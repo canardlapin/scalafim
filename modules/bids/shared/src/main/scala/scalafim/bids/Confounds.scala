@@ -23,6 +23,36 @@ enum ConfoundDiagnosticAction:
   case Drop
   case Flag
 
+opaque type PositiveInt = Int
+
+object PositiveInt:
+  def from(value: Int): Option[PositiveInt] =
+    Option.when(value > 0)(value)
+
+  def unsafe(value: Int): PositiveInt =
+    require(value > 0, "value must be positive")
+    value
+
+  extension (value: PositiveInt)
+    def toInt: Int = value
+
+opaque type VariancePercent = Double
+
+object VariancePercent:
+  def from(value: Double): Option[VariancePercent] =
+    Option.when(value.isFinite && value > 0.0 && value <= 100.0)(value)
+
+  def unsafe(value: Double): VariancePercent =
+    require(value.isFinite && value > 0.0 && value <= 100.0, "percent variance must be in (0, 100]")
+    value
+
+  extension (value: VariancePercent)
+    def toDouble: Double = value
+
+enum PcaRetention:
+  case Components(n: PositiveInt)
+  case Percent(value: VariancePercent)
+
 final case class ConfoundDiagnostic(
     column: String,
     reason: ConfoundDiagnosticReason,
@@ -49,10 +79,40 @@ object ConfoundStrategy:
       percentVariance = Some(80.0)
     )
 
+  def from(
+      name: String,
+      pcaVars: Vector[String],
+      rawVars: Vector[String] = Vector.empty,
+      npcs: Option[Int] = None,
+      percentVariance: Option[Double] = None
+  ): Either[BidsError, ConfoundStrategy] =
+    validate(ConfoundStrategy(name, pcaVars, rawVars, npcs, percentVariance))
+
   def named(name: String): Either[BidsError, ConfoundStrategy] =
     name.trim.toLowerCase match
-      case "pcabasic80" => Right(PcaBasic80)
+      case "pcabasic80" => validate(PcaBasic80)
       case other        => Left(BidsError.UnknownConfoundSet(other))
+
+  def retention(strategy: ConfoundStrategy): Either[BidsError, Option[PcaRetention]] =
+    (strategy.npcs, strategy.percentVariance) match
+      case (Some(_), Some(_)) =>
+        Left(BidsError.InvalidConfoundStrategy(strategy.name, "choose either npcs or percentVariance, not both"))
+      case (Some(n), None) =>
+        PositiveInt.from(n) match
+          case Some(value) => Right(Some(PcaRetention.Components(value)))
+          case None => Left(BidsError.InvalidConfoundStrategy(strategy.name, "npcs must be positive"))
+      case (None, Some(percent)) =>
+        VariancePercent.from(percent) match
+          case Some(value) => Right(Some(PcaRetention.Percent(value)))
+          case None => Left(BidsError.InvalidConfoundStrategy(strategy.name, "percentVariance must be in (0, 100]"))
+      case (None, None) =>
+        Right(None)
+
+  private[bids] def validate(strategy: ConfoundStrategy): Either[BidsError, ConfoundStrategy] =
+    val cleanName = strategy.name.trim
+    if cleanName.isEmpty then Left(BidsError.InvalidConfoundStrategy(strategy.name, "name must be non-empty"))
+    else if strategy.pcaVars.isEmpty then Left(BidsError.InvalidConfoundStrategy(cleanName, "pcaVars must be non-empty"))
+    else retention(strategy).map(_ => strategy.copy(name = cleanName))
 
 private[bids] object ConfoundAliases:
   val entries: Vector[(String, Vector[String])] =
@@ -117,26 +177,30 @@ object ConfoundSets:
     ConfoundAliases.canonical
 
   def named(name: String, n: Option[Int] = None): Either[BidsError, Vector[String]] =
-    val capped = (prefix: String) => n.fold(s"${prefix}_*")(k => s"${prefix}_*[$k]")
-    name.trim.toLowerCase match
-      case "motion6" => Right(motion6)
-      case "motion12" => Right(motion12)
-      case "motion24" => Right(motion24)
-      case "global3" => Right(global3)
-      case "9p" => Right(motion6 ++ global3)
-      case "36p" => Right(motion24 ++ global3 ++ globalDerivatives ++ globalPowers ++ globalDerivativePowers)
-      case "acompcor" | "acomppcor" => Right(Vector(capped("a_comp_cor")))
-      case "tcompcor" => Right(Vector(capped("t_comp_cor")))
-      case "compcor" => Right(Vector(capped("a_comp_cor"), capped("t_comp_cor")))
-      case "cosine" => Right(Vector("cosine_*", "cosine*"))
-      case "outliers" => Right(Vector("framewise_displacement", "rmsd", "motion_outlier_*", "non_steady_state_outlier*"))
-      case "dvars" | "std_dvars" => Right(Vector("std_dvars"))
-      case "raw_dvars" => Right(Vector("dvars"))
-      case "non_std_dvars" => Right(Vector("non_std_dvars"))
-      case "vx_wisestd_dvars" => Right(Vector("vx_wisestd_dvars"))
-      case "fd" => Right(Vector("framewise_displacement"))
-      case "legacy_default" => Right(legacyDefault)
-      case other => Left(BidsError.UnknownConfoundSet(other))
+    n match
+      case Some(k) if k <= 0 =>
+        Left(BidsError.InvalidConfoundStrategy(name, "component cap must be positive"))
+      case _ =>
+        val capped = (prefix: String) => n.fold(s"${prefix}_*")(k => s"${prefix}_*[$k]")
+        name.trim.toLowerCase match
+          case "motion6" => Right(motion6)
+          case "motion12" => Right(motion12)
+          case "motion24" => Right(motion24)
+          case "global3" => Right(global3)
+          case "9p" => Right(motion6 ++ global3)
+          case "36p" => Right(motion24 ++ global3 ++ globalDerivatives ++ globalPowers ++ globalDerivativePowers)
+          case "acompcor" | "acomppcor" => Right(Vector(capped("a_comp_cor")))
+          case "tcompcor" => Right(Vector(capped("t_comp_cor")))
+          case "compcor" => Right(Vector(capped("a_comp_cor"), capped("t_comp_cor")))
+          case "cosine" => Right(Vector("cosine_*", "cosine*"))
+          case "outliers" => Right(Vector("framewise_displacement", "rmsd", "motion_outlier_*", "non_steady_state_outlier*"))
+          case "dvars" | "std_dvars" => Right(Vector("std_dvars"))
+          case "raw_dvars" => Right(Vector("dvars"))
+          case "non_std_dvars" => Right(Vector("non_std_dvars"))
+          case "vx_wisestd_dvars" => Right(Vector("vx_wisestd_dvars"))
+          case "fd" => Right(Vector("framewise_displacement"))
+          case "legacy_default" => Right(legacyDefault)
+          case other => Left(BidsError.UnknownConfoundSet(other))
 
 final case class ConfoundSelectionConfig(
     variables: Vector[String] = ConfoundSets.legacyDefault,
@@ -193,22 +257,24 @@ object ConfoundSelector:
       naAction: NaAction = NaAction.Leave,
       clean: Vector[ConfoundClean] = Vector(ConfoundClean.ZeroVariance)
   ): Either[BidsError, ConfoundSelection] =
-    val pcaColumns = resolveVariables(strategy.pcaVars, table.columns)
-    if pcaColumns.isEmpty then Left(BidsError.NoConfoundColumns(strategy.pcaVars, table.columns))
-    else
-      for
-        selectedPca <- table.select(pcaColumns)
-        cleanedPca <- cleanTable(selectedPca, clean, ConfoundRole.Pca)
-        reduction <- PrincipalComponentConfoundReducer.reduce(cleanedPca.table, strategy)
-        rawSelection <- selectRawStrategyColumns(table, strategy.rawVars, naAction, clean)
-        joined <- appendTables(reduction.scores, rawSelection.table)
-      yield ConfoundSelection(
-        table = joined,
-        requested = strategy.pcaVars ++ strategy.rawVars,
-        resolved = pcaColumns ++ rawSelection.resolved,
-        diagnostics = cleanedPca.diagnostics ++ rawSelection.diagnostics,
-        pca = Some(reduction.pca)
-      )
+    ConfoundStrategy.validate(strategy).flatMap { strategy =>
+      val pcaColumns = resolveVariables(strategy.pcaVars, table.columns)
+      if pcaColumns.isEmpty then Left(BidsError.NoConfoundColumns(strategy.pcaVars, table.columns))
+      else
+        for
+          selectedPca <- table.select(pcaColumns)
+          cleanedPca <- cleanTable(selectedPca, clean, ConfoundRole.Pca)
+          reduction <- PrincipalComponentConfoundReducer.reduce(cleanedPca.table, strategy)
+          rawSelection <- selectRawStrategyColumns(table, strategy.rawVars, naAction, clean)
+          joined <- appendTables(reduction.scores, rawSelection.table)
+        yield ConfoundSelection(
+          table = joined,
+          requested = strategy.pcaVars ++ strategy.rawVars,
+          resolved = pcaColumns ++ rawSelection.resolved,
+          diagnostics = cleanedPca.diagnostics ++ rawSelection.diagnostics,
+          pca = Some(reduction.pca)
+        )
+    }
 
   private final case class Cleaned(table: BidsTable, diagnostics: Vector[ConfoundDiagnostic])
 
