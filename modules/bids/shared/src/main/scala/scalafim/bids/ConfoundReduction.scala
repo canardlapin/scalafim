@@ -7,48 +7,50 @@ private[bids] trait ConfoundReducer:
 
 private[bids] object PrincipalComponentConfoundReducer extends ConfoundReducer:
   def reduce(table: BidsTable, strategy: ConfoundStrategy): Either[BidsError, ConfoundReductionResult] =
-    if table.columns.isEmpty then
-      Left(BidsError.InvalidConfoundStrategy(strategy.name, "no PCA columns remain after cleaning"))
-    else if table.nrows == 0 then
-      Left(BidsError.InvalidConfoundStrategy(strategy.name, "PCA requires at least one row"))
-    else
-      val numeric = numericMatrix(table)
-      val standardized = standardize(numeric)
-      val covariance = covarianceMatrix(standardized)
-      val eigen = SymmetricEigen.decompose(covariance)
-      val components = retainedComponents(eigen.values, strategy.npcs, strategy.percentVariance)
-
-      if components <= 0 then
-        Left(BidsError.InvalidConfoundStrategy(strategy.name, "PCA retained zero components"))
+    ConfoundStrategy.validate(strategy).flatMap { strategy =>
+      if table.columns.isEmpty then
+        Left(BidsError.InvalidConfoundStrategy(strategy.name, "no PCA columns remain after cleaning"))
+      else if table.nrows == 0 then
+        Left(BidsError.InvalidConfoundStrategy(strategy.name, "PCA requires at least one row"))
       else
-        val loadings = eigen.vectors.take(components)
-        val scores = projectScores(standardized, loadings)
-        val componentNames = (1 to components).map(i => s"PC$i").toVector
-        val scoreTable =
-          BidsTable.fromRows(
-            componentNames,
-            scores.map(row => row.map(value => Some(formatDouble(value))))
-          )
-        val totalVariance = eigen.values.filter(_ > 0.0).sum
-        val variances = eigen.values.take(components)
-        val proportions =
-          if totalVariance <= 0.0 then Vector.fill(components)(0.0)
-          else variances.map(value => value / totalVariance)
-        val cumulative =
-          proportions.scanLeft(0.0)(_ + _).tail
-        scoreTable.map { scoresTable =>
-          ConfoundReductionResult(
-            scores = scoresTable,
-            pca = ConfoundPca(
-              sourceColumns = table.columns,
-              componentNames = componentNames,
-              variances = variances,
-              proportionVariance = proportions,
-              cumulativeProportion = cumulative,
-              loadings = loadings
+        val numeric = numericMatrix(table)
+        val standardized = standardize(numeric)
+        val covariance = covarianceMatrix(standardized)
+        val eigen = SymmetricEigen.decompose(covariance)
+        val components = retainedComponents(eigen.values, strategy.npcs, strategy.percentVariance)
+
+        if components <= 0 then
+          Left(BidsError.InvalidConfoundStrategy(strategy.name, "PCA retained zero components"))
+        else
+          val loadings = eigen.vectors.take(components)
+          val scores = projectScores(standardized, loadings)
+          val componentNames = (1 to components).map(i => s"PC$i").toVector
+          val scoreTable =
+            BidsTable.fromRows(
+              componentNames,
+              scores.map(row => row.map(value => Some(formatDouble(value))))
             )
-          )
-        }
+          val totalVariance = eigen.values.filter(_ > 0.0).sum
+          val variances = eigen.values.take(components)
+          val proportions =
+            if totalVariance <= 0.0 then Vector.fill(components)(0.0)
+            else variances.map(value => value / totalVariance)
+          val cumulative =
+            proportions.scanLeft(0.0)(_ + _).tail
+          scoreTable.map { scoresTable =>
+            ConfoundReductionResult(
+              scores = scoresTable,
+              pca = ConfoundPca(
+                sourceColumns = table.columns,
+                componentNames = componentNames,
+                variances = variances,
+                proportionVariance = proportions,
+                cumulativeProportion = cumulative,
+                loadings = loadings
+              )
+            )
+          }
+    }
 
   private def numericMatrix(table: BidsTable): Vector[Vector[Double]] =
     val fills = table.columns.map(column => column -> median(finiteValues(table, column))).toMap

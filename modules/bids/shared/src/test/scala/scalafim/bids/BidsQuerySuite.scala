@@ -1,6 +1,9 @@
 package scalafim.bids
 
 class BidsQuerySuite extends munit.FunSuite:
+  private def value[A](e: Either[BidsError, A]): A =
+    e.fold(err => fail(err.message), identity)
+
   private val manifest =
     BidsManifest.fromRelativePaths(
       Vector(
@@ -89,6 +92,19 @@ class BidsQuerySuite extends munit.FunSuite:
         "sub-01/func/sub-01_task-taskA_run-01_bold.nii.gz"
       )
     )
+
+  test("typed filename patterns validate regexes and escape exact names"):
+    assert(QueryPattern.regex("[").isLeft)
+    assert(BidsQuery.from(filename = Vector("[")).isLeft)
+
+    val exact = value(QueryPattern.exact("sub-01_task-taskA_run-01_bold.nii.gz"))
+    val query = value(BidsQuery.fromPatterns(Vector(exact), scope = BidsScope.Raw))
+    val hits = manifest.paths(query)
+
+    assertEquals(hits.map(_.value), Vector("sub-01/func/sub-01_task-taskA_run-01_bold.nii.gz"))
+
+    val directInvalid = BidsQuery(filename = Vector("["))
+    assertEquals(manifest.paths(directInvalid), Vector.empty)
 
   test("query and filter validation is total and direct constructors do not throw"):
     assert(EntityFilter.from(EntityKey.Subject, Vector.empty).isLeft)

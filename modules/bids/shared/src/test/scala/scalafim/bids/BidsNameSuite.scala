@@ -40,8 +40,31 @@ class BidsNameSuite extends munit.FunSuite:
     assert(BidsSpecs.Func.validate(value(BidsName.parseGeneric("sub-01_task-rest_space-MNI_bold.nii.gz"))).isLeft)
     assert(BidsName.parse("sub-01_task-rest_run-a_bold.nii.gz").isLeft)
 
+  test("path-aware parsing validates datatype folder and exposes typed role"):
+    val name = value(BidsRegistry.Builtin.parsePath(BidsPath("sub-01/func/sub-01_task-rest_bold.nii.gz")))
+    val role = value(BidsSpecs.Func.roleFor(name))
+
+    assertEquals(role.datatypeName, "func")
+    assertEquals(role.folderName, "func")
+    assertEquals(role.suffixName, "bold")
+    assertEquals(role.formatName, "nii.gz")
+    assert(BidsRegistry.Builtin.parsePath(BidsPath("sub-01/anat/sub-01_task-rest_bold.nii.gz")).isLeft)
+
+    val manifest = BidsManifest.fromRelativePaths(Vector("sub-01/anat/sub-01_task-rest_bold.nii.gz"))
+    assertEquals(manifest.files.head.parsed, None)
+    assertEquals(
+      manifest.paths(
+        BidsQuery(filename = Vector("bold\\.nii\\.gz$"), filters = Vector(EntityFilter(EntityKey.Task, "rest")))
+      ),
+      Vector.empty
+    )
+
   test("name constructor has a total validation path"):
     assert(BidsName.from(BidsEntities.Empty, "", "tsv").isLeft)
     assert(BidsName.from(BidsEntities.Empty, "events", "").isLeft)
     assert(BidsKind.from("", Vector("tsv")).isLeft)
     assert(BidsKind.from("events", Vector.empty).isLeft)
+    assert(BidsPath.from(" ").isLeft)
+    assert(PipelineName.from(" ").isLeft)
+    intercept[IllegalArgumentException](BidsPath(" "))
+    intercept[IllegalArgumentException](PipelineName(" "))
