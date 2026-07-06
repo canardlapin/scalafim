@@ -1,0 +1,188 @@
+# scalafim-fmri-mvpa
+
+Portable MVPA engine primitives for ScalaFIM.
+
+Package root:
+
+```scala
+import scalafim.fmri.mvpa.*
+```
+
+This module is the ScalaFIM landing zone for the computational core of
+`rMVPA`: typed sample responses, fold plans, feature-set/ROI execution,
+feature-set plans, dependency-free classifiers, metric vectors,
+representational-distance kernels, and first-class ROI RDM/RSA analyses. It
+deliberately does not port the R S3 model registry or runner surface. Spatial
+modules provide feature index sets, dataset/backends provide sample-by-feature
+matrices, and `mvpa` owns the small analysis contract that runs over those
+matrices.
+
+Regional and searchlight analyses use the same engine:
+
+```scala
+val plan =
+  FeatureSetPlan.fromLabelVector("regions", Vector(0, 1, 1, 2, 2)).toOption.get
+
+val analysis =
+  CrossValidatedClassifierAnalysis(SwiftCentroidClassifier())
+
+val result =
+  MvpaEngine.run(patterns, plan, labels, analysis, folds = Some(folds))
+```
+
+Streaming runners can visit outcomes without collecting every ROI/searchlight:
+
+```scala
+MvpaStream.foreach(source, plan, labels, analysis, Some(folds)) { outcome =>
+  MvpaStreamControl.Continue
+}
+```
+
+Distributed runners should target the lower-level single-ROI boundary instead
+of depending on the local collector:
+
+```scala
+val source = PatternSource.fromMatrix(patterns)
+val outcome =
+  MvpaTask.evaluate(source, plan.featureSets.head, labels, analysis, Some(folds))
+```
+
+A future Spark adapter should provide a JVM `PatternSource` backed by its data
+layout and map `MvpaTask.evaluate` over partitions of `FeatureSetPlan`; a local
+non-collecting runner can use `MvpaStream`.
+
+For high-volume searchlight classification, `SearchlightClassifierScanner`
+keeps the same `RoiOutcome`/`MvpaResult` surface but adds direct SWIFT centroid
+and ridge LDA fast paths:
+
+```scala
+val scanner =
+  SearchlightClassifierScanner(
+    SwiftCentroidClassifier(FeatureScaling.DiagonalShrinkage(0.2)),
+    storePredictions = true
+  )
+
+val result =
+  scanner.run(patterns, searchlightPlan, labels, folds)
+```
+
+The fast path validates response/folds once, reuses the global feature lookup,
+and computes fold-local scaling, centroids, priors, and probabilities directly
+over the selected columns. It allocates one output probability buffer per
+feature set plus fold-local work arrays. Classifiers without a specialized path
+fall back to `CrossValidatedClassifierAnalysis`.
+
+Cross-domain decoding uses a paired source/target pattern source and the same
+feature-set plans. The naive rMVPA-style baseline is expressed as a classifier
+analysis rather than a special runner: fit source-domain prototypes with
+`CorrelationCentroidClassifier`, predict target-domain patterns, and report
+accuracy through the usual ROI result surface.
+
+```scala
+val design =
+  CrossDecodingDesign.unsafe(
+    sourceLabels = Vector("face", "face", "house", "house"),
+    targetLabels = Vector("face", "house")
+  )
+
+val xdec =
+  CrossDecoding.naive(storePredictions = true)
+
+val result =
+  CrossDomainMvpaEngine.run(sourcePatterns, targetPatterns, plan, design, xdec)
+```
+
+The lower-level `CrossDomainMvpaTask.evaluate` boundary evaluates one feature
+set against a `CrossDomainPatternSource`; distributed runners can map that
+single-ROI task across regional/searchlight feature sets.
+
+For high-volume naive cross-decoding searchlights, `NaiveCrossDecodingScanner`
+keeps the same result surface while computing source prototypes and target
+correlation scores directly over selected feature columns:
+
+```scala
+val fast =
+  NaiveCrossDecodingScanner(storePredictions = false)
+
+val result =
+  fast.run(sourcePatterns, targetPatterns, searchlightPlan, design)
+```
+
+RSA is a `RoiAnalysis` too. Observed RDM rows can be sample rows or categorical
+class means, and model RDMs carry item labels so scoring aligns by label:
+
+```scala
+val model =
+  RdmModel.unsafe("geometry", Vector("face", "house", "tool"), modelRdm)
+
+val rsa =
+  RsaAnalysis(RdmMethod.SquaredEuclidean(), Vector(model), rows = RdmRows.ClassMeans)
+```
+
+RDM scoring is pluggable. Pearson and Spearman are dependency-free, and partial
+Pearson accepts labeled control RDMs so nuisance models are aligned by item
+label before residualization:
+
+```scala
+val partial =
+  RdmScorer.PartialPearson.unsafe(Vector(controlModel))
+
+val rsa =
+  RsaAnalysis(
+    RdmMethod.SquaredEuclidean(),
+    Vector(targetModel),
+    scorer = partial
+  )
+```
+
+Crossvalidated distances use the same ROI engine. `CrossnobisAnalysis` builds
+fold-wise class means internally and keeps feature normalization explicit:
+
+```scala
+val crossnobis =
+  CrossnobisAnalysis(normalizeByFeatures = true, storeRdm = true)
+
+val distances =
+  MvpaEngine.run(patterns, plan, labels, crossnobis, folds = Some(folds))
+```
+
+Feature encoding and decoding use the same ROI contract. This is the core idea
+behind rMVPA's `feature_rsa_model`, but expressed as a bidirectional
+cross-validated prediction model rather than an RSA-named wrapper:
+
+```scala
+val design =
+  FeatureModelDesign.unsafe(items, featureMatrix, Vector("semantic", "visual"))
+
+val encode =
+  FeatureModelAnalysis(
+    design,
+    FeaturePredictionDirection.FeaturesToPatterns,
+    estimator = FeatureRidgeEstimator(lambda = 1e-2)
+  )
+
+val decode =
+  FeatureModelAnalysis(design, FeaturePredictionDirection.PatternsToFeatures)
+```
+
+The first supported estimator is standardized multivariate ridge regression. It
+has no heavy dependencies, works in both directions, and reports pattern, RDM,
+correlation, MSE, and R-squared metrics.
+
+Parity fixtures and lightweight benchmark checks live in the shared test tree:
+
+```text
+MvpaParityFixtures
+MvpaParitySuite
+```
+
+Those fixtures keep squared, unsquared, and feature-normalized estimands
+separate. See `tools/r-parity/mvpa-fixtures.md` before adding an R or Python
+reference comparison.
+
+Run it directly with:
+
+```sh
+sbt mvpaJVM/test
+sbt mvpaJS/test
+```

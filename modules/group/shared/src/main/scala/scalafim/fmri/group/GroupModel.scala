@@ -1,0 +1,64 @@
+package scalafim.fmri.group
+
+/** A pure, inspectable description of a group analysis: the data cube, the
+  * second-level design, and the weighting (estimator) choice — the same "inspect
+  * before it runs" split that `FitPlan` gives the first level.
+  *
+  * The case class enforces only the structural invariant (design and data agree
+  * on subject count). `build` is the validating entry point: it additionally
+  * checks residual degrees of freedom and that a variance-weighted estimator has
+  * variances. Whichever path constructs the model, `GroupEngine.fit` re-validates
+  * totally, so no runnable-looking but ill-posed model reaches the numerics.
+  */
+final case class GroupModel(
+    data: GroupData,
+    design: GroupDesign,
+    weighting: GroupWeighting = GroupWeighting.Unweighted
+):
+  require(design.subjects == data.nSubjects, "design subjects must match data subjects")
+
+  def requiresVariance: Boolean = weighting.requiresVariance
+
+  /** Combinator: same model under a different estimator. The new estimator's
+    * variance requirement is checked at `fit`, not here.
+    */
+  def reduceWith(newWeighting: GroupWeighting): GroupModel = copy(weighting = newWeighting)
+
+  def summary: GroupSummary =
+    GroupSummary(
+      subjects = data.nSubjects,
+      samples = data.nSamples,
+      contrasts = data.nContrasts,
+      terms = design.terms,
+      termNames = design.termNames,
+      weighting = weighting,
+      residualDf = data.nSubjects - design.terms
+    )
+
+object GroupModel:
+
+  /** Build a model, reporting composition errors (subject mismatch, or a
+    * variance-weighted estimator applied to variance-free data) as values.
+    */
+  def build(
+      data: GroupData,
+      design: GroupDesign,
+      weighting: GroupWeighting = GroupWeighting.Unweighted
+  ): Either[GroupError, GroupModel] =
+    if design.subjects != data.nSubjects then
+      Left(GroupError.SubjectMismatch(design.subjects, data.nSubjects))
+    else if data.nSubjects <= design.terms then
+      Left(GroupError.InsufficientSubjects(data.nSubjects, design.terms))
+    else if weighting.requiresVariance && !data.hasVariances then
+      Left(GroupError.MissingVariances(weighting.label))
+    else Right(GroupModel(data, design, weighting))
+
+final case class GroupSummary(
+    subjects: Int,
+    samples: Int,
+    contrasts: Int,
+    terms: Int,
+    termNames: Vector[String],
+    weighting: GroupWeighting,
+    residualDf: Int
+)

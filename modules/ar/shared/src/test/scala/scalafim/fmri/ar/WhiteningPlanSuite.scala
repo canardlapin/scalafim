@@ -1,0 +1,191 @@
+package scalafim.fmri.ar
+
+import scalafim.linalg.DoubleMatrix
+
+class WhiteningPlanSuite extends munit.FunSuite:
+
+  private def matrix(values: Vector[Double]): DoubleMatrix =
+    DoubleMatrix.fromRows(values.map(v => Vector(v)))
+
+  private def assertClose(actual: Vector[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
+    assertEquals(actual.length, expected.length)
+    actual.zip(expected).zipWithIndex.foreach { case ((a, e), i) =>
+      assert(math.abs(a - e) <= tol, clues(i, a, e))
+    }
+
+  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double = 1e-12): Unit =
+    assertEquals(actual.rows, expected.rows)
+    assertEquals(actual.cols, expected.cols)
+    actual.copyData.zip(expected.copyData).zipWithIndex.foreach { case ((a, e), i) =>
+      assert(math.abs(a - e) <= tol, clues(i, a, e))
+    }
+
+  private def combine(left: DoubleMatrix, right: DoubleMatrix, leftScale: Double, rightScale: Double): DoubleMatrix =
+    require(left.rows == right.rows && left.cols == right.cols)
+    val out = new Array[Double](left.rows * left.cols)
+    val x = left.copyData
+    val y = right.copyData
+    var i = 0
+    while i < out.length do
+      out(i) = leftScale * x(i) + rightScale * y(i)
+      i += 1
+    DoubleMatrix.unsafe(left.rows, left.cols, out)
+
+  private def manualWhiten(
+      values: Vector[Double],
+      coefficients: ArmaCoefficients,
+      segments: Vector[TimeSegment],
+      exactFirstAr1: Boolean
+  ): Vector[Double] =
+    val out = Array.fill(values.length)(0.0)
+    segments.foreach { segment =>
+      val firstScale =
+        if exactFirstAr1 then coefficients.exactAr1FirstScale.toOption.get
+        else 1.0
+      var row = segment.start
+      while row < segment.endExclusive do
+        var value = values(row)
+        var lag = 0
+        while lag < coefficients.phi.length do
+          val lagged = row - lag - 1
+          if lagged >= segment.start then value -= coefficients.phi(lag) * values(lagged)
+          lag += 1
+        lag = 0
+        while lag < coefficients.theta.length do
+          val lagged = row - lag - 1
+          if lagged >= segment.start then value -= coefficients.theta(lag) * out(lagged)
+          lag += 1
+        if row == segment.start && firstScale != 1.0 then value *= firstScale
+        out(row) = value
+        row += 1
+    }
+    out.toVector
+
+  test("global AR(1) plan applies exact first-row scaling") {
+    val values = Vector(1.0, 2.0, 4.0, 7.0)
+    val coefficients = ArmaCoefficients.ar(0.5)
+    val segments = TimeSegments.continuous(values.length)
+    val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
+
+    assertClose(whitened, expected)
+    assertEqualsDouble(whitened.head, math.sqrt(0.75), 1e-12)
+  }
+
+  test("global AR(2) plan matches manual recursion") {
+    val values = Vector(1.0, 2.0, 4.0, 7.0, 11.0)
+    val coefficients = ArmaCoefficients.ar(0.5, -0.2)
+    val segments = TimeSegments.continuous(values.length)
+    val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
+
+    assertClose(whitened, expected)
+    assertClose(whitened, Vector(1.0, 1.5, 3.2, 5.4, 8.3))
+  }
+
+  test("global ARMA(1,1) plan uses previous innovations") {
+    val values = Vector(1.0, 1.8, 2.9, 4.1, 5.6)
+    val coefficients = ArmaCoefficients.arma(phi = Vector(0.4), theta = Vector(-0.25))
+    val segments = TimeSegments.continuous(values.length)
+    val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
+
+    assertClose(whitened, expected)
+  }
+
+  test("censor gaps reset whitening recursions without dropping rows") {
+    val values = Vector(1.0, 2.0, 4.0, 8.0, 16.0, 32.0)
+    val base = TimeSegments.fromRunLengths(Vector(values.length))
+    val segments = TimeSegments.withCensorResets(base, Set(2))
+    val coefficients = ArmaCoefficients.ar(0.5)
+    val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = false)
+
+    assertEquals(segments, Vector(TimeSegment(0, 3, 0), TimeSegment(3, 6, 0)))
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = false)
+
+    assertClose(whitened, expected)
+    assertEqualsDouble(whitened(3), 8.0, 1e-12)
+  }
+
+  test("run-specific plans apply coefficients by run index") {
+    val values = Vector(1.0, 2.0, 4.0, 8.0, 16.0)
+    val segments = TimeSegments.fromRunLengths(Vector(2, 3))
+    val plan = WhiteningPlan.byRun(
+      Vector(ArmaCoefficients.ar(0.5), ArmaCoefficients.ar(-0.25)),
+      segments,
+      exactFirstAr1 = false
+    )
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+
+    assertClose(whitened, Vector(1.0, 1.5, 4.0, 9.0, 18.0))
+  }
+
+  test("whitening transform applies the same plan to design and response") {
+    val design = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, 1.0), Vector(1.0, 2.0)))
+    val response = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(4.0), Vector(8.0)))
+    val plan = WhiteningPlan.global(ArmaCoefficients.ar(0.5), TimeSegments.continuous(3), exactFirstAr1 = false)
+
+    val out = WhiteningTransform(plan, design, response).toOption.get
+
+    assertEquals(out.design.rows, 3)
+    assertEquals(out.design.cols, 2)
+    assertEquals(out.response.rows, 3)
+    assertEquals(out.response.cols, 1)
+    assertEqualsDouble(out.design(1, 0), 0.5, 1e-12)
+    assertEqualsDouble(out.response(2, 0), 6.0, 1e-12)
+  }
+
+  test("whitening is linear in the input matrix") {
+    val left = DoubleMatrix.fromRows(
+      Vector(
+        Vector(1.0, 2.0),
+        Vector(3.0, 5.0),
+        Vector(8.0, 13.0),
+        Vector(21.0, 34.0)
+      )
+    )
+    val right = DoubleMatrix.fromRows(
+      Vector(
+        Vector(-1.0, 0.5),
+        Vector(2.0, -3.0),
+        Vector(4.0, 1.0),
+        Vector(0.0, 7.0)
+      )
+    )
+    val plan = WhiteningPlan.global(
+      ArmaCoefficients.ar(0.4, -0.15),
+      TimeSegments.continuous(left.rows),
+      exactFirstAr1 = true
+    )
+
+    val combined = combine(left, right, leftScale = 2.0, rightScale = -0.5)
+    val whitenedCombined = WhiteningTransform.matrix(plan, combined).toOption.get
+    val whitenedLeft = WhiteningTransform.matrix(plan, left).toOption.get
+    val whitenedRight = WhiteningTransform.matrix(plan, right).toOption.get
+    val expected = combine(whitenedLeft, whitenedRight, leftScale = 2.0, rightScale = -0.5)
+
+    assertMatrixClose(whitenedCombined, expected)
+  }
+
+  test("invalid exact AR(1) first-row scaling is reported as a typed error") {
+    val plan = WhiteningPlan.global(
+      ArmaCoefficients.ar(1.05),
+      TimeSegments.continuous(3),
+      exactFirstAr1 = true
+    )
+    val result = WhiteningTransform.matrix(plan, matrix(Vector(1.0, 2.0, 3.0)))
+
+    assert(result.left.toOption.exists {
+      case ArError.InvalidExactFirstAr1(rho) => rho == 1.05
+      case _                                => false
+    })
+  }
