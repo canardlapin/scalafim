@@ -18,9 +18,11 @@ semantics. It is not the target API.
 
 Current status: the shared module now has the core ADTs, motion metrics, QC,
 one-pass rigid application, typed controls/profiles, small inline fixture
-oracles, and a portable baseline `RigidRobust` estimator. Implemented profile
-components are separated from planned components. Spline acquisition timing,
-JVM IO, CLI/reporting, and larger external parity fixtures remain later layers.
+oracles, and a portable baseline `RigidRobust` estimator with optional pyramid
+levels, rotational capture seeds, robust/valid-frame template refresh, and
+thresholded low-motion pose shrink. Implemented profile components are
+separated from planned components. Spline acquisition timing, JVM IO,
+CLI/reporting, and larger external parity fixtures remain later layers.
 
 ## Home
 
@@ -227,10 +229,11 @@ Acceptance:
 The baseline portable estimator is implemented in shared code. It deliberately
 keeps the first surface smaller than `volregger`: deterministic dense samples,
 translation capture, finite-difference damped Gauss-Newton updates, Huber loss,
-outward reference traversal, explicit unsupported-control errors, and per-frame
-diagnostics. Robust template refresh, rotational capture seeds, pyramid levels,
-whitening/nuisance residual modes, parallel frame execution, and large real-data
-benchmarks remain follow-on work.
+outward reference traversal, rotational capture seeds, robust/valid-frame
+template refresh, optional pyramid levels, thresholded low-motion pose shrink,
+explicit unsupported-control errors, and per-frame diagnostics.
+Whitening/nuisance residual modes, parallel frame execution, and large
+real-data benchmarks remain follow-on work.
 
 Estimator phases:
 
@@ -238,11 +241,14 @@ Estimator phases:
 2. Choose reference from `ReferenceStrategy`.
 3. Build a template: reference frame or mean template.
 4. Generate deterministic dense sample points.
-5. Fit each frame with trilinear sampling and a small LM/Gauss-Newton solver.
+5. Fit each frame with trilinear sampling and a small LM/Gauss-Newton solver,
+   optionally using coarse-to-fine pyramid sample levels.
 6. Traverse outward from reference with warm starts.
-7. Use translation capture to recover simple off-center starts.
-8. Add robust-template refresh and valid-frame-only refresh later.
-9. Add whitening/nuisance residual options only after broader recovery tests
+7. Use translation and rotation capture to recover simple off-center starts.
+8. Refresh templates from aligned valid frames and reject high-cost outlier
+   frames for robust templates.
+9. Optionally shrink subthreshold low-motion poses toward identity after fitting.
+10. Add whitening/nuisance residual options only after broader recovery tests
    pass.
 
 The first estimator does not need every `volregger` feature. It needs a stable
@@ -256,7 +262,12 @@ Acceptance:
 - costs, overlaps, iterations, and convergence flags are finite and
   frame-indexed;
 - reference traversal order is tested;
-- unsupported pyramid and temporal-regularization controls are typed errors;
+- rotational capture is tested independently from optimizer iterations;
+- robust template refresh is tested against a high-cost outlier frame;
+- enabled pyramid schedules refine on their finest level;
+- low-motion pose shrink is thresholded and leaves larger motion estimates
+  unchanged;
+- unsupported temporal-regularization controls are typed errors;
 - no per-frame public API loops are required by users;
 - both platforms pass the same estimator contract tests, even if large
   performance tests are JVM-only.

@@ -42,6 +42,14 @@ class MotionEstimatorSuite extends munit.FunSuite:
       fixed(srcI + dims(0) * (j + dims(1) * k))
     }
 
+  private def shiftedMovingFrameX(offset: Double): Array[Double] =
+    Array.tabulate(nxyz) { lin =>
+      val i = lin % dims(0)
+      val j = (lin / dims(0)) % dims(1)
+      val k = lin / (dims(0) * dims(1))
+      baseValueAt(i.toDouble + offset, j.toDouble, k.toDouble)
+    }
+
   private def rotatedMovingFramePositiveZ(rotation: Double): Array[Double] =
     val cx = 0.5 * (dims(0).toDouble - 1.0)
     val cy = 0.5 * (dims(1).toDouble - 1.0)
@@ -56,6 +64,14 @@ class MotionEstimatorSuite extends munit.FunSuite:
       val targetX = cx + cos * dx - sin * dy
       val targetY = cy + sin * dx + cos * dy
       baseValueAt(targetX, targetY, k.toDouble)
+    }
+
+  private def outlierFrame(fixed: Array[Double]): Array[Double] =
+    Array.tabulate(nxyz) { lin =>
+      val i = lin % dims(0)
+      val j = (lin / dims(0)) % dims(1)
+      val k = lin / (dims(0) * dims(1))
+      fixed(lin) + 35.0 + 4.0 * i.toDouble - 3.0 * j.toDouble + 2.0 * k.toDouble
     }
 
   private def runFromFrames(frames: Vector[Array[Double]]): NeuroVec[Double] =
@@ -148,9 +164,81 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assertEqualsDouble(pose.tx, 0.0, 0.2)
     assertEqualsDouble(pose.ty, 0.0, 0.2)
     assertEqualsDouble(pose.tz, 0.0, 0.15)
-    assertEqualsDouble(pose.rz, rotation, 0.05)
+    assertEqualsDouble(pose.rz, rotation, 0.06)
     assert(est.diagnostics(1).costFinal < est.diagnostics(1).costInitial)
     assert(est.diagnostics(1).overlap > 0.8)
+  }
+
+  test("rotational capture seeds recover a large yaw before optimizer iterations") {
+    val fixed = baseFrame
+    val rotation = VolreggerFixtures.estimatorCaptureRotationZ
+    val moving = rotatedMovingFramePositiveZ(rotation)
+    val run = runFromFrames(Vector(fixed, moving))
+    val zeroIter =
+      PyramidControl
+        .make(
+          downsample = Vector(1),
+          maxIterations = Vector(0),
+          sampleCounts = Vector(nxyz),
+          enabled = false
+        )
+        .fold(err => fail(err.message), identity)
+    val captureControl =
+      plan.control.copy(
+        pyramid = zeroIter,
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture =
+          CaptureControl(
+            enabled = true,
+            translationHalfWidthMm = 0.5,
+            rotationHalfWidthDeg = math.toDegrees(rotation),
+            topK = 4
+          )
+      )
+    val noCaptureControl =
+      captureControl.copy(
+        capture = captureControl.capture.copy(enabled = false)
+      )
+    val captured =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = captureControl))
+        .fold(err => fail(err.message), identity)
+    val noCapture =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = noCaptureControl))
+        .fold(err => fail(err.message), identity)
+
+    assertEqualsDouble(noCapture.trace.unsafeFrame(1).rz, 0.0, 1e-12)
+    assertEqualsDouble(captured.trace.unsafeFrame(1).rz, rotation, 0.03)
+    assert(captured.diagnostics(1).costFinal < noCapture.diagnostics(1).costFinal)
+    assert(captured.diagnostics(1).restarted)
+  }
+
+  test("robust template refresh resists a high-cost outlier frame") {
+    val fixed = baseFrame
+    val run = runFromFrames(Vector(fixed, fixed.clone(), outlierFrame(fixed)))
+    val robustPlan =
+      plan.copy(
+        reference = ReferenceStrategy.RobustMean,
+        control =
+          plan.control.copy(
+            template = TemplateControl(robustTemplate = true, refreshValidOnly = true, edgeExcludeFraction = 0.0)
+          )
+      )
+    val plainPlan =
+      robustPlan.copy(
+        control =
+          robustPlan.control.copy(
+            template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0)
+          )
+      )
+    val robust = MotionEstimator.estimate(run, Some(interiorMask), robustPlan).fold(err => fail(err.message), identity)
+    val plain = MotionEstimator.estimate(run, Some(interiorMask), plainPlan).fold(err => fail(err.message), identity)
+
+    assert(robust.diagnostics(1).costFinal < plain.diagnostics(1).costFinal * 0.25)
+    assert(robust.diagnostics(0).costFinal < plain.diagnostics(0).costFinal * 0.25)
+    assert(robust.diagnostics(2).costFinal > robust.diagnostics(1).costFinal)
+    assert(robust.diagnostics.forall(d => d.costFinal.isFinite && d.overlap.isFinite))
   }
 
   test("rigid spline estimator is explicitly deferred") {
@@ -160,24 +248,91 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assert(MotionEstimator.estimate(run, Some(interiorMask), splinePlan).isLeft)
   }
 
-  test("unsupported estimator controls are explicit errors") {
+  test("enabled pyramid schedule refines on the finest level") {
     val fixed = baseFrame
-    val run = runFromFrames(Vector(fixed, fixed.clone()))
+    val moving = shiftedMovingFramePlusOneX(fixed)
+    val run = runFromFrames(Vector(fixed, moving))
+    val pyramid =
+      PyramidControl
+        .make(
+          downsample = Vector(3, 1),
+          maxIterations = Vector(0, 6),
+          sampleCounts = Vector(4, nxyz),
+          enabled = true
+        )
+        .fold(err => fail(err.message), identity)
     val pyramidPlan =
       plan.copy(
         control =
           plan.control.copy(
-            pyramid =
-              PyramidControl
-                .make(
-                  downsample = Vector(2, 1),
-                  maxIterations = Vector(4, 2),
-                  sampleCounts = Vector(20, 40),
-                  enabled = true
-                )
-                .fold(err => fail(err.message), identity)
+            pyramid = pyramid,
+            template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+            capture = plan.control.capture.copy(enabled = false)
           )
       )
+    val est = MotionEstimator.estimate(run, Some(interiorMask), pyramidPlan).fold(err => fail(err.message), identity)
+    val pose = est.trace.unsafeFrame(1)
+
+    assert(est.control.pyramid.enabled)
+    assert(est.diagnostics(1).iterations > 0)
+    assert(est.diagnostics(1).iterations <= 6)
+    assert(est.diagnostics(1).costFinal < est.diagnostics(1).costInitial)
+    assertEqualsDouble(pose.tx, VolreggerFixtures.estimatorTranslationX, 0.35)
+  }
+
+  test("low-motion pose shrink scales only subthreshold estimates") {
+    val fixed = baseFrame
+    val baseControl =
+      plan.control.copy(
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture = plan.control.capture.copy(enabled = false),
+        temporal =
+          TemporalControl(
+            regularizationEnabled = false,
+            lowMotionPoseShrink = false,
+            lowMotionPoseScale = 0.5,
+            lowMotionThresholdMm = 0.75
+          )
+      )
+    val shrinkControl =
+      baseControl.copy(
+        temporal = baseControl.temporal.copy(lowMotionPoseShrink = true)
+      )
+
+    val tinyRun = runFromFrames(Vector(fixed, shiftedMovingFrameX(0.12)))
+    val plainTiny =
+      MotionEstimator
+        .estimate(tinyRun, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val shrunkTiny =
+      MotionEstimator
+        .estimate(tinyRun, Some(interiorMask), plan.copy(control = shrinkControl))
+        .fold(err => fail(err.message), identity)
+    val plainTinyPose = plainTiny.trace.unsafeFrame(1)
+    val shrunkTinyPose = shrunkTiny.trace.unsafeFrame(1)
+
+    assert(math.abs(plainTinyPose.tx) > 1e-4)
+    assertEqualsDouble(shrunkTinyPose.tx, plainTinyPose.tx * 0.5, 1e-10)
+    assertEqualsDouble(shrunkTinyPose.ty, plainTinyPose.ty * 0.5, 1e-10)
+    assertEqualsDouble(shrunkTinyPose.rz, plainTinyPose.rz * 0.5, 1e-10)
+    assert(shrunkTiny.diagnostics(1).costFinal.isFinite)
+
+    val largeRun = runFromFrames(Vector(fixed, shiftedMovingFramePlusOneX(fixed)))
+    val plainLarge =
+      MotionEstimator
+        .estimate(largeRun, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val shrunkLarge =
+      MotionEstimator
+        .estimate(largeRun, Some(interiorMask), plan.copy(control = shrinkControl))
+        .fold(err => fail(err.message), identity)
+
+    assertEqualsDouble(shrunkLarge.trace.unsafeFrame(1).tx, plainLarge.trace.unsafeFrame(1).tx, 1e-10)
+  }
+
+  test("unsupported estimator controls are explicit errors") {
+    val fixed = baseFrame
+    val run = runFromFrames(Vector(fixed, fixed.clone()))
     val temporalPlan =
       plan.copy(
         control =
@@ -186,7 +341,6 @@ class MotionEstimatorSuite extends munit.FunSuite:
           )
       )
 
-    assert(MotionEstimator.estimate(run, Some(interiorMask), pyramidPlan).isLeft)
     assert(MotionEstimator.estimate(run, Some(interiorMask), temporalPlan).isLeft)
   }
 

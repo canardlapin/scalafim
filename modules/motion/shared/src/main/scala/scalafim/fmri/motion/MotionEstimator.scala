@@ -15,19 +15,24 @@ object MotionEstimator:
         _ <- MotionMetrics.validateMask(run, mask)
         _ <- validateFiniteRun(run)
         refIndex <- referenceIndex(run, plan.reference)
-        samples <- buildSamples(run, mask, plan.control)
+        levels <- buildPyramidLevels(run, mask, plan.control)
       yield
-        val ctx = EstimatorContext(run, plan.control, refIndex, samples)
+        val ctx = EstimatorContext(run, plan.control, refIndex, levels)
         val template = buildTemplate(run, plan.reference, refIndex)
-        fitRun(ctx, template)
+        val first = fitRun(ctx, template)
+        refreshTemplate(ctx, template, first) match
+          case None => first
+          case Some(refreshed) => fitRun(ctx, refreshed)
 
   private final case class SamplePoint(i: Int, j: Int, k: Int, linear: Int)
+
+  private final case class PyramidLevel(downsample: Int, maxIterations: Int, samples: Vector[SamplePoint])
 
   private final case class EstimatorContext(
       run: NeuroVec[Double],
       control: MotionControl,
       referenceIndex: Int,
-      samples: Vector[SamplePoint]
+      levels: Vector[PyramidLevel]
   ):
     val dims: Vector[Int] = run.space.spatialDims
     val nx: Int = dims(0)
@@ -37,6 +42,7 @@ object MotionEstimator:
     val px: Double = run.space.spacing(0)
     val py: Double = run.space.spacing(1)
     val pz: Double = run.space.spacing(2)
+    val diagnosticLevel: PyramidLevel = levels.last
 
   private final case class CostResult(cost: Double, overlap: Double)
 
@@ -44,10 +50,10 @@ object MotionEstimator:
 
   private final case class CaptureStart(pose: RigidPose, warmCost: CostResult, startCost: CostResult)
 
+  private final case class SeedCost(pose: RigidPose, cost: CostResult)
+
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
-    if plan.control.pyramid.enabled then Left(MotionError.NotImplemented("motion pyramid estimator levels"))
-    else if plan.control.temporal.regularizationEnabled then Left(MotionError.NotImplemented("temporal regularization"))
-    else if plan.control.temporal.lowMotionPoseShrink then Left(MotionError.NotImplemented("low-motion pose shrink"))
+    if plan.control.temporal.regularizationEnabled then Left(MotionError.NotImplemented("temporal regularization"))
     else Right(())
 
   private def fitRun(ctx: EstimatorContext, template: Array[Double]): MotionEstimate =
@@ -55,7 +61,7 @@ object MotionEstimator:
     val poses = Array.fill(nt)(RigidPose.identity)
     val diagnostics = Array.ofDim[FrameFitDiagnostics](nt)
 
-    val refCost = evaluate(ctx, template, ctx.referenceIndex, RigidPose.identity)
+    val refCost = evaluate(ctx, ctx.diagnosticLevel, template, ctx.referenceIndex, RigidPose.identity)
     diagnostics(ctx.referenceIndex) =
       FrameFitDiagnostics(
         costInitial = refCost.cost,
@@ -92,54 +98,70 @@ object MotionEstimator:
       frame: Int,
       warmStart: RigidPose
   ): FitResult =
-    val capture = captureStart(ctx, template, frame, warmStart)
+    val capture = captureStart(ctx, ctx.levels.head, template, frame, warmStart)
     var pose = capture.pose
-    var current = capture.startCost
     var lambda = math.max(1e-6, ctx.control.optimizer.lambda0)
-    val maxIter = ctx.control.pyramid.maxIterations.lastOption.getOrElse(12)
-    var iter = 0
+    var totalIterations = 0
     var converged = false
+    var levelIndex = 0
 
-    while iter < maxIter && !converged do
-      val system = buildSystem(ctx, template, frame, pose, lambda)
-      solve6(system.hessian, system.gradient.map(-_)) match
-        case None =>
-          converged = true
-        case Some(rawStep) =>
-          val step = limitStep(rawStep)
-          val stepNorm = poseStepNorm(step)
-          if stepNorm <= ctx.control.optimizer.stepTolerance then converged = true
-          else
-            var accepted = false
-            var attempt = 0
-            var trialStep = step
-            while attempt < 6 && !accepted do
-              val trialPose = addStep(pose, trialStep)
-              val trialCost = evaluate(ctx, template, frame, trialPose)
-              if trialCost.cost < current.cost then
-                val relDrop =
-                  if current.cost == 0.0 then current.cost - trialCost.cost
-                  else (current.cost - trialCost.cost) / math.max(1e-12, math.abs(current.cost))
-                pose = trialPose
-                current = trialCost
-                lambda = math.max(1e-8, lambda * 0.5)
-                accepted = true
-                if relDrop <= ctx.control.optimizer.costTolerance then converged = true
-              else
-                lambda *= 4.0
-                trialStep = trialStep.map(_ * 0.5)
-                attempt += 1
-            if !accepted then converged = true
-      iter += 1
+    while levelIndex < ctx.levels.length do
+      val level = ctx.levels(levelIndex)
+      var current =
+        if levelIndex == 0 then capture.startCost
+        else evaluate(ctx, level, template, frame, pose)
+      var iter = 0
+      var levelConverged = false
+
+      while iter < level.maxIterations && !levelConverged do
+        val system = buildSystem(ctx, level, template, frame, pose, lambda)
+        solve6(system.hessian, system.gradient.map(-_)) match
+          case None =>
+            levelConverged = true
+          case Some(rawStep) =>
+            val step = limitStep(rawStep)
+            val stepNorm = poseStepNorm(step)
+            if stepNorm <= ctx.control.optimizer.stepTolerance then levelConverged = true
+            else
+              var accepted = false
+              var attempt = 0
+              var trialStep = step
+              while attempt < 6 && !accepted do
+                val trialPose = addStep(pose, trialStep)
+                val trialCost = evaluate(ctx, level, template, frame, trialPose)
+                if trialCost.cost < current.cost then
+                  val relDrop =
+                    if current.cost == 0.0 then current.cost - trialCost.cost
+                    else (current.cost - trialCost.cost) / math.max(1e-12, math.abs(current.cost))
+                  pose = trialPose
+                  current = trialCost
+                  lambda = math.max(1e-8, lambda * 0.5)
+                  accepted = true
+                  if relDrop <= ctx.control.optimizer.costTolerance then levelConverged = true
+                else
+                  lambda *= 4.0
+                  trialStep = trialStep.map(_ * 0.5)
+                  attempt += 1
+              if !accepted then levelConverged = true
+        iter += 1
+
+      totalIterations += iter
+      converged = levelConverged
+      levelIndex += 1
+
+    val outputPose = shrinkLowMotionPose(ctx, pose)
+    val initial = evaluate(ctx, ctx.diagnosticLevel, template, frame, warmStart)
+    val start = evaluate(ctx, ctx.diagnosticLevel, template, frame, capture.pose)
+    val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, frame, outputPose)
 
     FitResult(
-      pose = pose,
+      pose = outputPose,
       diagnostics = FrameFitDiagnostics(
-        costInitial = capture.warmCost.cost,
-        costFinal = current.cost,
-        iterations = iter,
-        overlap = current.overlap,
-        restarted = capture.startCost.cost < capture.warmCost.cost,
+        costInitial = initial.cost,
+        costFinal = finalCost.cost,
+        iterations = totalIterations,
+        overlap = finalCost.overlap,
+        restarted = start.cost < initial.cost,
         converged = converged
       )
     )
@@ -148,6 +170,7 @@ object MotionEstimator:
 
   private def buildSystem(
       ctx: EstimatorContext,
+      level: PyramidLevel,
       template: Array[Double],
       frame: Int,
       pose: RigidPose,
@@ -160,8 +183,8 @@ object MotionEstimator:
 
     val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
     var s = 0
-    while s < ctx.samples.length do
-      val sample = ctx.samples(s)
+    while s < level.samples.length do
+      val sample = level.samples(s)
       val sx = MotionSampling.sourceX(map, sample.i, sample.j, sample.k)
       val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
       val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
@@ -197,18 +220,20 @@ object MotionEstimator:
 
   private def captureStart(
       ctx: EstimatorContext,
+      level: PyramidLevel,
       template: Array[Double],
       frame: Int,
       warmStart: RigidPose
   ): CaptureStart =
-    val warmCost = evaluate(ctx, template, frame, warmStart)
+    val warmCost = evaluate(ctx, level, template, frame, warmStart)
     if !ctx.control.capture.enabled then CaptureStart(warmStart, warmCost, warmCost)
     else
       val step = math.min(1.0, math.max(ctx.px, math.max(ctx.py, ctx.pz)))
       val maxTx = math.min(ctx.control.capture.translationHalfWidthMm, step)
       val offsets = Array(-maxTx, 0.0, maxTx)
-      var best = warmStart
-      var bestCost = warmCost
+      val rot = math.toRadians(ctx.control.capture.rotationHalfWidthDeg)
+      var best = SeedCost(warmStart, warmCost)
+      val translations = Vector.newBuilder[SeedCost]
       var ix = 0
       while ix < offsets.length do
         var iy = 0
@@ -224,17 +249,69 @@ object MotionEstimator:
                 warmStart.ry,
                 warmStart.rz
               )
-            val cost = evaluate(ctx, template, frame, candidate)
-            if cost.cost < bestCost.cost then
-              best = candidate
-              bestCost = cost
+            val cost = evaluate(ctx, level, template, frame, candidate)
+            val seed = SeedCost(candidate, cost)
+            translations += seed
+            if cost.cost < best.cost.cost then best = seed
             iz += 1
           iy += 1
         ix += 1
-      CaptureStart(best, warmCost, bestCost)
+
+      val rotations =
+        Vector(
+          SeedCost(warmStart, warmCost),
+          rotationSeed(ctx, level, template, frame, warmStart, 3, rot),
+          rotationSeed(ctx, level, template, frame, warmStart, 3, -rot),
+          rotationSeed(ctx, level, template, frame, warmStart, 4, rot),
+          rotationSeed(ctx, level, template, frame, warmStart, 4, -rot),
+          rotationSeed(ctx, level, template, frame, warmStart, 5, rot),
+          rotationSeed(ctx, level, template, frame, warmStart, 5, -rot)
+        )
+      var r = 0
+      while r < rotations.length do
+        if rotations(r).cost.cost < best.cost.cost then best = rotations(r)
+        r += 1
+
+      val nKeep = math.max(1, ctx.control.capture.topK)
+      val topTranslations = translations.result().sortBy(_.cost.cost).take(nKeep)
+      val topRotations = rotations.sortBy(_.cost.cost).take(nKeep)
+      var ti = 0
+      while ti < topTranslations.length do
+        var ri = 0
+        while ri < topRotations.length do
+          val tPose = topTranslations(ti).pose
+          val rPose = topRotations(ri).pose
+          val candidate =
+            RigidPose.unsafe(
+              tPose.tx,
+              tPose.ty,
+              tPose.tz,
+              rPose.rx,
+              rPose.ry,
+              rPose.rz
+            )
+          val cost = evaluate(ctx, level, template, frame, candidate)
+          if cost.cost < best.cost.cost then best = SeedCost(candidate, cost)
+          ri += 1
+        ti += 1
+
+      CaptureStart(best.pose, warmCost, best.cost)
+
+  private def rotationSeed(
+      ctx: EstimatorContext,
+      level: PyramidLevel,
+      template: Array[Double],
+      frame: Int,
+      warmStart: RigidPose,
+      index: Int,
+      delta: Double
+  ): SeedCost =
+    val pose = addOne(warmStart, index, delta)
+    SeedCost(pose, evaluate(ctx, level, template, frame, pose))
 
   private def evaluate(
       ctx: EstimatorContext,
+      level: PyramidLevel,
       template: Array[Double],
       frame: Int,
       pose: RigidPose
@@ -244,8 +321,8 @@ object MotionEstimator:
     var loss = 0.0
     var n = 0
     var inside = 0
-    while s < ctx.samples.length do
-      val sample = ctx.samples(s)
+    while s < level.samples.length do
+      val sample = level.samples(s)
       val sx = MotionSampling.sourceX(map, sample.i, sample.j, sample.k)
       val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
       val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
@@ -258,7 +335,7 @@ object MotionEstimator:
       s += 1
 
     if n == 0 then CostResult(Double.PositiveInfinity, 0.0)
-    else CostResult(loss / n.toDouble, inside.toDouble / ctx.samples.length.toDouble)
+    else CostResult(loss / n.toDouble, inside.toDouble / level.samples.length.toDouble)
 
   private def sampleAt(ctx: EstimatorContext, frame: Int, pose: RigidPose, sample: SamplePoint): Double =
     val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
@@ -288,6 +365,108 @@ object MotionEstimator:
           lin += 1
     out
 
+  private def refreshTemplate(
+      ctx: EstimatorContext,
+      initial: Array[Double],
+      estimate: MotionEstimate
+  ): Option[Array[Double]] =
+    if !ctx.control.template.robustTemplate && !ctx.control.template.refreshValidOnly then None
+    else
+      val included = refreshedFrameMask(ctx, estimate)
+      if ctx.run.nVolumes < 3 || countIncluded(included) == 0 then None
+      else
+        val out = Array.ofDim[Double](ctx.nxyz)
+        val counts = Array.ofDim[Int](ctx.nxyz)
+        val maps = Array.ofDim[MotionSampling.VoxelMap](ctx.run.nVolumes)
+        var t = 0
+        while t < ctx.run.nVolumes do
+          if included(t) then
+            maps(t) = MotionSampling.voxelMap(
+              ctx.nx,
+              ctx.ny,
+              ctx.nz,
+              zpad = 0,
+              ctx.px,
+              ctx.py,
+              ctx.pz,
+              estimate.trace.unsafeFrame(t)
+            )
+          t += 1
+
+        t = 0
+        while t < ctx.run.nVolumes do
+          if included(t) then
+            val map = maps(t)
+            var lin = 0
+            while lin < ctx.nxyz do
+              val i = lin % ctx.nx
+              val j = (lin / ctx.nx) % ctx.ny
+              val k = lin / (ctx.nx * ctx.ny)
+              val sx = MotionSampling.sourceX(map, i, j, k)
+              val sy = MotionSampling.sourceY(map, i, j, k)
+              val sz = MotionSampling.sourceZ(map, i, j, k)
+              if inBounds(ctx, sx, sy, sz) then
+                out(lin) += MotionSampling.trilinear(
+                  ctx.run.values.data,
+                  ctx.nx,
+                  ctx.ny,
+                  ctx.nz,
+                  ctx.nxyz,
+                  t,
+                  sx,
+                  sy,
+                  sz,
+                  zeroPad = false
+                )
+                counts(lin) += 1
+              lin += 1
+          t += 1
+
+        var lin = 0
+        while lin < ctx.nxyz do
+          if counts(lin) > 0 then out(lin) /= counts(lin).toDouble
+          else out(lin) = initial(lin)
+          lin += 1
+        Some(out)
+
+  private def refreshedFrameMask(ctx: EstimatorContext, estimate: MotionEstimate): Array[Boolean] =
+    val out = Array.fill(ctx.run.nVolumes)(true)
+    if ctx.control.template.refreshValidOnly then
+      var t = 0
+      while t < out.length do
+        val d = estimate.diagnostics(t)
+        out(t) = d.converged && d.costFinal.isFinite && d.overlap >= 0.5
+        t += 1
+
+    if ctx.control.template.robustTemplate then
+      val costs = Vector.newBuilder[Double]
+      var t = 0
+      while t < out.length do
+        val c = estimate.diagnostics(t).costFinal
+        if out(t) && c.isFinite then costs += c
+        t += 1
+      val finite = costs.result().sorted
+      if finite.nonEmpty then
+        val med = MotionMetrics.quantileSorted(finite, 0.5)
+        val deviations = finite.map(c => math.abs(c - med)).sorted
+        val mad = MotionMetrics.quantileSorted(deviations, 0.5)
+        val threshold = med + 3.0 * math.max(mad, 1e-12)
+        t = 0
+        while t < out.length do
+          out(t) = out(t) && estimate.diagnostics(t).costFinal <= threshold
+          t += 1
+
+    if !out.exists(identity) then out(ctx.referenceIndex) = true
+    out
+
+  private def countIncluded(included: Array[Boolean]): Int =
+    var n = 0
+    var i = 0
+    while i < included.length do
+      if included(i) then n += 1
+      i += 1
+    n
+
   private def referenceIndex(run: NeuroVec[Double], strategy: ReferenceStrategy): Either[MotionError, Int] =
     strategy match
       case ReferenceStrategy.Middle | ReferenceStrategy.RobustMean =>
@@ -297,7 +476,35 @@ object MotionEstimator:
         if i >= 0 && i < run.nVolumes then Right(i)
         else Left(MotionError.FrameIndexOutOfBounds(i, run.nVolumes))
 
-  private def buildSamples(
+  private def buildPyramidLevels(
+      run: NeuroVec[Double],
+      mask: Option[NeuroVol[Boolean]],
+      control: MotionControl
+  ): Either[MotionError, Vector[PyramidLevel]] =
+    buildCandidateSamples(run, mask, control).map { all =>
+      val pyramid = control.pyramid
+      if pyramid.enabled then
+        val levels = Vector.newBuilder[PyramidLevel]
+        var i = 0
+        while i < pyramid.downsample.length do
+          val stride = pyramid.downsample(i)
+          val coarse = strideSamples(all, stride)
+          val candidates = if coarse.isEmpty then all else coarse
+          val samples = subsample(candidates, scheduleAt(pyramid.sampleCounts, i))
+          levels += PyramidLevel(stride, scheduleAt(pyramid.maxIterations, i), samples)
+          i += 1
+        levels.result()
+      else
+        Vector(
+          PyramidLevel(
+            downsample = 1,
+            maxIterations = pyramid.maxIterations.lastOption.getOrElse(12),
+            samples = subsample(all, pyramid.sampleCounts.lastOption.getOrElse(all.length))
+          )
+        )
+    }
+
+  private def buildCandidateSamples(
       run: NeuroVec[Double],
       mask: Option[NeuroVol[Boolean]],
       control: MotionControl
@@ -329,7 +536,22 @@ object MotionEstimator:
 
     val all = builder.result()
     if all.isEmpty then Left(MotionError.ShapeMismatch("estimation mask", Vector(1), Vector(0)))
-    else Right(subsample(all, control.pyramid.sampleCounts.lastOption.getOrElse(all.length)))
+    else Right(all)
+
+  private def strideSamples(samples: Vector[SamplePoint], stride: Int): Vector[SamplePoint] =
+    if stride <= 1 then samples
+    else
+      val out = Vector.newBuilder[SamplePoint]
+      var i = 0
+      while i < samples.length do
+        val sample = samples(i)
+        if sample.i % stride == 0 && sample.j % stride == 0 && sample.k % stride == 0 then out += sample
+        i += 1
+      out.result()
+
+  private def scheduleAt(values: Vector[Int], index: Int): Int =
+    if values.length == 1 then values.head
+    else values(math.min(index, values.length - 1))
 
   private def subsample(samples: Vector[SamplePoint], target: Int): Vector[SamplePoint] =
     if target <= 0 || target >= samples.length then samples
@@ -396,6 +618,22 @@ object MotionEstimator:
       out(i) = math.max(-0.05, math.min(0.05, out(i)))
       i += 1
     out
+
+  private def shrinkLowMotionPose(ctx: EstimatorContext, pose: RigidPose): RigidPose =
+    val temporal = ctx.control.temporal
+    if temporal.lowMotionPoseShrink && poseStepNorm(poseComponents(pose)) <= temporal.lowMotionThresholdMm then
+      RigidPose.unsafe(
+        pose.tx * temporal.lowMotionPoseScale,
+        pose.ty * temporal.lowMotionPoseScale,
+        pose.tz * temporal.lowMotionPoseScale,
+        pose.rx * temporal.lowMotionPoseScale,
+        pose.ry * temporal.lowMotionPoseScale,
+        pose.rz * temporal.lowMotionPoseScale
+      )
+    else pose
+
+  private def poseComponents(pose: RigidPose): Array[Double] =
+    Array(pose.tx, pose.ty, pose.tz, pose.rx, pose.ry, pose.rz)
 
   private def poseStepNorm(step: Array[Double], radius: Double = 50.0): Double =
     math.sqrt(

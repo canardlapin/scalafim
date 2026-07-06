@@ -28,6 +28,8 @@ object PyramidControl:
       Left(MotionError.InvalidInt("sampleCounts", sampleCounts.find(_ < 0).getOrElse(-1), "all entries must be >= 0"))
     else if enabled && maxIterations.length > 1 && maxIterations.length != downsample.length then
       Left(MotionError.InvalidInt("maxIterations.length", maxIterations.length, "must match downsample length when pyramid is enabled"))
+    else if enabled && sampleCounts.length > 1 && sampleCounts.length != downsample.length then
+      Left(MotionError.InvalidInt("sampleCounts.length", sampleCounts.length, "must match downsample length when pyramid is enabled"))
     else Right(unsafe(downsample, maxIterations, sampleCounts, enabled))
 
   def unsafe(
@@ -97,14 +99,22 @@ object CaptureControl:
 final case class TemporalControl(
     regularizationEnabled: Boolean,
     lowMotionPoseShrink: Boolean,
-    lowMotionPoseScale: Double
+    lowMotionPoseScale: Double,
+    lowMotionThresholdMm: Double = 0.25
 ):
   require(lowMotionPoseScale.isFinite && lowMotionPoseScale > 0.0 && lowMotionPoseScale <= 1.0,
     "lowMotionPoseScale must be in (0, 1]")
+  require(lowMotionThresholdMm.isFinite && lowMotionThresholdMm >= 0.0,
+    "lowMotionThresholdMm must be non-negative")
 
 object TemporalControl:
   val default: TemporalControl =
-    TemporalControl(regularizationEnabled = false, lowMotionPoseShrink = false, lowMotionPoseScale = 0.95)
+    TemporalControl(
+      regularizationEnabled = false,
+      lowMotionPoseShrink = false,
+      lowMotionPoseScale = 0.95,
+      lowMotionThresholdMm = 0.25
+    )
 
 final case class ExecutionControl(
     parallelFrames: Boolean,

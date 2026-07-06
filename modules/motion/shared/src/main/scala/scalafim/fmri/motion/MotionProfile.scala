@@ -15,9 +15,9 @@ enum MotionProfile:
 
   def components: Vector[String] =
     this match
-      case DenseBaseline => Vector("capture_boost", "dense_sampling")
-      case FastNative => Vector("capture_boost", "dense_sampling", "edge_exclude")
-      case FastFmri => Vector("capture_boost", "dense_sampling", "edge_exclude")
+      case DenseBaseline => Vector("capture_boost", "rotational_capture", "dense_sampling", "robust_template")
+      case FastNative => Vector("capture_boost", "rotational_capture", "dense_sampling", "edge_exclude", "robust_template", "valid_template_refresh")
+      case FastFmri => Vector("capture_boost", "rotational_capture", "dense_sampling", "edge_exclude", "robust_template", "valid_template_refresh")
       case IcStencil => Vector.empty
       case IcWhiten => Vector.empty
       case SliceSpline => Vector.empty
@@ -26,7 +26,7 @@ enum MotionProfile:
     this match
       case DenseBaseline => components
       case FastNative => components ++ Vector("fast_native")
-      case FastFmri => components ++ Vector("fast_native", "valid_template_refresh", "parallel_frames")
+      case FastFmri => components ++ Vector("fast_native", "parallel_frames")
       case IcStencil => Vector("capture_boost", "ic_stencil")
       case IcWhiten => Vector("capture_boost", "ic_stencil", "whiten")
       case SliceSpline => Vector("capture_boost", "slice_spline")

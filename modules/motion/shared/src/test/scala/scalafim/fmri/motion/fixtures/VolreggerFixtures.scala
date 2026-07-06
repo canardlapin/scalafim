@@ -36,3 +36,6 @@ object VolreggerFixtures:
 
   val estimatorRotationZ: Double =
     0.18
+
+  val estimatorCaptureRotationZ: Double =
+    0.35

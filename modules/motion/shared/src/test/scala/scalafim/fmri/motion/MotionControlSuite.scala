@@ -10,18 +10,54 @@ class MotionControlSuite extends munit.FunSuite:
         sampleCounts = Vector(100, 200, 300),
         enabled = true
       )
+    val badSampleCounts =
+      PyramidControl.make(
+        downsample = Vector(4, 2, 1),
+        maxIterations = Vector(10, 5, 2),
+        sampleCounts = Vector(100, 200),
+        enabled = true
+      )
+    val sharedBudget =
+      PyramidControl.make(
+        downsample = Vector(4, 2, 1),
+        maxIterations = Vector(5),
+        sampleCounts = Vector(0),
+        enabled = true
+      )
     assert(bad.isLeft)
+    assert(badSampleCounts.isLeft)
+    assert(sharedBudget.isRight)
   }
 
   test("apply control rejects negative zpad") {
     assert(ApplyControl.make(zpad = -1).isLeft)
   }
 
+  test("temporal shrink controls validate shrink range and threshold") {
+    intercept[IllegalArgumentException] {
+      TemporalControl(
+        regularizationEnabled = false,
+        lowMotionPoseShrink = true,
+        lowMotionPoseScale = 0.0,
+        lowMotionThresholdMm = 0.25
+      )
+    }
+    intercept[IllegalArgumentException] {
+      TemporalControl(
+        regularizationEnabled = false,
+        lowMotionPoseShrink = true,
+        lowMotionPoseScale = 0.5,
+        lowMotionThresholdMm = -0.1
+      )
+    }
+  }
+
   test("fast fMRI profile selects rigid robust engine and component tags") {
     assertEquals(MotionProfile.FastFmri.engine, MotionEngine.RigidRobust)
     assert(MotionProfile.FastFmri.components.contains("dense_sampling"))
+    assert(MotionProfile.FastFmri.components.contains("rotational_capture"))
+    assert(MotionProfile.FastFmri.components.contains("valid_template_refresh"))
     assert(!MotionProfile.FastFmri.components.contains("ic_stencil"))
-    assert(MotionProfile.FastFmri.plannedComponents.contains("valid_template_refresh"))
     assert(MotionProfile.FastFmri.plannedComponents.contains("parallel_frames"))
     assert(!MotionProfile.FastFmri.control.execution.parallelFrames)
     assert(MotionProfile.FastFmri.plan().isRight)
