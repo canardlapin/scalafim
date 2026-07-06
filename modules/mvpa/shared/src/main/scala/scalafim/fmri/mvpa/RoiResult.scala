@@ -9,6 +9,7 @@ enum RoiPayload:
   case Classification(prediction: ClassificationPrediction)
   case Rdm(items: Vector[String], rdm: RdmVector)
   case Rsa(items: Vector[String], observed: Option[RdmVector], scores: Vector[RsaScore])
+  case SamplewiseRsa(modelName: String, scores: Vector[SamplewiseRsaScore])
   case FeatureModel(prediction: FeatureModelPrediction)
 
 final case class RsaScore(modelName: String, value: Double):

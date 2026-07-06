@@ -32,6 +32,30 @@ enum RdmMethod:
       case Correlation =>
         Rdm.correlation(matrix)
 
+opaque type RsaItemId = String
+
+object RsaItemId:
+  def apply(value: String): Either[MvpaError, RsaItemId] =
+    checkedRsaId("RSA item", value)
+
+  def unsafe(value: String): RsaItemId =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  extension (id: RsaItemId)
+    inline def value: String = id
+
+opaque type RsaBlockId = String
+
+object RsaBlockId:
+  def apply(value: String): Either[MvpaError, RsaBlockId] =
+    checkedRsaId("RSA block", value)
+
+  def unsafe(value: String): RsaBlockId =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  extension (id: RsaBlockId)
+    inline def value: String = id
+
 final case class RdmModel private (
     name: String,
     items: Vector[String],
@@ -79,6 +103,81 @@ object RdmModel:
 
   def unsafe(name: String, items: Seq[String], rdm: RdmVector): RdmModel =
     apply(name, items, rdm).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class SamplewiseRsaDesign private (
+    model: RdmModel,
+    sampleItems: Vector[RsaItemId],
+    blocks: Vector[RsaBlockId],
+    modelItemIndices: Vector[Int]
+):
+  require(sampleItems.length == blocks.length, "sample items and blocks must have the same length")
+  require(sampleItems.length == modelItemIndices.length, "sample items and model index lookup must have the same length")
+
+  def samples: Int =
+    sampleItems.length
+
+  private[mvpa] inline def referenceDistance(row: Int, col: Int): Double =
+    model.rdm.unsafeDistance(modelItemIndices(row), modelItemIndices(col))
+
+object SamplewiseRsaDesign:
+  def apply(
+      model: RdmModel,
+      sampleItems: Seq[String],
+      blocks: Seq[String]
+  ): Either[MvpaError, SamplewiseRsaDesign] =
+    val itemIds = Vector.newBuilder[RsaItemId]
+    val rawItems = sampleItems.toVector
+    val rawBlocks = blocks.toVector
+    if rawItems.length != rawBlocks.length then
+      Left(MvpaError.InvalidRdmInput(s"sample item count ${rawItems.length} != block count ${rawBlocks.length}"))
+    else if rawItems.length < 2 then Left(MvpaError.InvalidRdmInput("samplewise RSA requires at least two samples"))
+    else
+      var i = 0
+      while i < rawItems.length do
+        RsaItemId(rawItems(i)) match
+          case Right(id) =>
+            itemIds += id
+          case Left(error) =>
+            return Left(error)
+        i += 1
+
+      val blockIds = Vector.newBuilder[RsaBlockId]
+      i = 0
+      while i < rawBlocks.length do
+        RsaBlockId(rawBlocks(i)) match
+          case Right(id) =>
+            blockIds += id
+          case Left(error) =>
+            return Left(error)
+        i += 1
+
+      val parsedItems = itemIds.result()
+      val parsedBlocks = blockIds.result()
+      if parsedBlocks.map(_.value).distinct.length < 2 then
+        Left(MvpaError.InvalidRdmInput("samplewise RSA requires at least two blocks"))
+      else
+        val modelIndex = model.items.zipWithIndex.toMap
+        val indices = Vector.newBuilder[Int]
+        indices.sizeHint(parsedItems.length)
+        i = 0
+        while i < parsedItems.length do
+          modelIndex.get(parsedItems(i).value) match
+            case Some(index) =>
+              indices += index
+            case None =>
+              return Left(MvpaError.InvalidRdmInput(s"sample item '${parsedItems(i).value}' is not present in model RDM '${model.name}'"))
+          i += 1
+        Right(new SamplewiseRsaDesign(model, parsedItems, parsedBlocks, indices.result()))
+
+  def unsafe(model: RdmModel, sampleItems: Seq[String], blocks: Seq[String]): SamplewiseRsaDesign =
+    apply(model, sampleItems, blocks).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class SamplewiseRsaScore(
+    sample: SampleIndex,
+    item: RsaItemId,
+    block: RsaBlockId,
+    value: Double
+)
 
 trait RdmScorer:
   def name: String
@@ -392,6 +491,98 @@ object RdmScorer:
     if denom <= 0.0 then Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer is undefined for zero-variance residual distances"))
     else Right(numerator / denom)
 
+trait RowSimilarity:
+  def name: String
+  private[mvpa] def score(observed: Array[Double], model: Array[Double], length: Int): Either[MvpaError, Option[Double]]
+
+object RowSimilarity:
+  object Pearson extends RowSimilarity:
+    override val name: String = "Pearson"
+
+    private[mvpa] override def score(
+        observed: Array[Double],
+        model: Array[Double],
+        length: Int
+    ): Either[MvpaError, Option[Double]] =
+      pearson(observed, model, length, name)
+
+  object Spearman extends RowSimilarity:
+    override val name: String = "Spearman"
+
+    private[mvpa] override def score(
+        observed: Array[Double],
+        model: Array[Double],
+        length: Int
+    ): Either[MvpaError, Option[Double]] =
+      for
+        observedRanks <- ranks(observed, length, name)
+        modelRanks <- ranks(model, length, name)
+        value <- pearson(observedRanks, modelRanks, length, name)
+      yield value
+
+  private def pearson(
+      observed: Array[Double],
+      model: Array[Double],
+      length: Int,
+      scorerName: String
+  ): Either[MvpaError, Option[Double]] =
+    if length < 2 then Right(None)
+    else
+      var observedSum = 0.0
+      var modelSum = 0.0
+      var i = 0
+      while i < length do
+        val x = observed(i)
+        val y = model(i)
+        if !x.isFinite || !y.isFinite then
+          return Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
+        observedSum += x
+        modelSum += y
+        i += 1
+
+      val observedMean = observedSum / length
+      val modelMean = modelSum / length
+      var numerator = 0.0
+      var observedSs = 0.0
+      var modelSs = 0.0
+      i = 0
+      while i < length do
+        val xo = observed(i) - observedMean
+        val ym = model(i) - modelMean
+        numerator += xo * ym
+        observedSs += xo * xo
+        modelSs += ym * ym
+        i += 1
+
+      val denom = math.sqrt(observedSs * modelSs)
+      if denom <= 0.0 then Right(None)
+      else Right(Some(numerator / denom))
+
+  private def ranks(values: Array[Double], length: Int, scorerName: String): Either[MvpaError, Array[Double]] =
+    val indexed = new Array[(Double, Int)](length)
+    var i = 0
+    while i < length do
+      val value = values(i)
+      if !value.isFinite then
+        return Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
+      indexed(i) = (value, i)
+      i += 1
+
+    val sorted = indexed.toVector.sortBy(_._1)
+    val out = new Array[Double](length)
+    var start = 0
+    while start < length do
+      var end = start + 1
+      while end < length && sorted(end)._1 == sorted(start)._1 do
+        end += 1
+      val rank = (start.toDouble + 1.0 + end.toDouble) / 2.0
+      var cursor = start
+      while cursor < end do
+        out(sorted(cursor)._2) = rank
+        cursor += 1
+      start = end
+    Right(out)
+
 final case class RdmAnalysis(
     method: RdmMethod,
     rows: RdmRows = RdmRows.Samples,
@@ -478,6 +669,78 @@ final case class RsaAnalysis(
       case null => Right(out.result())
       case e => Left(e)
 
+final case class SamplewiseRsaAnalysis(
+    design: SamplewiseRsaDesign,
+    method: RdmMethod = RdmMethod.Correlation,
+    scorer: RowSimilarity = RowSimilarity.Pearson,
+    storeScores: Boolean = false
+) extends RoiAnalysis:
+  override def name: String = s"samplewise_rsa_${method.label}_${scorer.name.toLowerCase}"
+  override val minFeatures: Int =
+    method match
+      case RdmMethod.Correlation => 2
+      case _ => 1
+
+  override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
+    if roi.samples != design.samples then
+      Left(MvpaError.InvalidRdmInput(s"samplewise RSA design samples ${design.samples} != ROI samples ${roi.samples}"))
+    else
+      for
+        observed <- method.compute(roi.value)
+        scores <- SamplewiseRsaAnalysis.scoreRows(observed, design, scorer)
+      yield
+        val validScores = scores.map(_.value).filter(_.isFinite)
+        val mean =
+          if validScores.isEmpty then Double.NaN
+          else validScores.sum / validScores.length
+        val metrics =
+          MetricVector(
+            "SamplewiseRsa" -> mean,
+            "ValidScores" -> validScores.length.toDouble,
+            "Samples" -> design.samples.toDouble,
+            "Features" -> roi.features.toDouble
+          )
+        val payload =
+          if storeScores then Some(RoiPayload.SamplewiseRsa(design.model.name, scores))
+          else None
+        RoiAnalysisResult(metrics, payload)
+
+object SamplewiseRsaAnalysis:
+  private[mvpa] def scoreRows(
+      observed: RdmVector,
+      design: SamplewiseRsaDesign,
+      scorer: RowSimilarity
+  ): Either[MvpaError, Vector[SamplewiseRsaScore]] =
+    if observed.items != design.samples then
+      Left(MvpaError.InvalidRdmInput(s"observed RDM items ${observed.items} != samplewise RSA design samples ${design.samples}"))
+    else
+      val out = Vector.newBuilder[SamplewiseRsaScore]
+      out.sizeHint(design.samples)
+      val observedRow = new Array[Double](design.samples)
+      val referenceRow = new Array[Double](design.samples)
+      var row = 0
+      while row < design.samples do
+        var length = 0
+        var col = 0
+        while col < design.samples do
+          if design.blocks(col) != design.blocks(row) then
+            observedRow(length) = observed.unsafeDistance(row, col)
+            referenceRow(length) = design.referenceDistance(row, col)
+            length += 1
+          col += 1
+
+        val value =
+          scorer.score(observedRow, referenceRow, length) match
+            case Right(Some(score)) =>
+              score
+            case Right(None) =>
+              Double.NaN
+            case Left(error) =>
+              return Left(error)
+        out += SamplewiseRsaScore(SampleIndex.unsafe(row), design.sampleItems(row), design.blocks(row), value)
+        row += 1
+      Right(out.result())
+
 final case class ObservedPatterns(items: Vector[String], matrix: DoubleMatrix)
 
 private[mvpa] object RdmAnalysisSupport:
@@ -513,3 +776,8 @@ private[mvpa] object RdmAnalysisSupport:
       sum += values(i)
       i += 1
     sum / values.length
+
+private def checkedRsaId(kind: String, value: String): Either[MvpaError, String] =
+  val trimmed = value.trim
+  if trimmed.isEmpty then Left(MvpaError.InvalidRdmInput(s"$kind id must be non-empty"))
+  else Right(trimmed)

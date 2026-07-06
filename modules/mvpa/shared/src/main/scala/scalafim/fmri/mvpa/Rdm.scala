@@ -6,6 +6,21 @@ final case class RdmVector private (items: Int, values: Vector[Double]):
   require(items >= 0, "item count must be non-negative")
   require(values.length == items * (items - 1) / 2, "RDM vector length does not match item count")
 
+  def distance(row: Int, col: Int): Either[MvpaError, Double] =
+    if row < 0 || row >= items then
+      Left(MvpaError.InvalidRdmInput(s"RDM row $row out of bounds for $items items"))
+    else if col < 0 || col >= items then
+      Left(MvpaError.InvalidRdmInput(s"RDM column $col out of bounds for $items items"))
+    else Right(unsafeDistance(row, col))
+
+  private[mvpa] inline def unsafeDistance(row: Int, col: Int): Double =
+    if row == col then 0.0
+    else
+      val high = if row > col then row else col
+      val low = if row > col then col else row
+      val offset = low * (2 * items - low - 1) / 2
+      values(offset + high - low - 1)
+
 object RdmVector:
   def unsafe(items: Int, values: Vector[Double]): RdmVector =
     new RdmVector(items, values)

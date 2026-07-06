@@ -135,6 +135,35 @@ val rsa =
   )
 ```
 
+Samplewise RSA is the ScalaFIM equivalent of rMVPA's `vector_rsa_model`. It
+keeps the reference RDM item labels unique, then maps repeated sample rows onto
+those items and block labels. For each sample, it correlates the neural
+distance row against the reference distance row after excluding same-block
+samples, then reports the mean defined score for the ROI/searchlight:
+
+```scala
+val model =
+  RdmModel.unsafe("identity", Vector("face", "house"), referenceRdm)
+
+val design =
+  SamplewiseRsaDesign.unsafe(
+    model,
+    sampleItems = Vector("face", "house", "face", "house"),
+    blocks = Vector("run1", "run1", "run2", "run2")
+  )
+
+val samplewise =
+  SamplewiseRsaAnalysis(
+    design,
+    method = RdmMethod.Euclidean,
+    scorer = RowSimilarity.Pearson,
+    storeScores = true
+  )
+```
+
+The ROI metric is `SamplewiseRsa`; optional `RoiPayload.SamplewiseRsa` stores
+one typed score per sample for trial-level modeling downstream.
+
 Crossvalidated distances use the same ROI engine. `CrossnobisAnalysis` builds
 fold-wise class means internally and keeps feature normalization explicit:
 

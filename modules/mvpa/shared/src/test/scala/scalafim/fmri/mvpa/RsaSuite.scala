@@ -96,6 +96,17 @@ class RsaSuite extends munit.FunSuite:
     assert(zeroVariance.swap.toOption.get.message.contains("zero-variance"))
   }
 
+  test("RDM vectors expose symmetric row-distance access") {
+    val rdm = RdmVector.unsafe(4, Vector(1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
+
+    assertEqualsDouble(rdm.distance(0, 0).toOption.get, 0.0, 1e-12)
+    assertEqualsDouble(rdm.distance(1, 0).toOption.get, 1.0, 1e-12)
+    assertEqualsDouble(rdm.distance(0, 1).toOption.get, 1.0, 1e-12)
+    assertEqualsDouble(rdm.distance(3, 1).toOption.get, 5.0, 1e-12)
+    assertEqualsDouble(rdm.distance(2, 3).toOption.get, 6.0, 1e-12)
+    assert(rdm.distance(4, 0).swap.toOption.get.message.contains("out of bounds"))
+  }
+
   test("partial Pearson RDM scorer aligns labeled controls and residualizes them") {
     val items = Vector("a", "b", "c", "d")
     val observed = RdmVector.unsafe(4, Vector(3.0, 3.0, 6.0, 8.0, 9.0, 13.0))
@@ -185,4 +196,148 @@ class RsaSuite extends munit.FunSuite:
     assertEquals(result.successes.length, 0)
     assertEquals(result.failures.length, 1)
     assert(result.failures.head.error.message.contains("item labels"))
+  }
+
+  test("samplewise RSA computes block-excluded row-wise second-order scores") {
+    val patterns =
+      PatternMatrix.fromRows(
+        Vector(
+          Vector(0.0, 0.0),
+          Vector(10.0, 0.0),
+          Vector(0.0, 0.0),
+          Vector(10.0, 0.0)
+        )
+      )
+    val response = Response.categorical(Vector("a", "b", "a", "b")).toOption.get
+    val model =
+      RdmModel.unsafe("identity", Vector("a", "b"), RdmVector.unsafe(2, Vector(1.0)))
+    val design =
+      SamplewiseRsaDesign
+        .unsafe(
+          model,
+          sampleItems = Vector("a", "b", "a", "b"),
+          blocks = Vector("run1", "run1", "run2", "run2")
+        )
+    val analysis =
+      SamplewiseRsaAnalysis(
+        design,
+        method = RdmMethod.Euclidean,
+        scorer = RowSimilarity.Pearson,
+        storeScores = true
+      )
+
+    val result = MvpaEngine.run(patterns, allFeatures, response, analysis, folds = None).toOption.get
+    val success = result.successes.head
+
+    assertEqualsDouble(success.metrics("SamplewiseRsa").get, 1.0, 1e-12)
+    assertEquals(success.metrics("ValidScores"), Some(4.0))
+    assertEquals(success.metrics("Samples"), Some(4.0))
+    assertEquals(success.metrics("Features"), Some(2.0))
+    success.payload match
+      case Some(RoiPayload.SamplewiseRsa(modelName, scores)) =>
+        assertEquals(modelName, "identity")
+        assertEquals(scores.map(_.sample.value), Vector(0, 1, 2, 3))
+        assertEquals(scores.map(_.item.value), Vector("a", "b", "a", "b"))
+        assertEquals(scores.map(_.block.value), Vector("run1", "run1", "run2", "run2"))
+        scores.foreach(score => assertEqualsDouble(score.value, 1.0, 1e-12))
+      case other =>
+        fail(s"unexpected payload: $other")
+  }
+
+  test("samplewise RSA is invariant to consistent sample reordering") {
+    val patterns =
+      PatternMatrix.fromRows(
+        Vector(
+          Vector(10.0, 0.0),
+          Vector(0.0, 0.0),
+          Vector(10.0, 0.0),
+          Vector(0.0, 0.0)
+        )
+      )
+    val response = Response.categorical(Vector("b", "a", "b", "a")).toOption.get
+    val model =
+      RdmModel.unsafe("identity", Vector("a", "b"), RdmVector.unsafe(2, Vector(1.0)))
+    val design =
+      SamplewiseRsaDesign
+        .unsafe(
+          model,
+          sampleItems = Vector("b", "a", "b", "a"),
+          blocks = Vector("run1", "run1", "run2", "run2")
+        )
+    val analysis =
+      SamplewiseRsaAnalysis(design, method = RdmMethod.Euclidean, scorer = RowSimilarity.Pearson)
+
+    val result = MvpaEngine.run(patterns, allFeatures, response, analysis, folds = None).toOption.get
+    val success = result.successes.head
+
+    assertEqualsDouble(success.metrics("SamplewiseRsa").get, 1.0, 1e-12)
+    assertEquals(success.metrics("ValidScores"), Some(4.0))
+  }
+
+  test("samplewise RSA represents undefined row scores without failing the ROI") {
+    val patterns =
+      PatternMatrix.fromRows(
+        Vector(
+          Vector(0.0),
+          Vector(1.0)
+        )
+      )
+    val response = Response.categorical(Vector("a", "b")).toOption.get
+    val plan =
+      FeatureSetPlan.regional("one-feature", Vector(FeatureSet.unsafe(RoiId(1), Vector(0)))).toOption.get
+    val model =
+      RdmModel.unsafe("identity", Vector("a", "b"), RdmVector.unsafe(2, Vector(1.0)))
+    val design =
+      SamplewiseRsaDesign
+        .unsafe(
+          model,
+          sampleItems = Vector("a", "b"),
+          blocks = Vector("run1", "run2")
+        )
+    val analysis =
+      SamplewiseRsaAnalysis(design, method = RdmMethod.Euclidean, storeScores = true)
+
+    val result = MvpaEngine.run(patterns, plan, response, analysis, folds = None).toOption.get
+    val success = result.successes.head
+
+    assert(success.metrics("SamplewiseRsa").exists(_.isNaN))
+    assertEquals(success.metrics("ValidScores"), Some(0.0))
+    success.payload match
+      case Some(RoiPayload.SamplewiseRsa(_, scores)) =>
+        assert(scores.forall(_.value.isNaN))
+      case other =>
+        fail(s"unexpected payload: $other")
+  }
+
+  test("samplewise RSA reports typed design and shape errors") {
+    val model =
+      RdmModel.unsafe("identity", Vector("a", "b"), RdmVector.unsafe(2, Vector(1.0)))
+    val missingItem =
+      SamplewiseRsaDesign(model, sampleItems = Vector("a", "c"), blocks = Vector("run1", "run2"))
+
+    assert(missingItem.swap.toOption.get.message.contains("not present"))
+
+    val design =
+      SamplewiseRsaDesign
+        .unsafe(
+          model,
+          sampleItems = Vector("a", "b", "a"),
+          blocks = Vector("run1", "run1", "run2")
+        )
+    val analysis = SamplewiseRsaAnalysis(design, method = RdmMethod.Euclidean)
+    val patterns =
+      PatternMatrix.fromRows(
+        Vector(
+          Vector(0.0),
+          Vector(1.0)
+        )
+      )
+    val response = Response.categorical(Vector("a", "b")).toOption.get
+    val plan =
+      FeatureSetPlan.regional("one-feature", Vector(FeatureSet.unsafe(RoiId(1), Vector(0)))).toOption.get
+    val result = MvpaEngine.run(patterns, plan, response, analysis, folds = None).toOption.get
+
+    assertEquals(result.successes.length, 0)
+    assertEquals(result.failures.length, 1)
+    assert(result.failures.head.error.message.contains("design samples"))
   }

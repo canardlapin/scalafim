@@ -94,6 +94,11 @@ The MVPA core then owns:
 - `RdmAnalysis`/`RsaAnalysis`: first-class ROI analyses over sample rows or
   categorical class means, with labeled model RDM alignment and pluggable RDM
   scorers.
+- `SamplewiseRsaAnalysis`: the ScalaFIM equivalent of rMVPA `vector_rsa_model`.
+  It keeps model RDM items unique, maps repeated sample rows to those items and
+  block labels, computes row-wise second-order similarity after excluding
+  same-block samples, and reports the ROI/searchlight mean plus an optional
+  per-sample payload.
 - `FeatureModelAnalysis`: a bidirectional feature encoding/decoding analysis
   derived from the useful core of rMVPA `feature_rsa_model`. It predicts either
   neural patterns from a fixed feature design or feature vectors from neural
@@ -189,6 +194,13 @@ RSA is similarly split into small parts:
 - `RdmScorer` is a pluggable contract, with dependency-free Pearson, Spearman,
   and partial Pearson scorers. Partial controls are labeled `RdmModel`s and are
   aligned at scoring time rather than pre-aligned by callers.
+- `SamplewiseRsaDesign` handles the rMVPA `vector_rsa` case where sample labels
+  repeat across blocks. This is deliberately separate from `RdmModel`, whose
+  unique-item invariant stays intact for whole-RDM RSA.
+- `SamplewiseRsaAnalysis` reuses `RdmMethod` for neural distances and
+  `RowSimilarity` for row-level Pearson/Spearman scores. Undefined row scores
+  such as single cross-block comparisons are represented as `NaN` sample
+  payload values while the ROI metric averages defined finite scores.
 - `CrossnobisAnalysis` exposes crossvalidated class distances as the same
   `RoiAnalysis` shape used by regional and searchlight RSA; normalization by
   feature count is explicit.
@@ -234,10 +246,12 @@ prediction probabilities.
 1. Add thin fit-specific convenience wrappers over `PatternTable` once the
    `fit`/`mvpa-dataset` build edge is available, so dense and LSS fit results
    can expose trialwise MVPA samples without hand-written matrix plumbing.
-2. Add Kendall and robust-rank RSA variants if they are needed for R parity or
+2. Add rMVPA parity fixtures for `vector_rsa_model`/`SamplewiseRsaAnalysis`,
+   including regional and searchlight paths with repeated labels across blocks.
+3. Add Kendall and robust-rank RSA variants if they are needed for R parity or
    specific datasets.
-3. Add R/Python fixture-generation scripts that emit the table described in
+4. Add R/Python fixture-generation scripts that emit the table described in
    `tools/r-parity/mvpa-fixtures.md`.
-4. Add rank-update reuse for ridge-LDA neighborhood sweeps if profiling shows
+5. Add rank-update reuse for ridge-LDA neighborhood sweeps if profiling shows
    the direct scanner is not enough. Keep it as an optimizer over the classifier
    contract rather than a separate model API.
