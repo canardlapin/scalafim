@@ -1,19 +1,11 @@
 package scalafim.surface.io
 
 import scalafim.image.DMat
-import scalafim.surface.Hemisphere
-import scalafim.surface.SurfaceGeometry
-import scalafim.surface.SurfaceKind
-import scalafim.surface.TriangleMesh
+import scalafim.surface.*
+import scalafim.surface.gifti.*
 
-import org.w3c.dom.Element
-import org.w3c.dom.Node
-
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
-import java.util.zip.GZIPInputStream
-import javax.xml.parsers.DocumentBuilderFactory
+import java.nio.file.Path
+import scala.util.control.NonFatal
 
 object GiftiSurfaceReader:
 
@@ -21,106 +13,91 @@ object GiftiSurfaceReader:
     read(path, FreeSurferSurfaceReader.inferHemisphere(path), FreeSurferSurfaceReader.inferKind(path))
 
   def read(path: Path, hemisphere: Hemisphere, kind: SurfaceKind): SurfaceGeometry =
-    val doc = parseXml(path)
-    val arrays = dataArrays(doc.getDocumentElement)
-    val pointset =
-      arrays.find(array => hasIntent(array, "POINTSET")).getOrElse {
-        throw new IllegalArgumentException("GIFTI surface file must contain a POINTSET DataArray")
-      }
-    val triangle =
-      arrays.find(array => hasIntent(array, "TRIANGLE")).getOrElse {
-        throw new IllegalArgumentException("GIFTI surface file must contain a TRIANGLE DataArray")
-      }
-
-    val coordinates = readPointset(pointset)
-    val faces = readTriangles(triangle)
-    val transform = transformMatrix(pointset).getOrElse(DMat.eye(4))
-    SurfaceGeometry(TriangleMesh.fromArrays(coordinates, faces), hemisphere, kind, transform)
-
-  private def parseXml(path: Path): org.w3c.dom.Document =
-    val factory = DocumentBuilderFactory.newInstance()
-    factory.setNamespaceAware(false)
-    val builder = factory.newDocumentBuilder()
-    val input = open(path)
-    try builder.parse(input)
-    finally input.close()
-
-  private def open(path: Path): InputStream =
-    val base = Files.newInputStream(path)
-    if path.getFileName.toString.endsWith(".gz") then new GZIPInputStream(base) else base
-
-  private def dataArrays(root: Element): Vector[Element] =
-    val nodes = root.getElementsByTagName("DataArray")
-    Vector.tabulate(nodes.getLength)(i => nodes.item(i).asInstanceOf[Element])
-
-  private def hasIntent(array: Element, label: String): Boolean =
-    array.getAttribute("Intent").toUpperCase.contains(label)
-
-  private def readPointset(array: Element): Array[Double] =
-    val rows = dim(array, "Dim0", "GIFTI POINTSET Dim0")
-    val cols = dim(array, "Dim1", "GIFTI POINTSET Dim1")
-    require(cols == 3, "GIFTI POINTSET array must have Dim1=3")
-    val values = numericData(array, "GIFTI POINTSET")
-    require(values.length == rows * cols, "GIFTI POINTSET data length must equal Dim0*Dim1")
-    values
-
-  private def readTriangles(array: Element): Array[Int] =
-    val rows = dim(array, "Dim0", "GIFTI TRIANGLE Dim0")
-    val cols = dim(array, "Dim1", "GIFTI TRIANGLE Dim1")
-    require(cols == 3, "GIFTI TRIANGLE array must have Dim1=3")
-    val values = integerData(array, "GIFTI TRIANGLE")
-    require(values.length == rows * cols, "GIFTI TRIANGLE data length must equal Dim0*Dim1")
-    values
-
-  private def transformMatrix(array: Element): Option[DMat] =
-    childElement(array, "CoordinateSystemTransformMatrix").flatMap { xform =>
-      childElement(xform, "MatrixData").map { matrixData =>
-        val values = splitFields(matrixData.getTextContent).map(parseDouble(_, "GIFTI CoordinateSystemTransformMatrix"))
-        require(values.length == 16, "GIFTI CoordinateSystemTransformMatrix must contain 16 values")
-        DMat.fromRows(Vector.tabulate(4)(r => Vector.tabulate(4)(c => values(r * 4 + c))))
-      }
+    unsafe {
+      GiftiReader.read(path).flatMap(geometry(_, hemisphere, kind))
     }
 
-  private def numericData(array: Element, label: String): Array[Double] =
-    ensureAsciiEncoding(array)
-    splitFields(dataText(array, label)).map(parseDouble(_, label))
+  def readLabels(path: Path, geometry: SurfaceGeometry, label: String = ""): LabeledSurface =
+    unsafe {
+      GiftiReader.read(path).flatMap(labeledSurface(_, geometry, label))
+    }
 
-  private def integerData(array: Element, label: String): Array[Int] =
-    ensureAsciiEncoding(array)
-    splitFields(dataText(array, label)).map(parseInt(_, label))
+  def geometry(document: GiftiDocument, hemisphere: Hemisphere, kind: SurfaceKind): Either[GiftiError, SurfaceGeometry] =
+    for
+      pointset <- document.pointSet.toRight(GiftiError.MissingDataArray(GiftiIntent.PointSet))
+      triangles <- document.triangles.toRight(GiftiError.MissingDataArray(GiftiIntent.Triangle))
+      _ <- requireTriple(pointset, "GIFTI POINTSET array must have Dim1=3")
+      _ <- requireTriple(triangles, "GIFTI TRIANGLE array must have Dim1=3")
+      coordinates <- GiftiReader.doubleData(pointset)
+      faces <- GiftiReader.intData(triangles)
+      transform <- transformMatrix(pointset)
+      surface <- buildGeometry(coordinates, faces, hemisphere, kind, transform)
+    yield surface
 
-  private def ensureAsciiEncoding(array: Element): Unit =
-    val encoding = array.getAttribute("Encoding")
-    require(
-      encoding.isEmpty || encoding.equalsIgnoreCase("ASCII"),
-      "GIFTI reader currently supports ASCII DataArray encoding only"
-    )
+  def labeledSurface(document: GiftiDocument, geometry: SurfaceGeometry, label: String = ""): Either[GiftiError, LabeledSurface] =
+    for
+      labelArray <- document.labels.toRight(GiftiError.MissingDataArray(GiftiIntent.Label))
+      labels <- GiftiReader.intData(labelArray)
+      indices <- labelIndices(document, labels.length, geometry.vertexCount)
+      surface <- buildLabels(document, geometry, indices, labels, label)
+    yield surface
 
-  private def dataText(array: Element, label: String): String =
-    childElement(array, "Data")
-      .map(_.getTextContent)
-      .getOrElse(throw new IllegalArgumentException(s"$label DataArray must contain Data"))
+  private def requireTriple(array: GiftiDataArray, message: String): Either[GiftiError, Unit] =
+    if array.isTriple then Right(())
+    else Left(GiftiError.InvalidDataArray(message))
 
-  private def dim(array: Element, name: String, label: String): Int =
-    val value = array.getAttribute(name)
-    require(value.nonEmpty, s"$label is required")
-    parseInt(value, label)
+  private def transformMatrix(pointset: GiftiDataArray): Either[GiftiError, DMat] =
+    pointset.transforms.headOption match
+      case None => Right(DMat.eye(4))
+      case Some(transform) =>
+        val values = transform.matrixData
+        try Right(DMat.fromRows(Vector.tabulate(4)(row => Vector.tabulate(4)(col => values(row * 4 + col)))))
+        catch case NonFatal(error) => Left(GiftiError.InvalidDataArray(error.getMessage))
 
-  private def childElement(parent: Element, name: String): Option[Element] =
-    var child = parent.getFirstChild
-    while child != null do
-      if child.getNodeType == Node.ELEMENT_NODE && child.getNodeName == name then
-        return Some(child.asInstanceOf[Element])
-      child = child.getNextSibling
-    None
+  private def buildGeometry(
+    coordinates: Array[Double],
+    faces: Array[Int],
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    transform: DMat
+  ): Either[GiftiError, SurfaceGeometry] =
+    try Right(SurfaceGeometry(TriangleMesh.fromArrays(coordinates, faces), hemisphere, kind, transform))
+    catch case NonFatal(error) => Left(GiftiError.InvalidDataArray(error.getMessage))
 
-  private def splitFields(text: String): Array[String] =
-    text.trim.split("\\s+").filter(_.nonEmpty)
+  private def labelIndices(document: GiftiDocument, nLabels: Int, vertexCount: Int): Either[GiftiError, Vector[VertexId]] =
+    document.nodeIndices match
+      case Some(nodeArray) =>
+        GiftiReader.intData(nodeArray).flatMap { indices =>
+          if indices.length != nLabels then
+            Left(GiftiError.InvalidDataArray("GIFTI NODE_INDEX length must match LABEL data length"))
+          else buildVertexIds(indices)
+        }
+      case None =>
+        if nLabels != vertexCount then
+          Left(GiftiError.InvalidDataArray("GIFTI LABEL data length must match geometry vertex count when NODE_INDEX is absent"))
+        else Right(Vector.tabulate(nLabels)(VertexId.apply))
 
-  private def parseInt(value: String, label: String): Int =
-    try value.toInt
-    catch case _: NumberFormatException => throw new IllegalArgumentException(s"$label must contain integer values")
+  private def buildVertexIds(indices: Array[Int]): Either[GiftiError, Vector[VertexId]] =
+    try Right(indices.toVector.map(VertexId.apply))
+    catch case NonFatal(error) => Left(GiftiError.InvalidDataArray(error.getMessage))
 
-  private def parseDouble(value: String, label: String): Double =
-    try value.toDouble
-    catch case _: NumberFormatException => throw new IllegalArgumentException(s"$label must contain numeric values")
+  private def buildLabels(
+    document: GiftiDocument,
+    geometry: SurfaceGeometry,
+    indices: Vector[VertexId],
+    labels: Array[Int],
+    label: String
+  ): Either[GiftiError, LabeledSurface] =
+    val tableById =
+      document.labelTable.map { entry =>
+        entry.key -> LabelInfo(entry.key, entry.name, entry.colorHex)
+      }.toMap
+    val table =
+      labels.distinct.sorted.toVector.map { id =>
+        tableById.getOrElse(id, LabelInfo(id, id.toString))
+      }
+    try Right(LabeledSurface.fromIndexed(geometry, indices, labels.toVector, table, label))
+    catch case NonFatal(error) => Left(GiftiError.InvalidDataArray(error.getMessage))
+
+  private def unsafe[A](result: Either[GiftiError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)

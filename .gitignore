@@ -13,6 +13,7 @@
 .coursier-cache/
 .mote/
 graphify-out/
+vendor/GIFTI-Reader-JS/
 target/
 project/target/
 project/project/

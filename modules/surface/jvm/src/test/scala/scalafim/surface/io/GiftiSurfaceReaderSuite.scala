@@ -3,8 +3,11 @@ package scalafim.surface.io
 import scalafim.image.DMat
 import scalafim.surface.*
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.util.Base64
 
 class GiftiSurfaceReaderSuite extends munit.FunSuite:
 
@@ -36,7 +39,7 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     val xml = giftiXml(includeTransform = false).replace("Dim1=\"3\"", "Dim1=\"2\"")
 
     withGiftiFile("bad-pointset.surf.gii", xml) { path =>
-      interceptMessage[IllegalArgumentException]("requirement failed: GIFTI POINTSET array must have Dim1=3"):
+      interceptMessage[IllegalArgumentException]("invalid GIFTI DataArray: GIFTI POINTSET array must have Dim1=3"):
         GiftiSurfaceReader.read(path)
     }
 
@@ -44,20 +47,20 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     val xml = giftiXml(includeTransform = false).replace("0 1 2", "0 1")
 
     withGiftiFile("bad-triangle.surf.gii", xml) { path =>
-      interceptMessage[IllegalArgumentException]("requirement failed: GIFTI TRIANGLE data length must equal Dim0*Dim1"):
+      interceptMessage[IllegalArgumentException]("GIFTI data decode failed: NIFTI_INTENT_TRIANGLE decoded 2 values but dimensions require 3"):
         GiftiSurfaceReader.read(path)
     }
 
   test("read rejects missing POINTSET and TRIANGLE arrays"):
     val noPointset = giftiXml(includeTransform = false).replace("NIFTI_INTENT_POINTSET", "NIFTI_INTENT_VECTOR")
     withGiftiFile("missing-pointset.surf.gii", noPointset) { path =>
-      interceptMessage[IllegalArgumentException]("GIFTI surface file must contain a POINTSET DataArray"):
+      interceptMessage[IllegalArgumentException]("GIFTI document is missing NIFTI_INTENT_POINTSET DataArray"):
         GiftiSurfaceReader.read(path)
     }
 
     val noTriangle = giftiXml(includeTransform = false).replace("NIFTI_INTENT_TRIANGLE", "NIFTI_INTENT_VECTOR")
     withGiftiFile("missing-triangle.surf.gii", noTriangle) { path =>
-      interceptMessage[IllegalArgumentException]("GIFTI surface file must contain a TRIANGLE DataArray"):
+      interceptMessage[IllegalArgumentException]("GIFTI document is missing NIFTI_INTENT_TRIANGLE DataArray"):
         GiftiSurfaceReader.read(path)
     }
 
@@ -65,7 +68,7 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     val xml = giftiXml(includeTransform = true).replace("0 0 0 1", "0 0 1")
 
     withGiftiFile("bad-transform.surf.gii", xml) { path =>
-      interceptMessage[IllegalArgumentException]("requirement failed: GIFTI CoordinateSystemTransformMatrix must contain 16 values"):
+      interceptMessage[IllegalArgumentException]("invalid GIFTI DataArray: CoordinateSystemTransformMatrix must contain 16 values"):
         GiftiSurfaceReader.read(path)
     }
 
@@ -77,12 +80,19 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
       assertEquals(geom.kind, SurfaceKind.Custom("custom-surface"))
     }
 
-  test("read rejects non-ASCII DataArray encodings explicitly"):
-    val xml = giftiXml(includeTransform = false).replace("Encoding=\"ASCII\"", "Encoding=\"Base64Binary\"")
+  test("read accepts Base64Binary pointset and triangle arrays"):
+    val xml =
+      giftiXml(includeTransform = false)
+        .replace("Encoding=\"ASCII\"", "Encoding=\"Base64Binary\"")
+        .replace("0 0 0\n      1 0 0\n      0 1 0", float32Base64(Vector(0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f)))
+        .replace("0 1 2", int32Base64(Vector(0, 1, 2)))
 
     withGiftiFile("encoded.surf.gii", xml) { path =>
-      interceptMessage[IllegalArgumentException]("requirement failed: GIFTI reader currently supports ASCII DataArray encoding only"):
-        GiftiSurfaceReader.read(path)
+      val geom = GiftiSurfaceReader.read(path)
+
+      assertEquals(geom.vertexCount, 3)
+      assertEquals(geom.faceCount, 1)
+      assertEquals(geom.mesh.face(FaceId(0)), Triangle(VertexId(0), VertexId(1), VertexId(2)))
     }
 
   private def withGiftiFile[A](name: String, contents: String)(f: java.nio.file.Path => A): A =
@@ -128,3 +138,13 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
        |  </DataArray>
        |</GIFTI>
        |""".stripMargin
+
+  private def float32Base64(values: Vector[Float]): String =
+    val buffer = ByteBuffer.allocate(values.length * 4).order(ByteOrder.LITTLE_ENDIAN)
+    values.foreach(buffer.putFloat)
+    Base64.getMimeEncoder.encodeToString(buffer.array())
+
+  private def int32Base64(values: Vector[Int]): String =
+    val buffer = ByteBuffer.allocate(values.length * 4).order(ByteOrder.LITTLE_ENDIAN)
+    values.foreach(buffer.putInt)
+    Base64.getMimeEncoder.encodeToString(buffer.array())

@@ -37,8 +37,11 @@ The JVM module adds:
 
 - `FreeSurferSurfaceReader` for FreeSurfer/SUMA ASCII and binary triangle
   geometry.
-- `GiftiSurfaceReader` for ASCII GIFTI POINTSET/TRIANGLE geometry and
-  POINTSET affine extraction.
+- `GiftiReader` for typed GIFTI documents, metadata, label tables,
+  coordinate-system transforms, and ASCII/Base64/GZip-Base64 `DataArray`
+  payloads.
+- `GiftiSurfaceReader` adapters from GIFTI POINTSET/TRIANGLE geometry and
+  LABEL/NODE_INDEX data into `SurfaceGeometry` and `LabeledSurface`.
 
 ## Conventions
 
@@ -119,6 +122,14 @@ val fs = FreeSurferSurfaceReader.read(java.nio.file.Path.of("lh.white"))
 val gii = GiftiSurfaceReader.read(java.nio.file.Path.of("sub-01_hemi-L_pial.surf.gii"))
 ```
 
+Parse GIFTI explicitly when you need provenance-like payload inspection before
+building a surface value:
+
+```scala
+val doc = GiftiReader.read(java.nio.file.Path.of("lh.aparc.label.gii"))
+val labels = doc.flatMap(GiftiSurfaceReader.labeledSurface(_, gii, "aparc"))
+```
+
 Compiled runnable examples live in
 [`../../examples/surface-jvm`](../../examples/surface-jvm). They cover
 FreeSurfer/GIFTI IO and labeled-surface parcel workflows:
@@ -140,7 +151,7 @@ This is not an S4 or plotting port. The target mapping from `neurosurf` is:
   `SurfaceRoi`, and `LabeledSurface`.
 - cluster, neighborhood, geodesic, and parcel operations -> pure functions over
   the typed model.
-- FreeSurfer and GIFTI geometry readers -> JVM-only IO.
+- FreeSurfer and GIFTI geometry/label readers -> JVM-only IO.
 
 Non-goals for this module:
 
