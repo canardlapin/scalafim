@@ -19,6 +19,7 @@ class ConfoundsSuite extends munit.FunSuite:
   test("CompCor confound sets support component caps"):
     assertEquals(value(ConfoundSets.named("acompcor", n = Some(6))), Vector("a_comp_cor_*[6]"))
     assertEquals(value(ConfoundSets.named("compcor", n = Some(3))), Vector("a_comp_cor_*[3]", "t_comp_cor_*[3]"))
+    assert(ConfoundSets.named("acompcor", n = Some(0)).isLeft)
 
   test("DVARS and legacy default preserve bidser names"):
     assertEquals(value(ConfoundSets.named("dvars")), Vector("std_dvars"))
@@ -35,6 +36,31 @@ class ConfoundsSuite extends munit.FunSuite:
     assert(strategy.pcaVars.contains("a_comp_cor_*"))
     assert(!strategy.pcaVars.contains("global_signal"))
     assert(strategy.rawVars.contains("cosine_*"))
+
+  test("confound strategy constructors reject contradictory PCA retention"):
+    assert(ConfoundStrategy.from("bad", Vector("csf"), npcs = Some(1), percentVariance = Some(80.0)).isLeft)
+    assert(ConfoundStrategy.from("bad", Vector("csf"), npcs = Some(0)).isLeft)
+    assert(ConfoundStrategy.from("bad", Vector("csf"), percentVariance = Some(101.0)).isLeft)
+    assert(ConfoundStrategy.from("bad", Vector.empty, percentVariance = Some(80.0)).isLeft)
+
+    val table =
+      value(
+        BidsTable.fromRows(
+          Vector("CSF", "WhiteMatter"),
+          Vector(
+            Vector(Some("1"), Some("2")),
+            Vector(Some("2"), Some("3"))
+          )
+        )
+      )
+    val invalid =
+      ConfoundStrategy(
+        name = "bad",
+        pcaVars = Vector("csf", "white_matter"),
+        npcs = Some(1),
+        percentVariance = Some(80.0)
+      )
+    assert(ConfoundSelector.selectStrategy(table, invalid).isLeft)
 
   test("confound resolver supports aliases, wildcards, caps, and derivative suffix aliases"):
     val columns =

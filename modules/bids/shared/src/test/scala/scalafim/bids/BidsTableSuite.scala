@@ -36,6 +36,16 @@ class BidsTableSuite extends munit.FunSuite:
     assertEquals(value(duration.numeric), Vector(Some(1.0), None))
     assert(table.columnNamed("missing").isLeft)
 
+  test("typed events table requires numeric onset and duration"):
+    val events = value(BidsEvents.readEventsTable("onset duration trial_type\n0 1 go\n2 NA stop\n"))
+
+    assertEquals(events.onsetSeconds, Vector(Some(0.0), Some(2.0)))
+    assertEquals(events.durationSeconds, Vector(Some(1.0), None))
+    assertEquals(events.trialType.map(_.name), Some("trial_type"))
+    assert(ColumnName.from("").isLeft)
+    assert(BidsEvents.readEventsTable("onset trial_type\n0 go\n").isLeft)
+    assert(BidsEvents.readEventsTable("onset duration\nzero 1\n").isLeft)
+
   test("table files attach BIDS path and entity context"):
     val file =
       BidsManifest
