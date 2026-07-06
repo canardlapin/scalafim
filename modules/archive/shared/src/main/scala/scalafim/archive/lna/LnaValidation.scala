@@ -275,10 +275,10 @@ object LnaValidator:
             b += ValidationIssue(ValidationLayer.Shapes, "shared basis offset dataset must be one-dimensional", Some(ref.path))
 
           runs.find(run => ref.path.value.startsWith(s"/scans/${run.label.value}/")).foreach { run =>
-            if ref.dims.length == 1 && ref.dims.head != run.shape.spatialSize then
+            if ref.dims.length == 1 && ref.dims.head > run.shape.spatialSize then
               b += ValidationIssue(
                 ValidationLayer.Shapes,
-                s"offset length ${ref.dims.head} does not match run samples ${run.shape.spatialSize}",
+                s"offset length ${ref.dims.head} exceeds run samples ${run.shape.spatialSize}",
                 Some(ref.path)
               )
           }

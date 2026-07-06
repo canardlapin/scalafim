@@ -169,6 +169,55 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
     finally deleteTree(root)
   }
 
+  test("expands sparse shared-basis masks when materializing coefficients") {
+    val root = Files.createTempDirectory("scalafim-lna-resolver-sparse-mask-")
+    try
+      val sparseBasis =
+        nonorthogonalBasis.copy(
+          mask = SharedBasisMask(Vector(2, 2, 1), Vector(true, false, true, true))
+        )
+      JhdfSharedBasisStore
+        .writeContentAddressed(root.resolve("bases"), sparseBasis, basisId = Some(nonorthogonalBasisId), created = "2026-07-06T22:45:00Z")
+        .fold(err => fail(err.message), identity)
+      val coefficients =
+        DMat.fromRows(
+          Vector(
+            Vector(1.0, 2.0),
+            Vector(3.0, -1.0)
+          )
+        )
+      val offset = Vector(10.0, -2.0, 5.0)
+      val archive =
+        LnaPipeline
+          .sharedBasisEmbedArchiveFromCoefficients(
+            coefficients = coefficients,
+            space = space,
+            basis = sparseBasis,
+            basisId = nonorthogonalBasisId,
+            offset = Some(offset)
+          )
+          .fold(err => fail(err.message), identity)
+      val archivePath = root.resolve("sub-01/func/sub-01_task-shared-sparse_space-MNI_bold.lna.h5")
+      Option(archivePath.getParent).foreach(Files.createDirectories(_))
+      LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
+
+      val reconstructed =
+        LnaSharedBasisResolver
+          .readAndReconstruct(archivePath, datasetRoot = Some(root))
+          .fold(err => fail(err.message), identity)
+
+      assertEquals(
+        reconstructed,
+        DMat.fromRows(
+          Vector(
+            Vector(11.0, 0.0, 1.0, 7.0),
+            Vector(13.0, 0.0, 0.0, 4.0)
+          )
+        )
+      )
+    finally deleteTree(root)
+  }
+
   private def writeSharedBasisArchive(
       path: Path,
       basis: SharedBasisArtifact,

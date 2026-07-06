@@ -315,6 +315,48 @@ class LnaCoreSuite extends munit.FunSuite:
     assert(failed.left.toOption.exists(_.message.contains("external shared-basis resolver")))
   }
 
+  test("shared basis embed archive supports active-mask coefficients and offsets") {
+    val basisId = SharedBasisId.unsafe("sparse_basis")
+    val sparseBasis =
+      SharedBasisArtifact(
+        loadings = DMat.fromRows(
+          Vector(
+            Vector(1.0, 0.0),
+            Vector(1.0, 1.0),
+            Vector(0.0, 1.0)
+          )
+        ),
+        mask = SharedBasisMask(Vector(2, 2, 1), Vector(true, false, true, true)),
+        kind = "nonorthogonal",
+        params = Map("source" -> "unit-test")
+      )
+    val coefficients =
+      DMat.fromRows(
+        Vector(
+          Vector(1.0, 2.0),
+          Vector(3.0, -1.0)
+        )
+      )
+    val offset = Vector(10.0, -2.0, 5.0)
+
+    val archive =
+      LnaPipeline
+        .sharedBasisEmbedArchiveFromCoefficients(coefficients, space, sparseBasis, basisId, offset = Some(offset))
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(LnaValidator.validate(archive), Vector.empty)
+    val embed = archive.manifest.transforms.head
+    val offsetRef = embed.datasets.find(_.role == DatasetRole.Offset).getOrElse(fail("missing offset ref"))
+    assertEquals(offsetRef.dims, Vector(3))
+    embed.params match
+      case TransformParams.SharedBasisEmbed(_, centerDataWith, _, _, _, _, metadata) =>
+        assertEquals(centerDataWith, Some(offsetRef.path))
+        assertEquals(metadata("basis.mask_size"), "4")
+        assertEquals(metadata("basis.mask_active"), "3")
+      case other =>
+        fail(s"expected shared basis embed params, found $other")
+  }
+
   test("shared basis locators reject traversal") {
     assert(SharedBasisLocator("../bases/identity.lna_basis.h5").isLeft)
     assert(SharedBasisLocator("bases/../identity.lna_basis.h5").isLeft)

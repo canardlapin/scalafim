@@ -268,14 +268,14 @@ object LnaPipeline:
       creator: String = "scalafim-archive"
   ): Either[ArchiveError, LnaArchive] =
     val shape = LnaShape(space, coefficients.rows)
-    if basis.nVoxels != shape.spatialSize then
-      Left(ArchiveError.ShapeMismatch(s"shared basis has ${basis.nVoxels} voxels but space has ${shape.spatialSize} voxels"))
+    if basis.mask.values.length != shape.spatialSize then
+      Left(ArchiveError.ShapeMismatch(s"shared basis mask has ${basis.mask.values.length} entries but space has ${shape.spatialSize} voxels"))
     else if coefficients.cols != basis.nAtoms then
       Left(ArchiveError.ShapeMismatch(s"coefficients have ${coefficients.cols} columns but shared basis has ${basis.nAtoms} atoms"))
     else
       offset match
-        case Some(values) if values.length != shape.spatialSize =>
-          Left(ArchiveError.ShapeMismatch(s"offset has ${values.length} values but space has ${shape.spatialSize} voxels"))
+        case Some(values) if values.length != basis.nVoxels =>
+          Left(ArchiveError.ShapeMismatch(s"offset has ${values.length} values but shared basis has ${basis.nVoxels} active voxels"))
         case Some(values) if values.exists(!_.isFinite) =>
           Left(ArchiveError.InvalidArchive("shared basis offset contains non-finite values"))
         case _ =>
@@ -298,6 +298,8 @@ object LnaPipeline:
                   "basis.kind" -> validBasis.kind,
                   "basis.n_atoms" -> validBasis.nAtoms.toString,
                   "basis.n_voxels" -> validBasis.nVoxels.toString,
+                  "basis.mask_size" -> validBasis.mask.values.length.toString,
+                  "basis.mask_active" -> validBasis.mask.activeCount.toString,
                   "center" -> offset.nonEmpty.toString
                 )
               ),
@@ -320,6 +322,8 @@ object LnaPipeline:
                   "basis.shared.checksum" -> validBasis.checksum.value,
                   "basis.shared.kind" -> validBasis.kind,
                   "basis.shared.atoms" -> validBasis.nAtoms.toString,
+                  "basis.shared.mask_size" -> validBasis.mask.values.length.toString,
+                  "basis.shared.mask_active" -> validBasis.mask.activeCount.toString,
                   "basis.shared.centered" -> offset.nonEmpty.toString
                 ) ++ locator.map(value => "basis.shared.locator" -> value.value).toMap
               ),

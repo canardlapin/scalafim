@@ -20,11 +20,13 @@ The current shared slice is intentionally small:
   Gram-solved shared spatial dictionaries persisted as LNA shared-basis archives
 - `TransportLatentResponse` for operator-backed coefficient handoff with
   analysis/raw transforms and native/template decoder projections
+- `LatentArchiveCodec.toTransportArchive` for LNA transport latent archives
+  backed by dense operator payloads
 - `BoldZipPayload` for decoder-only BOLDZip-SR carrier, texture, residual
   event, and spatial-basis payloads
 
 Later slices should add encoder factories, richer dataset adapters, shared-basis
-archive materialization helpers, and transport archive persistence.
+archive materialization helpers, and BOLDZip archive persistence.
 
 The DCT fixture constants in `DctBasisSuite` can be regenerated with
 `tools/r-parity/fmrilatent-dct-fixtures.R`.

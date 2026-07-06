@@ -3,7 +3,9 @@ package scalafim.dataset.io
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
 import scalafim.archive.lna.{LnaPipeline, QuantParams, SharedBasisArtifact, SharedBasisId, SharedBasisMask}
 import scalafim.dataset.{DataSelection, IndexSelection}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.latent.{DctNorm, LatentArchiveCodec, LatentSelection, TransportLatentResponse}
+import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -151,6 +153,171 @@ class LnaDatasetSuite extends munit.FunSuite:
     finally deleteTree(root)
   }
 
+  test("LnaDataset reads temporal latent archives as selection-aware latent backends") {
+    val root = Files.createTempDirectory("scalafim-lna-dataset-temporal-latent-")
+    try
+      Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Temporal Latent LNA Derivative"}""")
+      val archivePath = root.resolve("sub-04/func/sub-04_task-dct_space-MNI_bold.lna.h5")
+      val archive =
+        LatentArchiveCodec
+          .toTemporalDctArchive(
+            data = DoubleMatrix.fromRows(data.toRows),
+            space = space,
+            components = data.rows,
+            norm = DctNorm.Ortho,
+            center = true
+          )
+          .fold(err => fail(err.message), identity)
+      Option(archivePath.getParent).foreach(Files.createDirectories(_))
+      LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
+
+      val dataset = LnaDataset.unsafe(root)
+      val backend =
+        dataset
+          .readSubjectLatent(LnaDatasetQuery(subject = "04", task = Some("dct"), space = Some("MNI")))
+          .fold(err => fail(err.message), identity)
+      val series =
+        backend.read(
+          DataSelection(
+            time = IndexSelection.indices(2, 0),
+            voxels = IndexSelection.indices(3, 1)
+          )
+        )
+
+      assertEquals(backend.shape.timepoints, data.rows)
+      assertEquals(backend.shape.spatialSize, data.cols)
+      assertRowsClose(series.data.toRows, Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 1e-10)
+    finally deleteTree(root)
+  }
+
+  test("LnaDataset reads transport latent archives as selection-aware latent backends") {
+    val root = Files.createTempDirectory("scalafim-lna-dataset-transport-latent-")
+    try
+      Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Transport Latent LNA Derivative"}""")
+      val decoder =
+        mapValue(
+          CsrMatrix.fromTriplets(
+            rows = 4,
+            cols = 2,
+            rowIndices = Array(0, 1, 2, 2, 3, 3),
+            colIndices = Array(0, 1, 0, 1, 0, 1),
+            values = Array(1.0, 1.0, 1.0, 1.0, 2.0, -1.0)
+          )
+        )
+      val response =
+        TransportLatentResponse
+          .withIdentityTransform(
+            coefficientsAnalysis = DoubleMatrix.fromRows(
+              Vector(
+                Vector(1.0, 2.0),
+                Vector(3.0, 4.0)
+              )
+            ),
+            nativeDecoder = decoder,
+            offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+            label = "transport-dataset"
+          )
+          .fold(err => fail(err.message), identity)
+      val archive =
+        LatentArchiveCodec
+          .toTransportArchive(response, space)
+          .fold(err => fail(err.message), identity)
+      val archivePath = root.resolve("sub-06/func/sub-06_task-transport_space-MNI_bold.lna.h5")
+      Option(archivePath.getParent).foreach(Files.createDirectories(_))
+      LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
+
+      val dataset = LnaDataset.unsafe(root)
+      val backend =
+        dataset
+          .readSubjectLatent(LnaDatasetQuery(subject = "06", task = Some("transport"), space = Some("MNI")))
+          .fold(err => fail(err.message), identity)
+      val series =
+        backend.read(
+          DataSelection(
+            time = IndexSelection.indices(1, 0),
+            voxels = IndexSelection.indices(3, 1)
+          )
+        )
+      val expected =
+        response
+          .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
+          .fold(err => fail(err.message), identity)
+
+      assertEquals(backend.shape.timepoints, 2)
+      assertEquals(backend.shape.spatialSize, 4)
+      assertEquals(backend.response.metadata("family"), "transport")
+      assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+    finally deleteTree(root)
+  }
+
+  test("LnaDataset reads sparse shared-basis archives as mask-aware latent backends") {
+    val root = Files.createTempDirectory("scalafim-lna-dataset-shared-sparse-")
+    try
+      Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Sparse Shared Basis LNA Derivative"}""")
+      val basis =
+        SharedBasisArtifact(
+          loadings = DMat.fromRows(
+            Vector(
+              Vector(1.0, 0.0),
+              Vector(1.0, 1.0),
+              Vector(0.0, 1.0)
+            )
+          ),
+          mask = SharedBasisMask(Vector(2, 2, 1), Vector(true, false, true, true)),
+          kind = "nonorthogonal",
+          params = Map("source" -> "dataset-suite")
+        )
+      val basisId = SharedBasisId.unsafe("sparse_nonorthogonal_basis")
+      JhdfSharedBasisStore
+        .writeContentAddressed(root.resolve("bases"), basis, basisId = Some(basisId), created = "2026-07-06T23:00:00Z")
+        .fold(err => fail(err.message), identity)
+
+      val activeData =
+        DoubleMatrix.fromRows(
+          Vector(
+            Vector(11.0, 1.0, 7.0),
+            Vector(13.0, 0.0, 4.0),
+            Vector(8.0, -3.5, 5.5)
+          )
+        )
+      val archive =
+        LatentArchiveCodec
+          .toSharedBasisArchive(
+            data = activeData,
+            space = space,
+            basis = basis,
+            basisId = basisId,
+            center = true
+          )
+          .fold(err => fail(err.message), identity)
+      val archivePath = root.resolve("sub-05/func/sub-05_task-shared_space-MNI_bold.lna.h5")
+      Option(archivePath.getParent).foreach(Files.createDirectories(_))
+      LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
+
+      val dataset = LnaDataset.unsafe(root)
+      val backend =
+        dataset
+          .readSubjectLatent(LnaDatasetQuery(subject = "05", task = Some("shared"), space = Some("MNI")))
+          .fold(err => fail(err.message), identity)
+      val maskIndices = Mask.indices(backend.mask)
+      val series =
+        backend.read(
+          DataSelection(
+            time = IndexSelection.indices(2, 0),
+            voxels = IndexSelection.indices(3, 0)
+          )
+        )
+
+      assertEquals(Vector.tabulate(maskIndices.length)(maskIndices(_)), Vector(0, 2, 3))
+      assertEquals(backend.shape.spatialSize, 4)
+      assertEquals(backend.response.metadata("family"), "shared_basis")
+      assertRowsClose(series.data.toRows, Vector(Vector(5.5, 8.0), Vector(7.0, 11.0)), 1e-10)
+      interceptMessage[IllegalArgumentException]("voxel 1 is outside the latent mask") {
+        backend.read(DataSelection(voxels = IndexSelection.indices(1)))
+      }
+    finally deleteTree(root)
+  }
+
   test("LnaDataset reports ambiguous subject reads") {
     withFixture { root =>
       val dataset = LnaDataset.unsafe(root)
@@ -204,3 +371,21 @@ class LnaDatasetSuite extends munit.FunSuite:
       val files = Files.walk(path)
       try files.iterator().asScala.toVector.reverse.foreach(Files.deleteIfExists)
       finally files.close()
+
+  private def assertRowsClose(
+      actual: Vector[Vector[Double]],
+      expected: Vector[Vector[Double]],
+      tol: Double
+  ): Unit =
+    assertEquals(actual.length, expected.length)
+    assertEquals(if actual.isEmpty then 0 else actual.head.length, if expected.isEmpty then 0 else expected.head.length)
+    actual.zip(expected).foreach { case (actualRow, expectedRow) =>
+      actualRow.zip(expectedRow).foreach { case (actualValue, expectedValue) =>
+        assertEqualsDouble(actualValue, expectedValue, tol)
+      }
+    }
+
+  private def mapValue[A](result: Either[LinearMapError, A]): A =
+    result match
+      case Right(value) => value
+      case Left(error)  => fail(error.message)

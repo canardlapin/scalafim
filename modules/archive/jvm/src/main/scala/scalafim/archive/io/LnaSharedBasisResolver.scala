@@ -142,17 +142,18 @@ object LnaSharedBasisResolver:
       Left(ArchiveError.ShapeMismatch(s"coefficient rows ${coefficients.rows} do not match run timepoints ${run.shape.timepoints}"))
     else if coefficients.cols != basis.nAtoms then
       Left(ArchiveError.ShapeMismatch(s"coefficients have ${coefficients.cols} columns but shared basis has ${basis.nAtoms} atoms"))
-    else if basis.nVoxels != run.shape.spatialSize then
-      Left(ArchiveError.ShapeMismatch(s"shared basis has ${basis.nVoxels} voxels but run space has ${run.shape.spatialSize} voxels"))
+    else if basis.mask.values.length != run.shape.spatialSize then
+      Left(ArchiveError.ShapeMismatch(s"shared basis mask has ${basis.mask.values.length} entries but run space has ${run.shape.spatialSize} voxels"))
     else
       offset match
-        case Some(values) if values.length != run.shape.spatialSize =>
-          Left(ArchiveError.ShapeMismatch(s"offset has ${values.length} values but run space has ${run.shape.spatialSize} voxels"))
+        case Some(values) if values.length != basis.nVoxels =>
+          Left(ArchiveError.ShapeMismatch(s"offset has ${values.length} values but shared basis has ${basis.nVoxels} active voxels"))
         case Some(values) if values.exists(value => !value.isFinite) =>
           Left(ArchiveError.InvalidArchive("shared basis offset contains non-finite values"))
         case _ =>
-          val dense = multiplyCoefficientsByLoadings(coefficients, basis.loadings)
-          Right(offset.fold(dense)(values => addOffset(dense, values)))
+          val active = multiplyCoefficientsByLoadings(coefficients, basis.loadings)
+          val centered = offset.fold(active)(values => addOffset(active, values))
+          Right(expandMask(centered, basis.mask))
 
   private def sharedBasisDescriptor(
       archive: LnaArchive,
@@ -215,6 +216,21 @@ object LnaSharedBasisResolver:
         Vector.tabulate(data.cols) { col =>
           data(row, col) + offset(col)
         }
+      }
+    )
+
+  private def expandMask(activeData: DMat, mask: SharedBasisMask): DMat =
+    DMat.fromRows(
+      Vector.tabulate(activeData.rows) { row =>
+        val out = Array.fill(mask.values.length)(0.0)
+        var voxel = 0
+        var active = 0
+        while voxel < mask.values.length do
+          if mask.values(voxel) then
+            out(voxel) = activeData(row, active)
+            active += 1
+          voxel += 1
+        out.toVector
       }
     )
 

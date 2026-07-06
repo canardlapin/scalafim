@@ -9,6 +9,17 @@ final case class DMat private (rows: Int, cols: Int, data: NArray[Double]):
   inline def apply(r: Int, c: Int): Double =
     data(r * cols + c)
 
+  def transpose: DMat =
+    val arr = NArray.ofSize[Double](rows * cols)
+    var r = 0
+    while r < rows do
+      var c = 0
+      while c < cols do
+        arr(c * rows + r) = apply(r, c)
+        c += 1
+      r += 1
+    DMat(cols, rows, arr)
+
   def toRows: Vector[Vector[Double]] =
     Vector.tabulate(rows)(r => Vector.tabulate(cols)(c => apply(r, c)))
 

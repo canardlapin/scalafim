@@ -2,7 +2,7 @@ package scalafim.latent
 
 import scalafim.archive.lna.{DatasetRole, LnaPipeline, Payload, SharedBasisArtifact, SharedBasisId, SharedBasisMask, TransformKind, TransformParams}
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 class LatentArchiveCodecSuite extends munit.FunSuite:
   private val basis =
@@ -196,6 +196,110 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     assertRowsEqual(storedCoefficients.toRows, encoded.coefficients.toRows, 1e-12)
     assert(!rowsClose(storedCoefficients.toRows, rawProjection(data.toRows, storedOffset, sharedLoadings), 1e-8))
   }
+
+  test("transport archives preserve dense operator payloads and selected reconstruction") {
+    val decoder =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 4,
+          cols = 2,
+          rowIndices = Array(0, 1, 2, 2, 3, 3),
+          colIndices = Array(0, 1, 0, 1, 0, 1),
+          values = Array(1.0, 1.0, 1.0, 1.0, 2.0, -1.0)
+        )
+      )
+    val templateDecoder =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 3,
+          cols = 2,
+          rowIndices = Array(0, 1, 1, 2),
+          colIndices = Array(0, 0, 1, 1),
+          values = Array(1.0, 0.5, 1.0, 2.0)
+        )
+      )
+    val toAnalysis =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 2,
+          cols = 2,
+          rowIndices = Array(0, 1),
+          colIndices = Array(0, 1),
+          values = Array(2.0, 0.5)
+        )
+      )
+    val toRaw =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 2,
+          cols = 2,
+          rowIndices = Array(0, 1),
+          colIndices = Array(0, 1),
+          values = Array(0.5, 2.0)
+        )
+      )
+    val source =
+      TransportLatentResponse(
+        coefficientsAnalysis = DoubleMatrix.fromRows(
+          Vector(
+            Vector(2.0, 2.0),
+            Vector(4.0, -1.0)
+          )
+        ),
+        nativeDecoder = decoder,
+        transform = CoefficientTransform(toAnalysis, toRaw).fold(err => fail(err.message), identity),
+        templateDecoder = Some(templateDecoder),
+        offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+        label = "transport-demo",
+        metadata = Map("subject" -> "sub-01")
+      ).fold(err => fail(err.message), identity)
+
+    val archive =
+      LatentArchiveCodec
+        .toTransportArchive(source, NeuroSpace(Vector(2, 2, 1)))
+        .fold(err => fail(err.message), identity)
+
+    assert(LatentArchiveCodec.isTransportArchive(archive))
+    val descriptor = archive.manifest.transforms.head
+    assertEquals(descriptor.kind, TransformKind.Embed)
+    assert(descriptor.datasets.exists(_.role == DatasetRole.Other("transport_native_decoder_t")))
+    assert(descriptor.datasets.exists(_.role == DatasetRole.Other("transport_template_decoder_t")))
+    descriptor.params match
+      case params: TransformParams.Embed =>
+        assertEquals(params.label, Some("transport-demo"))
+        assertEquals(params.metadata("lna.response.kind"), "transport_latent")
+        assertEquals(params.metadata("operator_storage"), "dense_transpose")
+      case other =>
+        fail(s"expected transport embed params, found $other")
+
+    val decoded =
+      LatentArchiveCodec
+        .fromTransportArchive(archive)
+        .fold(err => fail(err.message), identity)
+    val expectedSelection =
+      source
+        .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
+        .fold(err => fail(err.message), identity)
+    val actualSelection =
+      decoded
+        .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
+        .fold(err => fail(err.message), identity)
+    val templateProjection =
+      decoded
+        .decodeCoefficients(DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(2.0))), TransportSpace.Template, CoefficientCoordinates.Analysis)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(decoded.label, "transport-demo")
+    assertEquals(decoded.metadata("family"), "transport")
+    assertEquals(decoded.metadata("subject"), "sub-01")
+    assertRowsEqual(actualSelection.toRows, expectedSelection.toRows, 1e-12)
+    assertRowsEqual(templateProjection.toRows, Vector(Vector(2.0), Vector(3.0), Vector(4.0)), 1e-12)
+  }
+
+  private def mapValue[A](result: Either[LinearMapError, A]): A =
+    result match
+      case Right(value) => value
+      case Left(error)  => fail(error.message)
 
   private def assertMatrixEquals(
       actual: DoubleMatrix,
