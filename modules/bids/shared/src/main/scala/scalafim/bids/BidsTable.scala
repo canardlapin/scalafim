@@ -1,5 +1,21 @@
 package scalafim.bids
 
+opaque type ColumnName = String
+
+object ColumnName:
+  def from(value: String): Either[BidsError, ColumnName] =
+    val clean = value.trim
+    if clean.isEmpty then Left(BidsError.InvalidTable("column name must be non-empty"))
+    else Right(clean)
+
+  def unsafe(value: String): ColumnName =
+    val clean = value.trim
+    require(clean.nonEmpty, "column name must be non-empty")
+    clean
+
+  extension (name: ColumnName)
+    def value: String = name
+
 final case class BidsColumn(name: String, values: Vector[Option[String]]):
   def nrows: Int = values.length
 
@@ -73,6 +89,36 @@ object BidsTable:
 object BidsEvents:
   def readTable(text: String): Either[BidsError, BidsTable] =
     BidsTable.parse(text)
+
+  def readEventsTable(text: String): Either[BidsError, EventsTable] =
+    BidsTable.parse(text).flatMap(EventsTable.from)
+
+final case class EventsTable private (
+    table: BidsTable,
+    onset: BidsColumn,
+    duration: BidsColumn
+):
+  def nrows: Int = table.nrows
+  def trialType: Option[BidsColumn] =
+    table.columnNamed("trial_type").toOption
+
+  def onsetSeconds: Vector[Option[Double]] =
+    onset.numeric.toOption.getOrElse(Vector.empty)
+
+  def durationSeconds: Vector[Option[Double]] =
+    duration.numeric.toOption.getOrElse(Vector.empty)
+
+object EventsTable:
+  val OnsetColumn: ColumnName = ColumnName.unsafe("onset")
+  val DurationColumn: ColumnName = ColumnName.unsafe("duration")
+
+  def from(table: BidsTable): Either[BidsError, EventsTable] =
+    for
+      onset <- table.columnNamed(OnsetColumn.value)
+      duration <- table.columnNamed(DurationColumn.value)
+      _ <- onset.numeric
+      _ <- duration.numeric
+    yield EventsTable(table, onset, duration)
 
 final case class BidsTableContext(
     path: BidsPath,

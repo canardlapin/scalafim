@@ -2,6 +2,7 @@ package scalafim.bids
 
 private def checkedNonEmpty(value: String, label: String): String =
   val out = value.trim
+  require(out.nonEmpty, s"$label must be non-empty")
   out
 
 opaque type BidsPath = String

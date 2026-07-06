@@ -12,6 +12,8 @@ final case class BidsFile(
   def fileName: String = path.fileName
   def directory: String = path.parent.map(_.value).getOrElse("")
   def datatype: Option[String] = parsed.flatMap(_.datatype)
+  def role: Option[BidsFileRole] =
+    parsed.flatMap(BidsRegistry.Builtin.roleFor(_, scope))
   def entities: BidsEntities = parsed.map(_.entities).getOrElse(BidsEntities.Empty)
   def extension: String =
     parsed.map(_.extension).getOrElse {
@@ -56,11 +58,12 @@ object BidsManifest:
       paths.iterator.toVector.distinct.map { rawPath =>
         val path = BidsPath(rawPath)
         val derivative = derivatives.find(d => path.startsWithPath(d.root))
-        val parsed = BidsName.parse(path.fileName).orElse(BidsName.parseGeneric(path.fileName)).toOption
+        val scope = if derivative.isDefined then BidsScope.Derivatives else BidsScope.Raw
+        val parsed = BidsRegistry.Builtin.parsePath(path, scope).toOption
         BidsFile(
           path = path,
           parsed = parsed,
-          scope = if derivative.isDefined then BidsScope.Derivatives else BidsScope.Raw,
+          scope = scope,
           pipeline = derivative.map(_.pipeline)
         )
       }

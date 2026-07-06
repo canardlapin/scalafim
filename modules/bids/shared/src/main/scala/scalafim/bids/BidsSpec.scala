@@ -5,6 +5,106 @@ enum DatatypeScope:
   case Derivative
   case Both
 
+private def checkedBidsType(value: String, label: String): Either[BidsError, String] =
+  val clean = value.trim
+  if clean.isEmpty then Left(BidsError.InvalidBidsName(value, s"$label must be non-empty"))
+  else Right(clean)
+
+private def unsafeBidsType(value: String, label: String): String =
+  val clean = value.trim
+  require(clean.nonEmpty, s"$label must be non-empty")
+  clean
+
+opaque type BidsDatatype = String
+
+object BidsDatatype:
+  def from(value: String): Either[BidsError, BidsDatatype] =
+    checkedBidsType(value, "datatype")
+
+  def unsafe(value: String): BidsDatatype =
+    unsafeBidsType(value, "datatype")
+
+  extension (datatype: BidsDatatype)
+    def value: String = datatype
+
+opaque type BidsDatatypeFolder = String
+
+object BidsDatatypeFolder:
+  def from(value: String): Either[BidsError, BidsDatatypeFolder] =
+    checkedBidsType(value, "datatype folder")
+
+  def unsafe(value: String): BidsDatatypeFolder =
+    unsafeBidsType(value, "datatype folder")
+
+  extension (folder: BidsDatatypeFolder)
+    def value: String = folder
+
+opaque type BidsSuffix = String
+
+object BidsSuffix:
+  def from(value: String): Either[BidsError, BidsSuffix] =
+    checkedBidsType(value, "BIDS suffix")
+
+  def unsafe(value: String): BidsSuffix =
+    unsafeBidsType(value, "BIDS suffix")
+
+  extension (suffix: BidsSuffix)
+    def value: String = suffix
+
+opaque type BidsFormat = String
+
+object BidsFormat:
+  def from(value: String): Either[BidsError, BidsFormat] =
+    checkedBidsType(value.stripPrefix("."), "BIDS format")
+
+  def unsafe(value: String): BidsFormat =
+    unsafeBidsType(value.stripPrefix("."), "BIDS format")
+
+  extension (format: BidsFormat)
+    def value: String = format
+
+final case class BidsFileRole private (
+    datatype: BidsDatatype,
+    folder: BidsDatatypeFolder,
+    suffix: BidsSuffix,
+    format: BidsFormat,
+    scope: DatatypeScope
+):
+  def datatypeName: String = datatype.value
+  def folderName: String = folder.value
+  def suffixName: String = suffix.value
+  def formatName: String = format.value
+
+object BidsFileRole:
+  def from(
+      datatype: String,
+      folder: String,
+      suffix: String,
+      format: String,
+      scope: DatatypeScope
+  ): Either[BidsError, BidsFileRole] =
+    for
+      datatype <- BidsDatatype.from(datatype)
+      folder <- BidsDatatypeFolder.from(folder)
+      suffix <- BidsSuffix.from(suffix)
+      format <- BidsFormat.from(format)
+    yield BidsFileRole(datatype, folder, suffix, format, scope)
+
+  def unsafe(
+      datatype: String,
+      folder: String,
+      suffix: String,
+      format: String,
+      scope: DatatypeScope
+  ): BidsFileRole =
+    BidsFileRole(
+      BidsDatatype.unsafe(datatype),
+      BidsDatatypeFolder.unsafe(folder),
+      BidsSuffix.unsafe(suffix),
+      BidsFormat.unsafe(format),
+      scope
+    )
+
 final case class EntityRule(
     key: EntityKey,
     required: Boolean,
@@ -37,6 +137,22 @@ final case class BidsDatatypeSpec(
 
   def accepts(bidsName: BidsName): Boolean =
     validate(bidsName).isRight
+
+  def validateInFolder(bidsName: BidsName, observedFolder: Option[String]): Either[BidsError, BidsName] =
+    observedFolder match
+      case Some(found) if found != folder =>
+        Left(
+          BidsError.InvalidBidsName(
+            bidsName.fileName,
+            s"datatype folder '$found' does not match registered folder '$folder' for datatype '$name'"
+          )
+        )
+      case _ => validate(bidsName)
+
+  def roleFor(bidsName: BidsName): Either[BidsError, BidsFileRole] =
+    validate(bidsName).flatMap { parsed =>
+      BidsFileRole.from(name, folder, parsed.kind, parsed.extension, scope)
+    }
 
   def validate(bidsName: BidsName): Either[BidsError, BidsName] =
     val validKind = kinds.exists(k => k.name == bidsName.kind && k.extensions.contains(bidsName.extension))
