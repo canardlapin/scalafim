@@ -621,6 +621,8 @@ tests before introducing any common testkit or manifest.
 | Scenario id | Suite | Reference | Terminal truth |
 | --- | --- | --- | --- |
 | `fit.public-f-contrast.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastScenarioSuite.scala` | mathematical/direct OLS oracle over the intended design matrix | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.semantic-contrast-reordered-columns.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/SemanticContrastReorderedColumnsScenarioSuite.scala` | paired public fits with reversed design-column order plus direct OLS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.lss-trialwise-recovery.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/LssTrialwiseRecoveryScenarioSuite.scala` | public builder/executor result against direct metadata-selected LSS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.one-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala` | analytic one-sample t oracle per sample | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 
 The fit harness currently lives in:
@@ -642,8 +644,7 @@ sbt groupJVM/test
 sbt groupJS/test
 ```
 
-The next scenario slice should add `fit_semantic_contrast_reordered_columns` and
-`fit_lss_trialwise_recovery`, then `group_two_sample_t` and
+The next scenario slice should add `group_two_sample_t` and
 `group_first_level_bridge`.
 
 ## Definition Of Done For A Scenario
@@ -679,9 +680,7 @@ A scenario is complete only when all of the following hold:
 
 1. Implement the fit-scope harness and public F-contrast mathematical scenario.
 2. Implement the group one-sample t scenario.
-3. Add `fit_semantic_contrast_reordered_columns` and
-   `fit_lss_trialwise_recovery` while the fit harness is still small.
-4. Add `group_two_sample_t` and `group_first_level_bridge`.
+3. Add `group_two_sample_t` and `group_first_level_bridge`.
 5. Add a tiny `docs/scenarios/manifest.json` only after at least four rows are
    green, so the manifest reflects real shape.
 6. Add a fmrimod/Nilearn exporter for `fit_public_f_confound_drift`.
