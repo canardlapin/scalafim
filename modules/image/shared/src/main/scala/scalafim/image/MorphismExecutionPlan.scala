@@ -18,6 +18,12 @@ final case class MorphismExecutionPlan private (
   def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
     morphism.transform(points)
 
+  def transform(point: SpatialPoint): SpatialPoint =
+    morphism.transform(point)
+
+  def transformPoints(points: Vector[SpatialPoint]): Vector[SpatialPoint] =
+    morphism.transformPoints(points)
+
 object MorphismExecutionPlan:
 
   def make(steps: Vector[SpatialMorphism]): Either[MorphismError, MorphismExecutionPlan] =

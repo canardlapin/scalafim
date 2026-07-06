@@ -42,6 +42,9 @@ class MorphismSuite extends munit.FunSuite:
     assertEquals(actual.length, expected.length, clue = "")
     actual.zip(expected).foreach { case (a, e) => assertClose(a, e, tol) }
 
+  private def assertClose(actual: SpatialPoint, expected: SpatialPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
   private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
     val data =
       NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
@@ -60,6 +63,23 @@ class MorphismSuite extends munit.FunSuite:
       Vector(11.0, 22.0, 33.0),
       1e-10
     )
+  }
+
+  test("morphisms expose typed SpatialPoint transform and jacobian helpers") {
+    val morphism = affine(native, mni, translation(10.0, 20.0, 30.0))
+    val point = SpatialPoint(1.0, 2.0, 3.0)
+    val expected = SpatialPoint(11.0, 22.0, 33.0)
+
+    assertClose(morphism.transform(point), expected, 1e-10)
+    assertEquals(morphism.transformPoints(Vector(point)), Vector(expected), clue = "")
+
+    val jacobian = morphism.jacobianAt(point).fold(err => fail(err.message), identity)
+    assertClose(jacobian(0, 0), 1.0)
+    assertClose(jacobian(1, 1), 1.0)
+    assertClose(jacobian(2, 2), 1.0)
+
+    val det = morphism.jacobianDetAt(point).fold(err => fail(err.message), identity)
+    assertClose(det, 1.0)
   }
 
   test("composition f.andThen(g) stores source-to-target and applies pullback in reverse") {
@@ -256,6 +276,8 @@ class MorphismSuite extends munit.FunSuite:
     assertEquals(plan.steps.length, 1, clue = "")
     assertEquals(plan.fusedAffinePairs, 1, clue = "")
     assertClose(plan.transform(Vector(Vector(0.0, 0.0, 0.0))).head, Vector(1.0, 2.0, 0.0), 1e-10)
+    assertClose(plan.transform(SpatialPoint.Origin), SpatialPoint(1.0, 2.0, 0.0), 1e-10)
+    assertEquals(plan.transformPoints(Vector(SpatialPoint.Origin)), Vector(SpatialPoint(1.0, 2.0, 0.0)), clue = "")
 
     val identities =
       MorphismExecutionPlan.make(Vector(IdentityMorphism(native), IdentityMorphism(native)))

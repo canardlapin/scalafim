@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, NeuroSpace, SpatialPoint}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError, SparseTriplets}
 
 class OperatorCompilerSuite extends munit.FunSuite:
@@ -157,3 +157,4 @@ class OperatorCompilerSuite extends munit.FunSuite:
     assertEquals(lowered.source.value, source.id.value)
     assertEquals(lowered.target.value, target.id.value)
     assertEquals(lowered.transform(Vector(0.0, 0.0, 0.0)), Vector(1.0, 2.0, 0.0))
+    assertEquals(lowered.transform(SpatialPoint.Origin), SpatialPoint(1.0, 2.0, 0.0))

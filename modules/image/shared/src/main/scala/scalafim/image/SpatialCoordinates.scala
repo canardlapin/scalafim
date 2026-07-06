@@ -69,6 +69,12 @@ object SpatialCoordinates:
     Affine3DMorphism.requireAffine3D(affine)
     voxels.map(voxel => Affine.applyAffine(affine, voxel))
 
+  def voxelPointsToWorld(voxels: Vector[SpatialPoint], affine: DMat): Vector[SpatialPoint] =
+    Affine3DMorphism.requireAffine3D(affine)
+    voxels.map { voxel =>
+      SpatialPoint.unsafeFromVector(Affine.applyAffine(affine, voxel.toVector), "world coordinate")
+    }
+
   def worldToVoxel(world: Vector[Double], affine: DMat): Either[CoordinateError, Vector[Double]] =
     validatePoint(world, "world")
     Affine3DMorphism.requireAffine3D(affine)
@@ -89,6 +95,17 @@ object SpatialCoordinates:
     DMat.invert(affine) match
       case Left(reason) => Left(CoordinateError.SingularAffine(reason))
       case Right(inverse) => Right(worlds.map(world => Affine.applyAffine(inverse, world)))
+
+  def worldPointsToVoxel(worlds: Vector[SpatialPoint], affine: DMat): Either[CoordinateError, Vector[SpatialPoint]] =
+    Affine3DMorphism.requireAffine3D(affine)
+    DMat.invert(affine) match
+      case Left(reason) => Left(CoordinateError.SingularAffine(reason))
+      case Right(inverse) =>
+        Right(
+          worlds.map { world =>
+            SpatialPoint.unsafeFromVector(Affine.applyAffine(inverse, world.toVector), "voxel coordinate")
+          }
+        )
 
   def gridCoords(grid: GridSpec): Vector[Vector[Double]] =
     grid.worldCoords
@@ -121,6 +138,9 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
   def voxelsToWorld(voxels: Vector[Vector[Double]]): Vector[Vector[Double]] =
     SpatialCoordinates.voxelsToWorld(voxels, affine)
 
+  def voxelPointsToWorld(voxels: Vector[SpatialPoint]): Vector[SpatialPoint] =
+    SpatialCoordinates.voxelPointsToWorld(voxels, affine)
+
   def worldToVoxel(world: Vector[Double]): Either[CoordinateError, Vector[Double]] =
     SpatialCoordinates.worldToVoxel(world, affine)
 
@@ -130,8 +150,14 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
   def worldsToVoxel(worlds: Vector[Vector[Double]]): Either[CoordinateError, Vector[Vector[Double]]] =
     SpatialCoordinates.worldsToVoxel(worlds, affine)
 
+  def worldPointsToVoxel(worlds: Vector[SpatialPoint]): Either[CoordinateError, Vector[SpatialPoint]] =
+    SpatialCoordinates.worldPointsToVoxel(worlds, affine)
+
   def worldCoords: Vector[Vector[Double]] =
-    val out = Vector.newBuilder[Vector[Double]]
+    worldPoints.map(_.toVector)
+
+  def worldPoints: Vector[SpatialPoint] =
+    val out = Vector.newBuilder[SpatialPoint]
     out.sizeHint(nVoxels)
     var z = 0
     while z < shape.z do
@@ -139,14 +165,11 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
       while y < shape.y do
         var x = 0
         while x < shape.x do
-          out += voxelToWorld(Vector(x.toDouble, y.toDouble, z.toDouble))
+          out += voxelToWorld(SpatialPoint(x.toDouble, y.toDouble, z.toDouble))
           x += 1
         y += 1
       z += 1
     out.result()
-
-  def worldPoints: Vector[SpatialPoint] =
-    worldCoords.map(coord => SpatialPoint.unsafeFromVector(coord, "world coordinate"))
 
   def toNeuroSpace: NeuroSpace =
     val spacing = Affine.voxelSizes(affine)

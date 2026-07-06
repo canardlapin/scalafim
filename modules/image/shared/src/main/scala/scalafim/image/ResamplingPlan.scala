@@ -251,9 +251,9 @@ object ResamplingPlan:
       morphism: SpatialMorphism,
       method: Resample.Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    val targetWorld = target.worldCoords
-    val sourceWorld = morphism.transform(targetWorld)
-    source.worldsToVoxel(sourceWorld) match
+    val targetWorldPoints = target.worldPoints
+    val sourceWorldPoints = morphism.transformPoints(targetWorldPoints)
+    source.worldPointsToVoxel(sourceWorldPoints) match
       case Left(err) =>
         Left(ResamplingPlanError.SingularSourceAffine(err.message))
       case Right(sourceVoxelCoords) =>
@@ -263,9 +263,9 @@ object ResamplingPlan:
             target = target,
             morphism = morphism,
             method = method,
-            targetWorldCoords = targetWorld,
-            sourceWorldCoords = sourceWorld,
-            sourceVoxelCoords = sourceVoxelCoords
+            targetWorldCoords = targetWorldPoints.map(_.toVector),
+            sourceWorldCoords = sourceWorldPoints.map(_.toVector),
+            sourceVoxelCoords = sourceVoxelCoords.map(_.toVector)
           )
         )
 

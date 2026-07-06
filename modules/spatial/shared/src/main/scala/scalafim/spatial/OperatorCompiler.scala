@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, SpatialDims}
+import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, SpatialDims, SpatialPoint}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMap, LinearMapError, SparseTriplets}
 
 import scala.collection.mutable.ArrayBuffer
@@ -209,7 +209,7 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       val targetIndex = targetRows(outRow)
       val targetVoxel = Indexing.indexToGrid3D(targetDims, targetIndex)
       val targetWorld =
-        targetGrid.voxelToWorld(Vector(targetVoxel.x.toDouble, targetVoxel.y.toDouble, targetVoxel.z.toDouble))
+        targetGrid.voxelToWorld(SpatialPoint(targetVoxel.x.toDouble, targetVoxel.y.toDouble, targetVoxel.z.toDouble))
       coordinateMap.transform(targetWorld) match
         case Left(err) =>
           error = Some(err)
@@ -237,21 +237,21 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       case Some(err) => Left(err)
       case None => Right(assembly)
 
-  private def nearestWeights(sourceDims: SpatialDims, voxel: Vector[Double]): RowWeights =
-    val x = math.round(voxel(0)).toInt
-    val y = math.round(voxel(1)).toInt
-    val z = math.round(voxel(2)).toInt
+  private def nearestWeights(sourceDims: SpatialDims, voxel: SpatialPoint): RowWeights =
+    val x = math.round(voxel.x).toInt
+    val y = math.round(voxel.y).toInt
+    val z = math.round(voxel.z).toInt
     if inBounds(sourceDims, x, y, z) then
       RowWeights(Vector(Indexing.gridToIndex3D(sourceDims, x, y, z)), Vector(1.0), 1.0)
     else RowWeights.empty
 
-  private def trilinearWeights(sourceDims: SpatialDims, voxel: Vector[Double]): RowWeights =
-    val x0 = math.floor(voxel(0)).toInt
-    val y0 = math.floor(voxel(1)).toInt
-    val z0 = math.floor(voxel(2)).toInt
-    val xd = voxel(0) - x0.toDouble
-    val yd = voxel(1) - y0.toDouble
-    val zd = voxel(2) - z0.toDouble
+  private def trilinearWeights(sourceDims: SpatialDims, voxel: SpatialPoint): RowWeights =
+    val x0 = math.floor(voxel.x).toInt
+    val y0 = math.floor(voxel.y).toInt
+    val z0 = math.floor(voxel.z).toInt
+    val xd = voxel.x - x0.toDouble
+    val yd = voxel.y - y0.toDouble
+    val zd = voxel.z - z0.toDouble
 
     val cols = ArrayBuffer.empty[Int]
     val values = ArrayBuffer.empty[Double]

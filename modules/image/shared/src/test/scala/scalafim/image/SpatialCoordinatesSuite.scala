@@ -73,6 +73,15 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
       1e-10
     )
     assertClose(SpatialCoordinates.lpsToRas(SpatialPoint(-1.0, -2.0, 3.0)), SpatialPoint(1.0, 2.0, 3.0), 1e-10)
+
+    val voxels = Vector(SpatialPoint.Origin, voxel)
+    val worlds = SpatialCoordinates.voxelPointsToWorld(voxels, affine)
+    assertClose(worlds(0), SpatialPoint(10.0, 20.0, 30.0), 1e-10)
+    assertClose(worlds(1), world, 1e-10)
+
+    val roundtrip = SpatialCoordinates.worldPointsToVoxel(worlds, affine).fold(err => fail(err.message), identity)
+    assertClose(roundtrip(0), voxels(0), 1e-10)
+    assertClose(roundtrip(1), voxels(1), 1e-10)
   }
 
   test("worldToVoxel reports singular affine directly") {
@@ -102,6 +111,23 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
 
     val fromObject = SpatialCoordinates.gridCoords(grid)
     assertEquals(fromObject, coords, clue = "")
+
+    val points = grid.worldPoints
+    assertClose(points(0), SpatialPoint(10.0, 20.0, 30.0), 1e-10)
+    assertClose(points(3), SpatialPoint(12.0, 23.0, 30.0), 1e-10)
+  }
+
+  test("GridSpec exposes typed batch affine conversions") {
+    val grid = GridSpec(Vector(3, 4, 5), affine)
+    val voxels = Vector(SpatialPoint.Origin, SpatialPoint(1.0, 2.0, 3.0))
+    val worlds = grid.voxelPointsToWorld(voxels)
+
+    assertClose(worlds(0), SpatialPoint(10.0, 20.0, 30.0), 1e-10)
+    assertClose(worlds(1), SpatialPoint(12.0, 26.0, 42.0), 1e-10)
+
+    val roundtrip = grid.worldPointsToVoxel(worlds).fold(err => fail(err.message), identity)
+    assertClose(roundtrip(0), voxels(0), 1e-10)
+    assertClose(roundtrip(1), voxels(1), 1e-10)
   }
 
   test("GridSpec accepts typed spatial dims and reports invalid vector dims") {

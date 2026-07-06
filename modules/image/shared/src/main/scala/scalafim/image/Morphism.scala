@@ -76,13 +76,34 @@ sealed trait SpatialMorphism:
   final def transform(point: Vector[Double]): Vector[Double] =
     transform(Vector(point)).head
 
+  final def transform(point: SpatialPoint): SpatialPoint =
+    SpatialPoint.unsafeFromVector(transform(point.toVector), "transformed point")
+
   @targetName("transformMany")
   def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]]
+
+  final def transformPoints(points: Vector[SpatialPoint]): Vector[SpatialPoint] =
+    transform(points.map(_.toVector)).map(point => SpatialPoint.unsafeFromVector(point, "transformed point"))
 
   def jacobian(
       coords: Vector[Vector[Double]],
       mode: JacobianMode = JacobianMode.Pullback
   ): Either[MorphismError, JacobianField]
+
+  final def jacobianAt(
+      point: SpatialPoint,
+      mode: JacobianMode = JacobianMode.Pullback
+  ): Either[MorphismError, DMat] =
+    jacobianAt(Vector(point), mode).map(_(0))
+
+  final def jacobianAt(points: Vector[SpatialPoint]): Either[MorphismError, JacobianField] =
+    jacobianAt(points, JacobianMode.Pullback)
+
+  final def jacobianAt(
+      points: Vector[SpatialPoint],
+      mode: JacobianMode
+  ): Either[MorphismError, JacobianField] =
+    jacobian(points.map(_.toVector), mode)
 
   def jacobianDet(
       coords: Vector[Vector[Double]],
@@ -93,6 +114,29 @@ sealed trait SpatialMorphism:
       val dets = field.determinants
       if log then dets.map(d => math.log(math.abs(d))) else dets
     }
+
+  final def jacobianDetAt(
+      point: SpatialPoint,
+      log: Boolean = false,
+      mode: JacobianMode = JacobianMode.Pullback
+  ): Either[MorphismError, Double] =
+    jacobianDetAt(Vector(point), log, mode).map(_.head)
+
+  final def jacobianDetAt(points: Vector[SpatialPoint]): Either[MorphismError, Vector[Double]] =
+    jacobianDetAt(points, log = false, mode = JacobianMode.Pullback)
+
+  final def jacobianDetAt(
+      points: Vector[SpatialPoint],
+      log: Boolean
+  ): Either[MorphismError, Vector[Double]] =
+    jacobianDetAt(points, log, JacobianMode.Pullback)
+
+  final def jacobianDetAt(
+      points: Vector[SpatialPoint],
+      log: Boolean,
+      mode: JacobianMode
+  ): Either[MorphismError, Vector[Double]] =
+    jacobianDet(points.map(_.toVector), log, mode)
 
   def invert: Either[MorphismError, SpatialMorphism]
 

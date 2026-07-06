@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, DMat}
+import scalafim.image.{Affine, DMat, SpatialPoint}
 
 enum MorphismKind:
   case Identity, Affine3D, Warp3D, VolumeToSurface, SurfaceToSurface, Functional, Filter
@@ -33,6 +33,9 @@ enum CoordinateMap:
           Right(Affine.applyAffine(matrix, point))
         case CoordinateMap.Unspecified =>
           Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
+
+  def transform(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
+    transform(point.toVector).map(point => SpatialPoint.unsafeFromVector(point, "transformed point"))
 
   def inverted: Either[SpatialError, CoordinateMap] =
     this match

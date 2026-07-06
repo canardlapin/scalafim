@@ -16,19 +16,21 @@ object MorphismFields:
       morphism: SpatialMorphism,
       grid: GridSpec
   ): DenseVectorField =
-    val targetCoords = grid.worldCoords
-    val sourceCoords = morphism.transform(targetCoords)
-    DenseVectorField(grid, vectorField(grid, sourceCoords), DenseVectorFieldKind.SourceCoordinates)
+    val targetPoints = grid.worldPoints
+    val sourcePoints = morphism.transformPoints(targetPoints)
+    DenseVectorField(grid, vectorField(grid, sourcePoints.map(_.toVector)), DenseVectorFieldKind.SourceCoordinates)
 
   def displacement(
       morphism: SpatialMorphism,
       grid: GridSpec
   ): DenseVectorField =
-    val targetCoords = grid.worldCoords
-    val sourceCoords = morphism.transform(targetCoords)
+    val targetPoints = grid.worldPoints
+    val sourcePoints = morphism.transformPoints(targetPoints)
     val deltas =
-      Vector.tabulate(sourceCoords.length) { i =>
-        Vector.tabulate(3)(axis => sourceCoords(i)(axis) - targetCoords(i)(axis))
+      Vector.tabulate(sourcePoints.length) { i =>
+        val source = sourcePoints(i)
+        val target = targetPoints(i)
+        Vector(source.x - target.x, source.y - target.y, source.z - target.z)
       }
     DenseVectorField(grid, vectorField(grid, deltas), DenseVectorFieldKind.Displacement)
 
@@ -38,8 +40,8 @@ object MorphismFields:
       log: Boolean = false,
       mode: JacobianMode = JacobianMode.Pullback
   ): Either[MorphismError, NeuroVol[Double]] =
-    val coords = grid.worldCoords
-    morphism.jacobianDet(coords, log, mode).map { dets =>
+    val points = grid.worldPoints
+    morphism.jacobianDetAt(points, log, mode).map { dets =>
       NeuroVol.fromLinear(NArrayUtil.fromArray(dets.toArray), grid.toNeuroSpace, "jacobian-det")
     }
 

@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, NeuroVol, SpatialDims}
+import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, NeuroVol, SpatialDims, SpatialPoint}
 import scalafim.linalg.{CsrMatrix, LinearMapError, SparseTriplets}
 import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId}
 
@@ -201,7 +201,7 @@ object VolumeToSurfaceOperatorCompiler:
     point: Vector[Double],
     sampling: SamplingPolicy
   ): SurfacePointWeights =
-    sourceGrid.worldToVoxel(point) match
+    sourceGrid.worldToVoxel(SpatialPoint.unsafeFromVector(point, "surface sample point")) match
       case Left(_) =>
         SurfacePointWeights.empty
       case Right(voxel) =>
@@ -214,11 +214,11 @@ object VolumeToSurfaceOperatorCompiler:
   private def nearestWeights(
     sourceDims: SpatialDims,
     sourceMask: Option[NeuroVol[Boolean]],
-    voxel: Vector[Double]
+    voxel: SpatialPoint
   ): SurfacePointWeights =
-    val x = math.round(voxel(0)).toInt
-    val y = math.round(voxel(1)).toInt
-    val z = math.round(voxel(2)).toInt
+    val x = math.round(voxel.x).toInt
+    val y = math.round(voxel.y).toInt
+    val z = math.round(voxel.z).toInt
     if inBounds(sourceDims, x, y, z) then
       val col = Indexing.gridToIndex3D(sourceDims, x, y, z)
       if sourceMask.forall(_.linear(col)) then SurfacePointWeights(Vector(col), Vector(1.0), 1.0)
@@ -228,14 +228,14 @@ object VolumeToSurfaceOperatorCompiler:
   private def trilinearWeights(
     sourceDims: SpatialDims,
     sourceMask: Option[NeuroVol[Boolean]],
-    voxel: Vector[Double]
+    voxel: SpatialPoint
   ): SurfacePointWeights =
-    val x0 = math.floor(voxel(0)).toInt
-    val y0 = math.floor(voxel(1)).toInt
-    val z0 = math.floor(voxel(2)).toInt
-    val xd = voxel(0) - x0.toDouble
-    val yd = voxel(1) - y0.toDouble
-    val zd = voxel(2) - z0.toDouble
+    val x0 = math.floor(voxel.x).toInt
+    val y0 = math.floor(voxel.y).toInt
+    val z0 = math.floor(voxel.z).toInt
+    val xd = voxel.x - x0.toDouble
+    val yd = voxel.y - y0.toDouble
+    val zd = voxel.z - z0.toDouble
 
     val cols = ArrayBuffer.empty[Int]
     val values = ArrayBuffer.empty[Double]
