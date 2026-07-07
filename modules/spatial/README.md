@@ -23,20 +23,25 @@ caches live under `scalafim.spatial.io`.
 - `DomainId`, `MorphismId`, and `OperatorId` opaque identifiers.
 - Supporting typed labels for subject, session, modality, template,
   resolution, basis, and hybrid part names.
-- `SpaceRef` for volume, surface, template, and latent spaces.
-- `SamplingGeometry` for volume, surface, and hybrid sampled domains.
+- `DomainKind` and `SpaceRef` for volume, surface, template, hybrid, and latent
+  spaces with constructor-level kind compatibility.
+- `SamplingGeometry` for volume, surface, hybrid, and latent sampled domains.
 - `Domain` and `DomainPart` with explicit sample counts and hybrid offsets.
-- `SpatialError` as the shared error ADT.
+- `SpatialError` as the shared error ADT with structured reason categories.
 - `Morphism`, `CoordinateMap`, `SpatialGraph`, and `MorphismPath` for immutable
-  route selection with geometric inverse policy.
+  route selection with geometric inverse policy and domain-kind compatibility.
 - `ImageMorphismBridge` for lowering executable identity/affine graph paths
   into `scalafim.image.SpatialMorphism` values without duplicating coordinate
   execution in this module.
+- `ExecutableAffinePath` and `VolumeToSurfacePath` wrappers for compiler-ready
+  route capabilities.
 - `CompileRequest`, `SamplingPolicy`, `SpatialOperator`, and
   `OperatorCompiler.volumeAffine` for sampled volume affine projectors backed by
   `scalafim.linalg.LinearMap`.
-- `CoverageReport`, `OperatorQc`, and `OperatorProvenance` for inspectable
-  compiler output.
+- `RowSelection`, `TargetRows`, `CoverageReport`, `OperatorShape`,
+  `OperatorRecipe`, `OperatorSignature`, `OperatorQc`, and
+  `OperatorProvenance` for inspectable compiler output and stable cache
+  signatures.
 - `SpatialQc`, `QcTolerance`, `QcCheck`, `QcReport`, and `TripletFixture` for
   identity, composition, adjoint, ROI, coverage, and fixture law checks.
 - `VolumeToSurfaceRequest` and `VolumeToSurfaceOperatorCompiler` for sparse

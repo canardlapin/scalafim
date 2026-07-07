@@ -5,6 +5,22 @@ import scalafim.image.{Affine, DMat, SpatialPoint}
 enum MorphismKind:
   case Identity, Affine3D, Warp3D, VolumeToSurface, SurfaceToSurface, Functional, Filter
 
+object MorphismKind:
+  def compatible(kind: MorphismKind, source: DomainKind, target: DomainKind): Boolean =
+    kind match
+      case MorphismKind.Identity =>
+        source == target
+      case MorphismKind.Affine3D | MorphismKind.Warp3D =>
+        source == DomainKind.Volume && target == DomainKind.Volume
+      case MorphismKind.VolumeToSurface =>
+        source == DomainKind.Volume && target == DomainKind.Surface
+      case MorphismKind.SurfaceToSurface =>
+        source == DomainKind.Surface && target == DomainKind.Surface
+      case MorphismKind.Functional =>
+        true
+      case MorphismKind.Filter =>
+        source == target
+
 enum RouteTag:
   case Identity, Anatomical, Functional
 
@@ -35,7 +51,11 @@ enum CoordinateMap:
           Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
 
   def transform(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
-    transform(point.toVector).map(point => SpatialPoint.unsafeFromVector(point, "transformed point"))
+    transform(point.toVector).flatMap { values =>
+      SpatialPoint
+        .fromVector(values, "transformed point")
+        .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
+    }
 
   def inverted: Either[SpatialError, CoordinateMap] =
     this match
@@ -126,6 +146,29 @@ final case class Morphism private (
       )
 
 object Morphism:
+  def between(
+    id: MorphismId,
+    source: Domain,
+    target: Domain,
+    kind: MorphismKind,
+    routeTag: RouteTag,
+    cost: Double = 1.0,
+    inverse: Inverse = Inverse.None,
+    coordinateMap: CoordinateMap = CoordinateMap.Unspecified,
+    isInverted: Boolean = false
+  ): Either[SpatialError, Morphism] =
+    build(
+      id = id,
+      source = source.id,
+      target = target.id,
+      kind = kind,
+      routeTag = routeTag,
+      cost = cost,
+      inverse = inverse,
+      coordinateMap = coordinateMap,
+      isInverted = isInverted
+    ).flatMap(morphism => validateDomains(morphism, source, target).map(_ => morphism))
+
   def build(
     id: MorphismId,
     source: DomainId,
@@ -138,6 +181,8 @@ object Morphism:
     isInverted: Boolean = false
   ): Either[SpatialError, Morphism] =
     if !cost.isFinite || cost < 0.0 then Left(SpatialError.InvalidCost(cost))
+    else if kind == MorphismKind.Identity && source != target then
+      Left(SpatialError.IdentityMorphismDomainMismatch(source, target))
     else if coordinateMap != CoordinateMap.Unspecified && !mapMatchesKind(kind, coordinateMap) then
       Left(SpatialError.UnsupportedMorphismForCompilation(id, kind))
     else
@@ -169,6 +214,17 @@ object Morphism:
       case (_, CoordinateMap.Unspecified) => true
       case _ => false
 
+  private[spatial] def validateDomains(
+    morphism: Morphism,
+    source: Domain,
+    target: Domain
+  ): Either[SpatialError, Unit] =
+    if morphism.source != source.id then Left(SpatialError.MorphismDomainMissing(morphism.id, morphism.source))
+    else if morphism.target != target.id then Left(SpatialError.MorphismDomainMissing(morphism.id, morphism.target))
+    else if !MorphismKind.compatible(morphism.kind, source.kind, target.kind) then
+      Left(SpatialError.IncompatibleMorphismKind(morphism.kind, source.id, source.kind, target.id, target.kind))
+    else Right(())
+
 final case class MorphismPath private (
   source: DomainId,
   target: DomainId,
@@ -198,3 +254,65 @@ object MorphismPath:
 
   def identity(domain: DomainId): MorphismPath =
     new MorphismPath(domain, domain, Vector(Morphism.identity(domain)), usedInverses = false)
+
+final case class ExecutableAffinePath private (
+  path: MorphismPath,
+  coordinateMap: CoordinateMap
+):
+  def source: DomainId =
+    path.source
+
+  def target: DomainId =
+    path.target
+
+  def ids: Vector[MorphismId] =
+    path.ids
+
+object ExecutableAffinePath:
+  def from(path: MorphismPath): Either[SpatialError, ExecutableAffinePath] =
+    pathCoordinateMap(path).map(map => new ExecutableAffinePath(path, map))
+
+  private def pathCoordinateMap(path: MorphismPath): Either[SpatialError, CoordinateMap] =
+    var matrix = scalafim.image.DMat.eye(4)
+    var sawAffine = false
+    var i = path.morphisms.length - 1
+    var error = Option.empty[SpatialError]
+    while i >= 0 && error.isEmpty do
+      val morphism = path.morphisms(i)
+      morphism.coordinateMap match
+        case CoordinateMap.Identity =>
+          if morphism.kind != MorphismKind.Identity then
+            error = Some(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
+        case CoordinateMap.Affine3D(step) =>
+          if morphism.kind != MorphismKind.Affine3D then
+            error = Some(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
+          else
+            matrix = Affine.multiply(step, matrix)
+            sawAffine = true
+        case CoordinateMap.Unspecified =>
+          error = Some(SpatialError.MissingCoordinateMap(morphism.id))
+      i -= 1
+
+    error match
+      case Some(err) => Left(err)
+      case None =>
+        if sawAffine then Right(CoordinateMap.Affine3D(matrix)) else Right(CoordinateMap.Identity)
+
+final case class VolumeToSurfacePath private (path: MorphismPath):
+  def source: DomainId =
+    path.source
+
+  def target: DomainId =
+    path.target
+
+  def ids: Vector[MorphismId] =
+    path.ids
+
+object VolumeToSurfacePath:
+  def from(path: MorphismPath): Either[SpatialError, VolumeToSurfacePath] =
+    val nonIdentity = path.morphisms.filter(_.kind != MorphismKind.Identity)
+    if nonIdentity.length == 1 && nonIdentity.head.kind == MorphismKind.VolumeToSurface then
+      Right(new VolumeToSurfacePath(path))
+    else
+      val offending = nonIdentity.headOption.getOrElse(path.morphisms.head)
+      Left(SpatialError.UnsupportedMorphismForCompilation(offending.id, offending.kind))

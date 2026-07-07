@@ -24,9 +24,9 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
 
   test("linear plans reuse interpolation weights across compatible dense fields") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
-    val points = Vector(Vector(0.5, 0.0, 0.0))
+    val points = Vector(WorldPoint(0.5, 0.0, 0.0))
     val plan =
-      DenseFieldInterpolationPlan.make(grid, points, Resample.Method.Linear)
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, points, Resample.Method.Linear)
         .fold(err => fail(err.message), identity)
     val first =
       denseField(grid) { (coord, component) =>
@@ -74,9 +74,9 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
 
   test("query-point outside policy blends missing linear field corners") {
     val grid = GridSpec.identity(Vector(1, 1, 1))
-    val point = Vector(0.5, 0.0, 0.0)
+    val point = WorldPoint(0.5, 0.0, 0.0)
     val plan =
-      DenseFieldInterpolationPlan.make(grid, Vector(point), Resample.Method.Linear)
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Linear)
         .fold(err => fail(err.message), identity)
     val field =
       denseField(grid) { (_, component) =>
@@ -92,23 +92,23 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
 
   test("nearest plans use outside policy for out-of-bounds samples") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
-    val point = Vector(10.0, 5.0, 6.0)
+    val point = WorldPoint(10.0, 5.0, 6.0)
     val plan =
-      DenseFieldInterpolationPlan.make(grid, Vector(point), Resample.Method.Nearest)
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Nearest)
         .fold(err => fail(err.message), identity)
     val field = denseField(grid)((_, _) => 99.0)
 
     val zero = plan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
     val query = plan.sample(field, DenseFieldOutside.QueryPoint).fold(err => fail(err.message), identity)
     assertClose(zero.head, Vector(0.0, 0.0, 0.0), 1e-10)
-    assertClose(query.head, point, 1e-10)
+    assertClose(query.head, point.toVector, 1e-10)
   }
 
   test("cubic plans reuse Catmull-Rom interpolation weights") {
     val grid = GridSpec.identity(Vector(5, 4, 4))
-    val point = Vector(1.5, 1.0, 1.0)
+    val point = WorldPoint(1.5, 1.0, 1.0)
     val plan =
-      DenseFieldInterpolationPlan.make(grid, Vector(point), Resample.Method.Cubic)
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Cubic)
         .fold(err => fail(err.message), identity)
     val field =
       denseField(grid) { (coord, component) =>
@@ -124,9 +124,9 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
 
   test("plans reject incompatible fields explicitly") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
-    val point = Vector(0.0, 0.0, 0.0)
+    val point = WorldPoint(0.0, 0.0, 0.0)
     val plan =
-      DenseFieldInterpolationPlan.make(grid, Vector(point), Resample.Method.Nearest)
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Nearest)
         .fold(err => fail(err.message), identity)
     val wrongShape = NDArray(NArrayUtil.fillConst[Double](6, 0.0), Vector(2, 3))
     val wrong = plan.sample(wrongShape, DenseFieldOutside.Zero)
@@ -149,19 +149,19 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
       DenseFieldMorphism.displacement(native, mni, grid, field, Resample.Method.Linear)
         .fold(err => fail(err.message), identity)
     val plan =
-      morphism.interpolationPlan(Vector(Vector(0.5, 0.0, 0.0)))
-        .fold(err => fail(err.message), identity)
-    val sampled = plan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
-    val worldPlan =
       morphism.interpolationPlanAtWorldPoints(Vector(WorldPoint(0.5, 0.0, 0.0)))
         .fold(err => fail(err.message), identity)
-    val worldSampled = worldPlan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
+    val sampled = plan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
+    val compatPlan =
+      morphism.interpolationPlan(Vector(Vector(0.5, 0.0, 0.0)))
+        .fold(err => fail(err.message), identity)
+    val compatSampled = compatPlan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
 
     assertClose(sampled.head, Vector(0.5, 0.0, 0.0), 1e-10)
-    assertEquals(worldPlan.worldPoints, Vector(WorldPoint(0.5, 0.0, 0.0)), clue = "")
-    assertClose(worldSampled.head, Vector(0.5, 0.0, 0.0), 1e-10)
-    assertClose(morphism.transform(Vector(0.5, 0.0, 0.0)), Vector(1.0, 0.0, 0.0), 1e-10)
+    assertEquals(plan.worldPoints, Vector(WorldPoint(0.5, 0.0, 0.0)), clue = "")
+    assertClose(compatSampled.head, sampled.head, 1e-10)
     assertClose(morphism.transform(WorldPoint(0.5, 0.0, 0.0)), WorldPoint(1.0, 0.0, 0.0), 1e-10)
+    assertClose(morphism.transform(Vector(0.5, 0.0, 0.0)), Vector(1.0, 0.0, 0.0), 1e-10)
   }
 
   test("dense cubic morphisms expose reusable interpolation plans") {
@@ -177,10 +177,10 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     val sampled =
-      morphism.interpolationPlan(Vector(Vector(1.5, 1.0, 1.0)))
+      morphism.interpolationPlanAtWorldPoints(Vector(WorldPoint(1.5, 1.0, 1.0)))
         .flatMap(_.sample(field, DenseFieldOutside.Zero))
         .fold(err => fail(err.message), identity)
 
     assertClose(sampled.head, Vector(2.25, 0.0, 0.0), 1e-10)
-    assertClose(morphism.transform(Vector(1.5, 1.0, 1.0)), Vector(3.75, 1.0, 1.0), 1e-10)
+    assertClose(morphism.transform(WorldPoint(1.5, 1.0, 1.0)), WorldPoint(3.75, 1.0, 1.0), 1e-10)
   }

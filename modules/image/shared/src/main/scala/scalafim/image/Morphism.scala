@@ -77,24 +77,27 @@ sealed trait SpatialMorphism:
     transform(Vector(point)).head
 
   final def transform(point: SpatialPoint): SpatialPoint =
-    SpatialPoint.unsafeFromVector(transform(point.toVector), "transformed point")
+    transformPoints(Vector(point)).head
 
   final def transform(point: WorldPoint): WorldPoint =
-    WorldPoint.unsafeFromVector(transform(point.toVector), "transformed world point")
+    transformWorldPoints(Vector(point)).head
 
   @targetName("transformMany")
-  def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]]
+  final def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
+    transformWorldPoints(
+      SpatialMorphism.worldPointsFromCoords(points, "morphism coordinate")
+    ).map(_.toVector)
 
   final def transformPoints(points: Vector[SpatialPoint]): Vector[SpatialPoint] =
-    transform(points.map(_.toVector)).map(point => SpatialPoint.unsafeFromVector(point, "transformed point"))
+    transformWorldPoints(points.map(WorldPoint.fromSpatialPoint)).map(_.toSpatialPoint)
 
-  final def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
-    transform(points.map(_.toVector)).map(point => WorldPoint.unsafeFromVector(point, "transformed world point"))
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint]
 
-  def jacobian(
+  final def jacobian(
       coords: Vector[Vector[Double]],
       mode: JacobianMode = JacobianMode.Pullback
-  ): Either[MorphismError, JacobianField]
+  ): Either[MorphismError, JacobianField] =
+    jacobianAtWorld(SpatialMorphism.worldPointsFromCoords(coords, "jacobian coordinate"), mode)
 
   final def jacobianAt(
       point: SpatialPoint,
@@ -109,7 +112,7 @@ sealed trait SpatialMorphism:
       points: Vector[SpatialPoint],
       mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
-    jacobian(points.map(_.toVector), mode)
+    jacobianAtWorld(points.map(WorldPoint.fromSpatialPoint), mode)
 
   final def jacobianAtWorld(
       point: WorldPoint,
@@ -120,11 +123,10 @@ sealed trait SpatialMorphism:
   final def jacobianAtWorld(points: Vector[WorldPoint]): Either[MorphismError, JacobianField] =
     jacobianAtWorld(points, JacobianMode.Pullback)
 
-  final def jacobianAtWorld(
+  def jacobianAtWorld(
       points: Vector[WorldPoint],
       mode: JacobianMode
-  ): Either[MorphismError, JacobianField] =
-    jacobian(points.map(_.toVector), mode)
+  ): Either[MorphismError, JacobianField]
 
   def jacobianDet(
       coords: Vector[Vector[Double]],
@@ -157,7 +159,7 @@ sealed trait SpatialMorphism:
       log: Boolean,
       mode: JacobianMode
   ): Either[MorphismError, Vector[Double]] =
-    jacobianDet(points.map(_.toVector), log, mode)
+    jacobianDetAtWorld(points.map(WorldPoint.fromSpatialPoint), log, mode)
 
   final def jacobianDetAtWorld(
       point: WorldPoint,
@@ -180,7 +182,10 @@ sealed trait SpatialMorphism:
       log: Boolean,
       mode: JacobianMode
   ): Either[MorphismError, Vector[Double]] =
-    jacobianDet(points.map(_.toVector), log, mode)
+    jacobianAtWorld(points, mode).map { field =>
+      val dets = field.determinants
+      if log then dets.map(d => math.log(math.abs(d))) else dets
+    }
 
   def invert: Either[MorphismError, SpatialMorphism]
 
@@ -195,17 +200,14 @@ final case class IdentityMorphism(domain: SpatialDomainId) extends SpatialMorphi
   def methodTag: String = "identity"
   def inverseKind: InverseKind = InverseKind.Exact
 
-  @targetName("transformMany")
-  def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
-    SpatialMorphism.validateCoords(points)
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
     points
 
-  def jacobian(
-      coords: Vector[Vector[Double]],
-      mode: JacobianMode = JacobianMode.Pullback
+  def jacobianAtWorld(
+      points: Vector[WorldPoint],
+      mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
-    SpatialMorphism.validateCoords(coords)
-    Right(JacobianField.constant(coords, DMat.eye(3), mode))
+    Right(JacobianField.constantAtWorld(points, DMat.eye(3), mode))
 
   def invert: Either[MorphismError, SpatialMorphism] =
     Right(this)
@@ -228,23 +230,22 @@ final case class Affine3DMorphism private (
   def kind: MorphismKind = MorphismKind.Affine3D
   def inverseKind: InverseKind = InverseKind.Exact
 
-  @targetName("transformMany")
-  def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
-    SpatialMorphism.validateCoords(points)
-    points.map(point => Affine.applyAffine(matrix, point))
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
+    points.map { point =>
+      WorldPoint.unsafeFromVector(Affine.applyAffine(matrix, point.toVector), "transformed world point")
+    }
 
-  def jacobian(
-      coords: Vector[Vector[Double]],
-      mode: JacobianMode = JacobianMode.Pullback
+  def jacobianAtWorld(
+      points: Vector[WorldPoint],
+      mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
-    SpatialMorphism.validateCoords(coords)
     val linear = Affine3DMorphism.linearPart(matrix)
     val j =
       mode match
         case JacobianMode.Pullback => Right(linear)
         case JacobianMode.Pushforward =>
           DMat.invert(linear).left.map(MorphismError.SingularMatrix.apply)
-    j.map(mat => JacobianField.constant(coords, mat, mode))
+    j.map(mat => JacobianField.constantAtWorld(points, mat, mode))
 
   def invert: Either[MorphismError, SpatialMorphism] =
     DMat.invert(matrix) match
@@ -316,27 +317,26 @@ final case class DenseFieldMorphism private (
 
   def inverseKind: InverseKind = InverseKind.Unavailable
 
-  @targetName("transformMany")
-  def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
-    SpatialMorphism.validateCoords(points)
-    val sampled = sampleField(points)
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
+    val sampled = sampleFieldAtWorldPoints(points)
     fieldKind match
       case DenseFieldKind.Displacement =>
         Vector.tabulate(points.length) { i =>
-          Vector.tabulate(3)(axis => points(i)(axis) + sampled(i)(axis))
+          val point = points(i)
+          val offset = sampled(i)
+          WorldPoint(point.x + offset(0), point.y + offset(1), point.z + offset(2))
         }
       case DenseFieldKind.AbsoluteCoordinates =>
-        sampled
+        sampled.map(point => WorldPoint.unsafeFromVector(point, "dense field transformed world point"))
 
-  def jacobian(
-      coords: Vector[Vector[Double]],
-      mode: JacobianMode = JacobianMode.Pullback
+  def jacobianAtWorld(
+      points: Vector[WorldPoint],
+      mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
-    SpatialMorphism.validateCoords(coords)
     val pullback =
-      JacobianField(
-        coords,
-        coords.map(point => numericJacobian(point, step = 1e-3)),
+      JacobianField.atWorld(
+        points,
+        points.map(point => numericJacobian(point, step = 1e-3)),
         JacobianMode.Pullback
       )
     if mode == JacobianMode.Pullback then Right(pullback) else pullback.invert
@@ -344,25 +344,22 @@ final case class DenseFieldMorphism private (
   def invert: Either[MorphismError, SpatialMorphism] =
     Left(MorphismError.NonInvertible(kind, inverseKind))
 
-  private def transformOne(point: Vector[Double]): Vector[Double] =
-    transform(Vector(point)).head
-
-  private def numericJacobian(point: Vector[Double], step: Double): DMat =
+  private def numericJacobian(point: WorldPoint, step: Double): DMat =
     DMat.fromRows(
       Vector.tabulate(3) { row =>
         Vector.tabulate(3) { col =>
-          val plus = point.updated(col, point(col) + step)
-          val minus = point.updated(col, point(col) - step)
-          (transformOne(plus)(row) - transformOne(minus)(row)) / (2.0 * step)
+          val plus = shiftAxis(point, col, step)
+          val minus = shiftAxis(point, col, -step)
+          (transform(plus).toVector(row) - transform(minus).toVector(row)) / (2.0 * step)
         }
       }
     )
 
-  def interpolationPlan(points: Vector[Vector[Double]]): Either[MorphismError, DenseFieldInterpolationPlan] =
-    DenseFieldInterpolationPlan.make(grid, points, interpolation)
-
   def interpolationPlanAtWorldPoints(points: Vector[WorldPoint]): Either[MorphismError, DenseFieldInterpolationPlan] =
     DenseFieldInterpolationPlan.fromWorldPoints(grid, points, interpolation)
+
+  def interpolationPlan(points: Vector[Vector[Double]]): Either[MorphismError, DenseFieldInterpolationPlan] =
+    DenseFieldInterpolationPlan.make(grid, points, interpolation)
 
   def approximateInverse(
       inverseGrid: GridSpec,
@@ -370,13 +367,19 @@ final case class DenseFieldMorphism private (
   ): Either[MorphismError, DenseFieldInverseResult] =
     DenseFieldInverse.approximate(this, inverseGrid, options)
 
-  private def sampleField(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
+  private def sampleFieldAtWorldPoints(points: Vector[WorldPoint]): Vector[Vector[Double]] =
     val plan =
-      interpolationPlan(points).fold(
+      interpolationPlanAtWorldPoints(points).fold(
         err => throw new IllegalArgumentException(err.message),
         identity
       )
     plan.sampleUnsafe(field, outsidePolicy)
+
+  private def shiftAxis(point: WorldPoint, axis: Int, offset: Double): WorldPoint =
+    axis match
+      case 0 => WorldPoint(point.x + offset, point.y, point.z)
+      case 1 => WorldPoint(point.x, point.y + offset, point.z)
+      case _ => WorldPoint(point.x, point.y, point.z + offset)
 
   private def outsidePolicy: DenseFieldOutside =
     fieldKind match
@@ -456,40 +459,37 @@ final case class MorphismPath private (steps: Vector[SpatialMorphism]) extends S
     else if steps.forall(_.inverseKind.hasGeometricInverse) then InverseKind.Approximate
     else InverseKind.Unavailable
 
-  @targetName("transformMany")
-  def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
-    SpatialMorphism.validateCoords(points)
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
     var out = points
     var i = steps.length - 1
     while i >= 0 do
-      out = steps(i).transform(out)
+      out = steps(i).transformWorldPoints(out)
       i -= 1
     out
 
-  def jacobian(
-      coords: Vector[Vector[Double]],
-      mode: JacobianMode = JacobianMode.Pullback
+  def jacobianAtWorld(
+      points: Vector[WorldPoint],
+      mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
-    SpatialMorphism.validateCoords(coords)
-    var currentCoords = coords
+    var currentPoints = points
     var result = Option.empty[JacobianField]
     var error = Option.empty[MorphismError]
     var i = steps.length - 1
     while i >= 0 && error.isEmpty do
-      steps(i).jacobian(currentCoords, JacobianMode.Pullback) match
+      steps(i).jacobianAtWorld(currentPoints, JacobianMode.Pullback) match
         case Left(err) => error = Some(err)
         case Right(j) =>
           result = result match
             case None => Some(j)
             case Some(acc) => Some(JacobianField.multiply(j, acc))
-          if i > 0 then currentCoords = steps(i).transform(currentCoords)
+          if i > 0 then currentPoints = steps(i).transformWorldPoints(currentPoints)
       i -= 1
 
     error match
       case Some(err) => Left(err)
       case None =>
-        val pullback = result.getOrElse(JacobianField.constant(coords, DMat.eye(3), JacobianMode.Pullback))
-        val field = pullback.withCoordsAndMode(coords, mode)
+        val pullback = result.getOrElse(JacobianField.constantAtWorld(points, DMat.eye(3), JacobianMode.Pullback))
+        val field = pullback.withWorldPointsAndMode(points, mode)
         if mode == JacobianMode.Pullback then Right(field) else field.invert
 
   def invert: Either[MorphismError, SpatialMorphism] =
@@ -561,6 +561,10 @@ object SpatialMorphism:
       require(point.forall(_.isFinite), "coordinates must be finite")
     }
 
+  private[image] def worldPointsFromCoords(coords: Vector[Vector[Double]], label: String): Vector[WorldPoint] =
+    validateCoords(coords)
+    coords.map(point => WorldPoint.unsafeFromVector(point, label))
+
 final case class JacobianField(
     coords: Vector[Vector[Double]],
     matrices: Vector[DMat],
@@ -605,7 +609,16 @@ final case class JacobianField(
   private[image] def withCoordsAndMode(newCoords: Vector[Vector[Double]], newMode: JacobianMode): JacobianField =
     JacobianField(newCoords, matrices, newMode)
 
+  private[image] def withWorldPointsAndMode(points: Vector[WorldPoint], newMode: JacobianMode): JacobianField =
+    withCoordsAndMode(points.map(_.toVector), newMode)
+
 object JacobianField:
+  def atWorld(points: Vector[WorldPoint], matrices: Vector[DMat], mode: JacobianMode): JacobianField =
+    JacobianField(points.map(_.toVector), matrices, mode)
+
+  def constantAtWorld(points: Vector[WorldPoint], matrix: DMat, mode: JacobianMode): JacobianField =
+    atWorld(points, Vector.fill(points.length)(matrix), mode)
+
   def constant(coords: Vector[Vector[Double]], matrix: DMat, mode: JacobianMode): JacobianField =
     JacobianField(coords, Vector.fill(coords.length)(matrix), mode)
 

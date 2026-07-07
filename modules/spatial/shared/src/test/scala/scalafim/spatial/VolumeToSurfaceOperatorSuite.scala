@@ -160,7 +160,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
           id = value(MorphismId("bad")),
           source = source.id,
           target = target.id,
-          kind = MorphismKind.Affine3D,
+          kind = MorphismKind.Functional,
           routeTag = RouteTag.Anatomical,
           cost = 1.0
         )

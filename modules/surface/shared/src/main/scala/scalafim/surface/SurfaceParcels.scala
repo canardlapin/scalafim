@@ -1,16 +1,53 @@
 package scalafim.surface
 
+import scala.util.control.NonFatal
+
 enum FragmentedParcelPolicy:
   case Error, Largest, Each, Merge
 
 enum ParcelDistanceMethod:
   case Centroid, Medoid, Minimum
 
-final case class ParcelKey(label: Int, part: Option[Int] = None):
-  require(part.forall(_ > 0), "parcel part must be positive")
+final class ParcelKey private (
+  val parcelLabel: ParcelLabel,
+  val parcelPart: Option[ParcelPart]
+):
+  def label: Int =
+    parcelLabel.value
+
+  def part: Option[Int] =
+    parcelPart.map(_.value)
 
   def display: String =
     part.fold(label.toString)(p => s"$label.$p")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ParcelKey =>
+        parcelLabel == that.parcelLabel && parcelPart == that.parcelPart
+      case _ => false
+
+  override def hashCode(): Int =
+    31 * parcelLabel.hashCode() + parcelPart.hashCode()
+
+  override def toString: String =
+    part match
+      case None => s"ParcelKey($label)"
+      case Some(value) => s"ParcelKey($label, Some($value))"
+
+object ParcelKey:
+  def apply(label: Int, part: Option[Int] = None): ParcelKey =
+    typed(ParcelLabel(label), part.map(ParcelPart(_)))
+
+  def typed(label: ParcelLabel, part: Option[ParcelPart] = None): ParcelKey =
+    new ParcelKey(label, part)
+
+  def fromEither(label: Int, part: Option[Int] = None): Either[SurfaceError, ParcelKey] =
+    try scala.util.Right(apply(label, part))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidParcel(SurfaceError.reason(error)))
+
+  def unapply(key: ParcelKey): Some[(Int, Option[Int])] =
+    Some((key.label, key.part))
 
 final case class ParcelUnit(
   key: ParcelKey,
@@ -23,8 +60,14 @@ final case class ParcelUnit(
   def label: Int =
     key.label
 
+  def parcelLabel: ParcelLabel =
+    key.parcelLabel
+
   def part: Option[Int] =
     key.part
+
+  def parcelPart: Option[ParcelPart] =
+    key.parcelPart
 
   def size: Int =
     vertices.length
@@ -247,7 +290,7 @@ object SurfaceParcels:
           while queue.nonEmpty do
             val vertex = queue.dequeue()
             component += VertexId.unsafe(vertex)
-            topology.neighbors(vertex).foreach { neighbor =>
+            topology.neighborsOf(VertexId.unsafe(vertex)).foreach { neighbor =>
               val n = neighbor.index
               if active(n) && !visited(n) then
                 visited += n

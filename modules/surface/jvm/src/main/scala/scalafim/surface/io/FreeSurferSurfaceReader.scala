@@ -1,6 +1,7 @@
 package scalafim.surface.io
 
 import scalafim.surface.Hemisphere
+import scalafim.surface.SurfaceError
 import scalafim.surface.SurfaceGeometry
 import scalafim.surface.SurfaceKind
 import scalafim.surface.TriangleMesh
@@ -9,6 +10,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
+import scala.util.control.NonFatal
 
 object FreeSurferSurfaceReader:
 
@@ -17,8 +19,14 @@ object FreeSurferSurfaceReader:
   def read(path: Path): SurfaceGeometry =
     if isAscii(path) then readAscii(path) else readBinary(path)
 
+  def readEither(path: Path): Either[SurfaceError, SurfaceGeometry] =
+    catchRead(path)(read(path))
+
   def readAscii(path: Path): SurfaceGeometry =
     readAscii(path, inferHemisphere(path), inferKind(path))
+
+  def readAsciiEither(path: Path): Either[SurfaceError, SurfaceGeometry] =
+    catchRead(path)(readAscii(path))
 
   def readAscii(path: Path, hemisphere: Hemisphere, kind: SurfaceKind): SurfaceGeometry =
     val lines = Files.readAllLines(path, StandardCharsets.UTF_8)
@@ -61,6 +69,9 @@ object FreeSurferSurfaceReader:
 
   def readBinary(path: Path): SurfaceGeometry =
     readBinary(path, inferHemisphere(path), inferKind(path))
+
+  def readBinaryEither(path: Path): Either[SurfaceError, SurfaceGeometry] =
+    catchRead(path)(readBinary(path))
 
   def readBinary(path: Path, hemisphere: Hemisphere, kind: SurfaceKind): SurfaceGeometry =
     val bytes = Files.readAllBytes(path)
@@ -170,3 +181,7 @@ object FreeSurferSurfaceReader:
   private def checkedBytes(count: Int, label: String): Int =
     require(count <= Int.MaxValue / 4, s"$label byte count is too large")
     count * 4
+
+  private def catchRead[A](path: Path)(body: => A): Either[SurfaceError, A] =
+    try Right(body)
+    catch case NonFatal(error) => Left(SurfaceError.ReadFailure(path.toString, SurfaceError.reason(error)))

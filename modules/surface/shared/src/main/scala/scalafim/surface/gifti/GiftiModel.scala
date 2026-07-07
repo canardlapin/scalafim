@@ -173,6 +173,108 @@ final case class GiftiDataArray(
   def isNodeIndex: Boolean =
     intent == GiftiIntent.NodeIndex
 
+sealed trait GiftiPayload[+A]:
+  def array: GiftiDataArray
+  def values: Vector[A]
+
+  def dims: Vector[Int] =
+    array.dims
+
+  def rank: Int =
+    array.rank
+
+  def order: GiftiArrayOrder =
+    array.arrayOrder
+
+  def size: Int =
+    values.length
+
+  def isVector: Boolean =
+    this.isInstanceOf[GiftiVector[?]]
+
+  def isMatrix: Boolean =
+    this.isInstanceOf[GiftiMatrix[?]]
+
+final case class GiftiVector[+A](array: GiftiDataArray, values: Vector[A]) extends GiftiPayload[A]:
+  require(array.rank == 1, "GIFTI vector payload requires rank-1 DataArray")
+  require(values.length == array.elementCount, "GIFTI payload length must match DataArray dimensions")
+
+  def length: Int =
+    array.rows
+
+  def apply(index: Int): A =
+    require(index >= 0 && index < length, "GIFTI vector index out of range")
+    values(index)
+
+final case class GiftiMatrix[+A](array: GiftiDataArray, values: Vector[A]) extends GiftiPayload[A]:
+  require(array.rank == 2, "GIFTI matrix payload requires rank-2 DataArray")
+  require(values.length == array.elementCount, "GIFTI payload length must match DataArray dimensions")
+  require(
+    array.arrayOrder == GiftiArrayOrder.RowMajor || array.arrayOrder == GiftiArrayOrder.ColumnMajor,
+    "GIFTI matrix payload requires RowMajorOrder or ColumnMajorOrder"
+  )
+
+  def rows: Int =
+    array.rows
+
+  def columns: Int =
+    array.columns
+
+  def apply(row: Int, column: Int): A =
+    require(row >= 0 && row < rows, "GIFTI matrix row out of range")
+    require(column >= 0 && column < columns, "GIFTI matrix column out of range")
+    values(linearIndex(row, column))
+
+  def row(row: Int): Vector[A] =
+    Vector.tabulate(columns)(column => apply(row, column))
+
+  def rowMajorValues: Vector[A] =
+    Vector.tabulate(rows * columns) { offset =>
+      val row = offset / columns
+      val column = offset % columns
+      apply(row, column)
+    }
+
+  def linearIndex(row: Int, column: Int): Int =
+    array.arrayOrder match
+      case GiftiArrayOrder.RowMajor => row * columns + column
+      case GiftiArrayOrder.ColumnMajor => column * rows + row
+      case other => throw new IllegalArgumentException(GiftiError.UnsupportedArrayOrder(other).message)
+
+object GiftiPayload:
+  def from[A](array: GiftiDataArray, values: Vector[A]): Either[GiftiError, GiftiPayload[A]] =
+    array.rank match
+      case 1 => vector(array, values)
+      case 2 => matrix(array, values)
+      case rank => Left(GiftiError.InvalidDataArray(s"typed GIFTI payload supports rank 1 or 2, got rank $rank"))
+
+  def vector[A](array: GiftiDataArray, values: Vector[A]): Either[GiftiError, GiftiVector[A]] =
+    try Right(GiftiVector(array, values))
+    catch case error: IllegalArgumentException => Left(GiftiError.InvalidDataArray(cleanRequirement(error.getMessage)))
+
+  def matrix[A](array: GiftiDataArray, values: Vector[A]): Either[GiftiError, GiftiMatrix[A]] =
+    array.arrayOrder match
+      case GiftiArrayOrder.RowMajor | GiftiArrayOrder.ColumnMajor =>
+        try Right(GiftiMatrix(array, values))
+        catch case error: IllegalArgumentException => Left(GiftiError.InvalidDataArray(cleanRequirement(error.getMessage)))
+      case other =>
+        Left(GiftiError.UnsupportedArrayOrder(other))
+
+  def requireVector[A](payload: GiftiPayload[A]): Either[GiftiError, GiftiVector[A]] =
+    payload match
+      case vector: GiftiVector[A] => Right(vector)
+      case _ => Left(GiftiError.InvalidDataArray("GIFTI payload is not a vector"))
+
+  def requireMatrix[A](payload: GiftiPayload[A]): Either[GiftiError, GiftiMatrix[A]] =
+    payload match
+      case matrix: GiftiMatrix[A] => Right(matrix)
+      case _ => Left(GiftiError.InvalidDataArray("GIFTI payload is not a matrix"))
+
+  private def cleanRequirement(message: String): String =
+    Option(message)
+      .getOrElse("requirement failed")
+      .stripPrefix("requirement failed: ")
+
 final case class GiftiDocument(
   attributes: Map[String, String],
   metadata: Map[String, String],
@@ -209,6 +311,7 @@ enum GiftiError:
   case InvalidDataArray(reason: String)
   case UnsupportedEncoding(encoding: GiftiEncoding)
   case UnsupportedEndian(endian: GiftiEndian)
+  case UnsupportedArrayOrder(order: GiftiArrayOrder)
   case UnsupportedDataType(dataType: GiftiDataType)
   case DecodeFailure(reason: String)
 
@@ -220,5 +323,6 @@ enum GiftiError:
       case InvalidDataArray(msg) => s"invalid GIFTI DataArray: $msg"
       case UnsupportedEncoding(encoding) => s"unsupported GIFTI encoding: ${encoding.code}"
       case UnsupportedEndian(endian) => s"unsupported GIFTI endian: ${endian.code}"
+      case UnsupportedArrayOrder(order) => s"unsupported GIFTI array order: ${order.code}"
       case UnsupportedDataType(dataType) => s"unsupported GIFTI data type: ${dataType.code}"
       case DecodeFailure(msg) => s"GIFTI data decode failed: $msg"

@@ -94,7 +94,7 @@ object SurfaceComponents:
           while queue.nonEmpty do
             val vertex = queue.dequeue()
             component += vertex
-            topology.neighbors(vertex).foreach { neighbor =>
+            topology.neighborsOf(VertexId.unsafe(vertex)).foreach { neighbor =>
               val n = neighbor.index
               if active(n) && !visited(n) then
                 visited += n

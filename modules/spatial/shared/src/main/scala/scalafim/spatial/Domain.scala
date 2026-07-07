@@ -3,8 +3,17 @@ package scalafim.spatial
 import scalafim.image.{NeuroSpace, NeuroVol}
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
 
+enum DomainKind:
+  case Volume, Surface, Hybrid, Latent
+
 enum TemplateKind:
   case Volume, Surface, Hybrid
+
+  def domainKind: DomainKind =
+    this match
+      case TemplateKind.Volume => DomainKind.Volume
+      case TemplateKind.Surface => DomainKind.Surface
+      case TemplateKind.Hybrid => DomainKind.Hybrid
 
 enum SpaceRef:
   case Volume(subject: SubjectId, session: Option[SessionId], modality: Modality)
@@ -17,6 +26,13 @@ enum SpaceRef:
       require(dim > 0, "latent dimension must be positive")
     case _ =>
       ()
+
+  def domainKind: DomainKind =
+    this match
+      case SpaceRef.Volume(_, _, _) => DomainKind.Volume
+      case SpaceRef.Surface(_, _, _) => DomainKind.Surface
+      case SpaceRef.Template(_, _, kind) => kind.domainKind
+      case SpaceRef.Latent(_, _, _) => DomainKind.Latent
 
 object SpaceRef:
   def latent(
@@ -31,6 +47,7 @@ enum SamplingGeometry:
   case Volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]])
   case Surface(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
   case Hybrid(parts: Vector[DomainPart])
+  case Latent(dim: Int)
 
   this match
     case SamplingGeometry.Volume(space, Some(mask)) =>
@@ -40,8 +57,17 @@ enum SamplingGeometry:
     case SamplingGeometry.Hybrid(parts) =>
       require(parts.nonEmpty, "hybrid geometry must contain at least one part")
       require(parts.map(_.name.value).distinct.length == parts.length, "hybrid part names must be unique")
+    case SamplingGeometry.Latent(dim) =>
+      require(dim > 0, "latent geometry dimension must be positive")
     case _ =>
       ()
+
+  def kind: DomainKind =
+    this match
+      case SamplingGeometry.Volume(_, _) => DomainKind.Volume
+      case SamplingGeometry.Surface(_, _) => DomainKind.Surface
+      case SamplingGeometry.Hybrid(_) => DomainKind.Hybrid
+      case SamplingGeometry.Latent(_) => DomainKind.Latent
 
   def nElements: Int =
     this match
@@ -51,6 +77,8 @@ enum SamplingGeometry:
         geometry.vertexCount
       case SamplingGeometry.Hybrid(parts) =>
         parts.map(_.nElements).sum
+      case SamplingGeometry.Latent(dim) =>
+        dim
 
 object SamplingGeometry:
   def volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]] = None): Either[SpatialError, SamplingGeometry] =
@@ -87,11 +115,18 @@ object SamplingGeometry:
         i += 1
       Right(SamplingGeometry.Hybrid(out.result()))
 
+  def latent(dim: Int): Either[SpatialError, SamplingGeometry] =
+    if dim <= 0 then Left(SpatialError.NonPositiveDimension("latent geometry", dim))
+    else Right(SamplingGeometry.Latent(dim))
+
 final case class Domain private (
   id: DomainId,
   space: SpaceRef,
   geometry: SamplingGeometry
 ):
+  def kind: DomainKind =
+    space.domainKind
+
   def nElements: Int =
     geometry.nElements
 
@@ -102,10 +137,20 @@ object Domain:
     geometry: SamplingGeometry
   ): Either[SpatialError, Domain] =
     if geometry.nElements <= 0 then Left(SpatialError.NonPositiveDimension("domain elements", geometry.nElements))
-    else Right(new Domain(id, space, geometry))
+    else validateKind(id, space, geometry).map(_ => new Domain(id, space, geometry))
 
   private[scalafim] def unsafe(id: DomainId, space: SpaceRef, geometry: SamplingGeometry): Domain =
     new Domain(id, space, geometry)
+
+  private def validateKind(id: DomainId, space: SpaceRef, geometry: SamplingGeometry): Either[SpatialError, Unit] =
+    if space.domainKind != geometry.kind then
+      Left(SpatialError.DomainKindMismatch(id, space.domainKind, geometry.kind))
+    else
+      (space, geometry) match
+        case (SpaceRef.Latent(dim, _, _), SamplingGeometry.Latent(geometryDim)) if dim != geometryDim =>
+          Left(SpatialError.LatentDimensionMismatch(id, dim, geometryDim))
+        case _ =>
+          Right(())
 
 final case class DomainPart private (
   name: PartName,

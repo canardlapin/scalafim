@@ -6,18 +6,53 @@ import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, Surfa
 
 import scala.collection.mutable.ArrayBuffer
 
-final case class VolumeToSurfaceRequest(
-  source: DomainId,
-  target: DomainId,
-  surfaces: SurfaceGeometryPair,
-  path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
-  sampling: SamplingPolicy = SamplingPolicy.Nearest,
-  roi: Option[Vector[Int]] = None,
-  routing: RoutingPolicy = RoutingPolicy.Shortest,
-  allowInverses: Boolean = false
-)
+final class VolumeToSurfaceRequest private (
+  val source: DomainId,
+  val target: DomainId,
+  val surfaces: SurfaceGeometryPair,
+  val path: SurfaceSamplingPath,
+  val sampling: SamplingPolicy,
+  val rowSelection: RowSelection,
+  val routing: RoutingPolicy,
+  val allowInverses: Boolean
+):
+  def roi: Option[Vector[Int]] =
+    rowSelection.roi
 
 object VolumeToSurfaceRequest:
+  def apply(
+    source: DomainId,
+    target: DomainId,
+    surfaces: SurfaceGeometryPair,
+    path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
+    sampling: SamplingPolicy = SamplingPolicy.Nearest,
+    roi: Option[Vector[Int]] = None,
+    routing: RoutingPolicy = RoutingPolicy.Shortest,
+    allowInverses: Boolean = false
+  ): VolumeToSurfaceRequest =
+    new VolumeToSurfaceRequest(
+      source,
+      target,
+      surfaces,
+      path,
+      sampling,
+      RowSelection.unsafeFromRoi(roi),
+      routing,
+      allowInverses
+    )
+
+  def forRows(
+    source: DomainId,
+    target: DomainId,
+    surfaces: SurfaceGeometryPair,
+    rowSelection: RowSelection,
+    path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
+    sampling: SamplingPolicy = SamplingPolicy.Nearest,
+    routing: RoutingPolicy = RoutingPolicy.Shortest,
+    allowInverses: Boolean = false
+  ): VolumeToSurfaceRequest =
+    new VolumeToSurfaceRequest(source, target, surfaces, path, sampling, rowSelection, routing, allowInverses)
+
   def midpoint(
     source: DomainId,
     target: DomainId,
@@ -48,8 +83,8 @@ object VolumeToSurfaceOperatorCompiler:
       target <- surfaceTarget(targetDomain)
       _ <- validateSurfacePair(targetDomain.id, target.geometry, request.surfaces)
       path <- graph.path(request.source, request.target, request.routing, request.allowInverses)
-      _ <- requireVolumeToSurfacePath(path)
-      rows <- selectedTargetRows(request.roi, targetDomain.nElements)
+      volumeToSurfacePath <- VolumeToSurfacePath.from(path)
+      rows <- TargetRows.fromSelection(request.rowSelection, targetDomain.nElements)
       rowAssembly <- assembleRows(source, target, rows, request)
       triplets <- SparseTriplets(
         rows = rows.length,
@@ -60,20 +95,21 @@ object VolumeToSurfaceOperatorCompiler:
       ).left.map(linearError)
       csr <- CsrMatrix.fromTriplets(triplets).left.map(linearError)
       coverage <- CoverageReport.build(rows, rowAssembly.coverage.toVector)
+      recipe <- OperatorRecipe.build(
+        path = volumeToSurfacePath.ids,
+        routing = request.routing,
+        sampling = request.sampling,
+        rowSelection = rows.selection,
+        allowInverses = request.allowInverses,
+        compiler = CompilerName
+      )
       operator <- SpatialOperator.build(
         source = request.source,
         target = request.target,
         map = csr,
         path = path,
         qc = OperatorQc(coverage, path.pathQuality),
-        provenance = OperatorProvenance(
-          path = path.ids,
-          routing = request.routing,
-          sampling = request.sampling,
-          roi = request.roi,
-          allowInverses = request.allowInverses,
-          compiler = CompilerName
-        )
+        provenance = OperatorProvenance.fromRecipe(recipe)
       )
     yield operator
 
@@ -100,36 +136,10 @@ object VolumeToSurfaceOperatorCompiler:
       Left(SpatialError.SurfacePairMismatch(target))
     else Right(())
 
-  private def requireVolumeToSurfacePath(path: MorphismPath): Either[SpatialError, Unit] =
-    if path.morphisms.length == 1 && path.morphisms.head.kind == MorphismKind.VolumeToSurface then Right(())
-    else
-      val offending = path.morphisms.find(_.kind != MorphismKind.Identity).getOrElse(path.morphisms.head)
-      Left(SpatialError.UnsupportedMorphismForCompilation(offending.id, offending.kind))
-
-  private def selectedTargetRows(roi: Option[Vector[Int]], targetRows: Int): Either[SpatialError, Vector[Int]] =
-    roi match
-      case None =>
-        Right(Vector.tabulate(targetRows)(identity))
-      case Some(rows) =>
-        if rows.isEmpty then Left(SpatialError.EmptyRoi)
-        else
-          val seen = scala.collection.mutable.HashSet.empty[Int]
-          var i = 0
-          var error = Option.empty[SpatialError]
-          while i < rows.length && error.isEmpty do
-            val row = rows(i)
-            if row < 0 || row >= targetRows then error = Some(SpatialError.InvalidRoiRow(row, targetRows))
-            else if seen.contains(row) then error = Some(SpatialError.DuplicateRoiRow(row))
-            else seen += row
-            i += 1
-          error match
-            case Some(err) => Left(err)
-            case None => Right(rows)
-
   private def assembleRows(
     source: VolumeSource,
     target: SurfaceTarget,
-    targetRows: Vector[Int],
+    targetRows: TargetRows,
     request: VolumeToSurfaceRequest
   ): Either[SpatialError, SurfaceRowAssembly] =
     val sourceGrid = GridSpec.fromSpace(source.space)
@@ -138,7 +148,7 @@ object VolumeToSurfaceOperatorCompiler:
     var outRow = 0
     var error = Option.empty[SpatialError]
     while outRow < targetRows.length && error.isEmpty do
-      val targetRow = targetRows(outRow)
+      val targetRow = targetRows.indices(outRow)
       val vertex = VertexId(targetRow)
       rowWeights(sourceGrid, source.mask, target.mask, request.surfaces, request.path, request.sampling, vertex) match
         case Left(err) =>
@@ -198,10 +208,10 @@ object VolumeToSurfaceOperatorCompiler:
   private def sourcePointWeights(
     sourceGrid: GridSpec,
     sourceMask: Option[NeuroVol[Boolean]],
-    point: Vector[Double],
+    point: SpatialPoint,
     sampling: SamplingPolicy
   ): SurfacePointWeights =
-    sourceGrid.worldToVoxel(SpatialPoint.unsafeFromVector(point, "surface sample point")) match
+    sourceGrid.worldToVoxel(point) match
       case Left(_) =>
         SurfacePointWeights.empty
       case Right(voxel) =>
@@ -281,34 +291,37 @@ object VolumeToSurfaceOperatorCompiler:
     surfaces: SurfaceGeometryPair,
     path: SurfaceSamplingPath,
     vertex: VertexId
-  ): Either[SpatialError, Vector[Vector[Double]]] =
-    val white = worldPoint(surfaces.white, vertex)
-    val pial = worldPoint(surfaces.pial, vertex)
-    val delta = subtract(pial, white)
+  ): Either[SpatialError, Vector[SpatialPoint]] =
+    for
+      white <- worldPoint(surfaces.white, vertex)
+      pial <- worldPoint(surfaces.pial, vertex)
+      delta = subtract(pial, white)
+      points <- path match
+        case SurfaceSamplingPath.White =>
+          Right(Vector(white))
+        case SurfaceSamplingPath.Pial =>
+          Right(Vector(pial))
+        case SurfaceSamplingPath.Midpoint =>
+          Right(Vector(add(white, scale(delta, 0.5))))
+        case SurfaceSamplingPath.FractionalThickness(fractions) =>
+          if fractions.isEmpty || fractions.exists(f => !f.isFinite || f < 0.0 || f > 1.0) then
+            Left(SpatialError.UnsupportedSurfaceSampling("fractional thickness"))
+          else Right(fractions.map(f => add(white, scale(delta, f))))
+        case SurfaceSamplingPath.NormalLine(offsets) =>
+          if offsets.isEmpty || offsets.exists(offset => !offset.isFinite) then
+            Left(SpatialError.UnsupportedSurfaceSampling("normal line"))
+          else
+            val midpoint = add(white, scale(delta, 0.5))
+            val n = norm(delta)
+            val unit = if n == 0.0 then SpatialPoint.Origin else scale(delta, 1.0 / n)
+            Right(offsets.map(offset => add(midpoint, scale(unit, offset))))
+    yield points
 
-    path match
-      case SurfaceSamplingPath.White =>
-        Right(Vector(white))
-      case SurfaceSamplingPath.Pial =>
-        Right(Vector(pial))
-      case SurfaceSamplingPath.Midpoint =>
-        Right(Vector(add(white, scale(delta, 0.5))))
-      case SurfaceSamplingPath.FractionalThickness(fractions) =>
-        if fractions.isEmpty || fractions.exists(f => !f.isFinite || f < 0.0 || f > 1.0) then
-          Left(SpatialError.UnsupportedSurfaceSampling("fractional thickness"))
-        else Right(fractions.map(f => add(white, scale(delta, f))))
-      case SurfaceSamplingPath.NormalLine(offsets) =>
-        if offsets.isEmpty || offsets.exists(offset => !offset.isFinite) then
-          Left(SpatialError.UnsupportedSurfaceSampling("normal line"))
-        else
-          val midpoint = add(white, scale(delta, 0.5))
-          val n = norm(delta)
-          val unit = if n == 0.0 then Vector(0.0, 0.0, 0.0) else scale(delta, 1.0 / n)
-          Right(offsets.map(offset => add(midpoint, scale(unit, offset))))
-
-  private def worldPoint(surface: SurfaceGeometry, vertex: VertexId): Vector[Double] =
+  private def worldPoint(surface: SurfaceGeometry, vertex: VertexId): Either[SpatialError, SpatialPoint] =
     val point = surface.mesh.vertex(vertex)
-    Affine.applyAffine(surface.surfaceToWorld, Vector(point.x, point.y, point.z))
+    SpatialPoint
+      .fromVector(Affine.applyAffine(surface.surfaceToWorld, point.toVector), "surface sample point")
+      .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
 
   private def surfaceMaskAllows(mask: Option[SurfaceRoi[Boolean]], vertex: VertexId): Boolean =
     mask match
@@ -329,17 +342,17 @@ object VolumeToSurfaceOperatorCompiler:
       y >= 0 && y < dims.y &&
       z >= 0 && z < dims.z
 
-  private def add(a: Vector[Double], b: Vector[Double]): Vector[Double] =
-    Vector.tabulate(3)(i => a(i) + b(i))
+  private def add(a: SpatialPoint, b: SpatialPoint): SpatialPoint =
+    SpatialPoint(a.x + b.x, a.y + b.y, a.z + b.z)
 
-  private def subtract(a: Vector[Double], b: Vector[Double]): Vector[Double] =
-    Vector.tabulate(3)(i => a(i) - b(i))
+  private def subtract(a: SpatialPoint, b: SpatialPoint): SpatialPoint =
+    SpatialPoint(a.x - b.x, a.y - b.y, a.z - b.z)
 
-  private def scale(a: Vector[Double], value: Double): Vector[Double] =
-    Vector.tabulate(3)(i => a(i) * value)
+  private def scale(a: SpatialPoint, value: Double): SpatialPoint =
+    SpatialPoint(a.x * value, a.y * value, a.z * value)
 
-  private def norm(a: Vector[Double]): Double =
-    math.sqrt(a.map(x => x * x).sum)
+  private def norm(a: SpatialPoint): Double =
+    math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
 
   private def linearError(error: LinearMapError): SpatialError =
     SpatialError.OperatorAssemblyFailed(error.message)

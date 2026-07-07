@@ -1,5 +1,31 @@
 package scalafim.surface
 
+enum CorticalHemisphere:
+  case Left, Right
+
+  def tag: Hemisphere =
+    this match
+      case Left => Hemisphere.Left
+      case Right => Hemisphere.Right
+
+  def code: String =
+    this match
+      case Left => "lh"
+      case Right => "rh"
+
+object CorticalHemisphere:
+  def fromTag(tag: Hemisphere): Either[SurfaceError, CorticalHemisphere] =
+    tag match
+      case Hemisphere.Left => scala.util.Right(Left)
+      case Hemisphere.Right => scala.util.Right(Right)
+      case other => scala.util.Left(SurfaceError.InvalidHemisphereTag(other))
+
+  def fromStringEither(value: String): Either[SurfaceError, CorticalHemisphere] =
+    Hemisphere.fromStringEither(value).flatMap(fromTag)
+
+  def fromString(value: String): CorticalHemisphere =
+    fromStringEither(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 enum Hemisphere:
   case Left, Right, Both, Unknown
 
@@ -10,14 +36,23 @@ enum Hemisphere:
       case Both => "both"
       case Unknown => "unknown"
 
+  def toCortical: Either[SurfaceError, CorticalHemisphere] =
+    CorticalHemisphere.fromTag(this)
+
+  def isCortical: Boolean =
+    this == Left || this == Right
+
 object Hemisphere:
-  def fromString(value: String): Hemisphere =
+  def fromStringEither(value: String): Either[SurfaceError, Hemisphere] =
     value.trim.toLowerCase match
-      case "l" | "lh" | "left" => Left
-      case "r" | "rh" | "right" => Right
-      case "both" | "bilateral" => Both
-      case "" | "unknown" => Unknown
-      case other => throw new IllegalArgumentException(s"unknown hemisphere: $other")
+      case "l" | "lh" | "left" => scala.util.Right(Left)
+      case "r" | "rh" | "right" => scala.util.Right(Right)
+      case "both" | "bilateral" => scala.util.Right(Both)
+      case "" | "unknown" => scala.util.Right(Unknown)
+      case other => scala.util.Left(SurfaceError.ReadFailure(value, s"unknown hemisphere: $other"))
+
+  def fromString(value: String): Hemisphere =
+    fromStringEither(value).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum SurfaceKind:
   case White, Pial, Inflated, Sphere, SmoothWm, Midthickness

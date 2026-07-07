@@ -9,7 +9,7 @@ class MeshTopologySuite extends munit.FunSuite:
 
     assertEquals(topology.edgeCount, 6)
     assertEquals(topology.edges.head, Edge.between(VertexId(0), VertexId(1)))
-    assertEquals(topology.neighbors(VertexId(0).index), Vector(VertexId(1), VertexId(2), VertexId(3)))
+    assertEquals(topology.neighborsOf(VertexId(0)), Vector(VertexId(1), VertexId(2), VertexId(3)))
     assertEquals(topology.vertexDegree(VertexId(0)), 3)
     assertEquals(topology.vertexDegree(VertexId(3)), 3)
 
@@ -55,4 +55,10 @@ class MeshTopologySuite extends munit.FunSuite:
     val topology = MeshTopology.from(mesh)
     assertEquals(topology.edgeCount, 6)
     assertEquals(topology.eulerCharacteristic, 1)
-    assertEquals(topology.neighbors(VertexId(2).index), Vector(VertexId(0), VertexId(1), VertexId(3), VertexId(4)))
+    assertEquals(topology.neighborsOf(VertexId(2)), Vector(VertexId(0), VertexId(1), VertexId(3), VertexId(4)))
+
+  test("MeshTopology carries a surface domain when built from geometry"):
+    val topology = MeshTopology.from(SurfaceTestFixtures.tetraGeometry)
+
+    assertEquals(topology.domainEither, scala.util.Right(SurfaceDomain(CorticalHemisphere.Left, 4)))
+    assertEquals(MeshTopology.from(SurfaceTestFixtures.tetraMesh).domainEither.left.map(_.message), scala.util.Left("mesh topology does not carry a usable surface domain"))

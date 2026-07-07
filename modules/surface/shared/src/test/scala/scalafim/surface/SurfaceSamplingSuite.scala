@@ -25,6 +25,9 @@ class SurfaceSamplingSuite extends munit.FunSuite:
       surfaceAtZ(2.0, SurfaceKind.Pial)
     )
 
+  test("SurfaceGeometryPair exposes a shared cortical domain"):
+    assertEquals(pair.domainEither, scala.util.Right(SurfaceDomain(CorticalHemisphere.Left, 3)))
+
   test("midpoint path is a named policy that preserves midpoint sampling semantics"):
     val plan = VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest)
     val sampler = VolumeSurfaceSampler(plan)
@@ -179,6 +182,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
     interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must have the same vertex count"):
       SurfaceGeometryPair(pair.white, mismatched)
+    assert(SurfaceGeometryPair.fromEither(pair.white, mismatched).isLeft)
 
     interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must have the same hemisphere"):
       SurfaceGeometryPair(pair.white, SurfaceGeometry(pair.pial.mesh, Hemisphere.Right, SurfaceKind.Pial))

@@ -39,7 +39,8 @@ The JVM module adds:
   geometry.
 - `GiftiReader` for typed GIFTI documents, metadata, label tables,
   coordinate-system transforms, and ASCII/Base64/GZip-Base64 `DataArray`
-  payloads.
+  payloads. Decoded payloads expose `GiftiVector` and `GiftiMatrix` views so
+  row-major and column-major indexing are explicit.
 - `GiftiSurfaceReader` adapters from GIFTI POINTSET/TRIANGLE geometry and
   LABEL/NODE_INDEX data into `SurfaceGeometry` and `LabeledSurface`.
 
@@ -72,7 +73,7 @@ val mesh =
 
 val geometry = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Pial)
 val topology = MeshTopology.from(mesh)
-val neighborsOfZero = topology.neighbors(VertexId(0).index)
+val neighborsOfZero = topology.neighborsOf(VertexId(0))
 ```
 
 Attach vertex data:
@@ -128,6 +129,7 @@ building a surface value:
 ```scala
 val doc = GiftiReader.read(java.nio.file.Path.of("lh.aparc.label.gii"))
 val labels = doc.flatMap(GiftiSurfaceReader.labeledSurface(_, gii, "aparc"))
+val matrix = doc.flatMap(_.pointSet.toRight(GiftiError.MissingDataArray(GiftiIntent.PointSet))).flatMap(GiftiReader.doubleMatrix)
 ```
 
 Compiled runnable examples live in

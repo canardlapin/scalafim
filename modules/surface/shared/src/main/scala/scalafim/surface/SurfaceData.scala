@@ -4,6 +4,7 @@ import narr.NArray
 import narr.nArray2NArr
 import scalafim.image.NArrayUtil
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 private[surface] object SurfaceData:
 
@@ -49,6 +50,9 @@ final case class SurfaceField[A](
   def valueAt(vertex: VertexId): Option[A] =
     indexLookup.get(vertex.index).map(data(_))
 
+  def domainEither: Either[SurfaceError, SurfaceDomain] =
+    geometry.domainEither
+
 object SurfaceField:
 
   def fromIndexed[A: ClassTag](
@@ -64,6 +68,15 @@ object SurfaceField:
       label = label
     )
 
+  def fromIndexedEither[A: ClassTag](
+    geometry: SurfaceGeometry,
+    indices: Seq[VertexId],
+    data: Seq[A],
+    label: String = ""
+  ): Either[SurfaceError, SurfaceField[A]] =
+    try scala.util.Right(fromIndexed(geometry, indices, data, label))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidField(SurfaceError.reason(error)))
+
   def full[A: ClassTag](
     geometry: SurfaceGeometry,
     data: Seq[A],
@@ -72,6 +85,14 @@ object SurfaceField:
     require(data.length == geometry.vertexCount, "full surface field data must match geometry vertex count")
     val indices = Vector.tabulate(geometry.vertexCount)(VertexId.unsafe)
     fromIndexed(geometry, indices, data, label)
+
+  def fullEither[A: ClassTag](
+    geometry: SurfaceGeometry,
+    data: Seq[A],
+    label: String = ""
+  ): Either[SurfaceError, SurfaceField[A]] =
+    try scala.util.Right(full(geometry, data, label))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidField(SurfaceError.reason(error)))
 
 final case class SurfaceMatrix[A](
   geometry: SurfaceGeometry,
@@ -181,6 +202,12 @@ final case class LabeledSurface(
       i += 1
     None
 
+  def parcelLabelAt(vertex: VertexId): Option[ParcelLabel] =
+    labelAt(vertex).map(ParcelLabel(_))
+
+  def domainEither: Either[SurfaceError, SurfaceDomain] =
+    geometry.domainEither
+
 object LabeledSurface:
 
   def fromIndexed(
@@ -197,6 +224,16 @@ object LabeledSurface:
       table = table.toVector,
       label = label
     )
+
+  def fromIndexedEither(
+    geometry: SurfaceGeometry,
+    indices: Seq[VertexId],
+    labels: Seq[Int],
+    table: Seq[LabelInfo],
+    label: String = ""
+  ): Either[SurfaceError, LabeledSurface] =
+    try scala.util.Right(fromIndexed(geometry, indices, labels, table, label))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidLabels(SurfaceError.reason(error)))
 
 final case class SurfaceSet private (
   surfaces: Map[SurfaceKind, SurfaceGeometry],

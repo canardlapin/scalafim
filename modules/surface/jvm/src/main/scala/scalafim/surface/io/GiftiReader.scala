@@ -30,7 +30,34 @@ object GiftiReader:
     val bytes = xml.getBytes(StandardCharsets.UTF_8)
     parse(new ByteArrayInputStream(bytes))
 
+  def doublePayload(array: GiftiDataArray): Either[GiftiError, GiftiPayload[Double]] =
+    doubleValues(array).flatMap(values => GiftiPayload.from(array, values.toVector))
+
+  def doubleMatrix(array: GiftiDataArray): Either[GiftiError, GiftiMatrix[Double]] =
+    doublePayload(array).flatMap(GiftiPayload.requireMatrix)
+
+  def intPayload(array: GiftiDataArray): Either[GiftiError, GiftiPayload[Int]] =
+    intValues(array).flatMap(values => GiftiPayload.from(array, values.toVector))
+
+  def intVector(array: GiftiDataArray): Either[GiftiError, GiftiVector[Int]] =
+    intPayload(array).flatMap(GiftiPayload.requireVector)
+
+  def intMatrix(array: GiftiDataArray): Either[GiftiError, GiftiMatrix[Int]] =
+    intPayload(array).flatMap(GiftiPayload.requireMatrix)
+
+  def bytePayload(array: GiftiDataArray): Either[GiftiError, GiftiPayload[Int]] =
+    byteValues(array).flatMap(values => GiftiPayload.from(array, values.toVector))
+
   def doubleData(array: GiftiDataArray): Either[GiftiError, Array[Double]] =
+    doublePayload(array).map(_.values.toArray)
+
+  def intData(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
+    intPayload(array).map(_.values.toArray)
+
+  def byteData(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
+    bytePayload(array).map(_.values.toArray)
+
+  private def doubleValues(array: GiftiDataArray): Either[GiftiError, Array[Double]] =
     array.encoding match
       case GiftiEncoding.Ascii =>
         parseAscii(array).map(_.map(_.toDouble))
@@ -41,7 +68,7 @@ object GiftiReader:
           checked <- validateCount(array, values)
         yield checked
 
-  def intData(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
+  private def intValues(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
     array.encoding match
       case GiftiEncoding.Ascii =>
         parseAscii(array).flatMap { values =>
@@ -65,12 +92,12 @@ object GiftiReader:
           checked <- validateCount(array, values)
         yield checked
 
-  def byteData(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
+  private def byteValues(array: GiftiDataArray): Either[GiftiError, Array[Int]] =
     array.dataType match
       case GiftiDataType.UInt8 =>
         array.encoding match
           case GiftiEncoding.Ascii =>
-            intData(array)
+            intValues(array)
           case _ =>
             rawBinary(array).map(bytes => bytes.map(_ & 0xff)).flatMap(validateCount(array, _))
       case other =>

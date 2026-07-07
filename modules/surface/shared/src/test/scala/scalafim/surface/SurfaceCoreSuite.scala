@@ -54,6 +54,7 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(geom.hemisphere, Hemisphere.Left)
     assertEquals(geom.label, "pial")
     assertEquals(geom.surfaceToWorld, transform)
+    assertEquals(geom.domainEither, scala.util.Right(SurfaceDomain(CorticalHemisphere.Left, 4)))
 
   test("SurfaceGeometry rejects non-4x4 transforms"):
     val mesh = SurfaceTestFixtures.tetraMesh
@@ -61,6 +62,18 @@ class SurfaceCoreSuite extends munit.FunSuite:
 
     interceptMessage[IllegalArgumentException]("requirement failed: surfaceToWorld must be 4x4"):
       SurfaceGeometry(mesh, surfaceToWorld = bad)
+
+    assert(SurfaceGeometry.readEither(mesh, surfaceToWorld = bad).isLeft)
+
+  test("surface domains reject IO-only hemisphere tags"):
+    val mesh = SurfaceTestFixtures.tetraMesh
+    val unknown = SurfaceGeometry(mesh, Hemisphere.Unknown, SurfaceKind.Pial)
+    val both = SurfaceGeometry(mesh, Hemisphere.Both, SurfaceKind.Pial)
+
+    assertEquals(unknown.domainEither.left.map(_.message), scala.util.Left("surface hemisphere unknown is an IO tag, not a usable cortical hemisphere"))
+    assertEquals(both.domainEither.left.map(_.message), scala.util.Left("surface hemisphere both is an IO tag, not a usable cortical hemisphere"))
+    assertEquals(CorticalHemisphere.fromString("rh"), CorticalHemisphere.Right)
+    assert(CorticalHemisphere.fromStringEither("both").isLeft)
 
   test("surface tag parsers normalize common labels"):
     assertEquals(Hemisphere.fromString("lh"), Hemisphere.Left)

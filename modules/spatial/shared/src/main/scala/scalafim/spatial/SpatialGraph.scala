@@ -14,7 +14,10 @@ final case class SpatialGraph private (
     if morphisms.exists(_.id == morphism.id) then Left(SpatialError.DuplicateMorphism(morphism.id))
     else if !domains.contains(morphism.source) then Left(SpatialError.MorphismDomainMissing(morphism.id, morphism.source))
     else if !domains.contains(morphism.target) then Left(SpatialError.MorphismDomainMissing(morphism.id, morphism.target))
-    else Right(copy(morphisms = morphisms :+ morphism))
+    else
+      val source = domains(morphism.source)
+      val target = domains(morphism.target)
+      Morphism.validateDomains(morphism, source, target).map(_ => copy(morphisms = morphisms :+ morphism))
 
   def domain(id: DomainId): Either[SpatialError, Domain] =
     domains.get(id).toRight(SpatialError.DomainNotFound(id))
@@ -82,7 +85,13 @@ final case class SpatialGraph private (
       val inverse =
         morphisms.flatMap { morphism =>
           if morphismAllowed(morphism, policy) && morphism.inverse.isGeometric then
-            morphism.reversed.toOption.map(rev => RouteEdge(rev.source, rev.target, rev, inverted = true))
+            morphism.reversed.toOption.flatMap { rev =>
+              for
+                source <- domains.get(rev.source)
+                target <- domains.get(rev.target)
+                if Morphism.validateDomains(rev, source, target).isRight
+              yield RouteEdge(rev.source, rev.target, rev, inverted = true)
+            }
           else None
         }
       forward ++ inverse

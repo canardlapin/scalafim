@@ -97,6 +97,7 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
       val cached = ioValue(SpatialTripletFileCache.read(path))
 
       assertEquals(cached.key, key)
+      assertEquals(cached.key.signature.recipe, provenance.recipe)
       assertEquals(cached.provenance, provenance)
       assertSameTriplets(cached.triplets, triplets)
     }
@@ -121,6 +122,7 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
       val cached = ioValue(SpatialTripletFileCache.read(path))
 
       assertEquals(cached.key, OperatorCacheKey.from(operator))
+      assertEquals(cached.key.signature, operator.signature)
       assertEquals(cached.provenance, operator.provenance)
       assertSameTriplets(cached.triplets, expected)
     }

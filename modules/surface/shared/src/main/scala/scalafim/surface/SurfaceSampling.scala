@@ -3,10 +3,23 @@ package scalafim.surface
 import scalafim.image.Affine
 import scalafim.image.NeuroVol
 import scalafim.image.NArrayUtil
+import scala.util.control.NonFatal
 
 final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):
   require(white.vertexCount == pial.vertexCount, "white and pial surfaces must have the same vertex count")
   require(white.hemisphere == pial.hemisphere, "white and pial surfaces must have the same hemisphere")
+
+  def domainEither: Either[SurfaceError, SurfaceDomain] =
+    for
+      whiteDomain <- white.domainEither
+      pialDomain <- pial.domainEither
+      _ <- if whiteDomain == pialDomain then scala.util.Right(()) else scala.util.Left(SurfaceError.DomainMismatch(whiteDomain, pialDomain))
+    yield whiteDomain
+
+object SurfaceGeometryPair:
+  def fromEither(white: SurfaceGeometry, pial: SurfaceGeometry): Either[SurfaceError, SurfaceGeometryPair] =
+    try scala.util.Right(SurfaceGeometryPair(white, pial))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidGeometry(SurfaceError.reason(error)))
 
 enum SurfaceSamplingPath:
   case White

@@ -26,6 +26,18 @@ class GiftiReaderSuite extends munit.FunSuite:
     assertEquals(GiftiReader.doubleData(doc.pointSet.get).toOption.get.toVector, Vector(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0))
     assertEquals(GiftiReader.intData(doc.triangles.get).toOption.get.toVector, Vector(0, 1, 2))
 
+  test("typed payload decoders preserve matrix indexing semantics"):
+    val xml =
+      surfaceXml("ASCII", "0 1 0 0 0 1 0 0 0", "ASCII", asciiTriangles)
+        .replace("ArrayIndexingOrder=\"RowMajorOrder\"", "ArrayIndexingOrder=\"ColumnMajorOrder\"")
+    val doc = GiftiReader.parseString(xml).toOption.get
+    val pointset = GiftiReader.doubleMatrix(doc.pointSet.get).toOption.get
+
+    assertEquals(pointset.row(0), Vector(0.0, 0.0, 0.0))
+    assertEquals(pointset.row(1), Vector(1.0, 0.0, 0.0))
+    assertEquals(pointset.row(2), Vector(0.0, 1.0, 0.0))
+    assertEquals(pointset.rowMajorValues, Vector(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0))
+
   test("Base64Binary data arrays decode with declared endian"):
     val doc =
       GiftiReader

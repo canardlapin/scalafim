@@ -1,6 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class SpatialGraphSuite extends munit.FunSuite:
 
@@ -15,6 +16,22 @@ class SpatialGraphSuite extends munit.FunSuite:
     val modality = value(Modality(name))
     val geometry = value(SamplingGeometry.volume(NeuroSpace(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
+
+  private def surfaceDomain(name: String): Domain =
+    val id = value(DomainId(name))
+    val subject = value(SubjectId("sub-01"))
+    val mesh =
+      TriangleMesh.fromRows(
+        vertices = Vector(
+          Vector(0.0, 0.0, 0.0),
+          Vector(1.0, 0.0, 0.0),
+          Vector(0.0, 1.0, 0.0)
+        ),
+        faces = Vector((0, 1, 2))
+      )
+    val surface = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Midthickness)
+    val geometry = value(SamplingGeometry.surface(surface))
+    value(Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.Midthickness), geometry))
 
   private def morphism(
     idValue: String,
@@ -79,7 +96,7 @@ class SpatialGraphSuite extends munit.FunSuite:
   test("inverse routing uses only geometric inverses"):
     val epi = domain("epi")
     val t1 = domain("t1")
-    val surface = domain("surface")
+    val surface = surfaceDomain("surface")
     val affine = morphism("epi-to-t1", epi, t1, 1.0, inverse = Inverse.Exact("analytic"))
     val volToSurf =
       morphism(
@@ -100,6 +117,26 @@ class SpatialGraphSuite extends munit.FunSuite:
 
     val noGeometricReverse = graph.path(surface.id, t1.id, allowInverses = true)
     assertEquals(noGeometricReverse.left.toOption, Some(SpatialError.NoPath(surface.id, t1.id)))
+
+  test("graph rejects morphisms whose kind is incompatible with domain kinds"):
+    val source = domain("source")
+    val target = domain("target")
+    val bad =
+      morphism(
+        "bad-volume-to-surface",
+        source,
+        target,
+        1.0,
+        inverse = Inverse.AdjointOnly,
+        kind = MorphismKind.VolumeToSurface
+      )
+
+    val result = SpatialGraph.build(Vector(source, target), Vector(bad))
+
+    assertEquals(
+      result.left.toOption,
+      Some(SpatialError.IncompatibleMorphismKind(MorphismKind.VolumeToSurface, source.id, DomainKind.Volume, target.id, DomainKind.Volume))
+    )
 
   test("provided inverse quality increases reverse edge cost"):
     val source = domain("source")

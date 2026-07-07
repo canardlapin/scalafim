@@ -114,6 +114,33 @@ class OperatorCompilerSuite extends munit.FunSuite:
     assertEqualsDouble(sampled(0, 0), 0.0, 1e-12)
     assertEqualsDouble(sampled(1, 0), 7.0, 1e-12)
     assertEquals(operator.provenance.roi, Some(Vector(2, 1)))
+    assertEquals(operator.provenance.rowSelection, RowSelection.Rows(Vector(2, 1)))
+    assertEquals(operator.signature.shape, OperatorShape.unsafe(2, 2))
+    assertEquals(operator.signature.recipe, operator.provenance.recipe)
+
+  test("typed row selections produce the same cache signature as ROI adapters"):
+    val source = domain("source", Vector(2, 1, 1))
+    val target = domain("target", Vector(3, 1, 1))
+    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val g = graph(Vector(source, target), Vector(morphism))
+    val rows = value(RowSelection.rows(Vector(2, 1)))
+    val typed =
+      value(
+        OperatorCompiler.compile(
+          g,
+          CompileRequest.forRows(source.id, target.id, rows, sampling = SamplingPolicy.Nearest)
+        )
+      )
+    val adapter =
+      value(
+        OperatorCompiler.compile(
+          g,
+          CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest, roi = Some(Vector(2, 1)))
+        )
+      )
+
+    assertEquals(typed.signature, adapter.signature)
+    assertEquals(OperatorCacheKey.from(typed), OperatorCacheKey.from(adapter))
 
   test("compiler rejects duplicate and out-of-bounds ROI rows"):
     val source = domain("source", Vector(2, 1, 1))

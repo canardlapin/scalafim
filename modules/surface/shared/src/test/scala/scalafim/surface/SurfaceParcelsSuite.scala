@@ -36,6 +36,15 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: parcel part must be positive"):
       ParcelKey(1, Some(0))
 
+    interceptMessage[IllegalArgumentException]("requirement failed: parcel label must be non-negative"):
+      ParcelLabel(-1)
+
+    val key = ParcelKey.typed(ParcelLabel(9), Some(ParcelPart(2)))
+    assertEquals(key.label, 9)
+    assertEquals(key.part, Some(2))
+    assertEquals(key.display, "9.2")
+    assert(ParcelKey.fromEither(1, Some(0)).isLeft)
+
   test("centroid and geodesic medoid can select different parcel representatives"):
     val topology = SurfaceTestFixtures.skewedCentroidTopology
     val parcel = SurfaceTestFixtures.skewedCentroidParcel

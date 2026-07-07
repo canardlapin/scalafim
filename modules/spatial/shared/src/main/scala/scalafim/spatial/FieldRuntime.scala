@@ -39,37 +39,70 @@ object FieldDataRef:
     if rows < 0 || cols < 0 then Left(SpatialError.FieldShapeMismatch(rows, cols))
     else Right(FieldDataRef.External(label.trim, rows, cols))
 
-final case class OperatorCacheKey(
-  source: DomainId,
-  target: DomainId,
-  path: Vector[MorphismId],
-  routing: RoutingPolicy,
-  sampling: SamplingPolicy,
-  roi: Option[Vector[Int]],
-  allowInverses: Boolean,
-  compiler: String,
-  rows: Int,
-  cols: Int
-):
+final case class OperatorCacheKey(signature: OperatorSignature):
+  def source: DomainId =
+    signature.source
+
+  def target: DomainId =
+    signature.target
+
+  def path: Vector[MorphismId] =
+    signature.recipe.path
+
+  def routing: RoutingPolicy =
+    signature.recipe.routing
+
+  def sampling: SamplingPolicy =
+    signature.recipe.sampling
+
+  def rowSelection: RowSelection =
+    signature.recipe.rowSelection
+
+  def roi: Option[Vector[Int]] =
+    signature.recipe.roi
+
+  def allowInverses: Boolean =
+    signature.recipe.allowInverses
+
+  def compiler: String =
+    signature.recipe.compiler
+
+  def rows: Int =
+    signature.shape.rows
+
+  def cols: Int =
+    signature.shape.cols
+
   def label: String =
-    val pathLabel = if path.isEmpty then "identity" else path.map(_.value).mkString(">")
-    val roiLabel = roi.fold("all")(_.mkString("[", ",", "]"))
-    s"${source.value}->${target.value}|$pathLabel|$routing|$sampling|roi=$roiLabel|inv=$allowInverses|$compiler|${rows}x${cols}"
+    signature.label
 
 object OperatorCacheKey:
+  def apply(
+    source: DomainId,
+    target: DomainId,
+    path: Vector[MorphismId],
+    routing: RoutingPolicy,
+    sampling: SamplingPolicy,
+    roi: Option[Vector[Int]],
+    allowInverses: Boolean,
+    compiler: String,
+    rows: Int,
+    cols: Int
+  ): OperatorCacheKey =
+    val shape = OperatorShape.unsafe(rows, cols)
+    val recipe =
+      OperatorRecipe.unsafe(
+        path,
+        routing,
+        sampling,
+        RowSelection.unsafeFromRoi(roi),
+        allowInverses,
+        compiler
+      )
+    new OperatorCacheKey(OperatorSignature.unsafe(source, target, shape, recipe))
+
   def from(operator: SpatialOperator): OperatorCacheKey =
-    OperatorCacheKey(
-      source = operator.source,
-      target = operator.target,
-      path = operator.provenance.path,
-      routing = operator.provenance.routing,
-      sampling = operator.provenance.sampling,
-      roi = operator.provenance.roi,
-      allowInverses = operator.provenance.allowInverses,
-      compiler = operator.provenance.compiler,
-      rows = operator.rows,
-      cols = operator.cols
-    )
+    new OperatorCacheKey(operator.signature)
 
 final case class FieldTransform(
   key: OperatorCacheKey,
@@ -186,6 +219,8 @@ final class InMemoryOperatorCache private (
       Left(SpatialError.OperatorAssemblyFailed("operator cache key shape does not match operator"))
     else if key.source != operator.source || key.target != operator.target then
       Left(SpatialError.OperatorAssemblyFailed("operator cache key domains do not match operator"))
+    else if key.signature != operator.signature then
+      Left(SpatialError.OperatorAssemblyFailed("operator cache key signature does not match operator"))
     else
       store.update(key, operator)
       Right(())

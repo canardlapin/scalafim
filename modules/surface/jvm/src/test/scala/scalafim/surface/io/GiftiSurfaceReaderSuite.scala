@@ -41,6 +41,8 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     withGiftiFile("bad-pointset.surf.gii", xml) { path =>
       interceptMessage[IllegalArgumentException]("invalid GIFTI DataArray: GIFTI POINTSET array must have Dim1=3"):
         GiftiSurfaceReader.read(path)
+
+      assert(GiftiSurfaceReader.readEither(path).left.exists(_.message.contains("GIFTI POINTSET array must have Dim1=3")))
     }
 
   test("read rejects malformed TRIANGLE data with stable messages"):
@@ -93,6 +95,20 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
       assertEquals(geom.vertexCount, 3)
       assertEquals(geom.faceCount, 1)
       assertEquals(geom.mesh.face(FaceId(0)), Triangle(VertexId(0), VertexId(1), VertexId(2)))
+    }
+
+  test("read honors ColumnMajorOrder matrix payloads"):
+    val xml =
+      giftiXml(includeTransform = false)
+        .replace("ArrayIndexingOrder=\"RowMajorOrder\"", "ArrayIndexingOrder=\"ColumnMajorOrder\"")
+        .replace("0 0 0\n      1 0 0\n      0 1 0", "0 1 0\n      0 0 1\n      0 0 0")
+
+    withGiftiFile("column-major.surf.gii", xml) { path =>
+      val geom = GiftiSurfaceReader.read(path)
+
+      assertEquals(geom.mesh.vertex(VertexId(0)).toVector, Vector(0.0, 0.0, 0.0))
+      assertEquals(geom.mesh.vertex(VertexId(1)).toVector, Vector(1.0, 0.0, 0.0))
+      assertEquals(geom.mesh.vertex(VertexId(2)).toVector, Vector(0.0, 1.0, 0.0))
     }
 
   private def withGiftiFile[A](name: String, contents: String)(f: java.nio.file.Path => A): A =

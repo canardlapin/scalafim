@@ -43,6 +43,45 @@ class GiftiModelSuite extends munit.FunSuite:
     val label = GiftiLabel(2, "Positive", red = Some(1.0), green = Some(0.5), blue = Some(0.0), alpha = Some(1.0))
     assertEquals(label.colorHex, Some("#ff8000"))
 
+  test("payload vectors and matrices expose typed shape semantics"):
+    val vectorArray =
+      GiftiDataArray(
+        intent = GiftiIntent.Label,
+        dataType = GiftiDataType.Int32,
+        encoding = GiftiEncoding.Ascii,
+        endian = GiftiEndian.Little,
+        arrayOrder = GiftiArrayOrder.RowMajor,
+        dims = Vector(3),
+        metadata = Map.empty,
+        transforms = Vector.empty,
+        dataText = "1 2 3"
+      )
+    val vector = GiftiPayload.from(vectorArray, Vector(1, 2, 3)).toOption.get
+
+    assertEquals(GiftiPayload.requireVector(vector).toOption.get(1), 2)
+
+  test("payload matrices make row-major and column-major order explicit"):
+    val rowMajor =
+      GiftiDataArray(
+        intent = GiftiIntent.PointSet,
+        dataType = GiftiDataType.Float32,
+        encoding = GiftiEncoding.Ascii,
+        endian = GiftiEndian.Little,
+        arrayOrder = GiftiArrayOrder.RowMajor,
+        dims = Vector(2, 3),
+        metadata = Map.empty,
+        transforms = Vector.empty,
+        dataText = "1 2 3 4 5 6"
+      )
+    val columnMajor = rowMajor.copy(arrayOrder = GiftiArrayOrder.ColumnMajor)
+
+    val rowMatrix = GiftiPayload.matrix(rowMajor, Vector(1, 2, 3, 4, 5, 6)).toOption.get
+    val columnMatrix = GiftiPayload.matrix(columnMajor, Vector(1, 4, 2, 5, 3, 6)).toOption.get
+
+    assertEquals(rowMatrix.row(1), Vector(4, 5, 6))
+    assertEquals(columnMatrix.row(1), Vector(4, 5, 6))
+    assertEquals(columnMatrix.rowMajorValues, Vector(1, 2, 3, 4, 5, 6))
+
   test("documents provide typed array lookup and reject duplicate labels"):
     val pointset =
       GiftiDataArray(

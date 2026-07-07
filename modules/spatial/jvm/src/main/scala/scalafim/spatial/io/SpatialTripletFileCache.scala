@@ -94,7 +94,15 @@ object SpatialTripletFileCache:
       compiler <- readNonEmptyUtf(in, path, "operator key compiler")
       rows <- readNonNegativeInt(in, path, "operator key rows")
       cols <- readNonNegativeInt(in, path, "operator key cols")
-    yield OperatorCacheKey(source, target, pathIds, routing, sampling, roi, allowInverses, compiler, rows, cols)
+      shape <- OperatorShape.build(rows, cols).left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+      rowSelection <- RowSelection.fromRoi(roi).left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+      recipe <- OperatorRecipe
+        .build(pathIds, routing, sampling, rowSelection, allowInverses, compiler)
+        .left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+      signature <- OperatorSignature
+        .build(source, target, shape, recipe)
+        .left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+    yield new OperatorCacheKey(signature)
 
   private def writeProvenance(out: DataOutputStream, provenance: OperatorProvenance): Unit =
     writeMorphismIds(out, provenance.path)
@@ -112,7 +120,11 @@ object SpatialTripletFileCache:
       roi <- readOptionalIntVector(in, path, "operator provenance ROI")
       allowInverses = in.readBoolean()
       compiler <- readNonEmptyUtf(in, path, "operator provenance compiler")
-    yield OperatorProvenance(pathIds, routing, sampling, roi, allowInverses, compiler)
+      rowSelection <- RowSelection.fromRoi(roi).left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+      recipe <- OperatorRecipe
+        .build(pathIds, routing, sampling, rowSelection, allowInverses, compiler)
+        .left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+    yield OperatorProvenance.fromRecipe(recipe)
 
   private def writeTriplets(out: DataOutputStream, triplets: SparseTriplets): Unit =
     val rows = triplets.rowIndices

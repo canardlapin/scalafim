@@ -68,6 +68,8 @@ class FreeSurferSurfaceReaderSuite extends munit.FunSuite:
 
       interceptMessage[IllegalArgumentException]("requirement failed: Unsupported FreeSurfer binary surface magic: 1"):
         FreeSurferSurfaceReader.readBinary(path)
+
+      assert(FreeSurferSurfaceReader.readBinaryEither(path).left.exists(_.message.contains("Unsupported FreeSurfer binary surface magic: 1")))
     }
 
   test("readBinary rejects headers shorter than magic bytes"):

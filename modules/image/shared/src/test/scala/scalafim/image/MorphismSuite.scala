@@ -60,12 +60,11 @@ class MorphismSuite extends munit.FunSuite:
 
   test("affine morphism applies target-to-source pullback coordinates") {
     val morphism = affine(native, mni, translation(10.0, 20.0, 30.0))
+    val point = WorldPoint(1.0, 2.0, 3.0)
+    val expected = WorldPoint(11.0, 22.0, 33.0)
 
-    assertClose(
-      morphism.transform(Vector(1.0, 2.0, 3.0)),
-      Vector(11.0, 22.0, 33.0),
-      1e-10
-    )
+    assertClose(morphism.transform(point), expected, 1e-10)
+    assertClose(morphism.transform(point.toVector), expected.toVector, 1e-10)
   }
 
   test("morphisms expose typed SpatialPoint transform and jacobian helpers") {
@@ -109,10 +108,10 @@ class MorphismSuite extends munit.FunSuite:
     val composed = f.andThen(g).fold(err => fail(err.message), identity)
     assert(composed.isInstanceOf[Affine3DMorphism], clue = "affine composition should fuse into one affine")
 
-    val pointInTemplate = Vector(1.0, 2.0, 3.0)
+    val pointInTemplate = WorldPoint(1.0, 2.0, 3.0)
     val expected = f.transform(g.transform(pointInTemplate))
     assertClose(composed.transform(pointInTemplate), expected, 1e-10)
-    assertClose(composed.transform(pointInTemplate), Vector(12.0, 26.0, 42.0), 1e-10)
+    assertClose(composed.transform(pointInTemplate), WorldPoint(12.0, 26.0, 42.0), 1e-10)
   }
 
   test("morphism paths validate adjacent domains and preserve pullback order") {
@@ -121,7 +120,7 @@ class MorphismSuite extends munit.FunSuite:
     val h = affine(template, report, translation(-1.0, 5.0, 2.0))
 
     val path = MorphismPath.make(Vector(f, g, h)).fold(err => fail(err.message), identity)
-    val pointInReport = Vector(2.0, 2.0, 2.0)
+    val pointInReport = WorldPoint(2.0, 2.0, 2.0)
     val expected = f.transform(g.transform(h.transform(pointInReport)))
     assertClose(path.transform(pointInReport), expected, 1e-10)
 
@@ -141,35 +140,39 @@ class MorphismSuite extends munit.FunSuite:
     val morphism = affine(native, mni, translation(10.0, 20.0, 30.0))
     val inverse = morphism.invert.fold(err => fail(err.message), identity)
 
-    val pointInMni = Vector(4.0, 5.0, 6.0)
+    val pointInMni = WorldPoint(4.0, 5.0, 6.0)
     val pointInNative = morphism.transform(pointInMni)
     assertClose(inverse.transform(pointInNative), pointInMni, 1e-10)
   }
 
   test("affine jacobians expose pullback and pushforward determinants") {
     val morphism = affine(native, mni, scale(2.0, 3.0, 4.0))
-    val coords = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 2.0, 3.0))
+    val points = Vector(WorldPoint(0.0, 0.0, 0.0), WorldPoint(1.0, 2.0, 3.0))
 
-    val pullback = morphism.jacobian(coords).fold(err => fail(err.message), identity)
+    val pullback = morphism.jacobianAtWorld(points).fold(err => fail(err.message), identity)
     assertEquals(pullback.size, 2, clue = "")
     assertClose(pullback(0)(0, 0), 2.0)
     assertClose(pullback(0)(1, 1), 3.0)
     assertClose(pullback(0)(2, 2), 4.0)
 
-    val dets = morphism.jacobianDet(coords).fold(err => fail(err.message), identity)
+    val dets = morphism.jacobianDetAtWorld(points).fold(err => fail(err.message), identity)
     assertClose(dets(0), 24.0)
     assertClose(dets(1), 24.0)
 
     val pushforward =
-      morphism.jacobian(coords, JacobianMode.Pushforward).fold(err => fail(err.message), identity)
+      morphism.jacobianAtWorld(points, JacobianMode.Pushforward).fold(err => fail(err.message), identity)
     assertClose(pushforward(0)(0, 0), 0.5)
     assertClose(pushforward(0)(1, 1), 1.0 / 3.0)
     assertClose(pushforward(0)(2, 2), 0.25)
 
     val pushDets =
-      morphism.jacobianDet(coords, mode = JacobianMode.Pushforward).fold(err => fail(err.message), identity)
+      morphism.jacobianDetAtWorld(points, log = false, mode = JacobianMode.Pushforward)
+        .fold(err => fail(err.message), identity)
     assertClose(pushDets(0), 1.0 / 24.0)
     assertClose(pushDets(1), 1.0 / 24.0)
+
+    val compat = morphism.jacobian(points.map(_.toVector)).fold(err => fail(err.message), identity)
+    assertEquals(compat.coords, pullback.coords, clue = "")
   }
 
   test("dense displacement fields apply interpolated target-to-source pullback displacements") {
@@ -186,7 +189,7 @@ class MorphismSuite extends munit.FunSuite:
 
     assertEquals(morphism.kind, MorphismKind.DenseDisplacementField, clue = "")
     assertEquals(morphism.inverseKind, InverseKind.Unavailable, clue = "")
-    assertClose(morphism.transform(Vector(0.5, 0.0, 0.0)), Vector(2.5, 0.0, 0.0), 1e-10)
+    assertClose(morphism.transform(WorldPoint(0.5, 0.0, 0.0)), WorldPoint(2.5, 0.0, 0.0), 1e-10)
     assert(morphism.invert.isLeft, clue = "dense fields should not claim a direct inverse")
   }
 
@@ -204,7 +207,7 @@ class MorphismSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertEquals(morphism.kind, MorphismKind.DenseCoordinateField, clue = "")
-    assertClose(morphism.transform(Vector(0.5, 0.0, 0.0)), Vector(11.0, 20.0, 30.0), 1e-10)
+    assertClose(morphism.transform(WorldPoint(0.5, 0.0, 0.0)), WorldPoint(11.0, 20.0, 30.0), 1e-10)
   }
 
   test("dense field jacobians use numeric derivatives of the pullback transform") {
@@ -219,16 +222,16 @@ class MorphismSuite extends munit.FunSuite:
     val morphism =
       DenseFieldMorphism.displacement(native, mni, grid, field, Resample.Method.Linear)
         .fold(err => fail(err.message), identity)
-    val coords = Vector(Vector(1.0, 1.0, 1.0))
+    val points = Vector(WorldPoint(1.0, 1.0, 1.0))
 
-    val pullback = morphism.jacobian(coords).fold(err => fail(err.message), identity)
+    val pullback = morphism.jacobianAtWorld(points).fold(err => fail(err.message), identity)
     assertClose(pullback(0)(0, 0), 1.2, 1e-6)
     assertClose(pullback(0)(1, 1), 0.9, 1e-6)
     assertClose(pullback(0)(2, 2), 1.5, 1e-6)
     assertClose(pullback.determinants.head, 1.2 * 0.9 * 1.5, 1e-6)
 
     val pushforward =
-      morphism.jacobian(coords, JacobianMode.Pushforward).fold(err => fail(err.message), identity)
+      morphism.jacobianAtWorld(points, JacobianMode.Pushforward).fold(err => fail(err.message), identity)
     assertClose(pushforward(0)(0, 0), 1.0 / 1.2, 1e-6)
     assertClose(pushforward(0)(1, 1), 1.0 / 0.9, 1e-6)
     assertClose(pushforward(0)(2, 2), 1.0 / 1.5, 1e-6)
@@ -276,9 +279,9 @@ class MorphismSuite extends munit.FunSuite:
     val f = affine(native, mni, scale(2.0, 3.0, 4.0))
     val g = affine(mni, template, scale(5.0, 6.0, 7.0))
     val path = MorphismPath.make(Vector(f, g)).fold(err => fail(err.message), identity)
-    val coords = Vector(Vector(1.0, 2.0, 3.0))
+    val points = Vector(WorldPoint(1.0, 2.0, 3.0))
 
-    val field = path.jacobian(coords).fold(err => fail(err.message), identity)
+    val field = path.jacobianAtWorld(points).fold(err => fail(err.message), identity)
     assertClose(field(0)(0, 0), 10.0)
     assertClose(field(0)(1, 1), 18.0)
     assertClose(field(0)(2, 2), 28.0)
@@ -295,11 +298,11 @@ class MorphismSuite extends munit.FunSuite:
 
     assertEquals(plan.steps.length, 1, clue = "")
     assertEquals(plan.fusedAffinePairs, 1, clue = "")
-    assertClose(plan.transform(Vector(Vector(0.0, 0.0, 0.0))).head, Vector(1.0, 2.0, 0.0), 1e-10)
     assertClose(plan.transform(SpatialPoint.Origin), SpatialPoint(1.0, 2.0, 0.0), 1e-10)
     assertClose(plan.transform(WorldPoint.Origin), WorldPoint(1.0, 2.0, 0.0), 1e-10)
     assertEquals(plan.transformPoints(Vector(SpatialPoint.Origin)), Vector(SpatialPoint(1.0, 2.0, 0.0)), clue = "")
     assertEquals(plan.transformWorldPoints(Vector(WorldPoint.Origin)), Vector(WorldPoint(1.0, 2.0, 0.0)), clue = "")
+    assertClose(plan.transform(Vector(Vector(0.0, 0.0, 0.0))).head, Vector(1.0, 2.0, 0.0), 1e-10)
 
     val identities =
       MorphismExecutionPlan.make(Vector(IdentityMorphism(native), IdentityMorphism(native)))

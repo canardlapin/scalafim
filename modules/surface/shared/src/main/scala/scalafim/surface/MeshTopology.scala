@@ -1,5 +1,7 @@
 package scalafim.surface
 
+import scala.util.control.NonFatal
+
 final case class Edge private (a: VertexId, b: VertexId):
   def vertices: (VertexId, VertexId) =
     (a, b)
@@ -12,19 +14,30 @@ object Edge:
 final case class MeshTopology private (
   mesh: TriangleMesh,
   edges: Vector[Edge],
-  neighbors: Vector[Vector[VertexId]],
-  edgeLengths: Vector[Double]
+  private val neighborRows: Vector[Vector[VertexId]],
+  edgeLengths: Vector[Double],
+  domainOption: Option[SurfaceDomain] = None
 ):
   require(edges.length == edgeLengths.length, "edges and edgeLengths must match")
-  require(neighbors.length == mesh.vertexCount, "neighbor rows must match vertex count")
+  require(neighborRows.length == mesh.vertexCount, "neighbor rows must match vertex count")
+  domainOption.foreach(domain => require(domain.vertexCount == mesh.vertexCount, "topology domain vertex count must match mesh"))
 
   def edgeCount: Int =
     edges.length
 
-  def vertexDegree(vertex: VertexId): Int =
+  def neighborsOf(vertex: VertexId): Vector[VertexId] =
     val i = vertex.index
     require(i < mesh.vertexCount, "vertex id out of range")
-    neighbors(i).length
+    neighborRows(i)
+
+  def vertexDegree(vertex: VertexId): Int =
+    neighborsOf(vertex).length
+
+  def domainEither: Either[SurfaceError, SurfaceDomain] =
+    domainOption.toRight(SurfaceError.MissingSurfaceDomain("mesh topology"))
+
+  def withDomain(domain: SurfaceDomain): MeshTopology =
+    MeshTopology(mesh, edges, neighborRows, edgeLengths, Some(domain))
 
   def edgeLength(edge: Edge): Double =
     val a = mesh.vertex(edge.a)
@@ -70,6 +83,20 @@ final case class MeshTopology private (
 object MeshTopology:
 
   def from(mesh: TriangleMesh): MeshTopology =
+    from(mesh, None)
+
+  def from(geometry: SurfaceGeometry): MeshTopology =
+    from(geometry.mesh, geometry.domainEither.toOption)
+
+  def fromEither(mesh: TriangleMesh): Either[SurfaceError, MeshTopology] =
+    try scala.util.Right(from(mesh))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidTopology(SurfaceError.reason(error)))
+
+  def fromEither(geometry: SurfaceGeometry): Either[SurfaceError, MeshTopology] =
+    try scala.util.Right(from(geometry))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidTopology(SurfaceError.reason(error)))
+
+  private def from(mesh: TriangleMesh, domain: Option[SurfaceDomain]): MeshTopology =
     val edgePairs = Vector.newBuilder[(Int, Int)]
 
     var f = 0
@@ -108,7 +135,7 @@ object MeshTopology:
         (a - b).norm
       }
 
-    MeshTopology(mesh, edges, neighbors, lengths)
+    MeshTopology(mesh, edges, neighbors, lengths, domain)
 
   private def addPair(
     builder: scala.collection.mutable.Builder[(Int, Int), Vector[(Int, Int)]],

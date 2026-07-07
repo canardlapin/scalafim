@@ -60,6 +60,30 @@ class DomainSuite extends munit.FunSuite:
     val latent = SpaceRef.latent(0)
     assertEquals(latent.left.toOption, Some(SpatialError.NonPositiveDimension("latent", 0)))
 
+    val id = value(DomainId("latent"))
+    val space = value(SpaceRef.latent(3))
+    val geometry = value(SamplingGeometry.latent(3))
+    val domain = value(Domain.build(id, space, geometry))
+
+    assertEquals(domain.kind, DomainKind.Latent)
+    assertEquals(domain.nElements, 3)
+
+    assertEquals(
+      Domain.build(id, space, value(SamplingGeometry.latent(2))).left.toOption,
+      Some(SpatialError.LatentDimensionMismatch(id, 3, 2))
+    )
+
+  test("domain construction rejects mismatched declared and sampled kinds"):
+    val id = value(DomainId("bad-surface"))
+    val subject = value(SubjectId("sub-01"))
+    val modality = value(Modality("bold"))
+    val volume = value(SamplingGeometry.volume(NeuroSpace(Vector(2, 2, 1), trans = Some(DMat.eye(4)))))
+
+    assertEquals(
+      Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.White), volume).left.toOption,
+      Some(SpatialError.DomainKindMismatch(id, DomainKind.Surface, DomainKind.Volume))
+    )
+
   test("hybrid geometry computes stable offsets and rejects duplicate part names"):
     val left = volumeDomain("left", Vector(2, 1, 1))
     val right = volumeDomain("right", Vector(3, 1, 1))

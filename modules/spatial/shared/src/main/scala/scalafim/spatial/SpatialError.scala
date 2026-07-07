@@ -1,5 +1,19 @@
 package scalafim.spatial
 
+enum SpatialErrorReason:
+  case Identifier
+  case Dimension
+  case Geometry
+  case DomainKind
+  case MorphismCompatibility
+  case Graph
+  case Route
+  case CoordinateMap
+  case Operator
+  case RowSelection
+  case Field
+  case Cache
+
 enum SpatialError:
   case EmptyIdentifier(label: String)
   case NonPositiveDimension(label: String, value: Int)
@@ -7,9 +21,13 @@ enum SpatialError:
   case DuplicatePartName(name: PartName)
   case NegativeOffset(part: PartName, offset: Int)
   case MaskSpaceMismatch(label: String)
+  case DomainKindMismatch(id: DomainId, expected: DomainKind, actual: DomainKind)
+  case LatentDimensionMismatch(id: DomainId, spaceDim: Int, geometryDim: Int)
   case UnsupportedGeometry(label: String)
   case InvalidCost(value: Double)
   case InvalidQuality(label: String, value: Double)
+  case IdentityMorphismDomainMismatch(source: DomainId, target: DomainId)
+  case IncompatibleMorphismKind(kind: MorphismKind, source: DomainId, sourceKind: DomainKind, target: DomainId, targetKind: DomainKind)
   case DuplicateDomain(id: DomainId)
   case DuplicateMorphism(id: MorphismId)
   case DomainNotFound(id: DomainId)
@@ -35,6 +53,33 @@ enum SpatialError:
   case CoordinateTransformFailed(reason: String)
   case OperatorAssemblyFailed(reason: String)
 
+  def reasonKind: SpatialErrorReason =
+    this match
+      case EmptyIdentifier(_) =>
+        SpatialErrorReason.Identifier
+      case NonPositiveDimension(_, _) | LatentDimensionMismatch(_, _, _) | NegativeOffset(_, _) =>
+        SpatialErrorReason.Dimension
+      case EmptyHybrid | DuplicatePartName(_) | MaskSpaceMismatch(_) | UnsupportedGeometry(_) =>
+        SpatialErrorReason.Geometry
+      case DomainKindMismatch(_, _, _) =>
+        SpatialErrorReason.DomainKind
+      case InvalidCost(_) | InvalidQuality(_, _) | IdentityMorphismDomainMismatch(_, _) | IncompatibleMorphismKind(_, _, _, _, _) =>
+        SpatialErrorReason.MorphismCompatibility
+      case DuplicateDomain(_) | DuplicateMorphism(_) | DomainNotFound(_) | MorphismDomainMissing(_, _) =>
+        SpatialErrorReason.Graph
+      case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
+        SpatialErrorReason.Route
+      case InvalidAffineCoordinateMap(_) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
+        SpatialErrorReason.CoordinateMap
+      case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | OperatorAssemblyFailed(_) =>
+        SpatialErrorReason.Operator
+      case InvalidRoiRow(_, _) | DuplicateRoiRow(_) | EmptyRoi =>
+        SpatialErrorReason.RowSelection
+      case FieldDataUnavailable(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) =>
+        SpatialErrorReason.Field
+      case OperatorCacheMiss(_) =>
+        SpatialErrorReason.Cache
+
   def message: String =
     this match
       case EmptyIdentifier(label) =>
@@ -49,12 +94,20 @@ enum SpatialError:
         s"hybrid part ${part.value} has negative offset $offset"
       case MaskSpaceMismatch(label) =>
         s"$label mask geometry does not match sampled geometry"
+      case DomainKindMismatch(id, expected, actual) =>
+        s"domain ${id.value} declares $expected space but uses $actual sampling geometry"
+      case LatentDimensionMismatch(id, spaceDim, geometryDim) =>
+        s"latent domain ${id.value} declares $spaceDim dimensions but geometry has $geometryDim"
       case UnsupportedGeometry(label) =>
         s"unsupported geometry: $label"
       case InvalidCost(value) =>
         s"morphism cost must be finite and non-negative, got $value"
       case InvalidQuality(label, value) =>
         s"$label quality must be finite and in [0, 1], got $value"
+      case IdentityMorphismDomainMismatch(source, target) =>
+        s"identity morphism must stay within one domain, got ${source.value} to ${target.value}"
+      case IncompatibleMorphismKind(kind, source, sourceKind, target, targetKind) =>
+        s"morphism kind $kind is incompatible with ${source.value}:$sourceKind to ${target.value}:$targetKind"
       case DuplicateDomain(id) =>
         s"domain already exists in graph: ${id.value}"
       case DuplicateMorphism(id) =>

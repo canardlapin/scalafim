@@ -35,6 +35,7 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(field.vertexIds, Vector(VertexId(0), VertexId(2)))
     assertEquals(field.valueAt(VertexId(2)), Some(20.0))
     assertEquals(field.valueAt(VertexId(1)), None)
+    assertEquals(field.domainEither, geometry.domainEither)
 
   test("SurfaceField validates data length, uniqueness, and bounds"):
     interceptMessage[IllegalArgumentException]("requirement failed: field data length must match vertex indices"):
@@ -45,6 +46,9 @@ class SurfaceDataSuite extends munit.FunSuite:
 
     interceptMessage[IllegalArgumentException]("requirement failed: surface vertex index out of range"):
       SurfaceField.fromIndexed(geometry, Vector(VertexId(4)), Vector(1.0))
+
+    assert(SurfaceField.fromIndexedEither(geometry, Vector(VertexId(0), VertexId(0)), Vector(1.0, 2.0)).isLeft)
+    assert(SurfaceField.fullEither(geometry, Vector(1.0, 2.0)).isLeft)
 
   test("SurfaceMatrix stores vertices by feature columns"):
     val matrix =
@@ -90,7 +94,10 @@ class SurfaceDataSuite extends munit.FunSuite:
 
     assertEquals(labeled.size, 3)
     assertEquals(labeled.labelAt(VertexId(2)), Some(2))
+    assertEquals(labeled.parcelLabelAt(VertexId(2)).map(_.value), Some(2))
     assertEquals(labeled.info(1).map(_.name), Some("A"))
+    assertEquals(labeled.domainEither, geometry.domainEither)
+    assert(LabeledSurface.fromIndexedEither(geometry, Vector(VertexId(0), VertexId(0)), Vector(1, 2), Vector(LabelInfo(1, "A"))).isLeft)
 
   test("SurfaceSet validates shared hemisphere and vertex count"):
     val inflated = SurfaceGeometry(geometry.mesh, Hemisphere.Left, SurfaceKind.Inflated)

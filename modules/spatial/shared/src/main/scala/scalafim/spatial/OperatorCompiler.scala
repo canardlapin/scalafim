@@ -8,24 +8,50 @@ import scala.collection.mutable.ArrayBuffer
 enum SamplingPolicy:
   case Nearest, Trilinear
 
-final case class CompileRequest(
-  source: DomainId,
-  target: DomainId,
-  routing: RoutingPolicy = RoutingPolicy.Shortest,
-  sampling: SamplingPolicy = SamplingPolicy.Trilinear,
-  roi: Option[Vector[Int]] = None,
-  allowInverses: Boolean = false
-)
+final class CompileRequest private (
+  val source: DomainId,
+  val target: DomainId,
+  val routing: RoutingPolicy,
+  val sampling: SamplingPolicy,
+  val rowSelection: RowSelection,
+  val allowInverses: Boolean
+):
+  def roi: Option[Vector[Int]] =
+    rowSelection.roi
+
+object CompileRequest:
+  def apply(
+    source: DomainId,
+    target: DomainId,
+    routing: RoutingPolicy = RoutingPolicy.Shortest,
+    sampling: SamplingPolicy = SamplingPolicy.Trilinear,
+    roi: Option[Vector[Int]] = None,
+    allowInverses: Boolean = false
+  ): CompileRequest =
+    new CompileRequest(source, target, routing, sampling, RowSelection.unsafeFromRoi(roi), allowInverses)
+
+  def forRows(
+    source: DomainId,
+    target: DomainId,
+    rowSelection: RowSelection,
+    routing: RoutingPolicy = RoutingPolicy.Shortest,
+    sampling: SamplingPolicy = SamplingPolicy.Trilinear,
+    allowInverses: Boolean = false
+  ): CompileRequest =
+    new CompileRequest(source, target, routing, sampling, rowSelection, allowInverses)
 
 final case class CoverageReport private (
-  targetRows: Vector[Int],
+  rows: TargetRows,
   rowCoverage: Vector[Double]
 ):
-  require(targetRows.length == rowCoverage.length, "target rows and coverage must have equal length")
+  require(rows.length == rowCoverage.length, "target rows and coverage must have equal length")
   require(rowCoverage.forall(value => value.isFinite && value >= 0.0 && value <= 1.0), "coverage must be in [0, 1]")
 
+  def targetRows: Vector[Int] =
+    rows.indices
+
   def totalRows: Int =
-    targetRows.length
+    rows.length
 
   def coveredRows: Int =
     rowCoverage.count(_ > 0.0)
@@ -37,7 +63,7 @@ final case class CoverageReport private (
     if totalRows == 0 then 0.0 else coveredRows.toDouble / totalRows.toDouble
 
 object CoverageReport:
-  def build(targetRows: Vector[Int], rowCoverage: Vector[Double]): Either[SpatialError, CoverageReport] =
+  def build(targetRows: TargetRows, rowCoverage: Vector[Double]): Either[SpatialError, CoverageReport] =
     if targetRows.length != rowCoverage.length then
       Left(SpatialError.OperatorAssemblyFailed("coverage length does not match target row count"))
     else if rowCoverage.exists(value => !value.isFinite || value < 0.0 || value > 1.0) then
@@ -50,13 +76,51 @@ final case class OperatorQc(
 )
 
 final case class OperatorProvenance(
-  path: Vector[MorphismId],
-  routing: RoutingPolicy,
-  sampling: SamplingPolicy,
-  roi: Option[Vector[Int]],
-  allowInverses: Boolean,
-  compiler: String
-)
+  recipe: OperatorRecipe
+):
+  def path: Vector[MorphismId] =
+    recipe.path
+
+  def routing: RoutingPolicy =
+    recipe.routing
+
+  def sampling: SamplingPolicy =
+    recipe.sampling
+
+  def rowSelection: RowSelection =
+    recipe.rowSelection
+
+  def roi: Option[Vector[Int]] =
+    recipe.roi
+
+  def allowInverses: Boolean =
+    recipe.allowInverses
+
+  def compiler: String =
+    recipe.compiler
+
+object OperatorProvenance:
+  def apply(
+    path: Vector[MorphismId],
+    routing: RoutingPolicy,
+    sampling: SamplingPolicy,
+    roi: Option[Vector[Int]],
+    allowInverses: Boolean,
+    compiler: String
+  ): OperatorProvenance =
+    new OperatorProvenance(
+      OperatorRecipe.unsafe(
+        path,
+        routing,
+        sampling,
+        RowSelection.unsafeFromRoi(roi),
+        allowInverses,
+        compiler
+      )
+    )
+
+  def fromRecipe(recipe: OperatorRecipe): OperatorProvenance =
+    new OperatorProvenance(recipe)
 
 final case class SpatialOperator private (
   source: DomainId,
@@ -64,6 +128,7 @@ final case class SpatialOperator private (
   map: LinearMap,
   path: MorphismPath,
   qc: OperatorQc,
+  signature: OperatorSignature,
   provenance: OperatorProvenance
 ):
   require(map.rows == qc.coverage.totalRows, "operator row count must match coverage report")
@@ -88,7 +153,15 @@ object SpatialOperator:
   ): Either[SpatialError, SpatialOperator] =
     if map.rows != qc.coverage.totalRows then
       Left(SpatialError.OperatorAssemblyFailed("operator row count does not match coverage report"))
-    else Right(new SpatialOperator(source, target, map, path, qc, provenance))
+    else if source != path.source || target != path.target then
+      Left(SpatialError.OperatorAssemblyFailed("operator domains do not match morphism path"))
+    else if provenance.path != path.ids then
+      Left(SpatialError.OperatorAssemblyFailed("operator provenance path does not match morphism path"))
+    else
+      for
+        shape <- OperatorShape.build(map.rows, map.cols)
+        signature <- OperatorSignature.build(source, target, shape, provenance.recipe)
+      yield new SpatialOperator(source, target, map, path, qc, signature, provenance)
 
 trait OperatorCompiler:
   def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator]
@@ -110,9 +183,9 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       sourceSpace <- volumeSpace(sourceDomain)
       targetSpace <- volumeSpace(targetDomain)
       path <- graph.path(request.source, request.target, request.routing, request.allowInverses)
-      coordinateMap <- pathCoordinateMap(path)
-      rows <- selectedTargetRows(request.roi, targetDomain.nElements)
-      rowAssembly <- assembleRows(sourceSpace, targetSpace, rows, coordinateMap, request.sampling)
+      affinePath <- ExecutableAffinePath.from(path)
+      rows <- TargetRows.fromSelection(request.rowSelection, targetDomain.nElements)
+      rowAssembly <- assembleRows(sourceSpace, targetSpace, rows, affinePath.coordinateMap, request.sampling)
       triplets <- SparseTriplets(
         rows = rows.length,
         cols = sourceDomain.nElements,
@@ -122,20 +195,21 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       ).left.map(mapLinearError)
       csr <- CsrMatrix.fromTriplets(triplets).left.map(mapLinearError)
       coverage <- CoverageReport.build(rows, rowAssembly.coverage.toVector)
+      recipe <- OperatorRecipe.build(
+        path = affinePath.ids,
+        routing = request.routing,
+        sampling = request.sampling,
+        rowSelection = rows.selection,
+        allowInverses = request.allowInverses,
+        compiler = CompilerName
+      )
       operator <- SpatialOperator.build(
         source = request.source,
         target = request.target,
         map = csr,
         path = path,
         qc = OperatorQc(coverage, path.pathQuality),
-        provenance = OperatorProvenance(
-          path = path.ids,
-          routing = request.routing,
-          sampling = request.sampling,
-          roi = request.roi,
-          allowInverses = request.allowInverses,
-          compiler = CompilerName
-        )
+        provenance = OperatorProvenance.fromRecipe(recipe)
       )
     yield operator
 
@@ -144,56 +218,10 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       case SamplingGeometry.Volume(space, _) => Right(space.spatialSpace)
       case _ => Left(SpatialError.NonVolumeDomain(domain.id))
 
-  private def selectedTargetRows(roi: Option[Vector[Int]], targetRows: Int): Either[SpatialError, Vector[Int]] =
-    roi match
-      case None =>
-        Right(Vector.tabulate(targetRows)(identity))
-      case Some(rows) =>
-        if rows.isEmpty then Left(SpatialError.EmptyRoi)
-        else
-          val seen = scala.collection.mutable.HashSet.empty[Int]
-          var i = 0
-          var error = Option.empty[SpatialError]
-          while i < rows.length && error.isEmpty do
-            val row = rows(i)
-            if row < 0 || row >= targetRows then error = Some(SpatialError.InvalidRoiRow(row, targetRows))
-            else if seen.contains(row) then error = Some(SpatialError.DuplicateRoiRow(row))
-            else seen += row
-            i += 1
-          error match
-            case Some(err) => Left(err)
-            case None => Right(rows)
-
-  private def pathCoordinateMap(path: MorphismPath): Either[SpatialError, CoordinateMap] =
-    var matrix = scalafim.image.DMat.eye(4)
-    var sawAffine = false
-    var i = path.morphisms.length - 1
-    var error = Option.empty[SpatialError]
-    while i >= 0 && error.isEmpty do
-      val morphism = path.morphisms(i)
-      morphism.coordinateMap match
-        case CoordinateMap.Identity =>
-          if morphism.kind != MorphismKind.Identity then
-            error = Some(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
-        case CoordinateMap.Affine3D(step) =>
-          if morphism.kind != MorphismKind.Affine3D then
-            error = Some(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
-          else
-            matrix = Affine.multiply(step, matrix)
-            sawAffine = true
-        case CoordinateMap.Unspecified =>
-          error = Some(SpatialError.MissingCoordinateMap(morphism.id))
-      i -= 1
-
-    error match
-      case Some(err) => Left(err)
-      case None =>
-        if sawAffine then Right(CoordinateMap.Affine3D(matrix)) else Right(CoordinateMap.Identity)
-
   private def assembleRows(
     sourceSpace: NeuroSpace,
     targetSpace: NeuroSpace,
-    targetRows: Vector[Int],
+    targetRows: TargetRows,
     coordinateMap: CoordinateMap,
     sampling: SamplingPolicy
   ): Either[SpatialError, RowAssembly] =
@@ -206,7 +234,7 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
     var outRow = 0
     var error = Option.empty[SpatialError]
     while outRow < targetRows.length && error.isEmpty do
-      val targetIndex = targetRows(outRow)
+      val targetIndex = targetRows.indices(outRow)
       val targetVoxel = Indexing.indexToGrid3D(targetDims, targetIndex)
       val targetWorld =
         targetGrid.voxelToWorld(SpatialPoint(targetVoxel.x.toDouble, targetVoxel.y.toDouble, targetVoxel.z.toDouble))
