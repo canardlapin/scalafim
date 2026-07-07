@@ -364,8 +364,12 @@ Scala version should usually become a constructor or an error ADT case.
 Use `~/code/volregger` as the fixture generator, not as a runtime dependency.
 Current tiny fixture oracles live in
 `modules/motion/shared/src/test/scala/scalafim/fmri/motion/fixtures`.
-The first external fixture generator should write small static files under
-`modules/motion/shared/src/test/resources/motion/`.
+The first external fixture generator is
+`tools/motion/generate_volregger_fixtures.R`; it writes small static files under
+`modules/motion/shared/src/test/resources/motion/` and records the `volregger`
+commit plus source files used for generation. Shared JVM/Scala.js tests parse a
+Scala mirror of the generated core fixture, while a JVM-only resource test
+checks that the mirror matches `motion/volregger_core.fixture`.
 
 Fixture families:
 
