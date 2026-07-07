@@ -43,3 +43,6 @@ Run the opt-in JVM benchmark smoke harness with:
 ```sh
 sbt "motionJVM/runMain scalafim.fmri.motion.benchmark.MotionBenchmarkCli --profile smoke --out modules/motion/jvm/target/motion-benchmark-smoke"
 ```
+
+The volregger closeout audit and unsupported-feature ledger are in
+[`docs/audits/motion-volregger-closeout.md`](../../docs/audits/motion-volregger-closeout.md).

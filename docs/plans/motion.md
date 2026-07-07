@@ -73,7 +73,11 @@ The dependency order is:
      real-data inputs/backends stay opt-in.
 5. Final closeout:
    - `bd-01KWX6S0NG16V6Y8HC387CJSY3` - API and verification audit. The epic is
-     blocked on this gate.
+     satisfied by `docs/audits/motion-volregger-closeout.md`.
+
+Closeout audit:
+
+- `docs/audits/motion-volregger-closeout.md`
 
 ## Home
 
