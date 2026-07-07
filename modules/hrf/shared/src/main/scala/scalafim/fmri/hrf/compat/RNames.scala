@@ -131,7 +131,7 @@ object r:
   def samples(sframe: SamplingFrame, global: Boolean = false): Vector[Double] =
     sframe.samples(global = global).map(_.value)
   def global_onsets(sframe: SamplingFrame, onsets: Seq[Double], blockids: Seq[Int]): Vector[Double] =
-    sframe.globalOnsets(onsets.map(_.s), blockids).map(_.value)
+    sframe.globalOnsets(onsets.map(Seconds(_)), blockids).map(_.value)
 
   // ---- Regressors ----
   def regressor(

@@ -5,6 +5,10 @@ trait Hrf extends (Seconds => scalafim.fmri.hrf.linalg.Vec):
   def nbasis: Int
   def span: Seconds
   def params: Map[String, Any] = Map.empty
+  def descriptor: HrfDescriptor =
+    HrfDescriptor.custom(name, nbasis, span, HrfParams.Legacy(params))
+  def basis: BasisCount =
+    descriptor.basis
 
   protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec
 
@@ -30,7 +34,7 @@ trait Hrf extends (Seconds => scalafim.fmri.hrf.linalg.Vec):
     eval(grid.iterator.map(Seconds(_)))
 
   final def evalScalar(grid: IterableOnce[Seconds]): Array[Double] =
-    require(nbasis == 1, s"evalScalar only valid for nbasis=1, got $nbasis")
+    require(descriptor.isScalar, s"evalScalar only valid for nbasis=1, got $nbasis")
     val it = grid.iterator
     val out = new scala.collection.mutable.ArrayBuffer[Double]()
     while it.hasNext do out += eval1(it.next()).data(0)
@@ -56,6 +60,7 @@ object ScalarHrf:
               def name: String = other.name
               def span: Seconds = other.span
               override def params: Map[String, Any] = other.params
+              override def descriptor: HrfDescriptor = other.descriptor
               def scalarAt(t: Seconds): Double = other(t).data(0)
           )
 
@@ -64,38 +69,50 @@ object Hrf:
       name: String,
       nbasis: Int = 1,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty
+      params: Map[String, Any] = Map.empty,
+      descriptor: Option[HrfDescriptor] = None
   )(f: Seconds => scalafim.fmri.hrf.linalg.Vec): Hrf =
-    require(nbasis >= 1, "nbasis must be >= 1")
+    val basis0 = BasisCount(nbasis)
     val name0 = name
-    val nbasis0 = nbasis
     val span0 = span
     val params0 = params
+    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, basis0.value, span0, HrfParams.Legacy(params0)))
+    require(descriptor0.nbasis == basis0.value, s"descriptor basis ${descriptor0.nbasis} != nbasis ${basis0.value}")
     new Hrf:
       def name: String = name0
-      def nbasis: Int = nbasis0
+      def nbasis: Int = basis0.value
       def span: Seconds = span0
-      override def params: Map[String, Any] = params0
+      override def params: Map[String, Any] =
+        val legacy = descriptor0.legacyParams
+        if legacy.nonEmpty then legacy else params0
+      override def descriptor: HrfDescriptor = descriptor0
       protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec = f(t)
 
   def scalar(
       name: String,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty
+      params: Map[String, Any] = Map.empty,
+      descriptor: Option[HrfDescriptor] = None
   )(f: Seconds => Double): ScalarHrf =
     val name0 = name
     val span0 = span
     val params0 = params
+    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, 1, span0, HrfParams.Legacy(params0)))
+    require(descriptor0.isScalar, s"scalar HRF descriptor must have nbasis=1, got ${descriptor0.nbasis}")
     new ScalarHrf:
       def name: String = name0
       def span: Seconds = span0
-      override def params: Map[String, Any] = params0
+      override def params: Map[String, Any] =
+        val legacy = descriptor0.legacyParams
+        if legacy.nonEmpty then legacy else params0
+      override def descriptor: HrfDescriptor = descriptor0
       def scalarAt(t: Seconds): Double = f(t)
 
   def multi(
       name: String,
       nbasis: Int,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty
+      params: Map[String, Any] = Map.empty,
+      descriptor: Option[HrfDescriptor] = None
   )(f: Seconds => Array[Double]): Hrf =
-    of(name, nbasis = nbasis, span = span, params = params)(t => scalafim.fmri.hrf.linalg.Vec.unsafe(f(t)))
+    of(name, nbasis = nbasis, span = span, params = params, descriptor = descriptor)(t => scalafim.fmri.hrf.linalg.Vec.unsafe(f(t)))

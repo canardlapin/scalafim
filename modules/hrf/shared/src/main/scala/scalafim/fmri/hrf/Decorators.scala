@@ -12,7 +12,8 @@ object HrfCombinators:
       val nb = hrfs.map(_.nbasis).sum
       val sp = hrfs.map(_.span).max
       val nm = name.getOrElse(hrfs.map(_.name).mkString(" + "))
-      Hrf.of(nm, nbasis = nb, span = sp) { t =>
+      val descriptor = HrfDescriptor.composite(nm, hrfs.toVector.map(_.descriptor), sp)
+      Hrf.of(nm, nbasis = nb, span = sp, descriptor = Some(descriptor)) { t =>
         val out = new Array[Double](nb)
         var offset = 0
         var i = 0
@@ -31,7 +32,9 @@ object HrfCombinators:
       if lag.value == 0.0 then hrf
       else
         val newSpan = if lag.value > 0.0 then hrf.span + lag else hrf.span
-        Hrf.of(s"${hrf.name}_lag(${lag.value})", nbasis = hrf.nbasis, span = newSpan) { t =>
+        val nm = s"${hrf.name}_lag(${lag.value})"
+        val descriptor = hrf.descriptor.derived(nm, span = newSpan)
+        Hrf.of(nm, nbasis = hrf.nbasis, span = newSpan, descriptor = Some(descriptor)) { t =>
           hrf(Seconds(t.value - lag.value))
         }
 
@@ -50,7 +53,9 @@ object HrfCombinators:
           j += 1
         i += 1
       val scales = maxAbs.map(m => if m > 1e-10 then m else 1.0)
-      Hrf.of(s"${hrf.name}_norm", nbasis = hrf.nbasis, span = hrf.span) { t =>
+      val nm = s"${hrf.name}_norm"
+      val descriptor = hrf.descriptor.derived(nm, span = hrf.span)
+      Hrf.of(nm, nbasis = hrf.nbasis, span = hrf.span, descriptor = Some(descriptor)) { t =>
         val v = hrf(t).data
         Vec.unsafe(v.zip(scales).map(_ / _))
       }
@@ -112,7 +117,9 @@ object HrfCombinators:
               k += 1
             maxAbs.map(m => if m > 1e-10 then m else 1.0)
 
-        Hrf.of(s"${hrf.name}_block(w=${width.value})", nbasis = hrf.nbasis, span = newSpan) { t =>
+        val nm = s"${hrf.name}_block(w=${width.value})"
+        val descriptor = hrf.descriptor.derived(nm, span = newSpan)
+        Hrf.of(nm, nbasis = hrf.nbasis, span = newSpan, descriptor = Some(descriptor)) { t =>
           val raw = rawAt(t)
           Vec.unsafe(raw.zip(scales).map(_ / _))
         }
@@ -120,7 +127,15 @@ object HrfCombinators:
     def withCoefficients(coeffs: Array[Double], name: Option[String] = None): Hrf =
       require(coeffs.length == hrf.nbasis, s"length(coeffs) must equal nbasis (${hrf.nbasis})")
       val nm = name.getOrElse(s"${hrf.name}_from_coef")
-      Hrf.of(nm, nbasis = 1, span = hrf.span) { t =>
+      val descriptor =
+        HrfDescriptor.derived(
+          name = nm,
+          nbasis = 1,
+          span = hrf.span,
+          params = HrfParams.Coefficients(hrf.name, coeffs.toVector),
+          components = Vector(hrf.descriptor)
+        )
+      Hrf.of(nm, nbasis = 1, span = hrf.span, descriptor = Some(descriptor)) { t =>
         val v = hrf(t).data
         var acc = 0.0
         var i = 0
@@ -186,8 +201,11 @@ object HrfCombinators:
     val withNorm = if normalize then withLag.normalize(precision) else withLag
     val renamed =
       name match
-        case Some(nm) => Hrf.of(nm, nbasis = withNorm.nbasis, span = withNorm.span) { t => withNorm(t) }
+        case Some(nm) =>
+          val descriptor = withNorm.descriptor.copy(family = HrfFamily.Derived(nm))
+          Hrf.of(nm, nbasis = withNorm.nbasis, span = withNorm.span, descriptor = Some(descriptor)) { t => withNorm(t) }
         case None => withNorm
     span match
-      case Some(sp) => Hrf.of(renamed.name, nbasis = renamed.nbasis, span = sp) { t => renamed(t) }
+      case Some(sp) =>
+        Hrf.of(renamed.name, nbasis = renamed.nbasis, span = sp, descriptor = Some(renamed.descriptor.withSpan(sp))) { t => renamed(t) }
       case None     => renamed

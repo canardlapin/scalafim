@@ -65,21 +65,24 @@ object StimulusEvent:
     if amplitude.isFinite then Right(amplitude) else Left(RegressorError.InvalidAmplitude(index, amplitude))
 
 sealed trait HrfAssignment:
-  def nbasis: Int
+  def basis: BasisCount
+  def nbasis: Int = basis.value
   def span: Seconds
-  def at(t: Seconds, eventIndex: Int): Vec
+  def eventHrf(eventIndex: Int): Hrf
+  def at(t: Seconds, eventIndex: Int): Vec =
+    eventHrf(eventIndex)(t)
 
 object HrfAssignment:
   final case class Shared(hrf: Hrf) extends HrfAssignment:
-    def nbasis: Int = hrf.nbasis
+    def basis: BasisCount = hrf.basis
     def span: Seconds = hrf.span
-    def at(t: Seconds, eventIndex: Int): Vec = hrf(t)
+    def eventHrf(eventIndex: Int): Hrf = hrf
 
   final case class PerEvent(hrfs: Vector[Hrf]) extends HrfAssignment:
-    require(hrfs.isEmpty || hrfs.forall(_.nbasis == hrfs.head.nbasis), "all per-event HRFs must have the same nbasis")
-    def nbasis: Int = if hrfs.isEmpty then 1 else hrfs.head.nbasis
+    require(hrfs.isEmpty || hrfs.forall(_.basis == hrfs.head.basis), "all per-event HRFs must have the same nbasis")
+    def basis: BasisCount = if hrfs.isEmpty then BasisCount.One else hrfs.head.basis
     def span: Seconds = if hrfs.isEmpty then Seconds(0.0) else hrfs.map(_.span).max
-    def at(t: Seconds, eventIndex: Int): Vec = hrfs(eventIndex)(t)
+    def eventHrf(eventIndex: Int): Hrf = hrfs(eventIndex)
 
 final case class Regressor private (
     events: Vector[StimulusEvent],
@@ -150,7 +153,7 @@ object Regressor:
             else
               val keep = events.iterator.zipWithIndex.collect { case (event, i) if event.amplitude != 0.0 => i }.toVector
               val keptHrfs = keep.map(hrfs)
-              if keptHrfs.nonEmpty && keptHrfs.exists(_.nbasis != keptHrfs.head.nbasis) then Left(RegressorError.MixedBasisCounts)
+              if keptHrfs.nonEmpty && keptHrfs.exists(_.basis != keptHrfs.head.basis) then Left(RegressorError.MixedBasisCounts)
               else Right(HrfAssignment.PerEvent(keptHrfs))
       hrf0.map(hrf1 => Regressor(filtered, hrf1, span0, summate))
     }
@@ -239,7 +242,7 @@ object Regressor:
         case RegressorError.LengthMismatch(_, expected, actual) => RegressorError.HrfLengthMismatch(expected, actual)
         case other => other
       }
-      _ <- if hrs.nonEmpty && hrs.exists(_.nbasis != hrs.head.nbasis) then Left(RegressorError.MixedBasisCounts) else Right(())
+      _ <- if hrs.nonEmpty && hrs.exists(_.basis != hrs.head.basis) then Left(RegressorError.MixedBasisCounts) else Right(())
       durs0 <- recycleOrError(duration, ons.length, "duration")
       amps0 <- recycleOrError(amplitude, ons.length, "amplitude")
       durs <- secondsVector(durs0, "duration", RegressorError.InvalidDuration.apply)
@@ -286,15 +289,15 @@ object Regressor:
       val durs = keepIdx.map(reg.durations).toVector
       val amps = keepIdx.map(reg.amplitudes).toVector
 
-      val hrfIsList = reg.hrf.isInstanceOf[HrfAssignment.PerEvent]
-      method match
-        case EvalMethod.Loop => evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
-        case _ if hrfIsList =>
+      (reg.hrf, method) match
+        case (_, EvalMethod.Loop) =>
           evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
-        case EvalMethod.Conv =>
-          evalConv(reg.hrf.asInstanceOf[HrfAssignment.Shared].hrf, reg.span, sorted, ons, durs, amps, dt)
-        case EvalMethod.FFT =>
-          evalFft(reg.hrf.asInstanceOf[HrfAssignment.Shared].hrf, reg.span, sorted, ons, durs, amps, dt)
+        case (HrfAssignment.PerEvent(_), _) =>
+          evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
+        case (HrfAssignment.Shared(hrf), EvalMethod.Conv) =>
+          evalConv(hrf, reg.span, sorted, ons, durs, amps, dt)
+        case (HrfAssignment.Shared(hrf), EvalMethod.FFT) =>
+          evalFft(hrf, reg.span, sorted, ons, durs, amps, dt)
 
   private def evalHrfEvent(
       hrf: Hrf,
@@ -364,9 +367,7 @@ object Regressor:
       val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= span.value)
       if validIdx.nonEmpty then
         val relValid = validIdx.map(rel).toArray
-        val hrf = hrfAssign match
-          case HrfAssignment.Shared(h) => h
-          case HrfAssignment.PerEvent(hs) => hs(e)
+        val hrf = hrfAssign.eventHrf(e)
         val resp = evalHrfEvent(hrf, relValid, amps(e), durations(e), precision, summate)
         var i = 0
         while i < validIdx.length do

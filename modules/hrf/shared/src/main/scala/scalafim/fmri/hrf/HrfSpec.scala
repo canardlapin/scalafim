@@ -77,6 +77,9 @@ final case class HrfSpec private (
     summate: Boolean,
     normalize: Boolean
 ):
+  def basis: BasisCount =
+    BasisCount.unsafe(nbasis)
+
   def toHrf: Either[HrfSpecError, Hrf] =
     build(applySpecSpan = true)
 
@@ -132,14 +135,14 @@ object HrfSpec:
       summate: Boolean = true,
       normalize: Boolean = false
   ): Either[HrfSpecError, HrfSpec] =
-    if nbasis < 1 then Left(HrfSpecError.InvalidBasisCount(nbasis))
-    else
+    BasisCount.fromInt(nbasis).left.map(_ => HrfSpecError.InvalidBasisCount(nbasis)).flatMap { basis =>
       for
         span0 <- PositiveSeconds.fromSeconds(span, "span").left.map(HrfSpecError.InvalidSpan.apply)
         lag0 <- Seconds.fromDouble(lag.value, "lag").left.map(HrfSpecError.InvalidLag.apply)
         width0 <- NonNegativeSeconds.fromSeconds(width, "width").left.map(HrfSpecError.InvalidWidth.apply)
         precision0 <- PositiveSeconds.fromSeconds(precision, "precision").left.map(HrfSpecError.InvalidPrecision.apply)
-      yield HrfSpec(kind, nbasis, span0, lag0, width0, precision0, summate, normalize)
+      yield HrfSpec(kind, basis.value, span0, lag0, width0, precision0, summate, normalize)
+    }
 
   def fromName(
       name: String,

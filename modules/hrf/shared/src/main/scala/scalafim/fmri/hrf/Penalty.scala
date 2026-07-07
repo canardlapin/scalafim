@@ -47,24 +47,18 @@ object Penalty:
       shrinkDeriv: Double = 2.0
   ): Mat =
     val nb = hrf.nbasis
-    hrf.name.toLowerCase match
-      case n if n.startsWith("spmg2") =>
-        val out = Mat.eye(nb).data
-        if nb >= 1 then out(0) = 0.0
-        if nb >= 2 then out(1 * nb + 1) = shrinkDeriv
-        Mat.unsafe(nb, nb, out)
-
-      case n if n.startsWith("spmg3") =>
+    hrf.descriptor.penalty match
+      case PenaltyPolicy.SpmgDerivatives =>
         val out = Mat.eye(nb).data
         if nb >= 1 then out(0) = 0.0
         if nb >= 2 then out(1 * nb + 1) = shrinkDeriv
         if nb >= 3 then out(2 * nb + 2) = shrinkDeriv
         Mat.unsafe(nb, nb, out)
 
-      case n if n.startsWith("fir") || n.startsWith("bspline") || n.startsWith("tent") =>
+      case PenaltyPolicy.Roughness =>
         roughnessPenalty(nb, order)
 
-      case n if n.startsWith("fourier") =>
+      case PenaltyPolicy.FourierFrequency =>
         val out = Array.fill(nb * nb)(0.0)
         var k = 0
         while k < nb do
@@ -73,7 +67,7 @@ object Penalty:
           k += 1
         Mat.unsafe(nb, nb, out)
 
-      case n if n.startsWith("daguerre") =>
+      case PenaltyPolicy.DaguerreDecay =>
         val out = Array.fill(nb * nb)(0.0)
         var k = 0
         while k < nb do
@@ -81,5 +75,5 @@ object Penalty:
           k += 1
         Mat.unsafe(nb, nb, out)
 
-      case _ =>
+      case PenaltyPolicy.Identity =>
         Mat.eye(nb)

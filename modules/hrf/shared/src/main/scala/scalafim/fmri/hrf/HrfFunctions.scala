@@ -270,37 +270,46 @@ object Hrfs:
     case Constant, Linear
 
   def gamma(shape: Double = 6.0, rate: Double = 1.0, span: Seconds = 24.s): Hrf =
-    Hrf.of("gamma", nbasis = 1, span = span, params = Map("shape" -> shape, "rate" -> rate)) { t =>
+    val params = HrfParams.Gamma(shape, rate)
+    Hrf.of("gamma", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Gamma, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.gammaPdf(t, shape, rate)))
     }
 
   def gaussian(mean: Double = 6.0, sd: Double = 2.0, span: Seconds = 24.s): Hrf =
-    Hrf.of("gaussian", nbasis = 1, span = span, params = Map("mean" -> mean, "sd" -> sd)) { t =>
+    val params = HrfParams.Gaussian(mean, sd)
+    Hrf.of("gaussian", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Gaussian, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.gaussianPdf(t, mean, sd)))
     }
 
   def spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
-    Hrf.of("SPMG1", nbasis = 1, span = span, params = Map("P1" -> P1, "P2" -> P2, "A1" -> A1)) { t =>
+    val params = SpmgParams(P1, P2, A1)
+    Hrf.of("SPMG1", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.spmg(HrfKind.Spmg1, 1, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.spmg1(t, P1, P2, A1)))
     }
 
   def spmg1TemporalDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
-    Hrf.of("SPMG1_temporal_deriv", nbasis = 1, span = span, params = Map("P1" -> P1, "P2" -> P2, "A1" -> A1)) { t =>
+    val params = SpmgParams(P1, P2, A1)
+    val descriptor = HrfDescriptor.derived("SPMG1_temporal_deriv", 1, span, params = HrfParams.Spmg(params))
+    Hrf.of("SPMG1_temporal_deriv", nbasis = 1, span = span, descriptor = Some(descriptor)) { t =>
       Vec.unsafe(Array(HrfFunctions.spmg1Deriv(t, P1, P2, A1)))
     }
 
   def spmg1DispersionDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
-    Hrf.of("SPMG1_dispersion_deriv", nbasis = 1, span = span, params = Map("P1" -> P1, "P2" -> P2, "A1" -> A1)) { t =>
+    val params = SpmgParams(P1, P2, A1)
+    val descriptor = HrfDescriptor.derived("SPMG1_dispersion_deriv", 1, span, params = HrfParams.Spmg(params))
+    Hrf.of("SPMG1_dispersion_deriv", nbasis = 1, span = span, descriptor = Some(descriptor)) { t =>
       Vec.unsafe(Array(HrfFunctions.spmg1SecondDeriv(t, P1, P2, A1)))
     }
 
   def mexhat(mean: Double = 6.0, sd: Double = 2.0, span: Seconds = 24.s): Hrf =
-    Hrf.of("mexhat", nbasis = 1, span = span) { t =>
+    val params = HrfParams.Mexhat(mean, sd)
+    Hrf.of("mexhat", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Mexhat, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.mexhat(t, mean, sd)))
     }
 
   def invLogit(mu1: Double = 6.0, s1: Double = 1.0, mu2: Double = 16.0, s2: Double = 1.0, lag: Seconds = 0.0.s, span: Seconds = 24.s): Hrf =
-    Hrf.of("inv_logit", nbasis = 1, span = span) { t =>
+    val params = HrfParams.InvLogit(mu1, s1, mu2, s2, lag)
+    Hrf.of("inv_logit", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.InvLogit, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.invLogit(t, mu1, s1, mu2, s2, lag)))
     }
 
@@ -313,7 +322,8 @@ object Hrfs:
       f2: Double = 0.0
   ): Hrf =
     val spanSec = h1 + h2 + h3 + h4
-    Hrf.of("half_cosine", nbasis = 1, span = spanSec) { t =>
+    val params = HrfParams.HalfCosine(h1, h2, h3, h4, f1, f2)
+    Hrf.of("half_cosine", nbasis = 1, span = spanSec, descriptor = Some(HrfDescriptor.scalar(HrfKind.HalfCosine, spanSec, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.halfCosine(t, h1, h2, h3, h4, f1, f2)))
     }
 
@@ -339,7 +349,8 @@ object Hrfs:
             i += 1
           if m > 1e-10 then m else 1.0
         case _ => 1.0
-    Hrf.of("lwu", nbasis = 1, span = span) { t =>
+    val params = HrfParams.Lwu(LwuParams(tau, sigma, rho), normalize)
+    Hrf.of("lwu", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Lwu, span, params))) { t =>
       Vec.unsafe(Array(raw(t) / scale))
     }
 
@@ -347,7 +358,8 @@ object Hrfs:
     require(width.value.isFinite && width.value > 0.0, "`width` must be > 0")
     require(amplitude.isFinite, "`amplitude` must be finite")
     val amp = if normalize then 1.0 / width.value else amplitude
-    Hrf.of(s"boxcar[${width.value}]", nbasis = 1, span = width) { t =>
+    val params = HrfParams.Boxcar(width, amplitude, normalize)
+    Hrf.of(s"boxcar[${width.value}]", nbasis = 1, span = width, descriptor = Some(HrfDescriptor.scalar(HrfKind.Boxcar, width, params))) { t =>
       val x = t.value
       Vec.unsafe(Array(if x >= 0.0 && x < width.value then amp else 0.0))
     }
@@ -359,23 +371,18 @@ object Hrfs:
       method: WeightedMethod = WeightedMethod.Constant,
       normalize: Boolean = false
   ): Hrf =
-    require(weights.length >= 2, "`weights` must have at least 2 elements")
-
-    val ts: Vector[Seconds] =
+    val profile =
       times match
         case Some(tvec) =>
-          require(tvec.length == weights.length, "`times` and `weights` must have same length")
-          require(tvec.head.value >= 0.0, "`times` must start at >= 0")
-          require(tvec.sliding(2).forall(w => w.length == 2 && w(1).value > w(0).value), "`times` must be strictly increasing")
-          tvec
+          WeightedProfile.fromExplicit(weights, tvec)
         case None =>
-          val w = width.getOrElse(throw new IllegalArgumentException("Either `width` or `times` must be provided"))
-          require(w.value > 0.0, "`width` must be > 0")
-          val n = weights.length
-          Vector.tabulate(n)(i => Seconds(i.toDouble * w.value / (n - 1).toDouble))
+          width match
+            case Some(w) => WeightedProfile.fromUniform(weights, w)
+            case None => throw new IllegalArgumentException("Either `width` or `times` must be provided")
+    val profile0 = profile.fold(err => throw new IllegalArgumentException(err.message), identity)
 
-    val timesD = ts.map(_.value).toArray
-    var ws = weights.toArray
+    val timesD = profile0.times.toVector.map(_.value).toArray
+    var ws = profile0.weights.toArray
 
     if normalize then
       method match
@@ -399,8 +406,9 @@ object Hrfs:
       math.max(0, math.min(timesD.length - 2, hi))
 
     val span = Seconds(timesD.last)
+    val params = HrfParams.Weighted(profile0, method, normalize)
 
-    Hrf.of("weighted", nbasis = 1, span = span) { t =>
+    Hrf.of("weighted", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.scalar(HrfKind.Weighted, span, params))) { t =>
       val x = t.value
       val v =
         if x < timesD.head || x > timesD.last then 0.0
@@ -425,13 +433,12 @@ object Hrfs:
       values: Seq[Double],
       name: String = "empirical_hrf"
   ): Hrf =
-    require(times.nonEmpty, "`times` must be non-empty")
-    require(times.length == values.length, "`times` and `values` must match length")
-    val pairs = times.zip(values).sortBy(_._1.value)
-    val ts = pairs.map(_._1.value).toArray
-    val ys = pairs.map(_._2).toArray
-    require(ts.sliding(2).forall { case Array(a, b) => b > a }, "`times` must be strictly increasing")
-    val span = Seconds(ts.last)
+    val curve = SampledCurve
+      .fromUnsorted(times.toVector, values.toVector)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
+    val ts = curve.times.toVector.map(_.value).toArray
+    val ys = curve.values.toArray
+    val span = curve.span
 
     def interp(x: Double): Double =
       if x < ts.head || x > ts.last then 0.0
@@ -452,65 +459,78 @@ object Hrfs:
             return y0 + a * (y1 - y0)
         ys.last
 
-    Hrf.scalar(name, span = span, params = Map("times" -> ts.toVector, "values" -> ys.toVector)) { t =>
+    val descriptor = HrfDescriptor.custom(name, 1, span, HrfParams.Empirical(curve))
+    Hrf.scalar(name, span = span, descriptor = Some(descriptor)) { t =>
       interp(t.value)
     }
 
   def sine(nBasis: Int = 5, span: Seconds = 24.s): Hrf =
-    Hrf.of("sine", nbasis = nBasis, span = span) { t =>
+    val basis = BasisCount(nBasis)
+    val descriptor = HrfDescriptor.known(HrfKind.Sine, basis.value, span, HrfParams.Sine(basis))
+    Hrf.of("sine", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
       Vec.unsafe(HrfFunctions.sineBasis(t, span, nBasis))
     }
 
   def fourier(nBasis: Int = 5, span: Seconds = 24.s): Hrf =
-    Hrf.of("fourier", nbasis = nBasis, span = span) { t =>
+    val basis = BasisCount(nBasis)
+    val descriptor = HrfDescriptor.known(HrfKind.Fourier, basis.value, span, HrfParams.Fourier(basis), penalty = PenaltyPolicy.FourierFrequency)
+    Hrf.of("fourier", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
       Vec.unsafe(HrfFunctions.fourierBasis(t, span, nBasis))
     }
 
   def daguerre(nBasis: Int = 3, scale: Double = 4.0, span: Seconds = 24.s): Hrf =
+    val basis = BasisCount(nBasis)
     val dt = 0.1
     val nSamples = math.ceil(span.value / dt).toInt + 1
-    val maxAbs = Array.fill(nBasis)(0.0)
+    val maxAbs = Array.fill(basis.value)(0.0)
     var i = 0
     while i < nSamples do
       val t = Seconds(i * dt)
-      val raw = HrfFunctions.daguerreBasis(t, nBasis, scale)
+      val raw = HrfFunctions.daguerreBasis(t, basis.value, scale)
       var j = 0
-      while j < nBasis do
+      while j < basis.value do
         val a = math.abs(raw(j))
         if a > maxAbs(j) then maxAbs(j) = a
         j += 1
       i += 1
     val scales = maxAbs.map(m => if m > 1e-10 then m else 1.0)
-    Hrf.of("daguerre", nbasis = nBasis, span = span) { t =>
-      val raw = HrfFunctions.daguerreBasis(t, nBasis, scale)
+    val descriptor = HrfDescriptor.known(HrfKind.Daguerre, basis.value, span, HrfParams.Daguerre(basis, scale), penalty = PenaltyPolicy.DaguerreDecay)
+    Hrf.of("daguerre", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
+      val raw = HrfFunctions.daguerreBasis(t, basis.value, scale)
       val normed = raw.zip(scales).map(_ / _)
       Vec.unsafe(normed)
     }
 
   def fir(nBasis: Int = 12, span: Seconds = 24.s): Hrf =
-    val binWidth = span.value / nBasis.toDouble
-    Hrf.of("fir", nbasis = nBasis, span = span) { t =>
+    val basis = BasisCount(nBasis)
+    val binWidth = span.value / basis.value.toDouble
+    val descriptor = HrfDescriptor.known(HrfKind.Fir, basis.value, span, HrfParams.Fir(basis), penalty = PenaltyPolicy.Roughness)
+    Hrf.of("fir", nbasis = basis.value, span = span, descriptor = Some(descriptor)) { t =>
       val x = t.value
-      val out = Array.fill(nBasis)(0.0)
+      val out = Array.fill(basis.value)(0.0)
       if x >= 0.0 && x < span.value then
         val idx = if x == 0.0 then 0 else math.floor(x / binWidth).toInt
-        out(math.min(idx, nBasis - 1)) = 1.0
+        out(math.min(idx, basis.value - 1)) = 1.0
       Vec.unsafe(out)
     }
 
   def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3): Hrf =
+    val requested = BasisCount(nBasis)
     val ord = degree + 1
-    val effectiveN = math.max(nBasis, ord)
-    Hrf.of("bspline", nbasis = effectiveN, span = span, params = Map("nbasis" -> nBasis, "degree" -> degree)) { t =>
-      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, nBasis, degree))
+    val effective = BasisCount(math.max(requested.value, ord))
+    val descriptor = HrfDescriptor.known(HrfKind.Bspline, effective.value, span, HrfParams.Bspline(requested, degree), penalty = PenaltyPolicy.Roughness)
+    Hrf.of("bspline", nbasis = effective.value, span = span, descriptor = Some(descriptor)) { t =>
+      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree))
     }
 
   def tent(nBasis: Int = 5, span: Seconds = 24.s): Hrf =
+    val requested = BasisCount(nBasis)
     val degree = 1
     val ord = degree + 1
-    val effectiveN = math.max(nBasis, ord)
-    Hrf.of("tent", nbasis = effectiveN, span = span, params = Map("nbasis" -> nBasis)) { t =>
-      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, nBasis, degree = degree))
+    val effective = BasisCount(math.max(requested.value, ord))
+    val descriptor = HrfDescriptor.known(HrfKind.Tent, effective.value, span, HrfParams.Tent(requested), penalty = PenaltyPolicy.Roughness)
+    Hrf.of("tent", nbasis = effective.value, span = span, descriptor = Some(descriptor)) { t =>
+      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree = degree))
     }
 
   val Gamma: Hrf = gamma()
