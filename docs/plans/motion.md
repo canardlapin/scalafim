@@ -30,11 +30,12 @@ separated from planned capabilities. JVM builds support deterministic ordered
 parallel mapping for independent diagnostic and template-refresh frame work,
 while Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
 control. Full IC template-mode whitening, richer packet-aware estimator
-semantics, process-runner CLI wiring, and real-data benchmark inputs remain
-later layers. The JVM adapter layer now has a lightweight NIfTI/sidecar
+semantics, process-runner CLI wiring, and external real-data benchmark inputs
+remain later layers. The JVM adapter layer now has a lightweight NIfTI/sidecar
 read-write surface, BIDS/fMRIPrep scan discovery with TR/slice-timing metadata,
-parser-only typed `estimate`/`apply`/`run`/`report` CLI commands, and
-motion/matrix/summary report bundle writers over the typed shared results.
+parser-only typed `estimate`/`apply`/`run`/`report` CLI commands,
+motion/matrix/summary report bundle writers over the typed shared results, and
+an opt-in synthetic/external benchmark harness.
 
 ## Mote Completion Plan
 
@@ -60,15 +61,16 @@ The dependency order is:
    - `bd-01KWX6R3MTXPWA3FWRGYEB810M` - deterministic parallel frame execution:
      JVM ordered mapping is supported for independent diagnostic and
      template-refresh frame work; Scala.js is explicitly typed-off.
-3. Active JVM adapter frontier:
+3. Completed JVM adapter frontier:
    - `bd-01KWX6RF9Z5K67HMPX0N3MG898` - JVM IO, BIDS, CLI, and report adapters:
      NIfTI/sidecar IO, BIDS/fMRIPrep scan discovery, parser-only typed CLI
      commands, and report bundle writers are in place; full process-runner CLI
-     wiring remains outside shared code and real-data adapter coverage belongs
-     to the benchmark slice.
-4. Blocked on the shared feature streams and JVM adapters:
+     wiring remains outside shared code.
+4. Completed benchmark frontier:
    - `bd-01KWX6RR3PQYN1H48791VYD161` - real-data differential benchmark
-     harness.
+     harness: JVM synthetic-continuous estimate/apply/report benchmark reports
+     and external volregger/RNiftyReg CSV validation are in place; external
+     real-data inputs/backends stay opt-in.
 5. Final closeout:
    - `bd-01KWX6S0NG16V6Y8HC387CJSY3` - API and verification audit. The epic is
      blocked on this gate.
@@ -408,6 +410,44 @@ typed and smaller:
 Reference files should guide fixtures and invariants, not public names or data
 shapes. If an R helper exists mostly to compensate for list/S3 flexibility, the
 Scala version should usually become a constructor or an error ADT case.
+
+## Benchmark Harness
+
+The JVM-only benchmark harness lives under
+`scalafim.fmri.motion.benchmark`. It keeps default tests fast while making the
+larger differential/performance evidence reproducible from the repo.
+
+Smoke run:
+
+```sh
+sbt "motionJVM/runMain scalafim.fmri.motion.benchmark.MotionBenchmarkCli --profile smoke --out modules/motion/jvm/target/motion-benchmark-smoke"
+```
+
+Default synthetic-continuous run:
+
+```sh
+sbt "motionJVM/runMain scalafim.fmri.motion.benchmark.MotionBenchmarkCli --profile default --out modules/motion/jvm/target/motion-benchmark"
+```
+
+The harness writes:
+
+- `motion_benchmark_raw.csv` with `estimate_sec`, `apply_sec`, `report_sec`,
+  `elapsed_sec`, `approx_bytes`, `tsnr_ratio`, `disp_p95`, `fd_error`, and
+  `cost_final_mean`;
+- `motion_benchmark_checks.csv` with threshold pass/fail rows for FD error,
+  p95 displacement, TSNR ratio, and elapsed time;
+- `motion_benchmark_summary.md` for a compact human-readable run summary.
+
+If a volregger/RNiftyReg external guardrail CSV exists, validate and summarize
+it without making Docker/R dependencies part of the Scala test suite:
+
+```sh
+sbt "motionJVM/runMain scalafim.fmri.motion.benchmark.MotionBenchmarkCli --profile smoke --external-csv /path/to/benchmark_vs_nifreeze_realdata_raw.csv --out modules/motion/jvm/target/motion-benchmark-external"
+```
+
+The external validator requires the guardrail columns recorded in the fixture:
+`estimate_sec`, `apply_sec`, `report_sec`, `elapsed_sec`, `tsnr_ratio`,
+`disp_p95`, and `fd_error`.
 
 ## Parity Fixtures
 
