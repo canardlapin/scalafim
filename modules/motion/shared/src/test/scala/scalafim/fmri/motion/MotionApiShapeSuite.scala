@@ -37,7 +37,7 @@ class MotionApiShapeSuite extends munit.FunSuite:
     assert(PacketTiming.make(3, Vector(packet0, SlicePacket.unsafe(Vector(2), 0.5))).isLeft)
   }
 
-  test("typed plan surfaces support apply timing and reject planned estimator modes") {
+  test("typed plan surfaces support apply timing and platform execution boundaries") {
     val x = run(Vector(0.0, 1.0))
     val trace = MotionTrace.identity(2).fold(err => fail(err.message), identity)
     val sliceTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector(0.0)))
@@ -55,7 +55,9 @@ class MotionApiShapeSuite extends munit.FunSuite:
         execution = ExecutionControl(parallelFrames = true, nThreads = 2)
       )
     val plan = MotionPlan.default.copy(control = parallel)
-    assert(MotionEstimator.estimate(x, None, plan).isLeft)
+    val parallelResult = MotionEstimator.estimate(x, None, plan)
+    if MotionPlatform.parallelFramesSupported then assert(parallelResult.isRight)
+    else assert(parallelResult.isLeft)
 
     val timedPlan = MotionPlan.default.copy(acquisitionTiming = sliceTiming)
     assert(MotionEstimator.estimate(x, None, timedPlan).isLeft)

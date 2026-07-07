@@ -27,6 +27,7 @@ LC_ALL=C Rscript tools/motion/generate_volregger_fixtures.R \
 | Spline smoother and packet offsets | `src/api_spline.cpp`, `tests/testthat/test-synthetic-ablation-modes.R` | `VolreggerParitySuite` |
 | IC, whitening, spline, and parallel profile contracts | `R/control.R`, `R/profiles.R`, `tests/testthat/test-ic-efficacy.R` | `VolreggerParitySuite` |
 | Shared IC stencil and frame-mean whitening behavior | `R/control.R`, `tests/testthat/test-ic-efficacy.R` | `MotionControlSuite`, `MotionEstimatorSuite` |
+| Deterministic parallel execution boundary | `R/control.R`, `R/profiles.R` | `MotionControlSuite`, `MotionEstimatorSuite` |
 | CLI run/report artifact metadata | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | `VolreggerParitySuite` |
 | Real-data benchmark gate metadata | `tests/testthat/test-external-benchmark-guardrails.R` | `VolreggerParitySuite` |
 | Resource payload parity | checked-in fixture | `VolreggerResourceSuite` |

@@ -17,12 +17,15 @@ pose-spline primitives, and one-pass rigid-motion application over
 `NeuroVec[Double]`, including packet-aware linear application for validated
 slice/packet timing.
 `MotionCorrectionResult` bundles an estimate, optional corrected run, QC, and
-the controls that produced them. Profiles expose typed active and planned
-capabilities; full IC template-mode whitening, parallel execution, richer
-packet-aware estimator semantics, JVM NIfTI IO, CLI, and report writers are
-staged later layers. `WhiteningPolicy.FrameMeanOnly` is supported as the typed
-frame-mean residual path; `WhiteningPolicy.IcWhiten` is an explicit unsupported
-control until the template-mode whitening contract is proven.
+the controls that produced them. JVM builds support deterministic ordered
+parallel mapping for independent diagnostic and template-refresh frame work;
+Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
+control. Profiles expose typed active and planned capabilities; full IC
+template-mode whitening, richer packet-aware estimator semantics, JVM NIfTI IO,
+CLI, and report writers are staged later layers. `WhiteningPolicy.FrameMeanOnly`
+is supported as the typed frame-mean residual path; `WhiteningPolicy.IcWhiten`
+is an explicit unsupported control until the template-mode whitening contract is
+proven.
 
 Run it directly with:
 

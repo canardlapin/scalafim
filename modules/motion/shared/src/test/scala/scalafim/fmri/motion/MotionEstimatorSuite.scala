@@ -244,6 +244,48 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assert(robust.diagnostics.forall(d => d.costFinal.isFinite && d.overlap.isFinite))
   }
 
+  test("parallel frame execution preserves deterministic refreshed estimates where supported") {
+    val fixed = baseFrame
+    val moving = shiftedMovingFramePlusOneX(fixed)
+    val run = runFromFrames(Vector(fixed, moving, fixed.clone(), moving.clone()))
+    val baseControl =
+      plan.control.copy(
+        template = TemplateControl(robustTemplate = true, refreshValidOnly = true, edgeExcludeFraction = 0.0),
+        execution = ExecutionControl.default
+      )
+    val sequential =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val parallelControl =
+      baseControl.copy(
+        execution = ExecutionControl(parallelFrames = true, nThreads = 2)
+      )
+    val parallel =
+      MotionEstimator.estimate(run, Some(interiorMask), plan.copy(control = parallelControl))
+
+    if MotionPlatform.parallelFramesSupported then
+      val actual = parallel.fold(err => fail(err.message), identity)
+      assertEquals(actual.trace.length, sequential.trace.length)
+      var t = 0
+      while t < actual.trace.length do
+        val a = actual.trace.unsafeFrame(t)
+        val s = sequential.trace.unsafeFrame(t)
+        assertEqualsDouble(a.tx, s.tx, 1e-12)
+        assertEqualsDouble(a.ty, s.ty, 1e-12)
+        assertEqualsDouble(a.tz, s.tz, 1e-12)
+        assertEqualsDouble(a.rx, s.rx, 1e-12)
+        assertEqualsDouble(a.ry, s.ry, 1e-12)
+        assertEqualsDouble(a.rz, s.rz, 1e-12)
+        assertEqualsDouble(actual.diagnostics(t).costInitial, sequential.diagnostics(t).costInitial, 1e-12)
+        assertEqualsDouble(actual.diagnostics(t).costFinal, sequential.diagnostics(t).costFinal, 1e-12)
+        assertEqualsDouble(actual.diagnostics(t).overlap, sequential.diagnostics(t).overlap, 1e-12)
+        assertEquals(actual.diagnostics(t).iterations, sequential.diagnostics(t).iterations)
+        t += 1
+    else
+      assert(parallel.isLeft)
+  }
+
   test("rigid spline estimator layers smoothing over the rigid estimate") {
     val fixed = baseFrame
     val moving = shiftedMovingFramePlusOneX(fixed)

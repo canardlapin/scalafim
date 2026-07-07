@@ -74,6 +74,21 @@ class MotionControlSuite extends munit.FunSuite:
     assertEqualsDouble(shrink.lowMotionThresholdMm, 0.75, 1e-12)
   }
 
+  test("execution control validates requested worker counts") {
+    val deterministic = ExecutionControl.make(ExecutionPolicy.Deterministic, nThreads = 1)
+    val parallel = ExecutionControl.make(ExecutionPolicy.ParallelFrames, nThreads = 2)
+
+    assert(deterministic.isRight)
+    assert(parallel.isRight)
+    assert(ExecutionControl.make(ExecutionPolicy.ParallelFrames, nThreads = 0).isLeft)
+  }
+
+  test("platform frame mapper preserves deterministic input order") {
+    val out = MotionPlatform.mapOrdered(Vector(3, 1, 2), nThreads = 8)(_ * 2)
+
+    assertEquals(out, Vector(6, 2, 4))
+  }
+
   test("residual control exposes frame-mean nuisance policy") {
     val raw = ResidualControl.default
     val nuisance = ResidualControl.fromRemoveFrameMean(removeFrameMean = true)

@@ -82,7 +82,8 @@ object MotionEstimator:
 
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
     if !plan.acquisitionTiming.isVolume then Left(MotionError.NotImplemented("slice/packet-aware estimation"))
-    else if plan.control.execution.policy == ExecutionPolicy.ParallelFrames then Left(MotionError.NotImplemented("parallel frame estimation"))
+    else if plan.control.execution.policy == ExecutionPolicy.ParallelFrames && !MotionPlatform.parallelFramesSupported then
+      Left(MotionError.UnsupportedControl("execution", "parallel frame estimation is not supported on this platform"))
     else if !plan.control.whitening.implemented then
       Left(
         MotionError.UnsupportedControl(
@@ -174,18 +175,17 @@ object MotionEstimator:
       poses: Array[RigidPose],
       diagnostics: Array[FrameFitDiagnostics]
   ): Array[FrameFitDiagnostics] =
-    val out = diagnostics.clone()
-    var t = 0
-    while t < poses.length do
-      val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, t, poses(t))
-      val d = diagnostics(t)
-      out(t) =
+    val frameIds = Vector.tabulate(poses.length)(identity)
+    val out =
+      mapFrames(ctx, frameIds) { t =>
+        val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, t, poses(t))
+        val d = diagnostics(t)
         d.copy(
           costFinal = finalCost.cost,
           overlap = finalCost.overlap
         )
-      t += 1
-    out
+      }
+    out.toArray
 
   private def fitFrame(
       ctx: EstimatorContext,
@@ -541,34 +541,20 @@ object MotionEstimator:
             )
           t += 1
 
-        t = 0
-        while t < ctx.run.nVolumes do
-          if included(t) then
-            val map = maps(t)
-            var lin = 0
-            while lin < ctx.nxyz do
-              val i = lin % ctx.nx
-              val j = (lin / ctx.nx) % ctx.ny
-              val k = lin / (ctx.nx * ctx.ny)
-              val sx = MotionSampling.sourceX(map, i, j, k)
-              val sy = MotionSampling.sourceY(map, i, j, k)
-              val sz = MotionSampling.sourceZ(map, i, j, k)
-              if inBounds(ctx, sx, sy, sz) then
-                out(lin) += MotionSampling.trilinear(
-                  ctx.run.values.data,
-                  ctx.nx,
-                  ctx.ny,
-                  ctx.nz,
-                  ctx.nxyz,
-                  t,
-                  sx,
-                  sy,
-                  sz,
-                  zeroPad = false
-                )
-                counts(lin) += 1
-              lin += 1
-          t += 1
+        val frameIds = Vector.tabulate(ctx.run.nVolumes)(identity).filter(included)
+        val contributions =
+          mapFrames(ctx, frameIds) { frame =>
+            templateContribution(ctx, maps(frame), frame)
+          }
+        var c = 0
+        while c < contributions.length do
+          val contribution = contributions(c)
+          var lin = 0
+          while lin < ctx.nxyz do
+            out(lin) += contribution.values(lin)
+            counts(lin) += contribution.counts(lin)
+            lin += 1
+          c += 1
 
         var lin = 0
         while lin < ctx.nxyz do
@@ -576,6 +562,45 @@ object MotionEstimator:
           else out(lin) = initial(lin)
           lin += 1
         Some(out)
+
+  private final case class TemplateContribution(values: Array[Double], counts: Array[Int])
+
+  private def templateContribution(
+      ctx: EstimatorContext,
+      map: MotionSampling.VoxelMap,
+      frame: Int
+  ): TemplateContribution =
+    val values = Array.ofDim[Double](ctx.nxyz)
+    val counts = Array.ofDim[Int](ctx.nxyz)
+    var lin = 0
+    while lin < ctx.nxyz do
+      val i = lin % ctx.nx
+      val j = (lin / ctx.nx) % ctx.ny
+      val k = lin / (ctx.nx * ctx.ny)
+      val sx = MotionSampling.sourceX(map, i, j, k)
+      val sy = MotionSampling.sourceY(map, i, j, k)
+      val sz = MotionSampling.sourceZ(map, i, j, k)
+      if inBounds(ctx, sx, sy, sz) then
+        values(lin) = MotionSampling.trilinear(
+          ctx.run.values.data,
+          ctx.nx,
+          ctx.ny,
+          ctx.nz,
+          ctx.nxyz,
+          frame,
+          sx,
+          sy,
+          sz,
+          zeroPad = false
+        )
+        counts(lin) = 1
+      lin += 1
+    TemplateContribution(values, counts)
+
+  private def mapFrames[A, B](ctx: EstimatorContext, values: Vector[A])(f: A => B): Vector[B] =
+    if ctx.control.execution.policy == ExecutionPolicy.ParallelFrames then
+      MotionPlatform.mapOrdered(values, ctx.control.execution.nThreads)(f)
+    else values.map(f)
 
   private def refreshedFrameMask(ctx: EstimatorContext, estimate: MotionEstimate): Array[Boolean] =
     val out = Array.fill(ctx.run.nVolumes)(true)
