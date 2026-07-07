@@ -4,13 +4,10 @@ import narr.NArray
 import scala.reflect.ClassTag
 import spire.algebra.{Order, Ring}
 
-final case class NeuroVol[A](
-  values: NDArray[A],
-  space: NeuroSpace,
-  label: String = ""
-):
-  require(values.ndim == 3, "NeuroVol must be 3D")
-  require(values.shape == space.spatialDims, "data/space dimension mismatch")
+final class NeuroVol[A] private[image] (
+  protected val image: NeuroImage[A, Volume3D]
+) extends NeuroImageView[A, Volume3D]:
+
   val volumeSpace: VolumeSpace =
     VolumeSpace.fromSpatialPart(space).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -151,7 +148,7 @@ final case class NeuroVol[A](
   def indexToVoxel(idx: Int): VoxelCoord =
     space.indexToVoxel3D(idx)
 
-  def linear(i: Int): A =
+  override def linear(i: Int): A =
     values.data(i)
 
   def slice(axis: Int, index: Int)(using ClassTag[A]): NeuroSlice[A] =
@@ -203,6 +200,24 @@ final case class NeuroVol[A](
   def map[B](f: A => B)(using ClassTag[B]): NeuroVol[B] =
     NeuroVol(values.map(f), space, label)
 
+  def copy(values: NDArray[A] = this.values, space: NeuroSpace = this.space, label: String = this.label): NeuroVol[A] =
+    NeuroVol(values, space, label)
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: NeuroVol[?] => sameImage(that)
+      case _ => false
+
+  override def hashCode(): Int =
+    imageHash
+
+  override def toString: String =
+    s"NeuroVol(values=$values, space=$space, label=$label)"
+
 object NeuroVol:
+  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
+    NeuroImage.make[A, Volume3D](values, space, label)
+      .fold(err => throw new IllegalArgumentException(err.message), image => new NeuroVol(image))
+
   def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
-    NeuroVol(NDArray(data, space.spatialDims), space, label)
+    new NeuroVol(NeuroImage.fromLinear[A, Volume3D](data, space, label))

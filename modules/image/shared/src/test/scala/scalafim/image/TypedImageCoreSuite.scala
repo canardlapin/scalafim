@@ -72,6 +72,26 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assert(SeriesSpace.make(volume.toNeuroSpace).isLeft, clue = "3D space should not be a SeriesSpace")
   }
 
+  test("NeuroImage core backs slice, volume, and series wrappers") {
+    val volumeSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(affineMatrix))
+    val volume = NeuroVol.fromLinear[Int](NArray(10, 20), volumeSpace, "vol")
+    val mapped = volume.map(_ + 1)
+    val series = volume.toVec
+    val slice = volume.slice(SpatialAxis.Z, 0)
+
+    assertEquals(volume.typedSpace.toNeuroSpace, volumeSpace, clue = "")
+    assertEquals(volume.ndim, 3, clue = "")
+    assertEquals(mapped.linear(1), 21, clue = "")
+    assertEquals(series.typedSpace.toNeuroSpace.ndim, 4, clue = "")
+    assertEquals(series.volume(0).space, volume.space, clue = "")
+    assertEquals(series.volume(0).linear(1), volume.linear(1), clue = "")
+    assertEquals(slice.typedSpace.toNeuroSpace.ndim, 2, clue = "")
+    assertEquals(slice(1, 0), 20, clue = "")
+
+    val wrongRank = NeuroImage.make[Int, Volume3D](NDArray(NArray(1, 2), Vector(2)), volumeSpace)
+    assert(wrongRank.isLeft, clue = "Volume3D images require rank-3 data")
+  }
+
   test("typed coordinate overloads keep voxel and world points separate") {
     val affine = Affine3D(affineMatrix)
     val voxel = VoxelPoint(1.0, 2.0, 3.0)

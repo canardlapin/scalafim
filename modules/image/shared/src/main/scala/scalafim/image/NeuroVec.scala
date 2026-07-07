@@ -3,13 +3,10 @@ package scalafim.image
 import narr.NArray
 import scala.reflect.ClassTag
 
-final case class NeuroVec[A](
-  values: NDArray[A],
-  space: NeuroSpace,
-  label: String = ""
-):
-  require(values.ndim == 4, "NeuroVec must be 4D")
-  require(values.shape == space.dims.take(4), "data/space dimension mismatch")
+final class NeuroVec[A] private[image] (
+  protected val image: NeuroImage[A, Series4D]
+) extends NeuroImageView[A, Series4D]:
+
   val seriesSpace: SeriesSpace =
     SeriesSpace.make(space).fold(err => throw new IllegalArgumentException(err.message), series => series)
 
@@ -30,7 +27,7 @@ final case class NeuroVec[A](
   def indexToGrid(idx: Int): Vector[Int] =
     Indexing.indexToGrid(space.dims.take(4), idx)
 
-  def linear(i: Int): A =
+  override def linear(i: Int): A =
     values.data(i)
 
   def asMatrix: NDArray[A] =
@@ -191,6 +188,24 @@ final case class NeuroVec[A](
   def map[B](f: A => B)(using ClassTag[B]): NeuroVec[B] =
     NeuroVec(values.map(f), space, label)
 
+  def copy(values: NDArray[A] = this.values, space: NeuroSpace = this.space, label: String = this.label): NeuroVec[A] =
+    NeuroVec(values, space, label)
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: NeuroVec[?] => sameImage(that)
+      case _ => false
+
+  override def hashCode(): Int =
+    imageHash
+
+  override def toString: String =
+    s"NeuroVec(values=$values, space=$space, label=$label)"
+
 object NeuroVec:
+  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
+    NeuroImage.make[A, Series4D](values, space, label)
+      .fold(err => throw new IllegalArgumentException(err.message), image => new NeuroVec(image))
+
   def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
-    NeuroVec(NDArray(data, space.dims.take(4)), space, label)
+    new NeuroVec(NeuroImage.fromLinear[A, Series4D](data, space, label))
