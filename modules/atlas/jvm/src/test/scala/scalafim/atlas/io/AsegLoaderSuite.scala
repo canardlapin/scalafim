@@ -65,7 +65,7 @@ class AsegLoaderSuite extends munit.FunSuite:
     assertEquals(atlas.region(RegionId(10)).flatMap(_.hemisphere), Some(Hemisphere.Left))
     assertEquals(atlas.region(RegionId(16)).flatMap(_.hemisphere), None)
     assertEquals(atlas.region(RegionId(49)).flatMap(_.hemisphere), Some(Hemisphere.Right))
-    assertEquals(atlas.ref.artifacts.map(_.role), Vector("parcellation_volume"))
+    assertEquals(atlas.ref.artifacts.map(_.role), Vector(ArtifactRole.ParcellationVolume))
     assertEquals(atlas.ref.artifacts.head.citationDoi, Some("10.1016/S0896-6273(02)00569-X"))
     assertEquals(atlas.ref.history.head.details, "Loaded FreeSurfer ASEG atlas.")
     assertEquals(atlas.provenance.sourceArtifacts.map(_.role), Vector(ArtifactRole.ParcellationVolume))

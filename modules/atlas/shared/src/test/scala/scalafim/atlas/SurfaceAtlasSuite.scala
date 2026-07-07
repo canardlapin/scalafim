@@ -22,11 +22,10 @@ class SurfaceAtlasSuite extends munit.FunSuite:
       )
     )
 
-  private def ref: AtlasRef =
-    AtlasRef(
+  private def ref: SurfaceAtlasRef =
+    AtlasRef.surface(
       family = "toy",
       model = "ToySurface",
-      representation = AtlasRepresentation.Surface,
       templateSpace = SpaceId.FsAverage6,
       coordSpace = SpaceId.FsAverage6,
       density = Some("41k"),

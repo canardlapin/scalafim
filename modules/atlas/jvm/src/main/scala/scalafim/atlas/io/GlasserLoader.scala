@@ -62,12 +62,12 @@ object GlasserLoader:
       )
     AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
 
-  def refFor(spec: GlasserHcpMmp1): AtlasRef =
+  def refFor(spec: GlasserHcpMmp1): VolumeAtlasRef =
     val a = assets(spec)
     spec.atlasRef().copy(
       artifacts = Vector(
         AtlasArtifact(
-          role = "parcellation_volume",
+          role = ArtifactRole.ParcellationVolume,
           sourceName = spec.source.key,
           sourceRef = a.volume.fileName,
           sourceUrl = Some(a.volume.uri.toString),
@@ -76,7 +76,7 @@ object GlasserLoader:
           notes = spec.source.notes
         ),
         AtlasArtifact(
-          role = "label_table",
+          role = ArtifactRole.LabelTable,
           sourceName = "xcpEngine",
           sourceRef = a.labels.fileName,
           sourceUrl = Some(a.labels.uri.toString),

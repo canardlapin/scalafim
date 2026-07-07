@@ -38,10 +38,9 @@ class AtlasCoreSuite extends munit.FunSuite:
       )
 
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "ToyAtlas",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.Custom,
         coordSpace = SpaceId.MNI152,
         confidence = Confidence.Exact
@@ -56,10 +55,11 @@ class AtlasCoreSuite extends munit.FunSuite:
     assert(AtlasRegistry.default.ids.contains("schaefer"), clue = "")
 
     val schaefer = Schaefer2018(SchaeferParcels.P400, YeoNetworks.Seventeen, VoxelResolution.TwoMm)
+    val typedVolumeRef: VolumeAtlasRef = schaefer.atlasRef()
     assertEquals(schaefer.id, "schaefer-400-17-2mm")
-    assertEquals(schaefer.atlasRef().templateSpace, SpaceId.MNI152NLin6Asym)
+    assertEquals(typedVolumeRef.templateSpace, SpaceId.MNI152NLin6Asym)
 
-    val schaeferSurface = Schaefer2018Surface.default.atlasRef()
+    val schaeferSurface: SurfaceAtlasRef = Schaefer2018Surface.default.atlasRef()
     assertEquals(schaeferSurface.representation, AtlasRepresentation.Surface)
     assertEquals(schaeferSurface.templateSpace, SpaceId.FsAverage6)
     assertEquals(schaeferSurface.density, Some("41k"))
@@ -74,6 +74,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     assertEquals(direct.nSteps, 1)
     assertEquals(direct.confidence, Confidence.Exact)
     assertEquals(direct.status, TransformStatus.Available)
+    assert(direct.executableCoordinatePlan.isRight, clue = direct.executableCoordinatePlan.toString)
 
     val same = SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI152).toOption.get
     assertEquals(same.steps.head.kind, TransformKind.Identity)
@@ -85,6 +86,7 @@ class AtlasCoreSuite extends munit.FunSuite:
 
     val planned = SpaceTransforms.plan(SpaceId.FsAverage, SpaceId.FsLR32k).toOption.get
     assertEquals(planned.status, TransformStatus.Planned)
+    assertEquals(planned.isExecutable, false)
     assert(planned.warnings.exists(_.contains("planned")), clue = planned.warnings.mkString(";"))
 
     val volToSurf = VolumeSurfaceTransformPlan.volumeToSurface(SpaceId.MNI152NLin6Asym, SpaceId.FsAverage).toOption.get

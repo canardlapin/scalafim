@@ -17,37 +17,65 @@ final case class QueryHit(
     region.map(_.label)
 
 object AtlasQuery:
+  def exactEither(
+    atlas: VolumeAtlas,
+    point: Point3D,
+    fromSpace: AnySpaceId = SpaceId.MNI152
+  ): Either[AtlasError, QueryHit] =
+    queryEither(atlas, Vector(point), radiusMm = 0.0, fromSpace).flatMap {
+      case head +: _ => Right(head)
+      case _ => Left(AtlasError.InvalidQuery("exact atlas query requires one point"))
+    }
+
   def exact(
     atlas: VolumeAtlas,
     point: Point3D,
-    fromSpace: SpaceId = SpaceId.MNI152
+    fromSpace: AnySpaceId = SpaceId.MNI152
   ): QueryHit =
-    query(atlas, Vector(point), radiusMm = 0.0, fromSpace).head
+    exactEither(atlas, point, fromSpace).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def queryEither(
+    atlas: VolumeAtlas,
+    points: Vector[Point3D],
+    radiusMm: Double = 0.0,
+    fromSpace: AnySpaceId = SpaceId.MNI152
+  ): Either[AtlasError, Vector[QueryHit]] =
+    if radiusMm < 0.0 || !radiusMm.isFinite then
+      Left(AtlasError.InvalidQuery("radiusMm must be finite and non-negative"))
+    else
+      queryValidated(atlas, points, radiusMm, fromSpace)
 
   def query(
     atlas: VolumeAtlas,
     points: Vector[Point3D],
     radiusMm: Double = 0.0,
-    fromSpace: SpaceId = SpaceId.MNI152
+    fromSpace: AnySpaceId = SpaceId.MNI152
   ): Vector[QueryHit] =
-    require(radiusMm >= 0.0 && radiusMm.isFinite, "radiusMm must be finite and non-negative")
-    val atlasPoints =
+    queryEither(atlas, points, radiusMm, fromSpace).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  private def queryValidated(
+    atlas: VolumeAtlas,
+    points: Vector[Point3D],
+    radiusMm: Double,
+    fromSpace: AnySpaceId
+  ): Either[AtlasError, Vector[QueryHit]] =
+    val atlasPointsEither =
       val fromNorm = SpaceId.normalize(fromSpace)
       val toNorm = SpaceId.normalize(atlas.ref.coordSpace)
-      if fromNorm == toNorm then points
+      if fromNorm == toNorm then Right(points)
       else
-        SpaceTransforms.transformCoords(points, fromNorm, toNorm) match
-          case Right(ps) => ps
-          case Left(err) => throw new IllegalArgumentException(err.message)
+        SpaceTransforms.transformCoords(points, fromNorm, toNorm)
 
-    if radiusMm == 0.0 then
-      atlasPoints.zip(points).zipWithIndex.map { case ((atlasPoint, input), idx) =>
-        exactOne(atlas, input, atlasPoint, idx)
-      }
-    else
-      atlasPoints.zip(points).zipWithIndex.flatMap { case ((atlasPoint, input), idx) =>
-        radiusOne(atlas, input, atlasPoint, idx, radiusMm)
-      }
+    atlasPointsEither.map { atlasPoints =>
+      if radiusMm == 0.0 then
+        atlasPoints.zip(points).zipWithIndex.map { case ((atlasPoint, input), idx) =>
+          exactOne(atlas, input, atlasPoint, idx)
+        }
+      else
+        atlasPoints.zip(points).zipWithIndex.flatMap { case ((atlasPoint, input), idx) =>
+          radiusOne(atlas, input, atlasPoint, idx, radiusMm)
+        }
+    }
 
   private def exactOne(atlas: VolumeAtlas, input: Point3D, atlasPoint: Point3D, pointIndex: Int): QueryHit =
     val grid = atlas.space.coordToIndex(atlasPoint.toVector).map(v => math.round(v).toInt)

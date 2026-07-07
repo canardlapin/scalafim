@@ -35,8 +35,8 @@ enum DataKind:
   case Parcel, Vertex, Voxel
 
 final case class TransformStep(
-  from: SpaceId,
-  to: SpaceId,
+  from: AnySpaceId,
+  to: AnySpaceId,
   kind: TransformKind,
   backend: TransformBackend,
   confidence: Confidence,
@@ -49,18 +49,61 @@ final case class TransformStep(
   require(dataFiles.forall(_.trim.nonEmpty), "transform data file names must be non-empty")
 
 final case class TransformPlan(
-  from: SpaceId,
-  to: SpaceId,
+  from: AnySpaceId,
+  to: AnySpaceId,
   steps: Vector[TransformStep],
   status: TransformStatus,
   confidence: Confidence,
   warnings: Vector[String]
 ):
+  require(steps.nonEmpty, "transform plan must contain at least one step")
+
   def nSteps: Int =
     steps.length
 
   def isExecutable: Boolean =
-    status == TransformStatus.Available
+    executableCoordinatePlan.isRight
+
+  def executableCoordinatePlan: Either[AtlasError, ExecutableCoordinateTransformPlan] =
+    ExecutableCoordinateTransformPlan.fromRoute(this)
+
+final case class ExecutableCoordinateTransformPlan private (
+  route: TransformPlan,
+  affine: DMat
+):
+  def from: AnySpaceId =
+    route.from
+
+  def to: AnySpaceId =
+    route.to
+
+  def steps: Vector[TransformStep] =
+    route.steps
+
+  def transform(points: Vector[Point3D]): Vector[Point3D] =
+    points.map(pt => Point3D.fromVector(Affine.applyAffine(affine, pt.toVector)))
+
+object ExecutableCoordinateTransformPlan:
+  def fromRoute(route: TransformPlan): Either[AtlasError, ExecutableCoordinateTransformPlan] =
+    val unavailable =
+      route.steps.filter(_.status != TransformStatus.Available)
+    val missingAffine =
+      route.steps.filter(_.affine.isEmpty)
+    if unavailable.nonEmpty || missingAffine.nonEmpty then
+      val unavailableReason =
+        if unavailable.isEmpty then Vector.empty
+        else Vector(s"unavailable steps=${unavailable.map(stepLabel).mkString(",")}")
+      val missingReason =
+        if missingAffine.isEmpty then Vector.empty
+        else Vector(s"non-affine steps=${missingAffine.map(stepLabel).mkString(",")}")
+      Left(AtlasError.TransformNotExecutable(route.from, route.to, (unavailableReason ++ missingReason).mkString("; ")))
+    else
+      val composed =
+        route.steps.map(_.affine.get).reduceLeft((acc, next) => Affine.multiply(next, acc))
+      Right(ExecutableCoordinateTransformPlan(route, composed))
+
+  private def stepLabel(step: TransformStep): String =
+    s"${step.from.value}->${step.to.value}:${step.kind}/${step.backend}"
 
 object SpaceTransforms:
   val mni305ToMni152: DMat =
@@ -215,8 +258,8 @@ object SpaceTransforms:
     )
 
   def plan(
-    from: SpaceId,
-    to: SpaceId,
+    from: AnySpaceId,
+    to: AnySpaceId,
     dataKind: DataKind = DataKind.Parcel,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, TransformPlan] =
@@ -246,29 +289,26 @@ object SpaceTransforms:
 
   def transformCoords(
     points: Vector[Point3D],
-    from: SpaceId,
-    to: SpaceId,
+    from: AnySpaceId,
+    to: AnySpaceId,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, Vector[Point3D]] =
-    plan(from, to, DataKind.Voxel, registry).flatMap { p =>
-      if p.steps.forall(s => s.status == TransformStatus.Available && s.affine.nonEmpty) then
-        val composed = p.steps.map(_.affine.get).reduceLeft((acc, next) => Affine.multiply(next, acc))
-        Right(points.map(pt => Point3D.fromVector(Affine.applyAffine(composed, pt.toVector))))
-      else Left(AtlasError.NoTransformRoute(from, to))
-    }
+    plan(from, to, DataKind.Voxel, registry)
+      .flatMap(_.executableCoordinatePlan)
+      .map(_.transform(points))
 
   def spatialMorphism(
-    from: SpaceId,
-    to: SpaceId,
+    from: AnySpaceId,
+    to: AnySpaceId,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, ImageSpatialMorphism] =
-    plan(from, to, DataKind.Voxel, registry).flatMap { p =>
-      if p.steps.forall(s => s.status == TransformStatus.Available && s.affine.nonEmpty) then
+    plan(from, to, DataKind.Voxel, registry).flatMap { route =>
+      route.executableCoordinatePlan.flatMap { executable =>
         val steps = Vector.newBuilder[ImageSpatialMorphism]
         var i = 0
         var error = Option.empty[AtlasError]
-        while i < p.steps.length && error.isEmpty do
-          val step = p.steps(i)
+        while i < executable.steps.length && error.isEmpty do
+          val step = executable.steps(i)
           val source = SpatialDomainId(SpaceId.normalize(step.from).value)
           val target = SpatialDomainId(SpaceId.normalize(step.to).value)
           if step.kind == TransformKind.Identity then steps += IdentityMorphism(source)
@@ -288,12 +328,12 @@ object SpaceTransforms:
           case Some(err) => Left(err)
           case None =>
             ImageSpatialMorphism.path(steps.result()).left.map(err => AtlasError.InvalidCoordinate(err.message))
-      else Left(AtlasError.NoTransformRoute(from, to))
+      }
     }
 
-  private final case class Candidate(space: SpaceId, steps: Vector[TransformStep], score: Int)
+  private final case class Candidate(space: AnySpaceId, steps: Vector[TransformStep], score: Int)
 
-  private def shortestRoute(from: SpaceId, to: SpaceId, registry: Vector[TransformStep]): Option[Vector[TransformStep]] =
+  private def shortestRoute(from: AnySpaceId, to: AnySpaceId, registry: Vector[TransformStep]): Option[Vector[TransformStep]] =
     val edges = registry.groupBy(step => SpaceId.normalize(step.from))
     var frontier = Vector(Candidate(from, Vector.empty, 0))
     var best = Map(from -> 0)

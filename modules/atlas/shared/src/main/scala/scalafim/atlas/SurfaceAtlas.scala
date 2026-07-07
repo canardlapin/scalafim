@@ -176,8 +176,8 @@ enum VolumeSurfaceDirection:
 
 final case class VolumeSurfaceTransformPlan(
   direction: VolumeSurfaceDirection,
-  from: SpaceId,
-  to: SpaceId,
+  from: AnySpaceId,
+  to: AnySpaceId,
   route: TransformPlan,
   sampling: SurfaceSamplingSpec,
   dataKind: DataKind
@@ -208,8 +208,8 @@ final case class VolumeSurfaceTransformPlan(
 
 object VolumeSurfaceTransformPlan:
   def volumeToSurface(
-    fromVolumeSpace: SpaceId,
-    toSurfaceSpace: SpaceId,
+    fromVolumeSpace: VolumeOrUnknownSpaceId,
+    toSurfaceSpace: SurfaceOrUnknownSpaceId,
     dataKind: DataKind = DataKind.Parcel,
     sampling: SurfaceSamplingSpec = SurfaceSamplingSpec.defaultParcel
   ): Either[AtlasError, VolumeSurfaceTransformPlan] =
@@ -227,8 +227,8 @@ object VolumeSurfaceTransformPlan:
       )
 
   def surfaceToVolume(
-    fromSurfaceSpace: SpaceId,
-    toVolumeSpace: SpaceId,
+    fromSurfaceSpace: SurfaceOrUnknownSpaceId,
+    toVolumeSpace: VolumeOrUnknownSpaceId,
     dataKind: DataKind = DataKind.Parcel,
     sampling: SurfaceSamplingSpec = SurfaceSamplingSpec.defaultParcel
   ): Either[AtlasError, VolumeSurfaceTransformPlan] =

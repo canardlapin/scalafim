@@ -61,12 +61,12 @@ object BrainnetomeLoader:
       )
     AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
 
-  def refFor(spec: Brainnetome246 = Brainnetome246.default): AtlasRef =
+  def refFor(spec: Brainnetome246 = Brainnetome246.default): VolumeAtlasRef =
     val a = assets(spec)
     spec.atlasRef().copy(
       artifacts = Vector(
         AtlasArtifact(
-          role = "parcellation_volume",
+          role = ArtifactRole.ParcellationVolume,
           sourceName = "Brainnetome Center",
           sourceRef = a.volume.fileName,
           sourceUrl = Some(spec.source.pageUrl),
@@ -75,7 +75,7 @@ object BrainnetomeLoader:
           notes = Some("Brainnetome Center MNI152 1mm labelmap; downloaded on demand.")
         ),
         AtlasArtifact(
-          role = "label_table",
+          role = ArtifactRole.LabelTable,
           sourceName = "Brainnetome Center",
           sourceRef = a.lut.fileName,
           sourceUrl = Some(spec.source.pageUrl),
@@ -84,7 +84,7 @@ object BrainnetomeLoader:
           notes = Some("Brainnetome Freeview-style LUT label table.")
         ),
         AtlasArtifact(
-          role = "network_table",
+          role = ArtifactRole.NetworkTable,
           sourceName = "Brainnetome Center",
           sourceRef = a.networks.fileName,
           sourceUrl = Some(spec.source.pageUrl),

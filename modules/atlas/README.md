@@ -170,8 +170,29 @@ val contacts =
 `SurfaceAtlas` requires a left `LabeledSurface` and a right `LabeledSurface`.
 Zero labels are treated as background. All non-zero labels must be present in
 the `RegionIndex`, and all regions must be present in the payload. This mirrors
-the strict `VolumeAtlas` contract while leaving geometry loading and annotation
-file parsing to later JVM adapters.
+the strict `VolumeAtlas` contract.
+
+On the JVM, GIFTI label payloads can be lifted into a `SurfaceAtlas` while
+preserving label-table metadata and local-file provenance:
+
+```scala
+import java.nio.file.Path
+
+val atlas =
+  SurfaceGiftiAtlasLoader.loadFromPaths(
+    ref = Schaefer2018Surface.default.atlasRef(),
+    geometry = SurfaceGiftiAtlasLoader.Geometry(leftGeometry, rightGeometry),
+    paths = SurfaceGiftiAtlasLoader.Paths(
+      left = Path.of("lh.Schaefer2018.label.gii"),
+      right = Path.of("rh.Schaefer2018.label.gii")
+    )
+  )
+```
+
+The loader is strict: non-background payload labels must be positive, every
+payload label must appear in the GIFTI `LabelTable`, conflicting bilateral
+label-table entries are rejected, and local paths plus SHA-256 digests are
+recorded in `AtlasProvenance`.
 
 Volume/surface bridge plans are explicit values:
 
@@ -204,6 +225,8 @@ The JVM loader surface is intentionally explicit:
 - `AsegLoader`: FreeSurfer ASEG 17-region subcortical atlas metadata, bundled
   neuroatlas volume asset, color-LUT parsing, and `VolumeAtlas` loading from
   cached or explicit paths.
+- `SurfaceGiftiAtlasLoader`: explicit left/right GIFTI label payload loading
+  into `SurfaceAtlas` using caller-supplied surface geometry.
 
 Use `CacheOnly` when a reproducible pipeline should fail instead of reaching
 the network:

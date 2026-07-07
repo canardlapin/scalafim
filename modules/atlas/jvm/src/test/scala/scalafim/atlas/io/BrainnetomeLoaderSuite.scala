@@ -162,7 +162,7 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     assertEquals(atlas.region(RegionId(1)).map(_.label), Some("A8m_L"))
     assertEquals(atlas.region(RegionId(1)).flatMap(_.network), Some(NetworkId("Default A")))
     assertEquals(atlas.region(RegionId(2)).flatMap(_.network), Some(NetworkId("Default B")))
-    assertEquals(atlas.ref.artifacts.map(_.role), Vector("parcellation_volume", "label_table", "network_table"))
+    assertEquals(atlas.ref.artifacts.map(_.role), Vector(ArtifactRole.ParcellationVolume, ArtifactRole.LabelTable, ArtifactRole.NetworkTable))
     assertEquals(atlas.ref.artifacts.head.citationDoi, Some("10.1093/cercor/bhw157"))
     assertEquals(atlas.ref.history.head.confidence, Confidence.High)
     assertEquals(

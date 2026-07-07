@@ -176,8 +176,9 @@ The contract is intentionally strict:
 - every region in `RegionIndex` must be present in the bilateral payload;
 - label-table IDs must not introduce unknown regions.
 
-The shared layer does not parse annotation, CIFTI, GIFTI label, or FreeSurfer
-annotation files. Those belong in explicit JVM IO adapters.
+The shared layer does not parse annotation, CIFTI, or FreeSurfer annotation
+files. JVM GIFTI adapters now cover typed GIFTI payloads, label tables, and
+left/right label payload loading into `SurfaceAtlas`.
 
 ## Loading Policy
 
@@ -384,4 +385,6 @@ than hidden inside docs:
 
 - Optional live-download smoke checks outside the default suite.
 - Optional TemplateFlow asset resolution and nonlinear warp execution.
-- JVM surface annotation/GIFTI/CIFTI loaders for real surface-atlas assets.
+- JVM FreeSurfer annotation and CIFTI loaders for real surface-atlas assets.
+- Optional `ExternalFileBinary` GIFTI payload support where a caller supplies
+  explicit sidecar files and digest policy.

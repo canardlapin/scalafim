@@ -122,17 +122,17 @@ enum HemisphereCoverage:
 
 enum SpatialSupport:
   case Volume(
-    templateSpace: SpaceId,
-    coordSpace: SpaceId,
+    templateSpace: AnySpaceId,
+    coordSpace: AnySpaceId,
     resolution: Option[VoxelSize],
     dimensions: Option[GridDims] = None
   )
   case Surface(
-    templateSpace: SpaceId,
+    templateSpace: AnySpaceId,
     density: SurfaceDensity,
     coverage: HemisphereCoverage = HemisphereCoverage.Bilateral
   )
-  case Derived(templateSpace: SpaceId, coordSpace: SpaceId)
+  case Derived(templateSpace: AnySpaceId, coordSpace: AnySpaceId)
 
 object SpatialSupport:
   def fromRef(ref: AtlasRef): SpatialSupport =
@@ -249,7 +249,7 @@ final case class SourceArtifact(
 
   def toAtlasArtifact: AtlasArtifact =
     AtlasArtifact(
-      role = role.legacy,
+      role = role,
       sourceName = sourceName,
       sourceRef = sourceRef,
       sourceUrl = sourceUri,
@@ -261,7 +261,7 @@ final case class SourceArtifact(
 
 object SourceArtifact:
   def fromAtlasArtifact(artifact: AtlasArtifact): SourceArtifact =
-    val role = ArtifactRole.fromLegacy(artifact.role)
+    val role = artifact.role
     SourceArtifact(
       id = stableId(role.legacy, artifact.sourceRef),
       role = role,
@@ -329,14 +329,14 @@ enum DerivationStep:
   case ParsedLabels(artifactId: String, schema: LabelTableSchema)
   case ValidatedLabels(regionIds: Vector[RegionId])
   case FilteredLabels(kept: Vector[RegionId], dropped: Vector[RegionId])
-  case Resampled(from: SpaceId, to: SpaceId, kind: TransformKind, status: TransformStatus, confidence: Confidence)
-  case ProjectedVolumeToSurface(from: SpaceId, to: SpaceId, sampling: SurfaceSamplingSpec, status: TransformStatus)
+  case Resampled(from: AnySpaceId, to: AnySpaceId, kind: TransformKind, status: TransformStatus, confidence: Confidence)
+  case ProjectedVolumeToSurface(from: AnySpaceId, to: AnySpaceId, sampling: SurfaceSamplingSpec, status: TransformStatus)
   case LegacyHistory(
     action: String,
-    fromTemplateSpace: SpaceId,
-    toTemplateSpace: SpaceId,
-    fromCoordSpace: SpaceId,
-    toCoordSpace: SpaceId,
+    fromTemplateSpace: AnySpaceId,
+    toTemplateSpace: AnySpaceId,
+    fromCoordSpace: AnySpaceId,
+    toCoordSpace: AnySpaceId,
     status: TransformStatus,
     confidence: Confidence,
     details: String
@@ -365,7 +365,7 @@ object Citation:
 enum ProvenanceIssue:
   case MissingDigest(role: ArtifactRole)
   case MissingLicense(sourceName: String)
-  case UncertainSpace(space: SpaceId)
+  case UncertainSpace(space: AnySpaceId)
   case UncertainConfidence
   case NoLoadedArtifact
 

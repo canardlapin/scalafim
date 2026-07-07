@@ -55,12 +55,12 @@ object SchaeferLoader:
       )
     AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
 
-  def refFor(spec: Schaefer2018): AtlasRef =
+  def refFor(spec: Schaefer2018): VolumeAtlasRef =
     val a = assets(spec)
     spec.atlasRef().copy(
       artifacts = Vector(
         AtlasArtifact(
-          role = "parcellation_volume",
+          role = ArtifactRole.ParcellationVolume,
           sourceName = "CBIG",
           sourceRef = a.volume.fileName,
           sourceUrl = Some(a.volume.uri.toString),
@@ -69,7 +69,7 @@ object SchaeferLoader:
           notes = Some(s"Schaefer2018 ${spec.parcels.value}-parcel ${spec.networks.value}-network volumetric labelmap")
         ),
         AtlasArtifact(
-          role = "label_table",
+          role = ArtifactRole.LabelTable,
           sourceName = "CBIG",
           sourceRef = a.labels.fileName,
           sourceUrl = Some(a.labels.uri.toString),

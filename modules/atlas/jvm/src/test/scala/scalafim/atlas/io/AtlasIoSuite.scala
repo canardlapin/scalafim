@@ -312,16 +312,15 @@ class AtlasIoSuite extends munit.FunSuite:
         )
       )
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "Toy",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.MNI152,
         coordSpace = SpaceId.MNI152,
         confidence = Confidence.High,
         artifacts = Vector(
-          AtlasArtifact(role = "parcellation_volume", sourceName = "toy", sourceRef = "toy.nii.gz", license = Some("CC0")),
-          AtlasArtifact(role = "label_table", sourceName = "toy", sourceRef = "toy.tsv", license = Some("CC0"))
+          AtlasArtifact(role = ArtifactRole.ParcellationVolume, sourceName = "toy", sourceRef = "toy.nii.gz", license = Some("CC0")),
+          AtlasArtifact(role = ArtifactRole.LabelTable, sourceName = "toy", sourceRef = "toy.tsv", license = Some("CC0"))
         )
       )
 
@@ -351,10 +350,9 @@ class AtlasIoSuite extends munit.FunSuite:
         )
       )
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "Toy",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.Custom,
         coordSpace = SpaceId.MNI152,
         confidence = Confidence.Exact

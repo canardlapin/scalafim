@@ -5,11 +5,10 @@ import scalafim.atlas.syntax.*
 
 class AtlasCoverageSuite extends munit.FunSuite:
 
-  private def ref: AtlasRef =
-    AtlasRef(
+  private def ref: VolumeAtlasRef =
+    AtlasRef.volume(
       family = "toy",
       model = "CoverageAtlas",
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.Custom,
       coordSpace = SpaceId.MNI152,
       confidence = Confidence.Exact
@@ -59,6 +58,16 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(index.find("network left v1").map(_.id), Vector(RegionId(1)))
     assertEquals(index.find("LEFT_V1", Some(Hemisphere.Left)).map(_.id), Vector(RegionId(1)))
     assertEquals(index.filter(_.hemisphere.contains(Hemisphere.Left)).ids, Vector(RegionId(1)))
+    assertEquals(index.regions.head.typedLabel, RegionLabel.unsafe("Left V1"))
+    assertEquals(index.regions.head.typedFullLabel, RegionLabel.unsafe("Network/Left V1"))
+    assertEquals(
+      Region.checked(RegionId(10), "Area 10", attributes = Map("system" -> "visual")).map(_.typedAttributes.toMap),
+      Right(Map("system" -> "visual"))
+    )
+    assertEquals(
+      Region.checked(RegionId(10), " ", attributes = Map.empty),
+      Left(AtlasError.InvalidRegionMetadata("region label must be non-empty"))
+    )
 
     val missing = intercept[NoSuchElementException]:
       index.requireRegion(RegionId(99))
@@ -80,6 +89,15 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(absent.getMessage.contains("label volume is missing region ids: 2"), clue = absent.getMessage)
 
   test("space transforms expose no-route and non-affine execution limits"):
+    assertEquals(SpaceId.kind(SpaceId.MNI152), SpaceKindTag.Volume)
+    assertEquals(SpaceId.kind(SpaceId.FsAverage), SpaceKindTag.Surface)
+    assertEquals(SpaceId.asVolume(SpaceId.MNI152), Right(SpaceId.MNI152))
+    assertEquals(SpaceId.asSurface(SpaceId.FsAverage), Right(SpaceId.FsAverage))
+    assertEquals(
+      SpaceId.asVolume(SpaceId.FsAverage),
+      Left(AtlasError.SpaceKindMismatch(SpaceId.FsAverage, SpaceKindTag.Volume, SpaceKindTag.Surface))
+    )
+
     val noRoute = SpaceTransforms.plan(SpaceId.Custom, SpaceId.FsLR32k)
     assertEquals(noRoute, Left(AtlasError.NoTransformRoute(SpaceId.Custom, SpaceId.FsLR32k)))
 
@@ -88,7 +106,13 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(vertexRoute.warnings.exists(_.contains("Nearest-neighbor surface resampling")), clue = vertexRoute.warnings.mkString(";"))
 
     val nonAffine = SpaceTransforms.transformCoords(Vector(Point3D(0.0, 0.0, 0.0)), SpaceId.FsAverage, SpaceId.FsLR32k)
-    assertEquals(nonAffine, Left(AtlasError.NoTransformRoute(SpaceId.FsAverage, SpaceId.FsLR32k)))
+    nonAffine match
+      case Left(AtlasError.TransformNotExecutable(from, to, reason)) =>
+        assertEquals(from, SpaceId.FsAverage)
+        assertEquals(to, SpaceId.FsLR32k)
+        assert(reason.contains("unavailable steps") || reason.contains("non-affine steps"), clue = reason)
+      case other =>
+        fail(s"expected non-executable route, got $other")
 
   test("parcel data preserves atlas order and rejects invalid record contracts"):
     val a = atlas(Vector(1, 2, 1, 2))
@@ -134,9 +158,11 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val a = atlas(Vector(2, 5, 2, 5), regions)
     val data = NeuroVol.fromLinear(NArrayUtil.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
     val reduced = a.reduce(data, Reducers.sum)
+    val checkedReduced = AtlasReduce.reduceVolumeEither(a, data, Reducers.sum)
 
     assertEquals(reduced.value(RegionId(2)), Some(4.0))
     assertEquals(reduced.value(RegionId(5)), Some(30.0))
+    assertEquals(checkedReduced.map(_.value(RegionId(2))), Right(Some(4.0)))
 
     val malformed =
       intercept[IllegalArgumentException]:
@@ -191,6 +217,10 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
     val mismatched = atlas(Vector(1, 2), space = NeuroSpace(Vector(2, 1, 1)))
+    assertEquals(
+      AtlasOverlap.computeEither(a, mismatched, resample = false),
+      Left(AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)))
+    )
     val err =
       intercept[IllegalArgumentException]:
         AtlasOverlap.compute(a, mismatched, resample = false)
@@ -214,10 +244,15 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(exact.id, Some(RegionId(1)))
     assertEquals(exact.distanceMm, Some(0.0))
 
-    interceptMessage[IllegalArgumentException]("requirement failed: radiusMm must be finite and non-negative"):
+    interceptMessage[IllegalArgumentException]("radiusMm must be finite and non-negative"):
       AtlasQuery.query(a, Vector(Point3D(0.0, 0.0, 0.0)), radiusMm = -1.0)
 
-    interceptMessage[IllegalArgumentException]("requirement failed: radiusMm must be finite and non-negative"):
+    assertEquals(
+      AtlasQuery.queryEither(a, Vector(Point3D(0.0, 0.0, 0.0)), radiusMm = -1.0),
+      Left(AtlasError.InvalidQuery("radiusMm must be finite and non-negative"))
+    )
+
+    interceptMessage[IllegalArgumentException]("radiusMm must be finite and non-negative"):
       AtlasQuery.query(a, Vector(Point3D(0.0, 0.0, 0.0)), radiusMm = Double.PositiveInfinity)
 
     val err =
@@ -233,8 +268,11 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasError.MissingRegionId(RegionId(3)) -> "atlas payload is missing region id 3",
         AtlasError.UnknownAtlas("missing", Vector("schaefer", "glasser")) -> "unknown atlas 'missing'; available atlases: schaefer, glasser",
         AtlasError.UnknownSpace(SpaceId("bad")) -> "unknown space 'bad'",
+        AtlasError.SpaceKindMismatch(SpaceId.FsAverage, SpaceKindTag.Volume, SpaceKindTag.Surface) -> "space 'fsaverage' has kind Surface; expected Volume",
         AtlasError.NoTransformRoute(SpaceId.Custom, SpaceId.MNI152) -> "no transform route found from 'custom' to 'MNI152'",
+        AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
         AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
+        AtlasError.InvalidQuery("bad query") -> "bad query",
         AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
         AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"
       )

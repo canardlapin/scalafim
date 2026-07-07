@@ -24,7 +24,7 @@ enum VoxelResolution(val mm: Int):
 
 enum StandardSurface(
   val key: String,
-  val spaceId: SpaceId,
+  val spaceId: SurfaceSpaceId,
   val density: String,
   val verticesPerHemisphere: Option[Int],
   val preferredKind: SurfaceKind
@@ -45,11 +45,10 @@ final case class Schaefer2018(
   def model: String =
     "Schaefer2018"
 
-  def atlasRef(confidence: Confidence = Confidence.High): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = Confidence.High): VolumeAtlasRef =
+    AtlasRef.volume(
       family = "schaefer",
       model = model,
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152NLin6Asym,
       coordSpace = SpaceId.MNI152,
       resolution = Some(s"${resolution.mm}mm"),
@@ -75,11 +74,10 @@ final case class Schaefer2018Surface(
   def model: String =
     "Schaefer2018"
 
-  def atlasRef(confidence: Confidence = Confidence.High): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = Confidence.High): SurfaceAtlasRef =
+    AtlasRef.surface(
       family = "schaefer",
       model = model,
-      representation = AtlasRepresentation.Surface,
       templateSpace = surface.spaceId,
       coordSpace = surface.spaceId,
       density = Some(surface.density),
@@ -90,7 +88,7 @@ final case class Schaefer2018Surface(
       notes = Some(s"${parcels.value} parcels, ${networks.value} Yeo networks, ${surface.key} surface labels"),
       artifacts = Vector(
         AtlasArtifact(
-          role = "surface-labels",
+          role = ArtifactRole.SurfaceAnnotation,
           sourceName = "CBIG Schaefer2018 surface annotations",
           sourceRef = s"${parcels.value}Parcels_${networks.value}Networks_${surface.key}",
           sourceUrl = Some(
@@ -110,11 +108,10 @@ final case class GlasserHcpMmp1(source: GlasserSource = GlasserSource.XcpEngine)
   def id: String =
     s"glasser-${source.key}"
 
-  def atlasRef(confidence: Confidence = source.defaultConfidence): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = source.defaultConfidence): VolumeAtlasRef =
+    AtlasRef.volume(
       family = "glasser",
       model = "HCP-MMP1.0",
-      representation = AtlasRepresentation.Volume,
       templateSpace = source.defaultTemplateSpace,
       coordSpace = SpaceId.MNI152,
       resolution = source.resolution,
@@ -127,7 +124,7 @@ final case class GlasserHcpMmp1(source: GlasserSource = GlasserSource.XcpEngine)
 
 enum GlasserSource(
   val key: String,
-  val defaultTemplateSpace: SpaceId,
+  val defaultTemplateSpace: VolumeOrUnknownSpaceId,
   val resolution: Option[String],
   val provenance: String,
   val lineage: String,
@@ -136,7 +133,7 @@ enum GlasserSource(
 ):
   case XcpEngine extends GlasserSource(
     "xcpengine",
-    SpaceId("MNI152_unspecified"),
+    SpaceId.unknown("MNI152_unspecified"),
     None,
     "xcpEngine glasser360MNI.nii.gz",
     "xcpEngine-distributed volumetric Glasser360 labelmap.",
@@ -157,11 +154,10 @@ final case class GlasserHcpMmp1Surface(surface: StandardSurface = StandardSurfac
   def id: String =
     s"glasser-surface-${surface.key}"
 
-  def atlasRef(confidence: Confidence = Confidence.High): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = Confidence.High): SurfaceAtlasRef =
+    AtlasRef.surface(
       family = "glasser",
       model = "HCP-MMP1.0",
-      representation = AtlasRepresentation.Surface,
       templateSpace = surface.spaceId,
       coordSpace = surface.spaceId,
       density = Some(surface.density),
@@ -172,7 +168,7 @@ final case class GlasserHcpMmp1Surface(surface: StandardSurface = StandardSurfac
       notes = Some(s"360 cortical areas on ${surface.key}; use SurfaceAtlas for left/right labeled surfaces."),
       artifacts = Vector(
         AtlasArtifact(
-          role = "surface-labels",
+          role = ArtifactRole.SurfaceAnnotation,
           sourceName = "HCP-MMP1.0 surface annotations",
           sourceRef = s"HCP-MMP1.0_${surface.key}",
           sourceUrl = Some("https://balsa.wustl.edu/study/show/RVVG"),
@@ -194,11 +190,10 @@ final case class Brainnetome246(source: BrainnetomeSource = BrainnetomeSource.Ca
   def model: String =
     "BrainnetomeAtlas246"
 
-  def atlasRef(confidence: Confidence = Confidence.High): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = Confidence.High): VolumeAtlasRef =
+    AtlasRef.volume(
       family = "brainnetome",
       model = model,
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       resolution = Some("1mm"),
@@ -233,11 +228,10 @@ final case class FreeSurferAseg(source: AsegSource = AsegSource.NeuroatlasExtdat
   def model: String =
     "FreeSurferASEG"
 
-  def atlasRef(confidence: Confidence = Confidence.High): AtlasRef =
-    AtlasRef(
+  def atlasRef(confidence: Confidence = Confidence.High): VolumeAtlasRef =
+    AtlasRef.volume(
       family = "aseg",
       model = model,
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152NLin6Asym,
       coordSpace = SpaceId.MNI152,
       resolution = Some("1mm"),

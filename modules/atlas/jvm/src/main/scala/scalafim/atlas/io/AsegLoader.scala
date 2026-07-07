@@ -46,12 +46,12 @@ object AsegLoader:
       )
     AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
 
-  def refFor(spec: FreeSurferAseg = FreeSurferAseg.default): AtlasRef =
+  def refFor(spec: FreeSurferAseg = FreeSurferAseg.default): VolumeAtlasRef =
     val a = assets(spec)
     spec.atlasRef().copy(
       artifacts = Vector(
         AtlasArtifact(
-          role = "parcellation_volume",
+          role = ArtifactRole.ParcellationVolume,
           sourceName = "neuroatlas",
           sourceRef = a.volume.fileName,
           sourceUrl = Some(a.volume.uri.toString),

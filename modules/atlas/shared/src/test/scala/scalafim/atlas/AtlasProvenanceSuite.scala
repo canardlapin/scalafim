@@ -12,17 +12,16 @@ class AtlasProvenanceSuite extends munit.FunSuite:
 
   test("AtlasRef converts to typed provenance with source artifacts, support, labels, and citations"):
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "ToyAtlas",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.MNI152NLin6Asym,
         coordSpace = SpaceId.MNI152,
         resolution = Some("2mm"),
         confidence = Confidence.High,
         artifacts = Vector(
           AtlasArtifact(
-            role = "parcellation_volume",
+            role = ArtifactRole.ParcellationVolume,
             sourceName = "toy-source",
             sourceRef = "toy.nii.gz",
             sourceUrl = Some("https://example.org/toy.nii.gz"),
@@ -31,7 +30,7 @@ class AtlasProvenanceSuite extends munit.FunSuite:
             sha256 = Some("abc123")
           ),
           AtlasArtifact(
-            role = "label_table",
+            role = ArtifactRole.LabelTable,
             sourceName = "toy-source",
             sourceRef = "toy.tsv",
             license = Some("CC-BY-4.0"),
@@ -84,10 +83,9 @@ class AtlasProvenanceSuite extends munit.FunSuite:
 
   test("descriptor-only provenance is explicit and validation reports audit gaps"):
     val ref =
-      AtlasRef(
+      AtlasRef.surface(
         family = "toy",
         model = "DescriptorOnly",
-        representation = AtlasRepresentation.Surface,
         templateSpace = SpaceId.Unknown,
         coordSpace = SpaceId.Unknown,
         density = Some("unknown"),
@@ -113,16 +111,15 @@ class AtlasProvenanceSuite extends munit.FunSuite:
 
   test("loaded provenance records label filtering decisions"):
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "Filtered",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.MNI152,
         coordSpace = SpaceId.MNI152,
         confidence = Confidence.Exact,
         artifacts = Vector(
           AtlasArtifact(
-            role = "label_table",
+            role = ArtifactRole.LabelTable,
             sourceName = "toy",
             sourceRef = "toy.tsv"
           )
@@ -166,7 +163,7 @@ class AtlasProvenanceSuite extends munit.FunSuite:
       )
 
     val artifact = source.toAtlasArtifact
-    assertEquals(artifact.role, "parcellation_volume")
+    assertEquals(artifact.role, ArtifactRole.ParcellationVolume)
     assertEquals(artifact.sourceUrl, Some("https://example.org/toy.nii.gz"))
     assertEquals(artifact.citationDoi, Some("10.0000/toy"))
     assertEquals(artifact.license, Some("Restricted: research use (https://example.org/terms)"))
@@ -175,16 +172,15 @@ class AtlasProvenanceSuite extends munit.FunSuite:
 
   test("strict provenance validation flags missing source accounting"):
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "MissingSourceAccounting",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.MNI152,
         coordSpace = SpaceId.MNI152,
         confidence = Confidence.High,
         artifacts = Vector(
           AtlasArtifact(
-            role = "label_table",
+            role = ArtifactRole.LabelTable,
             sourceName = "toy-labels",
             sourceRef = "toy.tsv"
           )

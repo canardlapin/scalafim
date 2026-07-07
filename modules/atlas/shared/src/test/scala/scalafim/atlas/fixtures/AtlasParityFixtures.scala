@@ -27,11 +27,10 @@ object AtlasParityFixtures:
   val dims: Vector[Int] =
     Vector(5, 5, 5)
 
-  val ref: AtlasRef =
-    AtlasRef(
+  val ref: VolumeAtlasRef =
+    AtlasRef.volume(
       family = "neuroatlas-parity",
       model = "NonContiguousFixture",
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       confidence = Confidence.Exact,

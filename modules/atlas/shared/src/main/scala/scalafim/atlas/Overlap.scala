@@ -13,12 +13,25 @@ final case class RegionOverlap(
 )
 
 object AtlasOverlap:
-  def compute(atlas1: VolumeAtlas, atlas2: VolumeAtlas, resample: Boolean = true): Vector[RegionOverlap] =
+  def computeEither(
+    atlas1: VolumeAtlas,
+    atlas2: VolumeAtlas,
+    resample: Boolean = true
+  ): Either[AtlasError, Vector[RegionOverlap]] =
     val vol1 = atlas1.labelVolume
-    val vol2 =
-      if atlas1.space.spatialDims == atlas2.space.spatialDims then atlas2.labelVolume
-      else if resample then Resample.nearest(atlas2.labelVolume, atlas1.space, fill = 0)
-      else throw new IllegalArgumentException(AtlasError.SpaceMismatch(atlas1.space.spatialDims, atlas2.space.spatialDims).message)
+    val vol2Either: Either[AtlasError, NeuroVol[Int]] =
+      if atlas1.space.spatialDims == atlas2.space.spatialDims then Right(atlas2.labelVolume)
+      else if resample then Right(Resample.nearest(atlas2.labelVolume, atlas1.space, fill = 0))
+      else Left(AtlasError.SpaceMismatch(atlas1.space.spatialDims, atlas2.space.spatialDims))
+
+    vol2Either.flatMap(vol2 => computeWithAlignedVolumes(atlas1, atlas2, vol1, vol2))
+
+  private def computeWithAlignedVolumes(
+    atlas1: VolumeAtlas,
+    atlas2: VolumeAtlas,
+    vol1: NeuroVol[Int],
+    vol2: NeuroVol[Int]
+  ): Either[AtlasError, Vector[RegionOverlap]] =
 
     val n1 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
     val n2 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
@@ -33,7 +46,7 @@ object AtlasOverlap:
       if a != 0 && b != 0 then both.update((a, b), both((a, b)) + 1)
       i += 1
 
-    both.toVector.flatMap { case ((id1, id2), nOverlap) =>
+    val overlaps = both.toVector.flatMap { case ((id1, id2), nOverlap) =>
       for
         r1 <- atlas1.region(RegionId(id1))
         r2 <- atlas2.region(RegionId(id2))
@@ -50,3 +63,7 @@ object AtlasOverlap:
           nRegion2 = b
         )
     }.sortBy(o => (-o.dice, o.region1.id.value, o.region2.id.value))
+    Right(overlaps)
+
+  def compute(atlas1: VolumeAtlas, atlas2: VolumeAtlas, resample: Boolean = true): Vector[RegionOverlap] =
+    computeEither(atlas1, atlas2, resample).fold(err => throw new IllegalArgumentException(err.message), identity)
