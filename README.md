@@ -6,6 +6,7 @@ cross-compiled sbt build.
 ## Modules
 
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
+- `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `latent`: typed latent fMRI response contracts, explicit basis/loadings responses, coefficient projection, and decoder-ready selections.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
 - `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
@@ -35,6 +36,8 @@ sbt compileAll
 sbt testAll
 sbt linalgJVM/test
 sbt linalgJS/test
+sbt pipelineJVM/test
+sbt pipelineJS/test
 sbt latentJVM/test
 sbt latentJS/test
 sbt arJVM/test

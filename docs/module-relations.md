@@ -24,6 +24,8 @@ linalg
 +-- fit               also depends on model, ar
 +-- group             also depends on image, dataset, design, fit
 
+pipeline
+
 hrf
 +-- design
     +-- model
@@ -46,15 +48,17 @@ image
 bids
 ```
 
-`bids` is intentionally standalone today: it parses/describes BIDS projects
-without forcing dataset, image IO, or modeling dependencies into the shared
-core.
+`pipeline` and `bids` are intentionally standalone today. `pipeline` owns
+generic graph orchestration without forcing workflow dependencies into the
+computational core. `bids` parses/describes BIDS projects without forcing
+dataset, image IO, or modeling dependencies into the shared core.
 
 ## Module Roles
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
 | `linalg` | Primitive vectors, matrices, sparse linear maps, linear solves, projection kernels. | Nothing internal. | fMRI, image, dataset, or domain-specific spatial concepts. |
+| `pipeline` | Generic typed pipeline graphs, artifact references, deterministic staging, local pure execution, and structured receipts. | Nothing internal. | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata. | `hrf` | Dataset execution or numerical fit engines. |
@@ -162,6 +166,7 @@ descriptors can materialize executable dense morphisms.
 ## Placement Rules
 
 - Put primitive matrix/vector/operator math in `linalg`.
+- Put generic workflow graph algebra in `pipeline`; keep domain execution in the owning computational modules and adapt it upward.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
 - Put mesh and vertex-domain algorithms in `surface`.
 - Put named atlas descriptors and parcel metadata in `atlas`.
