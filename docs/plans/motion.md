@@ -30,8 +30,11 @@ separated from planned capabilities. JVM builds support deterministic ordered
 parallel mapping for independent diagnostic and template-refresh frame work,
 while Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
 control. Full IC template-mode whitening, richer packet-aware estimator
-semantics, JVM IO, CLI/reporting, and real-data benchmark inputs remain later
-layers.
+semantics, process-runner CLI wiring, and real-data benchmark inputs remain
+later layers. The JVM adapter layer now has a lightweight NIfTI/sidecar
+read-write surface, BIDS/fMRIPrep scan discovery with TR/slice-timing metadata,
+parser-only typed `estimate`/`apply`/`run`/`report` CLI commands, and
+motion/matrix/summary report bundle writers over the typed shared results.
 
 ## Mote Completion Plan
 
@@ -57,8 +60,12 @@ The dependency order is:
    - `bd-01KWX6R3MTXPWA3FWRGYEB810M` - deterministic parallel frame execution:
      JVM ordered mapping is supported for independent diagnostic and
      template-refresh frame work; Scala.js is explicitly typed-off.
-3. Ready JVM adapter frontier:
-   - `bd-01KWX6RF9Z5K67HMPX0N3MG898` - JVM IO, BIDS, CLI, and report adapters.
+3. Active JVM adapter frontier:
+   - `bd-01KWX6RF9Z5K67HMPX0N3MG898` - JVM IO, BIDS, CLI, and report adapters:
+     NIfTI/sidecar IO, BIDS/fMRIPrep scan discovery, parser-only typed CLI
+     commands, and report bundle writers are in place; full process-runner CLI
+     wiring remains outside shared code and real-data adapter coverage belongs
+     to the benchmark slice.
 4. Blocked on the shared feature streams and JVM adapters:
    - `bd-01KWX6RR3PQYN1H48791VYD161` - real-data differential benchmark
      harness.
@@ -190,7 +197,11 @@ JVM-only adapters, when needed:
 
 ```text
 modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/
+  MotionIo.scala
+  MotionNifti.scala
   MotionNiftiIo.scala
+  MotionBids.scala
+  MotionCli.scala
   MotionReportWriter.scala
 ```
 
@@ -365,11 +376,14 @@ Acceptance:
 
 Keep these outside the shared module until the core is stable:
 
-- NIfTI read/write preserving affine, voxel size, and TR metadata;
-- BIDS/fMRIPrep scan discovery and sidecar-derived TR/slice timing;
-- command-line `estimate`, `apply`, `run`, and `report` commands;
-- report bundle generation: motion TSV, matrices CSV, summary CSV, overview
-  plot data;
+- NIfTI read/write preserving affine, voxel size, and TR metadata: lightweight
+  uncompressed write and sidecar metadata are present;
+- BIDS/fMRIPrep scan discovery and sidecar-derived TR/slice timing: raw and
+  preprocessed scan descriptors are present;
+- command-line `estimate`, `apply`, `run`, and `report` command parsing is
+  present; process execution wrappers remain a later packaging layer;
+- report bundle generation: motion TSV, matrices CSV, and summary CSV are
+  present; overview plot data remains later;
 - benchmark harnesses and real-data comparison scripts.
 
 JVM adapters should depend on the shared `motion` API. Shared code should never

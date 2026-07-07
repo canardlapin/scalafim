@@ -29,6 +29,7 @@ LC_ALL=C Rscript tools/motion/generate_volregger_fixtures.R \
 | Shared IC stencil and frame-mean whitening behavior | `R/control.R`, `tests/testthat/test-ic-efficacy.R` | `MotionControlSuite`, `MotionEstimatorSuite` |
 | Deterministic parallel execution boundary | `R/control.R`, `R/profiles.R` | `MotionControlSuite`, `MotionEstimatorSuite` |
 | CLI run/report artifact metadata | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | `VolreggerParitySuite` |
+| JVM NIfTI/BIDS/CLI/report adapter shape | `R/cli_io.R`, `R/cli.R`, `R/reporting.R` | `MotionIoSuite` |
 | Real-data benchmark gate metadata | `tests/testthat/test-external-benchmark-guardrails.R` | `VolreggerParitySuite` |
 | Resource payload parity | checked-in fixture | `VolreggerResourceSuite` |
 
@@ -42,5 +43,5 @@ benchmark inputs before they can become executable semantic parity tests.
 |---|---|---|
 | Packet-aware application semantics | `src/api_apply.cpp`, `src/api_spline.cpp`, `tests/testthat/test-synthetic-ablation-modes.R` | `bd-01KWX6QE4NYEWX7CESR04WFYSB` |
 | Full template-mode IC whitening numeric recovery | `tests/testthat/test-ic-efficacy.R`, `R/profiles.R` | `bd-01KWX6RR3PQYN1H48791VYD161` |
-| JVM CLI/report roundtrip outputs | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | `bd-01KWX6RF9Z5K67HMPX0N3MG898` |
+| Full CLI process roundtrip outputs | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | Final packaging layer after `bd-01KWX6RF9Z5K67HMPX0N3MG898` |
 | Real-data differential benchmark data | `tests/testthat/test-rniftyreg-differential.R`, `tests/testthat/test-external-benchmark-guardrails.R` | `bd-01KWX6RR3PQYN1H48791VYD161` |

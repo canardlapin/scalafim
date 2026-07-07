@@ -20,12 +20,15 @@ slice/packet timing.
 the controls that produced them. JVM builds support deterministic ordered
 parallel mapping for independent diagnostic and template-refresh frame work;
 Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
-control. Profiles expose typed active and planned capabilities; full IC
-template-mode whitening, richer packet-aware estimator semantics, JVM NIfTI IO,
-CLI, and report writers are staged later layers. `WhiteningPolicy.FrameMeanOnly`
-is supported as the typed frame-mean residual path; `WhiteningPolicy.IcWhiten`
-is an explicit unsupported control until the template-mode whitening contract is
-proven.
+control. JVM builds also include lightweight NIfTI/sidecar IO, BIDS scan
+discovery with TR/slice-timing metadata, and motion/matrix/summary report
+bundle writers plus parser-only typed CLI commands. Profiles expose typed active
+and planned capabilities; full IC template-mode whitening, richer packet-aware
+estimator semantics, process-runner CLI wiring, and real-data benchmark adapters
+are staged later layers.
+`WhiteningPolicy.FrameMeanOnly` is supported as the typed frame-mean residual
+path; `WhiteningPolicy.IcWhiten` is an explicit unsupported control until the
+template-mode whitening contract is proven.
 
 Run it directly with:
 

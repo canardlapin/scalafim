@@ -163,7 +163,7 @@ lazy val motion =
     .jsSettings(jsSettingsBase)
 
 lazy val motionJS  = motion.js
-lazy val motionJVM = motion.jvm
+lazy val motionJVM = motion.jvm.dependsOn(bidsJVM)
 
 lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
