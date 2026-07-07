@@ -79,11 +79,17 @@ sealed trait SpatialMorphism:
   final def transform(point: SpatialPoint): SpatialPoint =
     SpatialPoint.unsafeFromVector(transform(point.toVector), "transformed point")
 
+  final def transform(point: WorldPoint): WorldPoint =
+    WorldPoint.unsafeFromVector(transform(point.toVector), "transformed world point")
+
   @targetName("transformMany")
   def transform(points: Vector[Vector[Double]]): Vector[Vector[Double]]
 
   final def transformPoints(points: Vector[SpatialPoint]): Vector[SpatialPoint] =
     transform(points.map(_.toVector)).map(point => SpatialPoint.unsafeFromVector(point, "transformed point"))
+
+  final def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
+    transform(points.map(_.toVector)).map(point => WorldPoint.unsafeFromVector(point, "transformed world point"))
 
   def jacobian(
       coords: Vector[Vector[Double]],
@@ -101,6 +107,21 @@ sealed trait SpatialMorphism:
 
   final def jacobianAt(
       points: Vector[SpatialPoint],
+      mode: JacobianMode
+  ): Either[MorphismError, JacobianField] =
+    jacobian(points.map(_.toVector), mode)
+
+  final def jacobianAtWorld(
+      point: WorldPoint,
+      mode: JacobianMode = JacobianMode.Pullback
+  ): Either[MorphismError, DMat] =
+    jacobianAtWorld(Vector(point), mode).map(_(0))
+
+  final def jacobianAtWorld(points: Vector[WorldPoint]): Either[MorphismError, JacobianField] =
+    jacobianAtWorld(points, JacobianMode.Pullback)
+
+  final def jacobianAtWorld(
+      points: Vector[WorldPoint],
       mode: JacobianMode
   ): Either[MorphismError, JacobianField] =
     jacobian(points.map(_.toVector), mode)
@@ -133,6 +154,29 @@ sealed trait SpatialMorphism:
 
   final def jacobianDetAt(
       points: Vector[SpatialPoint],
+      log: Boolean,
+      mode: JacobianMode
+  ): Either[MorphismError, Vector[Double]] =
+    jacobianDet(points.map(_.toVector), log, mode)
+
+  final def jacobianDetAtWorld(
+      point: WorldPoint,
+      log: Boolean = false,
+      mode: JacobianMode = JacobianMode.Pullback
+  ): Either[MorphismError, Double] =
+    jacobianDetAtWorld(Vector(point), log, mode).map(_.head)
+
+  final def jacobianDetAtWorld(points: Vector[WorldPoint]): Either[MorphismError, Vector[Double]] =
+    jacobianDetAtWorld(points, log = false, mode = JacobianMode.Pullback)
+
+  final def jacobianDetAtWorld(
+      points: Vector[WorldPoint],
+      log: Boolean
+  ): Either[MorphismError, Vector[Double]] =
+    jacobianDetAtWorld(points, log, JacobianMode.Pullback)
+
+  final def jacobianDetAtWorld(
+      points: Vector[WorldPoint],
       log: Boolean,
       mode: JacobianMode
   ): Either[MorphismError, Vector[Double]] =
@@ -316,6 +360,9 @@ final case class DenseFieldMorphism private (
 
   def interpolationPlan(points: Vector[Vector[Double]]): Either[MorphismError, DenseFieldInterpolationPlan] =
     DenseFieldInterpolationPlan.make(grid, points, interpolation)
+
+  def interpolationPlanAtWorldPoints(points: Vector[WorldPoint]): Either[MorphismError, DenseFieldInterpolationPlan] =
+    DenseFieldInterpolationPlan.fromWorldPoints(grid, points, interpolation)
 
   def approximateInverse(
       inverseGrid: GridSpec,

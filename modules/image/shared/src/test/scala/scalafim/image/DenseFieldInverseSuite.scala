@@ -12,6 +12,9 @@ class DenseFieldInverseSuite extends munit.FunSuite:
     assertEquals(actual.length, expected.length, clue = "")
     actual.zip(expected).foreach { case (a, e) => assertClose(a, e, tol) }
 
+  private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
   private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
     val data =
       NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
@@ -50,6 +53,9 @@ class DenseFieldInverseSuite extends munit.FunSuite:
     val query = Vector(1.0, 1.0, 1.0)
     val inversePoint = result.morphism.transform(query)
     val roundtrip = morphism.transform(inversePoint)
+    val typedQuery = WorldPoint(1.0, 1.0, 1.0)
+    val typedInversePoint = result.morphism.transform(typedQuery)
+    val typedRoundtrip = morphism.transform(typedInversePoint)
 
     assert(result.converged, clue = s"maxResidual=${result.maxResidual}")
     assert(result.iterations <= 2, clue = s"iterations=${result.iterations}")
@@ -58,6 +64,8 @@ class DenseFieldInverseSuite extends munit.FunSuite:
     assertEquals(result.morphism.target, native, clue = "")
     assertClose(inversePoint, Vector(0.8, 1.1, 0.95), 1e-8)
     assertClose(roundtrip, query, 1e-8)
+    assertClose(typedInversePoint, WorldPoint(0.8, 1.1, 0.95), 1e-8)
+    assertClose(typedRoundtrip, typedQuery, 1e-8)
   }
 
   test("approximate inverse works for absolute-coordinate dense fields") {
@@ -80,10 +88,14 @@ class DenseFieldInverseSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     val query = Vector(1.0, 1.0, 1.0)
     val inversePoint = result.morphism.transform(query)
+    val typedQuery = WorldPoint(1.0, 1.0, 1.0)
+    val typedInversePoint = result.morphism.transform(typedQuery)
 
     assert(result.converged, clue = s"maxResidual=${result.maxResidual}")
     assertClose(inversePoint, Vector(1.15, 0.9, 0.8), 1e-8)
     assertClose(morphism.transform(inversePoint), query, 1e-8)
+    assertClose(typedInversePoint, WorldPoint(1.15, 0.9, 0.8), 1e-8)
+    assertClose(morphism.transform(typedInversePoint), typedQuery, 1e-8)
   }
 
   test("inverse options validate directly") {

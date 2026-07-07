@@ -45,6 +45,9 @@ class MorphismSuite extends munit.FunSuite:
   private def assertClose(actual: SpatialPoint, expected: SpatialPoint, tol: Double): Unit =
     assertClose(actual.toVector, expected.toVector, tol)
 
+  private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
   private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
     val data =
       NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
@@ -79,6 +82,23 @@ class MorphismSuite extends munit.FunSuite:
     assertClose(jacobian(2, 2), 1.0)
 
     val det = morphism.jacobianDetAt(point).fold(err => fail(err.message), identity)
+    assertClose(det, 1.0)
+  }
+
+  test("morphisms expose role-specific WorldPoint transform and jacobian helpers") {
+    val morphism = affine(native, mni, translation(10.0, 20.0, 30.0))
+    val point = WorldPoint(1.0, 2.0, 3.0)
+    val expected = WorldPoint(11.0, 22.0, 33.0)
+
+    assertClose(morphism.transform(point), expected, 1e-10)
+    assertEquals(morphism.transformWorldPoints(Vector(point)), Vector(expected), clue = "")
+
+    val jacobian = morphism.jacobianAtWorld(point).fold(err => fail(err.message), identity)
+    assertClose(jacobian(0, 0), 1.0)
+    assertClose(jacobian(1, 1), 1.0)
+    assertClose(jacobian(2, 2), 1.0)
+
+    val det = morphism.jacobianDetAtWorld(point).fold(err => fail(err.message), identity)
     assertClose(det, 1.0)
   }
 
@@ -277,7 +297,9 @@ class MorphismSuite extends munit.FunSuite:
     assertEquals(plan.fusedAffinePairs, 1, clue = "")
     assertClose(plan.transform(Vector(Vector(0.0, 0.0, 0.0))).head, Vector(1.0, 2.0, 0.0), 1e-10)
     assertClose(plan.transform(SpatialPoint.Origin), SpatialPoint(1.0, 2.0, 0.0), 1e-10)
+    assertClose(plan.transform(WorldPoint.Origin), WorldPoint(1.0, 2.0, 0.0), 1e-10)
     assertEquals(plan.transformPoints(Vector(SpatialPoint.Origin)), Vector(SpatialPoint(1.0, 2.0, 0.0)), clue = "")
+    assertEquals(plan.transformWorldPoints(Vector(WorldPoint.Origin)), Vector(WorldPoint(1.0, 2.0, 0.0)), clue = "")
 
     val identities =
       MorphismExecutionPlan.make(Vector(IdentityMorphism(native), IdentityMorphism(native)))

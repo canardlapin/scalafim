@@ -21,8 +21,14 @@ final case class MorphismExecutionPlan private (
   def transform(point: SpatialPoint): SpatialPoint =
     morphism.transform(point)
 
+  def transform(point: WorldPoint): WorldPoint =
+    morphism.transform(point)
+
   def transformPoints(points: Vector[SpatialPoint]): Vector[SpatialPoint] =
     morphism.transformPoints(points)
+
+  def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint] =
+    morphism.transformWorldPoints(points)
 
 object MorphismExecutionPlan:
 

@@ -159,3 +159,65 @@ object SpatialPoint:
 
   def unsafeFromVector(values: Vector[Double], label: String = "spatial point"): SpatialPoint =
     fromVector(values, label).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+final case class VoxelPoint(x: Double, y: Double, z: Double):
+  require(x.isFinite && y.isFinite && z.isFinite, "voxel point coordinates must be finite")
+
+  def apply(axis: SpatialAxis): Double =
+    axis match
+      case SpatialAxis.X => x
+      case SpatialAxis.Y => y
+      case SpatialAxis.Z => z
+
+  def toVector: Vector[Double] =
+    Vector(x, y, z)
+
+  def toSpatialPoint: SpatialPoint =
+    SpatialPoint(x, y, z)
+
+object VoxelPoint:
+  val Origin: VoxelPoint =
+    VoxelPoint(0.0, 0.0, 0.0)
+
+  def make(x: Double, y: Double, z: Double, label: String = "voxel point"): Either[GeometryError, VoxelPoint] =
+    SpatialPoint.make(x, y, z, label).map(point => VoxelPoint(point.x, point.y, point.z))
+
+  def fromVector(values: Vector[Double], label: String = "voxel point"): Either[GeometryError, VoxelPoint] =
+    SpatialPoint.fromVector(values, label).map(point => VoxelPoint(point.x, point.y, point.z))
+
+  def unsafeFromVector(values: Vector[Double], label: String = "voxel point"): VoxelPoint =
+    fromVector(values, label).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def fromSpatialPoint(point: SpatialPoint): VoxelPoint =
+    VoxelPoint(point.x, point.y, point.z)
+
+final case class WorldPoint(x: Double, y: Double, z: Double):
+  require(x.isFinite && y.isFinite && z.isFinite, "world point coordinates must be finite")
+
+  def apply(axis: SpatialAxis): Double =
+    axis match
+      case SpatialAxis.X => x
+      case SpatialAxis.Y => y
+      case SpatialAxis.Z => z
+
+  def toVector: Vector[Double] =
+    Vector(x, y, z)
+
+  def toSpatialPoint: SpatialPoint =
+    SpatialPoint(x, y, z)
+
+object WorldPoint:
+  val Origin: WorldPoint =
+    WorldPoint(0.0, 0.0, 0.0)
+
+  def make(x: Double, y: Double, z: Double, label: String = "world point"): Either[GeometryError, WorldPoint] =
+    SpatialPoint.make(x, y, z, label).map(point => WorldPoint(point.x, point.y, point.z))
+
+  def fromVector(values: Vector[Double], label: String = "world point"): Either[GeometryError, WorldPoint] =
+    SpatialPoint.fromVector(values, label).map(point => WorldPoint(point.x, point.y, point.z))
+
+  def unsafeFromVector(values: Vector[Double], label: String = "world point"): WorldPoint =
+    fromVector(values, label).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def fromSpatialPoint(point: SpatialPoint): WorldPoint =
+    WorldPoint(point.x, point.y, point.z)

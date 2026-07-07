@@ -149,6 +149,9 @@ the spatial stack. `scalafim.surface.Point3D` and `scalafim.atlas.Point3D` are
 source-compatible aliases/adapters over that image type, not independent point
 records.
 
+Where voxel/world roles matter, prefer the narrower `VoxelPoint` and
+`WorldPoint` image types over an unlabelled 3D vector.
+
 Agents should not duplicate coordinate execution in `spatial` when an
 `image.SpatialMorphism` or surface primitive can own it. Use the existing typed
 lowering from `spatial.MorphismPath` to executable image morphisms for

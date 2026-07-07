@@ -8,8 +8,10 @@ enum NeuroSpaceError:
   case NonPositiveSpacing(axis: SpatialAxis, value: Double)
   case InvalidTransformShape(rows: Int, cols: Int)
   case NonFiniteTransformValue(index: Int)
+  case InvalidTransformBottomRow(actual: Vector[Double])
   case SingularTransform(reason: String)
   case AxisCountMismatch(expected: Int, actual: Int)
+  case ExpectedDimensionality(label: String, expected: Int, actual: Int)
 
   def message: String =
     this match
@@ -27,10 +29,14 @@ enum NeuroSpaceError:
         s"spatial transform must be 4x4; got ${rows}x${cols}"
       case NonFiniteTransformValue(index) =>
         s"spatial transform value at linear index $index is not finite"
+      case InvalidTransformBottomRow(actual) =>
+        s"spatial transform bottom row must be [0, 0, 0, 1]; got $actual"
       case SingularTransform(reason) =>
         s"transformation matrix not invertible: $reason"
       case AxisCountMismatch(expected, actual) =>
         s"axis count must match dimensionality: expected $expected, got $actual"
+      case ExpectedDimensionality(label, expected, actual) =>
+        s"$label requires exactly $expected dimensions; got $actual"
 
 final class NeuroSpace private (
     val dims: Vector[Int],
@@ -40,10 +46,19 @@ final class NeuroSpace private (
     val trans: DMat,
     val inverse: DMat
 ):
+  val affine3D: Affine3D =
+    Affine3D.unsafe(trans, inverse)
+
   def ndim: Int = dims.length
   def spatialDims: Vector[Int] = dims.take(3)
   def spatialShape: SpatialDims =
     SpatialDims.unsafeFromVector(spatialDims)
+
+  def asVolumeSpace: Either[NeuroSpaceError, VolumeSpace] =
+    VolumeSpace.make(this)
+
+  def asSeriesSpace: Either[NeuroSpaceError, SeriesSpace] =
+    SeriesSpace.make(this)
 
   def gridToIndex(coords: Vector[Int]): Int =
     Indexing.gridToIndex(dims, coords)
@@ -134,6 +149,9 @@ final class NeuroSpace private (
   def indexToPoint(index: SpatialPoint): SpatialPoint =
     SpatialPoint.unsafeFromVector(indexToCoord(index.toVector), "world coordinate")
 
+  def voxelToWorld(voxel: VoxelPoint): WorldPoint =
+    affine3D.voxelToWorld(voxel)
+
   def coordToIndex(coord: Vector[Double]): Vector[Double] =
     val d = math.min(coord.length, 3)
     val hom = Array.ofDim[Double](4)
@@ -157,6 +175,9 @@ final class NeuroSpace private (
 
   def coordToIndexPoint(coord: SpatialPoint): SpatialPoint =
     SpatialPoint.unsafeFromVector(coordToIndex(coord.toVector), "voxel coordinate")
+
+  def worldToVoxel(world: WorldPoint): VoxelPoint =
+    affine3D.worldToVoxel(world)
 
   override def equals(other: Any): Boolean =
     other match
@@ -283,7 +304,10 @@ object NeuroSpace:
 
       error match
         case Some(err) => Left(err)
-        case None => Right(transform)
+        case None =>
+          val bottom = Vector(transform(3, 0), transform(3, 1), transform(3, 2), transform(3, 3))
+          if bottom == Vector(0.0, 0.0, 0.0, 1.0) then Right(transform)
+          else Left(NeuroSpaceError.InvalidTransformBottomRow(bottom))
 
   private def validateAxes(expected: Int, axes: AxisSet): Either[NeuroSpaceError, Unit] =
     if axes.ndim == expected then Right(())
@@ -295,3 +319,73 @@ object NeuroSpace:
       val inferred = Orientation.findAnatomy(transform)
       AxisSet((inferred.axes ++ base.additionalAxes)*)
     else base
+
+final case class VolumeSpace private (space: NeuroSpace):
+  def shape: SpatialDims =
+    space.spatialShape
+
+  def dims: Vector[Int] =
+    space.dims
+
+  def affine: Affine3D =
+    space.affine3D
+
+  def nVoxels: Int =
+    shape.product
+
+  def toNeuroSpace: NeuroSpace =
+    space
+
+  def voxelToWorld(voxel: VoxelPoint): WorldPoint =
+    affine.voxelToWorld(voxel)
+
+  def worldToVoxel(world: WorldPoint): VoxelPoint =
+    affine.worldToVoxel(world)
+
+  def addTime(n: Int): SeriesSpace =
+    SeriesSpace.unsafe(space.addDim(n, Some(Axis.Time)))
+
+object VolumeSpace:
+  def make(space: NeuroSpace): Either[NeuroSpaceError, VolumeSpace] =
+    if space.ndim == 3 then Right(new VolumeSpace(space))
+    else Left(NeuroSpaceError.ExpectedDimensionality("VolumeSpace", 3, space.ndim))
+
+  def fromSpatialPart(space: NeuroSpace): Either[NeuroSpaceError, VolumeSpace] =
+    if space.ndim >= 3 then Right(new VolumeSpace(space.spatialSpace))
+    else Left(NeuroSpaceError.ExpectedDimensionality("VolumeSpace spatial part", 3, space.ndim))
+
+  def apply(space: NeuroSpace): VolumeSpace =
+    make(space).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def unsafe(space: NeuroSpace): VolumeSpace =
+    new VolumeSpace(space)
+
+final case class SeriesSpace private (space: NeuroSpace):
+  def volumeSpace: VolumeSpace =
+    VolumeSpace.unsafe(space.spatialSpace)
+
+  def spatialShape: SpatialDims =
+    volumeSpace.shape
+
+  def dims: Vector[Int] =
+    space.dims.take(4)
+
+  def nVolumes: Int =
+    space.dims(3)
+
+  def affine: Affine3D =
+    space.affine3D
+
+  def toNeuroSpace: NeuroSpace =
+    space
+
+object SeriesSpace:
+  def make(space: NeuroSpace): Either[NeuroSpaceError, SeriesSpace] =
+    if space.ndim == 4 then Right(new SeriesSpace(space))
+    else Left(NeuroSpaceError.ExpectedDimensionality("SeriesSpace", 4, space.ndim))
+
+  def apply(space: NeuroSpace): SeriesSpace =
+    make(space).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def unsafe(space: NeuroSpace): SeriesSpace =
+    new SeriesSpace(space)

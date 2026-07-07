@@ -11,6 +11,8 @@ final case class NeuroVol[A](
 ):
   require(values.ndim == 3, "NeuroVol must be 3D")
   require(values.shape == space.spatialDims, "data/space dimension mismatch")
+  val volumeSpace: VolumeSpace =
+    VolumeSpace.fromSpatialPart(space).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   inline def apply(i: Int, j: Int, k: Int): A =
     values(i, j, k)
@@ -28,6 +30,16 @@ final case class NeuroVol[A](
       require(c(1) >= 0 && c(1) < dims(1), "roi coord out of bounds")
       require(c(2) >= 0 && c(2) < dims(2), "roi coord out of bounds")
       out(p) = apply(c(0), c(1), c(2))
+      p += 1
+    out
+
+  def apply(roi: VoxelRoi)(using ClassTag[A]): NArray[A] =
+    require(roi.space == volumeSpace, "ROI/space mismatch")
+    val out = NArrayUtil.ofSize[A](roi.size)
+    val coords = roi.coords
+    var p = 0
+    while p < coords.length do
+      out(p) = apply(coords(p))
       p += 1
     out
 
@@ -89,7 +101,14 @@ final case class NeuroVol[A](
     }
 
   def asMask(indices: NArray[Int], label: String): NeuroVol[Boolean] =
-    Mask.fromIndices(space, indices, label)
+    Mask.fromIndexSet(VoxelIndexSet(volumeSpace, indices), label)
+
+  def asMask(indexSet: VoxelIndexSet, label: String): NeuroVol[Boolean] =
+    require(indexSet.space == volumeSpace, "index set/space mismatch")
+    Mask.fromIndexSet(indexSet, label)
+
+  def asMask(indexSet: VoxelIndexSet): NeuroVol[Boolean] =
+    asMask(indexSet, this.label)
 
   def asMask(indices: NArray[Int]): NeuroVol[Boolean] =
     asMask(indices, this.label)
@@ -104,15 +123,21 @@ final case class NeuroVol[A](
     asSparse(indices, this.label)
 
   def asSparse(indices: NArray[Int], label: String)(using ClassTag[A]): SparseNeuroVol[A] =
-    val spatialNels = space.spatialDims.product
-    val out = NArrayUtil.ofSize[A](indices.length)
+    val indexSet = VoxelIndexSet.unique(volumeSpace, indices)
+    asSparse(indexSet, label)
+
+  def asSparse(indexSet: VoxelIndexSet)(using ClassTag[A]): SparseNeuroVol[A] =
+    asSparse(indexSet, this.label)
+
+  def asSparse(indexSet: VoxelIndexSet, label: String)(using ClassTag[A]): SparseNeuroVol[A] =
+    require(indexSet.space == volumeSpace, "index set/space mismatch")
+    val out = NArrayUtil.ofSize[A](indexSet.size)
     var p = 0
-    while p < indices.length do
-      val lin = indices(p)
-      require(lin >= 0 && lin < spatialNels, "indices out of range")
+    while p < indexSet.size do
+      val lin = indexSet(p)
       out(p) = linear(lin)
       p += 1
-    SparseNeuroVol(out, indices, space, label)
+    SparseNeuroVol.fromIndexSet(out, indexSet, space, label)
 
   def gridToIndex(i: Int, j: Int, k: Int): Int =
     space.gridToIndex3D(i, j, k)

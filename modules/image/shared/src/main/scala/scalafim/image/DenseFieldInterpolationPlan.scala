@@ -8,6 +8,15 @@ enum DenseFieldOutside:
       case Zero => 0.0
       case QueryPoint => point(component)
 
+  def value(point: WorldPoint, component: Int): Double =
+    this match
+      case Zero => 0.0
+      case QueryPoint =>
+        component match
+          case 0 => point.x
+          case 1 => point.y
+          case _ => point.z
+
 private[image] final class DenseFieldStencil(
     val indices: Array[Int],
     val weights: Array[Double],
@@ -20,14 +29,17 @@ private[image] final class DenseFieldStencil(
 
 final case class DenseFieldInterpolationPlan private (
     grid: GridSpec,
-    points: Vector[Vector[Double]],
+    worldPoints: Vector[WorldPoint],
     method: Resample.Method,
     private[image] val stencils: Vector[DenseFieldStencil]
 ):
-  require(points.length == stencils.length, "points/stencils length mismatch")
+  require(worldPoints.length == stencils.length, "points/stencils length mismatch")
+
+  def points: Vector[Vector[Double]] =
+    worldPoints.map(_.toVector)
 
   def queryCount: Int =
-    points.length
+    worldPoints.length
 
   def sample(
       field: NDArray[Double],
@@ -42,10 +54,10 @@ final case class DenseFieldInterpolationPlan private (
       outside: DenseFieldOutside
   ): Vector[Vector[Double]] =
     val out = Vector.newBuilder[Vector[Double]]
-    out.sizeHint(points.length)
+    out.sizeHint(worldPoints.length)
     var i = 0
-    while i < points.length do
-      val point = points(i)
+    while i < worldPoints.length do
+      val point = worldPoints(i)
       val stencil = stencils(i)
       val sampled = Array.ofDim[Double](3)
       var component = 0
@@ -71,6 +83,17 @@ object DenseFieldInterpolationPlan:
       method: Resample.Method
   ): Either[MorphismError, DenseFieldInterpolationPlan] =
     SpatialMorphism.validateCoords(points)
+    fromWorldPoints(
+      grid,
+      points.map(point => WorldPoint.unsafeFromVector(point, "dense field query point")),
+      method
+    )
+
+  def fromWorldPoints(
+      grid: GridSpec,
+      points: Vector[WorldPoint],
+      method: Resample.Method
+  ): Either[MorphismError, DenseFieldInterpolationPlan] =
     for
       _ <- validateMethod(method)
       inverse <- DMat.invert(grid.affine).left.map(MorphismError.SingularMatrix.apply)
@@ -79,7 +102,8 @@ object DenseFieldInterpolationPlan:
       stencils.sizeHint(points.length)
       var i = 0
       while i < points.length do
-        val voxel = Affine.applyAffine(inverse, points(i))
+        val voxel =
+          VoxelPoint.unsafeFromVector(Affine.applyAffine(inverse, points(i).toVector), "dense field voxel point")
         val stencil =
           method match
             case Resample.Method.Nearest => nearestStencil(grid, voxel)
@@ -110,21 +134,21 @@ object DenseFieldInterpolationPlan:
     method match
       case Resample.Method.Nearest | Resample.Method.Linear | Resample.Method.Cubic => Right(())
 
-  private def nearestStencil(grid: GridSpec, voxel: Vector[Double]): DenseFieldStencil =
-    val x = math.round(voxel(0)).toInt
-    val y = math.round(voxel(1)).toInt
-    val z = math.round(voxel(2)).toInt
+  private def nearestStencil(grid: GridSpec, voxel: VoxelPoint): DenseFieldStencil =
+    val x = math.round(voxel.x).toInt
+    val y = math.round(voxel.y).toInt
+    val z = math.round(voxel.z).toInt
     if inBounds(grid, x, y, z) then
       new DenseFieldStencil(Array(Indexing.gridToIndex3D(grid.shape, x, y, z)), Array(1.0), 0.0)
     else new DenseFieldStencil(Array.empty[Int], Array.empty[Double], 1.0)
 
-  private def linearStencil(grid: GridSpec, voxel: Vector[Double]): DenseFieldStencil =
-    val x0 = math.floor(voxel(0)).toInt
-    val y0 = math.floor(voxel(1)).toInt
-    val z0 = math.floor(voxel(2)).toInt
-    val xd = voxel(0) - x0
-    val yd = voxel(1) - y0
-    val zd = voxel(2) - z0
+  private def linearStencil(grid: GridSpec, voxel: VoxelPoint): DenseFieldStencil =
+    val x0 = math.floor(voxel.x).toInt
+    val y0 = math.floor(voxel.y).toInt
+    val z0 = math.floor(voxel.z).toInt
+    val xd = voxel.x - x0
+    val yd = voxel.y - y0
+    val zd = voxel.z - z0
     val indices = Array.ofDim[Int](8)
     val weights = Array.ofDim[Double](8)
     var n = 0
@@ -155,10 +179,10 @@ object DenseFieldInterpolationPlan:
 
     new DenseFieldStencil(indices.take(n), weights.take(n), outside)
 
-  private def cubicStencil(grid: GridSpec, voxel: Vector[Double]): DenseFieldStencil =
-    val x = voxel(0)
-    val y = voxel(1)
-    val z = voxel(2)
+  private def cubicStencil(grid: GridSpec, voxel: VoxelPoint): DenseFieldStencil =
+    val x = voxel.x
+    val y = voxel.y
+    val z = voxel.z
     if x < -0.5 || y < -0.5 || z < -0.5 ||
         x > grid.shape.x.toDouble - 0.5 ||
         y > grid.shape.y.toDouble - 0.5 ||

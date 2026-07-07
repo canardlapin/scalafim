@@ -10,6 +10,8 @@ final case class NeuroVec[A](
 ):
   require(values.ndim == 4, "NeuroVec must be 4D")
   require(values.shape == space.dims.take(4), "data/space dimension mismatch")
+  val seriesSpace: SeriesSpace =
+    SeriesSpace.make(space).fold(err => throw new IllegalArgumentException(err.message), series => series)
 
   def nVolumes: Int = values.shape(3)
 
@@ -107,6 +109,10 @@ final case class NeuroVec[A](
       p += 1
     NDArray(out, Vector(tLen, nVox))
 
+  def series(indexSet: VoxelIndexSet)(using ClassTag[A]): NDArray[A] =
+    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    series(indexSet.unsafeArray)
+
   def series(roi: ROICoords)(using ClassTag[A]): NDArray[A] =
     series(roi.linearIndices(space.spatialSpace))
 
@@ -114,7 +120,7 @@ final case class NeuroVec[A](
     series(ROICoords(coords))
 
   def series(mask: NeuroVol[Boolean])(using ClassTag[A]): NDArray[A] =
-    series(Mask.indices(mask))
+    series(Mask.indexSet(mask))
 
   def seriesRoi(roi: ROICoords)(using ClassTag[A]): ROIVec[A] =
     val lin = roi.linearIndices(space.spatialSpace)
@@ -127,7 +133,15 @@ final case class NeuroVec[A](
     asSparse(indices, this.label)
 
   def asSparse(indices: NArray[Int], label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-    val m = Mask.fromIndices(space.spatialSpace, indices)
+    val indexSet = VoxelIndexSet.unique(seriesSpace.volumeSpace, indices)
+    asSparse(indexSet, label)
+
+  def asSparse(indexSet: VoxelIndexSet)(using ClassTag[A]): SparseNeuroVec[A] =
+    asSparse(indexSet, this.label)
+
+  def asSparse(indexSet: VoxelIndexSet, label: String)(using ClassTag[A]): SparseNeuroVec[A] =
+    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    val m = Mask.fromIndexSet(indexSet)
     asSparse(m, label)
 
   def asSparse(roi: ROICoords)(using ClassTag[A]): SparseNeuroVec[A] =

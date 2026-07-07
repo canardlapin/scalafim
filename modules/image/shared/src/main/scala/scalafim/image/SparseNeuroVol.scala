@@ -11,15 +11,11 @@ final case class SparseNeuroVol[A](
   label: String = ""
 ):
   require(space.ndim >= 3, "space must be at least 3D")
-  require(data.length == indices.length, "data/indices length mismatch")
-  private val maxLin = space.spatialDims.product
-  private var ok = true
-  private var p = 0
-  while ok && p < indices.length do
-    val v = indices(p)
-    if v < 0 || v >= maxLin then ok = false
-    p += 1
-  require(ok, "indices out of range")
+  private val volumeSpace =
+    VolumeSpace.fromSpatialPart(space).fold(err => throw new IllegalArgumentException(err.message), identity)
+  val indexSet: VoxelIndexSet =
+    VoxelIndexSet.unique(volumeSpace, indices)
+  require(data.length == indexSet.size, "data/indices length mismatch")
 
   lazy val map: IndexLookupVol = IndexLookupVol(space, indices)
 
@@ -27,7 +23,7 @@ final case class SparseNeuroVol[A](
     toMask(this.label)
 
   def toMask(label: String): NeuroVol[Boolean] =
-    Mask.fromIndices(space, indices, label)
+    Mask.fromIndexSet(indexSet, label)
 
   def toDense(using ClassTag[A], spire.algebra.Ring[A]): NeuroVol[A] =
     val zero = summon[Ring[A]].zero
@@ -39,6 +35,23 @@ final case class SparseNeuroVol[A](
     NeuroVol.fromLinear(filled, space, label)
 
 object SparseNeuroVol:
+  def fromIndexSet[A](
+    data: NArray[A],
+    indexSet: VoxelIndexSet,
+    label: String
+  ): SparseNeuroVol[A] =
+    SparseNeuroVol(data, indexSet.indices, indexSet.space.toNeuroSpace, label)
+
+  def fromIndexSet[A](
+    data: NArray[A],
+    indexSet: VoxelIndexSet,
+    space: NeuroSpace,
+    label: String = ""
+  ): SparseNeuroVol[A] =
+    val actual = VolumeSpace.fromSpatialPart(space).fold(err => throw new IllegalArgumentException(err.message), identity)
+    require(actual == indexSet.space, "index set/space mismatch")
+    SparseNeuroVol(data, indexSet.indices, space, label)
+
   def fromMask[A](
     data: NArray[A],
     space: NeuroSpace,

@@ -1,5 +1,7 @@
 package scalafim.linalg
 
+import scala.annotation.targetName
+
 final class DoubleMatrix private (
     val rows: Int,
     val cols: Int,
@@ -11,8 +13,15 @@ final class DoubleMatrix private (
   inline private def index(row: Int, col: Int): Int =
     row * cols + col
 
+  def shape: MatrixShape =
+    MatrixShape.unsafe(rows, cols)
+
   def apply(row: Int, col: Int): Double =
     dataArray(index(row, col))
+
+  @targetName("applyAt")
+  def apply(row: RowIndex, col: ColIndex): Double =
+    dataArray(index(row.value, col.value))
 
   def copyData: Array[Double] =
     dataArray.clone
@@ -22,6 +31,10 @@ final class DoubleMatrix private (
     System.arraycopy(dataArray, rowIndex * cols, out, 0, cols)
     DoubleVector.unsafe(out)
 
+  @targetName("rowAt")
+  def row(rowIndex: RowIndex): DoubleVector =
+    row(rowIndex.value)
+
   def col(colIndex: Int): DoubleVector =
     val out = new Array[Double](rows)
     var rowIndex = 0
@@ -30,10 +43,18 @@ final class DoubleMatrix private (
       rowIndex += 1
     DoubleVector.unsafe(out)
 
+  @targetName("colAt")
+  def col(colIndex: ColIndex): DoubleVector =
+    col(colIndex.value)
+
   def updated(row: Int, col: Int, value: Double): DoubleMatrix =
     val out = dataArray.clone
     out(index(row, col)) = value
     DoubleMatrix.unsafe(rows, cols, out)
+
+  @targetName("updatedAt")
+  def updated(row: RowIndex, col: ColIndex, value: Double): DoubleMatrix =
+    updated(row.value, col.value, value)
 
   def transpose: DoubleMatrix =
     val out = new Array[Double](rows * cols)
@@ -77,6 +98,9 @@ final class DoubleMatrix private (
     out.result()
 
 object DoubleMatrix:
+  def zeros(shape: MatrixShape): DoubleMatrix =
+    unsafe(shape, new Array[Double](shape.entries))
+
   def zeros(rows: Int, cols: Int): DoubleMatrix =
     require(rows >= 0 && cols >= 0, "rows/cols must be non-negative")
     unsafe(rows, cols, new Array[Double](rows * cols))
@@ -106,7 +130,14 @@ object DoubleMatrix:
       rowIndex += 1
     unsafe(rowCount, colCount, out)
 
-  def unsafe(rows: Int, cols: Int, data: Array[Double]): DoubleMatrix =
+  def fromRowMajor(shape: MatrixShape, data: Array[Double]): Either[LinearAlgebraError, DoubleMatrix] =
+    if data.length != shape.entries then Left(LinearAlgebraError.MatrixStorageLengthMismatch(shape, data.length))
+    else Right(unsafe(shape, data.clone))
+
+  private[scalafim] def unsafe(shape: MatrixShape, data: Array[Double]): DoubleMatrix =
+    new DoubleMatrix(shape.rows, shape.cols, data)
+
+  private[scalafim] def unsafe(rows: Int, cols: Int, data: Array[Double]): DoubleMatrix =
     new DoubleMatrix(rows, cols, data)
 
   def multiply(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =

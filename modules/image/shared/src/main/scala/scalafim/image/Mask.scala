@@ -7,15 +7,18 @@ object Mask:
   type MaskVol = NeuroVol[Boolean]
 
   def fromIndices(space: NeuroSpace, indices: NArray[Int], label: String = ""): MaskVol =
-    val nels = space.spatialDims.product
+    fromIndexSet(VoxelIndexSet(space, indices), label)
+
+  def fromIndexSet(indexSet: VoxelIndexSet, label: String = ""): MaskVol =
+    val volumeSpace = indexSet.space
+    val nels = volumeSpace.nVoxels
     val flags = NArrayUtil.fillConst[Boolean](nels, false)
     var i = 0
-    while i < indices.length do
-      val idx = indices(i)
-      require(idx >= 0 && idx < nels, "mask index out of bounds")
+    while i < indexSet.size do
+      val idx = indexSet(i)
       flags(idx) = true
       i += 1
-    NeuroVol(NDArray(flags, space.spatialDims), space, label)
+    NeuroVol(NDArray(flags, volumeSpace.dims), volumeSpace.toNeuroSpace, label)
 
   def indices(mask: MaskVol): NArray[Int] =
     val flags = mask.values.data
@@ -25,6 +28,9 @@ object Mask:
       if flags(i) then buf += i
       i += 1
     NArrayUtil.fromArray(buf.result())
+
+  def indexSet(mask: MaskVol): VoxelIndexSet =
+    VoxelIndexSet(VolumeSpace.unsafe(mask.space.spatialSpace), indices(mask))
 
   def all(space: NeuroSpace, label: String = ""): MaskVol =
     NeuroVol.fromLinear[Boolean](

@@ -1,19 +1,19 @@
 package scalafim.linalg
 
-final case class Householder(v: Array[Double], beta: Double)
+private final case class Householder(v: Array[Double], beta: Double)
 
-final case class QrDecomposition(
-    rows: Int,
-    cols: Int,
-    reflectors: Array[Householder],
-    diagR: Array[Double],
-    perm: Array[Int],
-    rank: Int
+final class QrDecomposition private (
+    val shape: MatrixShape,
+    private val reflectors: Array[Householder],
+    private val diagR: Array[Double],
+    private val perm: Array[Int],
+    val rank: Int
 ):
-  require(rows >= 0 && cols >= 0, "rows/cols must be non-negative")
-  require(perm.length == cols, "perm length mismatch")
-  require(diagR.length == reflectors.length, "diagR/reflectors length mismatch")
-  require(rank >= 0 && rank <= math.min(rows, cols), "rank out of bounds")
+  def rows: Int =
+    shape.rows
+
+  def cols: Int =
+    shape.cols
 
   def applyQtInPlace(y: Array[Double], yCols: Int): Unit =
     require(yCols >= 0, "yCols must be non-negative")
@@ -87,7 +87,18 @@ object QrDecomposition:
       pivoting: Boolean = true,
       tol: Double = 1e-7
   ): QrDecomposition =
-    decompose(matrix.dataArray, matrix.rows, matrix.cols, pivoting = pivoting, tol = tol)
+    decompose(
+      matrix,
+      pivoting = Pivoting.fromBoolean(pivoting),
+      tolerance = requireTolerance(tol)
+    )
+
+  def decompose(
+      matrix: DoubleMatrix,
+      pivoting: Pivoting,
+      tolerance: Tolerance
+  ): QrDecomposition =
+    decompose(matrix.dataArray, matrix.shape, pivoting, tolerance)
 
   def decompose(
       a0: Array[Double],
@@ -96,23 +107,31 @@ object QrDecomposition:
       pivoting: Boolean,
       tol: Double
   ): QrDecomposition =
-    require(rows >= 0 && cols >= 0, "rows/cols must be non-negative")
-    require(a0.length == rows * cols, "data length mismatch")
-    require(tol >= 0.0 && tol.isFinite, "tol must be non-negative and finite")
+    val shape = requireShape(rows, cols)
+    require(a0.length == shape.entries, "data length mismatch")
+    decompose(a0, shape, Pivoting.fromBoolean(pivoting), requireTolerance(tol))
 
-    val nReflectors = math.min(rows, cols)
+  def decompose(
+      a0: Array[Double],
+      shape: MatrixShape,
+      pivoting: Pivoting,
+      tolerance: Tolerance
+  ): QrDecomposition =
+    require(a0.length == shape.entries, "data length mismatch")
+
+    val nReflectors = math.min(shape.rows, shape.cols)
     val a = a0.clone
     val reflectors = new Array[Householder](nReflectors)
     val diagR = new Array[Double](nReflectors)
-    val perm = Array.tabulate(cols)(identity)
+    val perm = Array.tabulate(shape.cols)(identity)
 
-    val colNorm2 = new Array[Double](cols)
+    val colNorm2 = new Array[Double](shape.cols)
     var col = 0
-    while col < cols do
+    while col < shape.cols do
       var acc = 0.0
       var row = 0
-      while row < rows do
-        val value = a(row * cols + col)
+      while row < shape.rows do
+        val value = a(row * shape.cols + col)
         acc += value * value
         row += 1
       colNorm2(col) = acc
@@ -120,17 +139,17 @@ object QrDecomposition:
 
     var k = 0
     while k < nReflectors do
-      if pivoting then
+      if pivoting.enabled then
         var best = k
         var bestNorm = colNorm2(k)
         col = k + 1
-        while col < cols do
+        while col < shape.cols do
           if colNorm2(col) > bestNorm then
             best = col
             bestNorm = colNorm2(col)
           col += 1
         if best != k then
-          swapColumns(a, rows, cols, k, best)
+          swapColumns(a, shape.rows, shape.cols, k, best)
           val normTmp = colNorm2(k)
           colNorm2(k) = colNorm2(best)
           colNorm2(best) = normTmp
@@ -140,8 +159,8 @@ object QrDecomposition:
 
       var norm2 = 0.0
       var row = k
-      while row < rows do
-        val value = a(row * cols + k)
+      while row < shape.rows do
+        val value = a(row * shape.cols + k)
         norm2 += value * value
         row += 1
 
@@ -150,16 +169,16 @@ object QrDecomposition:
         reflectors(k) = Householder(Array.emptyDoubleArray, 0.0)
         diagR(k) = 0.0
       else
-        val x0 = a(k * cols + k)
+        val x0 = a(k * shape.cols + k)
         val alpha = if x0 >= 0.0 then -norm else norm
-        val len = rows - k
+        val len = shape.rows - k
         val v = new Array[Double](len)
         v(0) = x0 - alpha
 
         row = k + 1
         var i = 1
-        while row < rows do
-          v(i) = a(row * cols + k)
+        while row < shape.rows do
+          v(i) = a(row * shape.cols + k)
           row += 1
           i += 1
 
@@ -173,32 +192,32 @@ object QrDecomposition:
         reflectors(k) = Householder(v, beta)
 
         var updateCol = k
-        while updateCol < cols do
+        while updateCol < shape.cols do
           var dot = 0.0
           row = k
           i = 0
-          while row < rows do
-            dot += v(i) * a(row * cols + updateCol)
+          while row < shape.rows do
+            dot += v(i) * a(row * shape.cols + updateCol)
             row += 1
             i += 1
           val scale = beta * dot
           row = k
           i = 0
-          while row < rows do
-            a(row * cols + updateCol) -= scale * v(i)
+          while row < shape.rows do
+            a(row * shape.cols + updateCol) -= scale * v(i)
             row += 1
             i += 1
           updateCol += 1
 
-        diagR(k) = a(k * cols + k)
+        diagR(k) = a(k * shape.cols + k)
 
-      if pivoting then
+      if pivoting.enabled then
         col = k + 1
-        while col < cols do
+        while col < shape.cols do
           var acc = 0.0
           row = k + 1
-          while row < rows do
-            val value = a(row * cols + col)
+          while row < shape.rows do
+            val value = a(row * shape.cols + col)
             acc += value * value
             row += 1
           colNorm2(col) = acc
@@ -213,10 +232,56 @@ object QrDecomposition:
         if scale == 0.0 then 0
         else
           var r = 0
-          while r < nReflectors && math.abs(diagR(r)) > tol * scale do r += 1
+          while r < nReflectors && math.abs(diagR(r)) > tolerance.value * scale do r += 1
           r
 
-    QrDecomposition(rows, cols, reflectors, diagR, perm, rank)
+    unsafe(shape, reflectors, diagR, perm, rank)
+
+  private def requireShape(rows: Int, cols: Int): MatrixShape =
+    MatrixShape.from(rows, cols) match
+      case Right(shape) => shape
+      case Left(error)  => throw new IllegalArgumentException(error.message)
+
+  private[linalg] def requireTolerance(tol: Double): Tolerance =
+    Tolerance(tol) match
+      case Right(tolerance) => tolerance
+      case Left(error)      => throw new IllegalArgumentException(error.message)
+
+  private def unsafe(
+      shape: MatrixShape,
+      reflectors: Array[Householder],
+      diagR: Array[Double],
+      perm: Array[Int],
+      rank: Int
+  ): QrDecomposition =
+    val nReflectors = math.min(shape.rows, shape.cols)
+    require(reflectors.length == nReflectors, "reflector count mismatch")
+    require(diagR.length == nReflectors, "diagR length mismatch")
+    require(perm.length == shape.cols, "perm length mismatch")
+    require(rank >= 0 && rank <= nReflectors, "rank out of bounds")
+    require(isPermutation(perm), "perm must be a zero-based column permutation")
+    var k = 0
+    while k < reflectors.length do
+      val reflector = reflectors(k)
+      require(reflector != null, s"reflector $k is not initialized")
+      require(reflector.beta.isFinite, s"reflector $k beta must be finite")
+      require(
+        reflector.v.length == 0 || reflector.v.length == shape.rows - k,
+        s"reflector $k length mismatch"
+      )
+      k += 1
+    new QrDecomposition(shape, reflectors, diagR, perm, rank)
+
+  private def isPermutation(perm: Array[Int]): Boolean =
+    val seen = Array.fill(perm.length)(false)
+    var i = 0
+    var valid = true
+    while i < perm.length && valid do
+      val value = perm(i)
+      if value < 0 || value >= perm.length || seen(value) then valid = false
+      else seen(value) = true
+      i += 1
+    valid
 
   private def swapColumns(a: Array[Double], rows: Int, cols: Int, c1: Int, c2: Int): Unit =
     var row = 0
@@ -237,9 +302,22 @@ object MatrixResidualizer:
       tol: Double = 1e-7,
       pivoting: Boolean = true
   ): ResidualizedMatrix =
+    residualize(
+      design,
+      data,
+      tolerance = QrDecomposition.requireTolerance(tol),
+      pivoting = Pivoting.fromBoolean(pivoting)
+    )
+
+  def residualize(
+      design: DoubleMatrix,
+      data: DoubleMatrix,
+      tolerance: Tolerance,
+      pivoting: Pivoting
+  ): ResidualizedMatrix =
     require(design.rows == data.rows, s"data rows ${data.rows} != design rows ${design.rows}")
     if design.cols == 0 || data.cols == 0 then
       ResidualizedMatrix(DoubleMatrix.unsafe(data.rows, data.cols, data.copyData), designRank = 0)
     else
-      val qr = QrDecomposition.decompose(design, pivoting = pivoting, tol = tol)
+      val qr = QrDecomposition.decompose(design, pivoting, tolerance)
       ResidualizedMatrix(qr.residualize(data), designRank = qr.rank)

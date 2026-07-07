@@ -1,67 +1,109 @@
 package scalafim.linalg
 
+import scala.annotation.targetName
+
 object GramProjection:
   final case class Projection(
       coefficients: DoubleMatrix,
       fitted: DoubleMatrix
   )
 
+  @targetName("solveGramTyped")
   def solveGram(
       gram: DoubleMatrix,
       rhs: DoubleMatrix,
       ridge: Double = 0.0,
       tol: Double = 1e-12
   ): Either[LinearAlgebraError, DoubleMatrix] =
+    for
+      ridgeValue <- Ridge(ridge)
+      tolerance <- Tolerance(tol)
+      coefficients <- solveGram(gram, rhs, ridgeValue, tolerance)
+    yield coefficients
+
+  def solveGram(
+      gram: DoubleMatrix,
+      rhs: DoubleMatrix,
+      ridge: Ridge,
+      tolerance: Tolerance
+  ): Either[LinearAlgebraError, DoubleMatrix] =
     if gram.rows != gram.cols then Left(LinearAlgebraError.NonSquareMatrix(gram.rows, gram.cols))
-    else if rhs.rows != gram.rows then Left(LinearAlgebraError.DimensionMismatch("right-hand side rows", gram.rows, rhs.rows))
-    else if ridge < 0.0 || !ridge.isFinite then Left(LinearAlgebraError.InvalidParameter("ridge", ridge))
+    else if rhs.rows != gram.rows then Left(LinearAlgebraError.DimensionMismatch(DimensionRole.RightHandSideRows, gram.rows, rhs.rows))
     else
-      firstNonFinite("gram", gram)
-        .orElse(firstNonFinite("rhs", rhs)) match
+      firstNonFinite(MatrixValueRole.Gram, gram)
+        .orElse(firstNonFinite(MatrixValueRole.RightHandSide, rhs)) match
         case Some(error) =>
           Left(error)
         case None =>
           val regularized =
-            if ridge == 0.0 then gram
-            else gram.addToDiagonal(ridge)
-          Cholesky.decompose(regularized, tol = tol).map(_.solve(rhs))
+            if ridge.value == 0.0 then gram
+            else gram.addToDiagonal(ridge.value)
+          for
+            square <- SquareMatrix.from(regularized)
+            factor <- Cholesky.decompose(square, tolerance)
+          yield factor.solve(rhs)
 
+  @targetName("coefficientsTyped")
   def coefficients(
       data: DoubleMatrix,
       basis: DoubleMatrix,
       ridge: Double = 0.0,
       tol: Double = 1e-12
   ): Either[LinearAlgebraError, DoubleMatrix] =
-    if data.rows != basis.rows then Left(LinearAlgebraError.DimensionMismatch("data rows", basis.rows, data.rows))
-    else if ridge < 0.0 || !ridge.isFinite then Left(LinearAlgebraError.InvalidParameter("ridge", ridge))
+    for
+      ridgeValue <- Ridge(ridge)
+      tolerance <- Tolerance(tol)
+      coefficients <- coefficients(data, basis, ridgeValue, tolerance)
+    yield coefficients
+
+  def coefficients(
+      data: DoubleMatrix,
+      basis: DoubleMatrix,
+      ridge: Ridge,
+      tolerance: Tolerance
+  ): Either[LinearAlgebraError, DoubleMatrix] =
+    if data.rows != basis.rows then Left(LinearAlgebraError.DimensionMismatch(DimensionRole.DataRows, basis.rows, data.rows))
     else
-      firstNonFinite("data", data)
-        .orElse(firstNonFinite("basis", basis)) match
+      firstNonFinite(MatrixValueRole.Data, data)
+        .orElse(firstNonFinite(MatrixValueRole.Basis, basis)) match
         case Some(error) =>
           Left(error)
         case None =>
           val gram = DoubleMatrix.crossProduct(basis)
           val rhs = DoubleMatrix.transposeMultiply(basis, data)
-          solveGram(gram, rhs, ridge = ridge, tol = tol)
+          solveGram(gram, rhs, ridge, tolerance)
 
+  @targetName("projectTyped")
   def project(
       data: DoubleMatrix,
       basis: DoubleMatrix,
       ridge: Double = 0.0,
       tol: Double = 1e-12
   ): Either[LinearAlgebraError, Projection] =
-    coefficients(data, basis, ridge = ridge, tol = tol).map { coef =>
+    for
+      ridgeValue <- Ridge(ridge)
+      tolerance <- Tolerance(tol)
+      projection <- project(data, basis, ridgeValue, tolerance)
+    yield projection
+
+  def project(
+      data: DoubleMatrix,
+      basis: DoubleMatrix,
+      ridge: Ridge,
+      tolerance: Tolerance
+  ): Either[LinearAlgebraError, Projection] =
+    coefficients(data, basis, ridge, tolerance).map { coef =>
       Projection(
         coefficients = coef,
         fitted = DoubleMatrix.multiply(basis, coef)
       )
     }
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LinearAlgebraError] =
+  private def firstNonFinite(role: MatrixValueRole, matrix: DoubleMatrix): Option[LinearAlgebraError] =
     var i = 0
     var error = Option.empty[LinearAlgebraError]
     while i < matrix.dataArray.length && error.isEmpty do
       val value = matrix.dataArray(i)
-      if !value.isFinite then error = Some(LinearAlgebraError.NonFiniteValue(label, i, value))
+      if !value.isFinite then error = Some(LinearAlgebraError.NonFiniteValue(role, i, value))
       i += 1
     error

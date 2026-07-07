@@ -19,20 +19,13 @@ final case class IndexLookupVol private (
 
 object IndexLookupVol:
   def apply(space: NeuroSpace, rawIndices: NArray[Int]): IndexLookupVol =
-    val nels = space.spatialDims.product
-    val tmp = Array.ofDim[Int](rawIndices.length)
-    var t = 0
-    while t < rawIndices.length do
-      tmp(t) = rawIndices(t)
-      t += 1
-    val uniq = tmp.distinct.sorted
-    require(uniq.forall(i => i >= 0 && i < nels), "indices out of range")
-
-    val idxArr = NArrayUtil.fromArray(uniq)
+    val indexSet = VoxelIndexSet(space, rawIndices)
+    val nels = indexSet.space.nVoxels
+    val idxArr = indexSet.unsafeArray
     val mapArr = NArrayUtil.fillConst[Int](nels, -1)
     var i = 0
-    while i < uniq.length do
-      mapArr(uniq(i)) = i
+    while i < idxArr.length do
+      mapArr(idxArr(i)) = i
       i += 1
 
     IndexLookupVol(space, idxArr, mapArr)

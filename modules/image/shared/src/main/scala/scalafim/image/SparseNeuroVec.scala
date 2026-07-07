@@ -15,6 +15,8 @@ final case class SparseNeuroVec[A](
   require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
   require(map.space.spatialDims == space.spatialDims, "map/space mismatch")
   require(data.shape == Vector(space.dims(3), map.cardinality), "data shape mismatch")
+  val seriesSpace: SeriesSpace =
+    SeriesSpace.make(space).fold(err => throw new IllegalArgumentException(err.message), series => series)
 
   inline def apply(i: Int, j: Int, k: Int, t: Int)(using Ring[A]): A =
     require(t >= 0 && t < space.dims(3), "t out of bounds")
@@ -114,6 +116,10 @@ final case class SparseNeuroVec[A](
       p += 1
     NDArray(out, Vector(tLen, nVox))
 
+  def series(indexSet: VoxelIndexSet)(using ClassTag[A], spire.algebra.Ring[A]): NDArray[A] =
+    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    series(indexSet.unsafeArray)
+
   def series(roi: ROICoords)(using ClassTag[A], spire.algebra.Ring[A]): NDArray[A] =
     series(roi.linearIndices(space.spatialSpace))
 
@@ -121,7 +127,7 @@ final case class SparseNeuroVec[A](
     series(ROICoords(coords))
 
   def series(mask: NeuroVol[Boolean])(using ClassTag[A], spire.algebra.Ring[A]): NDArray[A] =
-    series(Mask.indices(mask))
+    series(Mask.indexSet(mask))
 
   def seriesRoi(roi: ROICoords)(using ClassTag[A], spire.algebra.Ring[A]): ROIVec[A] =
     ROIVec(space, roi, series(roi))
@@ -183,18 +189,13 @@ object SparseNeuroVec:
   )(using ClassTag[A]): SparseNeuroVec[A] =
     require(space.ndim >= 4, "space must be 4D")
     require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
+    val indexSet = Mask.indexSet(mask)
     val spatialNels = space.spatialDims.product
     val tLen = space.dims(3)
     require(data.length == spatialNels * tLen, "data length mismatch")
 
-    val flags = mask.values.data
-    val buf = Array.newBuilder[Int]
-    var i = 0
-    while i < flags.length do
-      if flags(i) then buf += i
-      i += 1
-    val idx = buf.result()
-    val lookup = IndexLookupVol(space, NArrayUtil.fromArray(idx))
+    val idx = indexSet.toVector
+    val lookup = IndexLookupVol(space, indexSet.indices)
 
     val mat = narr.NArray.ofSize[A](tLen * idx.length)
     var pos = 0

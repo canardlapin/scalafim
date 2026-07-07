@@ -27,13 +27,22 @@ final case class ResamplingPlan private (
     target: GridSpec,
     morphism: SpatialMorphism,
     method: Resample.Method,
-    targetWorldCoords: Vector[Vector[Double]],
-    sourceWorldCoords: Vector[Vector[Double]],
-    sourceVoxelCoords: Vector[Vector[Double]]
+    targetWorldPoints: Vector[WorldPoint],
+    sourceWorldPoints: Vector[WorldPoint],
+    sourceVoxelPoints: Vector[VoxelPoint]
 ):
-  require(targetWorldCoords.length == target.nVoxels, "target coordinate count must match target grid")
-  require(sourceWorldCoords.length == targetWorldCoords.length, "source world coordinate count mismatch")
-  require(sourceVoxelCoords.length == targetWorldCoords.length, "source voxel coordinate count mismatch")
+  require(targetWorldPoints.length == target.nVoxels, "target coordinate count must match target grid")
+  require(sourceWorldPoints.length == targetWorldPoints.length, "source world coordinate count mismatch")
+  require(sourceVoxelPoints.length == targetWorldPoints.length, "source voxel coordinate count mismatch")
+
+  def targetWorldCoords: Vector[Vector[Double]] =
+    targetWorldPoints.map(_.toVector)
+
+  def sourceWorldCoords: Vector[Vector[Double]] =
+    sourceWorldPoints.map(_.toVector)
+
+  def sourceVoxelCoords: Vector[Vector[Double]] =
+    sourceVoxelPoints.map(_.toVector)
 
   def apply(volume: NeuroVol[Double]): Either[ResamplingPlanError, NeuroVol[Double]] =
     apply(volume, outside = 0.0)
@@ -105,11 +114,11 @@ final case class ResamplingPlan private (
     val dims = source.shape
     val out = NArrayUtil.ofSize[Double](target.nVoxels)
     var i = 0
-    while i < sourceVoxelCoords.length do
-      val coord = sourceVoxelCoords(i)
-      val x = math.round(coord(0)).toInt
-      val y = math.round(coord(1)).toInt
-      val z = math.round(coord(2)).toInt
+    while i < sourceVoxelPoints.length do
+      val coord = sourceVoxelPoints(i)
+      val x = math.round(coord.x).toInt
+      val y = math.round(coord.y).toInt
+      val z = math.round(coord.z).toInt
       out(i) =
         if inBounds(dims, x, y, z) then volume(x, y, z)
         else outside
@@ -124,11 +133,11 @@ final case class ResamplingPlan private (
       if inBounds(dims, x, y, z) then volume(x, y, z) else outside
 
     var i = 0
-    while i < sourceVoxelCoords.length do
-      val coord = sourceVoxelCoords(i)
-      val sx = coord(0)
-      val sy = coord(1)
-      val sz = coord(2)
+    while i < sourceVoxelPoints.length do
+      val coord = sourceVoxelPoints(i)
+      val sx = coord.x
+      val sy = coord.y
+      val sz = coord.z
 
       val x0 = math.floor(sx).toInt
       val y0 = math.floor(sy).toInt
@@ -183,11 +192,11 @@ final case class ResamplingPlan private (
     val tmpY = Array.ofDim[Double](4)
     val tmpZ = Array.ofDim[Double](4)
     var i = 0
-    while i < sourceVoxelCoords.length do
-      val coord = sourceVoxelCoords(i)
-      val sx = coord(0)
-      val sy = coord(1)
-      val sz = coord(2)
+    while i < sourceVoxelPoints.length do
+      val coord = sourceVoxelPoints(i)
+      val sx = coord.x
+      val sy = coord.y
+      val sz = coord.z
       val x1 = math.floor(sx).toInt
       val y1 = math.floor(sy).toInt
       val z1 = math.floor(sz).toInt
@@ -223,7 +232,7 @@ final case class ResamplingPlan private (
       case JacobianModulation.None =>
         Right(volume)
       case JacobianModulation.Jacobian | JacobianModulation.SqrtJacobian =>
-        morphism.jacobianDet(targetWorldCoords, log = false, mode = JacobianMode.Pullback) match
+        morphism.jacobianDetAtWorld(targetWorldPoints, log = false, mode = JacobianMode.Pullback) match
           case Left(err) =>
             Left(ResamplingPlanError.MorphismEvaluationFailed(err.message))
           case Right(dets) =>
@@ -251,21 +260,21 @@ object ResamplingPlan:
       morphism: SpatialMorphism,
       method: Resample.Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    val targetWorldPoints = target.worldPoints
-    val sourceWorldPoints = morphism.transformPoints(targetWorldPoints)
+    val targetWorldPoints = target.worldPoints.map(WorldPoint.fromSpatialPoint)
+    val sourceWorldPoints = morphism.transformWorldPoints(targetWorldPoints)
     source.worldPointsToVoxel(sourceWorldPoints) match
       case Left(err) =>
         Left(ResamplingPlanError.SingularSourceAffine(err.message))
-      case Right(sourceVoxelCoords) =>
+      case Right(sourceVoxelPoints) =>
         Right(
           new ResamplingPlan(
             source = source,
             target = target,
             morphism = morphism,
             method = method,
-            targetWorldCoords = targetWorldPoints.map(_.toVector),
-            sourceWorldCoords = sourceWorldPoints.map(_.toVector),
-            sourceVoxelCoords = sourceVoxelCoords.map(_.toVector)
+            targetWorldPoints = targetWorldPoints,
+            sourceWorldPoints = sourceWorldPoints,
+            sourceVoxelPoints = sourceVoxelPoints
           )
         )
 

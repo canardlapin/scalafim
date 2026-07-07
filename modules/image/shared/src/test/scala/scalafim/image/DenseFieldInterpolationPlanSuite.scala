@@ -9,6 +9,9 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
     assertEquals(actual.length, expected.length, clue = "")
     actual.zip(expected).foreach { case (a, e) => assertClose(a, e, tol) }
 
+  private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
   private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
     val data =
       NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
@@ -46,6 +49,27 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
     val secondSample = plan.sample(second, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
     assertClose(firstSample.head, Vector(2.0, 10.0, 20.0), 1e-10)
     assertClose(secondSample.head, Vector(0.0, -10.0, -20.0), 1e-10)
+  }
+
+  test("world-point plans retain typed query coordinates while preserving vector access") {
+    val grid = GridSpec.identity(Vector(2, 1, 1))
+    val point = WorldPoint(0.5, 0.0, 0.0)
+    val plan =
+      DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Linear)
+        .fold(err => fail(err.message), identity)
+    val field =
+      denseField(grid) { (coord, component) =>
+        component match
+          case 0 => if coord.x == 0 then 1.0 else 3.0
+          case 1 => 10.0
+          case _ => 20.0
+      }
+
+    assertEquals(plan.queryCount, 1, clue = "")
+    assertEquals(plan.worldPoints, Vector(point), clue = "")
+    assertEquals(plan.points, Vector(point.toVector), clue = "")
+    val sample = plan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
+    assertClose(sample.head, Vector(2.0, 10.0, 20.0), 1e-10)
   }
 
   test("query-point outside policy blends missing linear field corners") {
@@ -128,9 +152,16 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
       morphism.interpolationPlan(Vector(Vector(0.5, 0.0, 0.0)))
         .fold(err => fail(err.message), identity)
     val sampled = plan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
+    val worldPlan =
+      morphism.interpolationPlanAtWorldPoints(Vector(WorldPoint(0.5, 0.0, 0.0)))
+        .fold(err => fail(err.message), identity)
+    val worldSampled = worldPlan.sample(field, DenseFieldOutside.Zero).fold(err => fail(err.message), identity)
 
     assertClose(sampled.head, Vector(0.5, 0.0, 0.0), 1e-10)
+    assertEquals(worldPlan.worldPoints, Vector(WorldPoint(0.5, 0.0, 0.0)), clue = "")
+    assertClose(worldSampled.head, Vector(0.5, 0.0, 0.0), 1e-10)
     assertClose(morphism.transform(Vector(0.5, 0.0, 0.0)), Vector(1.0, 0.0, 0.0), 1e-10)
+    assertClose(morphism.transform(WorldPoint(0.5, 0.0, 0.0)), WorldPoint(1.0, 0.0, 0.0), 1e-10)
   }
 
   test("dense cubic morphisms expose reusable interpolation plans") {

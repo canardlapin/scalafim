@@ -39,30 +39,34 @@ final class Cholesky private (val size: Int, private val lower: Array[Double]):
 
 object Cholesky:
   def decompose(matrix: DoubleMatrix, tol: Double = 1e-12): Either[LinearAlgebraError, Cholesky] =
-    require(tol >= 0.0 && tol.isFinite, "tol must be non-negative and finite")
-    if matrix.rows != matrix.cols then
-      Left(LinearAlgebraError.NonSquareMatrix(matrix.rows, matrix.cols))
-    else
-      val size = matrix.rows
-      val lower = new Array[Double](size * size)
-      var failed: LinearAlgebraError | Null = null
-      var row = 0
-      while row < size && failed == null do
-        var col = 0
-        while col <= row && failed == null do
-          var sum = matrix.dataArray(row * size + col)
-          var k = 0
-          while k < col do
-            sum -= lower(row * size + k) * lower(col * size + k)
-            k += 1
-          if row == col then
-            if sum <= tol then failed = LinearAlgebraError.NonPositiveDefinite(row, sum)
-            else lower(row * size + col) = math.sqrt(sum)
-          else
-            lower(row * size + col) = sum / lower(col * size + col)
-          col += 1
-        row += 1
+    for
+      tolerance <- Tolerance(tol)
+      square <- SquareMatrix.from(matrix)
+      factor <- decompose(square, tolerance)
+    yield factor
 
-      failed match
-        case null  => Right(new Cholesky(size, lower))
-        case error => Left(error)
+  def decompose(matrix: SquareMatrix, tolerance: Tolerance): Either[LinearAlgebraError, Cholesky] =
+    val size = matrix.size
+    val data = matrix.value
+    val lower = new Array[Double](size * size)
+    var failed: LinearAlgebraError | Null = null
+    var row = 0
+    while row < size && failed == null do
+      var col = 0
+      while col <= row && failed == null do
+        var sum = data.dataArray(row * size + col)
+        var k = 0
+        while k < col do
+          sum -= lower(row * size + k) * lower(col * size + k)
+          k += 1
+        if row == col then
+          if sum <= tolerance.value then failed = LinearAlgebraError.NonPositiveDefinite(row, sum)
+          else lower(row * size + col) = math.sqrt(sum)
+        else
+          lower(row * size + col) = sum / lower(col * size + col)
+        col += 1
+      row += 1
+
+    failed match
+      case null  => Right(new Cholesky(size, lower))
+      case error => Left(error)

@@ -12,6 +12,12 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertEquals(actual.length, expected.length, clue = "")
     actual.zip(expected).foreach { case (a, e) => assertClose(a, e, tol) }
 
+  private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
+  private def assertClose(actual: VoxelPoint, expected: VoxelPoint, tol: Double): Unit =
+    assertClose(actual.toVector, expected.toVector, tol)
+
   private def assertSameVolume(actual: NeuroVol[Double], expected: NeuroVol[Double], tol: Double = 1e-10): Unit =
     assertEquals(actual.space, expected.space, clue = "")
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
@@ -227,9 +233,18 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
 
     assertEquals(p.targetWorldCoords, targetGrid.worldCoords, clue = "")
+    assertClose(p.targetWorldPoints(0), WorldPoint(0.0, 0.0, 0.0), 1e-10)
+    assertClose(p.targetWorldPoints(1), WorldPoint(1.0, 0.0, 0.0), 1e-10)
+    assertClose(p.targetWorldPoints(2), WorldPoint(2.0, 0.0, 0.0), 1e-10)
     assertClose(p.sourceWorldCoords(0), Vector(0.0, 0.0, 0.0), 1e-10)
     assertClose(p.sourceWorldCoords(1), Vector(2.0, 0.0, 0.0), 1e-10)
     assertClose(p.sourceWorldCoords(2), Vector(4.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceWorldPoints(0), WorldPoint(0.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceWorldPoints(1), WorldPoint(2.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceWorldPoints(2), WorldPoint(4.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceVoxelPoints(0), VoxelPoint(0.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceVoxelPoints(1), VoxelPoint(2.0, 0.0, 0.0), 1e-10)
+    assertClose(p.sourceVoxelPoints(2), VoxelPoint(4.0, 0.0, 0.0), 1e-10)
     assertEquals(p.sourceVoxelCoords, p.sourceWorldCoords, clue = "")
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
@@ -247,6 +262,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Linear)
 
     assertClose(p.sourceVoxelCoords.head, Vector(0.5, 0.5, 0.5), 1e-10)
+    assertClose(p.sourceVoxelPoints.head, VoxelPoint(0.5, 0.5, 0.5), 1e-10)
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
     val expected =

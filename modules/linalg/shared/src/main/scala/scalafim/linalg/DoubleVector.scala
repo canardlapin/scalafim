@@ -30,5 +30,8 @@ object DoubleVector:
     }
     unsafe(out)
 
-  def unsafe(data: Array[Double]): DoubleVector =
+  def fromArray(values: Array[Double]): DoubleVector =
+    unsafe(values.clone)
+
+  private[scalafim] def unsafe(data: Array[Double]): DoubleVector =
     new DoubleVector(data)

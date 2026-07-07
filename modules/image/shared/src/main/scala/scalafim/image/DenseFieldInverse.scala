@@ -24,21 +24,23 @@ object DenseFieldInverse:
       options: DenseFieldInverseOptions = DenseFieldInverseOptions()
   ): Either[MorphismError, DenseFieldInverseResult] =
     validateOptions(options).flatMap { _ =>
-      val query = inverseGrid.worldCoords
+      val query = inverseGrid.worldPoints.map(WorldPoint.fromSpatialPoint)
       val data = NArrayUtil.ofSize[Double](inverseGrid.nVoxels * 3)
       var maxResidual = 0.0
       var maxIterationsUsed = 0
       var converged = true
       var i = 0
       while i < query.length do
-        val target = query(i)
-        val solved = solvePoint(morphism, target, options)
+        val targetPoint = query(i)
+        val solved = solvePoint(morphism, targetPoint, options)
         maxResidual = math.max(maxResidual, solved.residual)
         maxIterationsUsed = math.max(maxIterationsUsed, solved.iterations)
         if !solved.converged then converged = false
+        val solvedPoint = solved.point.toVector
+        val target = targetPoint.toVector
         var component = 0
         while component < 3 do
-          data(component * inverseGrid.nVoxels + i) = solved.point(component) - target(component)
+          data(component * inverseGrid.nVoxels + i) = solvedPoint(component) - target(component)
           component += 1
         i += 1
 
@@ -63,7 +65,7 @@ object DenseFieldInverse:
     }
 
   private final case class PointSolve(
-      point: Vector[Double],
+      point: WorldPoint,
       iterations: Int,
       residual: Double,
       converged: Boolean
@@ -71,26 +73,29 @@ object DenseFieldInverse:
 
   private def solvePoint(
       morphism: DenseFieldMorphism,
-      target: Vector[Double],
+      target: WorldPoint,
       options: DenseFieldInverseOptions
   ): PointSolve =
+    val targetVector = target.toVector
     var current = target
     var residual = Double.PositiveInfinity
     var iterations = 0
     var done = false
     while iterations < options.maxIterations && !done do
       val mapped = morphism.transform(current)
-      val delta = Vector.tabulate(3)(axis => target(axis) - mapped(axis))
+      val mappedVector = mapped.toVector
+      val delta = Vector.tabulate(3)(axis => targetVector(axis) - mappedVector(axis))
       residual = norm(delta)
       if residual <= options.tolerance then done = true
       else
-        current = Vector.tabulate(3)(axis => current(axis) + options.relaxation * delta(axis))
+        current = shift(current, delta, options.relaxation)
         iterations += 1
 
     if done then PointSolve(current, iterations, residual, converged = true)
     else
       val mapped = morphism.transform(current)
-      val delta = Vector.tabulate(3)(axis => target(axis) - mapped(axis))
+      val mappedVector = mapped.toVector
+      val delta = Vector.tabulate(3)(axis => targetVector(axis) - mappedVector(axis))
       val finalResidual = norm(delta)
       PointSolve(current, iterations, finalResidual, converged = finalResidual <= options.tolerance)
 
@@ -105,6 +110,13 @@ object DenseFieldInverse:
 
   private def inversePenalty(maxResidual: Double, converged: Boolean): Double =
     if converged then maxResidual else maxResidual + 1.0
+
+  private def shift(point: WorldPoint, delta: Vector[Double], scale: Double): WorldPoint =
+    WorldPoint(
+      point.x + scale * delta(0),
+      point.y + scale * delta(1),
+      point.z + scale * delta(2)
+    )
 
   private def norm(vector: Vector[Double]): Double =
     math.sqrt(vector.map(value => value * value).sum)

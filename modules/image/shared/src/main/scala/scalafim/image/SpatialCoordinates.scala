@@ -1,5 +1,7 @@
 package scalafim.image
 
+import scala.annotation.targetName
+
 enum CoordinateError:
   case SingularAffine(reason: String)
 
@@ -16,6 +18,9 @@ object SpatialCoordinates:
   def lpsToRas(point: SpatialPoint): SpatialPoint =
     SpatialPoint(-point.x, -point.y, point.z)
 
+  def lpsToRas(point: WorldPoint): WorldPoint =
+    WorldPoint(-point.x, -point.y, point.z)
+
   def lpsToRasPoints(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
     validatePoints(points, "points")
     points.map(lpsToRas)
@@ -24,6 +29,9 @@ object SpatialCoordinates:
     lpsToRas(point)
 
   def rasToLps(point: SpatialPoint): SpatialPoint =
+    lpsToRas(point)
+
+  def rasToLps(point: WorldPoint): WorldPoint =
     lpsToRas(point)
 
   def rasToLpsPoints(points: Vector[Vector[Double]]): Vector[Vector[Double]] =
@@ -37,6 +45,9 @@ object SpatialCoordinates:
   def tkrasToRas(point: SpatialPoint, cRas: SpatialPoint): SpatialPoint =
     SpatialPoint(point.x + cRas.x, point.y + cRas.y, point.z + cRas.z)
 
+  def tkrasToRas(point: WorldPoint, cRas: WorldPoint): WorldPoint =
+    WorldPoint(point.x + cRas.x, point.y + cRas.y, point.z + cRas.z)
+
   def tkrasToRasPoints(points: Vector[Vector[Double]], cRas: Vector[Double]): Vector[Vector[Double]] =
     validatePoints(points, "points")
     validatePoint(cRas, "cRas")
@@ -49,6 +60,9 @@ object SpatialCoordinates:
 
   def rasToTkras(point: SpatialPoint, cRas: SpatialPoint): SpatialPoint =
     SpatialPoint(point.x - cRas.x, point.y - cRas.y, point.z - cRas.z)
+
+  def rasToTkras(point: WorldPoint, cRas: WorldPoint): WorldPoint =
+    WorldPoint(point.x - cRas.x, point.y - cRas.y, point.z - cRas.z)
 
   def rasToTkrasPoints(points: Vector[Vector[Double]], cRas: Vector[Double]): Vector[Vector[Double]] =
     validatePoints(points, "points")
@@ -64,6 +78,9 @@ object SpatialCoordinates:
     Affine3DMorphism.requireAffine3D(affine)
     SpatialPoint.unsafeFromVector(Affine.applyAffine(affine, voxel.toVector), "world coordinate")
 
+  def voxelToWorld(voxel: VoxelPoint, affine: Affine3D): WorldPoint =
+    affine.voxelToWorld(voxel)
+
   def voxelsToWorld(voxels: Vector[Vector[Double]], affine: DMat): Vector[Vector[Double]] =
     validatePoints(voxels, "voxels")
     Affine3DMorphism.requireAffine3D(affine)
@@ -74,6 +91,9 @@ object SpatialCoordinates:
     voxels.map { voxel =>
       SpatialPoint.unsafeFromVector(Affine.applyAffine(affine, voxel.toVector), "world coordinate")
     }
+
+  def voxelPointsToWorld(voxels: Vector[VoxelPoint], affine: Affine3D): Vector[WorldPoint] =
+    affine.voxelsToWorld(voxels)
 
   def worldToVoxel(world: Vector[Double], affine: DMat): Either[CoordinateError, Vector[Double]] =
     validatePoint(world, "world")
@@ -88,6 +108,9 @@ object SpatialCoordinates:
       case Left(reason) => Left(CoordinateError.SingularAffine(reason))
       case Right(inverse) =>
         Right(SpatialPoint.unsafeFromVector(Affine.applyAffine(inverse, world.toVector), "voxel coordinate"))
+
+  def worldToVoxel(world: WorldPoint, affine: Affine3D): VoxelPoint =
+    affine.worldToVoxel(world)
 
   def worldsToVoxel(worlds: Vector[Vector[Double]], affine: DMat): Either[CoordinateError, Vector[Vector[Double]]] =
     validatePoints(worlds, "worlds")
@@ -107,6 +130,9 @@ object SpatialCoordinates:
           }
         )
 
+  def worldPointsToVoxel(worlds: Vector[WorldPoint], affine: Affine3D): Vector[VoxelPoint] =
+    affine.worldsToVoxel(worlds)
+
   def gridCoords(grid: GridSpec): Vector[Vector[Double]] =
     grid.worldCoords
 
@@ -123,6 +149,9 @@ object SpatialCoordinates:
 final case class GridSpec private (shape: SpatialDims, affine: DMat):
   Affine3DMorphism.requireAffine3D(affine)
 
+  def affine3D: Either[Affine3DError, Affine3D] =
+    Affine3D.make(affine)
+
   def dims: Vector[Int] =
     shape.toVector
 
@@ -135,11 +164,18 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
   def voxelToWorld(voxel: SpatialPoint): SpatialPoint =
     SpatialCoordinates.voxelToWorld(voxel, affine)
 
+  def voxelToWorld(voxel: VoxelPoint): Either[Affine3DError, WorldPoint] =
+    affine3D.map(_.voxelToWorld(voxel))
+
   def voxelsToWorld(voxels: Vector[Vector[Double]]): Vector[Vector[Double]] =
     SpatialCoordinates.voxelsToWorld(voxels, affine)
 
   def voxelPointsToWorld(voxels: Vector[SpatialPoint]): Vector[SpatialPoint] =
     SpatialCoordinates.voxelPointsToWorld(voxels, affine)
+
+  @targetName("voxelTypedPointsToWorld")
+  def voxelPointsToWorld(voxels: Vector[VoxelPoint]): Either[Affine3DError, Vector[WorldPoint]] =
+    affine3D.map(_.voxelsToWorld(voxels))
 
   def worldToVoxel(world: Vector[Double]): Either[CoordinateError, Vector[Double]] =
     SpatialCoordinates.worldToVoxel(world, affine)
@@ -147,11 +183,18 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
   def worldToVoxel(world: SpatialPoint): Either[CoordinateError, SpatialPoint] =
     SpatialCoordinates.worldToVoxel(world, affine)
 
+  def worldToVoxel(world: WorldPoint): Either[Affine3DError, VoxelPoint] =
+    affine3D.map(_.worldToVoxel(world))
+
   def worldsToVoxel(worlds: Vector[Vector[Double]]): Either[CoordinateError, Vector[Vector[Double]]] =
     SpatialCoordinates.worldsToVoxel(worlds, affine)
 
   def worldPointsToVoxel(worlds: Vector[SpatialPoint]): Either[CoordinateError, Vector[SpatialPoint]] =
     SpatialCoordinates.worldPointsToVoxel(worlds, affine)
+
+  @targetName("worldTypedPointsToVoxel")
+  def worldPointsToVoxel(worlds: Vector[WorldPoint]): Either[Affine3DError, Vector[VoxelPoint]] =
+    affine3D.map(_.worldsToVoxel(worlds))
 
   def worldCoords: Vector[Vector[Double]] =
     worldPoints.map(_.toVector)
@@ -170,6 +213,23 @@ final case class GridSpec private (shape: SpatialDims, affine: DMat):
         y += 1
       z += 1
     out.result()
+
+  def typedWorldPoints: Either[Affine3DError, Vector[WorldPoint]] =
+    affine3D.map { tx =>
+      val out = Vector.newBuilder[WorldPoint]
+      out.sizeHint(nVoxels)
+      var z = 0
+      while z < shape.z do
+        var y = 0
+        while y < shape.y do
+          var x = 0
+          while x < shape.x do
+            out += tx.voxelToWorld(VoxelPoint(x.toDouble, y.toDouble, z.toDouble))
+            x += 1
+          y += 1
+        z += 1
+      out.result()
+    }
 
   def toNeuroSpace: NeuroSpace =
     val spacing = Affine.voxelSizes(affine)
@@ -199,3 +259,6 @@ object GridSpec:
 
   def fromSpace(space: NeuroSpace): GridSpec =
     fromSpatialDims(space.spatialShape, space.trans)
+
+  def fromVolumeSpace(space: VolumeSpace): GridSpec =
+    fromSpatialDims(space.shape, space.affine.matrix)

@@ -5,6 +5,101 @@ package scalafim.image
   * These mirror the pure affine utilities in neuroim2's R core, while keeping
   * the Scala API typed around immutable `DMat` and `Vector` values.
   */
+enum Affine3DError:
+  case InvalidShape(rows: Int, cols: Int)
+  case NonFiniteValue(index: Int)
+  case InvalidHomogeneousRow(actual: Vector[Double])
+  case Singular(reason: String)
+
+  def message: String =
+    this match
+      case InvalidShape(rows, cols) =>
+        s"Affine3D must be a 4x4 matrix; got ${rows}x${cols}"
+      case NonFiniteValue(index) =>
+        s"Affine3D value at linear index $index is not finite"
+      case InvalidHomogeneousRow(actual) =>
+        s"Affine3D bottom row must be [0, 0, 0, 1]; got $actual"
+      case Singular(reason) =>
+        s"Affine3D must be invertible: $reason"
+
+final case class Affine3D private (matrix: DMat, inverse: DMat):
+  def voxelToWorld(voxel: VoxelPoint): WorldPoint =
+    WorldPoint.unsafeFromVector(Affine.applyAffine(matrix, voxel.toVector), "world point")
+
+  def voxelsToWorld(voxels: Vector[VoxelPoint]): Vector[WorldPoint] =
+    voxels.map(voxelToWorld)
+
+  def worldToVoxel(world: WorldPoint): VoxelPoint =
+    VoxelPoint.unsafeFromVector(Affine.applyAffine(inverse, world.toVector), "voxel point")
+
+  def worldsToVoxel(worlds: Vector[WorldPoint]): Vector[VoxelPoint] =
+    worlds.map(worldToVoxel)
+
+  def inverseAffine: Affine3D =
+    Affine3D.unsafe(inverse, matrix)
+
+  def linearPart: DMat =
+    DMat.fromRows(
+      Vector.tabulate(3)(r => Vector.tabulate(3)(c => matrix(r, c)))
+    )
+
+  def voxelSizes: Vector[Double] =
+    Affine.voxelSizes(matrix)
+
+  def origin: WorldPoint =
+    WorldPoint(matrix(0, 3), matrix(1, 3), matrix(2, 3))
+
+object Affine3D:
+  private val HomogeneousTol = 1e-12
+
+  def make(matrix: DMat): Either[Affine3DError, Affine3D] =
+    validateShape(matrix).flatMap { _ =>
+      validateFinite(matrix).flatMap { _ =>
+        validateHomogeneousRow(matrix).flatMap { _ =>
+          DMat.invert(matrix) match
+            case Left(reason) => Left(Affine3DError.Singular(reason))
+            case Right(inverse) => Right(new Affine3D(matrix, inverse))
+        }
+      }
+    }
+
+  def apply(matrix: DMat): Affine3D =
+    make(matrix).fold(err => throw new IllegalArgumentException(err.message), affine => affine)
+
+  def unsafe(matrix: DMat, inverse: DMat): Affine3D =
+    new Affine3D(matrix, inverse)
+
+  def identity: Affine3D =
+    Affine3D(DMat.eye(4))
+
+  def fromRows(rows: Vector[Vector[Double]]): Either[Affine3DError, Affine3D] =
+    make(DMat.fromRows(rows))
+
+  private def validateShape(matrix: DMat): Either[Affine3DError, Unit] =
+    if matrix.rows == 4 && matrix.cols == 4 then Right(())
+    else Left(Affine3DError.InvalidShape(matrix.rows, matrix.cols))
+
+  private def validateFinite(matrix: DMat): Either[Affine3DError, Unit] =
+    var i = 0
+    var error = Option.empty[Affine3DError]
+    while i < matrix.data.length && error.isEmpty do
+      if !matrix.data(i).isFinite then error = Some(Affine3DError.NonFiniteValue(i))
+      i += 1
+
+    error match
+      case Some(err) => Left(err)
+      case None => Right(())
+
+  private def validateHomogeneousRow(matrix: DMat): Either[Affine3DError, Unit] =
+    val actual = Vector(matrix(3, 0), matrix(3, 1), matrix(3, 2), matrix(3, 3))
+    val ok =
+      math.abs(actual(0)) <= HomogeneousTol &&
+        math.abs(actual(1)) <= HomogeneousTol &&
+        math.abs(actual(2)) <= HomogeneousTol &&
+        math.abs(actual(3) - 1.0) <= HomogeneousTol
+
+    if ok then Right(()) else Left(Affine3DError.InvalidHomogeneousRow(actual))
+
 object Affine:
 
   final case class MatVec(matrix: DMat, vector: Vector[Double])
