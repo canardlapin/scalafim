@@ -29,18 +29,23 @@ final case class FitBlockInput(
     require(lss.timepoints == design.timepoints, "LSS design rows must match block design rows")
   }
 
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
+
 sealed trait FitBlockResult:
   def voxelIndices: Vector[Int]
   def timepoints: Vector[Int]
   def engine: FitEngine
   def voxels: Int = voxelIndices.length
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
 final case class DenseFitBlockResult(
     coefficients: CoefficientBlock,
     standardErrors: StandardErrorBlock,
     normalizedCovariance: DoubleMatrix,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
     engine: FitEngine,
@@ -260,38 +265,53 @@ object LssFitBlockResult:
     DoubleMatrix.unsafe(rows, cols, out)
 
 object FitKernel:
-  def fit(
+  def fitDense(
       input: FitBlockInput,
       engine: FitEngine,
       config: FitConfig = FitConfig()
-  ): Either[FitError, FitBlockResult] =
+  ): Either[FitError, DenseFitBlockResult] =
     engine match
       case FitEngine.OrdinaryLeastSquares =>
         Ols
           .fit(input.design, input.response)
           .map(DenseFitBlockResult.fromOls(input, _, engine))
 
-      case FitEngine.RunwiseLeastSquares =>
-        RunwiseOls
-          .fit(input.design, input.response, input.partitions)
-          .map(RunwiseFitBlockResult.fromRunwise(input, _))
-
       case FitEngine.GeneralizedLeastSquares =>
         Gls
           .fit(input.design, input.response, input.partitions, config.autocorrelation)
           .map(DenseFitBlockResult.fromGls(input, _))
 
-      case FitEngine.LeastSquaresSeparate =>
-        input.lssDesign match
-          case None =>
-            Left(FitError.UnsupportedLssDesign("block input is missing an LSS trial/fixed design"))
-          case Some(lss) =>
-            LeastSquaresSeparate
-              .fit(
-                prepared = lss.prepared,
-                response = input.response
-              )
-              .map(LssFitBlockResult.fromLss(input, _))
+      case other =>
+        Left(FitError.UnsupportedEngine(s"$other does not produce a dense fit block result"))
 
+  def fitRunwise(input: FitBlockInput): Either[FitError, RunwiseFitBlockResult] =
+    RunwiseOls
+      .fit(input.design, input.response, input.partitions)
+      .map(RunwiseFitBlockResult.fromRunwise(input, _))
+
+  def fitLss(input: FitBlockInput): Either[FitError, LssFitBlockResult] =
+    input.lssDesign match
+      case None =>
+        Left(FitError.UnsupportedLssDesign("block input is missing an LSS trial/fixed design"))
+      case Some(lss) =>
+        LeastSquaresSeparate
+          .fit(
+            prepared = lss.prepared,
+            response = input.response
+          )
+          .map(LssFitBlockResult.fromLss(input, _))
+
+  def fit(
+      input: FitBlockInput,
+      engine: FitEngine,
+      config: FitConfig = FitConfig()
+  ): Either[FitError, FitBlockResult] =
+    engine match
+      case FitEngine.OrdinaryLeastSquares | FitEngine.GeneralizedLeastSquares =>
+        fitDense(input, engine, config)
+      case FitEngine.RunwiseLeastSquares =>
+        fitRunwise(input)
+      case FitEngine.LeastSquaresSeparate =>
+        fitLss(input)
       case other =>
         Left(FitError.UnsupportedEngine(other.toString))

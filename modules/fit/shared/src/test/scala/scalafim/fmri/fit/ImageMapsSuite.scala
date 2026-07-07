@@ -73,6 +73,7 @@ class ImageMapsSuite extends munit.FunSuite:
     ).asInstanceOf[DenseFmriFitResult]
 
     assertEquals(result.voxelIndices, Vector(3, 1))
+    assertEquals(result.selectedVoxels.toVector, Vector(3, 1))
     val coef = result.coefficientMaps(dataset.shape)
     val dense = coef.dense
 

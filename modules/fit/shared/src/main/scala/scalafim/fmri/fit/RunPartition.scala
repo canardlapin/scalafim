@@ -11,6 +11,10 @@ final case class RunPartition(
   require(rowIndices.nonEmpty, "run partition must contain rows")
   require(rowIndices.length == timepoints.length, "run partition rows and timepoints must align")
 
+  def typedRunIndex: RunIndex = RunIndex.unsafe(runIndex)
+  def selectedRows: Vector[SelectedRowIndex] = rowIndices.map(SelectedRowIndex.unsafe)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
+
 object RunPartition:
   def fromSamplingFrame(
       samplingFrame: SamplingFrame,

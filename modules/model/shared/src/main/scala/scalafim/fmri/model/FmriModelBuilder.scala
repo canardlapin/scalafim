@@ -1,6 +1,7 @@
 package scalafim.fmri.model
 
 import scalafim.dataset.{DatasetEvents, FmriDataset}
+import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NaAction, NuisanceCheck}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
@@ -19,8 +20,22 @@ final case class NuisanceRegressors(
 ):
   require(matrices.nonEmpty, "nuisance matrices must be non-empty")
   names.foreach(ns => require(ns.length == matrices.length, "nuisance names must match nuisance matrices"))
+  names.foreach { ns =>
+    ns.zip(matrices).foreach { case (columns, matrix) =>
+      require(columns.length == matrix.cols, "nuisance names must match nuisance matrix columns")
+    }
+  }
   require(tol >= 0.0 && tol.isFinite, "nuisance tolerance must be non-negative and finite")
   require(duplicateThreshold >= 0.0 && duplicateThreshold <= 1.0, "nuisance duplicate threshold must be in [0, 1]")
+
+  val columnIds: Option[Vector[Vector[ColumnId]]] =
+    names.map { blocks =>
+      blocks.map { block =>
+        block.map { name =>
+          ColumnId(name).fold(error => throw new IllegalArgumentException(ModelError.InvalidId("nuisance column", name, error.message).message), identity)
+        }
+      }
+    }
 
 final case class ModelBuildSpec(
     formula: String,
@@ -29,8 +44,7 @@ final case class ModelBuildSpec(
     baselineBasis: BaselineBasis = BaselineBasis.Constant,
     baselineDegree: Int = 1,
     baselineIntercept: Intercept = Intercept.Global,
-    engine: FitEngine = FitEngine.OrdinaryLeastSquares,
-    config: FitConfig = FitConfig(),
+    strategy: FitStrategy = FitStrategy.Default,
     defaultHrf: Hrf = Hrfs.SPMG1,
     precision: Seconds = 0.3.s,
     dropEmpty: Boolean = true,
@@ -41,14 +55,22 @@ final case class ModelBuildSpec(
 ):
   require(formula.trim.nonEmpty, "model formula must be non-empty")
   require(baselineDegree >= 1, "baseline degree must be at least 1")
+  val formulaText: FormulaText = FormulaText.unsafe(formula)
+  val blockColumnId: Option[ColumnId] = blockColumn.map(ModelBuildSpec.columnId("block column", _))
+  val durationColumnId: Option[ColumnId] = durationColumn.map(ModelBuildSpec.columnId("duration column", _))
+  def engine: FitEngine = strategy.engine
+  def config: FitConfig = strategy.config
+
+object ModelBuildSpec:
+  private[model] def columnId(kind: String, name: String): ColumnId =
+    ColumnId(name).fold(error => throw new IllegalArgumentException(ModelError.InvalidId(kind, name, error.message).message), identity)
 
 object FmriModelBuilder:
 
   def buildPlan(dataset: FmriDataset, spec: ModelBuildSpec): FitPlan =
     FitPlan(
       model = buildModel(dataset, spec),
-      engine = spec.engine,
-      config = spec.config
+      strategy = spec.strategy
     )
 
   def buildModel(dataset: FmriDataset, spec: ModelBuildSpec): FmriModel =
@@ -60,7 +82,7 @@ object FmriModelBuilder:
         case Some(column) =>
           require(table.contains(column), s"block column '$column' is not present in dataset events")
           EventModelBuilder.buildWithBlockFormula(
-            formula = spec.formula,
+            formula = spec.formulaText.value,
             data = table,
             samplingFrame = dataset.samplingFrame,
             block = s"~$column",
@@ -74,7 +96,7 @@ object FmriModelBuilder:
           )
         case None =>
           EventModelBuilder.build(
-            formula = spec.formula,
+            formula = spec.formulaText.value,
             data = table,
             samplingFrame = dataset.samplingFrame,
             blockIds = Vector.fill(table.nrows)(0),

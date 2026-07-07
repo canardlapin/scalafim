@@ -67,6 +67,10 @@ class WhiteningPlanSuite extends munit.FunSuite:
     val segments = TimeSegments.continuous(values.length)
     val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
 
+    assertEquals(plan.coefficientScope, CoefficientScope.Global(coefficients))
+    assertEquals(plan.coveredSegments.nTimepoints, values.length)
+    assertEquals(plan.initialCondition, InitialConditionPolicy.ExactAr1)
+
     val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
     val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
 
@@ -124,9 +128,55 @@ class WhiteningPlanSuite extends munit.FunSuite:
       exactFirstAr1 = false
     )
 
+    assertEquals(plan.coefficientScope.kind, CoefficientScopeKind.ByRun)
+    assertEquals(plan.pooling, NoisePooling.Run)
+    assertEquals(plan.coefficients.length, 2)
+
     val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
 
     assertClose(whitened, Vector(1.0, 1.5, 4.0, 9.0, 18.0))
+  }
+
+  test("segment layouts distinguish raw layout from matrix row coverage") {
+    val layout = SegmentLayout.fromSegments(TimeSegments.fromRunLengths(Vector(2, 3))).toOption.get
+    val covered = layout.coverRows(5).toOption.get
+    val mismatch = layout.coverRows(6)
+
+    assertEquals(layout.nTimepoints, 5)
+    assertEquals(covered.runs, Vector(0, 1))
+    assert(mismatch.left.toOption.contains(ArError.SegmentCoverageMismatch(5, 6)))
+  }
+
+  test("precomputed initial-condition scale is used without inspecting AR(1) stationarity") {
+    val values = Vector(2.0, 3.0, 5.0)
+    val coefficients = ArmaCoefficients.ar(1.05)
+    val segments = TimeSegments.continuous(values.length)
+    val plan = WhiteningPlan
+      .globalWithInitialCondition(
+        coefficients,
+        segments,
+        initialCondition = InitialConditionPolicy.PrecomputedScale(0.25)
+      )
+      .toOption
+      .get
+
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+
+    assertClose(whitened, Vector(0.5, 0.9, 1.85))
+    assertEquals(plan.exactFirstAr1, false)
+  }
+
+  test("invalid precomputed initial-condition scales are structured errors") {
+    val result = WhiteningPlan.globalWithInitialCondition(
+      ArmaCoefficients.ar(0.5),
+      TimeSegments.continuous(3),
+      initialCondition = InitialConditionPolicy.PrecomputedScale(Double.NaN)
+    )
+
+    assert(result.left.toOption.exists {
+      case ArError.InvalidInitialScale(scale) => scale.isNaN
+      case _                                  => false
+    })
   }
 
   test("whitening transform applies the same plan to design and response") {

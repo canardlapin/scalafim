@@ -15,7 +15,7 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitEngine, FitPlan, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
+import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.linalg.DoubleMatrix
 
@@ -100,7 +100,7 @@ class LssTrialwiseRecoveryScenarioSuite extends munit.FunSuite:
       ModelBuildSpec(
         formula = "onset ~ trialwise(basis = \"spmg1\", add_sum = TRUE, label = \"trial\")",
         baselineIntercept = Intercept.Global,
-        engine = FitEngine.LeastSquaresSeparate,
+        strategy = FitStrategy.LeastSquaresSeparate(),
         nuisance = Some(
           NuisanceRegressors(
             matrices = Vector(Mat.fromRows(fixture.motion.map(value => Vector(value)))),

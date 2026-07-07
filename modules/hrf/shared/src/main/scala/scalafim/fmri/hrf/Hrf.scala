@@ -36,6 +36,29 @@ trait Hrf extends (Seconds => scalafim.fmri.hrf.linalg.Vec):
     while it.hasNext do out += eval1(it.next()).data(0)
     out.toArray
 
+trait ScalarHrf extends Hrf:
+  final def nbasis: Int = 1
+
+  def scalarAt(t: Seconds): Double
+
+  final protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec =
+    scalafim.fmri.hrf.linalg.Vec.unsafe(Array(scalarAt(t)))
+
+object ScalarHrf:
+  def from(hrf: Hrf): Either[HrfSpecError, ScalarHrf] =
+    if hrf.nbasis != 1 then Left(HrfSpecError.ExpectedScalar(hrf.name, hrf.nbasis))
+    else
+      hrf match
+        case scalar: ScalarHrf => Right(scalar)
+        case other =>
+          Right(
+            new ScalarHrf:
+              def name: String = other.name
+              def span: Seconds = other.span
+              override def params: Map[String, Any] = other.params
+              def scalarAt(t: Seconds): Double = other(t).data(0)
+          )
+
 object Hrf:
   def of(
       name: String,
@@ -59,8 +82,15 @@ object Hrf:
       name: String,
       span: Seconds = Seconds(24.0),
       params: Map[String, Any] = Map.empty
-  )(f: Seconds => Double): Hrf =
-    of(name, nbasis = 1, span = span, params = params)(t => scalafim.fmri.hrf.linalg.Vec.unsafe(Array(f(t))))
+  )(f: Seconds => Double): ScalarHrf =
+    val name0 = name
+    val span0 = span
+    val params0 = params
+    new ScalarHrf:
+      def name: String = name0
+      def span: Seconds = span0
+      override def params: Map[String, Any] = params0
+      def scalarAt(t: Seconds): Double = f(t)
 
   def multi(
       name: String,

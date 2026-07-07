@@ -4,7 +4,7 @@ import scalafim.fmri.model.{FitEngine, FitSummary}
 import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
 final case class FitDiagnostics(
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     residualVariance: DoubleVector
 ):
   require(residualVariance.length > 0, "diagnostics must contain at least one residual variance")
@@ -47,7 +47,7 @@ final case class DenseFmriFitResult(
     standardErrors: StandardErrorBlock,
     normalizedCovariance: DoubleMatrix,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     columnNames: Vector[String],
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
@@ -67,6 +67,11 @@ final case class DenseFmriFitResult(
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
   def diagnostics: FitDiagnostics = FitDiagnostics(residualDegreesOfFreedom, residualVariance)
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
+
+  def inferenceReady: Either[FitError, InferenceReadyDenseFit] =
+    Right(InferenceReadyDenseFit(this, residualDegreesOfFreedom))
 
   def coefficient(columnName: String, voxelIndex: Int): Option[Double] =
     val row = columnNames.indexOf(columnName)
@@ -90,6 +95,8 @@ final case class LssFmriFitResult(
   def columnNames: Vector[String] = trialNames
   def trials: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
   def coefficient(trialName: String, voxelIndex: Int): Option[Double] =
     val row = trialNames.indexOf(trialName)
@@ -104,7 +111,7 @@ final case class RunwiseFmriRunResult(
     standardErrors: StandardErrorBlock,
     normalizedCovariance: DoubleMatrix,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: Int
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom
 ):
   require(rowIndices.nonEmpty, "run result must contain at least one selected row")
   require(rowIndices.length == timepoints.length, "run rows and timepoints must align")
@@ -120,6 +127,9 @@ final case class RunwiseFmriRunResult(
     if row < 0 || col < 0 then None else Some(coefficients(row, col))
 
   def diagnostics: FitDiagnostics = FitDiagnostics(residualDegreesOfFreedom, residualVariance)
+  def typedRunIndex: RunIndex = RunIndex.unsafe(runIndex)
+  def selectedRows: Vector[SelectedRowIndex] = rowIndices.map(SelectedRowIndex.unsafe)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
 final case class RunwiseFmriFitResult(
     runs: Vector[RunwiseFmriRunResult],
@@ -133,6 +143,9 @@ final case class RunwiseFmriFitResult(
   require(timepoints.nonEmpty, "runwise result must contain at least one timepoint")
   require(runs.forall(_.coefficients.predictors == columnNames.length), "run coefficients must match column names")
   require(runs.forall(_.coefficients.voxels == voxelIndices.length), "run coefficients must match voxel indices")
+
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
   def run(runIndex: Int): Option[RunwiseFmriRunResult] =
     runs.find(_.runIndex == runIndex)

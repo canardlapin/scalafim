@@ -10,6 +10,9 @@ final case class TContrast(name: String, weights: Map[String, Double]):
   require(weights.values.forall(_.isFinite), "contrast weights must be finite")
 
   def evaluate(result: DenseFmriFitResult): Either[FitError, TContrastResult] =
+    result.inferenceReady.flatMap(evaluate)
+
+  def evaluate(result: InferenceReadyDenseFit): Either[FitError, TContrastResult] =
     weightVector(result.columnNames).flatMap { w =>
       val scale = contrastScale(w, result.normalizedCovariance)
       if !(scale > 0.0 && scale.isFinite) then
@@ -97,12 +100,13 @@ final case class TContrastResult(
     estimates: DoubleVector,
     standardErrors: DoubleVector,
     statistics: DoubleVector,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int]
 ):
   require(estimates.length == voxelIndices.length, "contrast estimates must match voxel indices")
   require(standardErrors.length == voxelIndices.length, "contrast standard errors must match voxel indices")
   require(statistics.length == voxelIndices.length, "contrast statistics must match voxel indices")
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
 
 final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   require(name.nonEmpty, "contrast name must be non-empty")
@@ -110,6 +114,9 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   require(weights.forall(_.values.forall(_.isFinite)), "contrast weights must be finite")
 
   def evaluate(result: DenseFmriFitResult): Either[FitError, FContrastResult] =
+    result.inferenceReady.flatMap(evaluate)
+
+  def evaluate(result: InferenceReadyDenseFit): Either[FitError, FContrastResult] =
     for
       w <- weightMatrix(result.columnNames)
       covariance <- contrastCovariance(w, result.normalizedCovariance)
@@ -226,12 +233,13 @@ final case class FContrastResult(
     estimates: DoubleMatrix,
     statistics: DoubleVector,
     numeratorDegreesOfFreedom: Int,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int]
 ):
   require(estimates.rows == numeratorDegreesOfFreedom, "F contrast estimates must match numerator df")
   require(estimates.cols == voxelIndices.length, "F contrast estimates must match voxel indices")
   require(statistics.length == voxelIndices.length, "F statistics must match voxel indices")
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
 
 object DesignContrasts:
 

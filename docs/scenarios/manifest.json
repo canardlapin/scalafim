@@ -1,0 +1,119 @@
+{
+  "schema_version": "scalafim-scenario-manifest/v1",
+  "status_semantics": {
+    "pass": "The scenario's ScenarioResult.status is Pass and ScenarioResult.ciPass is true.",
+    "fail": "Any unexpected shape, finite-value, identity, tolerance, caveat, or oracle check failed."
+  },
+  "default_acceptance_commands": [
+    "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+    "sbt fitJVM/test",
+    "sbt fitJS/test",
+    "sbt groupJVM/test",
+    "sbt groupJS/test"
+  ],
+  "scenarios": [
+    {
+      "id": "fit.public-f-contrast.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "direct_ols_plus_fmrimod_nilearn_fixture",
+        "description": "Public model/fit/T/F contrast path compared with a direct OLS oracle and a generated fmrimod/Nilearn reference fixture.",
+        "exporter_path": "tools/scenarios/export_fit_public_f_contrast_fixture.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.public-f-contrast.v1.nilearn.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastNilearnFixture.scala"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.semantic-contrast-reordered-columns.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/SemanticContrastReorderedColumnsScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "paired_public_fit_and_direct_ols",
+        "description": "Equivalent public formulas with reversed design-column order must produce identical name-keyed T/F contrast results."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.lss-trialwise-recovery.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/LssTrialwiseRecoveryScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "metadata_selected_lss_oracle",
+        "description": "Builder-created LSS results are compared with direct LeastSquaresSeparate output assembled from EventTermColumnRole metadata."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "group.one-sample-analytic.v1",
+      "tier": "workflow_parity",
+      "module": "group",
+      "suite_class": "scalafim.fmri.group.scenarios.GroupOneSampleScenarioSuite",
+      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_one_sample_t",
+        "description": "Intercept-only group OLS is compared with per-sample one-sample t-test mean, SE, statistic, and p-value."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "group.two-sample-analytic.v1",
+      "tier": "workflow_parity",
+      "module": "group",
+      "suite_class": "scalafim.fmri.group.scenarios.GroupTwoSampleScenarioSuite",
+      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_pooled_two_sample_t",
+        "description": "Two-sample group OLS is compared with per-sample pooled t-test estimates, SEs, statistics, p-values, and named group contrast results."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "group.first-level-bridge.v1",
+      "tier": "cross_level_workflow",
+      "module": "group",
+      "suite_class": "scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite",
+      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_fixed_effects_inverse_variance",
+        "description": "First-level TContrastResult estimates and SEs are bridged to GroupData, then fixed-effects inverse-variance inference is checked analytically."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
+    }
+  ]
+}

@@ -1,10 +1,13 @@
 package scalafim.fmri.design.event
 
+import scalafim.fmri.design.{DesignError, TermId}
 import scalafim.fmri.design.Names
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.regressor.{HrfAssignment, Regressor}
+
+import scala.util.control.NonFatal
 
 final case class TermDesignMatrix(data: Mat, conditionTags: Vector[String])
 
@@ -29,20 +32,21 @@ final case class EventTerm(
     termTag: Option[String] = None
 ):
 
+  val schedule: EventSchedule =
+    EventSchedule
+      .fromParts(onsets, durations, blockIds)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
+
   private val n: Int =
-    val n0 = onsets.length
+    val n0 = schedule.size
     require(events.forall(_.nEvents == n0), "all events must match onsets length")
-    if durations.nonEmpty then require(durations.length == n0, "durations length mismatch")
-    if blockIds.nonEmpty then require(blockIds.length == n0, "blockIds length mismatch")
     n0
 
   val durations0: Vector[Seconds] =
-    if durations.isEmpty then Vector.fill(n)(0.0.s) else durations
+    schedule.durations
 
   val blockIds0: Vector[Int] =
-    if blockIds.isEmpty then Vector.fill(n)(0) else
-      require(!isStrictlyDecreasing(blockIds), "'blockIds' must be non-decreasing")
-      blockIds
+    schedule.blockIds
 
   def conditions: Vector[String] =
     val tokenLists = events.map(_.conditionTokens).filter(_.nonEmpty)
@@ -246,11 +250,11 @@ final case class EventTerm(
     val durs = duration.map(Seconds(_)).toVector
     val amps = amplitude.toVector
     validateRegressorParts(ons, durs, amps)
-    val keep = amps.indices.filter(i => amps(i) != 0.0)
-    Regressor(
-      onsets = keep.map(ons).toVector,
-      durations = keep.map(durs).toVector,
-      amplitudes = keep.map(amps).toVector,
+    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
+    Regressor.unsafeFromParts(
+      onsets = valid.map(ons).toVector,
+      durations = valid.map(durs).toVector,
+      amplitudes = valid.map(amps).toVector,
       hrf = HrfAssignment.Shared(hrf),
       span = hrf.span,
       summate = summate
@@ -269,14 +273,15 @@ final case class EventTerm(
     val hrs = hrfs.toVector
     require(hrs.length == ons.length, "per-event HRF/onset length mismatch")
     validateRegressorParts(ons, durs, amps)
-    val keep = amps.indices.filter(i => amps(i) != 0.0)
+    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
+    val keep = valid.filter(i => amps(i) != 0.0)
     val hrsF = keep.map(hrs).toVector
     val span = hrsF.map(_.span).maxOption.getOrElse(hrs.map(_.span).maxOption.getOrElse(Seconds(0.0)))
-    Regressor(
-      onsets = keep.map(ons).toVector,
-      durations = keep.map(durs).toVector,
-      amplitudes = keep.map(amps).toVector,
-      hrf = HrfAssignment.PerEvent(hrsF),
+    Regressor.unsafeFromParts(
+      onsets = valid.map(ons).toVector,
+      durations = valid.map(durs).toVector,
+      amplitudes = valid.map(amps).toVector,
+      hrf = HrfAssignment.PerEvent(valid.map(hrs).toVector),
       span = span,
       summate = summate
     )
@@ -336,3 +341,45 @@ final case class EventTerm(
       if xs(i) < xs(i - 1) then return true
       i += 1
     false
+
+object EventTerm:
+  def validated(
+      events: Vector[Event],
+      onsets: Vector[Seconds],
+      durations: Vector[Seconds] = Vector.empty,
+      blockIds: Vector[Int] = Vector.empty,
+      termTag: Option[String] = None
+  ): Either[DesignError, EventTerm] =
+    EventSchedule.fromParts(onsets, durations, blockIds).flatMap(fromSchedule(events, _, termTag))
+
+  def fromSchedule(
+      events: Vector[Event],
+      schedule: EventSchedule,
+      termTag: Option[String] = None
+  ): Either[DesignError, EventTerm] =
+    termTag match
+      case Some(tag) =>
+        TermId(tag).flatMap(_ => construct(events, schedule, termTag))
+      case None =>
+        construct(events, schedule, termTag)
+
+  private def construct(
+      events: Vector[Event],
+      schedule: EventSchedule,
+      termTag: Option[String]
+  ): Either[DesignError, EventTerm] =
+    if events.exists(_.nEvents != schedule.size) then
+      Left(DesignError.InvalidSchedule("all events must match schedule length"))
+    else
+      try
+        Right(
+          EventTerm(
+            events = events,
+            onsets = schedule.onsets,
+            durations = schedule.durations,
+            blockIds = schedule.blockIds,
+            termTag = termTag
+          )
+        )
+      catch
+        case NonFatal(t) => Left(DesignError.fromThrowable(t))

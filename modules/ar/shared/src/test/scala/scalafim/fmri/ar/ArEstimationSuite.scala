@@ -63,6 +63,12 @@ class ArEstimationSuite extends munit.FunSuite:
     assert(pacf.forall(k => k.isFinite && math.abs(k) <= 0.8000000001), clues(pacf))
   }
 
+  test("typed AR order, lag, and stationarity constructors reject invalid bounds") {
+    assert(ArOrderValue(-1).left.toOption.contains(ArError.InvalidArOrder(-1)))
+    assert(ArLag(-1).left.toOption.contains(ArError.InvalidArLag(-1)))
+    assert(StationarityBound(1.0).left.toOption.contains(ArError.InvalidStationarityBound(1.0)))
+  }
+
   test("Yule-Walker recovers a fixed-order AR(1) coefficient") {
     val values = ar1Series(0.6, 500)
     val residuals = matrix(values)
@@ -113,8 +119,10 @@ class ArEstimationSuite extends munit.FunSuite:
     )
 
     assert(result.left.toOption.exists {
-      case ArError.CoefficientMismatch(message) => message.contains("only 1 lags")
-      case _                                    => false
+      case ArError.ArOrderNotEstimable(requested, maxLag) =>
+        requested.value == 2 && maxLag.value == 1
+      case _ =>
+        false
     })
   }
 
@@ -154,9 +162,12 @@ class ArEstimationSuite extends munit.FunSuite:
     val values = Vector(-2.0, 0.5, 3.0, 1.0, -1.5, 4.0, 2.0)
     val segments = TimeSegments.continuous(values.length)
     val gamma = ArEstimation.autocovariance(matrix(values), segments, maxLag = 3)
+    val typedGamma = ArEstimation.autocovariances(matrix(values), segments, ArLag.unsafe(3))
     val negated = ArEstimation.autocovariance(matrix(values.map(-_)), segments, maxLag = 3)
     val scaled = ArEstimation.autocovariance(matrix(values.map(_ * 3.0)), segments, maxLag = 3)
 
+    assertEquals(typedGamma.maxLag, ArLag.unsafe(3))
+    assertClose(typedGamma.toVector, gamma)
     assertClose(negated, gamma)
     assertClose(scaled, gamma.map(_ * 9.0))
   }

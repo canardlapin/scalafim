@@ -11,22 +11,22 @@ final case class OlsPrepared(
     if response.timepoints != design.timepoints then
       Left(FitError.RowMismatch(design.timepoints, response.timepoints))
     else
-      val xty = DoubleMatrix.transposeMultiply(design.value, response.value)
-      val coefficients = CoefficientBlock(factor.solve(xty))
-      val residualVariance =
-        Ols.residualVariance(design.value, response.value, coefficients.value)
-      val normalizedCovariance = factor.solve(DoubleMatrix.eye(design.predictors))
-      Right(
+      ResidualDegreesOfFreedom(design.timepoints - design.predictors).map { residualDf =>
+        val xty = DoubleMatrix.transposeMultiply(design.value, response.value)
+        val coefficients = CoefficientBlock(factor.solve(xty))
+        val residualVariance =
+          Ols.residualVariance(design.value, response.value, coefficients.value, residualDf)
+        val normalizedCovariance = factor.solve(DoubleMatrix.eye(design.predictors))
         OlsFit(
           coefficients = coefficients,
           residualVariance = residualVariance,
-          residualDegreesOfFreedom = design.timepoints - design.predictors,
+          residualDegreesOfFreedom = residualDf,
           normalizedCovariance = normalizedCovariance,
           standardErrors = StandardErrorBlock(
             Ols.standardErrors(normalizedCovariance, residualVariance, response.voxels)
           )
         )
-      )
+      }
 
   def unsafeFit(response: ResponseBlock): OlsFit =
     fit(response).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -34,7 +34,7 @@ final case class OlsPrepared(
 final case class OlsFit(
     coefficients: CoefficientBlock,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     normalizedCovariance: DoubleMatrix,
     standardErrors: StandardErrorBlock
 ):
@@ -62,9 +62,10 @@ object Ols:
   private[fit] def residualVariance(
       design: DoubleMatrix,
       response: DoubleMatrix,
-      coefficients: DoubleMatrix
+      coefficients: DoubleMatrix,
+      residualDegreesOfFreedom: ResidualDegreesOfFreedom
   ): DoubleVector =
-    val df = design.rows - design.cols
+    val df = residualDegreesOfFreedom.value
     val out = new Array[Double](response.cols)
 
     var voxel = 0
@@ -81,7 +82,7 @@ object Ols:
         val residual = response.dataArray(row * response.cols + voxel) - fitted
         sse += residual * residual
         row += 1
-      out(voxel) = if df > 0 then sse / df else Double.NaN
+      out(voxel) = sse / df
       voxel += 1
 
     DoubleVector.unsafe(out)

@@ -26,10 +26,19 @@ object FitImageMaps:
       voxelIndices: Vector[Int],
       label: String
   ): FitImageMaps =
+    fromRows(names, rowsByMap, shape, SelectedVoxelIndices.unsafe(voxelIndices), FitImageMapKind.Custom(label))
+
+  def fromRows(
+      names: Vector[String],
+      rowsByMap: Vector[Vector[Double]],
+      shape: DatasetShape,
+      selectedVoxels: SelectedVoxelIndices,
+      kind: FitImageMapKind
+  ): FitImageMaps =
+    val voxelIndices = selectedVoxels.toVector
+    val label = kind.label
     require(names.nonEmpty, "image map names must be non-empty")
     require(rowsByMap.length == names.length, "rowsByMap length must match names")
-    require(voxelIndices.nonEmpty, "voxel indices must be non-empty")
-    require(voxelIndices.distinct.length == voxelIndices.length, "voxel indices must be unique")
     require(voxelIndices.forall(i => i >= 0 && i < shape.spatialSize), "voxel index out of bounds for dataset shape")
     rowsByMap.foreach { row =>
       require(row.length == voxelIndices.length, "map rows must match voxel index count")
@@ -72,8 +81,8 @@ extension (result: DenseFmriFitResult)
       names = result.columnNames,
       rowsByMap = matrixRows(result.coefficients.value),
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = "coefficients"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.Coefficients
     )
 
   def standardErrorMaps(shape: DatasetShape): FitImageMaps =
@@ -81,8 +90,8 @@ extension (result: DenseFmriFitResult)
       names = result.columnNames,
       rowsByMap = matrixRows(result.standardErrors.value),
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = "standard_errors"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.StandardErrors
     )
 
 extension (result: TContrastResult)
@@ -91,8 +100,8 @@ extension (result: TContrastResult)
       names = Vector(result.name),
       rowsByMap = Vector(result.statistics.toVector),
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = s"t_${result.name}"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.TStatistic(result.name)
     )
 
   def maps(shape: DatasetShape): FitImageMaps =
@@ -100,8 +109,8 @@ extension (result: TContrastResult)
       names = Vector(s"${result.name}_estimate", s"${result.name}_standard_error", s"${result.name}_t"),
       rowsByMap = Vector(result.estimates.toVector, result.standardErrors.toVector, result.statistics.toVector),
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = s"t_${result.name}"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.TContrastBundle(result.name)
     )
 
 extension (result: FContrastResult)
@@ -110,8 +119,8 @@ extension (result: FContrastResult)
       names = Vector(result.name),
       rowsByMap = Vector(result.statistics.toVector),
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = s"f_${result.name}"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.FStatistic(result.name)
     )
 
   def maps(shape: DatasetShape): FitImageMaps =
@@ -121,8 +130,8 @@ extension (result: FContrastResult)
       names = estimateNames :+ s"${result.name}_f",
       rowsByMap = matrixRows(result.estimates) :+ result.statistics.toVector,
       shape = shape,
-      voxelIndices = result.voxelIndices,
-      label = s"f_${result.name}"
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.FContrastBundle(result.name)
     )
 
 private def matrixRows(matrix: scalafim.linalg.DoubleMatrix): Vector[Vector[Double]] =

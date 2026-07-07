@@ -10,33 +10,124 @@ enum WhiteningMethod:
   case Fixed
   case Estimated
 
-final case class WhiteningPlan(
-    coefficients: Vector[ArmaCoefficients],
-    segments: Vector[TimeSegment],
-    pooling: NoisePooling,
-    exactFirstAr1: Boolean = true,
-    method: WhiteningMethod = WhiteningMethod.Fixed
+enum CoefficientScope:
+  case Global(coefficients: ArmaCoefficients)
+  case ByRun(coefficientsByRun: Vector[ArmaCoefficients])
+
+  def kind: CoefficientScopeKind =
+    this match
+      case Global(_) => CoefficientScopeKind.Global
+      case ByRun(_)  => CoefficientScopeKind.ByRun
+
+  def allCoefficients: Vector[ArmaCoefficients] =
+    this match
+      case Global(coefficients) => Vector(coefficients)
+      case ByRun(coefficients)  => coefficients
+
+  def pooling: NoisePooling =
+    this match
+      case Global(_) => NoisePooling.Global
+      case ByRun(_)  => NoisePooling.Run
+
+  def validate(layout: SegmentLayout): Either[ArError, Unit] =
+    this match
+      case Global(_) =>
+        Right(())
+      case ByRun(coefficients) =>
+        if coefficients.length == layout.runCount then Right(())
+        else Left(ArError.CoefficientScopeMismatch(CoefficientScopeKind.ByRun, coefficients.length, layout.runCount))
+
+  def coefficientsFor(segment: TimeSegment): ArmaCoefficients =
+    this match
+      case Global(coefficients) => coefficients
+      case ByRun(coefficients)  => coefficients(segment.runIndex)
+
+enum InitialConditionPolicy:
+  case Identity
+  case ExactAr1
+  case PrecomputedScale(scale: Double)
+
+  def firstScale(coefficients: ArmaCoefficients): Either[ArError, Double] =
+    this match
+      case Identity =>
+        Right(1.0)
+      case ExactAr1 =>
+        coefficients.exactAr1FirstScale
+      case PrecomputedScale(scale) =>
+        if scale >= 0.0 && scale.isFinite then Right(scale)
+        else Left(ArError.InvalidInitialScale(scale))
+
+object InitialConditionPolicy:
+
+  def fromExactFirstAr1(exactFirstAr1: Boolean): InitialConditionPolicy =
+    if exactFirstAr1 then ExactAr1 else Identity
+
+  def precomputedScale(scale: Double): Either[ArError, InitialConditionPolicy] =
+    if scale >= 0.0 && scale.isFinite then Right(InitialConditionPolicy.PrecomputedScale(scale))
+    else Left(ArError.InvalidInitialScale(scale))
+
+final case class WhiteningPlan private (
+    coefficientScope: CoefficientScope,
+    coveredSegments: CoveredSegments,
+    initialCondition: InitialConditionPolicy,
+    method: WhiteningMethod
 ):
-  require(coefficients.nonEmpty, "whitening plan must contain coefficients")
-  require(segments.nonEmpty, "whitening plan must contain time segments")
+  coefficientScope.validate(coveredSegments.layout).fold(
+    error => throw new IllegalArgumentException(error.message),
+    _ => ()
+  )
 
-  pooling match
-    case NoisePooling.Global =>
-      require(coefficients.length == 1, "global whitening requires exactly one coefficient set")
-    case NoisePooling.Run =>
-      val runCount = segments.map(_.runIndex).max + 1
-      require(coefficients.length == runCount, "run whitening requires one coefficient set per run")
-
-  def nTimepoints: Int = segments.last.endExclusive
+  def layout: SegmentLayout = coveredSegments.layout
+  def segments: Vector[TimeSegment] = coveredSegments.segments
+  def coefficients: Vector[ArmaCoefficients] = coefficientScope.allCoefficients
+  def pooling: NoisePooling = coefficientScope.pooling
+  def exactFirstAr1: Boolean = initialCondition == InitialConditionPolicy.ExactAr1
+  def nTimepoints: Int = coveredSegments.nTimepoints
   def arOrder: Int = coefficients.map(_.arOrder).max
   def maOrder: Int = coefficients.map(_.maOrder).max
 
   def coefficientsFor(segment: TimeSegment): ArmaCoefficients =
-    pooling match
-      case NoisePooling.Global => coefficients.head
-      case NoisePooling.Run    => coefficients(segment.runIndex)
+    coefficientScope.coefficientsFor(segment)
 
 object WhiteningPlan:
+
+  def apply(
+      coefficients: Vector[ArmaCoefficients],
+      segments: Vector[TimeSegment],
+      pooling: NoisePooling,
+      exactFirstAr1: Boolean = true,
+      method: WhiteningMethod = WhiteningMethod.Fixed
+  ): WhiteningPlan =
+    pooling match
+      case NoisePooling.Global =>
+        if coefficients.length != 1 then
+          throw new IllegalArgumentException(
+            ArError.CoefficientScopeMismatch(CoefficientScopeKind.Global, coefficients.length, 1).message
+          )
+        global(coefficients.head, segments, exactFirstAr1, method)
+      case NoisePooling.Run =>
+        byRun(coefficients, segments, exactFirstAr1, method)
+
+  def withScope(
+      coefficientScope: CoefficientScope,
+      segments: Vector[TimeSegment],
+      initialCondition: InitialConditionPolicy = InitialConditionPolicy.ExactAr1,
+      method: WhiteningMethod = WhiteningMethod.Fixed
+  ): Either[ArError, WhiteningPlan] =
+    CoveredSegments
+      .fromSegments(segments, segments.lastOption.map(_.endExclusive).getOrElse(0))
+      .flatMap(withScope(coefficientScope, _, initialCondition, method))
+
+  def withScope(
+      coefficientScope: CoefficientScope,
+      coveredSegments: CoveredSegments,
+      initialCondition: InitialConditionPolicy,
+      method: WhiteningMethod
+  ): Either[ArError, WhiteningPlan] =
+    for
+      _ <- coefficientScope.validate(coveredSegments.layout)
+      _ <- validateInitialCondition(initialCondition)
+    yield new WhiteningPlan(coefficientScope, coveredSegments, initialCondition, method)
 
   def global(
       coefficients: ArmaCoefficients,
@@ -44,13 +135,13 @@ object WhiteningPlan:
       exactFirstAr1: Boolean = true,
       method: WhiteningMethod = WhiteningMethod.Fixed
   ): WhiteningPlan =
-    WhiteningPlan(
-      coefficients = Vector(coefficients),
-      segments = segments,
-      pooling = NoisePooling.Global,
-      exactFirstAr1 = exactFirstAr1,
-      method = method
+    withScope(
+      CoefficientScope.Global(coefficients),
+      segments,
+      InitialConditionPolicy.fromExactFirstAr1(exactFirstAr1),
+      method
     )
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def byRun(
       coefficients: Vector[ArmaCoefficients],
@@ -58,13 +149,36 @@ object WhiteningPlan:
       exactFirstAr1: Boolean = true,
       method: WhiteningMethod = WhiteningMethod.Fixed
   ): WhiteningPlan =
-    WhiteningPlan(
-      coefficients = coefficients,
-      segments = segments,
-      pooling = NoisePooling.Run,
-      exactFirstAr1 = exactFirstAr1,
-      method = method
+    withScope(
+      CoefficientScope.ByRun(coefficients),
+      segments,
+      InitialConditionPolicy.fromExactFirstAr1(exactFirstAr1),
+      method
     )
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def globalWithInitialCondition(
+      coefficients: ArmaCoefficients,
+      segments: Vector[TimeSegment],
+      initialCondition: InitialConditionPolicy,
+      method: WhiteningMethod = WhiteningMethod.Fixed
+  ): Either[ArError, WhiteningPlan] =
+    withScope(CoefficientScope.Global(coefficients), segments, initialCondition, method)
+
+  def byRunWithInitialCondition(
+      coefficients: Vector[ArmaCoefficients],
+      segments: Vector[TimeSegment],
+      initialCondition: InitialConditionPolicy,
+      method: WhiteningMethod = WhiteningMethod.Fixed
+  ): Either[ArError, WhiteningPlan] =
+    withScope(CoefficientScope.ByRun(coefficients), segments, initialCondition, method)
+
+  private def validateInitialCondition(initialCondition: InitialConditionPolicy): Either[ArError, Unit] =
+    initialCondition match
+      case InitialConditionPolicy.PrecomputedScale(scale) if scale < 0.0 || !scale.isFinite =>
+        Left(ArError.InvalidInitialScale(scale))
+      case _ =>
+        Right(())
 
 final case class WhitenedMatrices(
     design: DoubleMatrix,
@@ -86,19 +200,19 @@ object WhiteningTransform:
       yield WhitenedMatrices(x, y)
 
   def matrix(plan: WhiteningPlan, input: DoubleMatrix): Either[ArError, DoubleMatrix] =
-    TimeSegments.validateCoverage(plan.segments, input.rows).flatMap { _ =>
+    plan.coveredSegments.validateRows(input.rows).flatMap { _ =>
       val out = new Array[Double](input.rows * input.cols)
       var segmentIndex = 0
       var error: Option[ArError] = None
       while segmentIndex < plan.segments.length && error.isEmpty do
         val segment = plan.segments(segmentIndex)
         val coefficients = plan.coefficientsFor(segment)
-        val firstScale =
-          if plan.exactFirstAr1 then
-            coefficients.exactAr1FirstScale match
-              case Left(err) => error = Some(err); 1.0
-              case Right(scale) => scale
-          else 1.0
+        val firstScale = coefficients.firstScale(plan.initialCondition) match
+          case Left(err) =>
+            error = Some(err)
+            1.0
+          case Right(scale) =>
+            scale
 
         if error.isEmpty then
           whitenSegment(input, out, segment, coefficients, firstScale)

@@ -3,22 +3,57 @@ package scalafim.fmri.ar
 import scalafim.linalg.DoubleMatrix
 
 enum ArOrder:
-  case Fixed(order: Int)
-  case Auto(maxOrder: Int)
+  case Fixed(order: ArOrderValue)
+  case Auto(maxOrder: ArOrderValue)
 
   def maxRequested: Int =
+    this match
+      case Fixed(order)  => order.value
+      case Auto(maxOrder) => maxOrder.value
+
+  def maxRequestedOrder: ArOrderValue =
     this match
       case Fixed(order)  => order
       case Auto(maxOrder) => maxOrder
 
-final case class ArFitOptions(
-    order: ArOrder = ArOrder.Auto(6),
-    pooling: NoisePooling = NoisePooling.Global,
-    exactFirstAr1: Boolean = true,
-    stationarityBound: Double = 0.99
+object ArOrder:
+  def Fixed(order: Int): ArOrder =
+    Fixed(ArOrderValue.unsafe(order))
+
+  def Auto(maxOrder: Int): ArOrder =
+    Auto(ArOrderValue.unsafe(maxOrder))
+
+final case class ArFitOptions private (
+    order: ArOrder,
+    pooling: NoisePooling,
+    initialCondition: InitialConditionPolicy,
+    stationarity: StationarityBound
 ):
-  require(order.maxRequested >= 0, "AR order must be non-negative")
-  require(stationarityBound > 0.0 && stationarityBound < 1.0 && stationarityBound.isFinite, "stationarity bound must be in (0, 1)")
+  def exactFirstAr1: Boolean = initialCondition == InitialConditionPolicy.ExactAr1
+  def stationarityBound: Double = stationarity.value
+
+object ArFitOptions:
+
+  def apply(
+      order: ArOrder = ArOrder.Auto(6),
+      pooling: NoisePooling = NoisePooling.Global,
+      exactFirstAr1: Boolean = true,
+      stationarityBound: Double = 0.99
+  ): ArFitOptions =
+    new ArFitOptions(
+      order = order,
+      pooling = pooling,
+      initialCondition = InitialConditionPolicy.fromExactFirstAr1(exactFirstAr1),
+      stationarity = StationarityBound.unsafe(stationarityBound)
+    )
+
+  def withInitialCondition(
+      order: ArOrder = ArOrder.Auto(6),
+      pooling: NoisePooling = NoisePooling.Global,
+      initialCondition: InitialConditionPolicy = InitialConditionPolicy.ExactAr1,
+      stationarity: StationarityBound = StationarityBound.Default
+  ): ArFitOptions =
+    new ArFitOptions(order, pooling, initialCondition, stationarity)
 
 final case class YuleWalkerEstimate(
     coefficients: ArmaCoefficients,
@@ -36,11 +71,11 @@ object ArEstimation:
     TimeSegments.validateCoverage(segments, residuals.rows).flatMap { _ =>
       options.pooling match
         case NoisePooling.Global =>
-          estimateForSegments(residuals, segments, options).map { estimate =>
-            WhiteningPlan.global(
+          estimateForSegments(residuals, segments, options).flatMap { estimate =>
+            WhiteningPlan.globalWithInitialCondition(
               estimate.coefficients,
               segments,
-              exactFirstAr1 = options.exactFirstAr1,
+              initialCondition = options.initialCondition,
               method = WhiteningMethod.Estimated
             )
           }
@@ -55,17 +90,17 @@ object ArEstimation:
                 case (Right(acc), run) =>
                   val runSegments = segments.filter(_.runIndex == run)
                   if runSegments.isEmpty then
-                    Left(ArError.CoefficientMismatch(s"run $run has no segments"))
+                    Left(ArError.MissingRunSegments(run))
                   else
                     estimateForSegments(residuals, runSegments, options)
                       .map(result => acc :+ result.coefficients)
               }
 
-          estimates.map { coefficients =>
-            WhiteningPlan.byRun(
+          estimates.flatMap { coefficients =>
+            WhiteningPlan.byRunWithInitialCondition(
               coefficients,
               segments,
-              exactFirstAr1 = options.exactFirstAr1,
+              initialCondition = options.initialCondition,
               method = WhiteningMethod.Estimated
             )
           }
@@ -76,34 +111,41 @@ object ArEstimation:
       segments: Vector[TimeSegment],
       options: ArFitOptions
   ): Either[ArError, YuleWalkerEstimate] =
-    val maxLag = math.min(options.order.maxRequested, maxEstimableLag(segments))
+    val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, maxEstimableLag(segments).value))
     options.order match
       case ArOrder.Fixed(order) =>
-        if order > maxLag then
-          Left(ArError.CoefficientMismatch(s"requested AR($order) but only $maxLag lags are estimable"))
+        if order.value > maxLag.value then
+          Left(ArError.ArOrderNotEstimable(order, maxLag))
         else
-          val gamma = autocovariance(residuals, segments, order)
-          yuleWalker(gamma, order, options.stationarityBound)
+          val gamma = autocovariances(residuals, segments, ArLag.unsafe(order.value))
+          yuleWalker(gamma, order, options.stationarity)
 
       case ArOrder.Auto(_) =>
-        val gamma = autocovariance(residuals, segments, maxLag)
-        selectByBic(gamma, effectiveObservations(segments), maxLag, options.stationarityBound)
+        val gamma = autocovariances(residuals, segments, maxLag)
+        selectByBic(gamma, effectiveObservations(segments), maxLag, options.stationarity)
 
   def autocovariance(
       residuals: DoubleMatrix,
       segments: Vector[TimeSegment],
       maxLag: Int
   ): Vector[Double] =
-    require(maxLag >= 0, "maxLag must be non-negative")
-    val sums = Array.fill(maxLag + 1)(0.0)
-    val counts = Array.fill(maxLag + 1)(0)
+    autocovariances(residuals, segments, ArLag.unsafe(maxLag)).toVector
+
+  def autocovariances(
+      residuals: DoubleMatrix,
+      segments: Vector[TimeSegment],
+      maxLag: ArLag
+  ): Autocovariances =
+    val lagCount = maxLag.value
+    val sums = Array.fill(lagCount + 1)(0.0)
+    val counts = Array.fill(lagCount + 1)(0)
 
     segments.foreach { segment =>
       var col = 0
       while col < residuals.cols do
         val mean = segmentMean(residuals, segment, col)
         var lag = 0
-        while lag <= maxLag do
+        while lag <= lagCount do
           var row = segment.start + lag
           while row < segment.endExclusive do
             sums(lag) += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
@@ -113,30 +155,53 @@ object ArEstimation:
         col += 1
     }
 
-    sums.indices.map { lag =>
+    val values = sums.indices.map { lag =>
       if counts(lag) == 0 then 0.0 else sums(lag) / counts(lag).toDouble
     }.toVector
+    Autocovariances.unsafe(values)
 
   def yuleWalker(
       gamma: Vector[Double],
       order: Int,
       stationarityBound: Double = 0.99
   ): Either[ArError, YuleWalkerEstimate] =
-    require(order >= 0, "order must be non-negative")
-    require(gamma.length >= order + 1, "gamma must contain lag 0 through order")
-    if order == 0 then
-      Right(YuleWalkerEstimate(ArmaCoefficients.Iid, math.max(0.0, gamma.headOption.getOrElse(0.0))))
-    else if gamma.head <= 0.0 || !gamma.head.isFinite then
-      Right(YuleWalkerEstimate(ArmaCoefficients.ar(Vector.fill(order)(0.0)*), 0.0))
+    for
+      typedOrder <- ArOrderValue(order)
+      typedGamma <- Autocovariances(gamma)
+      bound <- StationarityBound(stationarityBound)
+      estimate <- yuleWalker(typedGamma, typedOrder, bound)
+    yield estimate
+
+  def yuleWalker(
+      gamma: Autocovariances,
+      order: ArOrderValue,
+      stationarityBound: StationarityBound
+  ): Either[ArError, YuleWalkerEstimate] =
+    gamma.takeThrough(order).flatMap { scopedGamma =>
+      if order.value == 0 then
+        Right(YuleWalkerEstimate(ArmaCoefficients.Iid, math.max(0.0, scopedGamma.lagZero)))
+      else if scopedGamma.lagZero <= 0.0 || !scopedGamma.lagZero.isFinite then
+        Right(YuleWalkerEstimate(ArmaCoefficients.ar(Vector.fill(order.value)(0.0)*), 0.0))
+      else
+        yuleWalkerNonZero(scopedGamma, order, stationarityBound)
+    }
+
+  private def yuleWalkerNonZero(
+      gamma: Autocovariances,
+      order: ArOrderValue,
+      stationarityBound: StationarityBound
+  ): Either[ArError, YuleWalkerEstimate] =
+    if gamma.lagZero <= 0.0 || !gamma.lagZero.isFinite then
+      Right(YuleWalkerEstimate(ArmaCoefficients.ar(Vector.fill(order.value)(0.0)*), 0.0))
     else
-      var sigma2 = gamma.head
+      var sigma2 = gamma.lagZero
       var previous = Array.empty[Double]
       var m = 1
-      while m <= order do
-        var acc = gamma(m)
+      while m <= order.value do
+        var acc = gamma.at(ArLag.unsafe(m))
         var j = 1
         while j <= m - 1 do
-          acc -= previous(j - 1) * gamma(m - j)
+          acc -= previous(j - 1) * gamma.at(ArLag.unsafe(m - j))
           j += 1
 
         val kappa =
@@ -157,15 +222,15 @@ object ArEstimation:
       Right(YuleWalkerEstimate(ArmaCoefficients.ar(stable*), sigma2))
 
   private def selectByBic(
-      gamma: Vector[Double],
+      gamma: Autocovariances,
       observations: Int,
-      maxOrder: Int,
-      stationarityBound: Double
+      maxOrder: ArLag,
+      stationarityBound: StationarityBound
   ): Either[ArError, YuleWalkerEstimate] =
     var best: Option[(Double, YuleWalkerEstimate)] = None
     var order = 0
-    while order <= maxOrder do
-      yuleWalker(gamma.take(order + 1), order, stationarityBound) match
+    while order <= maxOrder.value do
+      yuleWalker(gamma, ArOrderValue.unsafe(order), stationarityBound) match
         case Left(error) => return Left(error)
         case Right(estimate) =>
           val sigma2 = math.max(estimate.innovationVariance, 1e-12)
@@ -176,10 +241,10 @@ object ArEstimation:
             case _ => ()
       order += 1
 
-    best.map(_._2).toRight(ArError.CoefficientMismatch("unable to estimate AR model"))
+    best.map(_._2).toRight(ArError.UnableToEstimateArModel)
 
-  private def maxEstimableLag(segments: Vector[TimeSegment]): Int =
-    segments.map(_.length - 1).max
+  private def maxEstimableLag(segments: Vector[TimeSegment]): ArLag =
+    ArLag.unsafe(segments.map(_.length - 1).max)
 
   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
     segments.map(_.length).sum

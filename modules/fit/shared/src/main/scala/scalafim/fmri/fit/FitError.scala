@@ -9,6 +9,8 @@ enum FitError:
   case NonFiniteInput(component: String)
   case SingularDesign(cause: LinearAlgebraError)
   case UnsupportedEngine(engine: String)
+  case InvalidFitAxis(axis: String, detail: String)
+  case NonPositiveResidualDegreesOfFreedom(value: Int)
   case EmptyRunPartition(runIndex: Int)
   case RunwiseFitFailed(runIndex: Int, cause: FitError)
   case UnsupportedAutocorrelation(detail: String)
@@ -36,6 +38,10 @@ enum FitError:
         s"design matrix is singular or ill-conditioned: ${cause.message}"
       case UnsupportedEngine(engine) =>
         s"fit engine is not executable in scalafim-fmri-fit yet: $engine"
+      case InvalidFitAxis(axis, detail) =>
+        s"invalid $axis: $detail"
+      case NonPositiveResidualDegreesOfFreedom(value) =>
+        s"residual degrees of freedom must be positive for inference-ready fit results; got $value"
       case EmptyRunPartition(runIndex) =>
         s"run $runIndex has no selected rows"
       case RunwiseFitFailed(runIndex, cause) =>

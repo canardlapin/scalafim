@@ -6,6 +6,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.linalg.DoubleMatrix
 
 class ModelSuite extends munit.FunSuite:
 
@@ -49,6 +50,7 @@ class ModelSuite extends munit.FunSuite:
     assertEquals(model.designMatrix.rows, 3)
     assertEquals(model.designMatrix.cols, 2)
     assertEquals(model.columnNames, Vector("task", "base_constant"))
+    assertEquals(model.designBlock.columnNames, Vector("task", "base_constant"))
   }
 
   test("FitConfig validates algebraic options") {
@@ -94,4 +96,41 @@ class ModelSuite extends munit.FunSuite:
     val plan = FitPlan(FmriModel(eventModel, baselineModel, dataset), FitEngine.LeastSquaresSeparate)
     assertEquals(plan.summary.engine, FitEngine.LeastSquaresSeparate)
     assertEquals(plan.summary.predictors, 2)
+  }
+
+  test("FitPlan validates strategy-dependent dimensions at construction") {
+    val model = FmriModel(eventModel, baselineModel, dataset)
+
+    val shortWeights = FitControls(
+      volumeWeighting = ModelVolumeWeighting.Fixed(TimepointWeights.unsafe(Vector(1.0, 1.0)))
+    )
+    assert(FitPlan.make(model, FitStrategy.OrdinaryLeastSquares(shortWeights)).isLeft)
+
+    val nuisance = FitControls(
+      nuisanceProjection = ModelNuisanceProjection.MatrixProjection(
+        NuisanceMatrix.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))),
+        Regularization.Auto
+      )
+    )
+    assert(FitPlan.make(model, FitStrategy.OrdinaryLeastSquares(nuisance)).isLeft)
+
+    val ar = AutocorrelationConfig.unsafe(order = 1, censoredTimepoints = Vector(3))
+    assert(FitPlan.make(model, FitStrategy.GeneralizedLeastSquares(ar)).isLeft)
+  }
+
+  test("FitStrategy rejects illegal legacy engine/config pairings") {
+    val arConfig = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1)))
+    val ols = FitStrategy.fromLegacy(FitEngine.OrdinaryLeastSquares, arConfig)
+    assert(ols.isLeft)
+
+    val robustConfig = FitConfig(robust = RobustOptions(psi = RobustPsi.Huber()))
+    val robust = FitStrategy.fromLegacy(FitEngine.RobustLeastSquares, robustConfig)
+    assertEquals(robust.map(_.engine), Right(FitEngine.RobustLeastSquares))
+  }
+
+  test("LSS strategy validates selected trial term against model terms") {
+    val model = FmriModel(eventModel, baselineModel, dataset)
+    val lss = LssStrategyConfig.unsafe(trialTerm = Some("trial"))
+    val plan = FitPlan.make(model, FitStrategy.LeastSquaresSeparate(lss))
+    assert(plan.isLeft)
   }

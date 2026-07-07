@@ -9,7 +9,7 @@ import scalafim.fmri.design.event.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitConfig, FitEngine, FitPlan, FmriModel, FmriModelBuilder, LssConfig, ModelBuildSpec}
+import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, LssStrategyConfig, ModelBuildSpec}
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.linalg.DoubleMatrix
 
@@ -68,7 +68,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     assertEquals(result.columnNames, Vector("task", "base_constant"))
     assertEquals(result.voxelIndices, Vector(0, 1))
     assertEquals(result.timepoints, Vector(0, 1, 2, 3))
-    assertEquals(result.residualDegreesOfFreedom, 2)
+    assertEquals(result.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("task", 1).get, -1.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 1.0, 1e-10)
@@ -90,10 +90,9 @@ class FitPlanExecutorSuite extends munit.FunSuite:
   }
 
   test("FitPlanExecutor rejects unsupported engine/configuration paths") {
-    val result = FitPlanExecutor.fit(FitPlan(model, engine = FitEngine.GeneralizedLeastSquares))
+    val result = FitPlan.makeLegacy(model, engine = FitEngine.GeneralizedLeastSquares)
     assert(result.left.toOption.exists {
-      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("ArStructure.Ar(p)")
-      case _                                       => false
+      error => error.message.contains("AR(p)") && error.message.contains("not iid")
     })
   }
 
@@ -122,7 +121,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       ModelBuildSpec(
         formula = "onset ~ trialwise(basis = \"spmg1\", add_sum = TRUE, label = \"trial\")",
         baselineIntercept = Intercept.Global,
-        engine = FitEngine.LeastSquaresSeparate
+        strategy = FitStrategy.LeastSquaresSeparate()
       )
     )
 
@@ -182,7 +181,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       ModelBuildSpec(
         formula = "onset ~ trialwise(basis = \"spmg1\", add_sum = TRUE, label = \"trial\")",
         baselineIntercept = Intercept.Global,
-        engine = FitEngine.LeastSquaresSeparate
+        strategy = FitStrategy.LeastSquaresSeparate()
       )
     )
     val plan = moveTrialwiseMeanFirst(basePlan, termKey = "trial")
@@ -235,7 +234,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       ModelBuildSpec(
         formula = "onset ~ trialwise(basis = \"spmg1\", add_sum = TRUE, label = \"trial\")",
         baselineIntercept = Intercept.Global,
-        engine = FitEngine.LeastSquaresSeparate
+        strategy = FitStrategy.LeastSquaresSeparate()
       )
     )
     val plan = renameTrialwiseAggregate(basePlan, termKey = "trial", aggregateName = "trial_shared_signal")
@@ -286,14 +285,15 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       ModelBuildSpec(
         formula = "onset ~ trialwise(label = \"trial_a\") + trialwise(label = \"trial_b\")",
         baselineIntercept = Intercept.Global,
-        engine = FitEngine.LeastSquaresSeparate
+        strategy = FitStrategy.LeastSquaresSeparate()
       )
     )
 
     val ambiguous = FitPlanExecutor.fit(ambiguousPlan)
     assertEquals(ambiguous.left.toOption, Some(FitError.AmbiguousLssTrialTerms(Vector("trial_a", "trial_b"))))
 
-    val selectedPlan = ambiguousPlan.copy(config = FitConfig(lss = LssConfig(trialTerm = Some("trial_a"))))
+    val selectedPlan =
+      ambiguousPlan.copy(strategy = FitStrategy.LeastSquaresSeparate(LssStrategyConfig.unsafe(trialTerm = Some("trial_a"))))
     val selected = FitPlanExecutor.unsafeFit(selectedPlan).asInstanceOf[LssFmriFitResult]
     assertEquals(selected.trialNames.length, nTrials)
     assert(selected.trialNames.forall(_.startsWith("trial_a_")))

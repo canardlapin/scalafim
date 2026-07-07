@@ -14,16 +14,14 @@ object FitPlanExecutor:
         val series = plan.model.dataset.series(selection)
         for
           input <- fitBlockInput(plan, series)
-          block <- FitKernel.fit(input, plan.engine, plan.config)
-          dense <- expectDense(block)
+          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
         yield denseResult(plan, dense)
 
       case FitEngine.LeastSquaresSeparate =>
         val series = plan.model.dataset.series(selection)
         for
           input <- fitBlockInput(plan, series, lssDesign = Some(lssExecutionDesign(plan, series.timepoints)))
-          block <- FitKernel.fit(input, plan.engine, plan.config)
-          lss <- expectLss(block)
+          lss <- FitKernel.fitLss(input)
         yield LssFmriFitResult(
           coefficients = lss.coefficients,
           trialNames = lss.trialNames,
@@ -39,8 +37,7 @@ object FitPlanExecutor:
         val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
         for
           input <- fitBlockInput(plan, series, partitions = partitions)
-          block <- FitKernel.fit(input, plan.engine, plan.config)
-          runwise <- expectRunwise(block)
+          runwise <- FitKernel.fitRunwise(input)
         yield RunwiseFmriFitResult(
           runs = runwise.runs,
           columnNames = plan.model.columnNames,
@@ -55,8 +52,7 @@ object FitPlanExecutor:
         val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
         for
           input <- fitBlockInput(plan, series, partitions = partitions)
-          block <- FitKernel.fit(input, plan.engine, plan.config)
-          dense <- expectDense(block)
+          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
         yield denseResult(plan, dense)
 
       case other =>
@@ -103,21 +99,6 @@ object FitPlanExecutor:
       summary = plan.summary,
       autocorrelation = block.autocorrelation
     )
-
-  private def expectDense(block: FitBlockResult): Either[FitError, DenseFitBlockResult] =
-    block match
-      case dense: DenseFitBlockResult => Right(dense)
-      case other => Left(FitError.UnsupportedEngine(s"${other.engine} did not produce a dense block result"))
-
-  private def expectRunwise(block: FitBlockResult): Either[FitError, RunwiseFitBlockResult] =
-    block match
-      case runwise: RunwiseFitBlockResult => Right(runwise)
-      case other => Left(FitError.UnsupportedEngine(s"${other.engine} did not produce a runwise block result"))
-
-  private def expectLss(block: FitBlockResult): Either[FitError, LssFitBlockResult] =
-    block match
-      case lss: LssFitBlockResult => Right(lss)
-      case other => Left(FitError.UnsupportedEngine(s"${other.engine} did not produce an LSS block result"))
 
   private def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =
     for

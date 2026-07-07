@@ -1,0 +1,200 @@
+{
+  "inputs": {
+    "column_names": [
+      "task",
+      "base_constant",
+      "nuis#01_1"
+    ],
+    "contrasts": {
+      "task_and_motion_f": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "task_f": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "task_t": [
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    "design": [
+      [
+        -1.5,
+        1.0,
+        0.2
+      ],
+      [
+        -1.0,
+        1.0,
+        -0.4
+      ],
+      [
+        -0.25,
+        1.0,
+        0.7
+      ],
+      [
+        0.75,
+        1.0,
+        -0.6
+      ],
+      [
+        1.25,
+        1.0,
+        0.1
+      ],
+      [
+        -0.5,
+        1.0,
+        0.9
+      ],
+      [
+        0.5,
+        1.0,
+        -0.8
+      ],
+      [
+        1.75,
+        1.0,
+        0.3
+      ]
+    ],
+    "motion": [
+      0.2,
+      -0.4,
+      0.7,
+      -0.6,
+      0.1,
+      0.9,
+      -0.8,
+      0.3
+    ],
+    "response_rows": [
+      [
+        -1.53,
+        0.03500000000000001
+      ],
+      [
+        -0.36,
+        -1.05
+      ],
+      [
+        0.75,
+        -1.1125
+      ],
+      [
+        3.2,
+        -3.4175
+      ],
+      [
+        3.9699999999999998,
+        -3.5275
+      ],
+      [
+        0.10999999999999996,
+        -0.59
+      ],
+      [
+        2.8400000000000003,
+        -3.335
+      ],
+      [
+        4.86,
+        -3.9225000000000003
+      ]
+    ],
+    "task": [
+      -1.5,
+      -1.0,
+      -0.25,
+      0.75,
+      1.25,
+      -0.5,
+      0.5,
+      1.75
+    ]
+  },
+  "outputs": {
+    "coefficients": [
+      [
+        1.9901073580939022,
+        -1.2579960756832504
+      ],
+      [
+        1.5010944639103014,
+        -1.999946285914506
+      ],
+      [
+        -0.39715767344078506,
+        0.8439159074982482
+      ]
+    ],
+    "residual_degrees_of_freedom": 5,
+    "residual_variance": [
+      0.0012534054660126221,
+      0.0012599922214435746
+    ],
+    "task_and_motion_f": {
+      "p_values": [
+        3.7878129721685194e-10,
+        2.4468804602957416e-09
+      ],
+      "statistics": [
+        14672.71923174281,
+        6955.667955954013
+      ]
+    },
+    "task_f": {
+      "p_values": [
+        1.5396399820519634e-10,
+        1.544677332318578e-09
+      ],
+      "statistics": [
+        27307.73751743737,
+        10854.62943763998
+      ]
+    },
+    "task_t": {
+      "estimates": [
+        1.9901073580939022,
+        -1.2579960756832504
+      ],
+      "p_values_two_sided": [
+        1.5396399820519613e-10,
+        1.5446772749783122e-09
+      ],
+      "standard_errors": [
+        0.012042971138919209,
+        0.012074573109252428
+      ],
+      "statistics": [
+        165.25052955266852,
+        -104.18555292189018
+      ]
+    }
+  },
+  "scenario_id": "fit.public-f-contrast.v1",
+  "schema_version": "scalafim-external-fixture/v1",
+  "source": {
+    "fmrimod_fitlins_parity": "cross_testing/fitlins_parity.py",
+    "fmrimod_root": "provided by --fmrimod-root",
+    "nilearn_version": "0.12.1",
+    "numpy_version": "1.26.4",
+    "producer": "tools/scenarios/export_fit_public_f_contrast_fixture.py",
+    "reference": "Algorithm mirrored from fmrimod cross_testing.fitlins_parity.fit_fitlins_reference_ols plus nilearn run_glm/compute_contrast"
+  }
+}

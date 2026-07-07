@@ -1,11 +1,12 @@
 package scalafim.fmri.design.event
 
-import scalafim.fmri.design.Names
+import scalafim.fmri.design.{DesignError, Names}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 
 import scala.collection.immutable.VectorMap
+import scala.util.control.NonFatal
 
 enum EventModelDiagnosticKind:
   case DegenerateModulator, NonFiniteModulator, OnsetOutOfBounds
@@ -33,6 +34,11 @@ object EventModel:
 
   def build(terms: Seq[ConvolvedTerm], samplingFrame: SamplingFrame): EventModel =
     buildTerms(terms.toVector, samplingFrame)
+
+  def buildTermsEither(terms: Seq[EventModelTerm], samplingFrame: SamplingFrame): Either[DesignError, EventModel] =
+    try Right(buildTerms(terms, samplingFrame))
+    catch
+      case NonFatal(t) => Left(DesignError.fromThrowable(t))
 
   def buildTerms(terms: Seq[EventModelTerm], samplingFrame: SamplingFrame): EventModel =
     val ts0 = terms.toVector

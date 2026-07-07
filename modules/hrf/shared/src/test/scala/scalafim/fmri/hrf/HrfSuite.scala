@@ -22,6 +22,30 @@ class HrfSuite extends munit.FunSuite:
     assertEquals(mat.cols, 2)
   }
 
+  test("Seconds and refined time wrappers validate domain") {
+    assert(Seconds.fromDouble(Double.NaN).isLeft)
+    assert(NonNegativeSeconds(-0.1).isLeft)
+    assert(PositiveSeconds(0.0).isLeft)
+
+    val duration = NonNegativeSeconds(2.0).fold(err => fail(err.message), identity)
+    assertEqualsDouble(duration.value, 2.0, 0.0)
+  }
+
+  test("typed HRF specs resolve kinds and scalar capability") {
+    val spmg3 = HrfSpec
+      .fromName("spmg3", span = 20.0.s)
+      .flatMap(_.toHrf)
+      .fold(err => fail(err.message), identity)
+    assertEquals(spmg3.nbasis, 3)
+    assertEqualsDouble(spmg3.span.value, 20.0, 0.0)
+
+    val scalar = HrfSpec(HrfKind.Gamma).flatMap(_.toScalarHrf).fold(err => fail(err.message), identity)
+    assertEqualsDouble(scalar.scalarAt(0.0.s), Hrfs.Gamma.evalScalar(Seq(0.0.s)).head, 1e-12)
+
+    assert(HrfSpec(HrfKind.Spmg3).flatMap(_.toScalarHrf).isLeft)
+    assert(Registry.getEither("not_a_real_hrf").isLeft)
+  }
+
   test("FFT regressor evaluation matches conv") {
     val box = Hrfs.boxcar(1.0.s)
     val reg = Regressor(Seq(0.0, 2.0), box, duration = Seq(0.0), amplitude = Seq(1.0), span = Some(1.0))

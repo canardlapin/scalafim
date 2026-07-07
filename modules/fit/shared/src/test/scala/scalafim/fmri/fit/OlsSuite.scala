@@ -33,7 +33,7 @@ class OlsSuite extends munit.FunSuite:
 
     assertEquals(fit.predictors, 2)
     assertEquals(fit.voxels, 2)
-    assertEquals(fit.residualDegreesOfFreedom, 2)
+    assertEquals(fit.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(fit.coefficients(0, 0), 1.0, 1e-10)
     assertEqualsDouble(fit.coefficients(1, 0), 2.0, 1e-10)
     assertEqualsDouble(fit.coefficients(0, 1), 2.0, 1e-10)
@@ -59,7 +59,7 @@ class OlsSuite extends munit.FunSuite:
 
     val fit = Ols.unsafeFit(design, response)
 
-    assertEquals(fit.residualDegreesOfFreedom, 2)
+    assertEquals(fit.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(fit.coefficients(0, 0), 0.9, 1e-10)
     assertEqualsDouble(fit.coefficients(1, 0), 0.9, 1e-10)
     assertEqualsDouble(fit.residualVariance(0), 0.35, 1e-10)
@@ -95,6 +95,22 @@ class OlsSuite extends munit.FunSuite:
     assert(Ols.prepare(design).isLeft)
   }
 
+  test("OLS rejects saturated fits before residual inference is represented") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 0.0),
+          Vector(1.0, 1.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+
+    val result = Ols.fit(design, response)
+
+    assertEquals(result.left.toOption, Some(FitError.NonPositiveResidualDegreesOfFreedom(0)))
+  }
+
   test("OLS remains finite for extreme but well-conditioned predictor scales") {
     val x = Vector(-2.0e6, -1.0e6, 0.0, 1.0e6, 2.0e6)
     val design = DesignMatrix.unsafe(DoubleMatrix.fromRows(x.map(value => Vector(1.0, value))))
@@ -111,7 +127,7 @@ class OlsSuite extends munit.FunSuite:
 
     val fit = Ols.unsafeFit(design, response)
 
-    assertEquals(fit.residualDegreesOfFreedom, 3)
+    assertEquals(fit.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(3))
     assertEqualsDouble(fit.coefficients(0, 0), 3.0, 1e-10)
     assertEqualsDouble(fit.coefficients(1, 0), 2.0e-6, 1e-18)
     assertEqualsDouble(fit.coefficients(0, 1), -4.0, 1e-10)

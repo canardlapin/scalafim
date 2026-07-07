@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.Names
+import scalafim.fmri.design.{DesignError, Names}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.basis.{BasisRegistry, ParametricBasis}
@@ -11,6 +11,7 @@ import scalafim.fmri.hrf.HrfCombinators.*
 import scalafim.fmri.hrf.design.SamplingFrame
 
 import scala.collection.immutable.VectorMap
+import scala.util.control.NonFatal
 
 object EventModelBuilder:
 
@@ -58,6 +59,23 @@ object EventModelBuilder:
       strict = strict
     )
 
+  def bindFormula(
+      formula: String,
+      data: DataTable,
+      availableContrastSets: Set[String] = Set.empty,
+      requireKnownContrasts: Boolean = false
+  ): Either[DesignError, BoundFormula] =
+    try
+      val parsed = FormulaParser.parse(formula)
+      BoundFormula.bind(
+        parsed,
+        data,
+        availableContrastSets = availableContrastSets,
+        requireKnownContrasts = requireKnownContrasts
+      )
+    catch
+      case NonFatal(t) => Left(DesignError.fromThrowable(t))
+
   def build(
       formula: String,
       data: DataTable,
@@ -91,6 +109,44 @@ object EventModelBuilder:
       basisRegistry = basisRegistry,
       strict = strict
     )
+
+  def buildEither(
+      formula: String,
+      data: DataTable,
+      samplingFrame: SamplingFrame,
+      blockIds: Seq[Int],
+      durations: Seq[Double] = Seq(0.0),
+      tables: Map[String, DataTable] = Map.empty,
+      defaultHrf: Hrf = Hrfs.SPMG1,
+      precision: Seconds = 0.3.s,
+      dropEmpty: Boolean = true,
+      summate: Boolean = true,
+      hrfFuns: Map[String, HrfFun] = Map.empty,
+      contrastSets: Map[String, ContrastSpec.ContrastSet] = Map.empty,
+      strict: Boolean = false,
+      basisRegistry: BasisRegistry = BasisRegistry.default
+  ): Either[DesignError, EventModel] =
+    try
+      Right(
+        build(
+          formula = formula,
+          data = data,
+          samplingFrame = samplingFrame,
+          blockIds = blockIds,
+          durations = durations,
+          tables = tables,
+          defaultHrf = defaultHrf,
+          precision = precision,
+          dropEmpty = dropEmpty,
+          summate = summate,
+          hrfFuns = hrfFuns,
+          contrastSets = contrastSets,
+          strict = strict,
+          basisRegistry = basisRegistry
+        )
+      )
+    catch
+      case NonFatal(t) => Left(DesignError.fromThrowable(t))
 
   def build(
       formula: ModelFormula,

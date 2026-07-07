@@ -368,10 +368,9 @@ class GlsSuite extends munit.FunSuite:
   }
 
   test("GeneralizedLeastSquares rejects unsupported AR configurations explicitly") {
-    val iid = FitPlanExecutor.fit(FitPlan(glsModel, engine = FitEngine.GeneralizedLeastSquares))
+    val iid = FitPlan.makeLegacy(glsModel, engine = FitEngine.GeneralizedLeastSquares)
     assert(iid.left.toOption.exists {
-      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("ArStructure.Ar(p)")
-      case _                                       => false
+      error => error.message.contains("AR(p)") && error.message.contains("not iid")
     })
 
     val voxelwise = FitPlanExecutor.fit(

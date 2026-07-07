@@ -39,7 +39,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     assertEquals(plan.engine, FitEngine.OrdinaryLeastSquares)
     assertEquals(result.columnNames, Vector("task", "base_constant"))
     assertEquals(result.voxelIndices, Vector(0, 1))
-    assertEquals(result.residualDegreesOfFreedom, 2)
+    assertEquals(result.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("task", 1).get, -1.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 1.0, 1e-10)

@@ -9,6 +9,8 @@ final case class ArmaCoefficients(
 
   def arOrder: Int = phi.length
   def maOrder: Int = theta.length
+  def typedArOrder: ArOrderValue = ArOrderValue.unsafe(phi.length)
+  def typedMaOrder: ArOrderValue = ArOrderValue.unsafe(theta.length)
   def isIid: Boolean = phi.isEmpty && theta.isEmpty
   def isAr1: Boolean = phi.length == 1 && theta.isEmpty
 
@@ -18,6 +20,9 @@ final case class ArmaCoefficients(
       val rho = phi.head
       if math.abs(rho) >= 1.0 then Left(ArError.InvalidExactFirstAr1(rho))
       else Right(math.sqrt(1.0 - rho * rho))
+
+  def firstScale(policy: InitialConditionPolicy): Either[ArError, Double] =
+    policy.firstScale(this)
 
 object ArmaCoefficients:
   val Iid: ArmaCoefficients = ArmaCoefficients(Vector.empty)

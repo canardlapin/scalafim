@@ -15,6 +15,17 @@ class RegressorSuite extends munit.FunSuite:
     assertEquals(reg.amplitudes, Vector(1.0, 2.0))
   }
 
+  test("validated regressor stores typed stimulus events") {
+    val reg = Regressor
+      .validated(Seq(1.0, 2.0, 3.0), box, duration = Seq(0.5), amplitude = Seq(1.0, 0.0, 2.0), span = Some(1.0))
+      .fold(err => fail(err.message), identity)
+
+    assertEquals(reg.events.length, 2)
+    assertEquals(reg.events.map(_.onsetSeconds.value), Vector(1.0, 3.0))
+    assertEquals(reg.events.map(_.durationSeconds.value), Vector(0.5, 0.5))
+    assert(Regressor.validated(Seq(Double.NaN), box).isLeft)
+  }
+
   test("invalid inputs are rejected") {
     intercept[IllegalArgumentException] {
       Regressor(Seq(-1.0, 1.0), box)

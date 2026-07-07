@@ -102,7 +102,7 @@ class InferenceSuite extends munit.FunSuite:
     assertEqualsDouble(result.residualVariance(0), 0.35, 1e-10)
     assertEqualsDouble(result.standardErrors(0, 0), math.sqrt(0.07), 1e-10)
     assertEqualsDouble(result.standardErrors(1, 0), math.sqrt(0.245), 1e-10)
-    assertEquals(result.diagnostics.residualDegreesOfFreedom, 2)
+    assertEquals(result.diagnostics.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
   }
 
   test("T contrasts align weights by column name") {
@@ -111,10 +111,19 @@ class InferenceSuite extends munit.FunSuite:
     val evaluated = contrast.evaluate(result).toOption.get
 
     assertEquals(evaluated.voxelIndices, Vector(0))
-    assertEquals(evaluated.residualDegreesOfFreedom, 2)
+    assertEquals(evaluated.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(evaluated.estimates(0), 0.9, 1e-10)
     assertEqualsDouble(evaluated.standardErrors(0), math.sqrt(0.07), 1e-10)
     assertEqualsDouble(evaluated.statistics(0), 0.9 / math.sqrt(0.07), 1e-10)
+  }
+
+  test("T contrasts can evaluate an explicitly inference-ready dense fit") {
+    val result = FitPlanExecutor.unsafeFit(FitPlan(noisyModel)).asInstanceOf[DenseFmriFitResult]
+    val ready = result.inferenceReady.toOption.get
+    val evaluated = TContrast("task", Map("task" -> 1.0)).evaluate(ready).toOption.get
+
+    assertEquals(evaluated.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
+    assertEquals(evaluated.selectedVoxels.toVector, Vector(0))
   }
 
   test("T contrasts reject unknown columns") {
@@ -130,7 +139,7 @@ class InferenceSuite extends munit.FunSuite:
 
     assertEquals(f.voxelIndices, Vector(0))
     assertEquals(f.numeratorDegreesOfFreedom, 1)
-    assertEquals(f.residualDegreesOfFreedom, 2)
+    assertEquals(f.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEqualsDouble(f.estimates(0, 0), 0.9, 1e-10)
     assertEqualsDouble(f.statistics(0), t.statistics(0) * t.statistics(0), 1e-10)
   }
@@ -146,7 +155,7 @@ class InferenceSuite extends munit.FunSuite:
     ).evaluate(result).toOption.get
 
     assertEquals(f.numeratorDegreesOfFreedom, 2)
-    assertEquals(f.residualDegreesOfFreedom, 2)
+    assertEquals(f.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEquals(f.estimates.toRows, Vector(Vector(0.9), Vector(0.9)))
     assertEqualsDouble(f.statistics(0), 24.3 / 2.0 / 0.35, 1e-10)
   }

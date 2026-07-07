@@ -18,7 +18,7 @@ import scalafim.linalg.{DoubleMatrix, DoubleVector}
 final case class GlsFit(
     coefficients: CoefficientBlock,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: Int,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     normalizedCovariance: DoubleMatrix,
     standardErrors: StandardErrorBlock,
     diagnostics: ArDiagnostics

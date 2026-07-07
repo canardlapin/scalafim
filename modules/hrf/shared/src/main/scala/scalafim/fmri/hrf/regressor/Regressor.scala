@@ -1,9 +1,68 @@
 package scalafim.fmri.hrf.regressor
 
-import cats.data.NonEmptyList
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.Hrfs
 import scalafim.fmri.hrf.linalg.{Mat, Vec, Fft}
+
+enum RegressorError:
+  case LengthMismatch(name: String, expected: Int, actual: Int)
+  case InvalidOnset(index: Int, error: TimeError)
+  case InvalidDuration(index: Int, error: TimeError)
+  case InvalidAmplitude(index: Int, value: Double)
+  case InvalidSpan(error: TimeError)
+  case HrfLengthMismatch(expected: Int, actual: Int)
+  case MixedBasisCounts
+
+  def message: String =
+    this match
+      case LengthMismatch(name, expected, actual) =>
+        s"`$name` must have length 1 or $expected, not $actual"
+      case InvalidOnset(index, error) =>
+        s"invalid onset at event ${index + 1}: ${error.message}"
+      case InvalidDuration(index, error) =>
+        s"invalid duration at event ${index + 1}: ${error.message}"
+      case InvalidAmplitude(index, value) =>
+        s"invalid amplitude at event ${index + 1}: amplitude must be finite, got $value"
+      case InvalidSpan(error) =>
+        error.message
+      case HrfLengthMismatch(expected, actual) =>
+        s"`hrf` list must have length 1 or $expected, not $actual"
+      case MixedBasisCounts =>
+        "all per-event HRFs must have the same nbasis"
+
+final case class StimulusEvent private (
+    onset: NonNegativeSeconds,
+    duration: NonNegativeSeconds,
+    amplitude: Double
+):
+  def onsetSeconds: Seconds = onset.seconds
+  def durationSeconds: Seconds = duration.seconds
+
+  def shift(amount: Seconds): Either[RegressorError, StimulusEvent] =
+    StimulusEvent(onset.value + amount.value, duration.value, amplitude)
+
+object StimulusEvent:
+  def apply(onset: Double, duration: Double = 0.0, amplitude: Double = 1.0): Either[RegressorError, StimulusEvent] =
+    for
+      onset0 <- NonNegativeSeconds(onset, "onset").left.map(RegressorError.InvalidOnset(0, _))
+      duration0 <- NonNegativeSeconds(duration, "duration").left.map(RegressorError.InvalidDuration(0, _))
+      amp0 <- finiteAmplitude(amplitude, index = 0)
+    yield StimulusEvent(onset0, duration0, amp0)
+
+  private[regressor] def fromSeconds(
+      onset: Seconds,
+      duration: Seconds,
+      amplitude: Double,
+      index: Int
+  ): Either[RegressorError, StimulusEvent] =
+    for
+      onset0 <- NonNegativeSeconds.fromSeconds(onset, "onset").left.map(RegressorError.InvalidOnset(index, _))
+      duration0 <- NonNegativeSeconds.fromSeconds(duration, "duration").left.map(RegressorError.InvalidDuration(index, _))
+      amp0 <- finiteAmplitude(amplitude, index)
+    yield StimulusEvent(onset0, duration0, amp0)
+
+  private def finiteAmplitude(amplitude: Double, index: Int): Either[RegressorError, Double] =
+    if amplitude.isFinite then Right(amplitude) else Left(RegressorError.InvalidAmplitude(index, amplitude))
 
 sealed trait HrfAssignment:
   def nbasis: Int
@@ -17,29 +76,132 @@ object HrfAssignment:
     def at(t: Seconds, eventIndex: Int): Vec = hrf(t)
 
   final case class PerEvent(hrfs: Vector[Hrf]) extends HrfAssignment:
+    require(hrfs.isEmpty || hrfs.forall(_.nbasis == hrfs.head.nbasis), "all per-event HRFs must have the same nbasis")
     def nbasis: Int = if hrfs.isEmpty then 1 else hrfs.head.nbasis
     def span: Seconds = if hrfs.isEmpty then Seconds(0.0) else hrfs.map(_.span).max
     def at(t: Seconds, eventIndex: Int): Vec = hrfs(eventIndex)(t)
 
-final case class Regressor(
-    onsets: Vector[Seconds],
-    durations: Vector[Seconds],
-    amplitudes: Vector[Double],
+final case class Regressor private (
+    events: Vector[StimulusEvent],
     hrf: HrfAssignment,
     span: Seconds,
     summate: Boolean
 ):
-  require(onsets.length == durations.length && onsets.length == amplitudes.length, "onsets/durations/amplitudes length mismatch")
+  def onsets: Vector[Seconds] = events.map(_.onsetSeconds)
+  def durations: Vector[Seconds] = events.map(_.durationSeconds)
+  def amplitudes: Vector[Double] = events.map(_.amplitude)
 
 object Regressor:
 
   enum EvalMethod:
     case Conv, FFT, Loop
 
-  private def recycleOrError[A](xs: Seq[A], n: Int, name: String): Vector[A] =
-    if xs.length == n then xs.toVector
-    else if xs.length == 1 then Vector.fill(n)(xs.head)
-    else throw new IllegalArgumentException(s"`$name` must have length 1 or $n, not ${xs.length}")
+  private def recycleOrError[A](xs: Seq[A], n: Int, name: String): Either[RegressorError, Vector[A]] =
+    if xs.length == n then Right(xs.toVector)
+    else if xs.length == 1 then Right(Vector.fill(n)(xs.head))
+    else Left(RegressorError.LengthMismatch(name, n, xs.length))
+
+  private def secondsVector(
+      values: Seq[Double],
+      label: String,
+      err: (Int, TimeError) => RegressorError
+  ): Either[RegressorError, Vector[Seconds]] =
+    val out = Vector.newBuilder[Seconds]
+    var i = 0
+    val xs = values.toVector
+    while i < xs.length do
+      Seconds.fromDouble(xs(i), label) match
+        case Left(error) => return Left(err(i, error))
+        case Right(seconds) => out += seconds
+      i += 1
+    Right(out.result())
+
+  private def validateEvents(
+      onsets: Vector[Seconds],
+      durations: Vector[Seconds],
+      amplitudes: Vector[Double]
+  ): Either[RegressorError, Vector[StimulusEvent]] =
+    if durations.length != onsets.length then Left(RegressorError.LengthMismatch("duration", onsets.length, durations.length))
+    else if amplitudes.length != onsets.length then Left(RegressorError.LengthMismatch("amplitude", onsets.length, amplitudes.length))
+    else
+      val out = Vector.newBuilder[StimulusEvent]
+      var i = 0
+      while i < onsets.length do
+        StimulusEvent.fromSeconds(onsets(i), durations(i), amplitudes(i), i) match
+          case Left(err) => return Left(err)
+          case Right(event) =>
+            out += event
+        i += 1
+      Right(out.result())
+
+  def fromEvents(
+      events: Seq[StimulusEvent],
+      hrf: HrfAssignment,
+      span: Seconds,
+      summate: Boolean
+  ): Either[RegressorError, Regressor] =
+    Seconds.fromDouble(span.value, "span").left.map(RegressorError.InvalidSpan.apply).flatMap { span0 =>
+      val filtered = events.iterator.filter(_.amplitude != 0.0).toVector
+      val hrf0: Either[RegressorError, HrfAssignment] =
+        hrf match
+          case shared: HrfAssignment.Shared => Right(shared)
+          case HrfAssignment.PerEvent(hrfs) =>
+            if hrfs.length != events.size then Left(RegressorError.HrfLengthMismatch(events.size, hrfs.length))
+            else
+              val keep = events.iterator.zipWithIndex.collect { case (event, i) if event.amplitude != 0.0 => i }.toVector
+              val keptHrfs = keep.map(hrfs)
+              if keptHrfs.nonEmpty && keptHrfs.exists(_.nbasis != keptHrfs.head.nbasis) then Left(RegressorError.MixedBasisCounts)
+              else Right(HrfAssignment.PerEvent(keptHrfs))
+      hrf0.map(hrf1 => Regressor(filtered, hrf1, span0, summate))
+    }
+
+  def fromParts(
+      onsets: Seq[Seconds],
+      durations: Seq[Seconds],
+      amplitudes: Seq[Double],
+      hrf: HrfAssignment,
+      span: Seconds,
+      summate: Boolean
+  ): Either[RegressorError, Regressor] =
+    validateEvents(onsets.toVector, durations.toVector, amplitudes.toVector).flatMap(fromEvents(_, hrf, span, summate))
+
+  def unsafeFromParts(
+      onsets: Seq[Seconds],
+      durations: Seq[Seconds],
+      amplitudes: Seq[Double],
+      hrf: HrfAssignment,
+      span: Seconds,
+      summate: Boolean
+  ): Regressor =
+    fromParts(onsets, durations, amplitudes, hrf, span, summate)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def validated(
+      onsets: Seq[Double],
+      hrf: Hrf = Hrfs.SPMG1,
+      duration: Seq[Double] = Seq(0.0),
+      amplitude: Seq[Double] = Seq(1.0),
+      span: Option[Double] = None,
+      summate: Boolean = true
+  ): Either[RegressorError, Regressor] =
+    for
+      ons <- secondsVector(onsets, "onset", RegressorError.InvalidOnset.apply)
+      durs0 <- recycleOrError(duration, ons.length, "duration")
+      amps0 <- recycleOrError(amplitude, ons.length, "amplitude")
+      durs <- secondsVector(durs0, "duration", RegressorError.InvalidDuration.apply)
+      span0 <- span match
+        case None => Right(hrf.span)
+        case Some(s) =>
+          PositiveSeconds(s, "span").left.map(RegressorError.InvalidSpan.apply).map(_.seconds)
+      reg <- fromParts(
+        onsets = ons,
+        durations = durs,
+        amplitudes = amps0,
+        hrf = HrfAssignment.Shared(hrf),
+        span = span0,
+        summate = summate
+      )
+    yield reg
 
   def apply(
       onsets: Seq[Double],
@@ -49,29 +211,8 @@ object Regressor:
       span: Option[Double] = None,
       summate: Boolean = true
   ): Regressor =
-    span.foreach(s => require(s.isFinite && s > 0.0, "`span` must be finite and > 0"))
-    val ons: Vector[Seconds] = onsets.map(Seconds(_)).toVector
-    require(ons.forall(o => o.value >= 0.0 && o.value.isFinite), "`onsets` must be finite and non-negative")
-    val durs: Vector[Seconds] = recycleOrError(duration.map(Seconds(_)), ons.length, "duration")
-    val amps0 = recycleOrError(amplitude, ons.length, "amplitude")
-    require(durs.forall(d => d.value >= 0.0 && d.value.isFinite), "`duration` must be finite and non-negative")
-    require(amps0.forall(a => a.isFinite), "`amplitude` must be finite")
-
-    val keep = ons.indices.filter(i => amps0(i) != 0.0)
-    val onsF: Vector[Seconds] = keep.map(ons).toVector
-    val dursF: Vector[Seconds] = keep.map(durs).toVector
-    val ampsF = keep.map(amps0).toVector
-
-    val finalSpan: Seconds = span.map(Seconds(_)).getOrElse(hrf.span)
-
-    Regressor(
-      onsets = onsF,
-      durations = dursF,
-      amplitudes = ampsF,
-      hrf = HrfAssignment.Shared(hrf),
-      span = finalSpan,
-      summate = summate
-    )
+    validated(onsets, hrf, duration, amplitude, span, summate)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
 
   def perEvent(
       onsets: Seq[Double],
@@ -81,38 +222,41 @@ object Regressor:
       span: Option[Double] = None,
       summate: Boolean = true
   ): Regressor =
-    span.foreach(s => require(s.isFinite && s > 0.0, "`span` must be finite and > 0"))
-    val ons: Vector[Seconds] = onsets.map(Seconds(_)).toVector
-    val n = ons.length
-    val hrs =
-      if hrfs.length == 1 then Vector.fill(n)(hrfs.head)
-      else
-        require(hrfs.length == n, s"`hrf` list must have length 1 or $n")
-        hrfs.toVector
+    perEventValidated(onsets, hrfs, duration, amplitude, span, summate)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
 
-    val durs: Vector[Seconds] = recycleOrError(duration.map(Seconds(_)), n, "duration")
-    val amps0 = recycleOrError(amplitude, n, "amplitude")
-
-    val keep = ons.indices.filter(i => amps0(i) != 0.0)
-    val onsF: Vector[Seconds] = keep.map(ons).toVector
-    val dursF: Vector[Seconds] = keep.map(durs).toVector
-    val ampsF = keep.map(amps0).toVector
-    val hrsF = keep.map(hrs).toVector
-
-    val maxSpan: Seconds =
-      span.map(Seconds(_)).getOrElse(
-        if hrsF.nonEmpty then hrsF.map(_.span).max
-      else hrs.map(_.span).maxOption.getOrElse(Seconds(0.0))
+  def perEventValidated(
+      onsets: Seq[Double],
+      hrfs: Seq[Hrf],
+      duration: Seq[Double] = Seq(0.0),
+      amplitude: Seq[Double] = Seq(1.0),
+      span: Option[Double] = None,
+      summate: Boolean = true
+  ): Either[RegressorError, Regressor] =
+    for
+      ons <- secondsVector(onsets, "onset", RegressorError.InvalidOnset.apply)
+      hrs <- recycleOrError(hrfs, ons.length, "hrf").left.map {
+        case RegressorError.LengthMismatch(_, expected, actual) => RegressorError.HrfLengthMismatch(expected, actual)
+        case other => other
+      }
+      _ <- if hrs.nonEmpty && hrs.exists(_.nbasis != hrs.head.nbasis) then Left(RegressorError.MixedBasisCounts) else Right(())
+      durs0 <- recycleOrError(duration, ons.length, "duration")
+      amps0 <- recycleOrError(amplitude, ons.length, "amplitude")
+      durs <- secondsVector(durs0, "duration", RegressorError.InvalidDuration.apply)
+      span0 <- span match
+        case Some(s) =>
+          PositiveSeconds(s, "span").left.map(RegressorError.InvalidSpan.apply).map(_.seconds)
+        case None =>
+          Right(hrs.map(_.span).maxOption.getOrElse(Seconds(0.0)))
+      reg <- fromParts(
+        onsets = ons,
+        durations = durs,
+        amplitudes = amps0,
+        hrf = HrfAssignment.PerEvent(hrs),
+        span = span0,
+        summate = summate
       )
-
-    Regressor(
-      onsets = onsF,
-      durations = dursF,
-      amplitudes = ampsF,
-      hrf = HrfAssignment.PerEvent(hrsF),
-      span = maxSpan,
-      summate = summate
-    )
+    yield reg
 
   def evaluate(
       reg: Regressor,
@@ -378,7 +522,11 @@ object Regressor:
 
 extension (reg: Regressor)
   def shift(amount: Seconds): Regressor =
-    reg.copy(onsets = reg.onsets.map(_ + amount))
+    val shifted = reg.events.map { event =>
+      event.shift(amount).fold(err => throw new IllegalArgumentException(err.message), identity)
+    }
+    Regressor.fromEvents(shifted, reg.hrf, reg.span, reg.summate)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
 
   def nbasis: Int = reg.hrf.nbasis
 

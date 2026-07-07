@@ -12,6 +12,64 @@ final case class TimeSegment(
   def length: Int = endExclusive - start
   def contains(row: Int): Boolean = row >= start && row < endExclusive
 
+final case class SegmentLayout private (segments: Vector[TimeSegment]):
+  require(segments.nonEmpty, "segment layout must be non-empty")
+
+  def nTimepoints: Int = segments.last.endExclusive
+  def runCount: Int = segments.map(_.runIndex).max + 1
+  def runs: Vector[Int] = segments.map(_.runIndex).distinct.sorted
+
+  def coverRows(rows: Int): Either[ArError, CoveredSegments] =
+    CoveredSegments.fromLayout(this, rows)
+
+object SegmentLayout:
+
+  def fromSegments(segments: Vector[TimeSegment]): Either[ArError, SegmentLayout] =
+    if segments.isEmpty then Left(ArError.EmptySegments)
+    else
+      var expectedStart = 0
+      var index = 0
+      while index < segments.length do
+        val segment = segments(index)
+        if segment.start != expectedStart then
+          return Left(ArError.SegmentGap(index, expectedStart, segment.start))
+        expectedStart = segment.endExclusive
+        index += 1
+      Right(new SegmentLayout(segments))
+
+  def unsafe(segments: Vector[TimeSegment]): SegmentLayout =
+    fromSegments(segments).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class CoveredSegments private (layout: SegmentLayout, rows: Int):
+  require(rows > 0, "covered rows must be positive")
+  require(layout.nTimepoints == rows, "segment layout must cover exactly the requested rows")
+
+  def segments: Vector[TimeSegment] = layout.segments
+  def nTimepoints: Int = rows
+  def runCount: Int = layout.runCount
+  def runs: Vector[Int] = layout.runs
+
+  def validateRows(candidateRows: Int): Either[ArError, Unit] =
+    if candidateRows <= 0 then Left(ArError.NonPositiveRows(candidateRows))
+    else if candidateRows == rows then Right(())
+    else Left(ArError.SegmentCoverageMismatch(rows, candidateRows))
+
+object CoveredSegments:
+
+  def fromSegments(segments: Vector[TimeSegment], rows: Int): Either[ArError, CoveredSegments] =
+    SegmentLayout.fromSegments(segments).flatMap(fromLayout(_, rows))
+
+  def fromLayout(layout: SegmentLayout, rows: Int): Either[ArError, CoveredSegments] =
+    if rows <= 0 then Left(ArError.NonPositiveRows(rows))
+    else if layout.nTimepoints > rows then
+      val segment = layout.segments.find(_.endExclusive > rows).getOrElse(layout.segments.last)
+      Left(ArError.SegmentOutOfBounds(segment, rows))
+    else if layout.nTimepoints != rows then Left(ArError.SegmentCoverageMismatch(layout.nTimepoints, rows))
+    else Right(new CoveredSegments(layout, rows))
+
+  def unsafe(segments: Vector[TimeSegment], rows: Int): CoveredSegments =
+    fromSegments(segments, rows).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 object TimeSegments:
 
   def continuous(length: Int): Vector[TimeSegment] =
@@ -70,19 +128,4 @@ object TimeSegments:
       out.result()
 
   def validateCoverage(segments: Vector[TimeSegment], rows: Int): Either[ArError, Unit] =
-    if rows <= 0 then Left(ArError.SegmentCoverage("row count must be positive"))
-    else if segments.isEmpty then Left(ArError.SegmentCoverage("segments must be non-empty"))
-    else
-      var expectedStart = 0
-      var i = 0
-      while i < segments.length do
-        val segment = segments(i)
-        if segment.start != expectedStart then
-          return Left(ArError.SegmentCoverage(s"expected segment $i to start at $expectedStart, got ${segment.start}"))
-        if segment.endExclusive > rows then
-          return Left(ArError.SegmentOutOfBounds(segment, rows))
-        expectedStart = segment.endExclusive
-        i += 1
-
-      if expectedStart == rows then Right(())
-      else Left(ArError.SegmentCoverage(s"segments end at $expectedStart but matrix has $rows rows"))
+    CoveredSegments.fromSegments(segments, rows).map(_ => ())

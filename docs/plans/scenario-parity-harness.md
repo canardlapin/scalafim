@@ -616,7 +616,7 @@ and a documented command to regenerate all receipts.
 ## Phase 1 Active Cases
 
 Phase 1 keeps the harness test-scoped and proves the shape on shared JVM/Scala.js
-tests before introducing any common testkit or manifest.
+tests before introducing any common production testkit.
 
 | Scenario id | Suite | Reference | Terminal truth |
 | --- | --- | --- | --- |
@@ -624,6 +624,8 @@ tests before introducing any common testkit or manifest.
 | `fit.semantic-contrast-reordered-columns.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/SemanticContrastReorderedColumnsScenarioSuite.scala` | paired public fits with reversed design-column order plus direct OLS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.lss-trialwise-recovery.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/LssTrialwiseRecoveryScenarioSuite.scala` | public builder/executor result against direct metadata-selected LSS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.one-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala` | analytic one-sample t oracle per sample | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `group.two-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala` | analytic pooled two-sample t oracle per sample plus named group contrast check | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `group.first-level-bridge.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` | first-level `TContrastResult` bridge into fixed-effects group inference against analytic inverse-variance oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 
 The fit harness currently lives in:
 
@@ -631,21 +633,43 @@ The fit harness currently lives in:
 modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ScenarioHarness.scala
 ```
 
-The group scenario carries a small suite-local verdict helper. Promote these
-helpers only after the next fit/group scenarios prove the common shape is worth
-a shared testkit.
+The group harness currently lives in:
+
+```text
+modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/ScenarioHarness.scala
+```
+
+Keep the fit and group test harnesses separate until a third module needs the
+same algebra. Promote only after duplication proves the common shape is worth a
+shared testkit.
+
+The active scenario registry lives in:
+
+```text
+docs/scenarios/manifest.json
+```
+
+The first external reference fixture is generated from the fmrimod/Nilearn
+parity path:
+
+```text
+tools/scenarios/export_fit_public_f_contrast_fixture.py
+docs/scenarios/fixtures/fit.public-f-contrast.v1.nilearn.json
+modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastNilearnFixture.scala
+```
 
 Phase 1 acceptance:
 
 ```sh
+python tools/scenarios/export_fit_public_f_contrast_fixture.py --check
 sbt fitJVM/test
 sbt fitJS/test
 sbt groupJVM/test
 sbt groupJS/test
 ```
 
-The next scenario slice should add `group_two_sample_t` and
-`group_first_level_bridge`.
+The next slice should build `first_level_to_group_known_effect` from the green
+fit and group pieces.
 
 ## Definition Of Done For A Scenario
 
@@ -680,15 +704,12 @@ A scenario is complete only when all of the following hold:
 
 1. Implement the fit-scope harness and public F-contrast mathematical scenario.
 2. Implement the group one-sample t scenario.
-3. Add `group_two_sample_t` and `group_first_level_bridge`.
-5. Add a tiny `docs/scenarios/manifest.json` only after at least four rows are
-   green, so the manifest reflects real shape.
-6. Add a fmrimod/Nilearn exporter for `fit_public_f_confound_drift`.
-7. Build `first_level_to_group_known_effect` from the green fit and group
+3. Add a fmrimod/Nilearn exporter for `fit_public_f_contrast`.
+4. Build `first_level_to_group_known_effect` from the green fit and group
    pieces.
-8. Expand into Wave 2 stress scenarios: mixed TR, censoring, realistic
+5. Expand into Wave 2 stress scenarios: mixed TR, censoring, realistic
    confounds, FIR/block durations, factorial/parametric designs, and AR
    divergence.
-9. Add Wave 3 and Wave 4 module-family scenarios as their public seams become
+6. Add Wave 3 and Wave 4 module-family scenarios as their public seams become
    stable.
-10. Promote only composed, receipt-backed workflows into Wave 5 flagship rows.
+7. Promote only composed, receipt-backed workflows into Wave 5 flagship rows.

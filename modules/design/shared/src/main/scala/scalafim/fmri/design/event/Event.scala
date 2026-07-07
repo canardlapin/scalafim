@@ -1,6 +1,6 @@
 package scalafim.fmri.design.event
 
-import scalafim.fmri.design.Names
+import scalafim.fmri.design.{ConditionId, EventId, FactorId, Names}
 import scalafim.fmri.design.basis.ParametricBasis
 import scalafim.fmri.hrf.linalg.Mat
 
@@ -12,11 +12,22 @@ sealed trait Event:
   /** Tokens used by `EventTerm.conditions` to build condition tags. */
   def conditionTokens: Vector[String]
 
+  def eventId: EventId =
+    EventId.unsafe(varName)
+
+  def factorId: Option[FactorId] =
+    None
+
+  def conditionIds: Vector[ConditionId] =
+    conditionTokens.map(ConditionId.unsafe)
+
 final case class CategoricalEvent(varName: String, codes: Vector[Int], levels: Vector[String]) extends Event:
   val nEvents: Int = codes.length
   val isContinuous: Boolean = false
   val conditionTokens: Vector[String] =
     levels.map(lvl => Names.levelToken(varName, lvl))
+  override def factorId: Option[FactorId] =
+    Some(FactorId.unsafe(varName))
 
 final case class ContinuousEvent(
     varName: String,
