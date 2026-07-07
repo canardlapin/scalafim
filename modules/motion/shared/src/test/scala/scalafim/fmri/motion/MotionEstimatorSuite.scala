@@ -244,11 +244,21 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assert(robust.diagnostics.forall(d => d.costFinal.isFinite && d.overlap.isFinite))
   }
 
-  test("rigid spline estimator is explicitly deferred") {
+  test("rigid spline estimator layers smoothing over the rigid estimate") {
     val fixed = baseFrame
-    val run = runFromFrames(Vector(fixed, fixed.clone()))
-    val splinePlan = plan.copy(engine = MotionEngine.RigidSpline)
-    assert(MotionEstimator.estimate(run, Some(interiorMask), splinePlan).isLeft)
+    val moving = shiftedMovingFramePlusOneX(fixed)
+    val run = runFromFrames(Vector(fixed, moving, fixed.clone(), moving.clone()))
+    val rigid = MotionEstimator.estimate(run, Some(interiorMask), plan).fold(err => fail(err.message), identity)
+    val splinePlan = plan.copy(engine = MotionEngine.RigidSpline, acquisitionTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector.fill(dims(2))(0.0))))
+    val spline = MotionEstimator.estimate(run, Some(interiorMask), splinePlan).fold(err => fail(err.message), identity)
+    val badTiming = splinePlan.copy(acquisitionTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector(0.0))))
+
+    assertEquals(spline.trace.length, rigid.trace.length)
+    assertEquals(spline.diagnostics, rigid.diagnostics)
+    assertEqualsDouble(spline.trace.unsafeFrame(0).tx, rigid.trace.unsafeFrame(0).tx, 1e-12)
+    assertEqualsDouble(spline.trace.unsafeFrame(0).ty, rigid.trace.unsafeFrame(0).ty, 1e-12)
+    assert(math.abs(spline.trace.unsafeFrame(1).tx - rigid.trace.unsafeFrame(1).tx) > 1e-4)
+    assert(MotionEstimator.estimate(run, Some(interiorMask), badTiming).isLeft)
   }
 
   test("enabled pyramid schedule refines on the finest level") {

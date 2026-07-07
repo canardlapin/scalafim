@@ -17,14 +17,16 @@ The durable computation is:
 semantics. It is not the target API.
 
 Current status: the shared module now has the core ADTs, validated acquisition
-timing descriptions, motion metrics, QC, one-pass rigid application, typed
-controls/profiles, a typed correction-result wrapper, small inline fixture
-oracles, and a portable baseline `RigidRobust` estimator with optional pyramid
-levels, rotational capture seeds, robust/valid-frame template refresh, and
-thresholded low-motion pose shrink plus opt-in temporal pose regularization and
-frame-mean nuisance residual removal. Implemented profile capabilities are
-separated from planned capabilities. Packet-aware application, IC whitening,
-parallel execution, JVM IO, CLI/reporting, and larger external parity fixtures
+timing descriptions, motion metrics, QC, deterministic pose-spline primitives,
+one-pass rigid and packet-aware linear application, typed controls/profiles, a
+typed correction-result wrapper, small generated fixture oracles, and a portable
+baseline `RigidRobust` estimator with optional pyramid levels, rotational
+capture seeds, robust/valid-frame template refresh, and thresholded low-motion
+pose shrink plus opt-in temporal pose regularization and frame-mean nuisance
+residual removal. `RigidSpline` currently layers deterministic trace smoothing
+over the rigid estimator; implemented profile capabilities are separated from
+planned capabilities. Richer packet-aware estimator semantics, IC whitening,
+parallel execution, JVM IO, CLI/reporting, and real-data benchmark inputs
 remain later layers.
 
 ## Mote Completion Plan
@@ -329,7 +331,7 @@ Initial spline behavior:
 
 - smooth pose traces with a deterministic cubic/B-spline-like temporal stencil;
 - validate `SliceTiming` and `PacketTiming` against the run's z dimension;
-- evaluate packet-time poses during final application;
+- evaluate packet-time poses during final linear application;
 - report packet correction magnitude in `MotionQc`.
 
 Acceptance:
@@ -392,7 +394,9 @@ Fixture families:
 - FD vectors for fixed traces;
 - DVARS and robust DVARS for tiny 4D arrays with masks;
 - masked displacement summaries for known transforms;
-- identity and known-motion synthetic runs once the estimator exists.
+- identity and known-motion synthetic runs;
+- spline smoothing, packet offsets, IC/whitening/profile flags, CLI/report
+  artifact metadata, and benchmark gate metadata.
 
 Fixture policy:
 

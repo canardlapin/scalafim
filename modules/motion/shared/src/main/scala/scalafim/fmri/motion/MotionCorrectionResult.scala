@@ -38,6 +38,11 @@ object MotionCorrectionResult:
   ): Either[MotionError, MotionCorrectionResult] =
     for
       corrected <- MotionApplier.apply(run, estimate.trace, applyControl)
+      packetCorrection <-
+        if applyControl.acquisitionTiming.isVolume then Right(None)
+        else PoseSpline
+          .packetCorrectionMagnitude(estimate.trace, applyControl.acquisitionTiming, run.space.spatialDims(2))
+          .map(Some(_))
       qc <- MotionQc.from(
         run = run,
         trace = estimate.trace,
@@ -45,7 +50,8 @@ object MotionCorrectionResult:
         mask = mask,
         costInit = Some(estimate.diagnostics.map(_.costInitial)),
         costFinal = Some(estimate.diagnostics.map(_.costFinal)),
-        policy = qcPolicy
+        policy = qcPolicy,
+        packetCorrectionMagnitude = packetCorrection
       )
     yield
       MotionCorrectionResult(

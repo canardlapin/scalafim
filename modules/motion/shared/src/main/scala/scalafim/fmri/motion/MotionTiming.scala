@@ -110,3 +110,34 @@ enum AcquisitionTiming:
     this match
       case Volume => true
       case _ => false
+
+  def validateSlices(nSlices: Int): Either[MotionError, Unit] =
+    if nSlices <= 0 then Left(MotionError.InvalidInt("nSlices", nSlices, "must be positive"))
+    else
+      this match
+        case Volume => Right(())
+        case Slice(timing) =>
+          if timing.nSlices == nSlices then Right(())
+          else Left(MotionError.ShapeMismatch("slice timing", Vector(nSlices), Vector(timing.nSlices)))
+        case Packet(timing) =>
+          if timing.nSlices == nSlices then Right(())
+          else Left(MotionError.ShapeMismatch("packet timing", Vector(nSlices), Vector(timing.nSlices)))
+
+  def normalizedSliceOffsets(nSlices: Int): Either[MotionError, Vector[Double]] =
+    validateSlices(nSlices).map { _ =>
+      this match
+        case Volume =>
+          Vector.fill(nSlices)(0.0)
+        case Slice(timing) =>
+          AcquisitionTiming.normalize(timing.offsetSeconds)
+        case Packet(timing) =>
+          AcquisitionTiming.normalize(timing.toSliceTiming.offsetSeconds)
+    }
+
+object AcquisitionTiming:
+  private[motion] def normalize(offsets: Vector[Double]): Vector[Double] =
+    val min = offsets.min
+    val max = offsets.max
+    val denom = max - min
+    if denom > 0.0 then offsets.map(value => (value - min) / denom)
+    else Vector.fill(offsets.length)(0.0)

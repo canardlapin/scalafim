@@ -8,21 +8,43 @@ object MotionEstimator:
       mask: Option[NeuroVol[Boolean]] = None,
       plan: MotionPlan = MotionPlan.default
   ): Either[MotionError, MotionEstimate] =
-    if plan.engine != MotionEngine.RigidRobust then Left(MotionError.NotImplemented(s"${plan.engine} estimator"))
-    else
-      for
-        _ <- validateSupportedPlan(plan)
-        _ <- MotionMetrics.validateMask(run, mask)
-        _ <- validateFiniteRun(run)
-        refIndex <- referenceIndex(run, plan.reference)
-        levels <- buildPyramidLevels(run, mask, plan.control)
-      yield
-        val ctx = EstimatorContext(run, plan.control, refIndex, levels)
-        val template = buildTemplate(run, plan.reference, refIndex)
-        val first = fitRun(ctx, template)
-        refreshTemplate(ctx, template, first) match
-          case None => first
-          case Some(refreshed) => fitRun(ctx, refreshed)
+    plan.engine match
+      case MotionEngine.RigidRobust =>
+        estimateRigid(run, mask, plan)
+      case MotionEngine.RigidSpline =>
+        estimateSpline(run, mask, plan)
+
+  private def estimateRigid(
+      run: NeuroVec[Double],
+      mask: Option[NeuroVol[Boolean]],
+      plan: MotionPlan
+  ): Either[MotionError, MotionEstimate] =
+    for
+      _ <- validateSupportedPlan(plan)
+      _ <- MotionMetrics.validateMask(run, mask)
+      _ <- validateFiniteRun(run)
+      refIndex <- referenceIndex(run, plan.reference)
+      levels <- buildPyramidLevels(run, mask, plan.control)
+    yield
+      val ctx = EstimatorContext(run, plan.control, refIndex, levels)
+      val template = buildTemplate(run, plan.reference, refIndex)
+      val first = fitRun(ctx, template)
+      refreshTemplate(ctx, template, first) match
+        case None => first
+        case Some(refreshed) => fitRun(ctx, refreshed)
+
+  private def estimateSpline(
+      run: NeuroVec[Double],
+      mask: Option[NeuroVol[Boolean]],
+      plan: MotionPlan
+  ): Either[MotionError, MotionEstimate] =
+    for
+      _ <- plan.acquisitionTiming.validateSlices(run.space.spatialDims(2))
+      refIndex <- referenceIndex(run, plan.reference)
+      rigid <- estimateRigid(run, mask, plan.copy(engine = MotionEngine.RigidRobust, acquisitionTiming = AcquisitionTiming.Volume))
+      spline <- PoseSpline.smooth(rigid.trace)
+      trace = preserveReferenceFrame(spline.trace, rigid.trace, refIndex)
+    yield rigid.copy(trace = trace)
 
   private final case class SamplePoint(i: Int, j: Int, k: Int, linear: Int)
 
@@ -51,6 +73,10 @@ object MotionEstimator:
   private final case class CaptureStart(pose: RigidPose, warmCost: CostResult, startCost: CostResult)
 
   private final case class SeedCost(pose: RigidPose, cost: CostResult)
+
+  private def preserveReferenceFrame(smoothed: MotionTrace, original: MotionTrace, refIndex: Int): MotionTrace =
+    if refIndex < 0 || refIndex >= smoothed.length then smoothed
+    else MotionTrace.unsafe(smoothed.poses.updated(refIndex, original.unsafeFrame(refIndex)))
 
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
     if !plan.acquisitionTiming.isVolume then Left(MotionError.NotImplemented("slice/packet-aware estimation"))

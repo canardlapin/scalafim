@@ -12,6 +12,10 @@ class MotionApplierSuite extends munit.FunSuite:
       "line"
     )
 
+  private def volume(values: Vector[Double], dims: Vector[Int], nVolumes: Int): NeuroVec[Double] =
+    val data = NArrayUtil.tabulate[Double](values.length)(values)
+    NeuroVec.fromLinear(data, NeuroSpace(dims).addDim(nVolumes, Some(Axis.Time)), "volume")
+
   private def assertSameValues(actual: NeuroVec[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
     assertEquals(actual.values.data.length, expected.length)
     var i = 0
@@ -50,8 +54,75 @@ class MotionApplierSuite extends munit.FunSuite:
     assertSameValues(corrected, Vector(1.0, 2.0, 3.0, 0.0))
   }
 
+  test("all-zero slice timing is byte-identical to volume application") {
+    val run = volume(
+      Vector(
+        0.0, 1.0, 2.0,
+        10.0, 11.0, 12.0,
+        100.0, 101.0, 102.0,
+        110.0, 111.0, 112.0
+      ),
+      dims = Vector(3, 1, 2),
+      nVolumes = 2
+    )
+    val trace =
+      MotionTrace.unsafe(
+        Vector(
+          RigidPose.identity,
+          RigidPose.unsafe(1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        )
+      )
+    val zeroTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector(0.0, 0.0)))
+    val timedControl = ApplyControl.make(acquisitionTiming = zeroTiming).fold(err => fail(err.message), identity)
+
+    val volumeCorrected = MotionApplier.apply(run, trace).fold(err => fail(err.message), identity)
+    val timedCorrected = MotionApplier.apply(run, trace, timedControl).fold(err => fail(err.message), identity)
+
+    assertSameValues(timedCorrected, volumeCorrected.values.data.toVector)
+  }
+
+  test("nonzero slice timing interpolates packet poses during final application") {
+    val run = volume(
+      Vector(
+        0.0, 1.0, 2.0,
+        10.0, 11.0, 12.0,
+        100.0, 101.0, 102.0,
+        110.0, 111.0, 112.0
+      ),
+      dims = Vector(3, 1, 2),
+      nVolumes = 2
+    )
+    val trace =
+      MotionTrace.unsafe(
+        Vector(
+          RigidPose.identity,
+          RigidPose.unsafe(1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        )
+      )
+    val sliceTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector(0.0, 1.0)))
+    val timedControl = ApplyControl.make(acquisitionTiming = sliceTiming).fold(err => fail(err.message), identity)
+
+    val volumeCorrected = MotionApplier.apply(run, trace).fold(err => fail(err.message), identity)
+    val timedCorrected = MotionApplier.apply(run, trace, timedControl).fold(err => fail(err.message), identity)
+
+    assertEqualsDouble(volumeCorrected.values.data(3), 10.0, 1e-12)
+    assertEqualsDouble(timedCorrected.values.data(3), 10.0, 1e-12)
+    assertEqualsDouble(volumeCorrected.values.data(4), 11.0, 1e-12)
+    assertEqualsDouble(timedCorrected.values.data(4), 10.0, 1e-12)
+    assertEqualsDouble(volumeCorrected.values.data(5), 12.0, 1e-12)
+    assertEqualsDouble(timedCorrected.values.data(5), 11.0, 1e-12)
+  }
+
   test("motion application validates trace length") {
     val run = line(Vector(0.0, 1.0, 2.0, 3.0), nVolumes = 1)
     val trace = MotionTrace.identity(2).fold(err => fail(err.message), identity)
     assert(MotionApplier.apply(run, trace).isLeft)
+  }
+
+  test("motion application validates acquisition timing against z dimension") {
+    val run = volume(Vector(0.0, 1.0, 2.0, 3.0), dims = Vector(1, 1, 2), nVolumes = 2)
+    val trace = MotionTrace.identity(2).fold(err => fail(err.message), identity)
+    val badTiming = AcquisitionTiming.Slice(SliceTiming.unsafe(Vector(0.0)))
+    val control = ApplyControl.make(acquisitionTiming = badTiming).fold(err => fail(err.message), identity)
+    assert(MotionApplier.apply(run, trace, control).isLeft)
   }

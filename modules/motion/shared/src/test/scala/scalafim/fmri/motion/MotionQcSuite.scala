@@ -61,6 +61,19 @@ class MotionQcSuite extends munit.FunSuite:
       case other => fail(s"expected incomplete fit-cost trace, got $other")
   }
 
+  test("MotionQc records packet correction magnitudes when supplied") {
+    val x = run(Vector(0.0, 1.0, 3.0))
+    val trace = MotionTrace.identity(3).fold(err => fail(err.message), identity)
+    val qc =
+      MotionQc
+        .from(x, trace, packetCorrectionMagnitude = Some(Vector(0.0, 0.25, 0.5)))
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(qc.packetCorrectionMagnitude, Some(Vector(0.0, 0.25, 0.5)))
+    assert(MotionQc.from(x, trace, packetCorrectionMagnitude = Some(Vector(0.0, 0.25))).isLeft)
+    assert(MotionQc.from(x, trace, packetCorrectionMagnitude = Some(Vector(0.0, Double.NaN, 0.5))).isLeft)
+  }
+
   test("MotionQc applies typed thresholds and censor policy") {
     val x = run(Vector(0.0, 1.0, 3.0))
     val trace =

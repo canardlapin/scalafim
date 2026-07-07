@@ -125,7 +125,8 @@ final case class MotionQc(
     dvarsPairs: Vector[DvarsMetric],
     robustDvarsPairs: Vector[DvarsMetric],
     fitCostTrace: FitCostTrace,
-    policy: MotionQcPolicy
+    policy: MotionQcPolicy,
+    packetCorrectionMagnitude: Option[Vector[Double]] = None
 )
 
 object MotionQc:
@@ -137,7 +138,8 @@ object MotionQc:
       costInit: Option[Vector[Double]] = None,
       costFinal: Option[Vector[Double]] = None,
       radius: HeadRadius = HeadRadius.default,
-      policy: MotionQcPolicy = MotionQcPolicy.default
+      policy: MotionQcPolicy = MotionQcPolicy.default,
+      packetCorrectionMagnitude: Option[Vector[Double]] = None
   ): Either[MotionError, MotionQc] =
     if trace.length != run.nVolumes then Left(MotionError.TraceLengthMismatch(trace.length, run.nVolumes))
     else
@@ -150,6 +152,7 @@ object MotionQc:
           val qcRun = corrected.getOrElse(run)
           for
             fitCostTrace <- FitCostTrace.fromOptions(costInit, costFinal, frameCount)
+            packetCorrection <- validatePacketCorrection(packetCorrectionMagnitude, frameCount)
             dvarsPairs <- MotionMetrics.dvarsPairs(qcRun, mask, DvarsPolicy.Raw)
             robustDvarsPairs <- MotionMetrics.dvarsPairs(qcRun, mask, policy.dvarsPolicy)
           yield
@@ -180,8 +183,25 @@ object MotionQc:
               dvarsPairs = dvarsPairs,
               robustDvarsPairs = robustDvarsPairs,
               fitCostTrace = fitCostTrace,
-              policy = policy
+              policy = policy,
+              packetCorrectionMagnitude = packetCorrection
             )
+
+  private def validatePacketCorrection(
+      values: Option[Vector[Double]],
+      frameCount: FrameCount
+  ): Either[MotionError, Option[Vector[Double]]] =
+    values match
+      case None => Right(None)
+      case Some(xs) if xs.length != frameCount.value =>
+        Left(MotionError.ShapeMismatch("packetCorrectionMagnitude", Vector(frameCount.value), Vector(xs.length)))
+      case Some(xs) =>
+        var i = 0
+        while i < xs.length do
+          if !xs(i).isFinite || xs(i) < 0.0 then
+            return Left(MotionError.InvalidScalar("packetCorrectionMagnitude", xs(i), "must be non-negative and finite"))
+          i += 1
+        Right(Some(xs))
 
   private def fdCompat(
       frameCount: FrameCount,
