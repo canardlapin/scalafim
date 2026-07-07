@@ -7,6 +7,12 @@ import scalafim.image.{DMat, NeuroSpace}
 
 class MvpaDatasetViewSuite extends munit.FunSuite:
 
+  private def timepointOrigin(index: Int): SampleOrigin =
+    SampleOrigin.timepoint(index).toOption.get
+
+  private def estimateOrigin(name: String, row: Int): SampleOrigin =
+    SampleOrigin.estimate(name, row).toOption.get
+
   private def dataset: FmriDataset =
     val rows =
       Vector(
@@ -25,26 +31,32 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     )
 
   test("dataset view preserves selected timepoints, matrix orientation, and global feature indices") {
+    val request =
+      DatasetPatternRequest(
+        selection = DataSelection(
+          time = IndexSelection.indices(1, 3),
+          voxels = IndexSelection.indices(0, 2)
+        ),
+        metadata = SampleMetadataRequest.labeled(
+          labels = Vector("scene", "scene"),
+          blocks = Some(Vector("run-a", "run-b"))
+        ),
+        featureSpaceId = FeatureSpaceId.unsafe("selected-voxels")
+      )
+
     val view =
       MvpaDatasetView
-        .fromDataset(
-          dataset,
-          selection = DataSelection(
-            time = IndexSelection.indices(1, 3),
-            voxels = IndexSelection.indices(0, 2)
-          ),
-          labels = Some(Vector("scene", "scene")),
-          blocks = Some(Vector("run-a", "run-b")),
-          featureSpaceId = FeatureSpaceId.unsafe("selected-voxels")
-        )
+        .fromDataset(dataset, request)
         .toOption
         .get
 
     assertEquals(view.samples.rows.map(_.index.value), Vector(0, 1))
     assertEquals(view.samples.rows.map(_.timepoint), Vector(Some(1), Some(3)))
-    assertEquals(view.samples.rows.map(_.origin), Vector(SampleOrigin.Timepoint(1), SampleOrigin.Timepoint(3)))
+    assertEquals(view.samples.rows.map(_.origin), Vector(timepointOrigin(1), timepointOrigin(3)))
+    assertEquals(view.samples.metadata.blocks.flatten.map(_.value), Vector("run-a", "run-b"))
     assertEquals(view.patterns.value.toRows, Vector(Vector(-2.0, 0.0), Vector(-3.0, -0.5)))
     assertEquals(view.patterns.featureIndices.map(_.value), Vector(0, 2))
+    assert(view.featureMapping.isVoxelBacked)
     assertEquals(view.featureSpace.id.value, "selected-voxels")
     assertEquals(view.featureSpace.datasetId.map(_.value), Some("mvpa-demo"))
     assertEquals(view.featureSpace.shape.map(_.spatialSize), Some(3))
@@ -74,13 +86,14 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(
       view.samples.rows.map(_.origin),
       Vector(
-        SampleOrigin.Estimate("face_run1", 0),
-        SampleOrigin.Estimate("scene_run1", 1),
-        SampleOrigin.Estimate("face_run2", 2),
-        SampleOrigin.Estimate("scene_run2", 3)
+        estimateOrigin("face_run1", 0),
+        estimateOrigin("scene_run1", 1),
+        estimateOrigin("face_run2", 2),
+        estimateOrigin("scene_run2", 3)
       )
     )
     assertEquals(view.samples.rows.flatMap(_.item).map(_.value), Vector("face_run1", "scene_run1", "face_run2", "scene_run2"))
+    assert(!view.featureMapping.isVoxelBacked)
     assertEquals(view.featureSpace.shape, None)
     assertEquals(view.patterns.featureIndices.map(_.value), Vector(4, 2))
 
@@ -102,14 +115,16 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         .toOption
         .get
 
+    val labeled = view.toLabeled.toOption.get
+
     val result =
       MvpaEngine
         .runSource(
-          view.source,
+          labeled.source,
           plan,
-          view.response.toOption.get,
+          labeled.response,
           CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
-          Some(view.foldsByBlock.toOption.get)
+          Some(labeled.foldsByBlock.toOption.get)
         )
         .toOption
         .get
@@ -119,20 +134,25 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
   }
 
   test("sample metadata builds categorical responses and labeled leave-one-block-out folds") {
-    val view =
-      MvpaDatasetView
-        .fromDataset(
-          dataset,
-          labels = Some(Vector("face", "scene", "face", "scene")),
+    val request =
+      DatasetPatternRequest(
+        metadata = SampleMetadataRequest.labeled(
+          labels = Vector("face", "scene", "face", "scene"),
           blocks = Some(Vector("a", "a", "b", "b")),
           runs = Some(Vector("run-1", "run-1", "run-2", "run-2")),
           items = Some(Vector("face-a", "scene-a", "face-b", "scene-b"))
         )
+      )
+
+    val view =
+      MvpaDatasetView
+        .fromDataset(dataset, request)
         .toOption
         .get
 
-    val response = view.response.toOption.get
-    assertEquals(response.length, 4)
+    val labeled = view.toLabeled.toOption.get
+    assertEquals(labeled.response.length, 4)
+    assertEquals(view.samples.metadata.labels.flatten.map(_.value), Vector("face", "scene", "face", "scene"))
 
     val blockFolds = view.foldsByBlock.toOption.get
     assertEquals(blockFolds.samples, 4)
@@ -144,12 +164,12 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(runFolds.folds.map(_.id), Vector("run:run-1", "run:run-2"))
   }
 
-  test("dataset view source drives the MVPA engine without losing alignment") {
+  test("labeled dataset view source drives the MVPA engine without losing alignment") {
     val view =
-      MvpaDatasetView
+      LabeledMvpaDatasetView
         .fromDataset(
           dataset,
-          labels = Some(Vector("face", "scene", "face", "scene")),
+          labels = Vector("face", "scene", "face", "scene"),
           blocks = Some(Vector("a", "a", "b", "b"))
         )
         .toOption
@@ -169,7 +189,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         .runSource(
           view.source,
           plan,
-          view.response.toOption.get,
+          view.response,
           CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
           Some(view.foldsByBlock.toOption.get)
         )
@@ -180,6 +200,30 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(result.successes.length, 1)
     assertEqualsDouble(result.successes.head.metrics("Accuracy").getOrElse(Double.NaN), 1.0, 1e-12)
     assertEqualsDouble(result.successes.head.metrics("TestedSamples").getOrElse(Double.NaN), 4.0, 1e-12)
+  }
+
+  test("labeled view refuses unlabeled samples before classifier workflows") {
+    val unlabeled =
+      MvpaDatasetView
+        .fromDataset(dataset)
+        .toOption
+        .get
+
+    assertEquals(unlabeled.toLabeled.left.toOption, Some(MvpaDatasetError.MissingCategoricalLabels))
+
+    val labeled =
+      LabeledMvpaDatasetView
+        .fromPatternRows(
+          rows = Vector(Vector(1.0, 0.0), Vector(0.0, 1.0)),
+          rowNames = Vector("a", "b"),
+          featureIndices = Vector(10, 11),
+          labels = Vector("left", "right")
+        )
+        .toOption
+        .get
+
+    assertEquals(labeled.response.length, 2)
+    assertEquals(labeled.featureSpace.isVoxelBacked, false)
   }
 
   test("metadata contract failures are explicit ADT values") {
@@ -201,6 +245,10 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(
       badLength.left.toOption,
       Some(MvpaDatasetError.MetadataLengthMismatch("label", expected = 4, actual = 3))
+    )
+    assertEquals(
+      badLength.left.toOption.map(_.category),
+      Some(MvpaDatasetErrorCategory.Metadata)
     )
 
     val badSampleTable =
@@ -236,6 +284,18 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(
       raggedRows.left.toOption,
       Some(MvpaDatasetError.PatternFeatureCountMismatch(expected = 2, actual = 1))
+    )
+
+    val duplicateFeatures =
+      FeatureMapping.abstractFeatures(Vector(0, 0))
+
+    assertEquals(
+      duplicateFeatures.left.toOption,
+      Some(MvpaDatasetError.InvalidFeatureMapping("feature mapping indices must be unique"))
+    )
+    assertEquals(
+      duplicateFeatures.left.toOption.map(_.category),
+      Some(MvpaDatasetErrorCategory.FeatureMapping)
     )
 
     val table =

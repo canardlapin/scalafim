@@ -42,7 +42,14 @@ trait ClassifierModel:
 enum FeatureScaling:
   case None
   case ZScore
-  case DiagonalShrinkage(alpha: Double = 0.1)
+  case DiagonalShrinkage(alpha: ShrinkageAlpha = ShrinkageAlpha.unsafe(0.1))
+
+object FeatureScaling:
+  def diagonalShrinkage(alpha: Double = 0.1): Either[MvpaError, FeatureScaling] =
+    ShrinkageAlpha(alpha).map(value => FeatureScaling.DiagonalShrinkage(value))
+
+  def unsafeDiagonalShrinkage(alpha: Double = 0.1): FeatureScaling =
+    FeatureScaling.DiagonalShrinkage(ShrinkageAlpha.unsafe(alpha))
 
 final case class CorrelationCentroidClassifier() extends Classifier:
   override val name: String = "correlation_centroid"
@@ -121,8 +128,9 @@ final case class SwiftCentroidModel(
         ClassificationPrediction(classes, Classification.softmax(scores), test.sampleIndices)
       }
 
-final case class RidgeLdaClassifier(gamma: Double = 1e-2) extends Classifier:
-  require(gamma.isFinite && gamma > 0.0, "gamma must be positive and finite")
+final class RidgeLdaClassifier private (val penalty: RidgePenalty) extends Classifier:
+  def gamma: Double =
+    penalty.value
 
   override val name: String = "ridge_lda"
   override val minFeatures: Int = 1
@@ -185,19 +193,26 @@ final case class RidgeLdaModel(
         ClassificationPrediction(classes, Classification.softmax(scores), test.sampleIndices)
       }
 
+object RidgeLdaClassifier:
+  def apply(gamma: Double = 1e-2): RidgeLdaClassifier =
+    RidgePenalty(gamma).fold(error => throw new IllegalArgumentException(error.message), value => new RidgeLdaClassifier(value))
+
+  def fromPenalty(gamma: RidgePenalty): RidgeLdaClassifier =
+    new RidgeLdaClassifier(gamma)
+
 final case class CrossValidatedClassifierAnalysis(
     classifier: Classifier,
     storePredictions: Boolean = false
-) extends RoiAnalysis:
+) extends FoldRequiredRoiAnalysis:
   override def name: String = s"cv_${classifier.name}"
   override def minFeatures: Int = classifier.minFeatures
+  override def missingFoldsError: MvpaError =
+    MvpaError.InvalidClassifierInput("cross-validated classification requires a fold plan")
 
-  override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
-    val folds = context.folds.toRight(MvpaError.InvalidClassifierInput("cross-validated classification requires a fold plan"))
+  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
     for
-      plan <- folds
       labels <- Classification.categorical(context.response, roi.samples)
-      prediction <- Classification.crossValidate(classifier, roi, labels, plan)
+      prediction <- Classification.crossValidate(classifier, roi, labels, context.foldPlan)
       accuracy <- Classification.accuracy(prediction, labels)
     yield
       val payload =
@@ -228,7 +243,7 @@ object Classification:
 
   def validateScaling(scaling: FeatureScaling): Either[MvpaError, Unit] =
     scaling match
-      case FeatureScaling.DiagonalShrinkage(alpha) if !alpha.isFinite || alpha < 0.0 || alpha > 1.0 =>
+      case FeatureScaling.DiagonalShrinkage(alpha) if !alpha.value.isFinite || alpha.value < 0.0 || alpha.value > 1.0 =>
         Left(MvpaError.InvalidClassifierInput("diagonal shrinkage alpha must be finite and in [0, 1]"))
       case _ =>
         Right(())
@@ -278,7 +293,7 @@ object Classification:
         case FeatureScaling.ZScore =>
           floorScales(scales)
         case FeatureScaling.DiagonalShrinkage(alpha) =>
-          require(alpha.isFinite && alpha >= 0.0 && alpha <= 1.0, "diagonal shrinkage alpha must be finite and in [0, 1]")
+          require(alpha.value.isFinite && alpha.value >= 0.0 && alpha.value <= 1.0, "diagonal shrinkage alpha must be finite and in [0, 1]")
           val positive = scales.filter(_ > Eps)
           val target =
             if positive.isEmpty then 1.0
@@ -287,7 +302,7 @@ object Classification:
               sorted(sorted.length / 2)
           col = 0
           while col < scales.length do
-            scales(col) = math.sqrt((1.0 - alpha) * scales(col) * scales(col) + alpha * target * target)
+            scales(col) = math.sqrt((1.0 - alpha.value) * scales(col) * scales(col) + alpha.value * target * target)
             col += 1
           floorScales(scales)
 

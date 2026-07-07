@@ -75,6 +75,16 @@ class MvpaCoreSuite extends munit.FunSuite:
     assertEquals(searchlights.featureSets.map(_.center.map(_.value)), Vector(Some(1), Some(4)))
   }
 
+  test("searchlight plans require explicit centers inside each feature set") {
+    val missingCenter =
+      FeatureSetPlan.searchlight("missing-center", Vector(FeatureSet.unsafe(RoiId(3), Vector(0, 1))))
+    val externalCenter =
+      FeatureSet(RoiId(4), Vector(0, 1), center = Some(2))
+
+    assert(missingCenter.swap.toOption.get.message.contains("center"))
+    assert(externalCenter.swap.toOption.get.message.contains("center"))
+  }
+
   test("engine runs ROI analysis and records per-ROI feature failures") {
     val good = FeatureSet.unsafe(RoiId(10), Vector(0, 2))
     val missing = FeatureSet.unsafe(RoiId(11), Vector(0, 99))
@@ -194,6 +204,22 @@ class MvpaCoreSuite extends munit.FunSuite:
     }
 
     assert(result.swap.toOption.get.message.contains("response length mismatch"))
+    assertEquals(visited, false)
+    assertEquals(source.selections, 0)
+  }
+
+  test("fold-required analyses reject missing folds before visiting feature sets") {
+    val plan = FeatureSetPlan.regional("two-regions", Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1)))).toOption.get
+    val source = new CountingSource(toyData)
+    val analysis = CrossValidatedClassifierAnalysis(SwiftCentroidClassifier())
+    var visited = false
+
+    val result = MvpaStream.foreach(source, plan, toyResponse, analysis) { _ =>
+      visited = true
+      MvpaStreamControl.Continue
+    }
+
+    assert(result.swap.toOption.get.message.contains("fold plan"))
     assertEquals(visited, false)
     assertEquals(source.selections, 0)
   }

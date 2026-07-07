@@ -58,7 +58,7 @@ and ridge LDA fast paths:
 ```scala
 val scanner =
   SearchlightClassifierScanner(
-    SwiftCentroidClassifier(FeatureScaling.DiagonalShrinkage(0.2)),
+    SwiftCentroidClassifier(FeatureScaling.unsafeDiagonalShrinkage(0.2)),
     storePredictions = true
   )
 
@@ -72,11 +72,14 @@ over the selected columns. It allocates one output probability buffer per
 feature set plus fold-local work arrays. Classifiers without a specialized path
 fall back to `CrossValidatedClassifierAnalysis`.
 
-Cross-domain decoding uses a paired source/target pattern source and the same
-feature-set plans. The naive rMVPA-style baseline is expressed as a classifier
-analysis rather than a special runner: fit source-domain prototypes with
-`CorrelationCentroidClassifier`, predict target-domain patterns, and report
-accuracy through the usual ROI result surface.
+Cross-domain decoding uses a typed `CrossDomainDataset` over source/target
+pattern sources. Standard feature-set plans are lifted to same-source/target
+`PairedFeatureSet`s, and lower-level runners can pass explicit paired feature
+sets when the source and target domains use different feature ids. The naive
+rMVPA-style baseline is expressed as a classifier analysis rather than a
+special runner: fit source-domain prototypes with `CorrelationCentroidClassifier`,
+predict target-domain patterns, and report accuracy through the usual ROI result
+surface.
 
 ```scala
 val design =
@@ -92,9 +95,9 @@ val result =
   CrossDomainMvpaEngine.run(sourcePatterns, targetPatterns, plan, design, xdec)
 ```
 
-The lower-level `CrossDomainMvpaTask.evaluate` boundary evaluates one feature
-set against a `CrossDomainPatternSource`; distributed runners can map that
-single-ROI task across regional/searchlight feature sets.
+The lower-level `CrossDomainMvpaTask.evaluate` boundary evaluates one
+`PairedFeatureSet` against a `CrossDomainDataset`; distributed runners can map
+that single-ROI task across regional/searchlight feature sets.
 
 For high-volume naive cross-decoding searchlights, `NaiveCrossDecodingScanner`
 keeps the same result surface while computing source prototypes and target

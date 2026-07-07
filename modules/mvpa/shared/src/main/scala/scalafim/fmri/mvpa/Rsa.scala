@@ -44,28 +44,21 @@ object RsaItemId:
   extension (id: RsaItemId)
     inline def value: String = id
 
-opaque type RsaBlockId = String
-
-object RsaBlockId:
-  def apply(value: String): Either[MvpaError, RsaBlockId] =
-    checkedRsaId("RSA block", value)
-
-  def unsafe(value: String): RsaBlockId =
-    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  extension (id: RsaBlockId)
-    inline def value: String = id
-
-final case class RdmModel private (
-    name: String,
-    items: Vector[String],
+final case class LabeledRdm private (
+    items: Vector[RsaItemId],
     rdm: RdmVector
 ):
-  def alignTo(targetItems: Vector[String]): Either[MvpaError, RdmVector] =
+  require(items.length == rdm.items, "labeled RDM item count must match RDM item count")
+  require(items.distinct.length == items.length, "labeled RDM item labels must be unique")
+
+  def labels: Vector[String] =
+    items.map(_.value)
+
+  def alignTo(targetItems: Vector[RsaItemId], label: String): Either[MvpaError, RdmVector] =
     if targetItems.distinct.length != targetItems.length then
       Left(MvpaError.InvalidRdmInput("target RDM item labels must be unique"))
     else if targetItems.toSet != items.toSet then
-      Left(MvpaError.InvalidRdmInput(s"model RDM '$name' item labels do not match observed labels"))
+      Left(MvpaError.InvalidRdmInput(s"$label item labels do not match observed labels"))
     else
       val sourceIndex = items.zipWithIndex.toMap
       val matrix = new Array[Double](items.length * items.length)
@@ -89,17 +82,74 @@ final case class RdmModel private (
         pair += 1
       Right(RdmVector.unsafe(targetItems.length, out.toVector))
 
+object LabeledRdm:
+  def apply(items: Seq[String], rdm: RdmVector): Either[MvpaError, LabeledRdm] =
+    val out = Vector.newBuilder[RsaItemId]
+    val vector = items.toVector
+    var index = 0
+    while index < vector.length do
+      RsaItemId(vector(index)) match
+        case Right(item) =>
+          out += item
+        case Left(error) =>
+          return Left(error)
+      index += 1
+    fromItemIds(out.result(), rdm)
+
+  def fromItemIds(items: Seq[RsaItemId], rdm: RdmVector): Either[MvpaError, LabeledRdm] =
+    val itemVector = items.toVector
+    if itemVector.length != rdm.items then
+      Left(MvpaError.InvalidRdmInput(s"labeled RDM item count ${itemVector.length} != RDM item count ${rdm.items}"))
+    else if itemVector.distinct.length != itemVector.length then
+      Left(MvpaError.InvalidRdmInput("labeled RDM item labels must be unique"))
+    else if rdm.values.exists(value => !value.isFinite) then
+      Left(MvpaError.InvalidRdmInput("labeled RDM contains non-finite values"))
+    else Right(new LabeledRdm(itemVector, rdm))
+
+  def unsafe(items: Seq[String], rdm: RdmVector): LabeledRdm =
+    apply(items, rdm).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def unsafeFromItemIds(items: Seq[RsaItemId], rdm: RdmVector): LabeledRdm =
+    fromItemIds(items, rdm).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+opaque type RsaBlockId = String
+
+object RsaBlockId:
+  def apply(value: String): Either[MvpaError, RsaBlockId] =
+    checkedRsaId("RSA block", value)
+
+  def unsafe(value: String): RsaBlockId =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  extension (id: RsaBlockId)
+    inline def value: String = id
+
+final case class RdmModel private (
+    name: String,
+    labeledRdm: LabeledRdm
+):
+  def itemIds: Vector[RsaItemId] =
+    labeledRdm.items
+
+  def items: Vector[String] =
+    labeledRdm.labels
+
+  def rdm: RdmVector =
+    labeledRdm.rdm
+
+  def alignTo(targetItems: Vector[RsaItemId]): Either[MvpaError, RdmVector] =
+    labeledRdm.alignTo(targetItems, s"model RDM '$name'")
+
 object RdmModel:
   def apply(name: String, items: Seq[String], rdm: RdmVector): Either[MvpaError, RdmModel] =
     val trimmedName = name.trim
-    val trimmedItems = items.map(_.trim).toVector
     if trimmedName.isEmpty then Left(MvpaError.InvalidRdmInput("RDM model name must be non-empty"))
-    else if trimmedItems.exists(_.isEmpty) then Left(MvpaError.InvalidRdmInput("RDM model item labels must be non-empty"))
-    else if trimmedItems.distinct.length != trimmedItems.length then Left(MvpaError.InvalidRdmInput("RDM model item labels must be unique"))
-    else if trimmedItems.length != rdm.items then
-      Left(MvpaError.InvalidRdmInput(s"RDM model item count ${trimmedItems.length} != RDM item count ${rdm.items}"))
-    else if rdm.values.exists(value => !value.isFinite) then Left(MvpaError.InvalidRdmInput("RDM model contains non-finite values"))
-    else Right(new RdmModel(trimmedName, trimmedItems, rdm))
+    else LabeledRdm(items, rdm).map(labeled => new RdmModel(trimmedName, labeled))
+
+  def fromLabeled(name: String, labeledRdm: LabeledRdm): Either[MvpaError, RdmModel] =
+    val trimmedName = name.trim
+    if trimmedName.isEmpty then Left(MvpaError.InvalidRdmInput("RDM model name must be non-empty"))
+    else Right(new RdmModel(trimmedName, labeledRdm))
 
   def unsafe(name: String, items: Seq[String], rdm: RdmVector): RdmModel =
     apply(name, items, rdm).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -182,12 +232,15 @@ final case class SamplewiseRsaScore(
 trait RdmScorer:
   def name: String
   def score(observed: RdmVector, model: RdmVector): Either[MvpaError, Double]
+  def score(observed: LabeledRdm, model: RdmVector): Either[MvpaError, Double] =
+    score(observed.rdm, model)
+
   def score(
       observedItems: Vector[String],
       observed: RdmVector,
       model: RdmVector
   ): Either[MvpaError, Double] =
-    score(observed, model)
+    LabeledRdm(observedItems, observed).flatMap(labeled => score(labeled, model))
 
 object RdmScorer:
   object Pearson extends RdmScorer:
@@ -213,28 +266,24 @@ object RdmScorer:
     override def score(observed: RdmVector, model: RdmVector): Either[MvpaError, Double] =
       Left(MvpaError.InvalidRdmInput("partial Pearson RDM scorer requires observed item labels"))
 
-    override def score(
-        observedItems: Vector[String],
-        observed: RdmVector,
-        model: RdmVector
-    ): Either[MvpaError, Double] =
-      if observedItems.distinct.length != observedItems.length then
+    override def score(observed: LabeledRdm, model: RdmVector): Either[MvpaError, Double] =
+      if observed.items.distinct.length != observed.items.length then
         Left(MvpaError.InvalidRdmInput("partial Pearson RDM scorer requires unique observed item labels"))
-      else if observedItems.length != observed.items then
+      else if observed.items.length != observed.rdm.items then
         Left(MvpaError.InvalidRdmInput("partial Pearson observed item labels do not match observed RDM"))
       else
         val aligned = Vector.newBuilder[RdmVector]
         var i = 0
         var error: MvpaError | Null = null
         while i < controls.length && error == null do
-          controls(i).alignTo(observedItems) match
+          controls(i).alignTo(observed.items) match
             case Right(rdm) => aligned += rdm
             case Left(e) => error = e
           i += 1
 
         error match
           case null =>
-            validatePair(observed, model, name).flatMap(_ => partialPearsonValues(observed, model, aligned.result()))
+            validatePair(observed.rdm, model, name).flatMap(_ => partialPearsonValues(observed.rdm, model, aligned.result()))
           case e => Left(e)
 
   object PartialPearson:
@@ -597,27 +646,27 @@ final case class RdmAnalysis(
       rdm <- method.compute(observed.matrix)
     yield
       val payload =
-        if storeRdm then Some(RoiPayload.Rdm(observed.items, rdm))
+        if storeRdm then Some(RoiPayload.Rdm(LabeledRdm.unsafeFromItemIds(observed.items, rdm)))
         else None
       RoiAnalysisResult(RdmAnalysisSupport.rdmMetrics(rdm, observed.matrix.cols), payload)
 
 final case class CrossnobisAnalysis(
     normalizeByFeatures: Boolean = true,
     storeRdm: Boolean = true
-) extends RoiAnalysis:
+) extends FoldRequiredRoiAnalysis:
   override def name: String =
     if normalizeByFeatures then "crossnobis_normalized" else "crossnobis"
   override val minFeatures: Int = 1
+  override def missingFoldsError: MvpaError =
+    MvpaError.InvalidRdmInput("crossnobis analysis requires a fold plan")
 
-  override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
-    val folds = context.folds.toRight(MvpaError.InvalidRdmInput("crossnobis analysis requires a fold plan"))
+  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
     for
-      plan <- folds
-      partitioned <- PartitionMeansBuilder.fromPatterns(roi, context.response, plan)
+      partitioned <- PartitionMeansBuilder.fromPatterns(roi, context.response, context.foldPlan)
     yield
       val rdm = Rdm.crossnobisDistances(partitioned.means, normalizeByFeatures)
       val payload =
-        if storeRdm then Some(RoiPayload.Rdm(partitioned.items, rdm))
+        if storeRdm then Some(RoiPayload.Rdm(LabeledRdm.unsafe(partitioned.items, rdm)))
         else None
       val metrics =
         RdmAnalysisSupport.rdmMetricPairs(rdm, partitioned.means.features) :+
@@ -641,16 +690,17 @@ final case class RsaAnalysis(
     for
       observed <- RdmAnalysisSupport.observedPatterns(roi, context, rows)
       observedRdm <- method.compute(observed.matrix)
-      scores <- scoreModels(observed.items, observedRdm)
+      labeledObserved = LabeledRdm.unsafeFromItemIds(observed.items, observedRdm)
+      scores <- scoreModels(labeledObserved)
     yield
       val scoreMetrics = scores.map(score => s"${score.modelName}.${scorer.name}" -> score.value)
       val metrics = RdmAnalysisSupport.rdmMetricPairs(observedRdm, observed.matrix.cols) ++ scoreMetrics
       val payload =
-        if storeObservedRdm then Some(RoiPayload.Rsa(observed.items, Some(observedRdm), scores))
-        else Some(RoiPayload.Rsa(observed.items, None, scores))
+        if storeObservedRdm then Some(RoiPayload.Rsa(Some(labeledObserved), scores))
+        else Some(RoiPayload.Rsa(None, scores))
       RoiAnalysisResult(MetricVector.from(metrics), payload)
 
-  private def scoreModels(items: Vector[String], observed: RdmVector): Either[MvpaError, Vector[RsaScore]] =
+  private def scoreModels(observed: LabeledRdm): Either[MvpaError, Vector[RsaScore]] =
     val out = Vector.newBuilder[RsaScore]
     var error: MvpaError | Null = null
     var i = 0
@@ -658,7 +708,7 @@ final case class RsaAnalysis(
       val model = models(i)
       val scored =
         for
-          aligned <- model.alignTo(items)
+          aligned <- model.alignTo(observed.items)
           value <- scorer.score(observed, aligned)
         yield RsaScore(model.name, value)
       scored match
@@ -741,7 +791,7 @@ object SamplewiseRsaAnalysis:
         row += 1
       Right(out.result())
 
-final case class ObservedPatterns(items: Vector[String], matrix: DoubleMatrix)
+final case class ObservedPatterns(items: Vector[RsaItemId], matrix: DoubleMatrix)
 
 private[mvpa] object RdmAnalysisSupport:
   def observedPatterns(
@@ -751,12 +801,12 @@ private[mvpa] object RdmAnalysisSupport:
   ): Either[MvpaError, ObservedPatterns] =
     rows match
       case RdmRows.Samples =>
-        Right(ObservedPatterns(roi.sampleIndices.map(_.value.toString), roi.value))
+        Right(ObservedPatterns(roi.sampleIndices.map(index => RsaItemId.unsafe(index.value.toString)), roi.value))
       case RdmRows.ClassMeans =>
         for
           labels <- Classification.categorical(context.response, roi.samples)
           summary <- Classification.classSummary(roi, labels)
-        yield ObservedPatterns(summary.classes.map(_.value), summary.means)
+        yield ObservedPatterns(summary.classes.map(label => RsaItemId.unsafe(label.value)), summary.means)
 
   def rdmMetrics(rdm: RdmVector, features: Int): MetricVector =
     MetricVector.from(rdmMetricPairs(rdm, features))

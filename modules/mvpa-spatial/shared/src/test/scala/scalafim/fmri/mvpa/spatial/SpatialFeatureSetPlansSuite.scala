@@ -8,6 +8,8 @@ import scalafim.surface.{
   LabelInfo,
   LabeledSurface,
   MeshTopology,
+  ParcelKey,
+  ParcelUnit,
   SurfaceGeometry,
   SurfaceKind,
   TriangleMesh,
@@ -77,8 +79,10 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     Response.categorical(Vector("a", "a", "b", "b")).toOption.get
 
   test("volume label maps become regional feature plans with linear voxel ordering") {
-    val plan = SpatialFeatureSetPlans.fromVolumeLabels("volume-labels", labelVolume).toOption.get
+    val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labelVolume).toOption.get
+    val plan = spatial.plan
 
+    assertEquals(spatial.domain, SpatialFeatureDomain.VolumeLabels(volumeSpace, Set(0)))
     assertEquals(plan.kind, FeatureSetKind.Region)
     assertEquals(plan.featureSets.map(_.id.value), Vector(1, 2))
     assertEquals(plan.featureSets.map(_.label), Vector(Some("1"), Some("2")))
@@ -91,8 +95,10 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
   }
 
   test("volume atlas plans preserve atlas region ids and labels") {
-    val plan = SpatialFeatureSetPlans.fromVolumeAtlas("toy-atlas", toyVolumeAtlas).toOption.get
+    val spatial = SpatialFeatureSetPlans.volumeAtlas("toy-atlas", toyVolumeAtlas).toOption.get
+    val plan = spatial.plan
 
+    assertEquals(spatial.domain, SpatialFeatureDomain.VolumeAtlas(toyVolumeAtlas.ref, ParcelCoveragePolicy.RequireEveryRegion))
     assertEquals(plan.kind, FeatureSetKind.Region)
     assertEquals(plan.featureSets.map(_.id.value), Vector(1, 2))
     assertEquals(plan.featureSets.map(_.label), Vector(Some("semantic"), Some("visual")))
@@ -105,10 +111,18 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
-      )
+    )
     val window = Searchlight.sphericalRoi(space, Vector(1, 1, 0), radius = 1.0, fill = 1, mask = None, label = "center")
-    val plan = SpatialFeatureSetPlans.fromRoiWindows("window", Vector(window)).toOption.get
+    val spatial = SpatialFeatureSetPlans.roiWindows("window", Vector(window)).toOption.get
+    val plan = spatial.plan
     val featureSet = plan.featureSets.head
+
+    spatial.domain match
+      case SpatialFeatureDomain.Searchlight(windows) =>
+        assertEquals(windows.size, 1)
+        assertEquals(windows.windows.head.center.value, 4)
+      case other =>
+        fail(s"expected searchlight domain, found $other")
 
     assertEquals(plan.kind, FeatureSetKind.Searchlight)
     assertEquals(featureSet.id.value, 4)
@@ -168,21 +182,73 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         Vector(LabelInfo(1, "posterior"), LabelInfo(2, "anterior"))
       )
 
-    val plan = SpatialFeatureSetPlans.fromLabeledSurface("surface-parcels", labels, topology).toOption.get
+    val spatial = SpatialFeatureSetPlans.labeledSurface("surface-parcels", labels, topology).toOption.get
+    val plan = spatial.plan
 
+    assertEquals(spatial.domain, SpatialFeatureDomain.SurfaceParcels(SurfaceParcelIdentityPolicy.StableOrdinal))
     assertEquals(plan.kind, FeatureSetKind.Region)
     assertEquals(plan.featureSets.map(_.id.value), Vector(0, 1))
     assertEquals(plan.featureSets.map(_.label), Vector(Some("posterior"), Some("anterior")))
     assertEquals(plan.featureSets.map(_.featureIndices.map(_.value)), Vector(Vector(2, 3), Vector(0, 1)))
+
+    val keyed = SpatialFeatureSetPlans
+      .labeledSurface("surface-parcels-keyed", labels, topology, identityPolicy = SurfaceParcelIdentityPolicy.ParcelKey)
+      .toOption
+      .get
+      .plan
+
+    assertEquals(keyed.featureSets.map(_.id.value), Vector(1, 2))
+    assertEquals(keyed.featureSets.map(_.label), Vector(Some("posterior"), Some("anterior")))
   }
 
-  test("adapter validation reports typed MVPA plan errors") {
+  test("typed spatial errors convert to MVPA compatibility errors") {
     val badLabels =
       NeuroVol.fromLinear(
         NArrayUtil.fromArray(Array(0, -1, 1, 1, 0, 0)),
         volumeSpace
       )
-    val error = SpatialFeatureSetPlans.fromVolumeLabels("bad", badLabels).swap.toOption.get
+    val typedError = SpatialFeatureSetPlans.volumeLabels("bad", badLabels).swap.toOption.get
+    val mvpaError = SpatialFeatureSetPlans.fromVolumeLabels("bad", badLabels).swap.toOption.get
 
-    assert(error.message.contains("non-negative"))
+    assertEquals(typedError, SpatialPlanError.InvalidVolumeLabel(-1))
+    assert(mvpaError.message.contains("non-negative"))
+  }
+
+  test("typed searchlight windows reject centers missing from their voxel index set") {
+    val space =
+      NeuroSpace(
+        dims = Vector(3, 3, 1),
+        spacing = Some(Vector(1.0, 1.0, 1.0)),
+        origin = Some(Vector(0.0, 0.0, 0.0))
+      )
+    val window =
+      ROIVolWindow(
+        space,
+        ROICoords(Vector(Vector(0, 0, 0))),
+        NArrayUtil.fromArray(Array(1)),
+        centerIndex = 0,
+        parentIndex = 4,
+        label = "bad-center"
+      )
+    val typedError = SpatialFeatureSetPlans.roiWindows("bad-window", Vector(window)).swap.toOption.get
+    val mvpaError = SpatialFeatureSetPlans.fromRoiWindows("bad-window", Vector(window)).swap.toOption.get
+
+    assertEquals(typedError, SpatialPlanError.SearchlightCenterMissing(SearchlightCenter.unsafe(4)))
+    assert(mvpaError.message.contains("center 4"))
+  }
+
+  test("parcel key identity policy reports fragmented parcel id collisions") {
+    val parcels =
+      Vector(
+        ParcelUnit(ParcelKey(7, Some(1)), Vector(VertexId(0)), None),
+        ParcelUnit(ParcelKey(7, Some(2)), Vector(VertexId(1)), None)
+      )
+    val typedError =
+      SpatialFeatureSetPlans
+        .surfaceParcels("fragmented", parcels, SurfaceParcelIdentityPolicy.ParcelKey)
+        .swap
+        .toOption
+        .get
+
+    assertEquals(typedError, SpatialPlanError.DuplicateParcelIdentity(7, "7.2"))
   }

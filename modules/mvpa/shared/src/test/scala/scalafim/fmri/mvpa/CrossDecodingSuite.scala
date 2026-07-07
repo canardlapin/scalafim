@@ -117,6 +117,36 @@ class CrossDecodingSuite extends munit.FunSuite:
         fail(s"unexpected failure: ${failure.error.message}")
   }
 
+  test("cross-domain dataset supports paired source and target feature sets") {
+    val dataset = CrossDomainDataset.fromMatrices(source, target)
+    val paired =
+      PairedFeatureSet
+        .unsafe(
+          FeatureSet.unsafe(RoiId(8), Vector(0, 1), label = Some("source-pair")),
+          FeatureSet.unsafe(RoiId(8), Vector(1, 2), label = Some("target-pair"))
+        )
+
+    val result =
+      CrossDomainMvpaEngine
+        .runSource(dataset, Vector(paired), design, CrossDecoding.naive())
+        .toOption
+        .get
+
+    assertEquals(result.failures.length, 0)
+    assertEquals(result.successes.map(_.roiId.value), Vector(8))
+    assertEquals(result.successes.head.features.map(_.value), Vector(0, 1))
+  }
+
+  test("paired feature sets reject mismatched ROI ids") {
+    val result =
+      PairedFeatureSet(
+        FeatureSet.unsafe(RoiId(1), Vector(0, 1)),
+        FeatureSet.unsafe(RoiId(2), Vector(0, 1))
+      )
+
+    assert(result.swap.toOption.get.message.contains("ROI id"))
+  }
+
   test("cross-domain accuracy is target-row aligned, not sample-id indexed") {
     val shiftedTarget =
       PatternMatrix(

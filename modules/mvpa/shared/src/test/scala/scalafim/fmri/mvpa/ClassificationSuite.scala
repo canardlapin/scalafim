@@ -189,7 +189,7 @@ class ClassificationSuite extends munit.FunSuite:
   }
 
   test("swift diagonal shrinkage validates alpha through typed errors") {
-    val result = SwiftCentroidClassifier(FeatureScaling.DiagonalShrinkage(1.5)).fit(data, labels)
+    val result = SwiftCentroidClassifier(FeatureScaling.unsafeDiagonalShrinkage(1.5)).fit(data, labels)
 
     assert(result.isLeft)
     assert(leftMessage(result).contains("diagonal shrinkage"))

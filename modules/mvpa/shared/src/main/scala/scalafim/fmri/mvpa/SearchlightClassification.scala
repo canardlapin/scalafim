@@ -398,7 +398,7 @@ object SearchlightClassifierScanner:
             sorted(sorted.length / 2)
         feature = 0
         while feature < scales.length do
-          scales(feature) = math.sqrt((1.0 - alpha) * scales(feature) * scales(feature) + alpha * target * target)
+          scales(feature) = math.sqrt((1.0 - alpha.value) * scales(feature) * scales(feature) + alpha.value * target * target)
           feature += 1
         floorScales(scales)
 

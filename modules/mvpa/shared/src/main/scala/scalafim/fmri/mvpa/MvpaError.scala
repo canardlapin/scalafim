@@ -8,6 +8,8 @@ enum MvpaError:
   case EmptyFold(id: String)
   case FoldIndexOutOfBounds(id: String, index: Int, samples: Int)
   case FoldTrainTestOverlap(id: String)
+  case InvalidSampleAxis(detail: String)
+  case MissingFoldPlan(analysis: String)
   case EmptyFeatureSet(id: RoiId)
   case DuplicateFeatureIndices(id: RoiId)
   case InvalidFeatureSetPlan(detail: String)
@@ -37,6 +39,10 @@ enum MvpaError:
         s"fold '$id' index $index out of bounds for $samples samples"
       case FoldTrainTestOverlap(id) =>
         s"fold '$id' has overlapping train and test samples"
+      case InvalidSampleAxis(detail) =>
+        detail
+      case MissingFoldPlan(analysis) =>
+        s"$analysis requires a fold plan"
       case EmptyFeatureSet(id) =>
         s"feature set ${id.value} must contain at least one feature"
       case DuplicateFeatureIndices(id) =>

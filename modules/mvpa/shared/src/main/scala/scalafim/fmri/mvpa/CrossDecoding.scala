@@ -3,7 +3,51 @@ package scalafim.fmri.mvpa
 final case class CrossDomainPatternSource(
     source: PatternSource,
     target: PatternSource
+):
+  def toDataset: Either[MvpaError, CrossDomainDataset] =
+    CrossDomainDataset(source, target)
+
+final case class CrossDomainDataset private (
+    source: PatternSource,
+    target: PatternSource,
+    sourceAxis: SampleAxis,
+    targetAxis: SampleAxis
 )
+
+object CrossDomainDataset:
+  def apply(source: PatternSource, target: PatternSource): Either[MvpaError, CrossDomainDataset] =
+    for
+      sourceAxis <- SampleAxis(source.samples)
+      targetAxis <- SampleAxis(target.samples)
+    yield new CrossDomainDataset(source, target, sourceAxis, targetAxis)
+
+  def unsafe(source: PatternSource, target: PatternSource): CrossDomainDataset =
+    apply(source, target).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def fromMatrices(source: PatternMatrix, target: PatternMatrix): CrossDomainDataset =
+    unsafe(PatternSource.fromMatrix(source), PatternSource.fromMatrix(target))
+
+final case class PairedFeatureSet private (
+    source: FeatureSet,
+    target: FeatureSet
+):
+  def id: RoiId =
+    source.id
+
+  def reportedFeatures: Vector[FeatureIndex] =
+    source.featureIndices
+
+object PairedFeatureSet:
+  def apply(source: FeatureSet, target: FeatureSet): Either[MvpaError, PairedFeatureSet] =
+    if source.id != target.id then
+      Left(MvpaError.InvalidFeatureSetPlan("paired feature sets must share an ROI id"))
+    else Right(new PairedFeatureSet(source, target))
+
+  def same(featureSet: FeatureSet): PairedFeatureSet =
+    new PairedFeatureSet(featureSet, featureSet)
+
+  def unsafe(source: FeatureSet, target: FeatureSet): PairedFeatureSet =
+    apply(source, target).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class CrossDecodingDesign private (
     sourceLabels: Vector[ClassLabel],
@@ -77,7 +121,7 @@ object CrossDecodingDesign:
 
 final case class CrossDomainRoiContext(
     design: CrossDecodingDesign,
-    featureSet: FeatureSet
+    featureSet: PairedFeatureSet
 )
 
 trait CrossDomainRoiAnalysis:
@@ -170,43 +214,55 @@ object CrossDomainMvpaTask:
       design: CrossDecodingDesign,
       analysis: CrossDomainRoiAnalysis
   ): RoiOutcome =
-    design.validateSamples(sources.source.samples, sources.target.samples) match
+    sources.toDataset match
       case Left(error) =>
         RoiOutcome.Failure(featureSet.id, featureSet.featureIndices, error)
-      case Right(validDesign) =>
-        evaluateValidated(sources, featureSet, validDesign, analysis)
+      case Right(dataset) =>
+        evaluate(dataset, PairedFeatureSet.same(featureSet), design, analysis)
 
-  private[mvpa] def evaluateValidated(
-      sources: CrossDomainPatternSource,
-      featureSet: FeatureSet,
+  def evaluate(
+      dataset: CrossDomainDataset,
+      featureSet: PairedFeatureSet,
       design: CrossDecodingDesign,
       analysis: CrossDomainRoiAnalysis
   ): RoiOutcome =
-    sources.source.selectFeatures(featureSet) match
+    design.validateSamples(dataset.sourceAxis.samples, dataset.targetAxis.samples) match
       case Left(error) =>
-        RoiOutcome.Failure(featureSet.id, featureSet.featureIndices, error)
+        RoiOutcome.Failure(featureSet.id, featureSet.reportedFeatures, error)
+      case Right(validDesign) =>
+        evaluateValidated(dataset, featureSet, validDesign, analysis)
+
+  private[mvpa] def evaluateValidated(
+      dataset: CrossDomainDataset,
+      featureSet: PairedFeatureSet,
+      design: CrossDecodingDesign,
+      analysis: CrossDomainRoiAnalysis
+  ): RoiOutcome =
+    dataset.source.selectFeatures(featureSet.source) match
+      case Left(error) =>
+        RoiOutcome.Failure(featureSet.id, featureSet.reportedFeatures, error)
       case Right(sourceRoi) if sourceRoi.features < analysis.minFeatures =>
         RoiOutcome.Failure(
           featureSet.id,
-          featureSet.featureIndices,
+          featureSet.reportedFeatures,
           MvpaError.TooFewFeatures(featureSet.id, sourceRoi.features, analysis.minFeatures)
         )
       case Right(sourceRoi) =>
-        sources.target.selectFeatures(featureSet) match
+        dataset.target.selectFeatures(featureSet.target) match
           case Left(error) =>
-            RoiOutcome.Failure(featureSet.id, featureSet.featureIndices, error)
+            RoiOutcome.Failure(featureSet.id, featureSet.reportedFeatures, error)
           case Right(targetRoi) if targetRoi.features < analysis.minFeatures =>
             RoiOutcome.Failure(
               featureSet.id,
-              featureSet.featureIndices,
+              featureSet.reportedFeatures,
               MvpaError.TooFewFeatures(featureSet.id, targetRoi.features, analysis.minFeatures)
             )
           case Right(targetRoi) =>
             analysis.evaluate(sourceRoi, targetRoi, CrossDomainRoiContext(design, featureSet)) match
               case Right(result) =>
-                RoiOutcome.Success(featureSet.id, featureSet.featureIndices, result.metrics, result.payload)
+                RoiOutcome.Success(featureSet.id, featureSet.reportedFeatures, result.metrics, result.payload)
               case Left(error) =>
-                RoiOutcome.Failure(featureSet.id, featureSet.featureIndices, error)
+                RoiOutcome.Failure(featureSet.id, featureSet.reportedFeatures, error)
 
 object CrossDomainMvpaEngine:
   def run(
@@ -217,8 +273,8 @@ object CrossDomainMvpaEngine:
       analysis: CrossDomainRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
     runSource(
-      CrossDomainPatternSource(PatternSource.fromMatrix(source), PatternSource.fromMatrix(target)),
-      featureSets.toVector,
+      CrossDomainDataset.fromMatrices(source, target),
+      featureSets.map(PairedFeatureSet.same).toVector,
       None,
       design,
       analysis
@@ -232,7 +288,7 @@ object CrossDomainMvpaEngine:
       analysis: CrossDomainRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
     runSource(
-      CrossDomainPatternSource(PatternSource.fromMatrix(source), PatternSource.fromMatrix(target)),
+      CrossDomainDataset.fromMatrices(source, target),
       featureSetPlan,
       design,
       analysis
@@ -244,7 +300,15 @@ object CrossDomainMvpaEngine:
       design: CrossDecodingDesign,
       analysis: CrossDomainRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
-    runSource(sources, featureSetPlan.featureSets, Some(featureSetPlan), design, analysis)
+    sources.toDataset.flatMap(dataset => runSource(dataset, featureSetPlan, design, analysis))
+
+  def runSource(
+      dataset: CrossDomainDataset,
+      featureSetPlan: FeatureSetPlan,
+      design: CrossDecodingDesign,
+      analysis: CrossDomainRoiAnalysis
+  ): Either[MvpaError, MvpaResult] =
+    runSource(dataset, featureSetPlan.featureSets.map(PairedFeatureSet.same), Some(featureSetPlan), design, analysis)
 
   def runSource(
       sources: CrossDomainPatternSource,
@@ -252,19 +316,27 @@ object CrossDomainMvpaEngine:
       design: CrossDecodingDesign,
       analysis: CrossDomainRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
-    runSource(sources, featureSets.toVector, None, design, analysis)
+    sources.toDataset.flatMap(dataset => runSource(dataset, featureSets.map(PairedFeatureSet.same).toVector, None, design, analysis))
+
+  def runSource(
+      dataset: CrossDomainDataset,
+      featureSets: Seq[PairedFeatureSet],
+      design: CrossDecodingDesign,
+      analysis: CrossDomainRoiAnalysis
+  ): Either[MvpaError, MvpaResult] =
+    runSource(dataset, featureSets.toVector, None, design, analysis)
 
   private def runSource(
-      sources: CrossDomainPatternSource,
-      featureSets: Vector[FeatureSet],
+      dataset: CrossDomainDataset,
+      featureSets: Vector[PairedFeatureSet],
       featureSetPlan: Option[FeatureSetPlan],
       design: CrossDecodingDesign,
       analysis: CrossDomainRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
-    design.validateSamples(sources.source.samples, sources.target.samples).map { validDesign =>
+    design.validateSamples(dataset.sourceAxis.samples, dataset.targetAxis.samples).map { validDesign =>
       val outcomes =
         featureSets.map { featureSet =>
-          CrossDomainMvpaTask.evaluateValidated(sources, featureSet, validDesign, analysis)
+          CrossDomainMvpaTask.evaluateValidated(dataset, featureSet, validDesign, analysis)
         }
       MvpaResult(analysis.name, featureSetPlan, outcomes)
     }

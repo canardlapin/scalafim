@@ -3,13 +3,66 @@ package scalafim.fmri.mvpa
 trait RoiAnalysis:
   def name: String
   def minFeatures: Int = 2
+  def requiresFolds: Boolean = false
   def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult]
 
-final case class RoiContext(
-    response: Response,
-    folds: Option[FoldPlan],
+trait FoldRequiredRoiAnalysis extends RoiAnalysis:
+  override final def requiresFolds: Boolean = true
+  def missingFoldsError: MvpaError
+
+  final override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
+    context.folded(missingFoldsError).flatMap(foldedContext => evaluateFolded(roi, foldedContext))
+
+  def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult]
+
+sealed trait RoiContext:
+  def responseContext: ResponseContext
+  def featureSet: FeatureSet
+
+  def sampleAxis: SampleAxis =
+    responseContext.axis
+
+  def response: Response =
+    responseContext.response
+
+  def folds: Option[FoldPlan]
+
+  def folded(error: MvpaError): Either[MvpaError, FoldedRoiContext] =
+    this match
+      case context: FoldedRoiContext => Right(context)
+      case _ => Left(error)
+
+final case class UnfoldedRoiContext(
+    responseContext: ResponseContext,
     featureSet: FeatureSet
-)
+) extends RoiContext:
+  override val folds: Option[FoldPlan] =
+    None
+
+final case class FoldedRoiContext(
+    foldedContext: FoldedResponseContext,
+    featureSet: FeatureSet
+) extends RoiContext:
+  override def responseContext: ResponseContext =
+    foldedContext.responseContext
+
+  override def folds: Option[FoldPlan] =
+    Some(foldedContext.folds)
+
+  def foldPlan: FoldPlan =
+    foldedContext.folds
+
+object RoiContext:
+  def apply(
+      responseContext: ResponseContext,
+      folds: Option[FoldPlan],
+      featureSet: FeatureSet
+  ): Either[MvpaError, RoiContext] =
+    folds match
+      case None =>
+        Right(UnfoldedRoiContext(responseContext, featureSet))
+      case Some(plan) =>
+        FoldedResponseContext(responseContext, plan).map(folded => FoldedRoiContext(folded, featureSet))
 
 enum RoiOutcome:
   case Success(

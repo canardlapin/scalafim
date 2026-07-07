@@ -26,7 +26,7 @@ object FeatureSetPlan:
     else if sets.isEmpty then Left(MvpaError.InvalidFeatureSetPlan("feature set plan must contain at least one feature set"))
     else if sets.map(_.id.value).distinct.length != sets.length then
       Left(MvpaError.InvalidFeatureSetPlan("feature set plan ids must be unique"))
-    else Right(new FeatureSetPlan(trimmed, kind, sets))
+    else validateKind(kind, sets).map(_ => new FeatureSetPlan(trimmed, kind, sets))
 
   def regional(name: String, featureSets: Seq[FeatureSet]): Either[MvpaError, FeatureSetPlan] =
     FeatureSetPlan(name, FeatureSetKind.Region, featureSets)
@@ -70,3 +70,22 @@ object FeatureSetPlan:
     error match
       case null => Right(out.result())
       case e => Left(e)
+
+  private def validateKind(kind: FeatureSetKind, sets: Vector[FeatureSet]): Either[MvpaError, Unit] =
+    kind match
+      case FeatureSetKind.Region =>
+        sets.find(_.center.nonEmpty) match
+          case Some(featureSet) =>
+            Left(MvpaError.InvalidFeatureSetPlan(s"regional feature set ${featureSet.id.value} must not define a searchlight center"))
+          case None =>
+            Right(())
+      case FeatureSetKind.Searchlight =>
+        sets.find(_.center.isEmpty) match
+          case Some(featureSet) =>
+            Left(MvpaError.InvalidFeatureSetPlan(s"searchlight feature set ${featureSet.id.value} must define a center"))
+          case None =>
+            sets.find(featureSet => !featureSet.featureIndices.contains(featureSet.center.get)) match
+              case Some(featureSet) =>
+                Left(MvpaError.InvalidFeatureSetPlan(s"searchlight center for feature set ${featureSet.id.value} must be included in the feature indices"))
+              case None =>
+                Right(())

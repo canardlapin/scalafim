@@ -31,6 +31,7 @@ object FoldPlan:
   def apply(folds: Seq[Fold], samples: Int): Either[MvpaError, FoldPlan] =
     val foldVector = folds.toVector
     if foldVector.isEmpty then Left(MvpaError.EmptyFoldPlan)
+    else if samples <= 1 then Left(MvpaError.InvalidSampleAxis("fold plan requires at least two samples"))
     else
       foldVector
         .flatMap(fold => fold.train ++ fold.test)
@@ -40,6 +41,10 @@ object FoldPlan:
 
   def unsafe(folds: Seq[Fold], samples: Int): FoldPlan =
     apply(folds, samples).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def alignTo(axis: SampleAxis, folds: FoldPlan): Either[MvpaError, FoldPlan] =
+    if folds.samples == axis.samples then Right(folds)
+    else Left(MvpaError.ResponseLengthMismatch(axis.samples, folds.samples))
 
   def leaveOneBlockOut(blocks: Seq[Int]): Either[MvpaError, FoldPlan] =
     val blockVector = blocks.toVector

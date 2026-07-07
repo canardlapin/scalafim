@@ -23,6 +23,10 @@ object FeatureSet:
     else if indices.exists(_ < 0) then
       val bad = indices.find(_ < 0).get
       Left(MvpaError.FeatureIndexOutOfBounds(id, FeatureIndex.unsafe(bad)))
+    else if center.exists(_ < 0) then
+      Left(MvpaError.InvalidFeatureSetPlan("searchlight centers must be non-negative"))
+    else if center.exists(value => !indices.contains(value)) then
+      Left(MvpaError.InvalidFeatureSetPlan("searchlight center must be included in its feature set"))
     else
       val parsed = indices.map(FeatureIndex.apply).toVector
       val parsedCenter = center.map(FeatureIndex.apply)

@@ -47,7 +47,7 @@ class SearchlightClassificationSuite extends munit.FunSuite:
       .get
 
   test("SWIFT searchlight scanner matches the reference classifier analysis") {
-    val classifier = SwiftCentroidClassifier(FeatureScaling.DiagonalShrinkage(0.2))
+    val classifier = SwiftCentroidClassifier(FeatureScaling.unsafeDiagonalShrinkage(0.2))
     val reference =
       MvpaEngine
         .run(data, searchlights, labels, CrossValidatedClassifierAnalysis(classifier, storePredictions = true), Some(folds))
@@ -63,7 +63,7 @@ class SearchlightClassificationSuite extends munit.FunSuite:
   }
 
   test("SWIFT searchlight scanner matches reference classification with overlapping folds") {
-    val classifier = SwiftCentroidClassifier(FeatureScaling.DiagonalShrinkage(0.2))
+    val classifier = SwiftCentroidClassifier(FeatureScaling.unsafeDiagonalShrinkage(0.2))
     val reference =
       MvpaEngine
         .run(data, searchlights, labels, CrossValidatedClassifierAnalysis(classifier, storePredictions = true), Some(overlappingFolds))

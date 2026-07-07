@@ -21,9 +21,9 @@ object MvpaStream:
       analysis: RoiAnalysis,
       folds: Option[FoldPlan]
   ): Either[MvpaError, Iterator[RoiOutcome]] =
-    validate(source, response, folds).map { validResponse =>
+    validate(source, response, folds, analysis).map { responseContext =>
       featureSets.iterator.map { featureSet =>
-        MvpaTask.evaluateValidated(source, featureSet, validResponse, analysis, folds)
+        MvpaTask.evaluateValidated(source, featureSet, responseContext, analysis, folds)
       }
     }
 
@@ -84,9 +84,7 @@ object MvpaStream:
   private def validate(
       source: PatternSource,
       response: Response,
-      folds: Option[FoldPlan]
-  ): Either[MvpaError, Response] =
-    for
-      validResponse <- response.validate(source.samples)
-      _ <- MvpaTask.validateFolds(folds, source.samples)
-    yield validResponse
+      folds: Option[FoldPlan],
+      analysis: RoiAnalysis
+  ): Either[MvpaError, ResponseContext] =
+    MvpaTask.validateContext(source, response, folds, analysis)

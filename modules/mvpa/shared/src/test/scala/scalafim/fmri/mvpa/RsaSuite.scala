@@ -51,9 +51,9 @@ class RsaSuite extends munit.FunSuite:
     assertEquals(success.metrics("Pairs"), Some(3.0))
     assertEqualsDouble(success.metrics("MeanDistance").get, 10.0 / 3.0, 1e-12)
     success.payload match
-      case Some(RoiPayload.Rdm(items, rdm)) =>
-        assertEquals(items, Vector("b", "a", "c"))
-        assertEquals(rdm.values, Vector(1.0, 5.0, 4.0))
+      case Some(RoiPayload.Rdm(labeled)) =>
+        assertEquals(labeled.labels, Vector("b", "a", "c"))
+        assertEquals(labeled.rdm.values, Vector(1.0, 5.0, 4.0))
       case other =>
         fail(s"unexpected payload: $other")
   }
@@ -67,9 +67,9 @@ class RsaSuite extends munit.FunSuite:
     assertEqualsDouble(success.metrics("MeanDistance").get, 8.0, 1e-12)
     assertEquals(success.metrics("Folds"), Some(2.0))
     success.payload match
-      case Some(RoiPayload.Rdm(items, rdm)) =>
-        assertEquals(items, Vector("a", "b"))
-        assertEqualsDouble(rdm.values.head, 8.0, 1e-12)
+      case Some(RoiPayload.Rdm(labeled)) =>
+        assertEquals(labeled.labels, Vector("a", "b"))
+        assertEqualsDouble(labeled.rdm.values.head, 8.0, 1e-12)
       case other =>
         fail(s"unexpected payload: $other")
   }
@@ -151,11 +151,62 @@ class RsaSuite extends munit.FunSuite:
 
     assertEqualsDouble(success.metrics("geometry.Pearson").get, 1.0, 1e-12)
     success.payload match
-      case Some(RoiPayload.Rsa(items, Some(observed), scores)) =>
-        assertEquals(items, Vector("b", "a", "c"))
-        assertEquals(observed.values, Vector(1.0, 5.0, 4.0))
+      case Some(RoiPayload.Rsa(Some(observed), scores)) =>
+        assertEquals(observed.labels, Vector("b", "a", "c"))
+        assertEquals(observed.rdm.values, Vector(1.0, 5.0, 4.0))
         assertEquals(scores.map(_.modelName), Vector("geometry"))
         assertEqualsDouble(scores.head.value, 1.0, 1e-12)
+      case other =>
+        fail(s"unexpected payload: $other")
+  }
+
+  test("RSA analysis passes labeled observed RDMs to partial Pearson scorer") {
+    val patterns =
+      PatternMatrix.fromRows(
+        Vector(
+          Vector(0.0),
+          Vector(1.0),
+          Vector(2.0),
+          Vector(4.0)
+        )
+      )
+    val response = Response.continuous(Vector(0.0, 1.0, 2.0, 3.0)).toOption.get
+    val plan =
+      FeatureSetPlan.regional("one-feature", Vector(FeatureSet.unsafe(RoiId(7), Vector(0)))).toOption.get
+    val target =
+      RdmModel.unsafe(
+        "target",
+        Vector("0", "1", "2", "3"),
+        RdmVector.unsafe(4, Vector(2.0, 5.0, 3.0, 11.0, 7.0, 13.0))
+      )
+    val reversedControl =
+      RdmModel.unsafe(
+        "trend",
+        Vector("3", "2", "1", "0"),
+        RdmVector.unsafe(4, Vector(6.0, 5.0, 3.0, 4.0, 2.0, 1.0))
+      )
+    val scorer = RdmScorer.PartialPearson.unsafe(Vector(reversedControl))
+    val observed = Rdm.squaredEuclidean(patterns.value).toOption.get
+    val expected =
+      scorer.score(Vector("0", "1", "2", "3"), observed, target.rdm).toOption.get
+    val analysis =
+      RsaAnalysis(
+        method = RdmMethod.SquaredEuclidean(),
+        models = Vector(target),
+        rows = RdmRows.Samples,
+        scorer = scorer,
+        storeObservedRdm = true
+      )
+
+    val result = MvpaEngine.run(patterns, plan, response, analysis, folds = None).toOption.get
+    val success = result.successes.head
+
+    assertEquals(result.failures.length, 0)
+    assertEqualsDouble(success.metrics("target.PartialPearson").get, expected, 1e-12)
+    success.payload match
+      case Some(RoiPayload.Rsa(Some(observedPayload), scores)) =>
+        assertEquals(observedPayload.labels, Vector("0", "1", "2", "3"))
+        assertEquals(scores.map(_.modelName), Vector("target"))
       case other =>
         fail(s"unexpected payload: $other")
   }

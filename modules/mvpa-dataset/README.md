@@ -14,28 +14,31 @@ module is the narrow bridge between the two:
 
 - `MvpaDatasetView` converts an `FmriSeries` or selected `FmriDataset` read into
   a `PatternMatrix` and backend-neutral `PatternSource`;
+- `LabeledMvpaDatasetView` is the classifier-facing view: it can only be built
+  when every sample has a class label and exposes a validated `Response`
+  directly;
 - `PatternTable` represents any row-by-feature numeric product, including
   fit-result coefficient maps or trialwise beta maps, without depending on the
   `fit` module;
-- `FeatureSpaceRef` records the selected voxel feature space while preserving
-  global voxel indices, so atlas regions and searchlight plans remain
-  compatible after dataset selection;
-- `SampleTable` and `SampleRecord` preserve row-aligned sample provenance,
-  distinguishing acquisition timepoints from derived estimate rows;
-- typed sample metadata builds categorical `Response` values and leave-one-run
-  or leave-one-block-out `FoldPlan`s;
-- failures are represented as `MvpaDatasetError` values rather than thrown
-  ingestion exceptions.
+- `FeatureMapping` distinguishes voxel-backed dataset features from abstract
+  feature ids while preserving global indices, so atlas regions and searchlight
+  plans remain compatible after dataset selection;
+- `DatasetPatternRequest` ties a `DataSelection`, `SampleMetadataRequest`, and
+  feature-space id into one typed request;
+- `SampleTable`, `SampleRecord`, and `SampleMetadata` preserve row-aligned
+  sample provenance and aligned label/block/run/item columns;
+- failures are represented as categorized `MvpaDatasetError` values rather than
+  thrown ingestion exceptions.
 
 Example:
 
 ```scala
 val view =
-  MvpaDatasetView
+  LabeledMvpaDatasetView
     .fromDataset(
       dataset,
+      labels = Vector("face", "scene", "face", "scene"),
       selection = DataSelection(voxels = IndexSelection.indices(0, 2, 4)),
-      labels = Some(Vector("face", "scene", "face", "scene")),
       blocks = Some(Vector("run-1", "run-1", "run-2", "run-2"))
     )
     .toOption
@@ -45,10 +48,26 @@ val result =
   MvpaEngine.runSource(
     view.source,
     regions,
-    view.response.toOption.get,
+    view.response,
     CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
     Some(view.foldsByBlock.toOption.get)
   )
+```
+
+For lower-level construction, pass a single typed request:
+
+```scala
+val request =
+  DatasetPatternRequest(
+    selection = DataSelection(voxels = IndexSelection.indices(0, 2, 4)),
+    metadata = SampleMetadataRequest.labeled(
+      labels = Vector("face", "scene", "face", "scene"),
+      blocks = Some(Vector("run-1", "run-1", "run-2", "run-2"))
+    )
+  )
+
+val unlabeledOrLabeled =
+  MvpaDatasetView.fromDataset(dataset, request)
 ```
 
 Derived rows such as condition coefficients or LSS trial betas use the same
@@ -56,12 +75,12 @@ view surface:
 
 ```scala
 val betaView =
-  MvpaDatasetView
+  LabeledMvpaDatasetView
     .fromPatternRows(
       rows = betaRows,
       rowNames = trialNames,
-      voxelIndices = selectedVoxels,
-      labels = Some(trialLabels),
+      featureIndices = selectedVoxels,
+      labels = trialLabels,
       blocks = Some(runLabels),
       featureSpaceId = FeatureSpaceId.unsafe("trial-betas")
     )

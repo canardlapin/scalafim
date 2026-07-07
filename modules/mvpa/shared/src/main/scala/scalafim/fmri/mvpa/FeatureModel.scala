@@ -50,8 +50,16 @@ object FeatureModelDesign:
   ): FeatureModelDesign =
     apply(items, features, featureNames).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class FeatureRidgeEstimator(lambda: Double = 1.0):
-  require(lambda.isFinite && lambda > 0.0, "ridge lambda must be positive and finite")
+final class FeatureRidgeEstimator private (val penalty: RidgePenalty):
+  def lambda: Double =
+    penalty.value
+
+object FeatureRidgeEstimator:
+  def apply(lambda: Double = 1.0): FeatureRidgeEstimator =
+    RidgePenalty(lambda).fold(error => throw new IllegalArgumentException(error.message), value => new FeatureRidgeEstimator(value))
+
+  def fromPenalty(lambda: RidgePenalty): FeatureRidgeEstimator =
+    new FeatureRidgeEstimator(lambda)
 
 final case class FeatureModelPrediction(
     direction: FeaturePredictionDirection,
@@ -70,16 +78,16 @@ final case class FeatureModelAnalysis(
     direction: FeaturePredictionDirection,
     estimator: FeatureRidgeEstimator = FeatureRidgeEstimator(),
     storePrediction: Boolean = false
-) extends RoiAnalysis:
+) extends FoldRequiredRoiAnalysis:
   override def name: String = s"feature_model_${direction.label}_ridge"
   override val minFeatures: Int = 1
+  override def missingFoldsError: MvpaError =
+    MvpaError.InvalidFeatureModelInput("feature model analysis requires a fold plan")
 
-  override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
-    val folds = context.folds.toRight(MvpaError.InvalidFeatureModelInput("feature model analysis requires a fold plan"))
+  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
     for
-      plan <- folds
-      _ <- validateInputs(roi, plan)
-      prediction <- FeatureModelAnalysis.crossValidate(roi, design, direction, estimator, plan)
+      _ <- validateInputs(roi, context.foldPlan)
+      prediction <- FeatureModelAnalysis.crossValidate(roi, design, direction, estimator, context.foldPlan)
       metrics <- FeatureModelMetrics.compute(prediction).map(_.withEstimator(estimator.lambda))
     yield
       val payload =
