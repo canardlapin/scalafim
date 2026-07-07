@@ -108,11 +108,44 @@ class VolreggerParitySuite extends munit.FunSuite:
       else assertEqualsDouble(a, e, tol)
     }
 
+  private def metadataItems(key: String): Vector[String] =
+    fixture.string(key).split(";").toVector
+
+  private def smoothSplineRows(values: Vector[Double], iterations: Int): Vector[Double] =
+    val rows = values.grouped(6).map(_.toArray).toArray
+    var current = rows.map(_.clone())
+    var iter = 0
+    while iter < iterations do
+      val next = Array.ofDim[Double](current.length, 6)
+      var c = 0
+      while c < 6 do
+        next(0)(c) = current(0)(c)
+        var r = 1
+        while r < current.length - 1 do
+          next(r)(c) = (current(r - 1)(c) + 4.0 * current(r)(c) + current(r + 1)(c)) / 6.0
+          r += 1
+        if current.length > 1 then next(current.length - 1)(c) = current(current.length - 1)(c)
+        c += 1
+      current = next
+      iter += 1
+    current.toVector.flatMap(_.toVector)
+
+  private def packetOffsetsFromMultiband(groups: Vector[Double]): Vector[Double] =
+    val ints = groups.map(_.toInt)
+    val unique = ints.distinct.sorted
+    val denom = math.max(1.0, (unique.length - 1).toDouble)
+    ints.map { group =>
+      unique.indexOf(group).toDouble / denom
+    }
+
   test("generated core fixture records volregger provenance") {
     assertEquals(fixture.string("fixture_version"), "1")
     assertEquals(fixture.string("volregger_commit"), "f350a33140adc38ee860eae5efa0d8e80d1e6b94")
     assert(fixture.string("source_files").contains("R/transform_metrics.R"))
     assert(fixture.string("source_files").contains("R/fd_dvars.R"))
+    assert(fixture.string("source_files").contains("src/api_spline.cpp"))
+    assert(fixture.string("source_files").contains("tests/testthat/test-ic-efficacy.R"))
+    assert(fixture.string("source_files").contains("tests/testthat/test-reporting-cli.R"))
   }
 
   test("pose matrix and inverse match volregger homogeneous transform convention") {
@@ -275,4 +308,61 @@ class VolreggerParitySuite extends munit.FunSuite:
     assert(referenceCostInit(1) > referenceCostFinal(1))
     assert(estimate.diagnostics(1).overlap >= referenceOverlap(1) - 0.2)
     assert(estimate.diagnostics.forall(d => d.costInitial.isFinite && d.costFinal.isFinite && d.overlap.isFinite))
+  }
+
+  test("spline and packet fixture anchors volregger smoothing and packet offsets") {
+    val input = fixture.doubles("spline_pose_row_major")
+    val smoothIter = fixture.doubles("spline_smooth_iter").head.toInt
+    val expectedSmoothed = fixture.doubles("spline_smoothed_pose_row_major")
+    val expectedTimes = fixture.doubles("spline_times")
+    val tr = fixture.doubles("spline_tr").head
+    val sliceTimes = fixture.doubles("spline_slice_times")
+    val mbGroups = fixture.doubles("spline_mb_groups")
+
+    assertEquals(fixture.string("spline.method"), "cubic_bspline_smoother")
+    assertVectorClose(smoothSplineRows(input, smoothIter), expectedSmoothed, 1e-12)
+    assertVectorClose(expectedTimes, Vector.tabulate(expectedTimes.length)(_.toDouble * tr), 1e-12)
+    assertVectorClose(fixture.doubles("spline_packet_offsets_slice_times"), sliceTimes, 1e-12)
+    assertVectorClose(fixture.doubles("spline_packet_offsets_mb_groups"), packetOffsetsFromMultiband(mbGroups), 1e-12)
+  }
+
+  test("IC, whitening, spline, and parallel profile fixtures expose volregger contracts") {
+    val fastFmri = fixture.doubles("profile_fast_fmri_flags")
+    val fastParallel = fixture.doubles("profile_fast_native_parallel_flags")
+    val icStencil = fixture.doubles("profile_ic_stencil_flags")
+    val icWhiten = fixture.doubles("profile_ic_whiten_flags")
+    val sliceSpline = fixture.doubles("profile_slice_spline_flags")
+
+    assert(metadataItems("profile.fast_fmri.components").contains("parallel_frames"))
+    assert(metadataItems("profile.fast_fmri.components").contains("ic_stencil"))
+    assert(metadataItems("profile.ic_whiten.components").contains("whiten"))
+    assertEquals(fixture.string("profile.slice_spline.engine"), "rigid_spline")
+
+    assertVectorClose(fastFmri, Vector(1.0, 1.0, 1.0, 0.0, 0.0, 0.05, 1.0), 1e-12)
+    assertVectorClose(fastParallel, Vector(1.0, 1.0, 1.0, 0.0, 0.0, 0.05, 1.0), 1e-12)
+    assertVectorClose(icStencil, Vector(1.0, 0.0, 0.0, 0.0, 0.0, 0.05, 1.0), 1e-12)
+    assertVectorClose(icWhiten, Vector(1.0, 1.0, 0.0, 0.0, 0.0, 0.05, 1.0), 1e-12)
+    assertVectorClose(sliceSpline, Vector(1.0, 1.0, 0.0, 1.0, 0.0, 0.05, 1.0), 1e-12)
+    assertVectorClose(fixture.doubles("ic_whiten_noninferiority_gates"), Vector(1.08, 1.05, 0.15, 1.12), 1e-12)
+    assertVectorClose(fixture.doubles("ic_nuisance_improvement_gates"), Vector(0.98, 0.95, 0.10, 1.20), 1e-12)
+    assertVectorClose(fixture.doubles("expanded_capture_success_gates"), Vector(-1.0, 2.0), 1e-12)
+  }
+
+  test("CLI, report, and benchmark fixture metadata captures downstream artifact contracts") {
+    assertEquals(metadataItems("cli.commands").toSet, Set("estimate", "apply", "run", "report"))
+    assert(metadataItems("cli.run.outputs").contains("<prefix>_motion.tsv"))
+    assert(metadataItems("cli.run.outputs").contains("<prefix>_summary.csv"))
+    assert(metadataItems("cli.run.outputs").contains("<prefix>_matrices.csv"))
+    assert(metadataItems("cli.run.outputs").contains("<prefix>_report.rds"))
+
+    val summaryColumns = metadataItems("report.summary_columns")
+    assert(summaryColumns.contains("packet_correction_mag_mean"))
+    assert(summaryColumns.contains("packet_correction_mag_max"))
+    assert(metadataItems("report.fast_fmri.components").contains("whitening"))
+    assert(metadataItems("report.fast_fmri.components").contains("ic_stencil"))
+
+    assert(metadataItems("benchmark.required_columns").contains("estimate_sec"))
+    assert(metadataItems("benchmark.required_columns").contains("report_sec"))
+    assert(metadataItems("benchmark.truth_scenarios").contains("hard_motion_plus_nuisance"))
+    assert(metadataItems("benchmark.claim_families").contains("truth_displacement"))
   }
