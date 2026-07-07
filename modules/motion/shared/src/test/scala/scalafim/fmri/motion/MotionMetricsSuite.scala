@@ -15,18 +15,27 @@ class MotionMetricsSuite extends munit.FunSuite:
   test("framewise displacement matches volregger convention") {
     val trace = MotionTrace.unsafe(VolreggerFixtures.fdTrace)
     val fd = MotionMetrics.framewiseDisplacement(trace)
+    val pairs = MotionMetrics.framewiseDisplacementPairs(trace)
     assertEquals(fd.length, VolreggerFixtures.fdExpected.length)
     fd.zip(VolreggerFixtures.fdExpected).foreach { case (actual, expected) =>
       assertEqualsDouble(actual, expected, 1e-12)
     }
+    assertEquals(pairs.length, VolreggerFixtures.fdExpected.length - 1)
+    assertEquals(pairs.head.pair.previous.value, 0)
+    assertEquals(pairs.head.pair.current.value, 1)
+    assertEqualsDouble(pairs.head.millimeters, VolreggerFixtures.fdExpected(1), 1e-12)
   }
 
   test("DVARS computes temporal RMS differences") {
     val run = vec1x1x1(VolreggerFixtures.dvarsRunValues)
     val dv = MotionMetrics.dvars(run).fold(err => fail(err.message), identity)
+    val pairs = MotionMetrics.dvarsPairs(run).fold(err => fail(err.message), identity)
     assert(dv.head.isNaN)
     assertEqualsDouble(dv(1), VolreggerFixtures.dvarsExpected(1), 1e-12)
     assertEqualsDouble(dv(2), VolreggerFixtures.dvarsExpected(2), 1e-12)
+    assertEquals(pairs.length, 2)
+    assertEquals(pairs.head.pair, FramePair.unsafe(0, 1))
+    assertEqualsDouble(pairs.head.rms, VolreggerFixtures.dvarsExpected(1), 1e-12)
   }
 
   test("robust DVARS clips values above three times the finite median") {
@@ -36,6 +45,12 @@ class MotionMetricsSuite extends munit.FunSuite:
     assertEqualsDouble(dv(1), VolreggerFixtures.robustDvarsExpected(1), 1e-12)
     assertEqualsDouble(dv(2), VolreggerFixtures.robustDvarsExpected(2), 1e-12)
     assertEqualsDouble(dv(3), VolreggerFixtures.robustDvarsExpected(3), 1e-12)
+  }
+
+  test("DVARS policy replaces robust Boolean for typed pair metrics") {
+    val run = vec1x1x1(VolreggerFixtures.robustDvarsRunValues)
+    val pairs = MotionMetrics.dvarsPairs(run, None, DvarsPolicy.RobustClip3xMedian).fold(err => fail(err.message), identity)
+    assertEqualsDouble(pairs(2).rms, VolreggerFixtures.robustDvarsExpected(3), 1e-12)
   }
 
   test("transform displacement for pure translation equals translation length") {

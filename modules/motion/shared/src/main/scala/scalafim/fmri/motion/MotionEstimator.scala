@@ -53,8 +53,7 @@ object MotionEstimator:
   private final case class SeedCost(pose: RigidPose, cost: CostResult)
 
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
-    if plan.control.temporal.regularizationEnabled then Left(MotionError.NotImplemented("temporal regularization"))
-    else Right(())
+    Right(())
 
   private def fitRun(ctx: EstimatorContext, template: Array[Double]): MotionEstimate =
     val nt = ctx.run.nVolumes
@@ -86,11 +85,70 @@ object MotionEstimator:
       diagnostics(t) = result.diagnostics
       t -= 1
 
+    val outputPoses = regularizeTrace(ctx, poses)
+    val outputDiagnostics =
+      if outputPoses eq poses then diagnostics
+      else recomputeFinalDiagnostics(ctx, template, outputPoses, diagnostics)
+
     MotionEstimate(
-      trace = MotionTrace.unsafe(poses.toVector),
-      diagnostics = diagnostics.toVector,
+      trace = MotionTrace.unsafe(outputPoses.toVector),
+      diagnostics = outputDiagnostics.toVector,
       control = ctx.control
     )
+
+  private def regularizeTrace(ctx: EstimatorContext, poses: Array[RigidPose]): Array[RigidPose] =
+    ctx.control.temporal.regularization match
+      case TemporalRegularizationPolicy.Disabled => poses
+      case TemporalRegularizationPolicy.Enabled =>
+        val out = poses.clone()
+        var t = 0
+        while t < poses.length do
+          if t == ctx.referenceIndex then out(t) = RigidPose.identity
+          else
+            val left = if t > 0 then poses(t - 1) else poses(t)
+            val right = if t < poses.length - 1 then poses(t + 1) else poses(t)
+            out(t) =
+              if t == 0 then blendPoses(poses(t), left, right, 2.0 / 3.0, 0.0, 1.0 / 3.0)
+              else if t == poses.length - 1 then blendPoses(poses(t), left, right, 2.0 / 3.0, 1.0 / 3.0, 0.0)
+              else blendPoses(poses(t), left, right, 0.5, 0.25, 0.25)
+          t += 1
+        out
+
+  private def blendPoses(
+      center: RigidPose,
+      left: RigidPose,
+      right: RigidPose,
+      centerWeight: Double,
+      leftWeight: Double,
+      rightWeight: Double
+  ): RigidPose =
+    RigidPose.unsafe(
+      center.tx * centerWeight + left.tx * leftWeight + right.tx * rightWeight,
+      center.ty * centerWeight + left.ty * leftWeight + right.ty * rightWeight,
+      center.tz * centerWeight + left.tz * leftWeight + right.tz * rightWeight,
+      center.rx * centerWeight + left.rx * leftWeight + right.rx * rightWeight,
+      center.ry * centerWeight + left.ry * leftWeight + right.ry * rightWeight,
+      center.rz * centerWeight + left.rz * leftWeight + right.rz * rightWeight
+    )
+
+  private def recomputeFinalDiagnostics(
+      ctx: EstimatorContext,
+      template: Array[Double],
+      poses: Array[RigidPose],
+      diagnostics: Array[FrameFitDiagnostics]
+  ): Array[FrameFitDiagnostics] =
+    val out = diagnostics.clone()
+    var t = 0
+    while t < poses.length do
+      val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, t, poses(t))
+      val d = diagnostics(t)
+      out(t) =
+        d.copy(
+          costFinal = finalCost.cost,
+          overlap = finalCost.overlap
+        )
+      t += 1
+    out
 
   private def fitFrame(
       ctx: EstimatorContext,
@@ -180,8 +238,39 @@ object MotionEstimator:
     val g = Array.fill(6)(0.0)
     val eps = Array(1e-2, 1e-2, 1e-2, 1e-4, 1e-4, 1e-4)
     val deriv = Array.ofDim[Double](6)
+    val meanDeriv = Array.ofDim[Double](6)
+    val centered = ctx.control.residual.removeFrameMean
+    var meanResidual = 0.0
+    var meanCount = 0
 
     val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
+    if centered then
+      var s0 = 0
+      while s0 < level.samples.length do
+        val sample = level.samples(s0)
+        val sx = MotionSampling.sourceX(map, sample.i, sample.j, sample.k)
+        val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
+        val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
+        if inBounds(ctx, sx, sy, sz) then
+          val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+          meanResidual += fitted - template(sample.linear)
+          var p = 0
+          while p < 6 do
+            val plus = addOne(pose, p, eps(p))
+            val minus = addOne(pose, p, -eps(p))
+            val fPlus = sampleAt(ctx, frame, plus, sample)
+            val fMinus = sampleAt(ctx, frame, minus, sample)
+            meanDeriv(p) += (fPlus - fMinus) / (2.0 * eps(p))
+            p += 1
+          meanCount += 1
+        s0 += 1
+      if meanCount > 0 then
+        meanResidual /= meanCount.toDouble
+        var p = 0
+        while p < 6 do
+          meanDeriv(p) /= meanCount.toDouble
+          p += 1
+
     var s = 0
     while s < level.samples.length do
       val sample = level.samples(s)
@@ -190,7 +279,9 @@ object MotionEstimator:
       val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
       if inBounds(ctx, sx, sy, sz) then
         val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
-        val residual = fitted - template(sample.linear)
+        val residual =
+          if centered then fitted - template(sample.linear) - meanResidual
+          else fitted - template(sample.linear)
         val weight = huberWeight(residual, ctx.control.optimizer.huberK)
         var p = 0
         while p < 6 do
@@ -198,7 +289,8 @@ object MotionEstimator:
           val minus = addOne(pose, p, -eps(p))
           val fPlus = sampleAt(ctx, frame, plus, sample)
           val fMinus = sampleAt(ctx, frame, minus, sample)
-          deriv(p) = (fPlus - fMinus) / (2.0 * eps(p))
+          val rawDeriv = (fPlus - fMinus) / (2.0 * eps(p))
+          deriv(p) = if centered then rawDeriv - meanDeriv(p) else rawDeriv
           p += 1
 
         var a = 0
@@ -317,6 +409,23 @@ object MotionEstimator:
       pose: RigidPose
   ): CostResult =
     val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
+    val centered = ctx.control.residual.removeFrameMean
+    var meanResidual = 0.0
+    var meanCount = 0
+    if centered then
+      var s0 = 0
+      while s0 < level.samples.length do
+        val sample = level.samples(s0)
+        val sx = MotionSampling.sourceX(map, sample.i, sample.j, sample.k)
+        val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
+        val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
+        if inBounds(ctx, sx, sy, sz) then
+          val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+          meanResidual += fitted - template(sample.linear)
+          meanCount += 1
+        s0 += 1
+      if meanCount > 0 then meanResidual /= meanCount.toDouble
+
     var s = 0
     var loss = 0.0
     var n = 0
@@ -329,7 +438,9 @@ object MotionEstimator:
       if inBounds(ctx, sx, sy, sz) then
         inside += 1
         val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
-        val residual = fitted - template(sample.linear)
+        val residual =
+          if centered then fitted - template(sample.linear) - meanResidual
+          else fitted - template(sample.linear)
         loss += huberLoss(residual, ctx.control.optimizer.huberK)
         n += 1
       s += 1

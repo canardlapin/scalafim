@@ -82,8 +82,21 @@ object TemplateControl:
   val default: TemplateControl =
     TemplateControl(robustTemplate = true, refreshValidOnly = true, edgeExcludeFraction = 0.05)
 
-final case class CaptureControl(
-    enabled: Boolean,
+enum CapturePolicy:
+  case Disabled
+  case GridSearch
+
+  def enabled: Boolean =
+    this match
+      case Disabled => false
+      case GridSearch => true
+
+object CapturePolicy:
+  def fromEnabled(enabled: Boolean): CapturePolicy =
+    if enabled then CapturePolicy.GridSearch else CapturePolicy.Disabled
+
+final case class CaptureControl private (
+    policy: CapturePolicy,
     translationHalfWidthMm: Double,
     rotationHalfWidthDeg: Double,
     topK: Int
@@ -92,29 +105,147 @@ final case class CaptureControl(
   require(rotationHalfWidthDeg.isFinite && rotationHalfWidthDeg > 0.0, "rotationHalfWidthDeg must be positive")
   require(topK >= 1, "topK must be positive")
 
+  def enabled: Boolean = policy.enabled
+
+  def withEnabled(enabled: Boolean): CaptureControl =
+    copy(policy = CapturePolicy.fromEnabled(enabled))
+
 object CaptureControl:
   val default: CaptureControl =
-    CaptureControl(enabled = true, translationHalfWidthMm = 8.0, rotationHalfWidthDeg = 8.0, topK = 4)
+    unsafe(CapturePolicy.GridSearch, translationHalfWidthMm = 8.0, rotationHalfWidthDeg = 8.0, topK = 4)
 
-final case class TemporalControl(
-    regularizationEnabled: Boolean,
-    lowMotionPoseShrink: Boolean,
-    lowMotionPoseScale: Double,
-    lowMotionThresholdMm: Double = 0.25
+  def apply(
+      enabled: Boolean,
+      translationHalfWidthMm: Double,
+      rotationHalfWidthDeg: Double,
+      topK: Int
+  ): CaptureControl =
+    unsafe(CapturePolicy.fromEnabled(enabled), translationHalfWidthMm, rotationHalfWidthDeg, topK)
+
+  def make(
+      policy: CapturePolicy,
+      translationHalfWidthMm: Double,
+      rotationHalfWidthDeg: Double,
+      topK: Int
+  ): Either[MotionError, CaptureControl] =
+    if !translationHalfWidthMm.isFinite || translationHalfWidthMm <= 0.0 then
+      Left(MotionError.InvalidScalar("translationHalfWidthMm", translationHalfWidthMm, "must be positive"))
+    else if !rotationHalfWidthDeg.isFinite || rotationHalfWidthDeg <= 0.0 then
+      Left(MotionError.InvalidScalar("rotationHalfWidthDeg", rotationHalfWidthDeg, "must be positive"))
+    else if topK < 1 then Left(MotionError.InvalidInt("topK", topK, "must be positive"))
+    else Right(unsafe(policy, translationHalfWidthMm, rotationHalfWidthDeg, topK))
+
+  def unsafe(
+      policy: CapturePolicy,
+      translationHalfWidthMm: Double,
+      rotationHalfWidthDeg: Double,
+      topK: Int
+  ): CaptureControl =
+    new CaptureControl(policy, translationHalfWidthMm, rotationHalfWidthDeg, topK)
+
+enum TemporalRegularizationPolicy:
+  case Disabled
+  case Enabled
+
+  def enabled: Boolean =
+    this match
+      case Disabled => false
+      case Enabled => true
+
+object TemporalRegularizationPolicy:
+  def fromEnabled(enabled: Boolean): TemporalRegularizationPolicy =
+    if enabled then TemporalRegularizationPolicy.Enabled else TemporalRegularizationPolicy.Disabled
+
+enum LowMotionPosePolicy:
+  case Disabled(poseScale: PoseScale, thresholdMm: MotionMagnitudeMm)
+  case Shrink(poseScale: PoseScale, thresholdMm: MotionMagnitudeMm)
+
+  def enabled: Boolean =
+    this match
+      case Disabled(_, _) => false
+      case Shrink(_, _) => true
+
+  def scale: PoseScale =
+    this match
+      case Disabled(poseScale, _) => poseScale
+      case Shrink(poseScale, _) => poseScale
+
+  def threshold: MotionMagnitudeMm =
+    this match
+      case Disabled(_, thresholdMm) => thresholdMm
+      case Shrink(_, thresholdMm) => thresholdMm
+
+  def withEnabled(enabled: Boolean): LowMotionPosePolicy =
+    if enabled then LowMotionPosePolicy.Shrink(scale, threshold)
+    else LowMotionPosePolicy.Disabled(scale, threshold)
+
+object LowMotionPosePolicy:
+  val default: LowMotionPosePolicy =
+    Disabled(PoseScale.unsafe(0.95), MotionMagnitudeMm.unsafe(0.25))
+
+  def fromBoolean(enabled: Boolean, scale: Double, thresholdMm: Double): LowMotionPosePolicy =
+    val typedScale = PoseScale.unsafe(scale)
+    val typedThreshold = MotionMagnitudeMm.unsafe(thresholdMm)
+    if enabled then Shrink(typedScale, typedThreshold)
+    else Disabled(typedScale, typedThreshold)
+
+  def make(enabled: Boolean, scale: Double, thresholdMm: Double): Either[MotionError, LowMotionPosePolicy] =
+    for
+      typedScale <- PoseScale(scale)
+      typedThreshold <- MotionMagnitudeMm(thresholdMm)
+    yield if enabled then Shrink(typedScale, typedThreshold) else Disabled(typedScale, typedThreshold)
+
+final case class TemporalControl private (
+    regularization: TemporalRegularizationPolicy,
+    lowMotionPose: LowMotionPosePolicy
 ):
-  require(lowMotionPoseScale.isFinite && lowMotionPoseScale > 0.0 && lowMotionPoseScale <= 1.0,
-    "lowMotionPoseScale must be in (0, 1]")
-  require(lowMotionThresholdMm.isFinite && lowMotionThresholdMm >= 0.0,
-    "lowMotionThresholdMm must be non-negative")
+  def regularizationEnabled: Boolean = regularization.enabled
+  def lowMotionPoseShrink: Boolean = lowMotionPose.enabled
+  def lowMotionPoseScale: Double = lowMotionPose.scale.value
+  def lowMotionThresholdMm: Double = lowMotionPose.threshold.value
+
+  def withRegularizationEnabled(enabled: Boolean): TemporalControl =
+    copy(regularization = TemporalRegularizationPolicy.fromEnabled(enabled))
+
+  def withLowMotionPoseShrink(enabled: Boolean): TemporalControl =
+    copy(lowMotionPose = lowMotionPose.withEnabled(enabled))
 
 object TemporalControl:
   val default: TemporalControl =
-    TemporalControl(
-      regularizationEnabled = false,
-      lowMotionPoseShrink = false,
-      lowMotionPoseScale = 0.95,
-      lowMotionThresholdMm = 0.25
+    unsafe(TemporalRegularizationPolicy.Disabled, LowMotionPosePolicy.default)
+
+  def apply(
+      regularizationEnabled: Boolean,
+      lowMotionPoseShrink: Boolean,
+      lowMotionPoseScale: Double,
+      lowMotionThresholdMm: Double = 0.25
+  ): TemporalControl =
+    unsafe(
+      TemporalRegularizationPolicy.fromEnabled(regularizationEnabled),
+      LowMotionPosePolicy.fromBoolean(lowMotionPoseShrink, lowMotionPoseScale, lowMotionThresholdMm)
     )
+
+  def make(
+      regularization: TemporalRegularizationPolicy,
+      lowMotionPose: LowMotionPosePolicy
+  ): Either[MotionError, TemporalControl] =
+    Right(unsafe(regularization, lowMotionPose))
+
+  def make(
+      regularizationEnabled: Boolean,
+      lowMotionPoseShrink: Boolean,
+      lowMotionPoseScale: Double,
+      lowMotionThresholdMm: Double = 0.25
+  ): Either[MotionError, TemporalControl] =
+    LowMotionPosePolicy
+      .make(lowMotionPoseShrink, lowMotionPoseScale, lowMotionThresholdMm)
+      .map(unsafe(TemporalRegularizationPolicy.fromEnabled(regularizationEnabled), _))
+
+  def unsafe(
+      regularization: TemporalRegularizationPolicy,
+      lowMotionPose: LowMotionPosePolicy
+  ): TemporalControl =
+    new TemporalControl(regularization, lowMotionPose)
 
 final case class ExecutionControl(
     parallelFrames: Boolean,
@@ -126,13 +257,34 @@ object ExecutionControl:
   val default: ExecutionControl =
     ExecutionControl(parallelFrames = false, nThreads = 1)
 
+enum ResidualNuisancePolicy:
+  case Raw
+  case RemoveFrameMean
+
+  def removesFrameMean: Boolean =
+    this match
+      case Raw => false
+      case RemoveFrameMean => true
+
+final case class ResidualControl(nuisance: ResidualNuisancePolicy):
+  def removeFrameMean: Boolean = nuisance.removesFrameMean
+
+object ResidualControl:
+  val default: ResidualControl =
+    ResidualControl(ResidualNuisancePolicy.Raw)
+
+  def fromRemoveFrameMean(removeFrameMean: Boolean): ResidualControl =
+    if removeFrameMean then ResidualControl(ResidualNuisancePolicy.RemoveFrameMean)
+    else default
+
 final case class MotionControl(
     pyramid: PyramidControl,
     optimizer: OptimizerControl,
     template: TemplateControl,
     capture: CaptureControl,
     temporal: TemporalControl,
-    execution: ExecutionControl
+    execution: ExecutionControl,
+    residual: ResidualControl = ResidualControl.default
 )
 
 object MotionControl:
@@ -143,7 +295,8 @@ object MotionControl:
       template = TemplateControl.default,
       capture = CaptureControl.default,
       temporal = TemporalControl.default,
-      execution = ExecutionControl.default
+      execution = ExecutionControl.default,
+      residual = ResidualControl.default
     )
 
   val fastFmri: MotionControl =

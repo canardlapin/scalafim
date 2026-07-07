@@ -2,20 +2,20 @@ package scalafim.fmri.motion
 
 import scalafim.image.DMat
 
-final case class MotionTrace private (poses: Vector[RigidPose]):
-  require(poses.nonEmpty, "MotionTrace must be non-empty")
+final case class MotionTrace private (aligned: FrameAligned[RigidPose]):
+  require(aligned.nonEmpty, "MotionTrace must be non-empty")
 
-  def length: Int = poses.length
-  def isEmpty: Boolean = poses.isEmpty
-  def nonEmpty: Boolean = poses.nonEmpty
+  def frameCount: FrameCount = aligned.frameCount
+  def poses: Vector[RigidPose] = aligned.toVector
+  def length: Int = aligned.length
+  def isEmpty: Boolean = aligned.isEmpty
+  def nonEmpty: Boolean = aligned.nonEmpty
 
   def apply(index: FrameIndex): Either[MotionError, RigidPose] =
-    val i = index.value
-    if i >= 0 && i < poses.length then Right(poses(i))
-    else Left(MotionError.FrameIndexOutOfBounds(i, poses.length))
+    aligned(index)
 
   def unsafeFrame(index: Int): RigidPose =
-    poses(index)
+    aligned.unsafeFrame(index)
 
   def matrices: Vector[DMat] =
     poses.map(_.toMatrix)
@@ -26,8 +26,14 @@ object MotionTrace:
     else Left(MotionError.EmptyTrace)
 
   def unsafe(poses: Vector[RigidPose]): MotionTrace =
-    new MotionTrace(poses)
+    new MotionTrace(FrameAligned.unsafe(poses))
+
+  def unsafe(aligned: FrameAligned[RigidPose]): MotionTrace =
+    new MotionTrace(aligned)
 
   def identity(nFrames: Int): Either[MotionError, MotionTrace] =
     if nFrames >= 1 then Right(unsafe(Vector.fill(nFrames)(RigidPose.identity)))
     else Left(MotionError.InvalidInt("nFrames", nFrames, "must be positive"))
+
+  def identity(frameCount: FrameCount): MotionTrace =
+    unsafe(Vector.fill(frameCount.value)(RigidPose.identity))

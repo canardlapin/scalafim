@@ -21,6 +21,7 @@ class HierScanSuite extends munit.FunSuite:
     assert(result.reject.linear(7))
     assertEquals((0 until 8).count(result.reject.linear), 1)
     assertEqualsDouble(result.threshold, result.significantRegions.head.score, 1e-12)
+    assertEqualsDouble(result.cutoff.toLegacyDouble, result.significantRegions.head.score, 1e-12)
   }
 
   test("HierScan descends into rejected octree children") {
@@ -47,7 +48,24 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.significantRegions, Vector.empty)
     assertEquals(result.nodeTests.count(_.rejected), 0)
     assert(result.threshold.isPosInfinity)
+    assertEquals(result.cutoff, ThresholdCutoff.NoRejections)
     assertEquals((0 until 8).count(result.reject.linear), 0)
+  }
+
+  test("HierScan accepts an unsigned statistic map only with a greater alternative") {
+    val stat = StatisticMap.negLog10P(volume(Vector(2, 2, 2), Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 5.0)), PSide.OneSided)
+    val nulls = FixedNullDraw(Vector.fill(9)(Array.fill(8)(1.0)))
+    val ok = value(HierScan.runMap(stat, nulls, config = simpleConfig(alpha = 0.2)))
+
+    assertEquals(ok.significantRegions.size, 1)
+    assertEquals(
+      HierScan.runMap(
+        stat,
+        nulls,
+        config = simpleConfig(alpha = 0.2).copy(alternative = ThresholdAlternative.TwoSided)
+      ).left.toOption,
+      Some(ThresholdError.IncompatibleAlternative(ThresholdAlternative.TwoSided, EvidenceOrientation.Unsigned))
+    )
   }
 
   test("HierScan rejects null draws with the wrong mask-space length") {

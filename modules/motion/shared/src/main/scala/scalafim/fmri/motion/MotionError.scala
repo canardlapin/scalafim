@@ -7,8 +7,10 @@ enum MotionError:
   case InvalidInt(name: String, value: Int, reason: String)
   case EmptyTrace
   case FrameIndexOutOfBounds(index: Int, length: Int)
+  case InvalidFramePair(previous: Int, current: Int, reason: String)
   case TraceLengthMismatch(traceLength: Int, nVolumes: Int)
   case ShapeMismatch(name: String, expected: Vector[Int], actual: Vector[Int])
+  case IncompleteFitCostTrace(missing: String)
   case NonFiniteData(name: String, index: Int)
   case InvalidMatrix(reason: String)
   case SingularTransform(reason: String)
@@ -25,10 +27,14 @@ enum MotionError:
         "motion trace must contain at least one pose"
       case FrameIndexOutOfBounds(index, length) =>
         s"frame index $index is out of bounds for trace length $length"
+      case InvalidFramePair(previous, current, reason) =>
+        s"invalid frame pair ($previous, $current): $reason"
       case TraceLengthMismatch(traceLength, nVolumes) =>
         s"motion trace length $traceLength does not match run volume count $nVolumes"
       case ShapeMismatch(name, expected, actual) =>
         s"$name shape mismatch: expected $expected, actual $actual"
+      case IncompleteFitCostTrace(missing) =>
+        s"incomplete fit-cost trace: missing $missing"
       case NonFiniteData(name, index) =>
         s"$name contains non-finite value at linear index $index"
       case InvalidMatrix(reason) =>

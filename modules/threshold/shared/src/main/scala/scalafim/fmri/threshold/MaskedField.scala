@@ -47,19 +47,38 @@ final case class MaskedField private[threshold] (
 object MaskedField:
 
   def fromVolume(stat: NeuroVol[Double], tail: Tail = Tail.Positive): Either[ThresholdError, MaskedField] =
+    fromStatisticMap(StatisticMap.z(stat), tail.alternative)
+
+  def fromStatisticMap(
+    statistic: StatisticMap,
+    alternative: ThresholdAlternative = ThresholdAlternative.Greater
+  ): Either[ThresholdError, MaskedField] =
+    val stat = statistic.volume
     val n = stat.space.spatialDims.product
     val flags = NArrayUtil.fillConst[Boolean](n, false)
     var i = 0
     while i < n do
       flags(i) = stat.linear(i).isFinite
       i += 1
-    fromVolume(stat, NeuroVol.fromLinear(flags, stat.space.spatialSpace, stat.label), tail)
+    fromStatisticMap(statistic, NeuroVol.fromLinear(flags, stat.space.spatialSpace, stat.label), alternative)
 
   def fromVolume(
     stat: NeuroVol[Double],
     mask: NeuroVol[Boolean],
     tail: Tail
   ): Either[ThresholdError, MaskedField] =
+    fromStatisticMap(StatisticMap.z(stat), mask, tail.alternative)
+
+  def fromStatisticMap(
+    statistic: StatisticMap,
+    mask: NeuroVol[Boolean],
+    alternative: ThresholdAlternative
+  ): Either[ThresholdError, MaskedField] =
+    alternative.validate(statistic.orientation) match
+      case Left(err) => return Left(err)
+      case Right(()) => ()
+
+    val stat = statistic.volume
     if stat.space.spatialDims != mask.space.spatialDims then
       return Left(
         ThresholdError.ShapeMismatch(
@@ -88,7 +107,9 @@ object MaskedField:
       if mask.linear(lin) then
         val raw = stat.linear(lin)
         if !raw.isFinite then return Left(ThresholdError.NonFiniteData("stat volume inside mask"))
-        valueBuilder += tail.applyTo(raw)
+        if statistic.orientation == EvidenceOrientation.Unsigned && raw < 0.0 then
+          return Left(ThresholdError.NegativeUnsignedEvidence(lin, raw))
+        valueBuilder += alternative.applyTo(raw)
         indexBuilder += lin
         xBuilder += (lin % nx)
         yBuilder += ((lin / nx) % ny)

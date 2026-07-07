@@ -14,6 +14,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assertEquals(Alpha(0.0).left.toOption, Some(ThresholdError.InvalidAlpha(0.0)))
     assertEquals(QValue(1.0).left.toOption, Some(ThresholdError.InvalidQValue(1.0)))
     assertEquals(Kappa(-1.0).left.toOption, Some(ThresholdError.InvalidKappa(-1.0)))
+    assertEquals(DegreesOfFreedom(0.0).left.toOption, Some(ThresholdError.InvalidDegreesOfFreedom(0.0)))
+    assertEquals(AdjustedP(1.1).left.toOption, Some(ThresholdError.InvalidAdjustedPValue(1.1)))
     assertEquals(PermutationCount(0).left.toOption, Some(ThresholdError.InvalidPermutationCount(0)))
   }
 
@@ -26,6 +28,32 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assertEquals(field.volumeIndicesCopy.toVector, Vector(0, 1, 3))
     assertEquals(field.valuesCopy.toVector, Vector(1.0, 2.0, 4.0))
     assertEquals(field.coord(2), (1, 1, 0))
+  }
+
+  test("statistic maps separate evidence orientation from threshold alternative") {
+    val sp = NeuroSpace(Vector(2, 2, 1))
+    val evidence = NeuroVol.fromLinear[Double](NArray(1.0, 2.0, 0.5, 3.0), sp)
+    val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
+    val field = value(MaskedField.fromStatisticMap(statistic, ThresholdAlternative.Greater))
+
+    assertEquals(statistic.kind, StatKind.NegLog10P(PSide.OneSided))
+    assertEquals(statistic.orientation, EvidenceOrientation.Unsigned)
+    assertEquals(field.valuesCopy.toVector, Vector(1.0, 2.0, 0.5, 3.0))
+    assertEquals(
+      MaskedField.fromStatisticMap(statistic, ThresholdAlternative.TwoSided).left.toOption,
+      Some(ThresholdError.IncompatibleAlternative(ThresholdAlternative.TwoSided, EvidenceOrientation.Unsigned))
+    )
+  }
+
+  test("unsigned statistic maps reject negative evidence inside the mask") {
+    val sp = NeuroSpace(Vector(2, 1, 1))
+    val evidence = NeuroVol.fromLinear[Double](NArray(1.0, -0.1), sp)
+    val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
+
+    assertEquals(
+      MaskedField.fromStatisticMap(statistic, ThresholdAlternative.Greater).left.toOption,
+      Some(ThresholdError.NegativeUnsignedEvidence(1, -0.1))
+    )
   }
 
   test("masked field rejects non-finite values inside an explicit mask") {
@@ -69,6 +97,19 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assertEqualsDouble(diffuse.effectiveN, (sumW * sumW) / sumW2, 1e-12)
   }
 
+  test("scoring input ties a masked field, priors, and region for typed scores") {
+    val sp = NeuroSpace(Vector(3, 1, 1))
+    val stat = NeuroVol.fromLinear[Double](NArray(1.0, 2.0, 3.0), sp)
+    val field = value(MaskedField.fromVolume(stat))
+    val priors = value(PriorWeights.uniform(field.size))
+    val root = value(Octree.root(field, priors))
+    val input = value(ScoringInput(field, priors, root))
+    val typed = value(ScoreSet.softMax(input, Kappa.unsafe(1.0)))
+    val legacy = value(ScoreSet.softMax(root.indexArray, field.valuesCopy, priors, Kappa.unsafe(1.0)))
+
+    assertEqualsDouble(typed.toLegacyDouble, legacy, 1e-12)
+  }
+
   test("omnibus score keeps the best softmax channel and diffuse score") {
     val z = Array(0.0, 3.0)
     val priors = value(PriorWeights.uniform(2))
@@ -92,9 +133,9 @@ class ThresholdCoreSuite extends munit.FunSuite:
 
     val out = value(WestfallYoung.stepDown(observed, nulls, Alpha.unsafe(0.5)))
     assertEquals(out.map(_.testIndex), Vector(0, 1, 2))
-    assertEqualsDouble(out(0).adjustedP, 0.6, 1e-12)
-    assertEqualsDouble(out(1).adjustedP, 0.6, 1e-12)
-    assertEqualsDouble(out(2).adjustedP, 0.4, 1e-12)
+    assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
+    assertEqualsDouble(out(1).adjustedP.value, 0.6, 1e-12)
+    assertEqualsDouble(out(2).adjustedP.value, 0.4, 1e-12)
     assert(!out(0).rejected)
     assert(!out(1).rejected)
     assert(out(2).rejected)
@@ -112,10 +153,14 @@ class ThresholdCoreSuite extends munit.FunSuite:
     )
 
     val out = value(MaxT.singleStep(observed, nulls, Alpha.unsafe(0.5)))
-    assertEqualsDouble(out(0).adjustedP, 0.6, 1e-12)
-    assertEqualsDouble(out(1).adjustedP, 1.0, 1e-12)
-    assertEqualsDouble(out(2).adjustedP, 0.4, 1e-12)
+    assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
+    assertEqualsDouble(out(1).adjustedP.value, 1.0, 1e-12)
+    assertEqualsDouble(out(2).adjustedP.value, 0.4, 1e-12)
 
+    val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep))
+    assertEquals(adjusted.map(_.adjustedP.value), out.map(_.adjustedP.value))
+    assertEqualsDouble(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))).toLegacyDouble, 4.0, 1e-12)
+    assertEquals(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
     assertEqualsDouble(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))), 4.0, 1e-12)
     assert(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))).isPosInfinity)
   }

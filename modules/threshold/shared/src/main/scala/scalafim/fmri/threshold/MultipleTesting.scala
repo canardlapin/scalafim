@@ -2,7 +2,28 @@ package scalafim.fmri.threshold
 
 import scalafim.linalg.DoubleMatrix
 
-final case class AdjustedTest(testIndex: Int, score: Double, adjustedP: Double, rejected: Boolean)
+enum CorrectionPolicy:
+  case WestfallYoungStepDown
+  case MaxTSingleStep
+
+final case class AdjustedTest(testIndex: Int, score: Double, adjustedP: AdjustedP, rejected: Boolean):
+  require(score.isFinite, "score must be finite")
+
+  def adjustedPValue: Double =
+    adjustedP.value
+
+object MultipleTesting:
+  def adjust(
+    observed: Array[Double],
+    nullMatrix: DoubleMatrix,
+    alpha: Alpha,
+    policy: CorrectionPolicy
+  ): Either[ThresholdError, Vector[AdjustedTest]] =
+    policy match
+      case CorrectionPolicy.WestfallYoungStepDown =>
+        WestfallYoung.stepDown(observed, nullMatrix, alpha)
+      case CorrectionPolicy.MaxTSingleStep =>
+        MaxT.singleStep(observed, nullMatrix, alpha)
 
 object WestfallYoung:
 
@@ -56,7 +77,8 @@ object WestfallYoung:
             out.sizeHint(m)
             var i = 0
             while i < m do
-              out += AdjustedTest(i, observed(i), pByOriginal(i), pByOriginal(i) <= alpha.value)
+              val adjusted = AdjustedP.unsafe(pByOriginal(i))
+              out += AdjustedTest(i, observed(i), adjusted, adjusted.value <= alpha.value)
               i += 1
             Right(out.result())
 
@@ -94,14 +116,14 @@ object MaxT:
               out.sizeHint(m)
               var i = 0
               while i < m do
-                out += AdjustedTest(i, observed(i), p(i), p(i) <= alpha.value)
+                out += AdjustedTest(i, observed(i), p(i), p(i).value <= alpha.value)
                 i += 1
               out.result()
             }
 
 object MaxNull:
 
-  def pValues(observed: Array[Double], maxNull: Array[Double]): Either[ThresholdError, Array[Double]] =
+  def pValues(observed: Array[Double], maxNull: Array[Double]): Either[ThresholdError, Array[AdjustedP]] =
     validateObserved(observed) match
       case Left(err) => Left(err)
       case Right(()) =>
@@ -111,7 +133,7 @@ object MaxNull:
           if !maxNull(b).isFinite then return Left(ThresholdError.NonFiniteData("max-null distribution"))
           b += 1
 
-        val out = new Array[Double](observed.length)
+        val out = new Array[AdjustedP](observed.length)
         var i = 0
         while i < observed.length do
           var count = 0
@@ -119,11 +141,21 @@ object MaxNull:
           while b < maxNull.length do
             if maxNull(b) >= observed(i) then count += 1
             b += 1
-          out(i) = (count.toDouble + 1.0) / (maxNull.length.toDouble + 1.0)
+          out(i) = AdjustedP.unsafe((count.toDouble + 1.0) / (maxNull.length.toDouble + 1.0))
           i += 1
         Right(out)
 
-  def threshold(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, Double] =
+  def pValueDoubles(observed: Array[Double], maxNull: Array[Double]): Either[ThresholdError, Array[Double]] =
+    pValues(observed, maxNull).map { values =>
+      val out = new Array[Double](values.length)
+      var i = 0
+      while i < values.length do
+        out(i) = values(i).value
+        i += 1
+      out
+    }
+
+  def cutoff(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, ThresholdCutoff] =
     if maxNull.isEmpty then return Left(ThresholdError.InvalidArgument("maxNull", "must be non-empty"))
     var i = 0
     while i < maxNull.length do
@@ -131,10 +163,13 @@ object MaxNull:
       i += 1
 
     val k = math.floor(alpha.value * (maxNull.length.toDouble + 1.0)).toInt
-    if k < 1 then Right(Double.PositiveInfinity)
+    if k < 1 then Right(ThresholdCutoff.NoRejections)
     else
       val sorted = maxNull.clone.sortWith(_ > _)
-      Right(sorted(math.min(k, sorted.length) - 1))
+      ThresholdCutoff.inclusive(sorted(math.min(k, sorted.length) - 1))
+
+  def threshold(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, Double] =
+    cutoff(maxNull, alpha).map(_.toLegacyDouble)
 
 private def validateObserved(observed: Array[Double]): Either[ThresholdError, Unit] =
   var i = 0

@@ -17,22 +17,24 @@ import scalafim.fmri.threshold.*
 import scalafim.image.*
 
 val field =
-  MaskedField.fromVolume(zMap, Tail.Positive)
+  StatisticField.fromMap(StatisticMap.z(zMap), ThresholdAlternative.Greater)
 
 val score =
   for
-    f <- field
-    priors <- PriorWeights.uniform(f.size)
+    statField <- field
+    f = statField.evidence
+    priors <- PriorWeights.uniform(statField.size)
     root <- Octree.root(f, priors)
+    input <- ScoringInput(f, priors, root)
     kappa <- Kappa(1.0)
-    s <- ScoreSet.softMax(root.indices, f.valuesCopy, priors, kappa)
+    s <- ScoreSet.softMax(input, kappa)
   yield s
 
 val scan =
-  HierScan.run(
-    stat = zMap,
+  HierScan.runMap(
+    statistic = StatisticMap.z(zMap),
     nullDraw = permutationNulls,
-    config = HierScanConfig(alpha = Alpha.unsafe(0.05), tail = Tail.Positive)
+    config = HierScanConfig(alpha = Alpha.unsafe(0.05), alternative = ThresholdAlternative.Greater)
   )
 ```
 

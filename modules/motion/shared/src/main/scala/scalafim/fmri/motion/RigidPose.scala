@@ -3,14 +3,17 @@ package scalafim.fmri.motion
 import scalafim.image.{Affine, DMat}
 
 final case class RigidPose private (
-    tx: Double,
-    ty: Double,
-    tz: Double,
-    rx: Double,
-    ry: Double,
-    rz: Double
+    translation: Translation3Mm,
+    rotation: EulerZYXRad
 ):
   require(RigidPose.isFinite6(tx, ty, tz, rx, ry, rz), "RigidPose values must be finite")
+
+  def tx: Double = translation.tx
+  def ty: Double = translation.ty
+  def tz: Double = translation.tz
+  def rx: Double = rotation.rx
+  def ry: Double = rotation.ry
+  def rz: Double = rotation.rz
 
   def toMatrix: DMat =
     val cx = math.cos(rx)
@@ -37,17 +40,19 @@ final case class RigidPose private (
 
   def -(that: RigidPose): RigidPose =
     RigidPose.unsafe(
-      tx - that.tx,
-      ty - that.ty,
-      tz - that.tz,
-      rx - that.rx,
-      ry - that.ry,
-      rz - that.rz
+      Translation3Mm.unsafe(tx - that.tx, ty - that.ty, tz - that.tz),
+      EulerZYXRad.unsafe(rx - that.rx, ry - that.ry, rz - that.rz)
     )
 
 object RigidPose:
   val identity: RigidPose =
-    unsafe(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    unsafe(Translation3Mm.zero, EulerZYXRad.zero)
+
+  def make(
+      translation: Translation3Mm,
+      rotation: EulerZYXRad
+  ): RigidPose =
+    unsafe(translation, rotation)
 
   def make(
       tx: Double,
@@ -57,8 +62,16 @@ object RigidPose:
       ry: Double,
       rz: Double
   ): Either[MotionError, RigidPose] =
-    if isFinite6(tx, ty, tz, rx, ry, rz) then Right(unsafe(tx, ty, tz, rx, ry, rz))
-    else Left(MotionError.InvalidScalar("RigidPose", Double.NaN, "all pose components must be finite"))
+    for
+      translation <- Translation3Mm.make(tx, ty, tz)
+      rotation <- EulerZYXRad.make(rx, ry, rz)
+    yield unsafe(translation, rotation)
+
+  def unsafe(
+      translation: Translation3Mm,
+      rotation: EulerZYXRad
+  ): RigidPose =
+    new RigidPose(translation, rotation)
 
   def unsafe(
       tx: Double,
@@ -68,7 +81,7 @@ object RigidPose:
       ry: Double,
       rz: Double
   ): RigidPose =
-    new RigidPose(tx, ty, tz, wrapPi(rx), wrapPi(ry), wrapPi(rz))
+    unsafe(Translation3Mm.unsafe(tx, ty, tz), EulerZYXRad.unsafe(rx, ry, rz))
 
   def fromMatrix(matrix: DMat, tolerance: Double = 1e-8): Either[MotionError, RigidPose] =
     MotionError.validateFiniteMatrix(matrix).flatMap { _ =>

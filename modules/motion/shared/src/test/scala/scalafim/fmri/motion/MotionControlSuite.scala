@@ -52,6 +52,38 @@ class MotionControlSuite extends munit.FunSuite:
     }
   }
 
+  test("capture and temporal controls expose typed policies with Boolean adapters") {
+    val capture = CaptureControl.default.withEnabled(false)
+    assertEquals(capture.policy, CapturePolicy.Disabled)
+    assert(!capture.enabled)
+
+    val temporal =
+      TemporalControl(
+        regularizationEnabled = false,
+        lowMotionPoseShrink = false,
+        lowMotionPoseScale = 0.5,
+        lowMotionThresholdMm = 0.75
+      )
+    val shrink = temporal.withLowMotionPoseShrink(true)
+    val regularized = temporal.withRegularizationEnabled(true)
+    assertEquals(regularized.regularization, TemporalRegularizationPolicy.Enabled)
+    assert(regularized.regularizationEnabled)
+    assertEquals(shrink.lowMotionPose, LowMotionPosePolicy.Shrink(PoseScale.unsafe(0.5), MotionMagnitudeMm.unsafe(0.75)))
+    assert(shrink.lowMotionPoseShrink)
+    assertEqualsDouble(shrink.lowMotionPoseScale, 0.5, 1e-12)
+    assertEqualsDouble(shrink.lowMotionThresholdMm, 0.75, 1e-12)
+  }
+
+  test("residual control exposes frame-mean nuisance policy") {
+    val raw = ResidualControl.default
+    val nuisance = ResidualControl.fromRemoveFrameMean(removeFrameMean = true)
+
+    assertEquals(raw.nuisance, ResidualNuisancePolicy.Raw)
+    assert(!raw.removeFrameMean)
+    assertEquals(nuisance.nuisance, ResidualNuisancePolicy.RemoveFrameMean)
+    assert(nuisance.removeFrameMean)
+  }
+
   test("fast fMRI profile selects rigid robust engine and component tags") {
     assertEquals(MotionProfile.FastFmri.engine, MotionEngine.RigidRobust)
     assert(MotionProfile.FastFmri.components.contains("dense_sampling"))

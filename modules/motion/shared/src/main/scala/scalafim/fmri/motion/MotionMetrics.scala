@@ -8,17 +8,35 @@ final case class DisplacementSummary(
     max: Double
 )
 
+enum DvarsPolicy:
+  case Raw
+  case RobustClip3xMedian
+
+final case class FramewiseDisplacementMetric private (pair: FramePair, value: FramewiseDisplacementMm):
+  def millimeters: Double = value.value
+
+object FramewiseDisplacementMetric:
+  def unsafe(pair: FramePair, value: Double): FramewiseDisplacementMetric =
+    new FramewiseDisplacementMetric(pair, FramewiseDisplacementMm.unsafe(value))
+
+final case class DvarsMetric private (pair: FramePair, value: DvarsRms):
+  def rms: Double = value.value
+
+object DvarsMetric:
+  def unsafe(pair: FramePair, value: Double): DvarsMetric =
+    new DvarsMetric(pair, DvarsRms.unsafe(value))
+
 object MotionMetrics:
-  def framewiseDisplacement(
+  def framewiseDisplacementPairs(
       trace: MotionTrace,
       radius: HeadRadius = HeadRadius.default
-  ): Vector[Double] =
-    val out = Array.fill(trace.length)(0.0)
+  ): Vector[FramewiseDisplacementMetric] =
+    val out = Vector.newBuilder[FramewiseDisplacementMetric]
     var t = 1
     while t < trace.length do
       val a = trace.poses(t)
       val b = trace.poses(t - 1)
-      out(t) =
+      val value =
         math.abs(a.tx - b.tx) +
           math.abs(a.ty - b.ty) +
           math.abs(a.tz - b.tz) +
@@ -27,19 +45,33 @@ object MotionMetrics:
               math.abs(a.ry - b.ry) +
               math.abs(a.rz - b.rz)
           )
+      out += FramewiseDisplacementMetric.unsafe(FramePair.unsafe(t - 1, t), value)
       t += 1
+    out.result()
+
+  def framewiseDisplacement(
+      trace: MotionTrace,
+      radius: HeadRadius = HeadRadius.default
+  ): Vector[Double] =
+    val out = Array.fill(trace.length)(0.0)
+    val metrics = framewiseDisplacementPairs(trace, radius)
+    var i = 0
+    while i < metrics.length do
+      val metric = metrics(i)
+      out(metric.pair.current.value) = metric.value.value
+      i += 1
     out.toVector
 
-  def dvars(
+  def dvarsPairs(
       run: NeuroVec[Double],
       mask: Option[NeuroVol[Boolean]] = None,
-      robust: Boolean = false
-  ): Either[MotionError, Vector[Double]] =
+      policy: DvarsPolicy = DvarsPolicy.Raw
+  ): Either[MotionError, Vector[DvarsMetric]] =
     validateMask(run, mask).map { maskVol =>
       val dims = run.space.spatialDims
       val nSpatial = dims.product
       val nt = run.nVolumes
-      val out = Array.fill(nt)(Double.NaN)
+      val values = Array.fill(nt)(Double.NaN)
       var t = 1
       while t < nt do
         var ss = 0.0
@@ -54,10 +86,50 @@ object MotionMetrics:
             ss += d * d
             n += 1
           lin += 1
-        if n > 0 then out(t) = math.sqrt(ss / n.toDouble)
+        if n > 0 then values(t) = math.sqrt(ss / n.toDouble)
         t += 1
 
-      if robust then robustClip3xMedian(out).toVector else out.toVector
+      val transformed =
+        policy match
+          case DvarsPolicy.Raw => values
+          case DvarsPolicy.RobustClip3xMedian => robustClip3xMedian(values)
+      val out = Vector.newBuilder[DvarsMetric]
+      t = 1
+      while t < nt do
+        if transformed(t).isFinite then out += DvarsMetric.unsafe(FramePair.unsafe(t - 1, t), transformed(t))
+        t += 1
+      out.result()
+    }
+
+  def dvars(run: NeuroVec[Double]): Either[MotionError, Vector[Double]] =
+    dvars(run, None, DvarsPolicy.Raw)
+
+  def dvars(run: NeuroVec[Double], mask: Option[NeuroVol[Boolean]]): Either[MotionError, Vector[Double]] =
+    dvars(run, mask, DvarsPolicy.Raw)
+
+  def dvars(run: NeuroVec[Double], robust: Boolean): Either[MotionError, Vector[Double]] =
+    dvars(run, None, DvarsPolicy.fromRobustBoolean(robust))
+
+  def dvars(
+      run: NeuroVec[Double],
+      mask: Option[NeuroVol[Boolean]],
+      robust: Boolean
+  ): Either[MotionError, Vector[Double]] =
+    dvars(run, mask, DvarsPolicy.fromRobustBoolean(robust))
+
+  def dvars(
+      run: NeuroVec[Double],
+      mask: Option[NeuroVol[Boolean]],
+      policy: DvarsPolicy
+  ): Either[MotionError, Vector[Double]] =
+    dvarsPairs(run, mask, policy).map { metrics =>
+      val out = Array.fill(run.nVolumes)(Double.NaN)
+      var i = 0
+      while i < metrics.length do
+        val metric = metrics(i)
+        out(metric.pair.current.value) = metric.value.value
+        i += 1
+      out.toVector
     }
 
   def transformDisplacement(
@@ -169,3 +241,7 @@ object MotionMetrics:
     val dy = a(1) - b(1)
     val dz = a(2) - b(2)
     math.sqrt(dx * dx + dy * dy + dz * dz)
+
+object DvarsPolicy:
+  def fromRobustBoolean(robust: Boolean): DvarsPolicy =
+    if robust then DvarsPolicy.RobustClip3xMedian else DvarsPolicy.Raw

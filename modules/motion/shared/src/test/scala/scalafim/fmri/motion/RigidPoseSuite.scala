@@ -46,6 +46,21 @@ class RigidPoseSuite extends munit.FunSuite:
     assertClose(roundtrip.rz, pose.rz)
   }
 
+  test("rigid pose stores typed translation and ZYX Euler rotation components") {
+    val translation = Translation3Mm.make(1.0, -2.0, 3.5).fold(err => fail(err.message), identity)
+    val rotation = EulerZYXRad.make(0.1, -0.2, 2.0 * math.Pi + 0.3).fold(err => fail(err.message), identity)
+    val pose = RigidPose.make(translation, rotation)
+
+    assertEqualsDouble(pose.translation.tx, 1.0, 1e-12)
+    assertEqualsDouble(pose.translation.ty, -2.0, 1e-12)
+    assertEqualsDouble(pose.translation.tz, 3.5, 1e-12)
+    assertEqualsDouble(pose.rotation.rx, 0.1, 1e-12)
+    assertEqualsDouble(pose.rotation.ry, -0.2, 1e-12)
+    assertEqualsDouble(pose.rotation.rz, 0.3, 1e-12)
+    assertEqualsDouble(pose.tx, 1.0, 1e-12)
+    assertEqualsDouble(pose.rz, 0.3, 1e-12)
+  }
+
   test("inverse composes back to identity") {
     val pose = RigidPose.unsafe(0.25, -0.5, 1.5, 0.1, -0.2, 0.3)
     val inv = pose.inverse.fold(err => fail(err.message), identity)

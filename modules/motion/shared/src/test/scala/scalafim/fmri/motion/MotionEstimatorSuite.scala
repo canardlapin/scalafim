@@ -50,6 +50,9 @@ class MotionEstimatorSuite extends munit.FunSuite:
       baseValueAt(i.toDouble + offset, j.toDouble, k.toDouble)
     }
 
+  private def offsetFrame(fixed: Array[Double], offset: Double): Array[Double] =
+    Array.tabulate(nxyz)(lin => fixed(lin) + offset)
+
   private def rotatedMovingFramePositiveZ(rotation: Double): Array[Double] =
     val cx = 0.5 * (dims(0).toDouble - 1.0)
     val cy = 0.5 * (dims(1).toDouble - 1.0)
@@ -197,7 +200,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
       )
     val noCaptureControl =
       captureControl.copy(
-        capture = captureControl.capture.copy(enabled = false)
+        capture = captureControl.capture.withEnabled(false)
       )
     val captured =
       MotionEstimator
@@ -267,7 +270,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
           plan.control.copy(
             pyramid = pyramid,
             template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
-            capture = plan.control.capture.copy(enabled = false)
+            capture = plan.control.capture.withEnabled(false)
           )
       )
     val est = MotionEstimator.estimate(run, Some(interiorMask), pyramidPlan).fold(err => fail(err.message), identity)
@@ -285,7 +288,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
     val baseControl =
       plan.control.copy(
         template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
-        capture = plan.control.capture.copy(enabled = false),
+        capture = plan.control.capture.withEnabled(false),
         temporal =
           TemporalControl(
             regularizationEnabled = false,
@@ -296,7 +299,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
       )
     val shrinkControl =
       baseControl.copy(
-        temporal = baseControl.temporal.copy(lowMotionPoseShrink = true)
+        temporal = baseControl.temporal.withLowMotionPoseShrink(true)
       )
 
     val tinyRun = runFromFrames(Vector(fixed, shiftedMovingFrameX(0.12)))
@@ -330,18 +333,94 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assertEqualsDouble(shrunkLarge.trace.unsafeFrame(1).tx, plainLarge.trace.unsafeFrame(1).tx, 1e-10)
   }
 
-  test("unsupported estimator controls are explicit errors") {
+  test("temporal regularization smooths an isolated pose while preserving reference") {
+    val fixed = baseFrame
+    val moving = shiftedMovingFramePlusOneX(fixed)
+    val run = runFromFrames(Vector(fixed, moving, fixed.clone()))
+    val baseControl =
+      plan.control.copy(
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture = plan.control.capture.withEnabled(false),
+        temporal =
+          TemporalControl(
+            regularizationEnabled = false,
+            lowMotionPoseShrink = false,
+            lowMotionPoseScale = 0.95,
+            lowMotionThresholdMm = 0.25
+          )
+      )
+    val plain =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val regularized =
+      MotionEstimator
+        .estimate(
+          run,
+          Some(interiorMask),
+          plan.copy(control = baseControl.copy(temporal = baseControl.temporal.withRegularizationEnabled(true)))
+        )
+        .fold(err => fail(err.message), identity)
+
+    val plainSpike = plain.trace.unsafeFrame(1).tx
+    val regularizedSpike = regularized.trace.unsafeFrame(1).tx
+    assertEqualsDouble(regularized.trace.unsafeFrame(0).tx, 0.0, 1e-12)
+    assert(math.abs(regularizedSpike) < math.abs(plainSpike) * 0.75)
+    assert(math.abs(regularizedSpike) > math.abs(plainSpike) * 0.3)
+    assert(regularized.diagnostics.forall(d => d.costFinal.isFinite && d.overlap.isFinite))
+  }
+
+  test("enabled temporal regularization is executable") {
     val fixed = baseFrame
     val run = runFromFrames(Vector(fixed, fixed.clone()))
     val temporalPlan =
       plan.copy(
         control =
           plan.control.copy(
-            temporal = plan.control.temporal.copy(regularizationEnabled = true)
+            temporal = plan.control.temporal.withRegularizationEnabled(true)
           )
       )
 
-    assert(MotionEstimator.estimate(run, Some(interiorMask), temporalPlan).isLeft)
+    assert(MotionEstimator.estimate(run, Some(interiorMask), temporalPlan).isRight)
+  }
+
+  test("frame-mean nuisance residual removes global intensity offsets") {
+    val fixed = baseFrame
+    val run = runFromFrames(Vector(fixed, offsetFrame(fixed, 12.0)))
+    val zeroIter =
+      PyramidControl
+        .make(
+          downsample = Vector(1),
+          maxIterations = Vector(0),
+          sampleCounts = Vector(nxyz),
+          enabled = false
+        )
+        .fold(err => fail(err.message), identity)
+    val baseControl =
+      plan.control.copy(
+        pyramid = zeroIter,
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture = plan.control.capture.withEnabled(false),
+        residual = ResidualControl.default
+      )
+    val nuisanceControl =
+      baseControl.copy(
+        residual = ResidualControl.fromRemoveFrameMean(removeFrameMean = true)
+      )
+
+    val raw =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val nuisance =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = nuisanceControl))
+        .fold(err => fail(err.message), identity)
+
+    assert(raw.diagnostics(1).costFinal > 15.0)
+    assert(nuisance.diagnostics(1).costFinal < 1e-10)
+    assertEqualsDouble(nuisance.trace.unsafeFrame(1).tx, 0.0, 1e-12)
+    assertEqualsDouble(nuisance.trace.unsafeFrame(1).rz, 0.0, 1e-12)
   }
 
   test("estimator reports invalid references, non-finite runs, and empty masks as typed errors") {
