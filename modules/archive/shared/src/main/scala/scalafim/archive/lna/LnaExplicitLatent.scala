@@ -1,6 +1,6 @@
 package scalafim.archive.lna
 
-import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
+import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
 import scalafim.image.{DMat, NeuroSpace}
 
 object LnaExplicitLatent:
@@ -169,9 +169,12 @@ object LnaExplicitLatent:
       archive: LnaArchive,
       runLabel: RunLabel
   ): Either[ArchiveError, TransformDescriptor] =
-    val prefix = s"/scans/${runLabel.value}/"
+    val runOutput = archive.run(runLabel).map(_.output)
     archive.manifest.transforms
-      .find(desc => isExplicitEmbed(desc) && desc.datasets.exists(_.path.value.startsWith(prefix)))
+      .find { desc =>
+        isExplicitEmbed(desc) &&
+        desc.datasets.exists(ref => runOutput.contains(ref.path) || RunScopedPath.from(ref.path, runLabel).isDefined)
+      }
       .toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' has no explicit latent embed descriptor"))
 
   private def validateResponse(

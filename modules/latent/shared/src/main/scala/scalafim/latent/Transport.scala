@@ -5,11 +5,89 @@ import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, GramProjection, L
 enum CoefficientCoordinates:
   case Analysis, Raw
 
+enum CoefficientBlock:
+  case Analysis(override val values: DoubleMatrix)
+  case Raw(override val values: DoubleMatrix)
+
+  def values: DoubleMatrix =
+    this match
+      case Analysis(values) => values
+      case Raw(values)      => values
+
+  def coordinates: CoefficientCoordinates =
+    this match
+      case Analysis(_) => CoefficientCoordinates.Analysis
+      case Raw(_)      => CoefficientCoordinates.Raw
+
+object CoefficientBlock:
+  def apply(values: DoubleMatrix, coordinates: CoefficientCoordinates): CoefficientBlock =
+    coordinates match
+      case CoefficientCoordinates.Analysis => Analysis(values)
+      case CoefficientCoordinates.Raw      => Raw(values)
+
+enum CoefficientCovariance:
+  case Analysis(override val values: DoubleMatrix)
+  case Raw(override val values: DoubleMatrix)
+
+  def values: DoubleMatrix =
+    this match
+      case Analysis(values) => values
+      case Raw(values)      => values
+
+  def coordinates: CoefficientCoordinates =
+    this match
+      case Analysis(_) => CoefficientCoordinates.Analysis
+      case Raw(_)      => CoefficientCoordinates.Raw
+
+object CoefficientCovariance:
+  def apply(values: DoubleMatrix, coordinates: CoefficientCoordinates): CoefficientCovariance =
+    coordinates match
+      case CoefficientCoordinates.Analysis => Analysis(values)
+      case CoefficientCoordinates.Raw      => Raw(values)
+
 enum TransportSpace:
   case Native, Template
 
 enum TransportAdjointConvention:
   case EuclideanDiscrete
+
+enum TransportDecoders:
+  case NativeOnly(native: LinearMap)
+  case TemplateCapable(native: LinearMap, template: LinearMap)
+
+  def nativeDecoder: LinearMap =
+    this match
+      case NativeOnly(native)              => native
+      case TemplateCapable(native, _)      => native
+
+  def templateDecoder: Option[LinearMap] =
+    this match
+      case NativeOnly(_)                   => None
+      case TemplateCapable(_, template)    => Some(template)
+
+  def templateCapable: Boolean =
+    templateDecoder.nonEmpty
+
+  def decoder(space: TransportSpace): Either[LatentError, LinearMap] =
+    space match
+      case TransportSpace.Native =>
+        Right(nativeDecoder)
+      case TransportSpace.Template =>
+        templateDecoder.toRight(LatentError.MissingComponent("template decoder"))
+
+  def metadataValue: String =
+    this match
+      case NativeOnly(_)                => "native_only"
+      case TemplateCapable(_, _)        => "template_capable"
+
+object TransportDecoders:
+  def apply(
+      nativeDecoder: LinearMap,
+      templateDecoder: Option[LinearMap]
+  ): TransportDecoders =
+    templateDecoder match
+      case Some(template) => TransportDecoders.TemplateCapable(nativeDecoder, template)
+      case None           => TransportDecoders.NativeOnly(nativeDecoder)
 
 final class CoefficientTransform private (
     val toAnalysis: LinearMap,
@@ -49,8 +127,7 @@ object CoefficientTransform:
 
 final class TransportLatentResponse private (
     val coefficientsAnalysis: DoubleMatrix,
-    val nativeDecoder: LinearMap,
-    val templateDecoder: Option[LinearMap],
+    val decoders: TransportDecoders,
     val transform: CoefficientTransform,
     val offset: Option[DoubleVector],
     val sourceDomain: DomainId,
@@ -67,6 +144,15 @@ final class TransportLatentResponse private (
       coefficients = coefficientsAnalysis.cols
     )
 
+  def nativeDecoder: LinearMap =
+    decoders.nativeDecoder
+
+  def templateDecoder: Option[LinearMap] =
+    decoders.templateDecoder
+
+  def coefficientBlock: CoefficientBlock =
+    CoefficientBlock.Analysis(coefficientsAnalysis)
+
   override def coefTime: DoubleMatrix =
     coefficientsAnalysis
 
@@ -74,16 +160,7 @@ final class TransportLatentResponse private (
       space: TransportSpace = TransportSpace.Native,
       coordinates: CoefficientCoordinates = CoefficientCoordinates.Analysis
   ): Either[LatentError, LinearMap] =
-    val base =
-      space match
-        case TransportSpace.Native =>
-          Right(nativeDecoder)
-        case TransportSpace.Template =>
-          templateDecoder match
-            case Some(value) => Right(value)
-            case None        => Left(LatentError.MissingComponent("template decoder"))
-
-    base.flatMap { map =>
+    decoders.decoder(space).flatMap { map =>
       coordinates match
         case CoefficientCoordinates.Analysis =>
           Right(map)
@@ -94,6 +171,12 @@ final class TransportLatentResponse private (
   override def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
     decodeCoefficients(coefficients, TransportSpace.Native, CoefficientCoordinates.Analysis)
 
+  def decodeCoefficientBlock(
+      coefficients: CoefficientBlock,
+      space: TransportSpace = TransportSpace.Native
+  ): Either[LatentError, DoubleMatrix] =
+    decodeCoefficients(coefficients.values, space, coefficients.coordinates)
+
   def decodeCoefficients(
       coefficients: DoubleMatrix,
       space: TransportSpace,
@@ -103,6 +186,12 @@ final class TransportLatentResponse private (
       if coefficients.rows != map.cols then Left(LatentError.DimensionMismatch("coefficient rows", map.cols, coefficients.rows))
       else map.forward(coefficients).left.map(linearMapError)
     }
+
+  def covarianceDiagonal(
+      covariance: CoefficientCovariance,
+      space: TransportSpace
+  ): Either[LatentError, DoubleVector] =
+    covarianceDiagonal(covariance.values, space, covariance.coordinates)
 
   def covarianceDiagonal(
       covariance: DoubleMatrix,
@@ -171,6 +260,37 @@ final class TransportLatentResponse private (
 object TransportLatentResponse:
   def apply(
       coefficientsAnalysis: DoubleMatrix,
+      decoders: TransportDecoders,
+      transform: CoefficientTransform,
+      offset: Option[DoubleVector],
+      sourceDomain: DomainId,
+      targetDomain: DomainId,
+      label: String,
+      metadata: Map[String, String],
+      adjointConvention: TransportAdjointConvention
+  ): Either[LatentError, TransportLatentResponse] =
+    validate(coefficientsAnalysis, decoders, transform, offset).map { _ =>
+      new TransportLatentResponse(
+        coefficientsAnalysis = coefficientsAnalysis,
+        decoders = decoders,
+        transform = transform,
+        offset = offset,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata ++ Map(
+          "family" -> "transport",
+          "coordinates" -> "analysis",
+          "transport_decoders" -> decoders.metadataValue,
+          "has_template_decoder" -> decoders.templateCapable.toString,
+          "adjoint_convention" -> "euclidean_discrete"
+        ),
+        adjointConvention = adjointConvention
+      )
+    }
+
+  def apply(
+      coefficientsAnalysis: DoubleMatrix,
       nativeDecoder: LinearMap,
       transform: CoefficientTransform,
       templateDecoder: Option[LinearMap] = None,
@@ -181,24 +301,40 @@ object TransportLatentResponse:
       metadata: Map[String, String] = Map.empty,
       adjointConvention: TransportAdjointConvention = TransportAdjointConvention.EuclideanDiscrete
   ): Either[LatentError, TransportLatentResponse] =
-    validate(coefficientsAnalysis, nativeDecoder, transform, templateDecoder, offset).map { _ =>
-      new TransportLatentResponse(
-        coefficientsAnalysis = coefficientsAnalysis,
-        nativeDecoder = nativeDecoder,
-        templateDecoder = templateDecoder,
-        transform = transform,
-        offset = offset,
-        sourceDomain = sourceDomain,
-        targetDomain = targetDomain,
-        label = label,
-        metadata = metadata ++ Map(
-          "family" -> "transport",
-          "coordinates" -> "analysis",
-          "adjoint_convention" -> "euclidean_discrete"
-        ),
-        adjointConvention = adjointConvention
-      )
-    }
+    apply(
+      coefficientsAnalysis = coefficientsAnalysis,
+      decoders = TransportDecoders(nativeDecoder, templateDecoder),
+      transform = transform,
+      offset = offset,
+      sourceDomain = sourceDomain,
+      targetDomain = targetDomain,
+      label = label,
+      metadata = metadata,
+      adjointConvention = adjointConvention
+    )
+
+  def fromDecoders(
+      coefficientsAnalysis: DoubleMatrix,
+      decoders: TransportDecoders,
+      transform: CoefficientTransform,
+      offset: Option[DoubleVector] = None,
+      sourceDomain: DomainId = DomainId.unsafe("transport.coefficients.analysis"),
+      targetDomain: DomainId = DomainId.unsafe("transport.native"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty,
+      adjointConvention: TransportAdjointConvention = TransportAdjointConvention.EuclideanDiscrete
+  ): Either[LatentError, TransportLatentResponse] =
+    apply(
+      coefficientsAnalysis = coefficientsAnalysis,
+      decoders = decoders,
+      transform = transform,
+      offset = offset,
+      sourceDomain = sourceDomain,
+      targetDomain = targetDomain,
+      label = label,
+      metadata = metadata,
+      adjointConvention = adjointConvention
+    )
 
   def withIdentityTransform(
       coefficientsAnalysis: DoubleMatrix,
@@ -211,11 +347,10 @@ object TransportLatentResponse:
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, TransportLatentResponse] =
     CoefficientTransform.identity(nativeDecoder.cols).flatMap { transform =>
-      apply(
+      fromDecoders(
         coefficientsAnalysis = coefficientsAnalysis,
-        nativeDecoder = nativeDecoder,
+        decoders = TransportDecoders(nativeDecoder, templateDecoder),
         transform = transform,
-        templateDecoder = templateDecoder,
         offset = offset,
         sourceDomain = sourceDomain,
         targetDomain = targetDomain,
@@ -226,11 +361,11 @@ object TransportLatentResponse:
 
   private def validate(
       coefficientsAnalysis: DoubleMatrix,
-      nativeDecoder: LinearMap,
+      decoders: TransportDecoders,
       transform: CoefficientTransform,
-      templateDecoder: Option[LinearMap],
       offset: Option[DoubleVector]
   ): Either[LatentError, Unit] =
+    val nativeDecoder = decoders.nativeDecoder
     if coefficientsAnalysis.rows <= 0 then Left(LatentError.NonPositiveDimension("coefficient rows", coefficientsAnalysis.rows))
     else if coefficientsAnalysis.cols <= 0 then Left(LatentError.NonPositiveDimension("coefficient columns", coefficientsAnalysis.cols))
     else if nativeDecoder.cols != coefficientsAnalysis.cols then
@@ -238,7 +373,7 @@ object TransportLatentResponse:
     else if transform.dimension != coefficientsAnalysis.cols then
       Left(LatentError.DimensionMismatch("transform dimension", coefficientsAnalysis.cols, transform.dimension))
     else
-      templateDecoder match
+      decoders.templateDecoder match
         case Some(decoder) if decoder.cols != coefficientsAnalysis.cols =>
           Left(LatentError.DimensionMismatch("template decoder source", coefficientsAnalysis.cols, decoder.cols))
         case _ =>
@@ -252,18 +387,35 @@ object TransportLatentResponse:
                 case None        => Right(())
 
 object TransportProjection:
+  def coefficientsWithPenalty(
+      targetData: DoubleMatrix,
+      decoder: LinearMap,
+      ridge: RidgePenalty,
+      roughness: Option[DoubleMatrix] = None
+  ): Either[LatentError, DoubleMatrix] =
+    coefficientsValidated(targetData, decoder, ridge, roughness)
+
   def coefficients(
       targetData: DoubleMatrix,
       decoder: LinearMap,
       ridge: Double = 0.0,
       roughness: Option[DoubleMatrix] = None
   ): Either[LatentError, DoubleMatrix] =
+    RidgePenalty(ridge).flatMap { penalty =>
+      coefficientsValidated(targetData, decoder, penalty, roughness)
+    }
+
+  private def coefficientsValidated(
+      targetData: DoubleMatrix,
+      decoder: LinearMap,
+      ridge: RidgePenalty,
+      roughness: Option[DoubleMatrix]
+  ): Either[LatentError, DoubleMatrix] =
     if targetData.rows != decoder.rows then Left(LatentError.DimensionMismatch("target rows", decoder.rows, targetData.rows))
-    else if ridge < 0.0 || !ridge.isFinite then Left(LatentError.InvalidParameter("ridge", ridge))
     else
       for
         basis <- decoder.forward(DoubleMatrix.eye(decoder.cols)).left.map(linearMapError)
-        gram0 = DoubleMatrix.crossProduct(basis).addToDiagonal(ridge)
+        gram0 = DoubleMatrix.crossProduct(basis).addToDiagonal(ridge.value)
         gram <- addRoughness(gram0, roughness, decoder.cols)
         rhs = DoubleMatrix.transposeMultiply(basis, targetData)
         coeff <- GramProjection.solveGram(gram, rhs).left.map(err => LatentError.ProjectionFailed(err.message))

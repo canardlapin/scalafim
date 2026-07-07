@@ -1,6 +1,6 @@
 package scalafim.archive.lna
 
-import scalafim.archive.{ArchivePath, RunLabel}
+import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, RunLabel, RunScopedPath}
 import scalafim.image.{DMat, NeuroSpace}
 
 class LnaCoreSuite extends munit.FunSuite:
@@ -72,6 +72,32 @@ class LnaCoreSuite extends munit.FunSuite:
     assertEquals(RunLabel.indexed(0).value, "run-01")
     intercept[IllegalArgumentException](ArchivePath("relative"))
     intercept[IllegalArgumentException](RunLabel("bad/run"))
+  }
+
+  test("archive dataset paths expose typed run scope by path segment") {
+    val label = RunLabel("run-01")
+    val runPath = ArchivePath("/scans/run-01/step_00_quant/values")
+    val scoped = RunScopedPath.from(runPath, label).getOrElse(fail("expected run-scoped path"))
+
+    assertEquals(scoped.label, label)
+    assertEquals(scoped.dataset, ArchiveDatasetPath(runPath))
+    assertEquals(ArchiveDatasetPath.from("/basis/00_basis/matrix").runScope, None)
+    assertEquals(RunScopedPath.from(ArchivePath("/scans/run-010/step_00_quant/values"), label), None)
+  }
+
+  test("integer payload storage validates unsigned dtype ranges") {
+    assertEquals(Payload.IntMatrix(1, 2, Vector(0, 255), LnaDType.UInt8).dtype, LnaDType.UInt8)
+    assertEquals(Payload.IntMatrix(1, 2, Vector(0, 65535), LnaDType.UInt16).dtype, LnaDType.UInt16)
+
+    val uint8 = intercept[IllegalArgumentException] {
+      Payload.IntMatrix(1, 1, Vector(256), LnaDType.UInt8)
+    }
+    assert(uint8.getMessage.contains("UInt8"))
+
+    val uint16 = intercept[IllegalArgumentException] {
+      Payload.IntMatrix(1, 1, Vector(-1), LnaDType.UInt16)
+    }
+    assert(uint16.getMessage.contains("UInt16"))
   }
 
   test("quant archive validates and reconstructs with bounded error") {
@@ -251,6 +277,39 @@ class LnaCoreSuite extends munit.FunSuite:
 
     assert(issues.exists(_.layer == ValidationLayer.References))
     assert(issues.exists(_.message.contains("no payload")))
+
+    broken.validate match
+      case Left(ArchiveError.ValidationFailed(structured)) =>
+        assert(structured.exists(issue => issue.layer == ValidationLayer.References && issue.path.contains(archive.manifest.datasets.head.path)))
+      case other =>
+        fail(s"expected structured validation failure, found $other")
+  }
+
+  test("validation flags datasets scoped to unknown runs") {
+    val archive =
+      LnaPipeline
+        .quantArchive(data, space)
+        .fold(err => fail(err.message), identity)
+
+    val descriptor = archive.manifest.transforms.head
+    val quantIndex = descriptor.datasets.indexWhere(_.role == DatasetRole.Quantized)
+    val datasetIndex = archive.manifest.datasets.indexWhere(_.role == DatasetRole.Quantized)
+    val originalRef = descriptor.datasets(quantIndex)
+    val badPath = ArchivePath("/scans/run-02/step_00_quant/values")
+    val badRef = originalRef.copy(path = badPath)
+    val brokenDescriptor = descriptor.copy(datasets = descriptor.datasets.updated(quantIndex, badRef))
+    val brokenDatasets = archive.manifest.datasets.updated(datasetIndex, badRef)
+    val broken =
+      archive.copy(
+        manifest = archive.manifest.copy(
+          transforms = archive.manifest.transforms.updated(0, brokenDescriptor),
+          datasets = brokenDatasets
+        ),
+        payloads = (archive.payloads - originalRef.path) + (badPath -> archive.payloads(originalRef.path))
+      )
+
+    val issues = LnaValidator.validate(broken)
+    assert(issues.exists(issue => issue.path.contains(badPath) && issue.message.contains("unknown run run-02")))
   }
 
   test("basis and embed archive reconstructs from explicit stored basis") {

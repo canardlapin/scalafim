@@ -23,9 +23,9 @@ Backends currently include:
 - JVM-only `LnaDataset` directory adapter for neuroarchive-style
   `derivatives/lna` trees: subject discovery, metadata tables, shared-basis
   registries, filtered `.lna.h5` lookup, archive-backed backend creation,
-  selection-aware latent reads for explicit, temporal, transport, and shared-basis
-  archives, and opt-in materialized reads that resolve external shared-basis
-  archives through the dataset root.
+  selection-aware latent reads for explicit, temporal, transport, BOLDZip, and
+  shared-basis archives, and opt-in materialized reads that resolve external
+  shared-basis archives through the dataset root.
 
 Run it directly with:
 

@@ -188,6 +188,20 @@ object TransformParams:
     require(metadata.keys.forall(_.trim.nonEmpty), "shared basis embed metadata keys must be non-empty")
     val kind: TransformKind = TransformKind.Embed
 
+  final case class Custom(
+      name: String,
+      sourceDomain: Option[String] = None,
+      targetDomain: Option[String] = None,
+      label: Option[String] = None,
+      metadata: Map[String, String] = Map.empty
+  ) extends TransformParams:
+    require(name.trim.nonEmpty, "custom transform name must be non-empty")
+    require(sourceDomain.forall(_.trim.nonEmpty), "source domain must be non-empty when provided")
+    require(targetDomain.forall(_.trim.nonEmpty), "target domain must be non-empty when provided")
+    require(label.forall(_.trim.nonEmpty), "label must be non-empty when provided")
+    require(metadata.keys.forall(_.trim.nonEmpty), "custom transform metadata keys must be non-empty")
+    val kind: TransformKind = TransformKind.Custom(name)
+
 final case class DatasetRef(
     path: ArchivePath,
     role: DatasetRole,
@@ -231,6 +245,12 @@ object Payload:
     require(rows > 0 && cols > 0, "integer matrix dimensions must be positive")
     require(values.length == rows * cols, "integer matrix payload length must match dimensions")
     require(dtype == LnaDType.UInt8 || dtype == LnaDType.UInt16 || dtype == LnaDType.Int32, "integer matrix payload must use integer dtype")
+    Payload.integerRange(dtype).foreach { case (min, max) =>
+      require(
+        values.forall(value => value >= min && value <= max),
+        s"$dtype integer matrix values must be between $min and $max"
+      )
+    }
     def dims: Vector[Int] = Vector(rows, cols)
     def apply(row: Int, col: Int): Int =
       require(row >= 0 && row < rows, "row index out of bounds")
@@ -241,6 +261,13 @@ object Payload:
     require(values.nonEmpty, "double vector payload must be non-empty")
     require(dtype == LnaDType.Float32 || dtype == LnaDType.Float64, "double vector payload must use float dtype")
     def dims: Vector[Int] = Vector(values.length)
+
+  private[lna] def integerRange(dtype: LnaDType): Option[(Int, Int)] =
+    dtype match
+      case LnaDType.UInt8  => Some((0, 255))
+      case LnaDType.UInt16 => Some((0, 65535))
+      case LnaDType.Int32  => None
+      case _               => None
 
 final case class LnaRun(
     label: RunLabel,

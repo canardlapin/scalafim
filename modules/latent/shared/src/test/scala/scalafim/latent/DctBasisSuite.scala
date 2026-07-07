@@ -98,6 +98,36 @@ class DctBasisSuite extends munit.FunSuite:
     assertMatrixEquals(reconstructed, data.toRows, 1e-10)
   }
 
+  test("DctSpec and RidgePenalty validate typed DCT configuration") {
+    val data =
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 2.0),
+          Vector(2.0, 4.0),
+          Vector(4.0, 8.0)
+        )
+      )
+    val spec =
+      DctSpec(timepoints = data.rows, components = data.rows, norm = DctNorm.Ortho)
+        .fold(err => fail(err.message), identity)
+    val ridge =
+      RidgePenalty(0.0).fold(err => fail(err.message), identity)
+    val encoded =
+      TemporalBasisEncoder
+        .encodeDctSpec(data = data, spec = spec, ridge = ridge)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(spec.timepoints, 3)
+    assertEquals(spec.components, 3)
+    assertEquals(ridge.value, 0.0)
+    assertEquals(encoded.metadata("ridge"), "0.0")
+    val rejected = RidgePenalty(Double.NaN).left.toOption.map(_.payload)
+    assert(rejected.exists {
+      case LatentError.Payload.Parameter("ridge", value) => value.isNaN
+      case _ => false
+    })
+  }
+
   test("centered DCT encoder stores column offsets") {
     val data =
       DoubleMatrix.fromRows(

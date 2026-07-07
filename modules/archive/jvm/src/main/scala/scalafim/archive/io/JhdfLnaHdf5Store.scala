@@ -2,7 +2,7 @@ package scalafim.archive.io
 
 import io.jhdf.HdfFile
 import io.jhdf.api.{Attribute, Dataset, WritableGroup}
-import scalafim.archive.{ArchiveError, ArchivePath}
+import scalafim.archive.{ArchiveError, ArchivePath, ArchiveStorageFormatId}
 import scalafim.archive.lna.*
 import scalafim.image.DMat
 
@@ -13,7 +13,7 @@ import java.security.MessageDigest
 import scala.util.control.NonFatal
 
 object JhdfLnaHdf5Store extends LnaHdf5Store:
-  private val FormatId = "scalafim-lna-hdf5-0"
+  private val FormatId = ArchiveStorageFormatId.unsafe("scalafim-lna-hdf5-0")
   private val ChecksumAlgorithm = "sha256:lna-manifest-null-payloads-v1"
   private val MetaGroup = "__lna__"
   private val PayloadGroup = "payloads"
@@ -61,7 +61,7 @@ object JhdfLnaHdf5Store extends LnaHdf5Store:
   private def writeUnchecked(path: Path, archive: LnaArchive): Unit =
     val file = HdfFile.write(path)
     try
-      file.putAttribute("scalafim_lna_storage", FormatId)
+      file.putAttribute("scalafim_lna_storage", FormatId.value)
       file.putAttribute("lna_spec", archive.manifest.version.id)
       file.putAttribute("creator", archive.manifest.creator)
       file.putAttribute("lna_checksum_algorithm", ChecksumAlgorithm)
@@ -173,7 +173,11 @@ object JhdfLnaHdf5Store extends LnaHdf5Store:
   private def intMatrixPayload(dataset: Dataset, ref: DatasetRef, dtype: LnaDType): Either[ArchiveError, Payload] =
     val rows = ref.dims(0)
     val cols = ref.dims(1)
-    flatInts(dataset, ref, dtype).map(values => Payload.IntMatrix(rows, cols, values.toVector, dtype))
+    flatInts(dataset, ref, dtype).flatMap { values =>
+      catchInvalid(s"integer payload ${ref.path.value}") {
+        Payload.IntMatrix(rows, cols, values.toVector, dtype)
+      }
+    }
 
   private def flatDoubles(dataset: Dataset, ref: DatasetRef): Either[ArchiveError, Array[Double]] =
     try
@@ -189,18 +193,18 @@ object JhdfLnaHdf5Store extends LnaHdf5Store:
     try
       val values =
         dataset.getDataFlat match
-          case data: Array[Byte]  => Right(data.map(java.lang.Byte.toUnsignedInt))
-          case data: Array[Short] => Right(data.map(java.lang.Short.toUnsignedInt))
-          case data: Array[Int]   => Right(data)
+          case data: Array[Byte] if dtype == LnaDType.UInt8 || dtype == LnaDType.UInt16 =>
+            Right(data.map(java.lang.Byte.toUnsignedInt))
+          case data: Array[Byte] =>
+            Right(data.map(_.toInt))
+          case data: Array[Short] if dtype == LnaDType.UInt8 || dtype == LnaDType.UInt16 =>
+            Right(data.map(java.lang.Short.toUnsignedInt))
+          case data: Array[Short] =>
+            Right(data.map(_.toInt))
+          case data: Array[Int] =>
+            Right(data)
           case other => Left(ArchiveError.UnsupportedStorage(s"dataset ${ref.path.value} is not integer data: ${other.getClass.getName}"))
-      val coerced = values.flatMap { data =>
-        dtype match
-          case LnaDType.UInt8  => Right(data.map(value => value & 0xff))
-          case LnaDType.UInt16 => Right(data.map(value => value & 0xffff))
-          case LnaDType.Int32  => Right(data)
-          case other           => Left(ArchiveError.UnsupportedStorage(s"dataset ${ref.path.value} is not integer dtype: $other"))
-      }
-      coerced.flatMap(data => checkSize(ref, data.length).map(_ => data))
+      values.flatMap(data => checkSize(ref, data.length).map(_ => data))
     catch case NonFatal(e) => Left(ArchiveError.UnsupportedStorage(s"could not read integer payload ${ref.path.value}: ${e.getMessage}"))
 
   private def checkSize(ref: DatasetRef, actual: Int): Either[ArchiveError, Unit] =
@@ -365,3 +369,7 @@ object JhdfLnaHdf5Store extends LnaHdf5Store:
         case Left(err) => error = Some(err)
         case Right(ok) => out += ok
     error.fold(Right(out.result()))(Left(_))
+
+  private def catchInvalid[A](label: String)(body: => A): Either[ArchiveError, A] =
+    try Right(body)
+    catch case NonFatal(e) => Left(ArchiveError.InvalidArchive(s"$label: ${e.getMessage}"))

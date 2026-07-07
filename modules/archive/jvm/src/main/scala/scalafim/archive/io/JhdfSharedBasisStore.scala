@@ -2,7 +2,7 @@ package scalafim.archive.io
 
 import io.jhdf.HdfFile
 import io.jhdf.api.{Attribute, Dataset, Group}
-import scalafim.archive.ArchiveError
+import scalafim.archive.{ArchiveError, ArchiveStorageFormatId}
 import scalafim.archive.lna.*
 import scalafim.image.DMat
 
@@ -16,7 +16,7 @@ final case class SharedBasisWriteResult(
 )
 
 object JhdfSharedBasisStore:
-  private val FormatId = "scalafim-lna-basis-hdf5-0"
+  private val FormatId = ArchiveStorageFormatId.unsafe("scalafim-lna-basis-hdf5-0")
   private val MetaGroup = "meta"
   private val LoadingsDataset = "loadings"
   private val MaskDataset = "mask"
@@ -106,7 +106,7 @@ object JhdfSharedBasisStore:
   private def writeUnchecked(path: Path, artifact: SharedBasisArtifact): Unit =
     val file = HdfFile.write(path)
     try
-      file.putAttribute("scalafim_lna_basis_storage", FormatId)
+      file.putAttribute("scalafim_lna_basis_storage", FormatId.value)
 
       val meta = file.putGroup(MetaGroup)
       meta.putAttribute("basis_kind", artifact.kind)

@@ -11,52 +11,39 @@ final case class LatentResponseDatasetBackend(
     metadata: DatasetMetadata = DatasetMetadata.Empty
 ) extends DatasetBackend:
 
-  override val shape: DatasetShape =
-    DatasetShape(space.spatialSpace, response.shape.timepoints)
+  private lazy val shapeEither: Either[DatasetError, DatasetShape] =
+    DatasetShape.make(space, response.shape.timepoints)
 
-  require(mask.space.spatialDims == shape.spatialDims, "mask/space dimension mismatch")
-  require(mask.space.spacing == shape.space.spacing && mask.space.origin == shape.space.origin, "mask/space mismatch")
+  override lazy val shape: DatasetShape =
+    shapeEither.fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  private val sampleVoxels: Vector[Int] =
-    val indices = Mask.indices(mask)
-    require(indices.length == response.shape.samples, "latent sample count must match mask cardinality")
-    Vector.tabulate(indices.length)(indices(_))
+  private lazy val sampleMapEither: Either[DatasetError, VoxelSampleMap] =
+    for
+      checkedShape <- shapeEither
+      _ <- validateMaskSpace(mask, checkedShape)
+      sampleMap <- VoxelSampleMap.fromMask(mask, response.shape.samples)
+    yield sampleMap
 
-  private val voxelToSample: Array[Int] =
-    val lookup = Array.fill(shape.spatialSize)(-1)
-    var sample = 0
-    while sample < sampleVoxels.length do
-      lookup(sampleVoxels(sample)) = sample
-      sample += 1
-    lookup
+  private val sampleMap: VoxelSampleMap =
+    sampleMapEither.fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  override def read(selection: DataSelection = DataSelection.All): FmriSeries =
-    val resolved = selection.resolve(shape)
-    val samples = resolveSamples(resolved.voxels)
-    val decoded =
-      response
+  override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
+    for
+      checkedShape <- shapeEither
+      resolved <- selection.resolveEither(checkedShape)
+      samples <- sampleMap.samplesFor(resolved.voxelIndexValues)
+      decoded <- response
         .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(samples)))
-        .fold(err => throw new IllegalArgumentException(err.message), identity)
-
-    FmriSeries(
-      data = DMat.fromRows(decoded.toRows),
-      voxelIndices = resolved.voxels,
-      timepoints = resolved.timepoints,
-      shape = shape,
-      metadata = metadata
-    )
-
-  private def resolveSamples(voxels: Vector[Int]): Vector[Int] =
-    val out = Vector.newBuilder[Int]
-    out.sizeHint(voxels.length)
-    var i = 0
-    while i < voxels.length do
-      val voxel = voxels(i)
-      val sample = voxelToSample(voxel)
-      if sample < 0 then throw new IllegalArgumentException(s"voxel $voxel is outside the latent mask")
-      out += sample
-      i += 1
-    out.result()
+        .left
+        .map(DatasetError.LatentFailure.apply)
+      series <- FmriSeries.make(
+        data = DMat.fromRows(decoded.toRows),
+        voxelIndices = resolved.voxelIndexValues,
+        timepoints = resolved.timepointIndices,
+        shape = checkedShape,
+        metadata = metadata
+      )
+    yield series
 
 object LatentResponseDatasetBackend:
   def apply(
@@ -68,8 +55,8 @@ object LatentResponseDatasetBackend:
     LatentResponseDatasetBackend(
       id = id,
       response = response,
-      space = space.spatialSpace,
-      mask = Mask.all(space.spatialSpace),
+      space = space,
+      mask = Mask.all(space),
       metadata = metadata
     )
 
@@ -79,3 +66,13 @@ object LatentResponseDatasetBackend:
       space: NeuroSpace
   ): LatentResponseDatasetBackend =
     LatentResponseDatasetBackend(id, response, space, DatasetMetadata.Empty)
+
+private def validateMaskSpace(
+    mask: Mask.MaskVol,
+    shape: DatasetShape
+): Either[DatasetError, Unit] =
+  if mask.space.spatialDims != shape.spatialDims then
+    Left(DatasetError.ShapeMismatch("mask/space dimension mismatch"))
+  else if mask.space.spacing != shape.space.spacing || mask.space.origin != shape.space.origin then
+    Left(DatasetError.ShapeMismatch("mask/space mismatch"))
+  else Right(())

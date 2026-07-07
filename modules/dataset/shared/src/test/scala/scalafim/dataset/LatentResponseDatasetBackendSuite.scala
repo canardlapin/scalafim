@@ -35,12 +35,12 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
     val selection =
       DataSelection(
-        time = IndexSelection.indices(2, 0),
-        voxels = IndexSelection.indices(3, 0)
+        time = TimepointSelection.indices(2, 0),
+        voxels = VoxelSelection.indices(3, 0)
       )
 
     val expected = dense.read(selection)
-    val actual = latent.read(selection)
+    val actual = latent.readEither(selection).fold(err => fail(err.message), identity)
 
     assertEquals(actual.timepoints, expected.timepoints)
     assertEquals(actual.voxelIndices, expected.voxelIndices)
@@ -62,9 +62,29 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
       ).fold(err => fail(err.message), identity)
     val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
 
+    val failed =
+      latent
+        .readEither(DataSelection(voxels = VoxelSelection.indices(1)))
+        .left
+        .toOption
+        .getOrElse(fail("expected voxel outside mask error"))
+    assertEquals(failed, DatasetError.VoxelOutsideMask(1))
+
     interceptMessage[IllegalArgumentException]("voxel 1 is outside the latent mask") {
       latent.read(DataSelection(voxels = IndexSelection.indices(1)))
     }
+  }
+
+  test("voxel sample map preserves mask-to-latent sample order") {
+    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val sampleMap = VoxelSampleMap.fromMask(mask, expectedSamples = 3).fold(err => fail(err.message), identity)
+    val samples =
+      sampleMap
+        .samplesFor(Vector(VoxelIndex.unsafe(3), VoxelIndex.unsafe(0)))
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(samples, Vector(2, 0))
+    assertEquals(sampleMap.sampleVoxels.map(VoxelIndex.raw), Vector(0, 2, 3))
   }
 
   test("latent response backend enforces mask cardinality") {
@@ -104,8 +124,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space)
     val selection =
       DataSelection(
-        time = IndexSelection.indices(1),
-        voxels = IndexSelection.indices(2, 1)
+        time = TimepointSelection.indices(1),
+        voxels = VoxelSelection.indices(2, 1)
       )
 
     assertEquals(latent.read(selection).data.toRows, dense.read(selection).data.toRows)

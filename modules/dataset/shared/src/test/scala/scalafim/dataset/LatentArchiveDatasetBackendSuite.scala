@@ -23,12 +23,12 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
 
     val backend = LatentArchiveDatasetBackend(DatasetId("latent-demo"), archive)
     val series =
-      backend.read(
+      backend.readEither(
         DataSelection(
-          time = IndexSelection.indices(0, 2),
-          voxels = IndexSelection.indices(1, 3)
+          time = TimepointSelection.indices(0, 2),
+          voxels = VoxelSelection.indices(1, 3)
         )
-      )
+      ).fold(err => fail(err.message), identity)
 
     assertEquals(series.nTimepoints, 2)
     assertEquals(series.nVoxels, 2)

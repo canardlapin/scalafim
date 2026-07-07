@@ -1,11 +1,12 @@
 package scalafim.dataset.io
 
-import scalafim.dataset.{DataSelection, DatasetBackend, DatasetId, DatasetMetadata, DatasetShape, FmriSeries}
+import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries}
 import scalafim.image.{DMat, Mask, NeuroSpace}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import scala.io.Source
+import scala.util.control.NonFatal
 
 enum MatrixFileDelimiter:
   case Comma, Tab, Whitespace
@@ -19,34 +20,56 @@ final case class MatrixFileDatasetBackend(
     metadata: DatasetMetadata = DatasetMetadata.Empty
 ) extends DatasetBackend:
 
-  private lazy val data: DMat =
-    val rows = MatrixFileDatasetBackend.readRows(path, delimiter, hasHeader)
-    require(rows.nonEmpty, s"matrix file '$path' did not contain any data rows")
-    val cols = rows.head.length
-    require(rows.forall(_.length == cols), s"matrix file '$path' contains ragged rows")
-    require(cols == space.spatialDims.product, s"matrix file '$path' has $cols columns but space has ${space.spatialDims.product} voxels")
-    DMat.fromRows(rows)
+  private lazy val loadedEither: Either[DatasetError, MatrixFileDatasetBackend.LoadedMatrix] =
+    MatrixFileDatasetBackend.load(path, space, delimiter, hasHeader)
 
   override lazy val shape: DatasetShape =
-    DatasetShape(space, data.rows)
+    loadedEither.fold(error => throw new IllegalArgumentException(error.message), _.shape)
 
   override lazy val mask: Mask.MaskVol =
-    Mask.all(space)
+    Mask.all(shape.space)
 
-  override def read(selection: DataSelection = DataSelection.All): FmriSeries =
-    val resolved = selection.resolve(shape)
-    val rows = resolved.timepoints.map { r =>
-      resolved.voxels.map(c => data(r, c))
-    }
-    FmriSeries(
-      data = DMat.fromRows(rows),
-      voxelIndices = resolved.voxels,
-      timepoints = resolved.timepoints,
-      shape = shape,
-      metadata = metadata
-    )
+  override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
+    for
+      loaded <- loadedEither
+      resolved <- selection.resolveEither(loaded.shape)
+      series <- FmriSeries.make(
+        data = DMat.fromRows(
+          resolved.timepoints.map { r =>
+            resolved.voxels.map(c => loaded.data(r, c))
+          }
+        ),
+        voxelIndices = resolved.voxelIndexValues,
+        timepoints = resolved.timepointIndices,
+        shape = loaded.shape,
+        metadata = metadata
+      )
+    yield series
 
 object MatrixFileDatasetBackend:
+  private final case class LoadedMatrix(data: DMat, shape: DatasetShape)
+
+  private def load(
+      path: Path,
+      space: NeuroSpace,
+      delimiter: MatrixFileDelimiter,
+      hasHeader: Boolean
+  ): Either[DatasetError, LoadedMatrix] =
+    try
+      val rows = readRows(path, delimiter, hasHeader)
+      if rows.isEmpty then Left(DatasetError.StorageFailure(s"matrix file '$path' did not contain any data rows"))
+      else
+        val cols = rows.head.length
+        if rows.exists(_.length != cols) then Left(DatasetError.StorageFailure(s"matrix file '$path' contains ragged rows"))
+        else
+          for
+            shape <- DatasetShape.make(space, rows.length)
+            loaded <-
+              if cols != shape.spatialSize then
+                Left(DatasetError.ShapeMismatch(s"matrix file '$path' has $cols columns but space has ${shape.spatialSize} voxels"))
+              else Right(LoadedMatrix(DMat.fromRows(rows), shape))
+          yield loaded
+    catch case NonFatal(e) => Left(DatasetError.StorageFailure(e.getMessage))
 
   def readRows(
       path: Path,

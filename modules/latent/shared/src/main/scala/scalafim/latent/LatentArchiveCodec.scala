@@ -16,6 +16,7 @@ import scalafim.archive.lna.{
   SharedBasisArtifact,
   SharedBasisId,
   SharedBasisLocator,
+  SharedBasisRef,
   TransformDescriptor,
   TransformKind,
   TransformParams,
@@ -26,6 +27,56 @@ import scalafim.archive.ArchivePath
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMap}
 
+enum LatentArchiveResponse:
+  case Explicit(response: ExplicitLatentResponse)
+  case TemporalDct(response: ExplicitLatentResponse, spec: DctSpec, center: Boolean, ridge: RidgePenalty)
+  case SharedBasis(response: SharedBasisLatentArchive)
+  case Transport(response: TransportLatentResponse)
+  case BoldZip(response: BoldZipPayload)
+
+  def latentResponse: Option[LatentResponse] =
+    this match
+      case Explicit(response)              => Some(response)
+      case TemporalDct(response, _, _, _) => Some(response)
+      case SharedBasis(_)                 => None
+      case Transport(response)             => Some(response)
+      case BoldZip(response)               => Some(response)
+
+final class SharedBasisLatentArchive private (
+    val coefficients: DoubleMatrix,
+    val basis: SharedBasisRef,
+    val offset: Option[DoubleVector],
+    val sourceDomain: DomainId,
+    val targetDomain: DomainId,
+    val label: String,
+    val metadata: Map[String, String]
+):
+  def timepoints: Int =
+    coefficients.rows
+
+  def coefficientCount: Int =
+    coefficients.cols
+
+object SharedBasisLatentArchive:
+  def apply(
+      coefficients: DoubleMatrix,
+      basis: SharedBasisRef,
+      offset: Option[DoubleVector],
+      sourceDomain: DomainId,
+      targetDomain: DomainId,
+      label: String,
+      metadata: Map[String, String]
+  ): Either[LatentError, SharedBasisLatentArchive] =
+    if coefficients.rows <= 0 then Left(LatentError.NonPositiveDimension("shared-basis coefficient rows", coefficients.rows))
+    else if coefficients.cols <= 0 then Left(LatentError.NonPositiveDimension("shared-basis coefficient columns", coefficients.cols))
+    else
+      archiveFirstNonFinite("shared-basis coefficients", coefficients)
+        .orElse(offset.flatMap(value => archiveFirstNonFinite("shared-basis offset", value))) match
+        case Some(error) =>
+          Left(error)
+        case None =>
+          Right(new SharedBasisLatentArchive(coefficients, basis, offset, sourceDomain, targetDomain, label, metadata))
+
 object LatentArchiveCodec:
   private val TransportKindKey = "lna.response.kind"
   private val TransportKindValue = "transport_latent"
@@ -33,6 +84,18 @@ object LatentArchiveCodec:
   private val TemplateDecoderRole = DatasetRole.Other("transport_template_decoder_t")
   private val ToAnalysisRole = DatasetRole.Other("transport_to_analysis")
   private val ToRawRole = DatasetRole.Other("transport_to_raw")
+  private val BoldZipKindKey = "lna.response.kind"
+  private val BoldZipKindValue = "boldzip_sr"
+  private val BoldZipKind = TransformKind.Custom(BoldZipKindValue)
+  private val BoldZipCarrierThetaRole = DatasetRole.Other("boldzip_carrier_theta")
+  private val BoldZipCarrierLoadingsRole = DatasetRole.Other("boldzip_carrier_loadings")
+  private val BoldZipCoarseBasisRole = DatasetRole.Other("boldzip_phi_coarse")
+  private val BoldZipDetailBasisRole = DatasetRole.Other("boldzip_phi_detail")
+  private val BoldZipTextureIndexRole = DatasetRole.Other("boldzip_texture_index")
+  private val BoldZipTextureAmplitudeRole = DatasetRole.Other("boldzip_texture_amplitude")
+  private val BoldZipEventIndexRole = DatasetRole.Other("boldzip_residual_event_index")
+  private val BoldZipEventAmplitudeRole = DatasetRole.Other("boldzip_residual_event_amplitude")
+  private val BoldZipSpatialBasisLabelKey = "spatial_basis.label"
 
   def toArchive(
       response: ExplicitLatentResponse,
@@ -69,11 +132,41 @@ object LatentArchiveCodec:
       label: String = "",
       metadata: Map[String, String] = Map.empty
   ): Either[ArchiveError, LnaArchive] =
-    TemporalBasisEncoder
-      .encodeDct(
+    for
+      penalty <- RidgePenalty(ridge).left.map(error)
+      spec <- DctSpec(data.rows, components, norm).left.map(error)
+      archive <- toTemporalDctArchiveSpec(
         data = data,
-        components = components,
-        norm = norm,
+        space = space,
+        spec = spec,
+        center = center,
+        ridge = penalty,
+        runLabel = runLabel,
+        creator = creator,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata
+      )
+    yield archive
+
+  def toTemporalDctArchiveSpec(
+      data: DoubleMatrix,
+      space: NeuroSpace,
+      spec: DctSpec,
+      center: Boolean = false,
+      ridge: RidgePenalty = RidgePenalty.Zero,
+      runLabel: RunLabel = RunLabel.indexed(0),
+      creator: String = "scalafim-latent",
+      sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("latent.samples"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty
+  ): Either[ArchiveError, LnaArchive] =
+    TemporalBasisEncoder
+      .encodeDctSpec(
+        data = data,
+        spec = spec,
         center = center,
         ridge = ridge,
         sourceDomain = sourceDomain,
@@ -95,10 +188,10 @@ object LatentArchiveCodec:
             metadata = response.metadata
           ),
           params = TemporalDctParams(
-            components = components,
-            norm = archiveNorm(norm),
+            components = spec.components,
+            norm = archiveNorm(spec.norm),
             center = center,
-            ridge = ridge
+            ridge = ridge.value
           ),
           space = space,
           runLabel = runLabel,
@@ -148,6 +241,137 @@ object LatentArchiveCodec:
           creator = creator
         )
       }
+
+  def toBoldZipArchive(
+      response: BoldZipPayload,
+      space: NeuroSpace,
+      runLabel: RunLabel = RunLabel.indexed(0),
+      creator: String = "scalafim-latent"
+  ): Either[ArchiveError, LnaArchive] =
+    if response.shape.samples != space.spatialDims.product then
+      Left(ArchiveError.ShapeMismatch(s"BOLDZip response has ${response.shape.samples} samples but space has ${space.spatialDims.product} voxels"))
+    else
+      val base = ArchivePath(s"/scans/${runLabel.value}/step_00_boldzip_sr")
+      val temporalPath = base / "temporal_basis"
+      val thetaPath = base / "carrier_theta"
+      val loadingsPath = base / "carrier_loadings"
+      val coarsePath = base / "phi_coarse"
+      val detailPath = base / "phi_detail"
+      val textureIndexPath = base / "texture_index"
+      val textureAmplitudePath = base / "texture_amplitude"
+      val eventIndexPath = base / "residual_event_index"
+      val eventAmplitudePath = base / "residual_event_amplitude"
+      val offsetPath = base / "offset"
+
+      val temporalRef = DatasetRef(
+        temporalPath,
+        DatasetRole.TemporalBasis,
+        Vector(response.temporalBasis.rows, response.temporalBasis.cols),
+        Some(LnaDType.Float64)
+      )
+      val thetaRef = DatasetRef(
+        thetaPath,
+        BoldZipCarrierThetaRole,
+        Vector(response.carrierTheta.rows, response.carrierTheta.cols),
+        Some(LnaDType.Float64)
+      )
+      val loadingsRef =
+        Option.when(response.spatialBasis.coarseAtoms > 0)(
+          DatasetRef(
+            loadingsPath,
+            BoldZipCarrierLoadingsRole,
+            Vector(response.carrierLoadings.rows, response.carrierLoadings.cols),
+            Some(LnaDType.Float64)
+          )
+        )
+      val coarseRef =
+        response.spatialBasis.phiCoarse.map { matrix =>
+          DatasetRef(coarsePath, BoldZipCoarseBasisRole, Vector(matrix.rows, matrix.cols), Some(LnaDType.Float64))
+        }
+      val detailRef =
+        response.spatialBasis.phiDetail.map { matrix =>
+          DatasetRef(detailPath, BoldZipDetailBasisRole, Vector(matrix.rows, matrix.cols), Some(LnaDType.Float64))
+        }
+      val textureRefs =
+        Option.when(response.texture.nonEmpty)(
+          Vector(
+            DatasetRef(textureIndexPath, BoldZipTextureIndexRole, Vector(response.texture.length, 3), Some(LnaDType.Int32)),
+            DatasetRef(textureAmplitudePath, BoldZipTextureAmplitudeRole, Vector(response.texture.length), Some(LnaDType.Float64))
+          )
+        ).getOrElse(Vector.empty)
+      val eventRefs =
+        Option.when(response.events.nonEmpty)(
+          Vector(
+            DatasetRef(eventIndexPath, BoldZipEventIndexRole, Vector(response.events.length, 3), Some(LnaDType.Int32)),
+            DatasetRef(eventAmplitudePath, BoldZipEventAmplitudeRole, Vector(response.events.length), Some(LnaDType.Float64))
+          )
+        ).getOrElse(Vector.empty)
+      val offsetRef =
+        response.offset.map(values => DatasetRef(offsetPath, DatasetRole.SampleOffset, Vector(values.length), Some(LnaDType.Float64)))
+
+      val refs =
+        Vector(temporalRef, thetaRef) ++
+          loadingsRef.toVector ++
+          coarseRef.toVector ++
+          detailRef.toVector ++
+          textureRefs ++
+          eventRefs ++
+          offsetRef.toVector
+
+      val descriptor = TransformDescriptor(
+        name = "00_boldzip_sr.json",
+        kind = BoldZipKind,
+        params = TransformParams.Custom(
+          name = BoldZipKindValue,
+          sourceDomain = Some(response.sourceDomain.value),
+          targetDomain = Some(response.targetDomain.value),
+          label = Option.when(response.label.nonEmpty)(response.label),
+          metadata = response.metadata ++ Map(
+            BoldZipKindKey -> BoldZipKindValue,
+            BoldZipSpatialBasisLabelKey -> response.spatialBasis.label
+          )
+        ),
+        inputs = Vector("temporal_basis", "carrier_theta", "spatial_basis"),
+        outputs = Vector("latent_response"),
+        datasets = refs
+      )
+
+      val payloads =
+        Map[ArchivePath, Payload](
+          temporalPath -> Payload.DoubleMatrix(toDMat(response.temporalBasis)),
+          thetaPath -> Payload.DoubleMatrix(toDMat(response.carrierTheta))
+        ) ++
+          loadingsRef.map(_ => loadingsPath -> Payload.DoubleMatrix(toDMat(response.carrierLoadings))).toMap ++
+          response.spatialBasis.phiCoarse.map(matrix => coarsePath -> Payload.DoubleMatrix(toDMat(matrix))).toMap ++
+          response.spatialBasis.phiDetail.map(matrix => detailPath -> Payload.DoubleMatrix(toDMat(matrix))).toMap ++
+          boldZipTexturePayloads(response.texture, textureIndexPath, textureAmplitudePath) ++
+          boldZipEventPayloads(response.events, eventIndexPath, eventAmplitudePath) ++
+          response.offset.map(values => offsetPath -> Payload.DoubleVector(values.toVector)).toMap
+
+      Right(
+        LnaArchive(
+          manifest = LnaManifest(
+            creator = creator,
+            requiredTransforms = Vector(BoldZipKind),
+            transforms = Vector(descriptor),
+            runs = Vector(LnaRun(runLabel, LnaShape(space, response.shape.timepoints), thetaPath)),
+            datasets = refs,
+            header = Map(
+              "response.kind" -> BoldZipKindValue,
+              "space.dims" -> space.spatialDims.mkString("x"),
+              "timepoints" -> response.shape.timepoints.toString,
+              "samples" -> response.shape.samples.toString,
+              "carriers" -> response.shape.coefficients.toString,
+              "temporal.components" -> response.temporalBasis.cols.toString,
+              "coarse_basis" -> response.spatialBasis.coarse.metadataValue,
+              "detail_basis" -> response.spatialBasis.detail.metadataValue,
+              "source_domain" -> response.sourceDomain.value,
+              "target_domain" -> response.targetDomain.value
+            )
+          ),
+          payloads = payloads
+        )
+      )
 
   def toTransportArchive(
       response: TransportLatentResponse,
@@ -310,10 +534,89 @@ object LatentArchiveCodec:
       yield response
     }
 
+  def fromBoldZipArchive(
+      archive: LnaArchive,
+      runLabel: RunLabel = RunLabel.indexed(0)
+  ): Either[ArchiveError, BoldZipPayload] =
+    archive.validate.flatMap { valid =>
+      for
+        run <- valid.run(runLabel).toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' not found"))
+        desc <- boldZipDescriptor(valid, runLabel)
+        params <- desc.params match
+          case p: TransformParams.Custom if p.name == BoldZipKindValue => Right(p)
+          case _ => Left(ArchiveError.InvalidArchive("BOLDZip descriptor missing typed custom params"))
+        sourceDomain <- params.sourceDomain.toRight(ArchiveError.InvalidArchive("BOLDZip descriptor missing source domain"))
+        targetDomain <- params.targetDomain.toRight(ArchiveError.InvalidArchive("BOLDZip descriptor missing target domain"))
+        temporalPath <- byRole(desc, DatasetRole.TemporalBasis)
+        temporalBasis <- doubleMatrixPayload(valid, temporalPath, "BOLDZip temporal basis")
+        thetaPath <- byRole(desc, BoldZipCarrierThetaRole)
+        carrierTheta <- doubleMatrixPayload(valid, thetaPath, "BOLDZip carrier theta")
+        coarseMatrix <- optionalDoubleMatrix(valid, desc, BoldZipCoarseBasisRole, "BOLDZip coarse spatial basis")
+        detailMatrix <- optionalDoubleMatrix(valid, desc, BoldZipDetailBasisRole, "BOLDZip detail spatial basis")
+        spatialBasis <- BoldZipSpatialBasis(
+          sampleCount = run.shape.spatialSize,
+          coarse = coarseMatrix.map(matrix => BoldZipCoarseBasis.MatrixBasis(toDoubleMatrix(matrix))).getOrElse(BoldZipCoarseBasis.Absent),
+          detail = detailMatrix.map(matrix => BoldZipDetailBasis.MatrixBasis(toDoubleMatrix(matrix))).getOrElse(BoldZipDetailBasis.IdentitySamples),
+          label = params.metadata.getOrElse(BoldZipSpatialBasisLabelKey, "")
+        ).left.map(error)
+        carrierLoadings <- boldZipCarrierLoadings(valid, desc, spatialBasis, carrierTheta.rows)
+        texture <- boldZipTextureEntries(valid, desc)
+        events <- boldZipEventEntries(valid, desc)
+        offset <- optionalOffset(valid, desc, DatasetRole.SampleOffset, "BOLDZip offset")
+        source <- DomainId(sourceDomain).left.map(error)
+        target <- DomainId(targetDomain).left.map(error)
+        response <- BoldZipPayload(
+          temporalBasis = toDoubleMatrix(temporalBasis),
+          carrierTheta = toDoubleMatrix(carrierTheta),
+          carrierLoadings = carrierLoadings,
+          spatialBasis = spatialBasis,
+          texture = texture,
+          events = events,
+          offset = offset.map(DoubleVector.fromSeq),
+          sourceDomain = source,
+          targetDomain = target,
+          label = params.label.getOrElse(""),
+          metadata = params.metadata -- Set(BoldZipKindKey, BoldZipSpatialBasisLabelKey)
+        ).left.map(error)
+        _ <-
+          if response.shape.timepoints == run.shape.timepoints then Right(())
+          else Left(ArchiveError.ShapeMismatch(s"BOLDZip response has ${response.shape.timepoints} timepoints but run has ${run.shape.timepoints} timepoints"))
+        _ <-
+          if response.shape.samples == run.shape.spatialSize then Right(())
+          else Left(ArchiveError.ShapeMismatch(s"BOLDZip response has ${response.shape.samples} samples but run has ${run.shape.spatialSize} voxels"))
+      yield response
+    }
+
+  def isBoldZipArchive(archive: LnaArchive): Boolean =
+    archive.manifest.transforms.exists(isBoldZipDescriptor)
+
   def isTransportArchive(archive: LnaArchive): Boolean =
     archive.manifest.transforms.exists(isTransportDescriptor)
 
   def fromArchive(
+      archive: LnaArchive,
+      runLabel: RunLabel = RunLabel.indexed(0)
+  ): Either[ArchiveError, LatentArchiveResponse] =
+    archive.validate.flatMap { valid =>
+      if isBoldZipArchive(valid) then fromBoldZipArchive(valid, runLabel).map(LatentArchiveResponse.BoldZip(_))
+      else if isTransportArchive(valid) then fromTransportArchive(valid, runLabel).map(LatentArchiveResponse.Transport(_))
+      else
+        temporalDctDescriptor(valid, runLabel) match
+          case Some(desc) =>
+            fromExplicitArchive(valid, runLabel).flatMap { response =>
+              temporalDctSpec(valid, runLabel, desc).map { case (spec, center, ridge) =>
+                LatentArchiveResponse.TemporalDct(response, spec, center, ridge)
+              }
+            }
+          case None =>
+            sharedBasisDescriptor(valid, runLabel) match
+              case Some(_) =>
+                fromSharedBasisArchive(valid, runLabel).map(LatentArchiveResponse.SharedBasis(_))
+              case None =>
+                fromExplicitArchive(valid, runLabel).map(LatentArchiveResponse.Explicit(_))
+    }
+
+  def fromExplicitArchive(
       archive: LnaArchive,
       runLabel: RunLabel = RunLabel.indexed(0)
   ): Either[ArchiveError, ExplicitLatentResponse] =
@@ -333,6 +636,46 @@ object LatentArchiveCodec:
       yield latent
     }
 
+  def fromSharedBasisArchive(
+      archive: LnaArchive,
+      runLabel: RunLabel = RunLabel.indexed(0)
+  ): Either[ArchiveError, SharedBasisLatentArchive] =
+    archive.validate.flatMap { valid =>
+      for
+        run <- valid.run(runLabel).toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' not found"))
+        desc <- sharedBasisDescriptor(valid, runLabel).toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' has no shared-basis latent descriptor"))
+        params <- desc.params match
+          case p: TransformParams.SharedBasisEmbed => Right(p)
+          case _ => Left(ArchiveError.InvalidArchive("shared-basis descriptor missing typed embed params"))
+        coefficientsPath <- byRole(desc, DatasetRole.Coefficients)
+        coefficients <- doubleMatrixPayload(valid, coefficientsPath, "shared-basis coefficients")
+        offset <- optionalOffset(valid, desc, DatasetRole.Offset, "shared-basis offset")
+        source <- DomainId(params.targetDomain.getOrElse("shared_basis.coefficients")).left.map(error)
+        target <- DomainId(params.sourceDomain.getOrElse("voxels")).left.map(error)
+        response <- SharedBasisLatentArchive(
+          coefficients = toDoubleMatrix(coefficients),
+          basis = params.basis,
+          offset = offset.map(DoubleVector.fromSeq),
+          sourceDomain = source,
+          targetDomain = target,
+          label = params.label.getOrElse(""),
+          metadata = params.metadata
+        ).left.map(error)
+        _ <-
+          if response.timepoints == run.shape.timepoints then Right(())
+          else Left(ArchiveError.ShapeMismatch(s"shared-basis coefficients have ${response.timepoints} rows but run has ${run.shape.timepoints} timepoints"))
+      yield response
+    }
+
+  private def boldZipDescriptor(
+      archive: LnaArchive,
+      runLabel: RunLabel
+  ): Either[ArchiveError, TransformDescriptor] =
+    val prefix = s"/scans/${runLabel.value}/"
+    archive.manifest.transforms
+      .find(desc => isBoldZipDescriptor(desc) && desc.datasets.exists(_.path.value.startsWith(prefix)))
+      .toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' has no BOLDZip latent descriptor"))
+
   private def transportDescriptor(
       archive: LnaArchive,
       runLabel: RunLabel
@@ -341,6 +684,52 @@ object LatentArchiveCodec:
     archive.manifest.transforms
       .find(desc => isTransportDescriptor(desc) && desc.datasets.exists(_.path.value.startsWith(prefix)))
       .toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' has no transport latent descriptor"))
+
+  private def temporalDctDescriptor(
+      archive: LnaArchive,
+      runLabel: RunLabel
+  ): Option[TransformDescriptor] =
+    val prefix = s"/scans/${runLabel.value}/"
+    archive.manifest.transforms.find { desc =>
+      desc.kind == TransformKind.Temporal &&
+        desc.datasets.exists(_.path.value.startsWith(prefix)) &&
+        (desc.params match
+          case TransformParams.TemporalDct(_) => true
+          case _ => false)
+    }
+
+  private def temporalDctSpec(
+      archive: LnaArchive,
+      runLabel: RunLabel,
+      desc: TransformDescriptor
+  ): Either[ArchiveError, (DctSpec, Boolean, RidgePenalty)] =
+    for
+      run <- archive.run(runLabel).toRight(ArchiveError.InvalidArchive(s"run '${runLabel.value}' not found"))
+      params <- desc.params match
+        case TransformParams.TemporalDct(value) => Right(value)
+        case _ => Left(ArchiveError.InvalidArchive("temporal DCT descriptor missing typed params"))
+      ridge <- RidgePenalty(params.ridge).left.map(error)
+      spec <- DctSpec(run.shape.timepoints, params.components, latentNorm(params.norm)).left.map(error)
+    yield (spec, params.center, ridge)
+
+  private def sharedBasisDescriptor(
+      archive: LnaArchive,
+      runLabel: RunLabel
+  ): Option[TransformDescriptor] =
+    val prefix = s"/scans/${runLabel.value}/"
+    archive.manifest.transforms.find { desc =>
+      desc.kind == TransformKind.Embed &&
+        desc.datasets.exists(_.path.value.startsWith(prefix)) &&
+        (desc.params match
+          case _: TransformParams.SharedBasisEmbed => true
+          case _ => false)
+      }
+
+  private def isBoldZipDescriptor(desc: TransformDescriptor): Boolean =
+    desc.kind == BoldZipKind &&
+      (desc.params match
+        case p: TransformParams.Custom => p.name == BoldZipKindValue
+        case _                         => false)
 
   private def isTransportDescriptor(desc: TransformDescriptor): Boolean =
     desc.kind == TransformKind.Embed &&
@@ -352,7 +741,7 @@ object LatentArchiveCodec:
     desc.datasets
       .find(_.role == role)
       .map(_.path)
-      .toRight(ArchiveError.InvalidArchive(s"transport latent descriptor missing ${role.value} dataset"))
+      .toRight(ArchiveError.InvalidArchive(s"${desc.name} descriptor missing ${role.value} dataset"))
 
   private def doubleMatrixPayload(
       archive: LnaArchive,
@@ -376,16 +765,142 @@ object LatentArchiveCodec:
       case Some(ref) =>
         doubleMatrixPayload(archive, ref.path, label).map(Some(_))
 
+  private def intMatrixPayload(
+      archive: LnaArchive,
+      path: ArchivePath,
+      label: String
+  ): Either[ArchiveError, Payload.IntMatrix] =
+    archive.payload(path) match
+      case Some(payload: Payload.IntMatrix) => Right(payload)
+      case Some(_) => Left(ArchiveError.ShapeMismatch(s"$label payload is not an integer matrix"))
+      case None => Left(ArchiveError.MissingPayload(path))
+
+  private def doubleVectorPayload(
+      archive: LnaArchive,
+      path: ArchivePath,
+      label: String
+  ): Either[ArchiveError, Vector[Double]] =
+    archive.payload(path) match
+      case Some(Payload.DoubleVector(values, _)) => Right(values)
+      case Some(_) => Left(ArchiveError.ShapeMismatch(s"$label payload is not a double vector"))
+      case None => Left(ArchiveError.MissingPayload(path))
+
+  private def boldZipCarrierLoadings(
+      archive: LnaArchive,
+      desc: TransformDescriptor,
+      spatialBasis: BoldZipSpatialBasis,
+      carriers: Int
+  ): Either[ArchiveError, DoubleMatrix] =
+    optionalDoubleMatrix(archive, desc, BoldZipCarrierLoadingsRole, "BOLDZip carrier loadings").flatMap {
+      case Some(matrix) =>
+        val values = toDoubleMatrix(matrix)
+        if values.rows != spatialBasis.coarseAtoms then
+          Left(ArchiveError.ShapeMismatch(s"BOLDZip carrier loadings have ${values.rows} rows but coarse basis has ${spatialBasis.coarseAtoms} atoms"))
+        else if values.cols != carriers then
+          Left(ArchiveError.ShapeMismatch(s"BOLDZip carrier loadings have ${values.cols} columns but carrier theta has $carriers carriers"))
+        else Right(values)
+      case None if spatialBasis.coarseAtoms == 0 =>
+        Right(DoubleMatrix.zeros(0, carriers))
+      case None =>
+        Left(ArchiveError.InvalidArchive("BOLDZip archive has a coarse basis but no carrier loadings"))
+    }
+
+  private def boldZipTextureEntries(
+      archive: LnaArchive,
+      desc: TransformDescriptor
+  ): Either[ArchiveError, Vector[BoldZipTextureEntry]] =
+    optionalIndexAmplitudeTable(
+      archive = archive,
+      desc = desc,
+      indexRole = BoldZipTextureIndexRole,
+      amplitudeRole = BoldZipTextureAmplitudeRole,
+      label = "BOLDZip texture"
+    ).flatMap {
+      case None => Right(Vector.empty)
+      case Some((index, amplitudes)) =>
+        traverse(Vector.tabulate(index.rows)(identity)) { row =>
+          BoldZipTextureEntry
+            .checked(
+              atom = index(row, 0),
+              carrier = index(row, 1),
+              amplitude = amplitudes(row),
+              lag = index(row, 2)
+            )
+            .left
+            .map(error)
+        }
+    }
+
+  private def boldZipEventEntries(
+      archive: LnaArchive,
+      desc: TransformDescriptor
+  ): Either[ArchiveError, Vector[BoldZipResidualEvent]] =
+    optionalIndexAmplitudeTable(
+      archive = archive,
+      desc = desc,
+      indexRole = BoldZipEventIndexRole,
+      amplitudeRole = BoldZipEventAmplitudeRole,
+      label = "BOLDZip residual event"
+    ).flatMap {
+      case None => Right(Vector.empty)
+      case Some((index, amplitudes)) =>
+        traverse(Vector.tabulate(index.rows)(identity)) { row =>
+          BoldZipResidualEvent
+            .checked(
+              atom = index(row, 0),
+              frame = index(row, 1),
+              amplitude = amplitudes(row),
+              duration = index(row, 2)
+            )
+            .left
+            .map(error)
+        }
+    }
+
+  private def optionalIndexAmplitudeTable(
+      archive: LnaArchive,
+      desc: TransformDescriptor,
+      indexRole: DatasetRole,
+      amplitudeRole: DatasetRole,
+      label: String
+  ): Either[ArchiveError, Option[(Payload.IntMatrix, Vector[Double])]] =
+    (desc.datasets.find(_.role == indexRole), desc.datasets.find(_.role == amplitudeRole)) match
+      case (None, None) =>
+        Right(None)
+      case (Some(_), None) =>
+        Left(ArchiveError.InvalidArchive(s"$label index table is present without amplitudes"))
+      case (None, Some(_)) =>
+        Left(ArchiveError.InvalidArchive(s"$label amplitudes are present without an index table"))
+      case (Some(indexRef), Some(amplitudeRef)) =>
+        for
+          index <- intMatrixPayload(archive, indexRef.path, s"$label index")
+          amplitudes <- doubleVectorPayload(archive, amplitudeRef.path, s"$label amplitude")
+          _ <-
+            if index.cols == 3 then Right(())
+            else Left(ArchiveError.ShapeMismatch(s"$label index table must have 3 columns"))
+          _ <-
+            if index.rows == amplitudes.length then Right(())
+            else Left(ArchiveError.ShapeMismatch(s"$label index rows ${index.rows} do not match amplitude length ${amplitudes.length}"))
+        yield Some((index, amplitudes))
+
   private def optionalOffset(
       archive: LnaArchive,
       desc: TransformDescriptor
   ): Either[ArchiveError, Option[Vector[Double]]] =
-    desc.datasets.find(_.role == DatasetRole.SampleOffset) match
+    optionalOffset(archive, desc, DatasetRole.SampleOffset, "transport offset")
+
+  private def optionalOffset(
+      archive: LnaArchive,
+      desc: TransformDescriptor,
+      role: DatasetRole,
+      label: String
+  ): Either[ArchiveError, Option[Vector[Double]]] =
+    desc.datasets.find(_.role == role) match
       case None => Right(None)
       case Some(ref) =>
         archive.payload(ref.path) match
           case Some(Payload.DoubleVector(values, _)) => Right(Some(values))
-          case Some(_) => Left(ArchiveError.ShapeMismatch("transport offset payload is not a double vector"))
+          case Some(_) => Left(ArchiveError.ShapeMismatch(s"$label payload is not a double vector"))
           case None => Left(ArchiveError.MissingPayload(ref.path))
 
   private def linearMapMatrix(map: LinearMap): Either[ArchiveError, DoubleMatrix] =
@@ -418,6 +933,40 @@ object LatentArchiveCodec:
       .left
       .map(err => ArchiveError.InvalidArchive(err.message))
 
+  private def boldZipTexturePayloads(
+      entries: Vector[BoldZipTextureEntry],
+      indexPath: ArchivePath,
+      amplitudePath: ArchivePath
+  ): Map[ArchivePath, Payload] =
+    if entries.isEmpty then Map.empty
+    else
+      Map(
+        indexPath -> Payload.IntMatrix(
+          rows = entries.length,
+          cols = 3,
+          values = entries.flatMap(entry => Vector(entry.atom.value, entry.carrier.value, entry.lag.value)),
+          dtype = LnaDType.Int32
+        ),
+        amplitudePath -> Payload.DoubleVector(entries.map(_.amplitude))
+      )
+
+  private def boldZipEventPayloads(
+      entries: Vector[BoldZipResidualEvent],
+      indexPath: ArchivePath,
+      amplitudePath: ArchivePath
+  ): Map[ArchivePath, Payload] =
+    if entries.isEmpty then Map.empty
+    else
+      Map(
+        indexPath -> Payload.IntMatrix(
+          rows = entries.length,
+          cols = 3,
+          values = entries.flatMap(entry => Vector(entry.atom.value, entry.frame.value, entry.duration.value)),
+          dtype = LnaDType.Int32
+        ),
+        amplitudePath -> Payload.DoubleVector(entries.map(_.amplitude))
+      )
+
   private def toDMat(matrix: DoubleMatrix): DMat =
     DMat.fromRows(matrix.toRows)
 
@@ -428,6 +977,11 @@ object LatentArchiveCodec:
     norm match
       case DctNorm.Ortho => TemporalDctNorm.Ortho
       case DctNorm.None  => TemporalDctNorm.None
+
+  private def latentNorm(norm: TemporalDctNorm): DctNorm =
+    norm match
+      case TemporalDctNorm.Ortho => DctNorm.Ortho
+      case TemporalDctNorm.None  => DctNorm.None
 
   private def transportAdjoint(value: TransportAdjointConvention): String =
     value match
@@ -440,3 +994,31 @@ object LatentArchiveCodec:
 
   private def error(latentError: LatentError): ArchiveError =
     ArchiveError.InvalidArchive(latentError.message)
+
+  private def traverse[A, B](values: Iterable[A])(f: A => Either[ArchiveError, B]): Either[ArchiveError, Vector[B]] =
+    val out = Vector.newBuilder[B]
+    val it = values.iterator
+    var failure = Option.empty[ArchiveError]
+    while it.hasNext && failure.isEmpty do
+      f(it.next()) match
+        case Left(error) => failure = Some(error)
+        case Right(value) => out += value
+    failure.fold(Right(out.result()))(Left(_))
+
+private def archiveFirstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  var i = 0
+  var error = Option.empty[LatentError]
+  while i < matrix.dataArray.length && error.isEmpty do
+    val value = matrix.dataArray(i)
+    if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
+    i += 1
+  error
+
+private def archiveFirstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+  var i = 0
+  var error = Option.empty[LatentError]
+  while i < vector.length && error.isEmpty do
+    val value = vector(i)
+    if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
+    i += 1
+  error

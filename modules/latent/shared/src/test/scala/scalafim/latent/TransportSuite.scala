@@ -35,6 +35,7 @@ class TransportSuite extends munit.FunSuite:
 
     assertEquals(reconstructed.toRows, Vector(Vector(24.0, 13.0), Vector(22.0, 11.0)))
     assertEquals(response.metadata("family"), "transport")
+    assertEquals(response.decoders, TransportDecoders.NativeOnly(decoder))
     assertEquals(response.adjointConvention, TransportAdjointConvention.EuclideanDiscrete)
   }
 
@@ -82,9 +83,9 @@ class TransportSuite extends munit.FunSuite:
     val analysisGamma = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(2.0)))
     val rawGamma = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(4.0)))
     val analysisProjection =
-      latentValue(response.decodeCoefficients(analysisGamma, TransportSpace.Native, CoefficientCoordinates.Analysis))
+      latentValue(response.decodeCoefficientBlock(CoefficientBlock.Analysis(analysisGamma), TransportSpace.Native))
     val rawProjection =
-      latentValue(response.decodeCoefficients(rawGamma, TransportSpace.Native, CoefficientCoordinates.Raw))
+      latentValue(response.decodeCoefficientBlock(CoefficientBlock.Raw(rawGamma), TransportSpace.Native))
     val rawMetric = latentValue(transform.rawMetric)
 
     assertEquals(analysisProjection.toRows, Vector(Vector(2.0), Vector(2.0), Vector(4.0), Vector(2.0)))
@@ -140,7 +141,7 @@ class TransportSuite extends munit.FunSuite:
         )
       )
     val diag =
-      latentValue(response.covarianceDiagonal(sigmaRaw, coordinates = CoefficientCoordinates.Raw))
+      latentValue(response.covarianceDiagonal(CoefficientCovariance.Raw(sigmaRaw), TransportSpace.Native))
 
     diag.toVector.zip(Vector(4.0, 1.0, 5.0, 17.0)).foreach { case (actual, expected) =>
       assertEqualsDouble(actual, expected, 1e-12)
@@ -161,6 +162,32 @@ class TransportSuite extends munit.FunSuite:
       response.decoder(TransportSpace.Template).left.toOption,
       Some(LatentError.MissingComponent("template decoder"))
     )
+  }
+
+  test("template-capable transport response exposes decoder capability as an ADT") {
+    val native = mapValue(CsrMatrix.identity(2))
+    val template =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 3,
+          cols = 2,
+          rowIndices = Array(0, 1, 2),
+          colIndices = Array(0, 1, 1),
+          values = Array(1.0, 1.0, 2.0)
+        )
+      )
+    val response =
+      latentValue(
+        TransportLatentResponse.fromDecoders(
+          coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+          decoders = TransportDecoders.TemplateCapable(native, template),
+          transform = latentValue(CoefficientTransform.identity(2))
+        )
+      )
+
+    assertEquals(response.decoders.templateCapable, true)
+    assert(response.templateDecoder.nonEmpty)
+    assertEquals(response.metadata("transport_decoders"), "template_capable")
   }
 
   test("transport projection solves closed-form ridge and roughness fixture") {
@@ -192,10 +219,10 @@ class TransportSuite extends munit.FunSuite:
 
     val coefficients =
       latentValue(
-        TransportProjection.coefficients(
+        TransportProjection.coefficientsWithPenalty(
           targetData = target,
           decoder = decoder,
-          ridge = 0.5,
+          ridge = RidgePenalty.unsafe(0.5),
           roughness = Some(roughness)
         )
       )

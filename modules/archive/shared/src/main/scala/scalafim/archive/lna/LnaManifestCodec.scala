@@ -126,6 +126,15 @@ object LnaManifestCodec:
           "label" -> label.fold("null")(str),
           "metadata" -> stringMapJson(metadata)
         )
+      case TransformParams.Custom(name, sourceDomain, targetDomain, label, metadata) =>
+        obj(
+          "type" -> str("custom"),
+          "name" -> str(name),
+          "source_domain" -> sourceDomain.fold("null")(str),
+          "target_domain" -> targetDomain.fold("null")(str),
+          "label" -> label.fold("null")(str),
+          "metadata" -> stringMapJson(metadata)
+        )
 
   private def parseTransform(json: J): Either[ArchiveError, TransformDescriptor] =
     asObj(json, "transform").flatMap { obj =>
@@ -238,6 +247,15 @@ object LnaManifestCodec:
               metadata
             )
           )
+        yield params
+      case "custom" =>
+        for
+          name <- stringField(obj, "name")
+          sourceDomain <- optionalNullableString(obj, "source_domain")
+          targetDomain <- optionalNullableString(obj, "target_domain")
+          label <- optionalNullableString(obj, "label")
+          metadata <- optionalNullableObject(obj, "metadata").flatMap(_.fold(Right(Map.empty[String, String]))(parseHeader))
+          params <- catchInvalid("custom params")(TransformParams.Custom(name, sourceDomain, targetDomain, label, metadata))
         yield params
       case other =>
         Left(ArchiveError.InvalidArchive(s"unknown transform params type '$other'"))

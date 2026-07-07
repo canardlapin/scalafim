@@ -1,24 +1,37 @@
 package scalafim.archive.lna
 
-import scalafim.archive.{ArchiveError, ArchivePath}
+import scalafim.archive.{
+  ArchiveError,
+  ArchivePath,
+  ArchiveValidationIssue,
+  ArchiveValidationLayer,
+  RunScopedPath
+}
 
-enum ValidationLayer:
-  case Structure, Descriptors, References, Shapes, Checksum
+type ValidationLayer = ArchiveValidationLayer
 
-final case class ValidationIssue(
-    layer: ValidationLayer,
-    message: String,
-    path: Option[ArchivePath] = None
-):
-  def render: String =
-    val prefix = path.fold("")(p => s"${p.value}: ")
-    s"$layer: $prefix$message"
+object ValidationLayer:
+  val Structure: ArchiveValidationLayer = ArchiveValidationLayer.Structure
+  val Descriptors: ArchiveValidationLayer = ArchiveValidationLayer.Descriptors
+  val References: ArchiveValidationLayer = ArchiveValidationLayer.References
+  val Shapes: ArchiveValidationLayer = ArchiveValidationLayer.Shapes
+  val Checksum: ArchiveValidationLayer = ArchiveValidationLayer.Checksum
+
+type ValidationIssue = ArchiveValidationIssue
+
+object ValidationIssue:
+  def apply(
+      layer: ValidationLayer,
+      message: String,
+      path: Option[ArchivePath] = None
+  ): ValidationIssue =
+    ArchiveValidationIssue(layer, message, path)
 
 object LnaValidator:
   def validateArchive(archive: LnaArchive): Either[ArchiveError, LnaArchive] =
     val issues = validate(archive)
     if issues.isEmpty then Right(archive)
-    else Left(ArchiveError.ValidationFailed(issues.map(_.render)))
+    else Left(ArchiveError.ValidationFailed(issues))
 
   def validate(archive: LnaArchive): Vector[ValidationIssue] =
     validateStructure(archive) ++
@@ -74,7 +87,17 @@ object LnaValidator:
         b += ValidationIssue(ValidationLayer.References, s"run ${run.label.value} output is not declared", Some(run.output))
     }
 
+    val runLabels = archive.manifest.runs.map(_.label).toSet
     declared.values.foreach { ref =>
+      RunScopedPath.from(ref.path).foreach { scoped =>
+        if !runLabels.contains(scoped.label) then
+          b += ValidationIssue(
+            ValidationLayer.References,
+            s"dataset path belongs to unknown run ${scoped.label.value}",
+            Some(ref.path)
+          )
+      }
+
       archive.payloads.get(ref.path) match
         case None =>
           b += ValidationIssue(ValidationLayer.References, "declared dataset has no payload", Some(ref.path))
@@ -207,7 +230,7 @@ object LnaValidator:
             )
         }
 
-        runs.find(run => run.output == loadRef.path || loadRef.path.value.startsWith(s"/scans/${run.label.value}/")).foreach { run =>
+        runForPath(loadRef.path, runs).foreach { run =>
           if basisRef.dims.length == 2 && basisRef.dims.head != run.shape.timepoints then
             b += ValidationIssue(
               ValidationLayer.Shapes,
@@ -252,7 +275,7 @@ object LnaValidator:
           if ref.dims.length != 2 then
             b += ValidationIssue(ValidationLayer.Shapes, "shared basis coefficients dataset must be two-dimensional", Some(ref.path))
 
-          runs.find(run => run.output == ref.path || ref.path.value.startsWith(s"/scans/${run.label.value}/")).foreach { run =>
+          runForPath(ref.path, runs).foreach { run =>
             if ref.dims.length == 2 && ref.dims.head != run.shape.timepoints then
               b += ValidationIssue(
                 ValidationLayer.Shapes,
@@ -274,7 +297,7 @@ object LnaValidator:
           if ref.dims.length != 1 then
             b += ValidationIssue(ValidationLayer.Shapes, "shared basis offset dataset must be one-dimensional", Some(ref.path))
 
-          runs.find(run => ref.path.value.startsWith(s"/scans/${run.label.value}/")).foreach { run =>
+          runForPath(ref.path, runs).foreach { run =>
             if ref.dims.length == 1 && ref.dims.head > run.shape.spatialSize then
               b += ValidationIssue(
                 ValidationLayer.Shapes,
@@ -287,6 +310,11 @@ object LnaValidator:
         b.result()
       case _ =>
         Vector.empty
+
+  private def runForPath(path: ArchivePath, runs: Vector[LnaRun]): Option[LnaRun] =
+    runs.find(_.output == path).orElse {
+      RunScopedPath.from(path).flatMap(scoped => runs.find(_.label == scoped.label))
+    }
 
   private def validateChecksum(archive: LnaArchive): Vector[ValidationIssue] =
     archive.manifest.checksum match

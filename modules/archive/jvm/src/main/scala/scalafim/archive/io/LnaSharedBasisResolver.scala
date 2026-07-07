@@ -1,6 +1,6 @@
 package scalafim.archive.io
 
-import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
+import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
 import scalafim.archive.lna.*
 import scalafim.image.DMat
 
@@ -159,11 +159,13 @@ object LnaSharedBasisResolver:
       archive: LnaArchive,
       run: LnaRun
   ): Either[ArchiveError, TransformDescriptor] =
-    val prefix = s"/scans/${run.label.value}/"
     archive.manifest.transforms.reverseIterator
       .find { desc =>
         desc.params.isInstanceOf[TransformParams.SharedBasisEmbed] &&
-        desc.datasets.exists(ref => ref.role == DatasetRole.Coefficients && (ref.path == run.output || ref.path.value.startsWith(prefix)))
+        desc.datasets.exists { ref =>
+          ref.role == DatasetRole.Coefficients &&
+          (ref.path == run.output || RunScopedPath.from(ref.path, run.label).isDefined)
+        }
       }
       .toRight(ArchiveError.InvalidArchive(s"run '${run.label.value}' has no shared basis embed descriptor"))
 

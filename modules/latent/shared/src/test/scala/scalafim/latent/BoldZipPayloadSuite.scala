@@ -20,17 +20,17 @@ class BoldZipPayloadSuite extends munit.FunSuite:
           )
         ),
         carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
-        spatialBasis = BoldZipSpatialBasis(
+        spatialBasis = value(BoldZipSpatialBasis(
           sampleCount = 3,
-          phiCoarse = Some(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
-          phiDetail = None,
+          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          detail = BoldZipDetailBasis.IdentitySamples,
           label = "identity-detail"
-        ),
+        )),
         texture = Vector(
-          BoldZipTextureEntry(atom = 0, carrier = 0, amplitude = 0.5, lag = 0),
-          BoldZipTextureEntry(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
+          BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5, lag = 0),
+          BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
         ),
-        events = Vector(BoldZipResidualEvent(atom = 2, time = 2, amplitude = 3.0)),
+        events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
         offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
         label = "fixture"
       )
@@ -80,8 +80,8 @@ class BoldZipPayloadSuite extends munit.FunSuite:
         temporalBasis = DoubleMatrix.eye(2),
         carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
         carrierLoadings = DoubleMatrix.zeros(0, 1),
-        spatialBasis = BoldZipSpatialBasis(sampleCount = 2),
-        texture = Vector(BoldZipTextureEntry(atom = 2, carrier = 0, amplitude = 1.0))
+        spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
+        texture = Vector(BoldZipTextureEntry.unsafe(atom = 2, carrier = 0, amplitude = 1.0))
       )
     assert(badTexture.swap.toOption.exists(_.message.contains("texture atom")))
 
@@ -90,10 +90,23 @@ class BoldZipPayloadSuite extends munit.FunSuite:
         temporalBasis = DoubleMatrix.eye(2),
         carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
         carrierLoadings = DoubleMatrix.zeros(0, 1),
-        spatialBasis = BoldZipSpatialBasis(sampleCount = 2),
+        spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
         offset = Some(DoubleVector.fromSeq(Vector(1.0)))
       )
     assert(badOffset.swap.toOption.exists(_.message.contains("offset length")))
+  }
+
+  test("BOLDZip spatial basis variants make absent coarse and identity detail explicit") {
+    val spatial =
+      value(BoldZipSpatialBasis(sampleCount = 4))
+
+    assertEquals(spatial.coarse, BoldZipCoarseBasis.Absent)
+    assertEquals(spatial.detail, BoldZipDetailBasis.IdentitySamples)
+    assertEquals(spatial.coarseAtoms, 0)
+    assertEquals(spatial.detailAtoms, 4)
+    val negative =
+      BoldZipTextureEntry.checked(atom = -1, carrier = 0, amplitude = 1.0).left.toOption.map(_.payload)
+    assertEquals(negative, Some(LatentError.Payload.Index("BOLDZip atom", -1, None)))
   }
 
   private def assertMatrixEquals(

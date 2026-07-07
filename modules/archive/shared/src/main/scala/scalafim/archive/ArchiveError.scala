@@ -1,5 +1,17 @@
 package scalafim.archive
 
+enum ArchiveValidationLayer:
+  case Structure, Descriptors, References, Shapes, Checksum
+
+final case class ArchiveValidationIssue(
+    layer: ArchiveValidationLayer,
+    message: String,
+    path: Option[ArchivePath] = None
+):
+  def render: String =
+    val prefix = path.fold("")(p => s"${p.value}: ")
+    s"$layer: $prefix$message"
+
 enum ArchiveError:
   case InvalidArchive(detail: String)
   case InvalidPath(path: String, detail: String)
@@ -8,7 +20,7 @@ enum ArchiveError:
   case NonFiniteValue(index: Int)
   case UnsupportedTransform(kind: String)
   case UnsupportedStorage(detail: String)
-  case ValidationFailed(issues: Vector[String])
+  case ValidationFailed(issues: Vector[ArchiveValidationIssue])
 
   def message: String =
     this match
@@ -27,4 +39,4 @@ enum ArchiveError:
       case UnsupportedStorage(detail) =>
         s"unsupported archive storage: $detail"
       case ValidationFailed(issues) =>
-        s"archive validation failed: ${issues.mkString("; ")}"
+        s"archive validation failed: ${issues.map(_.render).mkString("; ")}"

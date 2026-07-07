@@ -47,7 +47,9 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     val decoded =
       LatentArchiveCodec
         .fromArchive(archive)
-        .fold(err => fail(err.message), identity)
+        .fold(err => fail(err.message), identity) match
+        case LatentArchiveResponse.Explicit(response) => response
+        case other => fail(s"expected explicit archive variant, found $other")
 
     assertEquals(decoded.sourceDomain.value, "latent.coefficients.demo")
     assertEquals(decoded.targetDomain.value, "voxels.demo")
@@ -96,10 +98,21 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       case other =>
         fail(s"expected temporal DCT params, found $other")
 
-    val decoded =
+    val decodedVariant =
       LatentArchiveCodec
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
+    val decoded =
+      decodedVariant match
+        case LatentArchiveResponse.TemporalDct(response, spec, center, ridge) =>
+          assertEquals(spec.timepoints, data.rows)
+          assertEquals(spec.components, data.rows)
+          assertEquals(spec.norm, DctNorm.Ortho)
+          assertEquals(center, true)
+          assertEquals(ridge.value, 0.0)
+          response
+        case other =>
+          fail(s"expected temporal DCT archive variant, found $other")
     val reconstructed =
       decoded
         .reconstruct()
@@ -195,6 +208,20 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     assertRowsEqual(Vector(storedOffset), Vector(encoded.offset.get.toVector), 1e-12)
     assertRowsEqual(storedCoefficients.toRows, encoded.coefficients.toRows, 1e-12)
     assert(!rowsClose(storedCoefficients.toRows, rawProjection(data.toRows, storedOffset, sharedLoadings), 1e-8))
+
+    val decodedVariant =
+      LatentArchiveCodec
+        .fromArchive(archive)
+        .fold(err => fail(err.message), identity)
+    decodedVariant match
+      case LatentArchiveResponse.SharedBasis(response) =>
+        assertEquals(response.basis.basisId, basisId)
+        assertEquals(response.sourceDomain.value, "shared_basis.coefficients")
+        assertEquals(response.targetDomain.value, "voxels")
+        assertRowsEqual(response.coefficients.toRows, encoded.coefficients.toRows, 1e-12)
+        assertEquals(response.offset.map(_.toVector), encoded.offset.map(_.toVector))
+      case other =>
+        fail(s"expected shared-basis archive variant, found $other")
   }
 
   test("transport archives preserve dense operator payloads and selected reconstruction") {
@@ -276,6 +303,10 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .fromTransportArchive(archive)
         .fold(err => fail(err.message), identity)
+    val decodedVariant =
+      LatentArchiveCodec
+        .fromArchive(archive)
+        .fold(err => fail(err.message), identity)
     val expectedSelection =
       source
         .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
@@ -291,10 +322,117 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
 
     assertEquals(decoded.label, "transport-demo")
     assertEquals(decoded.metadata("family"), "transport")
+    assertEquals(decoded.decoders.templateCapable, true)
     assertEquals(decoded.metadata("subject"), "sub-01")
+    decodedVariant match
+      case LatentArchiveResponse.Transport(response) =>
+        assertEquals(response.label, "transport-demo")
+      case other =>
+        fail(s"expected transport archive variant, found $other")
     assertRowsEqual(actualSelection.toRows, expectedSelection.toRows, 1e-12)
     assertRowsEqual(templateProjection.toRows, Vector(Vector(2.0), Vector(3.0), Vector(4.0)), 1e-12)
   }
+
+  test("BOLDZip archives preserve codec tables and selected reconstruction") {
+    val spatialBasis =
+      latentValue(
+        BoldZipSpatialBasis(
+          sampleCount = 3,
+          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          detail = BoldZipDetailBasis.IdentitySamples,
+          label = "identity-detail"
+        )
+      )
+    val source =
+      latentValue(
+        BoldZipPayload(
+          temporalBasis = DoubleMatrix.eye(4),
+          carrierTheta = DoubleMatrix.fromRows(
+            Vector(
+              Vector(1.0, 2.0, 3.0, 4.0),
+              Vector(10.0, 20.0, 30.0, 40.0)
+            )
+          ),
+          carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+          spatialBasis = spatialBasis,
+          texture = Vector(
+            BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5, lag = 0),
+            BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
+          ),
+          events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
+          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+          sourceDomain = DomainId.unsafe("boldzip.carriers.demo"),
+          targetDomain = DomainId.unsafe("boldzip.samples.demo"),
+          label = "boldzip-demo",
+          metadata = Map("subject" -> "sub-01")
+        )
+      )
+
+    val archive =
+      LatentArchiveCodec
+        .toBoldZipArchive(source, NeuroSpace(Vector(3, 1, 1)))
+        .fold(err => fail(err.message), identity)
+
+    assert(LatentArchiveCodec.isBoldZipArchive(archive))
+    val descriptor = archive.manifest.transforms.head
+    assertEquals(descriptor.kind, TransformKind.Custom("boldzip_sr"))
+    assert(descriptor.datasets.exists(_.role == DatasetRole.Other("boldzip_carrier_theta")))
+    assert(descriptor.datasets.exists(_.role == DatasetRole.Other("boldzip_texture_index")))
+    descriptor.params match
+      case TransformParams.Custom(name, sourceDomain, targetDomain, label, metadata) =>
+        assertEquals(name, "boldzip_sr")
+        assertEquals(sourceDomain, Some("boldzip.carriers.demo"))
+        assertEquals(targetDomain, Some("boldzip.samples.demo"))
+        assertEquals(label, Some("boldzip-demo"))
+        assertEquals(metadata("lna.response.kind"), "boldzip_sr")
+        assertEquals(metadata("spatial_basis.label"), "identity-detail")
+      case other =>
+        fail(s"expected BOLDZip custom params, found $other")
+
+    val textureIndexPath = descriptor.datasets.find(_.role == DatasetRole.Other("boldzip_texture_index")).get.path
+    archive.payload(textureIndexPath) match
+      case Some(Payload.IntMatrix(2, 3, values, _)) =>
+        assertEquals(values, Vector(0, 0, 0, 1, 1, 1))
+      case other =>
+        fail(s"expected BOLDZip texture index table, found $other")
+
+    val decoded =
+      LatentArchiveCodec
+        .fromBoldZipArchive(archive)
+        .fold(err => fail(err.message), identity)
+    val decodedVariant =
+      LatentArchiveCodec
+        .fromArchive(archive)
+        .fold(err => fail(err.message), identity)
+    val expectedSelection =
+      source
+        .reconstruct(LatentSelection(timepoints = Some(Vector(2, 0)), samples = Some(Vector(2, 0))))
+        .fold(err => fail(err.message), identity)
+    val actualSelection =
+      decoded
+        .reconstruct(LatentSelection(timepoints = Some(Vector(2, 0)), samples = Some(Vector(2, 0))))
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(decoded.label, "boldzip-demo")
+    assertEquals(decoded.sourceDomain.value, "boldzip.carriers.demo")
+    assertEquals(decoded.targetDomain.value, "boldzip.samples.demo")
+    assertEquals(decoded.metadata("family"), "boldzip_sr")
+    assertEquals(decoded.metadata("subject"), "sub-01")
+    assertEquals(decoded.spatialBasis.label, "identity-detail")
+    assertEquals(decoded.texture.map(_.lag.value), Vector(0, 1))
+    assertEquals(decoded.events.map(_.duration.value), Vector(1))
+    assertRowsEqual(actualSelection.toRows, expectedSelection.toRows, 1e-12)
+    decodedVariant match
+      case LatentArchiveResponse.BoldZip(response) =>
+        assertEquals(response.label, "boldzip-demo")
+      case other =>
+        fail(s"expected BOLDZip archive variant, found $other")
+  }
+
+  private def latentValue[A](result: Either[LatentError, A]): A =
+    result match
+      case Right(value) => value
+      case Left(error)  => fail(error.message)
 
   private def mapValue[A](result: Either[LinearMapError, A]): A =
     result match

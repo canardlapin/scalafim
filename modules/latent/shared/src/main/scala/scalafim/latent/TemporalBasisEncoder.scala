@@ -36,18 +36,46 @@ object TemporalBasisEncoder:
       label: String = "",
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, ExplicitLatentResponse] =
-    DctBasis.build(data.rows, components, norm).flatMap { basis =>
-      encode(
+    for
+      penalty <- RidgePenalty(ridge)
+      spec <- DctSpec(data.rows, components, norm)
+      response <- encodeDctSpec(
         data = data,
-        basis = basis,
+        spec = spec,
         center = center,
-        ridge = ridge,
+        ridge = penalty,
         sourceDomain = sourceDomain,
         targetDomain = targetDomain,
-        label = if label.nonEmpty then label else s"DCT(${data.rows},$components,${norm.metadataValue})",
-        metadata = dctMetadata(data.rows, components, norm, metadata)
+        label = label,
+        metadata = metadata
       )
-    }
+    yield response
+
+  def encodeDctSpec(
+      data: DoubleMatrix,
+      spec: DctSpec,
+      center: Boolean = false,
+      ridge: RidgePenalty = RidgePenalty.Zero,
+      sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("latent.samples"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty
+  ): Either[LatentError, ExplicitLatentResponse] =
+    if data.rows != spec.timepoints then
+      Left(LatentError.DimensionMismatch("DCT spec timepoints", spec.timepoints, data.rows))
+    else
+      DctBasis.build(spec).flatMap { basis =>
+        encode(
+          data = data,
+          basis = basis,
+          center = center,
+          ridge = ridge.value,
+          sourceDomain = sourceDomain,
+          targetDomain = targetDomain,
+          label = if label.nonEmpty then label else s"DCT(${spec.timepoints},${spec.components},${spec.norm.metadataValue})",
+          metadata = dctMetadata(spec.timepoints, spec.components, spec.norm, center, ridge, metadata)
+        )
+      }
 
   def encodeFullDct(
       data: DoubleMatrix,
@@ -139,6 +167,19 @@ object TemporalBasisEncoder:
       "timepoints" -> timepoints.toString,
       "components" -> components.toString,
       "norm" -> norm.metadataValue
+    )
+
+  private def dctMetadata(
+      timepoints: Int,
+      components: Int,
+      norm: DctNorm,
+      center: Boolean,
+      ridge: RidgePenalty,
+      metadata: Map[String, String]
+  ): Map[String, String] =
+    dctMetadata(timepoints, components, norm, metadata) ++ Map(
+      "center" -> center.toString,
+      "ridge" -> ridge.metadataValue
     )
 
   private def centerColumns(data: DoubleMatrix): CenteredData =

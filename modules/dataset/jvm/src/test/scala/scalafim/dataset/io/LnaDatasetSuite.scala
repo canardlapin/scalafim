@@ -2,9 +2,20 @@ package scalafim.dataset.io
 
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
 import scalafim.archive.lna.{LnaPipeline, QuantParams, SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.dataset.{DataSelection, IndexSelection}
+import scalafim.dataset.{DataSelection, TimepointSelection, VoxelSelection}
 import scalafim.image.{DMat, Mask, NeuroSpace}
-import scalafim.latent.{DctNorm, LatentArchiveCodec, LatentSelection, TransportLatentResponse}
+import scalafim.latent.{
+  BoldZipCoarseBasis,
+  BoldZipDetailBasis,
+  BoldZipPayload,
+  BoldZipResidualEvent,
+  BoldZipSpatialBasis,
+  BoldZipTextureEntry,
+  DctNorm,
+  LatentArchiveCodec,
+  LatentSelection,
+  TransportLatentResponse
+}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 import java.nio.file.{Files, Path}
@@ -58,7 +69,13 @@ class LnaDatasetSuite extends munit.FunSuite:
 
       val rest =
         dataset
-          .findLnaFiles(LnaDatasetQuery(subject = "01", task = Some("rest"), space = Some("MNI")))
+          .findLnaFiles(
+            LnaDatasetQuery.fromLabels(
+              subject = LnaSubjectLabel.unsafe("01"),
+              task = Some(LnaTaskLabel.unsafe("rest")),
+              space = Some(LnaSpaceLabel.unsafe("MNI"))
+            )
+          )
           .fold(err => fail(err.message), identity)
       assertEquals(rest.length, 1)
       assert(rest.head.getFileName.toString.contains("task-rest"))
@@ -76,8 +93,8 @@ class LnaDatasetSuite extends munit.FunSuite:
           .fold(err => fail(err.message), identity)
       assertEquals(none, Vector.empty)
 
-      assert(dataset.findLnaFiles(LnaDatasetQuery(subject = "../sub-01")).isLeft)
-      assert(dataset.findLnaFiles(LnaDatasetQuery(subject = "sub-01", task = Some("../rest"))).isLeft)
+      assert(LnaDatasetQuery.fromStrings(subject = "../sub-01").isLeft)
+      assert(LnaDatasetQuery.fromStrings(subject = "sub-01", task = Some("../rest")).isLeft)
     }
   }
 
@@ -100,12 +117,12 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(relativeBackend.shape, backend.shape)
 
       val series =
-        backend.read(
+        backend.readEither(
           DataSelection(
-            time = IndexSelection.indices(0, 2),
-            voxels = IndexSelection.indices(1, 3)
+            time = TimepointSelection.indices(0, 2),
+            voxels = VoxelSelection.indices(1, 3)
           )
-        )
+        ).fold(err => fail(err.message), identity)
 
       val expected = Vector(Vector(1.0, 3.0), Vector(9.0, 11.0))
       series.data.toRows.zip(expected).foreach { case (actualRow, expectedRow) =>
@@ -179,8 +196,8 @@ class LnaDatasetSuite extends munit.FunSuite:
       val series =
         backend.read(
           DataSelection(
-            time = IndexSelection.indices(2, 0),
-            voxels = IndexSelection.indices(3, 1)
+            time = TimepointSelection.indices(2, 0),
+            voxels = VoxelSelection.indices(3, 1)
           )
         )
 
@@ -234,8 +251,8 @@ class LnaDatasetSuite extends munit.FunSuite:
       val series =
         backend.read(
           DataSelection(
-            time = IndexSelection.indices(1, 0),
-            voxels = IndexSelection.indices(3, 1)
+            time = TimepointSelection.indices(1, 0),
+            voxels = VoxelSelection.indices(3, 1)
           )
         )
       val expected =
@@ -246,6 +263,69 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.shape.timepoints, 2)
       assertEquals(backend.shape.spatialSize, 4)
       assertEquals(backend.response.metadata("family"), "transport")
+      assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+    finally deleteTree(root)
+  }
+
+  test("LnaDataset reads BOLDZip latent archives as selection-aware latent backends") {
+    val root = Files.createTempDirectory("scalafim-lna-dataset-boldzip-latent-")
+    val boldZipSpace = NeuroSpace(Vector(3, 1, 1))
+    try
+      Files.writeString(root.resolve("dataset_description.json"), """{"Name":"BOLDZip Latent LNA Derivative"}""")
+      val spatialBasis =
+        BoldZipSpatialBasis(
+          sampleCount = 3,
+          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          detail = BoldZipDetailBasis.IdentitySamples,
+          label = "identity-detail"
+        ).fold(err => fail(err.message), identity)
+      val response =
+        BoldZipPayload(
+          temporalBasis = DoubleMatrix.eye(4),
+          carrierTheta = DoubleMatrix.fromRows(
+            Vector(
+              Vector(1.0, 2.0, 3.0, 4.0),
+              Vector(10.0, 20.0, 30.0, 40.0)
+            )
+          ),
+          carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+          spatialBasis = spatialBasis,
+          texture = Vector(
+            BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5),
+            BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
+          ),
+          events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
+          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+          label = "boldzip-dataset"
+        ).fold(err => fail(err.message), identity)
+      val archive =
+        LatentArchiveCodec
+          .toBoldZipArchive(response, boldZipSpace)
+          .fold(err => fail(err.message), identity)
+      val archivePath = root.resolve("sub-07/func/sub-07_task-boldzip_space-MNI_bold.lna.h5")
+      Option(archivePath.getParent).foreach(Files.createDirectories(_))
+      LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
+
+      val dataset = LnaDataset.unsafe(root)
+      val backend =
+        dataset
+          .readSubjectLatent(LnaDatasetQuery(subject = "07", task = Some("boldzip"), space = Some("MNI")))
+          .fold(err => fail(err.message), identity)
+      val series =
+        backend.read(
+          DataSelection(
+            time = TimepointSelection.indices(3, 1),
+            voxels = VoxelSelection.indices(2, 0)
+          )
+        )
+      val expected =
+        response
+          .reconstruct(LatentSelection(timepoints = Some(Vector(3, 1)), samples = Some(Vector(2, 0))))
+          .fold(err => fail(err.message), identity)
+
+      assertEquals(backend.shape.timepoints, 4)
+      assertEquals(backend.shape.spatialSize, 3)
+      assertEquals(backend.response.metadata("family"), "boldzip_sr")
       assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
     finally deleteTree(root)
   }
@@ -303,8 +383,8 @@ class LnaDatasetSuite extends munit.FunSuite:
       val series =
         backend.read(
           DataSelection(
-            time = IndexSelection.indices(2, 0),
-            voxels = IndexSelection.indices(3, 0)
+            time = TimepointSelection.indices(2, 0),
+            voxels = VoxelSelection.indices(3, 0)
           )
         )
 
@@ -313,7 +393,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.response.metadata("family"), "shared_basis")
       assertRowsClose(series.data.toRows, Vector(Vector(5.5, 8.0), Vector(7.0, 11.0)), 1e-10)
       interceptMessage[IllegalArgumentException]("voxel 1 is outside the latent mask") {
-        backend.read(DataSelection(voxels = IndexSelection.indices(1)))
+        backend.read(DataSelection(voxels = VoxelSelection.indices(1)))
       }
     finally deleteTree(root)
   }
