@@ -6,8 +6,7 @@ import scalafim.linalg.DoubleVector
   * keyed by term name and aligned to a fit by name (unknown terms are errors).
   * The second-level analog of `scalafim.fmri.fit.TContrast`.
   */
-final case class GroupContrast(name: String, weights: Map[String, Double]):
-  require(name.nonEmpty, "contrast name must be non-empty")
+final case class GroupContrast(name: GroupContrastName, weights: Map[DesignTermName, Double]):
   require(weights.nonEmpty, "contrast weights must be non-empty")
   require(weights.values.forall(_.isFinite), "contrast weights must be finite")
 
@@ -50,34 +49,50 @@ final case class GroupContrast(name: String, weights: Map[String, Double]):
 
   private def weightVector(termNames: Vector[String]): Either[GroupError, Array[Double]] =
     val known = termNames.toSet
-    weights.keys.find(term => !known.contains(term)) match
-      case Some(unknown) => Left(GroupError.UnknownContrastTerm(unknown))
+    weights.keys.find(term => !known.contains(term.value)) match
+      case Some(unknown) => Left(GroupError.UnknownContrastTerm(unknown.value))
       case None =>
         val out = new Array[Double](termNames.length)
         var nonZero = false
         var i = 0
         while i < termNames.length do
-          val value = weights.getOrElse(termNames(i), 0.0)
+          val value = weights.getOrElse(DesignTermName.unsafe(termNames(i)), 0.0)
           out(i) = value
           if value != 0.0 then nonZero = true
           i += 1
-        if nonZero then Right(out) else Left(GroupError.EmptyContrast(name))
+        if nonZero then Right(out) else Left(GroupError.EmptyContrast(name.value))
 
 object GroupContrast:
+  def fromStrings(name: String, weights: Map[String, Double]): Either[GroupError, GroupContrast] =
+    for
+      contrastName <- GroupContrastName(name)
+      typedWeights <- parseWeights(weights)
+    yield GroupContrast(contrastName, typedWeights)
+
+  def unsafe(name: String, weights: Map[String, Double]): GroupContrast =
+    fromStrings(name, weights).fold(error => throw new IllegalArgumentException(error.message), identity)
+
   /** The unit contrast selecting a single design term. */
   def term(termName: String): GroupContrast =
-    GroupContrast(termName, Map(termName -> 1.0))
+    unsafe(termName, Map(termName -> 1.0))
 
   /** A difference of two design terms, e.g. `patients - controls`. */
   def difference(name: String, positive: String, negative: String): GroupContrast =
-    GroupContrast(name, Map(positive -> 1.0, negative -> -1.0))
+    unsafe(name, Map(positive -> 1.0, negative -> -1.0))
+
+  private def parseWeights(weights: Map[String, Double]): Either[GroupError, Map[DesignTermName, Double]] =
+    weights.foldLeft[Either[GroupError, Map[DesignTermName, Double]]](Right(Map.empty)) {
+      case (Left(err), _) => Left(err)
+      case (Right(acc), (term, weight)) =>
+        DesignTermName(term).map(name => acc.updated(name, weight))
+    }
 
 /** Per-sample group statistics for one contrast: estimate, standard error, test
   * statistic, and two-sided p-value, with the reference distribution attached so
   * FDR correction can be applied.
   */
 final case class GroupContrastResult(
-    name: String,
+    name: GroupContrastName,
     estimates: DoubleVector,
     standardErrors: DoubleVector,
     statistics: DoubleVector,
@@ -89,6 +104,9 @@ final case class GroupContrastResult(
   require(standardErrors.length == space.nSamples, "standard errors must match sample space")
   require(statistics.length == space.nSamples, "statistics must match sample space")
   require(pValues.length == space.nSamples, "p-values must match sample space")
+
+  def pValue(sample: Int): Either[GroupError, PValue] =
+    PValue(pValues(sample))
 
   /** FDR-adjusted p-values (q-values) over this contrast's map. */
   def adjustedP(method: FdrMethod = FdrMethod.BenjaminiHochberg): DoubleVector =

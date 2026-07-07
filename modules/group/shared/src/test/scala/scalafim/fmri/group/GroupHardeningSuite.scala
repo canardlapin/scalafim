@@ -70,7 +70,7 @@ class GroupHardeningSuite extends munit.FunSuite:
   test("GroupFit rejects a covariance that does not match its terms") {
     intercept[IllegalArgumentException] {
       GroupFit(
-        contrast = "c",
+        contrast = FirstLevelContrastName.unsafe("c"),
         termNames = Vector("a", "b"),
         coefficients = DoubleMatrix.zeros(2, 1),
         standardErrors = DoubleMatrix.zeros(2, 1),

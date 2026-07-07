@@ -2,7 +2,7 @@ package scalafim.fmri.group.scenarios
 
 import scalafim.dataset.SubjectId
 import scalafim.fmri.group.{GroupData, GroupDesign, GroupEngine, GroupError, GroupModel, GroupSpace, GroupStatistic}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.linalg.DoubleMatrix
 
 class GroupOneSampleScenarioSuite extends munit.FunSuite:
   private val Tol = 1e-10
@@ -40,7 +40,7 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
       Vector(
         ScenarioCheck.fact(
           "reference statistic",
-          fit.statistic == GroupStatistic.StudentT(effectsBySubject.length - 1),
+          fit.statistic == GroupStatistic.unsafeStudentT(effectsBySubject.length - 1),
           s"actual=${fit.statistic.label} expected=t(${effectsBySubject.length - 1})"
         ),
         ScenarioCheck.fact(
@@ -84,7 +84,7 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
       }.sum / (n.toDouble - 1.0)
     val standardError = math.sqrt(variance / n.toDouble)
     val statistic = mean / standardError
-    val reference = GroupStatistic.StudentT(n - 1)
+    val reference = GroupStatistic.unsafeStudentT(n - 1)
 
     OneSampleOracle(
       mean = mean,
@@ -92,73 +92,3 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
       statistic = statistic,
       pValue = reference.twoSidedP(statistic)
     )
-
-  private enum ScenarioStatus:
-    case Pass, Fail
-
-    def ciPass: Boolean =
-      this == Pass
-
-  private final case class ScenarioResult(id: String, checks: Vector[ScenarioCheck]):
-    require(id.nonEmpty, "scenario id must be non-empty")
-    require(checks.nonEmpty, "scenario must contain at least one check")
-
-    def status: ScenarioStatus =
-      if checks.forall(_.passed) then ScenarioStatus.Pass else ScenarioStatus.Fail
-
-    def ciPass: Boolean =
-      status.ciPass
-
-    def render: String =
-      (Vector(s"scenario=$id status=$status") ++ checks.map(check => s"  ${check.render}")).mkString("\n")
-
-  private enum ScenarioCheck:
-    case Scalar(name: String, actual: Double, expected: Double, tolerance: Double)
-    case Fact(name: String, ok: Boolean, detail: String)
-
-    def passed: Boolean =
-      this match
-        case Scalar(_, actual, expected, tolerance) =>
-          actual.isFinite &&
-            expected.isFinite &&
-            math.abs(actual - expected) <= tolerance
-        case Fact(_, ok, _) => ok
-
-    def render: String =
-      this match
-        case Scalar(name, actual, expected, tolerance) =>
-          s"$name: actual=$actual expected=$expected delta=${math.abs(actual - expected)} tol=$tolerance pass=$passed"
-        case Fact(name, ok, detail) =>
-          s"$name: $detail pass=$ok"
-
-  private object ScenarioCheck:
-    def fact(name: String, passed: Boolean, detail: String): ScenarioCheck =
-      ScenarioCheck.Fact(name, passed, detail)
-
-    def finite(name: String, values: IndexedSeq[Double]): ScenarioCheck =
-      val nonFinite = values.zipWithIndex.collect {
-        case (value, index) if !value.isFinite => s"$index=$value"
-      }
-      fact(
-        name,
-        nonFinite.isEmpty,
-        if nonFinite.isEmpty then s"${values.length} finite values"
-        else nonFinite.mkString("non-finite values: ", ", ", "")
-      )
-
-    def vector(
-        name: String,
-        actual: DoubleVector,
-        expected: Vector[Double],
-        tolerance: Double
-    ): Vector[ScenarioCheck] =
-      Vector(
-        fact(
-          s"$name.length",
-          actual.length == expected.length,
-          s"actual=${actual.length} expected=${expected.length}"
-        )
-      ) ++
-        actual.toVector.zip(expected).zipWithIndex.map {
-          case ((a, e), index) => ScenarioCheck.Scalar(s"$name[$index]", a, e, tolerance)
-        }

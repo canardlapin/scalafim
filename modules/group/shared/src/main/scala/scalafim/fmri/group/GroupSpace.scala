@@ -15,7 +15,7 @@ object GroupSpace:
   /** A generic, geometry-free axis of `nSamples` samples, optionally labelled.
     * The default axis for tabular or ROI data.
     */
-  final case class SampleAxis(nSamples: Int, labels: Vector[String] = Vector.empty) extends GroupSpace:
+  final case class SampleAxis(nSamples: Int, labels: Vector[SampleLabel] = Vector.empty) extends GroupSpace:
     require(nSamples > 0, "sample axis must have at least one sample")
     require(labels.isEmpty || labels.length == nSamples, "labels must match sample count when present")
 
@@ -30,6 +30,6 @@ object GroupSpace:
     def nSamples: Int = sampleIndices.length
 
   /** Discrete parcels / regions of interest, one sample per parcel label. */
-  final case class ParcelAxis(labels: Vector[String]) extends GroupSpace:
+  final case class ParcelAxis(labels: Vector[SampleLabel]) extends GroupSpace:
     require(labels.nonEmpty, "parcel axis must have at least one parcel")
     def nSamples: Int = labels.length

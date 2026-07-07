@@ -80,7 +80,7 @@ final case class Heterogeneity(tau2: DoubleVector, q: DoubleVector, i2: DoubleVe
   * of `scalafim.fmri.fit.DenseFmriFitResult`.
   */
 final case class GroupFit(
-    contrast: String,
+    contrast: FirstLevelContrastName,
     termNames: Vector[String],
     coefficients: DoubleMatrix,
     standardErrors: DoubleMatrix,
@@ -120,7 +120,7 @@ final case class GroupFit(
         s += 1
       Some(
         GroupContrastResult(
-          name = name,
+          name = GroupContrastName.unsafe(name),
           estimates = DoubleVector.unsafe(estimates),
           standardErrors = DoubleVector.unsafe(ses),
           statistics = DoubleVector.unsafe(stats),

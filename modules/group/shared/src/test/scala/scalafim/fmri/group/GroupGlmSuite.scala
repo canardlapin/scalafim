@@ -19,7 +19,7 @@ class GroupGlmSuite extends munit.FunSuite:
     val result = value(GroupEngine.fit(model))
     val fit = result.fit("c").get
 
-    assertEquals(fit.statistic, GroupStatistic.StudentT(4))
+    assertEquals(fit.statistic, GroupStatistic.unsafeStudentT(4))
     val intercept = fit.term("(Intercept)").get
     assertEqualsDouble(intercept.estimates(0), 3.0, 1e-12)
     assertEqualsDouble(intercept.standardErrors(0), math.sqrt(0.5), 1e-12)
@@ -39,7 +39,7 @@ class GroupGlmSuite extends munit.FunSuite:
     val model = value(GroupModel.build(data, design))
     val fit = value(GroupEngine.fit(model)).fit("c").get
 
-    assertEquals(fit.statistic, GroupStatistic.StudentT(4))
+    assertEquals(fit.statistic, GroupStatistic.unsafeStudentT(4))
     // Intercept is the reference-group (a) mean.
     assertEqualsDouble(fit.term("(Intercept)").get.estimates(0), 2.0, 1e-12)
     val diff = fit.term("b").get

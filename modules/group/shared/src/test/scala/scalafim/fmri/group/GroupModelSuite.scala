@@ -27,14 +27,14 @@ class GroupModelSuite extends munit.FunSuite:
     val effects = column(1.0, 2.0, 3.0)
     val variances = column(0.25, 0.5, 0.75)
     val weighted = value(GroupResponse.weighted(effects, variances))
-    val narrowed = value((weighted: GroupResponse).requireVariances(GroupWeighting.InverseVariance))
+    val narrowed = value((weighted: GroupResponse[VarianceCapability]).requireVariances(GroupWeighting.InverseVariance))
 
     assertEquals(narrowed, weighted)
     assertEqualsDouble(narrowed.varianceMatrix(0, 0), 0.25, 1e-12)
 
     val effectsOnly = value(GroupResponse.fromEffects(effects))
     assertEquals(
-      (effectsOnly: GroupResponse).requireVariances(GroupWeighting.InverseVariance).left.toOption,
+      (effectsOnly: GroupResponse[VarianceCapability]).requireVariances(GroupWeighting.InverseVariance).left.toOption,
       Some(GroupError.MissingVariances("meta:fe"))
     )
   }
@@ -53,7 +53,7 @@ class GroupModelSuite extends munit.FunSuite:
     val data = value(GroupData.single(subjects(5), GroupSpace.SampleAxis(1), "c", column(1.0, 2.0, 3.0, 4.0, 5.0)))
     assertEquals(
       GroupModel.build(data, GroupDesign.intercept(3)).left.toOption,
-      Some(GroupError.SubjectMismatch(3, 5))
+      Some(GroupError.subjectMismatch(5, 3))
     )
   }
 
@@ -73,7 +73,7 @@ class GroupModelSuite extends munit.FunSuite:
   test("two-sample design requires exactly two levels") {
     assertEquals(
       GroupDesign.twoSample(Vector("a", "b", "c")).left.toOption,
-      Some(GroupError.ContrastMismatch(2, 3))
+      Some(GroupError.contrastMismatch(2, 3))
     )
   }
 

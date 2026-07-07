@@ -21,21 +21,21 @@ object FirstLevel:
       subjects: Vector[SubjectId],
       contrasts: Vector[String],
       results: Map[(SubjectId, String), TContrastResult]
-  ): Either[GroupError, GroupData] =
-    contrasts
-      .foldLeft[Either[GroupError, Vector[(String, GroupResponse)]]](Right(Vector.empty)) {
+  ): Either[GroupError, GroupData[VarianceCapability.WithVariances]] =
+    parseContrasts(contrasts)
+      .flatMap(_.foldLeft[Either[GroupError, Vector[(String, GroupResponse[VarianceCapability.WithVariances])]]](Right(Vector.empty)) {
         case (Left(err), _) => Left(err)
         case (Right(acc), contrast) =>
-          buildResponse(space, subjects, contrast, results).map(response => acc :+ (contrast -> response))
-      }
-      .flatMap(responses => GroupData(subjects, space, responses))
+          buildResponse(space, subjects, contrast, results).map(response => acc :+ (contrast.value -> response))
+      })
+      .flatMap(responses => GroupData.build(subjects, space, responses))
 
   private def buildResponse(
       space: GroupSpace,
       subjects: Vector[SubjectId],
-      contrast: String,
+      contrast: FirstLevelContrastName,
       results: Map[(SubjectId, String), TContrastResult]
-  ): Either[GroupError, GroupResponse] =
+  ): Either[GroupError, GroupResponse.WithVariances] =
     collectCells(space.nSamples, subjects, contrast, results).flatMap { cells =>
       val nSubjects = subjects.length
       val nSamples = space.nSamples
@@ -54,7 +54,7 @@ object FirstLevel:
       GroupResponse.weighted(
         DoubleMatrix.unsafe(nSubjects, nSamples, effects),
         DoubleMatrix.unsafe(nSubjects, nSamples, variances)
-      ).map(r => r: GroupResponse)
+      )
     }
 
   /** Gather the per-subject results for one contrast, in subject order,
@@ -63,17 +63,23 @@ object FirstLevel:
   private def collectCells(
       nSamples: Int,
       subjects: Vector[SubjectId],
-      contrast: String,
+      contrast: FirstLevelContrastName,
       results: Map[(SubjectId, String), TContrastResult]
   ): Either[GroupError, Vector[TContrastResult]] =
     subjects.foldLeft[Either[GroupError, Vector[TContrastResult]]](Right(Vector.empty)) {
       case (Left(err), _) => Left(err)
       case (Right(acc), subject) =>
-        results.get((subject, contrast)) match
+        results.get((subject, contrast.value)) match
           case None =>
-            Left(GroupError.MissingSubjectContrast(subject.value, contrast))
+            Left(GroupError.MissingSubjectContrast(subject.value, contrast.value))
           case Some(result) if result.estimates.length != nSamples =>
-            Left(GroupError.SampleMismatch(nSamples, result.estimates.length))
+            Left(GroupError.sampleMismatch(nSamples, result.estimates.length))
           case Some(result) =>
             Right(acc :+ result)
+    }
+
+  private def parseContrasts(contrasts: Vector[String]): Either[GroupError, Vector[FirstLevelContrastName]] =
+    contrasts.foldLeft[Either[GroupError, Vector[FirstLevelContrastName]]](Right(Vector.empty)) {
+      case (Left(err), _) => Left(err)
+      case (Right(acc), contrast) => FirstLevelContrastName(contrast).map(acc :+ _)
     }

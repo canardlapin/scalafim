@@ -9,23 +9,28 @@ import scalafim.linalg.DoubleMatrix
   * `model.matrix` non-standard evaluation. Common designs are provided as
   * combinators; arbitrary designs go through `fromMatrix`.
   */
-final case class GroupDesign private (matrix: DoubleMatrix, termNames: Vector[String]):
-  require(matrix.cols == termNames.length, "term names must match design columns")
+final case class GroupDesign private (matrix: DoubleMatrix, designTerms: Vector[DesignTermName]):
+  require(matrix.cols == designTerms.length, "term names must match design columns")
 
   def subjects: Int = matrix.rows
   def terms: Int = matrix.cols
+  def termNames: Vector[String] = designTerms.map(_.value)
   def hasTerm(name: String): Boolean = termNames.contains(name)
+  def hasDesignTerm(name: DesignTermName): Boolean = designTerms.contains(name)
 
 object GroupDesign:
 
-  private val InterceptName = "(Intercept)"
+  private val InterceptName = DesignTermName.Intercept
 
   def fromMatrix(matrix: DoubleMatrix, termNames: Vector[String]): Either[GroupError, GroupDesign] =
+    parseTermNames(termNames).flatMap(fromTypedMatrix(matrix, _))
+
+  def fromTypedMatrix(matrix: DoubleMatrix, termNames: Vector[DesignTermName]): Either[GroupError, GroupDesign] =
     if matrix.rows == 0 || matrix.cols == 0 then Left(GroupError.EmptyDesign)
     else if matrix.cols != termNames.length then
-      Left(GroupError.ContrastMismatch(matrix.cols, termNames.length))
+      Left(GroupError.contrastMismatch(matrix.cols, termNames.length))
     else if termNames.distinct.length != termNames.length then
-      Left(GroupError.DuplicateTerms(termNames.diff(termNames.distinct)))
+      Left(GroupError.DuplicateTerms(termNames.diff(termNames.distinct).map(_.value)))
     else if !allFinite(matrix) then
       Left(GroupError.NonFiniteData("group design"))
     else Right(new GroupDesign(matrix, termNames))
@@ -46,9 +51,10 @@ object GroupDesign:
     if groupLabels.isEmpty then Left(GroupError.EmptyDesign)
     else
       val levels = groupLabels.distinct
-      if levels.length != 2 then Left(GroupError.ContrastMismatch(2, levels.length))
+      if levels.length != 2 then Left(GroupError.contrastMismatch(2, levels.length))
       else
         val other = levels(1)
+        val otherTerm = DesignTermName.unsafe(other)
         val n = groupLabels.length
         val data = new Array[Double](n * 2)
         var i = 0
@@ -56,7 +62,7 @@ object GroupDesign:
           data(i * 2) = 1.0
           data(i * 2 + 1) = if groupLabels(i) == other then 1.0 else 0.0
           i += 1
-        Right(new GroupDesign(DoubleMatrix.unsafe(n, 2, data), Vector(InterceptName, other)))
+        Right(new GroupDesign(DoubleMatrix.unsafe(n, 2, data), Vector(InterceptName, otherTerm)))
 
   /** Covariate / meta-regression design from a typed `DataTable`. Numeric
     * columns become terms, optionally prefixed by an intercept column. Missing
@@ -66,17 +72,31 @@ object GroupDesign:
   def covariates(
       table: DataTable,
       columns: Vector[String],
-      intercept: Boolean = true
+      intercept: InterceptPolicy = InterceptPolicy.Include
   ): Either[GroupError, GroupDesign] =
-    columns.find(c => !table.contains(c)) match
-      case Some(c) => Left(GroupError.UnknownColumn(c))
+    parseCovariates(columns).flatMap(typedCovariates(table, _, intercept))
+
+  def covariates(
+      table: DataTable,
+      columns: Vector[String],
+      intercept: Boolean
+  ): Either[GroupError, GroupDesign] =
+    covariates(table, columns, InterceptPolicy.fromBoolean(intercept))
+
+  def typedCovariates(
+      table: DataTable,
+      columns: Vector[CovariateName],
+      intercept: InterceptPolicy
+  ): Either[GroupError, GroupDesign] =
+    columns.find(c => !table.contains(c.value)) match
+      case Some(c) => Left(GroupError.UnknownColumn(c.value))
       case None =>
-        columns.find(c => !isNumeric(table.column(c))) match
-          case Some(c) => Left(GroupError.NonNumericColumn(c))
+        columns.find(c => !isNumeric(table.column(c.value))) match
+          case Some(c) => Left(GroupError.NonNumericColumn(c.value))
           case None =>
             val n = table.nrows
-            val columnData = columns.map(c => table.doubles(c))
-            val termNames = (if intercept then Vector(InterceptName) else Vector.empty) ++ columns
+            val columnData = columns.map(c => table.doubles(c.value))
+            val termNames = (if intercept.include then Vector(InterceptName) else Vector.empty) ++ columns.map(c => DesignTermName.unsafe(c.value))
             val p = termNames.length
             if n == 0 || p == 0 then Left(GroupError.EmptyDesign)
             else
@@ -84,7 +104,7 @@ object GroupDesign:
               var row = 0
               while row < n do
                 var col = 0
-                if intercept then
+                if intercept.include then
                   data(row * p) = 1.0
                   col = 1
                 var c = 0
@@ -92,7 +112,7 @@ object GroupDesign:
                   data(row * p + col + c) = columnData(c)(row)
                   c += 1
                 row += 1
-              fromMatrix(DoubleMatrix.unsafe(n, p, data), termNames)
+              fromTypedMatrix(DoubleMatrix.unsafe(n, p, data), termNames)
 
   private def isNumeric(column: Column): Boolean =
     column match
@@ -107,3 +127,15 @@ object GroupDesign:
       if !data(i).isFinite then ok = false
       i += 1
     ok
+
+  private def parseTermNames(names: Vector[String]): Either[GroupError, Vector[DesignTermName]] =
+    names.foldLeft[Either[GroupError, Vector[DesignTermName]]](Right(Vector.empty)) {
+      case (Left(err), _) => Left(err)
+      case (Right(acc), name) => DesignTermName(name).map(acc :+ _)
+    }
+
+  private def parseCovariates(names: Vector[String]): Either[GroupError, Vector[CovariateName]] =
+    names.foldLeft[Either[GroupError, Vector[CovariateName]]](Right(Vector.empty)) {
+      case (Left(err), _) => Left(err)
+      case (Right(acc), name) => CovariateName(name).map(acc :+ _)
+    }

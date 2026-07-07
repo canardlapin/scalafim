@@ -70,7 +70,7 @@ class GroupInferenceSuite extends munit.FunSuite:
   test("adjustedP applies BH to a contrast result's p-value map") {
     val space = GroupSpace.SampleAxis(3)
     val result = GroupContrastResult(
-      name = "c",
+      name = GroupContrastName.unsafe("c"),
       estimates = DoubleVector.zeros(3),
       standardErrors = DoubleVector.zeros(3),
       statistics = DoubleVector.zeros(3),

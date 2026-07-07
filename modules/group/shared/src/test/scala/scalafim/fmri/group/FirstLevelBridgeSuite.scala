@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
-import scalafim.fmri.fit.TContrastResult
+import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
 import scalafim.linalg.DoubleVector
 
 class FirstLevelBridgeSuite extends munit.FunSuite:
@@ -15,7 +15,7 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
       estimates = DoubleVector.fromSeq(Seq(estimate)),
       standardErrors = DoubleVector.fromSeq(Seq(se)),
       statistics = DoubleVector.fromSeq(Seq(estimate / se)),
-      residualDegreesOfFreedom = 100,
+      residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(100),
       voxelIndices = Vector(0)
     )
 
@@ -55,6 +55,6 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
     )
     assertEquals(
       FirstLevel.groupData(GroupSpace.SampleAxis(2), subjects, Vector("faces"), results).left.toOption,
-      Some(GroupError.SampleMismatch(2, 1))
+      Some(GroupError.sampleMismatch(2, 1))
     )
   }

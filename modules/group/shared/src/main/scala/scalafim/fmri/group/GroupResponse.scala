@@ -9,7 +9,7 @@ import scalafim.linalg.DoubleMatrix
   * (the group analog of first-level timepoints), samples are voxels/parcels/etc.
   * This is the second-level analog of `scalafim.fmri.fit.ResponseBlock`.
   */
-sealed trait GroupResponse:
+sealed trait GroupResponse[+V <: VarianceCapability]:
   def effects: DoubleMatrix
   def variances: Option[DoubleMatrix]
 
@@ -23,13 +23,14 @@ sealed trait GroupResponse:
       case _: GroupResponse.EffectsOnly          => Left(GroupError.MissingVariances(weighting.label))
 
 object GroupResponse:
-  final case class EffectsOnly private[GroupResponse] (effects: DoubleMatrix) extends GroupResponse:
+  final case class EffectsOnly private[GroupResponse] (effects: DoubleMatrix)
+      extends GroupResponse[VarianceCapability.EffectsOnly]:
     def variances: Option[DoubleMatrix] = None
 
   final case class WithVariances private[GroupResponse] (
       effects: DoubleMatrix,
       varianceMatrix: DoubleMatrix
-  ) extends GroupResponse:
+  ) extends GroupResponse[VarianceCapability.WithVariances]:
     def variances: Option[DoubleMatrix] = Some(varianceMatrix)
 
   /** Effects only, for OLS-style estimators. */
@@ -59,8 +60,8 @@ object GroupResponse:
     if m.rows == 0 || m.cols == 0 then Left(GroupError.EmptyResponse) else Right(())
 
   private def requireSameShape(effects: DoubleMatrix, variances: DoubleMatrix): Either[GroupError, Unit] =
-    if variances.rows != effects.rows then Left(GroupError.SubjectMismatch(variances.rows, effects.rows))
-    else if variances.cols != effects.cols then Left(GroupError.SampleMismatch(effects.cols, variances.cols))
+    if variances.rows != effects.rows then Left(GroupError.responseSubjectMismatch(effects.rows, variances.rows))
+    else if variances.cols != effects.cols then Left(GroupError.sampleMismatch(effects.cols, variances.cols))
     else Right(())
 
   private def requireFinite(m: DoubleMatrix, what: String): Either[GroupError, Unit] =

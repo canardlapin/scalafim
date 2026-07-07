@@ -13,6 +13,9 @@ object Fdr:
   def benjaminiHochberg(p: Array[Double]): Array[Double] =
     adjust(p, cm = 1.0)
 
+  def benjaminiHochberg(p: Vector[PValue]): Vector[PValue] =
+    adjustTyped(p, cm = 1.0)
+
   /** Benjamini–Yekutieli adjusted p-values (valid under arbitrary dependence).
     * Scales the BH multiplier by the harmonic number `c(m) = Σ_{i=1..m} 1/i`.
     */
@@ -24,6 +27,15 @@ object Fdr:
       cm += 1.0 / i
       i += 1
     adjust(p, cm = if m == 0 then 1.0 else cm)
+
+  def benjaminiYekutieli(p: Vector[PValue]): Vector[PValue] =
+    val m = p.length
+    var cm = 0.0
+    var i = 1
+    while i <= m do
+      cm += 1.0 / i
+      i += 1
+    adjustTyped(p, cm = if m == 0 then 1.0 else cm)
 
   /** Shared step-up core. `cm` is the dependence-correction multiplier
     * (1.0 for BH, the harmonic number for BY).
@@ -56,3 +68,6 @@ object Fdr:
       if !p(i).isFinite then out(i) = Double.NaN
       i += 1
     out
+
+  private def adjustTyped(p: Vector[PValue], cm: Double): Vector[PValue] =
+    adjust(p.map(_.value).toArray, cm).toVector.map(PValue.unsafe)

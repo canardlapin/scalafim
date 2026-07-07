@@ -10,8 +10,8 @@ package scalafim.fmri.group
   * variances. Whichever path constructs the model, `GroupEngine.fit` re-validates
   * totally, so no runnable-looking but ill-posed model reaches the numerics.
   */
-final case class GroupModel(
-    data: GroupData,
+final case class GroupModel[+V <: VarianceCapability](
+    data: GroupData[V],
     design: GroupDesign,
     weighting: GroupWeighting = GroupWeighting.Unweighted
 ):
@@ -22,7 +22,7 @@ final case class GroupModel(
   /** Combinator: same model under a different estimator. The new estimator's
     * variance requirement is checked at `fit`, not here.
     */
-  def reduceWith(newWeighting: GroupWeighting): GroupModel = copy(weighting = newWeighting)
+  def reduceWith(newWeighting: GroupWeighting): GroupModel[V] = copy(weighting = newWeighting)
 
   def summary: GroupSummary =
     GroupSummary(
@@ -40,18 +40,47 @@ object GroupModel:
   /** Build a model, reporting composition errors (subject mismatch, or a
     * variance-weighted estimator applied to variance-free data) as values.
     */
-  def build(
-      data: GroupData,
+  def build[V <: VarianceCapability](
+      data: GroupData[V],
       design: GroupDesign,
       weighting: GroupWeighting = GroupWeighting.Unweighted
-  ): Either[GroupError, GroupModel] =
+  ): Either[GroupError, GroupModel[V]] =
     if design.subjects != data.nSubjects then
-      Left(GroupError.SubjectMismatch(design.subjects, data.nSubjects))
+      Left(GroupError.subjectMismatch(data.nSubjects, design.subjects))
     else if data.nSubjects <= design.terms then
       Left(GroupError.InsufficientSubjects(data.nSubjects, design.terms))
     else if weighting.requiresVariance && !data.hasVariances then
       Left(GroupError.MissingVariances(weighting.label))
     else Right(GroupModel(data, design, weighting))
+
+  def unweighted[V <: VarianceCapability](
+      data: GroupData[V],
+      design: GroupDesign
+  ): Either[GroupError, GroupModel[V]] =
+    validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.Unweighted))
+
+  def inverseVariance(
+      data: GroupData[VarianceCapability.WithVariances],
+      design: GroupDesign
+  ): Either[GroupError, GroupModel[VarianceCapability.WithVariances]] =
+    validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.InverseVariance))
+
+  def randomEffects(
+      data: GroupData[VarianceCapability.WithVariances],
+      design: GroupDesign,
+      tau: TauEstimator = TauEstimator.DerSimonianLaird
+  ): Either[GroupError, GroupModel[VarianceCapability.WithVariances]] =
+    validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.RandomEffects(tau)))
+
+  private def validateShape(
+      data: GroupData[? <: VarianceCapability],
+      design: GroupDesign
+  ): Either[GroupError, Unit] =
+    if design.subjects != data.nSubjects then
+      Left(GroupError.subjectMismatch(data.nSubjects, design.subjects))
+    else if data.nSubjects <= design.terms then
+      Left(GroupError.InsufficientSubjects(data.nSubjects, design.terms))
+    else Right(())
 
 final case class GroupSummary(
     subjects: Int,

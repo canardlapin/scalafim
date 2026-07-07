@@ -14,7 +14,7 @@ import scala.collection.immutable.VectorMap
   */
 object GroupEngine:
 
-  def fit(model: GroupModel): Either[GroupError, GroupResult] =
+  def fit[V <: VarianceCapability](model: GroupModel[V]): Either[GroupError, GroupResult] =
     if model.weighting.requiresVariance && !model.data.hasVariances then
       Left(GroupError.MissingVariances(model.weighting.label))
     else if model.data.nSubjects <= model.design.terms then
@@ -33,23 +33,23 @@ object GroupEngine:
 
   private def fitContrast(
       name: String,
-      response: GroupResponse,
+      response: GroupResponse[? <: VarianceCapability],
       design: DoubleMatrix,
       termNames: Vector[String],
       weighting: GroupWeighting,
       space: GroupSpace
   ): Either[GroupError, GroupFit] =
-    val df = response.nSubjects - termNames.length
+    val df = DegreesOfFreedom.unsafe(response.nSubjects - termNames.length)
     weighting match
       case GroupWeighting.Unweighted =>
         GroupGlm.ols(design, response.effects).map { pieces =>
           GroupFit(
-            contrast = name,
+            contrast = FirstLevelContrastName.unsafe(name),
             termNames = termNames,
             coefficients = pieces.coefficients,
             standardErrors = pieces.standardErrors,
             covariance = GroupCovariance.Shared(pieces.inverse, pieces.residualVariance),
-            statistic = GroupStatistic.StudentT(pieces.residualDf),
+            statistic = GroupStatistic.unsafeStudentT(pieces.residualDf),
             heterogeneity = None,
             space = space
           )
@@ -70,7 +70,7 @@ object GroupEngine:
       response: GroupResponse.WithVariances,
       design: DoubleMatrix,
       termNames: Vector[String],
-      df: Int,
+      df: DegreesOfFreedom,
       space: GroupSpace
   ): GroupFit =
     val pieces = GroupGlm.wls(design, response.effects, reciprocal(response.varianceMatrix))
@@ -84,7 +84,7 @@ object GroupEngine:
       design: DoubleMatrix,
       termNames: Vector[String],
       tau: TauEstimator,
-      df: Int,
+      df: DegreesOfFreedom,
       space: GroupSpace
   ): GroupFit =
     val variances = response.varianceMatrix
@@ -100,11 +100,11 @@ object GroupEngine:
       pieces: GroupGlm.WlsPieces,
       tau2: DoubleVector,
       qSource: DoubleVector,
-      df: Int,
+      df: DegreesOfFreedom,
       space: GroupSpace
   ): GroupFit =
     GroupFit(
-      contrast = name,
+      contrast = FirstLevelContrastName.unsafe(name),
       termNames = termNames,
       coefficients = pieces.coefficients,
       standardErrors = pieces.standardErrors,
@@ -117,12 +117,12 @@ object GroupEngine:
   /** Dispatch the between-subject variance estimator. Exhaustive on `TauEstimator`
     * so a future estimator is a compile error here, not a silent DL fallback.
     */
-  private def estimateTau2(tau: TauEstimator, pieces: GroupGlm.WlsPieces, df: Int): DoubleVector =
+  private def estimateTau2(tau: TauEstimator, pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DoubleVector =
     tau match
       case TauEstimator.DerSimonianLaird => derSimonianLaird(pieces, df)
 
   /** DerSimonian–Laird between-subject variance per sample: `max(0, (Q − df)/C)`. */
-  private def derSimonianLaird(pieces: GroupGlm.WlsPieces, df: Int): DoubleVector =
+  private def derSimonianLaird(pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DoubleVector =
     val n = pieces.q.length
     val out = new Array[Double](n)
     var s = 0
@@ -132,7 +132,7 @@ object GroupEngine:
       out(s) =
         if !q.isFinite || !c.isFinite then Double.NaN
         else if c <= 0.0 then 0.0
-        else math.max(0.0, (q - df) / c)
+        else math.max(0.0, (q - df.value) / c)
       s += 1
     DoubleVector.unsafe(out)
 
@@ -145,7 +145,7 @@ object GroupEngine:
       s += 1
     DoubleVector.unsafe(out)
 
-  private def heterogeneity(q: DoubleVector, tau2: DoubleVector, df: Int): Heterogeneity =
+  private def heterogeneity(q: DoubleVector, tau2: DoubleVector, df: DegreesOfFreedom): Heterogeneity =
     val n = q.length
     val i2 = new Array[Double](n)
     var s = 0
@@ -154,7 +154,7 @@ object GroupEngine:
       i2(s) =
         if !qs.isFinite then Double.NaN
         else if qs <= 0.0 then 0.0
-        else math.max(0.0, (qs - df) / qs)
+        else math.max(0.0, (qs - df.value) / qs)
       s += 1
     Heterogeneity(tau2, DoubleVector.unsafe(q.copyData), DoubleVector.unsafe(i2))
 
