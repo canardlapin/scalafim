@@ -626,6 +626,7 @@ tests before introducing any common production testkit.
 | `group.one-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala` | analytic one-sample t oracle per sample | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.two-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala` | analytic pooled two-sample t oracle per sample plus named group contrast check | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.first-level-bridge.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` | first-level `TContrastResult` bridge into fixed-effects group inference against analytic inverse-variance oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `group.first-level-to-group-known-effect.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala` | public first-level fits recover injected task effects, bridge to group data, and fixed-effects inference matches analytic inverse-variance oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 
 The fit harness currently lives in:
 
@@ -668,8 +669,8 @@ sbt groupJVM/test
 sbt groupJS/test
 ```
 
-The next slice should build `first_level_to_group_known_effect` from the green
-fit and group pieces.
+The next slice should start the Wave 2 stress cases with
+`fit_censored_multirun_concat`.
 
 ## Definition Of Done For A Scenario
 
@@ -707,7 +708,8 @@ A scenario is complete only when all of the following hold:
 3. Add a fmrimod/Nilearn exporter for `fit_public_f_contrast`.
 4. Build `first_level_to_group_known_effect` from the green fit and group
    pieces.
-5. Expand into Wave 2 stress scenarios: mixed TR, censoring, realistic
+5. Expand into Wave 2 stress scenarios, starting with
+   `fit_censored_multirun_concat`: mixed TR, censoring, realistic
    confounds, FIR/block durations, factorial/parametric designs, and AR
    divergence.
 6. Add Wave 3 and Wave 4 module-family scenarios as their public seams become

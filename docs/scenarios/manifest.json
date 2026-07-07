@@ -114,6 +114,22 @@
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
       "caveats": []
+    },
+    {
+      "id": "group.first-level-to-group-known-effect.v1",
+      "tier": "cross_level_workflow",
+      "module": "group",
+      "suite_class": "scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite",
+      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_first_level_and_fixed_effects_inverse_variance",
+        "description": "Subject-level public first-level fits recover injected task effects, bridge into GroupData, and fixed-effects group inference matches an analytic inverse-variance oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
     }
   ]
 }
