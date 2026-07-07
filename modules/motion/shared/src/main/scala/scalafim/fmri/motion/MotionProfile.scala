@@ -1,5 +1,18 @@
 package scalafim.fmri.motion
 
+enum MotionCapability(val label: String):
+  case CaptureBoost extends MotionCapability("capture_boost")
+  case RotationalCapture extends MotionCapability("rotational_capture")
+  case DenseSampling extends MotionCapability("dense_sampling")
+  case EdgeExclude extends MotionCapability("edge_exclude")
+  case RobustTemplate extends MotionCapability("robust_template")
+  case ValidTemplateRefresh extends MotionCapability("valid_template_refresh")
+  case FastNative extends MotionCapability("fast_native")
+  case ParallelFrames extends MotionCapability("parallel_frames")
+  case IcStencil extends MotionCapability("ic_stencil")
+  case Whitening extends MotionCapability("whiten")
+  case SliceSpline extends MotionCapability("slice_spline")
+
 enum MotionProfile:
   case DenseBaseline
   case FastNative
@@ -13,23 +26,42 @@ enum MotionProfile:
       case SliceSpline => MotionEngine.RigidSpline
       case _ => MotionEngine.RigidRobust
 
-  def components: Vector[String] =
+  def activeCapabilities: Vector[MotionCapability] =
     this match
-      case DenseBaseline => Vector("capture_boost", "rotational_capture", "dense_sampling", "robust_template")
-      case FastNative => Vector("capture_boost", "rotational_capture", "dense_sampling", "edge_exclude", "robust_template", "valid_template_refresh")
-      case FastFmri => Vector("capture_boost", "rotational_capture", "dense_sampling", "edge_exclude", "robust_template", "valid_template_refresh")
+      case DenseBaseline =>
+        Vector(
+          MotionCapability.CaptureBoost,
+          MotionCapability.RotationalCapture,
+          MotionCapability.DenseSampling,
+          MotionCapability.RobustTemplate
+        )
+      case FastNative | FastFmri =>
+        Vector(
+          MotionCapability.CaptureBoost,
+          MotionCapability.RotationalCapture,
+          MotionCapability.DenseSampling,
+          MotionCapability.EdgeExclude,
+          MotionCapability.RobustTemplate,
+          MotionCapability.ValidTemplateRefresh
+        )
       case IcStencil => Vector.empty
       case IcWhiten => Vector.empty
       case SliceSpline => Vector.empty
 
-  def plannedComponents: Vector[String] =
+  def plannedCapabilities: Vector[MotionCapability] =
     this match
-      case DenseBaseline => components
-      case FastNative => components ++ Vector("fast_native")
-      case FastFmri => components ++ Vector("fast_native", "parallel_frames")
-      case IcStencil => Vector("capture_boost", "ic_stencil")
-      case IcWhiten => Vector("capture_boost", "ic_stencil", "whiten")
-      case SliceSpline => Vector("capture_boost", "slice_spline")
+      case DenseBaseline => activeCapabilities
+      case FastNative => activeCapabilities ++ Vector(MotionCapability.FastNative)
+      case FastFmri => activeCapabilities ++ Vector(MotionCapability.FastNative, MotionCapability.ParallelFrames)
+      case IcStencil => Vector(MotionCapability.CaptureBoost, MotionCapability.IcStencil)
+      case IcWhiten => Vector(MotionCapability.CaptureBoost, MotionCapability.IcStencil, MotionCapability.Whitening)
+      case SliceSpline => Vector(MotionCapability.CaptureBoost, MotionCapability.SliceSpline)
+
+  def components: Vector[String] =
+    activeCapabilities.map(_.label)
+
+  def plannedComponents: Vector[String] =
+    plannedCapabilities.map(_.label)
 
   def implemented: Boolean =
     this match
@@ -53,6 +85,6 @@ enum MotionProfile:
       case IcStencil =>
         MotionControl.default
       case IcWhiten =>
-        MotionControl.default
+        MotionControl.default.copy(whitening = WhiteningControl(WhiteningPolicy.IcWhiten))
       case SliceSpline =>
         MotionControl.default

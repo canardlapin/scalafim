@@ -19,7 +19,8 @@ enum PadMode:
 final case class MotionPlan(
     reference: ReferenceStrategy,
     engine: MotionEngine,
-    control: MotionControl
+    control: MotionControl,
+    acquisitionTiming: AcquisitionTiming = AcquisitionTiming.Volume
 )
 
 object MotionPlan:

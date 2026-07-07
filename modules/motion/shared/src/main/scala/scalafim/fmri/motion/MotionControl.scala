@@ -247,15 +247,62 @@ object TemporalControl:
   ): TemporalControl =
     new TemporalControl(regularization, lowMotionPose)
 
-final case class ExecutionControl(
-    parallelFrames: Boolean,
+enum ExecutionPolicy:
+  case Deterministic
+  case ParallelFrames
+
+  def parallelFrames: Boolean =
+    this match
+      case Deterministic => false
+      case ParallelFrames => true
+
+object ExecutionPolicy:
+  def fromParallelFrames(parallelFrames: Boolean): ExecutionPolicy =
+    if parallelFrames then ExecutionPolicy.ParallelFrames else ExecutionPolicy.Deterministic
+
+final case class ExecutionControl private (
+    policy: ExecutionPolicy,
     nThreads: Int
 ):
   require(nThreads >= 1, "nThreads must be positive")
 
+  def parallelFrames: Boolean =
+    policy.parallelFrames
+
 object ExecutionControl:
   val default: ExecutionControl =
-    ExecutionControl(parallelFrames = false, nThreads = 1)
+    unsafe(ExecutionPolicy.Deterministic, nThreads = 1)
+
+  def apply(parallelFrames: Boolean, nThreads: Int): ExecutionControl =
+    unsafe(ExecutionPolicy.fromParallelFrames(parallelFrames), nThreads)
+
+  def make(policy: ExecutionPolicy, nThreads: Int): Either[MotionError, ExecutionControl] =
+    if nThreads < 1 then Left(MotionError.InvalidInt("nThreads", nThreads, "must be positive"))
+    else Right(unsafe(policy, nThreads))
+
+  def make(parallelFrames: Boolean, nThreads: Int): Either[MotionError, ExecutionControl] =
+    make(ExecutionPolicy.fromParallelFrames(parallelFrames), nThreads)
+
+  def unsafe(policy: ExecutionPolicy, nThreads: Int): ExecutionControl =
+    new ExecutionControl(policy, nThreads)
+
+enum WhiteningPolicy:
+  case Disabled
+  case FrameMeanOnly
+  case IcWhiten
+
+  def implemented: Boolean =
+    this match
+      case Disabled | FrameMeanOnly => true
+      case IcWhiten => false
+
+final case class WhiteningControl(policy: WhiteningPolicy):
+  def implemented: Boolean =
+    policy.implemented
+
+object WhiteningControl:
+  val default: WhiteningControl =
+    WhiteningControl(WhiteningPolicy.Disabled)
 
 enum ResidualNuisancePolicy:
   case Raw
@@ -284,7 +331,8 @@ final case class MotionControl(
     capture: CaptureControl,
     temporal: TemporalControl,
     execution: ExecutionControl,
-    residual: ResidualControl = ResidualControl.default
+    residual: ResidualControl = ResidualControl.default,
+    whitening: WhiteningControl = WhiteningControl.default
 )
 
 object MotionControl:
@@ -296,7 +344,8 @@ object MotionControl:
       capture = CaptureControl.default,
       temporal = TemporalControl.default,
       execution = ExecutionControl.default,
-      residual = ResidualControl.default
+      residual = ResidualControl.default,
+      whitening = WhiteningControl.default
     )
 
   val fastFmri: MotionControl =

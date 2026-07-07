@@ -53,7 +53,10 @@ object MotionEstimator:
   private final case class SeedCost(pose: RigidPose, cost: CostResult)
 
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
-    Right(())
+    if !plan.acquisitionTiming.isVolume then Left(MotionError.NotImplemented("slice/packet-aware estimation"))
+    else if plan.control.execution.policy == ExecutionPolicy.ParallelFrames then Left(MotionError.NotImplemented("parallel frame estimation"))
+    else if !plan.control.whitening.implemented then Left(MotionError.NotImplemented(s"${plan.control.whitening.policy} whitening"))
+    else Right(())
 
   private def fitRun(ctx: EstimatorContext, template: Array[Double]): MotionEstimate =
     val nt = ctx.run.nVolumes

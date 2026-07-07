@@ -16,14 +16,16 @@ The durable computation is:
 `volregger` is a good reference for algorithms, test cases, and numerical
 semantics. It is not the target API.
 
-Current status: the shared module now has the core ADTs, motion metrics, QC,
-one-pass rigid application, typed controls/profiles, small inline fixture
+Current status: the shared module now has the core ADTs, validated acquisition
+timing descriptions, motion metrics, QC, one-pass rigid application, typed
+controls/profiles, a typed correction-result wrapper, small inline fixture
 oracles, and a portable baseline `RigidRobust` estimator with optional pyramid
 levels, rotational capture seeds, robust/valid-frame template refresh, and
 thresholded low-motion pose shrink plus opt-in temporal pose regularization and
-frame-mean nuisance residual removal. Implemented profile components are
-separated from planned components. Spline acquisition timing, JVM IO,
-CLI/reporting, and larger external parity fixtures remain later layers.
+frame-mean nuisance residual removal. Implemented profile capabilities are
+separated from planned capabilities. Packet-aware application, IC whitening,
+parallel execution, JVM IO, CLI/reporting, and larger external parity fixtures
+remain later layers.
 
 ## Mote Completion Plan
 
@@ -85,14 +87,21 @@ val plan =
   MotionPlan(
     reference = ReferenceStrategy.Middle,
     engine = MotionEngine.RigidRobust,
-    control = MotionControl.fastFmri
+    control = MotionControl.fastFmri,
+    acquisitionTiming = AcquisitionTiming.Volume
   )
 
-val estimate =
-  MotionEstimator.estimate(run, mask = Some(mask), plan)
+val result =
+  MotionCorrectionResult.estimateAndApply(
+    run = run,
+    plan = plan,
+    mask = Some(mask),
+    applyControl = ApplyControl.linear,
+    qcPolicy = MotionQcPolicy.default
+  )
 
-val corrected =
-  estimate.flatMap(est => MotionApplier.apply(run, est.trace, ApplyControl.linear))
+val plannedCapabilities =
+  MotionProfile.FastFmri.plannedCapabilities
 ```
 
 The core rules:
@@ -119,11 +128,12 @@ The core rules:
 | `MotionEngine` | `RigidRobust` first; `RigidSpline` later. |
 | `Interpolation` | `Linear` first; high-order modes only after generic sampler policy is settled. |
 | `PadMode` | `Clamp` or `Zero`; `zpad` as explicit apply-time control. |
-| `SliceTiming`, `PacketTiming` | validated acquisition timing for later packet-aware application. |
+| `SliceTiming`, `PacketTiming`, `AcquisitionTiming` | validated acquisition timing for volume, slice, and packet descriptions. |
 | `PyramidControl`, `OptimizerControl`, `CaptureControl`, `TemplateControl`, `TemporalControl`, `ExecutionControl` | typed control groups replacing one large R list. |
+| `ExecutionPolicy`, `WhiteningPolicy`, `MotionCapability` | closed alternatives for planned/active runtime features. |
 | `MotionControl` | product of control groups plus smart defaults. |
 | `MotionProfile` | named constructors such as `denseBaseline`, `fastNative`, `fastFmri`, and later `sliceSpline`. |
-| `ApplyControl` | final resampling policy: interpolation, padding, `zpad`, and packet-aware apply settings. |
+| `ApplyControl` | final resampling policy: interpolation, padding, `zpad`, and acquisition timing. |
 | `MotionPlan` | pure estimate/apply/QC description. |
 | `FrameFitDiagnostics` | per-frame initial/final cost, iterations, overlap, restart flag, convergence flag. |
 | `MotionEstimate` | trace, frame diagnostics, and control used. |
@@ -143,12 +153,14 @@ modules/motion/shared/src/main/scala/scalafim/fmri/motion/
   MotionTrace.scala
   MotionMetrics.scala
   MotionQc.scala
+  MotionTiming.scala
   MotionControl.scala
   MotionProfile.scala
   MotionPlan.scala
   ApplyControl.scala
   MotionSampling.scala
   MotionEstimate.scala
+  MotionCorrectionResult.scala
   MotionApplier.scala
   MotionEstimator.scala
 
@@ -239,10 +251,12 @@ enum MotionProfile:
   case SliceSpline
 ```
 
-`MotionProfile.control` should return a complete `MotionControl` plus a compact
-set of implemented component tags. Planned but unsupported components should
-remain inspectable as planned metadata, not active behavior. If user overrides
-are supported, expose conflict diagnostics as values rather than warnings.
+`MotionProfile.control` should return a complete `MotionControl`.
+`activeCapabilities` and `plannedCapabilities` should expose `MotionCapability`
+values, with the legacy string labels available only as compatibility metadata.
+Planned but unsupported components should remain inspectable as planned
+metadata, not active behavior. If user overrides are supported, expose conflict
+diagnostics as values rather than warnings.
 
 Acceptance:
 

@@ -9,6 +9,7 @@ object MotionApplier:
       control: ApplyControl = ApplyControl.linear
   ): Either[MotionError, NeuroVec[Double]] =
     if trace.length != run.nVolumes then Left(MotionError.TraceLengthMismatch(trace.length, run.nVolumes))
+    else if !control.acquisitionTiming.isVolume then Left(MotionError.NotImplemented("packet-aware motion application"))
     else
       control.interpolation match
         case Interpolation.Linear =>
