@@ -77,11 +77,31 @@ class MotionControlSuite extends munit.FunSuite:
   test("residual control exposes frame-mean nuisance policy") {
     val raw = ResidualControl.default
     val nuisance = ResidualControl.fromRemoveFrameMean(removeFrameMean = true)
+    val frameMeanWhitening = WhiteningControl(WhiteningPolicy.FrameMeanOnly)
 
     assertEquals(raw.nuisance, ResidualNuisancePolicy.Raw)
     assert(!raw.removeFrameMean)
     assertEquals(nuisance.nuisance, ResidualNuisancePolicy.RemoveFrameMean)
     assert(nuisance.removeFrameMean)
+    assert(frameMeanWhitening.implemented)
+    assert(frameMeanWhitening.removeFrameMean)
+    assert(MotionControl.default.copy(whitening = frameMeanWhitening).removeFrameMeanResidual)
+    assert(MotionControl.default.copy(residual = nuisance).removeFrameMeanResidual)
+  }
+
+  test("IC stencil and whitening controls validate typed parameters") {
+    val bins = StencilBins.make(3, 3, 2).fold(err => fail(err.message), identity)
+    val stencil = InformationContentStencil.make(sampleCount = 12, bins = bins, gamma = 0.5).fold(err => fail(err.message), identity)
+    val control = StencilControl.informationContent(stencil)
+
+    assert(control.enabled)
+    assertEquals(stencil.sampleCount, 12)
+    assertEquals(stencil.bins, bins)
+    assertEqualsDouble(stencil.gamma, 0.5, 1e-12)
+    assert(StencilBins.make(0, 3, 2).isLeft)
+    assert(InformationContentStencil.make(sampleCount = 0, bins = bins, gamma = 0.5).isLeft)
+    assert(InformationContentStencil.make(sampleCount = 12, bins = bins, gamma = Double.NaN).isLeft)
+    assert(WhiteningControl.make(WhiteningPolicy.FrameMeanOnly, ridge = 0.0).isLeft)
   }
 
   test("fast fMRI profile selects rigid robust engine and component tags") {
@@ -101,11 +121,12 @@ class MotionControlSuite extends munit.FunSuite:
     assert(MotionProfile.SliceSpline.plan().isLeft)
   }
 
-  test("whitening and IC profiles are advertised as planned, not executable") {
+  test("IC profile is executable while full IC whitening remains an explicit planned profile") {
     assert(MotionProfile.IcStencil.plannedComponents.contains("ic_stencil"))
     assert(MotionProfile.IcWhiten.plannedComponents.contains("whiten"))
-    assert(MotionProfile.IcStencil.components.isEmpty)
+    assert(MotionProfile.IcStencil.components.contains("ic_stencil"))
     assert(MotionProfile.IcWhiten.components.isEmpty)
-    assert(MotionProfile.IcStencil.plan().isLeft)
+    assert(MotionProfile.IcStencil.plan().isRight)
+    assert(MotionProfile.IcStencil.control.stencil.enabled)
     assert(MotionProfile.IcWhiten.plan().isLeft)
   }

@@ -69,6 +69,8 @@ class MotionApiShapeSuite extends munit.FunSuite:
     assert(MotionProfile.IcWhiten.plannedCapabilities.contains(MotionCapability.Whitening))
     assertEquals(MotionProfile.IcWhiten.control.whitening.policy, WhiteningPolicy.IcWhiten)
     assert(!MotionProfile.IcWhiten.control.whitening.implemented)
+    assert(MotionProfile.IcStencil.activeCapabilities.contains(MotionCapability.IcStencil))
+    assert(MotionProfile.IcStencil.control.stencil.enabled)
   }
 
   test("motion correction result bundles estimate, corrected run, QC, and controls") {

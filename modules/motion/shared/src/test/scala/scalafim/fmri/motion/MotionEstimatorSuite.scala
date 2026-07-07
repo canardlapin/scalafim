@@ -433,6 +433,126 @@ class MotionEstimatorSuite extends munit.FunSuite:
     assertEqualsDouble(nuisance.trace.unsafeFrame(1).rz, 0.0, 1e-12)
   }
 
+  test("frame-mean whitening policy uses the same nuisance residual path") {
+    val fixed = baseFrame
+    val run = runFromFrames(Vector(fixed, offsetFrame(fixed, 12.0)))
+    val zeroIter =
+      PyramidControl
+        .make(
+          downsample = Vector(1),
+          maxIterations = Vector(0),
+          sampleCounts = Vector(nxyz),
+          enabled = false
+        )
+        .fold(err => fail(err.message), identity)
+    val baseControl =
+      plan.control.copy(
+        pyramid = zeroIter,
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture = plan.control.capture.withEnabled(false),
+        residual = ResidualControl.default,
+        whitening = WhiteningControl.default
+      )
+    val whitenedControl =
+      baseControl.copy(whitening = WhiteningControl(WhiteningPolicy.FrameMeanOnly))
+
+    val raw =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = baseControl))
+        .fold(err => fail(err.message), identity)
+    val whitened =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), plan.copy(control = whitenedControl))
+        .fold(err => fail(err.message), identity)
+
+    assert(raw.diagnostics(1).costFinal > 15.0)
+    assert(whitened.diagnostics(1).costFinal < 1e-10)
+    assertEqualsDouble(whitened.trace.unsafeFrame(1).tx, 0.0, 1e-12)
+    assertEqualsDouble(whitened.trace.unsafeFrame(1).rz, 0.0, 1e-12)
+  }
+
+  test("IC stencil policy is deterministic and changes the sampled objective") {
+    val fixed = baseFrame
+    val moving = shiftedMovingFramePlusOneX(fixed)
+    val run = runFromFrames(Vector(fixed, moving))
+    val denseFew =
+      PyramidControl
+        .make(
+          downsample = Vector(1),
+          maxIterations = Vector(0),
+          sampleCounts = Vector(8),
+          enabled = false
+        )
+        .fold(err => fail(err.message), identity)
+    val allSamples =
+      PyramidControl
+        .make(
+          downsample = Vector(1),
+          maxIterations = Vector(0),
+          sampleCounts = Vector(nxyz),
+          enabled = false
+        )
+        .fold(err => fail(err.message), identity)
+    val stencil =
+      InformationContentStencil
+        .make(sampleCount = 8, binsX = 3, binsY = 3, binsZ = 2, gamma = 0.5)
+        .fold(err => fail(err.message), identity)
+    val baseControl =
+      plan.control.copy(
+        template = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = 0.0),
+        capture = plan.control.capture.withEnabled(false)
+      )
+    val densePlan =
+      plan.copy(control = baseControl.copy(pyramid = denseFew, stencil = StencilControl.default))
+    val icPlan =
+      plan.copy(control = baseControl.copy(pyramid = allSamples, stencil = StencilControl.informationContent(stencil)))
+
+    val dense =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), densePlan)
+        .fold(err => fail(err.message), identity)
+    val ic1 =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), icPlan)
+        .fold(err => fail(err.message), identity)
+    val ic2 =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), icPlan)
+        .fold(err => fail(err.message), identity)
+
+    assert(ic1.control.stencil.enabled)
+    assert(ic1.diagnostics(1).costFinal.isFinite)
+    assert(math.abs(ic1.diagnostics(1).costFinal - dense.diagnostics(1).costFinal) > 1e-8)
+    assertEqualsDouble(ic1.diagnostics(1).costFinal, ic2.diagnostics(1).costFinal, 1e-12)
+  }
+
+  test("IC stencil profile is executable but full IC whitening is a typed unsupported control") {
+    val fixed = baseFrame
+    val run = runFromFrames(Vector(fixed, fixed.clone()))
+    val icPlan =
+      MotionProfile.IcStencil
+        .plan(ReferenceStrategy.Frame(FrameIndex.unsafe(0)))
+        .fold(err => fail(err.message), identity)
+    val icEstimate =
+      MotionEstimator
+        .estimate(run, Some(interiorMask), icPlan)
+        .fold(err => fail(err.message), identity)
+    val fullWhitenPlan =
+      plan.copy(
+        control =
+          plan.control.copy(
+            stencil = StencilControl.defaultInformationContent,
+            whitening = WhiteningControl(WhiteningPolicy.IcWhiten)
+          )
+      )
+
+    assert(icEstimate.control.stencil.enabled)
+    MotionEstimator.estimate(run, Some(interiorMask), fullWhitenPlan) match
+      case Left(MotionError.UnsupportedControl("whitening", reason)) =>
+        assert(reason.contains("template-mode residual whitening"))
+      case other => fail(s"expected unsupported whitening control, got $other")
+  }
+
   test("estimator reports invalid references, non-finite runs, and empty masks as typed errors") {
     val fixed = baseFrame
     val run = runFromFrames(Vector(fixed, fixed.clone()))

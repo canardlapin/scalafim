@@ -15,6 +15,7 @@ enum MotionError:
   case InvalidMatrix(reason: String)
   case SingularTransform(reason: String)
   case UnsupportedInterpolation(interpolation: Interpolation)
+  case UnsupportedControl(name: String, reason: String)
   case NotImplemented(feature: String)
 
   def message: String =
@@ -43,6 +44,8 @@ enum MotionError:
         s"singular rigid transform: $reason"
       case UnsupportedInterpolation(interpolation) =>
         s"unsupported interpolation for motion application: $interpolation"
+      case UnsupportedControl(name, reason) =>
+        s"unsupported motion control $name: $reason"
       case NotImplemented(feature) =>
         s"$feature is not implemented yet"
 

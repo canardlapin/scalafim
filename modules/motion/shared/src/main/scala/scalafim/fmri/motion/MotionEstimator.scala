@@ -74,6 +74,8 @@ object MotionEstimator:
 
   private final case class SeedCost(pose: RigidPose, cost: CostResult)
 
+  private final case class ScoredSample(sample: SamplePoint, score: Double)
+
   private def preserveReferenceFrame(smoothed: MotionTrace, original: MotionTrace, refIndex: Int): MotionTrace =
     if refIndex < 0 || refIndex >= smoothed.length then smoothed
     else MotionTrace.unsafe(smoothed.poses.updated(refIndex, original.unsafeFrame(refIndex)))
@@ -81,7 +83,13 @@ object MotionEstimator:
   private def validateSupportedPlan(plan: MotionPlan): Either[MotionError, Unit] =
     if !plan.acquisitionTiming.isVolume then Left(MotionError.NotImplemented("slice/packet-aware estimation"))
     else if plan.control.execution.policy == ExecutionPolicy.ParallelFrames then Left(MotionError.NotImplemented("parallel frame estimation"))
-    else if !plan.control.whitening.implemented then Left(MotionError.NotImplemented(s"${plan.control.whitening.policy} whitening"))
+    else if !plan.control.whitening.implemented then
+      Left(
+        MotionError.UnsupportedControl(
+          "whitening",
+          s"${plan.control.whitening.policy} requires template-mode residual whitening, which is not part of the shared estimator contract yet"
+        )
+      )
     else Right(())
 
   private def fitRun(ctx: EstimatorContext, template: Array[Double]): MotionEstimate =
@@ -268,7 +276,7 @@ object MotionEstimator:
     val eps = Array(1e-2, 1e-2, 1e-2, 1e-4, 1e-4, 1e-4)
     val deriv = Array.ofDim[Double](6)
     val meanDeriv = Array.ofDim[Double](6)
-    val centered = ctx.control.residual.removeFrameMean
+    val centered = ctx.control.removeFrameMeanResidual
     var meanResidual = 0.0
     var meanCount = 0
 
@@ -438,7 +446,7 @@ object MotionEstimator:
       pose: RigidPose
   ): CostResult =
     val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
-    val centered = ctx.control.residual.removeFrameMean
+    val centered = ctx.control.removeFrameMeanResidual
     var meanResidual = 0.0
     var meanCount = 0
     if centered then
@@ -676,7 +684,114 @@ object MotionEstimator:
 
     val all = builder.result()
     if all.isEmpty then Left(MotionError.ShapeMismatch("estimation mask", Vector(1), Vector(0)))
-    else Right(all)
+    else Right(applyStencil(run, all, control.stencil))
+
+  private def applyStencil(
+      run: NeuroVec[Double],
+      samples: Vector[SamplePoint],
+      control: StencilControl
+  ): Vector[SamplePoint] =
+    control.policy match
+      case StencilPolicy.Dense => samples
+      case StencilPolicy.InformationContent(stencil) =>
+        informationContentSamples(run, samples, stencil)
+
+  private def informationContentSamples(
+      run: NeuroVec[Double],
+      samples: Vector[SamplePoint],
+      stencil: InformationContentStencil
+  ): Vector[SamplePoint] =
+    val target = math.min(samples.length, stencil.sampleCount)
+    if target >= samples.length then samples
+    else
+      val dims = run.space.spatialDims
+      val nx = dims(0)
+      val ny = dims(1)
+      val nz = dims(2)
+      val nxyz = nx * ny * nz
+      val binCount = stencil.bins.x * stencil.bins.y * stencil.bins.z
+      val builders = Array.fill(binCount)(Vector.newBuilder[ScoredSample])
+      val weights = Array.fill(binCount)(0.0)
+      var s = 0
+      while s < samples.length do
+        val sample = samples(s)
+        val score = informationScore(run, sample, nx, ny, nz, nxyz)
+        val b = stencilBin(sample, nx, ny, nz, stencil.bins)
+        builders(b) += ScoredSample(sample, score)
+        weights(b) += math.pow(score + 1e-12, stencil.gamma)
+        s += 1
+
+      val bins =
+        Vector.tabulate(binCount) { b =>
+          builders(b).result().sortBy(scored => (-scored.score, scored.sample.linear))
+        }
+      val order =
+        bins.indices
+          .filter(b => bins(b).nonEmpty)
+          .toVector
+          .sortBy(b => (-weights(b), b))
+      val positions = Array.fill(binCount)(0)
+      val out = Vector.newBuilder[SamplePoint]
+      var emitted = 0
+      var progressed = true
+      while emitted < target && progressed do
+        progressed = false
+        var oi = 0
+        while oi < order.length && emitted < target do
+          val b = order(oi)
+          val p = positions(b)
+          if p < bins(b).length then
+            out += bins(b)(p).sample
+            positions(b) = p + 1
+            emitted += 1
+            progressed = true
+          oi += 1
+      out.result()
+
+  private def informationScore(
+      run: NeuroVec[Double],
+      sample: SamplePoint,
+      nx: Int,
+      ny: Int,
+      nz: Int,
+      nxyz: Int
+  ): Double =
+    val center = meanAt(run, sample.linear, nxyz)
+    var sum = 0.0
+    var n = 0
+    def addNeighbor(i: Int, j: Int, k: Int): Unit =
+      val lin = i + nx * (j + ny * k)
+      sum += meanAt(run, lin, nxyz)
+      n += 1
+
+    if sample.i > 0 then addNeighbor(sample.i - 1, sample.j, sample.k)
+    if sample.i < nx - 1 then addNeighbor(sample.i + 1, sample.j, sample.k)
+    if sample.j > 0 then addNeighbor(sample.i, sample.j - 1, sample.k)
+    if sample.j < ny - 1 then addNeighbor(sample.i, sample.j + 1, sample.k)
+    if sample.k > 0 then addNeighbor(sample.i, sample.j, sample.k - 1)
+    if sample.k < nz - 1 then addNeighbor(sample.i, sample.j, sample.k + 1)
+    if n == 0 then 0.0
+    else math.abs(center - sum / n.toDouble)
+
+  private def meanAt(run: NeuroVec[Double], linear: Int, nxyz: Int): Double =
+    var t = 0
+    var sum = 0.0
+    while t < run.nVolumes do
+      sum += run.values.data(linear + t * nxyz)
+      t += 1
+    sum / run.nVolumes.toDouble
+
+  private def stencilBin(
+      sample: SamplePoint,
+      nx: Int,
+      ny: Int,
+      nz: Int,
+      bins: StencilBins
+  ): Int =
+    val bx = math.min(bins.x - 1, (sample.i.toLong * bins.x.toLong / nx.toLong).toInt)
+    val by = math.min(bins.y - 1, (sample.j.toLong * bins.y.toLong / ny.toLong).toInt)
+    val bz = math.min(bins.z - 1, (sample.k.toLong * bins.z.toLong / nz.toLong).toInt)
+    bx + bins.x * (by + bins.y * bz)
 
   private def strideSamples(samples: Vector[SamplePoint], stride: Int): Vector[SamplePoint] =
     if stride <= 1 then samples

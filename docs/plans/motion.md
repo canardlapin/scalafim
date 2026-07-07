@@ -22,12 +22,13 @@ one-pass rigid and packet-aware linear application, typed controls/profiles, a
 typed correction-result wrapper, small generated fixture oracles, and a portable
 baseline `RigidRobust` estimator with optional pyramid levels, rotational
 capture seeds, robust/valid-frame template refresh, and thresholded low-motion
-pose shrink plus opt-in temporal pose regularization and frame-mean nuisance
-residual removal. `RigidSpline` currently layers deterministic trace smoothing
-over the rigid estimator; implemented profile capabilities are separated from
-planned capabilities. Richer packet-aware estimator semantics, IC whitening,
-parallel execution, JVM IO, CLI/reporting, and real-data benchmark inputs
-remain later layers.
+pose shrink plus opt-in temporal pose regularization, typed
+information-content stencil sampling, frame-mean nuisance residual removal, and
+frame-mean whitening. `RigidSpline` currently layers deterministic trace
+smoothing over the rigid estimator; implemented profile capabilities are
+separated from planned capabilities. Full IC template-mode whitening, richer
+packet-aware estimator semantics, parallel execution, JVM IO, CLI/reporting,
+and real-data benchmark inputs remain later layers.
 
 ## Mote Completion Plan
 
@@ -39,21 +40,23 @@ Oderskyan Scala 3 is:
 
 The dependency order is:
 
-1. Ready now:
+1. Completed shared foundations:
    - `bd-01KWX6PQBRFA6DG6AH15PG9Q8Z` - motion parity matrix and `volregger`
      fixture generator.
    - `bd-01KWX6Q1AMRZ7358V932QBZWC6` - public API audit for Oderskyan Scala 3
      domain shape.
-2. Blocked on both ready items:
    - `bd-01KWX6QE4NYEWX7CESR04WFYSB` - spline and acquisition timing core.
-   - `bd-01KWX6QSTFHZ99M93YR9V7JTGC` - IC stencil and whitening policies.
+   - `bd-01KWX6QSTFHZ99M93YR9V7JTGC` - IC stencil and whitening policies:
+     shared IC stencil sampling and frame-mean whitening are supported; full
+     template-mode IC whitening remains an explicit unsupported control until
+     the real-data recovery contract is proven.
+2. Ready shared/platform frontier:
    - `bd-01KWX6R3MTXPWA3FWRGYEB810M` - deterministic parallel frame execution.
-3. Blocked on the API audit and spline/timing:
    - `bd-01KWX6RF9Z5K67HMPX0N3MG898` - JVM IO, BIDS, CLI, and report adapters.
-4. Blocked on the shared feature streams and JVM adapters:
+3. Blocked on the shared feature streams and JVM adapters:
    - `bd-01KWX6RR3PQYN1H48791VYD161` - real-data differential benchmark
      harness.
-5. Final closeout:
+4. Final closeout:
    - `bd-01KWX6S0NG16V6Y8HC387CJSY3` - API and verification audit. The epic is
      blocked on this gate.
 
@@ -276,10 +279,11 @@ keeps the first surface smaller than `volregger`: deterministic dense samples,
 translation capture, finite-difference damped Gauss-Newton updates, Huber loss,
 outward reference traversal, rotational capture seeds, robust/valid-frame
 template refresh, optional pyramid levels, thresholded low-motion pose shrink,
-opt-in temporal pose regularization, frame-mean nuisance residual removal,
-explicit unsupported-control errors, and per-frame diagnostics.
-Whitening beyond nuisance mean removal, parallel frame execution, and large
-real-data benchmarks remain follow-on work.
+opt-in temporal pose regularization, typed information-content stencil
+sampling, frame-mean nuisance residual removal, frame-mean whitening, explicit
+unsupported-control errors, and per-frame diagnostics. Full template-mode IC
+whitening, parallel frame execution, and large real-data benchmarks remain
+follow-on work.
 
 Estimator phases:
 
@@ -296,8 +300,9 @@ Estimator phases:
 9. Optionally shrink subthreshold low-motion poses toward identity after fitting.
 10. Optionally smooth pose traces with deterministic temporal regularization.
 11. Optionally remove frame-mean residuals as an intensity-offset nuisance term.
-12. Add whitening residual options only after broader recovery tests
-   pass.
+12. Optionally use `WhiteningPolicy.FrameMeanOnly` to select the same
+   frame-mean residual transform through the whitening control group.
+13. Add full template-mode IC whitening only after broader recovery tests pass.
 
 The first estimator does not need every `volregger` feature. It needs a stable
 typed surface, deterministic behavior, and honest diagnostics.
@@ -318,6 +323,10 @@ Acceptance:
 - temporal regularization smooths isolated poses while preserving the reference;
 - frame-mean nuisance residual mode removes global intensity offsets without
   inventing motion;
+- IC stencil sampling is deterministic and changes the sampled objective only
+  when explicitly enabled;
+- `WhiteningPolicy.IcWhiten` fails as a typed unsupported control until its
+  template-mode whitening contract is implemented;
 - no per-frame public API loops are required by users;
 - both platforms pass the same estimator contract tests, even if large
   performance tests are JVM-only.

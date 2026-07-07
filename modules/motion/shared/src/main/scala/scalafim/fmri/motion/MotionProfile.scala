@@ -44,7 +44,7 @@ enum MotionProfile:
           MotionCapability.RobustTemplate,
           MotionCapability.ValidTemplateRefresh
         )
-      case IcStencil => Vector.empty
+      case IcStencil => Vector(MotionCapability.CaptureBoost, MotionCapability.IcStencil)
       case IcWhiten => Vector.empty
       case SliceSpline => Vector.empty
 
@@ -65,8 +65,8 @@ enum MotionProfile:
 
   def implemented: Boolean =
     this match
-      case DenseBaseline | FastNative | FastFmri => true
-      case IcStencil | IcWhiten | SliceSpline => false
+      case DenseBaseline | FastNative | FastFmri | IcStencil => true
+      case IcWhiten | SliceSpline => false
 
   def plan(reference: ReferenceStrategy = ReferenceStrategy.Middle): Either[MotionError, MotionPlan] =
     if implemented then Right(MotionPlan(reference, engine, control))
@@ -83,8 +83,11 @@ enum MotionProfile:
       case FastFmri =>
         MotionControl.fastFmri
       case IcStencil =>
-        MotionControl.default
+        MotionControl.default.copy(stencil = StencilControl.defaultInformationContent)
       case IcWhiten =>
-        MotionControl.default.copy(whitening = WhiteningControl(WhiteningPolicy.IcWhiten))
+        MotionControl.default.copy(
+          stencil = StencilControl.defaultInformationContent,
+          whitening = WhiteningControl(WhiteningPolicy.IcWhiten)
+        )
       case SliceSpline =>
         MotionControl.default

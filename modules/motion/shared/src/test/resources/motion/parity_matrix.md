@@ -26,6 +26,7 @@ LC_ALL=C Rscript tools/motion/generate_volregger_fixtures.R \
 | Estimator synthetic translation run | `R/estimate_motion.R`, `src/api_estimate.cpp`, `tests/testthat/test-volreg-basic.R` | `VolreggerParitySuite` |
 | Spline smoother and packet offsets | `src/api_spline.cpp`, `tests/testthat/test-synthetic-ablation-modes.R` | `VolreggerParitySuite` |
 | IC, whitening, spline, and parallel profile contracts | `R/control.R`, `R/profiles.R`, `tests/testthat/test-ic-efficacy.R` | `VolreggerParitySuite` |
+| Shared IC stencil and frame-mean whitening behavior | `R/control.R`, `tests/testthat/test-ic-efficacy.R` | `MotionControlSuite`, `MotionEstimatorSuite` |
 | CLI run/report artifact metadata | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | `VolreggerParitySuite` |
 | Real-data benchmark gate metadata | `tests/testthat/test-external-benchmark-guardrails.R` | `VolreggerParitySuite` |
 | Resource payload parity | checked-in fixture | `VolreggerResourceSuite` |
@@ -39,6 +40,6 @@ benchmark inputs before they can become executable semantic parity tests.
 | Family | Reference files | Target tracker slice |
 |---|---|---|
 | Packet-aware application semantics | `src/api_apply.cpp`, `src/api_spline.cpp`, `tests/testthat/test-synthetic-ablation-modes.R` | `bd-01KWX6QE4NYEWX7CESR04WFYSB` |
-| IC stencil and whitening numeric recovery | `tests/testthat/test-ic-efficacy.R`, `R/profiles.R` | `bd-01KWX6QSTFHZ99M93YR9V7JTGC` |
+| Full template-mode IC whitening numeric recovery | `tests/testthat/test-ic-efficacy.R`, `R/profiles.R` | `bd-01KWX6RR3PQYN1H48791VYD161` |
 | JVM CLI/report roundtrip outputs | `R/cli.R`, `R/reporting.R`, `tests/testthat/test-reporting-cli.R` | `bd-01KWX6RF9Z5K67HMPX0N3MG898` |
 | Real-data differential benchmark data | `tests/testthat/test-rniftyreg-differential.R`, `tests/testthat/test-external-benchmark-guardrails.R` | `bd-01KWX6RR3PQYN1H48791VYD161` |

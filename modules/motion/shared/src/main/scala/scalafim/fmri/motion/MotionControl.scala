@@ -286,6 +286,74 @@ object ExecutionControl:
   def unsafe(policy: ExecutionPolicy, nThreads: Int): ExecutionControl =
     new ExecutionControl(policy, nThreads)
 
+final case class StencilBins private (x: Int, y: Int, z: Int):
+  require(x >= 1 && y >= 1 && z >= 1, "stencil bins must be positive")
+
+object StencilBins:
+  val default: StencilBins =
+    unsafe(4, 4, 2)
+
+  def make(x: Int, y: Int, z: Int): Either[MotionError, StencilBins] =
+    if x < 1 then Left(MotionError.InvalidInt("stencil.bins.x", x, "must be positive"))
+    else if y < 1 then Left(MotionError.InvalidInt("stencil.bins.y", y, "must be positive"))
+    else if z < 1 then Left(MotionError.InvalidInt("stencil.bins.z", z, "must be positive"))
+    else Right(unsafe(x, y, z))
+
+  def unsafe(x: Int, y: Int, z: Int): StencilBins =
+    new StencilBins(x, y, z)
+
+final case class InformationContentStencil private (
+    sampleCount: Int,
+    bins: StencilBins,
+    gamma: Double
+):
+  require(sampleCount >= 1, "sampleCount must be positive")
+  require(gamma.isFinite && gamma > 0.0, "gamma must be positive and finite")
+
+object InformationContentStencil:
+  val default: InformationContentStencil =
+    unsafe(sampleCount = 1000, bins = StencilBins.default, gamma = 0.5)
+
+  def make(sampleCount: Int, bins: StencilBins, gamma: Double): Either[MotionError, InformationContentStencil] =
+    if sampleCount < 1 then Left(MotionError.InvalidInt("stencil.sampleCount", sampleCount, "must be positive"))
+    else if !gamma.isFinite || gamma <= 0.0 then Left(MotionError.InvalidScalar("stencil.gamma", gamma, "must be positive and finite"))
+    else Right(unsafe(sampleCount, bins, gamma))
+
+  def make(
+      sampleCount: Int,
+      binsX: Int,
+      binsY: Int,
+      binsZ: Int,
+      gamma: Double
+  ): Either[MotionError, InformationContentStencil] =
+    StencilBins.make(binsX, binsY, binsZ).flatMap(bins => make(sampleCount, bins, gamma))
+
+  def unsafe(sampleCount: Int, bins: StencilBins, gamma: Double): InformationContentStencil =
+    new InformationContentStencil(sampleCount, bins, gamma)
+
+enum StencilPolicy:
+  case Dense
+  case InformationContent(stencil: InformationContentStencil)
+
+  def enabled: Boolean =
+    this match
+      case Dense => false
+      case InformationContent(_) => true
+
+final case class StencilControl(policy: StencilPolicy):
+  def enabled: Boolean =
+    policy.enabled
+
+object StencilControl:
+  val default: StencilControl =
+    StencilControl(StencilPolicy.Dense)
+
+  val defaultInformationContent: StencilControl =
+    StencilControl(StencilPolicy.InformationContent(InformationContentStencil.default))
+
+  def informationContent(stencil: InformationContentStencil): StencilControl =
+    StencilControl(StencilPolicy.InformationContent(stencil))
+
 enum WhiteningPolicy:
   case Disabled
   case FrameMeanOnly
@@ -296,13 +364,29 @@ enum WhiteningPolicy:
       case Disabled | FrameMeanOnly => true
       case IcWhiten => false
 
-final case class WhiteningControl(policy: WhiteningPolicy):
+  def removesFrameMean: Boolean =
+    this match
+      case FrameMeanOnly => true
+      case Disabled | IcWhiten => false
+
+final case class WhiteningControl(policy: WhiteningPolicy, ridge: Double = WhiteningControl.defaultRidge):
+  require(ridge.isFinite && ridge > 0.0, "ridge must be positive and finite")
+
   def implemented: Boolean =
     policy.implemented
 
+  def removeFrameMean: Boolean =
+    policy.removesFrameMean
+
 object WhiteningControl:
+  val defaultRidge: Double = 1e-6
+
   val default: WhiteningControl =
     WhiteningControl(WhiteningPolicy.Disabled)
+
+  def make(policy: WhiteningPolicy, ridge: Double): Either[MotionError, WhiteningControl] =
+    if !ridge.isFinite || ridge <= 0.0 then Left(MotionError.InvalidScalar("whitening.ridge", ridge, "must be positive and finite"))
+    else Right(WhiteningControl(policy, ridge))
 
 enum ResidualNuisancePolicy:
   case Raw
@@ -331,9 +415,12 @@ final case class MotionControl(
     capture: CaptureControl,
     temporal: TemporalControl,
     execution: ExecutionControl,
+    stencil: StencilControl = StencilControl.default,
     residual: ResidualControl = ResidualControl.default,
     whitening: WhiteningControl = WhiteningControl.default
-)
+):
+  def removeFrameMeanResidual: Boolean =
+    residual.removeFrameMean || whitening.removeFrameMean
 
 object MotionControl:
   val default: MotionControl =
@@ -344,6 +431,7 @@ object MotionControl:
       capture = CaptureControl.default,
       temporal = TemporalControl.default,
       execution = ExecutionControl.default,
+      stencil = StencilControl.default,
       residual = ResidualControl.default,
       whitening = WhiteningControl.default
     )
