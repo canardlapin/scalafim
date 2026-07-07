@@ -19,6 +19,10 @@ The current shared slice is intentionally small:
   archives backed by the shared encoder
 - `SharedBasisEncoder` and `LatentArchiveCodec.toSharedBasisArchive` for
   Gram-solved shared spatial dictionaries persisted as LNA shared-basis archives
+- `SharedBasisLatentArchive.materialize` and `sampleMask` for resolving
+  shared-basis archive coefficients against an external basis artifact
+- `LatentEncodingSpec` and `LatentEncoder` as the typed factory layer over
+  provided temporal bases, temporal DCT, and shared spatial dictionaries
 - `TransportLatentResponse` for operator-backed coefficient handoff with typed
   analysis/raw coefficient blocks and native-only/template-capable decoders
 - `LatentArchiveCodec.toTransportArchive` for LNA transport latent archives
@@ -30,9 +34,8 @@ The current shared slice is intentionally small:
 - `LatentArchiveCodec.fromArchive` for tagged explicit, temporal-DCT,
   shared-basis, transport, and BOLDZip archive decode variants
 
-Later slices should add encoder factories, richer dataset adapters, shared-basis
-archive materialization helpers, and fmrilatent parity fixtures for BOLDZip
-encoder variants.
+Later slices should add richer dataset adapters, fmrilatent parity fixtures for
+the typed encoder factory, and BOLDZip encoder variants.
 
 The DCT fixture constants in `DctBasisSuite` can be regenerated with
 `tools/r-parity/fmrilatent-dct-fixtures.R`.

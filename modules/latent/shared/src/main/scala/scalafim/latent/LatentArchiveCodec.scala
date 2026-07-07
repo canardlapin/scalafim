@@ -24,7 +24,7 @@ import scalafim.archive.lna.{
   TemporalDctParams
 }
 import scalafim.archive.ArchivePath
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, Mask, NArrayUtil, NeuroSpace}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMap}
 
 enum LatentArchiveResponse:
@@ -57,6 +57,18 @@ final class SharedBasisLatentArchive private (
   def coefficientCount: Int =
     coefficients.cols
 
+  def materialize(
+      artifact: SharedBasisArtifact,
+      space: Option[NeuroSpace] = None
+  ): Either[LatentError, ExplicitLatentResponse] =
+    SharedBasisLatentArchive.materialize(this, artifact, space)
+
+  def sampleMask(
+      space: NeuroSpace,
+      artifact: SharedBasisArtifact
+  ): Either[LatentError, Mask.MaskVol] =
+    SharedBasisLatentArchive.sampleMask(space, artifact)
+
 object SharedBasisLatentArchive:
   def apply(
       coefficients: DoubleMatrix,
@@ -76,6 +88,78 @@ object SharedBasisLatentArchive:
           Left(error)
         case None =>
           Right(new SharedBasisLatentArchive(coefficients, basis, offset, sourceDomain, targetDomain, label, metadata))
+
+  def materialize(
+      archive: SharedBasisLatentArchive,
+      artifact: SharedBasisArtifact,
+      space: Option[NeuroSpace] = None
+  ): Either[LatentError, ExplicitLatentResponse] =
+    for
+      _ <- validateArtifact(archive, artifact, space)
+      response <- ExplicitLatentResponse(
+        basis = archive.coefficients,
+        loadings = toDoubleMatrix(artifact.loadings),
+        offset = archive.offset,
+        sourceDomain = archive.sourceDomain,
+        targetDomain = archive.targetDomain,
+        label = archive.label,
+        metadata = materializedMetadata(archive, artifact)
+      )
+    yield response
+
+  def sampleMask(
+      space: NeuroSpace,
+      artifact: SharedBasisArtifact
+  ): Either[LatentError, Mask.MaskVol] =
+    if artifact.mask.values.length != space.spatialDims.product then
+      Left(LatentError.DimensionMismatch("shared basis mask size", space.spatialDims.product, artifact.mask.values.length))
+    else
+      val indices = Array.newBuilder[Int]
+      var i = 0
+      while i < artifact.mask.values.length do
+        if artifact.mask.values(i) then indices += i
+        i += 1
+      Right(Mask.fromIndices(space, NArrayUtil.fromArray(indices.result()), label = s"shared-basis:${artifact.kind}"))
+
+  private def validateArtifact(
+      archive: SharedBasisLatentArchive,
+      artifact: SharedBasisArtifact,
+      space: Option[NeuroSpace]
+  ): Either[LatentError, Unit] =
+    if archive.coefficients.cols != artifact.nAtoms then
+      Left(LatentError.DimensionMismatch("shared basis atoms", artifact.nAtoms, archive.coefficients.cols))
+    else if artifact.mask.activeCount != artifact.nVoxels then
+      Left(LatentError.DimensionMismatch("shared basis active mask count", artifact.nVoxels, artifact.mask.activeCount))
+    else
+      archive.offset match
+        case Some(values) if values.length != artifact.nVoxels =>
+          Left(LatentError.DimensionMismatch("shared basis offset length", artifact.nVoxels, values.length))
+        case _ =>
+          space match
+            case Some(value) if artifact.mask.values.length != value.spatialDims.product =>
+              Left(LatentError.DimensionMismatch("shared basis mask size", value.spatialDims.product, artifact.mask.values.length))
+            case _ =>
+              archiveFirstNonFinite("shared-basis loadings", toDoubleMatrix(artifact.loadings)) match
+                case Some(error) => Left(error)
+                case None        => Right(())
+
+  private def materializedMetadata(
+      archive: SharedBasisLatentArchive,
+      artifact: SharedBasisArtifact
+  ): Map[String, String] =
+    archive.metadata ++ Map(
+      "family" -> "shared_basis",
+      "basis.id" -> archive.basis.basisId.value,
+      "basis.checksum" -> archive.basis.checksum.value,
+      "basis.kind" -> artifact.kind,
+      "basis.n_atoms" -> artifact.nAtoms.toString,
+      "basis.n_voxels" -> artifact.nVoxels.toString,
+      "basis.mask_size" -> artifact.mask.values.length.toString,
+      "basis.mask_active" -> artifact.mask.activeCount.toString
+    ) ++ archive.basis.locator.map(locator => "basis.locator" -> locator.value).toMap
+
+  private def toDoubleMatrix(matrix: DMat): DoubleMatrix =
+    DoubleMatrix.fromRows(matrix.toRows)
 
 object LatentArchiveCodec:
   private val TransportKindKey = "lna.response.kind"

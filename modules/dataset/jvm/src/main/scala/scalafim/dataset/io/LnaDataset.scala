@@ -1,23 +1,18 @@
 package scalafim.dataset.io
 
-import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
+import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store, LnaSharedBasisResolver, SharedBasisResolutionContext}
 import scalafim.archive.lna.{
-  DatasetRole,
   LnaArchive,
   LnaRun,
-  Payload,
   SharedBasisArtifact,
   SharedBasisRegistry,
   SharedBasisRegistryCodec,
-  TransformDescriptor,
   TransformParams
 }
 import scalafim.bids.{BidsJson, BidsTable, JsonValue}
 import scalafim.dataset.{DatasetError, DatasetId, DatasetMetadata, InMemoryDatasetBackend, LatentArchiveDatasetBackend, LatentResponseDatasetBackend}
-import scalafim.image.{DMat, Mask, NArrayUtil, NeuroSpace}
-import scalafim.latent.{DomainId, ExplicitLatentResponse, LatentArchiveCodec}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.latent.LatentArchiveCodec
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -343,21 +338,20 @@ final case class LnaDataset private (root: Path):
   ): Either[ArchiveError, LatentResponseDatasetBackend] =
     archive.validate.flatMap { valid =>
       for
-        desc <- sharedBasisDescriptor(valid, runInfo)
-        params <- desc.params match
-          case p: TransformParams.SharedBasisEmbed => Right(p)
-          case _ => Left(ArchiveError.InvalidArchive("shared basis embed descriptor missing typed params"))
-        coeffPath <- byRole(desc, DatasetRole.Coefficients)
-        coefficients <- doubleMatrixPayload(valid, coeffPath, "coefficients")
-        offset <- optionalOffset(valid, desc)
+        responseArchive <- LatentArchiveCodec.fromSharedBasisArchive(valid, runInfo.label)
         basisPath <- LnaSharedBasisResolver.resolve(
-          params.basis,
+          responseArchive.basis,
           SharedBasisResolutionContext(archivePath = archivePath, datasetRoot = Some(root))
         )
         artifact <- JhdfSharedBasisStore.read(basisPath).flatMap(SharedBasisArtifact.validateFinite)
-        _ <- validateSharedBasisShapes(coefficients, offset, artifact, runInfo)
-        response <- sharedBasisResponse(coefficients, offset, artifact, params)
-        mask <- sharedBasisMask(runInfo.shape.space, artifact)
+        response <- responseArchive
+          .materialize(artifact, Some(runInfo.shape.space))
+          .left
+          .map(err => ArchiveError.InvalidArchive(err.message))
+        mask <- responseArchive
+          .sampleMask(runInfo.shape.space, artifact)
+          .left
+          .map(err => ArchiveError.InvalidArchive(err.message))
       yield LatentResponseDatasetBackend(
         id = id,
         response = response,
@@ -367,114 +361,8 @@ final case class LnaDataset private (root: Path):
       )
     }
 
-  private def validateSharedBasisShapes(
-      coefficients: DMat,
-      offset: Option[Vector[Double]],
-      basis: SharedBasisArtifact,
-      runInfo: LnaRun
-  ): Either[ArchiveError, Unit] =
-    if coefficients.rows != runInfo.shape.timepoints then
-      Left(ArchiveError.ShapeMismatch(s"coefficient rows ${coefficients.rows} do not match run timepoints ${runInfo.shape.timepoints}"))
-    else if coefficients.cols != basis.nAtoms then
-      Left(ArchiveError.ShapeMismatch(s"coefficients have ${coefficients.cols} columns but shared basis has ${basis.nAtoms} atoms"))
-    else if basis.mask.values.length != runInfo.shape.spatialSize then
-      Left(ArchiveError.ShapeMismatch(s"shared basis mask has ${basis.mask.values.length} entries but run space has ${runInfo.shape.spatialSize} voxels"))
-    else
-      offset match
-        case Some(values) if values.length != basis.nVoxels =>
-          Left(ArchiveError.ShapeMismatch(s"offset has ${values.length} values but shared basis has ${basis.nVoxels} active voxels"))
-        case Some(values) if values.exists(value => !value.isFinite) =>
-          Left(ArchiveError.InvalidArchive("shared basis offset contains non-finite values"))
-        case _ =>
-          Right(())
-
-  private def sharedBasisResponse(
-      coefficients: DMat,
-      offset: Option[Vector[Double]],
-      basis: SharedBasisArtifact,
-      params: TransformParams.SharedBasisEmbed
-  ): Either[ArchiveError, ExplicitLatentResponse] =
-    for
-      sourceDomain <- DomainId(params.targetDomain.getOrElse("shared_basis.coefficients")).left.map(err => ArchiveError.InvalidArchive(err.message))
-      targetDomain <- DomainId(params.sourceDomain.getOrElse("voxels")).left.map(err => ArchiveError.InvalidArchive(err.message))
-      response <- ExplicitLatentResponse(
-        basis = toDoubleMatrix(coefficients),
-        loadings = toDoubleMatrix(basis.loadings),
-        offset = offset.map(DoubleVector.fromSeq),
-        sourceDomain = sourceDomain,
-        targetDomain = targetDomain,
-        label = params.label.getOrElse(""),
-        metadata = params.metadata ++ Map(
-          "family" -> "shared_basis",
-          "basis.kind" -> basis.kind,
-          "basis.n_atoms" -> basis.nAtoms.toString,
-          "basis.n_voxels" -> basis.nVoxels.toString,
-          "basis.mask_size" -> basis.mask.values.length.toString,
-          "basis.mask_active" -> basis.mask.activeCount.toString
-        )
-      ).left.map(err => ArchiveError.InvalidArchive(err.message))
-    yield response
-
-  private def sharedBasisMask(
-      space: NeuroSpace,
-      basis: SharedBasisArtifact
-  ): Either[ArchiveError, Mask.MaskVol] =
-    if basis.mask.values.length != space.spatialDims.product then
-      Left(ArchiveError.ShapeMismatch(s"shared basis mask has ${basis.mask.values.length} entries but space has ${space.spatialDims.product} voxels"))
-    else
-      val indices = Array.newBuilder[Int]
-      var i = 0
-      while i < basis.mask.values.length do
-        if basis.mask.values(i) then indices += i
-        i += 1
-      Right(Mask.fromIndices(space, NArrayUtil.fromArray(indices.result()), label = s"shared-basis:${basis.kind}"))
-
-  private def sharedBasisDescriptor(
-      archive: LnaArchive,
-      run: LnaRun
-  ): Either[ArchiveError, TransformDescriptor] =
-    val prefix = s"/scans/${run.label.value}/"
-    archive.manifest.transforms.reverseIterator
-      .find { desc =>
-        desc.params.isInstanceOf[TransformParams.SharedBasisEmbed] &&
-        desc.datasets.exists(ref => ref.role == DatasetRole.Coefficients && (ref.path == run.output || ref.path.value.startsWith(prefix)))
-      }
-      .toRight(ArchiveError.InvalidArchive(s"run '${run.label.value}' has no shared basis embed descriptor"))
-
-  private def optionalOffset(
-      archive: LnaArchive,
-      desc: TransformDescriptor
-  ): Either[ArchiveError, Option[Vector[Double]]] =
-    desc.datasets.find(_.role == DatasetRole.Offset) match
-      case None =>
-        Right(None)
-      case Some(ref) =>
-        archive.payload(ref.path) match
-          case Some(Payload.DoubleVector(values, _)) => Right(Some(values))
-          case Some(_) => Left(ArchiveError.ShapeMismatch("shared basis offset payload is not a double vector"))
-          case None => Left(ArchiveError.MissingPayload(ref.path))
-
-  private def doubleMatrixPayload(
-      archive: LnaArchive,
-      path: ArchivePath,
-      label: String
-  ): Either[ArchiveError, DMat] =
-    archive.payload(path) match
-      case Some(Payload.DoubleMatrix(data, _)) => Right(data)
-      case Some(_) => Left(ArchiveError.ShapeMismatch(s"shared basis $label payload is not a double matrix"))
-      case None => Left(ArchiveError.MissingPayload(path))
-
-  private def byRole(desc: TransformDescriptor, role: DatasetRole): Either[ArchiveError, ArchivePath] =
-    desc.datasets
-      .find(_.role == role)
-      .map(_.path)
-      .toRight(ArchiveError.InvalidArchive(s"${desc.kind.value} descriptor missing ${role.value} dataset"))
-
   private def hasSharedBasisEmbed(archive: LnaArchive): Boolean =
     archive.manifest.transforms.exists(_.params.isInstanceOf[TransformParams.SharedBasisEmbed])
-
-  private def toDoubleMatrix(matrix: DMat): DoubleMatrix =
-    DoubleMatrix.fromRows(matrix.toRows)
 
   private def resolveInsideRoot(path: Path): Path =
     if path.isAbsolute then path.toAbsolutePath.normalize()

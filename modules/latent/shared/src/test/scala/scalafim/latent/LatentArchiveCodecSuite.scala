@@ -1,7 +1,7 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{DatasetRole, LnaPipeline, Payload, SharedBasisArtifact, SharedBasisId, SharedBasisMask, TransformKind, TransformParams}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, Mask, NeuroSpace}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 class LatentArchiveCodecSuite extends munit.FunSuite:
@@ -220,6 +220,19 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         assertEquals(response.targetDomain.value, "voxels")
         assertRowsEqual(response.coefficients.toRows, encoded.coefficients.toRows, 1e-12)
         assertEquals(response.offset.map(_.toVector), encoded.offset.map(_.toVector))
+        val materialized =
+          response
+            .materialize(sharedBasis, Some(NeuroSpace(Vector(3, 1, 1))))
+            .fold(err => fail(err.message), identity)
+        val mask =
+          response
+            .sampleMask(NeuroSpace(Vector(3, 1, 1)), sharedBasis)
+            .fold(err => fail(err.message), identity)
+        assertRowsEqual(materialized.basis.toRows, encoded.coefficients.toRows, 1e-12)
+        assertRowsEqual(materialized.loadings.toRows, sharedLoadings.toRows, 1e-12)
+        assertEquals(materialized.metadata("basis.id"), basisId.value)
+        assertEquals(materialized.metadata("basis.checksum"), sharedBasis.checksum.value)
+        assertEquals(Vector.tabulate(Mask.indices(mask).length)(Mask.indices(mask)(_)), Vector(0, 1, 2))
       case other =>
         fail(s"expected shared-basis archive variant, found $other")
   }
