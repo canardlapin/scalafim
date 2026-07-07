@@ -21,10 +21,13 @@ final case class GlsFit(
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     normalizedCovariance: DoubleMatrix,
     standardErrors: StandardErrorBlock,
-    diagnostics: ArDiagnostics
+    diagnostics: ArDiagnostics,
+    initialOlsDiagnostics: OlsDiagnostics,
+    finalOlsDiagnostics: OlsDiagnostics
 ):
   def predictors: Int = coefficients.predictors
   def voxels: Int = coefficients.voxels
+  def olsDiagnostics: OlsDiagnostics = finalOlsDiagnostics
 
 object Gls:
 
@@ -49,7 +52,9 @@ object Gls:
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       normalizedCovariance = fit.normalizedCovariance,
       standardErrors = fit.standardErrors,
-      diagnostics = diagnostics(plan, partitions, method)
+      diagnostics = diagnostics(plan, partitions, method),
+      initialOlsDiagnostics = initial.diagnostics,
+      finalOlsDiagnostics = fit.diagnostics
     )
 
   private def validateOptions(options: ArOptions): Either[FitError, Unit] =

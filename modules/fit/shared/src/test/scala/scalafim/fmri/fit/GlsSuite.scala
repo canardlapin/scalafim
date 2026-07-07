@@ -198,6 +198,8 @@ class GlsSuite extends munit.FunSuite:
     assertEquals(result.engine, FitEngine.GeneralizedLeastSquares)
     assertEquals(result.autocorrelation.map(_.order), Some(1))
     assertEquals(result.autocorrelation.get.runs.map(_.method), Vector("fixed"))
+    assertEquals(result.olsDiagnostics.map(_.solveMethod), Some(OlsSolveMethod.QrRankRevealing))
+    assertEquals(result.olsDiagnostics.map(_.rank), Some(2))
     assertEqualsDouble(result.autocorrelation.get.runs.head.rho, rho, 1e-12)
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)

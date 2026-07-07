@@ -19,13 +19,25 @@ object OlsSolvePolicy:
   val NormalEquations: OlsSolvePolicy =
     OlsSolvePolicy(method = OlsSolveMethod.CholeskyNormalEquations)
 
+final case class OlsDiagnostics(
+    solveMethod: OlsSolveMethod,
+    predictors: Int,
+    rank: Int,
+    policy: OlsSolvePolicy
+):
+  require(predictors > 0, "OLS diagnostics require at least one predictor")
+  require(rank >= 0 && rank <= predictors, "OLS rank must be between 0 and predictor count")
+  def fullRank: Boolean = rank == predictors
+
 final class OlsPrepared private[fit] (
     val design: DesignMatrix,
     val crossproduct: DoubleMatrix,
     private val solver: OlsPreparedSolver,
     val normalizedCovariance: DoubleMatrix,
-    val policy: OlsSolvePolicy
+    val diagnostics: OlsDiagnostics
 ):
+  def policy: OlsSolvePolicy = diagnostics.policy
+
   def fit(response: ResponseBlock): Either[FitError, OlsFit] =
     if response.timepoints != design.timepoints then
       Left(FitError.RowMismatch(design.timepoints, response.timepoints))
@@ -44,7 +56,8 @@ final class OlsPrepared private[fit] (
           normalizedCovariance = normalizedCovariance,
           standardErrors = StandardErrorBlock(
             Ols.standardErrors(normalizedCovariance, residualVariance, response.voxels)
-          )
+          ),
+          diagnostics = diagnostics
         )
 
   def unsafeFit(response: ResponseBlock): OlsFit =
@@ -55,7 +68,8 @@ final case class OlsFit(
     residualVariance: DoubleVector,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     normalizedCovariance: DoubleMatrix,
-    standardErrors: StandardErrorBlock
+    standardErrors: StandardErrorBlock,
+    diagnostics: OlsDiagnostics
 ):
   def predictors: Int = coefficients.predictors
   def voxels: Int = coefficients.voxels
@@ -78,7 +92,12 @@ object Ols:
               crossproduct = xtx,
               solver = OlsPreparedSolver.Qr(qr),
               normalizedCovariance = covariance,
-              policy = policy
+              diagnostics = OlsDiagnostics(
+                solveMethod = OlsSolveMethod.QrRankRevealing,
+                predictors = design.predictors,
+                rank = qr.rank,
+                policy = policy
+              )
             )
           }
       case OlsSolveMethod.CholeskyNormalEquations =>
@@ -92,7 +111,12 @@ object Ols:
               crossproduct = xtx,
               solver = OlsPreparedSolver.NormalEquations(cholesky),
               normalizedCovariance = cholesky.solve(DoubleMatrix.eye(design.predictors)),
-              policy = policy
+              diagnostics = OlsDiagnostics(
+                solveMethod = OlsSolveMethod.CholeskyNormalEquations,
+                predictors = design.predictors,
+                rank = design.predictors,
+                policy = policy
+              )
             )
           }
 

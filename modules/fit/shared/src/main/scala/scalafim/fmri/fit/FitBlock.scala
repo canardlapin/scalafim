@@ -49,6 +49,7 @@ final case class DenseFitBlockResult(
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
     engine: FitEngine,
+    olsDiagnostics: Option[OlsDiagnostics] = None,
     autocorrelation: Option[ArDiagnostics] = None
 ) extends FitBlockResult:
   require(voxelIndices.length == coefficients.voxels, "block voxel indices must match coefficient columns")
@@ -68,7 +69,8 @@ object DenseFitBlockResult:
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       voxelIndices = input.voxelIndices,
       timepoints = input.timepoints,
-      engine = engine
+      engine = engine,
+      olsDiagnostics = Some(fit.diagnostics)
     )
 
   def fromGls(input: FitBlockInput, fit: GlsFit): DenseFitBlockResult =
@@ -81,6 +83,7 @@ object DenseFitBlockResult:
       voxelIndices = input.voxelIndices,
       timepoints = input.timepoints,
       engine = FitEngine.GeneralizedLeastSquares,
+      olsDiagnostics = Some(fit.finalOlsDiagnostics),
       autocorrelation = Some(fit.diagnostics)
     )
 
@@ -98,6 +101,7 @@ object DenseFitBlockResult:
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
           engine = first.engine,
+          olsDiagnostics = first.olsDiagnostics,
           autocorrelation = first.autocorrelation
         )
       }
@@ -119,6 +123,8 @@ object DenseFitBlockResult:
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must have the same predictor count"))
       if block.autocorrelation != first.autocorrelation then
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must have identical autocorrelation diagnostics"))
+      if block.olsDiagnostics != first.olsDiagnostics then
+        return Left(FitError.IncompatibleFitBlocks("all dense blocks must have identical OLS diagnostics"))
       if !sameMatrix(block.normalizedCovariance, first.normalizedCovariance) then
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must share the same normalized covariance"))
       i += 1
@@ -187,7 +193,8 @@ object RunwiseFitBlockResult:
           standardErrors = run.fit.standardErrors,
           normalizedCovariance = run.fit.normalizedCovariance,
           residualVariance = run.fit.residualVariance,
-          residualDegreesOfFreedom = run.fit.residualDegreesOfFreedom
+          residualDegreesOfFreedom = run.fit.residualDegreesOfFreedom,
+          olsDiagnostics = run.fit.diagnostics
         )
       },
       voxelIndices = input.voxelIndices,

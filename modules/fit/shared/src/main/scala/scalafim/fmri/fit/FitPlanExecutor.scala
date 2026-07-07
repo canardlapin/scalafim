@@ -97,6 +97,7 @@ object FitPlanExecutor:
       timepoints = block.timepoints,
       engine = block.engine,
       summary = plan.summary,
+      olsDiagnostics = block.olsDiagnostics,
       autocorrelation = block.autocorrelation
     )
 

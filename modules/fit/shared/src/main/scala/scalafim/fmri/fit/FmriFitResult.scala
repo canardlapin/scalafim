@@ -53,6 +53,7 @@ final case class DenseFmriFitResult(
     timepoints: Vector[Int],
     engine: FitEngine,
     summary: FitSummary,
+    olsDiagnostics: Option[OlsDiagnostics] = None,
     autocorrelation: Option[ArDiagnostics] = None
 ) extends FmriFitResult:
   require(columnNames.length == coefficients.predictors, "column names must match coefficient rows")
@@ -63,6 +64,7 @@ final case class DenseFmriFitResult(
   require(standardErrors.voxels == coefficients.voxels, "standard errors must match coefficient columns")
   require(normalizedCovariance.rows == coefficients.predictors, "normalized covariance rows must match predictors")
   require(normalizedCovariance.cols == coefficients.predictors, "normalized covariance cols must match predictors")
+  require(olsDiagnostics.forall(_.predictors == coefficients.predictors), "OLS diagnostics must match coefficient rows")
 
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
@@ -111,7 +113,8 @@ final case class RunwiseFmriRunResult(
     standardErrors: StandardErrorBlock,
     normalizedCovariance: DoubleMatrix,
     residualVariance: DoubleVector,
-    residualDegreesOfFreedom: ResidualDegreesOfFreedom
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom,
+    olsDiagnostics: OlsDiagnostics
 ):
   require(rowIndices.nonEmpty, "run result must contain at least one selected row")
   require(rowIndices.length == timepoints.length, "run rows and timepoints must align")
@@ -120,6 +123,7 @@ final case class RunwiseFmriRunResult(
   require(standardErrors.voxels == coefficients.voxels, "run standard errors must match coefficient columns")
   require(normalizedCovariance.rows == coefficients.predictors, "run covariance rows must match predictors")
   require(normalizedCovariance.cols == coefficients.predictors, "run covariance cols must match predictors")
+  require(olsDiagnostics.predictors == coefficients.predictors, "run OLS diagnostics must match coefficient rows")
 
   def coefficient(columnName: String, voxelIndex: Int, columnNames: Vector[String], voxelIndices: Vector[Int]): Option[Double] =
     val row = columnNames.indexOf(columnName)

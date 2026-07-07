@@ -51,6 +51,10 @@ class RunwiseOlsSuite extends munit.FunSuite:
 
     val run0 = result.run(0).get
     val run1 = result.run(1).get
+    assertEquals(run0.olsDiagnostics.solveMethod, OlsSolveMethod.QrRankRevealing)
+    assertEquals(run0.olsDiagnostics.rank, 2)
+    assertEquals(run1.olsDiagnostics.solveMethod, OlsSolveMethod.QrRankRevealing)
+    assertEquals(run1.olsDiagnostics.rank, 2)
     assertEqualsDouble(run0.coefficient("task", 0, result.columnNames, result.voxelIndices).get, 2.0, 1e-10)
     assertEqualsDouble(run0.coefficient("base_constant", 0, result.columnNames, result.voxelIndices).get, 1.0, 1e-10)
     assertEqualsDouble(run1.coefficient("task", 0, result.columnNames, result.voxelIndices).get, -1.0, 1e-10)
