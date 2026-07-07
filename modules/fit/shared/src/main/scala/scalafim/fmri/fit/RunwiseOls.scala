@@ -21,7 +21,8 @@ object RunwiseOls:
     else
       val out = Vector.newBuilder[RunwiseOlsRunFit]
       var i = 0
-      while i < partitions.length do
+      var failure: FitError | Null = null
+      while i < partitions.length && failure == null do
         val partition = partitions(i)
         val runResult =
           for
@@ -34,7 +35,9 @@ object RunwiseOls:
           case Right(value) =>
             out += value
           case Left(error) =>
-            return Left(FitError.RunwiseFitFailed(partition.runIndex, error))
+            failure = FitError.RunwiseFitFailed(partition.runIndex, error)
         i += 1
 
-      Right(RunwiseOlsFit(out.result()))
+      failure match
+        case null  => Right(RunwiseOlsFit(out.result()))
+        case error => Left(error)

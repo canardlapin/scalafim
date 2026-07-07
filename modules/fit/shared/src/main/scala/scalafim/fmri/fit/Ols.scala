@@ -1,22 +1,42 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector}
+import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector, Pivoting, QrDecomposition, Tolerance}
 
-final case class OlsPrepared(
-    design: DesignMatrix,
-    crossproduct: DoubleMatrix,
-    factor: Cholesky
+enum OlsSolveMethod:
+  case QrRankRevealing
+  case CholeskyNormalEquations
+
+final case class OlsSolvePolicy(
+    method: OlsSolveMethod = OlsSolveMethod.QrRankRevealing,
+    rankTolerance: Tolerance = Tolerance.DefaultQr,
+    choleskyTolerance: Tolerance = Tolerance.DefaultCholesky
+)
+
+object OlsSolvePolicy:
+  val Default: OlsSolvePolicy =
+    OlsSolvePolicy()
+
+  val NormalEquations: OlsSolvePolicy =
+    OlsSolvePolicy(method = OlsSolveMethod.CholeskyNormalEquations)
+
+final class OlsPrepared private[fit] (
+    val design: DesignMatrix,
+    val crossproduct: DoubleMatrix,
+    private val solver: OlsPreparedSolver,
+    val normalizedCovariance: DoubleMatrix,
+    val policy: OlsSolvePolicy
 ):
   def fit(response: ResponseBlock): Either[FitError, OlsFit] =
     if response.timepoints != design.timepoints then
       Left(FitError.RowMismatch(design.timepoints, response.timepoints))
     else
-      ResidualDegreesOfFreedom(design.timepoints - design.predictors).map { residualDf =>
-        val xty = DoubleMatrix.transposeMultiply(design.value, response.value)
-        val coefficients = CoefficientBlock(factor.solve(xty))
+      for
+        residualDf <- ResidualDegreesOfFreedom(design.timepoints - design.predictors)
+        coefficientMatrix <- solver.coefficients(design, response)
+      yield
+        val coefficients = CoefficientBlock(coefficientMatrix)
         val residualVariance =
           Ols.residualVariance(design.value, response.value, coefficients.value, residualDf)
-        val normalizedCovariance = factor.solve(DoubleMatrix.eye(design.predictors))
         OlsFit(
           coefficients = coefficients,
           residualVariance = residualVariance,
@@ -26,7 +46,6 @@ final case class OlsPrepared(
             Ols.standardErrors(normalizedCovariance, residualVariance, response.voxels)
           )
         )
-      }
 
   def unsafeFit(response: ResponseBlock): OlsFit =
     fit(response).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -42,22 +61,60 @@ final case class OlsFit(
   def voxels: Int = coefficients.voxels
 
 object Ols:
-  def prepare(design: DesignMatrix): Either[FitError, OlsPrepared] =
+  def prepare(
+      design: DesignMatrix,
+      policy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, OlsPrepared] =
     val xtx = DoubleMatrix.transposeMultiply(design.value, design.value)
-    Cholesky
-      .decompose(xtx)
-      .left
-      .map(FitError.SingularDesign.apply)
-      .map(cholesky => OlsPrepared(design, xtx, cholesky))
+    policy.method match
+      case OlsSolveMethod.QrRankRevealing =>
+        val qr = QrDecomposition.decompose(design.value, Pivoting.Enabled, policy.rankTolerance)
+        qr.normalizedCovarianceFullRank
+          .left
+          .map(FitError.SingularDesign.apply)
+          .map { covariance =>
+            new OlsPrepared(
+              design = design,
+              crossproduct = xtx,
+              solver = OlsPreparedSolver.Qr(qr),
+              normalizedCovariance = covariance,
+              policy = policy
+            )
+          }
+      case OlsSolveMethod.CholeskyNormalEquations =>
+        Cholesky
+          .decompose(xtx, policy.choleskyTolerance.value)
+          .left
+          .map(FitError.SingularDesign.apply)
+          .map { cholesky =>
+            new OlsPrepared(
+              design = design,
+              crossproduct = xtx,
+              solver = OlsPreparedSolver.NormalEquations(cholesky),
+              normalizedCovariance = cholesky.solve(DoubleMatrix.eye(design.predictors)),
+              policy = policy
+            )
+          }
 
-  def unsafePrepare(design: DesignMatrix): OlsPrepared =
-    prepare(design).fold(error => throw new IllegalArgumentException(error.message), identity)
+  def unsafePrepare(
+      design: DesignMatrix,
+      policy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): OlsPrepared =
+    prepare(design, policy).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  def fit(design: DesignMatrix, response: ResponseBlock): Either[FitError, OlsFit] =
-    prepare(design).flatMap(_.fit(response))
+  def fit(
+      design: DesignMatrix,
+      response: ResponseBlock,
+      policy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, OlsFit] =
+    prepare(design, policy).flatMap(_.fit(response))
 
-  def unsafeFit(design: DesignMatrix, response: ResponseBlock): OlsFit =
-    fit(design, response).fold(error => throw new IllegalArgumentException(error.message), identity)
+  def unsafeFit(
+      design: DesignMatrix,
+      response: ResponseBlock,
+      policy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): OlsFit =
+    fit(design, response, policy).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private[fit] def residualVariance(
       design: DoubleMatrix,
@@ -107,3 +164,15 @@ object Ols:
         voxel += 1
       predictor += 1
     DoubleMatrix.unsafe(predictors, voxels, out)
+
+private enum OlsPreparedSolver:
+  case Qr(qr: QrDecomposition)
+  case NormalEquations(factor: Cholesky)
+
+  def coefficients(design: DesignMatrix, response: ResponseBlock): Either[FitError, DoubleMatrix] =
+    this match
+      case Qr(qr) =>
+        qr.solveFullRank(response.value).left.map(FitError.SingularDesign.apply).map(_.coefficients)
+      case NormalEquations(factor) =>
+        val xty = DoubleMatrix.transposeMultiply(design.value, response.value)
+        Right(factor.solve(xty))

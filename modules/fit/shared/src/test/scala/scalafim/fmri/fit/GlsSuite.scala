@@ -293,6 +293,30 @@ class GlsSuite extends munit.FunSuite:
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)
   }
 
+  test("GeneralizedLeastSquares rejects censored timepoints outside selected partitions") {
+    val plan = FitPlan(
+      glsModel,
+      engine = FitEngine.GeneralizedLeastSquares,
+      config = FitConfig(
+        autocorrelation = ArOptions(
+          structure = ArStructure.Ar(1),
+          rho = Some(rho),
+          censoredTimepoints = Vector(2)
+        )
+      )
+    )
+
+    val result = FitPlanExecutor.fit(
+      plan,
+      DataSelection(time = IndexSelection.indices(3, 4, 5))
+    )
+
+    assert(result.left.toOption.exists {
+      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("not selected") && msg.contains("2")
+      case _                                       => false
+    })
+  }
+
   test("GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data") {
     val model = glsModelForVoxels(
       x = Vector(0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0),

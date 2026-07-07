@@ -7,6 +7,17 @@ class OlsSuite extends munit.FunSuite:
   private def assertAllFinite(matrix: DoubleMatrix): Unit =
     assert(matrix.copyData.forall(_.isFinite), clues(matrix.toRows))
 
+  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+    assertEquals(actual.rows, expected.rows)
+    assertEquals(actual.cols, expected.cols)
+    var row = 0
+    while row < actual.rows do
+      var col = 0
+      while col < actual.cols do
+        assertEqualsDouble(actual(row, col), expected(row, col), tol)
+        col += 1
+      row += 1
+
   test("OLS fits multiple response columns with one prepared factorization") {
     val design = DesignMatrix.unsafe(
       DoubleMatrix.fromRows(
@@ -65,6 +76,89 @@ class OlsSuite extends munit.FunSuite:
     assertEqualsDouble(fit.residualVariance(0), 0.35, 1e-10)
   }
 
+  test("OLS rejects non-finite dense inputs at construction") {
+    val badDesign = DesignMatrix.fromMatrix(
+      DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, Double.NaN), Vector(1.0, 2.0)))
+    )
+    val badResponse = ResponseBlock.fromMatrix(
+      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(Double.PositiveInfinity), Vector(3.0)))
+    )
+
+    assertEquals(badDesign.left.toOption, Some(FitError.NonFiniteInput("design matrix")))
+    assertEquals(badResponse.left.toOption, Some(FitError.NonFiniteInput("response block")))
+  }
+
+  test("OLS default QR solver agrees with normal equations on well-conditioned designs") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, -2.0, 4.0),
+          Vector(1.0, -1.0, 1.0),
+          Vector(1.0, 0.0, 0.0),
+          Vector(1.0, 1.0, 1.0),
+          Vector(1.0, 2.0, 4.0),
+          Vector(1.0, 3.0, 9.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(3.1, -7.0),
+          Vector(2.2, -4.1),
+          Vector(1.0, -1.0),
+          Vector(1.1, 1.9),
+          Vector(2.0, 5.2),
+          Vector(4.1, 8.1)
+        )
+      )
+    )
+
+    val qr = Ols.unsafeFit(design, response)
+    val normal = Ols.unsafeFit(design, response, OlsSolvePolicy.NormalEquations)
+
+    assertEquals(qr.residualDegreesOfFreedom, normal.residualDegreesOfFreedom)
+    assertMatrixClose(qr.coefficients.value, normal.coefficients.value, tol = 1e-11)
+    assertMatrixClose(qr.normalizedCovariance, normal.normalizedCovariance, tol = 1e-11)
+    assertMatrixClose(qr.standardErrors.value, normal.standardErrors.value, tol = 1e-11)
+  }
+
+  test("OLS coefficients are invariant to design column permutation") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, -2.0, 0.5),
+          Vector(1.0, -1.0, -1.0),
+          Vector(1.0, 0.0, 0.0),
+          Vector(1.0, 1.0, 1.0),
+          Vector(1.0, 2.0, -0.5),
+          Vector(1.0, 3.0, 2.0)
+        )
+      )
+    )
+    val beta = DoubleMatrix.fromRows(
+      Vector(
+        Vector(2.0, -3.0),
+        Vector(0.5, 1.5),
+        Vector(-1.0, 0.25)
+      )
+    )
+    val response = ResponseBlock.unsafe(DoubleMatrix.multiply(design.value, beta))
+    val permuted = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(design.value.toRows.map(row => Vector(row(2), row(0), row(1))))
+    )
+
+    val originalFit = Ols.unsafeFit(design, response)
+    val permutedFit = Ols.unsafeFit(permuted, response)
+
+    assertEqualsDouble(permutedFit.coefficients(0, 0), originalFit.coefficients(2, 0), 1e-10)
+    assertEqualsDouble(permutedFit.coefficients(1, 0), originalFit.coefficients(0, 0), 1e-10)
+    assertEqualsDouble(permutedFit.coefficients(2, 0), originalFit.coefficients(1, 0), 1e-10)
+    assertEqualsDouble(permutedFit.coefficients(0, 1), originalFit.coefficients(2, 1), 1e-10)
+    assertEqualsDouble(permutedFit.coefficients(1, 1), originalFit.coefficients(0, 1), 1e-10)
+    assertEqualsDouble(permutedFit.coefficients(2, 1), originalFit.coefficients(1, 1), 1e-10)
+  }
+
   test("OLS rejects singular designs") {
     val design = DesignMatrix.unsafe(
       DoubleMatrix.fromRows(
@@ -79,7 +173,7 @@ class OlsSuite extends munit.FunSuite:
     assert(Ols.prepare(design).isLeft)
   }
 
-  test("OLS rejects nearly collinear designs at the Cholesky tolerance boundary") {
+  test("OLS rejects nearly collinear designs at the QR rank tolerance boundary") {
     val design = DesignMatrix.unsafe(
       DoubleMatrix.fromRows(
         Vector(

@@ -6,6 +6,7 @@ final class QrDecomposition private (
     val shape: MatrixShape,
     private val reflectors: Array[Householder],
     private val diagR: Array[Double],
+    private val packed: Array[Double],
     private val perm: Array[Int],
     val rank: Int
 ):
@@ -80,6 +81,104 @@ final class QrDecomposition private (
 
     applyQInPlace(out, yCols = data.cols)
     DoubleMatrix.unsafe(data.rows, data.cols, out)
+
+  def solveFullRank(rhs: DoubleMatrix): Either[LinearAlgebraError, QrLeastSquaresSolution] =
+    if rhs.rows != rows then
+      Left(LinearAlgebraError.DimensionMismatch(DimensionRole.RightHandSideRows, rows, rhs.rows))
+    else if rank < cols then
+      Left(LinearAlgebraError.RankDeficient(cols, rank))
+    else
+      val qtb = rhs.copyData
+      applyQtInPlace(qtb, yCols = rhs.cols)
+
+      val pivotedCoefficients = new Array[Double](cols * rhs.cols)
+      var rhsCol = 0
+      while rhsCol < rhs.cols do
+        var row = cols - 1
+        while row >= 0 do
+          var value = qtb(row * rhs.cols + rhsCol)
+          var col = row + 1
+          while col < cols do
+            value -= upper(row, col) * pivotedCoefficients(col * rhs.cols + rhsCol)
+            col += 1
+          pivotedCoefficients(row * rhs.cols + rhsCol) = value / upper(row, row)
+          row -= 1
+        rhsCol += 1
+
+      val coefficients = new Array[Double](cols * rhs.cols)
+      var pivotedCol = 0
+      while pivotedCol < cols do
+        val originalCol = perm(pivotedCol)
+        rhsCol = 0
+        while rhsCol < rhs.cols do
+          coefficients(originalCol * rhs.cols + rhsCol) =
+            pivotedCoefficients(pivotedCol * rhs.cols + rhsCol)
+          rhsCol += 1
+        pivotedCol += 1
+
+      normalizedCovarianceFullRank.map { covariance =>
+        QrLeastSquaresSolution(
+          coefficients = DoubleMatrix.unsafe(cols, rhs.cols, coefficients),
+          normalizedCovariance = covariance,
+          rank = rank
+        )
+      }
+
+  def normalizedCovarianceFullRank: Either[LinearAlgebraError, DoubleMatrix] =
+    if rank < cols then Left(LinearAlgebraError.RankDeficient(cols, rank))
+    else
+      val invR = new Array[Double](cols * cols)
+      var rhsCol = 0
+      while rhsCol < cols do
+        var row = cols - 1
+        while row >= 0 do
+          var value = if row == rhsCol then 1.0 else 0.0
+          var col = row + 1
+          while col < cols do
+            value -= upper(row, col) * invR(col * cols + rhsCol)
+            col += 1
+          invR(row * cols + rhsCol) = value / upper(row, row)
+          row -= 1
+        rhsCol += 1
+
+      val pivotedCovariance = new Array[Double](cols * cols)
+      var row = 0
+      while row < cols do
+        var col = 0
+        while col < cols do
+          var acc = 0.0
+          var k = 0
+          while k < cols do
+            acc += invR(row * cols + k) * invR(col * cols + k)
+            k += 1
+          pivotedCovariance(row * cols + col) = acc
+          col += 1
+        row += 1
+
+      val covariance = new Array[Double](cols * cols)
+      var pivotedRow = 0
+      while pivotedRow < cols do
+        var pivotedCol = 0
+        while pivotedCol < cols do
+          val originalRow = perm(pivotedRow)
+          val originalCol = perm(pivotedCol)
+          covariance(originalRow * cols + originalCol) =
+            pivotedCovariance(pivotedRow * cols + pivotedCol)
+          pivotedCol += 1
+        pivotedRow += 1
+
+      Right(DoubleMatrix.unsafe(cols, cols, covariance))
+
+  private inline def upper(row: Int, col: Int): Double =
+    packed(row * cols + col)
+
+final case class QrLeastSquaresSolution(
+    coefficients: DoubleMatrix,
+    normalizedCovariance: DoubleMatrix,
+    rank: Int
+):
+  require(coefficients.rows == normalizedCovariance.rows, "coefficient rows must match covariance rows")
+  require(normalizedCovariance.rows == normalizedCovariance.cols, "normalized covariance must be square")
 
 object QrDecomposition:
   def decompose(
@@ -235,7 +334,7 @@ object QrDecomposition:
           while r < nReflectors && math.abs(diagR(r)) > tolerance.value * scale do r += 1
           r
 
-    unsafe(shape, reflectors, diagR, perm, rank)
+    unsafe(shape, reflectors, diagR, a, perm, rank)
 
   private def requireShape(rows: Int, cols: Int): MatrixShape =
     MatrixShape.from(rows, cols) match
@@ -251,12 +350,14 @@ object QrDecomposition:
       shape: MatrixShape,
       reflectors: Array[Householder],
       diagR: Array[Double],
+      packed: Array[Double],
       perm: Array[Int],
       rank: Int
   ): QrDecomposition =
     val nReflectors = math.min(shape.rows, shape.cols)
     require(reflectors.length == nReflectors, "reflector count mismatch")
     require(diagR.length == nReflectors, "diagR length mismatch")
+    require(packed.length == shape.entries, "packed QR length mismatch")
     require(perm.length == shape.cols, "perm length mismatch")
     require(rank >= 0 && rank <= nReflectors, "rank out of bounds")
     require(isPermutation(perm), "perm must be a zero-based column permutation")
@@ -270,7 +371,7 @@ object QrDecomposition:
         s"reflector $k length mismatch"
       )
       k += 1
-    new QrDecomposition(shape, reflectors, diagR, perm, rank)
+    new QrDecomposition(shape, reflectors, diagR, packed, perm, rank)
 
   private def isPermutation(perm: Array[Int]): Boolean =
     val seen = Array.fill(perm.length)(false)

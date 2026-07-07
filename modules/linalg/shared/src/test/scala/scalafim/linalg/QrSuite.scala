@@ -61,3 +61,51 @@ class QrSuite extends munit.FunSuite:
     copy(0) = 99.0
     assertEquals(data(0, 0), 1.0)
   }
+
+  test("QR full-rank solve recovers pivoted coefficients and covariance") {
+    val design = DoubleMatrix.fromRows(
+      Vector(
+        Vector(1.0, -2.0, 40.0),
+        Vector(1.0, -1.0, 10.0),
+        Vector(1.0, 0.0, 0.0),
+        Vector(1.0, 1.0, 10.0),
+        Vector(1.0, 2.0, 40.0)
+      )
+    )
+    val coefficients = DoubleMatrix.fromRows(
+      Vector(
+        Vector(2.0, -1.0),
+        Vector(-0.5, 3.0),
+        Vector(0.1, -0.2)
+      )
+    )
+    val response = DoubleMatrix.multiply(design, coefficients)
+
+    val qr = QrDecomposition.decompose(design, Pivoting.Enabled, Tolerance.DefaultQr)
+    val solved = qr.solveFullRank(response).fold(err => fail(err.message), identity)
+    val choleskyCovariance =
+      Cholesky
+        .decompose(DoubleMatrix.crossProduct(design))
+        .fold(err => fail(err.message), identity)
+        .solve(DoubleMatrix.eye(design.cols))
+
+    assertEquals(solved.rank, design.cols)
+    assertMatrixClose(solved.coefficients, coefficients, tol = 1e-11)
+    assertMatrixClose(solved.normalizedCovariance, choleskyCovariance, tol = 1e-11)
+  }
+
+  test("QR full-rank solve reports rank deficiency explicitly") {
+    val design = DoubleMatrix.fromRows(
+      Vector(
+        Vector(1.0, 2.0),
+        Vector(2.0, 4.0),
+        Vector(3.0, 6.0),
+        Vector(4.0, 8.0)
+      )
+    )
+    val response = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
+    val qr = QrDecomposition.decompose(design, Pivoting.Enabled, Tolerance.DefaultQr)
+
+    assertEquals(qr.solveFullRank(response).left.toOption, Some(LinearAlgebraError.RankDeficient(2, 1)))
+    assertEquals(qr.normalizedCovarianceFullRank.left.toOption, Some(LinearAlgebraError.RankDeficient(2, 1)))
+  }

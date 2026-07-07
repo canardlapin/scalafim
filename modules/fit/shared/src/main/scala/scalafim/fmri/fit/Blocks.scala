@@ -9,6 +9,7 @@ final case class DesignMatrix private (value: DoubleMatrix):
 object DesignMatrix:
   def fromMatrix(value: DoubleMatrix): Either[FitError, DesignMatrix] =
     if value.rows == 0 || value.cols == 0 then Left(FitError.EmptyDesign)
+    else if containsNonFinite(value) then Left(FitError.NonFiniteInput("design matrix"))
     else Right(new DesignMatrix(value))
 
   def unsafe(value: DoubleMatrix): DesignMatrix =
@@ -21,6 +22,7 @@ final case class ResponseBlock private (value: DoubleMatrix):
 object ResponseBlock:
   def fromMatrix(value: DoubleMatrix): Either[FitError, ResponseBlock] =
     if value.rows == 0 || value.cols == 0 then Left(FitError.EmptyResponse)
+    else if containsNonFinite(value) then Left(FitError.NonFiniteInput("response block"))
     else Right(new ResponseBlock(value))
 
   def unsafe(value: DoubleMatrix): ResponseBlock =
@@ -35,3 +37,11 @@ final case class StandardErrorBlock(value: DoubleMatrix):
   def predictors: Int = value.rows
   def voxels: Int = value.cols
   def apply(predictor: Int, voxel: Int): Double = value(predictor, voxel)
+
+private def containsNonFinite(value: DoubleMatrix): Boolean =
+  var i = 0
+  var found = false
+  while i < value.dataArray.length && !found do
+    if !value.dataArray(i).isFinite then found = true
+    i += 1
+  found

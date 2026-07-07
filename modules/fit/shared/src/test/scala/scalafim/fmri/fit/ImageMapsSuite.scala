@@ -5,8 +5,9 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitPlan, FmriModel}
+import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.linalg.DoubleMatrix
 
 class ImageMapsSuite extends munit.FunSuite:
 
@@ -85,10 +86,39 @@ class ImageMapsSuite extends munit.FunSuite:
   }
 
   test("t and F contrast statistics map into image space") {
-    val result = FitPlanExecutor.unsafeFit(
-      FitPlan(model),
-      DataSelection(voxels = IndexSelection.indices(1))
-    ).asInstanceOf[DenseFmriFitResult]
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(0.0, 1.0),
+          Vector(1.0, 1.0),
+          Vector(2.0, 1.0),
+          Vector(3.0, 1.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(1.2), Vector(0.0), Vector(-1.0)))
+    )
+    val fit = Ols.unsafeFit(design, response)
+    val result = DenseFmriFitResult(
+      coefficients = fit.coefficients,
+      standardErrors = fit.standardErrors,
+      normalizedCovariance = fit.normalizedCovariance,
+      residualVariance = fit.residualVariance,
+      residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
+      columnNames = Vector("task", "base_constant"),
+      voxelIndices = Vector(1),
+      timepoints = Vector(0, 1, 2, 3),
+      engine = FitEngine.OrdinaryLeastSquares,
+      summary = FitSummary(
+        engine = FitEngine.OrdinaryLeastSquares,
+        timepoints = 4,
+        predictors = 2,
+        voxels = 1,
+        robust = false,
+        autocorrelated = false
+      )
+    )
 
     val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
     val tMap = t.statisticMap(dataset.shape).dense

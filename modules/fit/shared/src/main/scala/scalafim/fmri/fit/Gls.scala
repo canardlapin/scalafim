@@ -87,15 +87,22 @@ object Gls:
         runIndex = partition.runIndex
       )
     }
-    val censoredRows =
-      censoredTimepoints.flatMap { timepoint =>
-        partitions.iterator
-          .flatMap(partition => partition.timepoints.zip(partition.rowIndices))
-          .find { case (candidate, _) => candidate == timepoint }
-          .map(_._2)
-      }.toSet
-    val segments = TimeSegments.withCensorResets(base, censoredRows)
-    TimeSegments.validateCoverage(segments, base.last.endExclusive).left.map(arToFitError).map(_ => segments)
+    val missingCensors =
+      censoredTimepoints.distinct.filterNot { timepoint =>
+        partitions.exists(_.timepoints.contains(timepoint))
+      }
+    if missingCensors.nonEmpty then
+      Left(FitError.UnsupportedAutocorrelation(s"censored timepoints are not selected: ${missingCensors.mkString(", ")}"))
+    else
+      val censoredRows =
+        censoredTimepoints.flatMap { timepoint =>
+          partitions.iterator
+            .flatMap(partition => partition.timepoints.zip(partition.rowIndices))
+            .find { case (candidate, _) => candidate == timepoint }
+            .map(_._2)
+        }.toSet
+      val segments = TimeSegments.withCensorResets(base, censoredRows)
+      TimeSegments.validateCoverage(segments, base.last.endExclusive).left.map(arToFitError).map(_ => segments)
 
   private def whiteningPlan(
       design: DoubleMatrix,

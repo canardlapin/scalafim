@@ -8,8 +8,9 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitPlan, FmriModel}
+import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
 class InferenceSuite extends munit.FunSuite:
 
@@ -94,6 +95,41 @@ class InferenceSuite extends munit.FunSuite:
       )
     FmriModel(eventModel, baseline, dataset)
 
+  private def zeroResidualVarianceResult: DenseFmriFitResult =
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 0.0),
+          Vector(1.0, 1.0),
+          Vector(1.0, 2.0),
+          Vector(1.0, 3.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(3.0), Vector(5.0), Vector(7.0)))
+    )
+    val fit = Ols.unsafeFit(design, response)
+    DenseFmriFitResult(
+      coefficients = fit.coefficients,
+      standardErrors = fit.standardErrors,
+      normalizedCovariance = fit.normalizedCovariance,
+      residualVariance = DoubleVector.unsafe(Array(0.0)),
+      residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
+      columnNames = Vector("base_constant", "task"),
+      voxelIndices = Vector(0),
+      timepoints = Vector(0, 1, 2, 3),
+      engine = FitEngine.OrdinaryLeastSquares,
+      summary = FitSummary(
+        engine = FitEngine.OrdinaryLeastSquares,
+        timepoints = 4,
+        predictors = 2,
+        voxels = 1,
+        robust = false,
+        autocorrelated = false
+      )
+    )
+
   test("Dense OLS results expose standard errors and diagnostics") {
     val result = FitPlanExecutor.unsafeFit(FitPlan(noisyModel)).asInstanceOf[DenseFmriFitResult]
 
@@ -156,8 +192,25 @@ class InferenceSuite extends munit.FunSuite:
 
     assertEquals(f.numeratorDegreesOfFreedom, 2)
     assertEquals(f.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
-    assertEquals(f.estimates.toRows, Vector(Vector(0.9), Vector(0.9)))
+    assertEqualsDouble(f.estimates(0, 0), 0.9, 1e-10)
+    assertEqualsDouble(f.estimates(1, 0), 0.9, 1e-10)
     assertEqualsDouble(f.statistics(0), 24.3 / 2.0 / 0.35, 1e-10)
+  }
+
+  test("contrasts reject zero residual variance instead of emitting non-finite statistics") {
+    val result = zeroResidualVarianceResult
+
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(result)
+    assert(t.left.toOption.exists {
+      case FitError.NonEstimableContrast("task", detail) => detail.contains("contrast variance")
+      case _                                             => false
+    })
+
+    val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result)
+    assert(f.left.toOption.exists {
+      case FitError.NonEstimableContrast("task", detail) => detail.contains("residual variance")
+      case _                                             => false
+    })
   }
 
   test("F contrasts reject unknown and non-estimable columns explicitly") {

@@ -46,6 +46,7 @@ enum LinearAlgebraError:
   case MatrixStorageLengthMismatch(shape: MatrixShape, actual: Int)
   case NonSquareMatrix(rows: Int, cols: Int)
   case NonPositiveDefinite(pivot: Int, value: Double)
+  case RankDeficient(requiredRank: Int, actualRank: Int)
   case DimensionMismatch(role: DimensionRole, expected: Int, actual: Int)
   case IndexOutOfBounds(axis: MatrixAxis, index: Int, limit: Int)
   case InvalidParameter(parameter: NumericParameter, value: Double)
@@ -63,6 +64,8 @@ enum LinearAlgebraError:
         s"matrix must be square, got ${rows}x${cols}"
       case NonPositiveDefinite(pivot, value) =>
         s"matrix is not positive definite at pivot $pivot: $value"
+      case RankDeficient(requiredRank, actualRank) =>
+        s"matrix rank $actualRank is less than required rank $requiredRank"
       case DimensionMismatch(role, expected, actual) =>
         s"${role.label} expected $expected but got $actual"
       case IndexOutOfBounds(axis, index, limit) =>
