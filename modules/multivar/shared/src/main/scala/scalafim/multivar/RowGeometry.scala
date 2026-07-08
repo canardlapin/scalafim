@@ -1,0 +1,754 @@
+package scalafim.multivar
+
+import scalafim.linalg.DoubleMatrix
+import scalafim.linalg.DoubleVector
+
+enum RowMetricMode:
+  case Identity
+  case GroupedIdentity
+  case BlockCholesky
+
+enum EffectScope:
+  case Between
+  case Within
+  case Mixed
+  case Ungrouped
+
+enum ExchangeabilityScheme:
+  case BetweenSubject
+  case WithinSubject
+  case WholeSubject
+  case Rows
+
+enum EffectScale:
+  case Whitened
+  case Processed
+  case Original
+
+trait RowMetric:
+  def rows: Int
+  def mode: RowMetricMode
+  def blocks: Vector[IndexSet]
+
+  def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+
+  def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+
+  def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+
+final case class IdentityRowMetric private[multivar] (
+    rows: Int,
+    mode: RowMetricMode,
+    blocks: Vector[IndexSet]
+) extends RowMetric:
+  require(rows > 0, "row metric rows must be positive")
+
+  override def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    RowGeometryOps.requireRows("row metric whitening", input, rows).map(_ => input)
+
+  override def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    RowGeometryOps.requireRows("row metric unwhitening", input, rows).map(_ => input)
+
+  override def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    RowGeometryOps.requireRows("row metric solve", input, rows).map(_ => input)
+
+final case class BlockCholeskyRowMetric private[multivar] (
+    rows: Int,
+    blocks: Vector[IndexSet],
+    upperCholesky: Vector[DoubleMatrix]
+) extends RowMetric:
+  require(rows > 0, "row metric rows must be positive")
+  require(blocks.length == upperCholesky.length, "row metric block/cholesky counts must match")
+
+  override def mode: RowMetricMode =
+    RowMetricMode.BlockCholesky
+
+  override def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    applyBlocks(input, RowGeometryOps.solveTransposeUpper)
+
+  override def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    applyBlocks(input, RowGeometryOps.multiplyTransposeUpper)
+
+  override def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    for
+      whitened <- whiten(input)
+      solved <- applyBlocks(whitened, RowGeometryOps.solveUpper)
+    yield solved
+
+  private def applyBlocks(
+      input: DoubleMatrix,
+      op: (DoubleMatrix, DoubleMatrix) => Either[MultivarError, DoubleMatrix]
+  ): Either[MultivarError, DoubleMatrix] =
+    RowGeometryOps.requireRows("row metric block operation", input, rows).flatMap { _ =>
+      val out = new Array[Double](input.rows * input.cols)
+      var blockIndex = 0
+      var error = Option.empty[MultivarError]
+      while blockIndex < blocks.length && error.isEmpty do
+        val block = blocks(blockIndex)
+        val local = RowGeometryOps.selectRows(input, block.indices)
+        op(upperCholesky(blockIndex), local) match
+          case Left(value) => error = Some(value)
+          case Right(blockOut) =>
+            RowGeometryOps.writeRows(out, input.cols, block.indices, blockOut)
+        blockIndex += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+    }
+
+object RowMetric:
+  def identity(rows: Int): Either[MultivarError, RowMetric] =
+    if rows <= 0 then Left(MultivarError.InvalidDimension("row metric rows", rows))
+    else Right(new IdentityRowMetric(rows, RowMetricMode.Identity, Vector.empty))
+
+  def groupedIdentity(rows: Int, blocks: Vector[IndexSet]): Either[MultivarError, RowMetric] =
+    if rows <= 0 then Left(MultivarError.InvalidDimension("row metric rows", rows))
+    else
+      validateBlocks(rows, blocks).map { checked =>
+        new IdentityRowMetric(rows, RowMetricMode.GroupedIdentity, checked)
+      }
+
+  def blockCholesky(
+      rows: Int,
+      blocks: Vector[IndexSet],
+      upperCholesky: Vector[DoubleMatrix],
+      tolerance: Double = 1e-12
+  ): Either[MultivarError, RowMetric] =
+    if rows <= 0 then Left(MultivarError.InvalidDimension("row metric rows", rows))
+    else if blocks.length != upperCholesky.length then
+      Left(MultivarError.InvalidRowGeometry("row metric block and Cholesky counts differ"))
+    else
+      for
+        checked <- validateBlocks(rows, blocks)
+        _ <- validateCholesky(checked, upperCholesky, tolerance)
+      yield new BlockCholeskyRowMetric(rows, checked, upperCholesky)
+
+  private def validateBlocks(rows: Int, blocks: Vector[IndexSet]): Either[MultivarError, Vector[IndexSet]] =
+    if blocks.isEmpty then Left(MultivarError.InvalidRowGeometry("row metric block list must be non-empty"))
+    else
+      val seen = Array.fill(rows)(false)
+      var blockIndex = 0
+      var error = Option.empty[MultivarError]
+      while blockIndex < blocks.length && error.isEmpty do
+        val block = blocks(blockIndex)
+        if block.axis != IndexAxis.Row && block.axis != IndexAxis.Sample then
+          error = Some(MultivarError.InvalidRowGeometry("row metric blocks must use row or sample indices"))
+        else
+          block.requireWithin(rows) match
+            case Left(value) => error = Some(value)
+            case Right(checked) =>
+              val indices = checked.indices
+              var i = 0
+              while i < indices.length && error.isEmpty do
+                val row = indices(i)
+                if seen(row) then error = Some(MultivarError.DuplicateIndex(IndexAxis.Row, row))
+                else seen(row) = true
+                i += 1
+        blockIndex += 1
+
+      var row = 0
+      while row < rows && error.isEmpty do
+        if !seen(row) then error = Some(MultivarError.IndexOutOfBounds(IndexAxis.Row, row, rows))
+        row += 1
+
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(blocks)
+
+  private def validateCholesky(
+      blocks: Vector[IndexSet],
+      upperCholesky: Vector[DoubleMatrix],
+      tolerance: Double
+  ): Either[MultivarError, Unit] =
+    var blockIndex = 0
+    var error = Option.empty[MultivarError]
+    while blockIndex < blocks.length && error.isEmpty do
+      val block = blocks(blockIndex)
+      val chol = upperCholesky(blockIndex)
+      if chol.rows != chol.cols || chol.rows != block.length then
+        error = Some(
+          MultivarError.InvalidRowGeometry(
+            s"Cholesky block ${chol.rows}x${chol.cols} does not match row block length ${block.length}"
+          )
+        )
+      else
+        MatrixOps.checkFinite("row metric Cholesky block", chol) match
+          case Left(value) => error = Some(value)
+          case Right(_) =>
+            var row = 0
+            while row < chol.rows && error.isEmpty do
+              var col = 0
+              while col < row && error.isEmpty do
+                if Math.abs(chol(row, col)) > tolerance then
+                  error = Some(MultivarError.InvalidRowGeometry("row metric Cholesky factors must be upper triangular"))
+                col += 1
+              if chol(row, row) <= tolerance then
+                error = Some(MultivarError.SingularRowMetric("row metric Cholesky factor has a non-positive diagonal"))
+              row += 1
+      blockIndex += 1
+    error match
+      case Some(value) => Left(value)
+      case None        => Right(())
+
+final case class RowProjector private (
+    matrix: DoubleMatrix,
+    rank: Int,
+    basis: Option[DoubleMatrix]
+):
+  require(matrix.rows == matrix.cols, "row projector matrix must be square")
+  require(rank >= 0, "row projector rank must be non-negative")
+
+  def rows: Int =
+    matrix.rows
+
+  def project(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    if input.rows != rows then
+      Left(MultivarError.MatrixShapeMismatch(s"row projector expected ${rows} rows, got ${input.rows}"))
+    else Right(DoubleMatrix.multiply(matrix, input))
+
+  def difference(nuisance: RowProjector, tolerance: Double = 1e-8): Either[MultivarError, RowProjector] =
+    if nuisance.rows != rows then
+      Left(MultivarError.MatrixShapeMismatch(s"row projector sizes differ: $rows vs ${nuisance.rows}"))
+    else
+      val nested = DoubleMatrix.multiply(matrix, nuisance.matrix)
+      if !RowGeometryOps.close(nested, nuisance.matrix, tolerance) then
+        Left(MultivarError.InvalidRowGeometry("nuisance projector is not nested in full projector"))
+      else RowProjector.fromMatrix(RowGeometryOps.subtract(matrix, nuisance.matrix), tolerance)
+
+  def complement: RowProjector =
+    val out = new Array[Double](rows * rows)
+    var row = 0
+    while row < rows do
+      var col = 0
+      while col < rows do
+        out(row * rows + col) = (if row == col then 1.0 else 0.0) - matrix(row, col)
+        col += 1
+      row += 1
+    RowProjector(DoubleMatrix.unsafe(rows, rows, out), rows - rank, None)
+
+object RowProjector:
+  def zero(rows: Int): Either[MultivarError, RowProjector] =
+    if rows <= 0 then Left(MultivarError.InvalidDimension("row projector rows", rows))
+    else Right(RowProjector(DoubleMatrix.zeros(rows, rows), 0, Some(DoubleMatrix.zeros(rows, 0))))
+
+  def orthogonal(
+      design: DoubleMatrix,
+      solver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
+      tolerance: Double = 1e-10
+  ): Either[MultivarError, RowProjector] =
+    if design.rows <= 0 then Left(MultivarError.InvalidDimension("row projector rows", design.rows))
+    else if design.cols == 0 then zero(design.rows)
+    else
+      for
+        _ <- MatrixOps.checkFinite("row design matrix", design)
+        gram = DoubleMatrix.crossProduct(design)
+        eigen <- solver.decompose(gram)
+      yield
+        val maxValue =
+          if eigen.values.length == 0 then 0.0
+          else Math.max(1.0, Math.abs(eigen.values(0)))
+        var rank = 0
+        while rank < eigen.values.length && eigen.values(rank) > tolerance * maxValue do
+          rank += 1
+
+        if rank == 0 then RowProjector(DoubleMatrix.zeros(design.rows, design.rows), 0, Some(DoubleMatrix.zeros(design.rows, 0)))
+        else
+          val rawBasis = designRightMultiply(design, MatrixOps.takeColumns(eigen.vectors, rank))
+          val basisData = rawBasis.copyData
+          var col = 0
+          while col < rank do
+            val scale = 1.0 / Math.sqrt(Math.max(eigen.values(col), tolerance))
+            var row = 0
+            while row < rawBasis.rows do
+              basisData(row * rank + col) *= scale
+              row += 1
+            col += 1
+          val basis = DoubleMatrix.unsafe(design.rows, rank, basisData)
+          val projector = DoubleMatrix.multiply(basis, basis.transpose)
+          RowProjector(projector, rank, Some(basis))
+
+  def fromMatrix(matrix: DoubleMatrix, tolerance: Double = 1e-8): Either[MultivarError, RowProjector] =
+    if matrix.rows <= 0 then Left(MultivarError.InvalidDimension("row projector rows", matrix.rows))
+    else if matrix.rows != matrix.cols then Left(MultivarError.MatrixShapeMismatch("row projector matrix must be square"))
+    else
+      for
+        _ <- MatrixOps.checkFinite("row projector matrix", matrix)
+        _ <- MatrixOps.checkSymmetric(matrix, tolerance)
+        squared = DoubleMatrix.multiply(matrix, matrix)
+        _ <-
+          if RowGeometryOps.close(squared, matrix, tolerance) then Right(())
+          else Left(MultivarError.InvalidRowGeometry("row projector matrix must be idempotent"))
+      yield
+        val trace = RowGeometryOps.trace(matrix)
+        val rank = Math.rint(trace).toInt
+        RowProjector(matrix, rank, None)
+
+  private def designRightMultiply(design: DoubleMatrix, weights: DoubleMatrix): DoubleMatrix =
+    DoubleMatrix.multiply(design, weights)
+
+final case class EffectTerm(
+    label: String,
+    effectColumns: Vector[Int],
+    nuisanceColumns: Vector[Int],
+    df: Int,
+    scope: EffectScope,
+    exchangeability: ExchangeabilityScheme
+):
+  require(label.nonEmpty, "effect term label must be non-empty")
+  require(effectColumns.nonEmpty, "effect term must have at least one design column")
+  require(df >= 0, "effect term degrees of freedom must be non-negative")
+
+object EffectTerm:
+  def of(
+      label: String,
+      effectColumns: Iterable[Int],
+      nuisanceColumns: Iterable[Int],
+      df: Int,
+      scope: EffectScope = EffectScope.Ungrouped,
+      exchangeability: ExchangeabilityScheme = ExchangeabilityScheme.Rows,
+      designColumns: Option[Int] = None
+  ): Either[MultivarError, EffectTerm] =
+    for
+      checkedLabel <- Identifier.validate("effect term", label)
+      effect <- RowGeometryOps.validateColumnList("effect columns", effectColumns, allowEmpty = false, designColumns)
+      nuisance <- RowGeometryOps.validateColumnList("nuisance columns", nuisanceColumns, allowEmpty = true, designColumns)
+      _ <- RowGeometryOps.requireDisjoint(effect, nuisance)
+      _ <- if df >= 0 then Right(()) else Left(MultivarError.InvalidRowGeometry("effect term df must be non-negative"))
+    yield EffectTerm(checkedLabel, effect, nuisance, df, scope, exchangeability)
+
+final case class EffectTermFit(
+    term: EffectTerm,
+    rowMetric: RowMetric,
+    termProjector: RowProjector,
+    nuisanceProjector: RowProjector,
+    fullProjector: RowProjector
+):
+  require(termProjector.rows == rowMetric.rows, "term projector rows must match row metric")
+  require(nuisanceProjector.rows == rowMetric.rows, "nuisance projector rows must match row metric")
+  require(fullProjector.rows == rowMetric.rows, "full projector rows must match row metric")
+
+  def effectMatrix(response: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    for
+      whitened <- rowMetric.whiten(response)
+      projected <- termProjector.project(whitened)
+    yield projected
+
+object EffectTermFit:
+  def fromDesign(
+      label: String,
+      design: DoubleMatrix,
+      effectColumns: Iterable[Int],
+      rowMetric: RowMetric,
+      scope: EffectScope = EffectScope.Ungrouped,
+      exchangeability: ExchangeabilityScheme = ExchangeabilityScheme.Rows,
+      solver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
+      tolerance: Double = 1e-10
+  ): Either[MultivarError, EffectTermFit] =
+    if design.rows != rowMetric.rows then
+      Left(MultivarError.MatrixShapeMismatch(s"design has ${design.rows} rows but row metric has ${rowMetric.rows}"))
+    else
+      for
+        effect <- RowGeometryOps.validateColumnList("effect columns", effectColumns, allowEmpty = false, Some(design.cols))
+        nuisance = (0 until design.cols).filterNot(effect.contains).toVector
+        designW <- rowMetric.whiten(design)
+        effectDesign = RowGeometryOps.selectColumns(designW, effect)
+        nuisanceDesign = RowGeometryOps.selectColumns(designW, nuisance)
+        fullDesign = RowGeometryOps.concatColumns(nuisanceDesign, effectDesign)
+        nuisanceProjector <- RowProjector.orthogonal(nuisanceDesign, solver, tolerance)
+        fullProjector <- RowProjector.orthogonal(fullDesign, solver, tolerance)
+        termProjector <- fullProjector.difference(nuisanceProjector, Math.sqrt(tolerance))
+        term <- EffectTerm.of(
+          label,
+          effect,
+          nuisance,
+          termProjector.rank,
+          scope,
+          exchangeability,
+          Some(design.cols)
+        )
+      yield EffectTermFit(term, rowMetric, termProjector, nuisanceProjector, fullProjector)
+
+final case class EffectModelFit(
+    rowMetric: RowMetric,
+    design: DoubleMatrix,
+    designWhitened: DoubleMatrix,
+    modelProjector: RowProjector,
+    terms: Vector[EffectTermFit]
+):
+  def term(label: String): Option[EffectTermFit] =
+    terms.find(_.term.label == label)
+
+object EffectModelFit:
+  def fromTerms(
+      design: DoubleMatrix,
+      rowMetric: RowMetric,
+      terms: Vector[(String, Iterable[Int])],
+      solver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
+      tolerance: Double = 1e-10
+  ): Either[MultivarError, EffectModelFit] =
+    if design.rows != rowMetric.rows then
+      Left(MultivarError.MatrixShapeMismatch(s"design has ${design.rows} rows but row metric has ${rowMetric.rows}"))
+    else
+      for
+        designW <- rowMetric.whiten(design)
+        modelProjector <- RowProjector.orthogonal(designW, solver, tolerance)
+        termFits <- RowGeometryOps.traverse(terms) { case (label, columns) =>
+          EffectTermFit.fromDesign(label, design, columns, rowMetric, solver = solver, tolerance = tolerance)
+        }
+      yield EffectModelFit(rowMetric, design, designW, modelProjector, termFits)
+
+final case class EffectOperator private (
+    termFit: EffectTermFit,
+    loadings: DoubleMatrix,
+    scores: DoubleMatrix,
+    singularValues: DoubleVector,
+    preprocessor: FittedPreprocessor,
+    basis: DoubleMatrix,
+    basisEffectMatrix: DoubleMatrix,
+    effectMatrixWhitened: DoubleMatrix,
+    fittedContribution: DoubleMatrix
+):
+  require(loadings.cols == scores.cols, "effect loadings and scores must have the same component count")
+  require(singularValues.length == loadings.cols, "singular values must match component count")
+  require(scores.rows == termFit.rowMetric.rows, "effect scores must match row metric rows")
+  require(loadings.rows == preprocessor.inputCols, "effect loadings must match response feature count")
+  require(effectMatrixWhitened.rows == scores.rows, "whitened effect matrix rows must match scores")
+  require(effectMatrixWhitened.cols == loadings.rows, "whitened effect matrix columns must match loadings")
+  require(fittedContribution.rows == scores.rows, "fitted contribution rows must match scores")
+  require(fittedContribution.cols == loadings.rows, "fitted contribution columns must match loadings")
+
+  def rank: Int =
+    singularValues.length
+
+  def reconstruct(scale: EffectScale = EffectScale.Processed): Either[MultivarError, DoubleMatrix] =
+    scale match
+      case EffectScale.Whitened =>
+        Right(effectMatrixWhitened)
+      case EffectScale.Processed =>
+        Right(fittedContribution)
+      case EffectScale.Original =>
+        EffectOperator.inverseContribution(preprocessor, fittedContribution)
+
+  def truncate(components: Int): Either[MultivarError, EffectOperator] =
+    if components < 0 || components > rank then Left(MultivarError.InvalidComponentRequest(components, rank))
+    else if components == rank then Right(this)
+    else
+      EffectOperator.fromParts(
+        termFit,
+        MatrixOps.takeColumns(loadings, components),
+        MatrixOps.takeColumns(scores, components),
+        MatrixOps.takeVector(singularValues, components),
+        preprocessor,
+        basis,
+        basisEffectMatrix
+      )
+
+object EffectOperator:
+  def fit(
+      termFit: EffectTermFit,
+      response: MatrixView,
+      preprocessor: FittedPreprocessor,
+      basis: DoubleMatrix,
+      components: Option[ComponentCount] = None,
+      solver: SvdSolver = DenseSolvers.svd,
+      tolerance: Double = 1e-10
+  ): Either[MultivarError, EffectOperator] =
+    if response.rows != termFit.rowMetric.rows then
+      Left(MultivarError.MatrixShapeMismatch(s"response has ${response.rows} rows but row metric has ${termFit.rowMetric.rows}"))
+    else if response.cols != preprocessor.inputCols then
+      Left(MultivarError.MatrixShapeMismatch(s"response has ${response.cols} columns but preprocessor expects ${preprocessor.inputCols}"))
+    else if basis.rows != response.cols then
+      Left(MultivarError.MatrixShapeMismatch(s"basis has ${basis.rows} rows but response has ${response.cols} columns"))
+    else
+      for
+        _ <- MatrixOps.checkFinite("effect basis", basis)
+        responseBasis <- response.rightMultiply(basis)
+        responseBasisW <- termFit.rowMetric.whiten(responseBasis)
+        basisEffect <- termFit.termProjector.project(responseBasisW)
+        rankBound = Math.min(Math.min(termFit.term.df, basis.cols), Math.min(basisEffect.rows, basisEffect.cols))
+        requested = components.map(_.value).getOrElse(rankBound)
+        out <-
+          if requested > rankBound then Left(MultivarError.InvalidComponentRequest(requested, rankBound))
+          else if rankBound <= 0 || requested == 0 then
+            empty(termFit, response.cols, response.rows, preprocessor, basis, basisEffect)
+          else
+            solver.decompose(MatrixView.dense(basisEffect), ComponentCount.unsafe(rankBound)).flatMap { svd =>
+              val maxValue =
+                if svd.singularValues.length == 0 then 0.0
+                else Math.max(1.0, svd.singularValues(0))
+              var available = 0
+              while available < svd.singularValues.length && svd.singularValues(available) > tolerance * maxValue do
+                available += 1
+              val keep = Math.min(requested, available)
+              if keep == 0 then empty(termFit, response.cols, response.rows, preprocessor, basis, basisEffect)
+              else
+                val basisLoadings = MatrixOps.takeColumns(svd.v, keep)
+                val loadings = DoubleMatrix.multiply(basis, basisLoadings)
+                val scores = scaleColumns(MatrixOps.takeColumns(svd.u, keep), MatrixOps.takeVector(svd.singularValues, keep))
+                fromParts(termFit, loadings, scores, MatrixOps.takeVector(svd.singularValues, keep), preprocessor, basis, basisEffect)
+            }
+      yield out
+
+  private def empty(
+      termFit: EffectTermFit,
+      featureCols: Int,
+      responseRows: Int,
+      preprocessor: FittedPreprocessor,
+      basis: DoubleMatrix,
+      basisEffectMatrix: DoubleMatrix
+  ): Either[MultivarError, EffectOperator] =
+    fromParts(
+      termFit,
+      DoubleMatrix.zeros(featureCols, 0),
+      DoubleMatrix.zeros(responseRows, 0),
+      DoubleVector.zeros(0),
+      preprocessor,
+      basis,
+      basisEffectMatrix
+    )
+
+  private def fromParts(
+      termFit: EffectTermFit,
+      loadings: DoubleMatrix,
+      scores: DoubleMatrix,
+      singularValues: DoubleVector,
+      preprocessor: FittedPreprocessor,
+      basis: DoubleMatrix,
+      basisEffectMatrix: DoubleMatrix
+  ): Either[MultivarError, EffectOperator] =
+    if loadings.cols != scores.cols || loadings.cols != singularValues.length then
+      Left(MultivarError.MatrixShapeMismatch("effect operator component dimensions do not agree"))
+    else if loadings.rows != preprocessor.inputCols then
+      Left(MultivarError.MatrixShapeMismatch("effect operator loadings do not match preprocessor feature count"))
+    else if scores.rows != termFit.rowMetric.rows then
+      Left(MultivarError.MatrixShapeMismatch("effect operator scores do not match row metric rows"))
+    else
+      val whitened =
+        if singularValues.length == 0 then DoubleMatrix.zeros(scores.rows, loadings.rows)
+        else DoubleMatrix.multiply(scores, loadings.transpose)
+      termFit.rowMetric.unwhiten(whitened).map { fitted =>
+        EffectOperator(
+          termFit,
+          loadings,
+          scores,
+          singularValues,
+          preprocessor,
+          basis,
+          basisEffectMatrix,
+          whitened,
+          fitted
+        )
+      }
+
+  private def scaleColumns(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+    require(matrix.cols == scale.length, "scale length must match matrix columns")
+    val out = matrix.copyData
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        out(row * matrix.cols + col) *= scale(col)
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+
+  private def inverseContribution(
+      preprocessor: FittedPreprocessor,
+      processed: DoubleMatrix
+  ): Either[MultivarError, DoubleMatrix] =
+    val zero = DoubleMatrix.zeros(processed.rows, processed.cols)
+    for
+      original <- preprocessor.inverseTransform(MatrixView.dense(processed), policy = StoragePolicy.AllowDense)
+      originalZero <- preprocessor.inverseTransform(MatrixView.dense(zero), policy = StoragePolicy.AllowDense)
+      originalDense <- original.toDense(StoragePolicy.AllowDense)
+      zeroDense <- originalZero.toDense(StoragePolicy.AllowDense)
+    yield RowGeometryOps.subtract(originalDense, zeroDense)
+
+private[multivar] object RowGeometryOps:
+  def requireRows(role: String, input: DoubleMatrix, expected: Int): Either[MultivarError, Unit] =
+    if input.rows == expected then Right(())
+    else Left(MultivarError.MatrixShapeMismatch(s"$role expected $expected rows, got ${input.rows}"))
+
+  def validateColumnList(
+      role: String,
+      columns: Iterable[Int],
+      allowEmpty: Boolean,
+      limit: Option[Int]
+  ): Either[MultivarError, Vector[Int]] =
+    val values = columns.toVector
+    if values.isEmpty && !allowEmpty then Left(MultivarError.EmptyIndexSet(IndexAxis.Column))
+    else
+      val seen = scala.collection.mutable.HashSet.empty[Int]
+      var i = 0
+      var error = Option.empty[MultivarError]
+      while i < values.length && error.isEmpty do
+        val col = values(i)
+        if col < 0 then error = Some(MultivarError.IndexOutOfBounds(IndexAxis.Column, col, 0))
+        else
+          limit match
+            case Some(cols) if col >= cols => error = Some(MultivarError.IndexOutOfBounds(IndexAxis.Column, col, cols))
+            case _ =>
+              if seen.contains(col) then error = Some(MultivarError.DuplicateIndex(IndexAxis.Column, col))
+              else seen += col
+        i += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(values)
+
+  def requireDisjoint(left: Vector[Int], right: Vector[Int]): Either[MultivarError, Unit] =
+    val rightSet = right.toSet
+    left.find(rightSet.contains) match
+      case Some(value) => Left(MultivarError.DuplicateIndex(IndexAxis.Column, value))
+      case None        => Right(())
+
+  def traverse[A, B](values: Vector[A])(f: A => Either[MultivarError, B]): Either[MultivarError, Vector[B]] =
+    val out = Vector.newBuilder[B]
+    var i = 0
+    var error = Option.empty[MultivarError]
+    while i < values.length && error.isEmpty do
+      f(values(i)) match
+        case Left(value)  => error = Some(value)
+        case Right(value) => out += value
+      i += 1
+    error match
+      case Some(value) => Left(value)
+      case None        => Right(out.result())
+
+  def selectRows(matrix: DoubleMatrix, rows: IndexedSeq[Int]): DoubleMatrix =
+    val out = new Array[Double](rows.length * matrix.cols)
+    var outRow = 0
+    while outRow < rows.length do
+      val sourceRow = rows(outRow)
+      System.arraycopy(matrix.dataArray, sourceRow * matrix.cols, out, outRow * matrix.cols, matrix.cols)
+      outRow += 1
+    DoubleMatrix.unsafe(rows.length, matrix.cols, out)
+
+  def writeRows(out: Array[Double], cols: Int, rows: IndexedSeq[Int], values: DoubleMatrix): Unit =
+    require(rows.length == values.rows, "row write length must match value rows")
+    var localRow = 0
+    while localRow < rows.length do
+      val targetRow = rows(localRow)
+      System.arraycopy(values.dataArray, localRow * cols, out, targetRow * cols, cols)
+      localRow += 1
+
+  def selectColumns(matrix: DoubleMatrix, columns: IndexedSeq[Int]): DoubleMatrix =
+    val out = new Array[Double](matrix.rows * columns.length)
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < columns.length do
+        out(row * columns.length + col) = matrix(row, columns(col))
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(matrix.rows, columns.length, out)
+
+  def concatColumns(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+    require(left.rows == right.rows, "column concatenation requires equal row counts")
+    val cols = left.cols + right.cols
+    val out = new Array[Double](left.rows * cols)
+    var row = 0
+    while row < left.rows do
+      var col = 0
+      while col < left.cols do
+        out(row * cols + col) = left(row, col)
+        col += 1
+      col = 0
+      while col < right.cols do
+        out(row * cols + left.cols + col) = right(row, col)
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(left.rows, cols, out)
+
+  def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+    require(left.rows == right.rows && left.cols == right.cols, "matrix subtraction requires matching shapes")
+    val out = new Array[Double](left.rows * left.cols)
+    var i = 0
+    while i < out.length do
+      out(i) = left.dataArray(i) - right.dataArray(i)
+      i += 1
+    DoubleMatrix.unsafe(left.rows, left.cols, out)
+
+  def trace(matrix: DoubleMatrix): Double =
+    require(matrix.rows == matrix.cols, "trace requires a square matrix")
+    var out = 0.0
+    var i = 0
+    while i < matrix.rows do
+      out += matrix(i, i)
+      i += 1
+    out
+
+  def close(left: DoubleMatrix, right: DoubleMatrix, tolerance: Double): Boolean =
+    if left.rows != right.rows || left.cols != right.cols then false
+    else
+      var i = 0
+      var ok = true
+      while i < left.dataArray.length && ok do
+        ok = Math.abs(left.dataArray(i) - right.dataArray(i)) <= tolerance
+        i += 1
+      ok
+
+  def solveTransposeUpper(upper: DoubleMatrix, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    if upper.rows != upper.cols || upper.rows != input.rows then
+      Left(MultivarError.MatrixShapeMismatch("lower triangular solve shape mismatch"))
+    else
+      val out = new Array[Double](input.rows * input.cols)
+      var col = 0
+      var error = Option.empty[MultivarError]
+      while col < input.cols && error.isEmpty do
+        var row = 0
+        while row < input.rows && error.isEmpty do
+          var sum = input(row, col)
+          var k = 0
+          while k < row do
+            sum -= upper(k, row) * out(k * input.cols + col)
+            k += 1
+          val diag = upper(row, row)
+          if Math.abs(diag) <= 1e-12 then error = Some(MultivarError.SingularRowMetric("row metric triangular solve is singular"))
+          else out(row * input.cols + col) = sum / diag
+          row += 1
+        col += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+
+  def solveUpper(upper: DoubleMatrix, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    if upper.rows != upper.cols || upper.rows != input.rows then
+      Left(MultivarError.MatrixShapeMismatch("upper triangular solve shape mismatch"))
+    else
+      val out = new Array[Double](input.rows * input.cols)
+      var col = 0
+      var error = Option.empty[MultivarError]
+      while col < input.cols && error.isEmpty do
+        var row = input.rows - 1
+        while row >= 0 && error.isEmpty do
+          var sum = input(row, col)
+          var k = row + 1
+          while k < input.rows do
+            sum -= upper(row, k) * out(k * input.cols + col)
+            k += 1
+          val diag = upper(row, row)
+          if Math.abs(diag) <= 1e-12 then error = Some(MultivarError.SingularRowMetric("row metric triangular solve is singular"))
+          else out(row * input.cols + col) = sum / diag
+          row -= 1
+        col += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+
+  def multiplyTransposeUpper(upper: DoubleMatrix, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    if upper.rows != upper.cols || upper.rows != input.rows then
+      Left(MultivarError.MatrixShapeMismatch("upper-transpose multiply shape mismatch"))
+    else
+      val out = new Array[Double](input.rows * input.cols)
+      var row = 0
+      while row < input.rows do
+        var k = 0
+        while k <= row do
+          val value = upper(k, row)
+          var col = 0
+          while col < input.cols do
+            out(row * input.cols + col) += value * input(k, col)
+            col += 1
+          k += 1
+        row += 1
+      Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
