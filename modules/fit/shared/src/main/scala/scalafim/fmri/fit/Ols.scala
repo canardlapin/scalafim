@@ -1,13 +1,30 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector, Pivoting, QrDecomposition, Tolerance}
+import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector, Pivoting, QrDecomposition, Ridge, Tolerance}
 
 enum OlsSolveMethod:
   case QrRankRevealing
   case CholeskyNormalEquations
 
+enum OlsRankPolicy:
+  case StrictFullRank
+  case RidgeRegularized(ridge: Ridge)
+  case MinimumNorm
+
+  def supported: Boolean =
+    this match
+      case StrictFullRank => true
+      case _              => false
+
+  def label: String =
+    this match
+      case StrictFullRank          => "strict full rank"
+      case RidgeRegularized(ridge) => s"ridge regularized (ridge=${ridge.value})"
+      case MinimumNorm             => "minimum norm"
+
 final case class OlsSolvePolicy(
     method: OlsSolveMethod = OlsSolveMethod.QrRankRevealing,
+    rankPolicy: OlsRankPolicy = OlsRankPolicy.StrictFullRank,
     rankTolerance: Tolerance = Tolerance.DefaultQr,
     choleskyTolerance: Tolerance = Tolerance.DefaultCholesky
 )
@@ -80,7 +97,9 @@ object Ols:
       policy: OlsSolvePolicy = OlsSolvePolicy.Default
   ): Either[FitError, OlsPrepared] =
     val xtx = DoubleMatrix.transposeMultiply(design.value, design.value)
-    policy.method match
+    if !policy.rankPolicy.supported then
+      Left(FitError.UnsupportedLeastSquaresPolicy(s"OLS currently supports ${OlsRankPolicy.StrictFullRank.label}; got ${policy.rankPolicy.label}"))
+    else policy.method match
       case OlsSolveMethod.QrRankRevealing =>
         val qr = QrDecomposition.decompose(design.value, Pivoting.Enabled, policy.rankTolerance)
         qr.normalizedCovarianceFullRank

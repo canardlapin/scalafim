@@ -8,6 +8,7 @@ enum FitError:
   case RowMismatch(designRows: Int, responseRows: Int)
   case NonFiniteInput(component: String)
   case SingularDesign(cause: LinearAlgebraError)
+  case UnsupportedLeastSquaresPolicy(detail: String)
   case UnsupportedEngine(engine: String)
   case InvalidFitAxis(axis: String, detail: String)
   case NonPositiveResidualDegreesOfFreedom(value: Int)
@@ -36,6 +37,8 @@ enum FitError:
         s"$component contains non-finite values"
       case SingularDesign(cause) =>
         s"design matrix is singular or ill-conditioned: ${cause.message}"
+      case UnsupportedLeastSquaresPolicy(detail) =>
+        s"unsupported least-squares policy: $detail"
       case UnsupportedEngine(engine) =>
         s"fit engine is not executable in scalafim-fmri-fit yet: $engine"
       case InvalidFitAxis(axis, detail) =>

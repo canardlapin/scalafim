@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.linalg.{DoubleMatrix, Ridge}
 
 class OlsSuite extends munit.FunSuite:
 
@@ -46,6 +46,7 @@ class OlsSuite extends munit.FunSuite:
     assertEquals(fit.voxels, 2)
     assertEquals(fit.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
     assertEquals(fit.diagnostics.solveMethod, OlsSolveMethod.QrRankRevealing)
+    assertEquals(fit.diagnostics.policy.rankPolicy, OlsRankPolicy.StrictFullRank)
     assertEquals(fit.diagnostics.predictors, 2)
     assertEquals(fit.diagnostics.rank, 2)
     assert(fit.diagnostics.fullRank)
@@ -179,6 +180,51 @@ class OlsSuite extends munit.FunSuite:
     )
 
     assert(Ols.prepare(design).isLeft)
+  }
+
+  test("OLS rank policy makes strict full-rank rejection explicit") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 2.0),
+          Vector(2.0, 4.0),
+          Vector(3.0, 6.0),
+          Vector(4.0, 8.0)
+        )
+      )
+    )
+
+    val result = Ols.prepare(design, OlsSolvePolicy(rankPolicy = OlsRankPolicy.StrictFullRank))
+
+    assert(result.left.toOption.exists {
+      case FitError.SingularDesign(cause) => cause.message.contains("rank 1") && cause.message.contains("required rank 2")
+      case _                              => false
+    })
+  }
+
+  test("OLS reports unsupported rank policies explicitly") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 0.0),
+          Vector(1.0, 1.0),
+          Vector(1.0, 2.0)
+        )
+      )
+    )
+
+    val ridgePolicy = OlsSolvePolicy(rankPolicy = OlsRankPolicy.RidgeRegularized(Ridge(1e-6).toOption.get))
+    val ridge = Ols.prepare(design, ridgePolicy)
+    assert(ridge.left.toOption.exists {
+      case FitError.UnsupportedLeastSquaresPolicy(message) => message.contains("ridge regularized")
+      case _                                               => false
+    })
+
+    val minimumNorm = Ols.prepare(design, OlsSolvePolicy(rankPolicy = OlsRankPolicy.MinimumNorm))
+    assert(minimumNorm.left.toOption.exists {
+      case FitError.UnsupportedLeastSquaresPolicy(message) => message.contains("minimum norm")
+      case _                                               => false
+    })
   }
 
   test("OLS rejects nearly collinear designs at the QR rank tolerance boundary") {
