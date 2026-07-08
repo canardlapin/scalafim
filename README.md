@@ -7,6 +7,8 @@ cross-compiled sbt build.
 
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
+- `graphics`: renderer-neutral grammar-of-graphics core, row-aware typed scales, immutable grid-like scene trees, and plot/layer specifications.
+- `graphics-svg`: deterministic SVG renderer for `graphics` scene trees.
 - `latent`: typed latent fMRI response contracts, explicit basis/loadings responses, coefficient projection, and decoder-ready selections.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
 - `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
@@ -38,6 +40,10 @@ sbt linalgJVM/test
 sbt linalgJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
+sbt graphicsJVM/test
+sbt graphicsJS/test
+sbt graphicsSvgJVM/test
+sbt graphicsSvgJS/test
 sbt latentJVM/test
 sbt latentJS/test
 sbt arJVM/test

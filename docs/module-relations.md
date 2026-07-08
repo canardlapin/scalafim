@@ -26,6 +26,9 @@ linalg
 
 pipeline
 
+graphics
++-- graphics-svg
+
 hrf
 +-- design
     +-- model
@@ -59,6 +62,8 @@ dataset, image IO, or modeling dependencies into the shared core.
 | --- | --- | --- | --- |
 | `linalg` | Primitive vectors, matrices, sparse linear maps, linear solves, projection kernels. | Nothing internal. | fMRI, image, dataset, or domain-specific spatial concepts. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, deterministic staging, local pure execution, and structured receipts. | Nothing internal. | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
+| `graphics` | Renderer-neutral graphics algebra: grammar-of-graphics plot/layer specs, row-aware typed aesthetics/scales, immutable grid-like grob scene trees, units, viewports, and graphical parameters. | Nothing internal. | Java2D/JavaFX/Canvas rendering, device IO, neuroimaging-specific plot exports, or mutable display-list state. |
+| `graphics-svg` | Deterministic SVG string rendering for `graphics` scene trees, including primitive grobs, graphical params, basic units, and viewport wrappers. | `graphics` | Plot compilation, browser Canvas state, Java2D/raster output, device IO, or domain-specific plot exporters. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata. | `hrf` | Dataset execution or numerical fit engines. |
@@ -167,6 +172,8 @@ descriptors can materialize executable dense morphisms.
 
 - Put primitive matrix/vector/operator math in `linalg`.
 - Put generic workflow graph algebra in `pipeline`; keep domain execution in the owning computational modules and adapt it upward.
+- Put renderer-neutral plotting and scene-description contracts in `graphics`; keep concrete rendering backends and domain-specific plot exporters in adapters above it.
+- Put deterministic SVG string rendering in `graphics-svg`; add browser Canvas or JVM raster backends as separate adapter modules rather than broadening `graphics`.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
 - Put mesh and vertex-domain algorithms in `surface`.
 - Put named atlas descriptors and parcel metadata in `atlas`.

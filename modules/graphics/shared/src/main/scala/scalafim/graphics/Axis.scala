@@ -1,0 +1,197 @@
+package scalafim.graphics
+
+enum AxisSide:
+  case Bottom
+  case Top
+  case Left
+  case Right
+
+  def isHorizontal: Boolean =
+    this match
+      case Bottom | Top => true
+      case Left | Right => false
+
+  private[graphics] def direction: Double =
+    this match
+      case Bottom | Right => 1.0
+      case Top | Left     => -1.0
+
+final case class AxisTick private (value: Double, label: String)
+
+object AxisTick:
+  def apply(value: Double, label: String): Either[GraphicsError, AxisTick] =
+    if value.isFinite then Right(new AxisTick(value, label))
+    else Left(GraphicsError.InvalidAxisCoordinate("tick", value))
+
+  def unsafe(value: Double, label: String): AxisTick =
+    apply(value, label).orThrow
+
+final case class Axis private (
+    side: AxisSide,
+    range: Interval,
+    ticks: Vector[AxisTick],
+    position: Double,
+    tickLength: Double,
+    labelOffset: Double,
+    axisGp: GraphicParams,
+    tickGp: GraphicParams,
+    labelGp: GraphicParams,
+    name: Option[GraphicsName]
+):
+  def toGrob(viewport: Option[Viewport] = None): Either[GraphicsError, Grob] =
+    val baseline =
+      if side.isHorizontal then
+        (Point.nativeUnsafe(range.lower, position), Point.nativeUnsafe(range.upper, position))
+      else
+        (Point.nativeUnsafe(position, range.lower), Point.nativeUnsafe(position, range.upper))
+    val tickSegments =
+      ticks.map { tick =>
+        if side.isHorizontal then
+          val y2 = position + side.direction * tickLength
+          (Point.nativeUnsafe(tick.value, position), Point.nativeUnsafe(tick.value, y2))
+        else
+          val x2 = position + side.direction * tickLength
+          (Point.nativeUnsafe(position, tick.value), Point.nativeUnsafe(x2, tick.value))
+      }
+    for
+      baselineGrob <- Grob.segments(Vector(baseline), axisGp, name = childName("baseline"))
+      tickGrobs <- tickGroup(tickSegments)
+    yield
+      val labels = ticks.map(labelGrob)
+      Grob.group(
+        Vector(baselineGrob) ++ tickGrobs ++ labels,
+        gp = GraphicParams.unsafe(stroke = None, fill = None),
+        viewport = viewport,
+        name = name
+      )
+
+  private def tickGroup(tickSegments: Vector[(Point, Point)]): Either[GraphicsError, Vector[Grob]] =
+    if tickSegments.isEmpty then Right(Vector.empty)
+    else Grob.segments(tickSegments, tickGp, name = childName("ticks")).map(Vector(_))
+
+  private def labelGrob(tick: AxisTick): Grob =
+    val at =
+      if side.isHorizontal then
+        Point.nativeUnsafe(tick.value, position + side.direction * labelOffset)
+      else
+        Point.nativeUnsafe(position + side.direction * labelOffset, tick.value)
+    Grob.text(
+      tick.label,
+      at,
+      anchor = labelAnchor,
+      gp = labelGp,
+      name = childName("label")
+    )
+
+  private def labelAnchor: Anchor =
+    side match
+      case AxisSide.Bottom => Anchor(HJust.Center, VJust.Top)
+      case AxisSide.Top    => Anchor(HJust.Center, VJust.Bottom)
+      case AxisSide.Left   => Anchor(HJust.Right, VJust.Center)
+      case AxisSide.Right  => Anchor(HJust.Left, VJust.Center)
+
+  private def childName(suffix: String): Option[GraphicsName] =
+    name.map(n => GraphicsName.unsafe(s"${n.value}-$suffix"))
+
+object Axis:
+  def make(
+      side: AxisSide,
+      range: Interval,
+      ticks: Vector[AxisTick],
+      position: Double = 0.0,
+      tickLength: Double = 0.4,
+      labelOffset: Double = 0.8,
+      axisGp: GraphicParams = GraphicParams.unsafe(),
+      tickGp: GraphicParams = GraphicParams.unsafe(),
+      labelGp: GraphicParams = GraphicParams.unsafe(),
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Axis] =
+    validate(range, ticks, position, tickLength, labelOffset).map { _ =>
+      new Axis(side, range, ticks, position, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+    }
+
+  def bottom(
+      range: Interval,
+      ticks: Vector[AxisTick],
+      y: Double = 0.0,
+      tickLength: Double = 0.4,
+      labelOffset: Double = 0.8,
+      axisGp: GraphicParams = GraphicParams.unsafe(),
+      tickGp: GraphicParams = GraphicParams.unsafe(),
+      labelGp: GraphicParams = GraphicParams.unsafe(),
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Axis] =
+    make(AxisSide.Bottom, range, ticks, y, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+
+  def top(
+      range: Interval,
+      ticks: Vector[AxisTick],
+      y: Double = 0.0,
+      tickLength: Double = 0.4,
+      labelOffset: Double = 0.8,
+      axisGp: GraphicParams = GraphicParams.unsafe(),
+      tickGp: GraphicParams = GraphicParams.unsafe(),
+      labelGp: GraphicParams = GraphicParams.unsafe(),
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Axis] =
+    make(AxisSide.Top, range, ticks, y, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+
+  def left(
+      range: Interval,
+      ticks: Vector[AxisTick],
+      x: Double = 0.0,
+      tickLength: Double = 0.4,
+      labelOffset: Double = 0.8,
+      axisGp: GraphicParams = GraphicParams.unsafe(),
+      tickGp: GraphicParams = GraphicParams.unsafe(),
+      labelGp: GraphicParams = GraphicParams.unsafe(),
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Axis] =
+    make(AxisSide.Left, range, ticks, x, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+
+  def right(
+      range: Interval,
+      ticks: Vector[AxisTick],
+      x: Double = 0.0,
+      tickLength: Double = 0.4,
+      labelOffset: Double = 0.8,
+      axisGp: GraphicParams = GraphicParams.unsafe(),
+      tickGp: GraphicParams = GraphicParams.unsafe(),
+      labelGp: GraphicParams = GraphicParams.unsafe(),
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Axis] =
+    make(AxisSide.Right, range, ticks, x, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+
+  def ticks(
+      range: Interval,
+      breaks: Breaks = Breaks.default,
+      labeler: Labeler = Labeler.default
+  ): Either[GraphicsError, Vector[AxisTick]] =
+    val values = breaks(range).filter(range.contains)
+    val labels = labeler(values)
+    if labels.length != values.length then Left(GraphicsError.AxisLabelCountMismatch(values.length, labels.length))
+    else
+      val out = Vector.newBuilder[AxisTick]
+      var idx = 0
+      var result: Either[GraphicsError, Unit] = Right(())
+      while idx < values.length && result.isRight do
+        AxisTick(values(idx), labels(idx)) match
+          case Right(tick) => out += tick
+          case Left(error) => result = Left(error)
+        idx += 1
+      result.map(_ => out.result())
+
+  private def validate(
+      range: Interval,
+      ticks: Vector[AxisTick],
+      position: Double,
+      tickLength: Double,
+      labelOffset: Double
+  ): Either[GraphicsError, Unit] =
+    if !position.isFinite then Left(GraphicsError.InvalidAxisCoordinate("position", position))
+    else if !tickLength.isFinite || tickLength < 0.0 then Left(GraphicsError.InvalidAxisCoordinate("tick length", tickLength))
+    else if !labelOffset.isFinite || labelOffset < 0.0 then Left(GraphicsError.InvalidAxisCoordinate("label offset", labelOffset))
+    else
+      ticks.find(tick => !range.contains(tick.value)) match
+        case Some(tick) => Left(GraphicsError.AxisTickOutsideRange(tick.value, range.lower, range.upper))
+        case None       => Right(())
