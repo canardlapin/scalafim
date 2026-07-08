@@ -15,7 +15,7 @@ class LssSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  test("LeastSquaresSeparate matches explicit per-trial OLS with fixed regressors") {
+  test("LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors") {
     val trials = DoubleMatrix.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0),
@@ -272,13 +272,13 @@ class LssSuite extends munit.FunSuite:
         if includeOther then design(row * cols + fixed.cols + 1) = total(row) - trials(row, trial)
         row += 1
 
-      val ols = Ols.unsafeFit(
-        DesignMatrix.unsafe(DoubleMatrix.unsafe(trials.rows, cols, design)),
-        ResponseBlock.unsafe(response)
+      val coefficients = LeastSquaresOracle.coefficients(
+        DoubleMatrix.unsafe(trials.rows, cols, design),
+        response
       )
       var voxel = 0
       while voxel < response.cols do
-        out(trial * response.cols + voxel) = ols.coefficients(fixed.cols, voxel)
+        out(trial * response.cols + voxel) = coefficients(fixed.cols, voxel)
         voxel += 1
 
       trial += 1

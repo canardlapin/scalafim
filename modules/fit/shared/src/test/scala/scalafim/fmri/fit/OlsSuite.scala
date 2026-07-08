@@ -81,6 +81,72 @@ class OlsSuite extends munit.FunSuite:
     assertEqualsDouble(fit.residualVariance(0), 0.35, 1e-10)
   }
 
+  test("OLS matches independent Gaussian oracle on overdetermined multivoxel data") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, -2.0, 0.25),
+          Vector(1.0, -1.0, 1.5),
+          Vector(1.0, 0.0, -0.5),
+          Vector(1.0, 1.0, 0.75),
+          Vector(1.0, 2.0, -1.25),
+          Vector(1.0, 3.0, 2.25)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(3.0, -1.5),
+          Vector(2.2, 0.25),
+          Vector(0.8, 1.75),
+          Vector(1.6, 2.5),
+          Vector(3.4, 1.0),
+          Vector(5.1, 5.5)
+        )
+      )
+    )
+
+    val fit = Ols.unsafeFit(design, response)
+    val oracle = LeastSquaresOracle.coefficients(design.value, response.value)
+
+    assertMatrixClose(fit.coefficients.value, oracle, tol = 1e-10)
+  }
+
+  test("OLS matches independent oracle for scaled full-rank predictors") {
+    val design = DesignMatrix.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, -0.003, 4.0),
+          Vector(1.0, -0.002, 1.0),
+          Vector(1.0, -0.001, 0.25),
+          Vector(1.0, 0.0, 0.0),
+          Vector(1.0, 0.001, 0.25),
+          Vector(1.0, 0.002, 1.0),
+          Vector(1.0, 0.003, 4.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(-2.0, 7.5),
+          Vector(-0.5, 3.0),
+          Vector(0.2, 1.2),
+          Vector(0.1, 0.3),
+          Vector(0.4, 1.0),
+          Vector(1.5, 2.5),
+          Vector(3.2, 8.0)
+        )
+      )
+    )
+
+    val fit = Ols.unsafeFit(design, response)
+    val oracle = LeastSquaresOracle.coefficients(design.value, response.value)
+
+    assertMatrixClose(fit.coefficients.value, oracle, tol = 1e-8)
+  }
+
   test("OLS rejects non-finite dense inputs at construction") {
     val badDesign = DesignMatrix.fromMatrix(
       DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, Double.NaN), Vector(1.0, 2.0)))
