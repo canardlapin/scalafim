@@ -5,7 +5,7 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventModel, EventTermColumnRole}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
+import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
@@ -14,6 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class ChunkedFitExecutorSuite extends munit.FunSuite:
 
   private val chunking = FitChunkingStrategy.unsafeByVoxelCount(2)
+  private val singleVoxelChunking = FitChunkingStrategy.unsafeByVoxelCount(1)
 
   test("FitChunkPlan exposes repeatable ordered voxel chunks") {
     val plan = FitPlan(olsModel)
@@ -74,6 +75,40 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertLssClose(actual, expected)
   }
 
+  test("ChunkedFitExecutor matches unchunked fixed-AR GLS") {
+    val plan = glsPlan(
+      ArOptions(
+        structure = ArStructure.Ar(1),
+        rho = Some(0.35)
+      )
+    )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+    val actual =
+      ChunkedFitExecutor
+        .fit(plan, selection, chunking)
+        .toOption
+        .get
+        .asInstanceOf[DenseFmriFitResult]
+
+    assertDenseClose(actual, expected)
+  }
+
+  test("FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks") {
+    val plan = glsPlan(ArOptions(structure = ArStructure.Ar(1)))
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.autocorrelation.map(_.runs.map(_.method)), Some(Vector("estimated")))
+        assertEquals(actual.autocorrelation, expected.autocorrelation)
+      }
+  }
+
   test("ChunkedFitExecutor matches unchunked runwise OLS") {
     val plan = FitPlan(runwiseModel, engine = FitEngine.RunwiseLeastSquares)
     val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
@@ -96,6 +131,18 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
 
     assert(FitChunkPlan.make(chunks).left.toOption.exists {
       case FitError.IncompatibleFitBlocks(detail) => detail.contains("ordinal 2")
+      case _                                      => false
+    })
+  }
+
+  test("FitChunkPlan rejects mixed timepoint chunks") {
+    val chunks = Vector(
+      FitChunkSpec.unsafe(ChunkOrdinal.unsafe(0), Vector(0, 1), Vector(0)),
+      FitChunkSpec.unsafe(ChunkOrdinal.unsafe(1), Vector(0, 2), Vector(1))
+    )
+
+    assert(FitChunkPlan.make(chunks).left.toOption.exists {
+      case FitError.IncompatibleFitBlocks(detail) => detail.contains("same selected timepoints")
       case _                                      => false
     })
   }
@@ -143,6 +190,51 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       task = task,
       rows = rows
     )
+
+  private def glsPlan(options: ArOptions): FitPlan =
+    FitPlan(
+      glsModel,
+      engine = FitEngine.GeneralizedLeastSquares,
+      config = FitConfig(autocorrelation = options)
+    )
+
+  private def glsModel: FmriModel =
+    val nTime = 90
+    val sampling = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
+    val task = Vector.tabulate(nTime)(i => ((i % 9) - 4).toDouble)
+    val residuals = Vector(
+      ar1Residual(phi = 0.72, n = nTime, offset = 0),
+      ar1Residual(phi = -0.48, n = nTime, offset = 500),
+      ar1Residual(phi = 0.18, n = nTime, offset = 1000)
+    )
+    val betas = Vector(
+      1.4 -> 2.0,
+      -0.8 -> 1.0,
+      0.35 -> -1.5
+    )
+    val rows =
+      Vector.tabulate(nTime) { row =>
+        betas.indices.toVector.map { voxel =>
+          val (taskBeta, intercept) = betas(voxel)
+          taskBeta * task(row) + intercept + residuals(voxel)(row)
+        }
+      }
+    modelFromRows(
+      id = "chunked-gls-demo",
+      sampling = sampling,
+      task = task,
+      rows = rows
+    )
+
+  private def ar1Residual(phi: Double, n: Int, offset: Int): Vector[Double] =
+    val out = Array.ofDim[Double](n)
+    var i = 0
+    while i < n do
+      val raw = math.sin((i + offset + 1).toDouble * 12.9898 + 78.233) * 43758.5453
+      val innovation = (raw - math.floor(raw)) * 2.0 - 1.0
+      out(i) = innovation + (if i == 0 then 0.0 else phi * out(i - 1))
+      i += 1
+    out.toVector
 
   private def modelFromRows(
       id: String,

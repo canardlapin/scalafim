@@ -29,6 +29,16 @@ final case class GlsFit(
   def voxels: Int = coefficients.voxels
   def olsDiagnostics: OlsDiagnostics = finalOlsDiagnostics
 
+final case class GlsPrepared private[fit] (
+    design: DesignMatrix,
+    partitions: Vector[RunPartition],
+    plan: WhiteningPlan,
+    diagnostics: ArDiagnostics,
+    initialOlsDiagnostics: OlsDiagnostics
+):
+  def fit(response: ResponseBlock): Either[FitError, GlsFit] =
+    Gls.fitPrepared(this, response)
+
 object Gls:
 
   def fit(
@@ -37,6 +47,14 @@ object Gls:
       partitions: Vector[RunPartition],
       options: ArOptions
   ): Either[FitError, GlsFit] =
+    prepare(design, response, partitions, options).flatMap(_.fit(response))
+
+  private[fit] def prepare(
+      design: DesignMatrix,
+      response: ResponseBlock,
+      partitions: Vector[RunPartition],
+      options: ArOptions
+  ): Either[FitError, GlsPrepared] =
     for
       _ <- validateOptions(options)
       _ <- validatePartitions(partitions)
@@ -44,7 +62,20 @@ object Gls:
       initial <- Ols.fit(design, response)
       planAndMethod <- whiteningPlan(design.value, response.value, initial.coefficients.value, segments, options)
       (plan, method) = planAndMethod
-      whitened <- WhiteningTransform(plan, design.value, response.value).left.map(arToFitError)
+    yield GlsPrepared(
+      design = design,
+      partitions = partitions,
+      plan = plan,
+      diagnostics = diagnostics(plan, partitions, method),
+      initialOlsDiagnostics = initial.diagnostics
+    )
+
+  private[fit] def fitPrepared(
+      prepared: GlsPrepared,
+      response: ResponseBlock
+  ): Either[FitError, GlsFit] =
+    for
+      whitened <- WhiteningTransform(prepared.plan, prepared.design.value, response.value).left.map(arToFitError)
       fit <- Ols.fit(DesignMatrix.unsafe(whitened.design), ResponseBlock.unsafe(whitened.response))
     yield GlsFit(
       coefficients = fit.coefficients,
@@ -52,8 +83,8 @@ object Gls:
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       normalizedCovariance = fit.normalizedCovariance,
       standardErrors = fit.standardErrors,
-      diagnostics = diagnostics(plan, partitions, method),
-      initialOlsDiagnostics = initial.diagnostics,
+      diagnostics = prepared.diagnostics,
+      initialOlsDiagnostics = prepared.initialOlsDiagnostics,
       finalOlsDiagnostics = fit.diagnostics
     )
 

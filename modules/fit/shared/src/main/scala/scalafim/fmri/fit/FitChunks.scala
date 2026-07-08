@@ -105,6 +105,18 @@ final case class FitChunkPlan private (chunks: IndexedSeq[FitChunkSpec]) extends
   def indexed: IndexedSeq[FitChunkSpec] =
     chunks
 
+  def timepoints: Vector[Int] =
+    chunks.head.timepoints
+
+  def voxelIndices: Vector[Int] =
+    chunks.iterator.flatMap(_.voxelIndices).toVector
+
+  def selection: DataSelection =
+    DataSelection(
+      time = IndexSelection.Indices(timepoints),
+      voxels = IndexSelection.Indices(voxelIndices)
+    )
+
 object FitChunkPlan:
   def fromSelection(
       plan: FitPlan,
@@ -144,15 +156,60 @@ object FitChunkPlan:
   def make(chunks: IndexedSeq[FitChunkSpec]): Either[FitError, FitChunkPlan] =
     if chunks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one fit chunk is required"))
     else
+      val timepoints = chunks.head.timepoints
       var i = 0
       while i < chunks.length do
         if chunks(i).ordinal.value != i then
           return Left(FitError.IncompatibleFitBlocks(s"chunk ordinal ${chunks(i).ordinal.value} does not match position $i"))
+        if chunks(i).timepoints != timepoints then
+          return Left(FitError.IncompatibleFitBlocks("all fit chunks must share the same selected timepoints"))
         i += 1
       Right(FitChunkPlan(chunks))
 
   private[fit] def mapDatasetError(error: DatasetError): FitError =
     FitError.InvalidFitAxis("data selection", error.message)
+
+private[fit] enum PreparedFitContext:
+  case OrdinaryLeastSquares(prepared: OlsPrepared)
+  case GeneralizedLeastSquares(prepared: GlsPrepared)
+  case Runwise(partitions: Vector[RunPartition])
+  case Lss(design: LssBlockDesign)
+
+object PreparedFitContext:
+  def prepare(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan
+  ): Either[FitError, PreparedFitContext] =
+    plan.model.dataset.seriesEither(chunkPlan.selection)
+      .left
+      .map(FitChunkPlan.mapDatasetError)
+      .flatMap(series => prepareSeries(plan, series))
+
+  private def prepareSeries(plan: FitPlan, series: FmriSeries): Either[FitError, PreparedFitContext] =
+    plan.engine match
+      case FitEngine.OrdinaryLeastSquares =>
+        for
+          input <- FitPlanExecutor.fitBlockInput(plan, series)
+          prepared <- Ols.prepare(input.design)
+        yield PreparedFitContext.OrdinaryLeastSquares(prepared)
+
+      case FitEngine.GeneralizedLeastSquares =>
+        val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+        for
+          input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
+          prepared <- Gls.prepare(input.design, input.response, partitions, plan.config.autocorrelation)
+        yield PreparedFitContext.GeneralizedLeastSquares(prepared)
+
+      case FitEngine.RunwiseLeastSquares =>
+        Right(PreparedFitContext.Runwise(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)))
+
+      case FitEngine.LeastSquaresSeparate =>
+        FitPlanExecutor
+          .lssExecutionDesign(plan, series.timepoints)
+          .map(PreparedFitContext.Lss.apply)
+
+      case other =>
+        Left(FitError.UnsupportedEngine(other.toString))
 
 private[fit] final case class CompletedFitChunk(
     ordinal: ChunkOrdinal,
@@ -167,7 +224,8 @@ object ChunkedFitExecutor:
   ): Either[FitError, FmriFitResult] =
     for
       chunkPlan <- FitChunkPlan.fromSelection(plan, selection, chunking)
-      chunks <- fitChunks(plan, chunkPlan)
+      context <- PreparedFitContext.prepare(plan, chunkPlan)
+      chunks <- fitChunks(plan, chunkPlan, context)
       result <- mergeChunks(plan, chunks)
     yield result
 
@@ -175,11 +233,18 @@ object ChunkedFitExecutor:
       plan: FitPlan,
       chunkPlan: FitChunkPlan
   ): Either[FitError, Vector[FitBlockResult]] =
+    PreparedFitContext.prepare(plan, chunkPlan).flatMap(fitChunks(plan, chunkPlan, _))
+
+  private[fit] def fitChunks(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan,
+      context: PreparedFitContext
+  ): Either[FitError, Vector[FitBlockResult]] =
     val out = Vector.newBuilder[FitBlockResult]
     val iterator = chunkPlan.iterator
     while iterator.hasNext do
       val chunk = iterator.next()
-      fitChunk(plan, chunk) match
+      fitChunk(plan, chunk, context) match
         case Left(error) =>
           return Left(error)
         case Right(result) =>
@@ -190,42 +255,69 @@ object ChunkedFitExecutor:
       plan: FitPlan,
       chunk: FitChunkSpec
   ): Either[FitError, FitBlockResult] =
+    val normalized =
+      FitChunkSpec.unsafe(
+        ordinal = ChunkOrdinal.unsafe(0),
+        timepoints = chunk.timepoints,
+        voxelIndices = chunk.voxelIndices
+      )
+    FitChunkPlan
+      .make(Vector(normalized))
+      .flatMap(PreparedFitContext.prepare(plan, _))
+      .flatMap(fitChunk(plan, chunk, _))
+
+  private[fit] def fitChunk(
+      plan: FitPlan,
+      chunk: FitChunkSpec,
+      context: PreparedFitContext
+  ): Either[FitError, FitBlockResult] =
     plan.model.dataset.seriesEither(chunk.selection)
       .left
       .map(FitChunkPlan.mapDatasetError)
-      .flatMap(series => fitSeriesChunk(plan, series))
+      .flatMap(series => fitSeriesChunk(plan, series, context))
 
-  private def fitSeriesChunk(plan: FitPlan, series: FmriSeries): Either[FitError, FitBlockResult] =
-    plan.engine match
-      case FitEngine.OrdinaryLeastSquares =>
+  private def fitSeriesChunk(
+      plan: FitPlan,
+      series: FmriSeries,
+      context: PreparedFitContext
+  ): Either[FitError, FitBlockResult] =
+    context match
+      case PreparedFitContext.OrdinaryLeastSquares(prepared) =>
         for
-          input <- FitPlanExecutor.fitBlockInput(plan, series)
-          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
-        yield dense
+          response <- MatrixAdapters.responseBlock(series)
+          input = FitBlockInput(
+            design = prepared.design,
+            response = response,
+            voxelIndices = series.voxelIndices,
+            timepoints = series.timepoints
+          )
+          fit <- prepared.fit(response)
+        yield DenseFitBlockResult.fromOls(input, fit, plan.engine)
 
-      case FitEngine.GeneralizedLeastSquares =>
-        val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      case PreparedFitContext.GeneralizedLeastSquares(prepared) =>
         for
-          input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
-        yield dense
+          response <- MatrixAdapters.responseBlock(series)
+          input = FitBlockInput(
+            design = prepared.design,
+            response = response,
+            voxelIndices = series.voxelIndices,
+            timepoints = series.timepoints,
+            partitions = prepared.partitions
+          )
+          fit <- prepared.fit(response)
+        yield DenseFitBlockResult.fromGls(input, fit)
 
-      case FitEngine.RunwiseLeastSquares =>
-        val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      case PreparedFitContext.Runwise(partitions) =>
         for
           input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
           runwise <- FitKernel.fitRunwise(input)
         yield runwise
 
-      case FitEngine.LeastSquaresSeparate =>
+      case PreparedFitContext.Lss(lssDesign) =>
         for
-          lssDesign <- FitPlanExecutor.lssExecutionDesign(plan, series.timepoints)
           input <- FitPlanExecutor.fitBlockInput(plan, series, lssDesign = Some(Right(lssDesign)))
           lss <- FitKernel.fitLss(input)
         yield lss
-
-      case other =>
-        Left(FitError.UnsupportedEngine(other.toString))
 
   private[fit] def mergeChunks(
       plan: FitPlan,
@@ -307,21 +399,37 @@ object FutureChunkedFitExecutor:
       case Left(error) =>
         Future.successful(Left(error))
       case Right(chunkPlan) =>
-        fitChunks(plan, chunkPlan, parallelism).map {
+        PreparedFitContext.prepare(plan, chunkPlan) match
           case Left(error) =>
-            Left(error)
-          case Right(chunks) =>
-            ChunkedFitExecutor.mergeChunks(plan, chunks.map(_.result))
-        }
+            Future.successful(Left(error))
+          case Right(context) =>
+            fitChunks(plan, chunkPlan, context, parallelism).map {
+              case Left(error) =>
+                Left(error)
+              case Right(chunks) =>
+                ChunkedFitExecutor.mergeChunks(plan, chunks.map(_.result))
+            }
 
   private[fit] def fitChunks(
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
+    PreparedFitContext.prepare(plan, chunkPlan) match
+      case Left(error) =>
+        Future.successful(Left(error))
+      case Right(context) =>
+        fitChunks(plan, chunkPlan, context, parallelism)
+
+  private[fit] def fitChunks(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan,
+      context: PreparedFitContext,
+      parallelism: FitParallelism
+  )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
     runBounded(chunkPlan.indexed, parallelism) { chunk =>
       Future {
-        ChunkedFitExecutor.fitChunk(plan, chunk).map { result =>
+        ChunkedFitExecutor.fitChunk(plan, chunk, context).map { result =>
           CompletedFitChunk(chunk.ordinal, result)
         }
       }

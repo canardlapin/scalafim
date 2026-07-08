@@ -46,3 +46,9 @@ caller-supplied `ExecutionContext` and typed `FitParallelism` to bound concurren
 chunk work. The public `FitPlanExecutor.fitChunked` and `fitChunkedFuture` methods
 cover OLS, GLS, LSS, and runwise OLS when chunking by voxel count; arbitrary
 time-splitting is intentionally not exposed as a valid fit chunking strategy.
+
+Chunked execution prepares engine-specific context once for the resolved
+selection and then applies that immutable context to each voxel chunk. This is
+especially important for estimated-AR GLS: the AR/whitening plan is estimated on
+the full selected response block before voxel chunks run, so chunking does not
+silently change the autocorrelation model.
