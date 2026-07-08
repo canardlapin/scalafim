@@ -29,6 +29,19 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertEquals(chunkPlan.iterator.map(_.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
   }
 
+  test("FitChunkProgram exposes a repeatable scheduler-neutral work stream") {
+    val plan = FitPlan(olsModel)
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+
+    val program = FitChunkProgram.fromSelection(plan, selection, chunking).toOption.get
+
+    assertEquals(program.chunkCount, 2)
+    assertEquals(program.indexed.map(_.ordinal.value).toVector, Vector(0, 1))
+    assertEquals(program.indexed.map(_.chunk.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
+    assertEquals(program.iterator.map(_.chunk.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
+    assertEquals(program.iterator.map(_.chunk.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
+  }
+
   test("ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order") {
     val plan = FitPlan(olsModel)
     val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
@@ -106,6 +119,34 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         assertDenseClose(actual, expected)
         assertEquals(actual.autocorrelation.map(_.runs.map(_.method)), Some(Vector("estimated")))
         assertEquals(actual.autocorrelation, expected.autocorrelation)
+      }
+  }
+
+  test("chunk interpreters agree from the same prepared GLS chunk program") {
+    val plan = glsPlan(ArOptions(structure = ArStructure.Ar(1)))
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val program = FitChunkProgram.fromSelection(plan, selection, singleVoxelChunking).toOption.get
+    val sequential = SequentialFitChunkInterpreter.execute(program).toOption.get
+
+    FutureFitChunkInterpreter(FitParallelism.unsafe(2))
+      .execute(program)
+      .map { result =>
+        val parallel = result.toOption.get
+        val sequentialFit =
+          ChunkedFitExecutor
+            .mergeCompletedChunks(plan, sequential)
+            .toOption
+            .get
+            .asInstanceOf[DenseFmriFitResult]
+        val parallelFit =
+          ChunkedFitExecutor
+            .mergeCompletedChunks(plan, parallel)
+            .toOption
+            .get
+            .asInstanceOf[DenseFmriFitResult]
+
+        assertEquals(parallel.map(_.ordinal.value), sequential.map(_.ordinal.value))
+        assertDenseClose(parallelFit, sequentialFit)
       }
   }
 

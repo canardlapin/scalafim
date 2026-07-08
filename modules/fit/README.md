@@ -52,3 +52,9 @@ selection and then applies that immutable context to each voxel chunk. This is
 especially important for estimated-AR GLS: the AR/whitening plan is estimated on
 the full selected response block before voxel chunks run, so chunking does not
 silently change the autocorrelation model.
+
+The scheduler-neutral boundary is `FitChunkProgram`: a resolved chunk stream plus
+the prepared engine context needed to execute each work item. The shared module
+provides local sequential and bounded `Future` interpreters over that program.
+Future distributed runtimes should consume the same prepared program contract
+from JVM-only adapters rather than adding scheduler concepts to shared code.

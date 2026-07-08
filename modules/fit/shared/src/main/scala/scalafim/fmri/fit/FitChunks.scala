@@ -216,6 +216,123 @@ private[fit] final case class CompletedFitChunk(
     result: FitBlockResult
 )
 
+private[fit] final case class FitChunkWork private (chunk: FitChunkSpec):
+  def ordinal: ChunkOrdinal =
+    chunk.ordinal
+
+  def selection: DataSelection =
+    chunk.selection
+
+object FitChunkWork:
+  def fromChunk(chunk: FitChunkSpec): FitChunkWork =
+    FitChunkWork(chunk)
+
+private[fit] final case class FitChunkProgram private (
+    plan: FitPlan,
+    chunkPlan: FitChunkPlan,
+    context: PreparedFitContext
+) extends Iterable[FitChunkWork]:
+  override def iterator: Iterator[FitChunkWork] =
+    chunkPlan.iterator.map(FitChunkWork.fromChunk)
+
+  override def knownSize: Int =
+    chunkPlan.knownSize
+
+  def indexed: IndexedSeq[FitChunkWork] =
+    chunkPlan.indexed.map(FitChunkWork.fromChunk)
+
+  def chunkCount: Int =
+    chunkPlan.length
+
+  def selection: DataSelection =
+    chunkPlan.selection
+
+object FitChunkProgram:
+  def fromSelection(
+      plan: FitPlan,
+      selection: DataSelection = DataSelection.All,
+      chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
+  ): Either[FitError, FitChunkProgram] =
+    FitChunkPlan
+      .fromSelection(plan, selection, chunking)
+      .flatMap(fromChunkPlan(plan, _))
+
+  def fromChunkPlan(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan
+  ): Either[FitError, FitChunkProgram] =
+    PreparedFitContext
+      .prepare(plan, chunkPlan)
+      .map(context => FitChunkProgram(plan, chunkPlan, context))
+
+  private[fit] def fromPrepared(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan,
+      context: PreparedFitContext
+  ): FitChunkProgram =
+    FitChunkProgram(plan, chunkPlan, context)
+
+private[fit] trait FitChunkInterpreter[F[_]]:
+  def execute(program: FitChunkProgram): F[Either[FitError, Vector[CompletedFitChunk]]]
+
+private[fit] object SequentialFitChunkInterpreter extends FitChunkInterpreter[[A] =>> A]:
+  def execute(program: FitChunkProgram): Either[FitError, Vector[CompletedFitChunk]] =
+    val out = Vector.newBuilder[CompletedFitChunk]
+    val iterator = program.iterator
+    while iterator.hasNext do
+      val work = iterator.next()
+      ChunkedFitExecutor.fitChunk(program.plan, work.chunk, program.context) match
+        case Left(error) =>
+          return Left(error)
+        case Right(result) =>
+          out += CompletedFitChunk(work.ordinal, result)
+    Right(out.result())
+
+private[fit] final case class FutureFitChunkInterpreter(
+    parallelism: FitParallelism = FitParallelism.unbounded
+)(
+    using executionContext: ExecutionContext
+) extends FitChunkInterpreter[Future]:
+  def execute(program: FitChunkProgram): Future[Either[FitError, Vector[CompletedFitChunk]]] =
+    FutureFitChunkInterpreter.runBounded(program.indexed, parallelism) { work =>
+      Future {
+        ChunkedFitExecutor.fitChunk(program.plan, work.chunk, program.context).map { result =>
+          CompletedFitChunk(work.ordinal, result)
+        }
+      }
+    }.map(FutureFitChunkInterpreter.collect)
+
+object FutureFitChunkInterpreter:
+  private def collect(results: Vector[Either[FitError, CompletedFitChunk]]): Either[FitError, Vector[CompletedFitChunk]] =
+    var error: FitError | Null = null
+    val sorted = Vector.newBuilder[CompletedFitChunk]
+    var i = 0
+    while i < results.length && error == null do
+      results(i) match
+        case Left(err) =>
+          error = err
+        case Right(result) =>
+          sorted += result
+      i += 1
+    error match
+      case null => Right(sorted.result().sortBy(_.ordinal.value))
+      case err  => Left(err)
+
+  private def runBounded[A, B](
+      values: IndexedSeq[A],
+      parallelism: FitParallelism
+  )(
+      f: A => Future[B]
+  )(using ExecutionContext): Future[Vector[B]] =
+    if values.isEmpty then Future.successful(Vector.empty)
+    else
+      val chunkSize = math.min(parallelism.maxConcurrency, values.length)
+      values.grouped(chunkSize).foldLeft(Future.successful(Vector.empty[B])) { (acc, chunk) =>
+        acc.flatMap { collected =>
+          Future.sequence(chunk.map(f)).map(results => collected ++ results)
+        }
+      }
+
 object ChunkedFitExecutor:
   def fit(
       plan: FitPlan,
@@ -223,33 +340,30 @@ object ChunkedFitExecutor:
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FmriFitResult] =
     for
-      chunkPlan <- FitChunkPlan.fromSelection(plan, selection, chunking)
-      context <- PreparedFitContext.prepare(plan, chunkPlan)
-      chunks <- fitChunks(plan, chunkPlan, context)
-      result <- mergeChunks(plan, chunks)
+      program <- FitChunkProgram.fromSelection(plan, selection, chunking)
+      chunks <- SequentialFitChunkInterpreter.execute(program)
+      result <- mergeCompletedChunks(program.plan, chunks)
     yield result
 
   def fitChunks(
       plan: FitPlan,
       chunkPlan: FitChunkPlan
   ): Either[FitError, Vector[FitBlockResult]] =
-    PreparedFitContext.prepare(plan, chunkPlan).flatMap(fitChunks(plan, chunkPlan, _))
+    FitChunkProgram
+      .fromChunkPlan(plan, chunkPlan)
+      .flatMap(fitChunks)
+
+  private[fit] def fitChunks(program: FitChunkProgram): Either[FitError, Vector[FitBlockResult]] =
+    SequentialFitChunkInterpreter
+      .execute(program)
+      .map(_.map(_.result))
 
   private[fit] def fitChunks(
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       context: PreparedFitContext
   ): Either[FitError, Vector[FitBlockResult]] =
-    val out = Vector.newBuilder[FitBlockResult]
-    val iterator = chunkPlan.iterator
-    while iterator.hasNext do
-      val chunk = iterator.next()
-      fitChunk(plan, chunk, context) match
-        case Left(error) =>
-          return Left(error)
-        case Right(result) =>
-          out += result
-    Right(out.result())
+    fitChunks(FitChunkProgram.fromPrepared(plan, chunkPlan, context))
 
   def fitChunk(
       plan: FitPlan,
@@ -358,6 +472,12 @@ object ChunkedFitExecutor:
             }
           }
 
+  private[fit] def mergeCompletedChunks(
+      plan: FitPlan,
+      chunks: IndexedSeq[CompletedFitChunk]
+  ): Either[FitError, FmriFitResult] =
+    mergeChunks(plan, chunks.sortBy(_.ordinal.value).map(_.result))
+
   private def collectDense(chunks: IndexedSeq[FitBlockResult]): Either[FitError, Vector[DenseFitBlockResult]] =
     val out = Vector.newBuilder[DenseFitBlockResult]
     var i = 0
@@ -395,31 +515,25 @@ object FutureChunkedFitExecutor:
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    FitChunkPlan.fromSelection(plan, selection, chunking) match
+    FitChunkProgram.fromSelection(plan, selection, chunking) match
       case Left(error) =>
         Future.successful(Left(error))
-      case Right(chunkPlan) =>
-        PreparedFitContext.prepare(plan, chunkPlan) match
+      case Right(program) =>
+        FutureFitChunkInterpreter(parallelism).execute(program).map {
           case Left(error) =>
-            Future.successful(Left(error))
-          case Right(context) =>
-            fitChunks(plan, chunkPlan, context, parallelism).map {
-              case Left(error) =>
-                Left(error)
-              case Right(chunks) =>
-                ChunkedFitExecutor.mergeChunks(plan, chunks.map(_.result))
-            }
+            Left(error)
+          case Right(chunks) =>
+            ChunkedFitExecutor.mergeCompletedChunks(program.plan, chunks)
+        }
 
   private[fit] def fitChunks(
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
-    PreparedFitContext.prepare(plan, chunkPlan) match
-      case Left(error) =>
-        Future.successful(Left(error))
-      case Right(context) =>
-        fitChunks(plan, chunkPlan, context, parallelism)
+    FitChunkProgram.fromChunkPlan(plan, chunkPlan) match
+      case Left(error)    => Future.successful(Left(error))
+      case Right(program) => FutureFitChunkInterpreter(parallelism).execute(program)
 
   private[fit] def fitChunks(
       plan: FitPlan,
@@ -427,39 +541,5 @@ object FutureChunkedFitExecutor:
       context: PreparedFitContext,
       parallelism: FitParallelism
   )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
-    runBounded(chunkPlan.indexed, parallelism) { chunk =>
-      Future {
-        ChunkedFitExecutor.fitChunk(plan, chunk, context).map { result =>
-          CompletedFitChunk(chunk.ordinal, result)
-        }
-      }
-    }.map { results =>
-      var error: FitError | Null = null
-      val sorted = Vector.newBuilder[CompletedFitChunk]
-      var i = 0
-      while i < results.length && error == null do
-        results(i) match
-          case Left(err) =>
-            error = err
-          case Right(result) =>
-            sorted += result
-        i += 1
-      error match
-        case null => Right(sorted.result().sortBy(_.ordinal.value))
-        case err  => Left(err)
-    }
-
-  private def runBounded[A, B](
-      values: IndexedSeq[A],
-      parallelism: FitParallelism
-  )(
-      f: A => Future[B]
-  )(using ExecutionContext): Future[Vector[B]] =
-    if values.isEmpty then Future.successful(Vector.empty)
-    else
-      val chunkSize = math.min(parallelism.maxConcurrency, values.length)
-      values.grouped(chunkSize).foldLeft(Future.successful(Vector.empty[B])) { (acc, chunk) =>
-        acc.flatMap { collected =>
-          Future.sequence(chunk.map(f)).map(results => collected ++ results)
-        }
-      }
+    FutureFitChunkInterpreter(parallelism)
+      .execute(FitChunkProgram.fromPrepared(plan, chunkPlan, context))
