@@ -1,5 +1,61 @@
 package scalafim.latent
 
+enum LatentAxis(val label: String):
+  case Timepoint extends LatentAxis("timepoint")
+  case Sample extends LatentAxis("sample")
+
+opaque type TimepointIndex = Int
+
+object TimepointIndex:
+  def apply(value: Int): Either[LatentError, TimepointIndex] =
+    if value < 0 then Left(LatentError.NegativeIndex(LatentAxis.Timepoint.label, value))
+    else Right(value)
+
+  def unsafe(value: Int): TimepointIndex =
+    apply(value).fold(error => throw IllegalArgumentException(error.message), identity)
+
+  extension (index: TimepointIndex)
+    def value: Int = index
+
+opaque type SampleIndex = Int
+
+object SampleIndex:
+  def apply(value: Int): Either[LatentError, SampleIndex] =
+    if value < 0 then Left(LatentError.NegativeIndex(LatentAxis.Sample.label, value))
+    else Right(value)
+
+  def unsafe(value: Int): SampleIndex =
+    apply(value).fold(error => throw IllegalArgumentException(error.message), identity)
+
+  extension (index: SampleIndex)
+    def value: Int = index
+
+final case class TypedLatentSelection(
+    timepoints: Option[IndexedSeq[TimepointIndex]] = None,
+    samples: Option[IndexedSeq[SampleIndex]] = None
+):
+  def toLatentSelection: LatentSelection =
+    LatentSelection(
+      timepoints = timepoints.map(_.map(_.value)),
+      samples = samples.map(_.map(_.value))
+    )
+
+object TypedLatentSelection:
+  val All: TypedLatentSelection =
+    TypedLatentSelection()
+
+  def checked(
+      timepoints: Option[IndexedSeq[Int]] = None,
+      samples: Option[IndexedSeq[Int]] = None
+  ): Either[LatentError, TypedLatentSelection] =
+    for
+      t <- traverse(timepoints.getOrElse(Vector.empty))(TimepointIndex.apply)
+      s <- traverse(samples.getOrElse(Vector.empty))(SampleIndex.apply)
+    yield TypedLatentSelection(
+      timepoints = timepoints.map(_ => t),
+      samples = samples.map(_ => s)
+    )
+
 final case class ResolvedLatentSelection(
     timepoints: IndexedSeq[Int],
     samples: IndexedSeq[Int]
@@ -20,6 +76,9 @@ final case class LatentSelection(
 object LatentSelection:
   val All: LatentSelection =
     LatentSelection()
+
+  def fromTyped(selection: TypedLatentSelection): LatentSelection =
+    selection.toLatentSelection
 
   private def resolveAxis(
       axis: String,
@@ -49,3 +108,15 @@ object LatentSelection:
             error match
               case Some(err) => Left(err)
               case None      => Right(indices)
+
+private def traverse[A, B](values: Iterable[A])(f: A => Either[LatentError, B]): Either[LatentError, IndexedSeq[B]] =
+  val out = Vector.newBuilder[B]
+  val it = values.iterator
+  var error = Option.empty[LatentError]
+  while it.hasNext && error.isEmpty do
+    f(it.next()) match
+      case Right(value) => out += value
+      case Left(err)    => error = Some(err)
+  error match
+    case Some(err) => Left(err)
+    case None      => Right(out.result())

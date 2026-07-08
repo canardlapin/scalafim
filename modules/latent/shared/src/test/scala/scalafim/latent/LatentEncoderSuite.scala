@@ -23,6 +23,7 @@ class LatentEncoderSuite extends munit.FunSuite:
         center = true,
         metadata = Map("subject" -> "sub-01")
       )
+    assertEquals(spec.typedMetadata.get("subject"), Some("sub-01"))
 
     val result =
       LatentEncoder.encode(data, spec).fold(err => fail(err.message), identity)
@@ -57,6 +58,91 @@ class LatentEncoderSuite extends munit.FunSuite:
         assertRowsEqual(response.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-10)
       case other =>
         fail(s"expected temporal DCT archive variant, found $other")
+  }
+
+  test("temporal Haar specs dispatch through the direct encoder and archive explicitly") {
+    val data =
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 2.0, 3.0),
+          Vector(2.0, 3.0, 5.0),
+          Vector(3.0, 5.0, 8.0),
+          Vector(5.0, 8.0, 13.0)
+        )
+      )
+    val haarSpec =
+      HaarSpec(data.rows, data.rows).fold(err => fail(err.message), identity)
+    val spec =
+      LatentEncodingSpec.haarSpec(
+        spec = haarSpec,
+        center = true,
+        metadata = Map("subject" -> "sub-01")
+      )
+    assertEquals(spec.typedMetadata.get("subject"), Some("sub-01"))
+
+    val result =
+      LatentEncoder.encode(data, spec).fold(err => fail(err.message), identity)
+    val direct =
+      TemporalBasisEncoder
+        .encodeHaarSpec(data, haarSpec, center = true, metadata = Map("subject" -> "sub-01"))
+        .fold(err => fail(err.message), identity)
+
+    result match
+      case LatentEncodingResult.TemporalHaar(response, returnedSpec, center, ridge) =>
+        assertEquals(returnedSpec.timepoints, haarSpec.timepoints)
+        assertEquals(returnedSpec.components, haarSpec.components)
+        assertEquals(center, true)
+        assertEquals(ridge.value, 0.0)
+        assertRowsEqual(response.basis.toRows, direct.basis.toRows, 1e-12)
+        assertRowsEqual(response.loadings.toRows, direct.loadings.toRows, 1e-12)
+        assertEquals(response.metadata("family"), "time_haar")
+        assertEquals(response.metadata("subject"), "sub-01")
+      case other =>
+        fail(s"expected temporal Haar result, found $other")
+
+    val archive =
+      LatentEncoder
+        .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
+        .fold(err => fail(err.message), identity)
+    val decoded =
+      LatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity)
+
+    decoded match
+      case LatentArchiveResponse.Explicit(response) =>
+        assertEquals(response.metadata("basis"), "haar")
+        assertEquals(response.metadata("family"), "time_haar")
+        assertRowsEqual(response.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-10)
+      case other =>
+        fail(s"expected explicit Haar archive variant, found $other")
+  }
+
+  test("latent typed shape metadata and selections preserve intent") {
+    val shape =
+      LatentShape
+        .checked(timepoints = 4, samples = 3, coefficients = 2)
+        .fold(err => fail(err.message), identity)
+    assertEquals(shape.timepointCount.value, 4)
+    assertEquals(shape.sampleCount.value, 3)
+    assertEquals(shape.coefficientCount.value, 2)
+    assert(LatentShape.checked(timepoints = 0, samples = 3, coefficients = 2).isLeft)
+
+    assertEquals(LatentMetadata(Map("subject" -> "sub-01")).map(_.get("subject")), Right(Some("sub-01")))
+    assert(LatentMetadata(Map("" -> "bad")).isLeft)
+
+    val typedSelection =
+      TypedLatentSelection
+        .checked(timepoints = Some(Vector(2, 0)), samples = Some(Vector(1)))
+        .fold(err => fail(err.message), identity)
+    val resolved =
+      typedSelection
+        .toLatentSelection
+        .resolve(timepointCount = 3, sampleCount = 2)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(resolved.timepoints, Vector(2, 0))
+    assertEquals(resolved.samples, Vector(1))
+    assertEquals(LatentSelection.fromTyped(TypedLatentSelection.All), LatentSelection.All)
+    assert(TypedLatentSelection.checked(timepoints = Some(Vector(-1))).isLeft)
   }
 
   test("provided temporal basis specs use Gram-solve projection") {

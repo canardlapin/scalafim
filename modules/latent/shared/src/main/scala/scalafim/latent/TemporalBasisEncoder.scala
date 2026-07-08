@@ -77,6 +77,77 @@ object TemporalBasisEncoder:
         )
       }
 
+  def encodeHaar(
+      data: DoubleMatrix,
+      components: Int,
+      center: Boolean = false,
+      ridge: Double = 0.0,
+      sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("latent.samples"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty
+  ): Either[LatentError, ExplicitLatentResponse] =
+    for
+      penalty <- RidgePenalty(ridge)
+      spec <- HaarSpec(data.rows, components)
+      response <- encodeHaarSpec(
+        data = data,
+        spec = spec,
+        center = center,
+        ridge = penalty,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata
+      )
+    yield response
+
+  def encodeHaarSpec(
+      data: DoubleMatrix,
+      spec: HaarSpec,
+      center: Boolean = false,
+      ridge: RidgePenalty = RidgePenalty.Zero,
+      sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("latent.samples"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty
+  ): Either[LatentError, ExplicitLatentResponse] =
+    if data.rows != spec.timepoints then
+      Left(LatentError.DimensionMismatch("Haar spec timepoints", spec.timepoints, data.rows))
+    else
+      HaarBasis.build(spec).flatMap { basis =>
+        encode(
+          data = data,
+          basis = basis,
+          center = center,
+          ridge = ridge.value,
+          sourceDomain = sourceDomain,
+          targetDomain = targetDomain,
+          label = if label.nonEmpty then label else s"Haar(${spec.timepoints},${spec.components})",
+          metadata = haarMetadata(spec.timepoints, spec.components, spec.levels, center, ridge, metadata)
+        )
+      }
+
+  def encodeFullHaar(
+      data: DoubleMatrix,
+      center: Boolean = false,
+      ridge: Double = 0.0,
+      sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("latent.samples"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty
+  ): Either[LatentError, ExplicitLatentResponse] =
+    encodeHaar(
+      data = data,
+      components = data.rows,
+      center = center,
+      ridge = ridge,
+      sourceDomain = sourceDomain,
+      targetDomain = targetDomain,
+      label = label,
+      metadata = metadata
+    )
+
   def encodeFullDct(
       data: DoubleMatrix,
       norm: DctNorm = DctNorm.Ortho,
@@ -178,6 +249,24 @@ object TemporalBasisEncoder:
       metadata: Map[String, String]
   ): Map[String, String] =
     dctMetadata(timepoints, components, norm, metadata) ++ Map(
+      "center" -> center.toString,
+      "ridge" -> ridge.metadataValue
+    )
+
+  private def haarMetadata(
+      timepoints: Int,
+      components: Int,
+      levels: Int,
+      center: Boolean,
+      ridge: RidgePenalty,
+      metadata: Map[String, String]
+  ): Map[String, String] =
+    metadata ++ Map(
+      "family" -> "time_haar",
+      "basis" -> "haar",
+      "timepoints" -> timepoints.toString,
+      "components" -> components.toString,
+      "levels" -> levels.toString,
       "center" -> center.toString,
       "ridge" -> ridge.metadataValue
     )
