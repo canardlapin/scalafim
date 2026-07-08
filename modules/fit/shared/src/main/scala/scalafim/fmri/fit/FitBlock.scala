@@ -201,6 +201,114 @@ object RunwiseFitBlockResult:
       timepoints = input.timepoints
     )
 
+  def merge(blocks: IndexedSeq[RunwiseFitBlockResult]): Either[FitError, RunwiseFitBlockResult] =
+    if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one runwise block is required"))
+    else
+      val first = blocks.head
+      validateCompatible(blocks, first).map { _ =>
+        RunwiseFitBlockResult(
+          runs = mergeRuns(blocks),
+          voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
+          timepoints = first.timepoints
+        )
+      }
+
+  private def validateCompatible(
+      blocks: IndexedSeq[RunwiseFitBlockResult],
+      first: RunwiseFitBlockResult
+  ): Either[FitError, Unit] =
+    var blockIndex = 0
+    while blockIndex < blocks.length do
+      val block = blocks(blockIndex)
+      if block.timepoints != first.timepoints then
+        return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have the same selected timepoints"))
+      if block.runs.length != first.runs.length then
+        return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have the same run count"))
+
+      var runIndex = 0
+      while runIndex < block.runs.length do
+        val run = block.runs(runIndex)
+        val firstRun = first.runs(runIndex)
+        if run.runIndex != firstRun.runIndex then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must preserve run order"))
+        if run.rowIndices != firstRun.rowIndices then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run row indices"))
+        if run.timepoints != firstRun.timepoints then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run timepoints"))
+        if run.residualDegreesOfFreedom != firstRun.residualDegreesOfFreedom then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run residual degrees of freedom"))
+        if run.coefficients.predictors != firstRun.coefficients.predictors then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run predictor counts"))
+        if run.olsDiagnostics != firstRun.olsDiagnostics then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run OLS diagnostics"))
+        if !sameMatrix(run.normalizedCovariance, firstRun.normalizedCovariance) then
+          return Left(FitError.IncompatibleFitBlocks("all runwise blocks must share run normalized covariance"))
+        runIndex += 1
+
+      blockIndex += 1
+    Right(())
+
+  private def mergeRuns(blocks: IndexedSeq[RunwiseFitBlockResult]): Vector[RunwiseFmriRunResult] =
+    val out = Vector.newBuilder[RunwiseFmriRunResult]
+    val first = blocks.head
+    var runIndex = 0
+    while runIndex < first.runs.length do
+      val firstRun = first.runs(runIndex)
+      val currentRuns = blocks.map(_.runs(runIndex))
+      out += RunwiseFmriRunResult(
+        runIndex = firstRun.runIndex,
+        rowIndices = firstRun.rowIndices,
+        timepoints = firstRun.timepoints,
+        coefficients = CoefficientBlock(bindMatrixColumns(currentRuns, _.coefficients.value)),
+        standardErrors = StandardErrorBlock(bindMatrixColumns(currentRuns, _.standardErrors.value)),
+        normalizedCovariance = DoubleMatrix.unsafe(firstRun.normalizedCovariance.rows, firstRun.normalizedCovariance.cols, firstRun.normalizedCovariance.copyData),
+        residualVariance = DoubleVector.unsafe(bindVectors(currentRuns, _.residualVariance)),
+        residualDegreesOfFreedom = firstRun.residualDegreesOfFreedom,
+        olsDiagnostics = firstRun.olsDiagnostics
+      )
+      runIndex += 1
+    out.result()
+
+  private def bindMatrixColumns(
+      runs: IndexedSeq[RunwiseFmriRunResult],
+      matrix: RunwiseFmriRunResult => DoubleMatrix
+  ): DoubleMatrix =
+    val rows = matrix(runs.head).rows
+    val cols = runs.iterator.map(run => matrix(run).cols).sum
+    val out = new Array[Double](rows * cols)
+    var colOffset = 0
+    var runIndex = 0
+    while runIndex < runs.length do
+      val current = matrix(runs(runIndex))
+      require(current.rows == rows, "runwise block matrix row mismatch")
+      var row = 0
+      while row < rows do
+        System.arraycopy(current.dataArray, row * current.cols, out, row * cols + colOffset, current.cols)
+        row += 1
+      colOffset += current.cols
+      runIndex += 1
+    DoubleMatrix.unsafe(rows, cols, out)
+
+  private def bindVectors(
+      runs: IndexedSeq[RunwiseFmriRunResult],
+      vector: RunwiseFmriRunResult => DoubleVector
+  ): Array[Double] =
+    val length = runs.iterator.map(run => vector(run).length).sum
+    val out = new Array[Double](length)
+    var offset = 0
+    var runIndex = 0
+    while runIndex < runs.length do
+      val current = vector(runs(runIndex)).copyData
+      System.arraycopy(current, 0, out, offset, current.length)
+      offset += current.length
+      runIndex += 1
+    out
+
+  private def sameMatrix(left: DoubleMatrix, right: DoubleMatrix): Boolean =
+    left.rows == right.rows &&
+      left.cols == right.cols &&
+      left.copyData.sameElements(right.copyData)
+
 final case class LssFitBlockResult(
     coefficients: CoefficientBlock,
     trialNames: Vector[String],

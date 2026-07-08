@@ -4,6 +4,8 @@ import scalafim.dataset.{DataSelection, FmriSeries}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
 import scalafim.fmri.model.{FitEngine, FitPlan}
 
+import scala.concurrent.{ExecutionContext, Future}
+
 object FitPlanExecutor:
   def fit(
       plan: FitPlan,
@@ -64,7 +66,22 @@ object FitPlanExecutor:
   ): FmriFitResult =
     fit(plan, selection).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  private def fitBlockInput(
+  def fitChunked(
+      plan: FitPlan,
+      selection: DataSelection = DataSelection.All,
+      chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
+  ): Either[FitError, FmriFitResult] =
+    ChunkedFitExecutor.fit(plan, selection, chunking)
+
+  def fitChunkedFuture(
+      plan: FitPlan,
+      selection: DataSelection = DataSelection.All,
+      chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
+      parallelism: FitParallelism = FitParallelism.unbounded
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    FutureChunkedFitExecutor.fit(plan, selection, chunking, parallelism)
+
+  private[fit] def fitBlockInput(
       plan: FitPlan,
       series: FmriSeries,
       partitions: Vector[RunPartition] = Vector.empty,
@@ -85,7 +102,7 @@ object FitPlanExecutor:
       lssDesign = lss
     )
 
-  private def denseResult(plan: FitPlan, block: DenseFitBlockResult): DenseFmriFitResult =
+  private[fit] def denseResult(plan: FitPlan, block: DenseFitBlockResult): DenseFmriFitResult =
     DenseFmriFitResult(
       coefficients = block.coefficients,
       standardErrors = block.standardErrors,
@@ -101,7 +118,7 @@ object FitPlanExecutor:
       autocorrelation = block.autocorrelation
     )
 
-  private def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =
+  private[fit] def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =
     for
       trialTerm <- selectTrialwiseTerm(plan)
       termCols <- trialColumns(plan, trialTerm)

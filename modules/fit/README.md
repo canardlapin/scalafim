@@ -33,3 +33,16 @@ Contrast inference treats zero residual variance and zero contrast variance as
 non-estimable. These paths now return `FitError.NonEstimableContrast` instead of
 emitting non-finite t or F statistics, so callers should handle the typed error
 case rather than interpreting `NaN` or infinity as a valid statistic.
+
+## Chunked execution
+
+`FitChunkPlan` represents a finite, ordered `Iterable` of voxel chunks over a
+resolved data selection. Each `FitChunkSpec` carries a typed ordinal plus the
+selected timepoint and voxel indices, so executors can run chunks independently
+and merge results back in selection order.
+
+`ChunkedFitExecutor` runs the plan sequentially. `FutureChunkedFitExecutor` uses a
+caller-supplied `ExecutionContext` and typed `FitParallelism` to bound concurrent
+chunk work. The public `FitPlanExecutor.fitChunked` and `fitChunkedFuture` methods
+cover OLS, GLS, LSS, and runwise OLS when chunking by voxel count; arbitrary
+time-splitting is intentionally not exposed as a valid fit chunking strategy.
