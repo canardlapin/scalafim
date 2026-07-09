@@ -30,10 +30,10 @@ class AxisSuite extends munit.FunSuite:
     assertEquals(baseline.name.map(_.value), Some("x-axis-baseline"))
     assertEquals(baseline.segments, Vector((Point.nativeUnsafe(0.0, 0.0), Point.nativeUnsafe(10.0, 0.0))))
     assertEquals(ticksGrob.name.map(_.value), Some("x-axis-ticks"))
-    assertEquals(ticksGrob.segments(1), (Point.nativeUnsafe(5.0, 0.0), Point.nativeUnsafe(5.0, 0.4)))
+    assertEquals(ticksGrob.segments(1), (Point.nativeUnsafe(5.0, 0.0), Point.nativeUnsafe(5.0, -0.4)))
     assertEquals(midpointLabel.name.map(_.value), Some("x-axis-label"))
     assertEquals(midpointLabel.label, "5")
-    assertEquals(midpointLabel.at, Point.nativeUnsafe(5.0, 0.8))
+    assertEquals(midpointLabel.at, Point.nativeUnsafe(5.0, -0.8))
     assertEquals(midpointLabel.anchor, Anchor(HJust.Center, VJust.Top))
   }
 

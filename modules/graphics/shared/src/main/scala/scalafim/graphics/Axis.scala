@@ -11,10 +11,13 @@ enum AxisSide:
       case Bottom | Top => true
       case Left | Right => false
 
+  /** Sign of the outward normal in y-up scene coordinates: ticks and labels
+    * extend away from the panel, so Bottom and Left are negative.
+    */
   private[graphics] def direction: Double =
     this match
-      case Bottom | Right => 1.0
-      case Top | Left     => -1.0
+      case Top | Right    => 1.0
+      case Bottom | Left  => -1.0
 
 final case class AxisTick private (value: Double, label: String)
 
@@ -75,7 +78,7 @@ final case class Axis private (
         Point.nativeUnsafe(tick.value, position + side.direction * labelOffset)
       else
         Point.nativeUnsafe(position + side.direction * labelOffset, tick.value)
-    Grob.text(
+    Grob.textUnsafe(
       tick.label,
       at,
       anchor = labelAnchor,

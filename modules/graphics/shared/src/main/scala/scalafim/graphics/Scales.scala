@@ -60,23 +60,61 @@ object ContinuousRange:
   def from(values: IterableOnce[Double]): ContinuousRange =
     empty.train(values)
 
-final case class TransformDomain private (lower: Double, upper: Double):
-  require(!lower.isNaN, "`lower` must not be NaN")
-  require(!upper.isNaN, "`upper` must not be NaN")
-  require(lower < upper, "`lower` must be < `upper`")
+enum DomainBound(val value: Double):
+  case Open(bound: Double) extends DomainBound(bound)
+  case Closed(bound: Double) extends DomainBound(bound)
+
+  def allowsLower(value: Double): Boolean =
+    this match
+      case Open(bound)   => value > bound
+      case Closed(bound) => value >= bound
+
+  def allowsUpper(value: Double): Boolean =
+    this match
+      case Open(bound)   => value < bound
+      case Closed(bound) => value <= bound
+
+final case class TransformDomain private (lower: DomainBound, upper: DomainBound):
+  require(!lower.value.isNaN, "`lower` must not be NaN")
+  require(!upper.value.isNaN, "`upper` must not be NaN")
+  require(lower.value < upper.value, "`lower` must be < `upper`")
+
+  def lowerValue: Double =
+    lower.value
+
+  def upperValue: Double =
+    upper.value
 
   def contains(value: Double): Boolean =
-    value.isFinite && value >= lower && value <= upper
+    value.isFinite && lower.allowsLower(value) && upper.allowsUpper(value)
 
 object TransformDomain:
   val all: TransformDomain =
-    TransformDomain(Double.NegativeInfinity, Double.PositiveInfinity)
+    unsafe("all", DomainBound.Open(Double.NegativeInfinity), DomainBound.Open(Double.PositiveInfinity))
 
   def apply(name: String, lower: Double, upper: Double): Either[GraphicsError, TransformDomain] =
-    if !lower.isNaN && !upper.isNaN && lower < upper then Right(new TransformDomain(lower, upper))
-    else Left(GraphicsError.InvalidTransformDomain(name, lower, upper))
+    closed(name, lower, upper)
+
+  def closed(name: String, lower: Double, upper: Double): Either[GraphicsError, TransformDomain] =
+    apply(name, DomainBound.Closed(lower), DomainBound.Closed(upper))
+
+  def openClosed(name: String, lower: Double, upper: Double): Either[GraphicsError, TransformDomain] =
+    apply(name, DomainBound.Open(lower), DomainBound.Closed(upper))
+
+  def closedOpen(name: String, lower: Double, upper: Double): Either[GraphicsError, TransformDomain] =
+    apply(name, DomainBound.Closed(lower), DomainBound.Open(upper))
+
+  def open(name: String, lower: Double, upper: Double): Either[GraphicsError, TransformDomain] =
+    apply(name, DomainBound.Open(lower), DomainBound.Open(upper))
+
+  def apply(name: String, lower: DomainBound, upper: DomainBound): Either[GraphicsError, TransformDomain] =
+    if !lower.value.isNaN && !upper.value.isNaN && lower.value < upper.value then Right(new TransformDomain(lower, upper))
+    else Left(GraphicsError.InvalidTransformDomain(name, lower.value, upper.value))
 
   def unsafe(name: String, lower: Double, upper: Double): TransformDomain =
+    closed(name, lower, upper).orThrow
+
+  def unsafe(name: String, lower: DomainBound, upper: DomainBound): TransformDomain =
     apply(name, lower, upper).orThrow
 
 trait Breaks:
@@ -128,12 +166,59 @@ trait Labeler:
   def apply(values: Vector[Double]): Vector[String]
 
 object Labeler:
+  /** Deterministic, platform-independent number labels. `Double.toString`
+    * switches to exponent notation at different magnitudes on the JVM and
+    * Scala.js, so non-integral values are formatted manually: fixed notation
+    * with up to six significant digits for ordinary magnitudes, an explicit
+    * `<mantissa>e<exponent>` form for extreme ones.
+    */
   val default: Labeler =
-    values => values.map { value =>
+    values => values.map(formatValue)
+
+  private def formatValue(value: Double): String =
+    if !value.isFinite then value.toString
+    else
       val rounded = math.rint(value)
-      if math.abs(value - rounded) < 1e-10 then rounded.toLong.toString
-      else value.toString
-    }
+      if math.abs(value - rounded) < 1e-10 && math.abs(value) < 1e15 then rounded.toLong.toString
+      else
+        val sign = if value < 0.0 then "-" else ""
+        val magnitude = math.abs(value)
+        val exponent = decimalExponent(magnitude)
+        if exponent >= -4 && exponent < 15 then
+          sign + fixed(magnitude, decimals = math.min(6, math.max(0, 5 - exponent)))
+        else
+          val mantissa = magnitude / math.pow(10.0, exponent.toDouble)
+          s"$sign${fixed(mantissa, decimals = 4)}e$exponent"
+
+  /** Largest e with 10^e <= magnitude, via repeated scaling (identical IEEE
+    * arithmetic on JVM and JS, unlike `math.log10`).
+    */
+  private def decimalExponent(magnitude: Double): Int =
+    var exponent = 0
+    var m = magnitude
+    while m >= 10.0 do
+      m /= 10.0
+      exponent += 1
+    while m < 1.0 do
+      m *= 10.0
+      exponent -= 1
+    exponent
+
+  /** Fixed-point rendering with trailing zeros stripped. */
+  private def fixed(magnitude: Double, decimals: Int): String =
+    val scale = math.pow(10.0, decimals.toDouble)
+    val scaled = math.rint(magnitude * scale).toLong
+    val whole = scaled / scale.toLong
+    var frac = scaled % scale.toLong
+    if decimals == 0 || frac == 0L then whole.toString
+    else
+      var digits = decimals
+      while frac % 10L == 0L do
+        frac /= 10L
+        digits -= 1
+      val text = frac.toString
+      val padded = "0" * (digits - text.length) + text
+      s"$whole.$padded"
 
 final case class Transform private (
     name: GraphicsName,
@@ -180,7 +265,7 @@ object Transform:
       "log10",
       value => math.log10(value),
       value => math.pow(10.0, value),
-      TransformDomain.unsafe("log10", 0.0, Double.PositiveInfinity),
+      TransformDomain.unsafe("log10", DomainBound.Open(0.0), DomainBound.Open(Double.PositiveInfinity)),
       breaks = Breaks.log10
     ).orThrow
 
@@ -205,6 +290,26 @@ enum OobPolicy:
         Some(math.max(0.0, math.min(1.0, value)))
       case Keep =>
         Some(value)
+
+enum ScaleKind:
+  case Continuous
+  case Discrete
+  case Generic
+
+enum ScaleDomain:
+  case Continuous(raw: Interval, transformed: Interval)
+  case Discrete(levels: Vector[String], ordered: Boolean)
+  case Unspecified
+
+final case class ScaleDescriptor(
+    name: GraphicsName,
+    kind: ScaleKind,
+    domain: ScaleDomain
+)
+
+enum ScaleMapFailure:
+  case TransformDomain(transform: String, value: Double)
+  case OutOfDomain(scale: String, value: String)
 
 trait Palette[+A]:
   def apply(value: Double): A
@@ -251,10 +356,24 @@ final case class ContinuousScale[A] private (
     palette: Palette[A],
     oob: OobPolicy
 ) extends Scale[Double, A]:
+  override def descriptor: ScaleDescriptor =
+    ScaleDescriptor(
+      name,
+      ScaleKind.Continuous,
+      ScaleDomain.Continuous(domain, transformedDomain)
+    )
+
   override def mapValue(value: Double): Option[A] =
-    transform.transform(value).toOption.flatMap { transformed =>
-      oob(transformedDomain.rescale(transformed)).map(palette(_))
-    }
+    mapValueResult(value).toOption
+
+  override def mapValueResult(value: Double): Either[ScaleMapFailure, A] =
+    transform.transform(value) match
+      case Left(_) =>
+        Left(ScaleMapFailure.TransformDomain(transform.name.value, value))
+      case Right(transformed) =>
+        oob(transformedDomain.rescale(transformed)) match
+          case Some(rescaled) => Right(palette(rescaled))
+          case None           => Left(ScaleMapFailure.OutOfDomain(name.value, value.toString))
 
   def mapValues(values: IterableOnce[Double]): Vector[Option[A]] =
     values.iterator.map(mapValue).toVector
@@ -342,9 +461,20 @@ final case class DiscreteScale[A] private (
     domain: DiscreteDomain,
     palette: DiscretePalette[A]
 ) extends Scale[String, A]:
+  override def descriptor: ScaleDescriptor =
+    ScaleDescriptor(
+      name,
+      ScaleKind.Discrete,
+      ScaleDomain.Discrete(domain.levels, domain.ordered)
+    )
+
   override def mapValue(value: String): Option[A] =
+    mapValueResult(value).toOption
+
+  override def mapValueResult(value: String): Either[ScaleMapFailure, A] =
     val idx = domain.levels.indexOf(value)
-    if idx < 0 then None else Some(palette(idx, domain.levels.length))
+    if idx < 0 then Left(ScaleMapFailure.OutOfDomain(name.value, value))
+    else Right(palette(idx, domain.levels.length))
 
   def mapLevels(values: IterableOnce[String]): Vector[Option[A]] =
     values.iterator.map(mapValue).toVector
@@ -360,6 +490,11 @@ object DiscreteScale:
 trait Scale[-In, +Out]:
   def name: GraphicsName
   def mapValue(value: In): Option[Out]
+  def descriptor: ScaleDescriptor =
+    ScaleDescriptor(name, ScaleKind.Generic, ScaleDomain.Unspecified)
+
+  def mapValueResult(value: In): Either[ScaleMapFailure, Out] =
+    mapValue(value).toRight(ScaleMapFailure.OutOfDomain(name.value, value.toString))
 
 final case class ScaleBinding[Row, In, Out](
     aesthetic: Aesthetic[Out],
@@ -368,3 +503,6 @@ final case class ScaleBinding[Row, In, Out](
 ):
   def map(row: Row): Option[Out] =
     scale.mapValue(value(row))
+
+  def toAesValue: AesValue[Row, Out] =
+    AesValue.scaled(value, scale)

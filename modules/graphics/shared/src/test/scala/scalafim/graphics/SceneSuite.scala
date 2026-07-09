@@ -19,7 +19,7 @@ class SceneSuite extends munit.FunSuite:
   test("scene concatenation is associative") {
     val a = Scene(Vector(Grob.points(Vector(p0)).toOption.get))
     val b = Scene(Vector(Grob.lines(Vector(p0, p1)).toOption.get))
-    val c = Scene(Vector(Grob.circle(p1, LengthExpr.npcUnsafe(0.2))))
+    val c = Scene(Vector(Grob.circle(p1, ExtentExpr.npcUnsafe(0.2)).toOption.get))
 
     assertEquals((a ++ b) ++ c, a ++ (b ++ c))
   }
@@ -37,6 +37,11 @@ class SceneSuite extends munit.FunSuite:
     assert(Length(Double.NaN, LengthUnit.Npc).left.toOption.exists {
       case GraphicsError.InvalidLength(value) => value.isNaN
       case _                                  => false
+    })
+    assertEquals(ExtentExpr.npc(-0.5).left.toOption, Some(GraphicsError.InvalidExtent("-0.5 Npc")))
+    assert(Grob.text("bad", p0, rotationDegrees = Double.NaN).left.toOption.exists {
+      case GraphicsError.InvalidRotation(value) => value.isNaN
+      case _                                    => false
     })
   }
 

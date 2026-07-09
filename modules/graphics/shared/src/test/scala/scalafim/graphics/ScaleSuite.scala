@@ -38,6 +38,9 @@ class ScaleSuite extends munit.FunSuite:
     assertEquals(mapped(3), None)
     assertEquals(scale.breaks, Vector(1.0, 10.0, 100.0))
     assertEquals(scale.breaks.flatMap(scale.mapValue), Vector(0.0, 0.5, 1.0))
+    assertEquals(scale.descriptor.kind, ScaleKind.Continuous)
+    assertEquals(scale.descriptor.domain, ScaleDomain.Continuous(Interval.unsafe(1.0, 100.0), Interval.unsafe(0.0, 2.0)))
+    assertEquals(scale.mapValueResult(0.0).left.toOption, Some(ScaleMapFailure.TransformDomain("log10", 0.0)))
   }
 
   test("squish keeps out-of-bounds values by clamping to palette endpoints") {
@@ -59,7 +62,25 @@ class ScaleSuite extends munit.FunSuite:
     assert(Transform.identity.roundTrips(-4.0, 1e-12))
     assert(Transform.sqrt.roundTrips(9.0, 1e-12))
     assert(Transform.log10.roundTrips(100.0, 1e-12))
+    assert(Transform.log10.transform(0.0).isLeft)
     assert(Transform.log10.transform(-1.0).isLeft)
+  }
+
+  test("transform domains model open and closed endpoints explicitly") {
+    val open =
+      TransformDomain
+        .openClosed("positive", 0.0, 1.0)
+        .toOption
+        .get
+    val closed =
+      TransformDomain
+        .closed("unit", 0.0, 1.0)
+        .toOption
+        .get
+
+    assert(!open.contains(0.0))
+    assert(open.contains(1.0))
+    assert(closed.contains(0.0))
   }
 
   test("discrete domains preserve declared ordering and append new levels") {
@@ -79,6 +100,9 @@ class ScaleSuite extends munit.FunSuite:
     val scale = DiscreteScale("condition", domain, palette).toOption.get
 
     assertEquals(scale.mapLevels(Vector("A", "B", "C", "D")), Vector(Some(Rgba.Black), Some(Rgba.White), Some(Rgba.Black), None))
+    assertEquals(scale.descriptor.kind, ScaleKind.Discrete)
+    assertEquals(scale.descriptor.domain, ScaleDomain.Discrete(Vector("A", "B", "C"), ordered = true))
+    assertEquals(scale.mapValueResult("D").left.toOption, Some(ScaleMapFailure.OutOfDomain("condition", "D")))
   }
 
   test("break generators are deterministic functions of intervals") {

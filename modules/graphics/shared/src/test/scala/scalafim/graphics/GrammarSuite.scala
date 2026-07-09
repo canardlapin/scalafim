@@ -17,7 +17,7 @@ class GrammarSuite extends munit.FunSuite:
 
     assertEquals(layer.geom, Geom.Point)
     assert(mapping.position.nonEmpty)
-    assertEquals(mapping.position.get(data.head), (0.0, 1.0))
+    assertEquals(mapping.position.flatMap(_.map(data.head)), Some((0.0, 1.0)))
   }
 
   test("plot validates required aesthetics after layer mapping inheritance") {
@@ -36,7 +36,7 @@ class GrammarSuite extends munit.FunSuite:
     val inheritedPlot =
       Plot(data)
         .withMapping(plotMapping)
-        .addLayer(inheritedPoint)
+        .flatMap(_.addLayer(inheritedPoint))
 
     val missingTextLabel =
       Layer.fromMapping[Observation](
@@ -64,12 +64,12 @@ class GrammarSuite extends munit.FunSuite:
     val plot =
       Plot(data)
         .withMapping(plotMapping)
-        .addLayer(layer)
+        .flatMap(_.addLayer(layer))
         .toOption
         .get
 
     assertEquals(plot.layerData(layer), data)
-    assertEquals(plot.layerMapping(layer).group.get(data.last), "B")
+    assertEquals(plot.layerMapping(layer).group.flatMap(_.map(data.last)), Some("B"))
     assertEquals(plot.layers, Vector(layer))
   }
 
@@ -84,6 +84,48 @@ class GrammarSuite extends munit.FunSuite:
     val plot = Plot(data).withScale(binding).toOption.get
 
     assertEquals(plot.withScale(binding).left.toOption, Some(GraphicsError.DuplicateScale("x")))
+    assertEquals(plot.mapping.x.flatMap(_.map(data.last)), Some(1.0))
+  }
+
+  test("plot scale bindings are not shadowed by direct layer mappings") {
+    val scale =
+      ContinuousScale
+        .train("x", data.map(_.time), Palette.numeric)
+        .toOption
+        .get
+    val binding = ScaleBinding[Observation, Double, Double](Aesthetic.X, _.time, scale)
+    val layer = Layer.point[Observation](_.time, _.value)
+
+    val plot =
+      Plot(data)
+        .withScale(binding)
+        .flatMap(_.addLayer(layer))
+        .toOption
+        .get
+    val mapping = plot.layerMapping(layer)
+
+    assertEquals(mapping.x.flatMap(_.map(data.last)), Some(1.0))
+    assertEquals(mapping.y.flatMap(_.map(data.last)), Some(3.0))
+    assertEquals(mapping.position.flatMap(_.map(data.last)), Some((1.0, 3.0)))
+  }
+
+  test("plot mapping replacement revalidates already-added inherited layers") {
+    val inheritedPoint =
+      Layer
+        .fromMapping[Observation](Geom.Point, AesSpec.empty[Observation])
+        .toOption
+        .get
+    val plot =
+      Plot(data)
+        .withMapping(AesSpec.empty[Observation].withPosition(_.time, _.value))
+        .flatMap(_.addLayer(inheritedPoint))
+        .toOption
+        .get
+
+    assertEquals(
+      plot.withMapping(AesSpec.empty[Observation]).left.toOption,
+      Some(GraphicsError.MissingAesthetic("point", "x"))
+    )
   }
 
   test("scale bindings carry the row extractor used to map an aesthetic") {
@@ -94,4 +136,23 @@ class GrammarSuite extends munit.FunSuite:
 
     assertEquals(binding.map(data.head), Some(Rgba.Black))
     assertEquals(binding.map(data.last), Some(Rgba.White))
+  }
+
+  test("aesthetic specs unify direct, constant, and scaled values") {
+    val domain = DiscreteDomain.ordered(Vector("A", "B")).toOption.get
+    val palette = DiscretePalette.valuesUnsafe(Vector(Rgba.Black, Rgba.White))
+    val scale = DiscreteScale("condition", domain, palette).toOption.get
+    val binding = ScaleBinding[Observation, String, Rgba](Aesthetic.Color, _.condition, scale)
+
+    val mapping =
+      AesSpec
+        .empty[Observation]
+        .withPosition(_.time, _.value)
+        .withAlpha(0.5)
+        .bindScale(binding)
+        .toOption
+        .get
+
+    assertEquals(mapping.alpha.flatMap(_.map(data.head)), Some(0.5))
+    assertEquals(mapping.color.flatMap(_.map(data.last)), Some(Rgba.White))
   }

@@ -71,6 +71,65 @@ object LengthExpr:
   def nativeUnsafe(value: Double): LengthExpr =
     native(value).orThrow
 
+final case class ExtentExpr private (expr: LengthExpr):
+  def +(that: ExtentExpr): ExtentExpr =
+    ExtentExpr.unsafe(expr + that.expr)
+
+  def times(factor: Double): Either[GraphicsError, ExtentExpr] =
+    if !factor.isFinite then Left(GraphicsError.InvalidLength(factor))
+    else if factor < 0.0 then Left(GraphicsError.InvalidExtent(factor.toString))
+    else Right(ExtentExpr.unsafe(LengthExpr.Mul(factor, expr)))
+
+object ExtentExpr:
+  def apply(length: Length): Either[GraphicsError, ExtentExpr] =
+    fromExpr(LengthExpr(length))
+
+  def fromExpr(expr: LengthExpr): Either[GraphicsError, ExtentExpr] =
+    if isProvablyNonNegative(expr) then Right(new ExtentExpr(expr))
+    else Left(GraphicsError.InvalidExtent(describe(expr)))
+
+  def unsafe(expr: LengthExpr): ExtentExpr =
+    fromExpr(expr).orThrow
+
+  def unsafe(length: Length): ExtentExpr =
+    apply(length).orThrow
+
+  def npc(value: Double): Either[GraphicsError, ExtentExpr] =
+    Length.npc(value).flatMap(apply)
+
+  def npcUnsafe(value: Double): ExtentExpr =
+    npc(value).orThrow
+
+  def native(value: Double): Either[GraphicsError, ExtentExpr] =
+    Length.native(value).flatMap(apply)
+
+  def nativeUnsafe(value: Double): ExtentExpr =
+    native(value).orThrow
+
+  def points(value: Double): Either[GraphicsError, ExtentExpr] =
+    Length.points(value).flatMap(apply)
+
+  def pointsUnsafe(value: Double): ExtentExpr =
+    points(value).orThrow
+
+  private def isProvablyNonNegative(expr: LengthExpr): Boolean =
+    expr match
+      case LengthExpr.Const(length) =>
+        length.value >= 0.0
+      case LengthExpr.Add(left, right) =>
+        isProvablyNonNegative(left) && isProvablyNonNegative(right)
+      case LengthExpr.Sub(_, _) =>
+        false
+      case LengthExpr.Mul(factor, value) =>
+        factor >= 0.0 && isProvablyNonNegative(value)
+
+  private def describe(expr: LengthExpr): String =
+    expr match
+      case LengthExpr.Const(length) => s"${length.value} ${length.unit}"
+      case LengthExpr.Add(_, _)     => "sum expression"
+      case LengthExpr.Sub(_, _)     => "difference expression"
+      case LengthExpr.Mul(_, _)     => "scaled expression"
+
 final case class Point(x: LengthExpr, y: LengthExpr)
 
 object Point:
@@ -92,14 +151,17 @@ object Point:
   def nativeUnsafe(x: Double, y: Double): Point =
     native(x, y).orThrow
 
-final case class Size(width: LengthExpr, height: LengthExpr)
+final case class Size private (width: ExtentExpr, height: ExtentExpr)
 
 object Size:
+  def fromExtents(width: ExtentExpr, height: ExtentExpr): Size =
+    new Size(width, height)
+
   def npc(width: Double, height: Double): Either[GraphicsError, Size] =
     for
-      w <- LengthExpr.npc(width)
-      h <- LengthExpr.npc(height)
-    yield Size(w, h)
+      w <- ExtentExpr.npc(width)
+      h <- ExtentExpr.npc(height)
+    yield new Size(w, h)
 
   def npcUnsafe(width: Double, height: Double): Size =
     npc(width, height).orThrow
@@ -152,7 +214,7 @@ object Rgba:
   val Transparent: Rgba =
     unsafe(0, 0, 0, 0.0)
 
-final case class GraphicParams(
+final case class GraphicParams private (
     stroke: Option[Rgba] = Some(Rgba.Black),
     fill: Option[Rgba] = None,
     lineWidth: Double = 1.0,
@@ -176,7 +238,7 @@ object GraphicParams:
   ): Either[GraphicsError, GraphicParams] =
     if !lineWidth.isFinite || lineWidth < 0.0 then Left(GraphicsError.InvalidLineWidth(lineWidth))
     else if !alpha.isFinite || alpha < 0.0 || alpha > 1.0 then Left(GraphicsError.InvalidAlpha(alpha))
-    else Right(GraphicParams(stroke, fill, lineWidth, lineType, alpha, fontFamily, fontSize))
+    else Right(new GraphicParams(stroke, fill, lineWidth, lineType, alpha, fontFamily, fontSize))
 
   def unsafe(
       stroke: Option[Rgba] = Some(Rgba.Black),
@@ -189,15 +251,40 @@ object GraphicParams:
   ): GraphicParams =
     checked(stroke, fill, lineWidth, lineType, alpha, fontFamily, fontSize).orThrow
 
-final case class Viewport(
+final case class Viewport private (
     origin: Point = Point.npcUnsafe(0.0, 0.0),
     size: Size = Size.npcUnsafe(1.0, 1.0),
     xScale: Interval = Interval.unsafe(0.0, 1.0),
     yScale: Interval = Interval.unsafe(0.0, 1.0),
     clip: Clip = Clip.On,
-    angleDegrees: Double = 0.0
+    angleDegrees: Double = 0.0,
+    yDirection: YDirection = YDirection.Up
 ):
   require(angleDegrees.isFinite, "`angleDegrees` must be finite")
+
+object Viewport:
+  def checked(
+      origin: Point = Point.npcUnsafe(0.0, 0.0),
+      size: Size = Size.npcUnsafe(1.0, 1.0),
+      xScale: Interval = Interval.unsafe(0.0, 1.0),
+      yScale: Interval = Interval.unsafe(0.0, 1.0),
+      clip: Clip = Clip.On,
+      angleDegrees: Double = 0.0,
+      yDirection: YDirection = YDirection.Up
+  ): Either[GraphicsError, Viewport] =
+    if !angleDegrees.isFinite then Left(GraphicsError.InvalidRotation(angleDegrees))
+    else Right(new Viewport(origin, size, xScale, yScale, clip, angleDegrees, yDirection))
+
+  def unsafe(
+      origin: Point = Point.npcUnsafe(0.0, 0.0),
+      size: Size = Size.npcUnsafe(1.0, 1.0),
+      xScale: Interval = Interval.unsafe(0.0, 1.0),
+      yScale: Interval = Interval.unsafe(0.0, 1.0),
+      clip: Clip = Clip.On,
+      angleDegrees: Double = 0.0,
+      yDirection: YDirection = YDirection.Up
+  ): Viewport =
+    checked(origin, size, xScale, yScale, clip, angleDegrees, yDirection).orThrow
 
 sealed trait Grob:
   def name: Option[GraphicsName]
@@ -209,7 +296,7 @@ sealed trait Grob:
 object Grob:
   final case class Points private[graphics] (
       points: Vector[Point],
-      size: LengthExpr,
+      size: ExtentExpr,
       shape: PointShape,
       gp: GraphicParams,
       viewport: Option[Viewport],
@@ -244,7 +331,7 @@ object Grob:
 
   final case class Circle private[graphics] (
       center: Point,
-      radius: LengthExpr,
+      radius: ExtentExpr,
       gp: GraphicParams,
       viewport: Option[Viewport],
       name: Option[GraphicsName]
@@ -270,7 +357,7 @@ object Grob:
 
   def points(
       points: Vector[Point],
-      size: LengthExpr = LengthExpr(Length.pointsUnsafe(4.0)),
+      size: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
       shape: PointShape = PointShape.Circle,
       gp: GraphicParams = GraphicParams.unsafe(),
       viewport: Option[Viewport] = None,
@@ -304,17 +391,36 @@ object Grob:
       gp: GraphicParams = GraphicParams.unsafe(),
       viewport: Option[Viewport] = None,
       name: Option[GraphicsName] = None
-  ): Grob =
-    Rect(center, size, anchor, gp, viewport, name)
+  ): Either[GraphicsError, Grob] =
+    Right(Rect(center, size, anchor, gp, viewport, name))
 
-  def circle(
+  def rectUnsafe(
       center: Point,
-      radius: LengthExpr,
+      size: Size,
+      anchor: Anchor = Anchor.Center,
       gp: GraphicParams = GraphicParams.unsafe(),
       viewport: Option[Viewport] = None,
       name: Option[GraphicsName] = None
   ): Grob =
-    Circle(center, radius, gp, viewport, name)
+    rect(center, size, anchor, gp, viewport, name).orThrow
+
+  def circle(
+      center: Point,
+      radius: ExtentExpr,
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Grob] =
+    Right(Circle(center, radius, gp, viewport, name))
+
+  def circleUnsafe(
+      center: Point,
+      radius: ExtentExpr,
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Grob =
+    circle(center, radius, gp, viewport, name).orThrow
 
   def text(
       label: String,
@@ -324,8 +430,20 @@ object Grob:
       gp: GraphicParams = GraphicParams.unsafe(),
       viewport: Option[Viewport] = None,
       name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Grob] =
+    if !rotationDegrees.isFinite then Left(GraphicsError.InvalidRotation(rotationDegrees))
+    else Right(Text(label, at, anchor, rotationDegrees, gp, viewport, name))
+
+  def textUnsafe(
+      label: String,
+      at: Point,
+      anchor: Anchor = Anchor.Center,
+      rotationDegrees: Double = 0.0,
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
   ): Grob =
-    Text(label, at, anchor, rotationDegrees, gp, viewport, name)
+    text(label, at, anchor, rotationDegrees, gp, viewport, name).orThrow
 
   def group(
       children: Vector[Grob],

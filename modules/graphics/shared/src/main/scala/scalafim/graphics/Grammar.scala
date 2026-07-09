@@ -1,53 +1,142 @@
 package scalafim.graphics
 
-final case class Position2[Row](x: Row => Double, y: Row => Double):
-  def apply(row: Row): (Double, Double) =
-    (x(row), y(row))
+sealed trait AesValue[Row, A]:
+  def map(row: Row): Option[A]
+  def isScaled: Boolean =
+    false
+
+object AesValue:
+  final case class Direct[Row, A](value: Row => A) extends AesValue[Row, A]:
+    override def map(row: Row): Option[A] =
+      Some(value(row))
+
+  final case class Constant[Row, A](value: A) extends AesValue[Row, A]:
+    override def map(row: Row): Option[A] =
+      Some(value)
+
+  final case class Scaled[Row, In, A](value: Row => In, scale: Scale[In, A]) extends AesValue[Row, A]:
+    override def map(row: Row): Option[A] =
+      scale.mapValue(value(row))
+
+    override def isScaled: Boolean =
+      true
+
+  def direct[Row, A](value: Row => A): AesValue[Row, A] =
+    Direct(value)
+
+  def constant[Row, A](value: A): AesValue[Row, A] =
+    Constant(value)
+
+  def scaled[Row, In, A](value: Row => In, scale: Scale[In, A]): AesValue[Row, A] =
+    Scaled(value, scale)
+
+final case class Position2[Row](x: AesValue[Row, Double], y: AesValue[Row, Double]):
+  def map(row: Row): Option[(Double, Double)] =
+    for
+      px <- x.map(row)
+      py <- y.map(row)
+    yield (px, py)
+
+enum RequiredAesthetic(val aesthetic: Aesthetic[?]):
+  case X extends RequiredAesthetic(Aesthetic.X)
+  case Y extends RequiredAesthetic(Aesthetic.Y)
+  case Label extends RequiredAesthetic(Aesthetic.Label)
+
+  def label: String =
+    aesthetic.label
+
+  def isPresent[Row](mapping: AesSpec[Row]): Boolean =
+    mapping.env.isBound(aesthetic)
 
 final case class AesSpec[Row](
-    position: Option[Position2[Row]] = None,
-    color: Option[Row => Rgba] = None,
-    fill: Option[Row => Rgba] = None,
-    alpha: Option[Row => Double] = None,
-    size: Option[Row => Double] = None,
-    label: Option[Row => String] = None,
-    group: Option[Row => String] = None
+    x: Option[AesValue[Row, Double]] = None,
+    y: Option[AesValue[Row, Double]] = None,
+    color: Option[AesValue[Row, Rgba]] = None,
+    fill: Option[AesValue[Row, Rgba]] = None,
+    alpha: Option[AesValue[Row, Double]] = None,
+    size: Option[AesValue[Row, Double]] = None,
+    label: Option[AesValue[Row, String]] = None,
+    group: Option[AesValue[Row, String]] = None
 ):
+  def position: Option[Position2[Row]] =
+    for
+      px <- x
+      py <- y
+    yield Position2(px, py)
+
   def withPosition(x: Row => Double, y: Row => Double): AesSpec[Row] =
-    copy(position = Some(Position2(x, y)))
+    copy(x = Some(AesValue.direct(x)), y = Some(AesValue.direct(y)))
 
   def withColor(f: Row => Rgba): AesSpec[Row] =
-    copy(color = Some(f))
+    copy(color = Some(AesValue.direct(f)))
+
+  def withColor(value: Rgba): AesSpec[Row] =
+    copy(color = Some(AesValue.constant(value)))
 
   def withFill(f: Row => Rgba): AesSpec[Row] =
-    copy(fill = Some(f))
+    copy(fill = Some(AesValue.direct(f)))
+
+  def withFill(value: Rgba): AesSpec[Row] =
+    copy(fill = Some(AesValue.constant(value)))
 
   def withAlpha(f: Row => Double): AesSpec[Row] =
-    copy(alpha = Some(f))
+    copy(alpha = Some(AesValue.direct(f)))
+
+  def withAlpha(value: Double): AesSpec[Row] =
+    copy(alpha = Some(AesValue.constant(value)))
 
   def withSize(f: Row => Double): AesSpec[Row] =
-    copy(size = Some(f))
+    copy(size = Some(AesValue.direct(f)))
+
+  def withSize(value: Double): AesSpec[Row] =
+    copy(size = Some(AesValue.constant(value)))
 
   def withLabel(f: Row => String): AesSpec[Row] =
-    copy(label = Some(f))
+    copy(label = Some(AesValue.direct(f)))
+
+  def withLabel(value: String): AesSpec[Row] =
+    copy(label = Some(AesValue.constant(value)))
 
   def withGroup(f: Row => String): AesSpec[Row] =
-    copy(group = Some(f))
+    copy(group = Some(AesValue.direct(f)))
+
+  def withGroup(value: String): AesSpec[Row] =
+    copy(group = Some(AesValue.constant(value)))
+
+  /** Normalize to the typed aesthetic environment. */
+  def env: AesEnv[Row] =
+    var out = AesEnv.empty[Row]
+    x.foreach(value => out = out.updated(Aesthetic.X, value))
+    y.foreach(value => out = out.updated(Aesthetic.Y, value))
+    color.foreach(value => out = out.updated(Aesthetic.Color, value))
+    fill.foreach(value => out = out.updated(Aesthetic.Fill, value))
+    alpha.foreach(value => out = out.updated(Aesthetic.Alpha, value))
+    size.foreach(value => out = out.updated(Aesthetic.Size, value))
+    label.foreach(value => out = out.updated(Aesthetic.Label, value))
+    group.foreach(value => out = out.updated(Aesthetic.Group, value))
+    out
+
+  def bindScale[In, A](binding: ScaleBinding[Row, In, A]): Either[GraphicsError, AesSpec[Row]] =
+    env.bind(binding).map(AesSpec.fromEnv)
 
   def inherit(parent: AesSpec[Row]): AesSpec[Row] =
-    AesSpec(
-      position = position.orElse(parent.position),
-      color = color.orElse(parent.color),
-      fill = fill.orElse(parent.fill),
-      alpha = alpha.orElse(parent.alpha),
-      size = size.orElse(parent.size),
-      label = label.orElse(parent.label),
-      group = group.orElse(parent.group)
-    )
+    AesSpec.fromEnv(env.inherit(parent.env))
 
 object AesSpec:
   def empty[Row]: AesSpec[Row] =
     AesSpec()
+
+  def fromEnv[Row](env: AesEnv[Row]): AesSpec[Row] =
+    AesSpec(
+      x = env.get(Aesthetic.X),
+      y = env.get(Aesthetic.Y),
+      color = env.get(Aesthetic.Color),
+      fill = env.get(Aesthetic.Fill),
+      alpha = env.get(Aesthetic.Alpha),
+      size = env.get(Aesthetic.Size),
+      label = env.get(Aesthetic.Label),
+      group = env.get(Aesthetic.Group)
+    )
 
 enum Geom(val label: String):
   case Point extends Geom("point")
@@ -55,12 +144,12 @@ enum Geom(val label: String):
   case Text extends Geom("text")
   case Rect extends Geom("rect")
 
-  def requiredAesthetics: Vector[String] =
+  def requiredAesthetics: Vector[RequiredAesthetic] =
     this match
-      case Point => Vector("x", "y")
-      case Line  => Vector("x", "y")
-      case Text  => Vector("x", "y", "label")
-      case Rect  => Vector("x", "y")
+      case Point => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
+      case Line  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
+      case Text  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.Label)
+      case Rect  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
 
 enum Stat:
   case Identity
@@ -123,37 +212,28 @@ object Layer:
       stat: Stat = Stat.Identity,
       params: GraphicParams = GraphicParams.unsafe()
   ): Either[GraphicsError, Layer[Row]] =
-    Right(Layer(geom, stat, data, mapping, inheritMapping, params))
+    if inheritMapping then Right(Layer(geom, stat, data, mapping, inheritMapping, params))
+    else validate(geom, mapping).map(_ => Layer(geom, stat, data, mapping, inheritMapping, params))
 
   private[graphics] def validate[Row](geom: Geom, mapping: AesSpec[Row]): Either[GraphicsError, Unit] =
-    val missing =
-      geom.requiredAesthetics.find {
-        case "x"     => mapping.position.isEmpty
-        case "y"     => mapping.position.isEmpty
-        case "label" => mapping.label.isEmpty
-        case _       => false
-      }
-    missing match
-      case Some(aesthetic) => Left(GraphicsError.MissingAesthetic(geom.label, aesthetic))
+    geom.requiredAesthetics.find(required => !required.isPresent(mapping)) match
+      case Some(aesthetic) => Left(GraphicsError.MissingAesthetic(geom.label, aesthetic.label))
       case None            => Right(())
 
 final case class Plot[Row] private (
     data: Vector[Row],
     mapping: AesSpec[Row],
     layers: Vector[Layer[Row]],
-    scales: Vector[ScaleBinding[Row, ?, ?]],
     coord: Coord
 ):
   def addLayer(layer: Layer[Row]): Either[GraphicsError, Plot[Row]] =
     Layer.validate(layer.geom, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
 
-  def withMapping(mapping: AesSpec[Row]): Plot[Row] =
-    copy(mapping = mapping)
+  def withMapping(mapping: AesSpec[Row]): Either[GraphicsError, Plot[Row]] =
+    validateLayers(mapping).map(_ => copy(mapping = mapping))
 
   def withScale[In, A](binding: ScaleBinding[Row, In, A]): Either[GraphicsError, Plot[Row]] =
-    if scales.exists(_.aesthetic.label == binding.aesthetic.label) then
-      Left(GraphicsError.DuplicateScale(binding.aesthetic.label))
-    else Right(copy(scales = scales :+ binding))
+    mapping.bindScale(binding).flatMap(withMapping)
 
   def withCoord(coord: Coord): Plot[Row] =
     copy(coord = coord)
@@ -164,6 +244,15 @@ final case class Plot[Row] private (
   def layerMapping(layer: Layer[Row]): AesSpec[Row] =
     layer.effectiveMapping(mapping)
 
+  private def validateLayers(plotMapping: AesSpec[Row]): Either[GraphicsError, Unit] =
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < layers.length && result.isRight do
+      val layer = layers(idx)
+      result = Layer.validate(layer.geom, layer.effectiveMapping(plotMapping))
+      idx += 1
+    result
+
 object Plot:
   def apply[Row](data: Vector[Row]): Plot[Row] =
-    Plot(data, AesSpec.empty, Vector.empty, Vector.empty, Coord.Cartesian())
+    Plot(data, AesSpec.empty, Vector.empty, Coord.Cartesian())
