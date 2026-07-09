@@ -19,230 +19,99 @@ final case class SvgDocument(value: String):
   override def toString: String =
     value
 
+/** Serializes a resolved [[scalafim.graphics.DeviceScene]] to SVG text.
+  * All unit and orientation semantics are handled by the shared device
+  * lowering; this backend only formats numeric device primitives.
+  */
 object SvgRenderer:
   def render(scene: Scene, options: SvgOptions = SvgOptions.default): Either[SvgRenderError, SvgDocument] =
+    for
+      device <- DeviceContext(options.width.toDouble, options.height.toDouble)
+        .left
+        .map(SvgRenderError.Graphics(_))
+      deviceScene <- DeviceScene.fromScene(scene, device).left.map(SvgRenderError.Graphics(_))
+    yield SvgDocument(serialize(deviceScene, options))
+
+  private final class ClipRegistry:
+    private val builder = Vector.newBuilder[DeviceClip]
+    private var count = 0
+
+    def register(clip: DeviceClip): String =
+      val id = s"clip-$count"
+      builder += clip
+      count += 1
+      id
+
+    def defs: Vector[(String, DeviceClip)] =
+      builder.result().zipWithIndex.map { case (clip, idx) => (s"clip-$idx", clip) }
+
+  private def serialize(scene: DeviceScene, options: SvgOptions): String =
     val out = new StringBuilder
+    val clips = new ClipRegistry
     line(
       out,
       0,
       s"""<svg xmlns="http://www.w3.org/2000/svg" width="${options.width}" height="${options.height}" viewBox="0 0 ${options.width} ${options.height}">"""
     )
     options.title.foreach(title => line(out, 1, s"<title>${escapeText(title)}</title>"))
-    writeAll(scene.grobs, out, 1).map { _ =>
-      line(out, 0, "</svg>")
-      SvgDocument(out.result())
-    }
+    scene.elements.foreach(writeElement(_, out, 1, clips))
+    val defs = clips.defs
+    if defs.nonEmpty then
+      line(out, 1, "<defs>")
+      defs.foreach { case (id, clip) =>
+        line(out, 2, s"""<clipPath id="$id">""")
+        line(
+          out,
+          3,
+          s"""<rect x="${format(clip.x)}" y="${format(clip.y)}" width="${format(clip.width)}" height="${format(clip.height)}" />"""
+        )
+        line(out, 2, "</clipPath>")
+      }
+      line(out, 1, "</defs>")
+    line(out, 0, "</svg>")
+    out.result()
 
-  private def writeAll(grobs: Vector[Grob], out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    var idx = 0
-    var result: Either[SvgRenderError, Unit] = Right(())
-    while idx < grobs.length && result.isRight do
-      result = writeGrob(grobs(idx), out, indent)
-      idx += 1
-    result
+  private def writeElement(element: DeviceElement, out: StringBuilder, indent: Int, clips: ClipRegistry): Unit =
+    element match
+      case DeviceElement.Mark(primitive) =>
+        writePrimitive(primitive, out, indent)
+      case DeviceElement.Group(name, clip, rotation, children) =>
+        val nameAttr = name.map(n => s""" data-name="${escapeAttr(n.value)}"""").getOrElse("")
+        val clipAttr = clip.map(c => s""" clip-path="url(#${clips.register(c)})"""").getOrElse("")
+        val rotateAttr = rotation
+          .map(r => s""" transform="rotate(${format(r.degrees)} ${format(r.pivotX)} ${format(r.pivotY)})"""")
+          .getOrElse("")
+        line(out, indent, s"<g$nameAttr$clipAttr$rotateAttr>")
+        children.foreach(writeElement(_, out, indent + 1, clips))
+        line(out, indent, "</g>")
 
-  private def writeGrob(grob: Grob, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    grob.viewport match
-      case Some(viewport) =>
-        writeViewportOpen(viewport, grob.name, out, indent).flatMap { _ =>
-          writeGrobBody(grob, out, indent + 1).map { _ =>
-            line(out, indent, "</svg>")
-          }
-        }
-      case None =>
-        writeGrobBody(grob, out, indent)
-
-  private def writeGrobBody(grob: Grob, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    grob match
-      case points: Grob.Points =>
-        writePoints(points, out, indent)
-      case lines: Grob.Lines =>
-        writeLines(lines, out, indent)
-      case segments: Grob.Segments =>
-        writeSegments(segments, out, indent)
-      case rect: Grob.Rect =>
-        writeRect(rect, out, indent)
-      case circle: Grob.Circle =>
-        writeCircle(circle, out, indent)
-      case text: Grob.Text =>
-        writeText(text, out, indent)
-      case group: Grob.Group =>
-        val attrs = commonAttrs(group.name, group.gp)
-        line(out, indent, s"<g$attrs>")
-        writeAll(group.children, out, indent + 1).map { _ =>
-          line(out, indent, "</g>")
-        }
-
-  private def writePoints(points: Grob.Points, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    renderLength(points.size).flatMap { radius =>
-      var idx = 0
-      var result: Either[SvgRenderError, Unit] = Right(())
-      while idx < points.points.length && result.isRight do
-        result = renderPoint(points.points(idx)).map { case (x, y) =>
-          points.shape match
-            case PointShape.Circle =>
-              line(out, indent, s"""<circle${commonAttrs(points.name, points.gp)} cx="$x" cy="$y" r="$radius" />""")
-            case PointShape.Square =>
-              line(out, indent, s"""<rect${commonAttrs(points.name, points.gp)} x="$x" y="$y" width="$radius" height="$radius" />""")
-            case PointShape.Triangle =>
-              line(out, indent, s"""<path${commonAttrs(points.name, points.gp)} d="M $x $y l $radius 0 l 0 $radius z" />""")
-            case PointShape.Cross =>
-              line(out, indent, s"""<text${textAttrs(points.name, points.gp)} x="$x" y="$y">+</text>""")
-        }
-        idx += 1
-      result
-    }
-
-  private def writeLines(lines: Grob.Lines, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    var idx = 0
-    var result: Either[SvgRenderError, Unit] = Right(())
-    while idx + 1 < lines.points.length && result.isRight do
-      result =
-        for
-          p0 <- renderPoint(lines.points(idx))
-          p1 <- renderPoint(lines.points(idx + 1))
-        yield
-          line(
-            out,
-            indent,
-            s"""<line${lineAttrs(lines.name, lines.gp)} x1="${p0._1}" y1="${p0._2}" x2="${p1._1}" y2="${p1._2}" />"""
-          )
-      idx += 1
-    result
-
-  private def writeSegments(segments: Grob.Segments, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    var idx = 0
-    var result: Either[SvgRenderError, Unit] = Right(())
-    while idx < segments.segments.length && result.isRight do
-      val (from, to) = segments.segments(idx)
-      result =
-        for
-          p0 <- renderPoint(from)
-          p1 <- renderPoint(to)
-        yield
-          line(
-            out,
-            indent,
-            s"""<line${lineAttrs(segments.name, segments.gp)} x1="${p0._1}" y1="${p0._2}" x2="${p1._1}" y2="${p1._2}" />"""
-          )
-      idx += 1
-    result
-
-  private def writeRect(rect: Grob.Rect, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    for
-      center <- renderPoint(rect.center)
-      size <- renderSize(rect.size)
-      x <- anchoredX(center._1, size._1, rect.anchor.horizontal)
-      y <- anchoredY(center._2, size._2, rect.anchor.vertical)
-    yield
-      line(out, indent, s"""<rect${commonAttrs(rect.name, rect.gp)} x="$x" y="$y" width="${size._1}" height="${size._2}" />""")
-
-  private def writeCircle(circle: Grob.Circle, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    for
-      center <- renderPoint(circle.center)
-      radius <- renderLength(circle.radius)
-    yield
-      line(out, indent, s"""<circle${commonAttrs(circle.name, circle.gp)} cx="${center._1}" cy="${center._2}" r="$radius" />""")
-
-  private def writeText(text: Grob.Text, out: StringBuilder, indent: Int): Either[SvgRenderError, Unit] =
-    renderPoint(text.at).map { case (x, y) =>
-      val anchor = textAnchor(text.anchor.horizontal)
-      val baseline = dominantBaseline(text.anchor.vertical)
-      val rotation =
-        if text.rotationDegrees == 0.0 then ""
-        else s" transform=\"rotate(${format(text.rotationDegrees)} $x $y)\""
-      line(
-        out,
-        indent,
-        s"""<text${textAttrs(text.name, text.gp)} x="$x" y="$y" text-anchor="$anchor" dominant-baseline="$baseline"$rotation>${escapeText(text.label)}</text>"""
-      )
-    }
-
-  private def writeViewportOpen(
-      viewport: Viewport,
-      name: Option[GraphicsName],
-      out: StringBuilder,
-      indent: Int
-  ): Either[SvgRenderError, Unit] =
-    for
-      origin <- renderPoint(viewport.origin)
-      size <- renderSize(viewport.size)
-    yield
-      val overflow =
-        viewport.clip match
-          case Clip.On  => "hidden"
-          case Clip.Off => "visible"
-      val rotate =
-        if viewport.angleDegrees == 0.0 then ""
-        else s" transform=\"rotate(${format(viewport.angleDegrees)} ${origin._1} ${origin._2})\""
-      val dataName = name.map(n => s""" data-name="${escapeAttr(n.value)}"""").getOrElse("")
-      val viewBox =
-        s"${format(viewport.xScale.lower)} ${format(viewport.yScale.lower)} ${format(viewport.xScale.width)} ${format(viewport.yScale.width)}"
-      line(
-        out,
-        indent,
-        s"""<svg$dataName x="${origin._1}" y="${origin._2}" width="${size._1}" height="${size._2}" viewBox="$viewBox" overflow="$overflow"$rotate>"""
-      )
-
-  private def renderPoint(point: Point): Either[SvgRenderError, (String, String)] =
-    for
-      x <- renderLength(point.x)
-      y <- renderLength(point.y)
-    yield (x, y)
-
-  private def renderSize(size: Size): Either[SvgRenderError, (String, String)] =
-    for
-      width <- renderLength(size.width)
-      height <- renderLength(size.height)
-    yield (width, height)
-
-  private def renderLength(expr: LengthExpr): Either[SvgRenderError, String] =
-    expr match
-      case LengthExpr.Const(length) =>
-        renderScalarLength(length)
-      case LengthExpr.Add(left, right) =>
-        for
-          l <- renderLength(left)
-          r <- renderLength(right)
-        yield s"calc($l + $r)"
-      case LengthExpr.Sub(left, right) =>
-        for
-          l <- renderLength(left)
-          r <- renderLength(right)
-        yield s"calc($l - $r)"
-      case LengthExpr.Mul(factor, LengthExpr.Const(length)) =>
-        renderScalarLength(Length.unsafe(length.value * factor, length.unit))
-      case LengthExpr.Mul(_, _) =>
-        Left(SvgRenderError.UnsupportedLengthExpression("non-scalar multiplication"))
-
-  private def renderScalarLength(length: Length): Either[SvgRenderError, String] =
-    length.unit match
-      case LengthUnit.Npc =>
-        Right(s"${format(length.value * 100.0)}%")
-      case LengthUnit.Native =>
-        Right(format(length.value))
-      case LengthUnit.Cm =>
-        Right(s"${format(length.value)}cm")
-      case LengthUnit.Mm =>
-        Right(s"${format(length.value)}mm")
-      case LengthUnit.Inch =>
-        Right(s"${format(length.value)}in")
-      case LengthUnit.Point =>
-        Right(s"${format(length.value)}pt")
-      case LengthUnit.Line =>
-        Left(SvgRenderError.UnsupportedLengthUnit(LengthUnit.Line))
-
-  private def anchoredX(x: String, width: String, just: HJust): Either[SvgRenderError, String] =
-    just match
-      case HJust.Left   => Right(x)
-      case HJust.Center => Right(s"calc($x - $width / 2)")
-      case HJust.Right  => Right(s"calc($x - $width)")
-
-  private def anchoredY(y: String, height: String, just: VJust): Either[SvgRenderError, String] =
-    just match
-      case VJust.Top    => Right(y)
-      case VJust.Center => Right(s"calc($y - $height / 2)")
-      case VJust.Bottom => Right(s"calc($y - $height)")
+  private def writePrimitive(primitive: DevicePrimitive, out: StringBuilder, indent: Int): Unit =
+    primitive match
+      case DevicePrimitive.Disc(cx, cy, radius, gp, name) =>
+        line(
+          out,
+          indent,
+          s"""<circle${commonAttrs(name, gp)} cx="${format(cx)}" cy="${format(cy)}" r="${format(radius)}" />"""
+        )
+      case DevicePrimitive.Polyline(points, closed, gp, name) =>
+        val coords = points.map(p => s"${format(p.x)},${format(p.y)}").mkString(" ")
+        if closed then line(out, indent, s"""<polygon${commonAttrs(name, gp)} points="$coords" />""")
+        else line(out, indent, s"""<polyline${lineAttrs(name, gp)} points="$coords" />""")
+      case DevicePrimitive.RectShape(x, y, width, height, gp, name) =>
+        line(
+          out,
+          indent,
+          s"""<rect${commonAttrs(name, gp)} x="${format(x)}" y="${format(y)}" width="${format(width)}" height="${format(height)}" />"""
+        )
+      case DevicePrimitive.TextRun(label, x, y, horizontal, vertical, rotationDegrees, fontSizePx, fontFamily, gp, name) =>
+        val rotation =
+          if rotationDegrees == 0.0 then ""
+          else s""" transform="rotate(${format(rotationDegrees)} ${format(x)} ${format(y)})""""
+        line(
+          out,
+          indent,
+          s"""<text${textAttrs(name, gp, fontSizePx, fontFamily)} x="${format(x)}" y="${format(y)}" text-anchor="${textAnchor(horizontal)}" dominant-baseline="${dominantBaseline(vertical)}"$rotation>${escapeText(label)}</text>"""
+        )
 
   private def commonAttrs(name: Option[GraphicsName], gp: GraphicParams): String =
     val attrs = new StringBuilder
@@ -264,13 +133,18 @@ object SvgRenderer:
     if gp.alpha != 1.0 then attrs.append(s""" opacity="${format(gp.alpha)}"""")
     attrs.result()
 
-  private def textAttrs(name: Option[GraphicsName], gp: GraphicParams): String =
+  private def textAttrs(
+      name: Option[GraphicsName],
+      gp: GraphicParams,
+      fontSizePx: Double,
+      fontFamily: Option[String]
+  ): String =
     val attrs = new StringBuilder
     name.foreach(n => attrs.append(s""" data-name="${escapeAttr(n.value)}""""))
     appendPaint(attrs, "fill", gp.fill.orElse(gp.stroke).orElse(Some(Rgba.Black)))
     attrs.append(""" stroke="none"""")
-    gp.fontFamily.foreach(family => attrs.append(s""" font-family="${escapeAttr(family)}""""))
-    attrs.append(s""" font-size="${format(gp.fontSize.value)}pt"""")
+    fontFamily.foreach(family => attrs.append(s""" font-family="${escapeAttr(family)}""""))
+    attrs.append(s""" font-size="${format(fontSizePx)}"""")
     if gp.alpha != 1.0 then attrs.append(s""" opacity="${format(gp.alpha)}"""")
     attrs.result()
 
@@ -309,11 +183,23 @@ object SvgRenderer:
   private def line(out: StringBuilder, indent: Int, value: String): Unit =
     out.append("  " * indent).append(value).append("\n")
 
+  /** Fixed-point formatting (up to 4 decimals, no exponent) so output is
+    * byte-identical across JVM and JS double-to-string behavior.
+    */
   private def format(value: Double): String =
-    if value == 0.0 then "0"
+    val scaled = math.rint(math.abs(value) * 10000.0).toLong
+    val sign = if value < 0.0 && scaled != 0L then "-" else ""
+    val whole = scaled / 10000L
+    var frac = (scaled % 10000L).toInt
+    if frac == 0 then s"$sign$whole"
     else
-      val text = value.toString
-      if text.endsWith(".0") then text.dropRight(2) else text
+      var digits = 4
+      while frac % 10 == 0 do
+        frac /= 10
+        digits -= 1
+      val text = frac.toString
+      val padded = "0" * (digits - text.length) + text
+      s"$sign$whole.$padded"
 
   private def escapeText(value: String): String =
     value

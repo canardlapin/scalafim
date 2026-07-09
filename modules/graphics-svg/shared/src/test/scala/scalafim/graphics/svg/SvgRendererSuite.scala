@@ -14,90 +14,85 @@ class SvgRendererSuite extends munit.FunSuite:
       next = value.indexOf(needle, from)
     count
 
-  private def assertSvgEquals(scene: Scene, expected: String, options: SvgOptions = SvgOptions.default): Unit =
-    assertEquals(SvgRenderer.render(scene, options).toOption.get.value, expected)
+  private def render(scene: Scene, options: SvgOptions = SvgOptions.default): String =
+    SvgRenderer.render(scene, options).toOption.get.value
 
-  test("renders a deterministic SVG document for basic grobs") {
+  test("renders numeric-only SVG for basic grobs with y-up npc coordinates") {
     val point =
       Grob.points(
         Vector(Point.npcUnsafe(0.5, 0.25)),
         gp = GraphicParams.unsafe(fill = Some(Rgba.unsafe(40, 80, 120, 0.5)))
       ).toOption.get
-    val line =
+    val segment =
       Grob.segments(
-        Vector((Point.nativeUnsafe(0.0, 0.0), Point.nativeUnsafe(10.0, 20.0))),
+        Vector((Point.npcUnsafe(0.0, 0.0), Point.npcUnsafe(1.0, 1.0))),
         gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(200, 10, 5)), lineWidth = 2.0, lineType = LineType.Dashed)
       ).toOption.get
     val label =
       Grob.text(
         "A&B <test>",
-        Point.nativeUnsafe(10.0, 20.0),
+        Point.npcUnsafe(0.5, 0.75),
         anchor = Anchor(HJust.Left, VJust.Top),
         gp = GraphicParams.unsafe(fontFamily = Some("Inter"))
-      )
-    val scene =
-      Scene(Vector(point, line, label))
+      ).toOption.get
 
-    val svg =
-      SvgRenderer
-        .render(scene, SvgOptions.unsafe(width = 120, height = 80, title = Some("Smoke & SVG")))
-        .toOption
-        .get
-        .value
+    val svg = render(
+      Scene(Vector(point, segment, label)),
+      SvgOptions.unsafe(width = 120, height = 80, title = Some("Smoke & SVG"))
+    )
 
     assert(svg.contains("""<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">"""))
     assert(svg.contains("<title>Smoke &amp; SVG</title>"))
-    assert(svg.contains("""<circle stroke="#000000" fill="#285078" fill-opacity="0.5" stroke-width="1" cx="50%" cy="25%" r="4pt" />"""))
-    assert(svg.contains("""<line stroke="#c80a05" fill="none" stroke-width="2" stroke-dasharray="6 4" x1="0" y1="0" x2="10" y2="20" />"""))
-    assert(svg.contains("""<text fill="#000000" stroke="none" font-family="Inter" font-size="12pt" x="10" y="20" text-anchor="start" dominant-baseline="text-before-edge">A&amp;B &lt;test&gt;</text>"""))
+    assert(svg.contains("""<circle stroke="#000000" fill="#285078" fill-opacity="0.5" stroke-width="1" cx="60" cy="60" r="5.3333" />"""))
+    assert(svg.contains("""<polyline stroke="#c80a05" fill="none" stroke-width="2" stroke-dasharray="6 4" points="0,80 120,0" />"""))
+    assert(svg.contains("""<text fill="#000000" stroke="none" font-family="Inter" font-size="16" x="60" y="20" text-anchor="start" dominant-baseline="text-before-edge">A&amp;B &lt;test&gt;</text>"""))
     assert(svg.endsWith("</svg>\n"))
   }
 
-  test("renders an x axis from baseline, tickmark segments, and labels") {
-    val range = Interval.unsafe(0.0, 10.0)
-    val ticks = Axis.ticks(range, Breaks.countUnsafe(3)).toOption.get
-    val viewport =
-      Viewport(
-        origin = Point.npcUnsafe(0.1, 0.85),
-        size = Size.npcUnsafe(0.8, 0.1),
-        xScale = Interval.unsafe(0.0, 10.0),
-        yScale = Interval.unsafe(-1.0, 1.0),
-        clip = Clip.Off
-      )
-    val axis =
-      Axis
-        .bottom(
-          range,
-          ticks,
-          tickLength = 0.4,
-          labelOffset = 0.8,
-          axisGp = GraphicParams.unsafe(lineWidth = 0.5),
-          tickGp = GraphicParams.unsafe(lineWidth = 0.5),
-          labelGp = GraphicParams.unsafe(fontSize = Length.pointsUnsafe(8.0)),
-          name = Some(GraphicsName.unsafe("x-axis"))
-        )
-        .flatMap(_.toGrob(Some(viewport)))
-        .toOption
-        .get
+  test("npc y = 0 renders at the bottom of the document") {
+    val bottom = Grob.points(Vector(Point.npcUnsafe(0.5, 0.0))).toOption.get
+    val top = Grob.points(Vector(Point.npcUnsafe(0.5, 1.0))).toOption.get
+    val svg = render(Scene(Vector(bottom, top)), SvgOptions.unsafe(width = 100, height = 100))
 
-    val svg = SvgRenderer.render(Scene(Vector(axis))).toOption.get.value
-
-    assert(svg.contains("""<svg data-name="x-axis" x="10%" y="85%" width="80%" height="10%" viewBox="0 -1 10 2" overflow="visible">"""))
-    assert(svg.contains("""<g data-name="x-axis" stroke="none" fill="none" stroke-width="1">"""))
-    assertEquals(occurrences(svg, """data-name="x-axis-baseline""""), 1)
-    assertEquals(occurrences(svg, """data-name="x-axis-ticks""""), 3)
-    assertEquals(occurrences(svg, """data-name="x-axis-label""""), 3)
-    assert(svg.contains("""<line data-name="x-axis-baseline" stroke="#000000" fill="none" stroke-width="0.5" x1="0" y1="0" x2="10" y2="0" />"""))
-    assert(svg.contains("""<line data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" x1="5" y1="0" x2="5" y2="0.4" />"""))
-    assert(svg.contains("""<text data-name="x-axis-label" fill="#000000" stroke="none" font-size="8pt" x="5" y="0.8" text-anchor="middle" dominant-baseline="text-before-edge">5</text>"""))
+    assert(svg.contains("""cy="100""""), "npc y=0 must be at device bottom")
+    assert(svg.contains("""cy="0""""), "npc y=1 must be at device top")
   }
 
-  test("renders axis-only SVG golden exactly") {
+  test("renders shared scene conformance cases deterministically without unresolved lengths") {
+    val cases = RendererConformance.cases.toOption.get
+    val options = SvgOptions.unsafe(width = 240, height = 160)
+    val first = cases.map(sceneCase => render(sceneCase.scene, options))
+    val second = cases.map(sceneCase => render(sceneCase.scene, options))
+
+    assertEquals(first, second)
+    assert(first.forall(_.startsWith("""<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160">""")))
+    assert(first.forall(_.endsWith("</svg>\n")))
+    assert(first.forall(!_.contains("calc(")), "SVG output must not contain CSS calc expressions")
+    assert(first.forall(!_.contains("%")), "SVG output must not contain percentage lengths")
+    assert(first.forall(!_.contains("pt\"")), "SVG output must not contain unit-suffixed lengths")
+  }
+
+  test("renders scaled plot conformance scene through clipped panel and guide groups") {
+    val scene = RendererConformance.scaledPlotCase.toOption.get.scene
+    val svg = render(scene, SvgOptions.unsafe(width = 300, height = 180))
+
+    assert(svg.contains("""<g data-name="plot-panel" clip-path="url(#clip-0)">"""))
+    assert(svg.contains("""<g data-name="scaled-x-axis">"""))
+    assert(svg.contains("""<g data-name="condition-legend">"""))
+    assert(svg.contains("""<clipPath id="clip-0">"""))
+    assertEquals(occurrences(svg, """<circle stroke="#285078" fill="none" stroke-width="1""""), 2)
+    assertEquals(occurrences(svg, """<circle stroke="#d27828" fill="none" stroke-width="1""""), 1)
+    assert(svg.contains("""<text data-name="condition-legend-title""""))
+    assert(!svg.contains("calc("))
+    assert(!svg.contains("%"))
+  }
+
+  test("renders a bottom axis at the visual bottom of its panel") {
     val range = Interval.unsafe(0.0, 10.0)
     val ticks = Axis.ticks(range, Breaks.countUnsafe(3)).toOption.get
     val viewport =
-      Viewport(
-        origin = Point.npcUnsafe(0.1, 0.8),
+      Viewport.unsafe(
+        origin = Point.npcUnsafe(0.1, 0.1),
         size = Size.npcUnsafe(0.8, 0.15),
         xScale = range,
         yScale = Interval.unsafe(-1.0, 1.0),
@@ -121,24 +116,28 @@ class SvgRendererSuite extends munit.FunSuite:
 
     val expected =
       """<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120" viewBox="0 0 200 120">
-        |  <svg data-name="x-axis" x="10%" y="80%" width="80%" height="15%" viewBox="0 -1 10 2" overflow="visible">
-        |    <g data-name="x-axis" stroke="none" fill="none" stroke-width="1">
-        |      <line data-name="x-axis-baseline" stroke="#000000" fill="none" stroke-width="0.5" x1="0" y1="0" x2="10" y2="0" />
-        |      <line data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" x1="0" y1="0" x2="0" y2="0.4" />
-        |      <line data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" x1="5" y1="0" x2="5" y2="0.4" />
-        |      <line data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" x1="10" y1="0" x2="10" y2="0.4" />
-        |      <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="8pt" x="0" y="0.8" text-anchor="middle" dominant-baseline="text-before-edge">0</text>
-        |      <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="8pt" x="5" y="0.8" text-anchor="middle" dominant-baseline="text-before-edge">5</text>
-        |      <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="8pt" x="10" y="0.8" text-anchor="middle" dominant-baseline="text-before-edge">10</text>
-        |    </g>
-        |  </svg>
+        |  <g data-name="x-axis">
+        |    <polyline data-name="x-axis-baseline" stroke="#000000" fill="none" stroke-width="0.5" points="20,99 180,99" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="20,99 20,102.6" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="100,99 100,102.6" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="180,99 180,102.6" />
+        |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="20" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">0</text>
+        |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="100" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">5</text>
+        |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="180" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">10</text>
+        |  </g>
         |</svg>
         |""".stripMargin
 
-    assertSvgEquals(Scene(Vector(axis)), expected, SvgOptions.unsafe(width = 200, height = 120))
+    assertEquals(render(Scene(Vector(axis)), SvgOptions.unsafe(width = 200, height = 120)), expected)
   }
 
-  test("renders multi-point line grobs as adjacent SVG line segments") {
+  test("renders multi-point line grobs as a single polyline") {
+    val viewport =
+      Viewport.unsafe(
+        xScale = Interval.unsafe(0.0, 4.0),
+        yScale = Interval.unsafe(0.0, 2.0),
+        clip = Clip.Off
+      )
     val polyline =
       Grob.lines(
         Vector(
@@ -147,27 +146,40 @@ class SvgRendererSuite extends munit.FunSuite:
           Point.nativeUnsafe(3.0, 1.0)
         ),
         gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(20, 30, 40)), lineType = LineType.Dotted),
+        viewport = Some(viewport),
         name = Some(GraphicsName.unsafe("trajectory"))
       ).toOption.get
 
-    val svg = SvgRenderer.render(Scene(Vector(polyline))).toOption.get.value
+    val svg = render(Scene(Vector(polyline)), SvgOptions.unsafe(width = 100, height = 100))
 
-    assertEquals(occurrences(svg, """data-name="trajectory""""), 2)
-    assert(svg.contains("""<line data-name="trajectory" stroke="#141e28" fill="none" stroke-width="1" stroke-dasharray="1 3" x1="0" y1="0" x2="1" y2="2" />"""))
-    assert(svg.contains("""<line data-name="trajectory" stroke="#141e28" fill="none" stroke-width="1" stroke-dasharray="1 3" x1="1" y1="2" x2="3" y2="1" />"""))
+    assert(svg.contains("""<polyline data-name="trajectory" stroke="#141e28" fill="none" stroke-width="1" stroke-dasharray="1 3" points="0,100 25,0 75,50" />"""))
   }
 
-  test("renders point shapes, rectangles, and groups") {
-    val points =
-      Vector(PointShape.Square, PointShape.Triangle, PointShape.Cross).zipWithIndex.map { case (shape, idx) =>
-        Grob.points(
-          Vector(Point.nativeUnsafe(idx.toDouble, idx.toDouble)),
-          size = LengthExpr(Length.pointsUnsafe(6.0)),
-          shape = shape,
-          gp = GraphicParams.unsafe(fill = Some(Rgba.White)),
-          name = Some(GraphicsName.unsafe(s"shape-${idx}"))
-        ).toOption.get
-      }
+  test("renders point shapes, rectangles, and groups numerically") {
+    val square =
+      Grob.points(
+        Vector(Point.npcUnsafe(0.5, 0.5)),
+        size = ExtentExpr.pointsUnsafe(6.0),
+        shape = PointShape.Square,
+        gp = GraphicParams.unsafe(fill = Some(Rgba.White)),
+        name = Some(GraphicsName.unsafe("shape-square"))
+      ).toOption.get
+    val triangle =
+      Grob.points(
+        Vector(Point.npcUnsafe(0.25, 0.25)),
+        size = ExtentExpr.pointsUnsafe(6.0),
+        shape = PointShape.Triangle,
+        gp = GraphicParams.unsafe(fill = Some(Rgba.White)),
+        name = Some(GraphicsName.unsafe("shape-triangle"))
+      ).toOption.get
+    val cross =
+      Grob.points(
+        Vector(Point.npcUnsafe(0.75, 0.75)),
+        size = ExtentExpr.pointsUnsafe(6.0),
+        shape = PointShape.Cross,
+        gp = GraphicParams.unsafe(fill = Some(Rgba.White)),
+        name = Some(GraphicsName.unsafe("shape-cross"))
+      ).toOption.get
     val rect =
       Grob.rect(
         Point.npcUnsafe(0.5, 0.5),
@@ -175,72 +187,41 @@ class SvgRendererSuite extends munit.FunSuite:
         anchor = Anchor.Center,
         gp = GraphicParams.unsafe(fill = Some(Rgba.unsafe(10, 20, 30)), alpha = 0.75),
         name = Some(GraphicsName.unsafe("centered-rect"))
-      )
+      ).toOption.get
     val group =
-      Grob.group(points :+ rect, name = Some(GraphicsName.unsafe("shape-group")))
+      Grob.group(Vector(square, triangle, cross, rect), name = Some(GraphicsName.unsafe("shape-group")))
 
-    val svg = SvgRenderer.render(Scene(Vector(group))).toOption.get.value
+    val svg = render(Scene(Vector(group)), SvgOptions.unsafe(width = 100, height = 100))
 
-    assert(svg.contains("""<g data-name="shape-group" stroke="#000000" fill="none" stroke-width="1">"""))
-    assert(svg.contains("""<rect data-name="shape-0" stroke="#000000" fill="#ffffff" stroke-width="1" x="0" y="0" width="6pt" height="6pt" />"""))
-    assert(svg.contains("""<path data-name="shape-1" stroke="#000000" fill="#ffffff" stroke-width="1" d="M 1 1 l 6pt 0 l 0 6pt z" />"""))
-    assert(svg.contains("""<text data-name="shape-2" fill="#ffffff" stroke="none" font-size="12pt" x="2" y="2">+</text>"""))
-    assert(svg.contains("""<rect data-name="centered-rect" stroke="#000000" fill="#0a141e" stroke-width="1" opacity="0.75" x="calc(50% - 20% / 2)" y="calc(50% - 40% / 2)" width="20%" height="40%" />"""))
+    assert(svg.contains("""<g data-name="shape-group">"""))
+    assert(svg.contains("""<rect data-name="shape-square" stroke="#000000" fill="#ffffff" stroke-width="1" x="42" y="42" width="16" height="16" />"""))
+    assert(svg.contains("""<polygon data-name="shape-triangle" stroke="#000000" fill="#ffffff" stroke-width="1" points="25,67 33,83 17,83" />"""))
+    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" points="67,25 83,25" />"""))
+    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" points="75,17 75,33" />"""))
+    assert(svg.contains("""<rect data-name="centered-rect" stroke="#000000" fill="#0a141e" stroke-width="1" opacity="0.75" x="40" y="30" width="20" height="40" />"""))
   }
 
-  test("renders mixed primitive SVG golden exactly") {
-    val scene =
-      Scene(
-        Vector(
-          Grob.group(
-            Vector(
-              Grob.rect(
-                Point.npcUnsafe(0.5, 0.5),
-                Size.npcUnsafe(0.25, 0.5),
-                gp = GraphicParams.unsafe(fill = Some(Rgba.unsafe(10, 20, 30))),
-                name = Some(GraphicsName.unsafe("panel"))
-              ),
-              Grob.circle(
-                Point.nativeUnsafe(10.0, 20.0),
-                LengthExpr(Length.pointsUnsafe(3.0)),
-                gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(200, 0, 0)), alpha = 0.8),
-                name = Some(GraphicsName.unsafe("marker"))
-              ),
-              Grob.text(
-                "A&B <label>",
-                Point.nativeUnsafe(4.0, 5.0),
-                rotationDegrees = 45.0,
-                gp = GraphicParams.unsafe(stroke = None, fill = Some(Rgba.Black), fontSize = Length.pointsUnsafe(9.0)),
-                name = Some(GraphicsName.unsafe("caption"))
-              )
-            ),
-            name = Some(GraphicsName.unsafe("mixed"))
-          )
-        )
-      )
-    val expected =
-      """<svg xmlns="http://www.w3.org/2000/svg" width="80" height="60" viewBox="0 0 80 60">
-        |  <title>Mixed primitives</title>
-        |  <g data-name="mixed" stroke="#000000" fill="none" stroke-width="1">
-        |    <rect data-name="panel" stroke="#000000" fill="#0a141e" stroke-width="1" x="calc(50% - 25% / 2)" y="calc(50% - 50% / 2)" width="25%" height="50%" />
-        |    <circle data-name="marker" stroke="#c80000" fill="none" stroke-width="1" opacity="0.8" cx="10" cy="20" r="3pt" />
-        |    <text data-name="caption" fill="#000000" stroke="none" font-size="9pt" x="4" y="5" text-anchor="middle" dominant-baseline="middle" transform="rotate(45 4 5)">A&amp;B &lt;label&gt;</text>
-        |  </g>
-        |</svg>
-        |""".stripMargin
+  test("anchors rectangles from their scene-space corners") {
+    val bottomLeft =
+      Grob.rect(
+        Point.npcUnsafe(0.5, 0.5),
+        Size.npcUnsafe(0.2, 0.4),
+        anchor = Anchor.BottomLeft,
+        name = Some(GraphicsName.unsafe("anchored-rect"))
+      ).toOption.get
+    val svg = render(Scene(Vector(bottomLeft)), SvgOptions.unsafe(width = 100, height = 100))
 
-    assertSvgEquals(scene, expected, SvgOptions.unsafe(width = 80, height = 60, title = Some("Mixed primitives")))
+    assert(svg.contains("""x="50" y="10" width="20" height="40""""))
   }
 
-  test("renders viewport wrappers with raw native viewBox coordinates") {
+  test("renders clipped viewports via clipPath definitions") {
     val viewport =
-      Viewport(
+      Viewport.unsafe(
         origin = Point.npcUnsafe(0.1, 0.2),
         size = Size.npcUnsafe(0.5, 0.4),
         xScale = Interval.unsafe(-1.0, 1.0),
         yScale = Interval.unsafe(0.0, 10.0),
-        clip = Clip.Off,
-        angleDegrees = 15.0
+        clip = Clip.On
       )
     val grob =
       Grob.lines(
@@ -249,35 +230,74 @@ class SvgRendererSuite extends munit.FunSuite:
         name = Some(GraphicsName.unsafe("native-line"))
       ).toOption.get
 
-    val svg = SvgRenderer.render(Scene(Vector(grob))).toOption.get.value
+    val svg = render(Scene(Vector(grob)), SvgOptions.unsafe(width = 200, height = 100))
 
-    assert(svg.contains("""<svg data-name="native-line" x="10%" y="20%" width="50%" height="40%" viewBox="-1 0 2 10" overflow="visible" transform="rotate(15 10% 20%)">"""))
-    assert(svg.contains("""<line data-name="native-line" stroke="#000000" fill="none" stroke-width="1" x1="-1" y1="0" x2="1" y2="10" />"""))
+    assert(svg.contains("""<g data-name="native-line" clip-path="url(#clip-0)">"""))
+    assert(svg.contains("""<polyline data-name="native-line" stroke="#000000" fill="none" stroke-width="1" points="20,80 120,40" />"""))
+    assert(svg.contains("""<clipPath id="clip-0">"""))
+    assert(svg.contains("""<rect x="20" y="40" width="100" height="40" />"""))
   }
 
-  test("returns typed errors for unsupported SVG unit semantics") {
+  test("rotated viewports pivot on the resolved origin corner") {
+    val viewport =
+      Viewport.unsafe(
+        origin = Point.npcUnsafe(0.1, 0.2),
+        size = Size.npcUnsafe(0.5, 0.4),
+        clip = Clip.Off,
+        angleDegrees = 15.0
+      )
+    val grob =
+      Grob.lines(
+        Vector(Point.npcUnsafe(0.0, 0.0), Point.npcUnsafe(1.0, 1.0)),
+        viewport = Some(viewport),
+        name = Some(GraphicsName.unsafe("rotated"))
+      ).toOption.get
+
+    val svg = render(Scene(Vector(grob)), SvgOptions.unsafe(width = 200, height = 100))
+
+    assert(svg.contains("""<g data-name="rotated" transform="rotate(-15 20 80)">"""))
+  }
+
+  test("renders rotated text about its own anchor point") {
+    val text =
+      Grob.text(
+        "A&B <label>",
+        Point.npcUnsafe(0.5, 0.5),
+        rotationDegrees = 45.0,
+        gp = GraphicParams.unsafe(stroke = None, fill = Some(Rgba.Black), fontSize = Length.pointsUnsafe(9.0)),
+        name = Some(GraphicsName.unsafe("caption"))
+      ).toOption.get
+
+    val svg = render(Scene(Vector(text)), SvgOptions.unsafe(width = 80, height = 60))
+
+    assert(svg.contains("""<text data-name="caption" fill="#000000" stroke="none" font-size="12" x="40" y="30" text-anchor="middle" dominant-baseline="middle" transform="rotate(-45 40 30)">A&amp;B &lt;label&gt;</text>"""))
+  }
+
+  test("returns typed errors for unresolvable length units") {
     val grob =
       Grob.circle(
         Point.npcUnsafe(0.5, 0.5),
-        LengthExpr(Length.unsafe(1.0, LengthUnit.Line))
-      )
+        ExtentExpr.unsafe(Length.unsafe(1.0, LengthUnit.Line))
+      ).toOption.get
 
-    assertEquals(
-      SvgRenderer.render(Scene(Vector(grob))).left.toOption,
-      Some(SvgRenderError.UnsupportedLengthUnit(LengthUnit.Line))
-    )
+    assert(SvgRenderer.render(Scene(Vector(grob))).left.toOption.exists {
+      case SvgRenderError.Graphics(GraphicsError.UnresolvableLength(_)) => true
+      case _                                                            => false
+    })
   }
 
-  test("returns typed errors for unsupported nested unit multiplication") {
-    val expr =
-      (LengthExpr.npcUnsafe(0.5) + LengthExpr.nativeUnsafe(1.0)).times(2.0).toOption.get
+  test("returns typed errors for relative font sizes") {
     val grob =
-      Grob.circle(Point.npcUnsafe(0.5, 0.5), expr)
+      Grob.text(
+        "label",
+        Point.npcUnsafe(0.5, 0.5),
+        gp = GraphicParams.unsafe(fontSize = Length.unsafe(0.5, LengthUnit.Npc))
+      ).toOption.get
 
-    assertEquals(
-      SvgRenderer.render(Scene(Vector(grob))).left.toOption,
-      Some(SvgRenderError.UnsupportedLengthExpression("non-scalar multiplication"))
-    )
+    assert(SvgRenderer.render(Scene(Vector(grob))).left.toOption.exists {
+      case SvgRenderError.Graphics(GraphicsError.UnresolvableLength(_)) => true
+      case _                                                            => false
+    })
   }
 
   test("rejects invalid document sizes through smart options constructor") {
