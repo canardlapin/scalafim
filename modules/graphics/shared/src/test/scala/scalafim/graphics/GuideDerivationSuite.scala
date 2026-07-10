@@ -112,6 +112,9 @@ class GuideDerivationSuite extends munit.FunSuite:
     }
     assertEquals(bottomAxes.length, 1)
     assertEquals(bottomAxes.head.name.map(_.value), Some("time-axis"))
+    val overrideTicks = bottomAxes.head.ticks.getOrElse(fail("override ticks must be materialized before panel expansion"))
+    assertEquals(overrideTicks.map(_.value), Vector(0.0, 2.0))
+    assertEquals(overrideTicks.map(_.label), Vector("0", "2"))
   }
 
   test("mixing scaled and unscaled position bindings across layers is a typed error") {

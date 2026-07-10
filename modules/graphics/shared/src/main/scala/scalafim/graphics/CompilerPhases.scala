@@ -422,7 +422,11 @@ private[graphics] object GuidePhase:
       case GuidePolicy.NoGuides =>
         Right(Vector.empty)
       case GuidePolicy.Explicit(explicit) =>
-        Right(explicit)
+        if explicit.isEmpty then Right(Vector.empty)
+        else
+          ranges match
+            case Some((xRange, yRange)) => materializeAxisTicks(explicit, xRange, yRange)
+            case None                   => Left(GraphicsError.MissingLayout("guides"))
       case GuidePolicy.Derived(overrides, deriveLegends) =>
         ranges match
           case None =>
@@ -444,6 +448,7 @@ private[graphics] object GuidePhase:
       case _                   => false
     }
     for
+      resolvedOverrides <- materializeAxisTicks(overrides, xRange, yRange)
       xAxis <-
         if overriddenSides.contains(AxisSide.Bottom) then Right(None)
         else positionAxis(layers, Aesthetic.X.label, AxisSide.Bottom, xRange)
@@ -453,7 +458,32 @@ private[graphics] object GuidePhase:
       legends <-
         if hasLegendOverride || !deriveLegends then Right(Vector.empty)
         else discreteLegends(layers, relativeLegend)
-    yield Vector(xAxis, yAxis).flatten ++ overrides ++ legends
+    yield Vector(xAxis, yAxis).flatten ++ resolvedOverrides ++ legends
+
+  /** Resolve caller-supplied break policies against the unexpanded data
+    * ranges. Panel padding is a view concern and must not leak into tick values
+    * or labels when the guides are lowered later against the expanded layout.
+    */
+  private def materializeAxisTicks(
+      specs: Vector[GuideSpec],
+      xRange: Interval,
+      yRange: Interval
+  ): Either[GraphicsError, Vector[GuideSpec]] =
+    val out = Vector.newBuilder[GuideSpec]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < specs.length && result.isRight do
+      specs(idx) match
+        case axis: GuideSpec.Axis if axis.ticks.isEmpty =>
+          val range = if axis.side.isHorizontal then xRange else yRange
+          result = Axis.ticks(range, axis.breaks, axis.labeler).map { ticks =>
+            out += axis.copy(ticks = Some(ticks))
+            ()
+          }
+        case spec =>
+          out += spec
+      idx += 1
+    result.map(_ => out.result())
 
   /** Derive an axis for a position aesthetic. A trained continuous scale
     * provides breaks and labels in the raw data domain, positioned in mapped
