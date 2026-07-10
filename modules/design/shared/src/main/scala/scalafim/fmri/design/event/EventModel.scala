@@ -9,7 +9,7 @@ import scala.collection.immutable.VectorMap
 import scala.util.control.NonFatal
 
 enum EventModelDiagnosticKind:
-  case DegenerateModulator, NonFiniteModulator, OnsetOutOfBounds
+  case BasisDegeneracy, DegenerateModulator, NonFiniteModulator, OnsetOutOfBounds
 
 final case class EventModelDiagnostic(
     kind: EventModelDiagnosticKind,

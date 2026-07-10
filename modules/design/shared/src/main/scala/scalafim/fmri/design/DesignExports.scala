@@ -1,10 +1,13 @@
 package scalafim.fmri.design
 
 import scalafim.fmri.design.baseline.{BaselineModel, BaselineTerm}
+import scalafim.fmri.design.contrast.{ContrastError, FContrasts}
 import scalafim.fmri.design.contrast.ContrastRegistry.*
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
+
+import scala.collection.immutable.VectorMap
 
 enum CorrelationMethod:
   case Pearson, Spearman
@@ -18,15 +21,60 @@ enum PlotLabelMode:
 enum ContrastScaleMode:
   case Auto, Diverging, OneSided
 
-final case class DesignMatrixRow(scan: Int, values: Vector[Double])
+enum DesignExportError:
+  case ColumnCountMismatch(context: String, expected: Int, actual: Int)
+  case MetadataCountMismatch(expected: Int, actual: Int)
+  case SamplingRowMismatch(context: String, expectedRows: Int, sampleRows: Int, blockRows: Int)
+  case EmptySelection(target: String)
+  case MissingEventTerm(name: String, known: Vector[String])
+  case EmptyBaselineModel
+  case MissingBaselineTerm(name: String, known: Vector[String])
+  case AmbiguousBaselineTerm(name: String, matches: Vector[String])
+  case EmptyContrasts
+  case ContrastFailed(error: ContrastError)
+
+  def message: String =
+    this match
+      case ColumnCountMismatch(context, expected, actual) =>
+        s"$context column count mismatch: matrix has $expected columns, columnNames has $actual"
+      case MetadataCountMismatch(expected, actual) =>
+        s"metadata length mismatch: expected 0 or $expected entries, found $actual"
+      case SamplingRowMismatch(context, expectedRows, sampleRows, blockRows) =>
+        s"$context sampling/design row mismatch: design has $expectedRows rows, samples has $sampleRows rows, block ids has $blockRows rows"
+      case EmptySelection(target) =>
+        s"No columns found matching $target"
+      case MissingEventTerm(name, known) =>
+        val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
+        s"No event term found matching '$name'$suffix"
+      case EmptyBaselineModel =>
+        "Baseline model contains no terms"
+      case MissingBaselineTerm(name, known) =>
+        val suffix = if known.isEmpty then "" else s" (available: ${known.mkString(", ")})"
+        s"Specified term_name '$name' not found$suffix"
+      case AmbiguousBaselineTerm(name, matches) =>
+        s"Specified term_name '$name' matches multiple terms: ${matches.mkString(", ")}"
+      case EmptyContrasts =>
+        "No contrasts found in this event model"
+      case ContrastFailed(error) =>
+        error.message
+
+final case class DesignMatrixRow(scan: Int, values: Vector[Double]):
+  def scanIndex: ScanIndex =
+    ScanIndex.unsafeOneBased(scan)
 
 final case class DesignMatrixTable(
     columnNames: Vector[String],
     rows: Vector[DesignMatrixRow],
-    metadata: Vector[DesignColumnMeta]
+    metadata: Vector[DesignColumnMeta],
+    descriptors: Vector[DesignColumnDescriptor] = Vector.empty
 )
 
-final case class DesignMapCell(scan: Int, col: Int, regressor: String, value: Double)
+final case class DesignMapCell(scan: Int, col: Int, regressor: String, value: Double):
+  def scanIndex: ScanIndex =
+    ScanIndex.unsafeOneBased(scan)
+
+  def columnIndex: DesignColumnIndex =
+    DesignColumnIndex.unsafeOneBased(col)
 
 final case class DesignMapData(
     cells: Vector[DesignMapCell],
@@ -43,7 +91,12 @@ final case class CorrelationCell(
     var1: String,
     var2: String,
     correlation: Option[Double]
-)
+):
+  def rowIndex: DesignColumnIndex =
+    DesignColumnIndex.unsafeOneBased(row)
+
+  def columnIndex: DesignColumnIndex =
+    DesignColumnIndex.unsafeOneBased(col)
 
 final case class CorrelationMapData(
     cells: Vector[CorrelationCell],
@@ -88,7 +141,9 @@ final case class ContrastWeightCell(
     row: Int,
     col: Int,
     weight: Double
-)
+):
+  def rowIndex: DesignColumnIndex =
+    DesignColumnIndex.unsafeOneBased(row)
 
 final case class ContrastPlotData(
     cells: Vector[ContrastWeightCell],
@@ -127,8 +182,28 @@ object DesignExports:
     def designMeta: Vector[DesignColumnMeta] =
       source.metadata(a)
 
+    def designDescriptors: Vector[DesignColumnDescriptor] =
+      source.metadata(a).map(_.descriptor)
+
     def designTable: DesignMatrixTable =
       DesignExports.designTable(source.designMatrix(a), source.columnNames(a), source.metadata(a))
+
+    def designTableEither: Either[DesignExportError, DesignMatrixTable] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      validateColumns("designTable", mat, names).flatMap { _ =>
+        DesignExports.designTableEither(mat, names, source.metadata(a))
+      }
+
+    def designTable(selector: DesignColumnSelector): DesignMatrixTable =
+      DesignExports.designTable(source.designMatrix(a), source.columnNames(a), source.metadata(a), selector)
+
+    def designTableEither(selector: DesignColumnSelector): Either[DesignExportError, DesignMatrixTable] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      validateColumns("designTable", mat, names).flatMap { _ =>
+        DesignExports.designTableEither(mat, names, source.metadata(a), selector)
+      }
 
     def designMap(blockSeparators: Boolean = true): DesignMapData =
       DesignExports.designMap(
@@ -138,6 +213,66 @@ object DesignExports:
         source.metadata(a),
         blockSeparators = blockSeparators
       )
+
+    def designMapEither: Either[DesignExportError, DesignMapData] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      val frame = source.samplingFrame(a)
+      for
+        _ <- validateColumns("designMap", mat, names)
+        _ <- validateSamplingRows("designMap", frame, mat.rows, global = true)
+        out <- DesignExports.designMapEither(mat, names, frame, source.metadata(a), blockSeparators = true)
+      yield out
+
+    def designMapEither(blockSeparators: Boolean): Either[DesignExportError, DesignMapData] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      val frame = source.samplingFrame(a)
+      for
+        _ <- validateColumns("designMap", mat, names)
+        _ <- validateSamplingRows("designMap", frame, mat.rows, global = true)
+        out <- DesignExports.designMapEither(mat, names, frame, source.metadata(a), blockSeparators = blockSeparators)
+      yield out
+
+    def designMap(selector: DesignColumnSelector): DesignMapData =
+      DesignExports.designMap(
+        source.designMatrix(a),
+        source.columnNames(a),
+        source.samplingFrame(a),
+        source.metadata(a),
+        blockSeparators = true,
+        selector = selector
+      )
+
+    def designMapEither(selector: DesignColumnSelector): Either[DesignExportError, DesignMapData] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      val frame = source.samplingFrame(a)
+      for
+        _ <- validateColumns("designMap", mat, names)
+        _ <- validateSamplingRows("designMap", frame, mat.rows, global = true)
+        out <- DesignExports.designMapEither(mat, names, frame, source.metadata(a), blockSeparators = true, selector = selector)
+      yield out
+
+    def designMap(selector: DesignColumnSelector, blockSeparators: Boolean): DesignMapData =
+      DesignExports.designMap(
+        source.designMatrix(a),
+        source.columnNames(a),
+        source.samplingFrame(a),
+        source.metadata(a),
+        blockSeparators = blockSeparators,
+        selector = selector
+      )
+
+    def designMapEither(selector: DesignColumnSelector, blockSeparators: Boolean): Either[DesignExportError, DesignMapData] =
+      val mat = source.designMatrix(a)
+      val names = source.columnNames(a)
+      val frame = source.samplingFrame(a)
+      for
+        _ <- validateColumns("designMap", mat, names)
+        _ <- validateSamplingRows("designMap", frame, mat.rows, global = true)
+        out <- DesignExports.designMapEither(mat, names, frame, source.metadata(a), blockSeparators = blockSeparators, selector = selector)
+      yield out
 
     def correlationMap(
         method: CorrelationMethod = CorrelationMethod.Pearson,
@@ -152,13 +287,68 @@ object DesignExports:
         absoluteLimits = absoluteLimits
       )
 
+    def correlationMapEither(
+        method: CorrelationMethod = CorrelationMethod.Pearson,
+        halfMatrix: Boolean = false,
+        absoluteLimits: Boolean = true
+    ): Either[DesignExportError, CorrelationMapData] =
+      DesignExports.correlationMapEither(
+        source.designMatrix(a),
+        source.columnNames(a),
+        method = method,
+        halfMatrix = halfMatrix,
+        absoluteLimits = absoluteLimits
+      )
+
   def designTable(mat: Mat, columnNames: Vector[String], metadata: Vector[DesignColumnMeta] = Vector.empty): DesignMatrixTable =
-    require(columnNames.length == mat.cols, "columnNames length must match matrix columns")
+    unsafe(designTableEither(mat, columnNames, metadata))
+
+  def designTableEither(
+      mat: Mat,
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta] = Vector.empty
+  ): Either[DesignExportError, DesignMatrixTable] =
+    for
+      _ <- validateColumns("designTable", mat, columnNames)
+      selected <- selectColumnIndicesEither(columnNames, metadata, DesignColumnSelector.All)
+    yield designTableSelected(mat, columnNames, metadata, selected)
+
+  def designTable(
+      mat: Mat,
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta],
+      selector: DesignColumnSelector
+  ): DesignMatrixTable =
+    unsafe(designTableEither(mat, columnNames, metadata, selector))
+
+  def designTableEither(
+      mat: Mat,
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta],
+      selector: DesignColumnSelector
+  ): Either[DesignExportError, DesignMatrixTable] =
+    for
+      _ <- validateColumns("designTable", mat, columnNames)
+      selected <- selectColumnIndicesEither(columnNames, metadata, selector)
+    yield designTableSelected(mat, columnNames, metadata, selected)
+
+  private def designTableSelected(
+      mat: Mat,
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta],
+      selected: Vector[Int]
+  ): DesignMatrixTable =
     val rows = Vector.tabulate(mat.rows) { r =>
-      val values = Vector.tabulate(mat.cols)(c => mat.data(r * mat.cols + c))
+      val values = selected.map(c => mat.data(r * mat.cols + c))
       DesignMatrixRow(scan = r + 1, values = values)
     }
-    DesignMatrixTable(columnNames, rows, metadata)
+    val selectedMetadata = if metadata.isEmpty then Vector.empty else selected.map(metadata)
+    DesignMatrixTable(
+      columnNames = selected.map(columnNames),
+      rows = rows,
+      metadata = selectedMetadata,
+      descriptors = selectedMetadata.map(_.descriptor)
+    )
 
   def designMap(
       mat: Mat,
@@ -167,14 +357,72 @@ object DesignExports:
       metadata: Vector[DesignColumnMeta],
       blockSeparators: Boolean
   ): DesignMapData =
-    require(columnNames.length == mat.cols, "columnNames length must match matrix columns")
+    unsafe(designMapEither(
+      mat = mat,
+      columnNames = columnNames,
+      samplingFrame = samplingFrame,
+      metadata = metadata,
+      blockSeparators = blockSeparators,
+      selector = DesignColumnSelector.All
+    ))
+
+  def designMapEither(
+      mat: Mat,
+      columnNames: Vector[String],
+      samplingFrame: SamplingFrame,
+      metadata: Vector[DesignColumnMeta],
+      blockSeparators: Boolean
+  ): Either[DesignExportError, DesignMapData] =
+    designMapEither(
+      mat = mat,
+      columnNames = columnNames,
+      samplingFrame = samplingFrame,
+      metadata = metadata,
+      blockSeparators = blockSeparators,
+      selector = DesignColumnSelector.All
+    )
+
+  def designMap(
+      mat: Mat,
+      columnNames: Vector[String],
+      samplingFrame: SamplingFrame,
+      metadata: Vector[DesignColumnMeta],
+      blockSeparators: Boolean,
+      selector: DesignColumnSelector
+  ): DesignMapData =
+    unsafe(designMapEither(mat, columnNames, samplingFrame, metadata, blockSeparators, selector))
+
+  def designMapEither(
+      mat: Mat,
+      columnNames: Vector[String],
+      samplingFrame: SamplingFrame,
+      metadata: Vector[DesignColumnMeta],
+      blockSeparators: Boolean,
+      selector: DesignColumnSelector
+  ): Either[DesignExportError, DesignMapData] =
+    for
+      _ <- validateColumns("designMap", mat, columnNames)
+      _ <- validateSamplingRows("designMap", samplingFrame, mat.rows, global = true)
+      selected <- selectColumnIndicesEither(columnNames, metadata, selector)
+    yield designMapSelected(mat, columnNames, samplingFrame, metadata, blockSeparators, selected)
+
+  private def designMapSelected(
+      mat: Mat,
+      columnNames: Vector[String],
+      samplingFrame: SamplingFrame,
+      metadata: Vector[DesignColumnMeta],
+      blockSeparators: Boolean,
+      selected: Vector[Int]
+  ): DesignMapData =
+    val selectedNames = selected.map(columnNames)
     val cells = Vector.newBuilder[DesignMapCell]
     var r = 0
     while r < mat.rows do
-      var c = 0
-      while c < mat.cols do
-        cells += DesignMapCell(scan = r + 1, col = c + 1, regressor = columnNames(c), value = mat.data(r * mat.cols + c))
-        c += 1
+      var j = 0
+      while j < selected.length do
+        val c = selected(j)
+        cells += DesignMapCell(scan = r + 1, col = j + 1, regressor = columnNames(c), value = mat.data(r * mat.cols + c))
+        j += 1
       r += 1
 
     val separators =
@@ -184,9 +432,9 @@ object DesignExports:
     DesignMapData(
       cells = cells.result(),
       nScans = mat.rows,
-      regressors = columnNames,
+      regressors = selectedNames,
       blockSeparators = separators,
-      metadata = metadata
+      metadata = if metadata.isEmpty then Vector.empty else selected.map(metadata)
     )
 
   def correlationMap(
@@ -196,7 +444,26 @@ object DesignExports:
       halfMatrix: Boolean,
       absoluteLimits: Boolean
   ): CorrelationMapData =
-    require(columnNames.length == mat.cols, "columnNames length must match matrix columns")
+    unsafe(correlationMapEither(mat, columnNames, method, halfMatrix, absoluteLimits))
+
+  def correlationMapEither(
+      mat: Mat,
+      columnNames: Vector[String],
+      method: CorrelationMethod,
+      halfMatrix: Boolean,
+      absoluteLimits: Boolean
+  ): Either[DesignExportError, CorrelationMapData] =
+    validateColumns("correlationMap", mat, columnNames).map { _ =>
+      correlationMapUnsafe(mat, columnNames, method, halfMatrix, absoluteLimits)
+    }
+
+  private def correlationMapUnsafe(
+      mat: Mat,
+      columnNames: Vector[String],
+      method: CorrelationMethod,
+      halfMatrix: Boolean,
+      absoluteLimits: Boolean
+  ): CorrelationMapData =
     val cells = Vector.newBuilder[CorrelationCell]
     val observed = Vector.newBuilder[Double]
     var i = 0
@@ -231,13 +498,59 @@ object DesignExports:
       maxLabels: Int = 30,
       blockAxis: PlotBlockAxis = PlotBlockAxis.Global,
       facetByBlock: Boolean = false,
-      showBlockBounds: Boolean = true
+      showBlockBounds: Boolean = true,
+      columnSelector: DesignColumnSelector = DesignColumnSelector.All
   ): EventPlotData =
-    val selected = selectEventColumns(model, termName)
+    unsafe(eventPlotDataEither(
+      model = model,
+      termName = termName,
+      facetThreshold = facetThreshold,
+      labelMode = labelMode,
+      maxLabels = maxLabels,
+      blockAxis = blockAxis,
+      facetByBlock = facetByBlock,
+      showBlockBounds = showBlockBounds,
+      columnSelector = columnSelector
+    ))
+
+  def eventPlotDataEither(
+      model: EventModel,
+      termName: Option[String] = None,
+      facetThreshold: Int = Int.MaxValue,
+      labelMode: PlotLabelMode = PlotLabelMode.Auto,
+      maxLabels: Int = 30,
+      blockAxis: PlotBlockAxis = PlotBlockAxis.Global,
+      facetByBlock: Boolean = false,
+      showBlockBounds: Boolean = true,
+      columnSelector: DesignColumnSelector = DesignColumnSelector.All
+  ): Either[DesignExportError, EventPlotData] =
+    for
+      selected <- selectEventColumnsEither(model, termName, columnSelector)
+      _ <- validateSamplingRows("eventPlotData", model.samplingFrame, model.designMatrix.rows, global = blockAxis == PlotBlockAxis.Global)
+    yield eventPlotDataSelected(
+      model = model,
+      selected = selected,
+      facetThreshold = facetThreshold,
+      labelMode = labelMode,
+      maxLabels = maxLabels,
+      blockAxis = blockAxis,
+      facetByBlock = facetByBlock,
+      showBlockBounds = showBlockBounds
+    )
+
+  private def eventPlotDataSelected(
+      model: EventModel,
+      selected: Vector[Int],
+      facetThreshold: Int,
+      labelMode: PlotLabelMode,
+      maxLabels: Int,
+      blockAxis: PlotBlockAxis,
+      facetByBlock: Boolean,
+      showBlockBounds: Boolean
+  ): EventPlotData =
     val regressors = selected.map(model.columnNames)
     val times = model.samplingFrame.samples(global = blockAxis == PlotBlockAxis.Global).map(_.value)
     val blocks = model.samplingFrame.blockIdsPerSample.map(_ + 1)
-    require(times.length == model.designMatrix.rows && blocks.length == model.designMatrix.rows, "samplingFrame/design row mismatch")
 
     val points = Vector.newBuilder[TracePoint]
     selected.foreach { c =>
@@ -275,13 +588,28 @@ object DesignExports:
       termName: Option[String] = None,
       zeroTol: Double = 1.4901161193847656e-8
   ): BaselinePlotData =
-    require(model.terms.nonEmpty, "Baseline model contains no terms")
-    val termKey = selectBaselineTerm(model, termName, zeroTol)
-    val term = model.terms.collectFirst { case (`termKey`, t) => t }.get
+    unsafe(baselinePlotDataEither(model, termName = termName, zeroTol = zeroTol))
+
+  def baselinePlotDataEither(
+      model: BaselineModel,
+      termName: Option[String] = None,
+      zeroTol: Double = 1.4901161193847656e-8
+  ): Either[DesignExportError, BaselinePlotData] =
+    for
+      termKey <- selectBaselineTermEither(model, termName, zeroTol)
+      term <- model.terms.collectFirst { case (`termKey`, t) => t }.toRight(DesignExportError.MissingBaselineTerm(termKey, model.termKeys))
+      _ <- validateSamplingRows("baselinePlotData", model.samplingFrame, term.data.rows, global = false)
+    yield baselinePlotDataSelected(model, termKey, term, zeroTol)
+
+  private def baselinePlotDataSelected(
+      model: BaselineModel,
+      termKey: String,
+      term: BaselineTerm,
+      zeroTol: Double
+  ): BaselinePlotData =
     val mat = term.data
     val times = model.samplingFrame.samples(global = false).map(_.value)
     val blocks = model.samplingFrame.blockIdsPerSample.map(_ + 1)
-    require(times.length == mat.rows && blocks.length == mat.rows, "samplingFrame/design row mismatch")
 
     val points = Vector.newBuilder[TracePoint]
     var c = 0
@@ -313,11 +641,37 @@ object DesignExports:
       absoluteLimits: Boolean = false,
       maxInter: Int = 4
   ): ContrastPlotData =
-    val attached = model.contrastWeights
-    val fcons = if includeFContrasts then model.fContrastWeights(maxInter = maxInter) else scala.collection.immutable.VectorMap.empty
-    val weights = attached ++ fcons
-    require(weights.nonEmpty, "No contrasts found in this event model")
+    unsafe(contrastPlotDataEither(
+      model = model,
+      includeFContrasts = includeFContrasts,
+      scaleMode = scaleMode,
+      absoluteLimits = absoluteLimits,
+      maxInter = maxInter
+    ))
 
+  def contrastPlotDataEither(
+      model: EventModel,
+      includeFContrasts: Boolean = false,
+      scaleMode: ContrastScaleMode = ContrastScaleMode.Auto,
+      absoluteLimits: Boolean = false,
+      maxInter: Int = 4
+  ): Either[DesignExportError, ContrastPlotData] =
+    for
+      attached <- model.contrastWeightsEither.left.map(DesignExportError.ContrastFailed.apply)
+      fcons <- {
+        if includeFContrasts then FContrasts.fContrastsEither(model)(maxInter = maxInter).left.map(DesignExportError.ContrastFailed.apply)
+        else Right(VectorMap.empty)
+      }
+      weights = attached ++ fcons
+      _ <- if weights.nonEmpty then Right(()) else Left(DesignExportError.EmptyContrasts)
+    yield contrastPlotDataFromWeights(model, weights, scaleMode, absoluteLimits)
+
+  private def contrastPlotDataFromWeights(
+      model: EventModel,
+      weights: VectorMap[String, scalafim.fmri.design.contrast.ContrastWeights],
+      scaleMode: ContrastScaleMode,
+      absoluteLimits: Boolean
+  ): ContrastPlotData =
     val cells = Vector.newBuilder[ContrastWeightCell]
     val contrastNames = Vector.newBuilder[String]
     val observed = Vector.newBuilder[Double]
@@ -372,33 +726,131 @@ object DesignExports:
       limits = limits
     )
 
-  private def selectEventColumns(model: EventModel, termName: Option[String]): Vector[Int] =
-    termName match
-      case None => model.columnNames.indices.toVector
-      case Some(name) =>
-        val byTerm = model.colIndices.get(name).toVector.flatten
-        val byPrefix =
-          model.columnNames.zipWithIndex.collect {
-            case (col, i) if col == name || col.startsWith(name + "_") || col.startsWith(name + ".") || col.startsWith(name + "[") => i
+  def selectColumnIndices(
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta],
+      selector: DesignColumnSelector
+  ): Vector[Int] =
+    unsafe(selectColumnIndicesEither(columnNames, metadata, selector))
+
+  def selectColumnIndicesEither(
+      columnNames: Vector[String],
+      metadata: Vector[DesignColumnMeta],
+      selector: DesignColumnSelector
+  ): Either[DesignExportError, Vector[Int]] =
+    validateMetadata(columnNames, metadata).flatMap { _ =>
+      val selected =
+        selector match
+          case DesignColumnSelector.All =>
+            columnNames.indices.toVector
+          case _ =>
+            descriptorsFor(columnNames, metadata).zipWithIndex.collect {
+              case (descriptor, i) if selector.matches(descriptor) => i
+            }
+      if selected.nonEmpty then Right(selected)
+      else Left(DesignExportError.EmptySelection(s"selector: $selector"))
+    }
+
+  private def selectEventColumns(
+      model: EventModel,
+      termName: Option[String],
+      selector: DesignColumnSelector
+  ): Vector[Int] =
+    unsafe(selectEventColumnsEither(model, termName, selector))
+
+  private def selectEventColumnsEither(
+      model: EventModel,
+      termName: Option[String],
+      selector: DesignColumnSelector
+  ): Either[DesignExportError, Vector[Int]] =
+    selector match
+      case DesignColumnSelector.All =>
+        selectEventColumnsByTermEither(model, termName)
+      case _ =>
+        val termSelector = termName.map(DesignColumnSelector.term).getOrElse(DesignColumnSelector.All)
+        val combined = termSelector && selector
+        val selected =
+          DesignColmap.forEventModel(model).map(_.descriptor).zipWithIndex.collect {
+            case (descriptor, i) if combined.matches(descriptor) => i
           }
-        val selected = (byTerm ++ byPrefix).distinct.sorted
-        if selected.isEmpty then throw new IllegalArgumentException(s"No columns found matching term name: $name")
-        selected
+        if selected.nonEmpty then Right(selected)
+        else
+          termName match
+            case Some(name) if !model.colIndices.contains(name) =>
+              Left(DesignExportError.MissingEventTerm(name, model.termKeys))
+            case Some(name) =>
+              Left(DesignExportError.EmptySelection(s"term name: $name and selector: $selector"))
+            case None =>
+              Left(DesignExportError.EmptySelection(s"selector: $selector"))
+
+  private def selectEventColumnsByTermEither(
+      model: EventModel,
+      termName: Option[String]
+  ): Either[DesignExportError, Vector[Int]] =
+    termName match
+      case None =>
+        Right(model.columnNames.indices.toVector)
+      case Some(name) =>
+        val semanticSelected =
+          DesignColmap.forEventModel(model).map(_.descriptor).zipWithIndex.collect {
+            case (descriptor, i) if descriptor.termTag.contains(name) => i
+          }
+        val legacySelected =
+          val byTerm = model.colIndices.get(name).toVector.flatten
+          val byPrefix =
+            model.columnNames.zipWithIndex.collect {
+              case (col, i) if col == name || col.startsWith(name + "_") || col.startsWith(name + ".") || col.startsWith(name + "[") => i
+            }
+          byTerm ++ byPrefix
+        val selected = (semanticSelected ++ legacySelected).distinct.sorted
+        if selected.nonEmpty then Right(selected)
+        else Left(DesignExportError.MissingEventTerm(name, model.termKeys))
+
+  private def descriptorsFor(columnNames: Vector[String], metadata: Vector[DesignColumnMeta]): Vector[DesignColumnDescriptor] =
+    if metadata.nonEmpty then metadata.map(_.descriptor)
+    else
+      columnNames.zipWithIndex.map { case (name, i) =>
+        DesignColumnDescriptor(
+          index = DesignColumnIndex.unsafeOneBased(i + 1),
+          name = name,
+          termTag = None,
+          termIndex = None,
+          condition = None,
+          run = None,
+          role = ColumnRole.Task,
+          modelSource = ModelSource.Event,
+          basis = None,
+          prettyName = name,
+          isBlockDiagonal = false,
+          modulationType = None,
+          modulationId = None
+        )
+      }
 
   private def selectBaselineTerm(model: BaselineModel, termName: Option[String], zeroTol: Double): String =
+    unsafe(selectBaselineTermEither(model, termName, zeroTol))
+
+  private def selectBaselineTermEither(
+      model: BaselineModel,
+      termName: Option[String],
+      zeroTol: Double
+  ): Either[DesignExportError, String] =
     val termKeys = model.termKeys
     termName match
       case Some(name) =>
         val exact = termKeys.filter(_ == name)
-        if exact.length == 1 then exact.head
+        if exact.length == 1 then Right(exact.head)
         else
           val partial = termKeys.filter(_.toLowerCase.contains(name.toLowerCase))
           partial match
-            case Vector(one) => one
-            case Vector()    => throw new IllegalArgumentException(s"Specified term_name '$name' not found. Available terms: ${termKeys.mkString(", ")}")
-            case many        => throw new IllegalArgumentException(s"Specified term_name '$name' matches multiple terms: ${many.mkString(", ")}")
+            case Vector(one) => Right(one)
+            case Vector()    => Left(DesignExportError.MissingBaselineTerm(name, termKeys))
+            case many        => Left(DesignExportError.AmbiguousBaselineTerm(name, many))
       case None =>
-        model.terms.find { case (_, term) => !baselineTermIsConstant(term, model.samplingFrame, zeroTol) }.map(_._1).getOrElse(termKeys.head)
+        model.terms.find { case (_, term) => !baselineTermIsConstant(term, model.samplingFrame, zeroTol) } match
+          case Some((termKey, _)) => Right(termKey)
+          case None =>
+            termKeys.headOption.toRight(DesignExportError.EmptyBaselineModel)
 
   private def baselineTermIsConstant(term: BaselineTerm, samplingFrame: SamplingFrame, zeroTol: Double): Boolean =
     val mat = term.data
@@ -445,6 +897,28 @@ object DesignExports:
           val ends = runLengths.scanLeft(0.0)(_ + _).drop(1)
           val starts = 0.0 +: ends.dropRight(1)
           (starts ++ ends).distinct.sorted.map(t => BlockBoundary(None, t)).toVector
+
+  private def validateColumns(context: String, mat: Mat, columnNames: Vector[String]): Either[DesignExportError, Unit] =
+    if columnNames.length == mat.cols then Right(())
+    else Left(DesignExportError.ColumnCountMismatch(context, mat.cols, columnNames.length))
+
+  private def validateMetadata(columnNames: Vector[String], metadata: Vector[DesignColumnMeta]): Either[DesignExportError, Unit] =
+    if metadata.isEmpty || metadata.length == columnNames.length then Right(())
+    else Left(DesignExportError.MetadataCountMismatch(columnNames.length, metadata.length))
+
+  private def validateSamplingRows(
+      context: String,
+      samplingFrame: SamplingFrame,
+      expectedRows: Int,
+      global: Boolean
+  ): Either[DesignExportError, Unit] =
+    val sampleRows = samplingFrame.samples(global = global).length
+    val blockRows = samplingFrame.blockIdsPerSample.length
+    if sampleRows == expectedRows && blockRows == expectedRows then Right(())
+    else Left(DesignExportError.SamplingRowMismatch(context, expectedRows, sampleRows, blockRows))
+
+  private def unsafe[A](result: Either[DesignExportError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def columnCorrelation(mat: Mat, c1: Int, c2: Int, method: CorrelationMethod): Double =
     val pairs = Vector.newBuilder[(Double, Double)]

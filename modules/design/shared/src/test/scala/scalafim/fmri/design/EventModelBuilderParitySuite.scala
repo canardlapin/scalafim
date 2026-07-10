@@ -125,6 +125,54 @@ class EventModelBuilderParitySuite extends munit.FunSuite:
     assert(naModel.designMatrix.data.forall(_.isFinite))
   }
 
+  test("builder records parametric basis repairs and strict mode promotes them to errors") {
+    val sf = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0), startTime = Seq(0.0))
+    val events = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 5.0, 9.0)),
+      "x" -> Column.Doubles(Vector(2.0, 2.0, 2.0))
+    )
+
+    val model = EventModelBuilder.build(
+      formula = "onset ~ hrf(scale(x))",
+      data = events,
+      samplingFrame = sf,
+      blockIds = Vector(0, 0, 0)
+    )
+    assert(model.diagnostics.exists(_.kind == EventModelDiagnosticKind.BasisDegeneracy))
+    assert(model.diagnostics.exists(_.message.contains("zero variance")))
+    assert(model.designMatrix.data.forall(_.isFinite))
+
+    val strictError = intercept[IllegalArgumentException] {
+      EventModelBuilder.build(
+        formula = "onset ~ hrf(scale(x))",
+        data = events,
+        samplingFrame = sf,
+        blockIds = Vector(0, 0, 0),
+        strict = true
+      )
+    }
+    assert(strictError.getMessage.contains("zero variance"))
+  }
+
+  test("builder reports all non-finite parametric basis inputs") {
+    val sf = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0), startTime = Seq(0.0))
+    val events = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 5.0, 9.0)),
+      "x" -> Column.Doubles(Vector(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity))
+    )
+
+    val model = EventModelBuilder.build(
+      formula = "onset ~ hrf(standardized(x))",
+      data = events,
+      samplingFrame = sf,
+      blockIds = Vector(0, 0, 0)
+    )
+
+    assert(model.diagnostics.exists(_.kind == EventModelDiagnosticKind.BasisDegeneracy))
+    assert(model.diagnostics.exists(_.message.contains("all non-finite")))
+    assert(model.designMatrix.data.forall(_.isFinite))
+  }
+
   test("builder records onset-bound diagnostics and strict mode promotes them to errors") {
     val sf = SamplingFrame(blockLens = Seq(10), tr = Seq(1.0), startTime = Seq(0.0))
     val events = DataTable.fromColumns(

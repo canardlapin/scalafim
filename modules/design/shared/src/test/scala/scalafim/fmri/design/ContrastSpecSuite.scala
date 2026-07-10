@@ -62,6 +62,85 @@ class ContrastSpecSuite extends munit.FunSuite:
     assertAllClose(weights.weights.data, Array(1.0, -1.0, 0.0), tol = 1e-12)
   }
 
+  test("typed pair selector compiles to the same weights as predicate pair") {
+    val conds = Vector("A", "B", "C", "A", "B", "C")
+    val onsets = (1 to conds.length).map(_.toDouble).toVector.map(Seconds(_))
+    val sf = SamplingFrame(blockLens = Seq(20), tr = Seq(1.0))
+
+    val term = EventTerm(
+      events = Vector(Event.factor(conds, "condition")),
+      onsets = onsets,
+      blockIds = Vector.fill(conds.length)(0),
+      termTag = Some("t")
+    )
+
+    val conv = term.convolve(Hrfs.SPMG1, sf)
+    val condition = CellSelector.factorUnsafe("condition")
+    val expr = ContrastExpr
+      .pair("A_vs_B", condition === "A", condition === "B")
+      .fold(error => fail(error.message), identity)
+    val spec = ContrastSpec.Typed(expr)
+    val compiled = spec.compileEither(conv).fold(error => fail(error.message), identity)
+    val legacy = ContrastSpec.Pair(
+      name = "A_vs_B",
+      A = cell => cell("condition") == "A",
+      B = cell => cell("condition") == "B"
+    ).weights(conv)
+
+    assertEquals(compiled.id.value, "A_vs_B")
+    assertEquals(compiled.source, ContrastSource.User)
+    assertAllClose(compiled.toLegacy.weights.data, legacy.weights.data, tol = 1e-12)
+  }
+
+  test("typed selector reports missing factors without throwing") {
+    val conds = Vector("A", "B", "A", "B")
+    val onsets = (1 to conds.length).map(_.toDouble).toVector.map(Seconds(_))
+    val sf = SamplingFrame(blockLens = Seq(20), tr = Seq(1.0))
+
+    val term = EventTerm(
+      events = Vector(Event.factor(conds, "condition")),
+      onsets = onsets,
+      blockIds = Vector.fill(conds.length)(0),
+      termTag = Some("t")
+    )
+
+    val conv = term.convolve(Hrfs.SPMG1, sf)
+    val missing = CellSelector.factorUnsafe("missing")
+    val condition = CellSelector.factorUnsafe("condition")
+    val expr = ContrastExpr
+      .pair("bad", missing === "A", condition === "B")
+      .fold(error => fail(error.message), identity)
+
+    ContrastCompiler.compile(conv, expr) match
+      case Left(ContrastError.UnknownFactor("bad", "missing", known)) =>
+        assertEquals(known, Vector("condition"))
+      case other =>
+        fail(s"expected UnknownFactor, got $other")
+  }
+
+  test("ContrastSet.compileEither rejects duplicate names") {
+    val conds = Vector("A", "B", "A", "B")
+    val onsets = (1 to conds.length).map(_.toDouble).toVector.map(Seconds(_))
+    val sf = SamplingFrame(blockLens = Seq(20), tr = Seq(1.0))
+
+    val term = EventTerm(
+      events = Vector(Event.factor(conds, "condition")),
+      onsets = onsets,
+      blockIds = Vector.fill(conds.length)(0),
+      termTag = Some("t")
+    )
+
+    val conv = term.convolve(Hrfs.SPMG1, sf)
+    val set = ContrastSpec.ContrastSet(
+      ContrastSpec.UnitContrast(name = "dup"),
+      ContrastSpec.UnitContrast(name = "dup")
+    )
+
+    set.compileEither(conv) match
+      case Left(ContrastError.DuplicateContrasts("ContrastSet", Vector("dup"))) => ()
+      case other => fail(s"expected DuplicateContrasts, got $other")
+  }
+
   test("ContrastSpec difference subtracts two contrast specs") {
     val category = Vector("face", "scene", "face", "scene")
     val attention = Vector("attend", "attend", "ignored", "ignored")

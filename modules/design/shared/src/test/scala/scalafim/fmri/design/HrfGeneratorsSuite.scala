@@ -2,7 +2,7 @@ package scalafim.fmri.design
 
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.formula.EventModelBuilder
-import scalafim.fmri.design.hrf.HrfGenerators
+import scalafim.fmri.design.hrf.{HrfGenerators, HrfSelection}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 
@@ -16,8 +16,8 @@ class HrfGeneratorsSuite extends munit.FunSuite:
     val result = HrfGenerators.duration()(data)
     val hrfs =
       result match
-        case h: Hrf     => Vector(h)
-        case hs: Seq[?] => hs.asInstanceOf[Seq[Hrf]].toVector
+        case HrfSelection.Shared(h)    => Vector(h)
+        case HrfSelection.PerEvent(hs) => hs
 
     assertEquals(hrfs.length, 2)
     assertEquals(hrfs.head.name, Hrfs.SPMG1.name)
@@ -62,7 +62,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
     var received: Vector[String] = Vector.empty
     val gen: scalafim.fmri.design.hrf.HrfFun = d =>
       received = d.names
-      Vector.fill(d.nrows)(Hrfs.SPMG1)
+      HrfSelection.perEvent(Vector.fill(d.nrows)(Hrfs.SPMG1))
 
     EventModelBuilder.build(
       formula = "onset ~ hrf(condition, hrf_fun = gen)",
@@ -92,7 +92,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
     var nReceived = -1
     val tracking: scalafim.fmri.design.hrf.HrfFun = d =>
       nReceived = d.nrows
-      Vector.fill(d.nrows)(Hrfs.SPMG1)
+      HrfSelection.perEvent(Vector.fill(d.nrows)(Hrfs.SPMG1))
 
     EventModelBuilder.build(
       formula = """onset ~ hrf(condition, hrf_fun = tracking, subset = condition == "A")""",
@@ -106,7 +106,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
     var called = false
     val never: scalafim.fmri.design.hrf.HrfFun = d =>
       called = true
-      Vector.fill(d.nrows)(Hrfs.SPMG1)
+      HrfSelection.perEvent(Vector.fill(d.nrows)(Hrfs.SPMG1))
 
     EventModelBuilder.build(
       formula = """onset ~ hrf(condition, hrf_fun = never, subset = condition == "C")""",
@@ -126,7 +126,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
       "condition" -> Column.Strings(Vector("A", "B", "C"))
     )
 
-    val wrongLen: scalafim.fmri.design.hrf.HrfFun = _ => Seq(Hrfs.SPMG1, Hrfs.SPMG1)
+    val wrongLen: scalafim.fmri.design.hrf.HrfFun = _ => HrfSelection.perEvent(Seq(Hrfs.SPMG1, Hrfs.SPMG1))
     intercept[IllegalArgumentException] {
       EventModelBuilder.build(
         formula = "onset ~ hrf(condition, hrf_fun = wrongLen)",
@@ -137,7 +137,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
       )
     }
 
-    val mixedNbasis: scalafim.fmri.design.hrf.HrfFun = _ => Seq(Hrfs.SPMG1, Hrfs.SPMG2, Hrfs.SPMG1)
+    val mixedNbasis: scalafim.fmri.design.hrf.HrfFun = _ => HrfSelection.perEvent(Seq(Hrfs.SPMG1, Hrfs.SPMG2, Hrfs.SPMG1))
     intercept[IllegalArgumentException] {
       EventModelBuilder.build(
         formula = "onset ~ hrf(condition, hrf_fun = mixedNbasis)",

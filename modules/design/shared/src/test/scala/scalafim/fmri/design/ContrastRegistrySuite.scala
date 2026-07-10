@@ -1,6 +1,6 @@
 package scalafim.fmri.design
 
-import scalafim.fmri.design.contrast.{ContrastRegistry, ContrastSpec}
+import scalafim.fmri.design.contrast.*
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -39,6 +39,13 @@ class ContrastRegistrySuite extends munit.FunSuite:
     val weights = model.contrastWeights
     assertEquals(weights.keySet, Set("task#A_vs_B"))
     assertEquals(weights("task#A_vs_B").weights.rows, model.designMatrix.cols)
+
+    val compiled = model.compiledContrasts.fold(error => fail(error.message), identity)
+    assertEquals(compiled.keySet, Set("task#A_vs_B"))
+    assertEquals(compiled("task#A_vs_B").id.value, "task#A_vs_B")
+    assertEquals(compiled("task#A_vs_B").effect.map(_.value), Some("A_vs_B"))
+    assertEquals(compiled("task#A_vs_B").source, ContrastSource.Legacy)
+    assertEquals(compiled("task#A_vs_B").toLegacy.condNames, model.columnNames)
 
     val res = model.validateAttachedContrasts()
     assertEquals(res.map(_.name), Vector("task#A_vs_B"))

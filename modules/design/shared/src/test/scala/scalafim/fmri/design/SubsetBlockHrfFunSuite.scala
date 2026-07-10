@@ -3,6 +3,7 @@ package scalafim.fmri.design
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.event.ConvolvedTerm
 import scalafim.fmri.design.formula.EventModelBuilder
+import scalafim.fmri.design.hrf.HrfSelection
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 
@@ -90,7 +91,7 @@ class SubsetBlockHrfFunSuite extends munit.FunSuite:
       data = events,
       samplingFrame = sf,
       blockIds = Vector(0, 0),
-      hrfFuns = Map("myHrfFun" -> (_ => Seq(h1, h2)))
+      hrfFuns = Map("myHrfFun" -> (_ => HrfSelection.perEvent(Seq(h1, h2))))
     )
 
     assertEquals(model.designMatrix.rows, 6)

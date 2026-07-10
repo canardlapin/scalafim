@@ -15,6 +15,7 @@ Live dependency edges are declared in `build.sbt`.
 ```text
 linalg
 +-- ar
++-- design           also depends on hrf
 +-- mvpa
 |   +-- mvpa-dataset  also depends on dataset
 +-- threshold         also depends on image
@@ -30,7 +31,7 @@ graphics
 +-- graphics-svg
 
 hrf
-+-- design
++-- design           also depends on linalg
     +-- model
         +-- fit
             +-- group
@@ -66,7 +67,7 @@ dataset, image IO, or modeling dependencies into the shared core.
 | `graphics-svg` | Deterministic SVG string rendering for `graphics` scene trees, including primitive grobs, graphical params, basic units, and viewport wrappers. | `graphics` | Plot compilation, browser Canvas state, Java2D/raster output, device IO, or domain-specific plot exporters. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
-| `design` | Event models, formulas, baselines, contrasts, design metadata. | `hrf` | Dataset execution or numerical fit engines. |
+| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design exports. | `hrf`, `linalg` | Dataset execution or numerical fit engines. |
 | `image` | Volumes, masks, spaces, affine math, low-level coordinate transforms, morphisms, resampling, clustering/searchlights. | Nothing internal. | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
 | `threshold` | Spatial inference over statistic maps: masked fields, octrees, set scoring, maxT-style correction. | `image`, `linalg` | Model fitting or group-model definitions. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |

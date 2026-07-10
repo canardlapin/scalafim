@@ -35,6 +35,11 @@ object FormulaParser:
     p.expect(Tok.EOF)
     out
 
+  def parseEither(input: String): Either[ParseError, ModelFormula] =
+    try Right(parse(input))
+    catch
+      case error: ParseError => Left(error)
+
   private def tokenize(input: String): Vector[Token] =
     val out = Vector.newBuilder[Token]
     val n = input.length
@@ -307,47 +312,52 @@ object FormulaParser:
         case "covariate" => buildCovariateCall(as)
         case other       => throw ParseError(s"Unknown term function '$other'", cur.pos)
 
-    private def namedUnique(args: Vector[Arg]): Map[String, ArgValue] =
-      val out = scala.collection.mutable.HashMap.empty[String, ArgValue]
-      args.foreach { a =>
-        a.name.foreach { n =>
-          if out.contains(n) then throw ParseError(s"Duplicate argument '$n'", cur.pos)
-          out.update(n, a.value)
+    private final case class TermArgs(fun: String, args: Vector[Arg]):
+      val positional: Vector[ArgValue] =
+        args.iterator.collect { case Arg(None, v) => v }.toVector
+
+      val named: Map[String, ArgValue] =
+        val out = scala.collection.mutable.HashMap.empty[String, ArgValue]
+        args.foreach { a =>
+          a.name.foreach { n =>
+            if out.contains(n) then throw ParseError(s"Duplicate argument '$n'", cur.pos)
+            out.update(n, a.value)
+          }
         }
-      }
-      out.toMap
+        out.toMap
 
-    private def positional(args: Vector[Arg]): Vector[ArgValue] =
-      args.iterator.collect { case Arg(None, v) => v }.toVector
+      def rejectUnknown(allowed: Set[String]): Unit =
+        val unknown = named.keySet.diff(allowed)
+        if unknown.nonEmpty then
+          throw ParseError(s"$fun(...) got unknown named args: ${unknown.toVector.sorted.mkString(", ")}", cur.pos)
 
-    private def buildHrfCall(args: Vector[Arg]): HrfCall =
-      val pos = positional(args)
-      if pos.isEmpty then throw ParseError("hrf(...) requires at least one variable", cur.pos)
-      pos.foreach {
-        case ArgValue.Ident(_) | ArgValue.Call(_, _) => ()
-        case other =>
-          throw ParseError(s"hrf(...) positional args must be identifiers or calls, found $other", cur.pos)
-      }
+      def requireNoPositional(): Unit =
+        if positional.nonEmpty then throw ParseError(s"$fun(...) does not take positional arguments", cur.pos)
 
-      val named = namedUnique(args)
-      def strArg(name: String): Option[String] =
+      def raw(name: String): Option[ArgValue] =
+        named.get(name)
+
+      def stringOrIdent(name: String): Option[String] =
         named.get(name).map {
           case ArgValue.Str(v)   => v
           case ArgValue.Ident(v) => v
-          case other          => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
+          case other             => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
         }
-      def doubleArg(name: String): Option[Double] =
+
+      def numeric(name: String): Option[Double] =
         named.get(name).map {
           case ArgValue.Num(v) => v
-          case other        => throw ParseError(s"'$name' must be numeric, found $other", cur.pos)
+          case other           => throw ParseError(s"'$name' must be numeric, found $other", cur.pos)
         }
-      def intArg(name: String): Option[Int] =
+
+      def integer(name: String): Option[Int] =
         named.get(name).map {
           case ArgValue.Num(v) if v.isValidInt && v == v.toInt.toDouble => v.toInt
           case ArgValue.Num(v)                                          => throw ParseError(s"'$name' must be an integer, found $v", cur.pos)
           case other                                                    => throw ParseError(s"'$name' must be an integer, found $other", cur.pos)
         }
-      def boolArg(name: String): Option[Boolean] =
+
+      def boolean(name: String): Option[Boolean] =
         named.get(name).map {
           case ArgValue.Bool(v) => v
           case ArgValue.Ident(v) =>
@@ -357,7 +367,8 @@ object FormulaParser:
               case _       => throw ParseError(s"'$name' must be boolean, found $v", cur.pos)
           case other => throw ParseError(s"'$name' must be boolean, found $other", cur.pos)
         }
-      def vectorRefArg(name: String): Option[ArgValue] =
+
+      def vectorRef(name: String): Option[ArgValue] =
         named.get(name).map {
           case v @ ArgValue.Ident(_) => v
           case v @ ArgValue.Str(_)   => v
@@ -365,30 +376,38 @@ object FormulaParser:
           case other                 => throw ParseError(s"'$name' must be a string/identifier or numeric scalar, found $other", cur.pos)
         }
 
-      val basis = strArg("basis")
-      val subset = named.get("subset")
-      val onsets = vectorRefArg("onsets")
-      val durations = vectorRefArg("durations")
-      val hrfFun = named.get("hrf_fun").map {
-        case v @ ArgValue.Str(_)   => v
-        case v @ ArgValue.Ident(_) => v
-        case other                 => throw ParseError(s"'hrf_fun' must be a string/identifier, found $other", cur.pos)
+      def stringOrIdentRef(name: String): Option[ArgValue] =
+        named.get(name).map {
+          case v @ ArgValue.Str(_)   => v
+          case v @ ArgValue.Ident(_) => v
+          case other                 => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
+        }
+
+    private def buildHrfCall(args: Vector[Arg]): HrfCall =
+      val schema = TermArgs("hrf", args)
+      val pos = schema.positional
+      if pos.isEmpty then throw ParseError("hrf(...) requires at least one variable", cur.pos)
+      pos.foreach {
+        case ArgValue.Ident(_) | ArgValue.Call(_, _) => ()
+        case other =>
+          throw ParseError(s"hrf(...) positional args must be identifiers or calls, found $other", cur.pos)
       }
-      val contrasts = named.get("contrasts").map {
-        case v @ ArgValue.Str(_)   => v
-        case v @ ArgValue.Ident(_) => v
-        case other                 => throw ParseError(s"'contrasts' must be a string/identifier, found $other", cur.pos)
-      }
-      val id = strArg("id").orElse(strArg("name"))
-      val prefix = strArg("prefix")
-      val lag = doubleArg("lag")
-      val nbasis = intArg("nbasis")
-      val summate = boolArg("summate")
-      val normalize = boolArg("normalize")
+
+      val basis = schema.stringOrIdent("basis")
+      val subset = schema.raw("subset")
+      val onsets = schema.vectorRef("onsets")
+      val durations = schema.vectorRef("durations")
+      val hrfFun = schema.stringOrIdentRef("hrf_fun")
+      val contrasts = schema.stringOrIdentRef("contrasts")
+      val id = schema.stringOrIdent("id").orElse(schema.stringOrIdent("name"))
+      val prefix = schema.stringOrIdent("prefix")
+      val lag = schema.numeric("lag")
+      val nbasis = schema.integer("nbasis")
+      val summate = schema.boolean("summate")
+      val normalize = schema.boolean("normalize")
 
       val allowed = Set("basis", "subset", "onsets", "durations", "hrf_fun", "contrasts", "id", "name", "prefix", "lag", "nbasis", "summate", "normalize")
-      val unknown = named.keySet.diff(allowed)
-      if unknown.nonEmpty then throw ParseError(s"hrf(...) got unknown named args: ${unknown.toVector.sorted.mkString(", ")}", cur.pos)
+      schema.rejectUnknown(allowed)
 
       HrfCall(
         vars = pos,
@@ -407,81 +426,35 @@ object FormulaParser:
       )
 
     private def buildTrialwiseCall(args: Vector[Arg]): TrialwiseCall =
-      val pos = positional(args)
-      if pos.nonEmpty then throw ParseError("trialwise(...) does not take positional arguments", cur.pos)
+      val schema = TermArgs("trialwise", args)
+      schema.requireNoPositional()
 
-      val named = namedUnique(args)
-      def strArg(name: String): Option[String] =
-        named.get(name).map {
-          case ArgValue.Str(v)   => v
-          case ArgValue.Ident(v) => v
-          case other             => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
-        }
-      def doubleArg(name: String): Option[Double] =
-        named.get(name).map {
-          case ArgValue.Num(v) => v
-          case other           => throw ParseError(s"'$name' must be numeric, found $other", cur.pos)
-        }
-      def intArg(name: String): Option[Int] =
-        named.get(name).map {
-          case ArgValue.Num(v) if v.isValidInt && v == v.toInt.toDouble => v.toInt
-          case ArgValue.Num(v)                                          => throw ParseError(s"'$name' must be an integer, found $v", cur.pos)
-          case other                                                    => throw ParseError(s"'$name' must be an integer, found $other", cur.pos)
-        }
-      def boolArg(name: String): Option[Boolean] =
-        named.get(name).map {
-          case ArgValue.Bool(v) => v
-          case ArgValue.Ident(v) =>
-            v.toLowerCase match
-              case "true"  => true
-              case "false" => false
-              case _       => throw ParseError(s"'$name' must be boolean, found $v", cur.pos)
-          case other => throw ParseError(s"'$name' must be boolean, found $other", cur.pos)
-        }
-      def vectorRefArg(name: String): Option[ArgValue] =
-        named.get(name).map {
-          case v @ ArgValue.Ident(_) => v
-          case v @ ArgValue.Str(_)   => v
-          case v @ ArgValue.Num(_)   => v
-          case other                 => throw ParseError(s"'$name' must be a string/identifier or numeric scalar, found $other", cur.pos)
-        }
-
-      val basis = strArg("basis")
-      val durations = vectorRefArg("durations")
-      val lag = doubleArg("lag")
-      val nbasis = intArg("nbasis")
-      val addSum = boolArg("add_sum")
-      val label = strArg("label")
-      val normalize = boolArg("normalize")
+      val basis = schema.stringOrIdent("basis")
+      val durations = schema.vectorRef("durations")
+      val lag = schema.numeric("lag")
+      val nbasis = schema.integer("nbasis")
+      val addSum = schema.boolean("add_sum")
+      val label = schema.stringOrIdent("label")
+      val normalize = schema.boolean("normalize")
 
       val allowed = Set("basis", "durations", "lag", "nbasis", "add_sum", "label", "normalize")
-      val unknown = named.keySet.diff(allowed)
-      if unknown.nonEmpty then
-        throw ParseError(s"trialwise(...) got unknown named args: ${unknown.toVector.sorted.mkString(", ")}", cur.pos)
+      schema.rejectUnknown(allowed)
 
       TrialwiseCall(basis = basis, durations = durations, lag = lag, nbasis = nbasis, addSum = addSum, label = label, normalize = normalize)
 
     private def buildCovariateCall(args: Vector[Arg]): CovariateCall =
-      val pos = positional(args).map {
+      val schema = TermArgs("covariate", args)
+      val pos = schema.positional.map {
         case ArgValue.Ident(v) => ArgValue.Ident(v)
         case other             => throw ParseError(s"covariate(...) positional args must be identifiers, found $other", cur.pos)
       }
       if pos.isEmpty then throw ParseError("covariate(...) requires at least one variable", cur.pos)
 
-      val named = namedUnique(args)
-      def strOrIdent(name: String): Option[String] =
-        named.get(name).map {
-          case ArgValue.Str(v)   => v
-          case ArgValue.Ident(v) => v
-          case other          => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
-        }
-
-      val data = strOrIdent("data")
-      val id = strOrIdent("id")
-      val prefix = strOrIdent("prefix")
+      val data = schema.stringOrIdent("data")
+      val id = schema.stringOrIdent("id")
+      val prefix = schema.stringOrIdent("prefix")
 
       val allowed = Set("data", "id", "prefix")
-      val unknown = named.keySet.diff(allowed)
-      if unknown.nonEmpty then throw ParseError(s"covariate(...) got unknown named args: ${unknown.toVector.sorted.mkString(", ")}", cur.pos)
+      schema.rejectUnknown(allowed)
 
       CovariateCall(vars = pos, data = data, id = id, prefix = prefix)

@@ -4,6 +4,11 @@ import scalafim.fmri.design.formula.*
 
 class FormulaParserSuite extends munit.FunSuite:
 
+  private def parseError(formula: String): FormulaParser.ParseError =
+    FormulaParser.parseEither(formula) match
+      case Left(error) => error
+      case Right(value) => fail(s"expected parse error, got $value")
+
   test("FormulaParser parses hrf + covariate calls") {
     val f = FormulaParser.parse("""onset ~ hrf(cond, basis="spmg3", id="task") + covariate(x, y, data=motion, id="motion", prefix="motion")""")
     assertEquals(f.onset, "onset")
@@ -101,5 +106,28 @@ class FormulaParserSuite extends munit.FunSuite:
           normalize = Some(true)
         )
       )
+    )
+  }
+
+  test("FormulaParser validates named arguments through shared term schemas") {
+    assertEquals(
+      parseError("onset ~ hrf(cond, basis = spmg1, basis = spmg2)").message,
+      "Duplicate argument 'basis'"
+    )
+    assertEquals(
+      parseError("onset ~ hrf(cond, typo = TRUE)").message,
+      "hrf(...) got unknown named args: typo"
+    )
+    assertEquals(
+      parseError("onset ~ hrf(cond, hrf_fun = TRUE)").message,
+      "'hrf_fun' must be a string/identifier, found Bool(true)"
+    )
+    assertEquals(
+      parseError("onset ~ trialwise(cond)").message,
+      "trialwise(...) does not take positional arguments"
+    )
+    assertEquals(
+      parseError("onset ~ covariate(x, data = FALSE)").message,
+      "'data' must be a string/identifier, found Bool(false)"
     )
   }

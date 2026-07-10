@@ -9,12 +9,16 @@ import scala.collection.immutable.VectorMap
 object FContrasts:
 
   def forEventTerm(term: EventTerm, maxInter: Int = 4): VectorMap[String, ContrastWeights] =
-    val cats = term.events.collect { case c: CategoricalEvent => c }
-    require(cats.nonEmpty, s"No categorical variables found in term for FContrasts (termTag=${term.termTag.getOrElse("none")})")
+    unsafe(forEventTermEither(term, maxInter = maxInter))
 
-    cats.foreach { c =>
-      require(c.levels.length >= 2, s"Need at least 2 levels for contrasts (variable '${c.varName}')")
-    }
+  def forEventTermEither(term: EventTerm, maxInter: Int = 4): Either[ContrastError, VectorMap[String, ContrastWeights]] =
+    val context = term.termTag.getOrElse("FContrasts")
+    val cats = term.events.collect { case c: CategoricalEvent => c }
+    if cats.isEmpty then return Left(ContrastError.NoCategoricalCells(context))
+
+    cats.find(_.levels.length < 2) match
+      case Some(c) => return Left(ContrastError.InsufficientLevels(context, c.varName, c.levels.length))
+      case None    => ()
 
     val baseCondNames = conditionTags(cats)
     val C = cats.map(c => ones(c.levels.length))
@@ -54,31 +58,41 @@ object FContrasts:
         }
         k += 1
 
-    out.result()
+    Right(out.result())
 
   def forConvolvedTerm(term: ConvolvedTerm, maxInter: Int = 4): VectorMap[String, ContrastWeights] =
-    val local = forEventTerm(term.term, maxInter = maxInter)
-    if local.isEmpty then VectorMap.empty
-    else
-      val nb = term.hrf.nbasis
+    unsafe(forConvolvedTermEither(term, maxInter = maxInter))
 
-      val out = VectorMap.newBuilder[String, ContrastWeights]
-      local.foreach { case (name, cw) =>
-        val (baseCondNames, lifted) = liftToTermConditions(term.term, cw)
-        val (_, expanded) = ContrastWeights.expandWeights(lifted, baseCondNames, nbasis = nb)
-        val fullNames = Names.makeColumnNames(term.term.termTag, baseCondNames, nb)
-        val full = ContrastWeights(
-          name = name,
-          condNames = fullNames,
-          contrastNames = cw.contrastNames,
-          weights = expanded,
-          selectedCondNames = fullNames
-        )
-        out += name -> full.embedIn(term.columnNames)
+  def forConvolvedTermEither(term: ConvolvedTerm, maxInter: Int = 4): Either[ContrastError, VectorMap[String, ContrastWeights]] =
+    for
+      local <- forEventTermEither(term.term, maxInter = maxInter)
+      out <- local.foldLeft(Right(VectorMap.empty): Either[ContrastError, VectorMap[String, ContrastWeights]]) {
+        case (acc, (name, cw)) =>
+          for
+            out0 <- acc
+            lifted <- liftToTermConditionsEither(term.term, cw)
+          yield
+            val (baseCondNames, liftedWeights) = lifted
+            val (_, expanded) = ContrastWeights.expandWeights(liftedWeights, baseCondNames, nbasis = term.hrf.nbasis)
+            val fullNames = Names.makeColumnNames(term.term.termTag, baseCondNames, term.hrf.nbasis)
+            val full = ContrastWeights(
+              name = name,
+              condNames = fullNames,
+              contrastNames = cw.contrastNames,
+              weights = expanded,
+              selectedCondNames = fullNames
+            )
+            out0.updated(name, full.embedIn(term.columnNames))
       }
-      out.result()
+    yield out
 
-  private def liftToTermConditions(term: EventTerm, cw: ContrastWeights): (Vector[String], Mat) =
+  def compiledForConvolvedTerm(term: ConvolvedTerm, maxInter: Int = 4): Either[ContrastError, VectorMap[String, CompiledContrast]] =
+    for
+      weights <- forConvolvedTermEither(term, maxInter = maxInter)
+      compiled <- ContrastCompiler.compileMap(weights, ContrastSource.GeneratedF)
+    yield compiled
+
+  private[design] def liftToTermConditionsEither(term: EventTerm, cw: ContrastWeights): Either[ContrastError, (Vector[String], Mat)] =
     val eventRows = expandGrid(term.events.map(_.conditionTokens).filter(_.nonEmpty))
     val allCondNames = eventRows.map(Names.makeCondTag)
     val catPositions =
@@ -89,11 +103,14 @@ object FContrasts:
     var r = 0
     while r < eventRows.length do
       val catTag = Names.makeCondTag(catPositions.map(eventRows(r)))
-      val srcRow = catIndex.getOrElse(catTag, throw new IllegalArgumentException(s"F contrast row '$catTag' not found in categorical condition names"))
+      val srcRow =
+        catIndex.get(catTag) match
+          case Some(i) => i
+          case None    => return Left(ContrastError.MissingConditionRow(cw.name, catTag, cw.condNames))
       System.arraycopy(cw.weights.data, srcRow * cw.weights.cols, out, r * cw.weights.cols, cw.weights.cols)
       r += 1
 
-    (allCondNames, Mat.unsafe(eventRows.length, cw.weights.cols, out))
+    Right((allCondNames, Mat.unsafe(eventRows.length, cw.weights.cols, out)))
 
   extension (model: EventModel)
 
@@ -102,20 +119,32 @@ object FContrasts:
       * Keys follow the R convention: `"<termKey>#<effectName>"`.
       */
     def fContrasts(maxInter: Int = 4): VectorMap[String, ContrastWeights] =
-      val out = VectorMap.newBuilder[String, ContrastWeights]
-      var i = 0
-      while i < model.terms.length do
-        val (termKey, term) = model.terms(i)
-        term match
-          case ct: ConvolvedTerm =>
-            val local = forConvolvedTerm(ct, maxInter = maxInter)
-            local.foreach { case (name, cw) =>
-              val key = s"$termKey#$name"
-              out += key -> cw.embedIn(model.columnNames)
-            }
-          case _ => ()
-        i += 1
-      out.result()
+      unsafe(fContrastsEither(maxInter = maxInter))
+
+    def fContrastsEither(maxInter: Int = 4): Either[ContrastError, VectorMap[String, ContrastWeights]] =
+      model.terms.foldLeft(Right(VectorMap.empty): Either[ContrastError, VectorMap[String, ContrastWeights]]) {
+        case (acc, (termKey, term)) =>
+          term match
+            case ct: ConvolvedTerm =>
+              for
+                out <- acc
+                local <- FContrasts.forConvolvedTermEither(ct, maxInter = maxInter)
+              yield
+                local.foldLeft(out) { case (out0, (name, cw)) =>
+                  val key = s"$termKey#$name"
+                  out0.updated(key, cw.embedIn(model.columnNames))
+                }
+            case _ => acc
+      }
+
+    def compiledFContrasts(maxInter: Int = 4): Either[ContrastError, VectorMap[String, CompiledContrast]] =
+      for
+        weights <- fContrastsEither(maxInter = maxInter)
+        compiled <- ContrastCompiler.compileMap(weights, ContrastSource.GeneratedF)
+      yield compiled
+
+  private def unsafe[A](result: Either[ContrastError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def genericCols(n: Int): Vector[String] =
     (1 to n).iterator.map(j => s"c$j").toVector

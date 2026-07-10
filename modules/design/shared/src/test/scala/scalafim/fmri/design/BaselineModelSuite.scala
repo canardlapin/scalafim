@@ -210,6 +210,61 @@ class BaselineModelSuite extends munit.FunSuite:
     assert(err.getMessage.contains("Duplicate or near-duplicate columns"))
   }
 
+  test("BaselineModel Either APIs expose structured baseline and nuisance errors") {
+    val sf = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0))
+    val nuis = Mat.unsafe(
+      6,
+      2,
+      Array(
+        1.0, 10.0,
+        2.0, 20.0,
+        3.0, 30.0,
+        4.0, 40.0,
+        5.0, 50.0,
+        6.0, 60.0
+      )
+    )
+
+    val failedBuild = BaselineModel.buildEither(
+      samplingFrame = sf,
+      basis = BaselineBasis.Constant,
+      nuisanceList = Some(Seq(nuis)),
+      nuisanceCheck = NuisanceCheck.Error,
+      nuisanceNames = Some(Seq(Seq("dvars", "std_dvars")))
+    )
+    assert(failedBuild.left.toOption.exists {
+      case BaselineError.NuisanceProblems(report) =>
+        !report.ok && report.problems.exists(_.issue == NuisanceIssue.Duplicate)
+      case _ =>
+        false
+    })
+
+    val missing = BaselineModel.checkNuisanceEither(BaselinePlan(samplingFrame = sf))
+    assertEquals(missing.left.toOption, Some(BaselineError.MissingNuisance))
+
+    val invalid = BaselineModel.buildEither(samplingFrame = sf, basis = BaselineBasis.Bs, degree = 2)
+    assert(invalid.left.toOption.exists {
+      case BaselineError.InvalidInput(detail) => detail.contains("degree")
+      case _                                  => false
+    })
+
+    val report = BaselineModel.checkNuisanceEither(
+      Seq(nuis),
+      sf,
+      basis = BaselineBasis.Constant,
+      nuisanceNames = Some(Seq(Seq("dvars", "std_dvars")))
+    ).fold(error => fail(error.message), identity)
+    assertEquals(report.ok, false)
+
+    val cleaned = BaselineModel.cleanNuisanceEither(
+      Seq(nuis),
+      sf,
+      basis = BaselineBasis.Constant,
+      nuisanceNames = Some(Seq(Seq("dvars", "std_dvars")))
+    ).fold(error => fail(error.message), identity)
+    assertEquals(cleaned.nuisanceList.head.cols, 1)
+  }
+
   test("baseline_model can drop nuisance columns that do not increase rank") {
     val sf = SamplingFrame(blockLens = Seq(6, 6), tr = Seq(1.0))
     val n1 = Mat.unsafe(
@@ -247,6 +302,41 @@ class BaselineModelSuite extends munit.FunSuite:
 
     assertEquals(nuisanceTerm(model).data.cols, 3)
     assertEquals(model.nuisanceReport.map(_.droppedByBlock).get, Vector(Vector("std_dvars", "zero_col"), Vector.empty))
+    assertEquals(rank(model.designMatrix), model.designMatrix.cols)
+  }
+
+  test("BaselinePlan builds through typed nuisance policy") {
+    val sf = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0))
+    val nuis = Mat.unsafe(
+      6,
+      3,
+      Array(
+        1.0, 10.0, 0.0,
+        2.0, 20.0, 0.0,
+        3.0, 30.0, 0.0,
+        4.0, 40.0, 0.0,
+        5.0, 50.0, 0.0,
+        6.0, 60.0, 0.0
+      )
+    )
+    val plan = BaselinePlan(
+      samplingFrame = sf,
+      basis = BaselineBasis.Constant,
+      nuisance = Some(NuisanceInput(
+        matrices = Vector(nuis),
+        names = Some(Vector(Vector("dvars", "std_dvars", "zero_col"))),
+        policy = NuisancePolicy(check = NuisanceCheck.Drop)
+      ))
+    )
+
+    val model = BaselineModel.build(plan)
+    val report = BaselineModel.checkNuisance(plan)
+    val cleaned = BaselineModel.cleanNuisance(plan)
+
+    assertEquals(model.nuisanceReport.exists(!_.ok), true)
+    assertEquals(nuisanceTerm(model).data.cols, 1)
+    assertEquals(report.byBlock.head.droppedColumns, Vector("std_dvars", "zero_col"))
+    assertEquals(cleaned.nuisanceList.head.cols, 1)
     assertEquals(rank(model.designMatrix), model.designMatrix.cols)
   }
 

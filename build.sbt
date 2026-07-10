@@ -130,7 +130,7 @@ lazy val design =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/design"))
-    .dependsOn(hrf)
+    .dependsOn(hrf, linalg)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-design",

@@ -4,8 +4,14 @@ enum DesignError:
   case InvalidId(kind: String, value: String, reason: String)
   case InvalidSchedule(detail: String)
   case MissingColumn(name: String)
+  case UnknownTable(name: String)
+  case InvalidColumnType(name: String, expected: String, actual: String)
   case UnknownBasis(name: String)
   case UnknownContrast(name: String, known: Vector[String])
+  case InvalidSubset(detail: String)
+  case InvalidHrfFun(term: String, detail: String)
+  case UnsupportedContrastTarget(term: String, found: String)
+  case FormulaParse(detail: String, pos: Int)
   case FormulaBinding(detail: String)
   case BuildFailed(detail: String)
 
@@ -17,11 +23,23 @@ enum DesignError:
         detail
       case MissingColumn(name) =>
         s"Unknown column: '$name'"
+      case UnknownTable(name) =>
+        s"Unknown data table: '$name'"
+      case InvalidColumnType(name, expected, actual) =>
+        s"Column '$name' is not $expected: $actual"
       case UnknownBasis(name) =>
         s"Unknown HRF basis: '$name'"
       case UnknownContrast(name, known) =>
         val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
         s"Unknown contrast set '$name'$suffix"
+      case InvalidSubset(detail) =>
+        s"Invalid subset expression: $detail"
+      case InvalidHrfFun(term, detail) =>
+        s"Invalid hrf_fun for term '$term': $detail"
+      case UnsupportedContrastTarget(term, found) =>
+        s"Term '$term' does not support contrasts (found $found)"
+      case FormulaParse(detail, pos) =>
+        s"$detail (at char $pos)"
       case FormulaBinding(detail) =>
         detail
       case BuildFailed(detail) =>
@@ -36,6 +54,85 @@ private def validateDesignId(kind: String, value: String, allowDot: Boolean): Ei
   val trimmed = value.trim
   if trimmed.isEmpty then Left(DesignError.InvalidId(kind, value, "must be non-empty"))
   else Right(Names.sanitize(trimmed, allowDot = allowDot))
+
+private def validateOneBasedIndex(kind: String, value: Int): Either[DesignError, Int] =
+  if value >= 1 then Right(value)
+  else Left(DesignError.InvalidId(kind, value.toString, "must be >= 1"))
+
+opaque type DesignColumnIndex = Int
+
+object DesignColumnIndex:
+  def fromOneBased(value: Int): Either[DesignError, DesignColumnIndex] =
+    validateOneBasedIndex("design column index", value)
+
+  def fromZeroBased(value: Int): Either[DesignError, DesignColumnIndex] =
+    fromOneBased(value + 1)
+
+  inline def unsafeOneBased(value: Int): DesignColumnIndex = value
+
+  extension (index: DesignColumnIndex)
+    inline def oneBased: Int = index
+    inline def zeroBased: Int = index - 1
+
+opaque type ScanIndex = Int
+
+object ScanIndex:
+  def fromOneBased(value: Int): Either[DesignError, ScanIndex] =
+    validateOneBasedIndex("scan index", value)
+
+  def fromZeroBased(value: Int): Either[DesignError, ScanIndex] =
+    fromOneBased(value + 1)
+
+  inline def unsafeOneBased(value: Int): ScanIndex = value
+
+  extension (index: ScanIndex)
+    inline def oneBased: Int = index
+    inline def zeroBased: Int = index - 1
+
+opaque type RunIndex = Int
+
+object RunIndex:
+  def fromOneBased(value: Int): Either[DesignError, RunIndex] =
+    validateOneBasedIndex("run index", value)
+
+  def fromZeroBased(value: Int): Either[DesignError, RunIndex] =
+    fromOneBased(value + 1)
+
+  inline def unsafeOneBased(value: Int): RunIndex = value
+
+  extension (index: RunIndex)
+    inline def oneBased: Int = index
+    inline def zeroBased: Int = index - 1
+
+opaque type BasisIndex = Int
+
+object BasisIndex:
+  def fromOneBased(value: Int): Either[DesignError, BasisIndex] =
+    validateOneBasedIndex("basis index", value)
+
+  def fromZeroBased(value: Int): Either[DesignError, BasisIndex] =
+    fromOneBased(value + 1)
+
+  inline def unsafeOneBased(value: Int): BasisIndex = value
+
+  extension (index: BasisIndex)
+    inline def oneBased: Int = index
+    inline def zeroBased: Int = index - 1
+
+opaque type TermIndex = Int
+
+object TermIndex:
+  def fromOneBased(value: Int): Either[DesignError, TermIndex] =
+    validateOneBasedIndex("term index", value)
+
+  def fromZeroBased(value: Int): Either[DesignError, TermIndex] =
+    fromOneBased(value + 1)
+
+  inline def unsafeOneBased(value: Int): TermIndex = value
+
+  extension (index: TermIndex)
+    inline def oneBased: Int = index
+    inline def zeroBased: Int = index - 1
 
 opaque type EventId = String
 

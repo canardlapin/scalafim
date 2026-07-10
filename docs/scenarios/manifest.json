@@ -6,6 +6,8 @@
   },
   "default_acceptance_commands": [
     "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+    "sbt designJVM/test",
+    "sbt designJS/test",
     "sbt fitJVM/test",
     "sbt fitJS/test",
     "sbt groupJVM/test",
@@ -65,6 +67,22 @@
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "design.mixed-tr-multirun.v1",
+      "tier": "workflow_parity",
+      "module": "design",
+      "suite_class": "scalafim.fmri.design.scenarios.MixedTrMultirunScenarioSuite",
+      "suite_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/MixedTrMultirunScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "blockwise_stitched_design_oracle",
+        "description": "Mixed-TR multi-run EventModelBuilder output is compared with independent per-run designs stitched rowwise; runwise baseline columns and a uniform-TR canary protect sampling-frame and concatenation semantics."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test"],
       "caveats": []
     },
     {

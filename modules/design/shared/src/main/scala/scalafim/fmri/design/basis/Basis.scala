@@ -14,7 +14,134 @@ trait ParametricBasis:
 
   def subset(mask: Vector[Boolean]): ParametricBasis
 
+enum BasisDegeneracyKind:
+  case AllNonFinite, RepairedNonFinite, ZeroVariance
+
+final case class BasisDiagnostic(
+    kind: BasisDegeneracyKind,
+    basisClass: String,
+    column: String,
+    message: String,
+    group: Option[String] = None
+)
+
+enum BasisDegeneracyPolicy:
+  case Compatible, Report, Strict
+
+enum BasisFitError:
+  case Degenerate(diagnostics: Vector[BasisDiagnostic])
+
+  def message: String =
+    this match
+      case Degenerate(diagnostics) =>
+        diagnostics.map(_.message).mkString("; ")
+
+final case class BasisFit[+A <: ParametricBasis](basis: A, diagnostics: Vector[BasisDiagnostic])
+
 object ParametricBasis:
+  private val FallbackScale = 1e-6
+
+  private final case class ScaleMoments(center: Double, rawScale: Double)
+
+  private final case class ScaledColumn(
+      center: Double,
+      scale: Double,
+      values: Array[Double],
+      diagnostics: Vector[BasisDiagnostic]
+  )
+
+  private def finishFit[A <: ParametricBasis](
+      basis: A,
+      diagnostics: Vector[BasisDiagnostic],
+      policy: BasisDegeneracyPolicy
+  ): Either[BasisFitError, BasisFit[A]] =
+    val reported =
+      policy match
+        case BasisDegeneracyPolicy.Compatible => Vector.empty
+        case BasisDegeneracyPolicy.Report     => diagnostics
+        case BasisDegeneracyPolicy.Strict     => diagnostics
+
+    policy match
+      case BasisDegeneracyPolicy.Strict if diagnostics.nonEmpty =>
+        Left(BasisFitError.Degenerate(diagnostics))
+      case _ =>
+        Right(BasisFit(basis, reported))
+
+  private def meanSd(clean: Vector[Double]): ScaleMoments =
+    val mean = if clean.isEmpty then Double.NaN else clean.sum / clean.length.toDouble
+    val sd =
+      if clean.length <= 1 then Double.NaN
+      else
+        val v = clean.map(a => (a - mean) * (a - mean)).sum / (clean.length - 1).toDouble
+        math.sqrt(v)
+    ScaleMoments(mean, sd)
+
+  private def repairedScale(
+      xs: Vector[Double],
+      clean: Vector[Double],
+      moments: ScaleMoments,
+      basisClass: String,
+      column: String,
+      scaleName: String,
+      group: Option[String] = None
+  ): ScaledColumn =
+    val scale =
+      if moments.rawScale.isFinite && moments.rawScale != 0.0 then moments.rawScale
+      else FallbackScale
+    val out = new Array[Double](xs.length)
+    var i = 0
+    while i < xs.length do
+      val v = (xs(i) - moments.center) / scale
+      out(i) = if v.isFinite then v else 0.0
+      i += 1
+
+    ScaledColumn(
+      center = moments.center,
+      scale = scale,
+      values = out,
+      diagnostics = scaleDiagnostics(xs, clean, moments.rawScale, basisClass, column, scaleName, group)
+    )
+
+  private def scaleDiagnostics(
+      xs: Vector[Double],
+      clean: Vector[Double],
+      rawScale: Double,
+      basisClass: String,
+      column: String,
+      scaleName: String,
+      group: Option[String]
+  ): Vector[BasisDiagnostic] =
+    val out = Vector.newBuilder[BasisDiagnostic]
+    val groupText = group.map(g => s" for group '$g'").getOrElse("")
+    val prefix = s"$basisClass basis column '$column'$groupText"
+
+    if xs.nonEmpty && clean.isEmpty then
+      out += BasisDiagnostic(
+        BasisDegeneracyKind.AllNonFinite,
+        basisClass,
+        column,
+        s"$prefix has all non-finite values; repaired output uses 0.0",
+        group
+      )
+    else if xs.exists(!_.isFinite) then
+      out += BasisDiagnostic(
+        BasisDegeneracyKind.RepairedNonFinite,
+        basisClass,
+        column,
+        s"$prefix has non-finite values; repaired affected rows to 0.0",
+        group
+      )
+
+    if clean.nonEmpty && (!rawScale.isFinite || rawScale == 0.0) then
+      out += BasisDiagnostic(
+        BasisDegeneracyKind.ZeroVariance,
+        basisClass,
+        column,
+        s"$prefix has zero variance; using fallback $scaleName $FallbackScale",
+        group
+      )
+
+    out.result()
 
   final case class Ident(y: Mat, varNames: Vector[String]) extends ParametricBasis:
     val argName: String = varNames.mkString("_")
@@ -284,23 +411,20 @@ object ParametricBasis:
 
   object Standardized:
     def fit(x: Seq[Double], argName: String): Standardized =
+      fitWithDiagnostics(x, argName, BasisDegeneracyPolicy.Compatible)
+        .fold(err => throw new IllegalArgumentException(err.message), _.basis)
+
+    def fitWithDiagnostics(
+        x: Seq[Double],
+        argName: String,
+        policy: BasisDegeneracyPolicy = BasisDegeneracyPolicy.Report
+    ): Either[BasisFitError, BasisFit[Standardized]] =
       val xs = x.toVector
       val clean = xs.filter(_.isFinite)
-      val mu = if clean.isEmpty then Double.NaN else clean.sum / clean.length.toDouble
-      val sd0 =
-        if clean.length <= 1 then Double.NaN
-        else
-          val m = mu
-          val v = clean.map(a => (a - m) * (a - m)).sum / (clean.length - 1).toDouble
-          math.sqrt(v)
-      val sd = if sd0.isFinite && sd0 != 0.0 then sd0 else 1e-6
-      val out = new Array[Double](xs.length)
-      var i = 0
-      while i < xs.length do
-        val v = (xs(i) - mu) / sd
-        out(i) = if v.isFinite then v else 0.0
-        i += 1
-      Standardized(xs, argName, mu, sd, Mat.unsafe(xs.length, 1, out))
+      val column = Names.continuousToken(s"std_${argName}")
+      val scaled = repairedScale(xs, clean, meanSd(clean), "Standardized", column, "sd")
+      val basis = Standardized(xs, argName, scaled.center, scaled.scale, Mat.unsafe(xs.length, 1, scaled.values))
+      finishFit(basis, scaled.diagnostics, policy)
 
   final case class Scale(x: Vector[Double], argName: String, mean: Double, sd: Double, y: Mat) extends ParametricBasis:
     val name: String = s"z_${argName}"
@@ -314,23 +438,20 @@ object ParametricBasis:
 
   object Scale:
     def fit(x: Seq[Double], argName: String): Scale =
+      fitWithDiagnostics(x, argName, BasisDegeneracyPolicy.Compatible)
+        .fold(err => throw new IllegalArgumentException(err.message), _.basis)
+
+    def fitWithDiagnostics(
+        x: Seq[Double],
+        argName: String,
+        policy: BasisDegeneracyPolicy = BasisDegeneracyPolicy.Report
+    ): Either[BasisFitError, BasisFit[Scale]] =
       val xs = x.toVector
       val clean = xs.filter(_.isFinite)
-      val mu = if clean.isEmpty then Double.NaN else clean.sum / clean.length.toDouble
-      val sd0 =
-        if clean.length <= 1 then Double.NaN
-        else
-          val m = mu
-          val v = clean.map(a => (a - m) * (a - m)).sum / (clean.length - 1).toDouble
-          math.sqrt(v)
-      val sd = if sd0.isFinite && sd0 != 0.0 then sd0 else 1e-6
-      val out = new Array[Double](xs.length)
-      var i = 0
-      while i < xs.length do
-        val v = (xs(i) - mu) / sd
-        out(i) = if v.isFinite then v else 0.0
-        i += 1
-      Scale(xs, argName, mu, sd, Mat.unsafe(xs.length, 1, out))
+      val column = Names.continuousToken(s"z_${argName}")
+      val scaled = repairedScale(xs, clean, meanSd(clean), "Scale", column, "sd")
+      val basis = Scale(xs, argName, scaled.center, scaled.scale, Mat.unsafe(xs.length, 1, scaled.values))
+      finishFit(basis, scaled.diagnostics, policy)
 
   final case class ScaleWithin(
       x: Vector[Double],
@@ -353,6 +474,16 @@ object ParametricBasis:
 
   object ScaleWithin:
     def fit(x: Seq[Double], group: Seq[String], argName: String, groupName: String): ScaleWithin =
+      fitWithDiagnostics(x, group, argName, groupName, BasisDegeneracyPolicy.Compatible)
+        .fold(err => throw new IllegalArgumentException(err.message), _.basis)
+
+    def fitWithDiagnostics(
+        x: Seq[Double],
+        group: Seq[String],
+        argName: String,
+        groupName: String,
+        policy: BasisDegeneracyPolicy = BasisDegeneracyPolicy.Report
+    ): Either[BasisFitError, BasisFit[ScaleWithin]] =
       val xs = x.toVector
       val gs = group.toVector
       require(xs.length == gs.length, "length(x) must equal length(group)")
@@ -360,23 +491,30 @@ object ParametricBasis:
       val byGroup: Map[String, Vector[Int]] =
         gs.indices.groupBy(gs).view.mapValues(_.toVector).toMap
 
-      val means: Map[String, Double] =
+      val column = Names.continuousToken(s"z_${argName}_by_${groupName}")
+      val diagnostics = Vector.newBuilder[BasisDiagnostic]
+
+      val groupScaled: Map[String, ScaledColumn] =
         byGroup.view.mapValues { idxs =>
           val clean = idxs.iterator.map(xs).filter(_.isFinite).toVector
-          if clean.isEmpty then Double.NaN else clean.sum / clean.length.toDouble
+          val scaled = repairedScale(
+            idxs.map(xs),
+            clean,
+            meanSd(clean),
+            "ScaleWithin",
+            column,
+            "sd",
+            group = Some(gs(idxs.head))
+          )
+          diagnostics ++= scaled.diagnostics
+          scaled
         }.toMap
 
       val sds: Map[String, Double] =
-        byGroup.view.mapValues { idxs =>
-          val clean = idxs.iterator.map(xs).filter(_.isFinite).toVector
-          val sd0 =
-            if clean.length <= 1 then Double.NaN
-            else
-              val mu = clean.sum / clean.length.toDouble
-              val v = clean.map(a => (a - mu) * (a - mu)).sum / (clean.length - 1).toDouble
-              math.sqrt(v)
-          if sd0.isFinite && sd0 != 0.0 then sd0 else 1e-6
-        }.toMap
+        groupScaled.view.mapValues(_.scale).toMap
+
+      val means: Map[String, Double] =
+        groupScaled.view.mapValues(_.center).toMap
 
       val out = new Array[Double](xs.length)
       var i = 0
@@ -388,7 +526,8 @@ object ParametricBasis:
         out(i) = if v.isFinite then v else 0.0
         i += 1
 
-      ScaleWithin(xs, gs, argName, groupName, means, sds, Mat.unsafe(xs.length, 1, out))
+      val basis = ScaleWithin(xs, gs, argName, groupName, means, sds, Mat.unsafe(xs.length, 1, out))
+      finishFit(basis, diagnostics.result(), policy)
 
   final case class RobustScale(x: Vector[Double], argName: String, median: Double, mad: Double, y: Mat) extends ParametricBasis:
     val name: String = s"robz_${argName}"
@@ -404,6 +543,14 @@ object ParametricBasis:
     private val MadConstant = 1.4826
 
     def fit(x: Seq[Double], argName: String): RobustScale =
+      fitWithDiagnostics(x, argName, BasisDegeneracyPolicy.Compatible)
+        .fold(err => throw new IllegalArgumentException(err.message), _.basis)
+
+    def fitWithDiagnostics(
+        x: Seq[Double],
+        argName: String,
+        policy: BasisDegeneracyPolicy = BasisDegeneracyPolicy.Report
+    ): Either[BasisFitError, BasisFit[RobustScale]] =
       val xs = x.toVector
       val clean = xs.filter(_.isFinite)
       val med = median(clean)
@@ -412,15 +559,10 @@ object ParametricBasis:
         else
           val absDevs = clean.map(a => math.abs(a - med))
           median(absDevs) * MadConstant
-      val mad = if mad0.isFinite && mad0 != 0.0 then mad0 else 1e-6
-
-      val out = new Array[Double](xs.length)
-      var i = 0
-      while i < xs.length do
-        val v = (xs(i) - med) / mad
-        out(i) = if v.isFinite then v else 0.0
-        i += 1
-      RobustScale(xs, argName, med, mad, Mat.unsafe(xs.length, 1, out))
+      val column = Names.continuousToken(s"robz_${argName}")
+      val scaled = repairedScale(xs, clean, ScaleMoments(med, mad0), "RobustScale", column, "MAD")
+      val basis = RobustScale(xs, argName, scaled.center, scaled.scale, Mat.unsafe(xs.length, 1, scaled.values))
+      finishFit(basis, scaled.diagnostics, policy)
 
   final case class BSpline(x: Vector[Double], degree: Int, argName: String, y: Mat, boundary: (Double, Double)) extends ParametricBasis:
     val name: String = s"bs_${argName}"

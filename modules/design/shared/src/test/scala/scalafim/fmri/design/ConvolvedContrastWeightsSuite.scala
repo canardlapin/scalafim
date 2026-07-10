@@ -107,6 +107,42 @@ class ConvolvedContrastWeightsSuite extends munit.FunSuite:
       r += 1
   }
 
+  test("categorical contrasts align by column metadata before falling back to names") {
+    val conds = Vector("A", "B", "C", "A", "B", "C")
+    val onsets = (1 to conds.length).map(_.toDouble).toVector.map(Seconds(_))
+    val sf = SamplingFrame(blockLens = Seq(20), tr = Seq(1.0))
+
+    val term = EventTerm(
+      events = Vector(Event.factor(conds, "condition")),
+      onsets = onsets,
+      blockIds = Vector.fill(conds.length)(0),
+      termTag = Some("t")
+    )
+
+    val conv = term.convolve(Hrfs.SPMG3, sf)
+    val renamed = conv.copy(columnNames = conv.columnNames.map(name => s"renamed_$name"))
+    val cw = ConvolvedContrastWeights.pair(
+      term = renamed,
+      name = "A_vs_B_b02",
+      A = cell => cell("condition") == "A",
+      B = cell => cell("condition") == "B",
+      basis = Some(Seq(2))
+    )
+
+    val idxA = cw.condNames.indexOf("renamed_t_condition.A_b02")
+    val idxB = cw.condNames.indexOf("renamed_t_condition.B_b02")
+    val idxC = cw.condNames.indexOf("renamed_t_condition.C_b02")
+    assert(idxA >= 0 && idxB >= 0 && idxC >= 0)
+
+    assertEquals(
+      cw.selectedCondNames,
+      Vector("renamed_t_condition.A_b02", "renamed_t_condition.B_b02", "renamed_t_condition.C_b02")
+    )
+    assertEquals(cw.weights.data(idxA), 1.0)
+    assertEquals(cw.weights.data(idxB), -1.0)
+    assertEquals(cw.weights.data(idxC), 0.0)
+  }
+
   test("interaction 2x2 matches expected +/- pattern") {
     val f1 = Vector("A", "B", "A", "B")
     val f2 = Vector("X", "X", "Y", "Y")

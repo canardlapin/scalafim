@@ -49,6 +49,11 @@ class FContrastsSuite extends munit.FunSuite:
       -1.0, -1.0
     )
     assertAllClose(cw.weights.data, expected, tol = 1e-12)
+
+    val compiled = FContrasts.compiledForConvolvedTerm(conv).fold(error => fail(error.message), identity)
+    assertEquals(compiled.keySet, Set("condition"))
+    assertEquals(compiled("condition").source, ContrastSource.GeneratedF)
+    assertAllClose(compiled("condition").toLegacy.weights.data, cw.weights.data, tol = 1e-12)
   }
 
   test("FContrasts.forConvolvedTerm: 3x2 ordering matches event cell order") {
@@ -130,6 +135,55 @@ class FContrastsSuite extends munit.FunSuite:
     assertAllClose(row(cw.weights, idxA1), Array(1.0, 0.0), tol = 1e-12)
     assertAllClose(row(cw.weights, idxB2), Array(0.0, 1.0), tol = 1e-12)
     assertAllClose(row(cw.weights, idxC3), Array(-1.0, -1.0), tol = 1e-12)
+  }
+
+  test("FContrasts reports expected generation failures without throwing") {
+    val onsets = Vector(1.0, 2.0).map(Seconds(_))
+    val sf = SamplingFrame(blockLens = Seq(10), tr = Seq(1.0))
+
+    val continuousTerm = EventTerm(
+      events = Vector(Event.variable(Vector(1.0, 2.0), "rt")),
+      onsets = onsets,
+      blockIds = Vector(0, 0),
+      termTag = Some("cont")
+    )
+    assertEquals(
+      FContrasts.forEventTermEither(continuousTerm).left.toOption,
+      Some(ContrastError.NoCategoricalCells("cont"))
+    )
+    assertEquals(
+      FContrasts.compiledForConvolvedTerm(continuousTerm.convolve(Hrfs.SPMG1, sf)).left.toOption,
+      Some(ContrastError.NoCategoricalCells("cont"))
+    )
+
+    val singleLevelTerm = EventTerm(
+      events = Vector(Event.factor(Vector("A", "A"), "condition")),
+      onsets = onsets,
+      blockIds = Vector(0, 0),
+      termTag = Some("single")
+    )
+    assertEquals(
+      FContrasts.forEventTermEither(singleLevelTerm).left.toOption,
+      Some(ContrastError.InsufficientLevels("single", "condition", 1))
+    )
+
+    val categoricalTerm = EventTerm(
+      events = Vector(Event.factor(Vector("A", "B"), "condition")),
+      onsets = onsets,
+      blockIds = Vector(0, 0),
+      termTag = Some("cat")
+    )
+    val brokenWeights = ContrastWeights(
+      name = "broken",
+      condNames = Vector("condition.A"),
+      contrastNames = Vector("c1"),
+      weights = Mat.unsafe(1, 1, Array(1.0)),
+      selectedCondNames = Vector("condition.A")
+    )
+    assertEquals(
+      FContrasts.liftToTermConditionsEither(categoricalTerm, brokenWeights).left.toOption,
+      Some(ContrastError.MissingConditionRow("broken", "condition.B", Vector("condition.A")))
+    )
   }
 
   test("EventModel.validateAllContrasts validates attached + F-contrasts") {

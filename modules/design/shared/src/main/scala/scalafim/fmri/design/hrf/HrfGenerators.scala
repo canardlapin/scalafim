@@ -15,7 +15,7 @@ object HrfGenerators:
     require(minDuration.isFinite && minDuration >= 0.0, "`minDuration` must be finite and >= 0")
     require(precision.value.isFinite && precision.value > 0.0, "`precision` must be finite and > 0")
     (d: DataTable) =>
-      d.doubles("duration").map { x =>
+      HrfSelection.perEvent(d.doubles("duration").map { x =>
         val width = math.max(x, minDuration)
         if width <= 0.0 then base
         else base.block(
@@ -25,16 +25,16 @@ object HrfGenerators:
           summate = summate,
           normalize = true
         )
-      }
+      })
 
   def boxcar(normalize: Boolean = true, minDuration: Double = 0.1): HrfFun =
     require(minDuration.isFinite && minDuration > 0.0, "`minDuration` must be finite and > 0")
     (d: DataTable) =>
       val dur = d.doubles("duration")
-      dur.map { x =>
+      HrfSelection.perEvent(dur.map { x =>
         val w = math.max(x, minDuration)
         Hrfs.boxcar(width = w.s, normalize = normalize)
-      }
+      })
 
   def weighted(
       timesCol: String = "sub_times",
@@ -65,4 +65,4 @@ object HrfGenerators:
         val relSec: Vector[Seconds] = relT.map(Seconds(_))
         out += Hrfs.weighted(weights = w0.toVector, times = Some(relSec), method = m, normalize = normalize)
         i += 1
-      out.result()
+      HrfSelection.perEvent(out.result())

@@ -17,9 +17,19 @@ final case class ConvolvedTerm(
     data: Mat,
     columnNames: Vector[String],
     role: EventTermRole = EventTermRole.Task,
-    columnRoles: Vector[EventTermColumnRole] = Vector.empty
+    columnRoles: Vector[EventTermColumnRole] = Vector.empty,
+    columnConditions: Vector[Option[String]] = Vector.empty,
+    columnBasisIx: Vector[Option[Int]] = Vector.empty
 ) extends EventModelTerm:
   requireColumnMetadata()
+  require(
+    columnConditions.isEmpty || columnConditions.length == data.cols,
+    s"columnConditions has ${columnConditions.length} entries for ${data.cols} data columns"
+  )
+  require(
+    columnBasisIx.isEmpty || columnBasisIx.length == data.cols,
+    s"columnBasisIx has ${columnBasisIx.length} entries for ${data.cols} data columns"
+  )
 
   def keyHint: Option[String] = term.termTag
   def hrfOpt: Option[Hrf] = Some(hrf)
@@ -112,13 +122,22 @@ final case class EventTerm(
     val nConds = dm.conditionTags.length
     val nb = hrf.nbasis
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
+    val finalConditions = columnConditionsFor(dm.conditionTags, nb)
+    val finalBasisIx = columnBasisIxFor(nConds, nb)
 
     val totalRows = samplingFrame.blockLens.sum
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
-      return ConvolvedTerm(this, hrf, Mat.unsafe(totalRows, totalCols, out), finalNames)
+      return ConvolvedTerm(
+        this,
+        hrf,
+        Mat.unsafe(totalRows, totalCols, out),
+        finalNames,
+        columnConditions = finalConditions,
+        columnBasisIx = finalBasisIx
+      )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -155,7 +174,14 @@ final case class EventTerm(
       b += 1
 
     if normalize then normalizeColumnsInPlace(out, totalRows, totalCols)
-    ConvolvedTerm(this, hrf, Mat.unsafe(totalRows, totalCols, out), finalNames)
+    ConvolvedTerm(
+      this,
+      hrf,
+      Mat.unsafe(totalRows, totalCols, out),
+      finalNames,
+      columnConditions = finalConditions,
+      columnBasisIx = finalBasisIx
+    )
 
   def convolvePerEvent(
       hrfs: Seq[Hrf],
@@ -178,13 +204,22 @@ final case class EventTerm(
     require(hrfs0.forall(_.nbasis == nb), "all per-event HRFs must have the same nbasis")
 
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
+    val finalConditions = columnConditionsFor(dm.conditionTags, nb)
+    val finalBasisIx = columnBasisIxFor(nConds, nb)
 
     val totalRows = samplingFrame.blockLens.sum
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 || n == 0 then
-      return ConvolvedTerm(this, rep, Mat.unsafe(totalRows, totalCols, out), finalNames)
+      return ConvolvedTerm(
+        this,
+        rep,
+        Mat.unsafe(totalRows, totalCols, out),
+        finalNames,
+        columnConditions = finalConditions,
+        columnBasisIx = finalBasisIx
+      )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -220,7 +255,28 @@ final case class EventTerm(
       b += 1
 
     if normalize then normalizeColumnsInPlace(out, totalRows, totalCols)
-    ConvolvedTerm(this, rep, Mat.unsafe(totalRows, totalCols, out), finalNames)
+    ConvolvedTerm(
+      this,
+      rep,
+      Mat.unsafe(totalRows, totalCols, out),
+      finalNames,
+      columnConditions = finalConditions,
+      columnBasisIx = finalBasisIx
+    )
+
+  private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =
+    if conditionTags.isEmpty || nbasis <= 0 then Vector.empty
+    else
+      Vector.tabulate(conditionTags.length * nbasis) { c =>
+        Some(conditionTags(c % conditionTags.length))
+      }
+
+  private def columnBasisIxFor(nConditions: Int, nbasis: Int): Vector[Option[Int]] =
+    if nConditions <= 0 || nbasis <= 0 then Vector.empty
+    else
+      Vector.tabulate(nConditions * nbasis) { c =>
+        Some((c / nConditions) + 1)
+      }
 
   private def normalizeColumnsInPlace(data: Array[Double], rows: Int, cols: Int): Unit =
     var c = 0

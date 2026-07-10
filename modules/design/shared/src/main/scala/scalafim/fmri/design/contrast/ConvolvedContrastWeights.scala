@@ -346,28 +346,31 @@ object ConvolvedContrastWeights:
     val cols = term.columnNames
     val prefix = term.term.termTag.map(_ + "_")
     val idx = cw.condNames.zipWithIndex.toMap
+    val semanticKeys = columnSemanticKeys(term)
     val out = new Array[Double](cols.length * cw.weights.cols)
 
     var rOut = 0
     while rOut < cols.length do
-      val raw = cols(rOut)
-      val key =
-        prefix match
-          case Some(p) if raw.startsWith(p) => raw.drop(p.length)
-          case _                            => raw
+      val rInOpt =
+        semanticKeys(rOut).flatMap(idx.get).orElse(idx.get(legacyColumnKey(cols(rOut), prefix)))
 
-      idx.get(key).foreach { rIn =>
+      rInOpt.foreach { rIn =>
         System.arraycopy(cw.weights.data, rIn * cw.weights.cols, out, rOut * cw.weights.cols, cw.weights.cols)
       }
       rOut += 1
 
     val selected =
-      val base = cw.selectedCondNames
-      val withPrefix = prefix match
-        case None    => base
-        case Some(p) => base.map(p + _)
-      val colSet = cols.toSet
-      withPrefix.filter(colSet)
+      val semanticSelected =
+        if semanticKeys.exists(_.nonEmpty) then
+          val selectedKeys = cw.selectedCondNames.toSet
+          cols.indices.iterator
+            .filter(i => semanticKeys(i).exists(selectedKeys))
+            .map(cols)
+            .toVector
+        else Vector.empty
+
+      if semanticSelected.nonEmpty || cw.selectedCondNames.isEmpty then semanticSelected
+      else legacySelectedNames(cw.selectedCondNames, cols, prefix)
 
     ContrastWeights(
       name = cw.name,
@@ -376,3 +379,31 @@ object ConvolvedContrastWeights:
       weights = Mat.unsafe(cols.length, cw.weights.cols, out),
       selectedCondNames = selected
     )
+
+  private def columnSemanticKeys(term: ConvolvedTerm): Vector[Option[String]] =
+    val nbasis = term.hrf.nbasis
+    Vector.tabulate(term.columnNames.length) { i =>
+      val condition =
+        if term.columnConditions.nonEmpty && i < term.columnConditions.length then term.columnConditions(i)
+        else None
+      condition.map { cond =>
+        val basis =
+          if term.columnBasisIx.nonEmpty && i < term.columnBasisIx.length then term.columnBasisIx(i)
+          else None
+        basis match
+          case Some(ix) if nbasis > 1 => cond + scalafim.fmri.design.Names.basisSuffix(ix, nbasis)
+          case _                      => cond
+      }
+    }
+
+  private def legacyColumnKey(raw: String, prefix: Option[String]): String =
+    prefix match
+      case Some(p) if raw.startsWith(p) => raw.drop(p.length)
+      case _                            => raw
+
+  private def legacySelectedNames(base: Vector[String], cols: Vector[String], prefix: Option[String]): Vector[String] =
+    val withPrefix = prefix match
+      case None    => base
+      case Some(p) => base.map(p + _)
+    val colSet = cols.toSet
+    withPrefix.filter(colSet)

@@ -3,9 +3,9 @@ package scalafim.fmri.design.formula
 import scalafim.fmri.design.{DesignError, Names}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.fmri.design.basis.{BasisRegistry, ParametricBasis}
+import scalafim.fmri.design.basis.{BasisDiagnostic, BasisFit, BasisFitError, BasisRegistry, ParametricBasis}
 import scalafim.fmri.design.event.*
-import scalafim.fmri.design.hrf.HrfFun
+import scalafim.fmri.design.hrf.{HrfFun, HrfSelection}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.HrfCombinators.*
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -15,11 +15,95 @@ import scala.util.control.NonFatal
 
 object EventModelBuilder:
 
+  final case class BuildOptions(
+      defaultHrf: Hrf = Hrfs.SPMG1,
+      precision: Seconds = 0.3.s,
+      dropEmpty: Boolean = true,
+      summate: Boolean = true,
+      strict: Boolean = false
+  )
+
+  final case class DesignExtensionEnv(
+      hrfFuns: Map[String, HrfFun] = Map.empty,
+      contrastSets: Map[String, ContrastSpec.ContrastSet] = Map.empty,
+      basisRegistry: BasisRegistry = BasisRegistry.default
+  )
+
+  enum DurationPlan:
+    case Values(seconds: Vector[Double])
+
+    def resolve(nEvents: Int): Either[DesignError, Vector[Double]] =
+      this match
+        case Values(values) =>
+          if values.length == nEvents then Right(values)
+          else if values.length == 1 then Right(Vector.fill(nEvents)(values.head))
+          else Left(DesignError.InvalidSchedule(s"`durations` must have length 1 or $nEvents, not ${values.length}"))
+
+  object DurationPlan:
+    def apply(durations: Seq[Double]): DurationPlan =
+      Values(durations.toVector)
+
+  enum BlockPlan:
+    case Explicit(ids: Vector[Int])
+    case Formula(text: String)
+    case SingleBlock
+
+    def resolve(data: DataTable): Either[DesignError, Vector[Int]] =
+      try
+        Right(
+          this match
+            case Explicit(ids) => ids
+            case Formula(text) => parseBlockIds(text, data)
+            case SingleBlock   => Vector.fill(data.nrows)(0)
+        )
+      catch
+        case NonFatal(t) => Left(DesignError.fromThrowable(t))
+
+  object BlockPlan:
+    def explicit(ids: Seq[Int]): BlockPlan =
+      Explicit(ids.toVector)
+
   final case class TableEnv(eventData: DataTable, other: Map[String, DataTable] = Map.empty):
-    def resolve(name: Option[String]): DataTable =
+    def resolveEither(name: Option[String]): Either[DesignError, DataTable] =
       name match
-        case None           => eventData
-        case Some(tableKey) => other.getOrElse(tableKey, throw new IllegalArgumentException(s"Unknown data table: '$tableKey'"))
+        case None           => Right(eventData)
+        case Some(tableKey) => other.get(tableKey).toRight(DesignError.UnknownTable(tableKey))
+
+    def resolve(name: Option[String]): DataTable =
+      resolveEither(name).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  final case class EventDesignRequest(
+      formula: ModelFormula,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      blockPlan: BlockPlan,
+      durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
+      options: BuildOptions = BuildOptions(),
+      extensions: DesignExtensionEnv = DesignExtensionEnv()
+  )
+
+  object EventDesignRequest:
+    def fromText(
+        formula: String,
+        data: DataTable,
+        samplingFrame: SamplingFrame,
+        blockPlan: BlockPlan = BlockPlan.SingleBlock,
+        durationPlan: DurationPlan = DurationPlan(Seq(0.0)),
+        tables: Map[String, DataTable] = Map.empty,
+        options: BuildOptions = BuildOptions(),
+        extensions: DesignExtensionEnv = DesignExtensionEnv()
+    ): Either[DesignError, EventDesignRequest] =
+      FormulaParser.parseEither(formula).left.map(parseError).map { parsed =>
+        EventDesignRequest(
+          formula = parsed,
+          env = TableEnv(eventData = data, other = tables),
+          samplingFrame = samplingFrame,
+          blockPlan = blockPlan,
+          durationPlan = durationPlan,
+          options = options,
+          extensions = extensions
+        )
+      }
 
   /** Build an [[scalafim.fmri.design.event.EventModel]] using an R-ish block formula such as `"~1"` or `"~run"`.
     *
@@ -41,22 +125,27 @@ object EventModelBuilder:
       strict: Boolean = false,
       basisRegistry: BasisRegistry = BasisRegistry.default
   ): EventModel =
-    val blockIds = parseBlockIds(block, data)
     build(
-      formula = formula,
-      data = data,
-      samplingFrame = samplingFrame,
-      blockIds = blockIds,
-      durations = durations,
-      tables = tables,
-      defaultHrf = defaultHrf,
-      precision = precision,
-      dropEmpty = dropEmpty,
-      summate = summate,
-      hrfFuns = hrfFuns,
-      contrastSets = contrastSets,
-      basisRegistry = basisRegistry,
-      strict = strict
+      EventDesignRequest.fromText(
+        formula = formula,
+        data = data,
+        samplingFrame = samplingFrame,
+        blockPlan = BlockPlan.Formula(block),
+        durationPlan = DurationPlan(durations),
+        tables = tables,
+        options = BuildOptions(
+          defaultHrf = defaultHrf,
+          precision = precision,
+          dropEmpty = dropEmpty,
+          summate = summate,
+          strict = strict
+        ),
+        extensions = DesignExtensionEnv(
+          hrfFuns = hrfFuns,
+          contrastSets = contrastSets,
+          basisRegistry = basisRegistry
+        )
+      ).fold(err => throw new IllegalArgumentException(err.message), identity)
     )
 
   def bindFormula(
@@ -65,16 +154,14 @@ object EventModelBuilder:
       availableContrastSets: Set[String] = Set.empty,
       requireKnownContrasts: Boolean = false
   ): Either[DesignError, BoundFormula] =
-    try
-      val parsed = FormulaParser.parse(formula)
+    FormulaParser.parseEither(formula).left.map(parseError).flatMap { parsed =>
       BoundFormula.bind(
         parsed,
         data,
         availableContrastSets = availableContrastSets,
         requireKnownContrasts = requireKnownContrasts
       )
-    catch
-      case NonFatal(t) => Left(DesignError.fromThrowable(t))
+    }
 
   def build(
       formula: String,
@@ -95,19 +182,25 @@ object EventModelBuilder:
     val parsed = FormulaParser.parse(formula)
     val env = TableEnv(eventData = data, other = tables)
     build(
-      parsed,
-      env,
-      samplingFrame,
-      blockIds = blockIds,
-      durations = durations,
-      defaultHrf = defaultHrf,
-      precision = precision,
-      dropEmpty = dropEmpty,
-      summate = summate,
-      hrfFuns = hrfFuns,
-      contrastSets = contrastSets,
-      basisRegistry = basisRegistry,
-      strict = strict
+      EventDesignRequest(
+        formula = parsed,
+        env = env,
+        samplingFrame = samplingFrame,
+        blockPlan = BlockPlan.explicit(blockIds),
+        durationPlan = DurationPlan(durations),
+        options = BuildOptions(
+          defaultHrf = defaultHrf,
+          precision = precision,
+          dropEmpty = dropEmpty,
+          summate = summate,
+          strict = strict
+        ),
+        extensions = DesignExtensionEnv(
+          hrfFuns = hrfFuns,
+          contrastSets = contrastSets,
+          basisRegistry = basisRegistry
+        )
+      )
     )
 
   def buildEither(
@@ -126,27 +219,69 @@ object EventModelBuilder:
       strict: Boolean = false,
       basisRegistry: BasisRegistry = BasisRegistry.default
   ): Either[DesignError, EventModel] =
-    try
-      Right(
-        build(
-          formula = formula,
-          data = data,
+    FormulaParser.parseEither(formula).left.map(parseError).flatMap { parsed =>
+      buildEither(
+        EventDesignRequest(
+          formula = parsed,
+          env = TableEnv(eventData = data, other = tables),
           samplingFrame = samplingFrame,
-          blockIds = blockIds,
-          durations = durations,
-          tables = tables,
-          defaultHrf = defaultHrf,
-          precision = precision,
-          dropEmpty = dropEmpty,
-          summate = summate,
-          hrfFuns = hrfFuns,
-          contrastSets = contrastSets,
-          strict = strict,
-          basisRegistry = basisRegistry
+          blockPlan = BlockPlan.explicit(blockIds),
+          durationPlan = DurationPlan(durations),
+          options = BuildOptions(
+            defaultHrf = defaultHrf,
+            precision = precision,
+            dropEmpty = dropEmpty,
+            summate = summate,
+            strict = strict
+          ),
+          extensions = DesignExtensionEnv(
+            hrfFuns = hrfFuns,
+            contrastSets = contrastSets,
+            basisRegistry = basisRegistry
+          )
         )
       )
-    catch
-      case NonFatal(t) => Left(DesignError.fromThrowable(t))
+    }
+
+  def build(request: EventDesignRequest): EventModel =
+    buildEither(request).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def buildEither(request: EventDesignRequest): Either[DesignError, EventModel] =
+    for
+      blockIds <- request.blockPlan.resolve(request.env.eventData)
+      durations <- request.durationPlan.resolve(request.env.eventData.nrows)
+      model <- buildEither(
+        formula = request.formula,
+        env = request.env,
+        samplingFrame = request.samplingFrame,
+        blockIds = blockIds,
+        durations = durations,
+        options = request.options,
+        extensions = request.extensions
+      )
+    yield model
+
+  private def parseError(error: FormulaParser.ParseError): DesignError =
+    DesignError.FormulaParse(error.message, error.pos)
+
+  def buildEither(
+      formula: ModelFormula,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      blockIds: Seq[Int],
+      durations: Seq[Double],
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, EventModel] =
+    compile(
+      formula,
+      env,
+      samplingFrame,
+      blockIds = blockIds,
+      durations = durations,
+      options = options,
+      extensions = extensions
+    )
 
   def build(
       formula: ModelFormula,
@@ -163,168 +298,425 @@ object EventModelBuilder:
       strict: Boolean,
       basisRegistry: BasisRegistry
   ): EventModel =
-    val onsetVals = env.eventData.doubles(formula.onset)
-    val nEvents = onsetVals.length
-    require(blockIds.length == nEvents, s"`blockIds` must have length $nEvents, not ${blockIds.length}")
+    buildEither(
+      formula,
+      env,
+      samplingFrame,
+      blockIds = blockIds,
+      durations = durations,
+      options = BuildOptions(
+        defaultHrf = defaultHrf,
+        precision = precision,
+        dropEmpty = dropEmpty,
+        summate = summate,
+        strict = strict
+      ),
+      extensions = DesignExtensionEnv(
+        hrfFuns = hrfFuns,
+        contrastSets = contrastSets,
+        basisRegistry = basisRegistry
+      )
+    ).fold(err => throw new IllegalArgumentException(err.message), identity)
 
-    val durVals =
+  private final case class ResolvedSchedule(
+      defaultOnsets: Vector[Seconds],
+      defaultDurs: Vector[Seconds],
+      blockIds0: Vector[Int]
+  )
+
+  private final case class CompiledTerm(
+      term: EventModelTerm,
+      contrastRef: Option[ArgValue],
+      diagnostics: Vector[EventModelDiagnostic]
+  )
+
+  private final case class EventExpression(
+      event: Event,
+      diagnostics: Vector[EventModelDiagnostic]
+  )
+
+  private final case class CompiledTerms(
+      terms: Vector[EventModelTerm],
+      contrastRefs: Vector[Option[ArgValue]],
+      diagnostics: Vector[EventModelDiagnostic]
+  )
+
+  private def compile(
+      formula: ModelFormula,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      blockIds: Seq[Int],
+      durations: Seq[Double],
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, EventModel] =
+    for
+      schedule <- resolveSchedule(formula, env, blockIds, durations)
+      compiled <- compileTerms(formula, env, samplingFrame, schedule, options, extensions)
+      model <- assembleModel(compiled, samplingFrame, extensions.contrastSets)
+    yield model
+
+  private def resolveSchedule(
+      formula: ModelFormula,
+      env: TableEnv,
+      blockIds: Seq[Int],
+      durations: Seq[Double]
+  ): Either[DesignError, ResolvedSchedule] =
+    for
+      onsetVals <- env.eventData.doublesEither(formula.onset)
+      _ <-
+        if blockIds.length == onsetVals.length then Right(())
+        else Left(DesignError.InvalidSchedule(s"`blockIds` must have length ${onsetVals.length}, not ${blockIds.length}"))
+      durVals <- resolveDurationValues(durations, onsetVals.length)
+    yield ResolvedSchedule(
+      defaultOnsets = onsetVals.map(Seconds(_)),
+      defaultDurs = durVals.map(Seconds(_)),
+      blockIds0 = blockIds.toVector
+    )
+
+  private def resolveDurationValues(durations: Seq[Double], nEvents: Int): Either[DesignError, Vector[Double]] =
+    val values =
       if durations.length == nEvents then durations.toVector
       else if durations.length == 1 then Vector.fill(nEvents)(durations.head)
-      else throw new IllegalArgumentException(s"`durations` must have length 1 or $nEvents, not ${durations.length}")
+      else return Left(DesignError.InvalidSchedule(s"`durations` must have length 1 or $nEvents, not ${durations.length}"))
+    validateScheduleValues(values, argName = "durations")
 
-    val defaultOnsets = onsetVals.map(Seconds(_))
-    val defaultDurs = durVals.map(Seconds(_))
-    val blockIds0 = blockIds.toVector
+  private def validateScheduleValues(values: Vector[Double], argName: String): Either[DesignError, Vector[Double]] =
+    if values.exists(!_.isFinite) then Left(DesignError.InvalidSchedule(s"$argName must be finite"))
+    else if argName == "durations" && values.exists(_ < 0.0) then Left(DesignError.InvalidSchedule("durations must be non-negative"))
+    else Right(values)
 
+  private def compileTerms(
+      formula: ModelFormula,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      schedule: ResolvedSchedule,
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, CompiledTerms] =
     val terms = Vector.newBuilder[EventModelTerm]
     val contrastRefs = Vector.newBuilder[Option[ArgValue]]
     val diagnostics = Vector.newBuilder[EventModelDiagnostic]
+    var failed: Option[DesignError] = None
+    var i = 0
+    while i < formula.terms.length && failed.isEmpty do
+      compileTerm(formula.terms(i), env, samplingFrame, schedule, options, extensions) match
+        case Left(error) =>
+          failed = Some(error)
+        case Right(compiled) =>
+          terms += compiled.term
+          contrastRefs += compiled.contrastRef
+          diagnostics ++= compiled.diagnostics
+      i += 1
 
-    formula.terms.foreach {
+    failed match
+      case Some(error) => Left(error)
+      case None =>
+        Right(CompiledTerms(terms.result(), contrastRefs.result(), diagnostics.result()))
+
+  private def compileTerm(
+      call: TermCall,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      schedule: ResolvedSchedule,
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, CompiledTerm] =
+    call match
       case h: HrfCall =>
-        val termTag = inferTermTag(h, basisRegistry)
-
-        val events0 = h.vars.map(v => toEvent(env.eventData, v))
-        val termOnsets = h.onsets.fold(defaultOnsets)(ref => resolveSeconds(ref, env.eventData, nEvents, argName = "onsets"))
-        val termDurs = h.durations.fold(defaultDurs)(ref => resolveSeconds(ref, env.eventData, nEvents, argName = "durations"))
-
-        val subsetMask =
-          h.subset match
-            case None => Vector.fill(nEvents)(true)
-            case Some(expr) =>
-              val keep = evalSubset(expr, env.eventData)
-              require(keep.length == nEvents, s"subset mask has length ${keep.length} but expected $nEvents")
-              keep
-
-        val originalSub =
-          if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
-
-        val (events, onsetsS, dursS, blockIdsS) =
-          if subsetMask.forall(identity) then (events0, termOnsets, termDurs, blockIds0)
-          else subsetTerm(events0, termOnsets, termDurs, blockIds0, subsetMask)
-
-        val (eventsClean, nonFiniteDiagnostics) = sanitizeContinuousEvents(events, termTag)
-        val term = EventTerm(
-          events = eventsClean,
-          onsets = onsetsS,
-          durations = dursS,
-          blockIds = blockIdsS,
-          termTag = termTag
-        )
-
-        val termDiagnostics = nonFiniteDiagnostics ++ diagnoseTerm(term, samplingFrame)
-        diagnostics ++= termDiagnostics
-        raiseStrictDiagnostics(termDiagnostics, strict)
-
-        val summate0 = h.summate.getOrElse(summate)
-        val normalize0 = h.normalize.getOrElse(false)
-        val conv =
-          (h.hrfFun, term.onsets.nonEmpty) match
-            case (Some(ref), true) =>
-              val eventData = buildEventDataForGenerator(term, originalSub)
-              val hsel = resolveHrfFun(ref, eventData, hrfFuns = hrfFuns, termTag = termTag)
-              hsel match
-                case Left(shared) =>
-                  term.convolve(shared, samplingFrame, precision = precision, dropEmpty = dropEmpty, summate = summate0, normalize = normalize0)
-                case Right(perEvent) =>
-                  term.convolvePerEvent(perEvent, samplingFrame, precision = precision, dropEmpty = dropEmpty, summate = summate0, normalize = normalize0)
-            case _ =>
-              val hrf0 = resolveHrf(h, defaultHrf)
-              term.convolve(hrf0, samplingFrame, precision = precision, dropEmpty = dropEmpty, summate = summate0, normalize = normalize0)
-
-        terms += conv
-        contrastRefs += h.contrasts
+        compileHrfCall(h, env, samplingFrame, schedule, options, extensions)
       case t: TrialwiseCall =>
-        val label0 = t.label.getOrElse("trial")
-        val termTag = Names.sanitize(label0, allowDot = false)
-        val termDurs = t.durations.fold(defaultDurs)(ref => resolveSeconds(ref, env.eventData, nEvents, argName = "durations"))
+        compileTrialwiseCall(t, env, samplingFrame, schedule, options)
+      case c: CovariateCall =>
+        compileCovariateCall(c, env, samplingFrame)
 
-        val trialEvent = Event.factor(trialLevels(nEvents), name = "trial")
-        val term = EventTerm(
-          events = Vector(trialEvent),
-          onsets = defaultOnsets,
-          durations = termDurs,
-          blockIds = blockIds0,
-          termTag = Some(termTag)
-        )
+  private def compileHrfCall(
+      h: HrfCall,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      schedule: ResolvedSchedule,
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, CompiledTerm] =
+    val nEvents = schedule.defaultOnsets.length
+    for
+      termTag <- catchBuild(DesignError.fromThrowable)(inferTermTag(h, extensions.basisRegistry))
+      expressions <- catchBuild(DesignError.fromThrowable)(h.vars.map(v => toEvent(env.eventData, v, termTag)))
+      events0 = expressions.map(_.event)
+      basisDiagnostics = expressions.flatMap(_.diagnostics)
+      termOnsets <- h.onsets.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultOnsets)) { ref =>
+        resolveSecondsEither(ref, env.eventData, nEvents, argName = "onsets")
+      }
+      termDurs <- h.durations.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultDurs)) { ref =>
+        resolveSecondsEither(ref, env.eventData, nEvents, argName = "durations")
+      }
+      subsetMask <- resolveSubsetMaskEither(h.subset, env.eventData, nEvents)
+      originalSub = if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
+      subset = if subsetMask.forall(identity) then (events0, termOnsets, termDurs, schedule.blockIds0)
+        else subsetTerm(events0, termOnsets, termDurs, schedule.blockIds0, subsetMask)
+      (events, onsetsS, dursS, blockIdsS) = subset
+      cleaned = sanitizeContinuousEvents(events, termTag)
+      (eventsClean, nonFiniteDiagnostics) = cleaned
+      term <- eventTermEither(
+        events = eventsClean,
+        onsets = onsetsS,
+        durations = dursS,
+        blockIds = blockIdsS,
+        termTag = termTag
+      )
+      termDiagnostics = basisDiagnostics ++ nonFiniteDiagnostics ++ diagnoseTerm(term, samplingFrame)
+      _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
+      conv <- convolveHrfTermEither(h, term, originalSub, samplingFrame, options, extensions)
+    yield CompiledTerm(conv, h.contrasts, termDiagnostics)
 
-        val termDiagnostics = diagnoseTerm(term, samplingFrame)
-        diagnostics ++= termDiagnostics
-        raiseStrictDiagnostics(termDiagnostics, strict)
+  private def compileTrialwiseCall(
+      t: TrialwiseCall,
+      env: TableEnv,
+      samplingFrame: SamplingFrame,
+      schedule: ResolvedSchedule,
+      options: BuildOptions
+  ): Either[DesignError, CompiledTerm] =
+    val nEvents = schedule.defaultOnsets.length
+    val label0 = t.label.getOrElse("trial")
+    val termTag = Names.sanitize(label0, allowDot = false)
 
-        val basisName = t.basis.getOrElse("spmg1")
-        val hrf0 = resolveHrfBasis(basisName, nbasis = t.nbasis, lag = t.lag)
-        val conv0 = term.convolve(
+    for
+      termDurs <- t.durations.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultDurs)) { ref =>
+        resolveSecondsEither(ref, env.eventData, nEvents, argName = "durations")
+      }
+      trialEvent <- catchBuild(DesignError.fromThrowable)(Event.factor(trialLevels(nEvents), name = "trial"))
+      term <- eventTermEither(
+        events = Vector(trialEvent),
+        onsets = schedule.defaultOnsets,
+        durations = termDurs,
+        blockIds = schedule.blockIds0,
+        termTag = Some(termTag)
+      )
+      termDiagnostics = diagnoseTerm(term, samplingFrame)
+      _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
+      basisName = t.basis.getOrElse("spmg1")
+      hrf0 <- resolveHrfBasisEither(basisName, nbasis = t.nbasis, lag = t.lag)
+      conv0 <- catchBuild(DesignError.fromThrowable) {
+        term.convolve(
           hrf0,
           samplingFrame,
-          precision = precision,
-          dropEmpty = dropEmpty,
-          summate = summate,
+          precision = options.precision,
+          dropEmpty = options.dropEmpty,
+          summate = options.summate,
           normalize = t.normalize.getOrElse(false)
         )
-        val conv = conv0.copy(
-          role = EventTermRole.Trialwise,
-          columnRoles = Vector.fill(conv0.columnNames.length)(EventTermColumnRole.Trial)
-        )
+      }
+      conv = conv0.copy(
+        role = EventTermRole.Trialwise,
+        columnRoles = Vector.fill(conv0.columnNames.length)(EventTermColumnRole.Trial)
+      )
+      out = if t.addSum.getOrElse(false) then addMeanColumn(conv, label = label0) else conv
+    yield CompiledTerm(out, None, termDiagnostics)
 
-        val out = if t.addSum.getOrElse(false) then addMeanColumn(conv, label = label0) else conv
-        terms += out
-        contrastRefs += None
-
-      case c: CovariateCall =>
-        val table = env.resolve(c.data)
-        val vars = c.vars.map {
+  private def compileCovariateCall(
+      c: CovariateCall,
+      env: TableEnv,
+      samplingFrame: SamplingFrame
+  ): Either[DesignError, CompiledTerm] =
+    for
+      table <- env.resolveEither(c.data)
+      vars <- catchBuild(DesignError.fromThrowable) {
+        c.vars.map {
           case ArgValue.Ident(v) => v
           case other             => throw new IllegalArgumentException(s"covariate vars must be identifiers, found $other")
         }
-        val spec = CovariateSpec(vars = vars, data = table, id = c.id, prefix = c.prefix)
-        terms += spec.construct(samplingFrame)
-        contrastRefs += None
-    }
+      }
+      spec = CovariateSpec(vars = vars, data = table, id = c.id, prefix = c.prefix)
+      term <- catchBuild(DesignError.fromThrowable)(spec.construct(samplingFrame))
+    yield CompiledTerm(term, None, Vector.empty)
 
-    val model0 = EventModel.buildTerms(terms.result(), samplingFrame)
-    val refs = contrastRefs.result()
-    require(refs.length == model0.terms.length, "internal: contrastRefs length mismatch")
-    model0.copy(
-      contrastSetsByTerm = attachContrastSets(model0, refs, contrastSets),
-      diagnostics = diagnostics.result()
+  private def assembleModel(
+      compiled: CompiledTerms,
+      samplingFrame: SamplingFrame,
+      contrastSets: Map[String, ContrastSpec.ContrastSet]
+  ): Either[DesignError, EventModel] =
+    for
+      model0 <- EventModel.buildTermsEither(compiled.terms, samplingFrame)
+      refs <-
+        if compiled.contrastRefs.length == model0.terms.length then Right(compiled.contrastRefs)
+        else Left(DesignError.BuildFailed("internal: contrastRefs length mismatch"))
+      attached <- attachContrastSetsEither(model0, refs, contrastSets)
+    yield model0.copy(
+      contrastSetsByTerm = attached,
+      diagnostics = compiled.diagnostics
     )
 
-  private def attachContrastSets(
+  private def attachContrastSetsEither(
       model: EventModel,
       refs: Vector[Option[ArgValue]],
       available: Map[String, ContrastSpec.ContrastSet]
-  ): VectorMap[String, ContrastSpec.ContrastSet] =
-    if refs.isEmpty then VectorMap.empty
+  ): Either[DesignError, VectorMap[String, ContrastSpec.ContrastSet]] =
+    if refs.isEmpty then Right(VectorMap.empty)
     else
       val out = VectorMap.newBuilder[String, ContrastSpec.ContrastSet]
+      var failed: Option[DesignError] = None
       var i = 0
-      while i < refs.length do
+      while i < refs.length && failed.isEmpty do
         refs(i) match
           case None => ()
           case Some(ref) =>
             val (termKey, term) = model.terms(i)
             term match
               case _: ConvolvedTerm =>
-                val key = contrastSetKey(ref, termKey)
-                val set = available.getOrElse(
-                  key,
-                  throw new IllegalArgumentException(
-                    s"Unknown contrast set '$key' for term '$termKey' (known: ${available.keys.toVector.sorted.mkString(", ")})"
-                  )
-                )
-                out += (termKey -> set)
+                contrastSetKeyEither(ref, termKey).flatMap { key =>
+                  available.get(key) match
+                    case Some(set) => Right(termKey -> set)
+                    case None      => Left(DesignError.UnknownContrast(key, available.keys.toVector.sorted))
+                } match
+                  case Right(entry) => out += entry
+                  case Left(error)  => failed = Some(error)
               case other =>
-                throw new IllegalArgumentException(s"Term '$termKey' does not support contrasts (found $other)")
+                failed = Some(DesignError.UnsupportedContrastTarget(termKey, other.getClass.getSimpleName))
         i += 1
-      out.result()
+      failed match
+        case Some(error) => Left(error)
+        case None        => Right(out.result())
 
-  private def contrastSetKey(ref: ArgValue, termKey: String): String =
+  private def contrastSetKeyEither(ref: ArgValue, termKey: String): Either[DesignError, String] =
     ref match
-      case ArgValue.Ident(v) => v
-      case ArgValue.Str(v)   => v
+      case ArgValue.Ident(v) => Right(v)
+      case ArgValue.Str(v)   => Right(v)
       case other =>
-        throw new IllegalArgumentException(s"contrasts for term '$termKey' must be a string/identifier, found $other")
+        Left(DesignError.FormulaBinding(s"contrasts for term '$termKey' must be a string/identifier, found $other"))
+
+  private def catchBuild[A](mapError: Throwable => DesignError)(body: => A): Either[DesignError, A] =
+    try Right(body)
+    catch
+      case NonFatal(t) => Left(mapError(t))
+
+  private def throwableMessage(t: Throwable): String =
+    Option(t.getMessage).filter(_.nonEmpty).getOrElse(t.toString)
+
+  private def eventTermEither(
+      events: Vector[Event],
+      onsets: Vector[Seconds],
+      durations: Vector[Seconds],
+      blockIds: Vector[Int],
+      termTag: Option[String]
+  ): Either[DesignError, EventTerm] =
+    catchBuild(t => DesignError.InvalidSchedule(throwableMessage(t))) {
+      EventTerm(
+        events = events,
+        onsets = onsets,
+        durations = durations,
+        blockIds = blockIds,
+        termTag = termTag
+      )
+    }
+
+  private def validateStrictDiagnostics(
+      diagnostics: Vector[EventModelDiagnostic],
+      strict: Boolean
+  ): Either[DesignError, Unit] =
+    if !strict then Right(())
+    else
+      val blocking = diagnostics.filter(d => strictDiagnosticKinds.contains(d.kind))
+      if blocking.isEmpty then Right(())
+      else Left(DesignError.InvalidSchedule(blocking.map(_.message).mkString("; ")))
+
+  private val strictDiagnosticKinds: Set[EventModelDiagnosticKind] =
+    Set(EventModelDiagnosticKind.BasisDegeneracy, EventModelDiagnosticKind.OnsetOutOfBounds)
+
+  private def resolveSubsetMaskEither(
+      subset: Option[ArgValue],
+      data: DataTable,
+      nEvents: Int
+  ): Either[DesignError, Vector[Boolean]] =
+    subset match
+      case None => Right(Vector.fill(nEvents)(true))
+      case Some(expr) =>
+        catchBuild(t => DesignError.InvalidSubset(stripSubsetPrefix(throwableMessage(t)))) {
+          val keep = evalSubset(expr, data)
+          require(keep.length == nEvents, s"subset mask has length ${keep.length} but expected $nEvents")
+          keep
+        }
+
+  private def stripSubsetPrefix(message: String): String =
+    message.stripPrefix("subset: ").trim
+
+  private def resolveSecondsEither(
+      ref: ArgValue,
+      data: DataTable,
+      nEvents: Int,
+      argName: String
+  ): Either[DesignError, Vector[Seconds]] =
+    resolveNumericVectorEither(ref, data, nEvents, argName).map(_.map(Seconds(_)))
+
+  private def resolveNumericVectorEither(
+      ref: ArgValue,
+      data: DataTable,
+      nEvents: Int,
+      argName: String
+  ): Either[DesignError, Vector[Double]] =
+    val valuesEither: Either[DesignError, Vector[Double]] =
+      ref match
+        case ArgValue.Num(v) =>
+          if v.isFinite then Right(Vector.fill(nEvents)(v))
+          else Left(scheduleArgError(argName, s"$argName scalar must be finite"))
+        case ArgValue.Ident(name) =>
+          data.doublesEither(name)
+        case ArgValue.Str(name) =>
+          data.doublesEither(name)
+        case other =>
+          Left(DesignError.FormulaBinding(s"$argName must be a column reference or numeric scalar, found $other"))
+
+    valuesEither.flatMap { values =>
+      if values.length != nEvents then Left(scheduleArgError(argName, s"$argName has length ${values.length} but expected $nEvents"))
+      else validateScheduleValues(values, argName)
+    }
+
+  private def scheduleArgError(argName: String, detail: String): DesignError =
+    argName match
+      case "durations" | "onsets" => DesignError.InvalidSchedule(detail)
+      case _                      => DesignError.FormulaBinding(detail)
+
+  private def convolveHrfTermEither(
+      h: HrfCall,
+      term: EventTerm,
+      originalSub: DataTable,
+      samplingFrame: SamplingFrame,
+      options: BuildOptions,
+      extensions: DesignExtensionEnv
+  ): Either[DesignError, ConvolvedTerm] =
+    val summate0 = h.summate.getOrElse(options.summate)
+    val normalize0 = h.normalize.getOrElse(false)
+
+    (h.hrfFun, term.onsets.nonEmpty) match
+      case (Some(ref), true) =>
+        for
+          eventData <- catchBuild(DesignError.fromThrowable)(buildEventDataForGenerator(term, originalSub))
+          hsel <- resolveHrfFunEither(ref, eventData, hrfFuns = extensions.hrfFuns, termTag = term.termTag)
+          conv <- catchBuild(DesignError.fromThrowable) {
+            hsel match
+              case Left(shared) =>
+                term.convolve(shared, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
+              case Right(perEvent) =>
+                term.convolvePerEvent(perEvent, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
+          }
+        yield conv
+      case _ =>
+        for
+          hrf0 <- resolveHrfEither(h, options.defaultHrf)
+          conv <- catchBuild(DesignError.fromThrowable) {
+            term.convolve(hrf0, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
+          }
+        yield conv
+
+  private def resolveHrfFunEither(
+      ref: ArgValue,
+      eventData: DataTable,
+      hrfFuns: Map[String, HrfFun],
+      termTag: Option[String]
+  ): Either[DesignError, Either[Hrf, Vector[Hrf]]] =
+    val termLabel = termTag.getOrElse("unknown")
+    catchBuild(t => DesignError.InvalidHrfFun(termLabel, throwableMessage(t))) {
+      resolveHrfFun(ref, eventData, hrfFuns = hrfFuns, termTag = termTag)
+    }
 
   private def resolveSeconds(ref: ArgValue, data: DataTable, nEvents: Int, argName: String): Vector[Seconds] =
     resolveNumericVector(ref, data, nEvents, argName).map(Seconds(_))
@@ -470,7 +862,7 @@ object EventModelBuilder:
 
   private def raiseStrictDiagnostics(diagnostics: Vector[EventModelDiagnostic], strict: Boolean): Unit =
     if strict then
-      val blocking = diagnostics.filter(_.kind == EventModelDiagnosticKind.OnsetOutOfBounds)
+      val blocking = diagnostics.filter(d => strictDiagnosticKinds.contains(d.kind))
       if blocking.nonEmpty then
         throw new IllegalArgumentException(blocking.map(_.message).mkString("; "))
 
@@ -544,10 +936,9 @@ object EventModelBuilder:
 
     ref match
       case ArgValue.Ident(key) if hrfFuns.contains(key) =>
-        val res = hrfFuns(key)(eventData)
-        res match
-          case h: Hrf      => Left(h)
-          case hs: Seq[?]  => validateHrfs(hs.asInstanceOf[Seq[Hrf]])
+        hrfFuns(key)(eventData) match
+          case HrfSelection.Shared(hrf)      => Left(hrf)
+          case HrfSelection.PerEvent(hrfs)   => validateHrfs(hrfs)
       case ArgValue.Ident(key) =>
         validateHrfs(eventData.hrfs(key))
       case ArgValue.Str(colName) =>
@@ -740,55 +1131,70 @@ object EventModelBuilder:
       i += 1
     out.toVector
 
-  private def toEvent(data: DataTable, expr: ArgValue): Event =
+  private def toEvent(data: DataTable, expr: ArgValue, termTag: Option[String]): EventExpression =
     expr match
       case ArgValue.Ident(name) =>
-        data.column(name) match
+        val event = data.column(name) match
           case Column.Strings(v) => Event.factor(v, name)
           case Column.Doubles(v) => Event.variable(v, name)
           case Column.Ints(v)    => Event.variable(v.map(_.toDouble), name)
           case Column.Bools(v)   => Event.factor(v.map(_.toString), name)
           case Column.DoubleLists(_) => throw new IllegalArgumentException(s"Column '$name' is a list column and cannot be used as an event variable")
           case Column.Hrfs(_)    => throw new IllegalArgumentException(s"Column '$name' is an HRF list and cannot be used as an event variable")
+        EventExpression(event, Vector.empty)
       case ArgValue.Call(fun, args) =>
-        evalBasisCall(data, fun, args)
+        evalBasisCall(data, fun, args, termTag)
       case other =>
         throw new IllegalArgumentException(s"Unsupported event expression: $other")
 
-  private def evalBasisCall(data: DataTable, funName: String, args: Vector[Arg]): Event =
+  private def evalBasisCall(data: DataTable, funName: String, args: Vector[Arg], termTag: Option[String]): EventExpression =
     val fun = funName.trim.toLowerCase
     fun match
       case "scale" =>
         val (xVar, xs) = requireNumeric1(data, args, "Scale")
-        val basis = ParametricBasis.Scale.fit(xs, argName = xVar)
-        Event.basis(basis)
+        basisExpression(ParametricBasis.Scale.fitWithDiagnostics(xs, argName = xVar), termTag)
       case "standardized" =>
         val (xVar, xs) = requireNumeric1(data, args, "Standardized")
-        val basis = ParametricBasis.Standardized.fit(xs, argName = xVar)
-        Event.basis(basis)
+        basisExpression(ParametricBasis.Standardized.fitWithDiagnostics(xs, argName = xVar), termTag)
       case "robustscale" =>
         val (xVar, xs) = requireNumeric1(data, args, "RobustScale")
-        val basis = ParametricBasis.RobustScale.fit(xs, argName = xVar)
-        Event.basis(basis)
+        basisExpression(ParametricBasis.RobustScale.fitWithDiagnostics(xs, argName = xVar), termTag)
       case "poly" =>
         val (xVar, xs) = requireNumeric1(data, args, "Poly")
         val degree = requireIntArg(args, "degree", fallbackPos = 1, ctx = "Poly")
         val basis = ParametricBasis.Poly.fit(xs, degree = degree, argName = xVar)
-        Event.basis(basis)
+        EventExpression(Event.basis(basis), Vector.empty)
       case "bspline" =>
         val (xVar, xs) = requireNumeric1(data, args, "BSpline")
         val degree = requireIntArg(args, "degree", fallbackPos = 1, ctx = "BSpline")
         val basis = ParametricBasis.BSpline.fit(xs, degree = degree, argName = xVar)
-        Event.basis(basis)
+        EventExpression(Event.basis(basis), Vector.empty)
       case "scalewithin" =>
         val xVar = requireIdentArg(args, pos = 0, ctx = "ScaleWithin")
         val gVar = requireIdentArg(args, pos = 1, ctx = "ScaleWithin")
         val xs = data.doubles(xVar)
         val gs = toFactorStrings(data, gVar)
-        val basis = ParametricBasis.ScaleWithin.fit(xs, gs, argName = xVar, groupName = gVar)
-        Event.basis(basis)
+        basisExpression(ParametricBasis.ScaleWithin.fitWithDiagnostics(xs, gs, argName = xVar, groupName = gVar), termTag)
       case other =>
         throw new IllegalArgumentException(s"Unknown basis call '$funName' in formula")
+
+  private def basisExpression[A <: ParametricBasis](
+      fitEither: Either[BasisFitError, BasisFit[A]],
+      termTag: Option[String]
+  ): EventExpression =
+    fitEither match
+      case Right(fit) =>
+        EventExpression(Event.basis(fit.basis), fit.diagnostics.map(toModelDiagnostic(termTag)))
+      case Left(error) =>
+        throw new IllegalArgumentException(error.message)
+
+  private def toModelDiagnostic(termTag: Option[String])(diagnostic: BasisDiagnostic): EventModelDiagnostic =
+    val termLabel = termTag.getOrElse("term")
+    EventModelDiagnostic(
+      EventModelDiagnosticKind.BasisDegeneracy,
+      termLabel,
+      s"${diagnostic.message} in term '$termLabel'"
+    )
 
   private def requireNumeric1(data: DataTable, args: Vector[Arg], ctx: String): (String, Vector[Double]) =
     val xVar = requireIdentArg(args, pos = 0, ctx = ctx)
@@ -852,33 +1258,41 @@ object EventModelBuilder:
         }.mkString(",")
         s"$fun($as)"
 
-  private def resolveHrf(call: HrfCall, defaultHrf: Hrf): Hrf =
-    val base: Hrf =
+  private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf): Either[DesignError, Hrf] =
+    val baseEither: Either[DesignError, Hrf] =
       call.basis match
-        case None => defaultHrf
+        case None => Right(defaultHrf)
         case Some(basisName0) =>
           val basisName = basisName0.trim.toLowerCase
           basisName match
-            case "spmg1"    => Hrfs.SPMG1
-            case "spmg2"    => Hrfs.SPMG2
-            case "spmg3"    => Hrfs.SPMG3
-            case "gamma"    => Hrfs.Gamma
-            case "gaussian" => Hrfs.Gaussian
-            case "fir"      => Hrfs.fir(nBasis = call.nbasis.getOrElse(12))
-            case "bspline"  => Hrfs.bspline(nBasis = call.nbasis.getOrElse(5))
-            case "tent"     => Hrfs.tent(nBasis = call.nbasis.getOrElse(5))
-            case "fourier"  => Hrfs.fourier(nBasis = call.nbasis.getOrElse(5))
-            case other      => throw new IllegalArgumentException(s"Unknown HRF basis: '$other'")
+            case "spmg1"    => Right(Hrfs.SPMG1)
+            case "spmg2"    => Right(Hrfs.SPMG2)
+            case "spmg3"    => Right(Hrfs.SPMG3)
+            case "gamma"    => Right(Hrfs.Gamma)
+            case "gaussian" => Right(Hrfs.Gaussian)
+            case "fir"      => catchBuild(DesignError.fromThrowable)(Hrfs.fir(nBasis = call.nbasis.getOrElse(12)))
+            case "bspline"  => catchBuild(DesignError.fromThrowable)(Hrfs.bspline(nBasis = call.nbasis.getOrElse(5)))
+            case "tent"     => catchBuild(DesignError.fromThrowable)(Hrfs.tent(nBasis = call.nbasis.getOrElse(5)))
+            case "fourier"  => catchBuild(DesignError.fromThrowable)(Hrfs.fourier(nBasis = call.nbasis.getOrElse(5)))
+            case other      => Left(DesignError.UnknownBasis(other))
 
-    call.lag match
-      case None => base
-      case Some(l) =>
-        require(l.isFinite, "`lag` must be finite")
-        base.lag(Seconds(l))
+    baseEither.flatMap { base =>
+      call.lag match
+        case None => Right(base)
+        case Some(l) =>
+          if l.isFinite then Right(base.lag(Seconds(l)))
+          else Left(DesignError.FormulaBinding("`lag` must be finite"))
+    }
+
+  private def resolveHrf(call: HrfCall, defaultHrf: Hrf): Hrf =
+    resolveHrfEither(call, defaultHrf).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double]): Either[DesignError, Hrf] =
+    val call = HrfCall(vars = Vector(ArgValue.Ident("x")), basis = Some(basis), lag = lag, nbasis = nbasis)
+    resolveHrfEither(call, defaultHrf = Hrfs.SPMG1)
 
   private def resolveHrfBasis(basis: String, nbasis: Option[Int], lag: Option[Double]): Hrf =
-    val call = HrfCall(vars = Vector(ArgValue.Ident("x")), basis = Some(basis), lag = lag, nbasis = nbasis)
-    resolveHrf(call, defaultHrf = Hrfs.SPMG1)
+    resolveHrfBasisEither(basis, nbasis, lag).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   private def trialLevels(n: Int): Vector[String] =
     if n <= 0 then Vector.empty
@@ -906,5 +1320,7 @@ object EventModelBuilder:
       term.copy(
         data = scalafim.fmri.hrf.linalg.Mat.unsafe(m.rows, m.cols + 1, out),
         columnNames = term.columnNames :+ meanName,
-        columnRoles = term.resolvedColumnRoles :+ EventTermColumnRole.TrialAggregate
+        columnRoles = term.resolvedColumnRoles :+ EventTermColumnRole.TrialAggregate,
+        columnConditions = term.columnConditions :+ Some("mean"),
+        columnBasisIx = term.columnBasisIx :+ None
       )

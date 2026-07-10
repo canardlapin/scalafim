@@ -38,7 +38,79 @@ final case class DesignColumnMeta(
     isBlockDiagonal: Boolean,
     modulationType: Option[ModulationType],
     modulationId: Option[String]
+):
+  def columnIndex: DesignColumnIndex =
+    DesignColumnIndex.unsafeOneBased(col)
+
+  def descriptor: DesignColumnDescriptor =
+    DesignColumnDescriptor.fromMeta(this)
+
+final case class DesignBasisDescriptor(
+    name: String,
+    index: Option[BasisIndex],
+    total: Option[Int],
+    label: Option[String]
 )
+
+final case class DesignColumnDescriptor(
+    index: DesignColumnIndex,
+    name: String,
+    termTag: Option[String],
+    termIndex: Option[TermIndex],
+    condition: Option[String],
+    run: Option[RunIndex],
+    role: ColumnRole,
+    modelSource: ModelSource,
+    basis: Option[DesignBasisDescriptor],
+    prettyName: String,
+    isBlockDiagonal: Boolean,
+    modulationType: Option[ModulationType],
+    modulationId: Option[String]
+):
+  def toMeta: DesignColumnMeta =
+    DesignColumnMeta(
+      col = index.oneBased,
+      name = name,
+      termTag = termTag,
+      termIndex = termIndex.map(_.oneBased),
+      condition = condition,
+      run = run.map(_.oneBased),
+      role = role,
+      modelSource = modelSource,
+      basisName = basis.map(_.name),
+      basisIx = basis.flatMap(_.index).map(_.oneBased),
+      basisTotal = basis.flatMap(_.total),
+      basisLabel = basis.flatMap(_.label),
+      prettyName = prettyName,
+      isBlockDiagonal = isBlockDiagonal,
+      modulationType = modulationType,
+      modulationId = modulationId
+    )
+
+object DesignColumnDescriptor:
+  def fromMeta(meta: DesignColumnMeta): DesignColumnDescriptor =
+    DesignColumnDescriptor(
+      index = DesignColumnIndex.unsafeOneBased(meta.col),
+      name = meta.name,
+      termTag = meta.termTag,
+      termIndex = meta.termIndex.map(TermIndex.unsafeOneBased),
+      condition = meta.condition,
+      run = meta.run.map(RunIndex.unsafeOneBased),
+      role = meta.role,
+      modelSource = meta.modelSource,
+      basis = meta.basisName.map { name =>
+        DesignBasisDescriptor(
+          name = name,
+          index = meta.basisIx.map(BasisIndex.unsafeOneBased),
+          total = meta.basisTotal,
+          label = meta.basisLabel
+        )
+      },
+      prettyName = meta.prettyName,
+      isBlockDiagonal = meta.isBlockDiagonal,
+      modulationType = meta.modulationType,
+      modulationId = meta.modulationId
+    )
 
 object DesignColmap:
 
@@ -126,16 +198,29 @@ object DesignColmap:
     var col0 = 0
     while col0 < nCols do
       val name = x.columnNames(col0)
-      val (baseNoBasis, basisIx) = stripBasisSuffix(name)
+      val (baseNoBasis, parsedBasisIx) = stripBasisSuffix(name)
 
       val termIndex0 = termIndexByCol(col0)
       val termIndexOpt = if termIndex0 >= 1 then Some(termIndex0) else None
       val termTagOpt = if termIndex0 >= 1 then Some(termTagByCol(col0)) else None
+      val termLocal =
+        termIndexOpt.map { i =>
+          (termList(i - 1), col0 - x.termSpans(i - 1)._1)
+        }
 
+      val semanticCondition =
+        termLocal.flatMap { case (term, localCol) => eventColumnCondition(term, localCol) }
       val condition0 =
-        termTagOpt match
-          case Some(tag) if baseNoBasis.startsWith(tag + "_") => Some(baseNoBasis.substring(tag.length + 1))
-          case _                                              => Some(baseNoBasis)
+        semanticCondition.orElse {
+          termTagOpt match
+            case Some(tag) if baseNoBasis.startsWith(tag + "_") => Some(baseNoBasis.substring(tag.length + 1))
+            case _                                              => Some(baseNoBasis)
+        }
+
+      val basisIx =
+        termLocal
+          .flatMap { case (term, localCol) => eventColumnBasisIx(term, localCol) }
+          .orElse(parsedBasisIx)
 
       val basisName = termIndexOpt.flatMap(i => perTermBasisName(i - 1))
       val basisTotal = termIndexOpt.flatMap(i => perTermBasisTotal(i - 1))
@@ -152,6 +237,7 @@ object DesignColmap:
           case Some(ModulationType.Parametric) =>
             (basisIx, modulationId) match
               case (None, Some(mid)) => mid
+              case (Some(_), Some(mid)) if basisTotal.contains(1) => mid
               case (Some(_), Some(mid)) =>
                 val suf =
                   basisLabel.getOrElse {
@@ -169,11 +255,9 @@ object DesignColmap:
         termIndex = termIndexOpt,
         condition = condition0,
         run = None,
-        role = termIndexOpt match
-          case Some(i) =>
-            val localCol = col0 - x.termSpans(i - 1)._1
-            eventColumnRole(termList(i - 1), localCol)
-          case None => ColumnRole.Task,
+        role = termLocal match
+          case Some((term, localCol)) => eventColumnRole(term, localCol)
+          case None                   => ColumnRole.Task,
         modelSource = ModelSource.Event,
         basisName = basisName,
         basisIx = basisIx,
@@ -227,29 +311,35 @@ object DesignColmap:
       val (basisName, run, basisIx, basisLabel, basisTotal, isBlockDiag) =
         role match
           case ColumnRole.Drift =>
-            val (r, k) = parseBlockAndComponent(name, blockMarker = "_block_")
-            val total =
-              if k.nonEmpty then maxComponentIndex(x.terms(termIndex0 - 1)._2.columnNames, blockMarker = "_block_")
-              else None
+            val semantics = baselineColumnSemantics(x.terms(termIndex0 - 1)._2, col0 - x.termSpans(termIndex0 - 1)._1)
             (
               Some(x.driftSpec.basis.toString.toLowerCase),
-              r,
-              k,
-              k.map(i => f"component_$i%02d"),
-              total,
-              r.nonEmpty
+              semantics.run,
+              semantics.component,
+              semantics.component.map(i => f"component_$i%02d"),
+              semantics.componentTotal,
+              semantics.blockDiagonal
             )
           case ColumnRole.Intercept =>
-            if name.endsWith("_global") then
-              (Some("constant"), None, Some(1), Some("intercept"), Some(1), false)
-            else
-              val r = parseTrailingInt(name, sep = "_")
-              val total = Some(x.samplingFrame.nBlocks)
-              (Some("constant"), r, None, Some("intercept"), total, true)
+            val semantics = baselineColumnSemantics(x.terms(termIndex0 - 1)._2, col0 - x.termSpans(termIndex0 - 1)._1)
+            (
+              Some("constant"),
+              semantics.run,
+              if semantics.run.isEmpty then semantics.component else None,
+              Some("intercept"),
+              if semantics.run.isEmpty then semantics.componentTotal else Some(x.samplingFrame.nBlocks),
+              semantics.blockDiagonal
+            )
           case ColumnRole.Nuisance =>
-            val r = parseAfterHash(name)
-            val k = parseTrailingInt(name, sep = "_")
-            (Some("nuisance"), r, k, k.map(i => f"component_$i%02d"), None, true)
+            val semantics = baselineColumnSemantics(x.terms(termIndex0 - 1)._2, col0 - x.termSpans(termIndex0 - 1)._1)
+            (
+              Some("nuisance"),
+              semantics.run,
+              semantics.component,
+              semantics.component.map(i => f"component_$i%02d"),
+              semantics.componentTotal,
+              semantics.blockDiagonal
+            )
           case ColumnRole.Baseline =>
             (Some("baseline"), None, None, None, None, false)
           case ColumnRole.Task | ColumnRole.Trial | ColumnRole.TrialAggregate | ColumnRole.Covariate =>
@@ -277,6 +367,38 @@ object DesignColmap:
 
     out.result()
 
+  private final case class BaselineColumnSemantics(
+      run: Option[Int],
+      component: Option[Int],
+      componentTotal: Option[Int],
+      blockDiagonal: Boolean
+  )
+
+  private def baselineColumnSemantics(term: scalafim.fmri.design.baseline.BaselineTerm, localCol: Int): BaselineColumnSemantics =
+    val memberships = term.colInd.zipWithIndex.flatMap { case (cols, block0) =>
+      val pos = cols.indexOf(localCol)
+      if pos < 0 then None else Some((block0 + 1, pos + 1, cols.length))
+    }
+
+    if memberships.length == 1 then
+      val (run, component, total) = memberships.head
+      BaselineColumnSemantics(Some(run), Some(component), Some(total), blockDiagonal = true)
+    else if memberships.length == term.colInd.length && memberships.nonEmpty then
+      val components = memberships.map(_._2).distinct
+      val totals = memberships.map(_._3).distinct
+      BaselineColumnSemantics(
+        run = None,
+        component = components match
+          case Vector(component) => Some(component)
+          case _                 => Some(localCol + 1),
+        componentTotal = totals match
+          case Vector(total) => Some(total)
+          case _             => Some(term.data.cols),
+        blockDiagonal = false
+      )
+    else
+      BaselineColumnSemantics(None, Some(localCol + 1), Some(term.data.cols), blockDiagonal = false)
+
   private def stripBasisSuffix(name: String): (String, Option[Int]) =
     val idx = name.lastIndexOf("_b")
     if idx < 0 || idx + 2 >= name.length then (name, None)
@@ -296,6 +418,22 @@ object DesignColmap:
             e.basis.flatMap(b => basisRegistry.getBasisEntry(b.registryKeys).map(entry => b -> entry))
         }.flatten
       case _ => Vector.empty
+
+  private def eventColumnCondition(term: EventModelTerm, localCol: Int): Option[String] =
+    term match
+      case ct: ConvolvedTerm if ct.columnConditions.nonEmpty && localCol >= 0 && localCol < ct.columnConditions.length =>
+        ct.columnConditions(localCol)
+      case cv: CovariateConvolvedTerm if localCol >= 0 && localCol < cv.columnNames.length =>
+        Some(cv.columnNames(localCol))
+      case _ =>
+        None
+
+  private def eventColumnBasisIx(term: EventModelTerm, localCol: Int): Option[Int] =
+    term match
+      case ct: ConvolvedTerm if ct.columnBasisIx.nonEmpty && localCol >= 0 && localCol < ct.columnBasisIx.length =>
+        ct.columnBasisIx(localCol)
+      case _ =>
+        None
 
   private def eventColumnRole(term: EventModelTerm, localCol: Int): ColumnRole =
     term.resolvedColumnRoles(localCol) match

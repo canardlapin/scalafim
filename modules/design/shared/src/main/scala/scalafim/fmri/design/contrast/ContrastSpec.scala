@@ -9,11 +9,29 @@ import scala.util.matching.Regex
 sealed trait ContrastSpec:
   def name: String
   def weights(term: ConvolvedTerm): ContrastWeights
+  def weightsEither(term: ConvolvedTerm): Either[ContrastError, ContrastWeights] =
+    compileEither(term).map(_.toLegacy)
+
+  def compileEither(term: ConvolvedTerm): Either[ContrastError, CompiledContrast] =
+    ContrastCompiler.compileLegacy(term, name)(weights(term))
 
   infix def -(other: ContrastSpec): ContrastSpec =
     ContrastSpec.Difference(name = s"$name:${other.name}", left = this, right = other)
 
 object ContrastSpec:
+
+  private def unsafe[A](result: Either[ContrastError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  final case class Typed(expr: ContrastExpr) extends ContrastSpec:
+    def name: String =
+      expr.id.value
+
+    def weights(term: ConvolvedTerm): ContrastWeights =
+      unsafe(weightsEither(term))
+
+    override def compileEither(term: ConvolvedTerm): Either[ContrastError, CompiledContrast] =
+      ContrastCompiler.compile(term, expr)
 
   final case class Pair(
       name: String,
@@ -77,25 +95,43 @@ object ContrastSpec:
       right: ContrastSpec
   ) extends ContrastSpec:
     def weights(term: ConvolvedTerm): ContrastWeights =
-      val l = left.weights(term)
-      val r = right.weights(term)
-      require(l.condNames == r.condNames, s"Difference contrast '$name' requires matching condition names")
-      require(l.weights.cols == r.weights.cols, s"Difference contrast '$name' requires matching contrast column counts")
-      val out = new Array[Double](l.weights.rows * l.weights.cols)
-      var i = 0
-      while i < out.length do
-        out(i) = l.weights.data(i) - r.weights.data(i)
-        i += 1
-      val names =
-        if l.weights.cols == 1 then Vector(name)
-        else (1 to l.weights.cols).map(j => s"${name}_$j").toVector
-      ContrastWeights(
-        name = name,
-        condNames = l.condNames,
-        contrastNames = names,
-        weights = scalafim.fmri.hrf.linalg.Mat.unsafe(l.weights.rows, l.weights.cols, out),
-        selectedCondNames = (l.selectedCondNames ++ r.selectedCondNames).distinct
+      unsafe(weightsEither(term))
+
+    override def compileEither(term: ConvolvedTerm): Either[ContrastError, CompiledContrast] =
+      for
+        l <- left.compileEither(term).map(_.toLegacy)
+        r <- right.compileEither(term).map(_.toLegacy)
+        weights <- differenceWeights(l, r)
+      yield CompiledContrast(
+        id = ContrastId.unsafe(name),
+        effect = None,
+        source = ContrastSource.User,
+        weights = TypedContrastWeights.fromLegacyDesign(weights)
       )
+
+    private def differenceWeights(l: ContrastWeights, r: ContrastWeights): Either[ContrastError, ContrastWeights] =
+      if l.condNames != r.condNames then
+        Left(ContrastError.IncompatibleWeights(name, "component contrasts must have matching condition names"))
+      else if l.weights.cols != r.weights.cols then
+        Left(ContrastError.IncompatibleWeights(name, "component contrasts must have matching contrast column counts"))
+      else
+        val out = new Array[Double](l.weights.rows * l.weights.cols)
+        var i = 0
+        while i < out.length do
+          out(i) = l.weights.data(i) - r.weights.data(i)
+          i += 1
+        val names =
+          if l.weights.cols == 1 then Vector(name)
+          else (1 to l.weights.cols).map(j => s"${name}_$j").toVector
+        Right(
+          ContrastWeights(
+            name = name,
+            condNames = l.condNames,
+            contrastNames = names,
+            weights = scalafim.fmri.hrf.linalg.Mat.unsafe(l.weights.rows, l.weights.cols, out),
+            selectedCondNames = (l.selectedCondNames ++ r.selectedCondNames).distinct
+          )
+        )
 
   final case class Oneway(
       name: String,
@@ -145,11 +181,67 @@ object ContrastSpec:
     def weights(term: ConvolvedTerm): VectorMap[String, ContrastWeights] =
       VectorMap.from(contrasts.map(c => c.name -> c.weights(term)))
 
+    def weightsEither(term: ConvolvedTerm): Either[ContrastError, VectorMap[String, ContrastWeights]] =
+      compileEither(term).map { compiled =>
+        VectorMap.from(compiled.iterator.map { case (name, contrast) => name -> contrast.toLegacy })
+      }
+
+    def compileEither(term: ConvolvedTerm): Either[ContrastError, VectorMap[String, CompiledContrast]] =
+      val duplicateNames = contrasts.map(_.name).groupBy(identity).collect {
+        case (name, values) if values.length > 1 => name
+      }.toVector.sorted
+
+      if duplicateNames.nonEmpty then Left(ContrastError.DuplicateContrasts("ContrastSet", duplicateNames))
+      else
+        contrasts.foldLeft(Right(VectorMap.empty): Either[ContrastError, VectorMap[String, CompiledContrast]]) {
+          case (acc, spec) =>
+            for
+              out <- acc
+              compiled <- spec.compileEither(term)
+            yield out.updated(spec.name, compiled)
+        }
+
     def ++(other: ContrastSet): ContrastSet = ContrastSet(contrasts ++ other.contrasts)
     def :+(c: ContrastSpec): ContrastSet = ContrastSet(contrasts :+ c)
 
   object ContrastSet:
     def apply(contrasts: ContrastSpec*): ContrastSet = ContrastSet(contrasts.toVector)
+
+  def typed(expr: ContrastExpr): ContrastSpec =
+    Typed(expr)
+
+  def typedPair(
+      name: String,
+      A: CellSelector,
+      B: CellSelector,
+      where: CellSelector = CellSelector.All,
+      basis: BasisSelection = BasisSelection.All
+  ): Either[ContrastError, ContrastSpec] =
+    ContrastExpr.pair(name, A, B, where, basis).map(Typed(_))
+
+  def typedUnit(
+      name: String,
+      where: CellSelector = CellSelector.All,
+      basis: BasisSelection = BasisSelection.All
+  ): Either[ContrastError, ContrastSpec] =
+    ContrastExpr.unit(name, where, basis).map(Typed(_))
+
+  def typedOneway(
+      name: String,
+      factor: String,
+      where: CellSelector = CellSelector.All,
+      basis: BasisSelection = BasisSelection.All
+  ): Either[ContrastError, ContrastSpec] =
+    ContrastExpr.oneway(name, factor, where, basis).map(Typed(_))
+
+  def typedInteraction(
+      name: String,
+      factor1: String,
+      factor2: String,
+      where: CellSelector = CellSelector.All,
+      basis: BasisSelection = BasisSelection.All
+  ): Either[ContrastError, ContrastSpec] =
+    ContrastExpr.interaction(name, factor1, factor2, where, basis).map(Typed(_))
 
   def oneAgainstAllContrasts(
       levels: Seq[String],

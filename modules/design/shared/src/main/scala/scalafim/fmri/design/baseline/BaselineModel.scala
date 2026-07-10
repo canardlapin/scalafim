@@ -5,6 +5,8 @@ import scalafim.fmri.design.linalg.QrDecomposition
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 
+import scala.util.control.NonFatal
+
 enum BaselineBasis:
   case Constant, Poly, Bs, Ns
 
@@ -132,6 +134,71 @@ final case class NuisanceReport(
       lines.result().mkString("\n")
 
 final case class CleanedNuisance(nuisanceList: Vector[Mat], report: NuisanceReport)
+
+enum BaselineError:
+  case InvalidInput(detail: String)
+  case MissingNuisance
+  case NuisanceProblems(report: NuisanceReport)
+
+  def message: String =
+    this match
+      case InvalidInput(detail) =>
+        detail
+      case MissingNuisance =>
+        "BaselinePlan.nuisance is required for nuisance validation"
+      case NuisanceProblems(report) =>
+        report.format()
+
+object BaselineError:
+  def fromThrowable(throwable: Throwable): BaselineError =
+    val detail = Option(throwable.getMessage).filter(_.nonEmpty).getOrElse(throwable.toString)
+    BaselineError.InvalidInput(detail)
+
+final case class NuisancePolicy(
+    check: NuisanceCheck = NuisanceCheck.Warn,
+    naAction: NaAction = NaAction.Drop,
+    tol: Double = BaselineModel.DefaultNuisanceTol,
+    duplicateThreshold: Double = 1.0 - BaselineModel.DefaultNuisanceTol
+):
+  require(tol.isFinite && tol >= 0.0, "nuisance tolerance must be non-negative and finite")
+  require(
+    duplicateThreshold.isFinite && duplicateThreshold >= 0.0 && duplicateThreshold <= 1.0,
+    "nuisance duplicate threshold must be in [0, 1]"
+  )
+
+final case class NuisanceInput(
+    matrices: Vector[Mat],
+    names: Option[Vector[Vector[String]]] = _root_.scala.None,
+    policy: NuisancePolicy = NuisancePolicy()
+):
+  require(matrices.nonEmpty, "nuisance matrices must be non-empty")
+  names.foreach { byBlock =>
+    require(byBlock.length == matrices.length, "nuisance names length must match nuisance matrices length")
+    byBlock.zip(matrices).zipWithIndex.foreach { case ((blockNames, mat), b) =>
+      require(blockNames.length == mat.cols, s"nuisance names length must match matrix columns for block ${b + 1}")
+    }
+  }
+
+object NuisanceInput:
+  def fromSeq(
+      matrices: Seq[Mat],
+      names: Option[Seq[Seq[String]]] = _root_.scala.None,
+      policy: NuisancePolicy = NuisancePolicy()
+  ): NuisanceInput =
+    NuisanceInput(
+      matrices = matrices.toVector,
+      names = names.map(_.map(_.toVector).toVector),
+      policy = policy
+    )
+
+final case class BaselinePlan(
+    samplingFrame: SamplingFrame,
+    basis: BaselineBasis = BaselineBasis.Constant,
+    degree: Int = 1,
+    intercept: Intercept = Intercept.Runwise,
+    nuisance: Option[NuisanceInput] = _root_.scala.None
+):
+  require(degree >= 1, "baseline degree must be at least 1")
 
 final case class BaselineSpec(
     degree: Int,
@@ -391,6 +458,24 @@ object BaselineModel:
 
   val DefaultNuisanceTol: Double = 1.4901161193847656e-8
 
+  def build(plan: BaselinePlan): BaselineModel =
+    unsafe(buildEither(plan))
+
+  def buildEither(plan: BaselinePlan): Either[BaselineError, BaselineModel] =
+    val policy = plan.nuisance.map(_.policy).getOrElse(NuisancePolicy())
+    buildEither(
+      samplingFrame = plan.samplingFrame,
+      basis = plan.basis,
+      degree = plan.degree,
+      intercept = plan.intercept,
+      nuisanceList = plan.nuisance.map(_.matrices),
+      nuisanceCheck = policy.check,
+      naAction = policy.naAction,
+      nuisanceNames = plan.nuisance.flatMap(_.names),
+      nuisanceTol = policy.tol,
+      duplicateThreshold = policy.duplicateThreshold
+    )
+
   def build(
       samplingFrame: SamplingFrame,
       basis: BaselineBasis = BaselineBasis.Constant,
@@ -403,94 +488,144 @@ object BaselineModel:
       nuisanceTol: Double = DefaultNuisanceTol,
       duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
   ): BaselineModel =
-    if basis == BaselineBasis.Bs || basis == BaselineBasis.Ns then
-      require(degree > 2, "'bs' and 'ns' bases must have degree >= 3")
-
-    val driftSpec = BaselineSpec(degree = degree, basis = basis, intercept = intercept)
-    val drift = driftSpec.construct(samplingFrame)
-
-    val blockTerm =
-      if intercept != Intercept.None && basis != BaselineBasis.Constant then
-        Some(BaselineTerm.blockIntercept("constant", samplingFrame, intercept))
-      else None
-
-    val baselineTerms = Vector.newBuilder[BaselineTerm]
-    baselineTerms += drift
-    blockTerm.foreach(baselineTerms += _)
-
-    val checkedNuisance = nuisanceList.map { ns =>
-      val prepared = prepareNuisance(ns, samplingFrame, nuisanceNames, naAction)
-      if nuisanceCheck == NuisanceCheck.None then (prepared.matrices, _root_.scala.None)
-      else
-        val report = checkPreparedNuisance(
-          prepared,
-          samplingFrame,
-          baselineTerms.result(),
-          nuisanceTol,
-          duplicateThreshold
-        )
-        if !report.ok then
-          nuisanceCheck match
-            case NuisanceCheck.Error =>
-              throw new IllegalArgumentException(report.format())
-            case NuisanceCheck.Drop =>
-              (dropNuisanceColumns(report), Some(report))
-            case NuisanceCheck.Warn =>
-              (prepared.matrices, Some(report))
-            case NuisanceCheck.None =>
-              (prepared.matrices, _root_.scala.None)
-        else (prepared.matrices, Some(report))
-    }
-
-    val nuisTerm = checkedNuisance.map { case (mats, _) =>
-      BaselineTerm.nuisance(mats, samplingFrame)
-    }
-    val nuisanceReport = checkedNuisance.flatMap(_._2)
-
-    val terms = Vector.newBuilder[(String, BaselineTerm)]
-    terms += ("drift" -> drift)
-    blockTerm.foreach(t => terms += ("block" -> t))
-    nuisTerm.foreach(t => terms += ("nuisance" -> t))
-    val ts = terms.result()
-
-    val totalRows = samplingFrame.blockLens.sum
-    ts.foreach { case (_, t) => require(t.data.rows == totalRows, "term matrix row mismatch with samplingFrame") }
-
-    val totalCols = ts.map(_._2.data.cols).sum
-    val out = new Array[Double](totalRows * totalCols)
-    val colNames = Vector.newBuilder[String]
-
-    val spans = Vector.newBuilder[(Int, Int)]
-    val indices = scala.collection.mutable.LinkedHashMap.empty[String, Vector[Int]]
-
-    var colOffset = 0
-    var i = 0
-    while i < ts.length do
-      val (key, term) = ts(i)
-      val cols = term.data.cols
-
-      var r = 0
-      while r < totalRows do
-        System.arraycopy(term.data.data, r * cols, out, r * totalCols + colOffset, cols)
-        r += 1
-
-      colNames ++= term.columnNames
-      spans += ((colOffset, colOffset + cols))
-      indices.update(key, (colOffset until (colOffset + cols)).toVector)
-
-      colOffset += cols
-      i += 1
-
-    BaselineModel(
-      terms = ts,
-      driftSpec = driftSpec,
+    unsafe(buildEither(
       samplingFrame = samplingFrame,
-      designMatrix = Mat.unsafe(totalRows, totalCols, out),
-      columnNames = colNames.result(),
-      termSpans = spans.result(),
-      colIndices = indices.toMap,
-      nuisanceReport = nuisanceReport
-    )
+      basis = basis,
+      degree = degree,
+      intercept = intercept,
+      nuisanceList = nuisanceList,
+      nuisanceCheck = nuisanceCheck,
+      naAction = naAction,
+      nuisanceNames = nuisanceNames,
+      nuisanceTol = nuisanceTol,
+      duplicateThreshold = duplicateThreshold
+    ))
+
+  def buildEither(
+      samplingFrame: SamplingFrame,
+      basis: BaselineBasis = BaselineBasis.Constant,
+      degree: Int = 1,
+      intercept: Intercept = Intercept.Runwise,
+      nuisanceList: Option[Seq[Mat]] = None,
+      nuisanceCheck: NuisanceCheck = NuisanceCheck.Warn,
+      naAction: NaAction = NaAction.Drop,
+      nuisanceNames: Option[Seq[Seq[String]]] = None,
+      nuisanceTol: Double = DefaultNuisanceTol,
+      duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
+  ): Either[BaselineError, BaselineModel] =
+    try
+      if basis == BaselineBasis.Bs || basis == BaselineBasis.Ns then
+        require(degree > 2, "'bs' and 'ns' bases must have degree >= 3")
+
+      val driftSpec = BaselineSpec(degree = degree, basis = basis, intercept = intercept)
+      val drift = driftSpec.construct(samplingFrame)
+
+      val blockTerm =
+        if intercept != Intercept.None && basis != BaselineBasis.Constant then
+          Some(BaselineTerm.blockIntercept("constant", samplingFrame, intercept))
+        else None
+
+      val baselineTerms = Vector.newBuilder[BaselineTerm]
+      baselineTerms += drift
+      blockTerm.foreach(baselineTerms += _)
+
+      val checkedNuisanceEither: Either[BaselineError, Option[(Vector[Mat], Option[NuisanceReport])]] =
+        nuisanceList match
+          case None => Right(None)
+          case Some(ns) =>
+            val prepared = prepareNuisance(ns, samplingFrame, nuisanceNames, naAction)
+            if nuisanceCheck == NuisanceCheck.None then Right(Some((prepared.matrices, _root_.scala.None)))
+            else
+              val report = checkPreparedNuisance(
+                prepared,
+                samplingFrame,
+                baselineTerms.result(),
+                nuisanceTol,
+                duplicateThreshold
+              )
+              if !report.ok then
+                nuisanceCheck match
+                  case NuisanceCheck.Error =>
+                    Left(BaselineError.NuisanceProblems(report))
+                  case NuisanceCheck.Drop =>
+                    Right(Some((dropNuisanceColumns(report), Some(report))))
+                  case NuisanceCheck.Warn =>
+                    Right(Some((prepared.matrices, Some(report))))
+                  case NuisanceCheck.None =>
+                    Right(Some((prepared.matrices, _root_.scala.None)))
+              else Right(Some((prepared.matrices, Some(report))))
+
+      checkedNuisanceEither.map { checkedNuisance =>
+        val nuisTerm = checkedNuisance.map { case (mats, _) =>
+          BaselineTerm.nuisance(mats, samplingFrame)
+        }
+        val nuisanceReport = checkedNuisance.flatMap(_._2)
+
+        val terms = Vector.newBuilder[(String, BaselineTerm)]
+        terms += ("drift" -> drift)
+        blockTerm.foreach(t => terms += ("block" -> t))
+        nuisTerm.foreach(t => terms += ("nuisance" -> t))
+        val ts = terms.result()
+
+        val totalRows = samplingFrame.blockLens.sum
+        ts.foreach { case (_, t) => require(t.data.rows == totalRows, "term matrix row mismatch with samplingFrame") }
+
+        val totalCols = ts.map(_._2.data.cols).sum
+        val out = new Array[Double](totalRows * totalCols)
+        val colNames = Vector.newBuilder[String]
+
+        val spans = Vector.newBuilder[(Int, Int)]
+        val indices = scala.collection.mutable.LinkedHashMap.empty[String, Vector[Int]]
+
+        var colOffset = 0
+        var i = 0
+        while i < ts.length do
+          val (key, term) = ts(i)
+          val cols = term.data.cols
+
+          var r = 0
+          while r < totalRows do
+            System.arraycopy(term.data.data, r * cols, out, r * totalCols + colOffset, cols)
+            r += 1
+
+          colNames ++= term.columnNames
+          spans += ((colOffset, colOffset + cols))
+          indices.update(key, (colOffset until (colOffset + cols)).toVector)
+
+          colOffset += cols
+          i += 1
+
+        BaselineModel(
+          terms = ts,
+          driftSpec = driftSpec,
+          samplingFrame = samplingFrame,
+          designMatrix = Mat.unsafe(totalRows, totalCols, out),
+          columnNames = colNames.result(),
+          termSpans = spans.result(),
+          colIndices = indices.toMap,
+          nuisanceReport = nuisanceReport
+        )
+      }
+    catch
+      case NonFatal(t) => Left(BaselineError.fromThrowable(t))
+
+  def checkNuisance(plan: BaselinePlan): NuisanceReport =
+    unsafe(checkNuisanceEither(plan))
+
+  def checkNuisanceEither(plan: BaselinePlan): Either[BaselineError, NuisanceReport] =
+    requireNuisanceEither(plan).flatMap { nuisance =>
+      checkNuisanceEither(
+        nuisanceList = nuisance.matrices,
+        samplingFrame = plan.samplingFrame,
+        basis = plan.basis,
+        degree = plan.degree,
+        intercept = plan.intercept,
+        nuisanceNames = nuisance.names,
+        naAction = nuisance.policy.naAction,
+        tol = nuisance.policy.tol,
+        duplicateThreshold = nuisance.policy.duplicateThreshold
+      )
+    }
 
   def checkNuisance(
       nuisanceList: Seq[Mat],
@@ -503,19 +638,63 @@ object BaselineModel:
       tol: Double = DefaultNuisanceTol,
       duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
   ): NuisanceReport =
-    if basis == BaselineBasis.Bs || basis == BaselineBasis.Ns then
-      require(degree > 2, "'bs' and 'ns' bases must have degree >= 3")
+    unsafe(checkNuisanceEither(
+      nuisanceList = nuisanceList,
+      samplingFrame = samplingFrame,
+      basis = basis,
+      degree = degree,
+      intercept = intercept,
+      nuisanceNames = nuisanceNames,
+      naAction = naAction,
+      tol = tol,
+      duplicateThreshold = duplicateThreshold
+    ))
 
-    val driftSpec = BaselineSpec(degree = degree, basis = basis, intercept = intercept)
-    val drift = driftSpec.construct(samplingFrame)
-    val blockTerm =
-      if intercept != Intercept.None && basis != BaselineBasis.Constant then
-        Some(BaselineTerm.blockIntercept("constant", samplingFrame, intercept))
-      else _root_.scala.None
-    val baselineTerms = Vector(drift) ++ blockTerm.toVector
-    val prepared = prepareNuisance(nuisanceList, samplingFrame, nuisanceNames, naAction)
+  def checkNuisanceEither(
+      nuisanceList: Seq[Mat],
+      samplingFrame: SamplingFrame,
+      basis: BaselineBasis = BaselineBasis.Constant,
+      degree: Int = 1,
+      intercept: Intercept = Intercept.Runwise,
+      nuisanceNames: Option[Seq[Seq[String]]] = None,
+      naAction: NaAction = NaAction.Drop,
+      tol: Double = DefaultNuisanceTol,
+      duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
+  ): Either[BaselineError, NuisanceReport] =
+    try
+      if basis == BaselineBasis.Bs || basis == BaselineBasis.Ns then
+        require(degree > 2, "'bs' and 'ns' bases must have degree >= 3")
 
-    checkPreparedNuisance(prepared, samplingFrame, baselineTerms, tol, duplicateThreshold)
+      val driftSpec = BaselineSpec(degree = degree, basis = basis, intercept = intercept)
+      val drift = driftSpec.construct(samplingFrame)
+      val blockTerm =
+        if intercept != Intercept.None && basis != BaselineBasis.Constant then
+          Some(BaselineTerm.blockIntercept("constant", samplingFrame, intercept))
+        else _root_.scala.None
+      val baselineTerms = Vector(drift) ++ blockTerm.toVector
+      val prepared = prepareNuisance(nuisanceList, samplingFrame, nuisanceNames, naAction)
+
+      Right(checkPreparedNuisance(prepared, samplingFrame, baselineTerms, tol, duplicateThreshold))
+    catch
+      case NonFatal(t) => Left(BaselineError.fromThrowable(t))
+
+  def cleanNuisance(plan: BaselinePlan): CleanedNuisance =
+    unsafe(cleanNuisanceEither(plan))
+
+  def cleanNuisanceEither(plan: BaselinePlan): Either[BaselineError, CleanedNuisance] =
+    requireNuisanceEither(plan).flatMap { nuisance =>
+      cleanNuisanceEither(
+        nuisanceList = nuisance.matrices,
+        samplingFrame = plan.samplingFrame,
+        basis = plan.basis,
+        degree = plan.degree,
+        intercept = plan.intercept,
+        nuisanceNames = nuisance.names,
+        naAction = nuisance.policy.naAction,
+        tol = nuisance.policy.tol,
+        duplicateThreshold = nuisance.policy.duplicateThreshold
+      )
+    }
 
   def cleanNuisance(
       nuisanceList: Seq[Mat],
@@ -528,7 +707,7 @@ object BaselineModel:
       tol: Double = DefaultNuisanceTol,
       duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
   ): CleanedNuisance =
-    val report = checkNuisance(
+    unsafe(cleanNuisanceEither(
       nuisanceList = nuisanceList,
       samplingFrame = samplingFrame,
       basis = basis,
@@ -538,8 +717,41 @@ object BaselineModel:
       naAction = naAction,
       tol = tol,
       duplicateThreshold = duplicateThreshold
-    )
-    CleanedNuisance(dropNuisanceColumns(report), report)
+    ))
+
+  def cleanNuisanceEither(
+      nuisanceList: Seq[Mat],
+      samplingFrame: SamplingFrame,
+      basis: BaselineBasis = BaselineBasis.Constant,
+      degree: Int = 1,
+      intercept: Intercept = Intercept.Runwise,
+      nuisanceNames: Option[Seq[Seq[String]]] = None,
+      naAction: NaAction = NaAction.Drop,
+      tol: Double = DefaultNuisanceTol,
+      duplicateThreshold: Double = 1.0 - DefaultNuisanceTol
+  ): Either[BaselineError, CleanedNuisance] =
+    checkNuisanceEither(
+      nuisanceList = nuisanceList,
+      samplingFrame = samplingFrame,
+      basis = basis,
+      degree = degree,
+      intercept = intercept,
+      nuisanceNames = nuisanceNames,
+      naAction = naAction,
+      tol = tol,
+      duplicateThreshold = duplicateThreshold
+    ).map { report =>
+      CleanedNuisance(dropNuisanceColumns(report), report)
+    }
+
+  private def requireNuisance(plan: BaselinePlan): NuisanceInput =
+    unsafe(requireNuisanceEither(plan))
+
+  private def requireNuisanceEither(plan: BaselinePlan): Either[BaselineError, NuisanceInput] =
+    plan.nuisance.toRight(BaselineError.MissingNuisance)
+
+  private def unsafe[A](result: Either[BaselineError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private final case class PreparedNuisance(matrices: Vector[Mat], names: Vector[Vector[String]])
 
