@@ -10,8 +10,9 @@ import scalafim.fmri.design.*
 
 This module contains event models, formula parsing, condition bases, baseline
 models, contrast definitions, design-matrix metadata, and design export helpers.
-It depends on `scalafim-fmri-hrf` for sampling/convolution and
-`scalafim-linalg` for shared QR/rank primitives.
+It depends on `scalafim-fmri-hrf` for sampling/convolution, `scalafim-linalg`
+for shared QR/rank primitives, and `scalafim-graphics` for renderer-neutral
+plot and scene exports.
 
 Preferred typed entry points:
 
@@ -26,9 +27,26 @@ Preferred typed entry points:
 - `DesignColumnDescriptor` and typed export indices (`DesignColumnIndex`,
   `ScanIndex`, `RunIndex`, `BasisIndex`, `TermIndex`) sit beside the legacy
   `DesignColumnMeta` fields for safer downstream plotting/reporting.
+- `DesignGraphics.eventPlot` and `DesignGraphics.eventScene` adapt
+  `EventPlotData` into graphics `Plot` and `Scene` values without depending on
+  SVG or any platform renderer.
 - `ContrastExpr`, `CellSelector`, `BasisSelection`, and `CompiledContrast`
   provide a typed, total contrast path via `compileEither` while legacy
   `ContrastSpec`/`ContrastWeights` constructors remain available.
+
+Renderer-neutral event plot export:
+
+```scala
+import scalafim.fmri.design.*
+import scalafim.graphics.svg.*
+
+val scene = DesignGraphics.eventModelScene(model, termName = Some("task")).toOption.get
+val svg = SvgRenderer.render(scene).toOption.get
+```
+
+The dependency direction is `design -> graphics -> graphics-svg` at the
+application boundary. `design` produces plot specs/scenes; SVG remains an
+optional renderer adapter.
 
 Run it directly with:
 
