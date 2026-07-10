@@ -135,6 +135,31 @@ object Breaks:
   def countUnsafe(n: Int): Breaks =
     count(n).orThrow
 
+  /** Deterministic 1/2/5-style breaks with an approximate target count.
+    *
+    * The grid is anchored at zero and chosen without logarithms so the same
+    * interval produces byte-identical labels on the JVM and Scala.js. Use
+    * [[count]] when the number of breaks must be exact.
+    */
+  def pretty(targetCount: Int = 5): Either[GraphicsError, Breaks] =
+    if targetCount < 1 then Left(GraphicsError.InvalidBreakCount(targetCount))
+    else
+      Right(new Breaks:
+        override def apply(range: Interval): Vector[Double] =
+          if range.lower == range.upper then Vector(range.lower)
+          else if targetCount == 1 then Vector(midpoint(range))
+          else
+            val rawStep = targetStep(range, targetCount)
+            if !rawStep.isFinite || rawStep <= 0.0 then boundaryFallback(range)
+            else
+              val step = niceStep(rawStep)
+              if !step.isFinite || step <= 0.0 then boundaryFallback(range)
+              else prettyGrid(range, step, targetCount)
+      )
+
+  def prettyUnsafe(targetCount: Int = 5): Breaks =
+    pretty(targetCount).orThrow
+
   def width(width: Double, offset: Double = 0.0): Either[GraphicsError, Breaks] =
     if !width.isFinite || width <= 0.0 then Left(GraphicsError.InvalidBreakWidth(width))
     else
@@ -160,7 +185,81 @@ object Breaks:
           else Vector.tabulate(hi - lo + 1)(i => math.pow(10.0, lo + i))
 
   val default: Breaks =
-    countUnsafe(5)
+    prettyUnsafe()
+
+  private val Sqrt2 = 1.4142135623730951
+  private val Sqrt10 = 3.1622776601683795
+  private val Sqrt50 = 7.0710678118654755
+  private val MaxExactInteger = 9007199254740992.0
+
+  private def midpoint(range: Interval): Double =
+    val width = range.width
+    if width.isFinite then range.lower + width / 2.0
+    else range.lower / 2.0 + range.upper / 2.0
+
+  private def targetStep(range: Interval, targetCount: Int): Double =
+    val width = range.width
+    if width.isFinite then width / targetCount.toDouble
+    else range.upper / targetCount.toDouble - range.lower / targetCount.toDouble
+
+  /** Nearest 1/2/5 power-of-ten step using D3-style geometric thresholds.
+    * Repeated IEEE scaling avoids platform-specific `log10` edge behavior.
+    */
+  private def niceStep(rawStep: Double): Double =
+    var fraction = rawStep
+    var power = 1.0
+    while fraction >= 10.0 && power.isFinite do
+      fraction /= 10.0
+      power *= 10.0
+    while fraction < 1.0 && power > 0.0 do
+      fraction *= 10.0
+      power /= 10.0
+
+    val factor =
+      if fraction >= Sqrt50 then 10.0
+      else if fraction >= Sqrt10 then 5.0
+      else if fraction >= Sqrt2 then 2.0
+      else 1.0
+    val candidate = factor * power
+    if candidate.isFinite && candidate > 0.0 then candidate
+    else if power.isFinite && power > 0.0 then power
+    else rawStep
+
+  private def prettyGrid(range: Interval, step: Double, targetCount: Int): Vector[Double] =
+    val firstIndex = math.ceil(range.lower / step)
+    val first = firstIndex * step
+    val out = Vector.newBuilder[Double]
+    val maxTicks = targetCount.toLong * 4L + 16L
+    var offset = 0L
+    var previous = Double.NegativeInfinity
+    var candidate = gridValue(firstIndex, first, offset, step)
+    var continue = candidate.isFinite && candidate <= range.upper && offset < maxTicks
+    while continue do
+      if range.contains(candidate) && candidate > previous then
+        out += candidate
+        previous = candidate
+      offset += 1L
+      val next = gridValue(firstIndex, first, offset, step)
+      continue = next.isFinite && next > candidate && next <= range.upper && offset < maxTicks
+      candidate = next
+
+    val result = out.result()
+    if result.nonEmpty then result else Vector(midpoint(range))
+
+  private def boundaryFallback(range: Interval): Vector[Double] =
+    if range.lower == range.upper then Vector(range.lower)
+    else Vector(range.lower, range.upper)
+
+  private def normalizeZero(value: Double): Double =
+    if value == 0.0 then 0.0 else value
+
+  private def gridValue(firstIndex: Double, first: Double, offset: Long, step: Double): Double =
+    val offsetDouble = offset.toDouble
+    val value =
+      if math.abs(firstIndex) + offsetDouble <= MaxExactInteger then
+        (firstIndex + offsetDouble) * step
+      else first + offsetDouble * step
+    normalizeZero(value)
 
 trait Labeler:
   def apply(values: Vector[Double]): Vector[String]

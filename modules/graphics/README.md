@@ -42,6 +42,9 @@ platform renderers should consume `DeviceScene` values at a boundary.
 - Continuous scales retain both raw data domains and transformed domains:
   palette mapping uses transformed coordinates, while breaks and labels remain
   in the raw data domain.
+- Default continuous breaks use a deterministic zero-anchored 1/2/5 grid with
+  an approximate target count. Use `Breaks.count` when an exact number of
+  equally spaced breaks is part of the caller's contract.
 - Aesthetic mappings are row-aware typed values: direct, constant, and scaled
   mappings share one `AesValue` algebra, and every `AesSpec` normalizes to a
   typed `AesEnv` keyed by the `Aesthetic[A]` enum. Continuous scales consume

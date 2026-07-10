@@ -51,6 +51,10 @@ class DesignGraphicsSuite extends munit.FunSuite:
     assertEquals(responseAxis.name.map(_.value), Some("response-axis"))
     assertEquals(legend.name.map(_.value), Some("regressor-legend"))
     assertEquals(legend.children.length, 1 + exported.regressors.length * 2)
+    assertEquals(
+      timeAxis.children.collect { case text: Grob.Text => text.label },
+      Vector("10", "20", "30")
+    )
   }
 
   test("event model helper composes design export errors with graphics errors") {

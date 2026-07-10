@@ -111,3 +111,47 @@ class ScaleSuite extends munit.FunSuite:
     assertEquals(breaks(Interval.unsafe(1.0, 6.0)), Vector(2.0, 4.0, 6.0))
     assertEquals(Breaks.countUnsafe(3)(Interval.unsafe(0.0, 10.0)), Vector(0.0, 5.0, 10.0))
   }
+
+  test("default pretty breaks use readable 1/2/5 steps for ordinary ranges") {
+    val interval = Interval.unsafe(0.0, 31.0)
+    val breaks = Breaks.default(interval)
+
+    assertEquals(breaks, Vector(0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0))
+    assertEquals(Labeler.default(breaks), Vector("0", "5", "10", "15", "20", "25", "30"))
+  }
+
+  test("pretty breaks include zero and platform-stable labels for signed ranges") {
+    val breaks = Breaks.prettyUnsafe()(Interval.unsafe(-0.25, 1.0))
+
+    assertEquals(breaks.length, 7)
+    assertEqualsDouble(breaks.head, -0.2, 1e-15)
+    assertEqualsDouble(breaks.last, 1.0, 1e-15)
+    assert(breaks.contains(0.0))
+    assertEquals(Labeler.default(breaks), Vector("-0.2", "0", "0.2", "0.4", "0.6", "0.8", "1"))
+  }
+
+  test("pretty breaks remain readable for tiny and large ranges") {
+    val tiny = Breaks.prettyUnsafe()(Interval.unsafe(-3.0e-6, 7.0e-6))
+    val large = Breaks.prettyUnsafe()(Interval.unsafe(1.0e9, 5.0e9))
+
+    assertEquals(Labeler.default(tiny), Vector("-2e-6", "0", "2e-6", "4e-6", "6e-6"))
+    assertEquals(
+      Labeler.default(large),
+      Vector("1000000000", "2000000000", "3000000000", "4000000000", "5000000000")
+    )
+  }
+
+  test("pretty breaks are scale-equivariant across powers of ten") {
+    val base = Breaks.prettyUnsafe()(Interval.unsafe(-3.0, 7.0))
+    val scaled = Breaks.prettyUnsafe()(Interval.unsafe(-3.0e6, 7.0e6))
+
+    assertEquals(base.length, scaled.length)
+    base.zip(scaled).foreach { case (left, right) =>
+      assertEqualsDouble(right, left * 1.0e6, 1e-9)
+    }
+  }
+
+  test("pretty breaks collapse degenerate ranges and validate target counts") {
+    assertEquals(Breaks.prettyUnsafe()(Interval.unsafe(42.0, 42.0)), Vector(42.0))
+    assertEquals(Breaks.pretty(0).left.toOption, Some(GraphicsError.InvalidBreakCount(0)))
+  }
