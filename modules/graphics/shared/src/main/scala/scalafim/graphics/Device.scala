@@ -69,6 +69,14 @@ object DeviceFrame:
       YDirection.Up
     )
 
+private object DeviceValue:
+  val MaxMagnitude: Double = 1.0e13
+
+  def checked(field: String, value: Double): Either[GraphicsError, Double] =
+    if !value.isFinite || math.abs(value) > MaxMagnitude then
+      Left(GraphicsError.InvalidDeviceValue(field, value))
+    else Right(value)
+
 /** Evaluates length expressions against a device frame. Locations resolve to
   * device coordinates (y flipped for y-up frames); extents resolve to
   * non-directional pixel magnitudes.
@@ -111,7 +119,7 @@ final class LengthResolver(device: DeviceContext, val frame: DeviceFrame):
   /** Font sizes must be absolute; relative units have no meaning for glyphs. */
   def fontSize(length: Length): Either[GraphicsError, Double] =
     device.pxPerUnit(length.unit) match
-      case Some(px) => Right(length.value * px)
+      case Some(px) => DeviceValue.checked("font size", length.value * px)
       case None =>
         Left(GraphicsError.UnresolvableLength(s"font size in unit '${length.unit}'"))
 
@@ -247,8 +255,104 @@ final case class DeviceScene(width: Double, height: Double, elements: Vector[Dev
 
 object DeviceScene:
   def fromScene(scene: Scene, device: DeviceContext): Either[GraphicsError, DeviceScene] =
-    lowerAll(scene.grobs, device, DeviceFrame.root(device))
-      .map(DeviceScene(device.width, device.height, _))
+    for
+      elements <- lowerAll(scene.grobs, device, DeviceFrame.root(device))
+      resolved <- validate(DeviceScene(device.width, device.height, elements))
+    yield resolved
+
+  private def validate(scene: DeviceScene): Either[GraphicsError, DeviceScene] =
+    for
+      _ <- DeviceValue.checked("width", scene.width)
+      _ <- DeviceValue.checked("height", scene.height)
+      _ <- validateElements(scene.elements)
+    yield scene
+
+  private def validateElements(elements: Vector[DeviceElement]): Either[GraphicsError, Unit] =
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < elements.length && result.isRight do
+      result = validateElement(elements(idx))
+      idx += 1
+    result
+
+  private def validateElement(element: DeviceElement): Either[GraphicsError, Unit] =
+    element match
+      case DeviceElement.Mark(primitive) =>
+        validatePrimitive(primitive)
+      case DeviceElement.Group(_, clip, rotation, children) =>
+        val clipResult = clip match
+          case Some(value) =>
+            validateNumbers(
+              Vector(
+                "clip x" -> value.x,
+                "clip y" -> value.y,
+                "clip width" -> value.width,
+                "clip height" -> value.height
+              )
+            )
+          case None => Right(())
+        val rotationResult = rotation match
+          case Some(value) =>
+            validateNumbers(
+              Vector(
+                "rotation" -> value.degrees,
+                "rotation pivot x" -> value.pivotX,
+                "rotation pivot y" -> value.pivotY
+              )
+            )
+          case None => Right(())
+        clipResult.flatMap(_ => rotationResult).flatMap(_ => validateElements(children))
+
+  private def validatePrimitive(primitive: DevicePrimitive): Either[GraphicsError, Unit] =
+    primitive match
+      case DevicePrimitive.Disc(centerX, centerY, radius, gp, _) =>
+        validateNumbers(
+          Vector(
+            "disc center x" -> centerX,
+            "disc center y" -> centerY,
+            "disc radius" -> radius,
+            "line width" -> gp.lineWidth
+          )
+        )
+      case DevicePrimitive.Polyline(points, _, gp, _) =>
+        validatePoints(points).flatMap(_ => DeviceValue.checked("line width", gp.lineWidth).map(_ => ()))
+      case DevicePrimitive.RectShape(x, y, width, height, gp, _) =>
+        validateNumbers(
+          Vector(
+            "rectangle x" -> x,
+            "rectangle y" -> y,
+            "rectangle width" -> width,
+            "rectangle height" -> height,
+            "line width" -> gp.lineWidth
+          )
+        )
+      case DevicePrimitive.TextRun(_, x, y, _, _, rotationDegrees, fontSizePx, _, _, _) =>
+        validateNumbers(
+          Vector(
+            "text x" -> x,
+            "text y" -> y,
+            "rotation" -> rotationDegrees,
+            "font size" -> fontSizePx
+          )
+        )
+
+  private def validatePoints(points: Vector[DevicePoint]): Either[GraphicsError, Unit] =
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < points.length && result.isRight do
+      val point = points(idx)
+      result = validateNumbers(Vector("point x" -> point.x, "point y" -> point.y))
+      idx += 1
+    result
+
+  private def validateNumbers(values: Vector[(String, Double)]): Either[GraphicsError, Unit] =
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < values.length && result.isRight do
+      val (field, value) = values(idx)
+      result = DeviceValue.checked(field, value).map(_ => ())
+      idx += 1
+    result
 
   private def lowerAll(
       grobs: Vector[Grob],

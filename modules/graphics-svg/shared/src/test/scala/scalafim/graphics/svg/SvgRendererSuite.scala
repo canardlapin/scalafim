@@ -306,3 +306,43 @@ class SvgRendererSuite extends munit.FunSuite:
       Some(SvgRenderError.InvalidDocumentSize(0, 20))
     )
   }
+
+  test("rejects XML-illegal characters instead of returning malformed documents") {
+    val label = Grob
+      .text("bad\u0001label", Point.npcUnsafe(0.5, 0.5))
+      .toOption
+      .get
+
+    assertEquals(
+      SvgRenderer.render(Scene(Vector(label))).left.toOption,
+      Some(SvgRenderError.InvalidXmlCharacter("text label", 1))
+    )
+    assertEquals(
+      SvgRenderer.render(Scene.empty, SvgOptions.unsafe(title = Some("bad\u0000title"))).left.toOption,
+      Some(SvgRenderError.InvalidXmlCharacter("document title", 0))
+    )
+  }
+
+  test("accepts supplementary Unicode characters in XML text") {
+    val label = Grob
+      .text("activation \ud83e\udde0", Point.npcUnsafe(0.5, 0.5))
+      .toOption
+      .get
+
+    assert(render(Scene(Vector(label))).contains("activation \ud83e\udde0"))
+  }
+
+  test("rejects oversized numeric attributes instead of silently saturating them") {
+    val line = Grob
+      .lines(
+        Vector(Point.npcUnsafe(0.0, 0.0), Point.npcUnsafe(1.0, 1.0)),
+        gp = GraphicParams.unsafe(lineWidth = 1.0e308)
+      )
+      .toOption
+      .get
+
+    assertEquals(
+      SvgRenderer.render(Scene(Vector(line))).left.toOption,
+      Some(SvgRenderError.Graphics(GraphicsError.InvalidDeviceValue("line width", 1.0e308)))
+    )
+  }

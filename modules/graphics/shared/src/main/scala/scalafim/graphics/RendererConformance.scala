@@ -7,6 +7,41 @@ enum ConformanceGroup:
   case Guide
   case CompiledPlot
 
+enum RenderPrimitiveKind:
+  case Disc
+  case Polyline
+  case Polygon
+  case Rectangle
+  case Text
+
+/** Backend-neutral facts that must be observable in renderer output. Unlike a
+  * marker-only smoke check, these requirements pin primitive choice, styles,
+  * text placement, and group effects without prescribing an output format.
+  */
+enum RenderRequirement:
+  case Primitive(name: GraphicsName, kind: RenderPrimitiveKind)
+  case Group(name: GraphicsName, clipped: Boolean, rotated: Boolean)
+  case Style(
+      name: GraphicsName,
+      stroke: Option[Rgba],
+      fill: Option[Rgba],
+      lineWidth: Double,
+      lineType: LineType,
+      alpha: Double
+  )
+  case Text(name: GraphicsName, horizontal: HJust, vertical: VJust, rotated: Boolean)
+
+  def description: String =
+    this match
+      case Primitive(name, kind) =>
+        s"primitive '${name.value}' as $kind"
+      case Group(name, clipped, rotated) =>
+        s"group '${name.value}' with clipped=$clipped and rotated=$rotated"
+      case Style(name, _, _, lineWidth, lineType, alpha) =>
+        s"style '${name.value}' with lineWidth=$lineWidth, lineType=$lineType, alpha=$alpha"
+      case Text(name, horizontal, vertical, rotated) =>
+        s"text '${name.value}' with anchor=($horizontal,$vertical) and rotated=$rotated"
+
 /** One renderer conformance case: a scene, the family it exercises, and the
   * named grobs whose markers must survive into backend output.
   */
@@ -14,7 +49,8 @@ final case class ConformanceCase(
     name: GraphicsName,
     group: ConformanceGroup,
     scene: Scene,
-    markers: Vector[GraphicsName]
+    markers: Vector[GraphicsName],
+    requirements: Vector[RenderRequirement] = Vector.empty
 )
 
 /** Adapter a backend implements to run the conformance contract. `Out` must
@@ -23,6 +59,8 @@ final case class ConformanceCase(
 trait RendererHarness[Out]:
   def render(scene: Scene): Either[String, Out]
   def containsMarker(out: Out, name: GraphicsName): Boolean
+  def satisfies(out: Out, requirement: RenderRequirement): Boolean =
+    false
 
   /** Backend-specific well-formedness check on the rendered output; return a
     * problem description to fail the case.
@@ -66,8 +104,11 @@ object RendererConformance:
             val markers = conformanceCase.markers.filterNot(harness.containsMarker(first, _)).map { missing =>
               violation(s"missing marker '${missing.value}'")
             }
+            val requirements = conformanceCase.requirements.filterNot(harness.satisfies(first, _)).map { missing =>
+              violation(s"missing semantic requirement: ${missing.description}")
+            }
             val validation = harness.validate(first).map(violation).toVector
-            determinism ++ markers ++ validation
+            determinism ++ markers ++ requirements ++ validation
 
   def cases: Either[GraphicsError, Vector[ConformanceCase]] =
     for
@@ -78,6 +119,7 @@ object RendererConformance:
       text <- textCase
       clipped <- clippedViewportCase
       rotated <- rotatedViewportCase
+      clippedAndRotated <- clippedRotatedViewportCase
       rasterOriented <- yDownViewportCase
       axis <- axisCase
       legend <- legendCase
@@ -91,6 +133,7 @@ object RendererConformance:
       text,
       clipped,
       rotated,
+      clippedAndRotated,
       rasterOriented,
       axis,
       legend,
@@ -116,7 +159,10 @@ object RendererConformance:
           GraphicsName.unsafe("point"),
           ConformanceGroup.Primitive,
           Scene(Vector(grob)),
-          Vector(GraphicsName.unsafe("conformance-point"))
+          Vector(GraphicsName.unsafe("conformance-point")),
+          Vector(
+            RenderRequirement.Primitive(GraphicsName.unsafe("conformance-point"), RenderPrimitiveKind.Disc)
+          )
         )
       }
 
@@ -136,7 +182,18 @@ object RendererConformance:
           GraphicsName.unsafe("line"),
           ConformanceGroup.Primitive,
           Scene(Vector(grob)),
-          Vector(GraphicsName.unsafe("conformance-line"))
+          Vector(GraphicsName.unsafe("conformance-line")),
+          Vector(
+            RenderRequirement.Primitive(GraphicsName.unsafe("conformance-line"), RenderPrimitiveKind.Polyline),
+            RenderRequirement.Style(
+              GraphicsName.unsafe("conformance-line"),
+              Some(Rgba.unsafe(25, 75, 125)),
+              None,
+              1.5,
+              LineType.Dashed,
+              1.0
+            )
+          )
         )
       }
 
@@ -208,7 +265,16 @@ object RendererConformance:
           GraphicsName.unsafe("text"),
           ConformanceGroup.Primitive,
           Scene(Vector(grob)),
-          Vector(GraphicsName.unsafe("conformance-text"))
+          Vector(GraphicsName.unsafe("conformance-text")),
+          Vector(
+            RenderRequirement.Primitive(GraphicsName.unsafe("conformance-text"), RenderPrimitiveKind.Text),
+            RenderRequirement.Text(
+              GraphicsName.unsafe("conformance-text"),
+              HJust.Left,
+              VJust.Top,
+              rotated = true
+            )
+          )
         )
       }
 
@@ -233,7 +299,10 @@ object RendererConformance:
           GraphicsName.unsafe("clipped-viewport"),
           ConformanceGroup.Layout,
           Scene(Vector(grob)),
-          Vector(GraphicsName.unsafe("conformance-clip"))
+          Vector(GraphicsName.unsafe("conformance-clip")),
+          Vector(
+            RenderRequirement.Group(GraphicsName.unsafe("conformance-clip"), clipped = true, rotated = false)
+          )
         )
       }
 
@@ -255,7 +324,52 @@ object RendererConformance:
           GraphicsName.unsafe("rotated-viewport"),
           ConformanceGroup.Layout,
           Scene(Vector(grob)),
-          Vector(GraphicsName.unsafe("conformance-rotation"))
+          Vector(GraphicsName.unsafe("conformance-rotation")),
+          Vector(
+            RenderRequirement.Group(GraphicsName.unsafe("conformance-rotation"), clipped = false, rotated = true)
+          )
+        )
+      }
+
+  def clippedRotatedViewportCase: Either[GraphicsError, ConformanceCase] =
+    val viewport = Viewport.unsafe(
+      origin = Point.npcUnsafe(0.15, 0.15),
+      size = Size.npcUnsafe(0.6, 0.6),
+      clip = Clip.On,
+      angleDegrees = 22.5
+    )
+    val style = GraphicParams.unsafe(
+      stroke = Some(Rgba.unsafe(80, 40, 160)),
+      lineWidth = 2.0,
+      lineType = LineType.Dotted,
+      alpha = 0.6
+    )
+    Grob
+      .lines(
+        Vector(Point.npcUnsafe(-0.1, 0.2), Point.npcUnsafe(1.1, 0.8)),
+        gp = style,
+        viewport = Some(viewport),
+        name = Some(GraphicsName.unsafe("conformance-clip-rotation"))
+      )
+      .map { grob =>
+        val name = GraphicsName.unsafe("conformance-clip-rotation")
+        ConformanceCase(
+          GraphicsName.unsafe("clipped-rotated-viewport"),
+          ConformanceGroup.Layout,
+          Scene(Vector(grob)),
+          Vector(name),
+          Vector(
+            RenderRequirement.Group(name, clipped = true, rotated = true),
+            RenderRequirement.Primitive(name, RenderPrimitiveKind.Polyline),
+            RenderRequirement.Style(
+              name,
+              Some(Rgba.unsafe(80, 40, 160)),
+              None,
+              2.0,
+              LineType.Dotted,
+              0.6
+            )
+          )
         )
       }
 

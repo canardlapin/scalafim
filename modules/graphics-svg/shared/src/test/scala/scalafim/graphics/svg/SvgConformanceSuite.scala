@@ -17,12 +17,90 @@ class SvgConformanceSuite extends munit.FunSuite:
     override def containsMarker(out: String, name: GraphicsName): Boolean =
       out.contains(s"""data-name="${name.value}"""")
 
+    override def satisfies(out: String, requirement: RenderRequirement): Boolean =
+      requirement match
+        case RenderRequirement.Primitive(name, kind) =>
+          namedLines(out, name).exists { line =>
+            val prefix = kind match
+              case RenderPrimitiveKind.Disc      => "<circle"
+              case RenderPrimitiveKind.Polyline  => "<polyline"
+              case RenderPrimitiveKind.Polygon   => "<polygon"
+              case RenderPrimitiveKind.Rectangle => "<rect"
+              case RenderPrimitiveKind.Text      => "<text"
+            line.startsWith(prefix)
+          }
+        case RenderRequirement.Group(name, clipped, rotated) =>
+          namedLines(out, name).exists { line =>
+            line.startsWith("<g") &&
+            line.contains(" clip-path=") == clipped &&
+            line.contains(" transform=\"rotate(") == rotated
+          }
+        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, alpha) =>
+          namedLines(out, name).exists { line =>
+            !line.startsWith("<g") &&
+            hasPaint(line, "stroke", stroke) &&
+            hasPaint(line, "fill", fill) &&
+            line.contains(s""" stroke-width="${number(lineWidth)}"""") &&
+            hasLineType(line, lineType) &&
+            hasOpacity(line, alpha)
+          }
+        case RenderRequirement.Text(name, horizontal, vertical, rotated) =>
+          namedLines(out, name).exists { line =>
+            line.startsWith("<text") &&
+            line.contains(s""" text-anchor="${textAnchor(horizontal)}"""") &&
+            line.contains(s""" dominant-baseline="${textBaseline(vertical)}"""") &&
+            line.contains(" transform=\"rotate(") == rotated
+          }
+
     override def validate(out: String): Option[String] =
       if out.contains("calc(") then Some("output contains CSS calc expressions")
       else if out.contains("%") then Some("output contains percentage lengths")
       else if out.contains("NaN") then Some("output contains NaN coordinates")
       else if !out.startsWith("<svg xmlns=") then Some("output is not an SVG document")
       else None
+
+    private def namedLines(out: String, name: GraphicsName): Vector[String] =
+      val marker = s"""data-name="${name.value}"""
+      out.linesIterator.map(_.trim).filter(_.contains(marker)).toVector
+
+    private def hasPaint(line: String, attribute: String, paint: Option[Rgba]): Boolean =
+      paint match
+        case Some(color) =>
+          line.contains(s""" $attribute="${hex(color)}"""") &&
+            (color.alpha == 1.0 || line.contains(s""" $attribute-opacity="${number(color.alpha)}""""))
+        case None =>
+          line.contains(s""" $attribute="none"""")
+
+    private def hasLineType(line: String, lineType: LineType): Boolean =
+      lineType match
+        case LineType.Solid  => !line.contains(" stroke-dasharray=")
+        case LineType.Dashed => line.contains(""" stroke-dasharray="6 4"""")
+        case LineType.Dotted => line.contains(""" stroke-dasharray="1 3"""")
+
+    private def hasOpacity(line: String, alpha: Double): Boolean =
+      if alpha == 1.0 then !line.contains(" opacity=")
+      else line.contains(s""" opacity="${number(alpha)}"""")
+
+    private def textAnchor(value: HJust): String =
+      value match
+        case HJust.Left   => "start"
+        case HJust.Center => "middle"
+        case HJust.Right  => "end"
+
+    private def textBaseline(value: VJust): String =
+      value match
+        case VJust.Bottom => "text-after-edge"
+        case VJust.Center => "middle"
+        case VJust.Top    => "text-before-edge"
+
+    private def hex(color: Rgba): String =
+      def channel(value: Int): String =
+        val encoded = value.toHexString
+        if encoded.length == 1 then "0" + encoded else encoded
+      "#" + channel(color.red) + channel(color.green) + channel(color.blue)
+
+    private def number(value: Double): String =
+      if value == value.toLong.toDouble then value.toLong.toString else value.toString
 
   test("the SVG backend passes the renderer conformance contract") {
     val violations = RendererConformance.check(SvgHarness).fold(e => fail(e.message), identity)

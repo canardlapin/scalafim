@@ -77,4 +77,8 @@ edge-centered framing, and an explicit `PanelLayout` is always authoritative.
 
 A backend implements `RendererHarness` and runs `RendererConformance.check`
 in its test suite; the shared `DeviceScene` lowering is the reference
-implementation. See `graphics-svg` for the canonical adoption.
+implementation. `graphics-svg` inspects serialized markup while
+`graphics-canvas` records deterministic Canvas commands; both must satisfy the
+same primitive, style, text-placement, clipping, and rotation requirements.
+`graphics-java2d` independently adopts the same contract and adds raster-level
+`BufferedImage` assertions for JVM rendering behavior.

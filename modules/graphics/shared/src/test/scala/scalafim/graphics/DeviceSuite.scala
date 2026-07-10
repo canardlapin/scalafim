@@ -259,3 +259,32 @@ class DeviceSuite extends munit.FunSuite:
       case _                                   => false
     })
   }
+
+  test("device lowering rejects oversized style and text attributes") {
+    val wideLine = Grob
+      .lines(
+        Vector(Point.npcUnsafe(0.0, 0.0), Point.npcUnsafe(1.0, 1.0)),
+        gp = GraphicParams.unsafe(lineWidth = 1.0e308)
+      )
+      .toOption
+      .get
+    val hugeText = Grob
+      .text(
+        "label",
+        Point.npcUnsafe(0.5, 0.5),
+        rotationDegrees = 1.0e308,
+        gp = GraphicParams.unsafe(fontSize = Length.pointsUnsafe(1.0e308))
+      )
+      .toOption
+      .get
+
+    assertEquals(
+      DeviceScene.fromScene(Scene(Vector(wideLine)), device).left.toOption,
+      Some(GraphicsError.InvalidDeviceValue("line width", 1.0e308))
+    )
+    assert(DeviceScene.fromScene(Scene(Vector(hugeText)), device).left.toOption.exists {
+      case GraphicsError.InvalidDeviceValue(field, _) =>
+        field == "font size" || field == "rotation"
+      case _ => false
+    })
+  }

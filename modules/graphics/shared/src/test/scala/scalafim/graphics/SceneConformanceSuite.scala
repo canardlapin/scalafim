@@ -15,6 +15,9 @@ class SceneConformanceSuite extends munit.FunSuite:
     override def containsMarker(out: DeviceScene, name: GraphicsName): Boolean =
       out.elements.exists(containsName(_, name))
 
+    override def satisfies(out: DeviceScene, requirement: RenderRequirement): Boolean =
+      out.elements.exists(satisfiesElement(_, requirement))
+
     override def validate(out: DeviceScene): Option[String] =
       firstNonFinite(out.elements)
 
@@ -31,6 +34,52 @@ class SceneConformanceSuite extends munit.FunSuite:
         case DevicePrimitive.Polyline(_, _, _, name)         => name
         case DevicePrimitive.RectShape(_, _, _, _, _, name)  => name
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, name) => name
+
+    private def satisfiesElement(element: DeviceElement, requirement: RenderRequirement): Boolean =
+      element match
+        case DeviceElement.Mark(primitive) =>
+          satisfiesPrimitive(primitive, requirement)
+        case DeviceElement.Group(name, clip, rotation, children) =>
+          val groupMatches = requirement match
+            case RenderRequirement.Group(expected, clipped, rotated) =>
+              name.contains(expected) && clip.nonEmpty == clipped && rotation.nonEmpty == rotated
+            case _ => false
+          groupMatches || children.exists(satisfiesElement(_, requirement))
+
+    private def satisfiesPrimitive(primitive: DevicePrimitive, requirement: RenderRequirement): Boolean =
+      requirement match
+        case RenderRequirement.Primitive(name, kind) =>
+          primitiveName(primitive).contains(name) && primitiveKind(primitive) == kind
+        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, alpha) =>
+          primitiveName(primitive).contains(name) &&
+            primitiveParams(primitive).exists { gp =>
+              gp.stroke == stroke && gp.fill == fill && gp.lineWidth == lineWidth &&
+              gp.lineType == lineType && gp.alpha == alpha
+            }
+        case RenderRequirement.Text(name, horizontal, vertical, rotated) =>
+          primitive match
+            case DevicePrimitive.TextRun(_, _, _, h, v, rotation, _, _, _, primitiveName) =>
+              primitiveName.contains(name) && h == horizontal && v == vertical && (rotation != 0.0) == rotated
+            case _ => false
+        case RenderRequirement.Group(_, _, _) => false
+
+    private def primitiveKind(primitive: DevicePrimitive): RenderPrimitiveKind =
+      primitive match
+        case DevicePrimitive.Disc(_, _, _, _, _) =>
+          RenderPrimitiveKind.Disc
+        case DevicePrimitive.Polyline(_, closed, _, _) =>
+          if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline
+        case DevicePrimitive.RectShape(_, _, _, _, _, _) =>
+          RenderPrimitiveKind.Rectangle
+        case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, _) =>
+          RenderPrimitiveKind.Text
+
+    private def primitiveParams(primitive: DevicePrimitive): Option[GraphicParams] =
+      primitive match
+        case DevicePrimitive.Disc(_, _, _, gp, _) => Some(gp)
+        case DevicePrimitive.Polyline(_, _, gp, _) => Some(gp)
+        case DevicePrimitive.RectShape(_, _, _, _, gp, _) => Some(gp)
+        case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, gp, _) => Some(gp)
 
     private def firstNonFinite(elements: Vector[DeviceElement]): Option[String] =
       elements.iterator.map(nonFinite).collectFirst { case Some(problem) => problem }
@@ -62,6 +111,7 @@ class SceneConformanceSuite extends munit.FunSuite:
     )
     assert(cases.forall(!_.scene.isEmpty))
     assert(cases.forall(_.markers.nonEmpty))
+    assert(cases.exists(_.requirements.nonEmpty))
     assertEquals(cases.map(_.name.value).distinct.length, cases.length)
   }
 
@@ -105,5 +155,6 @@ class SceneConformanceSuite extends munit.FunSuite:
       override def containsMarker(out: String, name: GraphicsName): Boolean = false
     val violations = RendererConformance.check(BlindHarness).fold(e => fail(e.message), identity)
     assert(violations.nonEmpty)
-    assert(violations.forall(_.problem.startsWith("missing marker")))
+    assert(violations.exists(_.problem.startsWith("missing marker")))
+    assert(violations.exists(_.problem.startsWith("missing semantic requirement")))
   }

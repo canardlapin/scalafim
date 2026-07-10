@@ -30,7 +30,8 @@ object SvgRenderer:
         .left
         .map(SvgRenderError.Graphics(_))
       deviceScene <- DeviceScene.fromScene(scene, device).left.map(SvgRenderError.Graphics(_))
-    yield SvgDocument(serialize(deviceScene, options))
+      serialized <- serialize(deviceScene, options)
+    yield SvgDocument(serialized)
 
   private final class ClipRegistry:
     private val builder = Vector.newBuilder[DeviceClip]
@@ -45,7 +46,10 @@ object SvgRenderer:
     def defs: Vector[(String, DeviceClip)] =
       builder.result().zipWithIndex.map { case (clip, idx) => (s"clip-$idx", clip) }
 
-  private def serialize(scene: DeviceScene, options: SvgOptions): String =
+  private def serialize(scene: DeviceScene, options: SvgOptions): Either[SvgRenderError, String] =
+    validateDocument(scene, options).map(_ => serializeValidated(scene, options))
+
+  private def serializeValidated(scene: DeviceScene, options: SvgOptions): String =
     val out = new StringBuilder
     val clips = new ClipRegistry
     line(
@@ -70,6 +74,75 @@ object SvgRenderer:
       line(out, 1, "</defs>")
     line(out, 0, "</svg>")
     out.result()
+
+  private def validateDocument(scene: DeviceScene, options: SvgOptions): Either[SvgRenderError, Unit] =
+    val title = options.title match
+      case Some(value) => validateXml("document title", value)
+      case None        => Right(())
+    title.flatMap(_ => validateElements(scene.elements))
+
+  private def validateElements(elements: Vector[DeviceElement]): Either[SvgRenderError, Unit] =
+    var idx = 0
+    var result: Either[SvgRenderError, Unit] = Right(())
+    while idx < elements.length && result.isRight do
+      result = validateElement(elements(idx))
+      idx += 1
+    result
+
+  private def validateElement(element: DeviceElement): Either[SvgRenderError, Unit] =
+    element match
+      case DeviceElement.Mark(primitive) =>
+        validatePrimitive(primitive)
+      case DeviceElement.Group(name, _, _, children) =>
+        validateName(name).flatMap(_ => validateElements(children))
+
+  private def validatePrimitive(primitive: DevicePrimitive): Either[SvgRenderError, Unit] =
+    primitive match
+      case DevicePrimitive.Disc(_, _, _, _, name) =>
+        validateName(name)
+      case DevicePrimitive.Polyline(_, _, _, name) =>
+        validateName(name)
+      case DevicePrimitive.RectShape(_, _, _, _, _, name) =>
+        validateName(name)
+      case DevicePrimitive.TextRun(label, _, _, _, _, _, _, fontFamily, _, name) =>
+        val family = fontFamily match
+          case Some(value) => validateXml("font family", value)
+          case None        => Right(())
+        validateName(name)
+          .flatMap(_ => family)
+          .flatMap(_ => validateXml("text label", label))
+
+  private def validateName(name: Option[GraphicsName]): Either[SvgRenderError, Unit] =
+    name match
+      case Some(value) => validateXml("data name", value.value)
+      case None        => Right(())
+
+  private def validateXml(field: String, value: String): Either[SvgRenderError, Unit] =
+    firstInvalidXmlCodePoint(value) match
+      case Some(codePoint) => Left(SvgRenderError.InvalidXmlCharacter(field, codePoint))
+      case None            => Right(())
+
+  private def firstInvalidXmlCodePoint(value: String): Option[Int] =
+    var index = 0
+    var invalid: Option[Int] = None
+    while index < value.length && invalid.isEmpty do
+      val first = value.charAt(index)
+      val paired =
+        java.lang.Character.isHighSurrogate(first) &&
+          index + 1 < value.length &&
+          java.lang.Character.isLowSurrogate(value.charAt(index + 1))
+      val codePoint =
+        if paired then java.lang.Character.toCodePoint(first, value.charAt(index + 1))
+        else first.toInt
+      if !isXmlCodePoint(codePoint) then invalid = Some(codePoint)
+      index += (if paired then 2 else 1)
+    invalid
+
+  private def isXmlCodePoint(value: Int): Boolean =
+    value == 0x9 || value == 0xa || value == 0xd ||
+      (value >= 0x20 && value <= 0xd7ff) ||
+      (value >= 0xe000 && value <= 0xfffd) ||
+      (value >= 0x10000 && value <= 0x10ffff)
 
   private def writeElement(element: DeviceElement, out: StringBuilder, indent: Int, clips: ClipRegistry): Unit =
     element match

@@ -13,11 +13,13 @@ Current scope:
 - points, lines, segments, rectangles, circles, text, and groups;
 - basic graphical parameters: stroke, fill, alpha, line width/type, font family,
   and font size;
-- nested SVG viewport wrappers with `viewBox`, `overflow`, and optional
-  rotation;
+- resolved device-space groups with clip paths and optional rotation;
 - renderer-neutral `Axis` output: baselines, tick marks, and labels.
 
-Unsupported units and unit expressions return typed `SvgRenderError` values.
+Unsupported units, oversized device attributes, and XML-illegal text return
+typed `SvgRenderError` values.
+JVM tests additionally parse every conformance document with the platform XML
+parser; shared JVM/Scala.js tests pin identical serialization behavior.
 That is intentional: a backend should expose missing layout semantics instead of
 silently inventing device-specific behavior.
 

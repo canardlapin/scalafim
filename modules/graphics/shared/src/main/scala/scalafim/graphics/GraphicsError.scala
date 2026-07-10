@@ -25,6 +25,7 @@ enum GraphicsError:
   case InvalidLayoutCoordinate(kind: String, value: Double)
   case InvalidDeviceSize(width: Double, height: Double)
   case InvalidDeviceResolution(pixelsPerInch: Double)
+  case InvalidDeviceValue(field: String, value: Double)
   case UnresolvableLength(description: String)
   case LayoutOverflow(region: String)
   case InvalidRangeExpansion(multiplicative: Double, additive: Double, zeroWidth: Double)
@@ -83,6 +84,8 @@ enum GraphicsError:
         s"device size must be finite and positive: ${width}x$height"
       case InvalidDeviceResolution(pixelsPerInch) =>
         s"device resolution must be finite and positive: $pixelsPerInch"
+      case InvalidDeviceValue(field, value) =>
+        s"device $field must be finite with magnitude <= 1e13: $value"
       case UnresolvableLength(description) =>
         s"length cannot be resolved to device pixels: $description"
       case LayoutOverflow(region) =>
