@@ -303,7 +303,6 @@ object Viewport:
 
 sealed trait Grob:
   def name: Option[GraphicsName]
-  def gp: GraphicParams
   def viewport: Option[Viewport]
   def children: Vector[Grob] =
     Vector.empty
@@ -362,6 +361,18 @@ object Grob:
       name: Option[GraphicsName]
   ) extends Grob:
     require(rotationDegrees.isFinite, "`rotationDegrees` must be finite")
+
+  final case class Image private[graphics] (
+      image: RasterImage,
+      at: Point,
+      size: Size,
+      anchor: Anchor,
+      interpolation: RasterInterpolation,
+      alpha: Double,
+      viewport: Option[Viewport],
+      name: Option[GraphicsName]
+  ) extends Grob:
+    require(alpha.isFinite && alpha >= 0.0 && alpha <= 1.0, "`alpha` must be in [0, 1]")
 
   final case class Group private[graphics] (
       override val children: Vector[Grob],
@@ -459,6 +470,31 @@ object Grob:
       name: Option[GraphicsName] = None
   ): Grob =
     text(label, at, anchor, rotationDegrees, gp, viewport, name).orThrow
+
+  def image(
+      image: RasterImage,
+      at: Point,
+      size: Size,
+      anchor: Anchor = Anchor.Center,
+      interpolation: RasterInterpolation = RasterInterpolation.Nearest,
+      alpha: Double = 1.0,
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Grob] =
+    if !alpha.isFinite || alpha < 0.0 || alpha > 1.0 then Left(GraphicsError.InvalidAlpha(alpha))
+    else Right(Image(image, at, size, anchor, interpolation, alpha, viewport, name))
+
+  def imageUnsafe(
+      image: RasterImage,
+      at: Point,
+      size: Size,
+      anchor: Anchor = Anchor.Center,
+      interpolation: RasterInterpolation = RasterInterpolation.Nearest,
+      alpha: Double = 1.0,
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Grob =
+    Grob.image(image, at, size, anchor, interpolation, alpha, viewport, name).orThrow
 
   def group(
       children: Vector[Grob],

@@ -13,6 +13,7 @@ enum RenderPrimitiveKind:
   case Polygon
   case Rectangle
   case Text
+  case Image
 
 /** Backend-neutral facts that must be observable in renderer output. Unlike a
   * marker-only smoke check, these requirements pin primitive choice, styles,
@@ -30,6 +31,12 @@ enum RenderRequirement:
       alpha: Double
   )
   case Text(name: GraphicsName, horizontal: HJust, vertical: VJust, rotated: Boolean)
+  case Image(
+      name: GraphicsName,
+      dimensions: RasterDimensions,
+      interpolation: RasterInterpolation,
+      alpha: Double
+  )
 
   def description: String =
     this match
@@ -41,6 +48,8 @@ enum RenderRequirement:
         s"style '${name.value}' with lineWidth=$lineWidth, lineType=$lineType, alpha=$alpha"
       case Text(name, horizontal, vertical, rotated) =>
         s"text '${name.value}' with anchor=($horizontal,$vertical) and rotated=$rotated"
+      case Image(name, dimensions, interpolation, alpha) =>
+        s"image '${name.value}' with ${dimensions.width}x${dimensions.height} pixels, interpolation=$interpolation, alpha=$alpha"
 
 /** One renderer conformance case: a scene, the family it exercises, and the
   * named grobs whose markers must survive into backend output.
@@ -117,6 +126,7 @@ object RendererConformance:
       shapes <- shapeCase
       rectAndCircle <- rectCircleCase
       text <- textCase
+      image <- imageCase
       clipped <- clippedViewportCase
       rotated <- rotatedViewportCase
       clippedAndRotated <- clippedRotatedViewportCase
@@ -131,6 +141,7 @@ object RendererConformance:
       shapes,
       rectAndCircle,
       text,
+      image,
       clipped,
       rotated,
       clippedAndRotated,
@@ -274,6 +285,40 @@ object RendererConformance:
               VJust.Top,
               rotated = true
             )
+          )
+        )
+      }
+
+  def imageCase: Either[GraphicsError, ConformanceCase] =
+    val dimensions = RasterDimensions.unsafe(2, 2)
+    val raster = RasterImage.unsafePacked(
+      dimensions,
+      Vector(
+        Rgba32.unsafe(220, 30, 30),
+        Rgba32.unsafe(30, 200, 60, 160),
+        Rgba32.unsafe(40, 80, 220),
+        Rgba32.unsafe(245, 210, 40, 0)
+      )
+    )
+    val name = GraphicsName.unsafe("conformance-image")
+    Grob
+      .image(
+        raster,
+        Point.npcUnsafe(0.5, 0.5),
+        Size.npcUnsafe(0.5, 0.5),
+        interpolation = RasterInterpolation.Nearest,
+        alpha = 0.8,
+        name = Some(name)
+      )
+      .map { grob =>
+        ConformanceCase(
+          GraphicsName.unsafe("image"),
+          ConformanceGroup.Primitive,
+          Scene(Vector(grob)),
+          Vector(name),
+          Vector(
+            RenderRequirement.Primitive(name, RenderPrimitiveKind.Image),
+            RenderRequirement.Image(name, dimensions, RasterInterpolation.Nearest, alpha = 0.8)
           )
         )
       }

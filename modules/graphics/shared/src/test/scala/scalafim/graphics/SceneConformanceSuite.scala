@@ -34,6 +34,7 @@ class SceneConformanceSuite extends munit.FunSuite:
         case DevicePrimitive.Polyline(_, _, _, name)         => name
         case DevicePrimitive.RectShape(_, _, _, _, _, name)  => name
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, name) => name
+        case DevicePrimitive.Image(_, _, _, _, _, _, _, name) => name
 
     private def satisfiesElement(element: DeviceElement, requirement: RenderRequirement): Boolean =
       element match
@@ -61,6 +62,12 @@ class SceneConformanceSuite extends munit.FunSuite:
             case DevicePrimitive.TextRun(_, _, _, h, v, rotation, _, _, _, primitiveName) =>
               primitiveName.contains(name) && h == horizontal && v == vertical && (rotation != 0.0) == rotated
             case _ => false
+        case RenderRequirement.Image(name, dimensions, interpolation, alpha) =>
+          primitive match
+            case DevicePrimitive.Image(image, _, _, _, _, actualInterpolation, actualAlpha, primitiveName) =>
+              primitiveName.contains(name) && image.dimensions == dimensions &&
+                actualInterpolation == interpolation && actualAlpha == alpha
+            case _ => false
         case RenderRequirement.Group(_, _, _) => false
 
     private def primitiveKind(primitive: DevicePrimitive): RenderPrimitiveKind =
@@ -73,6 +80,8 @@ class SceneConformanceSuite extends munit.FunSuite:
           RenderPrimitiveKind.Rectangle
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, _) =>
           RenderPrimitiveKind.Text
+        case DevicePrimitive.Image(_, _, _, _, _, _, _, _) =>
+          RenderPrimitiveKind.Image
 
     private def primitiveParams(primitive: DevicePrimitive): Option[GraphicParams] =
       primitive match
@@ -80,6 +89,7 @@ class SceneConformanceSuite extends munit.FunSuite:
         case DevicePrimitive.Polyline(_, _, gp, _) => Some(gp)
         case DevicePrimitive.RectShape(_, _, _, _, gp, _) => Some(gp)
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, gp, _) => Some(gp)
+        case DevicePrimitive.Image(_, _, _, _, _, _, _, _) => None
 
     private def firstNonFinite(elements: Vector[DeviceElement]): Option[String] =
       elements.iterator.map(nonFinite).collectFirst { case Some(problem) => problem }
@@ -92,6 +102,7 @@ class SceneConformanceSuite extends munit.FunSuite:
             case DevicePrimitive.Polyline(points, _, _, _)          => points.flatMap(p => Vector(p.x, p.y))
             case DevicePrimitive.RectShape(x, y, w, h, _, _)        => Vector(x, y, w, h)
             case DevicePrimitive.TextRun(_, x, y, _, _, rot, fs, _, _, _) => Vector(x, y, rot, fs)
+            case DevicePrimitive.Image(_, x, y, w, h, _, alpha, _) => Vector(x, y, w, h, alpha)
           if values.forall(_.isFinite) then None
           else Some(s"non-finite device coordinate in $primitive")
         case DeviceElement.Group(_, _, _, children) =>

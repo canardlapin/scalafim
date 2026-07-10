@@ -35,6 +35,13 @@ class CanvasConformanceSuite extends munit.FunSuite:
               commandName.contains(name) && h == horizontal && v == vertical && (rotation != 0.0) == rotated
             case _ => false
           }
+        case RenderRequirement.Image(name, dimensions, interpolation, alpha) =>
+          out.commands.exists {
+            case CanvasCommand.Image(image, _, _, _, _, actualInterpolation, actualAlpha, commandName) =>
+              commandName.contains(name) && image.dimensions == dimensions &&
+                actualInterpolation == interpolation && actualAlpha == alpha
+            case _ => false
+          }
 
     override def validate(out: CanvasProgram): Option[String] =
       CanvasProgram.validate(out)
@@ -70,6 +77,7 @@ class CanvasConformanceSuite extends munit.FunSuite:
       case CanvasCommand.Polyline(_, _, _, name)             => name
       case CanvasCommand.Rectangle(_, _, _, _, _, name)      => name
       case CanvasCommand.Text(_, _, _, _, _, _, _, _, _, name) => name
+      case CanvasCommand.Image(_, _, _, _, _, _, _, name)       => name
       case CanvasCommand.Rotate(_, _, _) | CanvasCommand.ClipRect(_, _, _, _) => None
 
   private def primitiveKind(command: CanvasCommand): Option[RenderPrimitiveKind] =
@@ -79,6 +87,7 @@ class CanvasConformanceSuite extends munit.FunSuite:
         Some(if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline)
       case CanvasCommand.Rectangle(_, _, _, _, _, _) => Some(RenderPrimitiveKind.Rectangle)
       case CanvasCommand.Text(_, _, _, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Text)
+      case CanvasCommand.Image(_, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Image)
       case _ => None
 
   private def commandPaint(command: CanvasCommand): Option[CanvasPaint] =

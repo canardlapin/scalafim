@@ -1,7 +1,9 @@
 package scalafim.graphics.java2d
 
-import java.awt.{BasicStroke, Color, Font, Graphics2D, RenderingHints, Shape}
-import java.awt.geom.{Ellipse2D, Path2D, Rectangle2D}
+import java.awt.{AlphaComposite, BasicStroke, Color, Font, Graphics2D, RenderingHints, Shape}
+import java.awt.geom.{AffineTransform, Ellipse2D, Path2D, Rectangle2D}
+import java.awt.image.BufferedImage
+import scala.collection.mutable
 import scalafim.graphics.*
 
 final case class Java2DOptions private (width: Int, height: Int)
@@ -103,6 +105,16 @@ enum Java2DCommand:
       paint: Java2DPaint,
       name: Option[GraphicsName]
   )
+  case Image(
+      image: RasterImage,
+      x: Double,
+      y: Double,
+      width: Double,
+      height: Double,
+      interpolation: RasterInterpolation,
+      alpha: Double,
+      name: Option[GraphicsName]
+  )
   case Restore(name: Option[GraphicsName])
 
 final case class Java2DProgram private (
@@ -171,6 +183,8 @@ object Java2DProgram:
           Java2DPaint.text(gp),
           name
         )
+      case DevicePrimitive.Image(image, x, y, width, height, interpolation, alpha, name) =>
+        Java2DCommand.Image(image, x, y, width, height, interpolation, alpha, name)
 
   private def firstInvalidNumber(command: Java2DCommand): Option[String] =
     val values = command match
@@ -186,6 +200,8 @@ object Java2DProgram:
         Vector(x, y, width, height, paint.lineWidth, paint.opacity)
       case Java2DCommand.Text(_, x, y, _, _, rotation, fontSize, _, paint, _) =>
         Vector(x, y, rotation, fontSize, paint.opacity)
+      case Java2DCommand.Image(_, x, y, width, height, _, alpha, _) =>
+        Vector(x, y, width, height, alpha)
       case Java2DCommand.Save(_) | Java2DCommand.Restore(_) =>
         Vector.empty
     if values.forall(_.isFinite) then None else Some(s"non-finite numeric value in $command")
@@ -209,6 +225,7 @@ object Java2DRenderer:
 
   def draw(program: Java2DProgram, graphics: Graphics2D): Unit =
     var stack = List(graphics)
+    val images = mutable.HashMap.empty[RasterImage, BufferedImage]
     try
       program.commands.foreach {
         case Java2DCommand.Save(_) =>
@@ -217,12 +234,16 @@ object Java2DRenderer:
           stack.head.dispose()
           stack = stack.tail
         case command =>
-          execute(command, stack.head)
+          execute(command, stack.head, images)
       }
     finally
       stack.takeWhile(_ ne graphics).foreach(_.dispose())
 
-  private def execute(command: Java2DCommand, graphics: Graphics2D): Unit =
+  private def execute(
+      command: Java2DCommand,
+      graphics: Graphics2D,
+      images: mutable.Map[RasterImage, BufferedImage]
+  ): Unit =
     command match
       case Java2DCommand.Rotate(degrees, pivotX, pivotY) =>
         graphics.rotate(degrees * math.Pi / 180.0, pivotX, pivotY)
@@ -262,6 +283,19 @@ object Java2DRenderer:
           copy.setColor(color.awt(paint.opacity))
           copy.drawString(label, drawX.toFloat, baseline.toFloat)
         }
+      case Java2DCommand.Image(image, x, y, width, height, interpolation, alpha, _) =>
+        withCopy(graphics) { copy =>
+          val hint = interpolation match
+            case RasterInterpolation.Nearest => RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+            case RasterInterpolation.Smooth  => RenderingHints.VALUE_INTERPOLATION_BILINEAR
+          copy.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint)
+          copy.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha.toFloat))
+          val source = images.getOrElseUpdate(image, buffered(image))
+          val transform = new AffineTransform()
+          transform.translate(x, y)
+          transform.scale(width / image.width.toDouble, height / image.height.toDouble)
+          copy.drawImage(source, transform, null)
+        }
       case Java2DCommand.Save(_) | Java2DCommand.Restore(_) =>
         ()
 
@@ -296,6 +330,17 @@ object Java2DRenderer:
   private def antialias(graphics: Graphics2D): Unit =
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+
+  private def buffered(image: RasterImage): BufferedImage =
+    val output = new BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB)
+    val pixels = new Array[Int](image.dimensions.pixelCount)
+    var idx = 0
+    while idx < pixels.length do
+      val pixel = image.packedAt(idx)
+      pixels(idx) = (pixel.alpha << 24) | (pixel.red << 16) | (pixel.green << 8) | pixel.blue
+      idx += 1
+    output.setRGB(0, 0, image.width, image.height, pixels, 0, image.width)
+    output
 
   private def withCopy(graphics: Graphics2D)(body: Graphics2D => Unit): Unit =
     val copy = graphics.create().asInstanceOf[Graphics2D]

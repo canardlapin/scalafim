@@ -55,6 +55,11 @@ platform renderers should consume `DeviceScene` values at a boundary.
   validates the effective layer mapping before a renderer ever sees the layer.
 - Scene sizes and radii use `ExtentExpr`, not raw `LengthExpr`, so negative
   extents cannot enter primitive grobs through checked constructors.
+- Raster images use checked `RasterDimensions`, opaque packed `Rgba32` pixels,
+  and immutable `RasterImage` storage. Pixel rows are top-to-bottom; image
+  placement still follows the scene's y-up `Point`/`Anchor` rules. Nearest and
+  smooth interpolation are explicit, and file IO or platform image objects
+  never enter the shared grammar.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 
@@ -79,6 +84,7 @@ A backend implements `RendererHarness` and runs `RendererConformance.check`
 in its test suite; the shared `DeviceScene` lowering is the reference
 implementation. `graphics-svg` inspects serialized markup while
 `graphics-canvas` records deterministic Canvas commands; both must satisfy the
-same primitive, style, text-placement, clipping, and rotation requirements.
+same primitive, style, text-placement, raster-image, clipping, and rotation
+requirements.
 `graphics-java2d` independently adopts the same contract and adds raster-level
 `BufferedImage` assertions for JVM rendering behavior.

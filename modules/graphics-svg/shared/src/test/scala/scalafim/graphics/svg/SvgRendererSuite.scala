@@ -346,3 +346,37 @@ class SvgRendererSuite extends munit.FunSuite:
       Some(SvgRenderError.Graphics(GraphicsError.InvalidDeviceValue("line width", 1.0e308)))
     )
   }
+
+  test("embeds raster images as deterministic PNG data with explicit interpolation") {
+    val scene = RendererConformance.imageCase.fold(error => fail(error.message), identity).scene
+    val first = render(scene, SvgOptions.unsafe(width = 100, height = 80))
+    val second = render(scene, SvgOptions.unsafe(width = 100, height = 80))
+
+    assertEquals(first, second)
+    assert(first.contains("""<image data-name="conformance-image" data-pixel-width="2" data-pixel-height="2"""))
+    assert(first.contains("""x="25" y="20" width="50" height="40"""))
+    assert(first.contains("""preserveAspectRatio="none" image-rendering="pixelated" opacity="0.8"""))
+    assert(first.contains("""href="data:image/png;base64,iVBORw0KGgo"""))
+  }
+
+  test("smooth images retain scene z-order") {
+    val source = RendererConformance.imageCase.fold(error => fail(error.message), identity).scene.grobs.head
+      .asInstanceOf[Grob.Image]
+    val image = Grob.imageUnsafe(
+      source.image,
+      source.at,
+      source.size,
+      interpolation = RasterInterpolation.Smooth,
+      name = Some(GraphicsName.unsafe("smooth-image"))
+    )
+    val overlay = Grob.rectUnsafe(
+      Point.npcUnsafe(0.5, 0.5),
+      Size.npcUnsafe(0.1, 0.1),
+      name = Some(GraphicsName.unsafe("image-overlay"))
+    )
+    val svg = render(Scene(Vector(image, overlay)), SvgOptions.unsafe(width = 100, height = 80))
+
+    assert(svg.contains("""data-name="smooth-image"""))
+    assert(svg.contains("""image-rendering="auto"""))
+    assert(svg.indexOf("""data-name="smooth-image""") < svg.indexOf("""data-name="image-overlay"""))
+  }

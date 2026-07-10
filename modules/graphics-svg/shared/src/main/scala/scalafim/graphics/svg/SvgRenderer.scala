@@ -111,6 +111,8 @@ object SvgRenderer:
         validateName(name)
           .flatMap(_ => family)
           .flatMap(_ => validateXml("text label", label))
+      case DevicePrimitive.Image(_, _, _, _, _, _, _, name) =>
+        validateName(name)
 
   private def validateName(name: Option[GraphicsName]): Either[SvgRenderError, Unit] =
     name match
@@ -184,6 +186,17 @@ object SvgRenderer:
           out,
           indent,
           s"""<text${textAttrs(name, gp, fontSizePx, fontFamily)} x="${format(x)}" y="${format(y)}" text-anchor="${textAnchor(horizontal)}" dominant-baseline="${dominantBaseline(vertical)}"$rotation>${escapeText(label)}</text>"""
+        )
+      case DevicePrimitive.Image(image, x, y, width, height, interpolation, alpha, name) =>
+        val nameAttr = name.map(n => s""" data-name="${escapeAttr(n.value)}"""").getOrElse("")
+        val opacityAttr = if alpha == 1.0 then "" else s""" opacity="${format(alpha)}""""
+        val rendering = interpolation match
+          case RasterInterpolation.Nearest => "pixelated"
+          case RasterInterpolation.Smooth  => "auto"
+        line(
+          out,
+          indent,
+          s"""<image$nameAttr data-pixel-width="${image.width}" data-pixel-height="${image.height}" x="${format(x)}" y="${format(y)}" width="${format(width)}" height="${format(height)}" preserveAspectRatio="none" image-rendering="$rendering"$opacityAttr href="${PngEncoder.dataUri(image)}" />"""
         )
 
   private def commonAttrs(name: Option[GraphicsName], gp: GraphicParams): String =

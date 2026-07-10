@@ -1,6 +1,8 @@
 package scalafim.graphics.canvas
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Uint8ClampedArray
+import scala.collection.mutable
 import scalafim.graphics.*
 
 final case class CanvasOptions private (width: Int, height: Int)
@@ -109,6 +111,16 @@ enum CanvasCommand:
       paint: CanvasPaint,
       name: Option[GraphicsName]
   )
+  case Image(
+      image: RasterImage,
+      x: Double,
+      y: Double,
+      width: Double,
+      height: Double,
+      interpolation: RasterInterpolation,
+      alpha: Double,
+      name: Option[GraphicsName]
+  )
   case Restore(name: Option[GraphicsName])
 
 final case class CanvasProgram private (
@@ -174,6 +186,8 @@ object CanvasProgram:
           CanvasPaint.text(gp),
           name
         )
+      case DevicePrimitive.Image(image, x, y, width, height, interpolation, alpha, name) =>
+        CanvasCommand.Image(image, x, y, width, height, interpolation, alpha, name)
 
   private def firstInvalidNumber(command: CanvasCommand): Option[String] =
     val values = command match
@@ -189,12 +203,29 @@ object CanvasProgram:
         Vector(x, y, width, height, paint.lineWidth, paint.opacity)
       case CanvasCommand.Text(_, x, y, _, _, rotation, fontSize, _, paint, _) =>
         Vector(x, y, rotation, fontSize, paint.opacity)
+      case CanvasCommand.Image(_, x, y, width, height, _, alpha, _) =>
+        Vector(x, y, width, height, alpha)
       case CanvasCommand.Save(_) | CanvasCommand.Restore(_) =>
         Vector.empty
     if values.forall(_.isFinite) then None else Some(s"non-finite numeric value in $command")
 
 @js.native
+trait CanvasImageData extends js.Object:
+  val data: Uint8ClampedArray = js.native
+
+@js.native
+trait CanvasImageSource extends js.Object
+
+@js.native
+trait CanvasElement extends CanvasImageSource:
+  var width: Int = js.native
+  var height: Int = js.native
+  val ownerDocument: js.Dynamic = js.native
+  def getContext(kind: String): CanvasRenderingContext2D = js.native
+
+@js.native
 trait CanvasRenderingContext2D extends js.Object:
+  val canvas: CanvasElement = js.native
   var strokeStyle: js.Any = js.native
   var fillStyle: js.Any = js.native
   var globalAlpha: Double = js.native
@@ -202,6 +233,7 @@ trait CanvasRenderingContext2D extends js.Object:
   var font: String = js.native
   var textAlign: String = js.native
   var textBaseline: String = js.native
+  var imageSmoothingEnabled: Boolean = js.native
 
   def save(): Unit = js.native
   def restore(): Unit = js.native
@@ -218,6 +250,32 @@ trait CanvasRenderingContext2D extends js.Object:
   def rotate(angleRadians: Double): Unit = js.native
   def setLineDash(segments: js.Array[Double]): Unit = js.native
   def fillText(text: String, x: Double, y: Double): Unit = js.native
+  def createImageData(width: Int, height: Int): CanvasImageData = js.native
+  def putImageData(image: CanvasImageData, x: Double, y: Double): Unit = js.native
+  def drawImage(image: CanvasImageSource, x: Double, y: Double, width: Double, height: Double): Unit = js.native
+
+trait CanvasRasterFactory:
+  def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource
+
+object CanvasRasterFactory:
+  given browser: CanvasRasterFactory with
+    override def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
+      val canvas = target.canvas.ownerDocument.createElement("canvas").asInstanceOf[CanvasElement]
+      canvas.width = image.width
+      canvas.height = image.height
+      val imageContext = canvas.getContext("2d")
+      val imageData = imageContext.createImageData(image.width, image.height)
+      var idx = 0
+      while idx < image.dimensions.pixelCount do
+        val pixel = image.packedAt(idx)
+        val offset = idx * 4
+        imageData.data(offset) = pixel.red
+        imageData.data(offset + 1) = pixel.green
+        imageData.data(offset + 2) = pixel.blue
+        imageData.data(offset + 3) = pixel.alpha
+        idx += 1
+      imageContext.putImageData(imageData, 0.0, 0.0)
+      canvas
 
 object CanvasRenderer:
   def compile(scene: Scene, options: CanvasOptions = CanvasOptions.default): Either[CanvasRenderError, CanvasProgram] =
@@ -230,31 +288,36 @@ object CanvasRenderer:
       scene: Scene,
       context: CanvasRenderingContext2D,
       options: CanvasOptions = CanvasOptions.default
-  ): Either[CanvasRenderError, CanvasProgram] =
+  )(using factory: CanvasRasterFactory): Either[CanvasRenderError, CanvasProgram] =
     compile(scene, options).map { program =>
       draw(program, context)
       program
     }
 
-  def draw(program: CanvasProgram, context: CanvasRenderingContext2D): Unit =
+  def draw(program: CanvasProgram, context: CanvasRenderingContext2D)(using factory: CanvasRasterFactory): Unit =
     var openGroups = 0
+    val images = mutable.HashMap.empty[RasterImage, CanvasImageSource]
     try
       program.commands.foreach {
         case command @ CanvasCommand.Save(_) =>
-          execute(command, context)
+          execute(command, context, images)
           openGroups += 1
         case command @ CanvasCommand.Restore(_) =>
-          execute(command, context)
+          execute(command, context, images)
           openGroups -= 1
         case command =>
-          execute(command, context)
+          execute(command, context, images)
       }
     finally
       while openGroups > 0 do
         context.restore()
         openGroups -= 1
 
-  private def execute(command: CanvasCommand, context: CanvasRenderingContext2D): Unit =
+  private def execute(
+      command: CanvasCommand,
+      context: CanvasRenderingContext2D,
+      images: mutable.Map[RasterImage, CanvasImageSource]
+  )(using factory: CanvasRasterFactory): Unit =
     command match
       case CanvasCommand.Save(_) =>
         context.save()
@@ -301,6 +364,13 @@ object CanvasRenderer:
             context.translate(x, y)
             context.rotate(rotation * math.Pi / 180.0)
             context.fillText(label, 0.0, 0.0)
+        }
+      case CanvasCommand.Image(image, x, y, width, height, interpolation, alpha, _) =>
+        withSaved(context) {
+          context.globalAlpha = alpha
+          context.imageSmoothingEnabled = interpolation == RasterInterpolation.Smooth
+          val source = images.getOrElseUpdate(image, factory.create(image, context))
+          context.drawImage(source, x, y, width, height)
         }
 
   private def withSaved(context: CanvasRenderingContext2D)(body: => Unit): Unit =

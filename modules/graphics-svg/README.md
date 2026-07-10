@@ -10,10 +10,12 @@ core scene contract before adding interactive Canvas or JVM raster backends.
 Current scope:
 
 - root SVG document options with explicit canvas size and optional title;
-- points, lines, segments, rectangles, circles, text, and groups;
+- points, lines, segments, rectangles, circles, text, raster images, and groups;
 - basic graphical parameters: stroke, fill, alpha, line width/type, font family,
   and font size;
 - resolved device-space groups with clip paths and optional rotation;
+- deterministic embedded RGBA PNG images with explicit nearest/smooth
+  interpolation policy;
 - renderer-neutral `Axis` output: baselines, tick marks, and labels.
 
 Unsupported units, oversized device attributes, and XML-illegal text return

@@ -35,6 +35,13 @@ class Java2DConformanceSuite extends munit.FunSuite:
               commandName.contains(name) && h == horizontal && v == vertical && (rotation != 0.0) == rotated
             case _ => false
           }
+        case RenderRequirement.Image(name, dimensions, interpolation, alpha) =>
+          out.commands.exists {
+            case Java2DCommand.Image(image, _, _, _, _, actualInterpolation, actualAlpha, commandName) =>
+              commandName.contains(name) && image.dimensions == dimensions &&
+                actualInterpolation == interpolation && actualAlpha == alpha
+            case _ => false
+          }
 
     override def validate(out: Java2DProgram): Option[String] =
       Java2DProgram.validate(out)
@@ -70,6 +77,7 @@ class Java2DConformanceSuite extends munit.FunSuite:
       case Java2DCommand.Polyline(_, _, _, name)               => name
       case Java2DCommand.Rectangle(_, _, _, _, _, name)        => name
       case Java2DCommand.Text(_, _, _, _, _, _, _, _, _, name) => name
+      case Java2DCommand.Image(_, _, _, _, _, _, _, name)       => name
       case Java2DCommand.Rotate(_, _, _) | Java2DCommand.ClipRect(_, _, _, _) => None
 
   private def primitiveKind(command: Java2DCommand): Option[RenderPrimitiveKind] =
@@ -79,6 +87,7 @@ class Java2DConformanceSuite extends munit.FunSuite:
         Some(if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline)
       case Java2DCommand.Rectangle(_, _, _, _, _, _) => Some(RenderPrimitiveKind.Rectangle)
       case Java2DCommand.Text(_, _, _, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Text)
+      case Java2DCommand.Image(_, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Image)
       case _ => None
 
   private def commandPaint(command: Java2DCommand): Option[Java2DPaint] =

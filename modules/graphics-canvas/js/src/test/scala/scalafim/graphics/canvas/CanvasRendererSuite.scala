@@ -2,6 +2,7 @@ package scalafim.graphics.canvas
 
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.Uint8ClampedArray
 import scalafim.graphics.*
 
 class CanvasRendererSuite extends munit.FunSuite:
@@ -17,7 +18,15 @@ class CanvasRendererSuite extends munit.FunSuite:
       Size.npcUnsafe(0.2, 0.3),
       name = Some(GraphicsName.unsafe("second"))
     )
-    val scene = Scene(Vector(first, second))
+    val raster = RasterImage.solid(RasterDimensions.unsafe(1, 1), Rgba32.unsafe(20, 40, 60))
+    val image = Grob.imageUnsafe(
+      raster,
+      Point.npcUnsafe(0.5, 0.5),
+      Size.npcUnsafe(0.2, 0.2),
+      interpolation = RasterInterpolation.Smooth,
+      name = Some(GraphicsName.unsafe("middle"))
+    )
+    val scene = Scene(Vector(first, image, second))
     val options = CanvasOptions.unsafe(width = 200, height = 100)
 
     val left = CanvasRenderer.compile(scene, options).fold(e => fail(e.message), identity)
@@ -25,7 +34,12 @@ class CanvasRendererSuite extends munit.FunSuite:
 
     assertEquals(left, right)
     assert(left.commands(0).isInstanceOf[CanvasCommand.Disc])
-    assert(left.commands(1).isInstanceOf[CanvasCommand.Rectangle])
+    left.commands(1) match
+      case CanvasCommand.Image(_, _, _, _, _, interpolation, _, name) =>
+        assertEquals(interpolation, RasterInterpolation.Smooth)
+        assertEquals(name.map(_.value), Some("middle"))
+      case other => fail(s"unexpected middle command: $other")
+    assert(left.commands(2).isInstanceOf[CanvasCommand.Rectangle])
   }
 
   test("draw interprets the deterministic program against a Canvas 2D context") {
@@ -81,4 +95,54 @@ class CanvasRendererSuite extends munit.FunSuite:
       CanvasOptions(width = 0, height = 20).left.toOption,
       Some(CanvasRenderError.InvalidCanvasSize(0, 20))
     )
+  }
+
+  test("image execution uploads top-left RGBA bytes and applies placement policy") {
+    val bytes = new Uint8ClampedArray(16)
+    val imageData = js.Dynamic.literal(data = bytes).asInstanceOf[CanvasImageData]
+    var uploaded = false
+    var drawn = Vector.empty[Double]
+    val offscreenContext = js.Dynamic
+      .literal(
+        createImageData = ((_: Int, _: Int) => imageData): js.Function2[Int, Int, CanvasImageData],
+        putImageData = ((_: CanvasImageData, _: Double, _: Double) => uploaded = true): js.Function3[CanvasImageData, Double, Double, Unit]
+      )
+      .asInstanceOf[CanvasRenderingContext2D]
+    val offscreen = js.Dynamic
+      .literal(
+        width = 0,
+        height = 0,
+        getContext = ((_: String) => offscreenContext): js.Function1[String, CanvasRenderingContext2D]
+      )
+      .asInstanceOf[CanvasElement]
+    val document = js.Dynamic
+      .literal(
+        createElement = ((_: String) => offscreen): js.Function1[String, CanvasElement]
+      )
+    val rootCanvas = js.Dynamic.literal(ownerDocument = document).asInstanceOf[CanvasElement]
+    val context = js.Dynamic
+      .literal(
+        canvas = rootCanvas,
+        save = (() => ()): js.Function0[Unit],
+        restore = (() => ()): js.Function0[Unit],
+        drawImage = ((_: CanvasImageSource, x: Double, y: Double, width: Double, height: Double) =>
+          drawn = Vector(x, y, width, height)): js.Function5[CanvasImageSource, Double, Double, Double, Double, Unit],
+        globalAlpha = 1.0,
+        imageSmoothingEnabled = true
+      )
+      .asInstanceOf[CanvasRenderingContext2D]
+    val scene = RendererConformance.imageCase.fold(error => fail(error.message), identity).scene
+    val program = CanvasRenderer
+      .compile(scene, CanvasOptions.unsafe(width = 100, height = 80))
+      .fold(error => fail(error.message), identity)
+
+    CanvasRenderer.draw(program, context)
+
+    assert(uploaded)
+    assertEquals(offscreen.width, 2)
+    assertEquals(offscreen.height, 2)
+    assertEquals((0 until 8).map(idx => bytes(idx).toInt).toVector, Vector(220, 30, 30, 255, 30, 200, 60, 160))
+    assertEquals(drawn, Vector(25.0, 20.0, 50.0, 40.0))
+    assertEquals(context.globalAlpha, 0.8)
+    assertEquals(context.imageSmoothingEnabled, false)
   }

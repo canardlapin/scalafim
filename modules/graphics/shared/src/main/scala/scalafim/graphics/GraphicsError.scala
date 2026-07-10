@@ -9,6 +9,9 @@ enum GraphicsError:
   case InvalidLength(value: Double)
   case InvalidExtent(description: String)
   case InvalidColorChannel(channel: String, value: Int)
+  case InvalidRasterDimensions(width: Int, height: Int)
+  case RasterPixelCountMismatch(expected: Int, actual: Int)
+  case RasterPixelOutsideBounds(x: Int, y: Int, width: Int, height: Int)
   case InvalidAlpha(value: Double)
   case InvalidLineWidth(value: Double)
   case InvalidRotation(value: Double)
@@ -52,6 +55,12 @@ enum GraphicsError:
         s"extent must be provably non-negative: $description"
       case InvalidColorChannel(channel, value) =>
         s"color channel '$channel' must be in [0, 255]: $value"
+      case InvalidRasterDimensions(width, height) =>
+        s"raster dimensions must be positive with a representable pixel count: ${width}x$height"
+      case RasterPixelCountMismatch(expected, actual) =>
+        s"raster pixel count mismatch: expected $expected, found $actual"
+      case RasterPixelOutsideBounds(x, y, width, height) =>
+        s"raster pixel ($x, $y) is outside ${width}x$height"
       case InvalidAlpha(value) =>
         s"alpha must be finite and in [0, 1]: $value"
       case InvalidLineWidth(value) =>

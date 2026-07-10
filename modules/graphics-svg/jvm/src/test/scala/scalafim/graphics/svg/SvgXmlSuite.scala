@@ -1,6 +1,9 @@
 package scalafim.graphics.svg
 
-import java.io.StringReader
+import java.awt.Color
+import java.io.{ByteArrayInputStream, StringReader}
+import java.util.Base64
+import javax.imageio.ImageIO
 import javax.xml.parsers.DocumentBuilderFactory
 import org.xml.sax.InputSource
 import scalafim.graphics.*
@@ -39,6 +42,24 @@ class SvgXmlSuite extends munit.FunSuite:
     assertEquals(element.getTextContent, "activation & <signal> \ud83e\udde0")
     assertEquals(element.getAttributes.getNamedItem("data-name").getNodeValue, name.value)
     assertEquals(element.getAttributes.getNamedItem("font-family").getNodeValue, "A&B \"Sans\"")
+  }
+
+  test("embedded PNG pixels preserve top-left row order and alpha") {
+    val scene = RendererConformance.imageCase.fold(error => fail(error.message), identity).scene
+    val svg = SvgRenderer
+      .render(scene, SvgOptions.unsafe(width = 100, height = 80))
+      .fold(error => fail(error.message), identity)
+    val element = parse(svg.value).getElementsByTagName("image").item(0)
+    val uri = element.getAttributes.getNamedItem("href").getNodeValue
+    val bytes = Base64.getDecoder.decode(uri.stripPrefix("data:image/png;base64,"))
+    val image = ImageIO.read(new ByteArrayInputStream(bytes))
+
+    assertEquals(image.getWidth, 2)
+    assertEquals(image.getHeight, 2)
+    assertEquals(new Color(image.getRGB(0, 0), true), new Color(220, 30, 30, 255))
+    assertEquals(new Color(image.getRGB(1, 0), true), new Color(30, 200, 60, 160))
+    assertEquals(new Color(image.getRGB(0, 1), true), new Color(40, 80, 220, 255))
+    assertEquals(new Color(image.getRGB(1, 1), true).getAlpha, 0)
   }
 
   private def parse(value: String): org.w3c.dom.Document =

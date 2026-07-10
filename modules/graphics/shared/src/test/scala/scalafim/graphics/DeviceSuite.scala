@@ -288,3 +288,40 @@ class DeviceSuite extends munit.FunSuite:
       case _ => false
     })
   }
+
+  test("images lower with rectangle-consistent anchors and top-left pixel order") {
+    val raster = RasterImage
+      .fromPacked(
+        RasterDimensions.unsafe(2, 1),
+        Vector(Rgba32.unsafe(255, 0, 0), Rgba32.unsafe(0, 0, 255))
+      )
+      .toOption
+      .get
+    val grob = Grob
+      .image(
+        raster,
+        Point.npcUnsafe(0.5, 0.5),
+        Size.npcUnsafe(0.4, 0.2),
+        anchor = Anchor.BottomLeft,
+        interpolation = RasterInterpolation.Nearest,
+        alpha = 0.75,
+        name = Some(GraphicsName.unsafe("device-image"))
+      )
+      .toOption
+      .get
+    val scene = DeviceScene.fromScene(Scene(Vector(grob)), device).toOption.get
+
+    scene.elements match
+      case Vector(DeviceElement.Mark(image: DevicePrimitive.Image)) =>
+        assertEqualsDouble(image.x, 100.0, tol)
+        assertEqualsDouble(image.y, 30.0, tol)
+        assertEqualsDouble(image.width, 80.0, tol)
+        assertEqualsDouble(image.height, 20.0, tol)
+        assertEquals(image.image.pixelUnsafe(0, 0), Rgba32.unsafe(255, 0, 0))
+        assertEquals(image.image.pixelUnsafe(1, 0), Rgba32.unsafe(0, 0, 255))
+        assertEquals(image.interpolation, RasterInterpolation.Nearest)
+        assertEqualsDouble(image.alpha, 0.75, tol)
+        assertEquals(image.name.map(_.value), Some("device-image"))
+      case other =>
+        fail(s"unexpected device elements: $other")
+  }

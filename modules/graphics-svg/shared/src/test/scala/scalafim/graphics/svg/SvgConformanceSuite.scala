@@ -27,6 +27,7 @@ class SvgConformanceSuite extends munit.FunSuite:
               case RenderPrimitiveKind.Polygon   => "<polygon"
               case RenderPrimitiveKind.Rectangle => "<rect"
               case RenderPrimitiveKind.Text      => "<text"
+              case RenderPrimitiveKind.Image     => "<image"
             line.startsWith(prefix)
           }
         case RenderRequirement.Group(name, clipped, rotated) =>
@@ -50,6 +51,17 @@ class SvgConformanceSuite extends munit.FunSuite:
             line.contains(s""" text-anchor="${textAnchor(horizontal)}"""") &&
             line.contains(s""" dominant-baseline="${textBaseline(vertical)}"""") &&
             line.contains(" transform=\"rotate(") == rotated
+          }
+        case RenderRequirement.Image(name, dimensions, interpolation, alpha) =>
+          namedLines(out, name).exists { line =>
+            val rendering = interpolation match
+              case RasterInterpolation.Nearest => "pixelated"
+              case RasterInterpolation.Smooth  => "auto"
+            line.startsWith("<image") &&
+            line.contains(s""" data-pixel-width="${dimensions.width}"""") &&
+            line.contains(s""" data-pixel-height="${dimensions.height}"""") &&
+            line.contains(s""" image-rendering="$rendering"""") &&
+            hasOpacity(line, alpha)
           }
 
     override def validate(out: String): Option[String] =

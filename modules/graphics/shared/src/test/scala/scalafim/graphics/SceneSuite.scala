@@ -43,6 +43,11 @@ class SceneSuite extends munit.FunSuite:
       case GraphicsError.InvalidRotation(value) => value.isNaN
       case _                                    => false
     })
+    val image = RasterImage.solid(RasterDimensions.unsafe(1, 1), Rgba32.unsafe(0, 0, 0))
+    assert(Grob.image(image, p0, Size.npcUnsafe(0.5, 0.5), alpha = Double.NaN).left.toOption.exists {
+      case GraphicsError.InvalidAlpha(value) => value.isNaN
+      case _                                 => false
+    })
   }
 
   test("length expressions preserve symbolic unit composition") {

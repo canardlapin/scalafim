@@ -234,6 +234,16 @@ enum DevicePrimitive:
       gp: GraphicParams,
       name: Option[GraphicsName]
   )
+  case Image(
+      image: RasterImage,
+      x: Double,
+      y: Double,
+      width: Double,
+      height: Double,
+      interpolation: RasterInterpolation,
+      alpha: Double,
+      name: Option[GraphicsName]
+  )
 
 final case class DeviceClip(x: Double, y: Double, width: Double, height: Double)
 
@@ -333,6 +343,16 @@ object DeviceScene:
             "text y" -> y,
             "rotation" -> rotationDegrees,
             "font size" -> fontSizePx
+          )
+        )
+      case DevicePrimitive.Image(_, x, y, width, height, _, alpha, _) =>
+        validateNumbers(
+          Vector(
+            "image x" -> x,
+            "image y" -> y,
+            "image width" -> width,
+            "image height" -> height,
+            "image alpha" -> alpha
           )
         )
 
@@ -462,6 +482,8 @@ object DeviceScene:
               text.name
             )
           )
+      case image: Grob.Image =>
+        imageMark(image, resolver)
       case group: Grob.Group =>
         Left(GraphicsError.UnresolvableLength("group grobs have no marks"))
 
@@ -553,21 +575,50 @@ object DeviceScene:
       rect: Grob.Rect,
       resolver: LengthResolver
   ): Either[GraphicsError, Vector[DevicePrimitive]] =
+    anchoredBounds(rect.center, rect.size, rect.anchor, resolver).map { case (x, y, width, height) =>
+      Vector(DevicePrimitive.RectShape(x, y, width, height, rect.gp, rect.name))
+    }
+
+  private def imageMark(
+      image: Grob.Image,
+      resolver: LengthResolver
+  ): Either[GraphicsError, Vector[DevicePrimitive]] =
+    anchoredBounds(image.at, image.size, image.anchor, resolver).map { case (x, y, width, height) =>
+      Vector(
+        DevicePrimitive.Image(
+          image.image,
+          x,
+          y,
+          width,
+          height,
+          image.interpolation,
+          image.alpha,
+          image.name
+        )
+      )
+    }
+
+  private def anchoredBounds(
+      at: Point,
+      size: Size,
+      anchor: Anchor,
+      resolver: LengthResolver
+  ): Either[GraphicsError, (Double, Double, Double, Double)] =
     for
-      cx <- resolver.x(rect.center.x)
-      cy <- resolver.y(rect.center.y)
-      w <- resolver.width(rect.size.width)
-      h <- resolver.height(rect.size.height)
+      cx <- resolver.x(at.x)
+      cy <- resolver.y(at.y)
+      w <- resolver.width(size.width)
+      h <- resolver.height(size.height)
     yield
-      val x0 = rect.anchor.horizontal match
+      val x0 = anchor.horizontal match
         case HJust.Left   => cx
         case HJust.Center => cx - w / 2.0
         case HJust.Right  => cx - w
-      val y0 = rect.anchor.vertical match
+      val y0 = anchor.vertical match
         case VJust.Top    => cy
         case VJust.Center => cy - h / 2.0
         case VJust.Bottom => cy - h
-      Vector(DevicePrimitive.RectShape(x0, y0, w, h, rect.gp, rect.name))
+      (x0, y0, w, h)
 
   private def resolvePoints(
       points: Vector[Point],
