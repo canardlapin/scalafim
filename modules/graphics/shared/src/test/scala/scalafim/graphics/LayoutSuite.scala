@@ -52,8 +52,8 @@ class LayoutSuite extends munit.FunSuite:
           GuideSpec.Axis(
             AxisSide.Bottom,
             breaks = Breaks.countUnsafe(3),
-            tickLength = Some(0.2),
-            labelOffset = Some(0.4),
+            tickLength = Some(ExtentExpr.nativeUnsafe(0.2)),
+            labelOffset = Some(ExtentExpr.nativeUnsafe(0.4)),
             name = Some(GraphicsName.unsafe("x-guide"))
           ),
           layout
@@ -71,7 +71,13 @@ class LayoutSuite extends munit.FunSuite:
       baseline.segments,
       Vector((Point.nativeUnsafe(0.0, -1.0), Point.nativeUnsafe(10.0, -1.0)))
     )
-    assertEquals(ticks.segments(1), (Point.nativeUnsafe(5.0, -1.0), Point.nativeUnsafe(5.0, -1.2)))
+    assertEquals(
+      ticks.segments(1),
+      (
+        Point.nativeUnsafe(5.0, -1.0),
+        Point(LengthExpr.nativeUnsafe(5.0), LengthExpr.nativeUnsafe(-1.0) - ExtentExpr.nativeUnsafe(0.2))
+      )
+    )
   }
 
   test("legend guides lower to stable marker and label grobs") {
@@ -116,4 +122,86 @@ class LayoutSuite extends munit.FunSuite:
       )
 
     assertEquals(GuideSpec.lower(guide, layout).left.toOption, Some(GraphicsError.EmptyGeometry("legend")))
+  }
+
+  test("default axis offsets follow point policy across device sizes") {
+    val spec = GuideSpec.Axis(
+      AxisSide.Bottom,
+      ticks = Some(Vector(AxisTick.unsafe(5.0, "5"))),
+      name = Some(GraphicsName.unsafe("policy-axis"))
+    )
+    val policy = LayoutPolicy(tickLengthPt = 6.0, tickLabelGapPt = 3.0)
+
+    def offsets(device: DeviceContext): (Double, Double) =
+      val guide = GuideSpec.lower(spec, layout, policy = policy).fold(e => fail(e.message), identity)
+      val scene = DeviceScene.fromScene(Scene(Vector(guide.grob)), device).fold(e => fail(e.message), identity)
+      val marks = scene.elements match
+        case Vector(DeviceElement.Group(_, _, _, children)) =>
+          children.collect { case DeviceElement.Mark(mark) => mark }
+        case other =>
+          fail(s"unexpected axis device scene: $other")
+      val tick = marks.collectFirst {
+        case line: DevicePrimitive.Polyline if line.name.exists(_.value == "policy-axis-ticks") => line
+      }.getOrElse(fail("missing policy-axis tick"))
+      val label = marks.collectFirst {
+        case text: DevicePrimitive.TextRun if text.name.exists(_.value == "policy-axis-label") => text
+      }.getOrElse(fail("missing policy-axis label"))
+      val baselineY = tick.points.head.y
+      (math.abs(tick.points.last.y - baselineY), math.abs(label.y - baselineY))
+
+    val small = offsets(DeviceContext.unsafe(640.0, 480.0))
+    val large = offsets(DeviceContext.unsafe(1280.0, 960.0))
+    val pxPerPt = 96.0 / 72.0
+    assertEqualsDouble(small._1, 6.0 * pxPerPt, 1e-9)
+    assertEqualsDouble(small._2, 9.0 * pxPerPt, 1e-9)
+    assertEqualsDouble(large._1, small._1, 1e-9)
+    assertEqualsDouble(large._2, small._2, 1e-9)
+  }
+
+  test("default legend spacing clears point-sized keys and the title") {
+    val name = GraphicsName.unsafe("absolute-legend")
+    val legend = GuideSpec.Legend(
+      title = Some("condition"),
+      entries = Vector(
+        LegendEntry.colorUnsafe("A", Rgba.Black),
+        LegendEntry.colorUnsafe("B", Rgba.White)
+      ),
+      origin = Point.npcUnsafe(0.1, 0.9),
+      name = Some(name)
+    )
+    val viewport = Viewport.unsafe(
+      origin = Point.npcUnsafe(0.8, 0.2),
+      size = Size.npcUnsafe(0.12, 0.6),
+      clip = Clip.Off
+    )
+    val guide = GuideSpec
+      .lower(legend, layout, legendViewport = Some(viewport))
+      .fold(e => fail(e.message), identity)
+    val scene = DeviceScene
+      .fromScene(Scene(Vector(guide.grob)), DeviceContext.unsafe(640.0, 480.0))
+      .fold(e => fail(e.message), identity)
+    val marks = scene.elements match
+      case Vector(DeviceElement.Group(_, _, _, children)) =>
+        children.collect { case DeviceElement.Mark(mark) => mark }
+      case other =>
+        fail(s"unexpected legend device scene: $other")
+    val title = marks.collectFirst {
+      case text: DevicePrimitive.TextRun if text.name.exists(_.value == "absolute-legend-title") => text
+    }.getOrElse(fail("missing legend title"))
+    val firstKey = marks.collectFirst {
+      case disc: DevicePrimitive.Disc if disc.name.exists(_.value == "absolute-legend-entry-0-key") => disc
+    }.getOrElse(fail("missing first legend key"))
+    val secondKey = marks.collectFirst {
+      case disc: DevicePrimitive.Disc if disc.name.exists(_.value == "absolute-legend-entry-1-key") => disc
+    }.getOrElse(fail("missing second legend key"))
+    val firstLabel = marks.collectFirst {
+      case text: DevicePrimitive.TextRun if text.name.exists(_.value == "absolute-legend-entry-0-label") => text
+    }.getOrElse(fail("missing first legend label"))
+    val pxPerPt = 96.0 / 72.0
+
+    assertEqualsDouble(firstLabel.x - firstKey.centerX, 10.0 * pxPerPt, 1e-9)
+    assertEqualsDouble(firstLabel.x - firstKey.centerX - firstKey.radius, 5.0 * pxPerPt, 1e-9)
+    assertEqualsDouble(firstKey.centerY - title.y, 20.0 * pxPerPt, 1e-9)
+    assert((firstKey.centerY - firstKey.radius) > (title.y + title.fontSizePx), "title must clear the first key")
+    assertEqualsDouble(secondKey.centerY - firstKey.centerY, 20.0 * pxPerPt, 1e-9)
   }

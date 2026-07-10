@@ -65,6 +65,24 @@ class DeviceSuite extends munit.FunSuite:
     assertEqualsDouble(r.height(LengthExpr.nativeUnsafe(0.5)).toOption.get, 10.0, tol)
   }
 
+  test("location offsets resolve native terms as extents") {
+    val frame = DeviceFrame(
+      x = 0.0,
+      y = 0.0,
+      width = 100.0,
+      height = 100.0,
+      xScale = Interval.unsafe(10.0, 20.0),
+      yScale = Interval.unsafe(10.0, 20.0),
+      yDirection = YDirection.Up
+    )
+    val r = LengthResolver(DeviceContext.unsafe(100.0, 100.0), frame)
+    val right = LengthExpr.nativeUnsafe(12.0) + ExtentExpr.nativeUnsafe(1.0)
+    val down = LengthExpr.nativeUnsafe(12.0) - ExtentExpr.pointsUnsafe(7.5)
+
+    assertEqualsDouble(r.x(right).toOption.get, 30.0, tol)
+    assertEqualsDouble(r.y(down).toOption.get, 90.0, tol)
+  }
+
   test("axis-neutral extents take the smaller of width and height resolutions") {
     val r = rootResolver
     assertEqualsDouble(r.extent(ExtentExpr.npcUnsafe(0.1)).toOption.get, 10.0, tol)

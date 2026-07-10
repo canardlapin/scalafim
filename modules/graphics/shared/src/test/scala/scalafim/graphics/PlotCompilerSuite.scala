@@ -239,8 +239,8 @@ class PlotCompilerSuite extends munit.FunSuite:
       GuideSpec.Axis(
         AxisSide.Bottom,
         breaks = Breaks.countUnsafe(3),
-        tickLength = Some(0.1),
-        labelOffset = Some(0.2),
+        tickLength = Some(ExtentExpr.nativeUnsafe(0.1)),
+        labelOffset = Some(ExtentExpr.nativeUnsafe(0.2)),
         name = Some(GraphicsName.unsafe("x-guide"))
       )
     val plot =

@@ -157,6 +157,11 @@ final class LengthResolver(device: DeviceContext, val frame: DeviceFrame):
           l <- eval(left, horizontal, location)
           r <- eval(right, horizontal, location)
         yield l - r
+      case LengthExpr.Offset(base, extent, direction) =>
+        for
+          locationValue <- eval(base, horizontal, location = true)
+          extentValue <- eval(extent.expr, horizontal, location = false)
+        yield locationValue + direction * extentValue
       case LengthExpr.Mul(factor, value) =>
         eval(value, horizontal, location).map(factor * _)
 

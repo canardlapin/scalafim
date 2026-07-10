@@ -103,8 +103,8 @@ class SvgRendererSuite extends munit.FunSuite:
         .bottom(
           range,
           ticks,
-          tickLength = 0.4,
-          labelOffset = 0.8,
+          tickLength = ExtentExpr.nativeUnsafe(0.4),
+          labelOffset = ExtentExpr.nativeUnsafe(0.8),
           axisGp = GraphicParams.unsafe(lineWidth = 0.5),
           tickGp = GraphicParams.unsafe(lineWidth = 0.5),
           labelGp = GraphicParams.unsafe(fontSize = Length.pointsUnsafe(8.0)),

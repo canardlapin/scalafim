@@ -39,8 +39,13 @@ final case class LayoutPolicy(
     legendPaddingPt: Double = 6.0
 ):
   require(outerMarginPt >= 0.0 && outerMarginPt.isFinite, "`outerMarginPt` must be finite and >= 0")
+  require(tickLengthPt >= 0.0 && tickLengthPt.isFinite, "`tickLengthPt` must be finite and >= 0")
+  require(tickLabelGapPt >= 0.0 && tickLabelGapPt.isFinite, "`tickLabelGapPt` must be finite and >= 0")
   require(axisFontPt > 0.0 && axisFontPt.isFinite, "`axisFontPt` must be finite and > 0")
   require(legendFontPt > 0.0 && legendFontPt.isFinite, "`legendFontPt` must be finite and > 0")
+  require(legendKeyPt >= 0.0 && legendKeyPt.isFinite, "`legendKeyPt` must be finite and >= 0")
+  require(legendGapPt >= 0.0 && legendGapPt.isFinite, "`legendGapPt` must be finite and >= 0")
+  require(legendPaddingPt >= 0.0 && legendPaddingPt.isFinite, "`legendPaddingPt` must be finite and >= 0")
 
 /** Stable names for solver-allocated regions. */
 object PlotRegion:

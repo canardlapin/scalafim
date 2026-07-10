@@ -140,7 +140,12 @@ object PlotCompiler:
       ranges <- LayoutPhase.panelRangesFor(options, layers)
       specs <- GuidePhase.specs(options.guides, layers, ranges, relativeLegend = options.policy.nonEmpty)
       resolution <- LayoutPhase.assemble(plot.coord, options, ranges, specs)
-      guides <- GuidePhase.lower(resolution.layout, resolution.frames, specs)
+      guides <- GuidePhase.lower(
+        resolution.layout,
+        resolution.frames,
+        specs,
+        options.policy.getOrElse(LayoutPolicy())
+      )
     yield TrainedPlot(layers, resolution.layout, guides)
 
   private def resolveLayers[Row](

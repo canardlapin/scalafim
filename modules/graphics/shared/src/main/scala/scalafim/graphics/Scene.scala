@@ -45,6 +45,16 @@ sealed trait LengthExpr:
   def -(that: LengthExpr): LengthExpr =
     LengthExpr.Sub(this, that)
 
+  /** Translate a location by an extent. Unlike adding two raw length
+    * expressions, native units in `that` resolve as a delta rather than as a
+    * second location in the frame's scale.
+    */
+  def +(that: ExtentExpr): LengthExpr =
+    LengthExpr.Offset(this, that, 1.0)
+
+  def -(that: ExtentExpr): LengthExpr =
+    LengthExpr.Offset(this, that, -1.0)
+
   def times(factor: Double): Either[GraphicsError, LengthExpr] =
     if factor.isFinite then Right(LengthExpr.Mul(factor, this))
     else Left(GraphicsError.InvalidLength(factor))
@@ -53,6 +63,8 @@ object LengthExpr:
   final case class Const(length: Length) extends LengthExpr
   final case class Add private[graphics] (left: LengthExpr, right: LengthExpr) extends LengthExpr
   final case class Sub private[graphics] (left: LengthExpr, right: LengthExpr) extends LengthExpr
+  final case class Offset private[graphics] (location: LengthExpr, extent: ExtentExpr, direction: Double) extends LengthExpr:
+    require(direction.isFinite, "`direction` must be finite")
   final case class Mul private[graphics] (factor: Double, value: LengthExpr) extends LengthExpr:
     require(factor.isFinite, "`factor` must be finite")
 
@@ -120,6 +132,8 @@ object ExtentExpr:
         isProvablyNonNegative(left) && isProvablyNonNegative(right)
       case LengthExpr.Sub(_, _) =>
         false
+      case LengthExpr.Offset(_, _, _) =>
+        false
       case LengthExpr.Mul(factor, value) =>
         factor >= 0.0 && isProvablyNonNegative(value)
 
@@ -128,6 +142,7 @@ object ExtentExpr:
       case LengthExpr.Const(length) => s"${length.value} ${length.unit}"
       case LengthExpr.Add(_, _)     => "sum expression"
       case LengthExpr.Sub(_, _)     => "difference expression"
+      case LengthExpr.Offset(_, _, _) => "location-offset expression"
       case LengthExpr.Mul(_, _)     => "scaled expression"
 
 final case class Point(x: LengthExpr, y: LengthExpr)

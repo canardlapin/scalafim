@@ -392,8 +392,8 @@ object RendererConformance:
               GuideSpec.Axis(
                 AxisSide.Bottom,
                 breaks = Breaks.countUnsafe(3),
-                tickLength = Some(0.05),
-                labelOffset = Some(0.1),
+                tickLength = Some(ExtentExpr.nativeUnsafe(0.05)),
+                labelOffset = Some(ExtentExpr.nativeUnsafe(0.1)),
                 name = Some(GraphicsName.unsafe("scaled-x-axis"))
               ),
               GuideSpec.Legend(

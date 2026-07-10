@@ -34,8 +34,8 @@ final case class Axis private (
     range: Interval,
     ticks: Vector[AxisTick],
     position: Double,
-    tickLength: Double,
-    labelOffset: Double,
+    tickLength: ExtentExpr,
+    labelOffset: ExtentExpr,
     axisGp: GraphicParams,
     tickGp: GraphicParams,
     labelGp: GraphicParams,
@@ -50,11 +50,11 @@ final case class Axis private (
     val tickSegments =
       ticks.map { tick =>
         if side.isHorizontal then
-          val y2 = position + side.direction * tickLength
-          (Point.nativeUnsafe(tick.value, position), Point.nativeUnsafe(tick.value, y2))
+          val y2 = outward(position, tickLength)
+          (Point.nativeUnsafe(tick.value, position), Point(LengthExpr.nativeUnsafe(tick.value), y2))
         else
-          val x2 = position + side.direction * tickLength
-          (Point.nativeUnsafe(position, tick.value), Point.nativeUnsafe(x2, tick.value))
+          val x2 = outward(position, tickLength)
+          (Point.nativeUnsafe(position, tick.value), Point(x2, LengthExpr.nativeUnsafe(tick.value)))
       }
     for
       baselineGrob <- Grob.segments(Vector(baseline), axisGp, name = childName("baseline"))
@@ -75,9 +75,9 @@ final case class Axis private (
   private def labelGrob(tick: AxisTick): Grob =
     val at =
       if side.isHorizontal then
-        Point.nativeUnsafe(tick.value, position + side.direction * labelOffset)
+        Point(LengthExpr.nativeUnsafe(tick.value), outward(position, labelOffset))
       else
-        Point.nativeUnsafe(position + side.direction * labelOffset, tick.value)
+        Point(outward(position, labelOffset), LengthExpr.nativeUnsafe(tick.value))
     Grob.textUnsafe(
       tick.label,
       at,
@@ -85,6 +85,11 @@ final case class Axis private (
       gp = labelGp,
       name = childName("label")
     )
+
+  private def outward(position: Double, distance: ExtentExpr): LengthExpr =
+    val base = LengthExpr.nativeUnsafe(position)
+    if side.direction > 0.0 then base + distance
+    else base - distance
 
   private def labelAnchor: Anchor =
     side match
@@ -102,14 +107,14 @@ object Axis:
       range: Interval,
       ticks: Vector[AxisTick],
       position: Double = 0.0,
-      tickLength: Double = 0.4,
-      labelOffset: Double = 0.8,
+      tickLength: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
+      labelOffset: ExtentExpr = ExtentExpr.pointsUnsafe(8.0),
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
       name: Option[GraphicsName] = None
   ): Either[GraphicsError, Axis] =
-    validate(range, ticks, position, tickLength, labelOffset).map { _ =>
+    validate(range, ticks, position).map { _ =>
       new Axis(side, range, ticks, position, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
     }
 
@@ -117,8 +122,8 @@ object Axis:
       range: Interval,
       ticks: Vector[AxisTick],
       y: Double = 0.0,
-      tickLength: Double = 0.4,
-      labelOffset: Double = 0.8,
+      tickLength: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
+      labelOffset: ExtentExpr = ExtentExpr.pointsUnsafe(8.0),
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -130,8 +135,8 @@ object Axis:
       range: Interval,
       ticks: Vector[AxisTick],
       y: Double = 0.0,
-      tickLength: Double = 0.4,
-      labelOffset: Double = 0.8,
+      tickLength: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
+      labelOffset: ExtentExpr = ExtentExpr.pointsUnsafe(8.0),
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -143,8 +148,8 @@ object Axis:
       range: Interval,
       ticks: Vector[AxisTick],
       x: Double = 0.0,
-      tickLength: Double = 0.4,
-      labelOffset: Double = 0.8,
+      tickLength: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
+      labelOffset: ExtentExpr = ExtentExpr.pointsUnsafe(8.0),
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -156,8 +161,8 @@ object Axis:
       range: Interval,
       ticks: Vector[AxisTick],
       x: Double = 0.0,
-      tickLength: Double = 0.4,
-      labelOffset: Double = 0.8,
+      tickLength: ExtentExpr = ExtentExpr.pointsUnsafe(4.0),
+      labelOffset: ExtentExpr = ExtentExpr.pointsUnsafe(8.0),
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -187,13 +192,9 @@ object Axis:
   private def validate(
       range: Interval,
       ticks: Vector[AxisTick],
-      position: Double,
-      tickLength: Double,
-      labelOffset: Double
+      position: Double
   ): Either[GraphicsError, Unit] =
     if !position.isFinite then Left(GraphicsError.InvalidAxisCoordinate("position", position))
-    else if !tickLength.isFinite || tickLength < 0.0 then Left(GraphicsError.InvalidAxisCoordinate("tick length", tickLength))
-    else if !labelOffset.isFinite || labelOffset < 0.0 then Left(GraphicsError.InvalidAxisCoordinate("label offset", labelOffset))
     else
       ticks.find(tick => !range.contains(tick.value)) match
         case Some(tick) => Left(GraphicsError.AxisTickOutsideRange(tick.value, range.lower, range.upper))

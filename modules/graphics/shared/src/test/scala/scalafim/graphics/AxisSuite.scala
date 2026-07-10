@@ -11,8 +11,8 @@ class AxisSuite extends munit.FunSuite:
           range,
           ticks,
           y = 0.0,
-          tickLength = 0.4,
-          labelOffset = 0.8,
+          tickLength = ExtentExpr.nativeUnsafe(0.4),
+          labelOffset = ExtentExpr.nativeUnsafe(0.8),
           name = Some(GraphicsName.unsafe("x-axis"))
         )
         .flatMap(_.toGrob())
@@ -30,10 +30,19 @@ class AxisSuite extends munit.FunSuite:
     assertEquals(baseline.name.map(_.value), Some("x-axis-baseline"))
     assertEquals(baseline.segments, Vector((Point.nativeUnsafe(0.0, 0.0), Point.nativeUnsafe(10.0, 0.0))))
     assertEquals(ticksGrob.name.map(_.value), Some("x-axis-ticks"))
-    assertEquals(ticksGrob.segments(1), (Point.nativeUnsafe(5.0, 0.0), Point.nativeUnsafe(5.0, -0.4)))
+    assertEquals(
+      ticksGrob.segments(1),
+      (
+        Point.nativeUnsafe(5.0, 0.0),
+        Point(LengthExpr.nativeUnsafe(5.0), LengthExpr.nativeUnsafe(0.0) - ExtentExpr.nativeUnsafe(0.4))
+      )
+    )
     assertEquals(midpointLabel.name.map(_.value), Some("x-axis-label"))
     assertEquals(midpointLabel.label, "5")
-    assertEquals(midpointLabel.at, Point.nativeUnsafe(5.0, -0.8))
+    assertEquals(
+      midpointLabel.at,
+      Point(LengthExpr.nativeUnsafe(5.0), LengthExpr.nativeUnsafe(0.0) - ExtentExpr.nativeUnsafe(0.8))
+    )
     assertEquals(midpointLabel.anchor, Anchor(HJust.Center, VJust.Top))
   }
 
@@ -42,7 +51,13 @@ class AxisSuite extends munit.FunSuite:
     val ticks = Vector(AxisTick.unsafe(-1.0, "low"), AxisTick.unsafe(1.0, "high"))
     val axis =
       Axis
-        .left(range, ticks, x = 0.0, tickLength = 0.25, labelOffset = 0.5)
+        .left(
+          range,
+          ticks,
+          x = 0.0,
+          tickLength = ExtentExpr.nativeUnsafe(0.25),
+          labelOffset = ExtentExpr.nativeUnsafe(0.5)
+        )
         .flatMap(_.toGrob())
         .toOption
         .get
@@ -51,8 +66,17 @@ class AxisSuite extends munit.FunSuite:
     val tickGrob = axis.children(1).asInstanceOf[Grob.Segments]
     val firstLabel = axis.children(2).asInstanceOf[Grob.Text]
 
-    assertEquals(tickGrob.segments.head, (Point.nativeUnsafe(0.0, -1.0), Point.nativeUnsafe(-0.25, -1.0)))
-    assertEquals(firstLabel.at, Point.nativeUnsafe(-0.5, -1.0))
+    assertEquals(
+      tickGrob.segments.head,
+      (
+        Point.nativeUnsafe(0.0, -1.0),
+        Point(LengthExpr.nativeUnsafe(0.0) - ExtentExpr.nativeUnsafe(0.25), LengthExpr.nativeUnsafe(-1.0))
+      )
+    )
+    assertEquals(
+      firstLabel.at,
+      Point(LengthExpr.nativeUnsafe(0.0) - ExtentExpr.nativeUnsafe(0.5), LengthExpr.nativeUnsafe(-1.0))
+    )
     assertEquals(firstLabel.anchor, Anchor(HJust.Right, VJust.Center))
   }
 
@@ -67,10 +91,7 @@ class AxisSuite extends munit.FunSuite:
       Axis.bottom(range, Vector(AxisTick.unsafe(2.0, "outside"))).left.toOption,
       Some(GraphicsError.AxisTickOutsideRange(2.0, 0.0, 1.0))
     )
-    assertEquals(
-      Axis.bottom(range, Vector.empty, tickLength = -1.0).left.toOption,
-      Some(GraphicsError.InvalidAxisCoordinate("tick length", -1.0))
-    )
+    assert(ExtentExpr.native(-1.0).isLeft, "negative axis extents must be unrepresentable")
   }
 
   test("tick generation rejects labeler count mismatches") {

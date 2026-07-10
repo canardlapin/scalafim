@@ -574,7 +574,8 @@ private[graphics] object GuidePhase:
   def lower(
       layout: Option[PanelLayout],
       frames: Option[PlotFrames],
-      specs: Vector[GuideSpec]
+      specs: Vector[GuideSpec],
+      policy: LayoutPolicy = LayoutPolicy()
   ): Either[GraphicsError, Vector[ResolvedGuide]] =
     if specs.isEmpty then Right(Vector.empty)
     else
@@ -587,7 +588,7 @@ private[graphics] object GuidePhase:
           var idx = 0
           var result: Either[GraphicsError, Unit] = Right(())
           while idx < specs.length && result.isRight do
-            result = GuideSpec.lower(specs(idx), panel, legendViewport).map { guide =>
+            result = GuideSpec.lower(specs(idx), panel, legendViewport, policy).map { guide =>
               out += guide
               ()
             }

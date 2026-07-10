@@ -96,11 +96,6 @@ final case class PanelLayout(
       case AxisSide.Left   => xScale.lower
       case AxisSide.Right  => xScale.upper
 
-  private[graphics] def perpendicularSpan(side: AxisSide): Double =
-    val span =
-      if side.isHorizontal then yScale.width else xScale.width
-    if span == 0.0 then 1.0 else span
-
 object PanelLayout:
   def unit(xScale: Interval, yScale: Interval, clip: Clip = Clip.On): PanelLayout =
     PanelLayout(
@@ -145,8 +140,8 @@ object GuideSpec:
       breaks: Breaks = Breaks.default,
       labeler: Labeler = Labeler.default,
       ticks: Option[Vector[AxisTick]] = None,
-      tickLength: Option[Double] = None,
-      labelOffset: Option[Double] = None,
+      tickLength: Option[ExtentExpr] = None,
+      labelOffset: Option[ExtentExpr] = None,
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -157,8 +152,12 @@ object GuideSpec:
       title: Option[String],
       entries: Vector[LegendEntry],
       origin: Point = Point.npcUnsafe(0.82, 0.88),
-      rowGap: ExtentExpr = ExtentExpr.npcUnsafe(0.055),
-      labelOffset: LengthExpr = LengthExpr.npcUnsafe(0.035),
+      // Row gap and label offset are absolute (points) so legend spacing is
+      // invariant to the viewport it is lowered into: a derived legend dropped
+      // into a narrow reserved strip must still clear its own point-sized key
+      // markers, which npc offsets fail to do once the strip is small.
+      rowGap: ExtentExpr = ExtentExpr.pointsUnsafe(20.0),
+      labelOffset: LengthExpr = LengthExpr(Length.pointsUnsafe(10.0)),
       markerSize: ExtentExpr = ExtentExpr.pointsUnsafe(5.0),
       titleGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
@@ -168,19 +167,28 @@ object GuideSpec:
   def lower(
       spec: GuideSpec,
       layout: PanelLayout,
-      legendViewport: Option[Viewport] = None
+      legendViewport: Option[Viewport] = None,
+      policy: LayoutPolicy = LayoutPolicy()
   ): Either[GraphicsError, ResolvedGuide] =
     spec match
       case axis: Axis =>
-        lowerAxis(axis, layout)
+        lowerAxis(axis, layout, policy)
       case legend: Legend =>
         lowerLegend(legend, legendViewport)
 
-  private def lowerAxis(spec: Axis, layout: PanelLayout): Either[GraphicsError, ResolvedGuide] =
+  private def lowerAxis(
+      spec: Axis,
+      layout: PanelLayout,
+      policy: LayoutPolicy
+  ): Either[GraphicsError, ResolvedGuide] =
     val range = layout.axisRange(spec.side)
-    val span = layout.perpendicularSpan(spec.side)
-    val tickLength = spec.tickLength.getOrElse(span * 0.04)
-    val labelOffset = spec.labelOffset.getOrElse(span * 0.08)
+    // The layout solver reserves point-sized strips. Lower defaults in the same
+    // unit system so guide geometry stays invariant when the panel or device
+    // size changes; explicit native extents remain available to callers.
+    val tickLength = spec.tickLength.getOrElse(ExtentExpr.pointsUnsafe(policy.tickLengthPt))
+    val labelOffset = spec.labelOffset.getOrElse(
+      ExtentExpr.pointsUnsafe(policy.tickLengthPt + policy.tickLabelGapPt)
+    )
     val name = spec.name.orElse(Some(defaultAxisName(spec.side)))
     for
       ticks <- spec.ticks match
