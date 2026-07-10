@@ -314,17 +314,32 @@ private[graphics] object LayoutPhase:
       case (Some(layout), _, _, _) =>
         Right(LayoutResolution(Some(layout.withClip(clip)), None))
       case (None, Some(frame), _, Some((xRange, yRange))) =>
-        Right(LayoutResolution(Some(PanelLayout(frame, xRange, yRange, options.margins, clip)), None))
+        expandedRanges(options.expansion, xRange, yRange).map { case (expandedX, expandedY) =>
+          LayoutResolution(Some(PanelLayout(frame, expandedX, expandedY, options.margins, clip)), None)
+        }
       case (None, None, Some(policy), Some((xRange, yRange))) =>
-        PlotLayoutSolver.solve(policy, layoutRequest(specs, xRange, yRange)).map { frames =>
+        for
+          frames <- PlotLayoutSolver.solve(policy, layoutRequest(specs, xRange, yRange))
+          expanded <- expandedRanges(options.expansion, xRange, yRange)
+        yield
+          val (expandedX, expandedY) = expanded
           LayoutResolution(
-            Some(PanelLayout(frames.panel, xRange, yRange, options.margins, clip)),
+            Some(PanelLayout(frames.panel, expandedX, expandedY, options.margins, clip)),
             Some(frames)
           )
-        }
       case _ =>
         if options.guides.requiresLayout then Left(GraphicsError.MissingLayout("guides"))
         else Right(LayoutResolution(None, None))
+
+  private def expandedRanges(
+      expansion: RangeExpansion,
+      xRange: Interval,
+      yRange: Interval
+  ): Either[GraphicsError, (Interval, Interval)] =
+    for
+      x <- expansion.expand(xRange)
+      y <- expansion.expand(yRange)
+    yield (x, y)
 
   private def layoutRequest(
       specs: Vector[GuideSpec],

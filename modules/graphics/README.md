@@ -31,7 +31,8 @@ platform renderers should consume `DeviceScene` values at a boundary.
   a `YDirection` (default `Up`; `Down` is available for raster-style spaces) —
   and the device lowering flips exactly once, so backends never guess.
 - Lengths resolve to numbers before rendering: `LengthResolver` evaluates
-  npc/native/absolute expressions (including `Add`/`Sub`/`Mul` mixtures)
+  npc/native/absolute expressions (including `Add`/`Sub`/`Mul` mixtures and
+  typed location-plus-extent offsets)
   against a `DeviceContext`, so backends emit numeric geometry only — no CSS
   `calc()`, no percentages.
 - Trained continuous ranges are immutable unions over finite observations; a
@@ -64,7 +65,10 @@ layout resolution → guide resolution. Guides follow a `GuidePolicy`:
 positioned in mapped space) and legends from discrete color/fill palettes,
 with explicit `GuideSpec` overrides; layout comes from an explicit
 `PanelLayout`, an explicit `PanelFrame` plus derived data ranges, or the
-`LayoutPolicy` solver.
+`LayoutPolicy` solver. Compiler-derived panel ranges use a typed
+`RangeExpansion` (5% by default) after guide derivation so point glyphs at
+trained extrema remain inside the panel; `RangeExpansion.none` restores exact
+edge-centered framing, and an explicit `PanelLayout` is always authoritative.
 
 ## Backends
 

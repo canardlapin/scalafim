@@ -27,6 +27,7 @@ enum GraphicsError:
   case InvalidDeviceResolution(pixelsPerInch: Double)
   case UnresolvableLength(description: String)
   case LayoutOverflow(region: String)
+  case InvalidRangeExpansion(multiplicative: Double, additive: Double, zeroWidth: Double)
   case MixedPositionScaling(aesthetic: String)
   case InvalidAxisCoordinate(kind: String, value: Double)
   case AxisTickOutsideRange(value: Double, lower: Double, upper: Double)
@@ -86,6 +87,8 @@ enum GraphicsError:
         s"length cannot be resolved to device pixels: $description"
       case LayoutOverflow(region) =>
         s"plot layout leaves no room for the $region"
+      case InvalidRangeExpansion(multiplicative, additive, zeroWidth) =>
+        s"range expansion must be finite with multiplicative/additive >= 0 and zeroWidth > 0: ($multiplicative, $additive, $zeroWidth)"
       case MixedPositionScaling(aesthetic) =>
         s"aesthetic '$aesthetic' is scaled in some layers and unscaled in others; panel ranges cannot mix mapped and raw coordinates"
       case InvalidAxisCoordinate(kind, value) =>

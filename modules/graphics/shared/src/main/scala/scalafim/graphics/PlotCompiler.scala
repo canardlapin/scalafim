@@ -21,11 +21,57 @@ enum GuidePolicy:
       case Explicit(specs) => specs.nonEmpty
       case Derived(_, _)   => true
 
+/** Padding applied to compiler-derived panel ranges after scale training and
+  * guide derivation. `multiplicative` is a fraction of the trained width;
+  * `additive` is in panel-native units. Degenerate ranges use `zeroWidth` as
+  * their reference width so a single point still receives visible framing.
+  */
+final case class RangeExpansion private (
+    multiplicative: Double,
+    additive: Double,
+    zeroWidth: Double
+):
+  def expand(interval: Interval): Either[GraphicsError, Interval] =
+    if isNone then Right(interval)
+    else
+      val referenceWidth = if interval.width == 0.0 then zeroWidth else interval.width
+      val padding = referenceWidth * multiplicative + additive
+      Interval(interval.lower - padding, interval.upper + padding)
+
+  def isNone: Boolean =
+    multiplicative == 0.0 && additive == 0.0
+
+object RangeExpansion:
+  val default: RangeExpansion =
+    new RangeExpansion(multiplicative = 0.05, additive = 0.0, zeroWidth = 1.0)
+
+  val none: RangeExpansion =
+    new RangeExpansion(multiplicative = 0.0, additive = 0.0, zeroWidth = 1.0)
+
+  def apply(
+      multiplicative: Double,
+      additive: Double = 0.0,
+      zeroWidth: Double = 1.0
+  ): Either[GraphicsError, RangeExpansion] =
+    if !multiplicative.isFinite || multiplicative < 0.0
+      || !additive.isFinite || additive < 0.0
+      || !zeroWidth.isFinite || zeroWidth <= 0.0
+    then Left(GraphicsError.InvalidRangeExpansion(multiplicative, additive, zeroWidth))
+    else Right(new RangeExpansion(multiplicative, additive, zeroWidth))
+
+  def unsafe(
+      multiplicative: Double,
+      additive: Double = 0.0,
+      zeroWidth: Double = 1.0
+  ): RangeExpansion =
+    apply(multiplicative, additive, zeroWidth).orThrow
+
 final case class PlotCompilerOptions(
     layout: Option[PanelLayout] = None,
     frame: Option[PanelFrame] = None,
     policy: Option[LayoutPolicy] = None,
     margins: PanelMargins = PanelMargins.none,
+    expansion: RangeExpansion = RangeExpansion.default,
     guides: GuidePolicy = GuidePolicy.NoGuides
 )
 

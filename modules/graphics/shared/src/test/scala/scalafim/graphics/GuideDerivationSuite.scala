@@ -38,8 +38,8 @@ class GuideDerivationSuite extends munit.FunSuite:
     val layout = trained.layout.getOrElse(fail("expected a derived layout"))
 
     assertEquals(layout.frame, frame)
-    assertEquals(layout.xScale, Interval.unsafe(0.0, 2.0))
-    assertEquals(layout.yScale, Interval.unsafe(1.0, 3.0))
+    assertEquals(layout.xScale, Interval.unsafe(-0.1, 2.1))
+    assertEquals(layout.yScale, Interval.unsafe(0.9, 3.1))
   }
 
   test("derived guides produce x/y axes and a legend from the discrete color scale") {
@@ -72,7 +72,7 @@ class GuideDerivationSuite extends munit.FunSuite:
       .resolve(plot, PlotCompilerOptions(frame = Some(frame), guides = GuidePolicy.Derived()))
       .fold(e => fail(e.message), identity)
     val layout = trained.layout.getOrElse(fail("expected a derived layout"))
-    assertEquals(layout.xScale, Interval.unsafe(0.0, 1.0))
+    assertEquals(layout.xScale, Interval.unsafe(-0.05, 1.05))
 
     val axis = trained.guides.collectFirst {
       case ResolvedGuide(spec: GuideSpec.Axis, _) if spec.side == AxisSide.Bottom => spec
@@ -176,4 +176,66 @@ class GuideDerivationSuite extends munit.FunSuite:
       .fold(e => fail(e.message), identity)
     assertEquals(trained.guides, Vector.empty)
     assertEquals(trained.layout, None)
+  }
+
+  test("range expansion validates parameters and preserves translation laws") {
+    assertEquals(
+      RangeExpansion(-0.1).left.toOption,
+      Some(GraphicsError.InvalidRangeExpansion(-0.1, 0.0, 1.0))
+    )
+    assert(RangeExpansion(0.1, additive = Double.NaN).isLeft)
+    assert(RangeExpansion(0.1, zeroWidth = 0.0).isLeft)
+
+    val expansion = RangeExpansion.unsafe(0.1, additive = 0.2)
+    val base = expansion.expand(Interval.unsafe(2.0, 6.0)).fold(e => fail(e.message), identity)
+    val translated = expansion.expand(Interval.unsafe(12.0, 16.0)).fold(e => fail(e.message), identity)
+    assertEquals(base, Interval.unsafe(1.4, 6.6))
+    assertEqualsDouble(translated.lower - base.lower, 10.0, 1e-12)
+    assertEqualsDouble(translated.upper - base.upper, 10.0, 1e-12)
+    assertEquals(RangeExpansion.none.expand(Interval.unsafe(2.0, 6.0)), Right(Interval.unsafe(2.0, 6.0)))
+  }
+
+  test("range expansion handles degenerate data and has an explicit opt-out") {
+    val single = Vector(Obs(3.0, 4.0, "A"))
+    val plot = Plot(single)
+      .addLayer(Layer.point[Obs](_.x, _.y))
+      .fold(e => fail(e.message), identity)
+    val expanded = PlotCompiler
+      .resolve(plot, PlotCompilerOptions(frame = Some(frame), guides = GuidePolicy.Derived()))
+      .fold(e => fail(e.message), identity)
+      .layout
+      .getOrElse(fail("expected expanded layout"))
+    val exact = PlotCompiler
+      .resolve(
+        plot,
+        PlotCompilerOptions(
+          frame = Some(frame),
+          expansion = RangeExpansion.none,
+          guides = GuidePolicy.Derived()
+        )
+      )
+      .fold(e => fail(e.message), identity)
+      .layout
+      .getOrElse(fail("expected exact layout"))
+
+    assertEquals(expanded.xScale, Interval.unsafe(2.95, 3.05))
+    assertEquals(expanded.yScale, Interval.unsafe(3.95, 4.05))
+    assertEquals(exact.xScale, Interval.unsafe(3.0, 3.0))
+    assertEquals(exact.yScale, Interval.unsafe(4.0, 4.0))
+  }
+
+  test("explicit panel layouts remain authoritative under default expansion") {
+    val explicit = PanelLayout(
+      frame,
+      xScale = Interval.unsafe(-1.0, 3.0),
+      yScale = Interval.unsafe(0.0, 4.0)
+    )
+    val trained = PlotCompiler
+      .resolve(
+        directPlot,
+        PlotCompilerOptions(layout = Some(explicit), guides = GuidePolicy.Derived())
+      )
+      .fold(e => fail(e.message), identity)
+
+    assertEquals(trained.layout, Some(explicit))
   }

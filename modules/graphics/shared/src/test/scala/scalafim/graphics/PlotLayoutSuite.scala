@@ -128,7 +128,7 @@ class PlotLayoutSuite extends munit.FunSuite:
       .fold(e => fail(e.message), identity)
 
     val layout = trained.layout.getOrElse(fail("expected a solved layout"))
-    assertEquals(layout.xScale, Interval.unsafe(0.0, 2.0))
+    assertEquals(layout.xScale, Interval.unsafe(-0.1, 2.1))
 
     val legendGuide = trained.guides.collectFirst {
       case guide @ ResolvedGuide(_: GuideSpec.Legend, _) => guide
@@ -155,4 +155,61 @@ class PlotLayoutSuite extends munit.FunSuite:
     val first = DeviceScene.fromScene(trained.scene, device).fold(e => fail(e.message), identity)
     val second = DeviceScene.fromScene(trained.scene, device).fold(e => fail(e.message), identity)
     assertEquals(first, second)
+  }
+
+  test("default derived ranges keep scaled and unscaled corner discs inside the panel clip") {
+    final case class Obs(x: Double, y: Double)
+    val data = Vector(Obs(0.0, 0.0), Obs(0.0, 1.0), Obs(1.0, 0.0), Obs(1.0, 1.0))
+
+    def plot(scaled: Boolean): Plot[Obs] =
+      val base =
+        if scaled then
+          val xScale = ContinuousScale.train("x", data.map(_.x), Palette.numeric).fold(e => fail(e.message), identity)
+          val yScale = ContinuousScale.train("y", data.map(_.y), Palette.numeric).fold(e => fail(e.message), identity)
+          Plot(data)
+            .withScale(ScaleBinding[Obs, Double, Double](Aesthetic.X, _.x, xScale))
+            .flatMap(_.withScale(ScaleBinding[Obs, Double, Double](Aesthetic.Y, _.y, yScale)))
+            .fold(e => fail(e.message), identity)
+        else Plot(data)
+      base.addLayer(Layer.point[Obs](_.x, _.y)).fold(e => fail(e.message), identity)
+
+    def panel(scaled: Boolean, expansion: RangeExpansion): (DeviceClip, Vector[DevicePrimitive.Disc]) =
+      val trained = PlotCompiler
+        .resolve(
+          plot(scaled),
+          PlotCompilerOptions(
+            policy = Some(policy),
+            expansion = expansion,
+            guides = GuidePolicy.Derived()
+          )
+        )
+        .fold(e => fail(e.message), identity)
+      val scene = DeviceScene
+        .fromScene(trained.scene, policy.referenceDevice)
+        .fold(e => fail(e.message), identity)
+      scene.elements.collectFirst {
+        case DeviceElement.Group(name, Some(clip), _, children)
+            if name.exists(_.value == "plot-panel") =>
+          val discs = children.collect {
+            case DeviceElement.Mark(disc: DevicePrimitive.Disc) => disc
+          }
+          (clip, discs)
+      }.getOrElse(fail(s"missing clipped panel for scaled=$scaled"))
+
+    Vector(false, true).foreach { scaled =>
+      val (clip, discs) = panel(scaled, RangeExpansion.default)
+      assertEquals(discs.length, 4)
+      discs.foreach { disc =>
+        assert(disc.centerX - disc.radius >= clip.x - tol)
+        assert(disc.centerX + disc.radius <= clip.x + clip.width + tol)
+        assert(disc.centerY - disc.radius >= clip.y - tol)
+        assert(disc.centerY + disc.radius <= clip.y + clip.height + tol)
+      }
+    }
+
+    val (exactClip, exactDiscs) = panel(scaled = false, RangeExpansion.none)
+    assert(
+      exactDiscs.exists(disc => disc.centerX - disc.radius < exactClip.x),
+      "the explicit no-expansion policy must retain exact edge-centered framing"
+    )
   }
