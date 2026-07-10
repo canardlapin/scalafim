@@ -20,3 +20,19 @@ Current scope:
 Unsupported units and unit expressions return typed `SvgRenderError` values.
 That is intentional: a backend should expose missing layout semantics instead of
 silently inventing device-specific behavior.
+
+## Visual gallery
+
+The reproducible gallery runner lives in JVM test sources, so it is excluded
+from the shipped backend. From the repository root:
+
+```sh
+tools/render_graphics_gallery.sh
+```
+
+It writes the complete renderer-conformance gallery and a derived log10 scatter
+to `target/graphics-gallery/` as SVGs, `manifest.tsv`, and `index.html`. When the
+`DesignGraphics` migration is present, the same command adds its real event
+plot. Set `SCALAFIM_GALLERY_REQUIRE_DESIGN=1` to make that integration mandatory.
+The shell runner combines compiled test classpaths at runtime rather than adding
+a domain dependency to `graphics-svg`.

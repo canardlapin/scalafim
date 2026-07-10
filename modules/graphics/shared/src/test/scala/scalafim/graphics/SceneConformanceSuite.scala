@@ -76,6 +76,29 @@ class SceneConformanceSuite extends munit.FunSuite:
     assertEquals(violations, Vector.empty)
   }
 
+  test("the explicit scaled-plot fixture frames every point disc inside its clip") {
+    val scene = RendererConformance.scaledPlotCase.fold(e => fail(e.message), identity).scene
+    val device = DeviceScene
+      .fromScene(scene, DeviceContext.unsafe(640.0, 480.0))
+      .fold(e => fail(e.message), identity)
+    val (clip, discs) = device.elements.collectFirst {
+      case DeviceElement.Group(name, Some(clip), _, children)
+          if name.exists(_.value == "plot-panel") =>
+        val discs = children.collect {
+          case DeviceElement.Mark(disc: DevicePrimitive.Disc) => disc
+        }
+        (clip, discs)
+    }.getOrElse(fail("missing scaled-plot panel"))
+
+    assertEquals(discs.length, 3)
+    discs.foreach { disc =>
+      assert(disc.centerX - disc.radius >= clip.x)
+      assert(disc.centerX + disc.radius <= clip.x + clip.width)
+      assert(disc.centerY - disc.radius >= clip.y)
+      assert(disc.centerY + disc.radius <= clip.y + clip.height)
+    }
+  }
+
   test("the checker reports missing markers and failures as violations") {
     object BlindHarness extends RendererHarness[String]:
       override def render(scene: Scene): Either[String, String] = Right("")

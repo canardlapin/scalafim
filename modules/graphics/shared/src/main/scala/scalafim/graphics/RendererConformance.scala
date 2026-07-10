@@ -382,8 +382,8 @@ object RendererConformance:
           layout = Some(
             PanelLayout(
               PanelFrame.npcUnsafe(0.12, 0.12, 0.68, 0.72),
-              xScale = Interval.unsafe(0.0, 1.0),
-              yScale = Interval.unsafe(0.0, 1.0),
+              xScale = Interval.unsafe(-0.05, 1.05),
+              yScale = Interval.unsafe(-0.05, 1.05),
               clip = Clip.On
             )
           ),
@@ -391,7 +391,13 @@ object RendererConformance:
             Vector(
               GuideSpec.Axis(
                 AxisSide.Bottom,
-                breaks = Breaks.countUnsafe(3),
+                ticks = Some(
+                  Vector(
+                    AxisTick.unsafe(0.0, "0"),
+                    AxisTick.unsafe(0.5, "0.5"),
+                    AxisTick.unsafe(1.0, "1")
+                  )
+                ),
                 tickLength = Some(ExtentExpr.nativeUnsafe(0.05)),
                 labelOffset = Some(ExtentExpr.nativeUnsafe(0.1)),
                 name = Some(GraphicsName.unsafe("scaled-x-axis"))
