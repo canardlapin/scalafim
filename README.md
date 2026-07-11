@@ -11,6 +11,7 @@ cross-compiled sbt build.
 - `graphics-svg`: deterministic SVG renderer for `graphics` scene trees.
 - `graphics-canvas`: Scala.js Canvas 2D renderer with deterministic command recording.
 - `graphics-java2d`: JVM Java2D raster renderer with deterministic commands and image-level tests.
+- `graphics-javafx`: JVM JavaFX Canvas renderer with deterministic commands behind a toolkit-free drawing contract.
 - `latent`: typed latent fMRI response contracts, explicit basis/loadings responses, coefficient projection, and decoder-ready selections.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
 - `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
@@ -48,6 +49,7 @@ sbt graphicsSvgJVM/test
 sbt graphicsSvgJS/test
 sbt graphicsCanvasJS/test
 sbt graphicsJava2dJVM/test
+sbt graphicsJavafxJVM/test
 sbt latentJVM/test
 sbt latentJS/test
 sbt arJVM/test
