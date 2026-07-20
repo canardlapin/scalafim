@@ -194,6 +194,15 @@ object VoxelPoint:
 final case class WorldPoint(x: Double, y: Double, z: Double):
   require(x.isFinite && y.isFinite && z.isFinite, "world point coordinates must be finite")
 
+  def +(delta: WorldVector): WorldPoint =
+    WorldPoint(x + delta.x, y + delta.y, z + delta.z)
+
+  def -(delta: WorldVector): WorldPoint =
+    WorldPoint(x - delta.x, y - delta.y, z - delta.z)
+
+  def -(other: WorldPoint): WorldVector =
+    WorldVector.unsafe(x - other.x, y - other.y, z - other.z)
+
   def apply(axis: SpatialAxis): Double =
     axis match
       case SpatialAxis.X => x
