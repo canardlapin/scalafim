@@ -208,7 +208,7 @@ object RidgeLdaClassifier:
 final case class CrossValidatedClassifierAnalysis(
     classifier: Classifier,
     storePredictions: Boolean = false
-) extends FoldRequiredRoiAnalysis:
+) extends FoldRequiredDenseRoiAnalysis:
   override def name: String = s"cv_${classifier.name}"
   override def minFeatures: Int = classifier.minFeatures
   override def missingFoldsError: MvpaError =
@@ -324,7 +324,8 @@ object Classification:
   def categorical(response: Response, samples: Int): Either[MvpaError, Vector[ClassLabel]] =
     response.validate(samples).flatMap {
       case Response.Categorical(labels) => Right(labels)
-      case Response.Continuous(_) => Left(MvpaError.InvalidClassifierInput("classification requires categorical response labels"))
+      case Response.Probabilistic(_) | Response.Continuous(_) =>
+        Left(MvpaError.InvalidClassifierInput("this classifier requires hard categorical response labels"))
     }
 
   def classSummary(data: PatternMatrix, labels: Vector[ClassLabel]): Either[MvpaError, ClassSummary] =

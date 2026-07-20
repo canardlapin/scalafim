@@ -1,11 +1,11 @@
 package scalafim.fmri.mvpa
 
 object MvpaTask:
-  def evaluate(
-      source: PatternSource,
+  def evaluate[Patterns](
+      source: PatternSource[Patterns],
       featureSet: FeatureSet,
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: RoiAnalysis[Patterns],
       folds: Option[FoldPlan] = None
   ): RoiOutcome =
     validateContext(source, response, folds, analysis) match
@@ -14,21 +14,21 @@ object MvpaTask:
       case Right(responseContext) =>
         evaluateValidated(source, featureSet, responseContext, analysis, folds)
 
-  private[mvpa] def evaluateValidated(
-      source: PatternSource,
+  private[mvpa] def evaluateValidated[Patterns](
+      source: PatternSource[Patterns],
       featureSet: FeatureSet,
       responseContext: ResponseContext,
-      analysis: RoiAnalysis,
+      analysis: RoiAnalysis[Patterns],
       folds: Option[FoldPlan]
   ): RoiOutcome =
     source.selectFeatures(featureSet) match
       case Left(error) =>
         RoiOutcome.Failure(featureSet.id, featureSet.featureIndices, error)
-      case Right(roi) if roi.features < analysis.minFeatures =>
+      case Right(_) if featureSet.size < analysis.minFeatures =>
         RoiOutcome.Failure(
           featureSet.id,
           featureSet.featureIndices,
-          MvpaError.TooFewFeatures(featureSet.id, roi.features, analysis.minFeatures)
+          MvpaError.TooFewFeatures(featureSet.id, featureSet.size, analysis.minFeatures)
         )
       case Right(roi) =>
         RoiContext(responseContext, folds, featureSet) match
@@ -47,11 +47,11 @@ object MvpaTask:
       case Some(plan) if plan.samples == samples => Right(())
       case Some(plan) => Left(MvpaError.ResponseLengthMismatch(samples, plan.samples))
 
-  private[mvpa] def validateContext(
-      source: PatternSource,
+  private[mvpa] def validateContext[Patterns](
+      source: PatternSource[Patterns],
       response: Response,
       folds: Option[FoldPlan],
-      analysis: RoiAnalysis
+      analysis: RoiAnalysis[Patterns]
   ): Either[MvpaError, ResponseContext] =
     for
       axis <- SampleAxis(source.samples)
@@ -60,11 +60,9 @@ object MvpaTask:
       _ <- validateFoldRequirement(folds, analysis)
     yield responseContext
 
-  private def validateFoldRequirement(folds: Option[FoldPlan], analysis: RoiAnalysis): Either[MvpaError, Unit] =
-    (folds, analysis) match
-      case (None, foldRequired: FoldRequiredRoiAnalysis) =>
-        Left(foldRequired.missingFoldsError)
-      case (None, _) if analysis.requiresFolds =>
-        Left(MvpaError.MissingFoldPlan(analysis.name))
-      case _ =>
-        Right(())
+  private def validateFoldRequirement(
+      folds: Option[FoldPlan],
+      analysis: RoiAnalysis[?]
+  ): Either[MvpaError, Unit] =
+    if folds.isEmpty && analysis.requiresFolds then Left(analysis.missingFoldsError)
+    else Right(())

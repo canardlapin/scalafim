@@ -1,27 +1,27 @@
 package scalafim.fmri.mvpa
 
 final case class CrossDomainPatternSource(
-    source: PatternSource,
-    target: PatternSource
+    source: DensePatternSource,
+    target: DensePatternSource
 ):
   def toDataset: Either[MvpaError, CrossDomainDataset] =
     CrossDomainDataset(source, target)
 
 final case class CrossDomainDataset private (
-    source: PatternSource,
-    target: PatternSource,
+    source: DensePatternSource,
+    target: DensePatternSource,
     sourceAxis: SampleAxis,
     targetAxis: SampleAxis
 )
 
 object CrossDomainDataset:
-  def apply(source: PatternSource, target: PatternSource): Either[MvpaError, CrossDomainDataset] =
+  def apply(source: DensePatternSource, target: DensePatternSource): Either[MvpaError, CrossDomainDataset] =
     for
       sourceAxis <- SampleAxis(source.samples)
       targetAxis <- SampleAxis(target.samples)
     yield new CrossDomainDataset(source, target, sourceAxis, targetAxis)
 
-  def unsafe(source: PatternSource, target: PatternSource): CrossDomainDataset =
+  def unsafe(source: DensePatternSource, target: DensePatternSource): CrossDomainDataset =
     apply(source, target).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def fromMatrices(source: PatternMatrix, target: PatternMatrix): CrossDomainDataset =

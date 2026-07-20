@@ -7,6 +7,7 @@ final case class RoiAnalysisResult(
 
 enum RoiPayload:
   case Classification(prediction: ClassificationPrediction)
+  case OperatorRidge(result: OperatorRidgePayload)
   case Rdm(rdm: LabeledRdm)
   case Rsa(observed: Option[LabeledRdm], scores: Vector[RsaScore])
   case SamplewiseRsa(modelName: String, scores: Vector[SamplewiseRsaScore])

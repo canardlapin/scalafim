@@ -20,6 +20,7 @@ enum FitError:
   case AmbiguousLssTrialTerms(candidates: Vector[String])
   case UnsupportedLssDesign(detail: String)
   case NonEstimableLssTrials(trials: Vector[String])
+  case TrialReadoutFailed(cause: LinAlgError)
   case UnknownContrastColumn(columnName: String)
   case EmptyContrast(name: String)
   case NonEstimableContrast(name: String, detail: String)
@@ -63,6 +64,8 @@ enum FitError:
         s"unsupported LSS design: $detail"
       case NonEstimableLssTrials(trials) =>
         s"LSS trial regressors are not estimable after fixed-effect residualization: ${trials.mkString(", ")}"
+      case TrialReadoutFailed(cause) =>
+        s"trial readout application failed: ${cause.getMessage}"
       case UnknownContrastColumn(columnName) =>
         s"contrast references unknown design column: $columnName"
       case EmptyContrast(name) =>

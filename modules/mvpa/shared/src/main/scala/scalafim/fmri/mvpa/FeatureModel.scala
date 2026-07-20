@@ -78,7 +78,7 @@ final case class FeatureModelAnalysis(
     direction: FeaturePredictionDirection,
     estimator: FeatureRidgeEstimator = FeatureRidgeEstimator(),
     storePrediction: Boolean = false
-) extends FoldRequiredRoiAnalysis:
+) extends FoldRequiredDenseRoiAnalysis:
   override def name: String = s"feature_model_${direction.label}_ridge"
   override val minFeatures: Int = 1
   override def missingFoldsError: MvpaError =

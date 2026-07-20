@@ -1,19 +1,50 @@
 package scalafim.fmri.mvpa
 
-trait RoiAnalysis:
+/** One-ROI analysis over a statically chosen pattern representation.
+  *
+  * The representation parameter is contravariant because analyses consume
+  * selected patterns. [[MvpaTask]] requires it to agree with the output of the
+  * corresponding [[PatternSource]], preventing a dense-only analysis from
+  * being sent an operator-backed ROI.
+  */
+trait RoiAnalysis[-Patterns]:
   def name: String
   def minFeatures: Int = 2
   def requiresFolds: Boolean = false
-  def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult]
+  def missingFoldsError: MvpaError = MvpaError.MissingFoldPlan(name)
+  def evaluate(roi: Patterns, context: RoiContext): Either[MvpaError, RoiAnalysisResult]
 
-trait FoldRequiredRoiAnalysis extends RoiAnalysis:
+trait FoldRequiredRoiAnalysis[-Patterns] extends RoiAnalysis[Patterns]:
   override final def requiresFolds: Boolean = true
-  def missingFoldsError: MvpaError
+  override def missingFoldsError: MvpaError
 
-  final override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
+  final override def evaluate(roi: Patterns, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
     context.folded(missingFoldsError).flatMap(foldedContext => evaluateFolded(roi, foldedContext))
 
-  def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult]
+  def evaluateFolded(roi: Patterns, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult]
+
+type DenseRoiAnalysis = RoiAnalysis[PatternMatrix]
+type OperatorRoiAnalysis = RoiAnalysis[PatternOperator]
+type FoldRequiredDenseRoiAnalysis = FoldRequiredRoiAnalysis[PatternMatrix]
+type FoldRequiredOperatorRoiAnalysis = FoldRequiredRoiAnalysis[PatternOperator]
+
+object RoiAnalysis:
+  def materializing(analysis: DenseRoiAnalysis): OperatorRoiAnalysis =
+    MaterializingRoiAnalysis(analysis)
+
+private final case class MaterializingRoiAnalysis(
+    analysis: DenseRoiAnalysis
+) extends OperatorRoiAnalysis:
+  override def name: String = analysis.name
+  override def minFeatures: Int = analysis.minFeatures
+  override def requiresFolds: Boolean = analysis.requiresFolds
+  override def missingFoldsError: MvpaError = analysis.missingFoldsError
+
+  override def evaluate(
+      roi: PatternOperator,
+      context: RoiContext
+  ): Either[MvpaError, RoiAnalysisResult] =
+    roi.materialize.flatMap(patterns => analysis.evaluate(patterns, context))
 
 sealed trait RoiContext:
   def responseContext: ResponseContext
@@ -99,7 +130,7 @@ object MvpaEngine:
       data: PatternMatrix,
       featureSets: Seq[FeatureSet],
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: DenseRoiAnalysis,
       folds: Option[FoldPlan] = None
   ): Either[MvpaError, MvpaResult] =
     runSource(PatternSource.fromMatrix(data), featureSets.toVector, None, response, analysis, folds)
@@ -108,51 +139,65 @@ object MvpaEngine:
       data: PatternMatrix,
       featureSetPlan: FeatureSetPlan,
       response: Response,
-      analysis: RoiAnalysis
+      analysis: DenseRoiAnalysis
   ): Either[MvpaError, MvpaResult] =
-    runSource(PatternSource.fromMatrix(data), featureSetPlan.featureSets, Some(featureSetPlan), response, analysis, None)
+    runSource(
+      PatternSource.fromMatrix(data),
+      featureSetPlan.featureSets,
+      Some(featureSetPlan),
+      response,
+      analysis,
+      None
+    )
 
   def run(
       data: PatternMatrix,
       featureSetPlan: FeatureSetPlan,
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: DenseRoiAnalysis,
       folds: Option[FoldPlan]
   ): Either[MvpaError, MvpaResult] =
-    runSource(PatternSource.fromMatrix(data), featureSetPlan.featureSets, Some(featureSetPlan), response, analysis, folds)
+    runSource(
+      PatternSource.fromMatrix(data),
+      featureSetPlan.featureSets,
+      Some(featureSetPlan),
+      response,
+      analysis,
+      folds
+    )
 
-  def runSource(
-      source: PatternSource,
+  def runSource[Patterns](
+      source: PatternSource[Patterns],
       featureSetPlan: FeatureSetPlan,
       response: Response,
-      analysis: RoiAnalysis
+      analysis: RoiAnalysis[Patterns]
   ): Either[MvpaError, MvpaResult] =
     runSource(source, featureSetPlan.featureSets, Some(featureSetPlan), response, analysis, None)
 
-  def runSource(
-      source: PatternSource,
+  def runSource[Patterns](
+      source: PatternSource[Patterns],
       featureSetPlan: FeatureSetPlan,
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: RoiAnalysis[Patterns],
       folds: Option[FoldPlan]
   ): Either[MvpaError, MvpaResult] =
     runSource(source, featureSetPlan.featureSets, Some(featureSetPlan), response, analysis, folds)
 
-  def runSource(
-      source: PatternSource,
+  def runSource[Patterns](
+      source: PatternSource[Patterns],
       featureSets: Seq[FeatureSet],
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: RoiAnalysis[Patterns],
       folds: Option[FoldPlan]
   ): Either[MvpaError, MvpaResult] =
     runSource(source, featureSets.toVector, None, response, analysis, folds)
 
-  private def runSource(
-      source: PatternSource,
+  private def runSource[Patterns](
+      source: PatternSource[Patterns],
       featureSets: Vector[FeatureSet],
       featureSetPlan: Option[FeatureSetPlan],
       response: Response,
-      analysis: RoiAnalysis,
+      analysis: RoiAnalysis[Patterns],
       folds: Option[FoldPlan]
   ): Either[MvpaError, MvpaResult] =
     MvpaStream.outcomes(source, featureSets, response, analysis, folds).map { outcomes =>

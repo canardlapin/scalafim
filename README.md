@@ -34,6 +34,7 @@ cross-compiled sbt build.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable ordinary least squares kernels over timepoints-by-voxels response blocks.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
+- `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - `multivar`: typed duality-diagram core — nominal primal/dual spaces, certified row/column forms, semantic GPCA, explicit partial row alignment, direct-sum multiset objectives, sparse-aware operators, decompositions, and pure execution plans.
 - `multivar-ir`: versioned language-neutral multivar semantics, portable JSON codecs, numeric payload references, and cross-binding conformance fixtures.
 - `inference`: typed perturbation inference over fitted multivariate structures — targets, resampling designs, null actions, Monte Carlo ladders, latent units, stability, validity, and provenance.
@@ -106,6 +107,8 @@ sbt fitJVM/test
 sbt fitJS/test
 sbt mvpaJVM/test
 sbt mvpaJS/test
+sbt mvpaFitJVM/test
+sbt mvpaFitJS/test
 sbt multivarJVM/test
 sbt multivarJS/test
 sbt multivarIrJVM/test
