@@ -21,6 +21,7 @@ enum MultivarError:
   case InvalidId(kind: String, value: String, reason: String)
   case InvalidDimension(kind: String, value: Int)
   case InvalidTolerance(kind: String, value: Double)
+  case InvalidRegularization(kind: String, value: Double, requirement: String)
   case DimensionOverflow(rows: Int, cols: Int)
   case EmptyIndexSet(axis: IndexAxis)
   case IndexOutOfBounds(axis: IndexAxis, index: Int, limit: Int)
@@ -49,6 +50,7 @@ enum MultivarError:
   case MetricShapeMismatch(axis: IndexAxis, expected: Int, actual: Int)
   case NonPositiveSemiDefinite(role: String, eigenvalue: Double)
   case IterationLimitExceeded(method: String, maxIterations: Int, residual: Double)
+  case NumericalResidualExceeded(method: String, residual: Double, threshold: Double)
 
   def message: String =
     this match
@@ -58,6 +60,8 @@ enum MultivarError:
         s"$kind must be positive, got $value"
       case InvalidTolerance(kind, value) =>
         s"$kind must be finite and non-negative, got $value"
+      case InvalidRegularization(kind, value, requirement) =>
+        s"invalid $kind $value: $requirement"
       case DimensionOverflow(rows, cols) =>
         s"matrix dimensions are too large for row-major storage: ${rows}x${cols}"
       case EmptyIndexSet(axis) =>
@@ -114,3 +118,5 @@ enum MultivarError:
         s"$role is not positive semi-definite: eigenvalue $eigenvalue is below tolerance"
       case IterationLimitExceeded(method, maxIterations, residual) =>
         s"$method did not converge within $maxIterations iterations (residual $residual)"
+      case NumericalResidualExceeded(method, residual, threshold) =>
+        s"$method residual $residual exceeds threshold $threshold"
