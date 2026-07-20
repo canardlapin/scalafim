@@ -1,7 +1,7 @@
 package scalafim.fmri.model
 
+import gale.linalg.DMat
 import scalafim.fmri.design.TermId
-import scalafim.linalg.DoubleMatrix
 
 import scala.util.control.NonFatal
 
@@ -35,7 +35,7 @@ enum Regularization:
 
 enum NuisanceProjection:
   case Disabled
-  case MatrixProjection(matrix: DoubleMatrix, lambda: Regularization = Regularization.Auto)
+  case MatrixProjection(matrix: DMat, lambda: Regularization = Regularization.Auto)
 
 final case class RobustOptions(
     psi: RobustPsi = RobustPsi.Disabled,
@@ -490,7 +490,7 @@ object ModelVolumeWeighting:
       case VolumeWeighting.Fixed(weights) =>
         TimepointWeights(weights).map(Fixed.apply)
 
-final class NuisanceMatrix private (val matrix: DoubleMatrix):
+final class NuisanceMatrix private (val matrix: DMat):
   require(matrix.rows > 0 && matrix.cols > 0, "nuisance matrix must be non-empty")
 
   override def equals(other: Any): Boolean =
@@ -506,11 +506,11 @@ final class NuisanceMatrix private (val matrix: DoubleMatrix):
     else Left(ModelError.MatrixRowMismatch("nuisance matrix", nTimepoints, matrix.rows))
 
 object NuisanceMatrix:
-  def apply(matrix: DoubleMatrix): Either[ModelError, NuisanceMatrix] =
+  def apply(matrix: DMat): Either[ModelError, NuisanceMatrix] =
     if matrix.rows > 0 && matrix.cols > 0 then Right(new NuisanceMatrix(matrix))
     else Left(ModelError.InvalidParameter("nuisance matrix", "must be non-empty"))
 
-  def unsafe(matrix: DoubleMatrix): NuisanceMatrix =
+  def unsafe(matrix: DMat): NuisanceMatrix =
     apply(matrix).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum ModelNuisanceProjection:

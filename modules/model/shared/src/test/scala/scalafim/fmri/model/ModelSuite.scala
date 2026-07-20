@@ -6,7 +6,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.Matrix
 
 class ModelSuite extends munit.FunSuite:
 
@@ -108,7 +108,7 @@ class ModelSuite extends munit.FunSuite:
 
     val nuisance = FitControls(
       nuisanceProjection = ModelNuisanceProjection.MatrixProjection(
-        NuisanceMatrix.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))),
+        NuisanceMatrix.unsafe(Matrix.dense(2, 1)(1.0, 2.0)),
         Regularization.Auto
       )
     )
