@@ -2,7 +2,8 @@
   "schema_version": "scalafim-scenario-manifest/v1",
   "status_semantics": {
     "pass": "The scenario's ScenarioResult.status is Pass and ScenarioResult.ciPass is true.",
-    "fail": "Any unexpected shape, finite-value, identity, tolerance, caveat, or oracle check failed."
+    "pass_with_caveats": "All active observations passed, at least one non-blocking caveat was emitted, and CI may pass only when every caveat id is declared and allowed by scenario policy.",
+    "fail": "ScenarioResult.status is Fail when any unexpected shape, finite-value, identity, tolerance, blocking caveat, or oracle check failed. A pass_with_caveats result with an undeclared caveat is a CI policy failure, not a clean pass."
   },
   "default_acceptance_commands": [
     "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",

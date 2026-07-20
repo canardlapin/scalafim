@@ -3,23 +3,86 @@ package scalafim.fmri.group.scenarios
 import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
 enum ScenarioStatus:
-  case Pass, Fail
+  case Pass, PassWithCaveats, Fail
 
   def ciPass: Boolean =
     this == Pass
 
-final case class ScenarioResult(id: String, checks: Vector[ScenarioCheck]):
-  require(id.nonEmpty, "scenario id must be non-empty")
-  require(checks.nonEmpty, "scenario must contain at least one check")
+enum CaveatSeverity:
+  case Note, Actionable, Blocking
 
-  def status: ScenarioStatus =
-    if checks.forall(_.passed) then ScenarioStatus.Pass else ScenarioStatus.Fail
+enum CaveatKind:
+  case PublicApiGap, AlgorithmDivergence, FixtureFreshness, PerformanceBudget, DiagnosticsGap, ErgonomicPain
 
-  def ciPass: Boolean =
-    status.ciPass
+final case class ScenarioCaveat(
+    id: String,
+    kind: CaveatKind,
+    severity: CaveatSeverity,
+    owner: String,
+    followUp: Option[String],
+    detail: String
+):
+  require(id.trim.nonEmpty, "caveat id must be non-empty")
+  require(owner.trim.nonEmpty, "caveat owner must be non-empty")
+  require(detail.trim.nonEmpty, "caveat detail must be non-empty")
+  followUp.foreach(value => require(value.trim.nonEmpty, "caveat follow-up must be non-empty when supplied"))
+
+  def blocksCi: Boolean =
+    severity == CaveatSeverity.Blocking
 
   def render: String =
-    (Vector(s"scenario=$id status=$status") ++ checks.map(check => s"  ${check.render}")).mkString("\n")
+    val suffix = followUp.fold("")(value => s" followUp=$value")
+    s"caveat=$id kind=$kind severity=$severity owner=$owner detail=$detail$suffix"
+
+final case class ScenarioPolicy(
+    allowedStatuses: Set[ScenarioStatus],
+    allowedCaveatIds: Set[String]
+):
+  require(allowedStatuses.nonEmpty, "scenario policy must allow at least one status")
+  require(!allowedStatuses.contains(ScenarioStatus.Fail), "scenario policy must not allow Fail")
+  require(allowedCaveatIds.forall(_.trim.nonEmpty), "allowed caveat ids must be non-empty")
+
+  def allows(result: ScenarioResult): Boolean =
+    allowedStatuses.contains(result.status) &&
+      result.caveats.forall(caveat => allowedCaveatIds.contains(caveat.id))
+
+object ScenarioPolicy:
+  val PassOnly: ScenarioPolicy =
+    ScenarioPolicy(Set(ScenarioStatus.Pass), Set.empty)
+
+  def allowCaveats(ids: String*): ScenarioPolicy =
+    ScenarioPolicy(
+      allowedStatuses = Set(ScenarioStatus.Pass, ScenarioStatus.PassWithCaveats),
+      allowedCaveatIds = ids.toSet
+    )
+
+final case class ScenarioResult(
+    id: String,
+    checks: Vector[ScenarioCheck],
+    caveats: Vector[ScenarioCaveat] = Vector.empty
+):
+  require(id.nonEmpty, "scenario id must be non-empty")
+  require(checks.nonEmpty, "scenario must contain at least one check")
+  require(caveats.map(_.id).distinct.length == caveats.length, "scenario caveat ids must be unique")
+
+  def status: ScenarioStatus =
+    if checks.exists(!_.passed) then ScenarioStatus.Fail
+    else if caveats.exists(_.blocksCi) then ScenarioStatus.Fail
+    else if caveats.nonEmpty then ScenarioStatus.PassWithCaveats
+    else ScenarioStatus.Pass
+
+  def ciPass: Boolean =
+    ciPass(ScenarioPolicy.PassOnly)
+
+  def ciPass(policy: ScenarioPolicy): Boolean =
+    policy.allows(this)
+
+  def render: String =
+    (
+      Vector(s"scenario=$id status=$status") ++
+        checks.map(check => s"  ${check.render}") ++
+        caveats.map(caveat => s"  ${caveat.render}")
+    ).mkString("\n")
 
 enum ScenarioCheck:
   case Scalar(name: String, actual: Double, expected: Double, tolerance: Double)

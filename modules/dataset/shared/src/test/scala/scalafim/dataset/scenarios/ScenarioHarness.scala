@@ -1,6 +1,6 @@
-package scalafim.fmri.fit.scenarios
+package scalafim.dataset.scenarios
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.DMat
 
 enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail
@@ -67,9 +67,6 @@ object ScenarioTolerance:
   def absolute(value: Double): ScenarioTolerance =
     ScenarioTolerance(value, 0.0)
 
-  def mixed(absolute: Double, relative: Double): ScenarioTolerance =
-    ScenarioTolerance(absolute, relative)
-
 enum ScenarioObservation:
   case Scalar(name: String, actual: Double, expected: Double, tolerance: ScenarioTolerance)
   case Fact(name: String, ok: Boolean, detail: String)
@@ -77,17 +74,15 @@ enum ScenarioObservation:
   def passed: Boolean =
     this match
       case Scalar(_, actual, expected, tolerance) =>
-        if actual.isNaN || expected.isNaN then false
-        else if actual.isInfinity || expected.isInfinity then actual == expected
-        else math.abs(actual - expected) <= tolerance.threshold(expected)
-      case Fact(_, ok, _) => ok
+        actual.isFinite && expected.isFinite && math.abs(actual - expected) <= tolerance.threshold(expected)
+      case Fact(_, ok, _) =>
+        ok
 
   def render: String =
     this match
       case Scalar(name, actual, expected, tolerance) =>
         val delta =
-          if actual.isNaN || expected.isNaN then Double.NaN
-          else math.abs(actual - expected)
+          if actual.isFinite && expected.isFinite then math.abs(actual - expected) else Double.NaN
         s"$name: actual=$actual expected=$expected delta=$delta tol=${tolerance.threshold(expected)} pass=$passed"
       case Fact(name, ok, detail) =>
         s"$name: $detail pass=$ok"
@@ -113,15 +108,12 @@ final case class ScenarioResult(
   def ciPass(policy: ScenarioPolicy): Boolean =
     policy.allows(this)
 
-  def failures: Vector[ScenarioObservation] =
-    observations.filterNot(_.passed)
-
   def render: String =
-    val lines =
+    (
       Vector(s"scenario=$id status=$status") ++
-        observations.map(obs => s"  ${obs.render}") ++
+        observations.map(observation => s"  ${observation.render}") ++
         caveats.map(caveat => s"  ${caveat.render}")
-    lines.mkString("\n")
+    ).mkString("\n")
 
 object ScenarioHarness:
   def result(
@@ -131,6 +123,9 @@ object ScenarioHarness:
   ): ScenarioResult =
     ScenarioResult(id, observations, caveats)
 
+  def fact(name: String, passed: Boolean, detail: String): ScenarioObservation =
+    ScenarioObservation.Fact(name, passed, detail)
+
   def scalar(
       name: String,
       actual: Double,
@@ -139,13 +134,11 @@ object ScenarioHarness:
   ): ScenarioObservation =
     ScenarioObservation.Scalar(name, actual, expected, tolerance)
 
-  def fact(name: String, passed: Boolean, detail: String): ScenarioObservation =
-    ScenarioObservation.Fact(name, passed, detail)
-
   def finite(name: String, values: IndexedSeq[Double]): ScenarioObservation =
-    val nonFinite = values.zipWithIndex.collect {
-      case (value, index) if !value.isFinite => s"$index=$value"
-    }
+    val nonFinite =
+      values.zipWithIndex.collect {
+        case (value, index) if !value.isFinite => s"$index=$value"
+      }
     fact(
       name,
       nonFinite.isEmpty,
@@ -153,41 +146,23 @@ object ScenarioHarness:
       else nonFinite.mkString("non-finite values: ", ", ", "")
     )
 
-  def vector(
-      name: String,
-      actual: DoubleVector,
-      expected: DoubleVector,
-      tolerance: ScenarioTolerance
-  ): Vector[ScenarioObservation] =
-    Vector(
-      fact(
-        s"$name.length",
-        actual.length == expected.length,
-        s"actual=${actual.length} expected=${expected.length}"
-      )
-    ) ++
-      actual.toVector.zip(expected.toVector).zipWithIndex.map {
-        case ((a, e), index) => scalar(s"$name[$index]", a, e, tolerance)
-      }
-
   def matrix(
       name: String,
-      actual: DoubleMatrix,
-      expected: DoubleMatrix,
+      actual: DMat,
+      expected: Vector[Vector[Double]],
       tolerance: ScenarioTolerance
   ): Vector[ScenarioObservation] =
-    val shape = Vector(
-      fact(s"$name.rows", actual.rows == expected.rows, s"actual=${actual.rows} expected=${expected.rows}"),
-      fact(s"$name.cols", actual.cols == expected.cols, s"actual=${actual.cols} expected=${expected.cols}")
-    )
-
-    val rows = math.min(actual.rows, expected.rows)
-    val cols = math.min(actual.cols, expected.cols)
+    val shape =
+      Vector(
+        fact(s"$name.rows", actual.rows == expected.length, s"actual=${actual.rows} expected=${expected.length}"),
+        fact(s"$name.cols", actual.cols == expected.headOption.fold(0)(_.length), s"actual=${actual.cols} expected=${expected.headOption.fold(0)(_.length)}")
+      )
+    val rows = math.min(actual.rows, expected.length)
+    val cols = math.min(actual.cols, expected.headOption.fold(0)(_.length))
     val values =
       (0 until rows).toVector.flatMap { row =>
         (0 until cols).toVector.map { col =>
-          scalar(s"$name[$row,$col]", actual(row, col), expected(row, col), tolerance)
+          scalar(s"$name[$row,$col]", actual(row, col), expected(row)(col), tolerance)
         }
       }
-
     shape ++ values

@@ -70,6 +70,11 @@ construction points, but the core model should express its invariants in types.
 - **Numerical parity fixtures** anchor behavior that must match the R ecosystem
   (`neuroim2`, `fmrihrf`, `fmridesign`, `fmrireg`, `fmridataset`; sources under `~/code/`).
   When porting statistical behavior, add a fixture-backed test rather than trusting the port.
+- Scenario tests are realistic workflow contracts, not loose assertion piles. Follow
+  [`docs/plans/scenario-parity-harness.md`](docs/plans/scenario-parity-harness.md):
+  every active scenario should return one `ScenarioResult` truth value, default to
+  clean `Pass` only, represent known gaps as declared caveats, and require an
+  explicit policy before `PassWithCaveats` is CI-acceptable.
 - Put platform-independent tests in `shared` so they run on both JVM and JS; reserve
   `jvm`/`js` test dirs for platform-specific behavior (IO, native shims).
 
