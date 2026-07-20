@@ -544,7 +544,7 @@ lazy val mvpaFit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-fit"))
-    .dependsOn(fit, mvpa, multivar)
+    .dependsOn(fit, mvpa, multivar % "compile->compile;test->test")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-fit"

@@ -1,6 +1,6 @@
 # One-shot MVPA by canonical contrast effect
 
-Status: **estimand frozen; implementation pending**
+Status: **implemented and accepted on JVM and Scala.js**
 
 Epic: `bd-01KXZZZWCEEDVD963AZA40FHE7` (`CCA`)
 
@@ -9,6 +9,21 @@ learns a spatial direction directly from prepared scan-level responses and a
 first-level contrast, without constructing trialwise beta maps. It is a
 canonical *contrast-effect* detector, not ordinary paired CCA and not a
 directed classifier.
+
+## What question this method answers
+
+The result asks whether some linear combination of the selected response
+features carries a reproducible effect of the named first-level contrast. The
+training generalized root chooses that combination; the held-out root measures
+the same contrast effect along the frozen combination in an independent run.
+The reported correlation is only a monotone presentation of the mean held-out
+root.
+
+No class labels, decision boundary, class probabilities, or predicted trial
+responses are produced. Use the ordinary `mvpa` classification contracts when
+the scientific question is directed prediction of labels. Use paired CCA when
+two observed variable blocks are symmetric peers. Neither operation is an
+alternate spelling of canonical contrast-effect detection.
 
 ## Version-one estimand
 
@@ -197,7 +212,7 @@ contrast-effect estimand.
 
 ## Gale boundary audit
 
-ScalaFIM pins Gale revision `ef540198b0cfd5678e14f85cdc7ea904f87812ba`.
+ScalaFIM pins Gale revision `441caa15e809622b606942461ebde326b96d2361`.
 At that revision, shared JVM/Scala.js code provides the required matrix
 carriers, positive-definite checks, eigenvalue selection, residual diagnostics,
 and `gale.spectral.Eigen.eigSymmetricGeneralized`. The current gap list is
@@ -241,9 +256,36 @@ Three oracle families anchor the implementation:
    records fold roots and the aggregate transformation with all orientations
    documented.
 
-Completion still requires metamorphic, leakage, null-calibration, held-out
-recovery, allocation, and full JVM/Scala.js gates in CCA4. Agreement among two
-Scala paths alone is not evidence of scientific correctness.
+## Acceptance evidence
+
+`CanonicalEffectAcceptanceSuite` exercises the complete `fit` -> `multivar` ->
+`mvpa-fit` path on both JVM and Scala.js. It establishes:
+
+- fold-by-fold roots, directions, trace-scaled ridge values, held-out roots,
+  their mean, and the correlation transform against the committed base-R
+  fixture;
+- invariance to run and row order, nonzero contrast scaling, invertible
+  nuisance-basis changes, orthogonal feature rotations, common response scale,
+  and semantic feature-axis permutations;
+- a zero-effect boundary, typed rejection of a numerically zero held-out
+  denominator, deterministic null calibration, and held-out signal recovery;
+  and
+- an 8,192-timepoint allocation sentinel whose only retained products are
+  feature-by-feature and feature-by-design sufficient statistics.
+
+`CanonicalEffectMvpaSuite` separately verifies streamed moments against both
+batch products and explicit dense projectors, ROI/searchlight integration,
+stream stopping, exact training-fold geometry resolution, and the leakage law
+that perturbing a held-out response cannot alter its training frame or ridge.
+`CanonicalEffectSuite` verifies the analytic rank-one oracle, PSD and
+rank-deficient boundaries, scale and orthogonal-coordinate laws, numerical
+diagnostics, and projector equality for repeated leading roots. At the
+scan-level integration boundary, a repeated training root is reported as a
+typed non-identifiable held-out direction; no arbitrary eigenvector is scored.
+
+The production source contains no trial-beta carrier and no time-by-time
+projector. Its only spectral call is the Gale symmetric-definite generalized
+eigensolver from `multivar`; ordinary paired CCA remains a separate method.
 
 ## Explicit non-goals
 

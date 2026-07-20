@@ -374,7 +374,8 @@ object CanonicalEffectMvpa:
       case CanonicalEffectSolution.Simple(direction, _) =>
         val numerator = quadratic(direction, heldOut.effect)
         val denominator = quadratic(direction, heldOut.residual)
-        if !denominator.isFinite || denominator <= 0.0 then
+        val denominatorThreshold = fit.programFit.identifiability.context.tolerance.threshold(matrixFrobenius(heldOut.residual))
+        if !denominator.isFinite || denominator <= denominatorThreshold then
           Left(OneShotMvpaError.NonPositiveHeldOutDenominator(runId, denominator))
         else
           val root = numerator / denominator
@@ -507,6 +508,17 @@ private def quadratic(vector: DVec, matrix: DMat): Double =
       col += 1
     row += 1
   value
+
+private def matrixFrobenius(matrix: DMat): Double =
+  var squared = 0.0
+  var row = 0
+  while row < matrix.rows do
+    var col = 0
+    while col < matrix.cols do
+      squared += matrix(row, col) * matrix(row, col)
+      col += 1
+    row += 1
+  Math.sqrt(squared)
 
 private def symmetrized(size: Int, values: Array[Double]): DMat =
   val out = Matrix.newBuilder(size, size)
