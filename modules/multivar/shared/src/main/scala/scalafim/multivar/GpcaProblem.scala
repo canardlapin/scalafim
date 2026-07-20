@@ -106,18 +106,19 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       for
         covarianceDense <- semantic(covariance.toDense)
         normalizationDense <- semantic(featureCometric.toDense)
-        eigen <- LinalgErrorAdapter.adapt(solver.decompose(covarianceDense, normalizationDense, components))
-        retained <- retainedSpectrum(eigen, rankTolerance)
-        (eigenvalues, rawWeights) = retained
-        weights = orientColumns(rawWeights)
-        component <- SpaceRef.of(s"${featureSpace.id.value}.gpca", SpaceRole.Latent, eigenvalues.length)
+        rayleigh <- GeneralizedRayleighRitz.solve(
+          covarianceDense,
+          normalizationDense,
+          components,
+          SpectralRankTolerance.unsafe(rankTolerance.value),
+          solver = solver
+        )
+        component <- SpaceRef.of(s"${featureSpace.id.value}.gpca", SpaceRole.Latent, rayleigh.values.length)
         fit <- assemble(
           component,
           components,
-          eigenvalues,
-          weights,
+          rayleigh,
           covarianceDense,
-          normalizationDense,
           rankTolerance
         )
       yield fit
@@ -125,12 +126,12 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
   private def assemble(
       component: SpaceRef,
       requested: ComponentCount,
-      eigenvalues: DVec,
-      weights: DMat,
+      rayleigh: RayleighRitzResult,
       covarianceDense: DMat,
-      normalizationDense: DMat,
       rankTolerance: GpcaRankTolerance
   ): Either[MultivarError, GpcaOperatorFit[Rows, Feature, component.Id]] =
+    val eigenvalues = rayleigh.values
+    val weights = rayleigh.vectors
     val frameIdentity = ValueIdentity.derived("gpca-frame", covariance.valueIdentity, featureCometric.valueIdentity)
     val fitProvenance = provenance.append(
       SemanticProvenanceEvent.Derived(
@@ -175,35 +176,9 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         method = "semantic-gpca",
         latentId = component.descriptor.id.value
       )
-      generalizedResidual = generalizedEquationResidual(
-        covarianceDense,
-        normalizationDense,
-        weights,
-        eigenvalues
-      )
-      normalizationResidual = orthonormalityResidual(normalizationDense, weights)
+      generalizedResidual = rayleigh.diagnostics.generalizedResidual
+      normalizationResidual = rayleigh.diagnostics.normalizationResidual
       tolerance = CertificateTolerance.strict
-      equationScale = frobenius(covarianceDense) + maxAbs(eigenvalues) * frobenius(normalizationDense)
-      _ <-
-        if generalizedResidual <= tolerance.threshold(equationScale) then Right(())
-        else
-          Left(
-            MultivarError.NumericalResidualExceeded(
-              "GPCA generalized eigen equation",
-              generalizedResidual,
-              tolerance.threshold(equationScale)
-            )
-          )
-      _ <-
-        if normalizationResidual <= tolerance.threshold(eigenvalues.length.toDouble) then Right(())
-        else
-          Left(
-            MultivarError.NumericalResidualExceeded(
-              "GPCA frame normalization",
-              normalizationResidual,
-              tolerance.threshold(eigenvalues.length.toDouble)
-            )
-          )
       context <- semantic(
         CertificateContext.from(
           tolerance,
@@ -214,7 +189,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
           Some(s"rank-tolerance=${rankTolerance.value}")
         )
       )
-      clusters = spectralClusters(eigenvalues)
+      clusters = rayleigh.diagnostics.spectralClusters
       identifiability = NumericalIdentifiability(
         eigenvalues.length,
         clusters,
@@ -248,27 +223,6 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         ),
         fitProvenance
       )
-
-  private def retainedSpectrum(
-      eigen: SymmetricEigenResult,
-      tolerance: GpcaRankTolerance
-  ): Either[MultivarError, (DVec, DMat)] =
-    if eigen.values.length == 0 then Left(MultivarError.SolverFailed("GPCA eigensolver returned an empty spectrum"))
-    else
-      val leading = eigen.values(0)
-      if !leading.isFinite then Left(MultivarError.NonFiniteValue("GPCA generalized eigenvalue", 0, leading))
-      else
-        val cutoff = tolerance.value * Math.max(leading, 0.0)
-        var retained = 0
-        var error = Option.empty[MultivarError]
-        while retained < eigen.values.length && error.isEmpty && eigen.values(retained) > cutoff do
-          val value = eigen.values(retained)
-          if !value.isFinite then error = Some(MultivarError.NonFiniteValue("GPCA generalized eigenvalue", retained, value))
-          else retained += 1
-        error match
-          case Some(value) => Left(value)
-          case None if retained == 0 => Left(MultivarError.SolverFailed("no GPCA components survived the rank tolerance"))
-          case None => Right((MatrixOps.takeVector(eigen.values, retained), MatrixOps.takeColumns(eigen.vectors, retained)))
 
 object GpcaProblem:
   private[multivar] def fromPrepared[Rows <: SemanticSpace, Feature <: SemanticSpace](
@@ -462,23 +416,6 @@ private[multivar] object DynamicGpcaProblem:
       .map(diagramToMultivar)
       .map(problem => new PreparedGpcaProblem(rows, features)(problem))
 
-private def orientColumns(matrix: DMat): DMat =
-  val out = matrix.copyData
-  var col = 0
-  while col < matrix.cols do
-    var anchor = 0
-    var row = 1
-    while row < matrix.rows do
-      if Math.abs(matrix(row, col)) > Math.abs(matrix(anchor, col)) then anchor = row
-      row += 1
-    if matrix(anchor, col) < 0.0 then
-      row = 0
-      while row < matrix.rows do
-        out(row * matrix.cols + col) = -out(row * matrix.cols + col)
-        row += 1
-    col += 1
-  GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
-
 private def squareRoots(values: DVec): DVec =
   val out = values.copyData
   var index = 0
@@ -498,37 +435,6 @@ private def scaleColumnsByInverse(matrix: DMat, scale: DVec): DMat =
     row += 1
   GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-private def generalizedEquationResidual(
-    numerator: DMat,
-    denominator: DMat,
-    vectors: DMat,
-    values: DVec
-): Double =
-  val left = GaleNumerics.multiply(numerator, vectors)
-  val right = MatrixOps.scaleColumns(GaleNumerics.multiply(denominator, vectors), values)
-  frobenius(MatrixOps.subtract(left, right))
-
-private def orthonormalityResidual(metric: DMat, vectors: DMat): Double =
-  val gram = GaleNumerics.multiply(vectors.t, GaleNumerics.multiply(metric, vectors))
-  frobenius(MatrixOps.subtract(gram, DMat.eye(gram.rows)))
-
-private def frobenius(matrix: DMat): Double =
-  var squared = 0.0
-  var row = 0
-  while row < matrix.rows do
-    var col = 0
-    while col < matrix.cols do
-      val value = matrix(row, col)
-      squared += value * value
-      col += 1
-    row += 1
-  Math.sqrt(squared)
-
-private def spectralClusters(values: DVec): Vector[Vector[Int]] =
-  GenPcaSpectrum(squareRoots(values), values)
-    .clusters()
-    .map(cluster => (cluster.firstComponent until cluster.lastComponentExclusive).toVector)
-
 private def sum(values: DVec): Double =
   var total = 0.0
   var index = 0
@@ -536,14 +442,6 @@ private def sum(values: DVec): Double =
     total += values(index)
     index += 1
   total
-
-private def maxAbs(values: DVec): Double =
-  var maximum = 0.0
-  var index = 0
-  while index < values.length do
-    maximum = Math.max(maximum, Math.abs(values(index)))
-    index += 1
-  maximum
 
 private def semantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
   result.left.map:

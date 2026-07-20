@@ -562,7 +562,9 @@ exercise.
 |---|---|---|
 | Operator/form/map substrate and legacy diagram bridge | `SemanticForms.scala`, `DualityKernels.scala`, `Metric.scala`, `Maps.scala`, `DualityDiagram.scala`, `SemanticDiagram.scala` | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Universal objective/result program | named builders across `SemanticGenPca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
-| GPCA and deflation | `GpcaProblem.scala` is the operator-program engine; `SemanticGenPca.scala` delegates to it; `GenPca.scala`, `GenPcaSemantics.scala`, and `GmdDeflation.scala` remain compatibility-only for unmigrated consumers | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Generalized Rayleigh-Ritz and trace ratio | `RayleighRitz.scala` owns solver-independent lowering through Gale-backed capabilities; GPCA and LDA assemble statistical operators but own no spectral engine | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
+| GPCA and deflation | `GpcaProblem.scala` is the operator-program assembly; `SemanticGenPca.scala` delegates to it; `GenPca.scala`, `GenPcaSemantics.scala`, and `GmdDeflation.scala` remain compatibility-only for unmigrated consumers | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| LDA | `Lda.scala` builds class-incidence row relations, pulls back between/within scatter only through `secondOrder`, and declares distinct Fisher and trace-ratio programs with an explicit fixed shrinkage seam | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
 | Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
 | CPCA | `Cpca.scala` | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3` |
@@ -573,7 +575,9 @@ exercise.
 | Legacy aliases and compatibility delegates remaining after all migrations | repository-wide scan for `MvMetric`, `MvMap`, legacy `DualityDiagram`, raw `GenPca`, and `PairedGmd` | purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 
 LDA is new proof code rather than a legacy consumer and is owned by
-`bd-01KXSGZ3E48W9X80199PS5FHA8`. The independent end-state audit is
+`bd-01KXSGZ3E48W9X80199PS5FHA8`. Its hard-label and simplex incidence forms
+share one relationship algebra; relabeling changes no operator identity at the
+statistical level. The independent end-state audit is
 `bd-01KXZZ2FAPEGV5MQX8EH9973QM`; no production consumer may be discovered at
 that gate without either an owner above or a new explicit dependency before
 purge.
