@@ -67,6 +67,9 @@ object PlotRegion:
   val Legend: GraphicsName = GraphicsName.unsafe("legend-region")
   val Title: GraphicsName = GraphicsName.unsafe("plot-title")
   val Subtitle: GraphicsName = GraphicsName.unsafe("plot-subtitle")
+  val PanelBackground: GraphicsName = GraphicsName.unsafe("plot-panel-background")
+  val PanelGridX: GraphicsName = GraphicsName.unsafe("plot-panel-grid-x")
+  val PanelGridY: GraphicsName = GraphicsName.unsafe("plot-panel-grid-y")
 
 /** What the solver must make room for. */
 final case class AxisRequest(labels: Vector[String], title: Option[String] = None)

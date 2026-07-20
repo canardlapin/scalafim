@@ -72,7 +72,8 @@ final case class PlotCompilerOptions(
     policy: Option[LayoutPolicy] = None,
     margins: PanelMargins = PanelMargins.none,
     expansion: RangeExpansion = RangeExpansion.default,
-    guides: GuidePolicy = GuidePolicy.NoGuides
+    guides: GuidePolicy = GuidePolicy.NoGuides,
+    theme: Theme = Theme.default
 )
 
 object PlotCompilerOptions:
@@ -84,23 +85,24 @@ final case class TrainedPlot[Row](
     layout: Option[PanelLayout],
     guides: Vector[ResolvedGuide],
     scaleRegistry: PlotScaleRegistry,
+    panelGrobs: Vector[Grob],
     labelGrobs: Vector[Grob]
 ):
   def scene: Scene =
     val layerGrobs = layers.flatMap(_.grobs)
-    val panelGrobs =
+    val panelGroup =
       layout match
         case None =>
           layerGrobs
         case Some(panel) =>
           Vector(
             Grob.group(
-              layerGrobs,
+              panelGrobs ++ layerGrobs,
               viewport = Some(panel.viewport),
               name = Some(GraphicsName.unsafe("plot-panel"))
             )
           )
-    Scene(panelGrobs ++ guides.map(_.grob) ++ labelGrobs)
+    Scene(panelGroup ++ guides.map(_.grob) ++ labelGrobs)
 
   def droppedRows: Vector[DroppedRow[Row]] =
     layers.flatMap(_.droppedRows)
@@ -180,50 +182,57 @@ object PlotCompiler:
       plot: Plot[Row],
       options: PlotCompilerOptions = PlotCompilerOptions.default
   ): Either[GraphicsError, TrainedPlot[Row]] =
+    val themeNeedsLayout =
+      options.theme.panel.background.nonEmpty || options.theme.panel.grid.nonEmpty
     val effectiveOptions =
-      if !plot.labels.isEmpty && options.layout.isEmpty && options.frame.isEmpty && options.policy.isEmpty then
-        options.copy(policy = Some(LayoutPolicy()))
+      if (!plot.labels.isEmpty || themeNeedsLayout)
+        && options.layout.isEmpty && options.frame.isEmpty && options.policy.isEmpty
+      then options.copy(policy = Some(options.theme.layout))
       else options
-    val layoutPolicy = effectiveOptions.policy.getOrElse(LayoutPolicy())
+    val layoutPolicy = options.theme.layoutPolicy(effectiveOptions.policy.getOrElse(options.theme.layout))
+    val resolvedOptions = effectiveOptions.copy(policy = effectiveOptions.policy.map(_ => layoutPolicy))
     for
       plans <- MappingPhase.plan(plot)
       scales <- ScalePhase.train(plans)
-      layers <- resolveLayers(scales.plans)
-      ranges <- LayoutPhase.panelRangesFor(effectiveOptions, layers)
+      layers <- resolveLayers(scales.plans, options.theme)
+      ranges <- LayoutPhase.panelRangesFor(resolvedOptions, layers)
       specs <- GuidePhase.specs(
-        effectiveOptions.guides,
+        resolvedOptions.guides,
         scales.registry,
         ranges,
-        relativeLegend = effectiveOptions.policy.nonEmpty,
+        relativeLegend = resolvedOptions.policy.nonEmpty,
         labels = plot.labels
       )
-      resolution <- LayoutPhase.assemble(plot.coord, effectiveOptions, ranges, specs, plot.labels)
+      resolution <- LayoutPhase.assemble(plot.coord, resolvedOptions, ranges, specs, plot.labels)
+      panelGrobs <- PanelPhase.lower(resolution.layout, specs, options.theme.panel)
       guides <- GuidePhase.lower(
         resolution.layout,
         resolution.frames,
         specs,
-        layoutPolicy
+        layoutPolicy,
+        options.theme
       )
-      labels <- PlotLabelPhase.lower(plot.labels, resolution.frames, layoutPolicy)
-    yield TrainedPlot(layers, resolution.layout, guides, scales.registry, labels)
+      labels <- PlotLabelPhase.lower(plot.labels, resolution.frames, options.theme.plotText)
+    yield TrainedPlot(layers, resolution.layout, guides, scales.registry, panelGrobs, labels)
 
   private def resolveLayers[Row](
-      plans: Vector[LayerPlan[Row]]
+      plans: Vector[LayerPlan[Row]],
+      theme: Theme
   ): Either[GraphicsError, Vector[ResolvedLayer[Row]]] =
     val out = Vector.newBuilder[ResolvedLayer[Row]]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
-      result = resolveLayer(plans(idx)).map { layer =>
+      result = resolveLayer(plans(idx), theme).map { layer =>
         out += layer
         ()
       }
       idx += 1
     result.map(_ => out.result())
 
-  private def resolveLayer[Row](plan: LayerPlan[Row]): Either[GraphicsError, ResolvedLayer[Row]] =
+  private def resolveLayer[Row](plan: LayerPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
     val registry = ScalePhase.registry(plan)
-    RowPhase.resolve(plan).flatMap { case (rows, droppedRows) =>
+    RowPhase.resolve(plan, theme).flatMap { case (rows, droppedRows) =>
       GeomPhase.lower(plan.layer.geom, rows).map { grobs =>
         ResolvedLayer(
           layerIndex = plan.layerIndex,

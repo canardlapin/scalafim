@@ -164,7 +164,7 @@ final case class Layer[Row] private (
     data: Option[Vector[Row]],
     mapping: AesSpec[Row],
     inheritMapping: Boolean,
-    params: GraphicParams
+    params: Option[GraphicParams]
 ):
   def effectiveMapping(plotMapping: AesSpec[Row]): AesSpec[Row] =
     if inheritMapping then mapping.inherit(plotMapping) else mapping
@@ -179,7 +179,7 @@ object Layer:
       data: Option[Vector[Row]] = None,
       mapping: AesSpec[Row] = AesSpec.empty[Row],
       inheritMapping: Boolean = true,
-      params: GraphicParams = GraphicParams.unsafe()
+      params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(Geom.Point, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params)
 
@@ -189,7 +189,7 @@ object Layer:
       data: Option[Vector[Row]] = None,
       mapping: AesSpec[Row] = AesSpec.empty[Row],
       inheritMapping: Boolean = true,
-      params: GraphicParams = GraphicParams.unsafe()
+      params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(Geom.Line, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params)
 
@@ -200,7 +200,7 @@ object Layer:
       data: Option[Vector[Row]] = None,
       mapping: AesSpec[Row] = AesSpec.empty[Row],
       inheritMapping: Boolean = true,
-      params: GraphicParams = GraphicParams.unsafe()
+      params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(Geom.Text, Stat.Identity, data, mapping.withPosition(x, y).withLabel(label), inheritMapping, params)
 
@@ -210,7 +210,7 @@ object Layer:
       data: Option[Vector[Row]] = None,
       inheritMapping: Boolean = true,
       stat: Stat = Stat.Identity,
-      params: GraphicParams = GraphicParams.unsafe()
+      params: Option[GraphicParams] = None
   ): Either[GraphicsError, Layer[Row]] =
     if inheritMapping then Right(Layer(geom, stat, data, mapping, inheritMapping, params))
     else validate(geom, mapping).map(_ => Layer(geom, stat, data, mapping, inheritMapping, params))

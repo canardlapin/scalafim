@@ -142,9 +142,9 @@ object GuideSpec:
       ticks: Option[Vector[AxisTick]] = None,
       tickLength: Option[ExtentExpr] = None,
       labelOffset: Option[ExtentExpr] = None,
-      axisGp: GraphicParams = GraphicParams.unsafe(),
-      tickGp: GraphicParams = GraphicParams.unsafe(),
-      labelGp: GraphicParams = GraphicParams.unsafe(),
+      axisGp: Option[GraphicParams] = None,
+      tickGp: Option[GraphicParams] = None,
+      labelGp: Option[GraphicParams] = None,
       title: Option[String] = None,
       titleGp: Option[GraphicParams] = None,
       name: Option[GraphicsName] = None
@@ -161,8 +161,8 @@ object GuideSpec:
       rowGap: ExtentExpr = ExtentExpr.pointsUnsafe(20.0),
       labelOffset: LengthExpr = LengthExpr(Length.pointsUnsafe(10.0)),
       markerSize: ExtentExpr = ExtentExpr.pointsUnsafe(5.0),
-      titleGp: GraphicParams = GraphicParams.unsafe(),
-      labelGp: GraphicParams = GraphicParams.unsafe(),
+      titleGp: Option[GraphicParams] = None,
+      labelGp: Option[GraphicParams] = None,
       name: Option[GraphicsName] = None
   ) extends GuideSpec
 
@@ -170,18 +170,20 @@ object GuideSpec:
       spec: GuideSpec,
       layout: PanelLayout,
       legendViewport: Option[Viewport] = None,
-      policy: LayoutPolicy = LayoutPolicy()
+      policy: LayoutPolicy = LayoutPolicy(),
+      theme: Theme = Theme.default
   ): Either[GraphicsError, ResolvedGuide] =
     spec match
       case axis: Axis =>
-        lowerAxis(axis, layout, policy)
+        lowerAxis(axis, layout, policy, theme)
       case legend: Legend =>
-        lowerLegend(legend, legendViewport)
+        lowerLegend(legend, legendViewport, theme)
 
   private def lowerAxis(
       spec: Axis,
       layout: PanelLayout,
-      policy: LayoutPolicy
+      policy: LayoutPolicy,
+      theme: Theme
   ): Either[GraphicsError, ResolvedGuide] =
     val range = layout.axisRange(spec.side)
     // The layout solver reserves point-sized strips. Lower defaults in the same
@@ -192,9 +194,7 @@ object GuideSpec:
       ExtentExpr.pointsUnsafe(policy.tickLengthPt + policy.tickLabelGapPt)
     )
     val titleOffset = ExtentExpr.pointsUnsafe(axisTitleOffsetPt(spec, policy))
-    val titleGp = spec.titleGp.getOrElse(
-      GraphicParams.unsafe(fontSize = Length.pointsUnsafe(policy.axisTitleFontPt))
-    )
+    val titleGp = spec.titleGp.getOrElse(theme.axis.title)
     val name = spec.name.orElse(Some(defaultAxisName(spec.side)))
     for
       ticks <- spec.ticks match
@@ -207,9 +207,9 @@ object GuideSpec:
         position = layout.axisPosition(spec.side),
         tickLength = tickLength,
         labelOffset = labelOffset,
-        axisGp = spec.axisGp,
-        tickGp = spec.tickGp,
-        labelGp = spec.labelGp,
+        axisGp = spec.axisGp.getOrElse(theme.axis.line),
+        tickGp = spec.tickGp.getOrElse(theme.axis.tick),
+        labelGp = spec.labelGp.getOrElse(theme.axis.text),
         name = name,
         title = spec.title,
         titleOffset = titleOffset,
@@ -230,15 +230,16 @@ object GuideSpec:
 
   private def lowerLegend(
       spec: Legend,
-      viewport: Option[Viewport]
+      viewport: Option[Viewport],
+      theme: Theme
   ): Either[GraphicsError, ResolvedGuide] =
     if spec.entries.isEmpty then Left(GraphicsError.EmptyGeometry("legend"))
     else
       val children = Vector.newBuilder[Grob]
-      var result: Either[GraphicsError, Unit] = addLegendTitle(spec, children)
+      var result: Either[GraphicsError, Unit] = addLegendTitle(spec, theme, children)
       var idx = 0
       while idx < spec.entries.length && result.isRight do
-        result = addLegendEntry(spec, spec.entries(idx), idx, children)
+        result = addLegendEntry(spec, theme, spec.entries(idx), idx, children)
         idx += 1
       result.map { _ =>
         val group =
@@ -252,6 +253,7 @@ object GuideSpec:
 
   private def addLegendTitle(
       spec: Legend,
+      theme: Theme,
       children: scala.collection.mutable.Builder[Grob, Vector[Grob]]
   ): Either[GraphicsError, Unit] =
     spec.title match
@@ -263,7 +265,7 @@ object GuideSpec:
             title,
             spec.origin,
             anchor = Anchor(HJust.Left, VJust.Top),
-            gp = spec.titleGp,
+            gp = spec.titleGp.getOrElse(theme.legend.title),
             name = spec.name.map(name => GraphicsName.unsafe(s"${name.value}-title"))
           )
           .map { grob =>
@@ -273,6 +275,7 @@ object GuideSpec:
 
   private def addLegendEntry(
       spec: Legend,
+      theme: Theme,
       entry: LegendEntry,
       index: Int,
       children: scala.collection.mutable.Builder[Grob, Vector[Grob]]
@@ -294,7 +297,7 @@ object GuideSpec:
         entry.label,
         labelAt,
         anchor = Anchor(HJust.Left, VJust.Center),
-        gp = spec.labelGp,
+        gp = spec.labelGp.getOrElse(theme.legend.text),
         name = baseName.map(value => GraphicsName.unsafe(s"$value-label"))
       )
     yield

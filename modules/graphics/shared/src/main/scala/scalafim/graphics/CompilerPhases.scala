@@ -132,7 +132,8 @@ private[graphics] object ScalePhase:
   */
 private[graphics] object RowPhase:
   def resolve[Row](
-      plan: LayerPlan[Row]
+      plan: LayerPlan[Row],
+      theme: Theme = Theme.default
   ): Either[GraphicsError, (Vector[ResolvedRow[Row]], Vector[DroppedRow[Row]])] =
     val rows = Vector.newBuilder[ResolvedRow[Row]]
     val dropped = Vector.newBuilder[DroppedRow[Row]]
@@ -140,7 +141,7 @@ private[graphics] object RowPhase:
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plan.data.length && result.isRight do
       val source = plan.data(idx)
-      resolveRow(idx, source, plan.layer, plan.env) match
+      resolveRow(idx, source, plan.layer, plan.env, theme) match
         case RowResolution.Resolved(row) =>
           rows += row
         case RowResolution.Dropped(reason) =>
@@ -154,7 +155,8 @@ private[graphics] object RowPhase:
       rowIndex: Int,
       source: Row,
       layer: Layer[Row],
-      env: AesEnv[Row]
+      env: AesEnv[Row],
+      theme: Theme
   ): RowResolution[Row] =
     val resolved =
       for
@@ -163,8 +165,8 @@ private[graphics] object RowPhase:
         _ <- finitePosition(x, y)
         text <- labelValue(layer.geom, env, source)
         group <- optionalAes(Aesthetic.Group, env.get(Aesthetic.Group), source)
-        gp <- rowGraphicParams(source, env, layer.params)
-        size <- rowSize(source, env)
+        gp <- rowGraphicParams(source, env, layer.params.getOrElse(theme.geom))
+        size <- rowSize(source, env, theme.pointSizePt)
       yield
         ResolvedRow(
           rowIndex = rowIndex,
@@ -206,10 +208,14 @@ private[graphics] object RowPhase:
         .map(error => PlotDropReason.InvalidAesthetic("gp", error.message))
     yield gp
 
-  private def rowSize[Row](row: Row, env: AesEnv[Row]): Either[PlotDropReason, ExtentExpr] =
+  private def rowSize[Row](
+      row: Row,
+      env: AesEnv[Row],
+      defaultSizePt: Double
+  ): Either[PlotDropReason, ExtentExpr] =
     optionalAes(Aesthetic.Size, env.get(Aesthetic.Size), row).flatMap {
       case None =>
-        Right(ExtentExpr.pointsUnsafe(4.0))
+        Right(ExtentExpr.pointsUnsafe(defaultSizePt))
       case Some(size) =>
         ExtentExpr
           .points(size)
@@ -499,7 +505,7 @@ private[graphics] object PlotLabelPhase:
   def lower(
       labels: PlotLabels,
       frames: Option[PlotFrames],
-      policy: LayoutPolicy
+      theme: PlotTextTheme
   ): Either[GraphicsError, Vector[Grob]] =
     val needsHeader = labels.title.nonEmpty || labels.subtitle.nonEmpty
     if !needsHeader then Right(Vector.empty)
@@ -512,14 +518,14 @@ private[graphics] object PlotLabelPhase:
             _ <- addLabel(
               labels.title,
               solved.titleViewport,
-              policy.plotTitleFontPt,
+              theme.title,
               PlotRegion.Title,
               out
             )
             _ <- addLabel(
               labels.subtitle,
               solved.subtitleViewport,
-              policy.plotSubtitleFontPt,
+              theme.subtitle,
               PlotRegion.Subtitle,
               out
             )
@@ -528,7 +534,7 @@ private[graphics] object PlotLabelPhase:
   private def addLabel(
       text: Option[String],
       viewport: Option[Viewport],
-      fontSizePt: Double,
+      gp: GraphicParams,
       name: GraphicsName,
       out: scala.collection.mutable.Builder[Grob, Vector[Grob]]
   ): Either[GraphicsError, Unit] =
@@ -543,7 +549,7 @@ private[graphics] object PlotLabelPhase:
                 label,
                 Point.npcUnsafe(0.0, 0.5),
                 anchor = Anchor(HJust.Left, VJust.Center),
-                gp = GraphicParams.unsafe(fontSize = Length.pointsUnsafe(fontSizePt)),
+                gp = gp,
                 viewport = Some(frame),
                 name = Some(name)
               )
@@ -768,7 +774,8 @@ private[graphics] object GuidePhase:
       layout: Option[PanelLayout],
       frames: Option[PlotFrames],
       specs: Vector[GuideSpec],
-      policy: LayoutPolicy = LayoutPolicy()
+      policy: LayoutPolicy = LayoutPolicy(),
+      theme: Theme = Theme.default
   ): Either[GraphicsError, Vector[ResolvedGuide]] =
     if specs.isEmpty then Right(Vector.empty)
     else
@@ -781,9 +788,56 @@ private[graphics] object GuidePhase:
           var idx = 0
           var result: Either[GraphicsError, Unit] = Right(())
           while idx < specs.length && result.isRight do
-            result = GuideSpec.lower(specs(idx), panel, legendViewport, policy).map { guide =>
+            result = GuideSpec.lower(specs(idx), panel, legendViewport, policy, theme).map { guide =>
               out += guide
               ()
             }
             idx += 1
           result.map(_ => out.result())
+
+/** Panel decoration is ordinary renderer-neutral geometry. It is lowered
+  * after guide derivation so grid lines use the same tick positions as axes,
+  * and inserted before layer marks so data remains visually authoritative.
+  */
+private[graphics] object PanelPhase:
+  def lower(
+      layout: Option[PanelLayout],
+      specs: Vector[GuideSpec],
+      theme: PanelTheme
+  ): Either[GraphicsError, Vector[Grob]] =
+    layout match
+      case None => Right(Vector.empty)
+      case Some(panel) =>
+        val out = Vector.newBuilder[Grob]
+        theme.background.foreach { gp =>
+          out += Grob.rectUnsafe(
+            center = Point.npcUnsafe(0.5, 0.5),
+            size = Size.npcUnsafe(1.0, 1.0),
+            gp = gp,
+            name = Some(PlotRegion.PanelBackground)
+          )
+        }
+        theme.grid match
+          case None => Right(out.result())
+          case Some(gp) =>
+            val xValues = tickValues(specs, horizontal = true).filter(panel.xScale.contains)
+            val yValues = tickValues(specs, horizontal = false).filter(panel.yScale.contains)
+            if xValues.nonEmpty then
+              out += Grob.segments(
+                xValues.map(x => Point.nativeUnsafe(x, panel.yScale.lower) -> Point.nativeUnsafe(x, panel.yScale.upper)),
+                gp = gp,
+                name = Some(PlotRegion.PanelGridX)
+              ).orThrow
+            if yValues.nonEmpty then
+              out += Grob.segments(
+                yValues.map(y => Point.nativeUnsafe(panel.xScale.lower, y) -> Point.nativeUnsafe(panel.xScale.upper, y)),
+                gp = gp,
+                name = Some(PlotRegion.PanelGridY)
+              ).orThrow
+            Right(out.result())
+
+  private def tickValues(specs: Vector[GuideSpec], horizontal: Boolean): Vector[Double] =
+    specs.iterator.collect {
+      case axis: GuideSpec.Axis if axis.side.isHorizontal == horizontal =>
+        axis.ticks.getOrElse(Vector.empty).map(_.value)
+    }.flatten.toVector.distinct

@@ -15,6 +15,8 @@ typed algebra those backends can interpret later:
   scenes into numeric, y-down device primitives any backend can serialize;
 - a plot layout solver (`PlotLayoutSolver`, `LayoutPolicy`, `TextMetrics`)
   that allocates named panel, axis-strip, and legend regions;
+- a finite immutable `Theme` value for geometry defaults, typography,
+  palettes, guides, and optional panel decoration;
 - a renderer conformance contract (`RendererConformance`, `RendererHarness`)
   that backend modules run to prove deterministic, marker-preserving output.
 
@@ -79,6 +81,11 @@ platform renderers should consume `DeviceScene` values at a boundary.
   override them. The layout solver sizes dedicated title/subtitle regions and
   enlarged axis strips through `TextMetrics`, then lowering emits ordinary
   text grobs for every backend.
+- Themes are values, not ambient state or a selector cascade. Compilation
+  resolves one `Theme` into complete leaf `GraphicParams`; explicit layer and
+  guide styles win locally. The layout solver measures the same themed font
+  sizes later emitted as text, while panel backgrounds and tick-aligned grids
+  are ordinary renderer-neutral grobs beneath the data.
 
 ## Compilation pipeline
 
@@ -107,6 +114,11 @@ val plot = Plot(rows)
   .withSubtitle("Condition means")
   .withAxisTitles("Time (s)", "Signal")
   .addLayer(Layer.line[Observation](_.time, _.signal))
+
+val scene = PlotCompiler.compile(
+  plot,
+  PlotCompilerOptions(guides = GuidePolicy.Derived(), theme = Theme.minimal)
+)
 ```
 
 ## Backends
