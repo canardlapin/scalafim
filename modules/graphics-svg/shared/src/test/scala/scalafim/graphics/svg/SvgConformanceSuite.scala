@@ -36,12 +36,14 @@ class SvgConformanceSuite extends munit.FunSuite:
             line.contains(" clip-path=") == clipped &&
             line.contains(" transform=\"rotate(") == rotated
           }
-        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, alpha) =>
+        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, lineCap, lineJoin, alpha) =>
           namedLines(out, name).exists { line =>
             !line.startsWith("<g") &&
             hasPaint(line, "stroke", stroke) &&
             hasPaint(line, "fill", fill) &&
             line.contains(s""" stroke-width="${number(lineWidth)}"""") &&
+            line.contains(s""" stroke-linecap="${svgLineCap(lineCap)}"""") &&
+            line.contains(s""" stroke-linejoin="${svgLineJoin(lineJoin)}"""") &&
             hasLineType(line, lineType) &&
             hasOpacity(line, alpha)
           }
@@ -92,6 +94,18 @@ class SvgConformanceSuite extends munit.FunSuite:
     private def hasOpacity(line: String, alpha: Double): Boolean =
       if alpha == 1.0 then !line.contains(" opacity=")
       else line.contains(s""" opacity="${number(alpha)}"""")
+
+    private def svgLineCap(value: LineCap): String =
+      value match
+        case LineCap.Butt   => "butt"
+        case LineCap.Round  => "round"
+        case LineCap.Square => "square"
+
+    private def svgLineJoin(value: LineJoin): String =
+      value match
+        case LineJoin.Miter => "miter"
+        case LineJoin.Round => "round"
+        case LineJoin.Bevel => "bevel"
 
     private def textAnchor(value: HJust): String =
       value match

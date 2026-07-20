@@ -28,6 +28,8 @@ enum RenderRequirement:
       fill: Option[Rgba],
       lineWidth: Double,
       lineType: LineType,
+      lineCap: LineCap,
+      lineJoin: LineJoin,
       alpha: Double
   )
   case Text(name: GraphicsName, horizontal: HJust, vertical: VJust, rotated: Boolean)
@@ -44,8 +46,8 @@ enum RenderRequirement:
         s"primitive '${name.value}' as $kind"
       case Group(name, clipped, rotated) =>
         s"group '${name.value}' with clipped=$clipped and rotated=$rotated"
-      case Style(name, _, _, lineWidth, lineType, alpha) =>
-        s"style '${name.value}' with lineWidth=$lineWidth, lineType=$lineType, alpha=$alpha"
+      case Style(name, _, _, lineWidth, lineType, lineCap, lineJoin, alpha) =>
+        s"style '${name.value}' with lineWidth=$lineWidth, lineType=$lineType, lineCap=$lineCap, lineJoin=$lineJoin, alpha=$alpha"
       case Text(name, horizontal, vertical, rotated) =>
         s"text '${name.value}' with anchor=($horizontal,$vertical) and rotated=$rotated"
       case Image(name, dimensions, interpolation, alpha) =>
@@ -185,7 +187,13 @@ object RendererConformance:
           Point.npcUnsafe(0.5, 0.75),
           Point.npcUnsafe(0.9, 0.25)
         ),
-        gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(25, 75, 125)), lineWidth = 1.5, lineType = LineType.Dashed),
+        gp = GraphicParams.unsafe(
+          stroke = Some(Rgba.unsafe(25, 75, 125)),
+          lineWidth = 1.5,
+          lineType = LineType.Dashed,
+          lineCap = LineCap.Round,
+          lineJoin = LineJoin.Bevel
+        ),
         name = Some(GraphicsName.unsafe("conformance-line"))
       )
       .map { grob =>
@@ -202,6 +210,8 @@ object RendererConformance:
               None,
               1.5,
               LineType.Dashed,
+              LineCap.Round,
+              LineJoin.Bevel,
               1.0
             )
           )
@@ -412,6 +422,8 @@ object RendererConformance:
               None,
               2.0,
               LineType.Dotted,
+              LineCap.Butt,
+              LineJoin.Miter,
               0.6
             )
           )

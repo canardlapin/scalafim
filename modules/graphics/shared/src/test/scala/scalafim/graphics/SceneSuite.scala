@@ -50,6 +50,13 @@ class SceneSuite extends munit.FunSuite:
     })
   }
 
+  test("graphic parameters define backend-neutral stroke geometry defaults") {
+    val gp = GraphicParams.unsafe()
+
+    assertEquals(gp.lineCap, LineCap.Butt)
+    assertEquals(gp.lineJoin, LineJoin.Miter)
+  }
+
   test("length expressions preserve symbolic unit composition") {
     val expr =
       LengthExpr.npcUnsafe(0.5) + LengthExpr(Length.pointsUnsafe(2.0)) - LengthExpr.nativeUnsafe(1.0)

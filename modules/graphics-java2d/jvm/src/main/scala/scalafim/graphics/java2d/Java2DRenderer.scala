@@ -62,6 +62,8 @@ final case class Java2DPaint(
     fill: Option[Java2DColor],
     lineWidth: Double,
     dash: Java2DLineDash,
+    lineCap: LineCap,
+    lineJoin: LineJoin,
     opacity: Double
 )
 
@@ -72,12 +74,14 @@ object Java2DPaint:
       gp.fill.map(Java2DColor.fromRgba),
       gp.lineWidth,
       Java2DLineDash.fromLineType(gp.lineType),
+      gp.lineCap,
+      gp.lineJoin,
       gp.alpha
     )
 
   def text(gp: GraphicParams): Java2DPaint =
     val color = gp.fill.orElse(gp.stroke).getOrElse(Rgba.Black)
-    Java2DPaint(None, Some(Java2DColor.fromRgba(color)), 0.0, Java2DLineDash.Solid, gp.alpha)
+    Java2DPaint(None, Some(Java2DColor.fromRgba(color)), 0.0, Java2DLineDash.Solid, gp.lineCap, gp.lineJoin, gp.alpha)
 
 enum Java2DCommand:
   case Save(name: Option[GraphicsName])
@@ -314,14 +318,22 @@ object Java2DRenderer:
     }
 
   private def stroke(paint: Java2DPaint): BasicStroke =
+    val cap = paint.lineCap match
+      case LineCap.Butt   => BasicStroke.CAP_BUTT
+      case LineCap.Round  => BasicStroke.CAP_ROUND
+      case LineCap.Square => BasicStroke.CAP_SQUARE
+    val join = paint.lineJoin match
+      case LineJoin.Miter => BasicStroke.JOIN_MITER
+      case LineJoin.Round => BasicStroke.JOIN_ROUND
+      case LineJoin.Bevel => BasicStroke.JOIN_BEVEL
     paint.dash match
       case Java2DLineDash.Solid =>
-        new BasicStroke(paint.lineWidth.toFloat)
+        new BasicStroke(paint.lineWidth.toFloat, cap, join)
       case Java2DLineDash.Pattern(values) =>
         new BasicStroke(
           paint.lineWidth.toFloat,
-          BasicStroke.CAP_BUTT,
-          BasicStroke.JOIN_MITER,
+          cap,
+          join,
           10.0f,
           values.toArray,
           0.0f

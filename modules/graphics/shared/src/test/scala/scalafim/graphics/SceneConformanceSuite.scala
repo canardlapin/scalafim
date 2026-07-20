@@ -51,11 +51,11 @@ class SceneConformanceSuite extends munit.FunSuite:
       requirement match
         case RenderRequirement.Primitive(name, kind) =>
           primitiveName(primitive).contains(name) && primitiveKind(primitive) == kind
-        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, alpha) =>
+        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, lineCap, lineJoin, alpha) =>
           primitiveName(primitive).contains(name) &&
             primitiveParams(primitive).exists { gp =>
               gp.stroke == stroke && gp.fill == fill && gp.lineWidth == lineWidth &&
-              gp.lineType == lineType && gp.alpha == alpha
+              gp.lineType == lineType && gp.lineCap == lineCap && gp.lineJoin == lineJoin && gp.alpha == alpha
             }
         case RenderRequirement.Text(name, horizontal, vertical, rotated) =>
           primitive match

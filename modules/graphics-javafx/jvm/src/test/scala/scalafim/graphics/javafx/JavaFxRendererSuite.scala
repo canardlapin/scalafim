@@ -9,7 +9,8 @@ import scalafim.graphics.*
 final class RecordingFxContext extends JavaFxGraphicsContext:
   val calls: ArrayBuffer[String] = ArrayBuffer.empty
   var lastDashes: Vector[Double] = Vector.empty
-  var lastCap: Option[JavaFxLineCap] = None
+  var lastCap: Option[LineCap] = None
+  var lastJoin: Option[LineJoin] = None
   var lastStroke: Option[JavaFxColor] = None
   var lastFill: Option[JavaFxColor] = None
   var lastFont: (Option[String], Double) = (None, 0.0)
@@ -41,9 +42,12 @@ final class RecordingFxContext extends JavaFxGraphicsContext:
     calls += "setStroke"
     lastStroke = Some(color)
   override def setLineWidth(width: Double): Unit = calls += "setLineWidth"
-  override def setLineCap(cap: JavaFxLineCap): Unit =
+  override def setLineCap(cap: LineCap): Unit =
     calls += "setLineCap"
     lastCap = Some(cap)
+  override def setLineJoin(join: LineJoin): Unit =
+    calls += "setLineJoin"
+    lastJoin = Some(join)
   override def setLineDashes(pattern: Vector[Double]): Unit =
     calls += "setLineDashes"
     lastDashes = pattern
@@ -110,7 +114,12 @@ class JavaFxRendererSuite extends munit.FunSuite:
     val line = Grob
       .lines(
         Vector(Point.npcUnsafe(0.1, 0.2), Point.npcUnsafe(0.9, 0.8)),
-        gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(10, 20, 30)), lineType = LineType.Dashed)
+        gp = GraphicParams.unsafe(
+          stroke = Some(Rgba.unsafe(10, 20, 30)),
+          lineType = LineType.Dashed,
+          lineCap = LineCap.Round,
+          lineJoin = LineJoin.Bevel
+        )
       )
       .fold(e => fail(e.message), identity)
     val program = JavaFxRenderer
@@ -129,13 +138,15 @@ class JavaFxRendererSuite extends munit.FunSuite:
         "setStroke",
         "setLineWidth",
         "setLineCap",
+        "setLineJoin",
         "setLineDashes",
         "strokePath",
         "restore"
       )
     )
     assertEquals(context.lastDashes, Vector(6.0, 4.0))
-    assertEquals(context.lastCap, Some(JavaFxLineCap.Butt))
+    assertEquals(context.lastCap, Some(LineCap.Round))
+    assertEquals(context.lastJoin, Some(LineJoin.Bevel))
     assertEquals(context.lastStroke, Some(JavaFxColor(10, 20, 30, 1.0)))
   }
 

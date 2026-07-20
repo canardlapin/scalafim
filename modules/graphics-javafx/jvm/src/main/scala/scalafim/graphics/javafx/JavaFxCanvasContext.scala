@@ -4,7 +4,7 @@ import javafx.geometry.VPos
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.image.{Image, PixelFormat, WritableImage}
 import javafx.scene.paint.Color
-import javafx.scene.shape.StrokeLineCap
+import javafx.scene.shape.{StrokeLineCap, StrokeLineJoin}
 import javafx.scene.text.{Font, TextAlignment}
 import scala.collection.mutable
 import scalafim.graphics.*
@@ -69,11 +69,20 @@ final class JavaFxCanvasContext(context: GraphicsContext) extends JavaFxGraphics
   override def setLineWidth(width: Double): Unit =
     context.setLineWidth(width)
 
-  override def setLineCap(cap: JavaFxLineCap): Unit =
+  override def setLineCap(cap: LineCap): Unit =
     context.setLineCap(
       cap match
-        case JavaFxLineCap.Butt   => StrokeLineCap.BUTT
-        case JavaFxLineCap.Square => StrokeLineCap.SQUARE
+        case LineCap.Butt   => StrokeLineCap.BUTT
+        case LineCap.Round  => StrokeLineCap.ROUND
+        case LineCap.Square => StrokeLineCap.SQUARE
+    )
+
+  override def setLineJoin(join: LineJoin): Unit =
+    context.setLineJoin(
+      join match
+        case LineJoin.Miter => StrokeLineJoin.MITER
+        case LineJoin.Round => StrokeLineJoin.ROUND
+        case LineJoin.Bevel => StrokeLineJoin.BEVEL
     )
 
   override def setLineDashes(pattern: Vector[Double]): Unit =

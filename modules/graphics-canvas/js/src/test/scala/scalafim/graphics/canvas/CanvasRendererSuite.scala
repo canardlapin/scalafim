@@ -69,6 +69,8 @@ class CanvasRendererSuite extends munit.FunSuite:
         fillStyle = "",
         globalAlpha = 1.0,
         lineWidth = 1.0,
+        lineCap = "",
+        lineJoin = "",
         font = "",
         textAlign = "start",
         textBaseline = "alphabetic"
@@ -77,7 +79,12 @@ class CanvasRendererSuite extends munit.FunSuite:
     val line = Grob
       .lines(
         Vector(Point.npcUnsafe(0.1, 0.2), Point.npcUnsafe(0.9, 0.8)),
-        gp = GraphicParams.unsafe(stroke = Some(Rgba.unsafe(10, 20, 30)), lineType = LineType.Dashed)
+        gp = GraphicParams.unsafe(
+          stroke = Some(Rgba.unsafe(10, 20, 30)),
+          lineType = LineType.Dashed,
+          lineCap = LineCap.Round,
+          lineJoin = LineJoin.Bevel
+        )
       )
       .toOption
       .get
@@ -88,6 +95,8 @@ class CanvasRendererSuite extends munit.FunSuite:
     CanvasRenderer.draw(program, context)
 
     assertEquals(calls.toVector, Vector("save", "beginPath", "moveTo", "lineTo", "dash", "stroke", "restore"))
+    assertEquals(context.lineCap, "round")
+    assertEquals(context.lineJoin, "bevel")
   }
 
   test("invalid canvas dimensions return typed errors") {

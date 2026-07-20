@@ -42,10 +42,6 @@ object JavaFxColor:
   def fromRgba(color: Rgba): JavaFxColor =
     JavaFxColor(color.red, color.green, color.blue, color.alpha)
 
-enum JavaFxLineCap:
-  case Butt
-  case Square
-
 enum JavaFxLineDash:
   case Solid
   case Pattern(values: Vector[Double])
@@ -62,6 +58,8 @@ final case class JavaFxPaint(
     fill: Option[JavaFxColor],
     lineWidth: Double,
     dash: JavaFxLineDash,
+    lineCap: LineCap,
+    lineJoin: LineJoin,
     opacity: Double
 )
 
@@ -72,12 +70,14 @@ object JavaFxPaint:
       gp.fill.map(JavaFxColor.fromRgba),
       gp.lineWidth,
       JavaFxLineDash.fromLineType(gp.lineType),
+      gp.lineCap,
+      gp.lineJoin,
       gp.alpha
     )
 
   def text(gp: GraphicParams): JavaFxPaint =
     val color = gp.fill.orElse(gp.stroke).getOrElse(Rgba.Black)
-    JavaFxPaint(None, Some(JavaFxColor.fromRgba(color)), 0.0, JavaFxLineDash.Solid, gp.alpha)
+    JavaFxPaint(None, Some(JavaFxColor.fromRgba(color)), 0.0, JavaFxLineDash.Solid, gp.lineCap, gp.lineJoin, gp.alpha)
 
 /** Deterministic JavaFX Canvas operations in device coordinates. Group effects
   * deliberately record rotation before clipping: the clip is installed in the
@@ -235,7 +235,8 @@ trait JavaFxGraphicsContext:
   def setFill(color: JavaFxColor): Unit
   def setStroke(color: JavaFxColor): Unit
   def setLineWidth(width: Double): Unit
-  def setLineCap(cap: JavaFxLineCap): Unit
+  def setLineCap(cap: LineCap): Unit
+  def setLineJoin(join: LineJoin): Unit
 
   /** An empty pattern means solid strokes. */
   def setLineDashes(pattern: Vector[Double]): Unit
@@ -368,17 +369,16 @@ object JavaFxRenderer:
       context.strokePath()
     }
 
-  /** JavaFX save/restore does not cover line dashes, so every stroke resets
-    * them (empty means solid). The JavaFX default line cap is SQUARE, which
-    * would fuse short dash marks into near-solid lines; dashed strokes force
-    * BUTT caps to match the Java2D and Canvas backends.
+  /** JavaFX save/restore does not cover all stroke geometry, so every stroke
+    * installs the complete backend-neutral state explicitly.
     */
   private def strokeState(context: JavaFxGraphicsContext, paint: JavaFxPaint, color: JavaFxColor): Unit =
     context.setStroke(color.combined(paint.opacity))
     context.setLineWidth(paint.lineWidth)
+    context.setLineCap(paint.lineCap)
+    context.setLineJoin(paint.lineJoin)
     paint.dash match
       case JavaFxLineDash.Solid =>
         context.setLineDashes(Vector.empty)
       case JavaFxLineDash.Pattern(values) =>
-        context.setLineCap(JavaFxLineCap.Butt)
         context.setLineDashes(values)

@@ -43,8 +43,8 @@ class SvgRendererSuite extends munit.FunSuite:
 
     assert(svg.contains("""<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80" viewBox="0 0 120 80">"""))
     assert(svg.contains("<title>Smoke &amp; SVG</title>"))
-    assert(svg.contains("""<circle stroke="#000000" fill="#285078" fill-opacity="0.5" stroke-width="1" cx="60" cy="60" r="5.3333" />"""))
-    assert(svg.contains("""<polyline stroke="#c80a05" fill="none" stroke-width="2" stroke-dasharray="6 4" points="0,80 120,0" />"""))
+    assert(svg.contains("""<circle stroke="#000000" fill="#285078" fill-opacity="0.5" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" cx="60" cy="60" r="5.3333" />"""))
+    assert(svg.contains("""<polyline stroke="#c80a05" fill="none" stroke-width="2" stroke-linecap="butt" stroke-linejoin="miter" stroke-dasharray="6 4" points="0,80 120,0" />"""))
     assert(svg.contains("""<text fill="#000000" stroke="none" font-family="Inter" font-size="16" x="60" y="20" text-anchor="start" dominant-baseline="text-before-edge">A&amp;B &lt;test&gt;</text>"""))
     assert(svg.endsWith("</svg>\n"))
   }
@@ -117,10 +117,10 @@ class SvgRendererSuite extends munit.FunSuite:
     val expected =
       """<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120" viewBox="0 0 200 120">
         |  <g data-name="x-axis">
-        |    <polyline data-name="x-axis-baseline" stroke="#000000" fill="none" stroke-width="0.5" points="20,99 180,99" />
-        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="20,99 20,102.6" />
-        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="100,99 100,102.6" />
-        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" points="180,99 180,102.6" />
+        |    <polyline data-name="x-axis-baseline" stroke="#000000" fill="none" stroke-width="0.5" stroke-linecap="butt" stroke-linejoin="miter" points="20,99 180,99" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" stroke-linecap="butt" stroke-linejoin="miter" points="20,99 20,102.6" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" stroke-linecap="butt" stroke-linejoin="miter" points="100,99 100,102.6" />
+        |    <polyline data-name="x-axis-ticks" stroke="#000000" fill="none" stroke-width="0.5" stroke-linecap="butt" stroke-linejoin="miter" points="180,99 180,102.6" />
         |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="20" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">0</text>
         |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="100" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">5</text>
         |    <text data-name="x-axis-label" fill="#000000" stroke="none" font-size="10.6667" x="180" y="106.2" text-anchor="middle" dominant-baseline="text-before-edge">10</text>
@@ -152,7 +152,7 @@ class SvgRendererSuite extends munit.FunSuite:
 
     val svg = render(Scene(Vector(polyline)), SvgOptions.unsafe(width = 100, height = 100))
 
-    assert(svg.contains("""<polyline data-name="trajectory" stroke="#141e28" fill="none" stroke-width="1" stroke-dasharray="1 3" points="0,100 25,0 75,50" />"""))
+    assert(svg.contains("""<polyline data-name="trajectory" stroke="#141e28" fill="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" stroke-dasharray="1 3" points="0,100 25,0 75,50" />"""))
   }
 
   test("renders point shapes, rectangles, and groups numerically") {
@@ -194,11 +194,11 @@ class SvgRendererSuite extends munit.FunSuite:
     val svg = render(Scene(Vector(group)), SvgOptions.unsafe(width = 100, height = 100))
 
     assert(svg.contains("""<g data-name="shape-group">"""))
-    assert(svg.contains("""<rect data-name="shape-square" stroke="#000000" fill="#ffffff" stroke-width="1" x="42" y="42" width="16" height="16" />"""))
-    assert(svg.contains("""<polygon data-name="shape-triangle" stroke="#000000" fill="#ffffff" stroke-width="1" points="25,67 33,83 17,83" />"""))
-    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" points="67,25 83,25" />"""))
-    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" points="75,17 75,33" />"""))
-    assert(svg.contains("""<rect data-name="centered-rect" stroke="#000000" fill="#0a141e" stroke-width="1" opacity="0.75" x="40" y="30" width="20" height="40" />"""))
+    assert(svg.contains("""<rect data-name="shape-square" stroke="#000000" fill="#ffffff" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" x="42" y="42" width="16" height="16" />"""))
+    assert(svg.contains("""<polygon data-name="shape-triangle" stroke="#000000" fill="#ffffff" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" points="25,67 33,83 17,83" />"""))
+    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" points="67,25 83,25" />"""))
+    assert(svg.contains("""<polyline data-name="shape-cross" stroke="#000000" fill="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" points="75,17 75,33" />"""))
+    assert(svg.contains("""<rect data-name="centered-rect" stroke="#000000" fill="#0a141e" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" opacity="0.75" x="40" y="30" width="20" height="40" />"""))
   }
 
   test("anchors rectangles from their scene-space corners") {
@@ -233,7 +233,7 @@ class SvgRendererSuite extends munit.FunSuite:
     val svg = render(Scene(Vector(grob)), SvgOptions.unsafe(width = 200, height = 100))
 
     assert(svg.contains("""<g data-name="native-line" clip-path="url(#clip-0)">"""))
-    assert(svg.contains("""<polyline data-name="native-line" stroke="#000000" fill="none" stroke-width="1" points="20,80 120,40" />"""))
+    assert(svg.contains("""<polyline data-name="native-line" stroke="#000000" fill="none" stroke-width="1" stroke-linecap="butt" stroke-linejoin="miter" points="20,80 120,40" />"""))
     assert(svg.contains("""<clipPath id="clip-0">"""))
     assert(svg.contains("""<rect x="20" y="40" width="100" height="40" />"""))
   }

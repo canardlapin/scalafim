@@ -36,6 +36,16 @@ enum LineType:
   case Dashed
   case Dotted
 
+enum LineCap:
+  case Butt
+  case Round
+  case Square
+
+enum LineJoin:
+  case Miter
+  case Round
+  case Bevel
+
 enum Clip:
   case On
   case Off

@@ -234,6 +234,8 @@ final case class GraphicParams private (
     fill: Option[Rgba] = None,
     lineWidth: Double = 1.0,
     lineType: LineType = LineType.Solid,
+    lineCap: LineCap = LineCap.Butt,
+    lineJoin: LineJoin = LineJoin.Miter,
     alpha: Double = 1.0,
     fontFamily: Option[String] = None,
     fontSize: Length = Length.pointsUnsafe(12.0)
@@ -247,24 +249,28 @@ object GraphicParams:
       fill: Option[Rgba] = None,
       lineWidth: Double = 1.0,
       lineType: LineType = LineType.Solid,
+      lineCap: LineCap = LineCap.Butt,
+      lineJoin: LineJoin = LineJoin.Miter,
       alpha: Double = 1.0,
       fontFamily: Option[String] = None,
       fontSize: Length = Length.pointsUnsafe(12.0)
   ): Either[GraphicsError, GraphicParams] =
     if !lineWidth.isFinite || lineWidth < 0.0 then Left(GraphicsError.InvalidLineWidth(lineWidth))
     else if !alpha.isFinite || alpha < 0.0 || alpha > 1.0 then Left(GraphicsError.InvalidAlpha(alpha))
-    else Right(new GraphicParams(stroke, fill, lineWidth, lineType, alpha, fontFamily, fontSize))
+    else Right(new GraphicParams(stroke, fill, lineWidth, lineType, lineCap, lineJoin, alpha, fontFamily, fontSize))
 
   def unsafe(
       stroke: Option[Rgba] = Some(Rgba.Black),
       fill: Option[Rgba] = None,
       lineWidth: Double = 1.0,
       lineType: LineType = LineType.Solid,
+      lineCap: LineCap = LineCap.Butt,
+      lineJoin: LineJoin = LineJoin.Miter,
       alpha: Double = 1.0,
       fontFamily: Option[String] = None,
       fontSize: Length = Length.pointsUnsafe(12.0)
   ): GraphicParams =
-    checked(stroke, fill, lineWidth, lineType, alpha, fontFamily, fontSize).orThrow
+    checked(stroke, fill, lineWidth, lineType, lineCap, lineJoin, alpha, fontFamily, fontSize).orThrow
 
 final case class Viewport private (
     origin: Point = Point.npcUnsafe(0.0, 0.0),

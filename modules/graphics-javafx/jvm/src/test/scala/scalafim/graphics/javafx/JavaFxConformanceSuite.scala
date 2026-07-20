@@ -19,13 +19,15 @@ class JavaFxConformanceSuite extends munit.FunSuite:
           out.commands.exists(command => commandName(command).contains(name) && primitiveKind(command).contains(kind))
         case RenderRequirement.Group(name, clipped, rotated) =>
           groupEffects(out.commands, name).contains((clipped, rotated))
-        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, alpha) =>
+        case RenderRequirement.Style(name, stroke, fill, lineWidth, lineType, lineCap, lineJoin, alpha) =>
           out.commands.exists { command =>
             commandName(command).contains(name) && commandPaint(command).exists { paint =>
               paint.stroke == stroke.map(JavaFxColor.fromRgba) &&
               paint.fill == fill.map(JavaFxColor.fromRgba) &&
               paint.lineWidth == lineWidth &&
               paint.dash == JavaFxLineDash.fromLineType(lineType) &&
+              paint.lineCap == lineCap &&
+              paint.lineJoin == lineJoin &&
               paint.opacity == alpha
             }
           }

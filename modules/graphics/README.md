@@ -28,6 +28,10 @@ platform renderers should consume `DeviceScene` values at a boundary.
   associative while preserving grob order.
 - Primitive grobs own complete graphic parameters. Groups compose children and
   viewports only; there is no ambient or backend-dependent style inheritance.
+- Stroke geometry is part of that complete value: `LineCap` and `LineJoin`
+  have explicit butt/miter defaults, survive `DeviceScene` lowering, and are
+  translated exhaustively by every backend rather than inherited from toolkit
+  state.
 - Scene coordinates are y-up (the grid convention): npc and native y increase
   toward the top of the device. Orientation is explicit — a `Viewport` carries
   a `YDirection` (default `Up`; `Down` is available for raster-style spaces) —

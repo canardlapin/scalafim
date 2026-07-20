@@ -196,6 +196,8 @@ private[graphics] object RowPhase:
           fill = fill.orElse(base.fill),
           lineWidth = base.lineWidth,
           lineType = base.lineType,
+          lineCap = base.lineCap,
+          lineJoin = base.lineJoin,
           alpha = alpha.getOrElse(base.alpha),
           fontFamily = base.fontFamily,
           fontSize = base.fontSize

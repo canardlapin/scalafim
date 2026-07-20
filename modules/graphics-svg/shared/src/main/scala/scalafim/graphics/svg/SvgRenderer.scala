@@ -205,6 +205,8 @@ object SvgRenderer:
     appendPaint(attrs, "stroke", gp.stroke)
     appendPaint(attrs, "fill", gp.fill)
     attrs.append(s""" stroke-width="${format(gp.lineWidth)}"""")
+    attrs.append(s""" stroke-linecap="${lineCap(gp.lineCap)}"""")
+    attrs.append(s""" stroke-linejoin="${lineJoin(gp.lineJoin)}"""")
     lineTypeAttr(gp.lineType).foreach(attrs.append)
     if gp.alpha != 1.0 then attrs.append(s""" opacity="${format(gp.alpha)}"""")
     attrs.result()
@@ -215,6 +217,8 @@ object SvgRenderer:
     appendPaint(attrs, "stroke", gp.stroke)
     attrs.append(""" fill="none"""")
     attrs.append(s""" stroke-width="${format(gp.lineWidth)}"""")
+    attrs.append(s""" stroke-linecap="${lineCap(gp.lineCap)}"""")
+    attrs.append(s""" stroke-linejoin="${lineJoin(gp.lineJoin)}"""")
     lineTypeAttr(gp.lineType).foreach(attrs.append)
     if gp.alpha != 1.0 then attrs.append(s""" opacity="${format(gp.alpha)}"""")
     attrs.result()
@@ -247,6 +251,18 @@ object SvgRenderer:
       case LineType.Solid  => None
       case LineType.Dashed => Some(""" stroke-dasharray="6 4"""")
       case LineType.Dotted => Some(""" stroke-dasharray="1 3"""")
+
+  private def lineCap(value: LineCap): String =
+    value match
+      case LineCap.Butt   => "butt"
+      case LineCap.Round  => "round"
+      case LineCap.Square => "square"
+
+  private def lineJoin(value: LineJoin): String =
+    value match
+      case LineJoin.Miter => "miter"
+      case LineJoin.Round => "round"
+      case LineJoin.Bevel => "bevel"
 
   private def textAnchor(just: HJust): String =
     just match

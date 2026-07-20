@@ -64,6 +64,8 @@ final case class CanvasPaint(
     fill: Option[CanvasColor],
     lineWidth: Double,
     dash: CanvasLineDash,
+    lineCap: LineCap,
+    lineJoin: LineJoin,
     opacity: Double
 )
 
@@ -74,12 +76,14 @@ object CanvasPaint:
       gp.fill.map(CanvasColor.fromRgba),
       gp.lineWidth,
       CanvasLineDash.fromLineType(gp.lineType),
+      gp.lineCap,
+      gp.lineJoin,
       gp.alpha
     )
 
   def text(gp: GraphicParams): CanvasPaint =
     val color = gp.fill.orElse(gp.stroke).getOrElse(Rgba.Black)
-    CanvasPaint(None, Some(CanvasColor.fromRgba(color)), 0.0, CanvasLineDash.Solid, gp.alpha)
+    CanvasPaint(None, Some(CanvasColor.fromRgba(color)), 0.0, CanvasLineDash.Solid, gp.lineCap, gp.lineJoin, gp.alpha)
 
 /** Deterministic Canvas 2D operations in device coordinates. Group effects
   * deliberately record rotation before clipping: the clip is installed in
@@ -230,6 +234,8 @@ trait CanvasRenderingContext2D extends js.Object:
   var fillStyle: js.Any = js.native
   var globalAlpha: Double = js.native
   var lineWidth: Double = js.native
+  var lineCap: String = js.native
+  var lineJoin: String = js.native
   var font: String = js.native
   var textAlign: String = js.native
   var textBaseline: String = js.native
@@ -388,12 +394,26 @@ object CanvasRenderer:
       context.strokeStyle = color.css
       context.globalAlpha = paint.opacity * color.alpha
       context.lineWidth = paint.lineWidth
+      context.lineCap = canvasLineCap(paint.lineCap)
+      context.lineJoin = canvasLineJoin(paint.lineJoin)
       val dash = paint.dash match
         case CanvasLineDash.Solid           => js.Array[Double]()
         case CanvasLineDash.Pattern(values) => js.Array(values*)
       context.setLineDash(dash)
       context.stroke()
     }
+
+  private def canvasLineCap(value: LineCap): String =
+    value match
+      case LineCap.Butt   => "butt"
+      case LineCap.Round  => "round"
+      case LineCap.Square => "square"
+
+  private def canvasLineJoin(value: LineJoin): String =
+    value match
+      case LineJoin.Miter => "miter"
+      case LineJoin.Round => "round"
+      case LineJoin.Bevel => "bevel"
 
   private def canvasFontFamily(value: Option[String]): String =
     value match
