@@ -19,6 +19,19 @@ final case class TContrast(name: String, weights: Map[String, Double]):
       evaluated <- evaluateEstimable(result, weights)
     yield evaluated
 
+  /** Align this named contrast to an explicit design axis. The resulting value
+    * keeps the column identity beside its dense row, so downstream geometry
+    * cannot silently reuse it against another ordering.
+    */
+  def align(columnNames: Vector[String]): Either[FitError, AlignedTContrast] =
+    weightVector(columnNames).map: values =>
+      val row = Matrix.newBuilder(1, values.length)
+      var col = 0
+      while col < values.length do
+        row(0, col) = values(col)
+        col += 1
+      AlignedTContrast.unsafe(name, columnNames, row.result())
+
   private def evaluateEstimable(
       result: InferenceReadyDenseFit,
       weights: Array[Double]
@@ -114,6 +127,21 @@ object TContrast:
       out += TContrast(contrastName, mapped.toMap)
       col += 1
     out.result()
+
+final case class AlignedTContrast private (
+    name: String,
+    columnNames: Vector[String],
+    weights: DMat
+):
+  require(name.nonEmpty, "aligned contrast name must be non-empty")
+  require(columnNames.nonEmpty, "aligned contrast must have design columns")
+  require(columnNames.distinct.length == columnNames.length, "aligned contrast columns must be unique")
+  require(weights.rows == 1, "aligned T contrast must contain exactly one row")
+  require(weights.cols == columnNames.length, "aligned contrast weights must match design columns")
+
+object AlignedTContrast:
+  private[fit] def unsafe(name: String, columnNames: Vector[String], weights: DMat): AlignedTContrast =
+    new AlignedTContrast(name, columnNames, weights)
 
 final case class TContrastResult(
     name: String,
