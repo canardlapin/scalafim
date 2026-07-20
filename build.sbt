@@ -501,6 +501,20 @@ lazy val inference =
 lazy val inferenceJS  = inference.js
 lazy val inferenceJVM = inference.jvm
 
+lazy val connectivity =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/connectivity"))
+    .dependsOn(graph, linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-connectivity"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val connectivityJS  = connectivity.js
+lazy val connectivityJVM = connectivity.jvm
+
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -601,6 +615,8 @@ lazy val root =
       multivarIrJVM,
       inferenceJS,
       inferenceJVM,
+      connectivityJS,
+      connectivityJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,

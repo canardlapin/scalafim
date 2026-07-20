@@ -6,6 +6,8 @@
   },
   "default_acceptance_commands": [
     "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+    "sbt connectivityJVM/test",
+    "sbt connectivityJS/test",
     "sbt designJVM/test",
     "sbt designJS/test",
     "sbt fitJVM/test",
@@ -14,6 +16,30 @@
     "sbt groupJS/test"
   ],
   "scenarios": [
+    {
+      "id": "connectivity.ariadne-cor-lw-weighted.v1",
+      "tier": "workflow_parity",
+      "module": "connectivity",
+      "suite_class": "scalafim.connectivity.scenarios.AriadneCorLwScenarioSuite",
+      "suite_path": "modules/connectivity/shared/src/test/scala/scalafim/connectivity/scenarios/AriadneCorLwScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "ariadne_weighted_cor_lw_fixture",
+        "description": "A fixed Ariadne weighted cor_lw analysis is represented as typed parcel time series plus frame weights, executed through ScalaFIM connectivity estimators, and checked against Ariadne shrinkage and edge-order semantics.",
+        "source_paths": [
+          "/Users/bbuchsbaum/code/ariadne/R/estimate_connectivity.R",
+          "/Users/bbuchsbaum/code/ariadne/tests/testthat/test_cor_accuracy.R",
+          "modules/connectivity/shared/src/test/scala/scalafim/connectivity/fixtures/AriadneCoreFixtures.scala"
+        ]
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "sbt connectivityJVM/test",
+        "sbt connectivityJS/test"
+      ],
+      "caveats": []
+    },
     {
       "id": "fit.public-f-contrast.v1",
       "tier": "workflow_parity",
