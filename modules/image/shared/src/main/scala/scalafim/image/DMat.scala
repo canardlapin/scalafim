@@ -49,6 +49,18 @@ final case class DMat private (rows: Int, cols: Int, data: NArray[Double]):
     h
 
 object DMat:
+  /** Adopt an already row-major primitive buffer without copying it.
+    *
+    * The caller transfers ownership of `data` to the returned matrix and must
+    * not mutate the buffer afterwards.
+    */
+  def fromRowMajorOwned(rows: Int, cols: Int, data: NArray[Double]): DMat =
+    require(rows > 0 && cols > 0, "rows/cols must be positive")
+    val expected = rows.toLong * cols.toLong
+    require(expected <= Int.MaxValue.toLong, s"matrix size $rows*$cols exceeds the supported array size")
+    require(data.length == expected.toInt, s"data length ${data.length} != $rows*$cols")
+    DMat(rows, cols, data)
+
   def fromRows(rowsV: Vector[Vector[Double]]): DMat =
     require(rowsV.nonEmpty, "matrix must be non-empty")
     val r = rowsV.length
