@@ -80,6 +80,12 @@ private[graphics] object StatPhase:
         Right(StatPlan(plan, frame, mapping, mapping.env))
       case count: Stat.Count[?] =>
         countFrame(plan, count.asInstanceOf[Stat.Count[Row]])
+      case bin: Stat.Bin[?] =>
+        binFrame(plan, bin.asInstanceOf[Stat.Bin[Row]])
+      case summary: Stat.Summary[?] =>
+        summaryFrame(plan, summary.asInstanceOf[Stat.Summary[Row]])
+      case density: Stat.Density[?] =>
+        densityFrame(plan, density.asInstanceOf[Stat.Density[Row]])
 
   private def countFrame[Row](
       plan: LayerPlan[Row],
@@ -129,6 +135,230 @@ private[graphics] object StatPhase:
         y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0)))
       )
     }
+
+  private val binAesthetics: Set[ComputedAesthetic[?]] =
+    Set(
+      ComputedAesthetic.Count,
+      ComputedAesthetic.Proportion,
+      ComputedAesthetic.Density,
+      ComputedAesthetic.BinLower,
+      ComputedAesthetic.BinUpper,
+      ComputedAesthetic.BinWidth,
+      ComputedAesthetic.BinMidpoint
+    )
+
+  private val summaryAesthetics: Set[ComputedAesthetic[?]] =
+    Set(
+      ComputedAesthetic.Count,
+      ComputedAesthetic.Position,
+      ComputedAesthetic.Mean,
+      ComputedAesthetic.Lower,
+      ComputedAesthetic.Upper
+    )
+
+  private val densityAesthetics: Set[ComputedAesthetic[?]] =
+    Set(ComputedAesthetic.Count, ComputedAesthetic.Position, ComputedAesthetic.Density)
+
+  private def binFrame[Row](plan: LayerPlan[Row], stat: Stat.Bin[Row]): Either[GraphicsError, StatPlan[Row]] =
+    val values = plan.data.map(stat.x)
+    firstNonFinite(values) match
+      case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.X.label, value))
+      case None if values.isEmpty =>
+        val mapping = binMapping[Row]
+        Right(StatPlan(plan, StatFrame(Vector.empty, binAesthetics), mapping, mapping.env))
+      case None =>
+        val breaks = HistogramBins.partition(stat.bins, values.min, values.max)
+        val lower = breaks.head
+        val upper = breaks.last
+        values.find(value => value < lower || value > upper) match
+          case Some(value) if HistogramBins.isExplicit(stat.bins) =>
+            Left(GraphicsError.StatInputOutsideBins(value, lower, upper))
+          case _ =>
+            val buckets = Array.fill(breaks.length - 1)(scala.collection.mutable.ArrayBuffer.empty[Row])
+            var rowIndex = 0
+            while rowIndex < plan.data.length do
+              val value = values(rowIndex)
+              val binIndex = findBin(value, breaks)
+              if binIndex >= 0 then buckets(binIndex) += plan.data(rowIndex)
+              rowIndex += 1
+            val rows = Vector.newBuilder[StatRow[Row]]
+            var binIndex = 0
+            while binIndex < buckets.length do
+              val members = buckets(binIndex).toVector
+              if members.nonEmpty then
+                rows += StatRow(
+                  members.head,
+                  members,
+                  None,
+                  ComputedValues.binned(members.length, plan.data.length, breaks(binIndex), breaks(binIndex + 1))
+                )
+              binIndex += 1
+            val mapping = binMapping[Row]
+            Right(StatPlan(plan, StatFrame(rows.result(), binAesthetics), mapping, mapping.env))
+
+  private def binMapping[Row]: AesSpec[StatRow[Row]] =
+    AesSpec(
+      x = Some(AesValue.direct(_.computed.get(ComputedAesthetic.BinMidpoint).getOrElse(0.0))),
+      y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0)))
+    )
+
+  /** ggplot2 histograms are right-closed by default: the first interval also
+    * owns its lower boundary, while an internal break belongs to the bin on
+    * its left.
+    */
+  private def findBin(value: Double, breaks: Vector[Double]): Int =
+    var idx = 0
+    var found = -1
+    while idx < breaks.length - 1 && found < 0 do
+      val aboveLower = if idx == 0 then value >= breaks(idx) else value > breaks(idx)
+      if aboveLower && value <= breaks(idx + 1) then found = idx
+      idx += 1
+    found
+
+  private def summaryFrame[Row](
+      plan: LayerPlan[Row],
+      stat: Stat.Summary[Row]
+  ): Either[GraphicsError, StatPlan[Row]] =
+    val xs = plan.data.map(stat.x)
+    val ys = plan.data.map(stat.y)
+    firstNonFinite(xs) match
+      case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.X.label, value))
+      case None =>
+        firstNonFinite(ys) match
+          case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.Y.label, value))
+          case None =>
+            val groups = scala.collection.mutable.HashMap.empty[Double, scala.collection.mutable.ArrayBuffer[(Row, Double)]]
+            var idx = 0
+            while idx < plan.data.length do
+              groups.getOrElseUpdate(xs(idx), scala.collection.mutable.ArrayBuffer.empty) += ((plan.data(idx), ys(idx)))
+              idx += 1
+            val rows = groups.keys.toVector.sorted.map { x =>
+              val observations = groups(x).toVector
+              val values = observations.map(_._2)
+              val mean = values.sum / values.length.toDouble
+              val (lower, upper) = summaryBounds(values, mean, stat.interval)
+              StatRow(
+                observations.head._1,
+                observations.map(_._1),
+                None,
+                ComputedValues.summarized(x, mean, lower, upper, values.length)
+              )
+            }
+            val mapping = summaryMapping[Row]
+            Right(StatPlan(plan, StatFrame(rows, summaryAesthetics), mapping, mapping.env))
+
+  private def summaryBounds(values: Vector[Double], mean: Double, interval: SummaryInterval): (Double, Double) =
+    interval match
+      case SummaryInterval.StandardError =>
+        val standardError =
+          if values.length < 2 then 0.0
+          else
+            var sumSquares = 0.0
+            var idx = 0
+            while idx < values.length do
+              val centered = values(idx) - mean
+              sumSquares += centered * centered
+              idx += 1
+            math.sqrt(sumSquares / (values.length - 1).toDouble) / math.sqrt(values.length.toDouble)
+        (mean - standardError, mean + standardError)
+      case SummaryInterval.Range =>
+        (values.min, values.max)
+
+  private def summaryMapping[Row]: AesSpec[StatRow[Row]] =
+    AesSpec(
+      x = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Position).getOrElse(0.0))),
+      y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Mean).getOrElse(0.0)))
+    )
+
+  private def densityFrame[Row](
+      plan: LayerPlan[Row],
+      stat: Stat.Density[Row]
+  ): Either[GraphicsError, StatPlan[Row]] =
+    val values = Array.ofDim[Double](plan.data.length)
+    var valueIndex = 0
+    while valueIndex < plan.data.length do
+      values(valueIndex) = stat.x(plan.data(valueIndex))
+      valueIndex += 1
+    firstNonFinite(values) match
+      case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.X.label, value))
+      case None if values.length < 2 => Left(GraphicsError.InsufficientStatData(stat.label, 2, values.length))
+      case None =>
+        val bandwidth = stat.config.bandwidth.map(_.toDouble).getOrElse(nrd0(values))
+        val domain = stat.config.domain.getOrElse(Interval.unsafe(values.min, values.max))
+        val points = stat.config.points.toInt
+        val step = domain.width / (points - 1).toDouble
+        val rows = Vector.tabulate(points) { idx =>
+          val position = domain.lower + step * idx.toDouble
+          val density = gaussianDensity(values, position, bandwidth)
+          StatRow(
+            plan.data.head,
+            plan.data,
+            None,
+            ComputedValues.densityAt(position, density, plan.data.length)
+          )
+        }
+        val mapping = densityMapping[Row]
+        Right(StatPlan(plan, StatFrame(rows, densityAesthetics), mapping, mapping.env))
+
+  private def densityMapping[Row]: AesSpec[StatRow[Row]] =
+    AesSpec(
+      x = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Position).getOrElse(0.0))),
+      y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Density).getOrElse(0.0)))
+    )
+
+  private def gaussianDensity(values: Array[Double], position: Double, bandwidth: Double): Double =
+    val normalizer = values.length.toDouble * bandwidth * math.sqrt(2.0 * math.Pi)
+    var sum = 0.0
+    var idx = 0
+    while idx < values.length do
+      val z = (position - values(idx)) / bandwidth
+      sum += math.exp(-0.5 * z * z)
+      idx += 1
+    sum / normalizer
+
+  /** R's `bw.nrd0`: the standard deviation or robust IQR scale, with the
+    * same constant-data fallbacks, followed by Silverman's 0.9 rule.
+    */
+  private def nrd0(values: Array[Double]): Double =
+    val sorted = values.clone()
+    scala.util.Sorting.quickSort(sorted)
+    var sum = 0.0
+    var sumIndex = 0
+    while sumIndex < values.length do
+      sum += values(sumIndex)
+      sumIndex += 1
+    val mean = sum / values.length.toDouble
+    var sumSquares = 0.0
+    var idx = 0
+    while idx < values.length do
+      val centered = values(idx) - mean
+      sumSquares += centered * centered
+      idx += 1
+    val standardDeviation = math.sqrt(sumSquares / (values.length - 1).toDouble)
+    val robust = (quantile(sorted, 0.75) - quantile(sorted, 0.25)) / 1.34
+    var scale = math.min(standardDeviation, robust)
+    if !(scale > 0.0) then scale = standardDeviation
+    if !(scale > 0.0) then scale = math.abs(values.head)
+    if !(scale > 0.0) then scale = 1.0
+    0.9 * scale * math.pow(values.length.toDouble, -0.2)
+
+  private def quantile(sorted: Array[Double], probability: Double): Double =
+    val position = (sorted.length - 1).toDouble * probability
+    val lower = math.floor(position).toInt
+    val upper = math.ceil(position).toInt
+    val fraction = position - lower.toDouble
+    sorted(lower) + fraction * (sorted(upper) - sorted(lower))
+
+  private def firstNonFinite(values: Vector[Double]): Option[Double] =
+    values.find(value => !value.isFinite)
+
+  private def firstNonFinite(values: Array[Double]): Option[Double] =
+    var idx = 0
+    var result: Option[Double] = None
+    while idx < values.length && result.isEmpty do
+      if !values(idx).isFinite then result = Some(values(idx))
+      idx += 1
+    result
 
 /** Output of plot-wide scale training: every layer plan is rebound to the same
   * trained scale for each aesthetic, and the plot registry contains one entry
@@ -259,6 +489,7 @@ private[graphics] object RowPhase:
         ResolvedRow(
           rowIndex = rowIndex,
           source = source.source,
+          computed = source.computed,
           x = x,
           y = y,
           point = Point.nativeUnsafe(x, y),
@@ -382,6 +613,15 @@ private[graphics] object RowPhase:
   */
 private[graphics] object GeomPhase:
   def lower[Row](
+      layer: Layer[Row],
+      rows: Vector[ResolvedRow[Row]]
+  ): Either[GraphicsError, Vector[Grob]] =
+    layer.stat match
+      case _: Stat.Summary[?] => summaryGrobs(rows)
+      case _: Stat.Density[?] => densityGrobs(rows)
+      case _ => lowerIdentity(layer.geom, rows)
+
+  private def lowerIdentity[Row](
       geom: Geom,
       rows: Vector[ResolvedRow[Row]]
   ): Either[GraphicsError, Vector[Grob]] =
@@ -396,6 +636,48 @@ private[graphics] object GeomPhase:
         barGrobs(rows)
       case Geom.Rect =>
         Left(GraphicsError.UnsupportedGeom(Geom.Rect.label))
+
+  private def summaryGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    val out = Vector.newBuilder[Grob]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < rows.length && result.isRight do
+      val row = rows(idx)
+      val lower = row.computed.get(ComputedAesthetic.Lower).getOrElse(row.y)
+      val upper = row.computed.get(ComputedAesthetic.Upper).getOrElse(row.y)
+      result = Grob
+        .segments(
+          Vector((Point.nativeUnsafe(row.x, lower), Point.nativeUnsafe(row.x, upper))),
+          gp = row.gp,
+          name = Some(GraphicsName.unsafe(s"stat-summary-interval-$idx"))
+        )
+        .flatMap { interval =>
+          Grob
+            .points(
+              Vector(row.point),
+              size = row.size,
+              gp = row.gp,
+              name = Some(GraphicsName.unsafe(s"stat-summary-mean-$idx"))
+            )
+            .map { point =>
+              out += interval
+              out += point
+              ()
+            }
+        }
+      idx += 1
+    result.map(_ => out.result())
+
+  private def densityGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    if rows.length < 2 then Right(Vector.empty)
+    else
+      Grob
+        .lines(
+          rows.map(_.point),
+          gp = rows.head.gp,
+          name = Some(GraphicsName.unsafe("stat-density-line"))
+        )
+        .map(Vector(_))
 
   private def pointGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
     val out = Vector.newBuilder[Grob]
@@ -446,12 +728,14 @@ private[graphics] object GeomPhase:
       val row = rows(idx)
       val height = math.abs(row.y)
       val centerY = math.min(0.0, row.y) + height / 2.0
+      val width = row.computed.get(ComputedAesthetic.BinWidth).getOrElse(0.9)
+      val statName = if row.computed.get(ComputedAesthetic.BinWidth).nonEmpty then "bin" else "count"
       result = Grob
         .rect(
           center = Point.nativeUnsafe(row.x, centerY),
-          size = Size.fromExtents(ExtentExpr.nativeUnsafe(0.9), ExtentExpr.nativeUnsafe(height)),
+          size = Size.fromExtents(ExtentExpr.nativeUnsafe(width), ExtentExpr.nativeUnsafe(height)),
           gp = row.gp,
-          name = Some(GraphicsName.unsafe(s"stat-count-bar-$idx"))
+          name = Some(GraphicsName.unsafe(s"stat-$statName-bar-$idx"))
         )
         .map { grob =>
           out += grob
@@ -607,9 +891,21 @@ private[graphics] object LayoutPhase:
           range = range.train(values)
       if layer.geom == Geom.Bar then
         if aesthetic == Aesthetic.X.label then
-          range = range.train(values.iterator.flatMap(x => Iterator(x - 0.45, x + 0.45)))
+          val edges = layer.rows.iterator.flatMap { row =>
+            val halfWidth = row.computed.get(ComputedAesthetic.BinWidth).getOrElse(0.9) / 2.0
+            Iterator(row.x - halfWidth, row.x + halfWidth)
+          }
+          range = range.train(edges)
         else if aesthetic == Aesthetic.Y.label then
           range = range.train(Iterator.single(0.0))
+      if aesthetic == Aesthetic.Y.label then
+        val intervalValues = layer.rows.iterator.flatMap { row =>
+          Iterator(
+            row.computed.get(ComputedAesthetic.Lower),
+            row.computed.get(ComputedAesthetic.Upper)
+          ).flatten
+        }
+        range = range.train(intervalValues)
     }
     if sawScaled && sawUnscaledData then Left(GraphicsError.MixedPositionScaling(aesthetic))
     else range.requireTrained

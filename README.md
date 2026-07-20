@@ -9,7 +9,7 @@ cross-compiled sbt build.
 - `graph-linalg`: basis-carrying topology/weighted adjacency, incidence, degree/strength, and Laplacian operators over the shared sparse linear-map contracts.
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
-- `graphics`: renderer-neutral grammar-of-graphics core, row-aware typed scales, immutable grid-like scene trees, and plot/layer specifications.
+- `graphics`: renderer-neutral grammar-of-graphics core, row-aware typed scales and statistical transforms (count, histogram, summary intervals, density), immutable grid-like scene trees, and plot/layer specifications.
 - `graphics-svg`: deterministic SVG renderer for `graphics` scene trees.
 - `graphics-canvas`: Scala.js Canvas 2D renderer with deterministic command recording.
 - `graphics-java2d`: JVM Java2D raster renderer with deterministic commands and image-level tests.

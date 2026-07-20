@@ -33,6 +33,10 @@ enum GraphicsError:
   case InvalidStatGeom(stat: String, geom: String)
   case StatAestheticConflict(stat: String, aesthetic: String)
   case UnsupportedStatAesthetic(stat: String, aesthetic: String)
+  case InvalidStatParameter(stat: String, parameter: String, value: String)
+  case NonFiniteStatInput(stat: String, aesthetic: String, value: Double)
+  case InsufficientStatData(stat: String, minimum: Int, actual: Int)
+  case StatInputOutsideBins(value: Double, lower: Double, upper: Double)
   case MissingLayout(feature: String)
   case InvalidLayoutCoordinate(kind: String, value: Double)
   case InvalidDeviceSize(width: Double, height: Double)
@@ -100,6 +104,14 @@ enum GraphicsError:
         s"stat '$stat' computes aesthetic '$aesthetic'; do not map it from input rows"
       case UnsupportedStatAesthetic(stat, aesthetic) =>
         s"stat '$stat' does not yet aggregate input aesthetic '$aesthetic'"
+      case InvalidStatParameter(stat, parameter, value) =>
+        s"stat '$stat' requires a valid $parameter: $value"
+      case NonFiniteStatInput(stat, aesthetic, value) =>
+        s"stat '$stat' requires finite '$aesthetic' values: $value"
+      case InsufficientStatData(stat, minimum, actual) =>
+        s"stat '$stat' requires at least $minimum observations: found $actual"
+      case StatInputOutsideBins(value, lower, upper) =>
+        s"histogram value $value is outside explicit breaks [$lower, $upper]"
       case MissingLayout(feature) =>
         s"$feature requires a panel layout"
       case InvalidLayoutCoordinate(kind, value) =>

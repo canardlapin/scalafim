@@ -138,6 +138,7 @@ object RendererConformance:
       scaled <- scaledPlotCase
       solved <- solvedPlotCase
       counted <- countPlotCase
+      scientific <- scientificStatsCase
     yield Vector(
       point,
       line,
@@ -153,7 +154,8 @@ object RendererConformance:
       legend,
       scaled,
       solved,
-      counted
+      counted,
+      scientific
     )
 
   def group(group: ConformanceGroup): Either[GraphicsError, Vector[ConformanceCase]] =
@@ -680,5 +682,37 @@ object RendererConformance:
           GraphicsName.unsafe("stat-count-bar-0"),
           RenderPrimitiveKind.Rectangle
         )
+      )
+    )
+
+  def scientificStatsCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double)
+    val samples = Vector.tabulate(5)(idx => Sample(idx.toDouble, idx.toDouble))
+    val bins = HistogramBins.breaksUnsafe(Vector(0.0, 2.0, 4.0))
+    val density = DensityConfig.fixedUnsafe(1.0, points = 16, domain = Some(Interval.unsafe(0.0, 4.0)))
+    for
+      histogram <- Plot(samples).addLayer(Layer.histogram[Sample](_.x, bins = bins))
+      summarized <- histogram.addLayer(Layer.summary[Sample](_.x, _.y))
+      plot <- summarized.addLayer(Layer.density[Sample](_.x, config = density))
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(policy = Some(LayoutPolicy()), expansion = RangeExpansion.none)
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("scientific-stats"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("stat-bin-bar-0"),
+        GraphicsName.unsafe("stat-summary-interval-0"),
+        GraphicsName.unsafe("stat-summary-mean-0"),
+        GraphicsName.unsafe("stat-density-line")
+      ),
+      Vector(
+        RenderRequirement.Primitive(GraphicsName.unsafe("stat-bin-bar-0"), RenderPrimitiveKind.Rectangle),
+        RenderRequirement.Primitive(GraphicsName.unsafe("stat-summary-interval-0"), RenderPrimitiveKind.Polyline),
+        RenderRequirement.Primitive(GraphicsName.unsafe("stat-summary-mean-0"), RenderPrimitiveKind.Disc),
+        RenderRequirement.Primitive(GraphicsName.unsafe("stat-density-line"), RenderPrimitiveKind.Polyline)
       )
     )

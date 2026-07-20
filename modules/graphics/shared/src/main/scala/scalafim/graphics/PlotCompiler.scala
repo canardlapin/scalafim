@@ -143,6 +143,7 @@ final case class TrainedScale(
 final case class ResolvedRow[Row](
     rowIndex: Int,
     source: Row,
+    computed: ComputedValues,
     x: Double,
     y: Double,
     point: Point,
@@ -235,7 +236,7 @@ object PlotCompiler:
   private def resolveLayer[Row](plan: StatPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
     val registry = ScalePhase.registry(plan)
     RowPhase.resolve(plan, theme).flatMap { case (rows, droppedRows) =>
-      GeomPhase.lower(plan.layer.geom, rows).map { grobs =>
+      GeomPhase.lower(plan.layer, rows).map { grobs =>
         ResolvedLayer(
           layerIndex = plan.layerIndex,
           geom = plan.layer.geom,

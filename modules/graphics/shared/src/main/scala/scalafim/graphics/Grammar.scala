@@ -239,6 +239,31 @@ object Layer:
       params
     )
 
+  def histogram[Row](
+      x: Row => Double,
+      data: Option[Vector[Row]] = None,
+      bins: HistogramBins = HistogramBins.default,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(Geom.Bar, Stat.Bin(x, bins), data, AesSpec.empty[Row], inheritMapping = false, params)
+
+  def summary[Row](
+      x: Row => Double,
+      y: Row => Double,
+      data: Option[Vector[Row]] = None,
+      interval: SummaryInterval = SummaryInterval.StandardError,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(Geom.Point, Stat.Summary(x, y, interval), data, AesSpec.empty[Row], inheritMapping = false, params)
+
+  def density[Row](
+      x: Row => Double,
+      data: Option[Vector[Row]] = None,
+      config: DensityConfig = DensityConfig.default,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(Geom.Line, Stat.Density(x, config), data, AesSpec.empty[Row], inheritMapping = false, params)
+
   def fromMapping[Row](
       geom: Geom,
       mapping: AesSpec[Row],
@@ -256,13 +281,26 @@ object Layer:
       case Stat.Identity =>
         validate(layer.geom, mapping)
       case _: Stat.Count[?] =>
-        if layer.geom != Geom.Bar then Left(GraphicsError.InvalidStatGeom(layer.stat.label, layer.geom.label))
-        else if mapping.x.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.X.label))
-        else if mapping.y.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.Y.label))
-        else
-          mapping.env.bound.headOption match
-            case Some(aesthetic) => Left(GraphicsError.UnsupportedStatAesthetic(layer.stat.label, aesthetic.label))
-            case None            => Right(())
+        validateComputedStat(layer, mapping, Geom.Bar)
+      case _: Stat.Bin[?] =>
+        validateComputedStat(layer, mapping, Geom.Bar)
+      case _: Stat.Summary[?] =>
+        validateComputedStat(layer, mapping, Geom.Point)
+      case _: Stat.Density[?] =>
+        validateComputedStat(layer, mapping, Geom.Line)
+
+  private def validateComputedStat[Row](
+      layer: Layer[Row],
+      mapping: AesSpec[Row],
+      expectedGeom: Geom
+  ): Either[GraphicsError, Unit] =
+    if layer.geom != expectedGeom then Left(GraphicsError.InvalidStatGeom(layer.stat.label, layer.geom.label))
+    else if mapping.x.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.X.label))
+    else if mapping.y.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.Y.label))
+    else
+      mapping.env.bound.headOption match
+        case Some(aesthetic) => Left(GraphicsError.UnsupportedStatAesthetic(layer.stat.label, aesthetic.label))
+        case None            => Right(())
 
   private[graphics] def validate[Row](geom: Geom, mapping: AesSpec[Row]): Either[GraphicsError, Unit] =
     geom.requiredAesthetics.find(required => !required.isPresent(mapping)) match
