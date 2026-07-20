@@ -9,7 +9,7 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 // Immutable source dependency: sbt clones this exact Gale commit into its
 // staging area, so a clean checkout never depends on publishLocal or a sibling
 // developer checkout.
-lazy val galeRevision = "0207c653eb643cc07fdfa018989a4c3578d40aa7"
+lazy val galeRevision = "ef540198b0cfd5678e14f85cdc7ea904f87812ba"
 lazy val galeBuild =
   uri(s"https://github.com/bbuchsbaum/gale.git#$galeRevision")
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
@@ -613,6 +613,20 @@ lazy val group =
 lazy val groupJS  = group.js
 lazy val groupJVM = group.jvm
 
+lazy val fmriWorkflow =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/fmri-workflow"))
+    .dependsOn(bids, dataset, model, fit, group)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-fmri-workflow"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val fmriWorkflowJS  = fmriWorkflow.js
+lazy val fmriWorkflowJVM = fmriWorkflow.jvm
+
 lazy val root =
   project
     .in(file("."))
@@ -686,7 +700,9 @@ lazy val root =
       atlasExamplesJVM,
       workflowExamplesJVM,
       groupJS,
-      groupJVM
+      groupJVM,
+      fmriWorkflowJS,
+      fmriWorkflowJVM
     )
     .settings(
       name := "scalafim",
