@@ -7,12 +7,11 @@ import scalafim.archive.lna.{
   LnaRun,
   SharedBasisArtifact,
   SharedBasisRegistry,
-  SharedBasisRegistryCodec,
-  TransformParams
+  SharedBasisRegistryCodec
 }
 import scalafim.bids.{BidsJson, BidsTable, JsonValue}
 import scalafim.dataset.{DatasetError, DatasetId, DatasetMetadata, InMemoryDatasetBackend, LatentArchiveDatasetBackend, LatentResponseDatasetBackend}
-import scalafim.latent.LatentArchiveCodec
+import scalafim.latent.{LatentArchiveCodec, LatentArchivePlan, SharedBasisLatentArchive}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -45,6 +44,10 @@ object LnaSubjectLabel:
   def unsafe(value: String): LnaSubjectLabel =
     make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
 
+extension (label: LnaSubjectLabel)
+  def bare: String =
+    label.value.stripPrefix("sub-")
+
 final case class LnaSessionLabel private (value: String):
   def bare: String =
     value.stripPrefix("ses-")
@@ -75,51 +78,192 @@ object LnaSpaceLabel:
   def unsafe(value: String): LnaSpaceLabel =
     make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
 
+final case class LnaRunEntityLabel private (value: String)
+
+object LnaRunEntityLabel:
+  def make(value: String): Either[DatasetError, LnaRunEntityLabel] =
+    safeLnaLabel(value.trim.stripPrefix("run-"), "run").map(LnaRunEntityLabel(_))
+
+  def unsafe(value: String): LnaRunEntityLabel =
+    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class LnaAcqLabel private (value: String)
+
+object LnaAcqLabel:
+  def make(value: String): Either[DatasetError, LnaAcqLabel] =
+    safeLnaLabel(value.trim.stripPrefix("acq-"), "acq").map(LnaAcqLabel(_))
+
+  def unsafe(value: String): LnaAcqLabel =
+    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class LnaDescLabel private (value: String)
+
+object LnaDescLabel:
+  def make(value: String): Either[DatasetError, LnaDescLabel] =
+    safeLnaLabel(value.trim.stripPrefix("desc-"), "desc").map(LnaDescLabel(_))
+
+  def unsafe(value: String): LnaDescLabel =
+    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 final case class LnaDatasetQuery(
     subject: LnaSubjectLabel,
     session: Option[LnaSessionLabel],
     task: Option[LnaTaskLabel],
-    space: Option[LnaSpaceLabel]
-)
+    space: Option[LnaSpaceLabel],
+    run: Option[LnaRunEntityLabel],
+    acq: Option[LnaAcqLabel],
+    desc: Option[LnaDescLabel]
+):
+  def label: String =
+    val parts =
+      Vector(
+        Some(s"subject=${subject.value}"),
+        session.map(value => s"session=${value.value}"),
+        task.map(value => s"task=${value.value}"),
+        space.map(value => s"space=${value.value}"),
+        run.map(value => s"run=${value.value}"),
+        acq.map(value => s"acq=${value.value}"),
+        desc.map(value => s"desc=${value.value}")
+      ).flatten
+    parts.mkString(", ")
 
 object LnaDatasetQuery:
   def apply(
       subject: String,
       session: Option[String] = None,
       task: Option[String] = None,
-      space: Option[String] = None
+      space: Option[String] = None,
+      run: Option[String] = None,
+      acq: Option[String] = None,
+      desc: Option[String] = None
   ): LnaDatasetQuery =
-    unsafe(subject, session, task, space)
+    unsafe(subject, session, task, space, run, acq, desc)
 
   def fromStrings(
       subject: String,
       session: Option[String] = None,
       task: Option[String] = None,
-      space: Option[String] = None
+      space: Option[String] = None,
+      run: Option[String] = None,
+      acq: Option[String] = None,
+      desc: Option[String] = None
   ): Either[DatasetError, LnaDatasetQuery] =
     for
       subjectLabel <- LnaSubjectLabel.make(subject)
       sessionLabel <- traverseOptional(session, LnaSessionLabel.make)
       taskLabel <- traverseOptional(task, LnaTaskLabel.make)
       spaceLabel <- traverseOptional(space, LnaSpaceLabel.make)
-    yield LnaDatasetQuery(subjectLabel, sessionLabel, taskLabel, spaceLabel)
+      runLabel <- traverseOptional(run, LnaRunEntityLabel.make)
+      acqLabel <- traverseOptional(acq, LnaAcqLabel.make)
+      descLabel <- traverseOptional(desc, LnaDescLabel.make)
+    yield LnaDatasetQuery(subjectLabel, sessionLabel, taskLabel, spaceLabel, runLabel, acqLabel, descLabel)
 
   def unsafe(
       subject: String,
       session: Option[String] = None,
       task: Option[String] = None,
-      space: Option[String] = None
+      space: Option[String] = None,
+      run: Option[String] = None,
+      acq: Option[String] = None,
+      desc: Option[String] = None
   ): LnaDatasetQuery =
-    fromStrings(subject, session, task, space)
+    fromStrings(subject, session, task, space, run, acq, desc)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def fromLabels(
       subject: LnaSubjectLabel,
       session: Option[LnaSessionLabel] = None,
       task: Option[LnaTaskLabel] = None,
-      space: Option[LnaSpaceLabel] = None
+      space: Option[LnaSpaceLabel] = None,
+      run: Option[LnaRunEntityLabel] = None,
+      acq: Option[LnaAcqLabel] = None,
+      desc: Option[LnaDescLabel] = None
   ): LnaDatasetQuery =
-    LnaDatasetQuery(subject, session, task, space)
+    LnaDatasetQuery(subject, session, task, space, run, acq, desc)
+
+enum LnaDatasetLookupError:
+  case ScanFailed(error: ArchiveError)
+  case NoMatches(query: LnaDatasetQuery)
+  case Ambiguous(query: LnaDatasetQuery, matches: Vector[String])
+
+  def message: String =
+    this match
+      case ScanFailed(error) =>
+        error.message
+      case NoMatches(query) =>
+        s"no LNA files found for query ${query.label}"
+      case Ambiguous(query, matches) =>
+        s"multiple LNA files match query ${query.label}: ${matches.mkString(", ")}"
+
+  def toArchiveError: ArchiveError =
+    this match
+      case ScanFailed(error) => error
+      case other             => ArchiveError.InvalidArchive(other.message)
+
+private final case class LnaFileEntities(
+    subject: Option[String],
+    session: Option[String],
+    task: Option[String],
+    space: Option[String],
+    run: Option[String],
+    acq: Option[String],
+    desc: Option[String],
+    suffix: Option[String]
+):
+  def matches(query: LnaDatasetQuery): Boolean =
+    subject.contains(query.subject.bare) &&
+      query.session.forall(value => session.contains(value.bare)) &&
+      query.task.forall(value => task.contains(value.value)) &&
+      query.space.forall(value => space.contains(value.value)) &&
+      query.run.forall(value => run.contains(value.value)) &&
+      query.acq.forall(value => acq.contains(value.value)) &&
+      query.desc.forall(value => desc.contains(value.value))
+
+private object LnaFileEntities:
+  private val Extension = ".lna.h5"
+
+  def parse(path: Path): Either[DatasetError, LnaFileEntities] =
+    val fileName = path.getFileName.toString
+    if !fileName.endsWith(Extension) then
+      Left(DatasetError.InvalidLabel("LNA filename", fileName, s"must end with $Extension"))
+    else
+      val stem = fileName.substring(0, fileName.length - Extension.length)
+      val parts = stem.split("_").toVector.filter(_.nonEmpty)
+      if parts.isEmpty then Left(DatasetError.InvalidLabel("LNA filename", fileName, "must contain BIDS-like entities"))
+      else
+        val entities = scala.collection.mutable.Map.empty[String, String]
+        var suffix = Option.empty[String]
+        var index = 0
+        var error = Option.empty[DatasetError]
+        while index < parts.length && error.isEmpty do
+          val part = parts(index)
+          val dash = part.indexOf('-')
+          if dash > 0 then
+            val key = part.substring(0, dash)
+            val value = part.substring(dash + 1)
+            if value.isEmpty then error = Some(DatasetError.InvalidLabel("LNA filename", fileName, s"empty value for entity '$key'"))
+            else if entities.contains(key) then error = Some(DatasetError.InvalidLabel("LNA filename", fileName, s"duplicate entity '$key'"))
+            else entities.update(key, value)
+          else
+            if suffix.isDefined then error = Some(DatasetError.InvalidLabel("LNA filename", fileName, "contains multiple suffix components"))
+            else suffix = Some(part)
+          index += 1
+
+        error match
+          case Some(err) => Left(err)
+          case None =>
+            Right(
+              LnaFileEntities(
+                subject = entities.get("sub"),
+                session = entities.get("ses"),
+                task = entities.get("task"),
+                space = entities.get("space"),
+                run = entities.get("run"),
+                acq = entities.get("acq"),
+                desc = entities.get("desc"),
+                suffix = suffix
+              )
+            )
 
 final case class LnaDataset private (root: Path):
   def subjects: Either[ArchiveError, Vector[String]] =
@@ -171,12 +315,20 @@ final case class LnaDataset private (root: Path):
     else readString(path).flatMap(SharedBasisRegistryCodec.parse)
 
   def findLnaFiles(query: LnaDatasetQuery): Either[ArchiveError, Vector[Path]] =
-    findLnaFiles(
-      subjectLabel = query.subject.value,
-      sessionLabel = query.session.map(_.value),
-      task = query.task.map(_.value),
-      space = query.space.map(_.value)
-    )
+    findLnaFilesForQuery(query)
+
+  def resolveLnaFile(query: LnaDatasetQuery): Either[LnaDatasetLookupError, Path] =
+    findLnaFiles(query)
+      .left
+      .map(LnaDatasetLookupError.ScanFailed(_))
+      .flatMap {
+        case Vector() =>
+          Left(LnaDatasetLookupError.NoMatches(query))
+        case Vector(path) =>
+          Right(path)
+        case many =>
+          Left(LnaDatasetLookupError.Ambiguous(query, many.map(path => root.relativize(path).toString)))
+      }
 
   def readArchive(path: Path): Either[ArchiveError, LnaArchive] =
     val normalized = resolveInsideRoot(path)
@@ -198,40 +350,8 @@ final case class LnaDataset private (root: Path):
     val normalized = resolveInsideRoot(path)
     readArchive(path).flatMap { archive =>
       for
-        runInfo <- archive.run(run).toRight(ArchiveError.InvalidArchive(s"run '${run.value}' not found"))
-        backend <-
-          if LatentArchiveCodec.isBoldZipArchive(archive) then
-            LatentArchiveCodec
-              .fromBoldZipArchive(archive, run)
-              .left
-              .map(err => ArchiveError.InvalidArchive(err.message))
-              .map { response =>
-                LatentResponseDatasetBackend(id, response, runInfo.shape.space, metadataFor(normalized))
-              }
-          else if LatentArchiveCodec.isTransportArchive(archive) then
-            LatentArchiveCodec
-              .fromTransportArchive(archive, run)
-              .left
-              .map(err => ArchiveError.InvalidArchive(err.message))
-              .map { response =>
-                LatentResponseDatasetBackend(id, response, runInfo.shape.space, metadataFor(normalized))
-              }
-          else if hasSharedBasisEmbed(archive) then
-            sharedBasisLatentBackend(
-              archive = archive,
-              archivePath = normalized,
-              id = id,
-              runInfo = runInfo,
-              metadata = metadataFor(normalized)
-            )
-          else
-            LatentArchiveCodec
-              .fromExplicitArchive(archive, run)
-              .left
-              .map(err => ArchiveError.InvalidArchive(err.message))
-              .map { response =>
-                LatentResponseDatasetBackend(id, response, runInfo.shape.space, metadataFor(normalized))
-              }
+        plan <- LatentArchiveCodec.openPlan(archive, run)
+        backend <- latentBackendFromPlan(plan, normalized, id, metadataFor(normalized))
       yield backend
     }
 
@@ -258,65 +378,51 @@ final case class LnaDataset private (root: Path):
     }
 
   def readSubject(query: LnaDatasetQuery): Either[ArchiveError, LatentArchiveDatasetBackend] =
-    findLnaFiles(query).flatMap {
-      case Vector() =>
-        Left(ArchiveError.InvalidArchive(s"no LNA files found for subject '${query.subject.value}'"))
-      case Vector(path) =>
-        backendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path)))
-      case many =>
-        Left(ArchiveError.InvalidArchive(s"multiple LNA files match query for subject '${query.subject.value}': ${many.map(root.relativize).mkString(", ")}"))
-    }
+    resolveLnaFile(query)
+      .left
+      .map(_.toArchiveError)
+      .flatMap(path => backendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path))))
 
   def readSubjectLatent(
       query: LnaDatasetQuery,
       run: RunLabel = RunLabel.indexed(0)
   ): Either[ArchiveError, LatentResponseDatasetBackend] =
-    findLnaFiles(query).flatMap {
-      case Vector() =>
-        Left(ArchiveError.InvalidArchive(s"no LNA files found for subject '${query.subject.value}'"))
-      case Vector(path) =>
-        latentBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path)), run)
-      case many =>
-        Left(ArchiveError.InvalidArchive(s"multiple LNA files match query for subject '${query.subject.value}': ${many.map(root.relativize).mkString(", ")}"))
-    }
+    resolveLnaFile(query)
+      .left
+      .map(_.toArchiveError)
+      .flatMap(path => latentBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path)), run))
 
   def readSubjectMaterialized(query: LnaDatasetQuery): Either[ArchiveError, InMemoryDatasetBackend] =
-    findLnaFiles(query).flatMap {
-      case Vector() =>
-        Left(ArchiveError.InvalidArchive(s"no LNA files found for subject '${query.subject.value}'"))
-      case Vector(path) =>
-        materializedBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path)))
-      case many =>
-        Left(ArchiveError.InvalidArchive(s"multiple LNA files match query for subject '${query.subject.value}': ${many.map(root.relativize).mkString(", ")}"))
-    }
+    resolveLnaFile(query)
+      .left
+      .map(_.toArchiveError)
+      .flatMap(path => materializedBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path))))
 
-  private def findLnaFiles(
-      subjectLabel: String,
-      sessionLabel: Option[String],
-      task: Option[String],
-      space: Option[String]
-  ): Either[ArchiveError, Vector[Path]] =
-    val subjectDir = root.resolve(subjectLabel).normalize()
+  private def findLnaFilesForQuery(query: LnaDatasetQuery): Either[ArchiveError, Vector[Path]] =
+    val subjectDir = root.resolve(query.subject.value).normalize()
     if !subjectDir.startsWith(root) then
-      Left(ArchiveError.InvalidPath(subjectLabel, "subject path escapes dataset root"))
+      Left(ArchiveError.InvalidPath(query.subject.value, "subject path escapes dataset root"))
     else if !Files.isDirectory(subjectDir) then Right(Vector.empty)
     else
       try
         val stream = Files.walk(subjectDir)
         try
-          val files =
-            stream
-              .iterator()
-              .asScala
-              .filter(Files.isRegularFile(_))
-              .filter(path => path.getFileName.toString.endsWith(".lna.h5"))
-              .filter(path => sessionLabel.forall(label => path.iterator().asScala.exists(_.toString == label)))
-              .filter(path => task.forall(label => path.getFileName.toString.contains(s"task-$label")))
-              .filter(path => space.forall(label => path.getFileName.toString.contains(s"space-$label")))
-              .map(_.toAbsolutePath.normalize())
-              .toVector
-              .sortBy(path => root.relativize(path).toString)
-          Right(files)
+          val files = Vector.newBuilder[Path]
+          val iterator = stream.iterator().asScala
+          var error = Option.empty[ArchiveError]
+          while iterator.hasNext && error.isEmpty do
+            val path = iterator.next()
+            if Files.isRegularFile(path) && path.getFileName.toString.endsWith(".lna.h5") then
+              val normalized = path.toAbsolutePath.normalize()
+              LnaFileEntities.parse(normalized) match
+                case Left(err) =>
+                  error = Some(ArchiveError.InvalidArchive(s"${root.relativize(normalized)}: ${err.message}"))
+                case Right(entities) =>
+                  if entities.matches(query) then files += normalized
+          error match
+            case Some(err) => Left(err)
+            case None =>
+              Right(files.result().sortBy(path => root.relativize(path).toString))
         finally stream.close()
       catch case NonFatal(e) => Left(ArchiveError.UnsupportedStorage(s"could not scan LNA files under $subjectDir: ${e.getMessage}"))
 
@@ -329,40 +435,48 @@ final case class LnaDataset private (root: Path):
       )
     )
 
+  private def latentBackendFromPlan(
+      plan: LatentArchivePlan,
+      archivePath: Path,
+      id: DatasetId,
+      metadata: DatasetMetadata
+  ): Either[ArchiveError, LatentResponseDatasetBackend] =
+    plan match
+      case LatentArchivePlan.SharedBasis(runInfo, _, responseArchive) =>
+        sharedBasisLatentBackend(responseArchive, archivePath, id, runInfo, metadata)
+      case other =>
+        other.selectionResponse.map { response =>
+          LatentResponseDatasetBackend(id, response, other.runInfo.shape.space, metadata)
+        }
+
   private def sharedBasisLatentBackend(
-      archive: LnaArchive,
+      responseArchive: SharedBasisLatentArchive,
       archivePath: Path,
       id: DatasetId,
       runInfo: LnaRun,
       metadata: DatasetMetadata
   ): Either[ArchiveError, LatentResponseDatasetBackend] =
-    archive.validate.flatMap { valid =>
-      for
-        responseArchive <- LatentArchiveCodec.fromSharedBasisArchive(valid, runInfo.label)
-        basisPath <- LnaSharedBasisResolver.resolve(
-          responseArchive.basis,
-          SharedBasisResolutionContext(archivePath = archivePath, datasetRoot = Some(root))
-        )
-        artifact <- JhdfSharedBasisStore.read(basisPath).flatMap(SharedBasisArtifact.validateFinite)
-        response <- responseArchive
-          .materialize(artifact, Some(runInfo.shape.space))
-          .left
-          .map(err => ArchiveError.InvalidArchive(err.message))
-        mask <- responseArchive
-          .sampleMask(runInfo.shape.space, artifact)
-          .left
-          .map(err => ArchiveError.InvalidArchive(err.message))
-      yield LatentResponseDatasetBackend(
-        id = id,
-        response = response,
-        space = runInfo.shape.space,
-        mask = mask,
-        metadata = metadata
+    for
+      basisPath <- LnaSharedBasisResolver.resolve(
+        responseArchive.basis,
+        SharedBasisResolutionContext(archivePath = archivePath, datasetRoot = Some(root))
       )
-    }
-
-  private def hasSharedBasisEmbed(archive: LnaArchive): Boolean =
-    archive.manifest.transforms.exists(_.params.isInstanceOf[TransformParams.SharedBasisEmbed])
+      artifact <- JhdfSharedBasisStore.read(basisPath).flatMap(SharedBasisArtifact.validateFinite)
+      response <- responseArchive
+        .materialize(artifact, Some(runInfo.shape.space))
+        .left
+        .map(err => ArchiveError.InvalidArchive(err.message))
+      mask <- responseArchive
+        .sampleMask(runInfo.shape.space, artifact)
+        .left
+        .map(err => ArchiveError.InvalidArchive(err.message))
+    yield LatentResponseDatasetBackend(
+      id = id,
+      response = response,
+      space = runInfo.shape.space,
+      mask = mask,
+      metadata = metadata
+    )
 
   private def resolveInsideRoot(path: Path): Path =
     if path.isAbsolute then path.toAbsolutePath.normalize()

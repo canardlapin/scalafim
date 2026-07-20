@@ -2,6 +2,18 @@ package scalafim.dataset
 
 import scalafim.archive.lna.{LnaPipeline, QuantParams}
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.latent.{
+  BoldZipCoarseBasis,
+  BoldZipDetailBasis,
+  BoldZipPayload,
+  BoldZipResidualEvent,
+  BoldZipSpatialBasis,
+  BoldZipTextureEntry,
+  LatentArchiveCodec,
+  LatentSelection,
+  TransportLatentResponse
+}
+import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
 
@@ -39,3 +51,115 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
       }
     }
   }
+
+  test("latent archive backend reads transport archives through a typed latent plan") {
+    val space = NeuroSpace(Vector(2, 2, 1))
+    val decoder =
+      mapValue(
+        CsrMatrix.fromTriplets(
+          rows = 4,
+          cols = 2,
+          rowIndices = Array(0, 1, 2, 2, 3, 3),
+          colIndices = Array(0, 1, 0, 1, 0, 1),
+          values = Array(1.0, 1.0, 1.0, 1.0, 2.0, -1.0)
+        )
+      )
+    val response =
+      TransportLatentResponse
+        .withIdentityTransform(
+          coefficientsAnalysis = DoubleMatrix.fromRows(
+            Vector(
+              Vector(1.0, 2.0),
+              Vector(3.0, 4.0)
+            )
+          ),
+          nativeDecoder = decoder,
+          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+          label = "transport-dataset"
+        )
+        .fold(err => fail(err.message), identity)
+    val archive =
+      LatentArchiveCodec
+        .toTransportArchive(response, space)
+        .fold(err => fail(err.message), identity)
+    val backend = LatentArchiveDatasetBackend(DatasetId("transport-latent"), archive)
+    val series =
+      backend.readEither(
+        DataSelection(
+          time = TimepointSelection.indices(1, 0),
+          voxels = VoxelSelection.indices(3, 1)
+        )
+      ).fold(err => fail(err.message), identity)
+    val expected =
+      response
+        .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
+        .fold(err => fail(err.message), identity)
+
+    assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+  }
+
+  test("latent archive backend reads BOLDZip archives through a typed latent plan") {
+    val space = NeuroSpace(Vector(3, 1, 1))
+    val spatialBasis =
+      BoldZipSpatialBasis(
+        sampleCount = 3,
+        coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+        detail = BoldZipDetailBasis.IdentitySamples,
+        label = "identity-detail"
+      ).fold(err => fail(err.message), identity)
+    val response =
+      BoldZipPayload(
+        temporalBasis = DoubleMatrix.eye(4),
+        carrierTheta = DoubleMatrix.fromRows(
+          Vector(
+            Vector(1.0, 2.0, 3.0, 4.0),
+            Vector(10.0, 20.0, 30.0, 40.0)
+          )
+        ),
+        carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+        spatialBasis = spatialBasis,
+        texture = Vector(
+          BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5),
+          BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
+        ),
+        events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
+        offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+        label = "boldzip-dataset"
+      ).fold(err => fail(err.message), identity)
+    val archive =
+      LatentArchiveCodec
+        .toBoldZipArchive(response, space)
+        .fold(err => fail(err.message), identity)
+    val backend = LatentArchiveDatasetBackend(DatasetId("boldzip-latent"), archive)
+    val series =
+      backend.readEither(
+        DataSelection(
+          time = TimepointSelection.indices(3, 1),
+          voxels = VoxelSelection.indices(2, 0)
+        )
+      ).fold(err => fail(err.message), identity)
+    val expected =
+      response
+        .reconstruct(LatentSelection(timepoints = Some(Vector(3, 1)), samples = Some(Vector(2, 0))))
+        .fold(err => fail(err.message), identity)
+
+    assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+  }
+
+  private def assertRowsClose(
+      actual: Vector[Vector[Double]],
+      expected: Vector[Vector[Double]],
+      tol: Double
+  ): Unit =
+    assertEquals(actual.length, expected.length)
+    assertEquals(if actual.isEmpty then 0 else actual.head.length, if expected.isEmpty then 0 else expected.head.length)
+    actual.zip(expected).foreach { case (actualRow, expectedRow) =>
+      actualRow.zip(expectedRow).foreach { case (actualValue, expectedValue) =>
+        assertEqualsDouble(actualValue, expectedValue, tol)
+      }
+    }
+
+  private def mapValue[A](result: Either[LinearMapError, A]): A =
+    result match
+      case Right(value) => value
+      case Left(error)  => fail(error.message)

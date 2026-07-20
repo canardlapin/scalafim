@@ -47,6 +47,60 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     assertEquals(actual.data.toRows, expected.data.toRows)
   }
 
+  test("masked latent response default read uses the active voxel domain") {
+    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val response =
+      ExplicitLatentResponse(
+        basis = DoubleMatrix.eye(3),
+        loadings = DoubleMatrix.fromRows(
+          Vector(
+            Vector(1.0, 5.0, 9.0),
+            Vector(3.0, 7.0, 11.0),
+            Vector(4.0, 8.0, 12.0)
+          )
+        )
+      ).fold(err => fail(err.message), identity)
+    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+    val series = latent.read()
+
+    assertEquals(latent.voxelDomain.kind, VoxelDomainKind.ActiveMask)
+    assertEquals(latent.voxelDomain.indices, Vector(0, 2, 3))
+    assertEquals(series.voxelIndices, Vector(0, 2, 3))
+    assertEquals(
+      series.data.toRows,
+      Vector(
+        Vector(1.0, 3.0, 4.0),
+        Vector(5.0, 7.0, 8.0),
+        Vector(9.0, 11.0, 12.0)
+      )
+    )
+  }
+
+  test("masked latent response requires explicit full-spatial reads") {
+    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val response =
+      ExplicitLatentResponse(
+        basis = DoubleMatrix.eye(3),
+        loadings = DoubleMatrix.fromRows(
+          Vector(
+            Vector(1.0, 5.0, 9.0),
+            Vector(3.0, 7.0, 11.0),
+            Vector(4.0, 8.0, 12.0)
+          )
+        )
+      ).fold(err => fail(err.message), identity)
+    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+
+    val failed =
+      latent
+        .readEither(DataSelection(voxels = VoxelSelection.AllSpatial))
+        .left
+        .toOption
+        .getOrElse(fail("expected full-spatial request to hit the inactive voxel"))
+
+    assertEquals(failed, DatasetError.VoxelOutsideMask(1))
+  }
+
   test("latent response backend rejects selected voxels outside mask") {
     val mask = Mask.fromIndices(space, NArray(0, 2, 3))
     val response =

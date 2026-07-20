@@ -1,6 +1,6 @@
 package scalafim.dataset.io
 
-import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries}
+import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries, VoxelDomain}
 import scalafim.image.{DMat, Mask, NeuroSpace}
 
 import java.nio.charset.StandardCharsets
@@ -29,10 +29,13 @@ final case class MatrixFileDatasetBackend(
   override lazy val mask: Mask.MaskVol =
     Mask.all(shape.space)
 
+  override lazy val voxelDomain: VoxelDomain =
+    VoxelDomain.fullUnsafe(shape)
+
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
       loaded <- loadedEither
-      resolved <- selection.resolveEither(loaded.shape)
+      resolved <- selection.resolveEither(loaded.shape, voxelDomain)
       series <- FmriSeries.make(
         data = DMat.fromRows(
           resolved.timepoints.map { r =>
