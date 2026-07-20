@@ -104,8 +104,8 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
     if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
     else
       for
-        covarianceDense <- semantic(covariance.toDense)
-        normalizationDense <- semantic(featureCometric.toDense)
+        covarianceDense <- gpcaSemantic(covariance.toDense)
+        normalizationDense <- gpcaSemantic(featureCometric.toDense)
         rayleigh <- GeneralizedRayleighRitz.solve(
           covarianceDense,
           normalizationDense,
@@ -143,7 +143,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       variable <- program(
         FrameVariable.from(ParameterId.unsafe(s"${featureSpace.id.value}.gpca-frame"), featureSpace, component.evidence)
       )
-      frameOperator <- semantic(
+      frameOperator <- gpcaSemantic(
         Op.fromDense(
           weights,
           CoordinateEvidence.primal(component.evidence),
@@ -157,8 +157,8 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       parameterization = FrameParameterization.identity(variable)
       normalization = FrameNormalization(variable, featureCometric)
       operatorProgram <- program(OperatorPrograms.gpca(parameterization, covariance, normalization))
-      scoreValues <- semantic(functionalFrame.scores(table).toDense)
-      axisValues <- semantic(functionalFrame.axes.get.toDense)
+      scoreValues <- gpcaSemantic(functionalFrame.scores(table).toDense)
+      axisValues <- gpcaSemantic(functionalFrame.axes.get.toDense)
       singularValues = squareRoots(eigenvalues)
       rowAxes = scaleColumnsByInverse(scoreValues, singularValues)
       totalVariance <- featureMetricValue.contract(covarianceDense)
@@ -179,7 +179,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       generalizedResidual = rayleigh.diagnostics.generalizedResidual
       normalizationResidual = rayleigh.diagnostics.normalizationResidual
       tolerance = CertificateTolerance.strict
-      context <- semantic(
+      context <- gpcaSemantic(
         CertificateContext.from(
           tolerance,
           CertificateNorm.Frobenius,
@@ -443,7 +443,7 @@ private def sum(values: DVec): Double =
     index += 1
   total
 
-private def semantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
+private def gpcaSemantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
   result.left.map:
     case SemanticError.MultivarFailure(error) => error
     case SemanticError.LinearMapFailure(error) => LinalgErrorAdapter.toMultivarError(error)
