@@ -491,7 +491,7 @@ lazy val fit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fit"))
-    .dependsOn(linalg, model, ar)
+    .dependsOn(linalg, model, ar, pipeline % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-fit"

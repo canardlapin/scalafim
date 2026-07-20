@@ -42,29 +42,37 @@ sealed trait FitBlockResult:
 
 final case class DenseFitBlockResult(
     coefficients: CoefficientBlock,
-    standardErrors: StandardErrorBlock,
-    normalizedCovariance: DoubleMatrix,
+    inference: CoefficientInference,
     residualVariance: DoubleVector,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
     engine: FitEngine,
     olsDiagnostics: Option[OlsDiagnostics] = None,
-    autocorrelation: Option[ArDiagnostics] = None
+    autocorrelation: Option[ArDiagnostics] = None,
+    robustDiagnostics: Option[RobustDiagnostics] = None
 ) extends FitBlockResult:
   require(voxelIndices.length == coefficients.voxels, "block voxel indices must match coefficient columns")
   require(residualVariance.length == coefficients.voxels, "block residual variances must match coefficient columns")
-  require(standardErrors.predictors == coefficients.predictors, "block standard errors must match coefficient rows")
-  require(standardErrors.voxels == coefficients.voxels, "block standard errors must match coefficient columns")
-  require(normalizedCovariance.rows == coefficients.predictors, "block covariance rows must match predictors")
-  require(normalizedCovariance.cols == coefficients.predictors, "block covariance cols must match predictors")
+  require(inference.predictors == coefficients.predictors, "block inference must match coefficient rows")
+  require(inference.voxels == coefficients.voxels, "block inference must match coefficient columns")
+
+  def standardErrors: StandardErrorBlock = inference.standardErrors
+  def normalizedCovariance: DoubleMatrix = inference.normalizedCovariance
+  def coefficientCovariance: CoefficientCovariance = inference.covariance
+  def inferenceScope: CoefficientInferenceScope = inference.scope
 
 object DenseFitBlockResult:
   def fromOls(input: FitBlockInput, fit: OlsFit, engine: FitEngine): DenseFitBlockResult =
     DenseFitBlockResult(
       coefficients = fit.coefficients,
-      standardErrors = fit.standardErrors,
-      normalizedCovariance = fit.normalizedCovariance,
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        fit.coefficientCovariance,
+        fit.residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
       residualVariance = fit.residualVariance,
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       voxelIndices = input.voxelIndices,
@@ -73,38 +81,71 @@ object DenseFitBlockResult:
       olsDiagnostics = Some(fit.diagnostics)
     )
 
-  def fromGls(input: FitBlockInput, fit: GlsFit): DenseFitBlockResult =
+  def fromGls(
+      input: FitBlockInput,
+      fit: GlsFit,
+      engine: FitEngine = FitEngine.GeneralizedLeastSquares
+  ): DenseFitBlockResult =
     DenseFitBlockResult(
       coefficients = fit.coefficients,
-      standardErrors = fit.standardErrors,
-      normalizedCovariance = fit.normalizedCovariance,
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        fit.coefficientCovariance,
+        fit.residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
       residualVariance = fit.residualVariance,
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       voxelIndices = input.voxelIndices,
       timepoints = input.timepoints,
-      engine = FitEngine.GeneralizedLeastSquares,
+      engine = engine,
       olsDiagnostics = Some(fit.finalOlsDiagnostics),
       autocorrelation = Some(fit.diagnostics)
+    )
+
+  def fromRobust(input: FitBlockInput, fit: RobustFit): DenseFitBlockResult =
+    DenseFitBlockResult(
+      coefficients = fit.coefficients,
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        fit.coefficientCovariance,
+        fit.residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
+      residualVariance = fit.residualVariance,
+      residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
+      voxelIndices = input.voxelIndices,
+      timepoints = input.timepoints,
+      engine = FitEngine.RobustLeastSquares,
+      olsDiagnostics = Some(fit.finalOlsDiagnostics),
+      autocorrelation = fit.autocorrelation,
+      robustDiagnostics = Some(fit.diagnostics)
     )
 
   def merge(blocks: IndexedSeq[DenseFitBlockResult]): Either[FitError, DenseFitBlockResult] =
     if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one dense block is required"))
     else
       val first = blocks.head
-      validateCompatible(blocks, first).map { _ =>
+      for
+        autocorrelation <- mergeAutocorrelation(blocks)
+        robust <- mergeRobustDiagnostics(blocks)
+        inference <- CoefficientInference.mergeByVoxel(blocks.map(_.inference))
+        _ <- validateCompatible(blocks, first)
+      yield
         DenseFitBlockResult(
           coefficients = CoefficientBlock(bindMatrixColumns(blocks, _.coefficients.value)),
-          standardErrors = StandardErrorBlock(bindMatrixColumns(blocks, _.standardErrors.value)),
-          normalizedCovariance = DoubleMatrix.unsafe(first.normalizedCovariance.rows, first.normalizedCovariance.cols, first.normalizedCovariance.copyData),
+          inference = inference,
           residualVariance = DoubleVector.unsafe(bindVectors(blocks, _.residualVariance)),
           residualDegreesOfFreedom = first.residualDegreesOfFreedom,
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
           engine = first.engine,
           olsDiagnostics = first.olsDiagnostics,
-          autocorrelation = first.autocorrelation
+          autocorrelation = autocorrelation,
+          robustDiagnostics = robust
         )
-      }
 
   private def validateCompatible(
       blocks: IndexedSeq[DenseFitBlockResult],
@@ -121,19 +162,22 @@ object DenseFitBlockResult:
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must have the same residual degrees of freedom"))
       if block.coefficients.predictors != first.coefficients.predictors then
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must have the same predictor count"))
-      if block.autocorrelation != first.autocorrelation then
-        return Left(FitError.IncompatibleFitBlocks("all dense blocks must have identical autocorrelation diagnostics"))
       if block.olsDiagnostics != first.olsDiagnostics then
         return Left(FitError.IncompatibleFitBlocks("all dense blocks must have identical OLS diagnostics"))
-      if !sameMatrix(block.normalizedCovariance, first.normalizedCovariance) then
-        return Left(FitError.IncompatibleFitBlocks("all dense blocks must share the same normalized covariance"))
       i += 1
     Right(())
 
-  private def sameMatrix(left: DoubleMatrix, right: DoubleMatrix): Boolean =
-    left.rows == right.rows &&
-      left.cols == right.cols &&
-      left.copyData.sameElements(right.copyData)
+  private def mergeAutocorrelation(blocks: IndexedSeq[DenseFitBlockResult]): Either[FitError, Option[ArDiagnostics]] =
+    val diagnostics = blocks.map(_.autocorrelation)
+    if diagnostics.forall(_.isEmpty) then Right(None)
+    else if diagnostics.exists(_.isEmpty) then Left(FitError.IncompatibleFitBlocks("autocorrelation diagnostics must be present for every dense block"))
+    else ArDiagnostics.merge(diagnostics.flatten).map(Some(_))
+
+  private def mergeRobustDiagnostics(blocks: IndexedSeq[DenseFitBlockResult]): Either[FitError, Option[RobustDiagnostics]] =
+    val diagnostics = blocks.map(_.robustDiagnostics)
+    if diagnostics.forall(_.isEmpty) then Right(None)
+    else if diagnostics.exists(_.isEmpty) then Left(FitError.IncompatibleFitBlocks("robust diagnostics must be present for every dense block"))
+    else RobustDiagnostics.merge(diagnostics.flatten).map(Some(_))
 
   private def bindMatrixColumns(
       blocks: IndexedSeq[DenseFitBlockResult],
@@ -393,8 +437,13 @@ object FitKernel:
 
       case FitEngine.GeneralizedLeastSquares =>
         Gls
-          .fit(input.design, input.response, input.partitions, config.autocorrelation)
+          .fit(input.design, input.response, input.partitions, config.autocorrelation, input.voxelIndices)
           .map(DenseFitBlockResult.fromGls(input, _))
+
+      case FitEngine.RobustLeastSquares =>
+        Robust
+          .fit(input.design, input.response, input.partitions, config.robust, robustAutocorrelation(config))
+          .map(DenseFitBlockResult.fromRobust(input, _))
 
       case other =>
         Left(FitError.UnsupportedEngine(s"$other does not produce a dense fit block result"))
@@ -422,7 +471,7 @@ object FitKernel:
       config: FitConfig = FitConfig()
   ): Either[FitError, FitBlockResult] =
     engine match
-      case FitEngine.OrdinaryLeastSquares | FitEngine.GeneralizedLeastSquares =>
+      case FitEngine.OrdinaryLeastSquares | FitEngine.GeneralizedLeastSquares | FitEngine.RobustLeastSquares =>
         fitDense(input, engine, config)
       case FitEngine.RunwiseLeastSquares =>
         fitRunwise(input)
@@ -430,3 +479,6 @@ object FitKernel:
         fitLss(input)
       case other =>
         Left(FitError.UnsupportedEngine(other.toString))
+
+  private def robustAutocorrelation(config: FitConfig): Option[scalafim.fmri.model.ArOptions] =
+    if config.robust.reestimateAutocorrelation then Some(config.autocorrelation) else None

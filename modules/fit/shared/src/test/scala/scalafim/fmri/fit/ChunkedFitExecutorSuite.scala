@@ -5,16 +5,87 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventModel, EventTermColumnRole}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
+import scalafim.fmri.model.{
+  ArOptions,
+  ArStructure,
+  ArCoefficientSpec,
+  AutocorrelationConfig,
+  FitConfig,
+  FitEngine,
+  FitPlan,
+  FitStrategy,
+  FmriModel,
+  FmriModelBuilder,
+  LatentSketchConfig,
+  LatentSketchMethod,
+  LowRankComponentSpec,
+  ModelBuildSpec,
+  ReducedRankBootstrapConfig,
+  ReducedRankComponentSpec,
+  ReducedRankGlsConfig,
+  ReducedRankInferencePolicy
+}
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class ChunkedFitExecutorSuite extends munit.FunSuite:
 
   private val chunking = FitChunkingStrategy.unsafeByVoxelCount(2)
   private val singleVoxelChunking = FitChunkingStrategy.unsafeByVoxelCount(1)
+
+  test("ChunkProgram rejects non-contiguous generic work ordinals") {
+    val program = ChunkProgram.make(
+      Vector(
+        DummyWork(ChunkOrdinal.unsafe(0)),
+        DummyWork(ChunkOrdinal.unsafe(2))
+      )
+    )
+
+    assert(program.left.toOption.exists {
+      case FitError.IncompatibleFitBlocks(detail) => detail.contains("ordinal 2")
+      case _                                      => false
+    })
+  }
+
+  test("SequentialChunkProgramInterpreter wraps failures with chunk identity") {
+    val program = ChunkProgram.unsafe(
+      Vector(
+        DummyWork(ChunkOrdinal.unsafe(0)),
+        DummyWork(ChunkOrdinal.unsafe(1))
+      )
+    )
+
+    val result =
+      SequentialChunkProgramInterpreter.execute(program) { work =>
+        if work.ordinal.value == 1 then Left(FitError.EmptyResponse)
+        else Right(work.ordinal.value)
+      }
+
+    assertEquals(result.left.toOption, Some(FitError.ChunkFailed(1, FitError.EmptyResponse)))
+  }
+
+  test("FutureChunkProgramInterpreter preserves ordinal order with bounded execution") {
+    val program = ChunkProgram.unsafe(
+      Vector(
+        DummyWork(ChunkOrdinal.unsafe(0)),
+        DummyWork(ChunkOrdinal.unsafe(1)),
+        DummyWork(ChunkOrdinal.unsafe(2))
+      )
+    )
+
+    FutureChunkProgramInterpreter
+      .execute(program, FitParallelism.unsafe(2)) { work =>
+        Future.successful(Right(work.ordinal.value))
+      }
+      .map { result =>
+        val completed = result.toOption.get
+        assertEquals(completed.map(_.ordinal.value), Vector(0, 1, 2))
+        assertEquals(completed.map(_.result), Vector(0, 1, 2))
+      }
+  }
 
   test("FitChunkPlan exposes repeatable ordered voxel chunks") {
     val plan = FitPlan(olsModel)
@@ -36,6 +107,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     val program = FitChunkProgram.fromSelection(plan, selection, chunking).toOption.get
 
     assertEquals(program.chunkCount, 2)
+    assertEquals(program.engine, FitEngine.OrdinaryLeastSquares)
     assertEquals(program.indexed.map(_.ordinal.value).toVector, Vector(0, 1))
     assertEquals(program.indexed.map(_.chunk.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
     assertEquals(program.iterator.map(_.chunk.voxelIndices).toVector, Vector(Vector(2, 0), Vector(1)))
@@ -71,6 +143,70 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       .map { result =>
         val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
+      }
+  }
+
+  test("FutureChunkedFitExecutor matches unchunked full-rank LatentSketch") {
+    val plan = FitPlan(olsModel, FitStrategy.LatentSketch())
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.engine, FitEngine.LatentSketch)
+      }
+  }
+
+  test("FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks") {
+    val plan =
+      FitPlan(
+        olsModel,
+        FitStrategy.LatentSketch(
+          LatentSketchConfig.unsafe(
+            components = LowRankComponentSpec.unsafeFixed(2),
+            method = LatentSketchMethod.ContiguousVoxelAveraging
+          )
+        )
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.engine, FitEngine.LatentSketch)
+        assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+        assertEquals(actual.coefficientCovariance.matrixCount, 3)
+      }
+  }
+
+  test("FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks") {
+    val plan =
+      FitPlan(
+        olsModel,
+        FitStrategy.LatentSketch(
+          LatentSketchConfig.unsafe(
+            components = LowRankComponentSpec.unsafeFixed(2),
+            method = LatentSketchMethod.PrincipalComponents
+          )
+        )
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.engine, FitEngine.LatentSketch)
+        assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+        assertEquals(actual.coefficientCovariance.matrixCount, 3)
       }
   }
 
@@ -119,6 +255,156 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         assertDenseClose(actual, expected)
         assertEquals(actual.autocorrelation.map(_.runs.map(_.method)), Some(Vector("estimated")))
         assertEquals(actual.autocorrelation, expected.autocorrelation)
+      }
+  }
+
+  test("FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls") {
+    val plan =
+      FitPlan(
+        glsModel,
+        engine = FitEngine.ReducedRankGls,
+        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.35)))
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.engine, FitEngine.ReducedRankGls)
+      }
+  }
+
+  test("FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks") {
+    val plan =
+      FitPlan(
+        reducedRankGlsModel,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(
+              order = 1,
+              coefficients = ArCoefficientSpec.Rho(0.35)
+            )
+          )
+        )
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.engine, FitEngine.ReducedRankGls)
+        assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Shared)
+        assertEquals(actual.coefficientCovariance.matrixCount, 1)
+        assertEquals(actual.inference.method, CoefficientInferenceMethod.ReducedRankConditional)
+        assertEquals(actual.inferenceScope.allowedIndices(actual.predictors), Vector(0, 1))
+      }
+  }
+
+  test("FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference") {
+    val plan =
+      FitPlan(
+        reducedRankGlsModel,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(
+              order = 1,
+              coefficients = ArCoefficientSpec.Rho(0.35)
+            ),
+            inference = ReducedRankInferencePolicy.Bootstrap(
+              ReducedRankBootstrapConfig.unsafe(replicates = 16, blockSize = 2, seed = 11)
+            )
+          )
+        )
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(
+          actual.inference.method,
+          CoefficientInferenceMethod.ReducedRankBootstrap(replicates = 16, blockSize = 2, seed = 11)
+        )
+      }
+  }
+
+  test("full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks") {
+    val plan =
+      FitPlan(
+        glsModel,
+        engine = FitEngine.ReducedRankGls,
+        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true))
+      )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(expected.inference.method, CoefficientInferenceMethod.ReducedRankFullRankVoxelwiseFallback)
+    assertEquals(expected.inferenceScope.allowedIndices(expected.predictors), Vector(0))
+    assert(TContrast("baseline", Map("base_constant" -> 1.0)).evaluate(expected).isLeft)
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.inferenceScope.allowedIndices(actual.predictors), Vector(0))
+      }
+  }
+
+  test("compressed voxelwise-AR ReducedRankGls remains an explicit design boundary") {
+    val plan =
+      FitPlan(
+        reducedRankGlsModel,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(order = 1, voxelwise = true)
+          )
+        )
+      )
+
+    assert(FitPlanExecutor.fit(plan).left.toOption.exists {
+      case FitError.UnsupportedEngine(detail) =>
+        detail.contains("voxelwise-AR reduced-rank geometry") && detail.contains("tracked separately")
+      case _ =>
+        false
+    })
+  }
+
+  test("FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks") {
+    val plan = glsPlan(ArOptions(structure = ArStructure.Ar(1), voxelwise = true))
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.unsafeFit(plan, selection).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+      .map { result =>
+        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val diagnostics = actual.autocorrelation.get
+        val voxelRhos = diagnostics.runs.head.voxelwiseCoefficients.map(_.head)
+
+        assertDenseClose(actual, expected)
+        assertEquals(diagnostics.sharedNormalizedCovariance, false)
+        assertEquals(diagnostics.runs.map(_.method), Vector("voxelwise-estimated"))
+        assertEquals(voxelRhos.length, 3)
+        assertEquals(voxelRhos, expected.autocorrelation.get.runs.head.voxelwiseCoefficients.map(_.head))
+        assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+        assertEquals(actual.inferenceReady.isRight, true)
+        val t = TContrast("task", Map("task" -> 1.0)).evaluate(actual).toOption.get
+        val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(actual).toOption.get
+        assert(t.statistics.toVector.forall(_.isFinite))
+        assert(f.statistics.toVector.forall(_.isFinite))
       }
   }
 
@@ -267,6 +553,46 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       rows = rows
     )
 
+  private def reducedRankGlsModel: FmriModel =
+    val nTime = 90
+    val sampling = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
+    val taskA = Vector.tabulate(nTime)(i => ((i % 9) - 4).toDouble)
+    val taskB = Vector.tabulate(nTime)(i => math.sin(i.toDouble / 6.0) + (if i % 5 == 0 then 0.5 else -0.25))
+    val residuals = Vector(
+      ar1Residual(phi = 0.35, n = nTime, offset = 1500),
+      ar1Residual(phi = -0.2, n = nTime, offset = 2000),
+      ar1Residual(phi = 0.1, n = nTime, offset = 2500)
+    )
+    val loadings = Vector(1.0, -0.55, 0.3)
+    val rows =
+      Vector.tabulate(nTime) { row =>
+        loadings.indices.toVector.map { voxel =>
+          val sharedTask = 1.2 * taskA(row) - 0.45 * taskB(row)
+          loadings(voxel) * sharedTask + (voxel.toDouble - 1.0) + residuals(voxel)(row)
+        }
+      }
+    val eventModel =
+      EventModel(
+        terms = Vector.empty,
+        samplingFrame = sampling,
+        designMatrix = Mat.fromRows(taskA.indices.map(i => Vector(taskA(i), taskB(i))).toVector),
+        columnNames = Vector("task_a", "task_b"),
+        termSpans = Vector(0 -> 2),
+        colIndices = Map("task" -> Vector(0, 1))
+      )
+    val baseline =
+      BaselineModel.build(
+        samplingFrame = sampling,
+        basis = BaselineBasis.Constant,
+        intercept = Intercept.Global
+      )
+    val dataset =
+      FmriDataset(
+        backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), DMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
+        samplingFrame = sampling
+      )
+    FmriModel(eventModel, baseline, dataset)
+
   private def ar1Residual(phi: Double, n: Int, offset: Int): Vector[Double] =
     val out = Array.ofDim[Double](n)
     var i = 0
@@ -344,11 +670,15 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertEquals(actual.voxelIndices, expected.voxelIndices)
     assertEquals(actual.timepoints, expected.timepoints)
     assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
+    assertEquals(actual.inferenceScope, expected.inferenceScope)
+    assertEquals(actual.inference.method, expected.inference.method)
     assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
     assertEquals(actual.autocorrelation, expected.autocorrelation)
     assertMatrixClose(actual.coefficients.value, expected.coefficients.value, tol = 1e-10)
     assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, tol = 1e-10)
     assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance, tol = 1e-10)
+    assertCoefficientCovarianceClose(actual.coefficientCovariance, expected.coefficientCovariance, tol = 1e-10)
+    assertVectorClose(actual.inference.varianceScale, expected.inference.varianceScale, tol = 1e-10)
     assertVectorClose(actual.residualVariance, expected.residualVariance, tol = 1e-10)
 
   private def assertLssClose(actual: LssFmriFitResult, expected: LssFmriFitResult): Unit =
@@ -390,9 +720,19 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         col += 1
       row += 1
 
+  private def assertCoefficientCovarianceClose(actual: CoefficientCovariance, expected: CoefficientCovariance, tol: Double): Unit =
+    assertEquals(actual.scope, expected.scope)
+    assertEquals(actual.matrixCount, expected.matrixCount)
+    var i = 0
+    while i < actual.matrixCount do
+      assertMatrixClose(actual.matrices(i), expected.matrices(i), tol)
+      i += 1
+
   private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
+
+  private final case class DummyWork(ordinal: ChunkOrdinal) extends ChunkWork

@@ -1,14 +1,30 @@
 package scalafim.fmri.fit
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import scalafim.fmri.ar.{ArmaCoefficients, TimeSegments, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
+import scalafim.fmri.fit.fixtures.FmriregGlsFixtures
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.linalg.DoubleMatrix
 
 class GlsSuite extends munit.FunSuite:
+
+  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+    assertEquals(actual.rows, expected.rows)
+    assertEquals(actual.cols, expected.cols)
+    var row = 0
+    while row < actual.rows do
+      var col = 0
+      while col < actual.cols do
+        val a = actual(row, col)
+        val e = expected(row, col)
+        assert(math.abs(a - e) <= tol, clues(row, col, a, e))
+        col += 1
+      row += 1
 
   private def assertVectorClose(actual: Vector[Double], expected: Vector[Double], tol: Double): Unit =
     assertEquals(actual.length, expected.length)
@@ -198,6 +214,7 @@ class GlsSuite extends munit.FunSuite:
     assertEquals(result.engine, FitEngine.GeneralizedLeastSquares)
     assertEquals(result.autocorrelation.map(_.order), Some(1))
     assertEquals(result.autocorrelation.get.runs.map(_.method), Vector("fixed"))
+    assertEquals(result.autocorrelation.get.iterations, 0)
     assertEquals(result.olsDiagnostics.map(_.solveMethod), Some(OlsSolveMethod.QrRankRevealing))
     assertEquals(result.olsDiagnostics.map(_.rank), Some(2))
     assertEqualsDouble(result.autocorrelation.get.runs.head.rho, rho, 1e-12)
@@ -215,9 +232,53 @@ class GlsSuite extends munit.FunSuite:
     val diag = result.autocorrelation.get.runs.head
 
     assertEquals(diag.method, "estimated")
+    assertEquals(result.autocorrelation.get.iterations, 1)
     assert(diag.rho.isFinite)
     assert(math.abs(diag.rho) < 1.0)
     assertEquals(result.summary.autocorrelated, true)
+  }
+
+  test("GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals") {
+    val n = 240
+    val x =
+      (0 until n).toVector.map { i =>
+        math.sin(i.toDouble * 0.13) + (if i >= n / 2 then 0.75 else -0.25)
+      }
+    val residual = ar1Residual(0.82, n, offset = 3000)
+    val y =
+      x.zip(residual).map { case (task, err) =>
+        Vector(1.4 * task - 0.6 + err)
+      }
+    val model = modelFromRows(x, y, Vector(n))
+
+    def fit(iterations: Int): DenseFmriFitResult =
+      FitPlanExecutor
+        .unsafeFit(
+          FitPlan(
+            model,
+            engine = FitEngine.GeneralizedLeastSquares,
+            config = FitConfig(
+              autocorrelation = ArOptions(
+                structure = ArStructure.Ar(1),
+                iterations = iterations
+              )
+            )
+          )
+        )
+        .asInstanceOf[DenseFmriFitResult]
+
+    val one = fit(iterations = 1)
+    val two = fit(iterations = 2)
+    val oneRho = one.autocorrelation.get.runs.head.rho
+    val twoRho = two.autocorrelation.get.runs.head.rho
+
+    assertEquals(two.autocorrelation.get.iterations, 2)
+    assertEquals(two.autocorrelation.get.runs.map(_.method), Vector("estimated"))
+    assert(oneRho.isFinite && twoRho.isFinite, clues(oneRho, twoRho))
+    assert(math.abs(twoRho) < 1.0, clues(twoRho))
+    assert(math.abs(twoRho - oneRho) > 1e-8, clues(oneRho, twoRho))
+    assertFinite(two.coefficients.value.copyData)
+    assertFinite(two.standardErrors.value.copyData)
   }
 
   test("GeneralizedLeastSquares supports fixed AR(2) coefficients") {
@@ -293,6 +354,67 @@ class GlsSuite extends munit.FunSuite:
     assertEquals(result.autocorrelation.get.runs.head.rows, 6)
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)
+  }
+
+  test("GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset") {
+    val rows = FmriregGlsFixtures.design.rows
+    val x =
+      (0 until rows).toVector.map(row => FmriregGlsFixtures.design(row, 0))
+    val y =
+      (0 until rows).toVector.map { row =>
+        (0 until FmriregGlsFixtures.response.cols).toVector.map { col =>
+          FmriregGlsFixtures.response(row, col)
+        }
+      }
+
+    val segments =
+      TimeSegments.withCensorResets(
+        TimeSegments.continuous(rows),
+        FmriregGlsFixtures.censoredTimepoints.toSet
+      )
+    val whiteningPlan =
+      WhiteningPlan.global(
+        ArmaCoefficients.ar(FmriregGlsFixtures.rho),
+        segments,
+        exactFirstAr1 = FmriregGlsFixtures.exactFirst
+      )
+    val whitened =
+      WhiteningTransform(whiteningPlan, FmriregGlsFixtures.design, FmriregGlsFixtures.response).toOption.get
+
+    assertMatrixClose(whitened.design, FmriregGlsFixtures.whitenedDesign, 1e-12)
+    assertMatrixClose(whitened.response, FmriregGlsFixtures.whitenedResponse, 1e-12)
+
+    val model = modelFromRows(x, y, Vector(rows))
+    val plan =
+      FitPlan(
+        model,
+        engine = FitEngine.GeneralizedLeastSquares,
+        config = FitConfig(
+          autocorrelation = ArOptions(
+            structure = ArStructure.Ar(1),
+            rho = Some(FmriregGlsFixtures.rho),
+            exactFirst = FmriregGlsFixtures.exactFirst,
+            censoredTimepoints = FmriregGlsFixtures.censoredTimepoints
+          )
+        )
+      )
+    val result = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+    val diagnostics = result.autocorrelation.get
+
+    assertEquals(result.engine, FitEngine.GeneralizedLeastSquares)
+    assertEquals(result.columnNames, Vector("task", "base_constant"))
+    assertEquals(result.voxelIndices, Vector(0, 1))
+    assertEquals(result.timepoints, (0 until rows).toVector)
+    assertEquals(result.residualDegreesOfFreedom.value, FmriregGlsFixtures.residualDegreesOfFreedom)
+    assertEquals(diagnostics.iterations, 0)
+    assertEquals(diagnostics.order, 1)
+    assertEquals(diagnostics.runs.map(_.method), Vector("fixed"))
+    assertEquals(diagnostics.runs.map(_.rows), Vector(rows))
+    assertEqualsDouble(diagnostics.runs.head.rho, FmriregGlsFixtures.rho, 1e-12)
+    assertMatrixClose(result.coefficients.value, FmriregGlsFixtures.coefficients, 1e-12)
+    assertVectorClose(result.residualVariance.toVector, FmriregGlsFixtures.residualVariance, 1e-12)
+    assertMatrixClose(result.normalizedCovariance, FmriregGlsFixtures.normalizedCovariance, 1e-12)
+    assertFinite(result.standardErrors.value.copyData)
   }
 
   test("GeneralizedLeastSquares rejects censored timepoints outside selected partitions") {
@@ -393,22 +515,83 @@ class GlsSuite extends munit.FunSuite:
     assertEqualsDouble(globalRhos.head, globalRhos.last, 1e-12)
   }
 
+  test("GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance") {
+    val n = 220
+    val x =
+      (0 until n).toVector.map { i =>
+        math.sin(i.toDouble * 0.09) + ((i % 7) - 3).toDouble / 3.0
+      }
+    val residuals =
+      Vector(
+        ar1Residual(0.86, n, offset = 2000),
+        ar1Residual(-0.64, n, offset = 3000),
+        ar1Residual(0.18, n, offset = 4000)
+      )
+    val betas =
+      Vector(1.1 -> 0.5, -0.7 -> 1.25, 0.4 -> -1.0)
+    val y =
+      x.indices.toVector.map { row =>
+        residuals.indices.toVector.map { voxel =>
+          val (taskBeta, intercept) = betas(voxel)
+          taskBeta * x(row) + intercept + residuals(voxel)(row)
+        }
+      }
+    val model = modelFromRows(x, y, Vector(n))
+    val pooled =
+      FitPlanExecutor
+        .unsafeFit(
+          FitPlan(
+            model,
+            engine = FitEngine.GeneralizedLeastSquares,
+            config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), global = false))
+          )
+        )
+        .asInstanceOf[DenseFmriFitResult]
+    val voxelwise =
+      FitPlanExecutor
+        .unsafeFit(
+          FitPlan(
+            model,
+            engine = FitEngine.GeneralizedLeastSquares,
+            config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true))
+          )
+        )
+        .asInstanceOf[DenseFmriFitResult]
+    val diagnostics = voxelwise.autocorrelation.get
+    val voxelRhos = diagnostics.runs.head.voxelwiseCoefficients.map(_.head)
+
+    assertEquals(diagnostics.sharedNormalizedCovariance, false)
+    assertEquals(diagnostics.runs.map(_.method), Vector("voxelwise-estimated"))
+    assertEquals(voxelRhos.length, 3)
+    assert(voxelRhos.head > 0.45, clues(voxelRhos))
+    assert(voxelRhos(1) < -0.25, clues(voxelRhos))
+    assert(voxelRhos.max - voxelRhos.min > 0.65, clues(voxelRhos))
+    assert(math.abs(voxelRhos.head - pooled.autocorrelation.get.runs.head.rho) > 0.1, clues(voxelRhos, pooled.autocorrelation.get.runs.head.rho))
+    assertEqualsDouble(diagnostics.runs.head.rho, voxelRhos.sum / voxelRhos.length.toDouble, 1e-12)
+    assertFinite(voxelwise.coefficients.value.copyData)
+    assertFinite(voxelwise.standardErrors.value.copyData)
+    assertEquals(voxelwise.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+    assertEquals(voxelwise.coefficientCovariance.matrixCount, 3)
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(voxelwise).toOption.get
+    val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(voxelwise).toOption.get
+    assertFinite(t.standardErrors.toVector)
+    assertFinite(t.statistics.toVector)
+    assertFinite(f.statistics.toVector)
+  }
+
   test("GeneralizedLeastSquares rejects unsupported AR configurations explicitly") {
     val iid = FitPlan.makeLegacy(glsModel, engine = FitEngine.GeneralizedLeastSquares)
     assert(iid.left.toOption.exists {
       error => error.message.contains("AR(p)") && error.message.contains("not iid")
     })
 
-    val voxelwise = FitPlanExecutor.fit(
-      FitPlan(
+    val fixedVoxelwise = FitPlan.makeLegacy(
         glsModel,
         engine = FitEngine.GeneralizedLeastSquares,
-        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true))
-      )
+        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true, rho = Some(rho)))
     )
-    assert(voxelwise.left.toOption.exists {
-      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("voxelwise")
-      case _                                       => false
+    assert(fixedVoxelwise.left.toOption.exists {
+      error => error.message.contains("voxelwise") && error.message.contains("estimated")
     })
   }
 

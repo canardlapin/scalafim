@@ -13,17 +13,15 @@ final case class TContrast(name: String, weights: Map[String, Double]):
     result.inferenceReady.flatMap(evaluate)
 
   def evaluate(result: InferenceReadyDenseFit): Either[FitError, TContrastResult] =
-    weightVector(result.columnNames).flatMap { w =>
-      val scale = contrastScale(w, result.normalizedCovariance)
-      if !(scale > 0.0 && scale.isFinite) then
-        Left(FitError.NonEstimableContrast(name, s"contrast variance is $scale"))
-      else evaluateEstimable(result, w, scale)
-    }
+    for
+      weights <- weightVector(result.columnNames)
+      _ <- result.inferenceScope.validateTContrast(name, weights, result.columnNames)
+      evaluated <- evaluateEstimable(result, weights)
+    yield evaluated
 
   private def evaluateEstimable(
       result: InferenceReadyDenseFit,
-      weights: Array[Double],
-      scale: Double
+      weights: Array[Double]
   ): Either[FitError, TContrastResult] =
     val estimates = new Array[Double](result.voxels)
     val standardErrors = new Array[Double](result.voxels)
@@ -38,14 +36,22 @@ final case class TContrast(name: String, weights: Map[String, Double]):
         estimate += weights(predictor) * result.coefficients(predictor, voxel)
         predictor += 1
 
-      val variance = scale * result.residualVariance(voxel)
-      if !(variance > 0.0 && variance.isFinite) then
-        failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast variance $variance")
-      else
-        val se = math.sqrt(variance)
-        estimates(voxel) = estimate
-        standardErrors(voxel) = se
-        statistics(voxel) = estimate / se
+      result.coefficientCovariance.matrixForVoxelPosition(voxel) match
+        case Left(error) =>
+          failure = error
+        case Right(normalizedCovariance) =>
+          val scale = contrastScale(weights, normalizedCovariance)
+          if !(scale > 0.0 && scale.isFinite) then
+            failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast covariance scale $scale")
+          else
+            val variance = scale * result.varianceScale(voxel)
+            if !(variance > 0.0 && variance.isFinite) then
+              failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast variance $variance")
+            else
+              val se = math.sqrt(variance)
+              estimates(voxel) = estimate
+              standardErrors(voxel) = se
+              statistics(voxel) = estimate / se
       voxel += 1
 
     failure match
@@ -133,12 +139,19 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   def evaluate(result: InferenceReadyDenseFit): Either[FitError, FContrastResult] =
     for
       w <- weightMatrix(result.columnNames)
-      covariance <- contrastCovariance(w, result.normalizedCovariance)
-      factor <- Cholesky
-        .decompose(covariance)
-        .left
-        .map(error => FitError.NonEstimableContrast(name, error.message))
-      evaluated <- evaluateEstimable(result, w, factor)
+      _ <- result.inferenceScope.validateFContrast(name, w, result.columnNames)
+      evaluated <- result.coefficientCovariance.scope match
+        case CoefficientCovarianceScope.Shared =>
+          for
+            covariance <- contrastCovariance(w, result.coefficientCovariance.canonicalMatrix)
+            factor <- Cholesky
+              .decompose(covariance)
+              .left
+              .map(error => FitError.NonEstimableContrast(name, error.message))
+            evaluated <- evaluateEstimable(result, w, factor)
+          yield evaluated
+        case CoefficientCovarianceScope.Voxelwise =>
+          evaluateEstimableVoxelwise(result, w)
     yield evaluated
 
   private def evaluateEstimable(
@@ -154,7 +167,7 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
 
     var voxel = 0
     while voxel < result.voxels && failure == null do
-      val residualVariance = result.residualVariance(voxel)
+      val residualVariance = result.varianceScale(voxel)
       if !(residualVariance > 0.0 && residualVariance.isFinite) then
         failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has residual variance $residualVariance")
       else
@@ -167,6 +180,64 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
         if !statistic.isFinite then
           failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} produced non-finite F statistic")
         else statistics(voxel) = statistic
+      voxel += 1
+
+    failure match
+      case null =>
+        Right(
+          FContrastResult(
+            name = name,
+            estimates = estimates,
+            statistics = DoubleVector.unsafe(statistics),
+            numeratorDegreesOfFreedom = q,
+            residualDegreesOfFreedom = result.residualDegreesOfFreedom,
+            voxelIndices = result.voxelIndices
+          )
+        )
+      case error =>
+        Left(error)
+
+  private def evaluateEstimableVoxelwise(
+      result: InferenceReadyDenseFit,
+      weights: DoubleMatrix
+  ): Either[FitError, FContrastResult] =
+    val estimates = contrastEstimates(weights, result.coefficients.value)
+    val statistics = new Array[Double](result.voxels)
+    val q = weights.cols
+    var failure: FitError | Null = null
+
+    var voxel = 0
+    while voxel < result.voxels && failure == null do
+      val residualVariance = result.varianceScale(voxel)
+      if !(residualVariance > 0.0 && residualVariance.isFinite) then
+        failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has residual variance $residualVariance")
+      else
+        result.coefficientCovariance.matrixForVoxelPosition(voxel) match
+          case Left(error) =>
+            failure = error
+          case Right(normalizedCovariance) =>
+            contrastCovariance(weights, normalizedCovariance) match
+              case Left(error) =>
+                failure = error
+              case Right(covariance) =>
+                val factorEither = Cholesky
+                  .decompose(covariance)
+                  .left
+                  .map(error => FitError.NonEstimableContrast(name, error.message))
+                factorEither match
+                  case Left(error) =>
+                    failure = error
+                  case Right(factor) =>
+                    val solved = factor.solve(estimateColumn(estimates, voxel))
+                    var quadratic = 0.0
+                    var row = 0
+                    while row < q do
+                      quadratic += estimates(row, voxel) * solved(row, 0)
+                      row += 1
+                    val statistic = quadratic / q.toDouble / residualVariance
+                    if !statistic.isFinite then
+                      failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} produced non-finite F statistic")
+                    else statistics(voxel) = statistic
       voxel += 1
 
     failure match
@@ -247,6 +318,14 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
         voxel += 1
       contrast += 1
     DoubleMatrix.unsafe(weights.cols, coefficients.cols, out)
+
+  private def estimateColumn(estimates: DoubleMatrix, voxel: Int): DoubleMatrix =
+    val out = new Array[Double](estimates.rows)
+    var row = 0
+    while row < estimates.rows do
+      out(row) = estimates(row, voxel)
+      row += 1
+    DoubleMatrix.unsafe(estimates.rows, 1, out)
 
 object FContrast:
   def fromContrastWeights(name: String, weights: ContrastWeights): FContrast =

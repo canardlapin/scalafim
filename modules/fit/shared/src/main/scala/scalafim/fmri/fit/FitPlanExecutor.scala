@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.dataset.{DataSelection, FmriSeries}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
-import scalafim.fmri.model.{FitEngine, FitPlan}
+import scalafim.fmri.model.FitPlan
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -11,54 +11,11 @@ object FitPlanExecutor:
       plan: FitPlan,
       selection: DataSelection = DataSelection.All
   ): Either[FitError, FmriFitResult] =
-    plan.engine match
-      case FitEngine.OrdinaryLeastSquares =>
-        val series = plan.model.dataset.series(selection)
-        for
-          input <- fitBlockInput(plan, series)
-          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
-        yield denseResult(plan, dense)
-
-      case FitEngine.LeastSquaresSeparate =>
-        val series = plan.model.dataset.series(selection)
-        for
-          input <- fitBlockInput(plan, series, lssDesign = Some(lssExecutionDesign(plan, series.timepoints)))
-          lss <- FitKernel.fitLss(input)
-        yield LssFmriFitResult(
-          coefficients = lss.coefficients,
-          trialNames = lss.trialNames,
-          lssDiagnostics = lss.diagnostics,
-          voxelIndices = lss.voxelIndices,
-          timepoints = lss.timepoints,
-          engine = plan.engine,
-          summary = plan.summary
-        )
-
-      case FitEngine.RunwiseLeastSquares =>
-        val series = plan.model.dataset.series(selection)
-        val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
-        for
-          input <- fitBlockInput(plan, series, partitions = partitions)
-          runwise <- FitKernel.fitRunwise(input)
-        yield RunwiseFmriFitResult(
-          runs = runwise.runs,
-          columnNames = plan.model.columnNames,
-          voxelIndices = runwise.voxelIndices,
-          timepoints = runwise.timepoints,
-          engine = plan.engine,
-          summary = plan.summary
-        )
-
-      case FitEngine.GeneralizedLeastSquares =>
-        val series = plan.model.dataset.series(selection)
-        val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
-        for
-          input <- fitBlockInput(plan, series, partitions = partitions)
-          dense <- FitKernel.fitDense(input, plan.engine, plan.config)
-        yield denseResult(plan, dense)
-
-      case other =>
-        Left(FitError.UnsupportedEngine(other.toString))
+    for
+      interpreter <- FitInterpreters.forPlan(plan)
+      series <- plan.model.dataset.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError)
+      result <- interpreter.fit(plan, series)
+    yield result
 
   def unsafeFit(
       plan: FitPlan,
@@ -87,26 +44,35 @@ object FitPlanExecutor:
       partitions: Vector[RunPartition] = Vector.empty,
       lssDesign: Option[Either[FitError, LssBlockDesign]] = None
   ): Either[FitError, FitBlockInput] =
+    preparedFitBlockInput(plan, series, partitions, lssDesign).map(_.input)
+
+  private[fit] def preparedFitBlockInput(
+      plan: FitPlan,
+      series: FmriSeries,
+      partitions: Vector[RunPartition] = Vector.empty,
+      lssDesign: Option[Either[FitError, LssBlockDesign]] = None
+  ): Either[FitError, PreparedFitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, series.timepoints)
       response <- MatrixAdapters.responseBlock(series)
       lss <- lssDesign match
         case None        => Right(None)
         case Some(value) => value.map(design => Some(design): Option[LssBlockDesign])
-    yield FitBlockInput(
-      design = design,
-      response = response,
-      voxelIndices = series.voxelIndices,
-      timepoints = series.timepoints,
-      partitions = partitions,
-      lssDesign = lss
-    )
+      input = FitBlockInput(
+        design = design,
+        response = response,
+        voxelIndices = series.voxelIndices,
+        timepoints = series.timepoints,
+        partitions = partitions,
+        lssDesign = lss
+      )
+      prepared <- ResponsePreparationPlan.fromPlan(plan).prepare(input)
+    yield prepared
 
   private[fit] def denseResult(plan: FitPlan, block: DenseFitBlockResult): DenseFmriFitResult =
     DenseFmriFitResult(
       coefficients = block.coefficients,
-      standardErrors = block.standardErrors,
-      normalizedCovariance = block.normalizedCovariance,
+      inference = block.inference,
       residualVariance = block.residualVariance,
       residualDegreesOfFreedom = block.residualDegreesOfFreedom,
       columnNames = plan.model.columnNames,
@@ -115,7 +81,8 @@ object FitPlanExecutor:
       engine = block.engine,
       summary = plan.summary,
       olsDiagnostics = block.olsDiagnostics,
-      autocorrelation = block.autocorrelation
+      autocorrelation = block.autocorrelation,
+      robustDiagnostics = block.robustDiagnostics
     )
 
   private[fit] def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =

@@ -97,6 +97,54 @@
       "caveats": []
     },
     {
+      "id": "fit.censored-multirun-concat.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/CensoredMultirunConcatScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_selected_ols",
+        "description": "Public multi-run fit with selected timepoints is compared with direct OLS on the row-deleted design and response; censored rows contain outliers to prove they are omitted."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.chunked-runwise-execution.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ChunkedRunwiseExecutionScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_runwise_chunk_oracle",
+        "description": "Public chunked and future chunked RunwiseLeastSquares execution are compared with unchunked runwise fitting and analytic per-run coefficients while checking chunk ordinals, selected voxel order, and selected-row run partitions."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.pipeline-first-level-workflow.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PipelineFirstLevelWorkflowScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "direct_ols_plus_pipeline_runner_parity",
+        "description": "A public fMRI dataset/model/fit/contrast workflow is executed as a generic pipeline graph; local and bounded future runners are compared against a direct OLS oracle while checking typed artifact outputs, dependency stages, receipts, metadata, and selected voxel order."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
       "id": "design.mixed-tr-multirun.v1",
       "tier": "workflow_parity",
       "module": "design",
@@ -174,6 +222,22 @@
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "dataset.latent-archive-roundtrip.v1",
+      "tier": "workflow_parity",
+      "module": "dataset",
+      "suite_class": "scalafim.dataset.scenarios.LatentArchiveRoundtripScenarioSuite",
+      "suite_path": "modules/dataset/shared/src/test/scala/scalafim/dataset/scenarios/LatentArchiveRoundtripScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_temporal_dct_archive_selection",
+        "description": "A full-rank temporal-DCT LNA archive is read through LatentArchiveDatasetBackend and selected time/voxel order, shape, metadata, and values are compared with the source dense matrix."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt datasetJVM/test", "sbt datasetJS/test"],
       "caveats": []
     },
     {

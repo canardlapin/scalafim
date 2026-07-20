@@ -1,7 +1,7 @@
 package scalafim.fmri.model
 
-import gale.linalg.DMat
 import scalafim.fmri.design.TermId
+import scalafim.linalg.DoubleMatrix
 
 import scala.util.control.NonFatal
 
@@ -35,7 +35,7 @@ enum Regularization:
 
 enum NuisanceProjection:
   case Disabled
-  case MatrixProjection(matrix: DMat, lambda: Regularization = Regularization.Auto)
+  case MatrixProjection(matrix: DoubleMatrix, lambda: Regularization = Regularization.Auto)
 
 final case class RobustOptions(
     psi: RobustPsi = RobustPsi.Disabled,
@@ -332,6 +332,11 @@ object AutocorrelationConfig:
       coefficients: ArCoefficientSpec
   ): Either[ModelError, AutocorrelationConfig] =
     if iterations < 0 then Left(ModelError.InvalidParameter("AR iterations", "must be non-negative"))
+    else if global && voxelwise then Left(ModelError.InvalidParameter("AR pooling", "global and voxelwise estimation cannot both be enabled"))
+    else if voxelwise && coefficients != ArCoefficientSpec.Estimate then
+      Left(ModelError.InvalidParameter("AR voxelwise estimation", "requires estimated coefficients"))
+    else if iterations > 1 && coefficients != ArCoefficientSpec.Estimate then
+      Left(ModelError.InvalidParameter("AR iterations", "fixed coefficients cannot be re-estimated"))
     else Right(new AutocorrelationConfig(order, iterations, global, voxelwise, exactFirst, censoredTimepoints, coefficients))
 
   private def validateCoefficients(
@@ -378,6 +383,59 @@ object RobustConfig:
 
   def unsafe(options: RobustOptions): RobustConfig =
     apply(options).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+enum RobustAutocorrelation:
+  case Disabled
+  case Reestimate(autocorrelation: AutocorrelationConfig)
+
+  def toLegacy: ArOptions =
+    this match
+      case Disabled => ArOptions()
+      case Reestimate(autocorrelation) => autocorrelation.toLegacy
+
+  def reestimates: Boolean =
+    this match
+      case Disabled => false
+      case Reestimate(_) => true
+
+  def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
+    this match
+      case Disabled =>
+        Right(())
+      case Reestimate(autocorrelation) =>
+        for
+          _ <- autocorrelation.validateFor(nTimepoints)
+          _ <- RobustAutocorrelation.validateReestimate(autocorrelation)
+        yield ()
+
+object RobustAutocorrelation:
+  def fromLegacy(
+      robust: RobustOptions,
+      autocorrelation: ArOptions
+  ): Either[ModelError, RobustAutocorrelation] =
+    if robust.reestimateAutocorrelation then
+      AutocorrelationConfig
+        .fromLegacy(autocorrelation)
+        .left
+        .map {
+          case ModelError.InvalidFitConfig(_, detail) => ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, detail)
+          case other => other
+        }
+        .flatMap { config =>
+          validateReestimate(config).map(_ => Reestimate(config))
+        }
+    else if autocorrelation == ArOptions() then Right(Disabled)
+    else Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "AR options require robust re-estimation"))
+
+  private[model] def validateReestimate(autocorrelation: AutocorrelationConfig): Either[ModelError, Unit] =
+    if autocorrelation.voxelwise then
+      Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "robust AR re-estimation currently requires shared or run-pooled AR"))
+    else
+      autocorrelation.coefficients match
+        case ArCoefficientSpec.Estimate =>
+          Right(())
+        case _ =>
+          Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "robust AR re-estimation requires estimated coefficients"))
 
 final class TimepointWeights private (val values: Vector[Double]):
   require(values.nonEmpty, "timepoint weights must be non-empty")
@@ -432,7 +490,7 @@ object ModelVolumeWeighting:
       case VolumeWeighting.Fixed(weights) =>
         TimepointWeights(weights).map(Fixed.apply)
 
-final class NuisanceMatrix private (val matrix: DMat):
+final class NuisanceMatrix private (val matrix: DoubleMatrix):
   require(matrix.rows > 0 && matrix.cols > 0, "nuisance matrix must be non-empty")
 
   override def equals(other: Any): Boolean =
@@ -448,11 +506,11 @@ final class NuisanceMatrix private (val matrix: DMat):
     else Left(ModelError.MatrixRowMismatch("nuisance matrix", nTimepoints, matrix.rows))
 
 object NuisanceMatrix:
-  def apply(matrix: DMat): Either[ModelError, NuisanceMatrix] =
+  def apply(matrix: DoubleMatrix): Either[ModelError, NuisanceMatrix] =
     if matrix.rows > 0 && matrix.cols > 0 then Right(new NuisanceMatrix(matrix))
     else Left(ModelError.InvalidParameter("nuisance matrix", "must be non-empty"))
 
-  def unsafe(matrix: DMat): NuisanceMatrix =
+  def unsafe(matrix: DoubleMatrix): NuisanceMatrix =
     apply(matrix).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum ModelNuisanceProjection:
@@ -584,6 +642,355 @@ object LssStrategyConfig:
     else if rankTol < 0.0 || !rankTol.isFinite then Left(ModelError.InvalidParameter("LSS rankTol", "must be non-negative and finite"))
     else Right(new LssStrategyConfig(trialTerm, eps, rankTol))
 
+final class LowRankComponentCount private (val value: Int):
+  require(value >= 1, "low-rank component count must be positive")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: LowRankComponentCount => value == that.value
+      case _ => false
+
+  override def hashCode(): Int =
+    value.hashCode()
+
+  override def toString: String =
+    value.toString
+
+object LowRankComponentCount:
+  def apply(value: Int): Either[ModelError, LowRankComponentCount] =
+    if value >= 1 then Right(new LowRankComponentCount(value))
+    else Left(ModelError.InvalidParameter("low-rank component count", "must be positive"))
+
+  def unsafe(value: Int): LowRankComponentCount =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+enum LowRankComponentSpec:
+  case Full
+  case Fixed(count: LowRankComponentCount)
+
+  def validateFor(label: String, maximum: Int): Either[ModelError, Unit] =
+    val maxComponents = math.max(0, maximum)
+    this match
+      case Full =>
+        if maxComponents >= 1 then Right(())
+        else Left(ModelError.InvalidParameter(label, "requires at least one estimable component"))
+      case Fixed(count) =>
+        if maxComponents < 1 then Left(ModelError.InvalidParameter(label, "requires at least one estimable component"))
+        else if count.value <= maxComponents then Right(())
+        else Left(ModelError.InvalidParameter(label, s"requested ${count.value} components but maximum is $maxComponents"))
+
+  def isFull(maximum: Int): Boolean =
+    this match
+      case Full => true
+      case Fixed(count) => count.value == maximum
+
+object LowRankComponentSpec:
+  def fixed(value: Int): Either[ModelError, LowRankComponentSpec] =
+    LowRankComponentCount(value).map(Fixed.apply)
+
+  def unsafeFixed(value: Int): LowRankComponentSpec =
+    fixed(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankEnergyRetention private (val value: Double):
+  require(value > 0.0 && value <= 1.0 && value.isFinite, "energy retention must be in (0, 1]")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankEnergyRetention => value == that.value
+      case _ => false
+
+  override def hashCode(): Int =
+    value.hashCode()
+
+  override def toString: String =
+    value.toString
+
+object ReducedRankEnergyRetention:
+  def apply(value: Double): Either[ModelError, ReducedRankEnergyRetention] =
+    if value > 0.0 && value <= 1.0 && value.isFinite then Right(new ReducedRankEnergyRetention(value))
+    else Left(ModelError.InvalidParameter("reduced-rank energy retention", "must be in (0, 1]"))
+
+  def unsafe(value: Double): ReducedRankEnergyRetention =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankResidualBudget private (val value: Double):
+  require(value >= 0.0 && value.isFinite, "residual RSS budget must be non-negative and finite")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankResidualBudget => value == that.value
+      case _ => false
+
+  override def hashCode(): Int =
+    value.hashCode()
+
+  override def toString: String =
+    value.toString
+
+object ReducedRankResidualBudget:
+  def apply(value: Double): Either[ModelError, ReducedRankResidualBudget] =
+    if value >= 0.0 && value.isFinite then Right(new ReducedRankResidualBudget(value))
+    else Left(ModelError.InvalidParameter("reduced-rank residual RSS budget", "must be non-negative and finite"))
+
+  def unsafe(value: Double): ReducedRankResidualBudget =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+enum ReducedRankComponentSpec:
+  case Full
+  case Fixed(count: LowRankComponentCount)
+  case EnergyRetained(keep: ReducedRankEnergyRetention)
+  case ResidualSumsOfSquaresBudget(budget: ReducedRankResidualBudget)
+
+  def validateFor(label: String, maximum: Int): Either[ModelError, Unit] =
+    val maxComponents = math.max(0, maximum)
+    this match
+      case Full =>
+        if maxComponents >= 1 then Right(())
+        else Left(ModelError.InvalidParameter(label, "requires at least one estimable component"))
+      case Fixed(count) =>
+        if maxComponents < 1 then Left(ModelError.InvalidParameter(label, "requires at least one estimable component"))
+        else if count.value <= maxComponents then Right(())
+        else Left(ModelError.InvalidParameter(label, s"requested ${count.value} components but maximum is $maxComponents"))
+      case EnergyRetained(_) | ResidualSumsOfSquaresBudget(_) =>
+        if maxComponents >= 1 then Right(())
+        else Left(ModelError.InvalidParameter(label, "requires at least one estimable component"))
+
+  def isFull(maximum: Int): Boolean =
+    this match
+      case Full => true
+      case Fixed(count) => count.value == maximum
+      case EnergyRetained(_) | ResidualSumsOfSquaresBudget(_) => false
+
+object ReducedRankComponentSpec:
+  def fixed(value: Int): Either[ModelError, ReducedRankComponentSpec] =
+    LowRankComponentCount(value).map(Fixed.apply)
+
+  def unsafeFixed(value: Int): ReducedRankComponentSpec =
+    fixed(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def energyRetained(value: Double): Either[ModelError, ReducedRankComponentSpec] =
+    ReducedRankEnergyRetention(value).map(EnergyRetained.apply)
+
+  def unsafeEnergyRetained(value: Double): ReducedRankComponentSpec =
+    energyRetained(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def residualSumsOfSquaresBudget(value: Double): Either[ModelError, ReducedRankComponentSpec] =
+    ReducedRankResidualBudget(value).map(ResidualSumsOfSquaresBudget.apply)
+
+  def unsafeResidualSumsOfSquaresBudget(value: Double): ReducedRankComponentSpec =
+    residualSumsOfSquaresBudget(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankBootstrapReplicates private (val value: Int):
+  require(value >= 2, "reduced-rank bootstrap requires at least two replicates")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankBootstrapReplicates => value == that.value
+      case _                                    => false
+
+  override def hashCode(): Int = value.hashCode()
+
+object ReducedRankBootstrapReplicates:
+  def apply(value: Int): Either[ModelError, ReducedRankBootstrapReplicates] =
+    if value >= 2 then Right(new ReducedRankBootstrapReplicates(value))
+    else Left(ModelError.InvalidParameter("reduced-rank bootstrap replicates", "must be at least two"))
+
+  def unsafe(value: Int): ReducedRankBootstrapReplicates =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankBootstrapBlockSize private (val value: Int):
+  require(value >= 1, "reduced-rank bootstrap block size must be positive")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankBootstrapBlockSize => value == that.value
+      case _                                   => false
+
+  override def hashCode(): Int = value.hashCode()
+
+object ReducedRankBootstrapBlockSize:
+  def apply(value: Int): Either[ModelError, ReducedRankBootstrapBlockSize] =
+    if value >= 1 then Right(new ReducedRankBootstrapBlockSize(value))
+    else Left(ModelError.InvalidParameter("reduced-rank bootstrap block size", "must be positive"))
+
+  def unsafe(value: Int): ReducedRankBootstrapBlockSize =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankBootstrapSeed private (val value: Int):
+  require(value >= 0, "reduced-rank bootstrap seed must be non-negative")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankBootstrapSeed => value == that.value
+      case _                              => false
+
+  override def hashCode(): Int = value.hashCode()
+
+object ReducedRankBootstrapSeed:
+  def apply(value: Int): Either[ModelError, ReducedRankBootstrapSeed] =
+    if value >= 0 then Right(new ReducedRankBootstrapSeed(value))
+    else Left(ModelError.InvalidParameter("reduced-rank bootstrap seed", "must be non-negative"))
+
+  def unsafe(value: Int): ReducedRankBootstrapSeed =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class ReducedRankBootstrapConfig private (
+    replicates: ReducedRankBootstrapReplicates,
+    blockSize: ReducedRankBootstrapBlockSize,
+    seed: ReducedRankBootstrapSeed
+):
+  def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
+    if blockSize.value <= nTimepoints then Right(())
+    else Left(ModelError.InvalidParameter(
+      "reduced-rank bootstrap block size",
+      s"requested ${blockSize.value} rows but model has $nTimepoints timepoints"
+    ))
+
+object ReducedRankBootstrapConfig:
+  val Default: ReducedRankBootstrapConfig = unsafe()
+
+  def apply(
+      replicates: Int = 200,
+      blockSize: Int = 1,
+      seed: Int = 0
+  ): Either[ModelError, ReducedRankBootstrapConfig] =
+    for
+      checkedReplicates <- ReducedRankBootstrapReplicates(replicates)
+      checkedBlockSize <- ReducedRankBootstrapBlockSize(blockSize)
+      checkedSeed <- ReducedRankBootstrapSeed(seed)
+    yield new ReducedRankBootstrapConfig(checkedReplicates, checkedBlockSize, checkedSeed)
+
+  def unsafe(
+      replicates: Int = 200,
+      blockSize: Int = 1,
+      seed: Int = 0
+  ): ReducedRankBootstrapConfig =
+    apply(replicates, blockSize, seed).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+enum ReducedRankInferencePolicy:
+  case Conditional
+  case Bootstrap(config: ReducedRankBootstrapConfig)
+
+  def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
+    this match
+      case Conditional       => Right(())
+      case Bootstrap(config) => config.validateFor(nTimepoints)
+
+enum LatentSketchMethod:
+  case IdentityResponse
+  case ContiguousVoxelAveraging
+  case PrincipalComponents
+
+  def label: String =
+    this match
+      case IdentityResponse          => "identity response"
+      case ContiguousVoxelAveraging  => "contiguous voxel averaging"
+      case PrincipalComponents       => "principal components"
+
+final class LatentSketchConfig private (
+    val components: LowRankComponentSpec,
+    val method: LatentSketchMethod
+):
+  override def equals(other: Any): Boolean =
+    other match
+      case that: LatentSketchConfig => components == that.components && method == that.method
+      case _ => false
+
+  override def hashCode(): Int =
+    31 * components.hashCode() + method.hashCode()
+
+  def validateFor(model: FmriModel): Either[ModelError, Unit] =
+    val maximum =
+      method match
+        case LatentSketchMethod.PrincipalComponents =>
+          math.min(model.nTimepoints, model.dataset.shape.spatialSize)
+        case LatentSketchMethod.IdentityResponse | LatentSketchMethod.ContiguousVoxelAveraging =>
+          model.dataset.shape.spatialSize
+    for
+      _ <- components.validateFor("latent sketch components", maximum)
+      _ <- validateMethod(maximum)
+    yield ()
+
+  def isFullRankFor(model: FmriModel): Boolean =
+    components.isFull(model.dataset.shape.spatialSize)
+
+  private def validateMethod(maximum: Int): Either[ModelError, Unit] =
+    method match
+      case LatentSketchMethod.IdentityResponse if !components.isFull(maximum) =>
+        Left(ModelError.InvalidParameter(
+          "latent sketch method",
+          "identity response requires full component coverage; use contiguous voxel averaging for compressed sketches"
+        ))
+      case LatentSketchMethod.PrincipalComponents =>
+        components match
+          case LowRankComponentSpec.Fixed(_) =>
+            Right(())
+          case LowRankComponentSpec.Full =>
+            Left(ModelError.InvalidParameter(
+              "latent sketch method",
+              "principal components require an explicit fixed component count"
+            ))
+      case _ =>
+        Right(())
+
+object LatentSketchConfig:
+  val Default: LatentSketchConfig = unsafe()
+
+  def apply(
+      components: LowRankComponentSpec = LowRankComponentSpec.Full,
+      method: LatentSketchMethod = LatentSketchMethod.IdentityResponse
+  ): Either[ModelError, LatentSketchConfig] =
+    Right(new LatentSketchConfig(components, method))
+
+  def unsafe(
+      components: LowRankComponentSpec = LowRankComponentSpec.Full,
+      method: LatentSketchMethod = LatentSketchMethod.IdentityResponse
+  ): LatentSketchConfig =
+    apply(components, method).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class ReducedRankGlsConfig private (
+    val components: ReducedRankComponentSpec,
+    val autocorrelation: AutocorrelationConfig,
+    val inference: ReducedRankInferencePolicy
+):
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ReducedRankGlsConfig =>
+        components == that.components && autocorrelation == that.autocorrelation && inference == that.inference
+      case _ => false
+
+  override def hashCode(): Int =
+    (31 * components.hashCode() + autocorrelation.hashCode()) * 31 + inference.hashCode()
+
+  def validateFor(model: FmriModel): Either[ModelError, Unit] =
+    val maximum = math.min(model.eventModel.columnNames.length, model.dataset.shape.spatialSize)
+    for
+      _ <- components.validateFor("reduced-rank GLS components", maximum)
+      _ <- autocorrelation.validateFor(model.nTimepoints)
+      _ <- inference.validateFor(model.nTimepoints)
+    yield ()
+
+  def isFullRankFor(model: FmriModel): Boolean =
+    components.isFull(math.min(model.eventModel.columnNames.length, model.dataset.shape.spatialSize))
+
+  def toLegacyConfig(controls: FitControls): FitConfig =
+    controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
+
+object ReducedRankGlsConfig:
+  def apply(
+      components: ReducedRankComponentSpec = ReducedRankComponentSpec.Full,
+      autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
+      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional
+  ): Either[ModelError, ReducedRankGlsConfig] =
+    Right(new ReducedRankGlsConfig(components, autocorrelation, inference))
+
+  def unsafe(
+      components: ReducedRankComponentSpec = ReducedRankComponentSpec.Full,
+      autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
+      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional
+  ): ReducedRankGlsConfig =
+    apply(components, autocorrelation, inference).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 enum FitStrategy:
   case OrdinaryLeastSquares(controls: FitControls = FitControls())
   case RunwiseLeastSquares(controls: FitControls = FitControls())
@@ -593,15 +1000,19 @@ enum FitStrategy:
   )
   case RobustLeastSquares(
       robust: RobustConfig,
-      controls: FitControls = FitControls()
+      controls: FitControls = FitControls(),
+      autocorrelation: RobustAutocorrelation = RobustAutocorrelation.Disabled
   )
   case LeastSquaresSeparate(
       lss: LssStrategyConfig = LssStrategyConfig.Default,
       controls: FitControls = FitControls()
   )
-  case LatentSketch(controls: FitControls = FitControls())
+  case LatentSketch(
+      sketch: LatentSketchConfig = LatentSketchConfig.Default,
+      controls: FitControls = FitControls()
+  )
   case ReducedRankGls(
-      autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
+      lowRank: ReducedRankGlsConfig = ReducedRankGlsConfig.unsafe(),
       controls: FitControls = FitControls()
   )
 
@@ -610,9 +1021,9 @@ enum FitStrategy:
       case OrdinaryLeastSquares(_) => FitEngine.OrdinaryLeastSquares
       case RunwiseLeastSquares(_) => FitEngine.RunwiseLeastSquares
       case GeneralizedLeastSquares(_, _) => FitEngine.GeneralizedLeastSquares
-      case RobustLeastSquares(_, _) => FitEngine.RobustLeastSquares
+      case RobustLeastSquares(_, _, _) => FitEngine.RobustLeastSquares
       case LeastSquaresSeparate(_, _) => FitEngine.LeastSquaresSeparate
-      case LatentSketch(_) => FitEngine.LatentSketch
+      case LatentSketch(_, _) => FitEngine.LatentSketch
       case ReducedRankGls(_, _) => FitEngine.ReducedRankGls
 
   def config: FitConfig =
@@ -623,14 +1034,17 @@ enum FitStrategy:
         controls.toLegacyConfig()
       case GeneralizedLeastSquares(autocorrelation, controls) =>
         controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
-      case RobustLeastSquares(robust, controls) =>
-        controls.toLegacyConfig(robust = robust.toLegacy)
+      case RobustLeastSquares(robust, controls, autocorrelation) =>
+        controls.toLegacyConfig(
+          robust = robust.toLegacy.copy(reestimateAutocorrelation = autocorrelation.reestimates),
+          autocorrelation = autocorrelation.toLegacy
+        )
       case LeastSquaresSeparate(lss, controls) =>
         controls.toLegacyConfig(lss = lss.toLegacy)
-      case LatentSketch(controls) =>
+      case LatentSketch(_, controls) =>
         controls.toLegacyConfig()
-      case ReducedRankGls(autocorrelation, controls) =>
-        controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
+      case ReducedRankGls(lowRank, controls) =>
+        lowRank.toLegacyConfig(controls)
 
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val nTimepoints = model.nTimepoints
@@ -644,19 +1058,25 @@ enum FitStrategy:
           _ <- controls.validateFor(nTimepoints)
           _ <- autocorrelation.validateFor(nTimepoints)
         yield ()
-      case RobustLeastSquares(_, controls) =>
-        controls.validateFor(nTimepoints)
+      case RobustLeastSquares(robust, controls, autocorrelation) =>
+        for
+          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateRobustAutocorrelation(robust, autocorrelation, nTimepoints)
+        yield ()
       case LeastSquaresSeparate(lss, controls) =>
         for
           _ <- controls.validateFor(nTimepoints)
           _ <- lss.validateFor(model)
         yield ()
-      case LatentSketch(controls) =>
-        controls.validateFor(nTimepoints)
-      case ReducedRankGls(autocorrelation, controls) =>
+      case LatentSketch(sketch, controls) =>
         for
           _ <- controls.validateFor(nTimepoints)
-          _ <- autocorrelation.validateFor(nTimepoints)
+          _ <- sketch.validateFor(model)
+        yield ()
+      case ReducedRankGls(lowRank, controls) =>
+        for
+          _ <- controls.validateFor(nTimepoints)
+          _ <- lowRank.validateFor(model)
         yield ()
 
 object FitStrategy:
@@ -692,10 +1112,10 @@ object FitStrategy:
 
         case FitEngine.RobustLeastSquares =>
           for
-            _ <- requireNoAutocorrelation(engine, config)
             _ <- requireDefaultLss(engine, config)
             robust <- RobustConfig(config.robust)
-          yield FitStrategy.RobustLeastSquares(robust, controls)
+            autocorrelation <- RobustAutocorrelation.fromLegacy(config.robust, config.autocorrelation)
+          yield FitStrategy.RobustLeastSquares(robust, controls, autocorrelation)
 
         case FitEngine.LeastSquaresSeparate =>
           for
@@ -709,7 +1129,7 @@ object FitStrategy:
             _ <- requireNoRobust(engine, config)
             _ <- requireNoAutocorrelation(engine, config)
             _ <- requireDefaultLss(engine, config)
-          yield FitStrategy.LatentSketch(controls)
+          yield FitStrategy.LatentSketch(controls = controls)
 
         case FitEngine.ReducedRankGls =>
           for
@@ -719,7 +1139,8 @@ object FitStrategy:
               case ModelError.InvalidFitConfig(_, detail) => ModelError.InvalidFitConfig(engine, detail)
               case other => other
             }
-          yield FitStrategy.ReducedRankGls(ar, controls)
+            lowRank <- ReducedRankGlsConfig(autocorrelation = ar)
+          yield FitStrategy.ReducedRankGls(lowRank, controls)
     }
 
   def unsafeFromLegacy(engine: FitEngine, config: FitConfig = FitConfig()): FitStrategy =
@@ -736,6 +1157,17 @@ object FitStrategy:
   private def requireDefaultLss(engine: FitEngine, config: FitConfig): Either[ModelError, Unit] =
     if config.lss == LssConfig() then Right(())
     else Left(ModelError.InvalidFitConfig(engine, "LSS options belong only to LeastSquaresSeparate"))
+
+  private def validateRobustAutocorrelation(
+      robust: RobustConfig,
+      autocorrelation: RobustAutocorrelation,
+      nTimepoints: Int
+  ): Either[ModelError, Unit] =
+    autocorrelation match
+      case RobustAutocorrelation.Disabled if robust.toLegacy.reestimateAutocorrelation =>
+        Left(ModelError.InvalidFitConfig(FitEngine.RobustLeastSquares, "robust re-estimation requires an explicit AR policy"))
+      case _ =>
+        autocorrelation.validateFor(nTimepoints)
 
 private def catchModelError[A](value: => A): Either[ModelError, A] =
   try Right(value)

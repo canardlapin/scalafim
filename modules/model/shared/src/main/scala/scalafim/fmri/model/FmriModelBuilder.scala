@@ -1,6 +1,6 @@
 package scalafim.fmri.model
 
-import scalafim.dataset.{DatasetEvents, FmriDataset}
+import scalafim.dataset.{DatasetEvents, DatasetValue, FmriDataset}
 import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NaAction, NuisanceCheck}
 import scalafim.fmri.design.contrast.ContrastSpec
@@ -127,20 +127,12 @@ object FmriModelBuilder:
   def eventsTable(events: DatasetEvents): DataTable =
     require(!events.isEmpty, "dataset events are required to build an fMRI model")
 
-    val allKeys = events.rows.iterator.flatMap(_.keysIterator).toSet
+    val allKeys = events.columns
     require(allKeys.nonEmpty, "dataset events must contain at least one column")
 
-    events.rows.zipWithIndex.foreach { case (row, rowIndex) =>
-      val keys = row.keySet
-      require(
-        keys == allKeys,
-        s"dataset event row $rowIndex has columns ${keys.toVector.sorted.mkString(", ")}; expected ${allKeys.toVector.sorted.mkString(", ")}"
-      )
-    }
-
-    val columns = allKeys.toVector.sorted.map { key =>
-      val values = events.rows.map(row => row(key))
-      key -> inferColumn(key, values)
+    val columns = allKeys.map { key =>
+      val values = events.column(key)
+      key.value -> inferColumn(key.value, values)
     }
 
     DataTable(events.nrows, columns)
@@ -154,32 +146,16 @@ object FmriModelBuilder:
         require(values.forall(v => v.isFinite && v >= 0.0), s"duration column '$column' must be finite and non-negative")
         values
 
-  private def inferColumn(name: String, values: Vector[String]): Column =
-    val trimmed = values.map(_.trim)
-
-    val ints = trimmed.map(parseInt)
+  private def inferColumn(name: String, values: Vector[DatasetValue]): Column =
+    val ints = values.map(_.asInt)
     if ints.forall(_.isDefined) then Column.Ints(ints.map(_.get))
     else
-      val doubles = trimmed.map(parseDouble)
+      val doubles = values.map(_.asDouble)
       if doubles.forall(_.isDefined) then
         val out = doubles.map(_.get)
         require(out.forall(_.isFinite), s"numeric event column '$name' must contain only finite values")
         Column.Doubles(out)
       else
-        val bools = trimmed.map(parseBoolean)
+        val bools = values.map(_.asBoolean)
         if bools.forall(_.isDefined) then Column.Bools(bools.map(_.get))
-        else Column.Strings(values)
-
-  private def parseInt(value: String): Option[Int] =
-    try Some(value.toInt)
-    catch case _: NumberFormatException => None
-
-  private def parseDouble(value: String): Option[Double] =
-    try Some(value.toDouble)
-    catch case _: NumberFormatException => None
-
-  private def parseBoolean(value: String): Option[Boolean] =
-    value.toLowerCase match
-      case "true" | "t"  => Some(true)
-      case "false" | "f" => Some(false)
-      case _             => None
+        else Column.Strings(values.map(_.asString))

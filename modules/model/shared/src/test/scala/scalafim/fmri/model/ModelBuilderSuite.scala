@@ -1,6 +1,6 @@
 package scalafim.fmri.model
 
-import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
+import scalafim.dataset.{DatasetEventRow, DatasetEvents, DatasetFieldId, DatasetId, DatasetValue, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
 import scalafim.fmri.design.data.Column
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -42,6 +42,29 @@ class ModelBuilderSuite extends munit.FunSuite:
     assertEquals(table.doubles("onset"), Vector(0.0, 1.5))
     assertEquals(table.strings("condition"), Vector("face", "house"))
     assertEquals(table.bools("keep"), Vector(true, false))
+  }
+
+  test("eventsTable preserves explicitly typed text values") {
+    val rows =
+      Vector(
+        DatasetEventRow.unsafe(
+          Map(
+            DatasetFieldId("onset") -> DatasetValue.Number(0.0),
+            DatasetFieldId("code") -> DatasetValue.Text("1")
+          )
+        ),
+        DatasetEventRow.unsafe(
+          Map(
+            DatasetFieldId("onset") -> DatasetValue.Number(1.0),
+            DatasetFieldId("code") -> DatasetValue.Text("2")
+          )
+        )
+      )
+    val events = DatasetEvents.fromTypedRows(rows).fold(error => fail(error.message), identity)
+    val table = FmriModelBuilder.eventsTable(events)
+
+    assertEquals(table.doubles("onset"), Vector(0.0, 1.0))
+    assertEquals(table.column("code"), Column.Strings(Vector("1", "2")))
   }
 
   test("buildModel constructs an inspectable model from dataset-resident events") {

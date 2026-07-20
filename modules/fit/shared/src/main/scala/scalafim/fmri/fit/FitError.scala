@@ -24,6 +24,8 @@ enum FitError:
   case EmptyContrast(name: String)
   case NonEstimableContrast(name: String, detail: String)
   case IncompatibleFitBlocks(detail: String)
+  case ChunkFailed(chunkOrdinal: Int, cause: FitError)
+  case UnsupportedRobust(detail: String)
 
   def message: String =
     this match
@@ -69,3 +71,7 @@ enum FitError:
         s"contrast '$name' is not estimable: $detail"
       case IncompatibleFitBlocks(detail) =>
         s"fit blocks cannot be merged: $detail"
+      case ChunkFailed(chunkOrdinal, cause) =>
+        s"fit chunk $chunkOrdinal failed: ${cause.message}"
+      case UnsupportedRobust(detail) =>
+        s"unsupported robust least-squares configuration: $detail"

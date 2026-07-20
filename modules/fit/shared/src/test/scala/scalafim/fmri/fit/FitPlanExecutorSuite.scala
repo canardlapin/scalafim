@@ -7,11 +7,32 @@ import scalafim.fmri.design.event.{
   EventModel,
   EventTermColumnRole
 }
+import scalafim.fmri.fit.fixtures.ReducedRankGlsFmriregFixtures
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, LssStrategyConfig, ModelBuildSpec}
+import scalafim.fmri.model.{
+  ArOptions,
+  ArStructure,
+  ArCoefficientSpec,
+  AutocorrelationConfig,
+  FitConfig,
+  FitEngine,
+  FitPlan,
+  FitStrategy,
+  FmriModel,
+  FmriModelBuilder,
+  LatentSketchConfig,
+  LatentSketchMethod,
+  LowRankComponentSpec,
+  LssStrategyConfig,
+  ModelBuildSpec,
+  ReducedRankBootstrapConfig,
+  ReducedRankComponentSpec,
+  ReducedRankGlsConfig,
+  ReducedRankInferencePolicy
+}
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
 class FitPlanExecutorSuite extends munit.FunSuite:
 
@@ -50,6 +71,61 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     )
     FmriModel(eventModel, baseline, dataset)
 
+  private def pcaModel: FmriModel =
+    val signal = Vector(1.0, 3.0, 5.0, 7.0)
+    val data = DMat.fromRows(signal.map(value => Vector(value, -2.0 * value, 0.5 * value)))
+    val eventModel =
+      EventModel(
+        terms = Vector.empty,
+        samplingFrame = samplingFrame,
+        designMatrix = Mat.fromRows(Vector(Vector(0.0), Vector(1.0), Vector(2.0), Vector(3.0))),
+        columnNames = Vector("task"),
+        termSpans = Vector(0 -> 1),
+        colIndices = Map("task" -> Vector(0))
+      )
+    val baseline =
+      BaselineModel.build(
+        samplingFrame = samplingFrame,
+        basis = BaselineBasis.Constant,
+        intercept = Intercept.Global
+      )
+    val dataset =
+      FmriDataset(
+        backend = InMemoryDatasetBackend(DatasetId("pca-sketch-demo"), data, NeuroSpace(Vector(3, 1, 1))),
+        samplingFrame = samplingFrame
+      )
+    FmriModel(eventModel, baseline, dataset)
+
+  private def partitionedReducedRankModel: FmriModel =
+    val frame = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0))
+    val eventRows =
+      ReducedRankGlsFmriregFixtures.partitionedDesign.toRows.map(row => row.take(2))
+    val eventModel =
+      EventModel(
+        terms = Vector.empty,
+        samplingFrame = frame,
+        designMatrix = Mat.fromRows(eventRows),
+        columnNames = Vector("task_a", "task_b"),
+        termSpans = Vector(0 -> 2),
+        colIndices = Map("task" -> Vector(0, 1))
+      )
+    val baseline =
+      BaselineModel.build(
+        samplingFrame = frame,
+        basis = BaselineBasis.Constant,
+        intercept = Intercept.Global
+      )
+    val dataset =
+      FmriDataset(
+        backend = InMemoryDatasetBackend(
+          DatasetId("rrr-partitioned-demo"),
+          DMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
+          NeuroSpace(Vector(3, 1, 1))
+        ),
+        samplingFrame = frame
+      )
+    FmriModel(eventModel, baseline, dataset)
+
   private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
@@ -60,6 +136,63 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         assertEqualsDouble(actual(row, col), expected(row, col), tol)
         col += 1
       row += 1
+
+  private def assertVectorClose(actual: DoubleVector, expected: Vector[Double], tol: Double): Unit =
+    assertEquals(actual.length, expected.length)
+    var i = 0
+    while i < actual.length do
+      assertEqualsDouble(actual(i), expected(i), tol)
+      i += 1
+
+  private def assertTaskStandardErrors(
+      result: DenseFmriFitResult,
+      expected: DoubleMatrix,
+      tol: Double
+  ): Unit =
+    assertEquals(expected.rows, 2)
+    assertEquals(expected.cols, result.voxels)
+    var task = 0
+    while task < expected.rows do
+      var voxel = 0
+      while voxel < expected.cols do
+        assertEqualsDouble(result.standardErrors(task, voxel), expected(task, voxel), tol)
+        voxel += 1
+      task += 1
+    var voxel = 0
+    while voxel < result.voxels do
+      assertEqualsDouble(result.standardErrors(2, voxel), 0.0, 0.0)
+      voxel += 1
+
+  private def embedTaskCovariance(task: DoubleMatrix): DoubleMatrix =
+    val out = Array.ofDim[Double](9)
+    var row = 0
+    while row < 2 do
+      var col = 0
+      while col < 2 do
+        out(row * 3 + col) = task(row, col)
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(3, 3, out)
+
+  private def selectTaskCovariance(full: DoubleMatrix): DoubleMatrix =
+    DoubleMatrix.fromRows(
+      Vector(
+        Vector(full(0, 0), full(0, 1)),
+        Vector(full(1, 0), full(1, 1))
+      )
+    )
+
+  private def assertCoefficientCovarianceClose(
+      actual: CoefficientCovariance,
+      expected: CoefficientCovariance,
+      tol: Double
+  ): Unit =
+    assertEquals(actual.scope, expected.scope)
+    assertEquals(actual.matrixCount, expected.matrixCount)
+    var i = 0
+    while i < actual.matrixCount do
+      assertMatrixClose(actual.matrices(i), expected.matrices(i), tol)
+      i += 1
 
   test("FitPlanExecutor runs end-to-end OLS against an in-memory dataset") {
     val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
@@ -94,6 +227,312 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     assert(result.left.toOption.exists {
       error => error.message.contains("AR(p)") && error.message.contains("not iid")
     })
+  }
+
+  test("FitInterpreters exposes executable built-ins") {
+    val builtIns = Vector(
+      FitEngine.OrdinaryLeastSquares,
+      FitEngine.GeneralizedLeastSquares,
+      FitEngine.RunwiseLeastSquares,
+      FitEngine.RobustLeastSquares,
+      FitEngine.LeastSquaresSeparate,
+      FitEngine.LatentSketch,
+      FitEngine.ReducedRankGls
+    )
+
+    builtIns.foreach { engine =>
+      val interpreter = FitInterpreters.forEngine(engine).toOption.get
+      assertEquals(interpreter.engine, engine)
+    }
+  }
+
+  test("LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly") {
+    val expected = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
+    val actual =
+      FitPlanExecutor
+        .unsafeFit(FitPlan(model, FitStrategy.LatentSketch()))
+        .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(actual.engine, FitEngine.LatentSketch)
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-10)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-10)
+
+    val compressed =
+      FitPlan(
+        model,
+        FitStrategy.LatentSketch(
+          LatentSketchConfig.unsafe(
+            components = LowRankComponentSpec.unsafeFixed(1),
+            method = LatentSketchMethod.ContiguousVoxelAveraging
+          )
+        )
+      )
+
+    val sketched = FitPlanExecutor.unsafeFit(compressed).asInstanceOf[DenseFmriFitResult]
+    assertEquals(sketched.engine, FitEngine.LatentSketch)
+    assertEquals(sketched.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+    assertEquals(sketched.coefficientCovariance.matrixCount, 2)
+    assertEqualsDouble(sketched.coefficient("task", 0).get, 0.5, 1e-10)
+    assertEqualsDouble(sketched.coefficient("task", 1).get, 0.5, 1e-10)
+    assertEqualsDouble(sketched.coefficient("base_constant", 0).get, 1.5, 1e-10)
+    assertEqualsDouble(sketched.coefficient("base_constant", 1).get, 1.5, 1e-10)
+    assertEqualsDouble(sketched.residualVariance(0), 11.75, 1e-10)
+    assertEqualsDouble(sketched.residualVariance(1), 11.75, 1e-10)
+
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(sketched).toOption.get
+    assert(t.statistics.toVector.forall(_.isFinite))
+  }
+
+  test("LatentSketch principal components recovers rank-one response coefficients") {
+    val plan = FitPlan(pcaModel)
+    val expected = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+    val pcaPlan =
+      FitPlan(
+        pcaModel,
+        FitStrategy.LatentSketch(
+          LatentSketchConfig.unsafe(
+            components = LowRankComponentSpec.unsafeFixed(1),
+            method = LatentSketchMethod.PrincipalComponents
+          )
+        )
+      )
+
+    val actual = FitPlanExecutor.unsafeFit(pcaPlan).asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(actual.engine, FitEngine.LatentSketch)
+    assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
+    assertEquals(actual.coefficientCovariance.matrixCount, 3)
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-8)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-8)
+    var voxel = 0
+    while voxel < actual.voxels do
+      assertEqualsDouble(actual.residualVariance(voxel), expected.residualVariance(voxel), 1e-8)
+      voxel += 1
+  }
+
+  test("ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback") {
+    val ar = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.25))
+    val expected =
+      FitPlanExecutor
+        .unsafeFit(FitPlan(model, FitEngine.GeneralizedLeastSquares, FitConfig(autocorrelation = ar)))
+        .asInstanceOf[DenseFmriFitResult]
+    val actual =
+      FitPlanExecutor
+        .unsafeFit(FitPlan(model, FitEngine.ReducedRankGls, FitConfig(autocorrelation = ar)))
+        .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(actual.engine, FitEngine.ReducedRankGls)
+    assertEquals(actual.autocorrelation, expected.autocorrelation)
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-10)
+    assertEquals(actual.inferenceScope.allowedIndices(actual.predictors), Vector(0))
+    assertEquals(actual.inference.method, CoefficientInferenceMethod.ReducedRankConditional)
+    assert(TContrast("baseline", Map("base_constant" -> 1.0)).evaluate(actual).isLeft)
+
+    val fixedFullTask =
+      FitPlan(
+        model,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(
+              order = 1,
+              coefficients = ArCoefficientSpec.Rho(0.25)
+            )
+          )
+        )
+      )
+
+    val reduced = FitPlanExecutor.unsafeFit(fixedFullTask).asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(reduced.engine, FitEngine.ReducedRankGls)
+    assertEquals(reduced.autocorrelation.map(_.sharedNormalizedCovariance), Some(true))
+    assertMatrixClose(reduced.coefficients.value, expected.coefficients.value, 1e-10)
+    assertEquals(reduced.inferenceScope.allowedIndices(reduced.predictors), Vector(0))
+    assertEquals(reduced.inference.method, CoefficientInferenceMethod.ReducedRankConditional)
+    assert(TContrast("baseline", Map("base_constant" -> 1.0)).evaluate(reduced).isLeft)
+    assert(reduced.residualVariance.toVector.forall(_.isFinite))
+    assert(reduced.standardErrors.value.copyData.forall(_.isFinite))
+  }
+
+  test("ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture") {
+    val design = DesignMatrix.unsafe(ReducedRankGlsFmriregFixtures.design)
+    val response = ResponseBlock.unsafe(ReducedRankGlsFmriregFixtures.response)
+    val rows = (0 until response.timepoints).toVector
+    val partitions = Vector(RunPartition(0, rowIndices = rows, timepoints = rows))
+    val config =
+      ReducedRankGlsConfig.unsafe(
+        components = ReducedRankComponentSpec.unsafeFixed(1),
+        autocorrelation = AutocorrelationConfig.unsafe(
+          order = 1,
+          iterations = 0,
+          coefficients = ArCoefficientSpec.Rho(0.0)
+        )
+      )
+    val prepared =
+      ReducedRankGlsPrepared
+        .prepare(design, response, partitions, config, selectedVoxelIndices = Vector(0, 1))
+        .fold(error => fail(error.message), identity)
+    val result =
+      prepared
+        .fitBlock(FitBlockInput(design, response, voxelIndices = Vector(0, 1), timepoints = rows, partitions = partitions))
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(result.engine, FitEngine.ReducedRankGls)
+    assertMatrixClose(result.coefficients.value, ReducedRankGlsFmriregFixtures.rankOneCoefficients, 1e-10)
+    ReducedRankGlsFmriregFixtures.rankOneResidualVariance.zipWithIndex.foreach { case (expected, voxel) =>
+      assertEqualsDouble(result.residualVariance(voxel), expected, 1e-10)
+    }
+  }
+
+  test("ReducedRankGls reduces event targets after residualizing nuisance predictors") {
+    val plan =
+      FitPlan(
+        partitionedReducedRankModel,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(
+              order = 1,
+              iterations = 0,
+              coefficients = ArCoefficientSpec.Rho(0.0)
+            )
+          )
+        )
+      )
+    val result = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(result.columnNames, Vector("task_a", "task_b", "base_constant"))
+    assertEquals(
+      result.inferenceScope,
+      CoefficientInferenceScope.unsafeOnly(Vector(0, 1), "reduced-rank GLS target/event coefficient")
+    )
+    assertEquals(result.coefficientCovariance.scope, CoefficientCovarianceScope.Shared)
+    assertMatrixClose(result.coefficients.value, ReducedRankGlsFmriregFixtures.partitionedRankOneCoefficients, 1e-10)
+    ReducedRankGlsFmriregFixtures.partitionedRankOneResidualVariance.zipWithIndex.foreach { case (expected, voxel) =>
+      assertEqualsDouble(result.residualVariance(voxel), expected, 1e-10)
+    }
+
+    assertEquals(result.inference.method, CoefficientInferenceMethod.ReducedRankConditional)
+    assertEquals(result.coefficientCovariance.scope, CoefficientCovarianceScope.Shared)
+    assertMatrixClose(
+      result.coefficientCovariance.canonicalMatrix,
+      embedTaskCovariance(ReducedRankGlsFmriregFixtures.partitionedTaskNormalizedCovariance),
+      1e-12
+    )
+    assertVectorClose(result.inference.varianceScale, ReducedRankGlsFmriregFixtures.partitionedConditionalVariance, 1e-12)
+    assertTaskStandardErrors(
+      result,
+      ReducedRankGlsFmriregFixtures.partitionedConditionalStandardErrors,
+      1e-12
+    )
+
+    val taskContrast = TContrast("task_a", Map("task_a" -> 1.0)).evaluate(result).toOption.get
+    assertVectorClose(taskContrast.statistics, ReducedRankGlsFmriregFixtures.partitionedTaskATStatistics, 1e-9)
+
+    val taskF = FContrast(
+      "task",
+      Vector(Map("task_a" -> 1.0), Map("task_b" -> 1.0))
+    ).evaluate(result).toOption.get
+    assertVectorClose(taskF.statistics, ReducedRankGlsFmriregFixtures.partitionedTaskFStatistics, 1e-8)
+
+    val baselineContrast = TContrast("baseline", Map("base_constant" -> 1.0)).evaluate(result)
+    assert(baselineContrast.left.toOption.exists {
+      case FitError.NonEstimableContrast(name, detail) =>
+        name == "baseline" && detail.contains("base_constant") && detail.contains("target/event")
+      case _ =>
+        false
+    })
+
+    val mixedF = FContrast("task_plus_baseline", Vector(Map("task_a" -> 1.0), Map("base_constant" -> 1.0))).evaluate(result)
+    assert(mixedF.left.toOption.exists {
+      case FitError.NonEstimableContrast(name, detail) =>
+        name == "task_plus_baseline" && detail.contains("base_constant") && detail.contains("target/event")
+      case _ =>
+        false
+    })
+  }
+
+  test("ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture") {
+    val bootstrap =
+      ReducedRankBootstrapConfig.unsafe(
+        replicates = ReducedRankGlsFmriregFixtures.bootstrapReplicates,
+        blockSize = ReducedRankGlsFmriregFixtures.bootstrapBlockSize,
+        seed = ReducedRankGlsFmriregFixtures.bootstrapSeed
+      )
+    val plan =
+      FitPlan(
+        partitionedReducedRankModel,
+        FitStrategy.ReducedRankGls(
+          ReducedRankGlsConfig.unsafe(
+            components = ReducedRankComponentSpec.unsafeFixed(1),
+            autocorrelation = AutocorrelationConfig.unsafe(
+              order = 1,
+              iterations = 0,
+              coefficients = ArCoefficientSpec.Rho(0.0)
+            ),
+            inference = ReducedRankInferencePolicy.Bootstrap(bootstrap)
+          )
+        )
+      )
+
+    val first = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+    val second = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(
+      first.inference.method,
+      CoefficientInferenceMethod.ReducedRankBootstrap(
+        ReducedRankGlsFmriregFixtures.bootstrapReplicates,
+        ReducedRankGlsFmriregFixtures.bootstrapBlockSize,
+        ReducedRankGlsFmriregFixtures.bootstrapSeed
+      )
+    )
+    assertMatrixClose(first.standardErrors.value, second.standardErrors.value, 0.0)
+    assertCoefficientCovarianceClose(first.coefficientCovariance, second.coefficientCovariance, 0.0)
+    assertTaskStandardErrors(first, ReducedRankGlsFmriregFixtures.partitionedBootstrapStandardErrors, 1e-10)
+
+    ReducedRankGlsFmriregFixtures.partitionedBootstrapCovariance.zipWithIndex.foreach { case (expected, voxel) =>
+      val actual = selectTaskCovariance(first.coefficientCovariance.unsafeMatrixForVoxelPosition(voxel))
+      assertMatrixClose(actual, expected, 1e-10)
+    }
+
+    val task = TContrast("task_a", Map("task_a" -> 1.0)).evaluate(first).toOption.get
+    assertVectorClose(task.statistics, ReducedRankGlsFmriregFixtures.partitionedBootstrapTaskATStatistics, 1e-8)
+  }
+
+  test("ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component") {
+    def fitWith(components: ReducedRankComponentSpec): DenseFmriFitResult =
+      val plan =
+        FitPlan(
+          partitionedReducedRankModel,
+          FitStrategy.ReducedRankGls(
+            ReducedRankGlsConfig.unsafe(
+              components = components,
+              autocorrelation = AutocorrelationConfig.unsafe(
+                order = 1,
+                iterations = 0,
+                coefficients = ArCoefficientSpec.Rho(0.0)
+              )
+            )
+          )
+        )
+      FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
+
+    val fixed = fitWith(ReducedRankComponentSpec.unsafeFixed(1))
+    val energy = fitWith(ReducedRankComponentSpec.unsafeEnergyRetained(0.98))
+    val rssBudget = fitWith(ReducedRankComponentSpec.unsafeResidualSumsOfSquaresBudget(0.5))
+
+    assertEquals(energy.engine, FitEngine.ReducedRankGls)
+    assertEquals(rssBudget.engine, FitEngine.ReducedRankGls)
+    assertMatrixClose(energy.coefficients.value, fixed.coefficients.value, 1e-10)
+    assertMatrixClose(rssBudget.coefficients.value, fixed.coefficients.value, 1e-10)
+    assertMatrixClose(energy.standardErrors.value, fixed.standardErrors.value, 1e-10)
+    assertMatrixClose(rssBudget.standardErrors.value, fixed.standardErrors.value, 1e-10)
+    energy.residualVariance.toVector.zip(fixed.residualVariance.toVector).foreach { case (actual, expected) =>
+      assertEqualsDouble(actual, expected, 1e-10)
+    }
+    rssBudget.residualVariance.toVector.zip(fixed.residualVariance.toVector).foreach { case (actual, expected) =>
+      assertEqualsDouble(actual, expected, 1e-10)
+    }
   }
 
   test("FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model") {
