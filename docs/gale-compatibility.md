@@ -25,7 +25,7 @@ full Scalafim `compileAll` and `testAll` aliases. Platform success is conjunctiv
 passing only the JVM or only fast-linked JavaScript is not sufficient.
 
 The initial immutable pin is Gale commit
-`0207c653eb643cc07fdfa018989a4c3578d40aa7`. It contains the required migration
+`ef540198b0cfd5678e14f85cdc7ea904f87812ba`. It contains the required migration
 APIs, passes Gale's JVM, Scala.js, full-link, parity, and backend gates, and adds
 the owner-selected Apache-2.0 license plus canonical Git and POM provenance.
 Scalafim consumes the named `coreJVM` and `coreJS` projects directly from that
