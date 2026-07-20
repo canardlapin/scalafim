@@ -6,6 +6,7 @@ enum PipelineError:
   case DuplicateOutput(name: PortName)
   case UnknownDependency(nodeId: NodeId, dependency: NodeId)
   case CyclicGraph(remaining: Vector[NodeId])
+  case MissingOutput(name: PortName)
   case MissingArtifact(nodeId: NodeId)
   case MissingPipelineInput(nodeId: NodeId)
   case ArtifactKindMismatch(nodeId: NodeId, expected: String, actual: String)
@@ -26,6 +27,8 @@ enum PipelineError:
       case CyclicGraph(remaining) =>
         val ids = remaining.map(_.value).mkString(", ")
         s"pipeline graph contains a cycle among node(s): $ids"
+      case MissingOutput(name) =>
+        s"pipeline output '${name.value}' is not declared"
       case MissingArtifact(nodeId) =>
         s"artifact for node '${nodeId.value}' is not available"
       case MissingPipelineInput(nodeId) =>

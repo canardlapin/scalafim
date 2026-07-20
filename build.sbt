@@ -90,6 +90,7 @@ lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/pipeline"))
+    .dependsOn(graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-pipeline"
