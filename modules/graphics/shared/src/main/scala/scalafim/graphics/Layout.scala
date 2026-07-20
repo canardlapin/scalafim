@@ -145,6 +145,8 @@ object GuideSpec:
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
+      title: Option[String] = None,
+      titleGp: Option[GraphicParams] = None,
       name: Option[GraphicsName] = None
   ) extends GuideSpec
 
@@ -189,6 +191,10 @@ object GuideSpec:
     val labelOffset = spec.labelOffset.getOrElse(
       ExtentExpr.pointsUnsafe(policy.tickLengthPt + policy.tickLabelGapPt)
     )
+    val titleOffset = ExtentExpr.pointsUnsafe(axisTitleOffsetPt(spec, policy))
+    val titleGp = spec.titleGp.getOrElse(
+      GraphicParams.unsafe(fontSize = Length.pointsUnsafe(policy.axisTitleFontPt))
+    )
     val name = spec.name.orElse(Some(defaultAxisName(spec.side)))
     for
       ticks <- spec.ticks match
@@ -204,10 +210,23 @@ object GuideSpec:
         axisGp = spec.axisGp,
         tickGp = spec.tickGp,
         labelGp = spec.labelGp,
-        name = name
+        name = name,
+        title = spec.title,
+        titleOffset = titleOffset,
+        titleGp = titleGp
       )
       grob <- axis.toGrob(Some(layout.guideViewport))
     yield ResolvedGuide(spec, grob)
+
+  private def axisTitleOffsetPt(spec: Axis, policy: LayoutPolicy): Double =
+    val tickLabelExtent =
+      if spec.side.isHorizontal then policy.metrics.heightPt(policy.axisFontPt)
+      else
+        spec.ticks.getOrElse(Vector.empty).foldLeft(0.0) { (width, tick) =>
+          math.max(width, policy.metrics.widthPt(tick.label, policy.axisFontPt))
+        }
+    policy.tickLengthPt + policy.tickLabelGapPt + tickLabelExtent +
+      policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleFontPt) / 2.0
 
   private def lowerLegend(
       spec: Legend,

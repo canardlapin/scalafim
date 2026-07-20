@@ -601,6 +601,14 @@ object RendererConformance:
     for
       colorScale <- conditionScale
       plot <- Plot(observations)
+        .withLabels(
+          PlotLabels(
+            title = Some("Signal by condition"),
+            subtitle = Some("Portable renderer contract"),
+            x = Some("Time"),
+            y = Some("Signal")
+          )
+        )
         .withScale(ScaleBinding[Observation, String, Rgba](Aesthetic.Color, _.condition, colorScale))
         .flatMap(_.addLayer(Layer.point[Observation](_.x, _.y)))
       scene <- PlotCompiler.compile(
@@ -611,13 +619,23 @@ object RendererConformance:
         )
       )
     yield ConformanceCase(
-      GraphicsName.unsafe("solved-plot"),
+      GraphicsName.unsafe("titled-plot"),
       ConformanceGroup.CompiledPlot,
       scene,
       Vector(
         GraphicsName.unsafe("plot-panel"),
         GraphicsName.unsafe("x-axis"),
         GraphicsName.unsafe("y-axis"),
-        GraphicsName.unsafe("condition-legend")
+        GraphicsName.unsafe("condition-legend"),
+        PlotRegion.Title,
+        PlotRegion.Subtitle,
+        GraphicsName.unsafe("x-axis-title"),
+        GraphicsName.unsafe("y-axis-title")
+      ),
+      Vector(
+        RenderRequirement.Text(PlotRegion.Title, HJust.Left, VJust.Center, rotated = false),
+        RenderRequirement.Text(PlotRegion.Subtitle, HJust.Left, VJust.Center, rotated = false),
+        RenderRequirement.Text(GraphicsName.unsafe("x-axis-title"), HJust.Center, VJust.Center, rotated = false),
+        RenderRequirement.Text(GraphicsName.unsafe("y-axis-title"), HJust.Center, VJust.Center, rotated = true)
       )
     )

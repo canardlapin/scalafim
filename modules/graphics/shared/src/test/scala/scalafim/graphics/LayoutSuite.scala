@@ -80,6 +80,28 @@ class LayoutSuite extends munit.FunSuite:
     )
   }
 
+  test("axis guides lower titles at solver-matched offsets") {
+    val guide = GuideSpec
+      .lower(
+        GuideSpec.Axis(
+          AxisSide.Left,
+          ticks = Some(Vector(AxisTick.unsafe(-1.0, "low"), AxisTick.unsafe(1.0, "high"))),
+          title = Some("Signal"),
+          name = Some(GraphicsName.unsafe("signal-axis"))
+        ),
+        layout
+      )
+      .fold(e => fail(e.message), identity)
+    val group = guide.grob.asInstanceOf[Grob.Group]
+    val title = group.children.last.asInstanceOf[Grob.Text]
+
+    assertEquals(title.name.map(_.value), Some("signal-axis-title"))
+    assertEquals(title.label, "Signal")
+    assertEquals(title.anchor, Anchor(HJust.Center, VJust.Center))
+    assertEqualsDouble(title.rotationDegrees, 90.0, 1e-12)
+    assertEquals(title.gp.fontSize, Length.pointsUnsafe(11.0))
+  }
+
   test("legend guides lower to stable marker and label grobs") {
     val guide =
       GuideSpec

@@ -39,7 +39,10 @@ final case class Axis private (
     axisGp: GraphicParams,
     tickGp: GraphicParams,
     labelGp: GraphicParams,
-    name: Option[GraphicsName]
+    name: Option[GraphicsName],
+    title: Option[String],
+    titleOffset: ExtentExpr,
+    titleGp: GraphicParams
 ):
   def toGrob(viewport: Option[Viewport] = None): Either[GraphicsError, Grob] =
     val baseline =
@@ -61,8 +64,9 @@ final case class Axis private (
       tickGrobs <- tickGroup(tickSegments)
     yield
       val labels = ticks.map(labelGrob)
+      val titleGrob = title.map(axisTitleGrob).toVector
       Grob.group(
-        Vector(baselineGrob) ++ tickGrobs ++ labels,
+        Vector(baselineGrob) ++ tickGrobs ++ labels ++ titleGrob,
         viewport = viewport,
         name = name
       )
@@ -83,6 +87,27 @@ final case class Axis private (
       anchor = labelAnchor,
       gp = labelGp,
       name = childName("label")
+    )
+
+  private def axisTitleGrob(label: String): Grob =
+    val midpoint = range.lower + range.width / 2.0
+    val at =
+      if side.isHorizontal then
+        Point(LengthExpr.nativeUnsafe(midpoint), outward(position, titleOffset))
+      else
+        Point(outward(position, titleOffset), LengthExpr.nativeUnsafe(midpoint))
+    val rotation =
+      side match
+        case AxisSide.Left  => 90.0
+        case AxisSide.Right => -90.0
+        case _              => 0.0
+    Grob.textUnsafe(
+      label,
+      at,
+      anchor = Anchor(HJust.Center, VJust.Center),
+      rotationDegrees = rotation,
+      gp = titleGp,
+      name = childName("title")
     )
 
   private def outward(position: Double, distance: ExtentExpr): LengthExpr =
@@ -111,10 +136,13 @@ object Axis:
       axisGp: GraphicParams = GraphicParams.unsafe(),
       tickGp: GraphicParams = GraphicParams.unsafe(),
       labelGp: GraphicParams = GraphicParams.unsafe(),
-      name: Option[GraphicsName] = None
+      name: Option[GraphicsName] = None,
+      title: Option[String] = None,
+      titleOffset: ExtentExpr = ExtentExpr.pointsUnsafe(24.0),
+      titleGp: GraphicParams = GraphicParams.unsafe()
   ): Either[GraphicsError, Axis] =
     validate(range, ticks, position).map { _ =>
-      new Axis(side, range, ticks, position, tickLength, labelOffset, axisGp, tickGp, labelGp, name)
+      new Axis(side, range, ticks, position, tickLength, labelOffset, axisGp, tickGp, labelGp, name, title, titleOffset, titleGp)
     }
 
   def bottom(

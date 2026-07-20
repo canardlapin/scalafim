@@ -389,7 +389,8 @@ private[graphics] object LayoutPhase:
       coord: Coord,
       options: PlotCompilerOptions,
       ranges: Option[(Interval, Interval)],
-      specs: Vector[GuideSpec]
+      specs: Vector[GuideSpec],
+      labels: PlotLabels
   ): Either[GraphicsError, LayoutResolution] =
     val clip = coordClip(coord)
     (options.layout, options.frame, options.policy, ranges) match
@@ -401,7 +402,7 @@ private[graphics] object LayoutPhase:
         }
       case (None, None, Some(policy), Some((xRange, yRange))) =>
         for
-          frames <- PlotLayoutSolver.solve(policy, layoutRequest(specs, xRange, yRange))
+          frames <- PlotLayoutSolver.solve(policy, layoutRequest(specs, xRange, yRange, labels))
           expanded <- expandedRanges(options.expansion, xRange, yRange)
         yield
           val (expandedX, expandedY) = expanded
@@ -426,11 +427,12 @@ private[graphics] object LayoutPhase:
   private def layoutRequest(
       specs: Vector[GuideSpec],
       xRange: Interval,
-      yRange: Interval
+      yRange: Interval,
+      labels: PlotLabels
   ): PlotLayoutRequest =
     val axes = specs.collect { case axis: GuideSpec.Axis =>
       val range = if axis.side.isHorizontal then xRange else yRange
-      axis.side -> axisLabels(axis, range)
+      axis.side -> AxisRequest(axisLabels(axis, range), axis.title)
     }.toMap
     val legends = specs.collect { case legend: GuideSpec.Legend => legend }
     val legend =
@@ -442,7 +444,7 @@ private[graphics] object LayoutPhase:
             legends.flatMap(_.entries.map(_.label)) ++ legends.drop(1).flatMap(_.title)
           )
         )
-    PlotLayoutRequest(axes, legend)
+    PlotLayoutRequest(axes, legend, labels)
 
   private def axisLabels(axis: GuideSpec.Axis, range: Interval): Vector[String] =
     axis.ticks match
@@ -489,6 +491,67 @@ private[graphics] object LayoutPhase:
     coord match
       case Coord.Cartesian(clip) => clip
 
+/** Structural plot text lowers into solver-owned regions before any backend
+  * sees the scene. Axis titles remain guide children; title and subtitle are
+  * top-level text grobs in dedicated viewports.
+  */
+private[graphics] object PlotLabelPhase:
+  def lower(
+      labels: PlotLabels,
+      frames: Option[PlotFrames],
+      policy: LayoutPolicy
+  ): Either[GraphicsError, Vector[Grob]] =
+    val needsHeader = labels.title.nonEmpty || labels.subtitle.nonEmpty
+    if !needsHeader then Right(Vector.empty)
+    else
+      frames match
+        case None => Left(GraphicsError.MissingLayout("plot title"))
+        case Some(solved) =>
+          val out = Vector.newBuilder[Grob]
+          for
+            _ <- addLabel(
+              labels.title,
+              solved.titleViewport,
+              policy.plotTitleFontPt,
+              PlotRegion.Title,
+              out
+            )
+            _ <- addLabel(
+              labels.subtitle,
+              solved.subtitleViewport,
+              policy.plotSubtitleFontPt,
+              PlotRegion.Subtitle,
+              out
+            )
+          yield out.result()
+
+  private def addLabel(
+      text: Option[String],
+      viewport: Option[Viewport],
+      fontSizePt: Double,
+      name: GraphicsName,
+      out: scala.collection.mutable.Builder[Grob, Vector[Grob]]
+  ): Either[GraphicsError, Unit] =
+    text match
+      case None => Right(())
+      case Some(label) =>
+        viewport match
+          case None => Left(GraphicsError.MissingLayout(name.value))
+          case Some(frame) =>
+            Grob
+              .text(
+                label,
+                Point.npcUnsafe(0.0, 0.5),
+                anchor = Anchor(HJust.Left, VJust.Center),
+                gp = GraphicParams.unsafe(fontSize = Length.pointsUnsafe(fontSizePt)),
+                viewport = Some(frame),
+                name = Some(name)
+              )
+              .map { grob =>
+                out += grob
+                ()
+              }
+
 /** Phase 6 — guide resolution: determine guide specs from the policy (deriving
   * routine axes and legends from trained scales) and lower them against the
   * panel layout.
@@ -498,7 +561,8 @@ private[graphics] object GuidePhase:
       policy: GuidePolicy,
       plotScales: PlotScaleRegistry,
       ranges: Option[(Interval, Interval)],
-      relativeLegend: Boolean
+      relativeLegend: Boolean,
+      labels: PlotLabels
   ): Either[GraphicsError, Vector[GuideSpec]] =
     policy match
       case GuidePolicy.NoGuides =>
@@ -514,7 +578,7 @@ private[graphics] object GuidePhase:
           case None =>
             Left(GraphicsError.MissingLayout("guides"))
           case Some((xRange, yRange)) =>
-            derived(plotScales, xRange, yRange, overrides, deriveLegends, relativeLegend)
+            derived(plotScales, xRange, yRange, overrides, deriveLegends, relativeLegend, labels)
 
   private def derived(
       plotScales: PlotScaleRegistry,
@@ -522,7 +586,8 @@ private[graphics] object GuidePhase:
       yRange: Interval,
       overrides: Vector[GuideSpec],
       deriveLegends: Boolean,
-      relativeLegend: Boolean
+      relativeLegend: Boolean,
+      labels: PlotLabels
   ): Either[GraphicsError, Vector[GuideSpec]] =
     val overriddenSides = overrides.collect { case axis: GuideSpec.Axis => axis.side }.toSet
     val hasLegendOverride = overrides.exists {
@@ -533,10 +598,10 @@ private[graphics] object GuidePhase:
       resolvedOverrides <- materializeAxisTicks(overrides, xRange, yRange)
       xAxis <-
         if overriddenSides.contains(AxisSide.Bottom) then Right(None)
-        else positionAxis(plotScales, Aesthetic.X, AxisSide.Bottom, xRange)
+        else positionAxis(plotScales, Aesthetic.X, AxisSide.Bottom, xRange, labels.x)
       yAxis <-
         if overriddenSides.contains(AxisSide.Left) then Right(None)
-        else positionAxis(plotScales, Aesthetic.Y, AxisSide.Left, yRange)
+        else positionAxis(plotScales, Aesthetic.Y, AxisSide.Left, yRange, labels.y)
       legends <-
         if hasLegendOverride || !deriveLegends then Right(Vector.empty)
         else discreteLegends(plotScales, relativeLegend)
@@ -577,7 +642,8 @@ private[graphics] object GuidePhase:
       plotScales: PlotScaleRegistry,
       aesthetic: Aesthetic[?],
       side: AxisSide,
-      range: Interval
+      range: Interval,
+      requestedTitle: Option[String]
   ): Either[GraphicsError, Option[GuideSpec.Axis]] =
     val name = GraphicsName.unsafe(s"${aesthetic.label}-axis")
     plotScales.forAesthetic(aesthetic) match
@@ -585,20 +651,28 @@ private[graphics] object GuidePhase:
         trained.scale match
           case continuous: ContinuousScale[?] =>
             scaledTicks(continuous).map { ticks =>
-              Some(GuideSpec.Axis(side, ticks = Some(ticks), name = Some(name)))
+              Some(
+                GuideSpec.Axis(
+                  side,
+                  ticks = Some(ticks),
+                  title = requestedTitle.orElse(Some(continuous.name.value)),
+                  name = Some(name)
+                )
+              )
             }
           case _ =>
-            defaultTicks(side, range, name)
+            defaultTicks(side, range, name, requestedTitle.orElse(Some(aesthetic.label)))
       case None =>
-        defaultTicks(side, range, name)
+        defaultTicks(side, range, name, requestedTitle.orElse(Some(aesthetic.label)))
 
   private def defaultTicks(
       side: AxisSide,
       range: Interval,
-      name: GraphicsName
+      name: GraphicsName,
+      title: Option[String]
   ): Either[GraphicsError, Option[GuideSpec.Axis]] =
     Axis.ticks(range, Breaks.default, Labeler.default).map { ticks =>
-      Some(GuideSpec.Axis(side, ticks = Some(ticks), name = Some(name)))
+      Some(GuideSpec.Axis(side, ticks = Some(ticks), title = title, name = Some(name)))
     }
 
   /** Ticks for a trained continuous scale: break values come from the scale's

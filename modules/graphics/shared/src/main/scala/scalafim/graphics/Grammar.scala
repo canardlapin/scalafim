@@ -220,11 +220,21 @@ object Layer:
       case Some(aesthetic) => Left(GraphicsError.MissingAesthetic(geom.label, aesthetic.label))
       case None            => Right(())
 
+final case class PlotLabels(
+    title: Option[String] = None,
+    subtitle: Option[String] = None,
+    x: Option[String] = None,
+    y: Option[String] = None
+):
+  def isEmpty: Boolean =
+    title.isEmpty && subtitle.isEmpty && x.isEmpty && y.isEmpty
+
 final case class Plot[Row] private (
     data: Vector[Row],
     mapping: AesSpec[Row],
     layers: Vector[Layer[Row]],
-    coord: Coord
+    coord: Coord,
+    labels: PlotLabels
 ):
   def addLayer(layer: Layer[Row]): Either[GraphicsError, Plot[Row]] =
     Layer.validate(layer.geom, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
@@ -237,6 +247,18 @@ final case class Plot[Row] private (
 
   def withCoord(coord: Coord): Plot[Row] =
     copy(coord = coord)
+
+  def withLabels(labels: PlotLabels): Plot[Row] =
+    copy(labels = labels)
+
+  def withTitle(title: String): Plot[Row] =
+    copy(labels = labels.copy(title = Some(title)))
+
+  def withSubtitle(subtitle: String): Plot[Row] =
+    copy(labels = labels.copy(subtitle = Some(subtitle)))
+
+  def withAxisTitles(x: String, y: String): Plot[Row] =
+    copy(labels = labels.copy(x = Some(x), y = Some(y)))
 
   def layerData(layer: Layer[Row]): Vector[Row] =
     layer.effectiveData(data)
@@ -255,4 +277,4 @@ final case class Plot[Row] private (
 
 object Plot:
   def apply[Row](data: Vector[Row]): Plot[Row] =
-    Plot(data, AesSpec.empty, Vector.empty, Coord.Cartesian())
+    Plot(data, AesSpec.empty, Vector.empty, Coord.Cartesian(), PlotLabels())

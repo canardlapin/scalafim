@@ -74,6 +74,11 @@ platform renderers should consume `DeviceScene` values at a boundary.
   never enter the shared grammar.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
+- Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y
+  axis titles; derived axes default to their scale names, and explicit labels
+  override them. The layout solver sizes dedicated title/subtitle regions and
+  enlarged axis strips through `TextMetrics`, then lowering emits ordinary
+  text grobs for every backend.
 
 ## Compilation pipeline
 
@@ -93,6 +98,16 @@ with explicit `GuideSpec` overrides; layout comes from an explicit
 `RangeExpansion` (5% by default) after guide derivation so point glyphs at
 trained extrema remain inside the panel; `RangeExpansion.none` restores exact
 edge-centered framing, and an explicit `PanelLayout` is always authoritative.
+
+A compact labeled plot remains ordinary immutable composition:
+
+```scala
+val plot = Plot(rows)
+  .withTitle("Activation over time")
+  .withSubtitle("Condition means")
+  .withAxisTitles("Time (s)", "Signal")
+  .addLayer(Layer.line[Observation](_.time, _.signal))
+```
 
 ## Backends
 

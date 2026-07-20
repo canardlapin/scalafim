@@ -50,6 +50,9 @@ class GuideDerivationSuite extends munit.FunSuite:
     val names = trained.guides.flatMap(_.spec.name).map(_.value)
     assertEquals(names, Vector("x-axis", "y-axis", "condition-color-legend"))
 
+    val axisTitles = trained.guides.collect { case ResolvedGuide(axis: GuideSpec.Axis, _) => axis.title }
+    assertEquals(axisTitles, Vector(Some("x"), Some("y")))
+
     val legend = trained.guides.collectFirst {
       case ResolvedGuide(spec: GuideSpec.Legend, _) => spec
     }.getOrElse(fail("expected a derived legend"))
@@ -82,6 +85,17 @@ class GuideDerivationSuite extends munit.FunSuite:
     assertEqualsDouble(ticks(0).value, 0.0, 1e-12)
     assertEqualsDouble(ticks(1).value, 0.5, 1e-12)
     assertEqualsDouble(ticks(2).value, 1.0, 1e-12)
+    assertEquals(axis.title, Some("x-log"))
+  }
+
+  test("plot axis labels override derived scale names") {
+    val plot = coloredPlot.withAxisTitles("Elapsed time", "Response")
+    val trained = PlotCompiler
+      .resolve(plot, PlotCompilerOptions(frame = Some(frame), guides = GuidePolicy.Derived()))
+      .fold(e => fail(e.message), identity)
+
+    val titles = trained.guides.collect { case ResolvedGuide(axis: GuideSpec.Axis, _) => axis.title }
+    assertEquals(titles, Vector(Some("Elapsed time"), Some("Response")))
   }
 
   test("explicit overrides suppress matching derived guides and are included") {

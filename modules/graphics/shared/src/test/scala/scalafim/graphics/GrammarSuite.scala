@@ -73,6 +73,23 @@ class GrammarSuite extends munit.FunSuite:
     assertEquals(plot.layers, Vector(layer))
   }
 
+  test("plot labels compose without rebuilding the plot specification") {
+    val plot = Plot(data)
+      .withTitle("Activation")
+      .withSubtitle("Subject mean")
+      .withAxisTitles("Time", "Signal")
+
+    assertEquals(
+      plot.labels,
+      PlotLabels(
+        title = Some("Activation"),
+        subtitle = Some("Subject mean"),
+        x = Some("Time"),
+        y = Some("Signal")
+      )
+    )
+  }
+
   test("plot rejects duplicate scale bindings for the same aesthetic") {
     val scale =
       ContinuousScale

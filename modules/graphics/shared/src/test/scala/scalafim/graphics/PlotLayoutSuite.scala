@@ -42,8 +42,8 @@ class PlotLayoutSuite extends munit.FunSuite:
   test("axis requests allocate strips sized from tick labels via text metrics") {
     val request = PlotLayoutRequest(
       axes = Map(
-        AxisSide.Bottom -> Vector("0", "5", "10"),
-        AxisSide.Left -> Vector("-1", "1")
+        AxisSide.Bottom -> AxisRequest(Vector("0", "5", "10")),
+        AxisSide.Left -> AxisRequest(Vector("-1", "1"))
       )
     )
     val frames = PlotLayoutSolver.solve(policy, request).fold(e => fail(e.message), identity)
@@ -65,6 +65,28 @@ class PlotLayoutSuite extends munit.FunSuite:
     assertEqualsDouble(originX(left), npcX(10.0), tol)
     assertEqualsDouble(width(left), leftStrip, tol)
     assertEqualsDouble(height(left), height(frames.panel), tol)
+  }
+
+  test("axis titles and plot labels receive solver-owned regions") {
+    val request = PlotLayoutRequest(
+      axes = Map(
+        AxisSide.Bottom -> AxisRequest(Vector("0", "10"), Some("Time")),
+        AxisSide.Left -> AxisRequest(Vector("-1", "1"), Some("Signal"))
+      ),
+      labels = PlotLabels(title = Some("Activation"), subtitle = Some("Subject mean"))
+    )
+    val frames = PlotLayoutSolver.solve(policy, request).fold(e => fail(e.message), identity)
+
+    val axisTitleExtent = 6.0 + 11.0 * 1.25
+    assertEqualsDouble(height(frames.axes(AxisSide.Bottom)), npcY(20.5 + axisTitleExtent), tol)
+    assertEqualsDouble(width(frames.axes(AxisSide.Left)), npcX(20.4 + axisTitleExtent), tol)
+
+    val title = frames.title.getOrElse(fail("expected title frame"))
+    val subtitle = frames.subtitle.getOrElse(fail("expected subtitle frame"))
+    assertEqualsDouble(height(title), npcY(16.0 * 1.25), tol)
+    assertEqualsDouble(height(subtitle), npcY(12.0 * 1.25), tol)
+    assertEqualsDouble(originY(title), originY(subtitle) + height(subtitle) + npcY(4.0), tol)
+    assertEqualsDouble(originY(subtitle), originY(frames.panel) + height(frames.panel) + npcY(4.0), tol)
   }
 
   test("legend requests allocate a right-hand column beside the panel") {
@@ -89,7 +111,7 @@ class PlotLayoutSuite extends munit.FunSuite:
 
   test("legend columns clear a right-axis strip instead of overlapping it") {
     val request = PlotLayoutRequest(
-      axes = Map(AxisSide.Right -> Vector("-1", "1")),
+      axes = Map(AxisSide.Right -> AxisRequest(Vector("-1", "1"))),
       legend = Some(LegendRequest(title = None, labels = Vector("A", "B")))
     )
     val frames = PlotLayoutSolver.solve(policy, request).fold(e => fail(e.message), identity)
@@ -119,6 +141,7 @@ class PlotLayoutSuite extends munit.FunSuite:
       DiscretePalette.valuesUnsafe(Vector(Rgba.unsafe(40, 80, 120), Rgba.unsafe(210, 120, 40)))
     ).fold(e => fail(e.message), identity)
     val plot = Plot(data)
+      .withLabels(PlotLabels(title = Some("Activation"), subtitle = Some("Subject mean")))
       .withScale(ScaleBinding[Obs, String, Rgba](Aesthetic.Color, _.condition, colorScale))
       .flatMap(_.addLayer(Layer.point[Obs](_.x, _.y)))
       .fold(e => fail(e.message), identity)
@@ -139,6 +162,8 @@ class PlotLayoutSuite extends munit.FunSuite:
 
     val scene = trained.scene
     assert(scene.grobs.head.name.map(_.value).contains("plot-panel"))
+    assertEquals(trained.labelGrobs.flatMap(_.name).map(_.value), Vector("plot-title", "plot-subtitle"))
+    assertEquals(scene.grobs.takeRight(2).flatMap(_.name).map(_.value), Vector("plot-title", "plot-subtitle"))
   }
 
   test("solved scenes lower to identical device scenes across runs") {

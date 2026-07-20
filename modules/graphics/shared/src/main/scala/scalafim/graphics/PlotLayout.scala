@@ -33,6 +33,11 @@ final case class LayoutPolicy(
     tickLengthPt: Double = 4.0,
     tickLabelGapPt: Double = 4.0,
     axisFontPt: Double = 10.0,
+    axisTitleFontPt: Double = 11.0,
+    axisTitleGapPt: Double = 6.0,
+    plotTitleFontPt: Double = 16.0,
+    plotSubtitleFontPt: Double = 12.0,
+    plotLabelGapPt: Double = 4.0,
     legendFontPt: Double = 10.0,
     legendKeyPt: Double = 10.0,
     legendGapPt: Double = 10.0,
@@ -42,6 +47,11 @@ final case class LayoutPolicy(
   require(tickLengthPt >= 0.0 && tickLengthPt.isFinite, "`tickLengthPt` must be finite and >= 0")
   require(tickLabelGapPt >= 0.0 && tickLabelGapPt.isFinite, "`tickLabelGapPt` must be finite and >= 0")
   require(axisFontPt > 0.0 && axisFontPt.isFinite, "`axisFontPt` must be finite and > 0")
+  require(axisTitleFontPt > 0.0 && axisTitleFontPt.isFinite, "`axisTitleFontPt` must be finite and > 0")
+  require(axisTitleGapPt >= 0.0 && axisTitleGapPt.isFinite, "`axisTitleGapPt` must be finite and >= 0")
+  require(plotTitleFontPt > 0.0 && plotTitleFontPt.isFinite, "`plotTitleFontPt` must be finite and > 0")
+  require(plotSubtitleFontPt > 0.0 && plotSubtitleFontPt.isFinite, "`plotSubtitleFontPt` must be finite and > 0")
+  require(plotLabelGapPt >= 0.0 && plotLabelGapPt.isFinite, "`plotLabelGapPt` must be finite and >= 0")
   require(legendFontPt > 0.0 && legendFontPt.isFinite, "`legendFontPt` must be finite and > 0")
   require(legendKeyPt >= 0.0 && legendKeyPt.isFinite, "`legendKeyPt` must be finite and >= 0")
   require(legendGapPt >= 0.0 && legendGapPt.isFinite, "`legendGapPt` must be finite and >= 0")
@@ -55,11 +65,16 @@ object PlotRegion:
   val AxisTop: GraphicsName = GraphicsName.unsafe("axis-top")
   val AxisRight: GraphicsName = GraphicsName.unsafe("axis-right")
   val Legend: GraphicsName = GraphicsName.unsafe("legend-region")
+  val Title: GraphicsName = GraphicsName.unsafe("plot-title")
+  val Subtitle: GraphicsName = GraphicsName.unsafe("plot-subtitle")
 
 /** What the solver must make room for. */
+final case class AxisRequest(labels: Vector[String], title: Option[String] = None)
+
 final case class PlotLayoutRequest(
-    axes: Map[AxisSide, Vector[String]] = Map.empty,
-    legend: Option[LegendRequest] = None
+    axes: Map[AxisSide, AxisRequest] = Map.empty,
+    legend: Option[LegendRequest] = None,
+    labels: PlotLabels = PlotLabels()
 )
 
 final case class LegendRequest(title: Option[String], labels: Vector[String])
@@ -68,7 +83,9 @@ final case class LegendRequest(title: Option[String], labels: Vector[String])
 final case class PlotFrames(
     panel: PanelFrame,
     axes: Map[AxisSide, PanelFrame],
-    legend: Option[PanelFrame]
+    legend: Option[PanelFrame],
+    title: Option[PanelFrame],
+    subtitle: Option[PanelFrame]
 ):
   def legendViewport(clip: Clip = Clip.Off): Option[Viewport] =
     legend.map { frame =>
@@ -78,6 +95,15 @@ final case class PlotFrames(
         clip = clip
       )
     }
+
+  def titleViewport: Option[Viewport] =
+    title.map(frameViewport)
+
+  def subtitleViewport: Option[Viewport] =
+    subtitle.map(frameViewport)
+
+  private def frameViewport(frame: PanelFrame): Viewport =
+    Viewport.unsafe(origin = frame.origin, size = frame.size, clip = Clip.Off)
 
 /** Allocates panel, axis-strip, and legend regions from declared extents and
   * estimated text sizes. Deterministic and portable: no font access, no
@@ -96,15 +122,24 @@ object PlotLayoutSolver:
     val marginX = npcX(policy.outerMarginPt)
     val marginY = npcY(policy.outerMarginPt)
 
-    val axisStripPtY = policy.tickLengthPt + policy.tickLabelGapPt + policy.metrics.heightPt(policy.axisFontPt)
-    def axisStripPtX(labels: Vector[String]): Double =
-      val labelWidth = labels.foldLeft(0.0)((acc, label) => math.max(acc, policy.metrics.widthPt(label, policy.axisFontPt)))
-      policy.tickLengthPt + policy.tickLabelGapPt + labelWidth
+    def titleExtent(request: AxisRequest): Double =
+      request.title.fold(0.0)(_ => policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleFontPt))
+    def axisStripPtY(request: AxisRequest): Double =
+      policy.tickLengthPt + policy.tickLabelGapPt + policy.metrics.heightPt(policy.axisFontPt) + titleExtent(request)
+    def axisStripPtX(request: AxisRequest): Double =
+      val labelWidth = request.labels.foldLeft(0.0)((acc, label) => math.max(acc, policy.metrics.widthPt(label, policy.axisFontPt)))
+      policy.tickLengthPt + policy.tickLabelGapPt + labelWidth + titleExtent(request)
 
-    val bottom = if request.axes.contains(AxisSide.Bottom) then npcY(axisStripPtY) else 0.0
-    val top = if request.axes.contains(AxisSide.Top) then npcY(axisStripPtY) else 0.0
-    val left = request.axes.get(AxisSide.Left).map(labels => npcX(axisStripPtX(labels))).getOrElse(0.0)
-    val right = request.axes.get(AxisSide.Right).map(labels => npcX(axisStripPtX(labels))).getOrElse(0.0)
+    val bottom = request.axes.get(AxisSide.Bottom).map(axis => npcY(axisStripPtY(axis))).getOrElse(0.0)
+    val top = request.axes.get(AxisSide.Top).map(axis => npcY(axisStripPtY(axis))).getOrElse(0.0)
+    val left = request.axes.get(AxisSide.Left).map(axis => npcX(axisStripPtX(axis))).getOrElse(0.0)
+    val right = request.axes.get(AxisSide.Right).map(axis => npcX(axisStripPtX(axis))).getOrElse(0.0)
+
+    val titleHeight = request.labels.title.map(_ => npcY(policy.metrics.heightPt(policy.plotTitleFontPt)))
+    val subtitleHeight = request.labels.subtitle.map(_ => npcY(policy.metrics.heightPt(policy.plotSubtitleFontPt)))
+    val betweenLabels = if titleHeight.nonEmpty && subtitleHeight.nonEmpty then npcY(policy.plotLabelGapPt) else 0.0
+    val belowLabels = if titleHeight.nonEmpty || subtitleHeight.nonEmpty then npcY(policy.plotLabelGapPt) else 0.0
+    val headerHeight = titleHeight.getOrElse(0.0) + subtitleHeight.getOrElse(0.0) + betweenLabels + belowLabels
 
     val legendWidth = request.legend.map { legend =>
       val labelPt = legend.labels.foldLeft(0.0) { (acc, label) =>
@@ -119,7 +154,7 @@ object PlotLayoutSolver:
     val panelX0 = marginX + left
     val panelX1 = 1.0 - marginX - right - legendGap - legendWidth.getOrElse(0.0)
     val panelY0 = marginY + bottom
-    val panelY1 = 1.0 - marginY - top
+    val panelY1 = 1.0 - marginY - top - headerHeight
 
     if panelX1 <= panelX0 then Left(GraphicsError.LayoutOverflow("panel width"))
     else if panelY1 <= panelY0 then Left(GraphicsError.LayoutOverflow("panel height"))
@@ -134,7 +169,16 @@ object PlotLayoutSolver:
             PanelFrame.npc(panelX1 + right + legendGap, panelY0, width, panelH).map(Some(_))
           case None =>
             Right(None)
-      yield PlotFrames(panel, axes, legend)
+        subtitle <- subtitleHeight match
+          case Some(height) =>
+            PanelFrame.npc(panelX0, panelY1 + top + belowLabels, panelW, height).map(Some(_))
+          case None => Right(None)
+        title <- titleHeight match
+          case Some(height) =>
+            val y = panelY1 + top + belowLabels + subtitleHeight.getOrElse(0.0) + betweenLabels
+            PanelFrame.npc(panelX0, y, panelW, height).map(Some(_))
+          case None => Right(None)
+      yield PlotFrames(panel, axes, legend, title, subtitle)
 
   private def axisFrames(
       request: PlotLayoutRequest,

@@ -83,7 +83,8 @@ final case class TrainedPlot[Row](
     layers: Vector[ResolvedLayer[Row]],
     layout: Option[PanelLayout],
     guides: Vector[ResolvedGuide],
-    scaleRegistry: PlotScaleRegistry
+    scaleRegistry: PlotScaleRegistry,
+    labelGrobs: Vector[Grob]
 ):
   def scene: Scene =
     val layerGrobs = layers.flatMap(_.grobs)
@@ -99,7 +100,7 @@ final case class TrainedPlot[Row](
               name = Some(GraphicsName.unsafe("plot-panel"))
             )
           )
-    Scene(panelGrobs ++ guides.map(_.grob))
+    Scene(panelGrobs ++ guides.map(_.grob) ++ labelGrobs)
 
   def droppedRows: Vector[DroppedRow[Row]] =
     layers.flatMap(_.droppedRows)
@@ -179,25 +180,32 @@ object PlotCompiler:
       plot: Plot[Row],
       options: PlotCompilerOptions = PlotCompilerOptions.default
   ): Either[GraphicsError, TrainedPlot[Row]] =
+    val effectiveOptions =
+      if !plot.labels.isEmpty && options.layout.isEmpty && options.frame.isEmpty && options.policy.isEmpty then
+        options.copy(policy = Some(LayoutPolicy()))
+      else options
+    val layoutPolicy = effectiveOptions.policy.getOrElse(LayoutPolicy())
     for
       plans <- MappingPhase.plan(plot)
       scales <- ScalePhase.train(plans)
       layers <- resolveLayers(scales.plans)
-      ranges <- LayoutPhase.panelRangesFor(options, layers)
+      ranges <- LayoutPhase.panelRangesFor(effectiveOptions, layers)
       specs <- GuidePhase.specs(
-        options.guides,
+        effectiveOptions.guides,
         scales.registry,
         ranges,
-        relativeLegend = options.policy.nonEmpty
+        relativeLegend = effectiveOptions.policy.nonEmpty,
+        labels = plot.labels
       )
-      resolution <- LayoutPhase.assemble(plot.coord, options, ranges, specs)
+      resolution <- LayoutPhase.assemble(plot.coord, effectiveOptions, ranges, specs, plot.labels)
       guides <- GuidePhase.lower(
         resolution.layout,
         resolution.frames,
         specs,
-        options.policy.getOrElse(LayoutPolicy())
+        layoutPolicy
       )
-    yield TrainedPlot(layers, resolution.layout, guides, scales.registry)
+      labels <- PlotLabelPhase.lower(plot.labels, resolution.frames, layoutPolicy)
+    yield TrainedPlot(layers, resolution.layout, guides, scales.registry, labels)
 
   private def resolveLayers[Row](
       plans: Vector[LayerPlan[Row]]
