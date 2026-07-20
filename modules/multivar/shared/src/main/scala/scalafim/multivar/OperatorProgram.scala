@@ -182,77 +182,144 @@ object FrameParameterization:
       Left(ProgramError.InvalidParameterization("block-diagonal parameterization requires distinct non-empty block ids"))
     else Right(FrameParameterization(variable, variable.featureSpace.descriptor, ParameterizationKind.BlockDiagonal(blocks)))
 
-private final case class ObjectiveBinding(parameter: ParameterId, componentSpace: MvSpace)
+private final case class ObjectiveBinding(parameter: ParameterId, featureSpace: MvSpace, componentSpace: MvSpace)
+
+/** Symbolic `W* S W`; the component operator is derived only after a candidate
+  * frame exists, never stored as if it preceded the optimization variable.
+  */
+final case class SelfCompressionExpression[
+    Feature <: SemanticSpace,
+    Component <: SemanticSpace,
+    R <: OperatorRoleTag,
+    E <: OperatorEvidence
+](
+    parameter: FrameVariable[Feature, Component],
+    secondOrder: Op[Dual[Feature], Primal[Feature], R, E]
+):
+  def evaluate[EW <: OperatorEvidence](
+      frame: OpFrame[Feature, Component, EW]
+  ): Op[Primal[Component], Dual[Component], ComponentOperatorRole, UncheckedEvidence] =
+    OperatorAlgebra.compress(frame, secondOrder, frame)
+
+/** Symbolic `W_s* S_st W_t` for a pair of frame variables. */
+final case class CrossCompressionExpression[
+    SourceFeature <: SemanticSpace,
+    TargetFeature <: SemanticSpace,
+    SourceComponent <: SemanticSpace,
+    TargetComponent <: SemanticSpace,
+    R <: OperatorRoleTag,
+    E <: OperatorEvidence
+](
+    source: FrameVariable[SourceFeature, SourceComponent],
+    target: FrameVariable[TargetFeature, TargetComponent],
+    secondOrder: Op[Dual[TargetFeature], Primal[SourceFeature], R, E]
+):
+  def evaluate[ES <: OperatorEvidence, ET <: OperatorEvidence](
+      sourceFrame: OpFrame[SourceFeature, SourceComponent, ES],
+      targetFrame: OpFrame[TargetFeature, TargetComponent, ET]
+  ): Op[Primal[TargetComponent], Dual[SourceComponent], ComponentOperatorRole, UncheckedEvidence] =
+    OperatorAlgebra.compress(sourceFrame, secondOrder, targetFrame)
 
 /** Closed catalog of objectives that lower to the common operator core. */
 enum BaseObjective:
-  case MaximizeTrace[K <: SemanticSpace, E <: OperatorEvidence](
-      parameter: ParameterId,
-      operator: Op[Primal[K], Dual[K], ComponentOperatorRole, E]
+  case MaximizeTrace[F <: SemanticSpace, K <: SemanticSpace, R <: OperatorRoleTag, E <: OperatorEvidence](
+      expression: SelfCompressionExpression[F, K, R, E]
   )
-  case MaximizeCrossTrace[Source <: SemanticSpace, Target <: SemanticSpace, E <: OperatorEvidence](
-      source: ParameterId,
-      target: ParameterId,
-      operator: Op[Primal[Target], Dual[Source], ComponentOperatorRole, E]
+  case MaximizeCrossTrace[
+      SF <: SemanticSpace,
+      TF <: SemanticSpace,
+      SK <: SemanticSpace,
+      TK <: SemanticSpace,
+      R <: OperatorRoleTag,
+      E <: OperatorEvidence
+  ](
+      expression: CrossCompressionExpression[SF, TF, SK, TK, R, E]
   )
-  case GeneralizedRayleigh[K <: SemanticSpace, EN <: OperatorEvidence, ED <: SpdEvidence](
-      parameter: ParameterId,
-      numerator: Op[Primal[K], Dual[K], ComponentOperatorRole, EN],
-      denominator: Op[Primal[K], Dual[K], ComponentOperatorRole, ED]
+  case GeneralizedRayleigh[
+      F <: SemanticSpace,
+      K <: SemanticSpace,
+      RN <: OperatorRoleTag,
+      EN <: OperatorEvidence,
+      RD <: OperatorRoleTag,
+      ED <: SpdEvidence
+  ](
+      numerator: SelfCompressionExpression[F, K, RN, EN],
+      denominator: SelfCompressionExpression[F, K, RD, ED]
   )
-  case TraceRatio[K <: SemanticSpace, EN <: OperatorEvidence, ED <: SpdEvidence](
-      parameter: ParameterId,
-      numerator: Op[Primal[K], Dual[K], ComponentOperatorRole, EN],
-      denominator: Op[Primal[K], Dual[K], ComponentOperatorRole, ED]
+  case TraceRatio[
+      F <: SemanticSpace,
+      K <: SemanticSpace,
+      RN <: OperatorRoleTag,
+      EN <: OperatorEvidence,
+      RD <: OperatorRoleTag,
+      ED <: SpdEvidence
+  ](
+      numerator: SelfCompressionExpression[F, K, RN, EN],
+      denominator: SelfCompressionExpression[F, K, RD, ED]
   )
-  case RatioTrace[K <: SemanticSpace, EN <: OperatorEvidence, ED <: SpdEvidence](
-      parameter: ParameterId,
-      numerator: Op[Primal[K], Dual[K], ComponentOperatorRole, EN],
-      denominator: Op[Primal[K], Dual[K], ComponentOperatorRole, ED]
+  case RatioTrace[
+      F <: SemanticSpace,
+      K <: SemanticSpace,
+      RN <: OperatorRoleTag,
+      EN <: OperatorEvidence,
+      RD <: OperatorRoleTag,
+      ED <: SpdEvidence
+  ](
+      numerator: SelfCompressionExpression[F, K, RN, EN],
+      denominator: SelfCompressionExpression[F, K, RD, ED]
   )
-  case MinimizeDisagreement[K <: SemanticSpace, E <: OperatorEvidence](
-      parameter: ParameterId,
-      operator: Op[Primal[K], Dual[K], ComponentOperatorRole, E]
+  case MinimizeDisagreement[F <: SemanticSpace, K <: SemanticSpace, R <: OperatorRoleTag, E <: OperatorEvidence](
+      expression: SelfCompressionExpression[F, K, R, E]
   )
-  case SequentialCrossRegression[Source <: SemanticSpace, Target <: SemanticSpace, EC <: OperatorEvidence, EP <: SpdEvidence](
-      source: ParameterId,
-      target: ParameterId,
-      cross: Op[Primal[Target], Dual[Source], ComponentOperatorRole, EC],
-      predictor: Op[Primal[Source], Dual[Source], ComponentOperatorRole, EP]
+  case SequentialCrossRegression[
+      SF <: SemanticSpace,
+      TF <: SemanticSpace,
+      SK <: SemanticSpace,
+      TK <: SemanticSpace,
+      RC <: OperatorRoleTag,
+      EC <: OperatorEvidence,
+      RP <: OperatorRoleTag,
+      EP <: SpdEvidence
+  ](
+      cross: CrossCompressionExpression[SF, TF, SK, TK, RC, EC],
+      predictor: SelfCompressionExpression[SF, SK, RP, EP]
   )
 
   def label: String =
     this match
-      case MaximizeTrace(_, _) => "maximize-trace"
-      case MaximizeCrossTrace(_, _, _) => "maximize-cross-trace"
-      case GeneralizedRayleigh(_, _, _) => "generalized-rayleigh"
-      case TraceRatio(_, _, _) => "trace-ratio"
-      case RatioTrace(_, _, _) => "ratio-trace"
-      case MinimizeDisagreement(_, _) => "minimize-disagreement"
-      case SequentialCrossRegression(_, _, _, _) => "sequential-cross-regression"
+      case MaximizeTrace(_) => "maximize-trace"
+      case MaximizeCrossTrace(_) => "maximize-cross-trace"
+      case GeneralizedRayleigh(_, _) => "generalized-rayleigh"
+      case TraceRatio(_, _) => "trace-ratio"
+      case RatioTrace(_, _) => "ratio-trace"
+      case MinimizeDisagreement(_) => "minimize-disagreement"
+      case SequentialCrossRegression(_, _) => "sequential-cross-regression"
 
   private[multivar] def bindings: Vector[ObjectiveBinding] =
     this match
-      case MaximizeTrace(parameter, operator) =>
-        Vector(ObjectiveBinding(parameter, operator.domain.descriptor.space))
-      case MaximizeCrossTrace(source, target, operator) =>
+      case MaximizeTrace(expression) =>
+        Vector(binding(expression.parameter))
+      case MaximizeCrossTrace(expression) =>
         Vector(
-          ObjectiveBinding(source, operator.codomain.descriptor.space),
-          ObjectiveBinding(target, operator.domain.descriptor.space)
+          binding(expression.source),
+          binding(expression.target)
         )
-      case GeneralizedRayleigh(parameter, numerator, _) =>
-        Vector(ObjectiveBinding(parameter, numerator.domain.descriptor.space))
-      case TraceRatio(parameter, numerator, _) =>
-        Vector(ObjectiveBinding(parameter, numerator.domain.descriptor.space))
-      case RatioTrace(parameter, numerator, _) =>
-        Vector(ObjectiveBinding(parameter, numerator.domain.descriptor.space))
-      case MinimizeDisagreement(parameter, operator) =>
-        Vector(ObjectiveBinding(parameter, operator.domain.descriptor.space))
-      case SequentialCrossRegression(source, target, cross, _) =>
+      case GeneralizedRayleigh(numerator, _) =>
+        Vector(binding(numerator.parameter))
+      case TraceRatio(numerator, _) =>
+        Vector(binding(numerator.parameter))
+      case RatioTrace(numerator, _) =>
+        Vector(binding(numerator.parameter))
+      case MinimizeDisagreement(expression) =>
+        Vector(binding(expression.parameter))
+      case SequentialCrossRegression(cross, _) =>
         Vector(
-          ObjectiveBinding(source, cross.codomain.descriptor.space),
-          ObjectiveBinding(target, cross.domain.descriptor.space)
+          binding(cross.source),
+          binding(cross.target)
         )
+
+  private def binding(variable: FrameVariable[?, ?]): ObjectiveBinding =
+    ObjectiveBinding(variable.id, variable.featureSpace.descriptor, variable.componentSpace.descriptor)
 
 enum TargetCapability:
   case Linear
@@ -350,15 +417,20 @@ final case class ConstraintTerm(
 ):
   def symmetry: FrameSymmetry = feasibleSet.symmetry
 
-final case class FrameNormalization[Feature <: SemanticSpace, Component <: SemanticSpace, E <: SpdEvidence] private (
-    parameter: FrameVariable[Feature, Component],
-    geometry: OpMetric[Feature, E]
+final class FrameNormalization[Feature <: SemanticSpace, Component <: SemanticSpace, E <: SpdEvidence] private (
+    val parameter: FrameVariable[Feature, Component],
+    val geometry: Op[Dual[Feature], Primal[Feature], ? <: OperatorRoleTag, E]
 )
 
 object FrameNormalization:
-  def apply[Feature <: SemanticSpace, Component <: SemanticSpace, E <: SpdEvidence](
+  def apply[
+      Feature <: SemanticSpace,
+      Component <: SemanticSpace,
+      R <: OperatorRoleTag,
+      E <: SpdEvidence
+  ](
       parameter: FrameVariable[Feature, Component],
-      geometry: OpMetric[Feature, E]
+      geometry: Op[Dual[Feature], Primal[Feature], R, E]
   ): FrameNormalization[Feature, Component, E] =
     new FrameNormalization(parameter, geometry)
 
@@ -403,13 +475,13 @@ object ResultSemantics:
     val symmetry = (penalties.map(_.symmetry) ++ constraints.map(_.symmetry)).foldLeft(FrameSymmetry.Orthogonal)(meet)
     val smoothSpectral = penalties.isEmpty && constraints.isEmpty
     objective match
-      case BaseObjective.SequentialCrossRegression(_, _, _, _) =>
+      case BaseObjective.SequentialCrossRegression(_, _) =>
         ResultSemantics(
           ResultEquivalence.PredictionEquivalent(PredictionMetric.SquaredError, CertificateTolerance.strict),
           RepresentativeRule.PredictionMap,
           if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint
         )
-      case BaseObjective.MaximizeCrossTrace(_, _, _) =>
+      case BaseObjective.MaximizeCrossTrace(_) =>
         ResultSemantics(
           ResultEquivalence.FrameEquivalent(symmetry, CertificateTolerance.strict),
           RepresentativeRule.OrderedSpectrumThenSign,
@@ -507,9 +579,12 @@ object OperatorProgram:
           parameters.find(_.variable.id == binding.parameter) match
             case None => Left(ProgramError.UnknownParameter(binding.parameter))
             case Some(parameter) =>
-              val actual = parameter.variable.componentSpace.descriptor
-              if actual != binding.componentSpace then
-                Left(ProgramError.ComponentSpaceMismatch(binding.parameter, binding.componentSpace, actual))
+              val actualFeature = parameter.variable.featureSpace.descriptor
+              val actualComponent = parameter.variable.componentSpace.descriptor
+              if actualFeature != binding.featureSpace then
+                Left(ProgramError.FeatureSpaceMismatch(binding.parameter, binding.featureSpace, actualFeature))
+              else if actualComponent != binding.componentSpace then
+                Left(ProgramError.ComponentSpaceMismatch(binding.parameter, binding.componentSpace, actualComponent))
               else Right(())
 
   private def validateNormalizations(
@@ -590,40 +665,68 @@ object OperatorProgramFit:
   * not introduce method-specific solver or matrix representations.
   */
 object OperatorPrograms:
-  def gpca[Feature <: SemanticSpace, Component <: SemanticSpace, EO <: OperatorEvidence, EN <: SpdEvidence](
+  def gpca[
+      Feature <: SemanticSpace,
+      Component <: SemanticSpace,
+      RO <: OperatorRoleTag,
+      EO <: OperatorEvidence,
+      EN <: SpdEvidence
+  ](
       parameterization: FrameParameterization[Feature, Component],
-      covariance: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EO],
+      covariance: Op[Dual[Feature], Primal[Feature], RO, EO],
       normalization: FrameNormalization[Feature, Component, EN]
   ): Either[ProgramError, OperatorProgram] =
     OperatorProgram.from(
       Vector(parameterization),
-      BaseObjective.MaximizeTrace(parameterization.variable.id, covariance),
+      BaseObjective.MaximizeTrace(SelfCompressionExpression(parameterization.variable, covariance)),
       Vector(normalization),
       provenance = SemanticProvenance.source("gpca-program")
     )
 
-  def ldaRayleigh[Feature <: SemanticSpace, Component <: SemanticSpace, EB <: OperatorEvidence, EW <: SpdEvidence, EN <: SpdEvidence](
+  def ldaRayleigh[
+      Feature <: SemanticSpace,
+      Component <: SemanticSpace,
+      RB <: OperatorRoleTag,
+      EB <: OperatorEvidence,
+      RW <: OperatorRoleTag,
+      EW <: SpdEvidence,
+      EN <: SpdEvidence
+  ](
       parameterization: FrameParameterization[Feature, Component],
-      between: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EB],
-      within: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EW],
+      between: Op[Dual[Feature], Primal[Feature], RB, EB],
+      within: Op[Dual[Feature], Primal[Feature], RW, EW],
       normalization: FrameNormalization[Feature, Component, EN]
   ): Either[ProgramError, OperatorProgram] =
     OperatorProgram.from(
       Vector(parameterization),
-      BaseObjective.GeneralizedRayleigh(parameterization.variable.id, between, within),
+      BaseObjective.GeneralizedRayleigh(
+        SelfCompressionExpression(parameterization.variable, between),
+        SelfCompressionExpression(parameterization.variable, within)
+      ),
       Vector(normalization),
       provenance = SemanticProvenance.source("lda-rayleigh-program")
     )
 
-  def ldaTraceRatio[Feature <: SemanticSpace, Component <: SemanticSpace, EB <: OperatorEvidence, EW <: SpdEvidence, EN <: SpdEvidence](
+  def ldaTraceRatio[
+      Feature <: SemanticSpace,
+      Component <: SemanticSpace,
+      RB <: OperatorRoleTag,
+      EB <: OperatorEvidence,
+      RW <: OperatorRoleTag,
+      EW <: SpdEvidence,
+      EN <: SpdEvidence
+  ](
       parameterization: FrameParameterization[Feature, Component],
-      between: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EB],
-      within: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EW],
+      between: Op[Dual[Feature], Primal[Feature], RB, EB],
+      within: Op[Dual[Feature], Primal[Feature], RW, EW],
       normalization: FrameNormalization[Feature, Component, EN]
   ): Either[ProgramError, OperatorProgram] =
     OperatorProgram.from(
       Vector(parameterization),
-      BaseObjective.TraceRatio(parameterization.variable.id, between, within),
+      BaseObjective.TraceRatio(
+        SelfCompressionExpression(parameterization.variable, between),
+        SelfCompressionExpression(parameterization.variable, within)
+      ),
       Vector(normalization),
       provenance = SemanticProvenance.source("lda-trace-ratio-program")
     )
@@ -633,13 +736,14 @@ object OperatorPrograms:
       TargetFeature <: SemanticSpace,
       SourceComponent <: SemanticSpace,
       TargetComponent <: SemanticSpace,
+      RC <: OperatorRoleTag,
       EC <: OperatorEvidence,
       ENS <: SpdEvidence,
       ENT <: SpdEvidence
   ](
       source: FrameParameterization[SourceFeature, SourceComponent],
       target: FrameParameterization[TargetFeature, TargetComponent],
-      cross: Op[Primal[TargetComponent], Dual[SourceComponent], ComponentOperatorRole, EC],
+      cross: Op[Dual[TargetFeature], Primal[SourceFeature], RC, EC],
       sourceNormalization: FrameNormalization[SourceFeature, SourceComponent, ENS],
       targetNormalization: FrameNormalization[TargetFeature, TargetComponent, ENT]
   ): Either[ProgramError, OperatorProgram] =
@@ -650,26 +754,33 @@ object OperatorPrograms:
       TargetFeature <: SemanticSpace,
       SourceComponent <: SemanticSpace,
       TargetComponent <: SemanticSpace,
+      RC <: OperatorRoleTag,
       EC <: OperatorEvidence,
       ENS <: SpdEvidence,
       ENT <: SpdEvidence
   ](
       source: FrameParameterization[SourceFeature, SourceComponent],
       target: FrameParameterization[TargetFeature, TargetComponent],
-      cross: Op[Primal[TargetComponent], Dual[SourceComponent], ComponentOperatorRole, EC],
+      cross: Op[Dual[TargetFeature], Primal[SourceFeature], RC, EC],
       sourceNormalization: FrameNormalization[SourceFeature, SourceComponent, ENS],
       targetNormalization: FrameNormalization[TargetFeature, TargetComponent, ENT]
   ): Either[ProgramError, OperatorProgram] =
     paired("plsc-program", source, target, cross, sourceNormalization, targetNormalization)
 
-  def multiset[Feature <: SemanticSpace, Component <: SemanticSpace, EO <: OperatorEvidence, EN <: SpdEvidence](
+  def multiset[
+      Feature <: SemanticSpace,
+      Component <: SemanticSpace,
+      RO <: OperatorRoleTag,
+      EO <: OperatorEvidence,
+      EN <: SpdEvidence
+  ](
       parameterization: FrameParameterization[Feature, Component],
-      association: Op[Primal[Component], Dual[Component], ComponentOperatorRole, EO],
+      association: Op[Dual[Feature], Primal[Feature], RO, EO],
       normalization: FrameNormalization[Feature, Component, EN]
   ): Either[ProgramError, OperatorProgram] =
     OperatorProgram.from(
       Vector(parameterization),
-      BaseObjective.MaximizeTrace(parameterization.variable.id, association),
+      BaseObjective.MaximizeTrace(SelfCompressionExpression(parameterization.variable, association)),
       Vector(normalization),
       provenance = SemanticProvenance.source("multiset-program")
     )
@@ -679,6 +790,7 @@ object OperatorPrograms:
       TargetFeature <: SemanticSpace,
       SourceComponent <: SemanticSpace,
       TargetComponent <: SemanticSpace,
+      RC <: OperatorRoleTag,
       EC <: OperatorEvidence,
       ENS <: SpdEvidence,
       ENT <: SpdEvidence
@@ -686,13 +798,13 @@ object OperatorPrograms:
       provenance: String,
       source: FrameParameterization[SourceFeature, SourceComponent],
       target: FrameParameterization[TargetFeature, TargetComponent],
-      cross: Op[Primal[TargetComponent], Dual[SourceComponent], ComponentOperatorRole, EC],
+      cross: Op[Dual[TargetFeature], Primal[SourceFeature], RC, EC],
       sourceNormalization: FrameNormalization[SourceFeature, SourceComponent, ENS],
       targetNormalization: FrameNormalization[TargetFeature, TargetComponent, ENT]
   ): Either[ProgramError, OperatorProgram] =
     OperatorProgram.from(
       Vector(source, target),
-      BaseObjective.MaximizeCrossTrace(source.variable.id, target.variable.id, cross),
+      BaseObjective.MaximizeCrossTrace(CrossCompressionExpression(source.variable, target.variable, cross)),
       Vector(sourceNormalization, targetNormalization),
       provenance = SemanticProvenance.source(provenance)
     )

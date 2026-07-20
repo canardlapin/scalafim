@@ -8,19 +8,17 @@ class OperatorProgramSuite extends munit.FunSuite:
 
   test("every closed base objective retains its typed dense operators"):
     val fixture = programFixture()
+    val source = SelfCompressionExpression(fixture.source.variable, fixture.sourceValue)
+    val denominator = SelfCompressionExpression(fixture.source.variable, fixture.sourceDenominator)
+    val cross = CrossCompressionExpression(fixture.source.variable, fixture.target.variable, fixture.cross)
     val objectives = Vector[BaseObjective](
-      BaseObjective.MaximizeTrace(fixture.source.variable.id, fixture.sourceValue),
-      BaseObjective.MaximizeCrossTrace(fixture.source.variable.id, fixture.target.variable.id, fixture.cross),
-      BaseObjective.GeneralizedRayleigh(fixture.source.variable.id, fixture.sourceValue, fixture.sourceDenominator),
-      BaseObjective.TraceRatio(fixture.source.variable.id, fixture.sourceValue, fixture.sourceDenominator),
-      BaseObjective.RatioTrace(fixture.source.variable.id, fixture.sourceValue, fixture.sourceDenominator),
-      BaseObjective.MinimizeDisagreement(fixture.source.variable.id, fixture.sourceValue),
-      BaseObjective.SequentialCrossRegression(
-        fixture.source.variable.id,
-        fixture.target.variable.id,
-        fixture.cross,
-        fixture.sourceDenominator
-      )
+      BaseObjective.MaximizeTrace(source),
+      BaseObjective.MaximizeCrossTrace(cross),
+      BaseObjective.GeneralizedRayleigh(source, denominator),
+      BaseObjective.TraceRatio(source, denominator),
+      BaseObjective.RatioTrace(source, denominator),
+      BaseObjective.MinimizeDisagreement(source),
+      BaseObjective.SequentialCrossRegression(cross, denominator)
     )
 
     assertEquals(
@@ -35,22 +33,17 @@ class OperatorProgramSuite extends munit.FunSuite:
         "sequential-cross-regression"
       )
     )
+    assertScalarOperator(source.evaluate(fixture.sourceFrame), 1.75)
+    assertScalarOperator(denominator.evaluate(fixture.sourceFrame), 4.5)
+    assertScalarOperator(cross.evaluate(fixture.sourceFrame, fixture.targetFrame), 0.95)
     objectives.foreach:
-      case BaseObjective.MaximizeTrace(_, operator) => assertScalarOperator(operator, 2.0)
-      case BaseObjective.MaximizeCrossTrace(_, _, operator) => assertScalarOperator(operator, 0.75)
-      case BaseObjective.GeneralizedRayleigh(_, numerator, denominator) =>
-        assertScalarOperator(numerator, 2.0)
-        assertScalarOperator(denominator, 4.0)
-      case BaseObjective.TraceRatio(_, numerator, denominator) =>
-        assertScalarOperator(numerator, 2.0)
-        assertScalarOperator(denominator, 4.0)
-      case BaseObjective.RatioTrace(_, numerator, denominator) =>
-        assertScalarOperator(numerator, 2.0)
-        assertScalarOperator(denominator, 4.0)
-      case BaseObjective.MinimizeDisagreement(_, operator) => assertScalarOperator(operator, 2.0)
-      case BaseObjective.SequentialCrossRegression(_, _, cross, predictor) =>
-        assertScalarOperator(cross, 0.75)
-        assertScalarOperator(predictor, 4.0)
+      case BaseObjective.MaximizeTrace(_) => ()
+      case BaseObjective.MaximizeCrossTrace(_) => ()
+      case BaseObjective.GeneralizedRayleigh(_, _) => ()
+      case BaseObjective.TraceRatio(_, _) => ()
+      case BaseObjective.RatioTrace(_, _) => ()
+      case BaseObjective.MinimizeDisagreement(_) => ()
+      case BaseObjective.SequentialCrossRegression(_, _) => ()
 
   test("GPCA, LDA, CCA, PLSC, and multiset builders compile to one program type"):
     val fixture = programFixture()
@@ -141,7 +134,9 @@ class OperatorProgramSuite extends munit.FunSuite:
 
   test("program construction rejects unknown, duplicated, and unnormalized parameters"):
     val fixture = programFixture()
-    val objective = BaseObjective.MaximizeTrace(fixture.source.variable.id, fixture.sourceValue)
+    val objective = BaseObjective.MaximizeTrace(
+      SelfCompressionExpression(fixture.source.variable, fixture.sourceValue)
+    )
     val duplicate = OperatorProgram.from(
       Vector(fixture.source, fixture.source),
       objective,
@@ -167,9 +162,7 @@ class OperatorProgramSuite extends munit.FunSuite:
     val collapsedPair = OperatorProgram.from(
       Vector(fixture.source),
       BaseObjective.MaximizeCrossTrace(
-        fixture.source.variable.id,
-        fixture.source.variable.id,
-        fixture.cross
+        CrossCompressionExpression(fixture.source.variable, fixture.source.variable, fixture.sourceValue)
       ),
       Vector(fixture.sourceNormalization)
     )
@@ -193,7 +186,7 @@ class OperatorProgramSuite extends munit.FunSuite:
     val sparse = accepted(
       OperatorProgram.from(
         Vector(fixture.source),
-        BaseObjective.MaximizeTrace(fixture.source.variable.id, fixture.sourceValue),
+        BaseObjective.MaximizeTrace(SelfCompressionExpression(fixture.source.variable, fixture.sourceValue)),
         Vector(fixture.sourceNormalization),
         penalties = Vector(l1)
       )
@@ -202,10 +195,8 @@ class OperatorProgramSuite extends munit.FunSuite:
       OperatorProgram.from(
         Vector(fixture.source, fixture.target),
         BaseObjective.SequentialCrossRegression(
-          fixture.source.variable.id,
-          fixture.target.variable.id,
-          fixture.cross,
-          fixture.sourceDenominator
+          CrossCompressionExpression(fixture.source.variable, fixture.target.variable, fixture.cross),
+          SelfCompressionExpression(fixture.source.variable, fixture.sourceDenominator)
         ),
         Vector(fixture.sourceNormalization, fixture.targetNormalization)
       )
@@ -246,8 +237,8 @@ class OperatorProgramSuite extends munit.FunSuite:
     val program = accepted(
       OperatorPrograms.gpca(
         parameterization,
-        component(componentSpace.evidence, 2.0, "fit-value"),
-        FrameNormalization(variable, certifiedMetric(feature.evidence, DMat.eye(2), "fit-normalization"))
+        featureOperator(feature.evidence, matrix(Vector(Vector(2.0, 0.0), Vector(0.0, 1.0))), "fit-value"),
+        FrameNormalization(variable, certifiedCovariance(feature.evidence, DMat.eye(2), "fit-normalization"))
       )
     )
     val weights: OpFrame[F, K, UncheckedEvidence] = acceptedSemantic(
@@ -305,7 +296,7 @@ class OperatorProgramSuite extends munit.FunSuite:
       type G = g.Id
       type K = k.Id
       val variable: FrameVariable[F, K] = ???
-      val metric: OpMetric[G, CertifiedSpd] = ???
+      val metric: OpCovariance[G, CertifiedSpd] = ???
       FrameNormalization(variable, metric)
     """)
     assert(errors.nonEmpty)
@@ -318,11 +309,13 @@ class OperatorProgramSuite extends munit.FunSuite:
   ](
       source: FrameParameterization[SourceFeature, SourceComponent],
       target: FrameParameterization[TargetFeature, TargetComponent],
-      sourceValue: Op[Primal[SourceComponent], Dual[SourceComponent], ComponentOperatorRole, UncheckedEvidence],
-      sourceDenominator: Op[Primal[SourceComponent], Dual[SourceComponent], ComponentOperatorRole, CertifiedSpd],
-      cross: Op[Primal[TargetComponent], Dual[SourceComponent], ComponentOperatorRole, UncheckedEvidence],
+      sourceValue: Op[Dual[SourceFeature], Primal[SourceFeature], CovarianceOperatorRole, UncheckedEvidence],
+      sourceDenominator: Op[Dual[SourceFeature], Primal[SourceFeature], CovarianceOperatorRole, CertifiedSpd],
+      cross: Op[Dual[TargetFeature], Primal[SourceFeature], CrossOperatorRole, UncheckedEvidence],
       sourceNormalization: FrameNormalization[SourceFeature, SourceComponent, CertifiedSpd],
-      targetNormalization: FrameNormalization[TargetFeature, TargetComponent, CertifiedSpd]
+      targetNormalization: FrameNormalization[TargetFeature, TargetComponent, CertifiedSpd],
+      sourceFrame: OpFrame[SourceFeature, SourceComponent, UncheckedEvidence],
+      targetFrame: OpFrame[TargetFeature, TargetComponent, UncheckedEvidence]
   )
 
   private def programFixture(): Fixture[?, ?, ?, ?] =
@@ -339,68 +332,99 @@ class OperatorProgramSuite extends munit.FunSuite:
     Fixture[SF, TF, SK, TK](
       FrameParameterization.identity(sourceVariable),
       FrameParameterization.identity(targetVariable),
-      component(sourceComponent.evidence, 2.0, "program-source-value"),
-      certifiedComponent(sourceComponent.evidence, 4.0, "program-source-denominator"),
-      crossComponent(sourceComponent.evidence, targetComponent.evidence, 0.75, "program-cross"),
-      FrameNormalization(sourceVariable, certifiedMetric(sourceFeature.evidence, DMat.eye(2), "program-source-normalization")),
-      FrameNormalization(targetVariable, certifiedMetric(targetFeature.evidence, DMat.eye(3), "program-target-normalization"))
-    )
-
-  private def component[K <: SemanticSpace](
-      space: SpaceEvidence[K],
-      value: Double,
-      name: String
-  ): Op[Primal[K], Dual[K], ComponentOperatorRole, UncheckedEvidence] =
-    acceptedSemantic(
-      Op.fromDense(
-        matrix(Vector(Vector(value))),
-        CoordinateEvidence.primal(space),
-        CoordinateEvidence.dual(space),
-        OperatorRoleWitness.component,
-        id(name)
+      featureOperator(
+        sourceFeature.evidence,
+        matrix(Vector(Vector(2.0, 0.5), Vector(0.5, 1.0))),
+        "program-source-value"
+      ),
+      certifiedCovariance(
+        sourceFeature.evidence,
+        matrix(Vector(Vector(4.0, 0.0), Vector(0.0, 2.0))),
+        "program-source-denominator"
+      ),
+      crossFeatureOperator(
+        sourceFeature.evidence,
+        targetFeature.evidence,
+        matrix(Vector(Vector(0.75, 0.2, -0.1), Vector(0.5, -0.4, 0.3))),
+        "program-cross"
+      ),
+      FrameNormalization(sourceVariable, certifiedCovariance(sourceFeature.evidence, DMat.eye(2), "program-source-normalization")),
+      FrameNormalization(targetVariable, certifiedCovariance(targetFeature.evidence, DMat.eye(3), "program-target-normalization")),
+      frame(
+        sourceFeature.evidence,
+        sourceComponent.evidence,
+        matrix(Vector(Vector(1.0), Vector(-0.5))),
+        "program-source-frame"
+      ),
+      frame(
+        targetFeature.evidence,
+        targetComponent.evidence,
+        matrix(Vector(Vector(1.0), Vector(0.5), Vector(-1.0))),
+        "program-target-frame"
       )
     )
 
-  private def certifiedComponent[K <: SemanticSpace](
-      space: SpaceEvidence[K],
-      value: Double,
-      name: String
-  ): Op[Primal[K], Dual[K], ComponentOperatorRole, CertifiedSpd] =
-    val linear = acceptedSemantic(
-      Lin.fromDenseMatrix(
-        matrix(Vector(Vector(value))),
-        CoordinateEvidence.primal(space),
-        CoordinateEvidence.dual(space),
-        id(name)
-      )
-    )
-    acceptedSemantic(Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.component), acceptedSemantic(FormCertificates.spd(linear))))
-
-  private def crossComponent[Source <: SemanticSpace, Target <: SemanticSpace](
-      source: SpaceEvidence[Source],
-      target: SpaceEvidence[Target],
-      value: Double,
-      name: String
-  ): Op[Primal[Target], Dual[Source], ComponentOperatorRole, UncheckedEvidence] =
-    acceptedSemantic(
-      Op.fromDense(
-        matrix(Vector(Vector(value))),
-        CoordinateEvidence.primal(target),
-        CoordinateEvidence.dual(source),
-        OperatorRoleWitness.component,
-        id(name)
-      )
-    )
-
-  private def certifiedMetric[S <: SemanticSpace](
-      space: SpaceEvidence[S],
+  private def featureOperator[F <: SemanticSpace](
+      space: SpaceEvidence[F],
       value: DMat,
       name: String
-  ): OpMetric[S, CertifiedSpd] =
-    val linear = acceptedSemantic(
-      Lin.fromDenseMatrix(value, CoordinateEvidence.primal(space), CoordinateEvidence.dual(space), id(name))
+  ): Op[Dual[F], Primal[F], CovarianceOperatorRole, UncheckedEvidence] =
+    acceptedSemantic(
+      Op.fromDense(
+        value,
+        CoordinateEvidence.dual(space),
+        CoordinateEvidence.primal(space),
+        OperatorRoleWitness.covariance,
+        id(name)
+      )
     )
-    acceptedSemantic(Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.metric), acceptedSemantic(FormCertificates.spd(linear))))
+
+  private def certifiedCovariance[F <: SemanticSpace](
+      space: SpaceEvidence[F],
+      value: DMat,
+      name: String
+  ): Op[Dual[F], Primal[F], CovarianceOperatorRole, CertifiedSpd] =
+    val linear = acceptedSemantic(
+      Lin.fromDenseMatrix(
+        value,
+        CoordinateEvidence.dual(space),
+        CoordinateEvidence.primal(space),
+        id(name)
+      )
+    )
+    acceptedSemantic(Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.covariance), acceptedSemantic(FormCertificates.spd(linear))))
+
+  private def crossFeatureOperator[Source <: SemanticSpace, Target <: SemanticSpace](
+      source: SpaceEvidence[Source],
+      target: SpaceEvidence[Target],
+      value: DMat,
+      name: String
+  ): Op[Dual[Target], Primal[Source], CrossOperatorRole, UncheckedEvidence] =
+    acceptedSemantic(
+      Op.fromDense(
+        value,
+        CoordinateEvidence.dual(target),
+        CoordinateEvidence.primal(source),
+        OperatorRoleWitness.cross,
+        id(name)
+      )
+    )
+
+  private def frame[F <: SemanticSpace, K <: SemanticSpace](
+      feature: SpaceEvidence[F],
+      component: SpaceEvidence[K],
+      value: DMat,
+      name: String
+  ): OpFrame[F, K, UncheckedEvidence] =
+    acceptedSemantic(
+      Op.fromDense(
+        value,
+        CoordinateEvidence.primal(component),
+        CoordinateEvidence.dual(feature),
+        OperatorRoleWitness.frame,
+        id(name)
+      )
+    )
 
   private def assertScalarOperator(
       operator: Op[? <: Coordinate, ? <: Coordinate, ? <: OperatorRoleTag, ? <: OperatorEvidence],

@@ -14,14 +14,14 @@ class OperatorProgramIrSuite extends munit.FunSuite:
     val parameterization = FrameParameterization.identity(variable)
     val value = acceptedSemantic(
       Op.fromDense(
-        matrix(Vector(Vector(2.0))),
-        CoordinateEvidence.primal(component.evidence),
-        CoordinateEvidence.dual(component.evidence),
-        OperatorRoleWitness.component,
+        matrix(Vector(Vector(2.0, 0.0), Vector(0.0, 1.0))),
+        CoordinateEvidence.dual(feature.evidence),
+        CoordinateEvidence.primal(feature.evidence),
+        OperatorRoleWitness.covariance,
         id("ir-component-value")
       )
     )
-    val normalization = FrameNormalization(variable, certifiedMetric(feature.evidence, DMat.eye(2), "ir-normalization"))
+    val normalization = FrameNormalization(variable, certifiedCovariance(feature.evidence, DMat.eye(2), "ir-normalization"))
     val penalty = PenaltyTerm(
       TargetExpression.frame(variable.id),
       FunctionalKind.L1,
@@ -30,7 +30,7 @@ class OperatorProgramIrSuite extends munit.FunSuite:
     val program = acceptedProgram(
       OperatorProgram.from(
         Vector(parameterization),
-        BaseObjective.MaximizeTrace(variable.id, value),
+        BaseObjective.MaximizeTrace(SelfCompressionExpression(variable, value)),
         Vector(normalization),
         penalties = Vector(penalty),
         provenance = SemanticProvenance.source("ir-program")
@@ -64,17 +64,17 @@ class OperatorProgramIrSuite extends munit.FunSuite:
         "\"guarantee\":\"stationary-point\"}}"
     )
 
-  private def certifiedMetric[S <: SemanticSpace](
+  private def certifiedCovariance[S <: SemanticSpace](
       space: SpaceEvidence[S],
       value: DMat,
       name: String
-  ): OpMetric[S, CertifiedSpd] =
+  ): OpCovariance[S, CertifiedSpd] =
     val linear = acceptedSemantic(
-      Lin.fromDenseMatrix(value, CoordinateEvidence.primal(space), CoordinateEvidence.dual(space), id(name))
+      Lin.fromDenseMatrix(value, CoordinateEvidence.dual(space), CoordinateEvidence.primal(space), id(name))
     )
     acceptedSemantic(
       Op.certifiedSpd(
-        Op.fromLin(linear, OperatorRoleWitness.metric),
+        Op.fromLin(linear, OperatorRoleWitness.covariance),
         acceptedSemantic(FormCertificates.spd(linear))
       )
     )
