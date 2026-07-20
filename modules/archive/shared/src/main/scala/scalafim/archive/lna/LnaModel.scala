@@ -1,6 +1,6 @@
 package scalafim.archive.lna
 
-import scalafim.archive.{ArchivePath, RunLabel}
+import scalafim.archive.{ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, TransformName, TransformPort}
 import scalafim.image.{DMat, NeuroSpace}
 
 enum LnaVersion(val id: String):
@@ -16,6 +16,19 @@ enum LnaDType:
       case UInt8   => 1
       case UInt16  => 2
       case Int32   => 4
+
+  def isFloat: Boolean =
+    this == Float32 || this == Float64
+
+  def isInteger: Boolean =
+    this == UInt8 || this == UInt16 || this == Int32
+
+  def integerRange: Option[(Int, Int)] =
+    this match
+      case UInt8  => Some((0, 255))
+      case UInt16 => Some((0, 65535))
+      case Int32  => None
+      case _      => None
 
 enum DatasetRole:
   case RawData, Quantized, Scale, Offset, BasisMatrix, Coefficients, TemporalBasis, Loadings, SampleOffset, DeltaStream, FirstValues, Mask, Metadata
@@ -88,6 +101,63 @@ enum TemporalDctNorm(val value: String):
   case Ortho extends TemporalDctNorm("ortho")
   case None extends TemporalDctNorm("none")
 
+opaque type LnaMetadata = Map[String, String]
+
+object LnaMetadata:
+  val Empty: LnaMetadata = Map.empty
+
+  def apply(values: Map[String, String]): Either[ArchiveError, LnaMetadata] =
+    if values.keys.exists(_.trim.isEmpty) then Left(ArchiveError.InvalidArchive("metadata keys must be non-empty"))
+    else if values.keys.exists(_.exists(_.isControl)) then Left(ArchiveError.InvalidArchive("metadata keys must not contain control characters"))
+    else Right(values)
+
+  def unsafe(values: Map[String, String]): LnaMetadata =
+    apply(values).fold(err => throw IllegalArgumentException(err.message), identity)
+
+  extension (metadata: LnaMetadata)
+    def values: Map[String, String] = metadata
+    def get(key: String): Option[String] = metadata.get(key)
+
+opaque type QuantBits = Int
+
+object QuantBits:
+  def apply(value: Int): Either[ArchiveError, QuantBits] =
+    if value < 1 || value > 16 then Left(ArchiveError.InvalidArchive(s"quant bits must be between 1 and 16, got $value"))
+    else Right(value)
+
+  def unsafe(value: Int): QuantBits =
+    apply(value).fold(err => throw IllegalArgumentException(err.message), identity)
+
+  extension (bits: QuantBits)
+    def value: Int = bits
+    def levels: Int = (1 << bits) - 1
+    def storageDType: LnaDType =
+      if bits <= 8 then LnaDType.UInt8 else LnaDType.UInt16
+
+enum CenteringPolicy:
+  case Centered, Uncentered
+
+  def enabled: Boolean =
+    this match
+      case Centered   => true
+      case Uncentered => false
+
+object CenteringPolicy:
+  def fromBoolean(value: Boolean): CenteringPolicy =
+    if value then CenteringPolicy.Centered else CenteringPolicy.Uncentered
+
+enum ClipPolicy:
+  case RejectClipping, AllowClipping
+
+  def allowClip: Boolean =
+    this match
+      case RejectClipping => false
+      case AllowClipping  => true
+
+object ClipPolicy:
+  def fromBoolean(value: Boolean): ClipPolicy =
+    if value then ClipPolicy.AllowClipping else ClipPolicy.RejectClipping
+
 final case class QuantParams(
     bits: Int = 8,
     method: QuantMethod = QuantMethod.Range,
@@ -96,6 +166,36 @@ final case class QuantParams(
     allowClip: Boolean = false
 ):
   require(bits >= 1 && bits <= 16, "quant bits must be between 1 and 16")
+
+  def quantBits: QuantBits =
+    QuantBits.unsafe(bits)
+
+  def centeringPolicy: CenteringPolicy =
+    CenteringPolicy.fromBoolean(center)
+
+  def clipPolicy: ClipPolicy =
+    ClipPolicy.fromBoolean(allowClip)
+
+object QuantParams:
+  def checked(
+      bits: Int = 8,
+      method: QuantMethod = QuantMethod.Range,
+      center: Boolean = true,
+      scaleScope: QuantScaleScope = QuantScaleScope.Global,
+      allowClip: Boolean = false
+  ): Either[ArchiveError, QuantParams] =
+    QuantBits(bits).map { value =>
+      QuantParams(value.value, method, center, scaleScope, allowClip)
+    }
+
+  def typed(
+      bits: QuantBits,
+      method: QuantMethod = QuantMethod.Range,
+      centering: CenteringPolicy = CenteringPolicy.Centered,
+      scaleScope: QuantScaleScope = QuantScaleScope.Global,
+      clipping: ClipPolicy = ClipPolicy.RejectClipping
+  ): QuantParams =
+    QuantParams(bits.value, method, centering.enabled, scaleScope, clipping.allowClip)
 
 final case class QuantReport(
     bits: Int,
@@ -107,6 +207,18 @@ final case class QuantReport(
   require(bits >= 1 && bits <= 16, "quant report bits must be between 1 and 16")
   require(nClippedTotal >= 0, "clipped sample count must be non-negative")
   require(clipPct.isFinite && clipPct >= 0.0 && clipPct <= 100.0, "clip percentage must be finite and between 0 and 100")
+
+object QuantReport:
+  def checked(
+      bits: Int,
+      method: QuantMethod,
+      scaleScope: QuantScaleScope,
+      nClippedTotal: Int,
+      clipPct: Double
+  ): Either[ArchiveError, QuantReport] =
+    if nClippedTotal < 0 then Left(ArchiveError.InvalidArchive("clipped sample count must be non-negative"))
+    else if !clipPct.isFinite || clipPct < 0.0 || clipPct > 100.0 then Left(ArchiveError.InvalidArchive("clip percentage must be finite and between 0 and 100"))
+    else QuantBits(bits).map(value => QuantReport(value.value, method, scaleScope, nClippedTotal, clipPct))
 
 sealed trait TransformReport:
   def kind: TransformKind
@@ -123,6 +235,16 @@ final case class DeltaParams(
 ):
   require(order == 1, "delta currently supports only first-order differences")
 
+object DeltaParams:
+  def checked(
+      order: Int = 1,
+      axis: DeltaAxis = DeltaAxis.Time,
+      referenceValueStorage: DeltaReferenceStorage = DeltaReferenceStorage.FirstValueVerbatim,
+      codingMethod: DeltaCodingMethod = DeltaCodingMethod.None
+  ): Either[ArchiveError, DeltaParams] =
+    if order != 1 then Left(ArchiveError.UnsupportedTransform(s"delta order=$order"))
+    else Right(DeltaParams(order, axis, referenceValueStorage, codingMethod))
+
 final case class TemporalDctParams(
     components: Int,
     norm: TemporalDctNorm = TemporalDctNorm.Ortho,
@@ -131,6 +253,17 @@ final case class TemporalDctParams(
 ):
   require(components > 0, "temporal DCT components must be positive")
   require(ridge >= 0.0 && ridge.isFinite, "temporal DCT ridge must be finite and non-negative")
+
+object TemporalDctParams:
+  def checked(
+      components: Int,
+      norm: TemporalDctNorm = TemporalDctNorm.Ortho,
+      center: Boolean = false,
+      ridge: Double = 0.0
+  ): Either[ArchiveError, TemporalDctParams] =
+    if components <= 0 then Left(ArchiveError.InvalidArchive(s"temporal DCT components must be positive, got $components"))
+    else if ridge < 0.0 || !ridge.isFinite then Left(ArchiveError.InvalidArchive(s"temporal DCT ridge must be finite and non-negative, got $ridge"))
+    else Right(TemporalDctParams(components, norm, center, ridge))
 
 sealed trait TransformParams:
   def kind: TransformKind
@@ -172,6 +305,8 @@ object TransformParams:
     require(label.forall(_.trim.nonEmpty), "label must be non-empty when provided")
     require(metadata.keys.forall(_.trim.nonEmpty), "embed metadata keys must be non-empty")
     val kind: TransformKind = TransformKind.Embed
+    def lnaMetadata: LnaMetadata =
+      LnaMetadata.unsafe(metadata)
 
   final case class SharedBasisEmbed(
       basis: SharedBasisRef,
@@ -187,6 +322,8 @@ object TransformParams:
     require(label.forall(_.trim.nonEmpty), "label must be non-empty when provided")
     require(metadata.keys.forall(_.trim.nonEmpty), "shared basis embed metadata keys must be non-empty")
     val kind: TransformKind = TransformKind.Embed
+    def lnaMetadata: LnaMetadata =
+      LnaMetadata.unsafe(metadata)
 
   final case class Custom(
       name: String,
@@ -201,6 +338,8 @@ object TransformParams:
     require(label.forall(_.trim.nonEmpty), "label must be non-empty when provided")
     require(metadata.keys.forall(_.trim.nonEmpty), "custom transform metadata keys must be non-empty")
     val kind: TransformKind = TransformKind.Custom(name)
+    def lnaMetadata: LnaMetadata =
+      LnaMetadata.unsafe(metadata)
 
 final case class DatasetRef(
     path: ArchivePath,
@@ -210,6 +349,18 @@ final case class DatasetRef(
 ):
   require(dims.nonEmpty, "dataset dims must be non-empty")
   require(dims.forall(_ > 0), "dataset dims must be positive")
+
+  def shape: DatasetShape =
+    DatasetShape.unsafe(dims)
+
+object DatasetRef:
+  def checked(
+      path: ArchivePath,
+      role: DatasetRole,
+      dims: Vector[Int],
+      dtype: Option[LnaDType] = None
+  ): Either[ArchiveError, DatasetRef] =
+    DatasetShape(dims).map(shape => DatasetRef(path, role, shape.toVector, dtype))
 
 final case class TransformDescriptor(
     name: String,
@@ -226,6 +377,51 @@ final case class TransformDescriptor(
   require(outputs.nonEmpty, "transform descriptor requires at least one output key")
   require(params.kind == kind || params == TransformParams.Empty, "transform params kind must match descriptor kind")
   require(report.forall(_.kind == kind), "transform report kind must match descriptor kind")
+
+  def transformName: TransformName =
+    TransformName.unsafe(name)
+
+  def inputPorts: Vector[TransformPort] =
+    inputs.map(TransformPort.unsafe)
+
+  def outputPorts: Vector[TransformPort] =
+    outputs.map(TransformPort.unsafe)
+
+object TransformDescriptor:
+  def checked(
+      name: String,
+      kind: TransformKind,
+      params: TransformParams,
+      inputs: Vector[String],
+      outputs: Vector[String],
+      datasets: Vector[DatasetRef],
+      report: Option[TransformReport] = None
+  ): Either[ArchiveError, TransformDescriptor] =
+    for
+      checkedName <- TransformName(name)
+      checkedInputs <- traverseModel(inputs)(TransformPort.apply)
+      checkedOutputs <- traverseModel(outputs)(TransformPort.apply)
+      _ <-
+        if checkedInputs.nonEmpty then Right(())
+        else Left(ArchiveError.InvalidArchive("transform descriptor requires at least one input key"))
+      _ <-
+        if checkedOutputs.nonEmpty then Right(())
+        else Left(ArchiveError.InvalidArchive("transform descriptor requires at least one output key"))
+      _ <-
+        if params.kind == kind || params == TransformParams.Empty then Right(())
+        else Left(ArchiveError.InvalidArchive("transform params kind must match descriptor kind"))
+      _ <-
+        if report.forall(_.kind == kind) then Right(())
+        else Left(ArchiveError.InvalidArchive("transform report kind must match descriptor kind"))
+    yield TransformDescriptor(
+      name = checkedName.value,
+      kind = kind,
+      params = params,
+      inputs = checkedInputs.map(_.value),
+      outputs = checkedOutputs.map(_.value),
+      datasets = datasets,
+      report = report
+    )
 
 final case class LnaShape(space: NeuroSpace, timepoints: Int):
   require(timepoints > 0, "archive timepoints must be positive")
@@ -263,11 +459,7 @@ object Payload:
     def dims: Vector[Int] = Vector(values.length)
 
   private[lna] def integerRange(dtype: LnaDType): Option[(Int, Int)] =
-    dtype match
-      case LnaDType.UInt8  => Some((0, 255))
-      case LnaDType.UInt16 => Some((0, 65535))
-      case LnaDType.Int32  => None
-      case _               => None
+    dtype.integerRange
 
 final case class LnaRun(
     label: RunLabel,
@@ -289,6 +481,40 @@ final case class LnaManifest(
   require(creator.trim.nonEmpty, "archive creator must be non-empty")
   require(runs.nonEmpty, "archive manifest requires at least one run")
 
+  def creatorId: CreatorId =
+    CreatorId.unsafe(creator)
+
+  def lnaHeader: LnaMetadata =
+    LnaMetadata.unsafe(header)
+
+object LnaManifest:
+  def checked(
+      version: LnaVersion = LnaVersion.V2,
+      creator: String = "scalafim-archive",
+      requiredTransforms: Vector[TransformKind],
+      transforms: Vector[TransformDescriptor],
+      runs: Vector[LnaRun],
+      datasets: Vector[DatasetRef],
+      header: Map[String, String] = Map.empty,
+      checksum: Option[String] = None
+  ): Either[ArchiveError, LnaManifest] =
+    for
+      checkedCreator <- CreatorId(creator)
+      checkedHeader <- LnaMetadata(header)
+      _ <-
+        if runs.nonEmpty then Right(())
+        else Left(ArchiveError.InvalidArchive("archive manifest requires at least one run"))
+    yield LnaManifest(
+      version = version,
+      creator = checkedCreator.value,
+      requiredTransforms = requiredTransforms,
+      transforms = transforms,
+      runs = runs,
+      datasets = datasets,
+      header = checkedHeader.values,
+      checksum = checksum
+    )
+
 final case class LnaArchive(
     manifest: LnaManifest,
     payloads: Map[ArchivePath, Payload]
@@ -301,3 +527,15 @@ final case class LnaArchive(
 
   def validate: Either[scalafim.archive.ArchiveError, LnaArchive] =
     LnaValidator.validateArchive(this)
+
+private[lna] def traverseModel[A, B](values: Iterable[A])(f: A => Either[ArchiveError, B]): Either[ArchiveError, Vector[B]] =
+  val out = Vector.newBuilder[B]
+  val it = values.iterator
+  var error = Option.empty[ArchiveError]
+  while it.hasNext && error.isEmpty do
+    f(it.next()) match
+      case Right(value) => out += value
+      case Left(err)    => error = Some(err)
+  error match
+    case Some(err) => Left(err)
+    case None      => Right(out.result())

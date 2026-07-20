@@ -1,6 +1,6 @@
 package scalafim.archive.lna
 
-import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, RunLabel, RunScopedPath}
+import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, RunScopedPath, TransformName, TransformPort}
 import scalafim.image.{DMat, NeuroSpace}
 
 class LnaCoreSuite extends munit.FunSuite:
@@ -70,8 +70,81 @@ class LnaCoreSuite extends munit.FunSuite:
   test("archive paths and run labels enforce basic invariants") {
     assertEquals((ArchivePath("/scans") / "run-01").value, "/scans/run-01")
     assertEquals(RunLabel.indexed(0).value, "run-01")
+    assertEquals(ArchivePath.parse("/scans").map(path => (path / "run-01").value), Right("/scans/run-01"))
+    assert(ArchivePath.parse("relative").isLeft)
+    assert(RunLabel.parse("bad/run").isLeft)
+    assert(RunLabel.indexedChecked(-1).isLeft)
     intercept[IllegalArgumentException](ArchivePath("relative"))
     intercept[IllegalArgumentException](RunLabel("bad/run"))
+  }
+
+  test("typed archive primitives expose checked constructors") {
+    val shape = DatasetShape(Vector(2, 3)).fold(err => fail(err.message), identity)
+    assertEquals(shape.rank, 2)
+    assertEquals(shape.entries, 6)
+    assertEquals(shape.toVector, Vector(2, 3))
+    assert(DatasetShape(Vector(2, 0)).isLeft)
+
+    assertEquals(CreatorId("scalafim").map(_.value), Right("scalafim"))
+    assertEquals(TransformName("00_quant.json").map(_.value), Right("00_quant.json"))
+    assert(TransformName("nested/00_quant.json").isLeft)
+    assert(TransformName("00_quant").isLeft)
+    assertEquals(TransformPort("latent_response").map(_.value), Right("latent_response"))
+    assert(TransformPort("latent/response").isLeft)
+
+    val ref =
+      DatasetRef
+        .checked(ArchivePath("/scans/run-01/step_00_quant/values"), DatasetRole.Quantized, Vector(2, 3), Some(LnaDType.UInt8))
+        .fold(err => fail(err.message), identity)
+    assertEquals(ref.shape.entries, 6)
+    assert(DatasetRef.checked(ArchivePath("/bad"), DatasetRole.RawData, Vector.empty).isLeft)
+
+    val desc =
+      TransformDescriptor
+        .checked(
+          name = "00_quant.json",
+          kind = TransformKind.Quant,
+          params = TransformParams.Quant(QuantParams(bits = 8)),
+          inputs = Vector("raw"),
+          outputs = Vector("quantized"),
+          datasets = Vector(ref)
+        )
+        .fold(err => fail(err.message), identity)
+    assertEquals(desc.transformName.value, "00_quant.json")
+    assertEquals(desc.inputPorts.map(_.value), Vector("raw"))
+    assert(TransformDescriptor.checked("00_quant.json", TransformKind.Quant, TransformParams.Quant(QuantParams()), Vector.empty, Vector("out"), Vector(ref)).isLeft)
+    assert(TransformDescriptor.checked("00_quant.json", TransformKind.Quant, TransformParams.Delta(DeltaParams()), Vector("in"), Vector("out"), Vector(ref)).isLeft)
+  }
+
+  test("typed archive metadata and transform parameters reject invalid values") {
+    val bits = QuantBits(4).fold(err => fail(err.message), identity)
+    assertEquals(bits.value, 4)
+    assertEquals(bits.levels, 15)
+    assertEquals(bits.storageDType, LnaDType.UInt8)
+    assert(QuantBits(0).isLeft)
+
+    val params =
+      QuantParams.typed(
+        bits,
+        method = QuantMethod.Sd,
+        centering = CenteringPolicy.Uncentered,
+        scaleScope = QuantScaleScope.Voxel,
+        clipping = ClipPolicy.AllowClipping
+      )
+    assertEquals(params.bits, 4)
+    assertEquals(params.method, QuantMethod.Sd)
+    assertEquals(params.center, false)
+    assertEquals(params.scaleScope, QuantScaleScope.Voxel)
+    assertEquals(params.allowClip, true)
+    assertEquals(params.clipPolicy, ClipPolicy.AllowClipping)
+    assertEquals(params.centeringPolicy, CenteringPolicy.Uncentered)
+
+    assertEquals(LnaMetadata(Map("subject" -> "sub-01")).map(_.get("subject")), Right(Some("sub-01")))
+    assert(LnaMetadata(Map("" -> "bad")).isLeft)
+    assert(QuantParams.checked(bits = 17).isLeft)
+    assert(QuantReport.checked(bits = 8, method = QuantMethod.Range, scaleScope = QuantScaleScope.Global, nClippedTotal = -1, clipPct = 0.0).isLeft)
+    assert(TemporalDctParams.checked(components = 0).isLeft)
+    assert(DeltaParams.checked(order = 2).isLeft)
   }
 
   test("archive dataset paths expose typed run scope by path segment") {
@@ -227,6 +300,20 @@ class LnaCoreSuite extends munit.FunSuite:
     assertEquals(offsetRef.dims, Vector(spikyData.cols))
   }
 
+  test("quant checked decoder reports malformed scale and offset vectors") {
+    val quantized =
+      Payload.IntMatrix(
+        rows = 1,
+        cols = 3,
+        values = Vector(0, 1, 2),
+        dtype = LnaDType.UInt8
+      )
+
+    assert(Quant.decodeChecked(quantized, Vector.empty, Vector(0.0)).left.toOption.exists(_.message.contains("scale vector")))
+    assert(Quant.decodeChecked(quantized, Vector(1.0, 2.0), Vector(0.0, 0.0)).left.toOption.exists(_.message.contains("scale vector")))
+    assert(Quant.decodeChecked(quantized, Vector(1.0), Vector(0.0, 0.0, 0.0)).left.toOption.exists(_.message.contains("scale and offset")))
+  }
+
   test("delta archive validates and reconstructs losslessly") {
     val archive =
       LnaPipeline
@@ -242,6 +329,14 @@ class LnaCoreSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertEquals(reconstructed, data)
+  }
+
+  test("delta checked decoder reports unsupported feature-axis payloads") {
+    val deltas = DMat.fromRows(Vector(Vector(1.0, 2.0)))
+    val first = DMat.fromRows(Vector(Vector(0.0, 0.0)))
+    val result = Delta.decodeChecked(deltas, first, DeltaParams(axis = DeltaAxis.Feature))
+
+    assertEquals(result.left.toOption, Some(ArchiveError.UnsupportedTransform("delta axis=feature")))
   }
 
   test("delta then quant archive reconstructs through the reverse plan") {
