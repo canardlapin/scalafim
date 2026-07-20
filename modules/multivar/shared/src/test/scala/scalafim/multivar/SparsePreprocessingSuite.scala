@@ -1,6 +1,7 @@
 package scalafim.multivar
 
 import scalafim.linalg.DoubleMatrix
+import scalafim.linalg.DoubleVector
 
 class SparsePreprocessingSuite extends munit.FunSuite:
 
@@ -110,6 +111,46 @@ class SparsePreprocessingSuite extends munit.FunSuite:
     )
   }
 
+  test("standardize scales genuinely varying tiny-magnitude columns to unit variance") {
+    val rows = Vector(
+      Vector(1e-10 + 5e-13),
+      Vector(1e-10 - 5e-13),
+      Vector(1e-10 + 5e-13),
+      Vector(1e-10 - 5e-13)
+    )
+    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
+    val out = fitted.transform(view).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get
+    val sds = ColumnStats.fromDense(out).flatMap(_.sampleStandardDeviations).toOption.get
+
+    assertEqualsDouble(sds(0), 1.0, 1e-6)
+  }
+
+  test("standardize treats constant columns as degenerate and centers them only") {
+    val rows = Vector.fill(4)(Vector(3.5, 1e8))
+    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
+    val out = fitted.transform(view).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get
+
+    var row = 0
+    while row < out.rows do
+      assertEqualsDouble(out(row, 0), 0.0, 1e-12)
+      assertEqualsDouble(out(row, 1), 0.0, 1e-12)
+      row += 1
+  }
+
+  test("standardize keeps a unit scale for numerically constant huge-magnitude columns") {
+    val rows = Vector.fill(3)(Vector(1e8 + 0.1))
+    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
+
+    fitted match
+      case affine: FittedColumnAffine =>
+        assertEqualsDouble(affine.scale(0), 1.0, 0.0)
+      case other =>
+        fail(s"expected FittedColumnAffine, got $other")
+  }
+
   test("fitted preprocessor supports column-subset transform and inverse transform") {
     val fitted = PreprocessSpec.Center.fit(sparseView).toOption.get
     val columnSet = IndexSet.from(Vector(2, 0), IndexAxis.Feature).toOption.get
@@ -128,5 +169,57 @@ class SparsePreprocessingSuite extends munit.FunSuite:
       denseRows.map(row => Vector(row(2), row(0))),
       1e-12
     )
+  }
+
+  test("standardizing a single-row matrix reports insufficient rows") {
+    val view = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))))
+
+    PreprocessSpec.Standardize.fit(view) match
+      case Left(MultivarError.InsufficientRows("sample standard deviations", 2, 1)) => ()
+      case other => fail(s"expected InsufficientRows, got $other")
+  }
+
+  test("preprocessing fit rejects inputs without columns") {
+    val view = MatrixView.dense(DoubleMatrix.zeros(3, 0))
+
+    PreprocessSpec.Pass.fit(view) match
+      case Left(MultivarError.InvalidDimension("preprocessing input columns", 0)) => ()
+      case other => fail(s"expected InvalidDimension, got $other")
+    assert(PreprocessSpec.Standardize.fit(view).isLeft)
+  }
+
+  test("scale preprocessing rejects wrong-length weights") {
+    val spec = PreprocessSpec.scale(Vector(1.0, 2.0)).toOption.get
+
+    assert(spec.fit(sparseView).swap.toOption.exists(_.message.contains("length 2 != expected 3")))
+    assert(PreprocessSpec.scale(Vector(1.0, Double.NaN)).isLeft)
+  }
+
+  test("inverse transform reports non-invertible scale weights precisely") {
+    val fitted = FittedColumnAffine(
+      inputCols = 3,
+      scale = DoubleVector.fromSeq(Vector(1.0, 0.0, 2.0)),
+      shift = MatrixView.zeros(3)
+    )
+
+    fitted.inverseTransform(sparseView) match
+      case Left(MultivarError.NonInvertibleValue("affine inverse scale", 1, 0.0)) => ()
+      case other => fail(s"expected NonInvertibleValue, got $other")
+  }
+
+  test("restrict narrows a fitted preprocessor to selected columns") {
+    val fitted = PreprocessSpec.Center.fit(sparseView).toOption.get
+    val columnSet = IndexSet.from(Vector(2, 0), IndexAxis.Feature).toOption.get
+    val restricted = fitted.restrict(columnSet).toOption.get
+    val subset = sparseView.selectColumns(columnSet).toOption.get
+
+    assertEquals(restricted.inputCols, 2)
+    assertMatrixClose(
+      restricted.transform(subset).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get,
+      denseTransform(Vector(1.0, 1.0, 1.0), Vector(-1.25, -2.25, -1.75)).map(row => Vector(row(2), row(0))),
+      1e-12
+    )
+    assert(fitted.restrict(IndexSet.from(Vector(3), IndexAxis.Feature).toOption.get).isLeft)
+    assert(fitted.restrict(IndexSet.from(Vector(0), IndexAxis.Row).toOption.get).isLeft)
   }
 

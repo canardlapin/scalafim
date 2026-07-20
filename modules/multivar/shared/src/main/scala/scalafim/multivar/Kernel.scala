@@ -61,6 +61,13 @@ object Kernel:
   val linear: Kernel =
     LinearKernel()
 
+/** Diagnostic tag derived from the fitted preprocessor, never supplied by callers.
+  *
+  * `InputPreprocessed` records that the inputs were transformed (centered, scaled,
+  * or standardized) BEFORE the kernel was evaluated. Kernel-space (double) centering
+  * of the kernel matrix itself is not implemented, and for nonlinear kernels input
+  * preprocessing is not equivalent to it.
+  */
 enum KernelCentering:
   case Uncentered
   case InputPreprocessed
@@ -170,6 +177,14 @@ final case class NystromFit(
       yield DoubleMatrix.multiply(kNew, state.scoreWeights)
 
 object Nystrom:
+  /** Fit a Nyström kernel eigensystem over the selected landmarks.
+    *
+    * Kernel-space (double) centering of the kernel matrix is NOT implemented. The
+    * `KernelCentering` tag in the fit and its diagnostics is derived from the fitted
+    * preprocessor: an identity preprocessor yields `Uncentered`, anything else yields
+    * `InputPreprocessed`. Preprocessing the inputs is not equivalent to centering the
+    * kernel matrix for nonlinear kernels such as RBF.
+    */
   def fit(
       input: MatrixView,
       components: ComponentCount,
@@ -177,7 +192,6 @@ object Nystrom:
       kernel: Kernel = Kernel.linear,
       preproc: PreprocessSpec = PreprocessSpec.Pass,
       method: NystromMethod = NystromMethod.Standard,
-      centering: KernelCentering = KernelCentering.Uncentered,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       tolerance: Double = 1e-12
   ): Either[MultivarError, NystromFit] =
@@ -195,54 +209,58 @@ object Nystrom:
         _ <- MatrixOps.checkFinite("Nyström input", processed)
         landmarkData = RowGeometryOps.selectRows(processed, landmarkSet.indices)
         landmarkView = MatrixView.dense(landmarkData)
-        kMm <- computeKernel(kernel, landmarkView, landmarkView, "Nyström landmark kernel")
+        // Kernel is an open trait; symmetrize the square landmark kernel so a user
+        // kernel with roundoff asymmetry does not fail the symmetric eigensolver.
+        kMmRaw <- computeKernel(kernel, landmarkView, landmarkView, "Nyström landmark kernel")
+        kMm = DualityKernels.symmetrize(kMmRaw)
+        // The n x m kernel is computed exactly once and shared by every stage.
+        cAll <- computeKernel(kernel, MatrixView.dense(processed), landmarkView, "Nyström all-landmark kernel")
         fit <- method match
           case NystromMethod.Standard =>
             fitStandard(
-              inputRows = input.rows,
               components = components,
               landmarkSet = landmarkSet,
               landmarkData = landmarkData,
-              processed = processed,
               fitted = fitted,
               kernel = kernel,
               kMm = kMm,
-              centering = centering,
+              cAll = cAll,
+              originalCols = processed.cols,
               eigenSolver = eigenSolver,
               tolerance = tolerance
             )
           case NystromMethod.DoubleNystrom(intermediateRank) =>
             fitDouble(
-              inputRows = input.rows,
               components = components,
               intermediateRank = intermediateRank,
               landmarkSet = landmarkSet,
               landmarkData = landmarkData,
-              processed = processed,
               fitted = fitted,
               kernel = kernel,
               kMm = kMm,
-              centering = centering,
+              cAll = cAll,
+              originalCols = processed.cols,
               eigenSolver = eigenSolver,
               tolerance = tolerance
             )
       yield fit
 
   private def fitStandard(
-      inputRows: Int,
       components: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DoubleMatrix,
-      processed: DoubleMatrix,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       kMm: DoubleMatrix,
-      centering: KernelCentering,
+      cAll: DoubleMatrix,
+      originalCols: Int,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double
   ): Either[MultivarError, NystromFit] =
+    // The n x m all-landmark kernel carries the input row count.
+    val inputRows = cAll.rows
     for
-      eigen <- eigenSolver.decompose(kMm)
+      eigen <- LinalgErrorAdapter.adapt(eigenSolver.decompose(kMm))
       keep = positiveEigenCount(eigen.values, components.value, tolerance)
       fit <-
         if keep == 0 then Left(MultivarError.InvalidKernelFit("Nyström landmark kernel has no positive eigenvalues"))
@@ -255,15 +273,14 @@ object Nystrom:
           val sdev = sqrtVector(eigenvalues)
           val scoreWeights = scaleColumns(eigenWeights, sdev)
           buildFit(
-            inputRows,
             components,
             landmarkSet,
             landmarkData,
-            processed,
+            cAll,
+            originalCols,
             fitted,
             kernel,
             NystromMethod.Standard,
-            centering,
             KernelNormalization.StandardNystromScaling,
             eigenvalues,
             sdev,
@@ -274,16 +291,15 @@ object Nystrom:
     yield fit
 
   private def fitDouble(
-      inputRows: Int,
       components: ComponentCount,
       intermediateRank: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DoubleMatrix,
-      processed: DoubleMatrix,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       kMm: DoubleMatrix,
-      centering: KernelCentering,
+      cAll: DoubleMatrix,
+      originalCols: Int,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double
   ): Either[MultivarError, NystromFit] =
@@ -291,7 +307,7 @@ object Nystrom:
       Left(MultivarError.InvalidComponentRequest(intermediateRank.value, landmarkSet.length))
     else
       for
-        first <- eigenSolver.decompose(kMm)
+        first <- LinalgErrorAdapter.adapt(eigenSolver.decompose(kMm))
         firstKeep = positiveEigenCount(first.values, intermediateRank.value, tolerance)
         fit <-
           if firstKeep == 0 then Left(MultivarError.InvalidKernelFit("double Nyström first stage has no positive eigenvalues"))
@@ -300,11 +316,10 @@ object Nystrom:
             val lambdaL = MatrixOps.takeVector(first.values, firstKeep)
             val invSqrtLambdaL = MatrixOps.diagonal(inverseSqrt(lambdaL))
             val firstWeights = DoubleMatrix.multiply(vSL, invSqrtLambdaL)
+            val w = DoubleMatrix.multiply(cAll, firstWeights)
+            val kW = DualityKernels.symmetrize(DoubleMatrix.crossProduct(w))
             for
-              cAll <- computeKernel(kernel, MatrixView.dense(processed), MatrixView.dense(landmarkData), "double Nyström all-landmark kernel")
-              w = DoubleMatrix.multiply(cAll, firstWeights)
-              kW = DoubleMatrix.crossProduct(w)
-              second <- eigenSolver.decompose(kW)
+              second <- LinalgErrorAdapter.adapt(eigenSolver.decompose(kW))
               finalRequest = Math.min(components.value, firstKeep)
               secondKeep = positiveEigenCount(second.values, finalRequest, tolerance)
               out <-
@@ -317,15 +332,14 @@ object Nystrom:
                   val sdev = sqrtVector(lambdaK)
                   val scoreWeights = scaleColumns(eigenWeights, sdev)
                   buildFit(
-                    inputRows,
                     components,
                     landmarkSet,
                     landmarkData,
-                    processed,
+                    cAll,
+                    originalCols,
                     fitted,
                     kernel,
                     NystromMethod.DoubleNystrom(intermediateRank),
-                    centering,
                     KernelNormalization.DoubleNystromScaling,
                     lambdaK,
                     sdev,
@@ -337,15 +351,14 @@ object Nystrom:
       yield fit
 
   private def buildFit(
-      inputRows: Int,
       requestedComponents: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DoubleMatrix,
-      processed: DoubleMatrix,
+      cAll: DoubleMatrix,
+      originalCols: Int,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       method: NystromMethod,
-      centering: KernelCentering,
       normalization: KernelNormalization,
       eigenvalues: DoubleVector,
       sdev: DoubleVector,
@@ -353,13 +366,13 @@ object Nystrom:
       state: NystromState,
       scoreWeights: DoubleMatrix
   ): Either[MultivarError, NystromFit] =
+    val eigenvectors = DoubleMatrix.multiply(cAll, eigenWeights)
+    val scores = DoubleMatrix.multiply(cAll, scoreWeights)
     for
-      cAll <- computeKernel(kernel, MatrixView.dense(processed), MatrixView.dense(landmarkData), "Nyström all-landmark kernel")
-      eigenvectors = DoubleMatrix.multiply(cAll, eigenWeights)
-      scores = DoubleMatrix.multiply(cAll, scoreWeights)
       _ <- MatrixOps.checkFinite("Nyström eigenvectors", eigenvectors)
       _ <- MatrixOps.checkFinite("Nyström scores", scores)
     yield
+      val centering = derivedCentering(fitted)
       val artifact = KernelEigenArtifact(eigenvectors, eigenvalues, sdev, scores)
       val diagnostics = NystromDiagnostics(
         method = method,
@@ -374,7 +387,7 @@ object Nystrom:
         landmarks = landmarkSet,
         landmarkData = landmarkData,
         preprocessor = fitted,
-        originalCols = processed.cols,
+        originalCols = originalCols,
         centering = centering,
         normalization = normalization,
         eigen = artifact,
@@ -382,6 +395,25 @@ object Nystrom:
         state = state,
         kernelFunction = kernel
       )
+
+  /** The centering tag is a derived diagnostic: an identity preprocessor means the
+    * kernel saw the raw inputs; anything else means the inputs were preprocessed.
+    * No code path centers the kernel matrix itself (see `fit`).
+    */
+  private def derivedCentering(fitted: FittedPreprocessor): KernelCentering =
+    fitted match
+      case affine: FittedColumnAffine if isIdentityAffine(affine) =>
+        KernelCentering.Uncentered
+      case _ =>
+        KernelCentering.InputPreprocessed
+
+  private def isIdentityAffine(affine: FittedColumnAffine): Boolean =
+    var identity = true
+    var i = 0
+    while identity && i < affine.inputCols do
+      identity = affine.scale(i) == 1.0 && affine.shift(i) == 0.0
+      i += 1
+    identity
 
   private def positiveEigenCount(values: DoubleVector, requested: Int, tolerance: Double): Int =
     val maxValue =

@@ -6,42 +6,61 @@ enum PreprocessSpec:
   case Pass
   case Center
   case Scale(weights: DoubleVector)
+
+  /** Standardize columns to zero mean and unit sample variance.
+    *
+    * Degenerate (numerically constant) columns — those whose sample standard deviation
+    * is at most `MatrixView.DegenerateScaleEpsilon` relative to the magnitude of the
+    * column mean — are centered but not rescaled (their scale weight is 1), matching
+    * scikit-learn's `StandardScaler` convention for zero-variance features. The test
+    * is relative to the column's own magnitude, so genuine variation in tiny-valued
+    * columns is still standardized while rounding noise on huge-valued constant
+    * columns is not mistaken for signal.
+    */
   case Standardize
 
   def fit(input: MatrixView): Either[MultivarError, FittedPreprocessor] =
-    this match
-      case Pass =>
-        Right(FittedColumnAffine(input.cols, MatrixView.ones(input.cols), MatrixView.zeros(input.cols)))
-      case Center =>
-        input.columnStats.flatMap(_.means).map { means =>
-          FittedColumnAffine(input.cols, MatrixView.ones(input.cols), MatrixView.negate(means))
-        }
-      case Scale(weights) =>
-        for
-          _ <- MatrixView.requireVectorLength("preprocessing weights", weights, input.cols)
-          _ <- MatrixView.requireFinite("preprocessing weights", weights)
-        yield FittedColumnAffine(input.cols, weights, MatrixView.zeros(input.cols))
-      case Standardize =>
-        for
-          stats <- input.columnStats
-          means <- stats.means
-          sds <- stats.sampleStandardDeviations
-        yield
-          val safeSds = new Array[Double](sds.length)
-          var col = 0
-          while col < sds.length do
-            val sd = sds(col)
-            safeSds(col) =
-              if sd.isFinite && sd > 1e-12 then sd
-              else 1.0
-            col += 1
-          val scale = MatrixView.invert(DoubleVector.unsafe(safeSds)).toOption.get
-          FittedColumnAffine(input.cols, scale, MatrixView.multiply(MatrixView.negate(means), scale))
+    if input.cols <= 0 then Left(MultivarError.InvalidDimension("preprocessing input columns", input.cols))
+    else
+      this match
+        case Pass =>
+          Right(FittedColumnAffine(input.cols, MatrixView.ones(input.cols), MatrixView.zeros(input.cols)))
+        case Center =>
+          input.columnStats.flatMap(_.means).map { means =>
+            FittedColumnAffine(input.cols, MatrixView.ones(input.cols), MatrixView.negate(means))
+          }
+        case Scale(weights) =>
+          for
+            _ <- MatrixView.requireVectorLength("preprocessing weights", weights, input.cols)
+            _ <- MatrixView.requireFinite("preprocessing weights", weights)
+          yield FittedColumnAffine(input.cols, weights, MatrixView.zeros(input.cols))
+        case Standardize =>
+          for
+            stats <- input.columnStats
+            means <- stats.means
+            sds <- stats.sampleStandardDeviations
+            scale <- MatrixView.invert(PreprocessSpec.safeStandardizeScale(means, sds))
+          yield FittedColumnAffine(input.cols, scale, MatrixView.multiply(MatrixView.negate(means), scale))
 
 object PreprocessSpec:
   def scale(weights: Seq[Double]): Either[MultivarError, PreprocessSpec] =
     val vector = DoubleVector.fromSeq(weights)
     MatrixView.requireFinite("preprocessing weights", vector).map(_ => PreprocessSpec.Scale(vector))
+
+  /** Column scale for standardization: the sample standard deviation, or 1.0 for
+    * degenerate columns whose spread is negligible relative to their mean magnitude
+    * (see the `Standardize` case documentation).
+    */
+  private def safeStandardizeScale(means: DoubleVector, sds: DoubleVector): DoubleVector =
+    val out = new Array[Double](sds.length)
+    var col = 0
+    while col < sds.length do
+      val sd = sds(col)
+      out(col) =
+        if sd > MatrixView.DegenerateScaleEpsilon * Math.abs(means(col)) then sd
+        else 1.0
+      col += 1
+    DoubleVector.unsafe(out)
 
 trait FittedPreprocessor:
   def inputCols: Int

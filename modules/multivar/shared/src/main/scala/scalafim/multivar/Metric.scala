@@ -40,6 +40,28 @@ sealed trait MvMetric:
       case MvMetric.Identity(_, _) | MvMetric.Diagonal(_, _) => true
       case _                                                 => false
 
+  /** Value-based metric identity: same kind, same dimension, and exactly equal entries.
+    *
+    * Metric storage (`DoubleVector`/`DoubleMatrix`/`SparseMatrixView`) compares by
+    * reference, so case-class equality on metrics is reference equality for every
+    * non-identity kind; use this method to decide whether two separately built metrics
+    * are the same metric. Exact double equality is intentional — "same metric" is an
+    * identity claim across instances, not a numeric-tolerance claim. Space tags are
+    * ignored; space compatibility is checked separately where it matters.
+    */
+  final def sameValues(other: MvMetric): Boolean =
+    (this eq other) || ((this, other) match
+      case (MvMetric.Identity(dim, _), MvMetric.Identity(otherDim, _)) =>
+        dim == otherDim
+      case (MvMetric.Diagonal(weights, _), MvMetric.Diagonal(otherWeights, _)) =>
+        MvMetric.sameVectorValues(weights, otherWeights)
+      case (MvMetric.DenseSymmetric(matrix, _), MvMetric.DenseSymmetric(otherMatrix, _)) =>
+        MvMetric.sameMatrixValues(matrix, otherMatrix)
+      case (MvMetric.SparseSymmetric(view, _), MvMetric.SparseSymmetric(otherView, _)) =>
+        MvMetric.sameSparseValues(view, otherView)
+      case _ =>
+        false)
+
   /** M * input for a dim x k dense block. */
   def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
 
@@ -187,6 +209,14 @@ object MvMetric:
     override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
       Right(matrix)
 
+  /** Sparse symmetric metric over a fully stored symmetric pattern.
+    *
+    * The backing view must store BOTH triangles explicitly: every operation here
+    * (matvec, inner products, contraction) iterates the stored entries as-is, so
+    * upper-triangle-only storage silently halves every off-diagonal contribution.
+    * `MetricValidation.Structural` rejects a missing mirror entry;
+    * `MetricValidation.Trusted` skips that check entirely.
+    */
   final case class SparseSymmetric private[multivar] (view: SparseMatrixView, space: Option[MvSpace]) extends MvMetric:
     override def dim: Int =
       view.rows
@@ -225,20 +255,60 @@ object MvMetric:
     if dim <= 0 then Left(MultivarError.InvalidDimension("metric dimension", dim))
     else requireSpace(space, dim).map(_ => Identity(dim, space))
 
+  /** Diagonal PSD metric. Weights within `StructuralTolerance` below zero are treated
+    * as roundoff and clamped to exactly zero at construction, so every accepted
+    * instance is factorizable by `MetricSqrt.factor` regardless of its (tighter)
+    * tolerance; weights below that band are rejected as indefinite.
+    */
   def diagonal(weights: DoubleVector, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
     if weights.length <= 0 then Left(MultivarError.InvalidDimension("metric dimension", weights.length))
     else
       var i = 0
+      var needsClamp = false
       var error = Option.empty[MultivarError]
       while i < weights.length && error.isEmpty do
         val value = weights(i)
         if !value.isFinite then error = Some(MultivarError.NonFiniteValue("diagonal metric", i, value))
         else if value < -StructuralTolerance then
           error = Some(MultivarError.NonPositiveSemiDefinite("diagonal metric", value))
+        else if value < 0.0 then needsClamp = true
         i += 1
       error match
         case Some(value) => Left(value)
-        case None        => requireSpace(space, weights.length).map(_ => Diagonal(weights, space))
+        case None =>
+          requireSpace(space, weights.length).map { _ =>
+            val cleaned =
+              if !needsClamp then weights
+              else
+                val out = weights.copyData
+                var j = 0
+                while j < out.length do
+                  if out(j) < 0.0 then out(j) = 0.0
+                  j += 1
+                DoubleVector.unsafe(out)
+            Diagonal(cleaned, space)
+          }
+
+  /** The row metric induced by a whitening operator `W`: `D = W' W`.
+    *
+    * Row whitening remains design-conditioning geometry; this constructor is the
+    * explicit bridge that lets its induced bilinear form serve as the `D` of a
+    * duality diagram. Identity whitening stays operator-backed. A nontrivial
+    * whitening is materialized once as a dense symmetric metric.
+    */
+  def fromRowWhitening(
+      whitening: RowWhitening,
+      space: Option[MvSpace] = None
+  ): Either[MultivarError, MvMetric] =
+    whitening.mode match
+      case RowWhiteningMode.Identity | RowWhiteningMode.GroupedIdentity =>
+        identity(whitening.rows, space)
+      case RowWhiteningMode.BlockCholesky =>
+        for
+          root <- whitening.whiten(DoubleMatrix.eye(whitening.rows))
+          metric = DoubleMatrix.crossProduct(root)
+          result <- denseSymmetric(metric, MetricValidation.Structural, space)
+        yield result
 
   def denseSymmetric(
       matrix: DoubleMatrix,
@@ -257,6 +327,15 @@ object MvMetric:
       _ <- requireSpace(space, matrix.rows)
     yield DenseSymmetric(matrix, space)
 
+  /** Build a sparse symmetric metric from a view that stores BOTH triangles.
+    *
+    * The metric consumes the stored entries directly, so a view holding only the
+    * upper (or lower) triangle is not "symmetric by convention" here — it is a
+    * different, asymmetric operator whose off-diagonals are silently halved.
+    * `MetricValidation.Structural` (the default) rejects entries whose mirror is
+    * absent; `MetricValidation.Trusted` performs shape checks only and MUST be given
+    * fully mirrored storage.
+    */
   def sparseSymmetric(
       view: SparseMatrixView,
       validation: MetricValidation = MetricValidation.Structural,
@@ -290,6 +369,44 @@ object MvMetric:
   private[multivar] def unsafeSparseSymmetric(view: SparseMatrixView, space: Option[MvSpace] = None): MvMetric =
     SparseSymmetric(view, space)
 
+  private def sameVectorValues(left: DoubleVector, right: DoubleVector): Boolean =
+    if left.length != right.length then false
+    else
+      var i = 0
+      var same = true
+      while same && i < left.length do
+        same = left(i) == right(i)
+        i += 1
+      same
+
+  private def sameMatrixValues(left: DoubleMatrix, right: DoubleMatrix): Boolean =
+    if left.rows != right.rows || left.cols != right.cols then false
+    else
+      var row = 0
+      var same = true
+      while same && row < left.rows do
+        var col = 0
+        while same && col < left.cols do
+          same = left(row, col) == right(row, col)
+          col += 1
+        row += 1
+      same
+
+  /** Entrywise equality over both stored patterns, so structural zeros on either
+    * side compare against the other side's value.
+    */
+  private def sameSparseValues(left: SparseMatrixView, right: SparseMatrixView): Boolean =
+    if left.rows != right.rows || left.cols != right.cols then false
+    else
+      var same = true
+      left.foreachEntry { (row, col, value) =>
+        if same && right.valueAt(row, col) != value then same = false
+      }
+      right.foreachEntry { (row, col, value) =>
+        if same && left.valueAt(row, col) != value then same = false
+      }
+      same
+
   private def structuralDense(matrix: DoubleMatrix): Either[MultivarError, Unit] =
     for
       _ <- MatrixOps.checkFinite("dense metric", matrix)
@@ -307,7 +424,14 @@ object MvMetric:
         else
           val mirrored = view.valueAt(col, row)
           if Math.abs(value - mirrored) > StructuralTolerance then
-            error = Some(MultivarError.NonSymmetricMatrix(row, col, value, mirrored))
+            error = Some(
+              if mirrored == 0.0 then
+                MultivarError.MetricMismatch(
+                  s"sparse metric entry ($row, $col) = $value has no stored mirror at ($col, $row); " +
+                    "SparseSymmetric requires both triangles stored explicitly"
+                )
+              else MultivarError.NonSymmetricMatrix(row, col, value, mirrored)
+            )
     }
     error match
       case Some(value) => Left(value)
@@ -319,7 +443,7 @@ object MvMetric:
       tolerance: Double,
       role: String
   ): Either[MultivarError, Unit] =
-    eigenSolver.decompose(matrix).flatMap { eigen =>
+    LinalgErrorAdapter.adapt(eigenSolver.decompose(matrix)).flatMap { eigen =>
       val largest = Math.max(eigen.values(0), 0.0)
       val cutoff = tolerance * Math.max(1.0, largest)
       val smallest = eigen.values(eigen.values.length - 1)
@@ -504,7 +628,7 @@ private[multivar] object MetricSqrt:
       tolerance: Double,
       role: String
   ): Either[MultivarError, MetricRoots] =
-    eigenSolver.decompose(matrix).flatMap { eigen =>
+    LinalgErrorAdapter.adapt(eigenSolver.decompose(matrix)).flatMap { eigen =>
       val n = eigen.values.length
       val largest = Math.max(eigen.values(0), 0.0)
       val cutoff = tolerance * Math.max(1.0, largest)

@@ -445,6 +445,20 @@ lazy val mvpa =
 lazy val mvpaJS  = mvpa.js
 lazy val mvpaJVM = mvpa.jvm
 
+lazy val multivar =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/multivar"))
+    .dependsOn(linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-multivar"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val multivarJS  = multivar.js
+lazy val multivarJVM = multivar.jvm
+
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -537,6 +551,8 @@ lazy val root =
       fitJVM,
       mvpaJS,
       mvpaJVM,
+      multivarJS,
+      multivarJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,

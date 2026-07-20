@@ -12,13 +12,21 @@ import scalafim.linalg.DoubleVector
   * Initialization uses a seeded xorshift64* stream (uniform, no transcendentals) so
   * results are reproducible and identical across JVM and JS; the R reference uses
   * `rnorm`, which agrees within tolerance because the converged factors are
-  * init-independent. Components that stop converging or fall below `threshold`
-  * truncate the extraction, mirroring the R deflation path.
+  * init-independent.
+  *
+  * `threshold` is purely the power-iteration convergence tolerance: the residual is
+  * `(1 - |<u_new, M u_old>|) + (1 - |<v_new, A v_old>|)` between metric-normalized
+  * iterates, which lies in [0, 2] whatever the metric scale. `rankTolerance` is the
+  * separate relative rank/degeneracy cutoff (mirroring EigenGmd): iterate norms and
+  * extracted singular values are compared against the largest ones seen so far, so
+  * components below `rankTolerance` of the problem's own scale truncate the
+  * extraction, mirroring the R deflation path.
   */
 private[multivar] final case class DeflationGmd(
     threshold: Double = 1e-6,
     maxIterations: Int = 500,
-    seed: Long = GmdBackend.DefaultSeed
+    seed: Long = GmdBackend.DefaultSeed,
+    rankTolerance: Double = 1e-12
 ) extends GmdEngine:
 
   override def decompose(
@@ -30,7 +38,7 @@ private[multivar] final case class DeflationGmd(
       policy: StoragePolicy
   ): Either[MultivarError, GmdDecomposition] =
     for
-      totalVariance <- GenPcaKernels.totalVariance(x, rowMetric, colMetric, policy)
+      totalVariance <- DualityKernels.totalVariance(x, rowMetric, colMetric, policy)
       _ <- probe(x)
       result <- extract(x, rowMetric, colMetric, components)
     yield GmdDecomposition(result, totalVariance)
@@ -81,25 +89,42 @@ private[multivar] final case class DeflationGmd(
     var stop = false
     var lastResidual = 0.0
     var sawNonConvergence = false
+    // Largest metric norms and singular value seen so far; they set the problem's own
+    // scale so degeneracy and rank cutoffs are relative, never absolute.
+    var uNormScale = 0.0
+    var vNormScale = 0.0
+    var dScale = 0.0
     while dVals.length < components && !stop do
       val rng = DeflationGmd.XorShift(seed ^ (0x9E3779B97F4A7C15L * (dVals.length + 1)))
-      var u = DeflationGmd.normalized(rng.fill(n))
-      var v = DeflationGmd.normalized(rng.fill(p))
+      var u = DeflationGmd.metricNormalized(rng.fill(n), applyRow)
+      var v = DeflationGmd.metricNormalized(rng.fill(p), applyCol)
       var iter = 0
       var converged = false
       var degenerate = false
       while iter < maxIterations && !converged && !degenerate do
         val uhat = forward(applyCol(v))
-        val uNorm = Math.sqrt(Math.max(DeflationGmd.dot(applyRow(uhat), uhat), 0.0))
-        if !uNorm.isFinite || uNorm <= threshold then degenerate = true
+        val mu = applyRow(uhat)
+        val uNorm = Math.sqrt(Math.max(DeflationGmd.dot(mu, uhat), 0.0))
+        if !uNorm.isFinite || uNorm <= rankTolerance * uNormScale then degenerate = true
         else
+          uNormScale = Math.max(uNormScale, uNorm)
           DeflationGmd.scaleInPlace(uhat, 1.0 / uNorm)
-          val vhat = adjoint(applyRow(uhat))
-          val vNorm = Math.sqrt(Math.max(DeflationGmd.dot(applyCol(vhat), vhat), 0.0))
-          if !vNorm.isFinite || vNorm <= threshold then degenerate = true
+          // The identity-metric applier returns its argument, so guard against
+          // scaling an aliased array twice.
+          if !(mu eq uhat) then DeflationGmd.scaleInPlace(mu, 1.0 / uNorm)
+          val uAlign = Math.abs(DeflationGmd.dot(mu, u))
+          val vhat = adjoint(mu)
+          val av = applyCol(vhat)
+          val vNorm = Math.sqrt(Math.max(DeflationGmd.dot(av, vhat), 0.0))
+          if !vNorm.isFinite || vNorm <= rankTolerance * vNormScale then degenerate = true
           else
+            vNormScale = Math.max(vNormScale, vNorm)
             DeflationGmd.scaleInPlace(vhat, 1.0 / vNorm)
-            val residual = DeflationGmd.distanceSq(uhat, u) + DeflationGmd.distanceSq(vhat, v)
+            if !(av eq vhat) then DeflationGmd.scaleInPlace(av, 1.0 / vNorm)
+            val vAlign = Math.abs(DeflationGmd.dot(av, v))
+            // 1 - |cos| per side in the fit metrics; in [0, 2] whatever the metric scale.
+            val residual =
+              (1.0 - Math.min(1.0, uAlign)) + (1.0 - Math.min(1.0, vAlign))
             u = uhat
             v = vhat
             lastResidual = residual
@@ -112,11 +137,12 @@ private[multivar] final case class DeflationGmd(
         stop = true
       else
         var dValue = DeflationGmd.dot(applyRow(u), forward(applyCol(v)))
-        if !dValue.isFinite || Math.abs(dValue) <= threshold then stop = true
+        if !dValue.isFinite || Math.abs(dValue) <= rankTolerance * dScale then stop = true
         else
           if dValue < 0.0 then
             DeflationGmd.scaleInPlace(u, -1.0)
             dValue = -dValue
+          dScale = Math.max(dScale, dValue)
           uCols += u
           vCols += v
           dVals += dValue
@@ -218,17 +244,14 @@ private[multivar] object DeflationGmd:
       values(i) *= factor
       i += 1
 
-  private def distanceSq(left: Array[Double], right: Array[Double]): Double =
-    var acc = 0.0
-    var i = 0
-    while i < left.length do
-      val delta = left(i) - right(i)
-      acc += delta * delta
-      i += 1
-    acc
-
-  private def normalized(values: Array[Double]): Array[Double] =
-    val norm = Math.sqrt(dot(values, values))
+  /** Normalize to unit length in the metric induced by `applyMetric`, so alignment
+    * inner products against later metric-normalized iterates stay within [-1, 1].
+    */
+  private def metricNormalized(
+      values: Array[Double],
+      applyMetric: Array[Double] => Array[Double]
+  ): Array[Double] =
+    val norm = Math.sqrt(Math.max(dot(applyMetric(values), values), 0.0))
     if norm > 0.0 then scaleInPlace(values, 1.0 / norm)
     values
 

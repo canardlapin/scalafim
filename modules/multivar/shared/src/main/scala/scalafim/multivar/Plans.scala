@@ -118,7 +118,7 @@ object RoiPlanSet:
 enum MultivarExecutionMode:
   case Local
   case RoiParallel
-  case SparkReady
+  case DistributedReady
 
 enum MultivarPartitionAxis:
   case WholeInput
@@ -140,12 +140,24 @@ object MultivarExecutionPlan:
   val roiLocal: MultivarExecutionPlan =
     MultivarExecutionPlan(MultivarExecutionMode.RoiParallel, MultivarPartitionAxis.Roi, broadcastSmallFits = false)
 
+  val distributedReadyRoi: MultivarExecutionPlan =
+    MultivarExecutionPlan(MultivarExecutionMode.DistributedReady, MultivarPartitionAxis.Roi, broadcastSmallFits = true)
+
   val sparkReadyRoi: MultivarExecutionPlan =
-    MultivarExecutionPlan(MultivarExecutionMode.SparkReady, MultivarPartitionAxis.Roi, broadcastSmallFits = true)
+    distributedReadyRoi
 
 enum MultivarEstimator:
   case Pca(components: ComponentCount, preprocessing: PreprocessSpec = PreprocessSpec.Center)
   case Svd(components: ComponentCount, preprocessing: PreprocessSpec = PreprocessSpec.Pass)
+  case GenPca(
+      components: ComponentCount,
+      preprocessing: PreprocessSpec = PreprocessSpec.Center,
+      rowMetric: Option[MvMetric] = None,
+      columnMetric: Option[MvMetric] = None,
+      backend: GmdBackend = GmdBackend.Auto,
+      storagePolicy: StoragePolicy = StoragePolicy.AllowDense
+  )
+  case Cpca(spec: CpcaEstimatorSpec)
   case Nystrom(
       components: ComponentCount,
       landmarks: Vector[Int],
@@ -154,17 +166,35 @@ enum MultivarEstimator:
       method: NystromMethod = NystromMethod.Standard
   )
 
-  def componentCount: ComponentCount =
+  /** Concrete requested component count, when the estimator states one.
+    *
+    * CPCA requests are per-block and may be "full" (rank-determined only at fit
+    * time) or structurally invalid; those honestly report `None` instead of a
+    * fabricated count. `componentRequestSummary` renders the full picture.
+    */
+  def componentCount: Option[ComponentCount] =
     this match
-      case Pca(value, _)              => value
-      case Svd(value, _)              => value
-      case Nystrom(value, _, _, _, _) => value
+      case Pca(value, _)                => Some(value)
+      case Svd(value, _)                => Some(value)
+      case GenPca(value, _, _, _, _, _) => Some(value)
+      case Cpca(spec)                   => spec.requestedComponentUpperBound
+      case Nystrom(value, _, _, _, _)   => Some(value)
+
+  def componentRequestSummary: String =
+    this match
+      case Pca(value, _)                => value.value.toString
+      case Svd(value, _)                => value.value.toString
+      case GenPca(value, _, _, _, _, _) => value.value.toString
+      case Cpca(spec)                   => spec.requestedComponentSummary
+      case Nystrom(value, _, _, _, _)   => value.value.toString
 
   def kind: FitArtifactKind =
     this match
-      case Pca(_, _)              => FitArtifactKind.Pca
-      case Svd(_, _)              => FitArtifactKind.Svd
-      case Nystrom(_, _, _, _, _) => FitArtifactKind.Nystrom
+      case Pca(_, _)                => FitArtifactKind.Pca
+      case Svd(_, _)                => FitArtifactKind.Svd
+      case GenPca(_, _, _, _, _, _) => FitArtifactKind.GenPca
+      case Cpca(_)                  => FitArtifactKind.Cpca
+      case Nystrom(_, _, _, _, _)   => FitArtifactKind.Nystrom
 
 final case class MultivarPlan private (
     id: MultivarPlanId,
@@ -189,6 +219,7 @@ object MultivarPlan:
   ): Either[MultivarError, MultivarPlan] =
     for
       planId <- MultivarPlanId(id)
+      _ <- MatrixOps.traverse(roiPlan.rois)(roi => roi.columns.requireWithin(input.featureCount))
       _ <- validateEstimator(estimator, input.sampleCount, roiPlan)
     yield new MultivarPlan(planId, input, roiPlan, estimator, execution)
 
@@ -210,21 +241,163 @@ object MultivarPlan:
                   Left(MultivarError.InvalidComponentRequest(intermediateRank.value, checked.length))
                 else Right(())
         }
+      case MultivarEstimator.GenPca(components, _, rowMetric, columnMetric, _, _) =>
+        for
+          _ <- validateComponentRequest(components, sampleCount, roiPlan)
+          _ <- validateOptionalMetric(IndexAxis.Row, sampleCount, rowMetric)
+          _ <- MatrixOps.traverse(roiPlan.rois) { roi =>
+            validateOptionalMetric(IndexAxis.Feature, roi.size, columnMetric)
+          }
+        yield ()
+      case MultivarEstimator.Cpca(spec) =>
+        MatrixOps.traverse(roiPlan.rois) { roi =>
+          spec.validate(sampleCount, roi.size)
+        }.map(_ => ())
       case _ =>
-        val minRoiSize = roiPlan.rois.map(_.size).min
-        if estimator.componentCount.value > Math.min(sampleCount, minRoiSize) then
-          Left(MultivarError.InvalidComponentRequest(estimator.componentCount.value, Math.min(sampleCount, minRoiSize)))
-        else Right(())
+        estimator.componentCount match
+          case Some(components) => validateComponentRequest(components, sampleCount, roiPlan)
+          case None             => Right(())
+
+  private def validateComponentRequest(
+      components: ComponentCount,
+      sampleCount: Int,
+      roiPlan: RoiPlanSet
+  ): Either[MultivarError, Unit] =
+    val minRoiSize = roiPlan.rois.map(_.size).min
+    val limit = Math.min(sampleCount, minRoiSize)
+    if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
+    else Right(())
+
+  private def validateOptionalMetric(
+      axis: IndexAxis,
+      expected: Int,
+      metric: Option[MvMetric]
+  ): Either[MultivarError, Unit] =
+    metric match
+      case Some(value) if value.dim != expected =>
+        Left(MultivarError.MetricShapeMismatch(axis, expected, value.dim))
+      case _ =>
+        Right(())
+
+final case class PairedSampleByFeatureInput private (
+    x: SampleByFeatureInput,
+    y: SampleByFeatureInput
+):
+  def sampleCount: Int =
+    x.sampleCount
+
+  def xFeatureCount: Int =
+    x.featureCount
+
+  def yFeatureCount: Int =
+    y.featureCount
+
+object PairedSampleByFeatureInput:
+  def of(x: SampleByFeatureInput, y: SampleByFeatureInput): Either[MultivarError, PairedSampleByFeatureInput] =
+    if x.sampleCount != y.sampleCount then
+      Left(MultivarError.MatrixShapeMismatch(s"paired input expected equal samples, got ${x.sampleCount} and ${y.sampleCount}"))
+    else Right(new PairedSampleByFeatureInput(x, y))
+
+enum PairedFeatureScope:
+  case WholeInputPair
+
+  def label: String =
+    this match
+      case WholeInputPair => "whole-input-pair"
+
+enum PairedMultivarEstimator:
+  case Plsc(
+      components: ComponentCount,
+      xPreprocessing: PreprocessSpec = PreprocessSpec.Center,
+      yPreprocessing: PreprocessSpec = PreprocessSpec.Center
+  )
+  case Cca(
+      components: ComponentCount,
+      regularization: CcaRegularization = CcaRegularization.default,
+      xPreprocessing: PreprocessSpec = PreprocessSpec.Center,
+      yPreprocessing: PreprocessSpec = PreprocessSpec.Center
+  )
+  case ReducedRankRegression(
+      components: ComponentCount,
+      regularization: RegressionRegularization = RegressionRegularization.Ols,
+      direction: RegressionDirection = RegressionDirection.XToY,
+      xPreprocessing: PreprocessSpec = PreprocessSpec.Center,
+      yPreprocessing: PreprocessSpec = PreprocessSpec.Center
+  )
+
+  def componentCount: ComponentCount =
+    this match
+      case Plsc(value, _, _)                       => value
+      case Cca(value, _, _, _)                     => value
+      case ReducedRankRegression(value, _, _, _, _) => value
+
+  def method: PairedLatentMethod =
+    this match
+      case Plsc(_, _, _) =>
+        PairedLatentMethod.Plsc
+      case Cca(_, regularization, _, _) =>
+        PairedLatentMethod.Cca(regularization)
+      case ReducedRankRegression(_, regularization, direction, _, _) =>
+        PairedLatentMethod.ReducedRankRegression(direction, regularization)
+
+  def label: String =
+    method.label
+
+/** Inspectable plan boundary for paired latent analyses.
+  *
+  * This plan intentionally supports only whole-input X/Y pairs. ROI-by-ROI X
+  * with global Y and paired ROI sets remain future executor designs rather than
+  * implicit variants of the current single-input `MultivarPlan`.
+  */
+final case class PairedMultivarPlan private (
+    id: MultivarPlanId,
+    input: PairedSampleByFeatureInput,
+    estimator: PairedMultivarEstimator,
+    featureScope: PairedFeatureScope,
+    execution: MultivarExecutionPlan
+):
+  def inspectableSummary: String =
+    s"${id.value}:${estimator.label}:${input.sampleCount}x${input.xFeatureCount}->${input.yFeatureCount}:${featureScope.label}:${execution.mode}"
+
+object PairedMultivarPlan:
+  def of(
+      id: String,
+      input: PairedSampleByFeatureInput,
+      estimator: PairedMultivarEstimator,
+      execution: MultivarExecutionPlan = MultivarExecutionPlan.local,
+      featureScope: PairedFeatureScope = PairedFeatureScope.WholeInputPair
+  ): Either[MultivarError, PairedMultivarPlan] =
+    for
+      planId <- MultivarPlanId(id)
+      _ <- validateWholeInputExecution(execution)
+      _ <- validateComponentRequest(estimator.componentCount, input)
+    yield new PairedMultivarPlan(planId, input, estimator, featureScope, execution)
+
+  private def validateWholeInputExecution(execution: MultivarExecutionPlan): Either[MultivarError, Unit] =
+    if execution.partitionAxis == MultivarPartitionAxis.WholeInput then Right(())
+    else Left(MultivarError.InvalidRowGeometry("paired multivar plans currently support whole-input execution only"))
+
+  private def validateComponentRequest(
+      components: ComponentCount,
+      input: PairedSampleByFeatureInput
+  ): Either[MultivarError, Unit] =
+    val limit = Math.min(input.sampleCount, Math.min(input.xFeatureCount, input.yFeatureCount))
+    if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
+    else Right(())
 
 enum FitArtifactKind:
   case Pca
   case Svd
+  case GenPca
+  case Cpca
   case Nystrom
 
   def label: String =
     this match
       case Pca     => "pca"
       case Svd     => "svd"
+      case GenPca  => "genpca"
+      case Cpca    => "cpca"
       case Nystrom => "nystrom"
 
 final case class FitArtifactShape(
@@ -243,11 +416,15 @@ final case class FitArtifactShape(
 
 enum FitArtifact:
   case BiProjectionArtifact(artifactShape: FitArtifactShape, projection: BiProjection)
+  case GenPcaArtifact(artifactShape: FitArtifactShape, fit: GenPcaFit)
+  case CpcaArtifact(artifactShape: FitArtifactShape, fit: CpcaFit)
   case KernelArtifact(artifactShape: FitArtifactShape, fit: NystromFit)
 
   def shape: FitArtifactShape =
     this match
       case BiProjectionArtifact(value, _) => value
+      case GenPcaArtifact(value, _)       => value
+      case CpcaArtifact(value, _)         => value
       case KernelArtifact(value, _)       => value
 
 final case class LocalMultivarResult(plan: MultivarPlan, artifacts: Vector[FitArtifact]):
@@ -260,7 +437,7 @@ object LocalMultivarExecutor:
     else if input.cols != plan.input.featureCount then
       Left(MultivarError.MatrixShapeMismatch(s"plan expected ${plan.input.featureCount} features, got ${input.cols}"))
     else
-      PlanOps.traverse(plan.roiPlan.rois) { roi =>
+      MatrixOps.traverse(plan.roiPlan.rois) { roi =>
         for
           selected <- input.selectColumns(roi.columns)
           artifact <- fitRoi(plan, roi, selected)
@@ -277,11 +454,73 @@ object LocalMultivarExecutor:
         Svd.fit(input, components, preprocessing).map { fit =>
           FitArtifact.BiProjectionArtifact(shape(plan, roi, FitArtifactKind.Svd, input, fit.projection.map.codomain.size), fit.projection)
         }
+      case MultivarEstimator.GenPca(components, preprocessing, rowMetric, columnMetric, backend, policy) =>
+        val rowSpace = MvSpace(plan.input.id, SpaceRole.Samples, plan.input.samples)
+        val columnSpace = MvSpace(
+          SpaceId.unsafe(s"${plan.input.id.value}.${roi.id.value}"),
+          SpaceRole.Observed,
+          Dimension.unsafe(input.cols)
+        )
+        for
+          diagram <- DualityDiagram.from(
+            input,
+            rowMetric = rowMetric,
+            columnMetric = columnMetric,
+            rowSpace = Some(rowSpace),
+            columnSpace = Some(columnSpace)
+          )
+          fit <- GenPca.fit(diagram, components, preprocessing, backend, policy, DenseSolvers.symmetricEigen, DenseSolvers.svd)
+        yield FitArtifact.GenPcaArtifact(shape(plan, roi, FitArtifactKind.GenPca, input, fit.componentCount), fit)
+      case MultivarEstimator.Cpca(spec) =>
+        val rowSpace = MvSpace(plan.input.id, SpaceRole.Samples, plan.input.samples)
+        val columnSpace = MvSpace(
+          SpaceId.unsafe(s"${plan.input.id.value}.${roi.id.value}"),
+          SpaceRole.Observed,
+          Dimension.unsafe(input.cols)
+        )
+        for
+          diagram <- DualityDiagram.from(
+            input,
+            rowMetric = spec.rowMetric,
+            columnMetric = spec.columnMetric,
+            rowSpace = Some(rowSpace),
+            columnSpace = Some(columnSpace)
+          )
+          rowConstraint <- spec.rowConstraint.resolve(
+            IndexAxis.Row,
+            rowSpace,
+            diagram.rowMetric,
+            DenseSolvers.symmetricEigen,
+            spec.rankTolerance,
+            spec.storagePolicy
+          )
+          columnConstraint <- spec.columnConstraint.resolve(
+            IndexAxis.Feature,
+            columnSpace,
+            diagram.columnMetric,
+            DenseSolvers.symmetricEigen,
+            spec.rankTolerance,
+            spec.storagePolicy
+          )
+          problem <- CpcaProblem.from(diagram, rowConstraint, columnConstraint)
+          blockRequest <- spec.blockRequest
+          fit <- Cpca.fit(
+            problem,
+            blockRequest,
+            eigenSolver = DenseSolvers.symmetricEigen,
+            svdSolver = DenseSolvers.svd,
+            rankTolerance = spec.rankTolerance,
+            policy = spec.storagePolicy
+          )
+        yield FitArtifact.CpcaArtifact(shape(plan, roi, FitArtifactKind.Cpca, input, cpcaComponentCount(fit)), fit)
       case MultivarEstimator.Nystrom(components, landmarks, kernelSpec, preprocessing, method) =>
         for
           kernel <- PlanOps.kernelFromSpec(kernelSpec)
           fit <- Nystrom.fit(input, components, landmarks, kernel, preprocessing, method)
         yield FitArtifact.KernelArtifact(shape(plan, roi, FitArtifactKind.Nystrom, input, fit.eigen.components), fit)
+
+  private def cpcaComponentCount(fit: CpcaFit): Int =
+    fit.blocks.valuesIterator.map(_.rank).sum
 
   private def shape(
       plan: MultivarPlan,
@@ -302,19 +541,6 @@ object LocalMultivarExecutor:
     )
 
 private[multivar] object PlanOps:
-  def traverse[A, B](values: Vector[A])(f: A => Either[MultivarError, B]): Either[MultivarError, Vector[B]] =
-    val out = Vector.newBuilder[B]
-    var i = 0
-    var error = Option.empty[MultivarError]
-    while i < values.length && error.isEmpty do
-      f(values(i)) match
-        case Left(value)  => error = Some(value)
-        case Right(value) => out += value
-      i += 1
-    error match
-      case Some(value) => Left(value)
-      case None        => Right(out.result())
-
   def kernelFromSpec(spec: KernelSpec): Either[MultivarError, Kernel] =
     spec.name match
       case "linear" =>

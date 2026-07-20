@@ -131,10 +131,78 @@ class MetricSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     ).toOption.get
+    MvMetric.sparseSymmetric(asymmetricSparse) match
+      case Left(MultivarError.MetricMismatch(detail)) =>
+        assert(detail.contains("no stored mirror"), detail)
+        assert(detail.contains("both triangles"), detail)
+      case other =>
+        fail(s"expected a missing-mirror metric mismatch, got $other")
+
+    val unbalancedSparse = SparseMatrixView.fromRows(
+      Vector(
+        Vector(1.0, 2.0),
+        Vector(3.0, 1.0)
+      )
+    ).toOption.get
     assertEquals(
-      MvMetric.sparseSymmetric(asymmetricSparse),
-      Left(MultivarError.NonSymmetricMatrix(0, 1, 2.0, 0.0))
+      MvMetric.sparseSymmetric(unbalancedSparse),
+      Left(MultivarError.NonSymmetricMatrix(0, 1, 2.0, 3.0))
     )
+  }
+
+  test("sameValues identifies separately built metrics by kind, dimension, and entries") {
+    val identityA = MvMetric.identity(3).toOption.get
+    val identityB = MvMetric.identity(3).toOption.get
+    val identityOther = MvMetric.identity(4).toOption.get
+    assert(identityA.sameValues(identityB))
+    assert(!identityA.sameValues(identityOther))
+
+    val diagonalA = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
+    val diagonalB = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
+    val diagonalOther = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.0))).toOption.get
+    assert(diagonalA.sameValues(diagonalB), "separately built identical diagonal metrics must compare equal by value")
+    assert(!diagonalA.sameValues(diagonalOther))
+
+    val spdRows = Vector(
+      Vector(4.0, 1.0, 0.0),
+      Vector(1.0, 3.0, 1.0),
+      Vector(0.0, 1.0, 2.0)
+    )
+    val denseA = MvMetric.denseSymmetric(DoubleMatrix.fromRows(spdRows)).toOption.get
+    val denseB = MvMetric.denseSymmetric(DoubleMatrix.fromRows(spdRows)).toOption.get
+    assert(denseA.sameValues(denseB))
+
+    val sparseRows = Vector(
+      Vector(2.0, 0.0, 1.0),
+      Vector(0.0, 3.0, 0.0),
+      Vector(1.0, 0.0, 4.0)
+    )
+    val sparseA = MvMetric.sparseSymmetric(SparseMatrixView.fromRows(sparseRows).toOption.get).toOption.get
+    val sparseB = MvMetric.sparseSymmetric(SparseMatrixView.fromRows(sparseRows).toOption.get).toOption.get
+    assert(sparseA.sameValues(sparseB))
+
+    val onesDiagonal = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 1.0, 1.0))).toOption.get
+    assert(!identityA.sameValues(onesDiagonal), "sameValues is kind-sensitive, not just numerically equivalent")
+    assert(!diagonalA.sameValues(denseA))
+  }
+
+  test("diagonal metrics clamp roundoff negatives to zero and stay factorizable") {
+    val metric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, -5e-11))).toOption.get
+
+    metric match
+      case MvMetric.Diagonal(weights, _) =>
+        assertEqualsDouble(weights(1), 0.0, 0.0)
+      case other =>
+        fail(s"expected a diagonal metric, got $other")
+
+    MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense) match
+      case Right(roots) =>
+        assertEquals(roots.rank, 1)
+        val half = roots.half.applyLeft(DoubleMatrix.eye(2))
+        assertEqualsDouble(half(0, 0), 1.0, 1e-12)
+        assertEqualsDouble(half(1, 1), 0.0, 1e-12)
+      case Left(error) =>
+        fail(s"expected a construction-accepted diagonal metric to be factorizable, got $error")
   }
 
   test("strict PSD validation rejects an indefinite matrix that structural checks accept") {
