@@ -1,0 +1,218 @@
+#!/usr/bin/env Rscript
+
+# Generate the independent base-R reference for the one-shot canonical-effect
+# MVPA estimand. The training equations are the unconstrained core of
+# fmrireg.cca's F-optimizing direction learner; spatial filter construction,
+# simplex constraints, and its distinct cross-run Rayleigh statistic are not
+# part of this fixture.
+#
+# Orientations:
+#   X: timepoints x design columns
+#   Z: timepoints x features
+#   C: contrasts x design columns (one row in version one)
+#   H = Z'Z, G = Z'X, XtX = X'X
+#
+# Regenerate with:
+#   Rscript tools/r-parity/generate_cca_one_shot_fixtures.R
+
+fmt_num <- function(x) {
+  if (x == 0) return("0.0")
+  formatC(x, digits = 17, format = "fg", flag = "#")
+}
+
+fmt_vec <- function(x) {
+  paste0("Vector(", paste(vapply(x, fmt_num, character(1)), collapse = ", "), ")")
+}
+
+fmt_matrix <- function(x, indent = 8) {
+  x <- as.matrix(x)
+  pad <- paste(rep(" ", indent), collapse = "")
+  row_pad <- paste(rep(" ", indent + 4), collapse = "")
+  rows <- apply(x, 1, function(row) paste0(row_pad, fmt_vec(row)))
+  paste0(
+    "GaleNumerics.matrixFromRows(\n",
+    pad, "Vector(\n",
+    paste(rows, collapse = ",\n"),
+    "\n", pad, ")\n",
+    paste(rep(" ", indent - 2), collapse = ""), ")"
+  )
+}
+
+effect_and_residual <- function(X, Z, C) {
+  XtX <- crossprod(X)
+  M <- solve(XtX)
+  G <- crossprod(Z, X)
+  H <- crossprod(Z)
+  middle <- solve(C %*% M %*% t(C))
+  effect <- G %*% M %*% t(C) %*% middle %*% C %*% M %*% t(G)
+  residual <- H - G %*% M %*% t(G)
+
+  # Independent dense-projector oracle for generation-time validation.
+  effect_projector <- X %*% M %*% t(C) %*% middle %*% C %*% M %*% t(X)
+  residual_projector <- diag(nrow(X)) - X %*% M %*% t(X)
+  effect_dense <- crossprod(Z, effect_projector %*% Z)
+  residual_dense <- crossprod(Z, residual_projector %*% Z)
+  stopifnot(max(abs(effect - effect_dense)) < 1e-11)
+  stopifnot(max(abs(residual - residual_dense)) < 1e-11)
+
+  list(XtX = XtX, G = G, H = H, effect = effect, residual = residual)
+}
+
+canonical_direction <- function(effect, residual, ridge_fraction) {
+  ridge <- ridge_fraction * mean(diag(residual))
+  regularized <- residual + diag(ridge, nrow(residual))
+  lower <- t(chol(regularized))
+  whitened <- solve(lower, effect) %*% solve(t(lower))
+  eig <- eigen((whitened + t(whitened)) / 2, symmetric = TRUE)
+  direction <- solve(t(lower), eig$vectors[, 1])
+  direction <- direction / sqrt(drop(t(direction) %*% regularized %*% direction))
+  anchor <- which.max(abs(direction))
+  if (direction[anchor] < 0) direction <- -direction
+  lambda <- drop(t(direction) %*% effect %*% direction)
+  list(direction = direction, lambda = lambda, ridge = ridge)
+}
+
+task <- c(-1, -1, 1, 1, -1, -1, 1, 1)
+drift <- seq(-1, 1, length.out = length(task))
+X <- cbind(intercept = 1, task = task, drift = drift)
+C <- matrix(c(0, 1, 0), nrow = 1)
+
+noise <- list(
+  cbind(
+    c(0.20, -0.10, 0.10, -0.20, -0.15, 0.25, -0.05, -0.05),
+    c(-0.10, 0.20, -0.15, 0.05, 0.15, -0.05, 0.10, -0.20),
+    c(0.05, 0.15, -0.20, 0.10, -0.10, -0.15, 0.25, -0.10)
+  ),
+  cbind(
+    c(-0.05, 0.15, -0.10, 0.20, 0.10, -0.20, 0.05, -0.15),
+    c(0.15, -0.05, 0.20, -0.10, -0.20, 0.10, -0.15, 0.05),
+    c(-0.20, 0.10, 0.05, -0.15, 0.20, -0.10, -0.05, 0.15)
+  ),
+  cbind(
+    c(0.10, -0.20, 0.15, -0.05, 0.05, -0.10, 0.20, -0.15),
+    c(-0.15, 0.10, -0.05, 0.20, 0.05, -0.20, 0.15, -0.10),
+    c(0.20, -0.10, 0.10, -0.20, -0.05, 0.15, -0.15, 0.05)
+  )
+)
+
+task_loadings <- list(
+  c(0.90, -0.55, 0.35),
+  c(0.75, -0.70, 0.25),
+  c(1.05, -0.45, 0.40)
+)
+drift_loadings <- list(
+  c(0.20, 0.35, -0.15),
+  c(0.15, 0.45, -0.05),
+  c(0.25, 0.30, -0.20)
+)
+
+Z <- lapply(seq_along(noise), function(run) {
+  outer(task, task_loadings[[run]]) +
+    outer(drift, drift_loadings[[run]]) + noise[[run]]
+})
+moments <- lapply(Z, function(z) effect_and_residual(X, z, C))
+
+ridge_fraction <- 0.02
+folds <- lapply(seq_along(moments), function(held_out) {
+  training <- setdiff(seq_along(moments), held_out)
+  effect <- Reduce(`+`, lapply(moments[training], `[[`, "effect"))
+  residual <- Reduce(`+`, lapply(moments[training], `[[`, "residual"))
+  fit <- canonical_direction(effect, residual, ridge_fraction)
+  test <- moments[[held_out]]
+  heldout_lambda <- drop(t(fit$direction) %*% test$effect %*% fit$direction) /
+    drop(t(fit$direction) %*% test$residual %*% fit$direction)
+  list(
+    held_out = held_out - 1L,
+    direction = fit$direction,
+    training_lambda = fit$lambda,
+    ridge = fit$ridge,
+    heldout_lambda = heldout_lambda,
+    heldout_rho = sqrt(heldout_lambda / (1 + heldout_lambda))
+  )
+})
+
+mean_lambda <- mean(vapply(folds, `[[`, numeric(1), "heldout_lambda"))
+mean_rho <- sqrt(mean_lambda / (1 + mean_lambda))
+
+lines <- c(
+  "package scalafim.multivar",
+  "",
+  "import gale.linalg.DMat",
+  "import gale.linalg.DVec",
+  "",
+  "/** Fixed base-R reference for the one-shot canonical-effect estimand.",
+  "  * Generated by tools/r-parity/generate_cca_one_shot_fixtures.R with",
+  paste0("  * R ", getRversion(), "; only base matrix operations are used."),
+  "  * X and Z are time-by-column; C is contrast-by-design.",
+  "  */",
+  "object CanonicalEffectReferenceFixtures:",
+  "  final case class RunReference(",
+  "      response: DMat,",
+  "      cross: DMat,",
+  "      total: DMat,",
+  "      effect: DMat,",
+  "      residual: DMat",
+  "  )",
+  "",
+  "  final case class FoldReference(",
+  "      heldOutRun: Int,",
+  "      direction: DVec,",
+  "      trainingRoot: Double,",
+  "      ridge: Double,",
+  "      heldOutRoot: Double,",
+  "      heldOutCorrelation: Double",
+  "  )",
+  "",
+  paste0("  val analyticEffect: DMat = ", fmt_matrix(matrix(c(4, 2, 2, 1), 2, byrow = TRUE), 4)),
+  paste0("  val analyticResidual: DMat = ", fmt_matrix(diag(c(2, 3)), 4)),
+  paste0("  val analyticDirection: DVec = GaleNumerics.vectorFromArray(Array(",
+         paste(vapply(c(1, 1 / 3) / sqrt(7 / 3), fmt_num, character(1)), collapse = ", "), "))"),
+  paste0("  val analyticRoot: Double = ", fmt_num(7 / 3)),
+  paste0("  val analyticCorrelation: Double = ", fmt_num(sqrt(0.7))),
+  "",
+  paste0("  val contrast: DMat = ", fmt_matrix(C, 4)),
+  paste0("  val design: DMat = ", fmt_matrix(X, 4)),
+  paste0("  val expectedXtX: DMat = ", fmt_matrix(moments[[1]]$XtX, 4)),
+  paste0("  val ridgeFraction: Double = ", fmt_num(ridge_fraction)),
+  "",
+  "  val runs: Vector[RunReference] =",
+  "    Vector("
+)
+
+run_lines <- lapply(seq_along(moments), function(i) {
+  m <- moments[[i]]
+  c(
+    "      RunReference(",
+    paste0("        response = ", fmt_matrix(Z[[i]], 8), ","),
+    paste0("        cross = ", fmt_matrix(m$G, 8), ","),
+    paste0("        total = ", fmt_matrix(m$H, 8), ","),
+    paste0("        effect = ", fmt_matrix(m$effect, 8), ","),
+    paste0("        residual = ", fmt_matrix(m$residual, 8)),
+    "      )"
+  )
+})
+lines <- c(lines, paste(vapply(run_lines, paste, collapse = "\n", character(1)), collapse = ",\n"), "    )", "")
+
+lines <- c(lines, "  val folds: Vector[FoldReference] =", "    Vector(")
+fold_lines <- lapply(folds, function(fold) {
+  c(
+    "      FoldReference(",
+    paste0("        heldOutRun = ", fold$held_out, ","),
+    paste0("        direction = GaleNumerics.vectorFromArray(Array(", paste(vapply(fold$direction, fmt_num, character(1)), collapse = ", "), ")),"),
+    paste0("        trainingRoot = ", fmt_num(fold$training_lambda), ","),
+    paste0("        ridge = ", fmt_num(fold$ridge), ","),
+    paste0("        heldOutRoot = ", fmt_num(fold$heldout_lambda), ","),
+    paste0("        heldOutCorrelation = ", fmt_num(fold$heldout_rho)),
+    "      )"
+  )
+})
+lines <- c(
+  lines,
+  paste(vapply(fold_lines, paste, collapse = "\n", character(1)), collapse = ",\n"),
+  "    )",
+  "",
+  paste0("  val meanHeldOutRoot: Double = ", fmt_num(mean_lambda)),
+  paste0("  val rootToCorrelationOfMean: Double = ", fmt_num(mean_rho))
+)
+
+writeLines(lines)
