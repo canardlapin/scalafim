@@ -72,6 +72,20 @@ lazy val linalgBreeze =
 
 lazy val linalgBreezeJVM = linalgBreeze.jvm
 
+lazy val graphLinalg =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/graph-linalg"))
+    .dependsOn(graph, linalg, multivar % "test->compile")
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-graph-linalg"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val graphLinalgJS  = graphLinalg.js
+lazy val graphLinalgJVM = graphLinalg.jvm
+
 lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -521,6 +535,8 @@ lazy val root =
     .aggregate(
       graphJS,
       graphJVM,
+      graphLinalgJS,
+      graphLinalgJVM,
       linalgJS,
       linalgJVM,
       linalgBreezeJVM,
