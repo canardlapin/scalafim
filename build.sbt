@@ -281,6 +281,47 @@ lazy val imageView =
 lazy val imageViewJS  = imageView.js
 lazy val imageViewJVM = imageView.jvm
 
+lazy val imageViewCanvas =
+  crossProject(JSPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-canvas"))
+    .dependsOn(imageView, graphicsCanvas)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-canvas"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val imageViewCanvasJS = imageViewCanvas.js
+
+lazy val imageViewJava2d =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-java2d"))
+    .dependsOn(imageView, graphicsJava2d)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-java2d"
+    )
+
+lazy val imageViewJava2dJVM = imageViewJava2d.jvm
+
+lazy val imageViewJavafx =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-javafx"))
+    .dependsOn(imageView, graphicsJavafx)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-javafx",
+      libraryDependencies ++= Seq(
+        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
+        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
+      )
+    )
+
+lazy val imageViewJavafxJVM = imageViewJavafx.jvm
+
 lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -603,6 +644,9 @@ lazy val root =
       imageJVM,
       imageViewJS,
       imageViewJVM,
+      imageViewCanvasJS,
+      imageViewJava2dJVM,
+      imageViewJavafxJVM,
       thresholdJS,
       thresholdJVM,
       motionJS,
