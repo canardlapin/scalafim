@@ -1,14 +1,14 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class CpcaSuite extends munit.FunSuite:
 
   private def k(value: Int): ComponentCount =
     ComponentCount.unsafe(value)
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -19,16 +19,16 @@ class CpcaSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: DVec, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
 
-  private def assertMetricOrthonormal(factors: DoubleMatrix, metric: MvMetric, tol: Double): Unit =
+  private def assertMetricOrthonormal(factors: DMat, metric: MvMetric, tol: Double): Unit =
     val weighted = metric.matvec(factors).toOption.get
-    val gram = DoubleMatrix.transposeMultiply(factors, weighted)
+    val gram = GaleNumerics.transposeMultiply(factors, weighted)
     var row = 0
     while row < gram.rows do
       var col = 0
@@ -37,7 +37,7 @@ class CpcaSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def frobeniusInner(left: DoubleMatrix, right: DoubleMatrix): Double =
+  private def frobeniusInner(left: DMat, right: DMat): Double =
     assertEquals(left.rows, right.rows)
     assertEquals(left.cols, right.cols)
     val leftData = left.copyData
@@ -52,11 +52,11 @@ class CpcaSuite extends munit.FunSuite:
   private def partitionValue(fit: CpcaFit, block: CpcaBlock): Double =
     fit.partition.inertia(block).map(_.ss).getOrElse(fail(s"missing partition block ${block.label}"))
 
-  private def rightProject(con: ResolvedCpcaConstraint, input: DoubleMatrix): DoubleMatrix =
+  private def rightProject(con: ResolvedCpcaConstraint, input: DMat): DMat =
     con.project(input.transpose).toOption.get.transpose
 
   test("constraint specs validate shape before resolving projector geometry") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -73,7 +73,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("constraint specs resolve only after a concrete space and metric are known") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -97,7 +97,7 @@ class CpcaSuite extends munit.FunSuite:
   test("constraints expose projector and coordinate maps with decoder-backed projection") {
     given PseudoInverseSolver = PseudoInverseSolver.orthonormalColumns()
 
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -105,7 +105,7 @@ class CpcaSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     )
-    val input = DoubleMatrix.fromRows(
+    val input = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 3.0),
         Vector(4.0, 5.0),
@@ -137,13 +137,13 @@ class CpcaSuite extends munit.FunSuite:
 
     val zero = CpcaConstraint.zero(IndexAxis.Row, space)
     assertEquals(zero.coordinateMap, None)
-    assertMatrixClose(zero.project(input).toOption.get, DoubleMatrix.zeros(input.rows, input.cols), 1e-12)
+    assertMatrixClose(zero.project(input).toOption.get, DMat.zeros(input.rows, input.cols), 1e-12)
   }
 
   test("estimator specs validate metric and constraint dimensions without resolving formulas") {
     val rowMetric = MvMetric.identity(4).toOption.get
     val colMetric = MvMetric.identity(3).toOption.get
-    val rowDesign = DoubleMatrix.fromRows(
+    val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -151,7 +151,7 @@ class CpcaSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     )
-    val colDesign = DoubleMatrix.fromRows(
+    val colDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0),
         Vector(0.0),
@@ -234,7 +234,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("identity constraints reduce GxH to ordinary SVD") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, 0.5),
         Vector(0.0, -1.0, 2.0),
@@ -262,7 +262,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("direct CPCA fit rejects requested rank for structural zero blocks") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(-1.0, 0.5),
@@ -280,7 +280,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("diagonal-metric constraints produce the four orthogonal CPCA blocks") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.5, 2.0, -1.0),
         Vector(1.5, -0.5, 1.0, 0.0),
@@ -291,14 +291,14 @@ class CpcaSuite extends munit.FunSuite:
     )
     val rowSpace = MvSpace.of("cpca.rows", SpaceRole.Samples, x.rows).toOption.get
     val colSpace = MvSpace.of("cpca.columns", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
+    val colMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(colSpace))
       .toOption
       .get
 
-    val rowDesign = DoubleMatrix.fromRows(
+    val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -307,7 +307,7 @@ class CpcaSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     )
-    val colDesign = DoubleMatrix.fromRows(
+    val colDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -363,7 +363,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("CPCA block fits expose scores, original-scale reconstructions, and constraint coordinates") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.5, 2.0, -1.0),
         Vector(1.5, -0.5, 1.0, 0.0),
@@ -374,13 +374,13 @@ class CpcaSuite extends munit.FunSuite:
     )
     val rowSpace = MvSpace.of("cpca.fit.rows", SpaceRole.Samples, x.rows).toOption.get
     val colSpace = MvSpace.of("cpca.fit.columns", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
+    val colMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(colSpace))
       .toOption
       .get
-    val rowDesign = DoubleMatrix.fromRows(
+    val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -389,7 +389,7 @@ class CpcaSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     )
-    val colDesign = DoubleMatrix.fromRows(
+    val colDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -414,7 +414,7 @@ class CpcaSuite extends munit.FunSuite:
     assertMatrixClose(gxH.scores, MatrixOps.scaleColumns(gxH.u, gxH.d), 1e-12)
     assertMatrixClose(
       gxH.reconstructOriginal().toOption.get,
-      DoubleMatrix.multiply(gxH.scores, gxH.v.transpose),
+      GaleNumerics.multiply(gxH.scores, gxH.v.transpose),
       1e-10
     )
 
@@ -424,14 +424,14 @@ class CpcaSuite extends munit.FunSuite:
     val colCoords = gxH.columnCoordinates.getOrElse(fail("expected column coordinates for GxH"))
     val rowBasis = rowCon.basis.getOrElse(fail("expected row constraint basis"))
     val colBasis = colCon.basis.getOrElse(fail("expected column constraint basis"))
-    assertMatrixClose(DoubleMatrix.multiply(rowBasis, rowCoords), gxH.uStar, 1e-8)
-    assertMatrixClose(DoubleMatrix.multiply(colBasis, colCoords), gxH.vStar, 1e-8)
+    assertMatrixClose(GaleNumerics.multiply(rowBasis, rowCoords), gxH.uStar, 1e-8)
+    assertMatrixClose(GaleNumerics.multiply(colBasis, colCoords), gxH.vStar, 1e-8)
     assertEquals(fit.block(CpcaBlock.G0xH).get.rowCoordinates, None)
     assertEquals(fit.block(CpcaBlock.G0xH0).get.columnCoordinates, None)
   }
 
   test("CPCA block fits truncate to fewer components than the block rank") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, 0.5),
         Vector(0.0, -1.0, 2.0),
@@ -457,7 +457,7 @@ class CpcaSuite extends munit.FunSuite:
   test("rank-deficient constraint designs resolve to reduced bases and zero designs demote to Zero") {
     val space = MvSpace.of("cpca.deficient.rows", SpaceRole.Samples, 4).toOption.get
     val metric = MvMetric.identity(4, Some(space)).toOption.get
-    val collinear = DoubleMatrix.fromRows(
+    val collinear = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(1.0, 2.0),
@@ -469,13 +469,13 @@ class CpcaSuite extends munit.FunSuite:
     assertEquals(reduced.constraint, CpcaConstraint.Basis(collinear))
     assertEquals(reduced.rank, 1)
 
-    val demoted = CpcaConstraint.basis(IndexAxis.Row, space, DoubleMatrix.zeros(4, 2), metric).toOption.get
+    val demoted = CpcaConstraint.basis(IndexAxis.Row, space, DMat.zeros(4, 2), metric).toOption.get
     assertEquals(demoted.constraint, CpcaConstraint.Zero)
     assertEquals(demoted.rank, 0)
   }
 
   test("CPCA problems reject constraints resolved against a different metric than the diagram") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(-1.0, 0.5),
@@ -484,13 +484,13 @@ class CpcaSuite extends munit.FunSuite:
       )
     )
     val rowSpace = MvSpace.of("cpca.metric.rows", SpaceRole.Samples, 4).toOption.get
-    val diagMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 1.0, 1.0, 1.0)), Some(rowSpace)).toOption.get
+    val diagMetric = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 1.0, 1.0, 1.0)), Some(rowSpace)).toOption.get
     val identityMetric = MvMetric.identity(4, Some(rowSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(diagMetric), rowSpace = Some(rowSpace))
       .toOption
       .get
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -512,7 +512,7 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("zero row constraint assigns all identity-column inertia to G0xH") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(-1.0, 0.5),
@@ -539,7 +539,7 @@ class CpcaSuite extends munit.FunSuite:
   test("a basis-constrained block that is exactly zero records a zero block") {
     // Regression: an all-zero ROI under a Basis column constraint used to abort the
     // whole CPCA fit with SolverFailed instead of recording the zero block.
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(0.0, 0.0, 1.0, 2.0),
         Vector(0.0, 0.0, -1.5, 0.5),
@@ -549,7 +549,7 @@ class CpcaSuite extends munit.FunSuite:
     )
     val colSpace = MvSpace.of("cpca.zero.roi", SpaceRole.Observed, 4).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), columnSpace = Some(colSpace)).toOption.get
-    val colDesign = DoubleMatrix.fromRows(
+    val colDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),

@@ -2,8 +2,8 @@ package scalafim.multivar
 
 import scala.annotation.nowarn
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** The legacy raw-array overload is deliberately exercised here for compatibility.
   * Safe-boundary behavior is covered independently through `Unsafe` and the semantic
@@ -17,7 +17,7 @@ class GenPcaSuite extends munit.FunSuite:
   private def k(value: Int): ComponentCount =
     ComponentCount.unsafe(value)
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -28,7 +28,7 @@ class GenPcaSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertVectorClose(actual: DoubleVector, expected: Vector[Double], tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: Vector[Double], tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
@@ -38,7 +38,7 @@ class GenPcaSuite extends munit.FunSuite:
   /** Flip (ou_j, ov_j) pairs so the largest-magnitude ov entry is positive — the same
     * canonicalization applied to the R reference values.
     */
-  private def canonicalize(ou: DoubleMatrix, ov: DoubleMatrix): (DoubleMatrix, DoubleMatrix) =
+  private def canonicalize(ou: DMat, ov: DMat): (DMat, DMat) =
     val ouData = ou.copyData
     val ovData = ov.copyData
     var col = 0
@@ -58,7 +58,7 @@ class GenPcaSuite extends munit.FunSuite:
           ouData(row * ou.cols + col) = -ouData(row * ou.cols + col)
           row += 1
       col += 1
-    (DoubleMatrix.unsafe(ou.rows, ou.cols, ouData), DoubleMatrix.unsafe(ov.rows, ov.cols, ovData))
+    (GaleNumerics.matrixFromRowMajor(ou.rows, ou.cols, ouData), GaleNumerics.matrixFromRowMajor(ov.rows, ov.cols, ovData))
 
   private def assertGolden(
       fit: GenPcaFit,
@@ -71,12 +71,12 @@ class GenPcaSuite extends munit.FunSuite:
     assertVectorClose(fit.d, sdev, tol)
     assertVectorClose(fit.propV, propv, tol)
     val (canonOu, canonOv) = canonicalize(fit.ou, fit.ov)
-    assertMatrixClose(canonOu, DoubleMatrix.fromRows(ou), tol)
-    assertMatrixClose(canonOv, DoubleMatrix.fromRows(ov), tol)
+    assertMatrixClose(canonOu, GaleNumerics.matrixFromRows(ou), tol)
+    assertMatrixClose(canonOv, GaleNumerics.matrixFromRows(ov), tol)
 
-  private def assertMetricOrthonormal(factors: DoubleMatrix, metric: MvMetric, tol: Double): Unit =
+  private def assertMetricOrthonormal(factors: DMat, metric: MvMetric, tol: Double): Unit =
     val weighted = metric.matvec(factors).toOption.get
-    val gram = DoubleMatrix.transposeMultiply(factors, weighted)
+    val gram = GaleNumerics.transposeMultiply(factors, weighted)
     var row = 0
     while row < gram.rows do
       var col = 0
@@ -87,26 +87,26 @@ class GenPcaSuite extends munit.FunSuite:
 
   /** Subspace agreement in a metric: all singular values of U1' M U2 must be 1. */
   private def assertSameSubspace(
-      left: DoubleMatrix,
-      right: DoubleMatrix,
+      left: DMat,
+      right: DMat,
       metric: MvMetric,
       tol: Double
   ): Unit =
-    val cross = DoubleMatrix.transposeMultiply(left, metric.matvec(right).toOption.get)
-    val eigen = DenseSolvers.symmetricEigen.decompose(DoubleMatrix.crossProduct(cross)).toOption.get
+    val cross = GaleNumerics.transposeMultiply(left, metric.matvec(right).toOption.get)
+    val eigen = DenseSolvers.symmetricEigen.decompose(GaleNumerics.crossProduct(cross)).toOption.get
     var i = 0
     while i < eigen.values.length do
       assertEqualsDouble(Math.sqrt(Math.max(eigen.values(i), 0.0)), 1.0, tol)
       i += 1
 
   private def diagonal(values: Vector[Double]): MvMetric =
-    MvMetric.diagonal(DoubleVector.fromSeq(values)).toOption.get
+    MvMetric.diagonal(DVec.fromSeq(values)).toOption.get
 
   private def denseMetric(rows: Vector[Vector[Double]]): MvMetric =
-    MvMetric.denseSymmetric(DoubleMatrix.fromRows(rows)).toOption.get
+    MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(rows)).toOption.get
 
   test("raw-array generalized PCA requires an explicit unsafe reason") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g2X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
     Unsafe.genPcaFromArrays(x, k(2), reason = "") match
       case Left(MultivarError.InvalidMap(detail)) =>
         assert(detail.contains("non-empty reason"))
@@ -122,7 +122,7 @@ class GenPcaSuite extends munit.FunSuite:
   // ---------------------------------------------------------------- properties
 
   test("identity metrics reproduce the plain PCA fit exactly") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g2X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
     val gen = GenPca.fit(x, k(2)).toOption.get
     val pca = Pca.fit(x, k(2)).toOption.get
 
@@ -133,7 +133,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("a diagonal column metric equals the SVD of column-scaled data") {
-    val x = DoubleMatrix.fromRows(R.g2X)
+    val x = GaleNumerics.matrixFromRows(R.g2X)
     val weights = R.g2ColWeights
     val gen = GenPca
       .fit(
@@ -146,7 +146,7 @@ class GenPcaSuite extends munit.FunSuite:
       .toOption
       .get
 
-    val scaled = MetricOperator.scaleColumnsDense(x, DoubleVector.fromSeq(weights.map(Math.sqrt)))
+    val scaled = MetricOperator.scaleColumnsDense(x, DVec.fromSeq(weights.map(Math.sqrt)))
     val svd = Svd.fit(MatrixView.dense(scaled), k(3)).toOption.get
 
     var j = 0
@@ -167,7 +167,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("factors are orthonormal in their metrics for dense SPD row and column metrics") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g5X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g5X))
     val rowMetric = denseMetric(R.g5RowMetric)
     val colMetric = denseMetric(R.g5ColMetric)
     val fit = GenPca
@@ -180,11 +180,11 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("fitting a DualityDiagram is equivalent to metric arguments and preserves its column space") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g5X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g5X))
     val rowSpace = MvSpace.of("trial.rows", SpaceRole.Samples, x.rows).toOption.get
     val columnSpace = MvSpace.of("voxel.features", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.denseSymmetric(DoubleMatrix.fromRows(R.g5RowMetric), space = Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.denseSymmetric(DoubleMatrix.fromRows(R.g5ColMetric), space = Some(columnSpace)).toOption.get
+    val rowMetric = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(R.g5RowMetric), space = Some(rowSpace)).toOption.get
+    val colMetric = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(R.g5ColMetric), space = Some(columnSpace)).toOption.get
     val diagram = DualityDiagram
       .from(x, rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(columnSpace))
       .toOption
@@ -216,7 +216,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("full-rank reconstruction recovers the data and variance proportions sum to one") {
-    val x = DoubleMatrix.fromRows(R.g3X)
+    val x = GaleNumerics.matrixFromRows(R.g3X)
     val fit = GenPca
       .fit(
         MatrixView.dense(x),
@@ -241,7 +241,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("centered reconstruction inverts the preprocessing back to the original scale") {
-    val x = DoubleMatrix.fromRows(R.g5X)
+    val x = GaleNumerics.matrixFromRows(R.g5X)
     val fit = GenPca
       .fit(
         MatrixView.dense(x),
@@ -258,7 +258,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("truncate keeps leading factors and project matches the training scores") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g3X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g3X))
     val fit = GenPca
       .fit(
         x,
@@ -280,7 +280,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("eigen and deflation backends agree on singular values and metric subspaces") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g3X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g3X))
     val rowMetric = diagonal(R.g3RowWeights)
     val colMetric = diagonal(R.g3ColWeights)
 
@@ -346,7 +346,7 @@ class GenPcaSuite extends munit.FunSuite:
       .get
     val denseFit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g7X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g7X)),
         k(2),
         Some(sparseMetric),
         Some(colMetric),
@@ -368,7 +368,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("backend auto resolution prefers eigen for small dense problems") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g2X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
     val identity = MvMetric.identity(6).toOption.get
     val colMetric = diagonal(R.g2ColWeights)
     assertEquals(
@@ -378,7 +378,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("metric shape mismatches are rejected with the offending axis") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g2X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
     GenPca.fit(x, k(2), rowMetric = Some(diagonal(R.g2ColWeights))) match
       case Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, expected, actual)) =>
         assertEquals(expected, 6)
@@ -391,7 +391,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("deflation honors the metric scale: c*I metrics rescale the identity GMD analytically") {
     // From X = U D V' with U' (cI) U = I and V' (cI) V = I, substituting the plain
     // SVD X = U0 D0 V0' gives U = U0 / sqrt(c), V = V0 / sqrt(c), D = c * D0.
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g8X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g8X))
     val c = 1e12
     val rowScaled = diagonal(Vector.fill(x.rows)(c))
     val colScaled = diagonal(Vector.fill(x.cols)(c))
@@ -448,7 +448,7 @@ class GenPcaSuite extends munit.FunSuite:
         val c1 = Math.sin((i + 1) * 3 * 0.7) + 0.1 * (i + 1) * 2
         c0 + c1
     }
-    val x = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val fit = GenPca.fit(x, k(5), preproc = PreprocessSpec.Center).toOption.get
 
     assertEquals(fit.componentCount, 4)
@@ -460,7 +460,7 @@ class GenPcaSuite extends munit.FunSuite:
 
   test("non-finite input is rejected with a typed error on the identity SVD path") {
     val rows = Vector(Vector(1.0, 2.0), Vector(3.0, Double.NaN), Vector(4.0, 5.0))
-    val x = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     GenPca.fit(x, k(1), preproc = PreprocessSpec.Pass) match
       case Left(MultivarError.NonFiniteValue(_, _, _)) => ()
       case other => fail(s"expected a typed non-finite rejection, got $other")
@@ -471,7 +471,7 @@ class GenPcaSuite extends munit.FunSuite:
     val rows = R.g3X.map(_.map(_ * s))
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(rows)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(rows)),
         k(4),
         Some(diagonal(R.g3RowWeights)),
         Some(diagonal(R.g3ColWeights)),
@@ -498,7 +498,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("an explicit deflation backend is honored under identity metrics") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g3X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g3X))
     val fit = GenPca
       .fit(x, k(2), preproc = PreprocessSpec.Pass, backend = GmdBackend.Deflation())
       .toOption
@@ -513,7 +513,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("wide identity-metric data takes the n x n dual eigen path and matches the SVD") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g6X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g6X))
     assert(x.rows < x.cols)
     val fit = GenPca
       .fit(x, k(2), preproc = PreprocessSpec.Pass, backend = GmdBackend.Eigen())
@@ -529,7 +529,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("deflation reports iteration exhaustion as a typed error") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(R.g3X))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g3X))
     GenPca.fit(
       x,
       k(2),
@@ -546,7 +546,7 @@ class GenPcaSuite extends munit.FunSuite:
   }
 
   test("a zero matrix is rejected with a typed error on every backend") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector.fill(4)(Vector.fill(3)(0.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector.fill(4)(Vector.fill(3)(0.0))))
     GenPca.fit(x, k(1), preproc = PreprocessSpec.Pass) match
       case Left(MultivarError.SolverFailed(_)) => ()
       case other => fail(s"expected a typed zero-spectrum failure on the identity path, got $other")
@@ -573,7 +573,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("deflation truncation below the request is reflected in the diagnostics") {
     // Rank-one data: the second requested component must be dropped, not fabricated.
     val rows = Vector.tabulate(4, 3)((i, j) => (i + 1.0) * (j + 1.0))
-    val x = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val fit = GenPca
       .fit(
         x,
@@ -595,7 +595,7 @@ class GenPcaSuite extends munit.FunSuite:
 
   test("G1: identity metrics match the R genpca reference") {
     val fit = GenPca
-      .fit(MatrixView.dense(DoubleMatrix.fromRows(R.g1X)), k(2), preproc = PreprocessSpec.Pass)
+      .fit(MatrixView.dense(GaleNumerics.matrixFromRows(R.g1X)), k(2), preproc = PreprocessSpec.Pass)
       .toOption
       .get
     assertGolden(fit, R.g1Sdev, R.g1Ou, R.g1Ov, R.g1Propv, 1e-6)
@@ -604,7 +604,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G2: diagonal column metric matches the R genpca reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g2X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X)),
         k(3),
         colMetric = Some(diagonal(R.g2ColWeights)),
         preproc = PreprocessSpec.Pass,
@@ -618,7 +618,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G3: diagonal row and column metrics match the R genpca reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g3X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g3X)),
         k(3),
         Some(diagonal(R.g3RowWeights)),
         Some(diagonal(R.g3ColWeights)),
@@ -633,7 +633,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G4: dense SPD column metric matches the R genpca reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g4X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g4X)),
         k(3),
         colMetric = Some(denseMetric(R.g4ColMetric)),
         preproc = PreprocessSpec.Pass,
@@ -647,7 +647,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G5: dense SPD metrics with centering match the R genpca reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g5X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g5X)),
         k(3),
         Some(denseMetric(R.g5RowMetric)),
         Some(denseMetric(R.g5ColMetric)),
@@ -662,7 +662,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G6: wide data exercises the dual path and matches the R genpca reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g6X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g6X)),
         k(2),
         Some(diagonal(R.g6RowWeights)),
         Some(diagonal(R.g6ColWeights)),
@@ -694,7 +694,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G8: the deflation backend matches the R genpca deflation reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g8X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g8X)),
         k(2),
         Some(diagonal(R.g8RowWeights)),
         Some(diagonal(R.g8ColWeights)),
@@ -715,7 +715,7 @@ class GenPcaSuite extends munit.FunSuite:
   test("G9: a rank-deficient PSD column metric drops null directions like the R reference") {
     val fit = GenPca
       .fit(
-        MatrixView.dense(DoubleMatrix.fromRows(R.g9X)),
+        MatrixView.dense(GaleNumerics.matrixFromRows(R.g9X)),
         k(3),
         colMetric = Some(denseMetric(R.g9ColMetric)),
         preproc = PreprocessSpec.Pass,
@@ -737,11 +737,11 @@ class GenPcaSuite extends munit.FunSuite:
     val factor = 1.0e6
     val scaled = base.map(_.map(_ * factor))
     val small = GenPca
-      .fit(MatrixView.dense(DoubleMatrix.fromRows(base)), k(3), preproc = PreprocessSpec.Pass)
+      .fit(MatrixView.dense(GaleNumerics.matrixFromRows(base)), k(3), preproc = PreprocessSpec.Pass)
       .toOption
       .get
 
-    GenPca.fit(MatrixView.dense(DoubleMatrix.fromRows(scaled)), k(3), preproc = PreprocessSpec.Pass) match
+    GenPca.fit(MatrixView.dense(GaleNumerics.matrixFromRows(scaled)), k(3), preproc = PreprocessSpec.Pass) match
       case Right(big) =>
         assertEquals(big.componentCount, small.componentCount)
         var i = 0
@@ -754,7 +754,7 @@ class GenPcaSuite extends munit.FunSuite:
       case Left(error) =>
         fail(s"expected the large-scale wide identity fit to succeed, got $error")
 
-    assert(Pca.fit(MatrixView.dense(DoubleMatrix.fromRows(scaled)), k(2)).isRight)
+    assert(Pca.fit(MatrixView.dense(GaleNumerics.matrixFromRows(scaled)), k(2)).isRight)
   }
 
   test("identity-path total variance is stable for lazily centered huge-mean data") {
@@ -768,7 +768,7 @@ class GenPcaSuite extends munit.FunSuite:
     val fitMeans = Vector.tabulate(3)(j => raw.map(_(j)).sum / raw.length)
     val centered = raw.map(row => row.indices.toVector.map(j => row(j) - fitMeans(j)))
     val reference = GenPca
-      .fit(MatrixView.dense(DoubleMatrix.fromRows(centered)), k(2), preproc = PreprocessSpec.Pass)
+      .fit(MatrixView.dense(GaleNumerics.matrixFromRows(centered)), k(2), preproc = PreprocessSpec.Pass)
       .toOption
       .get
 

@@ -1,11 +1,13 @@
 package scalafim.multivar
 
-import scalafim.linalg.BlockDiagonalLinearMap
-import scalafim.linalg.BlockLinearMap
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinearMap
-import scalafim.linalg.LinearMapError
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.DoubleLinearOperator
+import gale.linalg.LinAlgError
+import gale.linalg.LinearOperator
+import gale.linalg.Matrix
+import gale.linalg.MutableDVec
+import gale.sparse.CSR
 
 /** Stable identity for an immutable numerical value or externally versioned object. */
 opaque type ValueId = String
@@ -148,12 +150,12 @@ enum OperatorRepresentation:
       case MatrixFree  => "matrix-free"
 
 object OperatorRepresentation:
-  private[multivar] def fromLinearMap(operator: LinearMap): OperatorRepresentation =
+  private[multivar] def fromLinearMap(operator: DoubleLinearOperator): OperatorRepresentation =
     operator match
-      case _: CsrMatrix              => OperatorRepresentation.Sparse
-      case _: BlockDiagonalLinearMap => OperatorRepresentation.Block
-      case _: BlockLinearMap         => OperatorRepresentation.Block
-      case _                         => OperatorRepresentation.MatrixFree
+      case _: CSR                     => OperatorRepresentation.Sparse
+      case _: BlockStructuredOperator => OperatorRepresentation.Block
+      case _: DMat                    => OperatorRepresentation.Dense
+      case _                          => OperatorRepresentation.MatrixFree
 
   private[multivar] def fromMatrixView(view: MatrixView): OperatorRepresentation =
     view.storage match
@@ -182,7 +184,7 @@ object SemanticProvenance:
 
 enum SemanticError:
   case MultivarFailure(error: MultivarError)
-  case LinearMapFailure(error: LinearMapError)
+  case LinearMapFailure(error: LinAlgError)
   case OperatorShapeMismatch(expectedRows: Int, expectedCols: Int, actualRows: Int, actualCols: Int)
   case CoordinateMismatch(role: String, expected: CoordinateDescriptor, actual: CoordinateDescriptor)
   case CertificateRejected(property: String, detail: String)
@@ -192,7 +194,7 @@ enum SemanticError:
   def message: String =
     this match
       case MultivarFailure(error) => error.message
-      case LinearMapFailure(error) => error.message
+      case LinearMapFailure(error) => error.getMessage
       case OperatorShapeMismatch(expectedRows, expectedCols, actualRows, actualCols) =>
         s"semantic operator expected ${expectedRows}x${expectedCols} storage, got ${actualRows}x${actualCols}"
       case CoordinateMismatch(role, expected, actual) =>
@@ -233,7 +235,7 @@ final class Lin[From <: Coordinate, To <: Coordinate] private[multivar] (
   def cols: Int =
     domain.dimension
 
-  def apply(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
+  def apply(input: DMat): Either[SemanticError, DMat] =
     kernel.forward(input)
 
   def andThen[Next <: Coordinate](next: Lin[To, Next]): Lin[From, Next] =
@@ -261,7 +263,7 @@ final class Lin[From <: Coordinate, To <: Coordinate] private[multivar] (
 
 object Lin:
   def fromDenseMatrix[From <: Coordinate, To <: Coordinate](
-      matrix: DoubleMatrix,
+      matrix: DMat,
       domain: CoordinateEvidence[From],
       codomain: CoordinateEvidence[To],
       valueIdentity: ValueIdentity,
@@ -270,7 +272,7 @@ object Lin:
     fromKernel(DenseMatrixKernel(matrix), domain, codomain, valueIdentity, provenance)
 
   def fromLinearMap[From <: Coordinate, To <: Coordinate](
-      operator: LinearMap,
+      operator: DoubleLinearOperator,
       domain: CoordinateEvidence[From],
       codomain: CoordinateEvidence[To],
       valueIdentity: ValueIdentity,
@@ -282,7 +284,7 @@ object Lin:
     * must agree with the caller's expected nominal coordinates before storage is accepted.
     */
   def decode[From <: Coordinate, To <: Coordinate](
-      operator: LinearMap,
+      operator: DoubleLinearOperator,
       expectedDomain: CoordinateEvidence[From],
       expectedCodomain: CoordinateEvidence[To],
       declaredDomain: CoordinateDescriptor,
@@ -336,30 +338,28 @@ private[multivar] trait SemanticKernel:
   def rows: Int
   def cols: Int
   def representation: OperatorRepresentation
-  def linearMap: LinearMap
-  def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix]
+  def linearMap: DoubleLinearOperator
+  def forward(input: DMat): Either[SemanticError, DMat]
   def adjoint: SemanticKernel
 
-private[multivar] final case class LinearMapKernel(operator: LinearMap) extends SemanticKernel:
+private[multivar] final case class LinearMapKernel(operator: DoubleLinearOperator) extends SemanticKernel:
   override def rows: Int = operator.rows
   override def cols: Int = operator.cols
   override def representation: OperatorRepresentation =
     OperatorRepresentation.fromLinearMap(operator)
-  override def linearMap: LinearMap = operator
-  override def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
-    operator.forward(input).left.map(SemanticError.LinearMapFailure.apply)
+  override def linearMap: DoubleLinearOperator = operator
+  override def forward(input: DMat): Either[SemanticError, DMat] =
+    operator.applyTo(input).left.map(SemanticError.LinearMapFailure.apply)
   override def adjoint: SemanticKernel =
     LinearMapKernel(operator.adjoint)
 
-private[multivar] final case class DenseMatrixKernel(matrix: DoubleMatrix) extends SemanticKernel:
-  private val adapted = DenseMatrixLinearMap(matrix)
-
+private[multivar] final case class DenseMatrixKernel(matrix: DMat) extends SemanticKernel:
   override def rows: Int = matrix.rows
   override def cols: Int = matrix.cols
   override def representation: OperatorRepresentation = OperatorRepresentation.Dense
-  override def linearMap: LinearMap = adapted
-  override def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
-    adapted.forward(input).left.map(SemanticError.LinearMapFailure.apply)
+  override def linearMap: DoubleLinearOperator = matrix
+  override def forward(input: DMat): Either[SemanticError, DMat] =
+    matrix.applyTo(input).left.map(SemanticError.LinearMapFailure.apply)
   override def adjoint: SemanticKernel =
     DenseMatrixKernel(matrix.transpose)
 
@@ -370,8 +370,8 @@ private[multivar] final case class MatrixViewKernel(view: MatrixView) extends Se
   override def cols: Int = view.cols
   override def representation: OperatorRepresentation =
     OperatorRepresentation.fromMatrixView(view)
-  override def linearMap: LinearMap = adapted
-  override def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
+  override def linearMap: DoubleLinearOperator = adapted
+  override def forward(input: DMat): Either[SemanticError, DMat] =
     view.rightMultiply(input).left.map(SemanticError.MultivarFailure.apply)
   override def adjoint: SemanticKernel =
     MatrixViewKernel(view.transposeView)
@@ -379,7 +379,7 @@ private[multivar] final case class MatrixViewKernel(view: MatrixView) extends Se
 private[multivar] final case class ComposedSemanticKernel(
     first: SemanticKernel,
     second: SemanticKernel,
-    linearMap: LinearMap
+    linearMap: DoubleLinearOperator
 ) extends SemanticKernel:
   override def rows: Int = second.rows
   override def cols: Int = first.cols
@@ -387,37 +387,41 @@ private[multivar] final case class ComposedSemanticKernel(
     (first.representation, second.representation) match
       case (OperatorRepresentation.Block, OperatorRepresentation.Block) => OperatorRepresentation.Block
       case _                                                            => OperatorRepresentation.MatrixFree
-  override def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
+  override def forward(input: DMat): Either[SemanticError, DMat] =
     first.forward(input).flatMap(second.forward)
   override def adjoint: SemanticKernel =
     SemanticKernel.compose(second.adjoint, first.adjoint)
 
 private[multivar] object SemanticKernel:
   def compose(first: SemanticKernel, second: SemanticKernel): SemanticKernel =
-    val composed = LinearMap.compose(first.linearMap, second.linearMap).fold(
-      error => throw new IllegalStateException(error.message),
+    val composed = LinearOperator.compose(second.linearMap, first.linearMap).fold(
+      error => throw new IllegalStateException(error.getMessage),
       identity
     )
     ComposedSemanticKernel(first, second, composed)
 
-private final case class MatrixViewLinearMap(view: MatrixView) extends LinearMap:
+private final case class MatrixViewLinearMap(view: MatrixView) extends DoubleLinearOperator:
   override def rows: Int = view.rows
   override def cols: Int = view.cols
 
-  override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
-    if input.rows != cols then Left(LinearMapError.DimensionMismatch(cols, input.rows))
-    else view.rightMultiply(input).left.map(error => LinearMapError.OperatorApplicationFailed(error.message))
+  override def applyTo(input: DVec, output: MutableDVec): Unit =
+    applyView(view, input, output)
 
-  override def adjoint: LinearMap =
-    MatrixViewLinearMap(view.transposeView)
+  override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
+    applyView(view.transposeView, input, output)
 
-private final case class DenseMatrixLinearMap(matrix: DoubleMatrix) extends LinearMap:
-  override def rows: Int = matrix.rows
-  override def cols: Int = matrix.cols
-
-  override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
-    if input.rows != cols then Left(LinearMapError.DimensionMismatch(cols, input.rows))
-    else Right(DoubleMatrix.multiply(matrix, input))
-
-  override def adjoint: LinearMap =
-    DenseMatrixLinearMap(matrix.transpose)
+  private def applyView(source: MatrixView, input: DVec, output: MutableDVec): Unit =
+    if input.length != source.cols then throw LinAlgError.VectorLengthMismatch(source.cols, input.length)
+    if output.length != source.rows then throw LinAlgError.VectorLengthMismatch(source.rows, output.length)
+    val column = Matrix.newBuilder(input.length, 1)
+    var index = 0
+    while index < input.length do
+      column(index, 0) = input(index)
+      index += 1
+    source.rightMultiply(column.result()) match
+      case Left(error) => throw LinAlgError.InvalidArgument(error.message)
+      case Right(result) =>
+        index = 0
+        while index < result.rows do
+          output(index) = result(index, 0)
+          index += 1

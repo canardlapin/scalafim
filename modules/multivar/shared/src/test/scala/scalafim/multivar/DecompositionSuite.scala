@@ -1,10 +1,10 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class DecompositionSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -23,7 +23,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("Gram SVD reconstructs a rank-one matrix through scores and loadings") {
     val input = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 1.0),
           Vector(2.0, 2.0),
@@ -34,7 +34,7 @@ class DecompositionSuite extends munit.FunSuite:
 
     val svd = DenseSolvers.svd.decompose(input, ComponentCount(1).toOption.get).toOption.get
     val scores = input.rightMultiply(svd.v).toOption.get
-    val reconstructed = DoubleMatrix.multiply(scores, svd.v.transpose)
+    val reconstructed = GaleNumerics.multiply(scores, svd.v.transpose)
 
     assertEqualsDouble(svd.singularValues(0), Math.sqrt(28.0), 1e-9)
     assertMatrixClose(reconstructed, input.toDense().toOption.get.toRows, 1e-9)
@@ -42,7 +42,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("PCA centers data and returns an inspectable BiProjection artifact") {
     val input = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 1.0),
           Vector(2.0, 2.0),
@@ -90,7 +90,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("PLSC returns two maps into a shared latent space from cross-covariance SVD") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -100,7 +100,7 @@ class DecompositionSuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(2.0),
           Vector(0.0),
@@ -127,8 +127,8 @@ class DecompositionSuite extends munit.FunSuite:
   }
 
   test("CCA recovers a one-dimensional perfect canonical correlation with ridge regularization") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
-    val y = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(4.0), Vector(6.0), Vector(8.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
+    val y = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0), Vector(4.0), Vector(6.0), Vector(8.0))))
 
     val fit = Cca.fit(x, y, ComponentCount(1).toOption.get, ridge = 1e-10).toOption.get
 
@@ -147,8 +147,8 @@ class DecompositionSuite extends munit.FunSuite:
   }
 
   test("CCA exposes typed asymmetric regularization and rejects invalid raw ridge") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
-    val y = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.5), Vector(3.0), Vector(4.5), Vector(6.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
+    val y = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.5), Vector(3.0), Vector(4.5), Vector(6.0))))
     val regularization = CcaRegularization.asymmetric(1e-4, 1e-3).toOption.get
 
     val fit = Cca.fitRegularized(x, y, ComponentCount(1).toOption.get, regularization).toOption.get
@@ -171,7 +171,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("RRR recovers an exact rank-one directed prediction") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -180,7 +180,7 @@ class DecompositionSuite extends munit.FunSuite:
         )
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 4.0),
         Vector(-1.0, -2.0),
@@ -213,7 +213,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("full-rank RRR equals the OLS coefficient map") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -222,7 +222,7 @@ class DecompositionSuite extends munit.FunSuite:
         )
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.5),
         Vector(-2.0, 3.0),
@@ -243,9 +243,9 @@ class DecompositionSuite extends munit.FunSuite:
   }
 
   test("RRR validates rank and row alignment before fitting") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
-    val y = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(2.0, 4.0), Vector(3.0, 6.0))))
-    val shortY = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
+    val y = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(2.0, 4.0), Vector(3.0, 6.0))))
+    val shortY = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
 
     ReducedRankRegression.fit(x, y, ComponentCount(2).toOption.get) match
       case Left(MultivarError.InvalidComponentRequest(requested, limit)) =>
@@ -262,7 +262,7 @@ class DecompositionSuite extends munit.FunSuite:
   }
 
   test("ridge RRR matches the closed-form covariance-scaled ridge solution at full rank") {
-    val xData = DoubleMatrix.fromRows(
+    val xData = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.5),
         Vector(-1.0, 2.0),
@@ -272,7 +272,7 @@ class DecompositionSuite extends munit.FunSuite:
         Vector(1.5, 1.0)
       )
     )
-    val yData = DoubleMatrix.fromRows(
+    val yData = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 1.0),
         Vector(1.0, -1.0),
@@ -301,7 +301,7 @@ class DecompositionSuite extends munit.FunSuite:
     // Independent closed form per the documented covariance-scale convention:
     // B = (X'X/(n-1) + lambda I)^-1 (X'Y/(n-1)), built here from dense products and
     // an eigendecomposition-based inverse, not the production metric path.
-    def inverseSpd(matrix: DoubleMatrix): DoubleMatrix =
+    def inverseSpd(matrix: DMat): DMat =
       val eigen = DenseSolvers.symmetricEigen.decompose(matrix).toOption.get
       val k = eigen.values.length
       val scaled = eigen.vectors.copyData
@@ -313,13 +313,13 @@ class DecompositionSuite extends munit.FunSuite:
           scaled(row * k + col) *= inv
           row += 1
         col += 1
-      DoubleMatrix.multiply(DoubleMatrix.unsafe(k, k, scaled), eigen.vectors.transpose)
+      GaleNumerics.multiply(GaleNumerics.matrixFromRowMajor(k, k, scaled), eigen.vectors.transpose)
 
     val denom = 1.0 / (n - 1)
-    val cxx = MatrixOps.scale(DoubleMatrix.crossProduct(xData), denom)
-    val cxy = MatrixOps.scale(DoubleMatrix.transposeMultiply(xData, yData), denom)
-    val expected = DoubleMatrix.multiply(inverseSpd(MatrixOps.addRidge(cxx, lambda)), cxy)
-    val expectedPrediction = DoubleMatrix.multiply(xData, expected)
+    val cxx = MatrixOps.scale(GaleNumerics.crossProduct(xData), denom)
+    val cxy = MatrixOps.scale(GaleNumerics.transposeMultiply(xData, yData), denom)
+    val expected = GaleNumerics.multiply(inverseSpd(MatrixOps.addRidge(cxx, lambda)), cxy)
+    val expectedPrediction = GaleNumerics.multiply(xData, expected)
 
     assertMatrixClose(fit.fullCoefficient, expected.toRows, 1e-8)
     assertMatrixClose(fit.workingCoefficient.weights, expected.toRows, 1e-8)
@@ -328,7 +328,7 @@ class DecompositionSuite extends munit.FunSuite:
 
   test("RRR predict restores the response preprocessor to original scale") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(-1.0, 0.0),
@@ -337,7 +337,7 @@ class DecompositionSuite extends munit.FunSuite:
         )
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(12.0, 24.0),
         Vector(8.0, 16.0),
@@ -352,10 +352,10 @@ class DecompositionSuite extends munit.FunSuite:
   }
 
   test("generalized eigensolver solves A v = lambda B v for diagonal SPD B") {
-    val a = DoubleMatrix.fromRows(Vector(Vector(4.0, 0.0), Vector(0.0, 9.0)))
-    val b = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 3.0)))
+    val a = GaleNumerics.matrixFromRows(Vector(Vector(4.0, 0.0), Vector(0.0, 9.0)))
+    val b = GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 3.0)))
 
-    val result = DenseSolvers.generalizedEigen.decompose(a, b, scalafim.linalg.DecompositionRank.unsafe(2)).toOption.get
+    val result = DenseSolvers.generalizedEigen.decompose(a, b, ComponentCount.unsafe(2)).toOption.get
 
     assertEqualsDouble(result.values(0), 4.0, 1e-9)
     assertEqualsDouble(result.values(1), 3.0, 1e-9)

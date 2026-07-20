@@ -1,11 +1,11 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 
 enum PreprocessSpec:
   case Pass
   case Center
-  case Scale(weights: DoubleVector)
+  case Scale(weights: DVec)
 
   /** Standardize columns to zero mean and unit sample variance.
     *
@@ -44,14 +44,14 @@ enum PreprocessSpec:
 
 object PreprocessSpec:
   def scale(weights: Seq[Double]): Either[MultivarError, PreprocessSpec] =
-    val vector = DoubleVector.fromSeq(weights)
+    val vector = DVec.fromSeq(weights)
     MatrixView.requireFinite("preprocessing weights", vector).map(_ => PreprocessSpec.Scale(vector))
 
   /** Column scale for standardization: the sample standard deviation, or 1.0 for
     * degenerate columns whose spread is negligible relative to their mean magnitude
     * (see the `Standardize` case documentation).
     */
-  private def safeStandardizeScale(means: DoubleVector, sds: DoubleVector): DoubleVector =
+  private def safeStandardizeScale(means: DVec, sds: DVec): DVec =
     val out = new Array[Double](sds.length)
     var col = 0
     while col < sds.length do
@@ -60,7 +60,7 @@ object PreprocessSpec:
         if sd > MatrixView.DegenerateScaleEpsilon * Math.abs(means(col)) then sd
         else 1.0
       col += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
 trait FittedPreprocessor:
   def inputCols: Int
@@ -81,8 +81,8 @@ trait FittedPreprocessor:
 
 final case class FittedColumnAffine(
     inputCols: Int,
-    scale: DoubleVector,
-    shift: DoubleVector
+    scale: DVec,
+    shift: DVec
 ) extends FittedPreprocessor:
   require(inputCols > 0, "fitted preprocessor input columns must be positive")
   require(scale.length == inputCols, "scale length must match input columns")
@@ -121,7 +121,7 @@ final case class FittedColumnAffine(
   private def parametersFor(
       input: MatrixView,
       columns: Option[IndexSet]
-  ): Either[MultivarError, (DoubleVector, DoubleVector)] =
+  ): Either[MultivarError, (DVec, DVec)] =
     columns match
       case None =>
         if input.cols != inputCols then

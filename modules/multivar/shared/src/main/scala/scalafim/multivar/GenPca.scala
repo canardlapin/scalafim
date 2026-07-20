@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** Backend selection for the generalized matrix decomposition. */
 enum GmdBackend:
@@ -62,7 +62,7 @@ object GmdBackend:
       case Auto                              => None
 
 /** Generalized SVD factors: X ~ ou * diag(d) * ov', with ou' M ou = I and ov' A ov = I. */
-final case class GmdResult(ou: DoubleMatrix, d: DoubleVector, ov: DoubleMatrix):
+final case class GmdResult(ou: DMat, d: DVec, ov: DMat):
   require(ou.cols == d.length, "left generalized vectors must match singular value count")
   require(ov.cols == d.length, "right generalized vectors must match singular value count")
 
@@ -80,34 +80,34 @@ final case class GenPcaFit private[multivar] (
     rowMetric: MvMetric,
     colMetric: MvMetric,
     preprocessor: FittedPreprocessor,
-    u: DoubleMatrix,
-    v: DoubleMatrix,
+    u: DMat,
+    v: DMat,
     totalVariance: Double
 ):
-  def ou: DoubleMatrix = result.ou
-  def ov: DoubleMatrix = result.ov
-  def d: DoubleVector = result.d
+  def ou: DMat = result.ou
+  def ov: DMat = result.ov
+  def d: DVec = result.d
   def componentCount: Int = result.d.length
 
   /** R genpca training scores s = M ou diag(d); defined only for the training rows. */
-  lazy val metricScores: DoubleMatrix =
+  lazy val metricScores: DMat =
     MetricOperator.scaleColumnsDense(u, result.d)
 
   /** Proportion of generalized variance per component: d_k^2 / tr(X' M X A). */
-  lazy val propV: DoubleVector =
+  lazy val propV: DVec =
     val out = new Array[Double](result.d.length)
     if totalVariance > 0.0 then
       var i = 0
       while i < out.length do
         out(i) = result.d(i) * result.d(i) / totalVariance
         i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  def project(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def project(input: MatrixView): Either[MultivarError, DMat] =
     projection.project(input)
 
   /** Low-rank reconstruction on the original scale: ou_k diag(d_k) ov_k' inverse-preprocessed. */
-  def reconstruct(components: Option[ComponentCount] = None): Either[MultivarError, DoubleMatrix] =
+  def reconstruct(components: Option[ComponentCount] = None): Either[MultivarError, DMat] =
     val k = components.map(_.value).getOrElse(componentCount)
     if k > componentCount then Left(MultivarError.InvalidComponentRequest(k, componentCount))
     else
@@ -115,7 +115,7 @@ final case class GenPcaFit private[multivar] (
         MatrixOps.takeColumns(result.ou, k),
         MatrixOps.takeVector(result.d, k)
       )
-      val lowRank = DoubleMatrix.multiply(scaled, MatrixOps.takeColumns(result.ov, k).transpose)
+      val lowRank = GaleNumerics.multiply(scaled, MatrixOps.takeColumns(result.ov, k).transpose)
       preprocessor
         .inverseTransform(MatrixView.dense(lowRank), policy = StoragePolicy.AllowDense)
         .flatMap(_.toDense(StoragePolicy.AllowDense))
@@ -515,7 +515,7 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
         else
           val ov = roots.pinvHalf.applyLeft(MatrixOps.takeColumns(eigen.vectors, kEff))
           colMetric.matvec(ov).flatMap { w =>
-            val gw = DoubleMatrix.multiply(gram, w)
+            val gw = GaleNumerics.multiply(gram, w)
             val norms = new Array[Double](kEff)
             var finalK = kEff
             var j = 0
@@ -546,8 +546,8 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
                   c += 1
                 GmdDecomposition(
                   GmdResult(
-                    DoubleMatrix.unsafe(xw.rows, finalK, ouData),
-                    DoubleVector.unsafe(d),
+                    GaleNumerics.matrixFromRowMajor(xw.rows, finalK, ouData),
+                    GaleNumerics.vectorFromArray(d),
                     MatrixOps.takeColumns(ov, finalK)
                   ),
                   totalVariance
@@ -600,7 +600,7 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
                 // eigenvector mapped into a null column direction gives ~0. It is
                 // dimensionless, so it is compared against the relative tolerance
                 // itself — never against the eigenvalue-scaled spectrum cutoff.
-                colMetric.quadNorm(DoubleVector.unsafe(column)) match
+                colMetric.quadNorm(GaleNumerics.vectorFromArray(column)) match
                   case Right(quad) if quad > rankTolerance =>
                     val inv = 1.0 / Math.sqrt(quad)
                     row = 0
@@ -620,8 +620,8 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
                   GmdDecomposition(
                     GmdResult(
                       MatrixOps.takeColumns(ou, finalK),
-                      MatrixOps.takeVector(DoubleVector.unsafe(d), finalK),
-                      MatrixOps.takeColumns(DoubleMatrix.unsafe(xtmu.rows, kEff, ovData), finalK)
+                      MatrixOps.takeVector(GaleNumerics.vectorFromArray(d), finalK),
+                      MatrixOps.takeColumns(GaleNumerics.matrixFromRowMajor(xtmu.rows, kEff, ovData), finalK)
                     ),
                     totalVariance
                   )
@@ -635,10 +635,10 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
     * small-scale data keeps its full rank; metric-side spectra keep their absolute
     * floor inside MetricSqrt, where weights are expected to be O(1).
     */
-  private def cutoffFor(values: DoubleVector): Double =
+  private def cutoffFor(values: DVec): Double =
     rankTolerance * Math.max(values(0), 0.0)
 
-  private def keptComponents(values: DoubleVector, cutoff: Double, requested: Int): Int =
+  private def keptComponents(values: DVec, cutoff: Double, requested: Int): Int =
     var kept = 0
     while kept < values.length && values(kept) > cutoff do kept += 1
     Math.min(requested, kept)

@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** Storage-aware Gram and trace kernels for metric-weighted tables.
   *
@@ -18,13 +18,13 @@ private[multivar] object DualityKernels:
       x: MatrixView,
       metric: MvMetric,
       policy: StoragePolicy = StoragePolicy.AllowDense
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     DualityDiagram.from(x, rowMetric = Some(metric)).flatMap(rowGram(_, policy))
 
   def rowGram(
       diagram: DualityDiagram,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     gramContext("row Gram")(rowGramUnchecked(diagram.table, diagram.rowMetric, policy))
 
   /** X A X' (n x n) for a column metric A (p x p); dense data only. */
@@ -32,13 +32,13 @@ private[multivar] object DualityKernels:
       x: MatrixView,
       metric: MvMetric,
       policy: StoragePolicy = StoragePolicy.AllowDense
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     DualityDiagram.from(x, columnMetric = Some(metric)).flatMap(colGram(_, policy))
 
   def colGram(
       diagram: DualityDiagram,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     gramContext("column Gram")(colGramUnchecked(diagram.table, diagram.columnMetric, policy))
 
   /** X' D Y (p x q) for row-aligned paired diagrams sharing row metric D.
@@ -50,7 +50,7 @@ private[multivar] object DualityKernels:
   def crossGram(
       paired: PairedDualityDiagram,
       policy: StoragePolicy = StoragePolicy.AllowDense
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     if !paired.x.rowMetric.sameValues(paired.y.rowMetric) then
       Left(
         MultivarError.MetricMismatch(
@@ -77,7 +77,7 @@ private[multivar] object DualityKernels:
     totalVarianceUnchecked(diagram.table, diagram.rowMetric, diagram.columnMetric, policy)
 
   /** (g + g') / 2, guarding eigensolvers against asymmetry from roundoff. */
-  def symmetrize(g: DoubleMatrix): DoubleMatrix =
+  def symmetrize(g: DMat): DMat =
     val n = g.rows
     val out = new Array[Double](n * n)
     var row = 0
@@ -87,7 +87,7 @@ private[multivar] object DualityKernels:
         out(row * n + col) = 0.5 * (g(row, col) + g(col, row))
         col += 1
       row += 1
-    DoubleMatrix.unsafe(n, n, out)
+    GaleNumerics.matrixFromRowMajor(n, n, out)
 
   /** Rewrap densification rejections under one operation context per Gram kind, so
     * equivalent policy failures surface identically no matter which storage seam
@@ -101,7 +101,7 @@ private[multivar] object DualityKernels:
         other
     }
 
-  private[multivar] def multiplyMetricRight(xd: DoubleMatrix, metric: MvMetric): Either[MultivarError, DoubleMatrix] =
+  private[multivar] def multiplyMetricRight(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
     if metric.dim != xd.cols then
       Left(MultivarError.MetricShapeMismatch(IndexAxis.Column, xd.cols, metric.dim))
     else applyMetricRight(xd, metric)
@@ -110,7 +110,7 @@ private[multivar] object DualityKernels:
       x: MatrixView,
       metric: MvMetric,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     x match
       case dense: DenseMatrixView =>
         denseRowGram(dense.value, metric)
@@ -147,7 +147,7 @@ private[multivar] object DualityKernels:
       x: MatrixView,
       metric: MvMetric,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     x match
       case dense: DenseMatrixView =>
         denseColGram(dense.value, metric)
@@ -171,7 +171,7 @@ private[multivar] object DualityKernels:
       y: MatrixView,
       rowMetric: MvMetric,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     if x.rows != y.rows then Left(MultivarError.MatrixShapeMismatch(s"cross Gram expected equal rows, got ${x.rows} and ${y.rows}"))
     else if rowMetric.dim != x.rows then Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, x.rows, rowMetric.dim))
     else
@@ -235,27 +235,27 @@ private[multivar] object DualityKernels:
     if x.cols <= x.rows then rowGramUnchecked(x, rowMetric, policy).flatMap(colMetric.contract)
     else colGramUnchecked(x, colMetric, policy).flatMap(rowMetric.contract)
 
-  private def denseRowGram(xd: DoubleMatrix, metric: MvMetric): Either[MultivarError, DoubleMatrix] =
+  private def denseRowGram(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
     metric match
       case MvMetric.Identity(_, _) =>
-        Right(DoubleMatrix.crossProduct(xd))
+        Right(GaleNumerics.crossProduct(xd))
       case MvMetric.Diagonal(weights, _) =>
-        Right(DoubleMatrix.transposeMultiply(xd, MatrixView.scaleRows(xd, weights)))
+        Right(GaleNumerics.transposeMultiply(xd, MatrixView.scaleRows(xd, weights)))
       case _ =>
-        metric.matvec(xd).map(mx => DoubleMatrix.transposeMultiply(xd, mx))
+        metric.matvec(xd).map(mx => GaleNumerics.transposeMultiply(xd, mx))
 
-  private def denseColGram(xd: DoubleMatrix, metric: MvMetric): Either[MultivarError, DoubleMatrix] =
-    applyMetricRight(xd, metric).map(xa => DoubleMatrix.multiply(xa, xd.transpose))
+  private def denseColGram(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
+    applyMetricRight(xd, metric).map(xa => GaleNumerics.multiply(xa, xd.transpose))
 
   /** X * A for a column metric A, exploiting symmetry for the sparse case. */
-  private def applyMetricRight(xd: DoubleMatrix, metric: MvMetric): Either[MultivarError, DoubleMatrix] =
+  private def applyMetricRight(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
     metric match
       case MvMetric.Identity(_, _) =>
         Right(xd)
       case MvMetric.Diagonal(weights, _) =>
         Right(MetricOperator.scaleColumnsDense(xd, weights))
       case MvMetric.DenseSymmetric(matrix, _) =>
-        Right(DoubleMatrix.multiply(xd, matrix))
+        Right(GaleNumerics.multiply(xd, matrix))
       case MvMetric.SparseSymmetric(view, _) =>
         view.rightMultiply(xd.transpose).map(_.transpose)
 
@@ -268,23 +268,24 @@ private[multivar] object DualityKernels:
       affine: AffineMatrixView,
       metric: MvMetric,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     val ones = MatrixView.ones(affine.rows)
     for
       baseGram <- rowGram(affine.base, metric, policy)
       weightedOnes <- metric.applyVector(ones)
       t <- affine.base.transposeMultiply(
-        DenseMatrixView(DoubleMatrix.unsafe(affine.rows, 1, weightedOnes.copyData))
+        DenseMatrixView(GaleNumerics.matrixFromRowMajor(affine.rows, 1, weightedOnes.copyData))
       )
       total <- metric.innerProduct(ones, ones)
     yield
-      val out = MatrixView.scaleRowsAndColumns(baseGram, affine.scale, affine.scale)
-      val tVector = DoubleVector.unsafe(t.copyData)
+      val scaled = MatrixView.scaleRowsAndColumns(baseGram, affine.scale, affine.scale)
+      val out = scaled.copyData
+      val tVector = GaleNumerics.vectorFromArray(t.copyData)
       val scaledT = MatrixView.multiply(affine.scale, tVector)
-      MatrixView.addOuterProductInPlace(out, scaledT, affine.shift)
-      MatrixView.addOuterProductInPlace(out, affine.shift, scaledT)
-      MatrixView.addOuterProductInPlace(out, affine.shift, affine.shift, factor = total)
-      out
+      MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, scaledT, affine.shift)
+      MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, affine.shift, scaledT)
+      MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, affine.shift, affine.shift, factor = total)
+      GaleNumerics.matrixFromRowMajor(scaled.rows, scaled.cols, out)
 
   private def diagonalWeight(metric: MvMetric, index: Int): Double =
     metric match

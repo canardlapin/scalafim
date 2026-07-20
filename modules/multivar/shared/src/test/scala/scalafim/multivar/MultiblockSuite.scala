@@ -1,6 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class MultiblockSuite extends munit.FunSuite:
 
@@ -18,7 +18,7 @@ class MultiblockSuite extends munit.FunSuite:
 
   private def data: MatrixView =
     MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 10.0, 2.0),
           Vector(3.0, 20.0, 4.0),
@@ -27,7 +27,7 @@ class MultiblockSuite extends munit.FunSuite:
       )
     )
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -47,13 +47,13 @@ class MultiblockSuite extends munit.FunSuite:
     val leftMap = MatrixMap.from(
       MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
       pass(2)
     ).toOption.get
     val rightMap = MatrixMap.from(
       MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(0.5))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
       pass(1)
     ).toOption.get
     BlockMap.from(
@@ -101,13 +101,13 @@ class MultiblockSuite extends munit.FunSuite:
     val leftMap = MatrixMap.from(
       MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
       pass(2)
     ).toOption.get
     val rightMap = MatrixMap.from(
       MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(0.5))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
       pass(1)
     ).toOption.get
     val blockMap = BlockMap.from(
@@ -137,13 +137,13 @@ class MultiblockSuite extends munit.FunSuite:
     val leftMap = MatrixMap.from(
       MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
       pass(2)
     ).toOption.get
     val rightMap = MatrixMap.from(
       MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(0.5))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
       pass(1)
     ).toOption.get
     val blockMap = BlockMap.from(
@@ -202,13 +202,13 @@ class MultiblockSuite extends munit.FunSuite:
     val leftMap = MatrixMap.from(
       MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
       pass(2)
     ).toOption.get
     val rightMap = MatrixMap.from(
       MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(0.5))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
       pass(1)
     ).toOption.get
     val impostorLeft = BlockSpec(leftId, IndexSet.from(Vector(0, 1), IndexAxis.Feature).toOption.get)
@@ -305,13 +305,13 @@ class MultiblockSuite extends munit.FunSuite:
     val leftMap = MatrixMap.from(
       MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0))),
       pass(2)
     ).toOption.get
     val rightMap = MatrixMap.from(
       MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
       pass(1)
     ).toOption.get
     val blockMap = BlockMap.from(
@@ -340,17 +340,17 @@ class MultiblockSuite extends munit.FunSuite:
     val xMap = MatrixMap.from(
       xDomain,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0))),
       pass(2)
     ).toOption.get
     val yMap = MatrixMap.from(
       yDomain,
       latent,
-      DoubleMatrix.fromRows(Vector(Vector(0.0), Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.0), Vector(1.0))),
       pass(2)
     ).toOption.get
-    val xInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(2.0, 99.0), Vector(3.0, 88.0))))
-    val yInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(0.0, 2.0), Vector(0.0, 3.0))))
+    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 99.0), Vector(3.0, 88.0))))
+    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(0.0, 2.0), Vector(0.0, 3.0))))
     val projection = CrossProjection(
       xMap,
       yMap,

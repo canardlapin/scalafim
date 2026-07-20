@@ -1,10 +1,10 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 final case class SvdFit(result: SvdResult, projection: BiProjection):
-  def project(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def project(input: MatrixView): Either[MultivarError, DMat] =
     projection.project(input)
 
 object Svd:
@@ -19,7 +19,7 @@ object Svd:
     }
 
 final case class PcaFit(result: SvdResult, projection: BiProjection):
-  def project(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def project(input: MatrixView): Either[MultivarError, DMat] =
     projection.project(input)
 
 object Pca:
@@ -172,27 +172,27 @@ object Cca:
 
 final case class ReducedRankRegressionFit(
     latent: PairedLatentFit,
-    fullCoefficient: DoubleMatrix,
+    fullCoefficient: DMat,
     workingCoefficient: MatrixMap,
     responsePreprocessor: FittedPreprocessor
 ):
   require(fullCoefficient.rows == workingCoefficient.weights.rows, "full coefficient rows must match low-rank coefficient rows")
   require(fullCoefficient.cols == workingCoefficient.weights.cols, "full coefficient columns must match low-rank coefficient columns")
 
-  def predictWorking(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def predictWorking(input: MatrixView): Either[MultivarError, DMat] =
     workingCoefficient.forward(input)
 
-  def predict(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def predict(input: MatrixView): Either[MultivarError, DMat] =
     for
       working <- predictWorking(input)
       restored <- responsePreprocessor.inverseTransform(MatrixView.dense(working), policy = StoragePolicy.AllowDense)
       dense <- restored.toDense(StoragePolicy.AllowDense)
     yield dense
 
-  def projectX(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectX(input: MatrixView): Either[MultivarError, DMat] =
     latent.projectX(input)
 
-  def projectY(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectY(input: MatrixView): Either[MultivarError, DMat] =
     latent.projectY(input)
 
 object ReducedRankRegression:
@@ -259,7 +259,7 @@ object ReducedRankRegression:
       coefficient <- xMetric.metric.matvec(cross)
       responseLoadings = gmd.yWeights
       encoderWeights = MetricOperator.scaleColumnsDense(gmd.xWeights, gmd.svd.singularValues)
-      lowRankCoefficient = DoubleMatrix.multiply(encoderWeights, responseLoadings.transpose)
+      lowRankCoefficient = GaleNumerics.multiply(encoderWeights, responseLoadings.transpose)
       workingMap <- MatrixMap.from(paired.x.columnSpace, paired.y.columnSpace, lowRankCoefficient, fittedX)
       latent <- buildPairedLatentFit(
         method = PairedLatentMethod.ReducedRankRegression(RegressionDirection.XToY, regularization),
@@ -366,7 +366,7 @@ private object PairedGmdMetric:
     MvMetric.identity(space.size, Some(space)).map(PairedGmdMetric(_, MetricOperator.Identity(space.size)))
 
   def inverseFromGram(
-      gram: DoubleMatrix,
+      gram: DMat,
       ridge: Double,
       space: MvSpace,
       eigenSolver: SymmetricEigenSolver,
@@ -377,11 +377,11 @@ private object PairedGmdMetric:
         if gram.rows == space.size && gram.cols == space.size then Right(())
         else Left(MultivarError.MatrixShapeMismatch(s"$role gram ${gram.rows}x${gram.cols} does not match space '${space.id.value}'"))
       half <- MatrixOps.inverseSquareRoot(MatrixOps.addRidge(gram, ridge), eigenSolver, 1e-12)
-      metricMatrix = DualityKernels.symmetrize(DoubleMatrix.multiply(half, half))
+      metricMatrix = DualityKernels.symmetrize(GaleNumerics.multiply(half, half))
       metric <- MvMetric.denseSymmetric(metricMatrix, MetricValidation.Trusted, Some(space))
     yield PairedGmdMetric(metric, MetricOperator.Dense(half))
 
-private final case class PairedGmdResult(svd: SvdResult, xWeights: DoubleMatrix, yWeights: DoubleMatrix)
+private final case class PairedGmdResult(svd: SvdResult, xWeights: DMat, yWeights: DMat)
 
 private object PairedGmd:
   def fit(
@@ -429,8 +429,8 @@ private def buildPairedLatentFit(
     components: ComponentCount,
     svd: SvdResult,
     spectrum: Spectrum,
-    xWeights: DoubleMatrix,
-    yWeights: DoubleMatrix,
+    xWeights: DMat,
+    yWeights: DMat,
     xInput: MatrixView,
     yInput: MatrixView,
     xDomain: MvSpace,

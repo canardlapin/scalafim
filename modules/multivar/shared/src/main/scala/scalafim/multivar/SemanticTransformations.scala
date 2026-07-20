@@ -1,6 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 final case class ColumnTransformationDescriptor(
     space: MvSpace,
@@ -72,8 +72,8 @@ def inducedGeometry[S <: SemanticSpace](
     eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen
 ): Either[DiagramError, InducedColumnGeometry[S]] =
   for
-    matrix <- transformation.operator(DoubleMatrix.eye(transformation.space.dimension)).left.map(DiagramError.Semantic.apply)
-    induced = DoubleMatrix.multiply(matrix, matrix.transpose)
+    matrix <- transformation.operator(DMat.eye(transformation.space.dimension)).left.map(DiagramError.Semantic.apply)
+    induced = GaleNumerics.multiply(matrix, matrix.transpose)
     legacy <- MvMetric
       .denseSymmetric(induced, MetricValidation.Structural, Some(transformation.space.descriptor))
       .left

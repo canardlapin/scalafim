@@ -6,7 +6,6 @@ import gale.spectral.Eigen
 import gale.spectral.EigenSelection
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
-import scalafim.linalg.DoubleMatrix
 import scalafim.multivar.Kernel
 import scalafim.multivar.MatrixView
 
@@ -74,9 +73,12 @@ class GraphSimilaritySuite extends munit.FunSuite:
     )
     val features = graphs.map: graph =>
       featurePlan(graph.vertexSpectrum(4).toOption.get).toOption.get
-    val rows = DoubleMatrix.fromRows(features.map(_.toVector.toSeq.toVector))
-    val legacyGram = Kernel.linear.compute(MatrixView.dense(rows), MatrixView.dense(rows)).toOption.get
-    val multivarGram = Matrix.dense(legacyGram.rows, legacyGram.cols, legacyGram.copyData.toSeq)
+    val rows = Matrix.dense(
+      features.length,
+      features.head.toVector.length,
+      features.flatMap(_.toVector.toSeq)
+    )
+    val multivarGram = Kernel.linear.compute(MatrixView.dense(rows), MatrixView.dense(rows)).toOption.get
     val directGram = gram(features, LinearFeatureSimilarity[String, String]())
 
     assertMatrixClose(multivarGram, directGram, tolerance)

@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 enum RowWhiteningMode:
   case Identity
@@ -40,11 +40,11 @@ trait RowWhitening:
   def mode: RowWhiteningMode
   def blocks: Vector[IndexSet]
 
-  def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def whiten(input: DMat): Either[MultivarError, DMat]
 
-  def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def unwhiten(input: DMat): Either[MultivarError, DMat]
 
-  def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def solve(input: DMat): Either[MultivarError, DMat]
 
 type RowMetric = RowWhitening
 
@@ -55,19 +55,19 @@ final case class IdentityRowWhitening private[multivar] (
 ) extends RowWhitening:
   require(rows > 0, "row whitening rows must be positive")
 
-  override def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def whiten(input: DMat): Either[MultivarError, DMat] =
     RowGeometryOps.requireRows("row whitening", input, rows).map(_ => input)
 
-  override def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def unwhiten(input: DMat): Either[MultivarError, DMat] =
     RowGeometryOps.requireRows("row unwhitening", input, rows).map(_ => input)
 
-  override def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def solve(input: DMat): Either[MultivarError, DMat] =
     RowGeometryOps.requireRows("row whitening solve", input, rows).map(_ => input)
 
 final case class BlockCholeskyRowWhitening private[multivar] (
     rows: Int,
     blocks: Vector[IndexSet],
-    upperCholesky: Vector[DoubleMatrix],
+    upperCholesky: Vector[DMat],
     tolerance: Double
 ) extends RowWhitening:
   require(rows > 0, "row whitening rows must be positive")
@@ -76,22 +76,22 @@ final case class BlockCholeskyRowWhitening private[multivar] (
   override def mode: RowWhiteningMode =
     RowWhiteningMode.BlockCholesky
 
-  override def whiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def whiten(input: DMat): Either[MultivarError, DMat] =
     applyBlocks(input, RowGeometryOps.solveTransposeUpper(_, _, tolerance))
 
-  override def unwhiten(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def unwhiten(input: DMat): Either[MultivarError, DMat] =
     applyBlocks(input, RowGeometryOps.multiplyTransposeUpper)
 
-  override def solve(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def solve(input: DMat): Either[MultivarError, DMat] =
     for
       whitened <- whiten(input)
       solved <- applyBlocks(whitened, RowGeometryOps.solveUpper(_, _, tolerance))
     yield solved
 
   private def applyBlocks(
-      input: DoubleMatrix,
-      op: (DoubleMatrix, DoubleMatrix) => Either[MultivarError, DoubleMatrix]
-  ): Either[MultivarError, DoubleMatrix] =
+      input: DMat,
+      op: (DMat, DMat) => Either[MultivarError, DMat]
+  ): Either[MultivarError, DMat] =
     RowGeometryOps.requireRows("row whitening block operation", input, rows).flatMap { _ =>
       val out = new Array[Double](input.rows * input.cols)
       var blockIndex = 0
@@ -106,7 +106,7 @@ final case class BlockCholeskyRowWhitening private[multivar] (
         blockIndex += 1
       error match
         case Some(value) => Left(value)
-        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+        case None        => Right(GaleNumerics.matrixFromRowMajor(input.rows, input.cols, out))
     }
 
 object RowWhitening:
@@ -124,7 +124,7 @@ object RowWhitening:
   def blockCholesky(
       rows: Int,
       blocks: Vector[IndexSet],
-      upperCholesky: Vector[DoubleMatrix],
+      upperCholesky: Vector[DMat],
       tolerance: Double = 1e-12
   ): Either[MultivarError, RowWhitening] =
     if rows <= 0 then Left(MultivarError.InvalidDimension("row whitening rows", rows))
@@ -171,7 +171,7 @@ object RowWhitening:
 
   private def validateCholesky(
       blocks: Vector[IndexSet],
-      upperCholesky: Vector[DoubleMatrix],
+      upperCholesky: Vector[DMat],
       tolerance: Double
   ): Either[MultivarError, Unit] =
     var blockIndex = 0
@@ -214,15 +214,15 @@ object RowMetric:
   def blockCholesky(
       rows: Int,
       blocks: Vector[IndexSet],
-      upperCholesky: Vector[DoubleMatrix],
+      upperCholesky: Vector[DMat],
       tolerance: Double = 1e-12
   ): Either[MultivarError, RowWhitening] =
     RowWhitening.blockCholesky(rows, blocks, upperCholesky, tolerance)
 
 final case class RowProjector private (
-    matrix: DoubleMatrix,
+    matrix: DMat,
     rank: Int,
-    basis: Option[DoubleMatrix]
+    basis: Option[DMat]
 ):
   require(matrix.rows == matrix.cols, "row projector matrix must be square")
   require(rank >= 0, "row projector rank must be non-negative")
@@ -230,17 +230,17 @@ final case class RowProjector private (
   def rows: Int =
     matrix.rows
 
-  def project(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def project(input: DMat): Either[MultivarError, DMat] =
     if input.rows != rows then
       Left(MultivarError.MatrixShapeMismatch(s"row projector expected ${rows} rows, got ${input.rows}"))
-    else Right(DoubleMatrix.multiply(matrix, input))
+    else Right(GaleNumerics.multiply(matrix, input))
 
   def difference(nuisance: RowProjector, tolerance: Double = 1e-8): Either[MultivarError, RowProjector] =
     if nuisance.rows != rows then
       Left(MultivarError.MatrixShapeMismatch(s"row projector sizes differ: $rows vs ${nuisance.rows}"))
     else
       RowGeometryOps.requireTolerance("row projector difference tolerance", tolerance).flatMap { _ =>
-        val nested = DoubleMatrix.multiply(matrix, nuisance.matrix)
+        val nested = GaleNumerics.multiply(matrix, nuisance.matrix)
         if !RowGeometryOps.close(nested, nuisance.matrix, tolerance) then
           Left(MultivarError.InvalidRowGeometry("nuisance projector is not nested in full projector"))
         else RowProjector.fromMatrix(RowGeometryOps.subtract(matrix, nuisance.matrix), tolerance)
@@ -255,12 +255,12 @@ final case class RowProjector private (
         out(row * rows + col) = (if row == col then 1.0 else 0.0) - matrix(row, col)
         col += 1
       row += 1
-    RowProjector(DoubleMatrix.unsafe(rows, rows, out), rows - rank, None)
+    RowProjector(GaleNumerics.matrixFromRowMajor(rows, rows, out), rows - rank, None)
 
 object RowProjector:
   def zero(rows: Int): Either[MultivarError, RowProjector] =
     if rows <= 0 then Left(MultivarError.InvalidDimension("row projector rows", rows))
-    else Right(RowProjector(DoubleMatrix.zeros(rows, rows), 0, Some(DoubleMatrix.zeros(rows, 0))))
+    else Right(RowProjector(DMat.zeros(rows, rows), 0, Some(DMat.zeros(rows, 0))))
 
   /** Orthogonal projector onto the column span of `design`.
     *
@@ -275,7 +275,7 @@ object RowProjector:
     * singular-value-level rank sensitivity.
     */
   def orthogonal(
-      design: DoubleMatrix,
+      design: DMat,
       solver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       tolerance: Double = 1e-10
   ): Either[MultivarError, RowProjector] =
@@ -286,7 +286,7 @@ object RowProjector:
         else
           for
             _ <- MatrixOps.checkFinite("row design matrix", design)
-            gram = DoubleMatrix.crossProduct(design)
+            gram = GaleNumerics.crossProduct(design)
             eigen <- LinalgErrorAdapter.adapt(solver.decompose(gram))
           yield
             val maxValue =
@@ -296,7 +296,7 @@ object RowProjector:
             while rank < eigen.values.length && eigen.values(rank) > tolerance * maxValue do
               rank += 1
 
-            if rank == 0 then RowProjector(DoubleMatrix.zeros(design.rows, design.rows), 0, Some(DoubleMatrix.zeros(design.rows, 0)))
+            if rank == 0 then RowProjector(DMat.zeros(design.rows, design.rows), 0, Some(DMat.zeros(design.rows, 0)))
             else
               val rawBasis = designRightMultiply(design, MatrixOps.takeColumns(eigen.vectors, rank))
               val basisData = rawBasis.copyData
@@ -308,12 +308,12 @@ object RowProjector:
                   basisData(row * rank + col) *= scale
                   row += 1
                 col += 1
-              val basis = DoubleMatrix.unsafe(design.rows, rank, basisData)
-              val projector = DoubleMatrix.multiply(basis, basis.transpose)
+              val basis = GaleNumerics.matrixFromRowMajor(design.rows, rank, basisData)
+              val projector = GaleNumerics.multiply(basis, basis.transpose)
               RowProjector(projector, rank, Some(basis))
       }
 
-  def fromMatrix(matrix: DoubleMatrix, tolerance: Double = 1e-8): Either[MultivarError, RowProjector] =
+  def fromMatrix(matrix: DMat, tolerance: Double = 1e-8): Either[MultivarError, RowProjector] =
     if matrix.rows <= 0 then Left(MultivarError.InvalidDimension("row projector rows", matrix.rows))
     else if matrix.rows != matrix.cols then Left(MultivarError.MatrixShapeMismatch("row projector matrix must be square"))
     else
@@ -321,7 +321,7 @@ object RowProjector:
         _ <- RowGeometryOps.requireTolerance("row projector matrix tolerance", tolerance)
         _ <- MatrixOps.checkFinite("row projector matrix", matrix)
         _ <- MatrixOps.checkSymmetric(matrix, tolerance)
-        squared = DoubleMatrix.multiply(matrix, matrix)
+        squared = GaleNumerics.multiply(matrix, matrix)
         _ <-
           if RowGeometryOps.close(squared, matrix, tolerance) then Right(())
           else Left(MultivarError.InvalidRowGeometry("row projector matrix must be idempotent"))
@@ -330,8 +330,8 @@ object RowProjector:
         val rank = Math.rint(trace).toInt
         RowProjector(matrix, rank, None)
 
-  private def designRightMultiply(design: DoubleMatrix, weights: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.multiply(design, weights)
+  private def designRightMultiply(design: DMat, weights: DMat): DMat =
+    GaleNumerics.multiply(design, weights)
 
 final case class EffectTerm(
     label: String,
@@ -377,7 +377,7 @@ final case class EffectTermFit(
   def rowMetric: RowWhitening =
     rowWhitening
 
-  def effectMatrix(response: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def effectMatrix(response: DMat): Either[MultivarError, DMat] =
     for
       whitened <- rowWhitening.whiten(response)
       projected <- termProjector.project(whitened)
@@ -386,7 +386,7 @@ final case class EffectTermFit(
 object EffectTermFit:
   def fromDesign(
       label: String,
-      design: DoubleMatrix,
+      design: DMat,
       effectColumns: Iterable[Int],
       rowWhitening: RowWhitening,
       scope: EffectScope = EffectScope.Ungrouped,
@@ -420,8 +420,8 @@ object EffectTermFit:
 
 final case class EffectModelFit(
     rowWhitening: RowWhitening,
-    design: DoubleMatrix,
-    designWhitened: DoubleMatrix,
+    design: DMat,
+    designWhitened: DMat,
     modelProjector: RowProjector,
     terms: Vector[EffectTermFit]
 ):
@@ -433,7 +433,7 @@ final case class EffectModelFit(
 
 object EffectModelFit:
   def fromTerms(
-      design: DoubleMatrix,
+      design: DMat,
       rowWhitening: RowWhitening,
       terms: Vector[(String, Iterable[Int])],
       solver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
@@ -452,14 +452,14 @@ object EffectModelFit:
 
 final case class EffectOperator private (
     termFit: EffectTermFit,
-    loadings: DoubleMatrix,
-    scores: DoubleMatrix,
-    singularValues: DoubleVector,
+    loadings: DMat,
+    scores: DMat,
+    singularValues: DVec,
     preprocessor: FittedPreprocessor,
-    basis: DoubleMatrix,
-    basisEffectMatrix: DoubleMatrix,
-    effectMatrixWhitened: DoubleMatrix,
-    fittedContribution: DoubleMatrix
+    basis: DMat,
+    basisEffectMatrix: DMat,
+    effectMatrixWhitened: DMat,
+    fittedContribution: DMat
 ):
   require(loadings.cols == scores.cols, "effect loadings and scores must have the same component count")
   require(singularValues.length == loadings.cols, "singular values must match component count")
@@ -473,7 +473,7 @@ final case class EffectOperator private (
   def rank: Int =
     singularValues.length
 
-  def reconstruct(scale: EffectScale = EffectScale.Processed): Either[MultivarError, DoubleMatrix] =
+  def reconstruct(scale: EffectScale = EffectScale.Processed): Either[MultivarError, DMat] =
     scale match
       case EffectScale.Whitened =>
         Right(effectMatrixWhitened)
@@ -508,7 +508,7 @@ object EffectOperator:
       termFit: EffectTermFit,
       response: MatrixView,
       preprocessor: FittedPreprocessor,
-      basis: DoubleMatrix,
+      basis: DMat,
       components: Option[ComponentCount] = None,
       solver: SvdSolver = DenseSolvers.svd,
       tolerance: Double = 1e-10
@@ -545,7 +545,7 @@ object EffectOperator:
               if keep == 0 then empty(termFit, response.cols, response.rows, preprocessor, basis, basisEffect)
               else
                 val basisLoadings = MatrixOps.takeColumns(svd.v, keep)
-                val loadings = DoubleMatrix.multiply(basis, basisLoadings)
+                val loadings = GaleNumerics.multiply(basis, basisLoadings)
                 val scores = MatrixOps.scaleColumns(MatrixOps.takeColumns(svd.u, keep), MatrixOps.takeVector(svd.singularValues, keep))
                 fromParts(termFit, loadings, scores, MatrixOps.takeVector(svd.singularValues, keep), preprocessor, basis, basisEffect)
             }
@@ -556,14 +556,14 @@ object EffectOperator:
       featureCols: Int,
       responseRows: Int,
       preprocessor: FittedPreprocessor,
-      basis: DoubleMatrix,
-      basisEffectMatrix: DoubleMatrix
+      basis: DMat,
+      basisEffectMatrix: DMat
   ): Either[MultivarError, EffectOperator] =
     fromParts(
       termFit,
-      DoubleMatrix.zeros(featureCols, 0),
-      DoubleMatrix.zeros(responseRows, 0),
-      DoubleVector.zeros(0),
+      DMat.zeros(featureCols, 0),
+      DMat.zeros(responseRows, 0),
+      DVec.zeros(0),
       preprocessor,
       basis,
       basisEffectMatrix
@@ -571,12 +571,12 @@ object EffectOperator:
 
   private def fromParts(
       termFit: EffectTermFit,
-      loadings: DoubleMatrix,
-      scores: DoubleMatrix,
-      singularValues: DoubleVector,
+      loadings: DMat,
+      scores: DMat,
+      singularValues: DVec,
       preprocessor: FittedPreprocessor,
-      basis: DoubleMatrix,
-      basisEffectMatrix: DoubleMatrix
+      basis: DMat,
+      basisEffectMatrix: DMat
   ): Either[MultivarError, EffectOperator] =
     if loadings.cols != scores.cols || loadings.cols != singularValues.length then
       Left(MultivarError.MatrixShapeMismatch("effect operator component dimensions do not agree"))
@@ -586,8 +586,8 @@ object EffectOperator:
       Left(MultivarError.MatrixShapeMismatch("effect operator scores do not match row whitening rows"))
     else
       val whitened =
-        if singularValues.length == 0 then DoubleMatrix.zeros(scores.rows, loadings.rows)
-        else DoubleMatrix.multiply(scores, loadings.transpose)
+        if singularValues.length == 0 then DMat.zeros(scores.rows, loadings.rows)
+        else GaleNumerics.multiply(scores, loadings.transpose)
       termFit.rowWhitening.unwhiten(whitened).map { fitted =>
         EffectOperator(
           termFit,
@@ -604,9 +604,9 @@ object EffectOperator:
 
   private def inverseContribution(
       preprocessor: FittedPreprocessor,
-      processed: DoubleMatrix
-  ): Either[MultivarError, DoubleMatrix] =
-    val zero = DoubleMatrix.zeros(processed.rows, processed.cols)
+      processed: DMat
+  ): Either[MultivarError, DMat] =
+    val zero = DMat.zeros(processed.rows, processed.cols)
     for
       original <- preprocessor.inverseTransform(MatrixView.dense(processed), policy = StoragePolicy.AllowDense)
       originalZero <- preprocessor.inverseTransform(MatrixView.dense(zero), policy = StoragePolicy.AllowDense)
@@ -619,7 +619,7 @@ private[multivar] object RowGeometryOps:
     if tolerance.isFinite && tolerance >= 0.0 then Right(())
     else Left(MultivarError.InvalidTolerance(role, tolerance))
 
-  def requireRows(role: String, input: DoubleMatrix, expected: Int): Either[MultivarError, Unit] =
+  def requireRows(role: String, input: DMat, expected: Int): Either[MultivarError, Unit] =
     if input.rows == expected then Right(())
     else Left(MultivarError.MatrixShapeMismatch(s"$role expected $expected rows, got ${input.rows}"))
 
@@ -660,10 +660,10 @@ private[multivar] object RowGeometryOps:
     */
   def requireOrthonormalColumns(
       context: String,
-      basis: DoubleMatrix,
+      basis: DMat,
       tolerance: Double
   ): Either[MultivarError, Unit] =
-    val gram = DoubleMatrix.crossProduct(basis)
+    val gram = GaleNumerics.crossProduct(basis)
     var row = 0
     var error = Option.empty[MultivarError]
     while row < gram.rows && error.isEmpty do
@@ -680,24 +680,26 @@ private[multivar] object RowGeometryOps:
       case Some(value) => Left(value)
       case None        => Right(())
 
-  def selectRows(matrix: DoubleMatrix, rows: IndexedSeq[Int]): DoubleMatrix =
+  def selectRows(matrix: DMat, rows: IndexedSeq[Int]): DMat =
     val out = new Array[Double](rows.length * matrix.cols)
+    val data = matrix.copyData
     var outRow = 0
     while outRow < rows.length do
       val sourceRow = rows(outRow)
-      System.arraycopy(matrix.dataArray, sourceRow * matrix.cols, out, outRow * matrix.cols, matrix.cols)
+      System.arraycopy(data, sourceRow * matrix.cols, out, outRow * matrix.cols, matrix.cols)
       outRow += 1
-    DoubleMatrix.unsafe(rows.length, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(rows.length, matrix.cols, out)
 
-  def writeRows(out: Array[Double], cols: Int, rows: IndexedSeq[Int], values: DoubleMatrix): Unit =
+  def writeRows(out: Array[Double], cols: Int, rows: IndexedSeq[Int], values: DMat): Unit =
     require(rows.length == values.rows, "row write length must match value rows")
+    val data = values.copyData
     var localRow = 0
     while localRow < rows.length do
       val targetRow = rows(localRow)
-      System.arraycopy(values.dataArray, localRow * cols, out, targetRow * cols, cols)
+      System.arraycopy(data, localRow * cols, out, targetRow * cols, cols)
       localRow += 1
 
-  def selectColumns(matrix: DoubleMatrix, columns: IndexedSeq[Int]): DoubleMatrix =
+  def selectColumns(matrix: DMat, columns: IndexedSeq[Int]): DMat =
     val out = new Array[Double](matrix.rows * columns.length)
     var row = 0
     while row < matrix.rows do
@@ -706,9 +708,9 @@ private[multivar] object RowGeometryOps:
         out(row * columns.length + col) = matrix(row, columns(col))
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, columns.length, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, columns.length, out)
 
-  def concatColumns(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  def concatColumns(left: DMat, right: DMat): DMat =
     require(left.rows == right.rows, "column concatenation requires equal row counts")
     val cols = left.cols + right.cols
     val out = new Array[Double](left.rows * cols)
@@ -723,12 +725,12 @@ private[multivar] object RowGeometryOps:
         out(row * cols + left.cols + col) = right(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(left.rows, cols, out)
+    GaleNumerics.matrixFromRowMajor(left.rows, cols, out)
 
-  def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  def subtract(left: DMat, right: DMat): DMat =
     MatrixOps.subtract(left, right)
 
-  def trace(matrix: DoubleMatrix): Double =
+  def trace(matrix: DMat): Double =
     require(matrix.rows == matrix.cols, "trace requires a square matrix")
     var out = 0.0
     var i = 0
@@ -737,21 +739,23 @@ private[multivar] object RowGeometryOps:
       i += 1
     out
 
-  def close(left: DoubleMatrix, right: DoubleMatrix, tolerance: Double): Boolean =
+  def close(left: DMat, right: DMat, tolerance: Double): Boolean =
     if left.rows != right.rows || left.cols != right.cols then false
     else
+      val leftData = left.copyData
+      val rightData = right.copyData
       var i = 0
       var ok = true
-      while i < left.dataArray.length && ok do
-        ok = Math.abs(left.dataArray(i) - right.dataArray(i)) <= tolerance
+      while i < leftData.length && ok do
+        ok = Math.abs(leftData(i) - rightData(i)) <= tolerance
         i += 1
       ok
 
   def solveTransposeUpper(
-      upper: DoubleMatrix,
-      input: DoubleMatrix,
+      upper: DMat,
+      input: DMat,
       tolerance: Double
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     if upper.rows != upper.cols || upper.rows != input.rows then
       Left(MultivarError.MatrixShapeMismatch("upper-transpose triangular solve shape mismatch"))
     else
@@ -773,13 +777,13 @@ private[multivar] object RowGeometryOps:
         col += 1
       error match
         case Some(value) => Left(value)
-        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+        case None        => Right(GaleNumerics.matrixFromRowMajor(input.rows, input.cols, out))
 
   def solveUpper(
-      upper: DoubleMatrix,
-      input: DoubleMatrix,
+      upper: DMat,
+      input: DMat,
       tolerance: Double
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     if upper.rows != upper.cols || upper.rows != input.rows then
       Left(MultivarError.MatrixShapeMismatch("upper triangular solve shape mismatch"))
     else
@@ -801,9 +805,9 @@ private[multivar] object RowGeometryOps:
         col += 1
       error match
         case Some(value) => Left(value)
-        case None        => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+        case None        => Right(GaleNumerics.matrixFromRowMajor(input.rows, input.cols, out))
 
-  def multiplyTransposeUpper(upper: DoubleMatrix, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def multiplyTransposeUpper(upper: DMat, input: DMat): Either[MultivarError, DMat] =
     if upper.rows != upper.cols || upper.rows != input.rows then
       Left(MultivarError.MatrixShapeMismatch("upper-transpose multiply shape mismatch"))
     else
@@ -819,4 +823,4 @@ private[multivar] object RowGeometryOps:
             col += 1
           k += 1
         row += 1
-      Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+      Right(GaleNumerics.matrixFromRowMajor(input.rows, input.cols, out))

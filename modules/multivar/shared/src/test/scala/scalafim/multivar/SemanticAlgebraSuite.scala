@@ -2,20 +2,32 @@ package scalafim.multivar
 
 import scala.compiletime.testing.typeCheckErrors
 
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinearMap
-import scalafim.linalg.LinearMapError
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.DoubleLinearOperator
+import gale.linalg.LinAlgError
+import gale.linalg.MutableDVec
+import gale.sparse.CSR
+import gale.sparse.Sparse
 
 class SemanticAlgebraSuite extends munit.FunSuite:
-  private final case class TestOperator(matrix: DoubleMatrix) extends LinearMap:
+  private final case class TestOperator(matrix: DMat) extends DoubleLinearOperator:
     override def rows: Int = matrix.rows
     override def cols: Int = matrix.cols
-    override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
-      if input.rows != cols then Left(LinearMapError.DimensionMismatch(cols, input.rows))
-      else Right(DoubleMatrix.multiply(matrix, input))
-    override def adjoint: LinearMap =
-      TestOperator(matrix.transpose)
+    override def applyTo(input: DVec, output: MutableDVec): Unit =
+      if input.length != cols then throw LinAlgError.VectorLengthMismatch(cols, input.length)
+      if output.length != rows then throw LinAlgError.VectorLengthMismatch(rows, output.length)
+      var row = 0
+      while row < rows do
+        var sum = 0.0
+        var col = 0
+        while col < cols do
+          sum += matrix(row, col) * input(col)
+          col += 1
+        output(row) = sum
+        row += 1
+    override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
+      TestOperator(matrix.transpose).applyTo(input, output)
 
   private def accepted[A](result: Either[SemanticError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -29,15 +41,12 @@ class SemanticAlgebraSuite extends munit.FunSuite:
   private def source(id: String): ValueIdentity =
     ValueIdentity.source(ValueId.unsafe(id))
 
-  private def csr(rows: Int, cols: Int, entries: (Int, Int, Double)*): CsrMatrix =
-    val rowIndices = entries.map(_._1).toArray
-    val colIndices = entries.map(_._2).toArray
-    val values = entries.map(_._3).toArray
-    CsrMatrix
-      .fromTriplets(rows, cols, rowIndices, colIndices, values)
-      .fold(error => fail(error.message), identity)
+  private def csr(rows: Int, cols: Int, entries: (Int, Int, Double)*): CSR =
+    val builder = Sparse.coo(rows, cols)
+    entries.foreach { case (row, col, value) => builder.add(row, col, value) }
+    builder.toCSR()
 
-  private def assertMatrix(actual: DoubleMatrix, expected: DoubleMatrix, tolerance: Double = 1e-10): Unit =
+  private def assertMatrix(actual: DMat, expected: DMat, tolerance: Double = 1e-10): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -100,13 +109,13 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     val composite = f.andThen(g)
     val dualComposite = composite.star
     val reversedDual = g.star.andThen(f.star)
-    assertMatrix(accepted(dualComposite(DoubleMatrix.eye(2))), accepted(reversedDual(DoubleMatrix.eye(2))))
+    assertMatrix(accepted(dualComposite(DMat.eye(2))), accepted(reversedDual(DMat.eye(2))))
 
     val twice = composite.star.star
     assertEquals(twice.valueIdentity, composite.valueIdentity)
     assertEquals(twice.domain.descriptor, composite.domain.descriptor)
     assertEquals(twice.codomain.descriptor, composite.codomain.descriptor)
-    assertMatrix(accepted(twice(DoubleMatrix.eye(2))), accepted(composite(DoubleMatrix.eye(2))))
+    assertMatrix(accepted(twice(DMat.eye(2))), accepted(composite(DMat.eye(2))))
   }
 
   test("table orientation is C-star to O and sparse storage survives the semantic adapter") {
@@ -132,8 +141,8 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     assertEquals(table.descriptor.representation, OperatorRepresentation.Sparse)
     assertEquals(table.star.descriptor.representation, OperatorRepresentation.Sparse)
     assertMatrix(
-      accepted(table(DoubleMatrix.eye(2))),
-      DoubleMatrix.fromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 2.0), Seq(3.0, 0.0)))
+      accepted(table(DMat.eye(2))),
+      GaleNumerics.matrixFromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 2.0), Seq(3.0, 0.0)))
     )
 
     val errors = typeCheckErrors("""
@@ -174,7 +183,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     type To = to.Id
     val operator = accepted(
       Lin.fromLinearMap[Primal[From], Primal[To]](
-        TestOperator(DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(0.0, 1.0)))),
+        TestOperator(GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(0.0, 1.0)))),
         CoordinateEvidence.primal(from.evidence),
         CoordinateEvidence.primal(to.evidence),
         source("opaque-operator")
@@ -183,8 +192,8 @@ class SemanticAlgebraSuite extends munit.FunSuite:
 
     assertEquals(operator.descriptor.representation, OperatorRepresentation.MatrixFree)
     assertMatrix(
-      accepted(operator(DoubleMatrix.eye(2))),
-      DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(0.0, 1.0)))
+      accepted(operator(DMat.eye(2))),
+      GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(0.0, 1.0)))
     )
   }
 
@@ -193,7 +202,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     type Genes = genes.Id
     val legacy = acceptedMv(
       MvMetric.diagonal(
-        scalafim.linalg.DoubleVector.fromSeq(Seq(2.0, 1.0)),
+        DVec.fromSeq(Seq(2.0, 1.0)),
         Some(genes.descriptor)
       )
     )
@@ -237,7 +246,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
   test("a structurally symmetric indefinite form cannot become a safe metric") {
     val space = ref("krein", SpaceRole.Observed, 2)
     type S = space.Id
-    val matrix = DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0)))
+    val matrix = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0)))
     val legacy = acceptedMv(
       MvMetric.denseSymmetric(matrix, MetricValidation.Structural, Some(space.descriptor))
     )
@@ -282,7 +291,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     type S = space.Id
     val indefinite = acceptedMv(
       MvMetric.denseSymmetric(
-        DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0))),
+        GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0))),
         MetricValidation.Structural,
         Some(space.descriptor)
       )

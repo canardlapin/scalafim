@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class GenPcaLawSuite extends munit.FunSuite:
 
@@ -12,20 +12,22 @@ class GenPcaLawSuite extends munit.FunSuite:
     ComponentCount.unsafe(value)
 
   private def assertMatrixClose(
-      actual: DoubleMatrix,
-      expected: DoubleMatrix,
+      actual: DMat,
+      expected: DMat,
       absolute: Double = absoluteTolerance,
       relative: Double = relativeTolerance
   ): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
+    val actualData = actual.copyData
+    val expectedData = expected.copyData
     var squaredResidual = 0.0
     var squaredReference = 0.0
     var i = 0
-    while i < actual.dataArray.length do
-      val difference = actual.dataArray(i) - expected.dataArray(i)
+    while i < actualData.length do
+      val difference = actualData(i) - expectedData(i)
       squaredResidual += difference * difference
-      squaredReference += expected.dataArray(i) * expected.dataArray(i)
+      squaredReference += expectedData(i) * expectedData(i)
       i += 1
     val residual = Math.sqrt(squaredResidual)
     val threshold = absolute + relative * Math.sqrt(squaredReference)
@@ -35,8 +37,8 @@ class GenPcaLawSuite extends munit.FunSuite:
     )
 
   private def assertVectorClose(
-      actual: DoubleVector,
-      expected: DoubleVector,
+      actual: DVec,
+      expected: DVec,
       absolute: Double = absoluteTolerance,
       relative: Double = relativeTolerance
   ): Unit =
@@ -58,33 +60,33 @@ class GenPcaLawSuite extends munit.FunSuite:
 
   /** Subspace agreement in a metric: all singular values of U1' M U2 are one. */
   private def assertSameMetricSubspace(
-      left: DoubleMatrix,
-      right: DoubleMatrix,
+      left: DMat,
+      right: DMat,
       metric: MvMetric,
       tolerance: Double = 1e-6
   ): Unit =
     assertEquals(left.rows, right.rows)
     assertEquals(left.cols, right.cols)
-    val cross = DoubleMatrix.transposeMultiply(left, metric.matvec(right).toOption.get)
-    val gram = DoubleMatrix.crossProduct(cross)
+    val cross = GaleNumerics.transposeMultiply(left, metric.matvec(right).toOption.get)
+    val gram = GaleNumerics.crossProduct(cross)
     val eigen = DenseSolvers.symmetricEigen.decompose(gram).toOption.get
     var i = 0
     while i < eigen.values.length do
       assertEqualsDouble(Math.sqrt(Math.max(eigen.values(i), 0.0)), 1.0, tolerance)
       i += 1
 
-  private def scaleColumns(matrix: DoubleMatrix, values: DoubleVector): DoubleMatrix =
+  private def scaleColumns(matrix: DMat, values: DVec): DMat =
     MetricOperator.scaleColumnsDense(matrix, values)
 
-  private def squared(values: DoubleVector): DoubleVector =
+  private def squared(values: DVec): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = values(i) * values(i)
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private val data = DoubleMatrix.fromRows(
+  private val data = GaleNumerics.matrixFromRows(
     Vector(
       Vector(1.0, 2.0, 0.0),
       Vector(0.0, 1.0, 3.0),
@@ -101,12 +103,12 @@ class GenPcaLawSuite extends munit.FunSuite:
     MvSpace.of("law.columns", SpaceRole.Observed, data.cols).toOption.get
 
   private val rowWeights =
-    DoubleVector.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))
+    DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))
 
   private val rowMetric =
     MvMetric.diagonal(rowWeights, Some(rowSpace)).toOption.get
 
-  private val columnMetricMatrix = DoubleMatrix.fromRows(
+  private val columnMetricMatrix = GaleNumerics.matrixFromRows(
     Vector(
       Vector(2.0, 0.2, 0.0),
       Vector(0.2, 1.5, 0.1),
@@ -125,7 +127,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       .get
 
   private def diagram(
-      table: DoubleMatrix = data,
+      table: DMat = data,
       rows: MvMetric = rowMetric,
       columns: MvMetric = columnMetric
   ): DualityDiagram =
@@ -194,8 +196,8 @@ class GenPcaLawSuite extends munit.FunSuite:
     val source = diagram()
     val fitted = fit(source)
     val eigenvalues = fitted.semanticResult.spectrum.generalizedEigenvalues
-    val rowApplied = DoubleMatrix.multiply(source.rowOperator().toOption.get, fitted.ou)
-    val columnApplied = DoubleMatrix.multiply(source.columnOperator().toOption.get, fitted.ov)
+    val rowApplied = GaleNumerics.multiply(source.rowOperator().toOption.get, fitted.ou)
+    val columnApplied = GaleNumerics.multiply(source.columnOperator().toOption.get, fitted.ov)
 
     assertMatrixClose(rowApplied, scaleColumns(fitted.ou, eigenvalues))
     assertMatrixClose(columnApplied, scaleColumns(fitted.ov, eigenvalues))
@@ -210,7 +212,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       .toOption
       .get
     val discarded = fitted.d(2) * fitted.d(2)
-    val competitor = DoubleMatrix.fromRows(data.toRows.map(row => row.updated(2, 0.0)))
+    val competitor = GaleNumerics.matrixFromRows(data.toRows.map(row => row.updated(2, 0.0)))
     val competitorError = GenPcaLaws
       .weightedSquaredError(data, competitor, rowMetric, columnMetric)
       .toOption
@@ -225,14 +227,14 @@ class GenPcaLawSuite extends munit.FunSuite:
     assertEqualsDouble(fullError, 0.0, 1e-10)
     assert(
       GenPcaLaws
-        .weightedSquaredError(data, DoubleMatrix.zeros(2, 2), rowMetric, columnMetric)
+        .weightedSquaredError(data, DMat.zeros(2, 2), rowMetric, columnMetric)
         .isLeft
     )
   }
 
   test("basis changes preserve eigenvalues and map row and column subspaces covariantly") {
     val original = fit()
-    val rowBasis = DoubleMatrix.fromRows(
+    val rowBasis = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.15, 0.0, 0.0, 0.0),
         Vector(0.0, 1.0, 0.0, 0.0, 0.0),
@@ -241,7 +243,7 @@ class GenPcaLawSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 0.0, 1.0)
       )
     )
-    val rowBasisInverse = DoubleMatrix.fromRows(
+    val rowBasisInverse = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, -0.15, 0.0, 0.0, 0.0),
         Vector(0.0, 1.0, 0.0, 0.0, 0.0),
@@ -250,30 +252,30 @@ class GenPcaLawSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 0.0, 1.0)
       )
     )
-    val columnBasis = DoubleMatrix.fromRows(
+    val columnBasis = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.2, 0.0),
         Vector(0.0, 1.0, -0.1),
         Vector(0.0, 0.0, 1.0)
       )
     )
-    val columnBasisInverse = DoubleMatrix.fromRows(
+    val columnBasisInverse = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, -0.2, -0.02),
         Vector(0.0, 1.0, 0.1),
         Vector(0.0, 0.0, 1.0)
       )
     )
-    val transformedData = DoubleMatrix.multiply(
-      DoubleMatrix.multiply(rowBasisInverse, data),
+    val transformedData = GaleNumerics.multiply(
+      GaleNumerics.multiply(rowBasisInverse, data),
       columnBasisInverse.transpose
     )
-    val transformedRowMetricMatrix = DoubleMatrix.multiply(
-      DoubleMatrix.multiply(rowBasis.transpose, rowMetric.toDense().toOption.get),
+    val transformedRowMetricMatrix = GaleNumerics.multiply(
+      GaleNumerics.multiply(rowBasis.transpose, rowMetric.toDense().toOption.get),
       rowBasis
     )
-    val transformedColumnMetricMatrix = DoubleMatrix.multiply(
-      DoubleMatrix.multiply(columnBasis.transpose, columnMetricMatrix),
+    val transformedColumnMetricMatrix = GaleNumerics.multiply(
+      GaleNumerics.multiply(columnBasis.transpose, columnMetricMatrix),
       columnBasis
     )
     val transformedRowMetric = MvMetric
@@ -293,8 +295,8 @@ class GenPcaLawSuite extends munit.FunSuite:
       .toOption
       .get
     val transformed = fit(diagram(transformedData, transformedRowMetric, transformedColumnMetric))
-    val expectedRows = DoubleMatrix.multiply(rowBasisInverse, original.ou)
-    val expectedColumns = DoubleMatrix.multiply(columnBasisInverse, original.ov)
+    val expectedRows = GaleNumerics.multiply(rowBasisInverse, original.ou)
+    val expectedColumns = GaleNumerics.multiply(columnBasisInverse, original.ov)
 
     assertVectorClose(transformed.d, original.d)
     assertSameMetricSubspace(expectedRows, transformed.ou, transformedRowMetric)
@@ -317,14 +319,14 @@ class GenPcaLawSuite extends munit.FunSuite:
   }
 
   test("repeated eigenvalues are identified as a subspace cluster") {
-    val repeated = DoubleMatrix.fromRows(
+    val repeated = GaleNumerics.matrixFromRows(
       Vector(
         Vector(3.0, 0.0, 0.0),
         Vector(0.0, 3.0, 0.0),
         Vector(0.0, 0.0, 1.0)
       )
     )
-    val rotation = DoubleMatrix.fromRows(
+    val rotation = GaleNumerics.matrixFromRows(
       Vector(
         Vector(Math.sqrt(0.5), -Math.sqrt(0.5), 0.0),
         Vector(Math.sqrt(0.5), Math.sqrt(0.5), 0.0),
@@ -343,7 +345,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       .get
     val rotated = Unsafe
       .genPcaFromArrays(
-        MatrixView.dense(DoubleMatrix.multiply(repeated, rotation)),
+        MatrixView.dense(GaleNumerics.multiply(repeated, rotation)),
         k(3),
         reason = "rotated repeated-eigenvalue law fixture",
         preproc = PreprocessSpec.Pass,

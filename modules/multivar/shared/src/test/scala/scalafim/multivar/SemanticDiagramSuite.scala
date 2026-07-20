@@ -2,8 +2,8 @@ package scalafim.multivar
 
 import scala.compiletime.testing.typeCheckErrors
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class SemanticDiagramSuite extends munit.FunSuite:
   private def accepted[A](result: Either[DiagramError, A]): A =
@@ -22,7 +22,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     ValueIdentity.source(ValueId.unsafe(id))
 
   private def table[Rows <: SemanticSpace, Columns <: SemanticSpace](
-      matrix: DoubleMatrix,
+      matrix: DMat,
       rows: SpaceEvidence[Rows],
       columns: SpaceEvidence[Columns],
       id: String
@@ -55,7 +55,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
   ): MetricForm[S, CertifiedSpd] =
     metric(space, acceptedMv(MvMetric.identity(space.dimension, Some(space.descriptor))), id)
 
-  private def assertMatrix(actual: DoubleMatrix, expected: DoubleMatrix, tolerance: Double = 1e-9): Unit =
+  private def assertMatrix(actual: DMat, expected: DMat, tolerance: Double = 1e-9): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -66,7 +66,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def weightedMeans(matrix: DoubleMatrix, weights: DoubleVector): Vector[Double] =
+  private def weightedMeans(matrix: DMat, weights: DVec): Vector[Double] =
     Vector.tabulate(matrix.cols) { col =>
       var value = 0.0
       var row = 0
@@ -81,7 +81,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val measure = accepted(
       RowMeasure.fromWeights(
         rows.evidence,
-        DoubleVector.fromSeq(Seq(2.0, 3.0, 5.0)),
+        DVec.fromSeq(Seq(2.0, 3.0, 5.0)),
         identity("measure.weights")
       )
     )
@@ -91,7 +91,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     assertEquals(measure.descriptor.normalization, RowMeasureNormalization.UnitMass(10.0))
     assert(
       RowMeasure
-        .fromWeights(rows.evidence, DoubleVector.fromSeq(Seq(1.0, -1.0, 1.0)), identity("bad.measure"))
+        .fromWeights(rows.evidence, DVec.fromSeq(Seq(1.0, -1.0, 1.0)), identity("bad.measure"))
         .isLeft
     )
 
@@ -104,26 +104,26 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val measure = accepted(
       RowMeasure.fromWeights(
         rows.evidence,
-        DoubleVector.fromSeq(Seq(1.0, 2.0, 1.0)),
+        DVec.fromSeq(Seq(1.0, 2.0, 1.0)),
         identity("center.measure")
       )
     )
     val projection = accepted(CenteringProjection.byMeasure(measure))
     val h = projection.matrix
 
-    assertMatrix(DoubleMatrix.multiply(h, h), h)
+    assertMatrix(GaleNumerics.multiply(h, h), h)
     assert(projection.lawCertificate.idempotenceResidual <= projection.lawCertificate.context.tolerance.threshold(1.0))
     assert(projection.lawCertificate.annihilatesOneResidual <= 1e-10)
     assert(projection.lawCertificate.leftAnnihilationResidual <= 1e-10)
 
-    val raw = DoubleMatrix.fromRows(Seq(Seq(1.0, 5.0), Seq(4.0, 2.0), Seq(7.0, -1.0)))
+    val raw = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 5.0), Seq(4.0, 2.0), Seq(7.0, -1.0)))
     val centered = accepted(projection.applyTo(DenseMatrixView(raw))).toDense().toOption.get
     weightedMeans(centered, measure.weights).foreach(value => assertEqualsDouble(value, 0.0, 1e-10))
   }
 
   test("metric-orthogonal centering is distinct from probability centering") {
     val rows = ref("orthogonal.rows", SpaceRole.Samples, 2)
-    val dense = DoubleMatrix.fromRows(Seq(Seq(2.0, -3.0), Seq(-3.0, 5.0)))
+    val dense = GaleNumerics.matrixFromRows(Seq(Seq(2.0, -3.0), Seq(-3.0, 5.0)))
     val rowMetric = metric(
       rows.evidence,
       acceptedMv(MvMetric.denseSymmetric(dense, MetricValidation.Structural, Some(rows.descriptor))),
@@ -135,7 +135,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     assert(projection.functional.weights.toVector.exists(_ < 0.0))
     assert(projection.lawCertificate.metricSelfAdjointResidual.exists(_ <= 1e-10))
     val h = projection.matrix
-    assertMatrix(DoubleMatrix.multiply(h.transpose, dense), DoubleMatrix.multiply(dense, h))
+    assertMatrix(GaleNumerics.multiply(h.transpose, dense), GaleNumerics.multiply(dense, h))
   }
 
   test("already-centered evidence is bound to both table and functional") {
@@ -147,7 +147,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val projection = accepted(CenteringProjection.byMeasure(measure))
     val centeredView = accepted(
       projection.applyTo(
-        DenseMatrixView(DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(3.0, 0.0), Seq(5.0, 4.0))))
+        DenseMatrixView(GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(3.0, 0.0), Seq(5.0, 4.0))))
       )
     )
     val centered: Table[Rows, Columns] = acceptedSemantic(
@@ -184,7 +184,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     type Columns = columns.Id
     val fullOperator = acceptedSemantic(
       Lin.fromDenseMatrix[Primal[Columns], Primal[Columns]](
-        DoubleMatrix.fromRows(Seq(Seq(1.0, 1.0), Seq(0.0, 1.0))),
+        GaleNumerics.matrixFromRows(Seq(Seq(1.0, 1.0), Seq(0.0, 1.0))),
         CoordinateEvidence.primal(columns.evidence),
         CoordinateEvidence.primal(columns.evidence),
         identity("transform.full")
@@ -198,7 +198,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
 
     val singularOperator = acceptedSemantic(
       Lin.fromDenseMatrix[Primal[Columns], Primal[Columns]](
-        DoubleMatrix.fromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 0.0))),
+        GaleNumerics.matrixFromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 0.0))),
         CoordinateEvidence.primal(columns.evidence),
         CoordinateEvidence.primal(columns.evidence),
         identity("transform.singular")
@@ -220,7 +220,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val rows = ref("diagram.rows", SpaceRole.Samples, 3)
     val columns = ref("diagram.columns", SpaceRole.Observed, 2)
     val x = table(
-      DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 0.0), Seq(3.0, 1.0))),
+      GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 0.0), Seq(3.0, 1.0))),
       rows.evidence,
       columns.evidence,
       "diagram.table"
@@ -235,7 +235,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
       metric(
         columns.evidence,
         acceptedMv(
-          MvMetric.diagonal(DoubleVector.fromSeq(Seq(2.0, 1.0)), Some(columns.descriptor))
+          MvMetric.diagonal(DVec.fromSeq(Seq(2.0, 1.0)), Some(columns.descriptor))
         ),
         "diagram.column.replacement"
       )
@@ -254,7 +254,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
   test("singular geometry requires an explicit reject, support, quotient, or ridge policy") {
     val columns = ref("singular.columns", SpaceRole.Observed, 3)
     val legacy = acceptedMv(
-      MvMetric.diagonal(DoubleVector.fromSeq(Seq(4.0, 0.0, 1.0)), Some(columns.descriptor))
+      MvMetric.diagonal(DVec.fromSeq(Seq(4.0, 0.0, 1.0)), Some(columns.descriptor))
     )
     val geometry = DiagramGeometry.semiMetric(semiMetric(columns.evidence, legacy, "singular.metric"))
 
@@ -280,8 +280,8 @@ class SemanticDiagramSuite extends munit.FunSuite:
     assertEquals(support.reducedMetric.descriptor.positivity, PositivityStatus.Spd)
     assertEquals(support.rankCertificate.runtime.context.tolerance.relative, threshold.toDouble)
     assertMatrix(
-      DoubleMatrix.multiply(support.restrictionMatrix, support.embeddingMatrix),
-      DoubleMatrix.eye(2)
+      GaleNumerics.multiply(support.restrictionMatrix, support.embeddingMatrix),
+      DMat.eye(2)
     )
 
     val quotient = accepted(
@@ -309,7 +309,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val rows = ref("support.rows", SpaceRole.Samples, 3)
     val columns = ref("support.columns", SpaceRole.Observed, 3)
     val x = table(
-      DoubleMatrix.fromRows(Seq(Seq(1.0, 2.0, 3.0), Seq(2.0, 1.0, 0.0), Seq(3.0, 4.0, 1.0))),
+      GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0, 3.0), Seq(2.0, 1.0, 0.0), Seq(3.0, 4.0, 1.0))),
       rows.evidence,
       columns.evidence,
       "support.table"
@@ -317,7 +317,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val columnSemi = semiMetric(
       columns.evidence,
       acceptedMv(
-        MvMetric.diagonal(DoubleVector.fromSeq(Seq(2.0, 0.0, 1.0)), Some(columns.descriptor))
+        MvMetric.diagonal(DVec.fromSeq(Seq(2.0, 0.0, 1.0)), Some(columns.descriptor))
       ),
       "support.column.metric"
     )
@@ -351,7 +351,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
   test("uniform arithmetic centering exists only as an explicit measure policy") {
     val rows = ref("compat.rows", SpaceRole.Samples, 3)
     val columns = ref("compat.columns", SpaceRole.Observed, 2)
-    val raw = DoubleMatrix.fromRows(Seq(Seq(1.0, 4.0), Seq(2.0, 1.0), Seq(6.0, 7.0)))
+    val raw = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 4.0), Seq(2.0, 1.0), Seq(6.0, 7.0)))
     val x = table(raw, rows.evidence, columns.evidence, "compat.table")
     val measure = RowMeasure.uniform(rows.evidence, identity("compat.uniform"))
     val core = accepted(
@@ -377,14 +377,14 @@ class SemanticDiagramSuite extends munit.FunSuite:
   test("semantic GenPCA consumes the complete prepared diagram and exposes its evidence") {
     val rows = ref("gpca.rows", SpaceRole.Samples, 4)
     val columns = ref("gpca.columns", SpaceRole.Observed, 2)
-    val raw = DoubleMatrix.fromRows(
+    val raw = GaleNumerics.matrixFromRows(
       Seq(Seq(1.0, 4.0), Seq(2.0, 1.0), Seq(5.0, 3.0), Seq(7.0, -1.0))
     )
     val x = table(raw, rows.evidence, columns.evidence, "gpca.semantic.table")
     val measure = accepted(
       RowMeasure.fromWeights(
         rows.evidence,
-        DoubleVector.fromSeq(Seq(1.0, 2.0, 3.0, 4.0)),
+        DVec.fromSeq(Seq(1.0, 2.0, 3.0, 4.0)),
         identity("gpca.measure")
       )
     )

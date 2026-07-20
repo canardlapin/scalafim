@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 enum CpcaBlock:
   case GxH
@@ -117,7 +117,7 @@ private[multivar] enum CpcaSubspaceMode:
 enum CpcaConstraint:
   case Identity
   case Zero
-  case Basis(design: DoubleMatrix, keepDesign: Boolean = true)
+  case Basis(design: DMat, keepDesign: Boolean = true)
 
   def basisRows: Option[Int] =
     this match
@@ -261,22 +261,22 @@ final case class ResolvedCpcaConstraint private[multivar] (
     axis: IndexAxis,
     space: MvSpace,
     rank: Int,
-    basis: Option[DoubleMatrix],
+    basis: Option[DMat],
     metric: Option[MvMetric],
-    originalDesign: Option[DoubleMatrix],
+    originalDesign: Option[DMat],
     projector: MvMap,
     coordinateMap: Option[MvMap]
 ):
   require(rank >= 0 && rank <= space.size, "resolved constraint rank must lie within its space")
   require(basis.forall(q => q.rows == space.size && q.cols == rank), "resolved constraint basis must match its space and rank")
 
-  def project(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def project(input: DMat): Either[MultivarError, DMat] =
     ResolvedCpcaConstraint.projectThroughDecoder(this, input)
 
-  def residual(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def residual(input: DMat): Either[MultivarError, DMat] =
     project(input).map(projected => MatrixOps.subtract(input, projected))
 
-  def coordinates(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  def coordinates(input: DMat): Either[MultivarError, DMat] =
     ResolvedCpcaConstraint.coordinatesThroughMap(this, input)
 
 object CpcaConstraint:
@@ -295,7 +295,7 @@ object CpcaConstraint:
     )
 
   def zero(axis: IndexAxis, space: MvSpace): ResolvedCpcaConstraint =
-    val matrix = DoubleMatrix.zeros(space.size, space.size)
+    val matrix = DMat.zeros(space.size, space.size)
     val projector = LinearMvMap.unsafe(space, space, matrix, Some(matrix))
     ResolvedCpcaConstraint(
       constraint = Zero,
@@ -312,7 +312,7 @@ object CpcaConstraint:
   def basis(
       axis: IndexAxis,
       space: MvSpace,
-      design: DoubleMatrix,
+      design: DMat,
       metric: MvMetric,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       tolerance: Double = 1e-12,
@@ -342,7 +342,7 @@ object CpcaConstraint:
               else
                 projector.basis match
                   case Some(q) =>
-                    val matrix = DoubleMatrix.multiply(q, q.transpose)
+                    val matrix = GaleNumerics.multiply(q, q.transpose)
                     val projectionMap = LinearMvMap.unsafe(space, space, matrix, Some(matrix))
                     val coordinateSpace = MvSpace(
                       SpaceId.unsafe(s"${space.id.value}.${axis.label}.constraint"),
@@ -373,7 +373,7 @@ object CpcaConstraint:
 
 object ResolvedCpcaConstraint:
 
-  private def projectThroughDecoder(con: ResolvedCpcaConstraint, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  private def projectThroughDecoder(con: ResolvedCpcaConstraint, input: DMat): Either[MultivarError, DMat] =
     val map = con.coordinateMap.getOrElse(con.projector)
     for
       _ <- requireRows(con, input)
@@ -382,7 +382,7 @@ object ResolvedCpcaConstraint:
       projected <- decoder.forward(MatrixView.dense(scores))
     yield projected.transpose
 
-  private def coordinatesThroughMap(con: ResolvedCpcaConstraint, input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  private def coordinatesThroughMap(con: ResolvedCpcaConstraint, input: DMat): Either[MultivarError, DMat] =
     con.coordinateMap match
       case Some(map) =>
         for
@@ -390,9 +390,9 @@ object ResolvedCpcaConstraint:
           scores <- map.forward(MatrixView.dense(input.transpose))
         yield scores.transpose
       case None =>
-        requireRows(con, input).map(_ => DoubleMatrix.zeros(con.rank, input.cols))
+        requireRows(con, input).map(_ => DMat.zeros(con.rank, input.cols))
 
-  private def requireRows(con: ResolvedCpcaConstraint, input: DoubleMatrix): Either[MultivarError, Unit] =
+  private def requireRows(con: ResolvedCpcaConstraint, input: DMat): Either[MultivarError, Unit] =
     if input.rows == con.space.size then Right(())
     else
       Left(
@@ -472,13 +472,13 @@ final case class CpcaPartition(totalSS: Double, blocks: Vector[CpcaBlockInertia]
 
 final case class CpcaBlockFit private[multivar] (
     block: CpcaBlock,
-    singularValues: DoubleVector,
-    uStar: DoubleMatrix,
-    vStar: DoubleMatrix,
-    u: DoubleMatrix,
-    v: DoubleMatrix,
-    rowCoordinates: Option[DoubleMatrix],
-    columnCoordinates: Option[DoubleMatrix],
+    singularValues: DVec,
+    uStar: DMat,
+    vStar: DMat,
+    u: DMat,
+    v: DMat,
+    rowCoordinates: Option[DMat],
+    columnCoordinates: Option[DMat],
     ss: Double
 ):
   require(uStar.cols == singularValues.length, "left whitened vectors must match singular values")
@@ -486,32 +486,32 @@ final case class CpcaBlockFit private[multivar] (
   require(u.cols == singularValues.length, "left metric vectors must match singular values")
   require(v.cols == singularValues.length, "right metric vectors must match singular values")
 
-  def d: DoubleVector =
+  def d: DVec =
     singularValues
 
   def rank: Int =
     singularValues.length
 
-  def scores: DoubleMatrix =
+  def scores: DMat =
     MatrixOps.scaleColumns(u, singularValues)
 
-  def reconstructWhitened(components: Option[ComponentCount] = None): Either[MultivarError, DoubleMatrix] =
+  def reconstructWhitened(components: Option[ComponentCount] = None): Either[MultivarError, DMat] =
     reconstruct(uStar, vStar, components)
 
-  def reconstructOriginal(components: Option[ComponentCount] = None): Either[MultivarError, DoubleMatrix] =
+  def reconstructOriginal(components: Option[ComponentCount] = None): Either[MultivarError, DMat] =
     reconstruct(u, v, components)
 
   private def reconstruct(
-      left: DoubleMatrix,
-      right: DoubleMatrix,
+      left: DMat,
+      right: DMat,
       components: Option[ComponentCount]
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     val k = components.map(_.value).getOrElse(rank)
     if k > rank then Left(MultivarError.InvalidComponentRequest(k, rank))
-    else if k == 0 then Right(DoubleMatrix.zeros(left.rows, right.rows))
+    else if k == 0 then Right(DMat.zeros(left.rows, right.rows))
     else
       val scaled = MatrixOps.scaleColumns(MatrixOps.takeColumns(left, k), MatrixOps.takeVector(singularValues, k))
-      Right(DoubleMatrix.multiply(scaled, MatrixOps.takeColumns(right, k).transpose))
+      Right(GaleNumerics.multiply(scaled, MatrixOps.takeColumns(right, k).transpose))
 
 final case class CpcaFit private[multivar] (
     problem: CpcaProblem,
@@ -596,14 +596,14 @@ object Cpca:
       rowRoots: MetricRoots,
       columnRoots: MetricRoots,
       policy: StoragePolicy
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     input.toDense(policy).map { dense =>
       rowRoots.half.applyLeft(columnRoots.half.applyRight(dense))
     }
 
   private def partition(
       problem: CpcaProblem,
-      zStar: DoubleMatrix
+      zStar: DMat
   ): Either[MultivarError, CpcaPartition] =
     for
       zH <- applyRight(problem.columnConstraint, zStar, CpcaSubspaceMode.Project)
@@ -628,7 +628,7 @@ object Cpca:
 
   private def fitBlocks(
       problem: CpcaProblem,
-      zStar: DoubleMatrix,
+      zStar: DMat,
       rowRoots: MetricRoots,
       columnRoots: MetricRoots,
       blockRequest: CpcaBlockRequest,
@@ -650,7 +650,7 @@ object Cpca:
 
   private def fitBlock(
       problem: CpcaProblem,
-      zStar: DoubleMatrix,
+      zStar: DMat,
       rowRoots: MetricRoots,
       columnRoots: MetricRoots,
       block: CpcaBlock,
@@ -693,9 +693,9 @@ object Cpca:
 
   private def blockMatrix(
       problem: CpcaProblem,
-      zStar: DoubleMatrix,
+      zStar: DMat,
       block: CpcaBlock
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     for
       right <- applyRight(problem.columnConstraint, zStar, block.columnMode)
       out <- applyLeft(problem.rowConstraint, right, block.rowMode)
@@ -703,25 +703,25 @@ object Cpca:
 
   private def applyLeft(
       constraint: ResolvedCpcaConstraint,
-      input: DoubleMatrix,
+      input: DMat,
       mode: CpcaSubspaceMode
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     mode match
       case CpcaSubspaceMode.Project  => constraint.project(input)
       case CpcaSubspaceMode.Residual => constraint.residual(input)
 
   private def applyRight(
       constraint: ResolvedCpcaConstraint,
-      input: DoubleMatrix,
+      input: DMat,
       mode: CpcaSubspaceMode
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     applyLeft(constraint, input.transpose, mode).map(_.transpose)
 
   private def coordinates(
       constraint: ResolvedCpcaConstraint,
-      input: DoubleMatrix,
+      input: DMat,
       mode: CpcaSubspaceMode
-  ): Either[MultivarError, Option[DoubleMatrix]] =
+  ): Either[MultivarError, Option[DMat]] =
     (mode, constraint.constraint) match
       case (CpcaSubspaceMode.Project, CpcaConstraint.Basis(_, _)) =>
         constraint.coordinates(input).map(Some(_))
@@ -753,20 +753,20 @@ object Cpca:
       case (CpcaSubspaceMode.Residual, CpcaConstraint.Basis(_, _)) => false
 
   private def zeroBlock(problem: CpcaProblem, block: CpcaBlock): CpcaBlockFit =
-    val d = DoubleVector.zeros(0)
+    val d = DVec.zeros(0)
     CpcaBlockFit(
       block,
       d,
-      DoubleMatrix.zeros(problem.rows, 0),
-      DoubleMatrix.zeros(problem.cols, 0),
-      DoubleMatrix.zeros(problem.rows, 0),
-      DoubleMatrix.zeros(problem.cols, 0),
+      DMat.zeros(problem.rows, 0),
+      DMat.zeros(problem.cols, 0),
+      DMat.zeros(problem.rows, 0),
+      DMat.zeros(problem.cols, 0),
       None,
       None,
       ss = 0.0
     )
 
-  private def keptComponents(values: DoubleVector, tolerance: Double): Int =
+  private def keptComponents(values: DVec, tolerance: Double): Int =
     if values.length == 0 then 0
     else
       val cutoff = tolerance * Math.max(1.0, values(0))
@@ -775,25 +775,27 @@ object Cpca:
       kept
 
 private[multivar] object CpcaMath:
-  def add(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  def add(left: DMat, right: DMat): DMat =
     require(left.rows == right.rows && left.cols == right.cols, "matrix shapes must match")
     val out = left.copyData
+    val rightData = right.copyData
     var i = 0
     while i < out.length do
-      out(i) += right.dataArray(i)
+      out(i) += rightData(i)
       i += 1
-    DoubleMatrix.unsafe(left.rows, left.cols, out)
+    GaleNumerics.matrixFromRowMajor(left.rows, left.cols, out)
 
-  def frobeniusNorm2(matrix: DoubleMatrix): Double =
+  def frobeniusNorm2(matrix: DMat): Double =
+    val data = matrix.copyData
     var acc = 0.0
     var i = 0
-    while i < matrix.dataArray.length do
-      val value = matrix.dataArray(i)
+    while i < data.length do
+      val value = data(i)
       acc += value * value
       i += 1
     acc
 
-  def sumSquares(values: DoubleVector): Double =
+  def sumSquares(values: DVec): Double =
     var acc = 0.0
     var i = 0
     while i < values.length do

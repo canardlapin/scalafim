@@ -1,12 +1,12 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class MatrixViewSuite extends munit.FunSuite:
 
-  private def matrix: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  private def matrix: DMat =
+    GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0)
@@ -26,7 +26,7 @@ class MatrixViewSuite extends munit.FunSuite:
       .toOption
       .get
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -53,7 +53,7 @@ class MatrixViewSuite extends munit.FunSuite:
 
   test("dense MatrixView exposes right multiplication and cross products") {
     val view = MatrixView.dense(matrix)
-    val weights = DoubleMatrix.fromRows(
+    val weights = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -94,8 +94,8 @@ class MatrixViewSuite extends munit.FunSuite:
 
   test("dense MatrixView reports shape and non-finite errors") {
     val view = MatrixView.dense(matrix)
-    val badWeights = DoubleMatrix.fromRows(Vector(Vector(1.0)))
-    val nonFinite = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, Double.NaN))))
+    val badWeights = GaleNumerics.matrixFromRows(Vector(Vector(1.0)))
+    val nonFinite = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, Double.NaN))))
 
     assert(view.rightMultiply(badWeights).swap.toOption.exists(_.message.contains("expected 3 weight rows")))
     assert(view.selectColumns(IndexSet.from(Vector(3), IndexAxis.Feature).toOption.get).isLeft)
@@ -172,7 +172,7 @@ class MatrixViewSuite extends munit.FunSuite:
 
   test("column stats compute large-mean sample standard deviations without cancellation") {
     val rows = Vector(Vector(1e8), Vector(1e8 + 1.0))
-    val dense = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val dense = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val denseSds = dense.columnStats.flatMap(_.sampleStandardDeviations).toOption.get
     assertEqualsDouble(denseSds(0), Math.sqrt(0.5), 1e-9)
 
@@ -188,10 +188,10 @@ class MatrixViewSuite extends munit.FunSuite:
       Vector(4.0, 0.0, 5.0),
       Vector(0.0, 6.0, 1.0)
     )
-    val scale = DoubleVector.fromSeq(Vector(1.0, 1.0, 1.0))
-    val shift = DoubleVector.fromSeq(Vector(5e-13, 5e-13, 5e-13))
+    val scale = DVec.fromSeq(Vector(1.0, 1.0, 1.0))
+    val shift = DVec.fromSeq(Vector(5e-13, 5e-13, 5e-13))
     val denseOut = MatrixView
-      .affine(MatrixView.dense(DoubleMatrix.fromRows(rows)), scale, shift)
+      .affine(MatrixView.dense(GaleNumerics.matrixFromRows(rows)), scale, shift)
       .toOption
       .get
       .toDense(StoragePolicy.AllowDense)
@@ -209,8 +209,8 @@ class MatrixViewSuite extends munit.FunSuite:
   }
 
   test("transposed operator views refuse densifying column selection") {
-    val scale = DoubleVector.fromSeq(Vector(2.0, 0.5, -1.5))
-    val shift = DoubleVector.fromSeq(Vector(0.25, -1.0, 3.0))
+    val scale = DVec.fromSeq(Vector(2.0, 0.5, -1.5))
+    val shift = DVec.fromSeq(Vector(0.25, -1.0, 3.0))
     val affine = MatrixView.affine(sparseMatrix, scale, shift, StoragePolicy.Operator).toOption.get
     val transposed = affine.transposeView
 
@@ -220,8 +220,8 @@ class MatrixViewSuite extends munit.FunSuite:
   }
 
   test("affine row stats over sparse bases match the densified reference without materializing") {
-    val scale = DoubleVector.fromSeq(Vector(2.0, 0.5, -1.5))
-    val shift = DoubleVector.fromSeq(Vector(0.25, -1.0, 3.0))
+    val scale = DVec.fromSeq(Vector(2.0, 0.5, -1.5))
+    val shift = DVec.fromSeq(Vector(0.25, -1.0, 3.0))
     val affine = MatrixView.affine(sparseMatrix, scale, shift, StoragePolicy.Operator).toOption.get
     assertEquals(affine.storage, StorageKind.LazyAffine)
 
@@ -240,8 +240,8 @@ class MatrixViewSuite extends munit.FunSuite:
   }
 
   test("operator affine views reject dense materialization under strict policies") {
-    val scale = DoubleVector.fromSeq(Vector(1.0, 1.0, 1.0))
-    val shift = DoubleVector.fromSeq(Vector(1.0, -1.0, 2.0))
+    val scale = DVec.fromSeq(Vector(1.0, 1.0, 1.0))
+    val shift = DVec.fromSeq(Vector(1.0, -1.0, 2.0))
     val affine = MatrixView.affine(sparseMatrix, scale, shift, StoragePolicy.Operator).toOption.get
 
     assertEquals(affine.storage, StorageKind.LazyAffine)
@@ -265,7 +265,7 @@ class MatrixViewSuite extends munit.FunSuite:
     assertEqualsDouble(stats.sumSquares(2), 30.0, 1e-12)
     assertEqualsDouble(stats.means.toOption.get(0), 1.25, 1e-12)
 
-    val denseTwin = DoubleMatrix.fromRows(
+    val denseTwin = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 2.0),
         Vector(0.0, 3.0, 0.0),
@@ -316,7 +316,7 @@ class MatrixViewSuite extends munit.FunSuite:
   test("mixed sparse and dense right multiplication dispatch matches dense arithmetic") {
     val denseView = MatrixView.dense(matrix)
     val sparseDense = sparseMatrix.toDense(StoragePolicy.AllowDense).toOption.get
-    val weights = DoubleMatrix.fromRows(
+    val weights = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, -2.0),
         Vector(0.0, 3.0),
@@ -331,13 +331,13 @@ class MatrixViewSuite extends munit.FunSuite:
     // sparse x dense
     assertMatrixClose(
       MatrixView.rightMultiplyView(sparseMatrix, MatrixView.dense(weights)).toOption.get,
-      DoubleMatrix.multiply(sparseDense, weights).toRows,
+      GaleNumerics.multiply(sparseDense, weights).toRows,
       1e-12
     )
     // dense x sparse
     assertMatrixClose(
       MatrixView.rightMultiplyView(denseView, sparseWeights).toOption.get,
-      DoubleMatrix.multiply(matrix, weights).toRows,
+      GaleNumerics.multiply(matrix, weights).toRows,
       1e-12
     )
     // dense x sparse-transpose
@@ -348,7 +348,7 @@ class MatrixViewSuite extends munit.FunSuite:
       .transposeView
     assertMatrixClose(
       MatrixView.rightMultiplyView(denseView, transposedWeights).toOption.get,
-      DoubleMatrix.multiply(matrix, weights).toRows,
+      GaleNumerics.multiply(matrix, weights).toRows,
       1e-12
     )
     // shape mismatch is reported once from the dispatch path
@@ -362,7 +362,7 @@ class MatrixViewSuite extends munit.FunSuite:
   }
 
   test("empty matrices: dense views allow zero rows while sparse construction rejects them") {
-    val empty = MatrixView.dense(DoubleMatrix.zeros(0, 3))
+    val empty = MatrixView.dense(DMat.zeros(0, 3))
     assertEquals(empty.rows, 0)
     assertEquals(empty.cols, 3)
     assertEquals(empty.columnStats.toOption.get.count, 0)

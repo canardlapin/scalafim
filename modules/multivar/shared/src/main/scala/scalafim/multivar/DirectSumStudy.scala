@@ -1,7 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.LinearMap
-import scalafim.linalg.LinearMapBlock
+import gale.linalg.DoubleLinearOperator
 
 enum DirectSumError:
   case Semantic(error: SemanticError)
@@ -98,8 +97,8 @@ object DirectSumStudy:
       )
       val blocks = describeBlocks(views)
       for
-        tableMap <- LinearMap
-          .blockDiag(views.map(_.diagram.core.table.kernel.linearMap))
+        tableMap <- GaleOperators
+          .blockDiagonal(views.map(_.diagram.core.table.kernel.linearMap))
           .left
           .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
         tableIdentity = ValueIdentity.Derived("direct-sum-table", views.map(_.diagram.core.table.valueIdentity))
@@ -113,8 +112,8 @@ object DirectSumStudy:
           )
           .left
           .map(DirectSumError.Semantic.apply)
-        geometryMap <- LinearMap
-          .blockDiag(views.map(_.diagram.core.columnGeometry.operator.kernel.linearMap))
+        geometryMap <- GaleOperators
+          .blockDiagonal(views.map(_.diagram.core.columnGeometry.operator.kernel.linearMap))
           .left
           .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
         geometryIdentity = ValueIdentity.Derived(
@@ -174,7 +173,7 @@ object DirectSumStudy:
 final case class DirectSumRowBlock(
     rowBlock: Int,
     columnBlock: Int,
-    operator: scalafim.linalg.LinearMap,
+    operator: DoubleLinearOperator,
     valueIdentity: ValueIdentity
 )
 
@@ -187,11 +186,11 @@ private[multivar] object DirectSumOperators:
   ): Either[DirectSumError, Lin[Primal[study.rowSpace.Id], Dual[study.rowSpace.Id]]] =
     val sizes = study.blocks.map(_.rowSpace.size)
     for
-      blockMap <- LinearMap
+      blockMap <- GaleOperators
         .blockMatrix(
           sizes,
           sizes,
-          blocks.map(block => LinearMapBlock(block.rowBlock, block.columnBlock, block.operator))
+          blocks.map(block => LinearOperatorBlock(block.rowBlock, block.columnBlock, block.operator))
         )
         .left
         .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))

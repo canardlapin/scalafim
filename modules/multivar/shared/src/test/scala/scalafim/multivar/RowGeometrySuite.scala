@@ -1,11 +1,11 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class RowGeometrySuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -16,17 +16,17 @@ class RowGeometrySuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertMatrixClose(actual, expected.toRows, tol)
 
-  private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: DVec, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
 
-  private def rightSpectralGram(vectors: DoubleMatrix, values: DoubleVector): DoubleMatrix =
+  private def rightSpectralGram(vectors: DMat, values: DVec): DMat =
     val scaled = vectors.copyData
     var col = 0
     while col < vectors.cols do
@@ -36,7 +36,7 @@ class RowGeometrySuite extends munit.FunSuite:
         scaled(row * vectors.cols + col) *= scale
         row += 1
       col += 1
-    DoubleMatrix.multiply(DoubleMatrix.unsafe(vectors.rows, vectors.cols, scaled), vectors.transpose)
+    GaleNumerics.multiply(GaleNumerics.matrixFromRowMajor(vectors.rows, vectors.cols, scaled), vectors.transpose)
 
   private def assertInvalidTolerance[A](result: Either[MultivarError, A], role: String): Unit =
     result match
@@ -53,17 +53,18 @@ class RowGeometrySuite extends munit.FunSuite:
       case other =>
         fail(s"expected MatrixShapeMismatch containing '$expected', got $other")
 
-  private def assertFiniteMatrix(matrix: DoubleMatrix): Unit =
+  private def assertFiniteMatrix(matrix: DMat): Unit =
+    val data = matrix.copyData
     var i = 0
-    while i < matrix.dataArray.length do
-      assert(matrix.dataArray(i).isFinite, s"entry $i is not finite: ${matrix.dataArray(i)}")
+    while i < data.length do
+      assert(data(i).isFinite, s"entry $i is not finite: ${data(i)}")
       i += 1
 
   private def pass(cols: Int): FittedPreprocessor =
     FittedColumnAffine(cols, MatrixView.ones(cols), MatrixView.zeros(cols))
 
-  private def cross(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.transposeMultiply(left, right)
+  private def cross(left: DMat, right: DMat): DMat =
+    GaleNumerics.transposeMultiply(left, right)
 
   test("block Cholesky row whitening exposes whitening, unwhitening, and solve algebra") {
     val blocks = Vector(
@@ -74,12 +75,12 @@ class RowGeometrySuite extends munit.FunSuite:
       rows = 3,
       blocks = blocks,
       upperCholesky = Vector(
-        DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
-        DoubleMatrix.fromRows(Vector(Vector(4.0)))
+        GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(4.0)))
       )
     ).toOption.get
-    val a = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0), Vector(3.0, 5.0), Vector(8.0, 4.0)))
-    val b = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
+    val a = GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(3.0, 5.0), Vector(8.0, 4.0)))
+    val b = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
 
     val whitened = metric.whiten(a).toOption.get
     val unwhitened = metric.unwhiten(whitened).toOption.get
@@ -98,11 +99,11 @@ class RowGeometrySuite extends munit.FunSuite:
       rows = 4,
       blocks = blocks,
       upperCholesky = Vector(
-        DoubleMatrix.fromRows(Vector(Vector(2.0, 0.5), Vector(0.0, 1.5))),
-        DoubleMatrix.fromRows(Vector(Vector(1.25, -0.25), Vector(0.0, 2.0)))
+        GaleNumerics.matrixFromRows(Vector(Vector(2.0, 0.5), Vector(0.0, 1.5))),
+        GaleNumerics.matrixFromRows(Vector(Vector(1.25, -0.25), Vector(0.0, 2.0)))
       )
     ).toOption.get
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, -1.0),
         Vector(0.5, -1.0, 3.0),
@@ -143,7 +144,7 @@ class RowGeometrySuite extends munit.FunSuite:
       IndexSet.from(Vector(1), IndexAxis.Row).toOption.get
     )
     val metric = RowWhitening.groupedIdentity(3, blocks).toOption.get
-    val a = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0), Vector(5.0, 6.0)))
+    val a = GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0), Vector(5.0, 6.0)))
 
     assertEquals(metric.mode, RowWhiteningMode.GroupedIdentity)
     assertEquals(metric.blocks, blocks)
@@ -168,11 +169,11 @@ class RowGeometrySuite extends munit.FunSuite:
       rows = 3,
       blocks = blocks,
       upperCholesky = Vector(
-        DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
-        DoubleMatrix.fromRows(Vector(Vector(4.0)))
+        GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(4.0)))
       )
     ).toOption.get
-    val a = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0), Vector(3.0, 5.0), Vector(8.0, 4.0)))
+    val a = GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(3.0, 5.0), Vector(8.0, 4.0)))
 
     // Block {0,2} solves U' y = [rows 0 and 2]; block {1} scales row 1 by 1/4.
     val whitened = metric.whiten(a).toOption.get
@@ -193,10 +194,10 @@ class RowGeometrySuite extends munit.FunSuite:
     val metric = RowWhitening.blockCholesky(
       rows = 1,
       blocks = blocks,
-      upperCholesky = Vector(DoubleMatrix.fromRows(Vector(Vector(1e-13)))),
+      upperCholesky = Vector(GaleNumerics.matrixFromRows(Vector(Vector(1e-13)))),
       tolerance = 1e-15
     ).toOption.get
-    val b = DoubleMatrix.fromRows(Vector(Vector(2e-13)))
+    val b = GaleNumerics.matrixFromRows(Vector(Vector(2e-13)))
 
     // A factor accepted at construction tolerance must stay usable at whiten time.
     assertMatrixClose(metric.whiten(b).toOption.get, Vector(Vector(2.0)), 1e-9)
@@ -207,7 +208,7 @@ class RowGeometrySuite extends munit.FunSuite:
     val result = RowWhitening.blockCholesky(
       rows = 1,
       blocks = blocks,
-      upperCholesky = Vector(DoubleMatrix.fromRows(Vector(Vector(0.0))))
+      upperCholesky = Vector(GaleNumerics.matrixFromRows(Vector(Vector(0.0))))
     )
 
     assert(result.swap.toOption.exists {
@@ -222,19 +223,19 @@ class RowGeometrySuite extends munit.FunSuite:
       RowWhitening.blockCholesky(
         rows = 1,
         blocks = Vector(block),
-        upperCholesky = Vector(DoubleMatrix.fromRows(Vector(Vector(1.0)))),
+        upperCholesky = Vector(GaleNumerics.matrixFromRows(Vector(Vector(1.0)))),
         tolerance = -1.0
       ),
       "row whitening Cholesky tolerance"
     )
 
-    val design = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
+    val design = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0)))
     assertInvalidTolerance(
       RowProjector.orthogonal(design, tolerance = Double.NaN),
       "row projector eigen tolerance"
     )
     assertInvalidTolerance(
-      RowProjector.fromMatrix(DoubleMatrix.eye(2), tolerance = Double.PositiveInfinity),
+      RowProjector.fromMatrix(DMat.eye(2), tolerance = Double.PositiveInfinity),
       "row projector matrix tolerance"
     )
 
@@ -247,15 +248,15 @@ class RowGeometrySuite extends munit.FunSuite:
 
     val metric = RowWhitening.identity(2).toOption.get
     val termFit = EffectTermFit.fromDesign("x", design, Vector(0), metric).toOption.get
-    val response = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val response = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
     assertInvalidTolerance(
-      EffectOperator.fit(termFit, response, pass(1), DoubleMatrix.eye(1), tolerance = Double.NaN),
+      EffectOperator.fit(termFit, response, pass(1), DMat.eye(1), tolerance = Double.NaN),
       "effect operator SVD tolerance"
     )
   }
 
   test("orthogonal row projectors are symmetric idempotent and expose rank") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, -1.0),
         Vector(1.0, 0.0),
@@ -264,7 +265,7 @@ class RowGeometrySuite extends munit.FunSuite:
     )
 
     val projector = RowProjector.orthogonal(design).toOption.get
-    val squared = DoubleMatrix.multiply(projector.matrix, projector.matrix)
+    val squared = GaleNumerics.multiply(projector.matrix, projector.matrix)
 
     assertEquals(projector.rank, 2)
     assertMatrixClose(projector.matrix.transpose, projector.matrix, 1e-9)
@@ -272,7 +273,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("row projector complements are symmetric idempotent and orthogonal to the original projector") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, -1.0),
         Vector(1.0, 0.0),
@@ -281,21 +282,21 @@ class RowGeometrySuite extends munit.FunSuite:
     )
     val projector = RowProjector.orthogonal(design).toOption.get
     val complement = projector.complement
-    val complementSquared = DoubleMatrix.multiply(complement.matrix, complement.matrix)
-    val cross = DoubleMatrix.multiply(complement.matrix, projector.matrix)
+    val complementSquared = GaleNumerics.multiply(complement.matrix, complement.matrix)
+    val cross = GaleNumerics.multiply(complement.matrix, projector.matrix)
 
     assertEquals(complement.rank, 1)
     assertMatrixClose(complement.matrix.transpose, complement.matrix, 1e-9)
     assertMatrixClose(complementSquared, complement.matrix, 1e-9)
-    assertMatrixClose(cross, DoubleMatrix.zeros(projector.rows, projector.rows), 1e-9)
+    assertMatrixClose(cross, DMat.zeros(projector.rows, projector.rows), 1e-9)
   }
 
   test("row whitening and projectors reject wrong response row counts with typed errors") {
     val metric = RowWhitening.identity(3).toOption.get
     val projector = RowProjector.orthogonal(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(-1.0)))
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0), Vector(-1.0)))
     ).toOption.get
-    val wrongRows = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
+    val wrongRows = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0)))
 
     assertShapeMismatch(metric.whiten(wrongRows), "expected 3 rows")
     assertShapeMismatch(metric.solve(wrongRows), "expected 3 rows")
@@ -303,7 +304,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("effect term fit reconstructs the fixed-effect projector algebra used by multivarious") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, 0.0),
         Vector(1.0, 0.0, 1.0, 0.0),
@@ -311,7 +312,7 @@ class RowGeometrySuite extends munit.FunSuite:
         Vector(1.0, 1.0, 1.0, 1.0)
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 1.0),
         Vector(2.0, 2.0),
@@ -335,11 +336,11 @@ class RowGeometrySuite extends munit.FunSuite:
       ),
       1e-9
     )
-    assertMatrixClose(DoubleMatrix.multiply(fit.fullProjector.matrix, fit.nuisanceProjector.matrix), fit.nuisanceProjector.matrix, 1e-9)
+    assertMatrixClose(GaleNumerics.multiply(fit.fullProjector.matrix, fit.nuisanceProjector.matrix), fit.nuisanceProjector.matrix, 1e-9)
   }
 
   test("effect model fits compose a model projector and per-term fits over one whitening") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, 0.0),
         Vector(1.0, 0.0, 1.0, 0.0),
@@ -363,7 +364,7 @@ class RowGeometrySuite extends munit.FunSuite:
     // Every term projector is nested inside the model projector.
     model.terms.foreach { fit =>
       assertMatrixClose(
-        DoubleMatrix.multiply(model.modelProjector.matrix, fit.termProjector.matrix),
+        GaleNumerics.multiply(model.modelProjector.matrix, fit.termProjector.matrix),
         fit.termProjector.matrix,
         1e-9
       )
@@ -379,11 +380,11 @@ class RowGeometrySuite extends munit.FunSuite:
       rows = 4,
       blocks = blocks,
       upperCholesky = Vector(
-        DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
-        DoubleMatrix.fromRows(Vector(Vector(1.0, 0.5), Vector(0.0, 2.0)))
+        GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.5), Vector(0.0, 2.0)))
       )
     ).toOption.get
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 1.0),
         Vector(1.0, 0.0),
@@ -391,7 +392,7 @@ class RowGeometrySuite extends munit.FunSuite:
         Vector(1.0, 0.0)
       )
     )
-    val yDense = DoubleMatrix.fromRows(
+    val yDense = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(3.0, -1.0),
@@ -400,7 +401,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val termFit = EffectTermFit.fromDesign("whitened.term", design, Vector(1), metric).toOption.get
-    val operator = EffectOperator.fit(termFit, MatrixView.dense(yDense), pass(2), DoubleMatrix.eye(2)).toOption.get
+    val operator = EffectOperator.fit(termFit, MatrixView.dense(yDense), pass(2), DMat.eye(2)).toOption.get
 
     assertEquals(termFit.term.df, 1)
     assertEquals(operator.rank, 1)
@@ -414,7 +415,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("effect operators reconstruct original-scale contributions through the preprocessor inverse") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -423,7 +424,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 0.0),
           Vector(0.0, 3.0),
@@ -436,10 +437,10 @@ class RowGeometrySuite extends munit.FunSuite:
     val termFit = EffectTermFit.fromDesign("orig.scale", design, Vector(0, 1), metric).toOption.get
     val preprocessor = FittedColumnAffine(
       2,
-      DoubleVector.fromSeq(Vector(2.0, 0.5)),
-      DoubleVector.fromSeq(Vector(1.0, -3.0))
+      DVec.fromSeq(Vector(2.0, 0.5)),
+      DVec.fromSeq(Vector(1.0, -3.0))
     )
-    val operator = EffectOperator.fit(termFit, y, preprocessor, DoubleMatrix.eye(2)).toOption.get
+    val operator = EffectOperator.fit(termFit, y, preprocessor, DMat.eye(2)).toOption.get
     val processed = operator.reconstruct(EffectScale.Processed).toOption.get
     val original = operator.reconstruct(EffectScale.Original).toOption.get
 
@@ -452,7 +453,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("effect operator reconstructs whitened and processed contributions") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, 0.0),
         Vector(1.0, 0.0, 1.0, 0.0),
@@ -461,7 +462,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 1.0),
           Vector(2.0, 2.0),
@@ -472,7 +473,7 @@ class RowGeometrySuite extends munit.FunSuite:
     )
     val metric = RowWhitening.identity(4).toOption.get
     val termFit = EffectTermFit.fromDesign("group.level", design, Vector(3), metric).toOption.get
-    val basis = DoubleMatrix.eye(2)
+    val basis = DMat.eye(2)
     val operator = EffectOperator.fit(termFit, y, pass(2), basis).toOption.get
 
     assertEquals(operator.rank, 1)
@@ -495,7 +496,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("effect operator truncation preserves typed shapes and finite reconstructions") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -504,7 +505,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 0.0),
           Vector(0.0, 3.0),
@@ -515,7 +516,7 @@ class RowGeometrySuite extends munit.FunSuite:
     )
     val metric = RowWhitening.identity(4).toOption.get
     val termFit = EffectTermFit.fromDesign("two.component", design, Vector(0, 1), metric).toOption.get
-    val operator = EffectOperator.fit(termFit, y, pass(2), DoubleMatrix.eye(2)).toOption.get
+    val operator = EffectOperator.fit(termFit, y, pass(2), DMat.eye(2)).toOption.get
     val one = operator.truncate(1).toOption.get
     val zero = operator.truncate(0).toOption.get
     val reconstructedOne = one.reconstruct(EffectScale.Processed).toOption.get
@@ -534,11 +535,11 @@ class RowGeometrySuite extends munit.FunSuite:
     assertEquals(zero.rank, 0)
     assertEquals(zero.scores.cols, 0)
     assertEquals(zero.loadings.cols, 0)
-    assertMatrixClose(reconstructedZero, DoubleMatrix.zeros(4, 2), 1e-12)
+    assertMatrixClose(reconstructedZero, DMat.zeros(4, 2), 1e-12)
   }
 
   test("effect operator fit rejects a non-orthonormal basis with a typed error") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -547,7 +548,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 0.0),
           Vector(0.0, 3.0),
@@ -558,7 +559,7 @@ class RowGeometrySuite extends munit.FunSuite:
     )
     val metric = RowWhitening.identity(4).toOption.get
     val termFit = EffectTermFit.fromDesign("scaled.basis", design, Vector(0, 1), metric).toOption.get
-    val basis = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(0.0)))
+    val basis = GaleNumerics.matrixFromRows(Vector(Vector(2.0), Vector(0.0)))
 
     EffectOperator.fit(termFit, y, pass(2), basis) match
       case Left(MultivarError.NonOrthonormalBasis(context, row, col, value)) =>
@@ -570,7 +571,7 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("aliased effect terms produce empty valid effect operators") {
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 0.0),
         Vector(1.0, 0.0, 0.0),
@@ -579,7 +580,7 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(3.0, 4.0),
@@ -590,7 +591,7 @@ class RowGeometrySuite extends munit.FunSuite:
     )
     val metric = RowWhitening.identity(4).toOption.get
     val termFit = EffectTermFit.fromDesign("aliased", design, Vector(2), metric).toOption.get
-    val operator = EffectOperator.fit(termFit, y, pass(2), DoubleMatrix.eye(2)).toOption.get
+    val operator = EffectOperator.fit(termFit, y, pass(2), DMat.eye(2)).toOption.get
 
     assertEquals(termFit.term.df, 0)
     assertEquals(operator.rank, 0)
@@ -611,7 +612,7 @@ class RowGeometrySuite extends munit.FunSuite:
   test("an exactly zero response produces an empty valid effect operator") {
     // Regression: a term with positive df but an exactly zero projected effect used
     // to fail the whole fit with SolverFailed instead of yielding the empty operator.
-    val design = DoubleMatrix.fromRows(
+    val design = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -619,12 +620,12 @@ class RowGeometrySuite extends munit.FunSuite:
         Vector(1.0, 1.0)
       )
     )
-    val y = MatrixView.dense(DoubleMatrix.zeros(4, 2))
+    val y = MatrixView.dense(DMat.zeros(4, 2))
     val metric = RowWhitening.identity(4).toOption.get
     val termFit = EffectTermFit.fromDesign("zero.response", design, Vector(1), metric).toOption.get
     assert(termFit.term.df > 0)
 
-    EffectOperator.fit(termFit, y, pass(2), DoubleMatrix.eye(2)) match
+    EffectOperator.fit(termFit, y, pass(2), DMat.eye(2)) match
       case Right(operator) =>
         assertEquals(operator.rank, 0)
         assertEquals(operator.scores.cols, 0)
@@ -644,6 +645,6 @@ class RowGeometrySuite extends munit.FunSuite:
   }
 
   test("orthonormal-column validation fails closed on non-finite Gram entries") {
-    val basis = DoubleMatrix.fromRows(Vector(Vector(Double.NaN), Vector(0.0)))
+    val basis = GaleNumerics.matrixFromRows(Vector(Vector(Double.NaN), Vector(0.0)))
     assert(RowGeometryOps.requireOrthonormalColumns("nan basis", basis, 1e-8).isLeft)
   }

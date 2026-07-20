@@ -1,6 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 opaque type MultivarPlanId = String
 

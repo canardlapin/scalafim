@@ -1,8 +1,8 @@
 package scalafim.multivar
 
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.sparse.Sparse
 
 type RowMap[From <: SemanticSpace, To <: SemanticSpace] = Lin[Primal[From], Primal[To]]
 type RowLink[Left <: SemanticSpace, Right <: SemanticSpace] = Lin[Primal[Right], Dual[Left]]
@@ -72,8 +72,8 @@ final case class RelationshipSupport(
 )
 
 final case class CouplingMarginals(
-    left: DoubleVector,
-    right: DoubleVector,
+    left: DVec,
+    right: DVec,
     totalMass: Double
 )
 
@@ -385,7 +385,7 @@ object AggregationMap:
   def fromMatrix[From <: SemanticSpace, To <: SemanticSpace](
       from: SpaceEvidence[From],
       to: SpaceEvidence[To],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       normalization: RelationshipNormalization,
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("row-aggregation-map")
@@ -414,7 +414,7 @@ object NonnegativeCoupling:
   def fromMatrix[Left <: SemanticSpace, Right <: SemanticSpace](
       left: SpaceEvidence[Left],
       right: SpaceEvidence[Right],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       normalization: RelationshipNormalization,
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("nonnegative-row-coupling")
@@ -486,7 +486,7 @@ object SignedRowLink:
   def fromMatrix[Left <: SemanticSpace, Right <: SemanticSpace](
       left: SpaceEvidence[Left],
       right: SpaceEvidence[Right],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("signed-row-link")
   ): Either[AlignmentError, SignedRowLink[Left, Right]] =
@@ -616,11 +616,13 @@ private[multivar] object RelationshipMatrices:
     val rowIndices = entries.map(_._1).toArray
     val colIndices = entries.map(_._2).toArray
     val values = entries.map(_._3).toArray
+    val builder = Sparse.coo(to.dimension, from.dimension)
+    var index = 0
+    while index < entries.length do
+      builder.add(rowIndices(index), colIndices(index), values(index))
+      index += 1
+    val csr = builder.pruneZeros.toCSR()
     for
-      csr <- CsrMatrix
-        .fromTriplets(to.dimension, from.dimension, rowIndices, colIndices, values)
-        .left
-        .map(error => AlignmentError.InvalidRelationship(error.message))
       view <- SparseMatrixView
         .fromTriplets(to.dimension, from.dimension, rowIndices, colIndices, values)
         .left
@@ -656,7 +658,7 @@ private[multivar] object RelationshipMatrices:
   def denseRowMap[From <: SemanticSpace, To <: SemanticSpace](
       from: SpaceEvidence[From],
       to: SpaceEvidence[To],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       requireNonnegative: Boolean,
       kind: RowRelationshipKind,
       normalization: RelationshipNormalization,
@@ -697,7 +699,7 @@ private[multivar] object RelationshipMatrices:
   def denseRowLink[Left <: SemanticSpace, Right <: SemanticSpace](
       left: SpaceEvidence[Left],
       right: SpaceEvidence[Right],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       requireNonnegative: Boolean,
       kind: RowRelationshipKind,
       normalization: RelationshipNormalization,
@@ -738,8 +740,8 @@ private[multivar] object RelationshipMatrices:
 
   def matrixOf[From <: Coordinate, To <: Coordinate](
       operator: Lin[From, To]
-  ): Either[AlignmentError, DoubleMatrix] =
-    operator(DoubleMatrix.eye(operator.cols)).left.map(AlignmentError.Semantic.apply)
+  ): Either[AlignmentError, DMat] =
+    operator(DMat.eye(operator.cols)).left.map(AlignmentError.Semantic.apply)
 
   final case class MatrixStats(
       support: RelationshipSupport,
@@ -747,7 +749,7 @@ private[multivar] object RelationshipMatrices:
   )
 
   def validateMatrix(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       expectedRows: Int,
       expectedColumns: Int,
       requireNonnegative: Boolean
@@ -807,7 +809,7 @@ private[multivar] object RelationshipMatrices:
           Right(
             MatrixStats(
               support,
-              CouplingMarginals(DoubleVector.unsafe(left), DoubleVector.unsafe(right), total)
+              CouplingMarginals(GaleNumerics.vectorFromArray(left), GaleNumerics.vectorFromArray(right), total)
             )
           )
 

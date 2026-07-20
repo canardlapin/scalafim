@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** Validation tier applied when constructing a metric from user-supplied storage. */
 enum MetricValidation:
@@ -42,7 +42,7 @@ sealed trait MvMetric:
 
   /** Value-based metric identity: same kind, same dimension, and exactly equal entries.
     *
-    * Metric storage (`DoubleVector`/`DoubleMatrix`/`SparseMatrixView`) compares by
+    * Metric storage (`DVec`/`DMat`/`SparseMatrixView`) compares by
     * reference, so case-class equality on metrics is reference equality for every
     * non-identity kind; use this method to decide whether two separately built metrics
     * are the same metric. Exact double equality is intentional — "same metric" is an
@@ -63,23 +63,23 @@ sealed trait MvMetric:
         false)
 
   /** M * input for a dim x k dense block. */
-  def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def matvec(input: DMat): Either[MultivarError, DMat]
 
   /** M * input for a dim-length vector. */
-  def applyVector(input: DoubleVector): Either[MultivarError, DoubleVector]
+  def applyVector(input: DVec): Either[MultivarError, DVec]
 
   /** x' M y for equal-length vectors. */
-  def innerProduct(x: DoubleVector, y: DoubleVector): Either[MultivarError, Double]
+  def innerProduct(x: DVec, y: DVec): Either[MultivarError, Double]
 
   /** x' M x, non-negative up to roundoff for a PSD metric. */
-  def quadNorm(x: DoubleVector): Either[MultivarError, Double] =
+  def quadNorm(x: DVec): Either[MultivarError, Double] =
     innerProduct(x, x)
 
   /** Sum of M_ij * g_ij over all entries; equals tr(M g) for symmetric g. */
-  private[multivar] def contract(g: DoubleMatrix): Either[MultivarError, Double]
+  private[multivar] def contract(g: DMat): Either[MultivarError, Double]
 
   /** Materialize as a dense dim x dim matrix, subject to policy. */
-  def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix]
+  def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat]
 
 object MvMetric:
   private val StructuralTolerance = 1e-10
@@ -88,13 +88,13 @@ object MvMetric:
     override def storage: StorageKind =
       StorageKind.Operator
 
-    override def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    override def matvec(input: DMat): Either[MultivarError, DMat] =
       requireMatvecShape(dim, input).map(_ => input)
 
-    override def applyVector(input: DoubleVector): Either[MultivarError, DoubleVector] =
+    override def applyVector(input: DVec): Either[MultivarError, DVec] =
       requireVectorShape(dim, input).map(_ => input)
 
-    override def innerProduct(x: DoubleVector, y: DoubleVector): Either[MultivarError, Double] =
+    override def innerProduct(x: DVec, y: DVec): Either[MultivarError, Double] =
       requirePairShape(dim, x, y).map { _ =>
         var acc = 0.0
         var i = 0
@@ -104,7 +104,7 @@ object MvMetric:
         acc
       }
 
-    override private[multivar] def contract(g: DoubleMatrix): Either[MultivarError, Double] =
+    override private[multivar] def contract(g: DMat): Either[MultivarError, Double] =
       requireContractShape(dim, g).map { _ =>
         var acc = 0.0
         var i = 0
@@ -114,23 +114,23 @@ object MvMetric:
         acc
       }
 
-    override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
-      Right(DoubleMatrix.eye(dim))
+    override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
+      Right(DMat.eye(dim))
 
-  final case class Diagonal private[multivar] (weights: DoubleVector, space: Option[MvSpace]) extends MvMetric:
+  final case class Diagonal private[multivar] (weights: DVec, space: Option[MvSpace]) extends MvMetric:
     override def dim: Int =
       weights.length
 
     override def storage: StorageKind =
       StorageKind.Operator
 
-    override def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    override def matvec(input: DMat): Either[MultivarError, DMat] =
       requireMatvecShape(dim, input).map(_ => MatrixView.scaleRows(input, weights))
 
-    override def applyVector(input: DoubleVector): Either[MultivarError, DoubleVector] =
+    override def applyVector(input: DVec): Either[MultivarError, DVec] =
       requireVectorShape(dim, input).map(_ => MatrixView.multiply(weights, input))
 
-    override def innerProduct(x: DoubleVector, y: DoubleVector): Either[MultivarError, Double] =
+    override def innerProduct(x: DVec, y: DVec): Either[MultivarError, Double] =
       requirePairShape(dim, x, y).map { _ =>
         var acc = 0.0
         var i = 0
@@ -140,7 +140,7 @@ object MvMetric:
         acc
       }
 
-    override private[multivar] def contract(g: DoubleMatrix): Either[MultivarError, Double] =
+    override private[multivar] def contract(g: DMat): Either[MultivarError, Double] =
       requireContractShape(dim, g).map { _ =>
         var acc = 0.0
         var i = 0
@@ -150,20 +150,20 @@ object MvMetric:
         acc
       }
 
-    override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+    override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       Right(MatrixOps.diagonal(weights))
 
-  final case class DenseSymmetric private[multivar] (matrix: DoubleMatrix, space: Option[MvSpace]) extends MvMetric:
+  final case class DenseSymmetric private[multivar] (matrix: DMat, space: Option[MvSpace]) extends MvMetric:
     override def dim: Int =
       matrix.rows
 
     override def storage: StorageKind =
       StorageKind.Dense
 
-    override def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
-      requireMatvecShape(dim, input).map(_ => DoubleMatrix.multiply(matrix, input))
+    override def matvec(input: DMat): Either[MultivarError, DMat] =
+      requireMatvecShape(dim, input).map(_ => GaleNumerics.multiply(matrix, input))
 
-    override def applyVector(input: DoubleVector): Either[MultivarError, DoubleVector] =
+    override def applyVector(input: DVec): Either[MultivarError, DVec] =
       requireVectorShape(dim, input).map { _ =>
         val out = new Array[Double](dim)
         var row = 0
@@ -175,10 +175,10 @@ object MvMetric:
             col += 1
           out(row) = acc
           row += 1
-        DoubleVector.unsafe(out)
+        GaleNumerics.vectorFromArray(out)
       }
 
-    override def innerProduct(x: DoubleVector, y: DoubleVector): Either[MultivarError, Double] =
+    override def innerProduct(x: DVec, y: DVec): Either[MultivarError, Double] =
       requirePairShape(dim, x, y).map { _ =>
         var acc = 0.0
         var row = 0
@@ -193,7 +193,7 @@ object MvMetric:
         acc
       }
 
-    override private[multivar] def contract(g: DoubleMatrix): Either[MultivarError, Double] =
+    override private[multivar] def contract(g: DMat): Either[MultivarError, Double] =
       requireContractShape(dim, g).map { _ =>
         var acc = 0.0
         var row = 0
@@ -206,7 +206,7 @@ object MvMetric:
         acc
       }
 
-    override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+    override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       Right(matrix)
 
   /** Sparse symmetric metric over a fully stored symmetric pattern.
@@ -224,31 +224,31 @@ object MvMetric:
     override def storage: StorageKind =
       StorageKind.Sparse
 
-    override def matvec(input: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+    override def matvec(input: DMat): Either[MultivarError, DMat] =
       requireMatvecShape(dim, input).flatMap(_ => view.rightMultiply(input))
 
-    override def applyVector(input: DoubleVector): Either[MultivarError, DoubleVector] =
+    override def applyVector(input: DVec): Either[MultivarError, DVec] =
       requireVectorShape(dim, input).map { _ =>
         val out = new Array[Double](dim)
         view.foreachEntry((row, col, value) => out(row) += value * input(col))
-        DoubleVector.unsafe(out)
+        GaleNumerics.vectorFromArray(out)
       }
 
-    override def innerProduct(x: DoubleVector, y: DoubleVector): Either[MultivarError, Double] =
+    override def innerProduct(x: DVec, y: DVec): Either[MultivarError, Double] =
       requirePairShape(dim, x, y).map { _ =>
         var acc = 0.0
         view.foreachEntry((row, col, value) => acc += value * x(row) * y(col))
         acc
       }
 
-    override private[multivar] def contract(g: DoubleMatrix): Either[MultivarError, Double] =
+    override private[multivar] def contract(g: DMat): Either[MultivarError, Double] =
       requireContractShape(dim, g).map { _ =>
         var acc = 0.0
         view.foreachEntry((row, col, value) => acc += value * g(row, col))
         acc
       }
 
-    override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+    override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       view.toDense(policy)
 
   def identity(dim: Int, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
@@ -260,7 +260,7 @@ object MvMetric:
     * instance is factorizable by `MetricSqrt.factor` regardless of its (tighter)
     * tolerance; weights below that band are rejected as indefinite.
     */
-  def diagonal(weights: DoubleVector, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
+  def diagonal(weights: DVec, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
     if weights.length <= 0 then Left(MultivarError.InvalidDimension("metric dimension", weights.length))
     else
       var i = 0
@@ -285,7 +285,7 @@ object MvMetric:
                 while j < out.length do
                   if out(j) < 0.0 then out(j) = 0.0
                   j += 1
-                DoubleVector.unsafe(out)
+                GaleNumerics.vectorFromArray(out)
             Diagonal(cleaned, space)
           }
 
@@ -305,13 +305,13 @@ object MvMetric:
         identity(whitening.rows, space)
       case RowWhiteningMode.BlockCholesky =>
         for
-          root <- whitening.whiten(DoubleMatrix.eye(whitening.rows))
-          metric = DoubleMatrix.crossProduct(root)
+          root <- whitening.whiten(DMat.eye(whitening.rows))
+          metric = GaleNumerics.crossProduct(root)
           result <- denseSymmetric(metric, MetricValidation.Structural, space)
         yield result
 
   def denseSymmetric(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       validation: MetricValidation = MetricValidation.Structural,
       space: Option[MvSpace] = None
   ): Either[MultivarError, MvMetric] =
@@ -360,16 +360,16 @@ object MvMetric:
   private[multivar] def unsafeIdentity(dim: Int, space: Option[MvSpace] = None): MvMetric =
     Identity(dim, space)
 
-  private[multivar] def unsafeDiagonal(weights: DoubleVector, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeDiagonal(weights: DVec, space: Option[MvSpace] = None): MvMetric =
     Diagonal(weights, space)
 
-  private[multivar] def unsafeDenseSymmetric(matrix: DoubleMatrix, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeDenseSymmetric(matrix: DMat, space: Option[MvSpace] = None): MvMetric =
     DenseSymmetric(matrix, space)
 
   private[multivar] def unsafeSparseSymmetric(view: SparseMatrixView, space: Option[MvSpace] = None): MvMetric =
     SparseSymmetric(view, space)
 
-  private def sameVectorValues(left: DoubleVector, right: DoubleVector): Boolean =
+  private def sameVectorValues(left: DVec, right: DVec): Boolean =
     if left.length != right.length then false
     else
       var i = 0
@@ -379,7 +379,7 @@ object MvMetric:
         i += 1
       same
 
-  private def sameMatrixValues(left: DoubleMatrix, right: DoubleMatrix): Boolean =
+  private def sameMatrixValues(left: DMat, right: DMat): Boolean =
     if left.rows != right.rows || left.cols != right.cols then false
     else
       var row = 0
@@ -407,7 +407,7 @@ object MvMetric:
       }
       same
 
-  private def structuralDense(matrix: DoubleMatrix): Either[MultivarError, Unit] =
+  private def structuralDense(matrix: DMat): Either[MultivarError, Unit] =
     for
       _ <- MatrixOps.checkFinite("dense metric", matrix)
       _ <- MatrixOps.checkSymmetric(matrix, StructuralTolerance)
@@ -438,7 +438,7 @@ object MvMetric:
       case None        => Right(())
 
   private def spectralPsd(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double,
       role: String
@@ -451,7 +451,7 @@ object MvMetric:
       else Right(())
     }
 
-  private def requireNonNegativeDiagonal(matrix: DoubleMatrix): Either[MultivarError, Unit] =
+  private def requireNonNegativeDiagonal(matrix: DMat): Either[MultivarError, Unit] =
     var i = 0
     var error = Option.empty[MultivarError]
     while i < matrix.rows && error.isEmpty do
@@ -480,7 +480,7 @@ object MvMetric:
       case _ =>
         Right(())
 
-  private def requireMatvecShape(dim: Int, input: DoubleMatrix): Either[MultivarError, Unit] =
+  private def requireMatvecShape(dim: Int, input: DMat): Either[MultivarError, Unit] =
     if input.rows == dim then Right(())
     else
       Left(
@@ -489,7 +489,7 @@ object MvMetric:
         )
       )
 
-  private def requireVectorShape(dim: Int, input: DoubleVector): Either[MultivarError, Unit] =
+  private def requireVectorShape(dim: Int, input: DVec): Either[MultivarError, Unit] =
     if input.length == dim then Right(())
     else
       Left(
@@ -498,7 +498,7 @@ object MvMetric:
         )
       )
 
-  private def requireContractShape(dim: Int, g: DoubleMatrix): Either[MultivarError, Unit] =
+  private def requireContractShape(dim: Int, g: DMat): Either[MultivarError, Unit] =
     if g.rows == dim && g.cols == dim then Right(())
     else
       Left(
@@ -507,7 +507,7 @@ object MvMetric:
         )
       )
 
-  private def requirePairShape(dim: Int, x: DoubleVector, y: DoubleVector): Either[MultivarError, Unit] =
+  private def requirePairShape(dim: Int, x: DVec, y: DVec): Either[MultivarError, Unit] =
     if x.length == dim && y.length == dim then Right(())
     else
       Left(
@@ -519,8 +519,8 @@ object MvMetric:
 /** Square-root factor of a metric applied as a linear operator. */
 private[multivar] enum MetricOperator:
   case Identity(size: Int)
-  case Diagonal(values: DoubleVector)
-  case Dense(matrix: DoubleMatrix)
+  case Diagonal(values: DVec)
+  case Dense(matrix: DMat)
 
   def dim: Int =
     this match
@@ -529,21 +529,21 @@ private[multivar] enum MetricOperator:
       case Dense(matrix)    => matrix.rows
 
   /** Op * input. */
-  def applyLeft(input: DoubleMatrix): DoubleMatrix =
+  def applyLeft(input: DMat): DMat =
     this match
       case Identity(_)      => input
       case Diagonal(values) => MatrixView.scaleRows(input, values)
-      case Dense(matrix)    => DoubleMatrix.multiply(matrix, input)
+      case Dense(matrix)    => GaleNumerics.multiply(matrix, input)
 
   /** input * Op. */
-  def applyRight(input: DoubleMatrix): DoubleMatrix =
+  def applyRight(input: DMat): DMat =
     this match
       case Identity(_)      => input
       case Diagonal(values) => MetricOperator.scaleColumnsDense(input, values)
-      case Dense(matrix)    => DoubleMatrix.multiply(input, matrix)
+      case Dense(matrix)    => GaleNumerics.multiply(input, matrix)
 
 private[multivar] object MetricOperator:
-  private[multivar] def scaleColumnsDense(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+  private[multivar] def scaleColumnsDense(matrix: DMat, scale: DVec): DMat =
     require(matrix.cols == scale.length, "scale length must match matrix columns")
     val out = matrix.copyData
     var row = 0
@@ -553,7 +553,7 @@ private[multivar] object MetricOperator:
         out(row * matrix.cols + col) *= scale(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
 /** Pseudo square-root pair of a PSD metric: half = M^{1/2}, pinvHalf = M^{-1/2} on the range. */
 private[multivar] final case class MetricRoots(half: MetricOperator, pinvHalf: MetricOperator, rank: Int)
@@ -587,7 +587,7 @@ private[multivar] object MetricSqrt:
             Left(MultivarError.DensificationRejected(s"$role square root", StorageKind.Sparse))
 
   private def diagonalRoots(
-      weights: DoubleVector,
+      weights: DVec,
       tolerance: Double,
       role: String
   ): Either[MultivarError, MetricRoots] =
@@ -616,14 +616,14 @@ private[multivar] object MetricSqrt:
       case None =>
         Right(
           MetricRoots(
-            MetricOperator.Diagonal(DoubleVector.unsafe(half)),
-            MetricOperator.Diagonal(DoubleVector.unsafe(pinv)),
+            MetricOperator.Diagonal(GaleNumerics.vectorFromArray(half)),
+            MetricOperator.Diagonal(GaleNumerics.vectorFromArray(pinv)),
             rank
           )
         )
 
   private def denseRoots(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double,
       role: String
@@ -649,12 +649,12 @@ private[multivar] object MetricSqrt:
       error match
         case Some(value) => Left(value)
         case None =>
-          val half = rebuild(eigen.vectors, DoubleVector.unsafe(halfDiag))
-          val pinv = rebuild(eigen.vectors, DoubleVector.unsafe(pinvDiag))
+          val half = rebuild(eigen.vectors, GaleNumerics.vectorFromArray(halfDiag))
+          val pinv = rebuild(eigen.vectors, GaleNumerics.vectorFromArray(pinvDiag))
           Right(MetricRoots(MetricOperator.Dense(half), MetricOperator.Dense(pinv), rank))
     }
 
   /** V diag(values) V'. */
-  private def rebuild(vectors: DoubleMatrix, values: DoubleVector): DoubleMatrix =
+  private def rebuild(vectors: DMat, values: DVec): DMat =
     val scaled = MetricOperator.scaleColumnsDense(vectors, values)
-    DoubleMatrix.multiply(scaled, vectors.transpose)
+    GaleNumerics.multiply(scaled, vectors.transpose)

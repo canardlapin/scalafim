@@ -1,11 +1,11 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class DualityDiagramSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -23,19 +23,19 @@ class DualityDiagramSuite extends munit.FunSuite:
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
 
-  private def dense(metric: MvMetric): DoubleMatrix =
+  private def dense(metric: MvMetric): DMat =
     metric.toDense(StoragePolicy.AllowDense).toOption.get
 
-  private def rowGramReference(x: DoubleMatrix, rowMetric: MvMetric): DoubleMatrix =
-    DoubleMatrix.transposeMultiply(x, DoubleMatrix.multiply(dense(rowMetric), x))
+  private def rowGramReference(x: DMat, rowMetric: MvMetric): DMat =
+    GaleNumerics.transposeMultiply(x, GaleNumerics.multiply(dense(rowMetric), x))
 
-  private def columnGramReference(x: DoubleMatrix, columnMetric: MvMetric): DoubleMatrix =
-    DoubleMatrix.multiply(DoubleMatrix.multiply(x, dense(columnMetric)), x.transpose)
+  private def columnGramReference(x: DMat, columnMetric: MvMetric): DMat =
+    GaleNumerics.multiply(GaleNumerics.multiply(x, dense(columnMetric)), x.transpose)
 
-  private def rightMultiplyMetric(matrix: DoubleMatrix, metric: MvMetric): DoubleMatrix =
-    DoubleMatrix.multiply(matrix, dense(metric))
+  private def rightMultiplyMetric(matrix: DMat, metric: MvMetric): DMat =
+    GaleNumerics.multiply(matrix, dense(metric))
 
-  private def trace(matrix: DoubleMatrix): Double =
+  private def trace(matrix: DMat): Double =
     assertEquals(matrix.rows, matrix.cols)
     var acc = 0.0
     var i = 0
@@ -44,7 +44,7 @@ class DualityDiagramSuite extends munit.FunSuite:
       i += 1
     acc
 
-  private def positiveEigenvalues(matrix: DoubleMatrix, tol: Double): Vector[Double] =
+  private def positiveEigenvalues(matrix: DMat, tol: Double): Vector[Double] =
     val eigen = DenseSolvers.symmetricEigen.decompose(matrix).toOption.get
     val out = Vector.newBuilder[Double]
     var i = 0
@@ -54,7 +54,7 @@ class DualityDiagramSuite extends munit.FunSuite:
       i += 1
     out.result()
 
-  private val x = DoubleMatrix.fromRows(
+  private val x = GaleNumerics.matrixFromRows(
     Vector(
       Vector(1.0, 2.0),
       Vector(0.0, 3.0),
@@ -65,8 +65,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   test("duality diagram validates table spaces and metric tags") {
     val rowSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val columnSpace = MvSpace.of("features", SpaceRole.Observed, 2).toOption.get
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0)), Some(rowSpace)).toOption.get
-    val columnMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(3.0, 0.25)), Some(columnSpace)).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(rowSpace)).toOption.get
+    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25)), Some(columnSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric), Some(rowSpace), Some(columnSpace))
       .toOption
@@ -101,8 +101,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   }
 
   test("row and column Gram forms plus total inertia match direct dense algebra") {
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val columnMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(3.0, 0.25))).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric)).toOption.get
     val rowGram = diagram.rowGram().toOption.get
     val columnGram = diagram.columnGram().toOption.get
@@ -115,12 +115,12 @@ class DualityDiagramSuite extends munit.FunSuite:
     assertMatrixClose(columnOperator, rightMultiplyMetric(rowGram, columnMetric), 1e-12)
     assertEqualsDouble(diagram.totalInertia().toOption.get, trace(columnOperator), 1e-12)
     assertEqualsDouble(trace(rowOperator), trace(columnOperator), 1e-12)
-    assertEqualsDouble(trace(DoubleMatrix.multiply(rowOperator, rowOperator)), trace(DoubleMatrix.multiply(columnOperator, columnOperator)), 1e-9)
+    assertEqualsDouble(trace(GaleNumerics.multiply(rowOperator, rowOperator)), trace(GaleNumerics.multiply(columnOperator, columnOperator)), 1e-9)
   }
 
   test("transposed duality diagram swaps the row and column forms") {
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val columnMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(3.0, 0.25))).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric)).toOption.get
     val transposed = diagram.transpose().toOption.get
 

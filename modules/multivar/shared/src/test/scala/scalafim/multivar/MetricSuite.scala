@@ -1,11 +1,11 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class MetricSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -16,10 +16,10 @@ class MetricSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def denseReference(metric: MvMetric): DoubleMatrix =
+  private def denseReference(metric: MvMetric): DMat =
     metric.toDense(StoragePolicy.AllowDense).toOption.get
 
-  private def contractReference(metric: DoubleMatrix, g: DoubleMatrix): Double =
+  private def contractReference(metric: DMat, g: DMat): Double =
     var acc = 0.0
     var row = 0
     while row < metric.rows do
@@ -30,7 +30,7 @@ class MetricSuite extends munit.FunSuite:
       row += 1
     acc
 
-  private val block = DoubleMatrix.fromRows(
+  private val block = GaleNumerics.matrixFromRows(
     Vector(
       Vector(1.0, 4.0),
       Vector(2.0, 5.0),
@@ -38,7 +38,7 @@ class MetricSuite extends munit.FunSuite:
     )
   )
 
-  private val gram = DoubleMatrix.fromRows(
+  private val gram = GaleNumerics.matrixFromRows(
     Vector(
       Vector(2.0, 1.0, 0.0),
       Vector(1.0, 3.0, 1.0),
@@ -46,11 +46,11 @@ class MetricSuite extends munit.FunSuite:
     )
   )
 
-  private val x = DoubleVector.fromSeq(Vector(1.0, -2.0, 3.0))
-  private val y = DoubleVector.fromSeq(Vector(0.5, 1.0, -1.0))
+  private val x = DVec.fromSeq(Vector(1.0, -2.0, 3.0))
+  private val y = DVec.fromSeq(Vector(0.5, 1.0, -1.0))
 
   private def allMetrics: Vector[(String, MvMetric)] =
-    val spd = DoubleMatrix.fromRows(
+    val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(4.0, 1.0, 0.0),
         Vector(1.0, 3.0, 1.0),
@@ -66,7 +66,7 @@ class MetricSuite extends munit.FunSuite:
     ).toOption.get
     Vector(
       "identity" -> MvMetric.identity(3).toOption.get,
-      "diagonal" -> MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get,
+      "diagonal" -> MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get,
       "dense" -> MvMetric.denseSymmetric(spd).toOption.get,
       "sparse" -> MvMetric.sparseSymmetric(sparse).toOption.get
     )
@@ -76,7 +76,7 @@ class MetricSuite extends munit.FunSuite:
       val dense = denseReference(metric)
 
       val viaMetric = metric.matvec(block).toOption.get
-      val viaDense = DoubleMatrix.multiply(dense, block)
+      val viaDense = GaleNumerics.multiply(dense, block)
       assertMatrixClose(viaMetric, viaDense, 1e-12)
 
       val vector = metric.applyVector(x).toOption.get
@@ -111,7 +111,7 @@ class MetricSuite extends munit.FunSuite:
   test("metric constructors reject invalid shapes, asymmetry, and negative diagonals") {
     assertEquals(MvMetric.identity(0), Left(MultivarError.InvalidDimension("metric dimension", 0)))
 
-    val negative = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, -0.5)))
+    val negative = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, -0.5)))
     assertEquals(negative, Left(MultivarError.NonPositiveSemiDefinite("diagonal metric", -0.5)))
 
     MvMetric.denseSymmetric(block) match
@@ -121,7 +121,7 @@ class MetricSuite extends munit.FunSuite:
         fail(s"expected MatrixShapeMismatch for a rectangular metric, got $other")
 
     val asymmetric = MvMetric.denseSymmetric(
-      DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(0.0, 1.0)))
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(0.0, 1.0)))
     )
     assertEquals(asymmetric, Left(MultivarError.NonSymmetricMatrix(0, 1, 2.0, 0.0)))
 
@@ -157,9 +157,9 @@ class MetricSuite extends munit.FunSuite:
     assert(identityA.sameValues(identityB))
     assert(!identityA.sameValues(identityOther))
 
-    val diagonalA = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
-    val diagonalB = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
-    val diagonalOther = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 0.5, 1.0))).toOption.get
+    val diagonalA = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
+    val diagonalB = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 0.5, 1.5))).toOption.get
+    val diagonalOther = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 0.5, 1.0))).toOption.get
     assert(diagonalA.sameValues(diagonalB), "separately built identical diagonal metrics must compare equal by value")
     assert(!diagonalA.sameValues(diagonalOther))
 
@@ -168,8 +168,8 @@ class MetricSuite extends munit.FunSuite:
       Vector(1.0, 3.0, 1.0),
       Vector(0.0, 1.0, 2.0)
     )
-    val denseA = MvMetric.denseSymmetric(DoubleMatrix.fromRows(spdRows)).toOption.get
-    val denseB = MvMetric.denseSymmetric(DoubleMatrix.fromRows(spdRows)).toOption.get
+    val denseA = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(spdRows)).toOption.get
+    val denseB = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(spdRows)).toOption.get
     assert(denseA.sameValues(denseB))
 
     val sparseRows = Vector(
@@ -181,13 +181,13 @@ class MetricSuite extends munit.FunSuite:
     val sparseB = MvMetric.sparseSymmetric(SparseMatrixView.fromRows(sparseRows).toOption.get).toOption.get
     assert(sparseA.sameValues(sparseB))
 
-    val onesDiagonal = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 1.0, 1.0))).toOption.get
+    val onesDiagonal = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 1.0, 1.0))).toOption.get
     assert(!identityA.sameValues(onesDiagonal), "sameValues is kind-sensitive, not just numerically equivalent")
     assert(!diagonalA.sameValues(denseA))
   }
 
   test("diagonal metrics clamp roundoff negatives to zero and stay factorizable") {
-    val metric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, -5e-11))).toOption.get
+    val metric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, -5e-11))).toOption.get
 
     metric match
       case MvMetric.Diagonal(weights, _) =>
@@ -198,7 +198,7 @@ class MetricSuite extends munit.FunSuite:
     MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense) match
       case Right(roots) =>
         assertEquals(roots.rank, 1)
-        val half = roots.half.applyLeft(DoubleMatrix.eye(2))
+        val half = roots.half.applyLeft(DMat.eye(2))
         assertEqualsDouble(half(0, 0), 1.0, 1e-12)
         assertEqualsDouble(half(1, 1), 0.0, 1e-12)
       case Left(error) =>
@@ -206,7 +206,7 @@ class MetricSuite extends munit.FunSuite:
   }
 
   test("strict PSD validation rejects an indefinite matrix that structural checks accept") {
-    val indefinite = DoubleMatrix.fromRows(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0)))
+    val indefinite = GaleNumerics.matrixFromRows(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0)))
 
     assert(MvMetric.denseSymmetric(indefinite, MetricValidation.Structural).isRight)
     assert(MvMetric.denseSymmetric(indefinite, MetricValidation.Trusted).isRight)
@@ -226,11 +226,11 @@ class MetricSuite extends munit.FunSuite:
   }
 
   test("diagonal square roots pseudo-invert on the range and report rank") {
-    val metric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(4.0, 0.0, 9.0))).toOption.get
+    val metric = MvMetric.diagonal(DVec.fromSeq(Vector(4.0, 0.0, 9.0))).toOption.get
     val roots = MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense).toOption.get
 
     assertEquals(roots.rank, 2)
-    val eye3 = DoubleMatrix.eye(3)
+    val eye3 = DMat.eye(3)
     val half = roots.half.applyLeft(eye3)
     val pinv = roots.pinvHalf.applyLeft(eye3)
     assertEqualsDouble(half(0, 0), 2.0, 1e-12)
@@ -242,7 +242,7 @@ class MetricSuite extends munit.FunSuite:
   }
 
   test("dense SPD square roots reconstruct the metric and invert it on the range") {
-    val spd = DoubleMatrix.fromRows(
+    val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(4.0, 1.0, 0.0),
         Vector(1.0, 3.0, 1.0),
@@ -253,30 +253,30 @@ class MetricSuite extends munit.FunSuite:
     val roots = MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense).toOption.get
 
     assertEquals(roots.rank, 3)
-    val half = roots.half.applyLeft(DoubleMatrix.eye(3))
-    assertMatrixClose(DoubleMatrix.multiply(half, half), spd, 1e-9)
+    val half = roots.half.applyLeft(DMat.eye(3))
+    assertMatrixClose(GaleNumerics.multiply(half, half), spd, 1e-9)
 
-    val pinv = roots.pinvHalf.applyLeft(DoubleMatrix.eye(3))
-    val whitened = DoubleMatrix.multiply(pinv, DoubleMatrix.multiply(spd, pinv))
-    assertMatrixClose(whitened, DoubleMatrix.eye(3), 1e-9)
+    val pinv = roots.pinvHalf.applyLeft(DMat.eye(3))
+    val whitened = GaleNumerics.multiply(pinv, GaleNumerics.multiply(spd, pinv))
+    assertMatrixClose(whitened, DMat.eye(3), 1e-9)
   }
 
   test("rank-deficient PSD square roots drop the null space instead of failing") {
-    val psd = DoubleMatrix.fromRows(Vector(Vector(1.0, 1.0), Vector(1.0, 1.0)))
+    val psd = GaleNumerics.matrixFromRows(Vector(Vector(1.0, 1.0), Vector(1.0, 1.0)))
     val metric = MvMetric.denseSymmetric(psd).toOption.get
     val roots = MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense).toOption.get
 
     assertEquals(roots.rank, 1)
-    val half = roots.half.applyLeft(DoubleMatrix.eye(2))
-    assertMatrixClose(DoubleMatrix.multiply(half, half), psd, 1e-9)
+    val half = roots.half.applyLeft(DMat.eye(2))
+    assertMatrixClose(GaleNumerics.multiply(half, half), psd, 1e-9)
 
-    val pinv = roots.pinvHalf.applyLeft(DoubleMatrix.eye(2))
-    val projector = DoubleMatrix.multiply(pinv, DoubleMatrix.multiply(psd, pinv))
+    val pinv = roots.pinvHalf.applyLeft(DMat.eye(2))
+    val projector = GaleNumerics.multiply(pinv, GaleNumerics.multiply(psd, pinv))
     assertMatrixClose(projector, MatrixOps.scale(psd, 0.5), 1e-9)
   }
 
   test("indefinite metrics fail at square-root time even when constructed as trusted") {
-    val indefinite = DoubleMatrix.fromRows(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0)))
+    val indefinite = GaleNumerics.matrixFromRows(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0)))
     val metric = MvMetric.denseSymmetric(indefinite, MetricValidation.Trusted).toOption.get
 
     MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense) match
@@ -302,8 +302,8 @@ class MetricSuite extends munit.FunSuite:
     )
 
     val roots = MetricSqrt.factor(metric, DenseSolvers.symmetricEigen, 1e-12, StoragePolicy.AllowDense).toOption.get
-    val half = roots.half.applyLeft(DoubleMatrix.eye(3))
-    assertMatrixClose(DoubleMatrix.multiply(half, half), denseReference(metric), 1e-9)
+    val half = roots.half.applyLeft(DMat.eye(3))
+    assertMatrixClose(GaleNumerics.multiply(half, half), denseReference(metric), 1e-9)
   }
 
   test("sparse row scaling matches the dense equivalent") {
@@ -314,7 +314,7 @@ class MetricSuite extends munit.FunSuite:
         Vector(4.0, 0.0, 5.0)
       )
     ).toOption.get
-    val scale = DoubleVector.fromSeq(Vector(2.0, -1.0, 0.5))
+    val scale = DVec.fromSeq(Vector(2.0, -1.0, 0.5))
 
     val scaled = sparse.scaleRows(scale).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get
     val expected = MatrixView.scaleRows(sparse.toDense(StoragePolicy.AllowDense).toOption.get, scale)

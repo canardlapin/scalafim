@@ -1,41 +1,41 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** Numerically normalized row axes `U`, satisfying `U' A U = I`. */
 final case class StandardRowScores private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: Option[MvSpace]
 )
 
 /** Principal row scores `X R V = U Sigma`. */
 final case class PrincipalRowScores private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: Option[MvSpace]
 )
 
 /** Column axes `V`, satisfying `V' R V = I`. */
 final case class ColumnAxes private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: MvSpace
 )
 
 /** Column metric loadings `R V`, the covectors applied by the table. */
 final case class ColumnMetricLoadings private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: MvSpace
 )
 
 /** Row metric loadings `A U`, dual to the normalized row axes. */
 final case class RowMetricLoadings private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: Option[MvSpace]
 )
 
 /** Row-dual principal scores `A U Sigma`. */
 final case class RowDualPrincipalScores private[multivar] (
-    values: DoubleMatrix,
+    values: DMat,
     space: Option[MvSpace]
 )
 
@@ -73,8 +73,8 @@ object SpectralClusteringTolerance:
     else Right(new SpectralClusteringTolerance(absolute, relative))
 
 final case class GenPcaSpectrum private[multivar] (
-    singularValues: DoubleVector,
-    generalizedEigenvalues: DoubleVector
+    singularValues: DVec,
+    generalizedEigenvalues: DVec
 ):
   require(singularValues.length == generalizedEigenvalues.length, "GenPCA spectrum lengths must agree")
 
@@ -141,7 +141,7 @@ object GenPcaSemanticResult:
       columnMetricLoadings = ColumnMetricLoadings(fit.v, columnSpace),
       rowMetricLoadings = RowMetricLoadings(fit.u, rowSpace),
       rowDualPrincipalScores = RowDualPrincipalScores(fit.metricScores, rowSpace),
-      spectrum = GenPcaSpectrum(fit.d, DoubleVector.unsafe(eigenvalues))
+      spectrum = GenPcaSpectrum(fit.d, GaleNumerics.vectorFromArray(eigenvalues))
     )
 
 extension (fit: GenPcaFit)
@@ -216,9 +216,9 @@ object GenPcaLaws:
     yield
       val expectedPrincipalScores = MetricOperator.scaleColumnsDense(fit.ou, fit.d)
       val expectedColumnTransport = MetricOperator.scaleColumnsDense(fit.ov, fit.d)
-      val rowGram = DoubleMatrix.transposeMultiply(fit.ou, fit.u)
-      val columnGram = DoubleMatrix.transposeMultiply(fit.ov, fit.v)
-      val identity = DoubleMatrix.eye(fit.componentCount)
+      val rowGram = GaleNumerics.transposeMultiply(fit.ou, fit.u)
+      val columnGram = GaleNumerics.transposeMultiply(fit.ov, fit.v)
+      val identity = DMat.eye(fit.componentCount)
       GenPcaLawDiagnostics(
         columnToRowTransport = residual(
           "X R V = U Sigma",
@@ -247,8 +247,8 @@ object GenPcaLaws:
       )
 
   def weightedSquaredError(
-      actual: DoubleMatrix,
-      approximation: DoubleMatrix,
+      actual: DMat,
+      approximation: DMat,
       rowMetric: MvMetric,
       columnMetric: MvMetric
   ): Either[MultivarError, Double] =
@@ -265,24 +265,26 @@ object GenPcaLaws:
     else
       val difference = subtract(actual, approximation)
       rowMetric.matvec(difference).flatMap { weighted =>
-        val gram = DoubleMatrix.transposeMultiply(difference, weighted)
+        val gram = GaleNumerics.transposeMultiply(difference, weighted)
         columnMetric.contract(gram)
       }
 
   private def residual(
       law: String,
-      actual: DoubleMatrix,
-      expected: DoubleMatrix,
+      actual: DMat,
+      expected: DMat,
       tolerance: NumericalLawTolerance
   ): NumericalLawResidual =
     require(actual.rows == expected.rows && actual.cols == expected.cols, "law residual shapes must agree")
+    val actualData = actual.copyData
+    val expectedData = expected.copyData
     var squaredResidual = 0.0
     var squaredReference = 0.0
     var i = 0
-    while i < actual.dataArray.length do
-      val difference = actual.dataArray(i) - expected.dataArray(i)
+    while i < actualData.length do
+      val difference = actualData(i) - expectedData(i)
       squaredResidual += difference * difference
-      squaredReference += expected.dataArray(i) * expected.dataArray(i)
+      squaredReference += expectedData(i) * expectedData(i)
       i += 1
     NumericalLawResidual(
       law = law,
@@ -292,10 +294,11 @@ object GenPcaLaws:
       tolerance = tolerance
     )
 
-  private def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  private def subtract(left: DMat, right: DMat): DMat =
     val out = left.copyData
+    val rightData = right.copyData
     var i = 0
     while i < out.length do
-      out(i) -= right.dataArray(i)
+      out(i) -= rightData(i)
       i += 1
-    DoubleMatrix.unsafe(left.rows, left.cols, out)
+    GaleNumerics.matrixFromRowMajor(left.rows, left.cols, out)

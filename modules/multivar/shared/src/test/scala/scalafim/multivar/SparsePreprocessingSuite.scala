@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class SparsePreprocessingSuite extends munit.FunSuite:
 
@@ -13,13 +13,13 @@ class SparsePreprocessingSuite extends munit.FunSuite:
       Vector(0.0, 6.0, 0.0)
     )
 
-  private def denseMatrix: DoubleMatrix =
-    DoubleMatrix.fromRows(denseRows)
+  private def denseMatrix: DMat =
+    GaleNumerics.matrixFromRows(denseRows)
 
   private def sparseView: MatrixView =
     SparseMatrixView.fromRows(denseRows).toOption.get
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -87,7 +87,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
     val fitted = PreprocessSpec.Center.fit(sparseView).toOption.get
     val centered = fitted.transform(sparseView).toOption.get
     val denseCentered = centered.toDense(StoragePolicy.AllowDense).toOption.get
-    val weights = DoubleMatrix.fromRows(
+    val weights = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -97,10 +97,10 @@ class SparsePreprocessingSuite extends munit.FunSuite:
 
     assertMatrixClose(
       centered.rightMultiply(weights).toOption.get,
-      DoubleMatrix.multiply(denseCentered, weights).toRows,
+      GaleNumerics.multiply(denseCentered, weights).toRows,
       1e-12
     )
-    assertMatrixClose(centered.crossProduct.toOption.get, DoubleMatrix.crossProduct(denseCentered).toRows, 1e-12)
+    assertMatrixClose(centered.crossProduct.toOption.get, GaleNumerics.crossProduct(denseCentered).toRows, 1e-12)
 
     val selected = centered.selectColumns(IndexSet.from(Vector(2, 0), IndexAxis.Feature).toOption.get).toOption.get
     assertEquals(selected.storage, StorageKind.LazyAffine)
@@ -118,7 +118,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
       Vector(1e-10 + 5e-13),
       Vector(1e-10 - 5e-13)
     )
-    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val view = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
     val out = fitted.transform(view).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get
     val sds = ColumnStats.fromDense(out).flatMap(_.sampleStandardDeviations).toOption.get
@@ -128,7 +128,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
 
   test("standardize treats constant columns as degenerate and centers them only") {
     val rows = Vector.fill(4)(Vector(3.5, 1e8))
-    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val view = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
     val out = fitted.transform(view).toOption.get.toDense(StoragePolicy.AllowDense).toOption.get
 
@@ -141,7 +141,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
 
   test("standardize keeps a unit scale for numerically constant huge-magnitude columns") {
     val rows = Vector.fill(3)(Vector(1e8 + 0.1))
-    val view = MatrixView.dense(DoubleMatrix.fromRows(rows))
+    val view = MatrixView.dense(GaleNumerics.matrixFromRows(rows))
     val fitted = PreprocessSpec.Standardize.fit(view).toOption.get
 
     fitted match
@@ -172,7 +172,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
   }
 
   test("standardizing a single-row matrix reports insufficient rows") {
-    val view = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))))
+    val view = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))))
 
     PreprocessSpec.Standardize.fit(view) match
       case Left(MultivarError.InsufficientRows("sample standard deviations", 2, 1)) => ()
@@ -180,7 +180,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
   }
 
   test("preprocessing fit rejects inputs without columns") {
-    val view = MatrixView.dense(DoubleMatrix.zeros(3, 0))
+    val view = MatrixView.dense(DMat.zeros(3, 0))
 
     PreprocessSpec.Pass.fit(view) match
       case Left(MultivarError.InvalidDimension("preprocessing input columns", 0)) => ()
@@ -198,7 +198,7 @@ class SparsePreprocessingSuite extends munit.FunSuite:
   test("inverse transform reports non-invertible scale weights precisely") {
     val fitted = FittedColumnAffine(
       inputCols = 3,
-      scale = DoubleVector.fromSeq(Vector(1.0, 0.0, 2.0)),
+      scale = DVec.fromSeq(Vector(1.0, 0.0, 2.0)),
       shift = MatrixView.zeros(3)
     )
 

@@ -1,10 +1,10 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class KernelSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -15,7 +15,7 @@ class KernelSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -26,15 +26,15 @@ class KernelSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def tcross(matrix: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.multiply(matrix, matrix.transpose)
+  private def tcross(matrix: DMat): DMat =
+    GaleNumerics.multiply(matrix, matrix.transpose)
 
-  private def diag(values: scalafim.linalg.DoubleVector): DoubleMatrix =
+  private def diag(values: gale.linalg.DVec): DMat =
     MatrixOps.diagonal(values)
 
-  private def explicitNystromKernel(input: DoubleMatrix, landmarks: Vector[Int]): DoubleMatrix =
+  private def explicitNystromKernel(input: DMat, landmarks: Vector[Int]): DMat =
     val landmarkData = RowGeometryOps.selectRows(input, landmarks)
-    val c = DoubleMatrix.multiply(input, landmarkData.transpose)
+    val c = GaleNumerics.multiply(input, landmarkData.transpose)
     val w = RowGeometryOps.selectRows(c, landmarks)
     val eigen = DenseSolvers.symmetricEigen.decompose(w).toOption.get
     val keep = landmarks.length
@@ -45,12 +45,12 @@ class KernelSuite extends munit.FunSuite:
     while i < keep do
       inv(i) = 1.0 / lambda(i)
       i += 1
-    val middle = DoubleMatrix.multiply(DoubleMatrix.multiply(u, MatrixOps.diagonal(scalafim.linalg.DoubleVector.unsafe(inv))), u.transpose)
-    DoubleMatrix.multiply(DoubleMatrix.multiply(c, middle), c.transpose)
+    val middle = GaleNumerics.multiply(GaleNumerics.multiply(u, MatrixOps.diagonal(GaleNumerics.vectorFromArray(inv))), u.transpose)
+    GaleNumerics.multiply(GaleNumerics.multiply(c, middle), c.transpose)
 
   test("standard Nyström all-landmark linear fit matches exact kernel eigensystem") {
     val input = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(-1.0, 0.0),
           Vector(0.0, 1.0),
@@ -67,22 +67,22 @@ class KernelSuite extends munit.FunSuite:
       preproc = PreprocessSpec.Pass
     ).toOption.get
     val kernel = input.toDense().toOption.get
-    val k = DoubleMatrix.multiply(kernel, kernel.transpose)
+    val k = GaleNumerics.multiply(kernel, kernel.transpose)
     val residual = RowGeometryOps.subtract(
-      DoubleMatrix.multiply(k, fit.eigen.eigenvectors),
-      DoubleMatrix.multiply(fit.eigen.eigenvectors, diag(fit.eigen.eigenvalues))
+      GaleNumerics.multiply(k, fit.eigen.eigenvectors),
+      GaleNumerics.multiply(fit.eigen.eigenvectors, diag(fit.eigen.eigenvalues))
     )
 
     assertEquals(fit.method, NystromMethod.Standard)
     assertEquals(fit.eigen.components, 2)
     assertEqualsDouble(fit.eigen.eigenvalues(0), 2.0, 1e-9)
     assertEqualsDouble(fit.eigen.eigenvalues(1), 2.0, 1e-9)
-    assertMatrixClose(residual, DoubleMatrix.zeros(4, 2), 1e-8)
+    assertMatrixClose(residual, DMat.zeros(4, 2), 1e-8)
     assertMatrixClose(fit.transform(input).toOption.get, fit.eigen.scores, 1e-9)
   }
 
   test("partial-landmark standard Nyström reconstructs the explicit kernel approximation") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 1.0),
         Vector(0.0, 1.0, 1.0),
@@ -106,7 +106,7 @@ class KernelSuite extends munit.FunSuite:
 
   test("all-landmark standard Nyström matches exact RBF kernel eigenvalues") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(-1.0, 0.0),
           Vector(0.0, 1.0),
@@ -126,18 +126,18 @@ class KernelSuite extends munit.FunSuite:
     val k = kernel.compute(x, x).toOption.get
     val exact = DenseSolvers.symmetricEigen.decompose(k).toOption.get
     val residual = RowGeometryOps.subtract(
-      DoubleMatrix.multiply(k, fit.eigen.eigenvectors),
-      DoubleMatrix.multiply(fit.eigen.eigenvectors, diag(fit.eigen.eigenvalues))
+      GaleNumerics.multiply(k, fit.eigen.eigenvectors),
+      GaleNumerics.multiply(fit.eigen.eigenvectors, diag(fit.eigen.eigenvalues))
     )
 
     assertEqualsDouble(fit.eigen.eigenvalues(0), exact.values(0), 1e-9)
     assertEqualsDouble(fit.eigen.eigenvalues(1), exact.values(1), 1e-9)
     assertEqualsDouble(fit.eigen.eigenvalues(2), exact.values(2), 1e-9)
-    assertMatrixClose(residual, DoubleMatrix.zeros(4, 3), 1e-8)
+    assertMatrixClose(residual, DMat.zeros(4, 3), 1e-8)
   }
 
   test("double Nyström with full intermediate rank reconstructs the standard approximation") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0, 1.0),
         Vector(0.0, 1.0, 1.0),
@@ -162,7 +162,7 @@ class KernelSuite extends munit.FunSuite:
   }
 
   test("double Nyström with truncated intermediate rank matches an explicit truncated reference") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, 0.5),
         Vector(-1.0, 1.0, 1.5),
@@ -186,7 +186,7 @@ class KernelSuite extends munit.FunSuite:
     // Independent reference: explicit truncated first stage, then the second-stage
     // eigensystem of W'W, using dense linear algebra only.
     val landmarkData = RowGeometryOps.selectRows(x, landmarks)
-    val c = DoubleMatrix.multiply(x, landmarkData.transpose)
+    val c = GaleNumerics.multiply(x, landmarkData.transpose)
     val kMm = RowGeometryOps.selectRows(c, landmarks)
     val first = DenseSolvers.symmetricEigen.decompose(kMm).toOption.get
     val vSL = MatrixOps.takeColumns(first.vectors, intermediateRank)
@@ -196,9 +196,9 @@ class KernelSuite extends munit.FunSuite:
     while i < intermediateRank do
       invSqrtL(i) = 1.0 / Math.sqrt(lambdaL(i))
       i += 1
-    val firstWeights = DoubleMatrix.multiply(vSL, MatrixOps.diagonal(scalafim.linalg.DoubleVector.unsafe(invSqrtL)))
-    val w = DoubleMatrix.multiply(c, firstWeights)
-    val second = DenseSolvers.symmetricEigen.decompose(DoubleMatrix.crossProduct(w)).toOption.get
+    val firstWeights = GaleNumerics.multiply(vSL, MatrixOps.diagonal(GaleNumerics.vectorFromArray(invSqrtL)))
+    val w = GaleNumerics.multiply(c, firstWeights)
+    val second = DenseSolvers.symmetricEigen.decompose(GaleNumerics.crossProduct(w)).toOption.get
     val lambdaK = MatrixOps.takeVector(second.values, components)
     val vK = MatrixOps.takeColumns(second.vectors, components)
     val sqrtInvK = new Array[Double](components)
@@ -206,18 +206,18 @@ class KernelSuite extends munit.FunSuite:
     while i < components do
       sqrtInvK(i) = 1.0 / Math.sqrt(lambdaK(i))
       i += 1
-    val eigenWeights = DoubleMatrix.multiply(
+    val eigenWeights = GaleNumerics.multiply(
       firstWeights,
-      DoubleMatrix.multiply(vK, MatrixOps.diagonal(scalafim.linalg.DoubleVector.unsafe(sqrtInvK)))
+      GaleNumerics.multiply(vK, MatrixOps.diagonal(GaleNumerics.vectorFromArray(sqrtInvK)))
     )
     val sqrtK = new Array[Double](components)
     i = 0
     while i < components do
       sqrtK(i) = Math.sqrt(lambdaK(i))
       i += 1
-    val expectedScores = DoubleMatrix.multiply(
-      DoubleMatrix.multiply(c, eigenWeights),
-      MatrixOps.diagonal(scalafim.linalg.DoubleVector.unsafe(sqrtK))
+    val expectedScores = GaleNumerics.multiply(
+      GaleNumerics.multiply(c, eigenWeights),
+      MatrixOps.diagonal(GaleNumerics.vectorFromArray(sqrtK))
     )
 
     fit.state match
@@ -235,7 +235,7 @@ class KernelSuite extends munit.FunSuite:
   }
 
   test("Nyström rejects component and intermediate-rank requests beyond the landmark count") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
 
     Nystrom.fit(x, ComponentCount(3).toOption.get, landmarks = Vector(0, 1)) match
       case Left(MultivarError.InvalidComponentRequest(requested, limit)) =>
@@ -258,7 +258,7 @@ class KernelSuite extends munit.FunSuite:
   }
 
   test("Nyström rejects out-of-bounds landmark indices") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
 
     Nystrom.fit(x, ComponentCount(1).toOption.get, landmarks = Vector(0, 7)) match
       case Left(MultivarError.IndexOutOfBounds(IndexAxis.Row, 7, 3)) => ()
@@ -270,8 +270,8 @@ class KernelSuite extends munit.FunSuite:
   }
 
   test("linear kernel rejects mismatched feature counts") {
-    val left = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))))
-    val right = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0, 3.0))))
+    val left = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))))
+    val right = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0, 3.0))))
 
     LinearKernel().compute(left, right) match
       case Left(MultivarError.MatrixShapeMismatch(detail)) =>
@@ -292,17 +292,17 @@ class KernelSuite extends munit.FunSuite:
       override def spec: KernelSpec =
         KernelSpec("asymmetric-linear")
 
-      override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
+      override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
         LinearKernel().compute(left, right).map { out =>
           if out.rows == out.cols && out.cols > 1 then
             val data = out.copyData
             data(1) += 1e-8
-            DoubleMatrix.unsafe(out.rows, out.cols, data)
+            GaleNumerics.matrixFromRowMajor(out.rows, out.cols, data)
           else out
         }
 
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -328,7 +328,7 @@ class KernelSuite extends munit.FunSuite:
 
   test("centering diagnostics are derived from the fitted preprocessor") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -349,7 +349,7 @@ class KernelSuite extends munit.FunSuite:
 
   test("out-of-sample projection follows the stored standard Nyström weights") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0),
@@ -358,16 +358,16 @@ class KernelSuite extends munit.FunSuite:
         )
       )
     )
-    val newData = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 0.0))))
+    val newData = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 0.0))))
     val fit = Nystrom.fit(x, ComponentCount(2).toOption.get, landmarks = Vector(0, 2)).toOption.get
     val kNew = LinearKernel().compute(newData, MatrixView.dense(fit.landmarkData)).toOption.get
-    val expected = DoubleMatrix.multiply(kNew, fit.state.scoreWeights)
+    val expected = GaleNumerics.multiply(kNew, fit.state.scoreWeights)
 
     assertMatrixClose(fit.transform(newData).toOption.get, expected, 1e-10)
   }
 
   test("landmarks are canonicalized and rank deficient kernels degrade to estimable rank") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector.fill(5)(Vector(1.0, 1.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector.fill(5)(Vector(1.0, 1.0))))
     val fit = Nystrom.fit(
       x,
       ComponentCount(3).toOption.get,
@@ -386,13 +386,13 @@ class KernelSuite extends munit.FunSuite:
     override def spec: KernelSpec =
       KernelSpec("counting-linear")
 
-    override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
+    override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
       invocations += 1
       LinearKernel().compute(left, right)
 
   test("standard Nyström computes the landmark and all-landmark kernels exactly once each") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 1.0),
           Vector(0.0, 1.0, 1.0),
@@ -412,7 +412,7 @@ class KernelSuite extends munit.FunSuite:
 
   test("double Nyström computes the n x m kernel once, not once per stage") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 1.0),
           Vector(0.0, 1.0, 1.0),
@@ -441,10 +441,10 @@ class KernelSuite extends munit.FunSuite:
       override def spec: KernelSpec =
         KernelSpec("bad")
 
-      override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
-        Right(DoubleMatrix.fromRows(Vector.fill(left.rows)(Vector.fill(right.rows)(Double.NaN))))
+      override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
+        Right(GaleNumerics.matrixFromRows(Vector.fill(left.rows)(Vector.fill(right.rows)(Double.NaN))))
 
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
     val result = Nystrom.fit(x, ComponentCount(1).toOption.get, landmarks = Vector(0, 1), kernel = badKernel)
 
     assert(result.swap.toOption.exists {
@@ -454,9 +454,9 @@ class KernelSuite extends munit.FunSuite:
   }
 
   test("new-sample projection rejects wrong feature counts") {
-    val x = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
+    val x = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0))))
     val fit = Nystrom.fit(x, ComponentCount(2).toOption.get, landmarks = Vector(0, 1)).toOption.get
-    val bad = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0))))
+    val bad = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0))))
 
     assert(fit.transform(bad).swap.toOption.exists(_.message.contains("expected 2 columns")))
   }

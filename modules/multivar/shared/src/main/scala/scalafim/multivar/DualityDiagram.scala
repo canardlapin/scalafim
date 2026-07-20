@@ -1,6 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 /** A metric-weighted data table `(X, D, Q)` in the duality-diagram sense.
   *
@@ -23,19 +23,19 @@ final case class DualityDiagram private (
     table.cols
 
   /** `X' D X`, the column-side Gram form induced by the row metric. */
-  def rowGram(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix] =
+  def rowGram(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat] =
     DualityKernels.rowGram(this, policy)
 
   /** `X Q X'`, the row-side Gram form induced by the column metric. */
-  def columnGram(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix] =
+  def columnGram(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat] =
     DualityKernels.colGram(this, policy)
 
   /** `X Q X' D`, the row-space endomorphism of the duality diagram. */
-  def rowOperator(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix] =
+  def rowOperator(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat] =
     columnGram(policy).flatMap(DualityKernels.multiplyMetricRight(_, rowMetric))
 
   /** `X' D X Q`, the column-space endomorphism of the duality diagram. */
-  def columnOperator(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix] =
+  def columnOperator(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat] =
     rowGram(policy).flatMap(DualityKernels.multiplyMetricRight(_, columnMetric))
 
   /** `tr(X' D X Q)`, often called total inertia in the duality-diagram literature. */

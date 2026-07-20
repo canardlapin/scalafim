@@ -1,17 +1,17 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class PairedLatentSuite extends munit.FunSuite:
 
   import PairedLatentRReferenceFixtures as R
 
   private final case class CanonicalPaired(
-      xWeights: DoubleMatrix,
-      yWeights: DoubleMatrix,
-      xScores: DoubleMatrix,
-      yScores: DoubleMatrix
+      xWeights: DMat,
+      yWeights: DMat,
+      xScores: DMat,
+      yScores: DMat
   )
 
   private def k(value: Int): ComponentCount =
@@ -20,7 +20,7 @@ class PairedLatentSuite extends munit.FunSuite:
   private def pass(cols: Int): FittedPreprocessor =
     FittedColumnAffine(cols, MatrixView.ones(cols), MatrixView.zeros(cols))
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -31,7 +31,7 @@ class PairedLatentSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -42,7 +42,7 @@ class PairedLatentSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: DVec, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
@@ -50,10 +50,10 @@ class PairedLatentSuite extends munit.FunSuite:
       i += 1
 
   private def canonicalize(
-      xWeights: DoubleMatrix,
-      yWeights: DoubleMatrix,
-      xScores: DoubleMatrix,
-      yScores: DoubleMatrix
+      xWeights: DMat,
+      yWeights: DMat,
+      xScores: DMat,
+      yScores: DMat
   ): CanonicalPaired =
     val xWeightData = xWeights.copyData
     val yWeightData = yWeights.copyData
@@ -85,10 +85,10 @@ class PairedLatentSuite extends munit.FunSuite:
           row += 1
       col += 1
     CanonicalPaired(
-      DoubleMatrix.unsafe(xWeights.rows, xWeights.cols, xWeightData),
-      DoubleMatrix.unsafe(yWeights.rows, yWeights.cols, yWeightData),
-      DoubleMatrix.unsafe(xScores.rows, xScores.cols, xScoreData),
-      DoubleMatrix.unsafe(yScores.rows, yScores.cols, yScoreData)
+      GaleNumerics.matrixFromRowMajor(xWeights.rows, xWeights.cols, xWeightData),
+      GaleNumerics.matrixFromRowMajor(yWeights.rows, yWeights.cols, yWeightData),
+      GaleNumerics.matrixFromRowMajor(xScores.rows, xScores.cols, xScoreData),
+      GaleNumerics.matrixFromRowMajor(yScores.rows, yScores.cols, yScoreData)
     )
 
   private def assertPairedReference(actual: CanonicalPaired, expected: R.PairedReference, tol: Double): Unit =
@@ -99,7 +99,7 @@ class PairedLatentSuite extends munit.FunSuite:
 
   test("every representable paired estimator is executable") {
     val x = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 2.0),
@@ -110,7 +110,7 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val y = MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 1.0),
           Vector(1.0, -1.0),
@@ -184,7 +184,7 @@ class PairedLatentSuite extends munit.FunSuite:
   }
 
   test("PLSC uses the shared row metric in the paired cross operator") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 2.0),
@@ -193,7 +193,7 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-2.0, 1.5)
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 1.0),
         Vector(1.0, -1.0),
@@ -202,7 +202,7 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-1.0, 0.5)
       )
     )
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Plsc.fit(xView, yView, k(2), rowMetric = Some(rowMetric)).toOption.get
@@ -221,7 +221,7 @@ class PairedLatentSuite extends munit.FunSuite:
   }
 
   test("CCA uses the shared row metric in covariance and cross-covariance operators") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 2.0),
@@ -230,7 +230,7 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-2.0, 1.5)
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 1.0),
         Vector(1.0, -1.0),
@@ -240,7 +240,7 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val ridge = 0.2
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Cca.fit(xView, yView, k(2), ridge = ridge, rowMetric = Some(rowMetric)).toOption.get
@@ -257,7 +257,7 @@ class PairedLatentSuite extends munit.FunSuite:
     val cxy = MatrixOps.scale(DualityKernels.crossGram(paired).toOption.get, scale)
     val wx = MatrixOps.inverseSquareRoot(cxx, DenseSolvers.symmetricEigen, 1e-12).toOption.get
     val wy = MatrixOps.inverseSquareRoot(cyy, DenseSolvers.symmetricEigen, 1e-12).toOption.get
-    val expectedOperator = DoubleMatrix.multiply(DoubleMatrix.multiply(wx, cxy), wy)
+    val expectedOperator = GaleNumerics.multiply(GaleNumerics.multiply(wx, cxy), wy)
     val expected = DenseSolvers.svd.decompose(MatrixView.dense(expectedOperator), k(2)).toOption.get
 
     assertVectorClose(fit.result.singularValues, expected.singularValues, 1e-9)
@@ -265,7 +265,7 @@ class PairedLatentSuite extends munit.FunSuite:
   }
 
   test("weighted PLSC matches an externally computed weighted cross-product SVD") {
-    val x = DoubleMatrix.fromRows(
+    val x = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 2.0),
@@ -274,7 +274,7 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-2.0, 1.5)
       )
     )
-    val y = DoubleMatrix.fromRows(
+    val y = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 1.0),
         Vector(1.0, -1.0),
@@ -284,13 +284,13 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val weights = Vector(1.0, 2.0, 0.5, 1.5, 0.75)
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(weights)).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
     val fit = Plsc.fit(MatrixView.dense(x), MatrixView.dense(y), k(2), rowMetric = Some(rowMetric)).toOption.get
 
     // External reference: column-center each table, then build X' D Y / (n - 1)
     // entrywise with plain loops — no DualityKernels, no metric machinery.
     val n = x.rows
-    def centered(data: DoubleMatrix): DoubleMatrix =
+    def centered(data: DMat): DMat =
       val out = data.copyData
       var col = 0
       while col < data.cols do
@@ -305,7 +305,7 @@ class PairedLatentSuite extends munit.FunSuite:
           out(row * data.cols + col) -= mean
           row += 1
         col += 1
-      DoubleMatrix.unsafe(data.rows, data.cols, out)
+      GaleNumerics.matrixFromRowMajor(data.rows, data.cols, out)
     val xc = centered(x)
     val yc = centered(y)
     val crossData = new Array[Double](x.cols * y.cols)
@@ -321,7 +321,7 @@ class PairedLatentSuite extends munit.FunSuite:
         crossData(p * y.cols + q) = acc / (n - 1)
         q += 1
       p += 1
-    val cross = DoubleMatrix.unsafe(x.cols, y.cols, crossData)
+    val cross = GaleNumerics.matrixFromRowMajor(x.cols, y.cols, crossData)
     val expected = DenseSolvers.svd.decompose(MatrixView.dense(cross), k(2)).toOption.get
 
     assertVectorClose(fit.result.singularValues, expected.singularValues, 1e-9)
@@ -329,8 +329,8 @@ class PairedLatentSuite extends munit.FunSuite:
     val expectedScores = canonicalize(
       expected.u,
       expected.v,
-      DoubleMatrix.multiply(xc, expected.u),
-      DoubleMatrix.multiply(yc, expected.v)
+      GaleNumerics.multiply(xc, expected.u),
+      GaleNumerics.multiply(yc, expected.v)
     )
     assertMatrixClose(actual.xWeights, expectedScores.xWeights, 1e-9)
     assertMatrixClose(actual.yWeights, expectedScores.yWeights, 1e-9)
@@ -381,18 +381,18 @@ class PairedLatentSuite extends munit.FunSuite:
     val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
     val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
     val latent = MvSpace.of("latent", SpaceRole.Latent, 1).toOption.get
-    val xWeights = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
-    val yWeights = DoubleMatrix.fromRows(Vector(Vector(3.0)))
+    val xWeights = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0)))
+    val yWeights = GaleNumerics.matrixFromRows(Vector(Vector(3.0)))
     val xMap = MatrixMap.from(xSpace, latent, xWeights, pass(2)).toOption.get
     val yMap = MatrixMap.from(ySpace, latent, yWeights, pass(1)).toOption.get
-    val xInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(2.0, 3.0))))
-    val yInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(4.0))))
+    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 3.0))))
+    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(4.0))))
     val xScores = xMap.forward(xInput).toOption.get
     val yScores = yMap.forward(yInput).toOption.get
     val svd = SvdResult(
-      u = DoubleMatrix.fromRows(Vector(Vector(1.0))),
-      singularValues = DoubleVector.fromSeq(Vector(1.0)),
-      v = DoubleMatrix.fromRows(Vector(Vector(1.0)))
+      u = GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
+      singularValues = DVec.fromSeq(Vector(1.0)),
+      v = GaleNumerics.matrixFromRows(Vector(Vector(1.0)))
     )
     val diagnostics = ProjectionDiagnostics("plsc", ComponentCount.unsafe(1), effectiveComponents = 1)
     val fit = PairedLatentFit.from(
@@ -417,21 +417,21 @@ class PairedLatentSuite extends munit.FunSuite:
     val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
     val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
     val latent = MvSpace.of("latent", SpaceRole.Latent, 1).toOption.get
-    val xWeights = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
-    val yWeights = DoubleMatrix.fromRows(Vector(Vector(3.0)))
+    val xWeights = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0)))
+    val yWeights = GaleNumerics.matrixFromRows(Vector(Vector(3.0)))
     val xMap = MatrixMap.from(xSpace, latent, xWeights, pass(2)).toOption.get
     val yMap = MatrixMap.from(ySpace, latent, yWeights, pass(1)).toOption.get
-    val xInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(2.0, 3.0))))
-    val yInput = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(4.0))))
+    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 3.0))))
+    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(4.0))))
     val xScores = xMap.forward(xInput).toOption.get
     val yScores = yMap.forward(yInput).toOption.get
-    val singular = DoubleVector.fromSeq(Vector(1.0))
+    val singular = DVec.fromSeq(Vector(1.0))
     val diagnostics = ProjectionDiagnostics("plsc", ComponentCount.unsafe(1), effectiveComponents = 1)
     val projection = CrossProjection(xMap, yMap, latent, xScores, yScores, diagnostics = Some(diagnostics))
 
     PairedLatentFit.from(
       PairedLatentMethod.Plsc,
-      DoubleMatrix.fromRows(Vector(Vector(1.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
       yWeights,
       Spectrum.Covariance(singular),
       projection,
@@ -446,7 +446,7 @@ class PairedLatentSuite extends munit.FunSuite:
       PairedLatentMethod.Plsc,
       xWeights,
       yWeights,
-      Spectrum.Covariance(DoubleVector.fromSeq(Vector(1.0, 2.0))),
+      Spectrum.Covariance(DVec.fromSeq(Vector(1.0, 2.0))),
       projection,
       diagnostics
     ) match

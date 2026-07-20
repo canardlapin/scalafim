@@ -2,8 +2,8 @@ package scalafim.multivar
 
 import scala.collection.mutable.ArrayBuffer
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 enum StorageKind:
   case Dense
@@ -30,9 +30,9 @@ enum StoragePolicy:
   */
 final case class ColumnStats(
     count: Int,
-    sums: DoubleVector,
-    sumSquares: DoubleVector,
-    centeredSumSquares: Option[DoubleVector] = None
+    sums: DVec,
+    sumSquares: DVec,
+    centeredSumSquares: Option[DVec] = None
 ):
   require(count >= 0, "column-stat count must be non-negative")
   require(sums.length == sumSquares.length, "column-stat vectors must have equal length")
@@ -44,7 +44,7 @@ final case class ColumnStats(
   def cols: Int =
     sums.length
 
-  def means: Either[MultivarError, DoubleVector] =
+  def means: Either[MultivarError, DVec] =
     if count <= 0 then Left(MultivarError.InvalidDimension("row count for column means", count))
     else
       val out = new Array[Double](cols)
@@ -52,9 +52,9 @@ final case class ColumnStats(
       while col < cols do
         out(col) = sums(col) / count
         col += 1
-      Right(DoubleVector.unsafe(out))
+      Right(GaleNumerics.vectorFromArray(out))
 
-  def sampleStandardDeviations: Either[MultivarError, DoubleVector] =
+  def sampleStandardDeviations: Either[MultivarError, DVec] =
     if count <= 1 then Left(MultivarError.InsufficientRows("sample standard deviations", 2, count))
     else
       val out = new Array[Double](cols)
@@ -71,10 +71,11 @@ final case class ColumnStats(
             val ss = sumSquares(col) - count * mean * mean
             out(col) = Math.sqrt(Math.max(ss / (count - 1), 0.0))
             col += 1
-      Right(DoubleVector.unsafe(out))
+      Right(GaleNumerics.vectorFromArray(out))
 
 object ColumnStats:
-  def fromDense(matrix: DoubleMatrix): Either[MultivarError, ColumnStats] =
+  def fromDense(matrix: DMat): Either[MultivarError, ColumnStats] =
+    val data = matrix.copyData
     val sums = new Array[Double](matrix.cols)
     val sumSquares = new Array[Double](matrix.cols)
     var row = 0
@@ -83,7 +84,7 @@ object ColumnStats:
       val offset = row * matrix.cols
       var col = 0
       while col < matrix.cols && error.isEmpty do
-        val value = matrix.dataArray(offset + col)
+        val value = data(offset + col)
         if !value.isFinite then error = Some(MultivarError.NonFiniteValue("matrix", offset + col, value))
         else
           sums(col) += value
@@ -106,20 +107,21 @@ object ColumnStats:
             val offset = row * matrix.cols
             var c = 0
             while c < matrix.cols do
-              val deviation = matrix.dataArray(offset + c) - means(c)
+              val deviation = data(offset + c) - means(c)
               centered(c) += deviation * deviation
               c += 1
             row += 1
         Right(
           ColumnStats(
             count = matrix.rows,
-            sums = DoubleVector.unsafe(sums),
-            sumSquares = DoubleVector.unsafe(sumSquares),
-            centeredSumSquares = Some(DoubleVector.unsafe(centered))
+            sums = GaleNumerics.vectorFromArray(sums),
+            sumSquares = GaleNumerics.vectorFromArray(sumSquares),
+            centeredSumSquares = Some(GaleNumerics.vectorFromArray(centered))
           )
         )
 
-  def fromDenseRows(matrix: DoubleMatrix): Either[MultivarError, ColumnStats] =
+  def fromDenseRows(matrix: DMat): Either[MultivarError, ColumnStats] =
+    val data = matrix.copyData
     val sums = new Array[Double](matrix.rows)
     val sumSquares = new Array[Double](matrix.rows)
     var row = 0
@@ -128,7 +130,7 @@ object ColumnStats:
       val offset = row * matrix.cols
       var col = 0
       while col < matrix.cols && error.isEmpty do
-        val value = matrix.dataArray(offset + col)
+        val value = data(offset + col)
         if !value.isFinite then error = Some(MultivarError.NonFiniteValue("matrix", offset + col, value))
         else
           sums(row) += value
@@ -147,16 +149,16 @@ object ColumnStats:
             val mean = sums(row) / matrix.cols
             var c = 0
             while c < matrix.cols do
-              val deviation = matrix.dataArray(offset + c) - mean
+              val deviation = data(offset + c) - mean
               centered(row) += deviation * deviation
               c += 1
             row += 1
         Right(
           ColumnStats(
             count = matrix.cols,
-            sums = DoubleVector.unsafe(sums),
-            sumSquares = DoubleVector.unsafe(sumSquares),
-            centeredSumSquares = Some(DoubleVector.unsafe(centered))
+            sums = GaleNumerics.vectorFromArray(sums),
+            sumSquares = GaleNumerics.vectorFromArray(sumSquares),
+            centeredSumSquares = Some(GaleNumerics.vectorFromArray(centered))
           )
         )
 
@@ -169,21 +171,21 @@ trait MatrixView:
 
   private[multivar] def rowStats: Either[MultivarError, ColumnStats]
 
-  def rightMultiply(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def rightMultiply(weights: DMat): Either[MultivarError, DMat]
 
-  def transposeMultiply(other: MatrixView): Either[MultivarError, DoubleMatrix]
+  def transposeMultiply(other: MatrixView): Either[MultivarError, DMat]
 
-  def crossProduct: Either[MultivarError, DoubleMatrix] =
+  def crossProduct: Either[MultivarError, DMat] =
     transposeMultiply(this)
 
   def selectColumns(columns: IndexSet): Either[MultivarError, MatrixView]
 
-  def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DoubleMatrix]
+  def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat]
 
   def transposeView: MatrixView =
     MatrixView.transpose(this)
 
-final class DenseMatrixView private (val value: DoubleMatrix) extends MatrixView:
+final class DenseMatrixView private (val value: DMat) extends MatrixView:
   override def rows: Int =
     value.rows
 
@@ -199,14 +201,14 @@ final class DenseMatrixView private (val value: DoubleMatrix) extends MatrixView
   override private[multivar] def rowStats: Either[MultivarError, ColumnStats] =
     ColumnStats.fromDenseRows(value)
 
-  override def rightMultiply(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def rightMultiply(weights: DMat): Either[MultivarError, DMat] =
     MatrixView.requireWeightRows(cols, weights.rows).map { _ =>
-      DoubleMatrix.multiply(value, weights)
+      GaleNumerics.multiply(value, weights)
     }
 
-  override def transposeMultiply(other: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
-      other.toDense().map(denseOther => DoubleMatrix.transposeMultiply(value, denseOther))
+      other.toDense().map(denseOther => GaleNumerics.transposeMultiply(value, denseOther))
     }
 
   override def selectColumns(columns: IndexSet): Either[MultivarError, MatrixView] =
@@ -217,20 +219,20 @@ final class DenseMatrixView private (val value: DoubleMatrix) extends MatrixView
       while row < rows do
         var col = 0
         while col < indices.length do
-          out(row * indices.length + col) = value.dataArray(row * cols + indices(col))
+          out(row * indices.length + col) = value(row, indices(col))
           col += 1
         row += 1
-      DenseMatrixView.unsafe(DoubleMatrix.unsafe(rows, indices.length, out))
+      DenseMatrixView.unsafe(GaleNumerics.matrixFromRowMajor(rows, indices.length, out))
     }
 
-  override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+  override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     Right(value)
 
 object DenseMatrixView:
-  def apply(value: DoubleMatrix): DenseMatrixView =
+  def apply(value: DMat): DenseMatrixView =
     new DenseMatrixView(value)
 
-  private[scalafim] def unsafe(value: DoubleMatrix): DenseMatrixView =
+  private[scalafim] def unsafe(value: DMat): DenseMatrixView =
     new DenseMatrixView(value)
 
 final class SparseMatrixView private (
@@ -285,9 +287,9 @@ final class SparseMatrixView private (
         Right(
           ColumnStats(
             rows,
-            DoubleVector.unsafe(sums),
-            DoubleVector.unsafe(sumSquares),
-            Some(DoubleVector.unsafe(centered))
+            GaleNumerics.vectorFromArray(sums),
+            GaleNumerics.vectorFromArray(sumSquares),
+            Some(GaleNumerics.vectorFromArray(centered))
           )
         )
 
@@ -328,13 +330,13 @@ final class SparseMatrixView private (
         Right(
           ColumnStats(
             cols,
-            DoubleVector.unsafe(sums),
-            DoubleVector.unsafe(sumSquares),
-            Some(DoubleVector.unsafe(centered))
+            GaleNumerics.vectorFromArray(sums),
+            GaleNumerics.vectorFromArray(sumSquares),
+            Some(GaleNumerics.vectorFromArray(centered))
           )
         )
 
-  override def rightMultiply(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def rightMultiply(weights: DMat): Either[MultivarError, DMat] =
     MatrixView.requireWeightRows(cols, weights.rows).map { _ =>
       val out = new Array[Double](rows * weights.cols)
       var row = 0
@@ -350,10 +352,10 @@ final class SparseMatrixView private (
             col += 1
           p += 1
         row += 1
-      DoubleMatrix.unsafe(rows, weights.cols, out)
+      GaleNumerics.matrixFromRowMajor(rows, weights.cols, out)
     }
 
-  override def transposeMultiply(other: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
       other match
         case dense: DenseMatrixView =>
@@ -394,7 +396,7 @@ final class SparseMatrixView private (
       SparseMatrixView.fromTriplets(rows, checked.length, outRows, outCols, outVals)
     }
 
-  override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+  override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     policy match
       case StoragePolicy.AllowDense =>
         val out = new Array[Double](rows * cols)
@@ -406,11 +408,11 @@ final class SparseMatrixView private (
             out(row * cols + colIndex(p)) = data(p)
             p += 1
           row += 1
-        Right(DoubleMatrix.unsafe(rows, cols, out))
+        Right(GaleNumerics.matrixFromRowMajor(rows, cols, out))
       case _ =>
         Left(MultivarError.DensificationRejected("toDense", storage))
 
-  private[multivar] def scaleRows(scale: DoubleVector): Either[MultivarError, SparseMatrixView] =
+  private[multivar] def scaleRows(scale: DVec): Either[MultivarError, SparseMatrixView] =
     MatrixView.requireVectorLength("sparse row scale", scale, rows).map { _ =>
       val out = new Array[Double](data.length)
       var row = 0
@@ -457,7 +459,7 @@ final class SparseMatrixView private (
       else high = mid - 1
     found
 
-  private[multivar] def scaleColumns(scale: DoubleVector): Either[MultivarError, SparseMatrixView] =
+  private[multivar] def scaleColumns(scale: DVec): Either[MultivarError, SparseMatrixView] =
     MatrixView.requireVectorLength("sparse column scale", scale, cols).map { _ =>
       val out = new Array[Double](data.length)
       var p = 0
@@ -467,7 +469,7 @@ final class SparseMatrixView private (
       SparseMatrixView.unsafe(rows, cols, rowPtr.clone, colIndex.clone, out)
     }
 
-  private[multivar] def rightMultiplySparse(weights: SparseMatrixView): Either[MultivarError, DoubleMatrix] =
+  private[multivar] def rightMultiplySparse(weights: SparseMatrixView): Either[MultivarError, DMat] =
     MatrixView.requireWeightRows(cols, weights.rows).map { _ =>
       val out = new Array[Double](rows * weights.cols)
       var row = 0
@@ -484,11 +486,11 @@ final class SparseMatrixView private (
             q += 1
           p += 1
         row += 1
-      DoubleMatrix.unsafe(rows, weights.cols, out)
+      GaleNumerics.matrixFromRowMajor(rows, weights.cols, out)
     }
 
   /** Computes `left * this` with raw CSR loops; shapes are validated by the caller. */
-  private[multivar] def leftMultiplyDense(left: DoubleMatrix): DoubleMatrix =
+  private[multivar] def leftMultiplyDense(left: DMat): DMat =
     val out = new Array[Double](left.rows * cols)
     var leftRow = 0
     while leftRow < left.rows do
@@ -504,10 +506,10 @@ final class SparseMatrixView private (
             p += 1
         row += 1
       leftRow += 1
-    DoubleMatrix.unsafe(left.rows, cols, out)
+    GaleNumerics.matrixFromRowMajor(left.rows, cols, out)
 
   /** Computes `left * this.transpose` with raw CSR loops; shapes are validated by the caller. */
-  private[multivar] def leftMultiplyDenseTranspose(left: DoubleMatrix): DoubleMatrix =
+  private[multivar] def leftMultiplyDenseTranspose(left: DMat): DMat =
     val out = new Array[Double](left.rows * rows)
     var leftRow = 0
     while leftRow < left.rows do
@@ -523,15 +525,15 @@ final class SparseMatrixView private (
         out(outOffset + row) = acc
         row += 1
       leftRow += 1
-    DoubleMatrix.unsafe(left.rows, rows, out)
+    GaleNumerics.matrixFromRowMajor(left.rows, rows, out)
 
   /** Row moments of `this * diag(scale) + 1 shiftᵀ` computed from stored entries only:
     * row sums are `(X·s)ᵢ + Σⱼhⱼ` and row sums of squares are
     * `Σⱼ(xᵢⱼsⱼ)² + 2Σⱼxᵢⱼsⱼhⱼ + Σⱼhⱼ²`, so no densification is required.
     */
   private[multivar] def affineRowStats(
-      scale: DoubleVector,
-      shift: DoubleVector
+      scale: DVec,
+      shift: DVec
   ): Either[MultivarError, ColumnStats] =
     var shiftSum = 0.0
     var shiftSumSq = 0.0
@@ -566,9 +568,9 @@ final class SparseMatrixView private (
 
     error match
       case Some(value) => Left(value)
-      case None        => Right(ColumnStats(cols, DoubleVector.unsafe(sums), DoubleVector.unsafe(sumSquares)))
+      case None        => Right(ColumnStats(cols, GaleNumerics.vectorFromArray(sums), GaleNumerics.vectorFromArray(sumSquares)))
 
-  private[multivar] def rightMultiplySparseTranspose(weights: SparseMatrixView): Either[MultivarError, DoubleMatrix] =
+  private[multivar] def rightMultiplySparseTranspose(weights: SparseMatrixView): Either[MultivarError, DMat] =
     if weights.cols != cols then
       Left(
         MultivarError.MatrixShapeMismatch(
@@ -585,7 +587,7 @@ final class SparseMatrixView private (
           if value != 0.0 then out(row * weights.rows + weightRow) = value
           weightRow += 1
         row += 1
-      Right(DoubleMatrix.unsafe(rows, weights.rows, out))
+      Right(GaleNumerics.matrixFromRowMajor(rows, weights.rows, out))
 
   private def dotRows(other: SparseMatrixView, leftRow: Int, rightRow: Int): Double =
     var p = rowPtr(leftRow)
@@ -633,7 +635,7 @@ final class SparseMatrixView private (
       SparseMatrixView.fromTriplets(cols, checked.length, outRows, outCols, outVals)
     }
 
-  private def transposeMultiplyDense(other: DoubleMatrix): DoubleMatrix =
+  private def transposeMultiplyDense(other: DMat): DMat =
     val out = new Array[Double](cols * other.cols)
     var row = 0
     while row < rows do
@@ -648,9 +650,9 @@ final class SparseMatrixView private (
           otherCol += 1
         p += 1
       row += 1
-    DoubleMatrix.unsafe(cols, other.cols, out)
+    GaleNumerics.matrixFromRowMajor(cols, other.cols, out)
 
-  private def transposeMultiplySparse(other: SparseMatrixView): DoubleMatrix =
+  private def transposeMultiplySparse(other: SparseMatrixView): DMat =
     val out = new Array[Double](cols * other.cols)
     var row = 0
     while row < rows do
@@ -666,7 +668,7 @@ final class SparseMatrixView private (
           q += 1
         p += 1
       row += 1
-    DoubleMatrix.unsafe(cols, other.cols, out)
+    GaleNumerics.matrixFromRowMajor(cols, other.cols, out)
 
 object SparseMatrixView:
   def fromRows(rowsData: Seq[Seq[Double]]): Either[MultivarError, SparseMatrixView] =
@@ -775,8 +777,8 @@ object SparseMatrixView:
 
 final class AffineMatrixView private (
     val base: MatrixView,
-    val scale: DoubleVector,
-    val shift: DoubleVector
+    val scale: DVec,
+    val shift: DVec
 ) extends MatrixView:
   require(scale.length == base.cols, "affine scale must match base columns")
   require(shift.length == base.cols, "affine shift must match base columns")
@@ -812,9 +814,9 @@ final class AffineMatrixView private (
           val s = scale(c)
           out(c) = s * s * baseCentered(c)
           c += 1
-        DoubleVector.unsafe(out)
+        GaleNumerics.vectorFromArray(out)
       }
-      ColumnStats(rows, DoubleVector.unsafe(sums), DoubleVector.unsafe(sumSquares), centered)
+      ColumnStats(rows, GaleNumerics.vectorFromArray(sums), GaleNumerics.vectorFromArray(sumSquares), centered)
     }
 
   override private[multivar] def rowStats: Either[MultivarError, ColumnStats] =
@@ -824,7 +826,7 @@ final class AffineMatrixView private (
       case _ =>
         toDense(StoragePolicy.AllowDense).flatMap(ColumnStats.fromDenseRows)
 
-  override def rightMultiply(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def rightMultiply(weights: DMat): Either[MultivarError, DMat] =
     MatrixView.requireWeightRows(cols, weights.rows).flatMap { _ =>
       val scaledWeights = MatrixView.scaleRows(weights, scale)
       base.rightMultiply(scaledWeights).map { out =>
@@ -833,7 +835,7 @@ final class AffineMatrixView private (
       }
     }
 
-  override def transposeMultiply(other: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
       other match
         case affine: AffineMatrixView =>
@@ -842,19 +844,21 @@ final class AffineMatrixView private (
             baseStats <- base.columnStats
             otherStats <- affine.base.columnStats
           yield
-            val out = MatrixView.scaleRowsAndColumns(baseCross, scale, affine.scale)
-            MatrixView.addOuterProductInPlace(out, MatrixView.multiply(baseStats.sums, scale), affine.shift)
-            MatrixView.addOuterProductInPlace(out, shift, MatrixView.multiply(otherStats.sums, affine.scale))
-            MatrixView.addOuterProductInPlace(out, shift, affine.shift, factor = rows.toDouble)
-            out
+            val scaled = MatrixView.scaleRowsAndColumns(baseCross, scale, affine.scale)
+            val out = scaled.copyData
+            MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, MatrixView.multiply(baseStats.sums, scale), affine.shift)
+            MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, shift, MatrixView.multiply(otherStats.sums, affine.scale))
+            MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, shift, affine.shift, factor = rows.toDouble)
+            GaleNumerics.matrixFromRowMajor(scaled.rows, scaled.cols, out)
         case _ =>
           for
             baseCross <- base.transposeMultiply(other)
             otherStats <- other.columnStats
           yield
-            val out = MatrixView.scaleRows(baseCross, scale)
-            MatrixView.addOuterProductInPlace(out, shift, otherStats.sums)
-            out
+            val scaled = MatrixView.scaleRows(baseCross, scale)
+            val out = scaled.copyData
+            MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, shift, otherStats.sums)
+            GaleNumerics.matrixFromRowMajor(scaled.rows, scaled.cols, out)
     }
 
   override def selectColumns(columns: IndexSet): Either[MultivarError, MatrixView] =
@@ -866,7 +870,7 @@ final class AffineMatrixView private (
       out <- MatrixView.affine(selectedBase, selectedScale, selectedShift, StoragePolicy.Operator, "affine column selection")
     yield out
 
-  override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+  override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     policy match
       case StoragePolicy.AllowDense =>
         base.toDense(StoragePolicy.AllowDense).map(MatrixView.materializeAffine(_, scale, shift))
@@ -874,7 +878,7 @@ final class AffineMatrixView private (
         Left(MultivarError.DensificationRejected("toDense", storage))
 
 object AffineMatrixView:
-  private[multivar] def unsafe(base: MatrixView, scale: DoubleVector, shift: DoubleVector): AffineMatrixView =
+  private[multivar] def unsafe(base: MatrixView, scale: DVec, shift: DVec): AffineMatrixView =
     new AffineMatrixView(base, scale, shift)
 
 final class TransposedMatrixView private (val base: MatrixView) extends MatrixView:
@@ -893,12 +897,12 @@ final class TransposedMatrixView private (val base: MatrixView) extends MatrixVi
   override def columnStats: Either[MultivarError, ColumnStats] =
     base.rowStats
 
-  override def rightMultiply(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
+  override def rightMultiply(weights: DMat): Either[MultivarError, DMat] =
     MatrixView.requireWeightRows(cols, weights.rows).flatMap { _ =>
       base.transposeMultiply(DenseMatrixView(weights))
     }
 
-  override def transposeMultiply(other: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.rightMultiplyView(base, other)
 
   override def selectColumns(columns: IndexSet): Either[MultivarError, MatrixView] =
@@ -914,7 +918,7 @@ final class TransposedMatrixView private (val base: MatrixView) extends MatrixVi
         // materialization must do so explicitly via toDense(StoragePolicy.AllowDense).
         Left(MultivarError.DensificationRejected("transposed column selection", storage))
 
-  override def toDense(policy: StoragePolicy): Either[MultivarError, DoubleMatrix] =
+  override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     base.toDense(policy).map(_.transpose)
 
   override private[multivar] def rowStats: Either[MultivarError, ColumnStats] =
@@ -925,7 +929,7 @@ object TransposedMatrixView:
     new TransposedMatrixView(base)
 
 object MatrixView:
-  def dense(value: DoubleMatrix): MatrixView =
+  def dense(value: DMat): MatrixView =
     DenseMatrixView(value)
 
   def sparse(value: SparseMatrixView): MatrixView =
@@ -936,7 +940,7 @@ object MatrixView:
       case transposed: TransposedMatrixView => transposed.base
       case _                                => TransposedMatrixView.unsafe(base)
 
-  private[multivar] def rightMultiplyView(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
+  private[multivar] def rightMultiplyView(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
     requireWeightRows(left.cols, right.rows).flatMap { _ =>
       (left, right) match
         case (_, dense: DenseMatrixView) =>
@@ -958,7 +962,7 @@ object MatrixView:
             case weights: SparseMatrixView =>
               Right(weights.leftMultiplyDenseTranspose(dense.value))
             case weights: DenseMatrixView =>
-              Right(DoubleMatrix.multiply(dense.value, weights.value.transpose))
+              Right(GaleNumerics.multiply(dense.value, weights.value.transpose))
             case _ =>
               transposed.toDense(StoragePolicy.AllowDense).flatMap(dense.rightMultiply)
         case _ =>
@@ -967,8 +971,8 @@ object MatrixView:
 
   def affine(
       base: MatrixView,
-      scale: DoubleVector,
-      shift: DoubleVector,
+      scale: DVec,
+      shift: DVec,
       policy: StoragePolicy = StoragePolicy.Operator,
       operation: String = "affine transform"
   ): Either[MultivarError, MatrixView] =
@@ -1051,13 +1055,13 @@ object MatrixView:
 
   private[multivar] def requireVectorLength(
       role: String,
-      vector: DoubleVector,
+      vector: DVec,
       expected: Int
   ): Either[MultivarError, Unit] =
     if vector.length == expected then Right(())
     else Left(MultivarError.MatrixShapeMismatch(s"$role length ${vector.length} != expected $expected"))
 
-  private[multivar] def requireFinite(role: String, vector: DoubleVector): Either[MultivarError, Unit] =
+  private[multivar] def requireFinite(role: String, vector: DVec): Either[MultivarError, Unit] =
     var i = 0
     var error = Option.empty[MultivarError]
     while i < vector.length && error.isEmpty do
@@ -1068,34 +1072,34 @@ object MatrixView:
       case Some(value) => Left(value)
       case None        => Right(())
 
-  private[multivar] def ones(length: Int): DoubleVector =
+  private[multivar] def ones(length: Int): DVec =
     val out = Array.fill(length)(1.0)
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private[multivar] def zeros(length: Int): DoubleVector =
-    DoubleVector.unsafe(new Array[Double](length))
+  private[multivar] def zeros(length: Int): DVec =
+    GaleNumerics.vectorFromArray(new Array[Double](length))
 
-  private[multivar] def selectVector(values: DoubleVector, columns: IndexSet): DoubleVector =
+  private[multivar] def selectVector(values: DVec, columns: IndexSet): DVec =
     val out = new Array[Double](columns.length)
     var i = 0
     val indices = columns.indices
     while i < indices.length do
       out(i) = values(indices(i))
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private[multivar] def negate(values: DoubleVector): DoubleVector =
+  private[multivar] def negate(values: DVec): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = -values(i)
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
   /** Reciprocal of every entry; fails when an entry is non-finite or its reciprocal
     * is not representable (zero and subnormal values), independent of data units.
     */
-  private[multivar] def invert(values: DoubleVector): Either[MultivarError, DoubleVector] =
+  private[multivar] def invert(values: DVec): Either[MultivarError, DVec] =
     val out = new Array[Double](values.length)
     var i = 0
     var error = Option.empty[MultivarError]
@@ -1109,30 +1113,30 @@ object MatrixView:
       i += 1
     error match
       case Some(value) => Left(value)
-      case None        => Right(DoubleVector.unsafe(out))
+      case None        => Right(GaleNumerics.vectorFromArray(out))
 
-  private[multivar] def multiply(left: DoubleVector, right: DoubleVector): DoubleVector =
+  private[multivar] def multiply(left: DVec, right: DVec): DVec =
     require(left.length == right.length, "vector lengths must match")
     val out = new Array[Double](left.length)
     var i = 0
     while i < out.length do
       out(i) = left(i) * right(i)
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private[multivar] def add(left: DoubleVector, right: DoubleVector): DoubleVector =
+  private[multivar] def add(left: DVec, right: DVec): DVec =
     require(left.length == right.length, "vector lengths must match")
     val out = new Array[Double](left.length)
     var i = 0
     while i < out.length do
       out(i) = left(i) + right(i)
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
   /** True only for exact zeros: tiny nonzero shifts must be applied on every
     * representation so dense and sparse paths stay bitwise-consistent.
     */
-  private[multivar] def isZero(values: DoubleVector): Boolean =
+  private[multivar] def isZero(values: DVec): Boolean =
     var i = 0
     var zero = true
     while i < values.length && zero do
@@ -1141,10 +1145,10 @@ object MatrixView:
     zero
 
   private[multivar] def materializeAffine(
-      base: DoubleMatrix,
-      scale: DoubleVector,
-      shift: DoubleVector
-  ): DoubleMatrix =
+      base: DMat,
+      scale: DVec,
+      shift: DVec
+  ): DMat =
     val out = new Array[Double](base.rows * base.cols)
     var row = 0
     while row < base.rows do
@@ -1153,9 +1157,9 @@ object MatrixView:
         out(row * base.cols + col) = base(row, col) * scale(col) + shift(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(base.rows, base.cols, out)
+    GaleNumerics.matrixFromRowMajor(base.rows, base.cols, out)
 
-  private[multivar] def scaleRows(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+  private[multivar] def scaleRows(matrix: DMat, scale: DVec): DMat =
     require(matrix.rows == scale.length, "scale length must match matrix rows")
     val out = matrix.copyData
     var row = 0
@@ -1165,13 +1169,13 @@ object MatrixView:
         out(row * matrix.cols + col) *= scale(row)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
   private[multivar] def scaleRowsAndColumns(
-      matrix: DoubleMatrix,
-      rowScale: DoubleVector,
-      colScale: DoubleVector
-  ): DoubleMatrix =
+      matrix: DMat,
+      rowScale: DVec,
+      colScale: DVec
+  ): DMat =
     require(matrix.rows == rowScale.length, "row scale length must match matrix rows")
     require(matrix.cols == colScale.length, "column scale length must match matrix columns")
     val out = matrix.copyData
@@ -1182,9 +1186,9 @@ object MatrixView:
         out(row * matrix.cols + col) *= rowScale(row) * colScale(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  private[multivar] def vectorTransposeMultiply(vector: DoubleVector, matrix: DoubleMatrix): DoubleVector =
+  private[multivar] def vectorTransposeMultiply(vector: DVec, matrix: DMat): DVec =
     require(vector.length == matrix.rows, "vector length must match matrix rows")
     val out = new Array[Double](matrix.cols)
     var row = 0
@@ -1195,9 +1199,9 @@ object MatrixView:
         out(col) += value * matrix(row, col)
         col += 1
       row += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private[multivar] def addRowVector(matrix: DoubleMatrix, rowVector: DoubleVector): DoubleMatrix =
+  private[multivar] def addRowVector(matrix: DMat, rowVector: DVec): DMat =
     require(matrix.cols == rowVector.length, "row vector length must match matrix columns")
     val out = matrix.copyData
     var row = 0
@@ -1207,20 +1211,23 @@ object MatrixView:
         out(row * matrix.cols + col) += rowVector(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
   private[multivar] def addOuterProductInPlace(
-      matrix: DoubleMatrix,
-      left: DoubleVector,
-      right: DoubleVector,
+      matrix: Array[Double],
+      rows: Int,
+      cols: Int,
+      left: DVec,
+      right: DVec,
       factor: Double = 1.0
   ): Unit =
-    require(matrix.rows == left.length, "left vector length must match matrix rows")
-    require(matrix.cols == right.length, "right vector length must match matrix columns")
+    require(matrix.length == rows * cols, "matrix data length must match its shape")
+    require(rows == left.length, "left vector length must match matrix rows")
+    require(cols == right.length, "right vector length must match matrix columns")
     var row = 0
-    while row < matrix.rows do
+    while row < rows do
       var col = 0
-      while col < matrix.cols do
-        matrix.dataArray(row * matrix.cols + col) += factor * left(row) * right(col)
+      while col < cols do
+        matrix(row * cols + col) += factor * left(row) * right(col)
         col += 1
       row += 1

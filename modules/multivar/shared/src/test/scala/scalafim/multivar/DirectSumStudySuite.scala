@@ -2,7 +2,7 @@ package scalafim.multivar
 
 import scala.compiletime.testing.typeCheckErrors
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class DirectSumStudySuite extends munit.FunSuite:
   private def accepted[A](result: Either[DirectSumError, A]): A =
@@ -38,7 +38,7 @@ class DirectSumStudySuite extends munit.FunSuite:
   private def diagram[R <: SemanticSpace, C <: SemanticSpace](
       rows: SpaceEvidence[R],
       columns: SpaceEvidence[C],
-      matrix: DoubleMatrix,
+      matrix: DMat,
       id: String
   ): SemanticDualityDiagram[R, C, CompleteCells] =
     val table = acceptedSemantic(Table.fromMatrixView(DenseMatrixView(matrix), rows, columns, value(s"$id.table")))
@@ -69,13 +69,13 @@ class DirectSumStudySuite extends munit.FunSuite:
     val leftDiagram = diagram(
       leftRows.evidence,
       leftFeatures.evidence,
-      DoubleMatrix.fromRows(Vector(Vector(0.0), Vector(1.0), Vector(2.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(0.0), Vector(1.0), Vector(2.0))),
       "direct.left"
     )
     val rightDiagram = diagram(
       rightRows.evidence,
       rightFeatures.evidence,
-      DoubleMatrix.fromRows(Vector(Vector(3.0), Vector(4.0))),
+      GaleNumerics.matrixFromRows(Vector(Vector(3.0), Vector(4.0))),
       "direct.right"
     )
     val study = accepted(
@@ -115,10 +115,10 @@ class DirectSumStudySuite extends munit.FunSuite:
     )
     new Fixture(entities)(study, alignment, leftEntry, rightEntry)
 
-  private def materialize[From <: Coordinate, To <: Coordinate](operator: Lin[From, To]): DoubleMatrix =
-    acceptedSemantic(operator(DoubleMatrix.eye(operator.cols)))
+  private def materialize[From <: Coordinate, To <: Coordinate](operator: Lin[From, To]): DMat =
+    acceptedSemantic(operator(DMat.eye(operator.cols)))
 
-  private def assertMatrix(actual: DoubleMatrix, expected: DoubleMatrix): Unit =
+  private def assertMatrix(actual: DMat, expected: DMat): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -146,7 +146,7 @@ class DirectSumStudySuite extends munit.FunSuite:
     assert(data.study.columnGeometry.isSpd)
     assertMatrix(
       materialize(data.study.table),
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(0.0, 0.0),
           Vector(1.0, 0.0),
@@ -158,7 +158,7 @@ class DirectSumStudySuite extends munit.FunSuite:
     )
 
     val independent = accepted(DirectSumRowForms.independent(data.study))
-    assertMatrix(materialize(independent.operator), DoubleMatrix.eye(5))
+    assertMatrix(materialize(independent.operator), DMat.eye(5))
     assertEquals(independent.psdCertificate.construction, "block-diagonal")
   }
 
@@ -238,7 +238,7 @@ class DirectSumStudySuite extends munit.FunSuite:
     val constraint = accepted(
       LinearConstraint.pairwiseHubAgreement(data.study, data.leftEntry, data.rightEntry)
     )
-    val agreeingScores = DoubleMatrix.fromRows(
+    val agreeingScores = GaleNumerics.matrixFromRows(
       Vector(Vector(0.0), Vector(5.0), Vector(7.0), Vector(5.0), Vector(7.0))
     )
     assertEqualsDouble(acceptedSemantic(constraint.residual(agreeingScores)), 0.0, 1e-12)
@@ -266,11 +266,11 @@ class DirectSumStudySuite extends munit.FunSuite:
         Vector(
           CompleteStudyView(
             leftId,
-            diagram(leftRows.evidence, leftFeatures.evidence, DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))), "identity.left")
+            diagram(leftRows.evidence, leftFeatures.evidence, GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))), "identity.left")
           ),
           CompleteStudyView(
             rightId,
-            diagram(rightRows.evidence, rightFeatures.evidence, DoubleMatrix.fromRows(Vector(Vector(3.0), Vector(4.0))), "identity.right")
+            diagram(rightRows.evidence, rightFeatures.evidence, GaleNumerics.matrixFromRows(Vector(Vector(3.0), Vector(4.0))), "identity.right")
           )
         )
       )
@@ -302,7 +302,7 @@ class DirectSumStudySuite extends munit.FunSuite:
     val objective = accepted(DirectSumRowForms.sameRowAssociation(sameRows, design(study)))
     assertMatrix(
       materialize(objective.operator),
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(0.0, 0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 0.0, 1.0),

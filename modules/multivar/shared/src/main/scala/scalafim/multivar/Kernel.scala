@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 final case class KernelSpec(name: String, parameters: Map[String, Double] = Map.empty):
   require(name.nonEmpty, "kernel name must be non-empty")
@@ -9,13 +9,13 @@ final case class KernelSpec(name: String, parameters: Map[String, Double] = Map.
 trait Kernel:
   def spec: KernelSpec
 
-  def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix]
+  def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat]
 
 final case class LinearKernel() extends Kernel:
   override def spec: KernelSpec =
     KernelSpec("linear")
 
-  override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
     if left.cols != right.cols then
       Left(MultivarError.MatrixShapeMismatch(s"linear kernel expected equal feature counts, got ${left.cols} and ${right.cols}"))
     else
@@ -31,7 +31,7 @@ final case class RbfKernel(gamma: Double) extends Kernel:
   override def spec: KernelSpec =
     KernelSpec("rbf", Map("gamma" -> gamma))
 
-  override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
     if left.cols != right.cols then
       Left(MultivarError.MatrixShapeMismatch(s"RBF kernel expected equal feature counts, got ${left.cols} and ${right.cols}"))
     else
@@ -55,7 +55,7 @@ final case class RbfKernel(gamma: Double) extends Kernel:
             out(row * rightDense.rows + other) = Math.exp(-gamma * Math.max(d2, 0.0))
             other += 1
           row += 1
-        DoubleMatrix.unsafe(leftDense.rows, rightDense.rows, out)
+        GaleNumerics.matrixFromRowMajor(leftDense.rows, rightDense.rows, out)
 
 object Kernel:
   val linear: Kernel =
@@ -109,10 +109,10 @@ object LandmarkSet:
         case None        => Right(new LandmarkSet(canonical))
 
 final case class KernelEigenArtifact(
-    eigenvectors: DoubleMatrix,
-    eigenvalues: DoubleVector,
-    standardDeviations: DoubleVector,
-    scores: DoubleMatrix
+    eigenvectors: DMat,
+    eigenvalues: DVec,
+    standardDeviations: DVec,
+    scores: DMat
 ):
   require(eigenvectors.cols == eigenvalues.length, "kernel eigenvectors must match eigenvalue count")
   require(standardDeviations.length == eigenvalues.length, "kernel standard deviations must match eigenvalue count")
@@ -131,22 +131,22 @@ final case class NystromDiagnostics(
 )
 
 sealed trait NystromState:
-  def scoreWeights: DoubleMatrix
+  def scoreWeights: DMat
 
 final case class StandardNystromState(
-    lambdaLandmark: DoubleVector,
-    landmarkEigenvectors: DoubleMatrix,
-    scoreWeights: DoubleMatrix
+    lambdaLandmark: DVec,
+    landmarkEigenvectors: DMat,
+    scoreWeights: DMat
 ) extends NystromState:
   require(lambdaLandmark.length == landmarkEigenvectors.cols, "standard Nyström eigenvalue/eigenvector mismatch")
   require(scoreWeights.rows == landmarkEigenvectors.rows, "standard Nyström score weights must be landmark x component")
 
 final case class DoubleNystromState(
-    firstStageEigenvectors: DoubleMatrix,
-    firstStageInvSqrtEigenvalues: DoubleMatrix,
-    secondStageEigenvectors: DoubleMatrix,
-    secondStageInvSqrtEigenvalues: DoubleMatrix,
-    scoreWeights: DoubleMatrix
+    firstStageEigenvectors: DMat,
+    firstStageInvSqrtEigenvalues: DMat,
+    secondStageEigenvectors: DMat,
+    secondStageInvSqrtEigenvalues: DMat,
+    scoreWeights: DMat
 ) extends NystromState:
   require(scoreWeights.rows == firstStageEigenvectors.rows, "double Nyström score weights must be landmark x component")
 
@@ -154,7 +154,7 @@ final case class NystromFit(
     kernel: KernelSpec,
     method: NystromMethod,
     landmarks: LandmarkSet,
-    landmarkData: DoubleMatrix,
+    landmarkData: DMat,
     preprocessor: FittedPreprocessor,
     originalCols: Int,
     centering: KernelCentering,
@@ -167,14 +167,14 @@ final case class NystromFit(
   require(landmarkData.rows == landmarks.length, "landmark data rows must match landmarks")
   require(originalCols > 0, "Nyström original feature count must be positive")
 
-  def transform(newData: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def transform(newData: MatrixView): Either[MultivarError, DMat] =
     if newData.cols != originalCols then
       Left(MultivarError.MatrixShapeMismatch(s"Nyström transform expected $originalCols columns, got ${newData.cols}"))
     else
       for
         processed <- preprocessor.transform(newData)
         kNew <- Nystrom.computeKernel(kernelFunction, processed, MatrixView.dense(landmarkData), "Nyström out-of-sample kernel")
-      yield DoubleMatrix.multiply(kNew, state.scoreWeights)
+      yield GaleNumerics.multiply(kNew, state.scoreWeights)
 
 object Nystrom:
   /** Fit a Nyström kernel eigensystem over the selected landmarks.
@@ -248,11 +248,11 @@ object Nystrom:
   private def fitStandard(
       components: ComponentCount,
       landmarkSet: LandmarkSet,
-      landmarkData: DoubleMatrix,
+      landmarkData: DMat,
       fitted: FittedPreprocessor,
       kernel: Kernel,
-      kMm: DoubleMatrix,
-      cAll: DoubleMatrix,
+      kMm: DMat,
+      cAll: DMat,
       originalCols: Int,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double
@@ -294,11 +294,11 @@ object Nystrom:
       components: ComponentCount,
       intermediateRank: ComponentCount,
       landmarkSet: LandmarkSet,
-      landmarkData: DoubleMatrix,
+      landmarkData: DMat,
       fitted: FittedPreprocessor,
       kernel: Kernel,
-      kMm: DoubleMatrix,
-      cAll: DoubleMatrix,
+      kMm: DMat,
+      cAll: DMat,
       originalCols: Int,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double
@@ -315,9 +315,9 @@ object Nystrom:
             val vSL = MatrixOps.takeColumns(first.vectors, firstKeep)
             val lambdaL = MatrixOps.takeVector(first.values, firstKeep)
             val invSqrtLambdaL = MatrixOps.diagonal(inverseSqrt(lambdaL))
-            val firstWeights = DoubleMatrix.multiply(vSL, invSqrtLambdaL)
-            val w = DoubleMatrix.multiply(cAll, firstWeights)
-            val kW = DualityKernels.symmetrize(DoubleMatrix.crossProduct(w))
+            val firstWeights = GaleNumerics.multiply(vSL, invSqrtLambdaL)
+            val w = GaleNumerics.multiply(cAll, firstWeights)
+            val kW = DualityKernels.symmetrize(GaleNumerics.crossProduct(w))
             for
               second <- LinalgErrorAdapter.adapt(eigenSolver.decompose(kW))
               finalRequest = Math.min(components.value, firstKeep)
@@ -328,7 +328,7 @@ object Nystrom:
                   val lambdaK = MatrixOps.takeVector(second.values, secondKeep)
                   val vK = MatrixOps.takeColumns(second.vectors, secondKeep)
                   val invSqrtLambdaK = MatrixOps.diagonal(inverseSqrt(lambdaK))
-                  val eigenWeights = DoubleMatrix.multiply(firstWeights, DoubleMatrix.multiply(vK, invSqrtLambdaK))
+                  val eigenWeights = GaleNumerics.multiply(firstWeights, GaleNumerics.multiply(vK, invSqrtLambdaK))
                   val sdev = sqrtVector(lambdaK)
                   val scoreWeights = scaleColumns(eigenWeights, sdev)
                   buildFit(
@@ -353,21 +353,21 @@ object Nystrom:
   private def buildFit(
       requestedComponents: ComponentCount,
       landmarkSet: LandmarkSet,
-      landmarkData: DoubleMatrix,
-      cAll: DoubleMatrix,
+      landmarkData: DMat,
+      cAll: DMat,
       originalCols: Int,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       method: NystromMethod,
       normalization: KernelNormalization,
-      eigenvalues: DoubleVector,
-      sdev: DoubleVector,
-      eigenWeights: DoubleMatrix,
+      eigenvalues: DVec,
+      sdev: DVec,
+      eigenWeights: DMat,
       state: NystromState,
-      scoreWeights: DoubleMatrix
+      scoreWeights: DMat
   ): Either[MultivarError, NystromFit] =
-    val eigenvectors = DoubleMatrix.multiply(cAll, eigenWeights)
-    val scores = DoubleMatrix.multiply(cAll, scoreWeights)
+    val eigenvectors = GaleNumerics.multiply(cAll, eigenWeights)
+    val scores = GaleNumerics.multiply(cAll, scoreWeights)
     for
       _ <- MatrixOps.checkFinite("Nyström eigenvectors", eigenvectors)
       _ <- MatrixOps.checkFinite("Nyström scores", scores)
@@ -415,7 +415,7 @@ object Nystrom:
       i += 1
     identity
 
-  private def positiveEigenCount(values: DoubleVector, requested: Int, tolerance: Double): Int =
+  private def positiveEigenCount(values: DVec, requested: Int, tolerance: Double): Int =
     val maxValue =
       if values.length == 0 then 0.0
       else Math.max(1.0, Math.abs(values(0)))
@@ -425,39 +425,39 @@ object Nystrom:
       keep += 1
     keep
 
-  private def reciprocal(values: DoubleVector, factor: Double): DoubleVector =
+  private def reciprocal(values: DVec, factor: Double): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = factor / values(i)
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private def inverseSqrt(values: DoubleVector): DoubleVector =
+  private def inverseSqrt(values: DVec): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = 1.0 / Math.sqrt(values(i))
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private def sqrtVector(values: DoubleVector): DoubleVector =
+  private def sqrtVector(values: DVec): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = Math.sqrt(Math.max(values(i), 0.0))
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private def scaleVector(values: DoubleVector, factor: Double): DoubleVector =
+  private def scaleVector(values: DVec, factor: Double): DVec =
     val out = new Array[Double](values.length)
     var i = 0
     while i < values.length do
       out(i) = values(i) * factor
       i += 1
-    DoubleVector.unsafe(out)
+    GaleNumerics.vectorFromArray(out)
 
-  private def scaleColumns(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+  private def scaleColumns(matrix: DMat, scale: DVec): DMat =
     require(matrix.cols == scale.length, "scale length must match matrix columns")
     val out = matrix.copyData
     var row = 0
@@ -467,14 +467,14 @@ object Nystrom:
         out(row * matrix.cols + col) *= scale(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
   private[multivar] def computeKernel(
       kernel: Kernel,
       left: MatrixView,
       right: MatrixView,
       role: String
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     kernel.compute(left, right).flatMap { out =>
       if out.rows != left.rows || out.cols != right.rows then
         Left(

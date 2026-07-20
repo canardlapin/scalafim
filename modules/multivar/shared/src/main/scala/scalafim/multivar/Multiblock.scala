@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 final case class BlockPreprocessSpec(id: BlockId, spec: PreprocessSpec)
 
@@ -88,8 +88,8 @@ object BlockwisePreprocessor:
               fitted.result(),
               FittedColumnAffine(
                 partition.totalSize.value,
-                DoubleVector.unsafe(globalScale),
-                DoubleVector.unsafe(globalShift)
+                GaleNumerics.vectorFromArray(globalScale),
+                GaleNumerics.vectorFromArray(globalShift)
               )
             )
           )
@@ -159,11 +159,11 @@ final case class BlockMap private (
     components: Vector[BlockMapComponent],
     combination: BlockCombination
 ) extends MvMap:
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     if input.cols != domain.size then
       Left(MultivarError.MatrixShapeMismatch(s"block map expected ${domain.size} input columns, got ${input.cols}"))
     else
-      val out = DoubleMatrix.zeros(input.rows, codomain.size)
+      val out = new Array[Double](input.rows * codomain.size)
       var i = 0
       var error = Option.empty[MultivarError]
       while i < components.length && error.isEmpty do
@@ -178,11 +178,11 @@ final case class BlockMap private (
           case Left(value) =>
             error = Some(value)
           case Right((blockScores, weight)) =>
-            addInPlace(out, blockScores, weight)
+            addInPlace(out, input.rows, codomain.size, blockScores, weight)
         i += 1
       error match
         case Some(value) => Left(value)
-        case None        => Right(out)
+        case None        => Right(GaleNumerics.matrixFromRowMajor(input.rows, codomain.size, out))
 
   /** Restricts the map to a column subset that lies within a single block.
     *
@@ -212,7 +212,7 @@ final case class BlockMap private (
     * contribution to `forward`, which scales these scores by the block's combination
     * weight. Use `restrictInput` when the weighted contribution is needed.
     */
-  def projectBlock(input: MatrixView, blockId: BlockId): Either[MultivarError, DoubleMatrix] =
+  def projectBlock(input: MatrixView, blockId: BlockId): Either[MultivarError, DMat] =
     component(blockId) match
       case Some(value) =>
         input.selectColumns(value.block.columns).flatMap(value.map.forward)
@@ -224,7 +224,7 @@ final case class BlockMap private (
       input: MatrixView,
       blockId: BlockId,
       localColumns: IndexSet
-  ): Either[MultivarError, DoubleMatrix] =
+  ): Either[MultivarError, DMat] =
     component(blockId) match
       case Some(value) =>
         for
@@ -239,11 +239,18 @@ final case class BlockMap private (
   private def component(blockId: BlockId): Option[BlockMapComponent] =
     components.find(_.block.id == blockId)
 
-  private def addInPlace(left: DoubleMatrix, right: DoubleMatrix, weight: Double): Unit =
-    require(left.rows == right.rows && left.cols == right.cols, "block outputs must have equal shape")
+  private def addInPlace(
+      left: Array[Double],
+      rows: Int,
+      cols: Int,
+      right: DMat,
+      weight: Double
+  ): Unit =
+    require(right.rows == rows && right.cols == cols, "block outputs must have equal shape")
+    val rightData = right.copyData
     var i = 0
-    while i < left.dataArray.length do
-      left.dataArray(i) += weight * right.dataArray(i)
+    while i < left.length do
+      left(i) += weight * rightData(i)
       i += 1
 
 object BlockMap:
@@ -292,7 +299,7 @@ object BlockMap:
     override def codomain: MvSpace =
       base.codomain
 
-    override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+    override def forward(input: MatrixView): Either[MultivarError, DMat] =
       base.forward(input).map(scaledBy(weight))
 
     override def restrictInput(columns: IndexSet): Either[MultivarError, MvMap] =
@@ -304,11 +311,11 @@ object BlockMap:
         Left(MultivarError.DecoderUnavailable("scaled block map combination weight has no finite reciprocal for a decoder"))
       else base.decoder.map(value => value.copy(weights = scaledBy(reciprocal)(value.weights)))
 
-  private def scaledBy(factor: Double)(matrix: DoubleMatrix): DoubleMatrix =
-    val data = matrix.dataArray
+  private def scaledBy(factor: Double)(matrix: DMat): DMat =
+    val data = matrix.copyData
     val out = new Array[Double](data.length)
     var i = 0
     while i < out.length do
       out(i) = factor * data(i)
       i += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)

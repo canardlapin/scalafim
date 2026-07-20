@@ -1,6 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum DiagramCertificate:
   case Numerical(value: NumericalCertificate)
@@ -110,11 +110,11 @@ object PreparedSemanticDiagram:
       table.toDense(StoragePolicy.AllowDense).left.map(DiagramError.Multivar.apply).map { dense =>
         val restrictedRows =
           rows.support match
-            case Some(support) => DoubleMatrix.multiply(support.restrictionMatrix, dense)
+            case Some(support) => GaleNumerics.multiply(support.restrictionMatrix, dense)
             case None          => dense
         val restricted =
           columns.support match
-            case Some(support) => DoubleMatrix.multiply(restrictedRows, support.embeddingMatrix)
+            case Some(support) => GaleNumerics.multiply(restrictedRows, support.embeddingMatrix)
             case None          => restrictedRows
         DenseMatrixView(restricted)
       }

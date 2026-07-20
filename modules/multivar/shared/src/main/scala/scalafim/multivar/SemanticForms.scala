@@ -1,8 +1,10 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinearMap
-import scalafim.linalg.LinearMapError
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.DoubleLinearOperator
+import gale.linalg.LinAlgError
+import gale.linalg.MutableDVec
 
 enum CertificateNorm:
   case Frobenius
@@ -74,7 +76,7 @@ object CertificateContext:
       CertificateTolerance.strict,
       CertificateNorm.Frobenius,
       "portable-spectral-check",
-      "scalafim-linalg",
+      "gale",
       NumericalPrecision.Float64,
       None
     )
@@ -270,7 +272,7 @@ object FormCertificates:
   private def inspectSymmetry[From <: Coordinate, To <: Coordinate](
       operator: Lin[From, To],
       context: CertificateContext
-  ): Either[SemanticError, (DoubleMatrix, Double, Double)] =
+  ): Either[SemanticError, (DMat, Double, Double)] =
     if context.norm != CertificateNorm.Frobenius then
       Left(
         SemanticError.CertificateRejected(
@@ -288,7 +290,7 @@ object FormCertificates:
     else if operator.rows != operator.cols then
       Left(SemanticError.CertificateRejected("symmetric", s"operator is ${operator.rows}x${operator.cols}"))
     else
-      operator(DoubleMatrix.eye(operator.cols)).flatMap { matrix =>
+      operator(DMat.eye(operator.cols)).flatMap { matrix =>
         val residual = symmetryResidual(matrix)
         val scale = frobeniusNorm(matrix)
         if !residual.isFinite || !scale.isFinite then
@@ -303,7 +305,7 @@ object FormCertificates:
         else Right((matrix, residual, scale))
       }
 
-  private def symmetryResidual(matrix: DoubleMatrix): Double =
+  private def symmetryResidual(matrix: DMat): Double =
     var sum = 0.0
     var row = 0
     while row < matrix.rows do
@@ -315,7 +317,7 @@ object FormCertificates:
       row += 1
     Math.sqrt(sum)
 
-  private def frobeniusNorm(matrix: DoubleMatrix): Double =
+  private def frobeniusNorm(matrix: DMat): Double =
     var sum = 0.0
     var row = 0
     while row < matrix.rows do
@@ -663,18 +665,26 @@ private[multivar] final case class MetricKernel(metric: MvMetric) extends Semant
       case _: MvMetric.Diagonal         => OperatorRepresentation.Diagonal
       case _: MvMetric.DenseSymmetric   => OperatorRepresentation.Dense
       case _: MvMetric.SparseSymmetric  => OperatorRepresentation.Sparse
-  override def linearMap: LinearMap = adapted
-  override def forward(input: DoubleMatrix): Either[SemanticError, DoubleMatrix] =
+  override def linearMap: DoubleLinearOperator = adapted
+  override def forward(input: DMat): Either[SemanticError, DMat] =
     metric.matvec(input).left.map(SemanticError.MultivarFailure.apply)
   override def adjoint: SemanticKernel = this
 
-private final case class MetricLinearMap(metric: MvMetric) extends LinearMap:
+private final case class MetricLinearMap(metric: MvMetric) extends DoubleLinearOperator:
   override def rows: Int = metric.dim
   override def cols: Int = metric.dim
-  override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
-    if input.rows != cols then Left(LinearMapError.DimensionMismatch(cols, input.rows))
-    else metric.matvec(input).left.map(error => LinearMapError.OperatorApplicationFailed(error.message))
-  override def adjoint: LinearMap = this
+  override def applyTo(input: DVec, output: MutableDVec): Unit =
+    if input.length != cols then throw LinAlgError.VectorLengthMismatch(cols, input.length)
+    if output.length != rows then throw LinAlgError.VectorLengthMismatch(rows, output.length)
+    metric.applyVector(input) match
+      case Left(error) => throw LinAlgError.InvalidArgument(error.message)
+      case Right(result) =>
+        var index = 0
+        while index < result.length do
+          output(index) = result(index)
+          index += 1
+  override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
+    applyTo(input, output)
 
 /** The only public path from an unproved numerical claim to a proved-looking role.
   * The type and runtime descriptor both retain that the property was assumed.

@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 enum DiagramError:
   case Semantic(error: SemanticError)
@@ -42,7 +42,7 @@ final case class RowMeasureDescriptor(
 /** A non-negative normalized statistical measure on one row space. It is not row geometry. */
 final class RowMeasure[S <: SemanticSpace] private (
     val space: SpaceEvidence[S],
-    val weights: DoubleVector,
+    val weights: DVec,
     val descriptor: RowMeasureDescriptor,
     val provenance: SemanticProvenance
 )
@@ -50,7 +50,7 @@ final class RowMeasure[S <: SemanticSpace] private (
 object RowMeasure:
   def fromWeights[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      weights: DoubleVector,
+      weights: DVec,
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("row-measure")
   ): Either[DiagramError, RowMeasure[S]] =
@@ -85,7 +85,7 @@ object RowMeasure:
           Right(
             new RowMeasure(
               space,
-              DoubleVector.unsafe(normalized),
+              GaleNumerics.vectorFromArray(normalized),
               RowMeasureDescriptor(space.descriptor, RowMeasureNormalization.UnitMass(mass), valueIdentity),
               provenance
             )
@@ -98,7 +98,7 @@ object RowMeasure:
     val weight = 1.0 / space.dimension
     new RowMeasure(
       space,
-      DoubleVector.fromSeq(Vector.fill(space.dimension)(weight)),
+      DVec.fromSeq(Vector.fill(space.dimension)(weight)),
       RowMeasureDescriptor(space.descriptor, RowMeasureNormalization.UnitMass(1.0), valueIdentity),
       SemanticProvenance.source("uniform-row-measure")
     )
@@ -118,7 +118,7 @@ final case class RowFunctionalDescriptor(
   */
 final class NormalizedRowFunctional[S <: SemanticSpace] private[multivar] (
     val space: SpaceEvidence[S],
-    val weights: DoubleVector,
+    val weights: DVec,
     val descriptor: RowFunctionalDescriptor,
     val provenance: SemanticProvenance
 )
@@ -138,7 +138,7 @@ object NormalizedRowFunctional:
 
   private[multivar] def metricDerived[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      weights: DoubleVector,
+      weights: DVec,
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance
   ): NormalizedRowFunctional[S] =
@@ -170,9 +170,9 @@ final class CenteringProjection[S <: SemanticSpace] private (
     val functional: NormalizedRowFunctional[S],
     val lawCertificate: CenteringLawCertificate
 ):
-  def matrix: DoubleMatrix =
+  def matrix: DMat =
     val size = functional.space.dimension
-    val out = DoubleMatrix.eye(size).copyData
+    val out = DMat.eye(size).copyData
     var row = 0
     while row < size do
       var col = 0
@@ -180,7 +180,7 @@ final class CenteringProjection[S <: SemanticSpace] private (
         out(row * size + col) -= functional.weights(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(size, size, out)
+    GaleNumerics.matrixFromRowMajor(size, size, out)
 
   def applyTo(
       table: MatrixView,
@@ -193,7 +193,7 @@ final class CenteringProjection[S <: SemanticSpace] private (
         )
       )
     else
-      val weights = DoubleMatrix.unsafe(functional.weights.length, 1, functional.weights.copyData)
+      val weights = GaleNumerics.matrixFromRowMajor(functional.weights.length, 1, functional.weights.copyData)
       table
         .transposeMultiply(DenseMatrixView(weights))
         .left
@@ -208,7 +208,7 @@ final class CenteringProjection[S <: SemanticSpace] private (
             .affine(
               table,
               MatrixView.ones(table.cols),
-              DoubleVector.unsafe(shift),
+              GaleNumerics.vectorFromArray(shift),
               policy,
               "measure centering"
             )
@@ -229,7 +229,7 @@ object CenteringProjection:
       context: CertificateContext = CertificateContext.portableFloat64
   ): Either[DiagramError, CenteringProjection[S]] =
     val size = metric.space.dimension
-    val ones = DoubleMatrix.unsafe(size, 1, Array.fill(size)(1.0))
+    val ones = GaleNumerics.matrixFromRowMajor(size, 1, Array.fill(size)(1.0))
     metric.operator(ones).left.map(DiagramError.Semantic.apply).flatMap { applied =>
       val weights = applied.copyData
       var denominator = 0.0
@@ -251,7 +251,7 @@ object CenteringProjection:
         )
         val functional = NormalizedRowFunctional.metricDerived(
           metric.space,
-          DoubleVector.unsafe(weights),
+          GaleNumerics.vectorFromArray(weights),
           identity,
           metric.provenance.append(
             SemanticProvenanceEvent.Derived("metric-orthogonal-centering-functional", Vector(metric.operator.valueIdentity))
@@ -274,19 +274,19 @@ object CenteringProjection:
         projection(row * size + col) = (if row == col then 1.0 else 0.0) - functional.weights(col)
         col += 1
       row += 1
-    val h = DoubleMatrix.unsafe(size, size, projection)
-    val hSquared = DoubleMatrix.multiply(h, h)
+    val h = GaleNumerics.matrixFromRowMajor(size, size, projection)
+    val hSquared = GaleNumerics.multiply(h, h)
     val idempotence = differenceNorm(hSquared, h)
-    val ones = DoubleMatrix.unsafe(size, 1, Array.fill(size)(1.0))
-    val annihilatesOne = frobeniusNorm(DoubleMatrix.multiply(h, ones))
-    val mu = DoubleMatrix.unsafe(1, size, functional.weights.copyData)
-    val leftAnnihilation = frobeniusNorm(DoubleMatrix.multiply(mu, h))
+    val ones = GaleNumerics.matrixFromRowMajor(size, 1, Array.fill(size)(1.0))
+    val annihilatesOne = frobeniusNorm(GaleNumerics.multiply(h, ones))
+    val mu = GaleNumerics.matrixFromRowMajor(1, size, functional.weights.copyData)
+    val leftAnnihilation = frobeniusNorm(GaleNumerics.multiply(mu, h))
     val metricResidual = metric.map { value =>
-      value.operator(DoubleMatrix.eye(size)) match
+      value.operator(DMat.eye(size)) match
         case Left(_) => Double.PositiveInfinity
         case Right(a) =>
-          val left = DoubleMatrix.multiply(h.transpose, a)
-          val right = DoubleMatrix.multiply(a, h)
+          val left = GaleNumerics.multiply(h.transpose, a)
+          val right = GaleNumerics.multiply(a, h)
           differenceNorm(left, right)
     }
     val scale = Math.max(1.0, frobeniusNorm(h))
@@ -312,16 +312,16 @@ object CenteringProjection:
         )
       )
 
-  private def differenceNorm(left: DoubleMatrix, right: DoubleMatrix): Double =
+  private def differenceNorm(left: DMat, right: DMat): Double =
     val difference = left.copyData
     val rightValues = right.copyData
     var index = 0
     while index < difference.length do
       difference(index) -= rightValues(index)
       index += 1
-    frobeniusNorm(DoubleMatrix.unsafe(left.rows, left.cols, difference))
+    frobeniusNorm(GaleNumerics.matrixFromRowMajor(left.rows, left.cols, difference))
 
-  private def frobeniusNorm(matrix: DoubleMatrix): Double =
+  private def frobeniusNorm(matrix: DMat): Double =
     val values = matrix.copyData
     var sum = 0.0
     var index = 0
@@ -336,7 +336,7 @@ object CenteredDataCertificate:
       functional: NormalizedRowFunctional[Rows],
       context: CertificateContext = CertificateContext.portableFloat64
   ): Either[DiagramError, CenteredDataCertificate] =
-    table(DoubleMatrix.eye(table.cols)).left.map(DiagramError.Semantic.apply).flatMap { matrix =>
+    table(DMat.eye(table.cols)).left.map(DiagramError.Semantic.apply).flatMap { matrix =>
       val residuals = new Array[Double](matrix.cols)
       var row = 0
       while row < matrix.rows do
@@ -655,8 +655,8 @@ final class SupportRestriction[S <: SemanticSpace] private (
     val embedding: Lin[Primal[effectiveSpace.Id], Primal[S]],
     val restriction: Lin[Primal[S], Primal[effectiveSpace.Id]],
     val reducedMetric: MetricForm[effectiveSpace.Id, CertifiedSpd],
-    val embeddingMatrix: DoubleMatrix,
-    val restrictionMatrix: DoubleMatrix,
+    val embeddingMatrix: DMat,
+    val restrictionMatrix: DMat,
     val discardedNullity: Int,
     val threshold: SupportThreshold,
     val rankCertificate: Certificate[RankProperty]
@@ -755,7 +755,7 @@ object SupportRestriction:
           supportTolerance,
           CertificateNorm.Spectral,
           "support-eigendecomposition",
-          "scalafim-linalg",
+          "gale",
           NumericalPrecision.Float64
         )
         .left
@@ -783,7 +783,7 @@ object SupportRestriction:
         rankCertificate
       )
 
-  private def numericalRank(values: DoubleVector, cutoff: Double): Int =
+  private def numericalRank(values: DVec, cutoff: Double): Int =
     var rank = 0
     while rank < values.length && values(rank) > cutoff do
       rank += 1
@@ -890,7 +890,7 @@ object GeometryResolution:
           CertificateTolerance.strict,
           CertificateNorm.Frobenius,
           "ridge-spd-check",
-          "scalafim-linalg",
+          "gale",
           NumericalPrecision.Float64,
           Some(s"ridge=${amount.toDouble}")
         )
@@ -912,8 +912,8 @@ object GeometryResolution:
       )
 
 private[multivar] object DiagramNumerics:
-  def formMatrix[S <: SemanticSpace](geometry: DiagramGeometry[S]): Either[DiagramError, DoubleMatrix] =
-    geometry.operator(DoubleMatrix.eye(geometry.space.dimension)).left.map(DiagramError.Semantic.apply)
+  def formMatrix[S <: SemanticSpace](geometry: DiagramGeometry[S]): Either[DiagramError, DMat] =
+    geometry.operator(DMat.eye(geometry.space.dimension)).left.map(DiagramError.Semantic.apply)
 
   def legacyMetric[S <: SemanticSpace](
       geometry: DiagramGeometry[S],
@@ -940,4 +940,4 @@ private[multivar] object DiagramNumerics:
       case _ if policy != StoragePolicy.AllowDense =>
         Left(DiagramError.DensificationRequired("table adaptation"))
       case _ =>
-        table(DoubleMatrix.eye(table.cols)).left.map(DiagramError.Semantic.apply).map(DenseMatrixView(_))
+        table(DMat.eye(table.cols)).left.map(DiagramError.Semantic.apply).map(DenseMatrixView(_))

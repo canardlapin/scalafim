@@ -1,12 +1,12 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 final case class ViewAssociationScore(
     viewId: BlockId,
     rowSpace: MvSpace,
-    values: DoubleMatrix
+    values: DMat
 )
 
 final case class MultisetAssociationDiagnostics(
@@ -19,10 +19,10 @@ final case class MultisetAssociationDiagnostics(
 )
 
 final case class MultisetAssociationFit(
-    eigenvalues: DoubleVector,
-    featureAxes: DoubleMatrix,
-    metricLoadings: DoubleMatrix,
-    directSumScores: DoubleMatrix,
+    eigenvalues: DVec,
+    featureAxes: DMat,
+    metricLoadings: DMat,
+    directSumScores: DMat,
     viewScores: Vector[ViewAssociationScore],
     objective: ObjectiveDefinition,
     diagnostics: MultisetAssociationDiagnostics
@@ -64,7 +64,7 @@ object MultisetAssociation:
     else
       val featureDimension = study.featureSpace.evidence.dimension
       for
-        r <- study.columnGeometry.operator(DoubleMatrix.eye(featureDimension)).left.map(DirectSumError.Semantic.apply)
+        r <- study.columnGeometry.operator(DMat.eye(featureDimension)).left.map(DirectSumError.Semantic.apply)
         metric <- MvMetric
           .denseSymmetric(
             DualityKernels.symmetrize(r),
@@ -85,10 +85,10 @@ object MultisetAssociation:
                 s"direct-sum column geometry has rank ${roots.rank}; expected $featureDimension after SPD validation"
               )
             )
-        rHalf = roots.half.applyLeft(DoubleMatrix.eye(featureDimension))
+        rHalf = roots.half.applyLeft(DMat.eye(featureDimension))
         weightedTable <- study.table(rHalf).left.map(DirectSumError.Semantic.apply)
         linkedTable <- problem.objective.operator(weightedTable).left.map(DirectSumError.Semantic.apply)
-        featureObjective = DualityKernels.symmetrize(DoubleMatrix.transposeMultiply(weightedTable, linkedTable))
+        featureObjective = DualityKernels.symmetrize(GaleNumerics.transposeMultiply(weightedTable, linkedTable))
         eigen <- LinalgErrorAdapter
           .adapt(eigenSolver.decompose(featureObjective))
           .left

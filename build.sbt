@@ -521,11 +521,12 @@ lazy val multivar =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/multivar"))
-    .dependsOn(linalg)
     .settings(commonSettings)
     .settings(
       name := "scalafim-multivar"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val multivarJS  = multivar.js

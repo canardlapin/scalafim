@@ -1,12 +1,12 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class PairedDualityDiagramSuite extends munit.FunSuite:
 
   private val x = MatrixView.dense(
-    DoubleMatrix.fromRows(
+    GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -16,7 +16,7 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   )
 
   private val y = MatrixView.dense(
-    DoubleMatrix.fromRows(
+    GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0),
         Vector(3.0),
@@ -29,7 +29,7 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
     val sampleSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
     val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
-    val rowMetric = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0)), Some(sampleSpace)).toOption.get
+    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(sampleSpace)).toOption.get
 
     val paired = Unsafe
       .pairedDiagramFromArrays(
@@ -57,7 +57,7 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   }
 
   test("paired diagram rejects row mismatch at the shared boundary") {
-    val shortY = MatrixView.dense(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val shortY = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
 
     Unsafe.pairedDiagramFromArrays(x, shortY, "exercise positional shape validation") match
       case Left(MultivarError.MatrixShapeMismatch(detail)) =>
@@ -104,8 +104,8 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   test("fromDiagrams accepts separately built, numerically identical row metrics") {
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 2).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 1).toOption.get
-    val first = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val second = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val first = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val second = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
     val xDiagram = DualityDiagram.from(x, rowMetric = Some(first), columnSpace = Some(xObserved)).toOption.get
     val yDiagram = DualityDiagram.from(y, rowMetric = Some(second), columnSpace = Some(yObserved)).toOption.get
 
@@ -116,8 +116,8 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   test("fromDiagrams rejects genuinely different row metrics with a typed metric mismatch") {
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 2).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 1).toOption.get
-    val first = MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val second = MvMetric.diagonal(DoubleVector.fromSeq(Vector(2.0, 2.0, 2.0))).toOption.get
+    val first = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val second = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 2.0, 2.0))).toOption.get
     val xDiagram = DualityDiagram.from(x, rowMetric = Some(first), columnSpace = Some(xObserved)).toOption.get
     val yDiagram = DualityDiagram.from(y, rowMetric = Some(second), columnSpace = Some(yObserved)).toOption.get
 

@@ -1,11 +1,11 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class DualityKernelsSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -16,21 +16,21 @@ class DualityKernelsSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def metricDense(metric: MvMetric): DoubleMatrix =
+  private def metricDense(metric: MvMetric): DMat =
     metric.toDense(StoragePolicy.AllowDense).toOption.get
 
-  private def bruteRowGram(xd: DoubleMatrix, metric: MvMetric): DoubleMatrix =
-    DoubleMatrix.transposeMultiply(xd, DoubleMatrix.multiply(metricDense(metric), xd))
+  private def bruteRowGram(xd: DMat, metric: MvMetric): DMat =
+    GaleNumerics.transposeMultiply(xd, GaleNumerics.multiply(metricDense(metric), xd))
 
-  private def bruteColGram(xd: DoubleMatrix, metric: MvMetric): DoubleMatrix =
-    DoubleMatrix.multiply(DoubleMatrix.multiply(xd, metricDense(metric)), xd.transpose)
+  private def bruteColGram(xd: DMat, metric: MvMetric): DMat =
+    GaleNumerics.multiply(GaleNumerics.multiply(xd, metricDense(metric)), xd.transpose)
 
-  private def bruteCrossGram(xd: DoubleMatrix, yd: DoubleMatrix, metric: MvMetric): DoubleMatrix =
-    DoubleMatrix.transposeMultiply(xd, DoubleMatrix.multiply(metricDense(metric), yd))
+  private def bruteCrossGram(xd: DMat, yd: DMat, metric: MvMetric): DMat =
+    GaleNumerics.transposeMultiply(xd, GaleNumerics.multiply(metricDense(metric), yd))
 
-  private def bruteTrace(xd: DoubleMatrix, rowMetric: MvMetric, colMetric: MvMetric): Double =
+  private def bruteTrace(xd: DMat, rowMetric: MvMetric, colMetric: MvMetric): Double =
     val gram = bruteRowGram(xd, rowMetric)
-    val weighted = DoubleMatrix.multiply(gram, metricDense(colMetric))
+    val weighted = GaleNumerics.multiply(gram, metricDense(colMetric))
     var acc = 0.0
     var i = 0
     while i < weighted.rows do
@@ -38,7 +38,7 @@ class DualityKernelsSuite extends munit.FunSuite:
       i += 1
     acc
 
-  private val xDense = DoubleMatrix.fromRows(
+  private val xDense = GaleNumerics.matrixFromRows(
     Vector(
       Vector(1.0, 0.0, 2.0),
       Vector(0.0, 3.0, 0.0),
@@ -49,7 +49,7 @@ class DualityKernelsSuite extends munit.FunSuite:
 
   private val xSparse = SparseMatrixView.fromRows(xDense.toRows).toOption.get
 
-  private val yDense = DoubleMatrix.fromRows(
+  private val yDense = GaleNumerics.matrixFromRows(
     Vector(
       Vector(2.0, 1.0),
       Vector(0.0, 4.0),
@@ -61,7 +61,7 @@ class DualityKernelsSuite extends munit.FunSuite:
   private val ySparse = SparseMatrixView.fromRows(yDense.toRows).toOption.get
 
   private def rowMetrics: Vector[(String, MvMetric)] =
-    val spd = DoubleMatrix.fromRows(
+    val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 0.5, 0.0, 0.0),
         Vector(0.5, 3.0, 0.0, 1.0),
@@ -72,13 +72,13 @@ class DualityKernelsSuite extends munit.FunSuite:
     val sparse = SparseMatrixView.fromRows(spd.toRows).toOption.get
     Vector(
       "identity" -> MvMetric.identity(4).toOption.get,
-      "diagonal" -> MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 2.0, 0.5, 1.5))).toOption.get,
+      "diagonal" -> MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5))).toOption.get,
       "dense" -> MvMetric.denseSymmetric(spd).toOption.get,
       "sparse" -> MvMetric.sparseSymmetric(sparse).toOption.get
     )
 
   private def colMetrics: Vector[(String, MvMetric)] =
-    val spd = DoubleMatrix.fromRows(
+    val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.5, 0.0, 0.5),
         Vector(0.0, 2.0, 0.0),
@@ -88,7 +88,7 @@ class DualityKernelsSuite extends munit.FunSuite:
     val sparse = SparseMatrixView.fromRows(spd.toRows).toOption.get
     Vector(
       "identity" -> MvMetric.identity(3).toOption.get,
-      "diagonal" -> MvMetric.diagonal(DoubleVector.fromSeq(Vector(0.5, 2.0, 1.0))).toOption.get,
+      "diagonal" -> MvMetric.diagonal(DVec.fromSeq(Vector(0.5, 2.0, 1.0))).toOption.get,
       "dense" -> MvMetric.denseSymmetric(spd).toOption.get,
       "sparse" -> MvMetric.sparseSymmetric(sparse).toOption.get
     )
@@ -116,8 +116,8 @@ class DualityKernelsSuite extends munit.FunSuite:
   }
 
   test("affine row Gram expands the lazy shift analytically for every metric kind") {
-    val scale = DoubleVector.fromSeq(Vector(2.0, 0.5, -1.0))
-    val shift = DoubleVector.fromSeq(Vector(1.0, -2.0, 0.5))
+    val scale = DVec.fromSeq(Vector(2.0, 0.5, -1.0))
+    val shift = DVec.fromSeq(Vector(1.0, -2.0, 0.5))
     val affine = MatrixView.affine(xSparse, scale, shift, StoragePolicy.Operator).toOption.get
     assertEquals(affine.storage, StorageKind.LazyAffine)
     val materialized = MatrixView.materializeAffine(xDense, scale, shift)
@@ -134,8 +134,8 @@ class DualityKernelsSuite extends munit.FunSuite:
   }
 
   test("affine row Gram over a dense base matches the materialized reference for every metric kind") {
-    val scale = DoubleVector.fromSeq(Vector(2.0, 0.5, -1.0))
-    val shift = DoubleVector.fromSeq(Vector(1.0, -2.0, 0.5))
+    val scale = DVec.fromSeq(Vector(2.0, 0.5, -1.0))
+    val shift = DVec.fromSeq(Vector(1.0, -2.0, 0.5))
     // The public affine constructor materializes dense bases eagerly, so build the
     // lazy view directly to exercise the dense-base branch of the affine row Gram.
     val affine = AffineMatrixView.unsafe(MatrixView.dense(xDense), scale, shift)
@@ -147,8 +147,8 @@ class DualityKernelsSuite extends munit.FunSuite:
   }
 
   test("total variance over a lazy affine view matches the materialized brute-force trace") {
-    val scale = DoubleVector.fromSeq(Vector(2.0, 0.5, -1.0))
-    val shift = DoubleVector.fromSeq(Vector(1.0, -2.0, 0.5))
+    val scale = DVec.fromSeq(Vector(2.0, 0.5, -1.0))
+    val shift = DVec.fromSeq(Vector(1.0, -2.0, 0.5))
     val affine = MatrixView.affine(xSparse, scale, shift, StoragePolicy.Operator).toOption.get
     assertEquals(affine.storage, StorageKind.LazyAffine)
     val materialized = MatrixView.materializeAffine(xDense, scale, shift)
@@ -193,8 +193,8 @@ class DualityKernelsSuite extends munit.FunSuite:
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 3).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 2).toOption.get
     val weights = Vector(1.0, 2.0, 0.5, 1.5)
-    val first = MvMetric.diagonal(DoubleVector.fromSeq(weights)).toOption.get
-    val second = MvMetric.diagonal(DoubleVector.fromSeq(weights)).toOption.get
+    val first = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
+    val second = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
     val xDiagram = DualityDiagram
       .from(MatrixView.dense(xDense), rowMetric = Some(first), columnSpace = Some(xObserved))
       .toOption

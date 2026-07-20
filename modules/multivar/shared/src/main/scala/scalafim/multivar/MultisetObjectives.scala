@@ -1,8 +1,6 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinearMap
-import scalafim.linalg.LinearMapBlock
+import gale.linalg.DMat
 
 final case class BlockDesignEdge(left: BlockId, right: BlockId, coefficient: Double)
 
@@ -261,8 +259,8 @@ object DirectSumRowForms:
                 case Right(pair) =>
                   (study.viewIndex(edge.left), study.viewIndex(edge.right)) match
                     case (Right(leftBlock), Right(rightBlock)) =>
-                      val forward = LinearMap.scale(pair.leftToRight.operator.kernel.linearMap, edge.coefficient)
-                      val reverse = LinearMap.scale(pair.rightToLeft.operator.kernel.linearMap, edge.coefficient)
+                      val forward = GaleOperators.scale(pair.leftToRight.operator.kernel.linearMap, edge.coefficient)
+                      val reverse = GaleOperators.scale(pair.rightToLeft.operator.kernel.linearMap, edge.coefficient)
                       (forward, reverse) match
                         case (Right(forwardMap), Right(reverseMap)) =>
                           blocks += DirectSumRowBlock(
@@ -316,8 +314,8 @@ object DirectSumRowForms:
         val relationship = linked.relationships(index)
         val coefficient = design.coefficient(relationship.leftId, relationship.rightId)
         if coefficient != 0.0 then
-          val forward = LinearMap.scale(relationship.pair.leftToRight.operator.kernel.linearMap, coefficient)
-          val reverse = LinearMap.scale(relationship.pair.rightToLeft.operator.kernel.linearMap, coefficient)
+          val forward = GaleOperators.scale(relationship.pair.leftToRight.operator.kernel.linearMap, coefficient)
+          val reverse = GaleOperators.scale(relationship.pair.rightToLeft.operator.kernel.linearMap, coefficient)
           (linked.study.viewIndex(relationship.leftId), linked.study.viewIndex(relationship.rightId), forward, reverse) match
             case (Right(leftBlock), Right(rightBlock), Right(forwardMap), Right(reverseMap)) =>
               blocks += DirectSumRowBlock(
@@ -394,7 +392,7 @@ final class LinearConstraint[S <: SemanticSpace, H <: SemanticSpace] private[mul
     val formula: String,
     val provenance: SemanticProvenance
 ):
-  def residual(scores: DoubleMatrix): Either[SemanticError, Double] =
+  def residual(scores: DMat): Either[SemanticError, Double] =
     operator(scores).map { values =>
       val data = values.copyData
       var sum = 0.0
@@ -461,17 +459,17 @@ object LinearConstraint:
       _ <-
         if left.map.descriptor.codomain == right.map.descriptor.codomain then Right(())
         else Left(DirectSumError.IncompatibleRelationship("agreement maps must target one entity space"))
-      negativeRight <- LinearMap
+      negativeRight <- GaleOperators
         .scale(right.map.operator.kernel.linearMap, -1.0)
         .left
         .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
-      blockMap <- LinearMap
+      blockMap <- GaleOperators
         .blockMatrix(
           Vector(left.map.descriptor.codomain.size),
           study.blocks.map(_.rowSpace.size),
           Vector(
-            LinearMapBlock(0, leftIndex, left.map.operator.kernel.linearMap),
-            LinearMapBlock(0, rightIndex, negativeRight)
+            LinearOperatorBlock(0, leftIndex, left.map.operator.kernel.linearMap),
+            LinearOperatorBlock(0, rightIndex, negativeRight)
           )
         )
         .left

@@ -2,7 +2,7 @@ package scalafim.multivar
 
 import scala.compiletime.testing.typeCheckErrors
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class RowRelationshipsSuite extends munit.FunSuite:
   private def accepted[A](result: Either[AlignmentError, A]): A =
@@ -29,10 +29,10 @@ class RowRelationshipsSuite extends munit.FunSuite:
     val certificate = acceptedSemantic(FormCertificates.spd(operator))
     DiagramGeometry.metric(acceptedSemantic(Form.metric(operator, space, certificate)))
 
-  private def dense(view: MatrixView): DoubleMatrix =
+  private def dense(view: MatrixView): DMat =
     acceptedMv(view.toDense(StoragePolicy.AllowDense))
 
-  private def assertMatrix(actual: DoubleMatrix, expected: DoubleMatrix): Unit =
+  private def assertMatrix(actual: DMat, expected: DMat): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -63,7 +63,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
     )
     assertMatrix(
       dense(exact.rowMap.matrix),
-      DoubleMatrix.fromRows(Vector(Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0), Vector(1.0, 0.0, 0.0)))
+      GaleNumerics.matrixFromRows(Vector(Vector(0.0, 1.0, 0.0), Vector(0.0, 0.0, 1.0), Vector(1.0, 0.0, 0.0)))
     )
 
     val errors = typeCheckErrors("""
@@ -124,8 +124,8 @@ class RowRelationshipsSuite extends munit.FunSuite:
     assert(unsafe.provenance.events.exists(_.isInstanceOf[SemanticProvenanceEvent.UnsafeAssumption]))
     assert(Unsafe.assumeSameRows(left.evidence, right.evidence, entities, "").isLeft)
 
-    val x = DenseMatrixView(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
-    val y = DenseMatrixView(DoubleMatrix.fromRows(Vector(Vector(3.0), Vector(4.0))))
+    val x = DenseMatrixView(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
+    val y = DenseMatrixView(GaleNumerics.matrixFromRows(Vector(Vector(3.0), Vector(4.0))))
     val paired = verified.toLegacyPair(x, y).fold(error => fail(error.message), identity)
     assertEquals(paired.sampleSpace, entities)
     assertEquals(paired.rows, 2)
@@ -134,7 +134,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
   test("couplings preserve supplied marginals and never silently normalize") {
     val left = ref("relationships.coupling.left", 2)
     val right = ref("relationships.coupling.right", 3)
-    val matrix = DoubleMatrix.fromRows(
+    val matrix = GaleNumerics.matrixFromRows(
       Vector(Vector(0.1, 0.2, 0.0), Vector(0.0, 0.3, 0.4))
     )
     val coupling = accepted(
@@ -160,7 +160,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
       NonnegativeCoupling.fromMatrix(
         left.evidence,
         right.evidence,
-        DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0))),
         RelationshipNormalization.Unnormalized,
         value("relationships.unnormalized")
       )
@@ -176,7 +176,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
       SignedRowLink.fromMatrix(
         left.evidence,
         right.evidence,
-        DoubleMatrix.fromRows(Vector(Vector(1.0, -1.0), Vector(0.0, 2.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(1.0, -1.0), Vector(0.0, 2.0))),
         value("relationships.signed")
       )
     )
@@ -251,11 +251,11 @@ class RowRelationshipsSuite extends munit.FunSuite:
     assertEquals(pair.rightToLeft.operator.valueIdentity, pair.leftToRight.operator.valueIdentity.star)
     assertMatrix(
       dense(pair.leftToRight.matrix),
-      DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(0.0, 0.0)))
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(0.0, 0.0)))
     )
     assertMatrix(
       dense(pair.rightToLeft.matrix),
-      DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)))
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)))
     )
   }
 
@@ -281,7 +281,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
       )
     )
 
-    assertMatrix(dense(link.matrix), DoubleMatrix.eye(3))
+    assertMatrix(dense(link.matrix), DMat.eye(3))
   }
 
   test("entity-aligned studies carry hub and global PSD certificates with support reports") {

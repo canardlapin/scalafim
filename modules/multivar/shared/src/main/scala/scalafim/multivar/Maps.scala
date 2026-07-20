@@ -1,16 +1,16 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 trait PseudoInverseSolver:
-  def rightPseudoInverse(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix]
+  def rightPseudoInverse(weights: DMat): Either[MultivarError, DMat]
 
 object PseudoInverseSolver:
   def orthonormalColumns(tolerance: Double = 1e-10): PseudoInverseSolver =
     new PseudoInverseSolver:
-      override def rightPseudoInverse(weights: DoubleMatrix): Either[MultivarError, DoubleMatrix] =
-        val gram = DoubleMatrix.crossProduct(weights)
+      override def rightPseudoInverse(weights: DMat): Either[MultivarError, DMat] =
+        val gram = GaleNumerics.crossProduct(weights)
         var row = 0
         var error = Option.empty[MultivarError]
         while row < gram.rows && error.isEmpty do
@@ -29,7 +29,7 @@ trait MvMap:
   def domain: MvSpace
   def codomain: MvSpace
 
-  def forward(input: MatrixView): Either[MultivarError, DoubleMatrix]
+  def forward(input: MatrixView): Either[MultivarError, DMat]
 
   def restrictInput(columns: IndexSet): Either[MultivarError, MvMap]
 
@@ -39,8 +39,8 @@ trait MvMap:
     ComposedMap.from(this, next)
 
 object MvMap:
-  private[multivar] def requireFiniteWeights(role: String, weights: DoubleMatrix): Either[MultivarError, Unit] =
-    val data = weights.dataArray
+  private[multivar] def requireFiniteWeights(role: String, weights: DMat): Either[MultivarError, Unit] =
+    val data = weights.copyData
     var i = 0
     var error = Option.empty[MultivarError]
     while i < data.length && error.isEmpty do
@@ -57,7 +57,7 @@ object MvMap:
 final case class Decoder(
     domain: MvSpace,
     codomain: MvSpace,
-    weights: DoubleMatrix,
+    weights: DMat,
     inversePreprocessor: Option[FittedPreprocessor] = None
 ):
   require(weights.rows == domain.size, "decoder weight rows must match decoder domain")
@@ -66,7 +66,7 @@ final case class Decoder(
     require(preprocessor.inputCols == codomain.size, "decoder inverse preprocessor must match decoder codomain")
   }
 
-  def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def forward(input: MatrixView): Either[MultivarError, DMat] =
     if input.cols != domain.size then
       Left(MultivarError.MatrixShapeMismatch(s"decoder expected ${domain.size} input columns, got ${input.cols}"))
     else
@@ -103,7 +103,7 @@ final case class IdentityMap(space: MvSpace) extends MvMap:
   override def codomain: MvSpace =
     space
 
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     if input.cols != domain.size then
       Left(MultivarError.MatrixShapeMismatch(s"identity map expected ${domain.size} columns, got ${input.cols}"))
     else input.toDense(StoragePolicy.AllowDense)
@@ -119,15 +119,15 @@ final case class IdentityMap(space: MvSpace) extends MvMap:
     }
 
   override def decoder(using solver: PseudoInverseSolver): Either[MultivarError, Decoder] =
-    Right(Decoder(space, space, DoubleMatrix.eye(space.size)))
+    Right(Decoder(space, space, DMat.eye(space.size)))
 
 final case class MatrixMap private (
     domain: MvSpace,
     codomain: MvSpace,
-    weights: DoubleMatrix,
+    weights: DMat,
     preprocessor: FittedPreprocessor
 ) extends MvMap:
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     for
       transformed <- preprocessor.transform(input)
       projected <- transformed.rightMultiply(weights)
@@ -153,7 +153,7 @@ object MatrixMap:
   def from(
       domain: MvSpace,
       codomain: MvSpace,
-      weights: DoubleMatrix,
+      weights: DMat,
       preprocessor: FittedPreprocessor
   ): Either[MultivarError, MatrixMap] =
     if weights.rows != domain.size || weights.cols != codomain.size then
@@ -176,8 +176,8 @@ object MatrixMap:
 final case class LinearMvMap private (
     domain: MvSpace,
     codomain: MvSpace,
-    weights: DoubleMatrix,
-    decoderWeights: Option[DoubleMatrix]
+    weights: DMat,
+    decoderWeights: Option[DMat]
 ) extends MvMap:
   require(weights.rows == domain.size, "linear map weight rows must match domain")
   require(weights.cols == codomain.size, "linear map weight columns must match codomain")
@@ -186,7 +186,7 @@ final case class LinearMvMap private (
     require(value.cols == domain.size, "decoder weight columns must match domain")
   }
 
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     if input.cols != domain.size then
       Left(MultivarError.MatrixShapeMismatch(s"linear map expected ${domain.size} input columns, got ${input.cols}"))
     else input.rightMultiply(weights)
@@ -216,8 +216,8 @@ object LinearMvMap:
   def from(
       domain: MvSpace,
       codomain: MvSpace,
-      weights: DoubleMatrix,
-      decoderWeights: Option[DoubleMatrix] = None
+      weights: DMat,
+      decoderWeights: Option[DMat] = None
   ): Either[MultivarError, LinearMvMap] =
     if weights.rows != domain.size || weights.cols != codomain.size then
       Left(
@@ -244,8 +244,8 @@ object LinearMvMap:
   private[multivar] def unsafe(
       domain: MvSpace,
       codomain: MvSpace,
-      weights: DoubleMatrix,
-      decoderWeights: Option[DoubleMatrix] = None
+      weights: DMat,
+      decoderWeights: Option[DMat] = None
   ): LinearMvMap =
     from(domain, codomain, weights, decoderWeights).fold(error => throw new IllegalArgumentException(error.message), identity)
 
@@ -256,7 +256,7 @@ final case class ComposedMap private (first: MvMap, second: MvMap) extends MvMap
   override def codomain: MvSpace =
     second.codomain
 
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     for
       middle <- first.forward(input)
       out <- second.forward(MatrixView.dense(middle))
@@ -277,7 +277,7 @@ final case class ComposedMap private (first: MvMap, second: MvMap) extends MvMap
               "composed decoder cannot fold an inverse-preprocessing step in the intermediate space"
             )
           )
-      composedWeights = DoubleMatrix.multiply(secondDecoder.weights, firstDecoder.weights)
+      composedWeights = GaleNumerics.multiply(secondDecoder.weights, firstDecoder.weights)
     yield Decoder(codomain, domain, composedWeights, firstDecoder.inversePreprocessor)
 
 object ComposedMap:
@@ -296,7 +296,7 @@ final case class RestrictedMap private (
   override def codomain: MvSpace =
     restricted.codomain
 
-  override def forward(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  override def forward(input: MatrixView): Either[MultivarError, DMat] =
     restricted.forward(input)
 
   override def restrictInput(nextColumns: IndexSet): Either[MultivarError, MvMap] =
@@ -310,21 +310,21 @@ object RestrictedMap:
     base.restrictInput(columns).map(restricted => RestrictedMap(base, columns, restricted))
 
 final case class Projector(map: MvMap):
-  def project(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def project(input: MatrixView): Either[MultivarError, DMat] =
     map.forward(input)
 
   def decoder(using solver: PseudoInverseSolver): Either[MultivarError, Decoder] =
     map.decoder
 
-final case class ComponentScale(values: DoubleVector):
+final case class ComponentScale(values: DVec):
   require(values.length > 0, "component scale must be non-empty")
 
 final case class ProjectionDiagnostics(
     method: String,
     components: ComponentCount,
     effectiveComponents: Int,
-    singularValues: Option[DoubleVector] = None,
-    eigenValues: Option[DoubleVector] = None,
+    singularValues: Option[DVec] = None,
+    eigenValues: Option[DVec] = None,
     backend: Option[String] = None,
     storagePolicy: Option[StoragePolicy] = None,
     tolerance: Option[Double] = None
@@ -332,21 +332,21 @@ final case class ProjectionDiagnostics(
 
 final case class BiProjection(
     map: MvMap,
-    scores: DoubleMatrix,
+    scores: DMat,
     scale: Option[ComponentScale] = None,
     diagnostics: Option[ProjectionDiagnostics] = None
 ):
   require(scores.cols == map.codomain.size, "score columns must match latent codomain")
 
-  def project(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def project(input: MatrixView): Either[MultivarError, DMat] =
     map.forward(input)
 
 final case class CrossProjection(
     x: MvMap,
     y: MvMap,
     latent: MvSpace,
-    xScores: DoubleMatrix,
-    yScores: DoubleMatrix,
+    xScores: DMat,
+    yScores: DMat,
     scale: Option[ComponentScale] = None,
     diagnostics: Option[ProjectionDiagnostics] = None
 ):
@@ -355,17 +355,17 @@ final case class CrossProjection(
   require(xScores.cols == latent.size, "x score columns must match latent space")
   require(yScores.cols == latent.size, "y score columns must match latent space")
 
-  def projectX(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectX(input: MatrixView): Either[MultivarError, DMat] =
     x.forward(input)
 
-  def projectY(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectY(input: MatrixView): Either[MultivarError, DMat] =
     y.forward(input)
 
   def transfer(
       source: DomainSide,
       target: DomainSide,
       input: MatrixView
-  )(using solver: PseudoInverseSolver): Either[MultivarError, DoubleMatrix] =
+  )(using solver: PseudoInverseSolver): Either[MultivarError, DMat] =
     val sourceMap = mapFor(source)
     val targetMap = mapFor(target)
     for

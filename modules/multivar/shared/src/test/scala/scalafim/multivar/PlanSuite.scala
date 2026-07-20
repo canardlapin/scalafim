@@ -1,7 +1,7 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 class PlanSuite extends munit.FunSuite:
 
@@ -21,7 +21,7 @@ class PlanSuite extends munit.FunSuite:
 
   private def data: MatrixView =
     MatrixView.dense(
-      DoubleMatrix.fromRows(
+      GaleNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 1.0, 0.0),
           Vector(2.0, 2.0, 1.0),
@@ -199,8 +199,8 @@ class PlanSuite extends munit.FunSuite:
       MultivarEstimator.GenPca(
         ComponentCount(1).toOption.get,
         preprocessing = PreprocessSpec.Pass,
-        rowMetric = Some(MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 2.0, 1.0, 0.5))).toOption.get),
-        columnMetric = Some(MvMetric.diagonal(DoubleVector.fromSeq(Vector(1.0, 0.25))).toOption.get),
+        rowMetric = Some(MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 1.0, 0.5))).toOption.get),
+        columnMetric = Some(MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.25))).toOption.get),
         backend = GmdBackend.Eigen(),
         storagePolicy = StoragePolicy.AllowDense
       )
@@ -222,7 +222,7 @@ class PlanSuite extends munit.FunSuite:
 
   test("local executor interprets ROI CPCA plans with ROI-local column constraints and reused row basis") {
     val rois = RoiPlanSet.of("roi-plan", Vector(roi("pair", 0, 1), roi("shifted", 1, 2)), featureCount = 3).toOption.get
-    val rowDesign = DoubleMatrix.fromRows(
+    val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -230,7 +230,7 @@ class PlanSuite extends munit.FunSuite:
         Vector(0.0, 1.0)
       )
     )
-    val columnDesign = DoubleMatrix.fromRows(
+    val columnDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0),
         Vector(1.0)
@@ -380,7 +380,7 @@ class PlanSuite extends munit.FunSuite:
 
   test("plan validation rejects CPCA metric, constraint, and block-rank mismatches") {
     val rois = RoiPlanSet.of("roi-plan", Vector(roi("pair", 0, 1)), featureCount = 3).toOption.get
-    val rowDesign = DoubleMatrix.fromRows(
+    val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0),
         Vector(1.0),
@@ -388,7 +388,7 @@ class PlanSuite extends munit.FunSuite:
         Vector(0.0)
       )
     )
-    val wholeFeatureDesign = DoubleMatrix.fromRows(
+    val wholeFeatureDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0),
         Vector(0.0),

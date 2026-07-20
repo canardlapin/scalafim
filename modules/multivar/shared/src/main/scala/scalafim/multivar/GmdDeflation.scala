@@ -2,8 +2,8 @@ package scalafim.multivar
 
 import scala.collection.mutable.ArrayBuffer
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 /** Matrix-free GMD backend: sequential rank-one extraction by generalized power
   * iteration with implicit deflation. Needs only products by X, X', M, and A, so
@@ -48,8 +48,8 @@ private[multivar] final case class DeflationGmd(
     */
   private def probe(x: MatrixView): Either[MultivarError, Unit] =
     for
-      _ <- x.rightMultiply(DoubleMatrix.unsafe(x.cols, 1, new Array[Double](x.cols)))
-      _ <- x.transposeMultiply(DenseMatrixView(DoubleMatrix.unsafe(x.rows, 1, new Array[Double](x.rows))))
+      _ <- x.rightMultiply(GaleNumerics.matrixFromRowMajor(x.cols, 1, new Array[Double](x.cols)))
+      _ <- x.transposeMultiply(DenseMatrixView(GaleNumerics.matrixFromRowMajor(x.rows, 1, new Array[Double](x.rows))))
     yield ()
 
   private def extract(
@@ -69,7 +69,7 @@ private[multivar] final case class DeflationGmd(
 
     // X_res w = X w - sum_j d_j u_j (v_j . w); the residual is never materialized.
     def forward(w: Array[Double]): Array[Double] =
-      val out = DeflationGmd.expect(x.rightMultiply(DoubleMatrix.unsafe(p, 1, w))).dataArray
+      val out = DeflationGmd.expect(x.rightMultiply(GaleNumerics.matrixFromRowMajor(p, 1, w))).copyData
       var j = 0
       while j < dVals.length do
         DeflationGmd.axpy(-dVals(j) * DeflationGmd.dot(vCols(j), w), uCols(j), out)
@@ -78,8 +78,8 @@ private[multivar] final case class DeflationGmd(
 
     def adjoint(z: Array[Double]): Array[Double] =
       val out = DeflationGmd
-        .expect(x.transposeMultiply(DenseMatrixView(DoubleMatrix.unsafe(n, 1, z))))
-        .dataArray
+        .expect(x.transposeMultiply(DenseMatrixView(GaleNumerics.matrixFromRowMajor(n, 1, z))))
+        .copyData
       var j = 0
       while j < dVals.length do
         DeflationGmd.axpy(-dVals(j) * DeflationGmd.dot(uCols(j), z), vCols(j), out)
@@ -222,7 +222,7 @@ private[multivar] object DeflationGmd:
         ov(row * k + col) = vCol(row)
         row += 1
       col += 1
-    GmdResult(DoubleMatrix.unsafe(n, k, ou), DoubleVector.unsafe(d), DoubleMatrix.unsafe(p, k, ov))
+    GmdResult(GaleNumerics.matrixFromRowMajor(n, k, ou), GaleNumerics.vectorFromArray(d), GaleNumerics.matrixFromRowMajor(p, k, ov))
 
   private def dot(left: Array[Double], right: Array[Double]): Double =
     var acc = 0.0

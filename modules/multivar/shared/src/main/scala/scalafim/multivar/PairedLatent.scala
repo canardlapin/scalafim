@@ -1,8 +1,20 @@
 package scalafim.multivar
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.Ridge
+import gale.linalg.DMat
+import gale.linalg.DVec
+
+opaque type Ridge = Double
+
+object Ridge:
+  def apply(value: Double): Either[MultivarError, Ridge] =
+    if value.isFinite && value >= 0.0 then Right(value)
+    else Left(MultivarError.InvalidTolerance("ridge", value))
+
+  private[multivar] def unsafe(value: Double): Ridge =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  extension (ridge: Ridge)
+    inline def value: Double = ridge
 
 final case class CcaRegularization(x: Ridge, y: Ridge)
 
@@ -11,13 +23,13 @@ object CcaRegularization:
     CcaRegularization(Ridge.unsafe(1e-8), Ridge.unsafe(1e-8))
 
   def symmetric(value: Double): Either[MultivarError, CcaRegularization] =
-    for ridge <- LinalgErrorAdapter.adapt(Ridge(value))
+    for ridge <- Ridge(value)
     yield CcaRegularization(ridge, ridge)
 
   def asymmetric(x: Double, y: Double): Either[MultivarError, CcaRegularization] =
     for
-      xRidge <- LinalgErrorAdapter.adapt(Ridge(x))
-      yRidge <- LinalgErrorAdapter.adapt(Ridge(y))
+      xRidge <- Ridge(x)
+      yRidge <- Ridge(y)
     yield CcaRegularization(xRidge, yRidge)
 
 /** Direction of a directed paired regression.
@@ -44,16 +56,16 @@ enum RegressionDirection:
   */
 enum RegressionRegularization:
   case Ols
-  case Ridge(value: scalafim.linalg.Ridge)
+  case Ridge(value: scalafim.multivar.Ridge)
 
   def label: String =
     this match
       case Ols      => "ols"
-      case Ridge(_) => "ridge"
+      case RegressionRegularization.Ridge(_) => "ridge"
 
 object RegressionRegularization:
   def ridge(value: Double): Either[MultivarError, RegressionRegularization] =
-    LinalgErrorAdapter.adapt(scalafim.linalg.Ridge(value)).map(RegressionRegularization.Ridge(_))
+    scalafim.multivar.Ridge(value).map(RegressionRegularization.Ridge(_))
 
 enum PairedLatentMethod:
   case Plsc
@@ -70,12 +82,12 @@ enum PairedLatentMethod:
       case ReducedRankRegression(_, _)      => "rrr"
 
 enum Spectrum:
-  case Eigenvalues(entries: DoubleVector)
-  case SingularValues(entries: DoubleVector)
-  case CanonicalCorrelations(entries: DoubleVector)
-  case Covariance(entries: DoubleVector)
+  case Eigenvalues(entries: DVec)
+  case SingularValues(entries: DVec)
+  case CanonicalCorrelations(entries: DVec)
+  case Covariance(entries: DVec)
 
-  def values: DoubleVector =
+  def values: DVec =
     this match
       case Eigenvalues(entries)            => entries
       case SingularValues(entries)         => entries
@@ -91,29 +103,29 @@ enum Spectrum:
 
 final case class PairedLatentFit private (
     method: PairedLatentMethod,
-    xWeights: DoubleMatrix,
-    yWeights: DoubleMatrix,
+    xWeights: DMat,
+    yWeights: DMat,
     spectrum: Spectrum,
     projection: CrossProjection,
     diagnostics: ProjectionDiagnostics
 ):
-  def xScores: DoubleMatrix =
+  def xScores: DMat =
     projection.xScores
 
-  def yScores: DoubleMatrix =
+  def yScores: DMat =
     projection.yScores
 
-  def projectX(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectX(input: MatrixView): Either[MultivarError, DMat] =
     projection.projectX(input)
 
-  def projectY(input: MatrixView): Either[MultivarError, DoubleMatrix] =
+  def projectY(input: MatrixView): Either[MultivarError, DMat] =
     projection.projectY(input)
 
 object PairedLatentFit:
   def from(
       method: PairedLatentMethod,
-      xWeights: DoubleMatrix,
-      yWeights: DoubleMatrix,
+      xWeights: DMat,
+      yWeights: DMat,
       spectrum: Spectrum,
       projection: CrossProjection,
       diagnostics: ProjectionDiagnostics
