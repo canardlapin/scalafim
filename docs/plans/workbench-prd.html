@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>ScalaFIM Workbench — Product Requirements Document</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #5f6c79;
+      --paper: #f7f5ef;
+      --panel: #fffdf8;
+      --panel-strong: #ffffff;
+      --line: #d9d6cc;
+      --accent: #0e6670;
+      --accent-2: #b84c35;
+      --accent-soft: #dceff0;
+      --warning-soft: #fff0d7;
+      --success-soft: #e2f1e7;
+      --code: #14252b;
+      --code-ink: #eaf7f7;
+      --shadow: 0 18px 60px rgba(30, 42, 48, 0.10);
+      --radius: 18px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 9% 2%, rgba(14, 102, 112, 0.11), transparent 25rem),
+        radial-gradient(circle at 92% 14%, rgba(184, 76, 53, 0.08), transparent 23rem),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.62;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 0.08em;
+      text-underline-offset: 0.18em;
+    }
+
+    code, pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .page-shell {
+      width: min(calc(100% - 2rem), var(--max));
+      margin: 0 auto;
+      padding: 2rem 0 5rem;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(2rem, 6vw, 5.5rem);
+      border: 1px solid rgba(14, 102, 112, 0.22);
+      border-radius: calc(var(--radius) + 10px);
+      color: #f5fbfb;
+      background:
+        linear-gradient(132deg, rgba(9, 45, 53, 0.98), rgba(14, 102, 112, 0.94) 62%, rgba(28, 117, 121, 0.90));
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 28rem;
+      height: 28rem;
+      right: -12rem;
+      top: -15rem;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 3rem rgba(255,255,255,0.035),
+        0 0 0 7rem rgba(255,255,255,0.025);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.7rem;
+      color: #bde4e7;
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, h4 {
+      margin-top: 0;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+
+    h1 {
+      max-width: 13ch;
+      margin-bottom: 1rem;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 500;
+    }
+
+    .hero .dek {
+      max-width: 52rem;
+      margin: 0;
+      color: #d9eff0;
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 2.2rem;
+    }
+
+    .meta-card {
+      padding: 0.85rem 1rem;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+    }
+
+    .meta-card span {
+      display: block;
+      color: #a9d8dc;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .meta-card strong {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.93rem;
+      font-weight: 650;
+    }
+
+    .document-grid {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 1fr);
+      gap: 2rem;
+      align-items: start;
+      margin-top: 2rem;
+    }
+
+    .toc {
+      position: sticky;
+      top: 1rem;
+      padding: 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.92);
+      box-shadow: 0 8px 25px rgba(30, 42, 48, 0.06);
+      backdrop-filter: blur(12px);
+    }
+
+    .toc h2 {
+      margin-bottom: 0.85rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: toc;
+    }
+
+    .toc li {
+      counter-increment: toc;
+      margin: 0.28rem 0;
+    }
+
+    .toc a {
+      display: grid;
+      grid-template-columns: 1.7rem 1fr;
+      gap: 0.25rem;
+      padding: 0.35rem 0.4rem;
+      border-radius: 7px;
+      color: var(--ink);
+      font-size: 0.83rem;
+      line-height: 1.3;
+      text-decoration: none;
+    }
+
+    .toc a::before {
+      content: counter(toc, decimal-leading-zero);
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toc a:hover {
+      background: var(--accent-soft);
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    section {
+      scroll-margin-top: 1rem;
+      margin-bottom: 1.3rem;
+      padding: clamp(1.4rem, 3vw, 2.6rem);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+
+    section > h2 {
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid var(--line);
+      color: var(--accent);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.75rem, 4vw, 2.55rem);
+      font-weight: 500;
+    }
+
+    h3 {
+      margin: 2rem 0 0.7rem;
+      font-size: 1.18rem;
+    }
+
+    h4 {
+      margin: 1.4rem 0 0.45rem;
+      font-size: 1rem;
+    }
+
+    p { margin: 0.65rem 0 1rem; }
+
+    .lead {
+      color: #31414d;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25rem;
+      line-height: 1.55;
+    }
+
+    .vision-statement {
+      margin: 1.5rem 0;
+      padding: 1.4rem 1.5rem;
+      border-left: 5px solid var(--accent-2);
+      border-radius: 0 12px 12px 0;
+      background: linear-gradient(90deg, #f8e9e2, #fff9f5);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25rem;
+      line-height: 1.5;
+    }
+
+    .loop {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.45rem;
+      margin: 1.4rem 0;
+    }
+
+    .loop span {
+      position: relative;
+      padding: 0.8rem 0.35rem;
+      border: 1px solid #bdd6d8;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #174c52;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .loop span:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      right: -0.48rem;
+      color: var(--accent-2);
+      z-index: 2;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin: 1.25rem 0;
+    }
+
+    .card {
+      padding: 1.15rem;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--panel-strong);
+    }
+
+    .card h3, .card h4 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    .card p:last-child { margin-bottom: 0; }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin: 1rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .principles li {
+      padding: 1rem 1rem 1rem 3.1rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      counter-increment: principle;
+      position: relative;
+    }
+
+    .principles { counter-reset: principle; }
+
+    .principles li::before {
+      content: counter(principle);
+      position: absolute;
+      top: 0.9rem;
+      left: 1rem;
+      display: grid;
+      width: 1.45rem;
+      height: 1.45rem;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--accent);
+      font-size: 0.73rem;
+      font-weight: 800;
+    }
+
+    ul, ol { padding-left: 1.3rem; }
+    li { margin: 0.35rem 0; }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: 0.87rem;
+    }
+
+    th, td {
+      padding: 0.75rem 0.85rem;
+      border-bottom: 1px solid #e6e3da;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      color: #31545a;
+      background: #eaf3f3;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .priority {
+      display: inline-flex;
+      min-width: 2.2rem;
+      justify-content: center;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+
+    .must { color: #773324; background: #f8ded7; }
+    .should { color: #6e4d11; background: #f8ebc8; }
+    .later { color: #315160; background: #dcecf3; }
+
+    pre {
+      overflow-x: auto;
+      margin: 1rem 0;
+      padding: 1.1rem 1.2rem;
+      border-radius: 12px;
+      color: var(--code-ink);
+      background: var(--code);
+      font-size: 0.81rem;
+      line-height: 1.55;
+    }
+
+    :not(pre) > code {
+      padding: 0.12rem 0.34rem;
+      border: 1px solid #d7d2c5;
+      border-radius: 5px;
+      color: #22484e;
+      background: #eeece5;
+      font-size: 0.88em;
+    }
+
+    .architecture {
+      display: grid;
+      gap: 0.7rem;
+      margin: 1.25rem 0;
+    }
+
+    .arch-row {
+      display: grid;
+      grid-template-columns: 9rem 1fr;
+      gap: 0.9rem;
+      align-items: stretch;
+    }
+
+    .arch-label, .arch-body {
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+    }
+
+    .arch-label {
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .arch-body {
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .law-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    .law {
+      padding: 1rem;
+      border: 1px solid #c9dcdc;
+      border-radius: 12px;
+      background: #f4fafa;
+    }
+
+    .law strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--accent);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .law code {
+      display: block;
+      margin-top: 0.5rem;
+      padding: 0.55rem;
+      border: 0;
+      color: #203e42;
+      background: #e5f1f1;
+      white-space: normal;
+    }
+
+    .callout {
+      margin: 1.2rem 0;
+      padding: 1rem 1.15rem;
+      border-radius: 12px;
+      background: var(--warning-soft);
+    }
+
+    .callout.success { background: var(--success-soft); }
+
+    .journey {
+      display: grid;
+      grid-template-columns: 2.2rem 1fr;
+      gap: 0.4rem 0.8rem;
+      margin: 1rem 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: journey;
+    }
+
+    .journey li {
+      display: contents;
+      counter-increment: journey;
+    }
+
+    .journey li::before {
+      content: counter(journey);
+      display: grid;
+      width: 2rem;
+      height: 2rem;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--accent-2);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .journey li span {
+      padding: 0.25rem 0 0.7rem;
+      border-bottom: 1px solid #e4e0d6;
+    }
+
+    .status-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin: 1rem 0;
+    }
+
+    .status-line span {
+      padding: 0.35rem 0.7rem;
+      border: 1px solid #c9d9da;
+      border-radius: 999px;
+      color: #2e5459;
+      background: #f1f8f8;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    footer {
+      padding: 1.8rem;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 900px) {
+      .document-grid { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .toc ol { columns: 2; }
+      .meta-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards { grid-template-columns: 1fr; }
+      .loop { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 620px) {
+      .page-shell { width: min(calc(100% - 1rem), var(--max)); padding-top: 0.5rem; }
+      .hero { padding: 1.5rem; border-radius: 18px; }
+      h1 { font-size: 2.8rem; }
+      .meta-grid, .principles, .law-grid { grid-template-columns: 1fr; }
+      .toc ol { columns: 1; }
+      .loop { grid-template-columns: repeat(2, 1fr); }
+      .arch-row { grid-template-columns: 1fr; }
+      section { padding: 1.2rem; }
+    }
+
+    @media print {
+      :root { --paper: white; --panel: white; }
+      body { background: white; font-size: 10pt; }
+      .page-shell { width: 100%; padding: 0; }
+      .hero { color: white; box-shadow: none; break-after: page; }
+      .document-grid { display: block; }
+      .toc { position: static; margin-bottom: 1rem; box-shadow: none; break-after: page; }
+      .toc ol { columns: 2; }
+      section { break-inside: avoid-page; box-shadow: none; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Product requirements document</p>
+      <h1>ScalaFIM Workbench</h1>
+      <p class="dek">
+        An interactive scientific environment where fMRI data, spatial selections,
+        models, analyses, and results remain connected—from first observation to
+        reproducible refinement.
+      </p>
+      <div class="meta-grid" aria-label="Document metadata">
+        <div class="meta-card"><span>Status</span><strong>Draft 0.1</strong></div>
+        <div class="meta-card"><span>Date</span><strong>15 July 2026</strong></div>
+        <div class="meta-card"><span>Product stage</span><strong>Founding specification</strong></div>
+        <div class="meta-card"><span>Decision horizon</span><strong>Walking skeleton → workbench</strong></div>
+      </div>
+    </header>
+
+    <div class="document-grid">
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <ol>
+          <li><a href="#summary">Executive summary</a></li>
+          <li><a href="#vision">Vision and thesis</a></li>
+          <li><a href="#problem">Problem and opportunity</a></li>
+          <li><a href="#users">Users and jobs</a></li>
+          <li><a href="#principles">Product principles</a></li>
+          <li><a href="#scope">Scope and non-goals</a></li>
+          <li><a href="#experience">Core experience</a></li>
+          <li><a href="#requirements">Requirements</a></li>
+          <li><a href="#algebra">Typed algebra</a></li>
+          <li><a href="#laws">Laws and invariants</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#quality">Quality attributes</a></li>
+          <li><a href="#delivery">Evolutionary delivery</a></li>
+          <li><a href="#success">Success measures</a></li>
+          <li><a href="#risks">Risks and open decisions</a></li>
+        </ol>
+      </nav>
+
+      <main>
+        <section id="summary">
+          <h2>Executive summary</h2>
+          <p class="lead">
+            ScalaFIM Workbench is where ScalaFIM becomes explorable: a desktop scientific
+            thinking environment that keeps fMRI data, spatial selections, models,
+            analyses, and results connected. Its first compelling capability is a fast
+            orthogonal image viewer with activation layers, thresholding, colormaps,
+            linked coordinates, and ROI selection. Its larger purpose is to let a
+            researcher move from seeing a pattern to interrogating it, revising the
+            analysis, and examining the new result without leaving the workspace.
+          </p>
+          <p>
+            The product composes two existing foundations: ScalaFIM supplies typed
+            neuroimaging data, computations, workflows, provenance, and renderer-neutral
+            graphics; ScalaDock supplies the persistent, rearrangeable JavaFX workspace.
+            The workbench supplies the interaction language between data, selections,
+            queries, views, and analysis actions.
+          </p>
+          <div class="callout success">
+            <strong>Founding product decision.</strong> The orthogonal viewer is the visual
+            center of gravity, but it is not the architectural center. The architectural
+            center is a typed graph of immutable scientific resources connected by
+            selections, derivations, and lawful workspace transitions.
+          </div>
+        </section>
+
+        <section id="vision">
+          <h2>Vision and thesis</h2>
+          <h3>Canonical vision</h3>
+          <div class="vision-statement">
+            <strong>ScalaFIM Workbench is where ScalaFIM becomes explorable.</strong>
+            It is an interactive scientific environment in which fMRI data, spatial
+            selections, models, analyses, and results remain connected, so researchers
+            can move fluidly from seeing a pattern, to interrogating it, to changing the
+            analysis that produced it—without sacrificing spatial correctness or
+            computational provenance.
+          </div>
+          <div class="loop" aria-label="Scientific exploration loop">
+            <span>Observe</span><span>Select</span><span>Ask</span><span>Compute</span><span>Compare</span><span>Refine</span>
+          </div>
+          <p>
+            The workbench should feel like an IDE for functional imaging: persistent panes,
+            explicit scientific objects, contextual commands, background tasks, linked views,
+            inspectable problems, and a workspace that can be saved and resumed. It is not a
+            collection of unrelated utilities arranged in tabs. Every feature participates in
+            a common conversation through resources and selections.
+          </p>
+          <div class="cards">
+            <article class="card">
+              <h3>Inspect</h3>
+              <p>Images, activation maps, designs, metadata, diagnostics, and provenance remain visible and navigable.</p>
+            </article>
+            <article class="card">
+              <h3>Explore</h3>
+              <p>Linked views, ROIs, time courses, plots, comparisons, and subject subsets turn observations into questions.</p>
+            </article>
+            <article class="card">
+              <h3>Act</h3>
+              <p>Typed analysis plans can be constructed, preflighted, launched, monitored, and revisited in the same workspace.</p>
+            </article>
+          </div>
+          <h3>Role of the viewer</h3>
+          <p>
+            The orthogonal viewer is the visual center of gravity, but the product is not
+            merely a viewer. Its architectural center is the typed relationship among
+            scientific resources, selections, queries, derivations, and views. A spatial
+            selection made in the viewer can therefore drive FIR plots, group summaries,
+            atlas queries, connectivity analyses, exports, or a revised analysis plan.
+          </p>
+          <h3>Product promise</h3>
+          <p>
+            A user can point to something scientifically meaningful and ask the next valid
+            question without manually translating coordinates, filenames, contrasts, ROIs,
+            or provenance between programs.
+          </p>
+        </section>
+
+        <section id="problem">
+          <h2>Problem and opportunity</h2>
+          <div class="cards">
+            <article class="card">
+              <h3>Context is lost</h3>
+              <p>
+                Image viewers commonly know pixels and filenames but not the model,
+                contrast, statistic, degrees of freedom, or workflow that produced a map.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Selections do not travel</h3>
+              <p>
+                Coordinates and ROIs must be manually recreated when moving from image
+                inspection to plotting, extraction, group summaries, or new analyses.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Execution is detached</h3>
+              <p>
+                Analysis launchers tend to be form front ends. They rarely preserve the
+                exploratory question that motivated the analysis or ingest results back into context.
+              </p>
+            </article>
+          </div>
+          <p>
+            ScalaFIM creates an opportunity to replace file-oriented interaction with a typed
+            scientific object model. ScalaDock creates an opportunity to let those objects remain
+            visible in a researcher-defined workspace. The workbench should exploit both without
+            pushing UI concerns into ScalaFIM or neuroimaging concerns into ScalaDock.
+          </p>
+        </section>
+
+        <section id="users">
+          <h2>Users and jobs</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>User</th><th>Primary jobs</th><th>What success feels like</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>fMRI researcher</td>
+                  <td>Explore maps, define ROIs, examine FIR/time-course responses, compare subjects and conditions.</td>
+                  <td>Questions can be answered interactively without losing analysis context.</td>
+                </tr>
+                <tr>
+                  <td>Methods developer</td>
+                  <td>Inspect designs and fits, compare pipelines, validate outputs, diagnose spatial or statistical discrepancies.</td>
+                  <td>Every result is inspectable, typed, and traceable to its producing plan.</td>
+                </tr>
+                <tr>
+                  <td>Analyst or lab member</td>
+                  <td>Open a study, run a validated analysis, monitor tasks, review problems, and hand off a reproducible workspace.</td>
+                  <td>The software guides valid work without hiding scientific choices.</td>
+                </tr>
+                <tr>
+                  <td>Feature author</td>
+                  <td>Add a pane, command, query, inspector, or result adapter without changing the workbench kernel.</td>
+                  <td>A new feature integrates through small typed contribution points.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Canonical job story</h3>
+          <p>
+            When I notice an activation pattern, I want to select the relevant region, examine
+            its response across conditions and subjects, inspect the model and provenance that
+            produced it, and optionally launch a revised analysis, so that exploration and
+            computation form one reproducible chain of reasoning.
+          </p>
+        </section>
+
+        <section id="principles">
+          <h2>Product principles</h2>
+          <ol class="principles">
+            <li><strong>Exploration first.</strong> Existing data and results are valuable without launching an analysis.</li>
+            <li><strong>Scientific objects, not anonymous files.</strong> Files are boundary representations of typed resources.</li>
+            <li><strong>Selections are first-class.</strong> Points, ROIs, parcels, subjects, conditions, and contrasts can move between features.</li>
+            <li><strong>Provenance is visible.</strong> Users can inspect what produced a result and what assumptions govern its display.</li>
+            <li><strong>Invalid states are difficult to construct.</strong> ADTs, opaque types, smart constructors, and witnesses carry invariants.</li>
+            <li><strong>Functional core, imperative shell.</strong> State transitions and render planning are pure; IO and JavaFX are interpreters.</li>
+            <li><strong>Modular by composition.</strong> Features contribute typed capabilities without becoming dependencies of the kernel.</li>
+            <li><strong>Responsiveness is correctness.</strong> Long computation never owns the JavaFX thread; stale results never overwrite current state.</li>
+          </ol>
+        </section>
+
+        <section id="scope">
+          <h2>Scope and non-goals</h2>
+          <h3>Initial product scope</h3>
+          <ul>
+            <li>Persistent JavaFX docking workspace using ScalaDock.</li>
+            <li>Orthogonal volume viewing with linked world coordinates.</li>
+            <li>Anatomical, statistic, and label layers with typed display policies.</li>
+            <li>Activation thresholding, display ranges, opacity, interpolation, and colormaps.</li>
+            <li>Point, ROI, parcel, and cluster selection.</li>
+            <li>FIR/time-course exploration over selected regions and subject groups.</li>
+            <li>Renderer-neutral plots rendered through the ScalaFIM JavaFX backend.</li>
+            <li>Study/result explorer, analysis preflight, task monitoring, and result ingestion.</li>
+            <li>Workspace, layout, and preference persistence.</li>
+          </ul>
+
+          <h3>Explicit non-goals for the founding release</h3>
+          <ul>
+            <li>A public runtime plugin marketplace or arbitrary dynamic class loading.</li>
+            <li>A complete replacement for every established neuroimaging viewer.</li>
+            <li>Distributed execution as the application foundation.</li>
+            <li>Silent spatial registration or filename-based inference of compatibility.</li>
+            <li>A generic node-graph workflow editor before concrete analysis journeys are proven.</li>
+            <li>Embedding scientific arrays, JavaFX nodes, open readers, or futures in persisted workspace state.</li>
+            <li>Moving UI-specific concepts into ScalaFIM core modules.</li>
+          </ul>
+        </section>
+
+        <section id="experience">
+          <h2>Core experience</h2>
+          <h3>Default workspace</h3>
+          <pre aria-label="Default workbench layout">┌────────────────┬────────────────────────────────┬────────────────┐
+│ Study/results  │ Orthogonal viewer              │ Layers         │
+│ explorer       │                                │ Inspector      │
+├────────────────┴────────────────────────────────┴────────────────┤
+│ Plots / Tasks / Problems / Console                               │
+└───────────────────────────────────────────────────────────────────┘</pre>
+          <p>
+            The global menu, command palette, toolbar, status bar, and notifications belong
+            to the shell. Scientific tools and documents belong in dockable panes. Panes may
+            be tabbed, split, maximized, minimized, or moved into other windows without altering
+            scientific state.
+          </p>
+
+          <h3>Primary exploration journey</h3>
+          <ol class="journey">
+            <li><span>Open an anatomical image and one or more activation maps from a result bundle.</span></li>
+            <li><span>Navigate sagittal, coronal, and axial views around one shared world-coordinate cursor.</span></li>
+            <li><span>Adjust activation threshold, colormap, display range, opacity, and layer order.</span></li>
+            <li><span>Select a cluster, atlas parcel, or custom ROI in the reference spatial domain.</span></li>
+            <li><span>Invoke a context-valid FIR response query for chosen conditions and subjects.</span></li>
+            <li><span>Inspect the resulting curve, uncertainty summary, query definition, and provenance.</span></li>
+            <li><span>Inspect the producing analysis specification and preflight a modified analysis.</span></li>
+            <li><span>Launch the plan, monitor progress, and ingest new results into the existing workspace.</span></li>
+          </ol>
+        </section>
+
+        <section id="requirements">
+          <h2>Functional requirements</h2>
+          <p>
+            Priorities use <span class="priority must">MUST</span>,
+            <span class="priority should">SHOULD</span>, and
+            <span class="priority later">LATER</span>. A founding release requires every MUST
+            requirement in the delivered phase; SHOULD requirements may move between phases but
+            remain part of the product definition.
+          </p>
+
+          <h3>Workspace and shell</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Priority</th><th>Requirement</th></tr></thead>
+              <tbody>
+                <tr><td>WB-001</td><td><span class="priority must">MUST</span></td><td>Create, open, save, and restore a versioned workspace manifest.</td></tr>
+                <tr><td>WB-002</td><td><span class="priority must">MUST</span></td><td>Persist the ScalaDock layout separately from scientific resources and runtime caches.</td></tr>
+                <tr><td>WB-003</td><td><span class="priority must">MUST</span></td><td>Preserve unavailable pane state without discarding its serialized payload.</td></tr>
+                <tr><td>WB-004</td><td><span class="priority must">MUST</span></td><td>Provide a command registry whose availability is derived from typed workbench context.</td></tr>
+                <tr><td>WB-005</td><td><span class="priority should">SHOULD</span></td><td>Provide recent workspaces, recoverable autosave, and explicit dirty-state indication.</td></tr>
+                <tr><td>WB-006</td><td><span class="priority should">SHOULD</span></td><td>Support multiple linked or independent views of the same scientific resource.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Imaging and layers</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Priority</th><th>Requirement</th></tr></thead>
+              <tbody>
+                <tr><td>IMG-001</td><td><span class="priority must">MUST</span></td><td>Display sagittal, coronal, and axial planes around exactly one shared world-coordinate cursor.</td></tr>
+                <tr><td>IMG-002</td><td><span class="priority must">MUST</span></td><td>Display orientation labels and world/voxel coordinate readouts derived from image geometry.</td></tr>
+                <tr><td>IMG-003</td><td><span class="priority must">MUST</span></td><td>Support anatomy, statistic, and label layers with kind-specific style types.</td></tr>
+                <tr><td>IMG-004</td><td><span class="priority must">MUST</span></td><td>Add, remove, reorder, hide, and select layers while maintaining stable layer identities.</td></tr>
+                <tr><td>IMG-005</td><td><span class="priority must">MUST</span></td><td>Support validated display range, opacity, interpolation, and colormap controls.</td></tr>
+                <tr><td>IMG-006</td><td><span class="priority must">MUST</span></td><td>Support unthresholded, positive, negative, two-sided, and interval display thresholds.</td></tr>
+                <tr><td>IMG-007</td><td><span class="priority must">MUST</span></td><td>Reject incompatible layers unless an explicit alignment or transform witness is available.</td></tr>
+                <tr><td>IMG-008</td><td><span class="priority should">SHOULD</span></td><td>Provide synchronized zoom, pan, cursor, and selection channels across compatible viewers.</td></tr>
+                <tr><td>IMG-009</td><td><span class="priority should">SHOULD</span></td><td>Distinguish display thresholding from inferential thresholding and show inferential provenance.</td></tr>
+                <tr><td>IMG-010</td><td><span class="priority later">LATER</span></td><td>Support oblique planes, surfaces, and volume-to-surface linked selections.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Selection and exploration</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Priority</th><th>Requirement</th></tr></thead>
+              <tbody>
+                <tr><td>EXP-001</td><td><span class="priority must">MUST</span></td><td>Represent point, region, parcel, and cluster selections as typed, domain-anchored values.</td></tr>
+                <tr><td>EXP-002</td><td><span class="priority must">MUST</span></td><td>Publish selections through explicit channels without coupling a viewer to a consuming feature.</td></tr>
+                <tr><td>EXP-003</td><td><span class="priority must">MUST</span></td><td>Construct a typed FIR query from a compatible result, ROI, subject selection, condition selection, and aggregation policy.</td></tr>
+                <tr><td>EXP-004</td><td><span class="priority must">MUST</span></td><td>Return FIR curves as a scientific result resource, independent of any plotting backend.</td></tr>
+                <tr><td>EXP-005</td><td><span class="priority must">MUST</span></td><td>Render FIR/time-course results in a dockable plot pane using ScalaFIM graphics.</td></tr>
+                <tr><td>EXP-006</td><td><span class="priority must">MUST</span></td><td>Retain query, input resource revisions, aggregation parameters, and warnings as result provenance.</td></tr>
+                <tr><td>EXP-007</td><td><span class="priority should">SHOULD</span></td><td>Compare conditions, subject subsets, ROIs, or result revisions without rebuilding the workspace.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Analysis and results</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Priority</th><th>Requirement</th></tr></thead>
+              <tbody>
+                <tr><td>ANA-001</td><td><span class="priority must">MUST</span></td><td>Represent analysis inputs with ScalaFIM study, model, contrast, workflow, and result-reference types.</td></tr>
+                <tr><td>ANA-002</td><td><span class="priority must">MUST</span></td><td>Display structural preflight errors and warnings before execution is available.</td></tr>
+                <tr><td>ANA-003</td><td><span class="priority must">MUST</span></td><td>Launch only an accepted typed analysis plan through an AnalysisRunner capability.</td></tr>
+                <tr><td>ANA-004</td><td><span class="priority must">MUST</span></td><td>Expose typed task identity, lifecycle, progress, cancellation, logs, and produced result references.</td></tr>
+                <tr><td>ANA-005</td><td><span class="priority must">MUST</span></td><td>Ingest completed result bundles into the workspace without mutating prior result identities.</td></tr>
+                <tr><td>ANA-006</td><td><span class="priority should">SHOULD</span></td><td>Navigate from a displayed result to the specification and receipts that produced it.</td></tr>
+                <tr><td>ANA-007</td><td><span class="priority later">LATER</span></td><td>Delegate execution to a remote runner without changing analysis specifications or feature code.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Feature composition</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Priority</th><th>Requirement</th></tr></thead>
+              <tbody>
+                <tr><td>EXT-001</td><td><span class="priority must">MUST</span></td><td>A feature may contribute typed panes, commands, inspectors, resource adapters, and selection consumers.</td></tr>
+                <tr><td>EXT-002</td><td><span class="priority must">MUST</span></td><td>Feature state, intents, effects, and reducers remain feature-local.</td></tr>
+                <tr><td>EXT-003</td><td><span class="priority must">MUST</span></td><td>Cross-feature interaction uses stable resource, selection, task, plot-request, and notification protocols.</td></tr>
+                <tr><td>EXT-004</td><td><span class="priority must">MUST</span></td><td>Heterogeneous registry casts, if unavoidable, are confined to one private checked boundary.</td></tr>
+                <tr><td>EXT-005</td><td><span class="priority later">LATER</span></td><td>Consider runtime plugin discovery only after compile-time feature composition is proven.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="algebra">
+          <h2>Typed product algebra</h2>
+          <p class="lead">
+            The workbench is modeled as a typed graph of immutable resources, connected by
+            derivations and explored through domain-anchored selections. Views are projections;
+            interaction is a deterministic algebra of state transitions.
+          </p>
+          <pre>Resource[A] ── Derivation[A, B] ──▶ Resource[B]
+    │                                      │
+Selection[A]                          ViewSpec[B]
+    │                                      │
+    └────────── Query[A, Q] ──▶ Observation[Q]</pre>
+
+          <h3>Core families</h3>
+          <pre>final case class ResourceRef[A] private (
+    id: ResourceId,
+    tpe: ResourceType[A],
+    revision: ResourceRevision
+)
+
+trait Derivation[I, O]:
+  def id: OperationId
+  def preflight(input: I): Either[DerivationError, Validated[I]]
+  def describe(input: Validated[I]): DerivationPlan[O]
+
+final case class Selection[D, A] private (
+    domain: DomainRef[D],
+    value: A
+)
+
+trait ViewSpec[A]:
+  type State
+  def initial(resource: ResourceRef[A]): State
+  def present(resource: ResourceSnapshot[A], state: State): Presentation
+
+trait Feature:
+  type State
+  type Intent
+  type Effect
+  def reduce(state: State, intent: Intent):
+    Either[FeatureError, Transition[State, Effect]]</pre>
+
+          <h3>Layer algebra</h3>
+          <pre>enum ImageLayer:
+  case Anatomy(id: LayerId, source: VolumeRef[Anatomy], style: AnatomyStyle)
+  case Statistic(id: LayerId, source: VolumeRef[StatisticField], style: StatisticStyle)
+  case Labels(id: LayerId, source: VolumeRef[LabelField], style: LabelStyle)
+
+enum DisplayThreshold:
+  case Unthresholded
+  case Positive(cutoff: ThresholdCutoff)
+  case Negative(cutoff: ThresholdCutoff)
+  case TwoSided(magnitude: ThresholdCutoff)
+  case Outside(interval: DisplayInterval)</pre>
+          <p>
+            Arbitrary file-discovered facts such as affine compatibility should not be
+            pretended into compile-time constants. Smart constructors produce runtime witnesses
+            such as <code>SameGrid</code> or <code>Alignment</code>, and later operations require
+            those witnesses. The type system carries the proof after the trust boundary.
+          </p>
+        </section>
+
+        <section id="laws">
+          <h2>Laws and invariants</h2>
+          <p>
+            Laws are executable product requirements. Compiler-enforced distinctions,
+            constructor validation, property tests, numerical fixtures, and scenario tests
+            collectively form the proof surface.
+          </p>
+          <div class="law-grid">
+            <article class="law"><strong>Derivation identity</strong>A no-op derivation changes neither content nor provenance.<code>identity &gt;&gt;&gt; f = f = f &gt;&gt;&gt; identity</code></article>
+            <article class="law"><strong>Derivation associativity</strong>Composition grouping cannot change the described scientific operation.<code>(f &gt;&gt;&gt; g) &gt;&gt;&gt; h = f &gt;&gt;&gt; (g &gt;&gt;&gt; h)</code></article>
+            <article class="law"><strong>Validity preservation</strong>A successful reducer transition always produces another valid state.<code>valid(s) ∧ reduce(s,i)=Right(t) ⇒ valid(t.state)</code></article>
+            <article class="law"><strong>Failure atomicity</strong>An invalid intent changes no state and emits no effects.<code>reduce(s, invalid) = Left(error)</code></article>
+            <article class="law"><strong>Replay</strong>Intent sequences compose by ordinary fold.<code>fold(s, xs ++ ys) = fold(fold(s,xs),ys)</code></article>
+            <article class="law"><strong>Stale-result exclusion</strong>An asynchronous result for an older revision cannot overwrite current state.<code>completion.revision &lt; current.revision ⇒ unchanged</code></article>
+            <article class="law"><strong>Layout independence</strong>Dock edits commute with disjoint scientific edits.<code>dock ∘ science = science ∘ dock</code></article>
+            <article class="law"><strong>Presentation invariance</strong>Zoom, colormap, threshold display, and docking do not mutate source content or provenance.<code>resource(before) = resource(after)</code></article>
+            <article class="law"><strong>Spatial round trip</strong>Valid affine conversion returns the original location within tolerance.<code>voxelToWorld(worldToVoxel(p)) ≈ p</code></article>
+            <article class="law"><strong>Selection transport</strong>Transport respects identity and transform composition.<code>transport(g∘f,s) = transport(g,transport(f,s))</code></article>
+            <article class="law"><strong>Threshold monotonicity</strong>Raising a magnitude cutoff cannot add visible samples.<code>b ≥ a ⇒ support(Tb(x)) ⊆ support(Ta(x))</code></article>
+            <article class="law"><strong>Threshold idempotence</strong>Applying the same threshold twice is the same as applying it once.<code>T(T(x)) = T(x)</code></article>
+            <article class="law"><strong>Color-support independence</strong>Changing a colormap cannot change the threshold support.<code>support(C1(x)) = support(C2(x))</code></article>
+            <article class="law"><strong>Alpha identities</strong>Transparent content is the compositing identity; opaque over transparent preserves content.<code>transparent over x = x</code></article>
+            <article class="law"><strong>Linked-cursor coherence</strong>All compatible linked views converge on the same world point.<code>cursor(v₁) = cursor(v₂) = worldPoint</code></article>
+            <article class="law"><strong>Immutable identity</strong>The same resource identity and revision denote the same scientific content.<code>same(id,revision) ⇒ same(content)</code></article>
+            <article class="law"><strong>Provenance completeness</strong>Every derived resource names its inputs, operation version, parameters, and warnings.<code>derived(r) ⇒ provenance(r).inputs.nonEmpty</code></article>
+            <article class="law"><strong>Command applicability</strong>A contextual command is enabled exactly when its typed context can be constructed.<code>enabled(c,w) ⇔ c.context(w).isDefined</code></article>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <h2>Architecture and ownership</h2>
+          <div class="architecture" aria-label="Application architecture layers">
+            <div class="arch-row"><div class="arch-label">Application</div><div class="arch-body"><strong>workbench-app</strong> — composition root, feature installation, toolchain, runtime configuration, and JavaFX lifecycle.</div></div>
+            <div class="arch-row"><div class="arch-label">UI shell</div><div class="arch-body"><strong>workbench-javafx</strong> — ScalaDock panes, controls, canvases, command palette, task center, and UI-thread interpretation.</div></div>
+            <div class="arch-row"><div class="arch-label">JVM runtime</div><div class="arch-body"><strong>workbench-runtime-jvm</strong> — resource loading, caches, background tasks, filesystem/result watching, cancellation, and analysis runners.</div></div>
+            <div class="arch-row"><div class="arch-label">Features</div><div class="arch-body"><strong>imaging · exploration · analysis</strong> — pure state, intents, effects, queries, plans, render requests, and domain adapters.</div></div>
+            <div class="arch-row"><div class="arch-label">Kernel</div><div class="arch-body"><strong>workbench-kernel</strong> — typed resources, selections, commands, jobs, notifications, transitions, feature contribution contracts, and persistence descriptors.</div></div>
+            <div class="arch-row"><div class="arch-label">Foundations</div><div class="arch-body"><strong>ScalaFIM</strong> owns scientific computation and graphics. <strong>ScalaDock</strong> owns docking layout and pane lifecycle. Neither depends on the workbench.</div></div>
+          </div>
+
+          <h3>Repository boundary</h3>
+          <p>
+            The preferred implementation is a third repository, provisionally
+            <code>scalafim-workbench</code>. This PRD lives in ScalaFIM while the product is being
+            defined because ScalaFIM owns the scientific architecture it consumes. Once a workbench
+            repository is created, the canonical PRD should move there and ScalaFIM should link to it.
+          </p>
+
+          <h3>Persistence boundary</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Store</th><th>Contains</th><th>Never contains</th></tr></thead>
+              <tbody>
+                <tr><td>Workspace manifest</td><td>Resource references, documents, analysis specs, result catalog, stable view identities.</td><td>Open readers, numeric caches, JavaFX objects, active futures.</td></tr>
+                <tr><td>Dock layout</td><td>Pane types, pane reference state, tab/split/floating geometry.</td><td>Scientific arrays or duplicated domain state.</td></tr>
+                <tr><td>User preferences</td><td>Theme, recent workspaces, default colormaps, cache policy.</td><td>Study-specific results or credentials.</td></tr>
+                <tr><td>Runtime cache</td><td>Loaded volumes, sampled slices, raster images, query intermediates.</td><td>Canonical scientific identity or irreplaceable provenance.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Rendering pipeline</h3>
+          <pre>OrthogonalViewerState
+        │
+        ▼
+SliceRenderRequest + ViewRevision
+        │ background interpreter
+        ▼
+RasterImage + vector overlays
+        │ JavaFX application thread
+        ▼
+ScalaFIM JavaFX renderer → Canvas</pre>
+          <p>
+            Compilation and sampling are performed off the JavaFX thread. Only the final draw
+            touches JavaFX. Render cache keys include resource revision, spatial reference,
+            plane, cursor, viewport dimensions, layer order, display policy, and interpolation.
+          </p>
+        </section>
+
+        <section id="quality">
+          <h2>Quality attributes</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Attribute</th><th>Requirement</th><th>Evidence</th></tr></thead>
+              <tbody>
+                <tr><td>Spatial correctness</td><td>No silent overlay of incompatible spaces; all coordinate labels and selections derive from validated geometry.</td><td>Synthetic orientation phantoms, affine round trips, mismatch rejection, reference fixtures.</td></tr>
+                <tr><td>Responsiveness</td><td>No IO or scientific computation on the JavaFX thread; latest revision wins during interaction.</td><td>Thread assertions, stale-result tests, interaction benchmarks.</td></tr>
+                <tr><td>Determinism</td><td>Pure transitions and render compilation are replayable from the same inputs.</td><td>Reducer properties, command goldens, stable serialization tests.</td></tr>
+                <tr><td>Numerical trust</td><td>Threshold, aggregation, interpolation, and compositing semantics have independent oracles.</td><td>Pixel fixtures, R/reference fixtures, tolerance-based numeric tests.</td></tr>
+                <tr><td>Recoverability</td><td>A failed pane, missing resource, or interrupted task does not corrupt the workspace.</td><td>Fault-injection scenarios, unresolved-resource states, atomic save tests.</td></tr>
+                <tr><td>Accessibility</td><td>Keyboard navigation, non-color status cues, scalable text, meaningful accessible names, and high-contrast themes.</td><td>Keyboard scenarios and accessibility inspection.</td></tr>
+                <tr><td>Extensibility</td><td>New features add contributions without workbench-kernel edits or unchecked global event payloads.</td><td>Reference third feature implemented only through public contribution contracts.</td></tr>
+                <tr><td>Build discipline</td><td>Any ScalaFIM core change compiles and tests on JVM and Scala.js; JavaFX adapters have focused JVM proof.</td><td>Repository build gates and renderer conformance suites.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Provisional performance targets</h3>
+          <ul>
+            <li>Cached cursor/slice updates become visible within 100 ms at p95 on the reference development machine.</li>
+            <li>Typical uncached local slice updates become visible within 250 ms at p95.</li>
+            <li>Rapid cursor movement remains interactive through cancellation/coalescing and stale-result exclusion.</li>
+            <li>Opening or restoring a workspace reports progress rather than blocking the JavaFX thread.</li>
+            <li>Cache use is bounded by an explicit policy and observable in diagnostics.</li>
+          </ul>
+          <p><em>Targets must be calibrated against representative datasets during Phase 1; they are not release claims yet.</em></p>
+        </section>
+
+        <section id="delivery">
+          <h2>Evolutionary delivery plan</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Phase</th><th>Outcome</th><th>Acceptance gate</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>0 — Compatibility spike</td>
+                  <td>A minimal application consumes ScalaFIM and ScalaDock and renders a synthetic ScalaFIM raster in a docked JavaFX pane.</td>
+                  <td>One verified Scala/OpenJFX matrix; lifecycle, packaging, and headless-test strategy recorded.</td>
+                </tr>
+                <tr>
+                  <td>1 — Viewer skeleton</td>
+                  <td>One anatomical volume, three linked planes, world cursor, zoom/pan, coordinate readout, workspace save/restore.</td>
+                  <td>Orientation phantom, affine round-trip, stale-render, and layout-independence scenarios pass.</td>
+                </tr>
+                <tr>
+                  <td>2 — Activation layers</td>
+                  <td>Statistic and label layers, ordering, thresholding, colormaps, range, opacity, interpolation, and alignment checks.</td>
+                  <td>Threshold laws, independent pixel compositing oracles, and incompatible-space rejection pass.</td>
+                </tr>
+                <tr>
+                  <td>3 — ROI and FIR exploration</td>
+                  <td>Domain-anchored ROI selections, subject/condition filters, group FIR summaries, and docked plots.</td>
+                  <td>Fixture-backed ROI aggregation and full selection-to-plot provenance scenario pass.</td>
+                </tr>
+                <tr>
+                  <td>4 — Analysis workbench</td>
+                  <td>Study explorer, spec editor, preflight, local runner, task center, result ingestion, and provenance navigation.</td>
+                  <td>Invalid plans cannot launch; cancellation and result identity scenarios pass.</td>
+                </tr>
+                <tr>
+                  <td>5 — Feature platform</td>
+                  <td>Reference features for design diagnostics, QC, connectivity, or multivariate results use stable contribution contracts.</td>
+                  <td>A third feature integrates without kernel modification; extension API and compatibility policy are documented.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <strong>Release discipline.</strong> Each phase is a complete vertical slice with a
+            realistic workflow contract. A broad pane inventory is not progress if the central
+            observe–select–ask loop remains unproven.
+          </div>
+        </section>
+
+        <section id="success">
+          <h2>Success measures</h2>
+          <h3>Founding-release outcomes</h3>
+          <ul>
+            <li>A researcher can open a study result, inspect spatially aligned layers, select an ROI, and obtain a provenance-bearing FIR plot in one workspace.</li>
+            <li>No workflow step requires manual transfer of world coordinates, voxel indices, ROI files, or contrast names between tools.</li>
+            <li>Every displayed scientific result can navigate to its resource metadata and producing operation or explicitly report that provenance is unavailable.</li>
+            <li>Closing, docking, floating, or restoring panes never changes scientific state.</li>
+            <li>An invalid spatial overlay or invalid analysis plan is rejected before execution or display.</li>
+            <li>Feature authors can add a representative new inspector or plot feature without modifying the workbench kernel.</li>
+          </ul>
+
+          <h3>Product telemetry without surveillance</h3>
+          <p>
+            Early evaluation should rely on opt-in local diagnostics and structured usability
+            sessions, not remote behavioral telemetry by default. Useful local measures include
+            render latency, cache hit rate, task duration, cancellation rate, problem categories,
+            and time from selection to observation. Any future telemetry requires explicit consent
+            and must exclude image data, paths, subject identifiers, coordinates, and analysis payloads.
+          </p>
+        </section>
+
+        <section id="risks">
+          <h2>Risks and open decisions</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Risk or decision</th><th>Current stance</th><th>Required resolution</th></tr></thead>
+              <tbody>
+                <tr><td>Scala and JavaFX version mismatch</td><td>ScalaDock and ScalaFIM currently target different baselines.</td><td>Phase 0 must select and prove one consumer/runtime matrix before product implementation.</td></tr>
+                <tr><td>ScalaDock pre-1.0 API movement</td><td>Use it, but isolate it behind local pane and dock-host contribution adapters.</td><td>Define the minimum workbench-facing wrapper during the compatibility spike.</td></tr>
+                <tr><td>Viewer performance</td><td>Start with immutable ScalaFIM raster scenes and revisioned background rendering.</td><td>Benchmark representative data before designing a specialized display engine.</td></tr>
+                <tr><td>Spatial heterogeneity</td><td>Same-grid only in the first viewer; later require explicit transform witnesses.</td><td>Define reference-space and resampling policy before Phase 2 completion.</td></tr>
+                <tr><td>Analysis execution model</td><td>Typed runner capability; local in-process interpretation first.</td><td>Decide isolation, cancellation, and crash-recovery requirements during Phase 4 design.</td></tr>
+                <tr><td>Workspace schema</td><td>Separate workspace, dock layout, preferences, and runtime cache.</td><td>Choose versioning/migration mechanism before Phase 1 persistence is accepted.</td></tr>
+                <tr><td>Dynamic plugins</td><td>Defer. Compile-time feature composition is sufficient for evolutionary development.</td><td>Reconsider only after stable contribution contracts and real third-party demand.</td></tr>
+                <tr><td>Product name and repository</td><td><code>ScalaFIM Workbench</code> and <code>scalafim-workbench</code> are working names.</td><td>Confirm before creating published coordinates or persistent workspace wire tags.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Decisions recorded by this PRD</h3>
+          <div class="status-line">
+            <span>D-001 Separate application repository</span>
+            <span>D-002 Orthogonal viewer as first vertical slice</span>
+            <span>D-003 Typed resources and selections as the product center</span>
+            <span>D-004 Functional core / JavaFX interpreter</span>
+            <span>D-005 Build-time feature composition first</span>
+            <span>D-006 Separate scientific and layout persistence</span>
+            <span>D-007 No silent alignment</span>
+          </div>
+
+          <h3>Open product questions</h3>
+          <ul>
+            <li>Which ROI creation modes belong in the first exploration release: atlas parcel, thresholded cluster, brush, polygon, or all four?</li>
+            <li>Should multiple viewers link cursor, zoom, slice plane, ROI, and layer style independently through separate channels?</li>
+            <li>What is the canonical persisted representation of a derived ROI when its source result is revised?</li>
+            <li>Which FIR/group uncertainty summaries are scientifically required for the first real study workflow?</li>
+            <li>Should analysis execution initially be in-process, an isolated local worker process, or both?</li>
+            <li>What packaging strategy provides reliable JavaFX natives across macOS, Linux, and Windows?</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      ScalaFIM Workbench PRD · Founding specification · Stored with ScalaFIM architectural plans
+    </footer>
+  </div>
+</body>
+</html>
