@@ -6,6 +6,15 @@ ThisBuild / organization := "scalafim"
 ThisBuild / scalaVersion := "3.4.2"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
+// Immutable source dependency: sbt clones this exact Gale commit into its
+// staging area, so a clean checkout never depends on publishLocal or a sibling
+// developer checkout.
+lazy val galeRevision = "0207c653eb643cc07fdfa018989a4c3578d40aa7"
+lazy val galeBuild =
+  uri(s"https://github.com/bbuchsbaum/gale.git#$galeRevision")
+lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
+lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
+
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq(
     "-deprecation",
@@ -30,6 +39,8 @@ lazy val linalg =
     .settings(
       name := "scalafim-linalg"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val linalgJS  = linalg.js

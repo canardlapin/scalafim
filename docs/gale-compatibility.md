@@ -24,9 +24,9 @@ executes on the JVM, and completes a full-optimized Scala.js link. Then run the
 full Scalafim `compileAll` and `testAll` aliases. Platform success is conjunctive:
 passing only the JVM or only fast-linked JavaScript is not sufficient.
 
-As of 2026-07-19, Gale commit
-`d510ed72e88457eeb87f2ba16fc470b2ec646eed` contains the required migration APIs
-and passes its JVM, Scala.js, full-link, parity, and backend gates. It is not yet
-a consumable Scalafim pin: Gale intentionally has no owner-selected license,
-canonical SCM remote, or publishing destination, so no release tag or artifact
-is claimed here.
+The initial immutable pin is Gale commit
+`0207c653eb643cc07fdfa018989a4c3578d40aa7`. It contains the required migration
+APIs, passes Gale's JVM, Scala.js, full-link, parity, and backend gates, and adds
+the owner-selected Apache-2.0 license plus canonical Git and POM provenance.
+Scalafim consumes the named `coreJVM` and `coreJS` projects directly from that
+Git commit; advancing the pin requires the consumer gate above.
