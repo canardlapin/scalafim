@@ -2,7 +2,7 @@ package scalafim.connectivity
 
 import scalafim.graph.Direction
 import scalafim.graph.VertexIx
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class ProjectionSuite extends munit.FunSuite:
   private val ids = Vector("a", "b", "c", "d").map(NodeId.unsafe)
@@ -177,7 +177,7 @@ class ProjectionSuite extends munit.FunSuite:
       symmetric = false
     ).toOption.get
     val edgeSpace = EdgeSpace.directed(axis).toOption.get
-    val values = DoubleMatrix.fromRows(
+    val values = GaleTestMatrix.fromRows(
       Vector(
         Vector(0.0, 0.8, 0.0, 0.0),
         Vector(0.1, 0.0, 0.0, 0.0),
@@ -209,7 +209,7 @@ class ProjectionSuite extends munit.FunSuite:
     val target = NodeAxis.unsafe(Vector(NodeSpec(NodeId.unsafe("x"), "X"), NodeSpec(NodeId.unsafe("y"), "Y")))
     val rectangularSpace = EdgeSpace.rectangular(axis, target).toOption.get
     val rectangular = ConnectivityMatrix.from(
-      DoubleMatrix.fromRows(Vector.fill(4)(Vector(0.1, 0.2))),
+      GaleTestMatrix.fromRows(Vector.fill(4)(Vector(0.1, 0.2))),
       rectangularSpace,
       measure = ConnectivityMeasure.edgeWeight
     ).toOption.get
@@ -293,7 +293,7 @@ class ProjectionSuite extends munit.FunSuite:
       symmetric = false
     ).toOption.get
     ConnectivityMatrix.from(
-      DoubleMatrix.zeros(axis.size, axis.size),
+      Matrix.zeros(axis.size, axis.size),
       edgeSpace,
       measure = measure,
       diagonalPolicy = DiagonalPolicy.StructuralZero

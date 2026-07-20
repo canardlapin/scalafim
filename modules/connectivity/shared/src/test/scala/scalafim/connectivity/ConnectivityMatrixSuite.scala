@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class ConnectivityMatrixSuite extends munit.FunSuite:
 
@@ -9,7 +9,7 @@ class ConnectivityMatrixSuite extends munit.FunSuite:
 
   test("ConnectivityMatrix enforces square and symmetric undirected inputs") {
     val undirected = EdgeSpace.undirected(axis).toOption.get
-    val symmetric = DoubleMatrix.fromRows(Vector(
+    val symmetric = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 0.2, 0.3),
       Vector(0.2, 1.0, 0.4),
       Vector(0.3, 0.4, 1.0)
@@ -22,18 +22,18 @@ class ConnectivityMatrixSuite extends munit.FunSuite:
     assert(ConnectivityMatrix.from(asymmetric, undirected).swap.toOption.exists(_.message.contains("not symmetric")))
     assert(ConnectivityMatrix.from(asymmetric, undirected, symmetryTolerance = Double.NaN).swap.toOption.exists(_.message.contains("symmetry tolerance")))
     assert(ConnectivityMatrix.from(asymmetric, undirected, symmetryTolerance = -1.0).isLeft)
-    assert(ConnectivityMatrix.from(DoubleMatrix.zeros(3, 2), undirected).isLeft)
+    assert(ConnectivityMatrix.from(Matrix.zeros(3, 2), undirected).isLeft)
   }
 
   test("directed and rectangular matrices accept non-symmetric shapes appropriate to their spaces") {
     val directed = EdgeSpace.directed(axis).toOption.get
     val rect = EdgeSpace.rectangular(NodeAxis.generated(2, "seed").toOption.get, axis).toOption.get
-    val directedMatrix = DoubleMatrix.fromRows(Vector(
+    val directedMatrix = GaleTestMatrix.fromRows(Vector(
       Vector(0.0, 1.0, 2.0),
       Vector(3.0, 0.0, 4.0),
       Vector(5.0, 6.0, 0.0)
     ))
-    val rectMatrix = DoubleMatrix.fromRows(Vector(
+    val rectMatrix = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0, 3.0),
       Vector(4.0, 5.0, 6.0)
     ))
@@ -47,15 +47,14 @@ class ConnectivityMatrixSuite extends munit.FunSuite:
 
   test("ConnectivityMatrix copies validated inputs instead of borrowing source storage") {
     val undirected = EdgeSpace.undirected(axis).toOption.get
-    val source = DoubleMatrix.fromRows(Vector(
+    val source = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 0.2, 0.3),
       Vector(0.2, 1.0, 0.4),
       Vector(0.3, 0.4, 1.0)
     ))
     val matrix = ConnectivityMatrix.from(source, undirected).toOption.get
 
-    source.dataArray(1) = Double.NaN
-
+    assert(!(matrix.values eq source))
     assertEqualsDouble(matrix.values(0, 1), 0.2, 1e-12)
   }
 

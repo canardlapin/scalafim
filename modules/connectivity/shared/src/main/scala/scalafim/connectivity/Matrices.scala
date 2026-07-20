@@ -2,11 +2,11 @@ package scalafim.connectivity
 
 import scala.collection.mutable
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 final class ConnectivityMatrix private (
     val edgeSpace: EdgeSpace,
-    val values: DoubleMatrix,
+    val values: DMat,
     val measure: ConnectivityMeasure,
     val diagonalPolicy: DiagonalPolicy
 ):
@@ -18,7 +18,7 @@ final class ConnectivityMatrix private (
 
 object ConnectivityMatrix:
   def from(
-      values: DoubleMatrix,
+      values: DMat,
       edgeSpace: EdgeSpace,
       symmetryTolerance: Double = 1e-12,
       measure: ConnectivityMeasure = ConnectivityMeasure.edgeWeight,
@@ -63,7 +63,7 @@ object ConnectivityMatrix:
       diagonalPolicy = diagonalPolicy
     )
 
-  private def firstAsymmetry(matrix: DoubleMatrix, tolerance: Double): Option[ConnectivityError] =
+  private def firstAsymmetry(matrix: DMat, tolerance: Double): Option[ConnectivityError] =
     var row = 0
     var error = Option.empty[ConnectivityError]
     while row < matrix.rows && error.isEmpty do
@@ -78,7 +78,7 @@ object ConnectivityMatrix:
     error
 
   private def validateDiagonal(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       diagonalPolicy: DiagonalPolicy,
       tolerance: Double
   ): Option[ConnectivityError] =

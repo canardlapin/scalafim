@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class AxesSuite extends munit.FunSuite:
 
@@ -77,7 +77,7 @@ class AxesSuite extends munit.FunSuite:
 
   test("TimeAxis, FrameWeights, and NuisanceMatrix enforce sample alignment") {
     val time = TimeAxis.fromSeconds(3, 0.8).toOption.get
-    val matrix = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0)))
+    val matrix = GaleTestMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0)))
 
     assert(TimeAxis.fromSeconds(0, 1.0).isLeft)
     assert(FrameWeights.from(Vector(1.0, 0.0), time).isLeft)
@@ -91,27 +91,26 @@ class AxesSuite extends munit.FunSuite:
   test("ParcelTimeSeries rejects shape mismatch empty matrices and non-finite data") {
     val axis = NodeAxis.generated(2).toOption.get
     val time = TimeAxis.fromSeconds(2, 1.0).toOption.get
-    val ok = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
-    val badRows = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0)))
-    val badFinite = DoubleMatrix.fromRows(Vector(Vector(1.0, Double.NaN), Vector(3.0, 4.0)))
+    val ok = GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
+    val badRows = GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0)))
+    val badFinite = GaleTestMatrix.fromRows(Vector(Vector(1.0, Double.NaN), Vector(3.0, 4.0)))
 
     assert(ParcelTimeSeries.from(ok, axis, time).isRight)
     assert(ParcelTimeSeries.from(badRows, axis, time).isLeft)
-    assert(ParcelTimeSeries.from(DoubleMatrix.zeros(0, 2), axis, time).isLeft)
+    assert(ParcelTimeSeries.from(Matrix.zeros(0, 2), axis, time).isLeft)
     assert(ParcelTimeSeries.from(badFinite, axis, time).swap.toOption.exists(_.message.contains("not finite")))
   }
 
   test("ParcelTimeSeries and NuisanceMatrix copy validated matrix inputs") {
     val axis = NodeAxis.generated(2).toOption.get
     val time = TimeAxis.fromSeconds(2, 1.0).toOption.get
-    val seriesSource = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
-    val nuisanceSource = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
+    val seriesSource = GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
+    val nuisanceSource = GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
     val series = ParcelTimeSeries.from(seriesSource, axis, time).toOption.get
     val nuisance = NuisanceMatrix.from(nuisanceSource, time, Vector("motion-x")).toOption.get
 
-    seriesSource.dataArray(0) = Double.NaN
-    nuisanceSource.dataArray(0) = Double.NaN
-
+    assert(!(series.values eq seriesSource))
+    assert(!(nuisance.values eq nuisanceSource))
     assertEqualsDouble(series.values(0, 0), 1.0, 1e-12)
     assertEqualsDouble(nuisance.values(0, 0), 1.0, 1e-12)
   }
@@ -122,7 +121,7 @@ class AxesSuite extends munit.FunSuite:
     val relabeledAxis = NodeAxis.fromIdsAndLabels(axis.ids, Vector("left", "right")).toOption.get
     val provenanceAxis = NodeAxis.from(axis.nodes, NodeAxisProvenance.unsafeDeclared("atlas", Some("1"))).toOption.get
     val time = TimeAxis.fromSeconds(2, 1.0).toOption.get
-    val data = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
+    val data = GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
     val run1 = RunTimeSeries(RunId.unsafe("run-1"), ParcelTimeSeries.from(data, axis, time).toOption.get)
     val run2 = RunTimeSeries(RunId.unsafe("run-2"), ParcelTimeSeries.from(data, axis, time).toOption.get)
     val other = RunTimeSeries(RunId.unsafe("run-3"), ParcelTimeSeries.from(data, otherAxis, time).toOption.get)

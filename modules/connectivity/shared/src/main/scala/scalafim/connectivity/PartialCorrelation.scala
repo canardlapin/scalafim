@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 object PartialCorrelation:
   def ridge(
@@ -67,110 +67,117 @@ object PartialCorrelation:
         )
       )
 
-  private def ridgePrecision(correlation: DoubleMatrix, lambda: Double): Either[ConnectivityError, DoubleMatrix] =
+  private def ridgePrecision(correlation: DMat, lambda: Double): Either[ConnectivityError, DMat] =
     val n = correlation.rows
-    val out = ConnectivityNumerics.symmetrize(correlation).copyData
-    var i = 0
-    while i < n do
-      out(i * n + i) += lambda
-      i += 1
-    ConnectivityNumerics.invertSymmetricPositiveDefinite(DoubleMatrix.unsafe(n, n, out))
+    val symmetric = ConnectivityNumerics.symmetrize(correlation)
+    val out = Matrix.newBuilder(n, n)
+    var row = 0
+    while row < n do
+      var col = 0
+      while col < n do
+        out(row, col) = symmetric(row, col) + (if row == col then lambda else 0.0)
+        col += 1
+      row += 1
+    ConnectivityNumerics.invertSymmetricPositiveDefinite(out.result())
 
-  private def precisionToPartial(precision: DoubleMatrix): DoubleMatrix =
+  private def precisionToPartial(precision: DMat): DMat =
     val n = precision.rows
-    val out = new Array[Double](n * n)
+    val out = Matrix.newBuilder(n, n)
     var row = 0
     while row < n do
       val rowScale = Math.sqrt(Math.max(precision(row, row), 1e-16))
       var col = 0
       while col < n do
         val colScale = Math.sqrt(Math.max(precision(col, col), 1e-16))
-        out(row * n + col) =
+        out(row, col) =
           if row == col then 1.0
           else -precision(row, col) / (rowScale * colScale)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(n, n, out)
+    out.result()
 
-  private def pcRegressionCoefficients(z: DoubleMatrix, components: Int): Either[ConnectivityError, DoubleMatrix] =
+  private def pcRegressionCoefficients(z: DMat, components: Int): Either[ConnectivityError, DMat] =
     val samples = z.rows
     val nodes = z.cols
-    val out = new Array[Double](nodes * nodes)
+    val out = Matrix.newBuilder(nodes, nodes)
     var target = 0
     var error = Option.empty[ConnectivityError]
     while target < nodes && error.isEmpty do
       val controls = controlMatrix(z, target)
       val p = controls.cols
       val k = Math.min(components, p)
-      val gram = DoubleMatrix.transposeMultiply(controls, controls)
+      val gram = controls.t * controls
       ConnectivityNumerics.symmetricEigen(gram) match
         case Left(value) => error = Some(value)
         case Right(eigen) =>
-          val vectors = firstColumns(eigen.vectors, k)
-          val scores = DoubleMatrix.multiply(controls, vectors)
-          val scoreGram = DoubleMatrix.transposeMultiply(scores, scores)
+          // Gale returns symmetric eigenpairs in ascending algebraic order;
+          // principal-component regression needs the largest-eigenvalue subspace.
+          val vectors = lastColumns(eigen.eigenvectors, k)
+          val scores = controls * vectors
+          val scoreGram = scores.t * scores
           ConnectivityNumerics.invertSymmetricPositiveDefinite(scoreGram) match
             case Left(value) => error = Some(value)
             case Right(inv) =>
               val y = targetColumn(z, target)
-              val xty = DoubleMatrix.transposeMultiply(scores, y)
-              val betaPc = DoubleMatrix.multiply(inv, xty)
-              val beta = DoubleMatrix.multiply(vectors, betaPc)
+              val xty = scores.t * y
+              val betaPc = inv * xty
+              val beta = vectors * betaPc
               var control = 0
               var original = 0
               while original < nodes do
                 if original != target then
-                  out(original * nodes + target) = beta(control, 0)
+                  out(original, target) = beta(control, 0)
                   control += 1
                 original += 1
       target += 1
     error match
       case Some(value) => Left(value)
-      case None        => Right(DoubleMatrix.unsafe(nodes, nodes, out))
+      case None        => Right(out.result())
 
-  private def coefficientsToSymmetricPartial(coefficients: DoubleMatrix): DoubleMatrix =
+  private def coefficientsToSymmetricPartial(coefficients: DMat): DMat =
     val n = coefficients.rows
-    val out = new Array[Double](n * n)
+    val out = Matrix.newBuilder(n, n)
     var row = 0
     while row < n do
       var col = 0
       while col < n do
-        out(row * n + col) =
+        out(row, col) =
           if row == col then 1.0
           else 0.5 * (coefficients(row, col) + coefficients(col, row))
         col += 1
       row += 1
-    DoubleMatrix.unsafe(n, n, out)
+    out.result()
 
-  private def controlMatrix(values: DoubleMatrix, excludedCol: Int): DoubleMatrix =
-    val out = new Array[Double](values.rows * (values.cols - 1))
+  private def controlMatrix(values: DMat, excludedCol: Int): DMat =
+    val out = Matrix.newBuilder(values.rows, values.cols - 1)
     var row = 0
     while row < values.rows do
       var sourceCol = 0
       var targetCol = 0
       while sourceCol < values.cols do
         if sourceCol != excludedCol then
-          out(row * (values.cols - 1) + targetCol) = values(row, sourceCol)
+          out(row, targetCol) = values(row, sourceCol)
           targetCol += 1
         sourceCol += 1
       row += 1
-    DoubleMatrix.unsafe(values.rows, values.cols - 1, out)
+    out.result()
 
-  private def targetColumn(values: DoubleMatrix, col: Int): DoubleMatrix =
-    val out = new Array[Double](values.rows)
+  private def targetColumn(values: DMat, col: Int): DMat =
+    val out = Matrix.newBuilder(values.rows, 1)
     var row = 0
     while row < values.rows do
-      out(row) = values(row, col)
+      out(row, 0) = values(row, col)
       row += 1
-    DoubleMatrix.unsafe(values.rows, 1, out)
+    out.result()
 
-  private def firstColumns(values: DoubleMatrix, count: Int): DoubleMatrix =
-    val out = new Array[Double](values.rows * count)
+  private def lastColumns(values: DMat, count: Int): DMat =
+    val out = Matrix.newBuilder(values.rows, count)
+    val start = values.cols - count
     var row = 0
     while row < values.rows do
       var col = 0
       while col < count do
-        out(row * count + col) = values(row, col)
+        out(row, col) = values(row, start + col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(values.rows, count, out)
+    out.result()

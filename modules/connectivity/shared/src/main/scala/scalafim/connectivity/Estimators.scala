@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 object ConnectivityEstimators:
   def weightedCorrelation(
@@ -95,7 +95,7 @@ object ConnectivityEstimators:
   ): Either[ConnectivityError, DynamicConnectivity] =
     DynamicConnectivityEstimators.ewmaCorrelationStack(series, halfLifeFrames, warmupFrames, order)
 
-  private final case class ShrinkageResult(matrix: DoubleMatrix, alpha: Double)
+  private final case class ShrinkageResult(matrix: DMat, alpha: Double)
 
   private[connectivity] def normalizedWeights(
       series: ParcelTimeSeries,
@@ -131,7 +131,7 @@ object ConnectivityEstimators:
                 i += 1
               Right(out)
 
-  private[connectivity] def weightedCorrelationMatrix(values: DoubleMatrix, weights: Array[Double]): DoubleMatrix =
+  private[connectivity] def weightedCorrelationMatrix(values: DMat, weights: Array[Double]): DMat =
     val rows = values.rows
     val cols = values.cols
     val means = new Array[Double](cols)
@@ -139,9 +139,8 @@ object ConnectivityEstimators:
     while row < rows do
       val weight = weights(row)
       var col = 0
-      val offset = row * cols
       while col < cols do
-        means(col) += values.dataArray(offset + col) * weight
+        means(col) += values(row, col) * weight
         col += 1
       row += 1
 
@@ -149,32 +148,31 @@ object ConnectivityEstimators:
     row = 0
     while row < rows do
       val weight = weights(row)
-      val offset = row * cols
       var left = 0
       while left < cols do
-        val centeredLeft = values.dataArray(offset + left) - means(left)
+        val centeredLeft = values(row, left) - means(left)
         var right = 0
         while right < cols do
           covariance(left * cols + right) +=
-            centeredLeft * (values.dataArray(offset + right) - means(right)) * weight
+            centeredLeft * (values(row, right) - means(right)) * weight
           right += 1
         left += 1
       row += 1
 
-    val out = new Array[Double](cols * cols)
+    val out = Matrix.newBuilder(cols, cols)
     row = 0
     while row < cols do
       val rowVariance = Math.max(covariance(row * cols + row), 1e-16)
       var col = 0
       while col < cols do
         val colVariance = Math.max(covariance(col * cols + col), 1e-16)
-        out(row * cols + col) = covariance(row * cols + col) / (Math.sqrt(rowVariance) * Math.sqrt(colVariance))
+        out(row, col) = covariance(row * cols + col) / (Math.sqrt(rowVariance) * Math.sqrt(colVariance))
         col += 1
-      out(row * cols + row) = 1.0
+      out(row, row) = 1.0
       row += 1
-    DoubleMatrix.unsafe(cols, cols, out)
+    out.result()
 
-  private def diagonalShrink(correlation: DoubleMatrix): ShrinkageResult =
+  private def diagonalShrink(correlation: DMat): ShrinkageResult =
     val cols = correlation.cols
     var count = 0
     var sum = 0.0
@@ -209,14 +207,14 @@ object ConnectivityEstimators:
       if !denom.isFinite || denom <= 0.0 then 0.0
       else Math.max(0.0, Math.min(1.0, variance / denom))
 
-    val out = correlation.copyData
+    val out = Matrix.newBuilder(correlation.rows, correlation.cols)
     row = 0
     while row < cols do
       var col = 0
       while col < cols do
-        out(row * cols + col) =
+        out(row, col) =
           if row == col then 1.0
           else (1.0 - alpha) * correlation(row, col)
         col += 1
       row += 1
-    ShrinkageResult(DoubleMatrix.unsafe(correlation.rows, correlation.cols, out), alpha)
+    ShrinkageResult(out.result(), alpha)

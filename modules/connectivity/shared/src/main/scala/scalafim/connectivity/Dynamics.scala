@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 object DynamicConnectivityEstimators:
   def slidingWindowCorrelation(
@@ -68,15 +68,18 @@ object DynamicConnectivityEstimators:
       yield dynamic
 
   private def windowedSeries(series: ParcelTimeSeries, window: TimeWindow): Either[ConnectivityError, ParcelTimeSeries] =
-    val rows = new Array[Double](window.length * series.nodes)
+    val rows = Matrix.newBuilder(window.length, series.nodes)
     var local = 0
     while local < window.length do
       val source = window.start.value + local
-      System.arraycopy(series.values.dataArray, source * series.nodes, rows, local * series.nodes, series.nodes)
+      var col = 0
+      while col < series.nodes do
+        rows(local, col) = series.values(source, col)
+        col += 1
       local += 1
     val time = TimeAxis.fromSamplePeriod(window.length, series.timeAxis.samplePeriod)
     time.flatMap: axis =>
-      ParcelTimeSeries.from(DoubleMatrix.unsafe(window.length, series.nodes, rows), series.nodeAxis, axis)
+      ParcelTimeSeries.from(rows.result(), series.nodeAxis, axis)
 
   private def sliceWeights(weights: FrameWeights, window: TimeWindow): Either[ConnectivityError, FrameWeights] =
     val out = new Array[Double](window.length)
@@ -87,7 +90,7 @@ object DynamicConnectivityEstimators:
     TimeAxis.fromSamplePeriod(window.length, weights.timeAxis.samplePeriod).flatMap: timeAxis =>
       FrameWeights.from(out.toVector, timeAxis)
 
-  private def outerSnapshot(values: DoubleMatrix, index: Int): DoubleMatrix =
+  private def outerSnapshot(values: DMat, index: Int): DMat =
     val nodes = values.cols
     var denom = 0.0
     var col = 0
@@ -96,19 +99,19 @@ object DynamicConnectivityEstimators:
       denom += value * value
       col += 1
     val scale = if denom.isFinite && denom > 0.0 then 1.0 / denom else 1.0
-    val out = new Array[Double](nodes * nodes)
+    val out = Matrix.newBuilder(nodes, nodes)
     var row = 0
     while row < nodes do
       col = 0
       while col < nodes do
-        out(row * nodes + col) =
+        out(row, col) =
           if row == col then 1.0 else values(index, row) * values(index, col) * scale
         col += 1
       row += 1
-    DoubleMatrix.unsafe(nodes, nodes, out)
+    out.result()
 
   private def ewmaSlices(
-      values: DoubleMatrix,
+      values: DMat,
       timeAxis: TimeAxis,
       space: EdgeSpace,
       estimator: EstimatorSpec,
@@ -161,20 +164,20 @@ object DynamicConnectivityEstimators:
       case Some(value) => Left(value)
       case None        => Right(out.result())
 
-  private def ewmaCorrelationMatrix(covariance: Array[Double], diagonal: Array[Double], nodes: Int): DoubleMatrix =
-    val out = new Array[Double](nodes * nodes)
+  private def ewmaCorrelationMatrix(covariance: Array[Double], diagonal: Array[Double], nodes: Int): DMat =
+    val out = Matrix.newBuilder(nodes, nodes)
     var row = 0
     while row < nodes do
       var col = 0
       while col < nodes do
-        out(row * nodes + col) =
+        out(row, col) =
           if row == col then 1.0
           else
             val denom = Math.sqrt(Math.max(diagonal(row), 1e-12)) * Math.sqrt(Math.max(diagonal(col), 1e-12))
             covariance(row * nodes + col) / denom
         col += 1
       row += 1
-    ConnectivityNumerics.symmetrize(DoubleMatrix.unsafe(nodes, nodes, out))
+    ConnectivityNumerics.symmetrize(out.result())
 
   private def traverseWindows(
       windows: Vector[TimeWindow]

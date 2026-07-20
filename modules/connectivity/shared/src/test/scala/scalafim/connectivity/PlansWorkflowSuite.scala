@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class PlansWorkflowSuite extends munit.FunSuite:
 
@@ -133,7 +133,7 @@ class PlansWorkflowSuite extends munit.FunSuite:
   private def runWith(frameWeights: Boolean = false, nuisance: Boolean = false): RunTimeSeries =
     val axis = NodeAxis.generated(2).toOption.get
     val time = TimeAxis.unsafeSeconds(4, 1.0)
-    val values = DoubleMatrix.fromRows(Vector(
+    val values = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0),
       Vector(2.0, 3.0),
       Vector(3.0, 4.0),
@@ -143,6 +143,6 @@ class PlansWorkflowSuite extends munit.FunSuite:
     val weights =
       if frameWeights then Some(FrameWeights.from(Vector(1.0, 1.0, 1.0, 1.0), time).toOption.get) else None
     val nuisanceMatrix =
-      if nuisance then Some(NuisanceMatrix.from(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0), Vector(0.0))), time, Vector("intercept")).toOption.get)
+      if nuisance then Some(NuisanceMatrix.from(GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0), Vector(0.0))), time, Vector("intercept")).toOption.get)
       else None
     RunTimeSeries(RunId.unsafe("run-1"), series, weights, nuisanceMatrix)

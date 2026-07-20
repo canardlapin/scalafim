@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class AriadnePortSyntheticSuite extends munit.FunSuite:
 
@@ -72,15 +72,15 @@ class AriadnePortSyntheticSuite extends munit.FunSuite:
     val design =
       ConnectivityDesign.from(
         "trait",
-        DoubleMatrix.fromRows(x.map(value => Vector(value))),
-        Some(DoubleMatrix.fromRows(x.map(_ => Vector(1.0))))
+        GaleTestMatrix.fromRows(x.map(value => Vector(value))),
+        Some(GaleTestMatrix.fromRows(x.map(_ => Vector(1.0))))
       ).toOption.get
     val nullTrait = Vector(-1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0)
     val shuffled =
       ConnectivityDesign.from(
         "trait.null",
-        DoubleMatrix.fromRows(nullTrait.map(value => Vector(value))),
-        Some(DoubleMatrix.fromRows(x.map(_ => Vector(1.0))))
+        GaleTestMatrix.fromRows(nullTrait.map(value => Vector(value))),
+        Some(GaleTestMatrix.fromRows(x.map(_ => Vector(1.0))))
       ).toOption.get
 
     val edgewise = ConnectivityInference.edgewiseF(set, design).toOption.get
@@ -194,15 +194,18 @@ class AriadnePortSyntheticSuite extends munit.FunSuite:
   private def series(rows: Vector[Vector[Double]]): ParcelTimeSeries =
     val axis = NodeAxis.generated(rows.head.length).toOption.get
     val time = TimeAxis.unsafeSeconds(rows.length, 1.0)
-    ParcelTimeSeries.from(DoubleMatrix.fromRows(rows), axis, time).toOption.get
+    ParcelTimeSeries.from(GaleTestMatrix.fromRows(rows), axis, time).toOption.get
 
-  private def assertFinite(matrix: DoubleMatrix): Unit =
-    var i = 0
-    while i < matrix.dataArray.length do
-      assert(matrix.dataArray(i).isFinite)
-      i += 1
+  private def assertFinite(matrix: DMat): Unit =
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        assert(matrix(row, col).isFinite)
+        col += 1
+      row += 1
 
-  private def assertSymmetricUnitDiagonal(matrix: DoubleMatrix, tol: Double): Unit =
+  private def assertSymmetricUnitDiagonal(matrix: DMat, tol: Double): Unit =
     var row = 0
     while row < matrix.rows do
       assertEqualsDouble(matrix(row, row), 1.0, tol)

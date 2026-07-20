@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 final case class EventWeighting private (quantile: Double, power: Double):
   def description: String =
@@ -21,7 +21,7 @@ object EventWeighting:
     from(quantile, power).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object EventTimeSeries:
-  def standardized(values: DoubleMatrix): DoubleMatrix =
+  def standardized(values: DMat): DMat =
     val rows = values.rows
     val cols = values.cols
     val means = new Array[Double](cols)
@@ -55,17 +55,17 @@ object EventTimeSeries:
       scales(col) = if sd.isFinite && sd > 0.0 then sd else 1.0
       col += 1
 
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
     row = 0
     while row < rows do
       col = 0
       while col < cols do
-        out(row * cols + col) = (values(row, col) - means(col)) / scales(col)
+        out(row, col) = (values(row, col) - means(col)) / scales(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(rows, cols, out)
+    out.result()
 
-  def energy(standardizedValues: DoubleMatrix): Either[ConnectivityError, Vector[Double]] =
+  def energy(standardizedValues: DMat): Either[ConnectivityError, Vector[Double]] =
     if standardizedValues.rows <= 0 then Left(ConnectivityError.InvalidDimension("ETS sample count", standardizedValues.rows))
     else if standardizedValues.cols < 2 then Left(ConnectivityError.InvalidDimension("ETS node count", standardizedValues.cols))
     else
@@ -216,10 +216,10 @@ object EventTimeSeries:
       out.toVector
 
   private def meanOuterProduct(
-      z: DoubleMatrix,
+      z: DMat,
       eventIndices: Vector[SampleIndex],
       lag: Int
-  ): Either[ConnectivityError, DoubleMatrix] =
+  ): Either[ConnectivityError, DMat] =
     val rows = z.rows
     val cols = z.cols
     val selected =
@@ -229,7 +229,7 @@ object EventTimeSeries:
       else eventIndices.filter(_.value >= lag)
     if selected.isEmpty then Left(ConnectivityError.InvalidPlan("no frames remain after event/lag filtering"))
     else
-      val out = new Array[Double](cols * cols)
+      val out = Matrix.newBuilder(cols, cols)
       var idx = 0
       while idx < selected.length do
         val t = selected(idx).value
@@ -239,13 +239,16 @@ object EventTimeSeries:
           val left = z(t, row)
           var col = 0
           while col < cols do
-            out(row * cols + col) += left * z(tp, col)
+            out(row, col) = out(row, col) + left * z(tp, col)
             col += 1
           row += 1
         idx += 1
       val scale = 1.0 / selected.length.toDouble
-      var i = 0
-      while i < out.length do
-        out(i) *= scale
-        i += 1
-      Right(DoubleMatrix.unsafe(cols, cols, out))
+      var row = 0
+      while row < cols do
+        var col = 0
+        while col < cols do
+          out(row, col) = out(row, col) * scale
+          col += 1
+        row += 1
+      Right(out.result())

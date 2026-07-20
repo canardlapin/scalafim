@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class EdgeVectorizerSuite extends munit.FunSuite:
 
@@ -78,7 +78,7 @@ class EdgeVectorizerSuite extends munit.FunSuite:
 
   test("fromMatrix rejects shape mismatches") {
     val space = EdgeSpace.directed(NodeAxis.generated(3).toOption.get).toOption.get
-    val bad = DoubleMatrix.zeros(3, 2)
+    val bad = Matrix.zeros(3, 2)
 
     assert(EdgeVectorizer.fromMatrix(bad, space).isLeft)
   }

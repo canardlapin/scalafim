@@ -1,13 +1,13 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 import scalafim.connectivity.fixtures.AriadneCoreFixtures
 
 class AriadneParitySuite extends munit.FunSuite:
 
   test("Ariadne compatibility order locks conn_set upper-triangle semantics") {
     val axis = NodeAxis.generated(4).toOption.get
-    val matrix = DoubleMatrix.fromRows(Vector(
+    val matrix = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0, 3.0, 4.0),
       Vector(5.0, 6.0, 7.0, 8.0),
       Vector(9.0, 10.0, 11.0, 12.0),
@@ -22,7 +22,7 @@ class AriadneParitySuite extends munit.FunSuite:
 
   test("Ariadne compatibility order locks directed off-diagonal semantics") {
     val axis = NodeAxis.generated(3).toOption.get
-    val matrix = DoubleMatrix.fromRows(Vector(
+    val matrix = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0, 3.0),
       Vector(4.0, 5.0, 6.0),
       Vector(7.0, 8.0, 9.0)
@@ -37,7 +37,7 @@ class AriadneParitySuite extends munit.FunSuite:
   test("Ariadne compatibility order locks conn_rect_set as.vector semantics") {
     val seeds = NodeAxis.generated(2, "seed").toOption.get
     val rois = NodeAxis.generated(3, "roi").toOption.get
-    val matrix = DoubleMatrix.fromRows(Vector(
+    val matrix = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0, 3.0),
       Vector(4.0, 5.0, 6.0)
     ))
@@ -75,7 +75,7 @@ class AriadneParitySuite extends munit.FunSuite:
     assert(AriadneCoreFixtures.notes.exists(_.contains("not ScalaFIM contracts")))
   }
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0
@@ -86,7 +86,7 @@ class AriadneParitySuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def weightedCorrelation(rows: Vector[Vector[Double]], weights: Vector[Double]): DoubleMatrix =
+  private def weightedCorrelation(rows: Vector[Vector[Double]], weights: Vector[Double]): DMat =
     val rowCount = rows.length
     val colCount = rows.head.length
     val weightSum = weights.sum
@@ -124,9 +124,9 @@ class AriadneParitySuite extends munit.FunSuite:
         col += 1
       out(row * colCount + row) = 1.0
       row += 1
-    DoubleMatrix.unsafe(colCount, colCount, out)
+    GaleTestMatrix.fromArray(colCount, colCount, out)
 
-  private def diagonalShrinkageCorrelation(rows: Vector[Vector[Double]], weights: Vector[Double]): DoubleMatrix =
+  private def diagonalShrinkageCorrelation(rows: Vector[Vector[Double]], weights: Vector[Double]): DMat =
     val correlation = weightedCorrelation(rows, weights)
     val off = Vector(correlation(0, 1), correlation(0, 2), correlation(1, 2))
     val mean = off.sum / off.length
@@ -146,4 +146,4 @@ class AriadneParitySuite extends munit.FunSuite:
           else (1.0 - alpha) * correlation(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(correlation.rows, correlation.cols, out)
+    GaleTestMatrix.fromArray(correlation.rows, correlation.cols, out)

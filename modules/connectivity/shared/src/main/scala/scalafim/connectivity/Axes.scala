@@ -4,8 +4,8 @@ import scala.collection.mutable
 
 import scalafim.graph.BasisError
 import scalafim.graph.VertexBasis
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.{DMat, Matrix}
+import gale.linalg.{DVec, Vec}
 
 final case class NodeSpec(id: NodeId, label: String, system: Option[SystemId] = None):
   require(label.trim.nonEmpty, "node label must be non-empty")
@@ -170,7 +170,7 @@ object RunAxis:
   def unsafe(runs: Iterable[RunId]): RunAxis =
     from(runs).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final class FrameWeights private (val timeAxis: TimeAxis, val values: DoubleVector):
+final class FrameWeights private (val timeAxis: TimeAxis, val values: DVec):
   def length: Int =
     values.length
 
@@ -179,7 +179,7 @@ final class FrameWeights private (val timeAxis: TimeAxis, val values: DoubleVect
 
 object FrameWeights:
   def uniform(timeAxis: TimeAxis): FrameWeights =
-    new FrameWeights(timeAxis, DoubleVector.fromSeq(Vector.fill(timeAxis.sampleCount)(1.0)))
+    new FrameWeights(timeAxis, DVec.fromSeq(Vector.fill(timeAxis.sampleCount)(1.0)))
 
   def from(values: Iterable[Double], timeAxis: TimeAxis): Either[ConnectivityError, FrameWeights] =
     val vector = values.toVector
@@ -199,19 +199,19 @@ object FrameWeights:
 
       error match
         case Some(value) => Left(value)
-        case None        => Right(new FrameWeights(timeAxis, DoubleVector.fromSeq(vector)))
+        case None        => Right(new FrameWeights(timeAxis, DVec.fromSeq(vector)))
 
 final class NuisanceMatrix private (
     val timeAxis: TimeAxis,
     val columnLabels: Vector[String],
-    val values: DoubleMatrix
+    val values: DMat
 ):
   def cols: Int =
     values.cols
 
 object NuisanceMatrix:
   def from(
-      values: DoubleMatrix,
+      values: DMat,
       timeAxis: TimeAxis,
       columnLabels: Iterable[String]
   ): Either[ConnectivityError, NuisanceMatrix] =
@@ -229,7 +229,7 @@ object NuisanceMatrix:
 final class ParcelTimeSeries private (
     val nodeAxis: NodeAxis,
     val timeAxis: TimeAxis,
-    val values: DoubleMatrix
+    val values: DMat
 ):
   def samples: Int =
     timeAxis.sampleCount
@@ -239,7 +239,7 @@ final class ParcelTimeSeries private (
 
 object ParcelTimeSeries:
   def from(
-      values: DoubleMatrix,
+      values: DMat,
       nodeAxis: NodeAxis,
       timeAxis: TimeAxis
   ): Either[ConnectivityError, ParcelTimeSeries] =
@@ -300,11 +300,14 @@ object MultiRunTimeSeries:
         case Some(value) => Left(value)
         case None        => Right(new MultiRunTimeSeries(values))
 
-private[connectivity] def firstNonFinite(matrix: DoubleMatrix, role: String): Option[ConnectivityError] =
-  var index = 0
+private[connectivity] def firstNonFinite(matrix: DMat, role: String): Option[ConnectivityError] =
+  var row = 0
   var error = Option.empty[ConnectivityError]
-  while index < matrix.dataArray.length && error.isEmpty do
-    val value = matrix.dataArray(index)
-    if !value.isFinite then error = Some(ConnectivityError.NonFiniteValue(role, index, value))
-    index += 1
+  while row < matrix.rows && error.isEmpty do
+    var col = 0
+    while col < matrix.cols && error.isEmpty do
+      val value = matrix(row, col)
+      if !value.isFinite then error = Some(ConnectivityError.NonFiniteValue(role, row * matrix.cols + col, value))
+      col += 1
+    row += 1
   error

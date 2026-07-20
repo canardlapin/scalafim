@@ -2,7 +2,7 @@ package scalafim.connectivity.scenarios
 
 import scalafim.connectivity.*
 import scalafim.connectivity.fixtures.AriadneCoreFixtures
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class AriadneCorLwScenarioSuite extends munit.FunSuite:
 
@@ -16,7 +16,7 @@ class AriadneCorLwScenarioSuite extends munit.FunSuite:
       TimeAxis.fromSeconds(AriadneCoreFixtures.weightedInputRows.length, trSeconds = 0.8).toOption.get
     val series =
       ParcelTimeSeries.from(
-        DoubleMatrix.fromRows(AriadneCoreFixtures.weightedInputRows),
+        GaleTestMatrix.fromRows(AriadneCoreFixtures.weightedInputRows),
         nodeAxis,
         timeAxis
       ).toOption.get
@@ -41,7 +41,7 @@ class AriadneCorLwScenarioSuite extends munit.FunSuite:
     assertEqualsDouble(ariadneEdges(2), AriadneCoreFixtures.diagonalShrinkageCorrelation(1)(2), 1e-12)
   }
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: Vector[Vector[Double]], tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
     var row = 0

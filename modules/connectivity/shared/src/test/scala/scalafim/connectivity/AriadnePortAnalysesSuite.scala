@@ -1,11 +1,11 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class AriadnePortAnalysesSuite extends munit.FunSuite:
 
   test("ETS energy uses the pairwise edge-product identity") {
-    val z = DoubleMatrix.fromRows(Vector(
+    val z = GaleTestMatrix.fromRows(Vector(
       Vector(1.0, 2.0, 3.0),
       Vector(0.0, -1.0, 4.0)
     ))
@@ -74,8 +74,8 @@ class AriadnePortAnalysesSuite extends munit.FunSuite:
   test("edgewise and global connectivity inference detect a planted linear edge effect") {
     val set = plantedConnectivitySet()
     val x = Vector(-2.5, -1.5, -0.5, 0.5, 1.5, 2.5)
-    val effect = DoubleMatrix.fromRows(x.map(value => Vector(value)))
-    val nuisance = DoubleMatrix.fromRows(x.map(_ => Vector(1.0)))
+    val effect = GaleTestMatrix.fromRows(x.map(value => Vector(value)))
+    val nuisance = GaleTestMatrix.fromRows(x.map(_ => Vector(1.0)))
     val design = ConnectivityDesign.from("dose", effect, Some(nuisance)).toOption.get
 
     val edgewise = ConnectivityInference.edgewiseF(set, design).toOption.get
@@ -129,7 +129,7 @@ class AriadnePortAnalysesSuite extends munit.FunSuite:
   ): ParcelTimeSeries =
     val axis = NodeAxis.generated(rows.head.length).toOption.get
     val time = TimeAxis.unsafeSeconds(rows.length, 1.0)
-    ParcelTimeSeries.from(DoubleMatrix.fromRows(rows), axis, time).toOption.get
+    ParcelTimeSeries.from(GaleTestMatrix.fromRows(rows), axis, time).toOption.get
 
   private def plantedConnectivitySet(): ConnectivitySet =
     val axis = NodeAxis.generated(3).toOption.get
@@ -142,7 +142,7 @@ class AriadnePortAnalysesSuite extends munit.FunSuite:
     }
     ConnectivitySet.from(subjects).toOption.get
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0

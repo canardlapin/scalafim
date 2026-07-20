@@ -2,34 +2,45 @@ package scalafim.connectivity
 
 import scala.util.Sorting
 
-import scalafim.linalg.Cholesky
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.JacobiSymmetricEigenSolver
-import scalafim.linalg.LinearAlgebraError
-import scalafim.linalg.SymmetricEigenResult
-import scalafim.linalg.Tolerance
+import gale.linalg.{CholeskyOptions, DMat, Matrix}
+import gale.spectral.{Eigen, EigenDecomposition, EigenSelection}
 
 private[connectivity] object ConnectivityNumerics:
   def invertSymmetricPositiveDefinite(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       tolerance: Double = 1e-10
-  ): Either[ConnectivityError, DoubleMatrix] =
+  ): Either[ConnectivityError, DMat] =
     if matrix.rows != matrix.cols then
       Left(ConnectivityError.MatrixShapeMismatch(s"SPD inverse expected a square matrix, got ${matrix.rows}x${matrix.cols}"))
     else
       val sym = symmetrize(matrix)
-      val eye = DoubleMatrix.eye(matrix.rows)
+      val eye = Matrix.eye(matrix.rows)
       var attempt = 0
       var jitter = 0.0
-      var out = Option.empty[DoubleMatrix]
+      var out = Option.empty[DMat]
       var last = Option.empty[String]
       while attempt < 8 && out.isEmpty do
         val candidate =
-          if jitter == 0.0 then sym else sym.addToDiagonal(jitter)
-        Cholesky.decompose(candidate, tol = tolerance) match
-          case Right(chol) => out = Some(chol.solve(eye))
+          if jitter == 0.0 then sym
+          else
+            val builder = Matrix.newBuilder(sym.rows, sym.cols)
+            var row = 0
+            while row < sym.rows do
+              var col = 0
+              while col < sym.cols do
+                builder(row, col) = sym(row, col) + (if row == col then jitter else 0.0)
+                col += 1
+              row += 1
+            builder.result()
+        candidate.cholesky(CholeskyOptions(tolerance)) match
+          case Right(chol) =>
+            chol.solve(eye) match
+              case Right(value) => out = Some(value)
+              case Left(error)  =>
+                last = Some(error.getMessage)
+                jitter = if jitter == 0.0 then tolerance else jitter * 10.0
           case Left(error) =>
-            last = Some(error.message)
+            last = Some(error.getMessage)
             jitter = if jitter == 0.0 then tolerance else jitter * 10.0
         attempt += 1
       out match
@@ -37,39 +48,38 @@ private[connectivity] object ConnectivityNumerics:
         case None        => Left(ConnectivityError.InvalidPlan(s"could not invert SPD matrix: ${last.getOrElse("unknown failure")}"))
 
   def symmetricEigen(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       tolerance: Double = 1e-10,
       maxSweeps: Int = 100
-  ): Either[ConnectivityError, SymmetricEigenResult] =
+  ): Either[ConnectivityError, EigenDecomposition] =
     if matrix.rows != matrix.cols then
       Left(ConnectivityError.MatrixShapeMismatch(s"symmetric eigen expected a square matrix, got ${matrix.rows}x${matrix.cols}"))
     else if maxSweeps < 0 then
       Left(ConnectivityError.InvalidScalar("max eigensolver sweeps", maxSweeps.toDouble, "must be non-negative"))
     else
-      Tolerance(tolerance)
-        .left
-        .map(toConnectivityError)
-        .flatMap { checkedTolerance =>
-          JacobiSymmetricEigenSolver(checkedTolerance, maxSweeps)
-            .decompose(symmetrize(matrix))
-            .left
-            .map(toConnectivityError)
-        }
+      if !tolerance.isFinite || tolerance < 0.0 then
+        Left(ConnectivityError.InvalidScalar("eigensolver tolerance", tolerance, "must be finite and non-negative"))
+      else
+        Eigen
+          .eigSymmetric(symmetrize(matrix), EigenSelection.All)
+          .left
+          .map(error => ConnectivityError.InvalidPlan(s"symmetric eigensolver failed: ${error.getMessage}"))
 
-  def symmetrize(matrix: DoubleMatrix): DoubleMatrix =
+  def symmetrize(matrix: DMat): DMat =
     require(matrix.rows == matrix.cols, "matrix must be square")
     val n = matrix.rows
-    val out = matrix.copyData
+    val out = Matrix.newBuilder(n, n)
     var row = 0
     while row < n do
       var col = row + 1
       while col < n do
         val value = 0.5 * (matrix(row, col) + matrix(col, row))
-        out(row * n + col) = value
-        out(col * n + row) = value
+        out(row, col) = value
+        out(col, row) = value
         col += 1
+      out(row, row) = matrix(row, row)
       row += 1
-    DoubleMatrix.unsafe(n, n, out)
+    out.result()
 
   def quantile(values: Array[Double], p: Double): Either[ConnectivityError, Double] =
     if values.isEmpty then Left(ConnectivityError.InvalidDimension("quantile sample count", 0))
@@ -110,7 +120,7 @@ private[connectivity] object ConnectivityNumerics:
       pos -= 1
     adjusted.toVector
 
-  def doubleCenter(matrix: DoubleMatrix): DoubleMatrix =
+  def doubleCenter(matrix: DMat): DMat =
     val rows = matrix.rows
     val cols = matrix.cols
     val rowMeans = new Array[Double](rows)
@@ -136,50 +146,15 @@ private[connectivity] object ConnectivityNumerics:
       col += 1
     grand /= (rows * cols).toDouble
 
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
     row = 0
     while row < rows do
       col = 0
       while col < cols do
-        out(row * cols + col) = matrix(row, col) - rowMeans(row) - colMeans(col) + grand
+        out(row, col) = matrix(row, col) - rowMeans(row) - colMeans(col) + grand
         col += 1
       row += 1
-    DoubleMatrix.unsafe(rows, cols, out)
-
-  private def toConnectivityError(error: LinearAlgebraError): ConnectivityError =
-    error match
-      case LinearAlgebraError.InvalidMatrixShape(rows, cols) =>
-        ConnectivityError.MatrixShapeMismatch(s"invalid matrix shape ${rows}x${cols}")
-      case LinearAlgebraError.MatrixTooLarge(rows, cols) =>
-        ConnectivityError.MatrixShapeMismatch(s"matrix dimensions are too large for row-major storage: ${rows}x${cols}")
-      case LinearAlgebraError.MatrixStorageLengthMismatch(shape, actual) =>
-        ConnectivityError.MatrixShapeMismatch(s"data length $actual != rows*cols ${shape.entries}")
-      case LinearAlgebraError.NonSquareMatrix(rows, cols) =>
-        ConnectivityError.MatrixShapeMismatch(s"matrix must be square, got ${rows}x${cols}")
-      case LinearAlgebraError.NonSymmetricMatrix(row, col, left, right) =>
-        ConnectivityError.NonSymmetricMatrix(row, col, left, right)
-      case LinearAlgebraError.NonPositiveDefinite(_, value) =>
-        ConnectivityError.InvalidPlan(s"matrix is not positive definite: $value")
-      case LinearAlgebraError.RankDeficient(requiredRank, actualRank) =>
-        ConnectivityError.InvalidPlan(s"matrix rank $actualRank is less than required rank $requiredRank")
-      case LinearAlgebraError.InvalidDecompositionRank(requested, limit) =>
-        ConnectivityError.InvalidPlan(s"requested decomposition rank $requested, but at most $limit component(s) are available")
-      case LinearAlgebraError.DimensionMismatch(role, expected, actual) =>
-        ConnectivityError.MatrixShapeMismatch(s"${role.label} expected $expected but got $actual")
-      case LinearAlgebraError.IndexOutOfBounds(axis, index, limit) =>
-        ConnectivityError.InvalidPlan(s"${axis.label} index $index out of bounds for size $limit")
-      case LinearAlgebraError.InvalidParameter(parameter, value) =>
-        ConnectivityError.InvalidScalar(parameter.label, value, "must be finite and non-negative")
-      case LinearAlgebraError.NonFiniteValue(role, index, value) =>
-        ConnectivityError.NonFiniteValue(role.label, index, value)
-      case LinearAlgebraError.SolverDidNotConverge(method, maxIterations) =>
-        ConnectivityError.InvalidPlan(s"$method did not converge within $maxIterations iteration(s)")
-      case LinearAlgebraError.BackendFailure(backend, detail) =>
-        ConnectivityError.InvalidPlan(s"$backend backend failed: $detail")
-      case LinearAlgebraError.OperatorOrderUnsupported(method, order, maximum) =>
-        ConnectivityError.InvalidPlan(s"$method supports operator order at most $maximum, got $order")
-      case LinearAlgebraError.OperatorApplicationFailed(detail) =>
-        ConnectivityError.InvalidPlan(s"operator application failed: $detail")
+    out.result()
 
   private def regularizedIncompleteBeta(a: Double, b: Double, x: Double): Double =
     if x <= 0.0 then 0.0

@@ -1,7 +1,7 @@
 package scalafim.connectivity
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.{DMat, Matrix}
+import gale.linalg.{DVec, Vec}
 
 enum EdgeTopology:
   case Undirected
@@ -146,7 +146,7 @@ object EdgeSpace:
 
 final class EdgeVector private (
     val space: EdgeSpace,
-    val values: DoubleVector
+    val values: DVec
 ):
   def length: Int =
     values.length
@@ -155,7 +155,7 @@ final class EdgeVector private (
     values(index)
 
   def toVector: Vector[Double] =
-    values.toVector
+    values.toSeq.toVector
 
 object EdgeVector:
   def from(space: EdgeSpace, values: Iterable[Double]): Either[ConnectivityError, EdgeVector] =
@@ -170,13 +170,18 @@ object EdgeVector:
         i += 1
       error match
         case Some(value) => Left(value)
-        case None        => Right(new EdgeVector(space, DoubleVector.fromSeq(vector)))
+        case None        => Right(new EdgeVector(space, DVec.fromSeq(vector)))
 
   private[connectivity] def unsafe(space: EdgeSpace, values: Array[Double]): EdgeVector =
-    new EdgeVector(space, DoubleVector.unsafe(values))
+    val out = Vec.newBuilder(values.length)
+    var i = 0
+    while i < values.length do
+      out(i) = values(i)
+      i += 1
+    new EdgeVector(space, out.result())
 
 object EdgeVectorizer:
-  def fromMatrix(matrix: DoubleMatrix, space: EdgeSpace): Either[ConnectivityError, EdgeVector] =
+  def fromMatrix(matrix: DMat, space: EdgeSpace): Either[ConnectivityError, EdgeVector] =
     if matrix.rows != space.rows || matrix.cols != space.cols then
       Left(ConnectivityError.MatrixShapeMismatch(s"edge space expected ${space.rows}x${space.cols} matrix, got ${matrix.rows}x${matrix.cols}"))
     else
@@ -191,20 +196,19 @@ object EdgeVectorizer:
             i += 1
           Right(EdgeVector.unsafe(space, out))
 
-  def toMatrix(vector: EdgeVector, diagonalPolicy: DiagonalPolicy = DiagonalPolicy.StructuralZero): DoubleMatrix =
-    val matrix = DoubleMatrix.zeros(vector.space.rows, vector.space.cols)
-    val out = matrix.dataArray
+  def toMatrix(vector: EdgeVector, diagonalPolicy: DiagonalPolicy = DiagonalPolicy.StructuralZero): DMat =
+    val out = Matrix.newBuilder(vector.space.rows, vector.space.cols)
     var i = 0
     while i < vector.space.edges.length do
       val edge = vector.space.edges(i)
-      out(edge.sourceIndex * vector.space.cols + edge.targetIndex) = vector(i)
+      out(edge.sourceIndex, edge.targetIndex) = vector(i)
       if vector.space.topology == EdgeTopology.Undirected then
-        out(edge.targetIndex * vector.space.cols + edge.sourceIndex) = vector(i)
+        out(edge.targetIndex, edge.sourceIndex) = vector(i)
       i += 1
     if vector.space.topology != EdgeTopology.Rectangular then
       diagonalPolicy.materializedValue.foreach: value =>
         var diag = 0
         while diag < vector.space.rows do
-          out(diag * vector.space.cols + diag) = value
+          out(diag, diag) = value
           diag += 1
-    DoubleMatrix.unsafe(vector.space.rows, vector.space.cols, out)
+    out.result()
