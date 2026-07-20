@@ -329,7 +329,8 @@ object FormCertificates:
       row += 1
     Math.sqrt(sum)
 
-sealed trait FormEvidence
+sealed trait OperatorEvidence
+sealed trait FormEvidence extends OperatorEvidence
 sealed trait SymmetricEvidence extends FormEvidence
 sealed trait PsdEvidence extends SymmetricEvidence
 sealed trait SpdEvidence extends PsdEvidence
@@ -343,7 +344,8 @@ sealed trait AssumedSymmetric extends SymmetricEvidence
 sealed trait AssumedPsd extends AssumedSymmetric with PsdEvidence
 sealed trait AssumedSpd extends AssumedPsd with SpdEvidence
 
-sealed trait FormRoleTag
+trait OperatorRoleTag
+sealed trait FormRoleTag extends OperatorRoleTag
 sealed trait BilinearFormRole extends FormRoleTag
 sealed trait SymmetricFormRole extends FormRoleTag
 sealed trait SemiMetricRole extends FormRoleTag
@@ -804,6 +806,24 @@ object Unsafe:
         PositivityStatus.Spd
       )
     }
+
+  def assumeSymmetric[From <: Coordinate, To <: Coordinate, R <: OperatorRoleTag](
+      operator: Op[From, To, R, UncheckedEvidence],
+      reason: String
+  )(using SelfDualPorts[From, To]): Either[SemanticError, Op[From, To, R, AssumedSymmetric]] =
+    Op.assume(operator, "symmetric", reason)
+
+  def assumePsd[From <: Coordinate, To <: Coordinate, R <: OperatorRoleTag](
+      operator: Op[From, To, R, UncheckedEvidence],
+      reason: String
+  )(using SelfDualPorts[From, To]): Either[SemanticError, Op[From, To, R, AssumedPsd]] =
+    Op.assume(operator, "psd", reason)
+
+  def assumeSpd[From <: Coordinate, To <: Coordinate, R <: OperatorRoleTag](
+      operator: Op[From, To, R, UncheckedEvidence],
+      reason: String
+  )(using SelfDualPorts[From, To]): Either[SemanticError, Op[From, To, R, AssumedSpd]] =
+    Op.assume(operator, "spd", reason)
 
   def assumeSameRows[Left <: SemanticSpace, Right <: SemanticSpace](
       left: SpaceEvidence[Left],

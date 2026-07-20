@@ -7,7 +7,9 @@ import gale.linalg.LinAlgError
 import gale.linalg.LinearOperator
 import gale.linalg.Matrix
 import gale.linalg.MutableDVec
+import gale.linalg.KroneckerLinearOperator
 import gale.sparse.CSR
+import gale.sparse.Diagonal
 
 /** Stable identity for an immutable numerical value or externally versioned object. */
 opaque type ValueId = String
@@ -153,6 +155,8 @@ object OperatorRepresentation:
   private[multivar] def fromLinearMap(operator: DoubleLinearOperator): OperatorRepresentation =
     operator match
       case _: CSR                     => OperatorRepresentation.Sparse
+      case _: Diagonal                => OperatorRepresentation.Diagonal
+      case _: KroneckerLinearOperator => OperatorRepresentation.Kronecker
       case _: BlockStructuredOperator => OperatorRepresentation.Block
       case _: DMat                    => OperatorRepresentation.Dense
       case _                          => OperatorRepresentation.MatrixFree

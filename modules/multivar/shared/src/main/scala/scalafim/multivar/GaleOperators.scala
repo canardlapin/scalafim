@@ -22,6 +22,8 @@ private final case class TaggedBlockOperator(delegate: DoubleLinearOperator) ext
     delegate.applyTo(input, output)
   override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
     delegate.transposeApplyTo(input, output)
+  override def adjoint: DoubleLinearOperator =
+    TaggedBlockOperator(delegate.adjoint)
 
 private[multivar] object GaleOperators:
   def blockDiagonal(
