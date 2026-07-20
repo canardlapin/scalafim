@@ -214,7 +214,7 @@ class PlanSuite extends munit.FunSuite:
       case FitArtifact.GenPcaArtifact(_, fit) =>
         assertEquals(fit.projection.map.domain.id.value, "patterns.pair")
         assertEquals(fit.componentCount, 1)
-        assertEquals(fit.projection.diagnostics.flatMap(_.backend), Some("eigen"))
+        assertEquals(fit.projection.diagnostics.flatMap(_.backend), Some("operator-gale-generalized-eigen"))
         assertEquals(fit.projection.diagnostics.flatMap(_.storagePolicy), Some(StoragePolicy.AllowDense))
       case _ =>
         fail("expected GenPCA artifact")

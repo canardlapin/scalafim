@@ -188,20 +188,23 @@ object GenPca:
     val limit = Math.min(diagram.rows, diagram.cols)
     if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
     else
-      fitResolved(
-        diagram.table,
-        components,
-        diagram.rowMetric,
-        diagram.columnMetric,
-        preproc,
-        backend,
-        policy,
-        eigenSolver,
-        svdSolver,
-        diagram.columnSpace,
-        method = "genpca",
-        latentId = "genpca.latent"
-      )
+      for
+        fitted <- preproc.fit(diagram.table)
+        transformed <- fitted.transform(diagram.table, policy = policy)
+        rankTolerance <- GpcaRankTolerance.fromBackend(backend)
+        problem <- DynamicGpcaProblem.from(
+          transformed,
+          diagram.table,
+          fitted,
+          diagram.rowSpace,
+          diagram.columnSpace,
+          diagram.rowMetric,
+          diagram.columnMetric,
+          ValueIdentity.source(ValueId.unsafe("genpca.compatibility.table")),
+          SemanticProvenance.source("duality-diagram-gpca-delegate")
+        )
+        fit <- problem.fit(components, rankTolerance)
+      yield fit.compatibility
 
   /** Fit a generalized PCA of `x` under a row metric M (n x n) and column metric A (p x p).
     *
@@ -341,7 +344,7 @@ object GenPca:
           engine
             .decompose(transformed, rm, cm, components.value, eigenSolver, policy)
             .flatMap(
-              assemble(
+              assembleCompatibility(
                 x,
                 fitted,
                 rm,
@@ -376,7 +379,7 @@ object GenPca:
     for
       svd <- svdSolver.decompose(transformed, components)
       stats <- transformed.columnStats
-      fit <- assemble(
+      fit <- assembleCompatibility(
         x,
         fitted,
         rm,
@@ -395,7 +398,7 @@ object GenPca:
       )
     yield fit
 
-  private def assemble(
+  private[multivar] def assembleCompatibility(
       x: MatrixView,
       fitted: FittedPreprocessor,
       rm: MvMetric,

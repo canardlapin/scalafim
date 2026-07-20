@@ -29,9 +29,9 @@ parallel representations of the same mathematics:
 - a **legacy numeric mirror** — `MvMetric` / `DualityDiagram` / `MvMap` /
   the raw `GenPca` engine — which is what actually computes.
 
-`SemanticGenPca.fit` prepares the typed diagram and then drops to `legacyDiagram`
-+ `GenPca.fit`. The typed layer is a façade over an engine that speaks a
-different vocabulary, and on top of that seam sits a zoo of per-method estimator
+Historically, `SemanticGenPca.fit` prepared the typed diagram and then dropped
+to `legacyDiagram` + `GenPca.fit`: the typed layer was a façade over an engine
+that spoke a different vocabulary, and on top of that seam sits a zoo of per-method estimator
 types (six named GenPCA result records; `PairedGmd` as a private third engine).
 
 None of that is a wrong idea — it is the residue of building the right basis over
@@ -562,7 +562,7 @@ exercise.
 |---|---|---|
 | Operator/form/map substrate and legacy diagram bridge | `SemanticForms.scala`, `DualityKernels.scala`, `Metric.scala`, `Maps.scala`, `DualityDiagram.scala`, `SemanticDiagram.scala` | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Universal objective/result program | named builders across `SemanticGenPca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
-| GPCA and deflation | `GenPca.scala`, `SemanticGenPca.scala`, `GenPcaSemantics.scala`, `GmdDeflation.scala` | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G` |
+| GPCA and deflation | `GpcaProblem.scala` is the operator-program engine; `SemanticGenPca.scala` delegates to it; `GenPca.scala`, `GenPcaSemantics.scala`, and `GmdDeflation.scala` remain compatibility-only for unmigrated consumers | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
 | Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
 | CPCA | `Cpca.scala` | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3` |

@@ -19,18 +19,7 @@ final class PreparedSemanticDiagram[Rows <: SemanticSpace, Columns <: SemanticSp
     val evidence: Vector[DiagramCertificate],
     val audit: DiagramAudit,
     val provenance: SemanticProvenance
-):
-  def legacyDiagram: Either[DiagramError, DualityDiagram] =
-    DualityDiagram
-      .from(
-        table,
-        rowMetric = Some(rowMetric),
-        columnMetric = Some(columnMetric),
-        rowSpace = Some(rowSpace),
-        columnSpace = Some(columnSpace)
-      )
-      .left
-      .map(DiagramError.Multivar.apply)
+)
 
 object PreparedSemanticDiagram:
   def prepare[Rows <: SemanticSpace, Columns <: SemanticSpace](
@@ -144,6 +133,7 @@ object PreparedSemanticDiagram:
 
 final case class SemanticGenPcaFit[Rows <: SemanticSpace, Columns <: SemanticSpace](
     preparedDiagram: PreparedSemanticDiagram[Rows, Columns],
+    operatorResult: GpcaOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace],
     numericalFit: GenPcaFit,
     result: GenPcaSemanticResult,
     lawDiagnostics: GenPcaLawDiagnostics,
@@ -162,19 +152,13 @@ object SemanticGenPca:
   ): Either[DiagramError, SemanticGenPcaFit[Rows, Columns]] =
     for
       prepared <- PreparedSemanticDiagram.prepare(diagram, storagePolicy, eigenSolver)
-      legacy <- prepared.legacyDiagram
-      fit <- GenPca
-        .fit(
-          legacy,
-          components,
-          PreprocessSpec.Pass,
-          backend,
-          storagePolicy,
-          eigenSolver,
-          svdSolver
-        )
+      tolerance <- GpcaRankTolerance.fromBackend(backend).left.map(DiagramError.Multivar.apply)
+      problem <- PreparedGpcaProblem.from(prepared)
+      operatorFit <- problem
+        .fit(components, tolerance)
         .left
         .map(DiagramError.Multivar.apply)
+      fit = operatorFit.compatibility
       diagnostics <- GenPcaLaws
         .evaluate(prepared.table, fit, lawTolerance)
         .left
@@ -182,6 +166,7 @@ object SemanticGenPca:
     yield
       SemanticGenPcaFit(
         prepared,
+        operatorFit,
         fit,
         fit.semanticResult,
         diagnostics,
