@@ -1,47 +1,42 @@
 package scalafim.graph.linalg
 
-import scala.collection.mutable
-
+import gale.linalg.Vec
+import gale.sparse.COOBuilder
+import gale.sparse.Sparse
 import scalafim.graph.Direction
 import scalafim.graph.Graph
 import scalafim.graph.UndirectedGraph
 import scalafim.graph.DirectedGraph
 import scalafim.graph.VertexIx
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleVector
 
 object GraphOperators:
   def topologyAdjacency[D <: Direction, K, V, E](
       graph: Graph[D, K, V, E]
   ): Either[GraphLinalgError[K], VertexOperator[K, V]] =
-    val rows = mutable.ArrayBuffer.empty[Int]
-    val cols = mutable.ArrayBuffer.empty[Int]
-    val values = mutable.ArrayBuffer.empty[Double]
+    val entries = Sparse.coo(graph.order, graph.order)
     var edgeIndex = 0
     while edgeIndex < graph.size do
       val edge = graph.edge(edgeIndex)
-      append(rows, cols, values, edge.endpoints.first.toInt, edge.endpoints.second.toInt, 1.0)
+      entries.add(edge.endpoints.first.toInt, edge.endpoints.second.toInt, 1.0)
       if graph.direction == Direction.Undirected then
-        append(rows, cols, values, edge.endpoints.second.toInt, edge.endpoints.first.toInt, 1.0)
+        entries.add(edge.endpoints.second.toInt, edge.endpoints.first.toInt, 1.0)
       edgeIndex += 1
-    vertexOperator(graph, rows, cols, values)
+    Right(vertexOperator(graph, entries))
 
   def weightedAdjacency[D <: Direction, K, V, E](
       graph: Graph[D, K, V, E]
   )(using weight: AdjacencyWeight[E]): Either[GraphLinalgError[K], VertexOperator[K, V]] =
     validatedWeights(graph, WeightRequirement.Finite).flatMap: weights =>
-      val rows = mutable.ArrayBuffer.empty[Int]
-      val cols = mutable.ArrayBuffer.empty[Int]
-      val values = mutable.ArrayBuffer.empty[Double]
+      val entries = Sparse.coo(graph.order, graph.order)
       var edgeIndex = 0
       while edgeIndex < graph.size do
         val edge = graph.edge(edgeIndex)
         val value = weights(edgeIndex)
-        append(rows, cols, values, edge.endpoints.first.toInt, edge.endpoints.second.toInt, value)
+        entries.add(edge.endpoints.first.toInt, edge.endpoints.second.toInt, value)
         if graph.direction == Direction.Undirected then
-          append(rows, cols, values, edge.endpoints.second.toInt, edge.endpoints.first.toInt, value)
+          entries.add(edge.endpoints.second.toInt, edge.endpoints.first.toInt, value)
         edgeIndex += 1
-      vertexOperator(graph, rows, cols, values)
+      Right(vertexOperator(graph, entries))
 
   def degree[K, V, E](graph: UndirectedGraph[K, V, E]): VertexSignal[K, V] =
     val values = Array.ofDim[Double](graph.order)
@@ -49,7 +44,7 @@ object GraphOperators:
     while vertex < graph.order do
       values(vertex) = graph.outgoingEdges(VertexIx.unsafe(vertex)).length.toDouble
       vertex += 1
-    new VertexSignal(graph.basis, DoubleVector.unsafe(values))
+    new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def outDegree[K, V, E](graph: DirectedGraph[K, V, E]): VertexSignal[K, V] =
     val values = Array.ofDim[Double](graph.order)
@@ -57,7 +52,7 @@ object GraphOperators:
     while vertex < graph.order do
       values(vertex) = graph.outgoingEdges(VertexIx.unsafe(vertex)).length.toDouble
       vertex += 1
-    new VertexSignal(graph.basis, DoubleVector.unsafe(values))
+    new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def inDegree[K, V, E](graph: DirectedGraph[K, V, E]): VertexSignal[K, V] =
     val values = Array.ofDim[Double](graph.order)
@@ -65,13 +60,14 @@ object GraphOperators:
     while vertex < graph.order do
       values(vertex) = graph.incomingEdges(VertexIx.unsafe(vertex)).length.toDouble
       vertex += 1
-    new VertexSignal(graph.basis, DoubleVector.unsafe(values))
+    new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def strength[K, V, E](
       graph: UndirectedGraph[K, V, E]
   )(using weight: AdjacencyWeight[E]): Either[GraphLinalgError[K], VertexSignal[K, V]] =
     validatedWeights(graph, WeightRequirement.Finite).map: weights =>
-      new VertexSignal(graph.basis, DoubleVector.unsafe(undirectedStrength(graph, weights)))
+      val values = undirectedStrength(graph, weights)
+      new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def outStrength[K, V, E](
       graph: DirectedGraph[K, V, E]
@@ -82,7 +78,7 @@ object GraphOperators:
       while edgeIndex < graph.size do
         values(graph.edge(edgeIndex).endpoints.first.toInt) += weights(edgeIndex)
         edgeIndex += 1
-      new VertexSignal(graph.basis, DoubleVector.unsafe(values))
+      new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def inStrength[K, V, E](
       graph: DirectedGraph[K, V, E]
@@ -93,51 +89,38 @@ object GraphOperators:
       while edgeIndex < graph.size do
         values(graph.edge(edgeIndex).endpoints.second.toInt) += weights(edgeIndex)
         edgeIndex += 1
-      new VertexSignal(graph.basis, DoubleVector.unsafe(values))
+      new VertexSignal(graph.basis, Vec.tabulate(values.length)(values.apply))
 
   def incidence[D <: Direction, K, V, E](
       graph: Graph[D, K, V, E]
   ): Either[GraphLinalgError[K], IncidenceOperator[D, K, V]] =
-    val rows = new Array[Int](graph.size * 2)
-    val cols = new Array[Int](graph.size * 2)
-    val values = new Array[Double](graph.size * 2)
+    val entries = Sparse.coo(graph.order, graph.size)
     var edgeIndex = 0
     while edgeIndex < graph.size do
       val edge = graph.edge(edgeIndex)
-      val offset = edgeIndex * 2
-      rows(offset) = edge.endpoints.first.toInt
-      cols(offset) = edgeIndex
-      values(offset) = -1.0
-      rows(offset + 1) = edge.endpoints.second.toInt
-      cols(offset + 1) = edgeIndex
-      values(offset + 1) = 1.0
+      entries.add(edge.endpoints.first.toInt, edgeIndex, -1.0)
+      entries.add(edge.endpoints.second.toInt, edgeIndex, 1.0)
       edgeIndex += 1
-    CsrMatrix
-      .fromTriplets(graph.order, graph.size, rows, cols, values)
-      .left
-      .map(GraphLinalgError.LinearMapFailure.apply)
-      .map(matrix => new IncidenceOperator(graph.basis, EdgeBasis.fromGraph(graph), matrix))
+    Right(new IncidenceOperator(graph.basis, EdgeBasis.fromGraph(graph), entries.pruneZeros.toCSR()))
 
   def combinatorialLaplacian[K, V, E](
       graph: UndirectedGraph[K, V, E]
   )(using weight: NonNegativeAdjacencyWeight[E]): Either[GraphLinalgError[K], VertexOperator[K, V]] =
     validatedWeights(graph, WeightRequirement.NonNegative).flatMap: weights =>
       val strengths = undirectedStrength(graph, weights)
-      val rows = mutable.ArrayBuffer.empty[Int]
-      val cols = mutable.ArrayBuffer.empty[Int]
-      val values = mutable.ArrayBuffer.empty[Double]
+      val entries = Sparse.coo(graph.order, graph.order)
       var vertex = 0
       while vertex < graph.order do
-        append(rows, cols, values, vertex, vertex, strengths(vertex))
+        entries.add(vertex, vertex, strengths(vertex))
         vertex += 1
       var edgeIndex = 0
       while edgeIndex < graph.size do
         val edge = graph.edge(edgeIndex)
         val value = -weights(edgeIndex)
-        append(rows, cols, values, edge.endpoints.first.toInt, edge.endpoints.second.toInt, value)
-        append(rows, cols, values, edge.endpoints.second.toInt, edge.endpoints.first.toInt, value)
+        entries.add(edge.endpoints.first.toInt, edge.endpoints.second.toInt, value)
+        entries.add(edge.endpoints.second.toInt, edge.endpoints.first.toInt, value)
         edgeIndex += 1
-      vertexOperator(graph, rows, cols, values)
+      Right(vertexOperator(graph, entries))
 
   def normalizedLaplacian[K, V, E](
       graph: UndirectedGraph[K, V, E],
@@ -149,13 +132,11 @@ object GraphOperators:
       firstZeroStrength(graph, strengths, zeroStrengthPolicy) match
         case Some(error) => Left(error)
         case None =>
-          val rows = mutable.ArrayBuffer.empty[Int]
-          val cols = mutable.ArrayBuffer.empty[Int]
-          val values = mutable.ArrayBuffer.empty[Double]
+          val entries = Sparse.coo(graph.order, graph.order)
           var vertex = 0
           while vertex < graph.order do
             if strengths(vertex) > 0.0 || zeroStrengthPolicy == ZeroStrengthPolicy.IdentityOnZeroStrength then
-              append(rows, cols, values, vertex, vertex, 1.0)
+              entries.add(vertex, vertex, 1.0)
             vertex += 1
 
           var edgeIndex = 0
@@ -168,13 +149,13 @@ object GraphOperators:
               kind match
                 case NormalizedLaplacian.Symmetric =>
                   val value = -edgeWeight / Math.sqrt(strengths(left) * strengths(right))
-                  append(rows, cols, values, left, right, value)
-                  append(rows, cols, values, right, left, value)
+                  entries.add(left, right, value)
+                  entries.add(right, left, value)
                 case NormalizedLaplacian.RandomWalk =>
-                  append(rows, cols, values, left, right, -edgeWeight / strengths(left))
-                  append(rows, cols, values, right, left, -edgeWeight / strengths(right))
+                  entries.add(left, right, -edgeWeight / strengths(left))
+                  entries.add(right, left, -edgeWeight / strengths(right))
             edgeIndex += 1
-          vertexOperator(graph, rows, cols, values)
+          Right(vertexOperator(graph, entries))
 
   private def validatedWeights[D <: Direction, K, V, E](
       graph: Graph[D, K, V, E],
@@ -237,27 +218,9 @@ object GraphOperators:
 
   private def vertexOperator[D <: Direction, K, V, E](
       graph: Graph[D, K, V, E],
-      rows: mutable.ArrayBuffer[Int],
-      cols: mutable.ArrayBuffer[Int],
-      values: mutable.ArrayBuffer[Double]
-  ): Either[GraphLinalgError[K], VertexOperator[K, V]] =
-    CsrMatrix
-      .fromTriplets(graph.order, graph.order, rows.toArray, cols.toArray, values.toArray)
-      .left
-      .map(GraphLinalgError.LinearMapFailure.apply)
-      .map(matrix => new VertexOperator(graph.basis, matrix))
-
-  private def append(
-      rows: mutable.ArrayBuffer[Int],
-      cols: mutable.ArrayBuffer[Int],
-      values: mutable.ArrayBuffer[Double],
-      row: Int,
-      col: Int,
-      value: Double
-  ): Unit =
-    rows += row
-    cols += col
-    values += value
+      entries: COOBuilder
+  ): VertexOperator[K, V] =
+    new VertexOperator(graph.basis, entries.pruneZeros.toCSR())
 
 extension [D <: Direction, K, V, E](graph: Graph[D, K, V, E])
   def topologyAdjacency: Either[GraphLinalgError[K], VertexOperator[K, V]] =

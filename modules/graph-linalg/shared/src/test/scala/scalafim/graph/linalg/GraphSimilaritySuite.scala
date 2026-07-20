@@ -1,12 +1,12 @@
 package scalafim.graph.linalg
 
+import gale.linalg.DMat
+import gale.linalg.Matrix
+import gale.spectral.Eigen
+import gale.spectral.EigenSelection
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DenseReferencePartialEigenSolver
 import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinalgSolvers
-import scalafim.linalg.PartialSymmetricEigenSolver
 import scalafim.multivar.Kernel
 import scalafim.multivar.MatrixView
 
@@ -14,15 +14,13 @@ class GraphSimilaritySuite extends munit.FunSuite:
   private val basis = VertexBasis.from(Vector("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D")).toOption.get
   private val tolerance = 1e-8
 
-  given PartialSymmetricEigenSolver = DenseReferencePartialEigenSolver(maximumOrder = 32)
-
   test("heat and diffusion diagonal features match the analytic two-vertex graph"):
     val smallBasis = VertexBasis.from(Vector("a" -> "A", "b" -> "B")).toOption.get
     val graph = Graph.undirected(
       smallBasis,
       Vector(("a", "b", NonNegativeAffinity.unsafe(1.0)))
     ).toOption.get
-    val spectrum = graph.vertexSpectrum(DecompositionRank.unsafe(2)).toOption.get
+    val spectrum = graph.vertexSpectrum(2).toOption.get
     val heat = SpectralDiagonalFeature.from(Vector(0.0, 1.0)).toOption.get(spectrum).toOption.get
     val diffusion = SpectralDiagonalFeature
       .from(Vector(1.0), SpectralDiagonalKind.DiffusionEnergy)
@@ -41,8 +39,8 @@ class GraphSimilaritySuite extends munit.FunSuite:
     val graph = weightedGraph(Vector(("a", "b", 1.0), ("b", "c", 1.0), ("c", "d", 2.0)))
     val reordered = graph.reindex(Vector("d", "b", "a", "c")).toOption.get.graph
     val featurePlan = SpectralDiagonalFeature.from(Vector(0.25, 1.0)).toOption.get
-    val left = featurePlan(graph.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get).toOption.get
-    val right = featurePlan(reordered.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get).toOption.get
+    val left = featurePlan(graph.vertexSpectrum(4).toOption.get).toOption.get
+    val right = featurePlan(reordered.vertexSpectrum(4).toOption.get).toOption.get
     val similarity = LinearFeatureSimilarity[String, String]()
 
     assert(similarity(left, right).isLeft)
@@ -58,7 +56,7 @@ class GraphSimilaritySuite extends munit.FunSuite:
       weightedGraph(Vector(("a", "b", 1.0), ("b", "c", 1.0), ("c", "d", 1.0), ("d", "a", 1.0)))
     )
     val features = graphs.map: graph =>
-      featurePlan(graph.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get).toOption.get
+      featurePlan(graph.vertexSpectrum(4).toOption.get).toOption.get
     val linear = LinearFeatureSimilarity[String, String]()
     val rbf = RbfFeatureSimilarity.from[String, String](0.75).toOption.get
 
@@ -75,9 +73,10 @@ class GraphSimilaritySuite extends munit.FunSuite:
       weightedGraph(Vector(("a", "b", 1.0), ("a", "d", 1.0), ("b", "c", 1.0), ("c", "d", 1.0)))
     )
     val features = graphs.map: graph =>
-      featurePlan(graph.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get).toOption.get
-    val rows = DoubleMatrix.fromRows(features.map(_.toVector.toVector))
-    val multivarGram = Kernel.linear.compute(MatrixView.dense(rows), MatrixView.dense(rows)).toOption.get
+      featurePlan(graph.vertexSpectrum(4).toOption.get).toOption.get
+    val rows = DoubleMatrix.fromRows(features.map(_.toVector.toSeq.toVector))
+    val legacyGram = Kernel.linear.compute(MatrixView.dense(rows), MatrixView.dense(rows)).toOption.get
+    val multivarGram = Matrix.dense(legacyGram.rows, legacyGram.cols, legacyGram.copyData.toSeq)
     val directGram = gram(features, LinearFeatureSimilarity[String, String]())
 
     assertMatrixClose(multivarGram, directGram, tolerance)
@@ -105,16 +104,18 @@ class GraphSimilaritySuite extends munit.FunSuite:
   private def gram(
       features: Vector[VertexFeatureSet[String, String]],
       similarity: GraphSimilarity[VertexFeatureSet[String, String]]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
-      features.map(left => features.map(right => similarity(left, right).toOption.get))
+  ): DMat =
+    Matrix.dense(
+      features.length,
+      features.length,
+      features.flatMap(left => features.map(right => similarity(left, right).toOption.get))
     )
 
-  private def assertPsd(matrix: DoubleMatrix): Unit =
-    val eigen = LinalgSolvers.symmetricEigen.decompose(matrix).toOption.get
-    assert(eigen.values.toVector.forall(_ >= -tolerance), clue = eigen.values.toVector)
+  private def assertPsd(matrix: DMat): Unit =
+    val eigen = Eigen.eigSymmetric(matrix, EigenSelection.All).toOption.get
+    assert(eigen.eigenvalues.toSeq.forall(_ >= -tolerance), clue = eigen.eigenvalues.toSeq)
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tolerance: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0

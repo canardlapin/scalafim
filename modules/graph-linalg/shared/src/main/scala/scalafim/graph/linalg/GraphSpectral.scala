@@ -1,26 +1,23 @@
 package scalafim.graph.linalg
 
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.Matrix
+import gale.spectral.Eigen
+import gale.spectral.EigenDecomposition
+import gale.spectral.EigenOrder
+import gale.spectral.EigenSelection
 import scalafim.graph.Graph
 import scalafim.graph.UndirectedGraph
 import scalafim.graph.connectedComponents
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.PartialSpectrum
-import scalafim.linalg.PartialSymmetricEigenResult
-import scalafim.linalg.PartialSymmetricEigenSolver
-import scalafim.linalg.SymmetricOperator
 
 object GraphSpectral:
   def spectrum[K, V, E](
       graph: UndirectedGraph[K, V, E],
-      rank: DecompositionRank,
+      rank: Int,
       operator: SpectralLaplacian = SpectralLaplacian.Combinatorial,
-      spectrum: PartialSpectrum = PartialSpectrum.Smallest
-  )(using
-      weight: NonNegativeAdjacencyWeight[E],
-      solver: PartialSymmetricEigenSolver
-  ): Either[GraphLinalgError[K], VertexSpectrum[K, V]] =
+      spectrum: SpectralEnd = SpectralEnd.Smallest
+  )(using weight: NonNegativeAdjacencyWeight[E]): Either[GraphLinalgError[K], VertexSpectrum[K, V]] =
     prepare(graph, operator).flatMap: prepared =>
       decompose(prepared.operator, rank, spectrum).map: result =>
         new VertexSpectrum(
@@ -36,10 +33,7 @@ object GraphSpectral:
       dimensions: Int,
       operator: SpectralLaplacian = SpectralLaplacian.Combinatorial,
       eigenvectors: EmbeddingEigenvectors = EmbeddingEigenvectors.DropExpectedNullspace
-  )(using
-      weight: NonNegativeAdjacencyWeight[E],
-      solver: PartialSymmetricEigenSolver
-  ): Either[GraphLinalgError[K], SpectralEmbedding[K, V]] =
+  )(using weight: NonNegativeAdjacencyWeight[E]): Either[GraphLinalgError[K], SpectralEmbedding[K, V]] =
     if dimensions <= 0 then
       Left(GraphLinalgError.InvalidEmbeddingDimensions(dimensions, graph.order, 0))
     else prepare(graph, operator).flatMap: prepared =>
@@ -50,19 +44,17 @@ object GraphSpectral:
       val requested = dimensions.toLong + dropped.toLong
       if requested > graph.order.toLong then
         Left(GraphLinalgError.InvalidEmbeddingDimensions(dimensions, graph.order, dropped))
-      else DecompositionRank.bounded(requested.toInt, graph.order) match
-        case Left(error) => Left(GraphLinalgError.EigenFailure(error))
-        case Right(rank) =>
-          decompose(prepared.operator, rank, PartialSpectrum.Smallest).map: result =>
-            new SpectralEmbedding(
-              graph.basis,
-              sliceVector(result.values, dropped, dimensions),
-              sliceColumns(result.vectors, dropped, dimensions),
-              sliceVector(result.residualNorms, dropped, dimensions),
-              operator,
-              prepared.support,
-              dropped
-            )
+      else
+        decompose(prepared.operator, requested.toInt, SpectralEnd.Smallest).map: result =>
+          new SpectralEmbedding(
+            graph.basis,
+            sliceVector(result.eigenvalues, dropped, dimensions),
+            sliceColumns(result.eigenvectors, dropped, dimensions),
+            sliceVector(result.diagnostics.residuals, dropped, dimensions),
+            operator,
+            prepared.support,
+            dropped
+          )
 
   private final case class Prepared[K, V](
       operator: VertexOperator[K, V],
@@ -128,41 +120,54 @@ object GraphSpectral:
 
   private def decompose[K, V](
       operator: VertexOperator[K, V],
-      rank: DecompositionRank,
-      spectrum: PartialSpectrum
-  )(using solver: PartialSymmetricEigenSolver): Either[GraphLinalgError[Nothing], PartialSymmetricEigenResult] =
-    SymmetricOperator
-      .declared(operator.map)
-      .left
-      .map(GraphLinalgError.EigenFailure.apply)
-      .flatMap(symmetric => solver.decompose(symmetric, rank, spectrum).left.map(GraphLinalgError.EigenFailure.apply))
+      rank: Int,
+      spectrum: SpectralEnd
+  ): Either[GraphLinalgError[Nothing], EigenDecomposition] =
+    if rank <= 0 || rank > operator.basis.size then
+      Left(GraphLinalgError.InvalidSpectrumRank(rank, operator.basis.size))
+    else
+      val selection =
+        if rank == operator.basis.size then EigenSelection.All
+        else
+          val order =
+            spectrum match
+              case SpectralEnd.Smallest => EigenOrder.SmallestAlgebraic
+              case SpectralEnd.Largest  => EigenOrder.LargestAlgebraic
+          EigenSelection.Count(rank, order)
+      // Gale's current single-vector Lanczos path does not recover repeated
+      // eigenvalue multiplicity. Graph embeddings need the complete repeated
+      // eigenspace, so select from Gale's dense symmetric decomposition.
+      val decomposed = Eigen.eigSymmetric(operator.matrix.toDense(), selection)
+      decomposed
+        .left
+        .map(GraphLinalgError.EigenFailure.apply)
+        .flatMap(_.requireConverged.left.map(GraphLinalgError.EigenFailure.apply))
 
-  private def sliceVector(values: DoubleVector, start: Int, count: Int): DoubleVector =
-    DoubleVector.fromSeq(Vector.tabulate(count)(offset => values(start + offset)))
+  private def sliceVector(values: DVec, start: Int, count: Int): DVec =
+    values.slice(start, start + count).copy
 
-  private def sliceColumns(matrix: DoubleMatrix, start: Int, count: Int): DoubleMatrix =
-    DoubleMatrix.fromRows(
-      Vector.tabulate(matrix.rows): row =>
-        Vector.tabulate(count)(offset => matrix(row, start + offset))
-    )
+  private def sliceColumns(matrix: DMat, start: Int, count: Int): DMat =
+    val out = Matrix.newBuilder(matrix.rows, count)
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < count do
+        out(row, col) = matrix(row, start + col)
+        col += 1
+      row += 1
+    out.result()
 
 extension [K, V, E](graph: UndirectedGraph[K, V, E])
   def vertexSpectrum(
-      rank: DecompositionRank,
+      rank: Int,
       operator: SpectralLaplacian = SpectralLaplacian.Combinatorial,
-      spectrum: PartialSpectrum = PartialSpectrum.Smallest
-  )(using
-      weight: NonNegativeAdjacencyWeight[E],
-      solver: PartialSymmetricEigenSolver
-  ): Either[GraphLinalgError[K], VertexSpectrum[K, V]] =
+      spectrum: SpectralEnd = SpectralEnd.Smallest
+  )(using weight: NonNegativeAdjacencyWeight[E]): Either[GraphLinalgError[K], VertexSpectrum[K, V]] =
     GraphSpectral.spectrum(graph, rank, operator, spectrum)
 
   def spectralEmbedding(
       dimensions: Int,
       operator: SpectralLaplacian = SpectralLaplacian.Combinatorial,
       eigenvectors: EmbeddingEigenvectors = EmbeddingEigenvectors.DropExpectedNullspace
-  )(using
-      weight: NonNegativeAdjacencyWeight[E],
-      solver: PartialSymmetricEigenSolver
-  ): Either[GraphLinalgError[K], SpectralEmbedding[K, V]] =
+  )(using weight: NonNegativeAdjacencyWeight[E]): Either[GraphLinalgError[K], SpectralEmbedding[K, V]] =
     GraphSpectral.embedding(graph, dimensions, operator, eigenvectors)

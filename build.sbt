@@ -63,11 +63,13 @@ lazy val graphLinalg =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/graph-linalg"))
-    .dependsOn(graph, linalg, multivar % "test->compile")
+    .dependsOn(graph, multivar % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-graph-linalg"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val graphLinalgJS  = graphLinalg.js

@@ -1,24 +1,28 @@
 # scalafim-graph-linalg
 
-Basis-carrying numerical operators for `scalafim-graph`.
+Basis-carrying Gale operators for `scalafim-graph`.
 
-This cross-built module depends only on `graph` and `linalg`. It projects
-explicit topology and interpreted edge payloads into the existing
-`SparseTriplets`, `CsrMatrix`, and `LinearMap` contracts. Public adjacency,
-incidence, degree/strength, and Laplacian results retain their vertex or edge
-bases so row and column meaning is never detached from numerical storage.
+This cross-built module depends on `graph` and Gale. It projects explicit
+topology and interpreted edge payloads into Gale `CSR`, `DVec`, `DMat`, and
+`DoubleLinearOperator` values. Public adjacency, incidence, degree/strength,
+and Laplacian results retain their vertex or edge bases so row and column
+meaning is never detached from numerical storage.
 
 Topology adjacency is distinct from weighted adjacency, and degree is distinct
 from strength. Normalized Laplacians require an explicit zero-strength policy.
 The module does not own connectivity measurement semantics or eigensolver
 implementations.
 
-`VertexSpectrum` and `SpectralEmbedding` wrap linalg's operator-oriented partial
-eigensolver results with the original `VertexBasis`. Spectral methods accept
+`VertexSpectrum` and `SpectralEmbedding` wrap Gale eigendecompositions and
+diagnostics with the original `VertexBasis`. Spectral methods accept
 only nonnegative adjacency evidence and symmetric combinatorial or normalized
 Laplacians; random-walk Laplacians are not admitted to this symmetric solver
-path. Every result also carries `WeightedSupport`: strictly-positive support
-components, explicit zero-weight edge count, and zero-strength vertices.
+path. Count-limited smallest and largest selections both retain Gale's fixed
+ascending-algebraic output layout. Spectra currently select from Gale's dense
+symmetric decomposition because its single-vector Lanczos path cannot preserve
+repeated-eigenvalue multiplicity required by graph embedding geometry. Every
+result also carries `WeightedSupport`: strictly-positive support components,
+explicit zero-weight edge count, and zero-strength vertices.
 
 Embedding nullspace removal is policy-aware. Combinatorial and normalized
 zero-row operators drop one eigenvector per positive-support component;

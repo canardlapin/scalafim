@@ -1,7 +1,6 @@
 package scalafim.graph.linalg
 
-import scalafim.linalg.LinearMapError
-import scalafim.linalg.LinearAlgebraError
+import gale.linalg.LinAlgError
 
 enum WeightRequirement:
   case Finite
@@ -32,13 +31,13 @@ object GraphLinalgError:
     def message: String =
       s"vertex '$key' has zero weighted strength"
 
-  final case class LinearMapFailure(error: LinearMapError) extends GraphLinalgError[Nothing]:
+  final case class EigenFailure(error: LinAlgError) extends GraphLinalgError[Nothing]:
     def message: String =
-      error.message
+      error.getMessage
 
-  final case class EigenFailure(error: LinearAlgebraError) extends GraphLinalgError[Nothing]:
+  final case class InvalidSpectrumRank(requested: Int, limit: Int) extends GraphLinalgError[Nothing]:
     def message: String =
-      error.message
+      s"spectrum rank $requested must lie in [1, $limit]"
 
   final case class TopologyFailure(detail: String) extends GraphLinalgError[Nothing]:
     def message: String =

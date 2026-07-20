@@ -1,27 +1,28 @@
 package scalafim.graph.linalg
 
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.DoubleLinearOperator
+import gale.sparse.CSR
+import gale.spectral.EigenDecomposition
 import scalafim.graph.Direction
 import scalafim.graph.Component
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
 import scalafim.graph.VertexIx
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.LinearMap
-import scalafim.linalg.PartialSymmetricEigenResult
 
 final class VertexOperator[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
-    val matrix: CsrMatrix
+    val matrix: CSR
 ):
   require(matrix.rows == basis.size && matrix.cols == basis.size, "vertex operator must be square in its vertex basis")
 
-  def map: LinearMap =
+  def map: DoubleLinearOperator =
     matrix
 
 final class VertexSignal[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
-    val values: DoubleVector
+    val values: DVec
 ):
   require(values.length == basis.size, "vertex signal length must match basis size")
 
@@ -53,12 +54,12 @@ object EdgeBasis:
 final class IncidenceOperator[D <: Direction, K, V] private[linalg] (
     val vertexBasis: VertexBasis[K, V],
     val edgeBasis: EdgeBasis[D, K],
-    val matrix: CsrMatrix
+    val matrix: CSR
 ):
   require(matrix.rows == vertexBasis.size, "incidence rows must match vertex basis size")
   require(matrix.cols == edgeBasis.size, "incidence columns must match edge basis size")
 
-  def map: LinearMap =
+  def map: DoubleLinearOperator =
     matrix
 
 enum NormalizedLaplacian:
@@ -78,6 +79,13 @@ enum EmbeddingEigenvectors:
   case IncludeSmallest
   case DropExpectedNullspace
 
+/** Which algebraic end supplies a count-limited spectrum. Gale fixes the
+  * returned layout to ascending algebraic order for either choice.
+  */
+enum SpectralEnd:
+  case Smallest
+  case Largest
+
 final class WeightedSupport[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
     val components: Vector[Component[K]],
@@ -88,19 +96,19 @@ final class WeightedSupport[K, V] private[linalg] (
 
 final class VertexSpectrum[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
-    val result: PartialSymmetricEigenResult,
+    val result: EigenDecomposition,
     val operator: SpectralLaplacian,
     val support: WeightedSupport[K, V],
     val expectedZeroEigenvalueMultiplicity: Int
 ):
-  require(result.vectors.rows == basis.size, "spectrum vectors must use the vertex basis")
+  require(result.eigenvectors.rows == basis.size, "spectrum vectors must use the vertex basis")
   require(expectedZeroEigenvalueMultiplicity >= 0, "expected nullity must be non-negative")
 
 final class SpectralEmbedding[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
-    val eigenvalues: DoubleVector,
-    val coordinates: scalafim.linalg.DoubleMatrix,
-    val residualNorms: DoubleVector,
+    val eigenvalues: DVec,
+    val coordinates: DMat,
+    val residualNorms: DVec,
     val operator: SpectralLaplacian,
     val support: WeightedSupport[K, V],
     val droppedEigenvectors: Int

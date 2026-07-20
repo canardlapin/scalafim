@@ -1,11 +1,11 @@
 package scalafim.graph.linalg
 
+import gale.sparse.CSR
+import gale.spectral.Eigen
+import gale.spectral.EigenSelection
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
 import scalafim.graph.connectedComponents
-import scalafim.linalg.CsrMatrix
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinalgSolvers
 
 class GraphOperatorsSuite extends munit.FunSuite:
   private val tolerance = 1e-10
@@ -51,8 +51,8 @@ class GraphOperatorsSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 0.0)
       )
     )
-    assertEquals(graph.degree.values.toVector, Vector(1.0, 2.0, 1.0, 0.0))
-    assertEquals(graph.strength.toOption.get.values.toVector, Vector(2.0, 2.0, 0.0, 0.0))
+    assertEquals(graph.degree.values.toSeq.toVector, Vector(1.0, 2.0, 1.0, 0.0))
+    assertEquals(graph.strength.toOption.get.values.toSeq.toVector, Vector(2.0, 2.0, 0.0, 0.0))
 
   test("signed weighted adjacency is symmetric without claiming non-negative spectral evidence"):
     val graph = Graph.undirected(
@@ -79,10 +79,10 @@ class GraphOperatorsSuite extends munit.FunSuite:
       )
     ).toOption.get
 
-    assertEquals(graph.outDegree.values.toVector, Vector(2.0, 0.0, 0.0, 1.0))
-    assertEquals(graph.inDegree.values.toVector, Vector(1.0, 1.0, 1.0, 0.0))
-    assertEquals(graph.outStrength.toOption.get.values.toVector, Vector(1.0, 0.0, 0.0, 4.0))
-    assertEquals(graph.inStrength.toOption.get.values.toVector, Vector(4.0, 2.0, -1.0, 0.0))
+    assertEquals(graph.outDegree.values.toSeq.toVector, Vector(2.0, 0.0, 0.0, 1.0))
+    assertEquals(graph.inDegree.values.toSeq.toVector, Vector(1.0, 1.0, 1.0, 0.0))
+    assertEquals(graph.outStrength.toOption.get.values.toSeq.toVector, Vector(1.0, 0.0, 0.0, 4.0))
+    assertEquals(graph.inStrength.toOption.get.values.toSeq.toVector, Vector(4.0, 2.0, -1.0, 0.0))
 
   test("incidence columns use canonical graph order and carry an endpoint basis"):
     val graph = Graph.undirected(
@@ -160,8 +160,11 @@ class GraphOperatorsSuite extends munit.FunSuite:
       basis,
       Vector(("a", "b", ()), ("c", "d", ()))
     ).toOption.get
-    val eigen = LinalgSolvers.symmetricEigen.decompose(toDoubleMatrix(dense(graph.combinatorialLaplacian.toOption.get.matrix))).toOption.get
-    val nullity = eigen.values.toVector.count(value => Math.abs(value) < 1e-9)
+    val eigen = Eigen
+      .eigSymmetric(graph.combinatorialLaplacian.toOption.get.matrix.toDense(), EigenSelection.All)
+      .toOption
+      .get
+    val nullity = eigen.eigenvalues.toSeq.count(value => Math.abs(value) < 1e-9)
 
     assertEquals(graph.connectedComponents.size, 1)
     assertEquals(support.connectedComponents.size, 2)
@@ -245,20 +248,9 @@ class GraphOperatorsSuite extends munit.FunSuite:
     assertKeyPermutation(originalAdjacency, graph.basis.keys, reorderedAdjacency, reordered.basis.keys)
     assertKeyPermutation(originalLaplacian, graph.basis.keys, reorderedLaplacian, reordered.basis.keys)
 
-  private def dense(matrix: CsrMatrix): Vector[Vector[Double]] =
-    val out = Array.fill(matrix.rows, matrix.cols)(0.0)
-    val triplets = matrix.toTriplets
-    val rows = triplets.rowIndices
-    val cols = triplets.colIndices
-    val values = triplets.values
-    var index = 0
-    while index < values.length do
-      out(rows(index))(cols(index)) = values(index)
-      index += 1
-    out.iterator.map(_.toVector).toVector
-
-  private def toDoubleMatrix(matrix: Vector[Vector[Double]]): DoubleMatrix =
-    DoubleMatrix.fromRows(matrix)
+  private def dense(matrix: CSR): Vector[Vector[Double]] =
+    Vector.tabulate(matrix.rows): row =>
+      Vector.tabulate(matrix.cols)(col => matrix(row, col))
 
   private def assertMatrixEquals(
       actual: Vector[Vector[Double]],

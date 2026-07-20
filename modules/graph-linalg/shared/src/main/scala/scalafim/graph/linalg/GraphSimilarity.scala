@@ -1,8 +1,10 @@
 package scalafim.graph.linalg
 
+import gale.linalg.DMat
+import gale.linalg.DVec
+import gale.linalg.Matrix
+import gale.linalg.Vec
 import scalafim.graph.VertexBasis
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
 
 final case class GraphFeatureSpec(name: String, parameters: Vector[Double]):
   require(name.trim.nonEmpty, "graph feature name must be non-empty")
@@ -38,7 +40,7 @@ trait GraphSimilarity[-A]:
 
 final class VertexFeatureSet[K, V] private[linalg] (
     val basis: VertexBasis[K, V],
-    val values: DoubleMatrix,
+    val values: DMat,
     val spec: GraphFeatureSpec
 ):
   require(values.rows == basis.size, "vertex feature rows must match the basis")
@@ -46,8 +48,9 @@ final class VertexFeatureSet[K, V] private[linalg] (
   def featureCount: Int =
     values.cols
 
-  def toVector: DoubleVector =
-    DoubleVector.fromArray(values.copyData)
+  def toVector: DVec =
+    Vec.tabulate(values.rows * values.cols): index =>
+      values(index / values.cols, index % values.cols)
 
   /** Align rows by stable keys. This establishes numerical key alignment only;
     * domain layers such as connectivity remain responsible for scientific
@@ -57,11 +60,16 @@ final class VertexFeatureSet[K, V] private[linalg] (
     if !basis.sameKeySetAs(target) then
       Left(GraphSimilarityError.BasisMismatch(basis.keys.map(_.toString), target.keys.map(_.toString)))
     else
-      val aligned = DoubleMatrix.fromRows(
-        target.keys.map: key =>
-          values.row(basis.indexOf(key).get.toInt).toVector
-      )
-      Right(new VertexFeatureSet(target, aligned, spec))
+      val aligned = Matrix.newBuilder(target.size, values.cols)
+      var row = 0
+      while row < target.size do
+        val sourceRow = basis.indexOf(target.keyAt(scalafim.graph.VertexIx.unsafe(row))).get.toInt
+        var col = 0
+        while col < values.cols do
+          aligned(row, col) = values(sourceRow, col)
+          col += 1
+        row += 1
+      Right(new VertexFeatureSet(target, aligned.result(), spec))
 
 enum SpectralDiagonalKind:
   case HeatKernel
@@ -84,7 +92,7 @@ final class SpectralDiagonalFeature private (
   def apply[K, V](spectrum: VertexSpectrum[K, V]): Either[GraphSimilarityError, VertexFeatureSet[K, V]] =
     val rows = spectrum.basis.size
     val cols = times.length
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
     var row = 0
     var error = Option.empty[GraphSimilarityError]
     while row < rows && error.isEmpty do
@@ -93,13 +101,13 @@ final class SpectralDiagonalFeature private (
         val time = times(timeIndex)
         var component = 0
         var value = 0.0
-        while component < spectrum.result.rank do
-          val eigenvalue = Math.max(spectrum.result.values(component), 0.0)
-          val coordinate = spectrum.result.vectors(row, component)
+        while component < spectrum.result.size do
+          val eigenvalue = Math.max(spectrum.result.eigenvalues(component), 0.0)
+          val coordinate = spectrum.result.eigenvectors(row, component)
           value += Math.exp(-kind.exponentFactor * time * eigenvalue) * coordinate * coordinate
           component += 1
         if !value.isFinite then error = Some(GraphSimilarityError.NonFiniteFeature(row * cols + timeIndex, value))
-        else out(row * cols + timeIndex) = value
+        else out(row, timeIndex) = value
         timeIndex += 1
       row += 1
     error match
@@ -108,10 +116,7 @@ final class SpectralDiagonalFeature private (
         Right(
           new VertexFeatureSet(
             spectrum.basis,
-            DoubleMatrix.fromRowMajor(
-              scalafim.linalg.MatrixShape.from(rows, cols).toOption.get,
-              out
-            ).toOption.get,
+            out.result(),
             GraphFeatureSpec(kind.label, times)
           )
         )
@@ -139,13 +144,14 @@ final case class LinearFeatureSimilarity[K, V]() extends GraphSimilarity[VertexF
       right: VertexFeatureSet[K, V]
   ): Either[GraphSimilarityError, Double] =
     validateComparable(left, right).map: _ =>
-      val leftValues = left.values.copyData
-      val rightValues = right.values.copyData
       var total = 0.0
-      var index = 0
-      while index < leftValues.length do
-        total += leftValues(index) * rightValues(index)
-        index += 1
+      var row = 0
+      while row < left.values.rows do
+        var col = 0
+        while col < left.values.cols do
+          total += left.values(row, col) * right.values(row, col)
+          col += 1
+        row += 1
       total
 
 final case class RbfFeatureSimilarity[K, V] private (gamma: Double)
@@ -158,14 +164,15 @@ final case class RbfFeatureSimilarity[K, V] private (gamma: Double)
       right: VertexFeatureSet[K, V]
   ): Either[GraphSimilarityError, Double] =
     validateComparable(left, right).map: _ =>
-      val leftValues = left.values.copyData
-      val rightValues = right.values.copyData
       var squared = 0.0
-      var index = 0
-      while index < leftValues.length do
-        val difference = leftValues(index) - rightValues(index)
-        squared += difference * difference
-        index += 1
+      var row = 0
+      while row < left.values.rows do
+        var col = 0
+        while col < left.values.cols do
+          val difference = left.values(row, col) - right.values(row, col)
+          squared += difference * difference
+          col += 1
+        row += 1
       Math.exp(-gamma * squared)
 
 object RbfFeatureSimilarity:
@@ -184,14 +191,15 @@ final case class NegativeEuclideanFeatureSimilarity[K, V]()
       right: VertexFeatureSet[K, V]
   ): Either[GraphSimilarityError, Double] =
     validateComparable(left, right).map: _ =>
-      val leftValues = left.values.copyData
-      val rightValues = right.values.copyData
       var squared = 0.0
-      var index = 0
-      while index < leftValues.length do
-        val difference = leftValues(index) - rightValues(index)
-        squared += difference * difference
-        index += 1
+      var row = 0
+      while row < left.values.rows do
+        var col = 0
+        while col < left.values.cols do
+          val difference = left.values(row, col) - right.values(row, col)
+          squared += difference * difference
+          col += 1
+        row += 1
       -Math.sqrt(squared)
 
 private def validateComparable[K, V](

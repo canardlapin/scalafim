@@ -2,20 +2,14 @@ package scalafim.graph.linalg
 
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DenseReferencePartialEigenSolver
-import scalafim.linalg.PartialSpectrum
-import scalafim.linalg.PartialSymmetricEigenSolver
 
 class GraphSpectralSuite extends munit.FunSuite:
   private val basis = VertexBasis.from(Vector("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D")).toOption.get
   private val tolerance = 1e-8
 
-  given PartialSymmetricEigenSolver = DenseReferencePartialEigenSolver(maximumOrder = 32)
-
   test("path graph spectrum matches analytic combinatorial eigenvalues and carries its basis"):
     val graph = weightedGraph(Vector(("a", "b", 1.0), ("b", "c", 1.0), ("c", "d", 1.0)))
-    val spectrum = graph.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get
+    val spectrum = graph.vertexSpectrum(4).toOption.get
     val expected = Vector(
       0.0,
       2.0 - Math.sqrt(2.0),
@@ -24,8 +18,8 @@ class GraphSpectralSuite extends munit.FunSuite:
     )
 
     assertEquals(spectrum.basis, graph.basis)
-    assertVectorClose(spectrum.result.values.toVector, expected, tolerance)
-    assert(spectrum.result.residualNorms.toVector.forall(_ < tolerance))
+    assertVectorClose(spectrum.result.eigenvalues.toSeq.toVector, expected, tolerance)
+    assert(spectrum.result.diagnostics.residuals.toSeq.forall(_ < tolerance))
     assertEquals(spectrum.expectedZeroEigenvalueMultiplicity, 1)
     assertEquals(spectrum.support.components.map(_.keys), Vector(Vector("a", "b", "c", "d")))
 
@@ -37,8 +31,8 @@ class GraphSpectralSuite extends munit.FunSuite:
         ("c", "d", 2.0)
       )
     )
-    val spectrum = graph.vertexSpectrum(DecompositionRank.unsafe(4)).toOption.get
-    val nullity = spectrum.result.values.toVector.count(value => Math.abs(value) < tolerance)
+    val spectrum = graph.vertexSpectrum(4).toOption.get
+    val nullity = spectrum.result.eigenvalues.toSeq.count(value => Math.abs(value) < tolerance)
 
     assertEquals(spectrum.support.zeroWeightEdgeCount, 1)
     assertEquals(spectrum.support.components.map(_.keys), Vector(Vector("a", "b"), Vector("c", "d")))
@@ -48,21 +42,21 @@ class GraphSpectralSuite extends munit.FunSuite:
   test("normalized isolate policy changes expected nullity explicitly"):
     val graph = weightedGraph(Vector(("a", "b", 2.0)))
     val keep = graph.vertexSpectrum(
-      DecompositionRank.unsafe(4),
+      4,
       SpectralLaplacian.SymmetricNormalized(ZeroStrengthPolicy.KeepZeroRow)
     ).toOption.get
     val identity = graph.vertexSpectrum(
-      DecompositionRank.unsafe(4),
+      4,
       SpectralLaplacian.SymmetricNormalized(ZeroStrengthPolicy.IdentityOnZeroStrength)
     ).toOption.get
 
     assertEquals(keep.support.zeroStrengthVertices, Vector("c", "d"))
     assertEquals(keep.expectedZeroEigenvalueMultiplicity, 3)
     assertEquals(identity.expectedZeroEigenvalueMultiplicity, 1)
-    assertEquals(keep.result.values.toVector.count(value => Math.abs(value) < tolerance), 3)
-    assertEquals(identity.result.values.toVector.count(value => Math.abs(value) < tolerance), 1)
+    assertEquals(keep.result.eigenvalues.toSeq.count(value => Math.abs(value) < tolerance), 3)
+    assertEquals(identity.result.eigenvalues.toSeq.count(value => Math.abs(value) < tolerance), 1)
     graph.vertexSpectrum(
-      DecompositionRank.unsafe(2),
+      2,
       SpectralLaplacian.SymmetricNormalized(ZeroStrengthPolicy.Error)
     ) match
       case Left(GraphLinalgError.ZeroStrengthVertex("c")) => ()
@@ -77,11 +71,11 @@ class GraphSpectralSuite extends munit.FunSuite:
     assertEquals(embedding.coordinates.cols, 2)
     assertEquals(embedding.droppedEigenvectors, 1)
     assertVectorClose(
-      embedding.eigenvalues.toVector,
+      embedding.eigenvalues.toSeq.toVector,
       Vector(2.0 - Math.sqrt(2.0), 2.0),
       tolerance
     )
-    assert(embedding.residualNorms.toVector.forall(_ < tolerance))
+    assert(embedding.residualNorms.toSeq.forall(_ < tolerance))
 
   test("cycle embedding is invariant under reindexing by repeated-eigenspace geometry"):
     val graph = weightedGraph(
@@ -96,8 +90,8 @@ class GraphSpectralSuite extends munit.FunSuite:
     val first = graph.spectralEmbedding(2).toOption.get
     val second = reordered.spectralEmbedding(2).toOption.get
 
-    assertVectorClose(first.eigenvalues.toVector, Vector(2.0, 2.0), tolerance)
-    assertVectorClose(second.eigenvalues.toVector, first.eigenvalues.toVector, tolerance)
+    assertVectorClose(first.eigenvalues.toSeq.toVector, Vector(2.0, 2.0), tolerance)
+    assertVectorClose(second.eigenvalues.toSeq.toVector, first.eigenvalues.toSeq.toVector, tolerance)
     basis.keys.foreach: left =>
       basis.keys.foreach: right =>
         assertEqualsDouble(
@@ -109,12 +103,28 @@ class GraphSpectralSuite extends munit.FunSuite:
   test("largest spectrum remains available without changing support metadata"):
     val graph = weightedGraph(Vector(("a", "b", 1.0), ("b", "c", 1.0), ("c", "d", 1.0)))
     val spectrum = graph.vertexSpectrum(
-      DecompositionRank.unsafe(1),
-      spectrum = PartialSpectrum.Largest
+      1,
+      spectrum = SpectralEnd.Largest
     ).toOption.get
 
-    assertEqualsDouble(spectrum.result.values(0), 2.0 + Math.sqrt(2.0), tolerance)
+    assertEqualsDouble(spectrum.result.eigenvalues(0), 2.0 + Math.sqrt(2.0), tolerance)
     assertEquals(spectrum.expectedZeroEigenvalueMultiplicity, 1)
+
+  test("largest selection still uses Gale's ascending-algebraic result layout"):
+    val graph = weightedGraph(Vector(("a", "b", 1.0), ("b", "c", 1.0), ("c", "d", 1.0)))
+    val spectrum = graph.vertexSpectrum(2, spectrum = SpectralEnd.Largest).toOption.get
+
+    assertVectorClose(
+      spectrum.result.eigenvalues.toSeq.toVector,
+      Vector(2.0, 2.0 + Math.sqrt(2.0)),
+      tolerance
+    )
+
+  test("spectrum rank is validated at the graph boundary"):
+    val graph = weightedGraph(Vector(("a", "b", 1.0)))
+
+    assertEquals(graph.vertexSpectrum(0), Left(GraphLinalgError.InvalidSpectrumRank(0, 4)))
+    assertEquals(graph.vertexSpectrum(5), Left(GraphLinalgError.InvalidSpectrumRank(5, 4)))
 
   test("embedding dimensions fail when the requested geometry cannot fit after nullspace removal"):
     val edgeless = weightedGraph(Vector.empty)
