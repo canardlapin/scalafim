@@ -46,6 +46,16 @@ class OperatorProgramIrSuite extends munit.FunSuite:
     assertEquals(ir.objective, "maximize-trace")
     assertEquals(ir.penalties.map(_.functional), Vector("l1"))
     assertEquals(ir.result.equivalence, "frame:signed-permutation")
+    val typed = ProgramSemanticIr.program("ir-program-v2", program)
+    val typedValue = ProgramSemanticIr.operator(
+      "ir-component-value-v2",
+      value,
+      ProgramOperatorDerivationIr.Source
+    )
+    assertEquals(typed.objective, ProgramObjectiveIr.MaximizeTrace("weights", "ir-component-value"))
+    assertEquals(typed.result.equivalence, ProgramEquivalenceIr.Frame(ProgramFrameSymmetryIr.SignedPermutation, ToleranceIr(1e-10, 1e-8)))
+    assertEquals(typedValue.role, ProgramOperatorRoleIr.Covariance)
+    assertEquals(typedValue.evidence.status, EvidenceStatusIr.Unchecked)
     assertEquals(
       json,
       "{" +
