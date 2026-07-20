@@ -1,7 +1,7 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 import scalafim.multivar.MvMap
 import scalafim.multivar.MvSpace
 import scalafim.multivar.Spectrum
@@ -14,7 +14,7 @@ enum OrderedSpectrumKind:
 
 final case class OrderedSpectrum private (
     kind: OrderedSpectrumKind,
-    values: DoubleVector
+    values: DVec
 )
 
 object OrderedSpectrum:
@@ -39,7 +39,7 @@ object OrderedSpectrum:
           error = Some(InferenceError.InvalidSpectrum(s"entry $i increases from $previous to $value"))
         previous = value
         i += 1
-      error.toLeft(OrderedSpectrum(kind, DoubleVector.fromSeq(Vector.tabulate(source.length)(source(_)))))
+      error.toLeft(OrderedSpectrum(kind, InferenceNumerics.vectorFromSeq(Vector.tabulate(source.length)(source(_)))))
 
 final case class DomainBundle private (entries: Vector[MvSpace]):
   def find(id: scalafim.multivar.SpaceId): Option[MvSpace] =
@@ -79,9 +79,9 @@ trait StabilityView[F]:
   def loadings(
       fit: F,
       domain: scalafim.multivar.SpaceId
-  ): Either[InferenceError, DoubleMatrix]
+  ): Either[InferenceError, DMat]
 
   def scores(
       fit: F,
       domain: scalafim.multivar.SpaceId
-  ): Either[InferenceError, DoubleMatrix]
+  ): Either[InferenceError, DMat]

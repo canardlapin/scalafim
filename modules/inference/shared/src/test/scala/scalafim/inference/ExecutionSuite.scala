@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class ExecutionSuite extends munit.FunSuite:
 
@@ -46,7 +46,7 @@ class ExecutionSuite extends munit.FunSuite:
     import CrossCovarianceRefit.given
 
     val data = accepted(PairedMatrixData.from(
-      DoubleMatrix.fromRows(Vector(
+      InferenceNumerics.matrixFromRows(Vector(
         Vector(1.0, 0.0, 2.0),
         Vector(0.0, 1.0, 1.0),
         Vector(2.0, 1.0, 0.0),
@@ -54,7 +54,7 @@ class ExecutionSuite extends munit.FunSuite:
         Vector(3.0, 2.0, 2.0),
         Vector(2.0, 4.0, 3.0)
       )),
-      DoubleMatrix.fromRows(Vector(
+      InferenceNumerics.matrixFromRows(Vector(
         Vector(0.0, 2.0),
         Vector(1.0, 0.0),
         Vector(2.0, 1.0),
@@ -88,10 +88,10 @@ class ExecutionSuite extends munit.FunSuite:
 
   test("exact paired core reduces feature dimensions before replicate updates") {
     val data = accepted(PairedMatrixData.from(
-      DoubleMatrix.fromRows(Vector.tabulate(20)(row =>
+      InferenceNumerics.matrixFromRows(Vector.tabulate(20)(row =>
         Vector.tabulate(8)(col => Math.sin((row + 1.0) * (col + 2.0)))
       )),
-      DoubleMatrix.fromRows(Vector.tabulate(20)(row =>
+      InferenceNumerics.matrixFromRows(Vector.tabulate(20)(row =>
         Vector.tabulate(6)(col => Math.cos((row + 3.0) * (col + 1.0)))
       ))
     ))

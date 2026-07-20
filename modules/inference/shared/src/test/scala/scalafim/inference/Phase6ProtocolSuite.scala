@@ -1,7 +1,7 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 import scalafim.multivar.BlockId
 import scalafim.multivar.BlockPartition
 import scalafim.multivar.BlockSpec
@@ -27,8 +27,8 @@ class Phase6ProtocolSuite extends munit.FunSuite:
   ): A =
     value.fold(error => fail(error.message), identity)
 
-  private def matrix(value: Phase6RReferenceFixtures.MatrixData): DoubleMatrix =
-    DoubleMatrix.fromRows(value.toRows)
+  private def matrix(value: Phase6RReferenceFixtures.MatrixData): DMat =
+    InferenceNumerics.matrixFromRows(value.toRows)
 
   test("CCA correlation protocol matches independent base-R ridge-CCA roots") {
     val state = accepted(CcaCorrelationState.from(
@@ -213,12 +213,12 @@ class Phase6ProtocolSuite extends munit.FunSuite:
   }
 
   test("method-native feature evidence matches R multiplicity adjustments") {
-    val nullRows = Phase6RReferenceFixtures.featureNull.toRows.map(DoubleVector.fromSeq)
+    val nullRows = Phase6RReferenceFixtures.featureNull.toRows.map(InferenceNumerics.vectorFromSeq)
     val evidence = accepted(FeatureNullEvidence.from(
       "loading-magnitude-null-v1",
       accepted(UnitId("u1")),
       SpaceId.unsafe("features"),
-      DoubleVector.fromSeq(Phase6RReferenceFixtures.featureObserved),
+      InferenceNumerics.vectorFromSeq(Phase6RReferenceFixtures.featureObserved),
       nullRows,
       ValidityClaim.Conditional
     ))

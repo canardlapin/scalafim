@@ -1,7 +1,7 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
+import gale.linalg.DMat
+import gale.linalg.DVec
 import scalafim.multivar.SpaceId
 
 class StabilitySuite extends munit.FunSuite:
@@ -11,12 +11,12 @@ class StabilitySuite extends munit.FunSuite:
   private def accepted[A](value: Either[InferenceError, A]): A =
     value.fold(error => fail(error.message), identity)
 
-  private def matrix(value: R.MatrixData): DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(value.rows) { row =>
+  private def matrix(value: R.MatrixData): DMat =
+    InferenceNumerics.matrixFromRows(Vector.tabulate(value.rows) { row =>
       Vector.tabulate(value.cols)(col => value(row, col))
     })
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: R.MatrixData, tolerance: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: R.MatrixData, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -53,12 +53,12 @@ class StabilitySuite extends munit.FunSuite:
   }
 
   test("principal angles report rank loss rather than inventing a subspace") {
-    val rankDeficient = DoubleMatrix.fromRows(Vector(
+    val rankDeficient = InferenceNumerics.matrixFromRows(Vector(
       Vector(1.0, 1.0),
       Vector(0.0, 0.0),
       Vector(0.0, 0.0)
     ))
-    val fullRank = DoubleMatrix.fromRows(Vector(
+    val fullRank = InferenceNumerics.matrixFromRows(Vector(
       Vector(1.0, 0.0),
       Vector(0.0, 1.0),
       Vector(0.0, 0.0)
@@ -70,7 +70,7 @@ class StabilitySuite extends munit.FunSuite:
         assertEquals(actual, 1)
       case other => fail(s"expected rank loss, got $other")
 
-    ComponentAlignment.matchComponents(fullRank, DoubleMatrix.fromRows(Vector(
+    ComponentAlignment.matchComponents(fullRank, InferenceNumerics.matrixFromRows(Vector(
       Vector(1.0),
       Vector(0.0),
       Vector(0.0)
@@ -111,7 +111,7 @@ class StabilitySuite extends munit.FunSuite:
     var replicate = 0
     while replicate < 1000 do
       reducer = accepted(reducer.add(
-        DoubleVector.fromSeq(Vector(
+        InferenceNumerics.vectorFromSeq(Vector(
           replicate.toDouble,
           2.0 * replicate,
           if replicate % 2 == 0 then 1.0 else -1.0
@@ -137,8 +137,8 @@ class StabilitySuite extends munit.FunSuite:
     val unit = accepted(UnitId("plane-1"))
     val domain = SpaceId.unsafe("loading-domain")
     val angle = accepted(PrincipalAngles.between(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0))),
-      DoubleMatrix.fromRows(Vector(Vector(Math.cos(0.2)), Vector(Math.sin(0.2))))
+      InferenceNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0))),
+      InferenceNumerics.matrixFromRows(Vector(Vector(Math.cos(0.2)), Vector(Math.sin(0.2))))
     ))
     val reducer = SubspaceStabilityReducer
       .empty(unit, domain)

@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 import scalafim.multivar.RowProjector
 import scalafim.multivar.RowWhitening
 
@@ -9,7 +9,7 @@ final case class RowPermutation private (
 ):
   def rowCount: Int = sourceRows.length
 
-  def applyTo(input: DoubleMatrix): Either[InferenceError, DoubleMatrix] =
+  def applyTo(input: DMat): Either[InferenceError, DMat] =
     if input.rows != rowCount then
       Left(InferenceError.RowCountMismatch("row permutation input", rowCount, input.rows))
     else
@@ -22,7 +22,7 @@ final case class RowPermutation private (
           out(targetRow * input.cols + col) = input(sourceRow, col)
           col += 1
         targetRow += 1
-      Right(DoubleMatrix.fromRows(Vector.tabulate(input.rows) { row =>
+      Right(InferenceNumerics.matrixFromRows(Vector.tabulate(input.rows) { row =>
         Vector.tabulate(input.cols)(col => out(row * input.cols + col))
       }))
 
@@ -161,10 +161,10 @@ final case class ResidualPermutationAction private (
     permutation: PermutationAction
 ):
   def draw(
-      input: DoubleMatrix,
+      input: DMat,
       seed: RootSeed,
       replicate: ReplicateId
-  ): Either[InferenceError, DoubleMatrix] =
+  ): Either[InferenceError, DMat] =
     if input.rows != rowCount.value then
       Left(InferenceError.RowCountMismatch(
         "conditioned permutation input",
@@ -189,7 +189,7 @@ final case class ResidualPermutationAction private (
             restored <- adapt("row unwhitening", whitening.unwhiten(randomized))
           yield restored
 
-  private def firstNonFinite(input: DoubleMatrix): Option[(Int, Double)] =
+  private def firstNonFinite(input: DMat): Option[(Int, Double)] =
     val values = input.copyData
     var i = 0
     while i < values.length do
@@ -197,7 +197,7 @@ final case class ResidualPermutationAction private (
       i += 1
     None
 
-  private def add(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  private def add(left: DMat, right: DMat): DMat =
     val out = new Array[Double](left.rows * left.cols)
     var row = 0
     while row < left.rows do
@@ -206,7 +206,7 @@ final case class ResidualPermutationAction private (
         out(row * left.cols + col) = left(row, col) + right(row, col)
         col += 1
       row += 1
-    DoubleMatrix.fromRows(Vector.tabulate(left.rows) { row =>
+    InferenceNumerics.matrixFromRows(Vector.tabulate(left.rows) { row =>
       Vector.tabulate(left.cols)(col => out(row * left.cols + col))
     })
 

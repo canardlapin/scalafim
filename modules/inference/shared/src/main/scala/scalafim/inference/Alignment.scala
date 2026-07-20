@@ -1,9 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DenseSvdSolver
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinalgSolvers
+import gale.linalg.DMat
 
 enum MatchingMetric:
   case AbsoluteInnerProduct
@@ -22,13 +19,13 @@ final case class ComponentMatch private[inference] (
 
 final case class AlignmentResult(
     matching: ComponentMatch,
-    aligned: DoubleMatrix
+    aligned: DMat
 )
 
 object ComponentAlignment:
   def align(
-      reference: DoubleMatrix,
-      replicate: DoubleMatrix,
+      reference: DMat,
+      replicate: DMat,
       metric: MatchingMetric = MatchingMetric.AbsoluteInnerProduct,
       ambiguityTolerance: Double = 1e-8
   ): Either[InferenceError, AlignmentResult] =
@@ -39,8 +36,8 @@ object ComponentAlignment:
     yield AlignmentResult(matching, aligned)
 
   def matchComponents(
-      reference: DoubleMatrix,
-      replicate: DoubleMatrix,
+      reference: DMat,
+      replicate: DMat,
       metric: MatchingMetric = MatchingMetric.AbsoluteInnerProduct,
       ambiguityTolerance: Double = 1e-8
   ): Either[InferenceError, ComponentMatch] =
@@ -73,7 +70,7 @@ object ComponentAlignment:
         MatchingMethod.Hungarian
       )
 
-  def permute(matrix: DoubleMatrix, permutation: Vector[Int]): Either[InferenceError, DoubleMatrix] =
+  def permute(matrix: DMat, permutation: Vector[Int]): Either[InferenceError, DMat] =
     if permutation.length != matrix.cols then
       Left(InferenceError.InvalidReplicatePlan(
         s"component permutation length ${permutation.length} does not match ${matrix.cols} columns"
@@ -89,12 +86,12 @@ object ComponentAlignment:
           out(row * matrix.cols + col) = matrix(row, permutation(col))
           col += 1
         row += 1
-      Right(DoubleMatrix.unsafe(matrix.rows, matrix.cols, out))
+      Right(InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out))
 
   def alignSigns(
-      reference: DoubleMatrix,
-      matched: DoubleMatrix
-  ): Either[InferenceError, DoubleMatrix] =
+      reference: DMat,
+      matched: DMat
+  ): Either[InferenceError, DMat] =
     validatePair(reference, matched).map { _ =>
       val signs = new Array[Double](reference.cols)
       var col = 0
@@ -114,10 +111,10 @@ object ComponentAlignment:
           out(row * matched.cols + col) *= signs(col)
           col += 1
         row += 1
-      DoubleMatrix.unsafe(matched.rows, matched.cols, out)
+      InferenceNumerics.matrixFromRowMajor(matched.rows, matched.cols, out)
     }
 
-  private def validatePair(left: DoubleMatrix, right: DoubleMatrix): Either[InferenceError, Unit] =
+  private def validatePair(left: DMat, right: DMat): Either[InferenceError, Unit] =
     if left.rows != right.rows then
       Left(InferenceError.InvalidReplicatePlan(
         s"alignment matrices differ: ${left.rows}x${left.cols} and ${right.rows}x${right.cols}"
@@ -133,8 +130,8 @@ object ComponentAlignment:
       Right(())
 
   private def scoreMatrix(
-      reference: DoubleMatrix,
-      replicate: DoubleMatrix,
+      reference: DMat,
+      replicate: DMat,
       metric: MatchingMetric
   ): Array[Double] =
     val k = reference.cols
@@ -220,8 +217,8 @@ final case class PrincipalAngles private (values: Vector[Double])
 
 object PrincipalAngles:
   def between(
-      left: DoubleMatrix,
-      right: DoubleMatrix,
+      left: DMat,
+      right: DMat,
       solver: DenseSvdSolver = LinalgSolvers.denseSvd,
       rankTolerance: Double = 1e-10
   ): Either[InferenceError, PrincipalAngles] =
@@ -233,7 +230,7 @@ object PrincipalAngles:
       for
         qLeft <- orthonormalBasis(left, solver, rankTolerance)
         qRight <- orthonormalBasis(right, solver, rankTolerance)
-        cross = DoubleMatrix.transposeMultiply(qLeft, qRight)
+        cross = InferenceNumerics.transposeMultiply(qLeft, qRight)
         rank <- DecompositionRank.bounded(Math.min(qLeft.cols, qRight.cols), Math.min(cross.rows, cross.cols))
           .left.map(error => InferenceError.NumericalFailure("principal-angle rank", error.message))
         fit <- solver.decompose(cross, rank)
@@ -243,10 +240,10 @@ object PrincipalAngles:
       })
 
   private def orthonormalBasis(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       solver: DenseSvdSolver,
       tolerance: Double
-  ): Either[InferenceError, DoubleMatrix] =
+  ): Either[InferenceError, DMat] =
     if !tolerance.isFinite || tolerance < 0.0 then
       Left(InferenceError.InvalidTolerance("principal-angle rank tolerance", tolerance))
     else
@@ -271,5 +268,5 @@ object PrincipalAngles:
                 out(row * kept + col) = fit.u(row, col)
                 col += 1
               row += 1
-            Right(DoubleMatrix.unsafe(matrix.rows, kept, out))
+            Right(InferenceNumerics.matrixFromRowMajor(matrix.rows, kept, out))
         }

@@ -1,21 +1,17 @@
 package scalafim.inference
 
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DenseSvdSolver
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.LinalgSolvers
-import scalafim.linalg.SvdResult
+import gale.linalg.DMat
+import gale.linalg.DVec
 
 final case class PairedMatrixData private (
-    x: DoubleMatrix,
-    y: DoubleMatrix
+    x: DMat,
+    y: DMat
 )
 
 object PairedMatrixData:
   def from(
-      x: DoubleMatrix,
-      y: DoubleMatrix
+      x: DMat,
+      y: DMat
   ): Either[InferenceError, PairedMatrixData] =
     if x.rows != y.rows then
       Left(InferenceError.RowCountMismatch("paired matrix data", x.rows, y.rows))
@@ -28,7 +24,7 @@ object PairedMatrixData:
         .toLeft(PairedMatrixData(x, y))
 
   private def firstNonFinite(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       role: String
   ): Option[InferenceError] =
     val values = matrix.copyData
@@ -40,18 +36,18 @@ object PairedMatrixData:
     None
 
 final case class CrossCovarianceFit private (
-    roots: DoubleVector
+    roots: DVec
 )
 
 object CrossCovarianceFit:
   private[inference] def unsafe(values: Vector[Double]): CrossCovarianceFit =
-    CrossCovarianceFit(DoubleVector.fromSeq(values))
+    CrossCovarianceFit(InferenceNumerics.vectorFromSeq(values))
 
 final case class PairedCrossCore private[inference] (
-    xRows: DoubleMatrix,
-    xValues: DoubleVector,
-    yRows: DoubleMatrix,
-    yValues: DoubleVector
+    xRows: DMat,
+    xValues: DVec,
+    yRows: DMat,
+    yValues: DVec
 )
 
 final case class ReducedCrossFit private[inference] (
@@ -81,7 +77,7 @@ final case class ExactCrossCovarianceReduction(
   ): Either[InferenceError, ReducedCrossFit] =
     for
       permutedY <- action.applyTo(core.yRows)
-      overlap = DoubleMatrix.transposeMultiply(core.xRows, permutedY)
+      overlap = InferenceNumerics.transposeMultiply(core.xRows, permutedY)
       reduced = scaleCross(overlap, core.xValues, core.yValues)
       fit <- roots(reduced)
     yield ReducedCrossFit(fit)
@@ -89,7 +85,7 @@ final case class ExactCrossCovarianceReduction(
   override def lift(reduced: ReducedCrossFit): Either[InferenceError, CrossCovarianceFit] =
     Right(CrossCovarianceFit.unsafe(reduced.roots))
 
-  private def decompose(matrix: DoubleMatrix): Either[InferenceError, SvdResult] =
+  private def decompose(matrix: DMat): Either[InferenceError, SvdResult] =
     val rank = Math.min(matrix.rows, matrix.cols)
     DecompositionRank.bounded(rank, rank)
       .left.map(error => InferenceError.NumericalFailure("exact reduction rank", error.message))
@@ -98,7 +94,7 @@ final case class ExactCrossCovarianceReduction(
           .left.map(error => InferenceError.NumericalFailure("exact reduction SVD", error.message))
       )
 
-  private def roots(matrix: DoubleMatrix): Either[InferenceError, Vector[Double]] =
+  private def roots(matrix: DMat): Either[InferenceError, Vector[Double]] =
     decompose(matrix).map { fit =>
       Vector.tabulate(fit.singularValues.length) { index =>
         val value = fit.singularValues(index)
@@ -107,10 +103,10 @@ final case class ExactCrossCovarianceReduction(
     }
 
   private def scaleCross(
-      overlap: DoubleMatrix,
-      xValues: DoubleVector,
-      yValues: DoubleVector
-  ): DoubleMatrix =
+      overlap: DMat,
+      xValues: DVec,
+      yValues: DVec
+  ): DMat =
     val out = new Array[Double](overlap.rows * overlap.cols)
     var row = 0
     while row < overlap.rows do
@@ -120,14 +116,14 @@ final case class ExactCrossCovarianceReduction(
           xValues(row) * overlap(row, col) * yValues(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(overlap.rows, overlap.cols, out)
+    InferenceNumerics.matrixFromRowMajor(overlap.rows, overlap.cols, out)
 
 object CrossCovarianceRefit:
   def fit(
       data: PairedMatrixData,
       solver: DenseSvdSolver = LinalgSolvers.denseSvd
   ): Either[InferenceError, CrossCovarianceFit] =
-    val cross = DoubleMatrix.transposeMultiply(data.x, data.y)
+    val cross = InferenceNumerics.transposeMultiply(data.x, data.y)
     val rank = Math.min(cross.rows, cross.cols)
     DecompositionRank.bounded(rank, rank)
       .left.map(error => InferenceError.NumericalFailure("cross-covariance rank", error.message))

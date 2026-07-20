@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 import scalafim.multivar.Spectrum
 
 class CoreTypesSuite extends munit.FunSuite:
@@ -68,16 +68,16 @@ class CoreTypesSuite extends munit.FunSuite:
 
   test("ordered spectra retain their mathematical meaning") {
     val covariance = accepted(OrderedSpectrum.from(
-      Spectrum.Covariance(DoubleVector.fromSeq(Vector(3.0, 1.0, 0.0)))
+      Spectrum.Covariance(InferenceNumerics.vectorFromSeq(Vector(3.0, 1.0, 0.0)))
     ))
     val correlations = accepted(OrderedSpectrum.from(
-      Spectrum.CanonicalCorrelations(DoubleVector.fromSeq(Vector(0.9, 0.4)))
+      Spectrum.CanonicalCorrelations(InferenceNumerics.vectorFromSeq(Vector(0.9, 0.4)))
     ))
 
     assertEquals(covariance.kind, OrderedSpectrumKind.Covariance)
     assertEquals(correlations.kind, OrderedSpectrumKind.CanonicalCorrelations)
-    assert(OrderedSpectrum.from(Spectrum.Eigenvalues(DoubleVector.fromSeq(Vector(1.0, 2.0)))).isLeft)
-    assert(OrderedSpectrum.from(Spectrum.SingularValues(DoubleVector.fromSeq(Vector(1.0, -0.1)))).isLeft)
+    assert(OrderedSpectrum.from(Spectrum.Eigenvalues(InferenceNumerics.vectorFromSeq(Vector(1.0, 2.0)))).isLeft)
+    assert(OrderedSpectrum.from(Spectrum.SingularValues(InferenceNumerics.vectorFromSeq(Vector(1.0, -0.1)))).isLeft)
   }
 
   test("unrequested and unavailable evidence are distinct states") {

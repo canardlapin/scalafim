@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 import scalafim.multivar.RowProjector
 import scalafim.multivar.RowWhitening
 
@@ -90,7 +90,7 @@ class StructuredActionsSuite extends munit.FunSuite:
   }
 
   test("row permutations apply a closed-form source-row fixture") {
-    val input = DoubleMatrix.fromRows(Vector(
+    val input = InferenceNumerics.matrixFromRows(Vector(
       Vector(10.0, 100.0),
       Vector(20.0, 200.0),
       Vector(30.0, 300.0)
@@ -114,7 +114,7 @@ class StructuredActionsSuite extends munit.FunSuite:
       reference,
       WhiteningRequirement.NotRequired
     )
-    val nuisance = acceptedMultivar(RowProjector.fromMatrix(DoubleMatrix.fromRows(Vector(
+    val nuisance = acceptedMultivar(RowProjector.fromMatrix(InferenceNumerics.matrixFromRows(Vector(
       Vector(0.5, 0.5, 0.0, 0.0),
       Vector(0.5, 0.5, 0.0, 0.0),
       Vector(0.0, 0.0, 0.5, 0.5),
@@ -126,7 +126,7 @@ class StructuredActionsSuite extends munit.FunSuite:
       nuisance,
       None
     ))
-    val input = DoubleMatrix.fromRows(Vector(
+    val input = InferenceNumerics.matrixFromRows(Vector(
       Vector(10.0),
       Vector(12.0),
       Vector(20.0),

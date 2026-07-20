@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 import scalafim.multivar.SpaceId
 
 enum StabilityChannel:
@@ -16,8 +16,8 @@ final case class StabilityKey(
 final case class VectorStabilitySummary(
     key: StabilityKey,
     replicates: Int,
-    mean: DoubleVector,
-    standardDeviation: DoubleVector,
+    mean: DVec,
+    standardDeviation: DVec,
     selectionFrequency: Double,
     ambiguousMatches: Int
 )
@@ -33,7 +33,7 @@ final case class VectorStabilityReducer private (
   def dimension: Int = means.length
 
   def add(
-      values: DoubleVector,
+      values: DVec,
       wasSelected: Boolean,
       ambiguousMatch: Boolean
   ): Either[InferenceError, VectorStabilityReducer] =
@@ -71,8 +71,8 @@ final case class VectorStabilityReducer private (
       Evidence.Computed(VectorStabilitySummary(
         key,
         count,
-        DoubleVector.fromArray(means),
-        DoubleVector.fromArray(sd),
+        InferenceNumerics.vectorFromArray(means),
+        InferenceNumerics.vectorFromArray(sd),
         selected.toDouble / count,
         ambiguous
       ))

@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 import scalafim.multivar.SpaceId
 
 enum MultiplicityMethod:
@@ -12,8 +12,8 @@ final case class FeatureNullEvidence private (
     method: String,
     unit: UnitId,
     domain: SpaceId,
-    observed: DoubleVector,
-    nullReplicates: Vector[DoubleVector],
+    observed: DVec,
+    nullReplicates: Vector[DVec],
     validity: ValidityClaim
 )
 
@@ -22,8 +22,8 @@ object FeatureNullEvidence:
       method: String,
       unit: UnitId,
       domain: SpaceId,
-      observed: DoubleVector,
-      nullReplicates: Iterable[DoubleVector],
+      observed: DVec,
+      nullReplicates: Iterable[DVec],
       validity: ValidityClaim
   ): Either[InferenceError, FeatureNullEvidence] =
     val nulls = nullReplicates.iterator.toVector
@@ -54,7 +54,7 @@ object FeatureNullEvidence:
           validity
         ))
 
-  private def firstNonFinite(values: DoubleVector, role: String): Option[InferenceError] =
+  private def firstNonFinite(values: DVec, role: String): Option[InferenceError] =
     var i = 0
     while i < values.length do
       if !values(i).isFinite then

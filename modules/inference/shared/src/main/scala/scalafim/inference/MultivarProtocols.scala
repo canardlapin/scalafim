@@ -1,18 +1,14 @@
 package scalafim.inference
 
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DenseSvdSolver
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.LinalgSolvers
-import scalafim.linalg.SvdResult
+import gale.linalg.DMat
 
 final case class PcaVarianceState private[inference] (
-    residual: DoubleMatrix,
+    residual: DMat,
     removed: Int
 )
 
 object PcaVarianceState:
-  def from(input: DoubleMatrix): Either[InferenceError, PcaVarianceState] =
+  def from(input: DMat): Either[InferenceError, PcaVarianceState] =
     ProtocolMatrices.validate("PCA input", input).map { _ =>
       PcaVarianceState(ProtocolMatrices.centerColumns(input), removed = 0)
     }
@@ -70,13 +66,13 @@ final case class PcaVarianceProtocol(
     }
 
 final case class PlscCovarianceState private[inference] (
-    x: DoubleMatrix,
-    y: DoubleMatrix,
+    x: DMat,
+    y: DMat,
     removed: Int
 )
 
 object PlscCovarianceState:
-  def from(x: DoubleMatrix, y: DoubleMatrix): Either[InferenceError, PlscCovarianceState] =
+  def from(x: DMat, y: DMat): Either[InferenceError, PlscCovarianceState] =
     for
       _ <- ProtocolMatrices.validate("PLSC X", x)
       _ <- ProtocolMatrices.validate("PLSC Y", y)
@@ -95,7 +91,7 @@ final case class PlscCovarianceProtocol(
   override val target: TargetSpec[TargetKind.CovarianceRoots] = TargetSpec.CovarianceRoots
 
   override def roots(initial: PlscCovarianceState): Either[InferenceError, Vector[Double]] =
-    val cross = DoubleMatrix.transposeMultiply(initial.x, initial.y)
+    val cross = InferenceNumerics.transposeMultiply(initial.x, initial.y)
     ProtocolMatrices.singularValues(cross, ProtocolMatrices.rankLimit(cross), solver)
       .map(_.map(value => value * value))
 
@@ -113,7 +109,7 @@ final case class PlscCovarianceProtocol(
     }
 
   override def remove(state: PlscCovarianceState): Either[InferenceError, PlscCovarianceState] =
-    val cross = DoubleMatrix.transposeMultiply(state.x, state.y)
+    val cross = InferenceNumerics.transposeMultiply(state.x, state.y)
     ProtocolMatrices.svd(cross, 1, solver).map { fit =>
       val xNext = ProtocolMatrices.removeFeatureDirection(state.x, fit.u)
       val yNext = ProtocolMatrices.removeFeatureDirection(state.y, fit.v)
@@ -124,13 +120,13 @@ final case class PlscCovarianceProtocol(
       )
     }
 
-  private def leadingCrossRoot(x: DoubleMatrix, y: DoubleMatrix): Either[InferenceError, Double] =
-    ProtocolMatrices.singularValues(DoubleMatrix.transposeMultiply(x, y), 1, solver).map { values =>
+  private def leadingCrossRoot(x: DMat, y: DMat): Either[InferenceError, Double] =
+    ProtocolMatrices.singularValues(InferenceNumerics.transposeMultiply(x, y), 1, solver).map { values =>
       values.head * values.head
     }
 
 private object ProtocolMatrices:
-  def validate(role: String, matrix: DoubleMatrix): Either[InferenceError, Unit] =
+  def validate(role: String, matrix: DMat): Either[InferenceError, Unit] =
     if matrix.rows < 2 then Left(InferenceError.InvalidCount(s"$role rows", matrix.rows))
     else if matrix.cols < 1 then Left(InferenceError.InvalidCount(s"$role columns", matrix.cols))
     else
@@ -141,7 +137,7 @@ private object ProtocolMatrices:
         i += 1
       Right(())
 
-  def centerColumns(matrix: DoubleMatrix): DoubleMatrix =
+  def centerColumns(matrix: DMat): DMat =
     val out = matrix.copyData
     var col = 0
     while col < matrix.cols do
@@ -156,20 +152,20 @@ private object ProtocolMatrices:
         out(row * matrix.cols + col) -= mean
         row += 1
       col += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def rankLimit(matrix: DoubleMatrix): Int =
+  def rankLimit(matrix: DMat): Int =
     Math.min(matrix.rows, matrix.cols)
 
   def singularValues(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       rank: Int,
       solver: DenseSvdSolver
   ): Either[InferenceError, Vector[Double]] =
     svd(matrix, rank, solver).map(_.singularValues.toVector)
 
   def svd(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       rank: Int,
       solver: DenseSvdSolver
   ): Either[InferenceError, SvdResult] =
@@ -180,7 +176,7 @@ private object ProtocolMatrices:
           .left.map(error => InferenceError.NumericalFailure("dense SVD", error.message))
       }
 
-  def frobeniusSquared(matrix: DoubleMatrix): Double =
+  def frobeniusSquared(matrix: DMat): Double =
     val values = matrix.copyData
     var total = 0.0
     var i = 0
@@ -192,15 +188,15 @@ private object ProtocolMatrices:
   def zeroTolerance(scale: Double): Double =
     Math.max(1.0, scale) * Math.ulp(1.0)
 
-  def zeroSmall(matrix: DoubleMatrix): DoubleMatrix =
+  def zeroSmall(matrix: DMat): DMat =
     val scale = frobeniusSquared(matrix)
-    if scale <= zeroTolerance(scale) then DoubleMatrix.zeros(matrix.rows, matrix.cols)
+    if scale <= zeroTolerance(scale) then DMat.zeros(matrix.rows, matrix.cols)
     else matrix
 
   def permuteColumns(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       initial: RandomSource
-  ): Either[InferenceError, DoubleMatrix] =
+  ): Either[InferenceError, DMat] =
     val out = new Array[Double](matrix.rows * matrix.cols)
     var random = initial
     var col = 0
@@ -214,14 +210,14 @@ private object ProtocolMatrices:
             row += 1
           random = next
       col += 1
-    Right(DoubleMatrix.unsafe(matrix.rows, matrix.cols, out))
+    Right(InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out))
 
   def removeRankOne(
-      matrix: DoubleMatrix,
-      u: DoubleMatrix,
+      matrix: DMat,
+      u: DMat,
       singularValue: Double,
-      v: DoubleMatrix
-  ): DoubleMatrix =
+      v: DMat
+  ): DMat =
     val out = matrix.copyData
     var row = 0
     while row < matrix.rows do
@@ -230,10 +226,10 @@ private object ProtocolMatrices:
         out(row * matrix.cols + col) -= singularValue * u(row, 0) * v(col, 0)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def removeFeatureDirection(matrix: DoubleMatrix, direction: DoubleMatrix): DoubleMatrix =
-    val scores = DoubleMatrix.multiply(matrix, direction)
+  def removeFeatureDirection(matrix: DMat, direction: DMat): DMat =
+    val scores = InferenceNumerics.multiply(matrix, direction)
     val out = matrix.copyData
     var row = 0
     while row < matrix.rows do
@@ -242,4 +238,4 @@ private object ProtocolMatrices:
         out(row * matrix.cols + col) -= scores(row, 0) * direction(col, 0)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)

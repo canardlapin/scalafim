@@ -543,6 +543,8 @@ lazy val multivarIr =
     .settings(
       name := "scalafim-multivar-ir"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val multivarIrJS  = multivarIr.js
@@ -552,11 +554,13 @@ lazy val inference =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/inference"))
-    .dependsOn(multivar, linalg)
+    .dependsOn(multivar)
     .settings(commonSettings)
     .settings(
       name := "scalafim-inference"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val inferenceJS  = inference.js

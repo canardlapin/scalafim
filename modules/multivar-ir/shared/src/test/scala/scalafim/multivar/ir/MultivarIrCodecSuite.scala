@@ -1,6 +1,6 @@
 package scalafim.multivar.ir
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 import scalafim.multivar.*
 
 class MultivarIrCodecSuite extends munit.FunSuite:
@@ -85,7 +85,7 @@ class MultivarIrCodecSuite extends munit.FunSuite:
       NonnegativeCoupling.fromMatrix(
         left.evidence,
         right.evidence,
-        DoubleMatrix.fromRows(Vector(Vector(0.5, 0.0), Vector(0.0, 0.5))),
+        DMat.dense(2, 2, Vector(0.5, 0.0, 0.0, 0.5)),
         RelationshipNormalization.UnitMass,
         valueIdentity("ir.coupling"),
         SemanticProvenance(

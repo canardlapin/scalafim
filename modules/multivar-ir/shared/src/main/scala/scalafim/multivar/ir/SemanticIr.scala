@@ -1,6 +1,6 @@
 package scalafim.multivar.ir
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 import scalafim.multivar.*
 
 object SemanticIr:
@@ -20,10 +20,10 @@ object SemanticIr:
       role: OperatorRoleIr,
       value: Lin[From, To]
   ): Either[IrError, OperatorIr] =
-    value(DoubleMatrix.eye(value.cols)).left.map { error =>
+    value(DMat.eye(value.cols)).left.map { error =>
       IrError(RejectionCategory.Malformed, s"operators.$id.payload", error.message)
     }.flatMap { matrix =>
-      PayloadIrFactory.inlineDense(matrix.rows, matrix.cols, matrix.copyData.toVector).map { payload =>
+      PayloadIrFactory.inlineDense(matrix.rows, matrix.cols, matrix.valuesRowMajor.toVector).map { payload =>
         OperatorIr(
           id,
           role,

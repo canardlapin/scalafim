@@ -1,27 +1,23 @@
 package scalafim.inference
 
-import scalafim.linalg.DecompositionRank
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.GeneralizedEigenSolver
-import scalafim.linalg.LinalgSolvers
-import scalafim.linalg.SymmetricEigenResult
+import gale.linalg.DMat
+import gale.linalg.DVec
 import scalafim.multivar.Cca
 import scalafim.multivar.CcaFit
 import scalafim.multivar.ComponentCount
 import scalafim.multivar.MatrixView
 
 final case class CcaCorrelationState private[inference] (
-    x: DoubleMatrix,
-    y: DoubleMatrix,
+    x: DMat,
+    y: DMat,
     ridge: Double,
     removed: Int
 )
 
 object CcaCorrelationState:
   def from(
-      x: DoubleMatrix,
-      y: DoubleMatrix,
+      x: DMat,
+      y: DMat,
       ridge: Double = 1e-8
   ): Either[InferenceError, CcaCorrelationState] =
     if x.rows != y.rows then
@@ -74,15 +70,15 @@ final case class CcaCorrelationProtocol()
     }
 
   private def leading(
-      x: DoubleMatrix,
-      y: DoubleMatrix,
+      x: DMat,
+      y: DMat,
       ridge: Double
   ): Either[InferenceError, Double] =
     fit(x, y, ridge, 1).map(_.paired.spectrum.values(0))
 
   private def fit(
-      x: DoubleMatrix,
-      y: DoubleMatrix,
+      x: DMat,
+      y: DMat,
       ridge: Double,
       rank: Int
   ): Either[InferenceError, CcaFit] =
@@ -97,20 +93,20 @@ final case class CcaCorrelationProtocol()
     Math.min(state.x.rows - 1, Math.min(state.x.cols, state.y.cols))
 
 final case class GeneralizedEigenState private[inference] (
-    a: DoubleMatrix,
-    b: DoubleMatrix,
+    a: DMat,
+    b: DMat,
     removed: Int
 )
 
 final case class GeneralizedEigenFit(
-    roots: DoubleVector,
-    vectors: DoubleMatrix
+    roots: DVec,
+    vectors: DMat
 )
 
 object GeneralizedEigenState:
   def from(
-      a: DoubleMatrix,
-      b: DoubleMatrix,
+      a: DMat,
+      b: DMat,
       solver: GeneralizedEigenSolver = LinalgSolvers.generalizedEigen
   ): Either[InferenceError, GeneralizedEigenState] =
     if a.rows != a.cols then
@@ -172,7 +168,7 @@ final case class GeneralizedEigenProtocol(
           col += 1
         row += 1
       GeneralizedEigenState(
-        FamilyMatrices.symmetrize(DoubleMatrix.unsafe(state.a.rows, state.a.cols, out)),
+        FamilyMatrices.symmetrize(InferenceNumerics.matrixFromRowMajor(state.a.rows, state.a.cols, out)),
         state.b,
         state.removed + 1
       )
@@ -210,12 +206,12 @@ final case class GeneralizedEigenProtocol(
         row += 1
       i += 1
     Right(GeneralizedEigenFit(
-      DoubleVector.unsafe(values),
-      DoubleMatrix.unsafe(result.vectors.rows, rank, vectors)
+      InferenceNumerics.vectorFromArray(values),
+      InferenceNumerics.matrixFromRowMajor(result.vectors.rows, rank, vectors)
     ))
 
 private object FamilyMatrices:
-  def validateFinite(role: String, matrix: DoubleMatrix): Either[InferenceError, Unit] =
+  def validateFinite(role: String, matrix: DMat): Either[InferenceError, Unit] =
     val values = matrix.copyData
     var i = 0
     while i < values.length do
@@ -224,7 +220,7 @@ private object FamilyMatrices:
       i += 1
     Right(())
 
-  def residualizeOn(matrix: DoubleMatrix, score: DoubleVector): DoubleMatrix =
+  def residualizeOn(matrix: DMat, score: DVec): DMat =
     var denominator = 0.0
     var row = 0
     while row < matrix.rows do
@@ -249,9 +245,9 @@ private object FamilyMatrices:
           out(row * matrix.cols + col) -= score(row) * coefficients(col)
           col += 1
         row += 1
-      DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+      InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def symmetricPermutation(matrix: DoubleMatrix, permutation: Vector[Int]): DoubleMatrix =
+  def symmetricPermutation(matrix: DMat, permutation: Vector[Int]): DMat =
     val out = new Array[Double](matrix.rows * matrix.cols)
     var row = 0
     while row < matrix.rows do
@@ -260,9 +256,9 @@ private object FamilyMatrices:
         out(row * matrix.cols + col) = matrix(permutation(row), permutation(col))
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def multiply(matrix: DoubleMatrix, vector: DoubleVector): DoubleVector =
+  def multiply(matrix: DMat, vector: DVec): DVec =
     val out = new Array[Double](matrix.rows)
     var row = 0
     while row < matrix.rows do
@@ -271,9 +267,9 @@ private object FamilyMatrices:
         out(row) += matrix(row, col) * vector(col)
         col += 1
       row += 1
-    DoubleVector.unsafe(out)
+    InferenceNumerics.vectorFromArray(out)
 
-  def symmetrize(matrix: DoubleMatrix): DoubleMatrix =
+  def symmetrize(matrix: DMat): DMat =
     val out = matrix.copyData
     var row = 0
     while row < matrix.rows do
@@ -284,4 +280,4 @@ private object FamilyMatrices:
         out(col * matrix.cols + row) = value
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)

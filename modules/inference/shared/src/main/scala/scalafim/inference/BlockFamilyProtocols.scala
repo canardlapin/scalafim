@@ -1,9 +1,7 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
-import scalafim.linalg.DoubleVector
-import scalafim.linalg.LinalgSolvers
-import scalafim.linalg.SymmetricEigenSolver
+import gale.linalg.DMat
+import gale.linalg.DVec
 import scalafim.multivar.BlockPartition
 import scalafim.multivar.ComponentCount
 import scalafim.multivar.Cpca
@@ -24,7 +22,7 @@ final case class CpcaInferenceState private[inference] (
 
 final case class CpcaInferenceFit(
     block: CpcaBlock,
-    roots: DoubleVector
+    roots: DVec
 )
 
 object CpcaInferenceState:
@@ -99,7 +97,7 @@ final case class CpcaBlockProtocol(
         case Some(value) =>
           Right(CpcaInferenceFit(
             state.block,
-            DoubleVector.fromSeq(Vector.tabulate(value.d.length) { index =>
+            InferenceNumerics.vectorFromSeq(Vector.tabulate(value.d.length) { index =>
               val root = value.d(index)
               root * root
             })
@@ -125,7 +123,7 @@ final case class CpcaBlockProtocol(
 
   private def rebuild(
       state: CpcaInferenceState,
-      table: DoubleMatrix
+      table: DMat
   ): Either[InferenceError, CpcaInferenceState] =
     val current = state.problem.diagram
     for
@@ -150,19 +148,19 @@ final case class CpcaBlockProtocol(
     value.left.map(error => InferenceError.NumericalFailure(role, error.message))
 
 final case class MultiblockInferenceState private[inference] (
-    data: DoubleMatrix,
+    data: DMat,
     partition: BlockPartition,
     removed: Int
 )
 
 final case class MultiblockInferenceFit(
-    roots: DoubleVector,
-    rowVectors: DoubleMatrix
+    roots: DVec,
+    rowVectors: DMat
 )
 
 object MultiblockInferenceState:
   def from(
-      data: DoubleMatrix,
+      data: DMat,
       partition: BlockPartition
   ): Either[InferenceError, MultiblockInferenceState] =
     if data.rows < 2 then Left(InferenceError.InvalidCount("multiblock rows", data.rows))
@@ -222,17 +220,22 @@ final case class MultiblockConsensusProtocol(
   private[inference] def fit(
       state: MultiblockInferenceState
   ): Either[InferenceError, MultiblockInferenceFit] =
-    val consensus = DoubleMatrix.zeros(state.data.rows, state.data.rows)
+    val consensusData = new Array[Double](state.data.rows * state.data.rows)
     var blockIndex = 0
     while blockIndex < state.partition.blocks.length do
       val block = state.partition.blocks(blockIndex)
       val blockData = FamilyBlockMatrices.selectColumns(state.data, block.columns.indices)
       val scale = FamilyBlockMatrices.frobeniusSquared(blockData)
       if scale > Math.ulp(1.0) then
-        val gram = DoubleMatrix.multiply(blockData, blockData.transpose)
-        FamilyBlockMatrices.addScaledInPlace(consensus, gram, 1.0 / scale)
+        val gram = InferenceNumerics.multiply(blockData, blockData.transpose)
+        FamilyBlockMatrices.addScaled(consensusData, state.data.rows, gram, 1.0 / scale)
       blockIndex += 1
 
+    val consensus = InferenceNumerics.matrixFromRowMajor(
+      state.data.rows,
+      state.data.rows,
+      consensusData
+    )
     solver.decompose(consensus)
       .left.map(error => InferenceError.NumericalFailure("multiblock consensus eigen", error.message))
       .flatMap { eigen =>
@@ -246,13 +249,13 @@ final case class MultiblockConsensusProtocol(
             ))
           else values(i) = Math.max(0.0, eigen.values(i))
           i += 1
-        error.toLeft(MultiblockInferenceFit(DoubleVector.unsafe(values), eigen.vectors))
+        error.toLeft(MultiblockInferenceFit(InferenceNumerics.vectorFromArray(values), eigen.vectors))
       }
 
   private def independentlyPermuteBlocks(
       state: MultiblockInferenceState,
       initial: RandomSource
-  ): Either[InferenceError, DoubleMatrix] =
+  ): Either[InferenceError, DMat] =
     val out = state.data.copyData
     var random = initial
     var blockIndex = 1
@@ -271,10 +274,10 @@ final case class MultiblockConsensusProtocol(
             row += 1
           random = next
       blockIndex += 1
-    Right(DoubleMatrix.unsafe(state.data.rows, state.data.cols, out))
+    Right(InferenceNumerics.matrixFromRowMajor(state.data.rows, state.data.cols, out))
 
 private object FamilyBlockMatrices:
-  def validateFinite(role: String, matrix: DoubleMatrix): Either[InferenceError, Unit] =
+  def validateFinite(role: String, matrix: DMat): Either[InferenceError, Unit] =
     val values = matrix.copyData
     var i = 0
     while i < values.length do
@@ -283,7 +286,7 @@ private object FamilyBlockMatrices:
       i += 1
     Right(())
 
-  def centerColumns(matrix: DoubleMatrix): DoubleMatrix =
+  def centerColumns(matrix: DMat): DMat =
     val out = matrix.copyData
     var col = 0
     while col < matrix.cols do
@@ -298,9 +301,9 @@ private object FamilyBlockMatrices:
         out(row * matrix.cols + col) -= mean
         row += 1
       col += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def selectColumns(matrix: DoubleMatrix, columns: Vector[Int]): DoubleMatrix =
+  def selectColumns(matrix: DMat, columns: Vector[Int]): DMat =
     val out = new Array[Double](matrix.rows * columns.length)
     var row = 0
     while row < matrix.rows do
@@ -309,9 +312,9 @@ private object FamilyBlockMatrices:
         out(row * columns.length + local) = matrix(row, columns(local))
         local += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, columns.length, out)
+    InferenceNumerics.matrixFromRowMajor(matrix.rows, columns.length, out)
 
-  def frobeniusSquared(matrix: DoubleMatrix): Double =
+  def frobeniusSquared(matrix: DMat): Double =
     val values = matrix.copyData
     var total = 0.0
     var i = 0
@@ -320,16 +323,17 @@ private object FamilyBlockMatrices:
       i += 1
     total
 
-  def addScaledInPlace(left: DoubleMatrix, right: DoubleMatrix, scale: Double): Unit =
+  def addScaled(left: Array[Double], columns: Int, right: DMat, scale: Double): Unit =
+    require(left.length == right.rows * right.cols && columns == right.cols)
     var row = 0
-    while row < left.rows do
+    while row < right.rows do
       var col = 0
-      while col < left.cols do
-        left.dataArray(row * left.cols + col) += scale * right(row, col)
+      while col < right.cols do
+        left(row * columns + col) += scale * right(row, col)
         col += 1
       row += 1
 
-  def residualizeOn(matrix: DoubleMatrix, score: DoubleVector): DoubleMatrix =
+  def residualizeOn(matrix: DMat, score: DVec): DMat =
     var denominator = 0.0
     var row = 0
     while row < matrix.rows do
@@ -354,13 +358,16 @@ private object FamilyBlockMatrices:
           out(row * matrix.cols + col) -= score(row) * coefficients(col)
           col += 1
         row += 1
-      DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+      InferenceNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
-  def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  def subtract(left: DMat, right: DMat): DMat =
     require(left.rows == right.rows && left.cols == right.cols)
     val out = left.copyData
-    var i = 0
-    while i < out.length do
-      out(i) -= right.dataArray(i)
-      i += 1
-    DoubleMatrix.unsafe(left.rows, left.cols, out)
+    var row = 0
+    while row < left.rows do
+      var col = 0
+      while col < left.cols do
+        out(row * left.cols + col) -= right(row, col)
+        col += 1
+      row += 1
+    InferenceNumerics.matrixFromRowMajor(left.rows, left.cols, out)

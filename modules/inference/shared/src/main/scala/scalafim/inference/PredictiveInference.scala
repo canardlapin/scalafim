@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 import scalafim.multivar.ComponentCount
 import scalafim.multivar.MatrixView
 import scalafim.multivar.ReducedRankRegression
@@ -57,12 +57,12 @@ object HeldOutSplit:
           ))
 
 final case class PredictiveData private (
-    x: DoubleMatrix,
-    y: DoubleMatrix
+    x: DMat,
+    y: DMat
 )
 
 object PredictiveData:
-  def from(x: DoubleMatrix, y: DoubleMatrix): Either[InferenceError, PredictiveData] =
+  def from(x: DMat, y: DMat): Either[InferenceError, PredictiveData] =
     if x.rows != y.rows then
       Left(InferenceError.RowCountMismatch("predictive X/Y", x.rows, y.rows))
     else if x.rows < 3 then Left(InferenceError.InvalidCount("predictive rows", x.rows))
@@ -171,7 +171,7 @@ final case class RrrPredictiveProtocol(
       }
 
 private object FamilyPredictionMatrices:
-  def validateFinite(role: String, matrix: DoubleMatrix): Either[InferenceError, Unit] =
+  def validateFinite(role: String, matrix: DMat): Either[InferenceError, Unit] =
     val values = matrix.copyData
     var i = 0
     while i < values.length do
@@ -180,7 +180,7 @@ private object FamilyPredictionMatrices:
       i += 1
     Right(())
 
-  def columnMeans(matrix: DoubleMatrix): Array[Double] =
+  def columnMeans(matrix: DMat): Array[Double] =
     val means = new Array[Double](matrix.cols)
     var row = 0
     while row < matrix.rows do
@@ -195,7 +195,7 @@ private object FamilyPredictionMatrices:
       col += 1
     means
 
-  def squaredError(observed: DoubleMatrix, predicted: DoubleMatrix): Double =
+  def squaredError(observed: DMat, predicted: DMat): Double =
     require(observed.rows == predicted.rows && observed.cols == predicted.cols)
     var total = 0.0
     var row = 0
@@ -208,7 +208,7 @@ private object FamilyPredictionMatrices:
       row += 1
     total
 
-  def squaredErrorFromRow(observed: DoubleMatrix, predicted: Array[Double]): Double =
+  def squaredErrorFromRow(observed: DMat, predicted: Array[Double]): Double =
     require(observed.cols == predicted.length)
     var total = 0.0
     var row = 0

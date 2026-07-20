@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class ProtocolSuite extends munit.FunSuite:
 
@@ -9,18 +9,18 @@ class ProtocolSuite extends munit.FunSuite:
   private def accepted[A](value: Either[InferenceError, A]): A =
     value.fold(error => fail(error.message), identity)
 
-  private def matrix(value: R.MatrixData): DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(value.rows) { row =>
+  private def matrix(value: R.MatrixData): DMat =
+    InferenceNumerics.matrixFromRows(Vector.tabulate(value.rows) { row =>
       Vector.tabulate(value.cols)(col => value(row, col))
     })
 
-  private def negate(value: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(value.rows) { row =>
+  private def negate(value: DMat): DMat =
+    InferenceNumerics.matrixFromRows(Vector.tabulate(value.rows) { row =>
       Vector.tabulate(value.cols)(col => -value(row, col))
     })
 
-  private def reverseColumns(value: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(value.rows) { row =>
+  private def reverseColumns(value: DMat): DMat =
+    InferenceNumerics.matrixFromRows(Vector.tabulate(value.rows) { row =>
       Vector.tabulate(value.cols)(col => value(row, value.cols - 1 - col))
     })
 
@@ -89,7 +89,7 @@ class ProtocolSuite extends munit.FunSuite:
   }
 
   test("a declared repeated-root subspace is invariant to rotation within that subspace") {
-    val original = DoubleMatrix.fromRows(Vector(
+    val original = InferenceNumerics.matrixFromRows(Vector(
       Vector(1.0, 0.0, 0.0),
       Vector(-1.0, 0.0, 0.0),
       Vector(0.0, 1.0, 0.0),
@@ -99,12 +99,12 @@ class ProtocolSuite extends munit.FunSuite:
     ))
     val c = Math.cos(Math.PI / 5.0)
     val s = Math.sin(Math.PI / 5.0)
-    val rotation = DoubleMatrix.fromRows(Vector(
+    val rotation = InferenceNumerics.matrixFromRows(Vector(
       Vector(c, -s, 0.0),
       Vector(s, c, 0.0),
       Vector(0.0, 0.0, 1.0)
     ))
-    val rotated = DoubleMatrix.multiply(original, rotation)
+    val rotated = InferenceNumerics.multiply(original, rotation)
     val protocol = PcaVarianceProtocol()
     val originalRoots = accepted(protocol.roots(accepted(PcaVarianceState.from(original))))
     val rotatedRoots = accepted(protocol.roots(accepted(PcaVarianceState.from(rotated))))
@@ -117,7 +117,13 @@ class ProtocolSuite extends munit.FunSuite:
     val policy = UnitPolicy.Declared(accepted(DeclaredUnitGroups.from(Vector(plane, axis))))
     val originalUnits = accepted(LatentUnitFormation.form(originalRoots, Vector(true, true, false), policy))
     val rotatedUnits = accepted(LatentUnitFormation.form(rotatedRoots, Vector(true, true, false), policy))
-    assertEquals(originalUnits, rotatedUnits)
+    assertEquals(originalUnits.map(_.unit), rotatedUnits.map(_.unit))
+    assertEquals(originalUnits.map(_.selected), rotatedUnits.map(_.selected))
+    originalUnits.zip(rotatedUnits).foreach { case (left, right) =>
+      left.roots.zip(right.roots).foreach { case (leftRoot, rightRoot) =>
+        assertEqualsDouble(leftRoot, rightRoot, 1e-12)
+      }
+    }
     assertEquals(originalUnits.head.unit.identifiability, Identifiability.UnorientedSubspace)
   }
 
