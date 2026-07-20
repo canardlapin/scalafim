@@ -1,18 +1,18 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class MvpaAdversarialSuite extends munit.FunSuite:
   private val Tolerance = 1e-10
 
-  private def patternMatrix(matrix: DoubleMatrix): PatternMatrix =
+  private def patternMatrix(matrix: DMat): PatternMatrix =
     PatternMatrix(
       matrix,
       (0 until matrix.rows).map(SampleIndex.unsafe).toVector,
       (0 until matrix.cols).map(FeatureIndex.unsafe).toVector
     )
 
-  private def assertFiniteMatrix(matrix: DoubleMatrix): Unit =
+  private def assertFiniteMatrix(matrix: DMat): Unit =
     val data = matrix.copyData
     var i = 0
     while i < data.length do
@@ -99,7 +99,7 @@ class MvpaAdversarialSuite extends munit.FunSuite:
 
   test("feature ridge fit stays finite for near-collinear high-dynamic-range predictors") {
     val featureRows =
-      DoubleMatrix.fromRows(
+      GaleTestMatrix.fromRows(
         Vector.tabulate(featureItems.length) { row =>
           val x = (row.toDouble - 3.5) * 1000000.0
           Vector(
@@ -111,7 +111,7 @@ class MvpaAdversarialSuite extends munit.FunSuite:
         }
       )
     val patternRows =
-      DoubleMatrix.fromRows(
+      GaleTestMatrix.fromRows(
         Vector.tabulate(featureItems.length) { row =>
           val x = (row.toDouble - 3.5) * 1000000.0
           Vector(
@@ -162,7 +162,7 @@ class MvpaAdversarialSuite extends munit.FunSuite:
         .toRows
         .updated(2, MvpaRReferenceFixtures.FeatureRsa.patternRows.toRows(2).updated(3, Double.NaN))
     val patterns =
-      patternMatrix(DoubleMatrix.fromRows(poisonedRows))
+      patternMatrix(GaleTestMatrix.fromRows(poisonedRows))
     val plan =
       FeatureSetPlan
         .regional(

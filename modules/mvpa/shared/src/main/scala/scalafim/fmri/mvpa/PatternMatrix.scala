@@ -1,9 +1,9 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 final case class PatternMatrix(
-    value: DoubleMatrix,
+    value: DMat,
     sampleIndices: Vector[SampleIndex],
     featureIndices: Vector[FeatureIndex]
 ):
@@ -19,9 +19,17 @@ final case class PatternMatrix(
       case Some(bad) =>
         Left(MvpaError.MatrixShapeMismatch(s"sample index $bad out of bounds for ${value.rows} rows"))
       case None =>
+        val selected = Matrix.newBuilder(localRows.length, value.cols)
+        var row = 0
+        while row < localRows.length do
+          var col = 0
+          while col < value.cols do
+            selected(row, col) = value(localRows(row), col)
+            col += 1
+          row += 1
         Right(
           PatternMatrix(
-            value = value.selectRows(localRows),
+            value = selected.result(),
             sampleIndices = rows.toVector,
             featureIndices = featureIndices
           )
@@ -40,18 +48,18 @@ final case class PatternMatrix(
           return Left(MvpaError.MissingFeature(featureSet.id, feature))
       i += 1
 
-    val out = new Array[Double](value.rows * positions.length)
+    val out = Matrix.newBuilder(value.rows, positions.length)
     var row = 0
     while row < value.rows do
       var col = 0
       while col < positions.length do
-        out(row * positions.length + col) = value.dataArray(row * value.cols + positions(col))
+        out(row, col) = value(row, positions(col))
         col += 1
       row += 1
 
     Right(
       PatternMatrix(
-        value = DoubleMatrix.unsafe(value.rows, positions.length, out),
+        value = out.result(),
         sampleIndices = sampleIndices,
         featureIndices = featureSet.featureIndices
       )
@@ -59,7 +67,19 @@ final case class PatternMatrix(
 
 object PatternMatrix:
   def fromRows(rows: Seq[Seq[Double]]): PatternMatrix =
-    val matrix = DoubleMatrix.fromRows(rows)
+    require(rows.nonEmpty, "matrix rows must be non-empty")
+    val rowVector = rows.map(_.toIndexedSeq).toIndexedSeq
+    val cols = rowVector.head.length
+    require(rowVector.forall(_.length == cols), "matrix rows must have equal length")
+    val builder = Matrix.newBuilder(rowVector.length, cols)
+    var row = 0
+    while row < rowVector.length do
+      var col = 0
+      while col < cols do
+        builder(row, col) = rowVector(row)(col)
+        col += 1
+      row += 1
+    val matrix = builder.result()
     PatternMatrix(
       value = matrix,
       sampleIndices = (0 until matrix.rows).map(SampleIndex.unsafe).toVector,

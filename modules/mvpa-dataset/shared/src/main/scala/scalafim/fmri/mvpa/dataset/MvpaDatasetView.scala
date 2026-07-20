@@ -11,7 +11,7 @@ import scalafim.dataset.{
   VoxelIndex
 }
 import scalafim.fmri.mvpa.*
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 import scala.util.control.NonFatal
 
@@ -794,7 +794,7 @@ object SampleTable:
     Right(out.result())
 
 final case class PatternTable private (
-    value: DoubleMatrix,
+    value: DMat,
     featureMapping: FeatureMapping
 ):
   require(value.rows > 0, "pattern table must contain at least one row")
@@ -817,23 +817,23 @@ final case class PatternTable private (
     )
 
 object PatternTable:
-  def build(value: DoubleMatrix, featureMapping: FeatureMapping): Either[MvpaDatasetError, PatternTable] =
+  def build(value: DMat, featureMapping: FeatureMapping): Either[MvpaDatasetError, PatternTable] =
     if value.rows <= 0 then Left(MvpaDatasetError.EmptySampleTable)
     else if value.cols != featureMapping.features then
       Left(MvpaDatasetError.PatternFeatureCountMismatch(featureMapping.features, value.cols))
     else Right(new PatternTable(value, featureMapping))
 
-  def build(value: DoubleMatrix, featureSpace: FeatureSpaceRef): Either[MvpaDatasetError, PatternTable] =
+  def build(value: DMat, featureSpace: FeatureSpaceRef): Either[MvpaDatasetError, PatternTable] =
     build(value, featureSpace.mapping)
 
   def fromMatrix(
-      value: DoubleMatrix,
+      value: DMat,
       featureMapping: FeatureMapping
   ): Either[MvpaDatasetError, PatternTable] =
     build(value, featureMapping)
 
   def fromMatrix(
-      value: DoubleMatrix,
+      value: DMat,
       voxelIndices: Seq[Int],
       featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("features"),
       datasetId: Option[DatasetId] = None,
@@ -864,7 +864,15 @@ object PatternTable:
         case Some(actual) =>
           Left(MvpaDatasetError.PatternFeatureCountMismatch(width, actual))
         case None =>
-          fromMatrix(DoubleMatrix.fromRows(rowVector), voxelIndices, featureSpaceId, datasetId, shape)
+          val builder = Matrix.newBuilder(rowVector.length, width)
+          var row = 0
+          while row < rowVector.length do
+            var col = 0
+            while col < width do
+              builder(row, col) = rowVector(row)(col)
+              col += 1
+            row += 1
+          fromMatrix(builder.result(), voxelIndices, featureSpaceId, datasetId, shape)
 
   def fromSeries(
       series: FmriSeries,
@@ -876,16 +884,16 @@ object PatternTable:
       table <- build(matrixFromSeries(series), mapping)
     yield table
 
-  private def matrixFromSeries(series: FmriSeries): DoubleMatrix =
-    val out = new Array[Double](series.nTimepoints * series.nVoxels)
+  private def matrixFromSeries(series: FmriSeries): DMat =
+    val out = Matrix.newBuilder(series.nTimepoints, series.nVoxels)
     var row = 0
     while row < series.nTimepoints do
       var col = 0
       while col < series.nVoxels do
-        out(row * series.nVoxels + col) = series.data(row, col)
+        out(row, col) = series.data(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(series.nTimepoints, series.nVoxels, out)
+    out.result()
 
 final case class MvpaDatasetView private[dataset] (
     patterns: PatternMatrix,

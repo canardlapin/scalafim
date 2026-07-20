@@ -1,11 +1,11 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 object MvpaParityFixtures:
   object Rdm:
-    val patterns: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val patterns: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(0.0, 0.0),
           Vector(3.0, 4.0),
@@ -23,8 +23,8 @@ object MvpaParityFixtures:
       Vector(5.0, math.sqrt(2.0), math.sqrt(13.0))
 
   object Correlation:
-    val patterns: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val patterns: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 2.0, 3.0),
           Vector(1.0, 2.0, 3.0),

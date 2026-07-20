@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 object MvpaRReferenceFixtures:
   final case class NaiveXdecCase(
@@ -10,7 +10,7 @@ object MvpaRReferenceFixtures:
       expectedClasses: Vector[String],
       expectedPredicted: Vector[String],
       expectedAccuracy: Double,
-      expectedProbabilities: DoubleMatrix
+      expectedProbabilities: DMat
   )
 
   object FeatureRsa:
@@ -23,8 +23,8 @@ object MvpaRReferenceFixtures:
     val lambda: Double =
       0.75
 
-    val featureRows: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val featureRows: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(0.0, 1.0, 0.2),
           Vector(1.0, 0.0, -0.1),
@@ -35,8 +35,8 @@ object MvpaRReferenceFixtures:
         )
       )
 
-    val patternRows: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val patternRows: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(0.76, 0.82, 0.98, 1.95),
           Vector(2.67, -0.27, -0.62, 2.34),
@@ -51,8 +51,8 @@ object MvpaRReferenceFixtures:
       Vector(0, 2, 3)
 
     object EncodeRegional:
-      val predicted: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val predicted: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(1.3654728019231466, 1.2239737378960658, 0.8868764273637605, 2.13063836654292),
             Vector(3.016896591222865, 0.38815249604505586, -0.4227203076382656, 2.603839223575439),
@@ -63,8 +63,8 @@ object MvpaRReferenceFixtures:
           )
         )
 
-      val observed: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val observed: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(0.76, 0.82, 0.98, 1.95),
             Vector(2.67, -0.27, -0.62, 2.34),
@@ -91,8 +91,8 @@ object MvpaRReferenceFixtures:
         )
 
     object DecodeRegional:
-      val predicted: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val predicted: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(0.45228628473213517, 1.3938333643070311, 0.27220499552721644),
             Vector(1.2874509708674042, 0.6213412817134125, 0.27037367160358944),
@@ -103,8 +103,8 @@ object MvpaRReferenceFixtures:
           )
         )
 
-      val observed: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val observed: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(0.0, 1.0, 0.2),
             Vector(1.0, 0.0, -0.1),
@@ -131,8 +131,8 @@ object MvpaRReferenceFixtures:
         )
 
     object EncodeSearchlight:
-      val predicted: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val predicted: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(1.3654728019231466, 0.8868764273637605, 2.13063836654292),
             Vector(3.016896591222865, -0.4227203076382656, 2.603839223575439),
@@ -143,8 +143,8 @@ object MvpaRReferenceFixtures:
           )
         )
 
-      val observed: DoubleMatrix =
-        DoubleMatrix.fromRows(
+      val observed: DMat =
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(0.76, 0.98, 1.95),
             Vector(2.67, -0.62, 2.34),
@@ -171,8 +171,8 @@ object MvpaRReferenceFixtures:
         )
 
   object NaiveXdec:
-    val sourceRows: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val sourceRows: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(2.0, 1.0, -1.0, 0.0, 0.6),
           Vector(-1.2, 2.1, 0.8, -0.5, 1.0),
@@ -183,8 +183,8 @@ object MvpaRReferenceFixtures:
         )
       )
 
-    val targetRows: DoubleMatrix =
-      DoubleMatrix.fromRows(
+    val targetRows: DMat =
+      GaleTestMatrix.fromRows(
         Vector(
           Vector(0.0, -1.3, 2.8, 1.4, -0.8),
           Vector(2.8, 1.4, -1.3, 0.1, 0.7),
@@ -210,7 +210,7 @@ object MvpaRReferenceFixtures:
           expectedClasses = Vector("a", "b", "c"),
           expectedPredicted = Vector("c", "a", "b", "c", "b", "a"),
           expectedAccuracy = 1.0,
-          expectedProbabilities = DoubleMatrix.fromRows(
+          expectedProbabilities = GaleTestMatrix.fromRows(
             Vector(
               Vector(0.11722663730035712, 0.2055694795891601, 0.6772038831104829),
               Vector(0.7139665467777573, 0.1681179141383179, 0.11791553908392469),
@@ -228,7 +228,7 @@ object MvpaRReferenceFixtures:
           expectedClasses = Vector("a", "b", "c"),
           expectedPredicted = Vector("c", "a", "b", "c", "b", "a"),
           expectedAccuracy = 1.0,
-          expectedProbabilities = DoubleMatrix.fromRows(
+          expectedProbabilities = GaleTestMatrix.fromRows(
             Vector(
               Vector(0.09792952958434892, 0.2260014833090925, 0.6760689871065586),
               Vector(0.6992676325702212, 0.19925395635059912, 0.10147841107917988),
@@ -250,7 +250,7 @@ object MvpaRReferenceFixtures:
           expectedClasses = Vector("a", "b", "c"),
           expectedPredicted = Vector("c", "a", "b", "c", "b", "a"),
           expectedAccuracy = 1.0,
-          expectedProbabilities = DoubleMatrix.fromRows(
+          expectedProbabilities = GaleTestMatrix.fromRows(
             Vector(
               Vector(0.4171817519945964, 0.06959922371999121, 0.5132190242854124),
               Vector(0.5033770055451968, 0.089438956198967, 0.4071840382558362),
@@ -268,7 +268,7 @@ object MvpaRReferenceFixtures:
           expectedClasses = Vector("a", "b", "c"),
           expectedPredicted = Vector("c", "a", "b", "c", "b", "a"),
           expectedAccuracy = 1.0,
-          expectedProbabilities = DoubleMatrix.fromRows(
+          expectedProbabilities = GaleTestMatrix.fromRows(
             Vector(
               Vector(0.10406725280176837, 0.14662198888930567, 0.7493107583089259),
               Vector(0.5804375125742458, 0.3392127574777426, 0.08034972994801153),
@@ -286,7 +286,7 @@ object MvpaRReferenceFixtures:
           expectedClasses = Vector("a", "b", "c"),
           expectedPredicted = Vector("c", "a", "b", "c", "b", "a"),
           expectedAccuracy = 1.0,
-          expectedProbabilities = DoubleMatrix.fromRows(
+          expectedProbabilities = GaleTestMatrix.fromRows(
             Vector(
               Vector(0.17849293555756526, 0.14349017544226908, 0.6780168890001657),
               Vector(0.6848171598823188, 0.14148656717754446, 0.17369627294013668),

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class FeatureModelSuite extends munit.FunSuite:
   private val itemLabels: Vector[String] =
@@ -31,7 +31,7 @@ class FeatureModelSuite extends munit.FunSuite:
     FeatureModelDesign
       .unsafe(
         itemLabels,
-        DoubleMatrix.fromRows(featureRows),
+        GaleTestMatrix.fromRows(featureRows),
         Vector("semantic", "visual")
       )
 
@@ -107,7 +107,7 @@ class FeatureModelSuite extends munit.FunSuite:
       FeatureModelDesign
         .unsafe(
           Vector("item_0", "item_1", "item_2", "item_3", "item_4"),
-          DoubleMatrix.fromRows(Vector.fill(5)(Vector(0.0))),
+          GaleTestMatrix.fromRows(Vector.fill(5)(Vector(0.0))),
           Vector("constant")
         )
     val targetPatterns =
@@ -161,11 +161,11 @@ class FeatureModelSuite extends munit.FunSuite:
   test("feature model design validates labels, dimensions, and finite values") {
     val duplicate = FeatureModelDesign(
       Vector("a", "a"),
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
+      GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
     )
     val nonFinite = FeatureModelDesign(
       Vector("a", "b"),
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN)))
+      GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN)))
     )
 
     assert(duplicate.swap.toOption.get.message.contains("unique"))
@@ -176,7 +176,7 @@ class FeatureModelSuite extends munit.FunSuite:
     val badDesign = FeatureModelDesign
       .unsafe(
         Vector("a", "b", "c"),
-        DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
+        GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
       )
     val analysis = FeatureModelAnalysis(badDesign, FeaturePredictionDirection.FeaturesToPatterns)
     val result = MvpaEngine.run(patterns, allFeatures, response, analysis, Some(folds)).toOption.get

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 enum RdmRows:
   case Samples
@@ -23,7 +23,7 @@ enum RdmMethod:
       case Euclidean => "euclidean"
       case Correlation => "correlation"
 
-  def compute(matrix: DoubleMatrix): Either[MvpaError, RdmVector] =
+  def compute(matrix: DMat): Either[MvpaError, RdmVector] =
     this match
       case SquaredEuclidean(normalizeByFeatures) =>
         Rdm.squaredEuclidean(matrix, normalizeByFeatures)
@@ -791,7 +791,7 @@ object SamplewiseRsaAnalysis:
         row += 1
       Right(out.result())
 
-final case class ObservedPatterns(items: Vector[RsaItemId], matrix: DoubleMatrix)
+final case class ObservedPatterns(items: Vector[RsaItemId], matrix: DMat)
 
 private[mvpa] object RdmAnalysisSupport:
   def observedPatterns(

@@ -7,6 +7,9 @@ import scalafim.image.{DMat, NeuroSpace}
 
 class MvpaDatasetViewSuite extends munit.FunSuite:
 
+  private def rows(matrix: gale.linalg.DMat): Vector[Vector[Double]] =
+    Vector.tabulate(matrix.rows)(row => Vector.tabulate(matrix.cols)(col => matrix(row, col)))
+
   private def timepointOrigin(index: Int): SampleOrigin =
     SampleOrigin.timepoint(index).toOption.get
 
@@ -54,7 +57,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(view.samples.rows.map(_.timepoint), Vector(Some(1), Some(3)))
     assertEquals(view.samples.rows.map(_.origin), Vector(timepointOrigin(1), timepointOrigin(3)))
     assertEquals(view.samples.metadata.blocks.flatten.map(_.value), Vector("run-a", "run-b"))
-    assertEquals(view.patterns.value.toRows, Vector(Vector(-2.0, 0.0), Vector(-3.0, -0.5)))
+    assertEquals(rows(view.patterns.value), Vector(Vector(-2.0, 0.0), Vector(-3.0, -0.5)))
     assertEquals(view.patterns.featureIndices.map(_.value), Vector(0, 2))
     assert(view.featureMapping.isVoxelBacked)
     assertEquals(view.featureSpace.id.value, "selected-voxels")
@@ -100,7 +103,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     val featureSet = FeatureSet.unsafe(RoiId(7), Vector(2, 4), label = Some("signal"))
     val selected = view.source.selectFeatures(featureSet).toOption.get
     assertEquals(
-      selected.value.toRows,
+      rows(selected.value),
       Vector(
         Vector(2.0, 0.1),
         Vector(-2.0, 0.1),

@@ -46,7 +46,7 @@ object PartitionMeansBuilder:
         var feature = 0
         while feature < data.features do
           sums((foldIndex * classes.length + condition) * data.features + feature) +=
-            data.value.dataArray(sample * data.features + feature)
+            data.value(sample, feature)
           feature += 1
         rowIndex += 1
       foldIndex += 1

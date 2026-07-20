@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class ClassificationSuite extends munit.FunSuite:
 
@@ -67,7 +67,7 @@ class ClassificationSuite extends munit.FunSuite:
         out(row * classes.length) = 0.2
         out(row * classes.length + 1) = 0.8
         row += 1
-      Right(ClassificationPrediction(classes, DoubleMatrix.unsafe(test.samples, classes.length, out), test.sampleIndices))
+      Right(ClassificationPrediction(classes, GaleTestMatrix.fromArray(test.samples, classes.length, out), test.sampleIndices))
 
   private final case class TrainMeanProbabilityClassifier() extends Classifier:
     override val name: String = "train_mean_probability"
@@ -101,7 +101,7 @@ class ClassificationSuite extends munit.FunSuite:
           out(row * classes.length) = firstClassProbability
           out(row * classes.length + 1) = 1.0 - firstClassProbability
           row += 1
-        Right(ClassificationPrediction(classes, DoubleMatrix.unsafe(test.samples, classes.length, out), test.sampleIndices))
+        Right(ClassificationPrediction(classes, GaleTestMatrix.fromArray(test.samples, classes.length, out), test.sampleIndices))
 
   test("correlation centroid classifier predicts by class templates") {
     val classifier = CorrelationCentroidClassifier()
@@ -297,7 +297,7 @@ class ClassificationSuite extends munit.FunSuite:
   test("accuracy rejects empty predictions") {
     val prediction = ClassificationPrediction(
       makeLabels("a", "b"),
-      DoubleMatrix.unsafe(0, 2, Array.empty[Double]),
+      GaleTestMatrix.fromArray(0, 2, Array.empty[Double]),
       Vector.empty
     )
 

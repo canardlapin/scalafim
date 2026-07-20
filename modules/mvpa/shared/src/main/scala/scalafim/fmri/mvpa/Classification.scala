@@ -1,10 +1,10 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.{Cholesky, DoubleMatrix}
+import gale.linalg.{CholeskyOptions, DMat, Matrix}
 
 final case class ClassificationPrediction(
     classes: Vector[ClassLabel],
-    probabilities: DoubleMatrix,
+    probabilities: DMat,
     sampleIndices: Vector[SampleIndex]
 ):
   require(classes.nonEmpty, "prediction classes must be non-empty")
@@ -68,7 +68,7 @@ final case class CorrelationCentroidClassifier() extends Classifier:
 
 final case class CorrelationCentroidModel(
     classes: Vector[ClassLabel],
-    centroids: DoubleMatrix
+    centroids: DMat
 ) extends ClassifierModel:
   override val classifierName: String = "correlation_centroid"
 
@@ -112,7 +112,7 @@ final case class SwiftCentroidClassifier(
 
 final case class SwiftCentroidModel(
     classes: Vector[ClassLabel],
-    centroids: DoubleMatrix,
+    centroids: DMat,
     priors: Vector[Double],
     scaler: Classification.Scaler
 ) extends ClassifierModel:
@@ -140,39 +140,43 @@ final class RidgeLdaClassifier private (val penalty: RidgePenalty) extends Class
       _ <- Classification.validateFinite(train.value, "training data")
       labels <- Classification.categorical(response, train.samples)
       model <- Classification.classSummary(train, labels).flatMap { summary =>
-        val sigma = Classification.pooledResidualCrossproduct(train.value, labels, summary)
-        var diag = 0
-        while diag < sigma.rows do
-          sigma.dataArray(diag * sigma.cols + diag) += gamma
-          diag += 1
-
-        Cholesky.decompose(sigma).left.map(error => MvpaError.ClassifierFitFailed(name, error.message)).map { factor =>
+        val sigma0 = Classification.pooledResidualCrossproduct(train.value, labels, summary)
+        val sigmaBuilder = Matrix.newBuilder(sigma0.rows, sigma0.cols)
+        var row = 0
+        while row < sigma0.rows do
+          var col = 0
+          while col < sigma0.cols do
+            sigmaBuilder(row, col) = sigma0(row, col) + (if row == col then gamma else 0.0)
+            col += 1
+          row += 1
+        val sigma = sigmaBuilder.result()
+        sigma.cholesky(CholeskyOptions(1e-12)).left.map(error => MvpaError.ClassifierFitFailed(name, error.getMessage)).flatMap { factor =>
           val meansT = Classification.transpose(summary.means)
-          val invSigmaMeans = factor.solve(meansT)
-          val linConst = new Array[Double](summary.classes.length)
-          var klass = 0
-          while klass < summary.classes.length do
-            var dot = 0.0
-            var feature = 0
-            while feature < train.features do
-              dot += summary.means.dataArray(klass * train.features + feature) *
-                invSigmaMeans.dataArray(feature * summary.classes.length + klass)
-              feature += 1
-            linConst(klass) = -0.5 * dot + math.log(math.max(summary.priors(klass), 1e-300))
-            klass += 1
+          factor.solve(meansT).left.map(error => MvpaError.ClassifierFitFailed(name, error.getMessage)).map { invSigmaMeans =>
+            val linConst = new Array[Double](summary.classes.length)
+            var klass = 0
+            while klass < summary.classes.length do
+              var dot = 0.0
+              var feature = 0
+              while feature < train.features do
+                dot += summary.means(klass, feature) * invSigmaMeans(feature, klass)
+                feature += 1
+              linConst(klass) = -0.5 * dot + math.log(math.max(summary.priors(klass), 1e-300))
+              klass += 1
 
-          RidgeLdaModel(
-            classes = summary.classes,
-            invSigmaMeans = invSigmaMeans,
-            linearConstants = linConst.toVector
-          )
+            RidgeLdaModel(
+              classes = summary.classes,
+              invSigmaMeans = invSigmaMeans,
+              linearConstants = linConst.toVector
+            )
+          }
         }
       }
     yield model
 
 final case class RidgeLdaModel(
     classes: Vector[ClassLabel],
-    invSigmaMeans: DoubleMatrix,
+    invSigmaMeans: DMat,
     linearConstants: Vector[Double]
 ) extends ClassifierModel:
   override val classifierName: String = "ridge_lda"
@@ -182,15 +186,16 @@ final case class RidgeLdaModel(
       Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.features} != model feature count ${invSigmaMeans.rows}"))
     else
       Classification.validateFinite(test.value, "test data").map { _ =>
-        val scores = DoubleMatrix.multiply(test.value, invSigmaMeans)
+        val rawScores = test.value * invSigmaMeans
+        val scores = Matrix.newBuilder(rawScores.rows, rawScores.cols)
         var row = 0
-        while row < scores.rows do
+        while row < rawScores.rows do
           var klass = 0
-          while klass < scores.cols do
-            scores.dataArray(row * scores.cols + klass) += linearConstants(klass)
+          while klass < rawScores.cols do
+            scores(row, klass) = rawScores(row, klass) + linearConstants(klass)
             klass += 1
           row += 1
-        ClassificationPrediction(classes, Classification.softmax(scores), test.sampleIndices)
+        ClassificationPrediction(classes, Classification.softmax(scores.result()), test.sampleIndices)
       }
 
 object RidgeLdaClassifier:
@@ -230,15 +235,18 @@ object Classification:
       classes: Vector[ClassLabel],
       counts: Vector[Int],
       priors: Vector[Double],
-      means: DoubleMatrix
+      means: DMat
   )
 
-  def validateFinite(matrix: DoubleMatrix, label: String): Either[MvpaError, Unit] =
-    var i = 0
-    while i < matrix.dataArray.length do
-      if !matrix.dataArray(i).isFinite then
-        return Left(MvpaError.InvalidClassifierInput(s"$label contains non-finite values"))
-      i += 1
+  def validateFinite(matrix: DMat, label: String): Either[MvpaError, Unit] =
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        if !matrix(row, col).isFinite then
+          return Left(MvpaError.InvalidClassifierInput(s"$label contains non-finite values"))
+        col += 1
+      row += 1
     Right(())
 
   def validateScaling(scaling: FeatureScaling): Either[MvpaError, Unit] =
@@ -249,21 +257,20 @@ object Classification:
         Right(())
 
   final case class Scaler(means: Array[Double], scales: Array[Double]):
-    def transform(matrix: DoubleMatrix): DoubleMatrix =
+    def transform(matrix: DMat): DMat =
       require(matrix.cols == means.length, "matrix columns must match scaler length")
-      val out = new Array[Double](matrix.rows * matrix.cols)
+      val out = Matrix.newBuilder(matrix.rows, matrix.cols)
       var row = 0
       while row < matrix.rows do
         var col = 0
         while col < matrix.cols do
-          out(row * matrix.cols + col) =
-            (matrix.dataArray(row * matrix.cols + col) - means(col)) / scales(col)
+          out(row, col) = (matrix(row, col) - means(col)) / scales(col)
           col += 1
         row += 1
-      DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+      out.result()
 
   object Scaler:
-    def fit(matrix: DoubleMatrix, scaling: FeatureScaling): Scaler =
+    def fit(matrix: DMat, scaling: FeatureScaling): Scaler =
       val means = new Array[Double](matrix.cols)
       val scales = new Array[Double](matrix.cols)
       var col = 0
@@ -271,7 +278,7 @@ object Classification:
         var sum = 0.0
         var row = 0
         while row < matrix.rows do
-          sum += matrix.dataArray(row * matrix.cols + col)
+          sum += matrix(row, col)
           row += 1
         val mean = sum / matrix.rows
         means(col) = scaling match
@@ -281,7 +288,7 @@ object Classification:
         var ss = 0.0
         row = 0
         while row < matrix.rows do
-          val centered = matrix.dataArray(row * matrix.cols + col) - mean
+          val centered = matrix(row, col) - mean
           ss += centered * centered
           row += 1
         scales(col) = math.sqrt(ss / math.max(1, matrix.rows - 1))
@@ -335,7 +342,7 @@ object Classification:
           counts(klass) += 1
           var feature = 0
           while feature < data.features do
-            sums(klass * data.features + feature) += data.value.dataArray(row * data.features + feature)
+            sums(klass * data.features + feature) += data.value(row, feature)
             feature += 1
           row += 1
 
@@ -348,38 +355,44 @@ object Classification:
               sums(klass * data.features + feature) /= counts(klass)
               feature += 1
             klass += 1
+          val means = Matrix.newBuilder(classes.length, data.features)
+          klass = 0
+          while klass < classes.length do
+            var feature = 0
+            while feature < data.features do
+              means(klass, feature) = sums(klass * data.features + feature)
+              feature += 1
+            klass += 1
           val total = counts.sum.toDouble
           Right(
             ClassSummary(
               classes = classes,
               counts = counts.toVector,
               priors = counts.map(_ / total).toVector,
-              means = DoubleMatrix.unsafe(classes.length, data.features, sums)
+              means = means.result()
             )
           )
 
-  def pooledResidualCrossproduct(data: DoubleMatrix, labels: Vector[ClassLabel], summary: ClassSummary): DoubleMatrix =
+  def pooledResidualCrossproduct(data: DMat, labels: Vector[ClassLabel], summary: ClassSummary): DMat =
     val classIndex = summary.classes.zipWithIndex.map { case (label, index) => label.value -> index }.toMap
-    val out = new Array[Double](data.cols * data.cols)
+    val out = Matrix.newBuilder(data.cols, data.cols)
     var row = 0
     while row < data.rows do
       val klass = classIndex(labels(row).value)
       var left = 0
       while left < data.cols do
-        val residualLeft = data.dataArray(row * data.cols + left) -
-          summary.means.dataArray(klass * data.cols + left)
+        val residualLeft = data(row, left) - summary.means(klass, left)
         var right = 0
         while right < data.cols do
-          val residualRight = data.dataArray(row * data.cols + right) -
-            summary.means.dataArray(klass * data.cols + right)
-          out(left * data.cols + right) += residualLeft * residualRight
+          val residualRight = data(row, right) - summary.means(klass, right)
+          out(left, right) = out(left, right) + residualLeft * residualRight
           right += 1
         left += 1
       row += 1
-    DoubleMatrix.unsafe(data.cols, data.cols, out)
+    out.result()
 
-  def rowCorrelationScores(data: DoubleMatrix, centroids: DoubleMatrix): DoubleMatrix =
-    val out = new Array[Double](data.rows * centroids.rows)
+  def rowCorrelationScores(data: DMat, centroids: DMat): DMat =
+    val out = Matrix.newBuilder(data.rows, centroids.rows)
     val centroidMeans = new Array[Double](centroids.rows)
     val centroidNorms = new Array[Double](centroids.rows)
     var klass = 0
@@ -398,24 +411,23 @@ object Classification:
         var dot = 0.0
         var col = 0
         while col < data.cols do
-          dot += (data.dataArray(row * data.cols + col) - mean) *
-            (centroids.dataArray(klass * centroids.cols + col) - centroidMeans(klass))
+          dot += (data(row, col) - mean) * (centroids(klass, col) - centroidMeans(klass))
           col += 1
-        out(row * centroids.rows + klass) = dot / math.max(Eps, norm * centroidNorms(klass))
+        out(row, klass) = dot / math.max(Eps, norm * centroidNorms(klass))
         klass += 1
       row += 1
-    DoubleMatrix.unsafe(data.rows, centroids.rows, out)
+    out.result()
 
-  def linearCentroidScores(data: DoubleMatrix, centroids: DoubleMatrix, priors: Vector[Double]): DoubleMatrix =
+  def linearCentroidScores(data: DMat, centroids: DMat, priors: Vector[Double]): DMat =
     require(centroids.rows == priors.length, "centroid rows must match priors")
-    val out = new Array[Double](data.rows * centroids.rows)
+    val out = Matrix.newBuilder(data.rows, centroids.rows)
     val norms = new Array[Double](centroids.rows)
     var klass = 0
     while klass < centroids.rows do
       var ss = 0.0
       var col = 0
       while col < centroids.cols do
-        val value = centroids.dataArray(klass * centroids.cols + col)
+        val value = centroids(klass, col)
         ss += value * value
         col += 1
       norms(klass) = ss
@@ -428,36 +440,36 @@ object Classification:
         var dot = 0.0
         var col = 0
         while col < data.cols do
-          dot += data.dataArray(row * data.cols + col) * centroids.dataArray(klass * centroids.cols + col)
+          dot += data(row, col) * centroids(klass, col)
           col += 1
-        out(row * centroids.rows + klass) =
+        out(row, klass) =
           dot - 0.5 * norms(klass) + math.log(math.max(priors(klass), 1e-300))
         klass += 1
       row += 1
-    DoubleMatrix.unsafe(data.rows, centroids.rows, out)
+    out.result()
 
-  def softmax(scores: DoubleMatrix): DoubleMatrix =
-    val out = new Array[Double](scores.rows * scores.cols)
+  def softmax(scores: DMat): DMat =
+    val out = Matrix.newBuilder(scores.rows, scores.cols)
     var row = 0
     while row < scores.rows do
-      var maxScore = scores.dataArray(row * scores.cols)
+      var maxScore = scores(row, 0)
       var col = 1
       while col < scores.cols do
-        maxScore = math.max(maxScore, scores.dataArray(row * scores.cols + col))
+        maxScore = math.max(maxScore, scores(row, col))
         col += 1
       var sum = 0.0
       col = 0
       while col < scores.cols do
-        val value = math.exp(scores.dataArray(row * scores.cols + col) - maxScore)
-        out(row * scores.cols + col) = value
+        val value = math.exp(scores(row, col) - maxScore)
+        out(row, col) = value
         sum += value
         col += 1
       col = 0
       while col < scores.cols do
-        out(row * scores.cols + col) /= sum
+        out(row, col) = out(row, col) / sum
         col += 1
       row += 1
-    DoubleMatrix.unsafe(scores.rows, scores.cols, out)
+    out.result()
 
   def crossValidate(
       classifier: Classifier,
@@ -474,7 +486,7 @@ object Classification:
       else
         val testRows = folds.folds.flatMap(_.test.map(_.value)).distinct.sorted
         val rowToOutput = testRows.zipWithIndex.toMap
-        val probSum = new Array[Double](testRows.length * classes.length)
+        val probSum = Matrix.newBuilder(testRows.length, classes.length)
         val probN = Array.fill(testRows.length)(0)
 
         def processFold(fold: Fold): Either[MvpaError, Unit] =
@@ -496,7 +508,7 @@ object Classification:
                 val outRow = rowToOutput(fold.test(localRow).value)
                 var klass = 0
                 while klass < classes.length do
-                  probSum(outRow * classes.length + klass) += pred.probabilities(localRow, classColumns(klass))
+                  probSum(outRow, klass) = probSum(outRow, klass) + pred.probabilities(localRow, classColumns(klass))
                   klass += 1
                 probN(outRow) += 1
                 localRow += 1
@@ -519,13 +531,13 @@ object Classification:
             while row < testRows.length do
               var klass = 0
               while klass < classes.length do
-                probSum(row * classes.length + klass) /= probN(row)
+                probSum(row, klass) = probSum(row, klass) / probN(row)
                 klass += 1
               row += 1
             Right(
               ClassificationPrediction(
                 classes,
-                DoubleMatrix.unsafe(testRows.length, classes.length, probSum),
+                probSum.result(),
                 testRows.map(SampleIndex.unsafe).toVector
               )
             )
@@ -573,30 +585,22 @@ object Classification:
           klass += 1
         Right(columns)
 
-  def transpose(matrix: DoubleMatrix): DoubleMatrix =
-    val out = new Array[Double](matrix.rows * matrix.cols)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < matrix.cols do
-        out(col * matrix.rows + row) = matrix.dataArray(row * matrix.cols + col)
-        col += 1
-      row += 1
-    DoubleMatrix.unsafe(matrix.cols, matrix.rows, out)
+  def transpose(matrix: DMat): DMat =
+    matrix.t
 
-  private def rowMean(matrix: DoubleMatrix, row: Int): Double =
+  private def rowMean(matrix: DMat, row: Int): Double =
     var sum = 0.0
     var col = 0
     while col < matrix.cols do
-      sum += matrix.dataArray(row * matrix.cols + col)
+      sum += matrix(row, col)
       col += 1
     sum / matrix.cols
 
-  private def rowNorm(matrix: DoubleMatrix, row: Int, mean: Double): Double =
+  private def rowNorm(matrix: DMat, row: Int, mean: Double): Double =
     var ss = 0.0
     var col = 0
     while col < matrix.cols do
-      val centered = matrix.dataArray(row * matrix.cols + col) - mean
+      val centered = matrix(row, col) - mean
       ss += centered * centered
       col += 1
     math.sqrt(ss)

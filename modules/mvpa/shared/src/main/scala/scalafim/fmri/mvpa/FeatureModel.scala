@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.{Cholesky, DoubleMatrix}
+import gale.linalg.{CholeskyOptions, DMat, Matrix}
 
 enum FeaturePredictionDirection:
   case FeaturesToPatterns
@@ -13,7 +13,7 @@ enum FeaturePredictionDirection:
 
 final case class FeatureModelDesign private (
     items: Vector[String],
-    features: DoubleMatrix,
+    features: DMat,
     featureNames: Vector[String]
 ):
   require(items.length == features.rows, "feature design item count must match matrix rows")
@@ -22,7 +22,7 @@ final case class FeatureModelDesign private (
 object FeatureModelDesign:
   def apply(
       items: Seq[String],
-      features: DoubleMatrix,
+      features: DMat,
       featureNames: Seq[String] = Seq.empty
   ): Either[MvpaError, FeatureModelDesign] =
     val itemVector = items.map(_.trim).toVector
@@ -45,7 +45,7 @@ object FeatureModelDesign:
 
   def unsafe(
       items: Seq[String],
-      features: DoubleMatrix,
+      features: DMat,
       featureNames: Seq[String] = Seq.empty
   ): FeatureModelDesign =
     apply(items, features, featureNames).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -65,8 +65,8 @@ final case class FeatureModelPrediction(
     direction: FeaturePredictionDirection,
     items: Vector[String],
     targetNames: Vector[String],
-    predicted: DoubleMatrix,
-    observed: DoubleMatrix
+    predicted: DMat,
+    observed: DMat
 ):
   require(predicted.rows == observed.rows, "predicted and observed rows must match")
   require(predicted.cols == observed.cols, "predicted and observed columns must match")
@@ -128,8 +128,8 @@ object FeatureModelAnalysis:
     if testRows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("fold plan produced no test samples"))
     else
       val rowToOutput = testRows.zipWithIndex.toMap
-      val predicted = new Array[Double](testRows.length * target.cols)
-      val observed = new Array[Double](testRows.length * target.cols)
+      val predicted = Matrix.newBuilder(testRows.length, target.cols)
+      val observed = Matrix.newBuilder(testRows.length, target.cols)
       val counts = Array.fill(testRows.length)(0)
 
       var foldIndex = 0
@@ -150,8 +150,8 @@ object FeatureModelAnalysis:
               val outRow = rowToOutput(test(localRow))
               var col = 0
               while col < target.cols do
-                predicted(outRow * target.cols + col) += foldPredicted.dataArray(localRow * target.cols + col)
-                observed(outRow * target.cols + col) = target.dataArray(test(localRow) * target.cols + col)
+                predicted(outRow, col) = predicted(outRow, col) + foldPredicted(localRow, col)
+                observed(outRow, col) = target(test(localRow), col)
                 col += 1
               counts(outRow) += 1
               localRow += 1
@@ -167,7 +167,7 @@ object FeatureModelAnalysis:
         while row < testRows.length do
           var col = 0
           while col < target.cols do
-            predicted(row * target.cols + col) /= counts(row)
+            predicted(row, col) = predicted(row, col) / counts(row)
             col += 1
           row += 1
         Right(
@@ -175,45 +175,53 @@ object FeatureModelAnalysis:
             direction,
             testRows.map(index => design.items(index)).toVector,
             targetNames,
-            DoubleMatrix.unsafe(testRows.length, target.cols, predicted),
-            DoubleMatrix.unsafe(testRows.length, target.cols, observed)
+            predicted.result(),
+            observed.result()
           )
         )
 
-  private def selectRows(matrix: DoubleMatrix, rows: IndexedSeq[Int]): Either[MvpaError, DoubleMatrix] =
+  private def selectRows(matrix: DMat, rows: IndexedSeq[Int]): Either[MvpaError, DMat] =
     if rows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("feature model fold has no rows"))
     else rows.find(row => row < 0 || row >= matrix.rows) match
       case Some(row) => Left(MvpaError.FoldIndexOutOfBounds("feature_model", row, matrix.rows))
-      case None => Right(matrix.selectRows(rows))
+      case None =>
+        val out = Matrix.newBuilder(rows.length, matrix.cols)
+        var row = 0
+        while row < rows.length do
+          var col = 0
+          while col < matrix.cols do
+            out(row, col) = matrix(rows(row), col)
+            col += 1
+          row += 1
+        Right(out.result())
 
 private final case class StandardizedRidgeMap(
     sourceMeans: Array[Double],
     sourceScales: Array[Double],
     targetMeans: Array[Double],
     targetScales: Array[Double],
-    coefficients: DoubleMatrix
+    coefficients: DMat
 ):
-  def predict(source: DoubleMatrix): Either[MvpaError, DoubleMatrix] =
+  def predict(source: DMat): Either[MvpaError, DMat] =
     if source.cols != sourceMeans.length then
       Left(MvpaError.InvalidFeatureModelInput(s"prediction source column count ${source.cols} != fitted source column count ${sourceMeans.length}"))
     else
       validateFinite(source, "feature model prediction source").map { _ =>
         val standardized = StandardizedRidgeMap.standardize(source, sourceMeans, sourceScales)
-        val predicted = DoubleMatrix.multiply(standardized, coefficients)
-        val out = predicted.copyData
+        val predicted = standardized * coefficients
+        val out = Matrix.newBuilder(predicted.rows, predicted.cols)
         var row = 0
         while row < predicted.rows do
           var col = 0
           while col < predicted.cols do
-            out(row * predicted.cols + col) =
-              out(row * predicted.cols + col) * targetScales(col) + targetMeans(col)
+            out(row, col) = predicted(row, col) * targetScales(col) + targetMeans(col)
             col += 1
           row += 1
-        DoubleMatrix.unsafe(predicted.rows, predicted.cols, out)
+        out.result()
       }
 
 private object StandardizedRidgeMap:
-  def fit(source: DoubleMatrix, target: DoubleMatrix, lambda: Double): Either[MvpaError, StandardizedRidgeMap] =
+  def fit(source: DMat, target: DMat, lambda: Double): Either[MvpaError, StandardizedRidgeMap] =
     if source.rows != target.rows then Left(MvpaError.InvalidFeatureModelInput(s"source rows ${source.rows} != target rows ${target.rows}"))
     else if source.rows < 2 then Left(MvpaError.InvalidFeatureModelInput("ridge feature model requires at least two training rows"))
     else if source.cols < 1 || target.cols < 1 then Left(MvpaError.InvalidFeatureModelInput("ridge feature model requires non-empty source and target columns"))
@@ -235,39 +243,46 @@ private object StandardizedRidgeMap:
         )
 
   private def solve(
-      source: DoubleMatrix,
-      target: DoubleMatrix,
+      source: DMat,
+      target: DMat,
       sourceStats: ColumnStats,
       targetStats: ColumnStats,
       lambda: Double
-  ): Either[MvpaError, DoubleMatrix] =
+  ): Either[MvpaError, DMat] =
     val x = standardize(source, sourceStats.means, sourceStats.scales)
     val y = standardize(target, targetStats.means, targetStats.scales)
-    val xtx = DoubleMatrix.crossProduct(x).addToDiagonal(lambda)
-    val xty = DoubleMatrix.transposeMultiply(x, y)
-    Cholesky
-      .decompose(xtx)
+    val gram = x.t * x
+    val gramBuilder = Matrix.newBuilder(gram.rows, gram.cols)
+    var row = 0
+    while row < gram.rows do
+      var col = 0
+      while col < gram.cols do
+        gramBuilder(row, col) = gram(row, col) + (if row == col then lambda else 0.0)
+        col += 1
+      row += 1
+    val xty = x.t * y
+    gramBuilder.result().cholesky(CholeskyOptions(1e-12))
       .left
-      .map(error => MvpaError.InvalidFeatureModelInput(s"ridge solve failed: ${error.message}"))
-      .map(_.solve(xty))
+      .map(error => MvpaError.InvalidFeatureModelInput(s"ridge solve failed: ${error.getMessage}"))
+      .flatMap(_.solve(xty).left.map(error => MvpaError.InvalidFeatureModelInput(s"ridge solve failed: ${error.getMessage}")))
 
-  def standardize(matrix: DoubleMatrix, means: Array[Double], scales: Array[Double]): DoubleMatrix =
-    val out = new Array[Double](matrix.rows * matrix.cols)
+  def standardize(matrix: DMat, means: Array[Double], scales: Array[Double]): DMat =
+    val out = Matrix.newBuilder(matrix.rows, matrix.cols)
     var row = 0
     while row < matrix.rows do
       var col = 0
       while col < matrix.cols do
-        out(row * matrix.cols + col) = (matrix.dataArray(row * matrix.cols + col) - means(col)) / scales(col)
+        out(row, col) = (matrix(row, col) - means(col)) / scales(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    out.result()
 
 private final case class ColumnStats(means: Array[Double], scales: Array[Double])
 
 private object ColumnStats:
   private val Eps = 1e-12
 
-  def from(matrix: DoubleMatrix): Either[MvpaError, ColumnStats] =
+  def from(matrix: DMat): Either[MvpaError, ColumnStats] =
     val means = new Array[Double](matrix.cols)
     val scales = new Array[Double](matrix.cols)
     var col = 0
@@ -275,7 +290,7 @@ private object ColumnStats:
       var sum = 0.0
       var row = 0
       while row < matrix.rows do
-        sum += matrix.dataArray(row * matrix.cols + col)
+        sum += matrix(row, col)
         row += 1
       val mean = sum / matrix.rows
       means(col) = mean
@@ -283,7 +298,7 @@ private object ColumnStats:
       var ss = 0.0
       row = 0
       while row < matrix.rows do
-        val centered = matrix.dataArray(row * matrix.cols + col) - mean
+        val centered = matrix(row, col) - mean
         ss += centered * centered
         row += 1
       val variance =
@@ -356,7 +371,7 @@ private object FeatureModelMetrics:
       patternRankPercentile: Double
   )
 
-  private def patternMetrics(predicted: DoubleMatrix, observed: DoubleMatrix): PatternMetrics =
+  private def patternMetrics(predicted: DMat, observed: DMat): PatternMetrics =
     if predicted.rows < 2 || predicted.cols < 2 then PatternMetrics(Double.NaN, Double.NaN, Double.NaN)
     else
       val cor = new Array[Double](predicted.rows * predicted.rows)
@@ -408,7 +423,7 @@ private object FeatureModelMetrics:
         if rankN == 0 then Double.NaN else rankSum / rankN
       PatternMetrics(patternCorrelation, patternDiscrimination, rank)
 
-  private def rdmCorrelation(predicted: DoubleMatrix, observed: DoubleMatrix): Double =
+  private def rdmCorrelation(predicted: DMat, observed: DMat): Double =
     if predicted.rows < 3 || predicted.cols < 2 then Double.NaN
     else
       val result =
@@ -419,24 +434,24 @@ private object FeatureModelMetrics:
         yield score
       result.getOrElse(Double.NaN)
 
-  private def globalCorrelation(predicted: DoubleMatrix, observed: DoubleMatrix): Double =
+  private def globalCorrelation(predicted: DMat, observed: DMat): Double =
     var predictedMean = 0.0
     var observedMean = 0.0
     var i = 0
-    while i < predicted.dataArray.length do
-      predictedMean += predicted.dataArray(i)
-      observedMean += observed.dataArray(i)
+    while i < predicted.rows * predicted.cols do
+      predictedMean += predicted(i / predicted.cols, i % predicted.cols)
+      observedMean += observed(i / observed.cols, i % observed.cols)
       i += 1
-    predictedMean /= predicted.dataArray.length
-    observedMean /= observed.dataArray.length
+    predictedMean /= (predicted.rows * predicted.cols)
+    observedMean /= (observed.rows * observed.cols)
 
     var numerator = 0.0
     var predictedSs = 0.0
     var observedSs = 0.0
     i = 0
-    while i < predicted.dataArray.length do
-      val px = predicted.dataArray(i) - predictedMean
-      val oy = observed.dataArray(i) - observedMean
+    while i < predicted.rows * predicted.cols do
+      val px = predicted(i / predicted.cols, i % predicted.cols) - predictedMean
+      val oy = observed(i / observed.cols, i % observed.cols) - observedMean
       numerator += px * oy
       predictedSs += px * px
       observedSs += oy * oy
@@ -444,7 +459,7 @@ private object FeatureModelMetrics:
     val denom = math.sqrt(predictedSs * observedSs)
     if denom <= 0.0 then Double.NaN else numerator / denom
 
-  private def meanColumnCorrelation(predicted: DoubleMatrix, observed: DoubleMatrix): Double =
+  private def meanColumnCorrelation(predicted: DMat, observed: DMat): Double =
     if predicted.rows < 2 then Double.NaN
     else
       var sum = 0.0
@@ -458,35 +473,35 @@ private object FeatureModelMetrics:
         col += 1
       if n == 0 then Double.NaN else sum / n
 
-  private def mse(predicted: DoubleMatrix, observed: DoubleMatrix): Double =
+  private def mse(predicted: DMat, observed: DMat): Double =
     var sum = 0.0
     var i = 0
-    while i < predicted.dataArray.length do
-      val diff = predicted.dataArray(i) - observed.dataArray(i)
+    while i < predicted.rows * predicted.cols do
+      val diff = predicted(i / predicted.cols, i % predicted.cols) - observed(i / observed.cols, i % observed.cols)
       sum += diff * diff
       i += 1
-    sum / predicted.dataArray.length
+    sum / (predicted.rows * predicted.cols)
 
-  private def rSquared(predicted: DoubleMatrix, observed: DoubleMatrix): Double =
+  private def rSquared(predicted: DMat, observed: DMat): Double =
     var mean = 0.0
     var i = 0
-    while i < observed.dataArray.length do
-      mean += observed.dataArray(i)
+    while i < observed.rows * observed.cols do
+      mean += observed(i / observed.cols, i % observed.cols)
       i += 1
-    mean /= observed.dataArray.length
+    mean /= (observed.rows * observed.cols)
 
     var rss = 0.0
     var tss = 0.0
     i = 0
-    while i < observed.dataArray.length do
-      val residual = observed.dataArray(i) - predicted.dataArray(i)
-      val centered = observed.dataArray(i) - mean
+    while i < observed.rows * observed.cols do
+      val residual = observed(i / observed.cols, i % observed.cols) - predicted(i / predicted.cols, i % predicted.cols)
+      val centered = observed(i / observed.cols, i % observed.cols) - mean
       rss += residual * residual
       tss += centered * centered
       i += 1
     if tss <= 0.0 then Double.NaN else 1.0 - rss / tss
 
-  private def rowCorrelation(left: DoubleMatrix, leftRow: Int, right: DoubleMatrix, rightRow: Int): Double =
+  private def rowCorrelation(left: DMat, leftRow: Int, right: DMat, rightRow: Int): Double =
     val leftMean = rowMean(left, leftRow)
     val rightMean = rowMean(right, rightRow)
     var numerator = 0.0
@@ -494,8 +509,8 @@ private object FeatureModelMetrics:
     var rightSs = 0.0
     var col = 0
     while col < left.cols do
-      val x = left.dataArray(leftRow * left.cols + col) - leftMean
-      val y = right.dataArray(rightRow * right.cols + col) - rightMean
+      val x = left(leftRow, col) - leftMean
+      val y = right(rightRow, col) - rightMean
       numerator += x * y
       leftSs += x * x
       rightSs += y * y
@@ -503,13 +518,13 @@ private object FeatureModelMetrics:
     val denom = math.sqrt(leftSs * rightSs)
     if denom <= 0.0 then Double.NaN else numerator / denom
 
-  private def columnCorrelation(left: DoubleMatrix, right: DoubleMatrix, col: Int): Double =
+  private def columnCorrelation(left: DMat, right: DMat, col: Int): Double =
     var leftMean = 0.0
     var rightMean = 0.0
     var row = 0
     while row < left.rows do
-      leftMean += left.dataArray(row * left.cols + col)
-      rightMean += right.dataArray(row * right.cols + col)
+      leftMean += left(row, col)
+      rightMean += right(row, col)
       row += 1
     leftMean /= left.rows
     rightMean /= right.rows
@@ -519,8 +534,8 @@ private object FeatureModelMetrics:
     var rightSs = 0.0
     row = 0
     while row < left.rows do
-      val x = left.dataArray(row * left.cols + col) - leftMean
-      val y = right.dataArray(row * right.cols + col) - rightMean
+      val x = left(row, col) - leftMean
+      val y = right(row, col) - rightMean
       numerator += x * y
       leftSs += x * x
       rightSs += y * y
@@ -528,18 +543,21 @@ private object FeatureModelMetrics:
     val denom = math.sqrt(leftSs * rightSs)
     if denom <= 0.0 then Double.NaN else numerator / denom
 
-  private def rowMean(matrix: DoubleMatrix, row: Int): Double =
+  private def rowMean(matrix: DMat, row: Int): Double =
     var sum = 0.0
     var col = 0
     while col < matrix.cols do
-      sum += matrix.dataArray(row * matrix.cols + col)
+      sum += matrix(row, col)
       col += 1
     sum / matrix.cols
 
-private def validateFinite(matrix: DoubleMatrix, label: String): Either[MvpaError, Unit] =
-  var i = 0
-  while i < matrix.dataArray.length do
-    if !matrix.dataArray(i).isFinite then
-      return Left(MvpaError.InvalidFeatureModelInput(s"$label contains non-finite values"))
-    i += 1
+private def validateFinite(matrix: DMat, label: String): Either[MvpaError, Unit] =
+  var row = 0
+  while row < matrix.rows do
+    var col = 0
+    while col < matrix.cols do
+      if !matrix(row, col).isFinite then
+        return Left(MvpaError.InvalidFeatureModelInput(s"$label contains non-finite values"))
+      col += 1
+    row += 1
   Right(())

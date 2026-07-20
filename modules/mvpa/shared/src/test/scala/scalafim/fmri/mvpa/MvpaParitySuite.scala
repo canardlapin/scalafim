@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 final case class MvpaBenchmarkCase(
     name: String,
@@ -57,7 +57,7 @@ class MvpaParitySuite extends munit.FunSuite:
       assertEqualsDouble(actual(i), expected(i), tolerance)
       i += 1
 
-  private def assertMatrixEquals(actual: DoubleMatrix, expected: DoubleMatrix, tolerance: Double): Unit =
+  private def assertMatrixEquals(actual: DMat, expected: DMat, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -80,7 +80,7 @@ class MvpaParitySuite extends munit.FunSuite:
       assertEqualsDouble(actual.values(i), expected.values(i), metricTolerance)
       i += 1
 
-  private def patternMatrix(matrix: DoubleMatrix): PatternMatrix =
+  private def patternMatrix(matrix: DMat): PatternMatrix =
     PatternMatrix(
       matrix,
       (0 until matrix.rows).map(SampleIndex.unsafe).toVector,
@@ -383,7 +383,7 @@ class MvpaParitySuite extends munit.FunSuite:
           val fit = SwiftCentroidClassifier(FeatureScaling.None)
             .fit(MvpaParityFixtures.Classifiers.swiftPatterns, MvpaParityFixtures.Classifiers.swiftResponse)
           fit.flatMap(_.predict(MvpaParityFixtures.Classifiers.swiftPatterns)).map { prediction =>
-            prediction.probabilities.dataArray.sum
+            prediction.probabilities.valuesRowMajor.sum
           }
       )
     )

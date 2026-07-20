@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.{Cholesky, DoubleMatrix}
+import gale.linalg.{CholeskyOptions, DMat, DMatBuilder, Matrix}
 
 final case class SearchlightClassifierScanner(
     classifier: Classifier,
@@ -176,7 +176,7 @@ object SearchlightClassifierScanner:
     if testRows.isEmpty then Left(MvpaError.InvalidClassifierInput("fold plan produced no test samples"))
     else
       val rowToOutput = testRows.zipWithIndex.toMap
-      val probSum = new Array[Double](testRows.length * classes.length)
+      val probSum = Matrix.newBuilder(testRows.length, classes.length)
       val probN = Array.fill(testRows.length)(0)
 
       var foldIndex = 0
@@ -197,13 +197,14 @@ object SearchlightClassifierScanner:
           while row < testRows.length do
             var klass = 0
             while klass < classes.length do
-              probSum(row * classes.length + klass) /= probN(row)
+              probSum(row, klass) = probSum(row, klass) / probN(row)
               klass += 1
             row += 1
-          Classification.validateFinite(DoubleMatrix.unsafe(testRows.length, classes.length, probSum.clone), "classifier probabilities").map { _ =>
+          val probabilities = probSum.result()
+          Classification.validateFinite(probabilities, "classifier probabilities").map { _ =>
             ClassificationPrediction(
               classes,
-              DoubleMatrix.unsafe(testRows.length, classes.length, probSum),
+              probabilities,
               testRows.map(SampleIndex.unsafe).toVector
             )
           }
@@ -221,7 +222,7 @@ object SearchlightClassifierScanner:
     if testRows.isEmpty then Left(MvpaError.InvalidClassifierInput("fold plan produced no test samples"))
     else
       val rowToOutput = testRows.zipWithIndex.toMap
-      val probSum = new Array[Double](testRows.length * classes.length)
+      val probSum = Matrix.newBuilder(testRows.length, classes.length)
       val probN = Array.fill(testRows.length)(0)
 
       var foldIndex = 0
@@ -242,13 +243,14 @@ object SearchlightClassifierScanner:
           while row < testRows.length do
             var klass = 0
             while klass < classes.length do
-              probSum(row * classes.length + klass) /= probN(row)
+              probSum(row, klass) = probSum(row, klass) / probN(row)
               klass += 1
             row += 1
-          Classification.validateFinite(DoubleMatrix.unsafe(testRows.length, classes.length, probSum.clone), "classifier probabilities").map { _ =>
+          val probabilities = probSum.result()
+          Classification.validateFinite(probabilities, "classifier probabilities").map { _ =>
             ClassificationPrediction(
               classes,
-              DoubleMatrix.unsafe(testRows.length, classes.length, probSum),
+              probabilities,
               testRows.map(SampleIndex.unsafe).toVector
             )
           }
@@ -261,7 +263,7 @@ object SearchlightClassifierScanner:
       fold: Fold,
       scaling: FeatureScaling,
       rowToOutput: Map[Int, Int],
-      probSum: Array[Double],
+      probSum: DMatBuilder,
       probN: Array[Int]
   ): Either[MvpaError, Unit] =
     val trainLabels = fold.train.map(index => labels(index.value)).toVector
@@ -285,7 +287,7 @@ object SearchlightClassifierScanner:
                 val outRow = rowToOutput(sample)
                 var klass = 0
                 while klass < classes.length do
-                  probSum(outRow * classes.length + klass) += probs(fit.classColumns(klass))
+                  probSum(outRow, klass) = probSum(outRow, klass) + probs(fit.classColumns(klass))
                   klass += 1
                 probN(outRow) += 1
             localRow += 1
@@ -301,7 +303,7 @@ object SearchlightClassifierScanner:
       fold: Fold,
       classifier: RidgeLdaClassifier,
       rowToOutput: Map[Int, Int],
-      probSum: Array[Double],
+      probSum: DMatBuilder,
       probN: Array[Int]
   ): Either[MvpaError, Unit] =
     val trainLabels = fold.train.map(index => labels(index.value)).toVector
@@ -325,7 +327,7 @@ object SearchlightClassifierScanner:
                 val outRow = rowToOutput(sample)
                 var klass = 0
                 while klass < classes.length do
-                  probSum(outRow * classes.length + klass) += probs(fit.classColumns(klass))
+                  probSum(outRow, klass) = probSum(outRow, klass) + probs(fit.classColumns(klass))
                   klass += 1
                 probN(outRow) += 1
             localRow += 1
@@ -345,7 +347,7 @@ object SearchlightClassifierScanner:
 
   private final case class RidgeFoldFit(
       classes: Vector[ClassLabel],
-      invSigmaMeans: DoubleMatrix,
+      invSigmaMeans: DMat,
       linearConstants: Array[Double],
       classColumns: Array[Int]
   )
@@ -365,7 +367,7 @@ object SearchlightClassifierScanner:
       var sum = 0.0
       var row = 0
       while row < train.length do
-        val value = data.value.dataArray(train(row).value * data.features + positions(feature))
+        val value = data.value(train(row).value, positions(feature))
         if !value.isFinite then return Left(MvpaError.InvalidClassifierInput("training data contains non-finite values"))
         sum += value
         row += 1
@@ -378,7 +380,7 @@ object SearchlightClassifierScanner:
       var ss = 0.0
       row = 0
       while row < train.length do
-        val centered = data.value.dataArray(train(row).value * data.features + positions(feature)) - rawMean
+        val centered = data.value(train(row).value, positions(feature)) - rawMean
         ss += centered * centered
         row += 1
       scales(feature) = math.sqrt(ss / math.max(1, train.length - 1))
@@ -412,7 +414,7 @@ object SearchlightClassifierScanner:
       counts(klass) += 1
       feature = 0
       while feature < positions.length do
-        val value = data.value.dataArray(sample * data.features + positions(feature))
+        val value = data.value(sample, positions(feature))
         centroids(klass * positions.length + feature) += (value - means(feature)) / scales(feature)
         feature += 1
       row += 1
@@ -460,7 +462,7 @@ object SearchlightClassifierScanner:
       counts(klass) += 1
       var feature = 0
       while feature < positions.length do
-        val value = data.value.dataArray(sample * data.features + positions(feature))
+        val value = data.value(sample, positions(feature))
         if !value.isFinite then return Left(MvpaError.InvalidClassifierInput("training data contains non-finite values"))
         means(klass * positions.length + feature) += value
         feature += 1
@@ -476,7 +478,7 @@ object SearchlightClassifierScanner:
           feature += 1
         klass += 1
 
-      val sigma = new Array[Double](positions.length * positions.length)
+      val sigma = Matrix.newBuilder(positions.length, positions.length)
       row = 0
       while row < train.length do
         val sample = train(row).value
@@ -484,59 +486,63 @@ object SearchlightClassifierScanner:
         var left = 0
         while left < positions.length do
           val residualLeft =
-            data.value.dataArray(sample * data.features + positions(left)) -
+            data.value(sample, positions(left)) -
               means(localClass * positions.length + left)
           var right = 0
           while right < positions.length do
             val residualRight =
-              data.value.dataArray(sample * data.features + positions(right)) -
+              data.value(sample, positions(right)) -
                 means(localClass * positions.length + right)
-            sigma(left * positions.length + right) += residualLeft * residualRight
+            sigma(left, right) = sigma(left, right) + residualLeft * residualRight
             right += 1
           left += 1
         row += 1
 
       var diag = 0
       while diag < positions.length do
-        sigma(diag * positions.length + diag) += classifier.gamma
+        sigma(diag, diag) = sigma(diag, diag) + classifier.gamma
         diag += 1
 
-      val meansT = new Array[Double](positions.length * classes.length)
+      val meansT = Matrix.newBuilder(positions.length, classes.length)
       var feature = 0
       while feature < positions.length do
         klass = 0
         while klass < classes.length do
-          meansT(feature * classes.length + klass) = means(klass * positions.length + feature)
+          meansT(feature, klass) = means(klass * positions.length + feature)
           klass += 1
         feature += 1
 
-      Cholesky
-        .decompose(DoubleMatrix.unsafe(positions.length, positions.length, sigma))
+      sigma.result()
+        .cholesky(CholeskyOptions(1e-12))
         .left
-        .map(error => MvpaError.ClassifierFitFailed(classifier.name, error.message))
-        .map { factor =>
-          val invSigmaMeans = factor.solve(DoubleMatrix.unsafe(positions.length, classes.length, meansT))
-          val constants = new Array[Double](classes.length)
-          klass = 0
-          while klass < classes.length do
-            var dot = 0.0
-            feature = 0
-            while feature < positions.length do
-              dot += means(klass * positions.length + feature) *
-                invSigmaMeans.dataArray(feature * classes.length + klass)
-              feature += 1
-            constants(klass) = -0.5 * dot + math.log(math.max(counts(klass) / train.length.toDouble, 1e-300))
-            klass += 1
+        .map(error => MvpaError.ClassifierFitFailed(classifier.name, error.getMessage))
+        .flatMap { factor =>
+          factor
+            .solve(meansT.result())
+            .left
+            .map(error => MvpaError.ClassifierFitFailed(classifier.name, error.getMessage))
+            .map { invSigmaMeans =>
+              val constants = new Array[Double](classes.length)
+              klass = 0
+              while klass < classes.length do
+                var dot = 0.0
+                feature = 0
+                while feature < positions.length do
+                  dot += means(klass * positions.length + feature) * invSigmaMeans(feature, klass)
+                  feature += 1
+                constants(klass) = -0.5 * dot + math.log(math.max(counts(klass) / train.length.toDouble, 1e-300))
+                klass += 1
 
-          val fullClasses = labels.distinct
-          val classColumns = new Array[Int](fullClasses.length)
-          val localIndex = classes.zipWithIndex.map { case (label, index) => label.value -> index }.toMap
-          klass = 0
-          while klass < fullClasses.length do
-            classColumns(klass) = localIndex(fullClasses(klass).value)
-            klass += 1
+              val fullClasses = labels.distinct
+              val classColumns = new Array[Int](fullClasses.length)
+              val localIndex = classes.zipWithIndex.map { case (label, index) => label.value -> index }.toMap
+              klass = 0
+              while klass < fullClasses.length do
+                classColumns(klass) = localIndex(fullClasses(klass).value)
+                klass += 1
 
-          RidgeFoldFit(classes, invSigmaMeans, constants, classColumns)
+              RidgeFoldFit(classes, invSigmaMeans, constants, classColumns)
+            }
         }
 
   private def scoreSwiftRow(
@@ -551,7 +557,7 @@ object SearchlightClassifierScanner:
       var dot = 0.0
       var feature = 0
       while feature < positions.length do
-        val value = data.value.dataArray(sample * data.features + positions(feature))
+        val value = data.value(sample, positions(feature))
         if !value.isFinite then return Left(MvpaError.InvalidClassifierInput("test data contains non-finite values"))
         val scaled = (value - fit.means(feature)) / fit.scales(feature)
         dot += scaled * fit.centroids(klass * positions.length + feature)
@@ -572,9 +578,9 @@ object SearchlightClassifierScanner:
       var dot = 0.0
       var feature = 0
       while feature < positions.length do
-        val value = data.value.dataArray(sample * data.features + positions(feature))
+        val value = data.value(sample, positions(feature))
         if !value.isFinite then return Left(MvpaError.InvalidClassifierInput("test data contains non-finite values"))
-        dot += value * fit.invSigmaMeans.dataArray(feature * fit.classes.length + klass)
+        dot += value * fit.invSigmaMeans(feature, klass)
         feature += 1
       scores(klass) = dot + fit.linearConstants(klass)
       klass += 1

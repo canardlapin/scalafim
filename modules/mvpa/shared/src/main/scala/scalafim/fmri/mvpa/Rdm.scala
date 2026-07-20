@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 final case class RdmVector private (items: Int, values: Vector[Double]):
   require(items >= 0, "item count must be non-negative")
@@ -65,7 +65,7 @@ object Rdm:
     out.result()
 
   def squaredEuclidean(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       normalizeByFeatures: Boolean = false
   ): Either[MvpaError, RdmVector] =
     validatePatternMatrix(matrix).map { _ =>
@@ -77,8 +77,7 @@ object Rdm:
         var sum = 0.0
         var col = 0
         while col < matrix.cols do
-          val diff = matrix.dataArray(rowA * matrix.cols + col) -
-            matrix.dataArray(rowB * matrix.cols + col)
+          val diff = matrix(rowA, col) - matrix(rowB, col)
           sum += diff * diff
           col += 1
         out(p) = if normalizeByFeatures then sum / matrix.cols else sum
@@ -86,10 +85,10 @@ object Rdm:
       RdmVector.unsafe(matrix.rows, out.toVector)
     }
 
-  def euclidean(matrix: DoubleMatrix): Either[MvpaError, RdmVector] =
+  def euclidean(matrix: DMat): Either[MvpaError, RdmVector] =
     squaredEuclidean(matrix).map(rdm => RdmVector.unsafe(rdm.items, rdm.values.map(v => math.sqrt(math.max(v, 0.0)))))
 
-  def correlation(matrix: DoubleMatrix): Either[MvpaError, RdmVector] =
+  def correlation(matrix: DMat): Either[MvpaError, RdmVector] =
     validatePatternMatrix(matrix).flatMap { _ =>
       val means = new Array[Double](matrix.rows)
       val norms = new Array[Double](matrix.rows)
@@ -99,14 +98,14 @@ object Rdm:
         var sum = 0.0
         var col = 0
         while col < matrix.cols do
-          sum += matrix.dataArray(row * matrix.cols + col)
+          sum += matrix(row, col)
           col += 1
         val mean = sum / matrix.cols
         means(row) = mean
         var ss = 0.0
         col = 0
         while col < matrix.cols do
-          val centered = matrix.dataArray(row * matrix.cols + col) - mean
+          val centered = matrix(row, col) - mean
           ss += centered * centered
           col += 1
         norms(row) = math.sqrt(ss)
@@ -125,8 +124,8 @@ object Rdm:
           var dot = 0.0
           var col = 0
           while col < matrix.cols do
-            dot += (matrix.dataArray(rowA * matrix.cols + col) - means(rowA)) *
-              (matrix.dataArray(rowB * matrix.cols + col) - means(rowB))
+            dot += (matrix(rowA, col) - means(rowA)) *
+              (matrix(rowB, col) - means(rowB))
             col += 1
           val corr = dot / (norms(rowA) * norms(rowB))
           out(p) = 1.0 - corr
@@ -190,13 +189,16 @@ object Rdm:
       row += 1
     gram
 
-  private def validatePatternMatrix(matrix: DoubleMatrix): Either[MvpaError, Unit] =
+  private def validatePatternMatrix(matrix: DMat): Either[MvpaError, Unit] =
     if matrix.rows < 2 then Left(MvpaError.InvalidRdmInput("RDM requires at least two rows"))
     else if matrix.cols < 1 then Left(MvpaError.InvalidRdmInput("RDM requires at least one feature"))
     else
-      var i = 0
-      while i < matrix.dataArray.length do
-        if !matrix.dataArray(i).isFinite then
-          return Left(MvpaError.InvalidRdmInput("RDM pattern matrix contains non-finite values"))
-        i += 1
+      var row = 0
+      while row < matrix.rows do
+        var col = 0
+        while col < matrix.cols do
+          if !matrix(row, col).isFinite then
+            return Left(MvpaError.InvalidRdmInput("RDM pattern matrix contains non-finite values"))
+          col += 1
+        row += 1
       Right(())

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMatBuilder, Matrix}
 
 final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
   def analysisName: String =
@@ -132,7 +132,7 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
       counts(klass) += 1
       var feature = 0
       while feature < positions.length && error == null do
-        val value = source.value.dataArray(row * source.features + positions(feature))
+        val value = source.value(row, positions(feature))
         if !value.isFinite then error = MvpaError.InvalidClassifierInput("training data contains non-finite values")
         else centroids(klass * positions.length + feature) += value
         feature += 1
@@ -177,7 +177,7 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
       positions: Array[Int],
       fit: PrototypeFit
   ): Either[MvpaError, ClassificationPrediction] =
-    val probabilities = new Array[Double](target.samples * fit.classes.length)
+    val probabilities = Matrix.newBuilder(target.samples, fit.classes.length)
     val scores = new Array[Double](fit.classes.length)
     var row = 0
     var error: MvpaError | Null = null
@@ -186,12 +186,12 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
         case Left(e) =>
           error = e
         case Right(()) =>
-          softmaxInto(scores, probabilities, row * fit.classes.length)
+          softmaxInto(scores, probabilities, row)
       row += 1
 
     error match
       case null =>
-        val matrix = DoubleMatrix.unsafe(target.samples, fit.classes.length, probabilities)
+        val matrix = probabilities.result()
         Classification.validateFinite(matrix, "classifier probabilities").map { _ =>
           ClassificationPrediction(fit.classes, matrix, target.sampleIndices)
         }
@@ -208,7 +208,7 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
     var feature = 0
     var error: MvpaError | Null = null
     while feature < positions.length && error == null do
-      val value = target.value.dataArray(row * target.features + positions(feature))
+      val value = target.value(row, positions(feature))
       if !value.isFinite then error = MvpaError.InvalidClassifierInput("test data contains non-finite values")
       else sum += value
       feature += 1
@@ -219,7 +219,7 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
       var ss = 0.0
       feature = 0
       while feature < positions.length do
-        val centered = target.value.dataArray(row * target.features + positions(feature)) - mean
+        val centered = target.value(row, positions(feature)) - mean
         ss += centered * centered
         feature += 1
       val norm = math.sqrt(ss)
@@ -229,14 +229,14 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
         var dot = 0.0
         feature = 0
         while feature < positions.length do
-          dot += (target.value.dataArray(row * target.features + positions(feature)) - mean) *
+          dot += (target.value(row, positions(feature)) - mean) *
             (fit.centroids(klass * positions.length + feature) - fit.centroidMeans(klass))
           feature += 1
         scores(klass) = dot / math.max(NaiveCrossDecodingScanner.Eps, norm * fit.centroidNorms(klass))
         klass += 1
       Right(())
 
-  private def softmaxInto(scores: Array[Double], out: Array[Double], offset: Int): Unit =
+  private def softmaxInto(scores: Array[Double], out: DMatBuilder, row: Int): Unit =
     var maxScore = scores(0)
     var i = 1
     while i < scores.length do
@@ -246,12 +246,12 @@ final case class NaiveCrossDecodingScanner(storePredictions: Boolean = false):
     i = 0
     while i < scores.length do
       val value = math.exp(scores(i) - maxScore)
-      out(offset + i) = value
+      out(row, i) = value
       sum += value
       i += 1
     i = 0
     while i < scores.length do
-      out(offset + i) /= sum
+      out(row, i) = out(row, i) / sum
       i += 1
 
   private def accuracy(

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class CrossDecodingScannerSuite extends munit.FunSuite:
 
@@ -32,7 +32,7 @@ class CrossDecodingScannerSuite extends munit.FunSuite:
   private val targetShuffled: PatternMatrix =
     val order = Vector(4, 0, 2, 1, 3, 5)
     PatternMatrix(
-      DoubleMatrix.fromRows(targetRows.map(row => order.map(row))),
+      GaleTestMatrix.fromRows(targetRows.map(row => order.map(row))),
       (10 until 16).map(SampleIndex.unsafe).toVector,
       order.map(FeatureIndex.unsafe)
     )
@@ -101,7 +101,7 @@ class CrossDecodingScannerSuite extends munit.FunSuite:
   test("naive cross-decoding scanner preserves local ROI failures") {
     val targetMissing =
       PatternMatrix(
-        DoubleMatrix.fromRows(targetRows.map(_.take(5))),
+        GaleTestMatrix.fromRows(targetRows.map(_.take(5))),
         target.sampleIndices,
         Vector(0, 1, 2, 3, 4).map(FeatureIndex.unsafe)
       )

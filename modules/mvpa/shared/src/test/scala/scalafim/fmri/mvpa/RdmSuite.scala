@@ -1,11 +1,11 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class RdmSuite extends munit.FunSuite:
 
   test("squared Euclidean RDM uses lower-triangle order") {
-    val matrix = DoubleMatrix.fromRows(
+    val matrix = GaleTestMatrix.fromRows(
       Vector(
         Vector(0.0, 0.0),
         Vector(3.0, 4.0),
@@ -24,7 +24,7 @@ class RdmSuite extends munit.FunSuite:
   }
 
   test("correlation RDM computes one minus row correlation") {
-    val matrix = DoubleMatrix.fromRows(
+    val matrix = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, 3.0),
         Vector(1.0, 2.0, 3.0),
@@ -39,7 +39,7 @@ class RdmSuite extends munit.FunSuite:
   }
 
   test("RDM kernels reject non-finite pattern values") {
-    val matrix = DoubleMatrix.fromRows(
+    val matrix = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(Double.NaN, 3.0)

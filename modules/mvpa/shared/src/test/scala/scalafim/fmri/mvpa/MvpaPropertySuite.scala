@@ -1,11 +1,11 @@
 package scalafim.fmri.mvpa
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class MvpaPropertySuite extends munit.FunSuite:
   private val Tolerance = 1e-10
 
-  private def assertMatrixEquals(actual: DoubleMatrix, expected: DoubleMatrix, tolerance: Double): Unit =
+  private def assertMatrixEquals(actual: DMat, expected: DMat, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -24,7 +24,7 @@ class MvpaPropertySuite extends munit.FunSuite:
       assertEqualsDouble(actual.values(i), expected.values(i), tolerance)
       i += 1
 
-  private def patternMatrix(matrix: DoubleMatrix): PatternMatrix =
+  private def patternMatrix(matrix: DMat): PatternMatrix =
     PatternMatrix(
       matrix,
       (0 until matrix.rows).map(SampleIndex.unsafe).toVector,
@@ -109,7 +109,7 @@ class MvpaPropertySuite extends munit.FunSuite:
       PatternMatrix.fromRows(sourceRows)
     val target =
       PatternMatrix(
-        DoubleMatrix.fromRows(targetRows),
+        GaleTestMatrix.fromRows(targetRows),
         (20 until 20 + targetRows.length).map(SampleIndex.unsafe).toVector,
         targetPermutation.map(FeatureIndex.unsafe)
       )
@@ -143,7 +143,7 @@ class MvpaPropertySuite extends munit.FunSuite:
       samples = MvpaRReferenceFixtures.FeatureRsa.items.length
     )
 
-  private def featureDesign(features: DoubleMatrix): FeatureModelDesign =
+  private def featureDesign(features: DMat): FeatureModelDesign =
     FeatureModelDesign.unsafe(
       MvpaRReferenceFixtures.FeatureRsa.items,
       features,
@@ -188,7 +188,7 @@ class MvpaPropertySuite extends munit.FunSuite:
     val success = result.successes.head
     (success.metrics, featurePrediction(success))
 
-  private def transformColumns(matrix: DoubleMatrix, scales: Vector[Double], shifts: Vector[Double]): DoubleMatrix =
+  private def transformColumns(matrix: DMat, scales: Vector[Double], shifts: Vector[Double]): DMat =
     require(scales.length == matrix.cols)
     require(shifts.length == matrix.cols)
     val out = matrix.copyData
@@ -199,7 +199,7 @@ class MvpaPropertySuite extends munit.FunSuite:
         out(row * matrix.cols + col) = matrix(row, col) * scales(col) + shifts(col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    GaleTestMatrix.fromArray(matrix.rows, matrix.cols, out)
 
   private def xdecSource: PatternMatrix =
     patternMatrix(MvpaRReferenceFixtures.NaiveXdec.sourceRows)
@@ -315,7 +315,7 @@ class MvpaPropertySuite extends munit.FunSuite:
                   .run(xdecSource, xdecTarget, xdecSearchlightPlan, xdecDesign)
                   .map { result =>
                     result.successes.map { success =>
-                      success.metrics("Accuracy").get + classificationPrediction(success).probabilities.dataArray.sum
+                      success.metrics("Accuracy").get + classificationPrediction(success).probabilities.valuesRowMajor.sum
                     }.sum
                   }
             )
