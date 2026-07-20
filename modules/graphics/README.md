@@ -26,6 +26,8 @@ platform renderers should consume `DeviceScene` values at a boundary.
 
 - Scene composition is a monoid: `Scene.empty` is identity and `++` is
   associative while preserving grob order.
+- Primitive grobs own complete graphic parameters. Groups compose children and
+  viewports only; there is no ambient or backend-dependent style inheritance.
 - Scene coordinates are y-up (the grid convention): npc and native y increase
   toward the top of the device. Orientation is explicit — a `Viewport` carries
   a `YDirection` (default `Up`; `Down` is available for raster-style spaces) —

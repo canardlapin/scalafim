@@ -225,7 +225,6 @@ object GuideSpec:
         val group =
           Grob.group(
             children.result(),
-            gp = GraphicParams.unsafe(stroke = None, fill = None),
             viewport = viewport,
             name = spec.name.orElse(Some(GraphicsName.unsafe("legend")))
           )

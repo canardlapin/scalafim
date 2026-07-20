@@ -95,7 +95,6 @@ final case class TrainedPlot[Row](
           Vector(
             Grob.group(
               layerGrobs,
-              gp = GraphicParams.unsafe(stroke = None, fill = None),
               viewport = Some(panel.viewport),
               name = Some(GraphicsName.unsafe("plot-panel"))
             )

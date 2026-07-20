@@ -63,7 +63,6 @@ final case class Axis private (
       val labels = ticks.map(labelGrob)
       Grob.group(
         Vector(baselineGrob) ++ tickGrobs ++ labels,
-        gp = GraphicParams.unsafe(stroke = None, fill = None),
         viewport = viewport,
         name = name
       )

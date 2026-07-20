@@ -376,7 +376,6 @@ object Grob:
 
   final case class Group private[graphics] (
       override val children: Vector[Grob],
-      gp: GraphicParams,
       viewport: Option[Viewport],
       name: Option[GraphicsName]
   ) extends Grob
@@ -498,11 +497,10 @@ object Grob:
 
   def group(
       children: Vector[Grob],
-      gp: GraphicParams = GraphicParams.unsafe(),
       viewport: Option[Viewport] = None,
       name: Option[GraphicsName] = None
   ): Grob =
-    Group(children, gp, viewport, name)
+    Group(children, viewport, name)
 
 final case class Scene private (grobs: Vector[Grob]):
   def append(grob: Grob): Scene =
