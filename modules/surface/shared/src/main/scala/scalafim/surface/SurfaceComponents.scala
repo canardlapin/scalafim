@@ -28,7 +28,7 @@ object SurfaceComponents:
       if threshold.keep(field.data(i)) then active += field.indices(i)
       i += 1
 
-    val components = collectComponents(topology, active.toSet)
+    val components = SurfaceTopologyTraversal.connectedComponents(topology, active.toSet)
       .sortBy(vertices => (-vertices.length, vertices.min))
 
     val componentIndex = scala.collection.mutable.Map.empty[Int, Int]
@@ -77,34 +77,6 @@ object SurfaceComponents:
       i += 1
 
     SurfaceField(field.geometry, NArrayUtil.fromArray(indices), NArrayUtil.fromArray(out), field.label)
-
-  private def collectComponents(topology: MeshTopology, active: Set[Int]): Vector[Vector[Int]] =
-    if active.isEmpty then Vector.empty
-    else
-      val visited = scala.collection.mutable.Set.empty[Int]
-      val components = Vector.newBuilder[Vector[Int]]
-
-      active.toVector.sorted.foreach { start =>
-        if !visited(start) then
-          val queue = scala.collection.mutable.Queue.empty[Int]
-          val component = Vector.newBuilder[Int]
-          visited += start
-          queue.enqueue(start)
-
-          while queue.nonEmpty do
-            val vertex = queue.dequeue()
-            component += vertex
-            topology.neighborsOf(VertexId.unsafe(vertex)).foreach { neighbor =>
-              val n = neighbor.index
-              if active(n) && !visited(n) then
-                visited += n
-                queue.enqueue(n)
-            }
-
-          components += component.result().sorted
-      }
-
-      components.result()
 
   private def copyIndices[A](field: SurfaceField[A]): Array[Int] =
     Array.tabulate(field.size)(i => field.indices(i))

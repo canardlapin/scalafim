@@ -1,6 +1,9 @@
 package scalafim.atlas
 
 import scalafim.image.Indexing
+import scalafim.graph.Graph
+import scalafim.graph.UndirectedGraph
+import scalafim.graph.VertexBasis
 
 enum VoxelConnectivity:
   case Connect6, Connect18, Connect26
@@ -8,6 +11,17 @@ enum VoxelConnectivity:
 final case class RegionEdge(from: Region, to: Region, weight: Int)
 
 object RegionGraph:
+  def topology(
+      atlas: VolumeAtlas,
+      connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
+  ): UndirectedGraph[RegionId, Region, Int] =
+    val basis = VertexBasis.from(atlas.regions.regions.map(region => region.id -> region)).toOption.get
+    val edges = adjacency(atlas, connectivity).map(edge => (edge.from.id, edge.to.id, edge.weight))
+    Graph.undirected(basis, edges) match
+      case Right(graph) => graph
+      case Left(errors) =>
+        throw new IllegalStateException(s"validated atlas adjacency violated graph invariants: ${errors.message}")
+
   def adjacency(atlas: VolumeAtlas, connectivity: VoxelConnectivity = VoxelConnectivity.Connect6): Vector[RegionEdge] =
     val vol = atlas.labelVolume
     val dims = atlas.space.spatialDims

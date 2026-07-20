@@ -123,7 +123,11 @@ object SurfaceParcels:
 
     byLabel.toVector.sortBy(_._1).flatMap { case (label, buffer) =>
       val info = labeled.info(label)
-      val components = connectedComponents(buffer.toVector, topology)
+      val components =
+        SurfaceTopologyTraversal
+          .connectedComponents(topology, buffer.iterator.map(_.index).toSet)
+          .sortBy(vertices => (-vertices.length, vertices.head))
+          .map(_.map(VertexId.unsafe))
       policy match
         case FragmentedParcelPolicy.Error =>
           require(components.length == 1, s"parcel label $label is fragmented")
@@ -272,32 +276,3 @@ object SurfaceParcels:
         data(col * parcels.length + row) = distance
         col += 1
       row += 1
-
-  private def connectedComponents(vertices: Vector[VertexId], topology: MeshTopology): Vector[Vector[VertexId]] =
-    if vertices.isEmpty then Vector.empty
-    else
-      val active = vertices.map(_.index).toSet
-      val visited = scala.collection.mutable.Set.empty[Int]
-      val out = Vector.newBuilder[Vector[VertexId]]
-
-      active.toVector.sorted.foreach { start =>
-        if !visited(start) then
-          val queue = scala.collection.mutable.Queue.empty[Int]
-          val component = Vector.newBuilder[VertexId]
-          visited += start
-          queue.enqueue(start)
-
-          while queue.nonEmpty do
-            val vertex = queue.dequeue()
-            component += VertexId.unsafe(vertex)
-            topology.neighborsOf(VertexId.unsafe(vertex)).foreach { neighbor =>
-              val n = neighbor.index
-              if active(n) && !visited(n) then
-                visited += n
-                queue.enqueue(n)
-            }
-
-          out += component.result().sortBy(_.index)
-      }
-
-      out.result().sortBy(vertices => (-vertices.length, vertices.head.index))

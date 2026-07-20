@@ -299,7 +299,7 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image)
+    .dependsOn(image, graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
@@ -340,7 +340,7 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(image, surface)
+    .dependsOn(image, surface, graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"
