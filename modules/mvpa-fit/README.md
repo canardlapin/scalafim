@@ -35,8 +35,41 @@ val result =
 
 The result uses ordinary `RoiOutcome` values with an `OperatorRidge` payload
 containing optional class scores and mandatory fold/solver receipts. Soft
-multinomial logistic regression, fold-local feature scaling, typed nuisance
-actions, and fused/cache crossover planning remain later Phase 3 work.
+multinomial logistic regression, fold-local feature scaling, and fused/cache
+crossover planning remain later work.
+
+## Pulled-back soft LDA
+
+`CrossValidatedSoftLdaAnalysis` is the operator-native discriminant path. It
+adapts each training `PatternOperator` to a typed `multivar.OpTable`, constructs
+hard or simplex-weighted class relations, and pulls their between/within forms
+back to feature space through `OperatorAlgebra.secondOrder`. The resulting LDA
+is an inspectable `OperatorProgram` fit, using Gale-backed generalized-eigen or
+trace-ratio solvers. The trial-by-feature table is never requested:
+
+```scala
+val softLda =
+  CrossValidatedSoftLdaAnalysis(
+    SoftLdaConfig(
+      withinPolicy = WithinScatterPolicy.FixedTraceScaledRidge(
+        TraceRidgeFraction.unsafe(0.05)
+      ),
+      objective = LdaObjective.FisherRayleigh
+    ),
+    storePredictions = true
+  )
+
+val result =
+  OneShotMvpaEngine.run(dataset, featureSetPlan, response, softLda)
+```
+
+The two nuisance domains remain explicit. Temporal nuisance is part of each
+design-only `TrialReadout`; an optional `TrialNuisanceDesign` instead lives on
+the resulting trial/sample axis and is subset using training rows inside every
+fold. `SoftLda.crossValidate` returns typed fold receipts retaining the fitted
+operator program, source provenance, exact train/test samples, and trial-level
+nuisance width. The ordinary MVPA adapter exposes cross-validated probabilities
+through `RoiPayload.Classification`.
 
 ## Canonical contrast effect
 

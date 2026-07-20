@@ -4,6 +4,7 @@ import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}
 import scalafim.fmri.mvpa.*
 import gale.linalg.{DMat, Matrix}
+import scalafim.multivar.{TraceRidgeFraction, WithinScatterPolicy}
 
 class OneShotDatasetSuite extends munit.FunSuite:
 
@@ -157,6 +158,35 @@ class OneShotDatasetSuite extends munit.FunSuite:
           assert(left.receipt.forwardApplications > 0)
           assert(left.receipt.transposeApplications > 0)
         case other => fail(s"unexpected operator-ridge payloads: $other")
+
+  test("one-shot soft LDA pulls class relations through trial readout operators"):
+    val dataset = oneShotDataset()
+    val folds = dataset.leaveOneRunOut.toOption.get
+    val targets = ClassMembership
+      .hard(Vector("a", "b", "a", "b", "a", "b").map(ClassLabel.apply))
+      .toOption
+      .get
+    val config = SoftLdaConfig(
+      WithinScatterPolicy.FixedTraceScaledRidge(TraceRidgeFraction.unsafe(0.1))
+    )
+
+    val oneShot = SoftLda.crossValidate(dataset.patterns, targets, folds, config).toOption.get
+    val explicit = SoftLda
+      .crossValidate(
+        PatternOperator.fromMatrix(dataset.explicitPatterns.toOption.get).toOption.get,
+        targets,
+        folds,
+        config
+      )
+      .toOption
+      .get
+
+    assertMatrixClose(oneShot.prediction.probabilities, explicit.prediction.probabilities, absTol = 1e-8, relTol = 1e-8)
+    assertEquals(oneShot.prediction.predicted, explicit.prediction.predicted)
+    assert(oneShot.receipt.folds.forall(_.patternProvenance.origin == PatternOperatorOrigin.Composed))
+    assert(oneShot.receipt.folds.forall(_.composedPatternInput))
+    assert(oneShot.receipt.folds.forall(_.trialNuisanceColumns == 0))
+    assert(oneShot.receipt.folds.forall(_.trainingSamples.length == 4))
 
   test("one-shot constructors reject incompatible run and feature structure"):
     val runs = runBlocks()

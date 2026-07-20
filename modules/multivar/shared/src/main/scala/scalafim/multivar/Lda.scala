@@ -58,29 +58,65 @@ object ClassIncidence:
         case None => Right(new ClassIncidence(weights, GaleNumerics.vectorFromArray(masses)))
 
 final case class LdaRowRelations[Rows <: SemanticSpace](
+    nuisance: OpRowLink[Rows, Rows, CertifiedPsd],
     between: OpRowLink[Rows, Rows, CertifiedPsd],
     within: OpRowLink[Rows, Rows, CertifiedPsd]
 )
+
+/** Sample-level nuisance design. This is deliberately not a temporal design:
+  * temporal nuisance belongs in the trial readout, while these columns act on
+  * the resulting trial/sample axis.
+  */
+final class TrialNuisanceDesign private (val values: DMat):
+  val samples: Int = values.rows
+  val columns: Int = values.cols
+
+object TrialNuisanceDesign:
+  def from(values: DMat): Either[MultivarError, TrialNuisanceDesign] =
+    if values.rows == 0 || values.cols == 0 then
+      Left(MultivarError.MatrixShapeMismatch("trial nuisance design must have rows and columns"))
+    else MatrixOps.checkFinite("trial nuisance design", values).map(_ => new TrialNuisanceDesign(values))
 
 object LdaRowRelations:
   def fromIncidence[Rows <: SemanticSpace](
       rows: SpaceEvidence[Rows],
       incidence: ClassIncidence,
+      trialNuisance: Option[TrialNuisanceDesign] = None,
       provenance: SemanticProvenance = SemanticProvenance.source("lda-class-relations")
   ): Either[MultivarError, LdaRowRelations[Rows]] =
     if incidence.samples != rows.dimension then
       Left(MultivarError.MatrixShapeMismatch(s"class incidence has ${incidence.samples} rows, expected ${rows.dimension}"))
+    else if trialNuisance.exists(_.samples != rows.dimension) then
+      Left(MultivarError.MatrixShapeMismatch("trial nuisance rows must match the LDA sample space"))
     else
-      val classProjection = classMeanProjection(incidence)
-      val grandProjection = constantProjection(rows.dimension)
-      val betweenDense = MatrixOps.subtract(classProjection, grandProjection)
-      val withinDense = MatrixOps.subtract(DMat.eye(rows.dimension), classProjection)
       for
+        nuisanceDense <- projector(nuisanceDesign(rows.dimension, trialNuisance))
+        residualMaker = MatrixOps.subtract(DMat.eye(rows.dimension), nuisanceDense)
+        classMeanDense = classMeanRelation(incidence)
+        baseBetween = MatrixOps.subtract(classMeanDense, constantRelation(rows.dimension))
+        baseWithin = MatrixOps.subtract(DMat.eye(rows.dimension), classMeanDense)
+        betweenDense = sandwich(residualMaker, baseBetween)
+        withinDense = sandwich(residualMaker, baseWithin)
+        nuisance <- certifiedRelation(rows, nuisanceDense, "lda-trial-nuisance-relation", provenance)
         between <- certifiedRelation(rows, betweenDense, "lda-between-class-relation", provenance)
         within <- certifiedRelation(rows, withinDense, "lda-within-class-relation", provenance)
-      yield LdaRowRelations(between, within)
+      yield LdaRowRelations(nuisance, between, within)
 
-  private def classMeanProjection(incidence: ClassIncidence): DMat =
+  private def nuisanceDesign(samples: Int, additional: Option[TrialNuisanceDesign]): DMat =
+    val columns = 1 + additional.fold(0)(_.columns)
+    val out = new Array[Double](samples * columns)
+    var row = 0
+    while row < samples do
+      out(row * columns) = 1.0
+      additional.foreach: design =>
+        var col = 0
+        while col < design.columns do
+          out(row * columns + col + 1) = design.values(row, col)
+          col += 1
+      row += 1
+    GaleNumerics.matrixFromRowMajor(samples, columns, out)
+
+  private def classMeanRelation(incidence: ClassIncidence): DMat =
     val out = new Array[Double](incidence.samples * incidence.samples)
     var left = 0
     while left < incidence.samples do
@@ -96,8 +132,29 @@ object LdaRowRelations:
       left += 1
     GaleNumerics.matrixFromRowMajor(incidence.samples, incidence.samples, out)
 
-  private def constantProjection(samples: Int): DMat =
+  private def constantRelation(samples: Int): DMat =
     GaleNumerics.matrixFromRowMajor(samples, samples, Array.fill(samples * samples)(1.0 / samples.toDouble))
+
+  private def sandwich(left: DMat, middle: DMat): DMat =
+    GaleNumerics.multiply(left, GaleNumerics.multiply(middle, left))
+
+  private def projector(design: DMat): Either[MultivarError, DMat] =
+    val gram = GaleNumerics.multiply(design.t, design)
+    for
+      eigen <- LinalgErrorAdapter.adapt(DenseSolvers.symmetricEigen.decompose(gram))
+      _ <-
+        if eigen.values.length > 0 && eigen.values(0) > 0.0 then Right(())
+        else Left(MultivarError.NonInvertibleValue("projector design", 0, if eigen.values.length == 0 then 0.0 else eigen.values(0)))
+    yield
+      val threshold = 1e-12 * eigen.values(0)
+      val inverse = new Array[Double](eigen.values.length)
+      var index = 0
+      while index < inverse.length do
+        inverse(index) = if eigen.values(index) > threshold then 1.0 / eigen.values(index) else 0.0
+        index += 1
+      val scaled = MatrixOps.scaleColumns(eigen.vectors, GaleNumerics.vectorFromArray(inverse))
+      val pseudoInverse = GaleNumerics.multiply(scaled, eigen.vectors.t)
+      GaleNumerics.multiply(design, GaleNumerics.multiply(pseudoInverse, design.t))
 
   private def certifiedRelation[Rows <: SemanticSpace](
       rows: SpaceEvidence[Rows],
@@ -163,8 +220,8 @@ final case class LdaOperatorFit[
     diagnostics: LdaDiagnostics,
     provenance: SemanticProvenance
 ):
-  def scores(table: OpTable[Rows, Feature, ? <: OperatorEvidence]):
-      Op[Primal[Component], Primal[Rows], ScoreOperatorRole, UncheckedEvidence] =
+  def scores[OtherRows <: SemanticSpace](table: OpTable[OtherRows, Feature, ? <: OperatorEvidence]):
+      Op[Primal[Component], Primal[OtherRows], ScoreOperatorRole, UncheckedEvidence] =
     functionalFrame.scores(table)
 
 /** LDA is a typed assembly of class relations and two second-order operators.
@@ -176,6 +233,7 @@ final class LdaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private 
     val featureSpace: SpaceEvidence[Feature],
     val table: OpTable[Rows, Feature, UncheckedEvidence],
     val incidence: ClassIncidence,
+    val trialNuisance: Option[TrialNuisanceDesign],
     val relations: LdaRowRelations[Rows],
     val between: OpScatter[Feature, CertifiedPsd],
     val within: OpScatter[Feature, CertifiedPsd],
@@ -324,13 +382,14 @@ object LdaProblem:
       table: OpTable[Rows, Feature, UncheckedEvidence],
       incidence: ClassIncidence,
       withinPolicy: WithinScatterPolicy,
+      trialNuisance: Option[TrialNuisanceDesign] = None,
       provenance: SemanticProvenance = SemanticProvenance.source("lda-problem")
   ): Either[MultivarError, LdaProblem[Rows, Feature]] =
     if table.codomain.descriptor.space != rowSpace.descriptor || table.domain.descriptor.space != featureSpace.descriptor then
       Left(MultivarError.MatrixShapeMismatch("LDA table endpoints do not match its declared spaces"))
     else
       for
-        relations <- LdaRowRelations.fromIncidence(rowSpace, incidence, provenance)
+        relations <- LdaRowRelations.fromIncidence(rowSpace, incidence, trialNuisance, provenance)
         betweenUnchecked = OperatorAlgebra
           .secondOrder(table, relations.between, table)
           .retag(OperatorRoleWitness.scatter, "lda-between-scatter")
@@ -348,6 +407,7 @@ object LdaProblem:
           featureSpace,
           table,
           incidence,
+          trialNuisance,
           relations,
           between,
           within,
@@ -361,7 +421,8 @@ object LdaProblem:
       matrix: DMat,
       incidence: ClassIncidence,
       withinPolicy: WithinScatterPolicy,
-      id: String = "lda"
+      id: String = "lda",
+      trialNuisance: Option[TrialNuisanceDesign] = None
   ): Either[MultivarError, PreparedLdaProblem] =
     for
       rows <- SpaceRef.of(s"$id.rows", SpaceRole.Samples, matrix.rows)
@@ -375,7 +436,7 @@ object LdaProblem:
           ValueIdentity.source(ValueId.unsafe(s"$id.table"))
         )
       )
-      problem <- fromTable(rows.evidence, features.evidence, table, incidence, withinPolicy)
+      problem <- fromTable(rows.evidence, features.evidence, table, incidence, withinPolicy, trialNuisance)
     yield new PreparedLdaProblem(rows, features)(problem)
 
   private def certifyPsd[Feature <: SemanticSpace, R <: OperatorRoleTag](

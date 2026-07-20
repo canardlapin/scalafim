@@ -79,6 +79,88 @@ class LdaSuite extends munit.FunSuite:
     assertMatrix(within, expectedWithin, 1e-10)
     assertEquals(problem.between.provenance.events.last.isInstanceOf[SemanticProvenanceEvent.Certified], true)
 
+  test("trial nuisance is a distinct sample-level relation and partitions the row space"):
+    val incidence = accepted(ClassIncidence.hard(rLabels))
+    val nuisance = accepted(
+      TrialNuisanceDesign.from(
+        GaleNumerics.matrixFromRows(
+          Seq(
+            Seq(-1.0), Seq(0.0), Seq(1.0),
+            Seq(-1.0), Seq(0.0), Seq(1.0),
+            Seq(-1.0), Seq(0.0), Seq(1.0)
+          )
+        )
+      )
+    )
+    val problem = accepted(
+      LdaProblem.fromMatrix(
+        rFixture,
+        incidence,
+        WithinScatterPolicy.RequirePositiveDefinite,
+        "lda-trial-nuisance",
+        Some(nuisance)
+      )
+    ).value
+    val nuisanceRelation = problem.relations.nuisance.toDense.toOption.get
+    val betweenRelation = problem.relations.between.toDense.toOption.get
+    val withinRelation = problem.relations.within.toDense.toOption.get
+    val augmentedNuisance = GaleNumerics.matrixFromRows(
+      Vector.tabulate(rFixture.rows)(row => Seq(1.0, nuisance.values(row, 0)))
+    )
+
+    assertMatrix(GaleNumerics.multiply(betweenRelation, augmentedNuisance), DMat.zeros(rFixture.rows, 2), 1e-10)
+    assertMatrix(GaleNumerics.multiply(withinRelation, augmentedNuisance), DMat.zeros(rFixture.rows, 2), 1e-10)
+    assertMatrix(
+      matrixSum(nuisanceRelation, betweenRelation, withinRelation),
+      DMat.eye(rFixture.rows),
+      1e-10
+    )
+
+    val withoutNuisance = accepted(
+      LdaProblem.fromMatrix(
+        rFixture,
+        incidence,
+        WithinScatterPolicy.RequirePositiveDefinite,
+        "lda-no-trial-nuisance"
+      )
+    ).value
+    val unadjustedWithinRelation = withoutNuisance.relations.within.toDense.toOption.get
+    assert(matrixDistance(withinRelation, unadjustedWithinRelation) > 1e-3)
+
+  test("simplex incidence matches the independent Discursive soft-LDA scatter convention"):
+    val membership = GaleNumerics.matrixFromRows(
+      Seq(
+        Seq(0.7, 0.2, 0.1), Seq(0.6, 0.3, 0.1), Seq(0.8, 0.1, 0.1),
+        Seq(0.1, 0.7, 0.2), Seq(0.2, 0.6, 0.2), Seq(0.1, 0.8, 0.1),
+        Seq(0.15, 0.15, 0.7), Seq(0.1, 0.2, 0.7), Seq(0.2, 0.1, 0.7)
+      )
+    )
+    val problem = accepted(
+      LdaProblem.fromMatrix(
+        rFixture,
+        accepted(ClassIncidence.fromSimplex(membership)),
+        WithinScatterPolicy.RequirePositiveDefinite,
+        "lda-soft-r"
+      )
+    ).value
+    val expectedWithin = GaleNumerics.matrixFromRows(
+      Seq(
+        Seq(11.186627703097603, -2.2430859146697846, -3.6918351841028647),
+        Seq(-2.2430859146697846, 10.873563812121379, -4.43163229523253),
+        Seq(-3.6918351841028647, -4.43163229523253, 4.51899140018369)
+      )
+    )
+    val expectedBetween = GaleNumerics.matrixFromRows(
+      Seq(
+        Seq(4.028927852457953, -0.0035807519968824586, -2.249275927008246),
+        Seq(-0.0035807519968824586, 4.386436187878616, -2.0150343714341394),
+        Seq(-2.249275927008246, -2.0150343714341394, 2.183230822038533)
+      )
+    )
+
+    assertMatrix(problem.within.toDense.toOption.get, expectedWithin, 1e-10)
+    assertMatrix(problem.between.toDense.toOption.get, expectedBetween, 1e-10)
+
   test("rank-deficient within scatter requires the explicit fixed shrinkage seam"):
     val x = GaleNumerics.matrixFromRows(
       Seq(Seq(-2.0, 0.0), Seq(-1.0, 0.0), Seq(1.0, 0.0), Seq(2.0, 0.0))
@@ -204,3 +286,29 @@ class LdaSuite extends munit.FunSuite:
 
   private def vectorValues(value: gale.linalg.DVec): Vector[Double] =
     Vector.tabulate(value.length)(value.apply)
+
+  private def matrixDistance(left: DMat, right: DMat): Double =
+    var squared = 0.0
+    var row = 0
+    while row < left.rows do
+      var col = 0
+      while col < left.cols do
+        val difference = left(row, col) - right(row, col)
+        squared += difference * difference
+        col += 1
+      row += 1
+    Math.sqrt(squared)
+
+  private def matrixSum(values: DMat*): DMat =
+    val out = new Array[Double](values.head.rows * values.head.cols)
+    var matrix = 0
+    while matrix < values.length do
+      var row = 0
+      while row < values(matrix).rows do
+        var col = 0
+        while col < values(matrix).cols do
+          out(row * values(matrix).cols + col) += values(matrix)(row, col)
+          col += 1
+        row += 1
+      matrix += 1
+    GaleNumerics.matrixFromRowMajor(values.head.rows, values.head.cols, out)

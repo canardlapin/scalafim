@@ -565,6 +565,7 @@ exercise.
 | Generalized Rayleigh-Ritz and trace ratio | `RayleighRitz.scala` owns solver-independent lowering through Gale-backed capabilities; GPCA and LDA assemble statistical operators but own no spectral engine | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | GPCA and deflation | `GpcaProblem.scala` is the operator-program assembly; `SemanticGenPca.scala` delegates to it; `GenPca.scala`, `GenPcaSemantics.scala`, and `GmdDeflation.scala` remain compatibility-only for unmigrated consumers | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | LDA | `Lda.scala` builds class-incidence row relations, pulls back between/within scatter only through `secondOrder`, and declares distinct Fisher and trace-ratio programs with an explicit fixed shrinkage seam | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
+| One-shot soft-LDA consumer | `mvpa-fit/SoftLda.scala` adapts fold-local `PatternOperator` values to `OpTable`, retains hard/simplex class semantics, and keeps optional trial-level nuisance separate from temporal `TrialReadout` nuisance | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
 | Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
 | CPCA | `Cpca.scala` | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3` |
@@ -577,7 +578,11 @@ exercise.
 LDA is new proof code rather than a legacy consumer and is owned by
 `bd-01KXSGZ3E48W9X80199PS5FHA8`. Its hard-label and simplex incidence forms
 share one relationship algebra; relabeling changes no operator identity at the
-statistical level. The independent end-state audit is
+statistical level. The fuzzy relation matches Discursive SL-LDA's
+mass-weighted scatter contract rather than treating simplex membership as a
+hard-design projector. Optional trial-level nuisance residualizes both
+between/within relations and is selected strictly inside each MVPA training
+fold. The independent end-state audit is
 `bd-01KXZZ2FAPEGV5MQX8EH9973QM`; no production consumer may be discovered at
 that gate without either an owner above or a new explicit dependency before
 purge.
