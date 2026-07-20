@@ -105,6 +105,85 @@ class PlotCompilerSuite extends munit.FunSuite:
     )
   }
 
+  test("one plot scale trains over the union of every layer before row mapping") {
+    val first =
+      Vector(
+        Observation(0.0, 1.0, "A"),
+        Observation(10.0, 2.0, "A")
+      )
+    val second =
+      Vector(
+        Observation(100.0, 3.0, "B"),
+        Observation(200.0, 4.0, "B")
+      )
+    val xScale =
+      ContinuousScale
+        .train("shared-x", first.map(_.time), Palette.numeric)
+        .fold(error => fail(error.message), identity)
+    val plot =
+      Plot(first)
+        .withScale(ScaleBinding[Observation, Double, Double](Aesthetic.X, _.time, xScale))
+        .flatMap(_.addLayer(Layer.point[Observation](_.time, _.value)))
+        .flatMap(
+          _.addLayer(
+            Layer.point[Observation](_.time, _.value, data = Some(second))
+          )
+        )
+        .fold(error => fail(error.message), identity)
+
+    val trained = PlotCompiler.resolve(plot).fold(error => fail(error.message), identity)
+    val trainedX = trained.scaleRegistry.forAesthetic(Aesthetic.X).get
+
+    assertEquals(trained.trainedScales.length, 1)
+    assertEquals(
+      trainedX.descriptor.domain,
+      ScaleDomain.Continuous(Interval.unsafe(0.0, 200.0), Interval.unsafe(0.0, 200.0))
+    )
+    assertEqualsDouble(trained.layers(0).rows(0).x, 0.0, 1e-12)
+    assertEqualsDouble(trained.layers(0).rows(1).x, 0.05, 1e-12)
+    assertEqualsDouble(trained.layers(1).rows(0).x, 0.5, 1e-12)
+    assertEqualsDouble(trained.layers(1).rows(1).x, 1.0, 1e-12)
+    assertEquals(
+      trained.layers.flatMap(_.trainedScales).map(_.descriptor.domain).distinct,
+      Vector(trainedX.descriptor.domain)
+    )
+  }
+
+  test("different scale declarations for one aesthetic are a typed plot error") {
+    val first = Vector(Observation(0.0, 1.0, "A"), Observation(10.0, 2.0, "A"))
+    val second = Vector(Observation(100.0, 3.0, "B"), Observation(200.0, 4.0, "B"))
+    val firstScale =
+      ContinuousScale
+        .train("first-x", first.map(_.time), Palette.numeric)
+        .fold(error => fail(error.message), identity)
+    val secondScale =
+      ContinuousScale
+        .train("second-x", second.map(_.time), Palette.numeric)
+        .fold(error => fail(error.message), identity)
+
+    def layer(rows: Vector[Observation], scale: ContinuousScale[Double]): Layer[Observation] =
+      val mapping =
+        AesSpec
+          .empty[Observation]
+          .withPosition(_.time, _.value)
+          .bindScale(ScaleBinding[Observation, Double, Double](Aesthetic.X, _.time, scale))
+          .fold(error => fail(error.message), identity)
+      Layer
+        .fromMapping(Geom.Point, mapping, data = Some(rows), inheritMapping = false)
+        .fold(error => fail(error.message), identity)
+
+    val plot =
+      Plot(Vector.empty[Observation])
+        .addLayer(layer(first, firstScale))
+        .flatMap(_.addLayer(layer(second, secondScale)))
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      PlotCompiler.resolve(plot).left.toOption,
+      Some(GraphicsError.ConflictingPlotScales("x", 0, "first-x", 1, "second-x"))
+    )
+  }
+
   test("compiles line layers in row order and drops non-finite positions") {
     val rows =
       Vector(
@@ -131,7 +210,7 @@ class PlotCompilerSuite extends munit.FunSuite:
   test("scaled label mappings can drop text rows without failing the whole plot") {
     val domain = DiscreteDomain.ordered(Vector("A")).toOption.get
     val scale =
-      DiscreteScale(
+      DiscreteScale.fixed(
         "condition-label",
         domain,
         DiscretePalette.valuesUnsafe(Vector("alpha"))
@@ -190,7 +269,7 @@ class PlotCompilerSuite extends munit.FunSuite:
   test("discrete unknown levels are typed scale out-of-domain row drops") {
     val domain = DiscreteDomain.ordered(Vector("A")).toOption.get
     val colorScale =
-      DiscreteScale(
+      DiscreteScale.fixed(
         "condition-color",
         domain,
         DiscretePalette.valuesUnsafe(Vector(Rgba.Black))

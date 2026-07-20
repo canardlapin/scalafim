@@ -22,6 +22,13 @@ enum GraphicsError:
   case EmptyGeometry(kind: String)
   case MissingAesthetic(geom: String, aesthetic: String)
   case DuplicateScale(aesthetic: String)
+  case ConflictingPlotScales(
+      aesthetic: String,
+      firstLayer: Int,
+      firstScale: String,
+      conflictingLayer: Int,
+      conflictingScale: String
+  )
   case UnsupportedGeom(geom: String)
   case UnsupportedStat(stat: String)
   case MissingLayout(feature: String)
@@ -81,6 +88,8 @@ enum GraphicsError:
         s"geom '$geom' requires aesthetic '$aesthetic'"
       case DuplicateScale(aesthetic) =>
         s"duplicate scale for aesthetic '$aesthetic'"
+      case ConflictingPlotScales(aesthetic, firstLayer, firstScale, conflictingLayer, conflictingScale) =>
+        s"aesthetic '$aesthetic' uses different plot scales in layers $firstLayer ('$firstScale') and $conflictingLayer ('$conflictingScale'); bind one scale at plot level or reuse the same scale declaration"
       case UnsupportedGeom(geom) =>
         s"unsupported geom '$geom'"
       case UnsupportedStat(stat) =>

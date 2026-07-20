@@ -98,7 +98,7 @@ class AesEnvSuite extends munit.FunSuite:
     assertEquals(declarations.map(_.aesthetic), Vector("x", "color"))
     assertEquals(declarations.map(_.layerIndex), Vector(3, 3))
     assertEquals(declarations.map(_.kind), Vector(ScaleKind.Continuous, ScaleKind.Discrete))
-    val trained = registry.trained(3)
+    val trained = registry.trained
     assertEquals(trained.map(_.descriptor.kind), Vector(ScaleKind.Continuous, ScaleKind.Discrete))
   }
 

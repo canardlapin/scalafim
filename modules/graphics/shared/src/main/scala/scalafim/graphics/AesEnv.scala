@@ -51,43 +51,98 @@ final class AesEnv[Row] private (
 
   /** Scaled bindings in declaration order, each registered exactly once. */
   def scaledEntries: Vector[RegisteredScale[Row]] =
-    Aesthetic.values.toVector.flatMap { aesthetic =>
-      entries.get(aesthetic) match
-        case Some(scaled: AesValue.Scaled[Row, ?, ?]) =>
-          Some(RegisteredScale(aesthetic, scaled))
-        case _ =>
-          None
-    }
+    Aesthetic.values.toVector.flatMap(scaledEntry)
+
+  private[graphics] def scaledEntry(aesthetic: Aesthetic[?]): Option[RegisteredScale[Row]] =
+    entries.get(aesthetic) match
+      case Some(scaled: AesValue.Scaled[Row, ?, ?]) =>
+        Some(RegisteredScale.erased(aesthetic, scaled))
+      case _ =>
+        None
 
 object AesEnv:
   def empty[Row]: AesEnv[Row] =
     new AesEnv(Map.empty)
 
-/** A scaled aesthetic binding recorded by the scale registry. */
-final case class RegisteredScale[Row](
-    aesthetic: Aesthetic[?],
-    value: AesValue.Scaled[Row, ?, ?]
-):
-  def scale: Scale[?, ?] =
+/** A scaled aesthetic binding with its hidden input/output types kept together.
+  * The only erased cast occurs when recovering a binding from `AesEnv`'s
+  * heterogeneous map; all observation and retraining operations are typed
+  * again inside this value.
+  */
+sealed trait RegisteredScale[Row]:
+  type In
+  type Out
+
+  def aesthetic: Aesthetic[Out]
+  def value: AesValue.Scaled[Row, In, Out]
+
+  final def scale: Scale[In, Out] =
     value.scale
 
-  def descriptor: ScaleDescriptor =
-    value.scale.descriptor
+  final def descriptor: ScaleDescriptor =
+    scale.descriptor
 
-/** Per-layer registry of scaled bindings, built once from the layer's
-  * effective aesthetic environment.
+  final def sharesDeclaration(that: RegisteredScale[Row]): Boolean =
+    scale.asInstanceOf[AnyRef] eq that.scale.asInstanceOf[AnyRef]
+
+  final def observations(rows: Vector[Row]): Vector[ScaleObservation] =
+    val out = Vector.newBuilder[ScaleObservation]
+    rows.foreach { row =>
+      scale.observation(value.value(row)).foreach(out += _)
+    }
+    out.result()
+
+  final def trainPlotWide(
+      observations: Vector[ScaleObservation]
+  ): Either[GraphicsError, RegisteredScale[Row]] =
+    scale.trainPlotWide(observations).map { trained =>
+      RegisteredScale(aesthetic, AesValue.Scaled(value.value, trained))
+    }
+
+  final def install(env: AesEnv[Row]): AesEnv[Row] =
+    env.updated(aesthetic, value)
+
+  final def declaration(layerIndex: Int): ScaleDeclaration =
+    ScaleDeclaration(layerIndex, aesthetic.label, descriptor.name, descriptor.kind)
+
+  final def trained: TrainedScale =
+    TrainedScale(aesthetic.label, descriptor, scale)
+
+object RegisteredScale:
+  type Aux[Row, In0, Out0] = RegisteredScale[Row] { type In = In0; type Out = Out0 }
+
+  def apply[Row, In0, Out0](
+      aesthetic0: Aesthetic[Out0],
+      value0: AesValue.Scaled[Row, In0, Out0]
+  ): Aux[Row, In0, Out0] =
+    new RegisteredScale[Row]:
+      type In = In0
+      type Out = Out0
+      val aesthetic: Aesthetic[Out] = aesthetic0
+      val value: AesValue.Scaled[Row, In, Out] = value0
+
+  /** `AesEnv.updated` is the type-safe construction boundary. Map lookup
+    * erases that relation, so recover it once here and keep it packaged.
+    */
+  private[graphics] def erased[Row](
+      aesthetic: Aesthetic[?],
+      value: AesValue.Scaled[Row, ?, ?]
+  ): RegisteredScale[Row] =
+    RegisteredScale(
+      aesthetic.asInstanceOf[Aesthetic[Any]],
+      value.asInstanceOf[AesValue.Scaled[Row, Any, Any]]
+    )
+
+/** Per-layer view of the plot-trained bindings in an effective aesthetic
+  * environment. Plot-wide uniqueness and training live in
+  * `PlotScaleRegistry`; this view preserves layer provenance.
   */
 final case class ScaleRegistry[Row] private (entries: Vector[RegisteredScale[Row]]):
   def declarations(layerIndex: Int): Vector[ScaleDeclaration] =
-    entries.map { entry =>
-      val descriptor = entry.descriptor
-      ScaleDeclaration(layerIndex, entry.aesthetic.label, descriptor.name, descriptor.kind)
-    }
+    entries.map(_.declaration(layerIndex))
 
-  def trained(layerIndex: Int): Vector[TrainedScale] =
-    entries.map { entry =>
-      TrainedScale(layerIndex, entry.aesthetic.label, entry.descriptor, entry.scale)
-    }
+  def trained: Vector[TrainedScale] =
+    entries.map(_.trained)
 
   def forAesthetic(aesthetic: Aesthetic[?]): Option[RegisteredScale[Row]] =
     entries.find(_.aesthetic == aesthetic)
@@ -95,3 +150,19 @@ final case class ScaleRegistry[Row] private (entries: Vector[RegisteredScale[Row
 object ScaleRegistry:
   def fromEnv[Row](env: AesEnv[Row]): ScaleRegistry[Row] =
     ScaleRegistry(env.scaledEntries)
+
+/** The single trained scale table for a plot. Each aesthetic occurs at most
+  * once, in `Aesthetic` declaration order.
+  */
+final case class PlotScaleRegistry private (scales: Vector[TrainedScale]):
+  require(scales.map(_.aesthetic).distinct.length == scales.length, "plot scales must be unique by aesthetic")
+
+  def forAesthetic(aesthetic: Aesthetic[?]): Option[TrainedScale] =
+    scales.find(_.aesthetic == aesthetic.label)
+
+object PlotScaleRegistry:
+  val empty: PlotScaleRegistry =
+    PlotScaleRegistry(Vector.empty)
+
+  private[graphics] def from(scales: Vector[TrainedScale]): PlotScaleRegistry =
+    PlotScaleRegistry(scales)

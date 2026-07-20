@@ -395,6 +395,14 @@ enum ScaleKind:
   case Discrete
   case Generic
 
+/** Whether a scale learns from every layer that uses it or keeps its declared
+  * domain unchanged. Plot-wide training is the ordinary grammar-of-graphics
+  * behavior; fixed domains are an explicit limits contract.
+  */
+enum ScaleTraining:
+  case PlotWide
+  case Fixed
+
 enum ScaleDomain:
   case Continuous(raw: Interval, transformed: Interval)
   case Discrete(levels: Vector[String], ordered: Boolean)
@@ -403,8 +411,16 @@ enum ScaleDomain:
 final case class ScaleDescriptor(
     name: GraphicsName,
     kind: ScaleKind,
-    domain: ScaleDomain
+    domain: ScaleDomain,
+    training: ScaleTraining = ScaleTraining.PlotWide
 )
+
+/** Erased, closed observations let a heterogeneous plot-scale registry train
+  * each binding without erasing the input type of `Scale[In, Out]` itself.
+  */
+private[graphics] enum ScaleObservation:
+  case Continuous(value: Double)
+  case Discrete(value: String)
 
 enum ScaleMapFailure:
   case TransformDomain(transform: String, value: Double)
@@ -453,14 +469,32 @@ final case class ContinuousScale[A] private (
     transformedDomain: Interval,
     transform: Transform,
     palette: Palette[A],
-    oob: OobPolicy
+    oob: OobPolicy,
+    training: ScaleTraining
 ) extends Scale[Double, A]:
   override def descriptor: ScaleDescriptor =
     ScaleDescriptor(
       name,
       ScaleKind.Continuous,
-      ScaleDomain.Continuous(domain, transformedDomain)
+      ScaleDomain.Continuous(domain, transformedDomain),
+      training
     )
+
+  private[graphics] override def observation(value: Double): Option[ScaleObservation] =
+    Some(ScaleObservation.Continuous(value))
+
+  private[graphics] override def trainPlotWide(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[Double, A]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        val values =
+          Iterator(domain.lower, domain.upper) ++ observations.iterator.collect {
+            case ScaleObservation.Continuous(value) => value
+          }
+        ContinuousScale.train(name.value, values, palette, transform, oob, training)
 
   override def mapValue(value: Double): Option[A] =
     mapValueResult(value).toOption
@@ -489,13 +523,23 @@ object ContinuousScale:
       values: IterableOnce[Double],
       palette: Palette[A],
       transform: Transform = Transform.identity,
-      oob: OobPolicy = OobPolicy.Censor
+      oob: OobPolicy = OobPolicy.Censor,
+      training: ScaleTraining = ScaleTraining.PlotWide
   ): Either[GraphicsError, ContinuousScale[A]] =
     val domains = trainDomains(values, transform)
     for
       scaleName <- GraphicsName(name, "continuous scale")
       (domain, transformedDomain) <- domains
-    yield ContinuousScale(scaleName, domain, transformedDomain, transform, palette, oob)
+    yield ContinuousScale(scaleName, domain, transformedDomain, transform, palette, oob, training)
+
+  def fixed[A](
+      name: String,
+      limits: IterableOnce[Double],
+      palette: Palette[A],
+      transform: Transform = Transform.identity,
+      oob: OobPolicy = OobPolicy.Censor
+  ): Either[GraphicsError, ContinuousScale[A]] =
+    train(name, limits, palette, transform, oob, ScaleTraining.Fixed)
 
   private def trainDomains(
       values: IterableOnce[Double],
@@ -558,14 +602,30 @@ object DiscreteDomain:
 final case class DiscreteScale[A] private (
     name: GraphicsName,
     domain: DiscreteDomain,
-    palette: DiscretePalette[A]
+    palette: DiscretePalette[A],
+    training: ScaleTraining
 ) extends Scale[String, A]:
   override def descriptor: ScaleDescriptor =
     ScaleDescriptor(
       name,
       ScaleKind.Discrete,
-      ScaleDomain.Discrete(domain.levels, domain.ordered)
+      ScaleDomain.Discrete(domain.levels, domain.ordered),
+      training
     )
+
+  private[graphics] override def observation(value: String): Option[ScaleObservation] =
+    Some(ScaleObservation.Discrete(value))
+
+  private[graphics] override def trainPlotWide(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[String, A]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        domain
+          .train(observations.iterator.collect { case ScaleObservation.Discrete(value) => value })
+          .map(DiscreteScale(name, _, palette, training))
 
   override def mapValue(value: String): Option[A] =
     mapValueResult(value).toOption
@@ -582,9 +642,17 @@ object DiscreteScale:
   def apply[A](
       name: String,
       domain: DiscreteDomain,
+      palette: DiscretePalette[A],
+      training: ScaleTraining = ScaleTraining.PlotWide
+  ): Either[GraphicsError, DiscreteScale[A]] =
+    GraphicsName(name, "discrete scale").map(DiscreteScale(_, domain, palette, training))
+
+  def fixed[A](
+      name: String,
+      domain: DiscreteDomain,
       palette: DiscretePalette[A]
   ): Either[GraphicsError, DiscreteScale[A]] =
-    GraphicsName(name, "discrete scale").map(DiscreteScale(_, domain, palette))
+    apply(name, domain, palette, ScaleTraining.Fixed)
 
 trait Scale[-In, +Out]:
   def name: GraphicsName
@@ -594,6 +662,14 @@ trait Scale[-In, +Out]:
 
   def mapValueResult(value: In): Either[ScaleMapFailure, Out] =
     mapValue(value).toRight(ScaleMapFailure.OutOfDomain(name.value, value.toString))
+
+  private[graphics] def observation(value: In): Option[ScaleObservation] =
+    None
+
+  private[graphics] def trainPlotWide(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[In, Out]] =
+    Right(this)
 
 final case class ScaleBinding[Row, In, Out](
     aesthetic: Aesthetic[Out],

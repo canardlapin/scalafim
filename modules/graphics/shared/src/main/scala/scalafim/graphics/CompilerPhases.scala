@@ -42,10 +42,90 @@ private[graphics] object MappingPhase:
       case Geom.Point | Geom.Line | Geom.Text => true
       case Geom.Rect                          => false
 
-/** Phase 2 — scale resolution: register each scaled binding once per layer. */
+/** Output of plot-wide scale training: every layer plan is rebound to the same
+  * trained scale for each aesthetic, and the plot registry contains one entry
+  * per aesthetic.
+  */
+private[graphics] final case class ScaleResolution[Row](
+    plans: Vector[LayerPlan[Row]],
+    registry: PlotScaleRegistry
+)
+
+/** Phase 2 — plot-wide scale training. All observations from all layers using
+  * an aesthetic train one shared scale before any row is mapped. Distinct
+  * scale declarations for the same aesthetic are rejected instead of silently
+  * placing independently normalized layers on one axis.
+  */
 private[graphics] object ScalePhase:
+  private final case class Contribution[Row](
+      layerIndex: Int,
+      rows: Vector[Row],
+      entry: RegisteredScale[Row]
+  )
+
+  def train[Row](plans: Vector[LayerPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
+    val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
+    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+      (result, aesthetic) => result.flatMap(trainAesthetic(_, aesthetic))
+    }
+
   def registry[Row](plan: LayerPlan[Row]): ScaleRegistry[Row] =
     ScaleRegistry.fromEnv(plan.env)
+
+  private def trainAesthetic[Row](
+      resolution: ScaleResolution[Row],
+      aesthetic: Aesthetic[?]
+  ): Either[GraphicsError, ScaleResolution[Row]] =
+    val contributions = resolution.plans.flatMap { plan =>
+      plan.env.scaledEntry(aesthetic).map(Contribution(plan.layerIndex, plan.data, _))
+    }
+    contributions.headOption match
+      case None =>
+        Right(resolution)
+      case Some(first) =>
+        contributions.find(contribution => !first.entry.sharesDeclaration(contribution.entry)) match
+          case Some(conflicting) =>
+            Left(
+              GraphicsError.ConflictingPlotScales(
+                aesthetic.label,
+                first.layerIndex,
+                first.entry.descriptor.name.value,
+                conflicting.layerIndex,
+                conflicting.entry.descriptor.name.value
+              )
+            )
+          case None =>
+            val observations = contributions.flatMap(contribution => contribution.entry.observations(contribution.rows))
+            for
+              trained <- first.entry.trainPlotWide(observations)
+              plans <- rebind(resolution.plans, aesthetic, observations)
+            yield
+              ScaleResolution(
+                plans,
+                PlotScaleRegistry.from(resolution.registry.scales :+ trained.trained)
+              )
+
+  private def rebind[Row](
+      plans: Vector[LayerPlan[Row]],
+      aesthetic: Aesthetic[?],
+      observations: Vector[ScaleObservation]
+  ): Either[GraphicsError, Vector[LayerPlan[Row]]] =
+    val out = Vector.newBuilder[LayerPlan[Row]]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < plans.length && result.isRight do
+      val plan = plans(idx)
+      plan.env.scaledEntry(aesthetic) match
+        case None =>
+          out += plan
+        case Some(entry) =>
+          result = entry.trainPlotWide(observations).map { trained =>
+            val env = trained.install(plan.env)
+            out += plan.copy(mapping = AesSpec.fromEnv(env), env = env)
+            ()
+          }
+      idx += 1
+    result.map(_ => out.result())
 
 /** Phase 3 — row evaluation: map each data row through the aesthetic
   * environment, keeping typed drop diagnostics for rows a renderer must skip.
@@ -412,9 +492,9 @@ private[graphics] object LayoutPhase:
   * panel layout.
   */
 private[graphics] object GuidePhase:
-  def specs[Row](
+  def specs(
       policy: GuidePolicy,
-      layers: Vector[ResolvedLayer[Row]],
+      plotScales: PlotScaleRegistry,
       ranges: Option[(Interval, Interval)],
       relativeLegend: Boolean
   ): Either[GraphicsError, Vector[GuideSpec]] =
@@ -432,10 +512,10 @@ private[graphics] object GuidePhase:
           case None =>
             Left(GraphicsError.MissingLayout("guides"))
           case Some((xRange, yRange)) =>
-            derived(layers, xRange, yRange, overrides, deriveLegends, relativeLegend)
+            derived(plotScales, xRange, yRange, overrides, deriveLegends, relativeLegend)
 
-  private def derived[Row](
-      layers: Vector[ResolvedLayer[Row]],
+  private def derived(
+      plotScales: PlotScaleRegistry,
       xRange: Interval,
       yRange: Interval,
       overrides: Vector[GuideSpec],
@@ -451,13 +531,13 @@ private[graphics] object GuidePhase:
       resolvedOverrides <- materializeAxisTicks(overrides, xRange, yRange)
       xAxis <-
         if overriddenSides.contains(AxisSide.Bottom) then Right(None)
-        else positionAxis(layers, Aesthetic.X.label, AxisSide.Bottom, xRange)
+        else positionAxis(plotScales, Aesthetic.X, AxisSide.Bottom, xRange)
       yAxis <-
         if overriddenSides.contains(AxisSide.Left) then Right(None)
-        else positionAxis(layers, Aesthetic.Y.label, AxisSide.Left, yRange)
+        else positionAxis(plotScales, Aesthetic.Y, AxisSide.Left, yRange)
       legends <-
         if hasLegendOverride || !deriveLegends then Right(Vector.empty)
-        else discreteLegends(layers, relativeLegend)
+        else discreteLegends(plotScales, relativeLegend)
     yield Vector(xAxis, yAxis).flatten ++ resolvedOverrides ++ legends
 
   /** Resolve caller-supplied break policies against the unexpanded data
@@ -491,14 +571,14 @@ private[graphics] object GuidePhase:
     * range. Both carry explicit ticks so the layout solver can size strips
     * from the actual labels.
     */
-  private def positionAxis[Row](
-      layers: Vector[ResolvedLayer[Row]],
-      aesthetic: String,
+  private def positionAxis(
+      plotScales: PlotScaleRegistry,
+      aesthetic: Aesthetic[?],
       side: AxisSide,
       range: Interval
   ): Either[GraphicsError, Option[GuideSpec.Axis]] =
-    val name = GraphicsName.unsafe(s"$aesthetic-axis")
-    firstScale(layers, aesthetic) match
+    val name = GraphicsName.unsafe(s"${aesthetic.label}-axis")
+    plotScales.forAesthetic(aesthetic) match
       case Some(trained) =>
         trained.scale match
           case continuous: ContinuousScale[?] =>
@@ -548,8 +628,8 @@ private[graphics] object GuidePhase:
   /** One legend per distinct discrete color/fill scale, stacked downward
     * from the top of the legend region so multiple legends never overprint.
     */
-  private def discreteLegends[Row](
-      layers: Vector[ResolvedLayer[Row]],
+  private def discreteLegends(
+      plotScales: PlotScaleRegistry,
       relative: Boolean
   ): Either[GraphicsError, Vector[GuideSpec]] =
     val seen = scala.collection.mutable.HashSet.empty[String]
@@ -557,24 +637,22 @@ private[graphics] object GuidePhase:
     var result: Either[GraphicsError, Unit] = Right(())
     val originX = if relative then 0.08 else 0.82
     var nextY = if relative then 0.92 else 0.88
-    layers.foreach { layer =>
-      layer.trainedScales.foreach { trained =>
-        if result.isRight
-          && (trained.aesthetic == Aesthetic.Color.label || trained.aesthetic == Aesthetic.Fill.label)
-          && seen.add(trained.descriptor.name.value)
-        then
-          trained.scale match
-            case discrete: DiscreteScale[?] =>
-              result = legendFor(discrete, Point.npcUnsafe(originX, nextY)).map { legend =>
-                legend.foreach { spec =>
-                  out += spec
-                  nextY -= (spec.entries.length + 1).toDouble * 0.055 + 0.04
-                }
-                ()
+    plotScales.scales.foreach { trained =>
+      if result.isRight
+        && (trained.aesthetic == Aesthetic.Color.label || trained.aesthetic == Aesthetic.Fill.label)
+        && seen.add(trained.descriptor.name.value)
+      then
+        trained.scale match
+          case discrete: DiscreteScale[?] =>
+            result = legendFor(discrete, Point.npcUnsafe(originX, nextY)).map { legend =>
+              legend.foreach { spec =>
+                out += spec
+                nextY -= (spec.entries.length + 1).toDouble * 0.055 + 0.04
               }
-            case _ =>
               ()
-      }
+            }
+          case _ =>
+            ()
     }
     result.map(_ => out.result())
 
@@ -609,12 +687,6 @@ private[graphics] object GuidePhase:
           )
         )
     }
-
-  private def firstScale[Row](
-      layers: Vector[ResolvedLayer[Row]],
-      aesthetic: String
-  ): Option[TrainedScale] =
-    layers.iterator.flatMap(_.trainedScales).find(_.aesthetic == aesthetic)
 
   def lower(
       layout: Option[PanelLayout],

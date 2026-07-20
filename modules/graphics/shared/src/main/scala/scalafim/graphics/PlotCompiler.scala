@@ -82,7 +82,8 @@ object PlotCompilerOptions:
 final case class TrainedPlot[Row](
     layers: Vector[ResolvedLayer[Row]],
     layout: Option[PanelLayout],
-    guides: Vector[ResolvedGuide]
+    guides: Vector[ResolvedGuide],
+    scaleRegistry: PlotScaleRegistry
 ):
   def scene: Scene =
     val layerGrobs = layers.flatMap(_.grobs)
@@ -108,7 +109,7 @@ final case class TrainedPlot[Row](
     layers.flatMap(_.scaleDeclarations)
 
   def trainedScales: Vector[TrainedScale] =
-    layers.flatMap(_.trainedScales)
+    scaleRegistry.scales
 
 final case class ResolvedLayer[Row](
     layerIndex: Int,
@@ -131,7 +132,6 @@ final case class ScaleDeclaration(
 )
 
 final case class TrainedScale(
-    layerIndex: Int,
     aesthetic: String,
     descriptor: ScaleDescriptor,
     scale: Scale[?, ?]
@@ -165,9 +165,9 @@ enum PlotDropReason:
   case ScaleOutOfDomain(aesthetic: String, scale: String, value: String)
   case InvalidAesthetic(aesthetic: String, value: String)
 
-/** Facade over the compiler phases: mapping resolution, scale resolution,
-  * row evaluation, geom lowering, and guide resolution. Each phase lives in
-  * [[CompilerPhases]] and is independently testable.
+/** Facade over the compiler phases: mapping resolution, plot-wide scale
+  * training, row evaluation, geom lowering, and guide resolution. Each phase
+  * lives in [[CompilerPhases]] and is independently testable.
   */
 object PlotCompiler:
   def compile[Row](
@@ -182,9 +182,15 @@ object PlotCompiler:
   ): Either[GraphicsError, TrainedPlot[Row]] =
     for
       plans <- MappingPhase.plan(plot)
-      layers <- resolveLayers(plans)
+      scales <- ScalePhase.train(plans)
+      layers <- resolveLayers(scales.plans)
       ranges <- LayoutPhase.panelRangesFor(options, layers)
-      specs <- GuidePhase.specs(options.guides, layers, ranges, relativeLegend = options.policy.nonEmpty)
+      specs <- GuidePhase.specs(
+        options.guides,
+        scales.registry,
+        ranges,
+        relativeLegend = options.policy.nonEmpty
+      )
       resolution <- LayoutPhase.assemble(plot.coord, options, ranges, specs)
       guides <- GuidePhase.lower(
         resolution.layout,
@@ -192,7 +198,7 @@ object PlotCompiler:
         specs,
         options.policy.getOrElse(LayoutPolicy())
       )
-    yield TrainedPlot(layers, resolution.layout, guides)
+    yield TrainedPlot(layers, resolution.layout, guides, scales.registry)
 
   private def resolveLayers[Row](
       plans: Vector[LayerPlan[Row]]
@@ -219,7 +225,7 @@ object PlotCompiler:
           dataSize = plan.data.length,
           mapping = plan.mapping,
           scaleDeclarations = registry.declarations(plan.layerIndex),
-          trainedScales = registry.trained(plan.layerIndex),
+          trainedScales = registry.trained,
           rows = rows,
           droppedRows = droppedRows,
           grobs = grobs

@@ -63,6 +63,43 @@ class CompilerPhasesSuite extends munit.FunSuite:
     )
   }
 
+  test("scale phase trains one declaration from distinct layer extractors") {
+    val first = Vector(Obs(0.0, 10.0, "A"))
+    val second = Vector(Obs(100.0, 200.0, "B"))
+    val scale =
+      ContinuousScale
+        .train("shared-x", first.map(_.x), Palette.numeric)
+        .fold(error => fail(error.message), identity)
+
+    def layer(rows: Vector[Obs], x: Obs => Double): Layer[Obs] =
+      val mapping =
+        AesSpec
+          .empty[Obs]
+          .withPosition(x, _.y)
+          .bindScale(ScaleBinding[Obs, Double, Double](Aesthetic.X, x, scale))
+          .fold(error => fail(error.message), identity)
+      Layer
+        .fromMapping(Geom.Point, mapping, data = Some(rows), inheritMapping = false)
+        .fold(error => fail(error.message), identity)
+
+    val plot =
+      Plot(Vector.empty[Obs])
+        .addLayer(layer(first, _.x))
+        .flatMap(_.addLayer(layer(second, _.y)))
+        .fold(error => fail(error.message), identity)
+    val plans = MappingPhase.plan(plot).fold(error => fail(error.message), identity)
+    val scales = ScalePhase.train(plans).fold(error => fail(error.message), identity)
+
+    assertEquals(scales.registry.scales.length, 1)
+    assertEquals(
+      scales.registry.scales.head.descriptor.domain,
+      ScaleDomain.Continuous(Interval.unsafe(0.0, 200.0), Interval.unsafe(0.0, 200.0))
+    )
+    val resolved = scales.plans.map(RowPhase.resolve(_).fold(error => fail(error.message), identity)._1.head.x)
+    assertEqualsDouble(resolved(0), 0.0, 1e-12)
+    assertEqualsDouble(resolved(1), 1.0, 1e-12)
+  }
+
   test("row phase records the evaluated group value on each row") {
     val plot = groupedLinePlot
     val plan = MappingPhase.plan(plot).fold(e => fail(e.message), identity).head

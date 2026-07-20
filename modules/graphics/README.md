@@ -42,6 +42,12 @@ platform renderers should consume `DeviceScene` values at a boundary.
 - Continuous scales retain both raw data domains and transformed domains:
   palette mapping uses transformed coordinates, while breaks and labels remain
   in the raw data domain.
+- Scale training is plot-global: every layer bound to an aesthetic contributes
+  observations to one shared scale before rows are mapped. Reusing one scale
+  declaration across layers therefore gives one coordinate or palette
+  language; conflicting declarations are a typed error instead of silently
+  normalizing each layer independently. `ScaleTraining.Fixed` is the explicit
+  limits contract when a domain must not expand.
 - Default continuous breaks use a deterministic zero-anchored 1/2/5 grid with
   an approximate target count. Use `Breaks.count` when an exact number of
   equally spaced breaks is part of the caller's contract.
@@ -66,9 +72,13 @@ platform renderers should consume `DeviceScene` values at a boundary.
 ## Compilation pipeline
 
 `PlotCompiler` is a facade over explicit, independently testable phases
-(`CompilerPhases.scala`): mapping resolution → scale registration → row
+(`CompilerPhases.scala`): mapping resolution → plot-wide scale training → row
 evaluation (with typed `DroppedRow` diagnostics) → group-aware geom lowering →
-layout resolution → guide resolution. Guides follow a `GuidePolicy`:
+layout resolution → guide resolution. The scale phase follows ggplot2's core
+build invariant: scales see the union of the layer data before they map values,
+but encodes the one-scale-per-aesthetic rule directly in `PlotScaleRegistry`.
+Guides read that same registry, so marks, axes, and legends cannot disagree.
+Guides follow a `GuidePolicy`:
 `Derived` produces routine axes from trained scales (transform-aware breaks
 positioned in mapped space) and legends from discrete color/fill palettes,
 with explicit `GuideSpec` overrides; layout comes from an explicit
