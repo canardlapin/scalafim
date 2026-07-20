@@ -31,6 +31,19 @@ lazy val jsSettingsBase = Seq(
   Test / jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv()
 )
 
+lazy val graph =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/graph"))
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-graph"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val graphJS  = graph.js
+lazy val graphJVM = graph.jvm
+
 lazy val linalg =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -478,6 +491,8 @@ lazy val root =
   project
     .in(file("."))
     .aggregate(
+      graphJS,
+      graphJVM,
       linalgJS,
       linalgJVM,
       linalgBreezeJVM,
