@@ -116,9 +116,10 @@ final case class TrainedPlot[Row](
 final case class ResolvedLayer[Row](
     layerIndex: Int,
     geom: Geom,
-    stat: Stat,
+    stat: Stat[Row],
     dataSize: Int,
     mapping: AesSpec[Row],
+    statFrame: StatFrame[Row],
     scaleDeclarations: Vector[ScaleDeclaration],
     trainedScales: Vector[TrainedScale],
     rows: Vector[ResolvedRow[Row]],
@@ -193,7 +194,8 @@ object PlotCompiler:
     val resolvedOptions = effectiveOptions.copy(policy = effectiveOptions.policy.map(_ => layoutPolicy))
     for
       plans <- MappingPhase.plan(plot)
-      scales <- ScalePhase.train(plans)
+      statPlans <- StatPhase.transform(plans)
+      scales <- ScalePhase.train(statPlans)
       layers <- resolveLayers(scales.plans, options.theme)
       ranges <- LayoutPhase.panelRangesFor(resolvedOptions, layers)
       specs <- GuidePhase.specs(
@@ -216,7 +218,7 @@ object PlotCompiler:
     yield TrainedPlot(layers, resolution.layout, guides, scales.registry, panelGrobs, labels)
 
   private def resolveLayers[Row](
-      plans: Vector[LayerPlan[Row]],
+      plans: Vector[StatPlan[Row]],
       theme: Theme
   ): Either[GraphicsError, Vector[ResolvedLayer[Row]]] =
     val out = Vector.newBuilder[ResolvedLayer[Row]]
@@ -230,7 +232,7 @@ object PlotCompiler:
       idx += 1
     result.map(_ => out.result())
 
-  private def resolveLayer[Row](plan: LayerPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
+  private def resolveLayer[Row](plan: StatPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
     val registry = ScalePhase.registry(plan)
     RowPhase.resolve(plan, theme).flatMap { case (rows, droppedRows) =>
       GeomPhase.lower(plan.layer.geom, rows).map { grobs =>
@@ -238,8 +240,9 @@ object PlotCompiler:
           layerIndex = plan.layerIndex,
           geom = plan.layer.geom,
           stat = plan.layer.stat,
-          dataSize = plan.data.length,
-          mapping = plan.mapping,
+          dataSize = plan.source.data.length,
+          mapping = plan.source.mapping,
+          statFrame = plan.frame,
           scaleDeclarations = registry.declarations(plan.layerIndex),
           trainedScales = registry.trained,
           rows = rows,

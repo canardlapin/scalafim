@@ -5,6 +5,12 @@ sealed trait AesValue[Row, A]:
   def isScaled: Boolean =
     false
 
+  def contramap[Input](f: Input => Row): AesValue[Input, A] =
+    this match
+      case AesValue.Direct(value)        => AesValue.direct(input => value(f(input)))
+      case AesValue.Constant(value)      => AesValue.constant(value)
+      case AesValue.Scaled(value, scale) => AesValue.scaled(input => value(f(input)), scale)
+
 object AesValue:
   final case class Direct[Row, A](value: Row => A) extends AesValue[Row, A]:
     override def map(row: Row): Option[A] =
@@ -58,6 +64,18 @@ final case class AesSpec[Row](
     label: Option[AesValue[Row, String]] = None,
     group: Option[AesValue[Row, String]] = None
 ):
+  def contramap[Input](f: Input => Row): AesSpec[Input] =
+    AesSpec(
+      x = x.map(_.contramap(f)),
+      y = y.map(_.contramap(f)),
+      color = color.map(_.contramap(f)),
+      fill = fill.map(_.contramap(f)),
+      alpha = alpha.map(_.contramap(f)),
+      size = size.map(_.contramap(f)),
+      label = label.map(_.contramap(f)),
+      group = group.map(_.contramap(f))
+    )
+
   def position: Option[Position2[Row]] =
     for
       px <- x
@@ -143,24 +161,21 @@ enum Geom(val label: String):
   case Line extends Geom("line")
   case Text extends Geom("text")
   case Rect extends Geom("rect")
+  case Bar extends Geom("bar")
 
   def requiredAesthetics: Vector[RequiredAesthetic] =
     this match
       case Point => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Line  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Text  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.Label)
-      case Rect  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
-
-enum Stat:
-  case Identity
-  case Count
+      case Rect | Bar => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
 
 enum Coord:
   case Cartesian(clip: Clip = Clip.On)
 
 final case class Layer[Row] private (
     geom: Geom,
-    stat: Stat,
+    stat: Stat[Row],
     data: Option[Vector[Row]],
     mapping: AesSpec[Row],
     inheritMapping: Boolean,
@@ -204,16 +219,50 @@ object Layer:
   ): Layer[Row] =
     Layer(Geom.Text, Stat.Identity, data, mapping.withPosition(x, y).withLabel(label), inheritMapping, params)
 
+  /** Count observations by a discrete key and lower the computed result as
+    * bars. Position aesthetics belong to the statistic, so this constructor
+    * deliberately does not accept raw `x` or `y` mappings.
+    */
+  def count[Row](
+      x: Row => String,
+      data: Option[Vector[Row]] = None,
+      order: CountOrder = CountOrder.Encountered,
+      scaleName: GraphicsName = GraphicsName.unsafe("x"),
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.Bar,
+      Stat.Count(x, order, scaleName),
+      data,
+      AesSpec.empty[Row],
+      inheritMapping = false,
+      params
+    )
+
   def fromMapping[Row](
       geom: Geom,
       mapping: AesSpec[Row],
       data: Option[Vector[Row]] = None,
       inheritMapping: Boolean = true,
-      stat: Stat = Stat.Identity,
+      stat: Stat[Row] = Stat.Identity,
       params: Option[GraphicParams] = None
   ): Either[GraphicsError, Layer[Row]] =
-    if inheritMapping then Right(Layer(geom, stat, data, mapping, inheritMapping, params))
-    else validate(geom, mapping).map(_ => Layer(geom, stat, data, mapping, inheritMapping, params))
+    val layer = Layer(geom, stat, data, mapping, inheritMapping, params)
+    if inheritMapping then Right(layer)
+    else validate(layer, mapping).map(_ => layer)
+
+  private[graphics] def validate[Row](layer: Layer[Row], mapping: AesSpec[Row]): Either[GraphicsError, Unit] =
+    layer.stat match
+      case Stat.Identity =>
+        validate(layer.geom, mapping)
+      case _: Stat.Count[?] =>
+        if layer.geom != Geom.Bar then Left(GraphicsError.InvalidStatGeom(layer.stat.label, layer.geom.label))
+        else if mapping.x.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.X.label))
+        else if mapping.y.nonEmpty then Left(GraphicsError.StatAestheticConflict(layer.stat.label, Aesthetic.Y.label))
+        else
+          mapping.env.bound.headOption match
+            case Some(aesthetic) => Left(GraphicsError.UnsupportedStatAesthetic(layer.stat.label, aesthetic.label))
+            case None            => Right(())
 
   private[graphics] def validate[Row](geom: Geom, mapping: AesSpec[Row]): Either[GraphicsError, Unit] =
     geom.requiredAesthetics.find(required => !required.isPresent(mapping)) match
@@ -237,7 +286,7 @@ final case class Plot[Row] private (
     labels: PlotLabels
 ):
   def addLayer(layer: Layer[Row]): Either[GraphicsError, Plot[Row]] =
-    Layer.validate(layer.geom, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
+    Layer.validate(layer, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
 
   def withMapping(mapping: AesSpec[Row]): Either[GraphicsError, Plot[Row]] =
     validateLayers(mapping).map(_ => copy(mapping = mapping))
@@ -271,7 +320,7 @@ final case class Plot[Row] private (
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < layers.length && result.isRight do
       val layer = layers(idx)
-      result = Layer.validate(layer.geom, layer.effectiveMapping(plotMapping))
+      result = Layer.validate(layer, layer.effectiveMapping(plotMapping))
       idx += 1
     result
 

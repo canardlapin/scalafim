@@ -86,15 +86,22 @@ platform renderers should consume `DeviceScene` values at a boundary.
   guide styles win locally. The layout solver measures the same themed font
   sizes later emitted as text, while panel backgrounds and tick-aligned grids
   are ordinary renderer-neutral grobs beneath the data.
+- Statistics are typed data transformations, not enum flags interpreted by a
+  geom. `StatFrame` exposes its aggregate rows and closed
+  `ComputedAesthetic` fields; `Stat.Count` computes count/proportion before
+  scale training, and its discrete category output therefore drives both bar
+  positions and axis labels. Unsupported stat/geom/aesthetic combinations are
+  compiler errors represented by `GraphicsError`.
 
 ## Compilation pipeline
 
 `PlotCompiler` is a facade over explicit, independently testable phases
-(`CompilerPhases.scala`): mapping resolution → plot-wide scale training → row
-evaluation (with typed `DroppedRow` diagnostics) → group-aware geom lowering →
-layout resolution → guide resolution. The scale phase follows ggplot2's core
-build invariant: scales see the union of the layer data before they map values,
-but encodes the one-scale-per-aesthetic rule directly in `PlotScaleRegistry`.
+(`CompilerPhases.scala`): mapping resolution → statistical transformation →
+plot-wide scale training → row evaluation (with typed `DroppedRow`
+diagnostics) → group-aware geom lowering → layout resolution → guide
+resolution. The scale phase follows ggplot2's core build invariant: scales see
+the union of each layer's stat output before they map values, but encodes the
+one-scale-per-aesthetic rule directly in `PlotScaleRegistry`.
 Guides read that same registry, so marks, axes, and legends cannot disagree.
 Guides follow a `GuidePolicy`:
 `Derived` produces routine axes from trained scales (transform-aware breaks
@@ -119,6 +126,9 @@ val scene = PlotCompiler.compile(
   plot,
   PlotCompilerOptions(guides = GuidePolicy.Derived(), theme = Theme.minimal)
 )
+
+val counts = Plot(observations)
+  .addLayer(Layer.count(_.condition))
 ```
 
 ## Backends

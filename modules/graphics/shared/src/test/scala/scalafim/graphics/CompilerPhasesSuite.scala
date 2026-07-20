@@ -41,16 +41,16 @@ class CompilerPhasesSuite extends munit.FunSuite:
     assert(plan.env.get(Aesthetic.Color).exists(_.isScaled))
   }
 
-  test("mapping phase rejects unsupported stats and geoms before row evaluation") {
+  test("mapping phase rejects invalid stat-geom combinations and unsupported geoms") {
     val plot = Plot(data)
     val statLayer = Layer.fromMapping(
       Geom.Point,
       AesSpec.empty[Obs].withPosition(_.x, _.y),
-      stat = Stat.Count
+      stat = Stat.Count(_.condition)
     ).fold(e => fail(e.message), identity)
     assertEquals(
       MappingPhase.planLayer(plot, statLayer, 0).left.toOption,
-      Some(GraphicsError.UnsupportedStat("Count"))
+      Some(GraphicsError.InvalidStatGeom("count", "point"))
     )
 
     val rectLayer = Layer.fromMapping(
@@ -88,7 +88,8 @@ class CompilerPhasesSuite extends munit.FunSuite:
         .flatMap(_.addLayer(layer(second, _.y)))
         .fold(error => fail(error.message), identity)
     val plans = MappingPhase.plan(plot).fold(error => fail(error.message), identity)
-    val scales = ScalePhase.train(plans).fold(error => fail(error.message), identity)
+    val statPlans = StatPhase.transform(plans).fold(error => fail(error.message), identity)
+    val scales = ScalePhase.train(statPlans).fold(error => fail(error.message), identity)
 
     assertEquals(scales.registry.scales.length, 1)
     assertEquals(
@@ -102,7 +103,8 @@ class CompilerPhasesSuite extends munit.FunSuite:
 
   test("row phase records the evaluated group value on each row") {
     val plot = groupedLinePlot
-    val plan = MappingPhase.plan(plot).fold(e => fail(e.message), identity).head
+    val mapped = MappingPhase.plan(plot).fold(e => fail(e.message), identity).head
+    val plan = StatPhase.transform(mapped).fold(e => fail(e.message), identity)
     val (rows, dropped) = RowPhase.resolve(plan).fold(e => fail(e.message), identity)
 
     assertEquals(dropped, Vector.empty)

@@ -11,9 +11,22 @@ private[graphics] final case class LayerPlan[Row](
     env: AesEnv[Row]
 )
 
+/** A layer after its statistical transform. Every stat emits the same typed
+  * row envelope, so scale training remains plot-wide even when layers have
+  * different statistics.
+  */
+private[graphics] final case class StatPlan[Row](
+    source: LayerPlan[Row],
+    frame: StatFrame[Row],
+    mapping: AesSpec[StatRow[Row]],
+    env: AesEnv[StatRow[Row]]
+):
+  def layerIndex: Int = source.layerIndex
+  def layer: Layer[Row] = source.layer
+  def data: Vector[StatRow[Row]] = frame.rows
+
 /** Phase 1 — mapping resolution: merge layer and plot mappings, validate the
-  * geom's required aesthetics, and reject unsupported stats and geoms before
-  * any row is evaluated.
+  * input contract, and reject unsupported geoms before any row is evaluated.
   */
 private[graphics] object MappingPhase:
   def plan[Row](plot: Plot[Row]): Either[GraphicsError, Vector[LayerPlan[Row]]] =
@@ -29,29 +42,104 @@ private[graphics] object MappingPhase:
     result.map(_ => out.result())
 
   def planLayer[Row](plot: Plot[Row], layer: Layer[Row], layerIndex: Int): Either[GraphicsError, LayerPlan[Row]] =
-    if layer.stat != Stat.Identity then Left(GraphicsError.UnsupportedStat(layer.stat.toString))
-    else if !isSupported(layer.geom) then Left(GraphicsError.UnsupportedGeom(layer.geom.label))
+    if !isSupported(layer.geom) then Left(GraphicsError.UnsupportedGeom(layer.geom.label))
     else
       val mapping = layer.effectiveMapping(plot.mapping)
-      Layer.validate(layer.geom, mapping).map { _ =>
+      Layer.validate(layer, mapping).map { _ =>
         LayerPlan(layerIndex, layer, layer.effectiveData(plot.data), mapping, mapping.env)
       }
 
   private def isSupported(geom: Geom): Boolean =
     geom match
-      case Geom.Point | Geom.Line | Geom.Text => true
-      case Geom.Rect                          => false
+      case Geom.Point | Geom.Line | Geom.Text | Geom.Bar => true
+      case Geom.Rect                                     => false
+
+/** Phase 2 — statistical transformation. Identity only lifts the source
+  * mapping into a stat row. Count aggregates by its typed key, creates count
+  * and proportion fields, and owns the discrete x scale plus computed y.
+  */
+private[graphics] object StatPhase:
+  def transform[Row](plans: Vector[LayerPlan[Row]]): Either[GraphicsError, Vector[StatPlan[Row]]] =
+    val out = Vector.newBuilder[StatPlan[Row]]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < plans.length && result.isRight do
+      result = transform(plans(idx)).map { plan =>
+        out += plan
+        ()
+      }
+      idx += 1
+    result.map(_ => out.result())
+
+  def transform[Row](plan: LayerPlan[Row]): Either[GraphicsError, StatPlan[Row]] =
+    plan.layer.stat match
+      case Stat.Identity =>
+        val rows = plan.data.map(row => StatRow(row, Vector(row), None, ComputedValues.empty))
+        val frame = StatFrame(rows, Set.empty)
+        val mapping = plan.mapping.contramap[StatRow[Row]](_.source)
+        Right(StatPlan(plan, frame, mapping, mapping.env))
+      case count: Stat.Count[?] =>
+        countFrame(plan, count.asInstanceOf[Stat.Count[Row]])
+
+  private def countFrame[Row](
+      plan: LayerPlan[Row],
+      stat: Stat.Count[Row]
+  ): Either[GraphicsError, StatPlan[Row]] =
+    if plan.data.isEmpty then
+      val mapping = countMapping[Row](stat)
+      mapping.map { resolved =>
+        StatPlan(
+          plan,
+          StatFrame(Vector.empty, Set(ComputedAesthetic.Count, ComputedAesthetic.Proportion)),
+          resolved,
+          resolved.env
+        )
+      }
+    else
+      val keys = plan.data.map(stat.x)
+      val order = stat.order.arrange(keys)
+      val groups = scala.collection.mutable.HashMap.empty[String, scala.collection.mutable.ArrayBuffer[Row]]
+      plan.data.zip(keys).foreach { case (row, key) =>
+        groups.getOrElseUpdate(key, scala.collection.mutable.ArrayBuffer.empty) += row
+      }
+      val rows = order.map { key =>
+        val members = groups(key).toVector
+        StatRow(
+          source = members.head,
+          members = members,
+          category = Some(key),
+          computed = ComputedValues.counted(members.length, plan.data.length)
+        )
+      }
+      countMapping[Row](stat).map { mapping =>
+        StatPlan(
+          plan,
+          StatFrame(rows, Set(ComputedAesthetic.Count, ComputedAesthetic.Proportion)),
+          mapping,
+          mapping.env
+        )
+      }
+
+  private def countMapping[Row](
+      stat: Stat.Count[Row]
+  ): Either[GraphicsError, AesSpec[StatRow[Row]]] =
+    DiscreteScale(stat.scaleName.value, DiscreteDomain.empty, DiscretePalette.indices).map { scale =>
+      AesSpec[StatRow[Row]](
+        x = Some(AesValue.scaled(_.category.getOrElse(""), scale)),
+        y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0)))
+      )
+    }
 
 /** Output of plot-wide scale training: every layer plan is rebound to the same
   * trained scale for each aesthetic, and the plot registry contains one entry
   * per aesthetic.
   */
 private[graphics] final case class ScaleResolution[Row](
-    plans: Vector[LayerPlan[Row]],
+    plans: Vector[StatPlan[Row]],
     registry: PlotScaleRegistry
 )
 
-/** Phase 2 — plot-wide scale training. All observations from all layers using
+/** Phase 3 — plot-wide scale training. All observations from all layers using
   * an aesthetic train one shared scale before any row is mapped. Distinct
   * scale declarations for the same aesthetic are rejected instead of silently
   * placing independently normalized layers on one axis.
@@ -59,17 +147,17 @@ private[graphics] final case class ScaleResolution[Row](
 private[graphics] object ScalePhase:
   private final case class Contribution[Row](
       layerIndex: Int,
-      rows: Vector[Row],
-      entry: RegisteredScale[Row]
+      rows: Vector[StatRow[Row]],
+      entry: RegisteredScale[StatRow[Row]]
   )
 
-  def train[Row](plans: Vector[LayerPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
+  def train[Row](plans: Vector[StatPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
     val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
     Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
       (result, aesthetic) => result.flatMap(trainAesthetic(_, aesthetic))
     }
 
-  def registry[Row](plan: LayerPlan[Row]): ScaleRegistry[Row] =
+  def registry[Row](plan: StatPlan[Row]): ScaleRegistry[StatRow[Row]] =
     ScaleRegistry.fromEnv(plan.env)
 
   private def trainAesthetic[Row](
@@ -106,11 +194,11 @@ private[graphics] object ScalePhase:
               )
 
   private def rebind[Row](
-      plans: Vector[LayerPlan[Row]],
+      plans: Vector[StatPlan[Row]],
       aesthetic: Aesthetic[?],
       observations: Vector[ScaleObservation]
-  ): Either[GraphicsError, Vector[LayerPlan[Row]]] =
-    val out = Vector.newBuilder[LayerPlan[Row]]
+  ): Either[GraphicsError, Vector[StatPlan[Row]]] =
+    val out = Vector.newBuilder[StatPlan[Row]]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
@@ -127,12 +215,12 @@ private[graphics] object ScalePhase:
       idx += 1
     result.map(_ => out.result())
 
-/** Phase 3 — row evaluation: map each data row through the aesthetic
+/** Phase 4 — row evaluation: map each stat row through the aesthetic
   * environment, keeping typed drop diagnostics for rows a renderer must skip.
   */
 private[graphics] object RowPhase:
   def resolve[Row](
-      plan: LayerPlan[Row],
+      plan: StatPlan[Row],
       theme: Theme = Theme.default
   ): Either[GraphicsError, (Vector[ResolvedRow[Row]], Vector[DroppedRow[Row]])] =
     val rows = Vector.newBuilder[ResolvedRow[Row]]
@@ -145,7 +233,7 @@ private[graphics] object RowPhase:
         case RowResolution.Resolved(row) =>
           rows += row
         case RowResolution.Dropped(reason) =>
-          dropped += DroppedRow(plan.layerIndex, idx, source, reason)
+          dropped += DroppedRow(plan.layerIndex, idx, source.source, reason)
         case RowResolution.Failed(error) =>
           result = Left(error)
       idx += 1
@@ -153,9 +241,9 @@ private[graphics] object RowPhase:
 
   private def resolveRow[Row](
       rowIndex: Int,
-      source: Row,
+      source: StatRow[Row],
       layer: Layer[Row],
-      env: AesEnv[Row],
+      env: AesEnv[StatRow[Row]],
       theme: Theme
   ): RowResolution[Row] =
     val resolved =
@@ -170,7 +258,7 @@ private[graphics] object RowPhase:
       yield
         ResolvedRow(
           rowIndex = rowIndex,
-          source = source,
+          source = source.source,
           x = x,
           y = y,
           point = Point.nativeUnsafe(x, y),
@@ -184,8 +272,8 @@ private[graphics] object RowPhase:
       case Left(reason) => RowResolution.Dropped(reason)
 
   private def rowGraphicParams[Row](
-      row: Row,
-      env: AesEnv[Row],
+      row: StatRow[Row],
+      env: AesEnv[StatRow[Row]],
       base: GraphicParams
   ): Either[PlotDropReason, GraphicParams] =
     for
@@ -209,8 +297,8 @@ private[graphics] object RowPhase:
     yield gp
 
   private def rowSize[Row](
-      row: Row,
-      env: AesEnv[Row],
+      row: StatRow[Row],
+      env: AesEnv[StatRow[Row]],
       defaultSizePt: Double
   ): Either[PlotDropReason, ExtentExpr] =
     optionalAes(Aesthetic.Size, env.get(Aesthetic.Size), row).flatMap {
@@ -225,8 +313,8 @@ private[graphics] object RowPhase:
 
   private def labelValue[Row](
       geom: Geom,
-      env: AesEnv[Row],
-      row: Row
+      env: AesEnv[StatRow[Row]],
+      row: StatRow[Row]
   ): Either[PlotDropReason, String] =
     geom match
       case Geom.Text =>
@@ -288,7 +376,7 @@ private[graphics] object RowPhase:
     case Dropped(reason: PlotDropReason)
     case Failed(error: GraphicsError)
 
-/** Phase 4 — geom lowering: turn resolved rows into grobs. Lowering is
+/** Phase 5 — geom lowering: turn resolved rows into grobs. Lowering is
   * group-aware: layers honoring the group aesthetic lower to one grob per
   * group carrying that group's graphic params.
   */
@@ -304,6 +392,8 @@ private[graphics] object GeomPhase:
         lineGrobs(rows)
       case Geom.Text =>
         textGrobs(rows)
+      case Geom.Bar =>
+        barGrobs(rows)
       case Geom.Rect =>
         Left(GraphicsError.UnsupportedGeom(Geom.Rect.label))
 
@@ -348,6 +438,28 @@ private[graphics] object GeomPhase:
       idx += 1
     result.map(_ => out.result())
 
+  private def barGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    val out = Vector.newBuilder[Grob]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < rows.length && result.isRight do
+      val row = rows(idx)
+      val height = math.abs(row.y)
+      val centerY = math.min(0.0, row.y) + height / 2.0
+      result = Grob
+        .rect(
+          center = Point.nativeUnsafe(row.x, centerY),
+          size = Size.fromExtents(ExtentExpr.nativeUnsafe(0.9), ExtentExpr.nativeUnsafe(height)),
+          gp = row.gp,
+          name = Some(GraphicsName.unsafe(s"stat-count-bar-$idx"))
+        )
+        .map { grob =>
+          out += grob
+          ()
+        }
+      idx += 1
+    result.map(_ => out.result())
+
   /** Partition rows by their group value, preserving first-encounter order of
     * groups and row order within each group.
     */
@@ -368,7 +480,7 @@ private[graphics] object GeomPhase:
       }
       order.result().map(key => buckets(key).toVector)
 
-/** Phase 5 — layout resolution: use the explicit panel layout when given,
+/** Phase 6 — layout resolution: use the explicit panel layout when given,
   * or derive one from an explicit frame plus panel data ranges computed from
   * the layers' position scales (mapped space is the unit interval) or their
   * resolved row values when a position is unscaled.
@@ -483,12 +595,21 @@ private[graphics] object LayoutPhase:
     var sawUnscaledData = false
     var range = ContinuousRange.empty
     layers.foreach { layer =>
-      if layer.trainedScales.exists(_.aesthetic == aesthetic) then
-        sawScaled = true
-        range = range.train(Vector(0.0, 1.0)).train(layer.rows.iterator.map(value))
-      else
-        if layer.rows.nonEmpty then sawUnscaledData = true
-        range = range.train(layer.rows.iterator.map(value))
+      val values = layer.rows.iterator.map(value).toVector
+      layer.trainedScales.find(_.aesthetic == aesthetic) match
+        case Some(scale) =>
+          sawScaled = true
+          if scale.descriptor.kind == ScaleKind.Continuous then
+            range = range.train(Vector(0.0, 1.0))
+          range = range.train(values)
+        case None =>
+          if layer.rows.nonEmpty then sawUnscaledData = true
+          range = range.train(values)
+      if layer.geom == Geom.Bar then
+        if aesthetic == Aesthetic.X.label then
+          range = range.train(values.iterator.flatMap(x => Iterator(x - 0.45, x + 0.45)))
+        else if aesthetic == Aesthetic.Y.label then
+          range = range.train(Iterator.single(0.0))
     }
     if sawScaled && sawUnscaledData then Left(GraphicsError.MixedPositionScaling(aesthetic))
     else range.requireTrained
@@ -558,7 +679,7 @@ private[graphics] object PlotLabelPhase:
                 ()
               }
 
-/** Phase 6 — guide resolution: determine guide specs from the policy (deriving
+/** Phase 7 — guide resolution: determine guide specs from the policy (deriving
   * routine axes and legends from trained scales) and lower them against the
   * panel layout.
   */
@@ -666,6 +787,21 @@ private[graphics] object GuidePhase:
                 )
               )
             }
+          case discrete: DiscreteScale[?] =>
+            discretePositionTicks(discrete) match
+              case Some(ticks) =>
+                Right(
+                  Some(
+                    GuideSpec.Axis(
+                      side,
+                      ticks = Some(ticks),
+                      title = requestedTitle.orElse(Some(discrete.name.value)),
+                      name = Some(name)
+                    )
+                  )
+                )
+              case None =>
+                defaultTicks(side, range, name, requestedTitle.orElse(Some(aesthetic.label)))
           case _ =>
             defaultTicks(side, range, name, requestedTitle.orElse(Some(aesthetic.label)))
       case None =>
@@ -680,6 +816,22 @@ private[graphics] object GuidePhase:
     Axis.ticks(range, Breaks.default, Labeler.default).map { ticks =>
       Some(GuideSpec.Axis(side, ticks = Some(ticks), title = title, name = Some(name)))
     }
+
+  private def discretePositionTicks(scale: DiscreteScale[?]): Option[Vector[AxisTick]] =
+    val out = Vector.newBuilder[AxisTick]
+    var idx = 0
+    var valid = true
+    while idx < scale.domain.levels.length && valid do
+      val level = scale.domain.levels(idx)
+      scale.mapValue(level) match
+        case Some(position: Double) =>
+          AxisTick(position, level) match
+            case Right(tick) => out += tick
+            case Left(_)     => valid = false
+        case _ =>
+          valid = false
+      idx += 1
+    if valid then Some(out.result()) else None
 
   /** Ticks for a trained continuous scale: break values come from the scale's
     * transform in the raw data domain; positions are the mapped unit-space

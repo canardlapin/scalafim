@@ -463,6 +463,10 @@ object DiscretePalette:
   def valuesUnsafe[A](values: Vector[A]): DiscretePalette[A] =
     DiscretePalette.values(values).orThrow
 
+  /** Stable zero-based positions for discrete axes and other ordinal output. */
+  val indices: DiscretePalette[Double] =
+    (index, _) => index.toDouble
+
 final case class ContinuousScale[A] private (
     name: GraphicsName,
     domain: Interval,

@@ -30,7 +30,9 @@ enum GraphicsError:
       conflictingScale: String
   )
   case UnsupportedGeom(geom: String)
-  case UnsupportedStat(stat: String)
+  case InvalidStatGeom(stat: String, geom: String)
+  case StatAestheticConflict(stat: String, aesthetic: String)
+  case UnsupportedStatAesthetic(stat: String, aesthetic: String)
   case MissingLayout(feature: String)
   case InvalidLayoutCoordinate(kind: String, value: Double)
   case InvalidDeviceSize(width: Double, height: Double)
@@ -92,8 +94,12 @@ enum GraphicsError:
         s"aesthetic '$aesthetic' uses different plot scales in layers $firstLayer ('$firstScale') and $conflictingLayer ('$conflictingScale'); bind one scale at plot level or reuse the same scale declaration"
       case UnsupportedGeom(geom) =>
         s"unsupported geom '$geom'"
-      case UnsupportedStat(stat) =>
-        s"unsupported stat '$stat'"
+      case InvalidStatGeom(stat, geom) =>
+        s"stat '$stat' cannot produce geom '$geom'"
+      case StatAestheticConflict(stat, aesthetic) =>
+        s"stat '$stat' computes aesthetic '$aesthetic'; do not map it from input rows"
+      case UnsupportedStatAesthetic(stat, aesthetic) =>
+        s"stat '$stat' does not yet aggregate input aesthetic '$aesthetic'"
       case MissingLayout(feature) =>
         s"$feature requires a panel layout"
       case InvalidLayoutCoordinate(kind, value) =>

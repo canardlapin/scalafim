@@ -137,6 +137,7 @@ object RendererConformance:
       legend <- legendCase
       scaled <- scaledPlotCase
       solved <- solvedPlotCase
+      counted <- countPlotCase
     yield Vector(
       point,
       line,
@@ -151,7 +152,8 @@ object RendererConformance:
       axis,
       legend,
       scaled,
-      solved
+      solved,
+      counted
     )
 
   def group(group: ConformanceGroup): Either[GraphicsError, Vector[ConformanceCase]] =
@@ -637,5 +639,46 @@ object RendererConformance:
         RenderRequirement.Text(PlotRegion.Subtitle, HJust.Left, VJust.Center, rotated = false),
         RenderRequirement.Text(GraphicsName.unsafe("x-axis-title"), HJust.Center, VJust.Center, rotated = false),
         RenderRequirement.Text(GraphicsName.unsafe("y-axis-title"), HJust.Center, VJust.Center, rotated = true)
+      )
+    )
+
+  def countPlotCase: Either[GraphicsError, ConformanceCase] =
+    val categories = Vector("control", "task", "task", "other", "task", "control")
+    for
+      plot <- Plot(categories).addLayer(
+        Layer.count(
+          identity,
+          order = CountOrder.Lexicographic,
+          params = Some(
+            GraphicParams.unsafe(
+              stroke = Some(Rgba.unsafe(35, 60, 90)),
+              fill = Some(Rgba.unsafe(90, 150, 205))
+            )
+          )
+        )
+      )
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          expansion = RangeExpansion.none,
+          guides = GuidePolicy.Derived()
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("count-plot"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis"),
+        GraphicsName.unsafe("stat-count-bar-0")
+      ),
+      Vector(
+        RenderRequirement.Primitive(
+          GraphicsName.unsafe("stat-count-bar-0"),
+          RenderPrimitiveKind.Rectangle
+        )
       )
     )
