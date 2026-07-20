@@ -1,11 +1,11 @@
 package scalafim.latent
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class ExplicitLatentResponseSuite extends munit.FunSuite:
 
   private val basis =
-    DoubleMatrix.fromRows(
+    LatentNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.0, 1.0),
@@ -14,7 +14,7 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
     )
 
   private val loadings =
-    DoubleMatrix.fromRows(
+    LatentNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 10.0),
         Vector(2.0, 20.0),
@@ -24,7 +24,7 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
     )
 
   private val offset =
-    DoubleVector.fromSeq(Vector(100.0, 200.0, 300.0, 400.0))
+    DVec.fromSeq(Vector(100.0, 200.0, 300.0, 400.0))
 
   private def latent: ExplicitLatentResponse =
     ExplicitLatentResponse(basis, loadings, offset = Some(offset))
@@ -61,7 +61,7 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
 
   test("coefficient decoder projects coefficient columns without offset") {
     val gamma =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(3.0, 4.0)
@@ -85,12 +85,12 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
   }
 
   test("constructor rejects inconsistent and non-finite explicit factors") {
-    val badLoadings = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0, 3.0)))
+    val badLoadings = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0, 3.0)))
     val mismatch = ExplicitLatentResponse(basis, badLoadings)
     assert(mismatch.swap.toOption.exists(_.message.contains("loading columns")))
 
-    val badBasis = DoubleMatrix.fromRows(Vector(Vector(1.0, Double.NaN)))
-    val bad = ExplicitLatentResponse(badBasis, DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))))
+    val badBasis = LatentNumerics.matrixFromRows(Vector(Vector(1.0, Double.NaN)))
+    val bad = ExplicitLatentResponse(badBasis, LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))))
     assert(bad.swap.toOption.exists(_.message.contains("basis value")))
   }
 
@@ -122,7 +122,7 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
 
   test("temporal basis encoder uses Gram-solve projection for non-orthonormal bases") {
     val nonOrthonormalBasis =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -130,7 +130,7 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
         )
       )
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 10.0),
           Vector(6.0, 30.0),
@@ -162,9 +162,9 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
 
   test("temporal basis encoder stores column means as offsets when centered") {
     val identityBasis =
-      DoubleMatrix.eye(3)
+      DMat.eye(3)
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 4.0),
           Vector(4.0, 8.0),

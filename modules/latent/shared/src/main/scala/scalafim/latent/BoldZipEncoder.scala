@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 enum BoldZipEncoderMode:
   case IdentityDetail
@@ -40,8 +40,8 @@ final case class BoldZipEncodingQuality private (
 
 object BoldZipEncodingQuality:
   def fromMatrices(
-      expected: DoubleMatrix,
-      actual: DoubleMatrix
+      expected: DMat,
+      actual: DMat
   ): Either[LatentError, BoldZipEncodingQuality] =
     if expected.rows != actual.rows || expected.cols != actual.cols then
       Left(
@@ -54,13 +54,15 @@ object BoldZipEncodingQuality:
         )
       )
     else
+      val expectedData = expected.copyData
+      val actualData = actual.copyData
       var i = 0
       var maxAbs = 0.0
       var sumSquaredError = 0.0
       var sumSquaredExpected = 0.0
-      while i < expected.dataArray.length do
-        val expectedValue = expected.dataArray(i)
-        val actualValue = actual.dataArray(i)
+      while i < expectedData.length do
+        val expectedValue = expectedData(i)
+        val actualValue = actualData(i)
         val diff = actualValue - expectedValue
         maxAbs = math.max(maxAbs, math.abs(diff))
         sumSquaredError += diff * diff
@@ -80,7 +82,7 @@ final case class BoldZipEncoding(
 
 object BoldZipEncoder:
   def encode(
-      data: DoubleMatrix,
+      data: DMat,
       spec: BoldZipEncoderSpec
   ): Either[LatentError, BoldZipEncoding] =
     spec.mode match
@@ -88,7 +90,7 @@ object BoldZipEncoder:
         encodeIdentityDetail(data, spec)
 
   def identityDetail(
-      data: DoubleMatrix,
+      data: DMat,
       center: Boolean = false,
       sourceDomain: DomainId = DomainId.unsafe("boldzip.identity.carriers"),
       targetDomain: DomainId = DomainId.unsafe("boldzip.samples"),
@@ -107,7 +109,7 @@ object BoldZipEncoder:
     yield encoding
 
   private def encodeIdentityDetail(
-      data: DoubleMatrix,
+      data: DMat,
       spec: BoldZipEncoderSpec
   ): Either[LatentError, BoldZipEncoding] =
     for
@@ -116,9 +118,9 @@ object BoldZipEncoder:
       spatial <- BoldZipSpatialBasis(sampleCount = data.cols)
       texture <- identityTexture(data.cols)
       payload <- BoldZipPayload(
-        temporalBasis = DoubleMatrix.eye(data.rows),
+        temporalBasis = DMat.eye(data.rows),
         carrierTheta = centered.matrix.transpose,
-        carrierLoadings = DoubleMatrix.zeros(0, data.cols),
+        carrierLoadings = DMat.zeros(0, data.cols),
         spatialBasis = spatial,
         texture = texture,
         events = Vector.empty,
@@ -138,11 +140,11 @@ object BoldZipEncoder:
     yield BoldZipEncoding(payload, quality)
 
   private final case class CenteredData(
-      matrix: DoubleMatrix,
-      offset: Option[DoubleVector]
+      matrix: DMat,
+      offset: Option[DVec]
   )
 
-  private def centerData(data: DoubleMatrix, center: Boolean): Either[LatentError, CenteredData] =
+  private def centerData(data: DMat, center: Boolean): Either[LatentError, CenteredData] =
     if !center then Right(CenteredData(data, None))
     else
       val means = new Array[Double](data.cols)
@@ -151,17 +153,18 @@ object BoldZipEncoder:
         var row = 0
         var sum = 0.0
         while row < data.rows do
-          sum += data.dataArray(row * data.cols + col)
+          sum += data(row, col)
           row += 1
         means(col) = sum / data.rows.toDouble
         col += 1
 
       val centered = new Array[Double](data.rows * data.cols)
+      val source = data.copyData
       var i = 0
-      while i < data.dataArray.length do
-        centered(i) = data.dataArray(i) - means(i % data.cols)
+      while i < source.length do
+        centered(i) = source(i) - means(i % data.cols)
         i += 1
-      Right(CenteredData(DoubleMatrix.unsafe(data.rows, data.cols, centered), Some(DoubleVector.unsafe(means))))
+      Right(CenteredData(LatentNumerics.matrixFromRowMajor(data.rows, data.cols, centered), Some(LatentNumerics.vectorFromArray(means))))
 
   private def identityTexture(samples: Int): Either[LatentError, Vector[BoldZipTextureEntry]] =
     val out = Vector.newBuilder[BoldZipTextureEntry]
@@ -177,7 +180,7 @@ object BoldZipEncoder:
       case Some(err) => Left(err)
       case None      => Right(out.result())
 
-  private def validateData(data: DoubleMatrix): Either[LatentError, Unit] =
+  private def validateData(data: DMat): Either[LatentError, Unit] =
     if data.rows <= 0 then Left(LatentError.NonPositiveDimension("BOLDZip encoder timepoints", data.rows))
     else if data.cols <= 0 then Left(LatentError.NonPositiveDimension("BOLDZip encoder samples", data.cols))
     else
@@ -185,11 +188,12 @@ object BoldZipEncoder:
         case Some(error) => Left(error)
         case None        => Right(())
 
-  private def firstNonFinite(data: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(data: DMat): Option[LatentError] =
+    val values = data.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < data.dataArray.length && error.isEmpty do
-      val value = data.dataArray(i)
+    while i < values.length && error.isEmpty do
+      val value = values(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue("BOLDZip encoder data", i, value))
       i += 1
     error

@@ -1,7 +1,7 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisLocator}
-import scalafim.linalg.{DoubleMatrix, DoubleVector, GramProjection}
+import gale.linalg.{DMat, DVec}
 
 final case class SharedBasisEncoding(
     response: ExplicitLatentResponse,
@@ -9,12 +9,12 @@ final case class SharedBasisEncoding(
     basisId: SharedBasisId,
     locator: Option[SharedBasisLocator]
 ):
-  def coefficients: DoubleMatrix = response.coefTime
-  def offset: Option[DoubleVector] = response.offset
+  def coefficients: DMat = response.coefTime
+  def offset: Option[DVec] = response.offset
 
 object SharedBasisEncoder:
   def encode(
-      data: DoubleMatrix,
+      data: DMat,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
       locator: Option[SharedBasisLocator] = None,
@@ -57,11 +57,11 @@ object SharedBasisEncoder:
             }
 
   def project(
-      data: DoubleMatrix,
-      loadings: DoubleMatrix,
-      offset: Option[DoubleVector] = None,
+      data: DMat,
+      loadings: DMat,
+      offset: Option[DVec] = None,
       ridge: Double = 0.0
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     if data.cols != loadings.rows then
       Left(LatentError.DimensionMismatch("loading rows", data.cols, loadings.rows))
     else if ridge < 0.0 || !ridge.isFinite then Left(LatentError.InvalidParameter("ridge", ridge))
@@ -76,50 +76,49 @@ object SharedBasisEncoder:
             case Some(error) =>
               Left(error)
             case None =>
-              val gram = DoubleMatrix.crossProduct(loadings)
+              val gram = LatentNumerics.crossProduct(loadings)
               val rhs = loadingTransposeTimesData(data, loadings, offset)
-              GramProjection
+              LatentNumerics
                 .solveGram(gram, rhs, ridge = ridge)
                 .left
                 .map(err => LatentError.ProjectionFailed(err.message))
                 .map(_.transpose)
 
   private def loadingTransposeTimesData(
-      data: DoubleMatrix,
-      loadings: DoubleMatrix,
-      offset: Option[DoubleVector]
-  ): DoubleMatrix =
+      data: DMat,
+      loadings: DMat,
+      offset: Option[DVec]
+  ): DMat =
     val out = new Array[Double](loadings.cols * data.rows)
     var time = 0
     while time < data.rows do
       var voxel = 0
       while voxel < data.cols do
         val value =
-          data.dataArray(time * data.cols + voxel) -
+          data(time, voxel) -
             offset.fold(0.0)(_(voxel))
-        val loadingOffset = voxel * loadings.cols
         var atom = 0
         while atom < loadings.cols do
-          out(atom * data.rows + time) += loadings.dataArray(loadingOffset + atom) * value
+          out(atom * data.rows + time) += loadings(voxel, atom) * value
           atom += 1
         voxel += 1
       time += 1
-    DoubleMatrix.unsafe(loadings.cols, data.rows, out)
+    LatentNumerics.matrixFromRowMajor(loadings.cols, data.rows, out)
 
-  private def columnMeans(data: DoubleMatrix): DoubleVector =
+  private def columnMeans(data: DMat): DVec =
     val means = new Array[Double](data.cols)
     var col = 0
     while col < data.cols do
       var sum = 0.0
       var row = 0
       while row < data.rows do
-        sum += data.dataArray(row * data.cols + col)
+        sum += data(row, col)
         row += 1
       means(col) = sum / data.rows.toDouble
       col += 1
-    DoubleVector.unsafe(means)
+    LatentNumerics.vectorFromArray(means)
 
-  private def toDoubleMatrix(basis: SharedBasisArtifact): DoubleMatrix =
+  private def toDoubleMatrix(basis: SharedBasisArtifact): DMat =
     val loadings = basis.loadings
     val out = new Array[Double](loadings.rows * loadings.cols)
     var row = 0
@@ -129,7 +128,7 @@ object SharedBasisEncoder:
         out(row * loadings.cols + col) = loadings(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(loadings.rows, loadings.cols, out)
+    LatentNumerics.matrixFromRowMajor(loadings.rows, loadings.cols, out)
 
   private def sharedBasisMetadata(
       basis: SharedBasisArtifact,
@@ -149,16 +148,17 @@ object SharedBasisEncoder:
       "ridge" -> ridge.toString
     )
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+    val data = matrix.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
+    while i < data.length && error.isEmpty do
+      val value = data(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error
 
-  private def firstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+  private def firstNonFinite(label: String, vector: DVec): Option[LatentError] =
     var i = 0
     var error = Option.empty[LatentError]
     while i < vector.length && error.isEmpty do

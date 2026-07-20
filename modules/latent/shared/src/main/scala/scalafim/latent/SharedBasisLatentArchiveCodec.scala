@@ -13,14 +13,14 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat, Mask, NArrayUtil, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ArchiveDMat, Mask, NArrayUtil, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
 final class SharedBasisLatentArchive private (
-    val coefficients: DoubleMatrix,
+    val coefficients: DMat,
     val basis: SharedBasisRef,
-    val offset: Option[DoubleVector],
+    val offset: Option[DVec],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
     val latentLabel: LatentLabel,
@@ -52,9 +52,9 @@ final class SharedBasisLatentArchive private (
 
 object SharedBasisLatentArchive:
   def apply(
-      coefficients: DoubleMatrix,
+      coefficients: DMat,
       basis: SharedBasisRef,
-      offset: Option[DoubleVector],
+      offset: Option[DVec],
       sourceDomain: DomainId,
       targetDomain: DomainId,
       label: String,
@@ -141,19 +141,20 @@ object SharedBasisLatentArchive:
       "basis.mask_active" -> artifact.mask.activeCount.toString
     ) ++ archive.basis.locator.map(locator => "basis.locator" -> locator.value).toMap
 
-  private def toDoubleMatrix(matrix: DMat): DoubleMatrix =
-    DoubleMatrix.fromRows(matrix.toRows)
+  private def toDoubleMatrix(matrix: ArchiveDMat): DMat =
+    LatentNumerics.matrixFromRows(matrix.toRows)
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+    val data = matrix.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
+    while i < data.length && error.isEmpty do
+      val value = data(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error
 
-  private def firstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+  private def firstNonFinite(label: String, vector: DVec): Option[LatentError] =
     var i = 0
     var error = Option.empty[LatentError]
     while i < vector.length && error.isEmpty do
@@ -164,7 +165,7 @@ object SharedBasisLatentArchive:
 
 private[latent] object SharedBasisLatentArchiveCodec:
   def toArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
@@ -229,7 +230,7 @@ private[latent] object SharedBasisLatentArchiveCodec:
         response <- SharedBasisLatentArchive(
           coefficients = toDoubleMatrix(coefficients),
           basis = params.basis,
-          offset = offset.map(DoubleVector.fromSeq),
+          offset = offset.map(DVec.fromSeq),
           sourceDomain = source,
           targetDomain = target,
           label = params.label.getOrElse(""),

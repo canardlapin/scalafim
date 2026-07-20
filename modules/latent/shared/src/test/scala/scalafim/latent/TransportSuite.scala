@@ -1,10 +1,10 @@
 package scalafim.latent
 
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
+import gale.linalg.{DMat, DVec, LinAlgError}
 
 class TransportSuite extends munit.FunSuite:
 
-  private def mapValue[A](result: Either[LinearMapError, A]): A =
+  private def mapValue[A](result: Either[LinAlgError, A]): A =
     result match
       case Right(value) => value
       case Left(error)  => fail(error.message)
@@ -15,18 +15,18 @@ class TransportSuite extends munit.FunSuite:
       case Left(error)  => fail(error.message)
 
   test("identity transport response reconstructs selected timepoints and samples") {
-    val decoder = mapValue(CsrMatrix.identity(2))
+    val decoder = mapValue(LatentOperators.identity(2))
     val response =
       latentValue(
         TransportLatentResponse.withIdentityTransform(
-          coefficientsAnalysis = DoubleMatrix.fromRows(
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(
             Vector(
               Vector(1.0, 2.0),
               Vector(3.0, 4.0)
             )
           ),
           nativeDecoder = decoder,
-          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0)))
+          offset = Some(DVec.fromSeq(Vector(10.0, 20.0)))
         )
       )
 
@@ -44,7 +44,7 @@ class TransportSuite extends munit.FunSuite:
 
     val invalidMetadata =
       TransportLatentResponse.withIdentityTransform(
-        coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+        coefficientsAnalysis = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
         nativeDecoder = decoder,
         metadata = Map(" " -> "bad")
       )
@@ -54,7 +54,7 @@ class TransportSuite extends munit.FunSuite:
   test("rectangular transport decoder supports analysis and raw coefficient handoff") {
     val decoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 4,
           cols = 2,
           rowIndices = Array(0, 1, 2, 2, 3, 3),
@@ -64,7 +64,7 @@ class TransportSuite extends munit.FunSuite:
       )
     val toAnalysis =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -74,7 +74,7 @@ class TransportSuite extends munit.FunSuite:
       )
     val toRaw =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -86,14 +86,14 @@ class TransportSuite extends munit.FunSuite:
     val response =
       latentValue(
         TransportLatentResponse(
-          coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(2.0, 2.0))),
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(Vector(Vector(2.0, 2.0))),
           nativeDecoder = decoder,
           transform = transform
         )
       )
 
-    val analysisGamma = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(2.0)))
-    val rawGamma = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(4.0)))
+    val analysisGamma = LatentNumerics.matrixFromRows(Vector(Vector(2.0), Vector(2.0)))
+    val rawGamma = LatentNumerics.matrixFromRows(Vector(Vector(1.0), Vector(4.0)))
     val analysisProjection =
       latentValue(response.decodeCoefficientBlock(CoefficientBlock.Analysis(analysisGamma), TransportSpace.Native))
     val rawProjection =
@@ -108,7 +108,7 @@ class TransportSuite extends munit.FunSuite:
   test("transport covariance diagonal uses raw-coordinate Euclidean decoder") {
     val decoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 4,
           cols = 2,
           rowIndices = Array(0, 1, 2, 2, 3, 3),
@@ -118,7 +118,7 @@ class TransportSuite extends munit.FunSuite:
       )
     val toAnalysis =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -128,7 +128,7 @@ class TransportSuite extends munit.FunSuite:
       )
     val toRaw =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -139,14 +139,14 @@ class TransportSuite extends munit.FunSuite:
     val response =
       latentValue(
         TransportLatentResponse(
-          coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(2.0, 2.0))),
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(Vector(Vector(2.0, 2.0))),
           nativeDecoder = decoder,
           transform = latentValue(CoefficientTransform(toAnalysis, toRaw))
         )
       )
 
     val sigmaRaw =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 4.0)
@@ -161,11 +161,11 @@ class TransportSuite extends munit.FunSuite:
   }
 
   test("template decoder absence is represented as a typed latent error") {
-    val decoder = mapValue(CsrMatrix.identity(2))
+    val decoder = mapValue(LatentOperators.identity(2))
     val response =
       latentValue(
         TransportLatentResponse.withIdentityTransform(
-          coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
           nativeDecoder = decoder
         )
       )
@@ -177,10 +177,10 @@ class TransportSuite extends munit.FunSuite:
   }
 
   test("template-capable transport response exposes decoder capability as an ADT") {
-    val native = mapValue(CsrMatrix.identity(2))
+    val native = mapValue(LatentOperators.identity(2))
     val template =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 3,
           cols = 2,
           rowIndices = Array(0, 1, 2),
@@ -191,7 +191,7 @@ class TransportSuite extends munit.FunSuite:
     val response =
       latentValue(
         TransportLatentResponse.fromDecoders(
-          coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
           decoders = TransportDecoders.TemplateCapable(native, template),
           transform = latentValue(CoefficientTransform.identity(2))
         )
@@ -205,7 +205,7 @@ class TransportSuite extends munit.FunSuite:
   test("transport projection solves closed-form ridge and roughness fixture") {
     val decoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 3,
           cols = 2,
           rowIndices = Array(0, 1, 2, 2),
@@ -214,7 +214,7 @@ class TransportSuite extends munit.FunSuite:
         )
       )
     val target =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0),
           Vector(2.0),
@@ -222,7 +222,7 @@ class TransportSuite extends munit.FunSuite:
         )
       )
     val roughness =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 2.0)

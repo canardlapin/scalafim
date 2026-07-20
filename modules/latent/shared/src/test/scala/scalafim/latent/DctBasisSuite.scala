@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class DctBasisSuite extends munit.FunSuite:
 
@@ -40,7 +40,7 @@ class DctBasisSuite extends munit.FunSuite:
     val basis =
       DctBasis.build(timepoints = 8, components = 5, norm = DctNorm.Ortho)
         .fold(err => fail(err.message), identity)
-    val gram = DoubleMatrix.crossProduct(basis)
+    val gram = LatentNumerics.crossProduct(basis)
 
     var row = 0
     while row < gram.rows do
@@ -54,7 +54,7 @@ class DctBasisSuite extends munit.FunSuite:
 
   test("full-rank DCT encoder roundtrips dense time by sample data") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, 3.0),
           Vector(2.0, 3.0, 5.0),
@@ -78,7 +78,7 @@ class DctBasisSuite extends munit.FunSuite:
 
   test("raw DCT encoder uses Gram projection and roundtrips at full rank") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, -1.0),
           Vector(0.0, 2.0),
@@ -100,7 +100,7 @@ class DctBasisSuite extends munit.FunSuite:
 
   test("DctSpec and RidgePenalty validate typed DCT configuration") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(2.0, 4.0),
@@ -136,7 +136,7 @@ class DctBasisSuite extends munit.FunSuite:
 
   test("centered DCT encoder stores column offsets") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 4.0),
           Vector(4.0, 8.0),
@@ -163,7 +163,7 @@ class DctBasisSuite extends munit.FunSuite:
   }
 
   private def assertMatrixEquals(
-      actual: DoubleMatrix,
+      actual: DMat,
       expected: Vector[Vector[Double]],
       tol: Double
   ): Unit =

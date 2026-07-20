@@ -1,8 +1,8 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 class LatentSyntheticRoundtripSuite extends munit.FunSuite:
 
@@ -20,7 +20,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       val sampleLoadings =
         syntheticMatrix(samples, components, rng, scale = 1.5 + caseIndex.toDouble / 10.0)
       val data =
-        DoubleMatrix.multiply(temporal.basis, sampleLoadings.transpose)
+        LatentNumerics.multiply(temporal.basis, sampleLoadings.transpose)
       val response =
         LatentEncoder
           .encodeResponse(data, temporal.spec)
@@ -78,13 +78,13 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
 
   private final case class TemporalCase(
       id: String,
-      basis: DoubleMatrix,
+      basis: DMat,
       spec: LatentEncodingSpec
   )
 
   private final case class SpatialCase(
       id: String,
-      data: DoubleMatrix,
+      data: DMat,
       spec: LatentEncodingSpec,
       selectedTimepoints: Vector[Int] = Vector.empty,
       selectedSamples: Vector[Int] = Vector.empty,
@@ -167,7 +167,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       rng: Lcg
   ): SpatialCase =
     val loadings =
-      DMat.fromRows(
+      ImageDMat.fromRows(
         Vector(
           Vector(1.0, 0.25, -0.2),
           Vector(0.4, 1.0, 0.3),
@@ -221,7 +221,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
     val coefficients =
       syntheticMatrix(timepoints, radial.nAtoms, rng, scale = 1.0 + caseIndex.toDouble / 25.0)
     val offset =
-      DoubleVector.fromSeq(syntheticOffset(radial.nVoxels, rng))
+      DVec.fromSeq(syntheticOffset(radial.nVoxels, rng))
     val data =
       radialDataFrom(radial.loadings, coefficients, offset.toVector)
     val id =
@@ -250,8 +250,8 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       radialSelection = Some(selection)
     )
 
-  private def providedTemporalBasis(timepoints: Int): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  private def providedTemporalBasis(timepoints: Int): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(timepoints) { time =>
         val x = (time.toDouble - (timepoints.toDouble - 1.0) / 2.0) / timepoints.toDouble
         val alt = if time % 2 == 0 then 0.5 else -0.5
@@ -264,8 +264,8 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       cols: Int,
       rng: Lcg,
       scale: Double
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(rows) { row =>
         Vector.tabulate(cols) { col =>
           val drift = (row.toDouble - col.toDouble) / (rows.toDouble + cols.toDouble)
@@ -283,11 +283,11 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
     }
 
   private def spatialDataFrom(
-      loadings: DMat,
-      coefficients: DoubleMatrix,
+      loadings: ImageDMat,
+      coefficients: DMat,
       offset: Vector[Double]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(coefficients.rows) { time =>
         Vector.tabulate(loadings.rows) { sample =>
           var sum = offset(sample)
@@ -301,11 +301,11 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
     )
 
   private def radialDataFrom(
-      loadings: DoubleMatrix,
-      coefficients: DoubleMatrix,
+      loadings: DMat,
+      coefficients: DMat,
       offset: Vector[Double]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(coefficients.rows) { time =>
         Vector.tabulate(loadings.rows) { sample =>
           var sum = offset(sample)
@@ -321,7 +321,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
   private def assertResponseRoundtrip(
       label: String,
       response: ExplicitLatentResponse,
-      expected: DoubleMatrix,
+      expected: DMat,
       expectedOffset: Option[Vector[Double]],
       tol: Double
   ): Unit =
@@ -358,14 +358,14 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
     assertRowsEqual(decodedWithOffset.toRows, expected.transpose.toRows, tol)
 
   private def addSampleOffset(
-      decoded: DoubleMatrix,
-      offset: Option[DoubleVector]
-  ): DoubleMatrix =
+      decoded: DMat,
+      offset: Option[DVec]
+  ): DMat =
     offset match
       case None =>
         decoded
       case Some(values) =>
-        DoubleMatrix.fromRows(
+        LatentNumerics.matrixFromRows(
           Vector.tabulate(decoded.rows) { row =>
             Vector.tabulate(decoded.cols) { col =>
               decoded(row, col) + values(row)
@@ -373,7 +373,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
           }
         )
 
-  private def columnMeans(matrix: DoubleMatrix): Vector[Double] =
+  private def columnMeans(matrix: DMat): Vector[Double] =
     Vector.tabulate(matrix.cols) { col =>
       var sum = 0.0
       var row = 0
@@ -385,7 +385,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
 
   private def assertOffset(
       label: String,
-      actual: Option[DoubleVector],
+      actual: Option[DVec],
       expected: Option[Vector[Double]],
       tol: Double
   ): Unit =
@@ -398,7 +398,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
         fail(s"$label offset mismatch: actual=${actual.map(_.toVector)}, expected=$expected")
 
   private def selectRows(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       rows: Vector[Int],
       cols: Vector[Int]
   ): Vector[Vector[Double]] =
@@ -412,7 +412,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
 
   private def assertFinite(
       label: String,
-      matrix: DoubleMatrix
+      matrix: DMat
   ): Unit =
     val data = matrix.copyData
     var i = 0

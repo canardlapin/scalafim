@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum DctNorm(val metadataValue: String):
   case Ortho extends DctNorm("ortho")
@@ -82,27 +82,27 @@ object DctSpec:
     apply(timepoints, timepoints, norm)
 
 object DctBasis:
-  def build(spec: DctSpec): Either[LatentError, DoubleMatrix] =
+  def build(spec: DctSpec): Either[LatentError, DMat] =
     buildUnchecked(spec.timepoints, spec.components, spec.norm)
 
   def build(
       timepoints: Int,
       components: Int,
       norm: DctNorm = DctNorm.Ortho
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     DctSpec(timepoints, components, norm).flatMap(build)
 
   def full(
       timepoints: Int,
       norm: DctNorm = DctNorm.Ortho
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     build(timepoints, timepoints, norm)
 
   private def buildUnchecked(
       timepoints: Int,
       components: Int,
       norm: DctNorm
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     val scales = new Array[Double](components)
     var component = 0
     while component < components do
@@ -126,4 +126,4 @@ object DctBasis:
         component += 1
       time += 1
 
-    Right(DoubleMatrix.unsafe(timepoints, components, out))
+    Right(LatentNumerics.matrixFromRowMajor(timepoints, components, out))

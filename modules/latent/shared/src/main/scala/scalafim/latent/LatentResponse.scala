@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 opaque type LatentMetadata = Map[String, String]
 
@@ -195,10 +195,10 @@ trait LatentResponse:
     typedMetadata.values
 
   /** Coefficient time series with rows as timepoints and columns as latent coefficients. */
-  def coefTime: DoubleMatrix
+  def coefTime: DMat
 
   /** Decode coefficient columns from coefficient-space rows to target-sample rows. */
-  def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix]
+  def decodeCoefficients(coefficients: DMat): Either[LatentError, DMat]
 
   /** Reconstruct dense response data with rows as timepoints and columns as selected samples. */
-  def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DoubleMatrix]
+  def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DMat]

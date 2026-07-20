@@ -1,9 +1,9 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisLocator, SharedBasisMask}
-import scalafim.image.DMat
+import scalafim.image.{DMat as ArchiveDMat}
 import scalafim.image.{Indexing, NArrayUtil, NeuroSpace, VoxelIndexSet}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 final case class RadialActiveVoxels private (
     indexSet: VoxelIndexSet,
@@ -53,7 +53,7 @@ final case class RadialBasis(
     atoms: Vector[RadialAtom],
     activeIndices: Option[Vector[Int]],
     activeCoordinates: Vector[WorldCoordinate3D],
-    loadings: DoubleMatrix
+    loadings: DMat
 ):
   require(atoms.nonEmpty, "radial basis atom set must be non-empty")
   require(activeCoordinates.nonEmpty, "radial basis active coordinates must be non-empty")
@@ -117,21 +117,21 @@ final case class RadialBasis(
     yield artifact
 
   def decode(
-      coefficients: DoubleMatrix,
+      coefficients: DMat,
       selection: RadialDecodeSelection = RadialDecodeSelection.All,
-      offset: Option[DoubleVector] = None
-  ): Either[LatentError, DoubleMatrix] =
+      offset: Option[DVec] = None
+  ): Either[LatentError, DMat] =
     for
       _ <- validateDecodeInputs(coefficients, offset)
       timeIndices <- resolveTimepoints(selection.timepoints, coefficients.rows)
       voxelRows <- resolveVoxelRows(selection.voxels)
     yield decodeResolved(coefficients, timeIndices, voxelRows, offset)
 
-  private[latent] def dataInMaskOrder(data: DoubleMatrix): Either[LatentError, DoubleMatrix] =
+  private[latent] def dataInMaskOrder(data: DMat): Either[LatentError, DMat] =
     if data.cols != nVoxels then Left(LatentError.DimensionMismatch("radial basis data columns", nVoxels, data.cols))
     else activeMaskOrderLatent.map(order => selectColumns(data, order.activeRowsInMaskOrder))
 
-  private[latent] def vectorInActiveOrderFromMaskOrder(values: DoubleVector): Either[LatentError, DoubleVector] =
+  private[latent] def vectorInActiveOrderFromMaskOrder(values: DVec): Either[LatentError, DVec] =
     activeMaskOrderLatent.flatMap(_.vectorInActiveOrderFromMaskOrder(values))
 
   private[latent] def activeRowsInMaskOrder: Either[LatentError, Vector[Int]] =
@@ -147,10 +147,10 @@ final case class RadialBasis(
       case None =>
         Left(LatentError.MissingComponent("radial active-index map"))
 
-  private def canonicalDMat(order: RadialMaskOrder): DMat =
-    DMat.fromRows(loadings.selectRows(order.activeRowsInMaskOrder).toRows)
+  private def canonicalDMat(order: RadialMaskOrder): ArchiveDMat =
+    ArchiveDMat.fromRows(loadings.selectRows(order.activeRowsInMaskOrder).toRows)
 
-  private def selectColumns(matrix: DoubleMatrix, columns: IndexedSeq[Int]): DoubleMatrix =
+  private def selectColumns(matrix: DMat, columns: IndexedSeq[Int]): DMat =
     val out = new Array[Double](matrix.rows * columns.length)
     var row = 0
     while row < matrix.rows do
@@ -159,7 +159,7 @@ final case class RadialBasis(
         out(row * columns.length + outCol) = matrix(row, columns(outCol))
         outCol += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, columns.length, out)
+    LatentNumerics.matrixFromRowMajor(matrix.rows, columns.length, out)
 
   private def checkedMaskSize(maskDims: Vector[Int]): Either[RadialBasisError, Int] =
     if maskDims.isEmpty then Left(RadialBasisError.InvalidMaskDimensions("mask dimensions must be non-empty"))
@@ -167,8 +167,8 @@ final case class RadialBasis(
     else Right(maskDims.product)
 
   private def validateDecodeInputs(
-      coefficients: DoubleMatrix,
-      offset: Option[DoubleVector]
+      coefficients: DMat,
+      offset: Option[DVec]
   ): Either[LatentError, Unit] =
     if coefficients.rows <= 0 then Left(LatentError.NonPositiveDimension("radial coefficient rows", coefficients.rows))
     else if coefficients.cols != nAtoms then Left(LatentError.DimensionMismatch("radial coefficient columns", nAtoms, coefficients.cols))
@@ -226,11 +226,11 @@ final case class RadialBasis(
               case None      => Right(indices)
 
   private def decodeResolved(
-      coefficients: DoubleMatrix,
+      coefficients: DMat,
       timeIndices: IndexedSeq[Int],
       voxelRows: IndexedSeq[Int],
-      offset: Option[DoubleVector]
-  ): DoubleMatrix =
+      offset: Option[DVec]
+  ): DMat =
     val out = new Array[Double](timeIndices.length * voxelRows.length)
     var outTime = 0
     while outTime < timeIndices.length do
@@ -246,18 +246,19 @@ final case class RadialBasis(
         out(outTime * voxelRows.length + outVoxel) = sum
         outVoxel += 1
       outTime += 1
-    DoubleMatrix.unsafe(timeIndices.length, voxelRows.length, out)
+    LatentNumerics.matrixFromRowMajor(timeIndices.length, voxelRows.length, out)
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+    val data = matrix.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
+    while i < data.length && error.isEmpty do
+      val value = data(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error
 
-  private def firstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+  private def firstNonFinite(label: String, vector: DVec): Option[LatentError] =
     var i = 0
     var error = Option.empty[LatentError]
     while i < vector.length && error.isEmpty do
@@ -275,15 +276,15 @@ final case class RadialBasisEncoding(
     locator: Option[SharedBasisLocator]
 ):
   def response: ExplicitLatentResponse = radialResponse
-  def coefficients: DoubleMatrix = encoding.coefficients
-  def offset: Option[DoubleVector] = radialResponse.offset
+  def coefficients: DMat = encoding.coefficients
+  def offset: Option[DVec] = radialResponse.offset
 
-  def decode(selection: RadialDecodeSelection = RadialDecodeSelection.All): Either[LatentError, DoubleMatrix] =
+  def decode(selection: RadialDecodeSelection = RadialDecodeSelection.All): Either[LatentError, DMat] =
     radialBasis.decode(coefficients, selection, offset)
 
 object RadialBasisEncoder:
   def encode(
-      data: DoubleMatrix,
+      data: DMat,
       radialBasis: RadialBasis,
       maskDims: Vector[Int],
       basisId: SharedBasisId,
@@ -434,7 +435,7 @@ object RadialBasis:
           atoms = atomVector,
           activeIndices = activeIndices,
           activeCoordinates = coordinateVector,
-          loadings = DoubleMatrix.unsafe(coordinateVector.length, atomVector.length, values)
+          loadings = LatentNumerics.matrixFromRowMajor(coordinateVector.length, atomVector.length, values)
         )
       )
 

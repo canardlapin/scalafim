@@ -1,13 +1,13 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class LatentEncoderSuite extends munit.FunSuite:
   test("temporal DCT specs dispatch through the direct encoder and preserve archive kind") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, 3.0),
           Vector(2.0, 3.0, 5.0),
@@ -69,7 +69,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
   test("temporal Haar specs dispatch through the direct encoder and archive explicitly") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, 3.0),
           Vector(2.0, 3.0, 5.0),
@@ -165,7 +165,7 @@ class LatentEncoderSuite extends munit.FunSuite:
     assertEquals(annotation.labelValue, "encoded")
     assertEquals(annotation.metadata.get("subject"), Some("sub-01"))
     assert(LatentAnnotation("encoded", Map(" " -> "bad")).isLeft)
-    assert(LatentEncodingSpec.providedBasis(DoubleMatrix.eye(2), metadata = Map(" " -> "bad")).isLeft)
+    assert(LatentEncodingSpec.providedBasis(DMat.eye(2), metadata = Map(" " -> "bad")).isLeft)
 
     val dctSpec =
       DctSpec(timepoints = 2, components = 2).fold(err => fail(err.message), identity)
@@ -189,7 +189,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
   test("provided temporal basis specs use Gram-solve projection") {
     val basis =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -227,7 +227,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
   test("shared spatial basis specs match direct shared-basis encoder and archive helpers") {
     val loadings =
-      DMat.fromRows(
+      ImageDMat.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -298,14 +298,14 @@ class LatentEncoderSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     val basisId = SharedBasisId.unsafe("encoder_suite_hrbf")
     val coefficients =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(-0.5, 0.25),
           Vector(3.0, -1.0)
         )
       )
-    val data = DoubleMatrix.multiply(coefficients, radial.loadings.transpose)
+    val data = LatentNumerics.multiply(coefficients, radial.loadings.transpose)
     val spec =
       LatentEncodingSpec
         .radialBasis(
@@ -366,10 +366,10 @@ class LatentEncoderSuite extends munit.FunSuite:
   }
 
   private def temporalDataFrom(
-      basis: DoubleMatrix,
+      basis: DMat,
       loadings: Vector[Vector[Double]]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(basis.rows) { time =>
         Vector.tabulate(loadings.length) { sample =>
           var sum = 0.0
@@ -383,11 +383,11 @@ class LatentEncoderSuite extends munit.FunSuite:
     )
 
   private def spatialDataFrom(
-      loadings: DMat,
+      loadings: ImageDMat,
       coefficients: Vector[Vector[Double]],
       offset: Vector[Double]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       coefficients.map { row =>
         Vector.tabulate(loadings.rows) { voxel =>
           var sum = offset(voxel)
@@ -401,8 +401,8 @@ class LatentEncoderSuite extends munit.FunSuite:
     )
 
   private def rawTemporalProjection(
-      data: DoubleMatrix,
-      basis: DoubleMatrix
+      data: DMat,
+      basis: DMat
   ): Vector[Vector[Double]] =
     Vector.tabulate(data.cols) { sample =>
       Vector.tabulate(basis.cols) { component =>

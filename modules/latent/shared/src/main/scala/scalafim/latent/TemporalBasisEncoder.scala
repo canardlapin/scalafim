@@ -1,12 +1,11 @@
 package scalafim.latent
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
-import scalafim.linalg.GramProjection
+import gale.linalg.{DMat, DVec}
 
 object TemporalBasisEncoder:
   def encodeProvided(
-      data: DoubleMatrix,
-      basis: DoubleMatrix,
+      data: DMat,
+      basis: DMat,
       center: Boolean = false,
       ridge: Double = 0.0,
       sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
@@ -26,7 +25,7 @@ object TemporalBasisEncoder:
     )
 
   def encodeDct(
-      data: DoubleMatrix,
+      data: DMat,
       components: Int,
       norm: DctNorm = DctNorm.Ortho,
       center: Boolean = false,
@@ -52,7 +51,7 @@ object TemporalBasisEncoder:
     yield response
 
   def encodeDctSpec(
-      data: DoubleMatrix,
+      data: DMat,
       spec: DctSpec,
       center: Boolean = false,
       ridge: RidgePenalty = RidgePenalty.Zero,
@@ -78,7 +77,7 @@ object TemporalBasisEncoder:
       }
 
   def encodeHaar(
-      data: DoubleMatrix,
+      data: DMat,
       components: Int,
       center: Boolean = false,
       ridge: Double = 0.0,
@@ -103,7 +102,7 @@ object TemporalBasisEncoder:
     yield response
 
   def encodeHaarSpec(
-      data: DoubleMatrix,
+      data: DMat,
       spec: HaarSpec,
       center: Boolean = false,
       ridge: RidgePenalty = RidgePenalty.Zero,
@@ -129,7 +128,7 @@ object TemporalBasisEncoder:
       }
 
   def encodeFullHaar(
-      data: DoubleMatrix,
+      data: DMat,
       center: Boolean = false,
       ridge: Double = 0.0,
       sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
@@ -149,7 +148,7 @@ object TemporalBasisEncoder:
     )
 
   def encodeFullDct(
-      data: DoubleMatrix,
+      data: DMat,
       norm: DctNorm = DctNorm.Ortho,
       center: Boolean = false,
       ridge: Double = 0.0,
@@ -171,8 +170,8 @@ object TemporalBasisEncoder:
     )
 
   def encode(
-      data: DoubleMatrix,
-      basis: DoubleMatrix,
+      data: DMat,
+      basis: DMat,
       center: Boolean = false,
       ridge: Double = 0.0,
       sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
@@ -205,10 +204,10 @@ object TemporalBasisEncoder:
           }
 
   def projectOntoBasis(
-      data: DoubleMatrix,
-      basis: DoubleMatrix,
+      data: DMat,
+      basis: DMat,
       ridge: Double = 0.0
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     if data.rows != basis.rows then
       Left(LatentError.DimensionMismatch("data rows", basis.rows, data.rows))
     else if ridge < 0.0 || !ridge.isFinite then
@@ -218,13 +217,13 @@ object TemporalBasisEncoder:
         case Some(error) =>
           Left(error)
         case None =>
-          GramProjection
+          LatentNumerics
             .coefficients(data, basis, ridge = ridge)
             .left
             .map(err => LatentError.ProjectionFailed(err.message))
             .map(_.transpose)
 
-  private final case class CenteredData(data: DoubleMatrix, offset: Option[DoubleVector])
+  private final case class CenteredData(data: DMat, offset: Option[DVec])
 
   private def dctMetadata(
       timepoints: Int,
@@ -271,14 +270,14 @@ object TemporalBasisEncoder:
       "ridge" -> ridge.metadataValue
     )
 
-  private def centerColumns(data: DoubleMatrix): CenteredData =
+  private def centerColumns(data: DMat): CenteredData =
     val means = new Array[Double](data.cols)
     var col = 0
     while col < data.cols do
       var sum = 0.0
       var row = 0
       while row < data.rows do
-        sum += data.dataArray(row * data.cols + col)
+        sum += data(row, col)
         row += 1
       means(col) = sum / data.rows.toDouble
       col += 1
@@ -292,13 +291,14 @@ object TemporalBasisEncoder:
         col += 1
       row += 1
 
-    CenteredData(DoubleMatrix.unsafe(data.rows, data.cols, centered), Some(DoubleVector.unsafe(means)))
+    CenteredData(LatentNumerics.matrixFromRowMajor(data.rows, data.cols, centered), Some(LatentNumerics.vectorFromArray(means)))
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+    val data = matrix.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
+    while i < data.length && error.isEmpty do
+      val value = data(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error

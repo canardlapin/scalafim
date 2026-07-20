@@ -1,6 +1,6 @@
 package scalafim.latent.scenarios
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail
@@ -148,7 +148,7 @@ object ScenarioHarness:
 
   def matrix(
       name: String,
-      actual: DoubleMatrix,
+      actual: DMat,
       expected: Vector[Vector[Double]],
       tolerance: ScenarioTolerance
   ): Vector[ScenarioObservation] =

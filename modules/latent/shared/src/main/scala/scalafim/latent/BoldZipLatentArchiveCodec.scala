@@ -15,7 +15,7 @@ import scalafim.archive.lna.{
   TransformParams
 }
 import scalafim.image.NeuroSpace
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
 private[latent] object BoldZipLatentArchiveCodec:
@@ -201,7 +201,7 @@ private[latent] object BoldZipLatentArchiveCodec:
           spatialBasis = spatialBasis,
           texture = texture,
           events = events,
-          offset = offset.map(DoubleVector.fromSeq),
+          offset = offset.map(DVec.fromSeq),
           sourceDomain = source,
           targetDomain = target,
           label = params.label.getOrElse(""),
@@ -245,7 +245,7 @@ private[latent] object BoldZipLatentArchiveCodec:
       desc: TransformDescriptor,
       spatialBasis: BoldZipSpatialBasis,
       carriers: Int
-  ): Either[ArchiveError, DoubleMatrix] =
+  ): Either[ArchiveError, DMat] =
     optionalDoubleMatrix(archive, desc, CarrierLoadingsRole, "BOLDZip carrier loadings").flatMap {
       case Some(matrix) =>
         val values = toDoubleMatrix(matrix)
@@ -255,7 +255,7 @@ private[latent] object BoldZipLatentArchiveCodec:
           Left(ArchiveError.ShapeMismatch(s"BOLDZip carrier loadings have ${values.cols} columns but carrier theta has $carriers carriers"))
         else Right(values)
       case None if spatialBasis.coarseAtoms == 0 =>
-        Right(DoubleMatrix.zeros(0, carriers))
+        Right(DMat.zeros(0, carriers))
       case None =>
         Left(ArchiveError.InvalidArchive("BOLDZip archive has a coarse basis but no carrier loadings"))
     }

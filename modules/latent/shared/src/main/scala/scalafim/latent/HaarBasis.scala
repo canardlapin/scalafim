@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 final class HaarSpec private (
     val timepoints: Int,
@@ -64,22 +64,22 @@ object HaarSpec:
     count
 
 object HaarBasis:
-  def build(spec: HaarSpec): Either[LatentError, DoubleMatrix] =
+  def build(spec: HaarSpec): Either[LatentError, DMat] =
     buildUnchecked(spec.timepoints, spec.components)
 
   def build(
       timepoints: Int,
       components: Int
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     HaarSpec(timepoints, components).flatMap(build)
 
-  def full(timepoints: Int): Either[LatentError, DoubleMatrix] =
+  def full(timepoints: Int): Either[LatentError, DMat] =
     build(timepoints, timepoints)
 
   private def buildUnchecked(
       timepoints: Int,
       components: Int
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     val out = new Array[Double](timepoints * components)
     val scaling = 1.0 / math.sqrt(timepoints.toDouble)
 
@@ -109,4 +109,4 @@ object HaarBasis:
         column += 1
       scale += 1
 
-    Right(DoubleMatrix.unsafe(timepoints, components, out))
+    Right(LatentNumerics.matrixFromRowMajor(timepoints, components, out))

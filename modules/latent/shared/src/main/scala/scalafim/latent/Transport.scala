@@ -1,15 +1,15 @@
 package scalafim.latent
 
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, GramProjection, LinearMap}
+import gale.linalg.{DMat, DVec, DoubleLinearOperator, LinAlgError}
 
 enum CoefficientCoordinates:
   case Analysis, Raw
 
 enum CoefficientBlock:
-  case Analysis(override val values: DoubleMatrix)
-  case Raw(override val values: DoubleMatrix)
+  case Analysis(override val values: DMat)
+  case Raw(override val values: DMat)
 
-  def values: DoubleMatrix =
+  def values: DMat =
     this match
       case Analysis(values) => values
       case Raw(values)      => values
@@ -20,16 +20,16 @@ enum CoefficientBlock:
       case Raw(_)      => CoefficientCoordinates.Raw
 
 object CoefficientBlock:
-  def apply(values: DoubleMatrix, coordinates: CoefficientCoordinates): CoefficientBlock =
+  def apply(values: DMat, coordinates: CoefficientCoordinates): CoefficientBlock =
     coordinates match
       case CoefficientCoordinates.Analysis => Analysis(values)
       case CoefficientCoordinates.Raw      => Raw(values)
 
 enum CoefficientCovariance:
-  case Analysis(override val values: DoubleMatrix)
-  case Raw(override val values: DoubleMatrix)
+  case Analysis(override val values: DMat)
+  case Raw(override val values: DMat)
 
-  def values: DoubleMatrix =
+  def values: DMat =
     this match
       case Analysis(values) => values
       case Raw(values)      => values
@@ -40,7 +40,7 @@ enum CoefficientCovariance:
       case Raw(_)      => CoefficientCoordinates.Raw
 
 object CoefficientCovariance:
-  def apply(values: DoubleMatrix, coordinates: CoefficientCoordinates): CoefficientCovariance =
+  def apply(values: DMat, coordinates: CoefficientCoordinates): CoefficientCovariance =
     coordinates match
       case CoefficientCoordinates.Analysis => Analysis(values)
       case CoefficientCoordinates.Raw      => Raw(values)
@@ -52,15 +52,15 @@ enum TransportAdjointConvention:
   case EuclideanDiscrete
 
 enum TransportDecoders:
-  case NativeOnly(native: LinearMap)
-  case TemplateCapable(native: LinearMap, template: LinearMap)
+  case NativeOnly(native: DoubleLinearOperator)
+  case TemplateCapable(native: DoubleLinearOperator, template: DoubleLinearOperator)
 
-  def nativeDecoder: LinearMap =
+  def nativeDecoder: DoubleLinearOperator =
     this match
       case NativeOnly(native)              => native
       case TemplateCapable(native, _)      => native
 
-  def templateDecoder: Option[LinearMap] =
+  def templateDecoder: Option[DoubleLinearOperator] =
     this match
       case NativeOnly(_)                   => None
       case TemplateCapable(_, template)    => Some(template)
@@ -68,7 +68,7 @@ enum TransportDecoders:
   def templateCapable: Boolean =
     templateDecoder.nonEmpty
 
-  def decoder(space: TransportSpace): Either[LatentError, LinearMap] =
+  def decoder(space: TransportSpace): Either[LatentError, DoubleLinearOperator] =
     space match
       case TransportSpace.Native =>
         Right(nativeDecoder)
@@ -82,40 +82,40 @@ enum TransportDecoders:
 
 object TransportDecoders:
   def apply(
-      nativeDecoder: LinearMap,
-      templateDecoder: Option[LinearMap]
+      nativeDecoder: DoubleLinearOperator,
+      templateDecoder: Option[DoubleLinearOperator]
   ): TransportDecoders =
     templateDecoder match
       case Some(template) => TransportDecoders.TemplateCapable(nativeDecoder, template)
       case None           => TransportDecoders.NativeOnly(nativeDecoder)
 
 final class CoefficientTransform private (
-    val toAnalysis: LinearMap,
-    val toRaw: LinearMap
+    val toAnalysis: DoubleLinearOperator,
+    val toRaw: DoubleLinearOperator
 ):
   def dimension: Int =
     toAnalysis.rows
 
-  def analysis(rawCoefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
-    toAnalysis.forward(rawCoefficients).left.map(linearMapError)
+  def analysis(rawCoefficients: DMat): Either[LatentError, DMat] =
+    toAnalysis.applyTo(rawCoefficients).left.map(linearMapError)
 
-  def raw(analysisCoefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
-    toRaw.forward(analysisCoefficients).left.map(linearMapError)
+  def raw(analysisCoefficients: DMat): Either[LatentError, DMat] =
+    toRaw.applyTo(analysisCoefficients).left.map(linearMapError)
 
-  def rawMetric: Either[LatentError, DoubleMatrix] =
-    toAnalysis.forward(DoubleMatrix.eye(dimension)).left.map(linearMapError).map { matrix =>
-      DoubleMatrix.crossProduct(matrix)
+  def rawMetric: Either[LatentError, DMat] =
+    toAnalysis.applyTo(DMat.eye(dimension)).left.map(linearMapError).map { matrix =>
+      LatentNumerics.crossProduct(matrix)
     }
 
 object CoefficientTransform:
   def identity(size: Int): Either[LatentError, CoefficientTransform] =
-    CsrMatrix.identity(size).left.map(linearMapError).map { id =>
+    LatentOperators.identity(size).left.map(linearMapError).map { id =>
       new CoefficientTransform(id, id)
     }
 
   def apply(
-      toAnalysis: LinearMap,
-      toRaw: LinearMap
+      toAnalysis: DoubleLinearOperator,
+      toRaw: DoubleLinearOperator
   ): Either[LatentError, CoefficientTransform] =
     if toAnalysis.rows != toAnalysis.cols then
       Left(LatentError.MatrixShapeMismatch("toAnalysis", toAnalysis.cols, toAnalysis.cols, toAnalysis.rows, toAnalysis.cols))
@@ -126,10 +126,10 @@ object CoefficientTransform:
     else Right(new CoefficientTransform(toAnalysis, toRaw))
 
 final class TransportLatentResponse private (
-    val coefficientsAnalysis: DoubleMatrix,
+    val coefficientsAnalysis: DMat,
     val decoders: TransportDecoders,
     val transform: CoefficientTransform,
-    val offset: Option[DoubleVector],
+    val offset: Option[DVec],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
     val latentLabel: LatentLabel,
@@ -144,16 +144,16 @@ final class TransportLatentResponse private (
       coefficients = coefficientsAnalysis.cols
     )
 
-  def nativeDecoder: LinearMap =
+  def nativeDecoder: DoubleLinearOperator =
     decoders.nativeDecoder
 
-  def templateDecoder: Option[LinearMap] =
+  def templateDecoder: Option[DoubleLinearOperator] =
     decoders.templateDecoder
 
   def coefficientBlock: CoefficientBlock =
     CoefficientBlock.Analysis(coefficientsAnalysis)
 
-  override def coefTime: DoubleMatrix =
+  override def coefTime: DMat =
     coefficientsAnalysis
 
   override def decodeSemantics: LatentDecodeSemantics =
@@ -162,52 +162,52 @@ final class TransportLatentResponse private (
   def decoder(
       space: TransportSpace = TransportSpace.Native,
       coordinates: CoefficientCoordinates = CoefficientCoordinates.Analysis
-  ): Either[LatentError, LinearMap] =
+  ): Either[LatentError, DoubleLinearOperator] =
     decoders.decoder(space).flatMap { map =>
       coordinates match
         case CoefficientCoordinates.Analysis =>
           Right(map)
         case CoefficientCoordinates.Raw =>
-          LinearMap.compose(transform.toAnalysis, map).left.map(linearMapError)
+          LatentOperators.compose(transform.toAnalysis, map).left.map(linearMapError)
     }
 
-  override def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
+  override def decodeCoefficients(coefficients: DMat): Either[LatentError, DMat] =
     decodeCoefficients(coefficients, TransportSpace.Native, CoefficientCoordinates.Analysis)
 
   def decodeCoefficientBlock(
       coefficients: CoefficientBlock,
       space: TransportSpace = TransportSpace.Native
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     decodeCoefficients(coefficients.values, space, coefficients.coordinates)
 
   def decodeCoefficients(
-      coefficients: DoubleMatrix,
+      coefficients: DMat,
       space: TransportSpace,
       coordinates: CoefficientCoordinates
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     decoder(space, coordinates).flatMap { map =>
       if coefficients.rows != map.cols then Left(LatentError.DimensionMismatch("coefficient rows", map.cols, coefficients.rows))
-      else map.forward(coefficients).left.map(linearMapError)
+      else map.applyTo(coefficients).left.map(linearMapError)
     }
 
   def covarianceDiagonal(
       covariance: CoefficientCovariance,
       space: TransportSpace
-  ): Either[LatentError, DoubleVector] =
+  ): Either[LatentError, DVec] =
     covarianceDiagonal(covariance.values, space, covariance.coordinates)
 
   def covarianceDiagonal(
-      covariance: DoubleMatrix,
+      covariance: DMat,
       space: TransportSpace = TransportSpace.Native,
       coordinates: CoefficientCoordinates = CoefficientCoordinates.Analysis
-  ): Either[LatentError, DoubleVector] =
+  ): Either[LatentError, DVec] =
     decoder(space, coordinates).flatMap { map =>
       if covariance.rows != map.cols || covariance.cols != map.cols then
         Left(LatentError.MatrixShapeMismatch("covariance", map.cols, map.cols, covariance.rows, covariance.cols))
       else
         for
-          basis <- map.forward(DoubleMatrix.eye(map.cols)).left.map(linearMapError)
-          weighted <- map.forward(covariance).left.map(linearMapError)
+          basis <- map.applyTo(DMat.eye(map.cols)).left.map(linearMapError)
+          weighted <- map.applyTo(covariance).left.map(linearMapError)
         yield
           val out = new Array[Double](map.rows)
           var row = 0
@@ -215,26 +215,26 @@ final class TransportLatentResponse private (
             var sum = 0.0
             var col = 0
             while col < map.cols do
-              sum += basis.dataArray(row * basis.cols + col) * weighted.dataArray(row * weighted.cols + col)
+              sum += basis(row, col) * weighted(row, col)
               col += 1
             out(row) = sum
             row += 1
-          DoubleVector.unsafe(out)
+          LatentNumerics.vectorFromArray(out)
     }
 
-  override def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DoubleMatrix] =
+  override def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DMat] =
     selection.resolve(shape.timepoints, shape.samples).flatMap { resolved =>
       for
-        restricted <- LinearMap
+        restricted <- LatentOperators
           .restrict(nativeDecoder, targetRows = Some(resolved.samples))
           .left
           .map(linearMapError)
         coeff <- selectedCoefficientColumns(resolved.timepoints)
-        decoded <- restricted.forward(coeff).left.map(linearMapError)
+        decoded <- restricted.applyTo(coeff).left.map(linearMapError)
       yield transposeDecoded(decoded, resolved.samples)
     }
 
-  private def selectedCoefficientColumns(timepoints: IndexedSeq[Int]): Either[LatentError, DoubleMatrix] =
+  private def selectedCoefficientColumns(timepoints: IndexedSeq[Int]): Either[LatentError, DMat] =
     val out = new Array[Double](shape.coefficients * timepoints.length)
     var outCol = 0
     while outCol < timepoints.length do
@@ -242,30 +242,30 @@ final class TransportLatentResponse private (
       var component = 0
       while component < shape.coefficients do
         out(component * timepoints.length + outCol) =
-          coefficientsAnalysis.dataArray(time * coefficientsAnalysis.cols + component)
+          coefficientsAnalysis(time, component)
         component += 1
       outCol += 1
-    Right(DoubleMatrix.unsafe(shape.coefficients, timepoints.length, out))
+    Right(LatentNumerics.matrixFromRowMajor(shape.coefficients, timepoints.length, out))
 
-  private def transposeDecoded(decoded: DoubleMatrix, samples: IndexedSeq[Int]): DoubleMatrix =
+  private def transposeDecoded(decoded: DMat, samples: IndexedSeq[Int]): DMat =
     val out = new Array[Double](decoded.cols * decoded.rows)
     var time = 0
     while time < decoded.cols do
       var sampleIndex = 0
       while sampleIndex < decoded.rows do
         val sample = samples(sampleIndex)
-        val value = decoded.dataArray(sampleIndex * decoded.cols + time) + offset.fold(0.0)(_(sample))
+        val value = decoded(sampleIndex, time) + offset.fold(0.0)(_(sample))
         out(time * decoded.rows + sampleIndex) = value
         sampleIndex += 1
       time += 1
-    DoubleMatrix.unsafe(decoded.cols, decoded.rows, out)
+    LatentNumerics.matrixFromRowMajor(decoded.cols, decoded.rows, out)
 
 object TransportLatentResponse:
   def apply(
-      coefficientsAnalysis: DoubleMatrix,
+      coefficientsAnalysis: DMat,
       decoders: TransportDecoders,
       transform: CoefficientTransform,
-      offset: Option[DoubleVector],
+      offset: Option[DVec],
       sourceDomain: DomainId,
       targetDomain: DomainId,
       label: String,
@@ -298,11 +298,11 @@ object TransportLatentResponse:
       )
 
   def apply(
-      coefficientsAnalysis: DoubleMatrix,
-      nativeDecoder: LinearMap,
+      coefficientsAnalysis: DMat,
+      nativeDecoder: DoubleLinearOperator,
       transform: CoefficientTransform,
-      templateDecoder: Option[LinearMap] = None,
-      offset: Option[DoubleVector] = None,
+      templateDecoder: Option[DoubleLinearOperator] = None,
+      offset: Option[DVec] = None,
       sourceDomain: DomainId = DomainId.unsafe("transport.coefficients.analysis"),
       targetDomain: DomainId = DomainId.unsafe("transport.native"),
       label: String = "",
@@ -322,10 +322,10 @@ object TransportLatentResponse:
     )
 
   def fromDecoders(
-      coefficientsAnalysis: DoubleMatrix,
+      coefficientsAnalysis: DMat,
       decoders: TransportDecoders,
       transform: CoefficientTransform,
-      offset: Option[DoubleVector] = None,
+      offset: Option[DVec] = None,
       sourceDomain: DomainId = DomainId.unsafe("transport.coefficients.analysis"),
       targetDomain: DomainId = DomainId.unsafe("transport.native"),
       label: String = "",
@@ -345,10 +345,10 @@ object TransportLatentResponse:
     )
 
   def withIdentityTransform(
-      coefficientsAnalysis: DoubleMatrix,
-      nativeDecoder: LinearMap,
-      templateDecoder: Option[LinearMap] = None,
-      offset: Option[DoubleVector] = None,
+      coefficientsAnalysis: DMat,
+      nativeDecoder: DoubleLinearOperator,
+      templateDecoder: Option[DoubleLinearOperator] = None,
+      offset: Option[DVec] = None,
       sourceDomain: DomainId = DomainId.unsafe("transport.coefficients.analysis"),
       targetDomain: DomainId = DomainId.unsafe("transport.native"),
       label: String = "",
@@ -368,10 +368,10 @@ object TransportLatentResponse:
     }
 
   private def validate(
-      coefficientsAnalysis: DoubleMatrix,
+      coefficientsAnalysis: DMat,
       decoders: TransportDecoders,
       transform: CoefficientTransform,
-      offset: Option[DoubleVector]
+      offset: Option[DVec]
   ): Either[LatentError, Unit] =
     val nativeDecoder = decoders.nativeDecoder
     if coefficientsAnalysis.rows <= 0 then Left(LatentError.NonPositiveDimension("coefficient rows", coefficientsAnalysis.rows))
@@ -396,44 +396,44 @@ object TransportLatentResponse:
 
 object TransportProjection:
   def coefficientsWithPenalty(
-      targetData: DoubleMatrix,
-      decoder: LinearMap,
+      targetData: DMat,
+      decoder: DoubleLinearOperator,
       ridge: RidgePenalty,
-      roughness: Option[DoubleMatrix] = None
-  ): Either[LatentError, DoubleMatrix] =
+      roughness: Option[DMat] = None
+  ): Either[LatentError, DMat] =
     coefficientsValidated(targetData, decoder, ridge, roughness)
 
   def coefficients(
-      targetData: DoubleMatrix,
-      decoder: LinearMap,
+      targetData: DMat,
+      decoder: DoubleLinearOperator,
       ridge: Double = 0.0,
-      roughness: Option[DoubleMatrix] = None
-  ): Either[LatentError, DoubleMatrix] =
+      roughness: Option[DMat] = None
+  ): Either[LatentError, DMat] =
     RidgePenalty(ridge).flatMap { penalty =>
       coefficientsValidated(targetData, decoder, penalty, roughness)
     }
 
   private def coefficientsValidated(
-      targetData: DoubleMatrix,
-      decoder: LinearMap,
+      targetData: DMat,
+      decoder: DoubleLinearOperator,
       ridge: RidgePenalty,
-      roughness: Option[DoubleMatrix]
-  ): Either[LatentError, DoubleMatrix] =
+      roughness: Option[DMat]
+  ): Either[LatentError, DMat] =
     if targetData.rows != decoder.rows then Left(LatentError.DimensionMismatch("target rows", decoder.rows, targetData.rows))
     else
       for
-        basis <- decoder.forward(DoubleMatrix.eye(decoder.cols)).left.map(linearMapError)
-        gram0 = DoubleMatrix.crossProduct(basis).addToDiagonal(ridge.value)
+        basis <- decoder.applyTo(DMat.eye(decoder.cols)).left.map(linearMapError)
+        gram0 = LatentNumerics.crossProduct(basis).addToDiagonal(ridge.value)
         gram <- addRoughness(gram0, roughness, decoder.cols)
-        rhs = DoubleMatrix.transposeMultiply(basis, targetData)
-        coeff <- GramProjection.solveGram(gram, rhs).left.map(err => LatentError.ProjectionFailed(err.message))
+        rhs = LatentNumerics.transposeMultiply(basis, targetData)
+        coeff <- LatentNumerics.solveGram(gram, rhs).left.map(err => LatentError.ProjectionFailed(err.message))
       yield coeff
 
   private def addRoughness(
-      gram: DoubleMatrix,
-      roughness: Option[DoubleMatrix],
+      gram: DMat,
+      roughness: Option[DMat],
       size: Int
-  ): Either[LatentError, DoubleMatrix] =
+  ): Either[LatentError, DMat] =
     roughness match
       case None =>
         Right(gram)
@@ -441,30 +441,32 @@ object TransportProjection:
         Left(LatentError.MatrixShapeMismatch("roughness", size, size, value.rows, value.cols))
       case Some(value) =>
         val out = gram.copyData
+        val roughnessData = value.copyData
         var i = 0
         var error = Option.empty[LatentError]
         while i < out.length && error.isEmpty do
-          val rough = value.dataArray(i)
+          val rough = roughnessData(i)
           if !rough.isFinite then error = Some(LatentError.NonFiniteValue("roughness", i, rough))
           else out(i) += rough
           i += 1
         error match
           case Some(value) => Left(value)
-          case None        => Right(DoubleMatrix.unsafe(size, size, out))
+          case None        => Right(LatentNumerics.matrixFromRowMajor(size, size, out))
 
-private def linearMapError(error: scalafim.linalg.LinearMapError): LatentError =
+private def linearMapError(error: LinAlgError): LatentError =
   LatentError.ProjectionFailed(error.message)
 
-private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+  val data = matrix.copyData
   var i = 0
   var error = Option.empty[LatentError]
-  while i < matrix.dataArray.length && error.isEmpty do
-    val value = matrix.dataArray(i)
+  while i < data.length && error.isEmpty do
+    val value = data(i)
     if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
     i += 1
   error
 
-private def firstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+private def firstNonFinite(label: String, vector: DVec): Option[LatentError] =
   var i = 0
   var error = Option.empty[LatentError]
   while i < vector.length && error.isEmpty do

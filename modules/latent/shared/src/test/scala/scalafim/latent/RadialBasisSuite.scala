@@ -2,7 +2,7 @@ package scalafim.latent
 
 import scalafim.archive.lna.SharedBasisId
 import scalafim.image.NeuroSpace
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class RadialBasisSuite extends munit.FunSuite:
   private val center = WorldCoordinate3D.unsafe(0.0, 0.0, 0.0)
@@ -222,7 +222,7 @@ class RadialBasisSuite extends munit.FunSuite:
     assertEquals(order.maskValues(space.spatialDims.product), Right(Vector(false, true, false, true)))
     assertEquals(order.activeRowsForFullGrid(Vector(1, 3)), Right(Vector(1, 0)))
     assertEquals(
-      order.vectorInActiveOrderFromMaskOrder(DoubleVector.fromSeq(Vector(10.0, 20.0))).map(_.toVector),
+      order.vectorInActiveOrderFromMaskOrder(DVec.fromSeq(Vector(10.0, 20.0))).map(_.toVector),
       Right(Vector(20.0, 10.0))
     )
     assertEquals(artifact.kind, "hrbf")
@@ -250,14 +250,14 @@ class RadialBasisSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val coefficients =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(-0.5, 0.25),
           Vector(3.0, -1.0)
         )
       )
-    val data = DoubleMatrix.multiply(coefficients, radial.loadings.transpose)
+    val data = LatentNumerics.multiply(coefficients, radial.loadings.transpose)
     val encoding =
       RadialBasisEncoder
         .encode(
@@ -298,7 +298,7 @@ class RadialBasisSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val coefficients =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(-0.5, 0.25),
@@ -311,7 +311,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     val partial =
       radial.decode(coefficients, selection).fold(err => fail(err.message), identity)
-    val full = DoubleMatrix.multiply(coefficients, radial.loadings.transpose)
+    val full = LatentNumerics.multiply(coefficients, radial.loadings.transpose)
 
     assertRowsEqual(
       partial.toRows,
@@ -341,14 +341,14 @@ class RadialBasisSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val coefficients =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, -0.5, 2.0),
           Vector(0.25, 3.0, 1.5, -1.0),
           Vector(-2.0, 0.5, 0.75, 1.0)
         )
       )
-    val offset = DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))
+    val offset = DVec.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))
     val selection =
       RadialDecodeSelection
         .checked(timepoints = Some(Vector(1, 2)), fullGridVoxels = Some(Vector(active(3), active(1))))
@@ -384,7 +384,7 @@ class RadialBasisSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val raw =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 4.0, 6.0),
           Vector(4.0, 6.0, 8.0),
@@ -437,7 +437,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .fromSpec(space, active, spec)
         .fold(err => fail(err.message), identity)
     val coefficients =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, -1.0, 0.5, 3.0),
           Vector(-2.0, 0.25, 1.5, -0.75, 0.0)
@@ -597,7 +597,7 @@ class RadialBasisSuite extends munit.FunSuite:
       }
     }
 
-  private def columnNorm(matrix: DoubleMatrix, col: Int): Double =
+  private def columnNorm(matrix: DMat, col: Int): Double =
     var sum = 0.0
     var row = 0
     while row < matrix.rows do

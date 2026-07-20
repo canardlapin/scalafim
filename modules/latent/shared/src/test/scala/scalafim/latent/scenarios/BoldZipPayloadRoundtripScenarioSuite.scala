@@ -3,7 +3,7 @@ package scalafim.latent.scenarios
 import scalafim.archive.lna.{DatasetRole, TransformParams}
 import scalafim.image.NeuroSpace
 import scalafim.latent.*
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
   test("latent BOLDZip payload roundtrip scenario receipt passes") {
@@ -16,7 +16,7 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
       latentValue(
         BoldZipSpatialBasis(
           sampleCount = 3,
-          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          coarse = BoldZipCoarseBasis.MatrixBasis(LatentNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
           detail = BoldZipDetailBasis.IdentitySamples,
           label = "scenario-detail"
         )
@@ -24,21 +24,21 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
     val source =
       latentValue(
         BoldZipPayload(
-          temporalBasis = DoubleMatrix.eye(4),
-          carrierTheta = DoubleMatrix.fromRows(
+          temporalBasis = DMat.eye(4),
+          carrierTheta = LatentNumerics.matrixFromRows(
             Vector(
               Vector(1.0, 2.0, 3.0, 4.0),
               Vector(10.0, 20.0, 30.0, 40.0)
             )
           ),
-          carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+          carrierLoadings = LatentNumerics.matrixFromRows(Vector(Vector(2.0, 1.0))),
           spatialBasis = spatialBasis,
           texture = Vector(
             BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5, lag = 0),
             BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
           ),
           events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
-          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+          offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0))),
           label = "scenario-boldzip",
           metadata = Map("scenario" -> "latent.boldzip-payload-roundtrip.v1")
         )
@@ -89,7 +89,7 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("metadata.scenario", decoded.metadata.get("scenario").contains("latent.boldzip-payload-roundtrip.v1"), s"metadata=${decoded.metadata}"),
         ScenarioHarness.fact("texture.count", decoded.texture.length == 2, s"actual=${decoded.texture.length} expected=2"),
         ScenarioHarness.fact("event.count", decoded.events.length == 1, s"actual=${decoded.events.length} expected=1"),
-        ScenarioHarness.finite("selected.values", selected.dataArray.toIndexedSeq)
+        ScenarioHarness.finite("selected.values", selected.copyData.toIndexedSeq)
       ) ++
         ScenarioHarness.matrix("selected.roundtrip", selected, expected, ScenarioTolerance.absolute(1e-12)) ++
         ScenarioHarness.matrix("selected.source", sourceSelected, expected, ScenarioTolerance.absolute(1e-12))

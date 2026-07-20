@@ -3,11 +3,11 @@ package scalafim.latent
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, SharedBasisArtifact, SharedBasisId, SharedBasisLocator}
 import scalafim.image.NeuroSpace
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum LatentEncodingSpec:
   case ProvidedTemporalBasis(
-      basis: DoubleMatrix,
+      basis: DMat,
       center: Boolean,
       ridge: RidgePenalty,
       sourceDomain: DomainId,
@@ -78,7 +78,7 @@ enum LatentEncodingSpec:
 
 object LatentEncodingSpec:
   def providedBasis(
-      basis: DoubleMatrix,
+      basis: DMat,
       center: Boolean = false,
       ridge: Double = 0.0,
       sourceDomain: DomainId = DomainId.unsafe("latent.coefficients"),
@@ -321,7 +321,7 @@ enum LatentEncodingResult:
 
 object LatentEncoder:
   def encode(
-      data: DoubleMatrix,
+      data: DMat,
       spec: LatentEncodingSpec
   ): Either[LatentError, LatentEncodingResult] =
     spec match
@@ -402,13 +402,13 @@ object LatentEncoder:
           .map(LatentEncodingResult.RadialBasis(_))
 
   def encodeResponse(
-      data: DoubleMatrix,
+      data: DMat,
       spec: LatentEncodingSpec
   ): Either[LatentError, ExplicitLatentResponse] =
     encode(data, spec).map(_.response)
 
   def toArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       spec: LatentEncodingSpec,
       runLabel: RunLabel = RunLabel.indexed(0),

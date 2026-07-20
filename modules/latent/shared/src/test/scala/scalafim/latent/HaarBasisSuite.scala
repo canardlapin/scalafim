@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class HaarBasisSuite extends munit.FunSuite:
 
@@ -28,7 +28,7 @@ class HaarBasisSuite extends munit.FunSuite:
 
   test("full-rank Haar encoder roundtrips dense time by sample data") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, 3.0),
           Vector(2.0, 3.0, 5.0),
@@ -73,7 +73,7 @@ class HaarBasisSuite extends munit.FunSuite:
 
   test("centered Haar encoder stores column offsets") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(2.0, 4.0),
           Vector(4.0, 8.0),
@@ -119,10 +119,10 @@ class HaarBasisSuite extends munit.FunSuite:
   }
 
   private def assertIdentityGram(
-      basis: DoubleMatrix,
+      basis: DMat,
       tol: Double
   ): Unit =
-    val gram = DoubleMatrix.crossProduct(basis)
+    val gram = LatentNumerics.crossProduct(basis)
     var row = 0
     while row < gram.rows do
       var col = 0
@@ -133,10 +133,10 @@ class HaarBasisSuite extends munit.FunSuite:
       row += 1
 
   private def temporalDataFrom(
-      basis: DoubleMatrix,
+      basis: DMat,
       loadings: Vector[Vector[Double]]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(basis.rows) { time =>
         Vector.tabulate(loadings.length) { sample =>
           var sum = 0.0
@@ -150,7 +150,7 @@ class HaarBasisSuite extends munit.FunSuite:
     )
 
   private def assertMatrixEquals(
-      actual: DoubleMatrix,
+      actual: DMat,
       expected: Vector[Vector[Double]],
       tol: Double
   ): Unit =

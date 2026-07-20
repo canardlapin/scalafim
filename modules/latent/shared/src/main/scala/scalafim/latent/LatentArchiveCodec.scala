@@ -3,7 +3,7 @@ package scalafim.latent
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, LnaRun, SharedBasisArtifact, SharedBasisId, SharedBasisLocator}
 import scalafim.image.NeuroSpace
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 object LatentArchiveCodec:
   def toArchive(
@@ -15,7 +15,7 @@ object LatentArchiveCodec:
     ExplicitLatentArchiveCodec.toArchive(response, space, runLabel, creator)
 
   def toTemporalDctArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       components: Int,
       norm: DctNorm = DctNorm.Ortho,
@@ -44,7 +44,7 @@ object LatentArchiveCodec:
     )
 
   def toTemporalDctArchiveSpec(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       spec: DctSpec,
       center: Boolean = false,
@@ -71,7 +71,7 @@ object LatentArchiveCodec:
     )
 
   def toSharedBasisArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
@@ -102,7 +102,7 @@ object LatentArchiveCodec:
     )
 
   def toRadialBasisArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       radialBasis: RadialBasis,
       maskDims: Vector[Int],

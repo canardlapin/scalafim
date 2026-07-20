@@ -1,12 +1,12 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.DMat
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat}
+import gale.linalg.DMat
 
 class SharedBasisEncoderSuite extends munit.FunSuite:
   private val loadings =
-    DMat.fromRows(
+    ImageDMat.fromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 1.0),
@@ -70,7 +70,7 @@ class SharedBasisEncoderSuite extends munit.FunSuite:
 
   test("rejects basis/data voxel mismatches") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(3.0, 4.0)
@@ -87,8 +87,8 @@ class SharedBasisEncoderSuite extends munit.FunSuite:
   private def denseFrom(
       coefficients: Vector[Vector[Double]],
       offset: Vector[Double]
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       coefficients.map { row =>
         Vector.tabulate(loadings.rows) { voxel =>
           var sum = offset(voxel)

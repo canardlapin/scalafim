@@ -2,7 +2,7 @@ package scalafim.latent
 
 import scalafim.archive.lna.{DatasetRole, Payload}
 import scalafim.image.NeuroSpace
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class BoldZipSyntheticPropertySuite extends munit.FunSuite:
 
@@ -175,7 +175,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
           carrierTheta = payload.carrierTheta,
           carrierLoadings = payload.carrierLoadings,
           spatialBasis = payload.spatialBasis,
-          offset = Some(DoubleVector.fromSeq(Vector.fill(payload.shape.samples + 1)(0.0)))
+          offset = Some(DVec.fromSeq(Vector.fill(payload.shape.samples + 1)(0.0)))
         )
       assert(badOffset.isLeft)
     }
@@ -226,7 +226,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
     val temporalBasis = randomMatrix(rng, timepoints, components, scale = 1.0)
     val carrierTheta = randomMatrix(rng, carriers, components, scale = 1.25)
     val carrierLoadings =
-      if coarseAtoms == 0 then DoubleMatrix.zeros(0, carriers)
+      if coarseAtoms == 0 then DMat.zeros(0, carriers)
       else randomMatrix(rng, coarseAtoms, carriers, scale = 1.0)
     val coarse =
       if coarseAtoms == 0 then BoldZipCoarseBasis.Absent
@@ -267,7 +267,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       }
     val offset =
       if forceNoOffset || !rng.nextBoolean() then None
-      else Some(DoubleVector.fromSeq(Vector.tabulate(samples)(_ => rng.nextDouble(-0.75, 0.75))))
+      else Some(DVec.fromSeq(Vector.tabulate(samples)(_ => rng.nextDouble(-0.75, 0.75))))
     val payload =
       latentValue(
         BoldZipPayload(
@@ -294,10 +294,10 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       rows: Int,
       cols: Int,
       scale: Double
-  ): DoubleMatrix =
-    if rows == 0 then DoubleMatrix.zeros(0, cols)
+  ): DMat =
+    if rows == 0 then DMat.zeros(0, cols)
     else
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector.tabulate(rows) { row =>
           Vector.tabulate(cols) { col =>
             val deterministicDrift = 0.01 * (row + 1) - 0.015 * (col + 1)
@@ -321,8 +321,8 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       samples: IndexedSeq[Int],
       includeEvents: Boolean,
       includeOffset: Boolean
-  ): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  ): DMat =
+    LatentNumerics.matrixFromRows(
       timepoints.map { time =>
         samples.map { sample =>
           referenceSampleValue(payload, sample, time, includeEvents, includeOffset)
@@ -332,12 +332,12 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
 
   private def referenceDecodeCarrierColumns(
       payload: BoldZipPayload,
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean,
       includeOffset: Boolean
-  ): DoubleMatrix =
+  ): DMat =
     require(carriersByColumn.rows == payload.shape.coefficients)
-    DoubleMatrix.fromRows(
+    LatentNumerics.matrixFromRows(
       Vector.tabulate(payload.shape.samples) { sample =>
         Vector.tabulate(carriersByColumn.cols) { column =>
           referenceSampleValueFromCarrierColumn(payload, sample, column, carriersByColumn, includeEvents, includeOffset)
@@ -374,7 +374,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       payload: BoldZipPayload,
       sample: Int,
       column: Int,
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean,
       includeOffset: Boolean
   ): Double =
@@ -405,7 +405,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       payload: BoldZipPayload,
       atom: Int,
       column: Int,
-      carriersByColumn: DoubleMatrix
+      carriersByColumn: DMat
   ): Double =
     Vector.tabulate(payload.shape.coefficients) { carrier =>
       payload.carrierLoadings(atom, carrier) * carriersByColumn(carrier, column)
@@ -430,7 +430,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       payload: BoldZipPayload,
       atom: Int,
       column: Int,
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean
   ): Double =
     val textureValue =
@@ -473,8 +473,8 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       case Right(value) => value
       case Left(error)  => fail(error.message)
 
-  private def assertFinite(label: String, matrix: DoubleMatrix): Unit =
-    matrix.dataArray.zipWithIndex.foreach { case (value, index) =>
+  private def assertFinite(label: String, matrix: DMat): Unit =
+    matrix.copyData.zipWithIndex.foreach { case (value, index) =>
       assert(value.isFinite, s"$label produced non-finite value at $index: $value")
     }
 

@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class BoldZipPayloadSuite extends munit.FunSuite:
 
@@ -12,17 +12,17 @@ class BoldZipPayloadSuite extends munit.FunSuite:
   private def payload: BoldZipPayload =
     value(
       BoldZipPayload(
-        temporalBasis = DoubleMatrix.eye(4),
-        carrierTheta = DoubleMatrix.fromRows(
+        temporalBasis = DMat.eye(4),
+        carrierTheta = LatentNumerics.matrixFromRows(
           Vector(
             Vector(1.0, 2.0, 3.0, 4.0),
             Vector(10.0, 20.0, 30.0, 40.0)
           )
         ),
-        carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+        carrierLoadings = LatentNumerics.matrixFromRows(Vector(Vector(2.0, 1.0))),
         spatialBasis = value(BoldZipSpatialBasis(
           sampleCount = 3,
-          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          coarse = BoldZipCoarseBasis.MatrixBasis(LatentNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
           detail = BoldZipDetailBasis.IdentitySamples,
           label = "identity-detail"
         )),
@@ -31,7 +31,7 @@ class BoldZipPayloadSuite extends munit.FunSuite:
           BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
         ),
         events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
-        offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+        offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0))),
         label = "fixture"
       )
     )
@@ -93,9 +93,9 @@ class BoldZipPayloadSuite extends munit.FunSuite:
   test("BOLDZip payload validates texture and offset invariants") {
     val badTexture =
       BoldZipPayload(
-        temporalBasis = DoubleMatrix.eye(2),
-        carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
-        carrierLoadings = DoubleMatrix.zeros(0, 1),
+        temporalBasis = DMat.eye(2),
+        carrierTheta = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
+        carrierLoadings = DMat.zeros(0, 1),
         spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
         texture = Vector(BoldZipTextureEntry.unsafe(atom = 2, carrier = 0, amplitude = 1.0))
       )
@@ -103,19 +103,19 @@ class BoldZipPayloadSuite extends munit.FunSuite:
 
     val badOffset =
       BoldZipPayload(
-        temporalBasis = DoubleMatrix.eye(2),
-        carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
-        carrierLoadings = DoubleMatrix.zeros(0, 1),
+        temporalBasis = DMat.eye(2),
+        carrierTheta = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
+        carrierLoadings = DMat.zeros(0, 1),
         spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
-        offset = Some(DoubleVector.fromSeq(Vector(1.0)))
+        offset = Some(DVec.fromSeq(Vector(1.0)))
       )
     assert(badOffset.swap.toOption.exists(_.message.contains("offset length")))
 
     val badMetadata =
       BoldZipPayload(
-        temporalBasis = DoubleMatrix.eye(2),
-        carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
-        carrierLoadings = DoubleMatrix.zeros(0, 1),
+        temporalBasis = DMat.eye(2),
+        carrierTheta = LatentNumerics.matrixFromRows(Vector(Vector(1.0, 2.0))),
+        carrierLoadings = DMat.zeros(0, 1),
         spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
         metadata = Map("" -> "bad")
       )
@@ -136,7 +136,7 @@ class BoldZipPayloadSuite extends munit.FunSuite:
   }
 
   private def assertMatrixEquals(
-      actual: DoubleMatrix,
+      actual: DMat,
       expected: Vector[Vector[Double]],
       tol: Double
   ): Unit =

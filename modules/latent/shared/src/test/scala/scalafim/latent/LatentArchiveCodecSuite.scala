@@ -1,12 +1,12 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{DatasetRole, LnaPipeline, Payload, SharedBasisArtifact, SharedBasisId, SharedBasisMask, TransformKind, TransformParams}
-import scalafim.image.{DMat, Mask, NeuroSpace}
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
+import scalafim.image.{DMat as ImageDMat, Mask, NeuroSpace}
+import gale.linalg.{DMat, DVec, LinAlgError}
 
 class LatentArchiveCodecSuite extends munit.FunSuite:
   private val basis =
-    DoubleMatrix.fromRows(
+    LatentNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.5, 1.0),
@@ -15,7 +15,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     )
 
   private val loadings =
-    DoubleMatrix.fromRows(
+    LatentNumerics.matrixFromRows(
       Vector(
         Vector(10.0, 1.0),
         Vector(20.0, 2.0),
@@ -25,7 +25,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     )
 
   private val offset =
-    DoubleVector.fromSeq(Vector(1.0, 2.0, 3.0, 4.0))
+    DVec.fromSeq(Vector(1.0, 2.0, 3.0, 4.0))
 
   test("explicit latent responses roundtrip through LNA archives") {
     val source =
@@ -89,7 +89,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     val archive =
       LnaPipeline
         .quantArchive(
-          DMat.fromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
+          ImageDMat.fromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
           NeuroSpace(Vector(2, 2, 1))
         )
         .fold(err => fail(err.message), identity)
@@ -103,7 +103,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
 
   test("temporal DCT archives preserve typed DCT params and reconstruct full-rank data") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 2.0, 3.0, 4.0),
           Vector(2.0, 3.0, 5.0, 7.0),
@@ -179,7 +179,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
 
   test("shared-basis archives are encoded through the latent Gram solver and store offsets") {
     val sharedLoadings =
-      DMat.fromRows(
+      ImageDMat.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -201,7 +201,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         Vector(-2.0, 0.5)
       )
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         expectedCoefficients.map { row =>
           Vector.tabulate(sharedLoadings.rows) { voxel =>
             var sum = Vector(10.0, -2.0, 5.0)(voxel)
@@ -307,7 +307,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
   test("transport archives preserve dense operator payloads and selected reconstruction") {
     val decoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 4,
           cols = 2,
           rowIndices = Array(0, 1, 2, 2, 3, 3),
@@ -317,7 +317,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
     val templateDecoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 3,
           cols = 2,
           rowIndices = Array(0, 1, 1, 2),
@@ -327,7 +327,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
     val toAnalysis =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -337,7 +337,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
     val toRaw =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -347,7 +347,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
     val source =
       TransportLatentResponse(
-        coefficientsAnalysis = DoubleMatrix.fromRows(
+        coefficientsAnalysis = LatentNumerics.matrixFromRows(
           Vector(
             Vector(2.0, 2.0),
             Vector(4.0, -1.0)
@@ -356,7 +356,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         nativeDecoder = decoder,
         transform = CoefficientTransform(toAnalysis, toRaw).fold(err => fail(err.message), identity),
         templateDecoder = Some(templateDecoder),
-        offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+        offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
         label = "transport-demo",
         metadata = Map("subject" -> "sub-01")
       ).fold(err => fail(err.message), identity)
@@ -405,7 +405,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     val templateProjection =
       decoded
-        .decodeCoefficients(DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(2.0))), TransportSpace.Template, CoefficientCoordinates.Analysis)
+        .decodeCoefficients(LatentNumerics.matrixFromRows(Vector(Vector(2.0), Vector(2.0))), TransportSpace.Template, CoefficientCoordinates.Analysis)
         .fold(err => fail(err.message), identity)
 
     assertEquals(decoded.label, "transport-demo")
@@ -429,7 +429,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       latentValue(
         BoldZipSpatialBasis(
           sampleCount = 3,
-          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          coarse = BoldZipCoarseBasis.MatrixBasis(LatentNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
           detail = BoldZipDetailBasis.IdentitySamples,
           label = "identity-detail"
         )
@@ -437,21 +437,21 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     val source =
       latentValue(
         BoldZipPayload(
-          temporalBasis = DoubleMatrix.eye(4),
-          carrierTheta = DoubleMatrix.fromRows(
+          temporalBasis = DMat.eye(4),
+          carrierTheta = LatentNumerics.matrixFromRows(
             Vector(
               Vector(1.0, 2.0, 3.0, 4.0),
               Vector(10.0, 20.0, 30.0, 40.0)
             )
           ),
-          carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+          carrierLoadings = LatentNumerics.matrixFromRows(Vector(Vector(2.0, 1.0))),
           spatialBasis = spatialBasis,
           texture = Vector(
             BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5, lag = 0),
             BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
           ),
           events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
-          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+          offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0))),
           sourceDomain = DomainId.unsafe("boldzip.carriers.demo"),
           targetDomain = DomainId.unsafe("boldzip.samples.demo"),
           label = "boldzip-demo",
@@ -536,13 +536,13 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       case Right(value) => value
       case Left(error)  => fail(error.message)
 
-  private def mapValue[A](result: Either[LinearMapError, A]): A =
+  private def mapValue[A](result: Either[LinAlgError, A]): A =
     result match
       case Right(value) => value
       case Left(error)  => fail(error.message)
 
   private def assertMatrixEquals(
-      actual: DoubleMatrix,
+      actual: DMat,
       expected: Vector[Vector[Double]],
       tol: Double
   ): Unit =
@@ -564,7 +564,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
   private def rawProjection(
       rows: Vector[Vector[Double]],
       offset: Vector[Double],
-      loadings: DMat
+      loadings: ImageDMat
   ): Vector[Vector[Double]] =
     rows.map { row =>
       Vector.tabulate(loadings.cols) { atom =>

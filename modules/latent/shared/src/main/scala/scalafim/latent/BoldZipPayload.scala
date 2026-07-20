@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 opaque type BoldZipAtomIndex = Int
 
@@ -87,9 +87,9 @@ object BoldZipDuration:
 
 enum BoldZipCoarseBasis:
   case Absent
-  case MatrixBasis(values: DoubleMatrix)
+  case MatrixBasis(values: DMat)
 
-  def matrix: Option[DoubleMatrix] =
+  def matrix: Option[DMat] =
     this match
       case Absent              => None
       case MatrixBasis(values) => Some(values)
@@ -105,16 +105,16 @@ enum BoldZipCoarseBasis:
       case MatrixBasis(_) => "matrix"
 
 object BoldZipCoarseBasis:
-  def fromOption(values: Option[DoubleMatrix]): BoldZipCoarseBasis =
+  def fromOption(values: Option[DMat]): BoldZipCoarseBasis =
     values match
       case Some(matrix) => BoldZipCoarseBasis.MatrixBasis(matrix)
       case None         => BoldZipCoarseBasis.Absent
 
 enum BoldZipDetailBasis:
   case IdentitySamples
-  case MatrixBasis(values: DoubleMatrix)
+  case MatrixBasis(values: DMat)
 
-  def matrix: Option[DoubleMatrix] =
+  def matrix: Option[DMat] =
     this match
       case IdentitySamples     => None
       case MatrixBasis(values) => Some(values)
@@ -130,7 +130,7 @@ enum BoldZipDetailBasis:
       case MatrixBasis(_)  => "matrix"
 
 object BoldZipDetailBasis:
-  def fromOption(values: Option[DoubleMatrix]): BoldZipDetailBasis =
+  def fromOption(values: Option[DMat]): BoldZipDetailBasis =
     values match
       case Some(matrix) => BoldZipDetailBasis.MatrixBasis(matrix)
       case None         => BoldZipDetailBasis.IdentitySamples
@@ -141,10 +141,10 @@ final class BoldZipSpatialBasis private (
     val detail: BoldZipDetailBasis,
     val label: String
 ):
-  def phiCoarse: Option[DoubleMatrix] =
+  def phiCoarse: Option[DMat] =
     coarse.matrix
 
-  def phiDetail: Option[DoubleMatrix] =
+  def phiDetail: Option[DMat] =
     detail.matrix
 
   def coarseAtoms: Int =
@@ -176,8 +176,8 @@ object BoldZipSpatialBasis:
 
   def fromOptional(
       sampleCount: Int,
-      phiCoarse: Option[DoubleMatrix],
-      phiDetail: Option[DoubleMatrix],
+      phiCoarse: Option[DMat],
+      phiDetail: Option[DMat],
       label: String = ""
   ): Either[LatentError, BoldZipSpatialBasis] =
     apply(
@@ -190,7 +190,7 @@ object BoldZipSpatialBasis:
   private def validateMatrix(
       label: String,
       sampleCount: Int,
-      matrix: Option[DoubleMatrix]
+      matrix: Option[DMat]
   ): Either[LatentError, Unit] =
     matrix match
       case Some(values) if values.rows != sampleCount =>
@@ -276,13 +276,13 @@ object BoldZipResidualEvent:
     )
 
 final class BoldZipPayload private (
-    val temporalBasis: DoubleMatrix,
-    val carrierTheta: DoubleMatrix,
-    val carrierLoadings: DoubleMatrix,
+    val temporalBasis: DMat,
+    val carrierTheta: DMat,
+    val carrierLoadings: DMat,
     val spatialBasis: BoldZipSpatialBasis,
     val texture: Vector[BoldZipTextureEntry],
     val events: Vector[BoldZipResidualEvent],
-    val offset: Option[DoubleVector],
+    val offset: Option[DVec],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
     val latentLabel: LatentLabel,
@@ -296,7 +296,7 @@ final class BoldZipPayload private (
       coefficients = carrierTheta.rows
     )
 
-  override def coefTime: DoubleMatrix =
+  override def coefTime: DMat =
     val out = new Array[Double](shape.timepoints * shape.coefficients)
     var time = 0
     while time < shape.timepoints do
@@ -305,18 +305,18 @@ final class BoldZipPayload private (
         out(time * shape.coefficients + carrier) = carrierValue(carrier, time)
         carrier += 1
       time += 1
-    DoubleMatrix.unsafe(shape.timepoints, shape.coefficients, out)
+    LatentNumerics.matrixFromRowMajor(shape.timepoints, shape.coefficients, out)
 
   override def decodeSemantics: LatentDecodeSemantics =
     LatentDecodeSemantics.boldZip(offset = offset.nonEmpty, residualEvents = events.nonEmpty)
 
-  override def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
+  override def decodeCoefficients(coefficients: DMat): Either[LatentError, DMat] =
     if coefficients.rows != shape.coefficients then
       Left(LatentError.DimensionMismatch("coefficient rows", shape.coefficients, coefficients.rows))
     else
       Right(decodeCarrierColumns(coefficients, includeEvents = false, includeOffset = false))
 
-  override def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DoubleMatrix] =
+  override def reconstruct(selection: LatentSelection = LatentSelection.All): Either[LatentError, DMat] =
     selection.resolve(shape.timepoints, shape.samples).map { resolved =>
       val out = new Array[Double](resolved.timepoints.length * resolved.samples.length)
       var outTime = 0
@@ -329,14 +329,14 @@ final class BoldZipPayload private (
             sampleValue(sample, time, includeEvents = true, includeOffset = true)
           outSample += 1
         outTime += 1
-      DoubleMatrix.unsafe(resolved.timepoints.length, resolved.samples.length, out)
+      LatentNumerics.matrixFromRowMajor(resolved.timepoints.length, resolved.samples.length, out)
     }
 
   private def decodeCarrierColumns(
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean,
       includeOffset: Boolean
-  ): DoubleMatrix =
+  ): DMat =
     val out = new Array[Double](shape.samples * carriersByColumn.cols)
     var sample = 0
     while sample < shape.samples do
@@ -352,7 +352,7 @@ final class BoldZipPayload private (
           )
         col += 1
       sample += 1
-    DoubleMatrix.unsafe(shape.samples, carriersByColumn.cols, out)
+    LatentNumerics.matrixFromRowMajor(shape.samples, carriersByColumn.cols, out)
 
   private def sampleValue(sample: Int, time: Int, includeEvents: Boolean, includeOffset: Boolean): Double =
     var value = 0.0
@@ -360,7 +360,7 @@ final class BoldZipPayload private (
       case BoldZipCoarseBasis.MatrixBasis(phi) =>
         var atom = 0
         while atom < phi.cols do
-          value += phi.dataArray(sample * phi.cols + atom) * coarseAtomValue(atom, time)
+          value += phi(sample, atom) * coarseAtomValue(atom, time)
           atom += 1
       case BoldZipCoarseBasis.Absent =>
         ()
@@ -369,7 +369,7 @@ final class BoldZipPayload private (
       case BoldZipDetailBasis.MatrixBasis(phi) =>
         var atom = 0
         while atom < phi.cols do
-          value += phi.dataArray(sample * phi.cols + atom) * detailAtomValue(atom, time, includeEvents)
+          value += phi(sample, atom) * detailAtomValue(atom, time, includeEvents)
           atom += 1
       case BoldZipDetailBasis.IdentitySamples =>
         value += detailAtomValue(sample, time, includeEvents)
@@ -380,7 +380,7 @@ final class BoldZipPayload private (
   private def sampleValueFromCarrierColumn(
       sample: Int,
       column: Int,
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean,
       includeOffset: Boolean
   ): Double =
@@ -389,7 +389,7 @@ final class BoldZipPayload private (
       case BoldZipCoarseBasis.MatrixBasis(phi) =>
         var atom = 0
         while atom < phi.cols do
-          value += phi.dataArray(sample * phi.cols + atom) * coarseAtomValueFromCarrierColumn(atom, column, carriersByColumn)
+          value += phi(sample, atom) * coarseAtomValueFromCarrierColumn(atom, column, carriersByColumn)
           atom += 1
       case BoldZipCoarseBasis.Absent =>
         ()
@@ -398,7 +398,7 @@ final class BoldZipPayload private (
       case BoldZipDetailBasis.MatrixBasis(phi) =>
         var atom = 0
         while atom < phi.cols do
-          value += phi.dataArray(sample * phi.cols + atom) *
+          value += phi(sample, atom) *
             detailAtomValueFromCarrierColumn(atom, column, carriersByColumn, includeEvents)
           atom += 1
       case BoldZipDetailBasis.IdentitySamples =>
@@ -411,16 +411,15 @@ final class BoldZipPayload private (
     var sum = 0.0
     var carrier = 0
     while carrier < shape.coefficients do
-      sum += carrierLoadings.dataArray(atom * carrierLoadings.cols + carrier) * carrierValue(carrier, time)
+      sum += carrierLoadings(atom, carrier) * carrierValue(carrier, time)
       carrier += 1
     sum
 
-  private def coarseAtomValueFromCarrierColumn(atom: Int, column: Int, carriersByColumn: DoubleMatrix): Double =
+  private def coarseAtomValueFromCarrierColumn(atom: Int, column: Int, carriersByColumn: DMat): Double =
     var sum = 0.0
     var carrier = 0
     while carrier < shape.coefficients do
-      sum += carrierLoadings.dataArray(atom * carrierLoadings.cols + carrier) *
-        carriersByColumn.dataArray(carrier * carriersByColumn.cols + column)
+      sum += carrierLoadings(atom, carrier) * carriersByColumn(carrier, column)
       carrier += 1
     sum
 
@@ -438,7 +437,7 @@ final class BoldZipPayload private (
   private def detailAtomValueFromCarrierColumn(
       atom: Int,
       column: Int,
-      carriersByColumn: DoubleMatrix,
+      carriersByColumn: DMat,
       includeEvents: Boolean
   ): Double =
     var sum = 0.0
@@ -448,7 +447,7 @@ final class BoldZipPayload private (
       if entry.atom.value == atom then
         val sourceColumn = column - entry.lag.value
         if sourceColumn >= 0 && sourceColumn < carriersByColumn.cols then
-          sum += entry.amplitude.value * carriersByColumn.dataArray(entry.carrier.value * carriersByColumn.cols + sourceColumn)
+          sum += entry.amplitude.value * carriersByColumn(entry.carrier.value, sourceColumn)
       i += 1
     if includeEvents then sum += eventValue(atom, column)
     sum
@@ -457,8 +456,7 @@ final class BoldZipPayload private (
     var sum = 0.0
     var component = 0
     while component < temporalBasis.cols do
-      sum += carrierTheta.dataArray(carrier * carrierTheta.cols + component) *
-        temporalBasis.dataArray(time * temporalBasis.cols + component)
+      sum += carrierTheta(carrier, component) * temporalBasis(time, component)
       component += 1
     sum
 
@@ -481,13 +479,13 @@ final class BoldZipPayload private (
 
 object BoldZipPayload:
   def apply(
-      temporalBasis: DoubleMatrix,
-      carrierTheta: DoubleMatrix,
-      carrierLoadings: DoubleMatrix,
+      temporalBasis: DMat,
+      carrierTheta: DMat,
+      carrierLoadings: DMat,
       spatialBasis: BoldZipSpatialBasis,
       texture: Vector[BoldZipTextureEntry] = Vector.empty,
       events: Vector[BoldZipResidualEvent] = Vector.empty,
-      offset: Option[DoubleVector] = None,
+      offset: Option[DVec] = None,
       sourceDomain: DomainId = DomainId.unsafe("boldzip.carriers"),
       targetDomain: DomainId = DomainId.unsafe("boldzip.samples"),
       label: String = "boldzip_sr",
@@ -521,13 +519,13 @@ object BoldZipPayload:
       )
 
   private def validate(
-      temporalBasis: DoubleMatrix,
-      carrierTheta: DoubleMatrix,
-      carrierLoadings: DoubleMatrix,
+      temporalBasis: DMat,
+      carrierTheta: DMat,
+      carrierLoadings: DMat,
       spatialBasis: BoldZipSpatialBasis,
       texture: Vector[BoldZipTextureEntry],
       events: Vector[BoldZipResidualEvent],
-      offset: Option[DoubleVector]
+      offset: Option[DVec]
   ): Either[LatentError, Unit] =
     if temporalBasis.rows <= 0 then Left(LatentError.NonPositiveDimension("temporal basis rows", temporalBasis.rows))
     else if temporalBasis.cols <= 0 then Left(LatentError.NonPositiveDimension("temporal basis columns", temporalBasis.cols))
@@ -583,7 +581,7 @@ object BoldZipPayload:
       case Some(value) => Left(value)
       case None        => Right(())
 
-  private def validateOffset(sampleCount: Int, offset: Option[DoubleVector]): Either[LatentError, Unit] =
+  private def validateOffset(sampleCount: Int, offset: Option[DVec]): Either[LatentError, Unit] =
     offset match
       case Some(value) if value.length != sampleCount =>
         Left(LatentError.DimensionMismatch("offset length", sampleCount, value.length))
@@ -591,13 +589,13 @@ object BoldZipPayload:
         Right(())
 
   private def validateFinite(
-      temporalBasis: DoubleMatrix,
-      carrierTheta: DoubleMatrix,
-      carrierLoadings: DoubleMatrix,
+      temporalBasis: DMat,
+      carrierTheta: DMat,
+      carrierLoadings: DMat,
       spatialBasis: BoldZipSpatialBasis,
       texture: Vector[BoldZipTextureEntry],
       events: Vector[BoldZipResidualEvent],
-      offset: Option[DoubleVector]
+      offset: Option[DVec]
   ): Either[LatentError, Unit] =
     firstNonFinite("temporal basis", temporalBasis)
       .orElse(firstNonFinite("carrier theta", carrierTheta))
@@ -608,16 +606,17 @@ object BoldZipPayload:
       case Some(error) => Left(error)
       case None        => Right(())
 
-  private def firstNonFinite(label: String, matrix: DoubleMatrix): Option[LatentError] =
+  private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
+    val data = matrix.copyData
     var i = 0
     var error = Option.empty[LatentError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
+    while i < data.length && error.isEmpty do
+      val value = data(i)
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error
 
-  private def firstNonFinite(label: String, vector: DoubleVector): Option[LatentError] =
+  private def firstNonFinite(label: String, vector: DVec): Option[LatentError] =
     var i = 0
     var error = Option.empty[LatentError]
     while i < vector.length && error.isEmpty do

@@ -15,7 +15,7 @@ import scalafim.archive.lna.{
   TransformParams
 }
 import scalafim.image.NeuroSpace
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 import scalafim.latent.LatentArchivePayloads.*
 
 private[latent] object TransportLatentArchiveCodec:
@@ -174,7 +174,7 @@ private[latent] object TransportLatentArchiveCodec:
           nativeDecoder = nativeDecoder,
           transform = transform,
           templateDecoder = templateDecoder,
-          offset = offset.map(DoubleVector.fromSeq),
+          offset = offset.map(DVec.fromSeq),
           sourceDomain = source,
           targetDomain = target,
           label = params.label.getOrElse(""),

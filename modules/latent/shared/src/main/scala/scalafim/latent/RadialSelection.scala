@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.DVec
 
 opaque type RadialActiveVoxelIndex = Int
 
@@ -85,7 +85,7 @@ final case class RadialMaskOrder private (
         case Some(err) => Left(err)
         case None      => Right(out.result())
 
-  def vectorInActiveOrderFromMaskOrder(values: DoubleVector): Either[LatentError, DoubleVector] =
+  def vectorInActiveOrderFromMaskOrder(values: DVec): Either[LatentError, DVec] =
     if values.length != activeCount then Left(LatentError.DimensionMismatch("radial basis vector length", activeCount, values.length))
     else
       val out = new Array[Double](activeCount)
@@ -93,7 +93,7 @@ final case class RadialMaskOrder private (
       while maskRow < activeRowsInMaskOrder.length do
         out(activeRowsInMaskOrder(maskRow)) = values(maskRow)
         maskRow += 1
-      Right(DoubleVector.unsafe(out))
+      Right(LatentNumerics.vectorFromArray(out))
 
 object RadialMaskOrder:
   def fromActiveIndices(indices: Vector[Int]): Either[RadialBasisError, RadialMaskOrder] =

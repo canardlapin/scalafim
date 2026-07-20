@@ -1,13 +1,13 @@
 package scalafim.latent
 
 import scalafim.image.NeuroSpace
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class BoldZipEncoderSuite extends munit.FunSuite:
 
   test("identity-detail encoder exactly reconstructs deterministic data and archives") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, -2.0, 0.5),
           Vector(3.0, 0.25, -1.5),
@@ -48,7 +48,7 @@ class BoldZipEncoderSuite extends munit.FunSuite:
 
   test("centered identity-detail encoder stores offsets but preserves reconstruction") {
     val data =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(10.0, 2.0),
           Vector(12.0, 4.0),
@@ -75,7 +75,7 @@ class BoldZipEncoderSuite extends munit.FunSuite:
       val rows = 2 + (caseIndex % 5)
       val cols = 1 + (caseIndex % 4)
       val data =
-        DoubleMatrix.fromRows(
+        LatentNumerics.matrixFromRows(
           Vector.tabulate(rows) { _ =>
             Vector.tabulate(cols) { _ =>
               rng.nextDouble(-5.0, 5.0)
@@ -97,17 +97,17 @@ class BoldZipEncoderSuite extends munit.FunSuite:
   }
 
   test("identity-detail encoder rejects invalid data and metadata") {
-    assert(BoldZipEncoder.identityDetail(DoubleMatrix.zeros(0, 2)).isLeft)
-    assert(BoldZipEncoder.identityDetail(DoubleMatrix.zeros(2, 0)).isLeft)
+    assert(BoldZipEncoder.identityDetail(DMat.zeros(0, 2)).isLeft)
+    assert(BoldZipEncoder.identityDetail(DMat.zeros(2, 0)).isLeft)
     val nonFinite =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, Double.NaN),
           Vector(2.0, 3.0)
         )
       )
     assert(BoldZipEncoder.identityDetail(nonFinite).isLeft)
-    assert(BoldZipEncoder.identityDetail(DoubleMatrix.eye(2), metadata = Map("" -> "bad")).isLeft)
+    assert(BoldZipEncoder.identityDetail(DMat.eye(2), metadata = Map("" -> "bad")).isLeft)
   }
 
   private final class Lcg private (private var state: Long):

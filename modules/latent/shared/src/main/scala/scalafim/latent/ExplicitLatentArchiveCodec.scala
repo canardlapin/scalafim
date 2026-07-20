@@ -11,7 +11,7 @@ import scalafim.archive.lna.{
   TransformParams
 }
 import scalafim.image.NeuroSpace
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
 private[latent] object ExplicitLatentArchiveCodec:
@@ -37,7 +37,7 @@ private[latent] object ExplicitLatentArchiveCodec:
     )
 
   def toTemporalDctArchive(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       components: Int,
       norm: DctNorm = DctNorm.Ortho,
@@ -69,7 +69,7 @@ private[latent] object ExplicitLatentArchiveCodec:
     yield archive
 
   def toTemporalDctArchiveSpec(
-      data: DoubleMatrix,
+      data: DMat,
       space: NeuroSpace,
       spec: DctSpec,
       center: Boolean = false,
@@ -128,7 +128,7 @@ private[latent] object ExplicitLatentArchiveCodec:
         latent <- ExplicitLatentResponse(
           basis = toDoubleMatrix(response.basis),
           loadings = toDoubleMatrix(response.loadings),
-          offset = response.offset.map(DoubleVector.fromSeq),
+          offset = response.offset.map(DVec.fromSeq),
           sourceDomain = sourceDomain,
           targetDomain = targetDomain,
           label = response.label,

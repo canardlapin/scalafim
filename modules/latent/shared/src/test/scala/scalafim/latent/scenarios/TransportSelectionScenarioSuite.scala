@@ -3,7 +3,7 @@ package scalafim.latent.scenarios
 import scalafim.archive.lna.TransformParams
 import scalafim.image.NeuroSpace
 import scalafim.latent.*
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
+import gale.linalg.{DMat, DVec, LinAlgError}
 
 class TransportSelectionScenarioSuite extends munit.FunSuite:
   test("latent transport selection scenario receipt passes") {
@@ -14,7 +14,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
   private def runScenario(): ScenarioResult =
     val decoder =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 4,
           cols = 2,
           rowIndices = Array(0, 1, 2, 2, 3, 3),
@@ -24,7 +24,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
       )
     val toAnalysis =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -34,7 +34,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
       )
     val toRaw =
       mapValue(
-        CsrMatrix.fromTriplets(
+        LatentOperators.csrFromTriplets(
           rows = 2,
           cols = 2,
           rowIndices = Array(0, 1),
@@ -45,7 +45,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
     val source =
       latentValue(
         TransportLatentResponse(
-          coefficientsAnalysis = DoubleMatrix.fromRows(
+          coefficientsAnalysis = LatentNumerics.matrixFromRows(
             Vector(
               Vector(2.0, 2.0),
               Vector(4.0, -1.0)
@@ -53,7 +53,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
           ),
           nativeDecoder = decoder,
           transform = latentValue(CoefficientTransform(toAnalysis, toRaw)),
-          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+          offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
           label = "scenario-transport",
           metadata = Map("scenario" -> "latent.transport-selection.v1")
         )
@@ -97,7 +97,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("descriptor.kind", descriptorKind.contains("transport_latent"), s"metadata=${descriptorKind.getOrElse("<missing>")}"),
         ScenarioHarness.fact("label", decoded.label == "scenario-transport", s"actual=${decoded.label}"),
         ScenarioHarness.fact("metadata.scenario", decoded.metadata.get("scenario").contains("latent.transport-selection.v1"), s"metadata=${decoded.metadata}"),
-        ScenarioHarness.finite("selected.values", selected.dataArray.toIndexedSeq)
+        ScenarioHarness.finite("selected.values", selected.copyData.toIndexedSeq)
       ) ++
         ScenarioHarness.matrix("selected.roundtrip", selected, expected, ScenarioTolerance.absolute(1e-12)) ++
         ScenarioHarness.matrix("selected.source", sourceSelected, expected, ScenarioTolerance.absolute(1e-12))
@@ -108,7 +108,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
       case Right(value) => value
       case Left(error)  => fail(error.message)
 
-  private def mapValue[A](result: Either[LinearMapError, A]): A =
+  private def mapValue[A](result: Either[LinAlgError, A]): A =
     result match
       case Right(value) => value
       case Left(error)  => fail(error.message)

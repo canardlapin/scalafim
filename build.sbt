@@ -186,11 +186,13 @@ lazy val latent =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/latent"))
-    .dependsOn(linalg, archive)
+    .dependsOn(archive)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-latent"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val latentJS  = latent.js

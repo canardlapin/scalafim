@@ -1,8 +1,8 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class LatentRoundtripMatrixSuite extends munit.FunSuite:
 
@@ -11,14 +11,14 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
     val components = 2
     val space = NeuroSpace(Vector(3, 1, 1))
     val core =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, -2.0),
           Vector(0.5, 3.0)
         )
       )
     val spatialLoadings =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -27,7 +27,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
       )
     val sharedBasis =
       SharedBasisArtifact(
-        loadings = DMat.fromRows(spatialLoadings.toRows),
+        loadings = ImageDMat.fromRows(spatialLoadings.toRows),
         mask = SharedBasisMask(Vector(3), Vector(true, true, true)),
         kind = "roundtrip-matrix",
         params = Map("suite" -> "LatentRoundtripMatrixSuite")
@@ -87,7 +87,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
 
   private final case class TemporalCase(
       id: String,
-      basis: DoubleMatrix,
+      basis: DMat,
       spec: LatentEncodingSpec,
       archiveKind: LatentArchiveKind
   )
@@ -97,7 +97,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
       components: Int
   ): Vector[TemporalCase] =
     val providedBasis =
-      DoubleMatrix.fromRows(
+      LatentNumerics.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -153,19 +153,19 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
     )
 
   private def separableData(
-      temporalBasis: DoubleMatrix,
-      core: DoubleMatrix,
-      spatialLoadings: DoubleMatrix
-  ): DoubleMatrix =
-    DoubleMatrix.multiply(
-      DoubleMatrix.multiply(temporalBasis, core),
+      temporalBasis: DMat,
+      core: DMat,
+      spatialLoadings: DMat
+  ): DMat =
+    LatentNumerics.multiply(
+      LatentNumerics.multiply(temporalBasis, core),
       spatialLoadings.transpose
     )
 
   private def assertResponseRoundtrip(
       label: String,
       response: LatentResponse,
-      expected: DoubleMatrix
+      expected: DMat
   ): Unit =
     val selection =
       LatentSelection(
@@ -186,7 +186,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
     assertRowsEqual(decoded.toRows, expected.transpose.toRows, 1e-10)
 
   private def selectRows(
-      matrix: DoubleMatrix,
+      matrix: DMat,
       rows: Vector[Int],
       cols: Vector[Int]
   ): Vector[Vector[Double]] =
