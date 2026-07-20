@@ -15,7 +15,6 @@ import scalafim.fmri.group.{
   VarianceCapability
 }
 import scalafim.fmri.group.GroupTestMatrix
-import scalafim.linalg.DoubleVector as FitVector
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
@@ -162,9 +161,9 @@ class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
   ): TContrastResult =
     TContrastResult(
       name = name,
-      estimates = FitVector.fromSeq(estimates),
-      standardErrors = FitVector.fromSeq(standardErrors),
-      statistics = FitVector.fromSeq(estimates.zip(standardErrors).map { case (estimate, se) => estimate / se }),
+      estimates = DVec.fromSeq(estimates),
+      standardErrors = DVec.fromSeq(standardErrors),
+      statistics = DVec.fromSeq(estimates.zip(standardErrors).map { case (estimate, se) => estimate / se }),
       residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(80),
       voxelIndices = estimates.indices.toVector
     )

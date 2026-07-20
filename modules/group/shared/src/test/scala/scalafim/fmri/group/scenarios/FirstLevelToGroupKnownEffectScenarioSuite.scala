@@ -83,7 +83,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
           intercept.statistic == GroupStatistic.Normal,
           s"actual=${intercept.statistic.label} expected=${GroupStatistic.Normal.label}"
         ),
-        ScenarioCheck.finite("first-level statistics finite", firstLevels.flatMap(_.contrast.statistics.toVector)),
+        ScenarioCheck.finite("first-level statistics finite", firstLevels.flatMap(_.contrast.statistics.toSeq.toVector)),
         ScenarioCheck.finite("group estimates finite", intercept.estimates.toSeq.toVector),
         ScenarioCheck.finite("group standard errors finite", intercept.standardErrors.toSeq.toVector),
         ScenarioCheck.finite("group statistics finite", intercept.statistics.toSeq.toVector),
@@ -142,10 +142,10 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
     FirstLevelFit(subject.id, contrast)
 
   private def firstLevelEffectMatrix(firstLevels: Vector[FirstLevelFit]): DMat =
-    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.estimates.toVector))
+    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.estimates.toSeq.toVector))
 
   private def firstLevelStandardErrorMatrix(firstLevels: Vector[FirstLevelFit]): DMat =
-    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.standardErrors.toVector))
+    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.standardErrors.toSeq.toVector))
 
   private def fitValue[A](e: Either[FitError, A]): A =
     e.fold(err => fail(err.message), identity)

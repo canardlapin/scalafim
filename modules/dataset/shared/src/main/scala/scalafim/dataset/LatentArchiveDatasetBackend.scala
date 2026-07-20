@@ -68,7 +68,7 @@ final case class LatentArchiveDatasetBackend(
               .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(resolved.voxels)))
               .left
               .map(DatasetError.LatentFailure.apply)
-              .map(decoded => DMat.fromRows(decoded.toRows))
+              .map(DatasetMatrices.fromGale)
           }
       case None =>
         denseEither.map { dense =>

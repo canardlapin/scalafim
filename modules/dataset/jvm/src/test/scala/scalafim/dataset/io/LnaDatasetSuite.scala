@@ -1,8 +1,9 @@
 package scalafim.dataset.io
 
+import gale.linalg.{DMat as GaleDMat, DVec}
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
 import scalafim.archive.lna.{LnaPipeline, QuantParams, SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.dataset.{DataSelection, TimepointSelection, VoxelSelection}
+import scalafim.dataset.{DataSelection, GaleTestData, TimepointSelection, VoxelSelection}
 import scalafim.image.{DMat, Mask, NeuroSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
@@ -16,7 +17,6 @@ import scalafim.latent.{
   LatentSelection,
   TransportLatentResponse
 }
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, DoubleVector, LinearMapError}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -287,7 +287,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       val archive =
         LatentArchiveCodec
           .toTemporalDctArchive(
-            data = DoubleMatrix.fromRows(data.toRows),
+            data = GaleTestData.matrixFromRows(data.toRows),
             space = space,
             components = data.rows,
             norm = DctNorm.Ortho,
@@ -321,26 +321,24 @@ class LnaDatasetSuite extends munit.FunSuite:
     try
       Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Transport Latent LNA Derivative"}""")
       val decoder =
-        mapValue(
-          CsrMatrix.fromTriplets(
-            rows = 4,
-            cols = 2,
-            rowIndices = Array(0, 1, 2, 2, 3, 3),
-            colIndices = Array(0, 1, 0, 1, 0, 1),
-            values = Array(1.0, 1.0, 1.0, 1.0, 2.0, -1.0)
-          )
+        GaleTestData.csrFromTriplets(
+          rows = 4,
+          cols = 2,
+          rowIndices = Array(0, 1, 2, 2, 3, 3),
+          colIndices = Array(0, 1, 0, 1, 0, 1),
+          values = Array(1.0, 1.0, 1.0, 1.0, 2.0, -1.0)
         )
       val response =
         TransportLatentResponse
           .withIdentityTransform(
-            coefficientsAnalysis = DoubleMatrix.fromRows(
+            coefficientsAnalysis = GaleTestData.matrixFromRows(
               Vector(
                 Vector(1.0, 2.0),
                 Vector(3.0, 4.0)
               )
             ),
             nativeDecoder = decoder,
-            offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
+            offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0, 40.0))),
             label = "transport-dataset"
           )
           .fold(err => fail(err.message), identity)
@@ -372,7 +370,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.shape.timepoints, 2)
       assertEquals(backend.shape.spatialSize, 4)
       assertEquals(backend.response.metadata("family"), "transport")
-      assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+      assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
     finally deleteTree(root)
   }
 
@@ -384,27 +382,27 @@ class LnaDatasetSuite extends munit.FunSuite:
       val spatialBasis =
         BoldZipSpatialBasis(
           sampleCount = 3,
-          coarse = BoldZipCoarseBasis.MatrixBasis(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
+          coarse = BoldZipCoarseBasis.MatrixBasis(GaleTestData.matrixFromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))),
           detail = BoldZipDetailBasis.IdentitySamples,
           label = "identity-detail"
         ).fold(err => fail(err.message), identity)
       val response =
         BoldZipPayload(
-          temporalBasis = DoubleMatrix.eye(4),
-          carrierTheta = DoubleMatrix.fromRows(
+          temporalBasis = GaleDMat.eye(4),
+          carrierTheta = GaleTestData.matrixFromRows(
             Vector(
               Vector(1.0, 2.0, 3.0, 4.0),
               Vector(10.0, 20.0, 30.0, 40.0)
             )
           ),
-          carrierLoadings = DoubleMatrix.fromRows(Vector(Vector(2.0, 1.0))),
+          carrierLoadings = GaleTestData.matrixFromRows(Vector(Vector(2.0, 1.0))),
           spatialBasis = spatialBasis,
           texture = Vector(
             BoldZipTextureEntry.unsafe(atom = 0, carrier = 0, amplitude = 0.5),
             BoldZipTextureEntry.unsafe(atom = 1, carrier = 1, amplitude = 1.0, lag = 1)
           ),
           events = Vector(BoldZipResidualEvent.unsafe(atom = 2, frame = 2, amplitude = 3.0)),
-          offset = Some(DoubleVector.fromSeq(Vector(10.0, 20.0, 30.0))),
+          offset = Some(DVec.fromSeq(Vector(10.0, 20.0, 30.0))),
           label = "boldzip-dataset"
         ).fold(err => fail(err.message), identity)
       val archive =
@@ -435,7 +433,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.shape.timepoints, 4)
       assertEquals(backend.shape.spatialSize, 3)
       assertEquals(backend.response.metadata("family"), "boldzip_sr")
-      assertRowsClose(series.data.toRows, expected.toRows, 1e-12)
+      assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
     finally deleteTree(root)
   }
 
@@ -462,7 +460,7 @@ class LnaDatasetSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
       val activeData =
-        DoubleMatrix.fromRows(
+        GaleTestData.matrixFromRows(
           Vector(
             Vector(11.0, 1.0, 7.0),
             Vector(13.0, 0.0, 4.0),
@@ -573,8 +571,3 @@ class LnaDatasetSuite extends munit.FunSuite:
         assertEqualsDouble(actualValue, expectedValue, tol)
       }
     }
-
-  private def mapValue[A](result: Either[LinearMapError, A]): A =
-    result match
-      case Right(value) => value
-      case Left(error)  => fail(error.message)

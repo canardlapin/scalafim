@@ -1,9 +1,9 @@
 package scalafim.dataset
 
+import gale.linalg.DMat as GaleDMat
 import narr.NArray
 import scalafim.image.{DMat, Mask, NeuroSpace}
 import scalafim.latent.ExplicitLatentResponse
-import scalafim.linalg.DoubleMatrix
 
 class LatentResponseDatasetBackendSuite extends munit.FunSuite:
 
@@ -22,8 +22,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, NArray(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(3.0, 7.0, 11.0),
@@ -51,8 +51,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, NArray(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(3.0, 7.0, 11.0),
@@ -80,8 +80,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, NArray(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(3.0, 7.0, 11.0),
@@ -105,8 +105,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, NArray(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(3.0, 7.0, 11.0),
@@ -145,8 +145,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, NArray(0, 2))
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(3.0, 7.0, 11.0),
@@ -164,8 +164,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   test("latent response backend defaults to an all-space mask") {
     val response =
       ExplicitLatentResponse(
-        basis = DoubleMatrix.eye(3),
-        loadings = DoubleMatrix.fromRows(
+        basis = GaleDMat.eye(3),
+        loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
             Vector(2.0, 6.0, 10.0),

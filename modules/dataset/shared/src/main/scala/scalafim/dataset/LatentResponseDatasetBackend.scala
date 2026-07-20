@@ -40,7 +40,7 @@ final case class LatentResponseDatasetBackend(
         .left
         .map(DatasetError.LatentFailure.apply)
       series <- FmriSeries.make(
-        data = DMat.fromRows(decoded.toRows),
+        data = DatasetMatrices.fromGale(decoded),
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
         shape = checkedShape,

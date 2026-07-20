@@ -1,8 +1,8 @@
 package scalafim.fmri.group
 
+import gale.linalg.DVec
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
-import scalafim.linalg.DoubleVector
 
 class FirstLevelBridgeSuite extends munit.FunSuite:
 
@@ -12,9 +12,9 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
   private def contrastResult(estimate: Double, se: Double): TContrastResult =
     TContrastResult(
       name = "faces",
-      estimates = DoubleVector.fromSeq(Seq(estimate)),
-      standardErrors = DoubleVector.fromSeq(Seq(se)),
-      statistics = DoubleVector.fromSeq(Seq(estimate / se)),
+      estimates = DVec.fromSeq(Seq(estimate)),
+      standardErrors = DVec.fromSeq(Seq(se)),
+      statistics = DVec.fromSeq(Seq(estimate / se)),
       residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(100),
       voxelIndices = Vector(0)
     )

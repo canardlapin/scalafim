@@ -3,7 +3,6 @@ package scalafim.dataset.scenarios
 import scalafim.dataset.*
 import scalafim.image.NeuroSpace
 import scalafim.latent.{DctNorm, LatentArchiveCodec}
-import scalafim.linalg.DoubleMatrix
 
 class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
   test("dataset latent archive roundtrip scenario receipt passes") {
@@ -24,7 +23,7 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
     val archive =
       LatentArchiveCodec
         .toTemporalDctArchive(
-          data = DoubleMatrix.fromRows(rows),
+          data = GaleTestData.matrixFromRows(rows),
           space = space,
           components = rows.length,
           norm = DctNorm.Ortho,

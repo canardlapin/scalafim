@@ -202,11 +202,12 @@ lazy val ar =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/ar"))
-    .dependsOn(linalg)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-ar"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val arJS  = ar.js
@@ -238,7 +239,7 @@ lazy val design =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/design"))
-    .dependsOn(hrf, linalg, graphics)
+    .dependsOn(hrf, graphics)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-design",
@@ -247,6 +248,8 @@ lazy val design =
         "org.typelevel" %%% "spire"     % "0.18.0"
       )
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val designJS  = design.js
@@ -331,11 +334,13 @@ lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image, linalg)
+    .dependsOn(image)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val thresholdJS  = threshold.js
@@ -345,11 +350,13 @@ lazy val motion =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/motion"))
-    .dependsOn(image, linalg)
+    .dependsOn(image)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-motion"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val motionJS  = motion.js
@@ -459,6 +466,8 @@ lazy val dataset =
         "ai.dragonfly" %%% "narr" % "1.0.1"
       )
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val datasetJS  = dataset.js
@@ -481,11 +490,13 @@ lazy val model =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/model"))
-    .dependsOn(design, dataset, linalg)
+    .dependsOn(design, dataset)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-model"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val modelJS  = model.js
@@ -495,11 +506,13 @@ lazy val fit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fit"))
-    .dependsOn(linalg, model, ar, pipeline % "test->compile")
+    .dependsOn(model, ar, pipeline % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-fit"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val fitJS  = fit.js
@@ -509,11 +522,12 @@ lazy val mvpa =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa"))
-    .dependsOn(linalg)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaJS  = mvpa.js
@@ -570,11 +584,13 @@ lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/connectivity"))
-    .dependsOn(graph, linalg)
+    .dependsOn(graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-connectivity"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val connectivityJS  = connectivity.js
@@ -612,11 +628,13 @@ lazy val group =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/group"))
-    .dependsOn(linalg, image, dataset, design, fit)
+    .dependsOn(image, dataset, design, fit)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-group"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val groupJS  = group.js
