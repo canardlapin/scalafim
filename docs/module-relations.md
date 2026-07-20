@@ -127,6 +127,13 @@ entity parsing.
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `bids`, `dataset`, `model`, `fit`, `group` | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 
+The binding `multivar` migration target is the
+[single-layer typed operator core](plans/multivar-operator-core.md): one directed
+operator representation, `secondOrder` and `compress` as the only second-order
+and component reductions, `FunctionalFrame` as the latent parameter, and named
+methods lowering to one closed `OperatorProgram`. Its production-consumer table
+is the authoritative ownership map until the legacy numeric mirror is removed.
+
 ## Main Vertical Flows
 
 ### First-level fMRI GLM

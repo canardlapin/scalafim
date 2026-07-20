@@ -69,16 +69,27 @@ directed operator. It carries the numeric kernel *inside* it — there is no sec
 diagram the engine secretly runs on.
 
 ```scala
-final class Op[From <: Coordinate, To <: Coordinate, R <: Role] private[multivar] (
+final class Op[
+    From <: Coordinate,
+    To <: Coordinate,
+    R <: Role,
+    E <: EvidenceTag
+] private[multivar] (
     private[multivar] val kernel: OperatorKernel,   // the ONLY numeric substrate
     val domain:   CoordinateEvidence[From],
     val codomain: CoordinateEvidence[To],
     val role:     R,                                 // phantom tag + runtime value
-    val evidence: Evidence,                          // runtime-authoritative certificate
+    val certificate: Certificate[E],                 // runtime-authoritative evidence
     val valueIdentity: ValueIdentity,
     val provenance:    SemanticProvenance):
-  def andThen[Next <: Coordinate](next: Op[To, Next, ?]): Op[From, Next, ComposedRole]
-  def star: Op[DualOf[To], DualOf[From], AdjointRole[R]]
+  def andThen[Next <: Coordinate, R2 <: Role, E2 <: EvidenceTag](
+      next: Op[To, Next, R2, E2]
+  ): Op[From, Next, ComposedRole[R, R2], CompositionEvidence[E, E2]]
+  def dual: Op[DualOf[To], DualOf[From], DualRole[R], DualEvidence[E]]
+  def metricAdjoint[DF <: EvidenceTag, DT <: EvidenceTag](
+      domainMetric: Op[From, DualOf[From], MetricRole, DF],
+      codomainMetric: Op[To, DualOf[To], MetricRole, DT]
+  ): Either[MultivarError, Op[DualOf[To], DualOf[From], MetricAdjointRole[R], ? <: EvidenceTag]]
 ```
 
 - `OperatorKernel` is today's `SemanticKernel`, tagged with
@@ -90,26 +101,38 @@ final class Op[From <: Coordinate, To <: Coordinate, R <: Role] private[multivar
   `Cometric`, `Covariance`, `Scatter`, `Penalty`, `Kernel`, `RowLink`, `Frame`,
   `Cross`, `Component`. Role advertises meaning; it is static because it is known
   at construction.
-- **Evidence is not a phantom claim.** A fact like "SPD, verified at residual
+- **Evidence is not a phantom claim.** `E` is a static capability tag, but a fact like "SPD, verified at residual
   1e-9, this backend" is established at runtime by a numerical test and cannot be
   honestly lifted into a type. We keep the balance the code already found: a
   type-level *evidence-lattice tag* (`CertifiedSpd <: CertifiedPsd <:
   CertifiedSymmetric`, plus `Assumed*`) where it helps inference, with the
-  authoritative claim a `Certificate` value bound to `valueIdentity`. `Unsafe.*`
+  authoritative claim a `Certificate[E]` value bound to `valueIdentity`. `Unsafe.*`
   (with a mandatory reason) remains the only way to assert evidence not
   established.
+- **Algebraic dual and metric adjoint are different operations.** `dual` reverses
+  the directed map and exchanges primal/dual ports without consulting a metric.
+  `metricAdjoint` is geometry-dependent, requires explicit certified domain and
+  codomain metrics, and can fail. The mathematical superscript `★` below denotes
+  `dual`; it never silently means a metric adjoint.
 
 Role-oriented aliases (orientations follow the constitution's `C —R→ C* —X→ O`
 spine):
 
 ```scala
-type Table[Rows <: SemanticSpace, Cols <: SemanticSpace]  = Op[Dual[Cols], Primal[Rows], TableRole]        // X : C* → O
-type Metric[S <: SemanticSpace]                           = Op[Primal[S], Dual[S], MetricRole]             // R : C  → C*   (SPD)
-type Cometric[S <: SemanticSpace]                         = Op[Dual[S], Primal[S], CometricRole]           // Q : C* → C
-type Covariance[S <: SemanticSpace]                       = Op[Dual[S], Primal[S], CovarianceRole]         // S : C* → C   (PSD)
-type Scatter[S <: SemanticSpace]                          = Op[Dual[S], Primal[S], ScatterRole]            // between/within
-type RowLink[Os <: SemanticSpace, Ot <: SemanticSpace]    = Op[Primal[Ot], Dual[Os], RowLinkRole]          // L : O_t → O_s*
-type Frame[Feat <: SemanticSpace, Comp <: SemanticSpace]  = Op[Primal[Comp], Dual[Feat], FrameRole]        // W : K  → C*
+type Table[Rows <: SemanticSpace, Cols <: SemanticSpace, E <: EvidenceTag] =
+  Op[Dual[Cols], Primal[Rows], TableRole, E]                                  // X : C* → O
+type Metric[S <: SemanticSpace, E <: SymmetricEvidence] =
+  Op[Primal[S], Dual[S], MetricRole, E]                                       // R : C  → C* (SPD)
+type Cometric[S <: SemanticSpace, E <: SymmetricEvidence] =
+  Op[Dual[S], Primal[S], CometricRole, E]                                     // Q : C* → C
+type Covariance[S <: SemanticSpace, E <: PsdEvidence] =
+  Op[Dual[S], Primal[S], CovarianceRole, E]                                   // S : C* → C (PSD)
+type Scatter[S <: SemanticSpace, E <: SymmetricEvidence] =
+  Op[Dual[S], Primal[S], ScatterRole, E]                                      // between/within
+type RowLink[Os <: SemanticSpace, Ot <: SemanticSpace, E <: EvidenceTag] =
+  Op[Primal[Ot], Dual[Os], RowLinkRole, E]                                    // L : O_t → O_s*
+type Frame[Feat <: SemanticSpace, Comp <: SemanticSpace, E <: EvidenceTag] =
+  Op[Primal[Comp], Dual[Feat], FrameRole, E]                                  // W : K → C*
 ```
 
 Metric, covariance, scatter, and penalty share this representation and differ only
@@ -442,39 +465,122 @@ as new objectives, distributed execution, Python/R bindings over the IR.
 ## 10. Migration sequence
 
 Invariants that must hold, green on **both** JVM and Scala.js, after *every*
-phase: the GenPCA and PairedLatent R parity fixtures pass; the `multivar-ir`
-conformance corpus passes; `sbt testAll` is clean; shared `multivar` imports no
-Breeze / dataset / image / scheduler / binding runtime.
+implementation phase: the GenPCA and PairedLatent R parity fixtures pass; the
+`multivar-ir` conformance corpus passes; the affected focused suites are clean;
+shared `multivar` imports no Breeze / dataset / image / scheduler / binding
+runtime. `sbt testAll` is the final release gate, not a substitute for the
+focused independent oracles at each phase.
 
-- **Phase 1 — collapse.** Define `Op` + `secondOrder` + `compress` +
-  `FunctionalFrame`. Re-base GenPCA to compute *through* them and **delete** the
-  `MvMetric`/`DualityDiagram`/`MvMap`/legacy-`GenPca` compute path. Extend the IR
-  with the new operator/frame/objective nodes (additive). Make `FunctionalFrame`
-  the *semantic* parameter `θ` so a `Parameterization` (identity for now, §6.2) can
-  sit above it later without rework. Gate: GenPCA fixtures + IR corpus. *This is
-  the invasive, worth-it step; everything else is downstream.*
-- **Phase 2 — LDA (proof).** Add LDA as a new method via `secondOrder` (between /
-  within scatter as `Xˢ L_B X` / `Xˢ L_W X`), with a fresh R parity fixture. This
-  proves the pullback generalizes on new code before any shipping method is
-  touched further.
-- **Phase 3 — paired family.** Re-express PLSC / CCA / RRR through the primitives,
-  delete `PairedGmd`-as-engine, unify on `FunctionalFrame` (already W-primary).
-  Gate: PairedLatent fixtures.
-- **Phase 4 — multiset.** Route direct-sum studies through `secondOrder` on block
-  operators; the promoted objective layer subsumes `MultisetObjectives`. Gate:
-  multiset suites.
-- **Phase 5 — the variational layer, one family at a time.** With the core
-  collapsed and the seam fixed by §6, add bells and whistles incrementally, each as
-  a `PenaltyTerm`/`ConstraintTerm` over a typed target plus its solver lowering and
-  a parity fixture against the reference implementation. A sensible order:
-  quadratic pullbacks first (ridge, graph smoothness — exact rewrites, eigen/normalization
-  absorption), then separable prox (ℓ₁, group ℓ₂,₁ on explicit coordinates), then
-  parameterizations (known support, fixed rank, null-space), then split/ADMM
-  families (fused lasso / TV, overlapping groups), then operator policies
-  (Ledoit–Wolf, joint-block CCA shrinkage). `ModelSpec`, the general solver
-  compiler/"mills", and learned alignment follow only when a family or a
-  fold-safe selection actually demands them.
+1. **Freeze this contract and inventory** (`bd-01KXZZ0T9511DAY99QNHWKQ688`).
+   No implementation deletion is permitted before this issue and the primitive
+   issue are closed.
+2. **Build the one operator kernel** (`bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`):
+   `Op`, evidence transitions, algebraic dual versus metric adjoint,
+   `secondOrder`, `compress`, and `FunctionalFrame`. Existing methods remain
+   untouched compatibility consumers during this slice.
+3. **Add the closed program and portable representation**
+   (`bd-01KXZZ2CR25BHXZMWXEBD9SQSR`,
+   `bd-01KXSGZ39BHVZ8YJ2XYDRSHKWP`): typed variables, the finite
+   `BaseObjective` catalog, normalization, result semantics, and additive IR
+   nodes.
+4. **Rebase GPCA without premature deletion**
+   (`bd-01KXSGZ33WT5MJABWX8GE3JP6G`). Semantic GPCA computes through the new
+   program; necessary old entry points may survive only as delegates recorded in
+   the purge inventory.
+5. **Add LDA as the independent proof**
+   (`bd-01KXSGZ3E48W9X80199PS5FHA8`). Between/within scatter must arise through
+   `secondOrder`, with a fresh external parity fixture.
+6. **Migrate the finite remaining families and plumbing**: paired PLSC/CCA/RRR
+   (`bd-01KXSGZ3JXDTCAKBHWN8G549B8`), direct-sum/multiset
+   (`bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5`), CPCA
+   (`bd-01KXZZ2DYHE40YAB7R4K3SPKX3`), kernel/Nyström
+   (`bd-01KXZZ2E8NERAS8W8Z2HKJE9RT`), and row geometry/plans/artifacts
+   (`bd-01KXZZ2ENAYNANJ02HDEQT07D4`). These slices may retain isolated delegates
+   needed by a not-yet-migrated sibling but may not contain another solver.
+7. **Delete the legacy mirror once** (`bd-01KXZZ2EZR8YGHYVP18KTDJKG3`), only
+   after every row in §12 has migrated. This is where `MvMetric`, legacy
+   `DualityDiagram`, `MvMap`, raw `GenPca`, `PairedGmd`, and estimator-switch
+   remnants leave production code.
+8. **Run the independent release gate** (`bd-01KXZZ2FAPEGV5MQX8EH9973QM`):
+   external fixtures, representation laws, negative type cases, dependency
+   scans, `compileAll`, and `testAll` at one committed revision.
 
-When Phase 4 lands, the dual-layer language leaves the constitution and this
-document becomes its implemented "operator core" section; Phase 5 accretes under
-it without reopening the core.
+The variational families described in §6.2–§6.5 are a separate follow-on epic.
+They accrete after the finite core without reopening it: quadratic pullbacks
+first, then explicit-coordinate prox families, parameterizations, split methods,
+and finally data-dependent operator policies under fold-safe `ModelSpec`.
+
+When the purge and release gate land, the dual-layer language leaves the
+constitution and this document becomes its implemented operator-core section.
+
+---
+
+## 11. Evidence transitions and result equivalence
+
+The evidence tag is useful only if every constructor has a deterministic rule.
+The runtime certificate remains authoritative and names the exact input value
+identities from which a derived claim follows.
+
+| Operation | Evidence rule |
+|---|---|
+| Identity, role refinement, or a zero-copy representation view | Preserve the tag and certificate only while `ValueIdentity` is unchanged. |
+| `dual(op)` | Preserve finiteness and verified structure under transposition; preserve symmetric/PSD/SPD only for a certified endomorphism on the same nominal space. |
+| Generic composition | Preserve shape and finiteness. Downgrade symmetry/PSD/SPD unless a specialized constructor proves the stronger result. |
+| `secondOrder(Xs, L, Xt)` | Cross-view output is generally uncertified symmetric. For `Xs == Xt`, certified symmetry follows from symmetric `L`, PSD follows from PSD `L`, and SPD additionally requires verified injectivity on the supported subspace. |
+| `compress(Ws, S, Wt)` | Apply the same cross/self rule as `secondOrder`; self-compression preserves PSD and preserves SPD only when the frame has verified full column rank on the certified support. |
+| Direct sum or block assembly | Derive the meet of block evidence and record every block identity. No global SPD claim follows if an uncovered or zero block exists. |
+| Materialization or backend transfer | Create a new value identity and a derived certificate referring to the source identity and verified representation equivalence; never copy a certificate blindly. |
+| Approximation, truncation, shrinkage, repair, or learned policy | Downgrade to the strongest property proved by that operation and retain tolerance/backend details. Data-dependent choices additionally belong to `ModelSpec`. |
+| `Unsafe.assume*` | Produce an `Assumed*` tag with a mandatory reason. It never becomes `Certified*` merely by flowing through the algebra. |
+
+Fits use a closed result-equivalence vocabulary rather than an unstructured
+string or a claim that one representative matrix is uniquely true:
+
+- `ValueEquivalent(tolerance)` for identified scalar/vector/matrix values;
+- `OperatorEquivalent(domain, codomain, tolerance)` for equal directed actions;
+- `SubspaceEquivalent(projectorTolerance, principalAngleTolerance)` for repeated
+  or clustered spectra;
+- `FrameEquivalent(group, tolerance)` for sign, permutation, or orthogonal gauge;
+- `PredictionEquivalent(metric, tolerance)` for directed fitted maps; and
+- `ObjectiveEquivalent(tolerance)` when only the achieved functional value is
+  identified.
+
+The fitted result records the strongest applicable case plus its numerical
+identifiability evidence. A solver residual is diagnostic evidence about the
+computed representative; it is not a replacement for the input operator
+certificate.
+
+## 12. Exhaustive production-consumer inventory
+
+This table is the ownership map for the production files found by the legacy
+symbol scan. A file may temporarily contain a compatibility delegate, but each
+delegate has one migration owner and the final purge has one finite deletion
+list. Tests and documentation follow the owner of the production surface they
+exercise.
+
+| Production surface | Current files | Migration owner |
+|---|---|---|
+| Operator/form/map substrate and legacy diagram bridge | `SemanticForms.scala`, `DualityKernels.scala`, `Metric.scala`, `Maps.scala`, `DualityDiagram.scala`, `SemanticDiagram.scala` | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Universal objective/result program | named builders across `SemanticGenPca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
+| GPCA and deflation | `GenPca.scala`, `SemanticGenPca.scala`, `GenPcaSemantics.scala`, `GmdDeflation.scala` | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G` |
+| Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
+| Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
+| CPCA | `Cpca.scala` | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3` |
+| Kernel and Nyström | `Kernel.scala` | kernel/Nyström `bd-01KXZZ2E8NERAS8W8Z2HKJE9RT` |
+| Multiblock, transformations, row geometry, plans, and fit artifacts | `BlockPartition.scala`, `Multiblock.scala`, `SemanticTransformations.scala`, `RowGeometry.scala`, `Plans.scala`, `PairedLatent.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4` |
+| Inference consumers of multivar problems, capabilities, and block protocols | `inference/Problems.scala`, `inference/Capabilities.scala`, `inference/Compiler.scala`, `inference/BlockFamilyProtocols.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, verified by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |
+| Portable wire representation | `modules/multivar-ir` operator, program, frame, rewrite, and result records | wire IR `bd-01KXSGZ39BHVZ8YJ2XYDRSHKWP` |
+| Legacy aliases and compatibility delegates remaining after all migrations | repository-wide scan for `MvMetric`, `MvMap`, legacy `DualityDiagram`, raw `GenPca`, and `PairedGmd` | purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+
+LDA is new proof code rather than a legacy consumer and is owned by
+`bd-01KXSGZ3E48W9X80199PS5FHA8`. The independent end-state audit is
+`bd-01KXZZ2FAPEGV5MQX8EH9973QM`; no production consumer may be discovered at
+that gate without either an owner above or a new explicit dependency before
+purge.
+
+Unsupported surfaces are deliberate: Krein/indefinite decompositions,
+generalized nonsymmetric pencils, an open scalar objective DSL, hidden raw-matrix
+callbacks, data-dependent preprocessing inside `OperatorProgram`, implicit
+metric adjoints, and family-private numerical engines. They remain unsupported
+until a named constructor, typed lowering, independent oracle, and JVM/JS path
+exist together.

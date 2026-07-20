@@ -6,8 +6,14 @@ nominal spaces, primal/dual orientation, form roles, evidence, centering,
 singularity policy, and provenance are part of the analysis object rather than
 loose matrix arguments.
 
-The durable architectural contract and migration guide are in
+The constitutional invariants are in
 [`docs/plans/multivar-duality-constitution.md`](../../docs/plans/multivar-duality-constitution.md).
+The binding single-layer target, evidence-transition rules, result-equivalence
+vocabulary, and exhaustive legacy-consumer ownership map are in
+[`docs/plans/multivar-operator-core.md`](../../docs/plans/multivar-operator-core.md).
+Until that finite migration closes, legacy entry points are compatibility
+delegates only; new methods must target the one operator/program architecture
+and may not add another numerical engine.
 
 This module owns the portable algebra below MVPA and neuroimaging adapters:
 
