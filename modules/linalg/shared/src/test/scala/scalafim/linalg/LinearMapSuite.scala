@@ -19,6 +19,12 @@ class LinearMapSuite extends munit.FunSuite:
       i += 1
     sum
 
+  private def denseMap(matrix: DoubleMatrix): LinearMap =
+    val entries = Vector.tabulate(matrix.rows, matrix.cols) { (row, col) =>
+      (row, col, matrix(row, col))
+    }.flatten.filter(_._3 != 0.0)
+    value(CsrMatrix.fromTriplets(matrix.rows, matrix.cols, entries.map(_._1).toArray, entries.map(_._2).toArray, entries.map(_._3).toArray))
+
   test("SparseTriplets validates dimensions and zero-based bounds"):
     val badLength =
       SparseTriplets(
@@ -151,6 +157,35 @@ class LinearMapSuite extends munit.FunSuite:
 
     val bad = LinearMap.compose(second, first)
     assertEquals(bad.left.toOption, Some(LinearMapError.NonComposable(2, 3)))
+
+  test("block matrix applies rectangular blocks, sums duplicate edges, and preserves adjoints"):
+    val upperLeft = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
+    val upperRight = DoubleMatrix.fromRows(Vector(Vector(5.0), Vector(6.0)))
+    val lowerLeft = DoubleMatrix.fromRows(Vector(Vector(7.0, 8.0)))
+    val duplicate = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0)))
+    val block = value(
+      LinearMap.blockMatrix(
+        Vector(2, 1),
+        Vector(2, 1),
+        Vector(
+          LinearMapBlock(0, 0, denseMap(upperLeft)),
+          LinearMapBlock(0, 0, denseMap(duplicate)),
+          LinearMapBlock(0, 1, denseMap(upperRight)),
+          LinearMapBlock(1, 0, denseMap(lowerLeft))
+        )
+      )
+    )
+    val input = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
+    val output = value(block.forward(input))
+    assertEquals(output.col(0).toVector, Vector(21.0, 31.0, 23.0))
+
+    val probe = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(-1.0), Vector(0.5)))
+    assertEqualsDouble(dot(output, probe), dot(input, value(block.adjoint.forward(probe))), 1e-12)
+    assert(
+      LinearMap
+        .blockMatrix(Vector(2), Vector(2), Vector(LinearMapBlock(0, 0, denseMap(upperRight))))
+        .isLeft
+    )
 
   test("restrict preserves selected target row and source column order"):
     val base =

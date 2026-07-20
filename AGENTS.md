@@ -56,6 +56,10 @@ construction points, but the core model should express its invariants in types.
   and readable; keep the *inner loop* allocation-free.
 - Shared code must avoid JVM-only numeric deps (Breeze, JTransforms) on hot paths — those
   belong behind a `jvm` boundary. If you need one in `shared`, it's a design smell; stop.
+- Linear algebra solver contracts and portable reference implementations belong in `linalg`;
+  do not add private eigensolver/SVD/inverse helper families in domain modules. JVM-only
+  libraries such as Breeze belong behind explicit adapter modules such as `linalg-breeze` and typed solver
+  capabilities. See [`docs/plans/linalg-backend-strategy.md`](docs/plans/linalg-backend-strategy.md).
 
 ## Testing
 
