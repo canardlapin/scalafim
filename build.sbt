@@ -14,6 +14,7 @@ lazy val galeBuild =
   uri(s"https://github.com/bbuchsbaum/gale.git#$galeRevision")
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
 lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
+lazy val jhdfVersion = "0.12.0"
 
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq(
@@ -398,6 +399,12 @@ lazy val spatial =
     .settings(
       name := "scalafim-spatial"
     )
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "io.jhdf" % "jhdf" % jhdfVersion,
+        "org.slf4j" % "slf4j-nop" % "2.0.18" % Test
+      )
+    )
     .jsSettings(jsSettingsBase)
 
 lazy val spatialJS  = spatial.js
@@ -447,7 +454,7 @@ lazy val archive =
       name := "scalafim-archive"
     )
     .jvmSettings(
-      libraryDependencies += "io.jhdf" % "jhdf" % "0.12.0"
+      libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion
     )
     .jsSettings(jsSettingsBase)
 

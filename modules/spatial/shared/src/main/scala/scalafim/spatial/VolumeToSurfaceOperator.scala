@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, NeuroVol, SpatialDims, SpatialPoint}
 import scalafim.linalg.{CsrMatrix, LinearMapError, SparseTriplets}
-import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId}
+import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -77,41 +77,52 @@ object VolumeToSurfaceOperatorCompiler:
 
   def compile(graph: SpatialGraph, request: VolumeToSurfaceRequest): Either[SpatialError, SpatialOperator] =
     for
-      sourceDomain <- graph.domain(request.source)
       targetDomain <- graph.domain(request.target)
-      source <- volumeSource(sourceDomain)
       target <- surfaceTarget(targetDomain)
       _ <- validateSurfacePair(targetDomain.id, target.geometry, request.surfaces)
       path <- graph.path(request.source, request.target, request.routing, request.allowInverses)
-      volumeToSurfacePath <- VolumeToSurfacePath.from(path)
-      rows <- TargetRows.fromSelection(request.rowSelection, targetDomain.nElements)
-      rowAssembly <- assembleRows(source, target, rows, request)
-      triplets <- SparseTriplets(
-        rows = rows.length,
-        cols = sourceDomain.nElements,
-        rowIndices = rowAssembly.rowIndices.toArray,
-        colIndices = rowAssembly.colIndices.toArray,
-        values = rowAssembly.values.toArray
-      ).left.map(linearError)
-      csr <- CsrMatrix.fromTriplets(triplets).left.map(linearError)
-      coverage <- CoverageReport.build(rows, rowAssembly.coverage.toVector)
-      recipe <- OperatorRecipe.build(
-        path = volumeToSurfacePath.ids,
-        routing = request.routing,
-        sampling = request.sampling,
-        rowSelection = rows.selection,
-        allowInverses = request.allowInverses,
-        compiler = CompilerName
+      _ <- validateMixedRoute(path)
+      plan = VolumeSurfaceSamplingPlan(request.surfaces, request.path)
+      bridgeCompiler = RequestVolumeToSurfacePullbackCompiler(plan)
+      registry <- MorphismCompilerRegistry.build(
+        Vector(
+          MorphismPullbackCompiler.identity,
+          MorphismPullbackCompiler.affine3D,
+          MorphismPullbackCompiler.warp3D,
+          bridgeCompiler,
+          MorphismPullbackCompiler.surfaceToSurface
+        )
       )
-      operator <- SpatialOperator.build(
-        source = request.source,
-        target = request.target,
-        map = csr,
-        path = path,
-        qc = OperatorQc(coverage, path.pathQuality),
-        provenance = OperatorProvenance.fromRecipe(recipe)
+      program <- PullbackProgram.compile(
+        graph,
+        CompileRequest.forRows(
+          source = request.source,
+          target = request.target,
+          rowSelection = request.rowSelection,
+          routing = request.routing,
+          sampling = request.sampling,
+          allowInverses = request.allowInverses
+        ),
+        registry
       )
+      compilerName = s"$CompilerName:${CoordinateMap.volumeSamples(plan).fingerprint}"
+      operator <- MixedPullbackOperatorCompiler.compile(program, compilerName)
     yield operator
+
+  private def validateMixedRoute(path: MorphismPath): Either[SpatialError, Unit] =
+    path.morphisms.find { morphism =>
+      morphism.kind != MorphismKind.Identity &&
+      morphism.kind != MorphismKind.Affine3D &&
+      morphism.kind != MorphismKind.Warp3D &&
+      morphism.kind != MorphismKind.VolumeToSurface &&
+      morphism.kind != MorphismKind.SurfaceToSurface
+    } match
+      case Some(morphism) =>
+        Left(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
+      case None =>
+        val bridges = path.morphisms.count(_.kind == MorphismKind.VolumeToSurface)
+        if bridges == 1 then Right(())
+        else Left(SpatialError.InvalidMixedPullback(s"expected one volume-to-surface bridge, got $bridges"))
 
   private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
     domain.geometry match
@@ -205,7 +216,7 @@ object VolumeToSurfaceOperatorCompiler:
           SurfaceRowWeights(cols.toVector, values.toVector, coverageSum / points.length.toDouble)
       }
 
-  private def sourcePointWeights(
+  private[spatial] def sourcePointWeights(
     sourceGrid: GridSpec,
     sourceMask: Option[NeuroVol[Boolean]],
     point: SpatialPoint,
@@ -287,7 +298,7 @@ object VolumeToSurfaceOperatorCompiler:
         values += weight
         weight
 
-  private def samplePoints(
+  private[spatial] def samplePoints(
     surfaces: SurfaceGeometryPair,
     path: SurfaceSamplingPath,
     vertex: VertexId
@@ -323,7 +334,7 @@ object VolumeToSurfaceOperatorCompiler:
       .fromVector(Affine.applyAffine(surface.surfaceToWorld, point.toVector), "surface sample point")
       .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
 
-  private def surfaceMaskAllows(mask: Option[SurfaceRoi[Boolean]], vertex: VertexId): Boolean =
+  private[spatial] def surfaceMaskAllows(mask: Option[SurfaceRoi[Boolean]], vertex: VertexId): Boolean =
     mask match
       case None =>
         true
@@ -361,7 +372,7 @@ private final case class VolumeSource(space: NeuroSpace, mask: Option[NeuroVol[B
 
 private final case class SurfaceTarget(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
 
-private final case class SurfacePointWeights(cols: Vector[Int], values: Vector[Double], coverage: Double)
+private[spatial] final case class SurfacePointWeights(cols: Vector[Int], values: Vector[Double], coverage: Double)
 
 private object SurfacePointWeights:
   val empty: SurfacePointWeights =
@@ -374,6 +385,287 @@ private object SurfaceRowWeights:
     SurfaceRowWeights(Vector.empty, Vector.empty, 0.0)
 
 private final case class SurfaceRowAssembly(
+  rowIndices: ArrayBuffer[Int] = ArrayBuffer.empty[Int],
+  colIndices: ArrayBuffer[Int] = ArrayBuffer.empty[Int],
+  values: ArrayBuffer[Double] = ArrayBuffer.empty[Double],
+  coverage: ArrayBuffer[Double] = ArrayBuffer.empty[Double]
+)
+
+private final class RequestVolumeToSurfacePullbackCompiler(
+  plan: scalafim.surface.VolumeSurfaceSamplingPlan
+) extends MorphismPullbackCompiler:
+  override val id: MorphismCompilerId =
+    MorphismCompilerId.unsafe("volume-to-surface-request-pullback-v1")
+
+  override val kind: MorphismKind =
+    MorphismKind.VolumeToSurface
+
+  override def lower(
+    morphism: Morphism,
+    source: Domain,
+    target: Domain
+  ): Either[SpatialError, Vector[PullbackStep]] =
+    if morphism.kind != kind then
+      Left(SpatialError.MorphismCompilerKindMismatch(id.value, kind, morphism.kind))
+    else
+      for
+        _ <- Morphism.validateDomains(morphism, source, target)
+        _ <- target.geometry match
+          case SamplingGeometry.Surface(geometry, _) if geometry == plan.surfaces.white => Right(())
+          case _ => Left(SpatialError.SurfaceSamplingGeometryMismatch(morphism.id))
+        step <- PullbackStep.build(morphism, id, CoordinateMap.volumeSamples(plan))
+      yield Vector(step)
+
+object MixedPullbackOperatorCompiler:
+  private val CompilerName = "mixed-pullback-fused-v1"
+
+  def compile(program: PullbackProgram): Either[SpatialError, SpatialOperator] =
+    compile(program, CompilerName)
+
+  private[spatial] def compile(
+    program: PullbackProgram,
+    compilerName: String
+  ): Either[SpatialError, SpatialOperator] =
+    (program.route.source.kind, program.route.target.kind) match
+      case (DomainKind.Volume, DomainKind.Surface) =>
+        compileVolumeRoot(program, compilerName)
+      case (DomainKind.Surface, DomainKind.Surface) =>
+        compileSurfaceRoot(program, compilerName)
+      case (source, target) =>
+        Left(SpatialError.InvalidMixedPullback(s"unsupported root/target transition $source->$target"))
+
+  private def compileVolumeRoot(
+    program: PullbackProgram,
+    compilerName: String
+  ): Either[SpatialError, SpatialOperator] =
+    val bridges = program.steps.zipWithIndex.collect {
+      case (step, index) if step.morphism.kind == MorphismKind.VolumeToSurface => index
+    }
+    if bridges.length != 1 then
+      Left(SpatialError.InvalidMixedPullback(s"expected one volume-to-surface bridge, got ${bridges.length}"))
+    else
+      val bridgeIndex = bridges.head
+      for
+        plan <- program.steps(bridgeIndex).coordinateMap match
+          case CoordinateMap.VolumeSamples(value) => Right(value)
+          case _ => Left(SpatialError.InvalidMixedPullback("volume-to-surface bridge has no executable sampling plan"))
+        _ <- validateVolumePrefix(program.steps.take(bridgeIndex))
+        _ <- validateSurfaceSuffix(program.steps.drop(bridgeIndex + 1))
+        source <- volumeSource(program.route.source)
+        target <- surfaceTarget(program.route.target)
+        assembly <- assembleVolumeRoot(program, bridgeIndex, plan, source, target)
+        operator <- buildOperator(program, assembly, compilerName)
+      yield operator
+
+  private def compileSurfaceRoot(
+    program: PullbackProgram,
+    compilerName: String
+  ): Either[SpatialError, SpatialOperator] =
+    for
+      _ <- validateSurfaceSuffix(program.steps)
+      source <- surfaceTarget(program.route.source)
+      target <- surfaceTarget(program.route.target)
+      assembly <- assembleSurfaceRoot(program, source, target)
+      operator <- buildOperator(program, assembly, compilerName)
+    yield operator
+
+  private def assembleVolumeRoot(
+    program: PullbackProgram,
+    bridgeIndex: Int,
+    plan: scalafim.surface.VolumeSurfaceSamplingPlan,
+    source: VolumeSource,
+    target: SurfaceTarget
+  ): Either[SpatialError, MixedRowAssembly] =
+    val sourceGrid = GridSpec.fromSpace(source.space)
+    val assembly = MixedRowAssembly()
+    val rows = program.route.targetRows
+    var outRow = 0
+    var error = Option.empty[SpatialError]
+
+    while outRow < rows.length && error.isEmpty do
+      val targetVertex = VertexId(rows.indices(outRow))
+      if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
+        assembly.coverage += 0.0
+      else
+        pullSurfaceVertex(program.steps, bridgeIndex + 1, targetVertex) match
+          case Left(err) => error = Some(err)
+          case Right(bridgeVertex) =>
+            VolumeToSurfaceOperatorCompiler.samplePoints(plan.surfaces, plan.path, bridgeVertex) match
+              case Left(err) => error = Some(err)
+              case Right(points) =>
+                val pointWeights = Vector.newBuilder[SurfacePointWeights]
+                var coverageSum = 0.0
+                var pointIndex = 0
+                while pointIndex < points.length && error.isEmpty do
+                  pullVolumePoint(program.steps, bridgeIndex, points(pointIndex)) match
+                    case Left(err) => error = Some(err)
+                    case Right(rootPoint) =>
+                      val weights =
+                        VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+                          sourceGrid,
+                          source.mask,
+                          rootPoint,
+                          program.route.sampling
+                        )
+                      pointWeights += weights
+                      coverageSum += weights.coverage
+                  pointIndex += 1
+
+                if error.isEmpty then
+                  appendAveragedWeights(
+                    assembly,
+                    outRow,
+                    pointWeights.result(),
+                    coverageSum / points.length.toDouble
+                  )
+      outRow += 1
+
+    error match
+      case Some(err) => Left(err)
+      case None => Right(assembly)
+
+  private def assembleSurfaceRoot(
+    program: PullbackProgram,
+    source: SurfaceTarget,
+    target: SurfaceTarget
+  ): Either[SpatialError, MixedRowAssembly] =
+    val assembly = MixedRowAssembly()
+    val rows = program.route.targetRows
+    var outRow = 0
+    var error = Option.empty[SpatialError]
+    while outRow < rows.length && error.isEmpty do
+      val targetVertex = VertexId(rows.indices(outRow))
+      if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
+        assembly.coverage += 0.0
+      else
+        pullSurfaceVertex(program.steps, 0, targetVertex) match
+          case Left(err) => error = Some(err)
+          case Right(rootVertex) =>
+            if VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(source.mask, rootVertex) then
+              assembly.rowIndices += outRow
+              assembly.colIndices += rootVertex.index
+              assembly.values += 1.0
+              assembly.coverage += 1.0
+            else assembly.coverage += 0.0
+      outRow += 1
+    error match
+      case Some(err) => Left(err)
+      case None => Right(assembly)
+
+  private def appendAveragedWeights(
+    assembly: MixedRowAssembly,
+    outRow: Int,
+    weights: Vector[SurfacePointWeights],
+    coverage: Double
+  ): Unit =
+    val valid = weights.filter(_.coverage > 0.0)
+    assembly.coverage += coverage
+    if valid.nonEmpty then
+      val scale = 1.0 / valid.length.toDouble
+      var point = 0
+      while point < valid.length do
+        var index = 0
+        while index < valid(point).cols.length do
+          assembly.rowIndices += outRow
+          assembly.colIndices += valid(point).cols(index)
+          assembly.values += valid(point).values(index) * scale
+          index += 1
+        point += 1
+
+  private def pullVolumePoint(
+    steps: Vector[PullbackStep],
+    bridgeIndex: Int,
+    point: SpatialPoint
+  ): Either[SpatialError, SpatialPoint] =
+    var current = point
+    var index = bridgeIndex - 1
+    var error = Option.empty[SpatialError]
+    while index >= 0 && error.isEmpty do
+      steps(index).coordinateMap.transform(current) match
+        case Left(err) => error = Some(err)
+        case Right(next) => current = next
+      index -= 1
+    error.toLeft(current)
+
+  private def pullSurfaceVertex(
+    steps: Vector[PullbackStep],
+    start: Int,
+    target: VertexId
+  ): Either[SpatialError, VertexId] =
+    var current = target
+    var index = steps.length - 1
+    while index >= start do
+      steps(index).coordinateMap match
+        case CoordinateMap.SurfaceVertices(mapping) =>
+          if current.index < 0 || current.index >= mapping.sourceForTarget.length then
+            return Left(SpatialError.InvalidMixedPullback(s"surface target vertex ${current.index} is out of bounds"))
+          current = mapping.sourceForTarget(current.index)
+        case other =>
+          return Left(SpatialError.InvalidMixedPullback(s"expected surface vertex mapping, got $other"))
+      index -= 1
+    Right(current)
+
+  private def validateVolumePrefix(steps: Vector[PullbackStep]): Either[SpatialError, Unit] =
+    steps.find { step =>
+      step.morphism.kind != MorphismKind.Affine3D && step.morphism.kind != MorphismKind.Warp3D
+    } match
+      case Some(step) => Left(SpatialError.InvalidMixedPullback(s"${step.morphism.kind} appears before the surface bridge"))
+      case None => Right(())
+
+  private def validateSurfaceSuffix(steps: Vector[PullbackStep]): Either[SpatialError, Unit] =
+    steps.find(_.morphism.kind != MorphismKind.SurfaceToSurface) match
+      case Some(step) => Left(SpatialError.InvalidMixedPullback(s"${step.morphism.kind} appears after the surface bridge"))
+      case None => Right(())
+
+  private def buildOperator(
+    program: PullbackProgram,
+    assembly: MixedRowAssembly,
+    compilerName: String
+  ): Either[SpatialError, SpatialOperator] =
+    val route = program.route
+    val rows = route.targetRows
+    for
+      triplets <- SparseTriplets(
+        rows = rows.length,
+        cols = route.source.nElements,
+        rowIndices = assembly.rowIndices.toArray,
+        colIndices = assembly.colIndices.toArray,
+        values = assembly.values.toArray
+      ).left.map(linearError)
+      csr <- CsrMatrix.fromTriplets(triplets).left.map(linearError)
+      coverage <- CoverageReport.build(rows, assembly.coverage.toVector)
+      recipe <- OperatorRecipe.build(
+        path = route.path.ids,
+        routing = route.routing,
+        sampling = route.sampling,
+        rowSelection = rows.selection,
+        allowInverses = route.allowInverses,
+        compiler = compilerName
+      )
+      operator <- SpatialOperator.build(
+        source = route.source.id,
+        target = route.target.id,
+        map = csr,
+        path = route.path,
+        qc = OperatorQc(coverage, route.path.pathQuality),
+        provenance = OperatorProvenance.fromRecipe(recipe)
+      )
+    yield operator
+
+  private def volumeSource(domain: Domain): Either[SpatialError, VolumeSource] =
+    domain.geometry match
+      case SamplingGeometry.Volume(space, mask) => Right(VolumeSource(space.spatialSpace, mask))
+      case _ => Left(SpatialError.NonVolumeDomain(domain.id))
+
+  private def surfaceTarget(domain: Domain): Either[SpatialError, SurfaceTarget] =
+    domain.geometry match
+      case SamplingGeometry.Surface(geometry, mask) => Right(SurfaceTarget(geometry, mask))
+      case _ => Left(SpatialError.NonSurfaceDomain(domain.id))
+
+  private def linearError(error: LinearMapError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.message)
+
+private final case class MixedRowAssembly(
   rowIndices: ArrayBuffer[Int] = ArrayBuffer.empty[Int],
   colIndices: ArrayBuffer[Int] = ArrayBuffer.empty[Int],
   values: ArrayBuffer[Double] = ArrayBuffer.empty[Double],

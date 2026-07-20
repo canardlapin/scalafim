@@ -16,11 +16,11 @@ enum TransformKind:
       case Warp3D | DisplacementField3D | CoordinateField3D => MorphismKind.Warp3D
 
 enum TransformFileFormat:
-  case ANTsH5, FslFlirt, FslFnirt, AfniAffine, AfniWarp, FreeSurferLta, X5
+  case AntsAffine, AntsDisplacement, ANTsH5, FslFlirt, FslFnirt, AfniAffine, AfniWarp, FreeSurferLta, X5
 
   def tool: TransformTool =
     this match
-      case ANTsH5 => TransformTool.ANTs
+      case AntsAffine | AntsDisplacement | ANTsH5 => TransformTool.ANTs
       case FslFlirt | FslFnirt => TransformTool.FSL
       case AfniAffine | AfniWarp => TransformTool.AFNI
       case FreeSurferLta => TransformTool.FreeSurfer
@@ -28,14 +28,17 @@ enum TransformFileFormat:
 
   def defaultKind: TransformKind =
     this match
-      case ANTsH5 | FslFnirt | AfniWarp => TransformKind.Warp3D
-      case FslFlirt | AfniAffine | FreeSurferLta => TransformKind.Affine3D
+      case AntsDisplacement | ANTsH5 | FslFnirt | AfniWarp => TransformKind.Warp3D
+      case AntsAffine | FslFlirt | AfniAffine | FreeSurferLta => TransformKind.Affine3D
       case X5 => TransformKind.Warp3D
 
 object TransformFileFormat:
   def detect(path: Path): Option[TransformFileFormat] =
     val name = path.getFileName.toString.toLowerCase
     if name.endsWith(".h5") || name.endsWith(".hdf5") then Some(TransformFileFormat.ANTsH5)
+    else if name.contains("genericaffine") && name.endsWith(".mat") then Some(TransformFileFormat.AntsAffine)
+    else if name.contains("ants") && (name.endsWith("warp.nii") || name.endsWith("warp.nii.gz")) then
+      Some(TransformFileFormat.AntsDisplacement)
     else if name.endsWith(".lta") then Some(TransformFileFormat.FreeSurferLta)
     else if name.endsWith(".x5") then Some(TransformFileFormat.X5)
     else if name.endsWith(".aff12.1d") || name.endsWith(".1d") then Some(TransformFileFormat.AfniAffine)
@@ -106,7 +109,8 @@ final case class TransformDescriptor private (
   routeTag: RouteTag,
   cost: Double,
   inverseQuality: InverseQuality,
-  coordinateMap: CoordinateMap
+  coordinateMap: CoordinateMap,
+  format: Option[TransformFileFormat]
 ):
   def inverseQualityDeclared: Boolean =
     inverseQuality.declared
@@ -128,6 +132,14 @@ final case class TransformDescriptor private (
       coordinateMap = coordinateMap
     ).left.map(error => SpatialIoError.InvalidTransformDescriptor(id.value, error.message))
 
+  def load(
+    sourceDomain: Domain,
+    targetDomain: Domain,
+    options: Option[TransformLoadOptions] = None,
+    inverseAsset: Option[TransformAssetSpec] = None
+  ): Either[SpatialIoError, LoadedTransform] =
+    TransformAssetLoader.load(this, sourceDomain, targetDomain, options, inverseAsset)
+
 object TransformDescriptor:
   def build(
     id: MorphismId,
@@ -139,7 +151,8 @@ object TransformDescriptor:
     routeTag: RouteTag = RouteTag.Anatomical,
     cost: Double = 1.0,
     inverseQuality: InverseQuality = InverseQuality.Missing,
-    coordinateMap: CoordinateMap = CoordinateMap.Unspecified
+    coordinateMap: CoordinateMap = CoordinateMap.Unspecified,
+    format: Option[TransformFileFormat] = None
   ): Either[SpatialIoError, TransformDescriptor] =
     if !cost.isFinite || cost < 0.0 then
       Left(SpatialIoError.InvalidTransformDescriptor(id.value, s"cost must be finite and non-negative, got $cost"))
@@ -155,7 +168,8 @@ object TransformDescriptor:
           routeTag,
           cost,
           inverseQuality,
-          coordinateMap
+          coordinateMap,
+          format
         )
       )
 
@@ -180,7 +194,8 @@ object TransformDescriptor:
       routeTag = routeTag,
       cost = cost,
       inverseQuality = inverseQuality,
-      coordinateMap = coordinateMap
+      coordinateMap = coordinateMap,
+      format = Some(format)
     )
 
 final case class FmriprepSpatialGraph private (

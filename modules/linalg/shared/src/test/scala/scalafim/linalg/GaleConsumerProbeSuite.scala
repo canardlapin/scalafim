@@ -1,6 +1,6 @@
 package scalafim.linalg
 
-import gale.linalg.{DMat, Vec}
+import gale.linalg.{DMat, DVec}
 import gale.spectral.{Eigen, EigenSelection, EigenVectors}
 
 /** Cross-platform consumer gate for the Gale artifact boundary.
@@ -18,7 +18,10 @@ class GaleConsumerProbeSuite extends munit.FunSuite:
     builder(1, 1) = 2.0
     val matrix = builder.result()
 
-    val product = matrix * Vec(1.0, -1.0)
+    val vector = DVec.newBuilder(2)
+    vector(0) = 1.0
+    vector(1) = -1.0
+    val product = matrix * vector.result()
     val spectrum = Eigen
       .eigSymmetric(matrix, EigenSelection.All, EigenVectors.ValuesOnly)
       .toOption

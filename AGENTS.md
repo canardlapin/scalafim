@@ -88,3 +88,17 @@ construction points, but the core model should express its invariants in types.
   before it runs and a fit should return typed results.
 - Add code to the lowest module that makes sense; don't reach across boundaries or create cycles.
 - Keep `README.md` module blurbs and `build.sbt` aggregates/aliases in sync when you add a module.
+
+## GitHub identity and publication
+
+- The canonical GitHub repository is `canardlapin/scalafim`. Do not publish this
+  checkout through the machine's default `bbuchsbaum` GitHub account.
+- Repo-local Git authoring must use `canardlapin` and
+  `307091466+canardlapin@users.noreply.github.com`. Verify `git config --local
+  user.name`, `user.email`, and `github.account` before committing or pushing.
+- Use `tools/github/gh-repo` for GitHub CLI operations. It selects the isolated
+  `gh-canardlapin` profile without switching the global `gh` account, so work in
+  other repositories can continue under `bbuchsbaum` concurrently.
+- `origin` should be `https://github.com/canardlapin/scalafim.git`, with the
+  repo-local credential helper bound to the same isolated profile. Credentials
+  belong in the user's GitHub CLI configuration, never in this repository.

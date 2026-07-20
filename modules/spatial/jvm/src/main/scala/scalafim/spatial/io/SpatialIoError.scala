@@ -8,6 +8,9 @@ enum SpatialIoReason:
   case CachePayload
   case UnsupportedLinearMap
   case TransformDescriptor
+  case TransformAsset
+  case TransformConvention
+  case TransformGeometry
   case MissingInverseQuality
 
 enum SpatialIoError:
@@ -16,6 +19,11 @@ enum SpatialIoError:
   case InvalidCachePayload(path: Path, reason: String)
   case UnsupportedLinearMap(path: Path, className: String)
   case InvalidTransformDescriptor(label: String, reason: String)
+  case UnsupportedTransformAsset(path: Path, format: TransformFileFormat, reason: String)
+  case UnsupportedItkTransformType(path: Path, componentIndex: Int, transformType: String)
+  case MalformedTransformAsset(path: Path, reason: String)
+  case TransformConventionMismatch(path: Path, reason: String)
+  case TransformGeometryMismatch(path: Path, reason: String)
   case MissingInverseQuality(asset: String)
 
   def reasonKind: SpatialIoReason =
@@ -25,6 +33,9 @@ enum SpatialIoError:
       case InvalidCachePayload(_, _) => SpatialIoReason.CachePayload
       case UnsupportedLinearMap(_, _) => SpatialIoReason.UnsupportedLinearMap
       case InvalidTransformDescriptor(_, _) => SpatialIoReason.TransformDescriptor
+      case UnsupportedTransformAsset(_, _, _) | UnsupportedItkTransformType(_, _, _) | MalformedTransformAsset(_, _) => SpatialIoReason.TransformAsset
+      case TransformConventionMismatch(_, _) => SpatialIoReason.TransformConvention
+      case TransformGeometryMismatch(_, _) => SpatialIoReason.TransformGeometry
       case MissingInverseQuality(_) => SpatialIoReason.MissingInverseQuality
 
   def message: String =
@@ -39,5 +50,15 @@ enum SpatialIoError:
         s"spatial triplet cache can only persist CSR operators, got $className for $path"
       case InvalidTransformDescriptor(label, reason) =>
         s"invalid transform descriptor $label: $reason"
+      case UnsupportedTransformAsset(path, format, reason) =>
+        s"unsupported $format transform asset $path: $reason"
+      case UnsupportedItkTransformType(path, componentIndex, transformType) =>
+        s"unsupported ITK transform type '$transformType' at component $componentIndex in $path"
+      case MalformedTransformAsset(path, reason) =>
+        s"malformed transform asset $path: $reason"
+      case TransformConventionMismatch(path, reason) =>
+        s"transform convention mismatch for $path: $reason"
+      case TransformGeometryMismatch(path, reason) =>
+        s"transform geometry mismatch for $path: $reason"
       case MissingInverseQuality(asset) =>
         s"transform descriptor $asset has no declared inverse quality"

@@ -170,22 +170,44 @@ object OperatorCompiler:
   val volumeAffine: OperatorCompiler =
     VolumeAffineOperatorCompiler
 
-  def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator] =
-    volumeAffine.compile(graph, request)
+  val volumePullback: OperatorCompiler =
+    VolumePullbackOperatorCompiler
 
-object VolumeAffineOperatorCompiler extends OperatorCompiler:
-  private val CompilerName = "volume-affine-v1"
+  def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator] =
+    volumePullback.compile(graph, request)
+
+object VolumePullbackOperatorCompiler extends OperatorCompiler:
+  private val AffineCompilerName = "affine-pullback-fused-v1"
+  private val GeneralCompilerName = "volume-pullback-fused-v1"
 
   override def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator] =
+    PullbackProgram.compile(graph, request).flatMap(compile)
+
+  def compile(program: PullbackProgram): Either[SpatialError, SpatialOperator] =
+    if program.valueStages.nonEmpty then StagedOperatorCompiler.compile(program)
+    else compileCoordinateOnly(program)
+
+  private[spatial] def compileCoordinateOnly(program: PullbackProgram): Either[SpatialError, SpatialOperator] =
+    if program.route.source.kind == DomainKind.Volume && program.route.target.kind == DomainKind.Volume then
+      val compilerName =
+        if program.steps.exists(_.morphism.kind == MorphismKind.Warp3D) then GeneralCompilerName
+        else AffineCompilerName
+      compileAs(program, compilerName)
+    else MixedPullbackOperatorCompiler.compile(program)
+
+  private[spatial] def compileAs(
+    program: PullbackProgram,
+    compilerName: String
+  ): Either[SpatialError, SpatialOperator] =
+    val route = program.route
+    val sourceDomain = route.source
+    val targetDomain = route.target
+    val path = route.path
+    val rows = route.targetRows
     for
-      sourceDomain <- graph.domain(request.source)
-      targetDomain <- graph.domain(request.target)
       sourceSpace <- volumeSpace(sourceDomain)
       targetSpace <- volumeSpace(targetDomain)
-      path <- graph.path(request.source, request.target, request.routing, request.allowInverses)
-      affinePath <- ExecutableAffinePath.from(path)
-      rows <- TargetRows.fromSelection(request.rowSelection, targetDomain.nElements)
-      rowAssembly <- assembleRows(sourceSpace, targetSpace, rows, affinePath.coordinateMap, request.sampling)
+      rowAssembly <- assembleRows(sourceSpace, targetSpace, rows, program, route.sampling)
       triplets <- SparseTriplets(
         rows = rows.length,
         cols = sourceDomain.nElements,
@@ -196,16 +218,16 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       csr <- CsrMatrix.fromTriplets(triplets).left.map(mapLinearError)
       coverage <- CoverageReport.build(rows, rowAssembly.coverage.toVector)
       recipe <- OperatorRecipe.build(
-        path = affinePath.ids,
-        routing = request.routing,
-        sampling = request.sampling,
+        path = path.ids,
+        routing = route.routing,
+        sampling = route.sampling,
         rowSelection = rows.selection,
-        allowInverses = request.allowInverses,
-        compiler = CompilerName
+        allowInverses = route.allowInverses,
+        compiler = compilerName
       )
       operator <- SpatialOperator.build(
-        source = request.source,
-        target = request.target,
+        source = sourceDomain.id,
+        target = targetDomain.id,
         map = csr,
         path = path,
         qc = OperatorQc(coverage, path.pathQuality),
@@ -222,7 +244,7 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
     sourceSpace: NeuroSpace,
     targetSpace: NeuroSpace,
     targetRows: TargetRows,
-    coordinateMap: CoordinateMap,
+    program: PullbackProgram,
     sampling: SamplingPolicy
   ): Either[SpatialError, RowAssembly] =
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
@@ -238,7 +260,7 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
       val targetVoxel = Indexing.indexToGrid3D(targetDims, targetIndex)
       val targetWorld =
         targetGrid.voxelToWorld(SpatialPoint(targetVoxel.x.toDouble, targetVoxel.y.toDouble, targetVoxel.z.toDouble))
-      coordinateMap.transform(targetWorld) match
+      program.pullback(targetWorld) match
         case Left(err) =>
           error = Some(err)
         case Right(sourceWorld) =>
@@ -340,6 +362,21 @@ object VolumeAffineOperatorCompiler extends OperatorCompiler:
 
   private def mapLinearError(error: LinearMapError): SpatialError =
     SpatialError.OperatorAssemblyFailed(error.message)
+
+object VolumeAffineOperatorCompiler extends OperatorCompiler:
+  private val CompilerName = "affine-pullback-fused-v1"
+
+  override def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator] =
+    PullbackProgram.compile(graph, request).flatMap(compile)
+
+  def compile(program: PullbackProgram): Either[SpatialError, SpatialOperator] =
+    program.route.path.morphisms.find { morphism =>
+      morphism.kind != MorphismKind.Identity && morphism.kind != MorphismKind.Affine3D
+    } match
+      case Some(morphism) =>
+        Left(SpatialError.UnsupportedMorphismForCompilation(morphism.id, morphism.kind))
+      case None =>
+        VolumePullbackOperatorCompiler.compileAs(program, CompilerName)
 
 private final case class RowWeights(cols: Vector[Int], values: Vector[Double], coverage: Double)
 

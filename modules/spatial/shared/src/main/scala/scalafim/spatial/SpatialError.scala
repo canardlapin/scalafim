@@ -12,6 +12,7 @@ enum SpatialErrorReason:
   case Operator
   case RowSelection
   case Field
+  case Source
   case Cache
 
 enum SpatialError:
@@ -37,15 +38,38 @@ enum SpatialError:
   case DisconnectedPath(previous: DomainId, next: DomainId)
   case NonInvertibleMorphism(id: MorphismId)
   case InvalidAffineCoordinateMap(label: String)
+  case InvalidDenseCoordinateMap(reason: String)
+  case InvalidCompositeCoordinateMap(reason: String)
+  case CoordinateMapDomainMismatch(id: MorphismId, source: DomainId, target: DomainId, mapSource: String, mapTarget: String)
   case MissingCoordinateMap(id: MorphismId)
   case NonVolumeDomain(id: DomainId)
   case NonSurfaceDomain(id: DomainId)
   case UnsupportedMorphismForCompilation(id: MorphismId, kind: MorphismKind)
+  case MorphismCompilerNotFound(kind: MorphismKind)
+  case DuplicateMorphismCompiler(kind: MorphismKind)
+  case MorphismCompilerKindMismatch(compiler: String, expected: MorphismKind, actual: MorphismKind)
+  case InvalidMorphismPlugin(id: MorphismId, detail: String)
+  case UnsupportedPluginComposition(detail: String)
   case UnsupportedSurfaceSampling(label: String)
   case SurfacePairMismatch(domain: DomainId)
+  case SurfaceSamplingGeometryMismatch(id: MorphismId)
+  case SurfaceMappingGeometryMismatch(id: MorphismId)
+  case InvalidMixedPullback(detail: String)
   case FieldDataUnavailable(label: String)
   case FieldDomainMismatch(field: DomainId, operator: DomainId)
   case FieldShapeMismatch(expectedRows: Int, actualRows: Int)
+  case FieldObservationMismatch(expected: Int, actual: Int)
+  case FieldMaterializedShapeMismatch(expectedRows: Int, actualRows: Int, expectedObservations: Int, actualObservations: Int)
+  case FieldSourceUnavailable(source: FieldSourceId, detail: String)
+  case FieldSourceStale(source: FieldSourceId, expected: String, actual: String)
+  case FieldSourceDomainMismatch(source: FieldSourceId, expected: DomainId, actual: DomainId)
+  case FieldSourceGeometryMismatch(source: FieldSourceId)
+  case FieldSourceShapeMismatch(source: FieldSourceId, expectedRows: Int, actualRows: Int)
+  case FieldSourceIndexOutOfBounds(axis: String, index: Int, limit: Int)
+  case DuplicateFieldSourceIndex(axis: String, index: Int)
+  case FieldSourceRequestMismatch(source: FieldSourceId)
+  case FieldSourceBlockShapeMismatch(source: FieldSourceId, expectedRows: Int, actualRows: Int, expectedObservations: Int, actualObservations: Int)
+  case FieldSourceReadFailed(source: FieldSourceId, detail: String)
   case OperatorCacheMiss(key: String)
   case InvalidRoiRow(index: Int, limit: Int)
   case DuplicateRoiRow(index: Int)
@@ -69,14 +93,16 @@ enum SpatialError:
         SpatialErrorReason.Graph
       case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
         SpatialErrorReason.Route
-      case InvalidAffineCoordinateMap(_) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
+      case InvalidAffineCoordinateMap(_) | InvalidDenseCoordinateMap(_) | InvalidCompositeCoordinateMap(_) | CoordinateMapDomainMismatch(_, _, _, _, _) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
         SpatialErrorReason.CoordinateMap
-      case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | OperatorAssemblyFailed(_) =>
+      case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | MorphismCompilerNotFound(_) | DuplicateMorphismCompiler(_) | MorphismCompilerKindMismatch(_, _, _) | InvalidMorphismPlugin(_, _) | UnsupportedPluginComposition(_) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | SurfaceSamplingGeometryMismatch(_) | SurfaceMappingGeometryMismatch(_) | InvalidMixedPullback(_) | OperatorAssemblyFailed(_) =>
         SpatialErrorReason.Operator
       case InvalidRoiRow(_, _) | DuplicateRoiRow(_) | EmptyRoi =>
         SpatialErrorReason.RowSelection
-      case FieldDataUnavailable(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) =>
+      case FieldDataUnavailable(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) | FieldObservationMismatch(_, _) | FieldMaterializedShapeMismatch(_, _, _, _) =>
         SpatialErrorReason.Field
+      case FieldSourceUnavailable(_, _) | FieldSourceStale(_, _, _) | FieldSourceDomainMismatch(_, _, _) | FieldSourceGeometryMismatch(_) | FieldSourceShapeMismatch(_, _, _) | FieldSourceIndexOutOfBounds(_, _, _) | DuplicateFieldSourceIndex(_, _) | FieldSourceRequestMismatch(_) | FieldSourceBlockShapeMismatch(_, _, _, _, _) | FieldSourceReadFailed(_, _) =>
+        SpatialErrorReason.Source
       case OperatorCacheMiss(_) =>
         SpatialErrorReason.Cache
 
@@ -126,6 +152,12 @@ enum SpatialError:
         s"morphism ${id.value} does not have a geometric inverse"
       case InvalidAffineCoordinateMap(label) =>
         s"$label coordinate map must be a finite 4x4 affine matrix"
+      case InvalidDenseCoordinateMap(reason) =>
+        s"invalid dense coordinate map: $reason"
+      case InvalidCompositeCoordinateMap(reason) =>
+        s"invalid composite coordinate map: $reason"
+      case CoordinateMapDomainMismatch(id, source, target, mapSource, mapTarget) =>
+        s"morphism ${id.value} is ${source.value}->${target.value}, but its coordinate map is $mapSource->$mapTarget"
       case MissingCoordinateMap(id) =>
         s"morphism ${id.value} does not carry an executable coordinate map"
       case NonVolumeDomain(id) =>
@@ -134,16 +166,56 @@ enum SpatialError:
         s"domain ${id.value} is not a surface domain"
       case UnsupportedMorphismForCompilation(id, kind) =>
         s"morphism ${id.value} with kind $kind cannot be compiled by this operator compiler"
+      case MorphismCompilerNotFound(kind) =>
+        s"no pullback compiler is registered for morphism kind $kind"
+      case DuplicateMorphismCompiler(kind) =>
+        s"a pullback compiler is already registered for morphism kind $kind"
+      case MorphismCompilerKindMismatch(compiler, expected, actual) =>
+        s"pullback compiler $compiler handles $expected but received $actual"
+      case InvalidMorphismPlugin(id, detail) =>
+        s"invalid morphism plugin ${id.value}: $detail"
+      case UnsupportedPluginComposition(detail) =>
+        s"unsupported staged plugin composition: $detail"
       case UnsupportedSurfaceSampling(label) =>
         s"unsupported surface sampling policy: $label"
       case SurfacePairMismatch(domain) =>
         s"surface pair does not match target domain ${domain.value}"
+      case SurfaceSamplingGeometryMismatch(id) =>
+        s"volume-to-surface morphism ${id.value} sampling geometry does not match its target domain"
+      case SurfaceMappingGeometryMismatch(id) =>
+        s"surface morphism ${id.value} vertex mapping does not match its source and target domains"
+      case InvalidMixedPullback(detail) =>
+        s"invalid mixed-domain pullback: $detail"
       case FieldDataUnavailable(label) =>
         s"field data is not materialized: $label"
       case FieldDomainMismatch(field, operator) =>
         s"field domain ${field.value} does not match operator source ${operator.value}"
       case FieldShapeMismatch(expectedRows, actualRows) =>
         s"field expected $expectedRows rows, got $actualRows"
+      case FieldObservationMismatch(expected, actual) =>
+        s"field expected $expected observations, got $actual"
+      case FieldMaterializedShapeMismatch(expectedRows, actualRows, expectedObservations, actualObservations) =>
+        s"materialized field expected ${expectedRows}x$expectedObservations values, got ${actualRows}x$actualObservations"
+      case FieldSourceUnavailable(source, detail) =>
+        s"field source ${source.value} is unavailable: $detail"
+      case FieldSourceStale(source, expected, actual) =>
+        s"field source ${source.value} is stale: expected $expected, got $actual"
+      case FieldSourceDomainMismatch(source, expected, actual) =>
+        s"field source ${source.value} targets ${actual.value}, expected ${expected.value}"
+      case FieldSourceGeometryMismatch(source) =>
+        s"field source ${source.value} geometry does not match its root domain"
+      case FieldSourceShapeMismatch(source, expectedRows, actualRows) =>
+        s"field source ${source.value} expected $expectedRows rows, got $actualRows"
+      case FieldSourceIndexOutOfBounds(axis, index, limit) =>
+        s"field source $axis $index is out of bounds for size $limit"
+      case DuplicateFieldSourceIndex(axis, index) =>
+        s"field source request contains duplicate $axis $index"
+      case FieldSourceRequestMismatch(source) =>
+        s"field source ${source.value} returned a block for a different request"
+      case FieldSourceBlockShapeMismatch(source, expectedRows, actualRows, expectedObservations, actualObservations) =>
+        s"field source ${source.value} returned ${actualRows}x$actualObservations values, expected ${expectedRows}x$expectedObservations"
+      case FieldSourceReadFailed(source, detail) =>
+        s"field source ${source.value} read failed: $detail"
       case OperatorCacheMiss(key) =>
         s"operator cache miss: $key"
       case InvalidRoiRow(index, limit) =>

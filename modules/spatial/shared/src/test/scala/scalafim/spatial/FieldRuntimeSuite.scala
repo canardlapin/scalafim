@@ -66,12 +66,23 @@ class FieldRuntimeSuite extends munit.FunSuite:
     val view = value(runtime.view(field, op))
 
     assert(view.isView)
+    assertEquals(view.rootId, field.rootId)
     assertEquals(view.domain, target.id)
     assertEquals(view.root, source.id)
     assertEquals(view.sampleCount, op.rows)
     assertEquals(view.observations, 1)
     assertEquals(view.pending.length, 1)
-    assertEquals(view.provenance.transforms.map(_.compiler), Vector("volume-affine-v1"))
+    assertEquals(view.legacyExecution.operators, view.pending)
+    assertEquals(view.plan.intent.root, source.id)
+    assertEquals(view.plan.intent.target, target.id)
+    assertEquals(view.plan.steps.length, 1)
+    view.plan.steps.head match
+      case ViewPlanStep.Reexpress(_, _, _, _, _, _, ViewStepOrigin.LegacyCompiled(path, compiler)) =>
+        assertEquals(path, op.provenance.path)
+        assertEquals(compiler, op.provenance.compiler)
+      case other =>
+        fail(s"expected an explicit legacy compatibility step, got $other")
+    assertEquals(view.provenance.transforms.map(_.compiler), Vector("affine-pullback-fused-v1"))
     assertEquals(cache.size, 1)
 
   test("field runtime materializes by applying cached operators"):
@@ -110,8 +121,28 @@ class FieldRuntimeSuite extends munit.FunSuite:
     val data = value(runtime.data(targetView))
 
     assertEquals(targetView.pending.length, 2)
+    assertEquals(targetView.plan.steps.length, 2)
+    assertEquals(targetView.plan.rootId, field.rootId)
+    assertEquals(targetView.plan.intent.root, source.id)
+    assertEquals(targetView.plan.intent.target, target.id)
     assertEquals(targetView.provenance.transforms.map(_.source), Vector(source.id, mid.id))
     assertEquals(data.toRows, Vector(Vector(3.0), Vector(4.0)))
+
+  test("field roots have distinct identities even when domain and label match"):
+    val source = domain("source")
+    val data = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
+    val first = Field.fromMatrix(source.id, data, "bold")
+    val second = Field.fromMatrix(source.id, data, "bold")
+    val explicitId =
+      FieldRootId("dataset:sub-01:run-01") match
+        case Right(value) => value
+        case Left(error) => fail(error.message)
+    val explicit = Field.fromMatrix(explicitId, source.id, data, "bold")
+
+    assertNotEquals(first.rootId, second.rootId)
+    assertEquals(explicit.rootId, explicitId)
+    assert(first.plan.isRoot)
+    assert(second.plan.isRoot)
 
   test("cache misses are explicit and caches are not ambient registries"):
     val source = domain("source")
@@ -144,9 +175,26 @@ class FieldRuntimeSuite extends munit.FunSuite:
 
     assertEquals(result.left.toOption, Some(SpatialError.FieldDomainMismatch(source.id, other.id)))
 
-  test("external field data refs are inspectable but not materialized"):
+  test("source-backed field refs are inspectable but not materialized"):
     val source = domain("source")
-    val field = value(Field.external(source.id, rows = 3, cols = 2, label = "archive-run"))
+    val sourceId = value(FieldSourceId("archive-run"))
+    val descriptor = value(
+      FieldSourceDescriptor.make(
+        sourceId,
+        value(FieldSourceRevision("revision-1")),
+        "archive-run",
+        source.id,
+        source.geometry,
+        rows = 3,
+        observations = 2
+      )
+    )
+    val field = value(
+      Field.fromSource(
+        source,
+        UnavailableFieldSource(descriptor, "fixture has no backing reader")
+      )
+    )
     val runtime = CachedFieldRuntime(InMemoryOperatorCache.empty)
 
     assertEquals(field.describe.label, "archive-run")
