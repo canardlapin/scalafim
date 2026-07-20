@@ -13,11 +13,23 @@ workflow.
 Live dependency edges are declared in `build.sbt`.
 
 ```text
+graph
++-- connectivity      also depends on linalg
++-- graph-linalg      also depends on linalg
++-- surface           also depends on image
++-- atlas             also depends on image, surface
++-- spatial           also depends on linalg, image, surface
++-- pipeline
+
 linalg
++-- linalg-breeze    JVM-only optional Breeze adapter
 +-- ar
 +-- design           also depends on hrf
 +-- mvpa
 |   +-- mvpa-dataset  also depends on dataset
++-- multivar
+|   +-- multivar-ir
+|   +-- inference     also depends on linalg
 +-- threshold         also depends on image
 +-- motion            also depends on image
 +-- spatial           also depends on image, surface
@@ -32,6 +44,10 @@ graphics
 +-- graphics-canvas
 +-- graphics-java2d
 +-- graphics-javafx
++-- image-view        also depends on image
+    +-- image-view-canvas   also depends on graphics-canvas
+    +-- image-view-java2d   also depends on graphics-java2d
+    +-- image-view-javafx   also depends on graphics-javafx
 
 hrf
 +-- design           also depends on linalg, graphics
@@ -40,9 +56,10 @@ hrf
             +-- group
 
 image
++-- image-view        also depends on graphics
 +-- archive
 |   +-- latent         also depends on linalg
-|   +-- dataset        also depends on hrf, latent
+|   +-- dataset        also depends on hrf, latent, bids
 |       +-- mvpa-dataset  also depends on mvpa
 +-- surface
 |   +-- spatial        also depends on linalg, image
@@ -53,21 +70,31 @@ image
 +-- group             also depends on linalg, dataset, design, fit
 
 bids
++-- dataset           one-way boundary parsing dependency; bids has no internal deps
+
+bids + dataset + model + fit + group
++-- fmri-workflow     outer composition only; no lower module depends back on it
 ```
 
-`pipeline` and `bids` are intentionally standalone today. `pipeline` owns
-generic graph orchestration without forcing workflow dependencies into the
-computational core. `bids` parses/describes BIDS projects without forcing
-dataset, image IO, or modeling dependencies into the shared core.
+`pipeline` depends only on `graph` for validated DAG layering. It owns generic
+graph orchestration without forcing workflow dependencies into the computational core;
+`fmri-workflow` will add that edge when its orchestration lowering lands.
+`bids` remains dependency-free and parses/describes BIDS projects without
+pulling in dataset, image IO, or modeling dependencies. Dataset IO adapters may
+consume `bids` at the boundary when they need BIDS metadata tables or exact
+entity parsing.
 
 ## Module Roles
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `linalg` | Primitive vectors, matrices, sparse linear maps, linear solves, projection kernels. | Nothing internal. | fMRI, image, dataset, or domain-specific spatial concepts. |
-| `pipeline` | Generic typed pipeline graphs, artifact references, deterministic staging, local pure execution, and structured receipts. | Nothing internal. | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
-| `graphics` | Renderer-neutral graphics algebra: grammar-of-graphics plot/layer specs, row-aware typed aesthetics/scales, immutable grid-like grob scene trees, units, viewports, and graphical parameters. | Nothing internal. | Java2D/JavaFX/Canvas rendering, device IO, neuroimaging-specific plot exports, or mutable display-list state. |
-| `graphics-svg` | Deterministic SVG string rendering for `graphics` scene trees, including primitive grobs, graphical params, basic units, and viewport wrappers. | `graphics` | Plot compilation, browser Canvas state, Java2D/raster output, device IO, or domain-specific plot exporters. |
+| `graph` | Ordered keyed vertex bases, graph-local dense coordinates, validated alignment/permutation values, canonical immutable simple directed/undirected graphs, components, nonnegative-cost paths, cycle witnesses, DAG layers, and topology laws. | Nothing internal. | Matrices, Laplacians, spectra, connectivity measures, spatial-domain validation, pipeline execution, multigraphs, or loops. |
+| `graph-linalg` | Basis-carrying topology/weighted adjacency, incidence, degree/strength, combinatorial/normalized Laplacians, spectra/embeddings, aligned spectral feature maps, and explicitly PSD-tagged similarities over shared linalg contracts. | `graph`, `linalg` | Connectivity estimation or projection policy, scientific measurement semantics, solver implementations, generic multivar kernel ownership, or domain-specific convenience APIs. |
+| `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
+| `linalg-breeze` | JVM-only Breeze-backed adapters for linalg solver contracts and backend differential tests. | `linalg` | Shared APIs, domain-specific algorithms, Scala.js code, or direct Breeze exposure to domain modules. |
+| `pipeline` | Generic typed pipeline graphs, artifact references, graph-delegated deterministic DAG staging, local pure execution, and structured receipts. | `graph` | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
+| `graphics` | Renderer-neutral graphics algebra: grammar-of-graphics plot/layer specs, row-aware typed aesthetics/scales, immutable grid-like grob scene trees (y-up), a phased plot compiler with derived guides and a layout solver, numeric device-scene resolution, and the renderer conformance contract. | Nothing internal. | Java2D/JavaFX/Canvas rendering, device IO, neuroimaging-specific plot exports, or mutable display-list state. |
+| `graphics-svg` | Deterministic SVG string serialization of resolved `graphics` device scenes (numeric-only geometry, clip paths, rotation), validated against the shared renderer conformance contract. | `graphics` | Plot compilation, browser Canvas state, Java2D/raster output, device IO, or domain-specific plot exporters. |
 | `graphics-canvas` | Scala.js Canvas 2D command compilation and browser-context interpretation, with deterministic command logs validated against the shared renderer conformance contract. | `graphics` | Plot compilation, SVG serialization, JVM raster output, browser DOM ownership, or domain-specific plot exporters. |
 | `graphics-java2d` | JVM Java2D command compilation and `Graphics2D` raster interpretation, validated with deterministic commands, shared conformance, and real image assertions. | `graphics` | Plot compilation, SVG/Canvas rendering, Scala.js code, device IO, or domain-specific plot exporters. |
 | `graphics-javafx` | JVM JavaFX Canvas command compilation and `GraphicsContext` interpretation behind a toolkit-free drawing contract, validated with deterministic commands and shared conformance. | `graphics` | Plot compilation, SVG/Canvas/Java2D rendering, Scala.js code, toolkit lifecycle ownership (application threads, stages), or domain-specific plot exporters. |
@@ -75,21 +102,30 @@ dataset, image IO, or modeling dependencies into the shared core.
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, `graphics` | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `image` | Volumes, masks, spaces, affine math, low-level coordinate transforms, morphisms, resampling, clustering/searchlights. | Nothing internal. | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
+| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, `graphics` | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
+| `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, `graphics-canvas` | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
+| `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, `graphics-java2d` | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
+| `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, `graphics-javafx` | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: masked fields, octrees, set scoring, maxT-style correction. | `image`, `linalg` | Model fitting or group-model definitions. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Meshes, topology, vertex fields, surface ROIs, geodesics, labels, JVM surface readers. | `image` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
-| `spatial` | Neurofunctor-style domains, morphism graphs, route policies, sampled operators, adjoints, provenance, QC, caches, lazy fields. | `linalg`, `image`, `surface` | Low-level image interpolation kernels or atlas-specific route catalogs. |
-| `atlas` | Standard atlas descriptors, region metadata, parcel payloads, coordinate/parcel lookup, transform route descriptors. | `image`, `surface` | Generic spatial operator compilation or low-level transform kernels. |
+| `surface` | Meshes, topology, vertex fields, surface ROIs, geodesics, labels, graph interop, JVM surface readers. | `graph`, `image` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `spatial` | Neurofunctor-style domains, graph-delegated morphism routing, route policies, sampled operators, adjoints, provenance, QC, caches, lazy fields. | `graph`, `linalg`, `image`, `surface` | Low-level image interpolation kernels or atlas-specific route catalogs. |
+| `atlas` | Standard atlas descriptors, region metadata, parcel payloads, coordinate/parcel lookup, region-graph interop, transform route descriptors. | `graph`, `image`, `surface` | Generic spatial operator compilation or low-level transform kernels. |
 | `archive` | Latent NeuroArchive-style manifests, transform descriptors, portable archive transforms, JVM HDF5 store. | `image` | Dataset selection APIs or model-level decoding policy. |
 | `latent` | Latent-response contracts, temporal bases, archive codecs, transport responses. | `linalg`, `archive` | Dataset storage backends or model execution. |
-| `dataset` | Dataset shapes, ids, selections, fMRI series, backend contracts and adapters. | `image`, `hrf`, `archive`, `latent` | Design formulas, fit kernels, or BIDS filesystem walking. |
+| `dataset` | Dataset shapes, ids, selections, fMRI series, backend contracts and narrow IO adapters. | `image`, `hrf`, `archive`, `latent`, `bids` | Design formulas, fit kernels, or general BIDS project ownership. |
 | `bids` | BIDS names/entities, manifests, queries, TSV tables, fMRIPrep confound selection. | Nothing internal. | Dataset execution, image decoding, or model fitting. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over model plans: dense/runwise OLS, contrasts, residual diagnostics. | `linalg`, `model`, `ar` | Model description, dataset storage, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
+| `multivar` | Typed duality-diagram semantics: nominal primal/dual spaces, directed maps, certified role-specific forms, measures and centering evidence, explicit singular policies, semantic GPCA, exact/partial/coupled/hub row alignment, direct-sum multiset objectives and constraints, sparse-aware matrix views, paired latent decompositions, CPCA, kernels, and pure plans/artifacts. | `linalg` | Formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
+| `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
+| `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | `multivar`, `linalg` | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
+| `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, parcel time series, edge spaces, vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `linalg` | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`/`FmriDataset` reads and sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas` | Classifier algorithms or atlas loading. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
+| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `bids`, `dataset`, `model`, `fit`, `group` | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 
 ## Main Vertical Flows
 
@@ -106,6 +142,9 @@ bids -> dataset -> model -> fit
 `bids` describes files and confounds. `dataset` provides selected data.
 `design`/`hrf` describe regressors. `model` joins those descriptions into an
 inspectable plan. `fit` executes the plan with `linalg` and optionally `ar`.
+`fmri-workflow` sits above this flow and `group`: it carries only persistent
+catalog/result references and immutable recipes, then delegates IO and numeric
+execution to typed interpreters at module boundaries.
 
 ### Spatial Data And Transforms
 
@@ -129,6 +168,7 @@ dataset -------------+
 
 dataset -> mvpa-dataset -> mvpa
 image/surface/atlas -> mvpa-spatial -> mvpa
+multivar -> inference
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
@@ -177,7 +217,17 @@ descriptors can materialize executable dense morphisms.
 
 ## Placement Rules
 
-- Put primitive matrix/vector/operator math in `linalg`.
+- Put stable-key/local-index separation, canonical simple topology, basis
+  alignment, and reusable graph laws in `graph`. Keep numerical projections in
+  `graph-linalg`, and keep scientific
+  connectivity semantics in `connectivity`.
+- Put primitive matrix/vector/operator math, solver contracts, portable
+  eigensolver/SVD/QR/Cholesky/SPD-inverse reference implementations, and backend
+  adapter boundaries in `linalg`. Domain modules should receive typed solver
+  capabilities from `linalg`, not define private decomposition families.
+  JVM-only libraries such as Breeze must stay behind adapter modules and never
+  appear in shared APIs. The current JVM adapter is `linalg-breeze`; see
+  `docs/plans/linalg-backend-strategy.md`.
 - Put generic workflow graph algebra in `pipeline`; keep domain execution in the owning computational modules and adapt it upward.
 - Put renderer-neutral plotting and scene-description contracts in `graphics`; keep concrete rendering backends and domain-specific plot exporters in adapters above it.
 - Put deterministic SVG string rendering in `graphics-svg`, browser Canvas 2D rendering in `graphics-canvas`, and JVM raster rendering in `graphics-java2d`; keep future backends in separate adapters rather than broadening `graphics`.
@@ -186,10 +236,33 @@ descriptors can materialize executable dense morphisms.
 - Put named atlas descriptors and parcel metadata in `atlas`.
 - Put route compilation, sparse projectors, adjoints, QC, provenance, and
   operator caches in `spatial`.
-- Put dataset selection/storage contracts in `dataset`; put file-name discovery
-  and BIDS table logic in `bids`.
+- Put dataset selection/storage contracts and narrow dataset-backend adapters in
+  `dataset`; put reusable BIDS table/query logic in `bids`, and translate BIDS
+  entities at dataset IO boundaries with exact parsed matches rather than
+  filename substring filters.
 - Put inspectable model descriptions in `model`; put numeric execution in
   `fit`; put group-level inference in `group`.
+- Put cross-module BIDS-to-group study recipes, catalog/job identity, structural
+  preflight, result references, and future pipeline lowering in `fmri-workflow`; keep
+  payloads, open readers, format implementations, and scheduler types out of it.
+- Put nominal primal/dual algebra, semantic duality diagrams, role-specific
+  forms and certificates, row measures/centering, singular policies, explicit
+  row relationships, direct-sum objectives, sparse-aware preprocessing, and
+  decomposition artifacts in `multivar`. Put their versioned language-neutral
+  records and conformance corpus in `multivar-ir`; keep neuroimaging adapters,
+  bindings, and scheduler-specific execution in higher modules.
+- Put perturbation targets, resampling/null actions, Monte Carlo programs,
+  latent-unit stability, validity, and evidence provenance in `inference`;
+  consume fitted geometry through small `multivar` capabilities and keep
+  fitting, workflows, IO, and schedulers outside the module.
+- Put shared connectivity structures in `connectivity`: validated series axes,
+  explicit edge spaces/vectorization orders, static/dynamic containers,
+  estimator/preprocessing plan ADTs, portable ETS/event, partial-correlation,
+  group-inference, and low-risk dynamic kernels, diagnostics, and workflow
+  receipts. Keep Ariadne/R compatibility orders explicit and keep dataset,
+  atlas, BIDS, plotting, IO, multivar execution bridges, native optimizer
+  backends, phase/HMM/TVGL/SRLC internals, and scheduler-specific execution
+  outside this structural core.
 - Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
   adapters for MVPA in `mvpa-spatial`; keep `mvpa` over plain sample-by-feature
   matrices.
