@@ -1,5 +1,6 @@
 package scalafim.fmri.fit
 
+import gale.linalg.Matrix
 import scalafim.fmri.model.{
   ArOptions,
   ArStructure,
@@ -38,7 +39,7 @@ class ResponsePreparationSuite extends munit.FunSuite:
       ),
       volumeWeighting = VolumeWeighting.Fixed(Vector(1.0, 0.9, 1.1)),
       nuisanceProjection = NuisanceProjection.MatrixProjection(
-        DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0), Vector(1.0)))
+        Matrix.dense(3, 1)(1.0, 0.0, 1.0)
       ),
       missingData = MissingDataPolicy.Propagate
     )
@@ -66,7 +67,7 @@ class ResponsePreparationSuite extends munit.FunSuite:
     val plan = ResponsePreparationPlan.fromConfig(
       FitConfig(
         nuisanceProjection = NuisanceProjection.MatrixProjection(
-          DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
+          Matrix.dense(2, 1)(1.0, 0.0)
         )
       )
     )

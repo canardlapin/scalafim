@@ -303,7 +303,7 @@ object Robust:
     def estimate(coefficients: DoubleMatrix): Either[FitError, WhiteningPlan] =
       val residuals = residualMatrix(design.value, response.value, coefficients)
       ArEstimation
-        .fitNoise(residuals, segments, arOptions)
+        .fitNoise(MatrixAdapters.toGaleMatrix(residuals), segments, arOptions)
         .left
         .map(Gls.arToFitError)
 
@@ -342,10 +342,17 @@ object Robust:
       design: DesignMatrix,
       response: ResponseBlock
   ): Either[FitError, (DesignMatrix, ResponseBlock)] =
-    WhiteningTransform(plan, design.value, response.value)
+    WhiteningTransform(
+      plan,
+      MatrixAdapters.toGaleMatrix(design.value),
+      MatrixAdapters.toGaleMatrix(response.value)
+    )
       .left
       .map(Gls.arToFitError)
-      .map(whitened => DesignMatrix.unsafe(whitened.design) -> ResponseBlock.unsafe(whitened.response))
+      .map(whitened =>
+        DesignMatrix.unsafe(MatrixAdapters.fromGaleMatrix(whitened.design)) ->
+          ResponseBlock.unsafe(MatrixAdapters.fromGaleMatrix(whitened.response))
+      )
 
   private def disabledFit(
       design: DesignMatrix,

@@ -379,10 +379,14 @@ class GlsSuite extends munit.FunSuite:
         exactFirstAr1 = FmriregGlsFixtures.exactFirst
       )
     val whitened =
-      WhiteningTransform(whiteningPlan, FmriregGlsFixtures.design, FmriregGlsFixtures.response).toOption.get
+      WhiteningTransform(
+        whiteningPlan,
+        MatrixAdapters.toGaleMatrix(FmriregGlsFixtures.design),
+        MatrixAdapters.toGaleMatrix(FmriregGlsFixtures.response)
+      ).toOption.get
 
-    assertMatrixClose(whitened.design, FmriregGlsFixtures.whitenedDesign, 1e-12)
-    assertMatrixClose(whitened.response, FmriregGlsFixtures.whitenedResponse, 1e-12)
+    assertMatrixClose(MatrixAdapters.fromGaleMatrix(whitened.design), FmriregGlsFixtures.whitenedDesign, 1e-12)
+    assertMatrixClose(MatrixAdapters.fromGaleMatrix(whitened.response), FmriregGlsFixtures.whitenedResponse, 1e-12)
 
     val model = modelFromRows(x, y, Vector(rows))
     val plan =

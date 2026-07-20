@@ -243,10 +243,14 @@ private final class ReducedRankGlsProjection private (
       coefficients: DoubleMatrix
   ): Either[FitError, DoubleVector] =
     for
-      whitened <- WhiteningTransform(whiteningPlan, input.design.value, input.response.value).left.map(Gls.arToFitError)
+      whitened <- WhiteningTransform(
+        whiteningPlan,
+        MatrixAdapters.toGaleMatrix(input.design.value),
+        MatrixAdapters.toGaleMatrix(input.response.value)
+      ).left.map(Gls.arToFitError)
     yield Ols.residualVariance(
-      whitened.design,
-      whitened.response,
+      MatrixAdapters.fromGaleMatrix(whitened.design),
+      MatrixAdapters.fromGaleMatrix(whitened.response),
       coefficients,
       fullFit.residualDegreesOfFreedom
     )
@@ -322,13 +326,19 @@ private object ReducedRankGlsProjection:
       partition: ReducedRankDesignPartition
   ): Either[FitError, ReducedRankFactors] =
     for
-      whitened <- WhiteningTransform(whiteningPlan, design.value, response.value).left.map(Gls.arToFitError)
-      targetDesign = selectColumns(whitened.design, partition.targetColumns)
-      nuisanceDesign = selectColumns(whitened.design, partition.nuisanceColumns)
-      residualized <- residualizeAgainstNuisance(targetDesign, whitened.response, nuisanceDesign)
+      whitened <- WhiteningTransform(
+        whiteningPlan,
+        MatrixAdapters.toGaleMatrix(design.value),
+        MatrixAdapters.toGaleMatrix(response.value)
+      ).left.map(Gls.arToFitError)
+      whitenedDesign = MatrixAdapters.fromGaleMatrix(whitened.design)
+      whitenedResponse = MatrixAdapters.fromGaleMatrix(whitened.response)
+      targetDesign = selectColumns(whitenedDesign, partition.targetColumns)
+      nuisanceDesign = selectColumns(whitenedDesign, partition.nuisanceColumns)
+      residualized <- residualizeAgainstNuisance(targetDesign, whitenedResponse, nuisanceDesign)
       taskFit <- fitReducedTask(residualized.targetDesign, residualized.response, rankRequest)
       taskFitted = DoubleMatrix.multiply(targetDesign, taskFit.coefficients)
-      nuisanceResponse = subtract(whitened.response, taskFitted)
+      nuisanceResponse = subtract(whitenedResponse, taskFitted)
       nuisanceCoefficients <- fitNuisance(nuisanceDesign, nuisanceResponse)
     yield ReducedRankFactors(
       taskFit = taskFit,

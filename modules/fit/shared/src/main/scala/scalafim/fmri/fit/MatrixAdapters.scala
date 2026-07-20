@@ -1,5 +1,6 @@
 package scalafim.fmri.fit
 
+import gale.linalg.{DMat as GaleDMat, Matrix}
 import scalafim.dataset.FmriSeries
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.FmriModel
@@ -7,6 +8,35 @@ import scalafim.image.DMat
 import scalafim.linalg.DoubleMatrix
 
 object MatrixAdapters:
+  /** Temporary carrier bridge for the ordered Gale migration.
+    *
+    * Deletion gate: remove `toGaleMatrix` and `fromGaleMatrix` once `DesignMatrix`
+    * and `ResponseBlock` carry Gale `DMat` directly. Each direction allocates
+    * exactly one destination carrier and performs one primitive-loop traversal;
+    * no `Seq` boxing or intermediate row collection is involved.
+    */
+  private[fit] def toGaleMatrix(matrix: DoubleMatrix): GaleDMat =
+    val out = Matrix.newBuilder(matrix.rows, matrix.cols)
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        out(row, col) = matrix(row, col)
+        col += 1
+      row += 1
+    out.result()
+
+  private[fit] def fromGaleMatrix(matrix: GaleDMat): DoubleMatrix =
+    val out = new Array[Double](matrix.rows * matrix.cols)
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        out(row * matrix.cols + col) = matrix(row, col)
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+
   def fromHrfMatrix(matrix: Mat): DoubleMatrix =
     DoubleMatrix.unsafe(matrix.rows, matrix.cols, matrix.data.clone)
 

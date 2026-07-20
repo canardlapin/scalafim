@@ -112,8 +112,15 @@ object Gls:
       prepared.whitening match
         case GlsWhitening.Shared(plan) =>
           for
-            whitened <- WhiteningTransform(plan, prepared.design.value, response.value).left.map(arToFitError)
-            fit <- Ols.fit(DesignMatrix.unsafe(whitened.design), ResponseBlock.unsafe(whitened.response))
+            whitened <- WhiteningTransform(
+              plan,
+              MatrixAdapters.toGaleMatrix(prepared.design.value),
+              MatrixAdapters.toGaleMatrix(response.value)
+            ).left.map(arToFitError)
+            fit <- Ols.fit(
+              DesignMatrix.unsafe(MatrixAdapters.fromGaleMatrix(whitened.design)),
+              ResponseBlock.unsafe(MatrixAdapters.fromGaleMatrix(whitened.response))
+            )
           yield GlsFit(
             coefficients = fit.coefficients,
             residualVariance = fit.residualVariance,
@@ -237,7 +244,7 @@ object Gls:
     def estimate(coefficients: DoubleMatrix): Either[FitError, WhiteningPlan] =
       val residuals = residualMatrix(design, response, coefficients)
       ArEstimation
-        .fitNoise(residuals, segments, arOptions)
+        .fitNoise(MatrixAdapters.toGaleMatrix(residuals), segments, arOptions)
         .left
         .map(arToFitError)
 
@@ -283,8 +290,15 @@ object Gls:
       response: DoubleMatrix
   ): Either[FitError, OlsFit] =
     for
-      whitened <- WhiteningTransform(plan, design, response).left.map(arToFitError)
-      fit <- Ols.fit(DesignMatrix.unsafe(whitened.design), ResponseBlock.unsafe(whitened.response))
+      whitened <- WhiteningTransform(
+        plan,
+        MatrixAdapters.toGaleMatrix(design),
+        MatrixAdapters.toGaleMatrix(response)
+      ).left.map(arToFitError)
+      fit <- Ols.fit(
+        DesignMatrix.unsafe(MatrixAdapters.fromGaleMatrix(whitened.design)),
+        ResponseBlock.unsafe(MatrixAdapters.fromGaleMatrix(whitened.response))
+      )
     yield fit
 
   private final case class SelectedVoxelPlans(plans: Vector[WhiteningPlan], positions: Vector[Int])
