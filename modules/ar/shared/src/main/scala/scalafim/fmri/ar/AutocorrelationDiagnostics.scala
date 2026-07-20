@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 enum AcfAggregation:
   case Mean
@@ -9,7 +9,7 @@ enum AcfAggregation:
 
 final case class AcorrDiagnostics(
     lags: Vector[Int],
-    acf: DoubleMatrix,
+    acf: DMat,
     confidenceInterval: Double,
     aggregation: AcfAggregation
 ):
@@ -19,7 +19,7 @@ final case class AcorrDiagnostics(
 object AcorrDiagnostics:
 
   def compute(
-      residuals: DoubleMatrix,
+      residuals: DMat,
       maxLag: Int = 20,
       aggregation: AcfAggregation = AcfAggregation.Mean
   ): AcorrDiagnostics =
@@ -30,25 +30,25 @@ object AcorrDiagnostics:
     val values =
       aggregation match
         case AcfAggregation.None =>
-          val out = new Array[Double](lagCount * residuals.cols)
+          val out = DMat.newBuilder(lagCount, residuals.cols)
           var col = 0
           while col < residuals.cols do
             val series = column(residuals, col)
             val acf = acfSeries(series, lagCount)
             var lag = 0
             while lag < lagCount do
-              out(lag * residuals.cols + col) = acf(lag)
+              out(lag, col) = acf(lag)
               lag += 1
             col += 1
-          DoubleMatrix.unsafe(lagCount, residuals.cols, out)
+          out.result()
 
         case AcfAggregation.Mean =>
           val series = rowAggregate(residuals, median = false)
-          DoubleMatrix.fromRows(acfSeries(series, lagCount).map(v => Vector(v)))
+          columnMatrix(acfSeries(series, lagCount))
 
         case AcfAggregation.Median =>
           val series = rowAggregate(residuals, median = true)
-          DoubleMatrix.fromRows(acfSeries(series, lagCount).map(v => Vector(v)))
+          columnMatrix(acfSeries(series, lagCount))
 
     AcorrDiagnostics(
       lags = (1 to lagCount).toVector,
@@ -75,7 +75,10 @@ object AcorrDiagnostics:
         num / denom
     }.toVector
 
-  private def column(matrix: DoubleMatrix, col: Int): Vector[Double] =
+  private def columnMatrix(values: Vector[Double]): DMat =
+    Matrix.tabulate(values.length, 1)((row, _) => values(row))
+
+  private def column(matrix: DMat, col: Int): Vector[Double] =
     val out = Vector.newBuilder[Double]
     out.sizeHint(matrix.rows)
     var row = 0
@@ -84,7 +87,7 @@ object AcorrDiagnostics:
       row += 1
     out.result()
 
-  private def rowAggregate(matrix: DoubleMatrix, median: Boolean): Vector[Double] =
+  private def rowAggregate(matrix: DMat, median: Boolean): Vector[Double] =
     val out = Vector.newBuilder[Double]
     out.sizeHint(matrix.rows)
     var row = 0

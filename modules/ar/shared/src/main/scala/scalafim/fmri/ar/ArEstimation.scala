@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum ArOrder:
   case Fixed(order: ArOrderValue)
@@ -64,7 +64,7 @@ final case class YuleWalkerEstimate(
 object ArEstimation:
 
   def fitNoise(
-      residuals: DoubleMatrix,
+      residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions = ArFitOptions()
   ): Either[ArError, WhiteningPlan] =
@@ -107,7 +107,7 @@ object ArEstimation:
     }
 
   def estimateForSegments(
-      residuals: DoubleMatrix,
+      residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions
   ): Either[ArError, YuleWalkerEstimate] =
@@ -125,14 +125,14 @@ object ArEstimation:
         selectByBic(gamma, effectiveObservations(segments), maxLag, options.stationarity)
 
   def autocovariance(
-      residuals: DoubleMatrix,
+      residuals: DMat,
       segments: Vector[TimeSegment],
       maxLag: Int
   ): Vector[Double] =
     autocovariances(residuals, segments, ArLag.unsafe(maxLag)).toVector
 
   def autocovariances(
-      residuals: DoubleMatrix,
+      residuals: DMat,
       segments: Vector[TimeSegment],
       maxLag: ArLag
   ): Autocovariances =
@@ -249,7 +249,7 @@ object ArEstimation:
   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
     segments.map(_.length).sum
 
-  private def segmentMean(matrix: DoubleMatrix, segment: TimeSegment, col: Int): Double =
+  private def segmentMean(matrix: DMat, segment: TimeSegment, col: Int): Double =
     var sum = 0.0
     var row = segment.start
     while row < segment.endExclusive do

@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class FmriArParitySuite extends munit.FunSuite:
 
@@ -10,15 +10,16 @@ class FmriArParitySuite extends munit.FunSuite:
       assert(math.abs(a - e) <= tol, clues(i, a, e))
     }
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double = 1e-12): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double = 1e-12): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
-    actual.copyData.zip(expected.copyData).zipWithIndex.foreach { case ((a, e), i) =>
+    actual.valuesRowMajor.zip(expected.valuesRowMajor).zipWithIndex.foreach { case ((a, e), i) =>
       assert(math.abs(a - e) <= tol, clues(i, a, e))
     }
 
-  private def matrix(rows: Vector[Vector[Double]]): DoubleMatrix =
-    DoubleMatrix.fromRows(rows)
+  private def matrix(rows: Vector[Vector[Double]]): DMat =
+    require(rows.nonEmpty && rows.forall(_.length == rows.head.length))
+    Matrix.tabulate(rows.length, rows.head.length)((row, col) => rows(row)(col))
 
   test("PACF conversion matches fmriAR helper output") {
     val kappa = Vector(0.25, -0.1, 0.2)
@@ -146,7 +147,7 @@ class FmriArParitySuite extends munit.FunSuite:
     )
     val median = AcorrDiagnostics.compute(medianResiduals, maxLag = 2, aggregation = AcfAggregation.Median)
 
-    assertClose(median.acf.col(0).toVector, Vector(-0.0098039215686274491, -0.66666666666666652))
+    assertClose(median.acf.col(0).toSeq.toVector, Vector(-0.0098039215686274491, -0.66666666666666652))
     assertEqualsDouble(median.confidenceInterval, 0.80016664930917158, 1e-12)
   }
 
@@ -177,7 +178,7 @@ class FmriArParitySuite extends munit.FunSuite:
       0.15924145658477434,
       0.95462884101509238
     )
-    val residuals = DoubleMatrix.fromRows(values.map(v => Vector(v)))
+    val residuals = matrix(values.map(v => Vector(v)))
     val segments = TimeSegments.continuous(values.length)
 
     val gamma = ArEstimation.autocovariance(residuals, segments, maxLag = 1)

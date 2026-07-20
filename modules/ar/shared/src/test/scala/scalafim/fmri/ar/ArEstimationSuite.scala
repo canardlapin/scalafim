@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class ArEstimationSuite extends munit.FunSuite:
 
@@ -14,8 +14,8 @@ class ArEstimationSuite extends munit.FunSuite:
       i += 1
     out.toVector
 
-  private def matrix(values: Vector[Double]): DoubleMatrix =
-    DoubleMatrix.fromRows(values.map(v => Vector(v)))
+  private def matrix(values: Vector[Double]): DMat =
+    Matrix.tabulate(values.length, 1)((row, _) => values(row))
 
   private def assertClose(actual: Vector[Double], expected: Vector[Double], tol: Double = 1e-10): Unit =
     assertEquals(actual.length, expected.length)
@@ -200,11 +200,11 @@ class ArEstimationSuite extends munit.FunSuite:
   }
 
   test("ACF diagnostics stay finite for constant multivoxel residuals") {
-    val residuals = DoubleMatrix.fromRows(Vector.fill(6)(Vector(2.0, 2.0, 2.0)))
+    val residuals = Matrix.tabulate(6, 3)((_, _) => 2.0)
 
     Vector(AcfAggregation.None, AcfAggregation.Mean, AcfAggregation.Median).foreach { aggregation =>
       val diag = AcorrDiagnostics.compute(residuals, maxLag = 3, aggregation = aggregation)
-      val values = diag.acf.copyData.toVector
+      val values = diag.acf.valuesRowMajor.toVector
 
       assertEquals(diag.lags, Vector(1, 2, 3))
       assert(values.forall(_.isFinite), clues(aggregation, values))

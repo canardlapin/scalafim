@@ -1,11 +1,15 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class WhiteningPlanSuite extends munit.FunSuite:
 
-  private def matrix(values: Vector[Double]): DoubleMatrix =
-    DoubleMatrix.fromRows(values.map(v => Vector(v)))
+  private def matrix(values: Vector[Double]): DMat =
+    Matrix.tabulate(values.length, 1)((row, _) => values(row))
+
+  private def fromRows(values: Vector[Vector[Double]]): DMat =
+    require(values.nonEmpty && values.forall(_.length == values.head.length))
+    Matrix.tabulate(values.length, values.head.length)((row, col) => values(row)(col))
 
   private def assertClose(actual: Vector[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
     assertEquals(actual.length, expected.length)
@@ -13,23 +17,24 @@ class WhiteningPlanSuite extends munit.FunSuite:
       assert(math.abs(a - e) <= tol, clues(i, a, e))
     }
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double = 1e-12): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double = 1e-12): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
-    actual.copyData.zip(expected.copyData).zipWithIndex.foreach { case ((a, e), i) =>
+    actual.valuesRowMajor.zip(expected.valuesRowMajor).zipWithIndex.foreach { case ((a, e), i) =>
       assert(math.abs(a - e) <= tol, clues(i, a, e))
     }
 
-  private def combine(left: DoubleMatrix, right: DoubleMatrix, leftScale: Double, rightScale: Double): DoubleMatrix =
+  private def combine(left: DMat, right: DMat, leftScale: Double, rightScale: Double): DMat =
     require(left.rows == right.rows && left.cols == right.cols)
-    val out = new Array[Double](left.rows * left.cols)
-    val x = left.copyData
-    val y = right.copyData
-    var i = 0
-    while i < out.length do
-      out(i) = leftScale * x(i) + rightScale * y(i)
-      i += 1
-    DoubleMatrix.unsafe(left.rows, left.cols, out)
+    val out = DMat.newBuilder(left.rows, left.cols)
+    var row = 0
+    while row < left.rows do
+      var col = 0
+      while col < left.cols do
+        out(row, col) = leftScale * left(row, col) + rightScale * right(row, col)
+        col += 1
+      row += 1
+    out.result()
 
   private def manualWhiten(
       values: Vector[Double],
@@ -71,7 +76,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
     assertEquals(plan.coveredSegments.nTimepoints, values.length)
     assertEquals(plan.initialCondition, InitialConditionPolicy.ExactAr1)
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
     val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
 
     assertClose(whitened, expected)
@@ -84,7 +89,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
     val segments = TimeSegments.continuous(values.length)
     val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
     val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
 
     assertClose(whitened, expected)
@@ -97,7 +102,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
     val segments = TimeSegments.continuous(values.length)
     val plan = WhiteningPlan.global(coefficients, segments, exactFirstAr1 = true)
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
     val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = true)
 
     assertClose(whitened, expected)
@@ -112,7 +117,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
 
     assertEquals(segments, Vector(TimeSegment(0, 3, 0), TimeSegment(3, 6, 0)))
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
     val expected = manualWhiten(values, coefficients, segments, exactFirstAr1 = false)
 
     assertClose(whitened, expected)
@@ -132,7 +137,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
     assertEquals(plan.pooling, NoisePooling.Run)
     assertEquals(plan.coefficients.length, 2)
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
 
     assertClose(whitened, Vector(1.0, 1.5, 4.0, 9.0, 18.0))
   }
@@ -160,7 +165,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
       .toOption
       .get
 
-    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toVector
+    val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
 
     assertClose(whitened, Vector(0.5, 0.9, 1.85))
     assertEquals(plan.exactFirstAr1, false)
@@ -180,8 +185,8 @@ class WhiteningPlanSuite extends munit.FunSuite:
   }
 
   test("whitening transform applies the same plan to design and response") {
-    val design = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, 1.0), Vector(1.0, 2.0)))
-    val response = DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(4.0), Vector(8.0)))
+    val design = fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, 1.0), Vector(1.0, 2.0)))
+    val response = fromRows(Vector(Vector(2.0), Vector(4.0), Vector(8.0)))
     val plan = WhiteningPlan.global(ArmaCoefficients.ar(0.5), TimeSegments.continuous(3), exactFirstAr1 = false)
 
     val out = WhiteningTransform(plan, design, response).toOption.get
@@ -195,7 +200,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
   }
 
   test("whitening is linear in the input matrix") {
-    val left = DoubleMatrix.fromRows(
+    val left = fromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(3.0, 5.0),
@@ -203,7 +208,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
         Vector(21.0, 34.0)
       )
     )
-    val right = DoubleMatrix.fromRows(
+    val right = fromRows(
       Vector(
         Vector(-1.0, 0.5),
         Vector(2.0, -3.0),

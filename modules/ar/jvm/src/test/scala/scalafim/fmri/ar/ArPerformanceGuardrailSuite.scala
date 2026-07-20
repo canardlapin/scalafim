@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class ArPerformanceGuardrailSuite extends munit.FunSuite:
 
@@ -66,8 +66,8 @@ class ArPerformanceGuardrailSuite extends munit.FunSuite:
       .filter(_ > 0L)
       .getOrElse(defaultMs)
 
-  private def ar2ResidualMatrix(rows: Int, cols: Int): DoubleMatrix =
-    val data = new Array[Double](rows * cols)
+  private def ar2ResidualMatrix(rows: Int, cols: Int): DMat =
+    val data = DMat.newBuilder(rows, cols)
     val lag1 = Array.fill(cols)(0.0)
     val lag2 = Array.fill(cols)(0.0)
     val runBreak = rows / 2
@@ -85,23 +85,25 @@ class ArPerformanceGuardrailSuite extends munit.FunSuite:
       while col < cols do
         val innovation = deterministicInnovation(row, col)
         val value = innovation + 0.45 * lag1(col) - 0.15 * lag2(col)
-        data(row * cols + col) = value
+        data(row, col) = value
         lag2(col) = lag1(col)
         lag1(col) = value
         col += 1
       row += 1
 
-    DoubleMatrix.unsafe(rows, cols, data)
+    data.result()
 
   private def deterministicInnovation(row: Int, col: Int): Double =
     val raw = math.sin((row + 1).toDouble * 12.9898 + (col + 1).toDouble * 78.233) * 43758.5453
     (raw - math.floor(raw)) * 2.0 - 1.0
 
-  private def finiteChecksum(matrix: DoubleMatrix): Double =
-    val data = matrix.copyData
+  private def finiteChecksum(matrix: DMat): Double =
     var sum = 0.0
-    var i = 0
-    while i < data.length do
-      sum += data(i) * 1.0e-6
-      i += 1
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        sum += matrix(row, col) * 1.0e-6
+        col += 1
+      row += 1
     sum
