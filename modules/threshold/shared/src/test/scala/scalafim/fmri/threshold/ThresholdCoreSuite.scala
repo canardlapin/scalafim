@@ -1,10 +1,14 @@
 package scalafim.fmri.threshold
 
+import gale.linalg.{DMat, Matrix}
 import narr.NArray
 import scalafim.image.{Mask, NDArray, NeuroSpace, NeuroVol}
-import scalafim.linalg.DoubleMatrix
 
 class ThresholdCoreSuite extends munit.FunSuite:
+
+  private def matrix(rows: Vector[Vector[Double]]): DMat =
+    require(rows.nonEmpty && rows.forall(_.length == rows.head.length))
+    Matrix.tabulate(rows.length, rows.head.length)((row, col) => rows(row)(col))
 
   private def value[A](e: Either[ThresholdError, A]): A =
     e.fold(err => fail(err.message), identity)
@@ -122,7 +126,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
 
   test("Westfall-Young step-down matches a hand-computed null matrix") {
     val observed = Array(3.5, 2.1, 4.2)
-    val nulls = DoubleMatrix.fromRows(
+    val nulls = matrix(
       Vector(
         Vector(2.0, 1.0, 3.0),
         Vector(4.0, 1.0, 2.0),
@@ -143,7 +147,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
 
   test("single-step maxT and max-null threshold use plus-one permutation rules") {
     val observed = Array(3.5, 2.1, 4.2)
-    val nulls = DoubleMatrix.fromRows(
+    val nulls = matrix(
       Vector(
         Vector(2.0, 1.0, 3.0),
         Vector(4.0, 1.0, 2.0),

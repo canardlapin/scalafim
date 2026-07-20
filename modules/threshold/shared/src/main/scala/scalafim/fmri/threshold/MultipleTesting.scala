@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 enum CorrectionPolicy:
   case WestfallYoungStepDown
@@ -15,7 +15,7 @@ final case class AdjustedTest(testIndex: Int, score: Double, adjustedP: Adjusted
 object MultipleTesting:
   def adjust(
     observed: Array[Double],
-    nullMatrix: DoubleMatrix,
+    nullMatrix: DMat,
     alpha: Alpha,
     policy: CorrectionPolicy
   ): Either[ThresholdError, Vector[AdjustedTest]] =
@@ -29,7 +29,7 @@ object WestfallYoung:
 
   def stepDown(
     observed: Array[Double],
-    nullMatrix: DoubleMatrix,
+    nullMatrix: DMat,
     alpha: Alpha
   ): Either[ThresholdError, Vector[AdjustedTest]] =
     validateObserved(observed) match
@@ -86,7 +86,7 @@ object MaxT:
 
   def singleStep(
     observed: Array[Double],
-    nullMatrix: DoubleMatrix,
+    nullMatrix: DMat,
     alpha: Alpha
   ): Either[ThresholdError, Vector[AdjustedTest]] =
     validateObserved(observed) match
@@ -178,7 +178,7 @@ private def validateObserved(observed: Array[Double]): Either[ThresholdError, Un
     i += 1
   Right(())
 
-private def validateNull(nullMatrix: DoubleMatrix): Either[ThresholdError, Unit] =
+private def validateNull(nullMatrix: DMat): Either[ThresholdError, Unit] =
   var row = 0
   while row < nullMatrix.rows do
     var col = 0

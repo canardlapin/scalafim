@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
+import gale.linalg.DMat
 import scalafim.image.NeuroVol
-import scalafim.linalg.DoubleMatrix
 
 final case class HierScanConfig(
     alpha: Alpha = Alpha.unsafe(0.05),
@@ -227,10 +227,10 @@ object HierScan:
     nullDraw: NullDraw,
     config: HierScanConfig,
     orientation: EvidenceOrientation
-  ): Either[ThresholdError, DoubleMatrix] =
+  ): Either[ThresholdError, DMat] =
     val rows = nullDraw.nPermutations.value
     val cols = children.length
-    val out = new Array[Double](rows * cols)
+    val out = DMat.newBuilder(rows, cols)
     var row = 0
     while row < rows do
       nullDraw.draw(row) match
@@ -246,10 +246,10 @@ object HierScan:
                   case Right(score) =>
                     score.scoreValue.finiteOrError("null child score") match
                       case Left(err) => return Left(err)
-                      case Right(value) => out(row * cols + col) = value
+                      case Right(value) => out(row, col) = value
                 col += 1
       row += 1
-    Right(DoubleMatrix.unsafe(rows, cols, out))
+    Right(out.result())
 
   private def transformDraw(
     raw: Array[Double],
