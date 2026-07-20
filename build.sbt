@@ -267,6 +267,20 @@ lazy val image =
 lazy val imageJS  = image.js
 lazy val imageJVM = image.jvm
 
+lazy val imageView =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view"))
+    .dependsOn(image, graphics)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val imageViewJS  = imageView.js
+lazy val imageViewJVM = imageView.jvm
+
 lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -587,6 +601,8 @@ lazy val root =
       designJVM,
       imageJS,
       imageJVM,
+      imageViewJS,
+      imageViewJVM,
       thresholdJS,
       thresholdJVM,
       motionJS,
