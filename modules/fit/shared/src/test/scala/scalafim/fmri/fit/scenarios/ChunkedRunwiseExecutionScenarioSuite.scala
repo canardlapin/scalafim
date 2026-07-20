@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
@@ -17,8 +19,8 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -163,7 +165,7 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
   private def analyticRunObservations(
       name: String,
       actual: scalafim.fmri.fit.RunwiseFmriRunResult,
-      expectedCoefficients: DoubleMatrix
+      expectedCoefficients: DMat
   ): Vector[ScenarioObservation] =
     ScenarioHarness.matrix(s"$name.coefficients", actual.coefficients.value, expectedCoefficients, Tol) ++
       Vector(
@@ -232,8 +234,8 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
     def plan: FitPlan =
       FitPlan(model, engine = FitEngine.RunwiseLeastSquares)
 
-    def expectedCoefficients(run: Int): DoubleMatrix =
-      DoubleMatrix.fromRows(
+    def expectedCoefficients(run: Int): DMat =
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           selectedVoxels.map(voxel => slopes(run)(voxel)),
           selectedVoxels.map(voxel => intercepts(run)(voxel))
@@ -260,7 +262,7 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
         FmriDataset(
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-chunked-runwise-execution"),
-            DMat.fromRows(responseRows),
+            ImageDMat.fromRows(responseRows),
             NeuroSpace(Vector(5, 1, 1))
           ),
           samplingFrame = samplingFrame

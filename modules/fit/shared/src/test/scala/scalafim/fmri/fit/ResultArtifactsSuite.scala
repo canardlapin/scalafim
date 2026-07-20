@@ -1,9 +1,11 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.model.{FitEngine, FitSummary}
 import scalafim.image.NeuroSpace
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 class ResultArtifactsSuite extends munit.FunSuite:
 
@@ -65,7 +67,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
       StatMap.make(
         name = "bad",
         kind = StatisticKind.Custom("bad"),
-        values = DoubleVector.fromSeq(Vector(1.0)),
+        values = DVec.fromSeq(Vector(1.0)),
         shape = shape,
         selectedVoxels = selected,
         provenance = provenance
@@ -81,7 +83,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
       StatMap.make(
         name = "bad",
         kind = StatisticKind.Custom("bad"),
-        values = DoubleVector.fromSeq(Vector(1.0)),
+        values = DVec.fromSeq(Vector(1.0)),
         shape = shape,
         selectedVoxels = SelectedVoxelIndices.unsafe(Vector(shape.spatialSize)),
         provenance = provenance
@@ -98,13 +100,13 @@ class ResultArtifactsSuite extends munit.FunSuite:
     val base = denseResult()
     val covariance = CoefficientCovariance.unsafeVoxelwise(
         Vector(
-          DoubleMatrix.fromRows(
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(
             Vector(
               Vector(0.25, 0.0),
               Vector(0.0, 0.5)
             )
           ),
-          DoubleMatrix.fromRows(
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(
             Vector(
               Vector(0.75, 0.0),
               Vector(0.0, 1.5)
@@ -184,18 +186,18 @@ class ResultArtifactsSuite extends munit.FunSuite:
   private def denseResult(): DenseFmriFitResult =
     val covariance =
       CoefficientCovariance.unsafeShared(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(0.25, 0.0),
             Vector(0.0, 0.5)
           )
         )
       )
-    val residualVariance = DoubleVector.fromSeq(Vector(1.0, 2.0))
+    val residualVariance = DVec.fromSeq(Vector(1.0, 2.0))
     val residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(2)
     DenseFmriFitResult(
       coefficients = CoefficientBlock(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(2.0, -1.0),
             Vector(3.0, 4.0)
@@ -205,7 +207,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
       inference = CoefficientInference.unsafeFromExisting(
         CoefficientInferenceScope.All,
         StandardErrorBlock(
-          DoubleMatrix.fromRows(
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(
             Vector(
               Vector(0.1, 0.3),
               Vector(0.2, 0.4)
@@ -236,7 +238,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
     val result = denseResult()
     val covariance =
       CoefficientCovariance.unsafeShared(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(0.25, 0.0),
             Vector(0.0, 0.0)
@@ -248,7 +250,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
         .fromCovariance(
           scope = CoefficientInferenceScope.unsafeOnly(Vector(0), "task coefficient"),
           covariance = covariance,
-          varianceScale = DoubleVector.fromSeq(Vector(1.0, 2.0)),
+          varianceScale = DVec.fromSeq(Vector(1.0, 2.0)),
           residualDegreesOfFreedom = result.residualDegreesOfFreedom,
           method = CoefficientInferenceMethod.ReducedRankConditional
         )

@@ -1,6 +1,8 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 class OlsPerformanceGuardrailSuite extends munit.FunSuite:
 
@@ -46,7 +48,7 @@ class OlsPerformanceGuardrailSuite extends munit.FunSuite:
   private def assertFinite(values: Array[Double]): Unit =
     assert(values.forall(_.isFinite), clues(values.take(16).toVector))
 
-  private def designMatrix(rows: Int): DoubleMatrix =
+  private def designMatrix(rows: Int): DMat =
     val data = new Array[Double](rows * Predictors)
     val midpoint = (rows - 1).toDouble / 2.0
     val firstRunRows = rows / 2
@@ -62,9 +64,9 @@ class OlsPerformanceGuardrailSuite extends munit.FunSuite:
       data(offset + 4) = if row >= firstRunRows then 1.0 else 0.0
       row += 1
 
-    DoubleMatrix.unsafe(rows, Predictors, data)
+    scalafim.fmri.fit.GaleTestMatrix.fromArray(rows, Predictors, data)
 
-  private def responseMatrix(design: DoubleMatrix, voxels: Int): DoubleMatrix =
+  private def responseMatrix(design: DMat, voxels: Int): DMat =
     val data = new Array[Double](design.rows * voxels)
 
     var row = 0
@@ -80,7 +82,7 @@ class OlsPerformanceGuardrailSuite extends munit.FunSuite:
         voxel += 1
       row += 1
 
-    DoubleMatrix.unsafe(design.rows, voxels, data)
+    scalafim.fmri.fit.GaleTestMatrix.fromArray(design.rows, voxels, data)
 
   private def beta(predictor: Int, voxel: Int): Double =
     val scale = 1.0 + (voxel % 13).toDouble * 0.015

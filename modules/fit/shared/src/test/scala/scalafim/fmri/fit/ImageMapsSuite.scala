@@ -1,13 +1,15 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class ImageMapsSuite extends munit.FunSuite:
 
@@ -21,7 +23,7 @@ class ImageMapsSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = DMat.fromRows(
+    val data = ImageDMat.fromRows(
       Vector(
         Vector(1.0, 2.0, 10.0, -1.0),
         Vector(3.0, 1.0, 9.0, -2.0),
@@ -114,7 +116,7 @@ class ImageMapsSuite extends munit.FunSuite:
         .fromCovariance(
           scope = CoefficientInferenceScope.unsafeOnly(Vector(0), "task coefficient"),
           covariance = CoefficientCovariance.unsafeShared(
-            DoubleMatrix.fromRows(
+            scalafim.fmri.fit.GaleTestMatrix.fromRows(
               Vector(
                 Vector(result.normalizedCovariance(0, 0), 0.0),
                 Vector(0.0, 0.0)
@@ -136,7 +138,7 @@ class ImageMapsSuite extends munit.FunSuite:
 
   test("t and F contrast statistics map into image space") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(0.0, 1.0),
           Vector(1.0, 1.0),
@@ -146,7 +148,7 @@ class ImageMapsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(1.2), Vector(0.0), Vector(-1.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(2.0), Vector(1.2), Vector(0.0), Vector(-1.0)))
     )
     val fit = Ols.unsafeFit(design, response)
     val covariance = CoefficientCovariance.unsafeShared(fit.normalizedCovariance)

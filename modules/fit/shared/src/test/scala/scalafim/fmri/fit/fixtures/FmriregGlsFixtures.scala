@@ -1,6 +1,8 @@
 package scalafim.fmri.fit.fixtures
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 object FmriregGlsFixtures:
   val rho: Double = 0.35
@@ -8,8 +10,8 @@ object FmriregGlsFixtures:
   val censoredTimepoints: Vector[Int] = Vector(2)
   val residualDegreesOfFreedom: Int = 6
 
-  val design: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val design: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(-2.0, 1.0),
         Vector(-1.0, 1.0),
@@ -22,8 +24,8 @@ object FmriregGlsFixtures:
       )
     )
 
-  val response: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val response: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.2, -1.5),
         Vector(0.1, -0.2),
@@ -36,8 +38,8 @@ object FmriregGlsFixtures:
       )
     )
 
-  val whitenedDesign: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val whitenedDesign: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(-1.873499399519519, 0.9367496997597597),
         Vector(-0.3, 0.65),
@@ -50,8 +52,8 @@ object FmriregGlsFixtures:
       )
     )
 
-  val whitenedResponse: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val whitenedResponse: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.124099639711712, -1.40512454963964),
         Vector(-0.32, 0.325),
@@ -64,8 +66,8 @@ object FmriregGlsFixtures:
       )
     )
 
-  val coefficients: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val coefficients: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.169144243493604, 0.73542126157918),
         Vector(1.683333333333334, 0.7083333333333333)
@@ -75,8 +77,8 @@ object FmriregGlsFixtures:
   val residualVariance: Vector[Double] =
     Vector(1.202744422082536, 0.2115509078015482)
 
-  val normalizedCovariance: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val normalizedCovariance: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(0.08822232024702252, 1.407491535032746e-17),
         Vector(1.407491535032746e-17, 0.2331002331002331)

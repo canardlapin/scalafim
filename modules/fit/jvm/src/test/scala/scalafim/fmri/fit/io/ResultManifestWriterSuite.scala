@@ -1,11 +1,13 @@
 package scalafim.fmri.fit.io
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*
 import scalafim.fmri.model.{FitEngine, FitSummary}
 import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -172,7 +174,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
         .fromCovariance(
           scope = CoefficientInferenceScope.unsafeOnly(Vector(0), "task coefficient"),
           covariance = CoefficientCovariance.unsafeShared(
-            DoubleMatrix.fromRows(
+            scalafim.fmri.fit.GaleTestMatrix.fromRows(
               Vector(
                 Vector(0.25, 0.0),
                 Vector(0.0, 0.0)
@@ -203,18 +205,18 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
   private def denseResult(): DenseFmriFitResult =
     val covariance =
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(0.25, 0.0),
           Vector(0.0, 0.5)
         )
       )
     val coefficientCovariance = CoefficientCovariance.unsafeShared(covariance)
-    val residualVariance = DoubleVector.fromSeq(Vector(1.0, 2.0))
+    val residualVariance = DVec.fromSeq(Vector(1.0, 2.0))
     val residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(2)
     DenseFmriFitResult(
       coefficients = CoefficientBlock(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(2.0, -1.0),
             Vector(3.0, 4.0)
@@ -224,7 +226,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
       inference = CoefficientInference.unsafeFromExisting(
         CoefficientInferenceScope.All,
         StandardErrorBlock(
-          DoubleMatrix.fromRows(
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(
             Vector(
               Vector(0.5, math.sqrt(0.5)),
               Vector(math.sqrt(0.5), 1.0)

@@ -1,19 +1,17 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.Matrix
 
 class MatrixAdaptersSuite extends munit.FunSuite:
-  test("temporary Gale carrier bridge preserves values without mutable aliasing") {
-    val source = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
-    val gale = MatrixAdapters.toGaleMatrix(source)
+  test("Gale column binding preserves logical row-major values"):
+    val left = Matrix.dense(2, 1, Seq(1.0, 3.0))
+    val right = Matrix.dense(2, 1, Seq(2.0, 4.0))
+    val bound = MatrixAdapters.bindColumns(left, right)
 
-    source.dataArray(0) = 99.0
-    assertEqualsDouble(gale(0, 0), 1.0, 0.0)
-
-    val roundTrip = MatrixAdapters.fromGaleMatrix(gale)
-    roundTrip.dataArray(1) = -7.0
-    assertEqualsDouble(gale(0, 1), 2.0, 0.0)
-    assertEquals((roundTrip.rows, roundTrip.cols), (2, 2))
-    assertEqualsDouble(roundTrip(1, 0), 3.0, 0.0)
-    assertEqualsDouble(roundTrip(1, 1), 4.0, 0.0)
-  }
+    assertEquals((bound.rows, bound.cols), (2, 2))
+    assertEqualsDouble(bound(0, 0), 1.0, 0.0)
+    assertEqualsDouble(bound(0, 1), 2.0, 0.0)
+    assertEqualsDouble(bound(1, 0), 3.0, 0.0)
+    assertEqualsDouble(bound(1, 1), 4.0, 0.0)

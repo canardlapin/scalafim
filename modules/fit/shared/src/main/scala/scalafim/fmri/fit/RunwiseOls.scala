@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import gale.linalg.{DMat, Matrix}
+
 final case class RunwiseOlsFit(runs: Vector[RunwiseOlsRunFit]):
   require(runs.nonEmpty, "runwise OLS fit must contain at least one run")
 
@@ -26,8 +28,8 @@ object RunwiseOls:
         val partition = partitions(i)
         val runResult =
           for
-            runDesign <- DesignMatrix.fromMatrix(design.value.selectRows(partition.rowIndices))
-            runResponse <- ResponseBlock.fromMatrix(response.value.selectRows(partition.rowIndices))
+            runDesign <- DesignMatrix.fromMatrix(selectRows(design.value, partition.rowIndices))
+            runResponse <- ResponseBlock.fromMatrix(selectRows(response.value, partition.rowIndices))
             runFit <- Ols.fit(runDesign, runResponse)
           yield RunwiseOlsRunFit(partition, runFit)
 
@@ -41,3 +43,8 @@ object RunwiseOls:
       failure match
         case null  => Right(RunwiseOlsFit(out.result()))
         case error => Left(error)
+
+  private def selectRows(matrix: DMat, rows: IndexedSeq[Int]): DMat =
+    Matrix.tabulate(rows.length, matrix.cols) { (row, col) =>
+      matrix(rows(row), col)
+    }

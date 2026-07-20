@@ -1,7 +1,7 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.model.{FitConfig, FitEngine}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 final case class LssBlockDesign(
     prepared: LssPreparedDesign
@@ -43,7 +43,7 @@ sealed trait FitBlockResult:
 final case class DenseFitBlockResult(
     coefficients: CoefficientBlock,
     inference: CoefficientInference,
-    residualVariance: DoubleVector,
+    residualVariance: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
@@ -58,7 +58,7 @@ final case class DenseFitBlockResult(
   require(inference.voxels == coefficients.voxels, "block inference must match coefficient columns")
 
   def standardErrors: StandardErrorBlock = inference.standardErrors
-  def normalizedCovariance: DoubleMatrix = inference.normalizedCovariance
+  def normalizedCovariance: DMat = inference.normalizedCovariance
   def coefficientCovariance: CoefficientCovariance = inference.covariance
   def inferenceScope: CoefficientInferenceScope = inference.scope
 
@@ -137,7 +137,7 @@ object DenseFitBlockResult:
         DenseFitBlockResult(
           coefficients = CoefficientBlock(bindMatrixColumns(blocks, _.coefficients.value)),
           inference = inference,
-          residualVariance = DoubleVector.unsafe(bindVectors(blocks, _.residualVariance)),
+          residualVariance = bindVectors(blocks, _.residualVariance),
           residualDegreesOfFreedom = first.residualDegreesOfFreedom,
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
@@ -181,11 +181,11 @@ object DenseFitBlockResult:
 
   private def bindMatrixColumns(
       blocks: IndexedSeq[DenseFitBlockResult],
-      matrix: DenseFitBlockResult => DoubleMatrix
-  ): DoubleMatrix =
+      matrix: DenseFitBlockResult => DMat
+  ): DMat =
     val rows = matrix(blocks.head).rows
     val cols = blocks.iterator.map(block => matrix(block).cols).sum
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
 
     var colOffset = 0
     var blockIndex = 0
@@ -194,27 +194,33 @@ object DenseFitBlockResult:
       require(current.rows == rows, "dense block matrix row mismatch")
       var row = 0
       while row < rows do
-        System.arraycopy(current.dataArray, row * current.cols, out, row * cols + colOffset, current.cols)
+        var col = 0
+        while col < current.cols do
+          out(row, colOffset + col) = current(row, col)
+          col += 1
         row += 1
       colOffset += current.cols
       blockIndex += 1
 
-    DoubleMatrix.unsafe(rows, cols, out)
+    out.result()
 
   private def bindVectors(
       blocks: IndexedSeq[DenseFitBlockResult],
-      vector: DenseFitBlockResult => DoubleVector
-  ): Array[Double] =
+      vector: DenseFitBlockResult => DVec
+  ): DVec =
     val length = blocks.iterator.map(block => vector(block).length).sum
-    val out = new Array[Double](length)
+    val out = Vec.newBuilder(length)
     var offset = 0
     var blockIndex = 0
     while blockIndex < blocks.length do
-      val current = vector(blocks(blockIndex)).copyData
-      System.arraycopy(current, 0, out, offset, current.length)
+      val current = vector(blocks(blockIndex))
+      var index = 0
+      while index < current.length do
+        out(offset + index) = current(index)
+        index += 1
       offset += current.length
       blockIndex += 1
-    out
+    out.result()
 
 final case class RunwiseFitBlockResult(
     runs: Vector[RunwiseFmriRunResult],
@@ -305,8 +311,8 @@ object RunwiseFitBlockResult:
         timepoints = firstRun.timepoints,
         coefficients = CoefficientBlock(bindMatrixColumns(currentRuns, _.coefficients.value)),
         standardErrors = StandardErrorBlock(bindMatrixColumns(currentRuns, _.standardErrors.value)),
-        normalizedCovariance = DoubleMatrix.unsafe(firstRun.normalizedCovariance.rows, firstRun.normalizedCovariance.cols, firstRun.normalizedCovariance.copyData),
-        residualVariance = DoubleVector.unsafe(bindVectors(currentRuns, _.residualVariance)),
+        normalizedCovariance = Matrix.tabulate(firstRun.normalizedCovariance.rows, firstRun.normalizedCovariance.cols)(firstRun.normalizedCovariance.apply),
+        residualVariance = bindVectors(currentRuns, _.residualVariance),
         residualDegreesOfFreedom = firstRun.residualDegreesOfFreedom,
         olsDiagnostics = firstRun.olsDiagnostics
       )
@@ -315,11 +321,11 @@ object RunwiseFitBlockResult:
 
   private def bindMatrixColumns(
       runs: IndexedSeq[RunwiseFmriRunResult],
-      matrix: RunwiseFmriRunResult => DoubleMatrix
-  ): DoubleMatrix =
+      matrix: RunwiseFmriRunResult => DMat
+  ): DMat =
     val rows = matrix(runs.head).rows
     val cols = runs.iterator.map(run => matrix(run).cols).sum
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
     var colOffset = 0
     var runIndex = 0
     while runIndex < runs.length do
@@ -327,31 +333,44 @@ object RunwiseFitBlockResult:
       require(current.rows == rows, "runwise block matrix row mismatch")
       var row = 0
       while row < rows do
-        System.arraycopy(current.dataArray, row * current.cols, out, row * cols + colOffset, current.cols)
+        var col = 0
+        while col < current.cols do
+          out(row, colOffset + col) = current(row, col)
+          col += 1
         row += 1
       colOffset += current.cols
       runIndex += 1
-    DoubleMatrix.unsafe(rows, cols, out)
+    out.result()
 
   private def bindVectors(
       runs: IndexedSeq[RunwiseFmriRunResult],
-      vector: RunwiseFmriRunResult => DoubleVector
-  ): Array[Double] =
+      vector: RunwiseFmriRunResult => DVec
+  ): DVec =
     val length = runs.iterator.map(run => vector(run).length).sum
-    val out = new Array[Double](length)
+    val out = Vec.newBuilder(length)
     var offset = 0
     var runIndex = 0
     while runIndex < runs.length do
-      val current = vector(runs(runIndex)).copyData
-      System.arraycopy(current, 0, out, offset, current.length)
+      val current = vector(runs(runIndex))
+      var index = 0
+      while index < current.length do
+        out(offset + index) = current(index)
+        index += 1
       offset += current.length
       runIndex += 1
-    out
+    out.result()
 
-  private def sameMatrix(left: DoubleMatrix, right: DoubleMatrix): Boolean =
-    left.rows == right.rows &&
-      left.cols == right.cols &&
-      left.copyData.sameElements(right.copyData)
+  private def sameMatrix(left: DMat, right: DMat): Boolean =
+    if left.rows != right.rows || left.cols != right.cols then false
+    else
+      var row = 0
+      while row < left.rows do
+        var col = 0
+        while col < left.cols do
+          if left(row, col) != right(row, col) then return false
+          col += 1
+        row += 1
+      true
 
 final case class LssFitBlockResult(
     coefficients: CoefficientBlock,
@@ -404,10 +423,10 @@ object LssFitBlockResult:
       i += 1
     Right(())
 
-  private def bindCoefficientColumns(blocks: IndexedSeq[LssFitBlockResult]): DoubleMatrix =
+  private def bindCoefficientColumns(blocks: IndexedSeq[LssFitBlockResult]): DMat =
     val rows = blocks.head.coefficients.predictors
     val cols = blocks.iterator.map(_.coefficients.voxels).sum
-    val out = new Array[Double](rows * cols)
+    val out = Matrix.newBuilder(rows, cols)
 
     var colOffset = 0
     var blockIndex = 0
@@ -416,12 +435,15 @@ object LssFitBlockResult:
       require(current.rows == rows, "LSS block coefficient row mismatch")
       var row = 0
       while row < rows do
-        System.arraycopy(current.dataArray, row * current.cols, out, row * cols + colOffset, current.cols)
+        var col = 0
+        while col < current.cols do
+          out(row, colOffset + col) = current(row, col)
+          col += 1
         row += 1
       colOffset += current.cols
       blockIndex += 1
 
-    DoubleMatrix.unsafe(rows, cols, out)
+    out.result()
 
 object FitKernel:
   def fitDense(

@@ -1,13 +1,13 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.LinearAlgebraError
+import gale.linalg.LinAlgError
 
 enum FitError:
   case EmptyDesign
   case EmptyResponse
   case RowMismatch(designRows: Int, responseRows: Int)
   case NonFiniteInput(component: String)
-  case SingularDesign(cause: LinearAlgebraError)
+  case SingularDesign(cause: LinAlgError)
   case UnsupportedLeastSquaresPolicy(detail: String)
   case UnsupportedEngine(engine: String)
   case InvalidFitAxis(axis: String, detail: String)
@@ -38,7 +38,7 @@ enum FitError:
       case NonFiniteInput(component) =>
         s"$component contains non-finite values"
       case SingularDesign(cause) =>
-        s"design matrix is singular or ill-conditioned: ${cause.message}"
+        s"design matrix is singular or ill-conditioned: ${cause.getMessage}"
       case UnsupportedLeastSquaresPolicy(detail) =>
         s"unsupported least-squares policy: $detail"
       case UnsupportedEngine(engine) =>

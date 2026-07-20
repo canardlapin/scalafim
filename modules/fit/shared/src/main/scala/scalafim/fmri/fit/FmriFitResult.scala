@@ -1,11 +1,11 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.model.{FitEngine, FitSummary}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec}
 
 final case class FitDiagnostics(
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    residualVariance: DoubleVector
+    residualVariance: DVec
 ):
   require(residualVariance.length > 0, "diagnostics must contain at least one residual variance")
 
@@ -118,7 +118,7 @@ sealed trait FmriFitResult:
 final case class DenseFmriFitResult(
     coefficients: CoefficientBlock,
     inference: CoefficientInference,
-    residualVariance: DoubleVector,
+    residualVariance: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     columnNames: Vector[String],
     voxelIndices: Vector[Int],
@@ -140,7 +140,7 @@ final case class DenseFmriFitResult(
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
   def standardErrors: StandardErrorBlock = inference.standardErrors
-  def normalizedCovariance: DoubleMatrix = inference.normalizedCovariance
+  def normalizedCovariance: DMat = inference.normalizedCovariance
   def coefficientCovariance: CoefficientCovariance = inference.covariance
   def inferenceScope: CoefficientInferenceScope = inference.scope
   def diagnostics: FitDiagnostics = FitDiagnostics(residualDegreesOfFreedom, residualVariance)
@@ -194,8 +194,8 @@ final case class RunwiseFmriRunResult(
     timepoints: Vector[Int],
     coefficients: CoefficientBlock,
     standardErrors: StandardErrorBlock,
-    normalizedCovariance: DoubleMatrix,
-    residualVariance: DoubleVector,
+    normalizedCovariance: DMat,
+    residualVariance: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     olsDiagnostics: OlsDiagnostics
 ):

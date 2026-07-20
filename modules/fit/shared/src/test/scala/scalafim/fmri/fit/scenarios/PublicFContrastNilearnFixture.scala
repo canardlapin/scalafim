@@ -1,6 +1,8 @@
 package scalafim.fmri.fit.scenarios
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.{DMat, DVec}
 
 object PublicFContrastNilearnFixture:
   val scenarioId: String = "fit.public-f-contrast.v1"
@@ -20,8 +22,8 @@ object PublicFContrastNilearnFixture:
       Vector(2.8400000000000003, -3.335),
       Vector(4.8600000000000003, -3.9225000000000003)
     )
-  val design: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val design: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(-1.5, 1.0, 0.20000000000000001),
         Vector(-1.0, 1.0, -0.40000000000000002),
@@ -33,23 +35,23 @@ object PublicFContrastNilearnFixture:
         Vector(1.75, 1.0, 0.29999999999999999)
       )
     )
-  val coefficients: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val coefficients: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.9901073580939022, -1.2579960756832504),
         Vector(1.5010944639103014, -1.9999462859145061),
         Vector(-0.39715767344078506, 0.84391590749824819)
       )
     )
-  val residualVariance: DoubleVector =
-    DoubleVector.fromSeq(Vector(0.0012534054660126221, 0.0012599922214435746))
-  val taskTEstimates: DoubleVector =
-    DoubleVector.fromSeq(Vector(1.9901073580939022, -1.2579960756832504))
-  val taskTStandardErrors: DoubleVector =
-    DoubleVector.fromSeq(Vector(0.012042971138919209, 0.012074573109252428))
-  val taskTStatistics: DoubleVector =
-    DoubleVector.fromSeq(Vector(165.25052955266852, -104.18555292189018))
-  val taskFStatistics: DoubleVector =
-    DoubleVector.fromSeq(Vector(27307.73751743737, 10854.62943763998))
-  val taskAndMotionFStatistics: DoubleVector =
-    DoubleVector.fromSeq(Vector(14672.719231742811, 6955.6679559540135))
+  val residualVariance: DVec =
+    DVec.fromSeq(Vector(0.0012534054660126221, 0.0012599922214435746))
+  val taskTEstimates: DVec =
+    DVec.fromSeq(Vector(1.9901073580939022, -1.2579960756832504))
+  val taskTStandardErrors: DVec =
+    DVec.fromSeq(Vector(0.012042971138919209, 0.012074573109252428))
+  val taskTStatistics: DVec =
+    DVec.fromSeq(Vector(165.25052955266852, -104.18555292189018))
+  val taskFStatistics: DVec =
+    DVec.fromSeq(Vector(27307.73751743737, 10854.62943763998))
+  val taskAndMotionFStatistics: DVec =
+    DVec.fromSeq(Vector(14672.719231742811, 6955.6679559540135))

@@ -4,7 +4,7 @@ import scalafim.fmri.fit.*
 import scalafim.fmri.fit.ContrastId.*
 import scalafim.fmri.fit.ResultMapName.*
 import scalafim.image.io.Nifti
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -318,7 +318,7 @@ object ResultManifestWriter:
       scope: String,
       voxel: Option[Int],
       names: Vector[String],
-      matrix: DoubleMatrix
+      matrix: DMat
   ): Unit =
     var row = 0
     while row < matrix.rows do

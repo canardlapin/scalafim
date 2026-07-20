@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.fit.{
@@ -18,8 +20,8 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -48,7 +50,7 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
     val canonicalOracle = oracle(fixture.canonicalDesign, fixture.responseRows)
     val reorderedOracle = oracle(fixture.reorderedDesign, fixture.responseRows)
     val expectedFEstimates =
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           canonicalOracle.coefficients.value.row(0).toVector,
           canonicalOracle.coefficients.value.row(1).toVector
@@ -102,7 +104,7 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
   private final case class FitSurface(
       label: String,
       result: DenseFmriFitResult,
-      design: DoubleMatrix,
+      design: DMat,
       task: TContrastResult,
       taskMinusDrift: TContrastResult,
       taskAndDrift: FContrastResult
@@ -168,10 +170,10 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
       }
     }
 
-  private def oracle(design: DoubleMatrix, responseRows: Vector[Vector[Double]]): OlsFit =
+  private def oracle(design: DMat, responseRows: Vector[Vector[Double]]): OlsFit =
     Ols.unsafeFit(
       DesignMatrix.unsafe(design),
-      ResponseBlock.unsafe(DoubleMatrix.fromRows(responseRows))
+      ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(responseRows))
     )
 
   private def value[A](either: Either[FitError, A]): A =
@@ -186,7 +188,7 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-semantic-contrast-reordered-columns"),
-          DMat.fromRows(responseRows),
+          ImageDMat.fromRows(responseRows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(task.length), tr = Seq(1.0)),
@@ -201,14 +203,14 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
         )
       )
 
-    def canonicalDesign: DoubleMatrix =
+    def canonicalDesign: DMat =
       design(Vector("task", "drift", "base_constant"))
 
-    def reorderedDesign: DoubleMatrix =
+    def reorderedDesign: DMat =
       design(Vector("drift", "task", "base_constant"))
 
-    private def design(names: Vector[String]): DoubleMatrix =
-      DoubleMatrix.fromRows(
+    private def design(names: Vector[String]): DMat =
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         task.indices.toVector.map { i =>
           names.map {
             case "task"          => task(i)

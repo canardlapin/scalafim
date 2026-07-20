@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import gale.linalg.Matrix
 import scalafim.fmri.model.{
   ArOptions,
@@ -11,7 +13,7 @@ import scalafim.fmri.model.{
   RobustPsi,
   VolumeWeighting
 }
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class ResponsePreparationSuite extends munit.FunSuite:
 
@@ -83,7 +85,7 @@ class ResponsePreparationSuite extends munit.FunSuite:
   private def blockInput(): FitBlockInput =
     FitBlockInput(
       design = DesignMatrix.unsafe(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(1.0, 0.0),
             Vector(1.0, 1.0),
@@ -92,7 +94,7 @@ class ResponsePreparationSuite extends munit.FunSuite:
         )
       ),
       response = ResponseBlock.unsafe(
-        DoubleMatrix.fromRows(
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(
           Vector(
             Vector(1.0, 2.0),
             Vector(3.0, 4.0),

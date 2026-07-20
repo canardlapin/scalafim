@@ -1,9 +1,11 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 private object LeastSquaresOracle:
-  def coefficients(design: DoubleMatrix, response: DoubleMatrix, tolerance: Double = 1e-12): DoubleMatrix =
+  def coefficients(design: DMat, response: DMat, tolerance: Double = 1e-12): DMat =
     require(design.rows == response.rows, s"row mismatch: ${design.rows} vs ${response.rows}")
     require(design.cols > 0, "design must have at least one predictor")
     require(design.rows >= design.cols, s"underdetermined oracle solve: ${design.rows} rows, ${design.cols} predictors")
@@ -13,7 +15,7 @@ private object LeastSquaresOracle:
     val rhs = transposeMultiply(design, response)
     solve(lhs, rhs, design.cols, response.cols, tolerance)
 
-  private def requireAllFinite(matrix: DoubleMatrix, label: String): Unit =
+  private def requireAllFinite(matrix: DMat, label: String): Unit =
     var row = 0
     while row < matrix.rows do
       var col = 0
@@ -22,7 +24,7 @@ private object LeastSquaresOracle:
         col += 1
       row += 1
 
-  private def crossProduct(matrix: DoubleMatrix): Array[Double] =
+  private def crossProduct(matrix: DMat): Array[Double] =
     val out = new Array[Double](matrix.cols * matrix.cols)
     var row = 0
     while row < matrix.rows do
@@ -37,7 +39,7 @@ private object LeastSquaresOracle:
       row += 1
     out
 
-  private def transposeMultiply(left: DoubleMatrix, right: DoubleMatrix): Array[Double] =
+  private def transposeMultiply(left: DMat, right: DMat): Array[Double] =
     val out = new Array[Double](left.cols * right.cols)
     var row = 0
     while row < left.rows do
@@ -58,7 +60,7 @@ private object LeastSquaresOracle:
       size: Int,
       rhsCols: Int,
       tolerance: Double
-  ): DoubleMatrix =
+  ): DMat =
     val a = lhs.clone
     val b = rhs.clone
     var pivot = 0
@@ -99,7 +101,7 @@ private object LeastSquaresOracle:
         out(row * rhsCols + rhsCol) = sum / a(row * size + row)
         row -= 1
       rhsCol += 1
-    DoubleMatrix.unsafe(size, rhsCols, out)
+    scalafim.fmri.fit.GaleTestMatrix.fromArray(size, rhsCols, out)
 
   private def bestPivotRow(a: Array[Double], size: Int, pivot: Int): Int =
     var bestRow = pivot

@@ -1,6 +1,8 @@
 package scalafim.fmri.fit.scenarios
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.{DMat, DVec}
 
 enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail
@@ -155,8 +157,8 @@ object ScenarioHarness:
 
   def vector(
       name: String,
-      actual: DoubleVector,
-      expected: DoubleVector,
+      actual: DVec,
+      expected: DVec,
       tolerance: ScenarioTolerance
   ): Vector[ScenarioObservation] =
     Vector(
@@ -172,8 +174,8 @@ object ScenarioHarness:
 
   def matrix(
       name: String,
-      actual: DoubleMatrix,
-      expected: DoubleMatrix,
+      actual: DMat,
+      expected: DMat,
       tolerance: ScenarioTolerance
   ): Vector[ScenarioObservation] =
     val shape = Vector(

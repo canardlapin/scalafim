@@ -1,15 +1,17 @@
 package scalafim.fmri.fit.fixtures
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 object FmriregRobustFixtures:
-  val design: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val design: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       (0 until 8).map(i => Vector(i.toDouble, 1.0)).toVector
     )
 
-  val volumeSpikeResponse: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val volumeSpikeResponse: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       (0 until 8).map { i =>
         val x = i.toDouble
         val base = Vector(
@@ -23,8 +25,8 @@ object FmriregRobustFixtures:
       }.toVector
     )
 
-  val huberRunCoefficients: DoubleMatrix =
-    DoubleMatrix.fromRows(
+  val huberRunCoefficients: DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(2.4220066, -1.8938728, 1.1157391),
         Vector(0.1561713, 5.7875734, -2.7313182)

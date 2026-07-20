@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset}
 import scalafim.dataset.io.MatrixFileDatasetBackend
 import scalafim.fmri.design.baseline.Intercept

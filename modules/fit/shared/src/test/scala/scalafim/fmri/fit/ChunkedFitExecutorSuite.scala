@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventModel, EventTermColumnRole}
@@ -25,8 +27,8 @@ import scalafim.fmri.model.{
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy
 }
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -588,7 +590,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset(
-        backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), DMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = sampling
       )
     FmriModel(eventModel, baseline, dataset)
@@ -626,7 +628,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset(
-        backend = InMemoryDatasetBackend(DatasetId(id), DMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId(id), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = sampling
       )
     FmriModel(eventModel, baseline, dataset)
@@ -649,7 +651,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("chunked-lss-demo"),
-          DMat.fromRows(rows),
+          ImageDMat.fromRows(rows),
           NeuroSpace(Vector(3, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -709,7 +711,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       assertVectorClose(left.residualVariance, right.residualVariance, tol = 1e-10)
       run += 1
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -728,7 +730,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       assertMatrixClose(actual.matrices(i), expected.matrices(i), tol)
       i += 1
 
-  private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: DVec, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do

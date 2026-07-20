@@ -8,7 +8,8 @@ import scalafim.fmri.model.{
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy
 }
-import scalafim.linalg.{DecompositionRank, DoubleMatrix, DoubleVector, LinalgSolvers, LinearAlgebraError, Pivoting, QrDecomposition, Tolerance}
+import gale.linalg.{DMat, DVec, LinAlgError, Matrix, QR, QROptions, QRPivoting, Vec}
+import gale.spectral.{SingularSelection, Svds}
 
 final case class ReducedRankDesignPartition private (
     predictors: Int,
@@ -174,9 +175,9 @@ private enum ReducedRankRequest:
 private final class ReducedRankGlsProjection private (
     selectedVoxelIndices: Vector[Int],
     designPartition: ReducedRankDesignPartition,
-    basis: DoubleMatrix,
-    targetLatentCoefficients: DoubleMatrix,
-    nuisanceCoefficients: DoubleMatrix,
+    basis: DMat,
+    targetLatentCoefficients: DMat,
+    nuisanceCoefficients: DMat,
     fullFit: GlsFit,
     whiteningPlan: WhiteningPlan,
     fullInference: CoefficientInference,
@@ -210,7 +211,7 @@ private final class ReducedRankGlsProjection private (
     else if nuisanceCoefficients.cols != selectedVoxelIndices.length then
       Left(FitError.InvalidFitAxis("reduced-rank GLS nuisance coefficients", s"expected ${selectedVoxelIndices.length} voxels, got ${nuisanceCoefficients.cols}"))
     else
-      val out = new Array[Double](designPartition.predictors * positions.length)
+      val out = Matrix.newBuilder(designPartition.predictors, positions.length)
       var target = 0
       while target < designPartition.targetPredictors do
         val predictor = designPartition.targetColumns(target)
@@ -222,7 +223,7 @@ private final class ReducedRankGlsProjection private (
           while component < components do
             sum += targetLatentCoefficients(target, component) * basis(position, component)
             component += 1
-          out(predictor * positions.length + local) = sum
+          out(predictor, local) = sum
           local += 1
         target += 1
 
@@ -232,25 +233,25 @@ private final class ReducedRankGlsProjection private (
         var local = 0
         while local < positions.length do
           val position = positions(local)
-          out(predictor * positions.length + local) = nuisanceCoefficients(nuisance, position)
+          out(predictor, local) = nuisanceCoefficients(nuisance, position)
           local += 1
         nuisance += 1
 
-      Right(CoefficientBlock(DoubleMatrix.unsafe(designPartition.predictors, positions.length, out)))
+      Right(CoefficientBlock(out.result()))
 
   private def reducedResidualVariance(
       input: FitBlockInput,
-      coefficients: DoubleMatrix
-  ): Either[FitError, DoubleVector] =
+      coefficients: DMat
+  ): Either[FitError, DVec] =
     for
       whitened <- WhiteningTransform(
         whiteningPlan,
-        MatrixAdapters.toGaleMatrix(input.design.value),
-        MatrixAdapters.toGaleMatrix(input.response.value)
+        input.design.value,
+        input.response.value
       ).left.map(Gls.arToFitError)
     yield Ols.residualVariance(
-      MatrixAdapters.fromGaleMatrix(whitened.design),
-      MatrixAdapters.fromGaleMatrix(whitened.response),
+      whitened.design,
+      whitened.response,
       coefficients,
       fullFit.residualDegreesOfFreedom
     )
@@ -304,18 +305,18 @@ private object ReducedRankGlsProjection:
 
   private final case class ReducedRankFactors(
       taskFit: ReducedTaskFit,
-      nuisanceCoefficients: DoubleMatrix,
-      residualizedTargetDesign: DoubleMatrix,
-      residualizedResponse: DoubleMatrix
+      nuisanceCoefficients: DMat,
+      residualizedTargetDesign: DMat,
+      residualizedResponse: DMat
   ):
-    def basis: DoubleMatrix = taskFit.basis
-    def targetCoefficients: DoubleMatrix = taskFit.latentCoefficients
+    def basis: DMat = taskFit.basis
+    def targetCoefficients: DMat = taskFit.latentCoefficients
 
   private final case class ReducedTaskFit(
-      basis: DoubleMatrix,
-      latentCoefficients: DoubleMatrix,
-      coefficients: DoubleMatrix,
-      normalizedCovariance: DoubleMatrix
+      basis: DMat,
+      latentCoefficients: DMat,
+      coefficients: DMat,
+      normalizedCovariance: DMat
   )
 
   private def taskSubspaceFactors(
@@ -328,16 +329,16 @@ private object ReducedRankGlsProjection:
     for
       whitened <- WhiteningTransform(
         whiteningPlan,
-        MatrixAdapters.toGaleMatrix(design.value),
-        MatrixAdapters.toGaleMatrix(response.value)
+        design.value,
+        response.value
       ).left.map(Gls.arToFitError)
-      whitenedDesign = MatrixAdapters.fromGaleMatrix(whitened.design)
-      whitenedResponse = MatrixAdapters.fromGaleMatrix(whitened.response)
+      whitenedDesign = whitened.design
+      whitenedResponse = whitened.response
       targetDesign = selectColumns(whitenedDesign, partition.targetColumns)
       nuisanceDesign = selectColumns(whitenedDesign, partition.nuisanceColumns)
       residualized <- residualizeAgainstNuisance(targetDesign, whitenedResponse, nuisanceDesign)
       taskFit <- fitReducedTask(residualized.targetDesign, residualized.response, rankRequest)
-      taskFitted = DoubleMatrix.multiply(targetDesign, taskFit.coefficients)
+      taskFitted = targetDesign * taskFit.coefficients
       nuisanceResponse = subtract(whitenedResponse, taskFitted)
       nuisanceCoefficients <- fitNuisance(nuisanceDesign, nuisanceResponse)
     yield ReducedRankFactors(
@@ -348,37 +349,35 @@ private object ReducedRankGlsProjection:
     )
 
   private def fitReducedTask(
-      targetDesign: DoubleMatrix,
-      response: DoubleMatrix,
+      targetDesign: DMat,
+      response: DMat,
       rankRequest: ReducedRankRequest
   ): Either[FitError, ReducedTaskFit] =
     for
       qr <- fullRankQr(targetDesign)
-      qty = leadingQtRows(qr, response, targetDesign.cols)
-      maxRank <- DecompositionRank
-        .bounded(math.min(targetDesign.cols, response.cols), math.min(targetDesign.cols, response.cols))
+      qty <- leadingQtRows(qr, response, targetDesign.cols)
+      svd <- Svds
+        .svd(qty, SingularSelection.All)
         .left
-        .map(error => FitError.InvalidFitAxis("reduced-rank GLS components", error.message))
-      svd <- LinalgSolvers
-        .denseSvd
-        .decompose(qty, maxRank)
+        .map(error => FitError.InvalidFitAxis("reduced-rank GLS task basis", error.getMessage))
+      converged <- svd
+        .requireConverged
         .left
-        .map(error => FitError.InvalidFitAxis("reduced-rank GLS task basis", error.message))
-      rank <- resolveRank(rankRequest, svd.singularValues)
-      u = takeColumns(svd.u, rank)
-      singularValues = takeValues(svd.singularValues, rank)
-      basis = takeColumns(svd.v, rank)
-      scoreTargets = qScores(qr, scaleColumns(u, singularValues), rank)
+        .map(error => FitError.InvalidFitAxis("reduced-rank GLS task basis", error.getMessage))
+      rank <- resolveRank(rankRequest, converged.singularValues)
+      u = takeColumns(converged.u, rank)
+      singularValues = takeValues(converged.singularValues, rank)
+      basis = takeColumns(converged.vt.t, rank)
+      scoreTargets <- qScores(qr, scaleColumns(u, singularValues), rank)
       targetCoefficients <- qr
-        .solveFullRank(scoreTargets)
+        .solveLeastSquares(scoreTargets)
         .left
         .map(FitError.SingularDesign.apply)
-        .map(_.coefficients)
-      covariance <- qr.normalizedCovarianceFullRank.left.map(FitError.SingularDesign.apply)
+      covariance <- qr.normalizedCovariance.left.map(FitError.SingularDesign.apply)
     yield ReducedTaskFit(
       basis = basis,
       latentCoefficients = targetCoefficients,
-      coefficients = DoubleMatrix.multiply(targetCoefficients, basis.transpose),
+      coefficients = targetCoefficients * basis.t,
       normalizedCovariance = covariance
     )
 
@@ -415,7 +414,7 @@ private object ReducedRankGlsProjection:
       case ReducedRankInferencePolicy.Bootstrap(config) =>
         for
           covariance <- bootstrapCovariance(factors, rankRequest, partition, config)
-          varianceScale = DoubleVector.fromSeq(Vector.fill(factors.residualizedResponse.cols)(1.0))
+          varianceScale = DVec.fromSeq(Vector.fill(factors.residualizedResponse.cols)(1.0))
           inference <- CoefficientInference.fromCovariance(
             scope,
             covariance,
@@ -432,15 +431,15 @@ private object ReducedRankGlsProjection:
   private def conditionalVariance(
       factors: ReducedRankFactors,
       residualDegreesOfFreedom: ResidualDegreesOfFreedom
-  ): Either[FitError, DoubleVector] =
-    val latentResponse = DoubleMatrix.multiply(factors.residualizedResponse, factors.basis)
-    val latentFitted = DoubleMatrix.multiply(factors.residualizedTargetDesign, factors.targetCoefficients)
+  ): Either[FitError, DVec] =
+    val latentResponse = factors.residualizedResponse * factors.basis
+    val latentFitted = factors.residualizedTargetDesign * factors.targetCoefficients
     val residual = subtract(latentResponse, latentFitted)
     val sigma = scaleMatrix(
-      DoubleMatrix.transposeMultiply(residual, residual),
+      residual.t * residual,
       1.0 / residualDegreesOfFreedom.value.toDouble
     )
-    val out = new Array[Double](factors.basis.rows)
+    val out = Vec.newBuilder(factors.basis.rows)
     var voxel = 0
     while voxel < factors.basis.rows do
       var value = 0.0
@@ -455,7 +454,7 @@ private object ReducedRankGlsProjection:
         return Left(FitError.InvalidFitAxis("reduced-rank GLS conditional variance", s"voxel $voxel has value $value"))
       out(voxel) = math.max(value, 2.220446049250313e-16)
       voxel += 1
-    Right(DoubleVector.unsafe(out))
+    Right(out.result())
 
   private def bootstrapCovariance(
       factors: ReducedRankFactors,
@@ -467,7 +466,7 @@ private object ReducedRankGlsProjection:
     val response = factors.residualizedResponse
     val targetPredictors = targetDesign.cols
     val voxels = response.cols
-    val fitted = DoubleMatrix.multiply(targetDesign, factors.taskFit.coefficients)
+    val fitted = targetDesign * factors.taskFit.coefficients
     val residual = subtract(response, fitted)
     val mean = new Array[Double](targetPredictors * voxels)
     val m2 = new Array[Double](voxels * targetPredictors * targetPredictors)
@@ -509,13 +508,16 @@ private object ReducedRankGlsProjection:
       case null =>
         val divisor = (config.replicates.value - 1).toDouble
         val matrices = Vector.tabulate(voxels) { voxel =>
-          val task = new Array[Double](targetPredictors * targetPredictors)
-          var i = 0
-          while i < task.length do
-            task(i) = m2(voxel * task.length + i) / divisor
-            i += 1
+          val task = Matrix.newBuilder(targetPredictors, targetPredictors)
+          var row = 0
+          while row < targetPredictors do
+            var col = 0
+            while col < targetPredictors do
+              task(row, col) = m2((voxel * targetPredictors + row) * targetPredictors + col) / divisor
+              col += 1
+            row += 1
           embedTargetCovariance(
-            DoubleMatrix.unsafe(targetPredictors, targetPredictors, task),
+            task.result(),
             partition.predictors,
             partition.targetColumns
           )
@@ -523,20 +525,20 @@ private object ReducedRankGlsProjection:
         CoefficientCovariance.voxelwise(matrices)
 
   private def embedTargetCovariance(
-      target: DoubleMatrix,
+      target: DMat,
       predictors: Int,
       targetColumns: Vector[Int]
-  ): DoubleMatrix =
+  ): DMat =
     require(target.rows == targetColumns.length && target.cols == targetColumns.length, "target covariance shape must match target columns")
-    val out = new Array[Double](predictors * predictors)
+    val out = Matrix.newBuilder(predictors, predictors)
     var row = 0
     while row < target.rows do
       var col = 0
       while col < target.cols do
-        out(targetColumns(row) * predictors + targetColumns(col)) = target(row, col)
+        out(targetColumns(row), targetColumns(col)) = target(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(predictors, predictors, out)
+    out.result()
 
   private def sampleIndices(
       rows: Int,
@@ -556,19 +558,19 @@ private object ReducedRankGlsProjection:
     out
 
   private def resampledResponse(
-      fitted: DoubleMatrix,
-      residual: DoubleMatrix,
+      fitted: DMat,
+      residual: DMat,
       indices: Array[Int]
-  ): DoubleMatrix =
-    val out = new Array[Double](fitted.rows * fitted.cols)
+  ): DMat =
+    val out = Matrix.newBuilder(fitted.rows, fitted.cols)
     var row = 0
     while row < fitted.rows do
       var voxel = 0
       while voxel < fitted.cols do
-        out(row * fitted.cols + voxel) = fitted(row, voxel) + residual(indices(row), voxel)
+        out(row, voxel) = fitted(row, voxel) + residual(indices(row), voxel)
         voxel += 1
       row += 1
-    DoubleMatrix.unsafe(fitted.rows, fitted.cols, out)
+    out.result()
 
   private final class ParkMillerRng private (private var state: Long):
     def nextInt(bound: Int): Int =
@@ -580,17 +582,14 @@ private object ReducedRankGlsProjection:
     def apply(seed: Int): ParkMillerRng =
       new ParkMillerRng(if seed == 0 then 1L else seed.toLong)
 
-  private def scaleMatrix(matrix: DoubleMatrix, scale: Double): DoubleMatrix =
-    val out = matrix.copyData
-    var i = 0
-    while i < out.length do
-      out(i) *= scale
-      i += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+  private def scaleMatrix(matrix: DMat, scale: Double): DMat =
+    Matrix.tabulate(matrix.rows, matrix.cols) { (row, col) =>
+      matrix(row, col) * scale
+    }
 
   private def resolveRank(
       request: ReducedRankRequest,
-      singularValues: DoubleVector
+      singularValues: DVec
   ): Either[FitError, Int] =
     val positive = positiveSingularValues(singularValues)
     val available =
@@ -629,7 +628,7 @@ private object ReducedRankGlsProjection:
             else rank += 1
           Right(math.max(1, math.min(rank, available)))
 
-  private def positiveSingularValues(values: DoubleVector): Vector[Double] =
+  private def positiveSingularValues(values: DVec): Vector[Double] =
     val tolerance =
       var maxValue = 1.0
       var i = 0
@@ -647,128 +646,116 @@ private object ReducedRankGlsProjection:
       i += 1
     out.result()
 
-  private def takeColumns(matrix: DoubleMatrix, count: Int): DoubleMatrix =
+  private def takeColumns(matrix: DMat, count: Int): DMat =
     require(count >= 1 && count <= matrix.cols, "invalid column count")
-    val out = new Array[Double](matrix.rows * count)
+    val out = Matrix.newBuilder(matrix.rows, count)
     var row = 0
     while row < matrix.rows do
       var col = 0
       while col < count do
-        out(row * count + col) = matrix(row, col)
+        out(row, col) = matrix(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, count, out)
+    out.result()
 
-  private def takeValues(values: DoubleVector, count: Int): DoubleVector =
+  private def takeValues(values: DVec, count: Int): DVec =
     require(count >= 1 && count <= values.length, "invalid value count")
-    val out = new Array[Double](count)
+    val out = Vec.newBuilder(count)
     var i = 0
     while i < count do
       out(i) = values(i)
       i += 1
-    DoubleVector.unsafe(out)
+    out.result()
 
-  private final case class ResidualizedTask(targetDesign: DoubleMatrix, response: DoubleMatrix)
+  private final case class ResidualizedTask(targetDesign: DMat, response: DMat)
 
   private def residualizeAgainstNuisance(
-      targetDesign: DoubleMatrix,
-      response: DoubleMatrix,
-      nuisanceDesign: DoubleMatrix
+      targetDesign: DMat,
+      response: DMat,
+      nuisanceDesign: DMat
   ): Either[FitError, ResidualizedTask] =
     if nuisanceDesign.cols == 0 then
       Right(ResidualizedTask(
-        DoubleMatrix.unsafe(targetDesign.rows, targetDesign.cols, targetDesign.copyData),
-        DoubleMatrix.unsafe(response.rows, response.cols, response.copyData)
+        Matrix.tabulate(targetDesign.rows, targetDesign.cols)(targetDesign.apply),
+        Matrix.tabulate(response.rows, response.cols)(response.apply)
       ))
     else
-      val nuisanceQr = QrDecomposition.decompose(nuisanceDesign, Pivoting.Enabled, Tolerance.DefaultQr)
-      Right(ResidualizedTask(
-        targetDesign = nuisanceQr.residualize(targetDesign),
-        response = nuisanceQr.residualize(response)
-      ))
+      val nuisanceQr = nuisanceDesign.qr(QROptions(QRPivoting.Column, Some(1e-7)))
+      for
+        residualizedTarget <- nuisanceQr.residualize(targetDesign).left.map(FitError.SingularDesign.apply)
+        residualizedResponse <- nuisanceQr.residualize(response).left.map(FitError.SingularDesign.apply)
+      yield ResidualizedTask(
+        targetDesign = residualizedTarget,
+        response = residualizedResponse
+      )
 
   private def fitNuisance(
-      nuisanceDesign: DoubleMatrix,
-      response: DoubleMatrix
-  ): Either[FitError, DoubleMatrix] =
-    if nuisanceDesign.cols == 0 then Right(DoubleMatrix.unsafe(0, response.cols, Array.emptyDoubleArray))
+      nuisanceDesign: DMat,
+      response: DMat
+  ): Either[FitError, DMat] =
+    if nuisanceDesign.cols == 0 then Right(Matrix.zeros(0, response.cols))
     else
       for
         qr <- fullRankQr(nuisanceDesign)
         coefficients <- qr
-          .solveFullRank(response)
+          .solveLeastSquares(response)
           .left
           .map(FitError.SingularDesign.apply)
-          .map(_.coefficients)
       yield coefficients
 
-  private def selectColumns(matrix: DoubleMatrix, columns: Vector[Int]): DoubleMatrix =
-    if columns.isEmpty then DoubleMatrix.unsafe(matrix.rows, 0, Array.emptyDoubleArray)
+  private def selectColumns(matrix: DMat, columns: Vector[Int]): DMat =
+    if columns.isEmpty then Matrix.zeros(matrix.rows, 0)
     else
-      val out = new Array[Double](matrix.rows * columns.length)
+      val out = Matrix.newBuilder(matrix.rows, columns.length)
       var row = 0
       while row < matrix.rows do
         var col = 0
         while col < columns.length do
-          out(row * columns.length + col) = matrix(row, columns(col))
+          out(row, col) = matrix(row, columns(col))
           col += 1
         row += 1
-      DoubleMatrix.unsafe(matrix.rows, columns.length, out)
+      out.result()
 
-  private def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+  private def subtract(left: DMat, right: DMat): DMat =
     require(left.rows == right.rows && left.cols == right.cols, "matrix subtraction requires equal shapes")
-    val out = left.copyData
-    val rightData = right.copyData
-    var i = 0
-    while i < out.length do
-      out(i) -= rightData(i)
-      i += 1
-    DoubleMatrix.unsafe(left.rows, left.cols, out)
+    Matrix.tabulate(left.rows, left.cols) { (row, col) =>
+      left(row, col) - right(row, col)
+    }
 
-  private def fullRankQr(design: DoubleMatrix): Either[FitError, QrDecomposition] =
-    val qr = QrDecomposition.decompose(design, Pivoting.Enabled, Tolerance.DefaultQr)
-    if qr.rank < design.cols then Left(FitError.SingularDesign(LinearAlgebraError.RankDeficient(design.cols, qr.rank)))
+  private def fullRankQr(design: DMat): Either[FitError, QR] =
+    val qr = design.qr(QROptions(QRPivoting.Column, Some(1e-7)))
+    val rank = qr.diagnostics.rank.getOrElse(design.cols)
+    if rank < design.cols then Left(FitError.SingularDesign(LinAlgError.RankDeficient(rank, design.cols)))
     else Right(qr)
 
-  private def leadingQtRows(qr: QrDecomposition, response: DoubleMatrix, rowCount: Int): DoubleMatrix =
-    val qTy = response.copyData
-    qr.applyQtInPlace(qTy, response.cols)
+  private def leadingQtRows(qr: QR, response: DMat, rowCount: Int): Either[FitError, DMat] =
+    qr.applyQT(response)
+      .left
+      .map(FitError.SingularDesign.apply)
+      .map { qTy =>
+        Matrix.tabulate(rowCount, response.cols) { (row, col) =>
+          qTy(row, col)
+        }
+      }
 
-    val out = new Array[Double](rowCount * response.cols)
-    var row = 0
-    while row < rowCount do
-      var col = 0
-      while col < response.cols do
-        out(row * response.cols + col) = qTy(row * response.cols + col)
-        col += 1
-      row += 1
-    DoubleMatrix.unsafe(rowCount, response.cols, out)
-
-  private def scaleColumns(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+  private def scaleColumns(matrix: DMat, scale: DVec): DMat =
     require(matrix.cols == scale.length, "scale length must match matrix columns")
-    val out = matrix.copyData
-    var col = 0
-    while col < matrix.cols do
-      var row = 0
-      while row < matrix.rows do
-        out(row * matrix.cols + col) *= scale(col)
-        row += 1
-      col += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+    Matrix.tabulate(matrix.rows, matrix.cols) { (row, col) =>
+      matrix(row, col) * scale(col)
+    }
 
-  private def qScores(qr: QrDecomposition, leadingRows: DoubleMatrix, scoreCols: Int): DoubleMatrix =
-    require(leadingRows.rows <= qr.rows, "score row count must not exceed QR rows")
+  private def qScores(qr: QR, leadingRows: DMat, scoreCols: Int): Either[FitError, DMat] =
+    require(leadingRows.rows <= qr.reflectors.rows, "score row count must not exceed QR rows")
     require(leadingRows.cols == scoreCols, "score column count mismatch")
-    val out = new Array[Double](qr.rows * scoreCols)
+    val out = Matrix.newBuilder(qr.reflectors.rows, scoreCols)
     var row = 0
     while row < leadingRows.rows do
       var col = 0
       while col < scoreCols do
-        out(row * scoreCols + col) = leadingRows(row, col)
+        out(row, col) = leadingRows(row, col)
         col += 1
       row += 1
-    qr.applyQInPlace(out, scoreCols)
-    DoubleMatrix.unsafe(qr.rows, scoreCols, out)
+    qr.applyQ(out.result()).left.map(FitError.SingularDesign.apply)
 
   private def validateSelectedResponse(
       response: ResponseBlock,

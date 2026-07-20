@@ -1,7 +1,8 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.model.{LatentSketchConfig, LatentSketchMethod, LowRankComponentSpec}
-import scalafim.linalg.{DecompositionRank, DoubleMatrix, DoubleVector, LinalgSolvers}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
+import gale.spectral.{SingularOrder, SingularSelection, Svds}
 
 final class LatentSketchPrepared private[fit] (
     val design: DesignMatrix,
@@ -56,7 +57,7 @@ object LatentSketchPrepared:
 
 private final class LatentSketchBasis private (
     val voxelIndices: Vector[Int],
-    val loadings: DoubleMatrix,
+    val loadings: DMat,
     private val rowNormSquares: Vector[Double],
     private val positionByVoxelIndex: Map[Int, Int]
 ):
@@ -67,7 +68,7 @@ private final class LatentSketchBasis private (
     if response.voxels != voxelIndices.length then
       Left(FitError.InvalidFitAxis("latent sketch response", s"expected ${voxelIndices.length} voxels, got ${response.voxels}"))
     else
-      val out = new Array[Double](response.timepoints * components)
+      val out = Matrix.newBuilder(response.timepoints, components)
       var time = 0
       while time < response.timepoints do
         var component = 0
@@ -75,22 +76,22 @@ private final class LatentSketchBasis private (
           var sum = 0.0
           var voxel = 0
           while voxel < response.voxels do
-            sum += response.value.dataArray(time * response.voxels + voxel) * loadings(voxel, component)
+            sum += response.value(time, voxel) * loadings(voxel, component)
             voxel += 1
-          out(time * components + component) = sum
+          out(time, component) = sum
           component += 1
         time += 1
-      Right(ResponseBlock.unsafe(DoubleMatrix.unsafe(response.timepoints, components, out)))
+      Right(ResponseBlock.unsafe(out.result()))
 
   def decodeCoefficients(
-      latentCoefficients: DoubleMatrix,
+      latentCoefficients: DMat,
       selectedVoxels: Vector[Int]
   ): Either[FitError, CoefficientBlock] =
     if latentCoefficients.cols != components then
       Left(FitError.InvalidFitAxis("latent coefficient columns", s"expected $components, got ${latentCoefficients.cols}"))
     else
       localPositions(selectedVoxels).map { positions =>
-        val out = new Array[Double](latentCoefficients.rows * positions.length)
+        val out = Matrix.newBuilder(latentCoefficients.rows, positions.length)
         var predictor = 0
         while predictor < latentCoefficients.rows do
           var local = 0
@@ -101,14 +102,14 @@ private final class LatentSketchBasis private (
             while component < components do
               sum += latentCoefficients(predictor, component) * loadings(position, component)
               component += 1
-            out(predictor * positions.length + local) = sum
+            out(predictor, local) = sum
             local += 1
           predictor += 1
-        CoefficientBlock(DoubleMatrix.unsafe(latentCoefficients.rows, positions.length, out))
+        CoefficientBlock(out.result())
       }
 
   def coefficientCovariance(
-      normalizedCovariance: DoubleMatrix,
+      normalizedCovariance: DMat,
       selectedVoxels: Vector[Int]
   ): Either[FitError, CoefficientCovariance] =
     localPositions(selectedVoxels).flatMap { positions =>
@@ -121,13 +122,13 @@ private final class LatentSketchBasis private (
 
   def standardErrors(
       covariance: CoefficientCovariance,
-      residualVariance: DoubleVector,
+      residualVariance: DVec,
       selectedVoxels: Vector[Int]
   ): Either[FitError, StandardErrorBlock] =
     if residualVariance.length != selectedVoxels.length then
       Left(FitError.InvalidFitAxis("latent sketch residual variance", s"expected ${selectedVoxels.length} voxels, got ${residualVariance.length}"))
     else
-      val out = new Array[Double](covariance.predictors * selectedVoxels.length)
+      val out = Matrix.newBuilder(covariance.predictors, selectedVoxels.length)
       var voxel = 0
       while voxel < selectedVoxels.length do
         covariance.matrixForVoxelPosition(voxel) match
@@ -137,11 +138,11 @@ private final class LatentSketchBasis private (
             var predictor = 0
             while predictor < covariance.predictors do
               val variance = matrix(predictor, predictor) * residualVariance(voxel)
-              out(predictor * selectedVoxels.length + voxel) =
+              out(predictor, voxel) =
                 if variance < 0.0 && variance > -1e-12 then 0.0 else math.sqrt(variance)
               predictor += 1
         voxel += 1
-      Right(StandardErrorBlock(DoubleMatrix.unsafe(covariance.predictors, selectedVoxels.length, out)))
+      Right(StandardErrorBlock(out.result()))
 
   private def localPositions(selectedVoxels: Vector[Int]): Either[FitError, Vector[Int]] =
     val out = Vector.newBuilder[Int]
@@ -156,13 +157,10 @@ private final class LatentSketchBasis private (
       i += 1
     Right(out.result())
 
-  private def scaleMatrix(matrix: DoubleMatrix, scale: Double): DoubleMatrix =
-    val data = matrix.copyData
-    var i = 0
-    while i < data.length do
-      data(i) *= scale
-      i += 1
-    DoubleMatrix.unsafe(matrix.rows, matrix.cols, data)
+  private def scaleMatrix(matrix: DMat, scale: Double): DMat =
+    Matrix.tabulate(matrix.rows, matrix.cols) { (row, col) =>
+      matrix(row, col) * scale
+    }
 
 private object LatentSketchBasis:
   def from(
@@ -194,7 +192,7 @@ private object LatentSketchBasis:
           "latent sketch method",
           "identity response requires one component per selected voxel"
         ))
-      basis <- make(selected, DoubleMatrix.eye(selected.length))
+      basis <- make(selected, DMat.eye(selected.length))
     yield basis
 
   private def contiguousAveraging(
@@ -219,18 +217,20 @@ private object LatentSketchBasis:
         ))
       case LowRankComponentSpec.Fixed(count) =>
         val limit = math.min(response.timepoints, response.voxels)
-        for
-          rank <- DecompositionRank
-            .bounded(count.value, limit)
-            .left
-            .map(error => FitError.InvalidFitAxis("latent sketch principal components", error.message))
-          svd <- LinalgSolvers
-            .denseSvd
-            .decompose(response.value, rank)
-            .left
-            .map(error => FitError.InvalidFitAxis("latent sketch principal components", error.message))
-          basis <- make(selected, svd.v)
-        yield basis
+        if count.value <= 0 || count.value > limit then
+          Left(FitError.InvalidFitAxis("latent sketch principal components", s"rank ${count.value} must be in [1, $limit]"))
+        else
+          for
+            svd <- Svds
+              .svd(response.value, SingularSelection.Count(count.value, SingularOrder.Largest))
+              .left
+              .map(error => FitError.InvalidFitAxis("latent sketch principal components", error.getMessage))
+            converged <- svd
+              .requireConverged
+              .left
+              .map(error => FitError.InvalidFitAxis("latent sketch principal components", error.getMessage))
+            basis <- make(selected, converged.vt.t)
+          yield basis
 
   private def componentCount(
       config: LatentSketchConfig,
@@ -250,7 +250,7 @@ private object LatentSketchBasis:
 
   private def make(
       selected: SelectedVoxelIndices,
-      loadings: DoubleMatrix
+      loadings: DMat
   ): Either[FitError, LatentSketchBasis] =
     if loadings.rows != selected.length then
       Left(FitError.InvalidFitAxis("latent sketch loadings", s"expected ${selected.length} rows, got ${loadings.rows}"))
@@ -270,16 +270,16 @@ private object LatentSketchBasis:
           )
         )
 
-  private def contiguousLoadings(voxels: Int, components: Int): DoubleMatrix =
+  private def contiguousLoadings(voxels: Int, components: Int): DMat =
     val componentByVoxel = assignContiguous(voxels, components)
     val componentSizes = sizes(componentByVoxel, components)
-    val data = new Array[Double](voxels * components)
+    val data = Matrix.newBuilder(voxels, components)
     var voxel = 0
     while voxel < voxels do
       val component = componentByVoxel(voxel)
-      data(voxel * components + component) = 1.0 / math.sqrt(componentSizes(component).toDouble)
+      data(voxel, component) = 1.0 / math.sqrt(componentSizes(component).toDouble)
       voxel += 1
-    DoubleMatrix.unsafe(voxels, components, data)
+    data.result()
 
   private def assignContiguous(voxels: Int, components: Int): Vector[Int] =
     val out = Vector.newBuilder[Int]
@@ -298,7 +298,7 @@ private object LatentSketchBasis:
       voxel += 1
     out.toVector
 
-  private def rowNormSquares(loadings: DoubleMatrix): Vector[Double] =
+  private def rowNormSquares(loadings: DMat): Vector[Double] =
     val out = Array.ofDim[Double](loadings.rows)
     var row = 0
     while row < loadings.rows do

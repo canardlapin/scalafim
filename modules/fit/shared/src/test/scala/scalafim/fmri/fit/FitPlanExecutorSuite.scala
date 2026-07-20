@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{
@@ -31,8 +33,8 @@ import scalafim.fmri.model.{
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy
 }
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 class FitPlanExecutorSuite extends munit.FunSuite:
 
@@ -40,7 +42,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = DMat.fromRows(
+    val data = ImageDMat.fromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(3.0, 1.0),
@@ -73,7 +75,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
 
   private def pcaModel: FmriModel =
     val signal = Vector(1.0, 3.0, 5.0, 7.0)
-    val data = DMat.fromRows(signal.map(value => Vector(value, -2.0 * value, 0.5 * value)))
+    val data = ImageDMat.fromRows(signal.map(value => Vector(value, -2.0 * value, 0.5 * value)))
     val eventModel =
       EventModel(
         terms = Vector.empty,
@@ -119,14 +121,14 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("rrr-partitioned-demo"),
-          DMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
+          ImageDMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
           NeuroSpace(Vector(3, 1, 1))
         ),
         samplingFrame = frame
       )
     FmriModel(eventModel, baseline, dataset)
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -137,7 +139,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def assertVectorClose(actual: DoubleVector, expected: Vector[Double], tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: Vector[Double], tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do
@@ -146,7 +148,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
 
   private def assertTaskStandardErrors(
       result: DenseFmriFitResult,
-      expected: DoubleMatrix,
+      expected: DMat,
       tol: Double
   ): Unit =
     assertEquals(expected.rows, 2)
@@ -163,7 +165,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       assertEqualsDouble(result.standardErrors(2, voxel), 0.0, 0.0)
       voxel += 1
 
-  private def embedTaskCovariance(task: DoubleMatrix): DoubleMatrix =
+  private def embedTaskCovariance(task: DMat): DMat =
     val out = Array.ofDim[Double](9)
     var row = 0
     while row < 2 do
@@ -172,10 +174,10 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         out(row * 3 + col) = task(row, col)
         col += 1
       row += 1
-    DoubleMatrix.unsafe(3, 3, out)
+    scalafim.fmri.fit.GaleTestMatrix.fromArray(3, 3, out)
 
-  private def selectTaskCovariance(full: DoubleMatrix): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  private def selectTaskCovariance(full: DMat): DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(full(0, 0), full(0, 1)),
         Vector(full(1, 0), full(1, 1))
@@ -549,7 +551,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-trialwise-demo"),
-          DMat.fromRows(rows),
+          ImageDMat.fromRows(rows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -609,7 +611,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-reordered-trialwise-demo"),
-          DMat.fromRows(rows),
+          ImageDMat.fromRows(rows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -662,7 +664,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-renamed-aggregate-demo"),
-          DMat.fromRows(rows),
+          ImageDMat.fromRows(rows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -713,7 +715,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-ambiguous-demo"),
-          DMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),
+          ImageDMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),
           NeuroSpace(Vector(1, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),

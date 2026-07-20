@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -22,8 +24,8 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 import scalafim.pipeline.*
 
 class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
@@ -153,7 +155,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
     FmriDataset(
       backend = InMemoryDatasetBackend(
         DatasetId("scenario-pipeline-first-level"),
-        DMat.fromRows(fixture.responseRows),
+        ImageDMat.fromRows(fixture.responseRows),
         NeuroSpace(Vector(2, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),
@@ -225,7 +227,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
       case (Some(lFit), Some(lT), Some(lF), Some(fFit), Some(fT), Some(fF)) =>
         val taskRow = lFit.columnNames.indexOf("task")
         val expectedT = ratio(oracle.coefficients.value.row(taskRow), oracle.standardErrors.value.row(taskRow))
-        val expectedF = DoubleVector.fromSeq(expectedT.toVector.map(value => value * value))
+        val expectedF = DVec.fromSeq(expectedT.toVector.map(value => value * value))
 
         Vector(
           ScenarioHarness.fact("typed outputs available", true, "fit, task-t, and task-f retrieved by artifact kind"),
@@ -244,7 +246,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
           ScenarioHarness.vector("task t estimates vs OLS oracle", lT.estimates, oracle.coefficients.value.row(taskRow), Tol) ++
           ScenarioHarness.vector("task t standard errors vs OLS oracle", lT.standardErrors, oracle.standardErrors.value.row(taskRow), Tol) ++
           ScenarioHarness.vector("task t statistics vs OLS oracle", lT.statistics, expectedT, Tol) ++
-          ScenarioHarness.matrix("task F estimates vs OLS oracle", lF.estimates, DoubleMatrix.fromRows(Vector(oracle.coefficients.value.row(taskRow).toVector)), Tol) ++
+          ScenarioHarness.matrix("task F estimates vs OLS oracle", lF.estimates, scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(oracle.coefficients.value.row(taskRow).toVector)), Tol) ++
           ScenarioHarness.vector("task F statistics equal t squared", lF.statistics, expectedF, Tol) ++
           ScenarioHarness.matrix("future coefficients match local", fFit.coefficients.value, lFit.coefficients.value, Tol) ++
           ScenarioHarness.vector("future task t statistics match local", fT.statistics, lT.statistics, Tol) ++
@@ -262,11 +264,11 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
           )
         )
 
-  private def selectedResponse(rows: Vector[Vector[Double]]): DoubleMatrix =
-    DoubleMatrix.fromRows(rows.map(row => VoxelOrder.map(row)))
+  private def selectedResponse(rows: Vector[Vector[Double]]): DMat =
+    scalafim.fmri.fit.GaleTestMatrix.fromRows(rows.map(row => VoxelOrder.map(row)))
 
-  private def ratio(numerator: DoubleVector, denominator: DoubleVector): DoubleVector =
-    DoubleVector.fromSeq(
+  private def ratio(numerator: DVec, denominator: DVec): DVec =
+    DVec.fromSeq(
       numerator.toVector.zip(denominator.toVector).map { case (n, d) => n / d }
     )
 

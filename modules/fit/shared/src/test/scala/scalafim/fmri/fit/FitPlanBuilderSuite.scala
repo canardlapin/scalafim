@@ -1,12 +1,14 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.NuisanceCheck
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
 
 class FitPlanBuilderSuite extends munit.FunSuite:
 
@@ -22,7 +24,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     FmriDataset(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-ols-demo"),
-        DMat.fromRows(rows),
+        ImageDMat.fromRows(rows),
         NeuroSpace(Vector(2, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
@@ -58,7 +60,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     val dataset = FmriDataset(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-nuisance-demo"),
-        DMat.fromRows(rows),
+        ImageDMat.fromRows(rows),
         NeuroSpace(Vector(1, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0)),

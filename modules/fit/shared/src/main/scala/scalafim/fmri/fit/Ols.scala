@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector, Pivoting, QrDecomposition, Ridge, Tolerance}
+import gale.linalg.{Cholesky, CholeskyOptions, DMat, DVec, Matrix, QR, QROptions, QRPivoting, Vec}
 
 enum OlsSolveMethod:
   case QrRankRevealing
@@ -8,7 +8,7 @@ enum OlsSolveMethod:
 
 enum OlsRankPolicy:
   case StrictFullRank
-  case RidgeRegularized(ridge: Ridge)
+  case RidgeRegularized(ridge: Double)
   case MinimumNorm
 
   def supported: Boolean =
@@ -19,15 +19,17 @@ enum OlsRankPolicy:
   def label: String =
     this match
       case StrictFullRank          => "strict full rank"
-      case RidgeRegularized(ridge) => s"ridge regularized (ridge=${ridge.value})"
+      case RidgeRegularized(ridge) => s"ridge regularized (ridge=$ridge)"
       case MinimumNorm             => "minimum norm"
 
 final case class OlsSolvePolicy(
     method: OlsSolveMethod = OlsSolveMethod.QrRankRevealing,
     rankPolicy: OlsRankPolicy = OlsRankPolicy.StrictFullRank,
-    rankTolerance: Tolerance = Tolerance.DefaultQr,
-    choleskyTolerance: Tolerance = Tolerance.DefaultCholesky
-)
+    rankTolerance: Double = 1e-7,
+    choleskyTolerance: Double = 1e-12
+):
+  require(rankTolerance >= 0.0 && rankTolerance.isFinite, "OLS rank tolerance must be finite and non-negative")
+  require(choleskyTolerance >= 0.0 && choleskyTolerance.isFinite, "OLS Cholesky tolerance must be finite and non-negative")
 
 object OlsSolvePolicy:
   val Default: OlsSolvePolicy =
@@ -48,9 +50,9 @@ final case class OlsDiagnostics(
 
 final class OlsPrepared private[fit] (
     val design: DesignMatrix,
-    val crossproduct: DoubleMatrix,
+    val crossproduct: DMat,
     private val solver: OlsPreparedSolver,
-    val normalizedCovariance: DoubleMatrix,
+    val normalizedCovariance: DMat,
     val diagnostics: OlsDiagnostics
 ):
   def policy: OlsSolvePolicy = diagnostics.policy
@@ -83,9 +85,9 @@ final class OlsPrepared private[fit] (
 
 final case class OlsFit(
     coefficients: CoefficientBlock,
-    residualVariance: DoubleVector,
+    residualVariance: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    normalizedCovariance: DoubleMatrix,
+    normalizedCovariance: DMat,
     standardErrors: StandardErrorBlock,
     diagnostics: OlsDiagnostics,
     coefficientCovariance: CoefficientCovariance
@@ -100,13 +102,13 @@ object Ols:
       design: DesignMatrix,
       policy: OlsSolvePolicy = OlsSolvePolicy.Default
   ): Either[FitError, OlsPrepared] =
-    val xtx = DoubleMatrix.transposeMultiply(design.value, design.value)
+    val xtx = design.value.t * design.value
     if !policy.rankPolicy.supported then
       Left(FitError.UnsupportedLeastSquaresPolicy(s"OLS currently supports ${OlsRankPolicy.StrictFullRank.label}; got ${policy.rankPolicy.label}"))
     else policy.method match
       case OlsSolveMethod.QrRankRevealing =>
-        val qr = QrDecomposition.decompose(design.value, Pivoting.Enabled, policy.rankTolerance)
-        qr.normalizedCovarianceFullRank
+        val qr = design.value.qr(QROptions(QRPivoting.Column, Some(policy.rankTolerance)))
+        qr.normalizedCovariance
           .left
           .map(FitError.SingularDesign.apply)
           .map { covariance =>
@@ -118,30 +120,33 @@ object Ols:
               diagnostics = OlsDiagnostics(
                 solveMethod = OlsSolveMethod.QrRankRevealing,
                 predictors = design.predictors,
-                rank = qr.rank,
+                rank = qr.diagnostics.rank.getOrElse(design.predictors),
                 policy = policy
               )
             )
           }
       case OlsSolveMethod.CholeskyNormalEquations =>
-        Cholesky
-          .decompose(xtx, policy.choleskyTolerance.value)
-          .left
-          .map(FitError.SingularDesign.apply)
-          .map { cholesky =>
-            new OlsPrepared(
-              design = design,
-              crossproduct = xtx,
-              solver = OlsPreparedSolver.NormalEquations(cholesky),
-              normalizedCovariance = cholesky.solve(DoubleMatrix.eye(design.predictors)),
-              diagnostics = OlsDiagnostics(
-                solveMethod = OlsSolveMethod.CholeskyNormalEquations,
-                predictors = design.predictors,
-                rank = design.predictors,
-                policy = policy
-              )
-            )
-          }
+        for
+          cholesky <- xtx
+            .cholesky(CholeskyOptions(policy.choleskyTolerance))
+            .left
+            .map(FitError.SingularDesign.apply)
+          covariance <- cholesky
+            .solve(Matrix.eye(design.predictors))
+            .left
+            .map(FitError.SingularDesign.apply)
+        yield new OlsPrepared(
+          design = design,
+          crossproduct = xtx,
+          solver = OlsPreparedSolver.NormalEquations(cholesky),
+          normalizedCovariance = covariance,
+          diagnostics = OlsDiagnostics(
+            solveMethod = OlsSolveMethod.CholeskyNormalEquations,
+            predictors = design.predictors,
+            rank = design.predictors,
+            policy = policy
+          )
+        )
 
   def unsafePrepare(
       design: DesignMatrix,
@@ -164,13 +169,13 @@ object Ols:
     fit(design, response, policy).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private[fit] def residualVariance(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
-      coefficients: DoubleMatrix,
+      design: DMat,
+      response: DMat,
+      coefficients: DMat,
       residualDegreesOfFreedom: ResidualDegreesOfFreedom
-  ): DoubleVector =
+  ): DVec =
     val df = residualDegreesOfFreedom.value
-    val out = new Array[Double](response.cols)
+    val out = Vec.newBuilder(response.cols)
 
     var voxel = 0
     while voxel < response.cols do
@@ -180,46 +185,45 @@ object Ols:
         var fitted = 0.0
         var predictor = 0
         while predictor < design.cols do
-          fitted += design.dataArray(row * design.cols + predictor) *
-            coefficients.dataArray(predictor * coefficients.cols + voxel)
+          fitted += design(row, predictor) * coefficients(predictor, voxel)
           predictor += 1
-        val residual = response.dataArray(row * response.cols + voxel) - fitted
+        val residual = response(row, voxel) - fitted
         sse += residual * residual
         row += 1
       out(voxel) = sse / df
       voxel += 1
 
-    DoubleVector.unsafe(out)
+    out.result()
 
   private[fit] def standardErrors(
-      normalizedCovariance: DoubleMatrix,
-      residualVariance: DoubleVector,
+      normalizedCovariance: DMat,
+      residualVariance: DVec,
       voxels: Int
-  ): DoubleMatrix =
+  ): DMat =
     require(normalizedCovariance.rows == normalizedCovariance.cols, "normalized covariance must be square")
     require(residualVariance.length == voxels, "residual variance length must match voxel count")
     val predictors = normalizedCovariance.rows
-    val out = new Array[Double](predictors * voxels)
+    val out = Matrix.newBuilder(predictors, voxels)
     var predictor = 0
     while predictor < predictors do
       val normalizedVariance = normalizedCovariance(predictor, predictor)
       var voxel = 0
       while voxel < voxels do
         val variance = normalizedVariance * residualVariance(voxel)
-        out(predictor * voxels + voxel) =
+        out(predictor, voxel) =
           if variance < 0.0 && variance > -1e-12 then 0.0 else math.sqrt(variance)
         voxel += 1
       predictor += 1
-    DoubleMatrix.unsafe(predictors, voxels, out)
+    out.result()
 
 private enum OlsPreparedSolver:
-  case Qr(qr: QrDecomposition)
+  case Qr(qr: QR)
   case NormalEquations(factor: Cholesky)
 
-  def coefficients(design: DesignMatrix, response: ResponseBlock): Either[FitError, DoubleMatrix] =
+  def coefficients(design: DesignMatrix, response: ResponseBlock): Either[FitError, DMat] =
     this match
       case Qr(qr) =>
-        qr.solveFullRank(response.value).left.map(FitError.SingularDesign.apply).map(_.coefficients)
+        qr.solveLeastSquares(response.value).left.map(FitError.SingularDesign.apply)
       case NormalEquations(factor) =>
-        val xty = DoubleMatrix.transposeMultiply(design.value, response.value)
-        Right(factor.solve(xty))
+        val xty = design.value.t * response.value
+        factor.solve(xty).left.map(FitError.SingularDesign.apply)

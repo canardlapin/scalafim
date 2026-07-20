@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 opaque type RunIndex = Int
 
@@ -120,10 +120,10 @@ final case class InferenceReadyDenseFit private[fit] (
 ):
   def columnNames: Vector[String] = result.columnNames
   def coefficients: CoefficientBlock = result.coefficients
-  def normalizedCovariance: DoubleMatrix = result.inference.normalizedCovariance
+  def normalizedCovariance: DMat = result.inference.normalizedCovariance
   def coefficientCovariance: CoefficientCovariance = result.inference.covariance
   def inferenceScope: CoefficientInferenceScope = result.inference.scope
-  def varianceScale: DoubleVector = result.inference.varianceScale
+  def varianceScale: DVec = result.inference.varianceScale
   def voxelIndices: Vector[Int] = result.voxelIndices
   def voxels: Int = result.voxels
 
@@ -138,7 +138,7 @@ sealed trait CoefficientInferenceScope:
   ): Either[FitError, Unit]
   def validateFContrast(
       contrastName: String,
-      weights: scalafim.linalg.DoubleMatrix,
+      weights: DMat,
       columnNames: Vector[String]
   ): Either[FitError, Unit]
 
@@ -163,7 +163,7 @@ object CoefficientInferenceScope:
 
     def validateFContrast(
         contrastName: String,
-        weights: scalafim.linalg.DoubleMatrix,
+        weights: DMat,
         columnNames: Vector[String]
     ): Either[FitError, Unit] =
       if weights.rows == columnNames.length then Right(())
@@ -199,7 +199,7 @@ object CoefficientInferenceScope:
 
     def validateFContrast(
         contrastName: String,
-        weights: scalafim.linalg.DoubleMatrix,
+        weights: DMat,
         columnNames: Vector[String]
     ): Either[FitError, Unit] =
       if weights.rows != columnNames.length then
@@ -260,7 +260,7 @@ final case class CoefficientInference private (
     scope: CoefficientInferenceScope,
     standardErrors: StandardErrorBlock,
     covariance: CoefficientCovariance,
-    varianceScale: DoubleVector,
+    varianceScale: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     method: CoefficientInferenceMethod
 ):
@@ -268,11 +268,11 @@ final case class CoefficientInference private (
   require(standardErrors.voxels == varianceScale.length, "inference standard errors must match variance scale voxels")
   require(covariance.validateVoxelCount(varianceScale.length).isRight, "inference covariance must be shared or match voxel count")
   require(scope.validateFor(covariance.predictors).isRight, "inference scope must be valid for covariance predictors")
-  require(varianceScale.toVector.forall(value => value >= 0.0 && value.isFinite), "inference variance scale must be non-negative and finite")
+  require(varianceScale.toSeq.forall(value => value >= 0.0 && value.isFinite), "inference variance scale must be non-negative and finite")
 
   def predictors: Int = covariance.predictors
   def voxels: Int = varianceScale.length
-  def normalizedCovariance: DoubleMatrix = covariance.canonicalMatrix
+  def normalizedCovariance: DMat = covariance.canonicalMatrix
 
   def standardError(predictor: Int, voxel: Int): Option[Double] =
     if predictor < 0 || predictor >= predictors || voxel < 0 || voxel >= voxels then None
@@ -303,17 +303,17 @@ final case class CoefficientInference private (
           case CoefficientCovarianceScope.Voxelwise =>
             CoefficientCovariance.voxelwise(positions.map(covariance.matrices))
       selectedCovariance.flatMap { selected =>
-        val selectedVariance = DoubleVector.fromSeq(positions.map(varianceScale.apply))
+        val selectedVariance = DVec.fromSeq(positions.map(varianceScale.apply))
         val selectedStandardErrors =
-          val out = new Array[Double](predictors * positions.length)
+          val out = Matrix.newBuilder(predictors, positions.length)
           var predictor = 0
           while predictor < predictors do
             var local = 0
             while local < positions.length do
-              out(predictor * positions.length + local) = standardErrors(predictor, positions(local))
+              out(predictor, local) = standardErrors(predictor, positions(local))
               local += 1
             predictor += 1
-          StandardErrorBlock(DoubleMatrix.unsafe(predictors, positions.length, out))
+          StandardErrorBlock(out.result())
         CoefficientInference.fromExisting(
           scope,
           selectedStandardErrors,
@@ -329,7 +329,7 @@ object CoefficientInference:
       scope: CoefficientInferenceScope,
       standardErrors: StandardErrorBlock,
       covariance: CoefficientCovariance,
-      varianceScale: DoubleVector,
+      varianceScale: DVec,
       residualDegreesOfFreedom: ResidualDegreesOfFreedom,
       method: CoefficientInferenceMethod = CoefficientInferenceMethod.Classical
   ): Either[FitError, CoefficientInference] =
@@ -344,7 +344,7 @@ object CoefficientInference:
       scope: CoefficientInferenceScope,
       standardErrors: StandardErrorBlock,
       covariance: CoefficientCovariance,
-      varianceScale: DoubleVector,
+      varianceScale: DVec,
       residualDegreesOfFreedom: ResidualDegreesOfFreedom,
       method: CoefficientInferenceMethod = CoefficientInferenceMethod.Classical
   ): CoefficientInference =
@@ -354,7 +354,7 @@ object CoefficientInference:
   def fromCovariance(
       scope: CoefficientInferenceScope,
       covariance: CoefficientCovariance,
-      varianceScale: DoubleVector,
+      varianceScale: DVec,
       residualDegreesOfFreedom: ResidualDegreesOfFreedom,
       method: CoefficientInferenceMethod
   ): Either[FitError, CoefficientInference] =
@@ -384,7 +384,7 @@ object CoefficientInference:
 
       for
         covariance <- CoefficientCovariance.mergeByVoxel(blocks.map(_.covariance))
-        varianceScale = DoubleVector.unsafe(blocks.iterator.flatMap(_.varianceScale.toVector).toArray)
+        varianceScale = bindVectors(blocks.map(_.varianceScale))
         standardErrors = StandardErrorBlock(bindMatrixColumns(blocks.map(_.standardErrors.value)))
         merged <- fromExisting(
           first.scope,
@@ -399,12 +399,12 @@ object CoefficientInference:
   private def standardErrors(
       scope: CoefficientInferenceScope,
       covariance: CoefficientCovariance,
-      varianceScale: DoubleVector
+      varianceScale: DVec
   ): Either[FitError, StandardErrorBlock] =
     val predictors = covariance.predictors
     val voxels = varianceScale.length
     val allowed = scope.allowedIndices(predictors).toSet
-    val out = new Array[Double](predictors * voxels)
+    val out = Matrix.newBuilder(predictors, voxels)
     var voxel = 0
     while voxel < voxels do
       covariance.matrixForVoxelPosition(voxel) match
@@ -417,10 +417,10 @@ object CoefficientInference:
               val variance = matrix(predictor, predictor) * varianceScale(voxel)
               if variance < -1e-12 || !variance.isFinite then
                 return Left(FitError.InvalidFitAxis("coefficient inference variance", s"predictor $predictor voxel $voxel has value $variance"))
-              out(predictor * voxels + voxel) = math.sqrt(math.max(0.0, variance))
+              out(predictor, voxel) = math.sqrt(math.max(0.0, variance))
             predictor += 1
       voxel += 1
-    Right(StandardErrorBlock(DoubleMatrix.unsafe(predictors, voxels, out)))
+    Right(StandardErrorBlock(out.result()))
 
   private def validateStandardErrors(
       standardErrors: StandardErrorBlock,
@@ -431,20 +431,28 @@ object CoefficientInference:
       Left(FitError.InvalidFitAxis("coefficient inference standard errors", s"expected $predictors predictor rows, got ${standardErrors.predictors}"))
     else if standardErrors.voxels != voxels then
       Left(FitError.InvalidFitAxis("coefficient inference standard errors", s"expected $voxels voxel columns, got ${standardErrors.voxels}"))
-    else if standardErrors.value.copyData.exists(value => value < 0.0 || !value.isFinite) then
-      Left(FitError.InvalidFitAxis("coefficient inference standard errors", "must be non-negative and finite"))
-    else Right(())
+    else
+      var row = 0
+      while row < standardErrors.value.rows do
+        var col = 0
+        while col < standardErrors.value.cols do
+          val value = standardErrors.value(row, col)
+          if value < 0.0 || !value.isFinite then
+            return Left(FitError.InvalidFitAxis("coefficient inference standard errors", "must be non-negative and finite"))
+          col += 1
+        row += 1
+      Right(())
 
-  private def validateVarianceScale(varianceScale: DoubleVector): Either[FitError, Unit] =
+  private def validateVarianceScale(varianceScale: DVec): Either[FitError, Unit] =
     if varianceScale.length <= 0 then Left(FitError.InvalidFitAxis("coefficient inference variance scale", "must be non-empty"))
-    else if varianceScale.toVector.exists(value => value < 0.0 || !value.isFinite) then
+    else if varianceScale.toSeq.exists(value => value < 0.0 || !value.isFinite) then
       Left(FitError.InvalidFitAxis("coefficient inference variance scale", "must be non-negative and finite"))
     else Right(())
 
-  private def bindMatrixColumns(matrices: IndexedSeq[DoubleMatrix]): DoubleMatrix =
+  private def bindMatrixColumns(matrices: IndexedSeq[DMat]): DMat =
     val rows = matrices.head.rows
     val totalCols = matrices.iterator.map(_.cols).sum
-    val out = new Array[Double](rows * totalCols)
+    val out = Matrix.newBuilder(rows, totalCols)
     var row = 0
     while row < rows do
       var offset = 0
@@ -453,12 +461,26 @@ object CoefficientInference:
         val matrix = matrices(block)
         var col = 0
         while col < matrix.cols do
-          out(row * totalCols + offset + col) = matrix(row, col)
+          out(row, offset + col) = matrix(row, col)
           col += 1
         offset += matrix.cols
         block += 1
       row += 1
-    DoubleMatrix.unsafe(rows, totalCols, out)
+    out.result()
+
+  private def bindVectors(vectors: IndexedSeq[DVec]): DVec =
+    val out = Vec.newBuilder(vectors.iterator.map(_.length).sum)
+    var offset = 0
+    var vectorIndex = 0
+    while vectorIndex < vectors.length do
+      val vector = vectors(vectorIndex)
+      var index = 0
+      while index < vector.length do
+        out(offset + index) = vector(index)
+        index += 1
+      offset += vector.length
+      vectorIndex += 1
+    out.result()
 
 enum FitImageMapKind:
   case Coefficients

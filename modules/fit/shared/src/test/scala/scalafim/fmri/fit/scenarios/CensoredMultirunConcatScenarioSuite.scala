@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{
   DataSelection,
   DatasetEvents,
@@ -25,8 +27,8 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -107,7 +109,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
         )
       ) ++
         ScenarioHarness.matrix("selected design", selectedDesign, fixture.selectedDesign, Tol) ++
-        ScenarioHarness.matrix("selected response", selectedResponse, DoubleMatrix.fromRows(fixture.selectedResponseRows), Tol) ++
+        ScenarioHarness.matrix("selected response", selectedResponse, scalafim.fmri.fit.GaleTestMatrix.fromRows(fixture.selectedResponseRows), Tol) ++
         ScenarioHarness.matrix("coefficients", publicResult.coefficients.value, oracle.coefficients.value, Tol) ++
         ScenarioHarness.matrix("known beta after censoring", publicResult.coefficients.value, fixture.beta, Tol) ++
         ScenarioHarness.matrix("standard errors", publicResult.standardErrors.value, oracle.standardErrors.value, Tol) ++
@@ -125,7 +127,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
       task: Vector[Double],
       responseRows: Vector[Vector[Double]],
       keepTimepoints: Vector[Int],
-      beta: DoubleMatrix
+      beta: DMat
   ):
     def selection: DataSelection =
       DataSelection(time = TimepointSelection.indices(keepTimepoints*))
@@ -138,7 +140,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-censored-multirun-concat"),
-          DMat.fromRows(responseRows),
+          ImageDMat.fromRows(responseRows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = samplingFrame,
@@ -155,8 +157,8 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
         timeAxis = timeAxis
       )
 
-    def selectedDesign: DoubleMatrix =
-      DoubleMatrix.fromRows(keepTimepoints.map(designRow))
+    def selectedDesign: DMat =
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(keepTimepoints.map(designRow))
 
     def selectedResponseRows: Vector[Vector[Double]] =
       keepTimepoints.map(responseRows)
@@ -177,7 +179,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
       )
     val keep = Vector(0, 1, 2, 3, 4, 6, 7, 9, 10, 11)
     val beta =
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(0.65, -0.40),
           Vector(1.20, -0.80),

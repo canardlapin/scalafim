@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.model.{FitEngine, FitSummary}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 opaque type ResultMapName = String
 
@@ -157,7 +157,7 @@ object AnalysisProvenance:
 final case class StatMap private (
     name: ResultMapName,
     kind: StatisticKind,
-    values: DoubleVector,
+    values: DVec,
     shape: DatasetShape,
     selectedVoxels: SelectedVoxelIndices,
     provenance: AnalysisProvenance,
@@ -165,13 +165,13 @@ final case class StatMap private (
 ):
   def label: String = name.value
   def voxelIndices: Vector[Int] = selectedVoxels.toVector
-  def valueVector: Vector[Double] = values.toVector
+  def valueVector: Vector[Double] = values.toSeq.toVector
 
 object StatMap:
   def make(
       name: String,
       kind: StatisticKind,
-      values: DoubleVector,
+      values: DVec,
       shape: DatasetShape,
       selectedVoxels: SelectedVoxelIndices,
       provenance: AnalysisProvenance,
@@ -186,7 +186,7 @@ object StatMap:
   def unsafe(
       name: String,
       kind: StatisticKind,
-      values: DoubleVector,
+      values: DVec,
       shape: DatasetShape,
       selectedVoxels: SelectedVoxelIndices,
       provenance: AnalysisProvenance,
@@ -196,7 +196,7 @@ object StatMap:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def validateValues(
-      values: DoubleVector,
+      values: DVec,
       selectedVoxels: SelectedVoxelIndices,
       shape: DatasetShape
   ): Either[FitError, Unit] =
@@ -209,7 +209,7 @@ object StatMap:
       )
     else if selectedVoxels.toVector.exists(index => index < 0 || index >= shape.spatialSize) then
       Left(FitError.InvalidFitAxis("result map voxel indices", "out of bounds for dataset shape"))
-    else if values.toVector.exists(value => !value.isFinite) then
+    else if values.toSeq.exists(value => !value.isFinite) then
       Left(FitError.NonFiniteInput("result map values"))
     else Right(())
 
@@ -225,7 +225,7 @@ object ParameterMap:
   def make(
       parameterName: String,
       statistic: ParameterMapKind,
-      values: DoubleVector,
+      values: DVec,
       shape: DatasetShape,
       selectedVoxels: SelectedVoxelIndices,
       provenance: AnalysisProvenance,
@@ -263,7 +263,7 @@ object ContrastMap:
   def make(
       contrastId: String,
       statistic: ContrastMapKind,
-      values: DoubleVector,
+      values: DVec,
       shape: DatasetShape,
       selectedVoxels: SelectedVoxelIndices,
       provenance: AnalysisProvenance,
@@ -312,7 +312,7 @@ object ContrastMap:
         residual = result.residualDegreesOfFreedom
       )
     )
-    val estimateMaps: Vector[(ContrastMapKind, DoubleVector)] =
+    val estimateMaps: Vector[(ContrastMapKind, DVec)] =
       Vector.tabulate(result.estimates.rows) { row =>
         ContrastMapKind.Estimate(row + 1) -> matrixRow(result.estimates, row)
       }
@@ -338,7 +338,7 @@ final case class CoefficientCovarianceArtifact private (
   def voxelIndices: Vector[Int] =
     selectedVoxels.toVector
 
-  def matrices: Vector[DoubleMatrix] =
+  def matrices: Vector[DMat] =
     covariance.matrices
 
 object CoefficientCovarianceArtifact:
@@ -378,15 +378,15 @@ object CoefficientCovarianceArtifact:
       indices: Vector[Int]
   ): CoefficientCovariance =
     val matrices = covariance.matrices.map { matrix =>
-      val out = new Array[Double](indices.length * indices.length)
+      val out = Matrix.newBuilder(indices.length, indices.length)
       var row = 0
       while row < indices.length do
         var col = 0
         while col < indices.length do
-          out(row * indices.length + col) = matrix(indices(row), indices(col))
+          out(row, col) = matrix(indices(row), indices(col))
           col += 1
         row += 1
-      DoubleMatrix.unsafe(indices.length, indices.length, out)
+      out.result()
     }
     covariance.scope match
       case CoefficientCovarianceScope.Shared => CoefficientCovariance.unsafeShared(matrices.head)
@@ -433,11 +433,11 @@ object ResultManifest:
   ): Either[FitError, ResultManifest] =
     val provenance = AnalysisProvenance.fromResult(result, source)
     val selectedVoxels = result.selectedVoxels
-    val coefficientSpecs: Vector[(String, ParameterMapKind, DoubleVector)] =
+    val coefficientSpecs: Vector[(String, ParameterMapKind, DVec)] =
       result.columnNames.zipWithIndex.map { case (parameter, row) =>
         (parameter, ParameterMapKind.Coefficient, matrixRow(result.coefficients.value, row))
       }
-    val standardErrorSpecs: Vector[(String, ParameterMapKind, DoubleVector)] =
+    val standardErrorSpecs: Vector[(String, ParameterMapKind, DVec)] =
       result.inferenceScope.allowedIndices(result.predictors).map { row =>
         (result.columnNames(row), ParameterMapKind.StandardError, matrixRow(result.standardErrors.value, row))
       }
@@ -450,13 +450,13 @@ object ResultManifest:
       covariance <- CoefficientCovarianceArtifact.fromDenseFit(result, shape, provenance, exportIntent)
     yield ResultManifest(provenance, parameters, contrasts = Vector.empty, coefficientCovariance = Some(covariance), exportIntent = exportIntent)
 
-private def matrixRow(matrix: DoubleMatrix, row: Int): DoubleVector =
-  val out = new Array[Double](matrix.cols)
+private def matrixRow(matrix: DMat, row: Int): DVec =
+  val out = Vec.newBuilder(matrix.cols)
   var col = 0
   while col < matrix.cols do
     out(col) = matrix(row, col)
     col += 1
-  DoubleVector.unsafe(out)
+  out.result()
 
 private def buildAll[A, B](
     values: Vector[A]

@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
 import scalafim.fmri.fit.{
@@ -17,8 +19,8 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 class PublicFContrastScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -36,7 +38,7 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-public-f-contrast"),
-          DMat.fromRows(fixture.responseRows),
+          ImageDMat.fromRows(fixture.responseRows),
           NeuroSpace(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),
@@ -67,7 +69,7 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
     val publicResult = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
     val generatedDesign = value(MatrixAdapters.designMatrix(plan.model, fixture.task.indices.toVector)).value
     val oracleDesign = fixture.design
-    val oracle = Ols.unsafeFit(DesignMatrix.unsafe(oracleDesign), ResponseBlock.unsafe(DoubleMatrix.fromRows(fixture.responseRows)))
+    val oracle = Ols.unsafeFit(DesignMatrix.unsafe(oracleDesign), ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(fixture.responseRows)))
     val t = value(TContrast("task", Map("task" -> 1.0)).evaluate(publicResult))
     val fTask = value(FContrast("task", Vector(Map("task" -> 1.0))).evaluate(publicResult))
     val fTaskAndMotion =
@@ -121,11 +123,11 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
         ScenarioHarness.vector("nilearn task t standard error", t.standardErrors, fixture.taskTStandardErrors, NilearnTol) ++
         ScenarioHarness.vector("nilearn task t statistic", t.statistics, fixture.taskTStatistics, NilearnTol) ++
         Vector(ScenarioHarness.finite("task t statistic finite", t.statistics.toVector)) ++
-        ScenarioHarness.matrix("task F estimates", fTask.estimates, DoubleMatrix.fromRows(Vector(oracle.coefficients.value.row(0).toVector)), Tol) ++
+        ScenarioHarness.matrix("task F estimates", fTask.estimates, scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(oracle.coefficients.value.row(0).toVector)), Tol) ++
         ScenarioHarness.vector(
           "single-df F equals t squared",
           fTask.statistics,
-          DoubleVector.fromSeq(t.statistics.toVector.map(value => value * value)),
+          DVec.fromSeq(t.statistics.toVector.map(value => value * value)),
           Tol
         ) ++
         ScenarioHarness.vector("nilearn task F statistic", fTask.statistics, fixture.taskFStatistics, NilearnTol) ++

@@ -13,13 +13,13 @@ import scalafim.fmri.ar.{
   WhiteningTransform
 }
 import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, AutocorrelationConfig}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 final case class GlsFit(
     coefficients: CoefficientBlock,
-    residualVariance: DoubleVector,
+    residualVariance: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    normalizedCovariance: DoubleMatrix,
+    normalizedCovariance: DMat,
     standardErrors: StandardErrorBlock,
     diagnostics: ArDiagnostics,
     initialOlsDiagnostics: OlsDiagnostics,
@@ -114,12 +114,12 @@ object Gls:
           for
             whitened <- WhiteningTransform(
               plan,
-              MatrixAdapters.toGaleMatrix(prepared.design.value),
-              MatrixAdapters.toGaleMatrix(response.value)
+              prepared.design.value,
+              response.value
             ).left.map(arToFitError)
             fit <- Ols.fit(
-              DesignMatrix.unsafe(MatrixAdapters.fromGaleMatrix(whitened.design)),
-              ResponseBlock.unsafe(MatrixAdapters.fromGaleMatrix(whitened.response))
+              DesignMatrix.unsafe(whitened.design),
+              ResponseBlock.unsafe(whitened.response)
             )
           yield GlsFit(
             coefficients = fit.coefficients,
@@ -206,9 +206,9 @@ object Gls:
       TimeSegments.validateCoverage(segments, base.last.endExclusive).left.map(arToFitError).map(_ => segments)
 
   private def whiteningPlan(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
-      coefficients: DoubleMatrix,
+      design: DMat,
+      response: DMat,
+      coefficients: DMat,
       segments: Vector[TimeSegment],
       config: AutocorrelationConfig
   ): Either[FitError, (GlsWhitening, String)] =
@@ -227,9 +227,9 @@ object Gls:
         else iterateEstimatedWhitening(design, response, coefficients, segments, config).map(GlsWhitening.Shared.apply).map(_ -> "estimated")
 
   private def iterateEstimatedWhitening(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
-      initialCoefficients: DoubleMatrix,
+      design: DMat,
+      response: DMat,
+      initialCoefficients: DMat,
       segments: Vector[TimeSegment],
       config: AutocorrelationConfig
   ): Either[FitError, WhiteningPlan] =
@@ -241,14 +241,14 @@ object Gls:
         exactFirstAr1 = config.exactFirst
       )
 
-    def estimate(coefficients: DoubleMatrix): Either[FitError, WhiteningPlan] =
+    def estimate(coefficients: DMat): Either[FitError, WhiteningPlan] =
       val residuals = residualMatrix(design, response, coefficients)
       ArEstimation
-        .fitNoise(MatrixAdapters.toGaleMatrix(residuals), segments, arOptions)
+        .fitNoise(residuals, segments, arOptions)
         .left
         .map(arToFitError)
 
-    def loop(iteration: Int, coefficients: DoubleMatrix): Either[FitError, WhiteningPlan] =
+    def loop(iteration: Int, coefficients: DMat): Either[FitError, WhiteningPlan] =
       estimate(coefficients).flatMap { plan =>
         if iteration >= config.iterations then Right(plan)
         else
@@ -261,9 +261,9 @@ object Gls:
     loop(iteration = 1, initialCoefficients)
 
   private def iterateEstimatedVoxelwiseWhitening(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
-      initialCoefficients: DoubleMatrix,
+      design: DMat,
+      response: DMat,
+      initialCoefficients: DMat,
       segments: Vector[TimeSegment],
       config: AutocorrelationConfig
   ): Either[FitError, Vector[WhiteningPlan]] =
@@ -286,18 +286,18 @@ object Gls:
 
   private[fit] def fitWithPlan(
       plan: WhiteningPlan,
-      design: DoubleMatrix,
-      response: DoubleMatrix
+      design: DMat,
+      response: DMat
   ): Either[FitError, OlsFit] =
     for
       whitened <- WhiteningTransform(
         plan,
-        MatrixAdapters.toGaleMatrix(design),
-        MatrixAdapters.toGaleMatrix(response)
+        design,
+        response
       ).left.map(arToFitError)
       fit <- Ols.fit(
-        DesignMatrix.unsafe(MatrixAdapters.fromGaleMatrix(whitened.design)),
-        ResponseBlock.unsafe(MatrixAdapters.fromGaleMatrix(whitened.response))
+        DesignMatrix.unsafe(whitened.design),
+        ResponseBlock.unsafe(whitened.response)
       )
     yield fit
 
@@ -344,18 +344,18 @@ object Gls:
       Right(diagnostics.copy(runs = runs))
 
   private def fitVoxelwise(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
+      design: DMat,
+      response: DMat,
       plans: Vector[WhiteningPlan]
   ): Either[FitError, OlsFit] =
     if plans.length != response.cols then
       Left(FitError.UnsupportedAutocorrelation(s"voxelwise AR requires ${response.cols} whitening plans, got ${plans.length}"))
     else
-      val coefficientData = new Array[Double](design.cols * response.cols)
-      val standardErrorData = new Array[Double](design.cols * response.cols)
-      val residualVarianceData = new Array[Double](response.cols)
-      val covarianceMatrices = Vector.newBuilder[DoubleMatrix]
-      var covariance: DoubleMatrix | Null = null
+      val coefficientData = Matrix.newBuilder(design.cols, response.cols)
+      val standardErrorData = Matrix.newBuilder(design.cols, response.cols)
+      val residualVarianceData = Vec.newBuilder(response.cols)
+      val covarianceMatrices = Vector.newBuilder[DMat]
+      var covariance: DMat | Null = null
       var diagnostics: OlsDiagnostics | Null = null
       var residualDf: ResidualDegreesOfFreedom | Null = null
 
@@ -367,8 +367,8 @@ object Gls:
           case Right(fit) =>
             var predictor = 0
             while predictor < design.cols do
-              coefficientData(predictor * response.cols + voxel) = fit.coefficients(predictor, 0)
-              standardErrorData(predictor * response.cols + voxel) = fit.standardErrors(predictor, 0)
+              coefficientData(predictor, voxel) = fit.coefficients(predictor, 0)
+              standardErrorData(predictor, voxel) = fit.standardErrors(predictor, 0)
               predictor += 1
             residualVarianceData(voxel) = fit.residualVariance(0)
             covarianceMatrices += fit.normalizedCovariance
@@ -379,22 +379,22 @@ object Gls:
 
       Right(
         OlsFit(
-          coefficients = CoefficientBlock(DoubleMatrix.unsafe(design.cols, response.cols, coefficientData)),
-          residualVariance = DoubleVector.unsafe(residualVarianceData),
+          coefficients = CoefficientBlock(coefficientData.result()),
+          residualVariance = residualVarianceData.result(),
           residualDegreesOfFreedom = residualDf.asInstanceOf[ResidualDegreesOfFreedom],
-          normalizedCovariance = covariance.asInstanceOf[DoubleMatrix],
-          standardErrors = StandardErrorBlock(DoubleMatrix.unsafe(design.cols, response.cols, standardErrorData)),
+          normalizedCovariance = covariance.asInstanceOf[DMat],
+          standardErrors = StandardErrorBlock(standardErrorData.result()),
           diagnostics = diagnostics.asInstanceOf[OlsDiagnostics],
           coefficientCovariance = CoefficientCovariance.unsafeVoxelwise(covarianceMatrices.result())
         )
       )
 
   private[fit] def residualMatrix(
-      design: DoubleMatrix,
-      response: DoubleMatrix,
-      coefficients: DoubleMatrix
-  ): DoubleMatrix =
-    val out = new Array[Double](response.rows * response.cols)
+      design: DMat,
+      response: DMat,
+      coefficients: DMat
+  ): DMat =
+    val out = Matrix.newBuilder(response.rows, response.cols)
     var row = 0
     while row < response.rows do
       var voxel = 0
@@ -404,10 +404,10 @@ object Gls:
         while predictor < design.cols do
           fitted += design(row, predictor) * coefficients(predictor, voxel)
           predictor += 1
-        out(row * response.cols + voxel) = response(row, voxel) - fitted
+        out(row, voxel) = response(row, voxel) - fitted
         voxel += 1
       row += 1
-    DoubleMatrix.unsafe(response.rows, response.cols, out)
+    out.result()
 
   private[fit] def diagnostics(
       whitening: GlsWhitening,
@@ -465,13 +465,13 @@ object Gls:
       case ArCoefficientSpec.Estimate => config.iterations
       case _                          => 0
 
-  private def matrixColumn(matrix: DoubleMatrix, col: Int): DoubleMatrix =
-    val out = new Array[Double](matrix.rows)
+  private def matrixColumn(matrix: DMat, col: Int): DMat =
+    val out = Matrix.newBuilder(matrix.rows, 1)
     var row = 0
     while row < matrix.rows do
-      out(row) = matrix(row, col)
+      out(row, 0) = matrix(row, col)
       row += 1
-    DoubleMatrix.unsafe(matrix.rows, 1, out)
+    out.result()
 
   private def averageCoefficients(coefficients: Vector[Vector[Double]], order: Int): Vector[Double] =
     val out = new Array[Double](order)

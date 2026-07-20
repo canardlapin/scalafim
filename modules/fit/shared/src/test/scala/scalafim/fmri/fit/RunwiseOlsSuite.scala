@@ -1,12 +1,14 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
 
 class RunwiseOlsSuite extends munit.FunSuite:
 
@@ -16,7 +18,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
   private def model: FmriModel =
     val x = Vector(0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0)
     val y = Vector(1.0, 3.0, 5.0, 7.0, 10.0, 9.0, 8.0, 7.0)
-    val data = DMat.fromRows(y.map(v => Vector(v)))
+    val data = ImageDMat.fromRows(y.map(v => Vector(v)))
     val dataset =
       FmriDataset(
         backend = InMemoryDatasetBackend(DatasetId("runwise-demo"), data, NeuroSpace(Vector(1, 1, 1))),
@@ -63,7 +65,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
 
   test("RunwiseOls reports singular run designs with run identity") {
     val design = DesignMatrix.unsafe(
-      scalafim.linalg.DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 1.0),
           Vector(1.0, 1.0),
@@ -73,7 +75,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      scalafim.linalg.DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
     )
     val partitions = Vector(
       RunPartition(runIndex = 0, rowIndices = Vector(0, 1), timepoints = Vector(0, 1)),

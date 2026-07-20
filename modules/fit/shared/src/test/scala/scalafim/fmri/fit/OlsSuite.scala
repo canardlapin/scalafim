@@ -1,13 +1,15 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{DoubleMatrix, Ridge}
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 class OlsSuite extends munit.FunSuite:
 
-  private def assertAllFinite(matrix: DoubleMatrix): Unit =
+  private def assertAllFinite(matrix: DMat): Unit =
     assert(matrix.copyData.forall(_.isFinite), clues(matrix.toRows))
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -20,7 +22,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS fits multiple response columns with one prepared factorization") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -30,7 +32,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(3.0, 1.0),
@@ -60,7 +62,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS reports residual variance per voxel") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -70,7 +72,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
     )
 
     val fit = Ols.unsafeFit(design, response)
@@ -83,7 +85,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS matches independent Gaussian oracle on overdetermined multivoxel data") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, -2.0, 0.25),
           Vector(1.0, -1.0, 1.5),
@@ -95,7 +97,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(3.0, -1.5),
           Vector(2.2, 0.25),
@@ -115,7 +117,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS matches independent oracle for scaled full-rank predictors") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, -0.003, 4.0),
           Vector(1.0, -0.002, 1.0),
@@ -128,7 +130,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(-2.0, 7.5),
           Vector(-0.5, 3.0),
@@ -149,10 +151,10 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rejects non-finite dense inputs at construction") {
     val badDesign = DesignMatrix.fromMatrix(
-      DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, Double.NaN), Vector(1.0, 2.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, Double.NaN), Vector(1.0, 2.0)))
     )
     val badResponse = ResponseBlock.fromMatrix(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(Double.PositiveInfinity), Vector(3.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(Double.PositiveInfinity), Vector(3.0)))
     )
 
     assertEquals(badDesign.left.toOption, Some(FitError.NonFiniteInput("design matrix")))
@@ -161,7 +163,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS default QR solver agrees with normal equations on well-conditioned designs") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, -2.0, 4.0),
           Vector(1.0, -1.0, 1.0),
@@ -173,7 +175,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(3.1, -7.0),
           Vector(2.2, -4.1),
@@ -200,7 +202,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS coefficients are invariant to design column permutation") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, -2.0, 0.5),
           Vector(1.0, -1.0, -1.0),
@@ -211,16 +213,16 @@ class OlsSuite extends munit.FunSuite:
         )
       )
     )
-    val beta = DoubleMatrix.fromRows(
+    val beta = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(2.0, -3.0),
         Vector(0.5, 1.5),
         Vector(-1.0, 0.25)
       )
     )
-    val response = ResponseBlock.unsafe(DoubleMatrix.multiply(design.value, beta))
+    val response = ResponseBlock.unsafe(design.value * beta)
     val permuted = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(design.value.toRows.map(row => Vector(row(2), row(0), row(1))))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(design.value.toRows.map(row => Vector(row(2), row(0), row(1))))
     )
 
     val originalFit = Ols.unsafeFit(design, response)
@@ -236,7 +238,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rejects singular designs") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 1.0),
           Vector(1.0, 1.0),
@@ -250,7 +252,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rank policy makes strict full-rank rejection explicit") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(2.0, 4.0),
@@ -263,14 +265,14 @@ class OlsSuite extends munit.FunSuite:
     val result = Ols.prepare(design, OlsSolvePolicy(rankPolicy = OlsRankPolicy.StrictFullRank))
 
     assert(result.left.toOption.exists {
-      case FitError.SingularDesign(cause) => cause.message.contains("rank 1") && cause.message.contains("required rank 2")
+      case FitError.SingularDesign(cause) => cause.getMessage.contains("rank 1") && cause.getMessage.contains("2 columns")
       case _                              => false
     })
   }
 
   test("OLS reports unsupported rank policies explicitly") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -279,7 +281,7 @@ class OlsSuite extends munit.FunSuite:
       )
     )
 
-    val ridgePolicy = OlsSolvePolicy(rankPolicy = OlsRankPolicy.RidgeRegularized(Ridge(1e-6).toOption.get))
+    val ridgePolicy = OlsSolvePolicy(rankPolicy = OlsRankPolicy.RidgeRegularized(1e-6))
     val ridge = Ols.prepare(design, ridgePolicy)
     assert(ridge.left.toOption.exists {
       case FitError.UnsupportedLeastSquaresPolicy(message) => message.contains("ridge regularized")
@@ -295,7 +297,7 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rejects nearly collinear designs at the QR rank tolerance boundary") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, -2.0, -2.0 - 2e-14),
           Vector(1.0, -1.0, -1.0 - 1e-14),
@@ -311,14 +313,14 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rejects saturated fits before residual inference is represented") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0)
         )
       )
     )
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
 
     val result = Ols.fit(design, response)
 
@@ -327,9 +329,9 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS remains finite for extreme but well-conditioned predictor scales") {
     val x = Vector(-2.0e6, -1.0e6, 0.0, 1.0e6, 2.0e6)
-    val design = DesignMatrix.unsafe(DoubleMatrix.fromRows(x.map(value => Vector(1.0, value))))
+    val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(x.map(value => Vector(1.0, value))))
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         x.map { value =>
           Vector(
             3.0 + 2.0e-6 * value,
@@ -354,10 +356,10 @@ class OlsSuite extends munit.FunSuite:
 
   test("OLS rejects row mismatches at fit time") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0)))
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
     )
 
     val result = Ols.unsafePrepare(design).fit(response)

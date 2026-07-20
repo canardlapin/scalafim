@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.contrast.ContrastSpec
@@ -9,8 +11,8 @@ import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 class InferenceSuite extends munit.FunSuite:
 
@@ -18,7 +20,7 @@ class InferenceSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def noisyModel: FmriModel =
-    val data = DMat.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
+    val data = ImageDMat.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
     val dataset =
       FmriDataset(
         backend = InMemoryDatasetBackend(DatasetId("inference-demo"), data, NeuroSpace(Vector(1, 1, 1))),
@@ -90,14 +92,14 @@ class InferenceSuite extends munit.FunSuite:
     }
     val dataset =
       FmriDataset(
-        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), DMat.fromRows(rows), NeuroSpace(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(1, 1, 1))),
         samplingFrame = sf
       )
     FmriModel(eventModel, baseline, dataset)
 
   private def zeroResidualVarianceResult: DenseFmriFitResult =
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -107,10 +109,10 @@ class InferenceSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(3.0), Vector(5.0), Vector(7.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(3.0), Vector(5.0), Vector(7.0)))
     )
     val fit = Ols.unsafeFit(design, response)
-    val residualVariance = DoubleVector.unsafe(Array(0.0))
+    val residualVariance = DVec.fromSeq(Seq(0.0))
     val covariance = CoefficientCovariance.unsafeShared(fit.normalizedCovariance)
     DenseFmriFitResult(
       coefficients = fit.coefficients,
@@ -206,26 +208,26 @@ class InferenceSuite extends munit.FunSuite:
 
   test("contrasts use voxelwise coefficient covariance when supplied") {
     val firstCovariance =
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(0.25, 0.0),
           Vector(0.0, 1.0)
         )
       )
     val secondCovariance =
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.0, 1.0)
         )
       )
     val covariance = CoefficientCovariance.unsafeVoxelwise(Vector(firstCovariance, secondCovariance))
-    val residualVariance = DoubleVector.fromSeq(Vector(1.0, 1.0))
+    val residualVariance = DVec.fromSeq(Vector(1.0, 1.0))
     val residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(8)
     val result =
       DenseFmriFitResult(
         coefficients = CoefficientBlock(
-          DoubleMatrix.fromRows(
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(
             Vector(
               Vector(2.0, 2.0),
               Vector(0.0, 0.0)
@@ -235,7 +237,7 @@ class InferenceSuite extends munit.FunSuite:
         inference = CoefficientInference.unsafeFromExisting(
           CoefficientInferenceScope.All,
           StandardErrorBlock(
-            DoubleMatrix.fromRows(
+            scalafim.fmri.fit.GaleTestMatrix.fromRows(
               Vector(
                 Vector(0.5, 1.0),
                 Vector(1.0, 1.0)

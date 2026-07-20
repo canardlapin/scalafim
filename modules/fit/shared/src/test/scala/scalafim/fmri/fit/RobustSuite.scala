@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
@@ -20,8 +22,8 @@ import scalafim.fmri.model.{
   ScaleScope
 }
 import scalafim.fmri.fit.fixtures.FmriregRobustFixtures
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -237,12 +239,12 @@ class RobustSuite extends munit.FunSuite:
 
   private def designMatrix(): DesignMatrix =
     DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(rows.map(i => Vector(i.toDouble, 1.0)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(rows.map(i => Vector(i.toDouble, 1.0)))
     )
 
   private def responseBlock(outlier: Boolean): ResponseBlock =
     ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         rows.map { i =>
           val clean = targetSlope * i.toDouble + targetIntercept
           val value = if outlier && i == nTime - 1 then clean + 80.0 else clean
@@ -257,7 +259,7 @@ class RobustSuite extends munit.FunSuite:
   private def model(outlier: Boolean): FmriModel =
     val frame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
     val data =
-      DMat.fromRows(
+      ImageDMat.fromRows(
         rows.map { i =>
           val clean = targetSlope * i.toDouble + targetIntercept
           val value = if outlier && i == nTime - 1 then clean + 80.0 else clean
@@ -289,7 +291,7 @@ class RobustSuite extends munit.FunSuite:
   private def twoVoxelModel: FmriModel =
     val frame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
     val data =
-      DMat.fromRows(
+      ImageDMat.fromRows(
         rows.map { i =>
           val clean = targetSlope * i.toDouble + targetIntercept
           val outlying = if i == nTime - 1 then clean + 80.0 else clean
@@ -327,10 +329,10 @@ class RobustSuite extends munit.FunSuite:
 
   private def robustArDesign: DesignMatrix =
     val task = robustArTask
-    DesignMatrix.unsafe(DoubleMatrix.fromRows(task.map(value => Vector(value, 1.0))))
+    DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(task.map(value => Vector(value, 1.0))))
 
   private def robustArResponse: ResponseBlock =
-    ResponseBlock.unsafe(DoubleMatrix.fromRows(robustArResponseRows))
+    ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(robustArResponseRows))
 
   private def robustArPartitions: Vector[RunPartition] =
     Vector(RunPartition(0, rowIndices = arRows, timepoints = arRows))
@@ -339,7 +341,7 @@ class RobustSuite extends munit.FunSuite:
     val frame = SamplingFrame(blockLens = Seq(arTime), tr = Seq(1.0))
     val dataset =
       FmriDataset(
-        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), DMat.fromRows(robustArResponseRows), NeuroSpace(Vector(2, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), ImageDMat.fromRows(robustArResponseRows), NeuroSpace(Vector(2, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =
@@ -381,7 +383,7 @@ class RobustSuite extends munit.FunSuite:
       i += 1
     out.toVector
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -412,7 +414,7 @@ class RobustSuite extends munit.FunSuite:
     assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance, 1e-10)
     assertVectorClose(actual.residualVariance, expected.residualVariance, 1e-10)
 
-  private def assertVectorClose(actual: DoubleVector, expected: DoubleVector, tol: Double): Unit =
+  private def assertVectorClose(actual: DVec, expected: DVec, tol: Double): Unit =
     assertEquals(actual.length, expected.length)
     var i = 0
     while i < actual.length do

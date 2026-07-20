@@ -1,10 +1,12 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.fit.GaleTestSyntax.*
+
+import gale.linalg.DMat
 
 class LssSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -16,7 +18,7 @@ class LssSuite extends munit.FunSuite:
       row += 1
 
   test("LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors") {
-    val trials = DoubleMatrix.fromRows(
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0),
         Vector(0.8, 0.2, 0.0),
@@ -28,7 +30,7 @@ class LssSuite extends munit.FunSuite:
         Vector(0.2, 0.5, 0.1)
       )
     )
-    val fixed = DoubleMatrix.fromRows(
+    val fixed = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, -3.5),
         Vector(1.0, -2.5),
@@ -40,7 +42,7 @@ class LssSuite extends munit.FunSuite:
         Vector(1.0, 3.5)
       )
     )
-    val response = DoubleMatrix.fromRows(
+    val response = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(5.2, -1.0),
         Vector(4.7, 0.5),
@@ -59,7 +61,7 @@ class LssSuite extends munit.FunSuite:
       fixed = LssFixedDesign.unsafe(fixed, Vector("intercept", "trend"))
     )
     val expected = explicitLss(trials, response, fixed)
-    val fmrilssExpected = DoubleMatrix.fromRows(
+    val fmrilssExpected = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(-2.00714771389244, 0.18904127763313),
         Vector(1.8141791857713, 4.7225165628497),
@@ -77,9 +79,9 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate handles a single trial as residualized simple regression") {
-    val trials = DoubleMatrix.fromRows(Vector(Vector(0.0), Vector(1.0), Vector(1.0), Vector(0.0), Vector(0.5)))
-    val fixed = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
-    val response = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(4.0), Vector(5.0), Vector(2.0), Vector(3.0)))
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(0.0), Vector(1.0), Vector(1.0), Vector(0.0), Vector(0.5)))
+    val fixed = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
+    val response = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(4.0), Vector(5.0), Vector(2.0), Vector(3.0)))
 
     val fit = LeastSquaresSeparate.unsafeFit(
       LssTrialDesign.unsafe(trials, Vector("only_trial")),
@@ -94,7 +96,7 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate prepared design reuses fixed projection and trial workspace") {
-    val trials = DoubleMatrix.fromRows(
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0),
         Vector(0.8, 0.2, 0.0),
@@ -106,7 +108,7 @@ class LssSuite extends munit.FunSuite:
         Vector(0.2, 0.5, 0.1)
       )
     )
-    val fixed = DoubleMatrix.fromRows(
+    val fixed = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, -3.5),
         Vector(1.0, -2.5),
@@ -119,7 +121,7 @@ class LssSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
           Vector(5.2, -1.0),
           Vector(4.7, 0.5),
@@ -147,7 +149,7 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate reports zero trial and degenerate other regressors") {
-    val trials = DoubleMatrix.fromRows(
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 0.0),
@@ -155,7 +157,7 @@ class LssSuite extends munit.FunSuite:
         Vector(0.0, 0.0)
       )
     )
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0))))
 
     val fit = LeastSquaresSeparate.unsafeFit(
       LssTrialDesign.unsafe(trials, Vector("active", "zero")),
@@ -169,8 +171,8 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate returns typed metadata errors from safe constructors") {
-    val trialDesign = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
-    val fixedDesign = DoubleMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, 1.0)))
+    val trialDesign = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(0.0)))
+    val fixedDesign = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0, 0.0), Vector(1.0, 1.0)))
 
     assertEquals(
       LssTrialDesign.fromMatrix(trialDesign, Vector("a", "b")).left.toOption,
@@ -183,9 +185,9 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas") {
-    val trials = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
-    val fixed = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0))))
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
+    val fixed = scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(1.0), Vector(1.0), Vector(1.0)))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0))))
 
     val fit = LeastSquaresSeparate.unsafeFit(
       LssTrialDesign.unsafe(trials, Vector("absorbed")),
@@ -200,7 +202,7 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate rejects collinear trial and other-trial regressors") {
-    val trials = DoubleMatrix.fromRows(
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 1.0),
         Vector(0.0, 0.0),
@@ -208,7 +210,7 @@ class LssSuite extends munit.FunSuite:
         Vector(0.0, 0.0)
       )
     )
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0))))
 
     val result = LeastSquaresSeparate.fit(
       LssTrialDesign.unsafe(trials, Vector("trial_a", "trial_b")),
@@ -219,8 +221,8 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate rejects non-finite matrix inputs") {
-    val trials = LssTrialDesign.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN))))
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val trials = LssTrialDesign.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
 
     val result = LeastSquaresSeparate.fit(trials, response)
 
@@ -228,15 +230,15 @@ class LssSuite extends munit.FunSuite:
   }
 
   test("LeastSquaresSeparate validates row alignment") {
-    val trials = LssTrialDesign.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(0.0))))
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
+    val trials = LssTrialDesign.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(0.0))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))))
 
     val result = LeastSquaresSeparate.fit(trials, response)
 
     assertEquals(result.left.toOption, Some(FitError.RowMismatch(2, 3)))
   }
 
-  private def explicitLss(trials: DoubleMatrix, response: DoubleMatrix, fixed: DoubleMatrix, eps: Double = 1e-12): DoubleMatrix =
+  private def explicitLss(trials: DMat, response: DMat, fixed: DMat, eps: Double = 1e-12): DMat =
     require(trials.rows == response.rows && fixed.rows == response.rows, "row mismatch")
     val out = new Array[Double](trials.cols * response.cols)
     val total = new Array[Double](trials.rows)
@@ -273,7 +275,7 @@ class LssSuite extends munit.FunSuite:
         row += 1
 
       val coefficients = LeastSquaresOracle.coefficients(
-        DoubleMatrix.unsafe(trials.rows, cols, design),
+        scalafim.fmri.fit.GaleTestMatrix.fromArray(trials.rows, cols, design),
         response
       )
       var voxel = 0
@@ -283,4 +285,4 @@ class LssSuite extends munit.FunSuite:
 
       trial += 1
 
-    DoubleMatrix.unsafe(trials.cols, response.cols, out)
+    scalafim.fmri.fit.GaleTestMatrix.fromArray(trials.cols, response.cols, out)

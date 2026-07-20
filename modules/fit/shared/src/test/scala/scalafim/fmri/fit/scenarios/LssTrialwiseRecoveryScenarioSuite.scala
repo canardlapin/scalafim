@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
@@ -16,8 +18,8 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class LssTrialwiseRecoveryScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -250,7 +252,7 @@ class LssTrialwiseRecoveryScenarioSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-lss-trialwise-recovery"),
-          DMat.fromRows(rows),
+          ImageDMat.fromRows(rows),
           NeuroSpace(Vector(voxels, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),

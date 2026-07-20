@@ -1,7 +1,9 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine}
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 class FitBlockSuite extends munit.FunSuite:
 
@@ -9,10 +11,10 @@ class FitBlockSuite extends munit.FunSuite:
 
   test("dense OLS block results merge to the same result as a full voxel block") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble)))
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble)))
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         timepoints.map { i =>
           val x = i.toDouble
           Vector(
@@ -44,7 +46,7 @@ class FitBlockSuite extends munit.FunSuite:
 
   test("fixed AR(1) GLS block results merge with identical diagnostics") {
     val design = DesignMatrix.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         timepoints.map { i =>
           val x = (i % 4).toDouble - 1.5
           Vector(1.0, x, if i >= 4 then 1.0 else 0.0)
@@ -52,7 +54,7 @@ class FitBlockSuite extends munit.FunSuite:
       )
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         timepoints.map { i =>
           val x = (i % 4).toDouble - 1.5
           val run = if i >= 4 then 1.0 else 0.0
@@ -93,7 +95,7 @@ class FitBlockSuite extends munit.FunSuite:
   }
 
   test("LSS block results merge to the same result as a full voxel block") {
-    val trials = DoubleMatrix.fromRows(
+    val trials = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       timepoints.map { i =>
         val x = i.toDouble
         Vector(
@@ -103,11 +105,11 @@ class FitBlockSuite extends munit.FunSuite:
         )
       }
     )
-    val fixed = DoubleMatrix.fromRows(
+    val fixed = scalafim.fmri.fit.GaleTestMatrix.fromRows(
       timepoints.map(i => Vector(1.0, i.toDouble - 3.5))
     )
     val response = ResponseBlock.unsafe(
-      DoubleMatrix.fromRows(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
         timepoints.map { i =>
           val x = i.toDouble
           Vector(
@@ -160,8 +162,8 @@ class FitBlockSuite extends munit.FunSuite:
   }
 
   test("dense block merge rejects incompatible execution context") {
-    val design = DesignMatrix.unsafe(DoubleMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble))))
-    val response = ResponseBlock.unsafe(DoubleMatrix.fromRows(timepoints.map(i => Vector(i.toDouble))))
+    val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(i.toDouble))))
     val block = denseKernel(
       FitBlockInput(design, response, voxelIndices = Vector(0), timepoints = timepoints),
       FitEngine.OrdinaryLeastSquares
@@ -175,7 +177,7 @@ class FitBlockSuite extends munit.FunSuite:
   }
 
   test("LSS block merge rejects incompatible trial names") {
-    val coefficients = CoefficientBlock(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
+    val coefficients = CoefficientBlock(scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0))))
     val diagnostics = LssDiagnostics(fixedRank = 0, zeroTrialRegressors = Vector.empty, degenerateOtherRegressors = Vector.empty)
     val block = LssFitBlockResult(
       coefficients = coefficients,
@@ -217,7 +219,7 @@ class FitBlockSuite extends munit.FunSuite:
         out(row * cols.length + outCol) = response.value(row, cols(outCol))
         outCol += 1
       row += 1
-    ResponseBlock.unsafe(DoubleMatrix.unsafe(response.timepoints, cols.length, out))
+    ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromArray(response.timepoints, cols.length, out))
 
   private def assertDenseClose(actual: DenseFitBlockResult, expected: DenseFitBlockResult, tol: Double): Unit =
     assertEquals(actual.engine, expected.engine)
@@ -237,7 +239,7 @@ class FitBlockSuite extends munit.FunSuite:
     assertEquals(actual.diagnostics, expected.diagnostics)
     assertMatrixClose(actual.coefficients.value, expected.coefficients.value, tol)
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     actual.copyData.zip(expected.copyData).zipWithIndex.foreach { case ((a, e), i) =>

@@ -1,15 +1,15 @@
 package scalafim.fmri.fit
 
-import scalafim.linalg.{DoubleMatrix, QrDecomposition}
+import gale.linalg.{DMat, Matrix, QR, QROptions, QRPivoting}
 
-final case class LssTrialDesign private (value: DoubleMatrix, trialNames: Vector[String]):
+final case class LssTrialDesign private (value: DMat, trialNames: Vector[String]):
   require(trialNames.length == value.cols, "trial names must match trial-design columns")
 
   def timepoints: Int = value.rows
   def trials: Int = value.cols
 
 object LssTrialDesign:
-  def fromMatrix(value: DoubleMatrix, trialNames: Vector[String] = Vector.empty): Either[FitError, LssTrialDesign] =
+  def fromMatrix(value: DMat, trialNames: Vector[String] = Vector.empty): Either[FitError, LssTrialDesign] =
     if value.rows == 0 || value.cols == 0 then Left(FitError.EmptyDesign)
     else
       val names =
@@ -19,10 +19,10 @@ object LssTrialDesign:
         Left(FitError.UnsupportedLssDesign(s"trial names length ${names.length} must match trial-design columns ${value.cols}"))
       else Right(new LssTrialDesign(value, names))
 
-  def unsafe(value: DoubleMatrix, trialNames: Vector[String] = Vector.empty): LssTrialDesign =
+  def unsafe(value: DMat, trialNames: Vector[String] = Vector.empty): LssTrialDesign =
     fromMatrix(value, trialNames).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class LssFixedDesign private (value: DoubleMatrix, columnNames: Vector[String]):
+final case class LssFixedDesign private (value: DMat, columnNames: Vector[String]):
   require(columnNames.length == value.cols, "fixed-design column names must match columns")
 
   def timepoints: Int = value.rows
@@ -32,9 +32,9 @@ final case class LssFixedDesign private (value: DoubleMatrix, columnNames: Vecto
 object LssFixedDesign:
   def empty(timepoints: Int): LssFixedDesign =
     require(timepoints > 0, "timepoints must be positive")
-    new LssFixedDesign(DoubleMatrix.zeros(timepoints, 0), Vector.empty)
+    new LssFixedDesign(DMat.zeros(timepoints, 0), Vector.empty)
 
-  def fromMatrix(value: DoubleMatrix, columnNames: Vector[String] = Vector.empty): Either[FitError, LssFixedDesign] =
+  def fromMatrix(value: DMat, columnNames: Vector[String] = Vector.empty): Either[FitError, LssFixedDesign] =
     if value.rows == 0 then Left(FitError.EmptyDesign)
     else
       val names =
@@ -44,7 +44,7 @@ object LssFixedDesign:
         Left(FitError.UnsupportedLssDesign(s"fixed-design column names length ${names.length} must match columns ${value.cols}"))
       else Right(new LssFixedDesign(value, names))
 
-  def unsafe(value: DoubleMatrix, columnNames: Vector[String] = Vector.empty): LssFixedDesign =
+  def unsafe(value: DMat, columnNames: Vector[String] = Vector.empty): LssFixedDesign =
     fromMatrix(value, columnNames).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class LssOptions(
@@ -87,27 +87,27 @@ final case class LssTrialWorkspace private[fit] (
 
 private[fit] enum LssFixedProjection:
   case Identity(timepoints: Int)
-  case Qr(qr: QrDecomposition)
+  case Qr(qr: QR)
 
   def rank: Int =
     this match
       case Identity(_) => 0
-      case Qr(qr)     => qr.rank
+      case Qr(qr)     => qr.diagnostics.rank.getOrElse(qr.r.rows)
 
-  def residualize(data: DoubleMatrix): DoubleMatrix =
+  def residualize(data: DMat): Either[FitError, DMat] =
     this match
       case Identity(_) =>
-        DoubleMatrix.unsafe(data.rows, data.cols, data.copyData)
+        Right(Matrix.tabulate(data.rows, data.cols)(data.apply))
       case Qr(qr) =>
-        qr.residualize(data)
+        qr.residualize(data).left.map(FitError.SingularDesign.apply)
 
 object LssFixedProjection:
   def fromFixed(fixed: LssFixedDesign, rankTol: Double): LssFixedProjection =
     if fixed.isEmpty then LssFixedProjection.Identity(fixed.timepoints)
-    else LssFixedProjection.Qr(QrDecomposition.decompose(fixed.value, pivoting = true, tol = rankTol))
+    else LssFixedProjection.Qr(fixed.value.qr(QROptions(QRPivoting.Column, Some(rankTol))))
 
 final case class LssPreparedDesign private[fit] (
-    residualizedTrials: DoubleMatrix,
+    residualizedTrials: DMat,
     private[fit] val totalTrialSignal: Array[Double],
     private[fit] val fixedProjection: LssFixedProjection,
     workspaces: Vector[LssTrialWorkspace],
@@ -165,14 +165,15 @@ object LeastSquaresSeparate:
     else if containsNonFinite(fixed.value) then Left(FitError.NonFiniteInput("LSS fixed design"))
     else
       val projection = LssFixedProjection.fromFixed(fixed, options.rankTol)
-      val residualizedTrials = projection.residualize(trials.value)
-      buildPreparedDesign(
-        residualizedTrials = residualizedTrials,
-        trialNames = trials.trialNames,
-        fixedRank = projection.rank,
-        fixedProjection = projection,
-        options = options
-      )
+      projection.residualize(trials.value).flatMap { residualizedTrials =>
+        buildPreparedDesign(
+          residualizedTrials = residualizedTrials,
+          trialNames = trials.trialNames,
+          fixedRank = projection.rank,
+          fixedProjection = projection,
+          options = options
+        )
+      }
 
   def unsafePrepare(
       trials: LssTrialDesign
@@ -221,15 +222,14 @@ object LeastSquaresSeparate:
       Left(FitError.RowMismatch(prepared.timepoints, response.timepoints))
     else if containsNonFinite(response.value) then Left(FitError.NonFiniteInput("LSS response block"))
     else
-      val residualizedY = prepared.fixedProjection.residualize(response.value)
-      val beta = computeBetas(prepared, residualizedY)
-      Right(
+      prepared.fixedProjection.residualize(response.value).map { residualizedY =>
+        val beta = computeBetas(prepared, residualizedY)
         LssFit(
           coefficients = CoefficientBlock(beta),
           trialNames = prepared.trialNames,
           diagnostics = prepared.diagnostics
         )
-      )
+      }
 
   def unsafeFit(
       trials: LssTrialDesign,
@@ -252,14 +252,17 @@ object LeastSquaresSeparate:
   ): LssFit =
     fit(trials, response, fixed, options).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  private def containsNonFinite(matrix: DoubleMatrix): Boolean =
-    var i = 0
-    while i < matrix.dataArray.length do
-      if !matrix.dataArray(i).isFinite then return true
-      i += 1
+  private def containsNonFinite(matrix: DMat): Boolean =
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        if !matrix(row, col).isFinite then return true
+        col += 1
+      row += 1
     false
 
-  private[fit] def computeBetas(prepared: LssPreparedDesign, response: DoubleMatrix): DoubleMatrix =
+  private[fit] def computeBetas(prepared: LssPreparedDesign, response: DMat): DMat =
     require(prepared.timepoints == response.rows, s"prepared design rows ${prepared.timepoints} != response rows ${response.rows}")
     require(response.cols > 0, "response block must have at least one column")
 
@@ -275,21 +278,21 @@ object LeastSquaresSeparate:
       val total = prepared.totalTrialSignal(row)
       var voxel = 0
       while voxel < nVoxels do
-        totalY(voxel) += total * response.dataArray(row * nVoxels + voxel)
+        totalY(voxel) += total * response(row, voxel)
         voxel += 1
 
       var trial = 0
       while trial < nTrials do
-        val c = trials.dataArray(row * nTrials + trial)
+        val c = trials(row, trial)
         voxel = 0
         while voxel < nVoxels do
-          ctY(trial * nVoxels + voxel) += c * response.dataArray(row * nVoxels + voxel)
+          ctY(trial * nVoxels + voxel) += c * response(row, voxel)
           voxel += 1
         trial += 1
 
       row += 1
 
-    val out = new Array[Double](nTrials * nVoxels)
+    val out = Matrix.newBuilder(nTrials, nVoxels)
     var trial = 0
     while trial < nTrials do
       val workspace = prepared.workspaces(trial)
@@ -301,15 +304,15 @@ object LeastSquaresSeparate:
           while voxel < nVoxels do
             val cty = ctY(trial * nVoxels + voxel)
             val num = (1.0 + workspace.alpha) * cty - workspace.alpha * totalY(voxel)
-            out(trial * nVoxels + voxel) = num / workspace.denominator
+            out(trial, voxel) = num / workspace.denominator
             voxel += 1
 
       trial += 1
 
-    DoubleMatrix.unsafe(nTrials, nVoxels, out)
+    out.result()
 
   private def buildPreparedDesign(
-      residualizedTrials: DoubleMatrix,
+      residualizedTrials: DMat,
       trialNames: Vector[String],
       fixedRank: Int,
       fixedProjection: LssFixedProjection,
@@ -326,7 +329,7 @@ object LeastSquaresSeparate:
     while row < residualizedTrials.rows do
       var trial = 0
       while trial < residualizedTrials.cols do
-        total(row) += residualizedTrials.dataArray(row * residualizedTrials.cols + trial)
+        total(row) += residualizedTrials(row, trial)
         trial += 1
       row += 1
 
@@ -337,7 +340,7 @@ object LeastSquaresSeparate:
       var crossOther = 0.0
       row = 0
       while row < residualizedTrials.rows do
-        val c = residualizedTrials.dataArray(row * residualizedTrials.cols + trial)
+        val c = residualizedTrials(row, trial)
         val other = total(row) - c
         norm2 += c * c
         otherNorm2 += other * other

@@ -164,7 +164,7 @@ extension (result: TContrastResult)
   def statisticMap(shape: DatasetShape): FitImageMaps =
     FitImageMaps.fromRows(
       names = Vector(result.name),
-      rowsByMap = Vector(result.statistics.toVector),
+      rowsByMap = Vector(result.statistics.toSeq.toVector),
       shape = shape,
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.TStatistic(result.name)
@@ -173,7 +173,7 @@ extension (result: TContrastResult)
   def maps(shape: DatasetShape): FitImageMaps =
     FitImageMaps.fromRows(
       names = Vector(s"${result.name}_estimate", s"${result.name}_standard_error", s"${result.name}_t"),
-      rowsByMap = Vector(result.estimates.toVector, result.standardErrors.toVector, result.statistics.toVector),
+      rowsByMap = Vector(result.estimates.toSeq.toVector, result.standardErrors.toSeq.toVector, result.statistics.toSeq.toVector),
       shape = shape,
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.TContrastBundle(result.name)
@@ -183,7 +183,7 @@ extension (result: FContrastResult)
   def statisticMap(shape: DatasetShape): FitImageMaps =
     FitImageMaps.fromRows(
       names = Vector(result.name),
-      rowsByMap = Vector(result.statistics.toVector),
+      rowsByMap = Vector(result.statistics.toSeq.toVector),
       shape = shape,
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.FStatistic(result.name)
@@ -194,16 +194,16 @@ extension (result: FContrastResult)
       Vector.tabulate(result.estimates.rows)(i => s"${result.name}_estimate_${i + 1}")
     FitImageMaps.fromRows(
       names = estimateNames :+ s"${result.name}_f",
-      rowsByMap = matrixRows(result.estimates) :+ result.statistics.toVector,
+      rowsByMap = matrixRows(result.estimates) :+ result.statistics.toSeq.toVector,
       shape = shape,
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.FContrastBundle(result.name)
     )
 
-private def matrixRows(matrix: scalafim.linalg.DoubleMatrix): Vector[Vector[Double]] =
+private def matrixRows(matrix: gale.linalg.DMat): Vector[Vector[Double]] =
   Vector.tabulate(matrix.rows) { row =>
     Vector.tabulate(matrix.cols)(col => matrix(row, col))
   }
 
-private def matrixRowValues(matrix: scalafim.linalg.DoubleMatrix, row: Int): Vector[Double] =
+private def matrixRowValues(matrix: gale.linalg.DMat, row: Int): Vector[Double] =
   Vector.tabulate(matrix.cols)(col => matrix(row, col))

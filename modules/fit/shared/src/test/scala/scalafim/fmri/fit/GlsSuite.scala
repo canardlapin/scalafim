@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegments, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
@@ -8,12 +10,12 @@ import scalafim.fmri.fit.fixtures.FmriregGlsFixtures
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 
 class GlsSuite extends munit.FunSuite:
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
@@ -76,8 +78,8 @@ class GlsSuite extends munit.FunSuite:
       resetAfterRows: Set[Int] = Set.empty
   ): Vector[Double] =
     val whitened = whitenRows(designRows, phi, resetAfterRows)
-    val design = DesignMatrix.unsafe(scalafim.linalg.DoubleMatrix.fromRows(whitened))
-    val response = ResponseBlock.unsafe(scalafim.linalg.DoubleMatrix.fromRows(seed.map(v => Vector(v))))
+    val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(whitened))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(seed.map(v => Vector(v))))
     val fit = Ols.unsafeFit(design, response)
 
     seed.zipWithIndex.map { case (value, row) =>
@@ -173,7 +175,7 @@ class GlsSuite extends munit.FunSuite:
     val frame = samplingFrame(blockLens)
     val dataset =
       FmriDataset(
-        backend = InMemoryDatasetBackend(DatasetId("gls-demo"), DMat.fromRows(y), NeuroSpace(Vector(y.head.length, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("gls-demo"), ImageDMat.fromRows(y), NeuroSpace(Vector(y.head.length, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =
@@ -381,12 +383,12 @@ class GlsSuite extends munit.FunSuite:
     val whitened =
       WhiteningTransform(
         whiteningPlan,
-        MatrixAdapters.toGaleMatrix(FmriregGlsFixtures.design),
-        MatrixAdapters.toGaleMatrix(FmriregGlsFixtures.response)
+        FmriregGlsFixtures.design,
+        FmriregGlsFixtures.response
       ).toOption.get
 
-    assertMatrixClose(MatrixAdapters.fromGaleMatrix(whitened.design), FmriregGlsFixtures.whitenedDesign, 1e-12)
-    assertMatrixClose(MatrixAdapters.fromGaleMatrix(whitened.response), FmriregGlsFixtures.whitenedResponse, 1e-12)
+    assertMatrixClose(whitened.design, FmriregGlsFixtures.whitenedDesign, 1e-12)
+    assertMatrixClose(whitened.response, FmriregGlsFixtures.whitenedResponse, 1e-12)
 
     val model = modelFromRows(x, y, Vector(rows))
     val plan =

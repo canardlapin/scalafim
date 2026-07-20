@@ -1,13 +1,15 @@
 package scalafim.fmri.fit
 
+import scalafim.fmri.fit.GaleTestSyntax.*
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.DMat
 import scalafim.pipeline.*
 
 class PipelineFitWorkflowSuite extends munit.FunSuite:
@@ -46,7 +48,7 @@ class PipelineFitWorkflowSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = DMat.fromRows(
+    val data = ImageDMat.fromRows(
       Vector(
         Vector(1.0, 2.0, 10.0),
         Vector(3.0, 1.0, 9.0),
@@ -81,7 +83,7 @@ class PipelineFitWorkflowSuite extends munit.FunSuite:
       plan <- FitPlan.make(model)
     yield plan
 
-  private def assertMatrixClose(actual: DoubleMatrix, expected: DoubleMatrix, tol: Double): Unit =
+  private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
     var row = 0
