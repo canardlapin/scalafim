@@ -1,6 +1,6 @@
 package scalafim.fmri.group.scenarios
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail
@@ -123,7 +123,7 @@ object ScenarioCheck:
 
   def vector(
       name: String,
-      actual: DoubleVector,
+      actual: DVec,
       expected: Vector[Double],
       tolerance: Double
   ): Vector[ScenarioCheck] =
@@ -134,14 +134,14 @@ object ScenarioCheck:
         s"actual=${actual.length} expected=${expected.length}"
       )
       ) ++
-        actual.toVector.zip(expected).zipWithIndex.map {
+        actual.toSeq.toVector.zip(expected).zipWithIndex.map {
           case ((a, e), index) => scalar(s"$name[$index]", a, e, tolerance)
         }
 
   def matrix(
       name: String,
-      actual: DoubleMatrix,
-      expected: DoubleMatrix,
+      actual: DMat,
+      expected: DMat,
       tolerance: Double
   ): Vector[ScenarioCheck] =
     val shape = Vector(

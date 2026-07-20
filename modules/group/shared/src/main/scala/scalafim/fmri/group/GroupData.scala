@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 import scala.collection.immutable.VectorMap
 
@@ -63,8 +63,8 @@ object GroupData:
       subjects: Vector[SubjectId],
       space: GroupSpace,
       contrast: String,
-      effects: DoubleMatrix,
-      variances: Option[DoubleMatrix] = None
+      effects: DMat,
+      variances: Option[DMat] = None
   ): Either[GroupError, GroupData[VarianceCapability]] =
     variances match
       case Some(v) => withVariances(subjects, space, contrast, effects, v).map(data => data: GroupData[VarianceCapability])
@@ -74,7 +74,7 @@ object GroupData:
       subjects: Vector[SubjectId],
       space: GroupSpace,
       contrast: String,
-      effects: DoubleMatrix
+      effects: DMat
   ): Either[GroupError, GroupData[VarianceCapability.EffectsOnly]] =
     for
       name <- FirstLevelContrastName(contrast)
@@ -86,8 +86,8 @@ object GroupData:
       subjects: Vector[SubjectId],
       space: GroupSpace,
       contrast: String,
-      effects: DoubleMatrix,
-      variances: DoubleMatrix
+      effects: DMat,
+      variances: DMat
   ): Either[GroupError, GroupData[VarianceCapability.WithVariances]] =
     for
       name <- FirstLevelContrastName(contrast)

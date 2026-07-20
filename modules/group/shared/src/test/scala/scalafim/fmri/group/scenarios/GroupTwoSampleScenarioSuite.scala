@@ -11,7 +11,8 @@ import scalafim.fmri.group.{
   GroupSpace,
   GroupStatistic
 }
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.group.GroupTestMatrix
+import gale.linalg.{DMat, Matrix}
 
 class GroupTwoSampleScenarioSuite extends munit.FunSuite:
   private val Tol = 1e-10
@@ -44,7 +45,7 @@ class GroupTwoSampleScenarioSuite extends munit.FunSuite:
         subjects = subjects(effectsBySubject.length),
         space = GroupSpace.SampleAxis(3),
         contrast = "task",
-        effects = DoubleMatrix.fromRows(effectsBySubject)
+        effects = GroupTestMatrix.fromRows(effectsBySubject)
       )
     )
     val model = value(GroupModel.build(data, design))
@@ -72,11 +73,11 @@ class GroupTwoSampleScenarioSuite extends munit.FunSuite:
           differenceTerm.estimates.length == expected.length,
           s"actual=${differenceTerm.estimates.length} expected=${expected.length}"
         ),
-        ScenarioCheck.finite("intercept estimate finite", intercept.estimates.toVector),
-        ScenarioCheck.finite("difference estimate finite", differenceTerm.estimates.toVector),
-        ScenarioCheck.finite("difference standard error finite", differenceTerm.standardErrors.toVector),
-        ScenarioCheck.finite("difference statistic finite", differenceTerm.statistics.toVector),
-        ScenarioCheck.finite("difference p-value finite", differenceTerm.pValues.toVector)
+        ScenarioCheck.finite("intercept estimate finite", intercept.estimates.toSeq.toVector),
+        ScenarioCheck.finite("difference estimate finite", differenceTerm.estimates.toSeq.toVector),
+        ScenarioCheck.finite("difference standard error finite", differenceTerm.standardErrors.toSeq.toVector),
+        ScenarioCheck.finite("difference statistic finite", differenceTerm.statistics.toSeq.toVector),
+        ScenarioCheck.finite("difference p-value finite", differenceTerm.pValues.toSeq.toVector)
       ) ++
         ScenarioCheck.vector("reference mean", intercept.estimates, expected.map(_.referenceMean), Tol) ++
         ScenarioCheck.vector("reference standard error", intercept.standardErrors, expected.map(_.referenceStandardError), Tol) ++
@@ -86,8 +87,8 @@ class GroupTwoSampleScenarioSuite extends munit.FunSuite:
         ScenarioCheck.vector("difference p value", differenceTerm.pValues, expected.map(_.differencePValue), PValueTol) ++
         ScenarioCheck.vector("named contrast estimate", namedDifference.estimates, expected.map(_.difference), Tol) ++
         ScenarioCheck.vector("named contrast standard error", namedDifference.standardErrors, expected.map(_.differenceStandardError), Tol) ++
-        ScenarioCheck.vector("named contrast statistic", namedDifference.statistics, differenceTerm.statistics.toVector, Tol) ++
-        ScenarioCheck.vector("named contrast p value", namedDifference.pValues, differenceTerm.pValues.toVector, PValueTol)
+        ScenarioCheck.vector("named contrast statistic", namedDifference.statistics, differenceTerm.statistics.toSeq.toVector, Tol) ++
+        ScenarioCheck.vector("named contrast p value", namedDifference.pValues, differenceTerm.pValues.toSeq.toVector, PValueTol)
 
     ScenarioResult("group.two-sample-analytic.v1", observations)
 

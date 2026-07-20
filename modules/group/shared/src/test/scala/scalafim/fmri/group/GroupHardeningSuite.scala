@@ -2,7 +2,7 @@ package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 /** Regression tests for totality and numerical-scale robustness (from the
   * adversarial council review): every public constructor stays total, and a
@@ -17,8 +17,8 @@ class GroupHardeningSuite extends munit.FunSuite:
   private def subjects(n: Int): Vector[SubjectId] =
     (1 to n).toVector.map(i => SubjectId(s"s$i"))
 
-  private def column(values: Double*): DoubleMatrix =
-    DoubleMatrix.fromRows(values.toVector.map(v => Vector(v)))
+  private def column(values: Double*): DMat =
+    GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))
 
   test("covariates returns a typed error for a non-numeric column, not an exception") {
     val table = DataTable.fromColumns("site" -> Column.Strings(Vector("a", "b", "c")))
@@ -29,7 +29,7 @@ class GroupHardeningSuite extends munit.FunSuite:
   }
 
   test("non-finite design matrices are rejected") {
-    val nan = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN), Vector(1.0)))
+    val nan = GroupTestMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN), Vector(1.0)))
     assertEquals(
       GroupDesign.fromMatrix(nan, Vector("(Intercept)")).left.toOption,
       Some(GroupError.NonFiniteData("group design"))
@@ -72,9 +72,9 @@ class GroupHardeningSuite extends munit.FunSuite:
       GroupFit(
         contrast = FirstLevelContrastName.unsafe("c"),
         termNames = Vector("a", "b"),
-        coefficients = DoubleMatrix.zeros(2, 1),
-        standardErrors = DoubleMatrix.zeros(2, 1),
-        covariance = GroupCovariance.PerSample(termCount = 1, packed = DoubleMatrix.zeros(1, 1)),
+        coefficients = Matrix.zeros(2, 1),
+        standardErrors = Matrix.zeros(2, 1),
+        covariance = GroupCovariance.PerSample(termCount = 1, packed = Matrix.zeros(1, 1)),
         statistic = GroupStatistic.Normal,
         heterogeneity = None,
         space = GroupSpace.SampleAxis(1)

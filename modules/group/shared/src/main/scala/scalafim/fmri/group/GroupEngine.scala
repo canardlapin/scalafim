@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 import scala.collection.immutable.VectorMap
 
@@ -34,7 +34,7 @@ object GroupEngine:
   private def fitContrast(
       name: String,
       response: GroupResponse[? <: VarianceCapability],
-      design: DoubleMatrix,
+      design: DMat,
       termNames: Vector[String],
       weighting: GroupWeighting,
       space: GroupSpace
@@ -68,7 +68,7 @@ object GroupEngine:
   private def fitInverseVariance(
       name: String,
       response: GroupResponse.WithVariances,
-      design: DoubleMatrix,
+      design: DMat,
       termNames: Vector[String],
       df: DegreesOfFreedom,
       space: GroupSpace
@@ -81,7 +81,7 @@ object GroupEngine:
   private def fitRandomEffects(
       name: String,
       response: GroupResponse.WithVariances,
-      design: DoubleMatrix,
+      design: DMat,
       termNames: Vector[String],
       tau: TauEstimator,
       df: DegreesOfFreedom,
@@ -98,8 +98,8 @@ object GroupEngine:
       name: String,
       termNames: Vector[String],
       pieces: GroupGlm.WlsPieces,
-      tau2: DoubleVector,
-      qSource: DoubleVector,
+      tau2: DVec,
+      qSource: DVec,
       df: DegreesOfFreedom,
       space: GroupSpace
   ): GroupFit =
@@ -117,14 +117,14 @@ object GroupEngine:
   /** Dispatch the between-subject variance estimator. Exhaustive on `TauEstimator`
     * so a future estimator is a compile error here, not a silent DL fallback.
     */
-  private def estimateTau2(tau: TauEstimator, pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DoubleVector =
+  private def estimateTau2(tau: TauEstimator, pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DVec =
     tau match
       case TauEstimator.DerSimonianLaird => derSimonianLaird(pieces, df)
 
   /** DerSimonian–Laird between-subject variance per sample: `max(0, (Q − df)/C)`. */
-  private def derSimonianLaird(pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DoubleVector =
+  private def derSimonianLaird(pieces: GroupGlm.WlsPieces, df: DegreesOfFreedom): DVec =
     val n = pieces.q.length
-    val out = new Array[Double](n)
+    val out = Vec.newBuilder(n)
     var s = 0
     while s < n do
       val q = pieces.q(s)
@@ -134,47 +134,52 @@ object GroupEngine:
         else if c <= 0.0 then 0.0
         else math.max(0.0, (q - df.value) / c)
       s += 1
-    DoubleVector.unsafe(out)
+    out.result()
 
-  private def fixedEffectsTau2(q: DoubleVector): DoubleVector =
+  private def fixedEffectsTau2(q: DVec): DVec =
     val n = q.length
-    val out = new Array[Double](n)
+    val out = Vec.newBuilder(n)
     var s = 0
     while s < n do
       out(s) = if q(s).isFinite then 0.0 else Double.NaN
       s += 1
-    DoubleVector.unsafe(out)
+    out.result()
 
-  private def heterogeneity(q: DoubleVector, tau2: DoubleVector, df: DegreesOfFreedom): Heterogeneity =
+  private def heterogeneity(q: DVec, tau2: DVec, df: DegreesOfFreedom): Heterogeneity =
     val n = q.length
-    val i2 = new Array[Double](n)
+    val i2 = Vec.newBuilder(n)
+    val qCopy = Vec.newBuilder(n)
     var s = 0
     while s < n do
       val qs = q(s)
+      qCopy(s) = qs
       i2(s) =
         if !qs.isFinite then Double.NaN
         else if qs <= 0.0 then 0.0
         else math.max(0.0, (qs - df.value) / qs)
       s += 1
-    Heterogeneity(tau2, DoubleVector.unsafe(q.copyData), DoubleVector.unsafe(i2))
+    Heterogeneity(tau2, qCopy.result(), i2.result())
 
-  private def reciprocal(m: DoubleMatrix): DoubleMatrix =
-    val data = m.copyData
-    var i = 0
-    while i < data.length do
-      data(i) = 1.0 / data(i)
-      i += 1
-    DoubleMatrix.unsafe(m.rows, m.cols, data)
+  private def reciprocal(m: DMat): DMat =
+    val out = Matrix.newBuilder(m.rows, m.cols)
+    var row = 0
+    while row < m.rows do
+      var col = 0
+      while col < m.cols do
+        out(row, col) = 1.0 / m(row, col)
+        col += 1
+      row += 1
+    out.result()
 
-  private def reweight(variances: DoubleMatrix, tau2: DoubleVector): DoubleMatrix =
+  private def reweight(variances: DMat, tau2: DVec): DMat =
     val n = variances.rows
     val samples = variances.cols
-    val data = new Array[Double](n * samples)
+    val out = Matrix.newBuilder(n, samples)
     var i = 0
     while i < n do
       var s = 0
       while s < samples do
-        data(i * samples + s) = 1.0 / (variances(i, s) + tau2(s))
+        out(i, s) = 1.0 / (variances(i, s) + tau2(s))
         s += 1
       i += 1
-    DoubleMatrix.unsafe(n, samples, data)
+    out.result()

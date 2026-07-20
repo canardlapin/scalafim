@@ -14,7 +14,9 @@ import scalafim.fmri.group.{
   GroupWeighting,
   VarianceCapability
 }
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import scalafim.fmri.group.GroupTestMatrix
+import scalafim.linalg.DoubleVector as FitVector
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
   private val Tol = 1e-10
@@ -76,14 +78,14 @@ class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
           faces.estimates.length == fixture.samples,
           s"actual=${faces.estimates.length} expected=${fixture.samples}"
         ),
-        ScenarioCheck.finite("faces estimates finite", faces.estimates.toVector),
-        ScenarioCheck.finite("faces standard errors finite", faces.standardErrors.toVector),
-        ScenarioCheck.finite("faces z statistics finite", faces.statistics.toVector),
-        ScenarioCheck.finite("faces p-values finite", faces.pValues.toVector)
+        ScenarioCheck.finite("faces estimates finite", faces.estimates.toSeq.toVector),
+        ScenarioCheck.finite("faces standard errors finite", faces.standardErrors.toSeq.toVector),
+        ScenarioCheck.finite("faces z statistics finite", faces.statistics.toSeq.toVector),
+        ScenarioCheck.finite("faces p-values finite", faces.pValues.toSeq.toVector)
       ) ++
-        ScenarioCheck.matrix("bridged faces effects", bridgedFaces.effects, DoubleMatrix.fromRows(fixture.estimates("faces")), Tol) ++
+        ScenarioCheck.matrix("bridged faces effects", bridgedFaces.effects, GroupTestMatrix.fromRows(fixture.estimates("faces")), Tol) ++
         ScenarioCheck.matrix("bridged faces variances", bridgedFaces.variances.get, varianceMatrix(fixture.standardErrors("faces")), Tol) ++
-        ScenarioCheck.matrix("bridged places effects", bridgedPlaces.effects, DoubleMatrix.fromRows(fixture.estimates("places")), Tol) ++
+        ScenarioCheck.matrix("bridged places effects", bridgedPlaces.effects, GroupTestMatrix.fromRows(fixture.estimates("places")), Tol) ++
         ScenarioCheck.matrix("bridged places variances", bridgedPlaces.variances.get, varianceMatrix(fixture.standardErrors("places")), Tol) ++
         ScenarioCheck.vector("fixed-effects estimate", faces.estimates, expectedFaces.map(_.estimate), Tol) ++
         ScenarioCheck.vector("fixed-effects standard error", faces.standardErrors, expectedFaces.map(_.standardError), Tol) ++
@@ -127,8 +129,8 @@ class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
       )
     }
 
-  private def varianceMatrix(standardErrors: Vector[Vector[Double]]): DoubleMatrix =
-    DoubleMatrix.fromRows(
+  private def varianceMatrix(standardErrors: Vector[Vector[Double]]): DMat =
+    GroupTestMatrix.fromRows(
       standardErrors.map(row => row.map(se => se * se))
     )
 
@@ -160,9 +162,9 @@ class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
   ): TContrastResult =
     TContrastResult(
       name = name,
-      estimates = DoubleVector.fromSeq(estimates),
-      standardErrors = DoubleVector.fromSeq(standardErrors),
-      statistics = DoubleVector.fromSeq(estimates.zip(standardErrors).map { case (estimate, se) => estimate / se }),
+      estimates = FitVector.fromSeq(estimates),
+      standardErrors = FitVector.fromSeq(standardErrors),
+      statistics = FitVector.fromSeq(estimates.zip(standardErrors).map { case (estimate, se) => estimate / se }),
       residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(80),
       voxelIndices = estimates.indices.toVector
     )

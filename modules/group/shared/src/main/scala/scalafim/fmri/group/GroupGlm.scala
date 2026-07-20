@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector}
+import gale.linalg.{CholeskyOptions, DMat, DVec, Matrix, Vec}
 
 /** The second-level fitting kernels. Two paths behind one idea:
   *
@@ -10,16 +10,16 @@ import scalafim.linalg.{Cholesky, DoubleMatrix, DoubleVector}
   *     so each solves its own `XᵀWX` system, and Cochran's `Q` and the
   *     DerSimonian–Laird scaling constant `C` are accumulated for heterogeneity.
   *
-  * All arithmetic is primitive-array `while` loops over `scalafim.linalg`, so the
+  * All arithmetic is primitive `while` loops over Gale builders and matrices, so the
   * kernel cross-compiles and allocates deliberately.
   */
 object GroupGlm:
 
   final case class OlsPieces(
-      coefficients: DoubleMatrix,
-      standardErrors: DoubleMatrix,
-      inverse: DoubleMatrix,
-      residualVariance: DoubleVector,
+      coefficients: DMat,
+      standardErrors: DMat,
+      inverse: DMat,
+      residualVariance: DVec,
       residualDf: Int
   )
 
@@ -28,18 +28,18 @@ object GroupGlm:
     * there is one backing array rather than one matrix object per sample.
     */
   final case class WlsPieces(
-      coefficients: DoubleMatrix,
-      standardErrors: DoubleMatrix,
-      covariance: DoubleMatrix,
+      coefficients: DMat,
+      standardErrors: DMat,
+      covariance: DMat,
       terms: Int,
-      q: DoubleVector,
-      c: DoubleVector
+      q: DVec,
+      c: DVec
   )
 
   /** Unweighted ordinary least squares, `β = (XᵀX)⁻¹ XᵀY`, with residual-variance
     * scaled standard errors and `df = n − p`.
     */
-  def ols(design: DoubleMatrix, effects: DoubleMatrix): Either[GroupError, OlsPieces] =
+  def ols(design: DMat, effects: DMat): Either[GroupError, OlsPieces] =
     val n = design.rows
     val p = design.cols
     val samples = effects.cols
@@ -47,13 +47,18 @@ object GroupGlm:
     else if samples == 0 then Left(GroupError.EmptyResponse)
     else if n <= p then Left(GroupError.InsufficientSubjects(n, p))
     else
-      val xtx = DoubleMatrix.transposeMultiply(design, design)
-      Cholesky.decompose(xtx, relativeTolerance(diagonalMax(xtx))).left.map(GroupError.SingularDesign.apply).map { chol =>
-        val coefficients = chol.solve(DoubleMatrix.transposeMultiply(design, effects))
-        val inverse = chol.solve(DoubleMatrix.eye(p))
+      val xtx = design.t * design
+      for
+        chol <- xtx
+          .cholesky(CholeskyOptions(relativeTolerance(diagonalMax(xtx))))
+          .left
+          .map(GroupError.SingularDesign.apply)
+        coefficients <- chol.solve(design.t * effects).left.map(GroupError.SingularDesign.apply)
+        inverse <- chol.solve(Matrix.eye(p)).left.map(GroupError.SingularDesign.apply)
+      yield
         val df = n - p
-        val residualVariance = new Array[Double](samples)
-        val standardErrors = new Array[Double](p * samples)
+        val residualVariance = Vec.newBuilder(samples)
+        val standardErrors = Matrix.newBuilder(p, samples)
 
         var s = 0
         while s < samples do
@@ -72,39 +77,38 @@ object GroupGlm:
           residualVariance(s) = v
           var j = 0
           while j < p do
-            standardErrors(j * samples + s) = safeSqrt(inverse(j, j) * v)
+            standardErrors(j, s) = safeSqrt(inverse(j, j) * v)
             j += 1
           s += 1
 
         OlsPieces(
           coefficients = coefficients,
-          standardErrors = DoubleMatrix.unsafe(p, samples, standardErrors),
+          standardErrors = standardErrors.result(),
           inverse = inverse,
-          residualVariance = DoubleVector.unsafe(residualVariance),
+          residualVariance = residualVariance.result(),
           residualDf = df
         )
-      }
 
   /** Weighted least squares with a distinct weight per (subject, sample). Solves
     * one `XᵀWX` system per sample; variances are treated as known, so standard
     * errors are `sqrt(diag((XᵀWX)⁻¹))` with no residual scaling. Samples whose
     * system is singular are filled with `NaN`.
     */
-  def wls(design: DoubleMatrix, effects: DoubleMatrix, weights: DoubleMatrix): WlsPieces =
+  def wls(design: DMat, effects: DMat, weights: DMat): WlsPieces =
     val n = design.rows
     val p = design.cols
     val samples = effects.cols
     val tri = p * (p + 1) / 2
-    val coefficients = new Array[Double](p * samples)
-    val standardErrors = new Array[Double](p * samples)
-    val covariance = new Array[Double](samples * tri)
-    val q = new Array[Double](samples)
-    val c = new Array[Double](samples)
+    val coefficients = Matrix.newBuilder(p, samples)
+    val standardErrors = Matrix.newBuilder(p, samples)
+    val covariance = Matrix.newBuilder(samples, tri)
+    val q = Vec.newBuilder(samples)
+    val c = Vec.newBuilder(samples)
 
     var s = 0
     while s < samples do
-      val xtwx = new Array[Double](p * p)
-      val xtwy = new Array[Double](p)
+      val xtwx = Matrix.newBuilder(p, p)
+      val xtwy = Matrix.newBuilder(p, 1)
       val xtw2x = new Array[Double](p * p)
       var i = 0
       while i < n do
@@ -113,37 +117,43 @@ object GroupGlm:
         var a = 0
         while a < p do
           val xa = design(i, a)
-          xtwy(a) += xa * w * yi
+          xtwy(a, 0) = xtwy(a, 0) + xa * w * yi
           var b = 0
           while b < p do
             val xb = design(i, b)
-            xtwx(a * p + b) += xa * w * xb
+            xtwx(a, b) = xtwx(a, b) + xa * w * xb
             xtw2x(a * p + b) += xa * w * w * xb
             b += 1
           a += 1
         i += 1
 
-      val triOffset = s * tri
-      Cholesky.decompose(DoubleMatrix.unsafe(p, p, xtwx), relativeTolerance(diagonalMaxArray(xtwx, p))) match
+      val tolerance = relativeTolerance(diagonalMax(xtwx))
+      val system = xtwx.result()
+      val rhs = xtwy.result()
+      val solved =
+        for
+          chol <- system.cholesky(CholeskyOptions(tolerance))
+          beta <- chol.solve(rhs)
+          inverse <- chol.solve(Matrix.eye(p))
+        yield (beta, inverse)
+      solved match
         case Left(_) =>
           var j = 0
           while j < p do
-            coefficients(j * samples + s) = Double.NaN
-            standardErrors(j * samples + s) = Double.NaN
+            coefficients(j, s) = Double.NaN
+            standardErrors(j, s) = Double.NaN
             j += 1
           var k = 0
           while k < tri do
-            covariance(triOffset + k) = Double.NaN
+            covariance(s, k) = Double.NaN
             k += 1
           q(s) = Double.NaN
           c(s) = Double.NaN
-        case Right(chol) =>
-          val beta = chol.solve(DoubleMatrix.unsafe(p, 1, xtwy))
-          val inv = chol.solve(DoubleMatrix.eye(p))
+        case Right((beta, inv)) =>
           var j = 0
           while j < p do
-            coefficients(j * samples + s) = beta(j, 0)
-            standardErrors(j * samples + s) = safeSqrt(inv(j, j))
+            coefficients(j, s) = beta(j, 0)
+            standardErrors(j, s) = safeSqrt(inv(j, j))
             j += 1
           // Pack the lower triangle of (XᵀWX)⁻¹ for this sample.
           var k = 0
@@ -151,7 +161,7 @@ object GroupGlm:
           while a < p do
             var b = 0
             while b <= a do
-              covariance(triOffset + k) = inv(a, b)
+              covariance(s, k) = inv(a, b)
               k += 1
               b += 1
             a += 1
@@ -186,12 +196,12 @@ object GroupGlm:
       s += 1
 
     WlsPieces(
-      coefficients = DoubleMatrix.unsafe(p, samples, coefficients),
-      standardErrors = DoubleMatrix.unsafe(p, samples, standardErrors),
-      covariance = DoubleMatrix.unsafe(samples, tri, covariance),
+      coefficients = coefficients.result(),
+      standardErrors = standardErrors.result(),
+      covariance = covariance.result(),
       terms = p,
-      q = DoubleVector.unsafe(q),
-      c = DoubleVector.unsafe(c)
+      q = q.result(),
+      c = c.result()
     )
 
   private def safeSqrt(variance: Double): Double =
@@ -204,7 +214,7 @@ object GroupGlm:
     */
   private def relativeTolerance(diagonalMax: Double): Double = 1e-12 * diagonalMax
 
-  private def diagonalMax(m: DoubleMatrix): Double =
+  private def diagonalMax(m: DMat): Double =
     var max = 0.0
     var i = 0
     while i < m.rows do
@@ -213,11 +223,11 @@ object GroupGlm:
       i += 1
     max
 
-  private def diagonalMaxArray(square: Array[Double], p: Int): Double =
+  private def diagonalMax(m: gale.linalg.DMatBuilder): Double =
     var max = 0.0
     var d = 0
-    while d < p do
-      val v = math.abs(square(d * p + d))
+    while d < m.rows do
+      val v = math.abs(m(d, d))
       if v > max then max = v
       d += 1
     max

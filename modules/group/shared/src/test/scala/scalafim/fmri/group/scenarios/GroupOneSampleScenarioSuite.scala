@@ -2,7 +2,8 @@ package scalafim.fmri.group.scenarios
 
 import scalafim.dataset.SubjectId
 import scalafim.fmri.group.{GroupData, GroupDesign, GroupEngine, GroupError, GroupModel, GroupSpace, GroupStatistic}
-import scalafim.linalg.DoubleMatrix
+import scalafim.fmri.group.GroupTestMatrix
+import gale.linalg.{DMat, Matrix}
 
 class GroupOneSampleScenarioSuite extends munit.FunSuite:
   private val Tol = 1e-10
@@ -28,7 +29,7 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
         subjects = subjects(effectsBySubject.length),
         space = GroupSpace.SampleAxis(3),
         contrast = "task",
-        effects = DoubleMatrix.fromRows(effectsBySubject)
+        effects = GroupTestMatrix.fromRows(effectsBySubject)
       )
     )
     val model = value(GroupModel.build(data, GroupDesign.intercept(effectsBySubject.length)))
@@ -48,10 +49,10 @@ class GroupOneSampleScenarioSuite extends munit.FunSuite:
           intercept.estimates.length == expected.length,
           s"actual=${intercept.estimates.length} expected=${expected.length}"
         ),
-        ScenarioCheck.finite("estimate finite", intercept.estimates.toVector),
-        ScenarioCheck.finite("standard error finite", intercept.standardErrors.toVector),
-        ScenarioCheck.finite("statistic finite", intercept.statistics.toVector),
-        ScenarioCheck.finite("p-value finite", intercept.pValues.toVector)
+        ScenarioCheck.finite("estimate finite", intercept.estimates.toSeq.toVector),
+        ScenarioCheck.finite("standard error finite", intercept.standardErrors.toSeq.toVector),
+        ScenarioCheck.finite("statistic finite", intercept.statistics.toSeq.toVector),
+        ScenarioCheck.finite("p-value finite", intercept.pValues.toSeq.toVector)
       ) ++
         ScenarioCheck.vector("mean", intercept.estimates, expected.map(_.mean), Tol) ++
         ScenarioCheck.vector("standard error", intercept.standardErrors, expected.map(_.standardError), Tol) ++

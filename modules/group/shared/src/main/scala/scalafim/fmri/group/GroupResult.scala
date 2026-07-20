@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
+import gale.linalg.{DMat, DVec, Vec}
 import scalafim.dataset.SubjectId
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
 
 import scala.collection.immutable.VectorMap
 
@@ -22,7 +22,7 @@ sealed trait GroupCovariance:
 
 object GroupCovariance:
 
-  final case class Shared(inverse: DoubleMatrix, residualVariance: DoubleVector) extends GroupCovariance:
+  final case class Shared(inverse: DMat, residualVariance: DVec) extends GroupCovariance:
     require(inverse.rows == inverse.cols, "shared covariance must be square")
     require(inverse.rows == 0 || residualVariance.length > 0, "residual variance required")
     def terms: Int = inverse.rows
@@ -34,7 +34,7 @@ object GroupCovariance:
     * entries per sample in a single `[samples × termCount(termCount+1)/2]`
     * matrix — one backing array rather than one matrix object per sample.
     */
-  final case class PerSample(termCount: Int, packed: DoubleMatrix) extends GroupCovariance:
+  final case class PerSample(termCount: Int, packed: DMat) extends GroupCovariance:
     require(termCount > 0, "per-sample covariance must have at least one term")
     require(packed.cols == termCount * (termCount + 1) / 2, "packed covariance width must match term count")
     def terms: Int = termCount
@@ -55,7 +55,7 @@ object GroupCovariance:
         i += 1
       out
 
-  private def quadForm(w: Array[Double], m: DoubleMatrix): Double =
+  private def quadForm(w: Array[Double], m: DMat): Double =
     var out = 0.0
     var i = 0
     while i < w.length do
@@ -71,7 +71,7 @@ object GroupCovariance:
 /** Between-subject heterogeneity diagnostics from a meta-analytic fit, one value
   * per sample: `tau2` (between-subject variance), Cochran's `q`, and `i2`.
   */
-final case class Heterogeneity(tau2: DoubleVector, q: DoubleVector, i2: DoubleVector):
+final case class Heterogeneity(tau2: DVec, q: DVec, i2: DVec):
   require(tau2.length == q.length && q.length == i2.length, "heterogeneity maps must align")
 
 /** The group fit for one first-level contrast: per-term coefficient and standard
@@ -82,8 +82,8 @@ final case class Heterogeneity(tau2: DoubleVector, q: DoubleVector, i2: DoubleVe
 final case class GroupFit(
     contrast: FirstLevelContrastName,
     termNames: Vector[String],
-    coefficients: DoubleMatrix,
-    standardErrors: DoubleMatrix,
+    coefficients: DMat,
+    standardErrors: DMat,
     covariance: GroupCovariance,
     statistic: GroupStatistic,
     heterogeneity: Option[Heterogeneity],
@@ -104,10 +104,10 @@ final case class GroupFit(
     val row = termNames.indexOf(name)
     if row < 0 then None
     else
-      val estimates = new Array[Double](samples)
-      val ses = new Array[Double](samples)
-      val stats = new Array[Double](samples)
-      val ps = new Array[Double](samples)
+      val estimates = Vec.newBuilder(samples)
+      val ses = Vec.newBuilder(samples)
+      val stats = Vec.newBuilder(samples)
+      val ps = Vec.newBuilder(samples)
       var s = 0
       while s < samples do
         val est = coefficients(row, s)
@@ -121,10 +121,10 @@ final case class GroupFit(
       Some(
         GroupContrastResult(
           name = GroupContrastName.unsafe(name),
-          estimates = DoubleVector.unsafe(estimates),
-          standardErrors = DoubleVector.unsafe(ses),
-          statistics = DoubleVector.unsafe(stats),
-          pValues = DoubleVector.unsafe(ps),
+          estimates = estimates.result(),
+          standardErrors = ses.result(),
+          statistics = stats.result(),
+          pValues = ps.result(),
           statistic = statistic,
           space = space
         )

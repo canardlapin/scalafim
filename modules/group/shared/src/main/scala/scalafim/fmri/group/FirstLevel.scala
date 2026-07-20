@@ -1,8 +1,8 @@
 package scalafim.fmri.group
 
+import gale.linalg.Matrix
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.TContrastResult
-import scalafim.linalg.DoubleMatrix
 
 /** Bridge from first-level results to a group cube. Each subject contributes,
   * per first-level contrast, an effect map (the contrast estimate) and a variance
@@ -39,21 +39,21 @@ object FirstLevel:
     collectCells(space.nSamples, subjects, contrast, results).flatMap { cells =>
       val nSubjects = subjects.length
       val nSamples = space.nSamples
-      val effects = new Array[Double](nSubjects * nSamples)
-      val variances = new Array[Double](nSubjects * nSamples)
+      val effects = Matrix.newBuilder(nSubjects, nSamples)
+      val variances = Matrix.newBuilder(nSubjects, nSamples)
       var subjectIdx = 0
       while subjectIdx < nSubjects do
         val result = cells(subjectIdx)
         var sample = 0
         while sample < nSamples do
           val se = result.standardErrors(sample)
-          effects(subjectIdx * nSamples + sample) = result.estimates(sample)
-          variances(subjectIdx * nSamples + sample) = se * se
+          effects(subjectIdx, sample) = result.estimates(sample)
+          variances(subjectIdx, sample) = se * se
           sample += 1
         subjectIdx += 1
       GroupResponse.weighted(
-        DoubleMatrix.unsafe(nSubjects, nSamples, effects),
-        DoubleMatrix.unsafe(nSubjects, nSamples, variances)
+        effects.result(),
+        variances.result()
       )
     }
 

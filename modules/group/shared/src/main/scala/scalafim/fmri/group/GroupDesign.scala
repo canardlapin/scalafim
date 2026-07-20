@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
+import gale.linalg.{DMat, Matrix}
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.linalg.DoubleMatrix
 
 /** The second-level design: `[subjects × terms]` with named terms.
   *
@@ -9,7 +9,7 @@ import scalafim.linalg.DoubleMatrix
   * `model.matrix` non-standard evaluation. Common designs are provided as
   * combinators; arbitrary designs go through `fromMatrix`.
   */
-final case class GroupDesign private (matrix: DoubleMatrix, designTerms: Vector[DesignTermName]):
+final case class GroupDesign private (matrix: DMat, designTerms: Vector[DesignTermName]):
   require(matrix.cols == designTerms.length, "term names must match design columns")
 
   def subjects: Int = matrix.rows
@@ -22,10 +22,10 @@ object GroupDesign:
 
   private val InterceptName = DesignTermName.Intercept
 
-  def fromMatrix(matrix: DoubleMatrix, termNames: Vector[String]): Either[GroupError, GroupDesign] =
+  def fromMatrix(matrix: DMat, termNames: Vector[String]): Either[GroupError, GroupDesign] =
     parseTermNames(termNames).flatMap(fromTypedMatrix(matrix, _))
 
-  def fromTypedMatrix(matrix: DoubleMatrix, termNames: Vector[DesignTermName]): Either[GroupError, GroupDesign] =
+  def fromTypedMatrix(matrix: DMat, termNames: Vector[DesignTermName]): Either[GroupError, GroupDesign] =
     if matrix.rows == 0 || matrix.cols == 0 then Left(GroupError.EmptyDesign)
     else if matrix.cols != termNames.length then
       Left(GroupError.contrastMismatch(matrix.cols, termNames.length))
@@ -40,7 +40,9 @@ object GroupDesign:
     */
   def intercept(nSubjects: Int): GroupDesign =
     require(nSubjects > 0, "need at least one subject")
-    new GroupDesign(DoubleMatrix.unsafe(nSubjects, 1, Array.fill(nSubjects)(1.0)), Vector(InterceptName))
+    val matrix = Matrix.newBuilder(nSubjects, 1)
+    matrix.fill(1.0)
+    new GroupDesign(matrix.result(), Vector(InterceptName))
 
   /** Two-sample design: intercept plus a 0/1 indicator for the non-reference
     * level (reference is the first level encountered). The indicator term is
@@ -56,13 +58,13 @@ object GroupDesign:
         val other = levels(1)
         val otherTerm = DesignTermName.unsafe(other)
         val n = groupLabels.length
-        val data = new Array[Double](n * 2)
+        val matrix = Matrix.newBuilder(n, 2)
         var i = 0
         while i < n do
-          data(i * 2) = 1.0
-          data(i * 2 + 1) = if groupLabels(i) == other then 1.0 else 0.0
+          matrix(i, 0) = 1.0
+          matrix(i, 1) = if groupLabels(i) == other then 1.0 else 0.0
           i += 1
-        Right(new GroupDesign(DoubleMatrix.unsafe(n, 2, data), Vector(InterceptName, otherTerm)))
+        Right(new GroupDesign(matrix.result(), Vector(InterceptName, otherTerm)))
 
   /** Covariate / meta-regression design from a typed `DataTable`. Numeric
     * columns become terms, optionally prefixed by an intercept column. Missing
@@ -100,32 +102,34 @@ object GroupDesign:
             val p = termNames.length
             if n == 0 || p == 0 then Left(GroupError.EmptyDesign)
             else
-              val data = new Array[Double](n * p)
+              val matrix = Matrix.newBuilder(n, p)
               var row = 0
               while row < n do
                 var col = 0
                 if intercept.include then
-                  data(row * p) = 1.0
+                  matrix(row, 0) = 1.0
                   col = 1
                 var c = 0
                 while c < columns.length do
-                  data(row * p + col + c) = columnData(c)(row)
+                  matrix(row, col + c) = columnData(c)(row)
                   c += 1
                 row += 1
-              fromTypedMatrix(DoubleMatrix.unsafe(n, p, data), termNames)
+              fromTypedMatrix(matrix.result(), termNames)
 
   private def isNumeric(column: Column): Boolean =
     column match
       case Column.Doubles(_) | Column.Ints(_) => true
       case _                                  => false
 
-  private def allFinite(m: DoubleMatrix): Boolean =
-    val data = m.copyData
-    var i = 0
+  private def allFinite(m: DMat): Boolean =
+    var row = 0
     var ok = true
-    while ok && i < data.length do
-      if !data(i).isFinite then ok = false
-      i += 1
+    while ok && row < m.rows do
+      var col = 0
+      while ok && col < m.cols do
+        if !m(row, col).isFinite then ok = false
+        col += 1
+      row += 1
     ok
 
   private def parseTermNames(names: Vector[String]): Either[GroupError, Vector[DesignTermName]] =

@@ -2,7 +2,7 @@ package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.linalg.{DoubleMatrix, DoubleVector}
+import gale.linalg.{DMat, DVec, Matrix, Vec}
 
 class GroupInferenceSuite extends munit.FunSuite:
 
@@ -12,12 +12,12 @@ class GroupInferenceSuite extends munit.FunSuite:
   private def subjects(n: Int): Vector[SubjectId] =
     (1 to n).toVector.map(i => SubjectId(s"s$i"))
 
-  private def column(values: Double*): DoubleMatrix =
-    DoubleMatrix.fromRows(values.toVector.map(v => Vector(v)))
+  private def column(values: Double*): DMat =
+    GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))
 
   test("singular per-sample WLS system propagates NaN, not a bogus finite value") {
     // Rank-deficient design (two identical columns) makes XᵀWX singular.
-    val design = value(GroupDesign.fromMatrix(DoubleMatrix.fromRows(Vector(Vector(1.0, 1.0), Vector(1.0, 1.0), Vector(1.0, 1.0))), Vector("a", "b")))
+    val design = value(GroupDesign.fromMatrix(GroupTestMatrix.fromRows(Vector(Vector(1.0, 1.0), Vector(1.0, 1.0), Vector(1.0, 1.0))), Vector("a", "b")))
     val data = value(GroupData.single(subjects(3), GroupSpace.SampleAxis(1), "c", column(1.0, 2.0, 3.0), Some(column(0.1, 0.1, 0.1))))
     val fit = value(GroupEngine.fit(value(GroupModel.build(data, design, GroupWeighting.InverseVariance)))).fit("c").get
 
@@ -42,7 +42,7 @@ class GroupInferenceSuite extends munit.FunSuite:
     // Cell-means design (no intercept): term a = mean(a), term b = mean(b).
     val design = value(
       GroupDesign.fromMatrix(
-        DoubleMatrix.fromRows(
+        GroupTestMatrix.fromRows(
           Vector(Vector(1.0, 0.0), Vector(1.0, 0.0), Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(0.0, 1.0), Vector(0.0, 1.0))
         ),
         Vector("a", "b")
@@ -71,10 +71,10 @@ class GroupInferenceSuite extends munit.FunSuite:
     val space = GroupSpace.SampleAxis(3)
     val result = GroupContrastResult(
       name = GroupContrastName.unsafe("c"),
-      estimates = DoubleVector.zeros(3),
-      standardErrors = DoubleVector.zeros(3),
-      statistics = DoubleVector.zeros(3),
-      pValues = DoubleVector.fromSeq(Seq(0.005, 0.01, 0.5)),
+      estimates = Vec.zeros(3),
+      standardErrors = Vec.zeros(3),
+      statistics = Vec.zeros(3),
+      pValues = DVec.fromSeq(Seq(0.005, 0.01, 0.5)),
       statistic = GroupStatistic.Normal,
       space = space
     )

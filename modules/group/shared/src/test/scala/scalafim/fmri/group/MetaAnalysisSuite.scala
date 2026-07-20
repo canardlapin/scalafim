@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class MetaAnalysisSuite extends munit.FunSuite:
 
@@ -11,12 +11,12 @@ class MetaAnalysisSuite extends munit.FunSuite:
   private def subjects(n: Int): Vector[SubjectId] =
     (1 to n).toVector.map(i => SubjectId(s"s$i"))
 
-  private def column(values: Double*): DoubleMatrix =
-    DoubleMatrix.fromRows(values.toVector.map(v => Vector(v)))
+  private def column(values: Double*): DMat =
+    GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))
 
   private def metaFit(
-      effects: DoubleMatrix,
-      variances: DoubleMatrix,
+      effects: DMat,
+      variances: DMat,
       design: GroupDesign,
       weighting: GroupWeighting
   ): GroupFit =

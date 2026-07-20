@@ -13,11 +13,12 @@ import scalafim.fmri.group.{
   GroupStatistic,
   GroupWeighting
 }
+import scalafim.fmri.group.GroupTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
+import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import gale.linalg.{DMat, Matrix}
 
 class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
   private val Tol = 1e-10
@@ -83,16 +84,16 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
           s"actual=${intercept.statistic.label} expected=${GroupStatistic.Normal.label}"
         ),
         ScenarioCheck.finite("first-level statistics finite", firstLevels.flatMap(_.contrast.statistics.toVector)),
-        ScenarioCheck.finite("group estimates finite", intercept.estimates.toVector),
-        ScenarioCheck.finite("group standard errors finite", intercept.standardErrors.toVector),
-        ScenarioCheck.finite("group statistics finite", intercept.statistics.toVector),
-        ScenarioCheck.finite("group p-values finite", intercept.pValues.toVector)
+        ScenarioCheck.finite("group estimates finite", intercept.estimates.toSeq.toVector),
+        ScenarioCheck.finite("group standard errors finite", intercept.standardErrors.toSeq.toVector),
+        ScenarioCheck.finite("group statistics finite", intercept.statistics.toSeq.toVector),
+        ScenarioCheck.finite("group p-values finite", intercept.pValues.toSeq.toVector)
       ) ++
         ScenarioCheck.matrix("first-level task estimates", firstLevelEffectMatrix(firstLevels), expectedEffects, Tol) ++
         ScenarioCheck.matrix(
           "first-level task standard errors",
           firstLevelStandardErrorMatrix(firstLevels),
-          DoubleMatrix.fromRows(expectedStandardErrors),
+          GroupTestMatrix.fromRows(expectedStandardErrors),
           Tol
         ) ++
         ScenarioCheck.matrix("bridged task effects", bridged.effects, expectedEffects, Tol) ++
@@ -109,7 +110,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
       FmriDataset(
         backend = InMemoryDatasetBackend(
           DatasetId(s"scenario-known-effect-${subject.id.value}"),
-          DMat.fromRows(subject.responseRows),
+          ImageDMat.fromRows(subject.responseRows),
           NeuroSpace(Vector(subject.samples, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(KnownDesign.task.length), tr = Seq(1.0)),
@@ -140,11 +141,11 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
 
     FirstLevelFit(subject.id, contrast)
 
-  private def firstLevelEffectMatrix(firstLevels: Vector[FirstLevelFit]): DoubleMatrix =
-    DoubleMatrix.fromRows(firstLevels.map(_.contrast.estimates.toVector))
+  private def firstLevelEffectMatrix(firstLevels: Vector[FirstLevelFit]): DMat =
+    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.estimates.toVector))
 
-  private def firstLevelStandardErrorMatrix(firstLevels: Vector[FirstLevelFit]): DoubleMatrix =
-    DoubleMatrix.fromRows(firstLevels.map(_.contrast.standardErrors.toVector))
+  private def firstLevelStandardErrorMatrix(firstLevels: Vector[FirstLevelFit]): DMat =
+    GroupTestMatrix.fromRows(firstLevels.map(_.contrast.standardErrors.toVector))
 
   private def fitValue[A](e: Either[FitError, A]): A =
     e.fold(err => fail(err.message), identity)
@@ -226,11 +227,11 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
     def standardErrorRows: Vector[Vector[Double]] =
       subjects.map(_.standardErrors)
 
-    def effectMatrix: DoubleMatrix =
-      DoubleMatrix.fromRows(effectRows)
+    def effectMatrix: DMat =
+      GroupTestMatrix.fromRows(effectRows)
 
-    def varianceMatrix: DoubleMatrix =
-      DoubleMatrix.fromRows(standardErrorRows.map(row => row.map(se => se * se)))
+    def varianceMatrix: DMat =
+      GroupTestMatrix.fromRows(standardErrorRows.map(row => row.map(se => se * se)))
 
   private object KnownDesign:
     val task: Vector[Double] =

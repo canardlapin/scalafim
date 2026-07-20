@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.linalg.LinearAlgebraError
+import gale.linalg.LinAlgError
 
 final case class CountMismatch(expected: Int, actual: Int, expectedLabel: String, actualLabel: String):
   def message: String =
@@ -39,7 +39,7 @@ enum GroupError:
   case InvalidPValue(value: Double)
   case InvalidLabel(kind: String, value: String)
   case InsufficientSubjects(subjects: Int, terms: Int)
-  case SingularDesign(cause: LinearAlgebraError)
+  case SingularDesign(cause: LinAlgError)
   case UnknownColumn(column: String)
   case UnknownContrastTerm(term: String)
   case EmptyContrast(name: String)
@@ -81,7 +81,7 @@ enum GroupError:
       case InsufficientSubjects(subjects, terms) =>
         s"need more subjects than design terms for residual degrees of freedom (subjects=$subjects, terms=$terms)"
       case SingularDesign(cause) =>
-        s"group design is singular or ill-conditioned: ${cause.message}"
+        s"group design is singular or ill-conditioned: ${cause.getMessage}"
       case UnknownColumn(column) =>
         s"covariate table has no column '$column'"
       case UnknownContrastTerm(term) =>

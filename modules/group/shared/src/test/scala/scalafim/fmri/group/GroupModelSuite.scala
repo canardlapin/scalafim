@@ -2,7 +2,7 @@ package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class GroupModelSuite extends munit.FunSuite:
 
@@ -12,8 +12,8 @@ class GroupModelSuite extends munit.FunSuite:
   private def subjects(n: Int): Vector[SubjectId] =
     (1 to n).toVector.map(i => SubjectId(s"s$i"))
 
-  private def column(values: Double*): DoubleMatrix =
-    DoubleMatrix.fromRows(values.toVector.map(v => Vector(v)))
+  private def column(values: Double*): DMat =
+    GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))
 
   test("meta-analytic estimator on variance-free data is a typed error") {
     val data = value(GroupData.single(subjects(3), GroupSpace.SampleAxis(1), "c", column(1.0, 2.0, 3.0)))
@@ -65,7 +65,7 @@ class GroupModelSuite extends munit.FunSuite:
   }
 
   test("variance dims must match effect dims") {
-    val effects = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
+    val effects = GroupTestMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
     val variances = column(1.0, 1.0)
     assert(GroupResponse.weighted(effects, variances).isLeft)
   }
@@ -99,7 +99,7 @@ class GroupModelSuite extends munit.FunSuite:
   }
 
   test("model summary reflects the composed description") {
-    val data = value(GroupData.single(subjects(5), GroupSpace.SampleAxis(4), "c", DoubleMatrix.zeros(5, 4)))
+    val data = value(GroupData.single(subjects(5), GroupSpace.SampleAxis(4), "c", Matrix.zeros(5, 4)))
     val summary = value(GroupModel.build(data, GroupDesign.intercept(5))).summary
     assertEquals(summary.subjects, 5)
     assertEquals(summary.samples, 4)

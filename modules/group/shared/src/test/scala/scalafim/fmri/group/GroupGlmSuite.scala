@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import scalafim.dataset.SubjectId
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, Matrix}
 
 class GroupGlmSuite extends munit.FunSuite:
 
@@ -13,7 +13,7 @@ class GroupGlmSuite extends munit.FunSuite:
 
   test("one-sample OLS reproduces the one-sample t-test") {
     // t.test(c(1,2,3,4,5)): mean 3, se sqrt(0.5), t 4.2426..., df 4.
-    val effects = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0)))
+    val effects = GroupTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0), Vector(5.0)))
     val data = value(GroupData.single(subjects(5), GroupSpace.SampleAxis(1), "c", effects))
     val model = value(GroupModel.build(data, GroupDesign.intercept(5)))
     val result = value(GroupEngine.fit(model))
@@ -31,7 +31,7 @@ class GroupGlmSuite extends munit.FunSuite:
   test("two-sample OLS reproduces the pooled two-sample t-test") {
     // groups a = {1,2,3}, b = {5,6,7}: diff 4, pooled se sqrt(2/3), t 4.898979, df 4.
     val labels = Vector("a", "a", "a", "b", "b", "b")
-    val effects = DoubleMatrix.fromRows(
+    val effects = GroupTestMatrix.fromRows(
       Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(5.0), Vector(6.0), Vector(7.0))
     )
     val design = value(GroupDesign.twoSample(labels))
@@ -50,7 +50,7 @@ class GroupGlmSuite extends munit.FunSuite:
 
   test("group contrast on the difference term equals the term statistic") {
     val labels = Vector("a", "a", "a", "b", "b", "b")
-    val effects = DoubleMatrix.fromRows(
+    val effects = GroupTestMatrix.fromRows(
       Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(5.0), Vector(6.0), Vector(7.0))
     )
     val design = value(GroupDesign.twoSample(labels))
@@ -64,7 +64,7 @@ class GroupGlmSuite extends munit.FunSuite:
 
   test("OLS fits every sample independently") {
     // Column 0: intercept mean 3; column 1: constant 10 (zero residual, t = inf).
-    val effects = DoubleMatrix.fromRows(
+    val effects = GroupTestMatrix.fromRows(
       Vector(Vector(1.0, 10.0), Vector(2.0, 10.0), Vector(3.0, 10.0), Vector(4.0, 10.0), Vector(5.0, 10.0))
     )
     val data = value(GroupData.single(subjects(5), GroupSpace.SampleAxis(2), "c", effects))
@@ -76,7 +76,7 @@ class GroupGlmSuite extends munit.FunSuite:
   }
 
   test("unknown contrast term is a typed error") {
-    val effects = DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
+    val effects = GroupTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
     val data = value(GroupData.single(subjects(3), GroupSpace.SampleAxis(1), "c", effects))
     val fit = value(GroupEngine.fit(value(GroupModel.build(data, GroupDesign.intercept(3))))).fit("c").get
     assertEquals(GroupContrast.term("missing").evaluate(fit).left.toOption, Some(GroupError.UnknownContrastTerm("missing")))

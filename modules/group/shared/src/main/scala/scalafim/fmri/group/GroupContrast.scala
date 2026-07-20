@@ -1,6 +1,6 @@
 package scalafim.fmri.group
 
-import scalafim.linalg.DoubleVector
+import gale.linalg.{DVec, Vec}
 
 /** A group-level t-contrast: a named linear combination of design terms,
   * keyed by term name and aligned to a fit by name (unknown terms are errors).
@@ -13,10 +13,10 @@ final case class GroupContrast(name: GroupContrastName, weights: Map[DesignTermN
   def evaluate(fit: GroupFit): Either[GroupError, GroupContrastResult] =
     weightVector(fit.termNames).map { w =>
       val samples = fit.samples
-      val estimates = new Array[Double](samples)
-      val standardErrors = new Array[Double](samples)
-      val statistics = new Array[Double](samples)
-      val pValues = new Array[Double](samples)
+      val estimates = Vec.newBuilder(samples)
+      val standardErrors = Vec.newBuilder(samples)
+      val statistics = Vec.newBuilder(samples)
+      val pValues = Vec.newBuilder(samples)
 
       var s = 0
       while s < samples do
@@ -38,10 +38,10 @@ final case class GroupContrast(name: GroupContrastName, weights: Map[DesignTermN
 
       GroupContrastResult(
         name = name,
-        estimates = DoubleVector.unsafe(estimates),
-        standardErrors = DoubleVector.unsafe(standardErrors),
-        statistics = DoubleVector.unsafe(statistics),
-        pValues = DoubleVector.unsafe(pValues),
+        estimates = estimates.result(),
+        standardErrors = standardErrors.result(),
+        statistics = statistics.result(),
+        pValues = pValues.result(),
         statistic = fit.statistic,
         space = fit.space
       )
@@ -93,10 +93,10 @@ object GroupContrast:
   */
 final case class GroupContrastResult(
     name: GroupContrastName,
-    estimates: DoubleVector,
-    standardErrors: DoubleVector,
-    statistics: DoubleVector,
-    pValues: DoubleVector,
+    estimates: DVec,
+    standardErrors: DVec,
+    statistics: DVec,
+    pValues: DVec,
     statistic: GroupStatistic,
     space: GroupSpace
 ):
@@ -109,12 +109,17 @@ final case class GroupContrastResult(
     PValue(pValues(sample))
 
   /** FDR-adjusted p-values (q-values) over this contrast's map. */
-  def adjustedP(method: FdrMethod = FdrMethod.BenjaminiHochberg): DoubleVector =
-    val p = pValues.copyData
+  def adjustedP(method: FdrMethod = FdrMethod.BenjaminiHochberg): DVec =
+    val p = pValues.toSeq.toArray
     val q = method match
       case FdrMethod.BenjaminiHochberg => Fdr.benjaminiHochberg(p)
       case FdrMethod.BenjaminiYekutieli => Fdr.benjaminiYekutieli(p)
-    DoubleVector.unsafe(q)
+    val out = Vec.newBuilder(q.length)
+    var i = 0
+    while i < q.length do
+      out(i) = q(i)
+      i += 1
+    out.result()
 
 enum FdrMethod:
   case BenjaminiHochberg
