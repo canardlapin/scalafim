@@ -487,6 +487,20 @@ lazy val multivarIr =
 lazy val multivarIrJS  = multivarIr.js
 lazy val multivarIrJVM = multivarIr.jvm
 
+lazy val inference =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/inference"))
+    .dependsOn(multivar, linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-inference"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val inferenceJS  = inference.js
+lazy val inferenceJVM = inference.jvm
+
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -585,6 +599,8 @@ lazy val root =
       multivarJVM,
       multivarIrJS,
       multivarIrJVM,
+      inferenceJS,
+      inferenceJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,

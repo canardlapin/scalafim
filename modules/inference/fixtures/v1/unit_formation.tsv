@@ -1,0 +1,8 @@
+case	roots	selected_input	group_near_ties	tie_threshold	unit_id	unit_type	members_one_based	identifiable	selected
+single_axes_default	5,4.9900000000000002,1	true,true,false	FALSE	0.01	u1	component	1	TRUE	TRUE
+single_axes_default	5,4.9900000000000002,1	true,true,false	FALSE	0.01	u2	component	2	TRUE	TRUE
+single_axes_default	5,4.9900000000000002,1	true,true,false	FALSE	0.01	u3	component	3	TRUE	FALSE
+near_tie_partial_selection	5,4.9900000000000002,1	true,false,true	TRUE	0.01	u1	subspace	1,2	FALSE	FALSE
+near_tie_partial_selection	5,4.9900000000000002,1	true,false,true	TRUE	0.01	u2	component	3	TRUE	TRUE
+consecutive_tie_chain	5,4.96,4.9199999999999999,1	true,true,true,false	TRUE	0.01	u1	subspace	1,2,3	FALSE	TRUE
+consecutive_tie_chain	5,4.96,4.9199999999999999,1	true,true,true,false	TRUE	0.01	u2	component	4	TRUE	FALSE
