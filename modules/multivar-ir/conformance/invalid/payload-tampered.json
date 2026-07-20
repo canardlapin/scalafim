@@ -1,0 +1,18 @@
+{
+  "schema": {"name": "scalafim-multivar-ir", "version": {"major": 0, "minor": 1}, "unknown_fields": "reject"},
+  "spaces": [{"id": "rows", "role": "samples", "dimension": 2}],
+  "operators": [
+    {
+      "id": "tampered", "role": "linear_map",
+      "domain": {"space_id": "rows", "variance": "primal"},
+      "codomain": {"space_id": "rows", "variance": "dual"},
+      "representation": "dense",
+      "payload": {
+        "kind": "inline_dense", "rows": 2, "columns": 2, "values": [2, 0, 0, 1],
+        "sha256": "a22a44164bd5ee3523c2e80df0080973f5e2dadfb4b653e511da7c64040e69c4"
+      },
+      "value_identity": "tampered-v1", "provenance": []
+    }
+  ],
+  "forms": [], "measures": [], "diagrams": [], "relationships": [], "objectives": []
+}

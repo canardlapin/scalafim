@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalafim.org/schema/multivar-ir-v0.1.schema.json",
+  "title": "ScalaFIM Multivar IR 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "spaces", "operators", "forms", "measures", "diagrams", "relationships", "objectives"],
+  "properties": {
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "unknown_fields"],
+      "properties": {
+        "name": {"const": "scalafim-multivar-ir"},
+        "version": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["major", "minor"],
+          "properties": {"major": {"const": 0}, "minor": {"const": 1}}
+        },
+        "unknown_fields": {"const": "reject"}
+      }
+    },
+    "spaces": {"type": "array", "items": {"$ref": "#/$defs/space"}},
+    "operators": {"type": "array", "items": {"$ref": "#/$defs/operator"}},
+    "forms": {"type": "array", "items": {"$ref": "#/$defs/form"}},
+    "measures": {"type": "array", "items": {"type": "object"}},
+    "diagrams": {"type": "array", "items": {"type": "object"}},
+    "relationships": {"type": "array", "items": {"type": "object"}},
+    "objectives": {"type": "array", "items": {"type": "object"}}
+  },
+  "$defs": {
+    "space": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "dimension"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["samples", "observed", "latent", "kernel", "block"]},
+        "dimension": {"type": "integer", "minimum": 1}
+      }
+    },
+    "coordinate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["space_id", "variance"],
+      "properties": {
+        "space_id": {"type": "string", "minLength": 1},
+        "variance": {"enum": ["primal", "dual"]}
+      }
+    },
+    "payload": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "rows", "columns", "values", "sha256"],
+          "properties": {
+            "kind": {"const": "inline_dense"},
+            "rows": {"type": "integer", "minimum": 1},
+            "columns": {"type": "integer", "minimum": 1},
+            "values": {"type": "array", "items": {"type": "number"}},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "rows", "columns", "row_indices", "column_indices", "values", "sha256"],
+          "properties": {
+            "kind": {"const": "inline_sparse"},
+            "rows": {"type": "integer", "minimum": 1},
+            "columns": {"type": "integer", "minimum": 1},
+            "row_indices": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+            "column_indices": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+            "values": {"type": "array", "items": {"type": "number"}},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "uri", "media_type", "rows", "columns", "sha256"],
+          "properties": {
+            "kind": {"const": "external"},
+            "uri": {"type": "string", "minLength": 1},
+            "media_type": {"type": "string", "minLength": 1},
+            "rows": {"type": "integer", "minimum": 1},
+            "columns": {"type": "integer", "minimum": 1},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      ]
+    },
+    "operator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "domain", "codomain", "representation", "payload", "value_identity", "provenance"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["table", "linear_map", "row_map", "row_link", "linear_constraint"]},
+        "domain": {"$ref": "#/$defs/coordinate"},
+        "codomain": {"$ref": "#/$defs/coordinate"},
+        "representation": {"type": "string", "minLength": 1},
+        "payload": {"$ref": "#/$defs/payload"},
+        "value_identity": {"type": "string", "minLength": 1},
+        "provenance": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "form": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "space_id", "operator_id", "structure", "positivity", "evidence", "scale_semantics", "certificates"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["bilinear", "symmetric", "semi_metric", "metric", "indefinite", "cometric", "penalty", "kernel", "covariance", "precision"]},
+        "space_id": {"type": "string", "minLength": 1},
+        "operator_id": {"type": "string", "minLength": 1},
+        "structure": {"enum": ["general", "symmetric"]},
+        "positivity": {"enum": ["unchecked", "psd", "spd", "indefinite"]},
+        "evidence": {"enum": ["unchecked", "certified", "assumed"]},
+        "scale_semantics": {
+          "oneOf": [
+            {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"enum": ["absolute_metric", "normalized_metric"]}}},
+            {"type": "object", "additionalProperties": false, "required": ["kind", "gauge_id"], "properties": {"kind": {"const": "shape_metric"}, "gauge_id": {"type": "string", "minLength": 1}}}
+          ]
+        },
+        "certificates": {"type": "array", "items": {"type": "object"}}
+      }
+    }
+  }
+}

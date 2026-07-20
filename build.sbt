@@ -459,6 +459,20 @@ lazy val multivar =
 lazy val multivarJS  = multivar.js
 lazy val multivarJVM = multivar.jvm
 
+lazy val multivarIr =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/multivar-ir"))
+    .dependsOn(multivar)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-multivar-ir"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val multivarIrJS  = multivarIr.js
+lazy val multivarIrJVM = multivarIr.jvm
+
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -553,6 +567,8 @@ lazy val root =
       mvpaJVM,
       multivarJS,
       multivarJVM,
+      multivarIrJS,
+      multivarIrJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,
