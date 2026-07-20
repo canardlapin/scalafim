@@ -12,8 +12,7 @@ enum LatentEncodingSpec:
       ridge: RidgePenalty,
       sourceDomain: DomainId,
       targetDomain: DomainId,
-      label: String,
-      metadata: Map[String, String]
+      annotations: LatentAnnotation
   )
 
   case TemporalDct(
@@ -22,8 +21,7 @@ enum LatentEncodingSpec:
       ridge: RidgePenalty,
       sourceDomain: DomainId,
       targetDomain: DomainId,
-      label: String,
-      metadata: Map[String, String]
+      annotations: LatentAnnotation
   )
 
   case TemporalHaar(
@@ -32,8 +30,7 @@ enum LatentEncodingSpec:
       ridge: RidgePenalty,
       sourceDomain: DomainId,
       targetDomain: DomainId,
-      label: String,
-      metadata: Map[String, String]
+      annotations: LatentAnnotation
   )
   case SharedSpatialBasis(
       basis: SharedBasisArtifact,
@@ -43,16 +40,41 @@ enum LatentEncodingSpec:
       ridge: RidgePenalty,
       sourceDomain: DomainId,
       targetDomain: DomainId,
-      label: String,
-      metadata: Map[String, String]
+      annotations: LatentAnnotation
   )
 
+  case RadialSpatialBasis(
+      radialBasis: RadialBasis,
+      maskDims: Vector[Int],
+      basisId: SharedBasisId,
+      locator: Option[SharedBasisLocator],
+      center: Boolean,
+      ridge: RidgePenalty,
+      sourceDomain: DomainId,
+      targetDomain: DomainId,
+      annotations: LatentAnnotation,
+      artifactParams: Map[String, String]
+  )
+
+  def latentLabel: LatentLabel =
+    annotation.label
+
   def typedMetadata: LatentMetadata =
+    annotation.metadata
+
+  def label: String =
+    annotation.labelValue
+
+  def metadata: Map[String, String] =
+    annotation.metadataValues
+
+  private def annotation: LatentAnnotation =
     this match
-      case ProvidedTemporalBasis(_, _, _, _, _, _, metadata)    => LatentMetadata.unsafe(metadata)
-      case TemporalDct(_, _, _, _, _, _, metadata)              => LatentMetadata.unsafe(metadata)
-      case TemporalHaar(_, _, _, _, _, _, metadata)             => LatentMetadata.unsafe(metadata)
-      case SharedSpatialBasis(_, _, _, _, _, _, _, _, metadata) => LatentMetadata.unsafe(metadata)
+      case ProvidedTemporalBasis(_, _, _, _, _, value)    => value
+      case TemporalDct(_, _, _, _, _, value)              => value
+      case TemporalHaar(_, _, _, _, _, value)             => value
+      case SharedSpatialBasis(_, _, _, _, _, _, _, value) => value
+      case RadialSpatialBasis(_, _, _, _, _, _, _, _, value, _) => value
 
 object LatentEncodingSpec:
   def providedBasis(
@@ -64,17 +86,18 @@ object LatentEncodingSpec:
       label: String = "",
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, LatentEncodingSpec] =
-    RidgePenalty(ridge).map { penalty =>
+    for
+      penalty <- RidgePenalty(ridge)
+      annotation <- LatentAnnotation(label, metadata)
+    yield
       LatentEncodingSpec.ProvidedTemporalBasis(
         basis = basis,
         center = center,
         ridge = penalty,
         sourceDomain = sourceDomain,
         targetDomain = targetDomain,
-        label = label,
-        metadata = metadata
+        annotations = annotation
       )
-    }
 
   def dct(
       timepoints: Int,
@@ -90,15 +113,16 @@ object LatentEncodingSpec:
     for
       penalty <- RidgePenalty(ridge)
       spec <- DctSpec(timepoints, components, norm)
-    yield dctSpec(
-      spec = spec,
-      center = center,
-      ridge = penalty,
-      sourceDomain = sourceDomain,
-      targetDomain = targetDomain,
-      label = label,
-      metadata = metadata
-    )
+      encoding <- dctSpec(
+        spec = spec,
+        center = center,
+        ridge = penalty,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata
+      )
+    yield encoding
 
   def dctSpec(
       spec: DctSpec,
@@ -108,16 +132,17 @@ object LatentEncodingSpec:
       targetDomain: DomainId = DomainId.unsafe("latent.samples"),
       label: String = "",
       metadata: Map[String, String] = Map.empty
-  ): LatentEncodingSpec =
-    LatentEncodingSpec.TemporalDct(
-      spec = spec,
-      center = center,
-      ridge = ridge,
-      sourceDomain = sourceDomain,
-      targetDomain = targetDomain,
-      label = label,
-      metadata = metadata
-    )
+  ): Either[LatentError, LatentEncodingSpec] =
+    LatentAnnotation(label, metadata).map { annotation =>
+      LatentEncodingSpec.TemporalDct(
+        spec = spec,
+        center = center,
+        ridge = ridge,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        annotations = annotation
+      )
+    }
 
   def haar(
       timepoints: Int,
@@ -132,15 +157,16 @@ object LatentEncodingSpec:
     for
       penalty <- RidgePenalty(ridge)
       spec <- HaarSpec(timepoints, components)
-    yield haarSpec(
-      spec = spec,
-      center = center,
-      ridge = penalty,
-      sourceDomain = sourceDomain,
-      targetDomain = targetDomain,
-      label = label,
-      metadata = metadata
-    )
+      encoding <- haarSpec(
+        spec = spec,
+        center = center,
+        ridge = penalty,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata
+      )
+    yield encoding
 
   def haarSpec(
       spec: HaarSpec,
@@ -150,16 +176,17 @@ object LatentEncodingSpec:
       targetDomain: DomainId = DomainId.unsafe("latent.samples"),
       label: String = "",
       metadata: Map[String, String] = Map.empty
-  ): LatentEncodingSpec =
-    LatentEncodingSpec.TemporalHaar(
-      spec = spec,
-      center = center,
-      ridge = ridge,
-      sourceDomain = sourceDomain,
-      targetDomain = targetDomain,
-      label = label,
-      metadata = metadata
-    )
+  ): Either[LatentError, LatentEncodingSpec] =
+    LatentAnnotation(label, metadata).map { annotation =>
+      LatentEncodingSpec.TemporalHaar(
+        spec = spec,
+        center = center,
+        ridge = ridge,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        annotations = annotation
+      )
+    }
 
   def sharedBasis(
       basis: SharedBasisArtifact,
@@ -172,8 +199,9 @@ object LatentEncodingSpec:
       label: String = "",
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, LatentEncodingSpec] =
-    RidgePenalty(ridge).map { penalty =>
-      sharedBasisSpec(
+    for
+      penalty <- RidgePenalty(ridge)
+      encoding <- sharedBasisSpec(
         basis = basis,
         basisId = basisId,
         locator = locator,
@@ -184,7 +212,7 @@ object LatentEncodingSpec:
         label = label,
         metadata = metadata
       )
-    }
+    yield encoding
 
   def sharedBasisSpec(
       basis: SharedBasisArtifact,
@@ -196,24 +224,89 @@ object LatentEncodingSpec:
       targetDomain: DomainId = DomainId.unsafe("voxels"),
       label: String = "",
       metadata: Map[String, String] = Map.empty
-  ): LatentEncodingSpec =
-    LatentEncodingSpec.SharedSpatialBasis(
-      basis = basis,
-      basisId = basisId,
-      locator = locator,
-      center = center,
-      ridge = ridge,
-      sourceDomain = sourceDomain,
-      targetDomain = targetDomain,
-      label = label,
-      metadata = metadata
-    )
+  ): Either[LatentError, LatentEncodingSpec] =
+    LatentAnnotation(label, metadata).map { annotation =>
+      LatentEncodingSpec.SharedSpatialBasis(
+        basis = basis,
+        basisId = basisId,
+        locator = locator,
+        center = center,
+        ridge = ridge,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        annotations = annotation
+      )
+    }
+
+  def radialBasis(
+      radialBasis: RadialBasis,
+      maskDims: Vector[Int],
+      basisId: SharedBasisId,
+      locator: Option[SharedBasisLocator] = None,
+      center: Boolean = true,
+      ridge: Double = 0.0,
+      sourceDomain: DomainId = DomainId.unsafe("radial_basis.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("voxels"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty,
+      artifactParams: Map[String, String] = Map.empty
+  ): Either[LatentError, LatentEncodingSpec] =
+    for
+      penalty <- RidgePenalty(ridge)
+      encoding <- radialBasisSpec(
+        radialBasis = radialBasis,
+        maskDims = maskDims,
+        basisId = basisId,
+        locator = locator,
+        center = center,
+        ridge = penalty,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        label = label,
+        metadata = metadata,
+        artifactParams = artifactParams
+      )
+    yield encoding
+
+  def radialBasisSpec(
+      radialBasis: RadialBasis,
+      maskDims: Vector[Int],
+      basisId: SharedBasisId,
+      locator: Option[SharedBasisLocator] = None,
+      center: Boolean = true,
+      ridge: RidgePenalty = RidgePenalty.Zero,
+      sourceDomain: DomainId = DomainId.unsafe("radial_basis.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("voxels"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty,
+      artifactParams: Map[String, String] = Map.empty
+  ): Either[LatentError, LatentEncodingSpec] =
+    for
+      _ <- radialBasis.toSharedBasisArtifact(maskDims, params = artifactParams).left.map(radialError)
+      annotation <- LatentAnnotation(label, metadata)
+    yield
+      LatentEncodingSpec.RadialSpatialBasis(
+        radialBasis = radialBasis,
+        maskDims = maskDims,
+        basisId = basisId,
+        locator = locator,
+        center = center,
+        ridge = ridge,
+        sourceDomain = sourceDomain,
+        targetDomain = targetDomain,
+        annotations = annotation,
+        artifactParams = artifactParams
+      )
+
+  private def radialError(error: RadialBasisError): LatentError =
+    LatentError.ProjectionFailed(error.message)
 
 enum LatentEncodingResult:
   case Explicit(value: ExplicitLatentResponse)
   case TemporalDct(value: ExplicitLatentResponse, spec: DctSpec, center: Boolean, ridge: RidgePenalty)
   case TemporalHaar(value: ExplicitLatentResponse, spec: HaarSpec, center: Boolean, ridge: RidgePenalty)
   case SharedBasis(encoding: SharedBasisEncoding)
+  case RadialBasis(encoding: RadialBasisEncoding)
 
   def response: ExplicitLatentResponse =
     this match
@@ -221,6 +314,7 @@ enum LatentEncodingResult:
       case TemporalDct(value, _, _, _)  => value
       case TemporalHaar(value, _, _, _) => value
       case SharedBasis(value)           => value.response
+      case RadialBasis(value)           => value.response
 
   def latentResponse: LatentResponse =
     response
@@ -231,7 +325,7 @@ object LatentEncoder:
       spec: LatentEncodingSpec
   ): Either[LatentError, LatentEncodingResult] =
     spec match
-      case LatentEncodingSpec.ProvidedTemporalBasis(basis, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.ProvidedTemporalBasis(basis, center, ridge, sourceDomain, targetDomain, annotations) =>
         TemporalBasisEncoder
           .encodeProvided(
             data = data,
@@ -240,12 +334,12 @@ object LatentEncoder:
             ridge = ridge.value,
             sourceDomain = sourceDomain,
             targetDomain = targetDomain,
-            label = label,
-            metadata = metadata
+            label = annotations.labelValue,
+            metadata = annotations.metadataValues
           )
           .map(LatentEncodingResult.Explicit(_))
 
-      case LatentEncodingSpec.TemporalDct(dctSpec, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.TemporalDct(dctSpec, center, ridge, sourceDomain, targetDomain, annotations) =>
         TemporalBasisEncoder
           .encodeDctSpec(
             data = data,
@@ -254,12 +348,12 @@ object LatentEncoder:
             ridge = ridge,
             sourceDomain = sourceDomain,
             targetDomain = targetDomain,
-            label = label,
-            metadata = metadata
+            label = annotations.labelValue,
+            metadata = annotations.metadataValues
           )
           .map(response => LatentEncodingResult.TemporalDct(response, dctSpec, center, ridge))
 
-      case LatentEncodingSpec.TemporalHaar(haarSpec, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.TemporalHaar(haarSpec, center, ridge, sourceDomain, targetDomain, annotations) =>
         TemporalBasisEncoder
           .encodeHaarSpec(
             data = data,
@@ -268,12 +362,12 @@ object LatentEncoder:
             ridge = ridge,
             sourceDomain = sourceDomain,
             targetDomain = targetDomain,
-            label = label,
-            metadata = metadata
+            label = annotations.labelValue,
+            metadata = annotations.metadataValues
           )
           .map(response => LatentEncodingResult.TemporalHaar(response, haarSpec, center, ridge))
 
-      case LatentEncodingSpec.SharedSpatialBasis(basis, basisId, locator, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.SharedSpatialBasis(basis, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations) =>
         SharedBasisEncoder
           .encode(
             data = data,
@@ -284,10 +378,28 @@ object LatentEncoder:
             ridge = ridge.value,
             sourceDomain = sourceDomain,
             targetDomain = targetDomain,
-            label = label,
-            metadata = metadata
+            label = annotations.labelValue,
+            metadata = annotations.metadataValues
           )
           .map(LatentEncodingResult.SharedBasis(_))
+
+      case LatentEncodingSpec.RadialSpatialBasis(radialBasis, maskDims, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations, artifactParams) =>
+        RadialBasisEncoder
+          .encode(
+            data = data,
+            radialBasis = radialBasis,
+            maskDims = maskDims,
+            basisId = basisId,
+            locator = locator,
+            center = center,
+            ridge = ridge.value,
+            sourceDomain = sourceDomain,
+            targetDomain = targetDomain,
+            label = annotations.labelValue,
+            metadata = annotations.metadataValues,
+            artifactParams = artifactParams
+          )
+          .map(LatentEncodingResult.RadialBasis(_))
 
   def encodeResponse(
       data: DoubleMatrix,
@@ -303,7 +415,7 @@ object LatentEncoder:
       creator: String = "scalafim-latent"
   ): Either[ArchiveError, LnaArchive] =
     spec match
-      case LatentEncodingSpec.ProvidedTemporalBasis(_, _, _, _, _, _, _) =>
+      case LatentEncodingSpec.ProvidedTemporalBasis(_, _, _, _, _, _) =>
         encodeResponse(data, spec)
           .left
           .map(archiveError)
@@ -316,7 +428,7 @@ object LatentEncoder:
             )
           }
 
-      case LatentEncodingSpec.TemporalDct(dctSpec, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.TemporalDct(dctSpec, center, ridge, sourceDomain, targetDomain, annotations) =>
         LatentArchiveCodec.toTemporalDctArchiveSpec(
           data = data,
           space = space,
@@ -327,11 +439,11 @@ object LatentEncoder:
           creator = creator,
           sourceDomain = sourceDomain,
           targetDomain = targetDomain,
-          label = label,
-          metadata = metadata
+          label = annotations.labelValue,
+          metadata = annotations.metadataValues
         )
 
-      case LatentEncodingSpec.TemporalHaar(_, _, _, _, _, _, _) =>
+      case LatentEncodingSpec.TemporalHaar(_, _, _, _, _, _) =>
         encodeResponse(data, spec)
           .left
           .map(archiveError)
@@ -344,7 +456,7 @@ object LatentEncoder:
             )
           }
 
-      case LatentEncodingSpec.SharedSpatialBasis(basis, basisId, locator, center, ridge, sourceDomain, targetDomain, label, metadata) =>
+      case LatentEncodingSpec.SharedSpatialBasis(basis, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations) =>
         LatentArchiveCodec.toSharedBasisArchive(
           data = data,
           space = space,
@@ -357,8 +469,27 @@ object LatentEncoder:
           creator = creator,
           sourceDomain = sourceDomain,
           targetDomain = targetDomain,
-          label = label,
-          metadata = metadata
+          label = annotations.labelValue,
+          metadata = annotations.metadataValues
+        )
+
+      case LatentEncodingSpec.RadialSpatialBasis(radialBasis, maskDims, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations, artifactParams) =>
+        LatentArchiveCodec.toRadialBasisArchive(
+          data = data,
+          space = space,
+          radialBasis = radialBasis,
+          maskDims = maskDims,
+          basisId = basisId,
+          locator = locator,
+          center = center,
+          ridge = ridge.value,
+          runLabel = runLabel,
+          creator = creator,
+          sourceDomain = sourceDomain,
+          targetDomain = targetDomain,
+          label = annotations.labelValue,
+          metadata = annotations.metadataValues,
+          artifactParams = artifactParams
         )
 
   private def archiveError(error: LatentError): ArchiveError =

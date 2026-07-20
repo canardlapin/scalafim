@@ -35,8 +35,20 @@ class TransportSuite extends munit.FunSuite:
 
     assertEquals(reconstructed.toRows, Vector(Vector(24.0, 13.0), Vector(22.0, 11.0)))
     assertEquals(response.metadata("family"), "transport")
+    assertEquals(response.typedMetadata.get("family"), Some("transport"))
     assertEquals(response.decoders, TransportDecoders.NativeOnly(decoder))
     assertEquals(response.adjointConvention, TransportAdjointConvention.EuclideanDiscrete)
+    assert(response.decodeSemantics.coefficientDecodeIsLinearOnly)
+    assert(!response.decodeSemantics.coefficientDecodeIncludes(LatentMaterializationTerm.SampleOffset))
+    assert(response.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
+
+    val invalidMetadata =
+      TransportLatentResponse.withIdentityTransform(
+        coefficientsAnalysis = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+        nativeDecoder = decoder,
+        metadata = Map(" " -> "bad")
+      )
+    assert(invalidMetadata.isLeft)
   }
 
   test("rectangular transport decoder supports analysis and raw coefficient handoff") {

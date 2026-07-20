@@ -175,6 +175,38 @@
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
       "caveats": []
+    },
+    {
+      "id": "latent.transport-selection.v1",
+      "tier": "workflow_parity",
+      "module": "latent",
+      "suite_class": "scalafim.latent.scenarios.TransportSelectionScenarioSuite",
+      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/TransportSelectionScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_transport_operator_selection",
+        "description": "A transport latent response is archived, decoded, and selected reconstruction is compared with the analytic native-decoder plus offset oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt latentJVM/test", "sbt latentJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "latent.boldzip-payload-roundtrip.v1",
+      "tier": "numeric_canary",
+      "module": "latent",
+      "suite_class": "scalafim.latent.scenarios.BoldZipPayloadRoundtripScenarioSuite",
+      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/BoldZipPayloadRoundtripScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_boldzip_payload_fixture",
+        "description": "A BOLDZip-SR payload is archived, decoded, and selected reconstruction plus codec table metadata are compared with a small mathematical fixture."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt latentJVM/test", "sbt latentJS/test"],
+      "caveats": []
     }
   ]
 }

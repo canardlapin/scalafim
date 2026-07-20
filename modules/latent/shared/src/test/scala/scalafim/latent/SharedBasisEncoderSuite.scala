@@ -51,6 +51,8 @@ class SharedBasisEncoderSuite extends munit.FunSuite:
     assertEquals(encoding.response.metadata("family"), "shared_basis")
     assertEquals(encoding.response.metadata("basis.id"), basisId.value)
     assertEquals(encoding.response.metadata("center"), "true")
+    assert(encoding.response.decodeSemantics.coefficientDecodeIsLinearOnly)
+    assert(encoding.response.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
   }
 
   test("recovers exact coefficients for non-centered data in the shared basis span") {
@@ -62,6 +64,8 @@ class SharedBasisEncoderSuite extends munit.FunSuite:
 
     assertEquals(encoding.offset, None)
     assertRowsEqual(encoding.coefficients.toRows, coefficients, 1e-12)
+    assert(encoding.response.decodeSemantics.coefficientDecodeIsLinearOnly)
+    assert(!encoding.response.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
   }
 
   test("rejects basis/data voxel mismatches") {

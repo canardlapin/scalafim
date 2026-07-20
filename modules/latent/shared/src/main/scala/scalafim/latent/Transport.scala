@@ -132,8 +132,8 @@ final class TransportLatentResponse private (
     val offset: Option[DoubleVector],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
-    val label: String,
-    val metadata: Map[String, String],
+    val latentLabel: LatentLabel,
+    val typedMetadata: LatentMetadata,
     val adjointConvention: TransportAdjointConvention
 ) extends LatentResponse:
 
@@ -155,6 +155,9 @@ final class TransportLatentResponse private (
 
   override def coefTime: DoubleMatrix =
     coefficientsAnalysis
+
+  override def decodeSemantics: LatentDecodeSemantics =
+    LatentDecodeSemantics.linear(offset = offset.nonEmpty)
 
   def decoder(
       space: TransportSpace = TransportSpace.Native,
@@ -269,7 +272,19 @@ object TransportLatentResponse:
       metadata: Map[String, String],
       adjointConvention: TransportAdjointConvention
   ): Either[LatentError, TransportLatentResponse] =
-    validate(coefficientsAnalysis, decoders, transform, offset).map { _ =>
+    for
+      _ <- validate(coefficientsAnalysis, decoders, transform, offset)
+      annotation <- LatentAnnotation(
+        label,
+        metadata ++ Map(
+          "family" -> "transport",
+          "coordinates" -> "analysis",
+          "transport_decoders" -> decoders.metadataValue,
+          "has_template_decoder" -> decoders.templateCapable.toString,
+          "adjoint_convention" -> "euclidean_discrete"
+        )
+      )
+    yield
       new TransportLatentResponse(
         coefficientsAnalysis = coefficientsAnalysis,
         decoders = decoders,
@@ -277,17 +292,10 @@ object TransportLatentResponse:
         offset = offset,
         sourceDomain = sourceDomain,
         targetDomain = targetDomain,
-        label = label,
-        metadata = metadata ++ Map(
-          "family" -> "transport",
-          "coordinates" -> "analysis",
-          "transport_decoders" -> decoders.metadataValue,
-          "has_template_decoder" -> decoders.templateCapable.toString,
-          "adjoint_convention" -> "euclidean_discrete"
-        ),
+        latentLabel = annotation.label,
+        typedMetadata = annotation.metadata,
         adjointConvention = adjointConvention
       )
-    }
 
   def apply(
       coefficientsAnalysis: DoubleMatrix,

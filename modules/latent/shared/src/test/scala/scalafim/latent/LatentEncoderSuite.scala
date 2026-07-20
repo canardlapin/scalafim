@@ -22,7 +22,7 @@ class LatentEncoderSuite extends munit.FunSuite:
         spec = dctSpec,
         center = true,
         metadata = Map("subject" -> "sub-01")
-      )
+      ).fold(err => fail(err.message), identity)
     assertEquals(spec.typedMetadata.get("subject"), Some("sub-01"))
 
     val result =
@@ -41,6 +41,8 @@ class LatentEncoderSuite extends munit.FunSuite:
         assertRowsEqual(response.loadings.toRows, direct.loadings.toRows, 1e-12)
         assertEquals(response.metadata("family"), "time_dct")
         assertEquals(response.metadata("subject"), "sub-01")
+        assert(response.decodeSemantics.coefficientDecodeIsLinearOnly)
+        assert(response.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
       case other =>
         fail(s"expected temporal DCT result, found $other")
 
@@ -48,6 +50,11 @@ class LatentEncoderSuite extends munit.FunSuite:
       LatentEncoder
         .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    assertEquals(plan.kind, LatentArchiveKind.TemporalDct)
     val decoded =
       LatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity)
 
@@ -77,7 +84,7 @@ class LatentEncoderSuite extends munit.FunSuite:
         spec = haarSpec,
         center = true,
         metadata = Map("subject" -> "sub-01")
-      )
+      ).fold(err => fail(err.message), identity)
     assertEquals(spec.typedMetadata.get("subject"), Some("sub-01"))
 
     val result =
@@ -97,6 +104,8 @@ class LatentEncoderSuite extends munit.FunSuite:
         assertRowsEqual(response.loadings.toRows, direct.loadings.toRows, 1e-12)
         assertEquals(response.metadata("family"), "time_haar")
         assertEquals(response.metadata("subject"), "sub-01")
+        assert(response.decodeSemantics.coefficientDecodeIsLinearOnly)
+        assert(response.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
       case other =>
         fail(s"expected temporal Haar result, found $other")
 
@@ -104,16 +113,34 @@ class LatentEncoderSuite extends munit.FunSuite:
       LatentEncoder
         .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    assertEquals(plan.kind, LatentArchiveKind.TemporalHaar)
+    plan match
+      case LatentArchivePlan.TemporalHaar(_, descriptor, _, returnedSpec, center, ridge) =>
+        assertEquals(descriptor.kind, LatentArchiveKind.TemporalHaar)
+        assertEquals(returnedSpec.timepoints, haarSpec.timepoints)
+        assertEquals(returnedSpec.components, haarSpec.components)
+        assertEquals(center, true)
+        assertEquals(ridge.value, 0.0)
+      case other =>
+        fail(s"expected temporal Haar archive plan, found $other")
     val decoded =
       LatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity)
 
     decoded match
-      case LatentArchiveResponse.Explicit(response) =>
+      case LatentArchiveResponse.TemporalHaar(response, returnedSpec, center, ridge) =>
+        assertEquals(returnedSpec.timepoints, haarSpec.timepoints)
+        assertEquals(returnedSpec.components, haarSpec.components)
+        assertEquals(center, true)
+        assertEquals(ridge.value, 0.0)
         assertEquals(response.metadata("basis"), "haar")
         assertEquals(response.metadata("family"), "time_haar")
         assertRowsEqual(response.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-10)
       case other =>
-        fail(s"expected explicit Haar archive variant, found $other")
+        fail(s"expected temporal Haar archive variant, found $other")
   }
 
   test("latent typed shape metadata and selections preserve intent") {
@@ -128,6 +155,21 @@ class LatentEncoderSuite extends munit.FunSuite:
 
     assertEquals(LatentMetadata(Map("subject" -> "sub-01")).map(_.get("subject")), Right(Some("sub-01")))
     assert(LatentMetadata(Map("" -> "bad")).isLeft)
+    assertEquals(LatentLabel(" analysis ").map(_.value), Right("analysis"))
+    assertEquals(LatentLabel.optional(" ").map(_.value), Right(""))
+    assert(LatentLabel("").isLeft)
+
+    val annotation =
+      LatentAnnotation(" encoded ", Map("subject" -> "sub-01"))
+        .fold(err => fail(err.message), identity)
+    assertEquals(annotation.labelValue, "encoded")
+    assertEquals(annotation.metadata.get("subject"), Some("sub-01"))
+    assert(LatentAnnotation("encoded", Map(" " -> "bad")).isLeft)
+    assert(LatentEncodingSpec.providedBasis(DoubleMatrix.eye(2), metadata = Map(" " -> "bad")).isLeft)
+
+    val dctSpec =
+      DctSpec(timepoints = 2, components = 2).fold(err => fail(err.message), identity)
+    assert(LatentEncodingSpec.dctSpec(dctSpec, metadata = Map("" -> "bad")).isLeft)
 
     val typedSelection =
       TypedLatentSelection
@@ -236,6 +278,89 @@ class LatentEncoderSuite extends munit.FunSuite:
         assertEquals(decoded.basis.basisId, basisId)
         assertRowsEqual(decoded.coefficients.toRows, direct.coefficients.toRows, 1e-12)
         assertEquals(decoded.offset.map(_.toVector), direct.offset.map(_.toVector))
+      case other =>
+        fail(s"expected shared-basis archive variant, found $other")
+  }
+
+  test("radial spatial basis specs dispatch through shared-basis encoding and archives") {
+    val space = NeuroSpace(Vector(3, 1, 1))
+    val radial =
+      RadialBasis
+        .fromSpaceIndices(
+          atoms = Vector(
+            RadialAtom(WorldCoordinate3D.unsafe(0.0, 0.0, 0.0), RadialSigmaMm.unsafe(1.0)),
+            RadialAtom(WorldCoordinate3D.unsafe(2.0, 0.0, 0.0), RadialSigmaMm.unsafe(1.0))
+          ),
+          space = space,
+          activeIndices = Vector(0, 1, 2),
+          kernel = RadialKernel.Gaussian
+        )
+        .fold(err => fail(err.message), identity)
+    val basisId = SharedBasisId.unsafe("encoder_suite_hrbf")
+    val coefficients =
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 2.0),
+          Vector(-0.5, 0.25),
+          Vector(3.0, -1.0)
+        )
+      )
+    val data = DoubleMatrix.multiply(coefficients, radial.loadings.transpose)
+    val spec =
+      LatentEncodingSpec
+        .radialBasis(
+          radialBasis = radial,
+          maskDims = space.spatialDims,
+          basisId = basisId,
+          center = false,
+          metadata = Map("subject" -> "sub-hrbf"),
+          artifactParams = Map("source" -> "encoder-suite")
+        )
+        .fold(err => fail(err.message), identity)
+    val direct =
+      RadialBasisEncoder
+        .encode(
+          data = data,
+          radialBasis = radial,
+          maskDims = space.spatialDims,
+          basisId = basisId,
+          center = false,
+          metadata = Map("subject" -> "sub-hrbf"),
+          artifactParams = Map("source" -> "encoder-suite")
+        )
+        .fold(err => fail(err.message), identity)
+
+    LatentEncoder.encode(data, spec).fold(err => fail(err.message), identity) match
+      case LatentEncodingResult.RadialBasis(encoding) =>
+        assertRowsEqual(encoding.coefficients.toRows, direct.coefficients.toRows, 1e-12)
+        assertEquals(encoding.artifact.kind, "hrbf")
+        assertEquals(encoding.artifact.params("source"), "encoder-suite")
+        assertEquals(encoding.response.metadata("radial.kernel"), "gaussian")
+        assertEquals(encoding.response.metadata("subject"), "sub-hrbf")
+      case other =>
+        fail(s"expected radial-basis result, found $other")
+
+    val archive =
+      LatentEncoder
+        .toArchive(data, space, spec)
+        .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    assertEquals(plan.kind, LatentArchiveKind.SharedBasis)
+
+    LatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity) match
+      case LatentArchiveResponse.SharedBasis(decoded) =>
+        assertEquals(decoded.basis.basisId, basisId)
+        assertEquals(decoded.basis.checksum, direct.artifact.checksum)
+        assertRowsEqual(decoded.coefficients.toRows, direct.coefficients.toRows, 1e-12)
+        assertEquals(decoded.metadata("radial.kernel"), "gaussian")
+        val materialized =
+          decoded
+            .materialize(direct.artifact, Some(space))
+            .fold(err => fail(err.message), identity)
+        assertRowsEqual(materialized.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-12)
       case other =>
         fail(s"expected shared-basis archive variant, found $other")
   }
