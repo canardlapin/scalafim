@@ -46,6 +46,19 @@ lazy val linalg =
 lazy val linalgJS  = linalg.js
 lazy val linalgJVM = linalg.jvm
 
+lazy val linalgBreeze =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/linalg-breeze"))
+    .dependsOn(linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-linalg-breeze",
+      libraryDependencies += "org.scalanlp" %% "breeze" % "2.1.0"
+    )
+
+lazy val linalgBreezeJVM = linalgBreeze.jvm
+
 lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -181,7 +194,6 @@ lazy val hrf =
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "org.scalanlp" %% "breeze"       % "2.1.0",
         "com.github.wendykierp" % "JTransforms" % "3.1"
       )
     )
@@ -468,6 +480,7 @@ lazy val root =
     .aggregate(
       linalgJS,
       linalgJVM,
+      linalgBreezeJVM,
       pipelineJS,
       pipelineJVM,
       graphicsJS,
