@@ -22,11 +22,11 @@ parallel mapping for independent diagnostic and template-refresh frame work;
 Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
 control. JVM builds also include lightweight NIfTI/sidecar IO, BIDS scan
 discovery with TR/slice-timing metadata, motion/matrix/summary report bundle
-writers, parser-only typed CLI commands, and an opt-in synthetic/external
+writers, executable typed CLI commands, and an opt-in synthetic/external
 benchmark harness. Profiles expose typed active and planned capabilities; full
 IC template-mode whitening, richer packet-aware estimator semantics,
-process-runner CLI wiring, and external real-data benchmark inputs are staged
-later layers.
+packaged shell-command distribution, and external real-data benchmark inputs
+are staged later layers.
 `WhiteningPolicy.FrameMeanOnly` is supported as the typed frame-mean residual
 path; `WhiteningPolicy.IcWhiten` is an explicit unsupported control until the
 template-mode whitening contract is proven.

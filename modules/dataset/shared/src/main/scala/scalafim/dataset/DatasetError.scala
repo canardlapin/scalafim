@@ -23,6 +23,14 @@ enum DatasetError:
   case LatentFailure(error: LatentError)
   case StorageFailure(detail: String)
   case InvalidLabel(label: String, value: String, detail: String)
+  case EmptyDatasetIndex
+  case DuplicateDatasetRun(key: String)
+  case DatasetRunNotFound(query: String)
+  case AmbiguousDatasetRun(query: String, matches: Int)
+  case InvalidTimeAxis(detail: String)
+  case InvalidDatasetValue(field: String, value: String, detail: String)
+  case InvalidEventRow(row: Int, detail: String)
+  case DatasetColumnNotFound(field: String)
 
   def message: String =
     this match
@@ -54,3 +62,19 @@ enum DatasetError:
         detail
       case InvalidLabel(label, value, detail) =>
         s"invalid $label label '$value': $detail"
+      case EmptyDatasetIndex =>
+        "dataset index must contain at least one run"
+      case DuplicateDatasetRun(key) =>
+        s"dataset index contains duplicate run key '$key'"
+      case DatasetRunNotFound(query) =>
+        s"dataset query matched no runs: $query"
+      case AmbiguousDatasetRun(query, matches) =>
+        s"dataset query matched $matches runs: $query"
+      case InvalidTimeAxis(detail) =>
+        s"invalid dataset time axis: $detail"
+      case InvalidDatasetValue(field, value, detail) =>
+        s"invalid dataset value for '$field'='$value': $detail"
+      case InvalidEventRow(row, detail) =>
+        s"invalid dataset event row $row: $detail"
+      case DatasetColumnNotFound(field) =>
+        s"dataset event column '$field' is not present"

@@ -30,6 +30,8 @@ class SharedBasisSuite extends munit.FunSuite:
     assertEquals(SharedBasisId("schaefer400_slepian-k8").map(_.value), Right("schaefer400_slepian-k8"))
     assert(SharedBasisId("../bad").isLeft)
     assert(SharedBasisId("bad/name").isLeft)
+    assertEquals(SharedBasisKind("slepian").map(_.value), Right("slepian"))
+    assert(SharedBasisKind(" \t").isLeft)
 
     val checksum = SharedBasisChecksum.fromHex("a" * 64).fold(err => fail(err.message), identity)
     assertEquals(checksum.value, s"sha256:${"a" * 64}")
@@ -96,6 +98,41 @@ class SharedBasisSuite extends munit.FunSuite:
         kind = "slepian"
       )
     assert(SharedBasisArtifact.validateFinite(bad).left.toOption.exists(_.message.contains("non-finite")))
+  }
+
+  test("checked shared-basis constructors return structured errors") {
+    val checkedMask =
+      SharedBasisMask
+        .checked(Vector(2, 2, 1), Vector(true, true, true, true))
+        .fold(err => fail(err.message), identity)
+    assertEquals(checkedMask.activeCount, 4)
+    assert(SharedBasisMask.checked(Vector(2, 2), Vector(true, false, true)).isLeft)
+
+    val artifact =
+      SharedBasisArtifact
+        .checked(
+          loadings = loadings,
+          mask = mask,
+          kind = "slepian",
+          params = Map("radius" -> "8"),
+          created = Some("2026-07-07T00:00:00Z")
+        )
+        .fold(err => fail(err.message), identity)
+    assertEquals(artifact.kind, "slepian")
+    assertEquals(artifact.nVoxels, loadings.rows)
+
+    assert(SharedBasisArtifact.checked(loadings, mask.copy(values = Vector(true, false, false, false)), "slepian").isLeft)
+    assert(
+      SharedBasisArtifact
+        .checked(
+          loadings = DMat.fromRows(Vector(Vector(1.0, Double.NaN), Vector(0.0, 1.0), Vector(0.5, 0.5), Vector(1.0, 0.0))),
+          mask = mask,
+          kind = "slepian"
+        )
+        .left
+        .toOption
+        .exists(_.message.contains("non-finite"))
+    )
   }
 
   test("registry codec roundtrips aliases deterministically") {

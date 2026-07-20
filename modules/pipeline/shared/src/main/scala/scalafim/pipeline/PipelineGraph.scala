@@ -79,7 +79,19 @@ private[pipeline] final case class StepNode[A, B](
 final case class PipelineOutputRef private[pipeline] (
     name: PortName,
     ref: ArtifactRef[?]
-)
+):
+  def nodeId: NodeId =
+    ref.nodeId
+
+  def kind: ArtifactKind[?] =
+    ref.kind
+
+  def label: Option[String] =
+    ref.label
+
+  private[pipeline] def typedRef[A](expected: ArtifactKind[A]): Either[PipelineError, ArtifactRef[A]] =
+    if ref.kind == expected then Right(ArtifactRef(ref.nodeId, expected, ref.label))
+    else Left(PipelineError.ArtifactKindMismatch(ref.nodeId, expected.diagnosticName, ref.kind.diagnosticName))
 
 final case class PipelineGraph private (
     id: PipelineId,
@@ -119,18 +131,18 @@ final case class PipelineGraph private (
   private def append(node: PipelineNode): Either[PipelineError, PipelineGraph] =
     if nodes.exists(_.id == node.id) then Left(PipelineError.DuplicateNode(node.id))
     else
-      val refs = node.dependencies
-      val firstUnknown = refs.find(ref => !nodes.exists(existing => existing.id == ref.nodeId && existing.output.kind == ref.kind))
-      firstUnknown match
-        case Some(ref) => Left(PipelineError.UnknownDependency(node.id, ref.nodeId))
-        case None     => Right(copy(nodes = nodes :+ node))
+      node.dependencies
+        .foldLeft(Right(()): Either[PipelineError, Unit]) { (validated, ref) =>
+          validated.flatMap(_ => validateRef(node.id, ref))
+        }
+        .map(_ => copy(nodes = nodes :+ node))
 
   private def validateRef(owner: NodeId, ref: ArtifactRef[?]): Either[PipelineError, Unit] =
     nodes.find(_.id == ref.nodeId) match
       case None =>
         Left(PipelineError.UnknownDependency(owner, ref.nodeId))
       case Some(node) if node.output.kind != ref.kind =>
-        Left(PipelineError.ArtifactKindMismatch(ref.nodeId, ref.kind.label, node.output.kind.label))
+        Left(PipelineError.ArtifactKindMismatch(ref.nodeId, ref.kind.diagnosticName, node.output.kind.diagnosticName))
       case Some(_) =>
         Right(())
 

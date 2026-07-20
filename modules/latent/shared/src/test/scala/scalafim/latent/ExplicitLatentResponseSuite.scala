@@ -77,8 +77,11 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
         Vector(62.0, 84.0),
         Vector(93.0, 126.0),
         Vector(124.0, 168.0)
-      )
+    )
     assertEquals(decoded.toRows, expected)
+    assert(latent.decodeSemantics.coefficientDecodeIsLinearOnly)
+    assert(!latent.decodeSemantics.coefficientDecodeIncludes(LatentMaterializationTerm.SampleOffset))
+    assert(latent.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
   }
 
   test("constructor rejects inconsistent and non-finite explicit factors") {
@@ -89,6 +92,22 @@ class ExplicitLatentResponseSuite extends munit.FunSuite:
     val badBasis = DoubleMatrix.fromRows(Vector(Vector(1.0, Double.NaN)))
     val bad = ExplicitLatentResponse(badBasis, DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))))
     assert(bad.swap.toOption.exists(_.message.contains("basis value")))
+  }
+
+  test("constructor stores validated typed annotations") {
+    val response =
+      ExplicitLatentResponse(
+        basis = basis,
+        loadings = loadings,
+        label = " demo-latent ",
+        metadata = Map("subject" -> "sub-01")
+      ).fold(err => fail(err.message), identity)
+
+    assertEquals(response.latentLabel.value, "demo-latent")
+    assertEquals(response.label, "demo-latent")
+    assertEquals(response.typedMetadata.get("subject"), Some("sub-01"))
+    assertEquals(response.metadata, Map("subject" -> "sub-01"))
+    assert(ExplicitLatentResponse(basis, loadings, metadata = Map(" " -> "bad")).isLeft)
   }
 
   test("selection validation rejects duplicates and out-of-range indices") {

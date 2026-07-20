@@ -15,7 +15,7 @@ object MotionNifti:
       try
         val header = Nifti.readHeader(path)
         val run = Nifti.readVec(path)
-        sidecarMetadata(defaultSidecar(path), header.dims, header.pixdim, header.sform)
+        sidecarMetadata(defaultSidecar(path), header.dims, header.pixdim, header.preferredAffine)
           .map(metadata => MotionNiftiRun(run, metadata.copy(path = path)))
       catch
         case e: Exception => Left(MotionIoError.InvalidInput(path, e.getMessage))

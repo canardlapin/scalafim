@@ -31,6 +31,19 @@ lazy val jsSettingsBase = Seq(
   Test / jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv()
 )
 
+lazy val graph =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/graph"))
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-graph"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val graphJS  = graph.js
+lazy val graphJVM = graph.jvm
+
 lazy val linalg =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -46,10 +59,38 @@ lazy val linalg =
 lazy val linalgJS  = linalg.js
 lazy val linalgJVM = linalg.jvm
 
+lazy val graphLinalg =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/graph-linalg"))
+    .dependsOn(graph, linalg, multivar % "test->compile")
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-graph-linalg"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val graphLinalgJS  = graphLinalg.js
+lazy val graphLinalgJVM = graphLinalg.jvm
+
+lazy val linalgBreeze =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/linalg-breeze"))
+    .dependsOn(linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-linalg-breeze",
+      libraryDependencies += "org.scalanlp" %% "breeze" % "2.1.0"
+    )
+
+lazy val linalgBreezeJVM = linalgBreeze.jvm
+
 lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/pipeline"))
+    .dependsOn(graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-pipeline"
@@ -181,7 +222,6 @@ lazy val hrf =
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "org.scalanlp" %% "breeze"       % "2.1.0",
         "com.github.wendykierp" % "JTransforms" % "3.1"
       )
     )
@@ -228,6 +268,61 @@ lazy val image =
 lazy val imageJS  = image.js
 lazy val imageJVM = image.jvm
 
+lazy val imageView =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view"))
+    .dependsOn(image, graphics)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val imageViewJS  = imageView.js
+lazy val imageViewJVM = imageView.jvm
+
+lazy val imageViewCanvas =
+  crossProject(JSPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-canvas"))
+    .dependsOn(imageView, graphicsCanvas)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-canvas"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val imageViewCanvasJS = imageViewCanvas.js
+
+lazy val imageViewJava2d =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-java2d"))
+    .dependsOn(imageView, graphicsJava2d)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-java2d"
+    )
+
+lazy val imageViewJava2dJVM = imageViewJava2d.jvm
+
+lazy val imageViewJavafx =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/image-view-javafx"))
+    .dependsOn(imageView, graphicsJavafx)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-image-view-javafx",
+      libraryDependencies ++= Seq(
+        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
+        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
+      )
+    )
+
+lazy val imageViewJavafxJVM = imageViewJavafx.jvm
+
 lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -260,7 +355,7 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image)
+    .dependsOn(image, graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
@@ -287,7 +382,7 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(linalg, image, surface)
+    .dependsOn(linalg, image, surface, graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-spatial"
@@ -301,7 +396,7 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(image, surface)
+    .dependsOn(image, surface, graph)
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"
@@ -396,7 +491,7 @@ lazy val fit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fit"))
-    .dependsOn(linalg, model, ar)
+    .dependsOn(linalg, model, ar, pipeline % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-fit"
@@ -419,6 +514,62 @@ lazy val mvpa =
 
 lazy val mvpaJS  = mvpa.js
 lazy val mvpaJVM = mvpa.jvm
+
+lazy val multivar =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/multivar"))
+    .dependsOn(linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-multivar"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val multivarJS  = multivar.js
+lazy val multivarJVM = multivar.jvm
+
+lazy val multivarIr =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/multivar-ir"))
+    .dependsOn(multivar)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-multivar-ir"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val multivarIrJS  = multivarIr.js
+lazy val multivarIrJVM = multivarIr.jvm
+
+lazy val inference =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/inference"))
+    .dependsOn(multivar, linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-inference"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val inferenceJS  = inference.js
+lazy val inferenceJVM = inference.jvm
+
+lazy val connectivity =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/connectivity"))
+    .dependsOn(graph, linalg)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-connectivity"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val connectivityJS  = connectivity.js
+lazy val connectivityJVM = connectivity.jvm
 
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
@@ -462,12 +613,31 @@ lazy val group =
 lazy val groupJS  = group.js
 lazy val groupJVM = group.jvm
 
+lazy val fmriWorkflow =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/fmri-workflow"))
+    .dependsOn(bids, dataset, model, fit, group)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-fmri-workflow"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val fmriWorkflowJS  = fmriWorkflow.js
+lazy val fmriWorkflowJVM = fmriWorkflow.jvm
+
 lazy val root =
   project
     .in(file("."))
     .aggregate(
+      graphJS,
+      graphJVM,
+      graphLinalgJS,
+      graphLinalgJVM,
       linalgJS,
       linalgJVM,
+      linalgBreezeJVM,
       pipelineJS,
       pipelineJVM,
       graphicsJS,
@@ -487,6 +657,11 @@ lazy val root =
       designJVM,
       imageJS,
       imageJVM,
+      imageViewJS,
+      imageViewJVM,
+      imageViewCanvasJS,
+      imageViewJava2dJVM,
+      imageViewJavafxJVM,
       thresholdJS,
       thresholdJVM,
       motionJS,
@@ -509,6 +684,14 @@ lazy val root =
       fitJVM,
       mvpaJS,
       mvpaJVM,
+      multivarJS,
+      multivarJVM,
+      multivarIrJS,
+      multivarIrJVM,
+      inferenceJS,
+      inferenceJVM,
+      connectivityJS,
+      connectivityJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,
@@ -517,15 +700,17 @@ lazy val root =
       atlasExamplesJVM,
       workflowExamplesJVM,
       groupJS,
-      groupJVM
+      groupJVM,
+      fmriWorkflowJS,
+      fmriWorkflowJVM
     )
     .settings(
       name := "scalafim",
       publish / skip := true
     )
 
-addCommandAlias("compileAll", ";linalgJVM/compile;linalgJS/compile;pipelineJVM/compile;pipelineJS/compile;graphicsJVM/compile;graphicsJS/compile;graphicsSvgJVM/compile;graphicsSvgJS/compile;graphicsCanvasJS/compile;graphicsJava2dJVM/compile;graphicsJavafxJVM/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile")
-addCommandAlias("testAll", ";linalgJVM/test;linalgJS/test;pipelineJVM/test;pipelineJS/test;graphicsJVM/test;graphicsJS/test;graphicsSvgJVM/test;graphicsSvgJS/test;graphicsCanvasJS/test;graphicsJava2dJVM/test;graphicsJavafxJVM/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test")
+addCommandAlias("compileAll", ";graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;graphicsJVM/compile;graphicsJS/compile;graphicsSvgJVM/compile;graphicsSvgJS/compile;graphicsCanvasJS/compile;graphicsJava2dJVM/compile;graphicsJavafxJVM/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;multivarJVM/compile;multivarJS/compile;multivarIrJVM/compile;multivarIrJS/compile;inferenceJVM/compile;inferenceJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile")
+addCommandAlias("testAll", ";graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;graphicsJVM/test;graphicsJS/test;graphicsSvgJVM/test;graphicsSvgJS/test;graphicsCanvasJS/test;graphicsJava2dJVM/test;graphicsJavafxJVM/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;multivarJVM/test;multivarJS/test;multivarIrJVM/test;multivarIrJS/test;inferenceJVM/test;inferenceJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("atlasCoverage", ";set atlasJVM / coverageEnabled := true;atlasJVM/test;atlasJVM/coverageReport;set atlasJVM / coverageEnabled := false")

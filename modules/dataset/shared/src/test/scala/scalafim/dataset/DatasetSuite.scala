@@ -6,14 +6,9 @@ import scalafim.image.{DMat, NeuroSpace}
 class DatasetSuite extends munit.FunSuite:
 
   private def backend: InMemoryDatasetBackend =
-    val rows = Vector(
-      Vector(1.0, 2.0, 3.0, 4.0),
-      Vector(5.0, 6.0, 7.0, 8.0),
-      Vector(9.0, 10.0, 11.0, 12.0)
-    )
     InMemoryDatasetBackend(
       id = DatasetId("demo"),
-      data = DMat.fromRows(rows),
+      data = DMat.fromRows(denseRows),
       space = NeuroSpace(Vector(2, 2, 1))
     )
 
@@ -57,6 +52,15 @@ class DatasetSuite extends munit.FunSuite:
     assertEquals(series.nTimepoints, 2)
     assertEquals(series.nVoxels, 2)
     assertEquals(series.data.toRows, Vector(Vector(2.0, 4.0), Vector(10.0, 12.0)))
+  }
+
+  test("dense dataset default read uses the full spatial voxel domain") {
+    val series = backend.read()
+
+    assertEquals(backend.voxelDomain.kind, VoxelDomainKind.FullSpatial)
+    assertEquals(backend.voxelDomain.indices, Vector(0, 1, 2, 3))
+    assertEquals(series.voxelIndices, Vector(0, 1, 2, 3))
+    assertEquals(series.data.toRows, denseRows)
   }
 
   test("selection reports duplicate and out-of-bounds indices as DatasetError") {
@@ -114,3 +118,10 @@ class DatasetSuite extends munit.FunSuite:
 
     assert(bad.message.contains("series has 1 columns but 2 selected voxels"))
   }
+
+  private def denseRows: Vector[Vector[Double]] =
+    Vector(
+      Vector(1.0, 2.0, 3.0, 4.0),
+      Vector(5.0, 6.0, 7.0, 8.0),
+      Vector(9.0, 10.0, 11.0, 12.0)
+    )

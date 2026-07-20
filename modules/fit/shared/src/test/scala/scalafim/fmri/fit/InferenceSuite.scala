@@ -110,11 +110,18 @@ class InferenceSuite extends munit.FunSuite:
       DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(3.0), Vector(5.0), Vector(7.0)))
     )
     val fit = Ols.unsafeFit(design, response)
+    val residualVariance = DoubleVector.unsafe(Array(0.0))
+    val covariance = CoefficientCovariance.unsafeShared(fit.normalizedCovariance)
     DenseFmriFitResult(
       coefficients = fit.coefficients,
-      standardErrors = fit.standardErrors,
-      normalizedCovariance = fit.normalizedCovariance,
-      residualVariance = DoubleVector.unsafe(Array(0.0)),
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        covariance,
+        residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
+      residualVariance = residualVariance,
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       columnNames = Vector("base_constant", "task"),
       voxelIndices = Vector(0),
@@ -195,6 +202,75 @@ class InferenceSuite extends munit.FunSuite:
     assertEqualsDouble(f.estimates(0, 0), 0.9, 1e-10)
     assertEqualsDouble(f.estimates(1, 0), 0.9, 1e-10)
     assertEqualsDouble(f.statistics(0), 24.3 / 2.0 / 0.35, 1e-10)
+  }
+
+  test("contrasts use voxelwise coefficient covariance when supplied") {
+    val firstCovariance =
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(0.25, 0.0),
+          Vector(0.0, 1.0)
+        )
+      )
+    val secondCovariance =
+      DoubleMatrix.fromRows(
+        Vector(
+          Vector(1.0, 0.0),
+          Vector(0.0, 1.0)
+        )
+      )
+    val covariance = CoefficientCovariance.unsafeVoxelwise(Vector(firstCovariance, secondCovariance))
+    val residualVariance = DoubleVector.fromSeq(Vector(1.0, 1.0))
+    val residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(8)
+    val result =
+      DenseFmriFitResult(
+        coefficients = CoefficientBlock(
+          DoubleMatrix.fromRows(
+            Vector(
+              Vector(2.0, 2.0),
+              Vector(0.0, 0.0)
+            )
+          )
+        ),
+        inference = CoefficientInference.unsafeFromExisting(
+          CoefficientInferenceScope.All,
+          StandardErrorBlock(
+            DoubleMatrix.fromRows(
+              Vector(
+                Vector(0.5, 1.0),
+                Vector(1.0, 1.0)
+              )
+            )
+          ),
+          covariance,
+          residualVariance,
+          residualDegreesOfFreedom
+        ),
+        residualVariance = residualVariance,
+        residualDegreesOfFreedom = residualDegreesOfFreedom,
+        columnNames = Vector("task", "base_constant"),
+        voxelIndices = Vector(10, 20),
+        timepoints = Vector.range(0, 10),
+        engine = FitEngine.GeneralizedLeastSquares,
+        summary = FitSummary(
+          engine = FitEngine.GeneralizedLeastSquares,
+          timepoints = 10,
+          predictors = 2,
+          voxels = 2,
+          robust = false,
+          autocorrelated = true
+        )
+      )
+
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
+    val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
+
+    assertEqualsDouble(t.standardErrors(0), 0.5, 1e-12)
+    assertEqualsDouble(t.standardErrors(1), 1.0, 1e-12)
+    assertEqualsDouble(t.statistics(0), 4.0, 1e-12)
+    assertEqualsDouble(t.statistics(1), 2.0, 1e-12)
+    assertEqualsDouble(f.statistics(0), 16.0, 1e-12)
+    assertEqualsDouble(f.statistics(1), 4.0, 1e-12)
   }
 
   test("contrasts reject zero residual variance instead of emitting non-finite statistics") {

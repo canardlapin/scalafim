@@ -98,6 +98,12 @@ class HaarBasisSuite extends munit.FunSuite:
     assertEquals(spec.timepoints, 8)
     assertEquals(spec.components, 6)
     assertEquals(spec.levels, 3)
+    assertEquals(spec, HaarSpec(timepoints = 8, components = 6).fold(err => fail(err.message), identity))
+    assertEquals(spec.hashCode(), HaarSpec(timepoints = 8, components = 6).fold(err => fail(err.message), identity).hashCode())
+    assertEquals(spec.toString, "HaarSpec(timepoints=8, components=6, levels=3)")
+    assertEquals(spec.copy(components = 4).map(_.components), Right(4))
+    assert(spec.copy(timepoints = 6).isLeft)
+    assertEquals(HaarSpec.full(8).map(_.components), Right(8))
 
     val nonPowerOfTwo = HaarSpec(timepoints = 6, components = 2)
     assert(nonPowerOfTwo.left.toOption.exists {

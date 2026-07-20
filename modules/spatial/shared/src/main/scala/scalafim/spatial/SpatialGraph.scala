@@ -2,6 +2,13 @@ package scalafim.spatial
 
 import scala.collection.mutable
 
+import scalafim.graph.DirectedGraph
+import scalafim.graph.EdgeCost
+import scalafim.graph.Graph
+import scalafim.graph.PathError
+import scalafim.graph.VertexBasis
+import scalafim.graph.shortestPath
+
 final case class SpatialGraph private (
   domains: Map[DomainId, Domain],
   morphisms: Vector[Morphism]
@@ -32,54 +39,37 @@ final case class SpatialGraph private (
     if !domains.contains(target) then return Left(SpatialError.DomainNotFound(target))
     if source == target then return Right(MorphismPath.identity(source))
 
-    val edges = routeEdges(policy, allowInverses)
-    val adjacency = mutable.HashMap.empty[DomainId, Vector[RouteEdge]]
-    edges.foreach { edge =>
-      adjacency.update(edge.from, adjacency.getOrElse(edge.from, Vector.empty) :+ edge)
-    }
+    given EdgeCost[Morphism] with
+      def cost(edge: Morphism): Double = edge.cost
 
-    given Ordering[(Double, DomainId)] =
-      Ordering.by[(Double, DomainId), Double](_._1).reverse
+    routeGraph(policy, allowInverses).flatMap: graph =>
+      graph.shortestPath(source, target) match
+        case Right(result) =>
+          val pathMorphisms = result.edges.map(_.value)
+          MorphismPath.build(pathMorphisms, pathMorphisms.exists(_.isInverted))
+        case Left(PathError.UnknownVertex(id)) => Left(SpatialError.DomainNotFound(id))
+        case Left(PathError.NoPath(_, _))       => Left(SpatialError.NoPath(source, target))
+        case Left(PathError.InvalidEdgeCost(_, _, value)) => Left(SpatialError.InvalidCost(value))
 
-    val queue = mutable.PriorityQueue.empty[(Double, DomainId)]
-    val distance = mutable.HashMap.empty[DomainId, Double]
-    val previous = mutable.HashMap.empty[DomainId, (DomainId, Morphism, Boolean)]
-    val visited = mutable.HashSet.empty[DomainId]
+  private def routeGraph(
+    policy: RoutingPolicy,
+    allowInverses: Boolean
+  ): Either[SpatialError, DirectedGraph[DomainId, Domain, Morphism]] =
+    val basis =
+      VertexBasis
+        .from(domains.values.toVector.sortBy(_.id.value).map(domain => domain.id -> domain))
+        .left
+        .map(error => SpatialError.GraphAssemblyFailed(error.message))
+    val routeMorphisms = collapseParallel(routeEdges(policy, allowInverses).filter(morphism => morphism.source != morphism.target))
+    basis.flatMap: value =>
+      Graph
+        .directed(value, routeMorphisms.map(morphism => (morphism.source, morphism.target, morphism)))
+        .left
+        .map(errors => SpatialError.GraphAssemblyFailed(errors.message))
 
-    distance(source) = 0.0
-    queue.enqueue((0.0, source))
-
-    while queue.nonEmpty do
-      val (cost, node) = queue.dequeue()
-      if !visited(node) then
-        visited += node
-        if node == target then
-          val pathMorphisms = Vector.newBuilder[Morphism]
-          var current = target
-          var usedInverses = false
-          while current != source do
-            val (prior, morphism, inverted) = previous(current)
-            pathMorphisms += morphism
-            usedInverses = usedInverses || inverted
-            current = prior
-          return MorphismPath.build(pathMorphisms.result().reverse, usedInverses)
-
-        adjacency.getOrElse(node, Vector.empty).foreach { edge =>
-          if !visited(edge.to) then
-            val candidate = cost + edge.morphism.cost
-            if candidate < distance.getOrElse(edge.to, Double.PositiveInfinity) then
-              distance(edge.to) = candidate
-              previous(edge.to) = (node, edge.morphism, edge.inverted)
-              queue.enqueue((candidate, edge.to))
-        }
-
-    Left(SpatialError.NoPath(source, target))
-
-  private def routeEdges(policy: RoutingPolicy, allowInverses: Boolean): Vector[RouteEdge] =
+  private def routeEdges(policy: RoutingPolicy, allowInverses: Boolean): Vector[Morphism] =
     val forward =
-      morphisms.filter(morphismAllowed(_, policy)).map { morphism =>
-        RouteEdge(morphism.source, morphism.target, morphism, inverted = false)
-      }
+      morphisms.filter(morphismAllowed(_, policy))
     if !allowInverses then forward
     else
       val inverse =
@@ -90,11 +80,19 @@ final case class SpatialGraph private (
                 source <- domains.get(rev.source)
                 target <- domains.get(rev.target)
                 if Morphism.validateDomains(rev, source, target).isRight
-              yield RouteEdge(rev.source, rev.target, rev, inverted = true)
+              yield rev
             }
           else None
         }
       forward ++ inverse
+
+  private def collapseParallel(edges: Vector[Morphism]): Vector[Morphism] =
+    edges
+      .zipWithIndex
+      .groupBy { case (morphism, _) => morphism.source -> morphism.target }
+      .values
+      .map(_.minBy { case (morphism, inputOrder) => (morphism.cost, inputOrder) }._1)
+      .toVector
 
   private def morphismAllowed(morphism: Morphism, policy: RoutingPolicy): Boolean =
     policy match
@@ -104,8 +102,6 @@ final case class SpatialGraph private (
         morphism.routeTag == RouteTag.Identity || morphism.routeTag == RouteTag.Anatomical
       case RoutingPolicy.Functional =>
         morphism.routeTag == RouteTag.Identity || morphism.routeTag == RouteTag.Functional
-
-private final case class RouteEdge(from: DomainId, to: DomainId, morphism: Morphism, inverted: Boolean)
 
 object SpatialGraph:
   val empty: SpatialGraph =

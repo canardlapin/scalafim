@@ -8,6 +8,11 @@ parcel reduction, overlap, and graph relationships. It deliberately leaves
 plotting, Shiny-style interaction, and hidden TemplateFlow downloads out of the
 core.
 
+`RegionGraph.adjacency` keeps its efficient implicit voxel-neighborhood scan.
+`RegionGraph.topology` lowers those deterministic contact counts to a canonical
+`UndirectedGraph[RegionId, Region, Int]` for traversal and graph-linalg without
+changing atlas vocabulary or materializing a voxel graph.
+
 See [docs/plans/atlas.md](../../docs/plans/atlas.md) for the fuller design and
 workflow guide.
 

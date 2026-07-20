@@ -46,14 +46,28 @@ opaque type BoldZipLag = Int
 object BoldZipLag:
   val Zero: BoldZipLag = 0
 
-  def apply(value: Int): BoldZipLag =
-    value
+  def apply(value: Int): Either[LatentError, BoldZipLag] =
+    if value == Int.MinValue then Left(LatentError.InvalidParameter("BOLDZip lag", value.toDouble))
+    else Right(value)
 
   def unsafe(value: Int): BoldZipLag =
-    value
+    apply(value).fold(error => throw IllegalArgumentException(error.message), identity)
 
   extension (lag: BoldZipLag)
     inline def value: Int = lag
+
+opaque type BoldZipAmplitude = Double
+
+object BoldZipAmplitude:
+  def apply(value: Double): Either[LatentError, BoldZipAmplitude] =
+    if !value.isFinite then Left(LatentError.InvalidParameter("BOLDZip amplitude", value))
+    else Right(value)
+
+  def unsafe(value: Double): BoldZipAmplitude =
+    apply(value).fold(error => throw IllegalArgumentException(error.message), identity)
+
+  extension (amplitude: BoldZipAmplitude)
+    inline def value: Double = amplitude
 
 opaque type BoldZipDuration = Int
 
@@ -189,9 +203,11 @@ object BoldZipSpatialBasis:
 final case class BoldZipTextureEntry(
     atom: BoldZipAtomIndex,
     carrier: BoldZipCarrierIndex,
-    amplitude: Double,
+    amplitude: BoldZipAmplitude,
     lag: BoldZipLag = BoldZipLag.Zero
-)
+):
+  def amplitudeValue: Double =
+    amplitude.value
 
 object BoldZipTextureEntry:
   def checked(
@@ -203,7 +219,9 @@ object BoldZipTextureEntry:
     for
       typedAtom <- BoldZipAtomIndex(atom)
       typedCarrier <- BoldZipCarrierIndex(carrier)
-    yield BoldZipTextureEntry(typedAtom, typedCarrier, amplitude, BoldZipLag(lag))
+      typedAmplitude <- BoldZipAmplitude(amplitude)
+      typedLag <- BoldZipLag(lag)
+    yield BoldZipTextureEntry(typedAtom, typedCarrier, typedAmplitude, typedLag)
 
   def unsafe(
       atom: Int,
@@ -214,18 +232,21 @@ object BoldZipTextureEntry:
     BoldZipTextureEntry(
       atom = BoldZipAtomIndex.unsafe(atom),
       carrier = BoldZipCarrierIndex.unsafe(carrier),
-      amplitude = amplitude,
+      amplitude = BoldZipAmplitude.unsafe(amplitude),
       lag = BoldZipLag.unsafe(lag)
     )
 
 final case class BoldZipResidualEvent(
     atom: BoldZipAtomIndex,
     frame: BoldZipFrameIndex,
-    amplitude: Double,
+    amplitude: BoldZipAmplitude,
     duration: BoldZipDuration = BoldZipDuration.One
 ):
   def time: Int =
     frame.value
+
+  def amplitudeValue: Double =
+    amplitude.value
 
 object BoldZipResidualEvent:
   def checked(
@@ -237,8 +258,9 @@ object BoldZipResidualEvent:
     for
       typedAtom <- BoldZipAtomIndex(atom)
       typedFrame <- BoldZipFrameIndex(frame)
+      typedAmplitude <- BoldZipAmplitude(amplitude)
       typedDuration <- BoldZipDuration(duration)
-    yield BoldZipResidualEvent(typedAtom, typedFrame, amplitude, typedDuration)
+    yield BoldZipResidualEvent(typedAtom, typedFrame, typedAmplitude, typedDuration)
 
   def unsafe(
       atom: Int,
@@ -249,7 +271,7 @@ object BoldZipResidualEvent:
     BoldZipResidualEvent(
       atom = BoldZipAtomIndex.unsafe(atom),
       frame = BoldZipFrameIndex.unsafe(frame),
-      amplitude = amplitude,
+      amplitude = BoldZipAmplitude.unsafe(amplitude),
       duration = BoldZipDuration.unsafe(duration)
     )
 
@@ -263,8 +285,8 @@ final class BoldZipPayload private (
     val offset: Option[DoubleVector],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
-    val label: String,
-    val metadata: Map[String, String]
+    val latentLabel: LatentLabel,
+    val typedMetadata: LatentMetadata
 ) extends LatentResponse:
 
   override val shape: LatentShape =
@@ -284,6 +306,9 @@ final class BoldZipPayload private (
         carrier += 1
       time += 1
     DoubleMatrix.unsafe(shape.timepoints, shape.coefficients, out)
+
+  override def decodeSemantics: LatentDecodeSemantics =
+    LatentDecodeSemantics.boldZip(offset = offset.nonEmpty, residualEvents = events.nonEmpty)
 
   override def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
     if coefficients.rows != shape.coefficients then
@@ -405,7 +430,7 @@ final class BoldZipPayload private (
     while i < texture.length do
       val entry = texture(i)
       if entry.atom.value == atom then
-        sum += entry.amplitude * laggedCarrierValue(entry.carrier.value, time, entry.lag.value)
+        sum += entry.amplitude.value * laggedCarrierValue(entry.carrier.value, time, entry.lag.value)
       i += 1
     if includeEvents then sum += eventValue(atom, time)
     sum
@@ -423,7 +448,7 @@ final class BoldZipPayload private (
       if entry.atom.value == atom then
         val sourceColumn = column - entry.lag.value
         if sourceColumn >= 0 && sourceColumn < carriersByColumn.cols then
-          sum += entry.amplitude * carriersByColumn.dataArray(entry.carrier.value * carriersByColumn.cols + sourceColumn)
+          sum += entry.amplitude.value * carriersByColumn.dataArray(entry.carrier.value * carriersByColumn.cols + sourceColumn)
       i += 1
     if includeEvents then sum += eventValue(atom, column)
     sum
@@ -450,7 +475,7 @@ final class BoldZipPayload private (
       val start = event.frame.value
       val stop = start + event.duration.value
       if event.atom.value == atom && time >= start && time < stop then
-        sum += event.amplitude
+        sum += event.amplitude.value
       i += 1
     sum
 
@@ -468,7 +493,19 @@ object BoldZipPayload:
       label: String = "boldzip_sr",
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, BoldZipPayload] =
-    validate(temporalBasis, carrierTheta, carrierLoadings, spatialBasis, texture, events, offset).map { _ =>
+    for
+      _ <- validate(temporalBasis, carrierTheta, carrierLoadings, spatialBasis, texture, events, offset)
+      annotation <- LatentAnnotation(
+        label,
+        metadata ++ Map(
+          "family" -> "boldzip_sr",
+          "codec_orientation" -> "samples_x_time",
+          "orientation" -> "time_x_samples",
+          "coarse_basis" -> spatialBasis.coarse.metadataValue,
+          "detail_basis" -> spatialBasis.detail.metadataValue
+        )
+      )
+    yield
       new BoldZipPayload(
         temporalBasis = temporalBasis,
         carrierTheta = carrierTheta,
@@ -479,16 +516,9 @@ object BoldZipPayload:
         offset = offset,
         sourceDomain = sourceDomain,
         targetDomain = targetDomain,
-        label = label,
-        metadata = metadata ++ Map(
-          "family" -> "boldzip_sr",
-          "codec_orientation" -> "samples_x_time",
-          "orientation" -> "time_x_samples",
-          "coarse_basis" -> spatialBasis.coarse.metadataValue,
-          "detail_basis" -> spatialBasis.detail.metadataValue
-        )
+        latentLabel = annotation.label,
+        typedMetadata = annotation.metadata
       )
-    }
 
   private def validate(
       temporalBasis: DoubleMatrix,
@@ -530,8 +560,8 @@ object BoldZipPayload:
         error = Some(LatentError.IndexOutOfBounds("texture carrier", entry.carrier.value, carriers))
       else if math.abs(entry.lag.value) >= timepoints then
         error = Some(LatentError.IndexOutOfBounds("texture lag", entry.lag.value, timepoints))
-      else if !entry.amplitude.isFinite then
-        error = Some(LatentError.NonFiniteValue("texture amplitude", textureIndex, entry.amplitude))
+      else if !entry.amplitude.value.isFinite then
+        error = Some(LatentError.NonFiniteValue("texture amplitude", textureIndex, entry.amplitude.value))
       textureIndex += 1
 
     var eventIndex = 0
@@ -545,8 +575,8 @@ object BoldZipPayload:
         error = Some(LatentError.IndexOutOfBounds("event frame", frame, timepoints))
       else if frame + duration > timepoints then
         error = Some(LatentError.IndexOutOfBounds("event duration", frame + duration - 1, timepoints))
-      else if !event.amplitude.isFinite then
-        error = Some(LatentError.NonFiniteValue("event amplitude", eventIndex, event.amplitude))
+      else if !event.amplitude.value.isFinite then
+        error = Some(LatentError.NonFiniteValue("event amplitude", eventIndex, event.amplitude.value))
       eventIndex += 1
 
     error match

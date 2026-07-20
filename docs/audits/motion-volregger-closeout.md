@@ -82,7 +82,7 @@ JVM adapters:
 - NIfTI/sidecar read-write adapter preserving affine, voxel size, TR, and slice
   timing metadata;
 - BIDS/fMRIPrep scan discovery through the typed BIDS project API;
-- parser-only typed CLI commands for `estimate`, `apply`, `run`, and `report`;
+- executable typed CLI commands for `estimate`, `apply`, `run`, and `report`;
 - motion TSV, transform matrix CSV, and summary CSV bundle writer;
 - opt-in synthetic/external benchmark harness with threshold summaries and
   external volregger/RNiftyReg guardrail CSV validation.
@@ -131,8 +131,8 @@ These are intentionally not claimed complete:
 
 - full template-mode IC whitening numeric recovery:
   `WhiteningPolicy.IcWhiten` remains a planned/unsupported control;
-- process-runner CLI packaging: `MotionCli` parses typed commands, but does not
-  install a shell command or execute an end-to-end correction process;
+- packaged shell-command distribution: `MotionCli` executes typed commands via
+  JVM entrypoints, but no installed launcher script is provided;
 - compressed NIfTI writing: `.nii.gz` reads are supported through image IO, but
   the lightweight writer intentionally writes uncompressed `.nii` plus sidecar;
 - overview plots/report graphics;

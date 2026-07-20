@@ -19,8 +19,12 @@ final case class BlockSpec(id: BlockId, columns: IndexSet):
         IndexSet.from(checked.indices.map(columns.indices), axis = columns.axis)
       }
 
+  /** Map global column indices to block-local positions. Local indices are always
+    * stamped with `IndexAxis.Feature`, whereas `globalColumns` preserves the block's
+    * own axis.
+    */
   def localColumns(globalColumns: IndexSet): Either[MultivarError, IndexSet] =
-    MatrixView.requireColumnIndexSet(globalColumns, Int.MaxValue).flatMap { checked =>
+    MatrixView.requireColumnAxis(globalColumns).flatMap { checked =>
       val lookup = columns.indices.zipWithIndex.toMap
       val locals = Vector.newBuilder[Int]
       var i = 0

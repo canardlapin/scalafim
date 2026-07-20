@@ -24,7 +24,8 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   `Triangle`, and `SurfaceGeometry`.
 - `Hemisphere`, `SurfaceKind`, `SurfaceSet`, and `HemispherePair`.
 - `MeshTopology` derived from triangle faces: edges, neighbors, edge lengths,
-  face areas, normals, and Euler characteristic.
+  face areas, normals, Euler characteristic, and a non-retained `toGraph`
+  interop value with distance-typed edges.
 - Vertex-indexed containers: `SurfaceField`, `SurfaceMatrix`, `SurfaceRoi`,
   and `LabeledSurface`.
 - `VolToSurfMorphism` and `SurfToSurfMorphism` wrappers for reusable
@@ -52,6 +53,10 @@ loaded into `TriangleMesh`.
 
 `TriangleMesh` stores only geometry. `MeshTopology` is a derived view over the
 mesh, so graph-like queries do not become a second source of truth.
+`MeshTopology.toGraph` materializes an immutable graph on demand; callers may
+reuse that value, but `MeshTopology` does not retain a parallel full topology.
+Thresholded components share one surface-local filtered traversal rather than
+allocating induced graphs per field.
 
 `SurfaceGeometry.surfaceToWorld` stores a 4x4 affine. Readers use identity when
 the source format has no usable transform.

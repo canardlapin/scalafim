@@ -14,7 +14,8 @@ final case class ArRunDiagnostic(
     rho: Double,
     method: String,
     rows: Int,
-    coefficients: Vector[Double] = Vector.empty
+    coefficients: Vector[Double] = Vector.empty,
+    voxelwiseCoefficients: Vector[Vector[Double]] = Vector.empty
 ):
   require(runIndex >= 0, "run index must be non-negative")
   require(rho.isFinite, "AR rho must be finite")
@@ -22,17 +23,89 @@ final case class ArRunDiagnostic(
   require(rows > 0, "AR diagnostic rows must be positive")
   require(coefficients.forall(_.isFinite), "AR diagnostic coefficients must be finite")
   require(coefficients.isEmpty || coefficients.head == rho, "AR diagnostic rho must match the first coefficient")
+  require(voxelwiseCoefficients.forall(_.forall(_.isFinite)), "voxelwise AR coefficients must be finite")
 
   def phi: Vector[Double] =
     if coefficients.isEmpty then Vector(rho) else coefficients
 
 final case class ArDiagnostics(
     order: Int,
-    runs: Vector[ArRunDiagnostic]
+    runs: Vector[ArRunDiagnostic],
+    iterations: Int = 1,
+    sharedNormalizedCovariance: Boolean = true
 ):
   require(order >= 1, "AR diagnostics require positive order")
   require(runs.nonEmpty, "AR diagnostics must contain at least one run")
   require(runs.forall(_.phi.length == order), "AR diagnostic coefficient length must match order")
+  require(runs.forall(_.voxelwiseCoefficients.forall(_.length == order)), "voxelwise AR coefficient length must match order")
+  require(iterations >= 0, "AR diagnostics iterations must be non-negative")
+  require(sharedNormalizedCovariance || runs.forall(_.voxelwiseCoefficients.nonEmpty), "voxelwise AR diagnostics must carry per-voxel coefficients")
+
+object ArDiagnostics:
+  def merge(blocks: IndexedSeq[ArDiagnostics]): Either[FitError, ArDiagnostics] =
+    if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one AR diagnostics block is required"))
+    else
+      val first = blocks.head
+      if blocks.forall(_.sharedNormalizedCovariance) then
+        if blocks.forall(_ == first) then Right(first)
+        else Left(FitError.IncompatibleFitBlocks("all dense blocks must have identical autocorrelation diagnostics"))
+      else if blocks.exists(_.sharedNormalizedCovariance) then
+        Left(FitError.IncompatibleFitBlocks("cannot merge shared and voxelwise autocorrelation diagnostics"))
+      else validateVoxelwiseCompatible(blocks, first).map { _ =>
+        val mergedRuns =
+          first.runs.indices.toVector.map { runIndex =>
+            val perVoxel =
+              blocks.iterator.flatMap(block => block.runs(runIndex).voxelwiseCoefficients).toVector
+            val summary = averageCoefficients(perVoxel, first.order)
+            first.runs(runIndex).copy(
+              rho = summary.head,
+              coefficients = summary,
+              voxelwiseCoefficients = perVoxel
+            )
+          }
+        first.copy(runs = mergedRuns, sharedNormalizedCovariance = false)
+      }
+
+  private def validateVoxelwiseCompatible(
+      blocks: IndexedSeq[ArDiagnostics],
+      first: ArDiagnostics
+  ): Either[FitError, Unit] =
+    var blockIndex = 0
+    while blockIndex < blocks.length do
+      val block = blocks(blockIndex)
+      if block.order != first.order then
+        return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share order"))
+      if block.iterations != first.iterations then
+        return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share iteration count"))
+      if block.runs.length != first.runs.length then
+        return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share run layout"))
+
+      var runIndex = 0
+      while runIndex < first.runs.length do
+        val left = first.runs(runIndex)
+        val right = block.runs(runIndex)
+        if left.runIndex != right.runIndex || left.method != right.method || left.rows != right.rows then
+          return Left(FitError.IncompatibleFitBlocks("voxelwise AR chunks must share run diagnostics"))
+        if right.voxelwiseCoefficients.exists(_.length != first.order) then
+          return Left(FitError.IncompatibleFitBlocks("voxelwise AR coefficient length must match order"))
+        runIndex += 1
+      blockIndex += 1
+    Right(())
+
+  private def averageCoefficients(coefficients: Vector[Vector[Double]], order: Int): Vector[Double] =
+    val out = new Array[Double](order)
+    var row = 0
+    while row < coefficients.length do
+      var col = 0
+      while col < order do
+        out(col) += coefficients(row)(col)
+        col += 1
+      row += 1
+    var col = 0
+    while col < order do
+      out(col) /= coefficients.length.toDouble
+      col += 1
+    out.toVector
 
 sealed trait FmriFitResult:
   def columnNames: Vector[String]
@@ -44,8 +117,7 @@ sealed trait FmriFitResult:
 
 final case class DenseFmriFitResult(
     coefficients: CoefficientBlock,
-    standardErrors: StandardErrorBlock,
-    normalizedCovariance: DoubleMatrix,
+    inference: CoefficientInference,
     residualVariance: DoubleVector,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     columnNames: Vector[String],
@@ -54,26 +126,37 @@ final case class DenseFmriFitResult(
     engine: FitEngine,
     summary: FitSummary,
     olsDiagnostics: Option[OlsDiagnostics] = None,
-    autocorrelation: Option[ArDiagnostics] = None
+    autocorrelation: Option[ArDiagnostics] = None,
+    robustDiagnostics: Option[RobustDiagnostics] = None
 ) extends FmriFitResult:
   require(columnNames.length == coefficients.predictors, "column names must match coefficient rows")
   require(voxelIndices.length == coefficients.voxels, "voxel indices must match coefficient columns")
   require(timepoints.nonEmpty, "fit result must contain at least one timepoint")
   require(residualVariance.length == coefficients.voxels, "residual variances must match coefficient columns")
-  require(standardErrors.predictors == coefficients.predictors, "standard errors must match coefficient rows")
-  require(standardErrors.voxels == coefficients.voxels, "standard errors must match coefficient columns")
-  require(normalizedCovariance.rows == coefficients.predictors, "normalized covariance rows must match predictors")
-  require(normalizedCovariance.cols == coefficients.predictors, "normalized covariance cols must match predictors")
+  require(inference.predictors == coefficients.predictors, "coefficient inference must match coefficient rows")
+  require(inference.voxels == coefficients.voxels, "coefficient inference must match coefficient columns")
   require(olsDiagnostics.forall(_.predictors == coefficients.predictors), "OLS diagnostics must match coefficient rows")
 
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
+  def standardErrors: StandardErrorBlock = inference.standardErrors
+  def normalizedCovariance: DoubleMatrix = inference.normalizedCovariance
+  def coefficientCovariance: CoefficientCovariance = inference.covariance
+  def inferenceScope: CoefficientInferenceScope = inference.scope
   def diagnostics: FitDiagnostics = FitDiagnostics(residualDegreesOfFreedom, residualVariance)
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
   def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
 
   def inferenceReady: Either[FitError, InferenceReadyDenseFit] =
-    Right(InferenceReadyDenseFit(this, residualDegreesOfFreedom))
+    autocorrelation match
+      case Some(diagnostics) if !diagnostics.sharedNormalizedCovariance && !inference.covariance.isVoxelwise =>
+        Left(FitError.UnsupportedAutocorrelation("voxelwise AR contrast inference requires per-voxel covariance result bundles"))
+      case _ =>
+        robustDiagnostics match
+          case Some(diagnostics) if !diagnostics.sharedNormalizedCovariance && !inference.covariance.isVoxelwise =>
+            Left(FitError.UnsupportedRobust("robust contrast inference requires per-voxel covariance result bundles"))
+          case _ =>
+            Right(InferenceReadyDenseFit(this, inference.residualDegreesOfFreedom))
 
   def coefficient(columnName: String, voxelIndex: Int): Option[Double] =
     val row = columnNames.indexOf(columnName)

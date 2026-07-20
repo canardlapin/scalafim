@@ -27,10 +27,13 @@ final case class LatentResponseDatasetBackend(
   private val sampleMap: VoxelSampleMap =
     sampleMapEither.fold(error => throw new IllegalArgumentException(error.message), identity)
 
+  override lazy val voxelDomain: VoxelDomain =
+    VoxelDomain.activeUnsafe(sampleMap.spatialSize, sampleMap.sampleVoxels)
+
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
       checkedShape <- shapeEither
-      resolved <- selection.resolveEither(checkedShape)
+      resolved <- selection.resolveEither(checkedShape, voxelDomain)
       samples <- sampleMap.samplesFor(resolved.voxelIndexValues)
       decoded <- response
         .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(samples)))

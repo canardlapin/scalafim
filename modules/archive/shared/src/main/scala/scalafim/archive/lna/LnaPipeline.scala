@@ -3,8 +3,6 @@ package scalafim.archive.lna
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
 import scalafim.image.{DMat, NeuroSpace}
 
-import scala.util.control.NonFatal
-
 object LnaPipeline:
   def quantArchive(
       data: DMat,
@@ -265,7 +263,11 @@ object LnaPipeline:
       locator: Option[SharedBasisLocator] = None,
       offset: Option[Vector[Double]] = None,
       runLabel: RunLabel = RunLabel.indexed(0),
-      creator: String = "scalafim-archive"
+      creator: String = "scalafim-archive",
+      sourceDomain: Option[String] = Some("voxels"),
+      targetDomain: Option[String] = Some("shared_basis.coefficients"),
+      label: Option[String] = None,
+      metadata: Map[String, String] = Map.empty
   ): Either[ArchiveError, LnaArchive] =
     val shape = LnaShape(space, coefficients.rows)
     if basis.mask.values.length != shape.spatialSize then
@@ -292,9 +294,10 @@ object LnaPipeline:
               params = TransformParams.SharedBasisEmbed(
                 basis = basisRef,
                 centerDataWith = offsetRef.map(_.path),
-                sourceDomain = Some("voxels"),
-                targetDomain = Some("shared_basis.coefficients"),
-                metadata = Map(
+                sourceDomain = sourceDomain,
+                targetDomain = targetDomain,
+                label = label,
+                metadata = metadata ++ Map(
                   "basis.kind" -> validBasis.kind,
                   "basis.n_atoms" -> validBasis.nAtoms.toString,
                   "basis.n_voxels" -> validBasis.nVoxels.toString,
@@ -422,7 +425,7 @@ object LnaPipeline:
         case Some(Payload.DoubleMatrix(data, _)) => Right(data)
         case Some(_) => Left(ArchiveError.ShapeMismatch("delta first-values payload is not a double matrix"))
         case None => Left(ArchiveError.MissingPayload(firstPath))
-      dense <- catchTransform("delta decode")(Delta.decode(deltas, first, p))
+      dense <- Delta.decodeChecked(deltas, first, p)
     yield dense
 
   private def reconstructQuant(
@@ -445,7 +448,7 @@ object LnaPipeline:
         case Some(Payload.DoubleVector(values, _)) => Right(values)
         case Some(_) => Left(ArchiveError.ShapeMismatch("offset payload is not a double vector"))
         case None => Left(ArchiveError.MissingPayload(offsetPath))
-      dense <- catchTransform("quant decode")(Quant.decode(q, scale, offset))
+      dense <- Quant.decodeChecked(q, scale, offset)
     yield dense
 
   private def reconstructEmbed(
@@ -485,10 +488,6 @@ object LnaPipeline:
       .find(_.role == role)
       .map(_.path)
       .toRight(ArchiveError.InvalidArchive(s"${desc.kind.value} descriptor missing ${role.value} dataset"))
-
-  private def catchTransform[A](label: String)(body: => A): Either[ArchiveError, A] =
-    try Right(body)
-    catch case NonFatal(e) => Left(ArchiveError.InvalidArchive(s"$label: ${e.getMessage}"))
 
   private def multiplyByBasisTranspose(data: DMat, basis: DMat): DMat =
     val rows =

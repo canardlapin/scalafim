@@ -2,10 +2,13 @@
   "schema_version": "scalafim-scenario-manifest/v1",
   "status_semantics": {
     "pass": "The scenario's ScenarioResult.status is Pass and ScenarioResult.ciPass is true.",
-    "fail": "Any unexpected shape, finite-value, identity, tolerance, caveat, or oracle check failed."
+    "pass_with_caveats": "All active observations passed, at least one non-blocking caveat was emitted, and CI may pass only when every caveat id is declared and allowed by scenario policy.",
+    "fail": "ScenarioResult.status is Fail when any unexpected shape, finite-value, identity, tolerance, blocking caveat, or oracle check failed. A pass_with_caveats result with an undeclared caveat is a CI policy failure, not a clean pass."
   },
   "default_acceptance_commands": [
     "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+    "sbt connectivityJVM/test",
+    "sbt connectivityJS/test",
     "sbt designJVM/test",
     "sbt designJS/test",
     "sbt fitJVM/test",
@@ -14,6 +17,30 @@
     "sbt groupJS/test"
   ],
   "scenarios": [
+    {
+      "id": "connectivity.ariadne-cor-lw-weighted.v1",
+      "tier": "workflow_parity",
+      "module": "connectivity",
+      "suite_class": "scalafim.connectivity.scenarios.AriadneCorLwScenarioSuite",
+      "suite_path": "modules/connectivity/shared/src/test/scala/scalafim/connectivity/scenarios/AriadneCorLwScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "ariadne_weighted_cor_lw_fixture",
+        "description": "A fixed Ariadne weighted cor_lw analysis is represented as typed parcel time series plus frame weights, executed through ScalaFIM connectivity estimators, and checked against Ariadne shrinkage and edge-order semantics.",
+        "source_paths": [
+          "/Users/bbuchsbaum/code/ariadne/R/estimate_connectivity.R",
+          "/Users/bbuchsbaum/code/ariadne/tests/testthat/test_cor_accuracy.R",
+          "modules/connectivity/shared/src/test/scala/scalafim/connectivity/fixtures/AriadneCoreFixtures.scala"
+        ]
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "sbt connectivityJVM/test",
+        "sbt connectivityJS/test"
+      ],
+      "caveats": []
+    },
     {
       "id": "fit.public-f-contrast.v1",
       "tier": "workflow_parity",
@@ -64,6 +91,54 @@
       "reference": {
         "kind": "metadata_selected_lss_oracle",
         "description": "Builder-created LSS results are compared with direct LeastSquaresSeparate output assembled from EventTermColumnRole metadata."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.censored-multirun-concat.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/CensoredMultirunConcatScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_selected_ols",
+        "description": "Public multi-run fit with selected timepoints is compared with direct OLS on the row-deleted design and response; censored rows contain outliers to prove they are omitted."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.chunked-runwise-execution.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ChunkedRunwiseExecutionScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_runwise_chunk_oracle",
+        "description": "Public chunked and future chunked RunwiseLeastSquares execution are compared with unchunked runwise fitting and analytic per-run coefficients while checking chunk ordinals, selected voxel order, and selected-row run partitions."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.pipeline-first-level-workflow.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PipelineFirstLevelWorkflowScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "direct_ols_plus_pipeline_runner_parity",
+        "description": "A public fMRI dataset/model/fit/contrast workflow is executed as a generic pipeline graph; local and bounded future runners are compared against a direct OLS oracle while checking typed artifact outputs, dependency stages, receipts, metadata, and selected voxel order."
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
@@ -147,6 +222,54 @@
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "dataset.latent-archive-roundtrip.v1",
+      "tier": "workflow_parity",
+      "module": "dataset",
+      "suite_class": "scalafim.dataset.scenarios.LatentArchiveRoundtripScenarioSuite",
+      "suite_path": "modules/dataset/shared/src/test/scala/scalafim/dataset/scenarios/LatentArchiveRoundtripScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_temporal_dct_archive_selection",
+        "description": "A full-rank temporal-DCT LNA archive is read through LatentArchiveDatasetBackend and selected time/voxel order, shape, metadata, and values are compared with the source dense matrix."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt datasetJVM/test", "sbt datasetJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "latent.transport-selection.v1",
+      "tier": "workflow_parity",
+      "module": "latent",
+      "suite_class": "scalafim.latent.scenarios.TransportSelectionScenarioSuite",
+      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/TransportSelectionScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_transport_operator_selection",
+        "description": "A transport latent response is archived, decoded, and selected reconstruction is compared with the analytic native-decoder plus offset oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt latentJVM/test", "sbt latentJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "latent.boldzip-payload-roundtrip.v1",
+      "tier": "numeric_canary",
+      "module": "latent",
+      "suite_class": "scalafim.latent.scenarios.BoldZipPayloadRoundtripScenarioSuite",
+      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/BoldZipPayloadRoundtripScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "mathematical_boldzip_payload_fixture",
+        "description": "A BOLDZip-SR payload is archived, decoded, and selected reconstruction plus codec table metadata are compared with a small mathematical fixture."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt latentJVM/test", "sbt latentJS/test"],
       "caveats": []
     }
   ]

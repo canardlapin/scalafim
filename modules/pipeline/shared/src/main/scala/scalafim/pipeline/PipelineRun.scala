@@ -1,5 +1,7 @@
 package scalafim.pipeline
 
+import scala.annotation.targetName
+
 enum PipelineStatus:
   case Pending
   case Running
@@ -18,16 +20,41 @@ final case class StepReceipt(
 
 final case class PipelineRun(
     graphId: PipelineId,
+    outputs: Vector[PipelineOutputRef],
     status: PipelineStatus,
     values: ArtifactTable,
     receipts: Vector[StepReceipt],
-    error: Option[PipelineError]
+    error: Option[PipelineError],
+    nodeDescriptions: Vector[NodeDescription] = Vector.empty,
+    runner: RunnerMetadata = RunnerMetadata.local,
+    userMetadata: Vector[(String, String)] = Vector.empty
 ):
   def succeeded: Boolean =
     status == PipelineStatus.Succeeded
 
+  def trace: PipelineTrace =
+    PipelineTrace.fromRun(this)
+
   def get[A](ref: ArtifactRef[A]): Either[PipelineError, A] =
     values.get(ref)
+
+  def outputRef(name: PortName): Either[PipelineError, PipelineOutputRef] =
+    outputs.find(_.name == name).toRight(PipelineError.MissingOutput(name))
+
+  @targetName("outputRefByString")
+  def outputRef(name: String): Either[PipelineError, PipelineOutputRef] =
+    PortName(name).flatMap(outputRef)
+
+  def output[A](name: PortName, kind: ArtifactKind[A]): Either[PipelineError, A] =
+    for
+      output <- outputRef(name)
+      ref <- output.typedRef(kind)
+      value <- values.get(ref)
+    yield value
+
+  @targetName("outputByString")
+  def output[A](name: String, kind: ArtifactKind[A]): Either[PipelineError, A] =
+    PortName(name).flatMap(port => output(port, kind))
 
 object LocalPipelineRunner:
   def run(graph: PipelineGraph, context: RunContext = RunContext.empty): PipelineRun =
@@ -35,10 +62,14 @@ object LocalPipelineRunner:
       case Left(error) =>
         PipelineRun(
           graphId = graph.id,
+          outputs = graph.outputs,
           status = PipelineStatus.Failed,
           values = ArtifactTable.empty,
           receipts = Vector.empty,
-          error = Some(error)
+          error = Some(error),
+          nodeDescriptions = graph.describe,
+          runner = RunnerMetadata.local,
+          userMetadata = sortedMetadata(context)
         )
       case Right(plan) =>
         runPlan(plan, context)
@@ -60,7 +91,7 @@ object LocalPipelineRunner:
             Some(s"dependency '${dep.nodeId.value}' did not succeed")
           )
         case None =>
-          node.execute(table, context) match
+          PipelineNodeExecution.execute(node, table, context) match
             case Right(stored) =>
               table.putStored(node.output, stored) match
                 case Right(updated) =>
@@ -82,11 +113,18 @@ object LocalPipelineRunner:
 
     PipelineRun(
       graphId = plan.graph.id,
+      outputs = plan.graph.outputs,
       status = finalStatus,
       values = table,
       receipts = receipts.result(),
-      error = firstError
+      error = firstError,
+      nodeDescriptions = plan.graph.describe,
+      runner = RunnerMetadata.local,
+      userMetadata = sortedMetadata(context)
     )
+
+  private def sortedMetadata(context: RunContext): Vector[(String, String)] =
+    context.metadata.toVector.sortBy(_._1)
 
   private def receipt(
       node: PipelineNode,

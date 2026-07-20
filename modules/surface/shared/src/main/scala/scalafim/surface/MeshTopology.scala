@@ -2,6 +2,11 @@ package scalafim.surface
 
 import scala.util.control.NonFatal
 
+import scalafim.graph.Distance
+import scalafim.graph.Graph
+import scalafim.graph.UndirectedGraph
+import scalafim.graph.VertexBasis
+
 final case class Edge private (a: VertexId, b: VertexId):
   def vertices: (VertexId, VertexId) =
     (a, b)
@@ -24,6 +29,20 @@ final case class MeshTopology private (
 
   def edgeCount: Int =
     edges.length
+
+  /** Materialize a reusable graph value for interop and downstream graph
+    * algorithms. The result is deliberately not retained by `MeshTopology`,
+    * so the mesh never owns two persistent full topology representations.
+    */
+  def toGraph: UndirectedGraph[VertexId, Point3D, Distance] =
+    val vertices = Vector.tabulate(mesh.vertexCount)(VertexId.apply)
+    val basis = VertexBasis.from(vertices.map(vertex => vertex -> mesh.vertex(vertex))).toOption.get
+    val weightedEdges = edges.zip(edgeLengths).map: (edge, length) =>
+      (edge.a, edge.b, Distance.unsafe(length))
+    Graph.undirected(basis, weightedEdges) match
+      case Right(graph) => graph
+      case Left(errors) =>
+        throw new IllegalStateException(s"validated mesh topology violated graph invariants: ${errors.message}")
 
   def neighborsOf(vertex: VertexId): Vector[VertexId] =
     val i = vertex.index

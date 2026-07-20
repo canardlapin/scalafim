@@ -30,12 +30,12 @@ separated from planned capabilities. JVM builds support deterministic ordered
 parallel mapping for independent diagnostic and template-refresh frame work,
 while Scala.js rejects `ExecutionPolicy.ParallelFrames` as a typed unsupported
 control. Full IC template-mode whitening, richer packet-aware estimator
-semantics, process-runner CLI wiring, and external real-data benchmark inputs
-remain later layers. The JVM adapter layer now has a lightweight NIfTI/sidecar
-read-write surface, BIDS/fMRIPrep scan discovery with TR/slice-timing metadata,
-parser-only typed `estimate`/`apply`/`run`/`report` CLI commands,
-motion/matrix/summary report bundle writers over the typed shared results, and
-an opt-in synthetic/external benchmark harness.
+semantics, packaged shell-command distribution, and external real-data
+benchmark inputs remain later layers. The JVM adapter layer now has a
+lightweight NIfTI/sidecar read-write surface, BIDS/fMRIPrep scan discovery with
+TR/slice-timing metadata, executable typed `estimate`/`apply`/`run`/`report`
+CLI commands, motion/matrix/summary report bundle writers over the typed shared
+results, and an opt-in synthetic/external benchmark harness.
 
 ## Mote Completion Plan
 
@@ -63,9 +63,9 @@ The dependency order is:
      template-refresh frame work; Scala.js is explicitly typed-off.
 3. Completed JVM adapter frontier:
    - `bd-01KWX6RF9Z5K67HMPX0N3MG898` - JVM IO, BIDS, CLI, and report adapters:
-     NIfTI/sidecar IO, BIDS/fMRIPrep scan discovery, parser-only typed CLI
-     commands, and report bundle writers are in place; full process-runner CLI
-     wiring remains outside shared code.
+     NIfTI/sidecar IO, BIDS/fMRIPrep scan discovery, executable typed CLI
+     commands, and report bundle writers are in place; packaged shell-command
+     distribution remains outside shared code.
 4. Completed benchmark frontier:
    - `bd-01KWX6RR3PQYN1H48791VYD161` - real-data differential benchmark
      harness: JVM synthetic-continuous estimate/apply/report benchmark reports

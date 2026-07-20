@@ -1,5 +1,6 @@
 package scalafim.pipeline
 
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class FuturePipelineRunnerSuite extends munit.FunSuite:
@@ -41,6 +42,13 @@ class FuturePipelineRunnerSuite extends munit.FunSuite:
     override def run(input: Int, context: RunContext): Either[PipelineError, Int] =
       Left(PipelineError.InvalidGraph("parallel failure"))
 
+  private object Throw extends PipelineStep[Int, Int]:
+    override val id: StepId = StepId.unsafe("throw")
+    override val outputKind: ArtifactKind[Int] = intKind
+
+    override def run(input: Int, context: RunContext): Either[PipelineError, Int] =
+      throw new IllegalStateException("thrown failure")
+
   private def branchedGraph: (PipelineGraph, ArtifactRef[Int], ArtifactRef[String]) =
     val base = PipelineGraph.empty(PipelineId.unsafe("parallel"))
     val (g1, input) = base.addInput(NodeId.unsafe("x"), intKind).toOption.get
@@ -67,6 +75,51 @@ class FuturePipelineRunnerSuite extends munit.FunSuite:
         Vector(Vector("x"), Vector("a", "b"), Vector("sum"), Vector("render"))
       )
     }
+  }
+
+  test("future runner matches the local runner surface apart from interpreter metadata") {
+    val (graph, input, rendered) = branchedGraph
+    val context =
+      RunContext.empty
+        .withMetadata("subject", "sub-01")
+        .withInput(input, 2)
+    val local = LocalPipelineRunner.run(graph, context)
+
+    FuturePipelineRunner.run(graph, context, ParallelPolicy.unsafe(1)).map { future =>
+      assertEquals(future.status, local.status)
+      assertEquals(future.output("rendered", stringKind), local.output("rendered", stringKind))
+      assertEquals(future.get(rendered), local.get(rendered))
+      assertEquals(future.receipts, local.receipts)
+      assertEquals(future.outputs, local.outputs)
+      assertEquals(future.nodeDescriptions, local.nodeDescriptions)
+      assertEquals(future.userMetadata, local.userMetadata)
+      assertEquals(future.trace.nodes.map(_.status), local.trace.nodes.map(_.status))
+      assertEquals(future.runner.name, "future")
+      assertEquals(local.runner.name, "local")
+    }
+  }
+
+  test("local, bounded future, and unbounded future agree across an input family") {
+    Future.sequence {
+      Vector(-2, 0, 1, 7).map { value =>
+        val (graph, input, rendered) = branchedGraph
+        val context = RunContext.empty.withInput(input, value)
+        val local = LocalPipelineRunner.run(graph, context)
+
+        for
+          unbounded <- FuturePipelineRunner.run(graph, context)
+          bounded <- FuturePipelineRunner.run(graph, context, ParallelPolicy.unsafe(1))
+        yield
+          assertEquals(unbounded.output("rendered", stringKind), local.output("rendered", stringKind))
+          assertEquals(bounded.output("rendered", stringKind), local.output("rendered", stringKind))
+          assertEquals(unbounded.get(rendered), local.get(rendered))
+          assertEquals(bounded.get(rendered), local.get(rendered))
+          assertEquals(unbounded.receipts, local.receipts)
+          assertEquals(bounded.receipts, local.receipts)
+          assertEquals(unbounded.trace.nodes.map(_.status), local.trace.nodes.map(_.status))
+          assertEquals(bounded.trace.nodes.map(_.status), local.trace.nodes.map(_.status))
+      }
+    }.map(_ => ())
   }
 
   test("bounded and unbounded future runners produce the same run surface") {
@@ -126,6 +179,51 @@ class FuturePipelineRunnerSuite extends munit.FunSuite:
       assertEquals(run.get(goodChild).toOption.get, 3)
       assert(run.get(badChild).isLeft)
     }
+  }
+
+  test("future runner records missing inputs and skips dependent nodes") {
+    val base = PipelineGraph.empty(PipelineId.unsafe("missing-input"))
+    val (g1, input) = base.addInput(NodeId.unsafe("x"), intKind).toOption.get
+    val (graph, out) = g1.addStep(NodeId.unsafe("child"), AddOne, input.expr).toOption.get
+
+    FuturePipelineRunner.run(graph).map { run =>
+      val byNode = run.receipts.map(receipt => receipt.nodeId.value -> receipt).toMap
+
+      assertEquals(run.status, PipelineStatus.Failed)
+      assertEquals(run.error, Some(PipelineError.MissingPipelineInput(input.nodeId)))
+      assertEquals(byNode("x").status, PipelineStatus.Failed)
+      assertEquals(byNode("child").status, PipelineStatus.Skipped)
+      assert(byNode("child").message.exists(_.contains("dependency 'x'")))
+      assert(run.get(out).isLeft)
+    }
+  }
+
+  test("future runner attributes thrown step exceptions to the step node") {
+    val base = PipelineGraph.empty(PipelineId.unsafe("thrown-step"))
+    val (g1, input) = base.addInput(NodeId.unsafe("x"), intKind).toOption.get
+    val (graph, out) = g1.addStep(NodeId.unsafe("explode"), Throw, input.expr).toOption.get
+
+    FuturePipelineRunner.run(graph, RunContext.empty.withInput(input, 1)).map { run =>
+      val thrown = run.receipts.find(_.nodeId.value == "explode").get
+
+      assertEquals(run.status, PipelineStatus.Failed)
+      assertEquals(thrown.status, PipelineStatus.Failed)
+      assert(thrown.message.exists(_.contains("step 'throw' at node 'explode' failed: thrown failure")))
+      assert(run.error.exists(_.message.contains("step 'throw' at node 'explode'")))
+      assert(run.get(out).isLeft)
+    }
+  }
+
+  test("future runner repeated runs with different contexts do not leak values") {
+    val (graph, input, _) = branchedGraph
+
+    for
+      first <- FuturePipelineRunner.run(graph, RunContext.empty.withInput(input, 1))
+      second <- FuturePipelineRunner.run(graph, RunContext.empty.withInput(input, 5))
+    yield
+      assertEquals(first.output("rendered", stringKind).toOption.get, "value=12")
+      assertEquals(second.output("rendered", stringKind).toOption.get, "value=56")
+      assertEquals(first.receipts.map(_.status), second.receipts.map(_.status))
   }
 
   test("parallel policy validates concurrency") {

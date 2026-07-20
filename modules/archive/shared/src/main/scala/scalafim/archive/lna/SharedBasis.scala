@@ -67,6 +67,21 @@ final case class SharedBasisRef(
     locator: Option[SharedBasisLocator] = None
 )
 
+opaque type SharedBasisKind = String
+
+object SharedBasisKind:
+  def apply(value: String): Either[ArchiveError, SharedBasisKind] =
+    val normalized = value.trim
+    if normalized.isEmpty then Left(ArchiveError.InvalidArchive("shared basis kind must be non-empty"))
+    else if normalized.exists(_.isControl) then Left(ArchiveError.InvalidArchive("shared basis kind must not contain control characters"))
+    else Right(normalized)
+
+  def unsafe(value: String): SharedBasisKind =
+    apply(value).fold(err => throw IllegalArgumentException(err.message), identity)
+
+  extension (kind: SharedBasisKind)
+    def value: String = kind
+
 final case class SharedBasisMask(
     dims: Vector[Int],
     values: Vector[Boolean]
@@ -77,6 +92,16 @@ final case class SharedBasisMask(
 
   def activeCount: Int =
     values.count(identity)
+
+object SharedBasisMask:
+  def checked(
+      dims: Vector[Int],
+      values: Vector[Boolean]
+  ): Either[ArchiveError, SharedBasisMask] =
+    if dims.isEmpty then Left(ArchiveError.InvalidArchive("shared basis mask dims must be non-empty"))
+    else if dims.exists(_ <= 0) then Left(ArchiveError.InvalidArchive("shared basis mask dims must be positive"))
+    else if dims.product != values.length then Left(ArchiveError.ShapeMismatch("shared basis mask length must match dims product"))
+    else Right(SharedBasisMask(dims, values))
 
 final case class SharedBasisArtifact(
     loadings: DMat,
@@ -100,6 +125,31 @@ final case class SharedBasisArtifact(
 object SharedBasisArtifact:
   val ChecksumAlgorithm: String = "sha256:lna-shared-basis-v1"
   val MaskChecksumAlgorithm: String = "sha256:lna-shared-basis-mask-v1"
+
+  def checked(
+      loadings: DMat,
+      mask: SharedBasisMask,
+      kind: String,
+      params: Map[String, String] = Map.empty,
+      created: Option[String] = None
+  ): Either[ArchiveError, SharedBasisArtifact] =
+    for
+      checkedKind <- SharedBasisKind(kind)
+      _ <-
+        if loadings.rows > 0 && loadings.cols > 0 then Right(())
+        else Left(ArchiveError.ShapeMismatch("shared basis loadings must be non-empty"))
+      _ <-
+        if mask.activeCount == loadings.rows then Right(())
+        else Left(ArchiveError.ShapeMismatch("shared basis active mask count must match loading rows"))
+      _ <-
+        if params.keys.forall(_.trim.nonEmpty) then Right(())
+        else Left(ArchiveError.InvalidArchive("shared basis params keys must be non-empty"))
+      _ <-
+        if created.forall(_.trim.nonEmpty) then Right(())
+        else Left(ArchiveError.InvalidArchive("shared basis created timestamp must be non-empty when provided"))
+      artifact = SharedBasisArtifact(loadings, mask, checkedKind.value, params, created)
+      finite <- validateFinite(artifact)
+    yield finite
 
   def checksum(artifact: SharedBasisArtifact): SharedBasisChecksum =
     val hex =

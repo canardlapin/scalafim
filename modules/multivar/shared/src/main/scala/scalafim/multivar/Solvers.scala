@@ -2,163 +2,45 @@ package scalafim.multivar
 
 import scalafim.linalg.DoubleMatrix
 import scalafim.linalg.DoubleVector
+import scalafim.linalg.LinearAlgebraError
 
-final case class SymmetricEigenResult(values: DoubleVector, vectors: DoubleMatrix):
-  require(vectors.rows == vectors.cols, "eigenvector matrix must be square")
-  require(values.length == vectors.cols, "eigenvalue count must match eigenvector columns")
+type SymmetricEigenResult = scalafim.linalg.SymmetricEigenResult
+val SymmetricEigenResult = scalafim.linalg.SymmetricEigenResult
 
-final case class SvdResult(u: DoubleMatrix, singularValues: DoubleVector, v: DoubleMatrix):
-  require(u.cols == singularValues.length, "left singular vector columns must match singular values")
-  require(v.cols == singularValues.length, "right singular vector columns must match singular values")
+type SvdResult = scalafim.linalg.SvdResult
+val SvdResult = scalafim.linalg.SvdResult
 
-trait SymmetricEigenSolver:
-  def decompose(matrix: DoubleMatrix): Either[MultivarError, SymmetricEigenResult]
+type SymmetricEigenSolver = scalafim.linalg.SymmetricEigenSolver
 
 trait SvdSolver:
   def decompose(input: MatrixView, components: ComponentCount): Either[MultivarError, SvdResult]
 
-trait GeneralizedEigenSolver:
-  def decompose(
-      a: DoubleMatrix,
-      b: DoubleMatrix,
-      components: ComponentCount
-  ): Either[MultivarError, SymmetricEigenResult]
+type GeneralizedEigenSolver = scalafim.linalg.GeneralizedEigenSolver
 
 object DenseSolvers:
   val symmetricEigen: SymmetricEigenSolver =
-    JacobiSymmetricEigenSolver()
+    scalafim.linalg.LinalgSolvers.symmetricEigen
 
   val svd: SvdSolver =
     GramSvdSolver(symmetricEigen)
 
   val generalizedEigen: GeneralizedEigenSolver =
-    DenseGeneralizedEigenSolver(symmetricEigen)
+    scalafim.linalg.LinalgSolvers.generalizedEigen
 
-final case class JacobiSymmetricEigenSolver(
-    tolerance: Double = 1e-10,
-    maxSweeps: Int = 100
-) extends SymmetricEigenSolver:
-  override def decompose(matrix: DoubleMatrix): Either[MultivarError, SymmetricEigenResult] =
-    if matrix.rows != matrix.cols then
-      Left(MultivarError.MatrixShapeMismatch(s"symmetric eigen solver expected a square matrix, got ${matrix.rows}x${matrix.cols}"))
-    else
-      MatrixOps.checkFinite("symmetric matrix", matrix).flatMap { _ =>
-        MatrixOps.checkSymmetric(matrix, tolerance).flatMap { _ =>
-          val n = matrix.rows
-          val a = matrix.copyData
-          val v = DoubleMatrix.eye(n).copyData
-          var sweep = 0
-          var converged = n <= 1 || maxOffDiagonal(a, n) <= convergenceThreshold(a, n)
-
-          while sweep < maxSweeps && !converged do
-            val threshold = convergenceThreshold(a, n)
-            var p = 0
-            while p < n - 1 do
-              var q = p + 1
-              while q < n do
-                if Math.abs(a(p * n + q)) > threshold then rotate(a, v, n, p, q)
-                q += 1
-              p += 1
-            sweep += 1
-            converged = maxOffDiagonal(a, n) <= convergenceThreshold(a, n)
-
-          if !converged then Left(MultivarError.SolverFailed("Jacobi symmetric eigensolver did not converge"))
-          else
-            val values = new Array[Double](n)
-            var i = 0
-            while i < n do
-              values(i) = a(i * n + i)
-              i += 1
-            Right(sortDescending(values, v, n))
-        }
-      }
-
-  /** Absolute tolerance scaled by the diagonal magnitude, so large-norm matrices still converge. */
-  private def convergenceThreshold(a: Array[Double], n: Int): Double =
-    var maxDiag = 0.0
-    var i = 0
-    while i < n do
-      val value = Math.abs(a(i * n + i))
-      if value > maxDiag then maxDiag = value
-      i += 1
-    tolerance * Math.max(1.0, maxDiag)
-
-  private def maxOffDiagonal(a: Array[Double], n: Int): Double =
-    var best = 0.0
-    var row = 0
-    while row < n do
-      var col = row + 1
-      while col < n do
-        val value = Math.abs(a(row * n + col))
-        if value > best then best = value
-        col += 1
-      row += 1
-    best
-
-  private def rotate(a: Array[Double], v: Array[Double], n: Int, p: Int, q: Int): Unit =
-    val app = a(p * n + p)
-    val aqq = a(q * n + q)
-    val apq = a(p * n + q)
-    val theta = 0.5 * Math.atan2(2.0 * apq, aqq - app)
-    val c = Math.cos(theta)
-    val s = Math.sin(theta)
-
-    var i = 0
-    while i < n do
-      if i != p && i != q then
-        val aip = a(i * n + p)
-        val aiq = a(i * n + q)
-        val newIp = c * aip - s * aiq
-        val newIq = s * aip + c * aiq
-        a(i * n + p) = newIp
-        a(p * n + i) = newIp
-        a(i * n + q) = newIq
-        a(q * n + i) = newIq
-      i += 1
-
-    val c2 = c * c
-    val s2 = s * s
-    val sc = s * c
-    a(p * n + p) = c2 * app - 2.0 * sc * apq + s2 * aqq
-    a(q * n + q) = s2 * app + 2.0 * sc * apq + c2 * aqq
-    a(p * n + q) = 0.0
-    a(q * n + p) = 0.0
-
-    i = 0
-    while i < n do
-      val vip = v(i * n + p)
-      val viq = v(i * n + q)
-      v(i * n + p) = c * vip - s * viq
-      v(i * n + q) = s * vip + c * viq
-      i += 1
-
-  private def sortDescending(values: Array[Double], vectors: Array[Double], n: Int): SymmetricEigenResult =
-    val order = (0 until n).toArray
-    scala.util.Sorting.stableSort(order, (left: Int, right: Int) => values(left) > values(right))
-
-    val outValues = new Array[Double](n)
-    val outVectors = new Array[Double](n * n)
-    var outCol = 0
-    while outCol < n do
-      val sourceCol = order(outCol)
-      outValues(outCol) = values(sourceCol)
-      var firstNonZero = 0
-      while firstNonZero < n && Math.abs(vectors(firstNonZero * n + sourceCol)) <= tolerance do
-        firstNonZero += 1
-      val sign =
-        if firstNonZero < n && vectors(firstNonZero * n + sourceCol) < 0.0 then -1.0
-        else 1.0
-      var row = 0
-      while row < n do
-        outVectors(row * n + outCol) = sign * vectors(row * n + sourceCol)
-        row += 1
-      outCol += 1
-
-    SymmetricEigenResult(DoubleVector.unsafe(outValues), DoubleMatrix.unsafe(n, n, outVectors))
-
+/** Gram-based SVD over a MatrixView; the storage-aware `crossProduct` is what makes
+  * this a legitimate multivar adaptation rather than a re-implementation of
+  * `linalg.GramDenseSvdSolver` (which requires a dense input and always returns the
+  * requested rank). Gram eigenvalues at or below `rankTolerance * lambdaMax` are
+  * treated as rank noise — mirroring `EigenGmd`'s convention — so requesting more
+  * components than the rank returns fewer, never zero-padded or noise-amplified
+  * factors. An exactly zero spectrum yields a rank-0 result with empty factors,
+  * leaving the "no components" decision to callers: fits with an empty-result
+  * contract (effect operators, CPCA blocks) record it, whole-fit entry points
+  * reject it with a typed error.
+  */
 final case class GramSvdSolver(
     eigenSolver: SymmetricEigenSolver,
-    tolerance: Double = 1e-10
+    rankTolerance: Double = 1e-12
 ) extends SvdSolver:
   override def decompose(input: MatrixView, components: ComponentCount): Either[MultivarError, SvdResult] =
     val limit = Math.min(input.rows, input.cols)
@@ -166,105 +48,107 @@ final case class GramSvdSolver(
     else
       for
         gram <- input.crossProduct
-        eigen <- eigenSolver.decompose(gram)
-        v = MatrixOps.takeColumns(eigen.vectors, components.value)
+        _ <- MatrixOps.checkFinite("svd gram", gram)
+        eigen <- LinalgErrorAdapter.adapt(eigenSolver.decompose(gram))
+        k = keptComponents(eigen.values, components.value)
+        v = MatrixOps.takeColumns(eigen.vectors, k)
         scores <- input.rightMultiply(v)
       yield
-        val singularValues = new Array[Double](components.value)
+        val singularValues = new Array[Double](k)
         var col = 0
-        while col < components.value do
-          singularValues(col) = Math.sqrt(Math.max(eigen.values(col), 0.0))
+        while col < k do
+          singularValues(col) = Math.sqrt(eigen.values(col))
           col += 1
         val uData = scores.copyData
         col = 0
-        while col < components.value do
+        while col < k do
           val sv = singularValues(col)
           var row = 0
           while row < scores.rows do
-            uData(row * components.value + col) =
-              if sv > tolerance then scores(row, col) / sv
-              else 0.0
+            uData(row * k + col) = scores(row, col) / sv
             row += 1
           col += 1
-        SvdResult(DoubleMatrix.unsafe(scores.rows, components.value, uData), DoubleVector.unsafe(singularValues), v)
+        SvdResult(DoubleMatrix.unsafe(scores.rows, k, uData), DoubleVector.unsafe(singularValues), v)
 
-final case class DenseGeneralizedEigenSolver(
-    eigenSolver: SymmetricEigenSolver,
-    tolerance: Double = 1e-10
-) extends GeneralizedEigenSolver:
-  override def decompose(
-      a: DoubleMatrix,
-      b: DoubleMatrix,
-      components: ComponentCount
-  ): Either[MultivarError, SymmetricEigenResult] =
-    if a.rows != a.cols || b.rows != b.cols || a.rows != b.rows then
-      Left(MultivarError.MatrixShapeMismatch("generalized eigen solver expects same-size square matrices"))
-    else
-      for
-        invSqrtB <- MatrixOps.inverseSquareRoot(b, eigenSolver, tolerance)
-        reduced = DoubleMatrix.multiply(DoubleMatrix.multiply(invSqrtB, a), invSqrtB)
-        eigen <- eigenSolver.decompose(reduced)
-      yield
-        val values = MatrixOps.takeVector(eigen.values, components.value)
-        val vectors = DoubleMatrix.multiply(invSqrtB, MatrixOps.takeColumns(eigen.vectors, components.value))
-        SymmetricEigenResult(values, vectors)
+  /** Rank cutoff relative to the leading Gram eigenvalue, per EigenGmd's convention;
+    * zero when the whole spectrum is rank noise.
+    */
+  private def keptComponents(values: DoubleVector, requested: Int): Int =
+    val cutoff = rankTolerance * Math.max(values(0), 0.0)
+    var kept = 0
+    while kept < values.length && values(kept) > cutoff do kept += 1
+    Math.min(requested, kept)
 
-private[multivar] object MatrixOps:
-  def checkFinite(role: String, matrix: DoubleMatrix): Either[MultivarError, Unit] =
-    var i = 0
-    var error = Option.empty[MultivarError]
-    while i < matrix.dataArray.length && error.isEmpty do
-      val value = matrix.dataArray(i)
-      if !value.isFinite then error = Some(MultivarError.NonFiniteValue(role, i, value))
-      i += 1
+private[multivar] object LinalgErrorAdapter:
+  def adapt[A](result: Either[LinearAlgebraError, A]): Either[MultivarError, A] =
+    result.left.map(toMultivarError)
+
+  def toMultivarError(error: LinearAlgebraError): MultivarError =
     error match
-      case Some(value) => Left(value)
-      case None        => Right(())
+      case LinearAlgebraError.InvalidMatrixShape(rows, cols) =>
+        MultivarError.MatrixShapeMismatch(s"invalid matrix shape ${rows}x${cols}")
+      case LinearAlgebraError.MatrixTooLarge(rows, cols) =>
+        MultivarError.DimensionOverflow(rows, cols)
+      case LinearAlgebraError.MatrixStorageLengthMismatch(shape, actual) =>
+        MultivarError.MatrixShapeMismatch(s"data length $actual != rows*cols ${shape.entries}")
+      case LinearAlgebraError.NonSquareMatrix(rows, cols) =>
+        MultivarError.MatrixShapeMismatch(s"matrix must be square, got ${rows}x${cols}")
+      case LinearAlgebraError.NonSymmetricMatrix(row, col, left, right) =>
+        MultivarError.NonSymmetricMatrix(row, col, left, right)
+      case LinearAlgebraError.NonPositiveDefinite(index, value) =>
+        MultivarError.NonInvertibleValue("positive-definite eigenvalue", index, value)
+      case LinearAlgebraError.RankDeficient(requiredRank, actualRank) =>
+        MultivarError.SolverFailed(s"matrix rank $actualRank is less than required rank $requiredRank")
+      case LinearAlgebraError.InvalidDecompositionRank(requested, limit) =>
+        MultivarError.InvalidComponentRequest(requested, limit)
+      case LinearAlgebraError.DimensionMismatch(role, expected, actual) =>
+        MultivarError.MatrixShapeMismatch(s"${role.label} expected $expected but got $actual")
+      case LinearAlgebraError.IndexOutOfBounds(axis, index, limit) =>
+        val mappedAxis =
+          axis match
+            case scalafim.linalg.MatrixAxis.Row => IndexAxis.Row
+            case scalafim.linalg.MatrixAxis.Col => IndexAxis.Column
+        MultivarError.IndexOutOfBounds(mappedAxis, index, limit)
+      case LinearAlgebraError.InvalidParameter(parameter, value) =>
+        MultivarError.InvalidTolerance(parameter.label, value)
+      case LinearAlgebraError.NonFiniteValue(role, index, value) =>
+        MultivarError.NonFiniteValue(role.label, index, value)
+      case LinearAlgebraError.SolverDidNotConverge(method, maxIterations) =>
+        MultivarError.SolverFailed(s"$method did not converge within $maxIterations iteration(s)")
+      case LinearAlgebraError.OperatorOrderUnsupported(method, order, maximum) =>
+        MultivarError.SolverFailed(s"$method supports operator order at most $maximum, got $order")
+      case LinearAlgebraError.OperatorApplicationFailed(detail) =>
+        MultivarError.SolverFailed(s"linear operator application failed: $detail")
+      case LinearAlgebraError.BackendFailure(backend, detail) =>
+        MultivarError.SolverFailed(s"$backend backend failed: $detail")
+
+/** Multivar-facing façade over `linalg.DenseDecompositionOps`: identical numeric
+  * kernels live in linalg only; this object adapts errors into `MultivarError` and
+  * keeps caller-supplied role labels. `scale` and `addRidge` are genuinely
+  * multivar-specific (no linalg counterpart) and stay implemented here.
+  */
+private[multivar] object MatrixOps:
+  private val Ops = scalafim.linalg.DenseDecompositionOps
+
+  def checkFinite(role: String, matrix: DoubleMatrix): Either[MultivarError, Unit] =
+    Ops.checkFinite(scalafim.linalg.MatrixValueRole.Data, matrix).left.map {
+      case LinearAlgebraError.NonFiniteValue(_, index, value) =>
+        MultivarError.NonFiniteValue(role, index, value)
+      case other =>
+        LinalgErrorAdapter.toMultivarError(other)
+    }
 
   def checkSymmetric(matrix: DoubleMatrix, tolerance: Double): Either[MultivarError, Unit] =
-    var row = 0
-    var error = Option.empty[MultivarError]
-    while row < matrix.rows && error.isEmpty do
-      var col = row + 1
-      while col < matrix.cols && error.isEmpty do
-        val left = matrix(row, col)
-        val right = matrix(col, row)
-        if Math.abs(left - right) > tolerance then
-          error = Some(MultivarError.NonSymmetricMatrix(row, col, left, right))
-        col += 1
-      row += 1
-    error match
-      case Some(value) => Left(value)
-      case None        => Right(())
+    LinalgErrorAdapter.adapt(Ops.checkSymmetric(matrix, tolerance))
 
   def takeColumns(matrix: DoubleMatrix, count: Int): DoubleMatrix =
-    require(count >= 0 && count <= matrix.cols, "invalid column count")
-    val out = new Array[Double](matrix.rows * count)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < count do
-        out(row * count + col) = matrix(row, col)
-        col += 1
-      row += 1
-    DoubleMatrix.unsafe(matrix.rows, count, out)
+    Ops.takeColumns(matrix, count)
 
   def takeVector(vector: DoubleVector, count: Int): DoubleVector =
-    require(count >= 0 && count <= vector.length, "invalid vector count")
-    val out = new Array[Double](count)
-    var i = 0
-    while i < count do
-      out(i) = vector(i)
-      i += 1
-    DoubleVector.unsafe(out)
+    Ops.takeVector(vector, count)
 
   def diagonal(values: DoubleVector): DoubleMatrix =
-    val out = new Array[Double](values.length * values.length)
-    var i = 0
-    while i < values.length do
-      out(i * values.length + i) = values(i)
-      i += 1
-    DoubleMatrix.unsafe(values.length, values.length, out)
+    Ops.diagonal(values)
 
   def scale(matrix: DoubleMatrix, factor: Double): DoubleMatrix =
     val out = matrix.copyData
@@ -287,26 +171,40 @@ private[multivar] object MatrixOps:
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double
   ): Either[MultivarError, DoubleMatrix] =
-    eigenSolver.decompose(matrix).flatMap { eigen =>
-      val diag = new Array[Double](eigen.values.length)
-      var i = 0
-      var error = Option.empty[MultivarError]
-      while i < diag.length && error.isEmpty do
-        val value = eigen.values(i)
-        if value <= tolerance then error = Some(MultivarError.SolverFailed("matrix is not positive definite"))
-        else diag(i) = 1.0 / Math.sqrt(value)
-        i += 1
-      error match
-        case Some(value) => Left(value)
-        case None =>
-          val d = DoubleMatrix.unsafe(diag.length, diag.length, {
-            val out = new Array[Double](diag.length * diag.length)
-            var j = 0
-            while j < diag.length do
-              out(j * diag.length + j) = diag(j)
-              j += 1
-            out
-          })
-          Right(DoubleMatrix.multiply(DoubleMatrix.multiply(eigen.vectors, d), eigen.vectors.transpose))
-    }
+    LinalgErrorAdapter.adapt(
+      Ops.inverseSquareRoot(matrix, eigenSolver, scalafim.linalg.Tolerance.unsafe(tolerance))
+    )
 
+  def scaleColumns(matrix: DoubleMatrix, scale: DoubleVector): DoubleMatrix =
+    require(matrix.cols == scale.length, "scale length must match matrix columns")
+    val out = matrix.copyData
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        out(row * matrix.cols + col) *= scale(col)
+        col += 1
+      row += 1
+    DoubleMatrix.unsafe(matrix.rows, matrix.cols, out)
+
+  def subtract(left: DoubleMatrix, right: DoubleMatrix): DoubleMatrix =
+    require(left.rows == right.rows && left.cols == right.cols, "matrix subtraction requires matching shapes")
+    val out = left.copyData
+    var i = 0
+    while i < out.length do
+      out(i) -= right.dataArray(i)
+      i += 1
+    DoubleMatrix.unsafe(left.rows, left.cols, out)
+
+  def traverse[A, B](values: Vector[A])(f: A => Either[MultivarError, B]): Either[MultivarError, Vector[B]] =
+    val out = Vector.newBuilder[B]
+    var i = 0
+    var error = Option.empty[MultivarError]
+    while i < values.length && error.isEmpty do
+      f(values(i)) match
+        case Left(value)  => error = Some(value)
+        case Right(value) => out += value
+      i += 1
+    error match
+      case Some(value) => Left(value)
+      case None        => Right(out.result())

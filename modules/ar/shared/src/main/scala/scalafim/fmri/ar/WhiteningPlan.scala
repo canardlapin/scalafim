@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.{DMat, DMatBuilder}
 
 enum NoisePooling:
   case Global
@@ -181,16 +181,16 @@ object WhiteningPlan:
         Right(())
 
 final case class WhitenedMatrices(
-    design: DoubleMatrix,
-    response: DoubleMatrix
+    design: DMat,
+    response: DMat
 )
 
 object WhiteningTransform:
 
   def apply(
       plan: WhiteningPlan,
-      design: DoubleMatrix,
-      response: DoubleMatrix
+      design: DMat,
+      response: DMat
   ): Either[ArError, WhitenedMatrices] =
     if design.rows != response.rows then Left(ArError.RowMismatch(design.rows, response.rows))
     else
@@ -199,9 +199,9 @@ object WhiteningTransform:
         y <- matrix(plan, response)
       yield WhitenedMatrices(x, y)
 
-  def matrix(plan: WhiteningPlan, input: DoubleMatrix): Either[ArError, DoubleMatrix] =
+  def matrix(plan: WhiteningPlan, input: DMat): Either[ArError, DMat] =
     plan.coveredSegments.validateRows(input.rows).flatMap { _ =>
-      val out = new Array[Double](input.rows * input.cols)
+      val out = DMat.newBuilder(input.rows, input.cols)
       var segmentIndex = 0
       var error: Option[ArError] = None
       while segmentIndex < plan.segments.length && error.isEmpty do
@@ -220,12 +220,12 @@ object WhiteningTransform:
 
       error match
         case Some(err) => Left(err)
-        case None      => Right(DoubleMatrix.unsafe(input.rows, input.cols, out))
+        case None      => Right(out.result())
     }
 
   private def whitenSegment(
-      input: DoubleMatrix,
-      out: Array[Double],
+      input: DMat,
+      out: DMatBuilder,
       segment: TimeSegment,
       coefficients: ArmaCoefficients,
       firstScale: Double
@@ -247,12 +247,12 @@ object WhiteningTransform:
         while lag < coefficients.theta.length do
           val laggedRow = row - lag - 1
           if laggedRow >= segment.start then
-            value -= coefficients.theta(lag) * out(laggedRow * input.cols + col)
+            value -= coefficients.theta(lag) * out(laggedRow, col)
           lag += 1
 
         if row == segment.start && firstScale != 1.0 then
           value *= firstScale
 
-        out(row * input.cols + col) = value
+        out(row, col) = value
         col += 1
       row += 1

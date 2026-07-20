@@ -1,0 +1,7 @@
+case	unit_id	unit_type	members_one_based	identifiable	selected
+pca_exact_rank_two	u1	component	1	TRUE	TRUE
+pca_exact_rank_two	u2	component	2	TRUE	TRUE
+pca_exact_rank_two	u3	subspace	3,4	FALSE	FALSE
+plsc_exact_rank_two	u1	component	1	TRUE	TRUE
+plsc_exact_rank_two	u2	component	2	TRUE	TRUE
+plsc_exact_rank_two	u3	subspace	3,4	FALSE	FALSE

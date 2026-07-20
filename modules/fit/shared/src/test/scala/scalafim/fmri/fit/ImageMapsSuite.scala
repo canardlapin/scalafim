@@ -85,6 +85,55 @@ class ImageMapsSuite extends munit.FunSuite:
     assertVectorClose(dense.series(3).toVector, Vector(-1.0, -1.0), 1e-10)
   }
 
+  test("typed result manifest coefficient maps adapt to existing image maps") {
+    val result = FitPlanExecutor.unsafeFit(
+      FitPlan(model),
+      DataSelection(voxels = IndexSelection.indices(3, 1))
+    ).asInstanceOf[DenseFmriFitResult]
+
+    val legacy = result.coefficientMaps(dataset.shape).dense
+    val manifest = ResultManifest.fromDenseFit(result, dataset.shape).toOption.get
+    val adapted =
+      FitImageMaps
+        .fromParameterMaps(manifest.parameterMaps(ParameterMapKind.Coefficient))
+        .toOption
+        .get
+        .dense
+
+    assertEquals(adapted.space, legacy.space)
+    assertVectorClose(adapted.series(0).toVector, legacy.series(0).toVector, 1e-10)
+    assertVectorClose(adapted.series(1).toVector, legacy.series(1).toVector, 1e-10)
+    assertVectorClose(adapted.series(2).toVector, legacy.series(2).toVector, 1e-10)
+    assertVectorClose(adapted.series(3).toVector, legacy.series(3).toVector, 1e-10)
+  }
+
+  test("standard-error image maps omit coefficients outside the inference scope") {
+    val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
+    val restricted = result.copy(
+      inference = CoefficientInference
+        .fromCovariance(
+          scope = CoefficientInferenceScope.unsafeOnly(Vector(0), "task coefficient"),
+          covariance = CoefficientCovariance.unsafeShared(
+            DoubleMatrix.fromRows(
+              Vector(
+                Vector(result.normalizedCovariance(0, 0), 0.0),
+                Vector(0.0, 0.0)
+              )
+            )
+          ),
+          varianceScale = result.inference.varianceScale,
+          residualDegreesOfFreedom = result.residualDegreesOfFreedom,
+          method = CoefficientInferenceMethod.ReducedRankConditional
+        )
+        .toOption
+        .get
+    )
+
+    val maps = restricted.standardErrorMaps(dataset.shape)
+    assertEquals(maps.names, Vector("task"))
+    assertEquals(maps.nMaps, 1)
+  }
+
   test("t and F contrast statistics map into image space") {
     val design = DesignMatrix.unsafe(
       DoubleMatrix.fromRows(
@@ -100,10 +149,16 @@ class ImageMapsSuite extends munit.FunSuite:
       DoubleMatrix.fromRows(Vector(Vector(2.0), Vector(1.2), Vector(0.0), Vector(-1.0)))
     )
     val fit = Ols.unsafeFit(design, response)
+    val covariance = CoefficientCovariance.unsafeShared(fit.normalizedCovariance)
     val result = DenseFmriFitResult(
       coefficients = fit.coefficients,
-      standardErrors = fit.standardErrors,
-      normalizedCovariance = fit.normalizedCovariance,
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        covariance,
+        fit.residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
       residualVariance = fit.residualVariance,
       residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
       columnNames = Vector("task", "base_constant"),

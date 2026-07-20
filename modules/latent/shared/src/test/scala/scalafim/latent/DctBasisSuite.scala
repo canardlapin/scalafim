@@ -119,6 +119,12 @@ class DctBasisSuite extends munit.FunSuite:
 
     assertEquals(spec.timepoints, 3)
     assertEquals(spec.components, 3)
+    assertEquals(spec, DctSpec.full(3).fold(err => fail(err.message), identity))
+    assertEquals(spec.hashCode(), DctSpec.full(3).fold(err => fail(err.message), identity).hashCode())
+    assertEquals(spec.toString, "DctSpec(timepoints=3, components=3, norm=ortho)")
+    assertEquals(spec.copy(components = 2).map(_.components), Right(2))
+    assert(spec.copy(timepoints = 2).isLeft)
+    assertEquals(spec.withNorm(DctNorm.None).norm, DctNorm.None)
     assertEquals(ridge.value, 0.0)
     assertEquals(encoded.metadata("ridge"), "0.0")
     val rejected = RidgePenalty(Double.NaN).left.toOption.map(_.payload)

@@ -43,6 +43,24 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    val descriptor =
+      LatentArchiveCodec
+        .openDescriptor(archive)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(plan.kind, LatentArchiveKind.Explicit)
+    assertEquals(plan.descriptor.kind, LatentArchiveKind.Explicit)
+    assertEquals(descriptor.kind, LatentArchiveKind.Explicit)
+    plan.capability match
+      case LatentResponseCapability.Response(response) =>
+        assertEquals(response.label, "demo-latent")
+      case other =>
+        fail(s"expected response-bearing capability, found $other")
+    assert(plan.latentResponse.nonEmpty)
 
     val decoded =
       LatentArchiveCodec
@@ -65,6 +83,22 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertEquals(selected.toRows, Vector(Vector(12.0, 6.0), Vector(44.0, 22.0)))
+  }
+
+  test("latent archive plans are absent for ordinary transform archives") {
+    val archive =
+      LnaPipeline
+        .quantArchive(
+          DMat.fromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
+          NeuroSpace(Vector(2, 2, 1))
+        )
+        .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .maybeOpenPlan(archive)
+        .fold(err => fail(err.message), identity)
+
+    assert(plan.isEmpty)
   }
 
   test("temporal DCT archives preserve typed DCT params and reconstruct full-rank data") {
@@ -102,6 +136,19 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    val descriptor =
+      LatentArchiveCodec
+        .openDescriptor(archive)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(plan.kind, LatentArchiveKind.TemporalDct)
+    assertEquals(plan.descriptor.kind, LatentArchiveKind.TemporalDct)
+    assertEquals(descriptor.kind, LatentArchiveKind.TemporalDct)
+
     val decoded =
       decodedVariant match
         case LatentArchiveResponse.TemporalDct(response, spec, center, ridge) =>
@@ -213,6 +260,26 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    val archiveDescriptor =
+      LatentArchiveCodec
+        .openDescriptor(archive)
+        .fold(err => fail(err.message), identity)
+
+    assertEquals(plan.kind, LatentArchiveKind.SharedBasis)
+    assertEquals(plan.descriptor.kind, LatentArchiveKind.SharedBasis)
+    assertEquals(archiveDescriptor.kind, LatentArchiveKind.SharedBasis)
+    plan.capability match
+      case LatentResponseCapability.DeferredSharedBasis(archive) =>
+        assertEquals(archive.basis.basisId, basisId)
+      case other =>
+        fail(s"expected deferred shared-basis capability, found $other")
+    assert(plan.selectionResponse.left.toOption.exists(_.message.contains("shared_basis_embed")))
+    assert(plan.latentResponse.isEmpty)
+
     decodedVariant match
       case LatentArchiveResponse.SharedBasis(response) =>
         assertEquals(response.basis.basisId, basisId)
@@ -320,6 +387,14 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    val archiveDescriptor =
+      LatentArchiveCodec
+        .openDescriptor(archive)
+        .fold(err => fail(err.message), identity)
     val expectedSelection =
       source
         .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
@@ -334,6 +409,9 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertEquals(decoded.label, "transport-demo")
+    assertEquals(plan.kind, LatentArchiveKind.Transport)
+    assertEquals(plan.descriptor.kind, LatentArchiveKind.Transport)
+    assertEquals(archiveDescriptor.kind, LatentArchiveKind.Transport)
     assertEquals(decoded.metadata("family"), "transport")
     assertEquals(decoded.decoders.templateCapable, true)
     assertEquals(decoded.metadata("subject"), "sub-01")
@@ -417,6 +495,14 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       LatentArchiveCodec
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
+    val plan =
+      LatentArchiveCodec
+        .openPlan(archive)
+        .fold(err => fail(err.message), identity)
+    val archiveDescriptor =
+      LatentArchiveCodec
+        .openDescriptor(archive)
+        .fold(err => fail(err.message), identity)
     val expectedSelection =
       source
         .reconstruct(LatentSelection(timepoints = Some(Vector(2, 0)), samples = Some(Vector(2, 0))))
@@ -427,6 +513,9 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertEquals(decoded.label, "boldzip-demo")
+    assertEquals(plan.kind, LatentArchiveKind.BoldZip)
+    assertEquals(plan.descriptor.kind, LatentArchiveKind.BoldZip)
+    assertEquals(archiveDescriptor.kind, LatentArchiveKind.BoldZip)
     assertEquals(decoded.sourceDomain.value, "boldzip.carriers.demo")
     assertEquals(decoded.targetDomain.value, "boldzip.samples.demo")
     assertEquals(decoded.metadata("family"), "boldzip_sr")

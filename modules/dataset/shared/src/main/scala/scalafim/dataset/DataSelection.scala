@@ -1,5 +1,7 @@
 package scalafim.dataset
 
+import scalafim.image.Mask
+
 opaque type TimepointIndex = Int
 
 object TimepointIndex:
@@ -51,11 +53,12 @@ object TimepointSelection:
 
 enum VoxelSelection:
   case All
+  case AllSpatial
   case Indices(values: Vector[VoxelIndex])
 
   def resolve(size: Int): Either[DatasetError, Vector[VoxelIndex]] =
     this match
-      case VoxelSelection.All =>
+      case VoxelSelection.All | VoxelSelection.AllSpatial =>
         resolveAllVoxels(size)
       case VoxelSelection.Indices(values) =>
         validateVoxels(values, size)
@@ -67,6 +70,110 @@ object VoxelSelection:
 
   def indices(values: Int*): VoxelSelection =
     fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+enum VoxelDomainKind:
+  case FullSpatial
+  case ActiveMask
+
+final class VoxelDomain private (
+    val kind: VoxelDomainKind,
+    val spatialSize: Int,
+    private val readableVoxelValues: Vector[VoxelIndex],
+    private val readableLookup: Array[Boolean]
+):
+  require(spatialSize > 0, "voxel domain spatial size must be positive")
+  require(readableVoxelValues.nonEmpty, "voxel domain must contain at least one readable voxel")
+  require(readableLookup.length == spatialSize, "voxel domain lookup length must match spatial size")
+
+  def voxels: Vector[VoxelIndex] =
+    readableVoxelValues
+
+  def indices: Vector[Int] =
+    readableVoxelValues.map(VoxelIndex.raw)
+
+  def nVoxels: Int =
+    readableVoxelValues.length
+
+  def isFullSpatial: Boolean =
+    kind == VoxelDomainKind.FullSpatial
+
+  def contains(voxel: VoxelIndex): Boolean =
+    val value = VoxelIndex.raw(voxel)
+    value >= 0 && value < spatialSize && readableLookup(value)
+
+  def resolve(selection: VoxelSelection): Either[DatasetError, Vector[VoxelIndex]] =
+    selection match
+      case VoxelSelection.All =>
+        Right(readableVoxelValues)
+      case VoxelSelection.AllSpatial =>
+        resolveAllVoxels(spatialSize)
+      case VoxelSelection.Indices(values) =>
+        validateVoxels(values, spatialSize).flatMap(validateReadable)
+
+  private def validateReadable(values: Vector[VoxelIndex]): Either[DatasetError, Vector[VoxelIndex]] =
+    var i = 0
+    while i < values.length do
+      val voxel = values(i)
+      val value = VoxelIndex.raw(voxel)
+      if !readableLookup(value) then return Left(DatasetError.VoxelOutsideMask(value))
+      i += 1
+    Right(values)
+
+object VoxelDomain:
+  def full(shape: DatasetShape): Either[DatasetError, VoxelDomain] =
+    fromVoxels(
+      kind = VoxelDomainKind.FullSpatial,
+      spatialSize = shape.spatialSize,
+      voxels = Vector.tabulate(shape.spatialSize)(VoxelIndex.unsafe)
+    )
+
+  def fullUnsafe(shape: DatasetShape): VoxelDomain =
+    full(shape).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def active(
+      spatialSize: Int,
+      voxels: Vector[VoxelIndex]
+  ): Either[DatasetError, VoxelDomain] =
+    fromVoxels(VoxelDomainKind.ActiveMask, spatialSize, voxels)
+
+  def activeUnsafe(
+      spatialSize: Int,
+      voxels: Vector[VoxelIndex]
+  ): VoxelDomain =
+    active(spatialSize, voxels).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def fromMask(mask: Mask.MaskVol, shape: DatasetShape): Either[DatasetError, VoxelDomain] =
+    if mask.space.spatialDims != shape.spatialDims then
+      Left(DatasetError.ShapeMismatch("mask/space dimension mismatch"))
+    else if mask.space.spacing != shape.space.spacing || mask.space.origin != shape.space.origin then
+      Left(DatasetError.ShapeMismatch("mask/space mismatch"))
+    else
+      val maskIndices = Mask.indices(mask)
+      val voxels = Vector.newBuilder[VoxelIndex]
+      voxels.sizeHint(maskIndices.length)
+      var i = 0
+      while i < maskIndices.length do
+        VoxelIndex.make(maskIndices(i)) match
+          case Left(error) => return Left(error)
+          case Right(voxel) => voxels += voxel
+        i += 1
+      fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
+
+  private def fromVoxels(
+      kind: VoxelDomainKind,
+      spatialSize: Int,
+      voxels: Vector[VoxelIndex]
+  ): Either[DatasetError, VoxelDomain] =
+    if spatialSize <= 0 then Left(DatasetError.NonPositiveAxisSize(DatasetAxis.Voxel, spatialSize))
+    else
+      validateVoxels(voxels, spatialSize).map { valid =>
+        val lookup = Array.fill(spatialSize)(false)
+        var i = 0
+        while i < valid.length do
+          lookup(VoxelIndex.raw(valid(i))) = true
+          i += 1
+        new VoxelDomain(kind, spatialSize, valid, lookup)
+      }
 
 enum IndexSelection:
   case All
@@ -81,9 +188,15 @@ final class DataSelection private (
     val voxels: VoxelSelection
 ):
   def resolveEither(shape: DatasetShape): Either[DatasetError, ResolvedDataSelection] =
+    VoxelDomain.full(shape).flatMap(resolveEither(shape, _))
+
+  def resolveEither(
+      shape: DatasetShape,
+      voxelDomain: VoxelDomain
+  ): Either[DatasetError, ResolvedDataSelection] =
     for
       timepoints <- time.resolve(shape.timepoints)
-      voxelIndices <- voxels.resolve(shape.spatialSize)
+      voxelIndices <- voxelDomain.resolve(voxels)
       resolved <- ResolvedDataSelection.make(timepoints, voxelIndices)
     yield resolved
 

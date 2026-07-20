@@ -9,6 +9,8 @@ enum LinearMapError:
   case NonFiniteValue(index: Int, value: Double)
   case DimensionMismatch(expectedRows: Int, actualRows: Int)
   case NonComposable(leftRows: Int, rightCols: Int)
+  case OperatorApplicationFailed(detail: String)
+  case InvalidBlockLayout(detail: String)
   case EmptyOperatorList
   case EmptySelection(axis: String)
   case DuplicateSelection(axis: String, index: Int)
@@ -27,6 +29,10 @@ enum LinearMapError:
         s"operator expected $expectedRows input rows, got $actualRows"
       case NonComposable(leftRows, rightCols) =>
         s"operators are not composable: first target dimension $leftRows != second source dimension $rightCols"
+      case OperatorApplicationFailed(detail) =>
+        s"linear operator application failed: $detail"
+      case InvalidBlockLayout(detail) =>
+        s"invalid block operator layout: $detail"
       case EmptyOperatorList =>
         "operator list must be non-empty"
       case EmptySelection(axis) =>
@@ -285,6 +291,23 @@ final class ComposedLinearMap private[scalafim] (first: LinearMap, second: Linea
   override def adjoint: LinearMap =
     new ComposedLinearMap(second.adjoint, first.adjoint)
 
+final class ScaledLinearMap private[scalafim] (base: LinearMap, factor: Double) extends LinearMap:
+  override def rows: Int = base.rows
+  override def cols: Int = base.cols
+
+  override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
+    base.forward(input).map { result =>
+      val out = result.copyData
+      var index = 0
+      while index < out.length do
+        out(index) *= factor
+        index += 1
+      DoubleMatrix.unsafe(result.rows, result.cols, out)
+    }
+
+  override def adjoint: LinearMap =
+    new ScaledLinearMap(base.adjoint, factor)
+
 final class RestrictedLinearMap private[scalafim] (
     base: LinearMap,
     targetRows: Option[Array[Int]],
@@ -368,10 +391,86 @@ final class BlockDiagonalLinearMap private[scalafim] (operators: Vector[LinearMa
   override def adjoint: LinearMap =
     new BlockDiagonalLinearMap(operators.map(_.adjoint))
 
+final case class LinearMapBlock(rowBlock: Int, columnBlock: Int, operator: LinearMap)
+
+/** A structured rectangular block operator. Missing blocks are exact zeros; duplicate
+  * block coordinates are summed. Application slices each source block once per edge
+  * and never materializes the full operator.
+  */
+final class BlockLinearMap private[scalafim] (
+    val rowBlockSizes: Vector[Int],
+    val columnBlockSizes: Vector[Int],
+    val blocks: Vector[LinearMapBlock]
+) extends LinearMap:
+  override val rows: Int =
+    rowBlockSizes.sum
+
+  override val cols: Int =
+    columnBlockSizes.sum
+
+  override def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
+    if input.rows != cols then Left(LinearMapError.DimensionMismatch(cols, input.rows))
+    else
+      val rowOffsets = BlockLinearMap.offsets(rowBlockSizes)
+      val columnOffsets = BlockLinearMap.offsets(columnBlockSizes)
+      val out = new Array[Double](rows * input.cols)
+      var blockIndex = 0
+      var error = Option.empty[LinearMapError]
+      while blockIndex < blocks.length && error.isEmpty do
+        val block = blocks(blockIndex)
+        val sourceRows = columnBlockSizes(block.columnBlock)
+        val source = new Array[Double](sourceRows * input.cols)
+        var sourceRow = 0
+        while sourceRow < sourceRows do
+          System.arraycopy(
+            input.dataArray,
+            (columnOffsets(block.columnBlock) + sourceRow) * input.cols,
+            source,
+            sourceRow * input.cols,
+            input.cols
+          )
+          sourceRow += 1
+        block.operator.forward(DoubleMatrix.unsafe(sourceRows, input.cols, source)) match
+          case Left(value) => error = Some(value)
+          case Right(part) =>
+            var targetRow = 0
+            while targetRow < part.rows do
+              var col = 0
+              val outOffset = (rowOffsets(block.rowBlock) + targetRow) * input.cols
+              val partOffset = targetRow * input.cols
+              while col < input.cols do
+                out(outOffset + col) += part.dataArray(partOffset + col)
+                col += 1
+              targetRow += 1
+        blockIndex += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(DoubleMatrix.unsafe(rows, input.cols, out))
+
+  override def adjoint: LinearMap =
+    new BlockLinearMap(
+      columnBlockSizes,
+      rowBlockSizes,
+      blocks.map(block => LinearMapBlock(block.columnBlock, block.rowBlock, block.operator.adjoint))
+    )
+
+object BlockLinearMap:
+  private[scalafim] def offsets(sizes: Vector[Int]): Array[Int] =
+    val out = new Array[Int](sizes.length)
+    var index = 1
+    while index < sizes.length do
+      out(index) = out(index - 1) + sizes(index - 1)
+      index += 1
+    out
+
 object LinearMap:
   def compose(first: LinearMap, second: LinearMap): Either[LinearMapError, LinearMap] =
     if first.rows != second.cols then Left(LinearMapError.NonComposable(first.rows, second.cols))
     else Right(new ComposedLinearMap(first, second))
+
+  def scale(map: LinearMap, factor: Double): Either[LinearMapError, LinearMap] =
+    if !factor.isFinite then Left(LinearMapError.NonFiniteValue(0, factor))
+    else Right(new ScaledLinearMap(map, factor))
 
   def restrict(
     map: LinearMap,
@@ -386,6 +485,38 @@ object LinearMap:
   def blockDiag(operators: Vector[LinearMap]): Either[LinearMapError, LinearMap] =
     if operators.isEmpty then Left(LinearMapError.EmptyOperatorList)
     else Right(new BlockDiagonalLinearMap(operators))
+
+  def blockMatrix(
+      rowBlockSizes: Vector[Int],
+      columnBlockSizes: Vector[Int],
+      blocks: Vector[LinearMapBlock]
+  ): Either[LinearMapError, LinearMap] =
+    if rowBlockSizes.isEmpty || columnBlockSizes.isEmpty then
+      Left(LinearMapError.InvalidBlockLayout("row and column block partitions must be non-empty"))
+    else if rowBlockSizes.exists(_ <= 0) || columnBlockSizes.exists(_ <= 0) then
+      Left(LinearMapError.InvalidBlockLayout("every row and column block must have positive size"))
+    else
+      var index = 0
+      var error = Option.empty[LinearMapError]
+      while index < blocks.length && error.isEmpty do
+        val block = blocks(index)
+        if block.rowBlock < 0 || block.rowBlock >= rowBlockSizes.length then
+          error = Some(LinearMapError.IndexOutOfBounds("row block", block.rowBlock, rowBlockSizes.length))
+        else if block.columnBlock < 0 || block.columnBlock >= columnBlockSizes.length then
+          error = Some(LinearMapError.IndexOutOfBounds("column block", block.columnBlock, columnBlockSizes.length))
+        else if block.operator.rows != rowBlockSizes(block.rowBlock) ||
+            block.operator.cols != columnBlockSizes(block.columnBlock)
+        then
+          error = Some(
+            LinearMapError.InvalidBlockLayout(
+              s"block (${block.rowBlock}, ${block.columnBlock}) has ${block.operator.rows}x${block.operator.cols}, " +
+                s"expected ${rowBlockSizes(block.rowBlock)}x${columnBlockSizes(block.columnBlock)}"
+            )
+          )
+        index += 1
+      error match
+        case Some(value) => Left(value)
+        case None        => Right(new BlockLinearMap(rowBlockSizes, columnBlockSizes, blocks))
 
   private def validateSelection(
     axis: String,

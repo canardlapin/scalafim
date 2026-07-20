@@ -58,8 +58,9 @@ values plus total functions:
   tolerances, unique output names, declared caveat ids, and shape agreement
   where the shape is known before comparison.
 - Invalid states should be impossible or explicit. Missing outputs, duplicate
-  arrays, undeclared caveats, non-finite values, stale fixtures, and failed
-  tolerances must all lower to `ScenarioStatus.Fail`, not to ad hoc warnings.
+  arrays, non-finite values, blocking stale fixtures, and failed tolerances
+  must all lower to `ScenarioStatus.Fail`, not to ad hoc warnings. Undeclared
+  caveats must fail the CI policy check rather than being silently accepted.
 - Syntax can be pleasant, but it should be syntax over values. Add extension
   methods and small DSL helpers only after the algebra is clear.
 
@@ -114,9 +115,7 @@ enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail
 
   def ciPass: Boolean =
-    this match
-      case Pass | PassWithCaveats => true
-      case Fail                   => false
+    this == Pass
 
 enum ScenarioTier:
   case NumericCanary, WorkflowParity, AlgorithmDivergence, CrossLevelWorkflow, FlagshipWorkflow
@@ -142,16 +141,44 @@ final case class ScenarioTolerance(
 final case class ScenarioArray(name: String, shape: Vector[Int], values: Vector[Double])
 final case class ScenarioOutput(arrays: Map[String, ScenarioArray])
 final case class ScenarioDelta(name: String, maxAbs: Double, mae: Double, pearson: Double, passes: Boolean)
-final case class ScenarioCaveat(id: String, quantity: String, reason: String, expected: String)
+enum CaveatSeverity:
+  case Note, Actionable, Blocking
+
+enum CaveatKind:
+  case PublicApiGap, AlgorithmDivergence, FixtureFreshness, PerformanceBudget, DiagnosticsGap, ErgonomicPain
+
+final case class ScenarioCaveat(
+    id: String,
+    kind: CaveatKind,
+    severity: CaveatSeverity,
+    owner: String,
+    followUp: Option[String],
+    detail: String
+)
+
+final case class ScenarioPolicy(allowedStatuses: Set[ScenarioStatus], allowedCaveatIds: Set[String]):
+  require(allowedStatuses.nonEmpty, "scenario policy must allow at least one status")
+  require(!allowedStatuses.contains(ScenarioStatus.Fail), "scenario policy must not allow Fail")
+
+  def allows(result: ScenarioResult): Boolean =
+    allowedStatuses.contains(result.status) &&
+      result.caveats.forall(caveat => allowedCaveatIds.contains(caveat.id))
+
 final case class ScenarioResult(
     id: ScenarioId,
     tier: ScenarioTier,
-    status: ScenarioStatus,
     deltas: Vector[ScenarioDelta],
     caveats: Vector[ScenarioCaveat],
     failures: Vector[String]
 ):
+  def status: ScenarioStatus =
+    if failures.nonEmpty || deltas.exists(delta => !delta.passes) then ScenarioStatus.Fail
+    else if caveats.exists(_.severity == CaveatSeverity.Blocking) then ScenarioStatus.Fail
+    else if caveats.nonEmpty then ScenarioStatus.PassWithCaveats
+    else ScenarioStatus.Pass
+
   def ciPass: Boolean = status.ciPass
+  def ciPass(policy: ScenarioPolicy): Boolean = policy.allows(this)
   def renderSummary: String =
     s"$id: $status (${deltas.count(_.passes)}/${deltas.length} deltas passed, ${failures.length} failures)"
 ```
@@ -167,14 +194,17 @@ suite should not scatter many unrelated assertions and then infer success from
 `result.ciPass`; any lower-level assertion helpers should feed the result's
 `deltas`, `caveats`, and `failures`.
 
-`PassWithCaveats` is green only under a strict policy:
+The no-argument `result.ciPass` is intentionally conservative: only a clean
+`Pass` is CI-green by default. `PassWithCaveats` is green only when the suite
+uses an explicit `ScenarioPolicy` derived from the manifest:
 
 - every numerical gate that remains active passes;
 - every bypassed or relaxed gate is tied to a declared caveat;
 - every declared caveat appears in the scenario metadata and receipt;
 - no undeclared caveat or unexpected output mismatch is present.
 
-Otherwise the result is `Fail`.
+Otherwise `result.ciPass(policy)` is false. A blocking caveat or failed
+observation always lowers the scenario to `Fail`.
 
 ## Fixture Policy
 
@@ -259,6 +289,8 @@ or in-memory Scala fixtures.
 | `fit_semantic_contrast_reordered_columns` | `workflow_parity` | `fit` | mathematical | Name-keyed contrasts survive design-column order changes and categorical level ordering. |
 | `fit_lss_trialwise_recovery` | `workflow_parity` | `fit` | mathematical | LSS chooses trial columns by metadata and recovers injected per-trial amplitudes. |
 | `fit_runwise_ols_pooling` | `workflow_parity` | `fit` | mathematical | Runwise fits preserve run metadata and combine estimates without swapping voxels or terms. |
+| `fit_chunked_runwise_execution` | `workflow_parity` | `fit` | mathematical | Chunked and future chunked runwise execution preserve voxel chunk order, selected run partitions, and per-run coefficients. |
+| `fit_pipeline_first_level_workflow` | `cross_level_workflow` | `fit` + `pipeline` | mathematical + pipeline runner parity | A public first-level workflow survives generic pipeline graph execution, typed artifact routing, branch outputs, receipts, and selected voxel ordering. |
 | `design_hrf_factorial_2x2` | `workflow_parity` | `design` | fmridesign/fmrimod fixture | Crossed factors produce stable design metadata and generated omnibus contrasts. |
 | `design_parametric_modulator_centering` | `workflow_parity` | `design` | fmridesign/fmrimod fixture | Parametric modulators are centered/scaled as intended and keep term provenance. |
 | `design_baseline_runwise_drift` | `workflow_parity` | `design` | fmridesign fixture | Runwise intercept and drift columns are block-local and rank-stable. |
@@ -623,6 +655,10 @@ tests before introducing any common production testkit.
 | `fit.public-f-contrast.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastScenarioSuite.scala` | mathematical/direct OLS oracle over the intended design matrix | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.semantic-contrast-reordered-columns.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/SemanticContrastReorderedColumnsScenarioSuite.scala` | paired public fits with reversed design-column order plus direct OLS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.lss-trialwise-recovery.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/LssTrialwiseRecoveryScenarioSuite.scala` | public builder/executor result against direct metadata-selected LSS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.censored-multirun-concat.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/CensoredMultirunConcatScenarioSuite.scala` | public multi-run fit with selected timepoints against direct OLS on row-deleted design/response; censored rows contain outliers | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.chunked-runwise-execution.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ChunkedRunwiseExecutionScenarioSuite.scala` | public chunked and future chunked `RunwiseLeastSquares` execution against unchunked runwise fitting and analytic per-run coefficients | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.pipeline-first-level-workflow.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PipelineFirstLevelWorkflowScenarioSuite.scala` | public dataset/model/fit/T/F workflow expressed as a generic pipeline graph, checked against direct OLS plus local/future runner parity | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `design.mixed-tr-multirun.v1` | `modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/MixedTrMultirunScenarioSuite.scala` | public mixed-TR `EventModelBuilder` output against independently stitched per-run designs plus runwise baseline and uniform-TR canary checks | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.one-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala` | analytic one-sample t oracle per sample | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.two-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala` | analytic pooled two-sample t oracle per sample plus named group contrast check | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.first-level-bridge.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala` | first-level `TContrastResult` bridge into fixed-effects group inference against analytic inverse-variance oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
@@ -640,9 +676,16 @@ The group harness currently lives in:
 modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/ScenarioHarness.scala
 ```
 
-Keep the fit and group test harnesses separate until a third module needs the
-same algebra. Promote only after duplication proves the common shape is worth a
-shared testkit.
+The design harness currently lives in:
+
+```text
+modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/ScenarioHarness.scala
+```
+
+Keep the module-local harnesses separate for Phase 1. The repeated
+`ScenarioResult` shape is now intentional evidence for a future shared testkit,
+but promotion should wait until one more cross-module scenario proves the common
+surface is stable.
 
 The active scenario registry lives in:
 
@@ -669,8 +712,8 @@ sbt groupJVM/test
 sbt groupJS/test
 ```
 
-The next slice should start the Wave 2 stress cases with
-`fit_censored_multirun_concat`.
+The next slice should continue the Wave 2 stress cases with
+`fit_mixed_tr_cross_run_contrast`.
 
 ## Definition Of Done For A Scenario
 
@@ -708,8 +751,7 @@ A scenario is complete only when all of the following hold:
 3. Add a fmrimod/Nilearn exporter for `fit_public_f_contrast`.
 4. Build `first_level_to_group_known_effect` from the green fit and group
    pieces.
-5. Expand into Wave 2 stress scenarios, starting with
-   `fit_censored_multirun_concat`: mixed TR, censoring, realistic
+5. Expand into Wave 2 stress scenarios: mixed-TR cross-run fitting, realistic
    confounds, FIR/block durations, factorial/parametric designs, and AR
    divergence.
 6. Add Wave 3 and Wave 4 module-family scenarios as their public seams become

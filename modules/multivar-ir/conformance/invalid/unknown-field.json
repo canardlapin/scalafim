@@ -1,0 +1,5 @@
+{
+  "schema": {"name": "scalafim-multivar-ir", "version": {"major": 0, "minor": 1}, "unknown_fields": "reject"},
+  "future_field": true,
+  "spaces": [], "operators": [], "forms": [], "measures": [], "diagrams": [], "relationships": [], "objectives": []
+}

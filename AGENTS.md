@@ -56,6 +56,10 @@ construction points, but the core model should express its invariants in types.
   and readable; keep the *inner loop* allocation-free.
 - Shared code must avoid JVM-only numeric deps (Breeze, JTransforms) on hot paths — those
   belong behind a `jvm` boundary. If you need one in `shared`, it's a design smell; stop.
+- Linear algebra solver contracts and portable reference implementations belong in `linalg`;
+  do not add private eigensolver/SVD/inverse helper families in domain modules. JVM-only
+  libraries such as Breeze belong behind explicit adapter modules such as `linalg-breeze` and typed solver
+  capabilities. See [`docs/plans/linalg-backend-strategy.md`](docs/plans/linalg-backend-strategy.md).
 
 ## Testing
 
@@ -66,6 +70,11 @@ construction points, but the core model should express its invariants in types.
 - **Numerical parity fixtures** anchor behavior that must match the R ecosystem
   (`neuroim2`, `fmrihrf`, `fmridesign`, `fmrireg`, `fmridataset`; sources under `~/code/`).
   When porting statistical behavior, add a fixture-backed test rather than trusting the port.
+- Scenario tests are realistic workflow contracts, not loose assertion piles. Follow
+  [`docs/plans/scenario-parity-harness.md`](docs/plans/scenario-parity-harness.md):
+  every active scenario should return one `ScenarioResult` truth value, default to
+  clean `Pass` only, represent known gaps as declared caveats, and require an
+  explicit policy before `PassWithCaveats` is CI-acceptable.
 - Put platform-independent tests in `shared` so they run on both JVM and JS; reserve
   `jvm`/`js` test dirs for platform-specific behavior (IO, native shims).
 

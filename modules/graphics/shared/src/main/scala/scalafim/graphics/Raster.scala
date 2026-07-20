@@ -119,6 +119,23 @@ final class RasterImage private (
     s"RasterImage(${width}x$height)"
 
 object RasterImage:
+  /** Build directly into primitive packed storage without an intermediate
+    * collection. The callback is evaluated in row-major visual order.
+    */
+  def tabulate(
+      dimensions: RasterDimensions
+  )(pixelAt: (Int, Int) => Rgba32): RasterImage =
+    val data = new Array[Int](dimensions.pixelCount)
+    var y = 0
+    while y < dimensions.height do
+      var x = 0
+      val rowOffset = y * dimensions.width
+      while x < dimensions.width do
+        data(rowOffset + x) = pixelAt(x, y).packedInt
+        x += 1
+      y += 1
+    new RasterImage(dimensions, data)
+
   def fromPacked(
       dimensions: RasterDimensions,
       pixels: IndexedSeq[Rgba32]

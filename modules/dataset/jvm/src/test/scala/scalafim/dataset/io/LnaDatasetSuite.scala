@@ -95,7 +95,116 @@ class LnaDatasetSuite extends munit.FunSuite:
 
       assert(LnaDatasetQuery.fromStrings(subject = "../sub-01").isLeft)
       assert(LnaDatasetQuery.fromStrings(subject = "sub-01", task = Some("../rest")).isLeft)
+      assert(LnaDatasetQuery.fromStrings(subject = "sub-01", run = Some("../01")).isLeft)
+      assert(LnaDatasetQuery.fromStrings(subject = "sub-01", acq = Some("../hi")).isLeft)
+      assert(LnaDatasetQuery.fromStrings(subject = "sub-01", desc = Some("../clean")).isLeft)
     }
+  }
+
+  test("LnaDataset matches parsed run acquisition and description entities exactly") {
+    val root = Files.createTempDirectory("scalafim-lna-entity-query-")
+    try
+      writeArchive(root.resolve("sub-09/func/sub-09_task-rest_run-01_acq-hi_desc-denoised_space-MNI_bold.lna.h5"), data)
+      writeArchive(root.resolve("sub-09/func/sub-09_task-rest_run-010_acq-hi_desc-denoised_space-MNI_bold.lna.h5"), data)
+      writeArchive(root.resolve("sub-09/func/sub-09_task-rest_run-01_acq-high_desc-denoised_space-MNI_bold.lna.h5"), data)
+      writeArchive(root.resolve("sub-09/func/sub-09_task-rest_run-01_acq-hi_desc-denoisedExtra_space-MNI_bold.lna.h5"), data)
+      writeArchive(root.resolve("sub-09/func/sub-09_task-resting_run-01_acq-hi_desc-denoised_space-MNI_bold.lna.h5"), data)
+
+      val dataset = LnaDataset.unsafe(root)
+      val exact =
+        dataset
+          .findLnaFiles(
+            LnaDatasetQuery(
+              subject = "09",
+              task = Some("rest"),
+              space = Some("MNI"),
+              run = Some("01"),
+              acq = Some("hi"),
+              desc = Some("denoised")
+            )
+          )
+          .fold(err => fail(err.message), identity)
+
+      assertEquals(exact.length, 1)
+      assertEquals(exact.head.getFileName.toString, "sub-09_task-rest_run-01_acq-hi_desc-denoised_space-MNI_bold.lna.h5")
+
+      val runOne =
+        dataset
+          .findLnaFiles(LnaDatasetQuery(subject = "09", task = Some("rest"), space = Some("MNI"), run = Some("1")))
+          .fold(err => fail(err.message), identity)
+      assertEquals(runOne, Vector.empty)
+
+      val ambiguous =
+        dataset.resolveLnaFile(LnaDatasetQuery(subject = "09", task = Some("rest"), space = Some("MNI"), run = Some("01")))
+
+      ambiguous match
+        case Left(LnaDatasetLookupError.Ambiguous(query, matches)) =>
+          assertEquals(query.run.map(_.value), Some("01"))
+          assertEquals(matches.length, 3)
+        case other =>
+          fail(s"expected ambiguous lookup, got $other")
+    finally deleteTree(root)
+  }
+
+  test("LnaDataset resolves session run queries to real archive-backed datasets") {
+    val root = Files.createTempDirectory("scalafim-lna-session-run-query-")
+    try
+      writeArchive(root.resolve("sub-10/ses-01/func/sub-10_ses-01_task-rest_run-01_space-MNI_bold.lna.h5"), data)
+      writeArchive(root.resolve("sub-10/ses-01/func/sub-10_ses-01_task-rest_run-02_space-MNI_bold.lna.h5"), data)
+
+      val dataset = LnaDataset.unsafe(root)
+      val run2 =
+        dataset
+          .readSubject(
+            LnaDatasetQuery(
+              subject = "10",
+              session = Some("01"),
+              task = Some("rest"),
+              space = Some("MNI"),
+              run = Some("02")
+            )
+          )
+          .fold(err => fail(err.message), identity)
+
+      assertEquals(
+        run2.metadata.get("lna.archive_relative_path"),
+        Some("sub-10/ses-01/func/sub-10_ses-01_task-rest_run-02_space-MNI_bold.lna.h5")
+      )
+      assertEquals(run2.shape.timepoints, 3)
+
+      val ambiguous =
+        dataset.resolveLnaFile(LnaDatasetQuery(subject = "10", session = Some("01"), task = Some("rest"), space = Some("MNI")))
+      ambiguous match
+        case Left(LnaDatasetLookupError.Ambiguous(query, matches)) =>
+          assertEquals(query.session.map(_.value), Some("ses-01"))
+          assertEquals(matches.length, 2)
+        case other =>
+          fail(s"expected ambiguous lookup, got $other")
+    finally deleteTree(root)
+  }
+
+  test("LnaDataset reports malformed LNA filename entities during discovery") {
+    val root = Files.createTempDirectory("scalafim-lna-malformed-query-")
+    try
+      val malformed = root.resolve("sub-11/func/sub-11_task-rest_task-other_space-MNI_bold.lna.h5")
+      Files.createDirectories(malformed.getParent)
+      Files.writeString(malformed, "not an archive")
+
+      val dataset = LnaDataset.unsafe(root)
+      val failed =
+        dataset
+          .findLnaFiles(LnaDatasetQuery(subject = "11", task = Some("rest")))
+          .left
+          .toOption
+          .getOrElse(fail("expected malformed filename error"))
+      assert(failed.message.contains("duplicate entity 'task'"))
+
+      dataset.resolveLnaFile(LnaDatasetQuery(subject = "11", task = Some("rest"))) match
+        case Left(LnaDatasetLookupError.ScanFailed(error)) =>
+          assert(error.message.contains("duplicate entity 'task'"))
+        case other =>
+          fail(s"expected scan failure, got $other")
+    finally deleteTree(root)
   }
 
   test("LnaDataset loads one archive as a LatentArchiveDatasetBackend") {

@@ -30,6 +30,11 @@ caches live under `scalafim.spatial.io`.
 - `SpatialError` as the shared error ADT with structured reason categories.
 - `Morphism`, `CoordinateMap`, `SpatialGraph`, and `MorphismPath` for immutable
   route selection with geometric inverse policy and domain-kind compatibility.
+  `SpatialGraph` retains domain validation and policy semantics, then delegates
+  the validated simple route search to `scalafim-graph`; parallel morphisms are
+  collapsed only after filtering (cheapest cost, then original morphism order),
+  equal-cost route ties use ordered domain ids, and public paths retain the
+  chosen morphism payloads and inverse state.
 - `ImageMorphismBridge` for lowering executable identity/affine graph paths
   into `scalafim.image.SpatialMorphism` values without duplicating coordinate
   execution in this module.

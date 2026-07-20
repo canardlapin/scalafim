@@ -44,7 +44,11 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
           .fromArchive(temporalArchive)
           .fold(err => fail(err.message), identity)
       val temporalResponse =
-        temporalDecoded.latentResponse.getOrElse(fail(s"${temporalCase.id} did not decode to a latent response"))
+        temporalDecoded.capability match
+          case LatentResponseCapability.Response(response) =>
+            response
+          case other =>
+            fail(s"${temporalCase.id} did not decode to a latent response: $other")
 
       assertEquals(temporalDecoded.kind, temporalCase.archiveKind)
       assertEquals(temporalResponse.metadata("case"), temporalCase.id)
@@ -144,7 +148,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
             metadata = Map("case" -> "haar")
           )
           .fold(err => fail(err.message), identity),
-        archiveKind = LatentArchiveKind.Explicit
+        archiveKind = LatentArchiveKind.TemporalHaar
       )
     )
 

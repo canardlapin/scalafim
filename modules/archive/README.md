@@ -20,8 +20,11 @@ adapters, including HDF5, live under JVM sources.
 Supported shared transform constructs now include:
 
 - `quant`: global or per-voxel range quantization with typed scale/offset
-  payloads
+  payloads, checked `QuantBits`, explicit centering and clipping policies, and
+  total checked decoders for malformed archive inputs
 - `delta`: first-order time-axis deltas with verbatim first-value references
+  and checked decode errors for unsupported axes or malformed first-value
+  payloads
 - `basis` plus `embed`: explicit basis storage and coefficient projection
 - external shared-basis `embed`: coefficient-only archives that reference a
   content-addressed shared basis artifact by alias/checksum, with locator and
@@ -33,6 +36,14 @@ Supported shared transform constructs now include:
   bases
 - composed `delta -> quant` archives reconstructed by walking typed transform
   descriptors in reverse order
+
+The public model keeps compatibility constructors for existing call sites, but
+new code should prefer checked constructors such as `ArchivePath.parse`,
+`RunLabel.parse`, `DatasetShape(...)`, `DatasetRef.checked`,
+`TransformDescriptor.checked`, `LnaManifest.checked`, and the shared-basis
+`checked` constructors. These return `Either[ArchiveError, A]` and keep path,
+shape, transform-name, port-name, creator, metadata, and finite-value failures
+inside the archive error algebra.
 
 The current delta core is intentionally lossless and simple: no feature-axis
 deltas, run-length coding, entropy coding, or external chunk/filter policy is

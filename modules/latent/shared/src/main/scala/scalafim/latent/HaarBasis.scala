@@ -9,6 +9,26 @@ final class HaarSpec private (
   val levels: Int =
     HaarSpec.levelCount(timepoints)
 
+  def copy(
+      timepoints: Int = this.timepoints,
+      components: Int = this.components
+  ): Either[LatentError, HaarSpec] =
+    HaarSpec(timepoints, components)
+
+  def withComponents(value: Int): Either[LatentError, HaarSpec] =
+    copy(components = value)
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: HaarSpec =>
+        timepoints == that.timepoints &&
+          components == that.components
+      case _ =>
+        false
+
+  override def hashCode(): Int =
+    (timepoints, components).##
+
   override def toString: String =
     s"HaarSpec(timepoints=$timepoints, components=$components, levels=$levels)"
 
@@ -28,6 +48,9 @@ object HaarSpec:
       components: Int
   ): HaarSpec =
     apply(timepoints, components).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def full(timepoints: Int): Either[LatentError, HaarSpec] =
+    apply(timepoints, timepoints)
 
   private[latent] def isPowerOfTwo(value: Int): Boolean =
     value > 0 && (value & (value - 1)) == 0

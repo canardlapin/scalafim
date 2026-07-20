@@ -6,6 +6,16 @@ final class IndexSet private (
     val axis: IndexAxis,
     private val values: Vector[Int]
 ):
+  /** Sorted copy of the indices for O(log n) membership queries. */
+  private val sorted: Array[Int] =
+    val out = new Array[Int](values.length)
+    var i = 0
+    while i < values.length do
+      out(i) = values(i)
+      i += 1
+    java.util.Arrays.sort(out)
+    out
+
   def indices: Vector[Int] =
     values
 
@@ -16,7 +26,7 @@ final class IndexSet private (
     values.isEmpty
 
   def contains(index: Int): Boolean =
-    values.contains(index)
+    java.util.Arrays.binarySearch(sorted, index) >= 0
 
   def requireWithin(limit: Int): Either[MultivarError, IndexSet] =
     IndexSet.from(values, axis = axis, limit = Some(limit))
@@ -46,7 +56,7 @@ object IndexSet:
       var error = Option.empty[MultivarError]
       while i < values.length && error.isEmpty do
         val index = values(i)
-        if index < 0 then error = Some(MultivarError.IndexOutOfBounds(axis, index, 0))
+        if index < 0 then error = Some(MultivarError.IndexOutOfBounds(axis, index, limit.getOrElse(0)))
         else
           limit match
             case Some(size) if index >= size =>

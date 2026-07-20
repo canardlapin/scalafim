@@ -12,9 +12,10 @@ final case class InMemoryDatasetBackend(
   require(data.cols == shape.spatialSize, "data columns must match spatial voxel count")
 
   override val mask: Mask.MaskVol = Mask.all(space)
+  override val voxelDomain: VoxelDomain = VoxelDomain.fullUnsafe(shape)
 
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
-    val resolvedEither = selection.resolveEither(shape)
+    val resolvedEither = selection.resolveEither(shape, voxelDomain)
     resolvedEither.flatMap { resolved =>
       val rows =
         resolved.timepoints.map { r =>

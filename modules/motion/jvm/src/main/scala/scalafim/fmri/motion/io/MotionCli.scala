@@ -8,6 +8,31 @@ object MotionCli:
   def parse(args: Array[String]): Either[MotionIoError, MotionCommand] =
     parse(args.toVector)
 
+  def run(args: Array[String]): Either[MotionIoError, MotionCliResult] =
+    run(args.toVector)
+
+  def run(args: Vector[String]): Either[MotionIoError, MotionCliResult] =
+    parse(args).flatMap(run)
+
+  def run(command: MotionCommand): Either[MotionIoError, MotionCliResult] =
+    command match
+      case MotionCommand.Estimate(input, outputPrefix, plan) =>
+        runEstimate(command, input, outputPrefix, plan)
+      case MotionCommand.Apply(input, motionTsv, output, control) =>
+        runApply(command, input, motionTsv, output, control)
+      case MotionCommand.Run(input, outputPrefix, plan, applyControl) =>
+        runEstimateAndApply(command, input, outputPrefix, plan, applyControl)
+      case MotionCommand.Report(motionTsv, outputDir, prefix) =>
+        runReport(command, motionTsv, outputDir, prefix)
+
+  def main(args: Array[String]): Unit =
+    run(args) match
+      case Left(error) =>
+        System.err.println(error.message)
+        sys.exit(2)
+      case Right(result) =>
+        result.outputs.foreach(path => println(path.toString))
+
   def parse(args: Vector[String]): Either[MotionIoError, MotionCommand] =
     args.headOption match
       case None =>
@@ -51,6 +76,77 @@ object MotionCli:
       prefix <- required(flags, "prefix")
       _ <- rejectUnknown(flags, Set("motion", "output-dir", "prefix"))
     yield MotionCommand.Report(motionTsv, outputDir, prefix)
+
+  private def runEstimate(
+      command: MotionCommand,
+      input: Path,
+      outputPrefix: Path,
+      plan: MotionPlan
+  ): Either[MotionIoError, MotionCliResult] =
+    for
+      run <- MotionNifti.read(input)
+      estimate <- MotionEstimator.estimate(run.run, None, plan).left.map(MotionIoError.fromMotion)
+      bundle <- writeBundle(outputPrefix, MotionCorrectionResult.estimateOnly(estimate, plan))
+    yield MotionCliResult(command, Vector(bundle.motionTsv, bundle.matricesCsv, bundle.summaryCsv))
+
+  private def runApply(
+      command: MotionCommand,
+      input: Path,
+      motionTsv: Path,
+      output: Path,
+      control: ApplyControl
+  ): Either[MotionIoError, MotionCliResult] =
+    for
+      run <- MotionNifti.read(input)
+      estimate <- MotionReportWriter.readEstimate(motionTsv)
+      corrected <- MotionApplier.apply(run.run, estimate.trace, control).left.map(MotionIoError.fromMotion)
+      out <- MotionNifti.write(output, corrected, Some(run.metadata.copy(path = output)))
+    yield MotionCliResult(command, Vector(out, MotionNifti.defaultSidecar(out)))
+
+  private def runEstimateAndApply(
+      command: MotionCommand,
+      input: Path,
+      outputPrefix: Path,
+      plan: MotionPlan,
+      applyControl: ApplyControl
+  ): Either[MotionIoError, MotionCliResult] =
+    val (directory, prefix) = splitOutputPrefix(outputPrefix)
+    val correctedPath = directory.resolve(s"${prefix}_corrected.nii")
+    for
+      run <- MotionNifti.read(input)
+      estimate <- MotionEstimator.estimate(run.run, None, plan).left.map(MotionIoError.fromMotion)
+      corrected <- MotionCorrectionResult
+        .fromEstimate(run.run, estimate, plan, applyControl = applyControl)
+        .left
+        .map(MotionIoError.fromMotion)
+      out <- corrected.corrected match
+        case None => Left(MotionIoError.InvalidCommand("run command did not produce a corrected image"))
+        case Some(image) => MotionNifti.write(correctedPath, image, Some(run.metadata.copy(path = correctedPath)))
+      bundle <- MotionReportWriter.writeBundle(directory, prefix, corrected)
+    yield MotionCliResult(command, Vector(out, MotionNifti.defaultSidecar(out), bundle.motionTsv, bundle.matricesCsv, bundle.summaryCsv))
+
+  private def runReport(
+      command: MotionCommand,
+      motionTsv: Path,
+      outputDir: Path,
+      prefix: String
+  ): Either[MotionIoError, MotionCliResult] =
+    for
+      estimate <- MotionReportWriter.readEstimate(motionTsv)
+      bundle <- MotionReportWriter.writeBundle(outputDir, prefix, MotionCorrectionResult.estimateOnly(estimate, MotionPlan.default))
+    yield MotionCliResult(command, Vector(bundle.motionTsv, bundle.matricesCsv, bundle.summaryCsv))
+
+  private def writeBundle(
+      outputPrefix: Path,
+      result: MotionCorrectionResult
+  ): Either[MotionIoError, MotionReportBundle] =
+    val (directory, prefix) = splitOutputPrefix(outputPrefix)
+    MotionReportWriter.writeBundle(directory, prefix, result)
+
+  private def splitOutputPrefix(path: Path): (Path, String) =
+    val parent = Option(path.getParent).getOrElse(Paths.get("."))
+    val prefix = Option(path.getFileName).map(_.toString).getOrElse(path.toString)
+    (parent, prefix)
 
   private def parseFlags(tokens: Vector[String]): Either[MotionIoError, Map[String, String]] =
     var i = 0

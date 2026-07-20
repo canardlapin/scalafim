@@ -30,6 +30,7 @@ enum SpatialError:
   case IncompatibleMorphismKind(kind: MorphismKind, source: DomainId, sourceKind: DomainKind, target: DomainId, targetKind: DomainKind)
   case DuplicateDomain(id: DomainId)
   case DuplicateMorphism(id: MorphismId)
+  case GraphAssemblyFailed(reason: String)
   case DomainNotFound(id: DomainId)
   case MorphismDomainMissing(id: MorphismId, domain: DomainId)
   case NoPath(source: DomainId, target: DomainId)
@@ -65,7 +66,7 @@ enum SpatialError:
         SpatialErrorReason.DomainKind
       case InvalidCost(_) | InvalidQuality(_, _) | IdentityMorphismDomainMismatch(_, _) | IncompatibleMorphismKind(_, _, _, _, _) =>
         SpatialErrorReason.MorphismCompatibility
-      case DuplicateDomain(_) | DuplicateMorphism(_) | DomainNotFound(_) | MorphismDomainMissing(_, _) =>
+      case DuplicateDomain(_) | DuplicateMorphism(_) | GraphAssemblyFailed(_) | DomainNotFound(_) | MorphismDomainMissing(_, _) =>
         SpatialErrorReason.Graph
       case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
         SpatialErrorReason.Route
@@ -112,6 +113,8 @@ enum SpatialError:
         s"domain already exists in graph: ${id.value}"
       case DuplicateMorphism(id) =>
         s"morphism already exists in graph: ${id.value}"
+      case GraphAssemblyFailed(reason) =>
+        s"spatial route graph assembly failed: $reason"
       case DomainNotFound(id) =>
         s"domain not found: ${id.value}"
       case MorphismDomainMissing(id, domain) =>

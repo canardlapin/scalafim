@@ -27,11 +27,12 @@ final class FitPlan private (
       predictors = nPredictors,
       voxels = nVoxels,
       robust = strategy match
-        case FitStrategy.RobustLeastSquares(_, _) => true
+        case FitStrategy.RobustLeastSquares(_, _, _) => true
         case _ => false,
       autocorrelated = strategy match
         case FitStrategy.GeneralizedLeastSquares(_, _) => true
         case FitStrategy.ReducedRankGls(_, _) => true
+        case FitStrategy.RobustLeastSquares(_, _, autocorrelation) => autocorrelation.reestimates
         case _ => false
     )
 

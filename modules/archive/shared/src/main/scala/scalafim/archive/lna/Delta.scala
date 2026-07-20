@@ -21,11 +21,17 @@ object Delta:
     decode(encoded.deltas.data, encoded.firstValues.data, encoded.params)
 
   def decode(deltas: DMat, firstValues: DMat, params: DeltaParams = DeltaParams()): DMat =
+    decodeChecked(deltas, firstValues, params).fold(err => throw IllegalArgumentException(err.message), identity)
+
+  def decodeChecked(encoded: Encoded): Either[ArchiveError, DMat] =
+    decodeChecked(encoded.deltas.data, encoded.firstValues.data, encoded.params)
+
+  def decodeChecked(deltas: DMat, firstValues: DMat, params: DeltaParams = DeltaParams()): Either[ArchiveError, DMat] =
     params.axis match
       case DeltaAxis.Time =>
-        decodeTime(deltas, firstValues)
+        decodeTimeChecked(deltas, firstValues)
       case DeltaAxis.Feature =>
-        throw new IllegalArgumentException("delta axis=feature is not supported")
+        Left(ArchiveError.UnsupportedTransform("delta axis=feature"))
 
   private def encodeTime(data: DMat, params: DeltaParams): Either[ArchiveError, Encoded] =
     if data.rows < 2 then
@@ -49,9 +55,15 @@ object Delta:
       )
 
   private def decodeTime(deltas: DMat, firstValues: DMat): DMat =
-    require(firstValues.rows == 1, "delta first values must have one row")
-    require(firstValues.cols == deltas.cols, "delta first values must match delta columns")
+    decodeTimeChecked(deltas, firstValues).fold(err => throw IllegalArgumentException(err.message), identity)
 
+  private def decodeTimeChecked(deltas: DMat, firstValues: DMat): Either[ArchiveError, DMat] =
+    if firstValues.rows != 1 then Left(ArchiveError.ShapeMismatch("delta first values must have one row"))
+    else if firstValues.cols != deltas.cols then Left(ArchiveError.ShapeMismatch("delta first values must match delta columns"))
+    else
+      Right(decodeTimeUnchecked(deltas, firstValues))
+
+  private def decodeTimeUnchecked(deltas: DMat, firstValues: DMat): DMat =
     val rows = Vector.newBuilder[Vector[Double]]
     var prev = Vector.tabulate(firstValues.cols)(c => firstValues(0, c))
     rows += prev

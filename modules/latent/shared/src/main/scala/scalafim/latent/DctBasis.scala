@@ -29,6 +29,31 @@ final class DctSpec private (
     val components: Int,
     val norm: DctNorm
 ):
+  def copy(
+      timepoints: Int = this.timepoints,
+      components: Int = this.components,
+      norm: DctNorm = this.norm
+  ): Either[LatentError, DctSpec] =
+    DctSpec(timepoints, components, norm)
+
+  def withComponents(value: Int): Either[LatentError, DctSpec] =
+    copy(components = value)
+
+  def withNorm(value: DctNorm): DctSpec =
+    new DctSpec(timepoints, components, value)
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: DctSpec =>
+        timepoints == that.timepoints &&
+          components == that.components &&
+          norm == that.norm
+      case _ =>
+        false
+
+  override def hashCode(): Int =
+    (timepoints, components, norm).##
+
   override def toString: String =
     s"DctSpec(timepoints=$timepoints, components=$components, norm=${norm.metadataValue})"
 
@@ -49,6 +74,12 @@ object DctSpec:
       norm: DctNorm = DctNorm.Ortho
   ): DctSpec =
     apply(timepoints, components, norm).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def full(
+      timepoints: Int,
+      norm: DctNorm = DctNorm.Ortho
+  ): Either[LatentError, DctSpec] =
+    apply(timepoints, timepoints, norm)
 
 object DctBasis:
   def build(spec: DctSpec): Either[LatentError, DoubleMatrix] =

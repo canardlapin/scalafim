@@ -27,28 +27,45 @@ object Quant:
     decode(quantized, Vector(scale), Vector(offset))
 
   def decode(quantized: Payload.IntMatrix, scale: IndexedSeq[Double], offset: IndexedSeq[Double]): DMat =
-    require(scale.nonEmpty, "quant scale vector must be non-empty")
-    require(offset.nonEmpty, "quant offset vector must be non-empty")
-    require(scale.length == 1 || scale.length == quantized.cols, "quant scale vector must have length 1 or match columns")
-    require(offset.length == 1 || offset.length == quantized.cols, "quant offset vector must have length 1 or match columns")
-    require(scale.length == offset.length, "quant scale and offset vectors must have the same length")
+    decodeChecked(quantized, scale, offset).fold(err => throw IllegalArgumentException(err.message), identity)
 
-    val rows =
-      Vector.tabulate(quantized.rows) { r =>
-        Vector.tabulate(quantized.cols) { c =>
-          val scaleAt = if scale.length == 1 then scale(0) else scale(c)
-          val offsetAt = if offset.length == 1 then offset(0) else offset(c)
-          quantized(r, c).toDouble * scaleAt + offsetAt
+  def decodeChecked(encoded: Encoded): Either[ArchiveError, DMat] =
+    decodeChecked(encoded.quantized, encoded.scale.values, encoded.offset.values)
+
+  def decodeChecked(quantized: Payload.IntMatrix, scale: Double, offset: Double): Either[ArchiveError, DMat] =
+    decodeChecked(quantized, Vector(scale), Vector(offset))
+
+  def decodeChecked(
+      quantized: Payload.IntMatrix,
+      scale: IndexedSeq[Double],
+      offset: IndexedSeq[Double]
+  ): Either[ArchiveError, DMat] =
+    if scale.isEmpty then Left(ArchiveError.ShapeMismatch("quant scale vector must be non-empty"))
+    else if offset.isEmpty then Left(ArchiveError.ShapeMismatch("quant offset vector must be non-empty"))
+    else if scale.length != 1 && scale.length != quantized.cols then
+      Left(ArchiveError.ShapeMismatch("quant scale vector must have length 1 or match columns"))
+    else if offset.length != 1 && offset.length != quantized.cols then
+      Left(ArchiveError.ShapeMismatch("quant offset vector must have length 1 or match columns"))
+    else if scale.length != offset.length then
+      Left(ArchiveError.ShapeMismatch("quant scale and offset vectors must have the same length"))
+    else
+      val rows =
+        Vector.tabulate(quantized.rows) { r =>
+          Vector.tabulate(quantized.cols) { c =>
+            val scaleAt = if scale.length == 1 then scale(0) else scale(c)
+            val offsetAt = if offset.length == 1 then offset(0) else offset(c)
+            quantized(r, c).toDouble * scaleAt + offsetAt
+          }
         }
-      }
-    DMat.fromRows(rows)
+      Right(DMat.fromRows(rows))
 
   private final case class ColumnStats(min: Double, max: Double, mean: Double, sampleSd: Double)
   private final case class QuantStats(scale: Vector[Double], offset: Vector[Double])
 
   private def encodeWithStats(data: DMat, params: QuantParams, stats: QuantStats): Either[ArchiveError, Encoded] =
-    val levels = (1 << params.bits) - 1
-    val dtype = if params.bits <= 8 then LnaDType.UInt8 else LnaDType.UInt16
+    val bits = params.quantBits
+    val levels = bits.levels
+    val dtype = bits.storageDType
     val out = Vector.newBuilder[Int]
     out.sizeHint(data.data.length)
 
@@ -77,7 +94,7 @@ object Quant:
         clipPct = 100.0 * nClipped.toDouble / data.data.length.toDouble
       )
 
-    if nClipped > 0 && !params.allowClip then
+    if nClipped > 0 && !params.clipPolicy.allowClip then
       val pctText = f"${report.clipPct}%.3f"
       Left(
         ArchiveError.InvalidArchive(
@@ -96,7 +113,7 @@ object Quant:
       )
 
   private def scaleOffset(stats: Vector[ColumnStats], params: QuantParams): QuantStats =
-    val levels = (1 << params.bits) - 1
+    val levels = params.quantBits.levels
     val offsets = Vector.newBuilder[Double]
     val scales = Vector.newBuilder[Double]
     var i = 0
@@ -105,7 +122,7 @@ object Quant:
       val (offset, upper) =
         params.method match
           case QuantMethod.Range =>
-            if params.center then
+            if params.centeringPolicy.enabled then
               val maxAbs = math.max(math.abs(s.max - s.mean), math.abs(s.min - s.mean))
               (s.mean - maxAbs, s.mean + maxAbs)
             else

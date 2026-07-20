@@ -196,6 +196,50 @@ class MotionIoSuite extends munit.FunSuite:
     assert(missing.left.exists(_.message.contains("output-dir")))
   }
 
+  test("CLI runner executes estimate, apply, run, and report commands") {
+    val dir = Files.createTempDirectory("scalafim-motion-cli-run")
+    val input = dir.resolve("run.nii")
+    MotionNifti.write(input, estimatorRun(), None).fold(err => fail(err.message), identity)
+
+    val estimate =
+      MotionCli
+        .run(Vector("estimate", "--input", input.toString, "--output-prefix", dir.resolve("estimate/sub-01").toString))
+        .fold(err => fail(err.message), identity)
+    val motionTsv = dir.resolve("estimate/sub-01_motion.tsv")
+    assert(estimate.outputs.contains(motionTsv))
+    assert(Files.isRegularFile(motionTsv))
+    assert(Files.isRegularFile(dir.resolve("estimate/sub-01_matrices.csv")))
+    assert(Files.isRegularFile(dir.resolve("estimate/sub-01_summary.csv")))
+
+    val applyOut = dir.resolve("corrected.nii")
+    val applied =
+      MotionCli
+        .run(Vector("apply", "--input", input.toString, "--motion", motionTsv.toString, "--output", applyOut.toString))
+        .fold(err => fail(err.message), identity)
+    assert(applied.outputs.contains(applyOut))
+    assert(Files.isRegularFile(applyOut))
+    assert(Files.isRegularFile(MotionNifti.defaultSidecar(applyOut)))
+    assertEquals(MotionNifti.read(applyOut).fold(err => fail(err.message), _.run.nVolumes), 2)
+
+    val reported =
+      MotionCli
+        .run(Vector("report", "--motion", motionTsv.toString, "--output-dir", dir.resolve("report").toString, "--prefix", "sub-01"))
+        .fold(err => fail(err.message), identity)
+    assertEquals(reported.outputs.length, 3)
+    assert(Files.isRegularFile(dir.resolve("report/sub-01_motion.tsv")))
+    assert(Files.isRegularFile(dir.resolve("report/sub-01_matrices.csv")))
+    assert(Files.isRegularFile(dir.resolve("report/sub-01_summary.csv")))
+
+    val run =
+      MotionCli
+        .run(Vector("run", "--input", input.toString, "--output-prefix", dir.resolve("run/sub-01").toString))
+        .fold(err => fail(err.message), identity)
+    assert(run.outputs.contains(dir.resolve("run/sub-01_corrected.nii")))
+    assert(run.outputs.contains(dir.resolve("run/sub-01_motion.tsv")))
+    assert(Files.isRegularFile(dir.resolve("run/sub-01_corrected.nii")))
+    assert(Files.isRegularFile(dir.resolve("run/sub-01_motion.tsv")))
+  }
+
   private def write(path: Path, text: String): Unit =
     Files.createDirectories(path.getParent)
     Files.writeString(path, text)
@@ -210,6 +254,33 @@ class MotionIoSuite extends munit.FunSuite:
       )
     val data = NArrayUtil.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
     NeuroVec.fromLinear(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
+
+  private def estimatorRun(): NeuroVec[Double] =
+    val dims = Vector(7, 5, 5)
+    val nxyz = dims.product
+    val space = NeuroSpace(dims)
+    val frame =
+      NArrayUtil.tabulate[Double](nxyz) { lin =>
+        val i = lin % dims(0)
+        val j = (lin / dims(0)) % dims(1)
+        val k = lin / (dims(0) * dims(1))
+        val dx = i.toDouble - 3.0
+        val dy = j.toDouble - 2.0
+        val dz = k.toDouble - 2.0
+        10.0 * math.exp(-(dx * dx / 5.0 + dy * dy / 3.0 + dz * dz / 4.0)) +
+          0.4 * i.toDouble +
+          0.2 * j.toDouble -
+          0.15 * k.toDouble
+      }
+    val data = NArrayUtil.ofSize[Double](nxyz * 2)
+    var t = 0
+    while t < 2 do
+      var lin = 0
+      while lin < nxyz do
+        data(lin + t * nxyz) = frame(lin)
+        lin += 1
+      t += 1
+    NeuroVec.fromLinear(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)

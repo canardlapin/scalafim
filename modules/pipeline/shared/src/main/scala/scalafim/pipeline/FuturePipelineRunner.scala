@@ -1,7 +1,6 @@
 package scalafim.pipeline
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 
 final case class ParallelPolicy private (maxConcurrency: Int):
   require(maxConcurrency > 0, "maxConcurrency must be positive")
@@ -28,10 +27,14 @@ object FuturePipelineRunner:
         Future.successful(
           PipelineRun(
             graphId = graph.id,
+            outputs = graph.outputs,
             status = PipelineStatus.Failed,
             values = ArtifactTable.empty,
             receipts = Vector.empty,
-            error = Some(error)
+            error = Some(error),
+            nodeDescriptions = graph.describe,
+            runner = RunnerMetadata.future(policy),
+            userMetadata = sortedMetadata(context)
           )
         )
       case Right(plan) =>
@@ -44,6 +47,10 @@ object FuturePipelineRunner:
   )(using ExecutionContext): Future[PipelineRun] =
     runStages(
       graphId = plan.graph.id,
+      outputs = plan.graph.outputs,
+      nodeDescriptions = plan.graph.describe,
+      runner = RunnerMetadata.future(policy),
+      userMetadata = sortedMetadata(context),
       stages = plan.stages,
       table = ArtifactTable.empty,
       failedOrSkipped = Set.empty,
@@ -72,6 +79,10 @@ object FuturePipelineRunner:
 
   private def runStages(
       graphId: PipelineId,
+      outputs: Vector[PipelineOutputRef],
+      nodeDescriptions: Vector[NodeDescription],
+      runner: RunnerMetadata,
+      userMetadata: Vector[(String, String)],
       stages: Vector[PipelineStage],
       table: ArtifactTable,
       failedOrSkipped: Set[NodeId],
@@ -87,10 +98,14 @@ object FuturePipelineRunner:
       Future.successful(
         PipelineRun(
           graphId = graphId,
+          outputs = outputs,
           status = finalStatus,
           values = table,
           receipts = receipts,
-          error = firstError
+          error = firstError,
+          nodeDescriptions = nodeDescriptions,
+          runner = runner,
+          userMetadata = userMetadata
         )
       )
     else
@@ -99,6 +114,10 @@ object FuturePipelineRunner:
       runStage(stage, table, failedOrSkipped, firstError, receipts, context, policy).flatMap { state =>
         runStages(
           graphId = graphId,
+          outputs = outputs,
+          nodeDescriptions = nodeDescriptions,
+          runner = runner,
+          userMetadata = userMetadata,
           stages = remaining,
           table = state.table,
           failedOrSkipped = state.failedOrSkipped,
@@ -108,6 +127,9 @@ object FuturePipelineRunner:
           policy = policy
         )
       }
+
+  private def sortedMetadata(context: RunContext): Vector[(String, String)] =
+    context.metadata.toVector.sortBy(_._1)
 
   private def runStage(
       stage: PipelineStage,
@@ -170,15 +192,7 @@ object FuturePipelineRunner:
       table: ArtifactTable,
       context: RunContext
   ): NodeResult =
-    val result =
-      try node.execute(table, context)
-      catch
-        case NonFatal(t) =>
-          val reason = Option(t.getMessage).filter(_.nonEmpty).getOrElse(t.toString)
-          node.description.step match
-            case Some(step) => Left(PipelineError.StepFailed(node.id, step.stepId, reason))
-            case None       => Left(PipelineError.InvalidGraph(reason))
-    NodeResult(node, result)
+    NodeResult(node, PipelineNodeExecution.execute(node, table, context))
 
   private def mergeStageResults(
       table: ArtifactTable,

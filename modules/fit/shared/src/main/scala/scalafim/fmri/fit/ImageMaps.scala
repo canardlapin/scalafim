@@ -19,6 +19,43 @@ final case class FitImageMaps(
 
 object FitImageMaps:
 
+  def fromStatMap(map: StatMap): FitImageMaps =
+    fromRows(
+      names = Vector(map.label),
+      rowsByMap = Vector(map.valueVector),
+      shape = map.shape,
+      selectedVoxels = map.selectedVoxels,
+      kind = FitImageMapKind.Custom(map.kind.label)
+    )
+
+  def fromParameterMaps(maps: Vector[ParameterMap]): Either[FitError, FitImageMaps] =
+    validateCompatibleParameterMaps(maps).map { _ =>
+      val first = maps.head
+      val kind =
+        first.statistic match
+          case ParameterMapKind.Coefficient   => FitImageMapKind.Coefficients
+          case ParameterMapKind.StandardError => FitImageMapKind.StandardErrors
+      fromRows(
+        names = maps.map(_.parameterName.value),
+        rowsByMap = maps.map(_.map.valueVector),
+        shape = first.map.shape,
+        selectedVoxels = first.map.selectedVoxels,
+        kind = kind
+      )
+    }
+
+  def fromContrastMaps(maps: Vector[ContrastMap]): Either[FitError, FitImageMaps] =
+    validateCompatibleContrastMaps(maps).map { _ =>
+      val first = maps.head
+      fromRows(
+        names = maps.map(_.map.label),
+        rowsByMap = maps.map(_.map.valueVector),
+        shape = first.map.shape,
+        selectedVoxels = first.map.selectedVoxels,
+        kind = FitImageMapKind.Custom(first.contrastId.value)
+      )
+    }
+
   def fromRows(
       names: Vector[String],
       rowsByMap: Vector[Vector[Double]],
@@ -75,6 +112,34 @@ object FitImageMaps:
       )
     )
 
+  private def validateCompatibleParameterMaps(maps: Vector[ParameterMap]): Either[FitError, Unit] =
+    if maps.isEmpty then Left(FitError.InvalidFitAxis("parameter maps", "must be non-empty"))
+    else
+      val first = maps.head
+      maps.find(_.statistic != first.statistic) match
+        case Some(_) =>
+          Left(FitError.InvalidFitAxis("parameter maps", "must share one statistic kind"))
+        case None =>
+          validateCompatibleStatMaps("parameter maps", maps.map(_.map))
+
+  private def validateCompatibleContrastMaps(maps: Vector[ContrastMap]): Either[FitError, Unit] =
+    if maps.isEmpty then Left(FitError.InvalidFitAxis("contrast maps", "must be non-empty"))
+    else
+      val first = maps.head
+      maps.find(_.contrastId != first.contrastId) match
+        case Some(_) =>
+          Left(FitError.InvalidFitAxis("contrast maps", "must share one contrast id"))
+        case None =>
+          validateCompatibleStatMaps("contrast maps", maps.map(_.map))
+
+  private def validateCompatibleStatMaps(label: String, maps: Vector[StatMap]): Either[FitError, Unit] =
+    val first = maps.head
+    maps.find(map => map.shape != first.shape || map.selectedVoxels != first.selectedVoxels) match
+      case Some(_) =>
+        Left(FitError.InvalidFitAxis(label, "must share dataset shape and selected voxels"))
+      case None =>
+        Right(())
+
 extension (result: DenseFmriFitResult)
   def coefficientMaps(shape: DatasetShape): FitImageMaps =
     FitImageMaps.fromRows(
@@ -86,9 +151,10 @@ extension (result: DenseFmriFitResult)
     )
 
   def standardErrorMaps(shape: DatasetShape): FitImageMaps =
+    val allowed = result.inferenceScope.allowedIndices(result.predictors)
     FitImageMaps.fromRows(
-      names = result.columnNames,
-      rowsByMap = matrixRows(result.standardErrors.value),
+      names = allowed.map(result.columnNames),
+      rowsByMap = allowed.map(row => matrixRowValues(result.standardErrors.value, row)),
       shape = shape,
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.StandardErrors
@@ -138,3 +204,6 @@ private def matrixRows(matrix: scalafim.linalg.DoubleMatrix): Vector[Vector[Doub
   Vector.tabulate(matrix.rows) { row =>
     Vector.tabulate(matrix.cols)(col => matrix(row, col))
   }
+
+private def matrixRowValues(matrix: scalafim.linalg.DoubleMatrix, row: Int): Vector[Double] =
+  Vector.tabulate(matrix.cols)(col => matrix(row, col))

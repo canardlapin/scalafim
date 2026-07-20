@@ -51,6 +51,22 @@ class BoldZipPayloadSuite extends munit.FunSuite:
     )
     assertEquals(payload.metadata("family"), "boldzip_sr")
     assertEquals(payload.metadata("orientation"), "time_x_samples")
+    assertEquals(payload.typedMetadata.get("family"), Some("boldzip_sr"))
+    assertEquals(payload.latentLabel.value, "fixture")
+    assert(payload.decodeSemantics.coefficientDecodeIsLinearOnly)
+    assert(!payload.decodeSemantics.coefficientDecodeIncludes(LatentMaterializationTerm.SampleOffset))
+    assert(!payload.decodeSemantics.coefficientDecodeIncludes(LatentMaterializationTerm.ResidualEvents))
+    assert(payload.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.SampleOffset))
+    assert(payload.decodeSemantics.reconstructionIncludes(LatentMaterializationTerm.ResidualEvents))
+    assertEquals(payload.texture.head.amplitudeValue, 0.5)
+  }
+
+  test("BOLDZip typed amplitude and lag constructors reject invalid values") {
+    assertEquals(BoldZipAmplitude(1.25).map(_.value), Right(1.25))
+    assert(BoldZipAmplitude(Double.NaN).isLeft)
+    assert(BoldZipLag(Int.MinValue).isLeft)
+    assert(BoldZipTextureEntry.checked(atom = 0, carrier = 0, amplitude = Double.NaN).isLeft)
+    assert(BoldZipResidualEvent.checked(atom = 0, frame = 0, amplitude = Double.PositiveInfinity).isLeft)
   }
 
   test("BOLDZip payload supports time and ROI selection without changing order") {
@@ -94,6 +110,16 @@ class BoldZipPayloadSuite extends munit.FunSuite:
         offset = Some(DoubleVector.fromSeq(Vector(1.0)))
       )
     assert(badOffset.swap.toOption.exists(_.message.contains("offset length")))
+
+    val badMetadata =
+      BoldZipPayload(
+        temporalBasis = DoubleMatrix.eye(2),
+        carrierTheta = DoubleMatrix.fromRows(Vector(Vector(1.0, 2.0))),
+        carrierLoadings = DoubleMatrix.zeros(0, 1),
+        spatialBasis = value(BoldZipSpatialBasis(sampleCount = 2)),
+        metadata = Map("" -> "bad")
+      )
+    assert(badMetadata.isLeft)
   }
 
   test("BOLDZip spatial basis variants make absent coarse and identity detail explicit") {

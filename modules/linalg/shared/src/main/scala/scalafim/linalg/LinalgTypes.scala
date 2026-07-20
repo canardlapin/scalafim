@@ -71,6 +71,9 @@ object ColIndex:
 opaque type Tolerance = Double
 
 object Tolerance:
+  val DefaultEigen: Tolerance =
+    unsafe(1e-10)
+
   val DefaultQr: Tolerance =
     unsafe(1e-7)
 
@@ -86,6 +89,23 @@ object Tolerance:
 
   extension (tolerance: Tolerance)
     inline def value: Double = tolerance
+
+opaque type DecompositionRank = Int
+
+object DecompositionRank:
+  def apply(value: Int): Either[LinearAlgebraError, DecompositionRank] =
+    if value > 0 then Right(value)
+    else Left(LinearAlgebraError.InvalidDecompositionRank(value, Int.MaxValue))
+
+  def bounded(value: Int, limit: Int): Either[LinearAlgebraError, DecompositionRank] =
+    if value > 0 && value <= limit then Right(value)
+    else Left(LinearAlgebraError.InvalidDecompositionRank(value, limit))
+
+  private[scalafim] def unsafe(value: Int): DecompositionRank =
+    value
+
+  extension (rank: DecompositionRank)
+    inline def value: Int = rank
 
 opaque type Ridge = Double
 

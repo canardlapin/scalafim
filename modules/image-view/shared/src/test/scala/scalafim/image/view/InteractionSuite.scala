@@ -1,0 +1,200 @@
+package scalafim.image.view
+
+import scalafim.graphics.*
+import scalafim.image.*
+
+class InteractionSuite extends munit.FunSuite:
+
+  private val space =
+    VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
+
+  private def constantVolume(value: Double, label: String): NeuroVol[Double] =
+    NeuroVol.fromLinear(
+      NArrayUtil.fillConst[Double](space.nVoxels, value),
+      space.toNeuroSpace,
+      label
+    )
+
+  private val scalarId = LayerId.unsafe("scalar")
+  private val maskId = LayerId.unsafe("mask")
+  private val scalarLayer =
+    SliceLayer(
+      scalarId,
+      constantVolume(2.0, "scalar"),
+      SliceSampling.Linear(),
+      ScalarColorizer(DisplayWindow.unsafe(0.0, 10.0))
+    )
+  private val maskLayer =
+    SliceLayer(
+      maskId,
+      NeuroVol.fromLinear(
+        NArrayUtil.fillConst[Boolean](space.nVoxels, true),
+        space.toNeuroSpace,
+        "mask"
+      ),
+      SliceSampling.Nearest(false),
+      MaskColorizer(Rgba32.unsafe(255, 0, 0, 128))
+    )
+  private val model = ViewerModel.unsafe(space, Vector(scalarLayer, maskLayer))
+  private val initial = ViewerSession(
+    ViewerState.centered(space).copy(sliceStep = SliceStep.unsafe(2.0)),
+    DeviceContext.unsafe(900.0, 700.0)
+  )
+
+  private def groupFor(frame: ViewerFrame, plane: AnatomicalPlane): Grob.Group =
+    val index = frame.panels.all.indexWhere(_.anatomicalPlane == plane)
+    frame.scene.grobs(index).asInstanceOf[Grob.Group]
+
+  private def images(frame: ViewerFrame, plane: AnatomicalPlane): Vector[Grob.Image] =
+    groupFor(frame, plane).children.collect { case image: Grob.Image => image }
+
+  test("centered state derives its cursor and steps from reference geometry") {
+    val centered = ViewerState.centered(space)
+    assertEquals(centered.cursor, WorldPoint(1.5, 1.0, 0.5))
+    assertEqualsDouble(centered.pixelSpacing.horizontal, 1.0, 0.0)
+    assertEqualsDouble(centered.sliceStep.millimeters, 1.0, 0.0)
+  }
+
+  test("panel picking is an exact root-npc to world-space roundtrip") {
+    val panels = ViewerCompiler.panels(space, initial.state, initial.device)
+    val axial = panels.axial
+    val target = axial.grid.worldAt(PixelCoord(2, 1)).toOption.get
+    val (rootX, rootY) = axial.cursorRootNpc(target)
+    val picked = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.Pick(AnatomicalPlane.Axial, ViewerPointer.unsafe(rootX, rootY))
+    ).toOption.get
+
+    assertEqualsDouble(picked.state.cursor.x, target.x, 1e-12)
+    assertEqualsDouble(picked.state.cursor.y, target.y, 1e-12)
+    assertEqualsDouble(picked.state.cursor.z, target.z, 1e-12)
+
+    val outside = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.Pick(AnatomicalPlane.Axial, ViewerPointer.unsafe(0.99, 0.01))
+    )
+    assert(outside.isLeft)
+  }
+
+  test("scrolling follows positive anatomical normals independent of display mirroring") {
+    val origin = initial.copy(state = initial.state.copy(cursor = WorldPoint.Origin))
+    val sagittal = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Sagittal, 1)).toOption.get
+    val coronal = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Coronal, 1)).toOption.get
+    val axial = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Axial, 1)).toOption.get
+
+    assertEquals(sagittal.state.cursor, WorldPoint(2.0, 0.0, 0.0))
+    assertEquals(coronal.state.cursor, WorldPoint(0.0, 2.0, 0.0))
+    assertEquals(axial.state.cursor, WorldPoint(0.0, 0.0, 2.0))
+
+    val mirrored = origin.copy(
+      state = origin.state.copy(convention = LeftRightConvention.PatientRightOnLeft)
+    )
+    val mirroredAxial = ViewerReducer.reduce(
+      model,
+      mirrored,
+      ViewerAction.Scroll(AnatomicalPlane.Axial, 1)
+    ).toOption.get
+    assertEquals(mirroredAxial.state.cursor, axial.state.cursor)
+  }
+
+  test("window opacity and visibility actions alter presentation without mutating layers") {
+    val windowed = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.SetWindow(scalarId, DisplayWindow.unsafe(2.0, 4.0))
+    ).toOption.get
+    val faded = ViewerReducer.reduce(
+      model,
+      windowed,
+      ViewerAction.SetOpacity(scalarId, LayerOpacity.unsafe(0.25))
+    ).toOption.get
+    val frame = faded.frame(model).toOption.get
+    val scalar = images(frame, AnatomicalPlane.Axial).head
+
+    assertEqualsDouble(scalar.alpha, 0.25, 0.0)
+    assertEquals(scalar.image.pixelUnsafe(1, 1).red, 0)
+    assertEquals(model.layers.head.opacity, LayerOpacity.Opaque)
+
+    val hidden = ViewerReducer.reduce(
+      model,
+      faded,
+      ViewerAction.SetVisibility(scalarId, false)
+    ).toOption.get
+    assertEquals(images(hidden.frame(model).toOption.get, AnatomicalPlane.Axial).length, 1)
+
+    val unsupported = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.SetWindow(maskId, DisplayWindow.unsafe(0.0, 1.0))
+    )
+    assert(unsupported.isLeft)
+  }
+
+  test("timepoint actions drive temporal layers while static overlays persist") {
+    val first = constantVolume(0.0, "first")
+    val second = constantVolume(10.0, "second")
+    val seriesLayer = SliceLayer.series(
+      scalarId,
+      first.concat(second),
+      SliceSampling.Linear(),
+      ScalarColorizer(DisplayWindow.unsafe(0.0, 10.0))
+    )
+    val temporalModel = ViewerModel.unsafe(space, Vector(seriesLayer, maskLayer))
+    assertEquals(temporalModel.timepointCount, 2)
+
+    val atSecond = ViewerReducer.reduce(
+      temporalModel,
+      initial,
+      ViewerAction.SetTimepoint(1)
+    ).toOption.get
+    val frame = atSecond.frame(temporalModel).toOption.get
+    val axial = images(frame, AnatomicalPlane.Axial)
+    assertEquals(axial.length, 2)
+    assertEquals(axial.head.image.pixelUnsafe(1, 1).red, 255)
+    assertEquals(axial(1).image.pixelUnsafe(1, 1).alpha, 128)
+
+    assert(ViewerReducer.reduce(temporalModel, initial, ViewerAction.SetTimepoint(2)).isLeft)
+    assert(ViewerCompiler.compile(temporalModel, initial.state.copy(timepoint = -1), initial.device).isLeft)
+  }
+
+  test("models reject temporal layers with incompatible frame counts") {
+    val one = constantVolume(1.0, "one")
+    val twoFrames = SliceLayer.series(
+      LayerId.unsafe("two"),
+      one.concat(one),
+      SliceSampling.Linear(),
+      ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
+    )
+    val threeFrames = SliceLayer.series(
+      LayerId.unsafe("three"),
+      one.concat(one, one),
+      SliceSampling.Linear(),
+      ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
+    )
+
+    assert(ViewerModel.make(space, Vector(twoFrames, threeFrames)).isLeft)
+  }
+
+  test("resize changes only device layout and reduction is deterministic") {
+    val resizedAction = ViewerAction.Resize(DeviceContext.unsafe(500.0, 1000.0))
+    val first = ViewerReducer.reduce(model, initial, resizedAction).toOption.get
+    val second = ViewerReducer.reduce(model, initial, resizedAction).toOption.get
+
+    assertEquals(first, second)
+    assertEquals(first.state, initial.state)
+    assertNotEquals(
+      first.frame(model).toOption.get.panels.axial.rect,
+      initial.frame(model).toOption.get.panels.axial.rect
+    )
+    assert(ViewerPointer.make(Double.NaN, 0.0).isLeft)
+    assert(SliceStep.make(0.0).isLeft)
+    assert(
+      ViewerReducer.reduce(
+        model,
+        initial,
+        ViewerAction.SetVisibility(LayerId.unsafe("missing"), false)
+      ).isLeft
+    )
+  }

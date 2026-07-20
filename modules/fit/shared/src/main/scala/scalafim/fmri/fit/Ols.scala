@@ -74,7 +74,8 @@ final class OlsPrepared private[fit] (
           standardErrors = StandardErrorBlock(
             Ols.standardErrors(normalizedCovariance, residualVariance, response.voxels)
           ),
-          diagnostics = diagnostics
+          diagnostics = diagnostics,
+          coefficientCovariance = CoefficientCovariance.unsafeShared(normalizedCovariance)
         )
 
   def unsafeFit(response: ResponseBlock): OlsFit =
@@ -86,8 +87,11 @@ final case class OlsFit(
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     normalizedCovariance: DoubleMatrix,
     standardErrors: StandardErrorBlock,
-    diagnostics: OlsDiagnostics
+    diagnostics: OlsDiagnostics,
+    coefficientCovariance: CoefficientCovariance
 ):
+  require(coefficientCovariance.predictors == coefficients.predictors, "OLS coefficient covariance must match coefficient rows")
+  require(coefficientCovariance.validateVoxelCount(coefficients.voxels).isRight, "OLS coefficient covariance must be shared or match voxel count")
   def predictors: Int = coefficients.predictors
   def voxels: Int = coefficients.voxels
 

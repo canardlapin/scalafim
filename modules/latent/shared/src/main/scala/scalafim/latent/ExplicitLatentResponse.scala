@@ -8,8 +8,8 @@ final class ExplicitLatentResponse private (
     val offset: Option[DoubleVector],
     val sourceDomain: DomainId,
     val targetDomain: DomainId,
-    val label: String,
-    val metadata: Map[String, String]
+    val latentLabel: LatentLabel,
+    val typedMetadata: LatentMetadata
 ) extends LatentResponse:
 
   override val shape: LatentShape =
@@ -21,6 +21,9 @@ final class ExplicitLatentResponse private (
 
   override def coefTime: DoubleMatrix =
     basis
+
+  override def decodeSemantics: LatentDecodeSemantics =
+    LatentDecodeSemantics.linear(offset = offset.nonEmpty)
 
   override def decodeCoefficients(coefficients: DoubleMatrix): Either[LatentError, DoubleMatrix] =
     if coefficients.rows != shape.coefficients then
@@ -73,9 +76,10 @@ object ExplicitLatentResponse:
       label: String = "",
       metadata: Map[String, String] = Map.empty
   ): Either[LatentError, ExplicitLatentResponse] =
-    validate(basis, loadings, offset).map { _ =>
-      unsafe(basis, loadings, offset, sourceDomain, targetDomain, label, metadata)
-    }
+    for
+      _ <- validate(basis, loadings, offset)
+      annotation <- LatentAnnotation(label, metadata)
+    yield unsafe(basis, loadings, offset, sourceDomain, targetDomain, annotation.label, annotation.metadata)
 
   private[scalafim] def unsafe(
       basis: DoubleMatrix,
@@ -83,8 +87,8 @@ object ExplicitLatentResponse:
       offset: Option[DoubleVector],
       sourceDomain: DomainId,
       targetDomain: DomainId,
-      label: String,
-      metadata: Map[String, String]
+      label: LatentLabel,
+      metadata: LatentMetadata
   ): ExplicitLatentResponse =
     new ExplicitLatentResponse(basis, loadings, offset, sourceDomain, targetDomain, label, metadata)
 
