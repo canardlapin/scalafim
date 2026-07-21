@@ -27,6 +27,10 @@ enum OneShotMvpaError:
   case NonIdentifiableHeldOutDirection(runId: RunId, multiplicity: Int)
   case NonPositiveHeldOutDenominator(runId: RunId, value: Double)
   case InvalidHeldOutRoot(runId: RunId, value: Double)
+  case NonFiniteCrossRunNumerator(runId: RunId, value: Double)
+  case NonPositiveCrossRunDenominator(runId: RunId, value: Double)
+  case InvalidSignedCrossRunValue(value: Double)
+  case InvalidSignedCrossRunStatistic(runId: RunId, value: Double)
 
   def message: String =
     this match
@@ -64,3 +68,11 @@ enum OneShotMvpaError:
         s"run ${runId.value} held-out residual denominator must be positive and finite, got $value"
       case InvalidHeldOutRoot(runId, value) =>
         s"run ${runId.value} held-out canonical root must be finite and non-negative, got $value"
+      case NonFiniteCrossRunNumerator(runId, value) =>
+        s"run ${runId.value} signed cross-run numerator must be finite, got $value"
+      case NonPositiveCrossRunDenominator(runId, value) =>
+        s"run ${runId.value} signed cross-run denominator must be positive and finite, got $value"
+      case InvalidSignedCrossRunValue(value) =>
+        s"signed cross-run Rayleigh value must be finite, got $value"
+      case InvalidSignedCrossRunStatistic(runId, value) =>
+        s"run ${runId.value} signed cross-run Rayleigh statistic must be finite, got $value"

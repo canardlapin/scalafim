@@ -31,6 +31,7 @@ import scalafim.multivar.{
 import gale.linalg.DMat
 import gale.linalg.DVec
 import gale.linalg.Matrix
+import gale.linalg.Vec
 
 private enum GeometryScheduleKind:
   case Stable
@@ -188,6 +189,8 @@ object CanonicalEffectDataset:
 final case class CanonicalRunMoments private[fit] (
     total: DMat,
     responseDesign: DMat,
+    contrastEstimate: DVec,
+    contrastVariance: Double,
     effect: DMat,
     residual: DMat,
     temporalReceipt: TemporalPreparationReceipt
@@ -196,6 +199,8 @@ final case class CanonicalRunMoments private[fit] (
   require(effect.rows == total.rows && effect.cols == total.cols, "canonical effect moment must match the feature space")
   require(residual.rows == total.rows && residual.cols == total.cols, "canonical residual moment must match the feature space")
   require(responseDesign.rows == total.rows, "response-design moment must have one row per feature")
+  require(contrastEstimate.length == total.rows, "canonical contrast estimate must match the feature space")
+  require(contrastVariance.isFinite && contrastVariance > 0.0, "canonical contrast variance must be positive and finite")
 
 enum CanonicalMomentExecution:
   case RunwiseSufficientStatistics
@@ -475,11 +480,27 @@ private[fit] object CanonicalMoments:
 
       val totalMatrix = matrix(features, features, h)
       val responseDesign = matrix(features, predictors, g)
+      val contrastEstimate = Vec.newBuilder(features)
+      val contrastScale = Math.sqrt(geometry.contrastVariance)
+      feature = 0
+      while feature < features do
+        contrastEstimate(feature) = effectVector(feature) * contrastScale
+        feature += 1
       val effectMatrix = matrix(features, features, effect)
       val residualMatrix = symmetrized(features, residual)
-      Right(CanonicalRunMoments(totalMatrix, responseDesign, effectMatrix, residualMatrix, geometry.receipt))
+      Right(
+        CanonicalRunMoments(
+          totalMatrix,
+          responseDesign,
+          contrastEstimate.result(),
+          geometry.contrastVariance,
+          effectMatrix,
+          residualMatrix,
+          geometry.receipt
+        )
+      )
 
-private def sumMatrices(values: Vector[DMat]): DMat =
+private[fit] def sumMatrices(values: Vector[DMat]): DMat =
   require(values.nonEmpty, "matrix sum must be non-empty")
   val rows = values.head.rows
   val cols = values.head.cols
@@ -498,7 +519,7 @@ private def sumMatrices(values: Vector[DMat]): DMat =
     row += 1
   out.result()
 
-private def quadratic(vector: DVec, matrix: DMat): Double =
+private[fit] def quadratic(vector: DVec, matrix: DMat): Double =
   var value = 0.0
   var row = 0
   while row < vector.length do
@@ -509,7 +530,7 @@ private def quadratic(vector: DVec, matrix: DMat): Double =
     row += 1
   value
 
-private def matrixFrobenius(matrix: DMat): Double =
+private[fit] def matrixFrobenius(matrix: DMat): Double =
   var squared = 0.0
   var row = 0
   while row < matrix.rows do
