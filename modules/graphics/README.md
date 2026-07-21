@@ -245,8 +245,8 @@ jitter—without importing `ggproto`, stringly configuration, or ambient random
 state. `DodgePreserve.Total` and `DodgePreserve.Single`, for example, are
 exhaustive Scala alternatives and can be inspected before compilation. Run
 `tools/render_position_adjustment_qa.sh` to generate a paired Java2D and
-ggplot2 gallery covering scatter, line, count, facets, and position adjustment,
-plus numeric layer-data fixtures; see
+ggplot2 gallery covering scatter, line, statistical layers, bounded geoms,
+count, facets, and position adjustment, plus numeric layer-data fixtures; see
 `docs/visual-qa/graphics-position-adjustments.md` for the comparison contract.
 
 ## Backends

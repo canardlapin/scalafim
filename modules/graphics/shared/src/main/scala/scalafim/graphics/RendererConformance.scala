@@ -140,6 +140,11 @@ object RendererConformance:
       solved <- solvedPlotCase
       scatter <- scatterComparisonCase
       groupedLine <- groupedLineComparisonCase
+      histogram <- histogramComparisonCase
+      density <- densityComparisonCase
+      summary <- summaryComparisonCase
+      ribbon <- ribbonComparisonCase
+      tiles <- tileComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -169,6 +174,11 @@ object RendererConformance:
       solved,
       scatter,
       groupedLine,
+      histogram,
+      density,
+      summary,
+      ribbon,
+      tiles,
       faceted,
       counted,
       bandPosition,
@@ -784,6 +794,195 @@ object RendererConformance:
         GraphicsName.unsafe("y-axis")
       )
     )
+
+  private val distributionValues =
+    Vector(0.0, 0.4, 0.9, 1.0, 1.3, 1.8, 2.0, 2.2, 2.7, 3.1, 3.6, 4.0)
+
+  private val comparisonBlue =
+    GraphicParams.unsafe(
+      stroke = Some(comparisonColor("A")),
+      fill = Some(Rgba.unsafe(90, 150, 205))
+    )
+
+  def histogramComparisonCase: Either[GraphicsError, ConformanceCase] =
+    Plot(distributionValues)
+      .withLabels(PlotLabels(title = Some("histogram"), x = Some("value"), y = Some("count")))
+      .addLayer(
+        Layer.histogram(
+          identity,
+          bins = HistogramBins.breaksUnsafe(Vector(0.0, 1.0, 2.0, 3.0, 4.0)),
+          params = Some(comparisonBlue)
+        )
+      )
+      .flatMap(
+        compiledComparisonCase(
+          "histogram",
+          _,
+          GraphicsName.unsafe("stat-bin-bar-0"),
+          RenderPrimitiveKind.Rectangle
+        )
+      )
+
+  def densityComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val config = DensityConfig.fixedUnsafe(
+      bandwidth = 0.45,
+      points = 64,
+      domain = Some(Interval.unsafe(0.0, 4.0))
+    )
+    Plot(distributionValues)
+      .withLabels(PlotLabels(title = Some("density"), x = Some("value"), y = Some("density")))
+      .addLayer(
+        Layer.density(
+          identity,
+          config = config,
+          params = Some(GraphicParams.unsafe(stroke = Some(comparisonColor("A")), lineWidth = 1.5))
+        )
+      )
+      .flatMap(
+        compiledComparisonCase(
+          "density",
+          _,
+          GraphicsName.unsafe("stat-density-line"),
+          RenderPrimitiveKind.Polyline
+        )
+      )
+
+  private final case class SummaryPoint(x: Double, y: Double)
+
+  def summaryComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val samples = Vector(
+      SummaryPoint(0.0, 1.0),
+      SummaryPoint(0.0, 2.0),
+      SummaryPoint(0.0, 3.0),
+      SummaryPoint(1.0, 2.0),
+      SummaryPoint(1.0, 4.0),
+      SummaryPoint(1.0, 6.0),
+      SummaryPoint(2.0, 4.0),
+      SummaryPoint(2.0, 5.0),
+      SummaryPoint(2.0, 6.0)
+    )
+    Plot(samples)
+      .withLabels(PlotLabels(title = Some("mean-and-se"), x = Some("x"), y = Some("mean")))
+      .addLayer(
+        Layer.summary(
+          _.x,
+          _.y,
+          params = Some(
+            GraphicParams.unsafe(
+              stroke = Some(comparisonColor("A")),
+              fill = Some(comparisonColor("A")),
+              lineWidth = 1.25
+            )
+          )
+        )
+      )
+      .flatMap(
+        compiledComparisonCase(
+          "summary",
+          _,
+          GraphicsName.unsafe("stat-summary-interval-0"),
+          RenderPrimitiveKind.Polyline
+        )
+      )
+
+  private final case class RibbonPoint(x: Double, lower: Double, upper: Double)
+
+  def ribbonComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val samples = Vector(
+      RibbonPoint(0.0, 0.8, 1.5),
+      RibbonPoint(1.0, 1.2, 2.0),
+      RibbonPoint(2.0, 1.0, 1.8),
+      RibbonPoint(3.0, 1.6, 2.4),
+      RibbonPoint(4.0, 1.3, 2.0)
+    )
+    Plot(samples)
+      .withLabels(PlotLabels(title = Some("ribbon"), x = Some("x"), y = Some("interval")))
+      .addLayer(
+        Layer.ribbon(
+          _.x,
+          _.lower,
+          _.upper,
+          params = Some(
+            GraphicParams.unsafe(
+              stroke = Some(comparisonColor("A")),
+              fill = Some(comparisonColor("A")),
+              alpha = 0.45
+            )
+          )
+        )
+      )
+      .flatMap(
+        compiledComparisonCase(
+          "ribbon",
+          _,
+          GraphicsName.unsafe("geom-ribbon-0"),
+          RenderPrimitiveKind.Polygon
+        )
+      )
+
+  private final case class TilePoint(x: Double, y: Double, level: Int)
+
+  def tileComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val samples = Vector(
+      TilePoint(0.0, 0.0, 0),
+      TilePoint(1.0, 0.0, 1),
+      TilePoint(2.0, 0.0, 2),
+      TilePoint(0.0, 1.0, 2),
+      TilePoint(1.0, 1.0, 1),
+      TilePoint(2.0, 1.0, 0)
+    )
+    val fills = Vector(Rgba.unsafe(225, 235, 245), Rgba.unsafe(125, 170, 210), Rgba.unsafe(45, 95, 145))
+    val mapping = AesSpec.empty[TilePoint].withFill(row => fills(row.level))
+    Plot(samples)
+      .withLabels(PlotLabels(title = Some("tiles"), x = Some("x"), y = Some("y")))
+      .addLayer(
+        Layer.tile(
+          _.x,
+          _.y,
+          _ => 1.0,
+          _ => 1.0,
+          mapping = mapping,
+          params = Some(GraphicParams.unsafe(stroke = Some(Rgba.White), lineWidth = 1.0))
+        )
+      )
+      .flatMap(
+        compiledComparisonCase(
+          "tiles",
+          _,
+          GraphicsName.unsafe("geom-tile-0"),
+          RenderPrimitiveKind.Rectangle
+        )
+      )
+
+  private def compiledComparisonCase[Row](
+      name: String,
+      plot: Plot[Row],
+      mark: GraphicsName,
+      kind: RenderPrimitiveKind
+  ): Either[GraphicsError, ConformanceCase] =
+    PlotCompiler
+      .compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
+        )
+      )
+      .map { scene =>
+        ConformanceCase(
+          GraphicsName.unsafe(s"comparison-$name"),
+          ConformanceGroup.CompiledPlot,
+          scene,
+          Vector(
+            GraphicsName.unsafe("plot-panel"),
+            GraphicsName.unsafe("x-axis"),
+            GraphicsName.unsafe("y-axis"),
+            mark
+          ),
+          Vector(RenderRequirement.Primitive(mark, kind))
+        )
+      }
 
   def facetedPlotCase: Either[GraphicsError, ConformanceCase] =
     final case class Sample(x: Double, y: Double, condition: String)

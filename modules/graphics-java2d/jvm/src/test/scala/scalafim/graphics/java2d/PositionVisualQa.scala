@@ -20,6 +20,11 @@ object PositionVisualQa:
     val examples = Vector(
       Example("scatter", RendererConformance.scatterComparisonCase),
       Example("line", RendererConformance.groupedLineComparisonCase),
+      Example("histogram", RendererConformance.histogramComparisonCase),
+      Example("density", RendererConformance.densityComparisonCase),
+      Example("summary", RendererConformance.summaryComparisonCase),
+      Example("ribbon", RendererConformance.ribbonComparisonCase),
+      Example("tiles", RendererConformance.tileComparisonCase),
       Example("count", RendererConformance.countPlotCase),
       Example("facets", RendererConformance.facetedPlotCase),
       Example("dodge", RendererConformance.dodgedPositionCase),

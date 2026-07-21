@@ -7,11 +7,16 @@ by ScalaFIM/Java2D and ggplot2. Run:
 tools/render_position_adjustment_qa.sh
 ```
 
-Open `target/graphics-position-qa/index.html`. The page places seven 640 x 480
+Open `target/graphics-position-qa/index.html`. The page places twelve 640 x 480
 comparisons side by side without enlarging either renderer's raster:
 
 - filled continuous scatter points;
 - grouped continuous lines;
+- explicit-break histograms;
+- fixed-bandwidth density estimates;
+- grouped means with standard-error intervals;
+- bounded ribbons;
+- explicitly sized and colored tiles;
 - categorical `stat_count` bars;
 - a fixed-scale two-panel facet wrap;
 - categorical bars divided into equal dodge slots;
@@ -19,10 +24,11 @@ comparisons side by side without enlarging either renderer's raster:
 - bounded jitter around two categorical centers.
 
 The ggplot2 runner writes `*-layer.tsv` data for every example. Scatter, line,
-count, and facet data give direct structural references. Dodge and stack are
-numeric oracles: ScalaFIM uses zero-based categorical centers, so subtracting
-one from ggplot2's x coordinates gives the ScalaFIM centers and bounds. Stack
-`ymin` and `ymax` should agree directly. Jitter is a semantic comparison only:
+histogram, density, summary, ribbon, tile, count, and facet data give direct
+structural references. Dodge and stack are numeric oracles: ScalaFIM uses
+zero-based categorical centers, so subtracting one from ggplot2's x
+coordinates gives the ScalaFIM centers and bounds. Stack `ymin` and `ymax`
+should agree directly. Jitter is a semantic comparison only:
 both use the requested half-spread, but ScalaFIM intentionally uses a pure
 SplitMix64 generator instead of R's RNG so its offsets are identical on JVM
 and Scala.js. Its circles bind the same typed color to stroke and fill

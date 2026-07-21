@@ -25,6 +25,62 @@ grouped_line <- ggplot(series, aes(x, y, group = condition, colour = condition))
   theme_minimal(base_size = 12) +
   theme(legend.position = "none")
 
+distribution <- data.frame(
+  value = c(0, 0.4, 0.9, 1, 1.3, 1.8, 2, 2.2, 2.7, 3.1, 3.6, 4)
+)
+histogram <- ggplot(distribution, aes(value)) +
+  geom_histogram(
+    breaks = c(0, 1, 2, 3, 4),
+    closed = "right",
+    colour = "#467DB4",
+    fill = "#5A96CD"
+  ) +
+  labs(title = "histogram", x = "value", y = "count") +
+  theme_minimal(base_size = 12)
+
+density_plot <- ggplot(distribution, aes(value)) +
+  stat_density(
+    geom = "line",
+    bw = 0.45,
+    n = 64,
+    trim = TRUE,
+    colour = "#467DB4",
+    linewidth = 0.4
+  ) +
+  labs(title = "density", x = "value", y = "density") +
+  theme_minimal(base_size = 12)
+
+summary_data <- data.frame(
+  x = rep(c(0, 1, 2), each = 3),
+  y = c(1, 2, 3, 2, 4, 6, 4, 5, 6)
+)
+summarized <- ggplot(summary_data, aes(x, y)) +
+  stat_summary(fun.data = mean_se, geom = "pointrange", colour = "#467DB4", linewidth = 0.4) +
+  labs(title = "mean-and-se", x = "x", y = "mean") +
+  theme_minimal(base_size = 12)
+
+ribbon_data <- data.frame(
+  x = c(0, 1, 2, 3, 4),
+  lower = c(0.8, 1.2, 1, 1.6, 1.3),
+  upper = c(1.5, 2, 1.8, 2.4, 2)
+)
+ribbon <- ggplot(ribbon_data, aes(x, ymin = lower, ymax = upper)) +
+  geom_ribbon(colour = "#467DB4", fill = "#467DB4", alpha = 0.45, linewidth = 0.3) +
+  labs(title = "ribbon", x = "x", y = "interval") +
+  theme_minimal(base_size = 12)
+
+tile_data <- data.frame(
+  x = rep(c(0, 1, 2), 2),
+  y = rep(c(0, 1), each = 3),
+  level = factor(c(0, 1, 2, 2, 1, 0), levels = c(0, 1, 2))
+)
+tiles <- ggplot(tile_data, aes(x, y, fill = level)) +
+  geom_tile(width = 1, height = 1, colour = "white", linewidth = 0.4) +
+  scale_fill_manual(values = c("#E1EBF5", "#7DAAD2", "#2D5F91")) +
+  labs(title = "tiles", x = "x", y = "y") +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
 count_data <- data.frame(category = c("control", "task", "task", "other", "task", "control"))
 counted <- ggplot(count_data, aes(category)) +
   geom_bar(width = 0.9, colour = "#233C5A", fill = "#5A96CD") +
@@ -76,6 +132,11 @@ jittered <- ggplot(jitter_points, aes(category, value, colour = group)) +
 plots <- list(
   scatter = scatter,
   line = grouped_line,
+  histogram = histogram,
+  density = density_plot,
+  summary = summarized,
+  ribbon = ribbon,
+  tiles = tiles,
   count = counted,
   facets = faceted,
   dodge = dodge,
@@ -104,6 +165,31 @@ write.table(
 write.table(
   layer_data(grouped_line)[c("x", "y", "colour", "group")],
   file.path(out_dir, "line-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(histogram)[c("x", "y", "count", "xmin", "xmax", "ymin", "ymax")],
+  file.path(out_dir, "histogram-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(density_plot)[c("x", "y", "density", "count")],
+  file.path(out_dir, "density-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(summarized)[c("x", "y", "ymin", "ymax")],
+  file.path(out_dir, "summary-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(ribbon)[c("x", "ymin", "ymax")],
+  file.path(out_dir, "ribbon-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(tiles)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "fill")],
+  file.path(out_dir, "tiles-layer.tsv"),
   sep = "\t", row.names = FALSE, quote = FALSE
 )
 write.table(
