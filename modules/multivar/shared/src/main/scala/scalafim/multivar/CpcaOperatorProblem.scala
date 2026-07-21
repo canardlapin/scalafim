@@ -5,8 +5,8 @@ import gale.linalg.DVec
 
 /** A CPCA projector resolved in one nominal space.
   *
-  * Unlike [[ResolvedCpcaConstraint]], the canonical representation contains
-  * only typed operators. `CpcaConstraint` remains the inspectable request;
+  * The canonical representation contains only typed operators.
+  * `CpcaConstraint` remains the inspectable request;
   * the fitted projector and optional coordinate extractor carry their domain
   * and codomain in the Scala type and at runtime.
   */
@@ -227,7 +227,7 @@ final case class CpcaOperatorBlockFit[
     blockTable: OpTable[Rows, Feature, UncheckedEvidence],
     featureOperator: Op[Dual[Feature], Primal[Feature], CovarianceOperatorRole, UncheckedEvidence],
     programFit: OperatorProgramFit,
-    compatibility: CpcaBlockFit,
+    result: CpcaBlockResult,
     diagnostics: CpcaOperatorDiagnostics,
     provenance: SemanticProvenance
 ):
@@ -258,7 +258,7 @@ final case class CpcaOperatorFit[Rows <: SemanticSpace, Feature <: SemanticSpace
     rowConstraint: CpcaOperatorConstraint[Rows],
     featureConstraint: CpcaOperatorConstraint[Feature],
     partition: CpcaPartition,
-    blocks: Map[CpcaBlock, CpcaBlockFit],
+    blocks: Map[CpcaBlock, CpcaBlockResult],
     operatorBlocks: Vector[CpcaOperatorBlockFit[Rows, Feature, ? <: SemanticSpace]],
     rowMetricRoots: MetricRoots,
     featureMetricRoots: MetricRoots,
@@ -266,7 +266,7 @@ final case class CpcaOperatorFit[Rows <: SemanticSpace, Feature <: SemanticSpace
     rankTolerance: Double,
     provenance: SemanticProvenance
 ):
-  def block(block: CpcaBlock): Option[CpcaBlockFit] =
+  def block(block: CpcaBlock): Option[CpcaBlockResult] =
     blocks.get(block)
 
   def operatorBlock(block: CpcaBlock): Option[CpcaOperatorBlockFit[Rows, Feature, ? <: SemanticSpace]] =
@@ -317,7 +317,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
         rowConstraint,
         featureConstraint,
         inertia,
-        executions.map(value => value.compatibility.block -> value.compatibility).toMap,
+        executions.map(value => value.result.block -> value.result).toMap,
         executions.flatMap(_.operator).toVector,
         rowRoots,
         featureRoots,
@@ -413,7 +413,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
     for
       rowCoordinates <- coordinates(rowConstraint, uStar, block.rowMode)
       featureCoordinates <- coordinates(featureConstraint, vStar, block.columnMode)
-      compatibility = CpcaBlockFit(
+      result = CpcaBlockResult(
         block,
         singularValues,
         uStar,
@@ -424,13 +424,13 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
         featureCoordinates,
         CpcaMath.sumSquares(singularValues)
       )
-      operator <- assembleProgramBlock(block, blockMatrix, compatibility)
-    yield CpcaBlockExecution(compatibility, Some(operator))
+      operator <- assembleProgramBlock(block, blockMatrix, result)
+    yield CpcaBlockExecution(result, Some(operator))
 
   private def assembleProgramBlock(
       block: CpcaBlock,
       dense: DMat,
-      compatibility: CpcaBlockFit
+      result: CpcaBlockResult
   ): Either[MultivarError, CpcaOperatorBlockFit[Rows, Feature, ? <: SemanticSpace]] =
     val identity = ValueIdentity.derived(s"cpca-${block.label}-table", table.valueIdentity)
     val fitProvenance = provenance.append(
@@ -443,7 +443,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       component <- SpaceRef.of(
         s"${rowSpace.id.value}.${featureSpace.id.value}.cpca.${block.label}",
         SpaceRole.Latent,
-        compatibility.rank
+        result.rank
       )
       blockTable <- cpcaSemantic(
         Op.fromDense(
@@ -464,7 +464,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       )
       featureFrameOperator <- cpcaSemantic(
         Op.fromDense(
-          compatibility.vStar,
+          result.vStar,
           CoordinateEvidence.primal(component.evidence),
           CoordinateEvidence.dual(featureSpace),
           OperatorRoleWitness.frame,
@@ -500,22 +500,22 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       )
       crossResidual = cpcaCrossResidual(
         dense,
-        compatibility.uStar,
-        compatibility.vStar,
-        compatibility.singularValues
+        result.uStar,
+        result.vStar,
+        result.singularValues
       )
       normalizationResidual = Math.max(
-        cpcaGramResidual(compatibility.uStar),
-        cpcaGramResidual(compatibility.vStar)
+        cpcaGramResidual(result.uStar),
+        cpcaGramResidual(result.vStar)
       )
-      clusters = spectralClusters(compatibility.singularValues, CertificateTolerance.strict)
+      clusters = spectralClusters(result.singularValues, CertificateTolerance.strict)
       genericFit <- cpcaProgram(
         OperatorProgramFit.from(
           operatorProgram,
           Vector(FittedFrame(featureVariable, featureFrame)),
-          CpcaMath.sumSquares(compatibility.singularValues),
+          CpcaMath.sumSquares(result.singularValues),
           NumericalIdentifiability(
-            compatibility.rank,
+            result.rank,
             clusters,
             Math.max(crossResidual, normalizationResidual),
             context
@@ -531,9 +531,9 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
         blockTable,
         featureOperator,
         genericFit,
-        compatibility,
+        result,
         CpcaOperatorDiagnostics(
-          compatibility.rank,
+          result.rank,
           crossResidual,
           normalizationResidual,
           clusters,
@@ -596,8 +596,8 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       case (CpcaSubspaceMode.Residual, CpcaConstraint.Zero)         => false
       case (CpcaSubspaceMode.Residual, CpcaConstraint.Basis(_, _))  => false
 
-  private def zeroBlock(block: CpcaBlock): CpcaBlockFit =
-    CpcaBlockFit(
+  private def zeroBlock(block: CpcaBlock): CpcaBlockResult =
+    CpcaBlockResult(
       block,
       DVec.zeros(0),
       DMat.zeros(rowSpace.dimension, 0),
@@ -618,12 +618,12 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       kept
 
 private final case class CpcaBlockExecution[Rows <: SemanticSpace, Feature <: SemanticSpace](
-    compatibility: CpcaBlockFit,
+    result: CpcaBlockResult,
     operator: Option[CpcaOperatorBlockFit[Rows, Feature, ? <: SemanticSpace]]
 )
 
 object CpcaOperatorProblem:
-  /** Dynamic compatibility boundary. Once constructed, the problem contains
+  /** Dynamic constructor boundary. Once constructed, the problem contains
     * typed operators only; the legacy metrics are not consulted by fitting.
     */
   def fromMatrices(
@@ -668,26 +668,6 @@ object CpcaOperatorProblem:
         provenance
       )
     yield new PreparedCpcaOperatorProblem(rows, features)(problem)
-
-  private[multivar] def fromCompatibility(
-      problem: CpcaProblem,
-      eigenSolver: SymmetricEigenSolver,
-      tolerance: Double,
-      policy: StoragePolicy
-  ): Either[MultivarError, PreparedCpcaOperatorProblem] =
-    fromMatrices(
-      problem.diagram.table,
-      Some(problem.diagram.rowMetric),
-      Some(problem.diagram.columnMetric),
-      problem.rowConstraint.constraint,
-      problem.columnConstraint.constraint,
-      problem.diagram.rowSpace,
-      problem.diagram.columnSpace,
-      eigenSolver,
-      tolerance,
-      policy,
-      "cpca-compatibility-adapter"
-    )
 
   private[multivar] def fromPrepared[Rows <: SemanticSpace, Feature <: SemanticSpace](
       rows: SpaceEvidence[Rows],
@@ -852,8 +832,8 @@ final class PreparedCpcaOperatorFit private[multivar] (
   def rowConstraint: CpcaOperatorConstraint[rows.Id] = value.rowConstraint
   def featureConstraint: CpcaOperatorConstraint[features.Id] = value.featureConstraint
   def partition: CpcaPartition = value.partition
-  def blocks: Map[CpcaBlock, CpcaBlockFit] = value.blocks
-  def block(block: CpcaBlock): Option[CpcaBlockFit] = value.block(block)
+  def blocks: Map[CpcaBlock, CpcaBlockResult] = value.blocks
+  def block(block: CpcaBlock): Option[CpcaBlockResult] = value.block(block)
   def operatorBlock(block: CpcaBlock): Option[CpcaOperatorBlockFit[rows.Id, features.Id, ? <: SemanticSpace]] =
     value.operatorBlock(block)
   def operatorBlocks: Vector[CpcaOperatorBlockFit[rows.Id, features.Id, ? <: SemanticSpace]] = value.operatorBlocks

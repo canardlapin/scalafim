@@ -508,26 +508,7 @@ final class SameEntityEvidence[Left <: SemanticSpace, Right <: SemanticSpace] pr
     val entitySpace: MvSpace,
     val keySetIdentity: ValueIdentity,
     val provenance: SemanticProvenance
-):
-  def toLegacyPair(
-      left: MatrixView,
-      right: MatrixView,
-      rowMetric: Option[MetricSpec] = None,
-      leftColumnMetric: Option[MetricSpec] = None,
-      rightColumnMetric: Option[MetricSpec] = None,
-      leftSpace: Option[MvSpace] = None,
-      rightSpace: Option[MvSpace] = None
-  ): Either[MultivarError, PairedDualityDiagram] =
-    PairedDualityDiagram.fromPositionalUnsafe(
-      left,
-      right,
-      rowMetric,
-      leftColumnMetric,
-      rightColumnMetric,
-      Some(entitySpace),
-      leftSpace,
-      rightSpace
-    )
+)
 
 object SameEntityEvidence:
   def fromVerifiedIdentity[Left <: SemanticSpace, Right <: SemanticSpace](

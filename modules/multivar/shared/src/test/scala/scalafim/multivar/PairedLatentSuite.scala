@@ -204,18 +204,18 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-1.0, 0.5)
       )
     )
-    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val weights = Vector(1.0, 2.0, 0.5, 1.5, 0.75)
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(weights)).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Plsc.fit(xView, yView, k(2), rowMetric = Some(rowMetric)).toOption.get
     val unweighted = Plsc.fit(xView, yView, k(2)).toOption.get
     val xp = PreprocessSpec.Center.fit(xView).toOption.get.transform(xView).toOption.get
     val yp = PreprocessSpec.Center.fit(yView).toOption.get.transform(yView).toOption.get
-    val paired = Unsafe
-      .pairedDiagramFromArrays(xp, yp, "test fixtures share row order", rowMetric = Some(rowMetric))
-      .toOption
-      .get
-    val cross = MatrixOps.scale(DualityKernels.crossGram(paired).toOption.get, 1.0 / (x.rows - 1))
+    val cross = MatrixOps.scale(
+      weightedCrossProduct(xp.toDense().toOption.get, yp.toDense().toOption.get, weights),
+      1.0 / (x.rows - 1)
+    )
     val expected = DenseSolvers.svd.decompose(MatrixView.dense(cross), k(2)).toOption.get
 
     assertVectorClose(fit.result.singularValues, expected.singularValues, 1e-9)
@@ -242,21 +242,20 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val ridge = 0.2
-    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val weights = Vector(1.0, 2.0, 0.5, 1.5, 0.75)
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(weights)).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Cca.fit(xView, yView, k(2), ridge = ridge, rowMetric = Some(rowMetric)).toOption.get
     val unweighted = Cca.fit(xView, yView, k(2), ridge = ridge).toOption.get
     val xp = PreprocessSpec.Center.fit(xView).toOption.get.transform(xView).toOption.get
     val yp = PreprocessSpec.Center.fit(yView).toOption.get.transform(yView).toOption.get
-    val paired = Unsafe
-      .pairedDiagramFromArrays(xp, yp, "test fixtures share row order", rowMetric = Some(rowMetric))
-      .toOption
-      .get
     val scale = 1.0 / (x.rows - 1)
-    val cxx = MatrixOps.addRidge(MatrixOps.scale(paired.x.rowGram().toOption.get, scale), ridge)
-    val cyy = MatrixOps.addRidge(MatrixOps.scale(paired.y.rowGram().toOption.get, scale), ridge)
-    val cxy = MatrixOps.scale(DualityKernels.crossGram(paired).toOption.get, scale)
+    val xpDense = xp.toDense().toOption.get
+    val ypDense = yp.toDense().toOption.get
+    val cxx = MatrixOps.addRidge(MatrixOps.scale(weightedCrossProduct(xpDense, xpDense, weights), scale), ridge)
+    val cyy = MatrixOps.addRidge(MatrixOps.scale(weightedCrossProduct(ypDense, ypDense, weights), scale), ridge)
+    val cxy = MatrixOps.scale(weightedCrossProduct(xpDense, ypDense, weights), scale)
     val wx = MatrixOps.inverseSquareRoot(cxx, DenseSolvers.symmetricEigen, 1e-12).toOption.get
     val wy = MatrixOps.inverseSquareRoot(cyy, DenseSolvers.symmetricEigen, 1e-12).toOption.get
     val expectedOperator = GaleNumerics.multiply(GaleNumerics.multiply(wx, cxy), wy)
@@ -384,3 +383,20 @@ class PairedLatentSuite extends munit.FunSuite:
     assertEquals(method.label, "rrr")
     assert(RegressionRegularization.ridge(Double.PositiveInfinity).isLeft)
   }
+
+  private def weightedCrossProduct(left: DMat, right: DMat, weights: Vector[Double]): DMat =
+    require(left.rows == right.rows && left.rows == weights.length)
+    val out = new Array[Double](left.cols * right.cols)
+    var source = 0
+    while source < left.cols do
+      var target = 0
+      while target < right.cols do
+        var value = 0.0
+        var row = 0
+        while row < left.rows do
+          value += left(row, source) * weights(row) * right(row, target)
+          row += 1
+        out(source * right.cols + target) = value
+        target += 1
+      source += 1
+    GaleNumerics.matrixFromRowMajor(left.cols, right.cols, out)

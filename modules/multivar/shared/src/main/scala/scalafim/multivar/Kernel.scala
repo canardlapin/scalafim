@@ -365,7 +365,7 @@ object Nystrom:
         // Kernel is an open trait; symmetrize the square landmark kernel so a user
         // kernel with roundoff asymmetry does not fail the symmetric eigensolver.
         kMmRaw <- computeKernel(kernel, landmarkView, landmarkView, "Nyström landmark kernel")
-        kMm = DualityKernels.symmetrize(kMmRaw)
+        kMm = MatrixOps.symmetrize(kMmRaw)
         // The n x m kernel is computed exactly once and shared by every stage.
         cAll <- computeKernel(kernel, MatrixView.dense(processed), landmarkView, "Nyström all-landmark kernel")
         fit <- method match
@@ -481,7 +481,7 @@ object Nystrom:
             val invSqrtLambdaL = MatrixOps.diagonal(inverseSqrt(lambdaL))
             val firstWeights = GaleNumerics.multiply(vSL, invSqrtLambdaL)
             val w = GaleNumerics.multiply(cAll, firstWeights)
-            val kW = DualityKernels.symmetrize(GaleNumerics.crossProduct(w))
+            val kW = MatrixOps.symmetrize(GaleNumerics.crossProduct(w))
             for
               second <- LinalgErrorAdapter.adapt(eigenSolver.decompose(kW))
               finalRequest = Math.min(components.value, firstKeep)

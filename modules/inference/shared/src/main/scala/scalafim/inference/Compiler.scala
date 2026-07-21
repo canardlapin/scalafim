@@ -122,9 +122,9 @@ object InferenceCompiler:
               spec.evidence,
               spec.seed
             ))))
-          case (BuiltInFit.GenPca, BuiltInTarget.VarianceRoots, BuiltInNull.PermuteRows) =>
-            Right(AnyInferenceProgram.GenPca(compile(InferenceSpec.of(
-              FitDescriptor.GenPca,
+          case (BuiltInFit.Gpca, BuiltInTarget.VarianceRoots, BuiltInNull.PermuteRows) =>
+            Right(AnyInferenceProgram.Gpca(compile(InferenceSpec.of(
+              FitDescriptor.Gpca,
               TargetSpec.VarianceRoots,
               NullSpec.PermuteRows,
               design,
@@ -193,9 +193,9 @@ object InferenceCompiler:
               spec.evidence,
               spec.seed
             ))))
-          case (BuiltInFit.GenPca, BuiltInTarget.VarianceRoots, BuiltInNull.PermuteRows) =>
-            Right(AnyInferenceProgram.GenPcaBlocks(compile(InferenceSpec.of(
-              FitDescriptor.GenPca,
+          case (BuiltInFit.Gpca, BuiltInTarget.VarianceRoots, BuiltInNull.PermuteRows) =>
+            Right(AnyInferenceProgram.GpcaBlocks(compile(InferenceSpec.of(
+              FitDescriptor.Gpca,
               TargetSpec.VarianceRoots,
               NullSpec.PermuteRows,
               design,
@@ -259,7 +259,7 @@ object InferenceCompiler:
 
 enum BuiltInFit:
   case Pca
-  case GenPca
+  case Gpca
   case Plsc
   case Cca
   case ReducedRankRegression
@@ -300,7 +300,7 @@ enum AnyInferenceProgram:
       NullKind.RowPermutation,
       DesignKind.ExchangeableRows
   ])
-  case GenPca(value: InferenceProgram[
+  case Gpca(value: InferenceProgram[
       GpcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,
@@ -324,7 +324,7 @@ enum AnyInferenceProgram:
       NullKind.RowPermutation,
       DesignKind.WithinBlockRows
   ])
-  case GenPcaBlocks(value: InferenceProgram[
+  case GpcaBlocks(value: InferenceProgram[
       GpcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,

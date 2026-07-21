@@ -6,7 +6,7 @@ package scalafim.multivar
   * exact whitened SVD because genpca's dual (n < p) branch returns a
   * non-M-orthonormal ou (its sdev and ov agree with the exact reference).
   */
-object GenPcaRReferenceFixtures:
+object GpcaRReferenceFixtures:
   val g1X: Vector[Vector[Double]] = Vector(
     Vector(-0.32603649051538575, 1.1739662875626988, 0.52644809887364219),
     Vector(0.5524618554191385, 0.61878985562596811, -0.79484443541505534),

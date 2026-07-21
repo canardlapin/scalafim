@@ -193,15 +193,15 @@ class PlanSuite extends munit.FunSuite:
   test("local executor compiles ROI GPCA plans to generic operator fit artifacts") {
     val rois = RoiPlanSet.of("roi-plan", Vector(roi("pair", 0, 1)), featureCount = 3).toOption.get
     val plan = MultivarPlan.of(
-      "local-genpca",
+      "local-gpca",
       inputRef(samples = 4, features = 3),
       rois,
-      MultivarEstimator.GenPca(
+      MultivarEstimator.Gpca(
         ComponentCount(1).toOption.get,
         preprocessing = PreprocessSpec.Pass,
         rowMetric = Some(MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 1.0, 0.5))).toOption.get),
         columnMetric = Some(MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.25))).toOption.get),
-        backend = GmdBackend.Eigen(),
+        backend = GpcaBackend.Eigen(),
         storagePolicy = StoragePolicy.AllowDense
       )
     ).toOption.get
@@ -209,7 +209,7 @@ class PlanSuite extends munit.FunSuite:
     val result = LocalMultivarExecutor.run(plan, data).toOption.get
     val artifact = result.artifacts.head
 
-    assertEquals(artifact.shape.kind, FitArtifactKind.GenPca)
+    assertEquals(artifact.shape.kind, FitArtifactKind.Gpca)
     artifact match
       case FitArtifact.OperatorArtifact(_, Vector(fit)) =>
         assertEquals(fit.programFit.program.objective.label, "maximize-trace")
@@ -365,13 +365,13 @@ class PlanSuite extends munit.FunSuite:
     assert(zeroRank.swap.toOption.contains(MultivarError.InvalidComponentRequest(1, 0)))
   }
 
-  test("plan validation rejects GenPCA metrics that do not match the duality axes") {
+  test("plan validation rejects GPCA metrics that do not match the duality axes") {
     val rois = RoiPlanSet.of("roi-plan", Vector(roi("pair", 0, 1)), featureCount = 3).toOption.get
     val plan = MultivarPlan.of(
-      "bad-genpca",
+      "bad-gpca",
       inputRef(samples = 4, features = 3),
       rois,
-      MultivarEstimator.GenPca(
+      MultivarEstimator.Gpca(
         ComponentCount(1).toOption.get,
         columnMetric = Some(MetricSpec.identity(3).toOption.get)
       )

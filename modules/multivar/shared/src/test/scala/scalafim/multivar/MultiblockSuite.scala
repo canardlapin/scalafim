@@ -38,35 +38,6 @@ class MultiblockSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def pass(cols: Int): FittedPreprocessor =
-    FittedColumnAffine(cols, MatrixView.ones(cols), MatrixView.zeros(cols))
-
-  private def blockMapWith(combination: BlockCombination): BlockMap =
-    val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
-    val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get
-    val leftMap = MatrixMap.from(
-      MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
-      pass(2)
-    ).toOption.get
-    val rightMap = MatrixMap.from(
-      MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
-      pass(1)
-    ).toOption.get
-    BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(
-        BlockMapComponent(partition.block(leftId).get, leftMap),
-        BlockMapComponent(partition.block(rightId).get, rightMap)
-      ),
-      combination
-    ).toOption.get
-
   test("blockwise preprocessing composes into global column order") {
     val weights = PreprocessSpec.scale(Vector(2.0)).toOption.get
     val fitted = BlockwisePreprocessor.fit(
@@ -92,43 +63,6 @@ class MultiblockSuite extends munit.FunSuite:
       1e-12
     )
   }
-
-  test("BlockMap sums block projections and projectBlock uses restriction semantics") {
-    val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
-    val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get
-    val leftBlock = partition.block(leftId).get
-    val rightBlock = partition.block(rightId).get
-    val leftMap = MatrixMap.from(
-      MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
-      pass(2)
-    ).toOption.get
-    val rightMap = MatrixMap.from(
-      MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
-      pass(1)
-    ).toOption.get
-    val blockMap = BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(BlockMapComponent(leftBlock, leftMap), BlockMapComponent(rightBlock, rightMap))
-    ).toOption.get
-
-    val projected = blockMap.forward(data).toOption.get
-    val leftProjected = blockMap.projectBlock(data, leftId).toOption.get
-    val localLeftSecond = blockMap.projectBlock(data, leftId, IndexSet.from(Vector(1), IndexAxis.Feature).toOption.get).toOption.get
-    val restricted = blockMap.restrictInput(IndexSet.from(Vector(0, 2), IndexAxis.Feature).toOption.get).toOption.get
-    val selected = data.selectColumns(IndexSet.from(Vector(0, 2), IndexAxis.Feature).toOption.get).toOption.get
-
-    assertMatrixClose(projected, Vector(Vector(8.0), Vector(17.0), Vector(26.0)), 1e-12)
-    assertMatrixClose(leftProjected, Vector(Vector(3.0), Vector(7.0), Vector(11.0)), 1e-12)
-    assertMatrixClose(localLeftSecond, Vector(Vector(2.0), Vector(4.0), Vector(6.0)), 1e-12)
-    assertMatrixClose(restricted.forward(selected).toOption.get, leftProjected.toRows, 1e-12)
-  }
-
   test("operator block partitions select typed tables and lift local frames") {
     val global = SpaceRef(MvSpace.of("typed-multi", SpaceRole.Observed, 3).toOption.get)
     val rows = SpaceRef(MvSpace.of("typed-rows", SpaceRole.Samples, 3).toOption.get)
@@ -197,104 +131,6 @@ class MultiblockSuite extends munit.FunSuite:
         .exists(_.message.contains("one frame per block"))
     )
   }
-
-  test("BlockMap weighted combination makes block score aggregation explicit") {
-    val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
-    val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get
-    val leftBlock = partition.block(leftId).get
-    val rightBlock = partition.block(rightId).get
-    val leftMap = MatrixMap.from(
-      MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
-      pass(2)
-    ).toOption.get
-    val rightMap = MatrixMap.from(
-      MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
-      pass(1)
-    ).toOption.get
-    val blockMap = BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(BlockMapComponent(leftBlock, leftMap), BlockMapComponent(rightBlock, rightMap)),
-      BlockCombination.Weighted(Vector(leftId -> 2.0, rightId -> -1.0))
-    ).toOption.get
-
-    assertEquals(blockMap.combination, BlockCombination.Weighted(Vector(leftId -> 2.0, rightId -> -1.0)))
-    assertMatrixClose(blockMap.forward(data).toOption.get, Vector(Vector(1.0), Vector(4.0), Vector(7.0)), 1e-12)
-
-    val invalid = BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(BlockMapComponent(leftBlock, leftMap), BlockMapComponent(rightBlock, rightMap)),
-      BlockCombination.Weighted(Vector(leftId -> 1.0))
-    )
-    assert(invalid.swap.toOption.exists(_.message.contains("exactly one weight per block")))
-  }
-
-  test("Weighted restrictInput preserves the block's weighted contribution to forward") {
-    val blockMap = blockMapWith(BlockCombination.Weighted(Vector(leftId -> 2.0, rightId -> -1.0)))
-
-    val leftColumns = IndexSet.from(Vector(0, 2), IndexAxis.Feature).toOption.get
-    val restrictedLeft = blockMap.restrictInput(leftColumns).toOption.get
-    val selectedLeft = data.selectColumns(leftColumns).toOption.get
-    assertMatrixClose(
-      restrictedLeft.forward(selectedLeft).toOption.get,
-      Vector(Vector(6.0), Vector(14.0), Vector(22.0)),
-      1e-12
-    )
-
-    val rightColumns = IndexSet.from(Vector(1), IndexAxis.Feature).toOption.get
-    val restrictedRight = blockMap.restrictInput(rightColumns).toOption.get
-    val selectedRight = data.selectColumns(rightColumns).toOption.get
-    assertMatrixClose(
-      restrictedRight.forward(selectedRight).toOption.get,
-      Vector(Vector(-5.0), Vector(-10.0), Vector(-15.0)),
-      1e-12
-    )
-  }
-
-  test("restrictInput spanning two blocks returns a typed error") {
-    val blockMap = blockMapWith(BlockCombination.Sum)
-    val spanning = IndexSet.from(Vector(0, 1), IndexAxis.Feature).toOption.get
-    val result = blockMap.restrictInput(spanning)
-    assert(result.swap.toOption.exists(_.message.contains("within one block")))
-  }
-
-  test("BlockMap.from rejects a component whose block columns disagree with the partition") {
-    val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
-    val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get
-    val leftMap = MatrixMap.from(
-      MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
-      pass(2)
-    ).toOption.get
-    val rightMap = MatrixMap.from(
-      MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.5))),
-      pass(1)
-    ).toOption.get
-    val impostorLeft = BlockSpec(leftId, IndexSet.from(Vector(0, 1), IndexAxis.Feature).toOption.get)
-
-    val result = BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(
-        BlockMapComponent(impostorLeft, leftMap),
-        BlockMapComponent(partition.block(rightId).get, rightMap)
-      )
-    )
-
-    assert(result.swap.toOption.exists(_.message.contains("does not match the partition block columns")))
-  }
-
   test("BlockwisePreprocessor.fit rejects unknown and duplicate spec ids") {
     val ghost = BlockId("ghost").toOption.get
     val unknown = BlockwisePreprocessor.fit(
@@ -362,73 +198,4 @@ class MultiblockSuite extends munit.FunSuite:
       ),
       1e-12
     )
-  }
-
-  test("BiProjection accepts BlockMap as its projection map") {
-    given PseudoInverseSolver = PseudoInverseSolver.orthonormalColumns()
-
-    val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
-    val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get
-    val leftBlock = partition.block(leftId).get
-    val rightBlock = partition.block(rightId).get
-    val leftMap = MatrixMap.from(
-      MvSpace.of("left-space", SpaceRole.Block, 2).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0))),
-      pass(2)
-    ).toOption.get
-    val rightMap = MatrixMap.from(
-      MvSpace.of("right-space", SpaceRole.Block, 1).toOption.get,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
-      pass(1)
-    ).toOption.get
-    val blockMap = BlockMap.from(
-      domain,
-      latent,
-      partition,
-      Vector(BlockMapComponent(leftBlock, leftMap), BlockMapComponent(rightBlock, rightMap))
-    ).toOption.get
-    val projection = BiProjection(blockMap, blockMap.forward(data).toOption.get)
-
-    assertMatrixClose(projection.project(data).toOption.get, Vector(Vector(11.0), Vector(23.0), Vector(35.0)), 1e-12)
-    projection.map match
-      case map: BlockMap =>
-        assertMatrixClose(map.projectBlock(data, rightId).toOption.get, Vector(Vector(10.0), Vector(20.0), Vector(30.0)), 1e-12)
-        assert(map.decoder.swap.toOption.exists(_.message.contains("block-map decoder")))
-      case other =>
-        fail(s"expected BlockMap projection map, got $other")
-  }
-
-  test("CrossProjection transfer is typed and decoder-capability explicit") {
-    given PseudoInverseSolver = PseudoInverseSolver.orthonormalColumns()
-
-    val xDomain = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
-    val yDomain = MvSpace.of("y", SpaceRole.Observed, 2).toOption.get
-    val latent = MvSpace.of("latent", SpaceRole.Latent, 1).toOption.get
-    val xMap = MatrixMap.from(
-      xDomain,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.0))),
-      pass(2)
-    ).toOption.get
-    val yMap = MatrixMap.from(
-      yDomain,
-      latent,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.0), Vector(1.0))),
-      pass(2)
-    ).toOption.get
-    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 99.0), Vector(3.0, 88.0))))
-    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(0.0, 2.0), Vector(0.0, 3.0))))
-    val projection = CrossProjection(
-      xMap,
-      yMap,
-      latent,
-      xMap.forward(xInput).toOption.get,
-      yMap.forward(yInput).toOption.get
-    )
-
-    val transferred = projection.transfer(DomainSide.X, DomainSide.Y, xInput).toOption.get
-
-    assertMatrixClose(transferred, Vector(Vector(0.0, 2.0), Vector(0.0, 3.0)), 1e-12)
   }

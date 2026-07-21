@@ -41,7 +41,7 @@ final case class CcaCorrelationProtocol()
 
   override def roots(initial: CcaCorrelationState): Either[InferenceError, Vector[Double]] =
     fit(initial.x, initial.y, initial.ridge, rankLimit(initial)).map { value =>
-      value.paired.spectrum.values.toVector
+      value.result.singularValues.toVector
     }
 
   override def observed(state: CcaCorrelationState): Either[InferenceError, Double] =
@@ -59,8 +59,8 @@ final case class CcaCorrelationProtocol()
 
   override def remove(state: CcaCorrelationState): Either[InferenceError, CcaCorrelationState] =
     fit(state.x, state.y, state.ridge, 1).map { fitted =>
-      val xScore = fitted.paired.xScores.col(0)
-      val yScore = fitted.paired.yScores.col(0)
+      val xScore = fitted.xScores.col(0)
+      val yScore = fitted.yScores.col(0)
       CcaCorrelationState(
         FamilyMatrices.residualizeOn(state.x, xScore),
         FamilyMatrices.residualizeOn(state.y, yScore),
@@ -74,7 +74,7 @@ final case class CcaCorrelationProtocol()
       y: DMat,
       ridge: Double
   ): Either[InferenceError, Double] =
-    fit(x, y, ridge, 1).map(_.paired.spectrum.values(0))
+    fit(x, y, ridge, 1).map(_.result.singularValues(0))
 
   private def fit(
       x: DMat,

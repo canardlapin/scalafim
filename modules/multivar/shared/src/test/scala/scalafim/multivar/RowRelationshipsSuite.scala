@@ -124,11 +124,9 @@ class RowRelationshipsSuite extends munit.FunSuite:
     assert(unsafe.provenance.events.exists(_.isInstanceOf[SemanticProvenanceEvent.UnsafeAssumption]))
     assert(Unsafe.assumeSameRows(left.evidence, right.evidence, entities, "").isLeft)
 
-    val x = DenseMatrixView(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
-    val y = DenseMatrixView(GaleNumerics.matrixFromRows(Vector(Vector(3.0), Vector(4.0))))
-    val paired = verified.toLegacyPair(x, y).fold(error => fail(error.message), identity)
-    assertEquals(paired.sampleSpace, entities)
-    assertEquals(paired.rows, 2)
+    assertEquals(verified.entitySpace, entities)
+    assertEquals(verified.exactIdentity.rowMap.descriptor.domain.size, 2)
+    assertEquals(verified.exactIdentity.rowMap.descriptor.codomain.size, 2)
   }
 
   test("couplings preserve supplied marginals and never silently normalize") {

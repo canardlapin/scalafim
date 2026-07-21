@@ -63,11 +63,8 @@ class OperatorFitSuite extends munit.FunSuite:
     )
     val rows = MvSpace.of("bundle-rows", SpaceRole.Samples, x.rows).toOption.get
     val features = MvSpace.of("bundle-features", SpaceRole.Observed, x.cols).toOption.get
-    val preprocessor = PreprocessSpec.Pass.fit(x).toOption.get
     val problem = DynamicGpcaProblem.from(
       x,
-      x,
-      preprocessor,
       rows,
       features,
       MetricSpec.identity(x.rows, Some(rows)).toOption.get,

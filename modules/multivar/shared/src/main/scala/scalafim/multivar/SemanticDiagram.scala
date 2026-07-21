@@ -672,7 +672,7 @@ object SupportRestriction:
     for
       matrix <- DiagramNumerics.formMatrix(geometry)
       eigen <- LinalgErrorAdapter
-        .adapt(eigenSolver.decompose(DualityKernels.symmetrize(matrix)))
+        .adapt(eigenSolver.decompose(MatrixOps.symmetrize(matrix)))
         .left
         .map(DiagramError.Multivar.apply)
       largest = Math.max(eigen.values(0), 0.0)

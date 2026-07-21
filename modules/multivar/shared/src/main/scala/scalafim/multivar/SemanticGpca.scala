@@ -131,25 +131,20 @@ object PreparedSemanticDiagram:
       )
     )
 
-final case class SemanticGenPcaFit[Rows <: SemanticSpace, Columns <: SemanticSpace](
+final case class SemanticGpcaFit[Rows <: SemanticSpace, Columns <: SemanticSpace](
     preparedDiagram: PreparedSemanticDiagram[Rows, Columns],
     operatorResult: GpcaOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace],
-    numericalFit: GenPcaFit,
-    result: GenPcaSemanticResult,
-    lawDiagnostics: GenPcaLawDiagnostics,
     evidence: Vector[DiagramCertificate]
 )
 
-object SemanticGenPca:
+object SemanticGpca:
   def fit[Rows <: SemanticSpace, Columns <: SemanticSpace](
       diagram: SemanticDualityDiagram[Rows, Columns, CompleteCells],
       components: ComponentCount,
-      backend: GmdBackend = GmdBackend.Auto,
+      backend: GpcaBackend = GpcaBackend.Auto,
       storagePolicy: StoragePolicy = StoragePolicy.AllowDense,
-      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
-      svdSolver: SvdSolver = DenseSolvers.svd,
-      lawTolerance: NumericalLawTolerance = NumericalLawTolerance.strict
-  ): Either[DiagramError, SemanticGenPcaFit[Rows, Columns]] =
+      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen
+  ): Either[DiagramError, SemanticGpcaFit[Rows, Columns]] =
     for
       prepared <- PreparedSemanticDiagram.prepare(diagram, storagePolicy, eigenSolver)
       tolerance <- GpcaRankTolerance.fromBackend(backend).left.map(DiagramError.Multivar.apply)
@@ -158,17 +153,9 @@ object SemanticGenPca:
         .fit(components, tolerance)
         .left
         .map(DiagramError.Multivar.apply)
-      fit = operatorFit.compatibility
-      diagnostics <- GenPcaLaws
-        .evaluate(prepared.table, fit, lawTolerance)
-        .left
-        .map(DiagramError.Multivar.apply)
     yield
-      SemanticGenPcaFit(
+      SemanticGpcaFit(
         prepared,
         operatorFit,
-        fit,
-        fit.semanticResult,
-        diagnostics,
         prepared.evidence
       )

@@ -167,6 +167,18 @@ private[multivar] object LinalgErrorAdapter:
         MultivarError.SolverFailed(other.getMessage)
 
 private[multivar] object MatrixOps:
+  def symmetrize(matrix: DMat): DMat =
+    require(matrix.rows == matrix.cols, "symmetrization requires a square matrix")
+    val out = new Array[Double](matrix.rows * matrix.cols)
+    var row = 0
+    while row < matrix.rows do
+      var col = 0
+      while col < matrix.cols do
+        out(row * matrix.cols + col) = 0.5 * (matrix(row, col) + matrix(col, row))
+        col += 1
+      row += 1
+    GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
+
   def checkFinite(role: String, matrix: DMat): Either[MultivarError, Unit] =
     var row = 0
     var error = Option.empty[MultivarError]

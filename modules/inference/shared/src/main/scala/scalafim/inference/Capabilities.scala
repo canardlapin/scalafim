@@ -4,7 +4,6 @@ import gale.linalg.DMat
 import gale.linalg.DVec
 import scalafim.multivar.MvSpace
 import scalafim.multivar.OperatorSnapshot
-import scalafim.multivar.Spectrum
 
 enum OrderedSpectrumKind:
   case Eigenvalues
@@ -18,14 +17,7 @@ final case class OrderedSpectrum private (
 )
 
 object OrderedSpectrum:
-  def from(spectrum: Spectrum): Either[InferenceError, OrderedSpectrum] =
-    val kind =
-      spectrum match
-        case Spectrum.Eigenvalues(_)           => OrderedSpectrumKind.Eigenvalues
-        case Spectrum.SingularValues(_)        => OrderedSpectrumKind.SingularValues
-        case Spectrum.CanonicalCorrelations(_) => OrderedSpectrumKind.CanonicalCorrelations
-        case Spectrum.Covariance(_)            => OrderedSpectrumKind.Covariance
-    val source = spectrum.values
+  def from(kind: OrderedSpectrumKind, source: DVec): Either[InferenceError, OrderedSpectrum] =
     if source.length <= 0 then Left(InferenceError.InvalidSpectrum("spectrum must be non-empty"))
     else
       var i = 0

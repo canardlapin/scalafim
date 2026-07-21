@@ -252,7 +252,7 @@ object DirectSumStudy:
         .map(error => DirectSumError.Multivar(LinalgErrorAdapter.toMultivarError(error)))
       linear <- Lin
         .fromDenseMatrix(
-          DualityKernels.symmetrize(inverse),
+          MatrixOps.symmetrize(inverse),
           CoordinateEvidence.dual(geometry.space),
           CoordinateEvidence.primal(geometry.space),
           identity,

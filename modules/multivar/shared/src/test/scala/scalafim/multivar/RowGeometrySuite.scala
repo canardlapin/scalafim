@@ -90,7 +90,7 @@ class RowGeometrySuite extends munit.FunSuite:
     assertMatrixClose(cross(metric.whiten(a).toOption.get, metric.whiten(b).toOption.get), cross(a, solved), 1e-10)
   }
 
-  test("a RowWhitening-induced duality metric makes GenPCA equal whitening-then-PCA") {
+  test("a RowWhitening-induced operator metric makes GPCA equal whitening-then-PCA") {
     val blocks = Vector(
       IndexSet.from(Vector(0, 1), IndexAxis.Row).toOption.get,
       IndexSet.from(Vector(2, 3), IndexAxis.Row).toOption.get
@@ -112,27 +112,31 @@ class RowGeometrySuite extends munit.FunSuite:
       )
     )
     val rowMetric = MetricSpec.fromRowWhitening(whitening).toOption.get
-    val diagram = DualityDiagram.from(MatrixView.dense(x), rowMetric = Some(rowMetric)).toOption.get
-    val conditioned = GenPca
-      .fit(
-        diagram,
-        ComponentCount.unsafe(2),
-        PreprocessSpec.Pass,
-        GmdBackend.Eigen(),
-        StoragePolicy.AllowDense,
-        DenseSolvers.symmetricEigen,
-        DenseSolvers.svd
+    val input = MatrixView.dense(x)
+    val rowSpace = MvSpace.of("row-whitening-gpca.rows", SpaceRole.Samples, x.rows).toOption.get
+    val featureSpace = MvSpace.of("row-whitening-gpca.features", SpaceRole.Observed, x.cols).toOption.get
+    val featureMetric = MetricSpec.identity(x.cols, Some(featureSpace)).toOption.get
+    val problem = DynamicGpcaProblem
+      .from(
+        input,
+        rowSpace,
+        featureSpace,
+        rowMetric,
+        featureMetric,
+        ValueIdentity.source(ValueId.unsafe("row-whitening-gpca.table")),
+        SemanticProvenance.source("row-whitening-gpca")
       )
       .toOption
       .get
+    val conditioned = problem.fit(ComponentCount.unsafe(2)).toOption.get
     val whitened = Pca
       .fit(MatrixView.dense(whitening.whiten(x).toOption.get), ComponentCount.unsafe(2), PreprocessSpec.Pass)
       .toOption
       .get
 
-    assertVectorClose(conditioned.d, whitened.result.singularValues, 1e-9)
+    assertVectorClose(conditioned.singularValues, whitened.result.singularValues, 1e-9)
     assertMatrixClose(
-      rightSpectralGram(conditioned.ov, conditioned.d),
+      rightSpectralGram(conditioned.axes.get.toDense.toOption.get, conditioned.singularValues),
       rightSpectralGram(whitened.result.v, whitened.result.singularValues),
       1e-9
     )

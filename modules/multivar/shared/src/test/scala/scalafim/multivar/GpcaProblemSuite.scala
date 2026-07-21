@@ -5,7 +5,7 @@ import gale.linalg.DVec
 
 class GpcaProblemSuite extends munit.FunSuite:
 
-  import GenPcaRReferenceFixtures as R
+  import GpcaRReferenceFixtures as R
 
   private def accepted[A](result: Either[DiagramError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -71,21 +71,25 @@ class GpcaProblemSuite extends munit.FunSuite:
     val rowMetric = acceptedMv(MetricSpec.diagonal(DVec.fromSeq(R.g3RowWeights)))
     val featureMetric = acceptedMv(MetricSpec.diagonal(DVec.fromSeq(R.g3ColWeights)))
     val fit = accepted(
-      SemanticGenPca.fit(
+      SemanticGpca.fit(
         diagram(x, rowMetric, featureMetric, "gpca-r-g3"),
         ComponentCount.unsafe(3)
       )
     )
 
-    assertVector(fit.numericalFit.d, R.g3Sdev, 1e-8)
-    assertMatrix(canonicalColumns(fit.numericalFit.ov), GaleNumerics.matrixFromRows(R.g3Ov), 1e-8)
+    assertVector(fit.operatorResult.singularValues, R.g3Sdev, 1e-8)
+    assertMatrix(
+      canonicalColumns(fit.operatorResult.axes.get.toDense.toOption.get),
+      GaleNumerics.matrixFromRows(R.g3Ov),
+      1e-8
+    )
     assertEquals(fit.operatorResult.programFit.program.objective.label, "maximize-trace")
     assertEquals(fit.operatorResult.programFit.frames.length, 1)
     assertEquals(fit.operatorResult.diagnostics.retainedRank, 3)
     assert(fit.operatorResult.diagnostics.generalizedResidual <= 1e-8)
     assert(fit.operatorResult.diagnostics.normalizationResidual <= 1e-8)
 
-  test("secondOrder covariance, functional scores, and axes have direct dense oracles"):
+  test("secondOrder covariance and functional axes have direct dense oracles"):
     val x = GaleNumerics.matrixFromRows(
       Seq(Seq(1.0, 2.0), Seq(3.0, -1.0), Seq(0.5, 4.0), Seq(-2.0, 1.5))
     )
@@ -99,7 +103,7 @@ class GpcaProblemSuite extends munit.FunSuite:
     )
     val featureDense = GaleNumerics.matrixFromRows(Seq(Seq(2.0, 0.4), Seq(0.4, 1.5)))
     val fit = accepted(
-      SemanticGenPca.fit(
+      SemanticGpca.fit(
         diagram(
           x,
           acceptedMv(MetricSpec.denseSymmetric(rowDense)),
@@ -114,11 +118,7 @@ class GpcaProblemSuite extends munit.FunSuite:
     val expectedCovariance = GaleNumerics.multiply(x.t, GaleNumerics.multiply(rowDense, x))
     assertMatrix(covariance, expectedCovariance, 1e-10)
 
-    val weights = fit.numericalFit.v
-    val expectedScores = GaleNumerics.multiply(x, weights)
-    assertMatrix(fit.numericalFit.projection.scores, expectedScores, 1e-9)
-
-    val expectedAxes = fit.numericalFit.ov
+    val expectedAxes = fit.operatorResult.axes.get.toDense.toOption.get
     val derivedAxes = fit.operatorResult.functionalFrame.axes.get.toDense.toOption.get
     assertMatrix(derivedAxes, expectedAxes, 1e-9)
 
@@ -128,7 +128,7 @@ class GpcaProblemSuite extends munit.FunSuite:
     )
     val identityMetric = acceptedMv(MetricSpec.identity(3))
     val repeatedFit = accepted(
-      SemanticGenPca.fit(
+      SemanticGpca.fit(
         diagram(repeated, identityMetric, identityMetric, "gpca-repeated"),
         ComponentCount.unsafe(3)
       )
@@ -146,14 +146,14 @@ class GpcaProblemSuite extends munit.FunSuite:
     val rankRows = acceptedMv(MetricSpec.identity(4))
     val rankFeatures = acceptedMv(MetricSpec.identity(3))
     val rankFit = accepted(
-      SemanticGenPca.fit(
+      SemanticGpca.fit(
         diagram(rankTwo, rankRows, rankFeatures, "gpca-rank-two"),
         ComponentCount.unsafe(3)
       )
     )
 
     assertEquals(rankFit.operatorResult.diagnostics.retainedRank, 2)
-    assertEquals(rankFit.numericalFit.componentCount, 2)
+    assertEquals(rankFit.operatorResult.singularValues.length, 2)
     assertEquals(rankFit.operatorResult.programFit.identifiability.retainedRank, 2)
 
   test("singular feature geometry fits only on its explicitly declared support"):
@@ -183,27 +183,12 @@ class GpcaProblemSuite extends munit.FunSuite:
       )
     )
     val semantic = accepted(SemanticDualityDiagram.from(core, preparation, CellDataSemantics.complete))
-    val fit = accepted(SemanticGenPca.fit(semantic, ComponentCount.unsafe(2)))
+    val fit = accepted(SemanticGpca.fit(semantic, ComponentCount.unsafe(2)))
 
     assertEquals(fit.preparedDiagram.columnResolution.kind, GeometryResolutionKind.Restricted)
     assertEquals(fit.preparedDiagram.columnSpace.size, 2)
     assertEquals(fit.operatorResult.featureMetric.domain.dimension, 2)
     assertEquals(fit.operatorResult.diagnostics.retainedRank, 2)
-
-  test("typed GPCA rejects the legacy deflation selector at the compatibility boundary"):
-    val x = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 1.0), Seq(1.0, 1.0)))
-    val rowMetric = acceptedMv(MetricSpec.identity(3))
-    val featureMetric = acceptedMv(MetricSpec.identity(2))
-
-    SemanticGenPca.fit(
-      diagram(x, rowMetric, featureMetric, "gpca-deflation-boundary"),
-      ComponentCount.unsafe(2),
-      backend = GmdBackend.Deflation()
-    ) match
-      case Left(DiagramError.Multivar(MultivarError.UnsupportedEstimator(detail))) =>
-        assert(detail.contains("explicit unsafe compatibility boundary"))
-      case Left(error) => fail(s"expected unsupported estimator, found: ${error.message}")
-      case Right(_)    => fail("typed GPCA unexpectedly accepted the legacy deflation selector")
 
   private def canonicalColumns(matrix: DMat): DMat =
     val out = matrix.copyData

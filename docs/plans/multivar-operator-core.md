@@ -1,11 +1,11 @@
 # Multivar operator core — single-layer target architecture
 
-Status: **implementation in progress**. Supersedes the *dual-layer* arrangement
+Status: **implemented; independent release gate pending**. Supersedes the *dual-layer* arrangement
 described in [`multivar-duality-constitution.md`](multivar-duality-constitution.md).
 The constitution's twelve invariants remain binding; this document adds the
 structural collapse that makes them hold in *one* layer instead of two, and
-specifies the migration. When the migration completes, this document folds back
-into the constitution as its implemented state.
+records the completed migration. The independent whole-repository compile/test
+gate remains before the parent epic closes.
 
 This is the committed design. The purpose of writing it before touching code is
 to stop the sequence of partial refactors: every change below is measured against
@@ -21,24 +21,23 @@ grab-bag of estimators. That decision was reached deliberately (the
 collection-of-algorithms and covariance-library alternatives were rejected) and
 is not reopened here.
 
-What is *not* cohesive is the **layering**. `multivar` currently carries two
-parallel representations of the same mathematics:
+Before this migration, `multivar` carried two parallel representations of the
+same mathematics:
 
 - the **semantic operator layer** — `Lin` / `Table` / `Coordinate` /
   `GeometricOperator` / `SemanticDualityDiagram` — the conceptual basis; and
 - a **legacy numeric mirror** — `MvMetric` / `DualityDiagram` / `MvMap` /
-  the raw `GenPca` engine — which is what actually computes.
+  the raw `GenPca` engine — which performed the computation.
 
 Historically, `SemanticGenPca.fit` prepared the typed diagram and then dropped
 to `legacyDiagram` + `GenPca.fit`: the typed layer was a façade over an engine
 that spoke a different vocabulary, and on top of that seam sits a zoo of per-method estimator
 types (six named GenPCA result records; `PairedGmd` as a private third engine).
 
-None of that is a wrong idea — it is the residue of building the right basis over
-an older one without being permitted to delete the older one. Because the library
-is new and has no external consumers, we remove that constraint and take the one
-move a behavior-preserving refactor structurally cannot: **collapse to a single
-layer and delete the legacy compute path.** Cohesion comes from that deletion.
+That was the residue of building the right basis over an older one. The
+migration collapsed those representations and deleted the legacy compute path;
+the remainder of this document specifies the resulting single layer and records
+the proof obligations used to reach it.
 
 ---
 
@@ -363,9 +362,9 @@ training fold (§8, deferred).
 ```scala
 object Gpca:     def problem(d: SemanticDualityDiagram[?,?,?], k: ComponentCount): Either[MultivarError, OperatorProblem]
 object Lda:      def problem(x: Table[?,?], classes: ClassDesign, within: Shrinkage, k: ComponentCount): Either[MultivarError, OperatorProblem]
-object Cca:      def problem(p: PairedDualityDiagram, reg: CcaRegularization, k: ComponentCount): Either[MultivarError, OperatorProblem]
-object Plsc:     def problem(p: PairedDualityDiagram, k: ComponentCount): Either[MultivarError, OperatorProblem]
-object Rrr:      def problem(p: PairedDualityDiagram, dir: RegressionDirection, reg: RegressionRegularization, k: ComponentCount): ...
+object Cca:      def problem(p: PairedOperatorProblem[?,?,?], reg: CcaRegularization, k: ComponentCount): Either[MultivarError, OperatorProblem]
+object Plsc:     def problem(p: PairedOperatorProblem[?,?,?], k: ComponentCount): Either[MultivarError, OperatorProblem]
+object Rrr:      def problem(p: PairedOperatorProblem[?,?,?], dir: RegressionDirection, reg: RegressionRegularization, k: ComponentCount): ...
 object Multiset: def problem(study: DirectSumStudy, design: BlockDesign, k: ComponentCount): ...
 ```
 
@@ -390,16 +389,18 @@ geometry — that distinction lives in `normalization`, not in separate engines.
 - The `RowRelationships` ADT (the `L` vocabulary) — it *feeds* `secondOrder`.
 - The `MultisetObjectives` algebra — promoted to the universal objective layer.
 - `multivar-ir` wire format and its conformance corpus.
-- R parity fixtures (`GenPcaRReferenceFixtures`, `PairedLatentRReferenceFixtures`).
+- R parity fixtures (`GpcaRReferenceFixtures`, `PairedLatentRReferenceFixtures`).
 
 **Deleted (the legacy mirror and the zoo):**
 - `MvMetric` as a separate numeric form → folded into `Op` (MetricRole + evidence).
 - `DualityDiagram(X,D,Q)` legacy triple → `SemanticDualityDiagram` is the only diagram.
 - `MvMap`/`Decoder`/`BiProjection`/`CrossProjection` fitted-map layer → results are `Op`/`FunctionalFrame`.
-- `GenPca.fit(DualityDiagram, …)` legacy engine path → GenPCA computes on `Op`.
+- `GenPca.fit(DualityDiagram, …)` legacy engine path → GPCA computes on `Op`.
 - `PairedGmd` as a private third engine → paired methods use the same primitives.
 - the six GenPCA result records → one `FunctionalFrame` + accessors.
-- `Plans.MultivarEstimator` estimator enum → method constructors are the identity.
+- semantic estimator switching → method constructors are the identity. The
+  `MultivarEstimator` ADT remains only as a serializable lifecycle-plan
+  descriptor and compiles immediately into named typed problems.
 
 **Specified now (§6), built incrementally — not in the core phases:**
 - the variational/structural-term layer (parameterization, target maps,
@@ -499,8 +500,9 @@ focused independent oracles at each phase.
    needed by a not-yet-migrated sibling but may not contain another solver.
 7. **Delete the legacy mirror once** (`bd-01KXZZ2EZR8YGHYVP18KTDJKG3`), only
    after every row in §12 has migrated. This is where `MvMetric`, legacy
-   `DualityDiagram`, `MvMap`, raw `GenPca`, `PairedGmd`, and estimator-switch
-   remnants leave production code.
+   `DualityDiagram`, `MvMap`, raw `GenPca`, `PairedGmd`, and semantic
+   estimator-switch remnants leave production code. Serializable lifecycle-plan
+   descriptors remain, but compile immediately into the named typed problem.
 8. **Run the independent release gate** (`bd-01KXZZ2FAPEGV5MQX8EH9973QM`):
    external fixtures, representation laws, negative type cases, dependency
    scans, `compileAll`, and `testAll` at one committed revision.
@@ -552,28 +554,26 @@ certificate.
 
 ## 12. Exhaustive production-consumer inventory
 
-This table is the ownership map for the production files found by the legacy
-symbol scan. A file may temporarily contain a compatibility delegate, but each
-delegate has one migration owner and the final purge has one finite deletion
-list. Tests and documentation follow the owner of the production surface they
-exercise.
+This table records the ownership and completed disposition of every production
+surface found by the legacy-symbol scan. Tests and documentation follow the
+owner of the production surface they exercise.
 
 | Production surface | Current files | Migration owner |
 |---|---|---|
-| Operator/form/map substrate and legacy diagram bridge | `SemanticForms.scala`, `DualityKernels.scala`, `Metric.scala`, `Maps.scala`, `DualityDiagram.scala`, `SemanticDiagram.scala` | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
-| Universal objective/result program | named builders across `SemanticGenPca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
+| Operator/form substrate | Migrated: `SemanticForms.scala`, `SemanticDiagram.scala`, and `OperatorAlgebra.scala` own the only semantic/numeric operator graph. `MetricSpec` is a validated lifecycle construction spec frozen into `Op`, not a parallel metric. | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Universal objective/result program | Migrated: named builders across `SemanticGpca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` produce `OperatorProgram` and generic fitted assignments. | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
 | Generalized Rayleigh-Ritz and trace ratio | `RayleighRitz.scala` owns solver-independent lowering through Gale-backed capabilities; GPCA and LDA assemble statistical operators but own no spectral engine | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
-| GPCA and deflation | `GpcaProblem.scala` is the operator-program assembly; `SemanticGenPca.scala` delegates to it; `GenPca.scala`, `GenPcaSemantics.scala`, and `GmdDeflation.scala` remain compatibility-only for unmigrated consumers | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| GPCA | Migrated: `GpcaProblem.scala` assembles and solves the typed generalized Rayleigh--Ritz program; `SemanticGpca.scala` performs evidenced diagram preparation and returns that operator result. The raw GPCA and deflation engines and duplicate fit records are deleted. | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | LDA | `Lda.scala` builds class-incidence row relations, pulls back between/within scatter only through `secondOrder`, and declares distinct Fisher and trace-ratio programs with an explicit fixed shrinkage seam | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | One-shot soft-LDA consumer | `mvpa-fit/SoftLda.scala` adapts fold-local `PatternOperator` values to `OpTable`, retains hard/simplex class semantics, and keeps optional trial-level nuisance separate from temporal `TrialReadout` nuisance | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
-| Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
-| Row relationships, direct sums, and multiset objectives | Migrated: direct-sum tables, geometries, row relations, every pairwise `S_st = X_s^* L_st X_t`, the assembled association operator, compressed component operator, functional frame, and fitted result now use `Op`/`OperatorProgram`; block representations remain structural until the explicit finite generalized-eigen lowering. `SemanticDualityDiagram` remains only as the typed per-view compatibility input pending the purge. | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
-| CPCA | Migrated: `CpcaOperatorProblem.scala` is the canonical typed problem and block-program fit; `Plans.scala` constructs it directly; `Cpca.fit`, `CpcaProblem`, and resolved `MvMap` constraints remain named compatibility delegates for purge | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
-| Kernel and Nyström | Migrated: `KernelInput` preserves nominal row/feature charts; landmark Gram, rectangular extension, extension frame, score operator, and low-rank approximate Gram are role-refined `Op` values. Square Gram operators carry certified PSD evidence, rectangular kernels explicitly downgrade to unchecked evidence, typed out-of-sample transforms validate feature identity and retain row-space provenance, and the raw `MatrixView` entry point is a compatibility compiler into the same representation. | kernel/Nyström `bd-01KXZZ2E8NERAS8W8Z2HKJE9RT` |
-| Multiblock, transformations, row geometry, plans, and fit artifacts | Migrated: `Multiblock.scala` exposes typed block partitions and lifted frames; `RowGeometry.scala` freezes whitening-derived metric/row-link operators with explicit certificate tolerance; `OperatorFit.scala` is the generic fit/snapshot boundary; `Plans.scala` emits generic operator fits. Legacy `BlockMap`, estimator requests, and projection records are compatibility-only until purge. | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Paired PLSC/CCA/RRR | Migrated: `PairedOperatorProblem.scala` constructs all cross/marginal operators; `Decompositions.scala` supplies lifecycle conveniences returning typed fitted frame/coefficient transforms. No paired diagram or paired-GMD engine remains. | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Row relationships, direct sums, and multiset objectives | Migrated: direct-sum tables, geometries, row relations, every pairwise `S_st = X_s^* L_st X_t`, the assembled association operator, compressed component operator, functional frame, and fitted result use `Op`/`OperatorProgram`. `SemanticDualityDiagram` is the typed single-view motif, not a bridge to another engine. | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
+| CPCA | Migrated: `CpcaOperatorProblem.scala` is the only typed problem and block-program fit; `Plans.scala` constructs it directly. Raw CPCA problems, resolved map constraints, and the parallel block solver are deleted. | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Kernel and Nyström | Migrated: `KernelInput` preserves nominal row/feature charts; landmark Gram, rectangular extension, extension frame, score operator, and low-rank approximate Gram are role-refined `Op` values. Square Gram operators carry certified PSD evidence, rectangular kernels explicitly downgrade to unchecked evidence, typed out-of-sample transforms validate feature identity and retain row-space provenance, and the `MatrixView` lifecycle constructor freezes immediately into the same representation. | kernel/Nyström `bd-01KXZZ2E8NERAS8W8Z2HKJE9RT` |
+| Multiblock, fitted transforms, row geometry, plans, and fit artifacts | Migrated: `Multiblock.scala` exposes typed block partitions and lifted frames; `FittedTransform.scala` binds fitted preprocessing to typed frame/coefficient operators; `RowGeometry.scala` freezes whitening-derived metric/row-link operators with explicit certificate tolerance; `OperatorFit.scala` is the generic fit/snapshot boundary; `Plans.scala` emits generic operator fits. Legacy block maps and projection records are deleted. | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Inference consumers of multivar problems, capabilities, and block protocols | Migrated: fit descriptors are semantic family markers, ordered coordinates are typed `OperatorSnapshot` values, and CPCA inference rebuilds `PreparedCpcaOperatorProblem` directly without a legacy diagram/problem. | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, verified by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |
 | Portable wire representation | `modules/multivar-ir` operator, program, frame, rewrite, result, and realized lifecycle-plan records. `OperatorPlanIr` binds every ROI to semantic program ids and deliberately excludes estimator and solver dispatch. | wire IR `bd-01KXSGZ39BHVZ8YJ2XYDRSHKWP`, lifecycle completion `bd-01KXZZ2ENAYNANJ02HDEQT07D4` |
-| Legacy aliases and compatibility delegates remaining after all migrations | repository-wide scan for `MvMetric`, `MvMap`, legacy `DualityDiagram`, raw `GenPca`, and `PairedGmd` | purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Legacy aliases and compatibility delegates | Deleted: repository-wide production scan has no `MvMetric`, `MvMap`, legacy `DualityDiagram`, raw `GenPca`, `PairedGmd`, old CPCA problem, or superseded fit-record references. | purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3`; independently rechecked by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |
 
 LDA is new proof code rather than a legacy consumer and is owned by
 `bd-01KXSGZ3E48W9X80199PS5FHA8`. Its hard-label and simplex incidence forms

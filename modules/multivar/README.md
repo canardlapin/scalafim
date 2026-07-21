@@ -8,12 +8,12 @@ loose matrix arguments.
 
 The constitutional invariants are in
 [`docs/plans/multivar-duality-constitution.md`](../../docs/plans/multivar-duality-constitution.md).
-The binding single-layer target, evidence-transition rules, result-equivalence
-vocabulary, and exhaustive legacy-consumer ownership map are in
+The implemented single-layer architecture, evidence-transition rules, and
+result-equivalence vocabulary are in
 [`docs/plans/multivar-operator-core.md`](../../docs/plans/multivar-operator-core.md).
-Until that finite migration closes, legacy entry points are compatibility
-delegates only; new methods must target the one operator/program architecture
-and may not add another numerical engine.
+All statistical methods execute on the typed operator/program substrate. There
+is no legacy diagram, metric, map/projection, GPCA, paired-GMD, or CPCA engine
+behind the semantic API.
 
 This module owns the portable algebra below MVPA and neuroimaging adapters:
 
@@ -25,9 +25,9 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
 - matrix-view contracts over dense, sparse, and lazy operator-backed inputs;
 - immutable semantic duality diagrams carrying row measure, row/column forms,
   centering evidence, singular policies, certificate effects, and provenance;
-- generalized PCA as one dual singular system, with semantically named row
-  scores, column axes, metric loadings, clustered eigenspaces, transport laws,
-  and weighted reconstruction laws;
+- generalized PCA as one generalized Rayleigh--Ritz program whose fitted
+  `FunctionalFrame` derives scores and axes, with clustered-spectrum and
+  normalization diagnostics;
 - explicit exact/partial row maps, incidence and aggregation maps, couplings,
   signed row links, common-entity hub alignment, and relationship support;
 - nominal multiset association, disagreement, and hard/soft constraint
@@ -42,11 +42,11 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   `OperatorProgramFit`, while
   unresolved numeric constraint specs remain available for ROI planning;
 - row-whitening/projector geometry for design-conditioned effect operators,
-  kept separate from duality-diagram bilinear metrics and connected explicitly
-  through the induced `D = W' W` metric when a design-conditioned GenPCA is wanted;
-- shared error ADTs for estimator, preprocessing, and map layers;
+  kept separate from row bilinear geometry and connected explicitly through
+  the induced `D = W' W` metric when design-conditioned GPCA is wanted;
+- shared error ADTs for estimation, preprocessing, and operator layers;
 - pure `MultivarPlan` / `FitArtifactShape` descriptions for sample-by-feature
-  ROI execution, including diagram-backed GenPCA.
+  ROI execution, including diagram-backed GPCA.
 - pure whole-input `PairedMultivarPlan` descriptions for paired latent
   analyses; ROI-by-ROI paired execution is deliberately deferred to a later
   adapter/executor boundary.
@@ -58,34 +58,27 @@ conformance.
 
 ## API boundary
 
-New GPCA code should construct `SemanticDualityDiagram` and call
-`SemanticGenPca.fit`. Raw-array compatibility is explicit:
-
-- `Unsafe.genPcaFromArrays(..., reason = ...)` admits anonymous spaces;
-- `Unsafe.pairedDiagramFromArrays(..., reason = ...)` admits positional row
-  identity;
-- `Unsafe.assumeSymmetric/assumePsd/assumeSpd` retain the assumption in
-  provenance.
-
-The raw `GenPca.fit(MatrixView, ...)` overload is deprecated and routes through
-the first boundary. Sparse/affine representations and `StoragePolicy` are
-preserved; the unsafe name does not authorize densification or suppress typed
-errors.
+GPCA code constructs a `SemanticDualityDiagram` and calls `SemanticGpca.fit`,
+or constructs `GpcaProblem` directly from frozen table and geometry operators.
+Dynamic ROI planning freezes its runtime spaces and `MetricSpec` lifecycle
+inputs immediately into the same `Op` graph. `MetricSpec` is a validated
+construction specification; it is not a second semantic metric representation.
+Unsafe evidence assumptions remain explicit through
+`Unsafe.assumeSymmetric/assumePsd/assumeSpd` and retain their reason in
+provenance.
 
 Typed paired code should construct `PairedOperatorProblem.fromTables`, supplying
 the two self row geometries and the directed cross-row relationship explicitly.
-The `Plsc`, `Cca`, and `ReducedRankRegression` matrix entry points are
-compatibility adapters: after preprocessing, they construct that typed problem
-and derive their legacy projection views from its fitted functional frames.
-The RRR coefficient is a directed `OpCoefficient`, not an untyped array in the
-operator result.
+The `Plsc`, `Cca`, and `ReducedRankRegression` matrix entry points are lifecycle
+conveniences: after preprocessing they construct that typed problem and return
+typed fitted frame or coefficient transforms derived from its operator fit.
+The RRR coefficient is a directed `OpCoefficient`; prediction is exposed by a
+`FittedCoefficientTransform` rather than a separate decoder hierarchy.
 
-Typed CPCA code should construct `CpcaOperatorProblem` and fit a validated
-`CpcaBlockRequest`. `Cpca.fit(DualityDiagram, ...)`, `CpcaProblem`, and
-`ResolvedCpcaConstraint` are compatibility descriptors only: they lower into
-the typed problem and do not own a second block solver. Planned ROI execution
-constructs the typed problem directly, and `CpcaArtifact` carries a
-`PreparedCpcaOperatorFit` rather than a legacy duality diagram.
+CPCA code constructs `CpcaOperatorProblem` and fits a validated
+`CpcaBlockRequest`. Planned ROI execution constructs the same typed problem
+directly and carries `PreparedCpcaOperatorFit`; no raw CPCA problem or resolved
+map constraint layer exists.
 
 `multivar` depends only on `linalg`. Keep dataset, image, MVPA adapter, JVM
 solver backend, and scheduler-specific code in higher modules.
@@ -115,33 +108,32 @@ The shared test suite covers the current core invariants on both JVM and JS:
 - typed ids, dimensions, index sets, and complete disjoint block partitions;
 - dense, sparse, and affine `MatrixView` algebra without implicit sparse
   densification, including lazy transposed views for duality symmetry;
-- preprocessing, map/projector algebra, and decoder-capability boundaries;
+- preprocessing, typed operator composition, fitted-transform, and
+  coefficient-orientation boundaries;
 - SVD/PCA plus operator-program PLSC/regularized CCA/reduced-rank regression,
   including typed partial row relationships, generalized cross-SVD residuals,
   row-permutation laws, directed coefficient orientation, and unchanged R
   parity fixtures;
-- row/column metrics and generalized PCA/GMD, including dense, diagonal,
-  sparse-preserving, rank-deficient PSD, and R-reference-backed paths;
+- row/column geometry and GPCA, including dense, diagonal, sparse-preserving,
+  rank-deficient PSD preparation, and R-reference-backed paths;
 - CPCA identity/zero/basis constraint specs, typed projector orientation,
   independent `X* A X` and projected-block oracles, ROI-local operator-plan
   execution, sparse materialization rejection, generic program/result
   semantics, diagonal-metric whitening, four-block orthogonality,
   reconstruction, partition inertia, and metric-orthonormal factors;
-- duality-diagram construction, transpose symmetry, dual operator invariants,
-  generalized PCA dual transport, metric self-adjointness, weighted
-  approximation, basis covariance, row/column exchange, clustered-subspace
-  equivalence, and backend/policy diagnostics;
+- semantic-diagram construction, algebraic dual invariants, metric
+  self-adjointness, centered/support-restricted preparation, clustered-spectrum
+  evidence, and backend/policy diagnostics;
 - centering projection laws, certificate invalidation, and explicit support,
   quotient, regularization, or rejection policies for singular geometry;
 - exact, partial, coupling, signed-link, and hub-factorized alignment laws,
   including unmatched support and global PSD construction;
 - direct-sum association/agreement/constraint compilation with block design
   kept separate from row correspondence;
-- multiblock projection restrictions, explicit block-combination models, and
-  cross-domain transfer maps;
+- typed multiblock partitions, lifted block frames, and direct-sum operators;
 - row-side whitening/projector/effect-operator algebra matching the
   multivarious fixed-effect projector form, including equivalence between
-  whitening-then-PCA and GenPCA under the induced row metric;
+  whitening-then-PCA and GPCA under the induced row metric;
 - kernel and Nyström artifacts, including out-of-sample projection;
 - pure ROI/sample-by-feature `MultivarPlan` execution that stays independent of
   MVPA, dataset, image IO, concrete schedulers, and JVM-only numeric libraries.

@@ -16,17 +16,10 @@ object GpcaRankTolerance:
   val default: GpcaRankTolerance =
     1e-12
 
-  private[multivar] def fromBackend(backend: GmdBackend): Either[MultivarError, GpcaRankTolerance] =
+  private[multivar] def fromBackend(backend: GpcaBackend): Either[MultivarError, GpcaRankTolerance] =
     backend match
-      case GmdBackend.Eigen(value) => from(value)
-      case GmdBackend.Auto         => Right(default)
-      case GmdBackend.Deflation(_, _, _, _) =>
-        Left(
-          MultivarError.UnsupportedEstimator(
-            "the typed GPCA operator path supports Gale generalized Rayleigh-Ritz; " +
-              "the legacy deflation selector is confined to the explicit unsafe compatibility boundary"
-          )
-        )
+      case GpcaBackend.Eigen(value) => from(value)
+      case GpcaBackend.Auto         => Right(default)
 
   extension (tolerance: GpcaRankTolerance)
     inline def value: Double = tolerance
@@ -44,12 +37,15 @@ final case class GpcaNumericalDiagnostics(
   require(spectralClusters.flatten.length == retainedRank, "GPCA spectral clusters must partition the retained range")
   require(solver.nonEmpty, "GPCA solver label must be non-empty")
 
+enum GpcaBackend:
+  case Eigen(rankTolerance: Double = GpcaRankTolerance.default.value)
+  case Auto
+
 /** Executable result of the GPCA operator program.
   *
   * `functionalFrame` is the fitted covector frame `W = Q V`. Scores and axes
-  * remain derived views of that one fitted value. `compatibility` contains no
-  * independent numerical result: it is assembled from the same frame and
-  * spectrum for consumers that have not yet migrated from [[GenPcaFit]].
+  * remain derived views of that one fitted value; no parallel numerical fit
+  * record is assembled.
   */
 final case class GpcaOperatorFit[
     Rows <: SemanticSpace,
@@ -62,7 +58,7 @@ final case class GpcaOperatorFit[
     featureMetric: OpMetric[Feature, CertifiedSpd],
     featureCometric: OpCometric[Feature, CertifiedSpd],
     generalizedEigenvalues: DVec,
-    compatibility: GenPcaFit,
+    singularValues: DVec,
     diagnostics: GpcaNumericalDiagnostics,
     provenance: SemanticProvenance
 ):
@@ -107,11 +103,6 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
     val featureMetric: OpMetric[Feature, CertifiedSpd],
     val featureCometric: OpCometric[Feature, CertifiedSpd],
     val covariance: OpCovariance[Feature, CertifiedPsd],
-    private val tableView: MatrixView,
-    private val sourceView: MatrixView,
-    private val preprocessor: FittedPreprocessor,
-    private val rowMetricValue: MetricSpec,
-    private val featureMetricValue: MetricSpec,
     val provenance: SemanticProvenance
 ):
   def fit(
@@ -135,18 +126,14 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         component <- SpaceRef.of(s"${featureSpace.id.value}.gpca", SpaceRole.Latent, rayleigh.values.length)
         fit <- assemble(
           component,
-          components,
           rayleigh,
-          covarianceDense,
           rankTolerance
         )
       yield fit
 
   private def assemble(
       component: SpaceRef,
-      requested: ComponentCount,
       rayleigh: RayleighRitzResult,
-      covarianceDense: DMat,
       rankTolerance: GpcaRankTolerance
   ): Either[MultivarError, GpcaOperatorFit[Rows, Feature, component.Id]] =
     val eigenvalues = rayleigh.values
@@ -176,25 +163,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       parameterization = FrameParameterization.identity(variable)
       normalization = FrameNormalization(variable, featureCometric)
       operatorProgram <- program(OperatorPrograms.gpca(parameterization, covariance, normalization))
-      scoreValues <- gpcaSemantic(functionalFrame.scores(table).toDense)
-      axisValues <- gpcaSemantic(functionalFrame.axes.get.toDense)
       singularValues = squareRoots(eigenvalues)
-      rowAxes = scaleColumnsByInverse(scoreValues, singularValues)
-      totalVariance <- featureMetricValue.contract(covarianceDense)
-      compatibility <- GenPca.assembleCompatibility(
-        sourceView,
-        preprocessor,
-        rowMetricValue,
-        featureMetricValue,
-        GmdDecomposition(GmdResult(rowAxes, singularValues, axisValues), totalVariance),
-        requested,
-        featureSpace.descriptor,
-        backend = Some("operator-gale-generalized-eigen"),
-        storagePolicy = Some(StoragePolicy.AllowDense),
-        tolerance = Some(rankTolerance.value),
-        method = "semantic-gpca",
-        latentId = component.descriptor.id.value
-      )
       generalizedResidual = rayleigh.diagnostics.generalizedResidual
       normalizationResidual = rayleigh.diagnostics.normalizationResidual
       tolerance = CertificateTolerance.strict
@@ -232,7 +201,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         featureMetric,
         featureCometric,
         eigenvalues,
-        compatibility,
+        singularValues,
         GpcaNumericalDiagnostics(
           eigenvalues.length,
           generalizedResidual,
@@ -248,8 +217,6 @@ object GpcaProblem:
       rowSpace: SpaceEvidence[Rows],
       featureSpace: SpaceEvidence[Feature],
       tableView: MatrixView,
-      sourceView: MatrixView,
-      preprocessor: FittedPreprocessor,
       rowMetricValue: MetricSpec,
       featureMetricValue: MetricSpec,
       sourceIdentity: ValueIdentity,
@@ -289,11 +256,6 @@ object GpcaProblem:
         featureMetric,
         featureCometric,
         covariance,
-        tableView,
-        sourceView,
-        preprocessor,
-        rowMetricValue,
-        featureMetricValue,
         provenance
       )
 
@@ -339,7 +301,7 @@ object GpcaProblem:
       )
       linear <- semanticDiagram(
         Lin.fromDenseMatrix(
-          DualityKernels.symmetrize(inverse),
+          MatrixOps.symmetrize(inverse),
           CoordinateEvidence.dual(space),
           CoordinateEvidence.primal(space),
           identity,
@@ -390,13 +352,10 @@ object PreparedGpcaProblem:
     val rows = SpaceRef(prepared.rowSpace)
     val features = SpaceRef(prepared.columnSpace)
     for
-      preprocessor <- PreprocessSpec.Pass.fit(prepared.table).left.map(DiagramError.Multivar.apply)
       problem <- GpcaProblem.fromPrepared(
         rows.evidence,
         features.evidence,
         prepared.table,
-        prepared.table,
-        preprocessor,
         prepared.rowMetric,
         prepared.columnMetric,
         prepared.source.core.table.valueIdentity,
@@ -404,12 +363,10 @@ object PreparedGpcaProblem:
       )
     yield new PreparedGpcaProblem(rows, features)(problem)
 
-/** Compatibility adapter for a dynamically described, already transformed GPCA table. */
+/** Lifecycle boundary for a dynamically described, already transformed GPCA table. */
 private[multivar] object DynamicGpcaProblem:
   def from(
       table: MatrixView,
-      source: MatrixView,
-      preprocessor: FittedPreprocessor,
       rowSpace: MvSpace,
       featureSpace: MvSpace,
       rowMetric: MetricSpec,
@@ -424,8 +381,6 @@ private[multivar] object DynamicGpcaProblem:
         rows.evidence,
         features.evidence,
         table,
-        source,
-        preprocessor,
         rowMetric,
         featureMetric,
         sourceIdentity,
@@ -442,17 +397,6 @@ private def squareRoots(values: DVec): DVec =
     out(index) = Math.sqrt(Math.max(out(index), 0.0))
     index += 1
   GaleNumerics.vectorFromArray(out)
-
-private def scaleColumnsByInverse(matrix: DMat, scale: DVec): DMat =
-  val out = matrix.copyData
-  var row = 0
-  while row < matrix.rows do
-    var col = 0
-    while col < matrix.cols do
-      out(row * matrix.cols + col) /= scale(col)
-      col += 1
-    row += 1
-  GaleNumerics.matrixFromRowMajor(matrix.rows, matrix.cols, out)
 
 private def sum(values: DVec): Double =
   var total = 0.0

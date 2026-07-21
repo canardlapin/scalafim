@@ -5,7 +5,7 @@ object MultivarIrCodec:
     IrJson.render(Encoder.document(document))
 
   def decode(text: String): Either[IrError, MultivarIrDocument] =
-    IrJson.parse(text).flatMap(Decoder.document).flatMap(IrValidator.validate(_))
+    IrJson.parse(text).flatMap(IrDecoder.document).flatMap(IrValidator.validate(_))
 
 private object Encoder:
   import IrJson.*
@@ -249,7 +249,7 @@ private object Encoder:
     }
     out.result()
 
-private object Decoder:
+private object IrDecoder:
   import IrJson.*
 
   def document(value: IrJson): Either[IrError, MultivarIrDocument] =

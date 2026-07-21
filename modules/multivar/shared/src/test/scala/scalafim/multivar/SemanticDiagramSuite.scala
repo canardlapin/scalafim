@@ -374,7 +374,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     assertMatrix(prepared.table.toDense().toOption.get, legacyCentered.toDense().toOption.get)
   }
 
-  test("semantic GenPCA consumes the complete prepared diagram and exposes its evidence") {
+  test("semantic GPCA consumes the complete prepared diagram and exposes its evidence") {
     val rows = ref("gpca.rows", SpaceRole.Samples, 4)
     val columns = ref("gpca.columns", SpaceRole.Observed, 2)
     val raw = GaleNumerics.matrixFromRows(
@@ -402,19 +402,20 @@ class SemanticDiagramSuite extends munit.FunSuite:
         CellDataSemantics.complete
       )
     )
-    val fit = accepted(SemanticGenPca.fit(diagram, ComponentCount.unsafe(2)))
+    val fit = accepted(SemanticGpca.fit(diagram, ComponentCount.unsafe(2)))
     val preparedDense = fit.preparedDiagram.table.toDense().toOption.get
 
     weightedMeans(preparedDense, measure.weights).foreach(value => assertEqualsDouble(value, 0.0, 1e-9))
-    assert(fit.lawDiagnostics.satisfied)
-    assertEquals(fit.result.columnAxes.values.cols, 2)
+    assert(fit.operatorResult.diagnostics.generalizedResidual <= 1e-8)
+    assert(fit.operatorResult.diagnostics.normalizationResidual <= 1e-8)
+    assertEquals(fit.operatorResult.axes.get.toDense.toOption.get.cols, 2)
     assert(fit.evidence.exists(_.isInstanceOf[DiagramCertificate.CenteringLaws]))
     assertEquals(fit.preparedDiagram.audit.records.last.operation, "prepare")
 
     val errors = typeCheckErrors("""
       import scalafim.multivar.*
       val missing: SemanticDualityDiagram[Nothing, Nothing, MissingCells] = ???
-      SemanticGenPca.fit(missing, ComponentCount.unsafe(1))
+      SemanticGpca.fit(missing, ComponentCount.unsafe(1))
     """)
     assert(errors.nonEmpty)
   }

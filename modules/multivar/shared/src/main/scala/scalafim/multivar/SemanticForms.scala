@@ -248,7 +248,7 @@ object FormCertificates:
       checked <- inspectSymmetry(operator, context)
       (matrix, residual, scale) = checked
       eigen <- LinalgErrorAdapter
-        .adapt(eigenSolver.decompose(DualityKernels.symmetrize(matrix)))
+        .adapt(eigenSolver.decompose(MatrixOps.symmetrize(matrix)))
         .left
         .map(SemanticError.MultivarFailure.apply)
       maximum = eigen.values(0)
@@ -692,65 +692,6 @@ private final case class MetricLinearMap(metric: MetricSpec) extends DoubleLinea
   * The type and runtime descriptor both retain that the property was assumed.
   */
 object Unsafe:
-  /** Compatibility boundary for raw generalized-PCA arrays.
-    *
-    * Raw arrays cannot carry nominal row/column identities, form roles, centering
-    * evidence, or certificates. The required reason makes that semantic loss
-    * explicit at the call site. Numerical storage and backend policies are passed
-    * through unchanged; this method does not materialize sparse operators.
-    */
-  def genPcaFromArrays(
-      x: MatrixView,
-      components: ComponentCount,
-      reason: String,
-      rowMetric: Option[MetricSpec] = None,
-      colMetric: Option[MetricSpec] = None,
-      preproc: PreprocessSpec = PreprocessSpec.Center,
-      backend: GmdBackend = GmdBackend.Auto,
-      policy: StoragePolicy = StoragePolicy.AllowDense,
-      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
-      svdSolver: SvdSolver = DenseSolvers.svd
-  ): Either[MultivarError, GenPcaFit] =
-    if reason.trim.isEmpty then
-      Left(MultivarError.InvalidMap("unsafe generalized PCA requires a non-empty reason"))
-    else
-      GenPca.fitRawUnsafe(
-        x,
-        components,
-        rowMetric,
-        colMetric,
-        preproc,
-        backend,
-        policy,
-        eigenSolver,
-        svdSolver
-      )
-
-  def pairedDiagramFromArrays(
-      x: MatrixView,
-      y: MatrixView,
-      reason: String,
-      rowMetric: Option[MetricSpec] = None,
-      xColumnMetric: Option[MetricSpec] = None,
-      yColumnMetric: Option[MetricSpec] = None,
-      sampleSpace: Option[MvSpace] = None,
-      xSpace: Option[MvSpace] = None,
-      ySpace: Option[MvSpace] = None
-  ): Either[MultivarError, PairedDualityDiagram] =
-    if reason.trim.isEmpty then
-      Left(MultivarError.InvalidMap("unsafe positional row identity requires a non-empty reason"))
-    else
-      PairedDualityDiagram.fromPositionalUnsafe(
-        x,
-        y,
-        rowMetric,
-        xColumnMetric,
-        yColumnMetric,
-        sampleSpace,
-        xSpace,
-        ySpace
-      )
-
   def assumeSymmetric[S <: SemanticSpace](
       operator: Lin[Primal[S], Dual[S]],
       space: SpaceEvidence[S],

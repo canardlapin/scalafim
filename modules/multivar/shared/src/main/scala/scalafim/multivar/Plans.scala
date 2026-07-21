@@ -149,12 +149,12 @@ object MultivarExecutionPlan:
 enum MultivarEstimator:
   case Pca(components: ComponentCount, preprocessing: PreprocessSpec = PreprocessSpec.Center)
   case Svd(components: ComponentCount, preprocessing: PreprocessSpec = PreprocessSpec.Pass)
-  case GenPca(
+  case Gpca(
       components: ComponentCount,
       preprocessing: PreprocessSpec = PreprocessSpec.Center,
       rowMetric: Option[MetricSpec] = None,
       columnMetric: Option[MetricSpec] = None,
-      backend: GmdBackend = GmdBackend.Auto,
+      backend: GpcaBackend = GpcaBackend.Auto,
       storagePolicy: StoragePolicy = StoragePolicy.AllowDense
   )
   case Cpca(spec: CpcaEstimatorSpec)
@@ -176,7 +176,7 @@ enum MultivarEstimator:
     this match
       case Pca(value, _)                => Some(value)
       case Svd(value, _)                => Some(value)
-      case GenPca(value, _, _, _, _, _) => Some(value)
+      case Gpca(value, _, _, _, _, _) => Some(value)
       case Cpca(spec)                   => spec.requestedComponentUpperBound
       case Nystrom(value, _, _, _, _)   => Some(value)
 
@@ -184,7 +184,7 @@ enum MultivarEstimator:
     this match
       case Pca(value, _)                => value.value.toString
       case Svd(value, _)                => value.value.toString
-      case GenPca(value, _, _, _, _, _) => value.value.toString
+      case Gpca(value, _, _, _, _, _) => value.value.toString
       case Cpca(spec)                   => spec.requestedComponentSummary
       case Nystrom(value, _, _, _, _)   => value.value.toString
 
@@ -192,7 +192,7 @@ enum MultivarEstimator:
     this match
       case Pca(_, _)                => FitArtifactKind.Pca
       case Svd(_, _)                => FitArtifactKind.Svd
-      case GenPca(_, _, _, _, _, _) => FitArtifactKind.GenPca
+      case Gpca(_, _, _, _, _, _) => FitArtifactKind.Gpca
       case Cpca(_)                  => FitArtifactKind.Cpca
       case Nystrom(_, _, _, _, _)   => FitArtifactKind.Nystrom
 
@@ -241,7 +241,7 @@ object MultivarPlan:
                   Left(MultivarError.InvalidComponentRequest(intermediateRank.value, checked.length))
                 else Right(())
         }
-      case MultivarEstimator.GenPca(components, _, rowMetric, columnMetric, _, _) =>
+      case MultivarEstimator.Gpca(components, _, rowMetric, columnMetric, _, _) =>
         for
           _ <- validateComponentRequest(components, sampleCount, roiPlan)
           _ <- validateOptionalMetric(IndexAxis.Row, sampleCount, rowMetric)
@@ -388,7 +388,7 @@ object PairedMultivarPlan:
 enum FitArtifactKind:
   case Pca
   case Svd
-  case GenPca
+  case Gpca
   case Cpca
   case Nystrom
 
@@ -396,7 +396,7 @@ enum FitArtifactKind:
     this match
       case Pca     => "pca"
       case Svd     => "svd"
-      case GenPca  => "genpca"
+      case Gpca    => "gpca"
       case Cpca    => "cpca"
       case Nystrom => "nystrom"
 
@@ -470,7 +470,7 @@ object LocalMultivarExecutor:
             fit.transform
           )
         }
-      case MultivarEstimator.GenPca(components, preprocessing, rowMetric, columnMetric, backend, policy) =>
+      case MultivarEstimator.Gpca(components, preprocessing, rowMetric, columnMetric, backend, policy) =>
         val rowSpace = MvSpace(plan.input.id, SpaceRole.Samples, plan.input.samples)
         val columnSpace = MvSpace(
           SpaceId.unsafe(s"${plan.input.id.value}.${roi.id.value}"),
@@ -489,8 +489,6 @@ object LocalMultivarExecutor:
           tolerance <- GpcaRankTolerance.fromBackend(backend)
           problem <- DynamicGpcaProblem.from(
             transformed,
-            input,
-            preprocessor,
             rowSpace,
             columnSpace,
             rowGeometry,
@@ -501,7 +499,7 @@ object LocalMultivarExecutor:
           fit <- problem.fit(components, tolerance, DenseSolvers.generalizedEigen)
           bundle <- fit.toBundle(problem.value.table)
         yield FitArtifact.OperatorArtifact(
-          shape(plan, roi, FitArtifactKind.GenPca, input, fit.generalizedEigenvalues.length),
+          shape(plan, roi, FitArtifactKind.Gpca, input, fit.generalizedEigenvalues.length),
           Vector(bundle)
         )
       case MultivarEstimator.Cpca(spec) =>

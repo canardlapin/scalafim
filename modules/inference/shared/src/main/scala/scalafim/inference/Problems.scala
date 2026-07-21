@@ -17,8 +17,8 @@ object FitDescriptor:
   case object Pca extends FitDescriptor[PcaFitFamily]:
     override val label: String = "pca"
 
-  case object GenPca extends FitDescriptor[GpcaFitFamily]:
-    override val label: String = "genpca"
+  case object Gpca extends FitDescriptor[GpcaFitFamily]:
+    override val label: String = "gpca"
 
   case object Plsc extends FitDescriptor[PlscFitFamily]:
     override val label: String = "plsc"
