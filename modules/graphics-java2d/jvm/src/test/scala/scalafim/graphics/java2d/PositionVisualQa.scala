@@ -7,8 +7,8 @@ import java.nio.file.{Files, Path, Paths}
 import javax.imageio.ImageIO
 import scalafim.graphics.*
 
-/** Renders the canonical position-adjustment cases beside ggplot2 reference
-  * images produced by `tools/r-parity/render_graphics_position_reference.R`.
+/** Renders canonical compiled plots beside ggplot2 reference images produced
+  * by `tools/r-parity/render_graphics_position_reference.R`.
   */
 object PositionVisualQa:
   private final case class Example(name: String, scalaCase: Either[GraphicsError, ConformanceCase])
@@ -18,6 +18,10 @@ object PositionVisualQa:
     val scalaDir = root.resolve("scalafim")
     Files.createDirectories(scalaDir)
     val examples = Vector(
+      Example("scatter", RendererConformance.scatterComparisonCase),
+      Example("line", RendererConformance.groupedLineComparisonCase),
+      Example("count", RendererConformance.countPlotCase),
+      Example("facets", RendererConformance.facetedPlotCase),
       Example("dodge", RendererConformance.dodgedPositionCase),
       Example("stack", RendererConformance.stackedPositionCase),
       Example("jitter", RendererConformance.jitteredPositionCase)
@@ -42,7 +46,7 @@ object PositionVisualQa:
       ),
       StandardCharsets.UTF_8
     )
-    println(s"wrote position-adjustment visual QA to $root")
+    println(s"wrote plotting visual QA to $root")
 
   private def render(scene: Scene, options: Java2DOptions, path: Path): Unit =
     val image = new BufferedImage(options.width, options.height, BufferedImage.TYPE_INT_ARGB)
@@ -67,19 +71,20 @@ object PositionVisualQa:
        |  <head>
        |    <meta charset="utf-8">
        |    <meta name="viewport" content="width=device-width, initial-scale=1">
-       |    <title>ScalaFIM position-adjustment visual QA</title>
+       |    <title>ScalaFIM plotting visual QA</title>
        |    <style>
        |      body { margin: 0; padding: 2rem; color: #18212b; background: #f3f5f7; font: 15px/1.4 system-ui, sans-serif; }
        |      h1 { margin-top: 0; }
-       |      section { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 0 0 1.5rem; padding: 1rem; background: white; border: 1px solid #d7dde3; border-radius: 8px; }
+       |      section { display: grid; grid-template-columns: repeat(2, minmax(0, 640px)); gap: 1rem; margin: 0 0 1.5rem; padding: 1rem; background: white; border: 1px solid #d7dde3; border-radius: 8px; }
        |      h2 { grid-column: 1 / -1; margin: 0; }
        |      figure { margin: 0; }
        |      figcaption { margin-bottom: 0.5rem; font-weight: 650; }
-       |      img { display: block; width: 100%; height: auto; border: 1px solid #edf0f2; }
+       |      img { display: block; width: 100%; max-width: 640px; height: auto; border: 1px solid #edf0f2; }
+       |      @media (max-width: 900px) { section { grid-template-columns: minmax(0, 640px); } h2 { grid-column: 1; } }
        |    </style>
        |  </head>
        |  <body>
-       |    <h1>Position-adjustment comparison</h1>
+       |    <h1>ScalaFIM / ggplot2 comparison</h1>
        |$rows
        |  </body>
        |</html>

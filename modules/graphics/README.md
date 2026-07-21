@@ -244,8 +244,9 @@ layout semantics of ggplot2—band-aware dodge, sign-separated stack, and seeded
 jitter—without importing `ggproto`, stringly configuration, or ambient random
 state. `DodgePreserve.Total` and `DodgePreserve.Single`, for example, are
 exhaustive Scala alternatives and can be inspected before compilation. Run
-`tools/render_position_adjustment_qa.sh` to generate paired Java2D and ggplot2
-reference images plus numeric layer-data fixtures; see
+`tools/render_position_adjustment_qa.sh` to generate a paired Java2D and
+ggplot2 gallery covering scatter, line, count, facets, and position adjustment,
+plus numeric layer-data fixtures; see
 `docs/visual-qa/graphics-position-adjustments.md` for the comparison contract.
 
 ## Backends

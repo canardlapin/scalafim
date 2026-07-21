@@ -138,6 +138,8 @@ object RendererConformance:
       colorbar <- colorbarCase
       scaled <- scaledPlotCase
       solved <- solvedPlotCase
+      scatter <- scatterComparisonCase
+      groupedLine <- groupedLineComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -165,6 +167,8 @@ object RendererConformance:
       colorbar,
       scaled,
       solved,
+      scatter,
+      groupedLine,
       faceted,
       counted,
       bandPosition,
@@ -699,6 +703,88 @@ object RendererConformance:
       )
     )
 
+  private final case class ComparisonPoint(x: Double, y: Double, condition: String)
+
+  private val comparisonPoints =
+    Vector(
+      ComparisonPoint(0.0, 1.0, "A"),
+      ComparisonPoint(1.0, 1.8, "A"),
+      ComparisonPoint(2.0, 2.5, "A"),
+      ComparisonPoint(0.0, 2.0, "B"),
+      ComparisonPoint(1.0, 2.7, "B"),
+      ComparisonPoint(2.0, 3.2, "B")
+    )
+
+  private def comparisonColor(condition: String): Rgba =
+    if condition == "A" || condition == "red" then Rgba.unsafe(70, 125, 180)
+    else Rgba.unsafe(220, 135, 65)
+
+  def scatterComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val mapping = AesSpec
+      .empty[ComparisonPoint]
+      .withPosition(_.x, _.y)
+      .withGroup(_.condition)
+      .withColor(row => comparisonColor(row.condition))
+      .withFill(row => comparisonColor(row.condition))
+    for
+      layer <- Layer.fromMapping(Geom.Point, mapping, inheritMapping = false)
+      plot <- Plot(comparisonPoints)
+        .withLabels(PlotLabels(title = Some("scatter"), x = Some("x"), y = Some("y")))
+        .addLayer(layer)
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("comparison-scatter"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis")
+      )
+    )
+
+  def groupedLineComparisonCase: Either[GraphicsError, ConformanceCase] =
+    val mapping = AesSpec
+      .empty[ComparisonPoint]
+      .withPosition(_.x, _.y)
+      .withGroup(_.condition)
+      .withColor(row => comparisonColor(row.condition))
+    for
+      layer <- Layer.fromMapping(
+        Geom.Line,
+        mapping,
+        inheritMapping = false,
+        params = Some(GraphicParams.unsafe(lineWidth = 1.5))
+      )
+      plot <- Plot(comparisonPoints)
+        .withLabels(PlotLabels(title = Some("grouped-line"), x = Some("x"), y = Some("y")))
+        .addLayer(layer)
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("comparison-line"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis")
+      )
+    )
+
   def facetedPlotCase: Either[GraphicsError, ConformanceCase] =
     final case class Sample(x: Double, y: Double, condition: String)
     val samples =
@@ -711,7 +797,17 @@ object RendererConformance:
     plot(samples)
       .aes(_.x, _.y)
       .facetWrap(_.condition, columns = 2)
-      .geomPoint()
+      .geomPoint(
+        params = Some(
+          GraphicParams.unsafe(
+            stroke = Some(comparisonColor("A")),
+            fill = Some(comparisonColor("A"))
+          )
+        )
+      )
+      .title("facets")
+      .axisTitles("x", "y")
+      .theme(Theme.minimal)
       .scene
       .map { scene =>
         ConformanceCase(
@@ -739,24 +835,26 @@ object RendererConformance:
   def countPlotCase: Either[GraphicsError, ConformanceCase] =
     val categories = Vector("control", "task", "task", "other", "task", "control")
     for
-      plot <- Plot(categories).addLayer(
-        Layer.count(
-          identity,
-          order = CountOrder.Lexicographic,
-          params = Some(
-            GraphicParams.unsafe(
-              stroke = Some(Rgba.unsafe(35, 60, 90)),
-              fill = Some(Rgba.unsafe(90, 150, 205))
+      plot <- Plot(categories)
+        .withLabels(PlotLabels(title = Some("count"), x = Some("category"), y = Some("count")))
+        .addLayer(
+          Layer.count(
+            identity,
+            order = CountOrder.Lexicographic,
+            params = Some(
+              GraphicParams.unsafe(
+                stroke = Some(Rgba.unsafe(35, 60, 90)),
+                fill = Some(Rgba.unsafe(90, 150, 205))
+              )
             )
           )
         )
-      )
       scene <- PlotCompiler.compile(
         plot,
         PlotCompilerOptions(
           policy = Some(LayoutPolicy()),
-          expansion = RangeExpansion.none,
-          guides = GuidePolicy.Derived()
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
         )
       )
     yield ConformanceCase(
@@ -845,7 +943,7 @@ object RendererConformance:
         .empty[PositionBar]
         .withPosition(_ => 0.0, _.value)
         .withGroup(_.group)
-        .withFill(row => if row.group == "red" then Rgba.unsafe(70, 125, 180) else Rgba.unsafe(220, 135, 65))
+        .withFill(row => comparisonColor(row.group))
         .bindScale(ScaleBinding[PositionBar, String, Double](Aesthetic.X, _.category, band))
       layer <- Layer.fromMapping(
         Geom.Bar,
@@ -899,7 +997,8 @@ object RendererConformance:
       mapping <- AesSpec
         .empty[JitterPoint]
         .withPosition(_ => 0.0, _.value)
-        .withColor(row => if row.group == "red" then Rgba.unsafe(70, 125, 180) else Rgba.unsafe(220, 135, 65))
+        .withColor(row => comparisonColor(row.group))
+        .withFill(row => comparisonColor(row.group))
         .bindScale(ScaleBinding[JitterPoint, String, Double](Aesthetic.X, _.category, band))
       layer <- Layer.fromMapping(
         Geom.Point,

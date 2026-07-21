@@ -6,6 +6,13 @@ package scalafim.graphics
   */
 class SceneConformanceSuite extends munit.FunSuite:
 
+  private def discs(elements: Vector[DeviceElement]): Vector[DevicePrimitive.Disc] =
+    elements.flatMap {
+      case DeviceElement.Mark(disc: DevicePrimitive.Disc) => Vector(disc)
+      case DeviceElement.Mark(_)                           => Vector.empty
+      case DeviceElement.Group(_, _, _, children)          => discs(children)
+    }
+
   private object DeviceHarness extends RendererHarness[DeviceScene]:
     private val device = DeviceContext.unsafe(240.0, 160.0)
 
@@ -157,6 +164,20 @@ class SceneConformanceSuite extends munit.FunSuite:
       assert(disc.centerX + disc.radius <= clip.x + clip.width)
       assert(disc.centerY - disc.radius >= clip.y)
       assert(disc.centerY + disc.radius <= clip.y + clip.height)
+    }
+  }
+
+  test("the jitter comparison uses explicit filled circular marks") {
+    val scene = RendererConformance.jitteredPositionCase.fold(e => fail(e.message), identity).scene
+    val device = DeviceScene
+      .fromScene(scene, DeviceContext.unsafe(640.0, 480.0))
+      .fold(e => fail(e.message), identity)
+    val marks = discs(device.elements)
+
+    assertEquals(marks.length, 6)
+    marks.foreach { mark =>
+      assert(mark.gp.fill.nonEmpty)
+      assertEquals(mark.gp.fill, mark.gp.stroke)
     }
   }
 
