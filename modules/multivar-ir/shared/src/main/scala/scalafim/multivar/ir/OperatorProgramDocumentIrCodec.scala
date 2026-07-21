@@ -161,7 +161,10 @@ private object ProgramIrEncoder:
       "parameter_id" -> Str(value.parameterId),
       "capability" -> Str(targetCapability(value.capability)),
       "operation" -> Str(value.operation),
-      "operator_identity" -> value.operatorIdentity.fold[IrJson](Null)(Str.apply)
+      "operator_identity" -> value.operatorIdentity.fold[IrJson](Null)(Str.apply),
+      "additional_parameter_ids" -> arr(value.additionalParameterIds.map(Str.apply)),
+      "additional_operator_identities" -> arr(value.additionalOperatorIdentities.map(Str.apply)),
+      "equivariance" -> Str(symmetry(value.equivariance))
     )
 
   private def penalty(value: ProgramPenaltyV2Ir): IrJson =
@@ -640,12 +643,45 @@ private object ProgramIrDecoder:
 
   private def target(value: IrJson, path: String): Either[IrError, ProgramTargetIr] =
     for
-      current <- fields(value, path, Set("parameter_id", "capability", "operation", "operator_identity"))
+      current <- fields(
+        value,
+        path,
+        Set(
+          "parameter_id",
+          "capability",
+          "operation",
+          "operator_identity",
+          "additional_parameter_ids",
+          "additional_operator_identities",
+          "equivariance"
+        )
+      )
       parameter <- required(current, "parameter_id", path, string(_, s"$path.parameter_id"))
       capability <- required(current, "capability", path, targetCapability(_, s"$path.capability"))
       operation <- required(current, "operation", path, string(_, s"$path.operation"))
       operator <- required(current, "operator_identity", path, optionalString(_, s"$path.operator_identity"))
-    yield ProgramTargetIr(parameter, capability, operation, operator)
+      additionalParameters <- required(
+        current,
+        "additional_parameter_ids",
+        path,
+        vector(_, s"$path.additional_parameter_ids", string)
+      )
+      additionalOperators <- required(
+        current,
+        "additional_operator_identities",
+        path,
+        vector(_, s"$path.additional_operator_identities", string)
+      )
+      equivariance <- required(current, "equivariance", path, symmetry(_, s"$path.equivariance"))
+    yield ProgramTargetIr(
+      parameter,
+      capability,
+      operation,
+      operator,
+      additionalParameters,
+      additionalOperators,
+      equivariance
+    )
 
   private def penalty(value: IrJson, path: String): Either[IrError, ProgramPenaltyV2Ir] =
     for

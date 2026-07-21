@@ -328,15 +328,19 @@ enum TargetCapability:
   case General
 
 final case class TargetExpression private (
-    parameter: ParameterId,
+    parameters: Vector[ParameterId],
     capability: TargetCapability,
     operation: String,
-    operator: Option[ValueIdentity]
-)
+    operators: Vector[ValueIdentity],
+    equivariance: FrameSymmetry
+):
+  require(parameters.nonEmpty, "target expression requires at least one parameter")
+  def parameter: ParameterId = parameters.head
+  def operator: Option[ValueIdentity] = operators.headOption
 
 object TargetExpression:
   def frame(parameter: ParameterId): TargetExpression =
-    TargetExpression(parameter, TargetCapability.Linear, "frame", None)
+    TargetExpression(Vector(parameter), TargetCapability.Linear, "frame", Vector.empty, FrameSymmetry.Orthogonal)
 
   def linear[From <: Coordinate, To <: Coordinate, R <: OperatorRoleTag, E <: OperatorEvidence](
       parameter: ParameterId,
@@ -345,7 +349,15 @@ object TargetExpression:
   ): Either[ProgramError, TargetExpression] =
     val clean = operation.trim
     if clean.isEmpty then Left(ProgramError.InvalidParameterization("target operation must be non-empty"))
-    else Right(TargetExpression(parameter, TargetCapability.Linear, clean, Some(operator.valueIdentity)))
+    else Right(
+      TargetExpression(
+        Vector(parameter),
+        TargetCapability.Linear,
+        clean,
+        Vector(operator.valueIdentity),
+        FrameSymmetry.Orthogonal
+      )
+    )
 
   def affine(parameter: ParameterId, operation: String): Either[ProgramError, TargetExpression] =
     named(parameter, TargetCapability.Affine, operation)
@@ -356,6 +368,19 @@ object TargetExpression:
   def general(parameter: ParameterId, operation: String): Either[ProgramError, TargetExpression] =
     named(parameter, TargetCapability.General, operation)
 
+  def typed[A](expression: TypedExpression[A]): TargetExpression =
+    TargetExpression(
+      expression.parameterIds,
+      expression.capability match
+        case MapCapability.Linear => TargetCapability.Linear
+        case MapCapability.Affine => TargetCapability.Affine
+        case MapCapability.Smooth => TargetCapability.Smooth
+        case MapCapability.General => TargetCapability.General,
+      expression.operations.mkString("/"),
+      expression.operatorIdentities,
+      expression.equivariance
+    )
+
   private def named(
       parameter: ParameterId,
       capability: TargetCapability,
@@ -363,7 +388,7 @@ object TargetExpression:
   ): Either[ProgramError, TargetExpression] =
     val clean = operation.trim
     if clean.isEmpty then Left(ProgramError.InvalidParameterization("target operation must be non-empty"))
-    else Right(TargetExpression(parameter, capability, clean, None))
+    else Right(TargetExpression(Vector(parameter), capability, clean, Vector.empty, FrameSymmetry.Orthogonal))
 
 enum FunctionalKind:
   case SquaredNorm(geometry: ValueIdentity)
@@ -379,6 +404,58 @@ enum FunctionalKind:
     this match
       case SquaredNorm(_) | GroupL21 | NuclearNorm | NegativeLogDet => FrameSymmetry.Orthogonal
       case L1 | ElasticNet(_) | Huber(_) | TotalVariation => FrameSymmetry.SignedPermutation
+
+  def traits: FunctionalTraits =
+    this match
+      case SquaredNorm(_) =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Smooth,
+          HomogeneityTrait.DegreeTwo,
+          SeparabilityTrait.Nonseparable,
+          Set(OracleCapability.Gradient, OracleCapability.HessianVector),
+          symmetry
+        )
+      case L1 | GroupL21 | TotalVariation | NuclearNorm =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Nonsmooth,
+          HomogeneityTrait.DegreeOne,
+          this match
+            case L1 => SeparabilityTrait.Elementwise
+            case GroupL21 => SeparabilityTrait.Rowwise
+            case NuclearNorm => SeparabilityTrait.Spectral
+            case _ => SeparabilityTrait.Nonseparable,
+          Set(OracleCapability.Proximal, OracleCapability.Conic),
+          symmetry
+        )
+      case ElasticNet(_) =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Nonsmooth,
+          HomogeneityTrait.None,
+          SeparabilityTrait.Elementwise,
+          Set(OracleCapability.Proximal, OracleCapability.Conic),
+          symmetry
+        )
+      case Huber(_) =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Smooth,
+          HomogeneityTrait.None,
+          SeparabilityTrait.Elementwise,
+          Set(OracleCapability.Gradient, OracleCapability.Proximal, OracleCapability.Conic),
+          symmetry
+        )
+      case NegativeLogDet =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Smooth,
+          HomogeneityTrait.None,
+          SeparabilityTrait.Spectral,
+          Set(OracleCapability.Gradient, OracleCapability.HessianVector, OracleCapability.Conic),
+          symmetry
+        )
 
 enum FeasibleSetKind:
   case ZeroSubspace
@@ -398,24 +475,85 @@ enum FeasibleSetKind:
       case NonnegativeOrthant | Simplex | Box(_) =>
         FrameSymmetry.Permutation
 
+  def traits: FeasibleSetTraits =
+    this match
+      case ZeroSubspace | NonnegativeOrthant | Simplex | Box(_) | NormBall(_) =>
+        FeasibleSetTraits(
+          SetConvexity.Convex,
+          closed = true,
+          SetStructure.Euclidean,
+          this match
+            case NonnegativeOrthant | Box(_) => SeparabilityTrait.Elementwise
+            case _ => SeparabilityTrait.Nonseparable,
+          Set(SetCapability.Projection, SetCapability.Conic, SetCapability.NormalCone),
+          symmetry
+        )
+      case PsdCone =>
+        FeasibleSetTraits(
+          SetConvexity.Convex,
+          closed = true,
+          SetStructure.Cone,
+          SeparabilityTrait.Spectral,
+          Set(SetCapability.Projection, SetCapability.Conic, SetCapability.NormalCone),
+          symmetry
+        )
+      case Stiefel =>
+        FeasibleSetTraits(
+          SetConvexity.Nonconvex,
+          closed = true,
+          SetStructure.Manifold,
+          SeparabilityTrait.Nonseparable,
+          Set(SetCapability.Projection, SetCapability.NormalCone),
+          symmetry
+        )
+      case FixedSupport(_) | RankBounded(_) =>
+        FeasibleSetTraits(
+          SetConvexity.Nonconvex,
+          closed = true,
+          SetStructure.Discrete,
+          SeparabilityTrait.Nonseparable,
+          Set(SetCapability.Projection),
+          symmetry
+        )
+
 enum FrameSymmetry:
   case Orthogonal
   case SignedPermutation
   case Permutation
   case Identity
 
+object FrameSymmetry:
+  def meet(left: FrameSymmetry, right: FrameSymmetry): FrameSymmetry =
+    (left, right) match
+      case (FrameSymmetry.Identity, _) | (_, FrameSymmetry.Identity) => FrameSymmetry.Identity
+      case (FrameSymmetry.Permutation, _) | (_, FrameSymmetry.Permutation) => FrameSymmetry.Permutation
+      case (FrameSymmetry.SignedPermutation, _) | (_, FrameSymmetry.SignedPermutation) => FrameSymmetry.SignedPermutation
+      case _ => FrameSymmetry.Orthogonal
+
 final case class PenaltyTerm(
     target: TargetExpression,
     functional: FunctionalKind,
     weight: PenaltyWeight
 ):
-  def symmetry: FrameSymmetry = functional.symmetry
+  def symmetry: FrameSymmetry = FrameSymmetry.meet(target.equivariance, functional.symmetry)
+
+object PenaltyTerm:
+  def typed[Z](
+      target: TypedExpression[Z],
+      functional: TypedFunctional[Z],
+      weight: PenaltyWeight
+  ): PenaltyTerm =
+    PenaltyTerm(TargetExpression.typed(target), functional.kind, weight)
 
 final case class ConstraintTerm(
     target: TargetExpression,
     feasibleSet: FeasibleSetKind
 ):
-  def symmetry: FrameSymmetry = feasibleSet.symmetry
+  def symmetry: FrameSymmetry = FrameSymmetry.meet(target.equivariance, feasibleSet.symmetry)
+
+object ConstraintTerm:
+  def typed[Z](target: TypedExpression[Z], feasibleSet: TypedFeasibleSet[Z]): ConstraintTerm =
+    ConstraintTerm(TargetExpression.typed(target), feasibleSet.kind)
 
 final class FrameNormalization[Feature <: SemanticSpace, Component <: SemanticSpace, E <: SpdEvidence] private (
     val parameter: FrameVariable[Feature, Component],
@@ -472,7 +610,8 @@ object ResultSemantics:
       penalties: Vector[PenaltyTerm],
       constraints: Vector[ConstraintTerm]
   ): ResultSemantics =
-    val symmetry = (penalties.map(_.symmetry) ++ constraints.map(_.symmetry)).foldLeft(FrameSymmetry.Orthogonal)(meet)
+    val symmetry =
+      (penalties.map(_.symmetry) ++ constraints.map(_.symmetry)).foldLeft(FrameSymmetry.Orthogonal)(FrameSymmetry.meet)
     val smoothSpectral = penalties.isEmpty && constraints.isEmpty
     objective match
       case BaseObjective.SequentialCrossRegression(_, _) =>
@@ -497,13 +636,6 @@ object ResultSemantics:
           RepresentativeRule.OrderedSpectrumThenSign,
           if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint
         )
-
-  private def meet(left: FrameSymmetry, right: FrameSymmetry): FrameSymmetry =
-    (left, right) match
-      case (FrameSymmetry.Identity, _) | (_, FrameSymmetry.Identity) => FrameSymmetry.Identity
-      case (FrameSymmetry.Permutation, _) | (_, FrameSymmetry.Permutation) => FrameSymmetry.Permutation
-      case (FrameSymmetry.SignedPermutation, _) | (_, FrameSymmetry.SignedPermutation) => FrameSymmetry.SignedPermutation
-      case _ => FrameSymmetry.Orthogonal
 
 final case class OperatorProgramDescriptor(
     parameters: Vector[(String, MvSpace, MvSpace, ParameterizationKind)],
@@ -608,8 +740,8 @@ object OperatorProgram:
               else Right(())
 
   private def validateTerms(ids: Vector[ParameterId], targets: Vector[TargetExpression]): Either[ProgramError, Unit] =
-    targets.find(target => !ids.contains(target.parameter)) match
-      case Some(target) => Left(ProgramError.UnknownParameter(target.parameter))
+    targets.flatMap(_.parameters).find(parameter => !ids.contains(parameter)) match
+      case Some(parameter) => Left(ProgramError.UnknownParameter(parameter))
       case None => Right(())
 
   private def firstDuplicate(ids: Vector[ParameterId]): ParameterId =

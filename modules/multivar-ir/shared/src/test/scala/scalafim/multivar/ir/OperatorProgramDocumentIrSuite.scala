@@ -64,6 +64,42 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     val mutated = encoded.replaceFirst("\"schema\":", "\"future\":true,\"schema\":")
     assertEquals(OperatorProgramDocumentIrCodec.decode(mutated).left.toOption.get.category, RejectionCategory.UnknownField)
 
+  test("multi-parameter targets and public penalty-versus-constraint intent round-trip"):
+    val base = validDocument
+    val second = base.programs.head.parameters.head.copy(id = "weights-peer")
+    val target = ProgramTargetIr(
+      "weights",
+      ProgramTargetCapabilityIr.Smooth,
+      "parameter:frame/parameter:frame/product/aligned-score-difference",
+      None,
+      additionalParameterIds = Vector("weights-peer"),
+      additionalOperatorIdentities = Vector("table"),
+      equivariance = ProgramFrameSymmetryIr.Orthogonal
+    )
+    val penalty = ProgramPenaltyV2Ir(
+      target,
+      ProgramFunctionalIr.Huber(1.0),
+      0.25,
+      ProgramFrameSymmetryIr.SignedPermutation
+    )
+    val constraint = ProgramConstraintV2Ir(
+      target,
+      ProgramFeasibleSetIr.NormBall(2.0),
+      ProgramFrameSymmetryIr.Orthogonal
+    )
+    val program = base.programs.head.copy(
+      parameters = base.programs.head.parameters :+ second,
+      normalizations = base.programs.head.normalizations :+ ProgramNormalizationV2Ir("weights-peer", "within"),
+      penalties = Vector(penalty),
+      constraints = Vector(constraint)
+    )
+    val document = base.copy(programs = Vector(program), rewrites = Vector.empty, fits = Vector.empty)
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.programs.head.penalties.head.target.parameterIds, Vector("weights", "weights-peer"))
+    assertEquals(decoded.programs.head.penalties.head, penalty)
+    assertEquals(decoded.programs.head.constraints.head, constraint)
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",

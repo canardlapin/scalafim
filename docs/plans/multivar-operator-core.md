@@ -1,11 +1,11 @@
 # Multivar operator core — single-layer target architecture
 
-Status: **implemented; independent release gate pending**. Supersedes the *dual-layer* arrangement
+Status: **implemented and independently release-gated**. Supersedes the *dual-layer* arrangement
 described in [`multivar-duality-constitution.md`](multivar-duality-constitution.md).
 The constitution's twelve invariants remain binding; this document adds the
 structural collapse that makes them hold in *one* layer instead of two, and
 records the completed migration. The independent whole-repository compile/test
-gate remains before the parent epic closes.
+gate passed at committed revision `7ac966c9f333b0917d350605d5901a6b7786f611`.
 
 This is the committed design. The purpose of writing it before touching code is
 to stop the sequence of partial refactors: every change below is measured against

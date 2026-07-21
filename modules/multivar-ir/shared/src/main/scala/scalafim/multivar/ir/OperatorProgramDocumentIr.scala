@@ -103,8 +103,13 @@ final case class ProgramTargetIr(
     parameterId: String,
     capability: ProgramTargetCapabilityIr,
     operation: String,
-    operatorIdentity: Option[String]
-)
+    operatorIdentity: Option[String],
+    additionalParameterIds: Vector[String] = Vector.empty,
+    additionalOperatorIdentities: Vector[String] = Vector.empty,
+    equivariance: ProgramFrameSymmetryIr = ProgramFrameSymmetryIr.Orthogonal
+):
+  def parameterIds: Vector[String] = parameterId +: additionalParameterIds
+  def operatorIdentities: Vector[String] = operatorIdentity.toVector ++ additionalOperatorIdentities
 
 enum ProgramFunctionalIr:
   case SquaredNorm(geometryIdentity: String)
@@ -408,7 +413,10 @@ object ProgramSemanticIr:
         case TargetCapability.Smooth => ProgramTargetCapabilityIr.Smooth
         case TargetCapability.General => ProgramTargetCapabilityIr.General,
       value.operation,
-      value.operator.map(_.stableKey)
+      value.operator.map(_.stableKey),
+      value.parameters.drop(1).map(_.value),
+      value.operators.drop(1).map(_.stableKey),
+      symmetry(value.equivariance)
     )
 
   private def penalty(value: PenaltyTerm): ProgramPenaltyV2Ir =

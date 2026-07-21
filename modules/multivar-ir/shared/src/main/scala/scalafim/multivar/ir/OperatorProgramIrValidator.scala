@@ -325,7 +325,14 @@ object OperatorProgramIrValidator:
   ): Either[IrError, Unit] =
     val targets = program.penalties.map(_.target) ++ program.constraints.map(_.target)
     for
-      _ <- requireValue(targets.forall(target => parameters.contains(target.parameterId) && target.operation.trim.nonEmpty), RejectionCategory.Malformed, s"programs.${program.id}.terms", "term target must name a parameter and operation")
+      _ <- requireValue(
+        targets.forall: target =>
+          target.parameterIds.nonEmpty && target.parameterIds.distinct.length == target.parameterIds.length &&
+            target.parameterIds.forall(parameters.contains) && target.operation.trim.nonEmpty,
+        RejectionCategory.Malformed,
+        s"programs.${program.id}.terms",
+        "term target must name distinct known parameters and an operation"
+      )
       _ <- requireValue(program.penalties.forall(term => term.weight.isFinite && term.weight > 0.0), RejectionCategory.Malformed, s"programs.${program.id}.penalties", "penalty weights must be finite and positive")
     yield ()
 
