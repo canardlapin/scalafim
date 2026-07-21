@@ -41,7 +41,7 @@ class CompilerPhasesSuite extends munit.FunSuite:
     assert(plan.env.get(Aesthetic.Color).exists(_.isScaled))
   }
 
-  test("mapping phase rejects invalid stat-geom combinations and unsupported geoms") {
+  test("mapping phase rejects invalid stat-geom combinations and incomplete geom mappings") {
     val plot = Plot(data)
     val statLayer = Layer.fromMapping(
       Geom.Point,
@@ -59,7 +59,7 @@ class CompilerPhasesSuite extends munit.FunSuite:
     ).fold(e => fail(e.message), identity)
     assertEquals(
       MappingPhase.planLayer(plot, rectLayer, 0).left.toOption,
-      Some(GraphicsError.UnsupportedGeom("rect"))
+      Some(GraphicsError.MissingAesthetic("rect", "xmin"))
     )
   }
 

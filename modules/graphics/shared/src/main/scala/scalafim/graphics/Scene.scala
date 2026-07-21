@@ -332,6 +332,14 @@ object Grob:
   ) extends Grob:
     require(points.nonEmpty, "`points` must be non-empty")
 
+  final case class Polygon private[graphics] (
+      points: Vector[Point],
+      gp: GraphicParams,
+      viewport: Option[Viewport],
+      name: Option[GraphicsName]
+  ) extends Grob:
+    require(points.length >= 3, "`points` must contain at least three vertices")
+
   final case class Segments private[graphics] (
       segments: Vector[(Point, Point)],
       gp: GraphicParams,
@@ -405,6 +413,23 @@ object Grob:
   ): Either[GraphicsError, Grob] =
     if points.isEmpty then Left(GraphicsError.EmptyGeometry("lines"))
     else Right(Lines(points, gp, viewport, name))
+
+  def polygon(
+      points: Vector[Point],
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Grob] =
+    if points.length < 3 then Left(GraphicsError.InvalidGeometrySize("polygon", 3, points.length))
+    else Right(Polygon(points, gp, viewport, name))
+
+  def polygonUnsafe(
+      points: Vector[Point],
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Grob =
+    polygon(points, gp, viewport, name).orThrow
 
   def segments(
       segments: Vector[(Point, Point)],

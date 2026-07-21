@@ -28,6 +28,24 @@ class SceneSuite extends munit.FunSuite:
     assertEquals(Grob.points(Vector.empty).left.toOption, Some(GraphicsError.EmptyGeometry("points")))
     assertEquals(Grob.lines(Vector.empty).left.toOption, Some(GraphicsError.EmptyGeometry("lines")))
     assertEquals(Grob.segments(Vector.empty).left.toOption, Some(GraphicsError.EmptyGeometry("segments")))
+    assertEquals(
+      Grob.polygon(Vector(p0, p1)).left.toOption,
+      Some(GraphicsError.InvalidGeometrySize("polygon", 3, 2))
+    )
+  }
+
+  test("public polygons lower as closed renderer-neutral polylines") {
+    val polygon = Grob
+      .polygon(Vector(Point.nativeUnsafe(0.0, 0.0), Point.nativeUnsafe(1.0, 0.0), Point.nativeUnsafe(0.5, 1.0)))
+      .fold(error => fail(error.message), identity)
+    val device = DeviceScene
+      .fromScene(Scene(Vector(polygon)), DeviceContext.unsafe(100.0, 100.0))
+      .fold(error => fail(error.message), identity)
+
+    val closed = device.elements.collectFirst {
+      case DeviceElement.Mark(DevicePrimitive.Polyline(_, isClosed, _, _)) => isClosed
+    }
+    assertEquals(closed, Some(true))
   }
 
   test("color and length constructors keep invalid scalar values out of the scene tree") {

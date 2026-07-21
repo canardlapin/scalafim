@@ -452,6 +452,10 @@ object DeviceScene:
         resolvePoints(lines.points, resolver).map { resolved =>
           Vector(DevicePrimitive.Polyline(resolved, closed = false, lines.gp, lines.name))
         }
+      case polygon: Grob.Polygon =>
+        resolvePoints(polygon.points, resolver).map { resolved =>
+          Vector(DevicePrimitive.Polyline(resolved, closed = true, polygon.gp, polygon.name))
+        }
       case segments: Grob.Segments =>
         segmentMarks(segments, resolver)
       case rect: Grob.Rect =>

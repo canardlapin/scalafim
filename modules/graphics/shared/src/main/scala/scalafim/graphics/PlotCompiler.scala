@@ -146,6 +146,12 @@ final case class ResolvedRow[Row](
     computed: ComputedValues,
     x: Double,
     y: Double,
+    xEnd: Option[Double],
+    yEnd: Option[Double],
+    xMin: Option[Double],
+    xMax: Option[Double],
+    yMin: Option[Double],
+    yMax: Option[Double],
     point: Point,
     label: Option[String],
     group: Option[String],
@@ -165,6 +171,8 @@ enum PlotDropReason:
   case MissingPosition
   case MissingLabel
   case NonFinitePosition(x: Double, y: Double)
+  case NonFiniteAesthetic(aesthetic: String, value: Double)
+  case InvalidBounds(axis: String, minimum: Double, maximum: Double)
   case TransformDomain(aesthetic: String, transform: String, value: Double)
   case ScaleOutOfDomain(aesthetic: String, scale: String, value: String)
   case InvalidAesthetic(aesthetic: String, value: String)

@@ -140,6 +140,9 @@ object RendererConformance:
       counted <- countPlotCase
       scientific <- scientificStatsCase
       flipped <- flippedPlotCase
+      boundedGeoms <- boundedGeomsCase
+      segmentGeoms <- segmentGeomsCase
+      bandGeoms <- bandGeomsCase
     yield Vector(
       point,
       line,
@@ -157,7 +160,10 @@ object RendererConformance:
       solved,
       counted,
       scientific,
-      flipped
+      flipped,
+      boundedGeoms,
+      segmentGeoms,
+      bandGeoms
     )
 
   def group(group: ConformanceGroup): Either[GraphicsError, Vector[ConformanceCase]] =
@@ -736,5 +742,82 @@ object RendererConformance:
       Vector(GraphicsName.unsafe("plot-panel"), GraphicsName.unsafe("stat-bin-bar-0")),
       Vector(
         RenderRequirement.Primitive(GraphicsName.unsafe("stat-bin-bar-0"), RenderPrimitiveKind.Rectangle)
+      )
+    )
+
+  def boundedGeomsCase: Either[GraphicsError, ConformanceCase] =
+    final case class Bounds(xMin: Double, xMax: Double, yMin: Double, yMax: Double)
+    val data = Vector(Bounds(0.1, 0.4, 0.2, 0.6), Bounds(0.55, 0.85, 0.35, 0.8))
+    val fill = Some(GraphicParams.unsafe(fill = Some(Rgba.unsafe(75, 130, 185))))
+    for
+      rects <- Plot(data).addLayer(Layer.rect[Bounds](_.xMin, _.xMax, _.yMin, _.yMax, params = fill))
+      plot <- rects.addLayer(
+        Layer.tile[Bounds](
+          row => (row.xMin + row.xMax) / 2.0,
+          row => (row.yMin + row.yMax) / 2.0,
+          row => row.xMax - row.xMin,
+          row => row.yMax - row.yMin,
+          params = Some(GraphicParams.unsafe(fill = Some(Rgba.unsafe(205, 125, 55))))
+        )
+      )
+      scene <- PlotCompiler.compile(plot)
+    yield ConformanceCase(
+      GraphicsName.unsafe("bounded-geoms"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(GraphicsName.unsafe("geom-rect-0"), GraphicsName.unsafe("geom-tile-0")),
+      Vector(
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-rect-0"), RenderPrimitiveKind.Rectangle),
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle)
+      )
+    )
+
+  def segmentGeomsCase: Either[GraphicsError, ConformanceCase] =
+    final case class SegmentDatum(x: Double, y: Double, xEnd: Double, yEnd: Double, lower: Double, upper: Double)
+    val data = Vector(
+      SegmentDatum(0.1, 0.2, 0.4, 0.6, 0.1, 0.5),
+      SegmentDatum(0.6, 0.4, 0.9, 0.8, 0.3, 0.9)
+    )
+    for
+      segments <- Plot(data).addLayer(Layer.segment[SegmentDatum](_.x, _.y, _.xEnd, _.yEnd))
+      errors <- segments.addLayer(Layer.errorBar[SegmentDatum](_.x, _.lower, _.upper))
+      horizontal <- errors.addLayer(Layer.hline[SegmentDatum](0.5))
+      plot <- horizontal.addLayer(Layer.vline[SegmentDatum](0.5))
+      scene <- PlotCompiler.compile(plot)
+    yield ConformanceCase(
+      GraphicsName.unsafe("segment-geoms"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("geom-segment-0"),
+        GraphicsName.unsafe("geom-errorbar-0"),
+        GraphicsName.unsafe("geom-hline"),
+        GraphicsName.unsafe("geom-vline")
+      ),
+      Vector(
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-segment-0"), RenderPrimitiveKind.Polyline),
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-errorbar-0"), RenderPrimitiveKind.Polyline),
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-hline"), RenderPrimitiveKind.Polyline),
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-vline"), RenderPrimitiveKind.Polyline)
+      )
+    )
+
+  def bandGeomsCase: Either[GraphicsError, ConformanceCase] =
+    final case class Band(x: Double, y: Double, lower: Double, upper: Double)
+    val data = Vector(Band(0.1, 0.3, 0.2, 0.4), Band(0.5, 0.7, 0.5, 0.85), Band(0.9, 0.5, 0.3, 0.65))
+    val ribbonStyle = Some(GraphicParams.unsafe(fill = Some(Rgba.unsafe(80, 145, 205, 0.6))))
+    val areaStyle = Some(GraphicParams.unsafe(fill = Some(Rgba.unsafe(215, 135, 65, 0.45))))
+    for
+      ribbon <- Plot(data).addLayer(Layer.ribbon[Band](_.x, _.lower, _.upper, params = ribbonStyle))
+      plot <- ribbon.addLayer(Layer.area[Band](_.x, _.y, params = areaStyle))
+      scene <- PlotCompiler.compile(plot)
+    yield ConformanceCase(
+      GraphicsName.unsafe("band-geoms"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(GraphicsName.unsafe("geom-ribbon-0"), GraphicsName.unsafe("geom-area-0")),
+      Vector(
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-ribbon-0"), RenderPrimitiveKind.Polygon),
+        RenderRequirement.Primitive(GraphicsName.unsafe("geom-area-0"), RenderPrimitiveKind.Polygon)
       )
     )

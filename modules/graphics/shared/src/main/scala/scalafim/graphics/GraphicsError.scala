@@ -20,6 +20,7 @@ enum GraphicsError:
   case EmptyPalette
   case DuplicateLevel(level: String)
   case EmptyGeometry(kind: String)
+  case InvalidGeometrySize(kind: String, minimum: Int, actual: Int)
   case MissingAesthetic(geom: String, aesthetic: String)
   case DuplicateScale(aesthetic: String)
   case ConflictingPlotScales(
@@ -92,6 +93,8 @@ enum GraphicsError:
         s"duplicate discrete level '$level'"
       case EmptyGeometry(kind) =>
         s"$kind geometry requires at least one element"
+      case InvalidGeometrySize(kind, minimum, actual) =>
+        s"$kind geometry requires at least $minimum elements: found $actual"
       case MissingAesthetic(geom, aesthetic) =>
         s"geom '$geom' requires aesthetic '$aesthetic'"
       case DuplicateScale(aesthetic) =>

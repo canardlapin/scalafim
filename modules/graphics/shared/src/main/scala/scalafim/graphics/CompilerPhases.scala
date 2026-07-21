@@ -51,8 +51,8 @@ private[graphics] object MappingPhase:
 
   private def isSupported(geom: Geom): Boolean =
     geom match
-      case Geom.Point | Geom.Line | Geom.Text | Geom.Bar => true
-      case Geom.Rect                                     => false
+      case Geom.Point | Geom.Line | Geom.Text | Geom.Rect | Geom.Bar | Geom.Segment |
+          Geom.ErrorBar | Geom.Ribbon | Geom.Area | Geom.HLine | Geom.VLine | Geom.Tile => true
 
 /** Phase 2 — statistical transformation. Identity only lifts the source
   * mapping into a stat row. Count aggregates by its typed key, creates count
@@ -481,6 +481,14 @@ private[graphics] object RowPhase:
         x <- requiredAes(Aesthetic.X, env.get(Aesthetic.X), source)
         y <- requiredAes(Aesthetic.Y, env.get(Aesthetic.Y), source)
         _ <- finitePosition(x, y)
+        xEnd <- optionalFiniteAes(Aesthetic.XEnd, env.get(Aesthetic.XEnd), source)
+        yEnd <- optionalFiniteAes(Aesthetic.YEnd, env.get(Aesthetic.YEnd), source)
+        xMin <- optionalFiniteAes(Aesthetic.XMin, env.get(Aesthetic.XMin), source)
+        xMax <- optionalFiniteAes(Aesthetic.XMax, env.get(Aesthetic.XMax), source)
+        yMin <- optionalFiniteAes(Aesthetic.YMin, env.get(Aesthetic.YMin), source)
+        yMax <- optionalFiniteAes(Aesthetic.YMax, env.get(Aesthetic.YMax), source)
+        _ <- validBounds(Aesthetic.X.label, xMin, xMax)
+        _ <- validBounds(Aesthetic.Y.label, yMin, yMax)
         text <- labelValue(layer.geom, env, source)
         group <- optionalAes(Aesthetic.Group, env.get(Aesthetic.Group), source)
         gp <- rowGraphicParams(source, env, layer.params.getOrElse(theme.geom))
@@ -492,6 +500,12 @@ private[graphics] object RowPhase:
           computed = source.computed,
           x = x,
           y = y,
+          xEnd = xEnd,
+          yEnd = yEnd,
+          xMin = xMin,
+          xMax = xMax,
+          yMin = yMin,
+          yMax = yMax,
           point = Point.nativeUnsafe(x, y),
           label = if layer.geom == Geom.Text then Some(text) else None,
           group = group,
@@ -556,6 +570,29 @@ private[graphics] object RowPhase:
   private def finitePosition(x: Double, y: Double): Either[PlotDropReason, Unit] =
     if x.isFinite && y.isFinite then Right(())
     else Left(PlotDropReason.NonFinitePosition(x, y))
+
+  private def optionalFiniteAes[Row](
+      aesthetic: Aesthetic[Double],
+      value: Option[AesValue[Row, Double]],
+      row: Row
+  ): Either[PlotDropReason, Option[Double]] =
+    optionalAes(aesthetic, value, row).flatMap {
+      case Some(resolved) if !resolved.isFinite =>
+        Left(PlotDropReason.NonFiniteAesthetic(aesthetic.label, resolved))
+      case resolved =>
+        Right(resolved)
+    }
+
+  private def validBounds(
+      axis: String,
+      minimum: Option[Double],
+      maximum: Option[Double]
+  ): Either[PlotDropReason, Unit] =
+    (minimum, maximum) match
+      case (Some(lower), Some(upper)) if lower > upper =>
+        Left(PlotDropReason.InvalidBounds(axis, lower, upper))
+      case _ =>
+        Right(())
 
   private def requiredAes[Row, A](
       aesthetic: Aesthetic[A],
@@ -635,7 +672,21 @@ private[graphics] object GeomPhase:
       case Geom.Bar =>
         barGrobs(rows)
       case Geom.Rect =>
-        Left(GraphicsError.UnsupportedGeom(Geom.Rect.label))
+        boundedRectGrobs(rows, "rect")
+      case Geom.Segment =>
+        segmentGrobs(rows)
+      case Geom.ErrorBar =>
+        errorBarGrobs(rows)
+      case Geom.Ribbon =>
+        ribbonGrobs(rows, "ribbon")
+      case Geom.Area =>
+        ribbonGrobs(rows, "area")
+      case Geom.HLine =>
+        horizontalLineGrob(rows)
+      case Geom.VLine =>
+        verticalLineGrob(rows)
+      case Geom.Tile =>
+        boundedRectGrobs(rows, "tile")
 
   private def summaryGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
     val out = Vector.newBuilder[Grob]
@@ -678,6 +729,125 @@ private[graphics] object GeomPhase:
           name = Some(GraphicsName.unsafe("stat-density-line"))
         )
         .map(Vector(_))
+
+  private def boundedRectGrobs[Row](
+      rows: Vector[ResolvedRow[Row]],
+      prefix: String
+  ): Either[GraphicsError, Vector[Grob]] =
+    val out = Vector.newBuilder[Grob]
+    var idx = 0
+    while idx < rows.length do
+      val row = rows(idx)
+      val xMin = row.xMin.getOrElse(row.x)
+      val xMax = row.xMax.getOrElse(row.x)
+      val yMin = row.yMin.getOrElse(row.y)
+      val yMax = row.yMax.getOrElse(row.y)
+      out += Grob.rectUnsafe(
+        center = Point.nativeUnsafe(xMin + (xMax - xMin) / 2.0, yMin + (yMax - yMin) / 2.0),
+        size = Size.fromExtents(ExtentExpr.nativeUnsafe(xMax - xMin), ExtentExpr.nativeUnsafe(yMax - yMin)),
+        gp = row.gp,
+        name = Some(GraphicsName.unsafe(s"geom-$prefix-$idx"))
+      )
+      idx += 1
+    Right(out.result())
+
+  private def segmentGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    val out = Vector.newBuilder[Grob]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < rows.length && result.isRight do
+      val row = rows(idx)
+      val end = Point.nativeUnsafe(row.xEnd.getOrElse(row.x), row.yEnd.getOrElse(row.y))
+      result = Grob
+        .segments(
+          Vector(row.point -> end),
+          gp = row.gp,
+          name = Some(GraphicsName.unsafe(s"geom-segment-$idx"))
+        )
+        .map { grob =>
+          out += grob
+          ()
+        }
+      idx += 1
+    result.map(_ => out.result())
+
+  private def errorBarGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    val out = Vector.newBuilder[Grob]
+    val halfCap = ExtentExpr.pointsUnsafe(3.0)
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < rows.length && result.isRight do
+      val row = rows(idx)
+      val lower = row.yMin.getOrElse(row.y)
+      val upper = row.yMax.getOrElse(row.y)
+      val x = LengthExpr.nativeUnsafe(row.x)
+      val lowerY = LengthExpr.nativeUnsafe(lower)
+      val upperY = LengthExpr.nativeUnsafe(upper)
+      val segments = Vector(
+        Point(x, lowerY) -> Point(x, upperY),
+        Point(x - halfCap, lowerY) -> Point(x + halfCap, lowerY),
+        Point(x - halfCap, upperY) -> Point(x + halfCap, upperY)
+      )
+      result = Grob
+        .segments(segments, gp = row.gp, name = Some(GraphicsName.unsafe(s"geom-errorbar-$idx")))
+        .map { grob =>
+          out += grob
+          ()
+        }
+      idx += 1
+    result.map(_ => out.result())
+
+  private def ribbonGrobs[Row](
+      rows: Vector[ResolvedRow[Row]],
+      prefix: String
+  ): Either[GraphicsError, Vector[Grob]] =
+    val groups = groupInOrder(rows)
+    val out = Vector.newBuilder[Grob]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < groups.length && result.isRight do
+      val group = groups(idx)
+      if group.length >= 2 then
+        val upper = group.map(row => Point.nativeUnsafe(row.x, row.yMax.getOrElse(row.y)))
+        val lower = group.reverse.map(row => Point.nativeUnsafe(row.x, row.yMin.getOrElse(row.y)))
+        result = Grob
+          .polygon(
+            upper ++ lower,
+            gp = group.head.gp,
+            name = Some(GraphicsName.unsafe(s"geom-$prefix-$idx"))
+          )
+          .map { grob =>
+            out += grob
+            ()
+          }
+      idx += 1
+    result.map(_ => out.result())
+
+  private def horizontalLineGrob[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    rows.headOption match
+      case None => Right(Vector.empty)
+      case Some(row) =>
+        val y = LengthExpr.nativeUnsafe(row.y)
+        Grob
+          .segments(
+            Vector(Point(LengthExpr.npcUnsafe(0.0), y) -> Point(LengthExpr.npcUnsafe(1.0), y)),
+            gp = row.gp,
+            name = Some(GraphicsName.unsafe("geom-hline"))
+          )
+          .map(Vector(_))
+
+  private def verticalLineGrob[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    rows.headOption match
+      case None => Right(Vector.empty)
+      case Some(row) =>
+        val x = LengthExpr.nativeUnsafe(row.x)
+        Grob
+          .segments(
+            Vector(Point(x, LengthExpr.npcUnsafe(0.0)) -> Point(x, LengthExpr.npcUnsafe(1.0))),
+            gp = row.gp,
+            name = Some(GraphicsName.unsafe("geom-vline"))
+          )
+          .map(Vector(_))
 
   private def pointGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
     val out = Vector.newBuilder[Grob]
@@ -802,6 +972,12 @@ private[graphics] object CoordPhase:
     row.copy(
       x = row.y,
       y = row.x,
+      xEnd = row.yEnd,
+      yEnd = row.xEnd,
+      xMin = row.yMin,
+      xMax = row.yMax,
+      yMin = row.xMin,
+      yMax = row.xMax,
       point = flipPoint(row.point)
     )
 
@@ -817,6 +993,8 @@ private[graphics] object CoordPhase:
         points.copy(points = points.points.map(flipPoint))
       case lines: Grob.Lines =>
         lines.copy(points = lines.points.map(flipPoint))
+      case polygon: Grob.Polygon =>
+        polygon.copy(points = polygon.points.map(flipPoint))
       case segments: Grob.Segments =>
         segments.copy(segments = segments.segments.map { case (start, end) => (flipPoint(start), flipPoint(end)) })
       case rect: Grob.Rect =>
@@ -961,7 +1139,12 @@ private[graphics] object LayoutPhase:
     var sawUnscaledData = false
     var range = ContinuousRange.empty
     layers.foreach { layer =>
-      val values = layer.rows.iterator.map(value).toVector
+      val contributes =
+        !(layer.geom == Geom.HLine && aesthetic == Aesthetic.X.label)
+          && !(layer.geom == Geom.VLine && aesthetic == Aesthetic.Y.label)
+      val values =
+        if contributes then layer.rows.iterator.flatMap(row => positionValues(row, aesthetic, value)).toVector
+        else Vector.empty
       layer.trainedScales.find(_.aesthetic == aesthetic) match
         case Some(scale) =>
           sawScaled = true
@@ -969,7 +1152,7 @@ private[graphics] object LayoutPhase:
             range = range.train(Vector(0.0, 1.0))
           range = range.train(values)
         case None =>
-          if layer.rows.nonEmpty then sawUnscaledData = true
+          if values.nonEmpty then sawUnscaledData = true
           range = range.train(values)
       if layer.geom == Geom.Bar then
         if aesthetic == Aesthetic.X.label then
@@ -991,6 +1174,16 @@ private[graphics] object LayoutPhase:
     }
     if sawScaled && sawUnscaledData then Left(GraphicsError.MixedPositionScaling(aesthetic))
     else range.requireTrained
+
+  private def positionValues[Row](
+      row: ResolvedRow[Row],
+      aesthetic: String,
+      primary: ResolvedRow[Row] => Double
+  ): Vector[Double] =
+    if aesthetic == Aesthetic.X.label then
+      Vector(Some(primary(row)), row.xEnd, row.xMin, row.xMax).flatten
+    else
+      Vector(Some(primary(row)), row.yEnd, row.yMin, row.yMax).flatten
 
   private def coordClip(coord: Coord): Clip =
     coord.clipping

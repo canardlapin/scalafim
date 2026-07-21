@@ -46,6 +46,12 @@ final case class Position2[Row](x: AesValue[Row, Double], y: AesValue[Row, Doubl
 enum RequiredAesthetic(val aesthetic: Aesthetic[?]):
   case X extends RequiredAesthetic(Aesthetic.X)
   case Y extends RequiredAesthetic(Aesthetic.Y)
+  case XEnd extends RequiredAesthetic(Aesthetic.XEnd)
+  case YEnd extends RequiredAesthetic(Aesthetic.YEnd)
+  case XMin extends RequiredAesthetic(Aesthetic.XMin)
+  case XMax extends RequiredAesthetic(Aesthetic.XMax)
+  case YMin extends RequiredAesthetic(Aesthetic.YMin)
+  case YMax extends RequiredAesthetic(Aesthetic.YMax)
   case Label extends RequiredAesthetic(Aesthetic.Label)
 
   def label: String =
@@ -57,6 +63,12 @@ enum RequiredAesthetic(val aesthetic: Aesthetic[?]):
 final case class AesSpec[Row](
     x: Option[AesValue[Row, Double]] = None,
     y: Option[AesValue[Row, Double]] = None,
+    xEnd: Option[AesValue[Row, Double]] = None,
+    yEnd: Option[AesValue[Row, Double]] = None,
+    xMin: Option[AesValue[Row, Double]] = None,
+    xMax: Option[AesValue[Row, Double]] = None,
+    yMin: Option[AesValue[Row, Double]] = None,
+    yMax: Option[AesValue[Row, Double]] = None,
     color: Option[AesValue[Row, Rgba]] = None,
     fill: Option[AesValue[Row, Rgba]] = None,
     alpha: Option[AesValue[Row, Double]] = None,
@@ -68,6 +80,12 @@ final case class AesSpec[Row](
     AesSpec(
       x = x.map(_.contramap(f)),
       y = y.map(_.contramap(f)),
+      xEnd = xEnd.map(_.contramap(f)),
+      yEnd = yEnd.map(_.contramap(f)),
+      xMin = xMin.map(_.contramap(f)),
+      xMax = xMax.map(_.contramap(f)),
+      yMin = yMin.map(_.contramap(f)),
+      yMax = yMax.map(_.contramap(f)),
       color = color.map(_.contramap(f)),
       fill = fill.map(_.contramap(f)),
       alpha = alpha.map(_.contramap(f)),
@@ -84,6 +102,44 @@ final case class AesSpec[Row](
 
   def withPosition(x: Row => Double, y: Row => Double): AesSpec[Row] =
     copy(x = Some(AesValue.direct(x)), y = Some(AesValue.direct(y)))
+
+  def withSegment(x: Row => Double, y: Row => Double, xEnd: Row => Double, yEnd: Row => Double): AesSpec[Row] =
+    copy(
+      x = Some(AesValue.direct(x)),
+      y = Some(AesValue.direct(y)),
+      xEnd = Some(AesValue.direct(xEnd)),
+      yEnd = Some(AesValue.direct(yEnd))
+    )
+
+  def withBounds(
+      x: Row => Double,
+      y: Row => Double,
+      xMin: Row => Double,
+      xMax: Row => Double,
+      yMin: Row => Double,
+      yMax: Row => Double
+  ): AesSpec[Row] =
+    copy(
+      x = Some(AesValue.direct(x)),
+      y = Some(AesValue.direct(y)),
+      xMin = Some(AesValue.direct(xMin)),
+      xMax = Some(AesValue.direct(xMax)),
+      yMin = Some(AesValue.direct(yMin)),
+      yMax = Some(AesValue.direct(yMax))
+    )
+
+  def withYBounds(
+      x: Row => Double,
+      y: Row => Double,
+      yMin: Row => Double,
+      yMax: Row => Double
+  ): AesSpec[Row] =
+    copy(
+      x = Some(AesValue.direct(x)),
+      y = Some(AesValue.direct(y)),
+      yMin = Some(AesValue.direct(yMin)),
+      yMax = Some(AesValue.direct(yMax))
+    )
 
   def withColor(f: Row => Rgba): AesSpec[Row] =
     copy(color = Some(AesValue.direct(f)))
@@ -126,6 +182,12 @@ final case class AesSpec[Row](
     var out = AesEnv.empty[Row]
     x.foreach(value => out = out.updated(Aesthetic.X, value))
     y.foreach(value => out = out.updated(Aesthetic.Y, value))
+    xEnd.foreach(value => out = out.updated(Aesthetic.XEnd, value))
+    yEnd.foreach(value => out = out.updated(Aesthetic.YEnd, value))
+    xMin.foreach(value => out = out.updated(Aesthetic.XMin, value))
+    xMax.foreach(value => out = out.updated(Aesthetic.XMax, value))
+    yMin.foreach(value => out = out.updated(Aesthetic.YMin, value))
+    yMax.foreach(value => out = out.updated(Aesthetic.YMax, value))
     color.foreach(value => out = out.updated(Aesthetic.Color, value))
     fill.foreach(value => out = out.updated(Aesthetic.Fill, value))
     alpha.foreach(value => out = out.updated(Aesthetic.Alpha, value))
@@ -148,6 +210,12 @@ object AesSpec:
     AesSpec(
       x = env.get(Aesthetic.X),
       y = env.get(Aesthetic.Y),
+      xEnd = env.get(Aesthetic.XEnd),
+      yEnd = env.get(Aesthetic.YEnd),
+      xMin = env.get(Aesthetic.XMin),
+      xMax = env.get(Aesthetic.XMax),
+      yMin = env.get(Aesthetic.YMin),
+      yMax = env.get(Aesthetic.YMax),
       color = env.get(Aesthetic.Color),
       fill = env.get(Aesthetic.Fill),
       alpha = env.get(Aesthetic.Alpha),
@@ -162,13 +230,33 @@ enum Geom(val label: String):
   case Text extends Geom("text")
   case Rect extends Geom("rect")
   case Bar extends Geom("bar")
+  case Segment extends Geom("segment")
+  case ErrorBar extends Geom("errorbar")
+  case Ribbon extends Geom("ribbon")
+  case Area extends Geom("area")
+  case HLine extends Geom("hline")
+  case VLine extends Geom("vline")
+  case Tile extends Geom("tile")
 
   def requiredAesthetics: Vector[RequiredAesthetic] =
     this match
       case Point => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Line  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Text  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.Label)
-      case Rect | Bar => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
+      case Bar | HLine | VLine => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
+      case Segment =>
+        Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.XEnd, RequiredAesthetic.YEnd)
+      case ErrorBar | Ribbon | Area =>
+        Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.YMin, RequiredAesthetic.YMax)
+      case Rect | Tile =>
+        Vector(
+          RequiredAesthetic.X,
+          RequiredAesthetic.Y,
+          RequiredAesthetic.XMin,
+          RequiredAesthetic.XMax,
+          RequiredAesthetic.YMin,
+          RequiredAesthetic.YMax
+        )
 
 opaque type CoordinateRatio = Double
 
@@ -245,6 +333,143 @@ object Layer:
       params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(Geom.Text, Stat.Identity, data, mapping.withPosition(x, y).withLabel(label), inheritMapping, params)
+
+  def rect[Row](
+      xMin: Row => Double,
+      xMax: Row => Double,
+      yMin: Row => Double,
+      yMax: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.Rect,
+      Stat.Identity,
+      data,
+      mapping.withBounds(midpoint(xMin, xMax), midpoint(yMin, yMax), xMin, xMax, yMin, yMax),
+      inheritMapping = false,
+      params
+    )
+
+  def segment[Row](
+      x: Row => Double,
+      y: Row => Double,
+      xEnd: Row => Double,
+      yEnd: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(Geom.Segment, Stat.Identity, data, mapping.withSegment(x, y, xEnd, yEnd), inheritMapping = false, params)
+
+  def errorBar[Row](
+      x: Row => Double,
+      yMin: Row => Double,
+      yMax: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.ErrorBar,
+      Stat.Identity,
+      data,
+      mapping.withYBounds(x, midpoint(yMin, yMax), yMin, yMax),
+      inheritMapping = false,
+      params
+    )
+
+  def ribbon[Row](
+      x: Row => Double,
+      yMin: Row => Double,
+      yMax: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.Ribbon,
+      Stat.Identity,
+      data,
+      mapping.withYBounds(x, midpoint(yMin, yMax), yMin, yMax),
+      inheritMapping = false,
+      params
+    )
+
+  def area[Row](
+      x: Row => Double,
+      y: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.Area,
+      Stat.Identity,
+      data,
+      mapping.withYBounds(
+        x,
+        row => y(row) / 2.0,
+        row => math.min(0.0, y(row)),
+        row => math.max(0.0, y(row))
+      ),
+      inheritMapping = false,
+      params
+    )
+
+  def hline[Row](
+      y: Double,
+      data: Option[Vector[Row]] = None,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.HLine,
+      Stat.Identity,
+      data,
+      AesSpec.empty[Row].withPosition(_ => 0.0, _ => y),
+      inheritMapping = false,
+      params
+    )
+
+  def vline[Row](
+      x: Double,
+      data: Option[Vector[Row]] = None,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.VLine,
+      Stat.Identity,
+      data,
+      AesSpec.empty[Row].withPosition(_ => x, _ => 0.0),
+      inheritMapping = false,
+      params
+    )
+
+  def tile[Row](
+      x: Row => Double,
+      y: Row => Double,
+      width: Row => Double,
+      height: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(
+      Geom.Tile,
+      Stat.Identity,
+      data,
+      mapping.withBounds(
+        x,
+        y,
+        row => x(row) - width(row) / 2.0,
+        row => x(row) + width(row) / 2.0,
+        row => y(row) - height(row) / 2.0,
+        row => y(row) + height(row) / 2.0
+      ),
+      inheritMapping = false,
+      params
+    )
 
   /** Count observations by a discrete key and lower the computed result as
     * bars. Position aesthetics belong to the statistic, so this constructor
@@ -333,6 +558,9 @@ object Layer:
     geom.requiredAesthetics.find(required => !required.isPresent(mapping)) match
       case Some(aesthetic) => Left(GraphicsError.MissingAesthetic(geom.label, aesthetic.label))
       case None            => Right(())
+
+  private def midpoint[Row](lower: Row => Double, upper: Row => Double): Row => Double =
+    row => lower(row) + (upper(row) - lower(row)) / 2.0
 
 final case class PlotLabels(
     title: Option[String] = None,

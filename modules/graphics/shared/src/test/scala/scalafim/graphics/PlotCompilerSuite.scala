@@ -363,17 +363,12 @@ class PlotCompilerSuite extends munit.FunSuite:
     )
   }
 
-  test("unsupported geoms fail at the compiler boundary with typed errors") {
-    val layer =
-      Layer
-        .fromMapping[Observation](
-          Geom.Rect,
-          AesSpec.empty[Observation].withPosition(_.time, _.value),
-          inheritMapping = false
-        )
-        .toOption
-        .get
-    val plot = Plot(data).addLayer(layer).toOption.get
+  test("incomplete geom mappings fail at the typed layer boundary") {
+    val layer = Layer.fromMapping[Observation](
+      Geom.Rect,
+      AesSpec.empty[Observation].withPosition(_.time, _.value),
+      inheritMapping = false
+    )
 
-    assertEquals(PlotCompiler.resolve(plot).left.toOption, Some(GraphicsError.UnsupportedGeom("rect")))
+    assertEquals(layer.left.toOption, Some(GraphicsError.MissingAesthetic("rect", "xmin")))
   }
