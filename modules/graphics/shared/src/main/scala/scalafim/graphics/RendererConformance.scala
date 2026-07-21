@@ -137,6 +137,7 @@ object RendererConformance:
       legend <- legendCase
       scaled <- scaledPlotCase
       solved <- solvedPlotCase
+      faceted <- facetedPlotCase
       counted <- countPlotCase
       scientific <- scientificStatsCase
       flipped <- flippedPlotCase
@@ -158,6 +159,7 @@ object RendererConformance:
       legend,
       scaled,
       solved,
+      faceted,
       counted,
       scientific,
       flipped,
@@ -651,6 +653,43 @@ object RendererConformance:
         RenderRequirement.Text(GraphicsName.unsafe("y-axis-title"), HJust.Center, VJust.Center, rotated = true)
       )
     )
+
+  def facetedPlotCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double, condition: String)
+    val samples =
+      Vector(
+        Sample(0.0, 0.0, "control"),
+        Sample(1.0, 1.0, "control"),
+        Sample(10.0, 2.0, "task"),
+        Sample(20.0, 3.0, "task")
+      )
+    plot(samples)
+      .aes(_.x, _.y)
+      .facetWrap(_.condition, columns = 2)
+      .geomPoint()
+      .scene
+      .map { scene =>
+        ConformanceCase(
+          GraphicsName.unsafe("faceted-plot"),
+          ConformanceGroup.CompiledPlot,
+          scene,
+          Vector(
+            GraphicsName.unsafe("panel-0-0"),
+            GraphicsName.unsafe("strip-0-0"),
+            GraphicsName.unsafe("panel-0-1"),
+            GraphicsName.unsafe("strip-0-1"),
+            GraphicsName.unsafe("x-axis-0-0"),
+            GraphicsName.unsafe("x-axis-0-1"),
+            GraphicsName.unsafe("y-axis-0-0")
+          ),
+          Vector(
+            RenderRequirement.Group(GraphicsName.unsafe("panel-0-0"), clipped = true, rotated = false),
+            RenderRequirement.Group(GraphicsName.unsafe("panel-0-1"), clipped = true, rotated = false),
+            RenderRequirement.Text(GraphicsName.unsafe("strip-0-0"), HJust.Center, VJust.Center, rotated = false),
+            RenderRequirement.Text(GraphicsName.unsafe("strip-0-1"), HJust.Center, VJust.Center, rotated = false)
+          )
+        )
+      }
 
   def countPlotCase: Either[GraphicsError, ConformanceCase] =
     val categories = Vector("control", "task", "task", "other", "task", "control")

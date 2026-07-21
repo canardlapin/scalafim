@@ -132,6 +132,25 @@ class PlotLayoutSuite extends munit.FunSuite:
     )
   }
 
+  test("panel grids allocate stable row-major data and strip frames") {
+    val request = PlotLayoutRequest(grid = Some(PanelGridRequest(rows = 2, columns = 2, count = 4)))
+    val frames = PlotLayoutSolver.solve(policy, request).fold(e => fail(e.message), identity)
+
+    assertEquals(frames.grid.map(frame => (frame.row, frame.column)), Vector((0, 0), (0, 1), (1, 0), (1, 1)))
+    assertEquals(frames.panelFrames, frames.grid.map(_.panel))
+    assert(originY(frames.grid(0).panel) > originY(frames.grid(2).panel))
+    frames.grid.foreach { frame =>
+      assertEqualsDouble(originY(frame.strip), originY(frame.panel) + height(frame.panel), tol)
+      assertEqualsDouble(width(frame.strip), width(frame.panel), tol)
+      assertEqualsDouble(height(frame.strip), npcY(policy.facetStripPt), tol)
+    }
+    assertEqualsDouble(
+      originX(frames.grid(1).panel) - originX(frames.grid(0).panel) - width(frames.grid(0).panel),
+      npcX(policy.panelGapPt),
+      tol
+    )
+  }
+
   test("solver-driven compilation places the legend in its own named viewport") {
     final case class Obs(x: Double, y: Double, condition: String)
     val data = Vector(Obs(0.0, 1.0, "A"), Obs(1.0, 2.0, "B"), Obs(2.0, 3.0, "A"))

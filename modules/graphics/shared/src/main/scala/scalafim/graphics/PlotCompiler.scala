@@ -86,22 +86,35 @@ final case class TrainedPlot[Row](
     guides: Vector[ResolvedGuide],
     scaleRegistry: PlotScaleRegistry,
     panelGrobs: Vector[Grob],
-    labelGrobs: Vector[Grob]
+    labelGrobs: Vector[Grob],
+    facetPanels: Vector[ResolvedFacetPanel[Row]] = Vector.empty
 ):
   def scene: Scene =
     val layerGrobs = layers.flatMap(_.grobs)
     val panelGroup =
-      layout match
-        case None =>
-          layerGrobs
-        case Some(panel) =>
+      if facetPanels.nonEmpty then
+        facetPanels.flatMap { panel =>
           Vector(
             Grob.group(
-              panelGrobs ++ layerGrobs,
-              viewport = Some(panel.viewport),
-              name = Some(GraphicsName.unsafe("plot-panel"))
-            )
+              panel.panelGrobs ++ panel.layers.flatMap(_.grobs),
+              viewport = Some(panel.layout.viewport),
+              name = Some(panel.cell.panelName)
+            ),
+            panel.stripGrob
           )
+        }
+      else
+        layout match
+          case None =>
+            layerGrobs
+          case Some(panel) =>
+            Vector(
+              Grob.group(
+                panelGrobs ++ layerGrobs,
+                viewport = Some(panel.viewport),
+                name = Some(GraphicsName.unsafe("plot-panel"))
+              )
+            )
     Scene(panelGroup ++ guides.map(_.grob) ++ labelGrobs)
 
   def droppedRows: Vector[DroppedRow[Row]] =
@@ -112,6 +125,15 @@ final case class TrainedPlot[Row](
 
   def trainedScales: Vector[TrainedScale] =
     scaleRegistry.scales
+
+final case class ResolvedFacetPanel[Row](
+    cell: FacetCell,
+    layout: PanelLayout,
+    layers: Vector[ResolvedLayer[Row]],
+    scaleRegistry: PlotScaleRegistry,
+    panelGrobs: Vector[Grob],
+    stripGrob: Grob
+)
 
 final case class ResolvedLayer[Row](
     layerIndex: Int,
@@ -192,20 +214,35 @@ object PlotCompiler:
       plot: Plot[Row],
       options: PlotCompilerOptions = PlotCompilerOptions.default
   ): Either[GraphicsError, TrainedPlot[Row]] =
+    val resolvedOptions = effectiveOptions(plot, options)
+    plot.facet match
+      case Some(facet) => FacetCompiler.resolve(plot, facet, resolvedOptions)
+      case None        => resolveSingle(plot, resolvedOptions)
+
+  private[graphics] def effectiveOptions[Row](
+      plot: Plot[Row],
+      options: PlotCompilerOptions
+  ): PlotCompilerOptions =
     val themeNeedsLayout =
       options.theme.panel.background.nonEmpty || options.theme.panel.grid.nonEmpty
     val effectiveOptions =
-      if (!plot.labels.isEmpty || themeNeedsLayout)
+      if (!plot.labels.isEmpty || themeNeedsLayout || plot.facet.nonEmpty)
         && options.layout.isEmpty && options.frame.isEmpty && options.policy.isEmpty
       then options.copy(policy = Some(options.theme.layout))
       else options
     val layoutPolicy = options.theme.layoutPolicy(effectiveOptions.policy.getOrElse(options.theme.layout))
-    val resolvedOptions = effectiveOptions.copy(policy = effectiveOptions.policy.map(_ => layoutPolicy))
+    effectiveOptions.copy(policy = effectiveOptions.policy.map(_ => layoutPolicy))
+
+  private def resolveSingle[Row](
+      plot: Plot[Row],
+      resolvedOptions: PlotCompilerOptions
+  ): Either[GraphicsError, TrainedPlot[Row]] =
+    val layoutPolicy = resolvedOptions.policy.getOrElse(resolvedOptions.theme.layoutPolicy)
     for
       plans <- MappingPhase.plan(plot)
       statPlans <- StatPhase.transform(plans)
       scales <- ScalePhase.train(statPlans)
-      logicalLayers <- resolveLayers(scales.plans, options.theme)
+      logicalLayers <- resolveLayers(scales.plans, resolvedOptions.theme)
       logicalRanges <- LayoutPhase.panelRangesFor(resolvedOptions, logicalLayers)
       specs <- GuidePhase.specs(
         resolvedOptions.guides,
@@ -219,18 +256,27 @@ object PlotCompiler:
       layers = coordinates.layers
       ranges = coordinates.ranges
       resolution <- LayoutPhase.assemble(plot.coord, resolvedOptions, ranges, specs, plot.labels)
-      panelGrobs <- PanelPhase.lower(resolution.layout, specs, options.theme.panel)
+      panelGrobs <- PanelPhase.lower(resolution.layout, specs, resolvedOptions.theme.panel)
       guides <- GuidePhase.lower(
         resolution.layout,
         resolution.frames,
         specs,
         layoutPolicy,
-        options.theme
+        resolvedOptions.theme
       )
-      labels <- PlotLabelPhase.lower(plot.labels, resolution.frames, options.theme.plotText)
-    yield TrainedPlot(layers, resolution.layout, guides, scales.registry, panelGrobs, labels)
+      labels <- PlotLabelPhase.lower(plot.labels, resolution.frames, resolvedOptions.theme.plotText)
+    yield
+      TrainedPlot(
+        layers,
+        resolution.layout,
+        guides,
+        scales.registry,
+        panelGrobs,
+        labels,
+        Vector.empty[ResolvedFacetPanel[Row]]
+      )
 
-  private def resolveLayers[Row](
+  private[graphics] def resolveLayers[Row](
       plans: Vector[StatPlan[Row]],
       theme: Theme
   ): Either[GraphicsError, Vector[ResolvedLayer[Row]]] =

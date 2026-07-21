@@ -384,15 +384,47 @@ private[graphics] object ScalePhase:
   def train[Row](plans: Vector[StatPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
     val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
     Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
-      (result, aesthetic) => result.flatMap(trainAesthetic(_, aesthetic))
+      (result, aesthetic) =>
+        result.flatMap(trainAesthetic(_, aesthetic, facetLocal = false, unifyFacetCopies = false))
     }
+
+  /** Facet statistics are transformed panel-by-panel, so a computed stat may
+    * construct equivalent scale values more than once. Copies are unified
+    * only when they retain the same source layer and compatible descriptor;
+    * distinct plot layers keep the ordinary strict conflict rule.
+    */
+  def trainFacets[Row](plans: Vector[StatPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
+    val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
+    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+      (result, aesthetic) =>
+        result.flatMap(trainAesthetic(_, aesthetic, facetLocal = false, unifyFacetCopies = true))
+    }
+
+  def trainFacetPositions[Row](
+      plans: Vector[StatPlan[Row]],
+      scales: FacetScales
+  ): Either[GraphicsError, Vector[StatPlan[Row]]] =
+    val aesthetics =
+      Vector(
+        Option.when(scales.xIsFree)(Aesthetic.X),
+        Option.when(scales.yIsFree)(Aesthetic.Y)
+      ).flatten
+    val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
+    aesthetics
+      .foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+        (result, aesthetic) =>
+          result.flatMap(trainAesthetic(_, aesthetic, facetLocal = true, unifyFacetCopies = false))
+      }
+      .map(_.plans)
 
   def registry[Row](plan: StatPlan[Row]): ScaleRegistry[StatRow[Row]] =
     ScaleRegistry.fromEnv(plan.env)
 
   private def trainAesthetic[Row](
       resolution: ScaleResolution[Row],
-      aesthetic: Aesthetic[?]
+      aesthetic: Aesthetic[?],
+      facetLocal: Boolean,
+      unifyFacetCopies: Boolean
   ): Either[GraphicsError, ScaleResolution[Row]] =
     val contributions = resolution.plans.flatMap { plan =>
       plan.env.scaledEntry(aesthetic).map(Contribution(plan.layerIndex, plan.data, _))
@@ -401,7 +433,10 @@ private[graphics] object ScalePhase:
       case None =>
         Right(resolution)
       case Some(first) =>
-        contributions.find(contribution => !first.entry.sharesDeclaration(contribution.entry)) match
+        contributions.find { contribution =>
+          !first.entry.sharesDeclaration(contribution.entry) &&
+          !(unifyFacetCopies && compatibleFacetCopy(first, contribution))
+        } match
           case Some(conflicting) =>
             Left(
               GraphicsError.ConflictingPlotScales(
@@ -415,18 +450,30 @@ private[graphics] object ScalePhase:
           case None =>
             val observations = contributions.flatMap(contribution => contribution.entry.observations(contribution.rows))
             for
-              trained <- first.entry.trainPlotWide(observations)
-              plans <- rebind(resolution.plans, aesthetic, observations)
+              trained <- trainEntry(first.entry, observations, facetLocal)
+              plans <- rebind(resolution.plans, aesthetic, observations, facetLocal)
             yield
               ScaleResolution(
                 plans,
                 PlotScaleRegistry.from(resolution.registry.scales :+ trained.trained)
               )
 
+  private def compatibleFacetCopy[Row](
+      first: Contribution[Row],
+      candidate: Contribution[Row]
+  ): Boolean =
+    val left = first.entry.descriptor
+    val right = candidate.entry.descriptor
+    first.layerIndex == candidate.layerIndex &&
+    left.name == right.name &&
+    left.kind == right.kind &&
+    left.training == right.training
+
   private def rebind[Row](
       plans: Vector[StatPlan[Row]],
       aesthetic: Aesthetic[?],
-      observations: Vector[ScaleObservation]
+      observations: Vector[ScaleObservation],
+      facetLocal: Boolean
   ): Either[GraphicsError, Vector[StatPlan[Row]]] =
     val out = Vector.newBuilder[StatPlan[Row]]
     var idx = 0
@@ -437,13 +484,21 @@ private[graphics] object ScalePhase:
         case None =>
           out += plan
         case Some(entry) =>
-          result = entry.trainPlotWide(observations).map { trained =>
+          result = trainEntry(entry, observations, facetLocal).map { trained =>
             val env = trained.install(plan.env)
             out += plan.copy(mapping = AesSpec.fromEnv(env), env = env)
             ()
           }
       idx += 1
     result.map(_ => out.result())
+
+  private def trainEntry[Row](
+      entry: RegisteredScale[Row],
+      observations: Vector[ScaleObservation],
+      facetLocal: Boolean
+  ): Either[GraphicsError, RegisteredScale[Row]] =
+    if facetLocal then entry.trainFacet(observations)
+    else entry.trainPlotWide(observations)
 
 /** Phase 4 — row evaluation: map each stat row through the aesthetic
   * environment, keeping typed drop diagnostics for rows a renderer must skip.
@@ -1061,7 +1116,7 @@ private[graphics] object LayoutPhase:
         if options.guides.requiresLayout then Left(GraphicsError.MissingLayout("guides"))
         else Right(LayoutResolution(None, None))
 
-  private def expandedRanges(
+  private[graphics] def expandedRanges(
       expansion: RangeExpansion,
       xRange: Interval,
       yRange: Interval
@@ -1071,12 +1126,13 @@ private[graphics] object LayoutPhase:
       y <- expansion.expand(yRange)
     yield (x, y)
 
-  private def layoutRequest(
+  private[graphics] def layoutRequest(
       specs: Vector[GuideSpec],
       xRange: Interval,
       yRange: Interval,
       labels: PlotLabels,
-      panelAspect: Option[CoordinateRatio]
+      panelAspect: Option[CoordinateRatio],
+      grid: Option[PanelGridRequest] = None
   ): PlotLayoutRequest =
     val axes = specs.collect { case axis: GuideSpec.Axis =>
       val range = if axis.side.isHorizontal then xRange else yRange
@@ -1092,9 +1148,9 @@ private[graphics] object LayoutPhase:
             legends.flatMap(_.entries.map(_.label)) ++ legends.drop(1).flatMap(_.title)
           )
         )
-    PlotLayoutRequest(axes, legend, labels, panelAspect)
+    PlotLayoutRequest(axes, legend, labels, panelAspect, grid)
 
-  private def panelAspect(
+  private[graphics] def panelAspect(
       coord: Coord,
       xRange: Interval,
       yRange: Interval
@@ -1185,7 +1241,7 @@ private[graphics] object LayoutPhase:
     else
       Vector(Some(primary(row)), row.yEnd, row.yMin, row.yMax).flatten
 
-  private def coordClip(coord: Coord): Clip =
+  private[graphics] def coordClip(coord: Coord): Clip =
     coord.clipping
 
 /** Structural plot text lowers into solver-owned regions before any backend

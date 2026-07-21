@@ -41,7 +41,9 @@ final case class LayoutPolicy(
     legendFontPt: Double = 10.0,
     legendKeyPt: Double = 10.0,
     legendGapPt: Double = 10.0,
-    legendPaddingPt: Double = 6.0
+    legendPaddingPt: Double = 6.0,
+    panelGapPt: Double = 8.0,
+    facetStripPt: Double = 18.0
 ):
   require(outerMarginPt >= 0.0 && outerMarginPt.isFinite, "`outerMarginPt` must be finite and >= 0")
   require(tickLengthPt >= 0.0 && tickLengthPt.isFinite, "`tickLengthPt` must be finite and >= 0")
@@ -56,6 +58,8 @@ final case class LayoutPolicy(
   require(legendKeyPt >= 0.0 && legendKeyPt.isFinite, "`legendKeyPt` must be finite and >= 0")
   require(legendGapPt >= 0.0 && legendGapPt.isFinite, "`legendGapPt` must be finite and >= 0")
   require(legendPaddingPt >= 0.0 && legendPaddingPt.isFinite, "`legendPaddingPt` must be finite and >= 0")
+  require(panelGapPt >= 0.0 && panelGapPt.isFinite, "`panelGapPt` must be finite and >= 0")
+  require(facetStripPt > 0.0 && facetStripPt.isFinite, "`facetStripPt` must be finite and > 0")
 
 /** Stable names for solver-allocated regions. */
 object PlotRegion:
@@ -78,10 +82,23 @@ final case class PlotLayoutRequest(
     axes: Map[AxisSide, AxisRequest] = Map.empty,
     legend: Option[LegendRequest] = None,
     labels: PlotLabels = PlotLabels(),
-    panelAspect: Option[CoordinateRatio] = None
+    panelAspect: Option[CoordinateRatio] = None,
+    grid: Option[PanelGridRequest] = None
 )
 
 final case class LegendRequest(title: Option[String], labels: Vector[String])
+
+final case class PanelGridRequest(rows: Int, columns: Int, count: Int):
+  require(rows >= 1, "`rows` must be >= 1")
+  require(columns >= 1, "`columns` must be >= 1")
+  require(count >= 1 && count <= rows * columns, "`count` must fit in the panel grid")
+
+final case class PanelGridFrame(
+    row: Int,
+    column: Int,
+    panel: PanelFrame,
+    strip: PanelFrame
+)
 
 /** Solved plot regions, all as npc frames of the whole plot area. */
 final case class PlotFrames(
@@ -89,8 +106,12 @@ final case class PlotFrames(
     axes: Map[AxisSide, PanelFrame],
     legend: Option[PanelFrame],
     title: Option[PanelFrame],
-    subtitle: Option[PanelFrame]
+    subtitle: Option[PanelFrame],
+    grid: Vector[PanelGridFrame] = Vector.empty
 ):
+  def panelFrames: Vector[PanelFrame] =
+    if grid.isEmpty then Vector(panel) else grid.map(_.panel)
+
   def legendViewport(clip: Clip = Clip.Off): Option[Viewport] =
     legend.map { frame =>
       Viewport.unsafe(
@@ -179,6 +200,9 @@ object PlotLayoutSolver:
               (availableX0 + (availableW - width) / 2.0, availableY0, width, availableH)
       for
         panel <- PanelFrame.npc(panelX0, panelY0, panelW, panelH)
+        grid <- request.grid match
+          case Some(spec) => panelGridFrames(policy, spec, panelX0, panelY0, panelW, panelH, npcX, npcY)
+          case None       => Right(Vector.empty)
         axes <- axisFrames(request, panelX0, panelY0, panelW, panelH, bottom, top, left, right)
         legend <- legendWidth match
           case Some(width) =>
@@ -194,7 +218,44 @@ object PlotLayoutSolver:
             val y = availableY1 + top + belowLabels + subtitleHeight.getOrElse(0.0) + betweenLabels
             PanelFrame.npc(panelX0, y, panelW, height).map(Some(_))
           case None => Right(None)
-      yield PlotFrames(panel, axes, legend, title, subtitle)
+      yield PlotFrames(panel, axes, legend, title, subtitle, grid)
+
+  private def panelGridFrames(
+      policy: LayoutPolicy,
+      request: PanelGridRequest,
+      panelX: Double,
+      panelY: Double,
+      panelW: Double,
+      panelH: Double,
+      npcX: Double => Double,
+      npcY: Double => Double
+  ): Either[GraphicsError, Vector[PanelGridFrame]] =
+    val gapX = npcX(policy.panelGapPt)
+    val gapY = npcY(policy.panelGapPt)
+    val stripH = npcY(policy.facetStripPt)
+    val cellW = (panelW - gapX * (request.columns - 1).toDouble) / request.columns.toDouble
+    val blockH = (panelH - gapY * (request.rows - 1).toDouble) / request.rows.toDouble
+    val dataH = blockH - stripH
+    if cellW <= 0.0 then Left(GraphicsError.LayoutOverflow("facet panel width"))
+    else if dataH <= 0.0 then Left(GraphicsError.LayoutOverflow("facet panel height"))
+    else
+      val out = Vector.newBuilder[PanelGridFrame]
+      var index = 0
+      var result: Either[GraphicsError, Unit] = Right(())
+      while index < request.count && result.isRight do
+        val row = index / request.columns
+        val column = index % request.columns
+        val x = panelX + column.toDouble * (cellW + gapX)
+        val y = panelY + (request.rows - row - 1).toDouble * (blockH + gapY)
+        result =
+          for
+            panel <- PanelFrame.npc(x, y, cellW, dataH)
+            strip <- PanelFrame.npc(x, y + dataH, cellW, stripH)
+          yield
+            out += PanelGridFrame(row, column, panel, strip)
+            ()
+        index += 1
+      result.map(_ => out.result())
 
   private def axisFrames(
       request: PlotLayoutRequest,

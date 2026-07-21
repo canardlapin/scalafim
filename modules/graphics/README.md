@@ -14,7 +14,7 @@ typed algebra those backends can interpret later:
 - a device-resolution layer (`DeviceContext`, `DeviceScene`) that flattens
   scenes into numeric, y-down device primitives any backend can serialize;
 - a plot layout solver (`PlotLayoutSolver`, `LayoutPolicy`, `TextMetrics`)
-  that allocates named panel, axis-strip, and legend regions;
+  that allocates named panel, facet-strip, axis-strip, and legend regions;
 - a finite immutable `Theme` value for geometry defaults, typography,
   palettes, guides, and optional panel decoration;
 - a renderer conformance contract (`RendererConformance`, `RendererHarness`)
@@ -60,6 +60,11 @@ val points = plot(rows).aes(_.time, _.signal).geomPoint().resolve
 val lines = plot(rows).aes(_.time, _.signal).geomLine().resolve
 val histogram = plot(rows).aes(_.signal).geomHistogram().resolve
 val summary = plot(rows).aes(_.time, _.signal).geomSummary().resolve
+val facets = plot(rows)
+  .aes(_.time, _.signal)
+  .facetWrap(_.condition, columns = 2)
+  .geomPoint()
+  .resolve
 ```
 
 The equivalent ggplot2 inspection pattern requires a plot statement followed
@@ -105,6 +110,12 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   language; conflicting declarations are a typed error instead of silently
   normalizing each layer independently. `ScaleTraining.Fixed` is the explicit
   limits contract when a domain must not expand.
+- Facets partition each layer before statistics run. `facetWrap` and
+  `facetGrid` compile to typed `FacetCell` values, row-major panel groups named
+  `panel-r-c`, and renderer-neutral strip text named `strip-r-c`. Position
+  scales are shared by default; `FreeX`, `FreeY`, and `Free` retrain only the
+  requested panel positions, while color and fill remain plot-global so
+  legends never drift between panels.
 - Default continuous breaks use a deterministic zero-anchored 1/2/5 grid with
   an approximate target count. Use `Breaks.count` when an exact number of
   equally spaced breaks is part of the caller's contract.
@@ -152,6 +163,10 @@ resolution. The scale phase follows ggplot2's core build invariant: scales see
 the union of each layer's stat output before they map values, but encodes the
 one-scale-per-aesthetic rule directly in `PlotScaleRegistry`.
 Guides read that same registry, so marks, axes, and legends cannot disagree.
+Faceted plots repeat mapping and statistics per panel before the scale phase,
+then either train one union scale or fresh panel position scales according to
+`FacetScales`; the remaining row, geom, coordinate, and guide phases stay the
+same renderer-neutral machinery.
 Guides follow a `GuidePolicy`:
 `Derived` produces routine axes from trained scales (transform-aware breaks
 positioned in mapped space) and legends from discrete color/fill palettes,

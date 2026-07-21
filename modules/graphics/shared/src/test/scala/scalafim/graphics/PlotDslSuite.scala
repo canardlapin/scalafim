@@ -105,6 +105,19 @@ class PlotDslSuite extends munit.FunSuite:
     assertEquals(invalidCoord.left.toOption, Some(GraphicsError.InvalidCoordinateRatio(0.0)))
   }
 
+  test("facet builders retain an inspectable typed specification") {
+    val program =
+      plot(rows)
+        .aes(_.x, _.y)
+        .facetWrap(_.group, columns = 1, scales = FacetScales.FreeY)
+        .geomPoint()
+        .build
+        .fold(error => fail(error.message), identity)
+
+    assert(program.plot.facet.nonEmpty)
+    assertEquals(program.resolve.fold(error => fail(error.message), identity).facetPanels.length, 2)
+  }
+
   test("geom prerequisites are compile-time constraints") {
     val pointErrors = typeCheckErrors("""
       import scalafim.graphics.*

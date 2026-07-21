@@ -99,6 +99,13 @@ sealed trait RegisteredScale[Row]:
       RegisteredScale(aesthetic, AesValue.Scaled(value.value, trained))
     }
 
+  final def trainFacet(
+      observations: Vector[ScaleObservation]
+  ): Either[GraphicsError, RegisteredScale[Row]] =
+    scale.trainFacet(observations).map { trained =>
+      RegisteredScale(aesthetic, AesValue.Scaled(value.value, trained))
+    }
+
   final def install(env: AesEnv[Row]): AesEnv[Row] =
     env.updated(aesthetic, value)
 

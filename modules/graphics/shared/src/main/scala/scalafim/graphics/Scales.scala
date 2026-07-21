@@ -500,6 +500,22 @@ final case class ContinuousScale[A] private (
           }
         ContinuousScale.train(name.value, values, palette, transform, oob, training)
 
+  private[graphics] override def trainFacet(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[Double, A]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        ContinuousScale.train(
+          name.value,
+          observations.iterator.collect { case ScaleObservation.Continuous(value) => value },
+          palette,
+          transform,
+          oob,
+          training
+        )
+
   override def mapValue(value: Double): Option[A] =
     mapValueResult(value).toOption
 
@@ -631,6 +647,19 @@ final case class DiscreteScale[A] private (
           .train(observations.iterator.collect { case ScaleObservation.Discrete(value) => value })
           .map(DiscreteScale(name, _, palette, training))
 
+  private[graphics] override def trainFacet(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[String, A]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        val levels = observations.iterator.collect { case ScaleObservation.Discrete(value) => value }.toVector.distinct
+        val trained =
+          if domain.ordered then DiscreteDomain.ordered(levels)
+          else DiscreteDomain.unordered(levels)
+        trained.map(DiscreteScale(name, _, palette, training))
+
   override def mapValue(value: String): Option[A] =
     mapValueResult(value).toOption
 
@@ -674,6 +703,11 @@ trait Scale[-In, +Out]:
       observations: IterableOnce[ScaleObservation]
   ): Either[GraphicsError, Scale[In, Out]] =
     Right(this)
+
+  private[graphics] def trainFacet(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[In, Out]] =
+    trainPlotWide(observations)
 
 final case class ScaleBinding[Row, In, Out](
     aesthetic: Aesthetic[Out],

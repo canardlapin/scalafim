@@ -238,6 +238,33 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   def vline(x: Double, params: Option[GraphicParams] = None): PlotBuilder[Row, Position] =
     addLayer(Right(Layer.vline(x, data = Some(data), params = params)))
 
+  def facetWrap(
+      value: Row => String,
+      columns: Int = 2,
+      levels: Vector[String] = Vector.empty,
+      scales: FacetScales = FacetScales.Shared
+  ): PlotBuilder[Row, Position] =
+    updateResult(
+      for
+        current <- result
+        facet <- FacetSpec.wrap(value, columns, levels, scales)
+      yield current.withFacet(facet)
+    )
+
+  def facetGrid(
+      rows: Row => String,
+      columns: Row => String,
+      rowLevels: Vector[String] = Vector.empty,
+      columnLevels: Vector[String] = Vector.empty,
+      scales: FacetScales = FacetScales.Shared
+  ): PlotBuilder[Row, Position] =
+    updateResult(
+      for
+        current <- result
+        facet <- FacetSpec.grid(rows, columns, rowLevels, columnLevels, scales)
+      yield current.withFacet(facet)
+    )
+
   def coord(coord: Coord): PlotBuilder[Row, Position] =
     updatePlot(_.withCoord(coord))
 

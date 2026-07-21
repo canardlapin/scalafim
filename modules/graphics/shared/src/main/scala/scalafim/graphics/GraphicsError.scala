@@ -40,6 +40,10 @@ enum GraphicsError:
   case StatInputOutsideBins(value: Double, lower: Double, upper: Double)
   case InvalidCoordinateRatio(value: Double)
   case DegenerateFixedAspect(xWidth: Double, yWidth: Double)
+  case InvalidFacetColumns(value: Int)
+  case EmptyFacet
+  case FacetRequiresSolver
+  case FacetFixedCoordinates
   case MissingLayout(feature: String)
   case InvalidLayoutCoordinate(kind: String, value: Double)
   case InvalidDeviceSize(width: Double, height: Double)
@@ -121,6 +125,14 @@ enum GraphicsError:
         s"coordinate ratio must be finite and > 0: $value"
       case DegenerateFixedAspect(xWidth, yWidth) =>
         s"fixed coordinates require non-degenerate expanded ranges: x width $xWidth, y width $yWidth"
+      case InvalidFacetColumns(value) =>
+        s"facet column count must be >= 1: $value"
+      case EmptyFacet =>
+        "facet specification produced no panels"
+      case FacetRequiresSolver =>
+        "facets require a layout policy; explicit single-panel layouts and frames are not facet grids"
+      case FacetFixedCoordinates =>
+        "fixed coordinates are not yet supported for facet grids"
       case MissingLayout(feature) =>
         s"$feature requires a panel layout"
       case InvalidLayoutCoordinate(kind, value) =>

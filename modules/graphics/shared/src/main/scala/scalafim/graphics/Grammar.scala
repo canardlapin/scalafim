@@ -302,6 +302,9 @@ final case class Layer[Row] private (
   def effectiveData(plotData: Vector[Row]): Vector[Row] =
     data.getOrElse(plotData)
 
+  private[graphics] def withData(rows: Vector[Row]): Layer[Row] =
+    copy(data = Some(rows))
+
 object Layer:
   def point[Row](
       x: Row => Double,
@@ -576,7 +579,8 @@ final case class Plot[Row] private (
     mapping: AesSpec[Row],
     layers: Vector[Layer[Row]],
     coord: Coord,
-    labels: PlotLabels
+    labels: PlotLabels,
+    facet: Option[FacetSpec[Row]]
 ):
   def addLayer(layer: Layer[Row]): Either[GraphicsError, Plot[Row]] =
     Layer.validate(layer, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
@@ -602,6 +606,15 @@ final case class Plot[Row] private (
   def withAxisTitles(x: String, y: String): Plot[Row] =
     copy(labels = labels.copy(x = Some(x), y = Some(y)))
 
+  def withFacet(spec: FacetSpec[Row]): Plot[Row] =
+    copy(facet = Some(spec))
+
+  def withoutFacet: Plot[Row] =
+    copy(facet = None)
+
+  private[graphics] def facetPanel(rows: Vector[Row], panelLayers: Vector[Layer[Row]]): Plot[Row] =
+    copy(data = rows, layers = panelLayers, facet = None)
+
   def layerData(layer: Layer[Row]): Vector[Row] =
     layer.effectiveData(data)
 
@@ -619,4 +632,4 @@ final case class Plot[Row] private (
 
 object Plot:
   def apply[Row](data: Vector[Row]): Plot[Row] =
-    Plot(data, AesSpec.empty, Vector.empty, Coord.Cartesian(), PlotLabels())
+    Plot(data, AesSpec.empty, Vector.empty, Coord.Cartesian(), PlotLabels(), None)
