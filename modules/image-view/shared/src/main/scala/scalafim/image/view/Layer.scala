@@ -19,6 +19,8 @@ enum ImageViewError:
   case PointerOutsideViewer
   case InvalidPointer(x: Double, y: Double)
   case InvalidSliceStep(value: Double)
+  case InvalidZoom(value: Double)
+  case InvalidViewCenter(x: Double, y: Double, zoom: Double)
   case SourceFailed(id: LayerId, cause: VolumeSourceError)
   case InvalidCacheCapacity(value: Int)
   case InvalidOrthogonalLayout(margin: Double, gap: Double)
@@ -53,6 +55,10 @@ enum ImageViewError:
         s"viewer pointer coordinates must be finite; got ($x, $y)"
       case InvalidSliceStep(value) =>
         s"slice step must be finite and positive; got $value"
+      case InvalidZoom(value) =>
+        s"viewer zoom must be finite and at least 1; got $value"
+      case InvalidViewCenter(x, y, zoom) =>
+        s"viewer center ($x, $y) must keep zoom $zoom inside the image"
       case SourceFailed(id, cause) =>
         s"layer '${id.asString}' source failed: ${cause.message}"
       case InvalidCacheCapacity(value) =>
@@ -154,8 +160,30 @@ enum LayerMapping:
   case WorldAligned
   case Pullback(referenceToSource: SpatialMorphism)
 
+enum LayerSampleValue:
+  case Scalar(value: Double)
+  case Label(value: Int)
+  case Mask(value: Boolean)
+
+trait LayerValue[A]:
+  def sampleValue(value: A): LayerSampleValue
+
+object LayerValue:
+  given LayerValue[Double] with
+    def sampleValue(value: Double): LayerSampleValue =
+      LayerSampleValue.Scalar(value)
+
+  given LayerValue[Int] with
+    def sampleValue(value: Int): LayerSampleValue =
+      LayerSampleValue.Label(value)
+
+  given LayerValue[Boolean] with
+    def sampleValue(value: Boolean): LayerSampleValue =
+      LayerSampleValue.Mask(value)
+
 private[view] sealed trait SampledLayerSlice:
   def dimensions: SliceDimensions
+  def readout(column: Int, row: Int): Option[LayerSampleValue]
   def colorize(
     window: Option[DisplayWindow],
     threshold: Option[DisplayThreshold]
@@ -189,7 +217,7 @@ sealed trait SliceLayer:
     sample(grid, timepoint).map(_.colorize(window, threshold))
 
 object SliceLayer:
-  def apply[A: ClassTag](
+  def apply[A: ClassTag: LayerValue](
     id: LayerId,
     volume: NeuroVol[A],
     sampling: SliceSampling[A],
@@ -200,7 +228,7 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.static(volume), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def series[A: ClassTag](
+  def series[A: ClassTag: LayerValue](
     id: LayerId,
     series: NeuroVec[A],
     sampling: SliceSampling[A],
@@ -211,7 +239,7 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.series(series), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def fromSource[A: ClassTag](
+  def fromSource[A: ClassTag: LayerValue](
     id: LayerId,
     source: VolumeSource[A],
     sampling: SliceSampling[A],
@@ -222,7 +250,7 @@ object SliceLayer:
   ): SliceLayer =
     Typed(id, source, sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  private final case class Typed[A: ClassTag](
+  private final case class Typed[A: ClassTag: LayerValue](
     id: LayerId,
     source: VolumeSource[A],
     sampling: SliceSampling[A],
@@ -254,7 +282,7 @@ object SliceLayer:
         .map(error => ImageViewError.SourceFailed(id, error))
         .map(volume => TypedFrame(id, volume, sampling, colorizer, mapping))
 
-  private final case class TypedFrame[A: ClassTag](
+  private final case class TypedFrame[A: ClassTag: LayerValue](
     id: LayerId,
     volume: NeuroVol[A],
     sampling: SliceSampling[A],
@@ -276,9 +304,13 @@ object SliceLayer:
   private final case class TypedSample[A](
     slice: SliceImage[A],
     colorizer: Colorizer[A]
-  ) extends SampledLayerSlice:
+  )(using layerValue: LayerValue[A]) extends SampledLayerSlice:
     def dimensions: SliceDimensions =
       slice.dimensions
+
+    def readout(column: Int, row: Int): Option[LayerSampleValue] =
+      if column < 0 || column >= dimensions.width || row < 0 || row >= dimensions.height then None
+      else Some(layerValue.sampleValue(slice(column, row)))
 
     def colorize(
       window: Option[DisplayWindow],

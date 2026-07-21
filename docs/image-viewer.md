@@ -76,6 +76,24 @@ Device input is y-down; panel receipts convert it to root NPC and then to the
 top-to-bottom slice grid. Scrolling follows each plane's positive anatomical
 normal and is independent of screen mirroring.
 
+## Navigation, layouts, and readouts
+
+Each anatomical panel has an independent, checked `PanelView`. Its `ZoomLevel`
+is at least one and its normalized center is constrained so panning cannot move
+outside the sampled image. `SetPanelView` and `ResetPanelView` are pure viewer
+actions. Rendering, crosshairs, and inverse picking all use the same transform,
+so a backend does not need to reimplement navigation geometry.
+
+`OrthogonalLayout` supports the default L-shaped arrangement as well as checked
+single-row and single-column arrangements. Physical slice aspect is preserved
+inside every cell on every device size.
+
+Every compiled `ViewerFrame` also carries a `PanelReadout` for each anatomical
+panel. Readout values are typed as scalar, label, or mask samples and include
+both world and reference-voxel coordinates. They are derived from the sampled
+slice already used for rendering; a raster-cache hit never forces a new source
+read merely to populate a readout.
+
 ## Temporal, lazy, and mapped layers
 
 `SliceLayer.series` displays an in-memory `NeuroVec`. `VolumeSource.lazyFrames`

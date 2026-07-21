@@ -19,6 +19,59 @@ object SliceStep:
 extension (step: SliceStep)
   def millimeters: Double = step
 
+opaque type ZoomLevel = Double
+
+object ZoomLevel:
+  def make(value: Double): Either[ImageViewError, ZoomLevel] =
+    if value.isFinite && value >= 1.0 then Right(value)
+    else Left(ImageViewError.InvalidZoom(value))
+
+  def unsafe(value: Double): ZoomLevel =
+    make(value).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  val One: ZoomLevel =
+    1.0
+
+extension (zoom: ZoomLevel)
+  def factor: Double = zoom
+
+final case class PanelView private (
+  zoom: ZoomLevel,
+  centerX: Double,
+  centerY: Double
+):
+  private[view] def imageLeft: Double =
+    0.5 - centerX * zoom.factor
+
+  private[view] def imageBottom: Double =
+    0.5 - centerY * zoom.factor
+
+  private[view] def imageToLocal(value: Double, center: Double): Double =
+    (value - center) * zoom.factor + 0.5
+
+  private[view] def localToImage(value: Double, center: Double): Double =
+    center + (value - 0.5) / zoom.factor
+
+object PanelView:
+  val Default: PanelView =
+    new PanelView(ZoomLevel.One, 0.5, 0.5)
+
+  def make(
+    zoom: ZoomLevel,
+    centerX: Double,
+    centerY: Double
+  ): Either[ImageViewError, PanelView] =
+    val halfSpan = 0.5 / zoom.factor
+    val valid =
+      centerX.isFinite && centerY.isFinite &&
+        centerX >= halfSpan && centerX <= 1.0 - halfSpan &&
+        centerY >= halfSpan && centerY <= 1.0 - halfSpan
+    if valid then Right(new PanelView(zoom, centerX, centerY))
+    else Left(ImageViewError.InvalidViewCenter(centerX, centerY, zoom.factor))
+
+  def unsafe(zoom: ZoomLevel, centerX: Double, centerY: Double): PanelView =
+    make(zoom, centerX, centerY).fold(err => throw new IllegalArgumentException(err.message), identity)
+
 final case class ViewerPointer private (rootX: Double, rootY: Double)
 
 object ViewerPointer:
@@ -43,6 +96,8 @@ enum ViewerAction:
   case SetConvention(convention: LeftRightConvention)
   case SetPixelSpacing(spacing: PixelSpacing)
   case SetSliceStep(step: SliceStep)
+  case SetPanelView(plane: AnatomicalPlane, view: PanelView)
+  case ResetPanelView(plane: AnatomicalPlane)
   case SetWindow(layer: LayerId, window: DisplayWindow)
   case ClearWindow(layer: LayerId)
   case SetThreshold(layer: LayerId, threshold: DisplayThreshold)
@@ -92,6 +147,18 @@ object ViewerReducer:
         Right(session.copy(state = session.state.copy(pixelSpacing = spacing)))
       case ViewerAction.SetSliceStep(step) =>
         Right(session.copy(state = session.state.copy(sliceStep = step)))
+      case ViewerAction.SetPanelView(plane, view) =>
+        Right(
+          session.copy(
+            state = session.state.copy(panelViews = session.state.panelViews.updated(plane, view))
+          )
+        )
+      case ViewerAction.ResetPanelView(plane) =>
+        Right(
+          session.copy(
+            state = session.state.copy(panelViews = session.state.panelViews.updated(plane, PanelView.Default))
+          )
+        )
       case ViewerAction.SetWindow(layer, window) =>
         withLayer(model, session, layer) { (sliceLayer, current) =>
           if !sliceLayer.supportsWindow then Left(ImageViewError.WindowUnsupported(layer))
