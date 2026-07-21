@@ -36,39 +36,13 @@ object DesignGraphics:
       data: EventPlotData,
       options: EventPlotGraphicsOptions = EventPlotGraphicsOptions()
   ): Either[GraphicsError, Plot[TracePoint]] =
-    if data.points.isEmpty then Left(GraphicsError.EmptyGeometry("event plot"))
-    else if options.colors.isEmpty then Left(GraphicsError.EmptyPalette)
-    else
-      for
-        domain <- regressorDomain(data)
-        colorScale <- DiscreteScale(
-          "regressor",
-          domain,
-          DiscretePalette.valuesUnsafe(options.colors)
-        )
-        plot <- Plot(data.points)
-          .withCoord(Coord.Cartesian(options.clip))
-          .withScale(ScaleBinding[TracePoint, String, Rgba](Aesthetic.Color, _.regressor, colorScale))
-        withLayers <- addTraceLayers(plot, data.points, domain.levels)
-      yield withLayers
+    eventProgram(data, options).map(_.plot)
 
   def eventScene(
       data: EventPlotData,
       options: EventPlotGraphicsOptions = EventPlotGraphicsOptions()
   ): Either[GraphicsError, Scene] =
-    for
-      plot <- eventPlot(data, options)
-      scene <- PlotCompiler.compile(
-        plot,
-        PlotCompilerOptions(
-          policy = Some(options.layoutPolicy),
-          guides = GuidePolicy.Derived(
-            overrides = axisOverrides(options),
-            deriveLegends = options.showLegend
-          )
-        )
-      )
-    yield scene
+    eventProgram(data, options).flatMap(_.scene)
 
   def eventModelScene(
       model: EventModel,
@@ -91,27 +65,50 @@ object DesignGraphics:
       domain <- initial.train(data.points.map(_.regressor))
     yield domain
 
+  private def eventProgram(
+      data: EventPlotData,
+      options: EventPlotGraphicsOptions
+  ): Either[GraphicsError, PlotProgram[TracePoint]] =
+    if data.points.isEmpty then Left(GraphicsError.EmptyGeometry("event plot"))
+    else if options.colors.isEmpty then Left(GraphicsError.EmptyPalette)
+    else
+      for
+        domain <- regressorDomain(data)
+        program <- addTraceLayers(
+          plot(data.points)
+            .aes(_.time, _.response)
+            .scaleColorDiscrete(
+              _.regressor,
+              levels = domain.levels,
+              colors = options.colors,
+              name = "regressor"
+            )
+            .coord(Coord.Cartesian(options.clip))
+            .compilerOptions(
+              PlotCompilerOptions(
+                policy = Some(options.layoutPolicy),
+                guides = GuidePolicy.Derived(
+                  overrides = axisOverrides(options),
+                  deriveLegends = options.showLegend
+                )
+              )
+            ),
+          data.points,
+          domain.levels
+        ).build
+      yield program
+
   private def addTraceLayers(
-      plot: Plot[TracePoint],
+      builder: PlotBuilder[TracePoint, PlotPosition.XY[TracePoint]],
       points: Vector[TracePoint],
       regressors: Vector[String]
-  ): Either[GraphicsError, Plot[TracePoint]] =
-    var out = plot
-    var idx = 0
-    var result: Either[GraphicsError, Unit] = Right(())
-    while idx < regressors.length && result.isRight do
-      val regressor = regressors(idx)
+  ): PlotBuilder[TracePoint, PlotPosition.XY[TracePoint]] =
+    regressors.foldLeft(builder) { (current, regressor) =>
       val trace = points.filter(_.regressor == regressor)
-      if trace.nonEmpty then
-        val layer =
-          if trace.length < 2 then Layer.point[TracePoint](_.time, _.response, data = Some(trace))
-          else Layer.line[TracePoint](_.time, _.response, data = Some(trace))
-        result = out.addLayer(layer).map { next =>
-          out = next
-          ()
-        }
-      idx += 1
-    result.map(_ => out)
+      if trace.isEmpty then current
+      else if trace.length < 2 then current.geomPoint(data = Some(trace))
+      else current.geomLine(data = Some(trace))
+    }
 
   private def axisOverrides(options: EventPlotGraphicsOptions): Vector[GuideSpec] =
     Vector(

@@ -24,6 +24,55 @@ The module has no internal dependencies and cross-compiles to JVM and Scala.js.
 Domain modules should export plot specifications or scenes into this module;
 platform renderers should consume `DeviceScene` values at a boundary.
 
+## Plotting DSL
+
+The ordinary entry point is a small immutable Scala DSL. Position mappings
+change the builder's type, so `geomPoint`, `geomLine`, and `geomSummary` are not
+callable until both x and y exist; histogram and density need only x. Checked
+scale and coordinate failures stay in the final `Either`.
+
+```scala
+import scalafim.graphics.*
+
+final case class Observation(time: Double, signal: Double, condition: String)
+
+val program = plot(rows)
+  .aes(_.time, _.signal)
+  .group(_.condition)
+  .scaleColorDiscrete(_.condition, name = "condition")
+  .geomLine()
+  .geomPoint()
+  .title("Activation over time")
+  .axisTitles("Time (s)", "Signal")
+  .theme(Theme.minimal)
+  .build
+
+val trained = program.flatMap(_.resolve)
+val scene = program.flatMap(_.scene)
+```
+
+`PlotProgram` retains the renderer-neutral `Plot` and `PlotCompilerOptions`, so
+the concise surface does not hide the value being compiled. Canonical plots
+are single inspectable expressions:
+
+```scala
+val points = plot(rows).aes(_.time, _.signal).geomPoint().resolve
+val lines = plot(rows).aes(_.time, _.signal).geomLine().resolve
+val histogram = plot(rows).aes(_.signal).geomHistogram().resolve
+val summary = plot(rows).aes(_.time, _.signal).geomSummary().resolve
+```
+
+The equivalent ggplot2 inspection pattern requires a plot statement followed
+by `ggplot_build` for each case:
+
+```r
+p <- ggplot(rows, aes(time, signal)) + geom_line()
+trained <- ggplot_build(p)
+```
+
+The Scala examples above are compiled as JVM and Scala.js tests in
+`PlotDslSuite`; this is executable syntax, not documentation-only sugar.
+
 ## Core laws
 
 - Scene composition is a monoid: `Scene.empty` is identity and `++` is
@@ -113,7 +162,8 @@ with explicit `GuideSpec` overrides; layout comes from an explicit
 trained extrema remain inside the panel; `RangeExpansion.none` restores exact
 edge-centered framing, and an explicit `PanelLayout` is always authoritative.
 
-A compact labeled plot remains ordinary immutable composition:
+A lower-level plot remains ordinary immutable composition when a domain adapter
+needs direct control of layers:
 
 ```scala
 val plot = Plot(rows)

@@ -30,3 +30,18 @@ portable numerical primitives. It deliberately excludes dataset backends, atlas
 registries, BIDS parsing, plotting, JVM IO, multivariate execution adapters,
 TVGL/SRLC, phase/HMM internals, and scheduler/runtime execution. Those belong
 in higher adapter modules once the structural contracts are stable.
+
+At that application boundary, ordinary connectivity projections can use the
+shared plotting DSL without moving renderer types into this module:
+
+```scala
+import scalafim.graphics.*
+
+final case class EdgeSummary(distance: Double, weight: Double, network: String)
+
+val edgePlot = plot(edgeSummaries)
+  .aes(_.distance, _.weight)
+  .scaleColorDiscrete(_.network, name = "network")
+  .geomPoint()
+  .build
+```

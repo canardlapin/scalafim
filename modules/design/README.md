@@ -44,6 +44,20 @@ val scene = DesignGraphics.eventModelScene(model, termName = Some("task")).toOpt
 val svg = SvgRenderer.render(scene).toOption.get
 ```
 
+`DesignGraphics` itself is implemented with the public plotting DSL. A design
+adapter can use the same surface directly:
+
+```scala
+import scalafim.graphics.*
+
+val trained = plot(eventPlotData.points)
+  .aes(_.time, _.response)
+  .group(_.regressor)
+  .scaleColorDiscrete(_.regressor, levels = eventPlotData.regressors, name = "regressor")
+  .geomLine()
+  .resolve
+```
+
 The dependency direction is `design -> graphics -> graphics-svg` at the
 application boundary. `design` produces plot specs/scenes; SVG remains an
 optional renderer adapter.

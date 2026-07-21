@@ -57,6 +57,47 @@ class DesignGraphicsSuite extends munit.FunSuite:
     )
   }
 
+  test("the DSL migration preserves the previous event scene exactly") {
+    val exported = DesignExports.eventPlotData(eventModel(), termName = Some("task"))
+    val domain =
+      DiscreteDomain
+        .ordered(exported.regressors)
+        .flatMap(_.train(exported.points.map(_.regressor)))
+        .fold(error => fail(error.message), identity)
+    val scale =
+      DiscreteScale(
+        "regressor",
+        domain,
+        DiscretePalette.valuesUnsafe(DesignGraphics.defaultColors)
+      ).fold(error => fail(error.message), identity)
+    val base =
+      Plot(exported.points)
+        .withCoord(Coord.Cartesian())
+        .withScale(ScaleBinding[TracePoint, String, Rgba](Aesthetic.Color, _.regressor, scale))
+        .fold(error => fail(error.message), identity)
+    val legacyPlot = exported.regressors.foldLeft(Right(base): Either[GraphicsError, Plot[TracePoint]]) {
+      (current, regressor) =>
+        val trace = exported.points.filter(_.regressor == regressor)
+        val layer =
+          if trace.length < 2 then Layer.point[TracePoint](_.time, _.response, data = Some(trace))
+          else Layer.line[TracePoint](_.time, _.response, data = Some(trace))
+        current.flatMap(_.addLayer(layer))
+    }.fold(error => fail(error.message), identity)
+    val compilerOptions = PlotCompilerOptions(
+      policy = Some(LayoutPolicy()),
+      guides = GuidePolicy.Derived(
+        overrides = Vector(
+          GuideSpec.Axis(AxisSide.Bottom, name = Some(GraphicsName.unsafe("time-axis"))),
+          GuideSpec.Axis(AxisSide.Left, name = Some(GraphicsName.unsafe("response-axis")))
+        )
+      )
+    )
+    val legacy = PlotCompiler.compile(legacyPlot, compilerOptions).fold(error => fail(error.message), identity)
+    val concise = DesignGraphics.eventScene(exported).fold(error => fail(error.message), identity)
+
+    assertEquals(concise, legacy)
+  }
+
   test("event model helper composes design export errors with graphics errors") {
     val model = eventModel()
     val scene = DesignGraphics.eventModelScene(model, termName = Some("task"))
