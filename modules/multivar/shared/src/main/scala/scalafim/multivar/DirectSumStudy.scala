@@ -1,5 +1,7 @@
 package scalafim.multivar
 
+import gale.linalg.CholeskyOptions
+import gale.linalg.DMat
 import gale.linalg.DoubleLinearOperator
 
 enum DirectSumError:
@@ -52,12 +54,15 @@ final case class PsdConstructionCertificate(
 )
 
 final class DirectSumColumnGeometry[S <: SemanticSpace] private[multivar] (
-    val operator: Lin[Primal[S], Dual[S]],
+    val operator: Op[Primal[S], Dual[S], MetricOperatorRole, UncheckedEvidence],
     val space: SpaceEvidence[S],
     val blockGeometries: Vector[DiagramGeometry[?]],
     val psdCertificate: PsdConstructionCertificate,
-    val isSpd: Boolean
-)
+    val certifiedMetric: Option[OpMetric[S, CertifiedSpd]],
+    val cometric: Option[OpCometric[S, CertifiedSpd]]
+):
+  def isSpd: Boolean =
+    certifiedMetric.nonEmpty && cometric.nonEmpty
 
 final class DirectSumStudy private (
     val studyId: ValueId,
@@ -66,7 +71,7 @@ final class DirectSumStudy private (
     val featureSpace: SpaceRef,
     val blocks: Vector[DirectSumBlock]
 )(
-    val table: Table[rowSpace.Id, featureSpace.Id],
+    val table: OpTable[rowSpace.Id, featureSpace.Id, UncheckedEvidence],
     val columnGeometry: DirectSumColumnGeometry[featureSpace.Id],
     val provenance: SemanticProvenance
 ):
@@ -102,11 +107,12 @@ object DirectSumStudy:
           .left
           .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
         tableIdentity = ValueIdentity.Derived("direct-sum-table", views.map(_.diagram.core.table.valueIdentity))
-        table <- Lin
-          .fromLinearMap[Dual[featureSpace.Id], Primal[rowSpace.Id]](
+        table <- Op
+          .fromLinearMap(
             tableMap,
             CoordinateEvidence.dual(featureSpace.evidence),
             CoordinateEvidence.primal(rowSpace.evidence),
+            OperatorRoleWitness.table,
             tableIdentity,
             provenance
           )
@@ -120,16 +126,23 @@ object DirectSumStudy:
           "direct-sum-column-geometry",
           views.map(_.diagram.core.columnGeometry.operator.valueIdentity)
         )
-        geometryOperator <- Lin
-          .fromLinearMap[Primal[featureSpace.Id], Dual[featureSpace.Id]](
+        geometryOperator <- Op
+          .fromLinearMap(
             geometryMap,
             CoordinateEvidence.primal(featureSpace.evidence),
             CoordinateEvidence.dual(featureSpace.evidence),
+            OperatorRoleWitness.metric,
             geometryIdentity,
             provenance
           )
           .left
           .map(DirectSumError.Semantic.apply)
+        spdPair <- certifiedGeometry(
+          featureSpace.evidence,
+          views.map(_.diagram.core.columnGeometry),
+          geometryOperator,
+          provenance
+        )
       yield
         val geometries = views.map(_.diagram.core.columnGeometry)
         val directGeometry = new DirectSumColumnGeometry(
@@ -142,7 +155,8 @@ object DirectSumStudy:
             "block-diagonal",
             "a block diagonal operator with certified PSD blocks is PSD"
           ),
-          geometries.forall(_.isSpd)
+          spdPair.map(_._1),
+          spdPair.map(_._2)
         )
         new DirectSumStudy(studyId, views, rowSpace, featureSpace, blocks)(
           table,
@@ -154,6 +168,113 @@ object DirectSumStudy:
             )
           )
         )
+
+  private def certifiedGeometry[S <: SemanticSpace](
+      space: SpaceEvidence[S],
+      geometries: Vector[DiagramGeometry[?]],
+      metric: Op[Primal[S], Dual[S], MetricOperatorRole, UncheckedEvidence],
+      provenance: SemanticProvenance
+  ): Either[DirectSumError, Option[(OpMetric[S, CertifiedSpd], OpCometric[S, CertifiedSpd])]] =
+    if !geometries.forall(_.isSpd) then Right(None)
+    else
+      for
+        blockCertificates <- geometries.foldLeft[Either[DirectSumError, Vector[NumericalCertificate]]](
+          Right(Vector.empty)
+        ): (result, geometry) =>
+          result.flatMap: current =>
+            geometry.certificates.find(_.claim.isInstanceOf[CertificateClaim.PositiveDefinite]) match
+              case Some(value) => Right(current :+ value)
+              case None => Left(DirectSumError.InvalidStudy("SPD block geometry is missing its bound certificate"))
+        metricCertificate <- DirectSumOperatorCertificates.spd(
+          metric.valueIdentity,
+          blockCertificates,
+          "block-diagonal-spd"
+        )
+        certifiedMetric <- Op
+          .certifiedSpd(metric, metricCertificate)
+          .left
+          .map(DirectSumError.Semantic.apply)
+        inverseBlocks <- traverseGeometries(geometries)(inverseBlock)
+        inverseMap <- GaleOperators
+          .blockDiagonal(inverseBlocks.map(_.operator))
+          .left
+          .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
+        inverseIdentity = ValueIdentity.derived("direct-sum-column-cometric", inverseBlocks.map(_.identity)*)
+        uncheckedCometric <- Op
+          .fromLinearMap(
+            inverseMap,
+            CoordinateEvidence.dual(space),
+            CoordinateEvidence.primal(space),
+            OperatorRoleWitness.cometric,
+            inverseIdentity,
+            provenance.append(
+              SemanticProvenanceEvent.Derived("block-diagonal-cometric", inverseBlocks.map(_.identity))
+            )
+          )
+          .left
+          .map(DirectSumError.Semantic.apply)
+        cometricCertificate <- DirectSumOperatorCertificates.spd(
+          inverseIdentity,
+          inverseBlocks.map(_.certificate),
+          "block-diagonal-cometric-spd"
+        )
+        cometric <- Op
+          .certifiedSpd(uncheckedCometric, cometricCertificate)
+          .left
+          .map(DirectSumError.Semantic.apply)
+      yield Some(certifiedMetric -> cometric)
+
+  private final case class InverseBlock(
+      operator: DoubleLinearOperator,
+      identity: ValueIdentity,
+      certificate: NumericalCertificate
+  )
+
+  private def inverseBlock(geometry: DiagramGeometry[?]): Either[DirectSumError, InverseBlock] =
+    inverseBlockTyped(geometry)
+
+  private def inverseBlockTyped[S <: SemanticSpace](
+      geometry: DiagramGeometry[S]
+  ): Either[DirectSumError, InverseBlock] =
+    val identity = ValueIdentity.derived("inverse", geometry.operator.valueIdentity)
+    for
+      dense <- geometry
+        .operator(DMat.eye(geometry.space.dimension))
+        .left
+        .map(DirectSumError.Semantic.apply)
+      factor <- dense
+        .cholesky(CholeskyOptions())
+        .left
+        .map(error => DirectSumError.Multivar(LinalgErrorAdapter.toMultivarError(error)))
+      inverse <- factor
+        .solve(DMat.eye(dense.rows))
+        .left
+        .map(error => DirectSumError.Multivar(LinalgErrorAdapter.toMultivarError(error)))
+      linear <- Lin
+        .fromDenseMatrix(
+          DualityKernels.symmetrize(inverse),
+          CoordinateEvidence.dual(geometry.space),
+          CoordinateEvidence.primal(geometry.space),
+          identity,
+          geometry.operator.provenance.append(
+            SemanticProvenanceEvent.Derived("block-cometric", Vector(geometry.operator.valueIdentity))
+          )
+        )
+        .left
+        .map(DirectSumError.Semantic.apply)
+      certificate <- FormCertificates
+        .spd(linear)
+        .left
+        .map(DirectSumError.Semantic.apply)
+    yield InverseBlock(linear.kernel.linearMap, identity, certificate.runtime)
+
+  private def traverseGeometries[A](
+      values: Vector[DiagramGeometry[?]]
+  )(
+      function: DiagramGeometry[?] => Either[DirectSumError, A]
+  ): Either[DirectSumError, Vector[A]] =
+    values.foldLeft[Either[DirectSumError, Vector[A]]](Right(Vector.empty)): (result, value) =>
+      result.flatMap(current => function(value).map(current :+ _))
 
   private def describeBlocks(views: Vector[CompleteStudyView]): Vector[DirectSumBlock] =
     val out = Vector.newBuilder[DirectSumBlock]
@@ -183,7 +304,7 @@ private[multivar] object DirectSumOperators:
       blocks: Vector[DirectSumRowBlock],
       operation: String,
       provenance: SemanticProvenance
-  ): Either[DirectSumError, Lin[Primal[study.rowSpace.Id], Dual[study.rowSpace.Id]]] =
+  ): Either[DirectSumError, OpRowLink[study.rowSpace.Id, study.rowSpace.Id, UncheckedEvidence]] =
     val sizes = study.blocks.map(_.rowSpace.size)
     for
       blockMap <- GaleOperators
@@ -195,11 +316,12 @@ private[multivar] object DirectSumOperators:
         .left
         .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
       identity = ValueIdentity.Derived(operation, blocks.map(_.valueIdentity))
-      operator <- Lin
-        .fromLinearMap[Primal[study.rowSpace.Id], Dual[study.rowSpace.Id]](
+      operator <- Op
+        .fromLinearMap(
           blockMap,
           CoordinateEvidence.primal(study.rowSpace.evidence),
           CoordinateEvidence.dual(study.rowSpace.evidence),
+          OperatorRoleWitness.rowLink,
           identity,
           provenance
         )
@@ -218,9 +340,17 @@ private[multivar] object DirectSumOperators:
         view.diagram.core.rowGeometry.operator.valueIdentity
       )
     }
-    rowOperator(study, blocks, "independent-row-geometry", study.provenance).map { operator =>
+    for
+      operator <- rowOperator(study, blocks, "independent-row-geometry", study.provenance)
+      certificate <- DirectSumOperatorCertificates.psd(
+        operator.valueIdentity,
+        study.views.flatMap(_.diagram.core.rowGeometry.certificates),
+        "block-diagonal-row-geometry"
+      )
+      certified <- Op.certifiedPsd(operator, certificate).left.map(DirectSumError.Semantic.apply)
+    yield
       new RowGeometry(
-        operator,
+        certified,
         PsdConstructionCertificate(
           operator.valueIdentity,
           blocks.map(_.valueIdentity),
@@ -228,21 +358,220 @@ private[multivar] object DirectSumOperators:
           "independent certified PSD row geometries form a PSD direct-sum row geometry"
         )
       )
-    }
 
 final class RowGeometry[S <: SemanticSpace] private[multivar] (
-    val operator: Lin[Primal[S], Dual[S]],
+    val operator: OpRowLink[S, S, CertifiedPsd],
     val psdCertificate: PsdConstructionCertificate
 )
 
 final class ConstraintPenalty[S <: SemanticSpace] private[multivar] (
-    val operator: Lin[Primal[S], Dual[S]],
+    val operator: Op[Primal[S], Dual[S], PenaltyOperatorRole, CertifiedPsd],
     val psdCertificate: PsdConstructionCertificate
 )
 
 final class SymmetricObjectiveForm[S <: SemanticSpace] private[multivar] (
-    val operator: Lin[Primal[S], Dual[S]],
+    val operator: OpRowLink[S, S, CertifiedSymmetric],
+    private[multivar] val blocks: Vector[DirectSumRowBlock],
     val adjointCertificates: Vector[AdjointConsistencyCertificate],
     val potentiallyIndefinite: Boolean,
     val provenance: SemanticProvenance
 )
+
+private[multivar] object DirectSumOperatorCertificates:
+  def spd(
+      identity: ValueIdentity,
+      inputs: Vector[NumericalCertificate],
+      method: String
+  ): Either[DirectSumError, Certificate[SpdProperty]] =
+    val claims = inputs.collect:
+      case NumericalCertificate(_, CertificateClaim.PositiveDefinite(minimum, _, _), _) => minimum
+    if inputs.isEmpty || claims.length != inputs.length then
+      Left(DirectSumError.InvalidStudy(s"$method requires certified SPD block inputs"))
+    else
+      context(method).map: current =>
+        Certificate.unsafe[SpdProperty](
+          identity,
+          CertificateClaim.PositiveDefinite(
+            claims.min,
+            0.0,
+            1.0
+          ),
+          current
+        )
+
+  def psd(
+      identity: ValueIdentity,
+      inputs: Vector[NumericalCertificate],
+      method: String
+  ): Either[DirectSumError, Certificate[PsdProperty]] =
+    if inputs.isEmpty || !inputs.forall(certificate =>
+        certificate.claim.isInstanceOf[CertificateClaim.PositiveSemidefinite] ||
+          certificate.claim.isInstanceOf[CertificateClaim.PositiveDefinite]
+      )
+    then Left(DirectSumError.InvalidStudy(s"$method requires certified PSD block inputs"))
+    else
+      context(method).map: current =>
+        Certificate.unsafe[PsdProperty](
+          identity,
+          CertificateClaim.PositiveSemidefinite(0.0, 0.0, 1.0),
+          current
+        )
+
+  def symmetric(
+      identity: ValueIdentity,
+      method: String
+  ): Either[DirectSumError, Certificate[SymmetryProperty]] =
+    context(method).map: current =>
+      Certificate.unsafe[SymmetryProperty](identity, CertificateClaim.Symmetric(0.0, 1.0), current)
+
+  private def context(method: String): Either[DirectSumError, CertificateContext] =
+    CertificateContext
+      .from(
+        CertificateTolerance.strict,
+        CertificateNorm.Frobenius,
+        method,
+        "operator-algebra",
+        NumericalPrecision.Float64
+      )
+      .left
+      .map(DirectSumError.Semantic.apply)
+
+sealed trait DirectSumSecondOrderBlock:
+  type SourceFeature <: SemanticSpace
+  type TargetFeature <: SemanticSpace
+  def sourceId: BlockId
+  def targetId: BlockId
+  def rowBlock: Int
+  def columnBlock: Int
+  def operator: Op[Dual[TargetFeature], Primal[SourceFeature], CrossOperatorRole, UncheckedEvidence]
+
+  private[multivar] def linearOperator: DoubleLinearOperator =
+    operator.kernel.linearMap
+
+object DirectSumSecondOrderBlock:
+  private[multivar] def apply[SF <: SemanticSpace, TF <: SemanticSpace](
+      source: BlockId,
+      target: BlockId,
+      outputBlock: Int,
+      inputBlock: Int,
+      value: Op[Dual[TF], Primal[SF], CrossOperatorRole, UncheckedEvidence]
+  ): DirectSumSecondOrderBlock { type SourceFeature = SF; type TargetFeature = TF } =
+    new DirectSumSecondOrderBlock:
+      type SourceFeature = SF
+      type TargetFeature = TF
+      override val sourceId: BlockId = source
+      override val targetId: BlockId = target
+      override val rowBlock: Int = outputBlock
+      override val columnBlock: Int = inputBlock
+      override val operator: Op[Dual[TF], Primal[SF], CrossOperatorRole, UncheckedEvidence] = value
+
+final case class SecondOrderAssemblyCertificate(
+    blockOperators: Vector[ValueIdentity],
+    directOperator: ValueIdentity,
+    proof: String
+)
+
+/** Feature-space association assembled from pairwise `secondOrder` blocks.
+  * `direct` is the independent direct-sum expression `X* L X`; retaining both
+  * representations makes their equivalence testable without densifying either
+  * block assembly.
+  */
+final class DirectSumAssociationOperator[S <: SemanticSpace] private[multivar] (
+    val blocks: Vector[DirectSumSecondOrderBlock],
+    val operator: Op[Dual[S], Primal[S], CrossOperatorRole, CertifiedSymmetric],
+    val direct: Op[Dual[S], Primal[S], CrossOperatorRole, UncheckedEvidence],
+    val certificate: SecondOrderAssemblyCertificate
+)
+
+object DirectSumFeatureOperators:
+  def association(
+      study: DirectSumStudy,
+      objective: SymmetricObjectiveForm[study.rowSpace.Id]
+  ): Either[DirectSumError, DirectSumAssociationOperator[study.featureSpace.Id]] =
+    for
+      featureBlocks <- objective.blocks.foldLeft[Either[DirectSumError, Vector[DirectSumSecondOrderBlock]]](
+        Right(Vector.empty)
+      ): (result, block) =>
+        result.flatMap(current => secondOrderBlock(study, block).map(current :+ _))
+      blockMap <- GaleOperators
+        .blockMatrix(
+          study.blocks.map(_.featureSpace.size),
+          study.blocks.map(_.featureSpace.size),
+          featureBlocks.map(block => LinearOperatorBlock(block.rowBlock, block.columnBlock, block.linearOperator))
+        )
+        .left
+        .map(error => DirectSumError.Semantic(SemanticError.LinearMapFailure(error)))
+      identity = ValueIdentity.derived("direct-sum-second-order-blocks", featureBlocks.map(_.operator.valueIdentity)*)
+      unchecked <- Op
+        .fromLinearMap(
+          blockMap,
+          CoordinateEvidence.dual(study.featureSpace.evidence),
+          CoordinateEvidence.primal(study.featureSpace.evidence),
+          OperatorRoleWitness.cross,
+          identity,
+          objective.provenance.append(
+            SemanticProvenanceEvent.Derived(
+              "assemble-second-order-blocks",
+              featureBlocks.map(_.operator.valueIdentity)
+            )
+          )
+        )
+        .left
+        .map(DirectSumError.Semantic.apply)
+      symmetry <- DirectSumOperatorCertificates.symmetric(identity, "second-order-adjoint-block-pairs")
+      certified <- Op.certifiedSymmetric(unchecked, symmetry).left.map(DirectSumError.Semantic.apply)
+      direct = OperatorAlgebra.secondOrder(study.table, objective.operator, study.table)
+    yield
+      new DirectSumAssociationOperator(
+        featureBlocks,
+        certified,
+        direct,
+        SecondOrderAssemblyCertificate(
+          featureBlocks.map(_.operator.valueIdentity),
+          direct.valueIdentity,
+          "each feature block is secondOrder(X_s, L_st, X_t); block assembly equals X_oplus* L X_oplus"
+        )
+      )
+
+  private def secondOrderBlock(
+      study: DirectSumStudy,
+      block: DirectSumRowBlock
+  ): Either[DirectSumError, DirectSumSecondOrderBlock] =
+    if block.rowBlock < 0 || block.rowBlock >= study.views.length ||
+        block.columnBlock < 0 || block.columnBlock >= study.views.length
+    then Left(DirectSumError.InvalidStudy("row-relation block lies outside the direct-sum view grid"))
+    else
+      val source = study.views(block.rowBlock)
+      val target = study.views(block.columnBlock)
+      secondOrderBlockTyped(source, target, block)
+
+  private def secondOrderBlockTyped(
+      source: CompleteStudyView,
+      target: CompleteStudyView,
+      block: DirectSumRowBlock
+  ): Either[DirectSumError, DirectSumSecondOrderBlock] =
+    val sourceTable = Op.fromLin(source.diagram.core.table, OperatorRoleWitness.table)
+    val targetTable = Op.fromLin(target.diagram.core.table, OperatorRoleWitness.table)
+    for
+      relationship <- Op
+        .fromLinearMap(
+          block.operator,
+          CoordinateEvidence.primal(target.diagram.core.rowGeometry.space),
+          CoordinateEvidence.dual(source.diagram.core.rowGeometry.space),
+          OperatorRoleWitness.rowLink,
+          block.valueIdentity,
+          (source.diagram.provenance ++ target.diagram.provenance).append(
+            SemanticProvenanceEvent.Derived("direct-sum-row-block", Vector(block.valueIdentity))
+          )
+        )
+        .left
+        .map(DirectSumError.Semantic.apply)
+      secondOrder = OperatorAlgebra.secondOrder(sourceTable, relationship, targetTable)
+    yield
+      DirectSumSecondOrderBlock(
+        source.id,
+        target.id,
+        block.rowBlock,
+        block.columnBlock,
+        secondOrder
+      )

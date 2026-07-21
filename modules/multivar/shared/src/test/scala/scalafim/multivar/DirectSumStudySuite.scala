@@ -58,7 +58,7 @@ class DirectSumStudySuite extends munit.FunSuite:
       val rightEntry: EntityMapEntry[entities.Id]
   )
 
-  private def fixture(): Fixture =
+  private def fixture(leftOrder: Vector[Int] = Vector(0, 1, 2)): Fixture =
     val leftRows = ref("direct.left.rows", SpaceRole.Samples, 3)
     val rightRows = ref("direct.right.rows", SpaceRole.Samples, 2)
     val leftFeatures = ref("direct.left.features", SpaceRole.Observed, 1)
@@ -66,10 +66,11 @@ class DirectSumStudySuite extends munit.FunSuite:
     val entities = ref("direct.entities", SpaceRole.Samples, 4)
     val leftId = BlockId.unsafe("left")
     val rightId = BlockId.unsafe("right")
+    val leftBase = GaleNumerics.matrixFromRows(Vector(Vector(0.0), Vector(1.0), Vector(2.0)))
     val leftDiagram = diagram(
       leftRows.evidence,
       leftFeatures.evidence,
-      GaleNumerics.matrixFromRows(Vector(Vector(0.0), Vector(1.0), Vector(2.0))),
+      leftBase.selectRows(leftOrder),
       "direct.left"
     )
     val rightDiagram = diagram(
@@ -89,7 +90,7 @@ class DirectSumStudySuite extends munit.FunSuite:
         .fromEdges(
           leftRows.evidence,
           entities.evidence,
-          Vector((0, 0), (1, 1), (2, 2)),
+          leftOrder.zipWithIndex.map { case (entity, row) => (row, entity) },
           value("direct.left-map")
         )
         .map(_.rowMap)
@@ -115,8 +116,13 @@ class DirectSumStudySuite extends munit.FunSuite:
     )
     new Fixture(entities)(study, alignment, leftEntry, rightEntry)
 
-  private def materialize[From <: Coordinate, To <: Coordinate](operator: Lin[From, To]): DMat =
-    acceptedSemantic(operator(DMat.eye(operator.cols)))
+  private def materialize[
+      From <: Coordinate,
+      To <: Coordinate,
+      R <: OperatorRoleTag,
+      E <: OperatorEvidence
+  ](operator: Op[From, To, R, E]): DMat =
+    acceptedSemantic(operator.toDense)
 
   private def assertMatrix(actual: DMat, expected: DMat): Unit =
     assertEquals(actual.rows, expected.rows)
@@ -137,12 +143,28 @@ class DirectSumStudySuite extends munit.FunSuite:
       )
     )
 
+  private def associationProblem(
+      data: Fixture
+  ): MaximizeAssociation[data.study.rowSpace.Id] =
+    val objective = accepted(DirectSumRowForms.hubAssociation(data.study, data.alignment, design(data.study)))
+    MaximizeAssociation(
+      objective,
+      ObjectiveDefinition(
+        ObjectiveFormula.PairwiseAssociation,
+        "maximize t* L t = sum_{s != t} gamma_st t_s* L_st t_t",
+        Vector("W* Q W = I"),
+        ObjectiveNormalization.DirectSumMetricOrthonormal,
+        SolverFormulation.SymmetricFeatureEigen,
+        SolvedToReportedRelationship.Identical
+      )
+    )
+
   test("direct-sum study compiles tables and column forms as block-diagonal operators") {
     val data = fixture()
     assertEquals(data.study.rowSpace.evidence.dimension, 5)
     assertEquals(data.study.featureSpace.evidence.dimension, 2)
-    assertEquals(data.study.table.descriptor.representation, OperatorRepresentation.Block)
-    assertEquals(data.study.columnGeometry.operator.descriptor.representation, OperatorRepresentation.Block)
+    assertEquals(data.study.table.representation, OperatorRepresentation.Block)
+    assertEquals(data.study.columnGeometry.operator.representation, OperatorRepresentation.Block)
     assert(data.study.columnGeometry.isSpd)
     assertMatrix(
       materialize(data.study.table),
@@ -205,16 +227,7 @@ class DirectSumStudySuite extends munit.FunSuite:
 
   test("a real partially aligned multiset association fit uses the compiled operator") {
     val data = fixture()
-    val objective = accepted(DirectSumRowForms.hubAssociation(data.study, data.alignment, design(data.study)))
-    val definition = ObjectiveDefinition(
-      ObjectiveFormula.PairwiseAssociation,
-      "maximize t* L t = sum_{s != t} gamma_st t_s* L_st t_t",
-      Vector("v* R v = I"),
-      ObjectiveNormalization.DirectSumMetricOrthonormal,
-      SolverFormulation.SymmetricFeatureEigen,
-      SolvedToReportedRelationship.Identical
-    )
-    val problem = MaximizeAssociation(objective, definition)
+    val problem = associationProblem(data)
     val fit = accepted(
       MultisetAssociation.fit(
         data.study,
@@ -228,9 +241,65 @@ class DirectSumStudySuite extends munit.FunSuite:
     assertEquals(fit.featureAxes.rows, 2)
     assertEquals(fit.directSumScores.rows, 5)
     assertEquals(fit.viewScores.map(_.values.rows), Vector(3, 2))
-    assertEquals(fit.objective, definition)
+    assertEquals(fit.objective, problem.definition)
     assertEquals(fit.diagnostics.rowOperatorRepresentation, OperatorRepresentation.Block)
-    assert(fit.diagnostics.formulation.contains("eigendecomposition"))
+    assertEquals(fit.diagnostics.featureOperatorRepresentation, OperatorRepresentation.Block)
+    assert(fit.diagnostics.formulation.contains("OperatorProgram"))
+    assertEquals(fit.programFit.program.objective.label, "maximize-trace")
+    assert(fit.programFit.program.resultSemantics.equivalence.isInstanceOf[ResultEquivalence.SubspaceEquivalent])
+    assertEquals(fit.operatorBundle.resultSemantics, fit.programFit.program.resultSemantics)
+    assertEquals(fit.componentAssociation.role.value, OperatorRole.Component)
+    assertEqualsDouble(materialize(fit.componentAssociation)(0, 0), fit.eigenvalues(0), 1e-8)
+    assertEquals(
+      fit.programFit.frames.head.parameter.componentSpace.descriptor,
+      fit.functionalFrame.weights.domain.descriptor.space
+    )
+  }
+
+  test("pairwise second-order blocks equal the direct-sum operator and an independent dense oracle") {
+    val data = fixture()
+    val problem = associationProblem(data)
+    val association = accepted(DirectSumFeatureOperators.association(data.study, problem.objective))
+    val table = materialize(data.study.table)
+    val rowRelation = materialize(problem.objective.operator)
+    val expected = GaleNumerics.multiply(table.t, GaleNumerics.multiply(rowRelation, table))
+
+    assertEquals(association.blocks.length, 2)
+    assert(association.blocks.forall(_.operator.role.value == OperatorRole.Cross))
+    assertEquals(association.operator.representation, OperatorRepresentation.Block)
+    assertMatrix(materialize(association.operator), expected)
+    assertMatrix(materialize(association.direct), expected)
+    assert(association.certificate.proof.contains("secondOrder"))
+
+    val leftToRight = association.blocks.find(block =>
+      block.sourceId == BlockId.unsafe("left") && block.targetId == BlockId.unsafe("right")
+    ).get
+    assertEqualsDouble(materialize(leftToRight.operator)(0, 0), 11.0, 1e-12)
+  }
+
+  test("hub-factorized association is invariant to a consistent within-view row permutation") {
+    val original = fixture()
+    val permuted = fixture(Vector(2, 0, 1))
+    val originalFit = accepted(
+      MultisetAssociation.fit(
+        original.study,
+        associationProblem(original),
+        ComponentCount.unsafe(1),
+        StoragePolicy.AllowDense
+      )
+    )
+    val permutedFit = accepted(
+      MultisetAssociation.fit(
+        permuted.study,
+        associationProblem(permuted),
+        ComponentCount.unsafe(1),
+        StoragePolicy.AllowDense
+      )
+    )
+
+    assertEqualsDouble(permutedFit.eigenvalues(0), originalFit.eigenvalues(0), 1e-10)
+    assertEquals(permutedFit.association.blocks.map(block => block.sourceId -> block.targetId),
+      originalFit.association.blocks.map(block => block.sourceId -> block.targetId))
   }
 
   test("agreement constraints have distinct hard, bounded, and PSD penalty semantics") {

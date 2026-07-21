@@ -222,19 +222,24 @@ object DirectSumRowForms:
         case Some(value) => Left(value)
         case None =>
           val compiled = blocks.result()
-          DirectSumOperators
-            .rowOperator(study, compiled, "hub-row-geometry", alignment.provenance)
-            .map { operator =>
-              new RowGeometry(
-                operator,
-                PsdConstructionCertificate(
-                  operator.valueIdentity,
-                  compiled.map(_.valueIdentity),
-                  "hub-factorized-block-form",
-                  alignment.globalBlockPsdCertificate.proof
-                )
+          for
+            operator <- DirectSumOperators.rowOperator(study, compiled, "hub-row-geometry", alignment.provenance)
+            certificate <- DirectSumOperatorCertificates.psd(
+              operator.valueIdentity,
+              alignment.entityForm.certificates,
+              "hub-factorized-row-geometry"
+            )
+            certified <- Op.certifiedPsd(operator, certificate).left.map(DirectSumError.Semantic.apply)
+          yield
+            new RowGeometry(
+              certified,
+              PsdConstructionCertificate(
+                operator.valueIdentity,
+                compiled.map(_.valueIdentity),
+                "hub-factorized-block-form",
+                alignment.globalBlockPsdCertificate.proof
               )
-            }
+            )
     }
 
   def hubAssociation[E <: SemanticSpace](
@@ -293,11 +298,27 @@ object DirectSumRowForms:
         error match
           case Some(value) => Left(value)
           case None =>
-            DirectSumOperators
-              .rowOperator(study, blocks.result(), "hub-association-objective", alignment.provenance)
-              .map { operator =>
-                new SymmetricObjectiveForm(operator, certificates.result(), potentiallyIndefinite = true, alignment.provenance)
-              }
+            val compiled = blocks.result()
+            for
+              operator <- DirectSumOperators.rowOperator(
+                study,
+                compiled,
+                "hub-association-objective",
+                alignment.provenance
+              )
+              certificate <- DirectSumOperatorCertificates.symmetric(
+                operator.valueIdentity,
+                "hub-association-adjoint-pairs"
+              )
+              certified <- Op.certifiedSymmetric(operator, certificate).left.map(DirectSumError.Semantic.apply)
+            yield
+              new SymmetricObjectiveForm(
+                certified,
+                compiled,
+                certificates.result(),
+                potentiallyIndefinite = true,
+                alignment.provenance
+              )
     }
 
   def pairwiseAssociation(
@@ -346,16 +367,27 @@ object DirectSumRowForms:
       error match
         case Some(value) => Left(value)
         case None =>
-          DirectSumOperators
-            .rowOperator(linked.study, blocks.result(), "pairwise-association-objective", linked.study.provenance)
-            .map { operator =>
-              new SymmetricObjectiveForm(
-                operator,
-                linked.certificates.adjoint,
-                potentiallyIndefinite = true,
-                linked.study.provenance
-              )
-            }
+          val compiled = blocks.result()
+          for
+            operator <- DirectSumOperators.rowOperator(
+              linked.study,
+              compiled,
+              "pairwise-association-objective",
+              linked.study.provenance
+            )
+            certificate <- DirectSumOperatorCertificates.symmetric(
+              operator.valueIdentity,
+              "pairwise-association-adjoint-pairs"
+            )
+            certified <- Op.certifiedSymmetric(operator, certificate).left.map(DirectSumError.Semantic.apply)
+          yield
+            new SymmetricObjectiveForm(
+              certified,
+              compiled,
+              linked.certificates.adjoint,
+              potentiallyIndefinite = true,
+              linked.study.provenance
+            )
 
   private def validateHubStudy[E <: SemanticSpace](
       study: DirectSumStudy,
@@ -386,7 +418,7 @@ enum ConstraintSemantics:
   case Bounded(weight: ValueIdentity, epsilon: Double)
 
 final class LinearConstraint[S <: SemanticSpace, H <: SemanticSpace] private[multivar] (
-    val operator: Lin[Primal[S], Primal[H]],
+    val operator: Op[Primal[S], Primal[H], ConstraintOperatorRole, UncheckedEvidence],
     val source: SpaceEvidence[S],
     val target: SpaceEvidence[H],
     val formula: String,
@@ -422,10 +454,21 @@ final class LinearConstraint[S <: SemanticSpace, H <: SemanticSpace] private[mul
     if weight.space.descriptor != target.descriptor then
       Left(DirectSumError.IncompatibleRelationship("constraint weight belongs to a different space"))
     else
-      val penalty = operator.andThen(weight.operator).andThen(operator.star)
-      Right(
+      val weightOperator = Op.fromLin(weight.operator, OperatorRoleWitness.metric)
+      val penalty = operator
+        .andThen(weightOperator)
+        .andThen(operator.dual)
+        .retag(OperatorRoleWitness.penalty, "agreement-quadratic-penalty")
+      for
+        certificate <- DirectSumOperatorCertificates.psd(
+          penalty.valueIdentity,
+          weight.certificates,
+          "agreement-quadratic-pullback"
+        )
+        certified <- Op.certifiedPsd(penalty, certificate).left.map(DirectSumError.Semantic.apply)
+      yield
         new ConstraintPenalty(
-          penalty,
+          certified,
           PsdConstructionCertificate(
             penalty.valueIdentity,
             Vector(operator.valueIdentity, weight.operator.valueIdentity),
@@ -433,7 +476,6 @@ final class LinearConstraint[S <: SemanticSpace, H <: SemanticSpace] private[mul
             "B* W B is PSD because W is certified PSD"
           )
         )
-      )
 
 final case class HardScoreConstraint[S <: SemanticSpace, H <: SemanticSpace](
     constraint: LinearConstraint[S, H],
@@ -479,11 +521,12 @@ object LinearConstraint:
         left.map.operator.valueIdentity,
         right.map.operator.valueIdentity
       )
-      operator <- Lin
-        .fromLinearMap[Primal[study.rowSpace.Id], Primal[E]](
+      operator <- Op
+        .fromLinearMap(
           blockMap,
           CoordinateEvidence.primal(study.rowSpace.evidence),
           left.map.operator.codomain,
+          OperatorRoleWitness.constraint,
           identity,
           (left.map.provenance ++ right.map.provenance).append(
             SemanticProvenanceEvent.Derived(
