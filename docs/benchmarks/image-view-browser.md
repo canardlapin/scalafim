@@ -16,6 +16,8 @@ The deterministic benchmark entry point is
 - cold compilation, sampling, colorization, Canvas upload, and draw;
 - warm redraw with all sampled slices, rasters, and native image sources cached;
 - axial scrolling, where sagittal and coronal rasters must remain cached;
+- adjacent-slice-prefetched axial scrolling, whose visible render must perform
+  no sampling or colorization;
 - display-window changes, which recolorize without volume reads or resampling;
 - nonlinear dense-field pullback scrolling;
 - source-read counts, viewer/Canvas work receipts, and a final canvas checksum.
@@ -54,6 +56,8 @@ Before timings are interpreted, the receipt must show:
   bytes;
 - axial scrolling misses one raster per visible layer and reuses the other two
   planes;
+- a bounded one-slice prefetch turns the subsequent visible scroll into six
+  raster hits with zero visible sampling or colorization;
 - window changes have zero source reads and zero sampled pixels;
 - nonlinear scrolling misses only the moved plane and reuses the other two;
 - the canvas checksum is non-empty and stable for the same linked artifact.
@@ -125,6 +129,15 @@ scene compilation was 0.067 ms and median cached Canvas drawing was 0.030 ms.
 The entire warm path is therefore about 0.10 ms; a split could recover only a
 fraction of that and would not reduce sampling on scroll. It is not justified
 for the current viewer.
+
+The Canvas application layer now also exposes two latency controls without
+changing synchronous compilation. `CanvasScrollCoordinator` combines wheel
+events per anatomical plane until the next application-scheduled frame; the
+resulting summed world-space translations are reducer-equivalent. Bounded
+`prefetchSlices` accepts only the immediately adjacent offsets `-1` and `1`
+and warms sampled/raster caches without changing visible state or uploading a
+Canvas image. The browser receipt reports the visible prefetched-scroll phase
+separately from the idle prefetch work.
 
 A Chrome performance trace reported a 1 ms document response and an 8.884 s
 render delay because this diagnostic page deliberately runs the complete

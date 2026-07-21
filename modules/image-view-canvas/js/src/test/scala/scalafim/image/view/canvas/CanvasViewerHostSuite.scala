@@ -81,6 +81,68 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(controller.dispatch(ViewerAction.SetTimepoint(0)), Left(CanvasViewerError.ControllerClosed))
   }
 
+  test("scroll bursts coalesce and adjacent prefetch removes visible sampling work") {
+    final class ManualScheduler extends CanvasTaskScheduler:
+      private var tasks = Vector.empty[() => Unit]
+
+      def schedule(task: () => Unit): Unit =
+        tasks :+= task
+
+      def pendingCount: Int =
+        tasks.length
+
+      def run(): Unit =
+        val current = tasks
+        tasks = Vector.empty
+        current.foreach(_())
+
+    val controller = CanvasViewerHost.controller(
+      model,
+      session,
+      viewerCacheCapacity = 12,
+      rasterCacheCapacity = 6
+    ).toOption.get
+    val scheduler = new ManualScheduler
+    var flushed = Option.empty[(Either[CanvasViewerError, ViewerSession], CanvasScrollBatch)]
+    val coordinator = controller.scrollCoordinator(scheduler) { (result, batch) =>
+      flushed = Some(result -> batch)
+    }.toOption.get
+    coordinator.enqueue(AnatomicalPlane.Axial, 1)
+    coordinator.enqueue(AnatomicalPlane.Axial, 2)
+    coordinator.enqueue(AnatomicalPlane.Axial, -2)
+
+    assertEquals(scheduler.pendingCount, 1)
+    scheduler.run()
+    val (result, batch) = flushed.get
+    assert(result.isRight)
+    assertEquals(batch.submittedEvents, 3)
+    assertEquals(batch.executedActions, 1)
+    assertEquals(batch.netSteps, Map(AnatomicalPlane.Axial -> 1))
+    assertEquals(
+      controller.session.toOption.get.state.cursor,
+      session.state.cursor + AnatomicalPlane.Axial.positiveNormal.unit.scaled(session.state.sliceStep.millimeters)
+    )
+
+    val prefetchController = CanvasViewerHost.controller(
+      model,
+      session,
+      viewerCacheCapacity = 12,
+      rasterCacheCapacity = 6
+    ).toOption.get
+    val prefetched = prefetchController.prefetchSlices(
+      AnatomicalPlane.Axial,
+      Vector(1)
+    ).toOption.get
+    assertEquals(prefetched.requestedSlices, 1)
+    assert(prefetched.viewerProfile.sampledPixels > 0L)
+    prefetchController.dispatch(ViewerAction.Scroll(AnatomicalPlane.Axial, 1)).toOption.get
+    val warm = prefetchController.compile().toOption.get
+    assertEquals(warm.viewerProfile.cacheHits, 3)
+    assertEquals(warm.viewerProfile.sampledPixels, 0L)
+    assertEquals(warm.viewerProfile.colorizedPixels, 0L)
+    assert(prefetchController.prefetchSlices(AnatomicalPlane.Axial, Vector(2)).isLeft)
+  }
+
   test("runtime preserves viewer rasters and Canvas uploads across redraws") {
     var uploads = 0
     given CanvasRasterFactory with

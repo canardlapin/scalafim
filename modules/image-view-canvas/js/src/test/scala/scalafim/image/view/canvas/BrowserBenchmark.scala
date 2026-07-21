@@ -65,6 +65,12 @@ object BrowserBenchmark:
       )
       render(scrollRuntime, affine.model, next, context)
     }
+    val prefetchedScroll = measurePrefetchedScroll(
+      affine.model,
+      affine.session,
+      context,
+      repetitions = 24
+    )
 
     val windowRuntime = makeRuntime()
     render(windowRuntime, affine.model, affine.session, context)
@@ -102,6 +108,10 @@ object BrowserBenchmark:
     val scrollContract =
       scroll.viewer.rasterHits.asInstanceOf[Int] == 4 &&
         scroll.viewer.rasterMisses.asInstanceOf[Int] == 2
+    val prefetchContract =
+      prefetchedScroll.viewer.rasterHits.asInstanceOf[Int] == 6 &&
+        prefetchedScroll.viewer.sampledPixels.asInstanceOf[Double] == 0.0 &&
+        prefetchedScroll.viewer.colorizedPixels.asInstanceOf[Double] == 0.0
     val windowContract =
       windowed.viewer.sourceReads.asInstanceOf[Int] == 0 &&
         windowed.viewer.sampledPixels.asInstanceOf[Double] == 0.0
@@ -112,6 +122,7 @@ object BrowserBenchmark:
       coldSourceReadCoalescing = coldReadContract,
       warmZeroSamplingColorizationAndUpload = warmContract,
       axialScrollReusesTwoPlanesPerLayer = scrollContract,
+      prefetchedAxialScrollHasNoVisibleSampling = prefetchContract,
       windowChangeReusesSamples = windowContract,
       nonlinearScrollReusesTwoPlanes = nonlinearContract,
       interactiveViewerWorkflow = interactiveContract,
@@ -130,10 +141,11 @@ object BrowserBenchmark:
       warmCompileOnly = warmCompileOnly,
       warmDrawOnly = warmDrawOnly,
       scroll = scroll,
+      prefetchedScroll = prefetchedScroll,
       window = windowed,
       nonlinear = nonlinearScroll,
       contracts = contracts,
-      allContractsPass = coldReadContract && warmContract && scrollContract && windowContract && nonlinearContract && interactiveContract && checksum.nonEmpty,
+      allContractsPass = coldReadContract && warmContract && scrollContract && prefetchContract && windowContract && nonlinearContract && interactiveContract && checksum.nonEmpty,
       canvasChecksum = checksum
     )
     js.Dynamic.global.window.scalafimImageViewBenchmark = receipt
@@ -322,6 +334,44 @@ object BrowserBenchmark:
       repetitions = repetitions,
       elapsedMs = elapsed,
       meanMs = elapsed / repetitions.toDouble
+    )
+
+  private def measurePrefetchedScroll(
+    model: ViewerModel,
+    initial: ViewerSession,
+    context: CanvasRenderingContext2D,
+    repetitions: Int
+  )(using CanvasRasterFactory): js.Dynamic =
+    val runtime = makeRuntime()
+    render(runtime, model, initial, context)
+    val samples = new Array[Double](repetitions)
+    var current = initial
+    var last = Option.empty[CanvasViewerRender]
+    var index = 0
+    while index < repetitions do
+      runtime.prefetchSlices(model, current, AnatomicalPlane.Axial, Vector(1))
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      val next = current.copy(
+        state = current.state.copy(
+          cursor = current.state.cursor + AnatomicalDirection.Superior.unit.scaled(current.state.sliceStep.millimeters)
+        )
+      )
+      val started = js.Dynamic.global.performance.now().asInstanceOf[Double]
+      last = Some(render(runtime, model, next, context))
+      samples(index) = js.Dynamic.global.performance.now().asInstanceOf[Double] - started
+      current = next
+      index += 1
+    val sorted = samples.sorted
+    val result = last.get
+    js.Dynamic.literal(
+      scenario = "prefetched-axial-scroll",
+      repetitions = repetitions,
+      medianMs = sorted(sorted.length / 2),
+      p95Ms = sorted(math.min(sorted.length - 1, math.ceil(sorted.length * 0.95).toInt - 1)),
+      minMs = sorted.head,
+      maxMs = sorted.last,
+      viewer = viewerProfile(result.compiled.viewerProfile),
+      canvas = canvasProfile(result.canvasProfile)
     )
 
   private def viewerProfile(profile: ViewerProfile): js.Dynamic =

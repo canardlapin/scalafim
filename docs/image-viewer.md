@@ -159,6 +159,11 @@ are documented in [`benchmarks/image-view-browser.md`](benchmarks/image-view-bro
   dispatch bindings, supports exact session snapshot/restore, and rejects work
   after `close()`. It deliberately retains neither a DOM node nor a Canvas
   context, so applications still own listener installation and teardown.
+  `CanvasScrollCoordinator` can coalesce wheel bursts on an application
+  scheduler such as `CanvasTaskScheduler.AnimationFrame`, and
+  `prefetchSlices` can warm only the immediately adjacent slices during idle
+  time. Both paths still reduce through the synchronous reference state
+  machine; prefetch never mutates visible state or uploads native rasters.
 - `Java2DViewerHost` draws into a supplied `Graphics2D` and can produce a
   `BufferedImage` directly.
 - `JavaFxViewerHost` draws through `JavaFxGraphicsContext` or a live JavaFX

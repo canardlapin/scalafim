@@ -1,18 +1,23 @@
 package scalafim.image.view.canvas
 
+import scala.scalajs.js
 import scalafim.graphics.canvas.*
+import scalafim.image.AnatomicalPlane
 import scalafim.image.view.*
 
 enum CanvasViewerError:
   case View(cause: ImageViewError)
   case Renderer(cause: CanvasRenderError)
   case ControllerClosed
+  case InvalidPrefetchOffsets(offsets: Vector[Int])
 
   def message: String =
     this match
       case View(cause) => cause.message
       case Renderer(cause) => cause.message
       case ControllerClosed => "canvas viewer controller is closed"
+      case InvalidPrefetchOffsets(offsets) =>
+        s"adjacent-slice prefetch offsets must be a non-empty subset of [-1, 1]; got ${offsets.mkString(", ")}"
 
 final case class CanvasViewerProgram(
   frame: ViewerFrame,
@@ -26,6 +31,28 @@ final case class CanvasViewerRender(
 )
 
 final case class CanvasViewerSnapshot(session: ViewerSession)
+
+final case class CanvasPrefetchProfile(
+  requestedSlices: Int,
+  viewerProfile: ViewerProfile
+)
+
+trait CanvasTaskScheduler:
+  def schedule(task: () => Unit): Unit
+
+object CanvasTaskScheduler:
+  val AnimationFrame: CanvasTaskScheduler =
+    new CanvasTaskScheduler:
+      def schedule(task: () => Unit): Unit =
+        js.Dynamic.global.window.requestAnimationFrame(
+          ((_: Double) => task()): js.Function1[Double, Unit]
+        )
+
+final case class CanvasScrollBatch(
+  submittedEvents: Int,
+  executedActions: Int,
+  netSteps: Map[AnatomicalPlane, Int]
+)
 
 /** Stateful browser resource owner. The viewer model and reducer remain pure;
   * only sampled/raster cache state and browser-native Canvas resources live
@@ -59,6 +86,42 @@ final class CanvasViewerRuntime private[canvas] (
 
   def rasterCount: Int =
     viewerCache.size
+
+  /** Populate sampled/raster caches for at most the two immediately adjacent
+    * slices. The caller chooses an idle scheduler; this method never changes
+    * the visible viewer session or uploads browser-native rasters.
+    */
+  def prefetchSlices(
+    model: ViewerModel,
+    session: ViewerSession,
+    plane: AnatomicalPlane,
+    offsets: Vector[Int] = Vector(-1, 1)
+  ): Either[CanvasViewerError, CanvasPrefetchProfile] =
+    val valid = offsets.nonEmpty && offsets.distinct == offsets && offsets.forall(step => step == -1 || step == 1)
+    if !valid then Left(CanvasViewerError.InvalidPrefetchOffsets(offsets))
+    else
+      var currentCache = viewerCache
+      var aggregate = ViewerProfile.Zero
+      var error = Option.empty[CanvasViewerError]
+      var index = 0
+      while index < offsets.length && error.isEmpty do
+        val prefetched =
+          ViewerReducer.reduce(model, session, ViewerAction.Scroll(plane, offsets(index)))
+            .left.map(CanvasViewerError.View.apply)
+            .flatMap { next =>
+              next.compileCached(model, currentCache).left.map(CanvasViewerError.View.apply)
+            }
+        prefetched match
+          case Left(value) => error = Some(value)
+          case Right(compilation) =>
+            currentCache = compilation.cache
+            aggregate = aggregate + compilation.profile
+        index += 1
+      error match
+        case Some(value) => Left(value)
+        case None =>
+          viewerCache = currentCache
+          Right(CanvasPrefetchProfile(offsets.length, aggregate))
 
 /** Thin application-facing owner for one model, session, and Canvas runtime.
   * It retains no DOM node or rendering context: applications own listeners and
@@ -123,11 +186,65 @@ final class CanvasViewerController private[canvas] (
         .flatMap(dispatch)
     }
 
+  def prefetchSlices(
+    plane: AnatomicalPlane,
+    offsets: Vector[Int] = Vector(-1, 1)
+  ): Either[CanvasViewerError, CanvasPrefetchProfile] =
+    ensureActive.flatMap(_ => runtime.prefetchSlices(model, currentSession, plane, offsets))
+
+  def scrollCoordinator(
+    scheduler: CanvasTaskScheduler
+  )(
+    onFlush: (Either[CanvasViewerError, ViewerSession], CanvasScrollBatch) => Unit
+  ): Either[CanvasViewerError, CanvasScrollCoordinator] =
+    ensureActive.map(_ => new CanvasScrollCoordinator(this, scheduler, onFlush))
+
   def close(): Unit =
     active = false
 
   private def ensureActive: Either[CanvasViewerError, Unit] =
     if active then Right(()) else Left(CanvasViewerError.ControllerClosed)
+
+/** Coalesces wheel bursts until the application's next scheduled frame.
+  * Anatomical scroll vectors commute, so summing steps per plane preserves the
+  * reducer result while avoiding obsolete intermediate compilations.
+  */
+final class CanvasScrollCoordinator private[canvas] (
+  controller: CanvasViewerController,
+  scheduler: CanvasTaskScheduler,
+  onFlush: (Either[CanvasViewerError, ViewerSession], CanvasScrollBatch) => Unit
+):
+  private var pending = Map.empty[AnatomicalPlane, Int]
+  private var eventCount = 0
+  private var scheduled = false
+
+  def enqueue(plane: AnatomicalPlane, steps: Int): Unit =
+    if steps != 0 then
+      pending = pending.updated(plane, pending.getOrElse(plane, 0) + steps)
+      eventCount += 1
+      if !scheduled then
+        scheduled = true
+        scheduler.schedule(() => flush())
+
+  private def flush(): Unit =
+    val net = pending.filter((_, steps) => steps != 0)
+    val submitted = eventCount
+    pending = Map.empty
+    eventCount = 0
+    scheduled = false
+    val actions = Vector(
+      AnatomicalPlane.Sagittal,
+      AnatomicalPlane.Coronal,
+      AnatomicalPlane.Axial
+    ).flatMap { plane =>
+      net.get(plane).map(steps => ViewerAction.Scroll(plane, steps))
+    }
+    var result = controller.session
+    var index = 0
+    while index < actions.length && result.isRight do
+      result = result.flatMap(_ => controller.dispatch(actions(index)))
+      index += 1
+    onFlush(result, CanvasScrollBatch(submitted, actions.length, net))
 
 object CanvasViewerHost:
   def controller(
