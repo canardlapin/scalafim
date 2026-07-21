@@ -195,8 +195,27 @@ val scene = PlotCompiler.compile(
 )
 
 val counts = Plot(observations)
-  .addLayer(Layer.count(_.condition))
+  .addLayer(
+    Layer.count(
+      _.condition,
+      padding = BandPadding.unsafe(0.2)
+    )
+  )
 ```
+
+Categorical positions are represented by `BandScale`, not by an untyped scale
+configuration or a geom-specific width convention. A checked `BandPadding`
+trains ordered string levels into zero-based centers, while each resolved row
+carries a `Band(center, width)` value that layout, axes, bars, and coordinates
+consume uniformly. The same `BandScale` can bind to `Aesthetic.X` or
+`Aesthetic.Y`; `Stat.Count` simply produces the categorical values it trains.
+
+This is behavioral parity with ggplot2, not an R-shaped port. ggplot2's
+one-based categorical centers and ScalaFIM's zero-based centers are related by
+an affine translation, and both use a default width of 0.9. The public Scala
+surface instead makes invalid padding unrepresentable, preserves the scale's
+typed input/output relation, and exposes the trained interval semantics for
+inspection before rendering.
 
 ## Backends
 

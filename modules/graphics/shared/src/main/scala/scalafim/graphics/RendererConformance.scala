@@ -140,6 +140,7 @@ object RendererConformance:
       solved <- solvedPlotCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
+      bandPosition <- bandPositionCase
       scientific <- scientificStatsCase
       flipped <- flippedPlotCase
       boundedGeoms <- boundedGeomsCase
@@ -163,6 +164,7 @@ object RendererConformance:
       solved,
       faceted,
       counted,
+      bandPosition,
       scientific,
       flipped,
       boundedGeoms,
@@ -753,6 +755,48 @@ object RendererConformance:
       )
     yield ConformanceCase(
       GraphicsName.unsafe("count-plot"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis"),
+        GraphicsName.unsafe("stat-count-bar-0")
+      ),
+      Vector(
+        RenderRequirement.Primitive(
+          GraphicsName.unsafe("stat-count-bar-0"),
+          RenderPrimitiveKind.Rectangle
+        )
+      )
+    )
+
+  def bandPositionCase: Either[GraphicsError, ConformanceCase] =
+    val conditions = Vector("control", "task", "task", "control", "other")
+    for
+      plot <- Plot(conditions).addLayer(
+        Layer.count(
+          identity,
+          order = CountOrder.declaredUnsafe(Vector("control", "task", "other")),
+          padding = BandPadding.unsafe(0.2),
+          params = Some(
+            GraphicParams.unsafe(
+              stroke = Some(Rgba.unsafe(30, 55, 85)),
+              fill = Some(Rgba.unsafe(105, 165, 210))
+            )
+          )
+        )
+      )
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          expansion = RangeExpansion.none,
+          guides = GuidePolicy.Derived()
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("band-position-plot"),
       ConformanceGroup.CompiledPlot,
       scene,
       Vector(

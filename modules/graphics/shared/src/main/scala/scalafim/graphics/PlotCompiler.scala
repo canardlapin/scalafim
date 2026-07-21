@@ -168,6 +168,8 @@ final case class ResolvedRow[Row](
     computed: ComputedValues,
     x: Double,
     y: Double,
+    xBand: Option[Band],
+    yBand: Option[Band],
     xEnd: Option[Double],
     yEnd: Option[Double],
     xMin: Option[Double],

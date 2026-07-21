@@ -2,6 +2,8 @@ package scalafim.graphics
 
 sealed trait AesValue[Row, A]:
   def map(row: Row): Option[A]
+  private[graphics] def mappedBand(row: Row): Option[Band] =
+    None
   def isScaled: Boolean =
     false
 
@@ -26,6 +28,9 @@ object AesValue:
 
     override def isScaled: Boolean =
       true
+
+    private[graphics] override def mappedBand(row: Row): Option[Band] =
+      scale.mappedBand(value(row))
 
   def direct[Row, A](value: Row => A): AesValue[Row, A] =
     Direct(value)
@@ -483,11 +488,12 @@ object Layer:
       data: Option[Vector[Row]] = None,
       order: CountOrder = CountOrder.Encountered,
       scaleName: GraphicsName = GraphicsName.unsafe("x"),
+      padding: BandPadding = BandPadding.default,
       params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(
       Geom.Bar,
-      Stat.Count(x, order, scaleName),
+      Stat.Count(x, order, scaleName, padding),
       data,
       AesSpec.empty[Row],
       inheritMapping = false,

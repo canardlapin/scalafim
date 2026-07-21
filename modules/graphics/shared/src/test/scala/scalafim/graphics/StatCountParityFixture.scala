@@ -5,6 +5,10 @@ package scalafim.graphics
   *
   * ggplot2's own reference asserts x = 1,2,3,4,6,8 and
   * y = 7,10,3,10,1,1 in `vendor/ggplot2/tests/testthat/test-stat-count.R`.
+  * Its categorical positions are internally one-based and `geom_bar()` uses a
+  * default width of 0.9. ScalaFIM deliberately uses zero-based centers and an
+  * explicit `Band(width = 1 - padding)` value; the layouts are affine-equivalent
+  * while the Scala API keeps interval semantics inspectable and typed.
   */
 object StatCountParityFixture:
   val carb: Vector[String] =

@@ -129,6 +129,30 @@ class ScaleSuite extends munit.FunSuite:
     assertEquals(scale.mapValueResult("D").left.toOption, Some(ScaleMapFailure.OutOfDomain("condition", "D")))
   }
 
+  test("band scales expose checked categorical intervals as domain values") {
+    val padding = BandPadding(0.2).fold(e => fail(e.message), identity)
+    val domain = DiscreteDomain.ordered(Vector("control", "task", "other")).fold(e => fail(e.message), identity)
+    val scale = BandScale("condition", domain, padding).fold(e => fail(e.message), identity)
+
+    assertEquals(scale.mapLevels(Vector("control", "task", "other", "missing")), Vector(Some(0.0), Some(1.0), Some(2.0), None))
+    assertEquals(scale.band("control"), Some(Band.unsafe(0.0, 0.8)))
+    assertEquals(scale.band("task").map(_.lower), Some(0.6))
+    assertEquals(scale.band("task").map(_.upper), Some(1.4))
+    assertEquals(scale.descriptor.kind, ScaleKind.Band)
+    assertEquals(scale.descriptor.domain, ScaleDomain.Band(domain.levels, ordered = true, padding))
+    assertEquals(scale.mapValueResult("missing").left.toOption, Some(ScaleMapFailure.OutOfDomain("condition", "missing")))
+  }
+
+  test("band construction rejects invalid padding, centers, and widths") {
+    assertEquals(BandPadding(-0.1).left.toOption, Some(GraphicsError.InvalidBandPadding(-0.1)))
+    assertEquals(BandPadding(1.0).left.toOption, Some(GraphicsError.InvalidBandPadding(1.0)))
+    BandPadding(Double.NaN).left.toOption match
+      case Some(GraphicsError.InvalidBandPadding(value)) => assert(value.isNaN)
+      case result => fail(s"expected InvalidBandPadding(NaN), obtained $result")
+    assertEquals(Band(Double.PositiveInfinity, 0.8).left.toOption, Some(GraphicsError.InvalidBand(Double.PositiveInfinity, 0.8)))
+    assertEquals(Band(0.0, 0.0).left.toOption, Some(GraphicsError.InvalidBand(0.0, 0.0)))
+  }
+
   test("break generators are deterministic functions of intervals") {
     val breaks = Breaks.width(2.0).toOption.get
 

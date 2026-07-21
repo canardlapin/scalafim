@@ -17,6 +17,8 @@ enum GraphicsError:
   case InvalidRotation(value: Double)
   case InvalidBreakCount(value: Int)
   case InvalidBreakWidth(value: Double)
+  case InvalidBand(center: Double, width: Double)
+  case InvalidBandPadding(value: Double)
   case EmptyPalette
   case DuplicateLevel(level: String)
   case EmptyGeometry(kind: String)
@@ -91,6 +93,10 @@ enum GraphicsError:
         s"break count must be >= 1: $value"
       case InvalidBreakWidth(value) =>
         s"break width must be finite and > 0: $value"
+      case InvalidBand(center, width) =>
+        s"band center must be finite and width must be finite and > 0: ($center, $width)"
+      case InvalidBandPadding(value) =>
+        s"band padding must be finite and in [0, 1): $value"
       case EmptyPalette =>
         "palette must contain at least one value"
       case DuplicateLevel(level) =>

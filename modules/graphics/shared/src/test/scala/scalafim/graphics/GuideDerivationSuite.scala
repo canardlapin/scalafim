@@ -118,6 +118,36 @@ class GuideDerivationSuite extends munit.FunSuite:
     assertEquals(axis.title, Some("x-log"))
   }
 
+  test("band scales are ordinary typed position scales on the y aesthetic") {
+    val padding = BandPadding.unsafe(0.2)
+    val scale = BandScale("condition", DiscreteDomain.empty, padding).fold(e => fail(e.message), identity)
+    val mapping = AesSpec
+      .empty[Obs]
+      .withPosition(_.x, _ => 0.0)
+      .bindScale(ScaleBinding[Obs, String, Double](Aesthetic.Y, _.condition, scale))
+      .fold(e => fail(e.message), identity)
+    val layer = Layer
+      .fromMapping(Geom.Point, mapping, inheritMapping = false)
+      .fold(e => fail(e.message), identity)
+    val plot = Plot(data).addLayer(layer).fold(e => fail(e.message), identity)
+    val trained = PlotCompiler
+      .resolve(
+        plot,
+        PlotCompilerOptions(frame = Some(frame), expansion = RangeExpansion.none, guides = GuidePolicy.Derived())
+      )
+      .fold(e => fail(e.message), identity)
+    val axis = trained.guides.collectFirst {
+      case ResolvedGuide(spec: GuideSpec.Axis, _) if spec.side == AxisSide.Left => spec
+    }.getOrElse(fail("expected a derived left band axis"))
+
+    assertEquals(trained.layers.head.rows.map(_.y), Vector(0.0, 1.0, 0.0))
+    assertEquals(trained.layers.head.rows.flatMap(_.yBand).map(_.width), Vector.fill(3)(0.8))
+    assertEquals(trained.layout.map(_.yScale), Some(Interval.unsafe(-0.4, 1.4)))
+    assertEquals(axis.ticks.toVector.flatten.map(_.label), Vector("A", "B"))
+    assertEquals(axis.ticks.toVector.flatten.map(_.value), Vector(0.0, 1.0))
+    assertEquals(axis.title, Some("condition"))
+  }
+
   test("plot axis labels override derived scale names") {
     val plot = coloredPlot.withAxisTitles("Elapsed time", "Response")
     val trained = PlotCompiler

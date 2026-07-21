@@ -390,9 +390,39 @@ enum OobPolicy:
       case Keep =>
         Some(value)
 
+/** Fraction of each unit categorical step reserved as inter-band space. */
+opaque type BandPadding = Double
+
+object BandPadding:
+  def apply(value: Double): Either[GraphicsError, BandPadding] =
+    if value.isFinite && value >= 0.0 && value < 1.0 then Right(value)
+    else Left(GraphicsError.InvalidBandPadding(value))
+
+  def unsafe(value: Double): BandPadding =
+    apply(value).orThrow
+
+  val default: BandPadding =
+    unsafe(0.1)
+
+  extension (value: BandPadding) def toDouble: Double = value
+
+/** One categorical position interval in native plot coordinates. */
+final case class Band private (center: Double, width: Double):
+  def lower: Double = center - width / 2.0
+  def upper: Double = center + width / 2.0
+
+object Band:
+  def apply(center: Double, width: Double): Either[GraphicsError, Band] =
+    if center.isFinite && width.isFinite && width > 0.0 then Right(new Band(center, width))
+    else Left(GraphicsError.InvalidBand(center, width))
+
+  def unsafe(center: Double, width: Double): Band =
+    apply(center, width).orThrow
+
 enum ScaleKind:
   case Continuous
   case Discrete
+  case Band
   case Generic
 
 /** Whether a scale learns from every layer that uses it or keeps its declared
@@ -406,6 +436,7 @@ enum ScaleTraining:
 enum ScaleDomain:
   case Continuous(raw: Interval, transformed: Interval)
   case Discrete(levels: Vector[String], ordered: Boolean)
+  case Band(levels: Vector[String], ordered: Boolean, padding: BandPadding)
   case Unspecified
 
 final case class ScaleDescriptor(
@@ -700,6 +731,88 @@ object DiscreteScale:
   ): Either[GraphicsError, DiscreteScale[A]] =
     apply(name, domain, palette, ScaleTraining.Fixed)
 
+/** Scala-native categorical position scale. Levels retain their declared
+  * order, centers are zero-based unit steps, and width is carried explicitly
+  * as a [[Band]] rather than inferred later from a plotting convention.
+  */
+final case class BandScale private (
+    name: GraphicsName,
+    domain: DiscreteDomain,
+    padding: BandPadding,
+    training: ScaleTraining
+) extends Scale[String, Double]:
+  override def descriptor: ScaleDescriptor =
+    ScaleDescriptor(
+      name,
+      ScaleKind.Band,
+      ScaleDomain.Band(domain.levels, domain.ordered, padding),
+      training
+    )
+
+  private[graphics] override def observation(value: String): Option[ScaleObservation] =
+    Some(ScaleObservation.Discrete(value))
+
+  private[graphics] override def trainPlotWide(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[String, Double]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        domain
+          .train(observations.iterator.collect { case ScaleObservation.Discrete(value) => value })
+          .map(BandScale(name, _, padding, training))
+
+  private[graphics] override def trainFacet(
+      observations: IterableOnce[ScaleObservation]
+  ): Either[GraphicsError, Scale[String, Double]] =
+    training match
+      case ScaleTraining.Fixed =>
+        Right(this)
+      case ScaleTraining.PlotWide =>
+        val levels = observations.iterator.collect { case ScaleObservation.Discrete(value) => value }.toVector.distinct
+        val trained =
+          if domain.ordered then DiscreteDomain.ordered(levels)
+          else DiscreteDomain.unordered(levels)
+        trained.map(BandScale(name, _, padding, training))
+
+  override def mapValue(value: String): Option[Double] =
+    band(value).map(_.center)
+
+  override def mapValueResult(value: String): Either[ScaleMapFailure, Double] =
+    band(value).map(_.center).toRight(ScaleMapFailure.OutOfDomain(name.value, value))
+
+  private[graphics] override def mappedBand(value: String): Option[Band] =
+    band(value)
+
+  def band(value: String): Option[Band] =
+    val index = domain.levels.indexOf(value)
+    Option.when(index >= 0)(Band.unsafe(index.toDouble, 1.0 - padding.toDouble))
+
+  def bands: Vector[(String, Band)] =
+    domain.levels.zipWithIndex.map { case (level, index) =>
+      level -> Band.unsafe(index.toDouble, 1.0 - padding.toDouble)
+    }
+
+  def mapLevels(values: IterableOnce[String]): Vector[Option[Double]] =
+    values.iterator.map(mapValue).toVector
+
+object BandScale:
+  def apply(
+      name: String,
+      domain: DiscreteDomain,
+      padding: BandPadding = BandPadding.default,
+      training: ScaleTraining = ScaleTraining.PlotWide
+  ): Either[GraphicsError, BandScale] =
+    GraphicsName(name, "band scale").map(BandScale(_, domain, padding, training))
+
+  def fixed(
+      name: String,
+      domain: DiscreteDomain,
+      padding: BandPadding = BandPadding.default
+  ): Either[GraphicsError, BandScale] =
+    apply(name, domain, padding, ScaleTraining.Fixed)
+
 trait Scale[-In, +Out]:
   def name: GraphicsName
   def mapValue(value: In): Option[Out]
@@ -710,6 +823,9 @@ trait Scale[-In, +Out]:
     mapValue(value).toRight(ScaleMapFailure.OutOfDomain(name.value, value.toString))
 
   private[graphics] def observation(value: In): Option[ScaleObservation] =
+    None
+
+  private[graphics] def mappedBand(value: In): Option[Band] =
     None
 
   private[graphics] def trainPlotWide(

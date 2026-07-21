@@ -129,7 +129,7 @@ private[graphics] object StatPhase:
   private def countMapping[Row](
       stat: Stat.Count[Row]
   ): Either[GraphicsError, AesSpec[StatRow[Row]]] =
-    DiscreteScale(stat.scaleName.value, DiscreteDomain.empty, DiscretePalette.indices).map { scale =>
+    BandScale(stat.scaleName.value, DiscreteDomain.empty, stat.padding).map { scale =>
       AesSpec[StatRow[Row]](
         x = Some(AesValue.scaled(_.category.getOrElse(""), scale)),
         y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0)))
@@ -536,6 +536,8 @@ private[graphics] object RowPhase:
         x <- requiredAes(Aesthetic.X, env.get(Aesthetic.X), source)
         y <- requiredAes(Aesthetic.Y, env.get(Aesthetic.Y), source)
         _ <- finitePosition(x, y)
+        xBand = env.get(Aesthetic.X).flatMap(_.mappedBand(source))
+        yBand = env.get(Aesthetic.Y).flatMap(_.mappedBand(source))
         xEnd <- optionalFiniteAes(Aesthetic.XEnd, env.get(Aesthetic.XEnd), source)
         yEnd <- optionalFiniteAes(Aesthetic.YEnd, env.get(Aesthetic.YEnd), source)
         xMin <- optionalFiniteAes(Aesthetic.XMin, env.get(Aesthetic.XMin), source)
@@ -555,6 +557,8 @@ private[graphics] object RowPhase:
           computed = source.computed,
           x = x,
           y = y,
+          xBand = xBand,
+          yBand = yBand,
           xEnd = xEnd,
           yEnd = yEnd,
           xMin = xMin,
@@ -953,7 +957,7 @@ private[graphics] object GeomPhase:
       val row = rows(idx)
       val height = math.abs(row.y)
       val centerY = math.min(0.0, row.y) + height / 2.0
-      val width = row.computed.get(ComputedAesthetic.BinWidth).getOrElse(0.9)
+      val width = row.xBand.map(_.width).orElse(row.computed.get(ComputedAesthetic.BinWidth)).getOrElse(0.9)
       val statName = if row.computed.get(ComputedAesthetic.BinWidth).nonEmpty then "bin" else "count"
       result = Grob
         .rect(
@@ -1027,6 +1031,8 @@ private[graphics] object CoordPhase:
     row.copy(
       x = row.y,
       y = row.x,
+      xBand = row.yBand,
+      yBand = row.xBand,
       xEnd = row.yEnd,
       yEnd = row.xEnd,
       xMin = row.yMin,
@@ -1217,7 +1223,8 @@ private[graphics] object LayoutPhase:
       if layer.geom == Geom.Bar then
         if aesthetic == Aesthetic.X.label then
           val edges = layer.rows.iterator.flatMap { row =>
-            val halfWidth = row.computed.get(ComputedAesthetic.BinWidth).getOrElse(0.9) / 2.0
+            val halfWidth =
+              row.xBand.map(_.width).orElse(row.computed.get(ComputedAesthetic.BinWidth)).getOrElse(0.9) / 2.0
             Iterator(row.x - halfWidth, row.x + halfWidth)
           }
           range = range.train(edges)
@@ -1241,9 +1248,11 @@ private[graphics] object LayoutPhase:
       primary: ResolvedRow[Row] => Double
   ): Vector[Double] =
     if aesthetic == Aesthetic.X.label then
-      Vector(Some(primary(row)), row.xEnd, row.xMin, row.xMax).flatten
+      Vector(Some(primary(row)), row.xEnd, row.xMin, row.xMax).flatten ++
+        row.xBand.toVector.flatMap(band => Vector(band.lower, band.upper))
     else
-      Vector(Some(primary(row)), row.yEnd, row.yMin, row.yMax).flatten
+      Vector(Some(primary(row)), row.yEnd, row.yMin, row.yMax).flatten ++
+        row.yBand.toVector.flatMap(band => Vector(band.lower, band.upper))
 
   private[graphics] def coordClip(coord: Coord): Clip =
     coord.clipping
@@ -1424,6 +1433,19 @@ private[graphics] object GuidePhase:
                 )
               )
             }
+          case band: BandScale =>
+            Right(
+              Some(
+                GuideSpec.Axis(
+                  side,
+                  ticks = Some(band.bands.map { case (level, position) =>
+                    AxisTick.unsafe(position.center, level)
+                  }),
+                  title = requestedTitle.orElse(Some(band.name.value)),
+                  name = Some(name)
+                )
+              )
+            )
           case discrete: DiscreteScale[?] =>
             discretePositionTicks(discrete) match
               case Some(ticks) =>

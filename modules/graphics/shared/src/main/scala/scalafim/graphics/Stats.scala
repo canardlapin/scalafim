@@ -295,7 +295,8 @@ object Stat:
   final case class Count[Row](
       x: Row => String,
       order: CountOrder = CountOrder.Encountered,
-      scaleName: GraphicsName = GraphicsName.unsafe("x")
+      scaleName: GraphicsName = GraphicsName.unsafe("x"),
+      padding: BandPadding = BandPadding.default
   ) extends Stat[Row]:
     override val label: String = "count"
 

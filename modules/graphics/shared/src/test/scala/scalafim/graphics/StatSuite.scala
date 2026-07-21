@@ -47,12 +47,13 @@ class StatSuite extends munit.FunSuite:
     assertEquals(layer.dataSize, 32)
     assertEquals(layer.rows.map(_.x), Vector(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
     assertEquals(layer.rows.map(_.y), StatCountParityFixture.counts)
+    assertEquals(layer.rows.flatMap(_.xBand).map(_.width), Vector.fill(6)(0.9))
     assertEquals(layer.grobs.length, 6)
     assert(layer.grobs.forall(_.isInstanceOf[Grob.Rect]))
     assertEquals(layer.statFrame.rows.length, 6)
     assertEquals(
       trained.scaleRegistry.forAesthetic(Aesthetic.X).map(_.descriptor.domain),
-      Some(ScaleDomain.Discrete(StatCountParityFixture.levels, ordered = true))
+      Some(ScaleDomain.Band(StatCountParityFixture.levels, ordered = true, BandPadding.default))
     )
     assertEquals(trained.layout.map(_.xScale), Some(Interval.unsafe(-0.45, 5.45)))
     assertEquals(trained.layout.map(_.yScale), Some(Interval.unsafe(0.0, 10.0)))
@@ -62,6 +63,30 @@ class StatSuite extends munit.FunSuite:
     }.getOrElse(fail("missing count x axis"))
     assertEquals(xAxis.ticks.toVector.flatten.map(_.label), StatCountParityFixture.levels)
     assertEquals(xAxis.ticks.toVector.flatten.map(_.value), Vector(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+  }
+
+  test("count bars and panel ranges consume explicit band padding") {
+    val padding = BandPadding.unsafe(0.2)
+    val plot =
+      Plot(Vector("control", "task", "task"))
+        .addLayer(Layer.count(identity, order = CountOrder.Lexicographic, padding = padding))
+        .fold(error => fail(error.message), identity)
+    val trained = PlotCompiler
+      .resolve(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          expansion = RangeExpansion.none,
+          guides = GuidePolicy.Derived()
+        )
+      )
+      .fold(error => fail(error.message), identity)
+    val layer = trained.layers.head
+    val bars = layer.grobs.collect { case rect: Grob.Rect => rect }
+
+    assertEquals(layer.rows.flatMap(_.xBand), Vector(Band.unsafe(0.0, 0.8), Band.unsafe(1.0, 0.8)))
+    assertEquals(bars.map(_.size.width), Vector.fill(2)(ExtentExpr.nativeUnsafe(0.8)))
+    assertEquals(trained.layout.map(_.xScale), Some(Interval.unsafe(-0.4, 1.4)))
   }
 
   test("declared count order is preserved before undeclared observed levels") {
