@@ -903,7 +903,7 @@ final case class MvpaDatasetView private[dataset] (
   require(patterns.samples == samples.size, "pattern rows must match sample table")
   require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
 
-  def source: PatternSource =
+  def source: DensePatternSource =
     PatternSource.fromMatrix(patterns)
 
   def featureSpace: FeatureSpaceRef =
@@ -931,7 +931,7 @@ final case class LabeledMvpaDatasetView private[dataset] (
   require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
   require(response.length == samples.size, "response length must match sample table")
 
-  def source: PatternSource =
+  def source: DensePatternSource =
     PatternSource.fromMatrix(patterns)
 
   def featureSpace: FeatureSpaceRef =
