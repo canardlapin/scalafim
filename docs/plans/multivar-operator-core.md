@@ -568,7 +568,7 @@ exercise.
 | One-shot soft-LDA consumer | `mvpa-fit/SoftLda.scala` adapts fold-local `PatternOperator` values to `OpTable`, retains hard/simplex class semantics, and keeps optional trial-level nuisance separate from temporal `TrialReadout` nuisance | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | Paired PLSC/CCA/RRR | `PairedDualityDiagram.scala`, `Decompositions.scala` | paired family `bd-01KXSGZ3JXDTCAKBHWN8G549B8` |
 | Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
-| CPCA | `Cpca.scala` | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3` |
+| CPCA | Migrated: `CpcaOperatorProblem.scala` is the canonical typed problem and block-program fit; `Plans.scala` constructs it directly; `Cpca.fit`, `CpcaProblem`, and resolved `MvMap` constraints remain named compatibility delegates for purge | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Kernel and Nyström | `Kernel.scala` | kernel/Nyström `bd-01KXZZ2E8NERAS8W8Z2HKJE9RT` |
 | Multiblock, transformations, row geometry, plans, and fit artifacts | `BlockPartition.scala`, `Multiblock.scala`, `SemanticTransformations.scala`, `RowGeometry.scala`, `Plans.scala`, `PairedLatent.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4` |
 | Inference consumers of multivar problems, capabilities, and block protocols | `inference/Problems.scala`, `inference/Capabilities.scala`, `inference/Compiler.scala`, `inference/BlockFamilyProtocols.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, verified by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |

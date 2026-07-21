@@ -333,6 +333,7 @@ private object ProgramIrEncoder:
       case ProgramOperatorRoleIr.Score => "score"
       case ProgramOperatorRoleIr.Axis => "axis"
       case ProgramOperatorRoleIr.Coefficient => "coefficient"
+      case ProgramOperatorRoleIr.ConstraintMap => "constraint_map"
       case _ => throw new IllegalArgumentException("compound operator role requires structural encoding")
 
   private def evidenceStatus(value: EvidenceStatusIr): String =
@@ -953,6 +954,7 @@ private object ProgramIrDecoder:
       case "score" => Right(ProgramOperatorRoleIr.Score)
       case "axis" => Right(ProgramOperatorRoleIr.Axis)
       case "coefficient" => Right(ProgramOperatorRoleIr.Coefficient)
+      case "constraint_map" => Right(ProgramOperatorRoleIr.ConstraintMap)
       case other => malformed(path, s"unknown operator role '$other'")
 
   private def evidenceStatus(value: IrJson, path: String): Either[IrError, EvidenceStatusIr] =

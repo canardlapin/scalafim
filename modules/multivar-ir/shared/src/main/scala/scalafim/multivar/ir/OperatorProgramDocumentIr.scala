@@ -17,6 +17,7 @@ enum ProgramOperatorRoleIr:
   case Score
   case Axis
   case Coefficient
+  case ConstraintMap
   case Composed(first: ProgramOperatorRoleIr, second: ProgramOperatorRoleIr)
   case Dual(of: ProgramOperatorRoleIr)
   case MetricAdjoint(of: ProgramOperatorRoleIr)
@@ -301,6 +302,7 @@ object ProgramSemanticIr:
       case OperatorRole.Score => ProgramOperatorRoleIr.Score
       case OperatorRole.Axis => ProgramOperatorRoleIr.Axis
       case OperatorRole.Coefficient => ProgramOperatorRoleIr.Coefficient
+      case OperatorRole.ConstraintMap => ProgramOperatorRoleIr.ConstraintMap
       case OperatorRole.Composed(first, second) => ProgramOperatorRoleIr.Composed(role(first), role(second))
       case OperatorRole.Dual(of) => ProgramOperatorRoleIr.Dual(role(of))
       case OperatorRole.MetricAdjoint(of) => ProgramOperatorRoleIr.MetricAdjoint(role(of))

@@ -84,6 +84,25 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     )
     assertEquals(rejection(invalid).category, RejectionCategory.DomainCodomainMismatch)
 
+  test("typed constraint maps round-trip and require primal-to-primal ports"):
+    val constraint = op(
+      "constraint",
+      CoordinateIr("trials", VarianceIr.Primal),
+      CoordinateIr("trials", VarianceIr.Primal),
+      ProgramOperatorRoleIr.ConstraintMap
+    )
+    val document = validDocument.copy(operators = validDocument.operators :+ constraint)
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.operators.last.role, ProgramOperatorRoleIr.ConstraintMap)
+    val invalid = document.copy(
+      operators = document.operators.updated(
+        document.operators.length - 1,
+        constraint.copy(domain = CoordinateIr("trials", VarianceIr.Dual))
+      )
+    )
+    assertEquals(rejection(invalid).category, RejectionCategory.DomainCodomainMismatch)
+
   private def validDocument: OperatorProgramDocumentIr =
     val spaces = Vector(
       SpaceIr("trials", SpaceRoleIr.Samples, 3),

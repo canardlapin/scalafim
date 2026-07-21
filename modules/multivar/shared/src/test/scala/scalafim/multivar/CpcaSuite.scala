@@ -253,8 +253,11 @@ class CpcaSuite extends munit.FunSuite:
       .get
     val svd = Svd.fit(MatrixView.dense(x), k(3)).toOption.get
     val gxH = fit.block(CpcaBlock.GxH).get
+    val operator = fit.operator.operatorBlock(CpcaBlock.GxH).get
 
     assertVectorClose(gxH.d, svd.result.singularValues, 1e-10)
+    assertEquals(operator.programFit.frames.length, 1)
+    assertEquals(operator.programFit.program.objective.label, "maximize-trace")
     assertEqualsDouble(partitionValue(fit, CpcaBlock.GxH), CpcaMath.frobeniusNorm2(x), 1e-10)
     assertEqualsDouble(partitionValue(fit, CpcaBlock.G0xH), 0.0, 1e-12)
     assertEqualsDouble(partitionValue(fit, CpcaBlock.GxH0), 0.0, 1e-12)

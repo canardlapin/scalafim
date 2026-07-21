@@ -417,7 +417,7 @@ final case class FitArtifactShape(
 enum FitArtifact:
   case BiProjectionArtifact(artifactShape: FitArtifactShape, projection: BiProjection)
   case GenPcaArtifact(artifactShape: FitArtifactShape, fit: GenPcaFit)
-  case CpcaArtifact(artifactShape: FitArtifactShape, fit: CpcaFit)
+  case CpcaArtifact(artifactShape: FitArtifactShape, fit: PreparedCpcaOperatorFit)
   case KernelArtifact(artifactShape: FitArtifactShape, fit: NystromFit)
 
   def shape: FitArtifactShape =
@@ -479,33 +479,21 @@ object LocalMultivarExecutor:
           Dimension.unsafe(input.cols)
         )
         for
-          diagram <- DualityDiagram.from(
+          problem <- CpcaOperatorProblem.fromMatrices(
             input,
-            rowMetric = spec.rowMetric,
-            columnMetric = spec.columnMetric,
-            rowSpace = Some(rowSpace),
-            columnSpace = Some(columnSpace)
-          )
-          rowConstraint <- spec.rowConstraint.resolve(
-            IndexAxis.Row,
+            spec.rowMetric,
+            spec.columnMetric,
+            spec.rowConstraint,
+            spec.columnConstraint,
             rowSpace,
-            diagram.rowMetric,
-            DenseSolvers.symmetricEigen,
-            spec.rankTolerance,
-            spec.storagePolicy
-          )
-          columnConstraint <- spec.columnConstraint.resolve(
-            IndexAxis.Feature,
             columnSpace,
-            diagram.columnMetric,
             DenseSolvers.symmetricEigen,
             spec.rankTolerance,
-            spec.storagePolicy
+            spec.storagePolicy,
+            s"planned-cpca:${plan.id.value}:${roi.id.value}"
           )
-          problem <- CpcaProblem.from(diagram, rowConstraint, columnConstraint)
           blockRequest <- spec.blockRequest
-          fit <- Cpca.fit(
-            problem,
+          fit <- problem.fit(
             blockRequest,
             eigenSolver = DenseSolvers.symmetricEigen,
             svdSolver = DenseSolvers.svd,
@@ -519,7 +507,7 @@ object LocalMultivarExecutor:
           fit <- Nystrom.fit(input, components, landmarks, kernel, preprocessing, method)
         yield FitArtifact.KernelArtifact(shape(plan, roi, FitArtifactKind.Nystrom, input, fit.eigen.components), fit)
 
-  private def cpcaComponentCount(fit: CpcaFit): Int =
+  private def cpcaComponentCount(fit: PreparedCpcaOperatorFit): Int =
     fit.blocks.valuesIterator.map(_.rank).sum
 
   private def shape(

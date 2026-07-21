@@ -86,6 +86,8 @@ object OperatorProgramIrValidator:
         case ProgramOperatorRoleIr.Coefficient =>
           domain.role == SpaceRoleIr.Observed && codomain.role == SpaceRoleIr.Observed &&
             operator.domain.variance == VarianceIr.Dual && operator.codomain.variance == VarianceIr.Dual
+        case ProgramOperatorRoleIr.ConstraintMap =>
+          operator.domain.variance == VarianceIr.Primal && operator.codomain.variance == VarianceIr.Primal
         case ProgramOperatorRoleIr.Composed(_, _) | ProgramOperatorRoleIr.Dual(_) |
             ProgramOperatorRoleIr.MetricAdjoint(_) => true
     requireValue(

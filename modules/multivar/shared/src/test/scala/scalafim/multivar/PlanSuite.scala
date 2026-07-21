@@ -262,11 +262,12 @@ class PlanSuite extends munit.FunSuite:
       assertEquals(artifact.shape.components, 1)
       artifact match
         case FitArtifact.CpcaArtifact(_, fit) =>
-          assertEquals(fit.problem.diagram.columnSpace.id.value, s"patterns.$roiId")
-          assertEquals(fit.problem.rowConstraint.space.id.value, "patterns")
-          assertEquals(fit.problem.rowConstraint.rank, 2)
-          assertEquals(fit.problem.columnConstraint.rank, 1)
+          assertEquals(fit.featureSpace.id.value, s"patterns.$roiId")
+          assertEquals(fit.rowSpace.id.value, "patterns")
+          assertEquals(fit.rowConstraint.rank, 2)
+          assertEquals(fit.featureConstraint.rank, 1)
           assertEquals(fit.block(CpcaBlock.GxH).map(_.rank), Some(1))
+          assertEquals(fit.operatorBlocks.map(_.programFit.program.objective.label), Vector("maximize-trace"))
           assertEqualsDouble(fit.partition.totalSS, expectedTotalSS, 1e-10)
         case _ =>
           fail("expected CPCA artifact")

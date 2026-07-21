@@ -36,9 +36,11 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   regression: cross and marginal statistics arise through `secondOrder`, PLSC
   and CCA differ by normalization geometry, and fits expose two
   `FunctionalFrame`s plus the common `OperatorProgramFit` result contract;
-- CPCA as duality-diagram geometry plus explicit row/column constraint
-  subspaces, unresolved numeric constraint specs for ROI planning,
-  four-block variance partitions, and block SVD fits;
+- CPCA as one `CpcaOperatorProblem` over a typed table, row relationship,
+  feature covariance, and row/feature constraint operators; each nonzero block
+  exposes one feature `FunctionalFrame`, derived row scores, and an
+  `OperatorProgramFit`, while
+  unresolved numeric constraint specs remain available for ROI planning;
 - row-whitening/projector geometry for design-conditioned effect operators,
   kept separate from duality-diagram bilinear metrics and connected explicitly
   through the induced `D = W' W` metric when a design-conditioned GenPCA is wanted;
@@ -78,6 +80,13 @@ and derive their legacy projection views from its fitted functional frames.
 The RRR coefficient is a directed `OpCoefficient`, not an untyped array in the
 operator result.
 
+Typed CPCA code should construct `CpcaOperatorProblem` and fit a validated
+`CpcaBlockRequest`. `Cpca.fit(DualityDiagram, ...)`, `CpcaProblem`, and
+`ResolvedCpcaConstraint` are compatibility descriptors only: they lower into
+the typed problem and do not own a second block solver. Planned ROI execution
+constructs the typed problem directly, and `CpcaArtifact` carries a
+`PreparedCpcaOperatorFit` rather than a legacy duality diagram.
+
 `multivar` depends only on `linalg`. Keep dataset, image, MVPA adapter, JVM
 solver backend, and scheduler-specific code in higher modules.
 
@@ -113,10 +122,11 @@ The shared test suite covers the current core invariants on both JVM and JS:
   parity fixtures;
 - row/column metrics and generalized PCA/GMD, including dense, diagonal,
   sparse-preserving, rank-deficient PSD, and R-reference-backed paths;
-- CPCA identity/zero/basis constraint specs, ROI-local plan validation,
-  `CpcaArtifact` execution, diagonal-metric whitening, four-block
-  orthogonality, reconstruction, partition inertia, and metric-orthonormal
-  factors;
+- CPCA identity/zero/basis constraint specs, typed projector orientation,
+  independent `X* A X` and projected-block oracles, ROI-local operator-plan
+  execution, sparse materialization rejection, generic program/result
+  semantics, diagonal-metric whitening, four-block orthogonality,
+  reconstruction, partition inertia, and metric-orthonormal factors;
 - duality-diagram construction, transpose symmetry, dual operator invariants,
   generalized PCA dual transport, metric self-adjointness, weighted
   approximation, basis covariance, row/column exchange, clustered-subspace

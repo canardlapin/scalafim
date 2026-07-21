@@ -586,6 +586,26 @@ private[multivar] object MetricSqrt:
           case _ =>
             Left(MultivarError.DensificationRejected(s"$role square root", StorageKind.Sparse))
 
+  /** Factor an already materialized typed metric without demoting it to the
+    * legacy `MvMetric` hierarchy. This is the canonical entry point for
+    * operator-program consumers; storage policy is enforced before the dense
+    * value reaches this method.
+    */
+  def factorDense(
+      metric: DMat,
+      eigenSolver: SymmetricEigenSolver,
+      tolerance: Double,
+      role: String = "metric"
+  ): Either[MultivarError, MetricRoots] =
+    if metric.rows != metric.cols then
+      Left(MultivarError.MatrixShapeMismatch(s"$role must be square, got ${metric.rows}x${metric.cols}"))
+    else
+      for
+        _ <- MatrixOps.checkFinite(role, metric)
+        _ <- MatrixOps.checkSymmetric(metric, tolerance)
+        roots <- denseRoots(metric, eigenSolver, tolerance, role)
+      yield roots
+
   private def diagonalRoots(
       weights: DVec,
       tolerance: Double,

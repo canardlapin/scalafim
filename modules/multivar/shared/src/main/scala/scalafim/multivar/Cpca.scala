@@ -515,15 +515,24 @@ final case class CpcaBlockFit private[multivar] (
 
 final case class CpcaFit private[multivar] (
     problem: CpcaProblem,
-    partition: CpcaPartition,
-    blocks: Map[CpcaBlock, CpcaBlockFit],
-    rowMetricRoots: MetricRoots,
-    columnMetricRoots: MetricRoots,
+    operator: PreparedCpcaOperatorFit,
     storagePolicy: StoragePolicy,
     rankTolerance: Double
 ):
+  def partition: CpcaPartition =
+    operator.partition
+
+  def blocks: Map[CpcaBlock, CpcaBlockFit] =
+    operator.blocks
+
+  def rowMetricRoots: MetricRoots =
+    operator.value.rowMetricRoots
+
+  def columnMetricRoots: MetricRoots =
+    operator.value.featureMetricRoots
+
   def block(block: CpcaBlock): Option[CpcaBlockFit] =
-    blocks.get(block)
+    operator.block(block)
 
   def totalSS: Double =
     partition.totalSS
@@ -574,22 +583,9 @@ object Cpca:
     for
       _ <- RowGeometryOps.requireTolerance("CPCA rank tolerance", rankTolerance)
       _ <- blockRequest.validateAgainst(problem.rows, problem.cols)
-      roots <- roots(problem, eigenSolver, rankTolerance, policy)
-      zStar <- whiten(problem.diagram.table, roots._1, roots._2, policy)
-      partition <- partition(problem, zStar)
-      fits <- fitBlocks(problem, zStar, roots._1, roots._2, blockRequest, svdSolver, rankTolerance)
-    yield CpcaFit(problem, partition, fits, roots._1, roots._2, policy, rankTolerance)
-
-  private def roots(
-      problem: CpcaProblem,
-      eigenSolver: SymmetricEigenSolver,
-      tolerance: Double,
-      policy: StoragePolicy
-  ): Either[MultivarError, (MetricRoots, MetricRoots)] =
-    for
-      rowRoots <- MetricSqrt.factor(problem.diagram.rowMetric, eigenSolver, tolerance, policy, "CPCA row metric")
-      colRoots <- MetricSqrt.factor(problem.diagram.columnMetric, eigenSolver, tolerance, policy, "CPCA column metric")
-    yield (rowRoots, colRoots)
+      prepared <- CpcaOperatorProblem.fromCompatibility(problem, eigenSolver, rankTolerance, policy)
+      operator <- prepared.fit(blockRequest, eigenSolver, svdSolver, rankTolerance, policy)
+    yield CpcaFit(problem, operator, policy, rankTolerance)
 
   private[multivar] def whiten(
       input: MatrixView,
@@ -600,179 +596,6 @@ object Cpca:
     input.toDense(policy).map { dense =>
       rowRoots.half.applyLeft(columnRoots.half.applyRight(dense))
     }
-
-  private def partition(
-      problem: CpcaProblem,
-      zStar: DMat
-  ): Either[MultivarError, CpcaPartition] =
-    for
-      zH <- applyRight(problem.columnConstraint, zStar, CpcaSubspaceMode.Project)
-      b11 <- problem.rowConstraint.project(zH)
-      b01 = MatrixOps.subtract(zH, b11)
-      zG <- problem.rowConstraint.project(zStar)
-      b10 = MatrixOps.subtract(zG, b11)
-      partial = CpcaMath.add(CpcaMath.add(b11, b01), b10)
-      b00 = MatrixOps.subtract(zStar, partial)
-      total = CpcaMath.frobeniusNorm2(zStar)
-    yield
-      val ss = Vector(
-        CpcaBlock.GxH -> CpcaMath.frobeniusNorm2(b11),
-        CpcaBlock.G0xH -> CpcaMath.frobeniusNorm2(b01),
-        CpcaBlock.GxH0 -> CpcaMath.frobeniusNorm2(b10),
-        CpcaBlock.G0xH0 -> CpcaMath.frobeniusNorm2(b00)
-      )
-      val inertias = ss.map { case (block, value) =>
-        CpcaBlockInertia(block, value, if total > 0.0 then value / total else 0.0)
-      }
-      CpcaPartition(total, inertias)
-
-  private def fitBlocks(
-      problem: CpcaProblem,
-      zStar: DMat,
-      rowRoots: MetricRoots,
-      columnRoots: MetricRoots,
-      blockRequest: CpcaBlockRequest,
-      svdSolver: SvdSolver,
-      tolerance: Double
-  ): Either[MultivarError, Map[CpcaBlock, CpcaBlockFit]] =
-    val out = scala.collection.mutable.Map.empty[CpcaBlock, CpcaBlockFit]
-    var i = 0
-    var error = Option.empty[MultivarError]
-    while i < blockRequest.blocks.length && error.isEmpty do
-      val block = blockRequest.blocks(i)
-      fitBlock(problem, zStar, rowRoots, columnRoots, block, blockRequest.requestedComponents(block), svdSolver, tolerance) match
-        case Left(value) => error = Some(value)
-        case Right(fit) => out += block -> fit
-      i += 1
-    error match
-      case Some(value) => Left(value)
-      case None        => Right(out.toMap)
-
-  private def fitBlock(
-      problem: CpcaProblem,
-      zStar: DMat,
-      rowRoots: MetricRoots,
-      columnRoots: MetricRoots,
-      block: CpcaBlock,
-      requested: Option[ComponentCount],
-      svdSolver: SvdSolver,
-      tolerance: Double
-  ): Either[MultivarError, CpcaBlockFit] =
-    val rankLimit = blockRankLimit(problem, block)
-    val requestedCount = requested.map(_.value).getOrElse(rankLimit)
-    if requestedCount > rankLimit then Left(MultivarError.InvalidComponentRequest(requestedCount, rankLimit))
-    else if rankLimit == 0 || isZeroBlock(problem, block) then Right(zeroBlock(problem, block))
-    else
-      for
-        materialized <- blockMatrix(problem, zStar, block)
-        svd <- svdSolver.decompose(MatrixView.dense(materialized), ComponentCount.unsafe(requestedCount))
-        kept = keptComponents(svd.singularValues, tolerance)
-        fit <-
-          if kept == 0 then Right(zeroBlock(problem, block))
-          else
-            val d = MatrixOps.takeVector(svd.singularValues, kept)
-            val uStar = MatrixOps.takeColumns(svd.u, kept)
-            val vStar = MatrixOps.takeColumns(svd.v, kept)
-            val u = rowRoots.pinvHalf.applyLeft(uStar)
-            val v = columnRoots.pinvHalf.applyLeft(vStar)
-            for
-              rowCoordinates <- coordinates(problem.rowConstraint, uStar, block.rowMode)
-              columnCoordinates <- coordinates(problem.columnConstraint, vStar, block.columnMode)
-            yield CpcaBlockFit(
-              block,
-              d,
-              uStar,
-              vStar,
-              u,
-              v,
-              rowCoordinates,
-              columnCoordinates,
-              CpcaMath.sumSquares(d)
-            )
-      yield fit
-
-  private def blockMatrix(
-      problem: CpcaProblem,
-      zStar: DMat,
-      block: CpcaBlock
-  ): Either[MultivarError, DMat] =
-    for
-      right <- applyRight(problem.columnConstraint, zStar, block.columnMode)
-      out <- applyLeft(problem.rowConstraint, right, block.rowMode)
-    yield out
-
-  private def applyLeft(
-      constraint: ResolvedCpcaConstraint,
-      input: DMat,
-      mode: CpcaSubspaceMode
-  ): Either[MultivarError, DMat] =
-    mode match
-      case CpcaSubspaceMode.Project  => constraint.project(input)
-      case CpcaSubspaceMode.Residual => constraint.residual(input)
-
-  private def applyRight(
-      constraint: ResolvedCpcaConstraint,
-      input: DMat,
-      mode: CpcaSubspaceMode
-  ): Either[MultivarError, DMat] =
-    applyLeft(constraint, input.transpose, mode).map(_.transpose)
-
-  private def coordinates(
-      constraint: ResolvedCpcaConstraint,
-      input: DMat,
-      mode: CpcaSubspaceMode
-  ): Either[MultivarError, Option[DMat]] =
-    (mode, constraint.constraint) match
-      case (CpcaSubspaceMode.Project, CpcaConstraint.Basis(_, _)) =>
-        constraint.coordinates(input).map(Some(_))
-      case _ =>
-        Right(None)
-
-  private def blockRankLimit(problem: CpcaProblem, block: CpcaBlock): Int =
-    val rowLimit =
-      block.rowMode match
-        case CpcaSubspaceMode.Project  => problem.rowConstraint.rank
-        case CpcaSubspaceMode.Residual => problem.rows - problem.rowConstraint.rank
-    val colLimit =
-      block.columnMode match
-        case CpcaSubspaceMode.Project  => problem.columnConstraint.rank
-        case CpcaSubspaceMode.Residual => problem.cols - problem.columnConstraint.rank
-    Math.min(rowLimit, colLimit)
-
-  private def isZeroBlock(problem: CpcaProblem, block: CpcaBlock): Boolean =
-    annihilates(problem.rowConstraint, block.rowMode) ||
-      annihilates(problem.columnConstraint, block.columnMode)
-
-  private def annihilates(constraint: ResolvedCpcaConstraint, mode: CpcaSubspaceMode): Boolean =
-    (mode, constraint.constraint) match
-      case (CpcaSubspaceMode.Project, CpcaConstraint.Zero)        => true
-      case (CpcaSubspaceMode.Residual, CpcaConstraint.Identity)  => true
-      case (CpcaSubspaceMode.Project, CpcaConstraint.Identity)   => false
-      case (CpcaSubspaceMode.Project, CpcaConstraint.Basis(_, _)) => false
-      case (CpcaSubspaceMode.Residual, CpcaConstraint.Zero)       => false
-      case (CpcaSubspaceMode.Residual, CpcaConstraint.Basis(_, _)) => false
-
-  private def zeroBlock(problem: CpcaProblem, block: CpcaBlock): CpcaBlockFit =
-    val d = DVec.zeros(0)
-    CpcaBlockFit(
-      block,
-      d,
-      DMat.zeros(problem.rows, 0),
-      DMat.zeros(problem.cols, 0),
-      DMat.zeros(problem.rows, 0),
-      DMat.zeros(problem.cols, 0),
-      None,
-      None,
-      ss = 0.0
-    )
-
-  private def keptComponents(values: DVec, tolerance: Double): Int =
-    if values.length == 0 then 0
-    else
-      val cutoff = tolerance * Math.max(1.0, values(0))
-      var kept = 0
-      while kept < values.length && values(kept) > cutoff do kept += 1
-      kept
 
 private[multivar] object CpcaMath:
   def add(left: DMat, right: DMat): DMat =
