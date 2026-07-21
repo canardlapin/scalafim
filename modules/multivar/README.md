@@ -75,6 +75,14 @@ typed fitted frame or coefficient transforms derived from its operator fit.
 The RRR coefficient is a directed `OpCoefficient`; prediction is exposed by a
 `FittedCoefficientTransform` rather than a separate decoder hierarchy.
 
+`ConstrainedCanonicalProblem` is the coordinate-constrained counterpart of the
+ordinary canonical-effect problem. Its first estimand is the nonnegative
+generalized-Rayleigh root. The nonnegative cone is an explicit
+`ConstraintTerm`, so the resulting `OperatorProgram` reports permutation—not
+orthogonal—equivalence and a stationary-point guarantee. ScalaFIM owns those
+scientific semantics; the reusable projected iteration and its KKT,
+feasibility, and normalization certificates come from Gale.
+
 CPCA code constructs `CpcaOperatorProblem` and fits a validated
 `CpcaBlockRequest`. Planned ROI execution constructs the same typed problem
 directly and carries `PreparedCpcaOperatorFit`; no raw CPCA problem or resolved
