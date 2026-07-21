@@ -5,7 +5,6 @@ import gale.linalg.DVec
 import gale.linalg.DoubleLinearOperator
 import gale.linalg.LinAlgError
 import gale.linalg.LinearOperator
-import gale.linalg.Matrix
 import gale.linalg.MutableDVec
 import gale.linalg.KroneckerLinearOperator
 import gale.sparse.CSR
@@ -409,23 +408,11 @@ private final case class MatrixViewLinearMap(view: MatrixView) extends DoubleLin
   override def cols: Int = view.cols
 
   override def applyTo(input: DVec, output: MutableDVec): Unit =
-    applyView(view, input, output)
+    view.multiplyVector(input, output) match
+      case Left(error) => throw LinAlgError.InvalidArgument(error.message)
+      case Right(_) => ()
 
   override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
-    applyView(view.transposeView, input, output)
-
-  private def applyView(source: MatrixView, input: DVec, output: MutableDVec): Unit =
-    if input.length != source.cols then throw LinAlgError.VectorLengthMismatch(source.cols, input.length)
-    if output.length != source.rows then throw LinAlgError.VectorLengthMismatch(source.rows, output.length)
-    val column = Matrix.newBuilder(input.length, 1)
-    var index = 0
-    while index < input.length do
-      column(index, 0) = input(index)
-      index += 1
-    source.rightMultiply(column.result()) match
+    view.transposeMultiplyVector(input, output) match
       case Left(error) => throw LinAlgError.InvalidArgument(error.message)
-      case Right(result) =>
-        index = 0
-        while index < result.rows do
-          output(index) = result(index, 0)
-          index += 1
+      case Right(_) => ()

@@ -30,6 +30,7 @@ class ModelSpecSuite extends munit.FunSuite:
       LifecycleStage.ChartEstimation,
       LifecycleStage.GraphEstimation,
       LifecycleStage.StatisticalEstimation,
+      LifecycleStage.OperatorPolicy,
       LifecycleStage.ProgramBuild,
       LifecycleStage.Lowering,
       LifecycleStage.Solve
@@ -86,6 +87,11 @@ class ModelSpecSuite extends munit.FunSuite:
 
     assertEquals(scores.rows, heldOut.rows)
     assertEquals(scores.cols, 2)
+    assertEquals(scores.rowIds, heldOut.rowIds)
+    assertEquals(scores.inputFeatureSpace, heldOut.featureSpace)
+    assertEquals(scores.inputFeatureIdentity, heldOut.featureIdentity)
+    assertEquals(scores.outputCoordinates.dimension, 2)
+    assert(scores.provenance.events.nonEmpty)
     assertEquals(
       fit.transform(foreignIdentity).left.toOption,
       Some(ModelSpecError.FeatureIdentityMismatch(fit.featureIdentity, foreignIdentity.featureIdentity))
@@ -93,6 +99,33 @@ class ModelSpecSuite extends munit.FunSuite:
     assertEquals(
       fit.transform(foreignNominal).left.toOption,
       Some(ModelSpecError.IncompatibleFeatureSpace(fit.featureSpace, foreignSpace))
+    )
+
+  test("ModelStudy row subsets preserve sparse storage and row order"):
+    val rows = Vector(
+      Vector(1.0, 0.0, 2.0),
+      Vector(0.0, 3.0, 0.0),
+      Vector(4.0, 0.0, 5.0)
+    )
+    val sparse = acceptedMultivar(SparseMatrixView.fromRows(rows))
+    val features = acceptedMultivar(MvSpace.of("sparse-modelspec-features", SpaceRole.Observed, 3))
+    val study = accepted(
+      ModelStudy.from(
+        sparse,
+        valuesRowIds(rows.length),
+        features,
+        id("sparse-modelspec-feature-order"),
+        id("sparse-modelspec-source"),
+        SemanticProvenance.source("sparse-modelspec")
+      )
+    )
+    val subset = accepted(study.subset(IndexSet.from(Vector(2, 0), IndexAxis.Row).toOption.get))
+
+    assertEquals(subset.values.storage, StorageKind.Sparse)
+    assertEquals(subset.rowIds, Vector(study.rowIds(2), study.rowIds(0)))
+    assertEquals(
+      acceptedMultivar(subset.values.toDense(StoragePolicy.AllowDense)).toRows,
+      Vector(rows(2), rows(0))
     )
 
   test("certified ModelFit exposes requested and lowered programs, operators, terms, auxiliaries, guarantee, and provenance"):
@@ -110,6 +143,9 @@ class ModelSpecSuite extends munit.FunSuite:
     assertEquals(fit.missingness, MissingnessPolicy.RejectNonFinite)
     assertEquals(fit.lifecyclePlans, lifecyclePlans)
     assertEquals(fit.solverPolicy.artifact, "gale-generalized-eigen")
+    assertEquals(fit.solverExecution.artifact, fit.solverPolicy.artifact)
+    assertEquals(fit.solverExecution.attestation, fit.pipeline.fitBundle.programFit.solverAttestation)
+    assertEquals(fit.solverExecution.settings.toMap.get("components"), Some("2"))
     assert(fit.solverPolicy.acceptedGuarantees.contains(fit.guarantee))
     assert(fit.provenance.events.nonEmpty)
     assert(fit.pipeline.events.exists(_.stage == LifecycleStage.Solve))
@@ -175,6 +211,22 @@ class ModelSpecSuite extends munit.FunSuite:
         assert(violations.exists(_.contains("different rows")))
       case other => fail(s"expected leakage rejection, got $other")
 
+  test("a fitted artifact cannot be reused across ModelSpec-minted training scopes"):
+    val fixture = modelFixture(pipeline = new ReusedFoldFitPipeline)
+
+    fixture.spec.fit(fixture.study, fixture.outer).left.toOption match
+      case Some(ModelSpecError.LeakageDetected(violations)) =>
+        assert(violations.exists(_.contains("different ModelSpec-minted training scope")))
+      case other => fail(s"expected scoped-provenance rejection, got $other")
+
+  test("an effective operator not derived from the scoped training study is rejected"):
+    val fixture = modelFixture(pipeline = new UnboundOperatorPipeline)
+
+    fixture.spec.fit(fixture.study, fixture.outer).left.toOption match
+      case Some(ModelSpecError.LeakageDetected(violations)) =>
+        assert(violations.exists(_.contains("effective operator provenance")))
+      case other => fail(s"expected effective-operator provenance rejection, got $other")
+
   private final class AuditedGpcaPipeline extends FoldPipeline:
     private val delegate = new GpcaFoldPipeline
 
@@ -191,6 +243,7 @@ class ModelSpecSuite extends munit.FunSuite:
         )
         FoldPipelineFit.from(
           context,
+          training,
           base.requestedProgram,
           base.loweredProgram,
           base.fitBundle,
@@ -198,7 +251,7 @@ class ModelSpecSuite extends munit.FunSuite:
           base.effectiveOperators,
           base.auxiliaryVariables,
           base.splitMethod,
-          base.guarantee,
+          base.solverExecution,
           learned ++ base.events,
           base.provenance
         )
@@ -225,6 +278,7 @@ class ModelSpecSuite extends munit.FunSuite:
         )
         FoldPipelineFit.from(
           context,
+          training,
           base.requestedProgram,
           base.loweredProgram,
           base.fitBundle,
@@ -232,7 +286,7 @@ class ModelSpecSuite extends munit.FunSuite:
           base.effectiveOperators,
           base.auxiliaryVariables,
           base.splitMethod,
-          base.guarantee,
+          base.solverExecution,
           base.events :+ lie,
           base.provenance
         )
@@ -254,6 +308,7 @@ class ModelSpecSuite extends munit.FunSuite:
         )
         FoldPipelineFit.from(
           context,
+          training,
           base.requestedProgram,
           base.loweredProgram,
           base.fitBundle,
@@ -261,8 +316,63 @@ class ModelSpecSuite extends munit.FunSuite:
           base.effectiveOperators,
           base.auxiliaryVariables,
           base.splitMethod,
-          base.guarantee,
+          base.solverExecution,
           base.events :+ event,
+          base.provenance
+        )
+
+  private final class ReusedFoldFitPipeline extends FoldPipeline:
+    private val delegate = new AuditedGpcaPipeline
+    private var cached = Option.empty[FoldPipelineFit]
+
+    def fit(
+        context: TrainingContext,
+        training: ProcessedStudy,
+        candidate: HyperparameterCandidate
+    ): Either[ModelSpecError, FoldPipelineFit] =
+      cached match
+        case Some(value) => Right(value)
+        case None =>
+          delegate.fit(context, training, candidate).map: value =>
+            cached = Some(value)
+            value
+
+  private final class UnboundOperatorPipeline extends FoldPipeline:
+    private val delegate = new AuditedGpcaPipeline
+
+    def fit(
+        context: TrainingContext,
+        training: ProcessedStudy,
+        candidate: HyperparameterCandidate
+    ): Either[ModelSpecError, FoldPipelineFit] =
+      delegate.fit(context, training, candidate).flatMap: base =>
+        val feature = SpaceRef(training.featureSpace)
+        val foreign = Op
+          .fromDense(
+            DMat.eye(training.values.cols),
+            CoordinateEvidence.dual(feature.evidence),
+            CoordinateEvidence.primal(feature.evidence),
+            OperatorRoleWitness.covariance,
+            id("foreign-effective-operator")
+          )
+          .toOption
+          .get
+        val snapshot = OperatorSnapshot
+          .from("foreign-effective", DerivedOperatorKind.SecondOrder, foreign)
+          .toOption
+          .get
+        FoldPipelineFit.from(
+          context,
+          training,
+          base.requestedProgram,
+          base.loweredProgram,
+          base.fitBundle,
+          base.operatorPolicies,
+          base.effectiveOperators :+ snapshot,
+          base.auxiliaryVariables,
+          base.splitMethod,
+          base.solverExecution,
+          base.events,
           base.provenance
         )
 

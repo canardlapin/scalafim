@@ -132,6 +132,21 @@ class CompositeLoweringSuite extends munit.FunSuite:
     assertMatrixClose(accepted(lift.aggregate(auxiliary)), value, 1e-12)
     assert(accepted(lift.proximal(auxiliary, 1.0)) != auxiliary)
 
+    val partial = acceptedChart(
+      GroupStructure.from(
+        chart,
+        Vector(
+          CoordinateGroup("partial-left", IndexSet.unsafe(Vector(0, 1))),
+          CoordinateGroup("partial-overlap", IndexSet.unsafe(Vector(1)))
+        ),
+        id("partial-overlap-groups")
+      )
+    )
+    assert(OverlappingGroupLift.from(partial).left.exists:
+      case CompositeLoweringError.InvalidDefinition(reason) => reason.contains("does not cover coordinates 2")
+      case _ => false
+    )
+
   test("aligned-score l1, group, Huber, bounded, and equality forms share one typed multi-input target"):
     val source = space("aligned-source", 2)
     val target = space("aligned-target", 2)

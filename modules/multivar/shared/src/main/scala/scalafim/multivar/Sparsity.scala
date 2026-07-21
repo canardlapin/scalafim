@@ -42,6 +42,26 @@ enum ChartError:
       case SetMismatch(actual) => s"feasible set $actual has no direct chart projection lowering"
       case Semantic(error) => error.message
 
+final case class ChartLawCertificate private (
+    kind: ChartKind,
+    forwardIdentity: ValueIdentity,
+    synthesisIdentity: ValueIdentity,
+    residual: Double,
+    scale: Double,
+    context: CertificateContext
+)
+
+object ChartLawCertificate:
+  private[multivar] def certified(
+      kind: ChartKind,
+      forwardIdentity: ValueIdentity,
+      synthesisIdentity: ValueIdentity,
+      residual: Double,
+      scale: Double,
+      context: CertificateContext
+  ): ChartLawCertificate =
+    new ChartLawCertificate(kind, forwardIdentity, synthesisIdentity, residual, scale, context)
+
 /** Stable coordinates for chart-dependent claims. `synthesis` is explicit: an
   * algebraic dual alone is not a coordinate inverse.
   */
@@ -52,7 +72,8 @@ final class FeatureChart[Feature <: SemanticSpace, Coordinates <: SemanticSpace]
     val valueIdentity: ValueIdentity,
     val kind: ChartKind,
     val forward: Op[Dual[Feature], Primal[Coordinates], ChartOperatorRole, UncheckedEvidence],
-    val synthesis: Op[Primal[Coordinates], Dual[Feature], ChartOperatorRole, UncheckedEvidence]
+    val synthesis: Op[Primal[Coordinates], Dual[Feature], ChartOperatorRole, UncheckedEvidence],
+    val lawCertificate: Option[ChartLawCertificate]
 ):
   def target(parameter: ParameterId): TargetExpression =
     TargetExpression
@@ -109,7 +130,8 @@ object FeatureChart:
       valueIdentity: ValueIdentity,
       kind: ChartKind,
       forward: Op[Dual[Feature], Primal[Coordinates], ? <: OperatorRoleTag, ? <: OperatorEvidence],
-      synthesis: Op[Primal[Coordinates], Dual[Feature], ? <: OperatorRoleTag, ? <: OperatorEvidence]
+      synthesis: Op[Primal[Coordinates], Dual[Feature], ? <: OperatorRoleTag, ? <: OperatorEvidence],
+      context: CertificateContext = CertificateContext.portableFloat64
   ): Either[ChartError, FeatureChart[Feature, Coordinates]] =
     kind match
       case ChartKind.Identity | ChartKind.Selection(_) =>
@@ -119,7 +141,10 @@ object FeatureChart:
       case ChartKind.TightFrame(_, proof) if proof != forward.valueIdentity =>
         Left(ChartError.InvalidDefinition("tight-frame proof must bind the forward map identity"))
       case _ =>
-        validateMetadata(featureIds, coordinateSpace.dimension).map: _ =>
+        for
+          _ <- validateMetadata(featureIds, coordinateSpace.dimension)
+          law <- certifyLaw(kind, forward, synthesis, context)
+        yield
           new FeatureChart(
             featureSpace,
             coordinateSpace,
@@ -127,7 +152,8 @@ object FeatureChart:
             valueIdentity,
             kind,
             eraseForward(forward),
-            eraseSynthesis(synthesis)
+            eraseSynthesis(synthesis),
+            law
           )
 
   private def build[Feature <: SemanticSpace, Coordinates <: SemanticSpace](
@@ -161,7 +187,80 @@ object FeatureChart:
         )
         .left
         .map(ChartError.Semantic.apply)
-    yield new FeatureChart(featureSpace, coordinateSpace, featureIds, valueIdentity, kind, forward, synthesis)
+    yield new FeatureChart(featureSpace, coordinateSpace, featureIds, valueIdentity, kind, forward, synthesis, None)
+
+  private def certifyLaw[Feature <: SemanticSpace, Coordinates <: SemanticSpace](
+      kind: ChartKind,
+      forward: Op[Dual[Feature], Primal[Coordinates], ? <: OperatorRoleTag, ? <: OperatorEvidence],
+      synthesis: Op[Primal[Coordinates], Dual[Feature], ? <: OperatorRoleTag, ? <: OperatorEvidence],
+      context: CertificateContext
+  ): Either[ChartError, Option[ChartLawCertificate]] =
+    kind match
+      case ChartKind.General => Right(None)
+      case ChartKind.Orthogonal(_) | ChartKind.TightFrame(_, _) =>
+        for
+          forwardDense <- forward.toDense.left.map(ChartError.Semantic.apply)
+          synthesisDense <- synthesis.toDense.left.map(ChartError.Semantic.apply)
+          bound = kind match
+            case ChartKind.Orthogonal(_) => 1.0
+            case ChartKind.TightFrame(value, _) => value.doubleValue
+            case _ => 1.0
+          requiresSquare = kind match
+            case ChartKind.Orthogonal(_) => true
+            case _ => false
+          _ <-
+            if requiresSquare && forwardDense.rows != forwardDense.cols then
+              Left(ChartError.InvalidDefinition("orthogonal chart must be square"))
+            else Right(())
+          adjointResidual = frobeniusDifference(synthesisDense, forwardDense.t)
+          coisometry = GaleNumerics.multiply(forwardDense, synthesisDense)
+          expected = MatrixOps.scale(DMat.eye(forwardDense.rows), bound)
+          lawResidual = frobeniusDifference(coisometry, expected)
+          residual = Math.max(adjointResidual, lawResidual)
+          scale = Math.max(1.0, Math.max(frobenius(synthesisDense), Math.max(frobenius(forwardDense), frobenius(expected))))
+          _ <-
+            if residual <= context.tolerance.threshold(scale) then Right(())
+            else Left(
+              ChartError.InvalidDefinition(
+                s"$kind chart law residual $residual exceeds threshold ${context.tolerance.threshold(scale)}"
+              )
+            )
+        yield Some(
+          ChartLawCertificate.certified(
+            kind,
+            forward.valueIdentity,
+            synthesis.valueIdentity,
+            residual,
+            scale,
+            context
+          )
+        )
+      case ChartKind.Identity | ChartKind.Selection(_) =>
+        Left(ChartError.InvalidDefinition("identity and selection charts must use their proof-by-construction factories"))
+
+  private def frobenius(value: DMat): Double =
+    var total = 0.0
+    var row = 0
+    while row < value.rows do
+      var column = 0
+      while column < value.cols do
+        val entry = value(row, column)
+        total += entry * entry
+        column += 1
+      row += 1
+    Math.sqrt(total)
+
+  private def frobeniusDifference(left: DMat, right: DMat): Double =
+    var total = 0.0
+    var row = 0
+    while row < left.rows do
+      var column = 0
+      while column < left.cols do
+        val delta = left(row, column) - right(row, column)
+        total += delta * delta
+        column += 1
+      row += 1
+    Math.sqrt(total)
 
   private def validateMetadata(featureIds: Vector[String], expected: Int): Either[ChartError, Unit] =
     val clean = featureIds.map(_.trim)
@@ -287,14 +386,20 @@ object DirectProximalPlan:
       kind: DirectProximalKind
   ): Either[ChartError, DirectProximalPlan[Feature, Coordinates]] =
     for
-      _ <- validateChart(chart.kind)
+      _ <- validateChart(chart)
       _ <- validateFunctional(original.functional, kind)
       _ <- validateGroups(chart, kind)
       _ <- validateTarget(original, chart)
     yield new DirectProximalPlan(original, chart, kind)
 
-  private def validateChart(kind: ChartKind): Either[ChartError, Unit] =
-    if kind == ChartKind.General then Left(ChartError.UnsupportedDirectLowering(kind)) else Right(())
+  private def validateChart[Feature <: SemanticSpace, Coordinates <: SemanticSpace](
+      chart: FeatureChart[Feature, Coordinates]
+  ): Either[ChartError, Unit] =
+    chart.kind match
+      case ChartKind.General => Left(ChartError.UnsupportedDirectLowering(chart.kind))
+      case ChartKind.Orthogonal(_) | ChartKind.TightFrame(_, _) if chart.lawCertificate.isEmpty =>
+        Left(ChartError.InvalidDefinition(s"${chart.kind} chart requires a numerical law certificate"))
+      case _ => Right(())
 
   private def validateFunctional(actual: FunctionalKind, expected: DirectProximalKind): Either[ChartError, Unit] =
     val valid =

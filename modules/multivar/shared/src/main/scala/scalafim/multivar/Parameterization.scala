@@ -35,6 +35,7 @@ enum ParameterizationError:
   case InvalidDefinition(reason: String)
   case NullSpaceResidual(residual: Double, threshold: Double)
   case InverseUnavailable
+  case SolverBoundary(error: scalafim.linalg.FirstOrderError)
   case Program(error: ProgramError)
   case Semantic(error: SemanticError)
 
@@ -44,6 +45,7 @@ enum ParameterizationError:
       case NullSpaceResidual(residual, threshold) =>
         s"declared null-space basis has constraint residual $residual above threshold $threshold"
       case InverseUnavailable => "parameterization has no unique semantic inverse"
+      case SolverBoundary(error) => error.message
       case Program(error) => error.message
       case Semantic(error) => error.message
 
@@ -51,7 +53,8 @@ final case class NullSpaceProof(
     constraintIdentity: ValueIdentity,
     basisIdentity: ValueIdentity,
     rankTolerance: CertificateTolerance,
-    residual: Double
+    residual: Double,
+    numericalCertificate: scalafim.linalg.LinearReductionCertificate
 )
 
 /** Executable exact linear realization `W = E Z`. The descriptor used by
@@ -158,31 +161,45 @@ object LinearFrameParameterization:
         Op[Dual[Feature], Dual[FreeFeature], ? <: OperatorRoleTag, ? <: OperatorEvidence]
       ] = None
   ): Either[ParameterizationError, LinearFrameParameterization[Feature, FreeFeature, Component]] =
-    val residualOperator = basis.andThen(constraint)
-    residualOperator(DMat.eye(freeFeatureSpace.dimension)).left.map(ParameterizationError.Semantic.apply).flatMap: residual =>
-      val current = maxAbs(residual)
-      val threshold = rankTolerance.threshold(1.0)
-      if current > threshold then Left(ParameterizationError.NullSpaceResidual(current, threshold))
-      else
-        Right(
-          new LinearFrameParameterization(
-            FrameParameterization.nullSpace(variable, freeFeatureSpace, basis, rankTolerance),
-            basis,
-            inverseOnImage,
-            ParameterizationProperties(
-              if inverseOnImage.isDefined then InjectivityClaim.VerifiedInjective else InjectivityClaim.Unknown,
-              ImageClaim.ExactFeasibleImage,
-              RedundancyClaim.NoRedundancy,
-              ParameterizationGauge.Unique,
-              DifferentialKind.Linear,
-              invertibleOnImage = inverseOnImage.isDefined
-            ),
-            Some(NullSpaceProof(constraint.valueIdentity, basis.valueIdentity, rankTolerance, current)),
-            SemanticProvenance
-              .source("null-space-parameterization")
-              .append(SemanticProvenanceEvent.Derived("verify-null-space", Vector(constraint.valueIdentity, basis.valueIdentity)))
-          )
+    for
+      tolerance <- scalafim.linalg.FirstOrderTolerance
+        .from(rankTolerance.absoluteValue, rankTolerance.relativeValue)
+        .left
+        .map(ParameterizationError.SolverBoundary.apply)
+      numerical <- scalafim.linalg.ExactLinearReduction
+        .verify(
+          new OperatorLinearMap(basis),
+          new OperatorLinearMap(constraint),
+          tolerance
         )
+        .left
+        .map(ParameterizationError.SolverBoundary.apply)
+    yield
+      new LinearFrameParameterization(
+        FrameParameterization.nullSpace(variable, freeFeatureSpace, basis, rankTolerance),
+        basis,
+        inverseOnImage,
+        ParameterizationProperties(
+          if inverseOnImage.isDefined then InjectivityClaim.VerifiedInjective else InjectivityClaim.Unknown,
+          ImageClaim.ExactFeasibleImage,
+          RedundancyClaim.NoRedundancy,
+          ParameterizationGauge.Unique,
+          DifferentialKind.Linear,
+          invertibleOnImage = inverseOnImage.isDefined
+        ),
+        Some(
+          NullSpaceProof(
+            constraint.valueIdentity,
+            basis.valueIdentity,
+            rankTolerance,
+            numerical.residual,
+            numerical
+          )
+        ),
+        SemanticProvenance
+          .source("null-space-parameterization")
+          .append(SemanticProvenanceEvent.Derived("verify-null-space", Vector(constraint.valueIdentity, basis.valueIdentity)))
+      )
 
   def sharedBasis[
       Feature <: SemanticSpace,
@@ -252,17 +269,6 @@ object LinearFrameParameterization:
     Op.fromDense(value, domain, codomain, OperatorRoleWitness.coefficient, identity)
       .left
       .map(ParameterizationError.Semantic.apply)
-
-  private def maxAbs(value: DMat): Double =
-    var result = 0.0
-    var row = 0
-    while row < value.rows do
-      var column = 0
-      while column < value.cols do
-        result = Math.max(result, Math.abs(value(row, column)))
-        column += 1
-      row += 1
-    result
 
 final case class FactorCoordinates private (left: DMat, right: DMat)
 

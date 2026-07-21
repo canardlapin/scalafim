@@ -67,6 +67,8 @@ enum CompositeLoweringError:
   case OverlappingGroupsRequired(actual: GroupOverlap)
   case ReferenceMethodUnsupported(method: SplitMethod)
   case NumericalFailure(reason: String)
+  case SolverBoundary(error: scalafim.linalg.FirstOrderError)
+  case Chart(error: ChartError)
   case Semantic(error: SemanticError)
 
   def message: String =
@@ -83,6 +85,8 @@ enum CompositeLoweringError:
       case OverlappingGroupsRequired(actual) => s"latent group lifting requires overlapping groups, got $actual"
       case ReferenceMethodUnsupported(method) => s"portable reference execution does not implement $method"
       case NumericalFailure(reason) => reason
+      case SolverBoundary(error) => error.message
+      case Chart(error) => error.message
       case Semantic(error) => error.message
 
 /** A semantic lowering of `phi(T(theta))` to an auxiliary equation. The target
@@ -213,18 +217,22 @@ object CompositeConstraintPlan:
   * equation `coordinates = sum E_g* z_g`. The group prox is separable only in
   * the lifted variables, never in the original overlapping coordinates.
   */
-final class OverlappingGroupLift private (val structure: GroupStructure):
+final class OverlappingGroupLift private (
+    val structure: GroupStructure,
+    multiplicity: Array[Int]
+):
   private val offsets: Vector[Int] =
     structure.groups.scanLeft(0)((offset, group) => offset + group.indices.length)
 
   val auxiliaryRows: Int = offsets.last
 
+  val normUpperBound: Double =
+    Math.sqrt(multiplicity.max.toDouble)
+
   def feasibleLift(coordinates: DMat): Either[CompositeLoweringError, DMat] =
     if coordinates.rows != structure.coordinateDimension then
       Left(CompositeLoweringError.InvalidDefinition("coordinates do not match the overlapping group structure"))
     else
-      val multiplicity = Array.fill(structure.coordinateDimension)(0)
-      structure.groups.foreach(_.indices.indices.foreach(index => multiplicity(index) += 1))
       val output = new Array[Double](auxiliaryRows * coordinates.cols)
       var groupIndex = 0
       while groupIndex < structure.groups.length do
@@ -260,6 +268,47 @@ final class OverlappingGroupLift private (val structure: GroupStructure):
         groupIndex += 1
       Right(GaleNumerics.matrixFromRowMajor(structure.coordinateDimension, auxiliary.cols, output))
 
+  def adjoint(coordinates: DMat): Either[CompositeLoweringError, DMat] =
+    if coordinates.rows != structure.coordinateDimension then
+      Left(CompositeLoweringError.InvalidDefinition("coordinates do not match the overlapping group structure"))
+    else
+      val output = new Array[Double](auxiliaryRows * coordinates.cols)
+      var groupIndex = 0
+      while groupIndex < structure.groups.length do
+        val group = structure.groups(groupIndex)
+        var local = 0
+        while local < group.indices.length do
+          val source = group.indices.indices(local)
+          var column = 0
+          while column < coordinates.cols do
+            output((offsets(groupIndex) + local) * coordinates.cols + column) = coordinates(source, column)
+            column += 1
+          local += 1
+        groupIndex += 1
+      Right(GaleNumerics.matrixFromRowMajor(auxiliaryRows, coordinates.cols, output))
+
+  def value(auxiliary: DMat): Either[CompositeLoweringError, Double] =
+    if auxiliary.rows != auxiliaryRows then
+      Left(CompositeLoweringError.InvalidDefinition("auxiliary rows do not match the overlapping group lift"))
+    else
+      var result = 0.0
+      var groupIndex = 0
+      while groupIndex < structure.groups.length do
+        val start = offsets(groupIndex)
+        val end = offsets(groupIndex + 1)
+        var squared = 0.0
+        var row = start
+        while row < end do
+          var column = 0
+          while column < auxiliary.cols do
+            val current = auxiliary(row, column)
+            squared += current * current
+            column += 1
+          row += 1
+        result += Math.sqrt(squared)
+        groupIndex += 1
+      Right(result)
+
   def proximal(auxiliary: DMat, threshold: Double): Either[CompositeLoweringError, DMat] =
     if auxiliary.rows != auxiliaryRows || !threshold.isFinite || threshold < 0.0 then
       Left(CompositeLoweringError.InvalidDefinition("invalid lifted group proximal input"))
@@ -292,8 +341,20 @@ final class OverlappingGroupLift private (val structure: GroupStructure):
 
 object OverlappingGroupLift:
   def from(structure: GroupStructure): Either[CompositeLoweringError, OverlappingGroupLift] =
-    if structure.overlap == GroupOverlap.Overlapping then Right(new OverlappingGroupLift(structure))
-    else Left(CompositeLoweringError.OverlappingGroupsRequired(structure.overlap))
+    if structure.overlap != GroupOverlap.Overlapping then
+      Left(CompositeLoweringError.OverlappingGroupsRequired(structure.overlap))
+    else
+      val multiplicity = Array.fill(structure.coordinateDimension)(0)
+      structure.groups.foreach: group =>
+        group.indices.indices.foreach(index => multiplicity(index) += 1)
+      val uncovered = multiplicity.indices.filter(index => multiplicity(index) == 0).toVector
+      if uncovered.nonEmpty then
+        Left(
+          CompositeLoweringError.InvalidDefinition(
+            s"overlapping group lift does not cover coordinates ${uncovered.mkString(", ")}"
+          )
+        )
+      else Right(new OverlappingGroupLift(structure, multiplicity))
 
 final class AlignedScoreTarget private (
     val expression: TypedExpression[DMat],
@@ -418,7 +479,8 @@ final case class PrimalDualSolution(
     auxiliary: DMat,
     dual: DMat,
     objective: Double,
-    status: SplitStoppingStatus
+    status: SplitStoppingStatus,
+    numericalCertificate: scalafim.linalg.FirstOrderCertificate
 )
 
 /** Portable reference solver for
@@ -434,149 +496,9 @@ object PrimalDualL1Reference:
       observation: DMat,
       config: PrimalDualConfig = PrimalDualConfig.portable
   ): Either[CompositeLoweringError, PrimalDualSolution] =
-    if plan.method != SplitMethod.PrimalDual then
-      Left(CompositeLoweringError.ReferenceMethodUnsupported(plan.method))
-    else if plan.functional != CompositeFunctional.ElementwiseL1 then
-      Left(CompositeLoweringError.FunctionalUnsupported(plan.original.functional))
-    else if observation.rows != plan.targetOperator.cols then
-      Left(CompositeLoweringError.InvalidDefinition("observation rows do not match the source parameter"))
-    else
-      for
-        dense <- plan.targetOperator.toDense.left.map(CompositeLoweringError.Semantic.apply)
-        solution <- iterate(plan, observation, dense, config)
-      yield solution
-
-  private def iterate[Source <: SemanticSpace, Target <: SemanticSpace](
-      plan: CompositePenaltyPlan[Source, Target],
-      observation: DMat,
-      denseTarget: DMat,
-      config: PrimalDualConfig
-  ): Either[CompositeLoweringError, PrimalDualSolution] =
-    val normBound = frobenius(denseTarget)
-    if !normBound.isFinite then Left(CompositeLoweringError.NumericalFailure("target norm is non-finite"))
-    else if normBound == 0.0 then
-      val auxiliary = zeros(plan.targetOperator.rows, observation.cols)
-      val dual = zeros(plan.targetOperator.rows, observation.cols)
-      val certificate = SplitResidualCertificate(0.0, 0.0, 0.0, 0.0, 0, config.tolerance)
-      Right(PrimalDualSolution(observation, auxiliary, dual, 0.0, SplitStoppingStatus.Converged(certificate)))
-    else
-      val step = 0.99 / normBound
-      val lambda = plan.original.weight.value
-      var primal = observation
-      var extrapolated = observation
-      var dual = zeros(plan.targetOperator.rows, observation.cols)
-      var certificate = SplitResidualCertificate(Double.MaxValue, Double.MaxValue, Double.MaxValue, Double.MaxValue, 0, config.tolerance)
-      var iteration = 0
-      var converged = false
-      while iteration < config.iterations.intValue && !converged do
-        val mapped = denseTarget * extrapolated
-        val nextDual = clip(add(dual, MatrixOps.scale(mapped, step)), lambda)
-        val transpose = denseTarget.t * nextDual
-        val numerator = add(
-          MatrixOps.subtract(primal, MatrixOps.scale(transpose, step)),
-          MatrixOps.scale(observation, step)
-        )
-        val nextPrimal = MatrixOps.scale(numerator, 1.0 / (1.0 + step))
-        extrapolated = add(
-          nextPrimal,
-          MatrixOps.scale(MatrixOps.subtract(nextPrimal, primal), config.extrapolation.value)
-        )
-        primal = nextPrimal
-        dual = nextDual
-        iteration += 1
-        certificate = residuals(plan, denseTarget, observation, primal, dual, iteration, config.tolerance)
-        val residual = Math.max(certificate.stationarity, Math.max(certificate.dualFeasibility, certificate.complementarity))
-        val scale = Math.max(1.0, frobenius(observation))
-        converged = residual <= config.tolerance.threshold(scale) &&
-          certificate.primalDualGap <= config.tolerance.threshold(
-            Math.max(1.0, objective(plan, denseTarget, observation, primal))
-          )
-      val auxiliary = denseTarget * primal
-      val status =
-        if converged then SplitStoppingStatus.Converged(certificate)
-        else SplitStoppingStatus.IterationLimit(certificate)
-      Right(PrimalDualSolution(primal, auxiliary, dual, objective(plan, denseTarget, observation, primal), status))
-
-  private def residuals[Source <: SemanticSpace, Target <: SemanticSpace](
-      plan: CompositePenaltyPlan[Source, Target],
-      denseTarget: DMat,
-      observation: DMat,
-      primal: DMat,
-      dual: DMat,
-      iteration: Int,
-      tolerance: CertificateTolerance
-  ): SplitResidualCertificate =
-    val lambda = plan.original.weight.value
-    val mapped = denseTarget * primal
-    val transpose = denseTarget.t * dual
-    val stationarity = maxAbs(add(MatrixOps.subtract(primal, observation), transpose))
-    var dualFeasibility = 0.0
-    var complementarity = 0.0
-    var row = 0
-    while row < mapped.rows do
-      var column = 0
-      while column < mapped.cols do
-        val z = mapped(row, column)
-        val p = dual(row, column)
-        dualFeasibility = Math.max(dualFeasibility, Math.max(0.0, Math.abs(p) - lambda))
-        val current =
-          if Math.abs(z) > tolerance.threshold(1.0) then Math.abs(p - lambda * Math.signum(z))
-          else Math.max(0.0, Math.abs(p) - lambda)
-        complementarity = Math.max(complementarity, current)
-        column += 1
-      row += 1
-    val ktp = transpose
-    val dualObjective = -0.5 * squaredNorm(ktp) + inner(ktp, observation)
-    val gap = Math.max(0.0, objective(plan, denseTarget, observation, primal) - dualObjective)
-    SplitResidualCertificate(stationarity, dualFeasibility, complementarity, gap, iteration, tolerance)
-
-  private def objective[Source <: SemanticSpace, Target <: SemanticSpace](
-      plan: CompositePenaltyPlan[Source, Target],
-      denseTarget: DMat,
-      observation: DMat,
-      primal: DMat
-  ): Double =
-    0.5 * squaredNorm(MatrixOps.subtract(primal, observation)) +
-      plan.original.weight.value * l1(denseTarget * primal)
-
-  private def clip(value: DMat, bound: Double): DMat =
-    map(value)(current => Math.max(-bound, Math.min(bound, current)))
-
-  private def l1(value: DMat): Double =
-    var result = 0.0
-    var row = 0
-    while row < value.rows do
-      var column = 0
-      while column < value.cols do
-        result += Math.abs(value(row, column))
-        column += 1
-      row += 1
-    result
-
-  private def inner(left: DMat, right: DMat): Double =
-    var result = 0.0
-    var row = 0
-    while row < left.rows do
-      var column = 0
-      while column < left.cols do
-        result += left(row, column) * right(row, column)
-        column += 1
-      row += 1
-    result
-
-  private def squaredNorm(value: DMat): Double = inner(value, value)
-  private def frobenius(value: DMat): Double = Math.sqrt(squaredNorm(value))
-
-  private def maxAbs(value: DMat): Double =
-    var result = 0.0
-    var row = 0
-    while row < value.rows do
-      var column = 0
-      while column < value.cols do
-        result = Math.max(result, Math.abs(value(row, column)))
-        column += 1
-      row += 1
-    result
+    VariationalSolverCompiler
+      .compileL1(plan, observation)
+      .flatMap(_.solve(config))
 
 object ConstraintFeasibility:
   def intersectScalarBoxes(
@@ -606,20 +528,6 @@ object ConstraintFeasibility:
             )
           )
         )
-
-private def add(left: DMat, right: DMat): DMat =
-  MatrixOps.subtract(left, MatrixOps.scale(right, -1.0))
-
-private def zeros(rows: Int, columns: Int): DMat =
-  GaleNumerics.matrixFromRowMajor(rows, columns, new Array[Double](rows * columns))
-
-private def map(value: DMat)(function: Double => Double): DMat =
-  val output = matrixData(value)
-  var index = 0
-  while index < output.length do
-    output(index) = function(output(index))
-    index += 1
-  GaleNumerics.matrixFromRowMajor(value.rows, value.cols, output)
 
 private def matrixData(value: DMat): Array[Double] =
   val output = new Array[Double](value.rows * value.cols)

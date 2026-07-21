@@ -185,6 +185,38 @@ class OperatorProgramSuite extends munit.FunSuite:
     assert(unknown.left.exists(_.isInstanceOf[ProgramError.UnknownParameter]))
     assert(collapsedPair.left.exists(_.isInstanceOf[ProgramError.InvalidParameterization]))
 
+  test("every objective operand must bind the declared parameter identity"):
+    val fixture = programFixture()
+    val foreignVariable = accepted(
+      FrameVariable.from(
+        ParameterId.unsafe("foreign-source"),
+        fixture.source.variable.featureSpace,
+        fixture.source.variable.componentSpace
+      )
+    )
+    val numerator = SelfCompressionExpression(fixture.source.variable, fixture.sourceValue)
+    val foreignDenominator = SelfCompressionExpression(foreignVariable, fixture.sourceDenominator)
+    val cross = CrossCompressionExpression(fixture.source.variable, fixture.target.variable, fixture.cross)
+    val ratio = OperatorProgram.from(
+      Vector(fixture.source),
+      BaseObjective.GeneralizedRayleigh(numerator, foreignDenominator),
+      Vector(fixture.sourceNormalization)
+    )
+    val regression = OperatorProgram.from(
+      Vector(fixture.source, fixture.target),
+      BaseObjective.SequentialCrossRegression(cross, foreignDenominator),
+      Vector(fixture.sourceNormalization, fixture.targetNormalization)
+    )
+
+    assert(ratio.left.exists:
+      case ProgramError.InvalidParameterization(reason) => reason.contains("same frame parameter")
+      case _ => false
+    )
+    assert(regression.left.exists:
+      case ProgramError.InvalidParameterization(reason) => reason.contains("predictor")
+      case _ => false
+    )
+
   test("whole-program symmetry determines subspace, frame, and prediction semantics"):
     val fixture = programFixture()
     val smooth = accepted(
@@ -284,6 +316,8 @@ class OperatorProgramSuite extends munit.FunSuite:
     )
 
     assertEquals(result.program.resultSemantics, program.resultSemantics)
+    assertEquals(result.solverAttestation.guarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(result.solverAttestation.certificate.claim.property, "converged")
     assertMatrix(
       acceptedSemantic(fitted.frame.scores(table).toDense),
       matrix(Vector(Vector(2.0), Vector(-1.0)))
@@ -296,6 +330,17 @@ class OperatorProgramSuite extends munit.FunSuite:
         identifiability,
         SemanticProvenance.source("bad-fit-result")
       ).isLeft
+    )
+    assert(
+      OperatorProgramFit.from(
+        program,
+        Vector(fitted),
+        2.0,
+        identifiability.copy(residual = 1.0),
+        SemanticProvenance.source("uncertified-fit-result")
+      ).left.exists:
+        case ProgramError.InvalidResult(reason) => reason.contains("solver convergence was not certified")
+        case _ => false
     )
 
   test("nominal feature spaces prevent invalid normalization at compile time"):

@@ -36,6 +36,25 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   regression: cross and marginal statistics arise through `secondOrder`, PLSC
   and CCA differ by normalization geometry, and fits expose two
   `FunctionalFrame`s plus the common `OperatorProgramFit` result contract;
+- fitted analysis capabilities that reuse frozen preprocessing and feature
+  identity: full scores, additive partial-feature contributions, metric-aware
+  partial least-squares recovery, and supplementary-variable frames under
+  explicitly named compatibility or metric conventions;
+- fitted synthesis capabilities with no implicit transpose decoder: explicit,
+  certified orthonormal-transpose, or Euclidean least-squares construction;
+  component/feature-selective reconstruction and PLSC/CCA paired transfer are
+  compositions of those typed analysis and synthesis objects;
+- a fitted multiblock façade returning either unweighted block scores or
+  weighted block contributions, with the exact global/local frame, block
+  schema, and combination weight retained in provenance;
+- executable variational lowering for exact quadratic/equality programs and
+  convex coefficient-space refinements with L1, L21, disjoint/overlapping
+  groups, sparse-group, elastic-net, Huber/TV composition, nonnegative, box,
+  simplex, and monotone constraints; fits report the guarantee actually
+  attained rather than inheriting the requested one;
+- fold-safe `ModelSpec` execution that fits preprocessing, learned operators,
+  policies, programs, lowerings, and solvers on training identities only and
+  returns transformations bound to the fitted feature and row provenance;
 - CPCA as one `CpcaOperatorProblem` over a typed table, row relationship,
   feature covariance, and row/feature constraint operators; each nonzero block
   exposes one feature `FunctionalFrame`, derived row scores, and an
@@ -83,6 +102,22 @@ orthogonal—equivalence and a stationary-point guarantee. ScalaFIM owns those
 scientific semantics; the reusable projected iteration and its KKT,
 feasibility, and normalization certificates come from Gale.
 
+`FittedFrameTransform` is the analysis boundary for new data. Its partial APIs
+distinguish additive contribution from latent-score recovery in their result
+types. `FittedBidirectionalTransform` is a separate capability that exists only
+after a decoder policy has been validated. `SupplementaryProjector` is a
+training-row operation producing a variable-by-component frame, not a row-score
+projection. `FittedMultiblockProjection` preserves this same distinction per
+block. The complete mathematical and failure contract is
+[`multivar-fitted-projection-contract.md`](../../docs/plans/multivar-fitted-projection-contract.md).
+
+The current solver compiler deliberately rejects PSD-cone, Stiefel,
+fixed-support, and rank-bounded feasible sets, and general/nonlinear target
+charts without a matching executable capability. Its convex first-order path
+optimizes coefficient-space refinements around a supplied anchor; it does not
+claim to solve the normalized nonconvex `OperatorProgram` itself. Those gaps
+remain typed `Unsupported` results rather than heuristic fallbacks.
+
 CPCA code constructs `CpcaOperatorProblem` and fits a validated
 `CpcaBlockRequest`. Planned ROI execution constructs the same typed problem
 directly and carries `PreparedCpcaOperatorFit`; no raw CPCA problem or resolved
@@ -117,7 +152,9 @@ The shared test suite covers the current core invariants on both JVM and JS:
 - dense, sparse, and affine `MatrixView` algebra without implicit sparse
   densification, including lazy transposed views for duality symmetry;
 - preprocessing, typed operator composition, fitted-transform, and
-  coefficient-orientation boundaries;
+  coefficient-orientation boundaries, including schema permutations, partial
+  projection laws, synthesis/reconstruction, supplementary variables, paired
+  transfer, and multiblock additivity;
 - SVD/PCA plus operator-program PLSC/regularized CCA/reduced-rank regression,
   including typed partial row relationships, generalized cross-SVD residuals,
   row-permutation laws, directed coefficient orientation, and unchanged R
@@ -147,3 +184,5 @@ The shared test suite covers the current core invariants on both JVM and JS:
   MVPA, dataset, image IO, concrete schedulers, and JVM-only numeric libraries.
 - pure whole-input `PairedMultivarPlan` validation for paired latent analyses,
   kept separate from the ROI-local `MultivarPlan` executor path.
+- executable variational compiler oracles, KKT/gap/feasibility evidence,
+  unsupported-capability rejection, and fold lifecycle/leakage audits.

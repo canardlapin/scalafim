@@ -225,6 +225,20 @@ final class ConstrainedCanonicalProblem[Feature <: SemanticSpace] private (
       )
 
 object ConstrainedCanonicalProblem:
+  def fromOperators[Feature <: SemanticSpace](
+      featureSpace: SpaceEvidence[Feature],
+      effect: OpCovariance[Feature, CertifiedPsd],
+      residual: OpCovariance[Feature, CertifiedPsd],
+      regularization: ResidualRegularization,
+      constraint: CanonicalFrameConstraint = CanonicalFrameConstraint.Nonnegative,
+      solver: ConstrainedCanonicalSolverSpec = ConstrainedCanonicalSolverSpec.default,
+      tolerance: CertificateTolerance = CertificateTolerance.strict,
+      provenance: SemanticProvenance = SemanticProvenance.source("constrained-canonical-operators")
+  ): Either[MultivarError, ConstrainedCanonicalProblem[Feature]] =
+    CanonicalEffectProblem
+      .fromOperators(featureSpace, effect, residual, regularization, tolerance, provenance)
+      .map(new ConstrainedCanonicalProblem(_, constraint, solver))
+
   def fromDense[Feature <: SemanticSpace](
       featureSpace: SpaceEvidence[Feature],
       effect: DMat,

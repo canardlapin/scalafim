@@ -19,6 +19,8 @@ object OperatorProgramIrValidator:
       _ <- validateCompositeLowerings(document.compositeLowerings, programs, operators)
       _ <- validateRewrites(document.rewrites, programs, operators)
       _ <- validateFits(document.fits, programs, operators)
+      _ <- validateProjections(document.projections, operators)
+      _ <- validateSynthesisCapabilities(document.synthesisCapabilities, operators)
     yield document
 
   private def validateSpaces(spaces: Vector[SpaceIr]): Either[IrError, Unit] =
@@ -87,6 +89,9 @@ object OperatorProgramIrValidator:
             operator.domain.variance == VarianceIr.Primal && operator.codomain.variance == VarianceIr.Primal
         case ProgramOperatorRoleIr.Coefficient =>
           domain.role == SpaceRoleIr.Observed && codomain.role == SpaceRoleIr.Observed &&
+            operator.domain.variance == VarianceIr.Dual && operator.codomain.variance == VarianceIr.Dual
+        case ProgramOperatorRoleIr.Synthesis =>
+          domain.role == SpaceRoleIr.Observed && codomain.role == SpaceRoleIr.Latent &&
             operator.domain.variance == VarianceIr.Dual && operator.codomain.variance == VarianceIr.Dual
         case ProgramOperatorRoleIr.ConstraintMap =>
           operator.domain.variance == VarianceIr.Primal && operator.codomain.variance == VarianceIr.Primal
@@ -320,6 +325,142 @@ object OperatorProgramIrValidator:
             "composite lowering requires a known linear term target, explicit auxiliary equation, selected capability, and derived provenance"
           )
 
+  private def validateProjections(
+      projections: Vector[ProgramProjectionIr],
+      operators: Map[String, ProgramOpIr]
+  ): Either[IrError, Unit] =
+    unique(projections, _.id, "$.projections").flatMap: _ =>
+      projections.foldLeft[Either[IrError, Unit]](Right(())): (result, projection) =>
+        result.flatMap: _ =>
+          val actionValid = projection.action match
+            case ProgramProjectionActionIr.FullProjection(frame, schema) =>
+              hasRole(operators, frame, ProgramOperatorRoleIr.Frame) && schema.trim.nonEmpty &&
+                projection.result == ProgramProjectionResultIr.Scores
+            case ProgramProjectionActionIr.PartialContribution(frame, schema, features) =>
+              hasRole(operators, frame, ProgramOperatorRoleIr.Frame) && schema.trim.nonEmpty &&
+                validNames(features) && projection.result == ProgramProjectionResultIr.Scores
+            case ProgramProjectionActionIr.PartialLeastSquares(frame, schema, features, metric, dimension, ridge) =>
+              hasRole(operators, frame, ProgramOperatorRoleIr.Frame) && schema.trim.nonEmpty &&
+                validNames(features) && validMetric(metric, dimension) && nonnegative(ridge) &&
+                projection.result == ProgramProjectionResultIr.Scores
+            case ProgramProjectionActionIr.SupplementaryVariables(table, scores, rows, components, convention) =>
+              hasRole(operators, table, ProgramOperatorRoleIr.Table) &&
+                hasRole(operators, scores, ProgramOperatorRoleIr.Score) && rows.trim.nonEmpty &&
+                validIndices(components) && validConvention(convention) &&
+                projection.result == ProgramProjectionResultIr.FunctionalFrame
+            case ProgramProjectionActionIr.Reconstruction(frame, decoder, source, components, features, coordinate) =>
+              validAnalysisDecoder(frame, decoder, operators) && validReconstructionSource(source) &&
+                validIndices(components) && validNames(features) &&
+                projection.result == ProgramProjectionResultIr.FeatureValues(coordinate)
+            case ProgramProjectionActionIr.PairedTransfer(estimand, source, target, frame, decoder, scaling) =>
+              Set("Plsc", "Cca").contains(estimand) && source.trim.nonEmpty && target.trim.nonEmpty &&
+                source != target && scaling.trim.nonEmpty && validAnalysisDecoder(frame, decoder, operators) &&
+                projection.result == ProgramProjectionResultIr.TransferValues
+            case ProgramProjectionActionIr.MultiblockScores(block, global, local, schema) =>
+              block.trim.nonEmpty && schema.trim.nonEmpty && hasRole(operators, global, ProgramOperatorRoleIr.Frame) &&
+                hasRole(operators, local, ProgramOperatorRoleIr.Frame) &&
+                sameComponentSpace(global, local, operators) && projection.result == ProgramProjectionResultIr.Scores
+            case ProgramProjectionActionIr.MultiblockContribution(block, global, local, schema, weight) =>
+              block.trim.nonEmpty && schema.trim.nonEmpty && weight.isFinite &&
+                hasRole(operators, global, ProgramOperatorRoleIr.Frame) &&
+                hasRole(operators, local, ProgramOperatorRoleIr.Frame) &&
+                sameComponentSpace(global, local, operators) && projection.result == ProgramProjectionResultIr.Scores
+          requireValue(
+            actionValid && validEquivalence(projection.equivalence) && projection.provenance.nonEmpty,
+            RejectionCategory.Malformed,
+            s"projections.${projection.id}",
+            "projection requires compatible typed operators, a valid action/result contract, equivalence, and provenance"
+          )
+
+  private def validateSynthesisCapabilities(
+      capabilities: Vector[ProgramSynthesisCapabilityIr],
+      operators: Map[String, ProgramOpIr]
+  ): Either[IrError, Unit] =
+    unique(capabilities, _.id, "$.synthesis_capabilities").flatMap: _ =>
+      capabilities.foldLeft[Either[IrError, Unit]](Right(())): (result, capability) =>
+        result.flatMap: _ =>
+          val policyValid = capability.policy match
+            case ProgramSynthesisPolicyIr.Explicit(identity) =>
+              operators.get(capability.decoder).exists(_.valueIdentity == identity)
+            case ProgramSynthesisPolicyIr.OrthonormalTranspose(tolerance) => nonnegative(tolerance)
+            case ProgramSynthesisPolicyIr.EuclideanLeastSquares(ridge) => nonnegative(ridge)
+          requireValue(
+            validAnalysisDecoder(capability.analysisFrame, capability.decoder, operators) && policyValid &&
+              capability.supportsWorkingCoordinates && capability.provenance.nonEmpty,
+            RejectionCategory.DomainCodomainMismatch,
+            s"synthesis_capabilities.${capability.id}",
+            "synthesis capability requires compatible frame/decoder ports, a valid construction policy, working-coordinate support, and provenance"
+          )
+
+  private def validAnalysisDecoder(
+      frameIdentity: String,
+      decoderIdentity: String,
+      operators: Map[String, ProgramOpIr]
+  ): Boolean =
+    (operators.get(frameIdentity), operators.get(decoderIdentity)) match
+      case (Some(frame), Some(decoder)) =>
+        frame.role == ProgramOperatorRoleIr.Frame && decoder.role == ProgramOperatorRoleIr.Synthesis &&
+          frame.codomain == decoder.domain && frame.domain.spaceId == decoder.codomain.spaceId
+      case _ => false
+
+  private def sameComponentSpace(
+      firstIdentity: String,
+      secondIdentity: String,
+      operators: Map[String, ProgramOpIr]
+  ): Boolean =
+    (operators.get(firstIdentity), operators.get(secondIdentity)) match
+      case (Some(first), Some(second)) => first.domain == second.domain
+      case _ => false
+
+  private def hasRole(
+      operators: Map[String, ProgramOpIr],
+      identity: String,
+      role: ProgramOperatorRoleIr
+  ): Boolean =
+    operators.get(identity).exists(_.role == role)
+
+  private def validNames(values: Vector[String]): Boolean =
+    values.nonEmpty && values.forall(_.trim.nonEmpty) && values.distinct.length == values.length
+
+  private def validIndices(values: Vector[Int]): Boolean =
+    values.nonEmpty && values.forall(_ >= 0) && values.distinct.length == values.length
+
+  private def validMetric(kind: String, dimension: Int): Boolean =
+    Set("identity", "diagonal", "dense_symmetric", "sparse_symmetric").contains(kind) && dimension > 0
+
+  private def validConvention(value: ProgramSupplementaryConventionIr): Boolean =
+    value match
+      case ProgramSupplementaryConventionIr.MultivariousCovarianceScaled(policy) => validNullPolicy(policy)
+      case ProgramSupplementaryConventionIr.MetricLeastSquares(measure, centering, policy) =>
+        measure.trim.nonEmpty && centering.trim.nonEmpty && validNullPolicy(policy)
+
+  private def validNullPolicy(value: ProgramNullComponentPolicyIr): Boolean =
+    value match
+      case ProgramNullComponentPolicyIr.Reject(tolerance) => nonnegative(tolerance)
+      case ProgramNullComponentPolicyIr.Drop(tolerance) => nonnegative(tolerance)
+      case ProgramNullComponentPolicyIr.Regularize(ridge) => nonnegative(ridge)
+
+  private def validReconstructionSource(value: ProgramReconstructionSourceIr): Boolean =
+    value match
+      case ProgramReconstructionSourceIr.PartialLeastSquares(metric, dimension, ridge) =>
+        validMetric(metric, dimension) && nonnegative(ridge)
+      case _ => true
+
+  private def validEquivalence(value: ProgramEquivalenceIr): Boolean =
+    value match
+      case ProgramEquivalenceIr.Value(tolerance) => validTolerance(tolerance)
+      case ProgramEquivalenceIr.Operator(_, _, tolerance) => validTolerance(tolerance)
+      case ProgramEquivalenceIr.Subspace(projector, angle) => validTolerance(projector) && validTolerance(angle)
+      case ProgramEquivalenceIr.Frame(_, tolerance) => validTolerance(tolerance)
+      case ProgramEquivalenceIr.Prediction(_, tolerance) => validTolerance(tolerance)
+      case ProgramEquivalenceIr.Objective(tolerance) => validTolerance(tolerance)
+
+  private def validTolerance(value: ToleranceIr): Boolean =
+    nonnegative(value.absolute) && nonnegative(value.relative)
+
+  private def nonnegative(value: Double): Boolean =
+    value.isFinite && value >= 0.0
+
   private def validateObjective(
       program: OperatorProgramV2Ir,
       parameters: Map[String, ProgramFrameParameterIr],
@@ -463,14 +604,22 @@ object OperatorProgramIrValidator:
                 frame.cometricIdentity.forall(identity => operators.get(identity).exists(_.role == ProgramOperatorRoleIr.Cometric)) &&
                 frame.scoreIdentities.forall(identity => operators.get(identity).exists(_.role == ProgramOperatorRoleIr.Score)) &&
                 frame.axisIdentity.forall(identity => operators.get(identity).exists(_.role == ProgramOperatorRoleIr.Axis))
+            val residualEvidenceValid =
+              fit.residualCertificates.nonEmpty && fit.residualCertificates.forall: certificate =>
+                val tolerance = certificate.tolerance
+                certificate.property == "converged" &&
+                  tolerance.absolute.isFinite && tolerance.absolute >= 0.0 &&
+                  tolerance.relative.isFinite && tolerance.relative >= 0.0 &&
+                  certificate.residual.exists: value =>
+                    value.isFinite && value >= 0.0 && value <= tolerance.absolute + tolerance.relative
             requireValue(
               fit.objectiveValue.isFinite && fit.retainedRank >= 0 &&
                 actual.distinct.length == actual.length && actual.toSet == expected && operatorsKnown &&
                 fit.spectralClusters.flatten.distinct.length == fit.spectralClusters.flatten.length &&
-                fit.residualCertificates.forall(certificate => certificate.property == "converged" && certificate.residual.exists(value => value.isFinite && value >= 0.0)),
+                fit.solverGuarantee == program.result.guarantee && residualEvidenceValid,
               RejectionCategory.Malformed,
               s"fits.${fit.programId}",
-              "fit must match its program, reference typed frames, and carry valid residual certificates"
+              "fit must match its program guarantee, reference typed frames, and carry bounded convergence evidence"
             )
 
   private def unique[A](values: Vector[A], key: A => String, path: String): Either[IrError, Map[String, A]] =

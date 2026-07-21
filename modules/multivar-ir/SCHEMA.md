@@ -24,6 +24,16 @@ capabilities, and retains derived provenance. A simple proximal oracle on the
 functional is therefore never misreported as a direct proximal oracle for the
 composite term.
 
+Fitted-data actions have two separate top-level record families. `projections`
+records the selected analysis action (full, partial contribution, partial
+least-squares, supplementary variables, reconstruction, paired transfer, or
+multiblock score/contribution), its restrictions and regularization, result
+kind, equivalence, and provenance. `synthesis_capabilities` binds an analysis
+frame to a distinct synthesis-role operator and records the explicit,
+orthonormal-transpose, or Euclidean-least-squares construction policy plus the
+supported coordinate/restriction operations. The validator checks operator
+roles and ports; a frame identity alone is not a decoder capability.
+
 ## Evolution
 
 - The `major` component changes when an existing meaning, tag, orientation, or
@@ -35,6 +45,9 @@ composite term.
   at every nesting level. A lowering is data, not an implementation detail: it
   must name the original and lowered programs, its input and output operators,
   a value-bound rewrite proof, provenance, and the equivalence that remains.
+- Projection and synthesis arrays are required in the 0.2 envelope, including
+  when empty. Nested action/policy objects are closed; new action tags require a
+  new schema version rather than being silently ignored.
 - `unknown_fields` is `reject` in 0.1. Unknown fields at every object level are
   rejected with `unknown_field`. A future minor version may add an explicit
   preservation mode, but 0.1 never drops unknown semantics silently.

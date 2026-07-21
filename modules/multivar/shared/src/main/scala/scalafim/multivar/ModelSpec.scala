@@ -78,6 +78,8 @@ enum ModelSpecError:
   case NonFiniteScore(candidate: CandidateId, split: SplitIdentity, value: Double)
   case Multivar(error: MultivarError)
   case Program(error: ProgramError)
+  case Quadratic(error: QuadraticLoweringError)
+  case ExactSpectral(error: ExactSpectralError)
 
   def message: String =
     this match
@@ -94,6 +96,8 @@ enum ModelSpecError:
         s"candidate ${candidate.stringValue} produced non-finite score $value on ${split.stringValue}"
       case Multivar(error) => error.message
       case Program(error) => error.message
+      case Quadratic(error) => error.message
+      case ExactSpectral(error) => error.message
 
 final class ModelStudy private (
     val values: MatrixView,
@@ -109,14 +113,18 @@ final class ModelStudy private (
   def subset(indices: IndexSet): Either[ModelSpecError, ModelStudy] =
     for
       checked <- indices.requireWithin(rows).left.map(ModelSpecError.Multivar.apply)
-      dense <- values.toDense(StoragePolicy.AllowDense).left.map(ModelSpecError.Multivar.apply)
-      selected = GaleNumerics.selectRows(dense, checked.indices)
+      rowIndices <- IndexSet
+        .from(checked.indices, IndexAxis.Row, Some(rows))
+        .left
+        .map(ModelSpecError.Multivar.apply)
+      selected <- values.selectRows(rowIndices).left.map(ModelSpecError.Multivar.apply)
+      subsetIdentity = ValueIdentity.derived(s"study-row-subset-${checked.indices.mkString("-")}", sourceIdentity)
       result <- ModelStudy.from(
-        MatrixView.dense(selected),
+        selected,
         checked.indices.map(rowIds),
         featureSpace,
         featureIdentity,
-        ValueIdentity.derived("study-row-subset", sourceIdentity),
+        subsetIdentity,
         provenance.append(SemanticProvenanceEvent.Derived("study-row-subset", Vector(sourceIdentity)))
       )
     yield result
@@ -138,16 +146,29 @@ object ModelStudy:
       Left(ModelSpecError.InvalidDefinition("model feature space must be observed and match the data columns"))
     else Right(new ModelStudy(values, rowIds, featureSpace, featureIdentity, sourceIdentity, provenance))
 
-final case class ProcessedStudy(
-    values: MatrixView,
-    rowIds: Vector[ModelRowId],
-    featureSpace: MvSpace,
-    featureIdentity: ValueIdentity,
-    sourceIdentity: ValueIdentity,
-    provenance: SemanticProvenance
+final class ProcessedStudy private (
+    val values: MatrixView,
+    val rowIds: Vector[ModelRowId],
+    val featureSpace: MvSpace,
+    val featureIdentity: ValueIdentity,
+    val sourceIdentity: ValueIdentity,
+    val provenance: SemanticProvenance,
+    private[multivar] val trainingScope: Option[TrainingScope]
 ):
   require(values.rows == rowIds.length, "processed rows must match row ids")
   require(values.cols == featureSpace.size, "processed columns must match feature space")
+
+object ProcessedStudy:
+  private[multivar] def transformed(
+      values: MatrixView,
+      rowIds: Vector[ModelRowId],
+      featureSpace: MvSpace,
+      featureIdentity: ValueIdentity,
+      sourceIdentity: ValueIdentity,
+      provenance: SemanticProvenance,
+      trainingScope: Option[TrainingScope]
+  ): ProcessedStudy =
+    new ProcessedStudy(values, rowIds, featureSpace, featureIdentity, sourceIdentity, provenance, trainingScope)
 
 final case class FoldSplit private (
     id: SplitIdentity,
@@ -223,14 +244,53 @@ enum MissingnessPolicy:
         yield ()
       case PipelineHandled(_) => Right(())
 
-final case class TrainingContext(
-    split: SplitIdentity,
-    seed: DeterministicSeed,
-    trainingRows: Vector[ModelRowId],
-    candidate: CandidateId
+final class TrainingScope private (
+    val split: SplitIdentity,
+    val seed: DeterministicSeed,
+    val trainingRows: Vector[ModelRowId],
+    val sourceIdentity: ValueIdentity,
+    val valueIdentity: ValueIdentity
+)
+
+object TrainingScope:
+  private[multivar] def mint(
+      split: SplitIdentity,
+      seed: DeterministicSeed,
+      trainingRows: Vector[ModelRowId],
+      sourceIdentity: ValueIdentity
+  ): TrainingScope =
+    new TrainingScope(
+      split,
+      seed,
+      trainingRows,
+      sourceIdentity,
+      ValueIdentity.derived("modelspec-training-scope", sourceIdentity)
+    )
+
+final class TrainingContext private (
+    val split: SplitIdentity,
+    val seed: DeterministicSeed,
+    val trainingRows: Vector[ModelRowId],
+    val candidate: CandidateId,
+    private[multivar] val scope: TrainingScope
 ):
   require(trainingRows.nonEmpty && trainingRows.distinct.length == trainingRows.length,
     "training context rows must be non-empty and unique")
+
+object TrainingContext:
+  private[multivar] def mint(
+      split: SplitIdentity,
+      seed: DeterministicSeed,
+      training: ModelStudy,
+      candidate: CandidateId
+  ): TrainingContext =
+    new TrainingContext(
+      split,
+      seed,
+      training.rowIds,
+      candidate,
+      TrainingScope.mint(split, seed, training.rowIds, training.sourceIdentity)
+    )
 
 enum LifecycleStage:
   case Preprocessing
@@ -366,6 +426,31 @@ object LeakageAudit:
     val result = violations.result()
     LeakageAuditReport(result.isEmpty, result)
 
+final case class SolverExecutionRecord private (
+    artifact: String,
+    method: String,
+    settings: Vector[(String, String)],
+    attestation: SolverAttestation
+)
+
+object SolverExecutionRecord:
+  def from(
+      artifact: String,
+      method: String,
+      settings: Vector[(String, String)],
+      attestation: SolverAttestation
+  ): Either[ModelSpecError, SolverExecutionRecord] =
+    val cleanArtifact = artifact.trim
+    val cleanMethod = method.trim
+    val cleanedSettings = settings.map((name, value) => name.trim -> value.trim)
+    if cleanArtifact.isEmpty then Left(ModelSpecError.InvalidDefinition("solver execution artifact must be non-empty"))
+    else if cleanMethod.isEmpty then Left(ModelSpecError.InvalidDefinition("solver execution method must be non-empty"))
+    else if cleanedSettings.exists((name, value) => name.isEmpty || value.isEmpty) then
+      Left(ModelSpecError.InvalidDefinition("solver execution settings must have non-empty names and values"))
+    else if cleanedSettings.map(_._1).distinct.length != cleanedSettings.length then
+      Left(ModelSpecError.InvalidDefinition("solver execution setting names must be unique"))
+    else Right(SolverExecutionRecord(cleanArtifact, cleanMethod, cleanedSettings, attestation))
+
 final class FittedModelPreprocessor private (
     val featureSpace: MvSpace,
     val featureIdentity: ValueIdentity,
@@ -374,6 +459,17 @@ final class FittedModelPreprocessor private (
     val provenance: SemanticProvenance
 ):
   def transform(study: ModelStudy): Either[ModelSpecError, ProcessedStudy] =
+    transformScoped(study, None)
+
+  private[multivar] def transformTraining(study: ModelStudy): Either[ModelSpecError, ProcessedStudy] =
+    if study.rowIds != context.trainingRows || study.sourceIdentity != context.scope.sourceIdentity then
+      Left(ModelSpecError.LeakageDetected(Vector("preprocessor training input does not match the ModelSpec-minted scope")))
+    else transformScoped(study, Some(context.scope))
+
+  private def transformScoped(
+      study: ModelStudy,
+      scope: Option[TrainingScope]
+  ): Either[ModelSpecError, ProcessedStudy] =
     if study.featureSpace != featureSpace then
       Left(ModelSpecError.IncompatibleFeatureSpace(featureSpace, study.featureSpace))
     else if study.featureIdentity != featureIdentity then
@@ -384,7 +480,7 @@ final class FittedModelPreprocessor private (
         .left
         .map(ModelSpecError.Multivar.apply)
         .map: transformed =>
-          ProcessedStudy(
+          ProcessedStudy.transformed(
             transformed,
             study.rowIds,
             featureSpace,
@@ -392,7 +488,8 @@ final class FittedModelPreprocessor private (
             ValueIdentity.derived("fitted-preprocess-transform", study.sourceIdentity),
             provenance.append(
               SemanticProvenanceEvent.Derived("fitted-preprocess-transform", Vector(study.sourceIdentity))
-            )
+            ),
+            scope
           )
 
 object FittedModelPreprocessor:
@@ -421,16 +518,21 @@ final case class FoldPipelineFit private (
     effectiveOperators: Vector[OperatorSnapshot],
     auxiliaryVariables: Vector[AuxiliaryConstraint],
     splitMethod: Option[SplitMethod],
-    guarantee: SolverGuarantee,
+    solverExecution: SolverExecutionRecord,
+    private[multivar] val trainingScope: TrainingScope,
     events: Vector[LifecycleEvent],
     provenance: SemanticProvenance
 ):
   def activePenalties: Vector[PenaltyTerm] = requestedProgram.penalties
   def activeConstraints: Vector[ConstraintTerm] = requestedProgram.constraints
+  def solverAttestation: SolverAttestation = fitBundle.programFit.solverAttestation
+  def guarantee: SolverGuarantee = solverAttestation.guarantee
+  def trainingProvenanceIdentity: ValueIdentity = trainingScope.valueIdentity
 
 object FoldPipelineFit:
   def from(
       context: TrainingContext,
+      training: ProcessedStudy,
       requestedProgram: OperatorProgram,
       loweredProgram: OperatorProgram,
       fitBundle: OperatorFitBundle,
@@ -438,16 +540,33 @@ object FoldPipelineFit:
       effectiveOperators: Vector[OperatorSnapshot],
       auxiliaryVariables: Vector[AuxiliaryConstraint],
       splitMethod: Option[SplitMethod],
-      guarantee: SolverGuarantee,
+      solverExecution: SolverExecutionRecord,
       events: Vector[LifecycleEvent],
       provenance: SemanticProvenance
   ): Either[ModelSpecError, FoldPipelineFit] =
     val labels = effectiveOperators.map(_.label)
     val eventAudit = LeakageAudit.verify(context, Vector.empty, events)
-    if fitBundle.programFit.program ne loweredProgram then
+    val hasCurrentScope = training.trainingScope.exists(_ eq context.scope)
+    val framesBoundToTraining = fitBundle.parameterFrames.forall: frame =>
+      identityDependsOn(frame.sourceIdentity, training.sourceIdentity)
+    val operatorsBoundToTraining = effectiveOperators.forall: operator =>
+      identityDependsOn(operator.sourceIdentity, training.sourceIdentity)
+    val policiesBoundToTraining = operatorPolicies.forall: policy =>
+      policy.outputIdentities.forall(identityDependsOn(_, training.sourceIdentity))
+    if !hasCurrentScope || training.rowIds != context.trainingRows then
+      Left(ModelSpecError.LeakageDetected(Vector("pipeline fit does not carry the current ModelSpec-minted training scope")))
+    else if !framesBoundToTraining then
+      Left(ModelSpecError.LeakageDetected(Vector("fitted frame provenance is not derived from the scoped training study")))
+    else if !operatorsBoundToTraining then
+      Left(ModelSpecError.LeakageDetected(Vector("effective operator provenance is not derived from the scoped training study")))
+    else if !policiesBoundToTraining then
+      Left(ModelSpecError.LeakageDetected(Vector("operator-policy output provenance is not derived from the scoped training study")))
+    else if fitBundle.programFit.program ne loweredProgram then
       Left(ModelSpecError.InvalidDefinition("fit bundle must reference the exact lowered program"))
     else if labels.distinct.length != labels.length then
       Left(ModelSpecError.InvalidDefinition("effective operator labels must be unique"))
+    else if solverExecution.attestation != fitBundle.programFit.solverAttestation then
+      Left(ModelSpecError.InvalidDefinition("solver execution record must carry the fit bundle attestation"))
     else if !eventAudit.valid then Left(ModelSpecError.LeakageDetected(eventAudit.violations))
     else
       Right(
@@ -459,11 +578,21 @@ object FoldPipelineFit:
           effectiveOperators,
           auxiliaryVariables,
           splitMethod,
-          guarantee,
+          solverExecution,
+          context.scope,
           events,
           provenance
         )
       )
+
+  private def identityDependsOn(value: ValueIdentity, input: ValueIdentity): Boolean =
+    value == input || (value match
+      case ValueIdentity.Source(_) => false
+      case ValueIdentity.Adjoint(of) => identityDependsOn(of, input)
+      case ValueIdentity.Composition(first, second) =>
+        identityDependsOn(first, input) || identityDependsOn(second, input)
+      case ValueIdentity.Derived(_, inputs) => inputs.exists(identityDependsOn(_, input))
+    )
 
 trait FoldPipeline:
   def fit(
@@ -479,8 +608,26 @@ trait ValidationScorer:
       candidate: HyperparameterCandidate
   ): Either[ModelSpecError, Double]
 
+final case class PipelineTransformation private (
+    values: DMat,
+    outputCoordinates: CoordinateDescriptor,
+    sourceIdentity: ValueIdentity,
+    provenance: SemanticProvenance
+)
+
+object PipelineTransformation:
+  def from(
+      values: DMat,
+      outputCoordinates: CoordinateDescriptor,
+      sourceIdentity: ValueIdentity,
+      provenance: SemanticProvenance
+  ): Either[ModelSpecError, PipelineTransformation] =
+    if values.cols != outputCoordinates.dimension then
+      Left(ModelSpecError.InvalidDefinition("pipeline transformation columns do not match its output coordinates"))
+    else Right(PipelineTransformation(values, outputCoordinates, sourceIdentity, provenance))
+
 trait ModelTransformer:
-  def transform(fitted: FoldPipelineFit, study: ProcessedStudy): Either[ModelSpecError, DMat]
+  def transform(fitted: FoldPipelineFit, study: ProcessedStudy): Either[ModelSpecError, PipelineTransformation]
 
 final case class FoldEvaluation(
     candidate: CandidateId,
@@ -505,6 +652,49 @@ final case class ModelSelectionReport(
     baseSeed: DeterministicSeed
 )
 
+final case class ModelTransformation private (
+    values: DMat,
+    rowIds: Vector[ModelRowId],
+    inputFeatureSpace: MvSpace,
+    inputFeatureIdentity: ValueIdentity,
+    outputCoordinates: CoordinateDescriptor,
+    sourceIdentity: ValueIdentity,
+    provenance: SemanticProvenance
+):
+  def rows: Int = values.rows
+  def cols: Int = values.cols
+
+object ModelTransformation:
+  private[multivar] def from(
+      transformed: PipelineTransformation,
+      study: ProcessedStudy,
+      fittedProvenance: SemanticProvenance
+  ): Either[ModelSpecError, ModelTransformation] =
+    if transformed.values.rows != study.rowIds.length then
+      Left(ModelSpecError.InvalidDefinition("model transformation rows do not match the transformed study"))
+    else
+      val sourceIdentity = ValueIdentity.derived(
+        "modelspec-transformation",
+        study.sourceIdentity,
+        transformed.sourceIdentity
+      )
+      Right(
+        ModelTransformation(
+          transformed.values,
+          study.rowIds,
+          study.featureSpace,
+          study.featureIdentity,
+          transformed.outputCoordinates,
+          sourceIdentity,
+          (study.provenance ++ transformed.provenance ++ fittedProvenance).append(
+            SemanticProvenanceEvent.Derived(
+              "modelspec-transformation",
+              Vector(study.sourceIdentity, transformed.sourceIdentity)
+            )
+          )
+        )
+      )
+
 final class ModelFit private[multivar] (
     val specId: ModelSpecId,
     val featureSpace: MvSpace,
@@ -524,11 +714,13 @@ final class ModelFit private[multivar] (
   def effectiveOperators: Vector[OperatorSnapshot] = pipeline.effectiveOperators
   def auxiliaryVariables: Vector[AuxiliaryConstraint] = pipeline.auxiliaryVariables
   def guarantee: SolverGuarantee = pipeline.guarantee
+  def solverExecution: SolverExecutionRecord = pipeline.solverExecution
 
-  def transform(study: ModelStudy): Either[ModelSpecError, DMat] =
+  def transform(study: ModelStudy): Either[ModelSpecError, ModelTransformation] =
     for
       processed <- preprocessor.transform(study)
-      result <- transformer.transform(pipeline, processed)
+      transformed <- transformer.transform(pipeline, processed)
+      result <- ModelTransformation.from(transformed, processed, pipeline.provenance)
     yield result
 
 final class ModelSpec private (
@@ -557,7 +749,7 @@ final class ModelSpec private (
           val finalSeed = baseSeed.derive(finalSplit.stringValue, selection.selected.id.stringValue)
           for
             outerTraining <- study.subset(outer.training)
-            context = TrainingContext(finalSplit, finalSeed, outerTraining.rowIds, selection.selected.id)
+            context = TrainingContext.mint(finalSplit, finalSeed, outerTraining, selection.selected.id)
             trained <- trainOne(context, outerTraining, selection.selected)
             audit = LeakageAudit.verify(context, Vector.empty, trained.events)
             _ <- if audit.valid then Right(()) else Left(ModelSpecError.LeakageDetected(audit.violations))
@@ -591,7 +783,7 @@ final class ModelSpec private (
   ): Either[ModelSpecError, TrainedFold] =
     for
       fittedPreprocessor <- FittedModelPreprocessor.fit(preprocessing, context, training)
-      processed <- fittedPreprocessor.transform(training)
+      processed <- fittedPreprocessor.transformTraining(training)
       preprocessFit = LifecycleEvent.fit(
         context,
         LifecycleStage.Preprocessing,
@@ -606,13 +798,20 @@ final class ModelSpec private (
         processed.provenance
       )
       fittedPipeline <- pipeline.fit(context, processed, candidate)
-      _ <- validatePipeline(fittedPipeline)
+      _ <-
+        if (fittedPipeline.trainingScope eq context.scope) && processed.trainingScope.exists(_ eq context.scope) then Right(())
+        else Left(ModelSpecError.LeakageDetected(Vector("pipeline fit was returned from a different ModelSpec-minted training scope")))
+      _ <- validatePipeline(context, processed, fittedPipeline)
       events = Vector(preprocessFit, preprocessApply) ++ fittedPipeline.events
       audit = LeakageAudit.verify(context, Vector.empty, events)
       _ <- if audit.valid then Right(()) else Left(ModelSpecError.LeakageDetected(audit.violations))
     yield TrainedFold(fittedPreprocessor, fittedPipeline, processed, events)
 
-  private def validatePipeline(fitted: FoldPipelineFit): Either[ModelSpecError, Unit] =
+  private def validatePipeline(
+      context: TrainingContext,
+      training: ProcessedStudy,
+      fitted: FoldPipelineFit
+  ): Either[ModelSpecError, Unit] =
     val expected = lifecyclePlans.map(plan => (plan.stage, plan.artifact))
     val observed = fitted.events.collect:
       case event if event.action == LifecycleAction.Fit => (event.stage, event.artifact)
@@ -624,6 +823,8 @@ final class ModelSpec private (
       case plan if plan.stage == LifecycleStage.OperatorPolicy => plan.artifact
     val realizedPolicyArtifacts = fitted.operatorPolicies.map(_.id.stringValue)
     val violations = Vector.newBuilder[String]
+    if !(fitted.trainingScope eq context.scope) || !training.trainingScope.exists(_ eq context.scope) then
+      violations += "pipeline fit was returned from a different ModelSpec-minted training scope"
     missing.foreach:
       case (stage, artifact) => violations += s"declared $stage artifact '$artifact' was not fitted"
     undeclared.foreach:
@@ -637,6 +838,8 @@ final class ModelSpec private (
     fitted.splitMethod.foreach: method =>
       if !solverPolicy.splitCapabilities.contains(method) then
         violations += s"split method $method is not supported by policy ${solverPolicy.artifact}"
+    if fitted.solverExecution.artifact != solverPolicy.artifact then
+      violations += s"solver execution artifact ${fitted.solverExecution.artifact} does not match policy ${solverPolicy.artifact}"
     if !solverPolicy.acceptedGuarantees.contains(fitted.guarantee) then
       violations += s"solver guarantee ${fitted.guarantee} is not accepted by policy ${solverPolicy.artifact}"
     val result = violations.result()
@@ -647,51 +850,57 @@ final class ModelSpec private (
       outer: FoldSplit
   ): Either[ModelSpecError, ModelSelectionReport] =
     val evaluations = Vector.newBuilder[CandidateEvaluation]
-    var candidateIndex = 0
     var failure = Option.empty[ModelSpecError]
+    val prepared = Vector.newBuilder[(FoldSplit, ModelStudy, ModelStudy)]
+    var preparationIndex = 0
+    while preparationIndex < innerFolds.folds.length && failure.isEmpty do
+      val fold = innerFolds.folds(preparationIndex)
+      (study.subset(fold.training), study.subset(fold.validation)) match
+        case (Right(training), Right(validation)) => prepared += ((fold, training, validation))
+        case (Left(error), _) => failure = Some(error)
+        case (_, Left(error)) => failure = Some(error)
+      preparationIndex += 1
+    val preparedFolds = if failure.isEmpty then prepared.result() else Vector.empty
+    var candidateIndex = 0
     while candidateIndex < candidates.length && failure.isEmpty do
       val candidate = candidates(candidateIndex)
       val folds = Vector.newBuilder[FoldEvaluation]
       var foldIndex = 0
-      while foldIndex < innerFolds.folds.length && failure.isEmpty do
-        val fold = innerFolds.folds(foldIndex)
+      while foldIndex < preparedFolds.length && failure.isEmpty do
+        val (fold, training, validation) = preparedFolds(foldIndex)
         val split = SplitIdentity.unsafe(s"${id.stringValue}.${outer.id.stringValue}.${fold.id.stringValue}.${candidate.id.stringValue}")
         val seed = baseSeed.derive(split.stringValue, candidate.id.stringValue)
-        (study.subset(fold.training), study.subset(fold.validation)) match
-          case (Right(training), Right(validation)) =>
-            val context = TrainingContext(split, seed, training.rowIds, candidate.id)
-            trainOne(context, training, candidate) match
+        val context = TrainingContext.mint(split, seed, training, candidate.id)
+        trainOne(context, training, candidate) match
+          case Left(error) => failure = Some(error)
+          case Right(trained) =>
+            trained.preprocessor.transform(validation) match
               case Left(error) => failure = Some(error)
-              case Right(trained) =>
-                trained.preprocessor.transform(validation) match
+              case Right(processedValidation) =>
+                scorer.score(trained.pipeline, processedValidation, candidate) match
                   case Left(error) => failure = Some(error)
-                  case Right(processedValidation) =>
-                    scorer.score(trained.pipeline, processedValidation, candidate) match
-                      case Left(error) => failure = Some(error)
-                      case Right(score) if !score.isFinite =>
-                        failure = Some(ModelSpecError.NonFiniteScore(candidate.id, split, score))
-                      case Right(score) =>
-                        val transformEvent = LifecycleEvent.applyTo(
-                          context,
-                          LifecycleStage.Transform,
-                          validation.rowIds,
-                          "validation-preprocess-transform",
-                          processedValidation.provenance
-                        )
-                        val scoreEvent = LifecycleEvent.applyTo(
-                          context,
-                          LifecycleStage.Score,
-                          validation.rowIds,
-                          "validation-score",
-                          trained.pipeline.provenance,
-                          LifecycleAction.Evaluate
-                        )
-                        val events = trained.events ++ Vector(transformEvent, scoreEvent)
-                        val audit = LeakageAudit.verify(context, validation.rowIds, events)
-                        if !audit.valid then failure = Some(ModelSpecError.LeakageDetected(audit.violations))
-                        else folds += FoldEvaluation(candidate.id, split, seed, score, audit, events)
-          case (Left(error), _) => failure = Some(error)
-          case (_, Left(error)) => failure = Some(error)
+                  case Right(score) if !score.isFinite =>
+                    failure = Some(ModelSpecError.NonFiniteScore(candidate.id, split, score))
+                  case Right(score) =>
+                    val transformEvent = LifecycleEvent.applyTo(
+                      context,
+                      LifecycleStage.Transform,
+                      validation.rowIds,
+                      "validation-preprocess-transform",
+                      processedValidation.provenance
+                    )
+                    val scoreEvent = LifecycleEvent.applyTo(
+                      context,
+                      LifecycleStage.Score,
+                      validation.rowIds,
+                      "validation-score",
+                      trained.pipeline.provenance,
+                      LifecycleAction.Evaluate
+                    )
+                    val events = trained.events ++ Vector(transformEvent, scoreEvent)
+                    val audit = LeakageAudit.verify(context, validation.rowIds, events)
+                    if !audit.valid then failure = Some(ModelSpecError.LeakageDetected(audit.violations))
+                    else folds += FoldEvaluation(candidate.id, split, seed, score, audit, events)
         foldIndex += 1
       if failure.isEmpty then
         val values = folds.result()
@@ -799,6 +1008,12 @@ final class GpcaFoldPipeline extends FoldPipeline:
       fitted <- problem.fit(components).left.map(ModelSpecError.Multivar.apply)
       bundle <- fitted.toBundle(problem.value.table).left.map(ModelSpecError.Multivar.apply)
       requested = bundle.programFit.program
+      solverExecution <- SolverExecutionRecord.from(
+        "gale-generalized-eigen",
+        "gale.spectral generalized symmetric-definite eigen",
+        Vector("components" -> components.value.toString),
+        bundle.programFit.solverAttestation
+      )
       events = Vector(
         LifecycleEvent.fit(context, LifecycleStage.StatisticalEstimation, "gpca-operator-diagram", fitted.provenance),
         LifecycleEvent.fit(context, LifecycleStage.ProgramBuild, "gpca-operator-program", requested.provenance),
@@ -807,6 +1022,7 @@ final class GpcaFoldPipeline extends FoldPipeline:
       )
       result <- FoldPipelineFit.from(
         context,
+        training,
         requested,
         requested,
         bundle,
@@ -814,11 +1030,23 @@ final class GpcaFoldPipeline extends FoldPipeline:
         bundle.derivedOperators,
         Vector.empty,
         None,
-        requested.resultSemantics.guarantee,
+        solverExecution,
         events,
         fitted.provenance
       )
     yield result
+
+object FittedFrameCapturedVariance extends ValidationScorer:
+  def score(
+      fitted: FoldPipelineFit,
+      validation: ProcessedStudy,
+      candidate: HyperparameterCandidate
+  ): Either[ModelSpecError, Double] =
+    fitted.fitBundle.parameterFrames.headOption match
+      case None => Left(ModelSpecError.InvalidDefinition("operator fit has no functional frame"))
+      case Some(frame) =>
+        validation.values.rightMultiply(frame.values).left.map(ModelSpecError.Multivar.apply).map: scores =>
+          squaredNorm(scores) / validation.values.rows.toDouble
 
 object GpcaCapturedVariance extends ValidationScorer:
   def score(
@@ -826,17 +1054,32 @@ object GpcaCapturedVariance extends ValidationScorer:
       validation: ProcessedStudy,
       candidate: HyperparameterCandidate
   ): Either[ModelSpecError, Double] =
+    FittedFrameCapturedVariance.score(fitted, validation, candidate)
+
+object FittedFrameTransformer extends ModelTransformer:
+  def transform(
+      fitted: FoldPipelineFit,
+      study: ProcessedStudy
+  ): Either[ModelSpecError, PipelineTransformation] =
     fitted.fitBundle.parameterFrames.headOption match
-      case None => Left(ModelSpecError.InvalidDefinition("GPCA fit has no functional frame"))
+      case None => Left(ModelSpecError.InvalidDefinition("operator fit has no functional frame"))
       case Some(frame) =>
-        validation.values.rightMultiply(frame.values).left.map(ModelSpecError.Multivar.apply).map: scores =>
-          squaredNorm(scores) / validation.values.rows.toDouble
+        for
+          values <- study.values.rightMultiply(frame.values).left.map(ModelSpecError.Multivar.apply)
+          result <- PipelineTransformation.from(
+            values,
+            frame.domain,
+            ValueIdentity.derived("modelspec-frame-transform", study.sourceIdentity, frame.sourceIdentity),
+            study.provenance ++ frame.provenance
+          )
+        yield result
 
 object GpcaFrameTransformer extends ModelTransformer:
-  def transform(fitted: FoldPipelineFit, study: ProcessedStudy): Either[ModelSpecError, DMat] =
-    fitted.fitBundle.parameterFrames.headOption match
-      case None => Left(ModelSpecError.InvalidDefinition("GPCA fit has no functional frame"))
-      case Some(frame) => study.values.rightMultiply(frame.values).left.map(ModelSpecError.Multivar.apply)
+  def transform(
+      fitted: FoldPipelineFit,
+      study: ProcessedStudy
+  ): Either[ModelSpecError, PipelineTransformation] =
+    FittedFrameTransformer.transform(fitted, study)
 
 private def squaredNorm(value: DMat): Double =
   var result = 0.0

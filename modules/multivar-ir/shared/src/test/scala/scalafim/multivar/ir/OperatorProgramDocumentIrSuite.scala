@@ -1,5 +1,7 @@
 package scalafim.multivar.ir
 
+import scalafim.multivar.*
+
 class OperatorProgramDocumentIrSuite extends munit.FunSuite:
 
   private val strict = ToleranceIr(1e-10, 1e-8)
@@ -300,6 +302,22 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
       assertEquals(decoded.programs.head.result.guarantee, guarantee)
       assertEquals(decoded.fits.head.solverGuarantee, guarantee)
 
+  test("fit guarantees require matching program declarations and bounded convergence evidence"):
+    val mismatched = validDocument.copy(
+      fits = validDocument.fits.map(_.copy(solverGuarantee = ProgramSolverGuaranteeIr.HeuristicFeasible))
+    )
+    val emptyEvidence = validDocument.copy(
+      fits = validDocument.fits.map(_.copy(residualCertificates = Vector.empty))
+    )
+    val unboundedEvidence = validDocument.copy(
+      fits = validDocument.fits.map: fit =>
+        fit.copy(residualCertificates = Vector(certificate("lda-fit", "converged", Some(1.0))))
+    )
+
+    assertEquals(rejection(mismatched).category, RejectionCategory.Malformed)
+    assertEquals(rejection(emptyEvidence).category, RejectionCategory.Malformed)
+    assertEquals(rejection(unboundedEvidence).category, RejectionCategory.Malformed)
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",
@@ -338,6 +356,214 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
       )
     )
     assertEquals(rejection(invalid).category, RejectionCategory.DomainCodomainMismatch)
+
+  test("projection actions and explicit synthesis capabilities round-trip without losing semantics"):
+    val base = validDocument
+    val provenance = Vector(ProvenanceEventIr.Derived("fitted-projection", Vector("weights", "decoder")))
+    val projections = Vector(
+      ProgramProjectionIr(
+        "full",
+        ProgramProjectionActionIr.FullProjection("weights", "feature-schema"),
+        ProgramProjectionResultIr.Scores,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "partial-contribution",
+        ProgramProjectionActionIr.PartialContribution("weights", "feature-schema", Vector("left")),
+        ProgramProjectionResultIr.Scores,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "partial-ls",
+        ProgramProjectionActionIr.PartialLeastSquares(
+          "weights",
+          "feature-schema",
+          Vector("left"),
+          "sparse_symmetric",
+          1,
+          0.01
+        ),
+        ProgramProjectionResultIr.Scores,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "supplementary",
+        ProgramProjectionActionIr.SupplementaryVariables(
+          "table",
+          "scores",
+          "training-row-schema",
+          Vector(0),
+          ProgramSupplementaryConventionIr.MetricLeastSquares(
+            "row-measure",
+            "RowMeasureMean",
+            ProgramNullComponentPolicyIr.Regularize(1e-6)
+          )
+        ),
+        ProgramProjectionResultIr.FunctionalFrame,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "reconstruction",
+        ProgramProjectionActionIr.Reconstruction(
+          "weights",
+          "decoder",
+          ProgramReconstructionSourceIr.PartialLeastSquares("identity", 1, 0.0),
+          Vector(0),
+          Vector("left"),
+          ProgramReconstructionCoordinateIr.Original
+        ),
+        ProgramProjectionResultIr.FeatureValues(ProgramReconstructionCoordinateIr.Original),
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "paired-transfer",
+        ProgramProjectionActionIr.PairedTransfer("Cca", "x", "y", "weights", "decoder", "unit-scale"),
+        ProgramProjectionResultIr.TransferValues,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "block-scores",
+        ProgramProjectionActionIr.MultiblockScores("behavior", "weights", "weights", "block-schema"),
+        ProgramProjectionResultIr.Scores,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      ),
+      ProgramProjectionIr(
+        "block-contribution",
+        ProgramProjectionActionIr.MultiblockContribution(
+          "behavior",
+          "weights",
+          "weights",
+          "block-schema",
+          0.5
+        ),
+        ProgramProjectionResultIr.Scores,
+        ProgramEquivalenceIr.Value(strict),
+        provenance
+      )
+    )
+    val capability = ProgramSynthesisCapabilityIr(
+      "fitted-decoder",
+      "weights",
+      "decoder",
+      ProgramSynthesisPolicyIr.Explicit("decoder"),
+      supportsWorkingCoordinates = true,
+      supportsOriginalCoordinates = true,
+      supportsComponentSelection = true,
+      supportsFeatureSelection = true,
+      provenance
+    )
+    val document = base.copy(projections = projections, synthesisCapabilities = Vector(capability))
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.projections, projections)
+    assertEquals(decoded.synthesisCapabilities, Vector(capability))
+    assertEquals(decoded.operators.find(_.valueIdentity == "decoder").map(_.role), Some(ProgramOperatorRoleIr.Synthesis))
+
+  test("projection validation rejects implicit or port-incompatible synthesis"):
+    val base = validDocument
+    val provenance = Vector(ProvenanceEventIr.Derived("fitted-projection", Vector("weights", "decoder")))
+    val capability = ProgramSynthesisCapabilityIr(
+      "fitted-decoder",
+      "weights",
+      "decoder",
+      ProgramSynthesisPolicyIr.Explicit("different-decoder"),
+      supportsWorkingCoordinates = true,
+      supportsOriginalCoordinates = true,
+      supportsComponentSelection = true,
+      supportsFeatureSelection = true,
+      provenance
+    )
+    assertEquals(
+      rejection(base.copy(synthesisCapabilities = Vector(capability))).category,
+      RejectionCategory.DomainCodomainMismatch
+    )
+
+    val invalidProjection = ProgramProjectionIr(
+      "invalid-components",
+      ProgramProjectionActionIr.Reconstruction(
+        "weights",
+        "decoder",
+        ProgramReconstructionSourceIr.SuppliedScores,
+        Vector(-1),
+        Vector("left"),
+        ProgramReconstructionCoordinateIr.Working
+      ),
+      ProgramProjectionResultIr.FeatureValues(ProgramReconstructionCoordinateIr.Working),
+      ProgramEquivalenceIr.Value(strict),
+      provenance
+    )
+    assertEquals(rejection(base.copy(projections = Vector(invalidProjection))).category, RejectionCategory.Malformed)
+
+  test("runtime fitted capabilities lower to their durable action and synthesis descriptors"):
+    val training = GaleNumerics.matrixFromRows(
+      Vector(Vector(1.0, 2.0), Vector(3.0, 1.0), Vector(2.0, 4.0))
+    )
+    val weights = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(0.5)))
+    val transform = FittedFrameTransform
+      .fromTraining(
+        MatrixView.dense(training),
+        weights,
+        FittedColumnAffine(
+          2,
+          gale.linalg.DVec.fromSeq(Vector(1.0, 1.0)),
+          gale.linalg.DVec.fromSeq(Vector(0.0, 0.0))
+        ),
+        "ir-projection-fixture",
+        ComponentCount.unsafe(1),
+        featureIds = Some(Vector(FeatureId.unsafe("left"), FeatureId.unsafe("right")))
+      )
+      .toOption
+      .get
+    val full = ProgramSemanticIr.fullProjection("full-runtime", transform)
+    val restricted = transform
+      .restrictFeatures(IndexSet.from(Vector(0), IndexAxis.Feature).toOption.get)
+      .toOption
+      .get
+    val partialInput = restricted.restriction
+      .bind(
+        MatrixView.dense(training.selectColumns(Vector(0))),
+        restricted.restriction.restrictedSchema
+      )
+      .toOption
+      .get
+    val partial = ProgramSemanticIr.partialProjection(
+      "partial-runtime",
+      restricted.contribution(partialInput).toOption.get
+    )
+    val decoderIdentity = ValueIdentity.source(ValueId.unsafe("ir-explicit-decoder"))
+    val bidirectional = FittedBidirectionalTransform
+      .explicit(
+        transform,
+        GaleNumerics.matrixFromRows(Vector(Vector(0.8, 0.2))),
+        decoderIdentity
+      )
+      .toOption
+      .get
+    val capability = ProgramSemanticIr.synthesisCapability("synthesis-runtime", bidirectional)
+
+    assertEquals(
+      full.action,
+      ProgramProjectionActionIr.FullProjection(
+        transform.frame.weights.valueIdentity.stableKey,
+        transform.featureSchema.valueIdentity.stableKey
+      )
+    )
+    partial.action match
+      case ProgramProjectionActionIr.PartialContribution(frame, schema, features) =>
+        assertEquals(frame, transform.frame.weights.valueIdentity.stableKey)
+        assertEquals(schema, transform.featureSchema.valueIdentity.stableKey)
+        assertEquals(features, Vector("left"))
+      case other => fail(s"expected partial contribution, got $other")
+    assertEquals(capability.analysisFrame, transform.frame.weights.valueIdentity.stableKey)
+    assertEquals(capability.decoder, bidirectional.decoder.valueIdentity.stableKey)
+    assertEquals(capability.policy, ProgramSynthesisPolicyIr.Explicit(decoderIdentity.stableKey))
 
   private def validDocument: OperatorProgramDocumentIr =
     val spaces = Vector(
@@ -399,6 +625,12 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
       ProgramOperatorRoleIr.Axis,
       derivation = ProgramOperatorDerivationIr.Axes("weights", "cometric")
     )
+    val decoder = op(
+      "decoder",
+      CoordinateIr("features", VarianceIr.Dual),
+      CoordinateIr("components", VarianceIr.Dual),
+      ProgramOperatorRoleIr.Synthesis
+    )
     val whitened = op(
       "whitened-between",
       CoordinateIr("features", VarianceIr.Dual),
@@ -457,7 +689,7 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     OperatorProgramDocumentIr(
       OperatorProgramDocumentIr.schemaV02,
       spaces,
-      Vector(table, relationship, between, within, cometric, weights, scores, axes, whitened),
+      Vector(table, relationship, between, within, cometric, weights, scores, axes, decoder, whitened),
       Vector(original, lowered),
       Vector(rewrite),
       Vector(fit)

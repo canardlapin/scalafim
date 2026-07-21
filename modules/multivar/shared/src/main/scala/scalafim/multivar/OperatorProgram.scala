@@ -323,18 +323,19 @@ enum BaseObjective:
           binding(expression.source),
           binding(expression.target)
         )
-      case GeneralizedRayleigh(numerator, _) =>
-        Vector(binding(numerator.parameter))
-      case TraceRatio(numerator, _) =>
-        Vector(binding(numerator.parameter))
-      case RatioTrace(numerator, _) =>
-        Vector(binding(numerator.parameter))
+      case GeneralizedRayleigh(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
+      case TraceRatio(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
+      case RatioTrace(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
       case MinimizeDisagreement(expression) =>
         Vector(binding(expression.parameter))
-      case SequentialCrossRegression(cross, _) =>
+      case SequentialCrossRegression(cross, predictor) =>
         Vector(
           binding(cross.source),
-          binding(cross.target)
+          binding(cross.target),
+          binding(predictor.parameter)
         )
 
   private def binding(variable: FrameVariable[?, ?]): ObjectiveBinding =
@@ -761,9 +762,7 @@ object OperatorProgram:
       objective: BaseObjective
   ): Either[ProgramError, Unit] =
     val bindings = objective.bindings
-    if bindings.length > 1 && bindings.map(_.parameter).distinct.length != bindings.length then
-      Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct frame parameters"))
-    else
+    validateObjectiveIdentities(objective).flatMap: _ =>
       bindings.foldLeft[Either[ProgramError, Unit]](Right(())): (result, binding) =>
         result.flatMap: _ =>
           parameters.find(_.variable.id == binding.parameter) match
@@ -776,6 +775,27 @@ object OperatorProgram:
               else if actualComponent != binding.componentSpace then
                 Left(ProgramError.ComponentSpaceMismatch(binding.parameter, binding.componentSpace, actualComponent))
               else Right(())
+
+  private def validateObjectiveIdentities(objective: BaseObjective): Either[ProgramError, Unit] =
+    objective match
+      case BaseObjective.MaximizeCrossTrace(expression) if expression.source.id == expression.target.id =>
+        Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct frame parameters"))
+      case BaseObjective.GeneralizedRayleigh(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("generalized-rayleigh numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.TraceRatio(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("trace-ratio numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.RatioTrace(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("ratio-trace numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.SequentialCrossRegression(cross, _)
+          if cross.source.id == cross.target.id =>
+        Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct source and target frame parameters"))
+      case BaseObjective.SequentialCrossRegression(cross, predictor)
+          if cross.source.id != predictor.parameter.id =>
+        Left(ProgramError.InvalidParameterization("sequential-cross-regression predictor must bind the cross-expression source parameter"))
+      case _ => Right(())
 
   private def validateNormalizations(
       parameters: Vector[FrameParameterization[? <: SemanticSpace, ? <: SemanticSpace]],
@@ -812,6 +832,25 @@ final case class NumericalIdentifiability(
     context: CertificateContext
 )
 
+/** Evidence for the guarantee actually achieved by one solver run.
+  *
+  * A program's result semantics state the guarantee required of a conforming
+  * fit. The attestation is created only after the returned frames and their
+  * numerical residual have been checked, so a fit cannot merely repeat that
+  * declaration without solver evidence.
+  */
+final case class SolverAttestation private (
+    guarantee: SolverGuarantee,
+    certificate: NumericalCertificate
+)
+
+object SolverAttestation:
+  private[multivar] def certified(
+      guarantee: SolverGuarantee,
+      certificate: NumericalCertificate
+  ): SolverAttestation =
+    new SolverAttestation(guarantee, certificate)
+
 final case class FittedFrame[
     Feature <: SemanticSpace,
     Component <: SemanticSpace,
@@ -826,6 +865,7 @@ final case class OperatorProgramFit(
     frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
     objectiveValue: Double,
     identifiability: NumericalIdentifiability,
+    solverAttestation: SolverAttestation,
     provenance: SemanticProvenance
 )
 
@@ -839,6 +879,10 @@ object OperatorProgramFit:
   ): Either[ProgramError, OperatorProgramFit] =
     val expected = program.parameters.map(_.variable.id).toSet
     val actual = frames.map(_.parameter.id)
+    val fitIdentity = ValueIdentity.derived(
+      "operator-program-fit",
+      frames.map(_.frame.weights.valueIdentity)*
+    )
     if !objectiveValue.isFinite then Left(ProgramError.InvalidResult("objective value must be finite"))
     else if identifiability.retainedRank < 0 || !identifiability.residual.isFinite || identifiability.residual < 0.0 then
       Left(ProgramError.InvalidResult("identifiability rank and residual must be finite and non-negative"))
@@ -849,7 +893,26 @@ object OperatorProgramFit:
           declared.variable.featureSpace.descriptor != fitted.parameter.featureSpace.descriptor ||
             declared.variable.componentSpace.descriptor != fitted.parameter.componentSpace.descriptor
     then Left(ProgramError.InvalidResult("fitted frame spaces must match their declared program parameter"))
-    else Right(OperatorProgramFit(program, frames, objectiveValue, identifiability, provenance))
+    else
+      Certificate
+        .converged(
+          fitIdentity,
+          iterations = 0,
+          identifiability.residual,
+          Math.max(1.0, Math.abs(objectiveValue)),
+          identifiability.context
+        )
+        .left
+        .map(error => ProgramError.InvalidResult(s"solver convergence was not certified: ${error.message}"))
+        .map: certificate =>
+          OperatorProgramFit(
+            program,
+            frames,
+            objectiveValue,
+            identifiability,
+            SolverAttestation.certified(program.resultSemantics.guarantee, certificate.runtime),
+            provenance
+          )
 
 /** Named method constructors assemble the shared program vocabulary; they do
   * not introduce method-specific solver or matrix representations.
