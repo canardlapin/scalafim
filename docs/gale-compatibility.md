@@ -30,3 +30,11 @@ APIs, passes Gale's JVM, Scala.js, full-link, parity, and backend gates, and add
 the owner-selected Apache-2.0 license plus canonical Git and POM provenance.
 Scalafim consumes the named `coreJVM` and `coreJS` projects directly from that
 Git commit; advancing the pin requires the consumer gate above.
+
+The current immutable pin is Gale commit
+`2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100`. It retains the migration baseline
+and adds the portable projected generalized-Rayleigh kernel, typed termination,
+and KKT/feasibility/normalization certificates required by constrained
+canonical models. The Gale core suites at this revision pass 506 JVM and 496
+Scala.js tests; ScalaFIM's consumer and full repository gates remain mandatory
+for every subsequent pin advance.

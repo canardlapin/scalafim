@@ -113,3 +113,21 @@ largest root, Wilks' lambda, Pillai's trace, and the Hotelling-Lawley trace as
 distinct typed estimands and ordinary MVPA metrics. Repeated roots identify a
 projector-valued subspace; no arbitrary axis is promoted to a scientific
 result.
+
+## Coordinate-constrained canonical effect
+
+`NonnegativeCanonicalMvpa` estimates the distinct nonnegative canonical root
+through the same `CanonicalEffectDataset` and runwise sufficient statistics.
+An inspectable `NonnegativeCanonicalModelSpec` fixes residual regularization
+and Gale solver policy before fold construction; version one performs no
+response-selected tuning. In each outer fold all training moments are formed
+and the constrained `OperatorProgram` is fitted before the held-out response is
+accessed.
+
+The constraint removes the ordinary sign gauge and makes feature coordinates
+part of the estimand. Feature permutations preserve the result, but arbitrary
+rotations generally do not. Fold payloads retain the nonnegative frame,
+stationary-point attestation, Gale KKT/feasibility/normalization diagnostics,
+temporal preparation receipts, and held-out root. The ordinary `MvpaResult`
+surface exposes `MeanNonnegativeCanonicalRoot` and
+`NonnegativeCanonicalCorrelation` for ROI and searchlight consumers.

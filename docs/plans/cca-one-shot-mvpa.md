@@ -212,13 +212,15 @@ contrast-effect estimand.
 
 ## Gale boundary audit
 
-ScalaFIM pins Gale revision `441caa15e809622b606942461ebde326b96d2361`.
+ScalaFIM pins Gale revision `2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100`.
 At that revision, shared JVM/Scala.js code provides the required matrix
 carriers, positive-definite checks, eigenvalue selection, residual diagnostics,
-and `gale.spectral.Eigen.eigSymmetricGeneralized`. The current gap list is
-empty. Any later missing operation that is independent of fMRI and canonical
-contrast semantics must be added to Gale and consumed through an advanced
-immutable pin; ScalaFIM will not grow a private generic eigensolver.
+`gale.spectral.Eigen.eigSymmetricGeneralized`, and the certificate-bearing
+`gale.optim.ProjectedRayleigh` kernel used by coordinate-constrained canonical
+models. The current gap list is empty. Any later missing operation that is
+independent of fMRI and canonical contrast semantics must be added to Gale and
+consumed through an advanced immutable pin; ScalaFIM will not grow a private
+generic eigensolver or optimizer.
 
 ## Failure algebra
 

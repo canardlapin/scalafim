@@ -9,7 +9,7 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 // Immutable source dependency: sbt clones this exact Gale commit into its
 // staging area, so a clean checkout never depends on publishLocal or a sibling
 // developer checkout.
-lazy val galeRevision = "441caa15e809622b606942461ebde326b96d2361"
+lazy val galeRevision = "2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100"
 lazy val galeBuild =
   uri(s"https://github.com/bbuchsbaum/gale.git#$galeRevision")
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")

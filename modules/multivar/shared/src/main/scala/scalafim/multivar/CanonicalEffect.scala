@@ -103,6 +103,7 @@ final case class CanonicalEffectFit[
     solution: CanonicalEffectSolution,
     functionalFrame: FunctionalFrame[Feature, Component, UncheckedEvidence],
     programFit: OperatorProgramFit,
+    regularizedResidual: OpCovariance[Feature, CertifiedSpd],
     regularization: ResidualRegularizationFit,
     diagnostics: CanonicalEffectDiagnostics,
     provenance: CanonicalEffectProvenance
@@ -230,35 +231,10 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
       yield fit
 
   private def prepareResidual(residualDense: DMat): Either[MultivarError, (DMat, ResidualRegularizationFit)] =
-    val trace = matrixTrace(residualDense)
-    val scale = trace / featureSpace.dimension.toDouble
-    regularization match
-      case ResidualRegularization.Unregularized =>
-        if !trace.isFinite then Left(MultivarError.NonFiniteValue("residual trace", 0, trace))
-        else Right((residualDense, ResidualRegularizationFit(regularization, Math.max(scale, 0.0), 0.0)))
-      case ResidualRegularization.TraceScaled(fraction) =>
-        if !trace.isFinite then Left(MultivarError.NonFiniteValue("residual trace", 0, trace))
-        else if trace <= 0.0 then Left(MultivarError.NonInvertibleValue("residual trace", 0, trace))
-        else
-          val ridge = fraction.value * scale
-          Right((residualDense.addToDiagonal(ridge), ResidualRegularizationFit(regularization, scale, ridge)))
+    prepareCanonicalResidual(residualDense, featureSpace.dimension, regularization)
 
   private def certifySpd(matrix: DMat): Either[MultivarError, OpCovariance[Feature, CertifiedSpd]] =
-    val identity = ValueIdentity.derived("canonical-regularized-residual", residual.valueIdentity)
-    for
-      context <- certificateContext("canonical-residual-spd")
-      linear <- semantic(
-        Lin.fromDenseMatrix(
-          matrix,
-          CoordinateEvidence.dual(featureSpace),
-          CoordinateEvidence.primal(featureSpace),
-          identity,
-          provenance.append(SemanticProvenanceEvent.Derived("residual-regularization", Vector(residual.valueIdentity)))
-        )
-      )
-      certificate <- semantic(FormCertificates.spd(linear, context))
-      certified <- semantic(Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.covariance), certificate))
-    yield certified
+    certifyCanonicalResidual(featureSpace, residual, matrix, regularization, tolerance, provenance)
 
   private def componentSpace(multiplicity: Int): Either[MultivarError, SpaceRef] =
     SpaceRef.of(s"${featureSpace.id.value}.canonical", SpaceRole.Latent, multiplicity)
@@ -314,6 +290,7 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
         solution,
         functionalFrame,
         operatorFit,
+        regularized,
         regularizationFit,
         diagnostics,
         CanonicalEffectProvenance(
@@ -467,6 +444,62 @@ object CanonicalEffectProblem:
       certificate <- semantic(FormCertificates.psd(linear, context))
       certified <- semantic(Op.certifiedPsd(Op.fromLin(linear, OperatorRoleWitness.covariance), certificate))
     yield certified
+
+private[multivar] def prepareCanonicalResidual(
+    residualDense: DMat,
+    dimension: Int,
+    regularization: ResidualRegularization
+): Either[MultivarError, (DMat, ResidualRegularizationFit)] =
+  val trace = matrixTrace(residualDense)
+  val scale = trace / dimension.toDouble
+  regularization match
+    case ResidualRegularization.Unregularized =>
+      if !trace.isFinite then Left(MultivarError.NonFiniteValue("residual trace", 0, trace))
+      else Right((residualDense, ResidualRegularizationFit(regularization, Math.max(scale, 0.0), 0.0)))
+    case ResidualRegularization.TraceScaled(fraction) =>
+      if !trace.isFinite then Left(MultivarError.NonFiniteValue("residual trace", 0, trace))
+      else if trace <= 0.0 then Left(MultivarError.NonInvertibleValue("residual trace", 0, trace))
+      else
+        val ridge = fraction.value * scale
+        Right((residualDense.addToDiagonal(ridge), ResidualRegularizationFit(regularization, scale, ridge)))
+
+private[multivar] def certifyCanonicalResidual[Feature <: SemanticSpace](
+    featureSpace: SpaceEvidence[Feature],
+    residual: OpCovariance[Feature, CertifiedPsd],
+    matrix: DMat,
+    regularization: ResidualRegularization,
+    tolerance: CertificateTolerance,
+    provenance: SemanticProvenance
+): Either[MultivarError, OpCovariance[Feature, CertifiedSpd]] =
+  val identity = ValueIdentity.derived("canonical-regularized-residual", residual.valueIdentity)
+  for
+    context <- semantic(
+      CertificateContext.from(
+        tolerance,
+        CertificateNorm.Frobenius,
+        "canonical-residual-spd",
+        "gale",
+        NumericalPrecision.Float64,
+        Some(canonicalRegularizationLabel(regularization))
+      )
+    )
+    linear <- semantic(
+      Lin.fromDenseMatrix(
+        matrix,
+        CoordinateEvidence.dual(featureSpace),
+        CoordinateEvidence.primal(featureSpace),
+        identity,
+        provenance.append(SemanticProvenanceEvent.Derived("residual-regularization", Vector(residual.valueIdentity)))
+      )
+    )
+    certificate <- semantic(FormCertificates.spd(linear, context))
+    certified <- semantic(Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.covariance), certificate))
+  yield certified
+
+private def canonicalRegularizationLabel(regularization: ResidualRegularization): String =
+  regularization match
+    case ResidualRegularization.Unregularized => "unregularized"
+    case ResidualRegularization.TraceScaled(fraction) => s"trace-scaled-${fraction.value}"
 
 private def canonicalRoot(value: Double, noise: Double): Either[MultivarError, CanonicalRoot] =
   if value >= 0.0 then CanonicalRoot(value)
