@@ -18,8 +18,8 @@ import scalafim.surface.{
 
 class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
-  private val meanAnalysis: RoiAnalysis =
-    new RoiAnalysis:
+  private val meanAnalysis: DenseRoiAnalysis =
+    new DenseRoiAnalysis:
       override val name: String = "mean-signal"
 
       override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
