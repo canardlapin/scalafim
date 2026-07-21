@@ -233,6 +233,9 @@ final class TypedFunctional[Z] private (
 object TypedFunctional:
   def l1[Z]: TypedFunctional[Z] = known(FunctionalKind.L1)
   def groupL21[Z]: TypedFunctional[Z] = known(FunctionalKind.GroupL21)
+  def groupL2[Z](groups: ValueIdentity): TypedFunctional[Z] = known(FunctionalKind.GroupL2(groups))
+  def sparseGroup[Z](fraction: UnitFraction, groups: ValueIdentity): TypedFunctional[Z] =
+    known(FunctionalKind.SparseGroup(fraction, groups))
   def squaredNorm[Z](geometry: ValueIdentity): TypedFunctional[Z] = known(FunctionalKind.SquaredNorm(geometry))
   def elasticNet[Z](fraction: UnitFraction): TypedFunctional[Z] = known(FunctionalKind.ElasticNet(fraction))
   def huber[Z](delta: PenaltyWeight): TypedFunctional[Z] = known(FunctionalKind.Huber(delta))
@@ -252,6 +255,7 @@ object TypedFeasibleSet:
   def zero[Z]: TypedFeasibleSet[Z] = known(FeasibleSetKind.ZeroSubspace)
   def nonnegative[Z]: TypedFeasibleSet[Z] = known(FeasibleSetKind.NonnegativeOrthant)
   def simplex[Z]: TypedFeasibleSet[Z] = known(FeasibleSetKind.Simplex)
+  def monotone[Z](order: ValueIdentity): TypedFeasibleSet[Z] = known(FeasibleSetKind.Monotone(order))
   def box[Z](bounds: ClosedInterval): TypedFeasibleSet[Z] = known(FeasibleSetKind.Box(bounds))
   def normBall[Z](radius: PenaltyWeight): TypedFeasibleSet[Z] = known(FeasibleSetKind.NormBall(radius))
   def psd[Z]: TypedFeasibleSet[Z] = known(FeasibleSetKind.PsdCone)

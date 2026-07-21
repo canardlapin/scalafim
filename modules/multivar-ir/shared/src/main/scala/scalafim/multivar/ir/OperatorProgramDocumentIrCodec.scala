@@ -181,6 +181,14 @@ private object ProgramIrEncoder:
         obj("kind" -> Str("squared_norm"), "geometry_identity" -> Str(geometry))
       case ProgramFunctionalIr.ElasticNet(fraction) =>
         obj("kind" -> Str("elastic_net"), "l1_fraction" -> Num(fraction))
+      case ProgramFunctionalIr.GroupL2(groups) =>
+        obj("kind" -> Str("group_l2"), "groups_identity" -> Str(groups))
+      case ProgramFunctionalIr.SparseGroup(fraction, groups) =>
+        obj(
+          "kind" -> Str("sparse_group"),
+          "l1_fraction" -> Num(fraction),
+          "groups_identity" -> Str(groups)
+        )
       case ProgramFunctionalIr.Huber(delta) => obj("kind" -> Str("huber"), "delta" -> Num(delta))
       case other => obj("kind" -> Str(simpleFunctional(other)))
 
@@ -196,6 +204,8 @@ private object ProgramIrEncoder:
       case ProgramFeasibleSetIr.Box(lower, upper) =>
         obj("kind" -> Str("box"), "lower" -> Num(lower), "upper" -> Num(upper))
       case ProgramFeasibleSetIr.NormBall(radius) => obj("kind" -> Str("norm_ball"), "radius" -> Num(radius))
+      case ProgramFeasibleSetIr.Monotone(order) =>
+        obj("kind" -> Str("monotone"), "order_identity" -> Str(order))
       case ProgramFeasibleSetIr.FixedSupport(indices) =>
         obj("kind" -> Str("fixed_support"), "indices" -> arr(indices.map(value => Num(value))))
       case ProgramFeasibleSetIr.RankBounded(rank) => obj("kind" -> Str("rank_bounded"), "rank" -> Num(rank))
@@ -704,6 +714,16 @@ private object ProgramIrDecoder:
           exact(current, path, Set("kind", "l1_fraction"))
             .flatMap(checked => required(checked, "l1_fraction", path, number(_, s"$path.l1_fraction")))
             .map(ProgramFunctionalIr.ElasticNet.apply)
+        case "group_l2" =>
+          exact(current, path, Set("kind", "groups_identity"))
+            .flatMap(checked => required(checked, "groups_identity", path, string(_, s"$path.groups_identity")))
+            .map(ProgramFunctionalIr.GroupL2.apply)
+        case "sparse_group" =>
+          for
+            checked <- exact(current, path, Set("kind", "l1_fraction", "groups_identity"))
+            fraction <- required(checked, "l1_fraction", path, number(_, s"$path.l1_fraction"))
+            groups <- required(checked, "groups_identity", path, string(_, s"$path.groups_identity"))
+          yield ProgramFunctionalIr.SparseGroup(fraction, groups)
         case "huber" =>
           exact(current, path, Set("kind", "delta"))
             .flatMap(checked => required(checked, "delta", path, number(_, s"$path.delta")))
@@ -731,6 +751,10 @@ private object ProgramIrDecoder:
           exact(current, path, Set("kind", "radius"))
             .flatMap(checked => required(checked, "radius", path, number(_, s"$path.radius")))
             .map(ProgramFeasibleSetIr.NormBall.apply)
+        case "monotone" =>
+          exact(current, path, Set("kind", "order_identity"))
+            .flatMap(checked => required(checked, "order_identity", path, string(_, s"$path.order_identity")))
+            .map(ProgramFeasibleSetIr.Monotone.apply)
         case "fixed_support" =>
           exact(current, path, Set("kind", "indices"))
             .flatMap(checked => required(checked, "indices", path, vector(_, s"$path.indices", integer)))

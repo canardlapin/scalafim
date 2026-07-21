@@ -110,6 +110,38 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     assertEquals(decoded.programs.head.penalties.head, penalty)
     assertEquals(decoded.programs.head.constraints.head, constraint)
 
+  test("group, sparse-group, and monotone coordinate semantics round-trip"):
+    val base = validDocument
+    val target = ProgramTargetIr(
+      "weights",
+      ProgramTargetCapabilityIr.Linear,
+      "feature-chart:genes",
+      Some("table")
+    )
+    val groups = ProgramPenaltyV2Ir(
+      target,
+      ProgramFunctionalIr.GroupL2("gene-groups"),
+      0.5,
+      ProgramFrameSymmetryIr.Orthogonal
+    )
+    val sparseGroup = ProgramPenaltyV2Ir(
+      target,
+      ProgramFunctionalIr.SparseGroup(0.25, "gene-groups"),
+      0.75,
+      ProgramFrameSymmetryIr.SignedPermutation
+    )
+    val monotone = ProgramConstraintV2Ir(
+      target,
+      ProgramFeasibleSetIr.Monotone("genomic-order"),
+      ProgramFrameSymmetryIr.Permutation
+    )
+    val program = base.programs.head.copy(penalties = Vector(groups, sparseGroup), constraints = Vector(monotone))
+    val document = base.copy(programs = Vector(program), rewrites = Vector.empty, fits = Vector.empty)
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.programs.head.penalties, Vector(groups, sparseGroup))
+    assertEquals(decoded.programs.head.constraints, Vector(monotone))
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",

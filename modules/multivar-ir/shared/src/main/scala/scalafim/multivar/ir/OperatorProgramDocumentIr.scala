@@ -115,6 +115,8 @@ enum ProgramFunctionalIr:
   case SquaredNorm(geometryIdentity: String)
   case L1
   case GroupL21
+  case GroupL2(groupsIdentity: String)
+  case SparseGroup(l1Fraction: Double, groupsIdentity: String)
   case ElasticNet(l1Fraction: Double)
   case Huber(delta: Double)
   case TotalVariation
@@ -125,6 +127,7 @@ enum ProgramFeasibleSetIr:
   case ZeroSubspace
   case NonnegativeOrthant
   case Simplex
+  case Monotone(orderIdentity: String)
   case Box(lower: Double, upper: Double)
   case NormBall(radius: Double)
   case PsdCone
@@ -431,6 +434,9 @@ object ProgramSemanticIr:
       case FunctionalKind.SquaredNorm(geometry) => ProgramFunctionalIr.SquaredNorm(geometry.stableKey)
       case FunctionalKind.L1 => ProgramFunctionalIr.L1
       case FunctionalKind.GroupL21 => ProgramFunctionalIr.GroupL21
+      case FunctionalKind.GroupL2(groups) => ProgramFunctionalIr.GroupL2(groups.stableKey)
+      case FunctionalKind.SparseGroup(fraction, groups) =>
+        ProgramFunctionalIr.SparseGroup(fraction.value, groups.stableKey)
       case FunctionalKind.ElasticNet(fraction) => ProgramFunctionalIr.ElasticNet(fraction.value)
       case FunctionalKind.Huber(delta) => ProgramFunctionalIr.Huber(delta.value)
       case FunctionalKind.TotalVariation => ProgramFunctionalIr.TotalVariation
@@ -442,6 +448,7 @@ object ProgramSemanticIr:
       case FeasibleSetKind.ZeroSubspace => ProgramFeasibleSetIr.ZeroSubspace
       case FeasibleSetKind.NonnegativeOrthant => ProgramFeasibleSetIr.NonnegativeOrthant
       case FeasibleSetKind.Simplex => ProgramFeasibleSetIr.Simplex
+      case FeasibleSetKind.Monotone(order) => ProgramFeasibleSetIr.Monotone(order.stableKey)
       case FeasibleSetKind.Box(bounds) => ProgramFeasibleSetIr.Box(bounds.lower, bounds.upper)
       case FeasibleSetKind.NormBall(radius) => ProgramFeasibleSetIr.NormBall(radius.value)
       case FeasibleSetKind.PsdCone => ProgramFeasibleSetIr.PsdCone

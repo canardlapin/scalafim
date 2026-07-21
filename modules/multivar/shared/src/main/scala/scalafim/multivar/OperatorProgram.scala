@@ -394,6 +394,8 @@ enum FunctionalKind:
   case SquaredNorm(geometry: ValueIdentity)
   case L1
   case GroupL21
+  case GroupL2(groups: ValueIdentity)
+  case SparseGroup(l1Fraction: UnitFraction, groups: ValueIdentity)
   case ElasticNet(l1Fraction: UnitFraction)
   case Huber(delta: PenaltyWeight)
   case TotalVariation
@@ -402,8 +404,8 @@ enum FunctionalKind:
 
   def symmetry: FrameSymmetry =
     this match
-      case SquaredNorm(_) | GroupL21 | NuclearNorm | NegativeLogDet => FrameSymmetry.Orthogonal
-      case L1 | ElasticNet(_) | Huber(_) | TotalVariation => FrameSymmetry.SignedPermutation
+      case SquaredNorm(_) | GroupL21 | GroupL2(_) | NuclearNorm | NegativeLogDet => FrameSymmetry.Orthogonal
+      case L1 | SparseGroup(_, _) | ElasticNet(_) | Huber(_) | TotalVariation => FrameSymmetry.SignedPermutation
 
   def traits: FunctionalTraits =
     this match
@@ -416,7 +418,7 @@ enum FunctionalKind:
           Set(OracleCapability.Gradient, OracleCapability.HessianVector),
           symmetry
         )
-      case L1 | GroupL21 | TotalVariation | NuclearNorm =>
+      case L1 | GroupL21 | GroupL2(_) | TotalVariation | NuclearNorm =>
         FunctionalTraits(
           ConvexityTrait.Convex,
           SmoothnessTrait.Nonsmooth,
@@ -424,17 +426,20 @@ enum FunctionalKind:
           this match
             case L1 => SeparabilityTrait.Elementwise
             case GroupL21 => SeparabilityTrait.Rowwise
+            case GroupL2(_) => SeparabilityTrait.Blockwise
             case NuclearNorm => SeparabilityTrait.Spectral
             case _ => SeparabilityTrait.Nonseparable,
           Set(OracleCapability.Proximal, OracleCapability.Conic),
           symmetry
         )
-      case ElasticNet(_) =>
+      case ElasticNet(_) | SparseGroup(_, _) =>
         FunctionalTraits(
           ConvexityTrait.Convex,
           SmoothnessTrait.Nonsmooth,
           HomogeneityTrait.None,
-          SeparabilityTrait.Elementwise,
+          this match
+            case ElasticNet(_) => SeparabilityTrait.Elementwise
+            case _ => SeparabilityTrait.Blockwise,
           Set(OracleCapability.Proximal, OracleCapability.Conic),
           symmetry
         )
@@ -461,6 +466,7 @@ enum FeasibleSetKind:
   case ZeroSubspace
   case NonnegativeOrthant
   case Simplex
+  case Monotone(order: ValueIdentity)
   case Box(bounds: ClosedInterval)
   case NormBall(radius: PenaltyWeight)
   case PsdCone
@@ -472,18 +478,19 @@ enum FeasibleSetKind:
     this match
       case ZeroSubspace | NormBall(_) | PsdCone | Stiefel | FixedSupport(_) | RankBounded(_) =>
         FrameSymmetry.Orthogonal
-      case NonnegativeOrthant | Simplex | Box(_) =>
+      case NonnegativeOrthant | Simplex | Monotone(_) | Box(_) =>
         FrameSymmetry.Permutation
 
   def traits: FeasibleSetTraits =
     this match
-      case ZeroSubspace | NonnegativeOrthant | Simplex | Box(_) | NormBall(_) =>
+      case ZeroSubspace | NonnegativeOrthant | Simplex | Monotone(_) | Box(_) | NormBall(_) =>
         FeasibleSetTraits(
           SetConvexity.Convex,
           closed = true,
           SetStructure.Euclidean,
           this match
             case NonnegativeOrthant | Box(_) => SeparabilityTrait.Elementwise
+            case Monotone(_) => SeparabilityTrait.Blockwise
             case _ => SeparabilityTrait.Nonseparable,
           Set(SetCapability.Projection, SetCapability.Conic, SetCapability.NormalCone),
           symmetry
