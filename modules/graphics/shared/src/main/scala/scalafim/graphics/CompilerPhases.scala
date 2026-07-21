@@ -103,19 +103,27 @@ private[graphics] object StatPhase:
       }
     else
       val keys = plan.data.map(stat.x)
-      val order = stat.order.arrange(keys)
-      val groups = scala.collection.mutable.HashMap.empty[String, scala.collection.mutable.ArrayBuffer[Row]]
+      val categories = stat.order.arrange(keys)
+      val groupKeys = stat.group match
+        case None          => Vector(None)
+        case Some(groupOf) => plan.data.map(row => Some(groupOf(row))).distinct
+      val groups = scala.collection.mutable.HashMap.empty[(String, Option[String]), scala.collection.mutable.ArrayBuffer[Row]]
       plan.data.zip(keys).foreach { case (row, key) =>
-        groups.getOrElseUpdate(key, scala.collection.mutable.ArrayBuffer.empty) += row
+        val group = stat.group.map(_(row))
+        groups.getOrElseUpdate((key, group), scala.collection.mutable.ArrayBuffer.empty) += row
       }
-      val rows = order.map { key =>
-        val members = groups(key).toVector
-        StatRow(
-          source = members.head,
-          members = members,
-          category = Some(key),
-          computed = ComputedValues.counted(members.length, plan.data.length)
-        )
+      val rows = categories.flatMap { category =>
+        groupKeys.flatMap { group =>
+          groups.get((category, group)).map { bucket =>
+            val members = bucket.toVector
+            StatRow(
+              source = members.head,
+              members = members,
+              category = Some(category),
+              computed = ComputedValues.counted(members.length, plan.data.length)
+            )
+          }
+        }
       }
       countMapping[Row](stat).map { mapping =>
         StatPlan(
@@ -132,7 +140,8 @@ private[graphics] object StatPhase:
     BandScale(stat.scaleName.value, DiscreteDomain.empty, stat.padding).map { scale =>
       AesSpec[StatRow[Row]](
         x = Some(AesValue.scaled(_.category.getOrElse(""), scale)),
-        y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0)))
+        y = Some(AesValue.direct(_.computed.get(ComputedAesthetic.Count).getOrElse(0.0))),
+        group = stat.group.map(groupOf => AesValue.direct(row => groupOf(row.source)))
       )
     }
 
@@ -703,7 +712,169 @@ private[graphics] object RowPhase:
     case Dropped(reason: PlotDropReason)
     case Failed(error: GraphicsError)
 
-/** Phase 5 — geom lowering: turn resolved rows into grobs. Lowering is
+/** Phase 5 — pure position adjustment over resolved statistical rows. The
+  * phase owns collision semantics; geoms only lower the resulting geometry.
+  */
+private[graphics] object PositionPhase:
+  def adjust[Row](
+      layer: Layer[Row],
+      rows: Vector[ResolvedRow[Row]]
+  ): Either[GraphicsError, Vector[ResolvedRow[Row]]] =
+    layer.position match
+      case Position.Identity =>
+        Right(rows)
+      case Position.Dodge(config) =>
+        Right(dodge(layer.geom, rows, config))
+      case Position.Stack(order) =>
+        if layer.geom == Geom.Bar then Right(stack(rows, order))
+        else Left(GraphicsError.InvalidPositionGeom("stack", layer.geom.label))
+      case Position.Jitter(config) =>
+        if layer.geom == Geom.Point then Right(jitter(rows, config))
+        else Left(GraphicsError.InvalidPositionGeom("jitter", layer.geom.label))
+
+  private def dodge[Row](
+      geom: Geom,
+      rows: Vector[ResolvedRow[Row]],
+      config: DodgeConfig
+  ): Vector[ResolvedRow[Row]] =
+    val updated = scala.collection.mutable.ArrayBuffer.from(rows)
+    val globalGroups = rows.map(_.group).distinct
+    val positions = rows.map(_.x).distinct
+    positions.foreach { base =>
+      val indices = rows.indices.filter(index => rows(index).x == base).toVector
+      val localGroups = globalGroups.filter(group => indices.exists(index => rows(index).group == group))
+      val slots = config.preserve match
+        case DodgePreserve.Total  => localGroups
+        case DodgePreserve.Single => globalGroups
+      val slotCount = math.max(1, slots.length)
+      val displacementWidth = config.width.fold {
+        indices.flatMap(index => rows(index).xBand.map(_.width)).maxOption.getOrElse(0.9)
+      }(_.toDouble)
+      indices.foreach { index =>
+        val row = rows(index)
+        val slot = math.max(0, slots.indexOf(row.group))
+        val center = base + displacementWidth * ((slot.toDouble + 0.5) / slotCount.toDouble - 0.5)
+        val delta = center - row.x
+        val sourceWidth = row.xBand.map(_.width).getOrElse(0.9)
+        val band = row.xBand
+          .map(_ => Band.unsafe(center, sourceWidth / slotCount.toDouble))
+          .orElse(Option.when(geom == Geom.Bar)(Band.unsafe(center, sourceWidth / slotCount.toDouble)))
+        val (xMin, xMax) = (row.xMin, row.xMax) match
+          case (Some(lower), Some(upper)) =>
+            val width = (upper - lower) / slotCount.toDouble
+            (Some(center - width / 2.0), Some(center + width / 2.0))
+          case _ =>
+            (row.xMin.map(_ + delta), row.xMax.map(_ + delta))
+        updated(index) = row.copy(
+          x = center,
+          xBand = band,
+          xEnd = row.xEnd.map(_ + delta),
+          xMin = xMin,
+          xMax = xMax,
+          point = Point.nativeUnsafe(center, row.y)
+        )
+      }
+    }
+    updated.toVector
+
+  private def stack[Row](
+      rows: Vector[ResolvedRow[Row]],
+      order: StackOrder
+  ): Vector[ResolvedRow[Row]] =
+    val updated = scala.collection.mutable.ArrayBuffer.from(rows)
+    val encountered = rows.map(_.group).distinct
+    val groupOrder = order match
+      case StackOrder.Encountered => encountered
+      case StackOrder.Reverse     => encountered.reverse
+    rows.map(_.x).distinct.foreach { x =>
+      val atPosition = rows.indices.filter(index => rows(index).x == x).toVector
+      val positives = ordered(atPosition.filter(index => rows(index).y >= 0.0), rows, groupOrder)
+      val negatives = ordered(atPosition.filter(index => rows(index).y < 0.0), rows, groupOrder)
+      stackSide(positives, rows, updated, positive = true)
+      stackSide(negatives, rows, updated, positive = false)
+    }
+    updated.toVector
+
+  private def ordered[Row](
+      indices: Vector[Int],
+      rows: Vector[ResolvedRow[Row]],
+      groups: Vector[Option[String]]
+  ): Vector[Int] =
+    indices.sortBy(index => (groups.indexOf(rows(index).group), index))
+
+  private def stackSide[Row](
+      indices: Vector[Int],
+      rows: Vector[ResolvedRow[Row]],
+      updated: scala.collection.mutable.ArrayBuffer[ResolvedRow[Row]],
+      positive: Boolean
+  ): Unit =
+    var cursor = 0.0
+    indices.foreach { index =>
+      val row = rows(index)
+      val next = cursor + row.y
+      val lower = math.min(cursor, next)
+      val upper = math.max(cursor, next)
+      val position = if positive then upper else lower
+      updated(index) = row.copy(
+        y = position,
+        yMin = Some(lower),
+        yMax = Some(upper),
+        point = Point.nativeUnsafe(row.x, position)
+      )
+      cursor = next
+    }
+
+  private def jitter[Row](
+      rows: Vector[ResolvedRow[Row]],
+      config: JitterConfig
+  ): Vector[ResolvedRow[Row]] =
+    val xAmount = config.width.fold(resolution(rows.map(_.x)) * 0.4)(_.toDouble)
+    val yAmount = config.height.fold(resolution(rows.map(_.y)) * 0.4)(_.toDouble)
+    rows.zipWithIndex.map { case (row, index) =>
+      val xOffset = symmetric(config.seed.toLong, index, axis = 0) * xAmount
+      val yOffset = symmetric(config.seed.toLong, index, axis = 1) * yAmount
+      translate(row, xOffset, yOffset)
+    }
+
+  private def resolution(values: Vector[Double]): Double =
+    val ordered = values.filter(_.isFinite).distinct.sorted
+    ordered.sliding(2).flatMap {
+      case Vector(left, right) if right > left => Some(right - left)
+      case _                                   => None
+    }.minOption.getOrElse(1.0)
+
+  private def translate[Row](
+      row: ResolvedRow[Row],
+      xOffset: Double,
+      yOffset: Double
+  ): ResolvedRow[Row] =
+    val x = row.x + xOffset
+    val y = row.y + yOffset
+    row.copy(
+      x = x,
+      y = y,
+      xEnd = row.xEnd.map(_ + xOffset),
+      yEnd = row.yEnd.map(_ + yOffset),
+      xMin = row.xMin.map(_ + xOffset),
+      xMax = row.xMax.map(_ + xOffset),
+      yMin = row.yMin.map(_ + yOffset),
+      yMax = row.yMax.map(_ + yOffset),
+      point = Point.nativeUnsafe(x, y)
+    )
+
+  /** SplitMix64 gives identical integer arithmetic on the JVM and Scala.js.
+    * Each row/axis is addressed independently, so traversal refactors cannot
+    * perturb later offsets.
+    */
+  private def symmetric(seed: Long, row: Int, axis: Int): Double =
+    var value = seed + 0x9e3779b97f4a7c15L * (row.toLong * 2L + axis.toLong + 1L)
+    value = (value ^ (value >>> 30)) * 0xbf58476d1ce4e5b9L
+    value = (value ^ (value >>> 27)) * 0x94d049bb133111ebL
+    value = value ^ (value >>> 31)
+    val bits = value >>> 11
+    bits.toDouble / 9007199254740992.0 * 2.0 - 1.0
+
+/** Phase 6 — geom lowering: turn adjusted rows into grobs. Lowering is
   * group-aware: layers honoring the group aesthetic lower to one grob per
   * group carrying that group's graphic params.
   */
@@ -955,8 +1126,10 @@ private[graphics] object GeomPhase:
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < rows.length && result.isRight do
       val row = rows(idx)
-      val height = math.abs(row.y)
-      val centerY = math.min(0.0, row.y) + height / 2.0
+      val lower = row.yMin.getOrElse(math.min(0.0, row.y))
+      val upper = row.yMax.getOrElse(math.max(0.0, row.y))
+      val height = upper - lower
+      val centerY = lower + height / 2.0
       val width = row.xBand.map(_.width).orElse(row.computed.get(ComputedAesthetic.BinWidth)).getOrElse(0.9)
       val statName = if row.computed.get(ComputedAesthetic.BinWidth).nonEmpty then "bin" else "count"
       result = Grob
@@ -993,7 +1166,7 @@ private[graphics] object GeomPhase:
       }
       order.result().map(key => buckets(key).toVector)
 
-/** Coordinate transformation is deliberately one compiler phase. Statistical
+/** Phase 7 — coordinate transformation is deliberately one compiler phase. Statistical
   * output and geoms remain expressed in logical x/y space; this phase turns
   * their rows, grobs, and panel ranges into physical panel coordinates before
   * layout and guide lowering. Backends therefore know nothing about plot
@@ -1069,7 +1242,7 @@ private[graphics] object CoordPhase:
       case group: Grob.Group =>
         group.copy(children = group.children.map(flipGrob))
 
-/** Phase 6 — layout resolution: use the explicit panel layout when given,
+/** Phase 8 — layout resolution: use the explicit panel layout when given,
   * or derive one from an explicit frame plus panel data ranges computed from
   * the layers' position scales (mapped space is the unit interval) or their
   * resolved row values when a position is unscaled.

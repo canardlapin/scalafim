@@ -141,6 +141,9 @@ object RendererConformance:
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
+      dodged <- dodgedPositionCase
+      stacked <- stackedPositionCase
+      jittered <- jitteredPositionCase
       scientific <- scientificStatsCase
       flipped <- flippedPlotCase
       boundedGeoms <- boundedGeomsCase
@@ -165,6 +168,9 @@ object RendererConformance:
       faceted,
       counted,
       bandPosition,
+      dodged,
+      stacked,
+      jittered,
       scientific,
       flipped,
       boundedGeoms,
@@ -810,6 +816,116 @@ object RendererConformance:
           GraphicsName.unsafe("stat-count-bar-0"),
           RenderPrimitiveKind.Rectangle
         )
+      )
+    )
+
+  private final case class PositionBar(category: String, value: Double, group: String)
+
+  private val positionBars =
+    Vector(
+      PositionBar("A", 3.0, "red"),
+      PositionBar("A", 2.0, "blue"),
+      PositionBar("B", 1.0, "red"),
+      PositionBar("B", 4.0, "blue")
+    )
+
+  def dodgedPositionCase: Either[GraphicsError, ConformanceCase] =
+    positionBarCase("position-dodge", Position.Dodge())
+
+  def stackedPositionCase: Either[GraphicsError, ConformanceCase] =
+    positionBarCase("position-stack", Position.Stack())
+
+  private def positionBarCase(
+      name: String,
+      position: Position
+  ): Either[GraphicsError, ConformanceCase] =
+    for
+      band <- BandScale("category", DiscreteDomain.empty)
+      mapping <- AesSpec
+        .empty[PositionBar]
+        .withPosition(_ => 0.0, _.value)
+        .withGroup(_.group)
+        .withFill(row => if row.group == "red" then Rgba.unsafe(70, 125, 180) else Rgba.unsafe(220, 135, 65))
+        .bindScale(ScaleBinding[PositionBar, String, Double](Aesthetic.X, _.category, band))
+      layer <- Layer.fromMapping(
+        Geom.Bar,
+        mapping,
+        inheritMapping = false,
+        params = Some(GraphicParams.unsafe(stroke = Some(Rgba.unsafe(35, 45, 55)))),
+        position = position
+      )
+      plot <- Plot(positionBars)
+        .withLabels(PlotLabels(title = Some(name), x = Some("category"), y = Some("value")))
+        .addLayer(layer)
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe(name),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis"),
+        GraphicsName.unsafe("stat-count-bar-0")
+      ),
+      Vector(
+        RenderRequirement.Primitive(
+          GraphicsName.unsafe("stat-count-bar-0"),
+          RenderPrimitiveKind.Rectangle
+        )
+      )
+    )
+
+  private final case class JitterPoint(category: String, value: Double, group: String)
+
+  def jitteredPositionCase: Either[GraphicsError, ConformanceCase] =
+    val points = Vector(
+      JitterPoint("A", 1.0, "red"),
+      JitterPoint("A", 1.0, "blue"),
+      JitterPoint("A", 1.6, "red"),
+      JitterPoint("B", 2.0, "blue"),
+      JitterPoint("B", 2.0, "red"),
+      JitterPoint("B", 2.6, "blue")
+    )
+    for
+      band <- BandScale("category", DiscreteDomain.empty)
+      mapping <- AesSpec
+        .empty[JitterPoint]
+        .withPosition(_ => 0.0, _.value)
+        .withColor(row => if row.group == "red" then Rgba.unsafe(70, 125, 180) else Rgba.unsafe(220, 135, 65))
+        .bindScale(ScaleBinding[JitterPoint, String, Double](Aesthetic.X, _.category, band))
+      layer <- Layer.fromMapping(
+        Geom.Point,
+        mapping,
+        inheritMapping = false,
+        position = Position.jitterUnsafe(2026L, width = Some(0.22), height = Some(0.12))
+      )
+      plot <- Plot(points)
+        .withLabels(PlotLabels(title = Some("position-jitter"), x = Some("category"), y = Some("value")))
+        .addLayer(layer)
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Derived(),
+          theme = Theme.minimal
+        )
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("position-jitter"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(
+        GraphicsName.unsafe("plot-panel"),
+        GraphicsName.unsafe("x-axis"),
+        GraphicsName.unsafe("y-axis")
       )
     )
 

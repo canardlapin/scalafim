@@ -299,7 +299,8 @@ final case class Layer[Row] private (
     data: Option[Vector[Row]],
     mapping: AesSpec[Row],
     inheritMapping: Boolean,
-    params: Option[GraphicParams]
+    params: Option[GraphicParams],
+    position: Position = Position.Identity
 ):
   def effectiveMapping(plotMapping: AesSpec[Row]): AesSpec[Row] =
     if inheritMapping then mapping.inherit(plotMapping) else mapping
@@ -317,9 +318,10 @@ object Layer:
       data: Option[Vector[Row]] = None,
       mapping: AesSpec[Row] = AesSpec.empty[Row],
       inheritMapping: Boolean = true,
-      params: Option[GraphicParams] = None
+      params: Option[GraphicParams] = None,
+      position: Position = Position.Identity
   ): Layer[Row] =
-    Layer(Geom.Point, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params)
+    Layer(Geom.Point, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params, position)
 
   def line[Row](
       x: Row => Double,
@@ -489,15 +491,18 @@ object Layer:
       order: CountOrder = CountOrder.Encountered,
       scaleName: GraphicsName = GraphicsName.unsafe("x"),
       padding: BandPadding = BandPadding.default,
-      params: Option[GraphicParams] = None
+      params: Option[GraphicParams] = None,
+      group: Option[Row => String] = None,
+      position: Position = Position.Stack()
   ): Layer[Row] =
     Layer(
       Geom.Bar,
-      Stat.Count(x, order, scaleName, padding),
+      Stat.Count(x, order, scaleName, padding, group),
       data,
       AesSpec.empty[Row],
       inheritMapping = false,
-      params
+      params,
+      position
     )
 
   def histogram[Row](
@@ -531,9 +536,10 @@ object Layer:
       data: Option[Vector[Row]] = None,
       inheritMapping: Boolean = true,
       stat: Stat[Row] = Stat.Identity,
-      params: Option[GraphicParams] = None
+      params: Option[GraphicParams] = None,
+      position: Position = Position.Identity
   ): Either[GraphicsError, Layer[Row]] =
-    val layer = Layer(geom, stat, data, mapping, inheritMapping, params)
+    val layer = Layer(geom, stat, data, mapping, inheritMapping, params, position)
     if inheritMapping then Right(layer)
     else validate(layer, mapping).map(_ => layer)
 

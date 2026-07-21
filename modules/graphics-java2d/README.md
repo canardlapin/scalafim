@@ -13,3 +13,8 @@ Shared raster images are materialized as cached ARGB `BufferedImage` values and
 drawn with explicit nearest-neighbor or bilinear interpolation. Image-level
 tests independently pin top-left row order, source alpha, grob alpha, and
 z-order with later vector marks.
+
+`tools/render_position_adjustment_qa.sh` renders the canonical dodge, stack,
+and seeded-jitter scenes through Java2D beside independently generated ggplot2
+references. The resulting comparison page is a review artifact, while numeric
+position laws remain the automated JVM/Scala.js gate.

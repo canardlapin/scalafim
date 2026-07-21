@@ -139,6 +139,7 @@ final case class ResolvedLayer[Row](
     layerIndex: Int,
     geom: Geom,
     stat: Stat[Row],
+    position: Position,
     dataSize: Int,
     mapping: AesSpec[Row],
     statFrame: StatFrame[Row],
@@ -296,19 +297,22 @@ object PlotCompiler:
   private def resolveLayer[Row](plan: StatPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
     val registry = ScalePhase.registry(plan)
     RowPhase.resolve(plan, theme).flatMap { case (rows, droppedRows) =>
-      GeomPhase.lower(plan.layer, rows).map { grobs =>
-        ResolvedLayer(
-          layerIndex = plan.layerIndex,
-          geom = plan.layer.geom,
-          stat = plan.layer.stat,
-          dataSize = plan.source.data.length,
-          mapping = plan.source.mapping,
-          statFrame = plan.frame,
-          scaleDeclarations = registry.declarations(plan.layerIndex),
-          trainedScales = registry.trained,
-          rows = rows,
-          droppedRows = droppedRows,
-          grobs = grobs
-        )
+      PositionPhase.adjust(plan.layer, rows).flatMap { adjusted =>
+        GeomPhase.lower(plan.layer, adjusted).map { grobs =>
+          ResolvedLayer(
+            layerIndex = plan.layerIndex,
+            geom = plan.layer.geom,
+            stat = plan.layer.stat,
+            position = plan.layer.position,
+            dataSize = plan.source.data.length,
+            mapping = plan.source.mapping,
+            statFrame = plan.frame,
+            scaleDeclarations = registry.declarations(plan.layerIndex),
+            trainedScales = registry.trained,
+            rows = adjusted,
+            droppedRows = droppedRows,
+            grobs = grobs
+          )
+        }
       }
     }

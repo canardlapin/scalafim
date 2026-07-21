@@ -17,6 +17,8 @@ typed algebra those backends can interpret later:
   that allocates named panel, facet-strip, axis-strip, and guide regions;
 - derived discrete color legends and continuous colorbars whose ticks and
   labels follow the scale transform, lowered to ordinary portable grobs;
+- typed `Position` values for identity, dodge, stack, and seeded jitter,
+  compiled as a distinct transformation between statistics and geometry;
 - a finite immutable `Theme` value for geometry defaults, typography,
   palettes, guides, and optional panel decoration;
 - a renderer conformance contract (`RendererConformance`, `RendererHarness`)
@@ -36,7 +38,7 @@ scale and coordinate failures stay in the final `Either`.
 ```scala
 import scalafim.graphics.*
 
-final case class Observation(time: Double, signal: Double, condition: String)
+final case class Observation(time: Double, signal: Double, condition: String, arm: String)
 
 val program = plot(rows)
   .aes(_.time, _.signal)
@@ -154,14 +156,19 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   scale training, and its discrete category output therefore drives both bar
   positions and axis labels. Unsupported stat/geom/aesthetic combinations are
   compiler errors represented by `GraphicsError`.
+- Position adjustment is likewise a typed compiler phase, not mutable geom
+  state. `DodgeConfig`, `StackOrder`, and `JitterConfig` are finite immutable
+  values; checked opaque widths and amounts reject invalid input at their
+  construction boundary, and a `JitterSeed` makes displacement reproducible
+  across JVM and Scala.js.
 
 ## Compilation pipeline
 
 `PlotCompiler` is a facade over explicit, independently testable phases
 (`CompilerPhases.scala`): mapping resolution → statistical transformation →
 plot-wide scale training → row evaluation (with typed `DroppedRow`
-diagnostics) → group-aware geom lowering → layout resolution → guide
-resolution. The scale phase follows ggplot2's core build invariant: scales see
+diagnostics) → position adjustment → group-aware geom lowering → layout
+resolution → guide resolution. The scale phase follows ggplot2's core build invariant: scales see
 the union of each layer's stat output before they map values, but encodes the
 one-scale-per-aesthetic rule directly in `PlotScaleRegistry`.
 Guides read that same registry, so marks, axes, and legends cannot disagree.
@@ -198,7 +205,22 @@ val counts = Plot(observations)
   .addLayer(
     Layer.count(
       _.condition,
+      group = Some(_.arm),
+      position = Position.Dodge(),
       padding = BandPadding.unsafe(0.2)
+    )
+  )
+
+val jittered = Plot(observations)
+  .addLayer(
+    Layer.point(
+      _.time,
+      _.signal,
+      position = Position.jitterUnsafe(
+        seed = 2026L,
+        width = 0.22,
+        height = 0.12
+      )
     )
   )
 ```
@@ -216,6 +238,15 @@ an affine translation, and both use a default width of 0.9. The public Scala
 surface instead makes invalid padding unrepresentable, preserves the scale's
 typed input/output relation, and exposes the trained interval semantics for
 inspection before rendering.
+
+The same distinction governs position adjustment. ScalaFIM adopts the useful
+layout semantics of ggplot2—band-aware dodge, sign-separated stack, and seeded
+jitter—without importing `ggproto`, stringly configuration, or ambient random
+state. `DodgePreserve.Total` and `DodgePreserve.Single`, for example, are
+exhaustive Scala alternatives and can be inspected before compilation. Run
+`tools/render_position_adjustment_qa.sh` to generate paired Java2D and ggplot2
+reference images plus numeric layer-data fixtures; see
+`docs/visual-qa/graphics-position-adjustments.md` for the comparison contract.
 
 ## Backends
 

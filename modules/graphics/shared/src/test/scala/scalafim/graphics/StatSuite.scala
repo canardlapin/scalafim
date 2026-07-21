@@ -116,6 +116,49 @@ class StatSuite extends munit.FunSuite:
     )
   }
 
+  test("grouped count dodge matches ggplot2 total and single width contracts") {
+    final case class Observation(category: String, group: String)
+    val data = Vector(Observation("a", "u"), Observation("b", "u"), Observation("b", "v"))
+
+    def positions(preserve: DodgePreserve): Vector[Double] =
+      val layer = Layer.count[Observation](
+        _.category,
+        padding = BandPadding.unsafe(0.0),
+        group = Some(_.group),
+        position = Position.Dodge(DodgeConfig(preserve = preserve))
+      )
+      Plot(data)
+        .addLayer(layer)
+        .flatMap(PlotCompiler.resolve(_))
+        .fold(error => fail(error.message), identity)
+        .layers
+        .head
+        .rows
+        .map(_.x)
+
+    assertEquals(positions(DodgePreserve.Total), Vector(0.0, 0.75, 1.25))
+    assertEquals(positions(DodgePreserve.Single), Vector(-0.25, 0.75, 1.25))
+  }
+
+  test("grouped count stack uses the trained band and reverse group order") {
+    final case class Observation(category: String, group: String)
+    val data =
+      Vector.fill(3)(Observation("A", "red")) ++
+        Vector.fill(2)(Observation("A", "blue")) ++
+        Vector(Observation("B", "red")) ++
+        Vector.fill(4)(Observation("B", "blue"))
+    val trained = Plot(data)
+      .addLayer(Layer.count[Observation](_.category, group = Some(_.group)))
+      .flatMap(PlotCompiler.resolve(_))
+      .fold(error => fail(error.message), identity)
+    val rows = trained.layers.head.rows
+
+    assertEquals(rows.map(_.group), Vector(Some("red"), Some("blue"), Some("red"), Some("blue")))
+    assertEquals(rows.map(_.yMin), Vector(Some(2.0), Some(0.0), Some(4.0), Some(0.0)))
+    assertEquals(rows.map(_.yMax), Vector(Some(5.0), Some(2.0), Some(5.0), Some(4.0)))
+    assert(rows.forall(_.xBand.nonEmpty))
+  }
+
   test("count owns position aesthetics and rejects incompatible specs") {
     val mapping = AesSpec.empty[String].withPosition(_.length.toDouble, _.length.toDouble)
     val result = Layer.fromMapping(

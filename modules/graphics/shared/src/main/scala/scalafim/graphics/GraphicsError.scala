@@ -37,6 +37,8 @@ enum GraphicsError:
   case StatAestheticConflict(stat: String, aesthetic: String)
   case UnsupportedStatAesthetic(stat: String, aesthetic: String)
   case InvalidStatParameter(stat: String, parameter: String, value: String)
+  case InvalidPositionParameter(position: String, parameter: String, value: Double, expectation: String)
+  case InvalidPositionGeom(position: String, geom: String)
   case NonFiniteStatInput(stat: String, aesthetic: String, value: Double)
   case InsufficientStatData(stat: String, minimum: Int, actual: Int)
   case StatInputOutsideBins(value: Double, lower: Double, upper: Double)
@@ -121,6 +123,10 @@ enum GraphicsError:
         s"stat '$stat' does not yet aggregate input aesthetic '$aesthetic'"
       case InvalidStatParameter(stat, parameter, value) =>
         s"stat '$stat' requires a valid $parameter: $value"
+      case InvalidPositionParameter(position, parameter, value, expectation) =>
+        s"position '$position' requires $parameter to be $expectation: $value"
+      case InvalidPositionGeom(position, geom) =>
+        s"position '$position' cannot adjust geom '$geom'"
       case NonFiniteStatInput(stat, aesthetic, value) =>
         s"stat '$stat' requires finite '$aesthetic' values: $value"
       case InsufficientStatData(stat, minimum, actual) =>
