@@ -172,6 +172,63 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
       )
     yield fit
 
+  /** Fit the leading generalized-root spectrum for a declared hypothesis rank.
+    * The returned frame identifies the retained subspace; repeated roots are
+    * represented by projector-valued clusters rather than arbitrary axes.
+    */
+  def fitSpectrum(
+      components: Int
+  ): Either[MultivarError, CanonicalSpectrumFit[Feature, ? <: SemanticSpace]] =
+    if components <= 0 || components > featureSpace.dimension then
+      Left(MultivarError.InvalidComponentRequest(components, featureSpace.dimension))
+    else
+      for
+        effectDense <- semantic(effect.toDense)
+        residualDense <- semantic(residual.toDense)
+        _ <- MatrixOps.checkFinite("canonical effect", effectDense)
+        _ <- MatrixOps.checkFinite("canonical residual", residualDense)
+        prepared <- prepareResidual(residualDense)
+        (regularizedDense, regularizationFit) = prepared
+        regularized <- certifySpd(regularizedDense)
+        spectrum <- adaptGale(
+          Eigen.eigSymmetricGeneralized(
+            effectDense,
+            regularizedDense,
+            EigenSelection.Count(featureSpace.dimension, EigenOrder.LargestAlgebraic)
+          )
+        )
+        converged <- adaptGale(spectrum.requireExtremeCertified)
+        _ <- validateSpectrum(converged.eigenvalues)
+        scale = matrixFrobenius(effectDense) +
+          canonicalMaxAbs(converged.eigenvalues) * matrixFrobenius(regularizedDense)
+        residualThreshold = tolerance.threshold(scale)
+        worstResidual = converged.diagnostics.worstResidual
+        _ <-
+          if worstResidual <= residualThreshold then Right(())
+          else Left(MultivarError.NumericalResidualExceeded("canonical generalized eigensolve", worstResidual, residualThreshold))
+        roots <- retainedRoots(converged.eigenvalues, components, tolerance)
+        basis = spectrumBasis(converged.eigenvectors, components)
+        clusters = rootClusters(roots, basis, tolerance)
+        condition <- adaptGale(regularizedDense.conditionEstimate)
+        component <- SpaceRef.of(s"${featureSpace.id.value}.canonical-spectrum", SpaceRole.Latent, components)
+        fit <- assembleSpectrumFit(
+          component,
+          basis,
+          roots,
+          clusters,
+          regularized,
+          regularizationFit,
+          CanonicalSpectrumDiagnostics(
+            effectDense.rankEstimate,
+            residualDense.rankEstimate,
+            condition,
+            clusters,
+            worstResidual,
+            converged.diagnostics.orthogonalityError
+          )
+        )
+      yield fit
+
   private def prepareResidual(residualDense: DMat): Either[MultivarError, (DMat, ResidualRegularizationFit)] =
     val trace = matrixTrace(residualDense)
     val scale = trace / featureSpace.dimension.toDouble
@@ -255,6 +312,77 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
       CanonicalEffectFit(
         root,
         solution,
+        functionalFrame,
+        operatorFit,
+        regularizationFit,
+        diagnostics,
+        CanonicalEffectProvenance(
+          effect.valueIdentity,
+          residual.valueIdentity,
+          regularized.valueIdentity,
+          "gale.spectral.Eigen.eigSymmetricGeneralized",
+          fitProvenance
+        )
+      )
+
+  private def assembleSpectrumFit(
+      component: SpaceRef,
+      basis: DMat,
+      roots: CanonicalRootSpectrum,
+      clusters: Vector[CanonicalRootCluster],
+      regularized: OpCovariance[Feature, CertifiedSpd],
+      regularizationFit: ResidualRegularizationFit,
+      diagnostics: CanonicalSpectrumDiagnostics
+  ): Either[MultivarError, CanonicalSpectrumFit[Feature, component.Id]] =
+    val parameterId = ParameterId.unsafe(s"${featureSpace.id.value}.canonical-spectrum-frame")
+    for
+      variable <- program(FrameVariable.from(parameterId, featureSpace, component.evidence))
+      frameOperator <- semantic(
+        Op.fromDense(
+          basis,
+          CoordinateEvidence.primal(component.evidence),
+          CoordinateEvidence.dual(featureSpace),
+          OperatorRoleWitness.frame,
+          ValueIdentity.derived("canonical-spectrum-frame", effect.valueIdentity, regularized.valueIdentity),
+          provenance.append(
+            SemanticProvenanceEvent.Derived(
+              "canonical-generalized-eigenframe",
+              Vector(effect.valueIdentity, regularized.valueIdentity)
+            )
+          )
+        )
+      )
+      parameterization = FrameParameterization.identity(variable)
+      normalization = FrameNormalization(variable, regularized)
+      operatorProgram <- program(OperatorPrograms.gpca(parameterization, effect, normalization))
+      functionalFrame = FunctionalFrame(frameOperator)
+      context <- certificateContext("canonical-generalized-spectrum-fit")
+      identifiability = NumericalIdentifiability(
+        roots.rank,
+        clusters.map(cluster => (cluster.firstRoot until cluster.firstRoot + cluster.multiplicity).toVector),
+        diagnostics.generalizedResidual,
+        context
+      )
+      fitProvenance = provenance.append(
+        SemanticProvenanceEvent.Derived(
+          "gale-symmetric-definite-generalized-spectrum",
+          Vector(effect.valueIdentity, regularized.valueIdentity)
+        )
+      )
+      statistics = ManovaStatistics.from(roots)
+      operatorFit <- program(
+        OperatorProgramFit.from(
+          operatorProgram,
+          Vector(FittedFrame(variable, functionalFrame)),
+          statistics.hotellingLawleyTrace,
+          identifiability,
+          fitProvenance
+        )
+      )
+    yield
+      CanonicalSpectrumFit(
+        roots,
+        statistics,
         functionalFrame,
         operatorFit,
         regularizationFit,
@@ -417,6 +545,73 @@ private def solutionBasis(solution: CanonicalEffectSolution): DMat =
         row += 1
       out.result()
     case CanonicalEffectSolution.LeadingSubspace(basis, _, _) => basis
+
+private def retainedRoots(
+    values: DVec,
+    components: Int,
+    tolerance: CertificateTolerance
+): Either[MultivarError, CanonicalRootSpectrum] =
+  val roots = Vector.newBuilder[ManovaRoot]
+  var component = 0
+  while component < components do
+    val value = values(values.length - component - 1)
+    val threshold = tolerance.threshold(Math.max(1.0, Math.abs(value)))
+    if value >= 0.0 then roots += ManovaRoot.unsafe(value)
+    else if value >= -threshold then roots += ManovaRoot.unsafe(0.0)
+    else return Left(MultivarError.NonPositiveSemiDefinite("canonical effect generalized root", value))
+    component += 1
+  Right(CanonicalRootSpectrum.unsafe(roots.result()))
+
+private def spectrumBasis(vectors: DMat, components: Int): DMat =
+  val out = Matrix.newBuilder(vectors.rows, components)
+  var component = 0
+  while component < components do
+    val source = vectors.cols - component - 1
+    var row = 0
+    while row < vectors.rows do
+      out(row, component) = vectors(row, source)
+      row += 1
+    component += 1
+  out.result()
+
+private def rootClusters(
+    roots: CanonicalRootSpectrum,
+    basis: DMat,
+    tolerance: CertificateTolerance
+): Vector[CanonicalRootCluster] =
+  val clusters = Vector.newBuilder[CanonicalRootCluster]
+  var first = 0
+  while first < roots.rank do
+    val representative = roots.values(first)
+    val threshold = tolerance.threshold(Math.max(1.0, representative.value))
+    var end = first + 1
+    while end < roots.rank && Math.abs(roots.values(end).value - representative.value) <= threshold do
+      end += 1
+    val block = basisBlock(basis, first, end - first)
+    val orthogonal = block.qr.q
+    val q = MatrixOps.takeColumns(orthogonal, end - first)
+    clusters += CanonicalRootCluster(first, end - first, representative, q * q.t)
+    first = end
+  clusters.result()
+
+private def basisBlock(matrix: DMat, first: Int, count: Int): DMat =
+  val out = Matrix.newBuilder(matrix.rows, count)
+  var row = 0
+  while row < matrix.rows do
+    var col = 0
+    while col < count do
+      out(row, col) = matrix(row, first + col)
+      col += 1
+    row += 1
+  out.result()
+
+private def canonicalMaxAbs(values: DVec): Double =
+  var largest = 0.0
+  var index = 0
+  while index < values.length do
+    largest = Math.max(largest, Math.abs(values(index)))
+    index += 1
+  largest
 
 private def matrixTrace(matrix: DMat): Double =
   var trace = 0.0

@@ -75,9 +75,29 @@ final case class TemporalPreparationReceipt(
     whitening: TemporalWhiteningReceipt
 ):
   require(designRank > 0, "temporal preparation design rank must be positive")
-  require(contrastRank == 1, "version-one temporal preparation requires contrast rank one")
+  require(contrastRank > 0, "temporal preparation contrast rank must be positive")
   require(contrastName.nonEmpty, "temporal preparation contrast name must be non-empty")
   require(nuisanceRank.value <= designRank, "temporal nuisance rank cannot exceed design rank")
+
+trait PreparedCanonicalGeometry:
+  def preparedDesign: DesignMatrix
+  def inverseXtX: DMat
+  def effectBasis: DMat
+  def receipt: TemporalPreparationReceipt
+  private[fit] def whitening: CanonicalTemporalWhitening
+
+  final def prepareResponse(response: ResponseBlock): Either[FitError, ResponseBlock] =
+    if response.timepoints != preparedDesign.timepoints then
+      Left(FitError.RowMismatch(preparedDesign.timepoints, response.timepoints))
+    else
+      whitening match
+        case CanonicalTemporalWhitening.Iid => Right(response)
+        case CanonicalTemporalWhitening.Shared(plan) =>
+          WhiteningTransform
+            .matrix(plan, response.value)
+            .left
+            .map(error => FitError.UnsupportedAutocorrelation(error.message))
+            .flatMap(ResponseBlock.fromMatrix)
 
 /** Immutable, response-independent geometry for one prepared first-level contrast.
   *
@@ -95,24 +115,11 @@ final class PreparedContrastGeometry private[fit] (
     val effectBasis: DMat,
     val contrastVariance: Double,
     val receipt: TemporalPreparationReceipt,
-    private val whitening: CanonicalTemporalWhitening
-):
+    private[fit] val whitening: CanonicalTemporalWhitening
+) extends PreparedCanonicalGeometry:
   require(effectBasis.rows == preparedDesign.predictors && effectBasis.cols == 1, "effect basis must be p-by-1")
   require(inverseXtX.rows == preparedDesign.predictors && inverseXtX.cols == preparedDesign.predictors, "inverse XtX must be p-by-p")
   require(contrastVariance > 0.0 && contrastVariance.isFinite, "contrast variance must be positive and finite")
-
-  def prepareResponse(response: ResponseBlock): Either[FitError, ResponseBlock] =
-    if response.timepoints != preparedDesign.timepoints then
-      Left(FitError.RowMismatch(preparedDesign.timepoints, response.timepoints))
-    else
-      whitening match
-        case CanonicalTemporalWhitening.Iid => Right(response)
-        case CanonicalTemporalWhitening.Shared(plan) =>
-          WhiteningTransform
-            .matrix(plan, response.value)
-            .left
-            .map(error => FitError.UnsupportedAutocorrelation(error.message))
-            .flatMap(ResponseBlock.fromMatrix)
 
 object PreparedContrastGeometry:
   private[fit] def compile(
@@ -159,7 +166,7 @@ object PreparedContrastGeometry:
         whitening = whitening
       )
 
-  private def validateAxis(
+  private[fit] def validateAxis(
       design: DesignMatrix,
       columnNames: Vector[String],
       selectedTimepoints: SelectedTimepointIndices,
@@ -184,7 +191,7 @@ object PreparedContrastGeometry:
           Left(FitError.InvalidFitAxis("run partitions", "timepoints must match the selected timepoint axis"))
         else Right(())
 
-  private def validatePreparation(
+  private[fit] def validatePreparation(
       preparation: ResponsePreparationPlan,
       design: DesignMatrix,
       partitions: Vector[RunPartition],
@@ -272,7 +279,7 @@ object PreparedContrastGeometry:
             Left(FitError.InvalidFitAxis("canonical whitening", s"plan pooling ${plan.pooling} does not match $expectedPooling"))
           else Right(())
 
-  private def prepareDesign(
+  private[fit] def prepareDesign(
       design: DesignMatrix,
       whitening: CanonicalTemporalWhitening
   ): Either[FitError, DesignMatrix] =
@@ -313,7 +320,7 @@ object PreparedContrastGeometry:
         row += 1
       Right(out.result() -> variance)
 
-  private def compiledProvenance(
+  private[fit] def compiledProvenance(
       preparation: ResponsePreparationPlan,
       whitening: CanonicalTemporalWhitening
   ): ResponsePreparationProvenance =
@@ -329,7 +336,7 @@ object PreparedContrastGeometry:
       case record => record
     ResponsePreparationProvenance(records)
 
-  private def whiteningReceipt(whitening: CanonicalTemporalWhitening): TemporalWhiteningReceipt =
+  private[fit] def whiteningReceipt(whitening: CanonicalTemporalWhitening): TemporalWhiteningReceipt =
     whitening match
       case CanonicalTemporalWhitening.Iid => TemporalWhiteningReceipt.Iid
       case CanonicalTemporalWhitening.Shared(plan) =>

@@ -541,7 +541,7 @@ private[fit] def matrixFrobenius(matrix: DMat): Double =
     row += 1
   Math.sqrt(squared)
 
-private def symmetrized(size: Int, values: Array[Double]): DMat =
+private[fit] def symmetrized(size: Int, values: Array[Double]): DMat =
   val out = Matrix.newBuilder(size, size)
   var row = 0
   while row < size do
@@ -552,7 +552,7 @@ private def symmetrized(size: Int, values: Array[Double]): DMat =
     row += 1
   out.result()
 
-private def matrix(rows: Int, cols: Int, values: Array[Double]): DMat =
+private[fit] def matrix(rows: Int, cols: Int, values: Array[Double]): DMat =
   val out = Matrix.newBuilder(rows, cols)
   var index = 0
   while index < values.length do

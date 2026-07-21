@@ -161,6 +161,9 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   require(weights.nonEmpty, "F contrast must contain at least one row")
   require(weights.forall(_.values.forall(_.isFinite)), "contrast weights must be finite")
 
+  def align(columnNames: Vector[String]): Either[FitError, AlignedFContrast] =
+    weightMatrix(columnNames).map(matrix => AlignedFContrast.unsafe(name, columnNames, matrix))
+
   def evaluate(result: DenseFmriFitResult): Either[FitError, FContrastResult] =
     result.inferenceReady.flatMap(evaluate)
 
@@ -385,6 +388,21 @@ object FContrast:
       rows += mapped.toMap
       col += 1
     FContrast(name, rows.result())
+
+final case class AlignedFContrast private (
+    name: String,
+    columnNames: Vector[String],
+    weights: DMat
+):
+  require(name.nonEmpty, "aligned F contrast name must be non-empty")
+  require(columnNames.length == weights.rows, "aligned F contrast columns must match weight rows")
+  require(weights.cols > 0, "aligned F contrast must contain at least one row")
+
+  def rank: Int = weights.cols
+
+object AlignedFContrast:
+  private[fit] def unsafe(name: String, columnNames: Vector[String], weights: DMat): AlignedFContrast =
+    new AlignedFContrast(name, columnNames, weights)
 
 final case class FContrastResult(
     name: String,

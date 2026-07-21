@@ -97,3 +97,19 @@ ordinary `MvpaResult` scalar summary and typed fold payloads containing the
 canonical fit, temporal receipts, regularization, Gale diagnostics, and the
 explicit `RunwiseSufficientStatistics` execution mode. No `TrialReadout`,
 trialwise beta matrix, or time-by-time projector is part of this API.
+
+## Multiple contrasts and full MANOVA
+
+`ManovaMvpa` extends the same runwise sufficient-statistic path to a typed
+`PreparedManovaGeometry`. A rank-q contrast subspace produces a rank-at-most-q
+feature effect without materializing coefficient maps. Training folds fit the
+full generalized-root frame through `CanonicalEffectProblem.fitSpectrum`, whose
+`FunctionalFrame` and `OperatorProgramFit` retain the subspace, regularization,
+Gale certificate, and repeated-root clusters.
+
+Held-out data is first compressed through that frozen training frame. Only then
+is its q-dimensional generalized spectrum evaluated. Results expose Roy's
+largest root, Wilks' lambda, Pillai's trace, and the Hotelling-Lawley trace as
+distinct typed estimands and ordinary MVPA metrics. Repeated roots identify a
+projector-valued subspace; no arbitrary axis is promoted to a scientific
+result.

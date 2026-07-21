@@ -139,6 +139,33 @@ final case class ResponsePreparationPlan(
       solvePolicy = solvePolicy
     )
 
+  /** Compile a full-rank multi-contrast hypothesis into normalized temporal
+    * geometry for one-shot MANOVA.
+    */
+  def prepareManova(
+      design: DesignMatrix,
+      columnNames: Vector[String],
+      contrast: FContrast,
+      selectedTimepoints: SelectedTimepointIndices,
+      partitions: Vector[RunPartition],
+      nuisanceRank: TemporalNuisanceRank,
+      scope: TemporalPreparationScope = TemporalPreparationScope.Fixed,
+      whitening: CanonicalTemporalWhitening = CanonicalTemporalWhitening.Iid,
+      solvePolicy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, PreparedManovaGeometry] =
+    PreparedManovaGeometry.compile(
+      preparation = this,
+      design = design,
+      columnNames = columnNames,
+      contrast = contrast,
+      selectedTimepoints = selectedTimepoints,
+      partitions = partitions,
+      nuisanceRank = nuisanceRank,
+      scope = scope,
+      whitening = whitening,
+      solvePolicy = solvePolicy
+    )
+
   private def validateFor(input: FitBlockInput): Either[FitError, Unit] =
     volumeWeighting match
       case VolumeWeighting.Fixed(weights) if weights.length != input.timepoints.length =>

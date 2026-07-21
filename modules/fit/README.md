@@ -96,6 +96,13 @@ non-estimable. These paths now return `FitError.NonEstimableContrast` instead of
 emitting non-finite t or F statistics, so callers should handle the typed error
 case rather than interpreting `NaN` or infinity as a valid statistic.
 
+`ResponsePreparationPlan.prepareManova` compiles an `FContrast` into a
+`PreparedManovaGeometry`. The contrast covariance is Cholesky-certified and the
+resulting multi-column effect basis is normalized in the prepared design
+metric. Dependent contrast rows are therefore rejected as non-estimable, while
+any nonsingular change of basis within the same contrast subspace preserves the
+hypothesis projector.
+
 ## Result artifacts
 
 Result export is modeled in shared code without binding the fit module to a file
