@@ -159,6 +159,70 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     assert(decoded.programs.head.result.redundantCoordinates)
     assertEquals(decoded.programs.head.result.parameterGauges, Vector("GeneralLinear"))
 
+  test("operator policies round-trip separately from parameter ridge terms"):
+    val base = validDocument
+    val ridge = ProgramPenaltyV2Ir(
+      ProgramTargetIr("weights", ProgramTargetCapabilityIr.Linear, "identity", Some("weights")),
+      ProgramFunctionalIr.SquaredNorm("cometric"),
+      0.2,
+      ProgramFrameSymmetryIr.Orthogonal
+    )
+    val program = base.programs.head.copy(penalties = Vector(ridge))
+    val joint = ProgramOperatorPolicyIr(
+      "joint-selection",
+      ProgramOperatorPolicyKindIr.JointBlockShrinkage,
+      Vector("between", "within", "cometric"),
+      Vector("whitened-between"),
+      ProgramPolicySelectionIr.FoldSelected("select-joint-alpha", Vector(0.0, 0.25, 0.5)),
+      ProgramScaleMatchingIr.MatchTrace,
+      ProgramPolicyScopeIr.JointSystem,
+      Vector(
+        ProgramPreservationClaimIr.PsdPreserved,
+        ProgramPreservationClaimIr.BlockAdjointsPreserved,
+        ProgramPreservationClaimIr.SharedGaugePreserved
+      ),
+      Vector(ProvenanceEventIr.Derived("joint-shrinkage", Vector("between", "within", "cometric")))
+    )
+    val unsafe = ProgramOperatorPolicyIr(
+      "blockwise-alternative",
+      ProgramOperatorPolicyKindIr.BlockwiseShrinkage,
+      Vector("between", "within"),
+      Vector("between", "within"),
+      ProgramPolicySelectionIr.Fixed(0.1),
+      ProgramScaleMatchingIr.None,
+      ProgramPolicyScopeIr.BlockwiseUnsafe,
+      Vector(
+        ProgramPreservationClaimIr.BlockAdjointsPreserved,
+        ProgramPreservationClaimIr.EvidenceDowngraded("joint PSD and gauge are not established")
+      ),
+      Vector(ProvenanceEventIr.Derived("blockwise-shrinkage", Vector("between", "within")))
+    )
+    val document = base.copy(
+      programs = Vector(program, base.programs(1)),
+      operatorPolicies = Vector(joint, unsafe)
+    )
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.operatorPolicies, Vector(joint, unsafe))
+    assertEquals(decoded.programs.head.penalties, Vector(ridge))
+    assertEquals(decoded.operatorPolicies.head.selection, joint.selection)
+    assertNotEquals(decoded.operatorPolicies.head.kind.toString, decoded.programs.head.penalties.head.functional.toString)
+
+  test("unsafe block policies require a visible evidence downgrade"):
+    val invalid = ProgramOperatorPolicyIr(
+      "hidden-downgrade",
+      ProgramOperatorPolicyKindIr.BlockwiseShrinkage,
+      Vector("between", "within"),
+      Vector("between", "within"),
+      ProgramPolicySelectionIr.Fixed(0.25),
+      ProgramScaleMatchingIr.None,
+      ProgramPolicyScopeIr.BlockwiseUnsafe,
+      Vector(ProgramPreservationClaimIr.BlockAdjointsPreserved),
+      Vector(ProvenanceEventIr.Derived("blockwise-shrinkage", Vector("between", "within")))
+    )
+
+    assertEquals(rejection(validDocument.copy(operatorPolicies = Vector(invalid))).category, RejectionCategory.Malformed)
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",

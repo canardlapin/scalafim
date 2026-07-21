@@ -9,8 +9,12 @@ non-Scala consumers.
 Operator optimization is an additive, separately versioned document family.
 `scalafim-operator-program-ir/0.2` references the stable identities established
 by the constitution and encodes typed operators, derivations, closed objectives,
-functional frames, proof-carrying rewrites, and fit/result semantics. Its schema
-is `schema/operator-program-ir-v0.2.schema.json`. Keeping the envelopes separate
+functional frames, certified statistical operator policies, proof-carrying
+rewrites, and fit/result semantics. Operator policies are a top-level lifecycle
+stage: they are never encoded as parameter penalties. Fixed strengths and
+fold-selected hooks, scale matching, joint versus unsafe blockwise scope,
+preservation claims, and provenance remain explicit. Its schema is
+`schema/operator-program-ir-v0.2.schema.json`. Keeping the envelopes separate
 means a strict v0.1 decoder never has to ignore a field it does not understand.
 
 ## Evolution

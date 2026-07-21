@@ -239,20 +239,75 @@ final case class ProgramFitIr(
     provenance: Vector[ProvenanceEventIr]
 )
 
+enum ProgramOperatorPolicyKindIr:
+  case LinearShrinkage
+  case LdaWithinScatterShrinkage
+  case PsdRepair
+  case SupportRestriction
+  case GaugeFixing
+  case JointBlockShrinkage
+  case BlockwiseShrinkage
+  case Custom(name: String)
+
+enum ProgramPolicySelectionIr:
+  case Fixed(strength: Double)
+  case FoldSelected(selectorId: String, candidates: Vector[Double])
+
+enum ProgramScaleMatchingIr:
+  case None
+  case MatchTrace
+  case MatchDiagonalMean
+  case Fixed(value: Double)
+
+enum ProgramPolicyScopeIr:
+  case SingleOperator
+  case JointSystem
+  case BlockwiseUnsafe
+
+enum ProgramPreservationClaimIr:
+  case PsdPreserved
+  case SpdPreserved
+  case BlockAdjointsPreserved
+  case SharedGaugePreserved
+  case SupportRestricted
+  case GaugeFixed
+  case EvidenceDowngraded(reason: String)
+
+final case class ProgramOperatorPolicyIr(
+    id: String,
+    kind: ProgramOperatorPolicyKindIr,
+    inputOperators: Vector[String],
+    outputOperators: Vector[String],
+    selection: ProgramPolicySelectionIr,
+    scaleMatching: ProgramScaleMatchingIr,
+    scope: ProgramPolicyScopeIr,
+    preservation: Vector[ProgramPreservationClaimIr],
+    provenance: Vector[ProvenanceEventIr]
+)
+
 final case class OperatorProgramDocumentIr(
     schema: String,
     spaces: Vector[SpaceIr],
     operators: Vector[ProgramOpIr],
     programs: Vector[OperatorProgramV2Ir],
     rewrites: Vector[ProgramRewriteIr],
-    fits: Vector[ProgramFitIr]
+    fits: Vector[ProgramFitIr],
+    operatorPolicies: Vector[ProgramOperatorPolicyIr] = Vector.empty
 )
 
 object OperatorProgramDocumentIr:
   val schemaV02: String = "scalafim-operator-program-ir/0.2"
 
   val empty: OperatorProgramDocumentIr =
-    OperatorProgramDocumentIr(schemaV02, Vector.empty, Vector.empty, Vector.empty, Vector.empty, Vector.empty)
+    OperatorProgramDocumentIr(
+      schemaV02,
+      Vector.empty,
+      Vector.empty,
+      Vector.empty,
+      Vector.empty,
+      Vector.empty,
+      Vector.empty
+    )
 
 object ProgramSemanticIr:
   def operator[From <: Coordinate, To <: Coordinate, R <: OperatorRoleTag, E <: OperatorEvidence](
@@ -297,6 +352,49 @@ object ProgramSemanticIr:
       result(value.resultSemantics),
       SemanticIr.provenance(value.provenance)
     )
+
+  def operatorPolicy(value: OperatorPolicyRecord): ProgramOperatorPolicyIr =
+    ProgramOperatorPolicyIr(
+      value.id.stringValue,
+      operatorPolicyKind(value.kind),
+      value.inputIdentities.map(_.stableKey),
+      value.outputIdentities.map(_.stableKey),
+      value.selection match
+        case PolicySelection.Fixed(strength) => ProgramPolicySelectionIr.Fixed(strength.value)
+        case PolicySelection.FoldSelected(hook) =>
+          ProgramPolicySelectionIr.FoldSelected(hook.id.stringValue, hook.candidates.map(_.value)),
+      value.scaleMatching match
+        case ScaleMatching.None => ProgramScaleMatchingIr.None
+        case ScaleMatching.MatchTrace => ProgramScaleMatchingIr.MatchTrace
+        case ScaleMatching.MatchDiagonalMean => ProgramScaleMatchingIr.MatchDiagonalMean
+        case ScaleMatching.Fixed(current) => ProgramScaleMatchingIr.Fixed(current),
+      value.scope match
+        case PolicyScope.SingleOperator => ProgramPolicyScopeIr.SingleOperator
+        case PolicyScope.JointSystem => ProgramPolicyScopeIr.JointSystem
+        case PolicyScope.BlockwiseUnsafe => ProgramPolicyScopeIr.BlockwiseUnsafe,
+      value.preservation.map:
+        case PreservationClaim.PsdPreserved => ProgramPreservationClaimIr.PsdPreserved
+        case PreservationClaim.SpdPreserved => ProgramPreservationClaimIr.SpdPreserved
+        case PreservationClaim.BlockAdjointsPreserved => ProgramPreservationClaimIr.BlockAdjointsPreserved
+        case PreservationClaim.SharedGaugePreserved => ProgramPreservationClaimIr.SharedGaugePreserved
+        case PreservationClaim.SupportRestricted => ProgramPreservationClaimIr.SupportRestricted
+        case PreservationClaim.GaugeFixed => ProgramPreservationClaimIr.GaugeFixed
+        case PreservationClaim.EvidenceDowngraded(reason) =>
+          ProgramPreservationClaimIr.EvidenceDowngraded(reason)
+      ,
+      SemanticIr.provenance(value.provenance)
+    )
+
+  private def operatorPolicyKind(value: String): ProgramOperatorPolicyKindIr =
+    value match
+      case "linear-shrinkage" => ProgramOperatorPolicyKindIr.LinearShrinkage
+      case "lda-within-scatter-shrinkage" => ProgramOperatorPolicyKindIr.LdaWithinScatterShrinkage
+      case "nearest-psd-repair" => ProgramOperatorPolicyKindIr.PsdRepair
+      case "support-restriction" => ProgramOperatorPolicyKindIr.SupportRestriction
+      case "trace-one-gauge" => ProgramOperatorPolicyKindIr.GaugeFixing
+      case "joint-block-shrinkage" => ProgramOperatorPolicyKindIr.JointBlockShrinkage
+      case "blockwise-shrinkage" => ProgramOperatorPolicyKindIr.BlockwiseShrinkage
+      case other => ProgramOperatorPolicyKindIr.Custom(other)
 
   private def role(value: OperatorRole): ProgramOperatorRoleIr =
     value match

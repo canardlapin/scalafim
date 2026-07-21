@@ -17,7 +17,8 @@ private object ProgramIrEncoder:
       "operators" -> arr(value.operators.map(operator)),
       "programs" -> arr(value.programs.map(program)),
       "rewrites" -> arr(value.rewrites.map(rewrite)),
-      "fits" -> arr(value.fits.map(fit))
+      "fits" -> arr(value.fits.map(fit)),
+      "operator_policies" -> arr(value.operatorPolicies.map(operatorPolicy))
     )
 
   private def space(value: SpaceIr): IrJson =
@@ -294,6 +295,66 @@ private object ProgramIrEncoder:
       "provenance" -> arr(value.provenance.map(provenance))
     )
 
+  private def operatorPolicy(value: ProgramOperatorPolicyIr): IrJson =
+    obj(
+      "id" -> Str(value.id),
+      "kind" -> policyKind(value.kind),
+      "input_operators" -> arr(value.inputOperators.map(Str.apply)),
+      "output_operators" -> arr(value.outputOperators.map(Str.apply)),
+      "selection" -> policySelection(value.selection),
+      "scale_matching" -> scaleMatching(value.scaleMatching),
+      "scope" -> Str(policyScope(value.scope)),
+      "preservation" -> arr(value.preservation.map(preservation)),
+      "provenance" -> arr(value.provenance.map(provenance))
+    )
+
+  private def policyKind(value: ProgramOperatorPolicyKindIr): IrJson =
+    value match
+      case ProgramOperatorPolicyKindIr.LinearShrinkage => obj("kind" -> Str("linear_shrinkage"))
+      case ProgramOperatorPolicyKindIr.LdaWithinScatterShrinkage =>
+        obj("kind" -> Str("lda_within_scatter_shrinkage"))
+      case ProgramOperatorPolicyKindIr.PsdRepair => obj("kind" -> Str("psd_repair"))
+      case ProgramOperatorPolicyKindIr.SupportRestriction => obj("kind" -> Str("support_restriction"))
+      case ProgramOperatorPolicyKindIr.GaugeFixing => obj("kind" -> Str("gauge_fixing"))
+      case ProgramOperatorPolicyKindIr.JointBlockShrinkage => obj("kind" -> Str("joint_block_shrinkage"))
+      case ProgramOperatorPolicyKindIr.BlockwiseShrinkage => obj("kind" -> Str("blockwise_shrinkage"))
+      case ProgramOperatorPolicyKindIr.Custom(name) => obj("kind" -> Str("custom"), "name" -> Str(name))
+
+  private def policySelection(value: ProgramPolicySelectionIr): IrJson =
+    value match
+      case ProgramPolicySelectionIr.Fixed(strength) =>
+        obj("kind" -> Str("fixed"), "strength" -> Num(strength))
+      case ProgramPolicySelectionIr.FoldSelected(selector, candidates) =>
+        obj(
+          "kind" -> Str("fold_selected"),
+          "selector_id" -> Str(selector),
+          "candidates" -> arr(candidates.map(Num.apply))
+        )
+
+  private def scaleMatching(value: ProgramScaleMatchingIr): IrJson =
+    value match
+      case ProgramScaleMatchingIr.None => obj("kind" -> Str("none"))
+      case ProgramScaleMatchingIr.MatchTrace => obj("kind" -> Str("match_trace"))
+      case ProgramScaleMatchingIr.MatchDiagonalMean => obj("kind" -> Str("match_diagonal_mean"))
+      case ProgramScaleMatchingIr.Fixed(current) => obj("kind" -> Str("fixed"), "value" -> Num(current))
+
+  private def policyScope(value: ProgramPolicyScopeIr): String =
+    value match
+      case ProgramPolicyScopeIr.SingleOperator => "single_operator"
+      case ProgramPolicyScopeIr.JointSystem => "joint_system"
+      case ProgramPolicyScopeIr.BlockwiseUnsafe => "blockwise_unsafe"
+
+  private def preservation(value: ProgramPreservationClaimIr): IrJson =
+    value match
+      case ProgramPreservationClaimIr.PsdPreserved => obj("kind" -> Str("psd_preserved"))
+      case ProgramPreservationClaimIr.SpdPreserved => obj("kind" -> Str("spd_preserved"))
+      case ProgramPreservationClaimIr.BlockAdjointsPreserved => obj("kind" -> Str("block_adjoints_preserved"))
+      case ProgramPreservationClaimIr.SharedGaugePreserved => obj("kind" -> Str("shared_gauge_preserved"))
+      case ProgramPreservationClaimIr.SupportRestricted => obj("kind" -> Str("support_restricted"))
+      case ProgramPreservationClaimIr.GaugeFixed => obj("kind" -> Str("gauge_fixed"))
+      case ProgramPreservationClaimIr.EvidenceDowngraded(reason) =>
+        obj("kind" -> Str("evidence_downgraded"), "reason" -> Str(reason))
+
   private def tolerance(value: ToleranceIr): IrJson =
     obj("absolute" -> Num(value.absolute), "relative" -> Num(value.relative))
 
@@ -433,14 +494,15 @@ private object ProgramIrDecoder:
 
   def document(value: IrJson): Either[IrError, OperatorProgramDocumentIr] =
     for
-      current <- fields(value, "$", Set("schema", "spaces", "operators", "programs", "rewrites", "fits"))
+      current <- fields(value, "$", Set("schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies"))
       schema <- required(current, "schema", "$", string(_, "$.schema"))
       spaces <- required(current, "spaces", "$", vector(_, "$.spaces", space))
       operators <- required(current, "operators", "$", vector(_, "$.operators", operator))
       programs <- required(current, "programs", "$", vector(_, "$.programs", program))
       rewrites <- required(current, "rewrites", "$", vector(_, "$.rewrites", rewrite))
       fits <- required(current, "fits", "$", vector(_, "$.fits", fit))
-    yield OperatorProgramDocumentIr(schema, spaces, operators, programs, rewrites, fits)
+      policies <- required(current, "operator_policies", "$", vector(_, "$.operator_policies", operatorPolicy))
+    yield OperatorProgramDocumentIr(schema, spaces, operators, programs, rewrites, fits, policies)
 
   private def space(value: IrJson, path: String): Either[IrError, SpaceIr] =
     for
@@ -880,6 +942,107 @@ private object ProgramIrDecoder:
       remaining <- required(current, "remaining_equivalence", path, equivalence(_, s"$path.remaining_equivalence"))
       provenanceValue <- required(current, "provenance", path, vector(_, s"$path.provenance", provenance))
     yield ProgramFitIr(program, frames, objective, rank, clusters, residuals, solver, remaining, provenanceValue)
+
+  private def operatorPolicy(value: IrJson, path: String): Either[IrError, ProgramOperatorPolicyIr] =
+    for
+      current <- fields(
+        value,
+        path,
+        Set(
+          "id",
+          "kind",
+          "input_operators",
+          "output_operators",
+          "selection",
+          "scale_matching",
+          "scope",
+          "preservation",
+          "provenance"
+        )
+      )
+      id <- required(current, "id", path, string(_, s"$path.id"))
+      kind <- required(current, "kind", path, policyKind(_, s"$path.kind"))
+      inputs <- required(current, "input_operators", path, vector(_, s"$path.input_operators", string))
+      outputs <- required(current, "output_operators", path, vector(_, s"$path.output_operators", string))
+      selection <- required(current, "selection", path, policySelection(_, s"$path.selection"))
+      matching <- required(current, "scale_matching", path, scaleMatching(_, s"$path.scale_matching"))
+      scope <- required(current, "scope", path, policyScope(_, s"$path.scope"))
+      claims <- required(current, "preservation", path, vector(_, s"$path.preservation", preservation))
+      provenanceValue <- required(current, "provenance", path, vector(_, s"$path.provenance", provenance))
+    yield ProgramOperatorPolicyIr(id, kind, inputs, outputs, selection, matching, scope, claims, provenanceValue)
+
+  private def policyKind(value: IrJson, path: String): Either[IrError, ProgramOperatorPolicyKindIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "linear_shrinkage" => exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.LinearShrinkage)
+        case "lda_within_scatter_shrinkage" =>
+          exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.LdaWithinScatterShrinkage)
+        case "psd_repair" => exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.PsdRepair)
+        case "support_restriction" =>
+          exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.SupportRestriction)
+        case "gauge_fixing" => exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.GaugeFixing)
+        case "joint_block_shrinkage" =>
+          exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.JointBlockShrinkage)
+        case "blockwise_shrinkage" =>
+          exact(current, path, Set("kind")).map(_ => ProgramOperatorPolicyKindIr.BlockwiseShrinkage)
+        case "custom" =>
+          exact(current, path, Set("kind", "name"))
+            .flatMap(checked => required(checked, "name", path, string(_, s"$path.name")))
+            .map(ProgramOperatorPolicyKindIr.Custom.apply)
+        case _ => malformed(path, s"unknown operator policy kind '$kind'")
+
+  private def policySelection(value: IrJson, path: String): Either[IrError, ProgramPolicySelectionIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "fixed" =>
+          exact(current, path, Set("kind", "strength"))
+            .flatMap(checked => required(checked, "strength", path, number(_, s"$path.strength")))
+            .map(ProgramPolicySelectionIr.Fixed.apply)
+        case "fold_selected" =>
+          for
+            checked <- exact(current, path, Set("kind", "selector_id", "candidates"))
+            selector <- required(checked, "selector_id", path, string(_, s"$path.selector_id"))
+            candidates <- required(checked, "candidates", path, vector(_, s"$path.candidates", number))
+          yield ProgramPolicySelectionIr.FoldSelected(selector, candidates)
+        case _ => malformed(path, s"unknown operator policy selection '$kind'")
+
+  private def scaleMatching(value: IrJson, path: String): Either[IrError, ProgramScaleMatchingIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "none" => exact(current, path, Set("kind")).map(_ => ProgramScaleMatchingIr.None)
+        case "match_trace" => exact(current, path, Set("kind")).map(_ => ProgramScaleMatchingIr.MatchTrace)
+        case "match_diagonal_mean" =>
+          exact(current, path, Set("kind")).map(_ => ProgramScaleMatchingIr.MatchDiagonalMean)
+        case "fixed" =>
+          exact(current, path, Set("kind", "value"))
+            .flatMap(checked => required(checked, "value", path, number(_, s"$path.value")))
+            .map(ProgramScaleMatchingIr.Fixed.apply)
+        case _ => malformed(path, s"unknown scale matching '$kind'")
+
+  private def policyScope(value: IrJson, path: String): Either[IrError, ProgramPolicyScopeIr] =
+    string(value, path).flatMap:
+      case "single_operator" => Right(ProgramPolicyScopeIr.SingleOperator)
+      case "joint_system" => Right(ProgramPolicyScopeIr.JointSystem)
+      case "blockwise_unsafe" => Right(ProgramPolicyScopeIr.BlockwiseUnsafe)
+      case other => malformed(path, s"unknown operator policy scope '$other'")
+
+  private def preservation(value: IrJson, path: String): Either[IrError, ProgramPreservationClaimIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "psd_preserved" => exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.PsdPreserved)
+        case "spd_preserved" => exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.SpdPreserved)
+        case "block_adjoints_preserved" =>
+          exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.BlockAdjointsPreserved)
+        case "shared_gauge_preserved" =>
+          exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.SharedGaugePreserved)
+        case "support_restricted" =>
+          exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.SupportRestricted)
+        case "gauge_fixed" => exact(current, path, Set("kind")).map(_ => ProgramPreservationClaimIr.GaugeFixed)
+        case "evidence_downgraded" =>
+          exact(current, path, Set("kind", "reason"))
+            .flatMap(checked => required(checked, "reason", path, string(_, s"$path.reason")))
+            .map(ProgramPreservationClaimIr.EvidenceDowngraded.apply)
+        case _ => malformed(path, s"unknown preservation claim '$kind'")
 
   private def tolerance(value: IrJson, path: String): Either[IrError, ToleranceIr] =
     for

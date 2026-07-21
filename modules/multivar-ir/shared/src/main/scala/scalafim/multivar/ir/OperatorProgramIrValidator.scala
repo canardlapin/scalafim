@@ -14,6 +14,7 @@ object OperatorProgramIrValidator:
       programs <- unique(document.programs, _.id, "$.programs")
       _ <- validateSpaces(document.spaces)
       _ <- validateOperators(document.operators, spaces, operators)
+      _ <- validatePolicies(document.operatorPolicies, operators)
       _ <- validatePrograms(document.programs, spaces, operators)
       _ <- validateRewrites(document.rewrites, programs, operators)
       _ <- validateFits(document.fits, programs, operators)
@@ -239,6 +240,50 @@ object OperatorProgramIrValidator:
         "parameter gauges must be distinct, named, and imply redundant coordinates"
       )
     yield ()
+
+  private def validatePolicies(
+      policies: Vector[ProgramOperatorPolicyIr],
+      operators: Map[String, ProgramOpIr]
+  ): Either[IrError, Unit] =
+    unique(policies, _.id, "$.operator_policies").flatMap: _ =>
+      policies.foldLeft[Either[IrError, Unit]](Right(())): (result, policy) =>
+        result.flatMap: _ =>
+          val selectionValid =
+            policy.selection match
+              case ProgramPolicySelectionIr.Fixed(strength) =>
+                strength.isFinite && strength >= 0.0 && strength <= 1.0
+              case ProgramPolicySelectionIr.FoldSelected(selector, candidates) =>
+                selector.trim.nonEmpty && candidates.nonEmpty && candidates.distinct.length == candidates.length &&
+                  candidates.forall(value => value.isFinite && value >= 0.0 && value <= 1.0)
+          val scaleValid =
+            policy.scaleMatching match
+              case ProgramScaleMatchingIr.Fixed(value) => value.isFinite && value > 0.0
+              case _ => true
+          val customKindValid =
+            policy.kind match
+              case ProgramOperatorPolicyKindIr.Custom(name) => name.trim.nonEmpty
+              case _ => true
+          val hasDerivedProvenance = policy.provenance.exists:
+            case ProvenanceEventIr.Derived(_, inputs) => inputs.nonEmpty && inputs.forall(policy.inputOperators.contains)
+            case _ => false
+          val unsafeDowngradeVisible =
+            policy.scope != ProgramPolicyScopeIr.BlockwiseUnsafe || policy.preservation.exists:
+              case ProgramPreservationClaimIr.EvidenceDowngraded(reason) => reason.trim.nonEmpty
+              case _ => false
+          val jointClaimsVisible =
+            policy.scope != ProgramPolicyScopeIr.JointSystem ||
+              (policy.preservation.contains(ProgramPreservationClaimIr.PsdPreserved) &&
+                policy.preservation.contains(ProgramPreservationClaimIr.BlockAdjointsPreserved) &&
+                policy.preservation.contains(ProgramPreservationClaimIr.SharedGaugePreserved))
+          requireValue(
+            policy.inputOperators.nonEmpty && policy.outputOperators.nonEmpty &&
+              policy.inputOperators.forall(operators.contains) && policy.outputOperators.forall(operators.contains) &&
+              selectionValid && scaleValid && customKindValid && policy.preservation.nonEmpty &&
+              hasDerivedProvenance && unsafeDowngradeVisible && jointClaimsVisible,
+            RejectionCategory.Malformed,
+            s"operator_policies.${policy.id}",
+            "operator policy requires known operators, valid selection and scale, preservation evidence, and derived provenance"
+          )
 
   private def validateObjective(
       program: OperatorProgramV2Ir,
