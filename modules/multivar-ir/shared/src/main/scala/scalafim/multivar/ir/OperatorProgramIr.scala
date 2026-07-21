@@ -161,6 +161,10 @@ object OperatorProgramIr:
       case SolverGuarantee.GlobalConvexOptimum => "global-convex-optimum"
       case SolverGuarantee.StationaryPoint => "stationary-point"
       case SolverGuarantee.FeasiblePoint => "feasible-point"
+      case SolverGuarantee.CoordinatewiseStationary => "coordinatewise-stationary"
+      case SolverGuarantee.LocallyOptimal => "locally-optimal"
+      case SolverGuarantee.HeuristicFeasible => "heuristic-feasible"
+      case SolverGuarantee.Unresolved => "unresolved"
 
   private def symmetry(value: FrameSymmetry): String =
     value match

@@ -283,6 +283,23 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
 
     assertEquals(rejection(document).category, RejectionCategory.Malformed)
 
+  test("local, coordinatewise, heuristic, and unresolved solver guarantees remain distinct"):
+    val guarantees = Vector(
+      ProgramSolverGuaranteeIr.CoordinatewiseStationary,
+      ProgramSolverGuaranteeIr.LocallyOptimal,
+      ProgramSolverGuaranteeIr.HeuristicFeasible,
+      ProgramSolverGuaranteeIr.Unresolved
+    )
+    guarantees.foreach: guarantee =>
+      val base = validDocument
+      val programs = base.programs.map(program => program.copy(result = program.result.copy(guarantee = guarantee)))
+      val fits = base.fits.map(_.copy(solverGuarantee = guarantee))
+      val document = base.copy(programs = programs, fits = fits)
+      val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+      assertEquals(decoded.programs.head.result.guarantee, guarantee)
+      assertEquals(decoded.fits.head.solverGuarantee, guarantee)
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",

@@ -187,7 +187,7 @@
         "retained_rank": {"type": "integer", "minimum": 0},
         "spectral_clusters": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 0}}},
         "residual_certificates": {"type": "array", "items": {"$ref": "#/$defs/certificate"}},
-        "solver_guarantee": {"enum": ["global_spectral_optimum", "global_convex_optimum", "stationary_point", "feasible_point"]},
+        "solver_guarantee": {"enum": ["global_spectral_optimum", "global_convex_optimum", "stationary_point", "feasible_point", "coordinatewise_stationary", "locally_optimal", "heuristic_feasible", "unresolved"]},
         "remaining_equivalence": {"type": "object", "required": ["kind"]},
         "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
       }

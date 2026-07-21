@@ -180,6 +180,10 @@ enum ProgramSolverGuaranteeIr:
   case GlobalConvexOptimum
   case StationaryPoint
   case FeasiblePoint
+  case CoordinatewiseStationary
+  case LocallyOptimal
+  case HeuristicFeasible
+  case Unresolved
 
 final case class ProgramResultContractIr(
     equivalence: ProgramEquivalenceIr,
@@ -687,6 +691,10 @@ object ProgramSemanticIr:
       case SolverGuarantee.GlobalConvexOptimum => ProgramSolverGuaranteeIr.GlobalConvexOptimum
       case SolverGuarantee.StationaryPoint => ProgramSolverGuaranteeIr.StationaryPoint
       case SolverGuarantee.FeasiblePoint => ProgramSolverGuaranteeIr.FeasiblePoint
+      case SolverGuarantee.CoordinatewiseStationary => ProgramSolverGuaranteeIr.CoordinatewiseStationary
+      case SolverGuarantee.LocallyOptimal => ProgramSolverGuaranteeIr.LocallyOptimal
+      case SolverGuarantee.HeuristicFeasible => ProgramSolverGuaranteeIr.HeuristicFeasible
+      case SolverGuarantee.Unresolved => ProgramSolverGuaranteeIr.Unresolved
 
   private def symmetry(value: FrameSymmetry): ProgramFrameSymmetryIr =
     value match

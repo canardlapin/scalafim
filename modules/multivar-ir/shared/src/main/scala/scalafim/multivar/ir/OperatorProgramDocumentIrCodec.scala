@@ -515,6 +515,10 @@ private object ProgramIrEncoder:
       case ProgramSolverGuaranteeIr.GlobalConvexOptimum => "global_convex_optimum"
       case ProgramSolverGuaranteeIr.StationaryPoint => "stationary_point"
       case ProgramSolverGuaranteeIr.FeasiblePoint => "feasible_point"
+      case ProgramSolverGuaranteeIr.CoordinatewiseStationary => "coordinatewise_stationary"
+      case ProgramSolverGuaranteeIr.LocallyOptimal => "locally_optimal"
+      case ProgramSolverGuaranteeIr.HeuristicFeasible => "heuristic_feasible"
+      case ProgramSolverGuaranteeIr.Unresolved => "unresolved"
 
   private def rewriteRule(value: ProgramRewriteRuleIr): String =
     value match
@@ -1382,6 +1386,10 @@ private object ProgramIrDecoder:
       case "global_convex_optimum" => Right(ProgramSolverGuaranteeIr.GlobalConvexOptimum)
       case "stationary_point" => Right(ProgramSolverGuaranteeIr.StationaryPoint)
       case "feasible_point" => Right(ProgramSolverGuaranteeIr.FeasiblePoint)
+      case "coordinatewise_stationary" => Right(ProgramSolverGuaranteeIr.CoordinatewiseStationary)
+      case "locally_optimal" => Right(ProgramSolverGuaranteeIr.LocallyOptimal)
+      case "heuristic_feasible" => Right(ProgramSolverGuaranteeIr.HeuristicFeasible)
+      case "unresolved" => Right(ProgramSolverGuaranteeIr.Unresolved)
       case other => malformed(path, s"unknown solver guarantee '$other'")
 
   private def rewriteRule(value: IrJson, path: String): Either[IrError, ProgramRewriteRuleIr] =

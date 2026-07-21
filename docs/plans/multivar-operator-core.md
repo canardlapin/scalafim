@@ -402,16 +402,19 @@ geometry — that distinction lives in `normalization`, not in separate engines.
   `MultivarEstimator` ADT remains only as a serializable lifecycle-plan
   descriptor and compiles immediately into named typed problems.
 
-**Specified now (§6), built incrementally — not in the core phases:**
-- the variational/structural-term layer (parameterization, target maps,
-  functionals, feasible sets) and its solver lowering — the seam is fixed by §6 so
-  the core is designed against it, but families land one at a time (§10, phase 5),
-  each with a lowering and a parity fixture. Methods call `linalg` directly until a
-  family needs more; the `OperatorRepresentation` vocabulary is ready for the
-  eventual compiler/"mills".
-- the `ModelSpec` fitting lifecycle (preprocessing / fold-safe alignment /
-  data-driven shrinkage and chart/graph selection) — owns every data-dependent
-  operation, refit inside training folds; build when learned alignment lands.
+**Implemented as the follow-on variational core:**
+- `OperatorProgram` now keeps pure typed maps, parameterizations, operator
+  policies, scalar functionals, and feasible sets distinct. It supports exact
+  linear-quadratic pullbacks, coordinate/group sparsity, redundant and
+  gauge-bearing parameterizations, and explicit auxiliary-variable lowering for
+  composed nonsmooth terms. Requested and lowered programs remain separately
+  inspectable with proof/provenance records.
+- `ModelSpec` now owns preprocessing and missingness, every declared fold-fitted
+  alignment/chart/graph/statistical/policy/program/lowering/solver stage,
+  hyperparameter candidates, nested folds, deterministic seeds, accepted solver
+  guarantees, and the fitted transform. Runtime lifecycle events must match the
+  declared plan exactly; leakage audits reject any fitted stage that touches a
+  validation row or uses another split, seed, or row identity.
 
 **Deferred outright:** Krein/indefinite decompositions, GCCA/co-inertia/ratio-trace
 as new objectives, distributed execution, Python/R bindings over the IR.
@@ -507,10 +510,12 @@ focused independent oracles at each phase.
    external fixtures, representation laws, negative type cases, dependency
    scans, `compileAll`, and `testAll` at one committed revision.
 
-The variational families described in §6.2–§6.5 are a separate follow-on epic.
-They accrete after the finite core without reopening it: quadratic pullbacks
-first, then explicit-coordinate prox families, parameterizations, split methods,
-and finally data-dependent operator policies under fold-safe `ModelSpec`.
+The variational families described in §6.2–§6.5 landed as the separate follow-on
+epic `bd-01KXSGZ3WVBAREYXHVRXB41GKG`: quadratic pullbacks first, then
+explicit-coordinate sparsity, parameterizations, split lowerings, certified
+operator policies, and finally fold-safe `ModelSpec`. This extended the program
+without reopening the finite operator kernel or introducing method-private
+solvers.
 
 When the purge and release gate land, the dual-layer language leaves the
 constitution and this document becomes its implemented operator-core section.
@@ -562,6 +567,8 @@ owner of the production surface they exercise.
 |---|---|---|
 | Operator/form substrate | Migrated: `SemanticForms.scala`, `SemanticDiagram.scala`, and `OperatorAlgebra.scala` own the only semantic/numeric operator graph. `MetricSpec` is a validated lifecycle construction spec frozen into `Op`, not a parallel metric. | primitives `bd-01KXSGZ2A6F9DA2HG7TB7CT0A4`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Universal objective/result program | Migrated: named builders across `SemanticGpca.scala`, `Decompositions.scala`, `MultisetObjectives.scala`, and `Plans.scala` produce `OperatorProgram` and generic fitted assignments. | program `bd-01KXZZ2CR25BHXZMWXEBD9SQSR` |
+| Variational terms and solver lowering | Implemented: typed maps, parameterizations, functionals, feasible sets, coordinate/group sparsity, exact quadratic pullbacks, explicit composed-nonsmooth auxiliaries, and guarantee-aware lowering all extend `OperatorProgram` without collapsing their semantics. The strict v0.2 IR preserves requested terms, rewrite proofs, auxiliary equations, operator policies, and the full solver-guarantee vocabulary. | variational epic `bd-01KXSGZ3WVBAREYXHVRXB41GKG` |
+| Fold-safe fitting lifecycle | Implemented: `ModelSpec.scala` performs nested selection with deterministic split identities and seeds, refits preprocessing and every declared learned stage on training rows only, freezes certified programs/operators/fits, rejects incompatible transform spaces and feature identities, and exposes requested/lowered programs plus the complete lifecycle audit. | ModelSpec `bd-01KXZZ6DTXA955Q8H33H4TY5B4` |
 | Generalized Rayleigh-Ritz and trace ratio | `RayleighRitz.scala` owns solver-independent lowering through Gale-backed capabilities; GPCA and LDA assemble statistical operators but own no spectral engine | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |
 | GPCA | Migrated: `GpcaProblem.scala` assembles and solves the typed generalized Rayleigh--Ritz program; `SemanticGpca.scala` performs evidenced diagram preparation and returns that operator result. The raw GPCA and deflation engines and duplicate fit records are deleted. | GPCA `bd-01KXSGZ33WT5MJABWX8GE3JP6G`, purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | LDA | `Lda.scala` builds class-incidence row relations, pulls back between/within scatter only through `secondOrder`, and declares distinct Fisher and trace-ratio programs with an explicit fixed shrinkage seam | LDA `bd-01KXSGZ3E48W9X80199PS5FHA8` |

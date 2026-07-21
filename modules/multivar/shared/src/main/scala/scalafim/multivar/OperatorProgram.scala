@@ -623,6 +623,10 @@ enum SolverGuarantee:
   case GlobalConvexOptimum
   case StationaryPoint
   case FeasiblePoint
+  case CoordinatewiseStationary
+  case LocallyOptimal
+  case HeuristicFeasible
+  case Unresolved
 
 final case class ResultSemantics(
     equivalence: ResultEquivalence,
