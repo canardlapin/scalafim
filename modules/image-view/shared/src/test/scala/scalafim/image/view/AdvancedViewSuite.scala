@@ -150,11 +150,33 @@ class AdvancedViewSuite extends munit.FunSuite:
     assert(windowed.profile.colorizedPixels > 0L)
     assertEquals(windowed.profile.sourceReads, 0)
 
+    val thresholdedState = windowedState.copy(
+      layerPresentation = windowedState.layerPresentation.updated(
+        LayerId.unsafe("one"),
+        LayerPresentation(
+          window = Some(DisplayWindow.unsafe(0.0, 8.0)),
+          threshold = Some(DisplayThreshold.transparentBand(1.0, 2.0).toOption.get)
+        )
+      )
+    )
+    val thresholded = ViewerCompiler.compileCached(
+      model,
+      thresholdedState,
+      device,
+      windowed.cache
+    ).toOption.get
+    assertEquals(thresholded.profile.cacheHits, 3)
+    assertEquals(thresholded.profile.cacheMisses, 3)
+    assertEquals(thresholded.profile.sampleCacheHits, 3)
+    assertEquals(thresholded.profile.sampledPixels, 0L)
+    assert(thresholded.profile.colorizedPixels > 0L)
+    assertEquals(thresholded.profile.sourceReads, 0)
+
     val moved = ViewerCompiler.compileCached(
       model,
       state.copy(cursor = state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0)),
       device,
-      windowed.cache
+      thresholded.cache
     ).toOption.get
     assertEquals(moved.profile.cacheHits, 4)
     assertEquals(moved.profile.cacheMisses, 2)

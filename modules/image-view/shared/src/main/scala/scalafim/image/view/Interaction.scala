@@ -45,6 +45,8 @@ enum ViewerAction:
   case SetSliceStep(step: SliceStep)
   case SetWindow(layer: LayerId, window: DisplayWindow)
   case ClearWindow(layer: LayerId)
+  case SetThreshold(layer: LayerId, threshold: DisplayThreshold)
+  case ClearThreshold(layer: LayerId)
   case SetOpacity(layer: LayerId, opacity: LayerOpacity)
   case SetVisibility(layer: LayerId, visible: Boolean)
   case SetTimepoint(index: Int)
@@ -98,6 +100,15 @@ object ViewerReducer:
       case ViewerAction.ClearWindow(layer) =>
         withLayer(model, session, layer) { (_, current) =>
           Right(current.copy(window = None))
+        }
+      case ViewerAction.SetThreshold(layer, threshold) =>
+        withLayer(model, session, layer) { (sliceLayer, current) =>
+          if !sliceLayer.supportsThreshold then Left(ImageViewError.ThresholdUnsupported(layer))
+          else Right(current.copy(threshold = Some(threshold)))
+        }
+      case ViewerAction.ClearThreshold(layer) =>
+        withLayer(model, session, layer) { (_, current) =>
+          Right(current.copy(threshold = None))
         }
       case ViewerAction.SetOpacity(layer, opacity) =>
         withLayer(model, session, layer) { (_, current) =>

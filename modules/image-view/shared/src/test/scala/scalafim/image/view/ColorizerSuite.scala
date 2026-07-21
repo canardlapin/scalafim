@@ -19,6 +19,24 @@ class ColorizerSuite extends munit.FunSuite:
     assertEquals(colorizer.color(Double.NaN).alpha, 0)
   }
 
+  test("threshold bands hide only their strict interior and disable explicitly") {
+    assert(ThresholdBand.make(1.0, 1.0).isLeft)
+    assert(ThresholdBand.make(Double.NaN, 2.0).isLeft)
+    val threshold = DisplayThreshold.transparentBand(-0.5, 0.5).toOption.get
+    val thresholded = ScalarColorizer(
+      DisplayWindow.unsafe(-1.0, 1.0),
+      threshold = threshold
+    )
+
+    assertEquals(thresholded.color(-0.5).alpha, 255)
+    assertEquals(thresholded.color(0.0).alpha, 0)
+    assertEquals(thresholded.color(0.5).alpha, 255)
+    assertEquals(thresholded.color(Double.NaN).alpha, 0)
+
+    val disabled = thresholded.withThreshold(DisplayThreshold.Disabled).get
+    assertEquals(disabled.color(0.0).alpha, 255)
+  }
+
   test("ramps interpolate every RGBA channel") {
     val ramp = ColorRamp(
       Rgba32.unsafe(0, 20, 40, 60),

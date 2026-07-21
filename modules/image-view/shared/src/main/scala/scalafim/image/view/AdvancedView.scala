@@ -45,7 +45,8 @@ private[view] object SliceSampleKey:
 
 private[view] final case class SliceRasterKey(
   sample: SliceSampleKey,
-  window: Option[DisplayWindow]
+  window: Option[DisplayWindow],
+  threshold: Option[DisplayThreshold]
 )
 
 /** Immutable, model-scoped LRU caches for sampled slices and colorized rasters.

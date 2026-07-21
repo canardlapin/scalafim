@@ -41,7 +41,8 @@ object ViewerState:
 final case class LayerPresentation(
   visible: Boolean = true,
   opacity: Option[LayerOpacity] = None,
-  window: Option[DisplayWindow] = None
+  window: Option[DisplayWindow] = None,
+  threshold: Option[DisplayThreshold] = None
 )
 
 object LayerPresentation:
@@ -288,7 +289,7 @@ object ViewerCompiler:
   ): Either[ImageViewError, LayerCompilation] =
     val presentation = state.presentation(layer.id)
     val sampleKey = SliceSampleKey.from(layer, grid, state.timepoint)
-    val rasterKey = SliceRasterKey(sampleKey, presentation.window)
+    val rasterKey = SliceRasterKey(sampleKey, presentation.window, presentation.threshold)
     val (cached, refreshedCache) = cache.lookupRaster(rasterKey)
     val rasterAndProfile =
       cached match
@@ -305,7 +306,7 @@ object ViewerCompiler:
           val (sampled, sampleCache) = refreshedCache.lookupSample(sampleKey)
           sampled match
             case Some(sample) =>
-              val raster = sample.colorize(presentation.window)
+              val raster = sample.colorize(presentation.window, presentation.threshold)
               Right(
                 (
                   raster,
@@ -316,7 +317,7 @@ object ViewerCompiler:
             case None =>
               frameResolver.resolve(layer).flatMap { case (frame, sourceRead) =>
                 frame.sample(grid).map { sample =>
-                  val raster = sample.colorize(presentation.window)
+                  val raster = sample.colorize(presentation.window, presentation.threshold)
                   val nextCache = sampleCache
                     .storeSample(sampleKey, sample)
                     .storeRaster(rasterKey, raster)

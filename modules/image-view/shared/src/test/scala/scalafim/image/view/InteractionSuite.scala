@@ -99,7 +99,7 @@ class InteractionSuite extends munit.FunSuite:
     assertEquals(mirroredAxial.state.cursor, axial.state.cursor)
   }
 
-  test("window opacity and visibility actions alter presentation without mutating layers") {
+  test("window threshold opacity and visibility actions alter presentation without mutating layers") {
     val windowed = ViewerReducer.reduce(
       model,
       initial,
@@ -110,16 +110,31 @@ class InteractionSuite extends munit.FunSuite:
       windowed,
       ViewerAction.SetOpacity(scalarId, LayerOpacity.unsafe(0.25))
     ).toOption.get
-    val frame = faded.frame(model).toOption.get
+    val thresholded = ViewerReducer.reduce(
+      model,
+      faded,
+      ViewerAction.SetThreshold(
+        scalarId,
+        DisplayThreshold.transparentBand(1.5, 2.5).toOption.get
+      )
+    ).toOption.get
+    val frame = thresholded.frame(model).toOption.get
     val scalar = images(frame, AnatomicalPlane.Axial).head
 
     assertEqualsDouble(scalar.alpha, 0.25, 0.0)
-    assertEquals(scalar.image.pixelUnsafe(1, 1).red, 0)
+    assertEquals(scalar.image.pixelUnsafe(1, 1).alpha, 0)
     assertEquals(model.layers.head.opacity, LayerOpacity.Opaque)
+
+    val disabled = ViewerReducer.reduce(
+      model,
+      thresholded,
+      ViewerAction.SetThreshold(scalarId, DisplayThreshold.Disabled)
+    ).toOption.get
+    assertEquals(images(disabled.frame(model).toOption.get, AnatomicalPlane.Axial).head.image.pixelUnsafe(1, 1).alpha, 255)
 
     val hidden = ViewerReducer.reduce(
       model,
-      faded,
+      thresholded,
       ViewerAction.SetVisibility(scalarId, false)
     ).toOption.get
     assertEquals(images(hidden.frame(model).toOption.get, AnatomicalPlane.Axial).length, 1)
@@ -130,6 +145,13 @@ class InteractionSuite extends munit.FunSuite:
       ViewerAction.SetWindow(maskId, DisplayWindow.unsafe(0.0, 1.0))
     )
     assert(unsupported.isLeft)
+    assert(
+      ViewerReducer.reduce(
+        model,
+        initial,
+        ViewerAction.SetThreshold(maskId, DisplayThreshold.Disabled)
+      ).isLeft
+    )
   }
 
   test("timepoint actions drive temporal layers while static overlays persist") {

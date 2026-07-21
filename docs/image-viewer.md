@@ -61,8 +61,11 @@ sampled into the reference grid in world space.
 
 `ViewerAction` and `ViewerReducer` form a pure state machine. Actions cover
 world-coordinate picking, anatomical scrolling, display convention, pixel and
-slice step, window, opacity, visibility, timepoint, resize, crosshair, and
-orientation labels.
+slice step, window, threshold, opacity, visibility, timepoint, resize,
+crosshair, and orientation labels. Thresholding is distinct from windowing:
+`DisplayThreshold.TransparentBand` makes only the strict interior of a finite
+band transparent, matching neuroimjs, while `DisplayThreshold.Disabled`
+explicitly preserves every finite value.
 
 ```scala
 val action = ViewerEvents.pick(frame, deviceX = 240.0, deviceY = 160.0)
@@ -106,8 +109,9 @@ val warm = ViewerCompiler.compileCached(
 ```
 
 `ViewerCache` retains sampled scalar slices separately from colorized rasters.
-Changing a display window therefore recolorizes cached values without reading
-or sampling the source volume. Cache identity includes the plane-normal
+Changing a display window or threshold therefore recolorizes cached values
+without reading or sampling the source volume. Raster cache identity includes
+both presentation values, while sampling identity includes the plane-normal
 position and covering-grid geometry but excludes in-plane cursor position, so
 moving an axial cursor reuses sagittal and coronal rasters while their
 crosshairs move.

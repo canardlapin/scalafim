@@ -12,6 +12,7 @@ enum ImageViewError:
   case DuplicateLayerId(id: LayerId)
   case UnknownLayer(id: LayerId)
   case WindowUnsupported(id: LayerId)
+  case ThresholdUnsupported(id: LayerId)
   case IncompatibleFrameCounts(counts: Vector[Int])
   case TimepointOutOfBounds(index: Int, count: Int)
   case PointerOutsidePanel(plane: AnatomicalPlane)
@@ -38,6 +39,8 @@ enum ImageViewError:
         s"viewer layer '${id.asString}' does not exist"
       case WindowUnsupported(id) =>
         s"viewer layer '${id.asString}' does not support display windows"
+      case ThresholdUnsupported(id) =>
+        s"viewer layer '${id.asString}' does not support display thresholds"
       case IncompatibleFrameCounts(counts) =>
         s"temporal viewer layers must have the same frame count; got ${counts.mkString(", ")}"
       case TimepointOutOfBounds(index, count) =>
@@ -153,7 +156,10 @@ enum LayerMapping:
 
 private[view] sealed trait SampledLayerSlice:
   def dimensions: SliceDimensions
-  def colorize(window: Option[DisplayWindow]): RasterImage
+  def colorize(
+    window: Option[DisplayWindow],
+    threshold: Option[DisplayThreshold]
+  ): RasterImage
 
 private[view] sealed trait ResolvedLayerFrame:
   def sample(grid: SliceGrid): Either[ImageViewError, SampledLayerSlice]
@@ -165,6 +171,7 @@ sealed trait SliceLayer:
   def frameCount: Int
   def timeInvariant: Boolean
   def supportsWindow: Boolean
+  def supportsThreshold: Boolean
   private[view] def sourceSpace: VolumeSpace
   private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
   private[view] def sample(
@@ -176,9 +183,10 @@ sealed trait SliceLayer:
   private[view] final def raster(
     grid: SliceGrid,
     timepoint: Int,
-    window: Option[DisplayWindow]
+    window: Option[DisplayWindow],
+    threshold: Option[DisplayThreshold]
   ): Either[ImageViewError, RasterImage] =
-    sample(grid, timepoint).map(_.colorize(window))
+    sample(grid, timepoint).map(_.colorize(window, threshold))
 
 object SliceLayer:
   def apply[A: ClassTag](
@@ -232,6 +240,9 @@ object SliceLayer:
     def supportsWindow: Boolean =
       colorizer.supportsWindow
 
+    def supportsThreshold: Boolean =
+      colorizer.supportsThreshold
+
     private[view] def sourceSpace: VolumeSpace =
       source.space
 
@@ -269,8 +280,12 @@ object SliceLayer:
     def dimensions: SliceDimensions =
       slice.dimensions
 
-    def colorize(window: Option[DisplayWindow]): RasterImage =
-      val activeColorizer = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
+    def colorize(
+      window: Option[DisplayWindow],
+      threshold: Option[DisplayThreshold]
+    ): RasterImage =
+      val windowed = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
+      val activeColorizer = threshold.flatMap(windowed.withThreshold).getOrElse(windowed)
       val dimensions = RasterDimensions.unsafe(slice.dimensions.width, slice.dimensions.height)
       val pixels = new Array[Int](dimensions.pixelCount)
       var index = 0

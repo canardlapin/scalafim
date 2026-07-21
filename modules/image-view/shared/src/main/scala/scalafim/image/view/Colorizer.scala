@@ -4,11 +4,14 @@ import scalafim.graphics.*
 
 enum ColorizerError:
   case InvalidWindow(lower: Double, upper: Double)
+  case InvalidThresholdBand(lower: Double, upper: Double)
 
   def message: String =
     this match
       case InvalidWindow(lower, upper) =>
         s"display window must have finite lower < upper; got [$lower, $upper]"
+      case InvalidThresholdBand(lower, upper) =>
+        s"display threshold band must have finite lower < upper; got [$lower, $upper]"
 
 final case class DisplayWindow private (lower: Double, upper: Double):
   def width: Double =
@@ -25,6 +28,31 @@ object DisplayWindow:
   def unsafe(lower: Double, upper: Double): DisplayWindow =
     make(lower, upper).fold(err => throw new IllegalArgumentException(err.message), identity)
 
+final case class ThresholdBand private (lower: Double, upper: Double):
+  def contains(value: Double): Boolean =
+    value > lower && value < upper
+
+object ThresholdBand:
+  def make(lower: Double, upper: Double): Either[ColorizerError, ThresholdBand] =
+    if lower.isFinite && upper.isFinite && lower < upper then Right(new ThresholdBand(lower, upper))
+    else Left(ColorizerError.InvalidThresholdBand(lower, upper))
+
+  def unsafe(lower: Double, upper: Double): ThresholdBand =
+    make(lower, upper).fold(err => throw new IllegalArgumentException(err.message), identity)
+
+enum DisplayThreshold:
+  case Disabled
+  case TransparentBand(band: ThresholdBand)
+
+  def hides(value: Double): Boolean =
+    this match
+      case Disabled => false
+      case TransparentBand(band) => band.contains(value)
+
+object DisplayThreshold:
+  def transparentBand(lower: Double, upper: Double): Either[ColorizerError, DisplayThreshold] =
+    ThresholdBand.make(lower, upper).map(DisplayThreshold.TransparentBand.apply)
+
 trait Colorizer[A]:
   def color(value: A): Rgba32
 
@@ -32,6 +60,12 @@ trait Colorizer[A]:
     false
 
   def withWindow(window: DisplayWindow): Option[Colorizer[A]] =
+    None
+
+  def supportsThreshold: Boolean =
+    false
+
+  def withThreshold(threshold: DisplayThreshold): Option[Colorizer[A]] =
     None
 
 final case class ColorRamp(low: Rgba32, high: Rgba32):
@@ -56,16 +90,29 @@ object ColorRamp:
 final case class ScalarColorizer(
   window: DisplayWindow,
   ramp: ColorRamp = ColorRamp.Grayscale,
-  invalid: Rgba32 = Rgba32.unsafe(0, 0, 0, 0)
+  invalid: Rgba32 = Rgba32.unsafe(0, 0, 0, 0),
+  threshold: DisplayThreshold = DisplayThreshold.Disabled
 ) extends Colorizer[Double]:
   def color(value: Double): Rgba32 =
-    if value.isFinite then ramp.colorAt(window.normalize(value)) else invalid
+    if !value.isFinite then invalid
+    else if threshold.hides(value) then ScalarColorizer.Transparent
+    else ramp.colorAt(window.normalize(value))
 
   override def supportsWindow: Boolean =
     true
 
   override def withWindow(value: DisplayWindow): Option[Colorizer[Double]] =
     Some(copy(window = value))
+
+  override def supportsThreshold: Boolean =
+    true
+
+  override def withThreshold(value: DisplayThreshold): Option[Colorizer[Double]] =
+    Some(copy(threshold = value))
+
+object ScalarColorizer:
+  private val Transparent: Rgba32 =
+    Rgba32.unsafe(0, 0, 0, 0)
 
 final case class LabelColorizer(
   colors: Map[Int, Rgba32],
