@@ -2,8 +2,8 @@ package scalafim.inference
 
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.MvMap
 import scalafim.multivar.MvSpace
+import scalafim.multivar.OperatorSnapshot
 import scalafim.multivar.Spectrum
 
 enum OrderedSpectrumKind:
@@ -62,7 +62,7 @@ trait OrderedFit[F]:
   def coordinates(
       fit: F,
       domain: scalafim.multivar.SpaceId
-  ): Either[InferenceError, MvMap]
+  ): Either[InferenceError, OperatorSnapshot]
 
 trait InferenceTarget[F, A]:
   def label: TargetLabel

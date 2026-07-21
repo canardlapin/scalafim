@@ -190,7 +190,7 @@ class PlanSuite extends munit.FunSuite:
         fail("expected kernel artifact")
   }
 
-  test("local executor interprets ROI GenPCA plans as duality-diagram fits") {
+  test("local executor compiles ROI GPCA plans to generic operator fit artifacts") {
     val rois = RoiPlanSet.of("roi-plan", Vector(roi("pair", 0, 1)), featureCount = 3).toOption.get
     val plan = MultivarPlan.of(
       "local-genpca",
@@ -211,13 +211,16 @@ class PlanSuite extends munit.FunSuite:
 
     assertEquals(artifact.shape.kind, FitArtifactKind.GenPca)
     artifact match
-      case FitArtifact.GenPcaArtifact(_, fit) =>
-        assertEquals(fit.projection.map.domain.id.value, "patterns.pair")
-        assertEquals(fit.componentCount, 1)
-        assertEquals(fit.projection.diagnostics.flatMap(_.backend), Some("operator-gale-generalized-eigen"))
-        assertEquals(fit.projection.diagnostics.flatMap(_.storagePolicy), Some(StoragePolicy.AllowDense))
+      case FitArtifact.OperatorArtifact(_, Vector(fit)) =>
+        assertEquals(fit.programFit.program.objective.label, "maximize-trace")
+        assertEquals(fit.parameterFrames.length, 1)
+        assertEquals(fit.parameterFrames.head.codomain.space.id.value, "patterns.pair")
+        assertEquals(fit.parameterFrames.head.codomain.variance, CoordinateVariance.Dual)
+        assertEquals(fit.operator("scores").map(_.role), Some(OperatorRole.Score))
+        assertEquals(fit.operator("axes").map(_.role), Some(OperatorRole.Axis))
+        assertEquals(fit.diagnostics.map(_.name), Vector("generalized-residual", "normalization-residual"))
       case _ =>
-        fail("expected GenPCA artifact")
+        fail("expected generic GPCA operator artifact")
   }
 
   test("local executor interprets ROI CPCA plans with ROI-local column constraints and reused row basis") {
@@ -261,7 +264,7 @@ class PlanSuite extends munit.FunSuite:
       assertEquals(artifact.shape.features, 2)
       assertEquals(artifact.shape.components, 1)
       artifact match
-        case FitArtifact.CpcaArtifact(_, fit) =>
+        case FitArtifact.CpcaArtifact(_, fit, bundles) =>
           assertEquals(fit.featureSpace.id.value, s"patterns.$roiId")
           assertEquals(fit.rowSpace.id.value, "patterns")
           assertEquals(fit.rowConstraint.rank, 2)
@@ -269,6 +272,9 @@ class PlanSuite extends munit.FunSuite:
           assertEquals(fit.block(CpcaBlock.GxH).map(_.rank), Some(1))
           assertEquals(fit.operatorBlocks.map(_.programFit.program.objective.label), Vector("maximize-trace"))
           assertEqualsDouble(fit.partition.totalSS, expectedTotalSS, 1e-10)
+          assertEquals(bundles.length, 1)
+          assertEquals(bundles.head.parameterFrames.length, 1)
+          assertEquals(bundles.head.operator("scores").map(_.role), Some(OperatorRole.Score))
         case _ =>
           fail("expected CPCA artifact")
 

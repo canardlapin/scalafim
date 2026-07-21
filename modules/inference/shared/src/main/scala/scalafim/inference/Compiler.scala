@@ -1,21 +1,16 @@
 package scalafim.inference
 
-import scalafim.multivar.CcaFit
-import scalafim.multivar.GenPcaFit
-import scalafim.multivar.PcaFit
-import scalafim.multivar.PlscFit
-
 trait SupportsTarget[F, K <: TargetKind]
 
 object SupportsTarget:
-  given SupportsTarget[PcaFit, TargetKind.VarianceRoots] with {}
-  given SupportsTarget[GenPcaFit, TargetKind.VarianceRoots] with {}
-  given SupportsTarget[PlscFit, TargetKind.CovarianceRoots] with {}
-  given SupportsTarget[CcaFit, TargetKind.CanonicalCorrelations] with {}
-  given SupportsTarget[scalafim.multivar.ReducedRankRegressionFit, TargetKind.PredictiveGain] with {}
-  given SupportsTarget[GeneralizedEigenFit, TargetKind.GeneralizedEigenRoots] with {}
-  given SupportsTarget[CpcaInferenceFit, TargetKind.ConstrainedInertiaRoots] with {}
-  given SupportsTarget[MultiblockInferenceFit, TargetKind.MultiblockConsensusRoots] with {}
+  given SupportsTarget[PcaFitFamily, TargetKind.VarianceRoots] with {}
+  given SupportsTarget[GpcaFitFamily, TargetKind.VarianceRoots] with {}
+  given SupportsTarget[PlscFitFamily, TargetKind.CovarianceRoots] with {}
+  given SupportsTarget[CcaFitFamily, TargetKind.CanonicalCorrelations] with {}
+  given SupportsTarget[ReducedRankRegressionFitFamily, TargetKind.PredictiveGain] with {}
+  given SupportsTarget[GeneralizedEigenFitFamily, TargetKind.GeneralizedEigenRoots] with {}
+  given SupportsTarget[CpcaBlockFitFamily, TargetKind.ConstrainedInertiaRoots] with {}
+  given SupportsTarget[MultiblockConsensusFitFamily, TargetKind.MultiblockConsensusRoots] with {}
 
 trait SupportsNull[K <: TargetKind, N <: NullKind]:
   def validity: ValidityClaim
@@ -300,49 +295,49 @@ final case class DynamicInferenceSpec(
 
 enum AnyInferenceProgram:
   case Pca(value: InferenceProgram[
-      PcaFit,
+      PcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,
       DesignKind.ExchangeableRows
   ])
   case GenPca(value: InferenceProgram[
-      GenPcaFit,
+      GpcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,
       DesignKind.ExchangeableRows
   ])
   case Plsc(value: InferenceProgram[
-      PlscFit,
+      PlscFitFamily,
       TargetKind.CovarianceRoots,
       NullKind.PairedIndependence,
       DesignKind.ExchangeableRows
   ])
   case Cca(value: InferenceProgram[
-      CcaFit,
+      CcaFitFamily,
       TargetKind.CanonicalCorrelations,
       NullKind.PairedIndependence,
       DesignKind.ExchangeableRows
   ])
   case PcaBlocks(value: InferenceProgram[
-      PcaFit,
+      PcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,
       DesignKind.WithinBlockRows
   ])
   case GenPcaBlocks(value: InferenceProgram[
-      GenPcaFit,
+      GpcaFitFamily,
       TargetKind.VarianceRoots,
       NullKind.RowPermutation,
       DesignKind.WithinBlockRows
   ])
   case PlscBlocks(value: InferenceProgram[
-      PlscFit,
+      PlscFitFamily,
       TargetKind.CovarianceRoots,
       NullKind.PairedIndependence,
       DesignKind.WithinBlockRows
   ])
   case CcaBlocks(value: InferenceProgram[
-      CcaFit,
+      CcaFitFamily,
       TargetKind.CanonicalCorrelations,
       NullKind.PairedIndependence,
       DesignKind.WithinBlockRows

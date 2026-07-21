@@ -73,6 +73,25 @@ final case class GpcaOperatorFit[
   def axes: Option[Op[Primal[Component], Primal[Feature], AxisOperatorRole, UncheckedEvidence]] =
     functionalFrame.axes
 
+  def toBundle(
+      table: OpTable[Rows, Feature, ? <: OperatorEvidence]
+  ): Either[MultivarError, OperatorFitBundle] =
+    for
+      covarianceSnapshot <- OperatorSnapshot.from("covariance", DerivedOperatorKind.SecondOrder, covariance)
+      scoreSnapshot <- OperatorSnapshot.from("scores", DerivedOperatorKind.Scores, scores(table))
+      axisSnapshots <- axes match
+        case Some(value) => OperatorSnapshot.from("axes", DerivedOperatorKind.Axes, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      generalized <- FitDiagnostic.from("generalized-residual", diagnostics.generalizedResidual)
+      normalization <- FitDiagnostic.from("normalization-residual", diagnostics.normalizationResidual)
+      bundle <- OperatorFitBundle.from(
+        programFit,
+        Vector(covarianceSnapshot, scoreSnapshot) ++ axisSnapshots,
+        Vector(generalized, normalization),
+        provenance
+      )
+    yield bundle
+
 /** A GPCA problem over one typed table and its two declared geometries.
   *
   * The sufficient statistic is constructed only as `secondOrder(X, M, X)`.

@@ -129,6 +129,75 @@ class MultiblockSuite extends munit.FunSuite:
     assertMatrixClose(restricted.forward(selected).toOption.get, leftProjected.toRows, 1e-12)
   }
 
+  test("operator block partitions select typed tables and lift local frames") {
+    val global = SpaceRef(MvSpace.of("typed-multi", SpaceRole.Observed, 3).toOption.get)
+    val rows = SpaceRef(MvSpace.of("typed-rows", SpaceRole.Samples, 3).toOption.get)
+    val components = SpaceRef(MvSpace.of("typed-components", SpaceRole.Latent, 1).toOption.get)
+    val typed = OperatorBlockPartition.from(global.evidence, partition).toOption.get
+    val table = Op.fromMatrixView(
+      data,
+      CoordinateEvidence.dual(global.evidence),
+      CoordinateEvidence.primal(rows.evidence),
+      OperatorRoleWitness.table,
+      ValueIdentity.source(ValueId.unsafe("typed-multiblock-table"))
+    ).toOption.get
+    val left = typed.block(leftId).get
+    val right = typed.block(rightId).get
+    val leftWeights = Op.fromDense(
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(1.0))),
+      CoordinateEvidence.primal(components.evidence),
+      CoordinateEvidence.dual(left.space.evidence),
+      OperatorRoleWitness.frame,
+      ValueIdentity.source(ValueId.unsafe("typed-left-frame"))
+    ).toOption.get
+    val rightWeights = Op.fromDense(
+      GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
+      CoordinateEvidence.primal(components.evidence),
+      CoordinateEvidence.dual(right.space.evidence),
+      OperatorRoleWitness.frame,
+      ValueIdentity.source(ValueId.unsafe("typed-right-frame"))
+    ).toOption.get
+    val leftFrame = BlockFunctionalFrame
+      .from(left, 1.0, FunctionalFrame(leftWeights))
+      .toOption
+      .get
+    val rightFrame = BlockFunctionalFrame
+      .from(right, 0.5, FunctionalFrame(rightWeights))
+      .toOption
+      .get
+    val projection = OperatorBlockProjection
+      .from(typed, components.evidence, Vector(leftFrame, rightFrame))
+      .toOption
+      .get
+    val scores = projection.combinedScores(table).toOption.get
+
+    assertEquals(left.table(table).domain.descriptor.space, left.space.descriptor)
+    assertMatrixClose(left.table(table).toDense.toOption.get, Vector(Vector(1.0, 2.0), Vector(3.0, 4.0), Vector(5.0, 6.0)), 0.0)
+    assertMatrixClose(scores.toDense.toOption.get, Vector(Vector(8.0), Vector(17.0), Vector(26.0)), 1e-12)
+    assertMatrixClose(
+      projection.liftedFrames.head.toDense.toOption.get,
+      Vector(Vector(1.0), Vector(0.0), Vector(1.0)),
+      0.0
+    )
+    assertEquals(scores.role.value, OperatorRole.Score)
+  }
+
+  test("operator block partition and projection fail closed on foreign structure") {
+    val global = SpaceRef(MvSpace.of("typed-multi", SpaceRole.Observed, 3).toOption.get)
+    val wrong = MvSpace.of("wrong", SpaceRole.Observed, 4).toOption.get
+    assert(PreparedOperatorBlockPartition.from(wrong, partition).isLeft)
+
+    val typed = OperatorBlockPartition.from(global.evidence, partition).toOption.get
+    val components = SpaceRef(MvSpace.of("typed-components", SpaceRole.Latent, 1).toOption.get)
+    assert(
+      OperatorBlockProjection
+        .from(typed, components.evidence, Vector.empty)
+        .swap
+        .toOption
+        .exists(_.message.contains("one frame per block"))
+    )
+  }
+
   test("BlockMap weighted combination makes block score aggregation explicit") {
     val domain = MvSpace.of("multi", SpaceRole.Observed, 3).toOption.get
     val latent = MvSpace.of("shared", SpaceRole.Latent, 1).toOption.get

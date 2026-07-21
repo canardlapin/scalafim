@@ -230,7 +230,24 @@ final case class CpcaOperatorBlockFit[
     compatibility: CpcaBlockFit,
     diagnostics: CpcaOperatorDiagnostics,
     provenance: SemanticProvenance
-)
+):
+  def toBundle: Either[MultivarError, OperatorFitBundle] =
+    for
+      scores <- OperatorSnapshot.from("scores", DerivedOperatorKind.Scores, rowScores)
+      table <- OperatorSnapshot.from("block-table", DerivedOperatorKind.Projection, blockTable)
+      feature <- OperatorSnapshot.from("feature-operator", DerivedOperatorKind.SecondOrder, featureOperator)
+      axes <- featureFrame.axes match
+        case Some(value) => OperatorSnapshot.from("axes", DerivedOperatorKind.Axes, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      crossResidual <- FitDiagnostic.from("cross-residual", diagnostics.crossResidual)
+      normalizationResidual <- FitDiagnostic.from("normalization-residual", diagnostics.normalizationResidual)
+      bundle <- OperatorFitBundle.from(
+        programFit,
+        Vector(scores, table, feature) ++ axes,
+        Vector(crossResidual, normalizationResidual),
+        provenance
+      )
+    yield bundle
 
 /** Certified CPCA fit. Structural-zero blocks remain present in `blocks` but
   * intentionally have no parameter frames or variational program.
@@ -272,6 +289,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
     val rowConstraint: CpcaOperatorConstraint[Rows],
     val featureConstraint: CpcaOperatorConstraint[Feature],
     private val tableView: MatrixView,
+    val constructionTolerance: Double,
     val provenance: SemanticProvenance
 ):
   def fit(
@@ -671,7 +689,7 @@ object CpcaOperatorProblem:
       "cpca-compatibility-adapter"
     )
 
-  private def fromPrepared[Rows <: SemanticSpace, Feature <: SemanticSpace](
+  private[multivar] def fromPrepared[Rows <: SemanticSpace, Feature <: SemanticSpace](
       rows: SpaceEvidence[Rows],
       features: SpaceEvidence[Feature],
       tableView: MatrixView,
@@ -729,6 +747,7 @@ object CpcaOperatorProblem:
         rowConstraint,
         featureConstraint,
         tableView,
+        tolerance,
         provenance
       )
 
@@ -768,6 +787,49 @@ final class PreparedCpcaOperatorProblem private[multivar] (
 )(
     val value: CpcaOperatorProblem[rows.Id, features.Id]
 ):
+  def tableDense: Either[MultivarError, DMat] =
+    cpcaSemantic(value.table.toDense)
+
+  /** Rebind a resampled or residualized table to the already resolved CPCA
+    * geometry. Statistical constraints are re-certified against the same
+    * nominal spaces; no legacy diagram or map is reconstructed.
+    */
+  def withTable(
+      table: MatrixView,
+      provenanceLabel: String
+  ): Either[MultivarError, PreparedCpcaOperatorProblem] =
+    if table.rows != rows.descriptor.size || table.cols != features.descriptor.size then
+      Left(
+        MultivarError.MatrixShapeMismatch(
+          s"replacement CPCA table is ${table.rows}x${table.cols}, expected ${rows.descriptor.size}x${features.descriptor.size}"
+        )
+      )
+    else
+      val cleanLabel = provenanceLabel.trim
+      if cleanLabel.isEmpty then Left(MultivarError.InvalidId("CPCA replacement provenance", provenanceLabel, "must be non-empty"))
+      else
+        val source = ValueIdentity.derived("cpca-replaced-table", value.table.valueIdentity)
+        val provenance = value.provenance.append(
+          SemanticProvenanceEvent.Derived(cleanLabel, Vector(value.table.valueIdentity))
+        )
+        for
+          rowMetric <- cpcaSemantic(value.rowMetric.toDense)
+          featureMetric <- cpcaSemantic(value.featureMetric.toDense)
+          problem <- CpcaOperatorProblem.fromPrepared(
+            rows.evidence,
+            features.evidence,
+            table,
+            rowMetric,
+            featureMetric,
+            value.rowConstraint.constraint,
+            value.featureConstraint.constraint,
+            DenseSolvers.symmetricEigen,
+            value.constructionTolerance,
+            source,
+            provenance
+          )
+        yield new PreparedCpcaOperatorProblem(rows, features)(problem)
+
   def fit(
       blockRequest: CpcaBlockRequest,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,

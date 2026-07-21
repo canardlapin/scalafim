@@ -51,6 +51,33 @@ final case class PairedOperatorFit[
   def targetWeights: Either[MultivarError, DMat] =
     pairedSemantic(targetFrame.weights.toDense)
 
+  def toBundle[SourceRows <: SemanticSpace, TargetRows <: SemanticSpace](
+      sourceTable: OpTable[SourceRows, SourceFeature, ? <: OperatorEvidence],
+      targetTable: OpTable[TargetRows, TargetFeature, ? <: OperatorEvidence]
+  ): Either[MultivarError, OperatorFitBundle] =
+    for
+      crossSnapshot <- OperatorSnapshot.from("cross", DerivedOperatorKind.SecondOrder, cross)
+      sourceScores <- OperatorSnapshot.from("source-scores", DerivedOperatorKind.Scores, sourceFrame.scores(sourceTable))
+      targetScores <- OperatorSnapshot.from("target-scores", DerivedOperatorKind.Scores, targetFrame.scores(targetTable))
+      sourceAxes <- sourceFrame.axes match
+        case Some(value) => OperatorSnapshot.from("source-axes", DerivedOperatorKind.Axes, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      targetAxes <- targetFrame.axes match
+        case Some(value) => OperatorSnapshot.from("target-axes", DerivedOperatorKind.Axes, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      coefficientSnapshot <- coefficient match
+        case Some(value) => OperatorSnapshot.from("coefficient", DerivedOperatorKind.Coefficient, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      crossResidual <- FitDiagnostic.from("cross-residual", diagnostics.crossResidual)
+      normalizationResidual <- FitDiagnostic.from("normalization-residual", diagnostics.normalizationResidual)
+      bundle <- OperatorFitBundle.from(
+        programFit,
+        Vector(crossSnapshot, sourceScores, targetScores) ++ sourceAxes ++ targetAxes ++ coefficientSnapshot,
+        Vector(crossResidual, normalizationResidual),
+        provenance
+      )
+    yield bundle
+
 /** Typed paired sufficient statistics and their common generalized cross-SVD
   * lowering. Cross-view matching is entirely represented by `relationship`;
   * neither the objective nor the solver assumes positional row equality.
@@ -418,6 +445,16 @@ final class PairedOperatorProblem[
   ): Either[MultivarError, Op[Dual[Feature], Primal[Feature], R, CertifiedSpd]] =
     val identity = ValueIdentity.derived(label, source)
     for
+      tolerance <- pairedSemantic(CertificateTolerance.from(1e-12, 1e-12))
+      context <- pairedSemantic(
+        CertificateContext.from(
+          tolerance,
+          CertificateNorm.Frobenius,
+          "paired-spd-normalization",
+          "gale",
+          NumericalPrecision.Float64
+        )
+      )
       linear <- pairedSemantic(
         Lin.fromDenseMatrix(
           dense,
@@ -427,7 +464,7 @@ final class PairedOperatorProblem[
           provenance.append(SemanticProvenanceEvent.Derived(label, Vector(source)))
         )
       )
-      certificate <- pairedSemantic(FormCertificates.spd(linear))
+      certificate <- pairedSemantic(FormCertificates.spd(linear, context))
       certified <- pairedSemantic(Op.certifiedSpd(Op.fromLin(linear, role), certificate))
     yield certified
 

@@ -1,6 +1,6 @@
 # Multivar operator core — single-layer target architecture
 
-Status: **target** (not yet implemented). Supersedes the *dual-layer* arrangement
+Status: **implementation in progress**. Supersedes the *dual-layer* arrangement
 described in [`multivar-duality-constitution.md`](multivar-duality-constitution.md).
 The constitution's twelve invariants remain binding; this document adds the
 structural collapse that makes them hold in *one* layer instead of two, and
@@ -570,9 +570,9 @@ exercise.
 | Row relationships, direct sums, and multiset objectives | `RowRelationships.scala`, `DirectSumStudy.scala`, `MultisetObjectives.scala`, `MultisetAssociation.scala` | multiset/direct-sum `bd-01KXSGZ3QX4H8M6Y3NQXHJHAD5` |
 | CPCA | Migrated: `CpcaOperatorProblem.scala` is the canonical typed problem and block-program fit; `Plans.scala` constructs it directly; `Cpca.fit`, `CpcaProblem`, and resolved `MvMap` constraints remain named compatibility delegates for purge | CPCA `bd-01KXZZ2DYHE40YAB7R4K3SPKX3`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 | Kernel and Nyström | `Kernel.scala` | kernel/Nyström `bd-01KXZZ2E8NERAS8W8Z2HKJE9RT` |
-| Multiblock, transformations, row geometry, plans, and fit artifacts | `BlockPartition.scala`, `Multiblock.scala`, `SemanticTransformations.scala`, `RowGeometry.scala`, `Plans.scala`, `PairedLatent.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4` |
-| Inference consumers of multivar problems, capabilities, and block protocols | `inference/Problems.scala`, `inference/Capabilities.scala`, `inference/Compiler.scala`, `inference/BlockFamilyProtocols.scala` | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, verified by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |
-| Portable wire representation | `modules/multivar-ir` operator, program, frame, rewrite, and result records | wire IR `bd-01KXSGZ39BHVZ8YJ2XYDRSHKWP` |
+| Multiblock, transformations, row geometry, plans, and fit artifacts | Migrated: `Multiblock.scala` exposes typed block partitions and lifted frames; `RowGeometry.scala` freezes whitening-derived metric/row-link operators with explicit certificate tolerance; `OperatorFit.scala` is the generic fit/snapshot boundary; `Plans.scala` emits generic operator fits. Legacy `BlockMap`, estimator requests, and projection records are compatibility-only until purge. | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, then purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
+| Inference consumers of multivar problems, capabilities, and block protocols | Migrated: fit descriptors are semantic family markers, ordered coordinates are typed `OperatorSnapshot` values, and CPCA inference rebuilds `PreparedCpcaOperatorProblem` directly without a legacy diagram/problem. | plumbing/artifacts `bd-01KXZZ2ENAYNANJ02HDEQT07D4`, verified by release gate `bd-01KXZZ2FAPEGV5MQX8EH9973QM` |
+| Portable wire representation | `modules/multivar-ir` operator, program, frame, rewrite, result, and realized lifecycle-plan records. `OperatorPlanIr` binds every ROI to semantic program ids and deliberately excludes estimator and solver dispatch. | wire IR `bd-01KXSGZ39BHVZ8YJ2XYDRSHKWP`, lifecycle completion `bd-01KXZZ2ENAYNANJ02HDEQT07D4` |
 | Legacy aliases and compatibility delegates remaining after all migrations | repository-wide scan for `MvMetric`, `MvMap`, legacy `DualityDiagram`, raw `GenPca`, and `PairedGmd` | purge `bd-01KXZZ2EZR8YGHYVP18KTDJKG3` |
 
 LDA is new proof code rather than a legacy consumer and is owned by

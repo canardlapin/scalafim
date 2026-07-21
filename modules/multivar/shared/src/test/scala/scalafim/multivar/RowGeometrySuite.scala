@@ -138,6 +138,50 @@ class RowGeometrySuite extends munit.FunSuite:
     )
   }
 
+  test("row whitening freezes as a certified typed metric and row relation") {
+    val blocks = Vector(
+      IndexSet.from(Vector(0, 2), IndexAxis.Row).toOption.get,
+      IndexSet.from(Vector(1), IndexAxis.Row).toOption.get
+    )
+    val whitening = RowWhitening.blockCholesky(
+      rows = 3,
+      blocks = blocks,
+      upperCholesky = Vector(
+        GaleNumerics.matrixFromRows(Vector(Vector(2.0, 1.0), Vector(0.0, 3.0))),
+        GaleNumerics.matrixFromRows(Vector(Vector(4.0)))
+      )
+    ).toOption.get
+    val rows = MvSpace.of("operator-rows", SpaceRole.Samples, 3).toOption.get
+    val geometry = whitening.toOperatorGeometry(rows, tolerance = 1e-9).toOption.get
+    val expectedRoot = whitening.whiten(DMat.eye(3)).toOption.get
+    val expected = GaleNumerics.crossProduct(expectedRoot)
+
+    assertEquals(geometry.space.descriptor, rows)
+    assertEquals(geometry.metric.domain.descriptor.variance, CoordinateVariance.Primal)
+    assertEquals(geometry.metric.codomain.descriptor.variance, CoordinateVariance.Dual)
+    assertEquals(geometry.relation.role.value, OperatorRole.RowLink)
+    assertEquals(geometry.evidence.mode, RowWhiteningMode.BlockCholesky)
+    assertEquals(geometry.evidence.certificate.claim.property, "spd")
+    assertEqualsDouble(geometry.evidence.tolerance.absolute, 1e-9, 0.0)
+    assertMatrixClose(geometry.metric.toDense.toOption.get, expected, 1e-12)
+    assertMatrixClose(geometry.relation.toDense.toOption.get, expected, 1e-12)
+  }
+
+  test("row whitening operator bridge rejects nominal-space and tolerance mismatches") {
+    val whitening = RowWhitening.identity(2).toOption.get
+    val wrongRows = MvSpace.of("wrong-rows", SpaceRole.Samples, 3).toOption.get
+    val rows = MvSpace.of("rows", SpaceRole.Samples, 2).toOption.get
+
+    assert(whitening.toOperatorGeometry(wrongRows).swap.toOption.exists {
+      case MultivarError.InvalidRowGeometry(detail) => detail.contains("has 3")
+      case _                                        => false
+    })
+    assertInvalidTolerance(
+      whitening.toOperatorGeometry(rows, tolerance = Double.NaN),
+      "row operator geometry tolerance"
+    )
+  }
+
   test("grouped identity row whitening validates block coverage and acts as identity") {
     val blocks = Vector(
       IndexSet.from(Vector(0, 2), IndexAxis.Row).toOption.get,

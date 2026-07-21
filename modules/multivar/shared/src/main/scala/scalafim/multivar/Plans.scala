@@ -416,16 +416,26 @@ final case class FitArtifactShape(
 
 enum FitArtifact:
   case BiProjectionArtifact(artifactShape: FitArtifactShape, projection: BiProjection)
-  case GenPcaArtifact(artifactShape: FitArtifactShape, fit: GenPcaFit)
-  case CpcaArtifact(artifactShape: FitArtifactShape, fit: PreparedCpcaOperatorFit)
+  case OperatorArtifact(artifactShape: FitArtifactShape, fits: Vector[OperatorFitBundle])
+  case CpcaArtifact(
+      artifactShape: FitArtifactShape,
+      fit: PreparedCpcaOperatorFit,
+      fits: Vector[OperatorFitBundle]
+  )
   case KernelArtifact(artifactShape: FitArtifactShape, fit: NystromFit)
 
   def shape: FitArtifactShape =
     this match
       case BiProjectionArtifact(value, _) => value
-      case GenPcaArtifact(value, _)       => value
-      case CpcaArtifact(value, _)         => value
+      case OperatorArtifact(value, _)     => value
+      case CpcaArtifact(value, _, _)      => value
       case KernelArtifact(value, _)       => value
+
+  def operatorFits: Vector[OperatorFitBundle] =
+    this match
+      case OperatorArtifact(_, values) => values
+      case CpcaArtifact(_, _, values)  => values
+      case _                           => Vector.empty
 
 final case class LocalMultivarResult(plan: MultivarPlan, artifacts: Vector[FitArtifact]):
   require(artifacts.nonEmpty, "local multivar result must contain at least one artifact")
@@ -462,15 +472,32 @@ object LocalMultivarExecutor:
           Dimension.unsafe(input.cols)
         )
         for
-          diagram <- DualityDiagram.from(
+          preprocessor <- preprocessing.fit(input)
+          transformed <- preprocessor.transform(input, policy = policy)
+          rowGeometry <- rowMetric match
+            case Some(value) => Right(value)
+            case None        => MvMetric.identity(input.rows, Some(rowSpace))
+          featureGeometry <- columnMetric match
+            case Some(value) => Right(value)
+            case None        => MvMetric.identity(input.cols, Some(columnSpace))
+          tolerance <- GpcaRankTolerance.fromBackend(backend)
+          problem <- DynamicGpcaProblem.from(
+            transformed,
             input,
-            rowMetric = rowMetric,
-            columnMetric = columnMetric,
-            rowSpace = Some(rowSpace),
-            columnSpace = Some(columnSpace)
+            preprocessor,
+            rowSpace,
+            columnSpace,
+            rowGeometry,
+            featureGeometry,
+            ValueIdentity.source(ValueId.unsafe(s"${plan.id.value}.${roi.id.value}.planned-gpca")),
+            SemanticProvenance.source(s"planned-gpca:${plan.id.value}:${roi.id.value}")
           )
-          fit <- GenPca.fit(diagram, components, preprocessing, backend, policy, DenseSolvers.symmetricEigen, DenseSolvers.svd)
-        yield FitArtifact.GenPcaArtifact(shape(plan, roi, FitArtifactKind.GenPca, input, fit.componentCount), fit)
+          fit <- problem.fit(components, tolerance, DenseSolvers.generalizedEigen)
+          bundle <- fit.toBundle(problem.value.table)
+        yield FitArtifact.OperatorArtifact(
+          shape(plan, roi, FitArtifactKind.GenPca, input, fit.generalizedEigenvalues.length),
+          Vector(bundle)
+        )
       case MultivarEstimator.Cpca(spec) =>
         val rowSpace = MvSpace(plan.input.id, SpaceRole.Samples, plan.input.samples)
         val columnSpace = MvSpace(
@@ -500,7 +527,12 @@ object LocalMultivarExecutor:
             rankTolerance = spec.rankTolerance,
             policy = spec.storagePolicy
           )
-        yield FitArtifact.CpcaArtifact(shape(plan, roi, FitArtifactKind.Cpca, input, cpcaComponentCount(fit)), fit)
+          bundles <- MatrixOps.traverse(fit.operatorBlocks)(_.toBundle)
+        yield FitArtifact.CpcaArtifact(
+          shape(plan, roi, FitArtifactKind.Cpca, input, cpcaComponentCount(fit)),
+          fit,
+          bundles
+        )
       case MultivarEstimator.Nystrom(components, landmarks, kernelSpec, preprocessing, method) =>
         for
           kernel <- PlanOps.kernelFromSpec(kernelSpec)

@@ -224,6 +224,26 @@ final case class LdaOperatorFit[
       Op[Primal[Component], Primal[OtherRows], ScoreOperatorRole, UncheckedEvidence] =
     functionalFrame.scores(table)
 
+  def toBundle(
+      table: OpTable[Rows, Feature, ? <: OperatorEvidence]
+  ): Either[MultivarError, OperatorFitBundle] =
+    for
+      betweenSnapshot <- OperatorSnapshot.from("between-scatter", DerivedOperatorKind.SecondOrder, between)
+      withinSnapshot <- OperatorSnapshot.from("within-scatter", DerivedOperatorKind.SecondOrder, within)
+      realizedSnapshot <- OperatorSnapshot.from("realized-within", DerivedOperatorKind.SecondOrder, realizedWithin)
+      scoreSnapshot <- OperatorSnapshot.from("scores", DerivedOperatorKind.Scores, scores(table))
+      axisSnapshots <- functionalFrame.axes match
+        case Some(value) => OperatorSnapshot.from("axes", DerivedOperatorKind.Axes, value).map(Vector(_))
+        case None        => Right(Vector.empty)
+      residual <- FitDiagnostic.from("stationarity-residual", diagnostics.residual)
+      bundle <- OperatorFitBundle.from(
+        programFit,
+        Vector(betweenSnapshot, withinSnapshot, realizedSnapshot, scoreSnapshot) ++ axisSnapshots,
+        Vector(residual),
+        provenance
+      )
+    yield bundle
+
 /** LDA is a typed assembly of class relations and two second-order operators.
   * It owns no eigensolver: Fisher delegates to [[GeneralizedRayleighRitz]] and
   * trace-ratio delegates to [[TraceRatioOptimization]].

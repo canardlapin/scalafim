@@ -4,17 +4,16 @@ import gale.linalg.DMat
 import gale.linalg.DVec
 import scalafim.multivar.BlockPartition
 import scalafim.multivar.ComponentCount
-import scalafim.multivar.Cpca
 import scalafim.multivar.CpcaBlock
 import scalafim.multivar.CpcaBlockRequest
-import scalafim.multivar.CpcaProblem
 import scalafim.multivar.DenseSolvers
-import scalafim.multivar.DualityDiagram
 import scalafim.multivar.MatrixView
+import scalafim.multivar.PreparedCpcaOperatorFit
+import scalafim.multivar.PreparedCpcaOperatorProblem
 import scalafim.multivar.StoragePolicy
 
 final case class CpcaInferenceState private[inference] (
-    problem: CpcaProblem,
+    problem: PreparedCpcaOperatorProblem,
     block: CpcaBlock,
     components: ComponentCount,
     removed: Int
@@ -27,7 +26,7 @@ final case class CpcaInferenceFit(
 
 object CpcaInferenceState:
   def from(
-      problem: CpcaProblem,
+      problem: PreparedCpcaOperatorProblem,
       block: CpcaBlock,
       components: ComponentCount
   ): Either[InferenceError, CpcaInferenceState] =
@@ -59,9 +58,9 @@ final case class CpcaBlockProtocol(
       replicate: ReplicateId,
       random: RandomSource
   ): Either[InferenceError, Double] =
-    random.permutation(state.problem.rows).flatMap { case (permutation, _) =>
+    random.permutation(state.problem.rows.descriptor.size).flatMap { case (permutation, _) =>
       for
-        dense <- adapt("CPCA table materialization", state.problem.diagram.table.toDense(StoragePolicy.AllowDense))
+        dense <- adapt("CPCA table materialization", state.problem.tableDense)
         permuted = dense.selectRows(permutation)
         next <- rebuild(state, permuted)
         value <- observed(next)
@@ -82,7 +81,7 @@ final case class CpcaBlockProtocol(
             .left.map(error => InferenceError.NumericalFailure("CPCA removal component", error.message))
             .flatMap(one => adapt("CPCA block reconstruction", blockFit.reconstructOriginal(Some(one))))
             .flatMap { reconstruction =>
-              adapt("CPCA table materialization", state.problem.diagram.table.toDense(StoragePolicy.AllowDense))
+              adapt("CPCA table materialization", state.problem.tableDense)
                 .map(FamilyBlockMatrices.subtract(_, reconstruction))
             }
       next <- rebuild(state, residual)
@@ -104,20 +103,19 @@ final case class CpcaBlockProtocol(
           ))
     }
 
-  private def fitRaw(state: CpcaInferenceState): Either[InferenceError, scalafim.multivar.CpcaFit] =
+  private def fitRaw(state: CpcaInferenceState): Either[InferenceError, PreparedCpcaOperatorFit] =
     CpcaBlockRequest.from(
       Vector(state.block),
       defaultComponents = Some(state.components)
     )
       .left.map(error => InferenceError.NumericalFailure("CPCA block request", error.message))
       .flatMap(request =>
-        Cpca.fit(
-          state.problem,
+        state.problem.fit(
           request,
-          DenseSolvers.symmetricEigen,
-          DenseSolvers.svd,
-          rankTolerance,
-          StoragePolicy.AllowDense
+          eigenSolver = DenseSolvers.symmetricEigen,
+          svdSolver = DenseSolvers.svd,
+          rankTolerance = rankTolerance,
+          policy = StoragePolicy.AllowDense
         ).left.map(error => InferenceError.NumericalFailure("CPCA inference fit", error.message))
       )
 
@@ -125,21 +123,10 @@ final case class CpcaBlockProtocol(
       state: CpcaInferenceState,
       table: DMat
   ): Either[InferenceError, CpcaInferenceState] =
-    val current = state.problem.diagram
-    for
-      diagram <- adapt("CPCA null diagram", DualityDiagram.from(
-        MatrixView.dense(table),
-        rowMetric = Some(current.rowMetric),
-        columnMetric = Some(current.columnMetric),
-        rowSpace = Some(current.rowSpace),
-        columnSpace = Some(current.columnSpace)
-      ))
-      problem <- adapt("CPCA null problem", CpcaProblem.from(
-        diagram,
-        state.problem.rowConstraint,
-        state.problem.columnConstraint
-      ))
-    yield state.copy(problem = problem)
+    adapt(
+      "CPCA null operator problem",
+      state.problem.withTable(MatrixView.dense(table), "cpca-inference-resample")
+    ).map(problem => state.copy(problem = problem))
 
   private def adapt[A](
       role: String,

@@ -8,13 +8,14 @@ import scalafim.multivar.BlockSpec
 import scalafim.multivar.ComponentCount
 import scalafim.multivar.CpcaBlock
 import scalafim.multivar.CpcaConstraint
-import scalafim.multivar.CpcaProblem
+import scalafim.multivar.CpcaOperatorProblem
 import scalafim.multivar.Dimension
-import scalafim.multivar.DualityDiagram
 import scalafim.multivar.IndexAxis
 import scalafim.multivar.IndexSet
 import scalafim.multivar.MatrixView
+import scalafim.multivar.MvSpace
 import scalafim.multivar.SpaceId
+import scalafim.multivar.SpaceRole
 import scala.compiletime.testing.typeCheckErrors
 
 class Phase6ProtocolSuite extends munit.FunSuite:
@@ -136,23 +137,17 @@ class Phase6ProtocolSuite extends munit.FunSuite:
 
   test("CPCA block inference matches an independently projected base-R SVD") {
     val data = matrix(Phase6RReferenceFixtures.cpcaData)
-    val diagram = acceptedMultivar(DualityDiagram.from(MatrixView.dense(data)))
-    val rowConstraint = acceptedMultivar(CpcaConstraint.basis(
-      IndexAxis.Row,
-      diagram.rowSpace,
-      matrix(Phase6RReferenceFixtures.cpcaRowDesign),
-      diagram.rowMetric
-    ))
-    val columnConstraint = acceptedMultivar(CpcaConstraint.basis(
-      IndexAxis.Column,
-      diagram.columnSpace,
-      matrix(Phase6RReferenceFixtures.cpcaColumnDesign),
-      diagram.columnMetric
-    ))
-    val problem = acceptedMultivar(CpcaProblem.from(
-      diagram,
-      rowConstraint,
-      columnConstraint
+    val rowSpace = acceptedMultivar(MvSpace.of("cpca-inference-rows", SpaceRole.Samples, data.rows))
+    val featureSpace = acceptedMultivar(MvSpace.of("cpca-inference-features", SpaceRole.Observed, data.cols))
+    val problem = acceptedMultivar(CpcaOperatorProblem.fromMatrices(
+      MatrixView.dense(data),
+      rowMetric = None,
+      featureMetric = None,
+      rowConstraint = CpcaConstraint.Basis(matrix(Phase6RReferenceFixtures.cpcaRowDesign)),
+      featureConstraint = CpcaConstraint.Basis(matrix(Phase6RReferenceFixtures.cpcaColumnDesign)),
+      rowSpace = rowSpace,
+      featureSpace = featureSpace,
+      provenanceLabel = "cpca-inference-fixture"
     ))
     val state = accepted(CpcaInferenceState.from(
       problem,

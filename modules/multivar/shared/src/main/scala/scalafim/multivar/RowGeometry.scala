@@ -46,6 +46,17 @@ trait RowWhitening:
 
   def solve(input: DMat): Either[MultivarError, DMat]
 
+  /** Freeze this fitted whitening as certified operator geometry on one nominal
+    * row space. The returned metric is the induced form `W* W`; its row-link is
+    * a role-refined view of that same certified value.
+    */
+  final def toOperatorGeometry(
+      space: MvSpace,
+      tolerance: Double = 1e-10,
+      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen
+  ): Either[MultivarError, PreparedRowOperatorGeometry] =
+    RowOperatorGeometry.from(this, space, tolerance, eigenSolver)
+
 type RowMetric = RowWhitening
 
 final case class IdentityRowWhitening private[multivar] (
@@ -203,6 +214,84 @@ object RowWhitening:
     error match
       case Some(value) => Left(value)
       case None        => Right(())
+
+/** Numerical evidence retained at the row-whitening/operator boundary. */
+final case class RowOperatorGeometryEvidence(
+    mode: RowWhiteningMode,
+    tolerance: CertificateTolerance,
+    certificate: NumericalCertificate
+):
+  require(certificate.context.tolerance == tolerance, "row geometry certificate must use the declared tolerance")
+
+/** Existential wrapper for a row metric whose nominal space is known only when
+  * the study is assembled. The row link is a certified role-refinement of the
+  * same numerical action, with its own derived value identity.
+  */
+final class PreparedRowOperatorGeometry private[multivar] (
+    val space: SpaceRef,
+    val evidence: RowOperatorGeometryEvidence
+)(
+    val metric: OpMetric[space.Id, CertifiedSpd],
+    val relation: OpRowLink[space.Id, space.Id, CertifiedSpd]
+):
+  require(metric.certificate.status == relation.certificate.status, "row relation must preserve the metric evidence status")
+
+object RowOperatorGeometry:
+  def from(
+      whitening: RowWhitening,
+      space: MvSpace,
+      tolerance: Double = 1e-10,
+      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen
+  ): Either[MultivarError, PreparedRowOperatorGeometry] =
+    if whitening.rows != space.size then
+      Left(
+        MultivarError.InvalidRowGeometry(
+          s"row whitening has ${whitening.rows} rows but nominal space '${space.id.value}' has ${space.size}"
+        )
+      )
+    else
+      val ref = SpaceRef(space)
+      val identity = ValueIdentity.source(ValueId.unsafe(s"${space.id.value}.row-whitening-metric"))
+      val provenance = SemanticProvenance
+        .source("row-whitening-operator-geometry")
+        .append(SemanticProvenanceEvent.Derived(s"row-whitening:${whitening.mode}", Vector.empty))
+      for
+        _ <- RowGeometryOps.requireTolerance("row operator geometry tolerance", tolerance)
+        certificateTolerance <- rowGeometrySemantic(CertificateTolerance.from(tolerance, tolerance))
+        context <- rowGeometrySemantic(
+          CertificateContext.from(
+            certificateTolerance,
+            CertificateNorm.Frobenius,
+            "row-whitening-induced-metric",
+            "gale",
+            NumericalPrecision.Float64,
+            Some(s"whitening-mode=${whitening.mode}")
+          )
+        )
+        root <- whitening.whiten(DMat.eye(whitening.rows))
+        dense = GaleNumerics.crossProduct(root)
+        linear <- rowGeometrySemantic(
+          Lin.fromDenseMatrix(
+            dense,
+            CoordinateEvidence.primal(ref.evidence),
+            CoordinateEvidence.dual(ref.evidence),
+            identity,
+            provenance
+          )
+        )
+        certificate <- rowGeometrySemantic(FormCertificates.spd(linear, context, eigenSolver))
+        metric <- rowGeometrySemantic(
+          Op.certifiedSpd(Op.fromLin(linear, OperatorRoleWitness.metric), certificate)
+        )
+        relation = metric.retag(OperatorRoleWitness.rowLink, "row-whitening-row-link")
+      yield
+        new PreparedRowOperatorGeometry(
+          ref,
+          RowOperatorGeometryEvidence(whitening.mode, certificateTolerance, certificate.runtime)
+        )(metric, relation)
+
+  private def rowGeometrySemantic[A](value: Either[SemanticError, A]): Either[MultivarError, A] =
+    value.left.map(error => MultivarError.InvalidRowGeometry(error.message))
 
 object RowMetric:
   def identity(rows: Int): Either[MultivarError, RowWhitening] =

@@ -1,37 +1,41 @@
 package scalafim.inference
 
-import scalafim.multivar.CcaFit
-import scalafim.multivar.GenPcaFit
-import scalafim.multivar.PcaFit
-import scalafim.multivar.PlscFit
-import scalafim.multivar.ReducedRankRegressionFit
+sealed trait OperatorFitFamily
+sealed trait PcaFitFamily extends OperatorFitFamily
+sealed trait GpcaFitFamily extends OperatorFitFamily
+sealed trait PlscFitFamily extends OperatorFitFamily
+sealed trait CcaFitFamily extends OperatorFitFamily
+sealed trait ReducedRankRegressionFitFamily extends OperatorFitFamily
+sealed trait GeneralizedEigenFitFamily extends OperatorFitFamily
+sealed trait CpcaBlockFitFamily extends OperatorFitFamily
+sealed trait MultiblockConsensusFitFamily extends OperatorFitFamily
 
 trait FitDescriptor[F]:
   def label: String
 
 object FitDescriptor:
-  case object Pca extends FitDescriptor[PcaFit]:
+  case object Pca extends FitDescriptor[PcaFitFamily]:
     override val label: String = "pca"
 
-  case object GenPca extends FitDescriptor[GenPcaFit]:
+  case object GenPca extends FitDescriptor[GpcaFitFamily]:
     override val label: String = "genpca"
 
-  case object Plsc extends FitDescriptor[PlscFit]:
+  case object Plsc extends FitDescriptor[PlscFitFamily]:
     override val label: String = "plsc"
 
-  case object Cca extends FitDescriptor[CcaFit]:
+  case object Cca extends FitDescriptor[CcaFitFamily]:
     override val label: String = "cca"
 
-  case object ReducedRankRegression extends FitDescriptor[ReducedRankRegressionFit]:
+  case object ReducedRankRegression extends FitDescriptor[ReducedRankRegressionFitFamily]:
     override val label: String = "reduced-rank-regression"
 
-  case object GeneralizedEigen extends FitDescriptor[GeneralizedEigenFit]:
+  case object GeneralizedEigen extends FitDescriptor[GeneralizedEigenFitFamily]:
     override val label: String = "generalized-eigen"
 
-  case object CpcaBlock extends FitDescriptor[CpcaInferenceFit]:
+  case object CpcaBlock extends FitDescriptor[CpcaBlockFitFamily]:
     override val label: String = "cpca-block"
 
-  case object MultiblockConsensus extends FitDescriptor[MultiblockInferenceFit]:
+  case object MultiblockConsensus extends FitDescriptor[MultiblockConsensusFitFamily]:
     override val label: String = "multiblock-consensus"
 
 enum SequentialBoundary:
