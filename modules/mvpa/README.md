@@ -181,6 +181,28 @@ val rsa =
   )
 ```
 
+Operator-backed data also has an exact crossvalidated RSA path. It accumulates
+the condition Gram fold by fold through adjoint operator products and never
+requests the sample-by-feature table. `OperatorCrossnobisAnalysis` emits the
+ordinary labeled RDM payload; `OperatorCrossnobisRsaAnalysis` feeds that same
+RDM to the existing Pearson, Spearman, or partial-Pearson model scorers:
+
+```scala
+val rsa =
+  OperatorCrossnobisRsaAnalysis(
+    models = Vector(targetModel),
+    scorer = RdmScorer.PartialPearson.unsafe(Vector(controlModel)),
+    storeObservedRdm = true
+  )
+
+val result =
+  MvpaEngine.runSource(operatorSource, plan, labels, rsa, Some(folds))
+```
+
+The computation retains signed crossnobis distances, including negative null
+estimates. Its metrics expose a zero trial-pattern materialization count and a
+fold-independent upper bound on working storage owned by the reduction.
+
 Samplewise RSA is the ScalaFIM equivalent of rMVPA's `vector_rsa_model`. It
 keeps the reference RDM item labels unique, then maps repeated sample rows onto
 those items and block labels. For each sample, it correlates the neural

@@ -12,6 +12,15 @@ by the operator path. Its `OperatorPatternSource` pushes each ROI feature
 selection into the run's time-series columns before composing with the trial
 readout, avoiding whole-feature-axis work for small MVPA regions.
 
+`OperatorCrossnobisAnalysis` and `OperatorCrossnobisRsaAnalysis` are the
+beta-free representational path. They apply the adjoint of the composed
+readout/response operator to fold-local condition averages, reduce those
+statistics directly to a crossvalidated condition Gram, and reuse the ordinary
+labeled RDM/RSA payloads and model scorers. Temporal nuisance remains inside
+the prepared `TrialReadout`; model-RDM nuisance remains an explicit
+`RdmScorer.PartialPearson` control. No trial-by-feature coefficient table is
+created between those two domains.
+
 `OneShotMvpaTask` and `OneShotMvpaEngine` target the existing
 `RoiOutcome`/`MvpaResult` surface through the canonical typed `MvpaTask` and
 `MvpaEngine` boundaries. They accept `OperatorRoiAnalysis`; dense analyses remain
