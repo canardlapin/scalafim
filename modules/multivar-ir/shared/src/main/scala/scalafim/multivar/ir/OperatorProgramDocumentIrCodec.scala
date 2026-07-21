@@ -18,7 +18,8 @@ private object ProgramIrEncoder:
       "programs" -> arr(value.programs.map(program)),
       "rewrites" -> arr(value.rewrites.map(rewrite)),
       "fits" -> arr(value.fits.map(fit)),
-      "operator_policies" -> arr(value.operatorPolicies.map(operatorPolicy))
+      "operator_policies" -> arr(value.operatorPolicies.map(operatorPolicy)),
+      "composite_lowerings" -> arr(value.compositeLowerings.map(compositeLowering))
     )
 
   private def space(value: SpaceIr): IrJson =
@@ -355,6 +356,43 @@ private object ProgramIrEncoder:
       case ProgramPreservationClaimIr.EvidenceDowngraded(reason) =>
         obj("kind" -> Str("evidence_downgraded"), "reason" -> Str(reason))
 
+  private def compositeLowering(value: ProgramCompositeLoweringIr): IrJson =
+    obj(
+      "id" -> Str(value.id),
+      "program_id" -> Str(value.programId),
+      "term" -> loweredTerm(value.term),
+      "target_operator" -> Str(value.targetOperator),
+      "method" -> Str(splitMethod(value.method)),
+      "available_capabilities" -> arr(value.availableCapabilities.map(method => Str(splitMethod(method)))),
+      "auxiliary" -> auxiliaryConstraint(value.auxiliary),
+      "provenance" -> arr(value.provenance.map(provenance))
+    )
+
+  private def loweredTerm(value: ProgramLoweredTermIr): IrJson =
+    value match
+      case ProgramLoweredTermIr.Penalty(index) => obj("kind" -> Str("penalty"), "index" -> Num(index))
+      case ProgramLoweredTermIr.Constraint(index) => obj("kind" -> Str("constraint"), "index" -> Num(index))
+
+  private def auxiliaryConstraint(value: ProgramAuxiliaryConstraintIr): IrJson =
+    obj(
+      "variable_id" -> Str(value.variableId),
+      "target" -> target(value.target),
+      "equation" -> auxiliaryEquation(value.equation)
+    )
+
+  private def auxiliaryEquation(value: ProgramAuxiliaryEquationIr): IrJson =
+    value match
+      case ProgramAuxiliaryEquationIr.TargetCopy => obj("kind" -> Str("target_copy"))
+      case ProgramAuxiliaryEquationIr.LatentGroupSum(groups) =>
+        obj("kind" -> Str("latent_group_sum"), "groups_identity" -> Str(groups))
+
+  private def splitMethod(value: ProgramSplitMethodIr): String =
+    value match
+      case ProgramSplitMethodIr.PrimalDual => "primal_dual"
+      case ProgramSplitMethodIr.Admm => "admm"
+      case ProgramSplitMethodIr.AugmentedLagrangian => "augmented_lagrangian"
+      case ProgramSplitMethodIr.Conic => "conic"
+
   private def tolerance(value: ToleranceIr): IrJson =
     obj("absolute" -> Num(value.absolute), "relative" -> Num(value.relative))
 
@@ -494,7 +532,11 @@ private object ProgramIrDecoder:
 
   def document(value: IrJson): Either[IrError, OperatorProgramDocumentIr] =
     for
-      current <- fields(value, "$", Set("schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies"))
+      current <- fields(
+        value,
+        "$",
+        Set("schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies", "composite_lowerings")
+      )
       schema <- required(current, "schema", "$", string(_, "$.schema"))
       spaces <- required(current, "spaces", "$", vector(_, "$.spaces", space))
       operators <- required(current, "operators", "$", vector(_, "$.operators", operator))
@@ -502,7 +544,8 @@ private object ProgramIrDecoder:
       rewrites <- required(current, "rewrites", "$", vector(_, "$.rewrites", rewrite))
       fits <- required(current, "fits", "$", vector(_, "$.fits", fit))
       policies <- required(current, "operator_policies", "$", vector(_, "$.operator_policies", operatorPolicy))
-    yield OperatorProgramDocumentIr(schema, spaces, operators, programs, rewrites, fits, policies)
+      lowerings <- required(current, "composite_lowerings", "$", vector(_, "$.composite_lowerings", compositeLowering))
+    yield OperatorProgramDocumentIr(schema, spaces, operators, programs, rewrites, fits, policies, lowerings)
 
   private def space(value: IrJson, path: String): Either[IrError, SpaceIr] =
     for
@@ -1043,6 +1086,81 @@ private object ProgramIrDecoder:
             .flatMap(checked => required(checked, "reason", path, string(_, s"$path.reason")))
             .map(ProgramPreservationClaimIr.EvidenceDowngraded.apply)
         case _ => malformed(path, s"unknown preservation claim '$kind'")
+
+  private def compositeLowering(value: IrJson, path: String): Either[IrError, ProgramCompositeLoweringIr] =
+    for
+      current <- fields(
+        value,
+        path,
+        Set(
+          "id",
+          "program_id",
+          "term",
+          "target_operator",
+          "method",
+          "available_capabilities",
+          "auxiliary",
+          "provenance"
+        )
+      )
+      id <- required(current, "id", path, string(_, s"$path.id"))
+      program <- required(current, "program_id", path, string(_, s"$path.program_id"))
+      term <- required(current, "term", path, loweredTerm(_, s"$path.term"))
+      targetOperator <- required(current, "target_operator", path, string(_, s"$path.target_operator"))
+      method <- required(current, "method", path, splitMethod(_, s"$path.method"))
+      capabilities <- required(
+        current,
+        "available_capabilities",
+        path,
+        vector(_, s"$path.available_capabilities", splitMethod)
+      )
+      auxiliary <- required(current, "auxiliary", path, auxiliaryConstraint(_, s"$path.auxiliary"))
+      provenanceValue <- required(current, "provenance", path, vector(_, s"$path.provenance", provenance))
+    yield ProgramCompositeLoweringIr(
+      id,
+      program,
+      term,
+      targetOperator,
+      method,
+      capabilities,
+      auxiliary,
+      provenanceValue
+    )
+
+  private def loweredTerm(value: IrJson, path: String): Either[IrError, ProgramLoweredTermIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "penalty" | "constraint" =>
+          exact(current, path, Set("kind", "index"))
+            .flatMap(checked => required(checked, "index", path, integer(_, s"$path.index")))
+            .map(index => if kind == "penalty" then ProgramLoweredTermIr.Penalty(index) else ProgramLoweredTermIr.Constraint(index))
+        case _ => malformed(path, s"unknown lowered term '$kind'")
+
+  private def auxiliaryConstraint(value: IrJson, path: String): Either[IrError, ProgramAuxiliaryConstraintIr] =
+    for
+      current <- fields(value, path, Set("variable_id", "target", "equation"))
+      variable <- required(current, "variable_id", path, string(_, s"$path.variable_id"))
+      targetValue <- required(current, "target", path, target(_, s"$path.target"))
+      equation <- required(current, "equation", path, auxiliaryEquation(_, s"$path.equation"))
+    yield ProgramAuxiliaryConstraintIr(variable, targetValue, equation)
+
+  private def auxiliaryEquation(value: IrJson, path: String): Either[IrError, ProgramAuxiliaryEquationIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "target_copy" => exact(current, path, Set("kind")).map(_ => ProgramAuxiliaryEquationIr.TargetCopy)
+        case "latent_group_sum" =>
+          exact(current, path, Set("kind", "groups_identity"))
+            .flatMap(checked => required(checked, "groups_identity", path, string(_, s"$path.groups_identity")))
+            .map(ProgramAuxiliaryEquationIr.LatentGroupSum.apply)
+        case _ => malformed(path, s"unknown auxiliary equation '$kind'")
+
+  private def splitMethod(value: IrJson, path: String): Either[IrError, ProgramSplitMethodIr] =
+    string(value, path).flatMap:
+      case "primal_dual" => Right(ProgramSplitMethodIr.PrimalDual)
+      case "admm" => Right(ProgramSplitMethodIr.Admm)
+      case "augmented_lagrangian" => Right(ProgramSplitMethodIr.AugmentedLagrangian)
+      case "conic" => Right(ProgramSplitMethodIr.Conic)
+      case other => malformed(path, s"unknown split method '$other'")
 
   private def tolerance(value: IrJson, path: String): Either[IrError, ToleranceIr] =
     for

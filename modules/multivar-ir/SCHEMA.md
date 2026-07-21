@@ -17,6 +17,13 @@ preservation claims, and provenance remain explicit. Its schema is
 `schema/operator-program-ir-v0.2.schema.json`. Keeping the envelopes separate
 means a strict v0.1 decoder never has to ignore a field it does not understand.
 
+General nonsmooth compositions have their own `composite_lowerings` records.
+Each record binds one penalty or constraint to its linear target operator,
+names the auxiliary equation, records the selected and available split
+capabilities, and retains derived provenance. A simple proximal oracle on the
+functional is therefore never misreported as a direct proximal oracle for the
+composite term.
+
 ## Evolution
 
 - The `major` component changes when an existing meaning, tag, orientation, or

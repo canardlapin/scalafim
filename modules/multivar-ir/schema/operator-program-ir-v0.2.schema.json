@@ -4,7 +4,7 @@
   "title": "ScalaFIM operator program IR 0.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies"],
+  "required": ["schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies", "composite_lowerings"],
   "properties": {
     "schema": {"const": "scalafim-operator-program-ir/0.2"},
     "spaces": {"type": "array", "items": {"$ref": "#/$defs/space"}},
@@ -12,7 +12,8 @@
     "programs": {"type": "array", "items": {"$ref": "#/$defs/program"}},
     "rewrites": {"type": "array", "items": {"$ref": "#/$defs/rewrite"}},
     "fits": {"type": "array", "items": {"$ref": "#/$defs/fit"}},
-    "operator_policies": {"type": "array", "items": {"$ref": "#/$defs/operatorPolicy"}}
+    "operator_policies": {"type": "array", "items": {"$ref": "#/$defs/operatorPolicy"}},
+    "composite_lowerings": {"type": "array", "items": {"$ref": "#/$defs/compositeLowering"}}
   },
   "$defs": {
     "identity": {"type": "string", "minLength": 1},
@@ -112,6 +113,35 @@
         "scale_matching": {"type": "object", "required": ["kind"]},
         "scope": {"enum": ["single_operator", "joint_system", "blockwise_unsafe"]},
         "preservation": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["kind"]}},
+        "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
+      }
+    },
+    "compositeLowering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "program_id", "term", "target_operator", "method", "available_capabilities", "auxiliary", "provenance"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identity"},
+        "program_id": {"$ref": "#/$defs/identity"},
+        "term": {"type": "object", "required": ["kind", "index"]},
+        "target_operator": {"$ref": "#/$defs/identity"},
+        "method": {"enum": ["primal_dual", "admm", "augmented_lagrangian", "conic"]},
+        "available_capabilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["primal_dual", "admm", "augmented_lagrangian", "conic"]}
+        },
+        "auxiliary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["variable_id", "target", "equation"],
+          "properties": {
+            "variable_id": {"$ref": "#/$defs/identity"},
+            "target": {"type": "object", "required": ["parameter_id", "capability", "operation"]},
+            "equation": {"type": "object", "required": ["kind"]}
+          }
+        },
         "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
       }
     },

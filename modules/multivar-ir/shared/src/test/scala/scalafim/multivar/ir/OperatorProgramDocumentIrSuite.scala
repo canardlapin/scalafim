@@ -223,6 +223,66 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
 
     assertEquals(rejection(validDocument.copy(operatorPolicies = Vector(invalid))).category, RejectionCategory.Malformed)
 
+  test("composed nonsmooth lowerings round-trip explicit auxiliary equations and solver capabilities"):
+    val base = validDocument
+    val target = ProgramTargetIr(
+      "weights",
+      ProgramTargetCapabilityIr.Linear,
+      "graph-incidence",
+      Some("between")
+    )
+    val penalty = ProgramPenaltyV2Ir(
+      target,
+      ProgramFunctionalIr.TotalVariation,
+      0.25,
+      ProgramFrameSymmetryIr.SignedPermutation
+    )
+    val program = base.programs.head.copy(penalties = Vector(penalty))
+    val lowering = ProgramCompositeLoweringIr(
+      "tv-primal-dual",
+      program.id,
+      ProgramLoweredTermIr.Penalty(0),
+      "between",
+      ProgramSplitMethodIr.PrimalDual,
+      Vector(ProgramSplitMethodIr.PrimalDual, ProgramSplitMethodIr.Admm),
+      ProgramAuxiliaryConstraintIr(
+        "graph-differences",
+        target,
+        ProgramAuxiliaryEquationIr.TargetCopy
+      ),
+      Vector(ProvenanceEventIr.Derived("composite-primaldual-split", Vector("between")))
+    )
+    val document = base.copy(
+      programs = Vector(program, base.programs(1)),
+      compositeLowerings = Vector(lowering)
+    )
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.compositeLowerings, Vector(lowering))
+    assertEquals(decoded.compositeLowerings.head.auxiliary.target, decoded.programs.head.penalties.head.target)
+
+  test("composed lowering rejects a selected method absent from its capabilities"):
+    val base = validDocument
+    val target = ProgramTargetIr("weights", ProgramTargetCapabilityIr.Linear, "general-map", Some("between"))
+    val penalty = ProgramPenaltyV2Ir(target, ProgramFunctionalIr.L1, 0.5, ProgramFrameSymmetryIr.SignedPermutation)
+    val program = base.programs.head.copy(penalties = Vector(penalty))
+    val invalid = ProgramCompositeLoweringIr(
+      "missing-admm",
+      program.id,
+      ProgramLoweredTermIr.Penalty(0),
+      "between",
+      ProgramSplitMethodIr.Admm,
+      Vector(ProgramSplitMethodIr.PrimalDual),
+      ProgramAuxiliaryConstraintIr("z", target, ProgramAuxiliaryEquationIr.TargetCopy),
+      Vector(ProvenanceEventIr.Derived("composite-admm-split", Vector("between")))
+    )
+    val document = base.copy(
+      programs = Vector(program, base.programs(1)),
+      compositeLowerings = Vector(invalid)
+    )
+
+    assertEquals(rejection(document).category, RejectionCategory.Malformed)
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",

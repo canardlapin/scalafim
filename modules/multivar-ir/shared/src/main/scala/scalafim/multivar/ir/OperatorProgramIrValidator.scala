@@ -16,6 +16,7 @@ object OperatorProgramIrValidator:
       _ <- validateOperators(document.operators, spaces, operators)
       _ <- validatePolicies(document.operatorPolicies, operators)
       _ <- validatePrograms(document.programs, spaces, operators)
+      _ <- validateCompositeLowerings(document.compositeLowerings, programs, operators)
       _ <- validateRewrites(document.rewrites, programs, operators)
       _ <- validateFits(document.fits, programs, operators)
     yield document
@@ -283,6 +284,40 @@ object OperatorProgramIrValidator:
             RejectionCategory.Malformed,
             s"operator_policies.${policy.id}",
             "operator policy requires known operators, valid selection and scale, preservation evidence, and derived provenance"
+          )
+
+  private def validateCompositeLowerings(
+      lowerings: Vector[ProgramCompositeLoweringIr],
+      programs: Map[String, OperatorProgramV2Ir],
+      operators: Map[String, ProgramOpIr]
+  ): Either[IrError, Unit] =
+    unique(lowerings, _.id, "$.composite_lowerings").flatMap: _ =>
+      lowerings.foldLeft[Either[IrError, Unit]](Right(())): (result, lowering) =>
+        result.flatMap: _ =>
+          val termTarget = programs.get(lowering.programId).flatMap: program =>
+            lowering.term match
+              case ProgramLoweredTermIr.Penalty(index) => program.penalties.lift(index).map(_.target)
+              case ProgramLoweredTermIr.Constraint(index) => program.constraints.lift(index).map(_.target)
+          val capabilitiesValid =
+            lowering.availableCapabilities.nonEmpty &&
+              lowering.availableCapabilities.distinct.length == lowering.availableCapabilities.length &&
+              lowering.availableCapabilities.contains(lowering.method)
+          val equationValid =
+            lowering.auxiliary.equation match
+              case ProgramAuxiliaryEquationIr.TargetCopy => true
+              case ProgramAuxiliaryEquationIr.LatentGroupSum(groups) => groups.trim.nonEmpty
+          val hasDerivedProvenance = lowering.provenance.exists:
+            case ProvenanceEventIr.Derived(_, inputs) => inputs.contains(lowering.targetOperator)
+            case _ => false
+          requireValue(
+            operators.contains(lowering.targetOperator) &&
+              termTarget.contains(lowering.auxiliary.target) &&
+              lowering.auxiliary.target.capability == ProgramTargetCapabilityIr.Linear &&
+              lowering.auxiliary.target.operatorIdentities.contains(lowering.targetOperator) &&
+              lowering.auxiliary.variableId.trim.nonEmpty && capabilitiesValid && equationValid && hasDerivedProvenance,
+            RejectionCategory.Malformed,
+            s"composite_lowerings.${lowering.id}",
+            "composite lowering requires a known linear term target, explicit auxiliary equation, selected capability, and derived provenance"
           )
 
   private def validateObjective(

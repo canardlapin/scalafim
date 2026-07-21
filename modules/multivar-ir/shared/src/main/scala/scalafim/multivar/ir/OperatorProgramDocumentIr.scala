@@ -285,6 +285,37 @@ final case class ProgramOperatorPolicyIr(
     provenance: Vector[ProvenanceEventIr]
 )
 
+enum ProgramSplitMethodIr:
+  case PrimalDual
+  case Admm
+  case AugmentedLagrangian
+  case Conic
+
+enum ProgramLoweredTermIr:
+  case Penalty(index: Int)
+  case Constraint(index: Int)
+
+enum ProgramAuxiliaryEquationIr:
+  case TargetCopy
+  case LatentGroupSum(groupsIdentity: String)
+
+final case class ProgramAuxiliaryConstraintIr(
+    variableId: String,
+    target: ProgramTargetIr,
+    equation: ProgramAuxiliaryEquationIr
+)
+
+final case class ProgramCompositeLoweringIr(
+    id: String,
+    programId: String,
+    term: ProgramLoweredTermIr,
+    targetOperator: String,
+    method: ProgramSplitMethodIr,
+    availableCapabilities: Vector[ProgramSplitMethodIr],
+    auxiliary: ProgramAuxiliaryConstraintIr,
+    provenance: Vector[ProvenanceEventIr]
+)
+
 final case class OperatorProgramDocumentIr(
     schema: String,
     spaces: Vector[SpaceIr],
@@ -292,7 +323,8 @@ final case class OperatorProgramDocumentIr(
     programs: Vector[OperatorProgramV2Ir],
     rewrites: Vector[ProgramRewriteIr],
     fits: Vector[ProgramFitIr],
-    operatorPolicies: Vector[ProgramOperatorPolicyIr] = Vector.empty
+    operatorPolicies: Vector[ProgramOperatorPolicyIr] = Vector.empty,
+    compositeLowerings: Vector[ProgramCompositeLoweringIr] = Vector.empty
 )
 
 object OperatorProgramDocumentIr:
@@ -301,6 +333,7 @@ object OperatorProgramDocumentIr:
   val empty: OperatorProgramDocumentIr =
     OperatorProgramDocumentIr(
       schemaV02,
+      Vector.empty,
       Vector.empty,
       Vector.empty,
       Vector.empty,
@@ -384,6 +417,61 @@ object ProgramSemanticIr:
       ,
       SemanticIr.provenance(value.provenance)
     )
+
+  def compositePenaltyLowering(
+      id: String,
+      programId: String,
+      penaltyIndex: Int,
+      value: CompositePenaltyPlan[?, ?],
+      availableCapabilities: Vector[SplitMethod]
+  ): ProgramCompositeLoweringIr =
+    ProgramCompositeLoweringIr(
+      id,
+      programId,
+      ProgramLoweredTermIr.Penalty(penaltyIndex),
+      value.targetOperator.valueIdentity.stableKey,
+      splitMethod(value.method),
+      availableCapabilities.map(splitMethod),
+      ProgramAuxiliaryConstraintIr(
+        value.auxiliary.variable.stringValue,
+        target(value.auxiliary.target),
+        value.auxiliary.equation match
+          case AuxiliaryEquation.TargetCopy => ProgramAuxiliaryEquationIr.TargetCopy
+          case AuxiliaryEquation.LatentGroupSum(groups) =>
+            ProgramAuxiliaryEquationIr.LatentGroupSum(groups.stableKey)
+      ),
+      SemanticIr.provenance(value.provenance)
+    )
+
+  def compositeConstraintLowering(
+      id: String,
+      programId: String,
+      constraintIndex: Int,
+      value: CompositeConstraintPlan[?, ?],
+      availableCapabilities: Vector[SplitMethod],
+      provenance: SemanticProvenance
+  ): ProgramCompositeLoweringIr =
+    ProgramCompositeLoweringIr(
+      id,
+      programId,
+      ProgramLoweredTermIr.Constraint(constraintIndex),
+      value.targetOperator.valueIdentity.stableKey,
+      splitMethod(value.method),
+      availableCapabilities.map(splitMethod),
+      ProgramAuxiliaryConstraintIr(
+        value.auxiliary.variable.stringValue,
+        target(value.auxiliary.target),
+        ProgramAuxiliaryEquationIr.TargetCopy
+      ),
+      SemanticIr.provenance(provenance)
+    )
+
+  private def splitMethod(value: SplitMethod): ProgramSplitMethodIr =
+    value match
+      case SplitMethod.PrimalDual => ProgramSplitMethodIr.PrimalDual
+      case SplitMethod.Admm => ProgramSplitMethodIr.Admm
+      case SplitMethod.AugmentedLagrangian => ProgramSplitMethodIr.AugmentedLagrangian
+      case SplitMethod.Conic => ProgramSplitMethodIr.Conic
 
   private def operatorPolicyKind(value: String): ProgramOperatorPolicyKindIr =
     value match
