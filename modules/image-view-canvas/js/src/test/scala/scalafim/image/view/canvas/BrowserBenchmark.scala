@@ -18,6 +18,22 @@ object BrowserBenchmark:
     sourceReads: () => Int
   )
 
+  private final case class InteractiveContracts(
+    applicationWorkflow: Boolean,
+    orthogonalOrientationAndHandedness: Boolean,
+    axialSliceDirection: Boolean
+  ):
+    def allPass: Boolean =
+      applicationWorkflow && orthogonalOrientationAndHandedness && axialSliceDirection
+
+    def toJs: js.Dynamic =
+      js.Dynamic.literal(
+        applicationWorkflow = applicationWorkflow,
+        orthogonalOrientationAndHandedness = orthogonalOrientationAndHandedness,
+        axialSliceDirection = axialSliceDirection,
+        allPass = allPass
+      )
+
   @JSExportTopLevel("runScalafimImageViewBenchmark")
   def run(): Unit =
     given CanvasRasterFactory = CanvasRasterFactory.browser
@@ -30,7 +46,7 @@ object BrowserBenchmark:
 
     renderOnce(affine.model, affine.session, context)
     renderOnce(nonlinear.model, nonlinear.session, context)
-    val interactiveContract = interactiveWorkflow(affine.model, affine.session, context)
+    val interactive = interactiveWorkflow(affine.model, affine.session, context)
 
     val coldReadsBefore = affine.sourceReads()
     val cold = measure("cold-render", 8) { _ =>
@@ -125,7 +141,9 @@ object BrowserBenchmark:
       prefetchedAxialScrollHasNoVisibleSampling = prefetchContract,
       windowChangeReusesSamples = windowContract,
       nonlinearScrollReusesTwoPlanes = nonlinearContract,
-      interactiveViewerWorkflow = interactiveContract,
+      interactiveViewerWorkflow = interactive.applicationWorkflow,
+      orthogonalOrientationAndHandedness = interactive.orthogonalOrientationAndHandedness,
+      axialSliceDirection = interactive.axialSliceDirection,
       checksumPresent = checksum.nonEmpty
     )
     val receipt = js.Dynamic.literal(
@@ -144,8 +162,9 @@ object BrowserBenchmark:
       prefetchedScroll = prefetchedScroll,
       window = windowed,
       nonlinear = nonlinearScroll,
+      interactive = interactive.toJs,
       contracts = contracts,
-      allContractsPass = coldReadContract && warmContract && scrollContract && prefetchContract && windowContract && nonlinearContract && interactiveContract && checksum.nonEmpty,
+      allContractsPass = coldReadContract && warmContract && scrollContract && prefetchContract && windowContract && nonlinearContract && interactive.allPass && checksum.nonEmpty,
       canvasChecksum = checksum
     )
     js.Dynamic.global.window.scalafimImageViewBenchmark = receipt
@@ -241,7 +260,7 @@ object BrowserBenchmark:
     model: ViewerModel,
     session: ViewerSession,
     context: CanvasRenderingContext2D
-  )(using CanvasRasterFactory): Boolean =
+  )(using CanvasRasterFactory): InteractiveContracts =
     val controller = CanvasViewerHost.controller(
       model,
       session,
@@ -262,10 +281,23 @@ object BrowserBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     val compiled = controller.compile()
       .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val orientationAndHandedness = compiled.frame.panels.all.forall { panel =>
+      val actual = panel.grid.plane
+      val expected = SlicePlane.canonical(
+        panel.anatomicalPlane,
+        actual.through,
+        compiled.frame.state.convention
+      )
+      actual.screenRight == expected.screenRight &&
+        actual.screenUp == expected.screenUp &&
+        actual.normal == expected.normal
+    }
     val panel = compiled.frame.panels.axial
     val deviceX = (panel.rect.left + panel.rect.width / 2.0) * session.device.width
     val deviceY = (1.0 - panel.rect.bottom - panel.rect.height / 2.0) * session.device.height
     controller.pick(deviceX, deviceY)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val picked = controller.session
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     controller.scroll(deviceX, deviceY, 1)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -273,6 +305,9 @@ object BrowserBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     val current = controller.session
       .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val expectedCursor = picked.state.cursor +
+      AnatomicalPlane.Axial.positiveNormal.unit.scaled(picked.state.sliceStep.millimeters)
+    val axialSliceDirection = current.state.cursor == expectedCursor
     val exercised =
       model.layers.length == 2 &&
         current.state.cursor != initial.session.state.cursor &&
@@ -284,7 +319,12 @@ object BrowserBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     val restored = controller.session.contains(initial.session)
     controller.close()
-    exercised && restored && controller.compile() == Left(CanvasViewerError.ControllerClosed)
+    val lifecycleClosed = controller.compile() == Left(CanvasViewerError.ControllerClosed)
+    InteractiveContracts(
+      applicationWorkflow = exercised && restored && lifecycleClosed,
+      orthogonalOrientationAndHandedness = orientationAndHandedness,
+      axialSliceDirection = axialSliceDirection
+    )
 
   private def render(
     runtime: CanvasViewerRuntime,

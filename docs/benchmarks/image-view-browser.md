@@ -50,6 +50,10 @@ receipt is shown beside the rendered viewer and is also available as
 Before timings are interpreted, the receipt must show:
 
 - the complete interactive viewer workflow contract passes in the real Canvas;
+- axial, coronal, and sagittal panels retain their canonical screen axes and
+  configured left/right handedness;
+- positive axial scrolling advances along the anatomical superior normal by
+  exactly one typed slice step;
 - cold source reads equal visible source-backed layers times cold repetitions,
   not that count times three anatomical panels;
 - warm redraw has zero sampled pixels, zero colorized pixels, and zero uploaded
@@ -83,31 +87,37 @@ primitive coordinates; cubic and arbitrary morphisms retain the typed generic
 fallback. JVM and Scala.js differential tests compare every fast path with its
 checked or typed reference behavior.
 
-## First live browser receipt
+## Live browser receipt
 
-The first live receipt was recorded on 2026-07-21 in Chrome 150 on macOS with
+The current live receipt was recorded on 2026-07-21 in Chrome 150 on macOS with
 no CPU or network throttling. The complete representative JSON receipt is
 preserved at
 [`receipts/image-view-browser-chrome150-2026-07-21.json`](receipts/image-view-browser-chrome150-2026-07-21.json).
-Every structural contract passed and repeated executions produced checksum
-`5c73b3ad` after the harness was made to clear the complete device canvas at
-the start of each run.
+Every structural, application-workflow, orthogonal-orientation, handedness, and
+slice-direction contract passed. Five executions of the final linked artifact
+all produced checksum `7aaf6379`.
 
 The following values are the medians of five same-browser benchmark medians,
 after the linked artifact and JavaScript engine were warm:
 
 | Scenario | Median time |
 | --- | ---: |
-| Cold render | 60.1 ms |
-| Warm redraw | 0.1 ms |
-| Axial scroll | 146.7 ms |
-| Window recolor | 7.8 ms |
-| Nonlinear scroll | 79.0 ms |
+| Cold render | 118.0 ms |
+| Warm redraw | 0.2 ms |
+| Axial scroll | 240.0 ms |
+| Prefetched axial scroll | 0.5 ms |
+| Window recolor | 8.6 ms |
+| Nonlinear scroll | 139.3 ms |
 
 These are diagnostic local measurements, not release thresholds. The work
 receipts explain the large interaction timings: axial scrolling samples and
 colorizes 61,440 pixels, while nonlinear scrolling maps, samples, and
-colorizes 6,400 pixels. Warm redraw performs none of that work.
+colorizes 6,400 pixels. Warm redraw performs none of that work. Bounded
+adjacent-slice prefetch reduced the subsequent visible axial-scroll median from
+240.0 ms to 0.5 ms in the same browser, a 480x reduction in visible-path
+latency (99.79%). It moves sampling and colorization into the bounded idle
+prefetch phase rather than eliminating that computation; an unprefetched or
+out-of-horizon slice still pays the ordinary sampling cost.
 
 ## Follow-up optimization decisions
 
