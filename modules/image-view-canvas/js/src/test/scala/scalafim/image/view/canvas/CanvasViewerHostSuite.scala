@@ -48,6 +48,39 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assert(CanvasViewerHost.pickAction(compiled, 639.0, 479.0).isLeft)
   }
 
+  test("application controller owns state snapshots bindings and lifecycle") {
+    val controller = CanvasViewerHost.controller(
+      model,
+      session,
+      viewerCacheCapacity = 8,
+      rasterCacheCapacity = 4
+    ).toOption.get
+    val initial = controller.snapshot().toOption.get
+    val threshold = DisplayThreshold.transparentBand(4.0, 12.0).toOption.get
+    val zoom = PanelView.unsafe(ZoomLevel.unsafe(2.0), centerX = 0.55, centerY = 0.45)
+
+    controller.dispatch(ViewerAction.SetThreshold(layer.id, threshold)).toOption.get
+    controller.dispatch(ViewerAction.SetPanelView(AnatomicalPlane.Axial, zoom)).toOption.get
+    val compiled = controller.compile().toOption.get
+    val panel = compiled.frame.panels.axial
+    val deviceX = (panel.rect.left + panel.rect.width / 2.0) * session.device.width
+    val deviceY = (1.0 - panel.rect.bottom - panel.rect.height / 2.0) * session.device.height
+    controller.pick(deviceX, deviceY).toOption.get
+    controller.scroll(deviceX, deviceY, 1).toOption.get
+
+    val changed = controller.compile().toOption.get
+    assertEquals(changed.frame.state.panelViews.axial, zoom)
+    assertEquals(changed.frame.state.presentation(layer.id).threshold, Some(threshold))
+    assertEquals(changed.frame.readouts.axial.layers.map(_.layer), Vector(layer.id))
+
+    controller.restore(initial).toOption.get
+    assertEquals(controller.session.toOption.get, session)
+    controller.close()
+    assert(controller.isClosed)
+    assertEquals(controller.compile(), Left(CanvasViewerError.ControllerClosed))
+    assertEquals(controller.dispatch(ViewerAction.SetTimepoint(0)), Left(CanvasViewerError.ControllerClosed))
+  }
+
   test("runtime preserves viewer rasters and Canvas uploads across redraws") {
     var uploads = 0
     given CanvasRasterFactory with

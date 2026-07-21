@@ -30,6 +30,7 @@ object BrowserBenchmark:
 
     renderOnce(affine.model, affine.session, context)
     renderOnce(nonlinear.model, nonlinear.session, context)
+    val interactiveContract = interactiveWorkflow(affine.model, affine.session, context)
 
     val coldReadsBefore = affine.sourceReads()
     val cold = measure("cold-render", 8) { _ =>
@@ -113,6 +114,7 @@ object BrowserBenchmark:
       axialScrollReusesTwoPlanesPerLayer = scrollContract,
       windowChangeReusesSamples = windowContract,
       nonlinearScrollReusesTwoPlanes = nonlinearContract,
+      interactiveViewerWorkflow = interactiveContract,
       checksumPresent = checksum.nonEmpty
     )
     val receipt = js.Dynamic.literal(
@@ -131,7 +133,7 @@ object BrowserBenchmark:
       window = windowed,
       nonlinear = nonlinearScroll,
       contracts = contracts,
-      allContractsPass = coldReadContract && warmContract && scrollContract && windowContract && nonlinearContract && checksum.nonEmpty,
+      allContractsPass = coldReadContract && warmContract && scrollContract && windowContract && nonlinearContract && interactiveContract && checksum.nonEmpty,
       canvasChecksum = checksum
     )
     js.Dynamic.global.window.scalafimImageViewBenchmark = receipt
@@ -222,6 +224,55 @@ object BrowserBenchmark:
     context: CanvasRenderingContext2D
   )(using CanvasRasterFactory): CanvasViewerRender =
     render(makeRuntime(), model, session, context)
+
+  private def interactiveWorkflow(
+    model: ViewerModel,
+    session: ViewerSession,
+    context: CanvasRenderingContext2D
+  )(using CanvasRasterFactory): Boolean =
+    val controller = CanvasViewerHost.controller(
+      model,
+      session,
+      viewerCacheCapacity = 24,
+      rasterCacheCapacity = 12
+    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val initial = controller.snapshot()
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val overlay = LayerId.unsafe("overlay")
+    val threshold = DisplayThreshold.transparentBand(450.0, 900.0)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val view = PanelView.unsafe(ZoomLevel.unsafe(2.0), centerX = 0.55, centerY = 0.45)
+    controller.dispatch(ViewerAction.SetVisibility(overlay, visible = true))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    controller.dispatch(ViewerAction.SetThreshold(overlay, threshold))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    controller.dispatch(ViewerAction.SetPanelView(AnatomicalPlane.Axial, view))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val compiled = controller.compile()
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val panel = compiled.frame.panels.axial
+    val deviceX = (panel.rect.left + panel.rect.width / 2.0) * session.device.width
+    val deviceY = (1.0 - panel.rect.bottom - panel.rect.height / 2.0) * session.device.height
+    controller.pick(deviceX, deviceY)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    controller.scroll(deviceX, deviceY, 1)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val rendered = controller.render(context)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val current = controller.session
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val exercised =
+      model.layers.length == 2 &&
+        current.state.cursor != initial.session.state.cursor &&
+        current.state.panelViews.axial == view &&
+        current.state.presentation(overlay).visible &&
+        current.state.presentation(overlay).threshold.contains(threshold) &&
+        rendered.compiled.frame.readouts.axial.layers.map(_.layer) == model.layers.map(_.id)
+    controller.restore(initial)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val restored = controller.session.contains(initial.session)
+    controller.close()
+    exercised && restored && controller.compile() == Left(CanvasViewerError.ControllerClosed)
 
   private def render(
     runtime: CanvasViewerRuntime,

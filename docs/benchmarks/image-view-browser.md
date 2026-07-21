@@ -10,6 +10,9 @@ and orientation contracts independently.
 The deterministic benchmark entry point is
 `scalafim.image.view.canvas.BrowserBenchmark`. It records:
 
+- an application-controller workflow covering model load, overlay visibility,
+  threshold, zoom/pan, picking, slice navigation, typed readout, snapshot
+  restore, and lifecycle closure;
 - cold compilation, sampling, colorization, Canvas upload, and draw;
 - warm redraw with all sampled slices, rasters, and native image sources cached;
 - axial scrolling, where sagittal and coronal rasters must remain cached;
@@ -44,6 +47,7 @@ receipt is shown beside the rendered viewer and is also available as
 
 Before timings are interpreted, the receipt must show:
 
+- the complete interactive viewer workflow contract passes in the real Canvas;
 - cold source reads equal visible source-backed layers times cold repetitions,
   not that count times three anatomical panels;
 - warm redraw has zero sampled pixels, zero colorized pixels, and zero uploaded

@@ -154,6 +154,11 @@ are documented in [`benchmarks/image-view-browser.md`](benchmarks/image-view-bro
   the immutable viewer-cache state plus a bounded browser-native raster cache;
   each render returns `ViewerProfile` and `CanvasDrawProfile` receipts,
   including uploaded bytes.
+  `CanvasViewerHost.controller(...)` is the higher-level application contract:
+  it owns one model/session/runtime, exposes reducer-backed pick, scroll, and
+  dispatch bindings, supports exact session snapshot/restore, and rejects work
+  after `close()`. It deliberately retains neither a DOM node nor a Canvas
+  context, so applications still own listener installation and teardown.
 - `Java2DViewerHost` draws into a supplied `Graphics2D` and can produce a
   `BufferedImage` directly.
 - `JavaFxViewerHost` draws through `JavaFxGraphicsContext` or a live JavaFX
