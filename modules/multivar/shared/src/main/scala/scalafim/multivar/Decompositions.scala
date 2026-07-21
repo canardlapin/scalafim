@@ -1,11 +1,10 @@
 package scalafim.multivar
 
 import gale.linalg.DMat
-import gale.linalg.DVec
 
-final case class SvdFit(result: SvdResult, projection: BiProjection):
+final case class SvdFit(result: SvdResult, transform: FittedFrameTransform):
   def project(input: MatrixView): Either[MultivarError, DMat] =
-    projection.project(input)
+    transform.project(input)
 
 object Svd:
   def fit(
@@ -14,13 +13,11 @@ object Svd:
       preproc: PreprocessSpec = PreprocessSpec.Pass,
       solver: SvdSolver = DenseSolvers.svd
   ): Either[MultivarError, SvdFit] =
-    fitBiProjection(input, components, preproc, solver, method = "svd").map { case (svd, projection) =>
-      SvdFit(svd, projection)
-    }
+    fitFrame(input, components, preproc, solver, "svd").map((result, transform) => SvdFit(result, transform))
 
-final case class PcaFit(result: SvdResult, projection: BiProjection):
+final case class PcaFit(result: SvdResult, transform: FittedFrameTransform):
   def project(input: MatrixView): Either[MultivarError, DMat] =
-    projection.project(input)
+    transform.project(input)
 
 object Pca:
   def fit(
@@ -29,20 +26,18 @@ object Pca:
       preproc: PreprocessSpec = PreprocessSpec.Center,
       solver: SvdSolver = DenseSolvers.svd
   ): Either[MultivarError, PcaFit] =
-    val observedSpace = MvSpace(SpaceId.unsafe("pca.observed"), SpaceRole.Observed, Dimension.unsafe(input.cols))
-    GenPca
-      .identityBackend(input, components, preproc, solver, observedSpace, method = "pca", latentId = "pca.latent")
-      .map { fit =>
-        PcaFit(SvdResult(fit.result.ou, fit.result.d, fit.result.ov), fit.projection)
-      }
+    fitFrame(input, components, preproc, solver, "pca").map((result, transform) => PcaFit(result, transform))
 
 final case class PlscFit(
-    paired: PairedLatentFit,
     result: SvdResult,
-    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
+    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace],
+    sourceTransform: FittedFrameTransform,
+    targetTransform: FittedFrameTransform
 ):
-  def projection: CrossProjection =
-    paired.projection
+  def xScores: DMat = sourceTransform.trainingValues
+  def yScores: DMat = targetTransform.trainingValues
+  def projectX(input: MatrixView): Either[MultivarError, DMat] = sourceTransform.project(input)
+  def projectY(input: MatrixView): Either[MultivarError, DMat] = targetTransform.project(input)
 
 object Plsc:
   def fit(
@@ -52,7 +47,7 @@ object Plsc:
       xPreproc: PreprocessSpec = PreprocessSpec.Center,
       yPreproc: PreprocessSpec = PreprocessSpec.Center,
       solver: SvdSolver = DenseSolvers.svd,
-      rowMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, PlscFit] =
@@ -62,38 +57,37 @@ object Plsc:
       xp <- fittedX.transform(x)
       yp <- fittedY.transform(y)
       problem <- PairedOperatorProblem.fromMatrices(xp, yp, rowMetric, "plsc", policy)
-      operator <- problem.fitPlsc(
-        components,
-        covarianceScale(x.rows),
-        solver,
-        eigenSolver
-      )
+      operator <- problem.fitPlsc(components, covarianceScale(x.rows), solver, eigenSolver)
       xWeights <- operator.sourceWeights
       yWeights <- operator.targetWeights
-      fit <- buildPairedLatentFit(
-        method = PairedLatentMethod.Plsc,
-        methodLabel = "plsc",
-        components = components,
-        svd = operator.result,
-        spectrum = Spectrum.Covariance(operator.result.singularValues),
-        xWeights = xWeights,
-        yWeights = yWeights,
-        xInput = x,
-        yInput = y,
-        xDomain = problem.sourceFeatures.descriptor,
-        yDomain = problem.targetFeatures.descriptor,
-        fittedX = fittedX,
-        fittedY = fittedY
+      xTransform <- FittedFrameTransform.fromTraining(
+        x,
+        xWeights,
+        fittedX,
+        "plsc.source",
+        components,
+        Some(operator.result.singularValues)
       )
-    yield PlscFit(fit, operator.result, operator)
+      yTransform <- FittedFrameTransform.fromTraining(
+        y,
+        yWeights,
+        fittedY,
+        "plsc.target",
+        components,
+        Some(operator.result.singularValues)
+      )
+    yield PlscFit(operator.result, operator, xTransform, yTransform)
 
 final case class CcaFit(
-    paired: PairedLatentFit,
     result: SvdResult,
-    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
+    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace],
+    sourceTransform: FittedFrameTransform,
+    targetTransform: FittedFrameTransform
 ):
-  def projection: CrossProjection =
-    paired.projection
+  def xScores: DMat = sourceTransform.trainingValues
+  def yScores: DMat = targetTransform.trainingValues
+  def projectX(input: MatrixView): Either[MultivarError, DMat] = sourceTransform.project(input)
+  def projectY(input: MatrixView): Either[MultivarError, DMat] = targetTransform.project(input)
 
 object Cca:
   def fit(
@@ -105,12 +99,11 @@ object Cca:
       yPreproc: PreprocessSpec = PreprocessSpec.Center,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       solver: SvdSolver = DenseSolvers.svd,
-      rowMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, CcaFit] =
-    CcaRegularization.symmetric(ridge).flatMap { regularization =>
+    CcaRegularization.symmetric(ridge).flatMap: regularization =>
       fitRegularized(x, y, components, regularization, xPreproc, yPreproc, eigenSolver, solver, rowMetric, policy)
-    }
 
   def fitRegularized(
       x: MatrixView,
@@ -121,10 +114,9 @@ object Cca:
       yPreproc: PreprocessSpec = PreprocessSpec.Center,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       solver: SvdSolver = DenseSolvers.svd,
-      rowMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, CcaFit] =
-    val denom = covarianceScale(x.rows)
     for
       fittedX <- xPreproc.fit(x)
       fittedY <- yPreproc.fit(y)
@@ -134,54 +126,48 @@ object Cca:
       operator <- problem.fitCca(
         components,
         regularization,
-        denom,
+        covarianceScale(x.rows),
         solver,
         eigenSolver
       )
       xWeights <- operator.sourceWeights
       yWeights <- operator.targetWeights
-      fit <- buildPairedLatentFit(
-        method = PairedLatentMethod.Cca(regularization),
-        methodLabel = "cca",
-        components = components,
-        svd = operator.result,
-        spectrum = Spectrum.CanonicalCorrelations(operator.result.singularValues),
-        xWeights = xWeights,
-        yWeights = yWeights,
-        xInput = x,
-        yInput = y,
-        xDomain = problem.sourceFeatures.descriptor,
-        yDomain = problem.targetFeatures.descriptor,
-        fittedX = fittedX,
-        fittedY = fittedY
+      xTransform <- FittedFrameTransform.fromTraining(
+        x,
+        xWeights,
+        fittedX,
+        "cca.source",
+        components,
+        Some(operator.result.singularValues)
       )
-    yield CcaFit(fit, operator.result, operator)
+      yTransform <- FittedFrameTransform.fromTraining(
+        y,
+        yWeights,
+        fittedY,
+        "cca.target",
+        components,
+        Some(operator.result.singularValues)
+      )
+    yield CcaFit(operator.result, operator, xTransform, yTransform)
 
 final case class ReducedRankRegressionFit(
-    latent: PairedLatentFit,
     fullCoefficient: DMat,
-    workingCoefficient: MatrixMap,
-    responsePreprocessor: FittedPreprocessor,
+    coefficientTransform: FittedCoefficientTransform,
+    sourceTransform: FittedFrameTransform,
+    targetTransform: FittedFrameTransform,
     operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
 ):
-  require(fullCoefficient.rows == workingCoefficient.weights.rows, "full coefficient rows must match low-rank coefficient rows")
-  require(fullCoefficient.cols == workingCoefficient.weights.cols, "full coefficient columns must match low-rank coefficient columns")
-
   def predictWorking(input: MatrixView): Either[MultivarError, DMat] =
-    workingCoefficient.forward(input)
+    coefficientTransform.predictWorking(input)
 
   def predict(input: MatrixView): Either[MultivarError, DMat] =
-    for
-      working <- predictWorking(input)
-      restored <- responsePreprocessor.inverseTransform(MatrixView.dense(working), policy = StoragePolicy.AllowDense)
-      dense <- restored.toDense(StoragePolicy.AllowDense)
-    yield dense
+    coefficientTransform.predict(input)
 
   def projectX(input: MatrixView): Either[MultivarError, DMat] =
-    latent.projectX(input)
+    sourceTransform.project(input)
 
   def projectY(input: MatrixView): Either[MultivarError, DMat] =
-    latent.projectY(input)
+    targetTransform.project(input)
 
 object ReducedRankRegression:
   def fit(
@@ -194,7 +180,7 @@ object ReducedRankRegression:
       yPreproc: PreprocessSpec = PreprocessSpec.Center,
       solver: SvdSolver = DenseSolvers.svd,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
-      rowMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, ReducedRankRegressionFit] =
     direction match
@@ -210,7 +196,7 @@ object ReducedRankRegression:
       yPreproc: PreprocessSpec,
       solver: SvdSolver,
       eigenSolver: SymmetricEigenSolver,
-      rowMetric: Option[MvMetric],
+      rowMetric: Option[MetricSpec],
       policy: StoragePolicy
   ): Either[MultivarError, ReducedRankRegressionFit] =
     for
@@ -230,67 +216,51 @@ object ReducedRankRegression:
       sourceWeights <- operator.sourceWeights
       responseLoadings <- operator.targetWeights
       coefficient <- operator.coefficient match
-        case Some(value) => pairedOperatorSemantic(value.toDense)
+        case Some(value) => decompositionSemantic(value.toDense)
         case None        => Left(MultivarError.SolverFailed("RRR operator fit omitted its directed coefficient"))
       encoderWeights = MetricOperator.scaleColumnsDense(sourceWeights, operator.result.singularValues)
       lowRankCoefficient = GaleNumerics.multiply(encoderWeights, responseLoadings.transpose)
-      workingMap <- MatrixMap.from(
-        problem.sourceFeatures.descriptor,
-        problem.targetFeatures.descriptor,
-        lowRankCoefficient,
-        fittedX
+      coefficientTransform <- FittedCoefficientTransform.from(lowRankCoefficient, fittedX, fittedY, "rrr")
+      sourceTransform <- FittedFrameTransform.fromTraining(
+        x,
+        encoderWeights,
+        fittedX,
+        "rrr.source",
+        components,
+        Some(operator.result.singularValues)
       )
-      latent <- buildPairedLatentFit(
-        method = PairedLatentMethod.ReducedRankRegression(RegressionDirection.XToY, regularization),
-        methodLabel = "rrr",
-        components = components,
-        svd = operator.result,
-        spectrum = Spectrum.SingularValues(operator.result.singularValues),
-        xWeights = encoderWeights,
-        yWeights = responseLoadings,
-        xInput = x,
-        yInput = y,
-        xDomain = problem.sourceFeatures.descriptor,
-        yDomain = problem.targetFeatures.descriptor,
-        fittedX = fittedX,
-        fittedY = fittedY
+      targetTransform <- FittedFrameTransform.fromTraining(
+        y,
+        responseLoadings,
+        fittedY,
+        "rrr.target",
+        components,
+        Some(operator.result.singularValues)
       )
-    yield ReducedRankRegressionFit(latent, coefficient, workingMap, fittedY, operator)
+    yield ReducedRankRegressionFit(coefficient, coefficientTransform, sourceTransform, targetTransform, operator)
 
-private def fitBiProjection(
+private def fitFrame(
     input: MatrixView,
     components: ComponentCount,
     preproc: PreprocessSpec,
     solver: SvdSolver,
     method: String
-): Either[MultivarError, (SvdResult, BiProjection)] =
+): Either[MultivarError, (SvdResult, FittedFrameTransform)] =
   for
     fitted <- preproc.fit(input)
     transformed <- fitted.transform(input)
     svd <- solver.decompose(transformed, components)
     _ <- requireComponents(svd)
-    domain = MvSpace(SpaceId.unsafe(s"$method.observed"), SpaceRole.Observed, Dimension.unsafe(input.cols))
-    latent = MvSpace(SpaceId.unsafe(s"$method.latent"), SpaceRole.Latent, Dimension.unsafe(svd.singularValues.length))
-    map <- MatrixMap.from(domain, latent, svd.v, fitted)
-    scores <- map.forward(input)
-  yield
-    val diagnostics = ProjectionDiagnostics(
-      method = method,
-      components = components,
-      effectiveComponents = svd.singularValues.length,
-      singularValues = Some(svd.singularValues)
+    transform <- FittedFrameTransform.fromTraining(
+      input,
+      svd.v,
+      fitted,
+      method,
+      components,
+      Some(svd.singularValues)
     )
-    val projection = BiProjection(
-      map,
-      scores,
-      scale = Some(ComponentScale(svd.singularValues)),
-      diagnostics = Some(diagnostics)
-    )
-    (svd, projection)
+  yield (svd, transform)
 
-/** Whole-fit entry points reject a rank-0 SVD (an exactly zero spectrum) with a typed
-  * error; callers with an empty-result contract handle rank 0 at their own call sites.
-  */
 private def requireComponents(svd: SvdResult): Either[MultivarError, Unit] =
   if svd.singularValues.length == 0 then Left(MultivarError.SolverFailed("no singular values above tolerance"))
   else Right(())
@@ -308,54 +278,8 @@ private def validateRrrComponentRequest(
 private def covarianceScale(rows: Int): Double =
   1.0 / Math.max(1, rows - 1)
 
-private def pairedOperatorSemantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
+private def decompositionSemantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
   result.left.map:
     case SemanticError.MultivarFailure(error)  => error
     case SemanticError.LinearMapFailure(error) => LinalgErrorAdapter.toMultivarError(error)
     case error                                 => MultivarError.SolverFailed(error.message)
-
-private def buildPairedLatentFit(
-    method: PairedLatentMethod,
-    methodLabel: String,
-    components: ComponentCount,
-    svd: SvdResult,
-    spectrum: Spectrum,
-    xWeights: DMat,
-    yWeights: DMat,
-    xInput: MatrixView,
-    yInput: MatrixView,
-    xDomain: MvSpace,
-    yDomain: MvSpace,
-    fittedX: FittedPreprocessor,
-    fittedY: FittedPreprocessor
-): Either[MultivarError, PairedLatentFit] =
-  for
-    latent <- MvSpace.of(s"$methodLabel.latent", SpaceRole.Latent, svd.singularValues.length)
-    xMap <- MatrixMap.from(xDomain, latent, xWeights, fittedX)
-    yMap <- MatrixMap.from(yDomain, latent, yWeights, fittedY)
-    xScores <- xMap.forward(xInput)
-    yScores <- yMap.forward(yInput)
-    diagnostics = ProjectionDiagnostics(
-      method = methodLabel,
-      components = components,
-      effectiveComponents = svd.singularValues.length,
-      singularValues = Some(svd.singularValues)
-    )
-    projection = CrossProjection(
-      xMap,
-      yMap,
-      latent,
-      xScores,
-      yScores,
-      scale = Some(ComponentScale(svd.singularValues)),
-      diagnostics = Some(diagnostics)
-    )
-    fit <- PairedLatentFit.from(
-      method,
-      xWeights,
-      yWeights,
-      spectrum,
-      projection,
-      diagnostics
-    )
-  yield fit

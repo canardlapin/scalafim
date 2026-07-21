@@ -199,8 +199,8 @@ class PlanSuite extends munit.FunSuite:
       MultivarEstimator.GenPca(
         ComponentCount(1).toOption.get,
         preprocessing = PreprocessSpec.Pass,
-        rowMetric = Some(MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 1.0, 0.5))).toOption.get),
-        columnMetric = Some(MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.25))).toOption.get),
+        rowMetric = Some(MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 1.0, 0.5))).toOption.get),
+        columnMetric = Some(MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.25))).toOption.get),
         backend = GmdBackend.Eigen(),
         storagePolicy = StoragePolicy.AllowDense
       )
@@ -373,7 +373,7 @@ class PlanSuite extends munit.FunSuite:
       rois,
       MultivarEstimator.GenPca(
         ComponentCount(1).toOption.get,
-        columnMetric = Some(MvMetric.identity(3).toOption.get)
+        columnMetric = Some(MetricSpec.identity(3).toOption.get)
       )
     )
 
@@ -409,7 +409,7 @@ class PlanSuite extends munit.FunSuite:
       rois,
       MultivarEstimator.Cpca(
         CpcaEstimatorSpec(
-          columnMetric = Some(MvMetric.identity(3).toOption.get),
+          columnMetric = Some(MetricSpec.identity(3).toOption.get),
           rowConstraint = CpcaConstraint.Basis(rowDesign)
         )
       )

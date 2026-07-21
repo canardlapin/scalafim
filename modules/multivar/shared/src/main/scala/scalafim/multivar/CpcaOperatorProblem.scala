@@ -628,8 +628,8 @@ object CpcaOperatorProblem:
     */
   def fromMatrices(
       table: MatrixView,
-      rowMetric: Option[MvMetric],
-      featureMetric: Option[MvMetric],
+      rowMetric: Option[MetricSpec],
+      featureMetric: Option[MetricSpec],
       rowConstraint: CpcaConstraint,
       featureConstraint: CpcaConstraint,
       rowSpace: MvSpace,
@@ -646,10 +646,10 @@ object CpcaOperatorProblem:
     for
       rowValue <- rowMetric match
         case Some(value) => Right(value)
-        case None        => MvMetric.identity(table.rows, Some(rowSpace))
+        case None        => MetricSpec.identity(table.rows, Some(rowSpace))
       featureValue <- featureMetric match
         case Some(value) => Right(value)
-        case None        => MvMetric.identity(table.cols, Some(featureSpace))
+        case None        => MetricSpec.identity(table.cols, Some(featureSpace))
       _ <- requireMetric(IndexAxis.Row, rowValue, rowSpace)
       _ <- requireMetric(IndexAxis.Feature, featureValue, featureSpace)
       rowDense <- rowValue.toDense(policy)
@@ -773,7 +773,7 @@ object CpcaOperatorProblem:
       certified <- cpcaSemantic(Op.certifiedPsd(Op.fromLin(linear, OperatorRoleWitness.metric), certificate))
     yield certified
 
-  private def requireMetric(axis: IndexAxis, metric: MvMetric, space: MvSpace): Either[MultivarError, Unit] =
+  private def requireMetric(axis: IndexAxis, metric: MetricSpec, space: MvSpace): Either[MultivarError, Unit] =
     if metric.dim != space.size then Left(MultivarError.MetricShapeMismatch(axis, space.size, metric.dim))
     else
       metric.space match

@@ -152,8 +152,8 @@ enum MultivarEstimator:
   case GenPca(
       components: ComponentCount,
       preprocessing: PreprocessSpec = PreprocessSpec.Center,
-      rowMetric: Option[MvMetric] = None,
-      columnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      columnMetric: Option[MetricSpec] = None,
       backend: GmdBackend = GmdBackend.Auto,
       storagePolicy: StoragePolicy = StoragePolicy.AllowDense
   )
@@ -271,7 +271,7 @@ object MultivarPlan:
   private def validateOptionalMetric(
       axis: IndexAxis,
       expected: Int,
-      metric: Option[MvMetric]
+      metric: Option[MetricSpec]
   ): Either[MultivarError, Unit] =
     metric match
       case Some(value) if value.dim != expected =>
@@ -415,7 +415,7 @@ final case class FitArtifactShape(
   require(components >= 0, "artifact components must be non-negative")
 
 enum FitArtifact:
-  case BiProjectionArtifact(artifactShape: FitArtifactShape, projection: BiProjection)
+  case FrameTransformArtifact(artifactShape: FitArtifactShape, transform: FittedFrameTransform)
   case OperatorArtifact(artifactShape: FitArtifactShape, fits: Vector[OperatorFitBundle])
   case CpcaArtifact(
       artifactShape: FitArtifactShape,
@@ -426,7 +426,7 @@ enum FitArtifact:
 
   def shape: FitArtifactShape =
     this match
-      case BiProjectionArtifact(value, _) => value
+      case FrameTransformArtifact(value, _) => value
       case OperatorArtifact(value, _)     => value
       case CpcaArtifact(value, _, _)      => value
       case KernelArtifact(value, _)       => value
@@ -458,11 +458,17 @@ object LocalMultivarExecutor:
     plan.estimator match
       case MultivarEstimator.Pca(components, preprocessing) =>
         Pca.fit(input, components, preprocessing).map { fit =>
-          FitArtifact.BiProjectionArtifact(shape(plan, roi, FitArtifactKind.Pca, input, fit.projection.map.codomain.size), fit.projection)
+          FitArtifact.FrameTransformArtifact(
+            shape(plan, roi, FitArtifactKind.Pca, input, fit.transform.componentSpace.descriptor.size),
+            fit.transform
+          )
         }
       case MultivarEstimator.Svd(components, preprocessing) =>
         Svd.fit(input, components, preprocessing).map { fit =>
-          FitArtifact.BiProjectionArtifact(shape(plan, roi, FitArtifactKind.Svd, input, fit.projection.map.codomain.size), fit.projection)
+          FitArtifact.FrameTransformArtifact(
+            shape(plan, roi, FitArtifactKind.Svd, input, fit.transform.componentSpace.descriptor.size),
+            fit.transform
+          )
         }
       case MultivarEstimator.GenPca(components, preprocessing, rowMetric, columnMetric, backend, policy) =>
         val rowSpace = MvSpace(plan.input.id, SpaceRole.Samples, plan.input.samples)
@@ -476,10 +482,10 @@ object LocalMultivarExecutor:
           transformed <- preprocessor.transform(input, policy = policy)
           rowGeometry <- rowMetric match
             case Some(value) => Right(value)
-            case None        => MvMetric.identity(input.rows, Some(rowSpace))
+            case None        => MetricSpec.identity(input.rows, Some(rowSpace))
           featureGeometry <- columnMetric match
             case Some(value) => Right(value)
-            case None        => MvMetric.identity(input.cols, Some(columnSpace))
+            case None        => MetricSpec.identity(input.cols, Some(columnSpace))
           tolerance <- GpcaRankTolerance.fromBackend(backend)
           problem <- DynamicGpcaProblem.from(
             transformed,

@@ -29,7 +29,7 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
     val sampleSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
     val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(sampleSpace)).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(sampleSpace)).toOption.get
 
     val paired = Unsafe
       .pairedDiagramFromArrays(
@@ -69,7 +69,7 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   test("paired diagram rejects metric space mismatch") {
     val sampleSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val otherSpace = MvSpace.of("other-samples", SpaceRole.Samples, 3).toOption.get
-    val rowMetric = MvMetric.identity(3, Some(otherSpace)).toOption.get
+    val rowMetric = MetricSpec.identity(3, Some(otherSpace)).toOption.get
 
     Unsafe.pairedDiagramFromArrays(
       x,
@@ -104,8 +104,8 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   test("fromDiagrams accepts separately built, numerically identical row metrics") {
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 2).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 1).toOption.get
-    val first = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val second = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val first = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val second = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
     val xDiagram = DualityDiagram.from(x, rowMetric = Some(first), columnSpace = Some(xObserved)).toOption.get
     val yDiagram = DualityDiagram.from(y, rowMetric = Some(second), columnSpace = Some(yObserved)).toOption.get
 
@@ -116,8 +116,8 @@ class PairedDualityDiagramSuite extends munit.FunSuite:
   test("fromDiagrams rejects genuinely different row metrics with a typed metric mismatch") {
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 2).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 1).toOption.get
-    val first = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val second = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 2.0, 2.0))).toOption.get
+    val first = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val second = MetricSpec.diagonal(DVec.fromSeq(Vector(2.0, 2.0, 2.0))).toOption.get
     val xDiagram = DualityDiagram.from(x, rowMetric = Some(first), columnSpace = Some(xObserved)).toOption.get
     val yDiagram = DualityDiagram.from(y, rowMetric = Some(second), columnSpace = Some(yObserved)).toOption.get
 

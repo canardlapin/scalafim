@@ -727,7 +727,7 @@ object SupportRestriction:
         )
         .left
         .map(DiagramError.Semantic.apply)
-      reducedLegacy <- MvMetric
+      reducedLegacy <- MetricSpec
         .diagonal(
           MatrixOps.takeVector(eigen.values, rank),
           Some(effectiveDescriptor)
@@ -799,7 +799,7 @@ final case class GeometryResolution[S <: SemanticSpace](
     original: DiagramGeometry[S],
     kind: GeometryResolutionKind,
     effectiveSpace: MvSpace,
-    effectiveMetric: MvMetric,
+    effectiveMetric: MetricSpec,
     support: Option[SupportRestriction[S]],
     certificates: Vector[NumericalCertificate]
 )
@@ -866,7 +866,7 @@ object GeometryResolution:
     for
       matrix <- DiagramNumerics.formMatrix(geometry)
       regularized = matrix.addToDiagonal(amount.toDouble)
-      legacy <- MvMetric
+      legacy <- MetricSpec
         .denseSymmetric(regularized, MetricValidation.Structural, Some(geometry.space.descriptor))
         .left
         .map(DiagramError.Multivar.apply)
@@ -918,14 +918,14 @@ private[multivar] object DiagramNumerics:
   def legacyMetric[S <: SemanticSpace](
       geometry: DiagramGeometry[S],
       policy: StoragePolicy
-  ): Either[DiagramError, MvMetric] =
+  ): Either[DiagramError, MetricSpec] =
     geometry.operator.kernel match
       case MetricKernel(metric) => Right(metric)
       case _ if policy != StoragePolicy.AllowDense =>
         Left(DiagramError.DensificationRequired("geometry adaptation"))
       case _ =>
         formMatrix(geometry).flatMap(
-          MvMetric
+          MetricSpec
             .denseSymmetric(_, MetricValidation.Structural, Some(geometry.space.descriptor))
             .left
             .map(DiagramError.Multivar.apply)

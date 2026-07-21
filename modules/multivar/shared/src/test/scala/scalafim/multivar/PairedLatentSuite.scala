@@ -17,9 +17,6 @@ class PairedLatentSuite extends munit.FunSuite:
   private def k(value: Int): ComponentCount =
     ComponentCount.unsafe(value)
 
-  private def pass(cols: Int): FittedPreprocessor =
-    FittedColumnAffine(cols, MatrixView.ones(cols), MatrixView.zeros(cols))
-
   private def assertMatrixClose(actual: DMat, expected: Vector[Vector[Double]], tol: Double): Unit =
     assertEquals(actual.rows, expected.length)
     assertEquals(actual.cols, expected.headOption.map(_.length).getOrElse(0))
@@ -126,12 +123,13 @@ class PairedLatentSuite extends munit.FunSuite:
       PairedMultivarEstimator.ReducedRankRegression(k(1))
     )
 
-    def fit(estimator: PairedMultivarEstimator): Either[MultivarError, PairedLatentFit] =
+    def fitKind(estimator: PairedMultivarEstimator): Either[MultivarError, PairedProgramKind] =
       estimator match
         case PairedMultivarEstimator.Plsc(components, xPreprocessing, yPreprocessing) =>
-          Plsc.fit(x, y, components, xPreprocessing, yPreprocessing).map(_.paired)
+          Plsc.fit(x, y, components, xPreprocessing, yPreprocessing).map(_.operator.diagnostics.kind)
         case PairedMultivarEstimator.Cca(components, regularization, xPreprocessing, yPreprocessing) =>
-          Cca.fitRegularized(x, y, components, regularization, xPreprocessing, yPreprocessing).map(_.paired)
+          Cca.fitRegularized(x, y, components, regularization, xPreprocessing, yPreprocessing)
+            .map(_.operator.diagnostics.kind)
         case PairedMultivarEstimator.ReducedRankRegression(
               components,
               regularization,
@@ -141,26 +139,27 @@ class PairedLatentSuite extends munit.FunSuite:
             ) =>
           ReducedRankRegression
             .fit(x, y, components, regularization, direction, xPreprocessing, yPreprocessing)
-            .map(_.latent)
+            .map(_.operator.diagnostics.kind)
 
     estimators.foreach { estimator =>
-      val actual = fit(estimator)
+      val actual = fitKind(estimator)
       assert(actual.isRight, s"${estimator.label} should be executable, got $actual")
-      assertEquals(actual.toOption.get.method, estimator.method)
+      assertEquals(actual.toOption.get.label, estimator.label)
     }
   }
 
   test("PLSC matches the R cross-covariance SVD fixture") {
     val ref = R.plsc
     val fit = Plsc.fit(MatrixView.dense(ref.x), MatrixView.dense(ref.y), k(ref.components)).toOption.get
-    val actual = canonicalize(fit.paired.xWeights, fit.paired.yWeights, fit.paired.xScores, fit.paired.yScores)
+    val actual = canonicalize(
+      fit.operator.sourceWeights.toOption.get,
+      fit.operator.targetWeights.toOption.get,
+      fit.xScores,
+      fit.yScores
+    )
 
     assertVectorClose(fit.result.singularValues, ref.singularValues, 1e-9)
-    fit.paired.spectrum match
-      case Spectrum.Covariance(values) =>
-        assertVectorClose(values, ref.singularValues, 1e-9)
-      case other =>
-        fail(s"expected covariance spectrum, got $other")
+    assertEquals(fit.operator.diagnostics.kind, PairedProgramKind.Plsc)
     assertPairedReference(actual, ref, 1e-9)
   }
 
@@ -168,14 +167,17 @@ class PairedLatentSuite extends munit.FunSuite:
     val ref = R.cca
     val regularization = CcaRegularization.asymmetric(ref.xRidge, ref.yRidge).toOption.get
     val fit = Cca.fitRegularized(MatrixView.dense(ref.x), MatrixView.dense(ref.y), k(ref.components), regularization).toOption.get
-    val actual = canonicalize(fit.paired.xWeights, fit.paired.yWeights, fit.paired.xScores, fit.paired.yScores)
+    val actual = canonicalize(
+      fit.operator.sourceWeights.toOption.get,
+      fit.operator.targetWeights.toOption.get,
+      fit.xScores,
+      fit.yScores
+    )
 
     assertVectorClose(fit.result.singularValues, ref.singularValues, 1e-9)
-    fit.paired.spectrum match
-      case Spectrum.CanonicalCorrelations(values) =>
-        assertVectorClose(values, ref.singularValues, 1e-9)
-      case other =>
-        fail(s"expected canonical-correlation spectrum, got $other")
+    fit.operator.diagnostics.kind match
+      case PairedProgramKind.Cca(value) => assertEquals(value, regularization)
+      case other                        => fail(s"expected CCA kind, got $other")
     assertPairedReference(actual, ref, 1e-9)
 
     val zeroRidge = CcaRegularization.asymmetric(0.0, 0.0).toOption.get
@@ -202,7 +204,7 @@ class PairedLatentSuite extends munit.FunSuite:
         Vector(-1.0, 0.5)
       )
     )
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Plsc.fit(xView, yView, k(2), rowMetric = Some(rowMetric)).toOption.get
@@ -240,7 +242,7 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val ridge = 0.2
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))).toOption.get
     val xView = MatrixView.dense(x)
     val yView = MatrixView.dense(y)
     val fit = Cca.fit(xView, yView, k(2), ridge = ridge, rowMetric = Some(rowMetric)).toOption.get
@@ -284,7 +286,7 @@ class PairedLatentSuite extends munit.FunSuite:
       )
     )
     val weights = Vector(1.0, 2.0, 0.5, 1.5, 0.75)
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(weights)).toOption.get
     val fit = Plsc.fit(MatrixView.dense(x), MatrixView.dense(y), k(2), rowMetric = Some(rowMetric)).toOption.get
 
     // External reference: column-center each table, then build X' D Y / (n - 1)
@@ -325,7 +327,12 @@ class PairedLatentSuite extends munit.FunSuite:
     val expected = DenseSolvers.svd.decompose(MatrixView.dense(cross), k(2)).toOption.get
 
     assertVectorClose(fit.result.singularValues, expected.singularValues, 1e-9)
-    val actual = canonicalize(fit.paired.xWeights, fit.paired.yWeights, fit.paired.xScores, fit.paired.yScores)
+    val actual = canonicalize(
+      fit.operator.sourceWeights.toOption.get,
+      fit.operator.targetWeights.toOption.get,
+      fit.xScores,
+      fit.yScores
+    )
     val expectedScores = canonicalize(
       expected.u,
       expected.v,
@@ -341,16 +348,17 @@ class PairedLatentSuite extends munit.FunSuite:
   test("RRR x-to-y matches the R reduced-rank regression fixture") {
     val ref = R.rrr
     val fit = ReducedRankRegression.fit(MatrixView.dense(ref.x), MatrixView.dense(ref.y), k(ref.components)).toOption.get
-    val actual = canonicalize(fit.latent.xWeights, fit.latent.yWeights, fit.latent.xScores, fit.latent.yScores)
+    val actual = canonicalize(
+      fit.sourceTransform.frame.weights.toDense.toOption.get,
+      fit.targetTransform.frame.weights.toDense.toOption.get,
+      fit.sourceTransform.trainingValues,
+      fit.targetTransform.trainingValues
+    )
 
-    fit.latent.spectrum match
-      case Spectrum.SingularValues(values) =>
-        assertVectorClose(values, ref.singularValues, 1e-9)
-      case other =>
-        fail(s"expected singular-value spectrum, got $other")
+    assertVectorClose(fit.operator.result.singularValues, ref.singularValues, 1e-9)
     assertPairedReference(actual, ref, 1e-9)
     assertMatrixClose(fit.fullCoefficient, ref.fullCoefficient.get, 1e-9)
-    assertMatrixClose(fit.workingCoefficient.weights, ref.workingCoefficient.get, 1e-9)
+    assertMatrixClose(fit.coefficientTransform.coefficient.toDense.toOption.get, ref.workingCoefficient.get, 1e-9)
     assertMatrixClose(fit.predictWorking(MatrixView.dense(ref.x)).toOption.get, ref.predictedWorking.get, 1e-9)
     assertMatrixClose(fit.predict(MatrixView.dense(ref.x)).toOption.get, ref.predicted.get, 1e-9)
   }
@@ -375,83 +383,4 @@ class PairedLatentSuite extends munit.FunSuite:
     assertEquals(ridge.label, "ridge")
     assertEquals(method.label, "rrr")
     assert(RegressionRegularization.ridge(Double.PositiveInfinity).isLeft)
-  }
-
-  test("paired latent fit delegates projection through the cross-projection artifact") {
-    val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
-    val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
-    val latent = MvSpace.of("latent", SpaceRole.Latent, 1).toOption.get
-    val xWeights = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0)))
-    val yWeights = GaleNumerics.matrixFromRows(Vector(Vector(3.0)))
-    val xMap = MatrixMap.from(xSpace, latent, xWeights, pass(2)).toOption.get
-    val yMap = MatrixMap.from(ySpace, latent, yWeights, pass(1)).toOption.get
-    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 3.0))))
-    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(4.0))))
-    val xScores = xMap.forward(xInput).toOption.get
-    val yScores = yMap.forward(yInput).toOption.get
-    val svd = SvdResult(
-      u = GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
-      singularValues = DVec.fromSeq(Vector(1.0)),
-      v = GaleNumerics.matrixFromRows(Vector(Vector(1.0)))
-    )
-    val diagnostics = ProjectionDiagnostics("plsc", ComponentCount.unsafe(1), effectiveComponents = 1)
-    val fit = PairedLatentFit.from(
-      PairedLatentMethod.Plsc,
-      xWeights,
-      yWeights,
-      Spectrum.Covariance(svd.singularValues),
-      CrossProjection(xMap, yMap, latent, xScores, yScores, diagnostics = Some(diagnostics)),
-      diagnostics
-    ).toOption.get
-
-    assertEquals(fit.spectrum.values, svd.singularValues)
-    assertEquals(fit.xWeights, xWeights)
-    assertEquals(fit.yWeights, yWeights)
-    assertEquals(fit.xScores, xScores)
-    assertEquals(fit.yScores, yScores)
-    assertMatrixClose(fit.projectX(xInput).toOption.get, Vector(Vector(8.0)), 1e-12)
-    assertMatrixClose(fit.projectY(yInput).toOption.get, Vector(Vector(12.0)), 1e-12)
-  }
-
-  test("paired latent fit construction rejects weight shapes that disagree with the projection") {
-    val xSpace = MvSpace.of("x", SpaceRole.Observed, 2).toOption.get
-    val ySpace = MvSpace.of("y", SpaceRole.Observed, 1).toOption.get
-    val latent = MvSpace.of("latent", SpaceRole.Latent, 1).toOption.get
-    val xWeights = GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0)))
-    val yWeights = GaleNumerics.matrixFromRows(Vector(Vector(3.0)))
-    val xMap = MatrixMap.from(xSpace, latent, xWeights, pass(2)).toOption.get
-    val yMap = MatrixMap.from(ySpace, latent, yWeights, pass(1)).toOption.get
-    val xInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(2.0, 3.0))))
-    val yInput = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(4.0))))
-    val xScores = xMap.forward(xInput).toOption.get
-    val yScores = yMap.forward(yInput).toOption.get
-    val singular = DVec.fromSeq(Vector(1.0))
-    val diagnostics = ProjectionDiagnostics("plsc", ComponentCount.unsafe(1), effectiveComponents = 1)
-    val projection = CrossProjection(xMap, yMap, latent, xScores, yScores, diagnostics = Some(diagnostics))
-
-    PairedLatentFit.from(
-      PairedLatentMethod.Plsc,
-      GaleNumerics.matrixFromRows(Vector(Vector(1.0))),
-      yWeights,
-      Spectrum.Covariance(singular),
-      projection,
-      diagnostics
-    ) match
-      case Left(MultivarError.MatrixShapeMismatch(detail)) =>
-        assert(detail.contains("x weights rows"), detail)
-      case other =>
-        fail(s"expected an x weight shape rejection, got $other")
-
-    PairedLatentFit.from(
-      PairedLatentMethod.Plsc,
-      xWeights,
-      yWeights,
-      Spectrum.Covariance(DVec.fromSeq(Vector(1.0, 2.0))),
-      projection,
-      diagnostics
-    ) match
-      case Left(MultivarError.MatrixShapeMismatch(detail)) =>
-        assert(detail.contains("spectrum values"), detail)
-      case other =>
-        fail(s"expected a spectrum length rejection, got $other")
   }

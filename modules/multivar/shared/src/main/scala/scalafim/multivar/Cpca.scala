@@ -141,7 +141,7 @@ enum CpcaConstraint:
   def resolve(
       axis: IndexAxis,
       space: MvSpace,
-      metric: MvMetric,
+      metric: MetricSpec,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       tolerance: Double = 1e-12,
       policy: StoragePolicy = StoragePolicy.AllowDense
@@ -160,8 +160,8 @@ final case class CpcaEstimatorSpec(
     blocks: Vector[CpcaBlock] = Vector(CpcaBlock.GxH),
     rankByBlock: Map[CpcaBlock, ComponentCount] = Map.empty,
     defaultComponents: Option[ComponentCount] = None,
-    rowMetric: Option[MvMetric] = None,
-    columnMetric: Option[MvMetric] = None,
+    rowMetric: Option[MetricSpec] = None,
+    columnMetric: Option[MetricSpec] = None,
     rowConstraint: CpcaConstraint = CpcaConstraint.Identity,
     columnConstraint: CpcaConstraint = CpcaConstraint.Identity,
     storagePolicy: StoragePolicy = StoragePolicy.AllowDense,
@@ -242,7 +242,7 @@ final case class CpcaEstimatorSpec(
   private def validateMetric(
       axis: IndexAxis,
       expected: Int,
-      metric: Option[MvMetric]
+      metric: Option[MetricSpec]
   ): Either[MultivarError, Unit] =
     metric match
       case Some(value) if value.dim != expected =>
@@ -262,7 +262,7 @@ final case class ResolvedCpcaConstraint private[multivar] (
     space: MvSpace,
     rank: Int,
     basis: Option[DMat],
-    metric: Option[MvMetric],
+    metric: Option[MetricSpec],
     originalDesign: Option[DMat],
     projector: MvMap,
     coordinateMap: Option[MvMap]
@@ -313,7 +313,7 @@ object CpcaConstraint:
       axis: IndexAxis,
       space: MvSpace,
       design: DMat,
-      metric: MvMetric,
+      metric: MetricSpec,
       eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
       tolerance: Double = 1e-12,
       policy: StoragePolicy = StoragePolicy.AllowDense,
@@ -444,7 +444,7 @@ object CpcaProblem:
   private def validateMetric(
       role: String,
       constraint: ResolvedCpcaConstraint,
-      diagramMetric: MvMetric
+      diagramMetric: MetricSpec
   ): Either[MultivarError, Unit] =
     constraint.metric match
       case Some(metric) if !metric.sameValues(diagramMetric) =>

@@ -26,7 +26,7 @@ class CpcaSuite extends munit.FunSuite:
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
 
-  private def assertMetricOrthonormal(factors: DMat, metric: MvMetric, tol: Double): Unit =
+  private def assertMetricOrthonormal(factors: DMat, metric: MetricSpec, tol: Double): Unit =
     val weighted = metric.matvec(factors).toOption.get
     val gram = GaleNumerics.transposeMultiply(factors, weighted)
     var row = 0
@@ -82,7 +82,7 @@ class CpcaSuite extends munit.FunSuite:
       )
     )
     val space = MvSpace.of("cpca.spec.rows", SpaceRole.Samples, 4).toOption.get
-    val metric = MvMetric.identity(4, Some(space)).toOption.get
+    val metric = MetricSpec.identity(4, Some(space)).toOption.get
     val resolved = CpcaConstraint.Basis(design, keepDesign = false)
       .resolve(IndexAxis.Row, space, metric)
       .toOption
@@ -114,7 +114,7 @@ class CpcaSuite extends munit.FunSuite:
       )
     )
     val space = MvSpace.of("cpca.map.rows", SpaceRole.Samples, 4).toOption.get
-    val metric = MvMetric.identity(4, Some(space)).toOption.get
+    val metric = MetricSpec.identity(4, Some(space)).toOption.get
     val basis = CpcaConstraint.Basis(design)
       .resolve(IndexAxis.Row, space, metric)
       .toOption
@@ -141,8 +141,8 @@ class CpcaSuite extends munit.FunSuite:
   }
 
   test("estimator specs validate metric and constraint dimensions without resolving formulas") {
-    val rowMetric = MvMetric.identity(4).toOption.get
-    val colMetric = MvMetric.identity(3).toOption.get
+    val rowMetric = MetricSpec.identity(4).toOption.get
+    val colMetric = MetricSpec.identity(3).toOption.get
     val rowDesign = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
@@ -294,8 +294,8 @@ class CpcaSuite extends munit.FunSuite:
     )
     val rowSpace = MvSpace.of("cpca.rows", SpaceRole.Samples, x.rows).toOption.get
     val colSpace = MvSpace.of("cpca.columns", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
+    val colMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(colSpace))
       .toOption
@@ -377,8 +377,8 @@ class CpcaSuite extends munit.FunSuite:
     )
     val rowSpace = MvSpace.of("cpca.fit.rows", SpaceRole.Samples, x.rows).toOption.get
     val colSpace = MvSpace.of("cpca.fit.columns", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.75, 1.5, 1.25, 0.5)), Some(rowSpace)).toOption.get
+    val colMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.2, 0.8, 1.5, 0.6)), Some(colSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(colSpace))
       .toOption
@@ -459,7 +459,7 @@ class CpcaSuite extends munit.FunSuite:
 
   test("rank-deficient constraint designs resolve to reduced bases and zero designs demote to Zero") {
     val space = MvSpace.of("cpca.deficient.rows", SpaceRole.Samples, 4).toOption.get
-    val metric = MvMetric.identity(4, Some(space)).toOption.get
+    val metric = MetricSpec.identity(4, Some(space)).toOption.get
     val collinear = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.0, 2.0),
@@ -487,8 +487,8 @@ class CpcaSuite extends munit.FunSuite:
       )
     )
     val rowSpace = MvSpace.of("cpca.metric.rows", SpaceRole.Samples, 4).toOption.get
-    val diagMetric = MvMetric.diagonal(DVec.fromSeq(Vector(2.0, 1.0, 1.0, 1.0)), Some(rowSpace)).toOption.get
-    val identityMetric = MvMetric.identity(4, Some(rowSpace)).toOption.get
+    val diagMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(2.0, 1.0, 1.0, 1.0)), Some(rowSpace)).toOption.get
+    val identityMetric = MetricSpec.identity(4, Some(rowSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), rowMetric = Some(diagMetric), rowSpace = Some(rowSpace))
       .toOption

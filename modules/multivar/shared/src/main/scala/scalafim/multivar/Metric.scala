@@ -15,15 +15,19 @@ enum MetricValidation:
   /** Shape checks only; trusted input for hot paths. */
   case Trusted
 
-/** Symmetric positive semi-definite bilinear form over one axis of a data matrix.
+/** Runtime constructor specification for a symmetric positive-semidefinite
+  * operator over one named axis.
   *
-  * A metric is axis-agnostic: the same p x p form can weight the columns of X or the
-  * rows of X transposed. Estimators check `dim` against the data axis they weight.
+  * This is lifecycle/configuration data, not the semantic metric itself. A model
+  * boundary must compile it to a role-refined `OpMetric` or `OpCometric` bound to
+  * a nominal `SpaceEvidence` before it can enter an operator program. The same
+  * p x p payload can describe a row or column metric only after that binding.
+  * Estimators check `dim` against the data axis they weight.
   * Positive semi-definiteness beyond the structural checks is enforced spectrally
   * wherever a square root is taken (`MetricSqrt.factor`), so rank-deficient PSD
   * metrics are usable while indefinite ones fail with a typed error.
   */
-sealed trait MvMetric:
+sealed trait MetricSpec:
   /** Size of the axis this metric weights (n for a row metric, p for a column metric). */
   def dim: Int
   def storage: StorageKind
@@ -32,12 +36,12 @@ sealed trait MvMetric:
 
   def isIdentity: Boolean =
     this match
-      case MvMetric.Identity(_, _) => true
+      case MetricSpec.Identity(_, _) => true
       case _                       => false
 
   def isDiagonal: Boolean =
     this match
-      case MvMetric.Identity(_, _) | MvMetric.Diagonal(_, _) => true
+      case MetricSpec.Identity(_, _) | MetricSpec.Diagonal(_, _) => true
       case _                                                 => false
 
   /** Value-based metric identity: same kind, same dimension, and exactly equal entries.
@@ -49,16 +53,16 @@ sealed trait MvMetric:
     * identity claim across instances, not a numeric-tolerance claim. Space tags are
     * ignored; space compatibility is checked separately where it matters.
     */
-  final def sameValues(other: MvMetric): Boolean =
+  final def sameValues(other: MetricSpec): Boolean =
     (this eq other) || ((this, other) match
-      case (MvMetric.Identity(dim, _), MvMetric.Identity(otherDim, _)) =>
+      case (MetricSpec.Identity(dim, _), MetricSpec.Identity(otherDim, _)) =>
         dim == otherDim
-      case (MvMetric.Diagonal(weights, _), MvMetric.Diagonal(otherWeights, _)) =>
-        MvMetric.sameVectorValues(weights, otherWeights)
-      case (MvMetric.DenseSymmetric(matrix, _), MvMetric.DenseSymmetric(otherMatrix, _)) =>
-        MvMetric.sameMatrixValues(matrix, otherMatrix)
-      case (MvMetric.SparseSymmetric(view, _), MvMetric.SparseSymmetric(otherView, _)) =>
-        MvMetric.sameSparseValues(view, otherView)
+      case (MetricSpec.Diagonal(weights, _), MetricSpec.Diagonal(otherWeights, _)) =>
+        MetricSpec.sameVectorValues(weights, otherWeights)
+      case (MetricSpec.DenseSymmetric(matrix, _), MetricSpec.DenseSymmetric(otherMatrix, _)) =>
+        MetricSpec.sameMatrixValues(matrix, otherMatrix)
+      case (MetricSpec.SparseSymmetric(view, _), MetricSpec.SparseSymmetric(otherView, _)) =>
+        MetricSpec.sameSparseValues(view, otherView)
       case _ =>
         false)
 
@@ -81,10 +85,10 @@ sealed trait MvMetric:
   /** Materialize as a dense dim x dim matrix, subject to policy. */
   def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat]
 
-object MvMetric:
+object MetricSpec:
   private val StructuralTolerance = 1e-10
 
-  final case class Identity private[multivar] (dim: Int, space: Option[MvSpace]) extends MvMetric:
+  final case class Identity private[multivar] (dim: Int, space: Option[MvSpace]) extends MetricSpec:
     override def storage: StorageKind =
       StorageKind.Operator
 
@@ -117,7 +121,7 @@ object MvMetric:
     override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       Right(DMat.eye(dim))
 
-  final case class Diagonal private[multivar] (weights: DVec, space: Option[MvSpace]) extends MvMetric:
+  final case class Diagonal private[multivar] (weights: DVec, space: Option[MvSpace]) extends MetricSpec:
     override def dim: Int =
       weights.length
 
@@ -153,7 +157,7 @@ object MvMetric:
     override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       Right(MatrixOps.diagonal(weights))
 
-  final case class DenseSymmetric private[multivar] (matrix: DMat, space: Option[MvSpace]) extends MvMetric:
+  final case class DenseSymmetric private[multivar] (matrix: DMat, space: Option[MvSpace]) extends MetricSpec:
     override def dim: Int =
       matrix.rows
 
@@ -217,7 +221,7 @@ object MvMetric:
     * `MetricValidation.Structural` rejects a missing mirror entry;
     * `MetricValidation.Trusted` skips that check entirely.
     */
-  final case class SparseSymmetric private[multivar] (view: SparseMatrixView, space: Option[MvSpace]) extends MvMetric:
+  final case class SparseSymmetric private[multivar] (view: SparseMatrixView, space: Option[MvSpace]) extends MetricSpec:
     override def dim: Int =
       view.rows
 
@@ -251,7 +255,7 @@ object MvMetric:
     override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
       view.toDense(policy)
 
-  def identity(dim: Int, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
+  def identity(dim: Int, space: Option[MvSpace] = None): Either[MultivarError, MetricSpec] =
     if dim <= 0 then Left(MultivarError.InvalidDimension("metric dimension", dim))
     else requireSpace(space, dim).map(_ => Identity(dim, space))
 
@@ -260,7 +264,7 @@ object MvMetric:
     * instance is factorizable by `MetricSqrt.factor` regardless of its (tighter)
     * tolerance; weights below that band are rejected as indefinite.
     */
-  def diagonal(weights: DVec, space: Option[MvSpace] = None): Either[MultivarError, MvMetric] =
+  def diagonal(weights: DVec, space: Option[MvSpace] = None): Either[MultivarError, MetricSpec] =
     if weights.length <= 0 then Left(MultivarError.InvalidDimension("metric dimension", weights.length))
     else
       var i = 0
@@ -299,7 +303,7 @@ object MvMetric:
   def fromRowWhitening(
       whitening: RowWhitening,
       space: Option[MvSpace] = None
-  ): Either[MultivarError, MvMetric] =
+  ): Either[MultivarError, MetricSpec] =
     whitening.mode match
       case RowWhiteningMode.Identity | RowWhiteningMode.GroupedIdentity =>
         identity(whitening.rows, space)
@@ -314,7 +318,7 @@ object MvMetric:
       matrix: DMat,
       validation: MetricValidation = MetricValidation.Structural,
       space: Option[MvSpace] = None
-  ): Either[MultivarError, MvMetric] =
+  ): Either[MultivarError, MetricSpec] =
     for
       _ <- requireSquare(matrix.rows, matrix.cols)
       _ <- validation match
@@ -340,7 +344,7 @@ object MvMetric:
       view: SparseMatrixView,
       validation: MetricValidation = MetricValidation.Structural,
       space: Option[MvSpace] = None
-  ): Either[MultivarError, MvMetric] =
+  ): Either[MultivarError, MetricSpec] =
     for
       _ <- requireSquare(view.rows, view.cols)
       _ <- validation match
@@ -357,16 +361,16 @@ object MvMetric:
       _ <- requireSpace(space, view.rows)
     yield SparseSymmetric(view, space)
 
-  private[multivar] def unsafeIdentity(dim: Int, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeIdentity(dim: Int, space: Option[MvSpace] = None): MetricSpec =
     Identity(dim, space)
 
-  private[multivar] def unsafeDiagonal(weights: DVec, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeDiagonal(weights: DVec, space: Option[MvSpace] = None): MetricSpec =
     Diagonal(weights, space)
 
-  private[multivar] def unsafeDenseSymmetric(matrix: DMat, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeDenseSymmetric(matrix: DMat, space: Option[MvSpace] = None): MetricSpec =
     DenseSymmetric(matrix, space)
 
-  private[multivar] def unsafeSparseSymmetric(view: SparseMatrixView, space: Option[MvSpace] = None): MvMetric =
+  private[multivar] def unsafeSparseSymmetric(view: SparseMatrixView, space: Option[MvSpace] = None): MetricSpec =
     SparseSymmetric(view, space)
 
   private def sameVectorValues(left: DVec, right: DVec): Boolean =
@@ -566,20 +570,20 @@ private[multivar] object MetricSqrt:
     * and rejected. Unlike `MatrixOps.inverseSquareRoot`, rank deficiency is allowed.
     */
   def factor(
-      metric: MvMetric,
+      metric: MetricSpec,
       eigenSolver: SymmetricEigenSolver,
       tolerance: Double,
       policy: StoragePolicy,
       role: String = "metric"
   ): Either[MultivarError, MetricRoots] =
     metric match
-      case MvMetric.Identity(dim, _) =>
+      case MetricSpec.Identity(dim, _) =>
         Right(MetricRoots(MetricOperator.Identity(dim), MetricOperator.Identity(dim), dim))
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         diagonalRoots(weights, tolerance, role)
-      case MvMetric.DenseSymmetric(matrix, _) =>
+      case MetricSpec.DenseSymmetric(matrix, _) =>
         denseRoots(matrix, eigenSolver, tolerance, role)
-      case MvMetric.SparseSymmetric(view, _) =>
+      case MetricSpec.SparseSymmetric(view, _) =>
         policy match
           case StoragePolicy.AllowDense =>
             view.toDense(StoragePolicy.AllowDense).flatMap(denseRoots(_, eigenSolver, tolerance, role))
@@ -587,7 +591,7 @@ private[multivar] object MetricSqrt:
             Left(MultivarError.DensificationRejected(s"$role square root", StorageKind.Sparse))
 
   /** Factor an already materialized typed metric without demoting it to the
-    * legacy `MvMetric` hierarchy. This is the canonical entry point for
+    * legacy `MetricSpec` hierarchy. This is the canonical entry point for
     * operator-program consumers; storage policy is enforced before the dense
     * value reaches this method.
     */

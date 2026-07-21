@@ -16,19 +16,19 @@ class DualityKernelsSuite extends munit.FunSuite:
         col += 1
       row += 1
 
-  private def metricDense(metric: MvMetric): DMat =
+  private def metricDense(metric: MetricSpec): DMat =
     metric.toDense(StoragePolicy.AllowDense).toOption.get
 
-  private def bruteRowGram(xd: DMat, metric: MvMetric): DMat =
+  private def bruteRowGram(xd: DMat, metric: MetricSpec): DMat =
     GaleNumerics.transposeMultiply(xd, GaleNumerics.multiply(metricDense(metric), xd))
 
-  private def bruteColGram(xd: DMat, metric: MvMetric): DMat =
+  private def bruteColGram(xd: DMat, metric: MetricSpec): DMat =
     GaleNumerics.multiply(GaleNumerics.multiply(xd, metricDense(metric)), xd.transpose)
 
-  private def bruteCrossGram(xd: DMat, yd: DMat, metric: MvMetric): DMat =
+  private def bruteCrossGram(xd: DMat, yd: DMat, metric: MetricSpec): DMat =
     GaleNumerics.transposeMultiply(xd, GaleNumerics.multiply(metricDense(metric), yd))
 
-  private def bruteTrace(xd: DMat, rowMetric: MvMetric, colMetric: MvMetric): Double =
+  private def bruteTrace(xd: DMat, rowMetric: MetricSpec, colMetric: MetricSpec): Double =
     val gram = bruteRowGram(xd, rowMetric)
     val weighted = GaleNumerics.multiply(gram, metricDense(colMetric))
     var acc = 0.0
@@ -60,7 +60,7 @@ class DualityKernelsSuite extends munit.FunSuite:
 
   private val ySparse = SparseMatrixView.fromRows(yDense.toRows).toOption.get
 
-  private def rowMetrics: Vector[(String, MvMetric)] =
+  private def rowMetrics: Vector[(String, MetricSpec)] =
     val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(2.0, 0.5, 0.0, 0.0),
@@ -71,13 +71,13 @@ class DualityKernelsSuite extends munit.FunSuite:
     )
     val sparse = SparseMatrixView.fromRows(spd.toRows).toOption.get
     Vector(
-      "identity" -> MvMetric.identity(4).toOption.get,
-      "diagonal" -> MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5))).toOption.get,
-      "dense" -> MvMetric.denseSymmetric(spd).toOption.get,
-      "sparse" -> MvMetric.sparseSymmetric(sparse).toOption.get
+      "identity" -> MetricSpec.identity(4).toOption.get,
+      "diagonal" -> MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5))).toOption.get,
+      "dense" -> MetricSpec.denseSymmetric(spd).toOption.get,
+      "sparse" -> MetricSpec.sparseSymmetric(sparse).toOption.get
     )
 
-  private def colMetrics: Vector[(String, MvMetric)] =
+  private def colMetrics: Vector[(String, MetricSpec)] =
     val spd = GaleNumerics.matrixFromRows(
       Vector(
         Vector(1.5, 0.0, 0.5),
@@ -87,10 +87,10 @@ class DualityKernelsSuite extends munit.FunSuite:
     )
     val sparse = SparseMatrixView.fromRows(spd.toRows).toOption.get
     Vector(
-      "identity" -> MvMetric.identity(3).toOption.get,
-      "diagonal" -> MvMetric.diagonal(DVec.fromSeq(Vector(0.5, 2.0, 1.0))).toOption.get,
-      "dense" -> MvMetric.denseSymmetric(spd).toOption.get,
-      "sparse" -> MvMetric.sparseSymmetric(sparse).toOption.get
+      "identity" -> MetricSpec.identity(3).toOption.get,
+      "diagonal" -> MetricSpec.diagonal(DVec.fromSeq(Vector(0.5, 2.0, 1.0))).toOption.get,
+      "dense" -> MetricSpec.denseSymmetric(spd).toOption.get,
+      "sparse" -> MetricSpec.sparseSymmetric(sparse).toOption.get
     )
 
   test("dense row Gram matches the brute-force reference for every metric kind") {
@@ -193,8 +193,8 @@ class DualityKernelsSuite extends munit.FunSuite:
     val xObserved = MvSpace.of("x-observed", SpaceRole.Observed, 3).toOption.get
     val yObserved = MvSpace.of("y-observed", SpaceRole.Observed, 2).toOption.get
     val weights = Vector(1.0, 2.0, 0.5, 1.5)
-    val first = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
-    val second = MvMetric.diagonal(DVec.fromSeq(weights)).toOption.get
+    val first = MetricSpec.diagonal(DVec.fromSeq(weights)).toOption.get
+    val second = MetricSpec.diagonal(DVec.fromSeq(weights)).toOption.get
     val xDiagram = DualityDiagram
       .from(MatrixView.dense(xDense), rowMetric = Some(first), columnSpace = Some(xObserved))
       .toOption

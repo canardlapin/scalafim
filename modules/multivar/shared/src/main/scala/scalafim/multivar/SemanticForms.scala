@@ -601,7 +601,7 @@ object Form:
 
 object FormOperator:
   def primal[S <: SemanticSpace](
-      metric: MvMetric,
+      metric: MetricSpec,
       space: SpaceEvidence[S],
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("legacy-mvmetric-primal")
@@ -616,7 +616,7 @@ object FormOperator:
     )
 
   def dual[S <: SemanticSpace](
-      metric: MvMetric,
+      metric: MetricSpec,
       space: SpaceEvidence[S],
       valueIdentity: ValueIdentity,
       provenance: SemanticProvenance = SemanticProvenance.source("legacy-mvmetric-dual")
@@ -631,7 +631,7 @@ object FormOperator:
     )
 
   private def fromMetric[S <: SemanticSpace, From <: Coordinate, To <: Coordinate](
-      metric: MvMetric,
+      metric: MetricSpec,
       space: SpaceEvidence[S],
       domain: CoordinateEvidence[From],
       codomain: CoordinateEvidence[To],
@@ -653,26 +653,26 @@ object FormOperator:
           domain,
           codomain,
           valueIdentity,
-          provenance.append(SemanticProvenanceEvent.Adapted("MvMetric"))
+          provenance.append(SemanticProvenanceEvent.Adapted("MetricSpec"))
         )
 
-private[multivar] final case class MetricKernel(metric: MvMetric) extends SemanticKernel:
+private[multivar] final case class MetricKernel(metric: MetricSpec) extends SemanticKernel:
   private val adapted = MetricLinearMap(metric)
 
   override def rows: Int = metric.dim
   override def cols: Int = metric.dim
   override def representation: OperatorRepresentation =
     metric match
-      case _: MvMetric.Identity         => OperatorRepresentation.Diagonal
-      case _: MvMetric.Diagonal         => OperatorRepresentation.Diagonal
-      case _: MvMetric.DenseSymmetric   => OperatorRepresentation.Dense
-      case _: MvMetric.SparseSymmetric  => OperatorRepresentation.Sparse
+      case _: MetricSpec.Identity         => OperatorRepresentation.Diagonal
+      case _: MetricSpec.Diagonal         => OperatorRepresentation.Diagonal
+      case _: MetricSpec.DenseSymmetric   => OperatorRepresentation.Dense
+      case _: MetricSpec.SparseSymmetric  => OperatorRepresentation.Sparse
   override def linearMap: DoubleLinearOperator = adapted
   override def forward(input: DMat): Either[SemanticError, DMat] =
     metric.matvec(input).left.map(SemanticError.MultivarFailure.apply)
   override def adjoint: SemanticKernel = this
 
-private final case class MetricLinearMap(metric: MvMetric) extends DoubleLinearOperator:
+private final case class MetricLinearMap(metric: MetricSpec) extends DoubleLinearOperator:
   override def rows: Int = metric.dim
   override def cols: Int = metric.dim
   override def applyTo(input: DVec, output: MutableDVec): Unit =
@@ -703,8 +703,8 @@ object Unsafe:
       x: MatrixView,
       components: ComponentCount,
       reason: String,
-      rowMetric: Option[MvMetric] = None,
-      colMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      colMetric: Option[MetricSpec] = None,
       preproc: PreprocessSpec = PreprocessSpec.Center,
       backend: GmdBackend = GmdBackend.Auto,
       policy: StoragePolicy = StoragePolicy.AllowDense,
@@ -730,9 +730,9 @@ object Unsafe:
       x: MatrixView,
       y: MatrixView,
       reason: String,
-      rowMetric: Option[MvMetric] = None,
-      xColumnMetric: Option[MvMetric] = None,
-      yColumnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      xColumnMetric: Option[MetricSpec] = None,
+      yColumnMetric: Option[MetricSpec] = None,
       sampleSpace: Option[MvSpace] = None,
       xSpace: Option[MvSpace] = None,
       ySpace: Option[MvSpace] = None

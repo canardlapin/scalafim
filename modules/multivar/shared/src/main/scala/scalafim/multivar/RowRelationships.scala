@@ -512,9 +512,9 @@ final class SameEntityEvidence[Left <: SemanticSpace, Right <: SemanticSpace] pr
   def toLegacyPair(
       left: MatrixView,
       right: MatrixView,
-      rowMetric: Option[MvMetric] = None,
-      leftColumnMetric: Option[MvMetric] = None,
-      rightColumnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      leftColumnMetric: Option[MetricSpec] = None,
+      rightColumnMetric: Option[MetricSpec] = None,
       leftSpace: Option[MvSpace] = None,
       rightSpace: Option[MvSpace] = None
   ): Either[MultivarError, PairedDualityDiagram] =

@@ -110,8 +110,8 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
     private val tableView: MatrixView,
     private val sourceView: MatrixView,
     private val preprocessor: FittedPreprocessor,
-    private val rowMetricValue: MvMetric,
-    private val featureMetricValue: MvMetric,
+    private val rowMetricValue: MetricSpec,
+    private val featureMetricValue: MetricSpec,
     val provenance: SemanticProvenance
 ):
   def fit(
@@ -250,8 +250,8 @@ object GpcaProblem:
       tableView: MatrixView,
       sourceView: MatrixView,
       preprocessor: FittedPreprocessor,
-      rowMetricValue: MvMetric,
-      featureMetricValue: MvMetric,
+      rowMetricValue: MetricSpec,
+      featureMetricValue: MetricSpec,
       sourceIdentity: ValueIdentity,
       provenance: SemanticProvenance
   ): Either[DiagramError, GpcaProblem[Rows, Feature]] =
@@ -412,8 +412,8 @@ private[multivar] object DynamicGpcaProblem:
       preprocessor: FittedPreprocessor,
       rowSpace: MvSpace,
       featureSpace: MvSpace,
-      rowMetric: MvMetric,
-      featureMetric: MvMetric,
+      rowMetric: MetricSpec,
+      featureMetric: MetricSpec,
       sourceIdentity: ValueIdentity,
       provenance: SemanticProvenance
   ): Either[MultivarError, PreparedGpcaProblem] =

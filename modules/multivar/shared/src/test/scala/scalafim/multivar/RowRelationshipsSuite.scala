@@ -24,7 +24,7 @@ class RowRelationshipsSuite extends munit.FunSuite:
       space: SpaceEvidence[S],
       id: String
   ): DiagramGeometry[S] =
-    val legacy = acceptedMv(MvMetric.identity(space.dimension, Some(space.descriptor)))
+    val legacy = acceptedMv(MetricSpec.identity(space.dimension, Some(space.descriptor)))
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, value(id)))
     val certificate = acceptedSemantic(FormCertificates.spd(operator))
     DiagramGeometry.metric(acceptedSemantic(Form.metric(operator, space, certificate)))

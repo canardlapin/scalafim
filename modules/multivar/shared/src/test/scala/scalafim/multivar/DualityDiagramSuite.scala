@@ -23,16 +23,16 @@ class DualityDiagramSuite extends munit.FunSuite:
       assertEqualsDouble(actual(i), expected(i), tol)
       i += 1
 
-  private def dense(metric: MvMetric): DMat =
+  private def dense(metric: MetricSpec): DMat =
     metric.toDense(StoragePolicy.AllowDense).toOption.get
 
-  private def rowGramReference(x: DMat, rowMetric: MvMetric): DMat =
+  private def rowGramReference(x: DMat, rowMetric: MetricSpec): DMat =
     GaleNumerics.transposeMultiply(x, GaleNumerics.multiply(dense(rowMetric), x))
 
-  private def columnGramReference(x: DMat, columnMetric: MvMetric): DMat =
+  private def columnGramReference(x: DMat, columnMetric: MetricSpec): DMat =
     GaleNumerics.multiply(GaleNumerics.multiply(x, dense(columnMetric)), x.transpose)
 
-  private def rightMultiplyMetric(matrix: DMat, metric: MvMetric): DMat =
+  private def rightMultiplyMetric(matrix: DMat, metric: MetricSpec): DMat =
     GaleNumerics.multiply(matrix, dense(metric))
 
   private def trace(matrix: DMat): Double =
@@ -65,8 +65,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   test("duality diagram validates table spaces and metric tags") {
     val rowSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val columnSpace = MvSpace.of("features", SpaceRole.Observed, 2).toOption.get
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(rowSpace)).toOption.get
-    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25)), Some(columnSpace)).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0)), Some(rowSpace)).toOption.get
+    val columnMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(3.0, 0.25)), Some(columnSpace)).toOption.get
     val diagram = DualityDiagram
       .from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric), Some(rowSpace), Some(columnSpace))
       .toOption
@@ -83,8 +83,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   test("duality diagram rejects metric dimension and space mismatches") {
     val rowSpace = MvSpace.of("samples", SpaceRole.Samples, 3).toOption.get
     val otherRowSpace = MvSpace.of("other-samples", SpaceRole.Samples, 3).toOption.get
-    val wrongDim = MvMetric.identity(2).toOption.get
-    val taggedElsewhere = MvMetric.identity(3, Some(otherRowSpace)).toOption.get
+    val wrongDim = MetricSpec.identity(2).toOption.get
+    val taggedElsewhere = MetricSpec.identity(3, Some(otherRowSpace)).toOption.get
 
     DualityDiagram.from(MatrixView.dense(x), rowMetric = Some(wrongDim)) match
       case Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, expected, actual)) =>
@@ -101,8 +101,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   }
 
   test("row and column Gram forms plus total inertia match direct dense algebra") {
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val columnMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric)).toOption.get
     val rowGram = diagram.rowGram().toOption.get
     val columnGram = diagram.columnGram().toOption.get
@@ -119,8 +119,8 @@ class DualityDiagramSuite extends munit.FunSuite:
   }
 
   test("transposed duality diagram swaps the row and column forms") {
-    val rowMetric = MvMetric.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
-    val columnMetric = MvMetric.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
+    val rowMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(1.0, 0.5, 2.0))).toOption.get
+    val columnMetric = MetricSpec.diagonal(DVec.fromSeq(Vector(3.0, 0.25))).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), Some(rowMetric), Some(columnMetric)).toOption.get
     val transposed = diagram.transpose().toOption.get
 

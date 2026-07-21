@@ -31,8 +31,8 @@ private[multivar] final case class DeflationGmd(
 
   override def decompose(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int,
       eigenSolver: SymmetricEigenSolver,
       policy: StoragePolicy
@@ -54,8 +54,8 @@ private[multivar] final case class DeflationGmd(
 
   private def extract(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int
   ): Either[MultivarError, GmdResult] =
     val n = x.rows
@@ -156,11 +156,11 @@ private[multivar] final case class DeflationGmd(
 private[multivar] object DeflationGmd:
 
   /** Metric application specialized once per fit so the iteration loop is Either-free. */
-  private def vectorApplier(metric: MvMetric): Array[Double] => Array[Double] =
+  private def vectorApplier(metric: MetricSpec): Array[Double] => Array[Double] =
     metric match
-      case MvMetric.Identity(_, _) =>
+      case MetricSpec.Identity(_, _) =>
         input => input
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         input =>
           val out = new Array[Double](input.length)
           var i = 0
@@ -168,7 +168,7 @@ private[multivar] object DeflationGmd:
             out(i) = weights(i) * input(i)
             i += 1
           out
-      case MvMetric.DenseSymmetric(matrix, _) =>
+      case MetricSpec.DenseSymmetric(matrix, _) =>
         input =>
           val out = new Array[Double](input.length)
           var row = 0
@@ -181,7 +181,7 @@ private[multivar] object DeflationGmd:
             out(row) = acc
             row += 1
           out
-      case MvMetric.SparseSymmetric(view, _) =>
+      case MetricSpec.SparseSymmetric(view, _) =>
         input =>
           val out = new Array[Double](input.length)
           view.foreachEntry((row, col, value) => out(row) += value * input(col))

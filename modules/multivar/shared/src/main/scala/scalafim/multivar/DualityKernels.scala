@@ -16,7 +16,7 @@ private[multivar] object DualityKernels:
   /** X' M X (p x p) for a row metric M (n x n). */
   def rowGram(
       x: MatrixView,
-      metric: MvMetric,
+      metric: MetricSpec,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, DMat] =
     DualityDiagram.from(x, rowMetric = Some(metric)).flatMap(rowGram(_, policy))
@@ -30,7 +30,7 @@ private[multivar] object DualityKernels:
   /** X A X' (n x n) for a column metric A (p x p); dense data only. */
   def colGram(
       x: MatrixView,
-      metric: MvMetric,
+      metric: MetricSpec,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, DMat] =
     DualityDiagram.from(x, columnMetric = Some(metric)).flatMap(colGram(_, policy))
@@ -62,8 +62,8 @@ private[multivar] object DualityKernels:
   /** tr(X' M X A), the total generalized variance, without forming an n x n product. */
   def totalVariance(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, Double] =
     DualityDiagram
@@ -101,14 +101,14 @@ private[multivar] object DualityKernels:
         other
     }
 
-  private[multivar] def multiplyMetricRight(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
+  private[multivar] def multiplyMetricRight(xd: DMat, metric: MetricSpec): Either[MultivarError, DMat] =
     if metric.dim != xd.cols then
       Left(MultivarError.MetricShapeMismatch(IndexAxis.Column, xd.cols, metric.dim))
     else applyMetricRight(xd, metric)
 
   private def rowGramUnchecked(
       x: MatrixView,
-      metric: MvMetric,
+      metric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, DMat] =
     x match
@@ -116,9 +116,9 @@ private[multivar] object DualityKernels:
         denseRowGram(dense.value, metric)
       case sparse: SparseMatrixView =>
         metric match
-          case MvMetric.Identity(_, _) =>
+          case MetricSpec.Identity(_, _) =>
             sparse.crossProduct
-          case MvMetric.Diagonal(weights, _) =>
+          case MetricSpec.Diagonal(weights, _) =>
             sparse.scaleRows(weights).flatMap(sparse.transposeMultiply)
           case _ if policy == StoragePolicy.AllowDense =>
             sparse.toDense(StoragePolicy.AllowDense).flatMap(denseRowGram(_, metric))
@@ -128,9 +128,9 @@ private[multivar] object DualityKernels:
         transposed.base match
           case sparse: SparseMatrixView =>
             metric match
-              case MvMetric.Identity(_, _) =>
+              case MetricSpec.Identity(_, _) =>
                 sparse.rightMultiplySparseTranspose(sparse)
-              case MvMetric.Diagonal(weights, _) =>
+              case MetricSpec.Diagonal(weights, _) =>
                 sparse.scaleColumns(weights).flatMap(sparse.rightMultiplySparseTranspose)
               case _ if policy == StoragePolicy.AllowDense =>
                 transposed.toDense(StoragePolicy.AllowDense).flatMap(denseRowGram(_, metric))
@@ -145,7 +145,7 @@ private[multivar] object DualityKernels:
 
   private def colGramUnchecked(
       x: MatrixView,
-      metric: MvMetric,
+      metric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, DMat] =
     x match
@@ -155,7 +155,7 @@ private[multivar] object DualityKernels:
         transposed.base match
           case sparse: SparseMatrixView =>
             metric match
-              case MvMetric.Identity(_, _) | MvMetric.Diagonal(_, _) =>
+              case MetricSpec.Identity(_, _) | MetricSpec.Diagonal(_, _) =>
                 rowGramUnchecked(sparse, metric, policy)
               case _ if policy == StoragePolicy.AllowDense =>
                 transposed.toDense(StoragePolicy.AllowDense).flatMap(denseColGram(_, metric))
@@ -169,16 +169,16 @@ private[multivar] object DualityKernels:
   private def crossGramUnchecked(
       x: MatrixView,
       y: MatrixView,
-      rowMetric: MvMetric,
+      rowMetric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, DMat] =
     if x.rows != y.rows then Left(MultivarError.MatrixShapeMismatch(s"cross Gram expected equal rows, got ${x.rows} and ${y.rows}"))
     else if rowMetric.dim != x.rows then Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, x.rows, rowMetric.dim))
     else
       rowMetric match
-        case MvMetric.Identity(_, _) =>
+        case MetricSpec.Identity(_, _) =>
           x.transposeMultiply(y)
-        case MvMetric.Diagonal(weights, _) =>
+        case MetricSpec.Diagonal(weights, _) =>
           y match
             case sparse: SparseMatrixView =>
               sparse.scaleRows(weights).flatMap(scaled => x.transposeMultiply(scaled))
@@ -199,8 +199,8 @@ private[multivar] object DualityKernels:
 
   private def totalVarianceUnchecked(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, Double] =
     x match
@@ -228,35 +228,35 @@ private[multivar] object DualityKernels:
   /** Gram-then-contract on the smaller side of a dense-representable table. */
   private def orientedTotalVariance(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, Double] =
     if x.cols <= x.rows then rowGramUnchecked(x, rowMetric, policy).flatMap(colMetric.contract)
     else colGramUnchecked(x, colMetric, policy).flatMap(rowMetric.contract)
 
-  private def denseRowGram(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
+  private def denseRowGram(xd: DMat, metric: MetricSpec): Either[MultivarError, DMat] =
     metric match
-      case MvMetric.Identity(_, _) =>
+      case MetricSpec.Identity(_, _) =>
         Right(GaleNumerics.crossProduct(xd))
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         Right(GaleNumerics.transposeMultiply(xd, MatrixView.scaleRows(xd, weights)))
       case _ =>
         metric.matvec(xd).map(mx => GaleNumerics.transposeMultiply(xd, mx))
 
-  private def denseColGram(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
+  private def denseColGram(xd: DMat, metric: MetricSpec): Either[MultivarError, DMat] =
     applyMetricRight(xd, metric).map(xa => GaleNumerics.multiply(xa, xd.transpose))
 
   /** X * A for a column metric A, exploiting symmetry for the sparse case. */
-  private def applyMetricRight(xd: DMat, metric: MvMetric): Either[MultivarError, DMat] =
+  private def applyMetricRight(xd: DMat, metric: MetricSpec): Either[MultivarError, DMat] =
     metric match
-      case MvMetric.Identity(_, _) =>
+      case MetricSpec.Identity(_, _) =>
         Right(xd)
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         Right(MetricOperator.scaleColumnsDense(xd, weights))
-      case MvMetric.DenseSymmetric(matrix, _) =>
+      case MetricSpec.DenseSymmetric(matrix, _) =>
         Right(GaleNumerics.multiply(xd, matrix))
-      case MvMetric.SparseSymmetric(view, _) =>
+      case MetricSpec.SparseSymmetric(view, _) =>
         view.rightMultiply(xd.transpose).map(_.transpose)
 
   /** Row Gram of a lazy column-affine view, expanded analytically so the base never
@@ -266,7 +266,7 @@ private[multivar] object DualityKernels:
     */
   private def affineRowGram(
       affine: AffineMatrixView,
-      metric: MvMetric,
+      metric: MetricSpec,
       policy: StoragePolicy
   ): Either[MultivarError, DMat] =
     val ones = MatrixView.ones(affine.rows)
@@ -287,9 +287,9 @@ private[multivar] object DualityKernels:
       MatrixView.addOuterProductInPlace(out, scaled.rows, scaled.cols, affine.shift, affine.shift, factor = total)
       GaleNumerics.matrixFromRowMajor(scaled.rows, scaled.cols, out)
 
-  private def diagonalWeight(metric: MvMetric, index: Int): Double =
+  private def diagonalWeight(metric: MetricSpec, index: Int): Double =
     metric match
-      case MvMetric.Diagonal(weights, _) => weights(index)
+      case MetricSpec.Diagonal(weights, _) => weights(index)
       case _                             => 1.0
 
   /** tr(X' M X A) = sum over M entries (i, k) of M_ik * (x_i' A x_k), driven entirely
@@ -298,25 +298,25 @@ private[multivar] object DualityKernels:
     */
   private def sparseTotalVariance(
       x: SparseMatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec
   ): Double =
     rowMetric match
-      case MvMetric.Identity(dim, _) =>
+      case MetricSpec.Identity(dim, _) =>
         var acc = 0.0
         var i = 0
         while i < dim do
           acc += rowPairThroughMetric(x, i, i, colMetric)
           i += 1
         acc
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         var acc = 0.0
         var i = 0
         while i < weights.length do
           acc += weights(i) * rowPairThroughMetric(x, i, i, colMetric)
           i += 1
         acc
-      case MvMetric.DenseSymmetric(matrix, _) =>
+      case MetricSpec.DenseSymmetric(matrix, _) =>
         var acc = 0.0
         var i = 0
         while i < matrix.rows do
@@ -328,7 +328,7 @@ private[multivar] object DualityKernels:
             j += 1
           i += 1
         acc
-      case MvMetric.SparseSymmetric(view, _) =>
+      case MetricSpec.SparseSymmetric(view, _) =>
         var acc = 0.0
         view.foreachEntry { (i, j, weight) =>
           acc += weight * rowPairThroughMetric(x, i, j, colMetric)
@@ -340,21 +340,21 @@ private[multivar] object DualityKernels:
       x: SparseMatrixView,
       left: Int,
       right: Int,
-      metric: MvMetric
+      metric: MetricSpec
   ): Double =
     var acc = 0.0
     metric match
-      case MvMetric.Identity(_, _) =>
+      case MetricSpec.Identity(_, _) =>
         x.foreachEntryInRow(left)((col, value) => acc += value * x.valueAt(right, col))
-      case MvMetric.Diagonal(weights, _) =>
+      case MetricSpec.Diagonal(weights, _) =>
         x.foreachEntryInRow(left)((col, value) => acc += weights(col) * value * x.valueAt(right, col))
-      case MvMetric.DenseSymmetric(matrix, _) =>
+      case MetricSpec.DenseSymmetric(matrix, _) =>
         x.foreachEntryInRow(left) { (leftCol, leftValue) =>
           x.foreachEntryInRow(right) { (rightCol, rightValue) =>
             acc += leftValue * matrix(leftCol, rightCol) * rightValue
           }
         }
-      case MvMetric.SparseSymmetric(view, _) =>
+      case MetricSpec.SparseSymmetric(view, _) =>
         x.foreachEntryInRow(left) { (leftCol, leftValue) =>
           x.foreachEntryInRow(right) { (rightCol, rightValue) =>
             acc += leftValue * view.valueAt(leftCol, rightCol) * rightValue

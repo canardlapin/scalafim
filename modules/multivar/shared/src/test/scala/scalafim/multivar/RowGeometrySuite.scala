@@ -111,7 +111,7 @@ class RowGeometrySuite extends munit.FunSuite:
         Vector(-1.0, 1.5, 0.5)
       )
     )
-    val rowMetric = MvMetric.fromRowWhitening(whitening).toOption.get
+    val rowMetric = MetricSpec.fromRowWhitening(whitening).toOption.get
     val diagram = DualityDiagram.from(MatrixView.dense(x), rowMetric = Some(rowMetric)).toOption.get
     val conditioned = GenPca
       .fit(

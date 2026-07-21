@@ -24,7 +24,7 @@ class GpcaProblemSuite extends munit.FunSuite:
 
   private def metric[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      legacy: MvMetric,
+      legacy: MetricSpec,
       id: String
   ): MetricForm[S, CertifiedSpd] =
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, value(id)))
@@ -33,7 +33,7 @@ class GpcaProblemSuite extends munit.FunSuite:
 
   private def semiMetric[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      legacy: MvMetric,
+      legacy: MetricSpec,
       id: String
   ): SemiMetric[S, CertifiedPsd] =
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, value(id)))
@@ -42,8 +42,8 @@ class GpcaProblemSuite extends munit.FunSuite:
 
   private def diagram(
       matrix: DMat,
-      rowMetric: MvMetric,
-      featureMetric: MvMetric,
+      rowMetric: MetricSpec,
+      featureMetric: MetricSpec,
       id: String
   ): SemanticDualityDiagram[? <: SemanticSpace, ? <: SemanticSpace, CompleteCells] =
     val rows = ref(s"$id.rows", SpaceRole.Samples, matrix.rows)
@@ -68,8 +68,8 @@ class GpcaProblemSuite extends munit.FunSuite:
 
   test("semantic GPCA executes the operator program and matches the R generalized spectrum"):
     val x = GaleNumerics.matrixFromRows(R.g3X)
-    val rowMetric = acceptedMv(MvMetric.diagonal(DVec.fromSeq(R.g3RowWeights)))
-    val featureMetric = acceptedMv(MvMetric.diagonal(DVec.fromSeq(R.g3ColWeights)))
+    val rowMetric = acceptedMv(MetricSpec.diagonal(DVec.fromSeq(R.g3RowWeights)))
+    val featureMetric = acceptedMv(MetricSpec.diagonal(DVec.fromSeq(R.g3ColWeights)))
     val fit = accepted(
       SemanticGenPca.fit(
         diagram(x, rowMetric, featureMetric, "gpca-r-g3"),
@@ -102,8 +102,8 @@ class GpcaProblemSuite extends munit.FunSuite:
       SemanticGenPca.fit(
         diagram(
           x,
-          acceptedMv(MvMetric.denseSymmetric(rowDense)),
-          acceptedMv(MvMetric.denseSymmetric(featureDense)),
+          acceptedMv(MetricSpec.denseSymmetric(rowDense)),
+          acceptedMv(MetricSpec.denseSymmetric(featureDense)),
           "gpca-oracle"
         ),
         ComponentCount.unsafe(2)
@@ -126,7 +126,7 @@ class GpcaProblemSuite extends munit.FunSuite:
     val repeated = GaleNumerics.matrixFromRows(
       Seq(Seq(2.0, 0.0, 0.0), Seq(0.0, 2.0, 0.0), Seq(0.0, 0.0, 1.0))
     )
-    val identityMetric = acceptedMv(MvMetric.identity(3))
+    val identityMetric = acceptedMv(MetricSpec.identity(3))
     val repeatedFit = accepted(
       SemanticGenPca.fit(
         diagram(repeated, identityMetric, identityMetric, "gpca-repeated"),
@@ -143,8 +143,8 @@ class GpcaProblemSuite extends munit.FunSuite:
     val rankTwo = GaleNumerics.matrixFromRows(
       Seq(Seq(1.0, 0.0, 1.0), Seq(0.0, 1.0, 1.0), Seq(1.0, 1.0, 2.0), Seq(2.0, -1.0, 1.0))
     )
-    val rankRows = acceptedMv(MvMetric.identity(4))
-    val rankFeatures = acceptedMv(MvMetric.identity(3))
+    val rankRows = acceptedMv(MetricSpec.identity(4))
+    val rankFeatures = acceptedMv(MetricSpec.identity(3))
     val rankFit = accepted(
       SemanticGenPca.fit(
         diagram(rankTwo, rankRows, rankFeatures, "gpca-rank-two"),
@@ -165,8 +165,8 @@ class GpcaProblemSuite extends munit.FunSuite:
     val table = acceptedSemantic(
       Table.fromMatrixView(DenseMatrixView(x), rows.evidence, features.evidence, value("gpca-support.table"))
     )
-    val rowMetric = metric(rows.evidence, acceptedMv(MvMetric.identity(4)), "gpca-support.row-metric")
-    val singular = acceptedMv(MvMetric.diagonal(DVec.fromSeq(Seq(2.0, 1.0, 0.0))))
+    val rowMetric = metric(rows.evidence, acceptedMv(MetricSpec.identity(4)), "gpca-support.row-metric")
+    val singular = acceptedMv(MetricSpec.diagonal(DVec.fromSeq(Seq(2.0, 1.0, 0.0))))
     val featureSemiMetric = semiMetric(features.evidence, singular, "gpca-support.feature-semimetric")
     val core = accepted(
       DiagramCore.from(
@@ -192,8 +192,8 @@ class GpcaProblemSuite extends munit.FunSuite:
 
   test("typed GPCA rejects the legacy deflation selector at the compatibility boundary"):
     val x = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 1.0), Seq(1.0, 1.0)))
-    val rowMetric = acceptedMv(MvMetric.identity(3))
-    val featureMetric = acceptedMv(MvMetric.identity(2))
+    val rowMetric = acceptedMv(MetricSpec.identity(3))
+    val featureMetric = acceptedMv(MetricSpec.identity(2))
 
     SemanticGenPca.fit(
       diagram(x, rowMetric, featureMetric, "gpca-deflation-boundary"),

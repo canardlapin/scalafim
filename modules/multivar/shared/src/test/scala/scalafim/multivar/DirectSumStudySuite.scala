@@ -27,7 +27,7 @@ class DirectSumStudySuite extends munit.FunSuite:
     ValueIdentity.source(ValueId.unsafe(id))
 
   private def metric[S <: SemanticSpace](space: SpaceEvidence[S], id: String): MetricForm[S, CertifiedSpd] =
-    val legacy = acceptedMv(MvMetric.identity(space.dimension, Some(space.descriptor)))
+    val legacy = acceptedMv(MetricSpec.identity(space.dimension, Some(space.descriptor)))
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, value(id)))
     val certificate = acceptedSemantic(FormCertificates.spd(operator))
     acceptedSemantic(Form.metric(operator, space, certificate))

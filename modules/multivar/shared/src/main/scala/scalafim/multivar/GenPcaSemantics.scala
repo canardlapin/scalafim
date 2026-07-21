@@ -249,8 +249,8 @@ object GenPcaLaws:
   def weightedSquaredError(
       actual: DMat,
       approximation: DMat,
-      rowMetric: MvMetric,
-      columnMetric: MvMetric
+      rowMetric: MetricSpec,
+      columnMetric: MetricSpec
   ): Either[MultivarError, Double] =
     if actual.rows != approximation.rows || actual.cols != approximation.cols then
       Left(

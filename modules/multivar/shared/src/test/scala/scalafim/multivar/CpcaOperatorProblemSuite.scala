@@ -17,7 +17,7 @@ class CpcaOperatorProblemSuite extends munit.FunSuite:
     val weights = Vector(2.0, 0.5, 1.5)
     val rowSpace = MvSpace.of("cpca.operator.rows", SpaceRole.Samples, 3).toOption.get
     val featureSpace = MvSpace.of("cpca.operator.features", SpaceRole.Observed, 2).toOption.get
-    val rowMetric = MvMetric
+    val rowMetric = MetricSpec
       .diagonal(GaleNumerics.vectorFromArray(weights.toArray), Some(rowSpace))
       .toOption
       .get

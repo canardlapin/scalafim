@@ -74,7 +74,7 @@ def inducedGeometry[S <: SemanticSpace](
   for
     matrix <- transformation.operator(DMat.eye(transformation.space.dimension)).left.map(DiagramError.Semantic.apply)
     induced = GaleNumerics.multiply(matrix, matrix.transpose)
-    legacy <- MvMetric
+    legacy <- MetricSpec
       .denseSymmetric(induced, MetricValidation.Structural, Some(transformation.space.descriptor))
       .left
       .map(DiagramError.Multivar.apply)

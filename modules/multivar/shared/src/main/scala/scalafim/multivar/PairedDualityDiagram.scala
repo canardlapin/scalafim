@@ -25,7 +25,7 @@ final case class PairedDualityDiagram private (
     * Construction requires `x.rowMetric.sameValues(y.rowMetric)`, so the x diagram's
     * metric is the canonical instance for every paired row-space operation.
     */
-  def rowMetric: MvMetric =
+  def rowMetric: MetricSpec =
     x.rowMetric
 
 object PairedDualityDiagram:
@@ -36,9 +36,9 @@ object PairedDualityDiagram:
   def from(
       x: MatrixView,
       y: MatrixView,
-      rowMetric: Option[MvMetric] = None,
-      xColumnMetric: Option[MvMetric] = None,
-      yColumnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      xColumnMetric: Option[MetricSpec] = None,
+      yColumnMetric: Option[MetricSpec] = None,
       sampleSpace: Option[MvSpace] = None,
       xSpace: Option[MvSpace] = None,
       ySpace: Option[MvSpace] = None
@@ -48,9 +48,9 @@ object PairedDualityDiagram:
   private[multivar] def fromPositionalUnsafe(
       x: MatrixView,
       y: MatrixView,
-      rowMetric: Option[MvMetric] = None,
-      xColumnMetric: Option[MvMetric] = None,
-      yColumnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      xColumnMetric: Option[MetricSpec] = None,
+      yColumnMetric: Option[MetricSpec] = None,
       sampleSpace: Option[MvSpace] = None,
       xSpace: Option[MvSpace] = None,
       ySpace: Option[MvSpace] = None
@@ -176,7 +176,7 @@ object PairedDualityDiagram:
     if space.size == size then Right(())
     else Left(MultivarError.MatrixShapeMismatch(s"$kind space '${space.id.value}' has size ${space.size} but expected $size"))
 
-  private def requireMetricSpace(kind: String, metric: MvMetric, sampleSpace: MvSpace): Either[MultivarError, Unit] =
+  private def requireMetricSpace(kind: String, metric: MetricSpec, sampleSpace: MvSpace): Either[MultivarError, Unit] =
     if metric.dim != sampleSpace.size then Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, sampleSpace.size, metric.dim))
     else
       metric.space match

@@ -40,7 +40,7 @@ class DecompositionSuite extends munit.FunSuite:
     assertMatrixClose(reconstructed, input.toDense().toOption.get.toRows, 1e-9)
   }
 
-  test("PCA centers data and returns an inspectable BiProjection artifact") {
+  test("PCA centers data and returns an inspectable typed frame transform") {
     val input = MatrixView.dense(
       GaleNumerics.matrixFromRows(
         Vector(
@@ -54,11 +54,11 @@ class DecompositionSuite extends munit.FunSuite:
     val fit = Pca.fit(input, ComponentCount(1).toOption.get).toOption.get
     val scores = fit.project(input).toOption.get
 
-    assertEquals(fit.projection.map.domain.size, 2)
-    assertEquals(fit.projection.map.codomain.size, 1)
-    assertEquals(fit.projection.map.domain.id.value, "pca.observed")
-    assertEquals(fit.projection.map.codomain.id.value, "pca.latent")
-    assertEquals(fit.projection.diagnostics.map(_.method), Some("pca"))
+    assertEquals(fit.transform.featureSpace.descriptor.size, 2)
+    assertEquals(fit.transform.componentSpace.descriptor.size, 1)
+    assertEquals(fit.transform.featureSpace.descriptor.id.value, "pca.features")
+    assertEquals(fit.transform.componentSpace.descriptor.id.value, "pca.components")
+    assertEquals(fit.transform.diagnostics.method, "pca")
     assertEqualsDouble(fit.result.singularValues(0), 2.0, 1e-9)
     assertAbsEquals(scores(0, 0), Math.sqrt(2.0), 1e-9)
     assertEqualsDouble(scores(1, 0), 0.0, 1e-9)
@@ -76,11 +76,7 @@ class DecompositionSuite extends munit.FunSuite:
     ).toOption.get
 
     val fit = Pca.fit(sparse, ComponentCount(2).toOption.get).toOption.get
-    val transformed = fit.projection.map match
-      case map: MatrixMap =>
-        map.preprocessor.transform(sparse).toOption.get
-      case other =>
-        fail(s"expected PCA projection to retain MatrixMap preprocessing, got $other")
+    val transformed = fit.transform.preprocessor.transform(sparse).toOption.get
     val projected = fit.project(sparse).toOption.get
     val expected = transformed.rightMultiply(fit.result.v).toOption.get
 
@@ -88,7 +84,7 @@ class DecompositionSuite extends munit.FunSuite:
     assertMatrixClose(projected, expected.toRows, 1e-9)
   }
 
-  test("PLSC returns two maps into a shared latent space from cross-covariance SVD") {
+  test("PLSC returns two typed frames into compatible component spaces") {
     val x = MatrixView.dense(
       GaleNumerics.matrixFromRows(
         Vector(
@@ -112,18 +108,16 @@ class DecompositionSuite extends munit.FunSuite:
 
     val fit = Plsc.fit(x, y, ComponentCount(1).toOption.get).toOption.get
 
-    assertEquals(fit.projection.latent.size, 1)
-    assertEquals(fit.projection.x.codomain, fit.projection.latent)
-    assertEquals(fit.projection.y.codomain, fit.projection.latent)
-    assertEquals(fit.paired.method, PairedLatentMethod.Plsc)
-    fit.paired.spectrum match
-      case Spectrum.Covariance(values) =>
-        assertEquals(values, fit.result.singularValues)
-      case other =>
-        fail(s"expected covariance spectrum, got $other")
+    assertEquals(fit.sourceTransform.componentSpace.descriptor.size, 1)
+    assertEquals(
+      fit.sourceTransform.componentSpace.descriptor.size,
+      fit.targetTransform.componentSpace.descriptor.size
+    )
+    assertEquals(fit.operator.diagnostics.kind, PairedProgramKind.Plsc)
+    assertEquals(fit.operator.result.singularValues, fit.result.singularValues)
     assertEqualsDouble(fit.result.singularValues(0), 4.0 / 3.0, 1e-9)
-    assertAbsEquals(fit.paired.xWeights(0, 0), 1.0, 1e-9)
-    assertAbsEquals(fit.paired.yWeights(0, 0), 1.0, 1e-9)
+    assertAbsEquals(fit.operator.sourceWeights.toOption.get(0, 0), 1.0, 1e-9)
+    assertAbsEquals(fit.operator.targetWeights.toOption.get(0, 0), 1.0, 1e-9)
   }
 
   test("CCA recovers a one-dimensional perfect canonical correlation with ridge regularization") {
@@ -132,18 +126,14 @@ class DecompositionSuite extends munit.FunSuite:
 
     val fit = Cca.fit(x, y, ComponentCount(1).toOption.get, ridge = 1e-10).toOption.get
 
-    assertEquals(fit.projection.latent.size, 1)
-    fit.paired.method match
-      case PairedLatentMethod.Cca(_) =>
+    assertEquals(fit.sourceTransform.componentSpace.descriptor.size, 1)
+    fit.operator.diagnostics.kind match
+      case PairedProgramKind.Cca(_) =>
       case other =>
         fail(s"expected CCA method, got $other")
     assertEqualsDouble(fit.result.singularValues(0), 1.0, 1e-8)
-    fit.paired.spectrum match
-      case Spectrum.CanonicalCorrelations(values) =>
-        assertEquals(values, fit.result.singularValues)
-      case other =>
-        fail(s"expected canonical-correlation spectrum, got $other")
-    assertAbsEquals(fit.projection.xScores(0, 0), fit.projection.yScores(0, 0), 1e-5)
+    assertEquals(fit.operator.result.singularValues, fit.result.singularValues)
+    assertAbsEquals(fit.xScores(0, 0), fit.yScores(0, 0), 1e-5)
   }
 
   test("CCA exposes typed asymmetric regularization and rejects invalid raw ridge") {
@@ -153,8 +143,8 @@ class DecompositionSuite extends munit.FunSuite:
 
     val fit = Cca.fitRegularized(x, y, ComponentCount(1).toOption.get, regularization).toOption.get
 
-    fit.paired.method match
-      case PairedLatentMethod.Cca(value) =>
+    fit.operator.diagnostics.kind match
+      case PairedProgramKind.Cca(value) =>
         assertEqualsDouble(value.x.value, 1e-4, 0.0)
         assertEqualsDouble(value.y.value, 1e-3, 0.0)
       case other =>
@@ -194,19 +184,15 @@ class DecompositionSuite extends munit.FunSuite:
       .toOption
       .get
 
-    fit.latent.method match
-      case PairedLatentMethod.ReducedRankRegression(RegressionDirection.XToY, RegressionRegularization.Ols) =>
+    fit.operator.diagnostics.kind match
+      case PairedProgramKind.ReducedRankRegression(RegressionRegularization.Ols) =>
       case other =>
         fail(s"expected XToY OLS RRR method, got $other")
-    assertEquals(fit.workingCoefficient.domain.size, 2)
-    assertEquals(fit.workingCoefficient.codomain.size, 2)
-    assertEquals(fit.latent.xWeights.rows, 2)
-    assertEquals(fit.latent.yWeights.rows, 2)
-    fit.latent.spectrum match
-      case Spectrum.SingularValues(values) =>
-        assertEquals(values.length, 1)
-      case other =>
-        fail(s"expected singular-value spectrum, got $other")
+    assertEquals(fit.coefficientTransform.sourceFeatureSpace.descriptor.size, 2)
+    assertEquals(fit.coefficientTransform.targetFeatureSpace.descriptor.size, 2)
+    assertEquals(fit.operator.sourceWeights.toOption.get.rows, 2)
+    assertEquals(fit.operator.targetWeights.toOption.get.rows, 2)
+    assertEquals(fit.operator.result.singularValues.length, 1)
     assertMatrixClose(fit.predictWorking(x).toOption.get, y.toRows, 1e-8)
     assertMatrixClose(fit.predict(x).toOption.get, y.toRows, 1e-8)
   }
@@ -238,7 +224,7 @@ class DecompositionSuite extends munit.FunSuite:
       .get
 
     assertMatrixClose(fit.fullCoefficient, expectedCoefficient, 1e-8)
-    assertMatrixClose(fit.workingCoefficient.weights, expectedCoefficient, 1e-8)
+    assertMatrixClose(fit.coefficientTransform.coefficient.toDense.toOption.get, expectedCoefficient, 1e-8)
     assertMatrixClose(fit.predict(x).toOption.get, y.toRows, 1e-8)
   }
 
@@ -322,7 +308,7 @@ class DecompositionSuite extends munit.FunSuite:
     val expectedPrediction = GaleNumerics.multiply(xData, expected)
 
     assertMatrixClose(fit.fullCoefficient, expected.toRows, 1e-8)
-    assertMatrixClose(fit.workingCoefficient.weights, expected.toRows, 1e-8)
+    assertMatrixClose(fit.coefficientTransform.coefficient.toDense.toOption.get, expected.toRows, 1e-8)
     assertMatrixClose(fit.predictWorking(MatrixView.dense(xData)).toOption.get, expectedPrediction.toRows, 1e-8)
   }
 

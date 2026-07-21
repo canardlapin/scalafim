@@ -29,8 +29,8 @@ object GmdBackend:
   private[multivar] def resolve(
       backend: GmdBackend,
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       policy: StoragePolicy
   ): GmdBackend =
     backend match
@@ -43,7 +43,7 @@ object GmdBackend:
         val allowDense = policy == StoragePolicy.AllowDense
         val gramFeasible = x.storage == StorageKind.Dense || gramSide.isDiagonal || allowDense
         val sqrtFeasible = sqrtSide match
-          case MvMetric.SparseSymmetric(_, _) => allowDense
+          case MetricSpec.SparseSymmetric(_, _) => allowDense
           case _                              => true
         if !gramFeasible || !sqrtFeasible then Deflation()
         else if Math.min(x.rows, x.cols) <= EigenDimCap then Eigen()
@@ -77,8 +77,8 @@ private[multivar] final case class GmdDecomposition(result: GmdResult, totalVari
 final case class GenPcaFit private[multivar] (
     result: GmdResult,
     projection: BiProjection,
-    rowMetric: MvMetric,
-    colMetric: MvMetric,
+    rowMetric: MetricSpec,
+    colMetric: MetricSpec,
     preprocessor: FittedPreprocessor,
     u: DMat,
     v: DMat,
@@ -222,8 +222,8 @@ object GenPca:
   def fit(
       x: MatrixView,
       components: ComponentCount,
-      rowMetric: Option[MvMetric] = None,
-      colMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      colMetric: Option[MetricSpec] = None,
       preproc: PreprocessSpec = PreprocessSpec.Center,
       backend: GmdBackend = GmdBackend.Auto,
       policy: StoragePolicy = StoragePolicy.AllowDense,
@@ -246,8 +246,8 @@ object GenPca:
   private[multivar] def fitRawUnsafe(
       x: MatrixView,
       components: ComponentCount,
-      rowMetric: Option[MvMetric],
-      colMetric: Option[MvMetric],
+      rowMetric: Option[MetricSpec],
+      colMetric: Option[MetricSpec],
       preproc: PreprocessSpec,
       backend: GmdBackend,
       policy: StoragePolicy,
@@ -255,8 +255,8 @@ object GenPca:
       svdSolver: SvdSolver
   ): Either[MultivarError, GenPcaFit] =
     val limit = Math.min(x.rows, x.cols)
-    val rm = rowMetric.getOrElse(MvMetric.unsafeIdentity(x.rows))
-    val cm = colMetric.getOrElse(MvMetric.unsafeIdentity(x.cols))
+    val rm = rowMetric.getOrElse(MetricSpec.unsafeIdentity(x.rows))
+    val cm = colMetric.getOrElse(MetricSpec.unsafeIdentity(x.cols))
     if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
     else if rm.dim != x.rows then Left(MultivarError.MetricShapeMismatch(IndexAxis.Row, x.rows, rm.dim))
     else if cm.dim != x.cols then Left(MultivarError.MetricShapeMismatch(IndexAxis.Column, x.cols, cm.dim))
@@ -292,8 +292,8 @@ object GenPca:
       fitResolved(
         x,
         components,
-        MvMetric.unsafeIdentity(x.rows),
-        MvMetric.unsafeIdentity(x.cols),
+        MetricSpec.unsafeIdentity(x.rows),
+        MetricSpec.unsafeIdentity(x.cols),
         preproc,
         GmdBackend.Auto,
         policy,
@@ -307,8 +307,8 @@ object GenPca:
   private def fitResolved(
       x: MatrixView,
       components: ComponentCount,
-      rm: MvMetric,
-      cm: MvMetric,
+      rm: MetricSpec,
+      cm: MetricSpec,
       preproc: PreprocessSpec,
       backend: GmdBackend,
       policy: StoragePolicy,
@@ -367,8 +367,8 @@ object GenPca:
       x: MatrixView,
       transformed: MatrixView,
       fitted: FittedPreprocessor,
-      rm: MvMetric,
-      cm: MvMetric,
+      rm: MetricSpec,
+      cm: MetricSpec,
       components: ComponentCount,
       svdSolver: SvdSolver,
       observedSpace: MvSpace,
@@ -401,8 +401,8 @@ object GenPca:
   private[multivar] def assembleCompatibility(
       x: MatrixView,
       fitted: FittedPreprocessor,
-      rm: MvMetric,
-      cm: MvMetric,
+      rm: MetricSpec,
+      cm: MetricSpec,
       decomposition: GmdDecomposition,
       requested: ComponentCount,
       observedSpace: MvSpace,
@@ -471,8 +471,8 @@ object GenPca:
 private[multivar] trait GmdEngine:
   def decompose(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int,
       eigenSolver: SymmetricEigenSolver,
       policy: StoragePolicy
@@ -487,8 +487,8 @@ private[multivar] trait GmdEngine:
 private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) extends GmdEngine:
   override def decompose(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int,
       eigenSolver: SymmetricEigenSolver,
       policy: StoragePolicy
@@ -499,8 +499,8 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
 
   private def decomposePrimal(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int,
       eigenSolver: SymmetricEigenSolver,
       policy: StoragePolicy
@@ -562,8 +562,8 @@ private[multivar] final case class EigenGmd(rankTolerance: Double = 1e-12) exten
 
   private def decomposeDual(
       x: MatrixView,
-      rowMetric: MvMetric,
-      colMetric: MvMetric,
+      rowMetric: MetricSpec,
+      colMetric: MetricSpec,
       components: Int,
       eigenSolver: SymmetricEigenSolver,
       policy: StoragePolicy

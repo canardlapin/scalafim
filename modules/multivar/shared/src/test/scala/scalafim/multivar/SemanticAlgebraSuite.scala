@@ -201,7 +201,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     val genes = ref("genes", SpaceRole.Observed, 2)
     type Genes = genes.Id
     val legacy = acceptedMv(
-      MvMetric.diagonal(
+      MetricSpec.diagonal(
         DVec.fromSeq(Seq(2.0, 1.0)),
         Some(genes.descriptor)
       )
@@ -248,7 +248,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     type S = space.Id
     val matrix = GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0)))
     val legacy = acceptedMv(
-      MvMetric.denseSymmetric(matrix, MetricValidation.Structural, Some(space.descriptor))
+      MetricSpec.denseSymmetric(matrix, MetricValidation.Structural, Some(space.descriptor))
     )
     val operator = accepted(FormOperator.primal(legacy, space.evidence, source("indefinite-form")))
 
@@ -266,7 +266,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
 
   test("certificates bind claims and complete numerical context to one immutable value") {
     val space = ref("certificate-space", SpaceRole.Observed, 2)
-    val metric = acceptedMv(MvMetric.identity(2, Some(space.descriptor)))
+    val metric = acceptedMv(MetricSpec.identity(2, Some(space.descriptor)))
     val first = accepted(FormOperator.primal(metric, space.evidence, source("first-value")))
     val second = accepted(FormOperator.primal(metric, space.evidence, source("second-value")))
     val certificate = accepted(FormCertificates.spd(first))
@@ -290,7 +290,7 @@ class SemanticAlgebraSuite extends munit.FunSuite:
     val space = ref("unsafe-space", SpaceRole.Observed, 2)
     type S = space.Id
     val indefinite = acceptedMv(
-      MvMetric.denseSymmetric(
+      MetricSpec.denseSymmetric(
         GaleNumerics.matrixFromRows(Seq(Seq(1.0, 2.0), Seq(2.0, 1.0))),
         MetricValidation.Structural,
         Some(space.descriptor)

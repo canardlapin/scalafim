@@ -33,7 +33,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
 
   private def metric[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      legacy: MvMetric,
+      legacy: MetricSpec,
       id: String
   ): MetricForm[S, CertifiedSpd] =
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, identity(id)))
@@ -42,7 +42,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
 
   private def semiMetric[S <: SemanticSpace](
       space: SpaceEvidence[S],
-      legacy: MvMetric,
+      legacy: MetricSpec,
       id: String
   ): SemiMetric[S, CertifiedPsd] =
     val operator = acceptedSemantic(FormOperator.primal(legacy, space, identity(id)))
@@ -53,7 +53,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
       space: SpaceEvidence[S],
       id: String
   ): MetricForm[S, CertifiedSpd] =
-    metric(space, acceptedMv(MvMetric.identity(space.dimension, Some(space.descriptor))), id)
+    metric(space, acceptedMv(MetricSpec.identity(space.dimension, Some(space.descriptor))), id)
 
   private def assertMatrix(actual: DMat, expected: DMat, tolerance: Double = 1e-9): Unit =
     assertEquals(actual.rows, expected.rows)
@@ -126,7 +126,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val dense = GaleNumerics.matrixFromRows(Seq(Seq(2.0, -3.0), Seq(-3.0, 5.0)))
     val rowMetric = metric(
       rows.evidence,
-      acceptedMv(MvMetric.denseSymmetric(dense, MetricValidation.Structural, Some(rows.descriptor))),
+      acceptedMv(MetricSpec.denseSymmetric(dense, MetricValidation.Structural, Some(rows.descriptor))),
       "orthogonal.metric"
     )
     val projection = accepted(CenteringProjection.orthogonal(rowMetric))
@@ -235,7 +235,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
       metric(
         columns.evidence,
         acceptedMv(
-          MvMetric.diagonal(DVec.fromSeq(Seq(2.0, 1.0)), Some(columns.descriptor))
+          MetricSpec.diagonal(DVec.fromSeq(Seq(2.0, 1.0)), Some(columns.descriptor))
         ),
         "diagram.column.replacement"
       )
@@ -254,7 +254,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
   test("singular geometry requires an explicit reject, support, quotient, or ridge policy") {
     val columns = ref("singular.columns", SpaceRole.Observed, 3)
     val legacy = acceptedMv(
-      MvMetric.diagonal(DVec.fromSeq(Seq(4.0, 0.0, 1.0)), Some(columns.descriptor))
+      MetricSpec.diagonal(DVec.fromSeq(Seq(4.0, 0.0, 1.0)), Some(columns.descriptor))
     )
     val geometry = DiagramGeometry.semiMetric(semiMetric(columns.evidence, legacy, "singular.metric"))
 
@@ -317,7 +317,7 @@ class SemanticDiagramSuite extends munit.FunSuite:
     val columnSemi = semiMetric(
       columns.evidence,
       acceptedMv(
-        MvMetric.diagonal(DVec.fromSeq(Seq(2.0, 0.0, 1.0)), Some(columns.descriptor))
+        MetricSpec.diagonal(DVec.fromSeq(Seq(2.0, 0.0, 1.0)), Some(columns.descriptor))
       ),
       "support.column.metric"
     )

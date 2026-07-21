@@ -70,8 +70,8 @@ class OperatorFitSuite extends munit.FunSuite:
       preprocessor,
       rows,
       features,
-      MvMetric.identity(x.rows, Some(rows)).toOption.get,
-      MvMetric.identity(x.cols, Some(features)).toOption.get,
+      MetricSpec.identity(x.rows, Some(rows)).toOption.get,
+      MetricSpec.identity(x.cols, Some(features)).toOption.get,
       ValueIdentity.source(ValueId.unsafe("bundle-source")),
       SemanticProvenance.source("bundle-fixture")
     ).toOption.get

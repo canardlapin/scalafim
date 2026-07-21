@@ -13,8 +13,8 @@ final case class DualityDiagram private (
     table: MatrixView,
     rowSpace: MvSpace,
     columnSpace: MvSpace,
-    rowMetric: MvMetric,
-    columnMetric: MvMetric
+    rowMetric: MetricSpec,
+    columnMetric: MetricSpec
 ):
   def rows: Int =
     table.rows
@@ -60,8 +60,8 @@ final case class DualityDiagram private (
 object DualityDiagram:
   def from(
       table: MatrixView,
-      rowMetric: Option[MvMetric] = None,
-      columnMetric: Option[MvMetric] = None,
+      rowMetric: Option[MetricSpec] = None,
+      columnMetric: Option[MetricSpec] = None,
       rowSpace: Option[MvSpace] = None,
       columnSpace: Option[MvSpace] = None
   ): Either[MultivarError, DualityDiagram] =
@@ -124,9 +124,9 @@ object DualityDiagram:
   private def resolveMetric(
       axis: IndexAxis,
       size: Int,
-      metric: Option[MvMetric],
+      metric: Option[MetricSpec],
       space: MvSpace
-  ): Either[MultivarError, MvMetric] =
+  ): Either[MultivarError, MetricSpec] =
     metric match
       case Some(value) if value.dim != size =>
         Left(MultivarError.MetricShapeMismatch(axis, size, value.dim))
@@ -141,7 +141,7 @@ object DualityDiagram:
           case _ =>
             Right(value)
       case None =>
-        Right(MvMetric.unsafeIdentity(size, Some(space)))
+        Right(MetricSpec.unsafeIdentity(size, Some(space)))
 
   private def requireSpaceSize(axis: IndexAxis, space: MvSpace, size: Int): Either[MultivarError, Unit] =
     if space.size == size then Right(())

@@ -516,7 +516,7 @@ object PairedOperatorProblem:
   private[multivar] def fromMatrices(
       source: MatrixView,
       target: MatrixView,
-      rowMetric: Option[MvMetric],
+      rowMetric: Option[MetricSpec],
       id: String,
       policy: StoragePolicy = StoragePolicy.AllowDense
   ): Either[MultivarError, PreparedPairedOperatorProblem] =
@@ -532,14 +532,14 @@ object PairedOperatorProblem:
         targetDescriptor <- MvSpace.of(s"$id.target", SpaceRole.Observed, target.cols)
         metricValue <- rowMetric match
           case Some(value) => Right(value)
-          case None        => MvMetric.identity(source.rows, Some(rowDescriptor))
+          case None        => MetricSpec.identity(source.rows, Some(rowDescriptor))
         prepared <- fromDynamic(source, target, metricValue, rowDescriptor, sourceDescriptor, targetDescriptor, id)
       yield prepared
 
   private def fromDynamic(
       source: MatrixView,
       target: MatrixView,
-      rowMetric: MvMetric,
+      rowMetric: MetricSpec,
       rowDescriptor: MvSpace,
       sourceDescriptor: MvSpace,
       targetDescriptor: MvSpace,

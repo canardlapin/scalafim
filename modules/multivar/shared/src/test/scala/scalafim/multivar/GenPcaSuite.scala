@@ -74,7 +74,7 @@ class GenPcaSuite extends munit.FunSuite:
     assertMatrixClose(canonOu, GaleNumerics.matrixFromRows(ou), tol)
     assertMatrixClose(canonOv, GaleNumerics.matrixFromRows(ov), tol)
 
-  private def assertMetricOrthonormal(factors: DMat, metric: MvMetric, tol: Double): Unit =
+  private def assertMetricOrthonormal(factors: DMat, metric: MetricSpec, tol: Double): Unit =
     val weighted = metric.matvec(factors).toOption.get
     val gram = GaleNumerics.transposeMultiply(factors, weighted)
     var row = 0
@@ -89,7 +89,7 @@ class GenPcaSuite extends munit.FunSuite:
   private def assertSameSubspace(
       left: DMat,
       right: DMat,
-      metric: MvMetric,
+      metric: MetricSpec,
       tol: Double
   ): Unit =
     val cross = GaleNumerics.transposeMultiply(left, metric.matvec(right).toOption.get)
@@ -99,11 +99,11 @@ class GenPcaSuite extends munit.FunSuite:
       assertEqualsDouble(Math.sqrt(Math.max(eigen.values(i), 0.0)), 1.0, tol)
       i += 1
 
-  private def diagonal(values: Vector[Double]): MvMetric =
-    MvMetric.diagonal(DVec.fromSeq(values)).toOption.get
+  private def diagonal(values: Vector[Double]): MetricSpec =
+    MetricSpec.diagonal(DVec.fromSeq(values)).toOption.get
 
-  private def denseMetric(rows: Vector[Vector[Double]]): MvMetric =
-    MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(rows)).toOption.get
+  private def denseMetric(rows: Vector[Vector[Double]]): MetricSpec =
+    MetricSpec.denseSymmetric(GaleNumerics.matrixFromRows(rows)).toOption.get
 
   test("raw-array generalized PCA requires an explicit unsafe reason") {
     val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
@@ -127,7 +127,7 @@ class GenPcaSuite extends munit.FunSuite:
     val pca = Pca.fit(x, k(2)).toOption.get
 
     assertVectorClose(gen.d, Vector.tabulate(2)(pca.result.singularValues(_)), 1e-12)
-    assertMatrixClose(gen.projection.scores, pca.projection.scores, 1e-12)
+    assertMatrixClose(gen.projection.scores, pca.transform.trainingValues, 1e-12)
     assertMatrixClose(gen.v, pca.result.v, 1e-12)
     assertEquals(gen.projection.diagnostics.map(_.method), Some("genpca"))
   }
@@ -183,8 +183,8 @@ class GenPcaSuite extends munit.FunSuite:
     val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g5X))
     val rowSpace = MvSpace.of("trial.rows", SpaceRole.Samples, x.rows).toOption.get
     val columnSpace = MvSpace.of("voxel.features", SpaceRole.Observed, x.cols).toOption.get
-    val rowMetric = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(R.g5RowMetric), space = Some(rowSpace)).toOption.get
-    val colMetric = MvMetric.denseSymmetric(GaleNumerics.matrixFromRows(R.g5ColMetric), space = Some(columnSpace)).toOption.get
+    val rowMetric = MetricSpec.denseSymmetric(GaleNumerics.matrixFromRows(R.g5RowMetric), space = Some(rowSpace)).toOption.get
+    val colMetric = MetricSpec.denseSymmetric(GaleNumerics.matrixFromRows(R.g5ColMetric), space = Some(columnSpace)).toOption.get
     val diagram = DualityDiagram
       .from(x, rowMetric = Some(rowMetric), columnMetric = Some(colMetric), rowSpace = Some(rowSpace), columnSpace = Some(columnSpace))
       .toOption
@@ -303,7 +303,7 @@ class GenPcaSuite extends munit.FunSuite:
 
   test("sparse data with sparse metrics fits through deflation and eigen is policy gated") {
     val xSparse = SparseMatrixView.fromRows(R.g7X).toOption.get
-    val sparseMetric = MvMetric
+    val sparseMetric = MetricSpec
       .sparseSymmetric(
         SparseMatrixView.fromRows(
           Vector(
@@ -369,7 +369,7 @@ class GenPcaSuite extends munit.FunSuite:
 
   test("backend auto resolution prefers eigen for small dense problems") {
     val x = MatrixView.dense(GaleNumerics.matrixFromRows(R.g2X))
-    val identity = MvMetric.identity(6).toOption.get
+    val identity = MetricSpec.identity(6).toOption.get
     val colMetric = diagonal(R.g2ColWeights)
     assertEquals(
       GmdBackend.resolve(GmdBackend.Auto, x, identity, colMetric, StoragePolicy.AllowDense),
@@ -455,7 +455,7 @@ class GenPcaSuite extends munit.FunSuite:
     val diagnostics = fit.projection.diagnostics.get
     assertEquals(diagnostics.components, k(5))
     assertEquals(diagnostics.effectiveComponents, 4)
-    assertMetricOrthonormal(fit.ou, MvMetric.identity(8).toOption.get, 1e-8)
+    assertMetricOrthonormal(fit.ou, MetricSpec.identity(8).toOption.get, 1e-8)
   }
 
   test("non-finite input is rejected with a typed error on the identity SVD path") {

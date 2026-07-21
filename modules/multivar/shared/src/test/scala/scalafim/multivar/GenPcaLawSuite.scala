@@ -62,7 +62,7 @@ class GenPcaLawSuite extends munit.FunSuite:
   private def assertSameMetricSubspace(
       left: DMat,
       right: DMat,
-      metric: MvMetric,
+      metric: MetricSpec,
       tolerance: Double = 1e-6
   ): Unit =
     assertEquals(left.rows, right.rows)
@@ -106,7 +106,7 @@ class GenPcaLawSuite extends munit.FunSuite:
     DVec.fromSeq(Vector(1.0, 2.0, 0.5, 1.5, 0.75))
 
   private val rowMetric =
-    MvMetric.diagonal(rowWeights, Some(rowSpace)).toOption.get
+    MetricSpec.diagonal(rowWeights, Some(rowSpace)).toOption.get
 
   private val columnMetricMatrix = GaleNumerics.matrixFromRows(
     Vector(
@@ -117,7 +117,7 @@ class GenPcaLawSuite extends munit.FunSuite:
   )
 
   private val columnMetric =
-    MvMetric
+    MetricSpec
       .denseSymmetric(
         columnMetricMatrix,
         MetricValidation.StrictPsd(),
@@ -128,8 +128,8 @@ class GenPcaLawSuite extends munit.FunSuite:
 
   private def diagram(
       table: DMat = data,
-      rows: MvMetric = rowMetric,
-      columns: MvMetric = columnMetric
+      rows: MetricSpec = rowMetric,
+      columns: MetricSpec = columnMetric
   ): DualityDiagram =
     DualityDiagram
       .from(
@@ -278,7 +278,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       GaleNumerics.multiply(columnBasis.transpose, columnMetricMatrix),
       columnBasis
     )
-    val transformedRowMetric = MvMetric
+    val transformedRowMetric = MetricSpec
       .denseSymmetric(
         transformedRowMetricMatrix,
         MetricValidation.StrictPsd(),
@@ -286,7 +286,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       )
       .toOption
       .get
-    val transformedColumnMetric = MvMetric
+    val transformedColumnMetric = MetricSpec
       .denseSymmetric(
         transformedColumnMetricMatrix,
         MetricValidation.StrictPsd(),
@@ -354,7 +354,7 @@ class GenPcaLawSuite extends munit.FunSuite:
       .toOption
       .get
     val clusters = first.semanticResult.spectrum.clusters()
-    val identity = MvMetric.identity(3).toOption.get
+    val identity = MetricSpec.identity(3).toOption.get
 
     assertEquals(clusters.map(_.componentCount), Vector(2, 1))
     assert(!clusters.head.individuallyIdentifiable)
