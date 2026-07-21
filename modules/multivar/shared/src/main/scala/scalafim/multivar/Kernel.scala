@@ -61,6 +61,50 @@ object Kernel:
   val linear: Kernel =
     LinearKernel()
 
+/** A kernel input with nominal row and feature identities.
+  *
+  * The numeric view is retained for kernel evaluation while `table` carries the
+  * same value across the typed operator boundary. Equal feature counts alone do
+  * not make two kernel inputs compatible.
+  */
+final class KernelInput[Rows <: SemanticSpace, Features <: SemanticSpace] private (
+    val values: MatrixView,
+    val rowSpace: SpaceEvidence[Rows],
+    val featureSpace: SpaceEvidence[Features],
+    val table: OpTable[Rows, Features, UncheckedEvidence],
+    val provenance: SemanticProvenance
+)
+
+object KernelInput:
+  def from[Rows <: SemanticSpace, Features <: SemanticSpace](
+      values: MatrixView,
+      rowSpace: SpaceEvidence[Rows],
+      featureSpace: SpaceEvidence[Features],
+      valueIdentity: ValueIdentity,
+      provenance: SemanticProvenance = SemanticProvenance.source("kernel-input")
+  ): Either[MultivarError, KernelInput[Rows, Features]] =
+    if values.rows != rowSpace.dimension then
+      Left(MultivarError.MatrixShapeMismatch(
+        s"kernel input has ${values.rows} rows but row space '${rowSpace.id.value}' has ${rowSpace.dimension}"
+      ))
+    else if values.cols != featureSpace.dimension then
+      Left(MultivarError.MatrixShapeMismatch(
+        s"kernel input has ${values.cols} columns but feature space '${featureSpace.id.value}' has ${featureSpace.dimension}"
+      ))
+    else
+      OperatorFitAdapters
+        .semantic(
+          Op.fromMatrixView(
+            values,
+            CoordinateEvidence.dual(featureSpace),
+            CoordinateEvidence.primal(rowSpace),
+            OperatorRoleWitness.table,
+            valueIdentity,
+            provenance
+          )
+        )
+        .map(table => new KernelInput(values, rowSpace, featureSpace, table, provenance))
+
 /** Diagnostic tag derived from the fitted preprocessor, never supplied by callers.
   *
   * `InputPreprocessed` records that the inputs were transformed (centered, scaled,
@@ -150,6 +194,83 @@ final case class DoubleNystromState(
 ) extends NystromState:
   require(scoreWeights.rows == firstStageEigenvectors.rows, "double Nyström score weights must be landmark x component")
 
+final case class KernelScoreTransform[
+    Rows <: SemanticSpace,
+    Landmarks <: SemanticSpace,
+    Components <: SemanticSpace
+](
+    extensionKernel: Op[Dual[Landmarks], Primal[Rows], KernelOperatorRole, UncheckedEvidence],
+    scores: Op[Primal[Components], Primal[Rows], ScoreOperatorRole, UncheckedEvidence],
+    values: DMat
+)
+
+/** Typed operator view of a fitted Nyström system.
+  *
+  * The landmark Gram and low-rank training approximation are certified PSD.
+  * Rectangular extension kernels deliberately remain unchecked because
+  * definiteness is not a meaningful claim for maps between distinct spaces.
+  */
+final class NystromOperatorFit private[multivar] (
+    val trainingRows: SpaceRef,
+    val featureSpace: SpaceRef,
+    val landmarkSpace: SpaceRef,
+    val componentSpace: SpaceRef,
+    val processedTraining: OpTable[trainingRows.Id, featureSpace.Id, UncheckedEvidence],
+    val processedLandmarks: OpTable[landmarkSpace.Id, featureSpace.Id, UncheckedEvidence],
+    val landmarkKernel: Op[Dual[landmarkSpace.Id], Primal[landmarkSpace.Id], KernelOperatorRole, CertifiedPsd],
+    val extensionKernel: Op[Dual[landmarkSpace.Id], Primal[trainingRows.Id], KernelOperatorRole, UncheckedEvidence],
+    val approximateKernel: Op[Dual[trainingRows.Id], Primal[trainingRows.Id], KernelOperatorRole, CertifiedPsd],
+    val extensionFrame: FunctionalFrame[landmarkSpace.Id, componentSpace.Id, UncheckedEvidence],
+    val trainingScores: Op[Primal[componentSpace.Id], Primal[trainingRows.Id], ScoreOperatorRole, UncheckedEvidence],
+    val provenance: SemanticProvenance
+):
+  def transform[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
+      preprocessor: FittedPreprocessor,
+      kernel: Kernel
+  ): Either[MultivarError, KernelScoreTransform[Rows, landmarkSpace.Id, componentSpace.Id]] =
+    if input.featureSpace.descriptor != featureSpace.descriptor then
+      Left(
+        MultivarError.InvalidMap(
+          s"Nyström transform feature space '${input.featureSpace.id.value}' does not match fitted space '${featureSpace.descriptor.id.value}'"
+        )
+      )
+    else
+      for
+        processed <- preprocessor.transform(input.values)
+        landmarkValues <- OperatorFitAdapters.semantic(processedLandmarks.toDense)
+        values <- Nystrom.computeKernel(
+          kernel,
+          processed,
+          MatrixView.dense(landmarkValues),
+          "Nyström typed out-of-sample kernel"
+        )
+        identity = ValueIdentity.derived(
+          "nystrom-out-of-sample-extension",
+          input.table.valueIdentity,
+          processedLandmarks.valueIdentity
+        )
+        extension <- OperatorFitAdapters.semantic(
+          Op.fromDense(
+            values,
+            CoordinateEvidence.dual(landmarkSpace.evidence),
+            CoordinateEvidence.primal(input.rowSpace),
+            OperatorRoleWitness.kernel,
+            identity,
+            (provenance ++ input.provenance).append(
+              SemanticProvenanceEvent.Derived(
+                "kernel-extension",
+                Vector(input.table.valueIdentity, processedLandmarks.valueIdentity)
+              )
+            )
+          )
+        )
+        scoreOperator = extensionFrame.weights
+          .andThen(extension)
+          .retag(OperatorRoleWitness.score, "nystrom-out-of-sample-scores")
+        scoreValues <- OperatorFitAdapters.semantic(scoreOperator.toDense)
+      yield KernelScoreTransform(extension, scoreOperator, scoreValues)
+
 final case class NystromFit(
     kernel: KernelSpec,
     method: NystromMethod,
@@ -162,7 +283,8 @@ final case class NystromFit(
     eigen: KernelEigenArtifact,
     diagnostics: NystromDiagnostics,
     state: NystromState,
-    kernelFunction: Kernel
+    kernelFunction: Kernel,
+    operatorFit: NystromOperatorFit
 ):
   require(landmarkData.rows == landmarks.length, "landmark data rows must match landmarks")
   require(originalCols > 0, "Nyström original feature count must be positive")
@@ -175,6 +297,11 @@ final case class NystromFit(
         processed <- preprocessor.transform(newData)
         kNew <- Nystrom.computeKernel(kernelFunction, processed, MatrixView.dense(landmarkData), "Nyström out-of-sample kernel")
       yield GaleNumerics.multiply(kNew, state.scoreWeights)
+
+  def transformTyped[Rows <: SemanticSpace, Features <: SemanticSpace](
+      newData: KernelInput[Rows, Features]
+  ): Either[MultivarError, KernelScoreTransform[Rows, operatorFit.landmarkSpace.Id, operatorFit.componentSpace.Id]] =
+    operatorFit.transform(newData, preprocessor, kernelFunction)
 
 object Nystrom:
   /** Fit a Nyström kernel eigensystem over the selected landmarks.
@@ -199,12 +326,38 @@ object Nystrom:
     else if input.cols <= 0 then Left(MultivarError.InvalidDimension("Nyström input columns", input.cols))
     else
       for
-        landmarkSet <- LandmarkSet.from(landmarks, input.rows)
+        rows <- SpaceRef.of("nystrom.raw.rows", SpaceRole.Samples, input.rows)
+        features <- SpaceRef.of("nystrom.raw.features", SpaceRole.Observed, input.cols)
+        typed <- KernelInput.from(
+          input,
+          rows.evidence,
+          features.evidence,
+          ValueIdentity.source(ValueId.unsafe("nystrom.raw.input")),
+          SemanticProvenance.source("raw-nystrom-compatibility-input")
+        )
+        fit <- fitTyped(typed, components, landmarks, kernel, preproc, method, eigenSolver, tolerance)
+      yield fit
+
+  def fitTyped[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
+      components: ComponentCount,
+      landmarks: Iterable[Int],
+      kernel: Kernel = Kernel.linear,
+      preproc: PreprocessSpec = PreprocessSpec.Pass,
+      method: NystromMethod = NystromMethod.Standard,
+      eigenSolver: SymmetricEigenSolver = DenseSolvers.symmetricEigen,
+      tolerance: Double = 1e-12
+  ): Either[MultivarError, NystromFit] =
+    if !tolerance.isFinite || tolerance < 0.0 then
+      Left(MultivarError.InvalidTolerance("Nyström spectral tolerance", tolerance))
+    else
+      for
+        landmarkSet <- LandmarkSet.from(landmarks, input.values.rows)
         _ <-
           if components.value <= landmarkSet.length then Right(())
           else Left(MultivarError.InvalidComponentRequest(components.value, landmarkSet.length))
-        fitted <- preproc.fit(input)
-        processedView <- fitted.transform(input)
+        fitted <- preproc.fit(input.values)
+        processedView <- fitted.transform(input.values)
         processed <- processedView.toDense(StoragePolicy.AllowDense)
         _ <- MatrixOps.checkFinite("Nyström input", processed)
         landmarkData = RowGeometryOps.selectRows(processed, landmarkSet.indices)
@@ -218,9 +371,11 @@ object Nystrom:
         fit <- method match
           case NystromMethod.Standard =>
             fitStandard(
+              input = input,
               components = components,
               landmarkSet = landmarkSet,
               landmarkData = landmarkData,
+              processed = processed,
               fitted = fitted,
               kernel = kernel,
               kMm = kMm,
@@ -231,10 +386,12 @@ object Nystrom:
             )
           case NystromMethod.DoubleNystrom(intermediateRank) =>
             fitDouble(
+              input = input,
               components = components,
               intermediateRank = intermediateRank,
               landmarkSet = landmarkSet,
               landmarkData = landmarkData,
+              processed = processed,
               fitted = fitted,
               kernel = kernel,
               kMm = kMm,
@@ -245,10 +402,12 @@ object Nystrom:
             )
       yield fit
 
-  private def fitStandard(
+  private def fitStandard[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
       components: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DMat,
+      processed: DMat,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       kMm: DMat,
@@ -273,9 +432,12 @@ object Nystrom:
           val sdev = sqrtVector(eigenvalues)
           val scoreWeights = scaleColumns(eigenWeights, sdev)
           buildFit(
+            input,
             components,
             landmarkSet,
             landmarkData,
+            processed,
+            kMm,
             cAll,
             originalCols,
             fitted,
@@ -290,11 +452,13 @@ object Nystrom:
           )
     yield fit
 
-  private def fitDouble(
+  private def fitDouble[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
       components: ComponentCount,
       intermediateRank: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DMat,
+      processed: DMat,
       fitted: FittedPreprocessor,
       kernel: Kernel,
       kMm: DMat,
@@ -332,9 +496,12 @@ object Nystrom:
                   val sdev = sqrtVector(lambdaK)
                   val scoreWeights = scaleColumns(eigenWeights, sdev)
                   buildFit(
+                    input,
                     components,
                     landmarkSet,
                     landmarkData,
+                    processed,
+                    kMm,
                     cAll,
                     originalCols,
                     fitted,
@@ -350,10 +517,13 @@ object Nystrom:
             yield out
       yield fit
 
-  private def buildFit(
+  private def buildFit[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
       requestedComponents: ComponentCount,
       landmarkSet: LandmarkSet,
       landmarkData: DMat,
+      processed: DMat,
+      kMm: DMat,
       cAll: DMat,
       originalCols: Int,
       fitted: FittedPreprocessor,
@@ -371,6 +541,18 @@ object Nystrom:
     for
       _ <- MatrixOps.checkFinite("Nyström eigenvectors", eigenvectors)
       _ <- MatrixOps.checkFinite("Nyström scores", scores)
+      operators <- buildOperatorFit(
+        input,
+        landmarkSet,
+        processed,
+        landmarkData,
+        kMm,
+        cAll,
+        scoreWeights,
+        scores,
+        kernel,
+        method
+      )
     yield
       val centering = derivedCentering(fitted)
       val artifact = KernelEigenArtifact(eigenvectors, eigenvalues, sdev, scores)
@@ -393,7 +575,161 @@ object Nystrom:
         eigen = artifact,
         diagnostics = diagnostics,
         state = state,
-        kernelFunction = kernel
+        kernelFunction = kernel,
+        operatorFit = operators
+      )
+
+  private def buildOperatorFit[Rows <: SemanticSpace, Features <: SemanticSpace](
+      input: KernelInput[Rows, Features],
+      landmarkSet: LandmarkSet,
+      processed: DMat,
+      landmarkData: DMat,
+      landmarkGram: DMat,
+      extensionValues: DMat,
+      scoreWeights: DMat,
+      scores: DMat,
+      kernel: Kernel,
+      method: NystromMethod
+  ): Either[MultivarError, NystromOperatorFit] =
+    val landmarkSuffix = landmarkSet.indices.mkString("-")
+    val base = input.rowSpace.id.value
+    val provenance = input.provenance.append(
+      SemanticProvenanceEvent.Derived("nystrom-fit", Vector(input.table.valueIdentity))
+    )
+    for
+      trainingRows <- SpaceRef.of(input.rowSpace.id.value, input.rowSpace.descriptor.role, input.rowSpace.dimension)
+      featureSpace <- SpaceRef.of(input.featureSpace.id.value, input.featureSpace.descriptor.role, input.featureSpace.dimension)
+      landmarkSpace <- SpaceRef.of(
+        s"$base.nystrom-landmarks-$landmarkSuffix",
+        SpaceRole.Kernel,
+        landmarkSet.length
+      )
+      componentSpace <- SpaceRef.of(
+        s"$base.nystrom-${method.label}-components",
+        SpaceRole.Latent,
+        scoreWeights.cols
+      )
+      processedTable <- OperatorFitAdapters.semantic(
+        Op.fromDense(
+          processed,
+          CoordinateEvidence.dual(featureSpace.evidence),
+          CoordinateEvidence.primal(trainingRows.evidence),
+          OperatorRoleWitness.table,
+          ValueIdentity.derived("nystrom-processed-training", input.table.valueIdentity),
+          provenance.append(
+            SemanticProvenanceEvent.Derived("preprocess-kernel-input", Vector(input.table.valueIdentity))
+          )
+        )
+      )
+      landmarkTable <- OperatorFitAdapters.semantic(
+        Op.fromDense(
+          landmarkData,
+          CoordinateEvidence.dual(featureSpace.evidence),
+          CoordinateEvidence.primal(landmarkSpace.evidence),
+          OperatorRoleWitness.table,
+          ValueIdentity.derived("nystrom-landmark-table", input.table.valueIdentity),
+          provenance.append(
+            SemanticProvenanceEvent.Derived("select-landmarks", Vector(input.table.valueIdentity))
+          )
+        )
+      )
+      landmarkIdentity = ValueIdentity.derived("nystrom-landmark-kernel", landmarkTable.valueIdentity)
+      landmarkLinear <- OperatorFitAdapters.semantic(
+        Lin.fromDenseMatrix(
+          landmarkGram,
+          CoordinateEvidence.dual(landmarkSpace.evidence),
+          CoordinateEvidence.primal(landmarkSpace.evidence),
+          landmarkIdentity,
+          provenance.append(
+            SemanticProvenanceEvent.Derived("kernel-gram", Vector(landmarkTable.valueIdentity))
+          )
+        )
+      )
+      landmarkCertificate <- FormCertificates
+        .psd(landmarkLinear)
+        .left
+        .map(error => MultivarError.InvalidKernelFit(s"landmark kernel is not certified PSD: ${error.message}"))
+      landmarkUnchecked = Op.fromLin(landmarkLinear, OperatorRoleWitness.kernel)
+      landmarkKernel <- OperatorFitAdapters.semantic(Op.certifiedPsd(landmarkUnchecked, landmarkCertificate))
+      extension <- OperatorFitAdapters.semantic(
+        Op.fromDense(
+          extensionValues,
+          CoordinateEvidence.dual(landmarkSpace.evidence),
+          CoordinateEvidence.primal(trainingRows.evidence),
+          OperatorRoleWitness.kernel,
+          ValueIdentity.derived("nystrom-training-extension", input.table.valueIdentity, landmarkTable.valueIdentity),
+          provenance.append(
+            SemanticProvenanceEvent.Derived(
+              "kernel-extension",
+              Vector(input.table.valueIdentity, landmarkTable.valueIdentity)
+            )
+          )
+        )
+      )
+      frame <- OperatorFitAdapters.semantic(
+        Op.fromDense(
+          scoreWeights,
+          CoordinateEvidence.primal(componentSpace.evidence),
+          CoordinateEvidence.dual(landmarkSpace.evidence),
+          OperatorRoleWitness.frame,
+          ValueIdentity.derived("nystrom-extension-frame", landmarkKernel.valueIdentity),
+          provenance.append(
+            SemanticProvenanceEvent.Derived("nystrom-extension-frame", Vector(landmarkKernel.valueIdentity))
+          )
+        )
+      )
+      scoreOperator = frame.andThen(extension).retag(OperatorRoleWitness.score, "nystrom-training-scores")
+      approximateUnchecked <- OperatorFitAdapters.semantic(
+        Op.lowRank(
+          scores,
+          scores,
+          CoordinateEvidence.dual(trainingRows.evidence),
+          CoordinateEvidence.primal(trainingRows.evidence),
+          OperatorRoleWitness.kernel,
+          ValueIdentity.derived("nystrom-low-rank-kernel", scoreOperator.valueIdentity)
+        )
+      )
+      approximateCertificate <- algebraicPsd(
+        approximateUnchecked.valueIdentity,
+        "low-rank-factor-product"
+      )
+      approximate <- OperatorFitAdapters.semantic(Op.certifiedPsd(approximateUnchecked, approximateCertificate))
+    yield
+      new NystromOperatorFit(
+        trainingRows,
+        featureSpace,
+        landmarkSpace,
+        componentSpace,
+        processedTable,
+        landmarkTable,
+        landmarkKernel,
+        extension,
+        approximate,
+        FunctionalFrame(frame),
+        scoreOperator,
+        provenance
+      )
+
+  private def algebraicPsd(
+      identity: ValueIdentity,
+      method: String
+  ): Either[MultivarError, Certificate[PsdProperty]] =
+    for
+      context <- CertificateContext
+        .from(
+          CertificateTolerance.strict,
+          CertificateNorm.Frobenius,
+          method,
+          "operator-algebra",
+          NumericalPrecision.Float64
+        )
+        .left
+        .map(error => MultivarError.InvalidMap(error.message))
+    yield
+      Certificate.unsafe[PsdProperty](
+        identity,
+        CertificateClaim.PositiveSemidefinite(0.0, 0.0, 1.0),
+        context
       )
 
   /** The centering tag is a derived diagnostic: an identity preprocessor means the

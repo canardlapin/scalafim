@@ -4,6 +4,22 @@ import gale.linalg.DMat
 
 class KernelSuite extends munit.FunSuite:
 
+  private def ref(id: String, role: SpaceRole, dimension: Int): SpaceRef =
+    SpaceRef.of(id, role, dimension).toOption.get
+
+  private def typedInput[Rows <: SemanticSpace, Features <: SemanticSpace](
+      values: DMat,
+      rows: SpaceEvidence[Rows],
+      features: SpaceEvidence[Features],
+      id: String
+  ): KernelInput[Rows, Features] =
+    KernelInput.from(
+      MatrixView.dense(values),
+      rows,
+      features,
+      ValueIdentity.source(ValueId.unsafe(id))
+    ).toOption.get
+
   private def assertMatrixClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
@@ -459,4 +475,111 @@ class KernelSuite extends munit.FunSuite:
     val bad = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0))))
 
     assert(fit.transform(bad).swap.toOption.exists(_.message.contains("expected 2 columns")))
+  }
+
+  test("typed Nyström artifacts preserve kernel roles, evidence, and low-rank storage") {
+    val rows = ref("kernel.typed.training", SpaceRole.Samples, 4)
+    val features = ref("kernel.typed.features", SpaceRole.Observed, 2)
+    val values = GaleNumerics.matrixFromRows(
+      Vector(
+        Vector(1.0, 0.0),
+        Vector(0.0, 1.0),
+        Vector(1.0, 1.0),
+        Vector(2.0, 1.0)
+      )
+    )
+    val input = typedInput(values, rows.evidence, features.evidence, "kernel.typed.input")
+    val fit = Nystrom.fitTyped(
+      input,
+      ComponentCount.unsafe(2),
+      landmarks = Vector(0, 2, 3)
+    ).toOption.get
+    val operators = fit.operatorFit
+
+    assertEquals(operators.trainingRows.descriptor, rows.descriptor)
+    assertEquals(operators.featureSpace.descriptor, features.descriptor)
+    assertEquals(operators.landmarkKernel.role.value, OperatorRole.Kernel)
+    assertEquals(operators.landmarkKernel.certificate.status, EvidenceStatus.Certified)
+    assertEquals(operators.extensionKernel.role.value, OperatorRole.Kernel)
+    assertEquals(operators.extensionKernel.certificate.status, EvidenceStatus.Unchecked)
+    assertEquals(operators.approximateKernel.role.value, OperatorRole.Kernel)
+    assertEquals(operators.approximateKernel.certificate.status, EvidenceStatus.Certified)
+    assertEquals(operators.approximateKernel.representation, OperatorRepresentation.LowRank)
+    assertEquals(operators.trainingScores.role.value, OperatorRole.Score)
+    assertMatrixClose(operators.trainingScores.toDense.toOption.get, fit.eigen.scores, 1e-10)
+    assertMatrixClose(operators.approximateKernel.toDense.toOption.get, tcross(fit.eigen.scores), 1e-10)
+  }
+
+  test("typed out-of-sample transforms enforce feature identity and retain row-space provenance") {
+    val trainingRows = ref("kernel.transform.training", SpaceRole.Samples, 4)
+    val features = ref("kernel.transform.features", SpaceRole.Observed, 2)
+    val training = typedInput(
+      GaleNumerics.matrixFromRows(
+        Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 1.0), Vector(2.0, 1.0))
+      ),
+      trainingRows.evidence,
+      features.evidence,
+      "kernel.transform.input"
+    )
+    val fit = Nystrom.fitTyped(training, ComponentCount.unsafe(2), Vector(0, 2)).toOption.get
+    val newRows = ref("kernel.transform.new-rows", SpaceRole.Samples, 2)
+    val newValues = GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 0.0)))
+    val newInput = typedInput(
+      newValues,
+      newRows.evidence,
+      features.evidence,
+      "kernel.transform.new-input"
+    )
+    val transformed = fit.transformTyped(newInput).toOption.get
+
+    assertEquals(transformed.scores.codomain.descriptor.space, newRows.descriptor)
+    assertEquals(
+      transformed.scores.domain.descriptor.space,
+      fit.operatorFit.componentSpace.descriptor
+    )
+    assertMatrixClose(
+      transformed.values,
+      fit.transform(MatrixView.dense(newValues)).toOption.get,
+      1e-10
+    )
+    assert(transformed.extensionKernel.provenance.events.exists {
+      case SemanticProvenanceEvent.Derived("kernel-extension", _) => true
+      case _                                                       => false
+    })
+
+    val foreignFeatures = ref("kernel.transform.foreign-features", SpaceRole.Observed, 2)
+    val foreignInput = typedInput(
+      newValues,
+      newRows.evidence,
+      foreignFeatures.evidence,
+      "kernel.transform.foreign-input"
+    )
+    assert(fit.transformTyped(foreignInput).swap.toOption.exists(_.message.contains("does not match fitted space")))
+  }
+
+  test("indefinite landmark kernels fail the PSD boundary and invalid tolerances fail early") {
+    val indefinite = new Kernel:
+      override def spec: KernelSpec = KernelSpec("indefinite")
+
+      override def compute(left: MatrixView, right: MatrixView): Either[MultivarError, DMat] =
+        if left.rows == 2 && right.rows == 2 then
+          Right(GaleNumerics.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(2.0, 1.0))))
+        else LinearKernel().compute(left, right)
+
+    val input = MatrixView.dense(GaleNumerics.matrixFromRows(Vector(Vector(1.0), Vector(2.0))))
+    val rejected = Nystrom.fit(
+      input,
+      ComponentCount.unsafe(1),
+      landmarks = Vector(0, 1),
+      kernel = indefinite
+    )
+    assert(rejected.swap.toOption.exists {
+      case MultivarError.InvalidKernelFit(detail) => detail.contains("not certified PSD")
+      case _                                      => false
+    })
+
+    assert(Nystrom.fit(input, ComponentCount.unsafe(1), Vector(0), tolerance = -1.0).swap.toOption.exists {
+      case MultivarError.InvalidTolerance(_, _) => true
+      case _                                     => false
+    })
   }
