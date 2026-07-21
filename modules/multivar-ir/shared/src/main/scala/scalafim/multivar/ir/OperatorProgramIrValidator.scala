@@ -230,6 +230,14 @@ object OperatorProgramIrValidator:
       _ <- validateObjective(program, parameters, operators)
       _ <- validateNormalizations(program, parameters, operators)
       _ <- validateTerms(program, parameters)
+      _ <- requireValue(
+        program.result.parameterGauges.forall(_.trim.nonEmpty) &&
+          program.result.parameterGauges.distinct.length == program.result.parameterGauges.length &&
+          (program.result.parameterGauges.isEmpty || program.result.redundantCoordinates),
+        RejectionCategory.Malformed,
+        s"programs.${program.id}.result",
+        "parameter gauges must be distinct, named, and imply redundant coordinates"
+      )
     yield ()
 
   private def validateObjective(

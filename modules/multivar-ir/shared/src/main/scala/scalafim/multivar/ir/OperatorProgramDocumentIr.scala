@@ -66,6 +66,7 @@ final case class ProgramOpIr(
 enum ProgramParameterizationIr:
   case Identity
   case KnownSupport(embeddingIdentity: String, injective: Boolean)
+  case SharedBasis(basisIdentity: String, injective: Boolean)
   case FixedRank(rank: Int, gauge: String)
   case BlockDiagonal(blocks: Vector[String])
   case NullSpace(basisIdentity: String, tolerance: ToleranceIr)
@@ -183,7 +184,9 @@ enum ProgramSolverGuaranteeIr:
 final case class ProgramResultContractIr(
     equivalence: ProgramEquivalenceIr,
     representative: ProgramRepresentativeIr,
-    guarantee: ProgramSolverGuaranteeIr
+    guarantee: ProgramSolverGuaranteeIr,
+    redundantCoordinates: Boolean = false,
+    parameterGauges: Vector[String] = Vector.empty
 )
 
 final case class OperatorProgramV2Ir(
@@ -363,6 +366,8 @@ object ProgramSemanticIr:
       case ParameterizationKind.Identity => ProgramParameterizationIr.Identity
       case ParameterizationKind.KnownSupport(embedding, injective) =>
         ProgramParameterizationIr.KnownSupport(embedding.stableKey, injective)
+      case ParameterizationKind.SharedBasis(basis, injective) =>
+        ProgramParameterizationIr.SharedBasis(basis.stableKey, injective)
       case ParameterizationKind.FixedRank(rank, gauge) =>
         ProgramParameterizationIr.FixedRank(rank.value, gauge.toString)
       case ParameterizationKind.BlockDiagonal(blocks) =>
@@ -466,7 +471,9 @@ object ProgramSemanticIr:
           ProgramRepresentativeIr.ProcrustesToReference(reference.stableKey)
         case RepresentativeRule.PredictionMap => ProgramRepresentativeIr.PredictionMap
         case RepresentativeRule.ObjectiveValueOnly => ProgramRepresentativeIr.ObjectiveValueOnly,
-      guarantee(value.guarantee)
+      guarantee(value.guarantee),
+      value.parameterIdentifiability.redundantCoordinates,
+      value.parameterIdentifiability.gauges.map(_.toString)
     )
 
   def equivalence(value: ResultEquivalence): ProgramEquivalenceIr =

@@ -110,6 +110,8 @@ private object ProgramIrEncoder:
       case ProgramParameterizationIr.Identity => obj("kind" -> Str("identity"))
       case ProgramParameterizationIr.KnownSupport(embedding, injective) =>
         obj("kind" -> Str("known_support"), "embedding_identity" -> Str(embedding), "injective" -> Bool(injective))
+      case ProgramParameterizationIr.SharedBasis(basis, injective) =>
+        obj("kind" -> Str("shared_basis"), "basis_identity" -> Str(basis), "injective" -> Bool(injective))
       case ProgramParameterizationIr.FixedRank(rank, gauge) =>
         obj("kind" -> Str("fixed_rank"), "rank" -> Num(rank), "gauge" -> Str(gauge))
       case ProgramParameterizationIr.BlockDiagonal(blocks) =>
@@ -215,7 +217,9 @@ private object ProgramIrEncoder:
     obj(
       "equivalence" -> equivalence(value.equivalence),
       "representative" -> representative(value.representative),
-      "guarantee" -> Str(guarantee(value.guarantee))
+      "guarantee" -> Str(guarantee(value.guarantee)),
+      "redundant_coordinates" -> Bool(value.redundantCoordinates),
+      "parameter_gauges" -> arr(value.parameterGauges.map(Str.apply))
     )
 
   private def equivalence(value: ProgramEquivalenceIr): IrJson =
@@ -588,6 +592,12 @@ private object ProgramIrDecoder:
             embedding <- required(checked, "embedding_identity", path, string(_, s"$path.embedding_identity"))
             injective <- required(checked, "injective", path, boolean(_, s"$path.injective"))
           yield ProgramParameterizationIr.KnownSupport(embedding, injective)
+        case "shared_basis" =>
+          for
+            checked <- exact(current, path, Set("kind", "basis_identity", "injective"))
+            basis <- required(checked, "basis_identity", path, string(_, s"$path.basis_identity"))
+            injective <- required(checked, "injective", path, boolean(_, s"$path.injective"))
+          yield ProgramParameterizationIr.SharedBasis(basis, injective)
         case "fixed_rank" =>
           for
             checked <- exact(current, path, Set("kind", "rank", "gauge"))
@@ -767,11 +777,17 @@ private object ProgramIrDecoder:
 
   private def result(value: IrJson, path: String): Either[IrError, ProgramResultContractIr] =
     for
-      current <- fields(value, path, Set("equivalence", "representative", "guarantee"))
+      current <- fields(
+        value,
+        path,
+        Set("equivalence", "representative", "guarantee", "redundant_coordinates", "parameter_gauges")
+      )
       equivalenceValue <- required(current, "equivalence", path, equivalence(_, s"$path.equivalence"))
       representativeValue <- required(current, "representative", path, representative(_, s"$path.representative"))
       guaranteeValue <- required(current, "guarantee", path, guarantee(_, s"$path.guarantee"))
-    yield ProgramResultContractIr(equivalenceValue, representativeValue, guaranteeValue)
+      redundant <- required(current, "redundant_coordinates", path, boolean(_, s"$path.redundant_coordinates"))
+      gauges <- required(current, "parameter_gauges", path, vector(_, s"$path.parameter_gauges", string))
+    yield ProgramResultContractIr(equivalenceValue, representativeValue, guaranteeValue, redundant, gauges)
 
   private def equivalence(value: IrJson, path: String): Either[IrError, ProgramEquivalenceIr] =
     tagged(value, path).flatMap: (kind, current) =>

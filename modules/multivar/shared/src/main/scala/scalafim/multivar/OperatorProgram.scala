@@ -109,6 +109,7 @@ enum ParameterizationGauge:
 enum ParameterizationKind:
   case Identity
   case KnownSupport(embedding: ValueIdentity, injective: Boolean)
+  case SharedBasis(basis: ValueIdentity, injective: Boolean)
   case FixedRank(rank: ComponentCount, gauge: ParameterizationGauge)
   case BlockDiagonal(blocks: Vector[ParameterId])
   case NullSpace(basis: ValueIdentity, rankTolerance: CertificateTolerance)
@@ -163,6 +164,24 @@ object FrameParameterization:
       variable,
       freeFeatureSpace.descriptor,
       ParameterizationKind.NullSpace(basis.valueIdentity, rankTolerance)
+    )
+
+  def sharedBasis[
+      Feature <: SemanticSpace,
+      FreeFeature <: SemanticSpace,
+      Component <: SemanticSpace,
+      R <: OperatorRoleTag,
+      E <: OperatorEvidence
+  ](
+      variable: FrameVariable[Feature, Component],
+      freeFeatureSpace: SpaceEvidence[FreeFeature],
+      basis: Op[Dual[FreeFeature], Dual[Feature], R, E],
+      injective: Boolean
+  ): FrameParameterization[Feature, Component] =
+    FrameParameterization(
+      variable,
+      freeFeatureSpace.descriptor,
+      ParameterizationKind.SharedBasis(basis.valueIdentity, injective)
     )
 
   def fixedRank[Feature <: SemanticSpace, Component <: SemanticSpace](
@@ -608,12 +627,37 @@ enum SolverGuarantee:
 final case class ResultSemantics(
     equivalence: ResultEquivalence,
     representative: RepresentativeRule,
-    guarantee: SolverGuarantee
+    guarantee: SolverGuarantee,
+    parameterIdentifiability: ParameterIdentifiability = ParameterIdentifiability.identified
 )
+
+final case class ParameterIdentifiability(
+    redundantCoordinates: Boolean,
+    gauges: Vector[ParameterizationGauge]
+)
+
+object ParameterIdentifiability:
+  val identified: ParameterIdentifiability = ParameterIdentifiability(redundantCoordinates = false, Vector.empty)
+
+  private[multivar] def infer(
+      parameterizations: Vector[FrameParameterization[? <: SemanticSpace, ? <: SemanticSpace]]
+  ): ParameterIdentifiability =
+    val gauges = parameterizations.flatMap: parameterization =>
+      parameterization.kind match
+        case ParameterizationKind.FixedRank(_, gauge) if gauge != ParameterizationGauge.Unique => Vector(gauge)
+        case _ => Vector.empty
+    val redundant = parameterizations.exists: parameterization =>
+      parameterization.kind match
+        case ParameterizationKind.FixedRank(_, gauge) => gauge != ParameterizationGauge.Unique
+        case ParameterizationKind.KnownSupport(_, injective) => !injective
+        case ParameterizationKind.SharedBasis(_, _) => false
+        case _ => false
+    ParameterIdentifiability(redundant, gauges.distinct)
 
 object ResultSemantics:
   private[multivar] def infer(
       objective: BaseObjective,
+      parameterizations: Vector[FrameParameterization[? <: SemanticSpace, ? <: SemanticSpace]],
       penalties: Vector[PenaltyTerm],
       constraints: Vector[ConstraintTerm]
   ): ResultSemantics =
@@ -625,13 +669,15 @@ object ResultSemantics:
         ResultSemantics(
           ResultEquivalence.PredictionEquivalent(PredictionMetric.SquaredError, CertificateTolerance.strict),
           RepresentativeRule.PredictionMap,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint
+          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          ParameterIdentifiability.infer(parameterizations)
         )
       case BaseObjective.MaximizeCrossTrace(_) =>
         ResultSemantics(
           ResultEquivalence.FrameEquivalent(symmetry, CertificateTolerance.strict),
           RepresentativeRule.OrderedSpectrumThenSign,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint
+          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          ParameterIdentifiability.infer(parameterizations)
         )
       case _ =>
         val equivalence =
@@ -641,7 +687,8 @@ object ResultSemantics:
         ResultSemantics(
           equivalence,
           RepresentativeRule.OrderedSpectrumThenSign,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint
+          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          ParameterIdentifiability.infer(parameterizations)
         )
 
 final case class OperatorProgramDescriptor(
@@ -701,7 +748,7 @@ object OperatorProgram:
           normalizations,
           penalties,
           constraints,
-          ResultSemantics.infer(objective, penalties, constraints),
+          ResultSemantics.infer(objective, parameters, penalties, constraints),
           provenance
         )
 

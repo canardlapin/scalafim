@@ -93,6 +93,8 @@ object OperatorProgramIr:
       case ParameterizationKind.Identity => "identity" -> Vector.empty
       case ParameterizationKind.KnownSupport(embedding, injective) =>
         (if injective then "known-support-injective" else "known-support") -> Vector(embedding.stableKey)
+      case ParameterizationKind.SharedBasis(basis, injective) =>
+        (if injective then "shared-basis-injective" else "shared-basis") -> Vector(basis.stableKey)
       case ParameterizationKind.FixedRank(rank, gauge) =>
         s"fixed-rank:${rank.value}:${gaugeTag(gauge)}" -> Vector.empty
       case ParameterizationKind.BlockDiagonal(blocks) =>

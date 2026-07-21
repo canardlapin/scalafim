@@ -142,6 +142,23 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     assertEquals(decoded.programs.head.penalties, Vector(groups, sparseGroup))
     assertEquals(decoded.programs.head.constraints, Vector(monotone))
 
+  test("shared-basis parameterizations and redundant gauge semantics round-trip"):
+    val base = validDocument
+    val parameter = base.programs.head.parameters.head.copy(
+      parameterization = ProgramParameterizationIr.SharedBasis("shared-basis", injective = false)
+    )
+    val result = base.programs.head.result.copy(
+      redundantCoordinates = true,
+      parameterGauges = Vector("GeneralLinear")
+    )
+    val program = base.programs.head.copy(parameters = Vector(parameter), result = result)
+    val document = base.copy(programs = Vector(program), rewrites = Vector.empty, fits = Vector.empty)
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.programs.head.parameters.head.parameterization, parameter.parameterization)
+    assert(decoded.programs.head.result.redundantCoordinates)
+    assertEquals(decoded.programs.head.result.parameterGauges, Vector("GeneralLinear"))
+
   test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
     val coefficient = op(
       "coefficient",
