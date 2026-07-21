@@ -43,6 +43,30 @@ class ScaleSuite extends munit.FunSuite:
     assertEquals(scale.mapValueResult(0.0).left.toOption, Some(ScaleMapFailure.TransformDomain("log10", 0.0)))
   }
 
+  test("continuous palette sampling is deterministic at equal-width bin centers") {
+    val scale = ContinuousScale
+      .train(
+        "activation",
+        Vector(1.0, 100.0),
+        Palette.gradient(Rgba.Black, Rgba.White),
+        transform = Transform.log10
+      )
+      .fold(e => fail(e.message), identity)
+
+    assertEquals(
+      scale.paletteSamples(4),
+      Right(
+        Vector(
+          Rgba.unsafe(32, 32, 32),
+          Rgba.unsafe(96, 96, 96),
+          Rgba.unsafe(159, 159, 159),
+          Rgba.unsafe(223, 223, 223)
+        )
+      )
+    )
+    assertEquals(scale.paletteSamples(0).left.toOption, Some(GraphicsError.InvalidBreakCount(0)))
+  }
+
   test("squish keeps out-of-bounds values by clamping to palette endpoints") {
     val scale =
       ContinuousScale

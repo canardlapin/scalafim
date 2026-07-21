@@ -86,7 +86,12 @@ final case class PlotLayoutRequest(
     grid: Option[PanelGridRequest] = None
 )
 
-final case class LegendRequest(title: Option[String], labels: Vector[String])
+final case class LegendRequest(
+    title: Option[String],
+    labels: Vector[String],
+    extraKeyWidthPt: Double = 0.0
+):
+  require(extraKeyWidthPt >= 0.0 && extraKeyWidthPt.isFinite, "`extraKeyWidthPt` must be finite and >= 0")
 
 final case class PanelGridRequest(rows: Int, columns: Int, count: Int):
   require(rows >= 1, "`rows` must be >= 1")
@@ -171,7 +176,7 @@ object PlotLayoutSolver:
         math.max(acc, policy.metrics.widthPt(label, policy.legendFontPt))
       }
       val titlePt = legend.title.fold(0.0)(title => policy.metrics.widthPt(title, policy.legendFontPt))
-      val entryPt = policy.legendKeyPt + policy.legendGapPt / 2.0 + labelPt
+      val entryPt = policy.legendKeyPt + policy.legendGapPt / 2.0 + legend.extraKeyWidthPt + labelPt
       npcX(policy.legendPaddingPt * 2.0 + math.max(entryPt, titlePt))
     }
     val legendGap = legendWidth.fold(0.0)(_ => npcX(policy.legendGapPt))

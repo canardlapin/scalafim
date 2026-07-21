@@ -61,6 +61,36 @@ class GuideDerivationSuite extends munit.FunSuite:
     assertEquals(legend.entries.head.gp.fill, Some(Rgba.unsafe(40, 80, 120)))
   }
 
+  test("continuous color scales derive transform-aware colorbars") {
+    val logData = Vector(Obs(0.0, 1.0, "A"), Obs(1.0, 10.0, "B"), Obs(2.0, 100.0, "A"))
+    val activation = ContinuousScale
+      .train(
+        "activation",
+        logData.map(_.y),
+        Palette.gradient(Rgba.unsafe(20, 30, 80), Rgba.unsafe(240, 210, 40)),
+        transform = Transform.log10
+      )
+      .fold(e => fail(e.message), identity)
+    val plot = Plot(logData)
+      .withScale(ScaleBinding[Obs, Double, Rgba](Aesthetic.Color, _.y, activation))
+      .flatMap(_.addLayer(Layer.point[Obs](_.x, _.y)))
+      .fold(e => fail(e.message), identity)
+
+    val trained = PlotCompiler
+      .resolve(plot, PlotCompilerOptions(frame = Some(frame), guides = GuidePolicy.Derived()))
+      .fold(e => fail(e.message), identity)
+    val colorbar = trained.guides.collectFirst {
+      case ResolvedGuide(spec: GuideSpec.Colorbar, _) => spec
+    }.getOrElse(fail("expected a derived colorbar"))
+
+    assertEquals(colorbar.name.map(_.value), Some("activation-colorbar"))
+    assertEquals(colorbar.title, Some("activation"))
+    assertEquals(colorbar.colors.length, 32)
+    assertEquals(colorbar.ticks.map(_.label), Vector("1", "10", "100"))
+    assertEquals(colorbar.ticks.map(_.value), Vector(0.0, 0.5, 1.0))
+    assert(!trained.guides.exists(_.spec.isInstanceOf[GuideSpec.Legend]))
+  }
+
   test("scaled positions derive unit panel ranges and transform-aware ticks") {
     val xScale = ContinuousScale
       .train("x-log", Vector(1.0, 10.0, 100.0), Palette.numeric, transform = Transform.log10)

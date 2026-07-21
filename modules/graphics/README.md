@@ -14,7 +14,9 @@ typed algebra those backends can interpret later:
 - a device-resolution layer (`DeviceContext`, `DeviceScene`) that flattens
   scenes into numeric, y-down device primitives any backend can serialize;
 - a plot layout solver (`PlotLayoutSolver`, `LayoutPolicy`, `TextMetrics`)
-  that allocates named panel, facet-strip, axis-strip, and legend regions;
+  that allocates named panel, facet-strip, axis-strip, and guide regions;
+- derived discrete color legends and continuous colorbars whose ticks and
+  labels follow the scale transform, lowered to ordinary portable grobs;
 - a finite immutable `Theme` value for geometry defaults, typography,
   palettes, guides, and optional panel decoration;
 - a renderer conformance contract (`RendererConformance`, `RendererHarness`)

@@ -531,6 +531,19 @@ final case class ContinuousScale[A] private (
   def mapValues(values: IterableOnce[Double]): Vector[Option[A]] =
     values.iterator.map(mapValue).toVector
 
+  /** Sample the palette at equal-width transformed-domain bin centers.
+    * Sampling is deliberately expressed only with integer indexing and IEEE
+    * arithmetic so a guide receives the same colors on the JVM and Scala.js.
+    */
+  def paletteSamples(count: Int): Either[GraphicsError, Vector[A]] =
+    if count < 1 then Left(GraphicsError.InvalidBreakCount(count))
+    else
+      Right(
+        Vector.tabulate(count) { index =>
+          palette((index.toDouble + 0.5) / count.toDouble)
+        }
+      )
+
   def breaks: Vector[Double] =
     transform.breaks(domain).filter(domain.contains)
 

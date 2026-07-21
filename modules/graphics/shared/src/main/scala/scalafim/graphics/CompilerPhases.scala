@@ -1138,14 +1138,18 @@ private[graphics] object LayoutPhase:
       val range = if axis.side.isHorizontal then xRange else yRange
       axis.side -> AxisRequest(axisLabels(axis, range), axis.title)
     }.toMap
-    val legends = specs.collect { case legend: GuideSpec.Legend => legend }
+    val nonPositionGuides = specs.collect {
+      case legend: GuideSpec.Legend     => (legend.title, legend.entries.map(_.label), 0.0)
+      case colorbar: GuideSpec.Colorbar => (colorbar.title, colorbar.ticks.map(_.label), 5.0)
+    }
     val legend =
-      if legends.isEmpty then None
+      if nonPositionGuides.isEmpty then None
       else
         Some(
           LegendRequest(
-            legends.head.title,
-            legends.flatMap(_.entries.map(_.label)) ++ legends.drop(1).flatMap(_.title)
+            nonPositionGuides.head._1,
+            nonPositionGuides.flatMap(_._2) ++ nonPositionGuides.drop(1).flatMap(_._1),
+            nonPositionGuides.map(_._3).max
           )
         )
     PlotLayoutRequest(axes, legend, labels, panelAspect, grid)
@@ -1346,8 +1350,9 @@ private[graphics] object GuidePhase:
   ): Either[GraphicsError, Vector[GuideSpec]] =
     val overriddenSides = overrides.collect { case axis: GuideSpec.Axis => axis.side }.toSet
     val hasLegendOverride = overrides.exists {
-      case _: GuideSpec.Legend => true
-      case _                   => false
+      case _: GuideSpec.Legend   => true
+      case _: GuideSpec.Colorbar => true
+      case _                     => false
     }
     val (xSide, xPhysicalRange, ySide, yPhysicalRange) =
       coord match
@@ -1363,7 +1368,7 @@ private[graphics] object GuidePhase:
         else positionAxis(plotScales, Aesthetic.Y, ySide, yPhysicalRange, labels.y)
       legends <-
         if hasLegendOverride || !deriveLegends then Right(Vector.empty)
-        else discreteLegends(plotScales, relativeLegend)
+        else nonPositionGuides(plotScales, relativeLegend)
     yield Vector(xAxis, yAxis).flatten ++ resolvedOverrides ++ legends
 
   /** Resolve caller-supplied break policies against the unexpanded data
@@ -1488,13 +1493,11 @@ private[graphics] object GuidePhase:
         idx += 1
       result.map(_ => out.result())
 
-  /** One legend per distinct discrete color/fill scale, with entries drawn
-    * from the scale's own palette.
+  /** One guide per distinct color/fill scale: discrete scales become keyed
+    * legends and continuous scales become sampled colorbars. Guides stack
+    * downward from the top of the reserved guide region.
     */
-  /** One legend per distinct discrete color/fill scale, stacked downward
-    * from the top of the legend region so multiple legends never overprint.
-    */
-  private def discreteLegends(
+  private def nonPositionGuides(
       plotScales: PlotScaleRegistry,
       relative: Boolean
   ): Either[GraphicsError, Vector[GuideSpec]] =
@@ -1514,6 +1517,16 @@ private[graphics] object GuidePhase:
               legend.foreach { spec =>
                 out += spec
                 nextY -= (spec.entries.length + 1).toDouble * 0.055 + 0.04
+              }
+              ()
+            }
+          case continuous: ContinuousScale[?] =>
+            val height = ExtentExpr.npcUnsafe(0.62)
+            val origin = Point(LengthExpr.npcUnsafe(originX), LengthExpr.npcUnsafe(nextY) - height)
+            result = colorbarFor(continuous, origin).map { colorbar =>
+              colorbar.foreach { spec =>
+                out += spec
+                nextY -= 0.72
               }
               ()
             }
@@ -1552,6 +1565,27 @@ private[graphics] object GuidePhase:
             name = Some(GraphicsName.unsafe(s"${scale.name.value}-legend"))
           )
         )
+    }
+
+  private def colorbarFor(
+      scale: ContinuousScale[?],
+      origin: Point
+  ): Either[GraphicsError, Option[GuideSpec.Colorbar]] =
+    scale.paletteSamples(32).flatMap { samples =>
+      val colors = samples.collect { case color: Rgba => color }
+      if colors.length != samples.length then Right(None)
+      else
+        scaledTicks(scale).map { ticks =>
+          Some(
+            GuideSpec.Colorbar(
+              title = Some(scale.name.value),
+              colors = colors,
+              ticks = ticks,
+              origin = origin,
+              name = Some(GraphicsName.unsafe(s"${scale.name.value}-colorbar"))
+            )
+          )
+        }
     }
 
   def lower(

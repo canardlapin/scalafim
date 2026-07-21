@@ -94,6 +94,26 @@ class FacetSuite extends munit.FunSuite:
       colored.facetPanels.map(_.scaleRegistry.forAesthetic(Aesthetic.Color).map(_.descriptor.domain)).distinct.length,
       1
     )
+
+    val activationScale = ContinuousScale
+      .train(
+        "activation",
+        rows.map(_.y),
+        Palette.gradient(Rgba.unsafe(20, 30, 80), Rgba.unsafe(240, 210, 40))
+      )
+      .fold(error => fail(error.message), identity)
+    val continuousFacet = Plot(rows)
+      .withFacet(FacetSpec.wrap[Observation](_.condition).fold(error => fail(error.message), identity))
+      .withScale(ScaleBinding[Observation, Double, Rgba](Aesthetic.Color, _.y, activationScale))
+      .flatMap(_.addLayer(Layer.point[Observation](_.x, _.y)))
+      .fold(error => fail(error.message), identity)
+    val continuous = PlotCompiler
+      .resolve(
+        continuousFacet,
+        PlotCompilerOptions(policy = Some(LayoutPolicy()), guides = GuidePolicy.Derived())
+      )
+      .fold(error => fail(error.message), identity)
+    assertEquals(continuous.guides.count(_.spec.isInstanceOf[GuideSpec.Colorbar]), 1)
   }
 
   test("facet grid forms the row-column product and rejects incompatible layout modes") {

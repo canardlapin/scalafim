@@ -109,6 +109,22 @@ class PlotLayoutSuite extends munit.FunSuite:
     )
   }
 
+  test("colorbar requests reserve their wider swatch and tick-label offset") {
+    val ordinary = PlotLayoutSolver
+      .solve(policy, PlotLayoutRequest(legend = Some(LegendRequest(None, Vector("100")))))
+      .fold(e => fail(e.message), identity)
+    val colorbar = PlotLayoutSolver
+      .solve(policy, PlotLayoutRequest(legend = Some(LegendRequest(None, Vector("100"), extraKeyWidthPt = 5.0))))
+      .fold(e => fail(e.message), identity)
+
+    assertEqualsDouble(
+      width(colorbar.legend.getOrElse(fail("expected colorbar frame"))) -
+        width(ordinary.legend.getOrElse(fail("expected guide frame"))),
+      npcX(5.0),
+      tol
+    )
+  }
+
   test("legend columns clear a right-axis strip instead of overlapping it") {
     val request = PlotLayoutRequest(
       axes = Map(AxisSide.Right -> AxisRequest(Vector("-1", "1"))),
@@ -183,6 +199,34 @@ class PlotLayoutSuite extends munit.FunSuite:
     assert(scene.grobs.head.name.map(_.value).contains("plot-panel"))
     assertEquals(trained.labelGrobs.flatMap(_.name).map(_.value), Vector("plot-title", "plot-subtitle"))
     assertEquals(scene.grobs.takeRight(2).flatMap(_.name).map(_.value), Vector("plot-title", "plot-subtitle"))
+  }
+
+  test("solver-driven compilation places a continuous colorbar in the guide viewport") {
+    final case class Obs(x: Double, y: Double, activation: Double)
+    val data = Vector(Obs(0.0, 1.0, 1.0), Obs(1.0, 2.0, 10.0), Obs(2.0, 3.0, 100.0))
+    val scale = ContinuousScale
+      .train(
+        "activation",
+        data.map(_.activation),
+        Palette.gradient(Rgba.Black, Rgba.White),
+        transform = Transform.log10
+      )
+      .fold(e => fail(e.message), identity)
+    val plot = Plot(data)
+      .withScale(ScaleBinding[Obs, Double, Rgba](Aesthetic.Fill, _.activation, scale))
+      .flatMap(_.addLayer(Layer.point[Obs](_.x, _.y)))
+      .fold(e => fail(e.message), identity)
+
+    val trained = PlotCompiler
+      .resolve(plot, PlotCompilerOptions(policy = Some(policy), guides = GuidePolicy.Derived()))
+      .fold(e => fail(e.message), identity)
+    val colorbar = trained.guides.collectFirst {
+      case guide @ ResolvedGuide(_: GuideSpec.Colorbar, _) => guide
+    }.getOrElse(fail("expected a derived colorbar"))
+    val group = colorbar.grob.asInstanceOf[Grob.Group]
+
+    assertEquals(group.name.map(_.value), Some("activation-colorbar"))
+    assert(group.viewport.nonEmpty, "colorbar must live in its allocated guide viewport")
   }
 
   test("solved scenes lower to identical device scenes across runs") {

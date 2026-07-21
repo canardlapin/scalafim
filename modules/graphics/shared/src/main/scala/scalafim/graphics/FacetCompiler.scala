@@ -64,13 +64,16 @@ private[graphics] object FacetCompiler:
             relativeLegend = true,
             labels = plot.labels
           )
-          legends = globalSpecs.collect { case legend: GuideSpec.Legend => legend }
+          nonPositionGuides = globalSpecs.collect {
+            case guide: GuideSpec.Legend   => guide
+            case guide: GuideSpec.Colorbar => guide
+          }
           sizingAxes = representativeAxes(panels.flatMap(_.specs))
           expandedGlobal <- LayoutPhase.expandedRanges(options.expansion, globalPhysical._1, globalPhysical._2)
           frames <- PlotLayoutSolver.solve(
             policy,
             LayoutPhase.layoutRequest(
-              sizingAxes ++ legends,
+              sizingAxes ++ nonPositionGuides,
               expandedGlobal._1,
               expandedGlobal._2,
               plot.labels,
@@ -80,10 +83,10 @@ private[graphics] object FacetCompiler:
           )
           resolvedPanels <- lowerPanels(panels, frames, plot.coord, options)
           axes <- lowerAxes(resolvedPanels, panels, facetLayout, policy, options)
-          legendGuides <- GuidePhase.lower(
+          globalGuides <- GuidePhase.lower(
             resolvedPanels.headOption.map(_.layout),
             Some(frames),
-            legends,
+            nonPositionGuides,
             policy,
             options.theme
           )
@@ -92,7 +95,7 @@ private[graphics] object FacetCompiler:
           TrainedPlot(
             layers = resolvedPanels.flatMap(_.layers),
             layout = resolvedPanels.headOption.map(_.layout),
-            guides = axes ++ legendGuides,
+            guides = axes ++ globalGuides,
             scaleRegistry = globalScales.registry,
             panelGrobs = Vector.empty,
             labelGrobs = labels,

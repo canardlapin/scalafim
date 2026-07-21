@@ -146,6 +146,47 @@ class LayoutSuite extends munit.FunSuite:
     assertEquals(GuideSpec.lower(guide, layout).left.toOption, Some(GraphicsError.EmptyGeometry("legend")))
   }
 
+  test("colorbar guides lower sampled colors, transform ticks, labels, and title") {
+    val name = GraphicsName.unsafe("activation-colorbar")
+    val guide = GuideSpec
+      .lower(
+        GuideSpec.Colorbar(
+          title = Some("activation"),
+          colors = Vector(Rgba.Black, Rgba.unsafe(128, 128, 128), Rgba.White),
+          ticks = Vector(
+            AxisTick.unsafe(0.0, "1"),
+            AxisTick.unsafe(0.5, "10"),
+            AxisTick.unsafe(1.0, "100")
+          ),
+          origin = Point.npcUnsafe(0.82, 0.15),
+          name = Some(name)
+        ),
+        layout
+      )
+      .fold(e => fail(e.message), identity)
+    val group = guide.grob.asInstanceOf[Grob.Group]
+    val swatches = group.children.collect { case rect: Grob.Rect => rect }
+    val ticks = group.children.collectFirst { case segments: Grob.Segments => segments }
+      .getOrElse(fail("missing colorbar ticks"))
+    val labels = group.children.collect { case text: Grob.Text if text.name.exists(_.value.contains("-label-")) => text }
+    val title = group.children.collectFirst {
+      case text: Grob.Text if text.name.exists(_.value == "activation-colorbar-title") => text
+    }.getOrElse(fail("missing colorbar title"))
+
+    assertEquals(group.name, Some(name))
+    assertEquals(swatches.map(_.gp.fill), Vector(Some(Rgba.Black), Some(Rgba.unsafe(128, 128, 128)), Some(Rgba.White)))
+    assertEquals(swatches.map(_.name.map(_.value)), Vector(Some("activation-colorbar-swatch-0"), Some("activation-colorbar-swatch-1"), Some("activation-colorbar-swatch-2")))
+    assertEquals(ticks.segments.length, 3)
+    assertEquals(labels.map(_.label), Vector("1", "10", "100"))
+    assertEquals(title.label, "activation")
+  }
+
+  test("empty colorbars fail before backend rendering") {
+    val guide = GuideSpec.Colorbar(None, Vector.empty, Vector.empty)
+
+    assertEquals(GuideSpec.lower(guide, layout).left.toOption, Some(GraphicsError.EmptyGeometry("colorbar")))
+  }
+
   test("default axis offsets follow point policy across device sizes") {
     val spec = GuideSpec.Axis(
       AxisSide.Bottom,

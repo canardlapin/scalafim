@@ -135,6 +135,7 @@ object RendererConformance:
       rasterOriented <- yDownViewportCase
       axis <- axisCase
       legend <- legendCase
+      colorbar <- colorbarCase
       scaled <- scaledPlotCase
       solved <- solvedPlotCase
       faceted <- facetedPlotCase
@@ -157,6 +158,7 @@ object RendererConformance:
       rasterOriented,
       axis,
       legend,
+      colorbar,
       scaled,
       solved,
       faceted,
@@ -528,6 +530,41 @@ object RendererConformance:
           ConformanceGroup.Guide,
           Scene(Vector(guide.grob)),
           Vector(GraphicsName.unsafe("conformance-legend"))
+        )
+      }
+
+  def colorbarCase: Either[GraphicsError, ConformanceCase] =
+    val layout = PanelLayout.unit(Interval.unsafe(0.0, 1.0), Interval.unsafe(0.0, 1.0))
+    val name = GraphicsName.unsafe("conformance-colorbar")
+    GuideSpec
+      .lower(
+        GuideSpec.Colorbar(
+          title = Some("activation"),
+          colors = Vector(
+            Rgba.unsafe(20, 30, 80),
+            Rgba.unsafe(90, 100, 100),
+            Rgba.unsafe(165, 155, 70),
+            Rgba.unsafe(240, 210, 40)
+          ),
+          ticks = Vector(AxisTick.unsafe(0.0, "1"), AxisTick.unsafe(0.5, "10"), AxisTick.unsafe(1.0, "100")),
+          name = Some(name)
+        ),
+        layout
+      )
+      .map { guide =>
+        val swatch = GraphicsName.unsafe("conformance-colorbar-swatch-0")
+        val ticks = GraphicsName.unsafe("conformance-colorbar-ticks")
+        val title = GraphicsName.unsafe("conformance-colorbar-title")
+        ConformanceCase(
+          GraphicsName.unsafe("colorbar"),
+          ConformanceGroup.Guide,
+          Scene(Vector(guide.grob)),
+          Vector(name, swatch, ticks, title),
+          requirements = Vector(
+            RenderRequirement.Primitive(swatch, RenderPrimitiveKind.Rectangle),
+            RenderRequirement.Primitive(ticks, RenderPrimitiveKind.Polyline),
+            RenderRequirement.Primitive(title, RenderPrimitiveKind.Text)
+          )
         )
       }
 
