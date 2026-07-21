@@ -14,19 +14,74 @@ enum CanvasViewerError:
 
 final case class CanvasViewerProgram(
   frame: ViewerFrame,
-  program: CanvasProgram
+  program: CanvasProgram,
+  viewerProfile: ViewerProfile = ViewerProfile.Zero
 )
 
-object CanvasViewerHost:
+final case class CanvasViewerRender(
+  compiled: CanvasViewerProgram,
+  canvasProfile: CanvasDrawProfile
+)
+
+/** Stateful browser resource owner. The viewer model and reducer remain pure;
+  * only sampled/raster cache state and browser-native Canvas resources live
+  * here across animation frames.
+  */
+final class CanvasViewerRuntime private[canvas] (
+  private var viewerCache: ViewerCache,
+  val rasterCache: CanvasRasterCache
+):
   def compile(
     model: ViewerModel,
     session: ViewerSession
   ): Either[CanvasViewerError, CanvasViewerProgram] =
+    CanvasViewerHost.compileCached(model, session, viewerCache).map { case (compiled, nextCache) =>
+      viewerCache = nextCache
+      compiled
+    }
+
+  def render(
+    model: ViewerModel,
+    session: ViewerSession,
+    context: CanvasRenderingContext2D
+  )(using CanvasRasterFactory): Either[CanvasViewerError, CanvasViewerRender] =
+    compile(model, session).map { compiled =>
+      val canvasProfile = CanvasRenderer.drawCached(compiled.program, context, rasterCache)
+      CanvasViewerRender(compiled, canvasProfile)
+    }
+
+  def sampledSliceCount: Int =
+    viewerCache.sampledSliceCount
+
+  def rasterCount: Int =
+    viewerCache.size
+
+object CanvasViewerHost:
+  def runtime(
+    viewerCacheCapacity: Int = 48,
+    rasterCacheCapacity: Int = 24
+  ): Either[CanvasViewerError, CanvasViewerRuntime] =
     for
-      frame <- session.frame(model).left.map(CanvasViewerError.View.apply)
-      options <- canvasOptions(frame).left.map(CanvasViewerError.Renderer.apply)
-      program <- CanvasRenderer.compile(frame.scene, options).left.map(CanvasViewerError.Renderer.apply)
-    yield CanvasViewerProgram(frame, program)
+      viewerCache <- ViewerCache.make(viewerCacheCapacity).left.map(CanvasViewerError.View.apply)
+      rasterCache <- CanvasRasterCache.make(rasterCacheCapacity).left.map(CanvasViewerError.Renderer.apply)
+    yield new CanvasViewerRuntime(viewerCache, rasterCache)
+
+  def compile(
+    model: ViewerModel,
+    session: ViewerSession
+  ): Either[CanvasViewerError, CanvasViewerProgram] =
+    compileCached(model, session, ViewerCache.Disabled).map(_._1)
+
+  private[canvas] def compileCached(
+    model: ViewerModel,
+    session: ViewerSession,
+    cache: ViewerCache
+  ): Either[CanvasViewerError, (CanvasViewerProgram, ViewerCache)] =
+    for
+      compilation <- session.compileCached(model, cache).left.map(CanvasViewerError.View.apply)
+      options <- canvasOptions(compilation.frame).left.map(CanvasViewerError.Renderer.apply)
+      program <- CanvasRenderer.compile(compilation.frame.scene, options).left.map(CanvasViewerError.Renderer.apply)
+    yield CanvasViewerProgram(compilation.frame, program, compilation.profile) -> compilation.cache
 
   def render(
     model: ViewerModel,

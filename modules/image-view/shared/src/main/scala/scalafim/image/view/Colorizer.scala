@@ -39,7 +39,7 @@ final case class ColorRamp(low: Rgba32, high: Rgba32):
     val t = math.max(0.0, math.min(1.0, fraction))
     def channel(from: Int, to: Int): Int =
       math.round(from + (to - from) * t).toInt
-    Rgba32.unsafe(
+    Rgba32.packUnsafe(
       channel(low.red, high.red),
       channel(low.green, high.green),
       channel(low.blue, high.blue),

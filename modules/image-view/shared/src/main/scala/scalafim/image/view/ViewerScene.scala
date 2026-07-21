@@ -2,6 +2,7 @@ package scalafim.image.view
 
 import scalafim.graphics.*
 import scalafim.image.*
+import scala.collection.mutable
 
 final case class ViewerState(
   cursor: WorldPoint,
@@ -176,11 +177,12 @@ object ViewerCompiler:
       val grobs = Vector.newBuilder[Grob]
       var currentCache = cache
       var profile = ViewerProfile.Zero
+      val frameResolver = new FrameResolver(state.timepoint)
       var error = Option.empty[ImageViewError]
       var index = 0
       val allPanels = panelReceipts.all
       while index < allPanels.length && error.isEmpty do
-        panelGrob(model, state, allPanels(index), theme, currentCache) match
+        panelGrob(model, state, allPanels(index), theme, currentCache, frameResolver) match
           case Left(value) => error = Some(value)
           case Right(compiled) =>
             grobs += compiled.grob
@@ -238,7 +240,8 @@ object ViewerCompiler:
     state: ViewerState,
     panel: PanelReceipt,
     theme: ViewerTheme,
-    cache: ViewerCache
+    cache: ViewerCache,
+    frameResolver: FrameResolver
   ): Either[ImageViewError, PanelCompilation] =
     val viewport = Viewport.unsafe(
       origin = Point.npcUnsafe(panel.rect.left, panel.rect.bottom),
@@ -261,7 +264,7 @@ object ViewerCompiler:
     var error = Option.empty[ImageViewError]
     var index = 0
     while index < visibleLayers.length && error.isEmpty do
-      layerGrob(visibleLayers(index), panel.grid, state, currentCache) match
+      layerGrob(visibleLayers(index), panel.grid, state, currentCache, frameResolver) match
         case Left(value) => error = Some(value)
         case Right(compiled) =>
           images += compiled.grob
@@ -280,11 +283,13 @@ object ViewerCompiler:
     layer: SliceLayer,
     grid: SliceGrid,
     state: ViewerState,
-    cache: ViewerCache
+    cache: ViewerCache,
+    frameResolver: FrameResolver
   ): Either[ImageViewError, LayerCompilation] =
     val presentation = state.presentation(layer.id)
-    val key = SliceCacheKey(layer, grid, state.timepoint, presentation.window)
-    val (cached, refreshedCache) = cache.lookup(key)
+    val sampleKey = SliceSampleKey.from(layer, grid, state.timepoint)
+    val rasterKey = SliceRasterKey(sampleKey, presentation.window)
+    val (cached, refreshedCache) = cache.lookupRaster(rasterKey)
     val rasterAndProfile =
       cached match
         case Some(raster) =>
@@ -296,13 +301,42 @@ object ViewerCompiler:
             )
           )
         case None =>
-          layer.raster(grid, state.timepoint, presentation.window).map { raster =>
-            (
-              raster,
-              cache.store(key, raster),
-              ViewerProfile(0, 1, 0, 1, grid.dimensions.pixelCount.toLong)
-            )
-          }
+          val pixelCount = grid.dimensions.pixelCount.toLong
+          val (sampled, sampleCache) = refreshedCache.lookupSample(sampleKey)
+          sampled match
+            case Some(sample) =>
+              val raster = sample.colorize(presentation.window)
+              Right(
+                (
+                  raster,
+                  sampleCache.storeRaster(rasterKey, raster),
+                  ViewerProfile(0, 1, 0, 1, 0L, 1, 0, pixelCount)
+                )
+              )
+            case None =>
+              frameResolver.resolve(layer).flatMap { case (frame, sourceRead) =>
+                frame.sample(grid).map { sample =>
+                  val raster = sample.colorize(presentation.window)
+                  val nextCache = sampleCache
+                    .storeSample(sampleKey, sample)
+                    .storeRaster(rasterKey, raster)
+                  (
+                    raster,
+                    nextCache,
+                    ViewerProfile(
+                      0,
+                      1,
+                      0,
+                      1,
+                      pixelCount,
+                      0,
+                      1,
+                      pixelCount,
+                      if sourceRead then 1 else 0
+                    )
+                  )
+                }
+              }
     rasterAndProfile.flatMap { case (raster, nextCache, profile) =>
       Grob.image(
         image = raster,
@@ -327,6 +361,18 @@ object ViewerCompiler:
     cache: ViewerCache,
     profile: ViewerProfile
   )
+
+  private final class FrameResolver(timepoint: Int):
+    private val frames = mutable.HashMap.empty[LayerId, ResolvedLayerFrame]
+
+    def resolve(layer: SliceLayer): Either[ImageViewError, (ResolvedLayerFrame, Boolean)] =
+      frames.get(layer.id) match
+        case Some(frame) => Right(frame -> false)
+        case None =>
+          layer.resolve(timepoint).map { frame =>
+            frames.update(layer.id, frame)
+            frame -> true
+          }
 
   private def decorationGrobs(
     state: ViewerState,

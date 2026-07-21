@@ -29,6 +29,26 @@ class ColorizerSuite extends munit.FunSuite:
     assertEquals((middle.red, middle.green, middle.blue, middle.alpha), (50, 70, 90, 110))
   }
 
+  test("ramp hot path is bit-exact against independently checked channel interpolation") {
+    val low = Rgba32.unsafe(213, 17, 91, 240)
+    val high = Rgba32.unsafe(4, 231, 52, 11)
+    val ramp = ColorRamp(low, high)
+    var step = -32
+    while step <= 288 do
+      val fraction = step.toDouble / 255.0
+      val t = math.max(0.0, math.min(1.0, fraction))
+      def channel(from: Int, to: Int): Int =
+        math.round(from + (to - from) * t).toInt
+      val expected = Rgba32.unsafe(
+        channel(low.red, high.red),
+        channel(low.green, high.green),
+        channel(low.blue, high.blue),
+        channel(low.alpha, high.alpha)
+      )
+      assertEquals(ramp.colorAt(fraction), expected)
+      step += 1
+  }
+
   test("label and mask colorizers keep missing data transparent by default") {
     val red = Rgba32.unsafe(255, 0, 0, 192)
     val labels = LabelColorizer(Map(7 -> red))

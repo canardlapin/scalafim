@@ -151,6 +151,13 @@ enum LayerMapping:
   case WorldAligned
   case Pullback(referenceToSource: SpatialMorphism)
 
+private[view] sealed trait SampledLayerSlice:
+  def dimensions: SliceDimensions
+  def colorize(window: Option[DisplayWindow]): RasterImage
+
+private[view] sealed trait ResolvedLayerFrame:
+  def sample(grid: SliceGrid): Either[ImageViewError, SampledLayerSlice]
+
 sealed trait SliceLayer:
   def id: LayerId
   def opacity: LayerOpacity
@@ -159,11 +166,19 @@ sealed trait SliceLayer:
   def timeInvariant: Boolean
   def supportsWindow: Boolean
   private[view] def sourceSpace: VolumeSpace
-  private[view] def raster(
+  private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
+  private[view] def sample(
+    grid: SliceGrid,
+    timepoint: Int
+  ): Either[ImageViewError, SampledLayerSlice] =
+    resolve(timepoint).flatMap(_.sample(grid))
+
+  private[view] final def raster(
     grid: SliceGrid,
     timepoint: Int,
     window: Option[DisplayWindow]
-  ): Either[ImageViewError, RasterImage]
+  ): Either[ImageViewError, RasterImage] =
+    sample(grid, timepoint).map(_.colorize(window))
 
 object SliceLayer:
   def apply[A: ClassTag](
@@ -220,29 +235,49 @@ object SliceLayer:
     private[view] def sourceSpace: VolumeSpace =
       source.space
 
-    private[view] def raster(
-      grid: SliceGrid,
-      timepoint: Int,
-      window: Option[DisplayWindow]
-    ): Either[ImageViewError, RasterImage] =
-      source.volumeAt(timepoint).left.map(error => ImageViewError.SourceFailed(id, error)).flatMap { volume =>
-        val activeColorizer = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
-        val sampled =
-          mapping match
-            case LayerMapping.WorldAligned =>
-              SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
-            case LayerMapping.Pullback(referenceToSource) =>
-              MappedSlicePlan.make(volume.volumeSpace, grid, referenceToSource).sample(volume, sampling)
-        sampled
-          .left
-          .map(error => ImageViewError.SamplingFailed(id, error))
-          .map { slice =>
-            val dimensions = RasterDimensions.unsafe(slice.dimensions.width, slice.dimensions.height)
-            RasterImage.tabulate(dimensions) { (column, row) =>
-              activeColorizer.color(slice(column, row))
-            }
-          }
-      }
+    private[view] def resolve(
+      timepoint: Int
+    ): Either[ImageViewError, ResolvedLayerFrame] =
+      source.volumeAt(timepoint)
+        .left
+        .map(error => ImageViewError.SourceFailed(id, error))
+        .map(volume => TypedFrame(id, volume, sampling, colorizer, mapping))
+
+  private final case class TypedFrame[A: ClassTag](
+    id: LayerId,
+    volume: NeuroVol[A],
+    sampling: SliceSampling[A],
+    colorizer: Colorizer[A],
+    mapping: LayerMapping
+  ) extends ResolvedLayerFrame:
+    def sample(grid: SliceGrid): Either[ImageViewError, SampledLayerSlice] =
+      val sampled =
+        mapping match
+          case LayerMapping.WorldAligned =>
+            SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
+          case LayerMapping.Pullback(referenceToSource) =>
+            MappedSlicePlan.make(volume.volumeSpace, grid, referenceToSource).sample(volume, sampling)
+      sampled
+        .left
+        .map(error => ImageViewError.SamplingFailed(id, error))
+        .map(slice => TypedSample(slice, colorizer))
+
+  private final case class TypedSample[A](
+    slice: SliceImage[A],
+    colorizer: Colorizer[A]
+  ) extends SampledLayerSlice:
+    def dimensions: SliceDimensions =
+      slice.dimensions
+
+    def colorize(window: Option[DisplayWindow]): RasterImage =
+      val activeColorizer = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
+      val dimensions = RasterDimensions.unsafe(slice.dimensions.width, slice.dimensions.height)
+      val pixels = new Array[Int](dimensions.pixelCount)
+      var index = 0
+      while index < pixels.length do
+        pixels(index) = activeColorizer.color(slice.values(index)).packedInt
+        index += 1
+      RasterImage.unsafeFromPackedArray(dimensions, pixels)
 
 final case class ViewerModel private (
   referenceSpace: VolumeSpace,

@@ -60,6 +60,12 @@ final case class ViewerSession(
   def frame(model: ViewerModel): Either[ImageViewError, ViewerFrame] =
     ViewerCompiler.compile(model, state, device, layout)
 
+  def compileCached(
+    model: ViewerModel,
+    cache: ViewerCache
+  ): Either[ImageViewError, ViewerCompilation] =
+    ViewerCompiler.compileCached(model, state, device, cache, layout)
+
 object ViewerReducer:
   def reduce(
     model: ViewerModel,

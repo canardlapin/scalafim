@@ -1,7 +1,8 @@
 package scalafim.image.view.canvas
 
+import scala.scalajs.js
 import scalafim.graphics.*
-import scalafim.graphics.canvas.CanvasProgram
+import scalafim.graphics.canvas.*
 import scalafim.image.*
 import scalafim.image.view.*
 
@@ -45,4 +46,78 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assert(pick.isInstanceOf[ViewerAction.Pick])
     assertEquals(scroll, ViewerAction.Scroll(AnatomicalPlane.Axial, -2))
     assert(CanvasViewerHost.pickAction(compiled, 639.0, 479.0).isLeft)
+  }
+
+  test("runtime preserves viewer rasters and Canvas uploads across redraws") {
+    var uploads = 0
+    given CanvasRasterFactory with
+      def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
+        uploads += 1
+        js.Dynamic.literal().asInstanceOf[CanvasImageSource]
+
+    def noArgs: js.Function0[Unit] =
+      () => ()
+    val context = js.Dynamic
+      .literal(
+        save = noArgs,
+        restore = noArgs,
+        beginPath = noArgs,
+        closePath = noArgs,
+        fill = noArgs,
+        stroke = noArgs,
+        clip = noArgs,
+        moveTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        lineTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        rect = ((_: Double, _: Double, _: Double, _: Double) => ()): js.Function4[Double, Double, Double, Double, Unit],
+        arc = ((_: Double, _: Double, _: Double, _: Double, _: Double, _: Boolean) => ()): js.Function6[Double, Double, Double, Double, Double, Boolean, Unit],
+        translate = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        rotate = ((_: Double) => ()): js.Function1[Double, Unit],
+        setLineDash = ((_: js.Array[Double]) => ()): js.Function1[js.Array[Double], Unit],
+        fillText = ((_: String, _: Double, _: Double) => ()): js.Function3[String, Double, Double, Unit],
+        drawImage = ((_: CanvasImageSource, _: Double, _: Double, _: Double, _: Double) => ()): js.Function5[CanvasImageSource, Double, Double, Double, Double, Unit],
+        strokeStyle = "",
+        fillStyle = "",
+        globalAlpha = 1.0,
+        lineWidth = 1.0,
+        lineCap = "",
+        lineJoin = "",
+        font = "",
+        textAlign = "start",
+        textBaseline = "alphabetic",
+        imageSmoothingEnabled = true
+      )
+      .asInstanceOf[CanvasRenderingContext2D]
+    val runtime = CanvasViewerHost.runtime(viewerCacheCapacity = 8, rasterCacheCapacity = 4).toOption.get
+
+    val cold = runtime.render(model, session, context).toOption.get
+    val warm = runtime.render(model, session, context).toOption.get
+
+    assertEquals(cold.compiled.viewerProfile.cacheMisses, 3)
+    assertEquals(cold.compiled.viewerProfile.sampleCacheMisses, 3)
+    assertEquals(cold.canvasProfile.cacheMisses, 3)
+    assertEquals(cold.canvasProfile.uploadedBytes, cold.compiled.viewerProfile.colorizedPixels * 4L)
+    assertEquals(warm.compiled.viewerProfile.cacheHits, 3)
+    assertEquals(warm.compiled.viewerProfile.sampledPixels, 0L)
+    assertEquals(warm.canvasProfile, CanvasDrawProfile(3, 3, 0, 0L))
+    assertEquals(uploads, 3)
+    assertEquals(runtime.sampledSliceCount, 3)
+    assertEquals(runtime.rasterCount, 3)
+
+    val resized = runtime.render(
+      model,
+      session.copy(device = DeviceContext.unsafe(800.0, 500.0)),
+      context
+    ).toOption.get
+    assertEquals(resized.compiled.viewerProfile.cacheHits, 3)
+    assertEquals(resized.canvasProfile, CanvasDrawProfile(3, 3, 0, 0L))
+
+    val movedSession = session.copy(
+      state = session.state.copy(cursor = session.state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0))
+    )
+    val moved = runtime.render(model, movedSession, context).toOption.get
+    assertEquals(moved.compiled.viewerProfile.cacheHits, 2)
+    assertEquals(moved.compiled.viewerProfile.cacheMisses, 1)
+    assertEquals(moved.canvasProfile.cacheHits, 2)
+    assertEquals(moved.canvasProfile.cacheMisses, 1)
+    assertEquals(uploads, 4)
   }

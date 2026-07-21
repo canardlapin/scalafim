@@ -20,6 +20,12 @@ object Rgba32:
   def fromRgba(color: Rgba): Rgba32 =
     pack(color.red, color.green, color.blue, math.round(color.alpha * 255.0).toInt)
 
+  /** Internal hot-path constructor. Callers must prove every channel is in
+    * `[0, 255]`; public and trust-boundary code must use `apply` or `unsafe`.
+    */
+  private[scalafim] def packUnsafe(red: Int, green: Int, blue: Int, alpha: Int): Rgba32 =
+    pack(red, green, blue, alpha)
+
   private def pack(red: Int, green: Int, blue: Int, alpha: Int): Rgba32 =
     (red << 24) | (green << 16) | (blue << 8) | alpha
 
@@ -42,7 +48,7 @@ extension (pixel: Rgba32)
   def toRgba: Rgba =
     Rgba.unsafe(pixel.red, pixel.green, pixel.blue, pixel.alpha.toDouble / 255.0)
 
-  private[graphics] def packedInt: Int =
+  private[scalafim] def packedInt: Int =
     pixel
 
 final case class RasterDimensions private (width: Int, height: Int):
@@ -119,6 +125,14 @@ final class RasterImage private (
     s"RasterImage(${width}x$height)"
 
 object RasterImage:
+  /** Internal ownership-transfer constructor for freshly allocated buffers. */
+  private[scalafim] def unsafeFromPackedArray(
+      dimensions: RasterDimensions,
+      pixels: Array[Int]
+  ): RasterImage =
+    require(pixels.length == dimensions.pixelCount, "raster pixel count must match dimensions")
+    new RasterImage(dimensions, pixels)
+
   /** Build directly into primitive packed storage without an intermediate
     * collection. The callback is evaluated in row-major visual order.
     */

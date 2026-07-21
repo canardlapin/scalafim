@@ -133,6 +133,7 @@ object SlicePlan:
 final class MappedSlicePlan private (
   val source: VolumeSpace,
   val grid: SliceGrid,
+  val mappingBatchCount: Int,
   private val sourceX: Array[Double],
   private val sourceY: Array[Double],
   private val sourceZ: Array[Double]
@@ -165,24 +166,64 @@ object MappedSlicePlan:
     referenceToSource: SpatialMorphism
   ): MappedSlicePlan =
     val count = grid.dimensions.pixelCount
+    val width = grid.dimensions.width
     val xs = new Array[Double](count)
     val ys = new Array[Double](count)
     val zs = new Array[Double](count)
+    val referenceX = new Array[Double](width)
+    val referenceY = new Array[Double](width)
+    val referenceZ = new Array[Double](width)
+    val mappedX = new Array[Double](width)
+    val mappedY = new Array[Double](width)
+    val mappedZ = new Array[Double](width)
+    val sourceInverse = source.affine.inverse
     var row = 0
     while row < grid.dimensions.height do
+      val upDistance = -row.toDouble * grid.spacing.vertical
       var column = 0
-      val rowOffset = row * grid.dimensions.width
-      while column < grid.dimensions.width do
-        val referenceWorld = grid.unsafeWorldAt(column, row)
-        val sourceWorld = referenceToSource.transform(referenceWorld)
-        val voxel = source.worldToVoxel(sourceWorld)
+      while column < width do
+        val rightDistance = column.toDouble * grid.spacing.horizontal
+        referenceX(column) =
+          grid.topLeftCenter.x + grid.plane.screenRight.x * rightDistance +
+            grid.plane.screenUp.x * upDistance
+        referenceY(column) =
+          grid.topLeftCenter.y + grid.plane.screenRight.y * rightDistance +
+            grid.plane.screenUp.y * upDistance
+        referenceZ(column) =
+          grid.topLeftCenter.z + grid.plane.screenRight.z * rightDistance +
+            grid.plane.screenUp.z * upDistance
+        column += 1
+      referenceToSource.transformWorldCoordinatesInto(
+        referenceX,
+        referenceY,
+        referenceZ,
+        mappedX,
+        mappedY,
+        mappedZ
+      )
+      val rowOffset = row * width
+      column = 0
+      while column < width do
         val index = rowOffset + column
-        xs(index) = voxel.x
-        ys(index) = voxel.y
-        zs(index) = voxel.z
+        xs(index) = affineCoordinate(sourceInverse, 0, mappedX(column), mappedY(column), mappedZ(column))
+        ys(index) = affineCoordinate(sourceInverse, 1, mappedX(column), mappedY(column), mappedZ(column))
+        zs(index) = affineCoordinate(sourceInverse, 2, mappedX(column), mappedY(column), mappedZ(column))
         column += 1
       row += 1
-    new MappedSlicePlan(source, grid, xs, ys, zs)
+    new MappedSlicePlan(source, grid, grid.dimensions.height, xs, ys, zs)
+
+  private inline def affineCoordinate(
+      matrix: DMat,
+      row: Int,
+      x: Double,
+      y: Double,
+      z: Double
+  ): Double =
+    var sum = matrix(row, 3)
+    sum += matrix(row, 0) * x
+    sum += matrix(row, 1) * y
+    sum += matrix(row, 2) * z
+    sum
 
 private[image] final case class VoxelStep(x: Double, y: Double, z: Double)
 
@@ -207,7 +248,9 @@ private[image] object VoxelSamplingKernel:
     val xi = math.round(x).toInt
     val yi = math.round(y).toInt
     val zi = math.round(z).toInt
-    if inBounds(dims, xi, yi, zi) then volume(xi, yi, zi) else outside
+    if inBounds(dims, xi, yi, zi) then
+      volume.linear(xi + yi * dims.x + zi * dims.x * dims.y)
+    else outside
 
   inline def valueOrOutside(
     volume: NeuroVol[Double],
@@ -217,7 +260,9 @@ private[image] object VoxelSamplingKernel:
     z: Int,
     outside: Double
   ): Double =
-    if inBounds(dims, x, y, z) then volume(x, y, z) else outside
+    if inBounds(dims, x, y, z) then
+      volume.linear(x + y * dims.x + z * dims.x * dims.y)
+    else outside
 
   def linear(
     volume: NeuroVol[Double],

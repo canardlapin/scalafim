@@ -1,52 +1,120 @@
 package scalafim.image.view
 
 import scalafim.graphics.RasterImage
-import scalafim.image.SliceGrid
+import scalafim.image.*
 
-private[view] final case class SliceCacheKey(
+private[view] final case class SliceGeometryKey(
+  anatomicalPlane: AnatomicalPlane,
+  screenRight: UnitWorldVector,
+  screenUp: UnitWorldVector,
+  normal: UnitWorldVector,
+  planeOffset: Double,
+  dimensions: SliceDimensions,
+  spacing: PixelSpacing,
+  topLeftCenter: WorldPoint
+)
+
+private[view] object SliceGeometryKey:
+  def from(grid: SliceGrid): SliceGeometryKey =
+    val normal = grid.plane.normal
+    val through = grid.plane.through
+    SliceGeometryKey(
+      anatomicalPlane = grid.plane.anatomicalPlane,
+      screenRight = grid.plane.screenRight,
+      screenUp = grid.plane.screenUp,
+      normal = normal,
+      planeOffset = through.x * normal.x + through.y * normal.y + through.z * normal.z,
+      dimensions = grid.dimensions,
+      spacing = grid.spacing,
+      topLeftCenter = grid.topLeftCenter
+    )
+
+private[view] final case class SliceSampleKey(
   layer: SliceLayer,
-  grid: SliceGrid,
-  timepoint: Int,
+  geometry: SliceGeometryKey,
+  timepoint: Int
+)
+
+private[view] object SliceSampleKey:
+  def from(layer: SliceLayer, grid: SliceGrid, timepoint: Int): SliceSampleKey =
+    SliceSampleKey(
+      layer,
+      SliceGeometryKey.from(grid),
+      if layer.timeInvariant then 0 else timepoint
+    )
+
+private[view] final case class SliceRasterKey(
+  sample: SliceSampleKey,
   window: Option[DisplayWindow]
 )
 
-/** Immutable, model-scoped LRU cache for sampled and colorized slice rasters. */
+/** Immutable, model-scoped LRU caches for sampled slices and colorized rasters.
+  * Sampling identity deliberately ignores the in-plane component of
+  * `SlicePlane.through`; the covering grid origin still protects cropped or
+  * otherwise distinct grids from false hits.
+  */
 final case class ViewerCache private (
   capacity: Int,
-  private val entries: Map[SliceCacheKey, RasterImage],
-  private val recency: Vector[SliceCacheKey]
+  private val samples: Map[SliceSampleKey, SampledLayerSlice],
+  private val sampleRecency: Vector[SliceSampleKey],
+  private val rasters: Map[SliceRasterKey, RasterImage],
+  private val rasterRecency: Vector[SliceRasterKey]
 ):
   def size: Int =
-    entries.size
+    rasters.size
 
-  private[view] def lookup(key: SliceCacheKey): (Option[RasterImage], ViewerCache) =
-    entries.get(key) match
+  def sampledSliceCount: Int =
+    samples.size
+
+  private[view] def lookupSample(key: SliceSampleKey): (Option[SampledLayerSlice], ViewerCache) =
+    samples.get(key) match
       case None => None -> this
       case hit =>
-        val refreshed = recency.filterNot(_ == key) :+ key
-        hit -> copy(recency = refreshed)
+        val refreshed = sampleRecency.filterNot(_ == key) :+ key
+        hit -> copy(sampleRecency = refreshed)
 
-  private[view] def store(key: SliceCacheKey, raster: RasterImage): ViewerCache =
+  private[view] def storeSample(key: SliceSampleKey, sample: SampledLayerSlice): ViewerCache =
     if capacity == 0 then this
     else
-      val withoutKey = recency.filterNot(_ == key)
+      val withoutKey = sampleRecency.filterNot(_ == key)
       val (baseEntries, baseRecency) =
-        if !entries.contains(key) && entries.size >= capacity then
+        if !samples.contains(key) && samples.size >= capacity then
           val evicted = withoutKey.head
-          entries.removed(evicted) -> withoutKey.tail
-        else entries -> withoutKey
+          samples.removed(evicted) -> withoutKey.tail
+        else samples -> withoutKey
       copy(
-        entries = baseEntries.updated(key, raster),
-        recency = baseRecency :+ key
+        samples = baseEntries.updated(key, sample),
+        sampleRecency = baseRecency :+ key
+      )
+
+  private[view] def lookupRaster(key: SliceRasterKey): (Option[RasterImage], ViewerCache) =
+    rasters.get(key) match
+      case None => None -> this
+      case hit =>
+        val refreshed = rasterRecency.filterNot(_ == key) :+ key
+        hit -> copy(rasterRecency = refreshed)
+
+  private[view] def storeRaster(key: SliceRasterKey, raster: RasterImage): ViewerCache =
+    if capacity == 0 then this
+    else
+      val withoutKey = rasterRecency.filterNot(_ == key)
+      val (baseEntries, baseRecency) =
+        if !rasters.contains(key) && rasters.size >= capacity then
+          val evicted = withoutKey.head
+          rasters.removed(evicted) -> withoutKey.tail
+        else rasters -> withoutKey
+      copy(
+        rasters = baseEntries.updated(key, raster),
+        rasterRecency = baseRecency :+ key
       )
 
 object ViewerCache:
   val Disabled: ViewerCache =
-    new ViewerCache(0, Map.empty, Vector.empty)
+    new ViewerCache(0, Map.empty, Vector.empty, Map.empty, Vector.empty)
 
   def make(capacity: Int): Either[ImageViewError, ViewerCache] =
     if capacity < 0 then Left(ImageViewError.InvalidCacheCapacity(capacity))
-    else Right(new ViewerCache(capacity, Map.empty, Vector.empty))
+    else Right(new ViewerCache(capacity, Map.empty, Vector.empty, Map.empty, Vector.empty))
 
   def empty(capacity: Int): ViewerCache =
     make(capacity).fold(err => throw new IllegalArgumentException(err.message), identity)
@@ -56,7 +124,11 @@ final case class ViewerProfile(
   layerRequests: Int,
   cacheHits: Int,
   cacheMisses: Int,
-  sampledPixels: Long
+  sampledPixels: Long,
+  sampleCacheHits: Int = 0,
+  sampleCacheMisses: Int = 0,
+  colorizedPixels: Long = 0L,
+  sourceReads: Int = 0
 ):
   def hitRate: Double =
     if layerRequests == 0 then 1.0 else cacheHits.toDouble / layerRequests
@@ -67,12 +139,20 @@ final case class ViewerProfile(
       layerRequests + other.layerRequests,
       cacheHits + other.cacheHits,
       cacheMisses + other.cacheMisses,
-      sampledPixels + other.sampledPixels
+      sampledPixels + other.sampledPixels,
+      sampleCacheHits + other.sampleCacheHits,
+      sampleCacheMisses + other.sampleCacheMisses,
+      colorizedPixels + other.colorizedPixels,
+      sourceReads + other.sourceReads
     )
+
+  def sampleHitRate: Double =
+    val requests = sampleCacheHits + sampleCacheMisses
+    if requests == 0 then 1.0 else sampleCacheHits.toDouble / requests
 
 object ViewerProfile:
   val Zero: ViewerProfile =
-    ViewerProfile(0, 0, 0, 0, 0L)
+    ViewerProfile(0, 0, 0, 0, 0L, 0, 0, 0L, 0)
 
 final case class ViewerCompilation(
   frame: ViewerFrame,

@@ -105,16 +105,33 @@ val warm = ViewerCompiler.compileCached(
 ).toOption.get
 ```
 
-`ViewerProfile` reports panel count, layer requests, cache hits/misses, and
-sampled pixel work. It deliberately excludes wall-clock time, keeping receipts
-portable and deterministic. A cache is scoped to one stable `ViewerModel`.
-`ViewLink` separately synchronizes declared cursor, timepoint, and convention
-properties between viewer states.
+`ViewerCache` retains sampled scalar slices separately from colorized rasters.
+Changing a display window therefore recolorizes cached values without reading
+or sampling the source volume. Cache identity includes the plane-normal
+position and covering-grid geometry but excludes in-plane cursor position, so
+moving an axial cursor reuses sagittal and coronal rasters while their
+crosshairs move.
+
+`ViewerProfile` reports raster and sampled-slice hits/misses, sampled pixels,
+colorized pixels, and source-frame reads. A compilation resolves each visible
+layer/timepoint at most once even when all three anatomical planes miss the
+slice cache. It deliberately excludes wall-clock time, keeping these work
+receipts portable and deterministic. A cache is scoped to one stable
+`ViewerModel`. `ViewLink` separately synchronizes declared cursor, timepoint,
+and convention properties between viewer states.
+
+The opt-in real-browser timing harness and its non-timing acceptance contract
+are documented in [`benchmarks/image-view-browser.md`](benchmarks/image-view-browser.md).
 
 ## Platform hosts
 
 - `CanvasViewerHost` compiles and draws through `graphics-canvas`; DOM code
   supplies canvas-relative pointer coordinates and owns listeners/lifecycle.
+  Interactive clients should create one `CanvasViewerRuntime` with
+  `CanvasViewerHost.runtime()` and retain it across frames. The runtime owns
+  the immutable viewer-cache state plus a bounded browser-native raster cache;
+  each render returns `ViewerProfile` and `CanvasDrawProfile` receipts,
+  including uploaded bytes.
 - `Java2DViewerHost` draws into a supplied `Graphics2D` and can produce a
   `BufferedImage` directly.
 - `JavaFxViewerHost` draws through `JavaFxGraphicsContext` or a live JavaFX

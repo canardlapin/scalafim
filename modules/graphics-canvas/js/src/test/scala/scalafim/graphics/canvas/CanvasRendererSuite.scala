@@ -155,3 +155,70 @@ class CanvasRendererSuite extends munit.FunSuite:
     assertEquals(context.globalAlpha, 0.8)
     assertEquals(context.imageSmoothingEnabled, false)
   }
+
+  test("packed Canvas upload is byte-exact with the portable fallback") {
+    val dimensions = RasterDimensions.unsafe(3, 2)
+    val image = RasterImage.unsafePacked(
+      dimensions,
+      Vector(
+        Rgba32.unsafe(0, 1, 2, 3),
+        Rgba32.unsafe(127, 128, 129, 130),
+        Rgba32.unsafe(255, 254, 253, 252),
+        Rgba32.unsafe(10, 20, 30, 40),
+        Rgba32.unsafe(50, 60, 70, 80),
+        Rgba32.unsafe(90, 100, 110, 120)
+      )
+    )
+    val fallback = new Uint8ClampedArray(dimensions.pixelCount * 4)
+    CanvasRasterFactory.writeRgbaBytes(image, fallback, usePackedLittleEndian = false)
+
+    assertEquals(
+      CanvasRasterFactory.rgbaToLittleEndianWord(0x01020304),
+      0x04030201
+    )
+    if CanvasRasterFactory.nativeLittleEndian then
+      val packed = new Uint8ClampedArray(dimensions.pixelCount * 4)
+      CanvasRasterFactory.writeRgbaBytes(image, packed, usePackedLittleEndian = true)
+      assertEquals(
+        (0 until fallback.length).map(index => packed(index).toInt).toVector,
+        (0 until fallback.length).map(index => fallback(index).toInt).toVector
+      )
+  }
+
+  test("persistent raster cache avoids repeated browser uploads and reports work") {
+    var creates = 0
+    given CanvasRasterFactory with
+      def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
+        creates += 1
+        js.Dynamic.literal().asInstanceOf[CanvasImageSource]
+
+    val context = js.Dynamic
+      .literal(
+        save = (() => ()): js.Function0[Unit],
+        restore = (() => ()): js.Function0[Unit],
+        drawImage = ((_: CanvasImageSource, _: Double, _: Double, _: Double, _: Double) => ()): js.Function5[CanvasImageSource, Double, Double, Double, Double, Unit],
+        globalAlpha = 1.0,
+        imageSmoothingEnabled = true
+      )
+      .asInstanceOf[CanvasRenderingContext2D]
+    val raster = RasterImage.solid(RasterDimensions.unsafe(3, 2), Rgba32.unsafe(10, 20, 30))
+    val scene = Scene(
+      Vector(
+        Grob.imageUnsafe(raster, Point.npcUnsafe(0.5, 0.5), Size.npcUnsafe(1.0, 1.0))
+      )
+    )
+    val program = CanvasRenderer
+      .compile(scene, CanvasOptions.unsafe(120, 80))
+      .fold(error => fail(error.message), identity)
+    val cache = CanvasRasterCache.empty(1)
+
+    val cold = CanvasRenderer.drawCached(program, context, cache)
+    val warm = CanvasRenderer.drawCached(program, context, cache)
+
+    assertEquals(cold, CanvasDrawProfile(1, 0, 1, 24L))
+    assertEquals(warm, CanvasDrawProfile(1, 1, 0, 0L))
+    assertEqualsDouble(warm.hitRate, 1.0, 0.0)
+    assertEquals(creates, 1)
+    assertEquals(cache.size, 1)
+    assert(CanvasRasterCache.make(-1).isLeft)
+  }

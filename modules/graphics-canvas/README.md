@@ -11,11 +11,15 @@ selection, paint, text alignment, and z-order testable without depending on
 browser pixel rasterization. The backend contains no plot, scale, guide, or
 layout semantics.
 
-Raster images are uploaded as top-left row-major `ImageData`, cached per draw,
-and scaled with the declared interpolation and alpha. `CanvasRasterFactory` is
-an explicit contextual capability: the companion supplies ordinary browser
-canvas materialization, while OffscreenCanvas or test environments can provide
-their own image source without changing shared graphics.
+Raster images are uploaded as top-left row-major `ImageData` and scaled with
+the declared interpolation and alpha. `CanvasRenderer.drawCached` accepts a
+bounded `CanvasRasterCache` that retains browser-native image sources across
+draws by raster identity; `CanvasDrawProfile` reports hits, misses, and uploaded
+bytes. The simpler `draw` entry point keeps a cache only for that call.
+`CanvasRasterFactory` is an explicit contextual capability: the companion
+supplies ordinary browser canvas materialization, while OffscreenCanvas or test
+environments can provide their own image source without changing shared
+graphics.
 
 `BrowserGallery` in the Scala.js test sources exports a real-browser review
 entry point. It renders every shared conformance scene through the production
