@@ -32,8 +32,10 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   signed row links, common-entity hub alignment, and relationship support;
 - nominal multiset association, disagreement, and hard/soft constraint
   objectives compiled through direct-sum operators and a separate block design;
-- a paired duality-diagram and paired latent backbone for PLSC, regularized
-  CCA, and reduced-rank regression over row-aligned sample-by-feature tables;
+- one typed `PairedOperatorProblem` for PLSC, regularized CCA, and reduced-rank
+  regression: cross and marginal statistics arise through `secondOrder`, PLSC
+  and CCA differ by normalization geometry, and fits expose two
+  `FunctionalFrame`s plus the common `OperatorProgramFit` result contract;
 - CPCA as duality-diagram geometry plus explicit row/column constraint
   subspaces, unresolved numeric constraint specs for ROI planning,
   four-block variance partitions, and block SVD fits;
@@ -68,6 +70,14 @@ the first boundary. Sparse/affine representations and `StoragePolicy` are
 preserved; the unsafe name does not authorize densification or suppress typed
 errors.
 
+Typed paired code should construct `PairedOperatorProblem.fromTables`, supplying
+the two self row geometries and the directed cross-row relationship explicitly.
+The `Plsc`, `Cca`, and `ReducedRankRegression` matrix entry points are
+compatibility adapters: after preprocessing, they construct that typed problem
+and derive their legacy projection views from its fitted functional frames.
+The RRR coefficient is a directed `OpCoefficient`, not an untyped array in the
+operator result.
+
 `multivar` depends only on `linalg`. Keep dataset, image, MVPA adapter, JVM
 solver backend, and scheduler-specific code in higher modules.
 
@@ -97,8 +107,10 @@ The shared test suite covers the current core invariants on both JVM and JS:
 - dense, sparse, and affine `MatrixView` algebra without implicit sparse
   densification, including lazy transposed views for duality symmetry;
 - preprocessing, map/projector algebra, and decoder-capability boundaries;
-- SVD/PCA/PLSC/regularized CCA decompositions, reduced-rank regression, and
-  generalized eigensolver behavior;
+- SVD/PCA plus operator-program PLSC/regularized CCA/reduced-rank regression,
+  including typed partial row relationships, generalized cross-SVD residuals,
+  row-permutation laws, directed coefficient orientation, and unchanged R
+  parity fixtures;
 - row/column metrics and generalized PCA/GMD, including dense, diagonal,
   sparse-preserving, rank-deficient PSD, and R-reference-backed paths;
 - CPCA identity/zero/basis constraint specs, ROI-local plan validation,

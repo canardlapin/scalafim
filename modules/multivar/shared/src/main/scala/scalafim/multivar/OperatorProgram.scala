@@ -785,6 +785,35 @@ object OperatorPrograms:
       provenance = SemanticProvenance.source("multiset-program")
     )
 
+  def reducedRankRegression[
+      SourceFeature <: SemanticSpace,
+      TargetFeature <: SemanticSpace,
+      SourceComponent <: SemanticSpace,
+      TargetComponent <: SemanticSpace,
+      RC <: OperatorRoleTag,
+      EC <: OperatorEvidence,
+      RD <: OperatorRoleTag,
+      ED <: SpdEvidence,
+      ENS <: SpdEvidence,
+      ENT <: SpdEvidence
+  ](
+      source: FrameParameterization[SourceFeature, SourceComponent],
+      target: FrameParameterization[TargetFeature, TargetComponent],
+      cross: Op[Dual[TargetFeature], Primal[SourceFeature], RC, EC],
+      sourceDenominator: Op[Dual[SourceFeature], Primal[SourceFeature], RD, ED],
+      sourceNormalization: FrameNormalization[SourceFeature, SourceComponent, ENS],
+      targetNormalization: FrameNormalization[TargetFeature, TargetComponent, ENT]
+  ): Either[ProgramError, OperatorProgram] =
+    OperatorProgram.from(
+      Vector(source, target),
+      BaseObjective.SequentialCrossRegression(
+        CrossCompressionExpression(source.variable, target.variable, cross),
+        SelfCompressionExpression(source.variable, sourceDenominator)
+      ),
+      Vector(sourceNormalization, targetNormalization),
+      provenance = SemanticProvenance.source("reduced-rank-regression-program")
+    )
+
   private def paired[
       SourceFeature <: SemanticSpace,
       TargetFeature <: SemanticSpace,

@@ -45,7 +45,7 @@ class OperatorProgramSuite extends munit.FunSuite:
       case BaseObjective.MinimizeDisagreement(_) => ()
       case BaseObjective.SequentialCrossRegression(_, _) => ()
 
-  test("GPCA, LDA, CCA, PLSC, and multiset builders compile to one program type"):
+  test("GPCA, LDA, CCA, PLSC, RRR, and multiset builders compile to one program type"):
     val fixture = programFixture()
     val gpca = accepted(
       OperatorPrograms.gpca(fixture.source, fixture.sourceValue, fixture.sourceNormalization)
@@ -84,22 +84,34 @@ class OperatorProgramSuite extends munit.FunSuite:
         fixture.targetNormalization
       )
     )
+    val rrr = accepted(
+      OperatorPrograms.reducedRankRegression(
+        fixture.source,
+        fixture.target,
+        fixture.cross,
+        fixture.sourceDenominator,
+        fixture.sourceNormalization,
+        fixture.targetNormalization
+      )
+    )
     val multiset = accepted(
       OperatorPrograms.multiset(fixture.source, fixture.sourceValue, fixture.sourceNormalization)
     )
 
     assertEquals(
-      Vector(gpca, lda, traceRatio, cca, plsc, multiset).map(_.objective.label),
+      Vector(gpca, lda, traceRatio, cca, plsc, rrr, multiset).map(_.objective.label),
       Vector(
         "maximize-trace",
         "generalized-rayleigh",
         "trace-ratio",
         "maximize-cross-trace",
         "maximize-cross-trace",
+        "sequential-cross-regression",
         "maximize-trace"
       )
     )
-    assert(Vector(gpca, lda, traceRatio, cca, plsc, multiset).forall(_.isInstanceOf[OperatorProgram]))
+    assert(Vector(gpca, lda, traceRatio, cca, plsc, rrr, multiset).forall(_.isInstanceOf[OperatorProgram]))
+    assert(rrr.resultSemantics.equivalence.isInstanceOf[ResultEquivalence.PredictionEquivalent])
 
   test("parameterization variants are inspectable and exact linear reductions retain operator identity"):
     val feature = space("parameterization-feature", SpaceRole.Observed, 3)

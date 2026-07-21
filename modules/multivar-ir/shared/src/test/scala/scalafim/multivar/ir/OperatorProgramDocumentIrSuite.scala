@@ -64,6 +64,26 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     val mutated = encoded.replaceFirst("\"schema\":", "\"future\":true,\"schema\":")
     assertEquals(OperatorProgramDocumentIrCodec.decode(mutated).left.toOption.get.category, RejectionCategory.UnknownField)
 
+  test("directed coefficient operators round-trip and require dual-to-dual observed ports"):
+    val coefficient = op(
+      "coefficient",
+      CoordinateIr("features", VarianceIr.Dual),
+      CoordinateIr("features", VarianceIr.Dual),
+      ProgramOperatorRoleIr.Coefficient
+    )
+    val document = validDocument.copy(operators = validDocument.operators :+ coefficient)
+    val encoded = OperatorProgramDocumentIrCodec.encode(document)
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(encoded))
+
+    assertEquals(decoded.operators.last.role, ProgramOperatorRoleIr.Coefficient)
+    val invalid = document.copy(
+      operators = document.operators.updated(
+        document.operators.length - 1,
+        coefficient.copy(codomain = CoordinateIr("features", VarianceIr.Primal))
+      )
+    )
+    assertEquals(rejection(invalid).category, RejectionCategory.DomainCodomainMismatch)
+
   private def validDocument: OperatorProgramDocumentIr =
     val spaces = Vector(
       SpaceIr("trials", SpaceRoleIr.Samples, 3),

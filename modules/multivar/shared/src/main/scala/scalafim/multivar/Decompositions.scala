@@ -36,7 +36,11 @@ object Pca:
         PcaFit(SvdResult(fit.result.ou, fit.result.d, fit.result.ov), fit.projection)
       }
 
-final case class PlscFit(paired: PairedLatentFit, result: SvdResult):
+final case class PlscFit(
+    paired: PairedLatentFit,
+    result: SvdResult,
+    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
+):
   def projection: CrossProjection =
     paired.projection
 
@@ -57,37 +61,37 @@ object Plsc:
       fittedY <- yPreproc.fit(y)
       xp <- fittedX.transform(x)
       yp <- fittedY.transform(y)
-      paired <- pairedDiagram(xp, yp, "plsc", rowMetric = rowMetric)
-      xMetric <- PairedGmdMetric.identity(paired.x.columnSpace)
-      yMetric <- PairedGmdMetric.identity(paired.y.columnSpace)
-      gmd <- PairedGmd.fit(
-        paired,
+      problem <- PairedOperatorProblem.fromMatrices(xp, yp, rowMetric, "plsc", policy)
+      operator <- problem.fitPlsc(
         components,
-        xMetric,
-        yMetric,
-        crossScale = covarianceScale(x.rows),
+        covarianceScale(x.rows),
         solver,
-        eigenSolver,
-        policy
+        eigenSolver
       )
+      xWeights <- operator.sourceWeights
+      yWeights <- operator.targetWeights
       fit <- buildPairedLatentFit(
         method = PairedLatentMethod.Plsc,
         methodLabel = "plsc",
         components = components,
-        svd = gmd.svd,
-        spectrum = Spectrum.Covariance(gmd.svd.singularValues),
-        xWeights = gmd.xWeights,
-        yWeights = gmd.yWeights,
+        svd = operator.result,
+        spectrum = Spectrum.Covariance(operator.result.singularValues),
+        xWeights = xWeights,
+        yWeights = yWeights,
         xInput = x,
         yInput = y,
-        xDomain = paired.x.columnSpace,
-        yDomain = paired.y.columnSpace,
+        xDomain = problem.sourceFeatures.descriptor,
+        yDomain = problem.targetFeatures.descriptor,
         fittedX = fittedX,
         fittedY = fittedY
       )
-    yield PlscFit(fit, gmd.svd)
+    yield PlscFit(fit, operator.result, operator)
 
-final case class CcaFit(paired: PairedLatentFit, result: SvdResult):
+final case class CcaFit(
+    paired: PairedLatentFit,
+    result: SvdResult,
+    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
+):
   def projection: CrossProjection =
     paired.projection
 
@@ -126,55 +130,39 @@ object Cca:
       fittedY <- yPreproc.fit(y)
       xp <- fittedX.transform(x)
       yp <- fittedY.transform(y)
-      paired <- pairedDiagram(xp, yp, "cca", rowMetric = rowMetric)
-      cxx <- paired.x.rowGram(policy)
-      cyy <- paired.y.rowGram(policy)
-      xMetric <- PairedGmdMetric.inverseFromGram(
-        MatrixOps.scale(cxx, denom),
-        regularization.x.value,
-        paired.x.columnSpace,
-        eigenSolver,
-        "cca x metric"
-      )
-      yMetric <- PairedGmdMetric.inverseFromGram(
-        MatrixOps.scale(cyy, denom),
-        regularization.y.value,
-        paired.y.columnSpace,
-        eigenSolver,
-        "cca y metric"
-      )
-      gmd <- PairedGmd.fit(
-        paired,
+      problem <- PairedOperatorProblem.fromMatrices(xp, yp, rowMetric, "cca", policy)
+      operator <- problem.fitCca(
         components,
-        xMetric,
-        yMetric,
-        crossScale = denom,
+        regularization,
+        denom,
         solver,
-        eigenSolver,
-        policy
+        eigenSolver
       )
+      xWeights <- operator.sourceWeights
+      yWeights <- operator.targetWeights
       fit <- buildPairedLatentFit(
         method = PairedLatentMethod.Cca(regularization),
         methodLabel = "cca",
         components = components,
-        svd = gmd.svd,
-        spectrum = Spectrum.CanonicalCorrelations(gmd.svd.singularValues),
-        xWeights = gmd.xWeights,
-        yWeights = gmd.yWeights,
+        svd = operator.result,
+        spectrum = Spectrum.CanonicalCorrelations(operator.result.singularValues),
+        xWeights = xWeights,
+        yWeights = yWeights,
         xInput = x,
         yInput = y,
-        xDomain = paired.x.columnSpace,
-        yDomain = paired.y.columnSpace,
+        xDomain = problem.sourceFeatures.descriptor,
+        yDomain = problem.targetFeatures.descriptor,
         fittedX = fittedX,
         fittedY = fittedY
       )
-    yield CcaFit(fit, gmd.svd)
+    yield CcaFit(fit, operator.result, operator)
 
 final case class ReducedRankRegressionFit(
     latent: PairedLatentFit,
     fullCoefficient: DMat,
     workingCoefficient: MatrixMap,
-    responsePreprocessor: FittedPreprocessor
+    responsePreprocessor: FittedPreprocessor,
+    operator: PairedOperatorFit[? <: SemanticSpace, ? <: SemanticSpace, ? <: SemanticSpace]
 ):
   require(fullCoefficient.rows == workingCoefficient.weights.rows, "full coefficient rows must match low-rank coefficient rows")
   require(fullCoefficient.cols == workingCoefficient.weights.cols, "full coefficient columns must match low-rank coefficient columns")
@@ -231,52 +219,43 @@ object ReducedRankRegression:
       fittedY <- yPreproc.fit(y)
       xp <- fittedX.transform(x)
       yp <- fittedY.transform(y)
-      paired <- pairedDiagram(xp, yp, "rrr", rowMetric = rowMetric)
-      cxx <- paired.x.rowGram(policy)
-      cross <- DualityKernels.crossGram(paired, policy)
-      // Ridge follows the covariance-scale convention shared with CCA (see
-      // RegressionRegularization.Ridge): (X'X/(n-1) + lambda I)^-1 X'Y/(n-1) equals
-      // (X'X + (n-1) lambda I)^-1 X'Y, applied here in the raw-Gram form so the
-      // lambda = 0 path stays the exact OLS solution.
-      xMetric <- PairedGmdMetric.inverseFromGram(
-        cxx,
-        regressionRidgeValue(regularization) * Math.max(1, x.rows - 1),
-        paired.x.columnSpace,
-        eigenSolver,
-        "rrr x metric"
-      )
-      yMetric <- PairedGmdMetric.identity(paired.y.columnSpace)
-      gmd <- PairedGmd.fit(
-        paired,
+      problem <- PairedOperatorProblem.fromMatrices(xp, yp, rowMetric, "rrr", policy)
+      operator <- problem.fitReducedRankRegression(
         components,
-        xMetric,
-        yMetric,
-        crossScale = 1.0,
+        regularization,
+        Math.max(1, x.rows - 1).toDouble,
         solver,
-        eigenSolver,
-        policy
+        eigenSolver
       )
-      coefficient <- xMetric.metric.matvec(cross)
-      responseLoadings = gmd.yWeights
-      encoderWeights = MetricOperator.scaleColumnsDense(gmd.xWeights, gmd.svd.singularValues)
+      sourceWeights <- operator.sourceWeights
+      responseLoadings <- operator.targetWeights
+      coefficient <- operator.coefficient match
+        case Some(value) => pairedOperatorSemantic(value.toDense)
+        case None        => Left(MultivarError.SolverFailed("RRR operator fit omitted its directed coefficient"))
+      encoderWeights = MetricOperator.scaleColumnsDense(sourceWeights, operator.result.singularValues)
       lowRankCoefficient = GaleNumerics.multiply(encoderWeights, responseLoadings.transpose)
-      workingMap <- MatrixMap.from(paired.x.columnSpace, paired.y.columnSpace, lowRankCoefficient, fittedX)
+      workingMap <- MatrixMap.from(
+        problem.sourceFeatures.descriptor,
+        problem.targetFeatures.descriptor,
+        lowRankCoefficient,
+        fittedX
+      )
       latent <- buildPairedLatentFit(
         method = PairedLatentMethod.ReducedRankRegression(RegressionDirection.XToY, regularization),
         methodLabel = "rrr",
         components = components,
-        svd = gmd.svd,
-        spectrum = Spectrum.SingularValues(gmd.svd.singularValues),
+        svd = operator.result,
+        spectrum = Spectrum.SingularValues(operator.result.singularValues),
         xWeights = encoderWeights,
         yWeights = responseLoadings,
         xInput = x,
         yInput = y,
-        xDomain = paired.x.columnSpace,
-        yDomain = paired.y.columnSpace,
+        xDomain = problem.sourceFeatures.descriptor,
+        yDomain = problem.targetFeatures.descriptor,
         fittedX = fittedX,
         fittedY = fittedY
       )
-    yield ReducedRankRegressionFit(latent, coefficient, workingMap, fittedY)
+    yield ReducedRankRegressionFit(latent, coefficient, workingMap, fittedY, operator)
 
 private def fitBiProjection(
     input: MatrixView,
@@ -326,102 +305,14 @@ private def validateRrrComponentRequest(
   if components.value > limit then Left(MultivarError.InvalidComponentRequest(components.value, limit))
   else Right(())
 
-private def regressionRidgeValue(regularization: RegressionRegularization): Double =
-  regularization match
-    case RegressionRegularization.Ols =>
-      0.0
-    case RegressionRegularization.Ridge(value) =>
-      value.value
-
 private def covarianceScale(rows: Int): Double =
   1.0 / Math.max(1, rows - 1)
 
-private def pairedDiagram(
-    x: MatrixView,
-    y: MatrixView,
-    method: String,
-    rowMetric: Option[MvMetric] = None
-): Either[MultivarError, PairedDualityDiagram] =
-  for
-    sampleSpace <- rowMetric.flatMap(_.space) match
-      case Some(space) => Right(space)
-      case None        => MvSpace.of(s"$method.samples", SpaceRole.Samples, x.rows)
-    xSpace <- MvSpace.of(s"$method.x", SpaceRole.Observed, x.cols)
-    ySpace <- MvSpace.of(s"$method.y", SpaceRole.Observed, y.cols)
-    paired <- Unsafe.pairedDiagramFromArrays(
-      x,
-      y,
-      reason = s"legacy $method API receives two positional matrices",
-      rowMetric = rowMetric,
-      sampleSpace = Some(sampleSpace),
-      xSpace = Some(xSpace),
-      ySpace = Some(ySpace)
-    )
-  yield paired
-
-private final case class PairedGmdMetric(metric: MvMetric, half: MetricOperator)
-
-private object PairedGmdMetric:
-  def identity(space: MvSpace): Either[MultivarError, PairedGmdMetric] =
-    MvMetric.identity(space.size, Some(space)).map(PairedGmdMetric(_, MetricOperator.Identity(space.size)))
-
-  def inverseFromGram(
-      gram: DMat,
-      ridge: Double,
-      space: MvSpace,
-      eigenSolver: SymmetricEigenSolver,
-      role: String
-  ): Either[MultivarError, PairedGmdMetric] =
-    for
-      _ <-
-        if gram.rows == space.size && gram.cols == space.size then Right(())
-        else Left(MultivarError.MatrixShapeMismatch(s"$role gram ${gram.rows}x${gram.cols} does not match space '${space.id.value}'"))
-      half <- MatrixOps.inverseSquareRoot(MatrixOps.addRidge(gram, ridge), eigenSolver, 1e-12)
-      metricMatrix = DualityKernels.symmetrize(GaleNumerics.multiply(half, half))
-      metric <- MvMetric.denseSymmetric(metricMatrix, MetricValidation.Trusted, Some(space))
-    yield PairedGmdMetric(metric, MetricOperator.Dense(half))
-
-private final case class PairedGmdResult(svd: SvdResult, xWeights: DMat, yWeights: DMat)
-
-private object PairedGmd:
-  def fit(
-      paired: PairedDualityDiagram,
-      components: ComponentCount,
-      xMetric: PairedGmdMetric,
-      yMetric: PairedGmdMetric,
-      crossScale: Double,
-      solver: SvdSolver,
-      eigenSolver: SymmetricEigenSolver,
-      policy: StoragePolicy
-  ): Either[MultivarError, PairedGmdResult] =
-    for
-      _ <- validateColumnMetric("x", xMetric.metric, paired.x.columnSpace)
-      _ <- validateColumnMetric("y", yMetric.metric, paired.y.columnSpace)
-      cross <- DualityKernels.crossGram(paired, policy)
-      scaledCross = MatrixOps.scale(cross, crossScale)
-      operator = yMetric.half.applyRight(xMetric.half.applyLeft(scaledCross))
-      svd <- solver.decompose(MatrixView.dense(operator), components)
-      _ <- requireComponents(svd)
-      xWeights = xMetric.half.applyLeft(svd.u)
-      yWeights = yMetric.half.applyLeft(svd.v)
-    yield PairedGmdResult(svd, xWeights, yWeights)
-
-  private def validateColumnMetric(
-      side: String,
-      metric: MvMetric,
-      space: MvSpace
-  ): Either[MultivarError, Unit] =
-    if metric.dim != space.size then Left(MultivarError.MetricShapeMismatch(IndexAxis.Feature, space.size, metric.dim))
-    else
-      metric.space match
-        case Some(metricSpace) if metricSpace != space =>
-          Left(
-            MultivarError.MatrixShapeMismatch(
-              s"paired $side metric space '${metricSpace.id.value}' does not match '${space.id.value}'"
-            )
-          )
-        case _ =>
-          Right(())
+private def pairedOperatorSemantic[A](result: Either[SemanticError, A]): Either[MultivarError, A] =
+  result.left.map:
+    case SemanticError.MultivarFailure(error)  => error
+    case SemanticError.LinearMapFailure(error) => LinalgErrorAdapter.toMultivarError(error)
+    case error                                 => MultivarError.SolverFailed(error.message)
 
 private def buildPairedLatentFit(
     method: PairedLatentMethod,

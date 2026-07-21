@@ -15,6 +15,7 @@ sealed trait CrossOperatorRole extends OperatorRoleTag
 sealed trait ComponentOperatorRole extends OperatorRoleTag
 sealed trait ScoreOperatorRole extends OperatorRoleTag
 sealed trait AxisOperatorRole extends OperatorRoleTag
+sealed trait CoefficientOperatorRole extends OperatorRoleTag
 sealed trait ComposedOperatorRole[A <: OperatorRoleTag, B <: OperatorRoleTag] extends OperatorRoleTag
 sealed trait DualOperatorRole[A <: OperatorRoleTag] extends OperatorRoleTag
 sealed trait MetricAdjointOperatorRole[A <: OperatorRoleTag] extends OperatorRoleTag
@@ -43,6 +44,7 @@ enum OperatorRole:
   case Component
   case Score
   case Axis
+  case Coefficient
   case Composed(first: OperatorRole, second: OperatorRole)
   case Dual(of: OperatorRole)
   case MetricAdjoint(of: OperatorRole)
@@ -63,6 +65,8 @@ object OperatorRoleWitness:
   val component: OperatorRoleWitness[ComponentOperatorRole] = new OperatorRoleWitness(OperatorRole.Component)
   val score: OperatorRoleWitness[ScoreOperatorRole] = new OperatorRoleWitness(OperatorRole.Score)
   val axis: OperatorRoleWitness[AxisOperatorRole] = new OperatorRoleWitness(OperatorRole.Axis)
+  val coefficient: OperatorRoleWitness[CoefficientOperatorRole] =
+    new OperatorRoleWitness(OperatorRole.Coefficient)
 
   private[multivar] def derived[R <: OperatorRoleTag](value: OperatorRole): OperatorRoleWitness[R] =
     new OperatorRoleWitness(value)
@@ -380,6 +384,12 @@ type OpRowLink[Source <: SemanticSpace, Target <: SemanticSpace, E <: OperatorEv
   Op[Primal[Target], Dual[Source], RowLinkOperatorRole, E]
 type OpFrame[Feature <: SemanticSpace, Component <: SemanticSpace, E <: OperatorEvidence] =
   Op[Primal[Component], Dual[Feature], FrameOperatorRole, E]
+type OpCoefficient[
+    SourceFeature <: SemanticSpace,
+    TargetFeature <: SemanticSpace,
+    E <: OperatorEvidence
+] =
+  Op[Dual[TargetFeature], Dual[SourceFeature], CoefficientOperatorRole, E]
 
 object OperatorAlgebra:
   def secondOrder[
