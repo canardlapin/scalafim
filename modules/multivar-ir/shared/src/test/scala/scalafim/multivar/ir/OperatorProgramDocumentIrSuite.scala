@@ -59,6 +59,16 @@ class OperatorProgramDocumentIrSuite extends munit.FunSuite:
     )
     assertEquals(rejection(broken).category, RejectionCategory.Malformed)
 
+  test("quadratic pullback rewrites preserve exact proof and evidence-bearing output identities"):
+    val base = validDocument
+    val rewrite = base.rewrites.head.copy(rule = ProgramRewriteRuleIr.QuadraticPullback)
+    val document = base.copy(rewrites = Vector(rewrite))
+    val decoded = accepted(OperatorProgramDocumentIrCodec.decode(OperatorProgramDocumentIrCodec.encode(document)))
+
+    assertEquals(decoded.rewrites.head.rule, ProgramRewriteRuleIr.QuadraticPullback)
+    assertEquals(decoded.rewrites.head.proof.property, "rewrite")
+    assert(decoded.rewrites.head.outputOperators.nonEmpty)
+
   test("v0.2 rejects unknown fields instead of dropping future semantics"):
     val encoded = OperatorProgramDocumentIrCodec.encode(validDocument)
     val mutated = encoded.replaceFirst("\"schema\":", "\"future\":true,\"schema\":")

@@ -205,6 +205,7 @@ final case class FunctionalFrameIr(
 enum ProgramRewriteRuleIr:
   case ExactLinearReduction
   case SupportRestriction
+  case QuadraticPullback
   case GeneralizedToStandardEigen
   case Whitening
 

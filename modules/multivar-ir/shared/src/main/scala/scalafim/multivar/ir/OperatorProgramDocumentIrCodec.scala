@@ -407,6 +407,7 @@ private object ProgramIrEncoder:
     value match
       case ProgramRewriteRuleIr.ExactLinearReduction => "exact_linear_reduction"
       case ProgramRewriteRuleIr.SupportRestriction => "support_restriction"
+      case ProgramRewriteRuleIr.QuadraticPullback => "quadratic_pullback"
       case ProgramRewriteRuleIr.GeneralizedToStandardEigen => "generalized_to_standard_eigen"
       case ProgramRewriteRuleIr.Whitening => "whitening"
 
@@ -1066,6 +1067,7 @@ private object ProgramIrDecoder:
     string(value, path).flatMap:
       case "exact_linear_reduction" => Right(ProgramRewriteRuleIr.ExactLinearReduction)
       case "support_restriction" => Right(ProgramRewriteRuleIr.SupportRestriction)
+      case "quadratic_pullback" => Right(ProgramRewriteRuleIr.QuadraticPullback)
       case "generalized_to_standard_eigen" => Right(ProgramRewriteRuleIr.GeneralizedToStandardEigen)
       case "whitening" => Right(ProgramRewriteRuleIr.Whitening)
       case other => malformed(path, s"unknown rewrite rule '$other'")
