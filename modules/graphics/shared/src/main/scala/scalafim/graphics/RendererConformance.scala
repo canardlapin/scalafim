@@ -139,6 +139,7 @@ object RendererConformance:
       solved <- solvedPlotCase
       counted <- countPlotCase
       scientific <- scientificStatsCase
+      flipped <- flippedPlotCase
     yield Vector(
       point,
       line,
@@ -155,7 +156,8 @@ object RendererConformance:
       scaled,
       solved,
       counted,
-      scientific
+      scientific,
+      flipped
     )
 
   def group(group: ConformanceGroup): Either[GraphicsError, Vector[ConformanceCase]] =
@@ -714,5 +716,25 @@ object RendererConformance:
         RenderRequirement.Primitive(GraphicsName.unsafe("stat-summary-interval-0"), RenderPrimitiveKind.Polyline),
         RenderRequirement.Primitive(GraphicsName.unsafe("stat-summary-mean-0"), RenderPrimitiveKind.Disc),
         RenderRequirement.Primitive(GraphicsName.unsafe("stat-density-line"), RenderPrimitiveKind.Polyline)
+      )
+    )
+
+  def flippedPlotCase: Either[GraphicsError, ConformanceCase] =
+    val bins = HistogramBins.breaksUnsafe(Vector(0.0, 2.0, 4.0))
+    for
+      histogram <- Plot(Vector(0.0, 1.0, 2.0, 3.0, 4.0)).addLayer(
+        Layer.histogram(identity, bins = bins)
+      )
+      scene <- PlotCompiler.compile(
+        histogram.withCoord(Coord.Flipped()),
+        PlotCompilerOptions(policy = Some(LayoutPolicy()), expansion = RangeExpansion.none)
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("flipped-plot"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(GraphicsName.unsafe("plot-panel"), GraphicsName.unsafe("stat-bin-bar-0")),
+      Vector(
+        RenderRequirement.Primitive(GraphicsName.unsafe("stat-bin-bar-0"), RenderPrimitiveKind.Rectangle)
       )
     )

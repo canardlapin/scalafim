@@ -77,7 +77,8 @@ final case class AxisRequest(labels: Vector[String], title: Option[String] = Non
 final case class PlotLayoutRequest(
     axes: Map[AxisSide, AxisRequest] = Map.empty,
     legend: Option[LegendRequest] = None,
-    labels: PlotLabels = PlotLabels()
+    labels: PlotLabels = PlotLabels(),
+    panelAspect: Option[CoordinateRatio] = None
 )
 
 final case class LegendRequest(title: Option[String], labels: Vector[String])
@@ -154,31 +155,43 @@ object PlotLayoutSolver:
     }
     val legendGap = legendWidth.fold(0.0)(_ => npcX(policy.legendGapPt))
 
-    val panelX0 = marginX + left
-    val panelX1 = 1.0 - marginX - right - legendGap - legendWidth.getOrElse(0.0)
-    val panelY0 = marginY + bottom
-    val panelY1 = 1.0 - marginY - top - headerHeight
+    val availableX0 = marginX + left
+    val availableX1 = 1.0 - marginX - right - legendGap - legendWidth.getOrElse(0.0)
+    val availableY0 = marginY + bottom
+    val availableY1 = 1.0 - marginY - top - headerHeight
 
-    if panelX1 <= panelX0 then Left(GraphicsError.LayoutOverflow("panel width"))
-    else if panelY1 <= panelY0 then Left(GraphicsError.LayoutOverflow("panel height"))
+    if availableX1 <= availableX0 then Left(GraphicsError.LayoutOverflow("panel width"))
+    else if availableY1 <= availableY0 then Left(GraphicsError.LayoutOverflow("panel height"))
     else
-      val panelW = panelX1 - panelX0
-      val panelH = panelY1 - panelY0
+      val availableW = availableX1 - availableX0
+      val availableH = availableY1 - availableY0
+      val (panelX0, panelY0, panelW, panelH) =
+        request.panelAspect match
+          case None =>
+            (availableX0, availableY0, availableW, availableH)
+          case Some(aspect) =>
+            val targetNpcAspect = aspect.toDouble * device.width / device.height
+            if availableH / availableW > targetNpcAspect then
+              val height = availableW * targetNpcAspect
+              (availableX0, availableY0 + (availableH - height) / 2.0, availableW, height)
+            else
+              val width = availableH / targetNpcAspect
+              (availableX0 + (availableW - width) / 2.0, availableY0, width, availableH)
       for
         panel <- PanelFrame.npc(panelX0, panelY0, panelW, panelH)
-        axes <- axisFrames(request, panelX0, panelY0, panelW, panelH, marginX, marginY, bottom, top, left, right)
+        axes <- axisFrames(request, panelX0, panelY0, panelW, panelH, bottom, top, left, right)
         legend <- legendWidth match
           case Some(width) =>
-            PanelFrame.npc(panelX1 + right + legendGap, panelY0, width, panelH).map(Some(_))
+            PanelFrame.npc(availableX1 + right + legendGap, panelY0, width, panelH).map(Some(_))
           case None =>
             Right(None)
         subtitle <- subtitleHeight match
           case Some(height) =>
-            PanelFrame.npc(panelX0, panelY1 + top + belowLabels, panelW, height).map(Some(_))
+            PanelFrame.npc(panelX0, availableY1 + top + belowLabels, panelW, height).map(Some(_))
           case None => Right(None)
         title <- titleHeight match
           case Some(height) =>
-            val y = panelY1 + top + belowLabels + subtitleHeight.getOrElse(0.0) + betweenLabels
+            val y = availableY1 + top + belowLabels + subtitleHeight.getOrElse(0.0) + betweenLabels
             PanelFrame.npc(panelX0, y, panelW, height).map(Some(_))
           case None => Right(None)
       yield PlotFrames(panel, axes, legend, title, subtitle)
@@ -189,8 +202,6 @@ object PlotLayoutSolver:
       panelY: Double,
       panelW: Double,
       panelH: Double,
-      marginX: Double,
-      marginY: Double,
       bottom: Double,
       top: Double,
       left: Double,
@@ -204,8 +215,8 @@ object PlotLayoutSolver:
           out += side -> frame
           ()
         }
-    if request.axes.contains(AxisSide.Bottom) then add(AxisSide.Bottom, panelX, marginY, panelW, bottom)
+    if request.axes.contains(AxisSide.Bottom) then add(AxisSide.Bottom, panelX, panelY - bottom, panelW, bottom)
     if request.axes.contains(AxisSide.Top) then add(AxisSide.Top, panelX, panelY + panelH, panelW, top)
-    if request.axes.contains(AxisSide.Left) then add(AxisSide.Left, marginX, panelY, left, panelH)
+    if request.axes.contains(AxisSide.Left) then add(AxisSide.Left, panelX - left, panelY, left, panelH)
     if request.axes.contains(AxisSide.Right) then add(AxisSide.Right, panelX + panelW, panelY, right, panelH)
     result.map(_ => out.result())

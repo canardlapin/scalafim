@@ -197,15 +197,19 @@ object PlotCompiler:
       plans <- MappingPhase.plan(plot)
       statPlans <- StatPhase.transform(plans)
       scales <- ScalePhase.train(statPlans)
-      layers <- resolveLayers(scales.plans, options.theme)
-      ranges <- LayoutPhase.panelRangesFor(resolvedOptions, layers)
+      logicalLayers <- resolveLayers(scales.plans, options.theme)
+      logicalRanges <- LayoutPhase.panelRangesFor(resolvedOptions, logicalLayers)
       specs <- GuidePhase.specs(
         resolvedOptions.guides,
+        plot.coord,
         scales.registry,
-        ranges,
+        logicalRanges,
         relativeLegend = resolvedOptions.policy.nonEmpty,
         labels = plot.labels
       )
+      coordinates <- CoordPhase.transform(plot.coord, logicalLayers, logicalRanges)
+      layers = coordinates.layers
+      ranges = coordinates.ranges
       resolution <- LayoutPhase.assemble(plot.coord, resolvedOptions, ranges, specs, plot.labels)
       panelGrobs <- PanelPhase.lower(resolution.layout, specs, options.theme.panel)
       guides <- GuidePhase.lower(

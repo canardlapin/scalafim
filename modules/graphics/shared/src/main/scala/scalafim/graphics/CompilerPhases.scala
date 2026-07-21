@@ -764,6 +764,72 @@ private[graphics] object GeomPhase:
       }
       order.result().map(key => buckets(key).toVector)
 
+/** Coordinate transformation is deliberately one compiler phase. Statistical
+  * output and geoms remain expressed in logical x/y space; this phase turns
+  * their rows, grobs, and panel ranges into physical panel coordinates before
+  * layout and guide lowering. Backends therefore know nothing about plot
+  * coordinates.
+  */
+private[graphics] object CoordPhase:
+  final case class CoordinateResolution[Row](
+      layers: Vector[ResolvedLayer[Row]],
+      ranges: Option[(Interval, Interval)]
+  )
+
+  def transform[Row](
+      coord: Coord,
+      layers: Vector[ResolvedLayer[Row]],
+      ranges: Option[(Interval, Interval)]
+  ): Either[GraphicsError, CoordinateResolution[Row]] =
+    coord match
+      case Coord.Flipped(_) =>
+        Right(
+          CoordinateResolution(
+            layers.map(flipLayer),
+            ranges.map { case (xRange, yRange) => (yRange, xRange) }
+          )
+        )
+      case Coord.Cartesian(_) | Coord.Fixed(_, _) =>
+        Right(CoordinateResolution(layers, ranges))
+
+  private def flipLayer[Row](layer: ResolvedLayer[Row]): ResolvedLayer[Row] =
+    layer.copy(
+      rows = layer.rows.map(flipRow),
+      grobs = layer.grobs.map(flipGrob)
+    )
+
+  private def flipRow[Row](row: ResolvedRow[Row]): ResolvedRow[Row] =
+    row.copy(
+      x = row.y,
+      y = row.x,
+      point = flipPoint(row.point)
+    )
+
+  private def flipPoint(point: Point): Point =
+    Point(point.y, point.x)
+
+  private def flipSize(size: Size): Size =
+    Size.fromExtents(size.height, size.width)
+
+  private def flipGrob(grob: Grob): Grob =
+    grob match
+      case points: Grob.Points =>
+        points.copy(points = points.points.map(flipPoint))
+      case lines: Grob.Lines =>
+        lines.copy(points = lines.points.map(flipPoint))
+      case segments: Grob.Segments =>
+        segments.copy(segments = segments.segments.map { case (start, end) => (flipPoint(start), flipPoint(end)) })
+      case rect: Grob.Rect =>
+        rect.copy(center = flipPoint(rect.center), size = flipSize(rect.size))
+      case circle: Grob.Circle =>
+        circle.copy(center = flipPoint(circle.center))
+      case text: Grob.Text =>
+        text.copy(at = flipPoint(text.at))
+      case image: Grob.Image =>
+        image.copy(at = flipPoint(image.at), size = flipSize(image.size))
+      case group: Grob.Group =>
+        group.copy(children = group.children.map(flipGrob))
+
 /** Phase 6 — layout resolution: use the explicit panel layout when given,
   * or derive one from an explicit frame plus panel data ranges computed from
   * the layers' position scales (mapped space is the unit interval) or their
@@ -796,16 +862,17 @@ private[graphics] object LayoutPhase:
   ): Either[GraphicsError, LayoutResolution] =
     val clip = coordClip(coord)
     (options.layout, options.frame, options.policy, ranges) match
-      case (Some(layout), _, _, _) =>
-        Right(LayoutResolution(Some(layout.withClip(clip)), None))
+      case (Some(layout), _, _, Some((xRange, yRange))) =>
+        Right(LayoutResolution(Some(layout.copy(xScale = xRange, yScale = yRange, clip = clip)), None))
       case (None, Some(frame), _, Some((xRange, yRange))) =>
         expandedRanges(options.expansion, xRange, yRange).map { case (expandedX, expandedY) =>
           LayoutResolution(Some(PanelLayout(frame, expandedX, expandedY, options.margins, clip)), None)
         }
       case (None, None, Some(policy), Some((xRange, yRange))) =>
         for
-          frames <- PlotLayoutSolver.solve(policy, layoutRequest(specs, xRange, yRange, labels))
           expanded <- expandedRanges(options.expansion, xRange, yRange)
+          aspect <- panelAspect(coord, expanded._1, expanded._2)
+          frames <- PlotLayoutSolver.solve(policy, layoutRequest(specs, expanded._1, expanded._2, labels, aspect))
         yield
           val (expandedX, expandedY) = expanded
           LayoutResolution(
@@ -830,7 +897,8 @@ private[graphics] object LayoutPhase:
       specs: Vector[GuideSpec],
       xRange: Interval,
       yRange: Interval,
-      labels: PlotLabels
+      labels: PlotLabels,
+      panelAspect: Option[CoordinateRatio]
   ): PlotLayoutRequest =
     val axes = specs.collect { case axis: GuideSpec.Axis =>
       val range = if axis.side.isHorizontal then xRange else yRange
@@ -846,7 +914,21 @@ private[graphics] object LayoutPhase:
             legends.flatMap(_.entries.map(_.label)) ++ legends.drop(1).flatMap(_.title)
           )
         )
-    PlotLayoutRequest(axes, legend, labels)
+    PlotLayoutRequest(axes, legend, labels, panelAspect)
+
+  private def panelAspect(
+      coord: Coord,
+      xRange: Interval,
+      yRange: Interval
+  ): Either[GraphicsError, Option[CoordinateRatio]] =
+    coord match
+      case Coord.Fixed(ratio, _) =>
+        if xRange.width <= 0.0 || yRange.width <= 0.0 then
+          Left(GraphicsError.DegenerateFixedAspect(xRange.width, yRange.width))
+        else
+          CoordinateRatio(yRange.width / xRange.width * ratio.toDouble).map(Some(_))
+      case Coord.Cartesian(_) | Coord.Flipped(_) =>
+        Right(None)
 
   private def axisLabels(axis: GuideSpec.Axis, range: Interval): Vector[String] =
     axis.ticks match
@@ -911,8 +993,7 @@ private[graphics] object LayoutPhase:
     else range.requireTrained
 
   private def coordClip(coord: Coord): Clip =
-    coord match
-      case Coord.Cartesian(clip) => clip
+    coord.clipping
 
 /** Structural plot text lowers into solver-owned regions before any backend
   * sees the scene. Axis titles remain guide children; title and subtitle are
@@ -982,6 +1063,7 @@ private[graphics] object PlotLabelPhase:
 private[graphics] object GuidePhase:
   def specs(
       policy: GuidePolicy,
+      coord: Coord,
       plotScales: PlotScaleRegistry,
       ranges: Option[(Interval, Interval)],
       relativeLegend: Boolean,
@@ -1001,9 +1083,10 @@ private[graphics] object GuidePhase:
           case None =>
             Left(GraphicsError.MissingLayout("guides"))
           case Some((xRange, yRange)) =>
-            derived(plotScales, xRange, yRange, overrides, deriveLegends, relativeLegend, labels)
+            derived(coord, plotScales, xRange, yRange, overrides, deriveLegends, relativeLegend, labels)
 
   private def derived(
+      coord: Coord,
       plotScales: PlotScaleRegistry,
       xRange: Interval,
       yRange: Interval,
@@ -1017,14 +1100,18 @@ private[graphics] object GuidePhase:
       case _: GuideSpec.Legend => true
       case _                   => false
     }
+    val (xSide, xPhysicalRange, ySide, yPhysicalRange) =
+      coord match
+        case Coord.Flipped(_) => (AxisSide.Left, xRange, AxisSide.Bottom, yRange)
+        case Coord.Cartesian(_) | Coord.Fixed(_, _) => (AxisSide.Bottom, xRange, AxisSide.Left, yRange)
     for
       resolvedOverrides <- materializeAxisTicks(overrides, xRange, yRange)
       xAxis <-
-        if overriddenSides.contains(AxisSide.Bottom) then Right(None)
-        else positionAxis(plotScales, Aesthetic.X, AxisSide.Bottom, xRange, labels.x)
+        if overriddenSides.contains(xSide) then Right(None)
+        else positionAxis(plotScales, Aesthetic.X, xSide, xPhysicalRange, labels.x)
       yAxis <-
-        if overriddenSides.contains(AxisSide.Left) then Right(None)
-        else positionAxis(plotScales, Aesthetic.Y, AxisSide.Left, yRange, labels.y)
+        if overriddenSides.contains(ySide) then Right(None)
+        else positionAxis(plotScales, Aesthetic.Y, ySide, yPhysicalRange, labels.y)
       legends <-
         if hasLegendOverride || !deriveLegends then Right(Vector.empty)
         else discreteLegends(plotScales, relativeLegend)

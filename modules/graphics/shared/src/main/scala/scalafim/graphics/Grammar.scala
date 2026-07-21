@@ -170,8 +170,35 @@ enum Geom(val label: String):
       case Text  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.Label)
       case Rect | Bar => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
 
+opaque type CoordinateRatio = Double
+
+object CoordinateRatio:
+  def apply(value: Double): Either[GraphicsError, CoordinateRatio] =
+    if value.isFinite && value > 0.0 then Right(value)
+    else Left(GraphicsError.InvalidCoordinateRatio(value))
+
+  def unsafe(value: Double): CoordinateRatio =
+    apply(value).orThrow
+
+  extension (ratio: CoordinateRatio) def toDouble: Double = ratio
+
 enum Coord:
   case Cartesian(clip: Clip = Clip.On)
+  case Flipped(clip: Clip = Clip.On)
+  case Fixed(ratio: CoordinateRatio, clip: Clip = Clip.On)
+
+  def clipping: Clip =
+    this match
+      case Cartesian(value) => value
+      case Flipped(value)   => value
+      case Fixed(_, value)  => value
+
+object Coord:
+  def fixed(ratio: Double = 1.0, clip: Clip = Clip.On): Either[GraphicsError, Coord] =
+    CoordinateRatio(ratio).map(Coord.Fixed(_, clip))
+
+  def fixedUnsafe(ratio: Double = 1.0, clip: Clip = Clip.On): Coord =
+    fixed(ratio, clip).orThrow
 
 final case class Layer[Row] private (
     geom: Geom,
