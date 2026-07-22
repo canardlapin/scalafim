@@ -47,6 +47,7 @@ enum GraphicsError:
   case NonFiniteStatInput(stat: String, aesthetic: String, value: Double)
   case InsufficientStatData(stat: String, minimum: Int, actual: Int)
   case StatInputOutsideBins(value: Double, lower: Double, upper: Double)
+  case StatInputOutsideGrid(stat: String, aesthetic: String, value: Double, lower: Double, upper: Double)
   case InvalidCoordinateRatio(value: Double)
   case DegenerateFixedAspect(xWidth: Double, yWidth: Double)
   case InvalidFacetColumns(value: Int)
@@ -148,6 +149,8 @@ enum GraphicsError:
         s"stat '$stat' requires at least $minimum observations: found $actual"
       case StatInputOutsideBins(value, lower, upper) =>
         s"histogram value $value is outside explicit breaks [$lower, $upper]"
+      case StatInputOutsideGrid(stat, aesthetic, value, lower, upper) =>
+        s"stat '$stat' value $value for '$aesthetic' is outside fixed domain [$lower, $upper]"
       case InvalidCoordinateRatio(value) =>
         s"coordinate ratio must be finite and > 0: $value"
       case DegenerateFixedAspect(xWidth, yWidth) =>

@@ -146,6 +146,7 @@ object RendererConformance:
       ribbon <- ribbonComparisonCase
       tiles <- tileComparisonCase
       heatmap <- heatmapComparisonCase
+      bin2d <- bin2DComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -181,6 +182,7 @@ object RendererConformance:
       ribbon,
       tiles,
       heatmap,
+      bin2d,
       faceted,
       counted,
       bandPosition,
@@ -981,6 +983,43 @@ object RendererConformance:
           GraphicsName.unsafe("y-axis"),
           GraphicsName.unsafe("geom-tile-0"),
           GraphicsName.unsafe("value-colorbar")
+        ),
+        Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
+      )
+
+  def bin2DComparisonCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double)
+    val samples = Vector(
+      Sample(0.2, 0.2),
+      Sample(0.4, 0.3),
+      Sample(0.7, 0.8),
+      Sample(1.2, 2.2),
+      Sample(1.8, 2.7),
+      Sample(2.2, 1.2),
+      Sample(2.4, 1.4),
+      Sample(2.6, 1.6),
+      Sample(3.2, 3.2),
+      Sample(3.7, 3.6)
+    )
+    val domain = Some(Interval.unsafe(0.0, 4.0))
+    for
+      config <- Bin2DConfig(4, 4, domain, domain)
+      field <- FieldStat.bin2D[Sample](_.x, _.y, config).compute(samples)
+      scene <- plot(field)
+        .geomHeatmap(name = "count")
+        .title("bin-2d")
+        .axisTitles("x", "y")
+        .theme(Theme.minimal)
+        .scene
+    yield
+      ConformanceCase(
+        GraphicsName.unsafe("comparison-bin2d"),
+        ConformanceGroup.CompiledPlot,
+        scene,
+        Vector(
+          GraphicsName.unsafe("plot-panel"),
+          GraphicsName.unsafe("geom-tile-0"),
+          GraphicsName.unsafe("count-colorbar")
         ),
         Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
       )

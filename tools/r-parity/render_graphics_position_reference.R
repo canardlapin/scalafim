@@ -92,6 +92,20 @@ heatmap <- ggplot(heatmap_data, aes(x, y, fill = value)) +
   labs(title = "heatmap", x = "x", y = "y") +
   theme_minimal(base_size = 12)
 
+bin2d_data <- data.frame(
+  x = c(0.2, 0.4, 0.7, 1.2, 1.8, 2.2, 2.4, 2.6, 3.2, 3.7),
+  y = c(0.2, 0.3, 0.8, 2.2, 2.7, 1.2, 1.4, 1.6, 3.2, 3.6)
+)
+bin2d <- ggplot(bin2d_data, aes(x, y)) +
+  geom_bin_2d(
+    binwidth = c(1, 1), boundary = 0, closed = "right", drop = FALSE
+  ) +
+  scale_x_continuous(limits = c(0, 4), expand = expansion(mult = 0)) +
+  scale_y_continuous(limits = c(0, 4), expand = expansion(mult = 0)) +
+  scale_fill_gradient(low = "#EFF3FF", high = "#08519C", name = "count") +
+  labs(title = "bin-2d", x = "x", y = "y") +
+  theme_minimal(base_size = 12)
+
 count_data <- data.frame(category = c("control", "task", "task", "other", "task", "control"))
 counted <- ggplot(count_data, aes(category)) +
   geom_bar(width = 0.9, colour = "#233C5A", fill = "#5A96CD") +
@@ -149,6 +163,7 @@ plots <- list(
   ribbon = ribbon,
   tiles = tiles,
   heatmap = heatmap,
+  bin2d = bin2d,
   count = counted,
   facets = faceted,
   dodge = dodge,
@@ -207,6 +222,11 @@ write.table(
 write.table(
   layer_data(heatmap)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "fill")],
   file.path(out_dir, "heatmap-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(bin2d)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "count", "density", "fill")],
+  file.path(out_dir, "bin2d-layer.tsv"),
   sep = "\t", row.names = FALSE, quote = FALSE
 )
 write.table(

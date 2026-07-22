@@ -143,6 +143,11 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   `plot(field).geomHeatmap()` derives coordinates, tile extents, a continuous
   fill scale, and a colorbar without inventing an untyped `z` aesthetic or
   leaking field storage into renderers.
+- `FieldStat.Bin2D` is a pure observation-to-field transform with checked bin
+  counts, optional fixed domains, explicit count/proportion values, and a
+  right-closed boundary contract. Conservation and permutation laws run in
+  shared tests on both JVM and Scala.js; plotting starts only after the field
+  has been computed.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 - Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y
