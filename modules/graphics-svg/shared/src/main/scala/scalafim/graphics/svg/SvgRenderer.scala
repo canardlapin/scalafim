@@ -102,6 +102,8 @@ object SvgRenderer:
         validateName(name)
       case DevicePrimitive.Polyline(_, _, _, name) =>
         validateName(name)
+      case DevicePrimitive.CompoundPolygon(_, _, name) =>
+        validateName(name)
       case DevicePrimitive.RectShape(_, _, _, _, _, name) =>
         validateName(name)
       case DevicePrimitive.TextRun(label, _, _, _, _, _, _, fontFamily, _, name) =>
@@ -172,6 +174,13 @@ object SvgRenderer:
         val coords = points.map(p => s"${format(p.x)},${format(p.y)}").mkString(" ")
         if closed then line(out, indent, s"""<polygon${commonAttrs(name, gp)} points="$coords" />""")
         else line(out, indent, s"""<polyline${lineAttrs(name, gp)} points="$coords" />""")
+      case DevicePrimitive.CompoundPolygon(rings, gp, name) =>
+        val path = rings.map { ring =>
+          val start = ring.head
+          val rest = ring.tail.map(point => s"L ${format(point.x)} ${format(point.y)}").mkString(" ")
+          s"M ${format(start.x)} ${format(start.y)} $rest Z"
+        }.mkString(" ")
+        line(out, indent, s"""<path${commonAttrs(name, gp)} fill-rule="nonzero" d="$path" />""")
       case DevicePrimitive.RectShape(x, y, width, height, gp, name) =>
         line(
           out,

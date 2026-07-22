@@ -52,7 +52,7 @@ private[graphics] object MappingPhase:
   private def isSupported(geom: Geom): Boolean =
     geom match
       case Geom.Point | Geom.Line | Geom.Text | Geom.Rect | Geom.Bar | Geom.Segment |
-          Geom.ErrorBar | Geom.Ribbon | Geom.Area | Geom.HLine | Geom.VLine | Geom.Tile => true
+          Geom.ErrorBar | Geom.Ribbon | Geom.Area | Geom.HLine | Geom.VLine | Geom.Tile | Geom.Polygon => true
 
 /** Phase 2 — statistical transformation. Identity only lifts the source
   * mapping into a stat row. Count aggregates by its typed key, creates count
@@ -524,6 +524,7 @@ private[graphics] object RowPhase:
         _ <- validBounds(Aesthetic.Y.label, yMin, yMax)
         text <- labelValue(layer.geom, env, source)
         group <- optionalAes(Aesthetic.Group, env.get(Aesthetic.Group), source)
+        subpath <- optionalAes(Aesthetic.Subpath, env.get(Aesthetic.Subpath), source)
         gp <- rowGraphicParams(source, env, layer.params.getOrElse(theme.geom))
         size <- rowSize(source, env, theme.pointSizePt)
       yield
@@ -544,6 +545,7 @@ private[graphics] object RowPhase:
           point = Point.nativeUnsafe(x, y),
           label = if layer.geom == Geom.Text then Some(text) else None,
           group = group,
+          subpath = subpath,
           gp = gp,
           size = size
         )
@@ -884,6 +886,8 @@ private[graphics] object GeomPhase:
         verticalLineGrob(rows)
       case Geom.Tile =>
         boundedRectGrobs(rows, "tile")
+      case Geom.Polygon =>
+        polygonGrobs(rows)
 
   private def summaryGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
     val out = Vector.newBuilder[Grob]
@@ -1073,6 +1077,51 @@ private[graphics] object GeomPhase:
         }
       idx += 1
     result.map(_ => out.result())
+
+  private def polygonGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
+    val groups = groupInOrder(rows)
+    val out = Vector.newBuilder[Grob]
+    var index = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while index < groups.length && result.isRight do
+      val group = groups(index)
+      if group.length >= 3 then
+        val grob =
+          if group.exists(_.subpath.nonEmpty) then
+            Grob.compoundPolygon(
+              subpathsInOrder(group).map(_.map(_.point)),
+              gp = group.head.gp,
+              name = Some(GraphicsName.unsafe(s"geom-polygon-$index"))
+            )
+          else
+            Grob.polygon(
+              group.map(_.point),
+              gp = group.head.gp,
+              name = Some(GraphicsName.unsafe(s"geom-polygon-$index"))
+            )
+        result = grob
+          .map { grob =>
+            out += grob
+            ()
+          }
+      index += 1
+    result.map(_ => out.result())
+
+  private def subpathsInOrder[Row](rows: Vector[ResolvedRow[Row]]): Vector[Vector[ResolvedRow[Row]]] =
+    val order = scala.collection.mutable.ArrayBuffer.empty[Option[String]]
+    val buckets = scala.collection.mutable.HashMap.empty[Option[String], scala.collection.mutable.ArrayBuffer[ResolvedRow[Row]]]
+    rows.foreach { row =>
+      val key = row.subpath
+      val bucket = buckets.getOrElseUpdate(
+        key,
+        {
+          order += key
+          scala.collection.mutable.ArrayBuffer.empty[ResolvedRow[Row]]
+        }
+      )
+      bucket += row
+    }
+    order.toVector.map(key => buckets(key).toVector)
 
   private def textGrobs[Row](rows: Vector[ResolvedRow[Row]]): Either[GraphicsError, Vector[Grob]] =
     val out = Vector.newBuilder[Grob]

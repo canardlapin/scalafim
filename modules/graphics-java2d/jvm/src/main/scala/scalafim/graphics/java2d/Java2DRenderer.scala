@@ -89,6 +89,7 @@ enum Java2DCommand:
   case ClipRect(x: Double, y: Double, width: Double, height: Double)
   case Disc(centerX: Double, centerY: Double, radius: Double, paint: Java2DPaint, name: Option[GraphicsName])
   case Polyline(points: Vector[DevicePoint], closed: Boolean, paint: Java2DPaint, name: Option[GraphicsName])
+  case CompoundPolygon(rings: Vector[Vector[DevicePoint]], paint: Java2DPaint, name: Option[GraphicsName])
   case Rectangle(
       x: Double,
       y: Double,
@@ -172,6 +173,8 @@ object Java2DProgram:
         Java2DCommand.Disc(centerX, centerY, radius, Java2DPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.Polyline(points, closed, gp, name) =>
         Java2DCommand.Polyline(points, closed, Java2DPaint.fromGraphicParams(gp), name)
+      case DevicePrimitive.CompoundPolygon(rings, gp, name) =>
+        Java2DCommand.CompoundPolygon(rings, Java2DPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.RectShape(x, y, width, height, gp, name) =>
         Java2DCommand.Rectangle(x, y, width, height, Java2DPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.TextRun(label, x, y, horizontal, vertical, rotation, fontSize, fontFamily, gp, name) =>
@@ -200,6 +203,8 @@ object Java2DProgram:
         Vector(centerX, centerY, radius, paint.lineWidth, paint.opacity)
       case Java2DCommand.Polyline(points, _, paint, _) =>
         points.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
+      case Java2DCommand.CompoundPolygon(rings, paint, _) =>
+        rings.flatten.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
       case Java2DCommand.Rectangle(x, y, width, height, paint, _) =>
         Vector(x, y, width, height, paint.lineWidth, paint.opacity)
       case Java2DCommand.Text(_, x, y, _, _, rotation, fontSize, _, paint, _) =>
@@ -264,6 +269,14 @@ object Java2DRenderer:
         path.moveTo(points.head.x, points.head.y)
         points.tail.foreach(point => path.lineTo(point.x, point.y))
         if closed then path.closePath()
+        paintShape(graphics, path, paint)
+      case Java2DCommand.CompoundPolygon(rings, paint, _) =>
+        val path = new Path2D.Double(Path2D.WIND_NON_ZERO)
+        rings.foreach { ring =>
+          path.moveTo(ring.head.x, ring.head.y)
+          ring.tail.foreach(point => path.lineTo(point.x, point.y))
+          path.closePath()
+        }
         paintShape(graphics, path, paint)
       case Java2DCommand.Rectangle(x, y, width, height, paint, _) =>
         paintShape(graphics, new Rectangle2D.Double(x, y, width, height), paint)

@@ -340,6 +340,17 @@ object Grob:
   ) extends Grob:
     require(points.length >= 3, "`points` must contain at least three vertices")
 
+  /** One filled polygon made from independently closed rings. Ring winding
+    * carries outer/hole semantics through the renderer-neutral scene.
+    */
+  final case class CompoundPolygon private[graphics] (
+      rings: Vector[Vector[Point]],
+      gp: GraphicParams,
+      viewport: Option[Viewport],
+      name: Option[GraphicsName]
+  ) extends Grob:
+    require(rings.nonEmpty && rings.forall(_.length >= 3), "`rings` must contain non-empty polygon paths")
+
   final case class Segments private[graphics] (
       segments: Vector[(Point, Point)],
       gp: GraphicParams,
@@ -430,6 +441,26 @@ object Grob:
       name: Option[GraphicsName] = None
   ): Grob =
     polygon(points, gp, viewport, name).orThrow
+
+  def compoundPolygon(
+      rings: Vector[Vector[Point]],
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Either[GraphicsError, Grob] =
+    if rings.isEmpty then Left(GraphicsError.EmptyGeometry("compound polygon"))
+    else
+      rings.find(_.length < 3) match
+        case Some(points) => Left(GraphicsError.InvalidGeometrySize("compound polygon ring", 3, points.length))
+        case None         => Right(CompoundPolygon(rings, gp, viewport, name))
+
+  def compoundPolygonUnsafe(
+      rings: Vector[Vector[Point]],
+      gp: GraphicParams = GraphicParams.unsafe(),
+      viewport: Option[Viewport] = None,
+      name: Option[GraphicsName] = None
+  ): Grob =
+    compoundPolygon(rings, gp, viewport, name).orThrow
 
   def segments(
       segments: Vector[(Point, Point)],

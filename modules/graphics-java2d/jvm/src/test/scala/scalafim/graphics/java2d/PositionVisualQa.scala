@@ -29,6 +29,7 @@ object PositionVisualQa:
       Example("bin2d", RendererConformance.bin2DComparisonCase),
       Example("kde2d", RendererConformance.kde2DComparisonCase),
       Example("contour", RendererConformance.contourComparisonCase),
+      Example("filled-contour", RendererConformance.filledContourComparisonCase),
       Example("count", RendererConformance.countPlotCase),
       Example("facets", RendererConformance.facetedPlotCase),
       Example("dodge", RendererConformance.dodgedPositionCase),

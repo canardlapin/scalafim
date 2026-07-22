@@ -149,6 +149,7 @@ object RendererConformance:
       bin2d <- bin2DComparisonCase
       kde2d <- kde2DComparisonCase
       contour <- contourComparisonCase
+      filledContour <- filledContourComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -187,6 +188,7 @@ object RendererConformance:
       bin2d,
       kde2d,
       contour,
+      filledContour,
       faceted,
       counted,
       bandPosition,
@@ -1100,6 +1102,43 @@ object RendererConformance:
           GraphicsName.unsafe("y-axis")
         ),
         Vector.empty
+      )
+
+  def filledContourComparisonCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double)
+    val samples = Vector(
+      Sample(-1.4, -1.0),
+      Sample(-1.1, -0.7),
+      Sample(-0.8, -1.2),
+      Sample(-0.5, -0.6),
+      Sample(0.5, 0.8),
+      Sample(0.9, 1.2),
+      Sample(1.2, 0.7),
+      Sample(1.5, 1.4)
+    )
+    val domain = Some(Interval.unsafe(-3.0, 3.0))
+    val config = Kde2DConfig.fixedUnsafe(0.6, 0.7, 40, 40, domain, domain)
+    for
+      field <- FieldStat.kde2D[Sample](_.x, _.y, config).compute(samples)
+      breaks <- ContourBreaks.at(Vector(0.02, 0.05, 0.08, 0.11, 0.15))
+      bands <- ContourBandSet.extract(field, breaks)
+      scene <- plot(bands)
+        .geomFilledContour(name = "density")
+        .title("filled-contour")
+        .axisTitles("x", "y")
+        .theme(Theme.minimal)
+        .scene
+    yield
+      ConformanceCase(
+        GraphicsName.unsafe("comparison-filled-contour"),
+        ConformanceGroup.CompiledPlot,
+        scene,
+        Vector(
+          GraphicsName.unsafe("plot-panel"),
+          GraphicsName.unsafe("geom-polygon-0"),
+          GraphicsName.unsafe("density-colorbar")
+        ),
+        Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-polygon-0"), RenderPrimitiveKind.Polygon))
       )
 
   private def compiledComparisonCase[Row](

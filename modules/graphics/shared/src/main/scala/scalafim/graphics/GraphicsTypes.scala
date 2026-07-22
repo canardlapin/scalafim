@@ -30,6 +30,7 @@ enum Aesthetic[A](val label: String):
   case Size extends Aesthetic[Double]("size")
   case Label extends Aesthetic[String]("label")
   case Group extends Aesthetic[String]("group")
+  case Subpath extends Aesthetic[String]("subpath")
 
 enum PointShape:
   case Circle

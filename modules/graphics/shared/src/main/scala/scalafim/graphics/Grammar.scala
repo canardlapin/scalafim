@@ -79,7 +79,8 @@ final case class AesSpec[Row](
     alpha: Option[AesValue[Row, Double]] = None,
     size: Option[AesValue[Row, Double]] = None,
     label: Option[AesValue[Row, String]] = None,
-    group: Option[AesValue[Row, String]] = None
+    group: Option[AesValue[Row, String]] = None,
+    subpath: Option[AesValue[Row, String]] = None
 ):
   def contramap[Input](f: Input => Row): AesSpec[Input] =
     AesSpec(
@@ -96,7 +97,8 @@ final case class AesSpec[Row](
       alpha = alpha.map(_.contramap(f)),
       size = size.map(_.contramap(f)),
       label = label.map(_.contramap(f)),
-      group = group.map(_.contramap(f))
+      group = group.map(_.contramap(f)),
+      subpath = subpath.map(_.contramap(f))
     )
 
   def position: Option[Position2[Row]] =
@@ -182,6 +184,12 @@ final case class AesSpec[Row](
   def withGroup(value: String): AesSpec[Row] =
     copy(group = Some(AesValue.constant(value)))
 
+  def withSubpath(f: Row => String): AesSpec[Row] =
+    copy(subpath = Some(AesValue.direct(f)))
+
+  def withSubpath(value: String): AesSpec[Row] =
+    copy(subpath = Some(AesValue.constant(value)))
+
   /** Normalize to the typed aesthetic environment. */
   def env: AesEnv[Row] =
     var out = AesEnv.empty[Row]
@@ -199,6 +207,7 @@ final case class AesSpec[Row](
     size.foreach(value => out = out.updated(Aesthetic.Size, value))
     label.foreach(value => out = out.updated(Aesthetic.Label, value))
     group.foreach(value => out = out.updated(Aesthetic.Group, value))
+    subpath.foreach(value => out = out.updated(Aesthetic.Subpath, value))
     out
 
   def bindScale[In, A](binding: ScaleBinding[Row, In, A]): Either[GraphicsError, AesSpec[Row]] =
@@ -226,7 +235,8 @@ object AesSpec:
       alpha = env.get(Aesthetic.Alpha),
       size = env.get(Aesthetic.Size),
       label = env.get(Aesthetic.Label),
-      group = env.get(Aesthetic.Group)
+      group = env.get(Aesthetic.Group),
+      subpath = env.get(Aesthetic.Subpath)
     )
 
 enum Geom(val label: String):
@@ -242,11 +252,13 @@ enum Geom(val label: String):
   case HLine extends Geom("hline")
   case VLine extends Geom("vline")
   case Tile extends Geom("tile")
+  case Polygon extends Geom("polygon")
 
   def requiredAesthetics: Vector[RequiredAesthetic] =
     this match
       case Point => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Line  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
+      case Polygon => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Text  => Vector(RequiredAesthetic.X, RequiredAesthetic.Y, RequiredAesthetic.Label)
       case Bar | HLine | VLine => Vector(RequiredAesthetic.X, RequiredAesthetic.Y)
       case Segment =>
@@ -332,6 +344,16 @@ object Layer:
       params: Option[GraphicParams] = None
   ): Layer[Row] =
     Layer(Geom.Line, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params)
+
+  def polygon[Row](
+      x: Row => Double,
+      y: Row => Double,
+      data: Option[Vector[Row]] = None,
+      mapping: AesSpec[Row] = AesSpec.empty[Row],
+      inheritMapping: Boolean = true,
+      params: Option[GraphicParams] = None
+  ): Layer[Row] =
+    Layer(Geom.Polygon, Stat.Identity, data, mapping.withPosition(x, y), inheritMapping, params)
 
   def text[Row](
       x: Row => Double,

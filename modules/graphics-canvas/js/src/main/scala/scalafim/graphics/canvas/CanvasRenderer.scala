@@ -98,6 +98,7 @@ enum CanvasCommand:
   case ClipRect(x: Double, y: Double, width: Double, height: Double)
   case Disc(centerX: Double, centerY: Double, radius: Double, paint: CanvasPaint, name: Option[GraphicsName])
   case Polyline(points: Vector[DevicePoint], closed: Boolean, paint: CanvasPaint, name: Option[GraphicsName])
+  case CompoundPolygon(rings: Vector[Vector[DevicePoint]], paint: CanvasPaint, name: Option[GraphicsName])
   case Rectangle(
       x: Double,
       y: Double,
@@ -178,6 +179,8 @@ object CanvasProgram:
         CanvasCommand.Disc(centerX, centerY, radius, CanvasPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.Polyline(points, closed, gp, name) =>
         CanvasCommand.Polyline(points, closed, CanvasPaint.fromGraphicParams(gp), name)
+      case DevicePrimitive.CompoundPolygon(rings, gp, name) =>
+        CanvasCommand.CompoundPolygon(rings, CanvasPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.RectShape(x, y, width, height, gp, name) =>
         CanvasCommand.Rectangle(x, y, width, height, CanvasPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.TextRun(label, x, y, horizontal, vertical, rotation, fontSize, fontFamily, gp, name) =>
@@ -206,6 +209,8 @@ object CanvasProgram:
         Vector(centerX, centerY, radius, paint.lineWidth, paint.opacity)
       case CanvasCommand.Polyline(points, _, paint, _) =>
         points.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
+      case CanvasCommand.CompoundPolygon(rings, paint, _) =>
+        rings.flatten.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
       case CanvasCommand.Rectangle(x, y, width, height, paint, _) =>
         Vector(x, y, width, height, paint.lineWidth, paint.opacity)
       case CanvasCommand.Text(_, x, y, _, _, rotation, fontSize, _, paint, _) =>
@@ -460,6 +465,16 @@ object CanvasRenderer:
           context.moveTo(points.head.x, points.head.y)
           points.tail.foreach(point => context.lineTo(point.x, point.y))
           if closed then context.closePath()
+          paintPath(context, paint)
+        }
+      case CanvasCommand.CompoundPolygon(rings, paint, _) =>
+        withSaved(context) {
+          context.beginPath()
+          rings.foreach { ring =>
+            context.moveTo(ring.head.x, ring.head.y)
+            ring.tail.foreach(point => context.lineTo(point.x, point.y))
+            context.closePath()
+          }
           paintPath(context, paint)
         }
       case CanvasCommand.Rectangle(x, y, width, height, paint, _) =>

@@ -77,6 +77,7 @@ class Java2DConformanceSuite extends munit.FunSuite:
       case Java2DCommand.Restore(name)                         => name
       case Java2DCommand.Disc(_, _, _, _, name)                => name
       case Java2DCommand.Polyline(_, _, _, name)               => name
+      case Java2DCommand.CompoundPolygon(_, _, name)           => name
       case Java2DCommand.Rectangle(_, _, _, _, _, name)        => name
       case Java2DCommand.Text(_, _, _, _, _, _, _, _, _, name) => name
       case Java2DCommand.Image(_, _, _, _, _, _, _, name)       => name
@@ -87,6 +88,7 @@ class Java2DConformanceSuite extends munit.FunSuite:
       case Java2DCommand.Disc(_, _, _, _, _) => Some(RenderPrimitiveKind.Disc)
       case Java2DCommand.Polyline(_, closed, _, _) =>
         Some(if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline)
+      case Java2DCommand.CompoundPolygon(_, _, _) => Some(RenderPrimitiveKind.Polygon)
       case Java2DCommand.Rectangle(_, _, _, _, _, _) => Some(RenderPrimitiveKind.Rectangle)
       case Java2DCommand.Text(_, _, _, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Text)
       case Java2DCommand.Image(_, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Image)
@@ -96,6 +98,7 @@ class Java2DConformanceSuite extends munit.FunSuite:
     command match
       case Java2DCommand.Disc(_, _, _, paint, _)             => Some(paint)
       case Java2DCommand.Polyline(_, _, paint, _)            => Some(paint)
+      case Java2DCommand.CompoundPolygon(_, paint, _)        => Some(paint)
       case Java2DCommand.Rectangle(_, _, _, _, paint, _)     => Some(paint)
       case Java2DCommand.Text(_, _, _, _, _, _, _, _, paint, _) => Some(paint)
       case _ => None

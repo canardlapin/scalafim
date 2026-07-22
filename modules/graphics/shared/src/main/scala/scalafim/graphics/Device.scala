@@ -214,6 +214,11 @@ enum DevicePrimitive:
       gp: GraphicParams,
       name: Option[GraphicsName]
   )
+  case CompoundPolygon(
+      rings: Vector[Vector[DevicePoint]],
+      gp: GraphicParams,
+      name: Option[GraphicsName]
+  )
   case RectShape(
       x: Double,
       y: Double,
@@ -326,6 +331,8 @@ object DeviceScene:
         )
       case DevicePrimitive.Polyline(points, _, gp, _) =>
         validatePoints(points).flatMap(_ => DeviceValue.checked("line width", gp.lineWidth).map(_ => ()))
+      case DevicePrimitive.CompoundPolygon(rings, gp, _) =>
+        validatePointGroups(rings).flatMap(_ => DeviceValue.checked("line width", gp.lineWidth).map(_ => ()))
       case DevicePrimitive.RectShape(x, y, width, height, gp, _) =>
         validateNumbers(
           Vector(
@@ -362,6 +369,14 @@ object DeviceScene:
     while idx < points.length && result.isRight do
       val point = points(idx)
       result = validateNumbers(Vector("point x" -> point.x, "point y" -> point.y))
+      idx += 1
+    result
+
+  private def validatePointGroups(groups: Vector[Vector[DevicePoint]]): Either[GraphicsError, Unit] =
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < groups.length && result.isRight do
+      result = validatePoints(groups(idx))
       idx += 1
     result
 
@@ -455,6 +470,10 @@ object DeviceScene:
       case polygon: Grob.Polygon =>
         resolvePoints(polygon.points, resolver).map { resolved =>
           Vector(DevicePrimitive.Polyline(resolved, closed = true, polygon.gp, polygon.name))
+        }
+      case polygon: Grob.CompoundPolygon =>
+        resolvePointGroups(polygon.rings, resolver).map { resolved =>
+          Vector(DevicePrimitive.CompoundPolygon(resolved, polygon.gp, polygon.name))
         }
       case segments: Grob.Segments =>
         segmentMarks(segments, resolver)
@@ -640,5 +659,20 @@ object DeviceScene:
         yield
           out += DevicePoint(x, y)
           ()
+      idx += 1
+    result.map(_ => out.result())
+
+  private def resolvePointGroups(
+      groups: Vector[Vector[Point]],
+      resolver: LengthResolver
+  ): Either[GraphicsError, Vector[Vector[DevicePoint]]] =
+    val out = Vector.newBuilder[Vector[DevicePoint]]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < groups.length && result.isRight do
+      result = resolvePoints(groups(idx), resolver).map { points =>
+        out += points
+        ()
+      }
       idx += 1
     result.map(_ => out.result())

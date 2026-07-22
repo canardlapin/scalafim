@@ -180,6 +180,7 @@ final case class ResolvedRow[Row](
     point: Point,
     label: Option[String],
     group: Option[String],
+    subpath: Option[String],
     gp: GraphicParams,
     size: ExtentExpr
 )

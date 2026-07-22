@@ -39,6 +39,7 @@ class SceneConformanceSuite extends munit.FunSuite:
       primitive match
         case DevicePrimitive.Disc(_, _, _, _, name)          => name
         case DevicePrimitive.Polyline(_, _, _, name)         => name
+        case DevicePrimitive.CompoundPolygon(_, _, name)     => name
         case DevicePrimitive.RectShape(_, _, _, _, _, name)  => name
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, name) => name
         case DevicePrimitive.Image(_, _, _, _, _, _, _, name) => name
@@ -83,6 +84,8 @@ class SceneConformanceSuite extends munit.FunSuite:
           RenderPrimitiveKind.Disc
         case DevicePrimitive.Polyline(_, closed, _, _) =>
           if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline
+        case DevicePrimitive.CompoundPolygon(_, _, _) =>
+          RenderPrimitiveKind.Polygon
         case DevicePrimitive.RectShape(_, _, _, _, _, _) =>
           RenderPrimitiveKind.Rectangle
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, _, _) =>
@@ -94,6 +97,7 @@ class SceneConformanceSuite extends munit.FunSuite:
       primitive match
         case DevicePrimitive.Disc(_, _, _, gp, _) => Some(gp)
         case DevicePrimitive.Polyline(_, _, gp, _) => Some(gp)
+        case DevicePrimitive.CompoundPolygon(_, gp, _) => Some(gp)
         case DevicePrimitive.RectShape(_, _, _, _, gp, _) => Some(gp)
         case DevicePrimitive.TextRun(_, _, _, _, _, _, _, _, gp, _) => Some(gp)
         case DevicePrimitive.Image(_, _, _, _, _, _, _, _) => None
@@ -107,6 +111,7 @@ class SceneConformanceSuite extends munit.FunSuite:
           val values = primitive match
             case DevicePrimitive.Disc(cx, cy, r, _, _)              => Vector(cx, cy, r)
             case DevicePrimitive.Polyline(points, _, _, _)          => points.flatMap(p => Vector(p.x, p.y))
+            case DevicePrimitive.CompoundPolygon(rings, _, _)       => rings.flatten.flatMap(p => Vector(p.x, p.y))
             case DevicePrimitive.RectShape(x, y, w, h, _, _)        => Vector(x, y, w, h)
             case DevicePrimitive.TextRun(_, x, y, _, _, rot, fs, _, _, _) => Vector(x, y, rot, fs)
             case DevicePrimitive.Image(_, x, y, w, h, _, alpha, _) => Vector(x, y, w, h, alpha)

@@ -89,6 +89,7 @@ enum JavaFxCommand:
   case ClipRect(x: Double, y: Double, width: Double, height: Double)
   case Disc(centerX: Double, centerY: Double, radius: Double, paint: JavaFxPaint, name: Option[GraphicsName])
   case Polyline(points: Vector[DevicePoint], closed: Boolean, paint: JavaFxPaint, name: Option[GraphicsName])
+  case CompoundPolygon(rings: Vector[Vector[DevicePoint]], paint: JavaFxPaint, name: Option[GraphicsName])
   case Rectangle(
       x: Double,
       y: Double,
@@ -172,6 +173,8 @@ object JavaFxProgram:
         JavaFxCommand.Disc(centerX, centerY, radius, JavaFxPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.Polyline(points, closed, gp, name) =>
         JavaFxCommand.Polyline(points, closed, JavaFxPaint.fromGraphicParams(gp), name)
+      case DevicePrimitive.CompoundPolygon(rings, gp, name) =>
+        JavaFxCommand.CompoundPolygon(rings, JavaFxPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.RectShape(x, y, width, height, gp, name) =>
         JavaFxCommand.Rectangle(x, y, width, height, JavaFxPaint.fromGraphicParams(gp), name)
       case DevicePrimitive.TextRun(label, x, y, horizontal, vertical, rotation, fontSize, fontFamily, gp, name) =>
@@ -200,6 +203,8 @@ object JavaFxProgram:
         Vector(centerX, centerY, radius, paint.lineWidth, paint.opacity)
       case JavaFxCommand.Polyline(points, _, paint, _) =>
         points.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
+      case JavaFxCommand.CompoundPolygon(rings, paint, _) =>
+        rings.flatten.flatMap(point => Vector(point.x, point.y)) ++ Vector(paint.lineWidth, paint.opacity)
       case JavaFxCommand.Rectangle(x, y, width, height, paint, _) =>
         Vector(x, y, width, height, paint.lineWidth, paint.opacity)
       case JavaFxCommand.Text(_, x, y, _, _, rotation, fontSize, _, paint, _) =>
@@ -326,6 +331,16 @@ object JavaFxRenderer:
           context.moveTo(points.head.x, points.head.y)
           points.tail.foreach(point => context.lineTo(point.x, point.y))
           if closed then context.closePath()
+          paintPath(context, paint)
+        }
+      case JavaFxCommand.CompoundPolygon(rings, paint, _) =>
+        withSaved(context) {
+          context.beginPath()
+          rings.foreach { ring =>
+            context.moveTo(ring.head.x, ring.head.y)
+            ring.tail.foreach(point => context.lineTo(point.x, point.y))
+            context.closePath()
+          }
           paintPath(context, paint)
         }
       case JavaFxCommand.Rectangle(x, y, width, height, paint, _) =>

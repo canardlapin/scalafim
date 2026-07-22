@@ -21,14 +21,13 @@ class SvgConformanceSuite extends munit.FunSuite:
       requirement match
         case RenderRequirement.Primitive(name, kind) =>
           namedLines(out, name).exists { line =>
-            val prefix = kind match
-              case RenderPrimitiveKind.Disc      => "<circle"
-              case RenderPrimitiveKind.Polyline  => "<polyline"
-              case RenderPrimitiveKind.Polygon   => "<polygon"
-              case RenderPrimitiveKind.Rectangle => "<rect"
-              case RenderPrimitiveKind.Text      => "<text"
-              case RenderPrimitiveKind.Image     => "<image"
-            line.startsWith(prefix)
+            kind match
+              case RenderPrimitiveKind.Disc      => line.startsWith("<circle")
+              case RenderPrimitiveKind.Polyline  => line.startsWith("<polyline")
+              case RenderPrimitiveKind.Polygon   => line.startsWith("<polygon") || line.startsWith("<path")
+              case RenderPrimitiveKind.Rectangle => line.startsWith("<rect")
+              case RenderPrimitiveKind.Text      => line.startsWith("<text")
+              case RenderPrimitiveKind.Image     => line.startsWith("<image")
           }
         case RenderRequirement.Group(name, clipped, rotated) =>
           namedLines(out, name).exists { line =>

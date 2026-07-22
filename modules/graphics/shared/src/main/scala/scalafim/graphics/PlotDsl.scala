@@ -110,6 +110,12 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   def group(value: Row => String): PlotBuilder[Row, Position] =
     mapAesthetics(_.withGroup(value))
 
+  /** Identify independently closed subpaths within one polygon group. This
+    * retains holes as geometry instead of flattening them into backend tricks.
+    */
+  def subpath(value: Row => String): PlotBuilder[Row, Position] =
+    mapAesthetics(_.withSubpath(value))
+
   def scaleXContinuous(
       name: String = "x",
       transform: Transform = Transform.identity,
@@ -162,6 +168,12 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
       params: Option[GraphicParams] = None
   )(using HasXY[Row, Position]): PlotBuilder[Row, Position] =
     addInheritedGeom(Geom.Line, data, params)
+
+  def geomPolygon(
+      data: Option[Vector[Row]] = None,
+      params: Option[GraphicParams] = None
+  )(using HasXY[Row, Position]): PlotBuilder[Row, Position] =
+    addInheritedGeom(Geom.Polygon, data, params)
 
   def geomText(
       label: Row => String,
@@ -266,6 +278,17 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
       params: Option[GraphicParams] = None
   )(using contourRows: Row =:= ContourVertex, ev: HasXY[Row, Position]): PlotBuilder[Row, Position] =
     geomLine(params = params)
+
+  /** Fill already-extracted contour bands. Each region is one compound
+    * polygon whose independently closed subpaths retain explicit holes.
+    */
+  def geomFilledContour(
+      palette: Palette[Rgba] = options.theme.palettes.continuousPalette,
+      name: String = "level",
+      params: GraphicParams = GraphicParams.unsafe(stroke = None)
+  )(using bandRows: Row =:= ContourBandVertex, ev: HasXY[Row, Position]): PlotBuilder[Row, Position] =
+    scaleFillContinuous(row => bandRows(row).levelMid, palette, name)
+      .geomPolygon(params = Some(params))
 
   def hline(y: Double, params: Option[GraphicParams] = None): PlotBuilder[Row, Position] =
     addLayer(Right(Layer.hline(y, data = Some(data), params = params)))
@@ -429,3 +452,12 @@ def plot(contours: ContourSet): PlotBuilder[ContourVertex, PlotPosition.XY[Conto
   plot(contours.vertices)
     .aes(_.x, _.y)
     .group(_.pathId)
+
+/** Begin a plot from filled-band regions while retaining each outer/hole ring
+  * as an independently closed polygon subpath.
+  */
+def plot(bands: ContourBandSet): PlotBuilder[ContourBandVertex, PlotPosition.XY[ContourBandVertex]] =
+  plot(bands.vertices)
+    .aes(_.x, _.y)
+    .group(_.regionId)
+    .subpath(_.ringId)

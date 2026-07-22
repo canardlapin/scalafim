@@ -157,6 +157,14 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   bilinear asymptotic decider handles ambiguous saddles, exact ties follow an
   explicit policy, and `plot(contours).geomContour()` lowers the paths through
   the ordinary grouped-line grammar on every backend.
+- Filled contours clip each regular-grid triangle against checked
+  `ContourBreaks`, cancel internal edges, stitch oriented rings, and assign
+  clockwise holes to the smallest containing counter-clockwise outer ring.
+  `ContourBandSet` retains that topology; `plot(bands).geomFilledContour()`
+  maps each region and ring to the generic typed polygon `group`/`subpath`
+  grammar. The shared scene lowers those rings to one winding-aware compound
+  path, eliminating fragment seams while keeping statistical behavior out of
+  renderers.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 - Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y

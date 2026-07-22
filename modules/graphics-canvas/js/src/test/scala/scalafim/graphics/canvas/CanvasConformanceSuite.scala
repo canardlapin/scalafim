@@ -77,6 +77,7 @@ class CanvasConformanceSuite extends munit.FunSuite:
       case CanvasCommand.Restore(name)                      => name
       case CanvasCommand.Disc(_, _, _, _, name)             => name
       case CanvasCommand.Polyline(_, _, _, name)             => name
+      case CanvasCommand.CompoundPolygon(_, _, name)         => name
       case CanvasCommand.Rectangle(_, _, _, _, _, name)      => name
       case CanvasCommand.Text(_, _, _, _, _, _, _, _, _, name) => name
       case CanvasCommand.Image(_, _, _, _, _, _, _, name)       => name
@@ -87,6 +88,7 @@ class CanvasConformanceSuite extends munit.FunSuite:
       case CanvasCommand.Disc(_, _, _, _, _) => Some(RenderPrimitiveKind.Disc)
       case CanvasCommand.Polyline(_, closed, _, _) =>
         Some(if closed then RenderPrimitiveKind.Polygon else RenderPrimitiveKind.Polyline)
+      case CanvasCommand.CompoundPolygon(_, _, _) => Some(RenderPrimitiveKind.Polygon)
       case CanvasCommand.Rectangle(_, _, _, _, _, _) => Some(RenderPrimitiveKind.Rectangle)
       case CanvasCommand.Text(_, _, _, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Text)
       case CanvasCommand.Image(_, _, _, _, _, _, _, _) => Some(RenderPrimitiveKind.Image)
@@ -96,6 +98,7 @@ class CanvasConformanceSuite extends munit.FunSuite:
     command match
       case CanvasCommand.Disc(_, _, _, paint, _)          => Some(paint)
       case CanvasCommand.Polyline(_, _, paint, _)         => Some(paint)
+      case CanvasCommand.CompoundPolygon(_, paint, _)     => Some(paint)
       case CanvasCommand.Rectangle(_, _, _, _, paint, _)  => Some(paint)
       case CanvasCommand.Text(_, _, _, _, _, _, _, _, paint, _) => Some(paint)
       case _ => None

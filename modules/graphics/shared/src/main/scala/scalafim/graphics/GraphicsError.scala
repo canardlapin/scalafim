@@ -20,6 +20,7 @@ enum GraphicsError:
   case InvalidContourLevels(expectation: String, actual: String)
   case InvalidContourPoint(x: Double, y: Double)
   case ContourGridTooSmall(width: Int, height: Int)
+  case InvalidContourTopology(detail: String)
   case InvalidAlpha(value: Double)
   case InvalidLineWidth(value: Double)
   case InvalidRotation(value: Double)
@@ -110,6 +111,8 @@ enum GraphicsError:
         s"contour point coordinates must be finite: ($x, $y)"
       case ContourGridTooSmall(width, height) =>
         s"contour extraction requires at least a 2x2 scalar field: found ${width}x$height"
+      case InvalidContourTopology(detail) =>
+        s"invalid contour topology: $detail"
       case InvalidAlpha(value) =>
         s"alpha must be finite and in [0, 1]: $value"
       case InvalidLineWidth(value) =>
