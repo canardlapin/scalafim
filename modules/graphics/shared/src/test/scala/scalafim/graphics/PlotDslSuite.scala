@@ -118,6 +118,24 @@ class PlotDslSuite extends munit.FunSuite:
     assertEquals(program.resolve.fold(error => fail(error.message), identity).facetPanels.length, 2)
   }
 
+  test("field-native heatmaps bind continuous fill and derive a colorbar") {
+    val axis = RegularGridAxis.cellCenteredUnsafe(0.0, 2.0, 2)
+    val field = ScalarField2D.unsafe(axis, axis, Vector(0.0, 1.0, 2.0, 3.0))
+    val program =
+      plot(field)
+        .geomHeatmap(name = "activation")
+        .theme(Theme.minimal)
+        .build
+        .fold(error => fail(error.message), identity)
+    val trained = program.resolve.fold(error => fail(error.message), identity)
+
+    assertEquals(program.plot.data.map(_.value), field.samples)
+    assertEquals(program.plot.layers.map(_.geom), Vector(Geom.Tile))
+    assertEquals(trained.trainedScales.map(scale => scale.aesthetic -> scale.descriptor.name.value), Vector("fill" -> "activation"))
+    assertEquals(trained.layers.head.grobs.length, 4)
+    assert(trained.guides.exists(_.grob.name.exists(_.value == "activation-colorbar")))
+  }
+
   test("geom prerequisites are compile-time constraints") {
     val pointErrors = typeCheckErrors("""
       import scalafim.graphics.*
@@ -129,9 +147,15 @@ class PlotDslSuite extends munit.FunSuite:
       final case class Row(x: Double, y: Double)
       plot(Vector(Row(1.0, 2.0))).aes(_.x).geomSummary()
     """)
+    val heatmapErrors = typeCheckErrors("""
+      import scalafim.graphics.*
+      final case class Row(x: Double, y: Double)
+      plot(Vector(Row(1.0, 2.0))).aes(_.x, _.y).geomHeatmap()
+    """)
 
     assert(pointErrors.nonEmpty)
     assert(summaryErrors.nonEmpty)
+    assert(heatmapErrors.nonEmpty)
     assert(pointErrors.exists(_.message.contains("requires x and y")))
     assert(summaryErrors.exists(_.message.contains("requires x and y")))
   }

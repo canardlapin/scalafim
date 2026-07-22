@@ -81,6 +81,17 @@ tiles <- ggplot(tile_data, aes(x, y, fill = level)) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "none")
 
+heatmap_data <- data.frame(
+  x = rep(c(0.5, 1.5, 2.5), 2),
+  y = rep(c(0.5, 1.5), each = 3),
+  value = c(0, 1, 2, 2, 1, 0)
+)
+heatmap <- ggplot(heatmap_data, aes(x, y, fill = value)) +
+  geom_tile(width = 1, height = 1) +
+  scale_fill_gradient(low = "#EFF3FF", high = "#08519C", name = "value") +
+  labs(title = "heatmap", x = "x", y = "y") +
+  theme_minimal(base_size = 12)
+
 count_data <- data.frame(category = c("control", "task", "task", "other", "task", "control"))
 counted <- ggplot(count_data, aes(category)) +
   geom_bar(width = 0.9, colour = "#233C5A", fill = "#5A96CD") +
@@ -137,6 +148,7 @@ plots <- list(
   summary = summarized,
   ribbon = ribbon,
   tiles = tiles,
+  heatmap = heatmap,
   count = counted,
   facets = faceted,
   dodge = dodge,
@@ -190,6 +202,11 @@ write.table(
 write.table(
   layer_data(tiles)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "fill")],
   file.path(out_dir, "tiles-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(heatmap)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "fill")],
+  file.path(out_dir, "heatmap-layer.tsv"),
   sep = "\t", row.names = FALSE, quote = FALSE
 )
 write.table(

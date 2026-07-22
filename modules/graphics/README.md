@@ -138,6 +138,11 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   placement still follows the scene's y-up `Point`/`Anchor` rules. Nearest and
   smooth interpolation are explicit, and file IO or platform image objects
   never enter the shared grammar.
+- Regular scalar fields use checked `RegularGridAxis` values with explicit
+  cell- or vertex-centered sampling and immutable x-fastest row-major storage.
+  `plot(field).geomHeatmap()` derives coordinates, tile extents, a continuous
+  fill scale, and a colorbar without inventing an untyped `z` aesthetic or
+  leaking field storage into renderers.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 - Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y

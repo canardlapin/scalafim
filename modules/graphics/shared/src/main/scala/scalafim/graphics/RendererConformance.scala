@@ -145,6 +145,7 @@ object RendererConformance:
       summary <- summaryComparisonCase
       ribbon <- ribbonComparisonCase
       tiles <- tileComparisonCase
+      heatmap <- heatmapComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -179,6 +180,7 @@ object RendererConformance:
       summary,
       ribbon,
       tiles,
+      heatmap,
       faceted,
       counted,
       bandPosition,
@@ -952,6 +954,35 @@ object RendererConformance:
           GraphicsName.unsafe("geom-tile-0"),
           RenderPrimitiveKind.Rectangle
         )
+      )
+
+  def heatmapComparisonCase: Either[GraphicsError, ConformanceCase] =
+    for
+      x <- RegularGridAxis.cellCentered(0.0, 3.0, 3)
+      y <- RegularGridAxis.cellCentered(0.0, 2.0, 2)
+      field <- ScalarField2D(x, y, Vector(0.0, 1.0, 2.0, 2.0, 1.0, 0.0))
+      scene <- plot(field)
+        .geomHeatmap(
+          palette = Palette.gradient(Rgba.unsafe(239, 243, 255), Rgba.unsafe(8, 81, 156)),
+          name = "value"
+        )
+        .title("heatmap")
+        .axisTitles("x", "y")
+        .theme(Theme.minimal)
+        .scene
+    yield
+      ConformanceCase(
+        GraphicsName.unsafe("comparison-heatmap"),
+        ConformanceGroup.CompiledPlot,
+        scene,
+        Vector(
+          GraphicsName.unsafe("plot-panel"),
+          GraphicsName.unsafe("x-axis"),
+          GraphicsName.unsafe("y-axis"),
+          GraphicsName.unsafe("geom-tile-0"),
+          GraphicsName.unsafe("value-colorbar")
+        ),
+        Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
       )
 
   private def compiledComparisonCase[Row](

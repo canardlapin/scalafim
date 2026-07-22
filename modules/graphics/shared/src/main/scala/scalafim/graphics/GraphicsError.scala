@@ -12,6 +12,11 @@ enum GraphicsError:
   case InvalidRasterDimensions(width: Int, height: Int)
   case RasterPixelCountMismatch(expected: Int, actual: Int)
   case RasterPixelOutsideBounds(x: Int, y: Int, width: Int, height: Int)
+  case InvalidGridSize(sampling: String, minimum: Int, actual: Int)
+  case InvalidGridDomain(lower: Double, upper: Double)
+  case ScalarFieldValueCountMismatch(expected: Int, actual: Int)
+  case NonFiniteScalarFieldValue(index: Int, value: Double)
+  case ScalarFieldIndexOutsideBounds(x: Int, y: Int, width: Int, height: Int)
   case InvalidAlpha(value: Double)
   case InvalidLineWidth(value: Double)
   case InvalidRotation(value: Double)
@@ -85,6 +90,16 @@ enum GraphicsError:
         s"raster pixel count mismatch: expected $expected, found $actual"
       case RasterPixelOutsideBounds(x, y, width, height) =>
         s"raster pixel ($x, $y) is outside ${width}x$height"
+      case InvalidGridSize(sampling, minimum, actual) =>
+        s"$sampling grid axis requires at least $minimum samples: found $actual"
+      case InvalidGridDomain(lower, upper) =>
+        s"grid axis requires a finite, increasing domain: [$lower, $upper]"
+      case ScalarFieldValueCountMismatch(expected, actual) =>
+        s"scalar field value count mismatch: expected $expected, found $actual"
+      case NonFiniteScalarFieldValue(index, value) =>
+        s"scalar field sample $index must be finite: $value"
+      case ScalarFieldIndexOutsideBounds(x, y, width, height) =>
+        s"scalar field index ($x, $y) is outside ${width}x$height"
       case InvalidAlpha(value) =>
         s"alpha must be finite and in [0, 1]: $value"
       case InvalidLineWidth(value) =>

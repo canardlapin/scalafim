@@ -142,6 +142,15 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   ): PlotBuilder[Row, Position] =
     bindDiscrete(Aesthetic.Fill, value, levels, colors, name)
 
+  def scaleFillContinuous(
+      value: Row => Double,
+      palette: Palette[Rgba] = options.theme.palettes.continuousPalette,
+      name: String = "fill",
+      transform: Transform = Transform.identity,
+      oob: OobPolicy = OobPolicy.Censor
+  ): PlotBuilder[Row, Position] =
+    bindContinuous(Aesthetic.Fill, value, name, palette, transform, oob)
+
   def geomPoint(
       data: Option[Vector[Row]] = None,
       params: Option[GraphicParams] = None
@@ -231,6 +240,24 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   )(using ev: HasXY[Row, Position]): PlotBuilder[Row, Position] =
     val xy = ev(position)
     addLayer(Right(Layer.tile(xy.x, xy.y, width, height, data, resultMapping, params)))
+
+  /** Add a continuous-fill heatmap to a field-native plot. The equality
+    * witness makes this operation unavailable to ordinary row plots without
+    * introducing a specialized mutable builder hierarchy.
+    */
+  def geomHeatmap(
+      palette: Palette[Rgba] = options.theme.palettes.continuousPalette,
+      name: String = "value",
+      transform: Transform = Transform.identity,
+      oob: OobPolicy = OobPolicy.Censor,
+      params: GraphicParams = GraphicParams.unsafe(stroke = None)
+  )(using fieldRows: Row =:= ScalarCell, ev: HasXY[Row, Position]): PlotBuilder[Row, Position] =
+    scaleFillContinuous(row => fieldRows(row).value, palette, name, transform, oob)
+      .geomTile(
+        row => fieldRows(row).width,
+        row => fieldRows(row).height,
+        params = Some(params)
+      )
 
   def hline(y: Double, params: Option[GraphicParams] = None): PlotBuilder[Row, Position] =
     addLayer(Right(Layer.hline(y, data = Some(data), params = params)))
@@ -382,3 +409,9 @@ def plot[Row](data: IterableOnce[Row]): PlotBuilder[Row, PlotPosition.Empty[Row]
       theme = theme
     )
   )
+
+/** Begin a field-native plot. Coordinates and cell extents derive from the
+  * checked field instead of being repeated as loosely related columns.
+  */
+def plot(field: ScalarField2D): PlotBuilder[ScalarCell, PlotPosition.XY[ScalarCell]] =
+  plot(field.cells).aes(_.x, _.y)
