@@ -38,6 +38,7 @@ class ExactSpectralProgramsSuite extends munit.FunSuite:
       assert(fit.proof.exact)
       assertEquals(fit.requestedProgram.penalties, Vector(lowering.original))
       assertEquals(fit.loweredProgram.penalties, Vector.empty)
+      assertEquals(fit.requestedProgram.resultSemantics.requestedClaim, RequestedOptimizationClaim.ExactGlobal)
       assertEquals(fit.loweredProgram.resultSemantics.requestedClaim, RequestedOptimizationClaim.ExactGlobal)
       assertEquals(fit.programFit.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
       assert(fit.programFit.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.ExactGlobal])

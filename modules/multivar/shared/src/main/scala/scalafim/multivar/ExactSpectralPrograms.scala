@@ -201,7 +201,7 @@ object ExactSpectralPrograms:
         .map(ExactSpectralError.Program.apply)
       identityParameterization = FrameParameterization.identity(variable)
       requestedNormalization = FrameNormalization(variable, baseDenominator)
-      requested <- OperatorProgram
+      requestedBase <- OperatorProgram
         .from(
           Vector(identityParameterization),
           BaseObjective.MaximizeTrace(SelfCompressionExpression(variable, baseNumerator)),
@@ -211,6 +211,7 @@ object ExactSpectralPrograms:
         )
         .left
         .map(ExactSpectralError.Program.apply)
+      requested = OperatorProgram.requesting(requestedBase, RequestedOptimizationClaim.ExactGlobal)
       loweredNormalization = FrameNormalization(variable, denominator)
       lowered <- OperatorProgram
         .from(
@@ -336,7 +337,7 @@ object ExactSpectralPrograms:
         .left
         .map(ExactSpectralError.Program.apply)
       normalization = FrameNormalization(variable, denominator)
-      requested <- OperatorProgram
+      requestedBase <- OperatorProgram
         .from(
           Vector(FrameParameterization.identity(variable)),
           BaseObjective.MaximizeTrace(SelfCompressionExpression(variable, numerator)),
@@ -346,6 +347,7 @@ object ExactSpectralPrograms:
         )
         .left
         .map(ExactSpectralError.Program.apply)
+      requested = OperatorProgram.requesting(requestedBase, RequestedOptimizationClaim.ExactGlobal)
       lowered <- OperatorProgram
         .from(
           Vector(parameterization.descriptor),

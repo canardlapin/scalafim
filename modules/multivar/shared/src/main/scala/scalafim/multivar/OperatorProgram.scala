@@ -711,6 +711,12 @@ final class OperatorProgram private (
     val resultSemantics: ResultSemantics,
     val provenance: SemanticProvenance
 ):
+  lazy val valueIdentity: ValueIdentity =
+    ValueIdentity.Derived(
+      s"operator-program-${objective.label}-${resultSemantics.requestedClaim.toString.toLowerCase}",
+      SolverAttestation.operatorIdentities(this)
+    )
+
   def descriptor: OperatorProgramDescriptor =
     OperatorProgramDescriptor(
       parameters.map(parameter => (
@@ -727,6 +733,20 @@ final class OperatorProgram private (
     )
 
 object OperatorProgram:
+  private[multivar] def requesting(
+      program: OperatorProgram,
+      requestedClaim: RequestedOptimizationClaim
+  ): OperatorProgram =
+    new OperatorProgram(
+      program.parameters,
+      program.objective,
+      program.normalizations,
+      program.penalties,
+      program.constraints,
+      program.resultSemantics.copy(requestedClaim = requestedClaim),
+      program.provenance
+    )
+
   def from(
       parameters: Vector[FrameParameterization[? <: SemanticSpace, ? <: SemanticSpace]],
       objective: BaseObjective,
@@ -944,12 +964,11 @@ object SolverAttestation:
       "operator-program-fit",
       frames.map(_.frame.weights.valueIdentity)*
     )
-    val programIdentity = ValueIdentity.Derived(s"operator-program-${program.objective.label}", operators)
     for
       bindings <- OptimizationIdentityBindings
         .from(
           contract,
-          programIdentity,
+          program.valueIdentity,
           ValueIdentity.Derived("operator-program-data", operators),
           ObservationMaskIdentity.Complete,
           operators,
@@ -1056,7 +1075,7 @@ object OperatorProgramFit:
     val expected = program.parameters.map(_.variable.id).toSet
     val actual = frames.map(_.parameter.id)
     val expectedOperators = SolverAttestation.operatorIdentities(program)
-    val expectedProgramIdentity = ValueIdentity.Derived(s"operator-program-${program.objective.label}", expectedOperators)
+    val expectedProgramIdentity = program.valueIdentity
     val expectedDataIdentity = ValueIdentity.Derived("operator-program-data", expectedOperators)
     val fitIdentity = ValueIdentity.derived(
       "operator-program-fit",
