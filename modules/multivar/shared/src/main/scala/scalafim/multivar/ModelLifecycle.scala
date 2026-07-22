@@ -193,7 +193,11 @@ object NonEmptyCertificates:
       case None => Left(ModelLifecycleError.EmptyCertificates)
       case Some(head) => Right(new NonEmptyCertificates(head, values.tail))
 
-sealed trait SolverReceipt[F <: MathematicalModelFamily]:
+/** Family-specific execution receipt. Evidence construction remains package
+  * controlled, while the open receipt algebra lets a new model family add its
+  * receipt beside its adapter instead of editing this kernel.
+  */
+trait SolverReceipt[F <: MathematicalModelFamily]:
   def program: ProgramId[F]
   def compiled: CompiledId[F]
   def compiledProgram: ValueIdentity

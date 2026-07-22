@@ -92,6 +92,7 @@ enum CertificateClaim:
   case Rank(rank: Int, dimension: Int, residual: Double, scale: Double)
   case Orthogonal(residual: Double, scale: Double)
   case Converged(iterations: Int, residual: Double, scale: Double)
+  case SolverTrace(iterations: Int, residual: Double, scale: Double, converged: Boolean)
 
   def property: String =
     this match
@@ -102,6 +103,7 @@ enum CertificateClaim:
       case Rank(_, _, _, _)                     => "rank"
       case Orthogonal(_, _)                     => "orthogonal"
       case Converged(_, _, _)                   => "converged"
+      case SolverTrace(_, _, _, _)              => "solver-trace"
 
 final case class NumericalCertificate(
     valueIdentity: ValueIdentity,
@@ -117,6 +119,7 @@ sealed trait IndefiniteProperty extends CertificateProperty
 sealed trait RankProperty extends CertificateProperty
 sealed trait OrthogonalProperty extends CertificateProperty
 sealed trait ConvergenceProperty extends CertificateProperty
+sealed trait SolverTraceProperty extends CertificateProperty
 
 final class Certificate[P <: CertificateProperty] private (
     val runtime: NumericalCertificate
@@ -168,6 +171,33 @@ object Certificate:
       residualCertificate[ConvergenceProperty]("converged", valueIdentity, residual, scale, context) {
         CertificateClaim.Converged(iterations, residual, scale)
       }
+
+  /** A truthful numerical record of an iterative run, whether or not its
+    * stopping criterion was met. Unlike [[converged]], this certificate does
+    * not turn an iteration-limit outcome into a convergence claim.
+    */
+  def solverTrace(
+      valueIdentity: ValueIdentity,
+      iterations: Int,
+      residual: Double,
+      scale: Double,
+      converged: Boolean,
+      context: CertificateContext
+  ): Either[SemanticError, Certificate[SolverTraceProperty]] =
+    if iterations < 0 then
+      Left(SemanticError.CertificateRejected("solver-trace", s"iterations must be non-negative, got $iterations"))
+    else if !residual.isFinite || residual < 0.0 then
+      Left(SemanticError.CertificateRejected("solver-trace", s"residual must be finite and non-negative, got $residual"))
+    else if !scale.isFinite || scale < 0.0 then
+      Left(SemanticError.CertificateRejected("solver-trace", s"scale must be finite and non-negative, got $scale"))
+    else
+      Right(
+        unsafe(
+          valueIdentity,
+          CertificateClaim.SolverTrace(iterations, residual, scale, converged),
+          context
+        )
+      )
 
   private def residualCertificate[P <: CertificateProperty](
       property: String,

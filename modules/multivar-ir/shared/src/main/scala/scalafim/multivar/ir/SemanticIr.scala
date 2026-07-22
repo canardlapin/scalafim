@@ -181,6 +181,7 @@ object SemanticIr:
         case CertificateClaim.Rank(_, _, residual, _) => Some(residual)
         case CertificateClaim.Orthogonal(residual, _) => Some(residual)
         case CertificateClaim.Converged(_, residual, _) => Some(residual)
+        case CertificateClaim.SolverTrace(_, residual, _, _) => Some(residual)
     CertificateIr(
       value.claim.property,
       value.valueIdentity.stableKey,

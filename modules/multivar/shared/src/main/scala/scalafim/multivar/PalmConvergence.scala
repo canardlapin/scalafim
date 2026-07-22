@@ -16,6 +16,7 @@ enum PalmConvergenceError:
   )
   case InexactnessViolation(iteration: Int, parameter: ParameterId, actual: Double, allowed: Double)
   case Guarantee(error: OptimizationGuaranteeError)
+  case Semantic(error: SemanticError)
 
   def message: String =
     this match
@@ -29,6 +30,7 @@ enum PalmConvergenceError:
       case InexactnessViolation(iteration, parameter, actual, allowed) =>
         s"PALM iteration $iteration block '${parameter.value}' reported inexactness $actual above $allowed"
       case Guarantee(error) => error.message
+      case Semantic(error) => error.message
 
 final class PalmBlockValue private (
     val parameter: ParameterId,
@@ -69,7 +71,7 @@ final class PalmState private (
     val replaced = blocks.map(current => if current.parameter == next.parameter then next else current)
     new PalmState(
       replaced,
-      ValueIdentity.derived("palm-state-update", valueIdentity, next.valueIdentity)
+      ValueIdentity.derived("palm-state", replaced.map(_.valueIdentity)*)
     )
 
 object PalmState:
@@ -303,6 +305,11 @@ enum PalmKlEvidence:
       assumption: ContractReference[AssumptionReference],
       proof: String
   )
+  case LogExpDefinable(
+      objective: ValueIdentity,
+      assumption: ContractReference[AssumptionReference],
+      proof: String
+  )
 
 enum PalmConvergenceTarget:
   case CriticalPoint
@@ -370,6 +377,9 @@ object PalmAdmission:
         case PalmKlEvidence.SemiAlgebraic(objective, _, proof)
             if objective != problem.objective.valueIdentity || proof.trim.isEmpty =>
           Left(PalmConvergenceError.InvalidDefinition("semi-algebraic KL evidence must bind the objective and state a proof"))
+        case PalmKlEvidence.LogExpDefinable(objective, _, proof)
+            if objective != problem.objective.valueIdentity || proof.trim.isEmpty =>
+          Left(PalmConvergenceError.InvalidDefinition("log-exp definable KL evidence must bind the objective and state a proof"))
         case _ =>
           val identity = ValueIdentity.derived(
             s"palm-admission-${target.toString.toLowerCase}",
@@ -462,6 +472,7 @@ final case class PalmFit(
     objective: Double,
     achievement: AchievedOptimizationGuarantee,
     receipt: PalmConvergenceReceipt,
+    certificate: NumericalCertificate,
     resultIdentity: ValueIdentity
 )
 
@@ -482,7 +493,8 @@ final class PalmSolver private (val admission: PalmAdmission):
         initialization.valueIdentity,
         state.valueIdentity
       )
-      achievement <- admitAchievement(resultIdentity, traces.last, termination)
+      admitted <- admitAchievement(resultIdentity, traces.last, termination, config.tolerance)
+      (achievement, certificate) = admitted
     yield
       PalmFit(
         state,
@@ -498,6 +510,7 @@ final class PalmSolver private (val admission: PalmAdmission):
           admission.klEvidence,
           config.tolerance
         ),
+        certificate,
         resultIdentity
       )
 
@@ -638,8 +651,9 @@ final class PalmSolver private (val admission: PalmAdmission):
   private def admitAchievement(
       resultIdentity: ValueIdentity,
       finalTrace: PalmIterationTrace,
-      termination: PalmTermination
-  ): Either[PalmConvergenceError, AchievedOptimizationGuarantee] =
+      termination: PalmTermination,
+      tolerance: CertificateTolerance
+  ): Either[PalmConvergenceError, (AchievedOptimizationGuarantee, NumericalCertificate)] =
     val problem = admission.problem
     for
       bindings <- OptimizationIdentityBindings
@@ -668,6 +682,27 @@ final class PalmSolver private (val admission: PalmAdmission):
         .residual(finalTrace.normalizationResidual)
         .left
         .map(PalmConvergenceError.Guarantee.apply)
+      context <- CertificateContext
+        .from(
+          tolerance,
+          CertificateNorm.Euclidean,
+          "portable-palm",
+          "gale",
+          NumericalPrecision.Float64
+        )
+        .left
+        .map(PalmConvergenceError.Semantic.apply)
+      certificate <- Certificate
+        .solverTrace(
+          resultIdentity,
+          finalTrace.iteration + 1,
+          finalTrace.maximumStationarity,
+          Math.max(1.0, Math.abs(finalTrace.objectiveAfter)),
+          termination == PalmTermination.Converged,
+          context
+        )
+        .left
+        .map(PalmConvergenceError.Semantic.apply)
       evidence <- SemanticOptimizationEvidence
         .from(
           bindings,
@@ -675,7 +710,8 @@ final class PalmSolver private (val admission: PalmAdmission):
           else NumericalTermination.IterationLimit,
           stationarity = Some(maximum),
           blockStationarity = blockResiduals,
-          feasibility = Some(feasibility)
+          feasibility = Some(feasibility),
+          numericalCertificates = Vector(certificate.runtime)
         )
         .left
         .map(PalmConvergenceError.Guarantee.apply)
@@ -696,7 +732,7 @@ final class PalmSolver private (val admission: PalmAdmission):
         )
         .left
         .map(PalmConvergenceError.Guarantee.apply)
-    yield achievement
+    yield achievement -> certificate.runtime
 
 object PalmSolver:
   def from(admission: PalmAdmission): PalmSolver = new PalmSolver(admission)

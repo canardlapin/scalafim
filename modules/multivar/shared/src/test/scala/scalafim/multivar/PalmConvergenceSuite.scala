@@ -79,6 +79,16 @@ class PalmConvergenceSuite extends munit.FunSuite:
     assertEqualsDouble(fit.receipt.finalNormalizationResidual, 0.0, 1e-14)
     assertEqualsDouble(fit.state.block(fixture.x).toOption.get.values(0, 0), Math.sqrt(0.8), 2e-6)
     assertEqualsDouble(fit.state.block(fixture.y).toOption.get.values(0, 0), Math.sqrt(0.8), 2e-6)
+    fit.certificate.claim match
+      case CertificateClaim.SolverTrace(iterations, residual, _, converged) =>
+        assertEquals(iterations, fit.receipt.traces.length)
+        assertEqualsDouble(residual, fit.receipt.finalStationarity.map(_._2).max, 1e-14)
+        assert(converged)
+      case other => fail(s"expected a solver-trace certificate, got $other")
+    assertEquals(
+      fit.achievement.semanticEvidence.numericalCertificates,
+      Vector(fit.certificate)
+    )
 
   test("coordinatewise convergence needs no KL claim and never becomes a global claim"):
     val fixture = biconvexFixture("coordinatewise")
@@ -122,6 +132,9 @@ class PalmConvergenceSuite extends munit.FunSuite:
     assertEquals(fit.receipt.traces.length, 1)
     assertEquals(fit.receipt.traces.head.blocks.map(_.parameter), Vector(fixture.x, fixture.y))
     assert(fit.receipt.traces.head.stationarity.forall(_._2.isFinite))
+    fit.certificate.claim match
+      case CertificateClaim.SolverTrace(1, _, _, converged) => assert(!converged)
+      case other => fail(s"expected an unconverged solver-trace certificate, got $other")
 
   test("objective increase is a typed descent violation rather than a converged result"):
     val fixture = biconvexFixture("descent-failure", badFirstUpdate = true)

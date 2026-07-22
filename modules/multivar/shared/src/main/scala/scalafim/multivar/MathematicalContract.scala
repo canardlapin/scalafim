@@ -546,7 +546,7 @@ object MathematicalContractCatalog:
       api = "GeneralizedLowRankProgram",
       ir = "operator-program.glrm.v1",
       symmetry = FrameSymmetry.Identity,
-      maturity = ContractMaturity.Planned,
+      maturity = ContractMaturity.Executable,
       claims = Set(
         OptimizationClaimClass.Stationary,
         OptimizationClaimClass.CoordinatewiseStationary,

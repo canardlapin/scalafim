@@ -65,7 +65,14 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   decoders and domain-preserving predictions; and an observation pattern that
   keeps weighted point observations, missingness, structural inapplicability,
   and censoring disjoint. Entry losses and factor penalties remain different
-  types, and missingness declarations carry no automatic MAR/MNAR claim;
+  types, and missingness declarations carry no automatic MAR/MNAR claim.
+  `GeneralizedLowRankProgram.fit` admits curvature-bounded, unconstrained
+  losses with coercive row and decoder penalties to a two-block PALM plan and
+  returns the common family-indexed `FittedModel`: learned factors, exact
+  observation/program bindings, solver trace and certificate, achieved
+  guarantee, and frozen latent encoder travel as one artifact. Poisson,
+  ordered-natural-parameter losses, censoring, and objectives without a
+  bounded-level-set witness fail before execution;
 - `FittedLatentEncoder` for nonlinear new-row inference against a frozen GLRM
   decoder, deliberately separate from linear `FittedProjection`; it consumes
   explicit dense or sparse observation patterns, solves globally
@@ -87,8 +94,10 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   Lipschitz witnesses, exact or geometrically summable inexactness, explicit
   singular-geometry policy, and KL evidence when critical-point convergence is
   claimed. Receipts retain every objective transition, residual, normalization
-  error, step, and stopping reason; deterministic multi-start retains all
-  SVD-derived and named starts;
+  error, step, and stopping reason. Every run also retains a solver-trace
+  numerical certificate whose convergence flag cannot turn an iteration limit
+  into a convergence claim; deterministic multi-start retains all SVD-derived
+  and named starts;
 - a separate `ConvexLowRankGlobalAdmission` for witnessed convex
   loss-plus-nuclear-norm certificates, so a PALM stopping status cannot be
   relabeled as global optimality;

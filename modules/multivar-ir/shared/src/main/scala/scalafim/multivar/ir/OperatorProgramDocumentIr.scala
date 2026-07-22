@@ -896,6 +896,7 @@ object ProgramSemanticIr:
         case CertificateClaim.Rank(_, _, current, _) => Some(current)
         case CertificateClaim.Orthogonal(current, _) => Some(current)
         case CertificateClaim.Converged(_, current, _) => Some(current)
+        case CertificateClaim.SolverTrace(_, current, _, _) => Some(current)
     CertificateIr(
       value.claim.property,
       value.valueIdentity.stableKey,
