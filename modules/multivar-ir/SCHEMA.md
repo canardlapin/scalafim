@@ -24,6 +24,34 @@ capabilities, and retains derived provenance. A simple proximal oracle on the
 functional is therefore never misreported as a direct proximal oracle for the
 composite term.
 
+Fitted-data actions have two separate top-level record families. `projections`
+records the selected analysis action (full, partial contribution, partial
+least-squares, supplementary variables, reconstruction, paired transfer, or
+multiblock score/contribution), its restrictions and regularization, result
+kind, equivalence, and provenance. `synthesis_capabilities` binds an analysis
+frame to a distinct synthesis-role operator and records the explicit,
+orthonormal-transpose, or Euclidean-least-squares construction policy plus the
+supported coordinate/restriction operations. The validator checks operator
+roles and ports; a frame identity alone is not a decoder capability.
+
+Mathematical release evidence is a third companion document family,
+`scalafim-mathematical-model-evidence-ir/1.0`. It references an existing
+operator-program schema and program id; it does not duplicate operators,
+parameters, or numerical payloads. Each model record binds those identities to
+one contract id, model family, estimand, explicit observation mask and entry
+losses, geometry and penalty identities, theorem-assumption witnesses, solver
+and trace receipt, achieved (not merely requested) guarantee, certificate
+identities, and a reproducibility receipt. The corresponding JSON Schema is
+`schema/mathematical-model-evidence-ir-v1.0.schema.json`.
+
+The evidence validator enforces family--estimand and family--contract
+agreement, the exact referenced operator-program version, loss declarations
+for GLRM and multiblock families, explicit censoring/missingness semantics,
+positive penalty weights, theorem-complete assumptions for nontrivial achieved
+claims, and membership of the achieved certificate in the retained certificate
+set. A nonconvex GLRM therefore cannot serialize an exact-global receipt even
+if a caller supplies a string with that name.
+
 ## Evolution
 
 - The `major` component changes when an existing meaning, tag, orientation, or
@@ -35,6 +63,14 @@ composite term.
   at every nesting level. A lowering is data, not an implementation detail: it
   must name the original and lowered programs, its input and output operators,
   a value-bound rewrite proof, provenance, and the equivalence that remains.
+- The mathematical-evidence 1.0 decoder accepts exactly 1.0 and rejects unknown
+  fields at every level. Reproducibility seeds must be non-negative JSON-safe
+  integers; dependency names/versions, generator/result identities,
+  conditioning, and tolerances are mandatory rather than implied by a golden
+  output file.
+- Projection and synthesis arrays are required in the 0.2 envelope, including
+  when empty. Nested action/policy objects are closed; new action tags require a
+  new schema version rather than being silently ignored.
 - `unknown_fields` is `reject` in 0.1. Unknown fields at every object level are
   rejected with `unknown_field`. A future minor version may add an explicit
   preservation mode, but 0.1 never drops unknown semantics silently.
@@ -67,3 +103,9 @@ Every binding must report these category tags for the same invalid document:
 category. The same cases are embedded in `ConformanceCorpus` so the identical
 suite runs on both JVM and Scala.js. Python and R bindings should consume the
 JSON files and reproduce the category listed in the manifest.
+
+`MathematicalModelEvidenceIrSuite` provides the 1.0 evidence corpus directly in
+shared source. It round-trips valid records for all six model families and
+checks invalid version, unknown-field, family/estimand, theorem-assumption,
+global-claim, mask/loss, certificate, numeric-guarantee, solver, and
+reproducibility cases unchanged on JVM and Scala.js.

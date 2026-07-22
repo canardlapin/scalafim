@@ -180,7 +180,7 @@ object MultisetAssociation:
         .left
         .map(DirectSumError.Semantic.apply)
       programFit <- OperatorProgramFit
-        .from(
+        .exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
           trace(componentDense),

@@ -2,6 +2,7 @@ package scalafim.multivar
 
 import gale.linalg.DMat
 import gale.linalg.DVec
+import gale.linalg.MutableDVec
 
 class SparsePreprocessingSuite extends munit.FunSuite:
 
@@ -109,6 +110,47 @@ class SparsePreprocessingSuite extends munit.FunSuite:
       denseCentered.toRows.map(row => Vector(row(2), row(0))),
       1e-12
     )
+  }
+
+  test("row selection preserves sparse and lazy-affine storage") {
+    val selectedRows = IndexSet.from(Vector(3, 1), IndexAxis.Row).toOption.get
+    val selectedSparse = sparseView.selectRows(selectedRows).toOption.get
+    val centered = PreprocessSpec.Center.fit(sparseView).toOption.get.transform(sparseView).toOption.get
+    val selectedCentered = centered.selectRows(selectedRows).toOption.get
+
+    assertEquals(selectedSparse.storage, StorageKind.Sparse)
+    assertEquals(selectedCentered.storage, StorageKind.LazyAffine)
+    assertMatrixClose(selectedSparse.toDense(StoragePolicy.AllowDense).toOption.get, Vector(denseRows(3), denseRows(1)), 1e-12)
+    val transformed = denseTransform(Vector(1.0, 1.0, 1.0), Vector(-1.25, -2.25, -1.75))
+    assertMatrixClose(
+      selectedCentered.toDense(StoragePolicy.AllowDense).toOption.get,
+      Vector(transformed(3), transformed(1)),
+      1e-12
+    )
+  }
+
+  test("MatrixView vector kernels match matrix multiplication without materializing a column matrix") {
+    val centered = PreprocessSpec.Center.fit(sparseView).toOption.get.transform(sparseView).toOption.get
+    val input = DVec.fromSeq(Vector(2.0, -1.0, 0.5))
+    val output = MutableDVec.zeros(centered.rows)
+    val transposeInput = DVec.fromSeq(Vector(1.0, -2.0, 0.5, 3.0))
+    val transposeOutput = MutableDVec.zeros(centered.cols)
+
+    assert(centered.multiplyVector(input, output).isRight)
+    assert(centered.transposeMultiplyVector(transposeInput, transposeOutput).isRight)
+    val expected = centered.rightMultiply(
+      GaleNumerics.matrixFromRows(Vector.tabulate(input.length)(index => Vector(input(index))))
+    ).toOption.get
+    val dense = centered.toDense(StoragePolicy.AllowDense).toOption.get
+    val expectedTranspose = dense.t * transposeInput
+    var row = 0
+    while row < output.length do
+      assertEqualsDouble(output(row), expected(row, 0), 1e-12)
+      row += 1
+    var column = 0
+    while column < transposeOutput.length do
+      assertEqualsDouble(transposeOutput(column), expectedTranspose(column), 1e-12)
+      column += 1
   }
 
   test("standardize scales genuinely varying tiny-magnitude columns to unit variance") {
@@ -222,4 +264,3 @@ class SparsePreprocessingSuite extends munit.FunSuite:
     assert(fitted.restrict(IndexSet.from(Vector(3), IndexAxis.Feature).toOption.get).isLeft)
     assert(fitted.restrict(IndexSet.from(Vector(0), IndexAxis.Row).toOption.get).isLeft)
   }
-

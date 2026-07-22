@@ -510,7 +510,7 @@ final class CpcaOperatorProblem[Rows <: SemanticSpace, Feature <: SemanticSpace]
       )
       clusters = spectralClusters(result.singularValues, CertificateTolerance.strict)
       genericFit <- cpcaProgram(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(featureVariable, featureFrame)),
           CpcaMath.sumSquares(result.singularValues),

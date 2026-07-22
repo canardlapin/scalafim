@@ -362,7 +362,7 @@ final class LdaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private 
         context
       )
       genericFit <- ldaProgram(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
           solved.objectiveValue,

@@ -4,6 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import gale.linalg.DMat
 import gale.linalg.DVec
+import gale.linalg.MutableDVec
 
 enum StorageKind:
   case Dense
@@ -173,12 +174,30 @@ trait MatrixView:
 
   def rightMultiply(weights: DMat): Either[MultivarError, DMat]
 
+  private[multivar] def multiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit]
+
+  private[multivar] def multiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit]
+
+  private[multivar] def transposeMultiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit]
+
+  private[multivar] def transposeMultiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit]
+
   def transposeMultiply(other: MatrixView): Either[MultivarError, DMat]
 
   def crossProduct: Either[MultivarError, DMat] =
     transposeMultiply(this)
 
   def selectColumns(columns: IndexSet): Either[MultivarError, MatrixView]
+
+  def selectRows(rows: IndexSet): Either[MultivarError, MatrixView]
 
   def toDense(policy: StoragePolicy = StoragePolicy.AllowDense): Either[MultivarError, DMat]
 
@@ -206,6 +225,52 @@ final class DenseMatrixView private (val value: DMat) extends MatrixView:
       GaleNumerics.multiply(value, weights)
     }
 
+  override private[multivar] def multiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, input, output, transpose = false, scaled = false)
+
+  override private[multivar] def multiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, scale, output, transpose = false, scaled = true)
+
+  override private[multivar] def transposeMultiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, input, output, transpose = true, scaled = false)
+
+  override private[multivar] def transposeMultiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, scale, output, transpose = true, scaled = true)
+
+  private def multiplyVectorImpl(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec,
+      transpose: Boolean,
+      scaled: Boolean
+  ): Either[MultivarError, Unit] =
+    val expectedInput = if transpose then rows else cols
+    val expectedOutput = if transpose then cols else rows
+    for
+      _ <- MatrixView.requireVectorLength("matrix-vector input", input, expectedInput)
+      _ <- MatrixView.requireMutableVectorLength("matrix-vector output", output, expectedOutput)
+      _ <- if scaled then MatrixView.requireVectorLength("matrix-vector input scale", scale, expectedInput) else Right(())
+    yield
+      var target = 0
+      while target < expectedOutput do
+        var sum = 0.0
+        var source = 0
+        while source < expectedInput do
+          val coefficient = if transpose then value(source, target) else value(target, source)
+          val factor = if scaled then scale(source) else 1.0
+          sum += coefficient * input(source) * factor
+          source += 1
+        output(target) = sum
+        target += 1
+
   override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
       other.toDense().map(denseOther => GaleNumerics.transposeMultiply(value, denseOther))
@@ -224,6 +289,10 @@ final class DenseMatrixView private (val value: DMat) extends MatrixView:
         row += 1
       DenseMatrixView.unsafe(GaleNumerics.matrixFromRowMajor(rows, indices.length, out))
     }
+
+  override def selectRows(selectedRows: IndexSet): Either[MultivarError, MatrixView] =
+    MatrixView.requireRowIndexSet(selectedRows, rows).map: checked =>
+      DenseMatrixView.unsafe(value.selectRows(checked.indices))
 
   override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     Right(value)
@@ -355,6 +424,59 @@ final class SparseMatrixView private (
       GaleNumerics.matrixFromRowMajor(rows, weights.cols, out)
     }
 
+  override private[multivar] def multiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, input, output, transpose = false, scaled = false)
+
+  override private[multivar] def multiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, scale, output, transpose = false, scaled = true)
+
+  override private[multivar] def transposeMultiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, input, output, transpose = true, scaled = false)
+
+  override private[multivar] def transposeMultiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    multiplyVectorImpl(input, scale, output, transpose = true, scaled = true)
+
+  private def multiplyVectorImpl(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec,
+      transpose: Boolean,
+      scaled: Boolean
+  ): Either[MultivarError, Unit] =
+    val expectedInput = if transpose then rows else cols
+    val expectedOutput = if transpose then cols else rows
+    for
+      _ <- MatrixView.requireVectorLength("sparse matrix-vector input", input, expectedInput)
+      _ <- MatrixView.requireMutableVectorLength("sparse matrix-vector output", output, expectedOutput)
+      _ <- if scaled then MatrixView.requireVectorLength("sparse matrix-vector input scale", scale, expectedInput) else Right(())
+    yield
+      var index = 0
+      while index < output.length do
+        output(index) = 0.0
+        index += 1
+      var row = 0
+      while row < rows do
+        var p = rowPtr(row)
+        val end = rowPtr(row + 1)
+        while p < end do
+          val column = colIndex(p)
+          if transpose then
+            val factor = if scaled then scale(row) else 1.0
+            output(column) = output(column) + data(p) * input(row) * factor
+          else
+            val factor = if scaled then scale(column) else 1.0
+            output(row) = output(row) + data(p) * input(column) * factor
+          p += 1
+        row += 1
+
   override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
       other match
@@ -395,6 +517,29 @@ final class SparseMatrixView private (
 
       SparseMatrixView.fromTriplets(rows, checked.length, outRows, outCols, outVals)
     }
+
+  override def selectRows(selectedRows: IndexSet): Either[MultivarError, MatrixView] =
+    MatrixView.requireRowIndexSet(selectedRows, rows).map: checked =>
+      val selected = checked.indices
+      val selectedNnz = selected.foldLeft(0): (total, row) =>
+        total + rowPtr(row + 1) - rowPtr(row)
+      val outRowPtr = new Array[Int](selected.length + 1)
+      val outColumns = new Array[Int](selectedNnz)
+      val outData = new Array[Double](selectedNnz)
+      var targetRow = 0
+      var targetOffset = 0
+      while targetRow < selected.length do
+        val sourceRow = selected(targetRow)
+        var sourceOffset = rowPtr(sourceRow)
+        val sourceEnd = rowPtr(sourceRow + 1)
+        while sourceOffset < sourceEnd do
+          outColumns(targetOffset) = colIndex(sourceOffset)
+          outData(targetOffset) = data(sourceOffset)
+          targetOffset += 1
+          sourceOffset += 1
+        outRowPtr(targetRow + 1) = targetOffset
+        targetRow += 1
+      SparseMatrixView.unsafe(selected.length, cols, outRowPtr, outColumns, outData)
 
   override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     policy match
@@ -835,6 +980,82 @@ final class AffineMatrixView private (
       }
     }
 
+  override private[multivar] def multiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    for
+      _ <- MatrixView.requireVectorLength("affine matrix-vector input", input, cols)
+      _ <- MatrixView.requireMutableVectorLength("affine matrix-vector output", output, rows)
+      _ <- base.multiplyScaledVector(input, scale, output)
+    yield
+      var shiftContribution = 0.0
+      var column = 0
+      while column < cols do
+        shiftContribution += shift(column) * input(column)
+        column += 1
+      var row = 0
+      while row < rows do
+        output(row) = output(row) + shiftContribution
+        row += 1
+
+  override private[multivar] def multiplyScaledVector(
+      input: DVec,
+      inputScale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    for
+      _ <- MatrixView.requireVectorLength("affine matrix-vector input", input, cols)
+      _ <- MatrixView.requireVectorLength("affine matrix-vector input scale", inputScale, cols)
+      _ <- MatrixView.requireMutableVectorLength("affine matrix-vector output", output, rows)
+      combined = MatrixView.multiply(scale, inputScale)
+      _ <- base.multiplyScaledVector(input, combined, output)
+    yield
+      var shiftContribution = 0.0
+      var column = 0
+      while column < cols do
+        shiftContribution += shift(column) * input(column) * inputScale(column)
+        column += 1
+      var row = 0
+      while row < rows do
+        output(row) = output(row) + shiftContribution
+        row += 1
+
+  override private[multivar] def transposeMultiplyVector(
+      input: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    transposeMultiplyVectorImpl(input, None, output)
+
+  override private[multivar] def transposeMultiplyScaledVector(
+      input: DVec,
+      inputScale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    transposeMultiplyVectorImpl(input, Some(inputScale), output)
+
+  private def transposeMultiplyVectorImpl(
+      input: DVec,
+      inputScale: Option[DVec],
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    for
+      _ <- MatrixView.requireVectorLength("affine transpose-vector input", input, rows)
+      _ <- MatrixView.requireMutableVectorLength("affine transpose-vector output", output, cols)
+      _ <- inputScale match
+        case Some(value) => MatrixView.requireVectorLength("affine transpose-vector input scale", value, rows)
+        case None => Right(())
+      _ <- inputScale match
+        case Some(value) => base.transposeMultiplyScaledVector(input, value, output)
+        case None => base.transposeMultiplyVector(input, output)
+    yield
+      var inputSum = 0.0
+      var row = 0
+      while row < rows do
+        inputSum += input(row) * inputScale.fold(1.0)(_(row))
+        row += 1
+      var column = 0
+      while column < cols do
+        output(column) = scale(column) * output(column) + shift(column) * inputSum
+        column += 1
+
   override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.requireSharedRows(rows, other.rows).flatMap { _ =>
       other match
@@ -870,6 +1091,12 @@ final class AffineMatrixView private (
       out <- MatrixView.affine(selectedBase, selectedScale, selectedShift, StoragePolicy.Operator, "affine column selection")
     yield out
 
+  override def selectRows(selectedRows: IndexSet): Either[MultivarError, MatrixView] =
+    for
+      selectedBase <- base.selectRows(selectedRows)
+      out <- MatrixView.affine(selectedBase, scale, shift, StoragePolicy.Operator, "affine row selection")
+    yield out
+
   override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     policy match
       case StoragePolicy.AllowDense =>
@@ -902,6 +1129,29 @@ final class TransposedMatrixView private (val base: MatrixView) extends MatrixVi
       base.transposeMultiply(DenseMatrixView(weights))
     }
 
+  override private[multivar] def multiplyVector(input: DVec, output: MutableDVec): Either[MultivarError, Unit] =
+    base.transposeMultiplyVector(input, output)
+
+  override private[multivar] def multiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    base.transposeMultiplyScaledVector(input, scale, output)
+
+  override private[multivar] def transposeMultiplyVector(
+      input: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    base.multiplyVector(input, output)
+
+  override private[multivar] def transposeMultiplyScaledVector(
+      input: DVec,
+      scale: DVec,
+      output: MutableDVec
+  ): Either[MultivarError, Unit] =
+    base.multiplyScaledVector(input, scale, output)
+
   override def transposeMultiply(other: MatrixView): Either[MultivarError, DMat] =
     MatrixView.rightMultiplyView(base, other)
 
@@ -917,6 +1167,13 @@ final class TransposedMatrixView private (val base: MatrixView) extends MatrixVi
         // Operator-backed bases are never silently densified; callers that can afford
         // materialization must do so explicitly via toDense(StoragePolicy.AllowDense).
         Left(MultivarError.DensificationRejected("transposed column selection", storage))
+
+  override def selectRows(selectedRows: IndexSet): Either[MultivarError, MatrixView] =
+    for
+      checked <- MatrixView.requireRowIndexSet(selectedRows, rows)
+      columns <- IndexSet.from(checked.indices, IndexAxis.Column, Some(base.cols))
+      selected <- base.selectColumns(columns)
+    yield selected.transposeView
 
   override def toDense(policy: StoragePolicy): Either[MultivarError, DMat] =
     base.toDense(policy).map(_.transpose)
@@ -1053,9 +1310,25 @@ object MatrixView:
   private[multivar] def requireColumnIndexSet(columns: IndexSet, limit: Int): Either[MultivarError, IndexSet] =
     requireColumnAxis(columns).flatMap(_.requireWithin(limit))
 
+  private[multivar] def requireRowAxis(rows: IndexSet): Either[MultivarError, IndexSet] =
+    if rows.axis != IndexAxis.Row && rows.axis != IndexAxis.Sample then
+      Left(MultivarError.InvalidBlockPartition("matrix rows must be selected with row or sample indices"))
+    else Right(rows)
+
+  private[multivar] def requireRowIndexSet(rows: IndexSet, limit: Int): Either[MultivarError, IndexSet] =
+    requireRowAxis(rows).flatMap(_.requireWithin(limit))
+
   private[multivar] def requireVectorLength(
       role: String,
       vector: DVec,
+      expected: Int
+  ): Either[MultivarError, Unit] =
+    if vector.length == expected then Right(())
+    else Left(MultivarError.MatrixShapeMismatch(s"$role length ${vector.length} != expected $expected"))
+
+  private[multivar] def requireMutableVectorLength(
+      role: String,
+      vector: MutableDVec,
       expected: Int
   ): Either[MultivarError, Unit] =
     if vector.length == expected then Right(())

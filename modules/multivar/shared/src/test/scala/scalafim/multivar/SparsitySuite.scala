@@ -174,6 +174,63 @@ class SparsitySuite extends munit.FunSuite:
 
     assert(result.left.exists(_.isInstanceOf[ChartError.UnsupportedDirectLowering]))
 
+  test("orthogonal and tight-frame charts require measured forward-synthesis laws"):
+    val feature = SpaceRef(MvSpace(SpaceId.unsafe("certified-chart-feature"), SpaceRole.Observed, Dimension.unsafe(2)))
+    val coordinates = SpaceRef(MvSpace(SpaceId.unsafe("certified-chart-coordinates"), SpaceRole.Observed, Dimension.unsafe(2)))
+    val orthogonalForward = chartForward(feature.evidence, coordinates.evidence, matrix(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0))), "orthogonal-forward")
+    val orthogonalSynthesis = chartSynthesis(feature.evidence, coordinates.evidence, matrix(Vector(Vector(0.0, 1.0), Vector(1.0, 0.0))), "orthogonal-synthesis")
+    val orthogonal = accepted(
+      FeatureChart.certified(
+        feature.evidence,
+        coordinates.evidence,
+        Vector("a", "b"),
+        id("orthogonal-chart"),
+        ChartKind.Orthogonal(orthogonalForward.valueIdentity),
+        orthogonalForward,
+        orthogonalSynthesis
+      )
+    )
+    val invalidForward = chartForward(feature.evidence, coordinates.evidence, matrix(Vector(Vector(2.0, 0.0), Vector(0.0, 1.0))), "invalid-forward")
+    val invalidSynthesis = chartSynthesis(feature.evidence, coordinates.evidence, matrix(Vector(Vector(2.0, 0.0), Vector(0.0, 1.0))), "invalid-synthesis")
+    val invalid = FeatureChart.certified(
+      feature.evidence,
+      coordinates.evidence,
+      Vector("a", "b"),
+      id("invalid-orthogonal-chart"),
+      ChartKind.Orthogonal(invalidForward.valueIdentity),
+      invalidForward,
+      invalidSynthesis
+    )
+    val tightScale = Math.sqrt(2.0)
+    val tightForward = chartForward(
+      feature.evidence,
+      coordinates.evidence,
+      matrix(Vector(Vector(tightScale, 0.0), Vector(0.0, tightScale))),
+      "tight-forward"
+    )
+    val tightSynthesis = chartSynthesis(
+      feature.evidence,
+      coordinates.evidence,
+      matrix(Vector(Vector(tightScale, 0.0), Vector(0.0, tightScale))),
+      "tight-synthesis"
+    )
+    val tight = accepted(
+      FeatureChart.certified(
+        feature.evidence,
+        coordinates.evidence,
+        Vector("a", "b"),
+        id("tight-chart"),
+        ChartKind.TightFrame(TightFrameBound(2.0).toOption.get, tightForward.valueIdentity),
+        tightForward,
+        tightSynthesis
+      )
+    )
+
+    assert(orthogonal.lawCertificate.nonEmpty)
+    assertEqualsDouble(orthogonal.lawCertificate.get.residual, 0.0, 1e-12)
+    assert(tight.lawCertificate.nonEmpty)
+    assert(invalid.left.exists(_.isInstanceOf[ChartError.InvalidDefinition]))
+
   test("selection-chart proximal lowering preserves unselected coordinates"):
     val feature = SpaceRef(MvSpace(SpaceId.unsafe("selection-feature"), SpaceRole.Observed, Dimension.unsafe(3)))
     val coordinates = SpaceRef(MvSpace(SpaceId.unsafe("selection-coordinates"), SpaceRole.Observed, Dimension.unsafe(2)))
@@ -229,6 +286,38 @@ class SparsitySuite extends munit.FunSuite:
   ): ConstraintTerm =
     ConstraintTerm(chart.target(ParameterId.unsafe("w")), feasibleSet)
 
+  private def chartForward[F <: SemanticSpace, C <: SemanticSpace](
+      feature: SpaceEvidence[F],
+      coordinates: SpaceEvidence[C],
+      values: DMat,
+      identity: String
+  ): Op[Dual[F], Primal[C], ChartOperatorRole, UncheckedEvidence] =
+    acceptedSemantic(
+      Op.fromDense(
+        values,
+        CoordinateEvidence.dual(feature),
+        CoordinateEvidence.primal(coordinates),
+        OperatorRoleWitness.derived[ChartOperatorRole](OperatorRole.ConstraintMap),
+        id(identity)
+      )
+    )
+
+  private def chartSynthesis[F <: SemanticSpace, C <: SemanticSpace](
+      feature: SpaceEvidence[F],
+      coordinates: SpaceEvidence[C],
+      values: DMat,
+      identity: String
+  ): Op[Primal[C], Dual[F], ChartOperatorRole, UncheckedEvidence] =
+    acceptedSemantic(
+      Op.fromDense(
+        values,
+        CoordinateEvidence.primal(coordinates),
+        CoordinateEvidence.dual(feature),
+        OperatorRoleWitness.derived[ChartOperatorRole](OperatorRole.ConstraintMap),
+        id(identity)
+      )
+    )
+
   private def assertMatrixClose(actual: DMat, expected: DMat, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
@@ -241,6 +330,9 @@ class SparsitySuite extends munit.FunSuite:
       row += 1
 
   private def accepted[A](value: Either[ChartError, A]): A =
+    value.fold(error => fail(error.message), identity)
+
+  private def acceptedSemantic[A](value: Either[SemanticError, A]): A =
     value.fold(error => fail(error.message), identity)
 
   private def id(value: String): ValueIdentity = ValueIdentity.source(ValueId.unsafe(value))

@@ -4,7 +4,7 @@
   "title": "ScalaFIM operator program IR 0.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies", "composite_lowerings"],
+  "required": ["schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies", "composite_lowerings", "projections", "synthesis_capabilities"],
   "properties": {
     "schema": {"const": "scalafim-operator-program-ir/0.2"},
     "spaces": {"type": "array", "items": {"$ref": "#/$defs/space"}},
@@ -13,7 +13,9 @@
     "rewrites": {"type": "array", "items": {"$ref": "#/$defs/rewrite"}},
     "fits": {"type": "array", "items": {"$ref": "#/$defs/fit"}},
     "operator_policies": {"type": "array", "items": {"$ref": "#/$defs/operatorPolicy"}},
-    "composite_lowerings": {"type": "array", "items": {"$ref": "#/$defs/compositeLowering"}}
+    "composite_lowerings": {"type": "array", "items": {"$ref": "#/$defs/compositeLowering"}},
+    "projections": {"type": "array", "items": {"$ref": "#/$defs/projection"}},
+    "synthesis_capabilities": {"type": "array", "items": {"$ref": "#/$defs/synthesisCapability"}}
   },
   "$defs": {
     "identity": {"type": "string", "minLength": 1},
@@ -145,6 +147,182 @@
         "provenance": {"type": "array", "items": {"$ref": "#/$defs/provenance"}}
       }
     },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "action", "result", "equivalence", "provenance"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identity"},
+        "action": {"$ref": "#/$defs/projectionAction"},
+        "result": {"$ref": "#/$defs/projectionResult"},
+        "equivalence": {"type": "object", "required": ["kind"]},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}}
+      }
+    },
+    "projectionAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "analysis_frame", "feature_schema"],
+          "properties": {
+            "kind": {"const": "full_projection"},
+            "analysis_frame": {"$ref": "#/$defs/identity"},
+            "feature_schema": {"$ref": "#/$defs/identity"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "analysis_frame", "source_schema", "selected_features"],
+          "properties": {
+            "kind": {"const": "partial_contribution"},
+            "analysis_frame": {"$ref": "#/$defs/identity"},
+            "source_schema": {"$ref": "#/$defs/identity"},
+            "selected_features": {"$ref": "#/$defs/nonemptyNames"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "analysis_frame", "source_schema", "selected_features", "metric_kind", "metric_dimension", "ridge"],
+          "properties": {
+            "kind": {"const": "partial_least_squares"},
+            "analysis_frame": {"$ref": "#/$defs/identity"},
+            "source_schema": {"$ref": "#/$defs/identity"},
+            "selected_features": {"$ref": "#/$defs/nonemptyNames"},
+            "metric_kind": {"$ref": "#/$defs/metricKind"},
+            "metric_dimension": {"type": "integer", "minimum": 1},
+            "ridge": {"type": "number", "minimum": 0}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "supplementary_table", "fitted_scores", "fitted_rows", "source_components", "convention"],
+          "properties": {
+            "kind": {"const": "supplementary_variables"},
+            "supplementary_table": {"$ref": "#/$defs/identity"},
+            "fitted_scores": {"$ref": "#/$defs/identity"},
+            "fitted_rows": {"$ref": "#/$defs/identity"},
+            "source_components": {"$ref": "#/$defs/nonemptyIndices"},
+            "convention": {"$ref": "#/$defs/supplementaryConvention"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "analysis_frame", "decoder", "source", "components", "target_features", "coordinate"],
+          "properties": {
+            "kind": {"const": "reconstruction"},
+            "analysis_frame": {"$ref": "#/$defs/identity"},
+            "decoder": {"$ref": "#/$defs/identity"},
+            "source": {"$ref": "#/$defs/reconstructionSource"},
+            "components": {"$ref": "#/$defs/nonemptyIndices"},
+            "target_features": {"$ref": "#/$defs/nonemptyNames"},
+            "coordinate": {"$ref": "#/$defs/reconstructionCoordinate"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "estimand", "source_space", "target_space", "source_frame", "target_decoder", "scaling"],
+          "properties": {
+            "kind": {"const": "paired_transfer"},
+            "estimand": {"enum": ["Plsc", "Cca"]},
+            "source_space": {"$ref": "#/$defs/identity"},
+            "target_space": {"$ref": "#/$defs/identity"},
+            "source_frame": {"$ref": "#/$defs/identity"},
+            "target_decoder": {"$ref": "#/$defs/identity"},
+            "scaling": {"$ref": "#/$defs/identity"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "block", "global_frame", "local_frame", "block_schema"],
+          "properties": {
+            "kind": {"const": "multiblock_scores"},
+            "block": {"$ref": "#/$defs/identity"},
+            "global_frame": {"$ref": "#/$defs/identity"},
+            "local_frame": {"$ref": "#/$defs/identity"},
+            "block_schema": {"$ref": "#/$defs/identity"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "block", "global_frame", "local_frame", "block_schema", "combination_weight"],
+          "properties": {
+            "kind": {"const": "multiblock_contribution"},
+            "block": {"$ref": "#/$defs/identity"},
+            "global_frame": {"$ref": "#/$defs/identity"},
+            "local_frame": {"$ref": "#/$defs/identity"},
+            "block_schema": {"$ref": "#/$defs/identity"},
+            "combination_weight": {"type": "number"}
+          }
+        }
+      ]
+    },
+    "projectionResult": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"enum": ["scores", "functional_frame", "transfer_values"]}}},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "coordinate"],
+          "properties": {
+            "kind": {"const": "feature_values"},
+            "coordinate": {"$ref": "#/$defs/reconstructionCoordinate"}
+          }
+        }
+      ]
+    },
+    "synthesisCapability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "analysis_frame", "decoder", "policy", "supports_working_coordinates", "supports_original_coordinates", "supports_component_selection", "supports_feature_selection", "provenance"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identity"},
+        "analysis_frame": {"$ref": "#/$defs/identity"},
+        "decoder": {"$ref": "#/$defs/identity"},
+        "policy": {"$ref": "#/$defs/synthesisPolicy"},
+        "supports_working_coordinates": {"type": "boolean"},
+        "supports_original_coordinates": {"type": "boolean"},
+        "supports_component_selection": {"type": "boolean"},
+        "supports_feature_selection": {"type": "boolean"},
+        "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}}
+      }
+    },
+    "synthesisPolicy": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind", "decoder_identity"], "properties": {"kind": {"const": "explicit"}, "decoder_identity": {"$ref": "#/$defs/identity"}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "tolerance"], "properties": {"kind": {"const": "orthonormal_transpose"}, "tolerance": {"type": "number", "minimum": 0}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "ridge"], "properties": {"kind": {"const": "euclidean_least_squares"}, "ridge": {"type": "number", "minimum": 0}}}
+      ]
+    },
+    "supplementaryConvention": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind", "null_policy"], "properties": {"kind": {"const": "multivarious_covariance_scaled"}, "null_policy": {"$ref": "#/$defs/nullComponentPolicy"}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "measure_identity", "centering", "null_policy"], "properties": {"kind": {"const": "metric_least_squares"}, "measure_identity": {"$ref": "#/$defs/identity"}, "centering": {"$ref": "#/$defs/identity"}, "null_policy": {"$ref": "#/$defs/nullComponentPolicy"}}}
+      ]
+    },
+    "nullComponentPolicy": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind", "tolerance"], "properties": {"kind": {"enum": ["reject", "drop"]}, "tolerance": {"type": "number", "minimum": 0}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "ridge"], "properties": {"kind": {"const": "regularize"}, "ridge": {"type": "number", "minimum": 0}}}
+      ]
+    },
+    "reconstructionSource": {
+      "oneOf": [
+        {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"enum": ["supplied_scores", "full_projection", "partial_contribution"]}}},
+        {"type": "object", "additionalProperties": false, "required": ["kind", "metric_kind", "metric_dimension", "ridge"], "properties": {"kind": {"const": "partial_least_squares"}, "metric_kind": {"$ref": "#/$defs/metricKind"}, "metric_dimension": {"type": "integer", "minimum": 1}, "ridge": {"type": "number", "minimum": 0}}}
+      ]
+    },
+    "reconstructionCoordinate": {"enum": ["working", "original"]},
+    "metricKind": {"enum": ["identity", "diagonal", "dense_symmetric", "sparse_symmetric"]},
+    "nonemptyNames": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identity"}},
+    "nonemptyIndices": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
     "program": {
       "type": "object",
       "additionalProperties": false,

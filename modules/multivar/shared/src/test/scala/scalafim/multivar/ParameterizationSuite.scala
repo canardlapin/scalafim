@@ -110,6 +110,8 @@ class ParameterizationSuite extends munit.FunSuite:
     assertMatrixClose(residual, matrix(Vector(Vector(0.0))), 1e-12)
     assertEquals(parameterization.nullSpaceProof.map(_.residual), Some(0.0))
     assertEquals(parameterization.nullSpaceProof.map(_.rankTolerance), Some(CertificateTolerance.strict))
+    assertEquals(parameterization.nullSpaceProof.map(_.numericalCertificate.freeRows), Some(2))
+    assertEquals(parameterization.nullSpaceProof.map(_.numericalCertificate.semanticRows), Some(3))
     assert(parameterization.provenance.events.exists:
       case SemanticProvenanceEvent.Derived("verify-null-space", _) => true
       case _ => false

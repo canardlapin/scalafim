@@ -185,7 +185,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         context
       )
       operatorFit <- program(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
           sum(eigenvalues),

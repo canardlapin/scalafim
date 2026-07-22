@@ -20,6 +20,9 @@ final case class CertificateTolerance private (
     absolute: Double,
     relative: Double
 ):
+  def absoluteValue: Double = absolute
+  def relativeValue: Double = relative
+
   def threshold(scale: Double): Double =
     absolute + relative * Math.max(1.0, scale)
 

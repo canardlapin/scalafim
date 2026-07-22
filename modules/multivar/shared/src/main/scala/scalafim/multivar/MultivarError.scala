@@ -31,6 +31,8 @@ enum MultivarError:
   case MissingBlockColumn(index: Int)
   case InvalidBlockPartition(detail: String)
   case MatrixShapeMismatch(detail: String)
+  case FeatureIdentityMismatch(detail: String)
+  case RowIdentityMismatch(detail: String)
   case InvalidMap(detail: String)
   case InvalidRowGeometry(detail: String)
   case SingularRowMetric(detail: String)
@@ -79,6 +81,10 @@ enum MultivarError:
       case InvalidBlockPartition(detail) =>
         detail
       case MatrixShapeMismatch(detail) =>
+        detail
+      case FeatureIdentityMismatch(detail) =>
+        detail
+      case RowIdentityMismatch(detail) =>
         detail
       case InvalidMap(detail) =>
         detail

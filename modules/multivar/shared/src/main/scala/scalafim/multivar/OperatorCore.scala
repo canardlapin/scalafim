@@ -16,6 +16,7 @@ sealed trait ComponentOperatorRole extends OperatorRoleTag
 sealed trait ScoreOperatorRole extends OperatorRoleTag
 sealed trait AxisOperatorRole extends OperatorRoleTag
 sealed trait CoefficientOperatorRole extends OperatorRoleTag
+sealed trait SynthesisOperatorRole extends OperatorRoleTag
 sealed trait ConstraintOperatorRole extends OperatorRoleTag
 sealed trait ComposedOperatorRole[A <: OperatorRoleTag, B <: OperatorRoleTag] extends OperatorRoleTag
 sealed trait DualOperatorRole[A <: OperatorRoleTag] extends OperatorRoleTag
@@ -46,6 +47,7 @@ enum OperatorRole:
   case Score
   case Axis
   case Coefficient
+  case Synthesis
   case ConstraintMap
   case Composed(first: OperatorRole, second: OperatorRole)
   case Dual(of: OperatorRole)
@@ -69,6 +71,8 @@ object OperatorRoleWitness:
   val axis: OperatorRoleWitness[AxisOperatorRole] = new OperatorRoleWitness(OperatorRole.Axis)
   val coefficient: OperatorRoleWitness[CoefficientOperatorRole] =
     new OperatorRoleWitness(OperatorRole.Coefficient)
+  val synthesis: OperatorRoleWitness[SynthesisOperatorRole] =
+    new OperatorRoleWitness(OperatorRole.Synthesis)
   val constraint: OperatorRoleWitness[ConstraintOperatorRole] =
     new OperatorRoleWitness(OperatorRole.ConstraintMap)
 

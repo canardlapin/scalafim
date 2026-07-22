@@ -36,6 +36,80 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   regression: cross and marginal statistics arise through `secondOrder`, PLSC
   and CCA differ by normalization geometry, and fits expose two
   `FunctionalFrame`s plus the common `OperatorProgramFit` result contract;
+- fitted analysis capabilities that reuse frozen preprocessing and feature
+  identity: full scores, additive partial-feature contributions, metric-aware
+  partial least-squares recovery, and supplementary-variable frames under
+  explicitly named compatibility or metric conventions;
+- fitted synthesis capabilities with no implicit transpose decoder: explicit,
+  certified orthonormal-transpose, or Euclidean least-squares construction;
+  component/feature-selective reconstruction and PLSC/CCA paired transfer are
+  compositions of those typed analysis and synthesis objects;
+- a fitted multiblock façade returning either unweighted block scores or
+  weighted block contributions, with the exact global/local frame, block
+  schema, and combination weight retained in provenance;
+- executable variational lowering for exact quadratic/equality programs and
+  convex coefficient-space refinements with L1, L21, disjoint/overlapping
+  groups, sparse-group, elastic-net, Huber/TV composition, nonnegative, box,
+  simplex, and monotone constraints; fits report the guarantee actually
+  attained rather than inheriting the requested one;
+- jointly estimated Allen-style rank-one GMD factors with certified row and
+  column geometries, independently composable metric smoothness plus
+  degree-one L1/sparse-group/TV structure on both sides, epsilon-certified
+  convex block solves, explicit zero/sign/gauge conventions, and achieved
+  coordinatewise-stationary evidence; greedy deflation and simultaneous
+  generalized-Stiefel rank-k are separate APIs, with only the empty-nonsmooth
+  rank-k case admitted through the exact generalized cross-SVD reduction;
+- an Udell-style generalized low-rank semantic layer with per-feature real,
+  binary, count, ordinal, or categorical domains; quadratic, Huber, logistic,
+  Poisson, cumulative-ordinal, and softmax entry losses; typed expanded
+  decoders and domain-preserving predictions; and an observation pattern that
+  keeps weighted point observations, missingness, structural inapplicability,
+  and censoring disjoint. Entry losses and factor penalties remain different
+  types, and missingness declarations carry no automatic MAR/MNAR claim;
+- `FittedLatentEncoder` for nonlinear new-row inference against a frozen GLRM
+  decoder, deliberately separate from linear `FittedProjection`; it consumes
+  explicit dense or sparse observation patterns, solves globally
+  curvature-bounded convex code objectives with row ridge/L1 penalties, and
+  returns support, objective, decoded values, proximal-gradient evidence, and
+  a proof-bearing or explicitly uncertified uniqueness status;
+- a structured multiblock GLRM family with verified shared-row bindings,
+  heterogeneous block layouts and losses, explicit observed-sum or
+  mean-observed weighting estimands, one shared row-code penalty, block-local
+  decoder penalties, and identity-bound graph/linear TV or smoothness operators
+  whose adjoints are derived algebraically. Aligned shared scores, independent
+  direct sums, and hub-aligned entity studies remain different types;
+- `FittedAlignedMultiblockEncoder`, which compiles frozen block decoders and
+  explicit one-row observation patterns into one convex latent-code problem,
+  then returns the global certificate alongside block-local support, decoded
+  predictions, weighted loss contributions, and provenance;
+- a convergence-honest `PalmSolver` over ordered named blocks, admitted only
+  with bounded-level-set/coercivity evidence, per-block convexity and positive
+  Lipschitz witnesses, exact or geometrically summable inexactness, explicit
+  singular-geometry policy, and KL evidence when critical-point convergence is
+  claimed. Receipts retain every objective transition, residual, normalization
+  error, step, and stopping reason; deterministic multi-start retains all
+  SVD-derived and named starts;
+- a separate `ConvexLowRankGlobalAdmission` for witnessed convex
+  loss-plus-nuclear-norm certificates, so a PALM stopping status cannot be
+  relabeled as global optimality;
+- `RecoveryValidation` contracts that bind all learned offsets, scales, loss
+  balancing, graphs, encodings, ranks, and penalties to a fold-safe `ModelSpec`;
+  keep row/column/entry/group/site/error resampling distinct; separate fixed
+  masks, synthetic MCAR, MAR sensitivity, and MNAR sensitivity; and preserve
+  deterministic within-fold warm-start lineage;
+- checked sparse-smooth, disconnected-graph, high-dimensional, correlated-noise,
+  weak-gap, block-imbalance, and graph-misspecification simulation designs,
+  with projector/factor/support/risk/roughness/stability/calibration reports and
+  empirical-versus-theorem-backed claim admission;
+- a typed `MathematicalOracleMatrix` spanning every model contract, with
+  analytic and independent differential fixtures, published Allen/GMD and GLRM
+  limits, metamorphic laws, mutation sentinels, trajectory obligations,
+  deterministic conditioning-aware tolerances, and explicit PR-fast,
+  reference, and nightly stress tiers. `LowRankModels.jl` may inform a GLRM
+  differential case but is rejected as its sole oracle;
+- fold-safe `ModelSpec` execution that fits preprocessing, learned operators,
+  policies, programs, lowerings, and solvers on training identities only and
+  returns transformations bound to the fitted feature and row provenance;
 - CPCA as one `CpcaOperatorProblem` over a typed table, row relationship,
   feature covariance, and row/feature constraint operators; each nonzero block
   exposes one feature `FunctionalFrame`, derived row scores, and an
@@ -54,7 +128,13 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
 `multivar-ir` serializes the semantic graph—space identities, orientation,
 forms, certificates, scale/gauge, centering, singular policy, alignments,
 objectives, unsafe assumptions, and payload hashes—for cross-language
-conformance.
+conformance. Its companion
+`scalafim-mathematical-model-evidence-ir/1.0` envelope binds extant
+operator-program identities to the model family and estimand, explicit
+loss/mask/geometry/penalty declarations, theorem witnesses, solver trace,
+achieved guarantee, certificate set, and reproducibility receipt. The external
+review boundary and counterexamples are documented in
+[`multivar-external-review.md`](../../docs/plans/multivar-external-review.md).
 
 ## API boundary
 
@@ -82,6 +162,25 @@ generalized-Rayleigh root. The nonnegative cone is an explicit
 orthogonal—equivalence and a stationary-point guarantee. ScalaFIM owns those
 scientific semantics; the reusable projected iteration and its KKT,
 feasibility, and normalization certificates come from Gale.
+
+`FittedFrameTransform` is the analysis boundary for new data. Its partial APIs
+distinguish additive contribution from latent-score recovery in their result
+types. `FittedBidirectionalTransform` is a separate capability that exists only
+after a decoder policy has been validated. `SupplementaryProjector` is a
+training-row operation producing a variable-by-component frame, not a row-score
+projection. `FittedMultiblockProjection` preserves this same distinction per
+block. The complete mathematical and failure contract is
+[`multivar-fitted-projection-contract.md`](../../docs/plans/multivar-fitted-projection-contract.md).
+
+The current solver compiler deliberately rejects PSD-cone, Stiefel,
+fixed-support, and rank-bounded feasible sets, and general/nonlinear target
+charts without a matching executable capability. Its convex first-order path
+optimizes coefficient-space refinements around a supplied anchor; it does not
+claim to solve an arbitrary normalized nonconvex `OperatorProgram` itself.
+`RankOneStructuredFactorization` is the narrow exception: its biconcave GMD
+blocks are lowered one at a time to that certified convex compiler and then
+normalized under degree-one penalty assumptions. Nonsmooth simultaneous
+rank-k remains a typed rejection rather than a deflation fallback.
 
 CPCA code constructs `CpcaOperatorProblem` and fits a validated
 `CpcaBlockRequest`. Planned ROI execution constructs the same typed problem
@@ -117,7 +216,9 @@ The shared test suite covers the current core invariants on both JVM and JS:
 - dense, sparse, and affine `MatrixView` algebra without implicit sparse
   densification, including lazy transposed views for duality symmetry;
 - preprocessing, typed operator composition, fitted-transform, and
-  coefficient-orientation boundaries;
+  coefficient-orientation boundaries, including schema permutations, partial
+  projection laws, synthesis/reconstruction, supplementary variables, paired
+  transfer, and multiblock additivity;
 - SVD/PCA plus operator-program PLSC/regularized CCA/reduced-rank regression,
   including typed partial row relationships, generalized cross-SVD residuals,
   row-permutation laws, directed coefficient orientation, and unchanged R
@@ -147,3 +248,38 @@ The shared test suite covers the current core invariants on both JVM and JS:
   MVPA, dataset, image IO, concrete schedulers, and JVM-only numeric libraries.
 - pure whole-input `PairedMultivarPlan` validation for paired latent analyses,
   kept separate from the ROI-local `MultivarPlan` executor path.
+- executable variational compiler oracles, KKT/gap/feasibility evidence,
+  unsupported-capability rejection, and fold lifecycle/leakage audits.
+- ordinary PCA and generalized-GMD reductions, functional and sparse limits,
+  two-way sparse-smooth and TV factors, planted-direction recovery, explicit
+  zero solutions, greedy-deflation semantics, and exact joint generalized
+  cross-SVD rank-k evidence on both JVM and Scala.js.
+- analytic mixed-domain GLRM loss/decoder oracles, exact masked and weighted
+  objective accounting, typed censoring and domain failures, and the complete
+  quadratic PCA-reconstruction reduction on both platforms.
+- partial-code ridge/least-squares and L1 analytic reductions, an independent
+  logistic convex oracle, dense/sparse mask equivalence, compatible-observation
+  metamorphism, and typed empty/unseen/censored/non-identifiable outcomes.
+- structured multiblock loss-scaling and shared-penalty accounting, graph/TV
+  adjoint provenance, block permutation and graph-relabeling laws, split-weight
+  duplication invariance, analytic joint partial encoding, and typed
+  alignment/domain failures on both platforms.
+- exact and summably-inexact PALM oracles, sufficient-decrease traces,
+  coordinatewise versus KL-backed stationary claims, iteration-limit and
+  descent-violation outcomes, singular-geometry admission, adversarial
+  deterministic multi-start, and separate nuclear-global certification.
+- complete fold-safety manifests, all six resampling units, disjoint
+  missingness targets, deterministic warm-start provenance, checked coverage of
+  seven adversarial recovery regimes, independent recovery-metric oracles, and
+  rejection of empirical-only support/inferential claims.
+- a complete mathematical-oracle matrix with diagonal, 2x2 Laplacian,
+  soft-threshold, tiny fused-lasso, and singular-nullspace fixtures; independent
+  convex and published limiting cases; permutation/relabeling/scaling/change-of-
+  coordinates/penalty-limit/sparse-dense laws; targeted adjoint, norm, proximal,
+  mask, and fold-provenance mutations; and objective/residual trajectory checks
+  from the same shared suite on JVM and Scala.js.
+- mathematical-evidence IR conformance for all six estimands, including typed
+  rejection of family/estimand mismatches, incomplete theorem witnesses,
+  inadmissible global claims, missing guarantee certificates, implicit GLRM
+  losses, unstable reproducibility receipts, future schema versions, and
+  unknown fields on both platforms.

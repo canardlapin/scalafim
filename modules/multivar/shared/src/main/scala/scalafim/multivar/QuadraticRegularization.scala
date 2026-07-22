@@ -9,6 +9,7 @@ enum QuadraticFamily:
   case DerivativeSmoothness
   case SplineSmoothness
   case BlockSmoothness
+  case MultisetDisagreement
 
 /** Where the same PSD pullback enters a program. These placements are
   * scientifically and algebraically distinct even when they share `T* G T`.

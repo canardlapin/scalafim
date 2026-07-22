@@ -276,7 +276,7 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
         SemanticProvenanceEvent.Derived("gale-symmetric-definite-generalized-eigen", Vector(effect.valueIdentity, regularized.valueIdentity))
       )
       operatorFit <- program(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
           root.value,
@@ -348,7 +348,7 @@ final class CanonicalEffectProblem[Feature <: SemanticSpace] private (
       )
       statistics = ManovaStatistics.from(roots)
       operatorFit <- program(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
           statistics.hotellingLawleyTrace,

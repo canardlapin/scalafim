@@ -358,7 +358,7 @@ final class PairedOperatorProblem[
       )
       clusters = spectralClusters(svd.singularValues, CertificateTolerance.strict)
       genericFit <- pairedProgram(
-        OperatorProgramFit.from(
+        OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(sourceVariable, sourceFrame), FittedFrame(targetVariable, targetFrame)),
           pairedSum(svd.singularValues),

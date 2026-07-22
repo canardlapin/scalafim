@@ -17,6 +17,7 @@ enum ProgramOperatorRoleIr:
   case Score
   case Axis
   case Coefficient
+  case Synthesis
   case ConstraintMap
   case Composed(first: ProgramOperatorRoleIr, second: ProgramOperatorRoleIr)
   case Dual(of: ProgramOperatorRoleIr)
@@ -320,6 +321,107 @@ final case class ProgramCompositeLoweringIr(
     provenance: Vector[ProvenanceEventIr]
 )
 
+enum ProgramNullComponentPolicyIr:
+  case Reject(tolerance: Double)
+  case Drop(tolerance: Double)
+  case Regularize(ridge: Double)
+
+enum ProgramSupplementaryConventionIr:
+  case MultivariousCovarianceScaled(nullPolicy: ProgramNullComponentPolicyIr)
+  case MetricLeastSquares(
+      measureIdentity: String,
+      centering: String,
+      nullPolicy: ProgramNullComponentPolicyIr
+  )
+
+enum ProgramReconstructionCoordinateIr:
+  case Working
+  case Original
+
+enum ProgramSynthesisPolicyIr:
+  case Explicit(decoderIdentity: String)
+  case OrthonormalTranspose(tolerance: Double)
+  case EuclideanLeastSquares(ridge: Double)
+
+enum ProgramReconstructionSourceIr:
+  case SuppliedScores
+  case FullProjection
+  case PartialContribution
+  case PartialLeastSquares(metricKind: String, metricDimension: Int, ridge: Double)
+
+enum ProgramProjectionActionIr:
+  case FullProjection(analysisFrame: String, featureSchema: String)
+  case PartialContribution(
+      analysisFrame: String,
+      sourceSchema: String,
+      selectedFeatures: Vector[String]
+  )
+  case PartialLeastSquares(
+      analysisFrame: String,
+      sourceSchema: String,
+      selectedFeatures: Vector[String],
+      metricKind: String,
+      metricDimension: Int,
+      ridge: Double
+  )
+  case SupplementaryVariables(
+      supplementaryTable: String,
+      fittedScores: String,
+      fittedRows: String,
+      sourceComponents: Vector[Int],
+      convention: ProgramSupplementaryConventionIr
+  )
+  case Reconstruction(
+      analysisFrame: String,
+      decoder: String,
+      source: ProgramReconstructionSourceIr,
+      components: Vector[Int],
+      targetFeatures: Vector[String],
+      coordinate: ProgramReconstructionCoordinateIr
+  )
+  case PairedTransfer(
+      estimand: String,
+      sourceSpace: String,
+      targetSpace: String,
+      sourceFrame: String,
+      targetDecoder: String,
+      scaling: String
+  )
+  case MultiblockScores(block: String, globalFrame: String, localFrame: String, blockSchema: String)
+  case MultiblockContribution(
+      block: String,
+      globalFrame: String,
+      localFrame: String,
+      blockSchema: String,
+      combinationWeight: Double
+  )
+
+enum ProgramProjectionResultIr:
+  case Scores
+  case FunctionalFrame
+  case FeatureValues(coordinate: ProgramReconstructionCoordinateIr)
+  case TransferValues
+
+final case class ProgramProjectionIr(
+    id: String,
+    action: ProgramProjectionActionIr,
+    result: ProgramProjectionResultIr,
+    equivalence: ProgramEquivalenceIr,
+    provenance: Vector[ProvenanceEventIr]
+)
+
+final case class ProgramSynthesisCapabilityIr(
+    id: String,
+    analysisFrame: String,
+    decoder: String,
+    policy: ProgramSynthesisPolicyIr,
+    supportsWorkingCoordinates: Boolean,
+    supportsOriginalCoordinates: Boolean,
+    supportsComponentSelection: Boolean,
+    supportsFeatureSelection: Boolean,
+    provenance: Vector[ProvenanceEventIr]
+)
+
 final case class OperatorProgramDocumentIr(
     schema: String,
     spaces: Vector[SpaceIr],
@@ -328,7 +430,9 @@ final case class OperatorProgramDocumentIr(
     rewrites: Vector[ProgramRewriteIr],
     fits: Vector[ProgramFitIr],
     operatorPolicies: Vector[ProgramOperatorPolicyIr] = Vector.empty,
-    compositeLowerings: Vector[ProgramCompositeLoweringIr] = Vector.empty
+    compositeLowerings: Vector[ProgramCompositeLoweringIr] = Vector.empty,
+    projections: Vector[ProgramProjectionIr] = Vector.empty,
+    synthesisCapabilities: Vector[ProgramSynthesisCapabilityIr] = Vector.empty
 )
 
 object OperatorProgramDocumentIr:
@@ -387,6 +491,70 @@ object ProgramSemanticIr:
       value.penalties.map(penalty),
       value.constraints.map(constraint),
       result(value.resultSemantics),
+      SemanticIr.provenance(value.provenance)
+    )
+
+  /** Serializes one executable exact spectral rewrite without weakening its
+    * semantic proof to an unbound descriptive label.
+    */
+  def exactSpectralRewrite(
+      id: String,
+      originalProgramId: String,
+      loweredProgramId: String,
+      value: ExactSpectralProgramFit[?, ?]
+  ): ProgramRewriteIr =
+    val proof = value.proof
+    val (rule, method, backend) =
+      proof.kind match
+        case ExactSpectralRewriteKind.ObjectiveQuadratic(_) =>
+          (ProgramRewriteRuleIr.QuadraticPullback, "exact-objective-quadratic-pullback", "operator-algebra")
+        case ExactSpectralRewriteKind.DenominatorLoading(_) =>
+          (ProgramRewriteRuleIr.QuadraticPullback, "exact-denominator-quadratic-pullback", "operator-algebra")
+        case ExactSpectralRewriteKind.NullSpaceEquality =>
+          (ProgramRewriteRuleIr.ExactLinearReduction, "verified-null-space-elimination", "scalafim-linalg")
+    ProgramRewriteIr(
+      id,
+      originalProgramId,
+      loweredProgramId,
+      rule,
+      proof.inputOperators.map(_.stableKey),
+      proof.outputOperators.map(_.stableKey),
+      CertificateIr(
+        "rewrite",
+        id,
+        tolerance(proof.tolerance),
+        "max-abs",
+        method,
+        "float64",
+        backend,
+        None,
+        Some(proof.residual)
+      ),
+      equivalence(value.requestedProgram.resultSemantics.equivalence),
+      SemanticIr.provenance(value.provenance)
+    )
+
+  /** Serializes the solver guarantee actually attained by a fit, including
+    * its convergence certificate and typed functional-frame identities.
+    */
+  def programFit(programId: String, value: OperatorProgramFit): ProgramFitIr =
+    ProgramFitIr(
+      programId,
+      value.frames.map: fitted =>
+        FunctionalFrameIr(
+          fitted.parameter.id.value,
+          fitted.frame.weights.valueIdentity.stableKey,
+          fitted.frame.cometric.map(_.valueIdentity.stableKey),
+          Vector.empty,
+          None
+        )
+      ,
+      value.objectiveValue,
+      value.identifiability.retainedRank,
+      value.identifiability.spectralClusters,
+      Vector(certificate(value.solverAttestation.certificate)),
+      guarantee(value.solverAttestation.guarantee),
+      equivalence(value.program.resultSemantics.equivalence),
       SemanticIr.provenance(value.provenance)
     )
 
@@ -470,6 +638,184 @@ object ProgramSemanticIr:
       SemanticIr.provenance(provenance)
     )
 
+  def fullProjection(id: String, value: FittedFrameTransform): ProgramProjectionIr =
+    projection(
+      id,
+      ProgramProjectionActionIr.FullProjection(
+        value.frame.weights.valueIdentity.stableKey,
+        value.featureSchema.valueIdentity.stableKey
+      ),
+      ProgramProjectionResultIr.Scores,
+      value.provenance
+    )
+
+  def partialProjection(id: String, value: PartialScoreResult): ProgramProjectionIr =
+    val current = value.projectionProvenance
+    val action = current.policy match
+      case PartialScorePolicy.Contribution =>
+        ProgramProjectionActionIr.PartialContribution(
+          current.sourceFrame.stableKey,
+          current.sourceSchema.stableKey,
+          current.selectedFeatures.map(_.value)
+        )
+      case PartialScorePolicy.LeastSquares(metric, ridge) =>
+        ProgramProjectionActionIr.PartialLeastSquares(
+          current.sourceFrame.stableKey,
+          current.sourceSchema.stableKey,
+          current.selectedFeatures.map(_.value),
+          metricKind(metric),
+          metric.dim,
+          ridge.value
+        )
+    projection(id, action, ProgramProjectionResultIr.Scores, current.semantic)
+
+  def supplementaryProjection(
+      id: String,
+      value: SupplementaryProjectionProvenance
+  ): ProgramProjectionIr =
+    projection(
+      id,
+      ProgramProjectionActionIr.SupplementaryVariables(
+        value.supplementaryTable.stableKey,
+        value.fittedScores.stableKey,
+        value.fittedRows.stableKey,
+        value.sourceComponents,
+        supplementaryConvention(value.convention)
+      ),
+      ProgramProjectionResultIr.FunctionalFrame,
+      value.semantic
+    )
+
+  def reconstruction(id: String, value: ReconstructionProvenance): ProgramProjectionIr =
+    val coordinate = reconstructionCoordinate(value.coordinate)
+    projection(
+      id,
+      ProgramProjectionActionIr.Reconstruction(
+        value.analysisFrame.stableKey,
+        value.decoder.stableKey,
+        reconstructionSource(value.source),
+        value.components,
+        value.targetFeatures.map(_.value),
+        coordinate
+      ),
+      ProgramProjectionResultIr.FeatureValues(coordinate),
+      value.semantic
+    )
+
+  def pairedTransfer(id: String, value: TransferProvenance): ProgramProjectionIr =
+    projection(
+      id,
+      ProgramProjectionActionIr.PairedTransfer(
+        value.estimand.toString,
+        value.orientation.source.id.value,
+        value.orientation.target.id.value,
+        value.sourceFrame.stableKey,
+        value.targetDecoder.stableKey,
+        value.scaling.stableKey
+      ),
+      ProgramProjectionResultIr.TransferValues,
+      value.semantic
+    )
+
+  def blockProjection(
+      id: String,
+      value: BlockProjectionResult
+  ): ProgramProjectionIr =
+    val current = value.projectionProvenance
+    val action = value match
+      case _: UnweightedBlockScores =>
+        ProgramProjectionActionIr.MultiblockScores(
+          current.block.value,
+          current.globalFrame.stableKey,
+          current.blockFrame.stableKey,
+          current.blockSchema.stableKey
+        )
+      case _: WeightedBlockContribution =>
+        ProgramProjectionActionIr.MultiblockContribution(
+          current.block.value,
+          current.globalFrame.stableKey,
+          current.blockFrame.stableKey,
+          current.blockSchema.stableKey,
+          current.combinationWeight
+        )
+    projection(id, action, ProgramProjectionResultIr.Scores, current.semantic)
+
+  def synthesisCapability(
+      id: String,
+      value: FittedBidirectionalTransform
+  ): ProgramSynthesisCapabilityIr =
+    ProgramSynthesisCapabilityIr(
+      id,
+      value.analysis.frame.weights.valueIdentity.stableKey,
+      value.decoder.valueIdentity.stableKey,
+      synthesisPolicy(value.policy),
+      supportsWorkingCoordinates = true,
+      supportsOriginalCoordinates = true,
+      supportsComponentSelection = true,
+      supportsFeatureSelection = true,
+      SemanticIr.provenance(value.provenance)
+    )
+
+  private def projection(
+      id: String,
+      action: ProgramProjectionActionIr,
+      result: ProgramProjectionResultIr,
+      provenance: SemanticProvenance
+  ): ProgramProjectionIr =
+    ProgramProjectionIr(
+      id,
+      action,
+      result,
+      ProgramEquivalenceIr.Value(tolerance(CertificateTolerance.strict)),
+      SemanticIr.provenance(provenance)
+    )
+
+  private def synthesisPolicy(value: SynthesisPolicy): ProgramSynthesisPolicyIr =
+    value match
+      case SynthesisPolicy.Explicit(decoder) => ProgramSynthesisPolicyIr.Explicit(decoder.stableKey)
+      case SynthesisPolicy.OrthonormalTranspose(current) =>
+        ProgramSynthesisPolicyIr.OrthonormalTranspose(current.value)
+      case SynthesisPolicy.EuclideanLeastSquares(ridge) =>
+        ProgramSynthesisPolicyIr.EuclideanLeastSquares(ridge.value)
+
+  private def supplementaryConvention(value: SupplementaryConvention): ProgramSupplementaryConventionIr =
+    value match
+      case SupplementaryConvention.MultivariousCovarianceScaled(policy) =>
+        ProgramSupplementaryConventionIr.MultivariousCovarianceScaled(nullComponentPolicy(policy))
+      case SupplementaryConvention.MetricLeastSquares(measure, centering, policy) =>
+        ProgramSupplementaryConventionIr.MetricLeastSquares(
+          measure.stableKey,
+          centering.toString,
+          nullComponentPolicy(policy)
+        )
+
+  private def nullComponentPolicy(value: NullComponentPolicy): ProgramNullComponentPolicyIr =
+    value match
+      case NullComponentPolicy.Reject(current) => ProgramNullComponentPolicyIr.Reject(current.value)
+      case NullComponentPolicy.Drop(current) => ProgramNullComponentPolicyIr.Drop(current.value)
+      case NullComponentPolicy.Regularize(ridge) => ProgramNullComponentPolicyIr.Regularize(ridge.value)
+
+  private def reconstructionCoordinate(value: ReconstructionCoordinate): ProgramReconstructionCoordinateIr =
+    value match
+      case ReconstructionCoordinate.Working => ProgramReconstructionCoordinateIr.Working
+      case ReconstructionCoordinate.Original => ProgramReconstructionCoordinateIr.Original
+
+  private def reconstructionSource(value: ReconstructionSource): ProgramReconstructionSourceIr =
+    value match
+      case ReconstructionSource.SuppliedScores => ProgramReconstructionSourceIr.SuppliedScores
+      case ReconstructionSource.FullProjection => ProgramReconstructionSourceIr.FullProjection
+      case ReconstructionSource.PartialProjection(PartialScorePolicy.Contribution) =>
+        ProgramReconstructionSourceIr.PartialContribution
+      case ReconstructionSource.PartialProjection(PartialScorePolicy.LeastSquares(metric, ridge)) =>
+        ProgramReconstructionSourceIr.PartialLeastSquares(metricKind(metric), metric.dim, ridge.value)
+
+  private def metricKind(value: MetricSpec): String =
+    value match
+      case _: MetricSpec.Identity => "identity"
+      case _: MetricSpec.Diagonal => "diagonal"
+      case _: MetricSpec.DenseSymmetric => "dense_symmetric"
+      case _: MetricSpec.SparseSymmetric => "sparse_symmetric"
+
   private def splitMethod(value: SplitMethod): ProgramSplitMethodIr =
     value match
       case SplitMethod.PrimalDual => ProgramSplitMethodIr.PrimalDual
@@ -504,6 +850,7 @@ object ProgramSemanticIr:
       case OperatorRole.Score => ProgramOperatorRoleIr.Score
       case OperatorRole.Axis => ProgramOperatorRoleIr.Axis
       case OperatorRole.Coefficient => ProgramOperatorRoleIr.Coefficient
+      case OperatorRole.Synthesis => ProgramOperatorRoleIr.Synthesis
       case OperatorRole.ConstraintMap => ProgramOperatorRoleIr.ConstraintMap
       case OperatorRole.Composed(first, second) => ProgramOperatorRoleIr.Composed(role(first), role(second))
       case OperatorRole.Dual(of) => ProgramOperatorRoleIr.Dual(role(of))

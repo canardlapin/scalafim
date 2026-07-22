@@ -308,6 +308,8 @@ object OperatorBlockProjection:
     val actual = frames.map(_.block.spec.id)
     if expected != actual then
       Left(MultivarError.InvalidBlockPartition("block projection must provide one frame per block in partition order"))
+    else if frames.zip(partition.blocks).exists((frame, block) => !(frame.block eq block)) then
+      Left(MultivarError.InvalidBlockPartition("block projection frame belongs to a different operator block partition"))
     else if frames.exists(_.block.embedding.codomain.descriptor.space != partition.globalSpace.descriptor) then
       Left(MultivarError.InvalidBlockPartition("block projection frame belongs to a different global feature space"))
     else if provenanceLabel.trim.isEmpty then

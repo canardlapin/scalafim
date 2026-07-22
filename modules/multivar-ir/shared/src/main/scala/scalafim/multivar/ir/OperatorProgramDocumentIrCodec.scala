@@ -19,7 +19,9 @@ private object ProgramIrEncoder:
       "rewrites" -> arr(value.rewrites.map(rewrite)),
       "fits" -> arr(value.fits.map(fit)),
       "operator_policies" -> arr(value.operatorPolicies.map(operatorPolicy)),
-      "composite_lowerings" -> arr(value.compositeLowerings.map(compositeLowering))
+      "composite_lowerings" -> arr(value.compositeLowerings.map(compositeLowering)),
+      "projections" -> arr(value.projections.map(projection)),
+      "synthesis_capabilities" -> arr(value.synthesisCapabilities.map(synthesisCapability))
     )
 
   private def space(value: SpaceIr): IrJson =
@@ -393,6 +395,152 @@ private object ProgramIrEncoder:
       case ProgramSplitMethodIr.AugmentedLagrangian => "augmented_lagrangian"
       case ProgramSplitMethodIr.Conic => "conic"
 
+  private def projection(value: ProgramProjectionIr): IrJson =
+    obj(
+      "id" -> Str(value.id),
+      "action" -> projectionAction(value.action),
+      "result" -> projectionResult(value.result),
+      "equivalence" -> equivalence(value.equivalence),
+      "provenance" -> arr(value.provenance.map(provenance))
+    )
+
+  private def projectionAction(value: ProgramProjectionActionIr): IrJson =
+    value match
+      case ProgramProjectionActionIr.FullProjection(frame, schema) =>
+        obj("kind" -> Str("full_projection"), "analysis_frame" -> Str(frame), "feature_schema" -> Str(schema))
+      case ProgramProjectionActionIr.PartialContribution(frame, schema, features) =>
+        obj(
+          "kind" -> Str("partial_contribution"),
+          "analysis_frame" -> Str(frame),
+          "source_schema" -> Str(schema),
+          "selected_features" -> arr(features.map(Str.apply))
+        )
+      case ProgramProjectionActionIr.PartialLeastSquares(frame, schema, features, metric, dimension, ridge) =>
+        obj(
+          "kind" -> Str("partial_least_squares"),
+          "analysis_frame" -> Str(frame),
+          "source_schema" -> Str(schema),
+          "selected_features" -> arr(features.map(Str.apply)),
+          "metric_kind" -> Str(metric),
+          "metric_dimension" -> Num(dimension),
+          "ridge" -> Num(ridge)
+        )
+      case ProgramProjectionActionIr.SupplementaryVariables(table, scores, rows, components, convention) =>
+        obj(
+          "kind" -> Str("supplementary_variables"),
+          "supplementary_table" -> Str(table),
+          "fitted_scores" -> Str(scores),
+          "fitted_rows" -> Str(rows),
+          "source_components" -> arr(components.map(value => Num(value))),
+          "convention" -> supplementaryConvention(convention)
+        )
+      case ProgramProjectionActionIr.Reconstruction(frame, decoder, source, components, features, coordinate) =>
+        obj(
+          "kind" -> Str("reconstruction"),
+          "analysis_frame" -> Str(frame),
+          "decoder" -> Str(decoder),
+          "source" -> reconstructionSource(source),
+          "components" -> arr(components.map(value => Num(value))),
+          "target_features" -> arr(features.map(Str.apply)),
+          "coordinate" -> Str(reconstructionCoordinate(coordinate))
+        )
+      case ProgramProjectionActionIr.PairedTransfer(estimand, source, target, frame, decoder, scaling) =>
+        obj(
+          "kind" -> Str("paired_transfer"),
+          "estimand" -> Str(estimand),
+          "source_space" -> Str(source),
+          "target_space" -> Str(target),
+          "source_frame" -> Str(frame),
+          "target_decoder" -> Str(decoder),
+          "scaling" -> Str(scaling)
+        )
+      case ProgramProjectionActionIr.MultiblockScores(block, global, local, schema) =>
+        obj(
+          "kind" -> Str("multiblock_scores"),
+          "block" -> Str(block),
+          "global_frame" -> Str(global),
+          "local_frame" -> Str(local),
+          "block_schema" -> Str(schema)
+        )
+      case ProgramProjectionActionIr.MultiblockContribution(block, global, local, schema, weight) =>
+        obj(
+          "kind" -> Str("multiblock_contribution"),
+          "block" -> Str(block),
+          "global_frame" -> Str(global),
+          "local_frame" -> Str(local),
+          "block_schema" -> Str(schema),
+          "combination_weight" -> Num(weight)
+        )
+
+  private def projectionResult(value: ProgramProjectionResultIr): IrJson =
+    value match
+      case ProgramProjectionResultIr.Scores => obj("kind" -> Str("scores"))
+      case ProgramProjectionResultIr.FunctionalFrame => obj("kind" -> Str("functional_frame"))
+      case ProgramProjectionResultIr.FeatureValues(coordinate) =>
+        obj("kind" -> Str("feature_values"), "coordinate" -> Str(reconstructionCoordinate(coordinate)))
+      case ProgramProjectionResultIr.TransferValues => obj("kind" -> Str("transfer_values"))
+
+  private def synthesisCapability(value: ProgramSynthesisCapabilityIr): IrJson =
+    obj(
+      "id" -> Str(value.id),
+      "analysis_frame" -> Str(value.analysisFrame),
+      "decoder" -> Str(value.decoder),
+      "policy" -> synthesisPolicy(value.policy),
+      "supports_working_coordinates" -> Bool(value.supportsWorkingCoordinates),
+      "supports_original_coordinates" -> Bool(value.supportsOriginalCoordinates),
+      "supports_component_selection" -> Bool(value.supportsComponentSelection),
+      "supports_feature_selection" -> Bool(value.supportsFeatureSelection),
+      "provenance" -> arr(value.provenance.map(provenance))
+    )
+
+  private def synthesisPolicy(value: ProgramSynthesisPolicyIr): IrJson =
+    value match
+      case ProgramSynthesisPolicyIr.Explicit(identity) =>
+        obj("kind" -> Str("explicit"), "decoder_identity" -> Str(identity))
+      case ProgramSynthesisPolicyIr.OrthonormalTranspose(current) =>
+        obj("kind" -> Str("orthonormal_transpose"), "tolerance" -> Num(current))
+      case ProgramSynthesisPolicyIr.EuclideanLeastSquares(ridge) =>
+        obj("kind" -> Str("euclidean_least_squares"), "ridge" -> Num(ridge))
+
+  private def supplementaryConvention(value: ProgramSupplementaryConventionIr): IrJson =
+    value match
+      case ProgramSupplementaryConventionIr.MultivariousCovarianceScaled(policy) =>
+        obj("kind" -> Str("multivarious_covariance_scaled"), "null_policy" -> nullComponentPolicy(policy))
+      case ProgramSupplementaryConventionIr.MetricLeastSquares(measure, centering, policy) =>
+        obj(
+          "kind" -> Str("metric_least_squares"),
+          "measure_identity" -> Str(measure),
+          "centering" -> Str(centering),
+          "null_policy" -> nullComponentPolicy(policy)
+        )
+
+  private def nullComponentPolicy(value: ProgramNullComponentPolicyIr): IrJson =
+    value match
+      case ProgramNullComponentPolicyIr.Reject(current) =>
+        obj("kind" -> Str("reject"), "tolerance" -> Num(current))
+      case ProgramNullComponentPolicyIr.Drop(current) =>
+        obj("kind" -> Str("drop"), "tolerance" -> Num(current))
+      case ProgramNullComponentPolicyIr.Regularize(ridge) =>
+        obj("kind" -> Str("regularize"), "ridge" -> Num(ridge))
+
+  private def reconstructionSource(value: ProgramReconstructionSourceIr): IrJson =
+    value match
+      case ProgramReconstructionSourceIr.SuppliedScores => obj("kind" -> Str("supplied_scores"))
+      case ProgramReconstructionSourceIr.FullProjection => obj("kind" -> Str("full_projection"))
+      case ProgramReconstructionSourceIr.PartialContribution => obj("kind" -> Str("partial_contribution"))
+      case ProgramReconstructionSourceIr.PartialLeastSquares(metric, dimension, ridge) =>
+        obj(
+          "kind" -> Str("partial_least_squares"),
+          "metric_kind" -> Str(metric),
+          "metric_dimension" -> Num(dimension),
+          "ridge" -> Num(ridge)
+        )
+
+  private def reconstructionCoordinate(value: ProgramReconstructionCoordinateIr): String =
+    value match
+      case ProgramReconstructionCoordinateIr.Working => "working"
+      case ProgramReconstructionCoordinateIr.Original => "original"
+
   private def tolerance(value: ToleranceIr): IrJson =
     obj("absolute" -> Num(value.absolute), "relative" -> Num(value.relative))
 
@@ -449,6 +597,7 @@ private object ProgramIrEncoder:
       case ProgramOperatorRoleIr.Score => "score"
       case ProgramOperatorRoleIr.Axis => "axis"
       case ProgramOperatorRoleIr.Coefficient => "coefficient"
+      case ProgramOperatorRoleIr.Synthesis => "synthesis"
       case ProgramOperatorRoleIr.ConstraintMap => "constraint_map"
       case _ => throw new IllegalArgumentException("compound operator role requires structural encoding")
 
@@ -539,7 +688,18 @@ private object ProgramIrDecoder:
       current <- fields(
         value,
         "$",
-        Set("schema", "spaces", "operators", "programs", "rewrites", "fits", "operator_policies", "composite_lowerings")
+        Set(
+          "schema",
+          "spaces",
+          "operators",
+          "programs",
+          "rewrites",
+          "fits",
+          "operator_policies",
+          "composite_lowerings",
+          "projections",
+          "synthesis_capabilities"
+        )
       )
       schema <- required(current, "schema", "$", string(_, "$.schema"))
       spaces <- required(current, "spaces", "$", vector(_, "$.spaces", space))
@@ -549,7 +709,25 @@ private object ProgramIrDecoder:
       fits <- required(current, "fits", "$", vector(_, "$.fits", fit))
       policies <- required(current, "operator_policies", "$", vector(_, "$.operator_policies", operatorPolicy))
       lowerings <- required(current, "composite_lowerings", "$", vector(_, "$.composite_lowerings", compositeLowering))
-    yield OperatorProgramDocumentIr(schema, spaces, operators, programs, rewrites, fits, policies, lowerings)
+      projections <- required(current, "projections", "$", vector(_, "$.projections", projection))
+      capabilities <- required(
+        current,
+        "synthesis_capabilities",
+        "$",
+        vector(_, "$.synthesis_capabilities", synthesisCapability)
+      )
+    yield OperatorProgramDocumentIr(
+      schema,
+      spaces,
+      operators,
+      programs,
+      rewrites,
+      fits,
+      policies,
+      lowerings,
+      projections,
+      capabilities
+    )
 
   private def space(value: IrJson, path: String): Either[IrError, SpaceIr] =
     for
@@ -1166,6 +1344,218 @@ private object ProgramIrDecoder:
       case "conic" => Right(ProgramSplitMethodIr.Conic)
       case other => malformed(path, s"unknown split method '$other'")
 
+  private def projection(value: IrJson, path: String): Either[IrError, ProgramProjectionIr] =
+    for
+      current <- fields(value, path, Set("id", "action", "result", "equivalence", "provenance"))
+      id <- required(current, "id", path, string(_, s"$path.id"))
+      action <- required(current, "action", path, projectionAction(_, s"$path.action"))
+      result <- required(current, "result", path, projectionResult(_, s"$path.result"))
+      currentEquivalence <- required(current, "equivalence", path, equivalence(_, s"$path.equivalence"))
+      provenanceValue <- required(current, "provenance", path, vector(_, s"$path.provenance", provenance))
+    yield ProgramProjectionIr(id, action, result, currentEquivalence, provenanceValue)
+
+  private def projectionAction(value: IrJson, path: String): Either[IrError, ProgramProjectionActionIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "full_projection" =>
+          for
+            checked <- exact(current, path, Set("kind", "analysis_frame", "feature_schema"))
+            frame <- required(checked, "analysis_frame", path, string(_, s"$path.analysis_frame"))
+            schema <- required(checked, "feature_schema", path, string(_, s"$path.feature_schema"))
+          yield ProgramProjectionActionIr.FullProjection(frame, schema)
+        case "partial_contribution" =>
+          for
+            checked <- exact(current, path, Set("kind", "analysis_frame", "source_schema", "selected_features"))
+            frame <- required(checked, "analysis_frame", path, string(_, s"$path.analysis_frame"))
+            schema <- required(checked, "source_schema", path, string(_, s"$path.source_schema"))
+            features <- required(checked, "selected_features", path, vector(_, s"$path.selected_features", string))
+          yield ProgramProjectionActionIr.PartialContribution(frame, schema, features)
+        case "partial_least_squares" =>
+          for
+            checked <- exact(
+              current,
+              path,
+              Set("kind", "analysis_frame", "source_schema", "selected_features", "metric_kind", "metric_dimension", "ridge")
+            )
+            frame <- required(checked, "analysis_frame", path, string(_, s"$path.analysis_frame"))
+            schema <- required(checked, "source_schema", path, string(_, s"$path.source_schema"))
+            features <- required(checked, "selected_features", path, vector(_, s"$path.selected_features", string))
+            metric <- required(checked, "metric_kind", path, string(_, s"$path.metric_kind"))
+            dimension <- required(checked, "metric_dimension", path, integer(_, s"$path.metric_dimension"))
+            ridge <- required(checked, "ridge", path, number(_, s"$path.ridge"))
+          yield ProgramProjectionActionIr.PartialLeastSquares(frame, schema, features, metric, dimension, ridge)
+        case "supplementary_variables" =>
+          for
+            checked <- exact(
+              current,
+              path,
+              Set("kind", "supplementary_table", "fitted_scores", "fitted_rows", "source_components", "convention")
+            )
+            table <- required(checked, "supplementary_table", path, string(_, s"$path.supplementary_table"))
+            scores <- required(checked, "fitted_scores", path, string(_, s"$path.fitted_scores"))
+            rows <- required(checked, "fitted_rows", path, string(_, s"$path.fitted_rows"))
+            components <- required(checked, "source_components", path, vector(_, s"$path.source_components", integer))
+            convention <- required(checked, "convention", path, supplementaryConvention(_, s"$path.convention"))
+          yield ProgramProjectionActionIr.SupplementaryVariables(table, scores, rows, components, convention)
+        case "reconstruction" =>
+          for
+            checked <- exact(
+              current,
+              path,
+              Set("kind", "analysis_frame", "decoder", "source", "components", "target_features", "coordinate")
+            )
+            frame <- required(checked, "analysis_frame", path, string(_, s"$path.analysis_frame"))
+            decoder <- required(checked, "decoder", path, string(_, s"$path.decoder"))
+            source <- required(checked, "source", path, reconstructionSource(_, s"$path.source"))
+            components <- required(checked, "components", path, vector(_, s"$path.components", integer))
+            features <- required(checked, "target_features", path, vector(_, s"$path.target_features", string))
+            coordinate <- required(checked, "coordinate", path, reconstructionCoordinate(_, s"$path.coordinate"))
+          yield ProgramProjectionActionIr.Reconstruction(frame, decoder, source, components, features, coordinate)
+        case "paired_transfer" =>
+          for
+            checked <- exact(
+              current,
+              path,
+              Set("kind", "estimand", "source_space", "target_space", "source_frame", "target_decoder", "scaling")
+            )
+            estimand <- required(checked, "estimand", path, string(_, s"$path.estimand"))
+            source <- required(checked, "source_space", path, string(_, s"$path.source_space"))
+            target <- required(checked, "target_space", path, string(_, s"$path.target_space"))
+            frame <- required(checked, "source_frame", path, string(_, s"$path.source_frame"))
+            decoder <- required(checked, "target_decoder", path, string(_, s"$path.target_decoder"))
+            scaling <- required(checked, "scaling", path, string(_, s"$path.scaling"))
+          yield ProgramProjectionActionIr.PairedTransfer(estimand, source, target, frame, decoder, scaling)
+        case "multiblock_scores" | "multiblock_contribution" =>
+          val allowed =
+            if kind == "multiblock_scores" then Set("kind", "block", "global_frame", "local_frame", "block_schema")
+            else Set("kind", "block", "global_frame", "local_frame", "block_schema", "combination_weight")
+          for
+            checked <- exact(current, path, allowed)
+            block <- required(checked, "block", path, string(_, s"$path.block"))
+            global <- required(checked, "global_frame", path, string(_, s"$path.global_frame"))
+            local <- required(checked, "local_frame", path, string(_, s"$path.local_frame"))
+            schema <- required(checked, "block_schema", path, string(_, s"$path.block_schema"))
+            result <-
+              if kind == "multiblock_scores" then Right(ProgramProjectionActionIr.MultiblockScores(block, global, local, schema))
+              else
+                required(checked, "combination_weight", path, number(_, s"$path.combination_weight"))
+                  .map(ProgramProjectionActionIr.MultiblockContribution(block, global, local, schema, _))
+          yield result
+        case _ => malformed(path, s"unknown projection action '$kind'")
+
+  private def projectionResult(value: IrJson, path: String): Either[IrError, ProgramProjectionResultIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "scores" => exact(current, path, Set("kind")).map(_ => ProgramProjectionResultIr.Scores)
+        case "functional_frame" =>
+          exact(current, path, Set("kind")).map(_ => ProgramProjectionResultIr.FunctionalFrame)
+        case "feature_values" =>
+          exact(current, path, Set("kind", "coordinate"))
+            .flatMap(checked => required(checked, "coordinate", path, reconstructionCoordinate(_, s"$path.coordinate")))
+            .map(ProgramProjectionResultIr.FeatureValues.apply)
+        case "transfer_values" =>
+          exact(current, path, Set("kind")).map(_ => ProgramProjectionResultIr.TransferValues)
+        case _ => malformed(path, s"unknown projection result '$kind'")
+
+  private def synthesisCapability(value: IrJson, path: String): Either[IrError, ProgramSynthesisCapabilityIr] =
+    for
+      current <- fields(
+        value,
+        path,
+        Set(
+          "id",
+          "analysis_frame",
+          "decoder",
+          "policy",
+          "supports_working_coordinates",
+          "supports_original_coordinates",
+          "supports_component_selection",
+          "supports_feature_selection",
+          "provenance"
+        )
+      )
+      id <- required(current, "id", path, string(_, s"$path.id"))
+      frame <- required(current, "analysis_frame", path, string(_, s"$path.analysis_frame"))
+      decoder <- required(current, "decoder", path, string(_, s"$path.decoder"))
+      policy <- required(current, "policy", path, synthesisPolicy(_, s"$path.policy"))
+      working <- required(current, "supports_working_coordinates", path, boolean(_, s"$path.supports_working_coordinates"))
+      original <- required(current, "supports_original_coordinates", path, boolean(_, s"$path.supports_original_coordinates"))
+      components <- required(current, "supports_component_selection", path, boolean(_, s"$path.supports_component_selection"))
+      features <- required(current, "supports_feature_selection", path, boolean(_, s"$path.supports_feature_selection"))
+      provenanceValue <- required(current, "provenance", path, vector(_, s"$path.provenance", provenance))
+    yield ProgramSynthesisCapabilityIr(id, frame, decoder, policy, working, original, components, features, provenanceValue)
+
+  private def synthesisPolicy(value: IrJson, path: String): Either[IrError, ProgramSynthesisPolicyIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "explicit" =>
+          exact(current, path, Set("kind", "decoder_identity"))
+            .flatMap(checked => required(checked, "decoder_identity", path, string(_, s"$path.decoder_identity")))
+            .map(ProgramSynthesisPolicyIr.Explicit.apply)
+        case "orthonormal_transpose" =>
+          exact(current, path, Set("kind", "tolerance"))
+            .flatMap(checked => required(checked, "tolerance", path, number(_, s"$path.tolerance")))
+            .map(ProgramSynthesisPolicyIr.OrthonormalTranspose.apply)
+        case "euclidean_least_squares" =>
+          exact(current, path, Set("kind", "ridge"))
+            .flatMap(checked => required(checked, "ridge", path, number(_, s"$path.ridge")))
+            .map(ProgramSynthesisPolicyIr.EuclideanLeastSquares.apply)
+        case _ => malformed(path, s"unknown synthesis policy '$kind'")
+
+  private def supplementaryConvention(value: IrJson, path: String): Either[IrError, ProgramSupplementaryConventionIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "multivarious_covariance_scaled" =>
+          exact(current, path, Set("kind", "null_policy"))
+            .flatMap(checked => required(checked, "null_policy", path, nullComponentPolicy(_, s"$path.null_policy")))
+            .map(ProgramSupplementaryConventionIr.MultivariousCovarianceScaled.apply)
+        case "metric_least_squares" =>
+          for
+            checked <- exact(current, path, Set("kind", "measure_identity", "centering", "null_policy"))
+            measure <- required(checked, "measure_identity", path, string(_, s"$path.measure_identity"))
+            centering <- required(checked, "centering", path, string(_, s"$path.centering"))
+            policy <- required(checked, "null_policy", path, nullComponentPolicy(_, s"$path.null_policy"))
+          yield ProgramSupplementaryConventionIr.MetricLeastSquares(measure, centering, policy)
+        case _ => malformed(path, s"unknown supplementary convention '$kind'")
+
+  private def nullComponentPolicy(value: IrJson, path: String): Either[IrError, ProgramNullComponentPolicyIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "reject" | "drop" =>
+          exact(current, path, Set("kind", "tolerance"))
+            .flatMap(checked => required(checked, "tolerance", path, number(_, s"$path.tolerance")))
+            .map(current => if kind == "reject" then ProgramNullComponentPolicyIr.Reject(current) else ProgramNullComponentPolicyIr.Drop(current))
+        case "regularize" =>
+          exact(current, path, Set("kind", "ridge"))
+            .flatMap(checked => required(checked, "ridge", path, number(_, s"$path.ridge")))
+            .map(ProgramNullComponentPolicyIr.Regularize.apply)
+        case _ => malformed(path, s"unknown null-component policy '$kind'")
+
+  private def reconstructionSource(value: IrJson, path: String): Either[IrError, ProgramReconstructionSourceIr] =
+    tagged(value, path).flatMap: (kind, current) =>
+      kind match
+        case "supplied_scores" => exact(current, path, Set("kind")).map(_ => ProgramReconstructionSourceIr.SuppliedScores)
+        case "full_projection" => exact(current, path, Set("kind")).map(_ => ProgramReconstructionSourceIr.FullProjection)
+        case "partial_contribution" =>
+          exact(current, path, Set("kind")).map(_ => ProgramReconstructionSourceIr.PartialContribution)
+        case "partial_least_squares" =>
+          for
+            checked <- exact(current, path, Set("kind", "metric_kind", "metric_dimension", "ridge"))
+            metric <- required(checked, "metric_kind", path, string(_, s"$path.metric_kind"))
+            dimension <- required(checked, "metric_dimension", path, integer(_, s"$path.metric_dimension"))
+            ridge <- required(checked, "ridge", path, number(_, s"$path.ridge"))
+          yield ProgramReconstructionSourceIr.PartialLeastSquares(metric, dimension, ridge)
+        case _ => malformed(path, s"unknown reconstruction source '$kind'")
+
+  private def reconstructionCoordinate(
+      value: IrJson,
+      path: String
+  ): Either[IrError, ProgramReconstructionCoordinateIr] =
+    string(value, path).flatMap:
+      case "working" => Right(ProgramReconstructionCoordinateIr.Working)
+      case "original" => Right(ProgramReconstructionCoordinateIr.Original)
+      case other => malformed(path, s"unknown reconstruction coordinate '$other'")
+
   private def tolerance(value: IrJson, path: String): Either[IrError, ToleranceIr] =
     for
       current <- fields(value, path, Set("absolute", "relative"))
@@ -1316,6 +1706,7 @@ private object ProgramIrDecoder:
       case "score" => Right(ProgramOperatorRoleIr.Score)
       case "axis" => Right(ProgramOperatorRoleIr.Axis)
       case "coefficient" => Right(ProgramOperatorRoleIr.Coefficient)
+      case "synthesis" => Right(ProgramOperatorRoleIr.Synthesis)
       case "constraint_map" => Right(ProgramOperatorRoleIr.ConstraintMap)
       case other => malformed(path, s"unknown operator role '$other'")
 

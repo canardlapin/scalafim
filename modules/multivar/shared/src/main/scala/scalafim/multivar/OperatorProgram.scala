@@ -323,18 +323,19 @@ enum BaseObjective:
           binding(expression.source),
           binding(expression.target)
         )
-      case GeneralizedRayleigh(numerator, _) =>
-        Vector(binding(numerator.parameter))
-      case TraceRatio(numerator, _) =>
-        Vector(binding(numerator.parameter))
-      case RatioTrace(numerator, _) =>
-        Vector(binding(numerator.parameter))
+      case GeneralizedRayleigh(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
+      case TraceRatio(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
+      case RatioTrace(numerator, denominator) =>
+        Vector(binding(numerator.parameter), binding(denominator.parameter))
       case MinimizeDisagreement(expression) =>
         Vector(binding(expression.parameter))
-      case SequentialCrossRegression(cross, _) =>
+      case SequentialCrossRegression(cross, predictor) =>
         Vector(
           binding(cross.source),
-          binding(cross.target)
+          binding(cross.target),
+          binding(predictor.parameter)
         )
 
   private def binding(variable: FrameVariable[?, ?]): ObjectiveBinding =
@@ -451,14 +452,21 @@ enum FunctionalKind:
           Set(OracleCapability.Proximal, OracleCapability.Conic),
           symmetry
         )
-      case ElasticNet(_) | SparseGroup(_, _) =>
+      case SparseGroup(_, _) =>
+        FunctionalTraits(
+          ConvexityTrait.Convex,
+          SmoothnessTrait.Nonsmooth,
+          HomogeneityTrait.DegreeOne,
+          SeparabilityTrait.Blockwise,
+          Set(OracleCapability.Proximal, OracleCapability.Conic),
+          symmetry
+        )
+      case ElasticNet(_) =>
         FunctionalTraits(
           ConvexityTrait.Convex,
           SmoothnessTrait.Nonsmooth,
           HomogeneityTrait.None,
-          this match
-            case ElasticNet(_) => SeparabilityTrait.Elementwise
-            case _ => SeparabilityTrait.Blockwise,
+          SeparabilityTrait.Elementwise,
           Set(OracleCapability.Proximal, OracleCapability.Conic),
           symmetry
         )
@@ -761,9 +769,7 @@ object OperatorProgram:
       objective: BaseObjective
   ): Either[ProgramError, Unit] =
     val bindings = objective.bindings
-    if bindings.length > 1 && bindings.map(_.parameter).distinct.length != bindings.length then
-      Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct frame parameters"))
-    else
+    validateObjectiveIdentities(objective).flatMap: _ =>
       bindings.foldLeft[Either[ProgramError, Unit]](Right(())): (result, binding) =>
         result.flatMap: _ =>
           parameters.find(_.variable.id == binding.parameter) match
@@ -776,6 +782,27 @@ object OperatorProgram:
               else if actualComponent != binding.componentSpace then
                 Left(ProgramError.ComponentSpaceMismatch(binding.parameter, binding.componentSpace, actualComponent))
               else Right(())
+
+  private def validateObjectiveIdentities(objective: BaseObjective): Either[ProgramError, Unit] =
+    objective match
+      case BaseObjective.MaximizeCrossTrace(expression) if expression.source.id == expression.target.id =>
+        Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct frame parameters"))
+      case BaseObjective.GeneralizedRayleigh(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("generalized-rayleigh numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.TraceRatio(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("trace-ratio numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.RatioTrace(numerator, denominator)
+          if numerator.parameter.id != denominator.parameter.id =>
+        Left(ProgramError.InvalidParameterization("ratio-trace numerator and denominator must bind the same frame parameter"))
+      case BaseObjective.SequentialCrossRegression(cross, _)
+          if cross.source.id == cross.target.id =>
+        Left(ProgramError.InvalidParameterization(s"${objective.label} requires distinct source and target frame parameters"))
+      case BaseObjective.SequentialCrossRegression(cross, predictor)
+          if cross.source.id != predictor.parameter.id =>
+        Left(ProgramError.InvalidParameterization("sequential-cross-regression predictor must bind the cross-expression source parameter"))
+      case _ => Right(())
 
   private def validateNormalizations(
       parameters: Vector[FrameParameterization[? <: SemanticSpace, ? <: SemanticSpace]],
@@ -812,6 +839,180 @@ final case class NumericalIdentifiability(
     context: CertificateContext
 )
 
+/** Evidence for the guarantee actually achieved by one solver run.
+  *
+  * A program's result semantics state the guarantee required of a conforming
+  * fit. The attestation is created only after the returned frames and their
+  * numerical residual have been checked, so a fit cannot merely repeat that
+  * declaration without solver evidence.
+  */
+final case class SolverAttestation private (
+    achievement: AchievedOptimizationGuarantee,
+    certificate: NumericalCertificate
+):
+  def guarantee: SolverGuarantee =
+    achievement.legacyGuarantee
+
+object SolverAttestation:
+  private[multivar] def exactSpectral(
+      program: OperatorProgram,
+      frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
+      objectiveValue: Double,
+      identifiability: NumericalIdentifiability
+  ): Either[ProgramError, SolverAttestation] =
+    if program.resultSemantics.guarantee != SolverGuarantee.GlobalSpectralOptimum then
+      Left(ProgramError.InvalidResult("an exact spectral attestation requires a spectral program contract"))
+    else
+      val contract = MathematicalContractCatalog.exactSpectralFrame
+      for
+        proof <- proofBoundary(program, frames, objectiveValue, identifiability, contract.id)
+        (bindings, certificate, evidence) = proof
+        symmetry <- TheoremAssumptionWitness
+          .from(
+            bindings,
+            ContractReference.unsafeAssumption("symmetric-value-operator"),
+            Vector(bindings.operators.head),
+            TheoremAssumptionEvidence.StaticType
+          )
+          .left
+          .map(proofError)
+        normalization <- TheoremAssumptionWitness
+          .from(
+            bindings,
+            ContractReference.unsafeAssumption("spd-normalization"),
+            program.normalizations.map(_.geometry.valueIdentity),
+            TheoremAssumptionEvidence.StaticType
+          )
+          .left
+          .map(proofError)
+        spectrum <- TheoremAssumptionWitness
+          .from(
+            bindings,
+            ContractReference.unsafeAssumption("certified-spectrum"),
+            Vector(bindings.result),
+            TheoremAssumptionEvidence.Numerical(certificate)
+          )
+          .left
+          .map(proofError)
+        assumptions <- OptimizationAssumptions
+          .from(bindings, theoremAssumptions = Vector(symmetry, normalization, spectrum))
+          .left
+          .map(proofError)
+        witness <- GlobalOptimalityWitness
+          .from(
+            bindings,
+            ContractReference.unsafeTheorem("symmetric-generalized-spectrum"),
+            assumptions.assumptionReferences,
+            OracleFamily.Analytic
+          )
+          .left
+          .map(proofError)
+        achievement <- OptimizationGuaranteeAdmission
+          .admit(
+            contract,
+            OptimizationClaimClass.ExactGlobal,
+            assumptions,
+            Set.empty,
+            evidence,
+            Some(witness)
+          )
+          .left
+          .map(proofError)
+      yield new SolverAttestation(achievement, certificate)
+
+  private[multivar] def stationary(
+      program: OperatorProgram,
+      frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
+      objectiveValue: Double,
+      identifiability: NumericalIdentifiability
+  ): Either[ProgramError, SolverAttestation] =
+    if program.resultSemantics.guarantee != SolverGuarantee.StationaryPoint then
+      Left(ProgramError.InvalidResult("a stationary attestation requires a stationary program contract"))
+    else
+      for
+        proof <- proofBoundary(
+          program,
+          frames,
+          objectiveValue,
+          identifiability,
+          ContractReference.unsafeModel("operator-program.stationary.v1")
+        )
+        (_, certificate, evidence) = proof
+        residual <- NonNegativeProofBound.residual(identifiability.residual).left.map(proofError)
+      yield new SolverAttestation(AchievedOptimizationGuarantee.Stationary(residual, evidence), certificate)
+
+  private def proofBoundary(
+      program: OperatorProgram,
+      frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
+      objectiveValue: Double,
+      identifiability: NumericalIdentifiability,
+      contract: ContractReference[ModelContractReference]
+  ): Either[
+    ProgramError,
+    (OptimizationIdentityBindings, NumericalCertificate, SemanticOptimizationEvidence)
+  ] =
+    val operators = operatorIdentities(program)
+    val resultIdentity = ValueIdentity.derived(
+      "operator-program-fit",
+      frames.map(_.frame.weights.valueIdentity)*
+    )
+    val programIdentity = ValueIdentity.Derived(s"operator-program-${program.objective.label}", operators)
+    for
+      bindings <- OptimizationIdentityBindings
+        .from(
+          contract,
+          programIdentity,
+          ValueIdentity.Derived("operator-program-data", operators),
+          ObservationMaskIdentity.Complete,
+          operators,
+          program.parameters.map(_.variable.id),
+          resultIdentity
+        )
+        .left
+        .map(proofError)
+      converged <- Certificate
+        .converged(
+          resultIdentity,
+          iterations = 0,
+          identifiability.residual,
+          Math.max(1.0, Math.abs(objectiveValue)),
+          identifiability.context
+        )
+        .left
+        .map(error => ProgramError.InvalidResult(s"solver convergence was not certified: ${error.message}"))
+      residual <- NonNegativeProofBound.residual(identifiability.residual).left.map(proofError)
+      evidence <- SemanticOptimizationEvidence
+        .from(
+          bindings,
+          NumericalTermination.Converged,
+          stationarity = Some(residual),
+          numericalCertificates = Vector(converged.runtime)
+        )
+        .left
+        .map(proofError)
+    yield (bindings, converged.runtime, evidence)
+
+  private[multivar] def operatorIdentities(program: OperatorProgram): Vector[ValueIdentity] =
+    val objective = program.objective match
+      case BaseObjective.MaximizeTrace(expression) => Vector(expression.secondOrder.valueIdentity)
+      case BaseObjective.MaximizeCrossTrace(expression) => Vector(expression.secondOrder.valueIdentity)
+      case BaseObjective.GeneralizedRayleigh(numerator, denominator) =>
+        Vector(numerator.secondOrder.valueIdentity, denominator.secondOrder.valueIdentity)
+      case BaseObjective.TraceRatio(numerator, denominator) =>
+        Vector(numerator.secondOrder.valueIdentity, denominator.secondOrder.valueIdentity)
+      case BaseObjective.RatioTrace(numerator, denominator) =>
+        Vector(numerator.secondOrder.valueIdentity, denominator.secondOrder.valueIdentity)
+      case BaseObjective.MinimizeDisagreement(expression) => Vector(expression.secondOrder.valueIdentity)
+      case BaseObjective.SequentialCrossRegression(cross, predictor) =>
+        Vector(cross.secondOrder.valueIdentity, predictor.secondOrder.valueIdentity)
+    (objective ++
+      program.normalizations.map(_.geometry.valueIdentity) ++
+      program.penalties.flatMap(_.target.operators) ++
+      program.constraints.flatMap(_.target.operators)).distinct
+
+  private def proofError(error: OptimizationGuaranteeError): ProgramError =
+    ProgramError.InvalidResult(s"optimization proof was rejected: ${error.message}")
+
 final case class FittedFrame[
     Feature <: SemanticSpace,
     Component <: SemanticSpace,
@@ -826,19 +1027,52 @@ final case class OperatorProgramFit(
     frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
     objectiveValue: Double,
     identifiability: NumericalIdentifiability,
+    solverAttestation: SolverAttestation,
     provenance: SemanticProvenance
 )
 
 object OperatorProgramFit:
-  def from(
+  def exactSpectral(
       program: OperatorProgram,
       frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
       objectiveValue: Double,
       identifiability: NumericalIdentifiability,
       provenance: SemanticProvenance
   ): Either[ProgramError, OperatorProgramFit] =
+    for
+      attestation <- SolverAttestation.exactSpectral(program, frames, objectiveValue, identifiability)
+      fit <- from(program, frames, objectiveValue, identifiability, attestation, provenance)
+    yield fit
+
+  def stationary(
+      program: OperatorProgram,
+      frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
+      objectiveValue: Double,
+      identifiability: NumericalIdentifiability,
+      provenance: SemanticProvenance
+  ): Either[ProgramError, OperatorProgramFit] =
+    for
+      attestation <- SolverAttestation.stationary(program, frames, objectiveValue, identifiability)
+      fit <- from(program, frames, objectiveValue, identifiability, attestation, provenance)
+    yield fit
+
+  def from(
+      program: OperatorProgram,
+      frames: Vector[FittedFrame[? <: SemanticSpace, ? <: SemanticSpace, ? <: OperatorEvidence]],
+      objectiveValue: Double,
+      identifiability: NumericalIdentifiability,
+      solverAttestation: SolverAttestation,
+      provenance: SemanticProvenance
+  ): Either[ProgramError, OperatorProgramFit] =
     val expected = program.parameters.map(_.variable.id).toSet
     val actual = frames.map(_.parameter.id)
+    val expectedOperators = SolverAttestation.operatorIdentities(program)
+    val expectedProgramIdentity = ValueIdentity.Derived(s"operator-program-${program.objective.label}", expectedOperators)
+    val expectedDataIdentity = ValueIdentity.Derived("operator-program-data", expectedOperators)
+    val fitIdentity = ValueIdentity.derived(
+      "operator-program-fit",
+      frames.map(_.frame.weights.valueIdentity)*
+    )
     if !objectiveValue.isFinite then Left(ProgramError.InvalidResult("objective value must be finite"))
     else if identifiability.retainedRank < 0 || !identifiability.residual.isFinite || identifiability.residual < 0.0 then
       Left(ProgramError.InvalidResult("identifiability rank and residual must be finite and non-negative"))
@@ -849,7 +1083,31 @@ object OperatorProgramFit:
           declared.variable.featureSpace.descriptor != fitted.parameter.featureSpace.descriptor ||
             declared.variable.componentSpace.descriptor != fitted.parameter.componentSpace.descriptor
     then Left(ProgramError.InvalidResult("fitted frame spaces must match their declared program parameter"))
-    else Right(OperatorProgramFit(program, frames, objectiveValue, identifiability, provenance))
+    else if solverAttestation.achievement.semanticEvidence.bindings.result != fitIdentity then
+      Left(ProgramError.InvalidResult("solver attestation does not bind the returned frame identities"))
+    else if solverAttestation.achievement.semanticEvidence.bindings.program != expectedProgramIdentity then
+      Left(ProgramError.InvalidResult("solver attestation does not bind the fitted operator program"))
+    else if solverAttestation.achievement.semanticEvidence.bindings.data != expectedDataIdentity then
+      Left(ProgramError.InvalidResult("solver attestation does not bind the program data operators"))
+    else if solverAttestation.achievement.semanticEvidence.bindings.mask != ObservationMaskIdentity.Complete then
+      Left(ProgramError.InvalidResult("an unmasked operator program requires an explicit complete-data attestation"))
+    else if solverAttestation.achievement.semanticEvidence.bindings.operators != expectedOperators then
+      Left(ProgramError.InvalidResult("solver attestation does not bind the program operators"))
+    else if solverAttestation.achievement.semanticEvidence.bindings.parameters.toSet != expected then
+      Left(ProgramError.InvalidResult("solver attestation does not bind the program parameters"))
+    else if solverAttestation.guarantee != program.resultSemantics.guarantee then
+      Left(ProgramError.InvalidResult("solver attestation does not attain the program's declared guarantee"))
+    else
+      Right(
+        OperatorProgramFit(
+          program,
+          frames,
+          objectiveValue,
+          identifiability,
+          solverAttestation,
+          provenance
+        )
+      )
 
 /** Named method constructors assemble the shared program vocabulary; they do
   * not introduce method-specific solver or matrix representations.

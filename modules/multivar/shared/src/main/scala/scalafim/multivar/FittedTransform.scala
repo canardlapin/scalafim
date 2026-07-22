@@ -21,9 +21,11 @@ final case class TransformDiagnostics(
   */
 final class FittedFrameTransform private (
     val trainingRowSpace: SpaceRef,
+    val trainingRowSchema: RowSchema,
     val featureSpace: SpaceRef,
     val componentSpace: SpaceRef,
     val preprocessor: FittedPreprocessor,
+    val featureSchema: FeatureSchema,
     val diagnostics: TransformDiagnostics,
     val provenance: SemanticProvenance
 )(
@@ -31,6 +33,37 @@ final class FittedFrameTransform private (
     val trainingScores: Op[Primal[componentSpace.Id], Primal[trainingRowSpace.Id], ScoreOperatorRole, UncheckedEvidence],
     val trainingValues: DMat
 ):
+  def requireSynthesis: Either[MultivarError, FittedBidirectionalTransform] =
+    Left(
+      MultivarError.DecoderUnavailable(
+        s"fitted frame '${diagnostics.method}' has analysis capability only; attach an explicit synthesis policy"
+      )
+    )
+
+  def withExplicitSynthesis(
+      decoder: DMat,
+      identity: ValueIdentity
+  ): Either[MultivarError, FittedBidirectionalTransform] =
+    FittedBidirectionalTransform.explicit(this, decoder, identity)
+
+  def withEuclideanSynthesis(
+      ridge: Ridge
+  ): Either[MultivarError, FittedBidirectionalTransform] =
+    FittedBidirectionalTransform.euclideanLeastSquares(this, ridge)
+
+  def withOrthonormalSynthesis(
+      tolerance: SynthesisTolerance = SynthesisTolerance.default
+  ): Either[MultivarError, FittedBidirectionalTransform] =
+    FittedBidirectionalTransform.orthonormalTranspose(this, tolerance)
+
+  def supplementary: SupplementaryProjector[trainingRowSpace.Id, componentSpace.Id] =
+    SupplementaryProjector.from(this)
+
+  def restrictFeatures(
+      columns: IndexSet
+  ): Either[MultivarError, RestrictedFrameTransform[featureSpace.Id, componentSpace.Id]] =
+    RestrictedFrameTransform.from(this, columns)
+
   def project(input: MatrixView): Either[MultivarError, DMat] =
     if input.cols != featureSpace.descriptor.size then
       Left(
@@ -68,7 +101,9 @@ object FittedFrameTransform:
       preprocessor: FittedPreprocessor,
       method: String,
       requested: ComponentCount,
-      spectrum: Option[DVec] = None
+      spectrum: Option[DVec] = None,
+      featureIds: Option[Vector[FeatureId]] = None,
+      rowIds: Option[Vector[RowId]] = None
   ): Either[MultivarError, FittedFrameTransform] =
     if weights.rows != input.cols then
       Left(
@@ -87,6 +122,13 @@ object FittedFrameTransform:
           features <- SpaceRef.of(s"$cleanMethod.features", SpaceRole.Observed, input.cols)
           components <- SpaceRef.of(s"$cleanMethod.components", SpaceRole.Latent, weights.cols)
           provenance = SemanticProvenance.source(s"$cleanMethod-fitted-frame")
+          frameIdentity = ValueIdentity.source(ValueId.unsafe(s"$cleanMethod.functional-frame"))
+          rowSchema <- rowIds match
+            case Some(ids) => RowSchema.from(rows.descriptor, ids, ValueIdentity.derived("training-row-schema", frameIdentity))
+            case None      => RowSchema.positional(rows.descriptor, ValueIdentity.derived("training-row-schema", frameIdentity))
+          schema <- featureIds match
+            case Some(ids) => FeatureSchema.from(features.descriptor, ids, ValueIdentity.derived("feature-schema", frameIdentity))
+            case None      => FeatureSchema.positional(features.descriptor, ValueIdentity.derived("feature-schema", frameIdentity))
           table <- transformSemantic(
             Op.fromMatrixView(
               processed,
@@ -103,7 +145,7 @@ object FittedFrameTransform:
               CoordinateEvidence.primal(components.evidence),
               CoordinateEvidence.dual(features.evidence),
               OperatorRoleWitness.frame,
-              ValueIdentity.source(ValueId.unsafe(s"$cleanMethod.functional-frame")),
+              frameIdentity,
               provenance
             )
           )
@@ -113,9 +155,11 @@ object FittedFrameTransform:
         yield
           new FittedFrameTransform(
             rows,
+            rowSchema,
             features,
             components,
             preprocessor,
+            schema,
             TransformDiagnostics(cleanMethod, requested, weights.cols, spectrum),
             provenance
           )(
