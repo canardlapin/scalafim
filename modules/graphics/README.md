@@ -27,6 +27,9 @@ typed algebra those backends can interpret later:
 The module has no internal dependencies and cross-compiles to JVM and Scala.js.
 Domain modules should export plot specifications or scenes into this module;
 platform renderers should consume `DeviceScene` values at a boundary.
+The frozen standalone artifact matrix, namespace decision, versioning policy,
+and lift-and-shift release procedure are documented in
+[`docs/plans/graphics-extraction.md`](../../docs/plans/graphics-extraction.md).
 
 ## Plotting DSL
 

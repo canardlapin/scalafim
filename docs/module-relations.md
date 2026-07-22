@@ -76,6 +76,13 @@ bids + dataset + model + fit + group
 +-- fmri-workflow     outer composition only; no lower module depends back on it
 ```
 
+The `graphics` subtree has a stricter extraction boundary: core has no internal
+dependency, and SVG, Canvas, Java2D, and JavaFX each depend only on core. Image
+and design modules consume that public API but are not part of the standalone
+artifact family. The frozen artifact matrix and lift-and-shift procedure are in
+[`plans/graphics-extraction.md`](plans/graphics-extraction.md); the boundary is
+enforced by `GraphicsExtractionGuardSuite` in `graphicsJVM/test`.
+
 `pipeline` depends only on `graph` for validated DAG layering. It owns generic
 graph orchestration without forcing workflow dependencies into the computational core;
 `fmri-workflow` will add that edge when its orchestration lowering lands.
