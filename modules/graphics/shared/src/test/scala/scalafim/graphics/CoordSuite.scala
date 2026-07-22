@@ -60,6 +60,27 @@ class CoordSuite extends munit.FunSuite:
     assertEqualsDouble(native(first.size.height.expr), 2.0, tol)
   }
 
+  test("flipped coordinates transpose every ring of compound polygons") {
+    val axis = RegularGridAxis.vertexCenteredUnsafe(-2.0, 2.0, 41)
+    val field = ScalarField2D.tabulate(axis, axis)((x, y) => x * x + y * y).toOption.get
+    val bands = ContourBandSet.extract(field, ContourBreaks.atUnsafe(Vector(0.25, 1.0))).toOption.get
+    val ordinary = plot(bands).geomFilledContour().resolve.fold(error => fail(error.message), identity)
+    val flipped =
+      plot(bands)
+        .coord(Coord.Flipped())
+        .geomFilledContour()
+        .resolve
+        .fold(error => fail(error.message), identity)
+    val ordinaryRings = ordinary.layers.head.grobs.head.asInstanceOf[Grob.CompoundPolygon].rings
+    val flippedRings = flipped.layers.head.grobs.head.asInstanceOf[Grob.CompoundPolygon].rings
+
+    assertEquals(flippedRings.map(_.length), ordinaryRings.map(_.length))
+    ordinaryRings.flatten.zip(flippedRings.flatten).foreach { case (point, transposed) =>
+      assertEqualsDouble(native(transposed.x), native(point.y), tol)
+      assertEqualsDouble(native(transposed.y), native(point.x), tol)
+    }
+  }
+
   test("derived x and y guides follow flipped physical axes") {
     val data = Vector(Observation(0.0, 10.0), Observation(1.0, 20.0), Observation(2.0, 30.0))
     val trained =

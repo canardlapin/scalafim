@@ -1240,6 +1240,8 @@ private[graphics] object CoordPhase:
         lines.copy(points = lines.points.map(flipPoint))
       case polygon: Grob.Polygon =>
         polygon.copy(points = polygon.points.map(flipPoint))
+      case polygon: Grob.CompoundPolygon =>
+        polygon.copy(rings = polygon.rings.map(_.map(flipPoint)))
       case segments: Grob.Segments =>
         segments.copy(segments = segments.segments.map { case (start, end) => (flipPoint(start), flipPoint(end)) })
       case rect: Grob.Rect =>
