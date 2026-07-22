@@ -102,7 +102,7 @@ class OptimizationGuaranteesSuite extends munit.FunSuite:
       .get
 
     assertEquals(result.claimClass, OptimizationClaimClass.ExactGlobal)
-    assertEquals(result.legacyGuarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(result.semanticEvidence.bindings.contract, MathematicalContractCatalog.exactSpectralFrame.id)
 
   test("compiler-style admission reports every absent proof obligation"):
     val fixture = anchorFixture()

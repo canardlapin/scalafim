@@ -2,6 +2,8 @@ package scalafim.multivar
 
 import gale.linalg.DMat
 import gale.linalg.DVec
+import scalafim.linalg.FirstOrderConfig
+import scalafim.linalg.FirstOrderTolerance
 
 class FittedLatentEncoderSuite extends munit.FunSuite:
 
@@ -15,7 +17,23 @@ class FittedLatentEncoderSuite extends munit.FunSuite:
     assertEquals(result.support.features.indices, Vector(0))
     assertEqualsDouble(result.objective.total, 0.9, 2e-7)
     assert(result.certificate.proxGradientResidual <= 3e-7)
-    assert(result.achievement.isInstanceOf[LatentEncodingAchievement.EpsilonStationary])
+    assert(result.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.Stationary])
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.bindings.program,
+      encoder.encoderIdentity
+    )
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.bindings.data,
+      pattern.valueIdentity
+    )
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.bindings.mask,
+      ObservationMaskIdentity.Observed(pattern.valueIdentity)
+    )
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.bindings.result,
+      result.resultIdentity
+    )
     result.uniqueness match
       case LatentCodeUniqueness.UniqueByStrongConvexity(modulus) =>
         assertEqualsDouble(modulus.doubleValue, 1.0, 1e-14)
@@ -40,6 +58,24 @@ class FittedLatentEncoderSuite extends munit.FunSuite:
     assertEqualsDouble(result.code.values(1), -1.0, 2e-7)
     assertEqualsDouble(result.objective.total, 0.0, 2e-12)
     assert(result.uniqueness.isInstanceOf[LatentCodeUniqueness.UniqueByStrongConvexity])
+
+  test("iteration exhaustion is an evidence-bound unresolved achievement"):
+    val fixture = quadraticFixture("limited-code", latentDimension = 1, decoder = matrix(Vector(Vector(2.0))))
+    val config = acceptedFirstOrder(FirstOrderConfig.from(1, FirstOrderTolerance.strict))
+    val encoder = accepted(FittedLatentEncoder.from(fixture.decoder, config = config))
+    val pattern = fixture.densePattern(Vector(ObservationCell.Observed(3.0)), "limited-code-pattern")
+    val result = accepted(encoder.encode(pattern))
+
+    assertEquals(result.achievedGuarantee.claimClass, OptimizationClaimClass.Unresolved)
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.termination,
+      NumericalTermination.IterationLimit
+    )
+    assert(result.achievedGuarantee.semanticEvidence.stationarity.nonEmpty)
+    assertEquals(
+      result.achievedGuarantee.semanticEvidence.bindings.result,
+      result.resultIdentity
+    )
 
   test("logistic ridge encoding matches an independent monotone root oracle"):
     val fixture = makeFixture(
@@ -312,6 +348,9 @@ class FittedLatentEncoderSuite extends munit.FunSuite:
 
   private def sigmoid(value: Double): Double =
     1.0 / (1.0 + Math.exp(-value))
+
+  private def acceptedFirstOrder[A](result: Either[scalafim.linalg.FirstOrderError, A]): A =
+    result.fold(error => fail(error.message), identity)
 
   private def matrix(values: Vector[Vector[Double]]): DMat =
     GaleNumerics.matrixFromRows(values)

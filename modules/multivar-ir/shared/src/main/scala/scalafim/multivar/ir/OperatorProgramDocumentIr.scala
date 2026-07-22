@@ -553,7 +553,7 @@ object ProgramSemanticIr:
       value.identifiability.retainedRank,
       value.identifiability.spectralClusters,
       Vector(certificate(value.solverAttestation.certificate)),
-      guarantee(value.solverAttestation.guarantee),
+      achievedGuarantee(value.achievedGuarantee),
       equivalence(value.program.resultSemantics.equivalence),
       SemanticIr.provenance(value.provenance)
     )
@@ -1008,7 +1008,7 @@ object ProgramSemanticIr:
           ProgramRepresentativeIr.ProcrustesToReference(reference.stableKey)
         case RepresentativeRule.PredictionMap => ProgramRepresentativeIr.PredictionMap
         case RepresentativeRule.ObjectiveValueOnly => ProgramRepresentativeIr.ObjectiveValueOnly,
-      guarantee(value.guarantee),
+      requestedGuarantee(value.requestedClaim),
       value.parameterIdentifiability.redundantCoordinates,
       value.parameterIdentifiability.gauges.map(_.toString)
     )
@@ -1032,16 +1032,31 @@ object ProgramSemanticIr:
         )
       case ResultEquivalence.ObjectiveEquivalent(current) => ProgramEquivalenceIr.Objective(tolerance(current))
 
-  def guarantee(value: SolverGuarantee): ProgramSolverGuaranteeIr =
+  private def requestedGuarantee(value: RequestedOptimizationClaim): ProgramSolverGuaranteeIr =
     value match
-      case SolverGuarantee.GlobalSpectralOptimum => ProgramSolverGuaranteeIr.GlobalSpectralOptimum
-      case SolverGuarantee.GlobalConvexOptimum => ProgramSolverGuaranteeIr.GlobalConvexOptimum
-      case SolverGuarantee.StationaryPoint => ProgramSolverGuaranteeIr.StationaryPoint
-      case SolverGuarantee.FeasiblePoint => ProgramSolverGuaranteeIr.FeasiblePoint
-      case SolverGuarantee.CoordinatewiseStationary => ProgramSolverGuaranteeIr.CoordinatewiseStationary
-      case SolverGuarantee.LocallyOptimal => ProgramSolverGuaranteeIr.LocallyOptimal
-      case SolverGuarantee.HeuristicFeasible => ProgramSolverGuaranteeIr.HeuristicFeasible
-      case SolverGuarantee.Unresolved => ProgramSolverGuaranteeIr.Unresolved
+      case RequestedOptimizationClaim.ExactGlobal => ProgramSolverGuaranteeIr.GlobalSpectralOptimum
+      case RequestedOptimizationClaim.EpsilonGlobal | RequestedOptimizationClaim.UniqueMinimizerWithinBound =>
+        ProgramSolverGuaranteeIr.GlobalConvexOptimum
+      case RequestedOptimizationClaim.Stationary => ProgramSolverGuaranteeIr.StationaryPoint
+      case RequestedOptimizationClaim.CoordinatewiseStationary =>
+        ProgramSolverGuaranteeIr.CoordinatewiseStationary
+      case RequestedOptimizationClaim.Feasible => ProgramSolverGuaranteeIr.FeasiblePoint
+
+  /** Compatibility adapter for the 0.2 solver-guarantee wire vocabulary. */
+  private def achievedGuarantee(value: AchievedOptimizationGuarantee): ProgramSolverGuaranteeIr =
+    value match
+      case AchievedOptimizationGuarantee.ExactGlobal(_, evidence)
+          if evidence.bindings.contract == MathematicalContractCatalog.exactSpectralFrame.id =>
+        ProgramSolverGuaranteeIr.GlobalSpectralOptimum
+      case AchievedOptimizationGuarantee.ExactGlobal(_, _) |
+          AchievedOptimizationGuarantee.EpsilonGlobal(_, _) |
+          AchievedOptimizationGuarantee.UniqueMinimizerWithinBound(_, _) =>
+        ProgramSolverGuaranteeIr.GlobalConvexOptimum
+      case AchievedOptimizationGuarantee.Stationary(_, _) => ProgramSolverGuaranteeIr.StationaryPoint
+      case AchievedOptimizationGuarantee.CoordinatewiseStationary(_, _) =>
+        ProgramSolverGuaranteeIr.CoordinatewiseStationary
+      case AchievedOptimizationGuarantee.FeasibleOnly(_, _) => ProgramSolverGuaranteeIr.FeasiblePoint
+      case AchievedOptimizationGuarantee.Unresolved(_, _) => ProgramSolverGuaranteeIr.Unresolved
 
   private def symmetry(value: FrameSymmetry): ProgramFrameSymmetryIr =
     value match

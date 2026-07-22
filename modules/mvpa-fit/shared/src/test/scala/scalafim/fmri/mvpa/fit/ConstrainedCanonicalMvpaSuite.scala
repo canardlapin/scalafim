@@ -17,7 +17,7 @@ import scalafim.multivar.{
   CanonicalEffectReferenceFixtures as R,
   FeasibleSetKind,
   ResidualRegularization,
-  SolverGuarantee,
+  RequestedOptimizationClaim,
   TraceRidgeFraction
 }
 
@@ -38,7 +38,10 @@ class ConstrainedCanonicalMvpaSuite extends munit.FunSuite:
         actual.trainingFit.programFit.program.constraints.map(_.feasibleSet),
         Vector(FeasibleSetKind.NonnegativeOrthant)
       )
-      assertEquals(actual.trainingFit.programFit.program.resultSemantics.guarantee, SolverGuarantee.StationaryPoint)
+      assertEquals(
+        actual.trainingFit.programFit.program.resultSemantics.requestedClaim,
+        RequestedOptimizationClaim.Stationary
+      )
       assertEquals(actual.receipt.execution, CanonicalMomentExecution.RunwiseSufficientStatistics)
 
     assertEqualsDouble(payload.meanHeldOutRoot, ConstrainedCanonicalReferenceFixtures.meanHeldOutRoot, 1e-7)

@@ -79,9 +79,7 @@ final case class VariationalFunctionalFrameFit[
     certificate: VariationalFrameCertificate,
     lowering: VariationalLoweringContract,
     provenance: SemanticProvenance
-):
-  def attainedGuarantee: Option[SolverGuarantee] =
-    legacyAttainedGuarantee(achievement)
+)
 
 final case class AlignedVariationalFunctionalFrameFit[
     Source <: SemanticSpace,
@@ -97,9 +95,7 @@ final case class AlignedVariationalFunctionalFrameFit[
     certificate: VariationalFrameCertificate,
     lowering: VariationalLoweringContract,
     provenance: SemanticProvenance
-):
-  def attainedGuarantee: Option[SolverGuarantee] =
-    legacyAttainedGuarantee(achievement)
+)
 
 object VariationalFunctionalFrames:
   def alignedScorePenalty[
@@ -647,10 +643,3 @@ object VariationalFunctionalFrames:
         column += 1
       row += 1
     result
-
-private def legacyAttainedGuarantee(
-    achievement: AchievedOptimizationGuarantee
-): Option[SolverGuarantee] =
-  achievement match
-    case AchievedOptimizationGuarantee.Unresolved(_, _) => None
-    case resolved => Some(resolved.legacyGuarantee)

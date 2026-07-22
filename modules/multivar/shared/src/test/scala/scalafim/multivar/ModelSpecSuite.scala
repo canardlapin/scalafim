@@ -128,7 +128,7 @@ class ModelSpecSuite extends munit.FunSuite:
       Vector(rows(2), rows(0))
     )
 
-  test("certified ModelFit exposes requested and lowered programs, operators, terms, auxiliaries, guarantee, and provenance"):
+  test("certified ModelFit exposes requested and lowered programs, operators, terms, auxiliaries, achieved guarantee, and provenance"):
     val fixture = modelFixture()
     val fit = accepted(fixture.spec.fit(fixture.study, fixture.outer))
 
@@ -139,14 +139,14 @@ class ModelSpecSuite extends munit.FunSuite:
     assertEquals(fit.auxiliaryVariables, Vector.empty)
     assertEquals(fit.pipeline.splitMethod, None)
     assert(fit.effectiveOperators.map(_.label).contains("covariance"))
-    assertEquals(fit.guarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(fit.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
     assertEquals(fit.missingness, MissingnessPolicy.RejectNonFinite)
     assertEquals(fit.lifecyclePlans, lifecyclePlans)
     assertEquals(fit.solverPolicy.artifact, "gale-generalized-eigen")
     assertEquals(fit.solverExecution.artifact, fit.solverPolicy.artifact)
     assertEquals(fit.solverExecution.attestation, fit.pipeline.fitBundle.programFit.solverAttestation)
     assertEquals(fit.solverExecution.settings.toMap.get("components"), Some("2"))
-    assert(fit.solverPolicy.acceptedGuarantees.contains(fit.guarantee))
+    assert(fit.solverPolicy.accepts(fit.achievedGuarantee))
     assert(fit.provenance.events.nonEmpty)
     assert(fit.pipeline.events.exists(_.stage == LifecycleStage.Solve))
 
@@ -174,8 +174,8 @@ class ModelSpecSuite extends munit.FunSuite:
         assert(value.isNaN)
       case other => fail(s"expected explicit non-finite rejection, got $other")
 
-  test("solver policy rejects a guarantee outside the declared acceptance contract"):
-    val fixture = modelFixture(acceptedGuarantees = Set(SolverGuarantee.FeasiblePoint))
+  test("solver policy rejects an achieved claim outside the declared acceptance contract"):
+    val fixture = modelFixture(acceptedClaims = Set(OptimizationClaimClass.Feasible))
 
     fixture.spec.fit(fixture.study, fixture.outer).left.toOption match
       case Some(ModelSpecError.InvalidDefinition(reason)) =>
@@ -385,7 +385,7 @@ class ModelSpecSuite extends munit.FunSuite:
 
   private def modelFixture(
       pipeline: FoldPipeline = new AuditedGpcaPipeline,
-      acceptedGuarantees: Set[SolverGuarantee] = Set(SolverGuarantee.GlobalSpectralOptimum),
+      acceptedClaims: Set[OptimizationClaimClass] = Set(OptimizationClaimClass.ExactGlobal),
       plans: Vector[LifecyclePlan] = lifecyclePlans
   ): ModelFixture =
     val values = matrix(
@@ -467,7 +467,7 @@ class ModelSpecSuite extends munit.FunSuite:
         pipeline,
         GpcaCapturedVariance,
         GpcaFrameTransformer,
-        ModelSolverPolicy.unsafe("gale-generalized-eigen", Set.empty, acceptedGuarantees),
+        ModelSolverPolicy.unsafe("gale-generalized-eigen", Set.empty, acceptedClaims),
         DeterministicSeed(20260720)
       )
     )

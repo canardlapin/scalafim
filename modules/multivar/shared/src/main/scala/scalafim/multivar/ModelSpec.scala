@@ -340,27 +340,29 @@ object LifecyclePlan:
 final case class ModelSolverPolicy private (
     artifact: String,
     splitCapabilities: Set[SplitMethod],
-    acceptedGuarantees: Set[SolverGuarantee]
-)
+    acceptedClaims: Set[OptimizationClaimClass]
+):
+  def accepts(achieved: AchievedOptimizationGuarantee): Boolean =
+    acceptedClaims.contains(achieved.claimClass)
 
 object ModelSolverPolicy:
   def from(
       artifact: String,
       splitCapabilities: Set[SplitMethod],
-      acceptedGuarantees: Set[SolverGuarantee]
+      acceptedClaims: Set[OptimizationClaimClass]
   ): Either[ModelSpecError, ModelSolverPolicy] =
     val clean = artifact.trim
     if clean.isEmpty then Left(ModelSpecError.InvalidDefinition("solver policy artifact must be non-empty"))
-    else if acceptedGuarantees.isEmpty then
-      Left(ModelSpecError.InvalidDefinition("solver policy must accept at least one guarantee"))
-    else Right(ModelSolverPolicy(clean, splitCapabilities, acceptedGuarantees))
+    else if acceptedClaims.isEmpty then
+      Left(ModelSpecError.InvalidDefinition("solver policy must accept at least one achieved claim class"))
+    else Right(ModelSolverPolicy(clean, splitCapabilities, acceptedClaims))
 
   def unsafe(
       artifact: String,
       splitCapabilities: Set[SplitMethod],
-      acceptedGuarantees: Set[SolverGuarantee]
+      acceptedClaims: Set[OptimizationClaimClass]
   ): ModelSolverPolicy =
-    from(artifact, splitCapabilities, acceptedGuarantees)
+    from(artifact, splitCapabilities, acceptedClaims)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class LifecycleEvent(
@@ -526,7 +528,7 @@ final case class FoldPipelineFit private (
   def activePenalties: Vector[PenaltyTerm] = requestedProgram.penalties
   def activeConstraints: Vector[ConstraintTerm] = requestedProgram.constraints
   def solverAttestation: SolverAttestation = fitBundle.programFit.solverAttestation
-  def guarantee: SolverGuarantee = solverAttestation.guarantee
+  def achievedGuarantee: AchievedOptimizationGuarantee = fitBundle.programFit.achievedGuarantee
   def trainingProvenanceIdentity: ValueIdentity = trainingScope.valueIdentity
 
 object FoldPipelineFit:
@@ -713,7 +715,7 @@ final class ModelFit private[multivar] (
   def loweredProgram: OperatorProgram = pipeline.loweredProgram
   def effectiveOperators: Vector[OperatorSnapshot] = pipeline.effectiveOperators
   def auxiliaryVariables: Vector[AuxiliaryConstraint] = pipeline.auxiliaryVariables
-  def guarantee: SolverGuarantee = pipeline.guarantee
+  def achievedGuarantee: AchievedOptimizationGuarantee = pipeline.achievedGuarantee
   def solverExecution: SolverExecutionRecord = pipeline.solverExecution
 
   def transform(study: ModelStudy): Either[ModelSpecError, ModelTransformation] =
@@ -840,8 +842,9 @@ final class ModelSpec private (
         violations += s"split method $method is not supported by policy ${solverPolicy.artifact}"
     if fitted.solverExecution.artifact != solverPolicy.artifact then
       violations += s"solver execution artifact ${fitted.solverExecution.artifact} does not match policy ${solverPolicy.artifact}"
-    if !solverPolicy.acceptedGuarantees.contains(fitted.guarantee) then
-      violations += s"solver guarantee ${fitted.guarantee} is not accepted by policy ${solverPolicy.artifact}"
+    if !solverPolicy.accepts(fitted.achievedGuarantee) then
+      violations +=
+        s"achieved optimization claim ${fitted.achievedGuarantee.claimClass} is not accepted by policy ${solverPolicy.artifact}"
     val result = violations.result()
     if result.isEmpty then Right(()) else Left(ModelSpecError.InvalidDefinition(result.mkString("; ")))
 

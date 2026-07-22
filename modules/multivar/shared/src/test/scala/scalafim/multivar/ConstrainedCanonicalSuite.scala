@@ -14,8 +14,10 @@ class ConstrainedCanonicalSuite extends munit.FunSuite:
     assertEqualsDouble(constrained.direction(1), 0.0, 1e-9)
     assertEquals(constrained.constraint, CanonicalFrameConstraint.Nonnegative)
     assertEquals(constrained.gauge, ConstrainedCanonicalGauge.CoordinateIdentified)
-    assertEquals(constrained.programFit.program.resultSemantics.guarantee, SolverGuarantee.StationaryPoint)
-    assert(constrained.programFit.solverAttestation.achievement.isInstanceOf[AchievedOptimizationGuarantee.Stationary])
+    assertEquals(constrained.programFit.program.resultSemantics.requestedClaim, RequestedOptimizationClaim.Stationary)
+    assert(
+      constrained.programFit.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.Stationary]
+    )
     assertEquals(constrained.programFit.program.constraints.map(_.feasibleSet), Vector(FeasibleSetKind.NonnegativeOrthant))
 
   test("inactive nonnegative constraint recovers the ordinary positive solution"):

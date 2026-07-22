@@ -343,7 +343,7 @@ class RecoveryValidationSuite extends munit.FunSuite:
         ModelSolverPolicy.unsafe(
           "validation-solver",
           Set.empty,
-          Set(SolverGuarantee.CoordinatewiseStationary)
+          Set(OptimizationClaimClass.CoordinatewiseStationary)
         ),
         DeterministicSeed(20260721)
       )

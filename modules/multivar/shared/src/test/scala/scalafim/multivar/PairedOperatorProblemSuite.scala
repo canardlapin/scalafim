@@ -61,7 +61,10 @@ class PairedOperatorProblemSuite extends munit.FunSuite:
       )
     )
     assertEquals(plsc.operator.programFit.program.objective.label, "maximize-cross-trace")
-    assertEquals(plsc.operator.programFit.program.resultSemantics.guarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(
+      plsc.operator.programFit.program.resultSemantics.requestedClaim,
+      RequestedOptimizationClaim.ExactGlobal
+    )
     assertEquals(
       plsc.operator.programFit.program.resultSemantics.equivalence,
       ResultEquivalence.FrameEquivalent(FrameSymmetry.Orthogonal, CertificateTolerance.strict)

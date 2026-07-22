@@ -53,10 +53,6 @@ enum LatentCodeUniqueness:
   case UniqueByStrongConvexity(modulus: StrongConvexityModulus)
   case NotCertified(reason: String)
 
-enum LatentEncodingAchievement:
-  case EpsilonStationary(residual: CertifiedResidualBound)
-  case Unresolved(reason: String)
-
 final class FittedLatentCode[Latent <: SemanticSpace] private (
     val latentSpace: SpaceEvidence[Latent],
     val values: DVec,
@@ -119,7 +115,7 @@ final case class FittedLatentEncoding[Latent <: SemanticSpace](
     decoded: Vector[DecodedLatentFeature],
     certificate: LatentEncodingCertificate,
     uniqueness: LatentCodeUniqueness,
-    achievement: LatentEncodingAchievement,
+    achievedGuarantee: AchievedOptimizationGuarantee,
     resultIdentity: ValueIdentity
 )
 
@@ -199,10 +195,38 @@ final class FittedLatentEncoder[
           .residual(solution.certificate.primalResidual)
           .left
           .map(LatentEncodingError.Guarantee.apply)
-        achievement = solution.status match
-          case FirstOrderStoppingStatus.Converged => LatentEncodingAchievement.EpsilonStationary(residual)
-          case FirstOrderStoppingStatus.IterationLimit =>
-            LatentEncodingAchievement.Unresolved("proximal-gradient iteration budget exhausted")
+        bindings <- OptimizationIdentityBindings
+          .from(
+            MathematicalContractCatalog.generalizedLowRankModel.id,
+            encoderIdentity,
+            observations.valueIdentity,
+            ObservationMaskIdentity.Observed(observations.valueIdentity),
+            (Vector(decoder.valueIdentity, decoder.layout.valueIdentity) ++ rowPenalties.map(_.valueIdentity)).distinct,
+            Vector(FittedLatentEncoder.latentCodeParameter),
+            resultIdentity
+          )
+          .left
+          .map(LatentEncodingError.Guarantee.apply)
+        termination = solution.status match
+          case FirstOrderStoppingStatus.Converged => NumericalTermination.Converged
+          case FirstOrderStoppingStatus.IterationLimit => NumericalTermination.IterationLimit
+        evidence <- SemanticOptimizationEvidence
+          .from(bindings, termination, stationarity = Some(residual))
+          .left
+          .map(LatentEncodingError.Guarantee.apply)
+        admittedClaim = solution.status match
+          case FirstOrderStoppingStatus.Converged => OptimizationClaimClass.Stationary
+          case FirstOrderStoppingStatus.IterationLimit => OptimizationClaimClass.Unresolved
+        achievedGuarantee <- OptimizationGuaranteeAdmission
+          .admit(
+            MathematicalContractCatalog.generalizedLowRankModel,
+            admittedClaim,
+            OptimizationAssumptions.empty(bindings),
+            Set.empty,
+            evidence
+          )
+          .left
+          .map(LatentEncodingError.Guarantee.apply)
         certificate = LatentEncodingCertificate(
           solution.certificate.primalResidual,
           solution.certificate.objectiveChange,
@@ -218,7 +242,7 @@ final class FittedLatentEncoder[
           decoded,
           certificate,
           uniqueness,
-          achievement,
+          achievedGuarantee,
           resultIdentity
         )
 
@@ -397,6 +421,8 @@ final class FittedLatentEncoder[
               )
 
 object FittedLatentEncoder:
+  private val latentCodeParameter: ParameterId = ParameterId.unsafe("latent-code")
+
   def from[Feature <: SemanticSpace, Latent <: SemanticSpace](
       decoder: FeatureDecoder[Feature, Latent],
       rowPenalties: Vector[GlrmFactorPenaltyTerm] = Vector.empty,

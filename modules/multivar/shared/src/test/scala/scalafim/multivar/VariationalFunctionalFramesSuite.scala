@@ -58,8 +58,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
 
       assertMatrixClose(weights, matrix(expectedRows), 2e-7)
       assertEquals(fit.selection.form, VariationalExecutionForm.SmoothSeparableProximal)
-      assertEquals(fit.attainedGuarantee, Some(SolverGuarantee.GlobalConvexOptimum))
-      assert(fit.achievement.isInstanceOf[AchievedOptimizationGuarantee.UniqueMinimizerWithinBound])
+      assertEquals(fit.achievement.claimClass, OptimizationClaimClass.UniqueMinimizerWithinBound)
       fit.achievement match
         case AchievedOptimizationGuarantee.UniqueMinimizerWithinBound(distance, _) =>
           assert(distance.doubleValue <= 2e-7)
@@ -178,8 +177,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
 
       assertMatrixClose(fit.frame.weights.toDense.toOption.get, matrix(expectedRows), 2e-7)
       assertEquals(fit.selection.form, VariationalExecutionForm.SmoothProjection)
-      assertEquals(fit.attainedGuarantee, Some(SolverGuarantee.GlobalConvexOptimum))
-      assert(fit.achievement.isInstanceOf[AchievedOptimizationGuarantee.UniqueMinimizerWithinBound])
+      assertEquals(fit.achievement.claimClass, OptimizationClaimClass.UniqueMinimizerWithinBound)
       fit.achievement match
         case AchievedOptimizationGuarantee.UniqueMinimizerWithinBound(distance, _) =>
           assert(distance.doubleValue <= 2e-7)
@@ -220,8 +218,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
 
     assertMatrixClose(fit.frame.weights.toDense.toOption.get, matrix(Vector(Vector(1.75), Vector(0.25))), 2e-6)
     assertEquals(fit.selection.form, VariationalExecutionForm.LinearComposite)
-    assertEquals(fit.attainedGuarantee, Some(SolverGuarantee.GlobalConvexOptimum))
-    assert(fit.achievement.isInstanceOf[AchievedOptimizationGuarantee.EpsilonGlobal])
+    assertEquals(fit.achievement.claimClass, OptimizationClaimClass.EpsilonGlobal)
     assert(fit.certificate.stationarityResidual <= 2e-6)
     assert(fit.certificate.primalDualGap.exists(_ <= 2e-6))
 
@@ -265,8 +262,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
     assertEquals(compiled.lift.auxiliaryRows, 4)
     assertMatrixClose(numerical.parameter, matrix(Vector(Vector(2.0), Vector(0.0), Vector(0.0))), 3e-6)
     assertMatrixClose(fit.frame.weights.toDense.toOption.get, numerical.parameter, 1e-10)
-    assertEquals(fit.attainedGuarantee, Some(SolverGuarantee.GlobalConvexOptimum))
-    assert(fit.achievement.isInstanceOf[AchievedOptimizationGuarantee.EpsilonGlobal])
+    assertEquals(fit.achievement.claimClass, OptimizationClaimClass.EpsilonGlobal)
     assert(fit.certificate.primalDualGap.exists(_ <= 3e-6))
 
   test("aligned-score l1 jointly fits both frames with a coupled KKT and gap certificate"):
@@ -349,8 +345,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
       assertMatrixClose(fit.sourceFrame.weights.toDense.toOption.get, matrix(Vector(Vector(expectedSource))), 2e-6)
       assertMatrixClose(fit.targetFrame.weights.toDense.toOption.get, matrix(Vector(Vector(expectedTarget))), 2e-6)
       assertEquals(fit.selection.form, VariationalExecutionForm.LinearComposite)
-      assertEquals(fit.attainedGuarantee, Some(SolverGuarantee.GlobalConvexOptimum))
-      assert(fit.achievement.isInstanceOf[AchievedOptimizationGuarantee.EpsilonGlobal])
+      assertEquals(fit.achievement.claimClass, OptimizationClaimClass.EpsilonGlobal)
       assert(fit.certificate.stationarityResidual <= 2e-6)
       assert(fit.certificate.primalDualGap.exists(_ <= 2e-6))
       assertEquals(fit.lowering.termSymmetry, fit.term.symmetry)
@@ -376,7 +371,7 @@ class VariationalFunctionalFramesSuite extends munit.FunSuite:
     val limited = VariationalFunctionalFrames.directPenalty(fixture.problem, plan, short).toOption.get
 
     assertEquals(limited.stopping, VariationalFrameStopping.FirstOrder(scalafim.linalg.FirstOrderStoppingStatus.IterationLimit))
-    assertEquals(limited.attainedGuarantee, None)
+    assertEquals(limited.achievement.claimClass, OptimizationClaimClass.Unresolved)
     assert(limited.achievement.isInstanceOf[AchievedOptimizationGuarantee.Unresolved])
     assertEquals(limited.certificate.numerical.iterations, 1)
 

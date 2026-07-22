@@ -154,6 +154,12 @@ class MathematicalContractSuite extends munit.FunSuite:
       if claim == OptimizationClaimClass.Unresolved then assertEquals(claim.requiredEvidence, Set.empty)
       else assert(claim.requiredEvidence.nonEmpty)
 
+  test("program requests cover every resolvable claim and cannot request unresolved"):
+    assertEquals(
+      RequestedOptimizationClaim.values.map(_.claimClass).toSet,
+      OptimizationClaimClass.values.toSet - OptimizationClaimClass.Unresolved
+    )
+
   test("unsupported cases carry durable ids and explanations"):
     val cases = MathematicalContractCatalog.all.flatMap(_.unsupportedCases)
     assert(cases.nonEmpty)

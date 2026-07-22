@@ -20,7 +20,7 @@ class ModelSpecExecutionSuite extends munit.FunSuite:
       solver = ModelSolverPolicy.unsafe(
         "gale-exact-quadratic-eigen",
         Set.empty,
-        Set(SolverGuarantee.GlobalSpectralOptimum)
+        Set(OptimizationClaimClass.ExactGlobal)
       )
     )
     val fit = accepted(fixture.spec.fit(fixture.study, fixture.outer))
@@ -32,7 +32,7 @@ class ModelSpecExecutionSuite extends munit.FunSuite:
     assert(fit.requestedProgram ne fit.loweredProgram)
     assertEquals(fit.requestedProgram.penalties.length, 1)
     assertEquals(fit.loweredProgram.penalties, Vector.empty)
-    assertEquals(fit.guarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(fit.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
     assertEquals(fit.solverExecution.settings.toMap.get("rewriteExact"), Some("true"))
     assertEquals(fit.solverExecution.settings.toMap.get("components"), Some("2"))
     assertEquals(
@@ -61,7 +61,7 @@ class ModelSpecExecutionSuite extends munit.FunSuite:
       solver = ModelSolverPolicy.unsafe(
         "gale-projected-rayleigh",
         Set.empty,
-        Set(SolverGuarantee.StationaryPoint)
+        Set(OptimizationClaimClass.Stationary)
       )
     )
     val fit = accepted(fixture.spec.fit(fixture.study, fixture.outer))
@@ -72,7 +72,7 @@ class ModelSpecExecutionSuite extends munit.FunSuite:
     assertEquals(fit.selection.candidates.length, 2)
     assert(fit.requestedProgram eq fit.loweredProgram)
     assertEquals(fit.requestedProgram.constraints.map(_.feasibleSet), Vector(FeasibleSetKind.NonnegativeOrthant))
-    assertEquals(fit.guarantee, SolverGuarantee.StationaryPoint)
+    assertEquals(fit.achievedGuarantee.claimClass, OptimizationClaimClass.Stationary)
     assertEquals(fit.solverExecution.settings.toMap.get("constraint"), Some("Nonnegative"))
     assert(fit.pipeline.fitBundle.diagnostics.exists(_.name == "projected-stationarity"))
     assert(fit.pipeline.fitBundle.diagnostics.exists(_.name == "constraint-violation"))

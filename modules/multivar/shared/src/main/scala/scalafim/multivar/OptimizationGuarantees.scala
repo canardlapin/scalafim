@@ -534,18 +534,6 @@ enum AchievedOptimizationGuarantee:
       case FeasibleOnly(_, value) => value
       case Unresolved(value, _) => value
 
-  def legacyGuarantee: SolverGuarantee =
-    this match
-      case ExactGlobal(_, evidence)
-          if evidence.bindings.contract == MathematicalContractCatalog.exactSpectralFrame.id =>
-        SolverGuarantee.GlobalSpectralOptimum
-      case ExactGlobal(_, _) => SolverGuarantee.GlobalConvexOptimum
-      case EpsilonGlobal(_, _) | UniqueMinimizerWithinBound(_, _) => SolverGuarantee.GlobalConvexOptimum
-      case Stationary(_, _) => SolverGuarantee.StationaryPoint
-      case CoordinatewiseStationary(_, _) => SolverGuarantee.CoordinatewiseStationary
-      case FeasibleOnly(_, _) => SolverGuarantee.FeasiblePoint
-      case Unresolved(_, _) => SolverGuarantee.Unresolved
-
 object OptimizationGuaranteeAdmission:
   def admit(
       contract: MathematicalModelContract,

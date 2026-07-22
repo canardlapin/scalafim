@@ -38,9 +38,9 @@ class ExactSpectralProgramsSuite extends munit.FunSuite:
       assert(fit.proof.exact)
       assertEquals(fit.requestedProgram.penalties, Vector(lowering.original))
       assertEquals(fit.loweredProgram.penalties, Vector.empty)
-      assertEquals(fit.loweredProgram.resultSemantics.guarantee, SolverGuarantee.GlobalSpectralOptimum)
-      assertEquals(fit.programFit.solverAttestation.guarantee, SolverGuarantee.GlobalSpectralOptimum)
-      assert(fit.programFit.solverAttestation.achievement.isInstanceOf[AchievedOptimizationGuarantee.ExactGlobal])
+      assertEquals(fit.loweredProgram.resultSemantics.requestedClaim, RequestedOptimizationClaim.ExactGlobal)
+      assertEquals(fit.programFit.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
+      assert(fit.programFit.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.ExactGlobal])
 
   test("direct and lowered quadratic objectives agree on the fitted frame"):
     val lowering = gpcaLowering(QuadraticFamily.GraphSmoothness, QuadraticPlacement.ObjectiveRidge)
@@ -138,7 +138,7 @@ class ExactSpectralProgramsSuite extends munit.FunSuite:
     assertEquals(fit.requestedProgram.constraints.length, 1)
     assertEquals(fit.loweredProgram.constraints, Vector.empty)
     assert(fit.loweredProgram.parameters.head.kind.isInstanceOf[ParameterizationKind.NullSpace])
-    assertEquals(fit.programFit.solverAttestation.guarantee, SolverGuarantee.GlobalSpectralOptimum)
+    assertEquals(fit.programFit.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
     assertEquals(hard.semantics, ConstraintSemantics.Hard)
     assert(bounded.semantics.isInstanceOf[ConstraintSemantics.Bounded])
     assert(quadratic.operator.valueIdentity != hard.constraint.operator.valueIdentity)

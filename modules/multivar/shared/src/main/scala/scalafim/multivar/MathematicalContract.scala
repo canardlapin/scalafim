@@ -107,6 +107,22 @@ enum OptimizationClaimClass:
       case Feasible => Set(ClaimEvidenceRequirement.FeasibilityResidual)
       case Unresolved => Set.empty
 
+/** Optimization result class requested by a declared program.
+  *
+  * `Unresolved` is deliberately absent: it is a possible achieved outcome,
+  * never a meaningful request. The explicit conversion keeps prospective
+  * intent distinct from retrospective solver evidence.
+  */
+enum RequestedOptimizationClaim(val claimClass: OptimizationClaimClass):
+  case ExactGlobal extends RequestedOptimizationClaim(OptimizationClaimClass.ExactGlobal)
+  case EpsilonGlobal extends RequestedOptimizationClaim(OptimizationClaimClass.EpsilonGlobal)
+  case UniqueMinimizerWithinBound
+      extends RequestedOptimizationClaim(OptimizationClaimClass.UniqueMinimizerWithinBound)
+  case Stationary extends RequestedOptimizationClaim(OptimizationClaimClass.Stationary)
+  case CoordinatewiseStationary
+      extends RequestedOptimizationClaim(OptimizationClaimClass.CoordinatewiseStationary)
+  case Feasible extends RequestedOptimizationClaim(OptimizationClaimClass.Feasible)
+
 enum ClaimEvidenceRequirement:
   case GlobalOptimalityWitness
   case ObjectiveGapBound

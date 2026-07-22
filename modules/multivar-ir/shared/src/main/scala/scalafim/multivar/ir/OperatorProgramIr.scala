@@ -136,7 +136,11 @@ object OperatorProgramIr:
       case FeasibleSetKind.RankBounded(rank) => s"rank-bounded:${rank.value}"
 
   private def result(value: ResultSemantics): ProgramResultIr =
-    ProgramResultIr(equivalence(value.equivalence), representative(value.representative), guarantee(value.guarantee))
+    ProgramResultIr(
+      equivalence(value.equivalence),
+      representative(value.representative),
+      requestedGuarantee(value.requestedClaim)
+    )
 
   private def equivalence(value: ResultEquivalence): String =
     value match
@@ -155,16 +159,14 @@ object OperatorProgramIr:
       case RepresentativeRule.PredictionMap => "prediction-map"
       case RepresentativeRule.ObjectiveValueOnly => "objective-value-only"
 
-  private def guarantee(value: SolverGuarantee): String =
+  private def requestedGuarantee(value: RequestedOptimizationClaim): String =
     value match
-      case SolverGuarantee.GlobalSpectralOptimum => "global-spectral-optimum"
-      case SolverGuarantee.GlobalConvexOptimum => "global-convex-optimum"
-      case SolverGuarantee.StationaryPoint => "stationary-point"
-      case SolverGuarantee.FeasiblePoint => "feasible-point"
-      case SolverGuarantee.CoordinatewiseStationary => "coordinatewise-stationary"
-      case SolverGuarantee.LocallyOptimal => "locally-optimal"
-      case SolverGuarantee.HeuristicFeasible => "heuristic-feasible"
-      case SolverGuarantee.Unresolved => "unresolved"
+      case RequestedOptimizationClaim.ExactGlobal => "global-spectral-optimum"
+      case RequestedOptimizationClaim.EpsilonGlobal | RequestedOptimizationClaim.UniqueMinimizerWithinBound =>
+        "global-convex-optimum"
+      case RequestedOptimizationClaim.Stationary => "stationary-point"
+      case RequestedOptimizationClaim.CoordinatewiseStationary => "coordinatewise-stationary"
+      case RequestedOptimizationClaim.Feasible => "feasible-point"
 
   private def symmetry(value: FrameSymmetry): String =
     value match

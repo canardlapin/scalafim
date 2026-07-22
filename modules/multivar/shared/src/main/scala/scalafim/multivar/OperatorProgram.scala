@@ -626,20 +626,10 @@ enum ResultEquivalence:
   case PredictionEquivalent(metric: PredictionMetric, tolerance: CertificateTolerance)
   case ObjectiveEquivalent(tolerance: CertificateTolerance)
 
-enum SolverGuarantee:
-  case GlobalSpectralOptimum
-  case GlobalConvexOptimum
-  case StationaryPoint
-  case FeasiblePoint
-  case CoordinatewiseStationary
-  case LocallyOptimal
-  case HeuristicFeasible
-  case Unresolved
-
 final case class ResultSemantics(
     equivalence: ResultEquivalence,
     representative: RepresentativeRule,
-    guarantee: SolverGuarantee,
+    requestedClaim: RequestedOptimizationClaim,
     parameterIdentifiability: ParameterIdentifiability = ParameterIdentifiability.identified
 )
 
@@ -681,14 +671,14 @@ object ResultSemantics:
         ResultSemantics(
           ResultEquivalence.PredictionEquivalent(PredictionMetric.SquaredError, CertificateTolerance.strict),
           RepresentativeRule.PredictionMap,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          if smoothSpectral then RequestedOptimizationClaim.ExactGlobal else RequestedOptimizationClaim.Stationary,
           ParameterIdentifiability.infer(parameterizations)
         )
       case BaseObjective.MaximizeCrossTrace(_) =>
         ResultSemantics(
           ResultEquivalence.FrameEquivalent(symmetry, CertificateTolerance.strict),
           RepresentativeRule.OrderedSpectrumThenSign,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          if smoothSpectral then RequestedOptimizationClaim.ExactGlobal else RequestedOptimizationClaim.Stationary,
           ParameterIdentifiability.infer(parameterizations)
         )
       case _ =>
@@ -699,7 +689,7 @@ object ResultSemantics:
         ResultSemantics(
           equivalence,
           RepresentativeRule.OrderedSpectrumThenSign,
-          if smoothSpectral then SolverGuarantee.GlobalSpectralOptimum else SolverGuarantee.StationaryPoint,
+          if smoothSpectral then RequestedOptimizationClaim.ExactGlobal else RequestedOptimizationClaim.Stationary,
           ParameterIdentifiability.infer(parameterizations)
         )
 
@@ -841,17 +831,15 @@ final case class NumericalIdentifiability(
 
 /** Evidence for the guarantee actually achieved by one solver run.
   *
-  * A program's result semantics state the guarantee required of a conforming
-  * fit. The attestation is created only after the returned frames and their
-  * numerical residual have been checked, so a fit cannot merely repeat that
-  * declaration without solver evidence.
+  * A program's result semantics state the optimization claim requested of a
+  * conforming fit. The attestation is created only after the returned frames
+  * and their numerical residual have been checked, so a fit cannot merely
+  * repeat that request without solver evidence.
   */
 final case class SolverAttestation private (
-    achievement: AchievedOptimizationGuarantee,
+    achievedGuarantee: AchievedOptimizationGuarantee,
     certificate: NumericalCertificate
-):
-  def guarantee: SolverGuarantee =
-    achievement.legacyGuarantee
+)
 
 object SolverAttestation:
   private[multivar] def exactSpectral(
@@ -860,7 +848,7 @@ object SolverAttestation:
       objectiveValue: Double,
       identifiability: NumericalIdentifiability
   ): Either[ProgramError, SolverAttestation] =
-    if program.resultSemantics.guarantee != SolverGuarantee.GlobalSpectralOptimum then
+    if program.resultSemantics.requestedClaim != RequestedOptimizationClaim.ExactGlobal then
       Left(ProgramError.InvalidResult("an exact spectral attestation requires a spectral program contract"))
     else
       val contract = MathematicalContractCatalog.exactSpectralFrame
@@ -926,7 +914,7 @@ object SolverAttestation:
       objectiveValue: Double,
       identifiability: NumericalIdentifiability
   ): Either[ProgramError, SolverAttestation] =
-    if program.resultSemantics.guarantee != SolverGuarantee.StationaryPoint then
+    if program.resultSemantics.requestedClaim != RequestedOptimizationClaim.Stationary then
       Left(ProgramError.InvalidResult("a stationary attestation requires a stationary program contract"))
     else
       for
@@ -1029,7 +1017,8 @@ final case class OperatorProgramFit(
     identifiability: NumericalIdentifiability,
     solverAttestation: SolverAttestation,
     provenance: SemanticProvenance
-)
+):
+  def achievedGuarantee: AchievedOptimizationGuarantee = solverAttestation.achievedGuarantee
 
 object OperatorProgramFit:
   def exactSpectral(
@@ -1083,20 +1072,20 @@ object OperatorProgramFit:
           declared.variable.featureSpace.descriptor != fitted.parameter.featureSpace.descriptor ||
             declared.variable.componentSpace.descriptor != fitted.parameter.componentSpace.descriptor
     then Left(ProgramError.InvalidResult("fitted frame spaces must match their declared program parameter"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.result != fitIdentity then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.result != fitIdentity then
       Left(ProgramError.InvalidResult("solver attestation does not bind the returned frame identities"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.program != expectedProgramIdentity then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.program != expectedProgramIdentity then
       Left(ProgramError.InvalidResult("solver attestation does not bind the fitted operator program"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.data != expectedDataIdentity then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.data != expectedDataIdentity then
       Left(ProgramError.InvalidResult("solver attestation does not bind the program data operators"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.mask != ObservationMaskIdentity.Complete then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.mask != ObservationMaskIdentity.Complete then
       Left(ProgramError.InvalidResult("an unmasked operator program requires an explicit complete-data attestation"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.operators != expectedOperators then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.operators != expectedOperators then
       Left(ProgramError.InvalidResult("solver attestation does not bind the program operators"))
-    else if solverAttestation.achievement.semanticEvidence.bindings.parameters.toSet != expected then
+    else if solverAttestation.achievedGuarantee.semanticEvidence.bindings.parameters.toSet != expected then
       Left(ProgramError.InvalidResult("solver attestation does not bind the program parameters"))
-    else if solverAttestation.guarantee != program.resultSemantics.guarantee then
-      Left(ProgramError.InvalidResult("solver attestation does not attain the program's declared guarantee"))
+    else if solverAttestation.achievedGuarantee.claimClass != program.resultSemantics.requestedClaim.claimClass then
+      Left(ProgramError.InvalidResult("solver attestation does not attain the program's requested claim"))
     else
       Right(
         OperatorProgramFit(

@@ -261,8 +261,8 @@ class OperatorProgramSuite extends munit.FunSuite:
       ResultEquivalence.FrameEquivalent(FrameSymmetry.SignedPermutation, CertificateTolerance.strict)
     )
     assert(regression.resultSemantics.equivalence.isInstanceOf[ResultEquivalence.PredictionEquivalent])
-    assertEquals(smooth.resultSemantics.guarantee, SolverGuarantee.GlobalSpectralOptimum)
-    assertEquals(sparse.resultSemantics.guarantee, SolverGuarantee.StationaryPoint)
+    assertEquals(smooth.resultSemantics.requestedClaim, RequestedOptimizationClaim.ExactGlobal)
+    assertEquals(sparse.resultSemantics.requestedClaim, RequestedOptimizationClaim.Stationary)
 
     val variants = Vector[ResultEquivalence](
       ResultEquivalence.ValueEquivalent(CertificateTolerance.strict),
@@ -325,8 +325,8 @@ class OperatorProgramSuite extends munit.FunSuite:
     )
 
     assertEquals(result.program.resultSemantics, program.resultSemantics)
-    assertEquals(result.solverAttestation.guarantee, SolverGuarantee.GlobalSpectralOptimum)
-    assert(result.solverAttestation.achievement.isInstanceOf[AchievedOptimizationGuarantee.ExactGlobal])
+    assertEquals(result.achievedGuarantee.claimClass, OptimizationClaimClass.ExactGlobal)
+    assert(result.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.ExactGlobal])
     assertEquals(result.solverAttestation.certificate.claim.property, "converged")
     assertMatrix(
       acceptedSemantic(fitted.frame.scores(table).toDense),
