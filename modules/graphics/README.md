@@ -157,6 +157,11 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   bilinear asymptotic decider handles ambiguous saddles, exact ties follow an
   explicit policy, and `plot(contours).geomContour()` lowers the paths through
   the ordinary grouped-line grammar on every backend.
+- `Geom.Line` deliberately has path semantics: within each group it connects
+  rows in encounter order and never sorts by x. This differs from ggplot2
+  `geom_line()`, which sorts by x; callers that want sorted lines must sort
+  their rows explicitly, and any future sorted-line geom will be a distinct
+  typed API rather than a silent change to `Geom.Line`.
 - Filled contours clip each regular-grid triangle against checked
   `ContourBreaks`, cancel internal edges, stitch oriented rings, and assign
   clockwise holes to the smallest containing counter-clockwise outer ring.
