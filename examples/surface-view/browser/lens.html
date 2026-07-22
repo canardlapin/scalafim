@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>ScalaFIM geodesic cortical reveal lens</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 22% -10%, rgba(48, 92, 150, .23), transparent 34rem),
+          #080d14;
+        color: #eef4fb;
+        font: 15px/1.45 ui-sans-serif, system-ui, sans-serif;
+      }
+      main { width: 1240px; margin: 0 auto; padding: 24px 20px 32px; }
+      header { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 30px; margin-bottom: 16px; }
+      .eyebrow { color: #74b9ff; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; font-size: 11px; }
+      h1 { margin: 2px 0 5px; font-size: 29px; letter-spacing: -.025em; }
+      p { margin: 3px 0; color: #aab8ca; }
+      .legend { display: flex; gap: 14px; align-items: center; color: #bcc8d8; font-size: 13px; }
+      .swatch { display: inline-block; width: 18px; height: 9px; border-radius: 4px; margin-right: 5px; }
+      .negative { background: #205ce0; box-shadow: 0 0 10px rgba(32,92,224,.45); }
+      .positive { background: #eb3826; box-shadow: 0 0 10px rgba(235,56,38,.45); }
+      .grid { display: grid; grid-template-columns: repeat(2, 600px); gap: 14px; }
+      figure {
+        position: relative;
+        margin: 0;
+        overflow: hidden;
+        border: 1px solid #243246;
+        border-radius: 11px;
+        background: #111a26;
+        box-shadow: 0 12px 30px rgba(0,0,0,.24);
+      }
+      figcaption {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 13px;
+        font-weight: 750;
+        letter-spacing: .05em;
+      }
+      figcaption small { color: #7f91a8; font-weight: 600; letter-spacing: .02em; }
+      canvas { display: block; width: 600px; height: 450px; background: white; }
+      .lens-guide { position: absolute; left: 0; top: 38px; width: 600px; height: 450px; pointer-events: none; }
+      .lens-guide .outer { fill: none; stroke: rgba(125,197,255,.48); stroke-width: 1.5; }
+      .lens-guide .inner { fill: rgba(255,224,137,.035); stroke: rgba(255,224,137,.72); stroke-width: 1.5; }
+      .lens-guide .pin-halo { fill: rgba(255,239,184,.92); }
+      .lens-guide .pin { fill: rgba(7,14,22,.9); }
+      .note { margin-top: 14px; padding: 12px 15px; border-left: 2px solid #438fd6; background: #0e1722; color: #b7c5d7; }
+      details { margin-top: 12px; }
+      pre { white-space: pre-wrap; color: #b9f6ca; max-height: 45vh; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <div class="eyebrow">Geodesic cortical reveal lens</div>
+          <h1>The fold opens; the scientific identity stays fixed.</h1>
+          <p id="status">Loading checksum-pinned pial and inflated cortical geometry…</p>
+          <p id="runtime-errors">Runtime error audit pending…</p>
+        </div>
+        <div class="legend">
+          <span><i class="swatch negative"></i>z ≤ −2.33</span>
+          <span><i class="swatch positive"></i>z ≥ 2.33</span>
+          <span>gray = curvature</span>
+        </div>
+      </header>
+      <section class="grid">
+        <figure><figcaption>FOLDED <small>pial · 0%</small></figcaption><canvas width="600" height="450"></canvas></figure>
+        <figure><figcaption>OPENING <small>local morph · 35%</small></figcaption><canvas width="600" height="450"></canvas></figure>
+        <figure><figcaption>REVEAL <small>local morph · 70%</small></figcaption><canvas width="600" height="450"></canvas></figure>
+        <figure><figcaption>FULL LENS <small>inflated locally · 100%</small></figcaption><canvas width="600" height="450"></canvas></figure>
+      </section>
+      <div class="note">
+        The warm ring marks the fully constrained core; the cool ring marks the fixed outer boundary.
+        Their common pin stays in place while the harmonic collar distributes the opening. Overlay values,
+        thresholding, topology, camera, and world-space readout identity remain anchored.
+      </div>
+      <details><summary>Acceptance receipt</summary><pre id="receipt"></pre></details>
+    </main>
+    <script type="importmap">
+      { "imports": { "three": "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js" } }
+    </script>
+    <script>
+      window.exports = {};
+      window.__scalafimLensQaErrors = [];
+      window.addEventListener("error", event => window.__scalafimLensQaErrors.push(event.error?.stack || event.message));
+      window.addEventListener("unhandledrejection", event => window.__scalafimLensQaErrors.push(event.reason?.stack || String(event.reason)));
+    </script>
+    <script src="../js/target/scala-3.4.2/scalafim-examples-surface-view-fastopt/main.js"></script>
+    <script type="module">
+      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
+
+      const root = "../../../../../jscode/FROIAtlas/app/public/data/surfaces/";
+      const corpus = [
+        ["lh.pial.gii", "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"],
+        ["lh.inflated.gii", "5a6d3f1fc87ab588133bc1656ef2e30d8cdbd89a45effeba6a3bf210433f0520"]
+      ];
+      const status = document.querySelector("#status");
+      const runtimeErrors = document.querySelector("#runtime-errors");
+      const receipt = document.querySelector("#receipt");
+      const hex = bytes => [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+      async function load([fileName, expectedDigest]) {
+        const response = await fetch(root + fileName);
+        if (!response.ok) throw new Error(`HTTP ${response.status} loading ${fileName}`);
+        const bytes = await response.arrayBuffer();
+        const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+        if (digest !== expectedDigest) throw new Error(`SHA-256 mismatch for ${fileName}: ${digest}`);
+        return { fileName, digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+      }
+
+      try {
+        const started = performance.now();
+        const [pial, inflated] = await Promise.all(corpus.map(load));
+        const result = exports.mountScalafimCorticalLensPlate(
+          THREE,
+          [...document.querySelectorAll("canvas")],
+          pial.geometry.vertices,
+          pial.geometry.faces,
+          inflated.geometry.vertices,
+          inflated.geometry.faces
+        );
+        result.corpus = [pial, inflated].map(entry => ({ fileName: entry.fileName, sha256: entry.digest }));
+        result.fetchParseBuildRenderMillis = performance.now() - started;
+        const failures = result.cases.flatMap(entry => entry.visualQa.violations.map(reason => `${entry.label}: ${reason}`));
+        if (result.cases.length !== 4) failures.push(`expected 4 lens stages; got ${result.cases.length}`);
+        if (result.activeVertices <= 1 || result.activeVertices >= 10242) failures.push("lens locality drift");
+        if (result.visibleNegativeVertices === 0 || result.visiblePositiveVertices === 0) failures.push("overlay threshold tail is empty");
+        if (result.quality.invertedTriangles !== 0) failures.push(`${result.quality.invertedTriangles} triangles inverted`);
+        if (!(result.quality.minimumAreaRatio > 0)) failures.push("lens collapsed a triangle");
+        document.querySelectorAll("figure").forEach((figure, index) => {
+          const guide = result.cases[index].guide;
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("class", "lens-guide");
+          svg.setAttribute("viewBox", "0 0 600 450");
+          svg.innerHTML = `
+            <circle class="outer" cx="${guide.centerX}" cy="${guide.centerY}" r="${guide.outerRadiusPixels}" />
+            <circle class="inner" cx="${guide.centerX}" cy="${guide.centerY}" r="${guide.innerRadiusPixels}" />
+            <circle class="pin-halo" cx="${guide.centerX}" cy="${guide.centerY}" r="3.5" />
+            <circle class="pin" cx="${guide.centerX}" cy="${guide.centerY}" r="1.5" />`;
+          figure.appendChild(svg);
+        });
+        result.failures = failures;
+        const passed = failures.length === 0;
+        document.body.dataset.scalafimCorticalLens = passed ? "pass" : "fail";
+        status.textContent = passed
+          ? `PASS — ${result.activeVertices.toLocaleString()} vertices unfold around pinned vertex ${result.centerVertex}; topology and overlay remain fixed`
+          : `FAIL — ${failures.join("; ")}`;
+        receipt.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.body.dataset.scalafimCorticalLens = "fail";
+        status.textContent = "FAIL";
+        receipt.textContent = error?.stack || String(error);
+      }
+      setTimeout(() => {
+        const errors = window.__scalafimLensQaErrors;
+        runtimeErrors.textContent = `Runtime errors: ${errors.length}`;
+        if (errors.length > 0) {
+          document.body.dataset.scalafimCorticalLens = "fail";
+          status.textContent = `FAIL — ${errors.join("; ")}`;
+        }
+      }, 0);
+    </script>
+  </body>
+</html>

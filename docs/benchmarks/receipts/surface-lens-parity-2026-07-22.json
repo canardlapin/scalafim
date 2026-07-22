@@ -1,0 +1,165 @@
+{
+  "schema": "scalafim.surface-cortical-lens.v1",
+  "capturedAt": "2026-07-22",
+  "source": {
+    "pial": {
+      "file": "lh.pial.gii",
+      "sha256": "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"
+    },
+    "inflated": {
+      "file": "lh.inflated.gii",
+      "sha256": "5a6d3f1fc87ab588133bc1656ef2e30d8cdbd89a45effeba6a3bf210433f0520"
+    },
+    "vertices": 10242,
+    "faces": 20480
+  },
+  "lens": {
+    "centerVertex": 3074,
+    "innerRadiusMm": 12.0,
+    "outerRadiusMm": 48.0,
+    "activeVertices": 900,
+    "policy": "pinned-harmonic",
+    "relaxationSteps": 64,
+    "quality": {
+      "invertedTriangles": 0,
+      "minimumAreaRatio": 0.040333240,
+      "maximumAreaRatio": 1.954145088,
+      "maximumEdgeStrain": 0.657157839,
+      "p95EdgeStrain": 0.045417501
+    },
+    "fractions": [0.0, 0.35, 0.7, 1.0]
+  },
+  "overlay": {
+    "seed": 324508639,
+    "smoothingIterations": 5,
+    "thresholdLower": -2.33,
+    "thresholdUpper": 2.33,
+    "visibleNegativeVertices": 115,
+    "visiblePositiveVertices": 88
+  },
+  "artifacts": {
+    "javafx": {
+      "path": "/private/tmp/scalafim-surface-lens-javafx-natural.png",
+      "sha256": "dbca230af476b98f32ec46040eeba3dd5f77c8036e402185177a7352e3329d91",
+      "width": 1214,
+      "height": 1132
+    },
+    "webgl": {
+      "path": "/private/tmp/scalafim-surface-lens-webgl-natural.png",
+      "sha256": "f3c3b44a41d709372ee7a934bf6e24802f838c02409c3c6542e5bc24836a6d4f",
+      "width": 1511,
+      "height": 1295
+    }
+  },
+  "javafx": {
+    "backend": "javafx-scene3d",
+    "buildMillis": 653.299750,
+    "cases": [
+      {
+        "label": "Folded",
+        "fraction": 0.0,
+        "geometryUpdates": 0,
+        "geometryBytesUpdated": 0,
+        "atlasUpdates": 0,
+        "elapsedMillis": 50.557459,
+        "maskIntersectionOverUnion": 0.995218601,
+        "centroidDistancePixels": 0.046975798,
+        "meanInteriorChannelError": 1.193138959,
+        "orientationMargin": 40.556743520
+      },
+      {
+        "label": "Opening",
+        "fraction": 0.35,
+        "geometryUpdates": 1,
+        "geometryBytesUpdated": 245808,
+        "atlasUpdates": 0,
+        "elapsedMillis": 1.466875,
+        "maskIntersectionOverUnion": 0.995218601,
+        "centroidDistancePixels": 0.046975798,
+        "meanInteriorChannelError": 1.199169883,
+        "orientationMargin": 40.634617137
+      },
+      {
+        "label": "Reveal",
+        "fraction": 0.7,
+        "geometryUpdates": 1,
+        "geometryBytesUpdated": 245808,
+        "atlasUpdates": 0,
+        "elapsedMillis": 0.282583,
+        "maskIntersectionOverUnion": 0.995218601,
+        "centroidDistancePixels": 0.046975798,
+        "meanInteriorChannelError": 1.211490458,
+        "orientationMargin": 40.684518929
+      },
+      {
+        "label": "Full lens",
+        "fraction": 1.0,
+        "geometryUpdates": 1,
+        "geometryBytesUpdated": 245808,
+        "atlasUpdates": 0,
+        "elapsedMillis": 0.168042,
+        "maskIntersectionOverUnion": 0.995218601,
+        "centroidDistancePixels": 0.046975798,
+        "meanInteriorChannelError": 1.220097734,
+        "orientationMargin": 40.680889443
+      }
+    ]
+  },
+  "webgl": {
+    "backend": "three-webgl2",
+    "pageState": "pass",
+    "runtimeErrors": 0,
+    "buildMillis": 366.099999,
+    "fetchParseBuildRenderMillis": 1131.1000000238419,
+    "cases": [
+      {
+        "label": "Folded",
+        "fraction": 0.0,
+        "geometryUploads": 1,
+        "colorUploads": 1,
+        "uploadedBytes": 614472,
+        "elapsedMillis": 8.3,
+        "maskIntersectionOverUnion": 0.995453910,
+        "centroidDistancePixels": 0.049785152,
+        "meanInteriorChannelError": 0.463317044,
+        "orientationMargin": 41.590975844
+      },
+      {
+        "label": "Opening",
+        "fraction": 0.35,
+        "geometryUploads": 1,
+        "colorUploads": 1,
+        "uploadedBytes": 614472,
+        "elapsedMillis": 4.200001,
+        "maskIntersectionOverUnion": 0.995453910,
+        "centroidDistancePixels": 0.049785152,
+        "meanInteriorChannelError": 0.461174336,
+        "orientationMargin": 41.686016639
+      },
+      {
+        "label": "Reveal",
+        "fraction": 0.7,
+        "geometryUploads": 1,
+        "colorUploads": 1,
+        "uploadedBytes": 614472,
+        "elapsedMillis": 2.8,
+        "maskIntersectionOverUnion": 0.995453910,
+        "centroidDistancePixels": 0.049785152,
+        "meanInteriorChannelError": 0.462307639,
+        "orientationMargin": 41.766375506
+      },
+      {
+        "label": "Full lens",
+        "fraction": 1.0,
+        "geometryUploads": 1,
+        "colorUploads": 1,
+        "uploadedBytes": 614472,
+        "elapsedMillis": 2.699999,
+        "maskIntersectionOverUnion": 0.995453910,
+        "centroidDistancePixels": 0.049785152,
+        "meanInteriorChannelError": 0.463353485,
+        "orientationMargin": 41.769152282
+      }
+    ]
+  }
+}

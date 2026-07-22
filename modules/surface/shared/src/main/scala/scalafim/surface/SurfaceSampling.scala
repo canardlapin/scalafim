@@ -8,6 +8,7 @@ import scala.util.control.NonFatal
 final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):
   require(white.vertexCount == pial.vertexCount, "white and pial surfaces must have the same vertex count")
   require(white.hemisphere == pial.hemisphere, "white and pial surfaces must have the same hemisphere")
+  require(white.mesh.hasSameTopology(pial.mesh), "white and pial surfaces must share ordered triangle topology")
 
   def domainEither: Either[SurfaceError, SurfaceDomain] =
     for

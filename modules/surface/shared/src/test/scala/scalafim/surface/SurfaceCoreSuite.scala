@@ -20,6 +20,32 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(mesh.vertex(VertexId(2)), Point3D(0.0, 1.0, 0.0))
     assertEquals(mesh.face(FaceId(0)), Triangle(VertexId(0), VertexId(1), VertexId(2)))
 
+  test("mesh topology identity ignores coordinates but preserves exact face ordering"):
+    val mesh = SurfaceTestFixtures.tetraMesh
+    val moved =
+      TriangleMesh.fromRows(
+        SurfaceTestFixtures.tetraVertices.map(_.map(_ + 10.0)),
+        SurfaceTestFixtures.tetraFaces
+      )
+    val reordered =
+      TriangleMesh.fromRows(
+        SurfaceTestFixtures.tetraVertices,
+        SurfaceTestFixtures.tetraFaces.reverse
+      )
+    val rewound =
+      TriangleMesh.fromRows(
+        SurfaceTestFixtures.tetraVertices,
+        SurfaceTestFixtures.tetraFaces.updated(0, (0, 2, 1))
+      )
+
+    assertEquals(mesh.topologyIdentity, moved.topologyIdentity)
+    assert(mesh.hasSameTopology(moved))
+    assertNotEquals(mesh.topologyIdentity, reordered.topologyIdentity)
+    assert(!mesh.hasSameTopology(reordered))
+    assertNotEquals(mesh.topologyIdentity, rewound.topologyIdentity)
+    assert(!mesh.hasSameTopology(rewound))
+    assertEquals(mesh.topologyIdentity.stableKey.length, 16)
+
   test("TriangleMesh rejects invalid shapes and indices"):
     interceptMessage[IllegalArgumentException]("requirement failed: vertex rows must have exactly 3 coordinates"):
       TriangleMesh.fromRows(Vector(Vector(0.0, 0.0)), SurfaceTestFixtures.tetraFaces)
@@ -55,6 +81,11 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(geom.label, "pial")
     assertEquals(geom.surfaceToWorld, transform)
     assertEquals(geom.domainEither, scala.util.Right(SurfaceDomain(CorticalHemisphere.Left, 4)))
+    val meshDomain = geom.meshDomainEither.toOption.get
+    assertEquals(meshDomain.hemisphere, CorticalHemisphere.Left)
+    assertEquals(meshDomain.vertexCount, 4)
+    assertEquals(meshDomain.faceCount, 4)
+    assertEquals(meshDomain.topology, mesh.topologyIdentity)
 
   test("SurfaceGeometry rejects non-4x4 transforms"):
     val mesh = SurfaceTestFixtures.tetraMesh

@@ -44,10 +44,15 @@ graphics
 +-- graphics-canvas
 +-- graphics-java2d
 +-- graphics-javafx
-+-- image-view        also depends on image
-    +-- image-view-canvas   also depends on graphics-canvas
-    +-- image-view-java2d   also depends on graphics-java2d
-    +-- image-view-javafx   also depends on graphics-javafx
++-- image-view             also depends on image
+|   +-- image-view-canvas  also depends on graphics-canvas
+|   +-- image-view-java2d  also depends on graphics-java2d
+|   +-- image-view-javafx  also depends on graphics-javafx
++-- surface-view           also depends on surface
+    +-- surface-view-raster
+    +-- surface-view-javafx  also depends on graphics-javafx
+    +-- surface-view-three
+    +-- surface-view-connectivity  also depends on connectivity
 
 hrf
 +-- design           also depends on linalg, graphics
@@ -65,6 +70,7 @@ image
 |   +-- spatial        also depends on linalg, image
 |   +-- atlas          also depends on image
 |   +-- mvpa-spatial   also depends on mvpa, image, atlas
+|   +-- surface-view   also depends on graphics
 +-- threshold         also depends on linalg
 +-- motion            also depends on linalg
 +-- group             also depends on linalg, dataset, design, fit
@@ -116,6 +122,11 @@ entity parsing.
 | `threshold` | Spatial inference over statistic maps: masked fields, octrees, set scoring, maxT-style correction. | `image`, `linalg` | Model fitting or group-model definitions. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
 | `surface` | Meshes, topology, vertex fields, surface ROIs, geodesics, labels, graph interop, JVM surface readers. | `graph`, `image` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, `graphics` | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
+| `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view` | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
+| `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, `graphics-javafx`; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
+| `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
+| `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | `surface-view`, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
 | `spatial` | Neurofunctor-style domains, graph-delegated morphism routing, route policies, sampled operators, adjoints, provenance, QC, caches, lazy fields. | `graph`, `linalg`, `image`, `surface` | Low-level image interpolation kernels or atlas-specific route catalogs. |
 | `atlas` | Standard atlas descriptors, region metadata, parcel payloads, coordinate/parcel lookup, region-graph interop, transform route descriptors. | `graph`, `image`, `surface` | Generic spatial operator compilation or low-level transform kernels. |
 | `archive` | Latent NeuroArchive-style manifests, transform descriptors, portable archive transforms, JVM HDF5 store. | `image` | Dataset selection APIs or model-level decoding policy. |
@@ -172,6 +183,22 @@ image -> surface
 `image` owns executable low-level volume geometry. `surface` owns mesh geometry.
 `atlas` names standard spaces and parcels. `spatial` compiles reusable
 source-to-target operators with provenance and adjoints.
+
+### Surface Display
+
+```text
+image ----------------------> surface-view <---------------- connectivity
+                               ^       |
+                               |       +--> surface-view-raster  (JVM + JS)
+surface -----------------------+       +--> surface-view-javafx  (JVM)
+graphics ----------------------+       +--> surface-view-three   (Scala.js)
+                                       +--> surface-view-connectivity
+```
+
+`surface-view` is the only owner of scientific display semantics and emits one
+backend-neutral plan. The raster backend is the deterministic oracle. JavaFX
+and Three.js retain native resources but may only interpret the plan; the
+connectivity adapter converts estimator output without reversing that boundary.
 
 ### Inference And Analysis
 
@@ -247,6 +274,12 @@ descriptors can materialize executable dense morphisms.
 - Put deterministic SVG string rendering in `graphics-svg`, browser Canvas 2D rendering in `graphics-canvas`, and JVM raster rendering in `graphics-java2d`; keep future backends in separate adapters rather than broadening `graphics`.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
 - Put mesh and vertex-domain algorithms in `surface`.
+- Put surface display state, layers, anatomical cameras, render-plan compilation,
+  projection/network visualization primitives, scene documents, and backend
+  admission contracts in `surface-view`. Put deterministic pixels in
+  `surface-view-raster`, JavaFX Scene3D interpretation in `surface-view-javafx`,
+  Three.js/WebGL interpretation in `surface-view-three`, and connectivity result
+  adaptation in `surface-view-connectivity`.
 - Put named atlas descriptors and parcel metadata in `atlas`.
 - Put route compilation, sparse projectors, adjoints, QC, provenance, and
   operator caches in `spatial`.

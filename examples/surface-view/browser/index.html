@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>ScalaFIM surface viewer example</title>
+    <style>
+      body { margin: 0; background: #10141b; color: #edf2f7; font: 15px system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: 960px minmax(300px, 1fr); gap: 24px; padding: 24px; }
+      canvas { width: 960px; height: 540px; background: white; border-radius: 8px; }
+      pre { white-space: pre-wrap; color: #b9f6ca; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="surface" width="960" height="540"></canvas>
+      <section>
+        <h1>ScalaFIM surface viewer</h1>
+        <p id="status">Loading shared GIFTI-derived scene…</p>
+        <p id="runtime-errors">Runtime error audit pending…</p>
+        <pre id="receipt"></pre>
+      </section>
+    </main>
+    <script>
+      window.exports = {};
+      window.__scalafimSurfaceQaErrors = [];
+      window.addEventListener("error", event => {
+        window.__scalafimSurfaceQaErrors.push(event.error?.stack || event.message);
+      });
+      window.addEventListener("unhandledrejection", event => {
+        window.__scalafimSurfaceQaErrors.push(event.reason?.stack || String(event.reason));
+      });
+    </script>
+    <script src="../js/target/scala-3.4.2/scalafim-examples-surface-view-fastopt/main.js"></script>
+    <script type="module">
+      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      const status = document.querySelector("#status");
+      const runtimeErrors = document.querySelector("#runtime-errors");
+      const receipt = document.querySelector("#receipt");
+      try {
+        const result = exports.mountScalafimSurfaceViewerExample(
+          THREE,
+          document.querySelector("#surface")
+        );
+        const failures = [...result.visualQa.violations];
+        if (result.webglPickedSurface == null) failures.push("native interior pick missed both surfaces");
+        if (result.webglPickedSurface !== result.screenReferencePickedSurface) {
+          failures.push("native pick resolved the wrong surface");
+        }
+        if (result.webglPickedFace !== result.screenReferencePickedFace) {
+          failures.push("native pick resolved the wrong face");
+        }
+        if (result.webglPickedVertex !== result.screenReferencePickedVertex) {
+          failures.push("native pick resolved the wrong nearest vertex");
+        }
+        const passed = failures.length === 0;
+        document.body.dataset.scalafimSurfaceExample = passed ? "pass" : "fail";
+        status.textContent = passed
+          ? "PASS — native pixels, orientation, colors, picking, and shared receipt agree"
+          : `FAIL — ${failures.join("; ")}`;
+        receipt.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.body.dataset.scalafimSurfaceExample = "fail";
+        status.textContent = "FAIL";
+        receipt.textContent = error?.stack || String(error);
+      }
+      setTimeout(() => {
+        const errors = window.__scalafimSurfaceQaErrors;
+        runtimeErrors.textContent = `Runtime errors: ${errors.length}`;
+        if (errors.length > 0) {
+          document.body.dataset.scalafimSurfaceExample = "fail";
+          status.textContent = `FAIL — ${errors.join("; ")}`;
+        }
+      }, 0);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+{
+  "schema": "scalafim.surface-cortical-acceptance-receipt.v1",
+  "recordedAt": "2026-07-21",
+  "corpus": {
+    "status": "external-not-vendored",
+    "redistributionTerms": "not established from embedded metadata",
+    "sourceRepository": "https://github.com/bbuchsbaum/surfviewjs",
+    "sourceCommit": "656a03cf0aa0bd1ddc72e0a407250b712ef40ec5",
+    "left": {
+      "file": "fsaverage5-lh-pial.gii",
+      "sha256": "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951",
+      "hemisphere": "left",
+      "vertices": 10242,
+      "faces": 20480
+    },
+    "right": {
+      "file": "fsaverage5-rh-pial.gii",
+      "sha256": "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9",
+      "hemisphere": "right",
+      "vertices": 10242,
+      "faces": 20480
+    }
+  },
+  "scene": {
+    "width": 960,
+    "height": 540,
+    "vertices": 20484,
+    "faces": 40960,
+    "layers": 2,
+    "viewpoint": "dorsal",
+    "projection": "orthographic",
+    "twoSided": true,
+    "expectedForegroundPixels": 106532,
+    "landmark": { "x": 241, "y": 268, "surface": "gifti-left", "vertex": 3859 }
+  },
+  "javafx": {
+    "runtime": "OpenJDK 25.0.1, JavaFX 21.0.5, macOS arm64",
+    "loadMillis": 209.86,
+    "compileMillis": 96.474584,
+    "referenceRasterMillis": 115.439375,
+    "coldRenderMillis": 46.768542,
+    "snapshotMillis": 100.535042,
+    "cameraRenderMillis": 0.222041,
+    "geometryUploads": 2,
+    "layerUploads": 2,
+    "cameraGeometryUploads": 0,
+    "cameraLayerUploads": 0,
+    "observedForegroundPixels": 107903,
+    "maskIntersectionOverUnion": 0.987294144,
+    "centroidDistancePixels": 0.472823623,
+    "meanInteriorChannelError": 2.832599962,
+    "pickedFace": 2838,
+    "pickedVertex": 3859,
+    "passed": true
+  },
+  "webgl": {
+    "runtime": "Chrome, Three.js/WebGL2, macOS arm64",
+    "fetchParseMillis": 27.399999976158142,
+    "referenceRasterMillis": 106.5,
+    "coldRenderMillis": 6.100001,
+    "cameraRenderMillis": 0.199999,
+    "geometryUploads": 2,
+    "layerUploads": 2,
+    "uploadedBytes": 1228944,
+    "cameraGeometryUploads": 0,
+    "cameraLayerUploads": 0,
+    "observedForegroundPixels": 107224,
+    "maskIntersectionOverUnion": 0.9935462209952995,
+    "centroidDistancePixels": 0.03234052275895701,
+    "meanInteriorChannelError": 0.046903896435176326,
+    "referenceFace": 2838,
+    "nativeFace": 6679,
+    "nativeFaceIncidentToReferenceVertex": true,
+    "pickedVertex": 3859,
+    "runtimeErrors": 0,
+    "passed": true
+  }
+}

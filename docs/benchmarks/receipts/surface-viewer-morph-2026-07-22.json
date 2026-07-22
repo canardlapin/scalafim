@@ -1,0 +1,93 @@
+{
+  "schema": "scalafim.surface-morph-acceptance.v1",
+  "recordedAt": "2026-07-22",
+  "corpus": {
+    "source": "FROIAtlas external fsaverage5 GIFTI family",
+    "verticesPerHemisphere": 10242,
+    "facesPerHemisphere": 20480,
+    "states": ["white", "pial", "inflated", "sphere"],
+    "transitions": ["white-to-pial", "pial-to-inflated", "inflated-to-sphere"],
+    "fractions": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "sphere": "deterministic radius-70 projection of the real inflated topology"
+  },
+  "javafx": {
+    "runtime": "JavaFX 21.0.5 on JDK 25.0.1, Apple Silicon",
+    "scene3dSupported": true,
+    "realCortex": {
+      "status": "pass",
+      "cases": 15,
+      "worstMaskIntersectionOverUnion": 0.929338604,
+      "worstCentroidDistancePixels": 1.254000822,
+      "worstMeanInteriorChannelError": 15.097380664,
+      "updatedBytesPerFrame": 491616,
+      "topologyRebuildsAfterColdLoad": 0,
+      "atlasUpdatesAfterColdLoad": 0,
+      "updateMillis": [
+        1.415708,
+        0.256959,
+        0.249291,
+        0.217542,
+        0.206417,
+        0.239625,
+        0.224375,
+        0.199958,
+        0.197250,
+        0.191875,
+        0.178834,
+        0.206208
+      ]
+    },
+    "syntheticPerformance": [
+      {"vertices": 32000, "layers": 1, "morphUpdateMillis": 0.449, "morphMiB": 0.732},
+      {"vertices": 32000, "layers": 4, "morphUpdateMillis": 0.044, "morphMiB": 0.732},
+      {"vertices": 32000, "layers": 8, "morphUpdateMillis": 0.049, "morphMiB": 0.732},
+      {"vertices": 164000, "layers": 1, "morphUpdateMillis": 0.168, "morphMiB": 3.754},
+      {"vertices": 164000, "layers": 4, "morphUpdateMillis": 0.156, "morphMiB": 3.754},
+      {"vertices": 164000, "layers": 8, "morphUpdateMillis": 0.159, "morphMiB": 3.754}
+    ]
+  },
+  "webgl": {
+    "runtime": "Chrome 150.0.0.0, WebGL2, WebKit WebGL",
+    "realCortex": {
+      "status": "pass",
+      "cases": 15,
+      "worstMaskIntersectionOverUnion": 0.9907231733145075,
+      "worstCentroidDistancePixels": 0.1869933067114122,
+      "worstMeanInteriorChannelError": 0.07456602504167842,
+      "updatedBytesPerFrame": 491616,
+      "geometryUpdates": 24,
+      "topologyRebuildsAfterColdLoad": 0,
+      "colorUploadsAfterColdLoad": 0,
+      "runtimeErrors": 0
+    },
+    "syntheticPerformance": [
+      {
+        "vertices": 32768,
+        "faces": 64770,
+        "morphMedianMillis": 5.100000023841858,
+        "morphP95Millis": 5.400000095367432,
+        "morphGeometryUploads": 0,
+        "morphGeometryUpdates": 12,
+        "morphColorUploads": 0,
+        "morphUploadedBytes": 9437184
+      },
+      {
+        "vertices": 163842,
+        "faces": 326020,
+        "morphMedianMillis": 24.700000047683716,
+        "morphP95Millis": 50.40000009536743,
+        "morphGeometryUploads": 0,
+        "morphGeometryUpdates": 12,
+        "morphColorUploads": 0,
+        "morphUploadedBytes": 47186496
+      }
+    ]
+  },
+  "gates": {
+    "surfaceViewConformance": "pass",
+    "threeAdmissionMatrixCases": 48,
+    "threeAdmissionViolations": 0,
+    "gpuProjectionParity": "pass",
+    "bilateralScissorClearRegression": "pass"
+  }
+}

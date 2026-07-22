@@ -380,6 +380,87 @@ lazy val surface =
 lazy val surfaceJS  = surface.js
 lazy val surfaceJVM = surface.jvm
 
+lazy val surfaceView =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-view"))
+    .dependsOn(surface, graphics)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-view"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceViewJS  = surfaceView.js
+lazy val surfaceViewJVM = surfaceView.jvm
+
+lazy val surfaceViewRaster =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-view-raster"))
+    .dependsOn(surfaceView)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-view-raster"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceViewRasterJS  = surfaceViewRaster.js
+lazy val surfaceViewRasterJVM = surfaceViewRaster.jvm
+
+lazy val surfaceViewJavafx =
+  crossProject(JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-view-javafx"))
+    .dependsOn(surfaceView, graphicsJavafx, surfaceViewRaster % "test->compile")
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-view-javafx",
+      Test / run / fork := true,
+      libraryDependencies ++= Seq(
+        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
+        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
+      )
+    )
+
+lazy val surfaceViewJavafxJVM = surfaceViewJavafx.jvm
+
+lazy val surfaceViewThree =
+  crossProject(JSPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-view-three"))
+    .dependsOn(surfaceView)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-view-three"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceViewThreeJS = surfaceViewThree.js
+
+lazy val surfaceViewExamples =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("examples/surface-view"))
+    .dependsOn(surfaceView, surfaceViewRaster)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-examples-surface-view",
+      publish / skip := true
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceViewExamplesJS = surfaceViewExamples.js.dependsOn(surfaceViewThreeJS)
+lazy val surfaceViewExamplesJVM = surfaceViewExamples.jvm
+  .dependsOn(surfaceViewJavafxJVM)
+  .settings(
+    Test / run / fork := true,
+    libraryDependencies ++= Seq(
+      "org.openjfx" % "javafx-base" % "21.0.5" classifier javafxPlatformClassifier,
+      "org.openjfx" % "javafx-graphics" % "21.0.5" classifier javafxPlatformClassifier
+    )
+  )
+
 lazy val surfaceExamplesJVM =
   project
     .in(file("examples/surface-jvm"))
@@ -620,6 +701,20 @@ lazy val connectivity =
 lazy val connectivityJS  = connectivity.js
 lazy val connectivityJVM = connectivity.jvm
 
+lazy val surfaceViewConnectivity =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/surface-view-connectivity"))
+    .dependsOn(surfaceView, connectivity)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-surface-view-connectivity"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val surfaceViewConnectivityJS  = surfaceViewConnectivity.js
+lazy val surfaceViewConnectivityJVM = surfaceViewConnectivity.jvm
+
 lazy val mvpaDataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -719,6 +814,14 @@ lazy val root =
       motionJVM,
       surfaceJS,
       surfaceJVM,
+      surfaceViewJS,
+      surfaceViewJVM,
+      surfaceViewRasterJS,
+      surfaceViewRasterJVM,
+      surfaceViewJavafxJVM,
+      surfaceViewThreeJS,
+      surfaceViewExamplesJS,
+      surfaceViewExamplesJVM,
       spatialJS,
       spatialJVM,
       atlasJS,
@@ -745,6 +848,8 @@ lazy val root =
       inferenceJVM,
       connectivityJS,
       connectivityJVM,
+      surfaceViewConnectivityJS,
+      surfaceViewConnectivityJVM,
       mvpaDatasetJS,
       mvpaDatasetJVM,
       mvpaSpatialJS,

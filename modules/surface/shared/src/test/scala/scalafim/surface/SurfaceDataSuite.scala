@@ -1,5 +1,7 @@
 package scalafim.surface
 
+import scalafim.image.DMat
+
 class SurfaceDataSuite extends munit.FunSuite:
 
   private val geometry =
@@ -99,18 +101,58 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(labeled.domainEither, geometry.domainEither)
     assert(LabeledSurface.fromIndexedEither(geometry, Vector(VertexId(0), VertexId(0)), Vector(1, 2), Vector(LabelInfo(1, "A"))).isLeft)
 
-  test("SurfaceSet validates shared hemisphere and vertex count"):
-    val inflated = SurfaceGeometry(geometry.mesh, Hemisphere.Left, SurfaceKind.Inflated)
+  test("SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates"):
+    val inflatedMesh =
+      TriangleMesh.fromRows(
+        geometry.mesh.vertices.map(point => Vector(point.x * 2.0, point.y * 2.0, point.z * 2.0)),
+        geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+      )
+    val inflated = SurfaceGeometry(inflatedMesh, Hemisphere.Left, SurfaceKind.Inflated)
     val set = SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Inflated -> inflated)
 
     assertEquals(set.hemisphere, Hemisphere.Left)
     assertEquals(set.vertexCount, 4)
     assertEquals(set.default, geometry)
     assertEquals(set.get(SurfaceKind.Inflated), Some(inflated))
+    assertEquals(set.topologyIdentity, geometry.mesh.topologyIdentity)
+    assertEquals(set.meshDomainEither, geometry.meshDomainEither)
 
-    val right = SurfaceGeometry(geometry.mesh, Hemisphere.Right, SurfaceKind.Pial)
+    val right = SurfaceGeometry(geometry.mesh, Hemisphere.Right, SurfaceKind.Inflated)
     interceptMessage[IllegalArgumentException]("requirement failed: all surface geometries must share a hemisphere"):
       SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Inflated -> right)
+
+    val reordered =
+      SurfaceGeometry(
+        TriangleMesh.fromRows(
+          geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+          geometry.mesh.faces.reverse.map(face => (face.a.index, face.b.index, face.c.index))
+        ),
+        Hemisphere.Left,
+        SurfaceKind.Inflated
+      )
+    interceptMessage[IllegalArgumentException]("requirement failed: all surface geometries must share ordered triangle topology"):
+      SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Inflated -> reordered)
+
+    val translated =
+      SurfaceGeometry(
+        inflatedMesh,
+        Hemisphere.Left,
+        SurfaceKind.Inflated,
+        DMat.fromRows(Vector(
+          Vector(1.0, 0.0, 0.0, 1.0),
+          Vector(0.0, 1.0, 0.0, 0.0),
+          Vector(0.0, 0.0, 1.0, 0.0),
+          Vector(0.0, 0.0, 0.0, 1.0)
+        ))
+      )
+    interceptMessage[IllegalArgumentException]("requirement failed: all surface geometries must share a surface-to-world transform"):
+      SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Inflated -> translated)
+
+    interceptMessage[IllegalArgumentException]("requirement failed: surface set keys must match geometry kinds"):
+      SurfaceSet(Map(SurfaceKind.Pial -> geometry, SurfaceKind.White -> inflated), SurfaceKind.Pial)
+
+    interceptMessage[IllegalArgumentException]("requirement failed: surface set kinds must be unique"):
+      SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Pial -> geometry)
 
   test("HemispherePair provides typed left/right containers"):
     val pair = HemispherePair(left = "lh", right = "rh")

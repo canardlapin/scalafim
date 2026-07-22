@@ -9,6 +9,24 @@ final case class TriangleMesh private (
   vertexCount: Int,
   faceCount: Int
 ):
+  lazy val topologyIdentity: MeshTopologyIdentity =
+    MeshTopologyIdentity.from(vertexCount, faceIndices)
+
+  /** Exact ordered-topology compatibility for fields and alternate surface
+    * coordinates. The fingerprint is a cheap rejection path; the full index
+    * comparison is the proof used at construction boundaries.
+    */
+  def hasSameTopology(other: TriangleMesh): Boolean =
+    if vertexCount != other.vertexCount || faceCount != other.faceCount then false
+    else if topologyIdentity != other.topologyIdentity then false
+    else
+      var index = 0
+      var same = true
+      while index < faceIndices.length && same do
+        same = faceIndices(index) == other.faceIndices(index)
+        index += 1
+      same
+
   inline def vertex(id: VertexId): Point3D =
     val i = id.index
     require(i < vertexCount, "vertex id out of range")

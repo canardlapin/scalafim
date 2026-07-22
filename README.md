@@ -26,6 +26,11 @@ cross-compiled sbt build.
 - `threshold`: spatial inference over statistic maps — LR-MFT set scoring, maxT/stepdown correction, octree regions, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
 - `surface`: surface-mesh data structures, topology, vertex fields, ROIs, surface sets, geodesics, parcel operations, and JVM surface IO.
+- `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
+- `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
+- `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
+- `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
+- `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `spatial`: spatial-functor infrastructure — typed domains, sampled geometries, morphism-ready ids, hybrid offsets, and later graph/operator compilation.
 - `atlas`: typed standard-atlas metadata, registry, transform plans, parcel lookup, reduction, overlap, and adjacency operations.
 - `archive`: typed Latent NeuroArchive-style manifests, transform descriptors, validation, quant roundtrips, and JVM storage boundaries.
@@ -49,6 +54,10 @@ Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 See [docs/image-viewer.md](docs/image-viewer.md) for the world-coordinate
 contract, slice and layer APIs, interaction reducer, caching receipts, and
 platform-host boundaries.
+
+See [docs/surface-viewer.md](docs/surface-viewer.md) for surface layers,
+orientation and coordinate contracts, JavaFX/Three.js backends, lifecycle,
+serialization, performance gates, and the cross-platform example.
 
 ## Common Commands
 
@@ -91,6 +100,14 @@ sbt motionJVM/test
 sbt motionJS/test
 sbt surfaceJVM/test
 sbt surfaceJS/test
+sbt surfaceViewJVM/test
+sbt surfaceViewJS/test
+sbt surfaceViewRasterJVM/test
+sbt surfaceViewRasterJS/test
+sbt surfaceViewJavafxJVM/test
+sbt surfaceViewThreeJS/test
+sbt surfaceViewConnectivityJVM/test
+sbt surfaceViewConnectivityJS/test
 sbt spatialJVM/test
 sbt spatialJS/test
 sbt atlasJVM/test
@@ -132,6 +149,7 @@ with smoke tests:
 
 ```sh
 sbt examplesTest
+sbt surfaceViewExamplesJVM/test surfaceViewExamplesJS/test
 sbt "atlasExamplesJVM/runMain scalafim.examples.atlas.describeStandardAtlases"
 ```
 

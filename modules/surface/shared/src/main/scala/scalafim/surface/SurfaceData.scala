@@ -241,6 +241,10 @@ final case class SurfaceSet private (
 ):
   require(surfaces.nonEmpty, "surface set must contain at least one geometry")
   require(surfaces.contains(defaultKind), "surface set default must exist in the set")
+  require(
+    surfaces.forall((kind, geometry) => kind == geometry.kind),
+    "surface set keys must match geometry kinds"
+  )
 
   val hemisphere: Hemisphere =
     surfaces.values.head.hemisphere
@@ -248,14 +252,28 @@ final case class SurfaceSet private (
   val vertexCount: Int =
     surfaces.values.head.vertexCount
 
+  val topologyIdentity: MeshTopologyIdentity =
+    surfaces.values.head.mesh.topologyIdentity
+
   require(surfaces.values.forall(_.hemisphere == hemisphere), "all surface geometries must share a hemisphere")
   require(surfaces.values.forall(_.vertexCount == vertexCount), "all surface geometries must share a vertex count")
+  require(
+    surfaces.values.forall(_.mesh.hasSameTopology(surfaces(defaultKind).mesh)),
+    "all surface geometries must share ordered triangle topology"
+  )
+  require(
+    surfaces.values.forall(_.surfaceToWorld == surfaces(defaultKind).surfaceToWorld),
+    "all surface geometries must share a surface-to-world transform"
+  )
 
   def default: SurfaceGeometry =
     surfaces(defaultKind)
 
   def get(kind: SurfaceKind): Option[SurfaceGeometry] =
     surfaces.get(kind)
+
+  def meshDomainEither: Either[SurfaceError, SurfaceMeshDomain] =
+    default.meshDomainEither
 
   def labels: Vector[String] =
     surfaces.keys.toVector.map(_.label)
@@ -269,6 +287,8 @@ object SurfaceSet:
     new SurfaceSet(surfaces, defaultKind)
 
   def of(defaultKind: SurfaceKind, default: SurfaceGeometry, rest: (SurfaceKind, SurfaceGeometry)*): SurfaceSet =
-    SurfaceSet((Map(defaultKind -> default) ++ rest.toMap), defaultKind)
+    val entries = (defaultKind -> default) +: rest
+    require(entries.map(_._1).distinct.length == entries.length, "surface set kinds must be unique")
+    SurfaceSet(entries.toMap, defaultKind)
 
 final case class HemispherePair[A](left: A, right: A)

@@ -5,15 +5,18 @@ import scalafim.surface.gifti.*
 import org.w3c.dom.Element
 import org.w3c.dom.NamedNodeMap
 import org.w3c.dom.Node
+import org.xml.sax.InputSource
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.io.StringReader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.Base64
+import java.util.zip.InflaterInputStream
 import java.util.zip.GZIPInputStream
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
@@ -108,8 +111,15 @@ object GiftiReader:
       val factory = DocumentBuilderFactory.newInstance()
       factory.setNamespaceAware(false)
       factory.setExpandEntityReferences(false)
+      factory.setXIncludeAware(false)
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+      factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "")
       val builder = factory.newDocumentBuilder()
+      builder.setEntityResolver((_, _) => new InputSource(new StringReader("")))
       val doc = builder.parse(input)
       val root = doc.getDocumentElement
       if root == null || root.getTagName != "GIFTI" then
@@ -281,7 +291,7 @@ object GiftiReader:
       case GiftiEncoding.Base64Binary =>
         decodeBase64(array.dataText)
       case GiftiEncoding.GZipBase64Binary =>
-        decodeBase64(array.dataText).flatMap(gunzip)
+        decodeBase64(array.dataText).flatMap(decompressGifti)
       case GiftiEncoding.ExternalFileBinary =>
         Left(GiftiError.UnsupportedEncoding(array.encoding))
       case GiftiEncoding.Other(_) =>
@@ -336,9 +346,22 @@ object GiftiReader:
       case NonFatal(error) =>
         Left(GiftiError.DecodeFailure(s"invalid Base64 payload: ${error.getMessage}"))
 
-  private def gunzip(bytes: Array[Byte]): Either[GiftiError, Array[Byte]] =
+  /** FreeSurfer GIFTI writers commonly label RFC 1950 zlib payloads as
+    * `GZipBase64Binary`. Accept both the actual gzip stream named by the
+    * attribute and that established zlib variant.
+    */
+  private def decompressGifti(bytes: Array[Byte]): Either[GiftiError, Array[Byte]] =
+    val isGzip = bytes.length >= 2 && (bytes(0) & 0xff) == 0x1f && (bytes(1) & 0xff) == 0x8b
+    if isGzip then decompress(new GZIPInputStream(_), bytes, "GZip")
+    else decompress(new InflaterInputStream(_), bytes, "zlib")
+
+  private def decompress(
+    stream: ByteArrayInputStream => InputStream,
+    bytes: Array[Byte],
+    label: String
+  ): Either[GiftiError, Array[Byte]] =
     try
-      val input = new GZIPInputStream(new ByteArrayInputStream(bytes))
+      val input = stream(new ByteArrayInputStream(bytes))
       val output = new ByteArrayOutputStream()
       val buffer = Array.ofDim[Byte](8192)
       var n = input.read(buffer)
@@ -349,7 +372,7 @@ object GiftiReader:
       Right(output.toByteArray)
     catch
       case NonFatal(error) =>
-        Left(GiftiError.DecodeFailure(s"invalid GZip payload: ${error.getMessage}"))
+        Left(GiftiError.DecodeFailure(s"invalid $label payload: ${error.getMessage}"))
 
   private def withBuffer[A](array: GiftiDataArray, bytes: Array[Byte], bytesPerValue: Int)(decode: ByteBuffer => A): Either[GiftiError, A] =
     if bytes.length % bytesPerValue != 0 then

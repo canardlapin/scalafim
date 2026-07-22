@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Base64
+import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPOutputStream
 
 class GiftiReaderSuite extends munit.FunSuite:
@@ -19,6 +20,17 @@ class GiftiReaderSuite extends munit.FunSuite:
     assertEquals(doc.pointSet.map(_.intent), Some(GiftiIntent.PointSet))
     assertEquals(doc.triangles.map(_.intent), Some(GiftiIntent.Triangle))
     assertEquals(doc.pointSet.toVector.flatMap(_.transforms).head.matrixData(3), 10.0)
+
+  test("external GIFTI DTD declarations are ignored without network access"):
+    val xml = surfaceXml("ASCII", asciiPointset, "ASCII", asciiTriangles)
+      .replace(
+        "<GIFTI Version=\"1.0\" NumberOfDataArrays=\"2\">",
+        "<!DOCTYPE GIFTI SYSTEM \"http://gifti.invalid/gifti.dtd\">\n<GIFTI Version=\"1.0\" NumberOfDataArrays=\"2\">"
+      )
+    val doc = GiftiReader.parseString(xml).toOption.get
+
+    assertEquals(doc.pointSet.map(_.dims), Some(Vector(3, 3)))
+    assertEquals(doc.triangles.map(_.dims), Some(Vector(1, 3)))
 
   test("ASCII data arrays decode to numeric pointsets and triangles"):
     val doc = GiftiReader.parseString(surfaceXml("ASCII", asciiPointset, "ASCII", asciiTriangles)).toOption.get
@@ -51,6 +63,14 @@ class GiftiReaderSuite extends munit.FunSuite:
   test("GZipBase64Binary data arrays decode after inflation"):
     val points = gzipBase64(float32Bytes(Vector(0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f)))
     val triangles = gzipBase64(int32Bytes(Vector(0, 1, 2)))
+    val doc = GiftiReader.parseString(surfaceXml("GZipBase64Binary", points, "GZipBase64Binary", triangles)).toOption.get
+
+    assertEquals(GiftiReader.doubleData(doc.pointSet.get).toOption.get.toVector, Vector(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0))
+    assertEquals(GiftiReader.intData(doc.triangles.get).toOption.get.toVector, Vector(0, 1, 2))
+
+  test("GZipBase64Binary accepts the zlib stream emitted by FreeSurfer GIFTI"):
+    val points = zlibBase64(float32Bytes(Vector(0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f)))
+    val triangles = zlibBase64(int32Bytes(Vector(0, 1, 2)))
     val doc = GiftiReader.parseString(surfaceXml("GZipBase64Binary", points, "GZipBase64Binary", triangles)).toOption.get
 
     assertEquals(GiftiReader.doubleData(doc.pointSet.get).toOption.get.toVector, Vector(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0))
@@ -183,4 +203,11 @@ class GiftiReaderSuite extends munit.FunSuite:
     val gzip = new GZIPOutputStream(out)
     gzip.write(bytes)
     gzip.close()
+    Base64.getMimeEncoder.encodeToString(out.toByteArray)
+
+  private def zlibBase64(bytes: Array[Byte]): String =
+    val out = new ByteArrayOutputStream()
+    val zlib = new DeflaterOutputStream(out)
+    zlib.write(bytes)
+    zlib.close()
     Base64.getMimeEncoder.encodeToString(out.toByteArray)

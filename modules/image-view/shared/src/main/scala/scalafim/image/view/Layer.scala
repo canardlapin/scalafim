@@ -87,8 +87,10 @@ opaque type LayerOpacity = Double
 
 object LayerOpacity:
   def make(value: Double): Either[ImageViewError, LayerOpacity] =
-    if value.isFinite && value >= 0.0 && value <= 1.0 then Right(value)
-    else Left(ImageViewError.InvalidOpacity(value))
+    DisplayOpacity.make(value)
+      .left
+      .map(_ => ImageViewError.InvalidOpacity(value))
+      .map(DisplayOpacity.value)
 
   def unsafe(value: Double): LayerOpacity =
     make(value).fold(err => throw new IllegalArgumentException(err.message), identity)

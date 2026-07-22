@@ -187,6 +187,23 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must have the same hemisphere"):
       SurfaceGeometryPair(pair.white, SurfaceGeometry(pair.pial.mesh, Hemisphere.Right, SurfaceKind.Pial))
 
+    val rewound =
+      SurfaceGeometry(
+        TriangleMesh.fromRows(
+          Vector(
+            Vector(0.0, 0.0, 2.0),
+            Vector(1.0, 0.0, 2.0),
+            Vector(0.0, 1.0, 2.0)
+          ),
+          Vector((0, 2, 1))
+        ),
+        Hemisphere.Left,
+        SurfaceKind.Pial
+      )
+    interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must share ordered triangle topology"):
+      SurfaceGeometryPair(pair.white, rewound)
+    assert(SurfaceGeometryPair.fromEither(pair.white, rewound).isLeft)
+
     interceptMessage[IllegalArgumentException]("requirement failed: fractional thickness path must contain at least one fraction"):
       VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.FractionalThickness(Vector.empty))
 
