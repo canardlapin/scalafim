@@ -152,10 +152,16 @@ class PlotDslSuite extends munit.FunSuite:
       final case class Row(x: Double, y: Double)
       plot(Vector(Row(1.0, 2.0))).aes(_.x, _.y).geomHeatmap()
     """)
+    val contourErrors = typeCheckErrors("""
+      import scalafim.graphics.*
+      final case class Row(x: Double, y: Double)
+      plot(Vector(Row(1.0, 2.0))).aes(_.x, _.y).geomContour()
+    """)
 
     assert(pointErrors.nonEmpty)
     assert(summaryErrors.nonEmpty)
     assert(heatmapErrors.nonEmpty)
+    assert(contourErrors.nonEmpty)
     assert(pointErrors.exists(_.message.contains("requires x and y")))
     assert(summaryErrors.exists(_.message.contains("requires x and y")))
   }

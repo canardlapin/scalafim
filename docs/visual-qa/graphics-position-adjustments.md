@@ -7,7 +7,7 @@ by ScalaFIM/Java2D and ggplot2. Run:
 tools/render_position_adjustment_qa.sh
 ```
 
-Open `target/graphics-position-qa/index.html`. The page places fifteen 640 x 480
+Open `target/graphics-position-qa/index.html`. The page places sixteen 640 x 480
 comparisons side by side without enlarging either renderer's raster:
 
 - filled continuous scatter points;
@@ -20,6 +20,7 @@ comparisons side by side without enlarging either renderer's raster:
 - a field-native continuous heatmap with a derived colorbar;
 - a rectangular 2D count field with fixed one-unit bins;
 - a fixed-bandwidth Gaussian 2D density field;
+- explicit-level contours extracted from that density field;
 - categorical `stat_count` bars;
 - a fixed-scale two-panel facet wrap;
 - categorical bars divided into equal dodge slots;
@@ -27,7 +28,7 @@ comparisons side by side without enlarging either renderer's raster:
 - bounded jitter around two categorical centers.
 
 The ggplot2 runner writes `*-layer.tsv` data for every example. Scatter, line,
-histogram, density, summary, ribbon, tile, heatmap, 2D bin, 2D KDE, count, and facet data give direct
+histogram, density, summary, ribbon, tile, heatmap, 2D bin, 2D KDE, contour, count, and facet data give direct
 structural references. Dodge and stack are numeric oracles: ScalaFIM uses
 zero-based categorical centers, so subtracting one from ggplot2's x
 coordinates gives the ScalaFIM centers and bounds. Stack `ymin` and `ymax`

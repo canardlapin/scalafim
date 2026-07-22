@@ -259,6 +259,14 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
         params = Some(params)
       )
 
+  /** Add already-extracted contour paths. The capability witness prevents
+    * ordinary row plots from accidentally claiming contour semantics.
+    */
+  def geomContour(
+      params: Option[GraphicParams] = None
+  )(using contourRows: Row =:= ContourVertex, ev: HasXY[Row, Position]): PlotBuilder[Row, Position] =
+    geomLine(params = params)
+
   def hline(y: Double, params: Option[GraphicParams] = None): PlotBuilder[Row, Position] =
     addLayer(Right(Layer.hline(y, data = Some(data), params = params)))
 
@@ -415,3 +423,9 @@ def plot[Row](data: IterableOnce[Row]): PlotBuilder[Row, PlotPosition.Empty[Row]
   */
 def plot(field: ScalarField2D): PlotBuilder[ScalarCell, PlotPosition.XY[ScalarCell]] =
   plot(field.cells).aes(_.x, _.y)
+
+/** Begin a plot from deterministic, already-extracted contour geometry. */
+def plot(contours: ContourSet): PlotBuilder[ContourVertex, PlotPosition.XY[ContourVertex]] =
+  plot(contours.vertices)
+    .aes(_.x, _.y)
+    .group(_.pathId)

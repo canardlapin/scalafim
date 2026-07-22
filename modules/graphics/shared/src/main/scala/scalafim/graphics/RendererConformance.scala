@@ -148,6 +148,7 @@ object RendererConformance:
       heatmap <- heatmapComparisonCase
       bin2d <- bin2DComparisonCase
       kde2d <- kde2DComparisonCase
+      contour <- contourComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -185,6 +186,7 @@ object RendererConformance:
       heatmap,
       bin2d,
       kde2d,
+      contour,
       faceted,
       counted,
       bandPosition,
@@ -1059,6 +1061,45 @@ object RendererConformance:
           GraphicsName.unsafe("density-colorbar")
         ),
         Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
+      )
+
+  def contourComparisonCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double)
+    val samples = Vector(
+      Sample(-1.4, -1.0),
+      Sample(-1.1, -0.7),
+      Sample(-0.8, -1.2),
+      Sample(-0.5, -0.6),
+      Sample(0.5, 0.8),
+      Sample(0.9, 1.2),
+      Sample(1.2, 0.7),
+      Sample(1.5, 1.4)
+    )
+    val domain = Some(Interval.unsafe(-3.0, 3.0))
+    val config = Kde2DConfig.fixedUnsafe(0.6, 0.7, 80, 80, domain, domain)
+    for
+      field <- FieldStat.kde2D[Sample](_.x, _.y, config).compute(samples)
+      levels <- ContourLevels.at(Vector(0.03, 0.06, 0.09, 0.12))
+      contours <- ContourSet.extract(field, levels)
+      scene <- plot(contours)
+        .geomContour(
+          params = Some(GraphicParams.unsafe(stroke = Some(comparisonColor("A")), lineWidth = 1.1))
+        )
+        .title("contour")
+        .axisTitles("x", "y")
+        .theme(Theme.minimal)
+        .scene
+    yield
+      ConformanceCase(
+        GraphicsName.unsafe("comparison-contour"),
+        ConformanceGroup.CompiledPlot,
+        scene,
+        Vector(
+          GraphicsName.unsafe("plot-panel"),
+          GraphicsName.unsafe("x-axis"),
+          GraphicsName.unsafe("y-axis")
+        ),
+        Vector.empty
       )
 
   private def compiledComparisonCase[Row](

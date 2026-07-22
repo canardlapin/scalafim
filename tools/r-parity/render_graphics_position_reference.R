@@ -124,6 +124,19 @@ kde2d <- ggplot(kde2d_data, aes(x, y)) +
   labs(title = "density-2d", x = "x", y = "y") +
   theme_minimal(base_size = 12)
 
+contour <- ggplot(kde2d_data, aes(x, y)) +
+  geom_density_2d(
+    h = c(2.4, 2.8),
+    n = 80,
+    breaks = c(0.03, 0.06, 0.09, 0.12),
+    colour = "#467DB4",
+    linewidth = 0.4
+  ) +
+  scale_x_continuous(limits = c(-3, 3), expand = expansion(mult = 0), oob = scales::oob_keep) +
+  scale_y_continuous(limits = c(-3, 3), expand = expansion(mult = 0), oob = scales::oob_keep) +
+  labs(title = "contour", x = "x", y = "y") +
+  theme_minimal(base_size = 12)
+
 count_data <- data.frame(category = c("control", "task", "task", "other", "task", "control"))
 counted <- ggplot(count_data, aes(category)) +
   geom_bar(width = 0.9, colour = "#233C5A", fill = "#5A96CD") +
@@ -183,6 +196,7 @@ plots <- list(
   heatmap = heatmap,
   bin2d = bin2d,
   kde2d = kde2d,
+  contour = contour,
   count = counted,
   facets = faceted,
   dodge = dodge,
@@ -251,6 +265,11 @@ write.table(
 write.table(
   layer_data(kde2d)[c("x", "y", "density", "count", "fill")],
   file.path(out_dir, "kde2d-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(contour)[c("x", "y", "level", "piece", "group")],
+  file.path(out_dir, "contour-layer.tsv"),
   sep = "\t", row.names = FALSE, quote = FALSE
 )
 write.table(

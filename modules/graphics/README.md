@@ -152,6 +152,11 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   domains. Its shared Gaussian kernel writes directly into primitive row-major
   storage; separability, translation, permutation, normalization, and
   automatic-bandwidth laws anchor the computation independently of rendering.
+- `ContourSet.extract` turns a scalar field and checked `ContourLevels` into
+  typed non-empty paths using deterministic shared marching squares. A
+  bilinear asymptotic decider handles ambiguous saddles, exact ties follow an
+  explicit policy, and `plot(contours).geomContour()` lowers the paths through
+  the ordinary grouped-line grammar on every backend.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 - Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y

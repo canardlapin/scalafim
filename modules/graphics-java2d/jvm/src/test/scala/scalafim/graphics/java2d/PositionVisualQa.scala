@@ -28,6 +28,7 @@ object PositionVisualQa:
       Example("heatmap", RendererConformance.heatmapComparisonCase),
       Example("bin2d", RendererConformance.bin2DComparisonCase),
       Example("kde2d", RendererConformance.kde2DComparisonCase),
+      Example("contour", RendererConformance.contourComparisonCase),
       Example("count", RendererConformance.countPlotCase),
       Example("facets", RendererConformance.facetedPlotCase),
       Example("dodge", RendererConformance.dodgedPositionCase),

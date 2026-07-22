@@ -17,6 +17,9 @@ enum GraphicsError:
   case ScalarFieldValueCountMismatch(expected: Int, actual: Int)
   case NonFiniteScalarFieldValue(index: Int, value: Double)
   case ScalarFieldIndexOutsideBounds(x: Int, y: Int, width: Int, height: Int)
+  case InvalidContourLevels(expectation: String, actual: String)
+  case InvalidContourPoint(x: Double, y: Double)
+  case ContourGridTooSmall(width: Int, height: Int)
   case InvalidAlpha(value: Double)
   case InvalidLineWidth(value: Double)
   case InvalidRotation(value: Double)
@@ -101,6 +104,12 @@ enum GraphicsError:
         s"scalar field sample $index must be finite: $value"
       case ScalarFieldIndexOutsideBounds(x, y, width, height) =>
         s"scalar field index ($x, $y) is outside ${width}x$height"
+      case InvalidContourLevels(expectation, actual) =>
+        s"contour levels require $expectation: $actual"
+      case InvalidContourPoint(x, y) =>
+        s"contour point coordinates must be finite: ($x, $y)"
+      case ContourGridTooSmall(width, height) =>
+        s"contour extraction requires at least a 2x2 scalar field: found ${width}x$height"
       case InvalidAlpha(value) =>
         s"alpha must be finite and in [0, 1]: $value"
       case InvalidLineWidth(value) =>
