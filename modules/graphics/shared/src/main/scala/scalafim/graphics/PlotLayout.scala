@@ -42,6 +42,13 @@ final case class LayoutPolicy(
     legendKeyPt: Double = 10.0,
     legendGapPt: Double = 10.0,
     legendPaddingPt: Double = 6.0,
+    legendRowGapPt: Double = 4.0,
+    legendTitleGapPt: Double = 4.0,
+    guideStackGapPt: Double = 12.0,
+    colorbarWidthPt: Double = 12.0,
+    colorbarHeightPt: Double = 120.0,
+    colorbarTickLengthPt: Double = 4.0,
+    colorbarLabelGapPt: Double = 4.0,
     panelGapPt: Double = 8.0,
     facetStripPt: Double = 18.0
 ):
@@ -58,6 +65,13 @@ final case class LayoutPolicy(
   require(legendKeyPt >= 0.0 && legendKeyPt.isFinite, "`legendKeyPt` must be finite and >= 0")
   require(legendGapPt >= 0.0 && legendGapPt.isFinite, "`legendGapPt` must be finite and >= 0")
   require(legendPaddingPt >= 0.0 && legendPaddingPt.isFinite, "`legendPaddingPt` must be finite and >= 0")
+  require(legendRowGapPt >= 0.0 && legendRowGapPt.isFinite, "`legendRowGapPt` must be finite and >= 0")
+  require(legendTitleGapPt >= 0.0 && legendTitleGapPt.isFinite, "`legendTitleGapPt` must be finite and >= 0")
+  require(guideStackGapPt >= 0.0 && guideStackGapPt.isFinite, "`guideStackGapPt` must be finite and >= 0")
+  require(colorbarWidthPt > 0.0 && colorbarWidthPt.isFinite, "`colorbarWidthPt` must be finite and > 0")
+  require(colorbarHeightPt > 0.0 && colorbarHeightPt.isFinite, "`colorbarHeightPt` must be finite and > 0")
+  require(colorbarTickLengthPt >= 0.0 && colorbarTickLengthPt.isFinite, "`colorbarTickLengthPt` must be finite and >= 0")
+  require(colorbarLabelGapPt >= 0.0 && colorbarLabelGapPt.isFinite, "`colorbarLabelGapPt` must be finite and >= 0")
   require(panelGapPt >= 0.0 && panelGapPt.isFinite, "`panelGapPt` must be finite and >= 0")
   require(facetStripPt > 0.0 && facetStripPt.isFinite, "`facetStripPt` must be finite and > 0")
 
@@ -89,9 +103,115 @@ final case class PlotLayoutRequest(
 final case class LegendRequest(
     title: Option[String],
     labels: Vector[String],
-    extraKeyWidthPt: Double = 0.0
+    extraKeyWidthPt: Double = 0.0,
+    items: Vector[GuideLayoutRequest] = Vector.empty
 ):
   require(extraKeyWidthPt >= 0.0 && extraKeyWidthPt.isFinite, "`extraKeyWidthPt` must be finite and >= 0")
+
+  private[graphics] def normalizedItems: Vector[GuideLayoutRequest] =
+    if items.nonEmpty then items
+    else Vector(GuideLayoutRequest.Legend(title, labels))
+
+enum GuideLayoutRequest:
+  case Legend(title: Option[String], labels: Vector[String])
+  case Colorbar(title: Option[String], labels: Vector[String])
+
+enum GuidePlacement:
+  case Legend(
+      xPt: Double,
+      topPt: Double,
+      rowPitchPt: Double,
+      firstRowOffsetPt: Double,
+      labelOffsetPt: Double,
+      markerSizePt: Double
+  )
+  case Colorbar(
+      xPt: Double,
+      topPt: Double,
+      barTopOffsetPt: Double,
+      barWidthPt: Double,
+      barHeightPt: Double,
+      tickLengthPt: Double,
+      labelOffsetPt: Double,
+      titleOffsetPt: Double
+  )
+
+final case class GuideStackPlan(
+    widthPt: Double,
+    heightPt: Double,
+    placements: Vector[GuidePlacement]
+)
+
+/** Measures a complete legend/colorbar column in points. Placement is stored
+  * as offsets from the top-left of the guide viewport so the same plan can be
+  * lowered deterministically by every backend.
+  */
+object GuideStackSolver:
+  def plan(policy: LayoutPolicy, request: LegendRequest): GuideStackPlan =
+    val textHeight = policy.metrics.heightPt(policy.legendFontPt)
+    val rowHeight = math.max(policy.legendKeyPt, textHeight)
+    val rowPitch = rowHeight + policy.legendRowGapPt
+    val placements = Vector.newBuilder[GuidePlacement]
+    var widest = 0.0
+    var nextTop = policy.legendPaddingPt
+    val items = request.normalizedItems
+    var index = 0
+    while index < items.length do
+      val item = items(index)
+      val labels = item match
+        case GuideLayoutRequest.Legend(_, values)   => values
+        case GuideLayoutRequest.Colorbar(_, values) => values
+      val title = item match
+        case GuideLayoutRequest.Legend(value, _)   => value
+        case GuideLayoutRequest.Colorbar(value, _) => value
+      val labelWidth = labels.foldLeft(0.0) { (acc, label) =>
+        math.max(acc, policy.metrics.widthPt(label, policy.legendFontPt))
+      }
+      val titleWidth = title.fold(0.0)(value => policy.metrics.widthPt(value, policy.legendFontPt))
+      val titleBlock = title.fold(0.0)(_ => textHeight + policy.legendTitleGapPt)
+      val itemHeight = item match
+        case GuideLayoutRequest.Legend(_, values) =>
+          val rowsHeight =
+            if values.isEmpty then 0.0
+            else rowHeight * values.length.toDouble + policy.legendRowGapPt * (values.length - 1).toDouble
+          val firstRowOffset =
+            if title.nonEmpty then titleBlock + rowHeight / 2.0
+            else rowHeight / 2.0
+          placements += GuidePlacement.Legend(
+            policy.legendPaddingPt,
+            nextTop,
+            rowPitch,
+            firstRowOffset,
+            policy.legendKeyPt + policy.legendGapPt / 2.0,
+            policy.legendKeyPt
+          )
+          val entryWidth = policy.legendKeyPt + policy.legendGapPt / 2.0 + request.extraKeyWidthPt + labelWidth
+          widest = math.max(widest, math.max(entryWidth, titleWidth))
+          titleBlock + rowsHeight
+        case GuideLayoutRequest.Colorbar(_, _) =>
+          val labelInset = textHeight / 2.0
+          val barTopOffset = titleBlock + labelInset
+          placements += GuidePlacement.Colorbar(
+            policy.legendPaddingPt,
+            nextTop,
+            barTopOffset,
+            policy.colorbarWidthPt,
+            policy.colorbarHeightPt,
+            policy.colorbarTickLengthPt,
+            policy.colorbarTickLengthPt + policy.colorbarLabelGapPt,
+            policy.legendTitleGapPt + labelInset
+          )
+          val entryWidth = policy.colorbarWidthPt + policy.colorbarTickLengthPt + policy.colorbarLabelGapPt + labelWidth
+          widest = math.max(widest, math.max(entryWidth, titleWidth))
+          titleBlock + policy.colorbarHeightPt + textHeight
+      nextTop += itemHeight
+      if index + 1 < items.length then nextTop += policy.guideStackGapPt
+      index += 1
+    GuideStackPlan(
+      widthPt = widest + policy.legendPaddingPt * 2.0,
+      heightPt = nextTop + policy.legendPaddingPt,
+      placements = placements.result()
+    )
 
 final case class PanelGridRequest(rows: Int, columns: Int, count: Int):
   require(rows >= 1, "`rows` must be >= 1")
@@ -171,14 +291,8 @@ object PlotLayoutSolver:
     val belowLabels = if titleHeight.nonEmpty || subtitleHeight.nonEmpty then npcY(policy.plotLabelGapPt) else 0.0
     val headerHeight = titleHeight.getOrElse(0.0) + subtitleHeight.getOrElse(0.0) + betweenLabels + belowLabels
 
-    val legendWidth = request.legend.map { legend =>
-      val labelPt = legend.labels.foldLeft(0.0) { (acc, label) =>
-        math.max(acc, policy.metrics.widthPt(label, policy.legendFontPt))
-      }
-      val titlePt = legend.title.fold(0.0)(title => policy.metrics.widthPt(title, policy.legendFontPt))
-      val entryPt = policy.legendKeyPt + policy.legendGapPt / 2.0 + legend.extraKeyWidthPt + labelPt
-      npcX(policy.legendPaddingPt * 2.0 + math.max(entryPt, titlePt))
-    }
+    val guideStack = request.legend.map(legend => GuideStackSolver.plan(policy, legend))
+    val legendWidth = guideStack.map(plan => npcX(plan.widthPt))
     val legendGap = legendWidth.fold(0.0)(_ => npcX(policy.legendGapPt))
 
     val availableX0 = marginX + left
@@ -203,7 +317,9 @@ object PlotLayoutSolver:
             else
               val width = availableH / targetNpcAspect
               (availableX0 + (availableW - width) / 2.0, availableY0, width, availableH)
-      for
+      val panelHeightPt = panelH * device.height / pxPerPt
+      if guideStack.exists(_.heightPt > panelHeightPt) then Left(GraphicsError.LayoutOverflow("guide stack height"))
+      else for
         panel <- PanelFrame.npc(panelX0, panelY0, panelW, panelH)
         grid <- request.grid match
           case Some(spec) => panelGridFrames(policy, spec, panelX0, panelY0, panelW, panelH, npcX, npcY)

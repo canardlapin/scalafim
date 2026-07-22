@@ -159,6 +159,7 @@ object GuideSpec:
       // into a narrow reserved strip must still clear its own point-sized key
       // markers, which npc offsets fail to do once the strip is small.
       rowGap: ExtentExpr = ExtentExpr.pointsUnsafe(20.0),
+      firstRowOffset: Option[ExtentExpr] = None,
       labelOffset: LengthExpr = LengthExpr(Length.pointsUnsafe(10.0)),
       markerSize: ExtentExpr = ExtentExpr.pointsUnsafe(5.0),
       titleGp: Option[GraphicParams] = None,
@@ -302,8 +303,10 @@ object GuideSpec:
       index: Int,
       children: scala.collection.mutable.Builder[Grob, Vector[Grob]]
   ): Either[GraphicsError, Unit] =
-    val row = index + spec.title.fold(0)(_ => 1)
-    val y = spec.origin.y - LengthExpr.Mul(row.toDouble, spec.rowGap.expr)
+    val defaultFirstOffset =
+      if spec.title.nonEmpty then spec.rowGap.expr else LengthExpr(Length.pointsUnsafe(0.0))
+    val firstOffset = spec.firstRowOffset.map(_.expr).getOrElse(defaultFirstOffset)
+    val y = spec.origin.y - firstOffset - LengthExpr.Mul(index.toDouble, spec.rowGap.expr)
     val keyAt = Point(spec.origin.x, y)
     val labelAt = Point(spec.origin.x + spec.labelOffset, y)
     val baseName = spec.name.map(name => s"${name.value}-entry-$index")

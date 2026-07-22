@@ -148,6 +148,50 @@ class PlotLayoutSuite extends munit.FunSuite:
     )
   }
 
+  test("guide stacks derive row, title, and inter-guide spacing from policy") {
+    val plan = GuideStackSolver.plan(
+      policy,
+      LegendRequest(
+        None,
+        Vector.empty,
+        items = Vector(
+          GuideLayoutRequest.Legend(Some("group"), Vector("A", "B")),
+          GuideLayoutRequest.Colorbar(Some("value"), Vector("0", "100"))
+        )
+      )
+    )
+    val legend = plan.placements.head.asInstanceOf[GuidePlacement.Legend]
+    val colorbar = plan.placements(1).asInstanceOf[GuidePlacement.Colorbar]
+    val textHeight = policy.metrics.heightPt(policy.legendFontPt)
+
+    assertEqualsDouble(legend.rowPitchPt, math.max(policy.legendKeyPt, textHeight) + policy.legendRowGapPt, tol)
+    assertEqualsDouble(
+      legend.firstRowOffsetPt,
+      textHeight + policy.legendTitleGapPt + math.max(policy.legendKeyPt, textHeight) / 2.0,
+      tol
+    )
+    assert(colorbar.topPt > legend.topPt)
+    assert(plan.widthPt >= policy.metrics.widthPt("value", policy.legendFontPt) + 2.0 * policy.legendPaddingPt)
+  }
+
+  test("guide stacks that exceed the reserved viewport fail with typed overflow") {
+    val shortDevice = policy.copy(referenceDevice = DeviceContext.unsafe(240.0, 120.0))
+    val request = PlotLayoutRequest(
+      legend = Some(
+        LegendRequest(
+          None,
+          Vector.empty,
+          items = Vector(GuideLayoutRequest.Colorbar(Some("value"), Vector("0", "100")))
+        )
+      )
+    )
+
+    assertEquals(
+      PlotLayoutSolver.solve(shortDevice, request).left.toOption,
+      Some(GraphicsError.LayoutOverflow("guide stack height"))
+    )
+  }
+
   test("panel grids allocate stable row-major data and strip frames") {
     val request = PlotLayoutRequest(grid = Some(PanelGridRequest(rows = 2, columns = 2, count = 4)))
     val frames = PlotLayoutSolver.solve(policy, request).fold(e => fail(e.message), identity)

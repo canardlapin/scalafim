@@ -231,13 +231,45 @@ class GuideDerivationSuite extends munit.FunSuite:
       .fold(e => fail(e.message), identity)
 
     val trained = PlotCompiler
-      .resolve(plot, PlotCompilerOptions(frame = Some(frame), guides = GuidePolicy.Derived()))
+      .resolve(plot, PlotCompilerOptions(policy = Some(LayoutPolicy()), guides = GuidePolicy.Derived()))
       .fold(e => fail(e.message), identity)
     val legends = trained.guides.map(_.spec).collect { case legend: GuideSpec.Legend => legend }
 
     assertEquals(legends.map(_.name.map(_.value)), Vector(Some("condition-color-legend"), Some("condition-fill-legend")))
     val origins = legends.map(_.origin.y)
     assert(origins(0) != origins(1), "stacked legends must not share an origin")
+  }
+
+  test("solver stacks mixed legend and colorbar guides from measured point extents") {
+    val legend = GuideSpec.Legend(
+      title = Some("condition"),
+      entries = Vector(LegendEntry.colorUnsafe("a long condition label", Rgba.Black)),
+      name = Some(GraphicsName.unsafe("condition-legend"))
+    )
+    val colorbar = GuideSpec.Colorbar(
+      title = Some("activation"),
+      colors = Vector(Rgba.Black, Rgba.White),
+      ticks = Vector(AxisTick.unsafe(0.0, "0"), AxisTick.unsafe(1.0, "100")),
+      name = Some(GraphicsName.unsafe("activation-colorbar"))
+    )
+    val trained = PlotCompiler
+      .resolve(
+        directPlot,
+        PlotCompilerOptions(
+          policy = Some(LayoutPolicy()),
+          guides = GuidePolicy.Explicit(Vector(legend, colorbar))
+        )
+      )
+      .fold(e => fail(e.message), identity)
+    val nonPosition = trained.guides.filterNot(_.spec.isInstanceOf[GuideSpec.Axis])
+    val solvedLegend = nonPosition.head.spec.asInstanceOf[GuideSpec.Legend]
+    val solvedColorbar = nonPosition(1).spec.asInstanceOf[GuideSpec.Colorbar]
+
+    assert(solvedLegend.origin.y != solvedColorbar.origin.y)
+    assertEquals(solvedColorbar.barHeight, ExtentExpr.pointsUnsafe(LayoutPolicy().colorbarHeightPt))
+    nonPosition.foreach { guide =>
+      assert(guide.grob.asInstanceOf[Grob.Group].viewport.nonEmpty)
+    }
   }
 
   test("derived guides without a frame or layout remain a typed error") {
