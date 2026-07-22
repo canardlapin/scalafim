@@ -106,6 +106,24 @@ bin2d <- ggplot(bin2d_data, aes(x, y)) +
   labs(title = "bin-2d", x = "x", y = "y") +
   theme_minimal(base_size = 12)
 
+kde2d_data <- data.frame(
+  x = c(-1.4, -1.1, -0.8, -0.5, 0.5, 0.9, 1.2, 1.5),
+  y = c(-1.0, -0.7, -1.2, -0.6, 0.8, 1.2, 0.7, 1.4)
+)
+kde2d <- ggplot(kde2d_data, aes(x, y)) +
+  stat_density_2d(
+    aes(fill = after_stat(density)),
+    geom = "tile",
+    contour = FALSE,
+    h = c(2.4, 2.8),
+    n = 40
+  ) +
+  scale_x_continuous(limits = c(-3, 3), expand = expansion(mult = 0), oob = scales::oob_keep) +
+  scale_y_continuous(limits = c(-3, 3), expand = expansion(mult = 0), oob = scales::oob_keep) +
+  scale_fill_gradient(low = "#EFF3FF", high = "#08519C", name = "density") +
+  labs(title = "density-2d", x = "x", y = "y") +
+  theme_minimal(base_size = 12)
+
 count_data <- data.frame(category = c("control", "task", "task", "other", "task", "control"))
 counted <- ggplot(count_data, aes(category)) +
   geom_bar(width = 0.9, colour = "#233C5A", fill = "#5A96CD") +
@@ -164,6 +182,7 @@ plots <- list(
   tiles = tiles,
   heatmap = heatmap,
   bin2d = bin2d,
+  kde2d = kde2d,
   count = counted,
   facets = faceted,
   dodge = dodge,
@@ -227,6 +246,11 @@ write.table(
 write.table(
   layer_data(bin2d)[c("x", "y", "xmin", "xmax", "ymin", "ymax", "count", "density", "fill")],
   file.path(out_dir, "bin2d-layer.tsv"),
+  sep = "\t", row.names = FALSE, quote = FALSE
+)
+write.table(
+  layer_data(kde2d)[c("x", "y", "density", "count", "fill")],
+  file.path(out_dir, "kde2d-layer.tsv"),
   sep = "\t", row.names = FALSE, quote = FALSE
 )
 write.table(

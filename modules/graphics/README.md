@@ -148,6 +148,10 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   right-closed boundary contract. Conservation and permutation laws run in
   shared tests on both JVM and Scala.js; plotting starts only after the field
   has been computed.
+- `FieldStat.Kde2D` uses checked per-axis bandwidths, grid sizes, and optional
+  domains. Its shared Gaussian kernel writes directly into primitive row-major
+  storage; separability, translation, permutation, normalization, and
+  automatic-bandwidth laws anchor the computation independently of rendering.
 - Axes are scene helpers, not renderer features: `Axis` lowers to baseline
   segments, tick segments, and text labels that any backend can interpret.
 - Plot text is structural data. `PlotLabels` carries title, subtitle, and x/y

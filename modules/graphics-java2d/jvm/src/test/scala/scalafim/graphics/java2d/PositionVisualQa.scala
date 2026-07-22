@@ -27,6 +27,7 @@ object PositionVisualQa:
       Example("tiles", RendererConformance.tileComparisonCase),
       Example("heatmap", RendererConformance.heatmapComparisonCase),
       Example("bin2d", RendererConformance.bin2DComparisonCase),
+      Example("kde2d", RendererConformance.kde2DComparisonCase),
       Example("count", RendererConformance.countPlotCase),
       Example("facets", RendererConformance.facetedPlotCase),
       Example("dodge", RendererConformance.dodgedPositionCase),

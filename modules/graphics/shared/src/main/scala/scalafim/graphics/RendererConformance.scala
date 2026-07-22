@@ -147,6 +147,7 @@ object RendererConformance:
       tiles <- tileComparisonCase
       heatmap <- heatmapComparisonCase
       bin2d <- bin2DComparisonCase
+      kde2d <- kde2DComparisonCase
       faceted <- facetedPlotCase
       counted <- countPlotCase
       bandPosition <- bandPositionCase
@@ -183,6 +184,7 @@ object RendererConformance:
       tiles,
       heatmap,
       bin2d,
+      kde2d,
       faceted,
       counted,
       bandPosition,
@@ -1020,6 +1022,41 @@ object RendererConformance:
           GraphicsName.unsafe("plot-panel"),
           GraphicsName.unsafe("geom-tile-0"),
           GraphicsName.unsafe("count-colorbar")
+        ),
+        Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
+      )
+
+  def kde2DComparisonCase: Either[GraphicsError, ConformanceCase] =
+    final case class Sample(x: Double, y: Double)
+    val samples = Vector(
+      Sample(-1.4, -1.0),
+      Sample(-1.1, -0.7),
+      Sample(-0.8, -1.2),
+      Sample(-0.5, -0.6),
+      Sample(0.5, 0.8),
+      Sample(0.9, 1.2),
+      Sample(1.2, 0.7),
+      Sample(1.5, 1.4)
+    )
+    val domain = Some(Interval.unsafe(-3.0, 3.0))
+    val config = Kde2DConfig.fixedUnsafe(0.6, 0.7, 40, 40, domain, domain)
+    for
+      field <- FieldStat.kde2D[Sample](_.x, _.y, config).compute(samples)
+      scene <- plot(field)
+        .geomHeatmap(name = "density")
+        .title("density-2d")
+        .axisTitles("x", "y")
+        .theme(Theme.minimal)
+        .scene
+    yield
+      ConformanceCase(
+        GraphicsName.unsafe("comparison-kde2d"),
+        ConformanceGroup.CompiledPlot,
+        scene,
+        Vector(
+          GraphicsName.unsafe("plot-panel"),
+          GraphicsName.unsafe("geom-tile-0"),
+          GraphicsName.unsafe("density-colorbar")
         ),
         Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
       )

@@ -292,7 +292,7 @@ private[graphics] object StatPhase:
       case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.X.label, value))
       case None if values.length < 2 => Left(GraphicsError.InsufficientStatData(stat.label, 2, values.length))
       case None =>
-        val bandwidth = stat.config.bandwidth.map(_.toDouble).getOrElse(nrd0(values))
+        val bandwidth = stat.config.bandwidth.map(_.toDouble).getOrElse(DensityMath.nrd0(values))
         val domain = stat.config.domain.getOrElse(Interval.unsafe(values.min, values.max))
         val points = stat.config.points.toInt
         val step = domain.width / (points - 1).toDouble
@@ -324,39 +324,6 @@ private[graphics] object StatPhase:
       sum += math.exp(-0.5 * z * z)
       idx += 1
     sum / normalizer
-
-  /** R's `bw.nrd0`: the standard deviation or robust IQR scale, with the
-    * same constant-data fallbacks, followed by Silverman's 0.9 rule.
-    */
-  private def nrd0(values: Array[Double]): Double =
-    val sorted = values.clone()
-    scala.util.Sorting.quickSort(sorted)
-    var sum = 0.0
-    var sumIndex = 0
-    while sumIndex < values.length do
-      sum += values(sumIndex)
-      sumIndex += 1
-    val mean = sum / values.length.toDouble
-    var sumSquares = 0.0
-    var idx = 0
-    while idx < values.length do
-      val centered = values(idx) - mean
-      sumSquares += centered * centered
-      idx += 1
-    val standardDeviation = math.sqrt(sumSquares / (values.length - 1).toDouble)
-    val robust = (quantile(sorted, 0.75) - quantile(sorted, 0.25)) / 1.34
-    var scale = math.min(standardDeviation, robust)
-    if !(scale > 0.0) then scale = standardDeviation
-    if !(scale > 0.0) then scale = math.abs(values.head)
-    if !(scale > 0.0) then scale = 1.0
-    0.9 * scale * math.pow(values.length.toDouble, -0.2)
-
-  private def quantile(sorted: Array[Double], probability: Double): Double =
-    val position = (sorted.length - 1).toDouble * probability
-    val lower = math.floor(position).toInt
-    val upper = math.ceil(position).toInt
-    val fraction = position - lower.toDouble
-    sorted(lower) + fraction * (sorted(upper) - sorted(lower))
 
   private def firstNonFinite(values: Vector[Double]): Option[Double] =
     values.find(value => !value.isFinite)
