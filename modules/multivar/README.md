@@ -105,8 +105,11 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   analytic and independent differential fixtures, published Allen/GMD and GLRM
   limits, metamorphic laws, mutation sentinels, trajectory obligations,
   deterministic conditioning-aware tolerances, and explicit PR-fast,
-  reference, and nightly stress tiers. `LowRankModels.jl` may inform a GLRM
-  differential case but is rejected as its sole oracle;
+  reference, and nightly stress tiers. The GLRM case includes pinned
+  `LowRankModels.jl` fixed-factor, convex row-encoding, and deterministic
+  multi-start fitted fixtures on both JVM and Scala.js, while retaining
+  analytic and independent convex checks because the Julia package is rejected
+  as a sole or proof oracle;
 - fold-safe `ModelSpec` execution that fits preprocessing, learned operators,
   policies, programs, lowerings, and solvers on training identities only and
   returns transformations bound to the fitted feature and row provenance;

@@ -481,8 +481,8 @@ object MathematicalOracleCatalog:
     oracleCase(
       "oracle.generalized-low-rank",
       MathematicalContractCatalog.generalizedLowRankModel,
-      "GeneralizedLowRankProgram and FittedLatentEncoder",
-      "GeneralizedLowRankModelSuite and FittedLatentEncoderSuite",
+      "GeneralizedLowRankProgram, FittedLatentEncoder, and PalmSolver",
+      "GeneralizedLowRankModelSuite, LowRankModelsDifferentialSuite, LowRankModelsEncodingDifferentialSuite, and LowRankModelsFittedDifferentialSuite",
       differential = Set(
         DifferentialOracle.IndependentConvexReference,
         DifferentialOracle.PublishedGlrmLimit,

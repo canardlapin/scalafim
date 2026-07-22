@@ -105,6 +105,19 @@ matrix therefore permits it only alongside an independent convex reference or
 a published limiting case. The PCA/Frobenius, analytic mixed-loss, masked
 objective, and convex new-row-code reductions are checked independently.
 
+The committed secondary-oracle environment pins LowRankModels.jl 1.1.1 at
+`a18f0df45f1a6ce37634bf4e347062b6090397eb`. Shared JVM/Scala.js suites consume
+generated fixtures for fixed-factor objectives and gradients, frozen-decoder
+convex encodings, and a ridge-regularized rank-one multi-start fit. Fitted
+comparisons use reconstruction, cross-evaluated full objectives, decoded
+predictions, stationarity, and monotone full-objective checkpoints rather than
+literal factors. The fixture also records that the upstream
+`ConvergenceHistory.objective` is not the full GLRM objective in this program;
+fixed-budget fits and independently recomputed objectives avoid treating that
+history field as a convergence certificate. Reproduction commands and the
+complete admitted/excluded semantic map live in
+`tools/oracles/lowrankmodels/README.md`.
+
 ## Counterexamples that define the boundary
 
 1. **Post-hoc shrinkage is not joint sparse PCA.** Soft-thresholding a fitted
