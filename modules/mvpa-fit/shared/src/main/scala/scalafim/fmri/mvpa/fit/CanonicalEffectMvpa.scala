@@ -1,5 +1,8 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import scalafim.multivar.family.canonical.{CanonicalEffectFit, CanonicalEffectProblem, CanonicalEffectSolution, ResidualRegularization}
+
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{
   PreparedContrastGeometry,
@@ -18,15 +21,6 @@ import scalafim.fmri.mvpa.{
   MvpaResult,
   MvpaStreamControl,
   RoiOutcome
-}
-import scalafim.multivar.{
-  CanonicalEffectFit,
-  CanonicalEffectProblem,
-  CanonicalEffectSolution,
-  ResidualRegularization,
-  SemanticSpace,
-  SpaceRef,
-  SpaceRole
 }
 import gale.linalg.DMat
 import gale.linalg.DVec

@@ -1,8 +1,10 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.core.*
+import scalafim.multivar.family.canonical.*
+
 import gale.linalg.{CholeskyOptions, DMat, Matrix}
 import scalafim.fmri.mvpa.*
-import scalafim.multivar.*
 
 enum SoftLdaComponents:
   case Maximum

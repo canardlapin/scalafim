@@ -1,5 +1,9 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.contract.RequestedOptimizationClaim
+import scalafim.multivar.family.canonical.{CanonicalEffectReferenceFixtures as R, ResidualRegularization, TraceRidgeFraction}
+import scalafim.multivar.optimization.FeasibleSetKind
+
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{
@@ -13,13 +17,6 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.model.FitConfig
 import scalafim.fmri.mvpa.{FeatureSet, FeatureSetPlan, MvpaStreamControl, RoiId}
-import scalafim.multivar.{
-  CanonicalEffectReferenceFixtures as R,
-  FeasibleSetKind,
-  ResidualRegularization,
-  RequestedOptimizationClaim,
-  TraceRidgeFraction
-}
 
 class ConstrainedCanonicalMvpaSuite extends munit.FunSuite:
   test("complete nonnegative one-shot MVPA agrees with the independent base-R active-face oracle"):

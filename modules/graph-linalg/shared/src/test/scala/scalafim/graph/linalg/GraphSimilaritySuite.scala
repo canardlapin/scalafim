@@ -6,8 +6,8 @@ import gale.spectral.Eigen
 import gale.spectral.EigenSelection
 import scalafim.graph.Graph
 import scalafim.graph.VertexBasis
-import scalafim.multivar.Kernel
-import scalafim.multivar.MatrixView
+import scalafim.multivar.family.kernel.Kernel
+import scalafim.multivar.core.MatrixView
 
 class GraphSimilaritySuite extends munit.FunSuite:
   private val basis = VertexBasis.from(Vector("a" -> "A", "b" -> "B", "c" -> "C", "d" -> "D")).toOption.get

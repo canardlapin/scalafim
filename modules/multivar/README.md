@@ -15,6 +15,35 @@ All statistical methods execute on the typed operator/program substrate. There
 is no legacy diagram, metric, map/projection, GPCA, paired-GMD, or CPCA engine
 behind the semantic API.
 
+## Package map
+
+The module now makes its mathematical lifecycle visible in the namespace:
+
+```text
+core -> contract -> optimization -> solver -> lifecycle
+                                      |
+                                      +-> capability -> family.*
+                                                           |
+                                                           +-> workflow -> validation
+```
+
+`core` owns portable semantic and numerical primitives; `contract` states the
+mathematics; `optimization` declares programs; `solver` lowers and executes;
+`lifecycle` binds declarations, evidence, receipts and fitted payloads;
+`capability` exposes family-neutral post-fit operations; each `family.*`
+package owns one statistical vertical; and `workflow` owns fold-safe
+`ModelSpec` composition. Tests mirror this layout. The exact ownership and
+extension rules are documented in
+[`multivar-package-hierarchy.md`](../../docs/plans/multivar-package-hierarchy.md).
+
+Import from the semantic owner rather than from a flat façade:
+
+```scala
+import scalafim.multivar.core.{ComponentCount, MatrixView}
+import scalafim.multivar.family.glrm.GeneralizedLowRankProgram
+import scalafim.multivar.workflow.ModelSpec
+```
+
 This module owns the portable algebra below MVPA and neuroimaging adapters:
 
 - nominal semantic spaces plus distinct primal and dual coordinates;

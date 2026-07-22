@@ -1,10 +1,11 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.family.canonical.ResidualRegularization
+
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.*
 import scalafim.fmri.model.FitConfig
 import scalafim.fmri.mvpa.*
-import scalafim.multivar.ResidualRegularization
 import gale.linalg.{DMat, Matrix}
 
 class ManovaMvpaSuite extends munit.FunSuite:

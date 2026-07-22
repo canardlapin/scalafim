@@ -1,5 +1,8 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import scalafim.multivar.family.canonical.{CanonicalEffectProblem, CanonicalRootSpectrum, CanonicalSpectrumFit, ManovaStatistics, ResidualRegularization}
+
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{
   PreparedManovaGeometry,
@@ -18,16 +21,6 @@ import scalafim.fmri.mvpa.{
   MvpaResult,
   MvpaStreamControl,
   RoiOutcome
-}
-import scalafim.multivar.{
-  CanonicalEffectProblem,
-  CanonicalSpectrumFit,
-  CanonicalRootSpectrum,
-  ManovaStatistics,
-  ResidualRegularization,
-  SemanticSpace,
-  SpaceRef,
-  SpaceRole
 }
 import gale.linalg.{DMat, Matrix}
 
