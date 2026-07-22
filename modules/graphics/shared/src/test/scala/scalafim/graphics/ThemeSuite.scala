@@ -15,10 +15,11 @@ class ThemeSuite extends munit.FunSuite:
   private val blue = Rgba.unsafe(35, 80, 180)
   private val green = Rgba.unsafe(35, 135, 80)
 
-  private def text(sizePt: Double, color: Rgba): GraphicParams =
+  private def text(sizePt: Double, color: Rgba, family: Option[String] = None): GraphicParams =
     GraphicParams.unsafe(
       stroke = None,
       fill = Some(color),
+      fontFamily = family,
       fontSize = Length.pointsUnsafe(sizePt)
     )
 
@@ -37,13 +38,34 @@ class ThemeSuite extends munit.FunSuite:
     )
 
   test("theme typography is the layout typography") {
-    val policy = themed.layoutPolicy
+    val withFamilies = themed.copy(
+      axis = themed.axis.copy(
+        text = text(9.0, blue, Some("Axis Sans")),
+        title = text(13.0, red, Some("Axis Title"))
+      ),
+      legend = LegendTheme(
+        text(8.0, green, Some("Legend Sans")),
+        text(12.0, red, Some("Legend Title"))
+      ),
+      plotText = PlotTextTheme(
+        text(20.0, red, Some("Display")),
+        text(14.0, blue, Some("Subtitle"))
+      )
+    )
+    val policy = withFamilies.layoutPolicy
 
     assertEqualsDouble(policy.axisFontPt, 9.0, 1e-12)
+    assertEquals(policy.axisFontFamily, Some("Axis Sans"))
     assertEqualsDouble(policy.axisTitleFontPt, 13.0, 1e-12)
-    assertEqualsDouble(policy.legendFontPt, 12.0, 1e-12)
+    assertEquals(policy.axisTitleFontFamily, Some("Axis Title"))
+    assertEqualsDouble(policy.legendFontPt, 8.0, 1e-12)
+    assertEquals(policy.legendFontFamily, Some("Legend Sans"))
+    assertEqualsDouble(policy.legendTitleFontPt, 12.0, 1e-12)
+    assertEquals(policy.legendTitleFontFamily, Some("Legend Title"))
     assertEqualsDouble(policy.plotTitleFontPt, 20.0, 1e-12)
+    assertEquals(policy.plotTitleFontFamily, Some("Display"))
     assertEqualsDouble(policy.plotSubtitleFontPt, 14.0, 1e-12)
+    assertEquals(policy.plotSubtitleFontFamily, Some("Subtitle"))
   }
 
   test("one theme reaches marks, panel, axes, legends, and plot labels") {

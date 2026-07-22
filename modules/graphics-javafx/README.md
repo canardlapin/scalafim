@@ -30,6 +30,11 @@ to look. The backend owns JavaFX-specific stroke,
 dash, font, text-anchor, clipping, transform, and alpha behavior; it contains
 no plot, scale, guide, or layout semantics.
 
+JavaFX applications that want installed-font-aware layout can also depend on
+`graphics-java2d` and inject `Java2DTextMetrics()` into `LayoutPolicy`. Font
+measurement is a caller-selected JVM capability; the JavaFX renderer itself
+does not change the deterministic shared `TextMetrics.estimate` default.
+
 Shared raster images are converted once per adapter into cached ARGB
 `WritableImage` values and drawn with explicit nearest-neighbor or bilinear
 smoothing plus grob-level alpha.

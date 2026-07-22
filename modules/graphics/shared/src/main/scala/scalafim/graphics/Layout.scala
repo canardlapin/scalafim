@@ -243,13 +243,13 @@ object GuideSpec:
 
   private def axisTitleOffsetPt(spec: Axis, policy: LayoutPolicy): Double =
     val tickLabelExtent =
-      if spec.side.isHorizontal then policy.metrics.heightPt(policy.axisFontPt)
+      if spec.side.isHorizontal then policy.metrics.heightPt(policy.axisTextStyle)
       else
         spec.ticks.getOrElse(Vector.empty).foldLeft(0.0) { (width, tick) =>
-          math.max(width, policy.metrics.widthPt(tick.label, policy.axisFontPt))
+          math.max(width, policy.metrics.widthPt(tick.label, policy.axisTextStyle))
         }
     policy.tickLengthPt + policy.tickLabelGapPt + tickLabelExtent +
-      policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleFontPt) / 2.0
+      policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleTextStyle) / 2.0
 
   private def lowerLegend(
       spec: Legend,

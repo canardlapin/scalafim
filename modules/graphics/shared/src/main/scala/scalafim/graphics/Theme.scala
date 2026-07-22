@@ -76,10 +76,17 @@ final case class Theme(
   def layoutPolicy(base: LayoutPolicy): LayoutPolicy =
     base.copy(
       axisFontPt = pointFont(axis.text),
+      axisFontFamily = axis.text.fontFamily,
       axisTitleFontPt = pointFont(axis.title),
+      axisTitleFontFamily = axis.title.fontFamily,
       plotTitleFontPt = pointFont(plotText.title),
+      plotTitleFontFamily = plotText.title.fontFamily,
       plotSubtitleFontPt = pointFont(plotText.subtitle),
-      legendFontPt = math.max(pointFont(legend.text), pointFont(legend.title))
+      plotSubtitleFontFamily = plotText.subtitle.fontFamily,
+      legendFontPt = pointFont(legend.text),
+      legendFontFamily = legend.text.fontFamily,
+      legendTitleFontPt = pointFont(legend.title),
+      legendTitleFontFamily = legend.title.fontFamily
     )
 
   private def requirePointFont(label: String, gp: GraphicParams): Unit =

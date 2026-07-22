@@ -9,6 +9,19 @@ trait TextMetrics:
   def widthPt(text: String, fontSizePt: Double): Double
   def heightPt(fontSizePt: Double): Double
 
+  /** Family-aware entry points used by layout. Existing deterministic or
+    * synthetic providers can implement only the size-based contract; platform
+    * providers override these methods to honor the requested family.
+    */
+  def widthPt(text: String, style: TextStyle): Double =
+    widthPt(text, style.fontSizePt)
+
+  def heightPt(style: TextStyle): Double =
+    heightPt(style.fontSizePt)
+
+final case class TextStyle(fontFamily: Option[String], fontSizePt: Double):
+  require(fontSizePt > 0.0 && fontSizePt.isFinite, "`fontSizePt` must be finite and > 0")
+
 object TextMetrics:
   /** Conservative portable estimator: wide-glyph average advance and a
     * standard line height, so allocated regions err toward whitespace rather
@@ -50,7 +63,14 @@ final case class LayoutPolicy(
     colorbarTickLengthPt: Double = 4.0,
     colorbarLabelGapPt: Double = 4.0,
     panelGapPt: Double = 8.0,
-    facetStripPt: Double = 18.0
+    facetStripPt: Double = 18.0,
+    axisFontFamily: Option[String] = None,
+    axisTitleFontFamily: Option[String] = None,
+    plotTitleFontFamily: Option[String] = None,
+    plotSubtitleFontFamily: Option[String] = None,
+    legendFontFamily: Option[String] = None,
+    legendTitleFontPt: Double = 10.0,
+    legendTitleFontFamily: Option[String] = None
 ):
   require(outerMarginPt >= 0.0 && outerMarginPt.isFinite, "`outerMarginPt` must be finite and >= 0")
   require(tickLengthPt >= 0.0 && tickLengthPt.isFinite, "`tickLengthPt` must be finite and >= 0")
@@ -62,6 +82,7 @@ final case class LayoutPolicy(
   require(plotSubtitleFontPt > 0.0 && plotSubtitleFontPt.isFinite, "`plotSubtitleFontPt` must be finite and > 0")
   require(plotLabelGapPt >= 0.0 && plotLabelGapPt.isFinite, "`plotLabelGapPt` must be finite and >= 0")
   require(legendFontPt > 0.0 && legendFontPt.isFinite, "`legendFontPt` must be finite and > 0")
+  require(legendTitleFontPt > 0.0 && legendTitleFontPt.isFinite, "`legendTitleFontPt` must be finite and > 0")
   require(legendKeyPt >= 0.0 && legendKeyPt.isFinite, "`legendKeyPt` must be finite and >= 0")
   require(legendGapPt >= 0.0 && legendGapPt.isFinite, "`legendGapPt` must be finite and >= 0")
   require(legendPaddingPt >= 0.0 && legendPaddingPt.isFinite, "`legendPaddingPt` must be finite and >= 0")
@@ -74,6 +95,13 @@ final case class LayoutPolicy(
   require(colorbarLabelGapPt >= 0.0 && colorbarLabelGapPt.isFinite, "`colorbarLabelGapPt` must be finite and >= 0")
   require(panelGapPt >= 0.0 && panelGapPt.isFinite, "`panelGapPt` must be finite and >= 0")
   require(facetStripPt > 0.0 && facetStripPt.isFinite, "`facetStripPt` must be finite and > 0")
+
+  def axisTextStyle: TextStyle = TextStyle(axisFontFamily, axisFontPt)
+  def axisTitleTextStyle: TextStyle = TextStyle(axisTitleFontFamily, axisTitleFontPt)
+  def plotTitleTextStyle: TextStyle = TextStyle(plotTitleFontFamily, plotTitleFontPt)
+  def plotSubtitleTextStyle: TextStyle = TextStyle(plotSubtitleFontFamily, plotSubtitleFontPt)
+  def legendTextStyle: TextStyle = TextStyle(legendFontFamily, legendFontPt)
+  def legendTitleTextStyle: TextStyle = TextStyle(legendTitleFontFamily, legendTitleFontPt)
 
 /** Stable names for solver-allocated regions. */
 object PlotRegion:
@@ -148,7 +176,8 @@ final case class GuideStackPlan(
   */
 object GuideStackSolver:
   def plan(policy: LayoutPolicy, request: LegendRequest): GuideStackPlan =
-    val textHeight = policy.metrics.heightPt(policy.legendFontPt)
+    val textHeight = policy.metrics.heightPt(policy.legendTextStyle)
+    val titleHeight = policy.metrics.heightPt(policy.legendTitleTextStyle)
     val rowHeight = math.max(policy.legendKeyPt, textHeight)
     val rowPitch = rowHeight + policy.legendRowGapPt
     val placements = Vector.newBuilder[GuidePlacement]
@@ -165,10 +194,10 @@ object GuideStackSolver:
         case GuideLayoutRequest.Legend(value, _)   => value
         case GuideLayoutRequest.Colorbar(value, _) => value
       val labelWidth = labels.foldLeft(0.0) { (acc, label) =>
-        math.max(acc, policy.metrics.widthPt(label, policy.legendFontPt))
+        math.max(acc, policy.metrics.widthPt(label, policy.legendTextStyle))
       }
-      val titleWidth = title.fold(0.0)(value => policy.metrics.widthPt(value, policy.legendFontPt))
-      val titleBlock = title.fold(0.0)(_ => textHeight + policy.legendTitleGapPt)
+      val titleWidth = title.fold(0.0)(value => policy.metrics.widthPt(value, policy.legendTitleTextStyle))
+      val titleBlock = title.fold(0.0)(_ => titleHeight + policy.legendTitleGapPt)
       val itemHeight = item match
         case GuideLayoutRequest.Legend(_, values) =>
           val rowsHeight =
@@ -273,11 +302,11 @@ object PlotLayoutSolver:
     val marginY = npcY(policy.outerMarginPt)
 
     def titleExtent(request: AxisRequest): Double =
-      request.title.fold(0.0)(_ => policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleFontPt))
+      request.title.fold(0.0)(_ => policy.axisTitleGapPt + policy.metrics.heightPt(policy.axisTitleTextStyle))
     def axisStripPtY(request: AxisRequest): Double =
-      policy.tickLengthPt + policy.tickLabelGapPt + policy.metrics.heightPt(policy.axisFontPt) + titleExtent(request)
+      policy.tickLengthPt + policy.tickLabelGapPt + policy.metrics.heightPt(policy.axisTextStyle) + titleExtent(request)
     def axisStripPtX(request: AxisRequest): Double =
-      val labelWidth = request.labels.foldLeft(0.0)((acc, label) => math.max(acc, policy.metrics.widthPt(label, policy.axisFontPt)))
+      val labelWidth = request.labels.foldLeft(0.0)((acc, label) => math.max(acc, policy.metrics.widthPt(label, policy.axisTextStyle)))
       policy.tickLengthPt + policy.tickLabelGapPt + labelWidth + titleExtent(request)
 
     val bottom = request.axes.get(AxisSide.Bottom).map(axis => npcY(axisStripPtY(axis))).getOrElse(0.0)
@@ -285,8 +314,8 @@ object PlotLayoutSolver:
     val left = request.axes.get(AxisSide.Left).map(axis => npcX(axisStripPtX(axis))).getOrElse(0.0)
     val right = request.axes.get(AxisSide.Right).map(axis => npcX(axisStripPtX(axis))).getOrElse(0.0)
 
-    val titleHeight = request.labels.title.map(_ => npcY(policy.metrics.heightPt(policy.plotTitleFontPt)))
-    val subtitleHeight = request.labels.subtitle.map(_ => npcY(policy.metrics.heightPt(policy.plotSubtitleFontPt)))
+    val titleHeight = request.labels.title.map(_ => npcY(policy.metrics.heightPt(policy.plotTitleTextStyle)))
+    val subtitleHeight = request.labels.subtitle.map(_ => npcY(policy.metrics.heightPt(policy.plotSubtitleTextStyle)))
     val betweenLabels = if titleHeight.nonEmpty && subtitleHeight.nonEmpty then npcY(policy.plotLabelGapPt) else 0.0
     val belowLabels = if titleHeight.nonEmpty || subtitleHeight.nonEmpty then npcY(policy.plotLabelGapPt) else 0.0
     val headerHeight = titleHeight.getOrElse(0.0) + subtitleHeight.getOrElse(0.0) + betweenLabels + belowLabels

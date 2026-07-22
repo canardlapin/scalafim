@@ -162,7 +162,7 @@ class PlotLayoutSuite extends munit.FunSuite:
     )
     val legend = plan.placements.head.asInstanceOf[GuidePlacement.Legend]
     val colorbar = plan.placements(1).asInstanceOf[GuidePlacement.Colorbar]
-    val textHeight = policy.metrics.heightPt(policy.legendFontPt)
+    val textHeight = policy.metrics.heightPt(policy.legendTextStyle)
 
     assertEqualsDouble(legend.rowPitchPt, math.max(policy.legendKeyPt, textHeight) + policy.legendRowGapPt, tol)
     assertEqualsDouble(
@@ -171,7 +171,7 @@ class PlotLayoutSuite extends munit.FunSuite:
       tol
     )
     assert(colorbar.topPt > legend.topPt)
-    assert(plan.widthPt >= policy.metrics.widthPt("value", policy.legendFontPt) + 2.0 * policy.legendPaddingPt)
+    assert(plan.widthPt >= policy.metrics.widthPt("value", policy.legendTitleTextStyle) + 2.0 * policy.legendPaddingPt)
   }
 
   test("guide stacks that exceed the reserved viewport fail with typed overflow") {

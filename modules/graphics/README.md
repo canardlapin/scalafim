@@ -210,8 +210,12 @@ scale declarations over observations from every layer.
 - Themes are values, not ambient state or a selector cascade. Compilation
   resolves one `Theme` into complete leaf `GraphicParams`; explicit layer and
   guide styles win locally. The layout solver measures the same themed font
-  sizes later emitted as text, while panel backgrounds and tick-aligned grids
-  are ordinary renderer-neutral grobs beneath the data.
+  families and point sizes later emitted as text, while panel backgrounds and
+  tick-aligned grids are ordinary renderer-neutral grobs beneath the data.
+  `TextMetrics.estimate` remains the deterministic portable default. Callers
+  may explicitly inject `Java2DTextMetrics` or `CanvasTextMetrics` through
+  `LayoutPolicy.metrics` when layouts should reflect a fixed platform font
+  environment; installed fonts never affect shared output implicitly.
 - Statistics are typed data transformations, not enum flags interpreted by a
   geom. `StatFrame` exposes its aggregate rows and closed
   `ComputedAesthetic` fields; `Stat.Count` computes count/proportion before

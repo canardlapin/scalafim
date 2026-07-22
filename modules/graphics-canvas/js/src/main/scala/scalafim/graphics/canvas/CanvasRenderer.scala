@@ -264,6 +264,7 @@ trait CanvasRenderingContext2D extends js.Object:
   def rotate(angleRadians: Double): Unit = js.native
   def setLineDash(segments: js.Array[Double]): Unit = js.native
   def fillText(text: String, x: Double, y: Double): Unit = js.native
+  def measureText(text: String): CanvasTextMeasurement = js.native
   def createImageData(width: Int, height: Int): CanvasImageData = js.native
   def putImageData(image: CanvasImageData, x: Double, y: Double): Unit = js.native
   def drawImage(image: CanvasImageSource, x: Double, y: Double, width: Double, height: Double): Unit = js.native
