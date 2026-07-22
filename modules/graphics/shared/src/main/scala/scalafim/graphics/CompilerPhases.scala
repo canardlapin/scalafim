@@ -1,14 +1,13 @@
 package scalafim.graphics
 
 /** Output of the mapping-resolution phase: one plan per layer with effective
-  * data, effective mapping, and its normalized aesthetic environment.
+  * data and its canonical aesthetic mapping.
   */
 private[graphics] final case class LayerPlan[Row](
     layerIndex: Int,
     layer: Layer[Row],
     data: Vector[Row],
-    mapping: AesSpec[Row],
-    env: AesEnv[Row]
+    mapping: AesSpec[Row]
 )
 
 /** A layer after its statistical transform. Every stat emits the same typed
@@ -18,8 +17,7 @@ private[graphics] final case class LayerPlan[Row](
 private[graphics] final case class StatPlan[Row](
     source: LayerPlan[Row],
     frame: StatFrame[Row],
-    mapping: AesSpec[StatRow[Row]],
-    env: AesEnv[StatRow[Row]]
+    mapping: AesSpec[StatRow[Row]]
 ):
   def layerIndex: Int = source.layerIndex
   def layer: Layer[Row] = source.layer
@@ -46,7 +44,7 @@ private[graphics] object MappingPhase:
     else
       val mapping = layer.effectiveMapping(plot.mapping)
       Layer.validate(layer, mapping).map { _ =>
-        LayerPlan(layerIndex, layer, layer.effectiveData(plot.data), mapping, mapping.env)
+        LayerPlan(layerIndex, layer, layer.effectiveData(plot.data), mapping)
       }
 
   private def isSupported(geom: Geom): Boolean =
@@ -77,7 +75,7 @@ private[graphics] object StatPhase:
         val rows = plan.data.map(row => StatRow(row, Vector(row), None, ComputedValues.empty))
         val frame = StatFrame(rows, Set.empty)
         val mapping = plan.mapping.contramap[StatRow[Row]](_.source)
-        Right(StatPlan(plan, frame, mapping, mapping.env))
+        Right(StatPlan(plan, frame, mapping))
       case count: Stat.Count[?] =>
         countFrame(plan, count.asInstanceOf[Stat.Count[Row]])
       case bin: Stat.Bin[?] =>
@@ -97,8 +95,7 @@ private[graphics] object StatPhase:
         StatPlan(
           plan,
           StatFrame(Vector.empty, Set(ComputedAesthetic.Count, ComputedAesthetic.Proportion)),
-          resolved,
-          resolved.env
+          resolved
         )
       }
     else
@@ -129,8 +126,7 @@ private[graphics] object StatPhase:
         StatPlan(
           plan,
           StatFrame(rows, Set(ComputedAesthetic.Count, ComputedAesthetic.Proportion)),
-          mapping,
-          mapping.env
+          mapping
         )
       }
 
@@ -174,7 +170,7 @@ private[graphics] object StatPhase:
       case Some(value) => Left(GraphicsError.NonFiniteStatInput(stat.label, Aesthetic.X.label, value))
       case None if values.isEmpty =>
         val mapping = binMapping[Row]
-        Right(StatPlan(plan, StatFrame(Vector.empty, binAesthetics), mapping, mapping.env))
+        Right(StatPlan(plan, StatFrame(Vector.empty, binAesthetics), mapping))
       case None =>
         val breaks = HistogramBins.partition(stat.bins, values.min, values.max)
         val lower = breaks.head
@@ -203,7 +199,7 @@ private[graphics] object StatPhase:
                 )
               binIndex += 1
             val mapping = binMapping[Row]
-            Right(StatPlan(plan, StatFrame(rows.result(), binAesthetics), mapping, mapping.env))
+            Right(StatPlan(plan, StatFrame(rows.result(), binAesthetics), mapping))
 
   private def binMapping[Row]: AesSpec[StatRow[Row]] =
     AesSpec(
@@ -254,7 +250,7 @@ private[graphics] object StatPhase:
               )
             }
             val mapping = summaryMapping[Row]
-            Right(StatPlan(plan, StatFrame(rows, summaryAesthetics), mapping, mapping.env))
+            Right(StatPlan(plan, StatFrame(rows, summaryAesthetics), mapping))
 
   private def summaryBounds(values: Vector[Double], mean: Double, interval: SummaryInterval): (Double, Double) =
     interval match
@@ -307,7 +303,7 @@ private[graphics] object StatPhase:
           )
         }
         val mapping = densityMapping[Row]
-        Right(StatPlan(plan, StatFrame(rows, densityAesthetics), mapping, mapping.env))
+        Right(StatPlan(plan, StatFrame(rows, densityAesthetics), mapping))
 
   private def densityMapping[Row]: AesSpec[StatRow[Row]] =
     AesSpec(
@@ -394,7 +390,7 @@ private[graphics] object ScalePhase:
       .map(_.plans)
 
   def registry[Row](plan: StatPlan[Row]): ScaleRegistry[StatRow[Row]] =
-    ScaleRegistry.fromEnv(plan.env)
+    ScaleRegistry.fromMapping(plan.mapping)
 
   private def trainAesthetic[Row](
       resolution: ScaleResolution[Row],
@@ -403,7 +399,7 @@ private[graphics] object ScalePhase:
       unifyFacetCopies: Boolean
   ): Either[GraphicsError, ScaleResolution[Row]] =
     val contributions = resolution.plans.flatMap { plan =>
-      plan.env.scaledEntry(aesthetic).map(Contribution(plan.layerIndex, plan.data, _))
+      plan.mapping.scaledEntry(aesthetic).map(Contribution(plan.layerIndex, plan.data, _))
     }
     contributions.headOption match
       case None =>
@@ -456,13 +452,12 @@ private[graphics] object ScalePhase:
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
       val plan = plans(idx)
-      plan.env.scaledEntry(aesthetic) match
+      plan.mapping.scaledEntry(aesthetic) match
         case None =>
           out += plan
         case Some(entry) =>
           result = trainEntry(entry, observations, facetLocal).map { trained =>
-            val env = trained.install(plan.env)
-            out += plan.copy(mapping = AesSpec.fromEnv(env), env = env)
+            out += plan.copy(mapping = trained.install(plan.mapping))
             ()
           }
       idx += 1
@@ -476,8 +471,8 @@ private[graphics] object ScalePhase:
     if facetLocal then entry.trainFacet(observations)
     else entry.trainPlotWide(observations)
 
-/** Phase 4 — row evaluation: map each stat row through the aesthetic
-  * environment, keeping typed drop diagnostics for rows a renderer must skip.
+/** Phase 4 — row evaluation: map each stat row through the canonical aesthetic
+  * mapping, keeping typed drop diagnostics for rows a renderer must skip.
   */
 private[graphics] object RowPhase:
   def resolve[Row](
@@ -490,7 +485,7 @@ private[graphics] object RowPhase:
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plan.data.length && result.isRight do
       val source = plan.data(idx)
-      resolveRow(idx, source, plan.layer, plan.env, theme) match
+      resolveRow(idx, source, plan.layer, plan.mapping, theme) match
         case RowResolution.Resolved(row) =>
           rows += row
         case RowResolution.Dropped(reason) =>
@@ -504,29 +499,29 @@ private[graphics] object RowPhase:
       rowIndex: Int,
       source: StatRow[Row],
       layer: Layer[Row],
-      env: AesEnv[StatRow[Row]],
+      mapping: AesSpec[StatRow[Row]],
       theme: Theme
   ): RowResolution[Row] =
     val resolved =
       for
-        x <- requiredAes(Aesthetic.X, env.get(Aesthetic.X), source)
-        y <- requiredAes(Aesthetic.Y, env.get(Aesthetic.Y), source)
+        x <- requiredAes(Aesthetic.X, mapping.get(Aesthetic.X), source)
+        y <- requiredAes(Aesthetic.Y, mapping.get(Aesthetic.Y), source)
         _ <- finitePosition(x, y)
-        xBand = env.get(Aesthetic.X).flatMap(_.mappedBand(source))
-        yBand = env.get(Aesthetic.Y).flatMap(_.mappedBand(source))
-        xEnd <- optionalFiniteAes(Aesthetic.XEnd, env.get(Aesthetic.XEnd), source)
-        yEnd <- optionalFiniteAes(Aesthetic.YEnd, env.get(Aesthetic.YEnd), source)
-        xMin <- optionalFiniteAes(Aesthetic.XMin, env.get(Aesthetic.XMin), source)
-        xMax <- optionalFiniteAes(Aesthetic.XMax, env.get(Aesthetic.XMax), source)
-        yMin <- optionalFiniteAes(Aesthetic.YMin, env.get(Aesthetic.YMin), source)
-        yMax <- optionalFiniteAes(Aesthetic.YMax, env.get(Aesthetic.YMax), source)
+        xBand = mapping.get(Aesthetic.X).flatMap(_.mappedBand(source))
+        yBand = mapping.get(Aesthetic.Y).flatMap(_.mappedBand(source))
+        xEnd <- optionalFiniteAes(Aesthetic.XEnd, mapping.get(Aesthetic.XEnd), source)
+        yEnd <- optionalFiniteAes(Aesthetic.YEnd, mapping.get(Aesthetic.YEnd), source)
+        xMin <- optionalFiniteAes(Aesthetic.XMin, mapping.get(Aesthetic.XMin), source)
+        xMax <- optionalFiniteAes(Aesthetic.XMax, mapping.get(Aesthetic.XMax), source)
+        yMin <- optionalFiniteAes(Aesthetic.YMin, mapping.get(Aesthetic.YMin), source)
+        yMax <- optionalFiniteAes(Aesthetic.YMax, mapping.get(Aesthetic.YMax), source)
         _ <- validBounds(Aesthetic.X.label, xMin, xMax)
         _ <- validBounds(Aesthetic.Y.label, yMin, yMax)
-        text <- labelValue(layer.geom, env, source)
-        group <- optionalAes(Aesthetic.Group, env.get(Aesthetic.Group), source)
-        subpath <- optionalAes(Aesthetic.Subpath, env.get(Aesthetic.Subpath), source)
-        gp <- rowGraphicParams(source, env, layer.params.getOrElse(theme.geom))
-        size <- rowSize(source, env, theme.pointSizePt)
+        text <- labelValue(layer.geom, mapping, source)
+        group <- optionalAes(Aesthetic.Group, mapping.get(Aesthetic.Group), source)
+        subpath <- optionalAes(Aesthetic.Subpath, mapping.get(Aesthetic.Subpath), source)
+        gp <- rowGraphicParams(source, mapping, layer.params.getOrElse(theme.geom))
+        size <- rowSize(source, mapping, theme.pointSizePt)
       yield
         ResolvedRow(
           rowIndex = rowIndex,
@@ -555,13 +550,13 @@ private[graphics] object RowPhase:
 
   private def rowGraphicParams[Row](
       row: StatRow[Row],
-      env: AesEnv[StatRow[Row]],
+      mapping: AesSpec[StatRow[Row]],
       base: GraphicParams
   ): Either[PlotDropReason, GraphicParams] =
     for
-      stroke <- optionalAes(Aesthetic.Color, env.get(Aesthetic.Color), row)
-      fill <- optionalAes(Aesthetic.Fill, env.get(Aesthetic.Fill), row)
-      alpha <- optionalAes(Aesthetic.Alpha, env.get(Aesthetic.Alpha), row)
+      stroke <- optionalAes(Aesthetic.Color, mapping.get(Aesthetic.Color), row)
+      fill <- optionalAes(Aesthetic.Fill, mapping.get(Aesthetic.Fill), row)
+      alpha <- optionalAes(Aesthetic.Alpha, mapping.get(Aesthetic.Alpha), row)
       gp <- GraphicParams
         .checked(
           stroke = stroke.orElse(base.stroke),
@@ -580,10 +575,10 @@ private[graphics] object RowPhase:
 
   private def rowSize[Row](
       row: StatRow[Row],
-      env: AesEnv[StatRow[Row]],
+      mapping: AesSpec[StatRow[Row]],
       defaultSizePt: Double
   ): Either[PlotDropReason, ExtentExpr] =
-    optionalAes(Aesthetic.Size, env.get(Aesthetic.Size), row).flatMap {
+    optionalAes(Aesthetic.Size, mapping.get(Aesthetic.Size), row).flatMap {
       case None =>
         Right(ExtentExpr.pointsUnsafe(defaultSizePt))
       case Some(size) =>
@@ -595,12 +590,12 @@ private[graphics] object RowPhase:
 
   private def labelValue[Row](
       geom: Geom,
-      env: AesEnv[StatRow[Row]],
+      mapping: AesSpec[StatRow[Row]],
       row: StatRow[Row]
   ): Either[PlotDropReason, String] =
     geom match
       case Geom.Text =>
-        requiredAes(Aesthetic.Label, env.get(Aesthetic.Label), row)
+        requiredAes(Aesthetic.Label, mapping.get(Aesthetic.Label), row)
       case _ =>
         Right("")
 

@@ -169,23 +169,23 @@ private[graphics] object FacetCompiler:
       scales: FacetScales
   ): StatPlan[Row] =
     val withX =
-      if scales.xIsFree then replace(global.env, local.env, Aesthetic.X)
-      else global.env
-    val env =
-      if scales.yIsFree then replace(withX, local.env, Aesthetic.Y)
+      if scales.xIsFree then replace(global.mapping, local.mapping, Aesthetic.X)
+      else global.mapping
+    val mapping =
+      if scales.yIsFree then replace(withX, local.mapping, Aesthetic.Y)
       else withX
-    global.copy(mapping = AesSpec.fromEnv(env), env = env)
+    global.copy(mapping = mapping)
 
   private def replace[Row, A](
-      target: AesEnv[Row],
-      source: AesEnv[Row],
+      target: AesSpec[Row],
+      source: AesSpec[Row],
       aesthetic: Aesthetic[A]
-  ): AesEnv[Row] =
+  ): AesSpec[Row] =
     source.get(aesthetic).fold(target)(target.updated(aesthetic, _))
 
   private def registry[Row](plans: Vector[StatPlan[Row]]): PlotScaleRegistry =
     val scales = Aesthetic.values.toVector.flatMap { aesthetic =>
-      plans.iterator.flatMap(_.env.scaledEntry(aesthetic)).take(1).map(_.trained)
+      plans.iterator.flatMap(_.mapping.scaledEntry(aesthetic)).take(1).map(_.trained)
     }
     PlotScaleRegistry.from(scales)
 

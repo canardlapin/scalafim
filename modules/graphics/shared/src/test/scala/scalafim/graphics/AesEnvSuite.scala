@@ -15,34 +15,39 @@ class AesEnvSuite extends munit.FunSuite:
       .train("x-position", Vector(0.0, 1.0, 2.0), Palette.numeric)
       .fold(e => fail(e.message), identity)
 
-  test("AesSpec.env normalizes exactly the bound aesthetics in declaration order") {
+  test("AesSpec is the canonical mapping and reports bound aesthetics in declaration order") {
     val spec = AesSpec
       .empty[Row]
       .withPosition(_.x, _.y)
       .withColor(Rgba.Black)
-    val env = spec.env
-    assertEquals(env.bound, Vector[Aesthetic[?]](Aesthetic.X, Aesthetic.Y, Aesthetic.Color))
-    assert(env.get(Aesthetic.X).nonEmpty)
-    assert(env.get(Aesthetic.Fill).isEmpty)
+    assertEquals(spec.bound, Vector[Aesthetic[?]](Aesthetic.X, Aesthetic.Y, Aesthetic.Color))
+    assert(spec.get(Aesthetic.X).nonEmpty)
+    assert(spec.get(Aesthetic.Fill).isEmpty)
   }
 
-  test("env round-trips through AesSpec.fromEnv") {
+  test("typed updates preserve the precise public record accessors without conversion") {
     val spec = AesSpec
       .empty[Row]
       .withPosition(_.x, _.y)
-      .withAlpha(0.5)
       .withLabel(_.condition)
-    val restored = AesSpec.fromEnv(spec.env)
-    assertEquals(restored.env.bound, spec.env.bound)
+      .updated(Aesthetic.Alpha, AesValue.constant(0.5))
     val row = Row(1.0, 2.0, "A")
-    assertEquals(restored.alpha.flatMap(_.map(row)), Some(0.5))
-    assertEquals(restored.label.flatMap(_.map(row)), Some("A"))
+    assertEquals(spec.alpha.flatMap(_.map(row)), Some(0.5))
+    assertEquals(spec.label.flatMap(_.map(row)), Some("A"))
+    assertEquals(spec.get(Aesthetic.Alpha), spec.alpha)
   }
 
   test("typed lookup returns values at the aesthetic's own type") {
-    val env = AesSpec.empty[Row].withColor(Rgba.Black).env
-    val color: Option[AesValue[Row, Rgba]] = env.get(Aesthetic.Color)
+    val mapping = AesSpec.empty[Row].withColor(Rgba.Black)
+    val color: Option[AesValue[Row, Rgba]] = mapping.get(Aesthetic.Color)
     assertEquals(color.flatMap(_.map(Row(0.0, 0.0, "A"))), Some(Rgba.Black))
+  }
+
+  test("AesEnv remains a source-compatible alias without allocating a second representation") {
+    val mapping = AesSpec.empty[Row].withColor(Rgba.Black)
+    val env: AesEnv[Row] = mapping
+    assert(env eq mapping)
+    assert(AesEnv.empty[Row].bound.isEmpty)
   }
 
   test("bind registers a scaled binding once and rejects a duplicate") {
@@ -54,7 +59,7 @@ class AesEnvSuite extends munit.FunSuite:
   }
 
   test("bind allows replacing an unscaled binding with a scaled one") {
-    val env = AesSpec.empty[Row].withColor(Rgba.Black).env
+    val env = AesSpec.empty[Row].withColor(Rgba.Black)
     val binding = ScaleBinding[Row, String, Rgba](Aesthetic.Color, _.condition, colorScale)
     val bound = env.bind(binding)
     assert(bound.exists(_.get(Aesthetic.Color).exists(_.isScaled)))
@@ -63,13 +68,13 @@ class AesEnvSuite extends munit.FunSuite:
   test("inherit prefers scaled local, then scaled parent, then local, then parent") {
     val row = Row(1.0, 2.0, "A")
     val scaledColor = ScaleBinding[Row, String, Rgba](Aesthetic.Color, _.condition, colorScale).toAesValue
-    val localDirect = AesSpec.empty[Row].withColor(Rgba.White).env
+    val localDirect = AesSpec.empty[Row].withColor(Rgba.White)
     val parentScaled = AesEnv.empty[Row].updated(Aesthetic.Color, scaledColor)
 
     val merged = localDirect.inherit(parentScaled)
     assert(merged.get(Aesthetic.Color).exists(_.isScaled), "scaled parent overrides direct local")
 
-    val parentDirect = AesSpec.empty[Row].withColor(Rgba.Black).env
+    val parentDirect = AesSpec.empty[Row].withColor(Rgba.Black)
     val localWins = localDirect.inherit(parentDirect)
     assertEquals(localWins.get(Aesthetic.Color).flatMap(_.map(row)), Some(Rgba.White))
 
@@ -77,7 +82,7 @@ class AesEnvSuite extends munit.FunSuite:
     assertEquals(parentOnly.get(Aesthetic.Color).flatMap(_.map(row)), Some(Rgba.Black))
   }
 
-  test("inherit through AesSpec matches env semantics") {
+  test("AesSpec inheritance preserves typed field access") {
     val plotMapping = AesSpec.empty[Row].withPosition(_.x, _.y).withColor(Rgba.Black)
     val layerMapping = AesSpec.empty[Row].withColor(Rgba.White)
     val inherited = layerMapping.inherit(plotMapping)
@@ -87,12 +92,12 @@ class AesEnvSuite extends munit.FunSuite:
   }
 
   test("ScaleRegistry registers each scaled binding exactly once, in declaration order") {
-    val env = AesEnv
+    val mapping = AesEnv
       .empty[Row]
       .bind(ScaleBinding[Row, String, Rgba](Aesthetic.Color, _.condition, colorScale))
       .flatMap(_.bind(ScaleBinding[Row, Double, Double](Aesthetic.X, _.x, xScale)))
       .fold(e => fail(e.message), identity)
-    val registry = ScaleRegistry.fromEnv(env)
+    val registry = ScaleRegistry.fromMapping(mapping)
     assertEquals(registry.entries.map(_.aesthetic), Vector[Aesthetic[?]](Aesthetic.X, Aesthetic.Color))
     val declarations = registry.declarations(3)
     assertEquals(declarations.map(_.aesthetic), Vector("x", "color"))
@@ -103,11 +108,11 @@ class AesEnvSuite extends munit.FunSuite:
   }
 
   test("registry lookup by aesthetic finds the registered scale") {
-    val env = AesEnv
+    val mapping = AesEnv
       .empty[Row]
       .bind(ScaleBinding[Row, String, Rgba](Aesthetic.Color, _.condition, colorScale))
       .fold(e => fail(e.message), identity)
-    val registry = ScaleRegistry.fromEnv(env)
+    val registry = ScaleRegistry.fromMapping(mapping)
     assert(registry.forAesthetic(Aesthetic.Color).nonEmpty)
     assert(registry.forAesthetic(Aesthetic.Fill).isEmpty)
   }

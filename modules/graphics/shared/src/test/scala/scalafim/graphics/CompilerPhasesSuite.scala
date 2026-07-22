@@ -28,7 +28,7 @@ class CompilerPhasesSuite extends munit.FunSuite:
       .flatMap(_.addLayer(Layer.line[Obs](_.x, _.y)))
       .fold(e => fail(e.message), identity)
 
-  test("mapping phase produces per-layer plans with effective mapping and env") {
+  test("mapping phase produces per-layer plans with one canonical effective mapping") {
     val plot = groupedLinePlot
     val plans = MappingPhase.plan(plot).fold(e => fail(e.message), identity)
 
@@ -36,9 +36,9 @@ class CompilerPhasesSuite extends munit.FunSuite:
     val plan = plans.head
     assertEquals(plan.layerIndex, 0)
     assertEquals(plan.data.length, data.length)
-    assert(plan.env.isBound(Aesthetic.X))
-    assert(plan.env.isBound(Aesthetic.Group))
-    assert(plan.env.get(Aesthetic.Color).exists(_.isScaled))
+    assert(plan.mapping.isBound(Aesthetic.X))
+    assert(plan.mapping.isBound(Aesthetic.Group))
+    assert(plan.mapping.get(Aesthetic.Color).exists(_.isScaled))
   }
 
   test("mapping phase rejects invalid stat-geom combinations and incomplete geom mappings") {

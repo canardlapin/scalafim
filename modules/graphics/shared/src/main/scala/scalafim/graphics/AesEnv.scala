@@ -1,73 +1,18 @@
 package scalafim.graphics
 
-/** Typed aesthetic environment: the normalized, inspectable form of an `AesSpec`.
-  *
-  * One entry per bound aesthetic, keyed by the `Aesthetic[A]` enum so lookups
-  * return values at the aesthetic's own type. Iteration order follows the
-  * `Aesthetic` declaration order, so derived metadata is stable.
+/** Source-compatible name for the canonical aesthetic mapping. `AesSpec`
+  * owns both the precise public fields and the deterministic typed operations;
+  * there is no second environment representation.
   */
-final class AesEnv[Row] private (
-    private val entries: Map[Aesthetic[?], AesValue[Row, ?]]
-):
-  def get[A](aesthetic: Aesthetic[A]): Option[AesValue[Row, A]] =
-    entries.get(aesthetic).map(_.asInstanceOf[AesValue[Row, A]])
-
-  def isBound(aesthetic: Aesthetic[?]): Boolean =
-    entries.contains(aesthetic)
-
-  def bound: Vector[Aesthetic[?]] =
-    Aesthetic.values.toVector.filter(entries.contains)
-
-  def updated[A](aesthetic: Aesthetic[A], value: AesValue[Row, A]): AesEnv[Row] =
-    new AesEnv(entries.updated(aesthetic, value))
-
-  /** Register a scaled binding; a second scaled binding on the same aesthetic
-    * remains a typed error.
-    */
-  def bind[In, A](binding: ScaleBinding[Row, In, A]): Either[GraphicsError, AesEnv[Row]] =
-    get(binding.aesthetic) match
-      case Some(value) if value.isScaled =>
-        Left(GraphicsError.DuplicateScale(binding.aesthetic.label))
-      case _ =>
-        Right(updated(binding.aesthetic, binding.toAesValue))
-
-  /** Layer-over-plot inheritance: a scaled local binding wins, then a scaled
-    * parent binding, then local, then parent.
-    */
-  def inherit(parent: AesEnv[Row]): AesEnv[Row] =
-    val merged = Map.newBuilder[Aesthetic[?], AesValue[Row, ?]]
-    Aesthetic.values.foreach { aesthetic =>
-      val local = entries.get(aesthetic)
-      val resolved = local match
-        case Some(value) if value.isScaled =>
-          local
-        case _ =>
-          parent.entries.get(aesthetic) match
-            case Some(value) if value.isScaled => Some(value)
-            case parentValue                   => local.orElse(parentValue)
-      resolved.foreach(value => merged += aesthetic -> value)
-    }
-    new AesEnv(merged.result())
-
-  /** Scaled bindings in declaration order, each registered exactly once. */
-  def scaledEntries: Vector[RegisteredScale[Row]] =
-    Aesthetic.values.toVector.flatMap(scaledEntry)
-
-  private[graphics] def scaledEntry(aesthetic: Aesthetic[?]): Option[RegisteredScale[Row]] =
-    entries.get(aesthetic) match
-      case Some(scaled: AesValue.Scaled[Row, ?, ?]) =>
-        Some(RegisteredScale.erased(aesthetic, scaled))
-      case _ =>
-        None
+type AesEnv[Row] = AesSpec[Row]
 
 object AesEnv:
   def empty[Row]: AesEnv[Row] =
-    new AesEnv(Map.empty)
+    AesSpec.empty[Row]
 
 /** A scaled aesthetic binding with its hidden input/output types kept together.
-  * The only erased cast occurs when recovering a binding from `AesEnv`'s
-  * heterogeneous map; all observation and retraining operations are typed
-  * again inside this value.
+  * The only erased cast packages an existentially typed `Scaled` value; all
+  * observation and retraining operations are typed again inside this value.
   */
 sealed trait RegisteredScale[Row]:
   type In
@@ -106,8 +51,8 @@ sealed trait RegisteredScale[Row]:
       RegisteredScale(aesthetic, AesValue.Scaled(value.value, trained))
     }
 
-  final def install(env: AesEnv[Row]): AesEnv[Row] =
-    env.updated(aesthetic, value)
+  final def install(mapping: AesSpec[Row]): AesSpec[Row] =
+    mapping.updated(aesthetic, value)
 
   final def declaration(layerIndex: Int): ScaleDeclaration =
     ScaleDeclaration(layerIndex, aesthetic.label, descriptor.name, descriptor.kind)
@@ -128,8 +73,9 @@ object RegisteredScale:
       val aesthetic: Aesthetic[Out] = aesthetic0
       val value: AesValue.Scaled[Row, In, Out] = value0
 
-  /** `AesEnv.updated` is the type-safe construction boundary. Map lookup
-    * erases that relation, so recover it once here and keep it packaged.
+  /** `AesSpec.updated` is the type-safe construction boundary. Existential
+    * iteration erases that relation, so recover it once here and keep it
+    * packaged.
     */
   private[graphics] def erased[Row](
       aesthetic: Aesthetic[?],
@@ -155,8 +101,11 @@ final case class ScaleRegistry[Row] private (entries: Vector[RegisteredScale[Row
     entries.find(_.aesthetic == aesthetic)
 
 object ScaleRegistry:
+  def fromMapping[Row](mapping: AesSpec[Row]): ScaleRegistry[Row] =
+    ScaleRegistry(mapping.scaledEntries)
+
   def fromEnv[Row](env: AesEnv[Row]): ScaleRegistry[Row] =
-    ScaleRegistry(env.scaledEntries)
+    fromMapping(env)
 
 /** The single trained scale table for a plot. Each aesthetic occurs at most
   * once, in `Aesthetic` declaration order.
