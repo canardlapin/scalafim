@@ -19,7 +19,7 @@ claims. A supportable result must identify:
 6. fold-local fitting and tuning provenance; and
 7. independent, metamorphic, adversarial, and cross-platform evidence.
 
-The companion `scalafim-mathematical-model-evidence-ir/1.0` record makes these
+The companion `scalafim-mathematical-model-evidence-ir/2.0` record makes these
 items portable. It references the existing operator-program document rather
 than serializing a second numerical model.
 

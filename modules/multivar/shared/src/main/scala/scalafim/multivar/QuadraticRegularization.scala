@@ -2,7 +2,7 @@ package scalafim.multivar
 
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 
-enum QuadraticFamily:
+enum QuadraticFamily extends PenaltyFunctionalWitness:
   case Ridge
   case Tikhonov
   case GraphSmoothness
@@ -10,6 +10,8 @@ enum QuadraticFamily:
   case SplineSmoothness
   case BlockSmoothness
   case MultisetDisagreement
+
+  def functionalIdentity: PenaltyFunctionalIdentity = PenaltyFunctionalIdentity.SquaredNorm
 
 /** Where the same PSD pullback enters a program. These placements are
   * scientifically and algebraically distinct even when they share `T* G T`.

@@ -108,11 +108,16 @@ object BlockNaturalGeometry:
       override val space: SpaceEvidence[Natural] =
         SpaceEvidence.unsafe(metric.domain.descriptor.space)
 
-enum BlockStructuredPenaltyKind:
+enum BlockStructuredPenaltyKind extends PenaltyFunctionalWitness:
   case GraphTotalVariation
   case GraphSmoothness
   case LinearTotalVariation
   case LinearSmoothness
+
+  def functionalIdentity: PenaltyFunctionalIdentity =
+    this match
+      case GraphTotalVariation | LinearTotalVariation => PenaltyFunctionalIdentity.TotalVariation
+      case GraphSmoothness | LinearSmoothness => PenaltyFunctionalIdentity.SquaredNorm
 
   def isNonsmooth: Boolean =
     this match
@@ -136,6 +141,7 @@ final class BlockDecoderStructure[
     val valueIdentity: ValueIdentity
 ):
   val adjointIdentity: ValueIdentity = operator.dual.valueIdentity
+  def functionalIdentity: PenaltyFunctionalIdentity = kind.functionalIdentity
 
   private[multivar] def penalty(decoder: DMat): Either[StructuredMultiblockGlrmError, Double] =
     operator

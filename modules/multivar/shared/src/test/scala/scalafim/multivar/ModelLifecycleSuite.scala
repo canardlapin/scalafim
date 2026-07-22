@@ -112,12 +112,11 @@ class ModelLifecycleSuite extends munit.FunSuite:
       fitted.solver.certificates.values,
       Vector(exact.programFit.solverAttestation.certificate)
     )
-    fitted.solver.receipt match
-      case receipt: ExactSpectralReceipt =>
-        assertEquals(receipt.retainedRank, exact.programFit.identifiability.retainedRank)
-        assertEqualsDouble(receipt.residual, exact.programFit.identifiability.residual, 0.0)
-        assertEquals(receipt.spectralClusters, exact.programFit.identifiability.spectralClusters)
-      case other => fail(s"expected an exact-spectral receipt, got $other")
+    val receipt = fitted.solver.receipt match
+      case exact: ExactSpectralReceipt => exact
+    assertEquals(receipt.retainedRank, exact.programFit.identifiability.retainedRank)
+    assertEqualsDouble(receipt.residual, exact.programFit.identifiability.residual, 0.0)
+    assertEquals(receipt.spectralClusters, exact.programFit.identifiability.spectralClusters)
 
   test("the convenience adapter preserves existing spectral numerical results"):
     val exact = exactFit(QuadraticFamily.Ridge)

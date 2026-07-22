@@ -410,7 +410,7 @@ object TargetExpression:
     if clean.isEmpty then Left(ProgramError.InvalidParameterization("target operation must be non-empty"))
     else Right(TargetExpression(Vector(parameter), capability, clean, Vector.empty, FrameSymmetry.Orthogonal))
 
-enum FunctionalKind:
+enum FunctionalKind extends PenaltyFunctionalWitness:
   case SquaredNorm(geometry: ValueIdentity)
   case L1
   case GroupL21
@@ -421,6 +421,19 @@ enum FunctionalKind:
   case TotalVariation
   case NuclearNorm
   case NegativeLogDet
+
+  def functionalIdentity: PenaltyFunctionalIdentity =
+    this match
+      case SquaredNorm(_) => PenaltyFunctionalIdentity.SquaredNorm
+      case L1 => PenaltyFunctionalIdentity.L1
+      case GroupL21 => PenaltyFunctionalIdentity.GroupL21
+      case GroupL2(_) => PenaltyFunctionalIdentity.GroupL2
+      case SparseGroup(_, _) => PenaltyFunctionalIdentity.SparseGroup
+      case ElasticNet(_) => PenaltyFunctionalIdentity.ElasticNet
+      case Huber(_) => PenaltyFunctionalIdentity.Huber
+      case TotalVariation => PenaltyFunctionalIdentity.TotalVariation
+      case NuclearNorm => PenaltyFunctionalIdentity.NuclearNorm
+      case NegativeLogDet => PenaltyFunctionalIdentity.NegativeLogDet
 
   def symmetry: FrameSymmetry =
     this match
@@ -569,6 +582,7 @@ final case class PenaltyTerm(
     functional: FunctionalKind,
     weight: PenaltyWeight
 ):
+  def functionalIdentity: PenaltyFunctionalIdentity = functional.functionalIdentity
   def symmetry: FrameSymmetry = FrameSymmetry.meet(target.equivariance, functional.symmetry)
 
 object PenaltyTerm:

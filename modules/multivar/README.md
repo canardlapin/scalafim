@@ -129,12 +129,36 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
 forms, certificates, scale/gauge, centering, singular policy, alignments,
 objectives, unsafe assumptions, and payload hashes—for cross-language
 conformance. Its companion
-`scalafim-mathematical-model-evidence-ir/1.0` envelope binds extant
+`scalafim-mathematical-model-evidence-ir/2.0` envelope binds extant
 operator-program identities to the model family and estimand, explicit
 loss/mask/geometry/penalty declarations, theorem witnesses, solver trace,
 achieved guarantee, certificate set, and reproducibility receipt. The external
 review boundary and counterexamples are documented in
 [`multivar-external-review.md`](../../docs/plans/multivar-external-review.md).
+
+## Penalty identity and ownership
+
+`PenaltyFunctionalIdentity` is the single stable name for shared mathematics:
+L1 is L1 and a squared Frobenius or squared smoothness penalty is a
+`SquaredNorm`. It is intentionally not executable. Each family retains a typed
+`PenaltyFunctionalWitness` with the information needed to use that identity
+lawfully:
+
+- `FunctionalKind` owns operator-program geometry, groups, tuning parameters,
+  traits, and `TargetExpression` compatibility;
+- `GlrmFactorPenalty` owns dense factor evaluation and targets either row codes
+  or the feature decoder through `GlrmFactorTarget`;
+- `BlockStructuredPenaltyKind` owns graph-versus-linear topology and smooth-
+  versus-nonsmooth evaluation on a block-local decoder operator;
+- `QuadraticFamily` records why a squared norm exists, while
+  `QuadraticPlacement` continues to distinguish objective regularization from
+  denominator geometry.
+
+Those targets, capabilities, parameters, placements, and topology choices are
+genuinely family-specific and must not be inferred from the shared identity.
+Evidence IR 2.0 stores the canonical identity together with its explicit owner
+and optional operator identity, so serialization does not invent another
+functional vocabulary.
 
 ## API boundary
 

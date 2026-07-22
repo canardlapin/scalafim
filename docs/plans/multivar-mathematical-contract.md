@@ -468,7 +468,7 @@ A model is supportable only when all of the following agree:
 5. analytic or independent differential oracle where feasible;
 6. metamorphic and adversarial laws;
 7. fold-local preprocessing and tuning provenance;
-8. a `scalafim-mathematical-model-evidence-ir/1.0` envelope binding the
+8. a `scalafim-mathematical-model-evidence-ir/2.0` envelope binding the
    operator-program identities to the estimand, theorem witnesses, achieved
    certificate, and reproducibility receipt; and
 9. JVM and Scala.js verification at the committed tip.

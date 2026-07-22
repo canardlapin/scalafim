@@ -113,7 +113,7 @@ final case class ProgramTargetIr(
   def parameterIds: Vector[String] = parameterId +: additionalParameterIds
   def operatorIdentities: Vector[String] = operatorIdentity.toVector ++ additionalOperatorIdentities
 
-enum ProgramFunctionalIr:
+enum ProgramFunctionalIr extends PenaltyFunctionalWitness:
   case SquaredNorm(geometryIdentity: String)
   case L1
   case GroupL21
@@ -124,6 +124,19 @@ enum ProgramFunctionalIr:
   case TotalVariation
   case NuclearNorm
   case NegativeLogDet
+
+  def functionalIdentity: PenaltyFunctionalIdentity =
+    this match
+      case SquaredNorm(_) => PenaltyFunctionalIdentity.SquaredNorm
+      case L1 => PenaltyFunctionalIdentity.L1
+      case GroupL21 => PenaltyFunctionalIdentity.GroupL21
+      case GroupL2(_) => PenaltyFunctionalIdentity.GroupL2
+      case SparseGroup(_, _) => PenaltyFunctionalIdentity.SparseGroup
+      case ElasticNet(_) => PenaltyFunctionalIdentity.ElasticNet
+      case Huber(_) => PenaltyFunctionalIdentity.Huber
+      case TotalVariation => PenaltyFunctionalIdentity.TotalVariation
+      case NuclearNorm => PenaltyFunctionalIdentity.NuclearNorm
+      case NegativeLogDet => PenaltyFunctionalIdentity.NegativeLogDet
 
 enum ProgramFeasibleSetIr:
   case ZeroSubspace

@@ -1,15 +1,59 @@
 package scalafim.multivar.ir
 
+import scalafim.multivar.*
+
 class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
   test("a theorem-complete GLRM evidence envelope round-trips without losing identities"):
     val document = MathematicalModelEvidenceDocumentIr(
-      MathematicalModelEvidenceDocumentIr.schemaV10,
+      MathematicalModelEvidenceDocumentIr.schemaV20,
       Vector(stationaryGlrm)
     )
     val encoded = MathematicalModelEvidenceIrCodec.encode(document)
     assertEquals(MathematicalModelEvidenceIrCodec.decode(encoded), Right(document))
     assert(encoded.contains("\"observed_count\":6"))
     assert(encoded.contains("\"stationary\""))
+
+  test("every canonical penalty identity round-trips through evidence IR"):
+    val penalties = PenaltyFunctionalIdentity.values.toVector.zipWithIndex.map: (functional, index) =>
+      PenaltyBindingEvidenceIr(
+        PenaltyOwnerEvidenceIr.BlockDecoder(s"block.$index"),
+        functional,
+        index.toDouble + 1.0,
+        Some(s"operator.$index")
+      )
+    val model = stationaryGlrm.copy(penalties = penalties)
+    val document = MathematicalModelEvidenceDocumentIr(
+      MathematicalModelEvidenceDocumentIr.schemaV20,
+      Vector(model)
+    )
+    val encoded = MathematicalModelEvidenceIrCodec.encode(document)
+
+    assertEquals(MathematicalModelEvidenceIrCodec.decode(encoded), Right(document))
+    PenaltyFunctionalIdentity.values.foreach: functional =>
+      assert(encoded.contains(s"\"functional\":\"${functional.stableKey}\""))
+    assert(!encoded.contains("squared_smoothness"))
+    assert(!encoded.contains("squared_frobenius"))
+
+  test("runtime and operator-IR witnesses map totally to evidence identities"):
+    val witnesses: Vector[PenaltyFunctionalWitness] = Vector(
+      FunctionalKind.L1,
+      GlrmFactorPenalty.SquaredFrobenius,
+      BlockStructuredPenaltyKind.GraphTotalVariation,
+      BlockStructuredPenaltyKind.LinearSmoothness,
+      QuadraticFamily.DerivativeSmoothness,
+      ProgramFunctionalIr.NuclearNorm
+    )
+    assertEquals(
+      witnesses.map(PenaltyFunctionalEvidenceIr.from),
+      Vector(
+        PenaltyFunctionalIdentity.L1,
+        PenaltyFunctionalIdentity.SquaredNorm,
+        PenaltyFunctionalIdentity.TotalVariation,
+        PenaltyFunctionalIdentity.SquaredNorm,
+        PenaltyFunctionalIdentity.SquaredNorm,
+        PenaltyFunctionalIdentity.NuclearNorm
+      )
+    )
 
   test("all six model families and estimands survive the shared codec"):
     val pairs = Vector(
@@ -21,7 +65,7 @@ class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
       ModelFamilyEvidenceIr.StructuredMultiblockFactorization -> ModelEstimandEvidenceIr.SharedBlockLatentRepresentation
     )
     val document = MathematicalModelEvidenceDocumentIr(
-      MathematicalModelEvidenceDocumentIr.schemaV10,
+      MathematicalModelEvidenceDocumentIr.schemaV20,
       pairs.zipWithIndex.map:
         case (pair, index) => unresolved(pair._1, pair._2, index)
     )
@@ -75,7 +119,7 @@ class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
 
   test("unknown fields and future schema versions are rejected explicitly"):
     val document = MathematicalModelEvidenceDocumentIr(
-      MathematicalModelEvidenceDocumentIr.schemaV10,
+      MathematicalModelEvidenceDocumentIr.schemaV20,
       Vector(stationaryGlrm)
     )
     val encoded = MathematicalModelEvidenceIrCodec.encode(document)
@@ -84,7 +128,7 @@ class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
       case Left(IrError(RejectionCategory.UnknownField, "$.surprise", _)) => true
       case _ => false
     )
-    val future = encoded.replace(MathematicalModelEvidenceDocumentIr.schemaV10, "scalafim-mathematical-model-evidence-ir/1.1")
+    val future = encoded.replace(MathematicalModelEvidenceDocumentIr.schemaV20, "scalafim-mathematical-model-evidence-ir/2.1")
     assert(MathematicalModelEvidenceIrCodec.decode(future) match
       case Left(IrError(RejectionCategory.SchemaVersionMismatch, "$.schema", _)) => true
       case _ => false
@@ -130,13 +174,13 @@ class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
       penalties = Vector(
         PenaltyBindingEvidenceIr(
           PenaltyOwnerEvidenceIr.RowFactor,
-          PenaltyFunctionalEvidenceIr.L1,
+          PenaltyFunctionalEvidenceIr.from(GlrmFactorPenalty.ElementwiseL1),
           0.2,
           None
         ),
         PenaltyBindingEvidenceIr(
           PenaltyOwnerEvidenceIr.ColumnFactor,
-          PenaltyFunctionalEvidenceIr.SquaredSmoothness,
+          PenaltyFunctionalEvidenceIr.from(QuadraticFamily.GraphSmoothness),
           0.5,
           Some("operator.graph")
         )
@@ -218,7 +262,7 @@ class MathematicalModelEvidenceIrSuite extends munit.FunSuite:
 
   private def validate(model: MathematicalModelEvidenceIr): Either[IrError, Unit] =
     MathematicalModelEvidenceIrValidator
-      .validate(MathematicalModelEvidenceDocumentIr(MathematicalModelEvidenceDocumentIr.schemaV10, Vector(model)))
+      .validate(MathematicalModelEvidenceDocumentIr(MathematicalModelEvidenceDocumentIr.schemaV20, Vector(model)))
       .map(_ => ())
 
   private def assertInvalid(model: MathematicalModelEvidenceIr, clue: String): Unit =

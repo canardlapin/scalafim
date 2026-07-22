@@ -102,6 +102,23 @@ class QuadraticRegularizationSuite extends munit.FunSuite:
     acceptedSemantic(lowered.pulledBack(matrix(Vector(Vector(1.0), Vector(0.0), Vector(-1.0)))))
     assert(counter.applications > 0)
 
+  test("shared squared-norm identity does not relax geometry-bound lowering"):
+    val fixture = graphFixture()
+    val foreignGeometry = id("foreign-quadratic-geometry")
+    val term = fixture.term.copy(functional = FunctionalKind.SquaredNorm(foreignGeometry))
+
+    assertEquals(term.functionalIdentity, PenaltyFunctionalIdentity.SquaredNorm)
+    assertEquals(
+      QuadraticPullback.lower(
+        term,
+        fixture.incidence,
+        fixture.geometry,
+        QuadraticFamily.GraphSmoothness,
+        QuadraticPlacement.ObjectiveRidge
+      ),
+      Left(QuadraticLoweringError.GeometryMismatch(foreignGeometry, fixture.geometry.valueIdentity))
+    )
+
   private final class ApplyCounter:
     var applications: Int = 0
 

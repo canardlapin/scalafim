@@ -638,9 +638,14 @@ enum GlrmFactorTarget:
   case RowCodes
   case FeatureDecoder
 
-enum GlrmFactorPenalty:
+enum GlrmFactorPenalty extends PenaltyFunctionalWitness:
   case ElementwiseL1
   case SquaredFrobenius
+
+  def functionalIdentity: PenaltyFunctionalIdentity =
+    this match
+      case ElementwiseL1 => PenaltyFunctionalIdentity.L1
+      case SquaredFrobenius => PenaltyFunctionalIdentity.SquaredNorm
 
   private[multivar] def value(matrix: DMat): Double =
     var result = 0.0
@@ -661,7 +666,8 @@ final case class GlrmFactorPenaltyTerm(
     functional: GlrmFactorPenalty,
     weight: PenaltyWeight,
     valueIdentity: ValueIdentity
-)
+):
+  def functionalIdentity: PenaltyFunctionalIdentity = functional.functionalIdentity
 
 final case class GlrmObjectiveValue(
     observedEntryLoss: Double,
