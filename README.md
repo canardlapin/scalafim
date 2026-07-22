@@ -48,6 +48,10 @@ cross-compiled sbt build.
 - `mvpa-spatial`: adapters from atlas, volume searchlight, and surface parcel objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
+- `zarr`: dependency-free Scala 3 Zarr v3 kernel with read-only v2 lowering, runtime-rank hierarchy and factored selections, portable bounded async reads, revision-scoped LRU range caches, sync/async create-only writers, and atomic JVM publication.
+- `zarr-codec-blosc-zstd`: optional typed Blosc/Zstandard provider using JNI on JVM and embedded WASM on Scala.js.
+- `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD semantics, immutable manifests/publication receipts, and measured sharded layout policy.
+- `dataset-zarr`: bounded dataset reads plus streaming NIfTI import and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
@@ -122,6 +126,15 @@ sbt modelJVM/test
 sbt modelJS/test
 sbt fitJVM/test
 sbt fitJS/test
+sbt zarrJVM/test
+sbt zarrJS/test
+npm ci --prefix modules/zarr-codec-blosc-zstd/js
+sbt zarrCodecBloscZstdJVM/test
+sbt zarrCodecBloscZstdJS/test
+sbt archiveZarrJVM/test
+sbt archiveZarrJS/test
+sbt datasetZarrJVM/test
+sbt datasetZarrJS/test
 sbt mvpaJVM/test
 sbt mvpaJS/test
 sbt mvpaFitJVM/test

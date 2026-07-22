@@ -80,6 +80,11 @@ bids
 
 bids + dataset + model + fit + group
 +-- fmri-workflow     outer composition only; no lower module depends back on it
+
+zarr
++-- zarr-codec-blosc-zstd  optional JVM JNI / Scala.js WASM codec provider
++-- archive-zarr      also depends on archive
+    +-- dataset-zarr  also depends on dataset, image, bids
 ```
 
 The `graphics` subtree has a stricter extraction boundary: core has no internal
@@ -144,6 +149,10 @@ entity parsing.
 | `mvpa-spatial` | Thin adapters from image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas` | Classifier algorithms or atlas loading. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `bids`, `dataset`, `model`, `fit`, `group` | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
+| `zarr` | Dependency-free Zarr v3 metadata plus read-only v2 lowering, runtime-rank hierarchy and factored slice/gather geometry, direct/sharded planning, backpressured chunk fragments, primitive codecs, portable bounded async reads, revision-scoped bounded object/range caches, store-independent sync/async create-only writers, content receipts, and atomic JVM publication. | Nothing internal. | Neuroimaging semantics, BIDS identity, S3 credentials, persistent cache/prefetch/retention policy, mutation, v2 writing, or hidden execution policy. |
+| `zarr-codec-blosc-zstd` | Optional typed Zarr v3 Blosc/Zstandard capability, bounded frame validation, JVM JNI executor, and Scala.js embedded-WASM executor. | `zarr`; external platform codec dependencies | Generic Zarr planning, neuroimaging semantics, or an implied guarantee that Scala.js can encode every Blosc `typesize`. |
+| `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement, measured layout profiles, scientific manifests, content identity, immutable publication, and audit. | `zarr`, `archive` | Dataset selection APIs, NIfTI/BIDS IO, catalogs, or generic Zarr mechanics. |
+| `dataset-zarr` | Ordered dataset-selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`, `bids` | Generic array mechanics, fit kernels, catalog policy, or browser file IO. |
 
 The binding `multivar` migration target is the
 [single-layer typed operator core](plans/multivar-operator-core.md): one directed
