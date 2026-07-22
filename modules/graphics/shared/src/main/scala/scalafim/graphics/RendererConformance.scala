@@ -137,6 +137,7 @@ object RendererConformance:
       legend <- legendCase
       colorbar <- colorbarCase
       scaled <- scaledPlotCase
+      mixedLayers <- mixedLayerPlotCase
       solved <- solvedPlotCase
       scatter <- scatterComparisonCase
       groupedLine <- groupedLineComparisonCase
@@ -176,6 +177,7 @@ object RendererConformance:
       legend,
       colorbar,
       scaled,
+      mixedLayers,
       solved,
       scatter,
       groupedLine,
@@ -678,6 +680,32 @@ object RendererConformance:
         GraphicsName.unsafe("scaled-x-axis"),
         GraphicsName.unsafe("condition-legend")
       )
+    )
+
+  private final case class OverlayTile(x: Double, y: Double, width: Double, height: Double)
+
+  def mixedLayerPlotCase: Either[GraphicsError, ConformanceCase] =
+    val overlays = Vector(OverlayTile(1.0, 2.0, 0.5, 0.75))
+    for
+      plot <- Plot(observations)
+        .addLayer(Layer.point[Observation](_.x, _.y))
+        .flatMap(
+          _.addIndependentLayer(
+            overlays,
+            Layer.tile[OverlayTile](_.x, _.y, _.width, _.height),
+            LayerFacetPolicy.Repeat
+          )
+        )
+      scene <- PlotCompiler.compile(
+        plot,
+        PlotCompilerOptions(policy = Some(LayoutPolicy()), guides = GuidePolicy.Derived())
+      )
+    yield ConformanceCase(
+      GraphicsName.unsafe("mixed-layer-plot"),
+      ConformanceGroup.CompiledPlot,
+      scene,
+      Vector(GraphicsName.unsafe("plot-panel"), GraphicsName.unsafe("geom-tile-0")),
+      Vector(RenderRequirement.Primitive(GraphicsName.unsafe("geom-tile-0"), RenderPrimitiveKind.Rectangle))
     )
 
   def solvedPlotCase: Either[GraphicsError, ConformanceCase] =

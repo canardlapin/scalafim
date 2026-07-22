@@ -96,7 +96,9 @@ class CompilerPhasesSuite extends munit.FunSuite:
       scales.registry.scales.head.descriptor.domain,
       ScaleDomain.Continuous(Interval.unsafe(0.0, 200.0), Interval.unsafe(0.0, 200.0))
     )
-    val resolved = scales.plans.map(RowPhase.resolve(_).fold(error => fail(error.message), identity)._1.head.x)
+    val resolved = scales.plans.map { plan =>
+      RowPhase.resolve(plan.value).fold(error => fail(error.message), identity)._1.head.x
+    }
     assertEqualsDouble(resolved(0), 0.0, 1e-12)
     assertEqualsDouble(resolved(1), 1.0, 1e-12)
   }
@@ -104,7 +106,7 @@ class CompilerPhasesSuite extends munit.FunSuite:
   test("row phase records the evaluated group value on each row") {
     val plot = groupedLinePlot
     val mapped = MappingPhase.plan(plot).fold(e => fail(e.message), identity).head
-    val plan = StatPhase.transform(mapped).fold(e => fail(e.message), identity)
+    val plan = StatPhase.transform(mapped.value).fold(e => fail(e.message), identity)
     val (rows, dropped) = RowPhase.resolve(plan).fold(e => fail(e.message), identity)
 
     assertEquals(dropped, Vector.empty)

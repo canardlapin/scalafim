@@ -350,6 +350,16 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   def compilerOptions(value: PlotCompilerOptions): PlotBuilder[Row, Position] =
     updateOptions(value)
 
+  /** Add a self-contained layer whose row type differs from the plot data.
+    * The required facet policy keeps future faceting behavior explicit.
+    */
+  def independentLayer[LayerRow](
+      data: Vector[LayerRow],
+      layer: Layer[LayerRow],
+      facetPolicy: LayerFacetPolicy[LayerRow]
+  ): PlotBuilder[Row, Position] =
+    updateResult(result.flatMap(_.addIndependentLayer(data, layer, facetPolicy)))
+
   def build: Either[GraphicsError, PlotProgram[Row]] =
     result.map(PlotProgram(_, options))
 

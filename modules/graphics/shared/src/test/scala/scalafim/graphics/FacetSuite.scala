@@ -16,6 +16,42 @@ class FacetSuite extends munit.FunSuite:
       Observation(20.0, 200.0, "task")
     )
 
+  private final case class Annotation(x: Double, y: Double, panel: String)
+
+  test("independent layers require and obey explicit facet participation policies") {
+    val annotations = Vector(Annotation(-1.0, -1.0, "control"), Annotation(30.0, 300.0, "task"))
+    val annotationLayer = Layer.point[Annotation](_.x, _.y, inheritMapping = false)
+    val facet = FacetSpec.wrap[Observation](_.condition).fold(error => fail(error.message), identity)
+
+    def resolve(policy: LayerFacetPolicy[Annotation]): TrainedPlot[Observation] =
+      Plot(rows)
+        .withFacet(facet)
+        .addLayer(Layer.point[Observation](_.x, _.y))
+        .flatMap(_.addIndependentLayer(annotations, annotationLayer, policy))
+        .flatMap(
+          PlotCompiler.resolve(
+            _,
+            PlotCompilerOptions(policy = Some(LayoutPolicy()), guides = GuidePolicy.Derived())
+          )
+        )
+        .fold(error => fail(error.message), identity)
+
+    val repeated = resolve(LayerFacetPolicy.Repeat)
+    assertEquals(repeated.facetPanels.map(_.layers(1).dataSize), Vector(2, 2))
+
+    val selected = resolve(LayerFacetPolicy.Select((cell, row) => cell.label == row.panel))
+    assertEquals(selected.facetPanels.map(_.layers(1).dataSize), Vector(1, 1))
+    assert(
+      selected.facetPanels.zip(annotations).forall { case (panel, annotation) =>
+        panel.layers(1).rows.head.source == annotation
+      }
+    )
+
+    val excluded = resolve(LayerFacetPolicy.Exclude)
+    assertEquals(excluded.facetPanels.map(_.layers(1).dataSize), Vector(0, 0))
+    assert(excluded.facetPanels.forall(_.layers(1).rows.isEmpty))
+  }
+
   test("facet wrap partitions rows before statistics and assigns stable scene names") {
     val counted = Vector(
       Observation(0.0, 0.0, "control"),

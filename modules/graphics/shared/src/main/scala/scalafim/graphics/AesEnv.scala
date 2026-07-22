@@ -27,7 +27,7 @@ sealed trait RegisteredScale[Row]:
   final def descriptor: ScaleDescriptor =
     scale.descriptor
 
-  final def sharesDeclaration(that: RegisteredScale[Row]): Boolean =
+  final def sharesDeclaration(that: RegisteredScale[?]): Boolean =
     scale.asInstanceOf[AnyRef] eq that.scale.asInstanceOf[AnyRef]
 
   final def observations(rows: Vector[Row]): Vector[ScaleObservation] =

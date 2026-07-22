@@ -70,7 +70,7 @@ class GrammarSuite extends munit.FunSuite:
 
     assertEquals(plot.layerData(layer), data)
     assertEquals(plot.layerMapping(layer).group.flatMap(_.map(data.last)), Some("B"))
-    assertEquals(plot.layers, Vector(layer))
+    assertEquals(plot.layers.map(_.layer), Vector(layer))
   }
 
   test("plot labels compose without rebuilding the plot specification") {

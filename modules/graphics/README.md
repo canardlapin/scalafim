@@ -82,6 +82,30 @@ trained <- ggplot_build(p)
 The Scala examples above are compiled as JVM and Scala.js tests in
 `PlotDslSuite`; this is executable syntax, not documentation-only sugar.
 
+Layers may also own a different row type. Independent layers supply their own
+data and mapping, and must state what happens if the plot is faceted:
+
+```scala
+final case class Reference(time: Double, limit: Double)
+
+val references = Vector(Reference(0.0, 2.5), Reference(10.0, 2.5))
+val mixed = plot(rows)
+  .aes(_.time, _.signal)
+  .geomPoint()
+  .independentLayer(
+    references,
+    Layer.line[Reference](_.time, _.limit, inheritMapping = false),
+    LayerFacetPolicy.Repeat
+  )
+  .resolve
+```
+
+`LayerFacetPolicy.Select` partitions the independent row type with a typed
+`(FacetCell, Row) => Boolean` function; `Exclude` omits it from facet panels.
+The compiler retains each layer's hidden `Row` member through statistics,
+dropped-row provenance, and `TrainedLayer` inspection while training shared
+scale declarations over observations from every layer.
+
 ## Core laws
 
 - Scene composition is a monoid: `Scene.empty` is identity and `++` is
@@ -130,6 +154,10 @@ The Scala examples above are compiled as JVM and Scala.js tests in
   `AesEnv` is only a source-compatible alias, not a normalized copy.
   Continuous scales consume `Double`, discrete scales consume `String`, and
   the aesthetic they bind to determines the rendered value type.
+- `PlotLayer` packages each layer's row type with its data, mapping, statistic,
+  and facet policy. Same-row layers inherit plot data and mappings as before;
+  independent layers do neither implicitly. Plot-global scales consume the
+  union of their observations without erasing row sources in trained output.
 - Layer constructors for common geoms require their essential aesthetics in the
   Scala signature. Generic `fromMapping` allows inheritance; `Plot.addLayer`
   validates the effective layer mapping before a renderer ever sees the layer.

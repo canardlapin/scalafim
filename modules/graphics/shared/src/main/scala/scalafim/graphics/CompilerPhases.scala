@@ -7,8 +7,29 @@ private[graphics] final case class LayerPlan[Row](
     layerIndex: Int,
     layer: Layer[Row],
     data: Vector[Row],
-    mapping: AesSpec[Row]
+    mapping: AesSpec[Row],
+    packageKey: AnyRef
 )
+
+/** Existential package that keeps one layer's row type attached to every
+  * compiler input derived from it.
+  */
+private[graphics] sealed trait PackedLayerPlan:
+  type Row
+  def value: LayerPlan[Row]
+
+  final def layerIndex: Int = value.layerIndex
+  final def layer: Layer[Row] = value.layer
+  final def data: Vector[Row] = value.data
+  final def mapping: AesSpec[Row] = value.mapping
+
+private[graphics] object PackedLayerPlan:
+  type Aux[Row0] = PackedLayerPlan { type Row = Row0 }
+
+  def apply[Row0](plan: LayerPlan[Row0]): Aux[Row0] =
+    new PackedLayerPlan:
+      type Row = Row0
+      val value: LayerPlan[Row] = plan
 
 /** A layer after its statistical transform. Every stat emits the same typed
   * row envelope, so scale training remains plot-wide even when layers have
@@ -23,12 +44,66 @@ private[graphics] final case class StatPlan[Row](
   def layer: Layer[Row] = source.layer
   def data: Vector[StatRow[Row]] = frame.rows
 
+/** Existential package for a statistically transformed layer. All operations
+  * except alignment of two copies of the same package remain fully typed.
+  */
+private[graphics] sealed trait PackedStatPlan:
+  type Row
+  def value: StatPlan[Row]
+
+  final def layerIndex: Int = value.layerIndex
+  final def layer: Layer[Row] = value.layer
+  final def data: Vector[StatRow[Row]] = value.data
+  final def mapping: AesSpec[StatRow[Row]] = value.mapping
+  final def frame: StatFrame[Row] = value.frame
+  final def packageKey: AnyRef = value.source.packageKey
+
+private[graphics] object PackedStatPlan:
+  type Aux[Row0] = PackedStatPlan { type Row = Row0 }
+
+  def apply[Row0](plan: StatPlan[Row0]): Aux[Row0] =
+    new PackedStatPlan:
+      type Row = Row0
+      val value: StatPlan[Row] = plan
+
+  /** Facet compilation creates global and panel-local copies from the same
+    * package. Runtime identity proves their hidden row types agree; the one
+    * unavoidable erasure recovery for heterogeneous layers is confined here.
+    */
+  def mergePositionScales(
+      global: PackedStatPlan,
+      local: PackedStatPlan,
+      scales: FacetScales
+  ): PackedStatPlan =
+    require(global.packageKey eq local.packageKey, "facet plans must originate from the same layer package")
+    mergeAligned(global.value, local.value.asInstanceOf[StatPlan[global.Row]], scales)
+
+  private def mergeAligned[Row](
+      global: StatPlan[Row],
+      local: StatPlan[Row],
+      scales: FacetScales
+  ): PackedStatPlan =
+    val withX =
+      if scales.xIsFree then replace(global.mapping, local.mapping, Aesthetic.X)
+      else global.mapping
+    val mapping =
+      if scales.yIsFree then replace(withX, local.mapping, Aesthetic.Y)
+      else withX
+    PackedStatPlan(global.copy(mapping = mapping))
+
+  private def replace[Row, A](
+      target: AesSpec[Row],
+      source: AesSpec[Row],
+      aesthetic: Aesthetic[A]
+  ): AesSpec[Row] =
+    source.get(aesthetic).fold(target)(target.updated(aesthetic, _))
+
 /** Phase 1 — mapping resolution: merge layer and plot mappings, validate the
   * input contract, and reject unsupported geoms before any row is evaluated.
   */
 private[graphics] object MappingPhase:
-  def plan[Row](plot: Plot[Row]): Either[GraphicsError, Vector[LayerPlan[Row]]] =
-    val out = Vector.newBuilder[LayerPlan[Row]]
+  def plan[Row](plot: Plot[Row]): Either[GraphicsError, Vector[PackedLayerPlan]] =
+    val out = Vector.newBuilder[PackedLayerPlan]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plot.layers.length && result.isRight do
@@ -39,12 +114,62 @@ private[graphics] object MappingPhase:
       idx += 1
     result.map(_ => out.result())
 
+  def planPanel[Row](
+      plot: Plot[Row],
+      facet: FacetSpec[Row],
+      cell: FacetCell
+  ): Either[GraphicsError, Vector[PackedLayerPlan]] =
+    val out = Vector.newBuilder[PackedLayerPlan]
+    var idx = 0
+    var result: Either[GraphicsError, Unit] = Right(())
+    while idx < plot.layers.length && result.isRight do
+      val packed = plot.layers(idx)
+      result = planValues(
+        packed.layer,
+        packed.panelData(plot.data, facet, cell),
+        packed.effectiveMapping(plot.mapping),
+        idx,
+        packed
+      ).map { plan =>
+        out += PackedLayerPlan(plan)
+        ()
+      }
+      idx += 1
+    result.map(_ => out.result())
+
   def planLayer[Row](plot: Plot[Row], layer: Layer[Row], layerIndex: Int): Either[GraphicsError, LayerPlan[Row]] =
+    planValues(
+      layer,
+      layer.effectiveData(plot.data),
+      layer.effectiveMapping(plot.mapping),
+      layerIndex,
+      layer
+    )
+
+  private def planLayer[PlotRow](
+      plot: Plot[PlotRow],
+      packed: PlotLayer[PlotRow],
+      layerIndex: Int
+  ): Either[GraphicsError, PackedLayerPlan] =
+    planValues(
+      packed.layer,
+      packed.effectiveData(plot.data),
+      packed.effectiveMapping(plot.mapping),
+      layerIndex,
+      packed
+    ).map(PackedLayerPlan(_))
+
+  private def planValues[Row](
+      layer: Layer[Row],
+      data: Vector[Row],
+      mapping: AesSpec[Row],
+      layerIndex: Int,
+      packageKey: AnyRef
+  ): Either[GraphicsError, LayerPlan[Row]] =
     if !isSupported(layer.geom) then Left(GraphicsError.UnsupportedGeom(layer.geom.label))
     else
-      val mapping = layer.effectiveMapping(plot.mapping)
       Layer.validate(layer, mapping).map { _ =>
-        LayerPlan(layerIndex, layer, layer.effectiveData(plot.data), mapping)
+        LayerPlan(layerIndex, layer, data, mapping, packageKey)
       }
 
   private def isSupported(geom: Geom): Boolean =
@@ -57,13 +182,13 @@ private[graphics] object MappingPhase:
   * and proportion fields, and owns the discrete x scale plus computed y.
   */
 private[graphics] object StatPhase:
-  def transform[Row](plans: Vector[LayerPlan[Row]]): Either[GraphicsError, Vector[StatPlan[Row]]] =
-    val out = Vector.newBuilder[StatPlan[Row]]
+  def transform(plans: Vector[PackedLayerPlan]): Either[GraphicsError, Vector[PackedStatPlan]] =
+    val out = Vector.newBuilder[PackedStatPlan]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
-      result = transform(plans(idx)).map { plan =>
-        out += plan
+      result = transform(plans(idx).value).map { plan =>
+        out += PackedStatPlan(plan)
         ()
       }
       idx += 1
@@ -336,8 +461,8 @@ private[graphics] object StatPhase:
   * trained scale for each aesthetic, and the plot registry contains one entry
   * per aesthetic.
   */
-private[graphics] final case class ScaleResolution[Row](
-    plans: Vector[StatPlan[Row]],
+private[graphics] final case class ScaleResolution(
+    plans: Vector[PackedStatPlan],
     registry: PlotScaleRegistry
 )
 
@@ -347,15 +472,15 @@ private[graphics] final case class ScaleResolution[Row](
   * placing independently normalized layers on one axis.
   */
 private[graphics] object ScalePhase:
-  private final case class Contribution[Row](
+  private final case class Contribution(
       layerIndex: Int,
-      rows: Vector[StatRow[Row]],
-      entry: RegisteredScale[StatRow[Row]]
+      entry: RegisteredScale[?],
+      observations: Vector[ScaleObservation]
   )
 
-  def train[Row](plans: Vector[StatPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
+  def train(plans: Vector[PackedStatPlan]): Either[GraphicsError, ScaleResolution] =
     val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
-    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution]](Right(initial)) {
       (result, aesthetic) =>
         result.flatMap(trainAesthetic(_, aesthetic, facetLocal = false, unifyFacetCopies = false))
     }
@@ -365,17 +490,17 @@ private[graphics] object ScalePhase:
     * only when they retain the same source layer and compatible descriptor;
     * distinct plot layers keep the ordinary strict conflict rule.
     */
-  def trainFacets[Row](plans: Vector[StatPlan[Row]]): Either[GraphicsError, ScaleResolution[Row]] =
+  def trainFacets(plans: Vector[PackedStatPlan]): Either[GraphicsError, ScaleResolution] =
     val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
-    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+    Aesthetic.values.foldLeft[Either[GraphicsError, ScaleResolution]](Right(initial)) {
       (result, aesthetic) =>
         result.flatMap(trainAesthetic(_, aesthetic, facetLocal = false, unifyFacetCopies = true))
     }
 
-  def trainFacetPositions[Row](
-      plans: Vector[StatPlan[Row]],
+  def trainFacetPositions(
+      plans: Vector[PackedStatPlan],
       scales: FacetScales
-  ): Either[GraphicsError, Vector[StatPlan[Row]]] =
+  ): Either[GraphicsError, Vector[PackedStatPlan]] =
     val aesthetics =
       Vector(
         Option.when(scales.xIsFree)(Aesthetic.X),
@@ -383,24 +508,25 @@ private[graphics] object ScalePhase:
       ).flatten
     val initial = ScaleResolution(plans, PlotScaleRegistry.empty)
     aesthetics
-      .foldLeft[Either[GraphicsError, ScaleResolution[Row]]](Right(initial)) {
+      .foldLeft[Either[GraphicsError, ScaleResolution]](Right(initial)) {
         (result, aesthetic) =>
           result.flatMap(trainAesthetic(_, aesthetic, facetLocal = true, unifyFacetCopies = false))
       }
       .map(_.plans)
 
-  def registry[Row](plan: StatPlan[Row]): ScaleRegistry[StatRow[Row]] =
+  def registry(plan: PackedStatPlan): ScaleRegistry[?] =
+    registryTyped(plan.value)
+
+  private def registryTyped[Row](plan: StatPlan[Row]): ScaleRegistry[StatRow[Row]] =
     ScaleRegistry.fromMapping(plan.mapping)
 
-  private def trainAesthetic[Row](
-      resolution: ScaleResolution[Row],
+  private def trainAesthetic(
+      resolution: ScaleResolution,
       aesthetic: Aesthetic[?],
       facetLocal: Boolean,
       unifyFacetCopies: Boolean
-  ): Either[GraphicsError, ScaleResolution[Row]] =
-    val contributions = resolution.plans.flatMap { plan =>
-      plan.mapping.scaledEntry(aesthetic).map(Contribution(plan.layerIndex, plan.data, _))
-    }
+  ): Either[GraphicsError, ScaleResolution] =
+    val contributions = resolution.plans.flatMap(contribution(_, aesthetic))
     contributions.headOption match
       case None =>
         Right(resolution)
@@ -420,7 +546,7 @@ private[graphics] object ScalePhase:
               )
             )
           case None =>
-            val observations = contributions.flatMap(contribution => contribution.entry.observations(contribution.rows))
+            val observations = contributions.flatMap(_.observations)
             for
               trained <- trainEntry(first.entry, observations, facetLocal)
               plans <- rebind(resolution.plans, aesthetic, observations, facetLocal)
@@ -430,9 +556,23 @@ private[graphics] object ScalePhase:
                 PlotScaleRegistry.from(resolution.registry.scales :+ trained.trained)
               )
 
-  private def compatibleFacetCopy[Row](
-      first: Contribution[Row],
-      candidate: Contribution[Row]
+  private def contribution(
+      plan: PackedStatPlan,
+      aesthetic: Aesthetic[?]
+  ): Option[Contribution] =
+    contributionTyped(plan.value, aesthetic)
+
+  private def contributionTyped[Row](
+      plan: StatPlan[Row],
+      aesthetic: Aesthetic[?]
+  ): Option[Contribution] =
+    plan.mapping.scaledEntry(aesthetic).map { entry =>
+      Contribution(plan.layerIndex, entry, entry.observations(plan.data))
+    }
+
+  private def compatibleFacetCopy(
+      first: Contribution,
+      candidate: Contribution
   ): Boolean =
     val left = first.entry.descriptor
     val right = candidate.entry.descriptor
@@ -441,33 +581,51 @@ private[graphics] object ScalePhase:
     left.kind == right.kind &&
     left.training == right.training
 
-  private def rebind[Row](
-      plans: Vector[StatPlan[Row]],
+  private def rebind(
+      plans: Vector[PackedStatPlan],
       aesthetic: Aesthetic[?],
       observations: Vector[ScaleObservation],
       facetLocal: Boolean
-  ): Either[GraphicsError, Vector[StatPlan[Row]]] =
-    val out = Vector.newBuilder[StatPlan[Row]]
+  ): Either[GraphicsError, Vector[PackedStatPlan]] =
+    val out = Vector.newBuilder[PackedStatPlan]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
       val plan = plans(idx)
-      plan.mapping.scaledEntry(aesthetic) match
-        case None =>
-          out += plan
-        case Some(entry) =>
-          result = trainEntry(entry, observations, facetLocal).map { trained =>
-            out += plan.copy(mapping = trained.install(plan.mapping))
-            ()
-          }
+      result = rebindPlan(plan, aesthetic, observations, facetLocal).map { rebound =>
+        out += rebound
+        ()
+      }
       idx += 1
     result.map(_ => out.result())
 
-  private def trainEntry[Row](
-      entry: RegisteredScale[Row],
+  private def rebindPlan(
+      plan: PackedStatPlan,
+      aesthetic: Aesthetic[?],
       observations: Vector[ScaleObservation],
       facetLocal: Boolean
-  ): Either[GraphicsError, RegisteredScale[Row]] =
+  ): Either[GraphicsError, PackedStatPlan] =
+    rebindTyped(plan.value, aesthetic, observations, facetLocal)
+
+  private def rebindTyped[Row](
+      plan: StatPlan[Row],
+      aesthetic: Aesthetic[?],
+      observations: Vector[ScaleObservation],
+      facetLocal: Boolean
+  ): Either[GraphicsError, PackedStatPlan] =
+    plan.mapping.scaledEntry(aesthetic) match
+      case None =>
+        Right(PackedStatPlan(plan))
+      case Some(entry) =>
+        trainEntry(entry, observations, facetLocal).map { trained =>
+          PackedStatPlan(plan.copy(mapping = trained.install(plan.mapping)))
+        }
+
+  private def trainEntry[EntryRow](
+      entry: RegisteredScale[EntryRow],
+      observations: Vector[ScaleObservation],
+      facetLocal: Boolean
+  ): Either[GraphicsError, RegisteredScale[EntryRow]] =
     if facetLocal then entry.trainFacet(observations)
     else entry.trainPlotWide(observations)
 
@@ -1184,16 +1342,16 @@ private[graphics] object GeomPhase:
   * coordinates.
   */
 private[graphics] object CoordPhase:
-  final case class CoordinateResolution[Row](
-      layers: Vector[ResolvedLayer[Row]],
+  final case class CoordinateResolution(
+      layers: Vector[TrainedLayer],
       ranges: Option[(Interval, Interval)]
   )
 
-  def transform[Row](
+  def transform(
       coord: Coord,
-      layers: Vector[ResolvedLayer[Row]],
+      layers: Vector[TrainedLayer],
       ranges: Option[(Interval, Interval)]
-  ): Either[GraphicsError, CoordinateResolution[Row]] =
+  ): Either[GraphicsError, CoordinateResolution] =
     coord match
       case Coord.Flipped(_) =>
         Right(
@@ -1205,11 +1363,14 @@ private[graphics] object CoordPhase:
       case Coord.Cartesian(_) | Coord.Fixed(_, _) =>
         Right(CoordinateResolution(layers, ranges))
 
-  private def flipLayer[Row](layer: ResolvedLayer[Row]): ResolvedLayer[Row] =
-    layer.copy(
+  private def flipLayer(layer: TrainedLayer): TrainedLayer =
+    flipTypedLayer(layer.value)
+
+  private def flipTypedLayer[Row](layer: ResolvedLayer[Row]): TrainedLayer =
+    TrainedLayer(layer.copy(
       rows = layer.rows.map(flipRow),
       grobs = layer.grobs.map(flipGrob)
-    )
+    ))
 
   private def flipRow[Row](row: ResolvedRow[Row]): ResolvedRow[Row] =
     row.copy(
@@ -1266,9 +1427,9 @@ private[graphics] object LayoutPhase:
   /** Panel data ranges when any layout source (explicit layout, frame, or
     * solver policy) is in play; `None` when the plot compiles layout-free.
     */
-  def panelRangesFor[Row](
+  def panelRangesFor(
       options: PlotCompilerOptions,
-      layers: Vector[ResolvedLayer[Row]]
+      layers: Vector[TrainedLayer]
   ): Either[GraphicsError, Option[(Interval, Interval)]] =
     options.layout match
       case Some(layout) =>
@@ -1367,12 +1528,12 @@ private[graphics] object LayoutPhase:
       case None =>
         Axis.ticks(range, axis.breaks, axis.labeler).map(_.map(_.label)).getOrElse(Vector.empty)
 
-  def panelRanges[Row](
-      layers: Vector[ResolvedLayer[Row]]
+  def panelRanges(
+      layers: Vector[TrainedLayer]
   ): Either[GraphicsError, (Interval, Interval)] =
     for
-      xRange <- positionRange(layers, Aesthetic.X.label, _.x)
-      yRange <- positionRange(layers, Aesthetic.Y.label, _.y)
+      xRange <- positionRange(layers, Aesthetic.X.label)
+      yRange <- positionRange(layers, Aesthetic.Y.label)
     yield (xRange, yRange)
 
   /** Union of the position ranges contributed by each layer. Scaled layers
@@ -1382,10 +1543,9 @@ private[graphics] object LayoutPhase:
     * values. Mixing the two across layers is incoherent — mapped and raw
     * coordinates share no unit — and is a typed error.
     */
-  private def positionRange[Row](
-      layers: Vector[ResolvedLayer[Row]],
-      aesthetic: String,
-      value: ResolvedRow[Row] => Double
+  private def positionRange(
+      layers: Vector[TrainedLayer],
+      aesthetic: String
   ): Either[GraphicsError, Interval] =
     var sawScaled = false
     var sawUnscaledData = false
@@ -1395,7 +1555,7 @@ private[graphics] object LayoutPhase:
         !(layer.geom == Geom.HLine && aesthetic == Aesthetic.X.label)
           && !(layer.geom == Geom.VLine && aesthetic == Aesthetic.Y.label)
       val values =
-        if contributes then layer.rows.iterator.flatMap(row => positionValues(row, aesthetic, value)).toVector
+        if contributes then layer.rows.iterator.flatMap(row => positionValues(row, aesthetic)).toVector
         else Vector.empty
       layer.trainedScales.find(_.aesthetic == aesthetic) match
         case Some(scale) =>
@@ -1428,16 +1588,15 @@ private[graphics] object LayoutPhase:
     if sawScaled && sawUnscaledData then Left(GraphicsError.MixedPositionScaling(aesthetic))
     else range.requireTrained
 
-  private def positionValues[Row](
-      row: ResolvedRow[Row],
-      aesthetic: String,
-      primary: ResolvedRow[Row] => Double
+  private def positionValues(
+      row: ResolvedRow[?],
+      aesthetic: String
   ): Vector[Double] =
     if aesthetic == Aesthetic.X.label then
-      Vector(Some(primary(row)), row.xEnd, row.xMin, row.xMax).flatten ++
+      Vector(Some(row.x), row.xEnd, row.xMin, row.xMax).flatten ++
         row.xBand.toVector.flatMap(band => Vector(band.lower, band.upper))
     else
-      Vector(Some(primary(row)), row.yEnd, row.yMin, row.yMax).flatten ++
+      Vector(Some(row.y), row.yEnd, row.yMin, row.yMax).flatten ++
         row.yBand.toVector.flatMap(band => Vector(band.lower, band.upper))
 
   private[graphics] def coordClip(coord: Coord): Clip =

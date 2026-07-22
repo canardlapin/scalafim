@@ -15,6 +15,29 @@ enum FacetScales:
   def yIsFree: Boolean =
     this == FreeY || this == Free
 
+/** How an independent layer whose row type differs from the plot's row type
+  * participates in facets. Same-row layers continue to use the plot's typed
+  * `FacetSpec` directly.
+  */
+sealed trait LayerFacetPolicy[-Row]:
+  private[graphics] def includes(cell: FacetCell, row: Row): Boolean
+
+object LayerFacetPolicy:
+  /** Repeat every row in every panel. Useful for reference annotations. */
+  case object Repeat extends LayerFacetPolicy[Any]:
+    private[graphics] def includes(cell: FacetCell, row: Any): Boolean =
+      true
+
+  /** Keep the layer out of every facet panel. */
+  case object Exclude extends LayerFacetPolicy[Any]:
+    private[graphics] def includes(cell: FacetCell, row: Any): Boolean =
+      false
+
+  /** Select rows with a function that sees the typed row and resolved cell. */
+  final case class Select[Row](include: (FacetCell, Row) => Boolean) extends LayerFacetPolicy[Row]:
+    private[graphics] def includes(cell: FacetCell, row: Row): Boolean =
+      include(cell, row)
+
 final case class FacetCell(
     row: Int,
     column: Int,

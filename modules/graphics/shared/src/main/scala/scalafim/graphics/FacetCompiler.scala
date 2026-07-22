@@ -6,14 +6,14 @@ package scalafim.graphics
   * coherent.
   */
 private[graphics] object FacetCompiler:
-  private final case class PanelStats[Row](
+  private final case class PanelStats(
       cell: FacetCell,
-      plans: Vector[StatPlan[Row]]
+      plans: Vector[PackedStatPlan]
   )
 
-  private final case class PanelResolution[Row](
+  private final case class PanelResolution(
       cell: FacetCell,
-      layers: Vector[ResolvedLayer[Row]],
+      layers: Vector[TrainedLayer],
       registry: PlotScaleRegistry,
       physicalRanges: (Interval, Interval),
       specs: Vector[GuideSpec]
@@ -38,7 +38,7 @@ private[graphics] object FacetCompiler:
       case _: Coord.Fixed =>
         Left(GraphicsError.FacetFixedCoordinates)
       case _ =>
-        val allData = plot.data ++ plot.layers.flatMap(_.effectiveData(plot.data))
+        val allData = plot.data ++ plot.layers.flatMap(_.facetSeedData(plot.data))
         for
           facetLayout <- facet.layout(allData)
           panelStats <- transformPanels(plot, facet, facetLayout)
@@ -81,7 +81,7 @@ private[graphics] object FacetCompiler:
               grid = Some(PanelGridRequest(facetLayout.rows, facetLayout.columns, facetLayout.cells.length))
             )
           )
-          resolvedPanels <- lowerPanels(panels, frames, plot.coord, options)
+          resolvedPanels <- lowerPanels[Row](panels, frames, plot.coord, options)
           axes <- lowerAxes(resolvedPanels, panels, facetLayout, policy, options)
           globalGuides <- GuidePhase.lower(
             resolvedPanels.headOption.map(_.layout),
@@ -106,28 +106,23 @@ private[graphics] object FacetCompiler:
       plot: Plot[Row],
       facet: FacetSpec[Row],
       layout: FacetLayout
-  ): Either[GraphicsError, Vector[PanelStats[Row]]] =
+  ): Either[GraphicsError, Vector[PanelStats]] =
     traverse(layout.cells) { cell =>
-      val panelData = plot.data.filter(facet.contains(cell, _))
-      val panelLayers = plot.layers.map { layer =>
-        layer.withData(layer.effectiveData(plot.data).filter(facet.contains(cell, _)))
-      }
-      val panelPlot = plot.facetPanel(panelData, panelLayers)
       for
-        plans <- MappingPhase.plan(panelPlot)
+        plans <- MappingPhase.planPanel(plot, facet, cell)
         stats <- StatPhase.transform(plans)
       yield PanelStats(cell, stats)
     }
 
-  private def resolvePanels[Row](
-      panels: Vector[PanelStats[Row]],
-      globallyTrained: Vector[StatPlan[Row]],
+  private def resolvePanels(
+      panels: Vector[PanelStats],
+      globallyTrained: Vector[PackedStatPlan],
       globalRanges: (Interval, Interval),
       coord: Coord,
       labels: PlotLabels,
       scales: FacetScales,
       options: PlotCompilerOptions
-  ): Either[GraphicsError, Vector[PanelResolution[Row]]] =
+  ): Either[GraphicsError, Vector[PanelResolution]] =
     val plansPerPanel = panels.headOption.fold(0)(_.plans.length)
     traverse(panels.zipWithIndex) { case (panel, panelIndex) =>
       val global = globallyTrained.slice(panelIndex * plansPerPanel, (panelIndex + 1) * plansPerPanel)
@@ -136,7 +131,7 @@ private[graphics] object FacetCompiler:
           if panel.plans.forall(_.data.isEmpty) then Right(global)
           else ScalePhase.trainFacetPositions(panel.plans, scales)
         merged = global.zip(localPlans).map { case (globalPlan, localPlan) =>
-          mergePositionScales(globalPlan, localPlan, scales)
+          PackedStatPlan.mergePositionScales(globalPlan, localPlan, scales)
         }
         layers <- PlotCompiler.resolveLayers(merged, options.theme)
         localRanges <- localRangesOrGlobal(layers, globalRanges)
@@ -163,34 +158,14 @@ private[graphics] object FacetCompiler:
       )
     }
 
-  private def mergePositionScales[Row](
-      global: StatPlan[Row],
-      local: StatPlan[Row],
-      scales: FacetScales
-  ): StatPlan[Row] =
-    val withX =
-      if scales.xIsFree then replace(global.mapping, local.mapping, Aesthetic.X)
-      else global.mapping
-    val mapping =
-      if scales.yIsFree then replace(withX, local.mapping, Aesthetic.Y)
-      else withX
-    global.copy(mapping = mapping)
-
-  private def replace[Row, A](
-      target: AesSpec[Row],
-      source: AesSpec[Row],
-      aesthetic: Aesthetic[A]
-  ): AesSpec[Row] =
-    source.get(aesthetic).fold(target)(target.updated(aesthetic, _))
-
-  private def registry[Row](plans: Vector[StatPlan[Row]]): PlotScaleRegistry =
+  private def registry(plans: Vector[PackedStatPlan]): PlotScaleRegistry =
     val scales = Aesthetic.values.toVector.flatMap { aesthetic =>
       plans.iterator.flatMap(_.mapping.scaledEntry(aesthetic)).take(1).map(_.trained)
     }
     PlotScaleRegistry.from(scales)
 
-  private def localRangesOrGlobal[Row](
-      layers: Vector[ResolvedLayer[Row]],
+  private def localRangesOrGlobal(
+      layers: Vector[TrainedLayer],
       global: (Interval, Interval)
   ): Either[GraphicsError, (Interval, Interval)] =
     LayoutPhase.panelRanges(layers) match
@@ -215,7 +190,7 @@ private[graphics] object FacetCompiler:
       axis.title.fold(0)(_.length)
 
   private def lowerPanels[Row](
-      panels: Vector[PanelResolution[Row]],
+      panels: Vector[PanelResolution],
       frames: PlotFrames,
       coord: Coord,
       options: PlotCompilerOptions
@@ -259,7 +234,7 @@ private[graphics] object FacetCompiler:
 
   private def lowerAxes[Row](
       resolved: Vector[ResolvedFacetPanel[Row]],
-      panels: Vector[PanelResolution[Row]],
+      panels: Vector[PanelResolution],
       facetLayout: FacetLayout,
       policy: LayoutPolicy,
       options: PlotCompilerOptions

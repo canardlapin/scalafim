@@ -426,8 +426,8 @@ final case class Layer[Row] private (
   def effectiveData(plotData: Vector[Row]): Vector[Row] =
     data.getOrElse(plotData)
 
-  private[graphics] def withData(rows: Vector[Row]): Layer[Row] =
-    copy(data = Some(rows))
+  private[graphics] def independentWithData(rows: Vector[Row]): Layer[Row] =
+    copy(data = Some(rows), inheritMapping = false)
 
 object Layer:
   def point[Row](
@@ -705,6 +705,94 @@ object Layer:
   private def midpoint[Row](lower: Row => Double, upper: Row => Double): Row => Double =
     row => lower(row) + (upper(row) - lower(row)) / 2.0
 
+/** One plot layer with its row type kept together with its data, mapping, and
+  * statistic. `PlotRow` is the plot-level row type; `Row` may differ for an
+  * explicitly independent layer.
+  */
+sealed trait PlotLayer[PlotRow]:
+  type Row
+
+  def layer: Layer[Row]
+  def inheritsPlotData: Boolean
+  def inheritsPlotMapping: Boolean
+  def facetPolicy: Option[LayerFacetPolicy[Row]]
+
+  final def geom: Geom = layer.geom
+  final def stat: Stat[Row] = layer.stat
+  final def position: Position = layer.position
+  final def params: Option[GraphicParams] = layer.params
+
+  private[graphics] def effectiveData(plotData: Vector[PlotRow]): Vector[Row]
+  private[graphics] def effectiveMapping(plotMapping: AesSpec[PlotRow]): AesSpec[Row]
+  private[graphics] def facetSeedData(plotData: Vector[PlotRow]): Vector[PlotRow]
+  private[graphics] def panelData(
+      plotData: Vector[PlotRow],
+      facet: FacetSpec[PlotRow],
+      cell: FacetCell
+  ): Vector[Row]
+
+object PlotLayer:
+  type Aux[PlotRow, Row0] = PlotLayer[PlotRow] { type Row = Row0 }
+
+  private final case class Inherited[PlotRow](layer: Layer[PlotRow]) extends PlotLayer[PlotRow]:
+    type Row = PlotRow
+
+    val inheritsPlotData: Boolean = layer.data.isEmpty
+    val inheritsPlotMapping: Boolean = layer.inheritMapping
+    val facetPolicy: Option[LayerFacetPolicy[Row]] = None
+
+    private[graphics] def effectiveData(plotData: Vector[PlotRow]): Vector[Row] =
+      layer.effectiveData(plotData)
+
+    private[graphics] def effectiveMapping(plotMapping: AesSpec[PlotRow]): AesSpec[Row] =
+      layer.effectiveMapping(plotMapping)
+
+    private[graphics] def facetSeedData(plotData: Vector[PlotRow]): Vector[PlotRow] =
+      effectiveData(plotData)
+
+    private[graphics] def panelData(
+        plotData: Vector[PlotRow],
+        facet: FacetSpec[PlotRow],
+        cell: FacetCell
+    ): Vector[Row] =
+      effectiveData(plotData).filter(facet.contains(cell, _))
+
+  private final case class Independent[PlotRow, Row0](
+      layer: Layer[Row0],
+      policy: LayerFacetPolicy[Row0]
+  ) extends PlotLayer[PlotRow]:
+    type Row = Row0
+
+    val inheritsPlotData: Boolean = false
+    val inheritsPlotMapping: Boolean = false
+    val facetPolicy: Option[LayerFacetPolicy[Row]] = Some(policy)
+
+    private[graphics] def effectiveData(plotData: Vector[PlotRow]): Vector[Row] =
+      layer.data.getOrElse(Vector.empty)
+
+    private[graphics] def effectiveMapping(plotMapping: AesSpec[PlotRow]): AesSpec[Row] =
+      layer.mapping
+
+    private[graphics] def facetSeedData(plotData: Vector[PlotRow]): Vector[PlotRow] =
+      Vector.empty
+
+    private[graphics] def panelData(
+        plotData: Vector[PlotRow],
+        facet: FacetSpec[PlotRow],
+        cell: FacetCell
+    ): Vector[Row] =
+      effectiveData(plotData).filter(policy.includes(cell, _))
+
+  def inherited[Row](layer: Layer[Row]): PlotLayer.Aux[Row, Row] =
+    Inherited(layer)
+
+  def independent[PlotRow, Row](
+      data: Vector[Row],
+      layer: Layer[Row],
+      facetPolicy: LayerFacetPolicy[Row]
+  ): PlotLayer.Aux[PlotRow, Row] =
+    Independent(layer.independentWithData(data), facetPolicy)
+
 final case class PlotLabels(
     title: Option[String] = None,
     subtitle: Option[String] = None,
@@ -717,13 +805,27 @@ final case class PlotLabels(
 final case class Plot[Row] private (
     data: Vector[Row],
     mapping: AesSpec[Row],
-    layers: Vector[Layer[Row]],
+    layers: Vector[PlotLayer[Row]],
     coord: Coord,
     labels: PlotLabels,
     facet: Option[FacetSpec[Row]]
 ):
   def addLayer(layer: Layer[Row]): Either[GraphicsError, Plot[Row]] =
-    Layer.validate(layer, layer.effectiveMapping(mapping)).map(_ => copy(layers = layers :+ layer))
+    Layer
+      .validate(layer, layer.effectiveMapping(mapping))
+      .map(_ => copy(layers = layers :+ PlotLayer.inherited(layer)))
+
+  /** Add a layer with a row type independent of the plot-level data. Its data
+    * and mapping are self-contained, and its facet behavior is mandatory.
+    */
+  def addIndependentLayer[LayerRow](
+      data: Vector[LayerRow],
+      layer: Layer[LayerRow],
+      facetPolicy: LayerFacetPolicy[LayerRow]
+  ): Either[GraphicsError, Plot[Row]] =
+    Layer
+      .validate(layer, layer.mapping)
+      .map(_ => copy(layers = layers :+ PlotLayer.independent(data, layer, facetPolicy)))
 
   def withMapping(mapping: AesSpec[Row]): Either[GraphicsError, Plot[Row]] =
     validateLayers(mapping).map(_ => copy(mapping = mapping))
@@ -752,9 +854,6 @@ final case class Plot[Row] private (
   def withoutFacet: Plot[Row] =
     copy(facet = None)
 
-  private[graphics] def facetPanel(rows: Vector[Row], panelLayers: Vector[Layer[Row]]): Plot[Row] =
-    copy(data = rows, layers = panelLayers, facet = None)
-
   def layerData(layer: Layer[Row]): Vector[Row] =
     layer.effectiveData(data)
 
@@ -765,8 +864,8 @@ final case class Plot[Row] private (
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < layers.length && result.isRight do
-      val layer = layers(idx)
-      result = Layer.validate(layer, layer.effectiveMapping(plotMapping))
+      val packed = layers(idx)
+      result = Layer.validate(packed.layer, packed.effectiveMapping(plotMapping))
       idx += 1
     result
 

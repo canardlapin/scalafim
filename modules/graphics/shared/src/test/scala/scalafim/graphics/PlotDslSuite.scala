@@ -4,6 +4,7 @@ import scala.compiletime.testing.typeCheckErrors
 
 class PlotDslSuite extends munit.FunSuite:
   private final case class Observation(x: Double, y: Double, group: String)
+  private final case class Overlay(x: Double, y: Double)
 
   private val rows =
     Vector(
@@ -34,6 +35,22 @@ class PlotDslSuite extends munit.FunSuite:
     assertEquals(trained.droppedRows, Vector.empty)
     assertEquals(trained.trainedScales.map(_.aesthetic), Vector("color"))
     assert(trained.guides.nonEmpty)
+  }
+
+  test("the DSL adds independent typed layers only with an explicit facet policy") {
+    val overlays = Vector(Overlay(0.5, 4.0))
+    val program =
+      plot(rows)
+        .aes(_.x, _.y)
+        .geomPoint()
+        .independentLayer(overlays, Layer.point[Overlay](_.x, _.y, inheritMapping = false), LayerFacetPolicy.Repeat)
+        .build
+        .fold(error => fail(error.message), identity)
+    val trained = program.resolve.fold(error => fail(error.message), identity)
+
+    assertEquals(program.plot.layers.map(_.inheritsPlotData), Vector(true, false))
+    assertEquals(program.plot.layers.map(_.inheritsPlotMapping), Vector(true, false))
+    assertEquals(trained.layers.map(_.dataSize), Vector(rows.length, overlays.length))
   }
 
   test("canonical histogram, summary, and density programs expose trained plots") {

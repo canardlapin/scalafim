@@ -69,7 +69,7 @@ class PositionSuite extends munit.FunSuite:
   test("seeded jitter is byte-stable in principle across JVM and Scala.js") {
     val data = Vector(PointDatum(0.0, 1.0), PointDatum(0.0, 1.0), PointDatum(1.0, 2.0), PointDatum(1.0, 2.0))
     val jitter = Position.jitterUnsafe(42L, width = Some(0.25), height = Some(0.1))
-    def resolve(position: Position): Vector[ResolvedRow[PointDatum]] =
+    def resolve(position: Position): Vector[ResolvedRow[?]] =
       Plot(data)
         .addLayer(Layer.point[PointDatum](_.x, _.y, position = position))
         .flatMap(PlotCompiler.resolve(_))

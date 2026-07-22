@@ -80,8 +80,57 @@ object PlotCompilerOptions:
   val default: PlotCompilerOptions =
     PlotCompilerOptions()
 
+/** Inspectable trained layer whose hidden row type remains attached to its
+  * mapping, statistic, resolved rows, and dropped-row provenance.
+  */
+sealed trait TrainedLayer:
+  type Row
+  def value: ResolvedLayer[Row]
+
+  final def layerIndex: Int = value.layerIndex
+  final def geom: Geom = value.geom
+  final def stat: Stat[Row] = value.stat
+  final def position: Position = value.position
+  final def dataSize: Int = value.dataSize
+  final def mapping: AesSpec[Row] = value.mapping
+  final def statFrame: StatFrame[Row] = value.statFrame
+  final def scaleDeclarations: Vector[ScaleDeclaration] = value.scaleDeclarations
+  final def trainedScales: Vector[TrainedScale] = value.trainedScales
+  final def rows: Vector[ResolvedRow[Row]] = value.rows
+  final def droppedRows: Vector[DroppedRow[Row]] = value.droppedRows
+  final def grobs: Vector[Grob] = value.grobs
+
+  private[graphics] final def packedDroppedRows: Vector[TrainedDroppedRow] =
+    droppedRows.map(TrainedDroppedRow(_))
+
+object TrainedLayer:
+  type Aux[Row0] = TrainedLayer { type Row = Row0 }
+
+  def apply[Row0](layer: ResolvedLayer[Row0]): Aux[Row0] =
+    new TrainedLayer:
+      type Row = Row0
+      val value: ResolvedLayer[Row] = layer
+
+/** A dropped row packaged with its source type for plot-wide inspection. */
+sealed trait TrainedDroppedRow:
+  type Row
+  def value: DroppedRow[Row]
+
+  final def layerIndex: Int = value.layerIndex
+  final def rowIndex: Int = value.rowIndex
+  final def source: Row = value.source
+  final def reason: PlotDropReason = value.reason
+
+object TrainedDroppedRow:
+  type Aux[Row0] = TrainedDroppedRow { type Row = Row0 }
+
+  def apply[Row0](row: DroppedRow[Row0]): Aux[Row0] =
+    new TrainedDroppedRow:
+      type Row = Row0
+      val value: DroppedRow[Row] = row
+
 final case class TrainedPlot[Row](
-    layers: Vector[ResolvedLayer[Row]],
+    layers: Vector[TrainedLayer],
     layout: Option[PanelLayout],
     guides: Vector[ResolvedGuide],
     scaleRegistry: PlotScaleRegistry,
@@ -117,8 +166,8 @@ final case class TrainedPlot[Row](
             )
     Scene(panelGroup ++ guides.map(_.grob) ++ labelGrobs)
 
-  def droppedRows: Vector[DroppedRow[Row]] =
-    layers.flatMap(_.droppedRows)
+  def droppedRows: Vector[TrainedDroppedRow] =
+    layers.flatMap(_.packedDroppedRows)
 
   def scaleDeclarations: Vector[ScaleDeclaration] =
     layers.flatMap(_.scaleDeclarations)
@@ -129,7 +178,7 @@ final case class TrainedPlot[Row](
 final case class ResolvedFacetPanel[Row](
     cell: FacetCell,
     layout: PanelLayout,
-    layers: Vector[ResolvedLayer[Row]],
+    layers: Vector[TrainedLayer],
     scaleRegistry: PlotScaleRegistry,
     panelGrobs: Vector[Grob],
     stripGrob: Grob
@@ -280,11 +329,11 @@ object PlotCompiler:
         Vector.empty[ResolvedFacetPanel[Row]]
       )
 
-  private[graphics] def resolveLayers[Row](
-      plans: Vector[StatPlan[Row]],
+  private[graphics] def resolveLayers(
+      plans: Vector[PackedStatPlan],
       theme: Theme
-  ): Either[GraphicsError, Vector[ResolvedLayer[Row]]] =
-    val out = Vector.newBuilder[ResolvedLayer[Row]]
+  ): Either[GraphicsError, Vector[TrainedLayer]] =
+    val out = Vector.newBuilder[TrainedLayer]
     var idx = 0
     var result: Either[GraphicsError, Unit] = Right(())
     while idx < plans.length && result.isRight do
@@ -295,24 +344,29 @@ object PlotCompiler:
       idx += 1
     result.map(_ => out.result())
 
-  private def resolveLayer[Row](plan: StatPlan[Row], theme: Theme): Either[GraphicsError, ResolvedLayer[Row]] =
-    val registry = ScalePhase.registry(plan)
+  private def resolveLayer(plan: PackedStatPlan, theme: Theme): Either[GraphicsError, TrainedLayer] =
+    resolveTypedLayer(plan.value, theme)
+
+  private def resolveTypedLayer[Row](plan: StatPlan[Row], theme: Theme): Either[GraphicsError, TrainedLayer] =
+    val registry = ScaleRegistry.fromMapping(plan.mapping)
     RowPhase.resolve(plan, theme).flatMap { case (rows, droppedRows) =>
       PositionPhase.adjust(plan.layer, rows).flatMap { adjusted =>
         GeomPhase.lower(plan.layer, adjusted).map { grobs =>
-          ResolvedLayer(
-            layerIndex = plan.layerIndex,
-            geom = plan.layer.geom,
-            stat = plan.layer.stat,
-            position = plan.layer.position,
-            dataSize = plan.source.data.length,
-            mapping = plan.source.mapping,
-            statFrame = plan.frame,
-            scaleDeclarations = registry.declarations(plan.layerIndex),
-            trainedScales = registry.trained,
-            rows = adjusted,
-            droppedRows = droppedRows,
-            grobs = grobs
+          TrainedLayer(
+            ResolvedLayer(
+              layerIndex = plan.layerIndex,
+              geom = plan.layer.geom,
+              stat = plan.layer.stat,
+              position = plan.layer.position,
+              dataSize = plan.source.data.length,
+              mapping = plan.source.mapping,
+              statFrame = plan.frame,
+              scaleDeclarations = registry.declarations(plan.layerIndex),
+              trainedScales = registry.trained,
+              rows = adjusted,
+              droppedRows = droppedRows,
+              grobs = grobs
+            )
           )
         }
       }

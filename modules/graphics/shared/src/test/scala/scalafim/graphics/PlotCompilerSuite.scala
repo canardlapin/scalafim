@@ -3,6 +3,7 @@ package scalafim.graphics
 class PlotCompilerSuite extends munit.FunSuite:
 
   private final case class Observation(time: Double, value: Double, condition: String)
+  private final case class Marker(time: Double, value: Double, name: String)
 
   private val data =
     Vector(
@@ -10,6 +11,50 @@ class PlotCompilerSuite extends munit.FunSuite:
       Observation(1.0, 2.0, "A"),
       Observation(2.0, 3.0, "B")
     )
+
+  test("independent row types share plot-wide scales and retain typed provenance") {
+    val markers = Vector(Marker(100.0, 5.0, "kept"), Marker(200.0, Double.NaN, "dropped"))
+    val scale =
+      ContinuousScale
+        .train("shared-x", data.map(_.time), Palette.numeric)
+        .fold(error => fail(error.message), identity)
+    val baseMapping = AesSpec
+      .empty[Observation]
+      .withPosition(_.time, _.value)
+      .bindScale(ScaleBinding[Observation, Double, Double](Aesthetic.X, _.time, scale))
+      .fold(error => fail(error.message), identity)
+    val markerMapping = AesSpec
+      .empty[Marker]
+      .withPosition(_.time, _.value)
+      .bindScale(ScaleBinding[Marker, Double, Double](Aesthetic.X, _.time, scale))
+      .fold(error => fail(error.message), identity)
+    val baseLayer = Layer
+      .fromMapping(Geom.Point, baseMapping, inheritMapping = false)
+      .fold(error => fail(error.message), identity)
+    val markerLayer = Layer
+      .fromMapping(Geom.Point, markerMapping, inheritMapping = false)
+      .fold(error => fail(error.message), identity)
+    val plot = Plot(data)
+      .addLayer(baseLayer)
+      .flatMap(_.addIndependentLayer(markers, markerLayer, LayerFacetPolicy.Repeat))
+      .fold(error => fail(error.message), identity)
+    val trained = PlotCompiler.resolve(plot).fold(error => fail(error.message), identity)
+
+    assertEquals(trained.layers.length, 2)
+    assertEquals(
+      trained.scaleRegistry.forAesthetic(Aesthetic.X).map(_.descriptor.domain),
+      Some(ScaleDomain.Continuous(Interval.unsafe(0.0, 200.0), Interval.unsafe(0.0, 200.0)))
+    )
+    val resolvedMarkers = trained.layers(1)
+    val typedSource: resolvedMarkers.Row = resolvedMarkers.rows.head.source
+    assert(typedSource == markers.head)
+    assert(resolvedMarkers.droppedRows.head.reason match
+      case PlotDropReason.NonFinitePosition(x, y) => x == 1.0 && y.isNaN
+      case _                                      => false
+    )
+    assert(resolvedMarkers.droppedRows.head.source == markers.last)
+    assert(trained.droppedRows.head.source == markers.last)
+  }
 
   test("compiles point layers through resolved scaled and direct aesthetics") {
     val xScale =
