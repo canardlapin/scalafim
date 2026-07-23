@@ -185,7 +185,7 @@ object SurfaceGeodesics:
     val visited = Array.fill(topology.mesh.vertexCount)(false)
     val queue =
       scala.collection.mutable.PriorityQueue.empty[(Double, Int)](
-        Ordering.by[(Double, Int), Double] { case (distance, _) => -distance }
+        using Ordering.by[(Double, Int), Double](entry => -entry._1)
       )
 
     distances(source.index) = 0.0

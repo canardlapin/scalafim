@@ -77,7 +77,7 @@ object VariationalSolverCompiler:
       for
         selection <- select(VariationalExecutionForm.LinearComposite, request, capabilities)
         representation <- plan.targetOperator(DMat.eye(plan.targetOperator.cols)).left.map(CompositeLoweringError.Semantic.apply)
-        normBound = frobenius(representation)
+        normBound = variationalFrobenius(representation)
         _ <-
           if normBound.isFinite then Right(())
           else Left(CompositeLoweringError.NumericalFailure("target norm bound is non-finite"))
@@ -409,10 +409,10 @@ final class CompiledOverlappingGroups[
     yield
       val weight = semanticPlan.original.weight.value
       val dualFeasibility = liftedDualViolation(adjoint, lift.structure, weight)
-      val primalObjective = 0.5 * squaredNorm(MatrixOps.subtract(parameter, observation)) + weight * penalty
+      val primalObjective = 0.5 * variationalSquaredNorm(MatrixOps.subtract(parameter, observation)) + weight * penalty
       val dualObjective =
         if dualFeasibility <= tolerance.threshold(1.0) then
-          -0.5 * squaredNorm(dual) - inner(dual, observation)
+          -0.5 * variationalSquaredNorm(dual) - variationalInner(dual, observation)
         else Double.NegativeInfinity
       SplitResidualCertificate(
         solution.certificate.primalResidual,
@@ -502,11 +502,11 @@ final class CompiledLinearCompositePenalty[
       val (dualFeasibility, complementarity) =
         compositeResiduals(semanticPlan.functional, auxiliary, dual, lambda, tolerance)
       val primalObjective =
-        0.5 * squaredNorm(MatrixOps.subtract(parameter, observation)) +
+        0.5 * variationalSquaredNorm(MatrixOps.subtract(parameter, observation)) +
           compositeValue(semanticPlan.functional, auxiliary, lambda)
       val conjugate = compositeConjugate(semanticPlan.functional, dual, lambda, tolerance)
       val dualObjective =
-        if conjugate.isFinite then -0.5 * squaredNorm(transpose) + inner(transpose, observation) - conjugate
+        if conjugate.isFinite then -0.5 * variationalSquaredNorm(transpose) + variationalInner(transpose, observation) - conjugate
         else Double.NegativeInfinity
       SplitResidualCertificate(
         stationarity,
@@ -615,7 +615,7 @@ private final class DirectPenaltyTerm[Feature <: SemanticSpace, Coordinates <: S
       .forward(GaleMatrixBridge.toGale(at))
       .left
       .map(error => FirstOrderError.OracleFailure("direct penalty chart", error.message))
-      .map(coordinates => directPenaltyValue(plan.kind, coordinates, plan.original.weight.value))
+      .map(coordinates => variationalDirectPenaltyValue(plan.kind, coordinates, plan.original.weight.value))
 
   def proximal(at: DoubleMatrix, step: Double): Either[FirstOrderError, DoubleMatrix] =
     plan(GaleMatrixBridge.toGale(at), PenaltyWeight.unsafe(step))
@@ -722,23 +722,23 @@ private def quadraticComposite(center: DMat): LinearCompositeFunctional =
     def proximalConjugate(at: DoubleMatrix, step: Double): Either[FirstOrderError, DoubleMatrix] =
       Right(numericalScale(numericalSubtract(at, numericalScale(numericalCenter, step)), 1.0 / (1.0 + step)))
 
-private def directPenaltyValue(kind: DirectProximalKind, value: DMat, weight: Double): Double =
+private def variationalDirectPenaltyValue(kind: DirectProximalKind, value: DMat, weight: Double): Double =
   val raw = kind match
-    case DirectProximalKind.ElementwiseL1 => l1(value)
-    case DirectProximalKind.FeatureRowsL21 => rowL21(value)
-    case DirectProximalKind.DisjointGroups(groups) => groupL2(value, groups)
+    case DirectProximalKind.ElementwiseL1 => variationalL1(value)
+    case DirectProximalKind.FeatureRowsL21 => variationalRowL21(value)
+    case DirectProximalKind.DisjointGroups(groups) => variationalGroupL2(value, groups)
     case DirectProximalKind.SparseGroup(fraction, groups) =>
-      fraction.value * l1(value) + (1.0 - fraction.value) * groupL2(value, groups)
+      fraction.value * variationalL1(value) + (1.0 - fraction.value) * variationalGroupL2(value, groups)
     case DirectProximalKind.ElasticNet(fraction) =>
-      fraction.value * l1(value) + 0.5 * (1.0 - fraction.value) * squaredNorm(value)
+      fraction.value * variationalL1(value) + 0.5 * (1.0 - fraction.value) * variationalSquaredNorm(value)
   weight * raw
 
 private def compositeValue(functional: CompositeFunctional, value: DMat, weight: Double): Double =
   functional match
-    case CompositeFunctional.ElementwiseL1 => weight * l1(value)
-    case CompositeFunctional.RowGroupL21 => weight * rowL21(value)
+    case CompositeFunctional.ElementwiseL1 => weight * variationalL1(value)
+    case CompositeFunctional.RowGroupL21 => weight * variationalRowL21(value)
     case CompositeFunctional.Huber(delta) => weight * huber(value, delta)
-    case CompositeFunctional.LatentOverlappingGroups(groups) => weight * groupL2(value, groups)
+    case CompositeFunctional.LatentOverlappingGroups(groups) => weight * variationalGroupL2(value, groups)
 
 private def compositeConjugate(
     functional: CompositeFunctional,
@@ -753,7 +753,7 @@ private def compositeConjugate(
       if maxRowNorm(dual) <= weight + tolerance.threshold(1.0) then 0.0 else Double.PositiveInfinity
     case CompositeFunctional.Huber(delta) =>
       if matrixMaxAbs(dual) <= weight + tolerance.threshold(1.0) then
-        delta * squaredNorm(dual) / (2.0 * weight)
+        delta * variationalSquaredNorm(dual) / (2.0 * weight)
       else Double.PositiveInfinity
     case CompositeFunctional.LatentOverlappingGroups(_) => Double.PositiveInfinity
 
@@ -828,11 +828,11 @@ private def alignedCertificate(
   val (dualFeasibility, complementarity) =
     compositeResiduals(functional, auxiliary, dual, weight, tolerance)
   val primalObjective =
-    0.5 * squaredNorm(MatrixOps.subtract(parameter, observation)) +
+    0.5 * variationalSquaredNorm(MatrixOps.subtract(parameter, observation)) +
       compositeValue(functional, auxiliary, weight)
   val conjugate = compositeConjugate(functional, dual, weight, tolerance)
   val dualObjective =
-    if conjugate.isFinite then -0.5 * squaredNorm(transpose) + inner(transpose, observation) - conjugate
+    if conjugate.isFinite then -0.5 * variationalSquaredNorm(transpose) + variationalInner(transpose, observation) - conjugate
     else Double.NegativeInfinity
   SplitResidualCertificate(
     stationarity,
@@ -905,7 +905,7 @@ private def liftedDualViolation(
   result
 
 private def clipElements(value: DMat, bound: Double): DMat =
-  val output = matrixData(value)
+  val output = variationalMatrixData(value)
   var index = 0
   while index < output.length do
     output(index) = Math.max(-bound, Math.min(bound, output(index)))
@@ -913,7 +913,7 @@ private def clipElements(value: DMat, bound: Double): DMat =
   GaleNumerics.matrixFromRowMajor(value.rows, value.cols, output)
 
 private def clipRows(value: DMat, bound: Double): DMat =
-  val output = matrixData(value)
+  val output = variationalMatrixData(value)
   var row = 0
   while row < value.rows do
     val norm = rowNorm(value, row)
@@ -957,7 +957,7 @@ private def numericalL1(value: DoubleMatrix): Double =
 private def add(left: DMat, right: DMat): DMat =
   MatrixOps.subtract(left, MatrixOps.scale(right, -1.0))
 
-private def inner(left: DMat, right: DMat): Double =
+private def variationalInner(left: DMat, right: DMat): Double =
   var result = 0.0
   var row = 0
   while row < left.rows do
@@ -968,13 +968,13 @@ private def inner(left: DMat, right: DMat): Double =
     row += 1
   result
 
-private def squaredNorm(value: DMat): Double =
-  inner(value, value)
+private def variationalSquaredNorm(value: DMat): Double =
+  variationalInner(value, value)
 
-private def frobenius(value: DMat): Double =
-  Math.sqrt(squaredNorm(value))
+private def variationalFrobenius(value: DMat): Double =
+  Math.sqrt(variationalSquaredNorm(value))
 
-private def l1(value: DMat): Double =
+private def variationalL1(value: DMat): Double =
   var result = 0.0
   var row = 0
   while row < value.rows do
@@ -985,7 +985,7 @@ private def l1(value: DMat): Double =
     row += 1
   result
 
-private def rowL21(value: DMat): Double =
+private def variationalRowL21(value: DMat): Double =
   var result = 0.0
   var row = 0
   while row < value.rows do
@@ -993,7 +993,7 @@ private def rowL21(value: DMat): Double =
     row += 1
   result
 
-private def groupL2(value: DMat, groups: GroupStructure): Double =
+private def variationalGroupL2(value: DMat, groups: GroupStructure): Double =
   var result = 0.0
   groups.groups.foreach: group =>
     var squared = 0.0
@@ -1038,7 +1038,7 @@ private def maxRowNorm(value: DMat): Double =
     row += 1
   result
 
-private def matrixData(value: DMat): Array[Double] =
+private def variationalMatrixData(value: DMat): Array[Double] =
   val output = new Array[Double](value.rows * value.cols)
   var row = 0
   while row < value.rows do

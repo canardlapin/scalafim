@@ -1046,7 +1046,7 @@ object FittedFrameCapturedVariance extends ValidationScorer:
       case None => Left(ModelSpecError.InvalidDefinition("operator fit has no functional frame"))
       case Some(frame) =>
         validation.values.rightMultiply(frame.values).left.map(ModelSpecError.Multivar.apply).map: scores =>
-          squaredNorm(scores) / validation.values.rows.toDouble
+          modelSpecSquaredNorm(scores) / validation.values.rows.toDouble
 
 object GpcaCapturedVariance extends ValidationScorer:
   def score(
@@ -1081,7 +1081,7 @@ object GpcaFrameTransformer extends ModelTransformer:
   ): Either[ModelSpecError, PipelineTransformation] =
     FittedFrameTransformer.transform(fitted, study)
 
-private def squaredNorm(value: DMat): Double =
+private def modelSpecSquaredNorm(value: DMat): Double =
   var result = 0.0
   var row = 0
   while row < value.rows do

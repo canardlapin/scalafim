@@ -284,7 +284,7 @@ final class LdaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private 
                 LdaSolved(
                   result.vectors,
                   result.values,
-                  sum(result.values),
+                  ldaSum(result.values),
                   Math.max(result.diagnostics.generalizedResidual, result.diagnostics.normalizationResidual),
                   result.diagnostics.spectralClusters,
                   result.diagnostics.solver
@@ -571,7 +571,7 @@ private def componentRatios(between: DMat, within: DMat, vectors: DMat): DVec =
     col += 1
   GaleNumerics.vectorFromArray(out)
 
-private def sum(values: DVec): Double =
+private def ldaSum(values: DVec): Double =
   var total = 0.0
   var index = 0
   while index < values.length do

@@ -3,7 +3,7 @@ import sbtcrossproject.CrossPlugin.autoImport.*
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport.*
 
 ThisBuild / organization := "scalafim"
-ThisBuild / scalaVersion := "3.4.2"
+ThisBuild / scalaVersion := "3.7.4"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
 // Immutable source dependency: sbt clones this exact Gale commit into its

@@ -138,7 +138,7 @@ final class ConstrainedCanonicalProblem[Feature <: SemanticSpace] private (
         Vector(canonical.effect.valueIdentity, regularizedResidual.valueIdentity)
       )
     )
-    val scale = matrixFrobenius(effectDense) + Math.abs(root.value) * matrixFrobenius(residualDense)
+    val scale = constrainedMatrixFrobenius(effectDense) + Math.abs(root.value) * constrainedMatrixFrobenius(residualDense)
     val normalizedStationarity = solved.certificate.stationarityResidual / Math.max(1.0, scale)
     val certificateResidual = Math.max(
       normalizedStationarity,
@@ -261,7 +261,7 @@ private def directionMatrix(direction: DVec): DMat =
     row += 1
   out.result()
 
-private def matrixFrobenius(matrix: DMat): Double =
+private def constrainedMatrixFrobenius(matrix: DMat): Double =
   var squared = 0.0
   var row = 0
   while row < matrix.rows do

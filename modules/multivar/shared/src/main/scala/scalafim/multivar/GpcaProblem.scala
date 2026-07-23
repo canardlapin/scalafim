@@ -146,7 +146,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       )
     )
     for
-      variable <- program(
+      variable <- gpcaProgram(
         FrameVariable.from(ParameterId.unsafe(s"${featureSpace.id.value}.gpca-frame"), featureSpace, component.evidence)
       )
       frameOperator <- gpcaSemantic(
@@ -162,7 +162,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
       functionalFrame = FunctionalFrame(frameOperator, Some(featureCometric))
       parameterization = FrameParameterization.identity(variable)
       normalization = FrameNormalization(variable, featureCometric)
-      operatorProgram <- program(OperatorPrograms.gpca(parameterization, covariance, normalization))
+      operatorProgram <- gpcaProgram(OperatorPrograms.gpca(parameterization, covariance, normalization))
       singularValues = squareRoots(eigenvalues)
       generalizedResidual = rayleigh.diagnostics.generalizedResidual
       normalizationResidual = rayleigh.diagnostics.normalizationResidual
@@ -184,7 +184,7 @@ final class GpcaProblem[Rows <: SemanticSpace, Feature <: SemanticSpace] private
         Math.max(generalizedResidual, normalizationResidual),
         context
       )
-      operatorFit <- program(
+      operatorFit <- gpcaProgram(
         OperatorProgramFit.exactSpectral(
           operatorProgram,
           Vector(FittedFrame(variable, functionalFrame)),
@@ -418,7 +418,7 @@ private def semanticDiagram[A](result: Either[SemanticError, A]): Either[Diagram
 private def multivarDiagram[A](result: Either[MultivarError, A]): Either[DiagramError, A] =
   result.left.map(DiagramError.Multivar.apply)
 
-private def program[A](result: Either[ProgramError, A]): Either[MultivarError, A] =
+private def gpcaProgram[A](result: Either[ProgramError, A]): Either[MultivarError, A] =
   result.left.map(error => MultivarError.SolverFailed(error.message))
 
 private def diagramToMultivar(error: DiagramError): MultivarError =

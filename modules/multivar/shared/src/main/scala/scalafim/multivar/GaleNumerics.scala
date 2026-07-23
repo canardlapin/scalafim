@@ -92,18 +92,6 @@ extension (matrix: DMat)
   private[multivar] def selectColumns(indices: IndexedSeq[Int]): DMat =
     GaleNumerics.selectColumns(matrix, indices)
 
-  private[multivar] def addToDiagonal(amount: Double): DMat =
-    require(matrix.rows == matrix.cols, "diagonal update requires a square matrix")
-    val out = Matrix.newBuilder(matrix.rows, matrix.cols)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < matrix.cols do
-        out(row, col) = matrix(row, col) + (if row == col then amount else 0.0)
-        col += 1
-      row += 1
-    out.result()
-
 extension (vector: DVec)
   private[multivar] def copyData: Array[Double] =
     vector.toSeq.toArray

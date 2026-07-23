@@ -49,7 +49,7 @@ object PalmBlockValue:
         )
       )
     else
-      firstNonFinite(values) match
+      palmFirstNonFinite(values) match
         case Some((row, column, value)) =>
           Left(
             PalmConvergenceError.InvalidDefinition(
@@ -139,7 +139,7 @@ object PalmBlockUpdate:
       normalizationResidual: Double,
       inexactness: Double
   ): Either[PalmConvergenceError, PalmBlockUpdate] =
-    firstNonFinite(value) match
+    palmFirstNonFinite(value) match
       case Some((row, column, actual)) =>
         Left(PalmConvergenceError.InvalidDefinition(s"PALM update value ($row,$column) is not finite: $actual"))
       case None if !subproblemResidual.isFinite || subproblemResidual < 0.0 =>
@@ -879,7 +879,7 @@ private def matrixDistance(left: DMat, right: DMat): Double =
     row += 1
   Math.sqrt(squared)
 
-private def firstNonFinite(matrix: DMat): Option[(Int, Int, Double)] =
+private def palmFirstNonFinite(matrix: DMat): Option[(Int, Int, Double)] =
   var row = 0
   var failure = Option.empty[(Int, Int, Double)]
   while row < matrix.rows && failure.isEmpty do

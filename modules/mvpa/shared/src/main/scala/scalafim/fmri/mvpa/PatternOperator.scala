@@ -111,9 +111,9 @@ final class PatternOperator private (
       Left(MvpaError.MatrixShapeMismatch("feature weights must contain at least one column"))
     else
       for
-        _ <- validateFinite(featureWeights, "feature weights")
+        _ <- validateFiniteOperator(featureWeights, "feature weights")
         output <- linear.applyTo(featureWeights).left.map(MvpaError.PatternOperatorFailed.apply)
-        _ <- validateFinite(output, "pattern-score output")
+        _ <- validateFiniteOperator(output, "pattern-score output")
       yield output
 
   def transposeApplyTo(sampleScores: DMat): Either[MvpaError, DMat] =
@@ -127,9 +127,9 @@ final class PatternOperator private (
       Left(MvpaError.MatrixShapeMismatch("sample scores must contain at least one column"))
     else
       for
-        _ <- validateFinite(sampleScores, "sample scores")
+        _ <- validateFiniteOperator(sampleScores, "sample scores")
         output <- linear.transposeApplyTo(sampleScores).left.map(MvpaError.PatternOperatorFailed.apply)
-        _ <- validateFinite(output, "feature-score output")
+        _ <- validateFiniteOperator(output, "feature-score output")
       yield output
 
   def materialize: Either[MvpaError, PatternMatrix] =
@@ -181,7 +181,7 @@ final class PatternOperator private (
 object PatternOperator:
   def fromMatrix(patterns: PatternMatrix): Either[MvpaError, PatternOperator] =
     for
-      _ <- validateFinite(patterns.value, "pattern matrix")
+      _ <- validateFiniteOperator(patterns.value, "pattern matrix")
       operator <- fromIndexedOperator(
         sampleIndices = patterns.sampleIndices,
         featureIndices = patterns.featureIndices,
@@ -267,7 +267,7 @@ object PatternOperator:
           )
         yield out
 
-private def validateFinite(matrix: DMat, label: String): Either[MvpaError, Unit] =
+private def validateFiniteOperator(matrix: DMat, label: String): Either[MvpaError, Unit] =
   var row = 0
   while row < matrix.rows do
     var col = 0
