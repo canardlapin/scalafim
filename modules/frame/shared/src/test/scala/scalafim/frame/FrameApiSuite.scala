@@ -208,6 +208,11 @@ class FrameApiSuite extends munit.FunSuite:
       Left(FrameError.InvalidSchema(SchemaError.DuplicateFieldName("id")))
     )
     assertEquals(people.limit(-1), Left(FrameError.InvalidLimit(-1)))
+    val scanRef = SourceRef.scan("not-values", "not-values").toOption.get
+    assertEquals(
+      Frame.values[People](scanRef),
+      Left(FrameError.NotValuesSource(scanRef.id, SourceKind.Scan))
+    )
 
   test("missing and mistyped columns are rejected at compile time"):
     val missing = typeCheckErrors("""
@@ -267,11 +272,17 @@ class FrameApiSuite extends munit.FunSuite:
       val right = Frame.source[R]("right").toOption.get
       left.innerJoinUsing(right, "id")
     """)
+    val widenedAlias = typeCheckErrors("""
+      import scalafim.frame.*
+      val name: String = "widened"
+      val widened: NamedExpr[String, Int] = NamedExpr(name, Expr.literal(1))
+    """)
     assert(nullablePredicate.nonEmpty)
     assert(duplicateAddition.nonEmpty)
     assert(collidingJoin.nonEmpty)
     assert(mismatchedUsingKey.nonEmpty)
     assert(usingCollision.nonEmpty)
+    assert(widenedAlias.nonEmpty)
 
   test("a wide named-tuple schema derives and resolves its final column"):
     type Wide = (

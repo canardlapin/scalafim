@@ -1,6 +1,7 @@
 package scalafim.frame.fs2
 
 import cats.effect.Async
+import cats.effect.Resource
 import cats.syntax.all.*
 import fs2.Stream
 import scala.collection.mutable.ArrayBuffer
@@ -91,7 +92,14 @@ final case class PlannedScan[F[_]](
 trait FrameSource[F[_]]:
   def inspect: F[Either[SourceError, SourceInspection]]
   def plan(request: ScanRequest): F[Either[SourceError, PlannedScan[F]]]
-  def close: F[Either[SourceError, Unit]]
+  private[fs2] def close: F[Either[SourceError, Unit]]
+
+object FrameSource:
+  private[fs2] def owningResource[F[_], A <: FrameSource[F]](
+      acquire: F[A]
+  )(using F: Async[F]): Resource[F, A] =
+    Resource.make(acquire): source =>
+      source.close.flatMap(result => F.fromEither(result.leftMap(SourceFailure.apply)))
 
 enum SinkError:
   case SchemaMismatch(expected: Schema, actual: Schema)
@@ -162,7 +170,7 @@ final class InMemoryFrameSource[F[_]] private (
               scan(selection, output, request.limit)
             )
 
-  def close: F[Either[SourceError, Unit]] =
+  private[fs2] def close: F[Either[SourceError, Unit]] =
     F.delay:
       synchronized:
         if !closed then
@@ -258,15 +266,18 @@ final class CsvFrameSource[F[_]] private (
   def inspect: F[Either[SourceError, SourceInspection]] = delegate.inspect
   def plan(request: ScanRequest): F[Either[SourceError, PlannedScan[F]]] =
     delegate.plan(request)
-  def close: F[Either[SourceError, Unit]] = delegate.close
+  private[fs2] def close: F[Either[SourceError, Unit]] = delegate.close
 
 object CsvFrameSource:
-  def fromString[F[_]: Async](
+  def resource[F[_]](
       input: String,
       options: CsvReadOptions
-  ): Either[SourceError, CsvFrameSource[F]] =
-    CsvCodec.decode(input, options).map: batches =>
-      new CsvFrameSource(InMemoryFrameSource.owned(options.schema, batches))
+  )(using F: Async[F]): Resource[F, CsvFrameSource[F]] =
+    FrameSource.owningResource:
+      F.blocking(CsvCodec.decode(input, options))
+        .flatMap(result => F.fromEither(result.leftMap(SourceFailure.apply)))
+        .map: batches =>
+          new CsvFrameSource(InMemoryFrameSource.owned(options.schema, batches))
 
 final case class CsvWriteResult(
     text: String,
@@ -284,7 +295,9 @@ final class CsvFrameSink[F[_]](
   ): F[Either[SinkError, CsvWriteResult]] =
     batches
       .evalMap: batch =>
-        F.delay(CsvCodec.encode(schema, Vector(batch), delimiter, includeHeader = false, nullValue))
+        F.blocking(
+          CsvCodec.encode(schema, Vector(batch), delimiter, includeHeader = false, nullValue)
+        )
       .compile
       .toVector
       .map: encoded =>

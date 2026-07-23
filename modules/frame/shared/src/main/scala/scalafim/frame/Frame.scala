@@ -30,6 +30,7 @@ enum FrameError:
   case NullablePredicate(id: ExprId)
   case InvalidExpressionScope(id: ExprId)
   case InvalidLimit(count: Int)
+  case NotValuesSource(id: SourceId, kind: SourceKind)
   case EmptySort
   case EmptyJoinKeys
   case DuplicateJoinKey(name: String)
@@ -49,6 +50,8 @@ enum FrameError:
     case NullablePredicate(id) => s"predicate ${id.value} is nullable; make it total before filtering"
     case InvalidExpressionScope(id) => s"expression ${id.value} references a different input scope"
     case InvalidLimit(count) => s"limit must be non-negative, found $count"
+    case NotValuesSource(id, kind) =>
+      s"source '${id.value}' has kind $kind; expected a values source"
     case EmptySort => "sort requires at least one expression"
     case EmptyJoinKeys => "using join requires at least one key"
     case DuplicateJoinKey(name) => s"using join key '$name' occurs more than once"
@@ -551,9 +554,15 @@ final class Frame[S <: NamedTuple.AnyNamedTuple] private[frame] (
       ],
       output: SchemaDescriptor[UsingJoinSchema[S, Right, Name]]
   ): Frame[UsingJoinSchema[S, Right, Name]] =
-    val dynamic = JoinPlanning
-      .using(this.dynamic, right.dynamic, JoinKind.Inner, Vector(name))
-      .fold(error => throw new IllegalStateException(error.message), identity)
+    val dynamic = JoinPlanning.typedUsing(
+      this.dynamic,
+      right.dynamic,
+      JoinKind.Inner,
+      name,
+      leftAt.index,
+      rightAt.index,
+      output.schema
+    )
     new Frame(dynamic.plan, output.schema)
 
   def leftJoinUsing[
@@ -570,9 +579,15 @@ final class Frame[S <: NamedTuple.AnyNamedTuple] private[frame] (
       ],
       output: SchemaDescriptor[LeftUsingJoinSchema[S, Right, Name]]
   ): Frame[LeftUsingJoinSchema[S, Right, Name]] =
-    val dynamic = JoinPlanning
-      .using(this.dynamic, right.dynamic, JoinKind.LeftOuter, Vector(name))
-      .fold(error => throw new IllegalStateException(error.message), identity)
+    val dynamic = JoinPlanning.typedUsing(
+      this.dynamic,
+      right.dynamic,
+      JoinKind.LeftOuter,
+      name,
+      leftAt.index,
+      rightAt.index,
+      output.schema
+    )
     new Frame(dynamic.plan, output.schema)
 
   def groupBy[Keys <: Tuple](
@@ -620,7 +635,7 @@ object Frame:
       descriptor: SchemaDescriptor[S]
   ): Either[FrameError, Frame[S]] =
     if reference.kind != SourceKind.Values then
-      Left(FrameError.InvalidSourceId(s"${reference.id.value} is not a values reference"))
+      Left(FrameError.NotValuesSource(reference.id, reference.kind))
     else Right(scan(reference))
 
   def source[S <: NamedTuple.AnyNamedTuple](name: String)(using
@@ -629,6 +644,77 @@ object Frame:
     SourceRef.scan(name, name).map(scan(_))
 
 private object JoinPlanning:
+  def typedUsing(
+      left: DynamicFrame,
+      right: DynamicFrame,
+      kind: JoinKind,
+      key: String,
+      leftIndex: Int,
+      rightIndex: Int,
+      output: Schema
+  ): DynamicFrame =
+    val leftField = left.schema.fields(leftIndex)
+    val rightField = right.schema.fields(rightIndex)
+    val renamedRight = right.schema.fields.zipWithIndex.map: (field, index) =>
+      val renamed =
+        if index == rightIndex then field.copy(
+          id = ColumnId.derived(s"using-right-$index-${field.name}"),
+          name = s"__frame_using_right_${index}_${field.name}"
+        )
+        else field
+      if kind == JoinKind.LeftOuter then renamed.copy(nullable = true)
+      else renamed
+    val joinedSchema = Schema.unsafe(left.schema.fields ++ renamedRight)
+    val leftExpr = ResolvedExpr(
+      ExprId.derived(s"column:left:${leftField.id.value}"),
+      leftField.dataType,
+      leftField.nullable,
+      ExprNode.Column(InputRef.Left, leftField.id, key, leftIndex)
+    )
+    val rightExpr = ResolvedExpr(
+      ExprId.derived(s"column:right:${rightField.id.value}"),
+      rightField.dataType,
+      rightField.nullable,
+      ExprNode.Column(InputRef.Right, rightField.id, key, rightIndex)
+    )
+    val equal = ResolvedExpr(
+      ExprId.derived(s"Equal(${leftExpr.id.value},${rightExpr.id.value})"),
+      DataType.Bool,
+      leftField.nullable || rightField.nullable,
+      ExprNode.Binary(BinaryOperator.Equal, leftExpr, rightExpr)
+    )
+    val condition = ResolvedExpr(
+      ExprId.derived(s"IsTrue(${equal.id.value})"),
+      DataType.Bool,
+      nullable = false,
+      ExprNode.Unary(UnaryOperator.IsTrue, equal)
+    )
+    val joined = LogicalPlan.Join(
+      left.plan,
+      right.plan,
+      kind,
+      condition,
+      joinedSchema
+    )
+    val retainedIndexes =
+      left.schema.fields.indices ++
+        right.schema.fields.indices
+          .filter(_ != rightIndex)
+          .map(_ + left.schema.size)
+    val selected = retainedIndexes.toVector.zip(output.fields).map:
+      case (index, field) =>
+        val input = joinedSchema.fields(index)
+        NamedExpression(
+          field.name,
+          ResolvedExpr(
+            ExprId.derived(s"column:current:${input.id.value}"),
+            input.dataType,
+            field.nullable,
+            ExprNode.Column(InputRef.Current, input.id, input.name, index)
+          )
+        )
+    new DynamicFrame(LogicalPlan.Project(joined, selected, output), output)
+
   def using(
       left: DynamicFrame,
       right: DynamicFrame,

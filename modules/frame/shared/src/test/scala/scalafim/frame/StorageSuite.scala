@@ -62,6 +62,8 @@ class StorageSuite extends munit.FunSuite:
     assertEquals(utf8.scalar(2), Right(ScalarValue.Utf8("γ")))
 
     val indices = value(ColumnArray.int32(Array(1, 0, 1)))
+    val preciseSlice: Either[StorageError, Int32Array] = indices.slice(0, 1)
+    value(preciseSlice).close()
     val dictionaryValues = value(ColumnArray.utf8(Array("red", "blue")))
     val dictionary = ColumnArray.dictionary(indices, dictionaryValues)
     assertEquals(
@@ -186,3 +188,20 @@ class StorageSuite extends munit.FunSuite:
     assertEquals(source.collect[S], Left(StorageError.Unexpected("injected failure")))
     assert(first.isClosed)
     assert(remaining.isClosed)
+
+  test("batch source captures non-fatal failures with diagnostics and still closes"):
+    type S = (id: Int)
+    var closed = false
+    val source = new BatchSource:
+      val schema = summon[SchemaDescriptor[S]].schema
+
+      def open(): Either[StorageError, BatchCursor] = Right:
+        new BatchCursor:
+          def nextBatch(): Either[StorageError, Option[RecordBatch]] = Right(None)
+          def close(): Unit = closed = true
+
+    val result = source.use(_ => throw new RuntimeException())
+    result match
+      case Left(StorageError.Unexpected(detail)) => assert(detail.nonEmpty)
+      case other => fail(s"expected structured unexpected failure, found $other")
+    assert(closed)

@@ -20,12 +20,15 @@ final class FrameRuntime[F[_]](
     F.fromEither(result.left.map(ExecutionFailure.apply))
 
   private def batches(cursor: ExecutionCursor): Stream[F, RecordBatch] =
-    Stream.eval(F.delay(cursor.nextBatch()).flatMap(failure)).flatMap:
-      case None => Stream.empty
-      case Some(batch) =>
-        Stream
-          .bracket(F.pure(batch))(value => F.delay(value.close()))
-          .flatMap(Stream.emit) ++ batches(cursor)
+    Stream
+      .resource:
+        Resource.make(
+          F.delay(cursor.nextBatch()).flatMap(failure)
+        ):
+          case Some(batch) => F.delay(batch.close())
+          case None => F.unit
+      .repeat
+      .unNoneTerminate
 
   def stream[S <: NamedTuple.AnyNamedTuple](frame: Frame[S]): Stream[F, RecordBatch] =
     val execution = ReferenceInterpreter.prepare(frame.plan, sources)
@@ -43,8 +46,10 @@ final class FrameRuntime[F[_]](
             retained.get.flatMap(_.traverse_(batch => F.delay(batch.close())))
 
           val copyBatches = stream(frame).evalMap: batch =>
-            failure(batch.slice(0, batch.rowCount).left.map(ExecutionError.Storage.apply))
-              .flatTap(copy => retained.update(_ :+ copy))
+            F.uncancelable: _ =>
+              F.delay(batch.slice(0, batch.rowCount))
+                .flatMap(result => failure(result.left.map(ExecutionError.Storage.apply)))
+                .flatTap(copy => retained.update(_ :+ copy))
           poll(copyBatches.compile.drain)
             .guaranteeCase:
               case Outcome.Succeeded(_) => F.unit

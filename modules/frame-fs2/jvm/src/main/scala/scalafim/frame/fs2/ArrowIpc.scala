@@ -1,6 +1,10 @@
 package scalafim.frame.fs2
 
 import cats.effect.Async
+import cats.effect.Ref
+import cats.effect.Resource
+import cats.effect.kernel.Outcome
+import cats.effect.syntax.all.*
 import cats.syntax.all.*
 import fs2.Stream
 import java.io.ByteArrayInputStream
@@ -18,8 +22,8 @@ import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field as ArrowField
 import org.apache.arrow.vector.types.pojo.FieldType as ArrowFieldType
 import org.apache.arrow.vector.types.pojo.Schema as ArrowSchema
-import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
+import scala.util.control.NonFatal
 import scalafim.frame.*
 
 final class ArrowIpcFrameSource[F[_]] private (
@@ -30,7 +34,7 @@ final class ArrowIpcFrameSource[F[_]] private (
   def plan(request: ScanRequest): F[Either[SourceError, PlannedScan[F]]] =
     delegate.plan(request)
 
-  def close: F[Either[SourceError, Unit]] = delegate.close
+  private[fs2] def close: F[Either[SourceError, Unit]] = delegate.close
 
   def write(
       schema: Schema,
@@ -39,16 +43,22 @@ final class ArrowIpcFrameSource[F[_]] private (
     new ArrowIpcFrameSink[F]().write(schema, batches).map(_.map(_.receipt))
 
 object ArrowIpcFrameSource:
-  def fromBytes[F[_]: Async](
+  def resource[F[_]](
       bytes: Array[Byte]
-  ): Either[SourceError, ArrowIpcFrameSource[F]] =
-    ArrowIpcCodec.decode(bytes).map: (schema, batches) =>
-      new ArrowIpcFrameSource(InMemoryFrameSource.owned(schema, batches))
+  )(using F: Async[F]): Resource[F, ArrowIpcFrameSource[F]] =
+    FrameSource.owningResource:
+      ArrowIpcCodec.decode[F](bytes)
+        .flatMap(result => F.fromEither(result.leftMap(SourceFailure.apply)))
+        .map: (schema, batches) =>
+          new ArrowIpcFrameSource(InMemoryFrameSource.owned(schema, batches))
 
 final case class ArrowIpcWriteResult(
     bytes: Array[Byte],
     receipt: SinkReceipt
 )
+
+private final case class SinkFailure(error: SinkError)
+    extends RuntimeException(error.message)
 
 final class ArrowIpcFrameSink[F[_]](using F: Async[F])
     extends FrameSink[F, ArrowIpcWriteResult]:
@@ -56,93 +66,162 @@ final class ArrowIpcFrameSink[F[_]](using F: Async[F])
       schema: Schema,
       batches: Stream[F, RecordBatch]
   ): F[Either[SinkError, ArrowIpcWriteResult]] =
-    batches
-      .evalMap(batch => F.delay(batch.slice(0, batch.rowCount)))
-      .compile
-      .toVector
-      .map: retained =>
-        val valuesToClose = retained.collect:
-          case Right(value) => value
-        val copies = retained.foldLeft[Either[SinkError, Vector[RecordBatch]]](Right(Vector.empty)):
-          case (result, value) =>
-            result.flatMap(current =>
-              value.leftMap(SinkError.Storage.apply).map(current :+ _)
-            )
-        try copies.flatMap(ArrowIpcCodec.encode(schema, _))
-        finally valuesToClose.foreach(_.close())
+    ArrowIpcCodec.encode(schema, batches)
 
 private object ArrowIpcCodec:
-  def encode(
+  private final case class WriterContext(
+      output: ByteArrayOutputStream,
+      root: VectorSchemaRoot,
+      writer: ArrowStreamWriter
+  )
+
+  def encode[F[_]](
       schema: Schema,
-      batches: Vector[RecordBatch]
-  ): Either[SinkError, ArrowIpcWriteResult] =
-    batches.find(_.schema != schema) match
-      case Some(batch) => Left(SinkError.SchemaMismatch(schema, batch.schema))
-      case None =>
-        val allocator = new RootAllocator()
-        val output = new ByteArrayOutputStream
-        val root = VectorSchemaRoot.create(arrowSchema(schema), allocator)
-        val writer = new ArrowStreamWriter(root, null, Channels.newChannel(output))
-        try
-          writer.start()
-          var batchIndex = 0
-          var rows = 0L
-          while batchIndex < batches.length do
-            val batch = batches(batchIndex)
-            root.allocateNew()
-            root.setRowCount(batch.rowCount)
-            var column = 0
-            while column < schema.size do
-              val vector = root.getVector(column)
-              var row = 0
-              while row < batch.rowCount do
-                batch.columns(column).scalar(row) match
-                  case Right(value) => set(vector, row, value)
-                  case Left(error) => return Left(SinkError.Storage(error))
-                row += 1
-              vector.setValueCount(batch.rowCount)
-              column += 1
-            writer.writeBatch()
-            rows += batch.rowCount.toLong
-            root.clear()
-            batchIndex += 1
-          writer.end()
-          val bytes = output.toByteArray
-          Right(
+      batches: Stream[F, RecordBatch]
+  )(using F: Async[F]): F[Either[SinkError, ArrowIpcWriteResult]] =
+    writerResource(schema)
+      .use: context =>
+        val initialize = F.blocking(context.writer.start())
+        val encoded = batches
+          .evalMap: batch =>
+            if batch.schema != schema then
+              F.raiseError[Long](SinkFailure(SinkError.SchemaMismatch(schema, batch.schema)))
+            else
+              F.blocking(writeBatch(schema, context, batch))
+                .flatMap(result => F.fromEither(result.leftMap(SinkFailure.apply)))
+          .compile
+          .fold((0L, 0L)): (state, rows) =>
+            (state._1 + rows, state._2 + 1L)
+        initialize *> encoded.flatMap: (rows, batchCount) =>
+          F.blocking:
+            context.writer.end()
+            val bytes = context.output.toByteArray
             ArrowIpcWriteResult(
               bytes,
-              SinkReceipt(rows, batches.length.toLong, bytes.length.toLong)
+              SinkReceipt(rows, batchCount, bytes.length.toLong)
+            )
+      .attempt
+      .map:
+        case Right(result) => Right(result)
+        case Left(SinkFailure(error)) => Left(error)
+        case Left(error) => Left(SinkError.Write(exceptionDetail(error)))
+
+  def decode[F[_]](
+      bytes: Array[Byte]
+  )(using F: Async[F]): F[Either[SourceError, (Schema, Vector[RecordBatch])]] =
+    Ref.of[F, Vector[RecordBatch]](Vector.empty).flatMap: retained =>
+      def closeRetained: F[Unit] =
+        retained.get.flatMap(_.traverse_(batch => F.delay(batch.close())))
+
+      val decoded = readerResource(bytes)
+        .use: reader =>
+          for
+            root <- F.blocking(reader.getVectorSchemaRoot)
+            schema <- F.fromEither(
+              frameSchema(root.getSchema).leftMap(SourceFailure.apply)
+            )
+            _ <- readBatches(reader, root, schema, retained)
+            batches <- retained.get
+          yield (schema, batches)
+      decoded
+        .guaranteeCase:
+          case Outcome.Succeeded(_) => F.unit
+          case _ => closeRetained
+        .attempt
+        .map:
+          case Right(result) => Right(result)
+          case Left(SourceFailure(error)) => Left(error)
+          case Left(error) => Left(SourceError.Open(exceptionDetail(error)))
+
+  private def writerResource[F[_]](
+      schema: Schema
+  )(using F: Async[F]): Resource[F, WriterContext] =
+    Resource
+      .fromAutoCloseable(F.blocking(new RootAllocator()))
+      .flatMap: allocator =>
+        Resource
+          .fromAutoCloseable(
+            F.blocking(VectorSchemaRoot.create(arrowSchema(schema), allocator))
+          )
+          .flatMap: root =>
+            val output = new ByteArrayOutputStream
+            Resource
+              .fromAutoCloseable(
+                F.blocking(
+                  new ArrowStreamWriter(
+                    root,
+                    null,
+                    Channels.newChannel(output)
+                  )
+                )
+              )
+              .map(writer => WriterContext(output, root, writer))
+
+  private def readerResource[F[_]](
+      bytes: Array[Byte]
+  )(using F: Async[F]): Resource[F, ArrowStreamReader] =
+    Resource
+      .fromAutoCloseable(F.blocking(new RootAllocator()))
+      .flatMap: allocator =>
+        Resource.fromAutoCloseable:
+          F.blocking(
+            new ArrowStreamReader(
+              new ByteArrayInputStream(bytes),
+              allocator
             )
           )
-        catch
-          case error: Throwable => Left(SinkError.Write(error.getMessage))
-        finally
-          writer.close()
-          root.close()
-          allocator.close()
 
-  def decode(bytes: Array[Byte]): Either[SourceError, (Schema, Vector[RecordBatch])] =
-    val allocator = new RootAllocator()
-    val reader = new ArrowStreamReader(new ByteArrayInputStream(bytes), allocator)
+  private def readBatches[F[_]](
+      reader: ArrowStreamReader,
+      root: VectorSchemaRoot,
+      schema: Schema,
+      retained: Ref[F, Vector[RecordBatch]]
+  )(using F: Async[F]): F[Unit] =
+    F.blocking(reader.loadNextBatch()).flatMap:
+      case false => F.unit
+      case true =>
+        (
+          F.uncancelable: _ =>
+            F.blocking(decodeBatch(schema, root))
+              .flatMap(result => F.fromEither(result.leftMap(SourceFailure.apply)))
+              .flatMap(batch => retained.update(_ :+ batch))
+        ) *> readBatches(reader, root, schema, retained)
+
+  private def writeBatch(
+      schema: Schema,
+      context: WriterContext,
+      batch: RecordBatch
+  ): Either[SinkError, Long] =
+    val root = context.root
     try
-      val root = reader.getVectorSchemaRoot
-      frameSchema(root.getSchema).flatMap: schema =>
-        val batches = ArrayBuffer.empty[RecordBatch]
-        var error: Option[SourceError] = None
-        while reader.loadNextBatch() && error.isEmpty do
-          decodeBatch(schema, root) match
-            case Right(batch) => batches += batch
-            case Left(value) => error = Some(value)
-        error match
-          case Some(value) =>
-            batches.foreach(_.close())
-            Left(value)
-          case None => Right((schema, batches.toVector))
+      root.allocateNew()
+      root.setRowCount(batch.rowCount)
+      var column = 0
+      var error: Option[SinkError] = None
+      while column < schema.size && error.isEmpty do
+        val vector = root.getVector(column)
+        var row = 0
+        while row < batch.rowCount && error.isEmpty do
+          batch.columns(column).scalar(row) match
+            case Right(value) =>
+              set(vector, column, row, value) match
+                case Left(value) => error = Some(value)
+                case Right(_) => ()
+            case Left(value) => error = Some(SinkError.Storage(value))
+          row += 1
+        vector.setValueCount(batch.rowCount)
+        column += 1
+      error match
+        case Some(value) => Left(value)
+        case None =>
+          context.writer.writeBatch()
+          Right(batch.rowCount.toLong)
     catch
-      case error: Throwable => Left(SourceError.Open(error.getMessage))
-    finally
-      reader.close()
-      allocator.close()
+      case NonFatal(error) => Left(SinkError.Write(exceptionDetail(error)))
+    finally root.clear()
+
+  private def exceptionDetail(error: Throwable): String =
+    Option(error.getMessage).filter(_.nonEmpty).getOrElse(error.toString)
 
   private def arrowSchema(schema: Schema): ArrowSchema =
     new ArrowSchema(
@@ -202,40 +281,84 @@ private object ArrowIpcCodec:
     case other =>
       Left(SourceError.SchemaMismatch(s"unsupported Arrow IPC type $other"))
 
-  private def set(vector: FieldVector, row: Int, value: ScalarValue): Unit =
+  private def set(
+      vector: FieldVector,
+      column: Int,
+      row: Int,
+      value: ScalarValue
+  ): Either[SinkError, Unit] =
     (vector, value) match
       case (current: BitVector, ScalarValue.Bool(actual)) =>
         current.setSafe(row, if actual then 1 else 0)
-      case (current: IntVector, ScalarValue.Int32(actual)) => current.setSafe(row, actual)
-      case (current: BigIntVector, ScalarValue.Int64(actual)) => current.setSafe(row, actual)
-      case (current: Float4Vector, ScalarValue.Float32(actual)) => current.setSafe(row, actual)
-      case (current: Float8Vector, ScalarValue.Float64(actual)) => current.setSafe(row, actual)
+        Right(())
+      case (current: IntVector, ScalarValue.Int32(actual)) =>
+        current.setSafe(row, actual)
+        Right(())
+      case (current: BigIntVector, ScalarValue.Int64(actual)) =>
+        current.setSafe(row, actual)
+        Right(())
+      case (current: Float4Vector, ScalarValue.Float32(actual)) =>
+        current.setSafe(row, actual)
+        Right(())
+      case (current: Float8Vector, ScalarValue.Float64(actual)) =>
+        current.setSafe(row, actual)
+        Right(())
       case (current: VarCharVector, ScalarValue.Utf8(actual)) =>
         current.setSafe(row, actual.getBytes(StandardCharsets.UTF_8))
+        Right(())
       case (current: TimeStampSecVector, ScalarValue.Timestamp(actual, TimeUnit.Second)) =>
         current.setSafe(row, actual)
+        Right(())
       case (current: TimeStampMilliVector, ScalarValue.Timestamp(actual, TimeUnit.Millisecond)) =>
         current.setSafe(row, actual)
+        Right(())
       case (current: TimeStampMicroVector, ScalarValue.Timestamp(actual, TimeUnit.Microsecond)) =>
         current.setSafe(row, actual)
+        Right(())
       case (current: TimeStampNanoVector, ScalarValue.Timestamp(actual, TimeUnit.Nanosecond)) =>
         current.setSafe(row, actual)
-      case (current, ScalarValue.Null) => setNull(current, row)
-      case _ =>
-        throw new IllegalArgumentException(s"value $value is incompatible with ${vector.getField}")
+        Right(())
+      case (current, ScalarValue.Null) => setNull(current, column, row, value)
+      case _ => Left(SinkError.Encode(row.toLong, column, value))
 
-  private def setNull(vector: FieldVector, row: Int): Unit = vector match
-    case current: BitVector => current.setNull(row)
-    case current: IntVector => current.setNull(row)
-    case current: BigIntVector => current.setNull(row)
-    case current: Float4Vector => current.setNull(row)
-    case current: Float8Vector => current.setNull(row)
-    case current: VarCharVector => current.setNull(row)
-    case current: TimeStampSecVector => current.setNull(row)
-    case current: TimeStampMilliVector => current.setNull(row)
-    case current: TimeStampMicroVector => current.setNull(row)
-    case current: TimeStampNanoVector => current.setNull(row)
-    case _ => throw new IllegalArgumentException(s"unsupported Arrow vector ${vector.getClass}")
+  private def setNull(
+      vector: FieldVector,
+      column: Int,
+      row: Int,
+      value: ScalarValue
+  ): Either[SinkError, Unit] =
+    vector match
+      case current: BitVector =>
+        current.setNull(row)
+        Right(())
+      case current: IntVector =>
+        current.setNull(row)
+        Right(())
+      case current: BigIntVector =>
+        current.setNull(row)
+        Right(())
+      case current: Float4Vector =>
+        current.setNull(row)
+        Right(())
+      case current: Float8Vector =>
+        current.setNull(row)
+        Right(())
+      case current: VarCharVector =>
+        current.setNull(row)
+        Right(())
+      case current: TimeStampSecVector =>
+        current.setNull(row)
+        Right(())
+      case current: TimeStampMilliVector =>
+        current.setNull(row)
+        Right(())
+      case current: TimeStampMicroVector =>
+        current.setNull(row)
+        Right(())
+      case current: TimeStampNanoVector =>
+        current.setNull(row)
+        Right(())
+      case _ => Left(SinkError.Encode(row.toLong, column, value))
 
   private def decodeBatch(
       schema: Schema,

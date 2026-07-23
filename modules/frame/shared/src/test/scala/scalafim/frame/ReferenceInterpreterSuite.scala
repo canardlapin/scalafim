@@ -373,6 +373,43 @@ class ReferenceInterpreterSuite extends munit.FunSuite:
     output.close()
     empty.close()
 
+  test("floating extrema propagate NaN independently of input order"):
+    type Floating = (group: String, value: Double)
+    type Result = (group: String, minimum: Double, maximum: Double)
+    val floatingSchema = summon[SchemaDescriptor[Floating]].schema
+    val floatingRef = SourceRef.values("floating-extrema", "floating-extrema").toOption.get
+    val floatingBatch = storage:
+      RecordBatch(
+        floatingSchema,
+        Vector(
+          storage(ColumnArray.utf8(Array("first", "first", "last", "last"))),
+          storage(ColumnArray.float64(Array(Double.NaN, 1.0, 1.0, Double.NaN)))
+        )
+      )
+    val floatingTable = storage(Table[Floating](Vector(floatingBatch)))
+    val floating = Frame.values[Floating](floatingRef).toOption.get
+    val query: Frame[Result] = floating
+      .groupBy(row => Tuple1(row.col("group").as("group")))
+      .aggregate: row =>
+        (
+          Aggregate.min(row.col("value")).as("minimum"),
+          Aggregate.max(row.col("value")).as("maximum")
+        )
+    val output = execution:
+      ReferenceInterpreter
+        .prepare(query.plan, ReferenceSources.empty.bind(floatingRef, floatingTable))
+        .collect[Result]
+
+    scalars(output, "minimum").foreach:
+      case ScalarValue.Float64(value) => assert(value.isNaN)
+      case other => fail(s"expected NaN minimum, found $other")
+    scalars(output, "maximum").foreach:
+      case ScalarValue.Float64(value) => assert(value.isNaN)
+      case other => fail(s"expected NaN maximum, found $other")
+
+    output.close()
+    floatingTable.close()
+
   test("inner and left joins obey null-key and duplicate-key semantics"):
     type Left = (id: Int, key: Option[Int])
     type Right = (rightKey: Option[Int], label: String)
@@ -488,7 +525,7 @@ class ReferenceInterpreterSuite extends munit.FunSuite:
     leftTable.close()
     rightTable.close()
 
-  test("sort is stable with explicit null placement and a declared blocking shape"):
+  test("sort direction and null placement are independent and stable"):
     type SortInput = (key: Option[Int], label: String)
     val sortSchema = summon[SchemaDescriptor[SortInput]].schema
     val sortRef = SourceRef.values("sort", "sort").toOption.get
@@ -502,23 +539,60 @@ class ReferenceInterpreterSuite extends munit.FunSuite:
       )
     val sortTable = storage(Table[SortInput](Vector(sortBatch)))
     val source = Frame.values[SortInput](sortRef).toOption.get
-    val query = source.sortBy(SortDirection.Ascending, NullPlacement.First)(_.col("key"))
-    val prepared = ReferenceInterpreter.prepare(
-      query.plan,
-      ReferenceSources.empty.bind(sortRef, sortTable)
+    val cases = Vector(
+      (SortDirection.Ascending, NullPlacement.First, Vector("b", "c", "d", "a")),
+      (SortDirection.Ascending, NullPlacement.Last, Vector("c", "d", "a", "b")),
+      (SortDirection.Descending, NullPlacement.First, Vector("b", "a", "c", "d")),
+      (SortDirection.Descending, NullPlacement.Last, Vector("a", "c", "d", "b"))
     )
-    val output = execution(prepared.collect[SortInput])
+    cases.foreach: (direction, nulls, expected) =>
+      val query = source.sortBy(direction, nulls)(_.col("key"))
+      val prepared = ReferenceInterpreter.prepare(
+        query.plan,
+        ReferenceSources.empty.bind(sortRef, sortTable)
+      )
+      val output = execution(prepared.collect[SortInput])
 
-    assertEquals(
-      scalars(output, "label"),
-      Vector("b", "c", "d", "a").map(ScalarValue.Utf8.apply)
-    )
-    assertEquals(prepared.shape.streaming, false)
-    assertEquals(prepared.shape.blockingNodes, Vector("Sort"))
-    assert(query.plan.order.isInstanceOf[OrderGuarantee.Sorted])
+      assertEquals(
+        scalars(output, "label"),
+        expected.map(ScalarValue.Utf8.apply)
+      )
+      assertEquals(prepared.shape.streaming, false)
+      assertEquals(prepared.shape.blockingNodes, Vector("Sort"))
+      assert(query.plan.order.isInstanceOf[OrderGuarantee.Sorted])
+      output.close()
 
-    output.close()
     sortTable.close()
+
+  test("normalization does not eagerly evaluate a fallible later filter"):
+    type Checked = (id: Int, value: Int)
+    val checkedSchema = summon[SchemaDescriptor[Checked]].schema
+    val checkedRef = SourceRef.values("checked", "checked").toOption.get
+    val checkedBatch = storage:
+      RecordBatch(
+        checkedSchema,
+        Vector(
+          storage(ColumnArray.int32(Array(0, 1))),
+          storage(ColumnArray.int32(Array(Int.MaxValue, 1)))
+        )
+      )
+    val checkedTable = storage(Table[Checked](Vector(checkedBatch)))
+    val checked = Frame.values[Checked](checkedRef).toOption.get
+    val original = checked
+      .filter(row => row.col("id") > Expr.literal(0))
+      .filter(row => (row.col("value") + Expr.literal(1)) > Expr.literal(0))
+    val (normalized, receipt) = original.normalized
+    val sources = ReferenceSources.empty.bind(checkedRef, checkedTable)
+    val first = execution(ReferenceInterpreter.prepare(original.plan, sources).collect[Checked])
+    val second = execution(ReferenceInterpreter.prepare(normalized.plan, sources).collect[Checked])
+
+    assert(!receipt.rules.contains(NormalizationRule.FuseFilters))
+    assertEquals(scalars(first, "id"), Vector(ScalarValue.Int32(1)))
+    assertEquals(scalars(second, "id"), Vector(ScalarValue.Int32(1)))
+
+    first.close()
+    second.close()
+    checkedTable.close()
 
   test("normalization rewrites are deterministic and preserve null and NaN semantics"):
     val input = fixture(chunked = true)

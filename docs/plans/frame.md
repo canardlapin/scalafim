@@ -183,6 +183,14 @@ SIMD framework, or performance competitor.
 or cancellation. `FrameRuntime.collect` retains output batches into a
 `Resource[F, Table[Schema]]`; failed or canceled acquisition closes every
 retained batch, and the resource finalizer closes the materialized table.
+Owning CSV and Arrow IPC sources are also acquired through `Resource`; their
+decoded or native buffers cannot escape an unbracketed source lifetime.
+
+Normalization is observationally error-preserving as well as value-preserving.
+Rewrites that reorder expression evaluation, including filter fusion and
+project pushdown, are applied only when the expressions moved across the
+boundary are total. Checked integral arithmetic therefore cannot begin failing,
+or stop failing, merely because a plan was normalized.
 
 ## 0.1 delivery boundary
 

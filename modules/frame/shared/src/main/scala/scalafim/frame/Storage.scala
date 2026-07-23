@@ -2,6 +2,7 @@ package scalafim.frame
 
 import scala.NamedTuple
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Using
 
 enum StorageError:
   case BufferClosed
@@ -308,7 +309,7 @@ sealed trait ColumnArray:
   def slice(offset: Int, length: Int): Either[StorageError, ColumnArray]
   def close(): Unit
 
-private abstract class FixedWidthArray(
+private abstract class FixedWidthArray[Self <: ColumnArray](
     val dataType: DataType,
     val length: Int,
     protected val logicalOffset: Int,
@@ -346,9 +347,9 @@ private abstract class FixedWidthArray(
       sliceLength: Int,
       retainedValues: Buffer,
       retainedValidity: Validity
-  ): ColumnArray
+  ): Self
 
-  def slice(offset: Int, sliceLength: Int): Either[StorageError, ColumnArray] =
+  override def slice(offset: Int, sliceLength: Int): Either[StorageError, Self] =
     if offset < 0 || sliceLength < 0 || offset + sliceLength > length then
       Left(StorageError.InvalidRange(offset, sliceLength, length))
     else
@@ -369,12 +370,21 @@ final class Int32Array private[frame] (
     logicalOffset: Int,
     values: Buffer,
     validity: Validity
-) extends FixedWidthArray(DataType.Int32, length, logicalOffset, 4, values, validity):
+) extends FixedWidthArray[Int32Array](DataType.Int32, length, logicalOffset, 4, values, validity):
   def value(index: Int): Either[StorageError, Int] =
     validIndex(index).flatMap: absolute =>
       validity.isValid(index).flatMap: valid =>
         if !valid then Left(StorageError.NullValue(index))
         else values.read((bytes, start) => LittleEndian.int(bytes, start + absolute * 4))
+
+  private[frame] def optionalValue(index: Int): Either[StorageError, Option[Int]] =
+    validIndex(index).flatMap: absolute =>
+      validity.isValid(index).flatMap: valid =>
+        if !valid then Right(None)
+        else
+          values
+            .read((bytes, start) => LittleEndian.int(bytes, start + absolute * 4))
+            .map(Some(_))
 
   protected def readValue(index: Int) = value(index).map(ScalarValue.Int32.apply)
 
@@ -386,7 +396,7 @@ final class Int64Array private[frame] (
     logicalOffset: Int,
     values: Buffer,
     validity: Validity
-) extends FixedWidthArray(DataType.Int64, length, logicalOffset, 8, values, validity):
+) extends FixedWidthArray[Int64Array](DataType.Int64, length, logicalOffset, 8, values, validity):
   def value(index: Int): Either[StorageError, Long] =
     validIndex(index).flatMap: absolute =>
       validity.isValid(index).flatMap: valid =>
@@ -403,7 +413,7 @@ final class Float32Array private[frame] (
     logicalOffset: Int,
     values: Buffer,
     validity: Validity
-) extends FixedWidthArray(DataType.Float32, length, logicalOffset, 4, values, validity):
+) extends FixedWidthArray[Float32Array](DataType.Float32, length, logicalOffset, 4, values, validity):
   def value(index: Int): Either[StorageError, Float] =
     validIndex(index).flatMap: absolute =>
       validity.isValid(index).flatMap: valid =>
@@ -420,7 +430,7 @@ final class Float64Array private[frame] (
     logicalOffset: Int,
     values: Buffer,
     validity: Validity
-) extends FixedWidthArray(DataType.Float64, length, logicalOffset, 8, values, validity):
+) extends FixedWidthArray[Float64Array](DataType.Float64, length, logicalOffset, 8, values, validity):
   def value(index: Int): Either[StorageError, Double] =
     validIndex(index).flatMap: absolute =>
       validity.isValid(index).flatMap: valid =>
@@ -438,7 +448,14 @@ final class TimestampArray private[frame] (
     logicalOffset: Int,
     values: Buffer,
     validity: Validity
-) extends FixedWidthArray(DataType.Timestamp(unit), length, logicalOffset, 8, values, validity):
+) extends FixedWidthArray[TimestampArray](
+      DataType.Timestamp(unit),
+      length,
+      logicalOffset,
+      8,
+      values,
+      validity
+    ):
   def value(index: Int): Either[StorageError, Long] =
     validIndex(index).flatMap: absolute =>
       validity.isValid(index).flatMap: valid =>
@@ -484,7 +501,7 @@ final class BooleanArray private[frame] (
     validity.isValid(index).flatMap: valid =>
       if valid then value(index).map(ScalarValue.Bool.apply) else Right(ScalarValue.Null)
 
-  def slice(offset: Int, sliceLength: Int): Either[StorageError, ColumnArray] =
+  override def slice(offset: Int, sliceLength: Int): Either[StorageError, BooleanArray] =
     if offset < 0 || sliceLength < 0 || offset + sliceLength > length then
       Left(StorageError.InvalidRange(offset, sliceLength, length))
     else
@@ -549,7 +566,7 @@ final class Utf8Array private[frame] (
     validity.isValid(index).flatMap: valid =>
       if valid then value(index).map(ScalarValue.Utf8.apply) else Right(ScalarValue.Null)
 
-  def slice(offset: Int, sliceLength: Int): Either[StorageError, ColumnArray] =
+  override def slice(offset: Int, sliceLength: Int): Either[StorageError, Utf8Array] =
     if offset < 0 || sliceLength < 0 || offset + sliceLength > length then
       Left(StorageError.InvalidRange(offset, sliceLength, length))
     else
@@ -590,25 +607,22 @@ final class DictionaryArray private[frame] (
       dictionary.copyPhysicalBuffers.map(indexBuffers ++ _)
 
   def scalar(index: Int): Either[StorageError, ScalarValue] =
-    indices.scalar(index).flatMap:
-      case ScalarValue.Null => Right(ScalarValue.Null)
-      case ScalarValue.Int32(value) =>
+    indices.optionalValue(index).flatMap:
+      case None => Right(ScalarValue.Null)
+      case Some(value) =>
         if value < 0 || value >= dictionary.length then
           Left(StorageError.InvalidDictionaryIndex(index, value, dictionary.length))
         else dictionary.scalar(value)
-      case other => Left(StorageError.Unexpected(s"dictionary index had unexpected scalar $other"))
 
-  def slice(offset: Int, sliceLength: Int): Either[StorageError, ColumnArray] =
+  override def slice(offset: Int, sliceLength: Int): Either[StorageError, DictionaryArray] =
     indices.slice(offset, sliceLength).flatMap:
-      case retainedIndices: Int32Array =>
+      retainedIndices =>
         dictionary.slice(0, dictionary.length) match
-          case Right(retainedDictionary) => Right(new DictionaryArray(retainedIndices, retainedDictionary))
+          case Right(retainedDictionary) =>
+            Right(new DictionaryArray(retainedIndices, retainedDictionary))
           case Left(error) =>
             retainedIndices.close()
             Left(error)
-      case other =>
-        other.close()
-        Left(StorageError.Unexpected("Int32 slice changed its physical type"))
 
   def close(): Unit =
     indices.close()
@@ -751,7 +765,7 @@ object ColumnArray:
 
 final class RecordBatch private (
     val schema: Schema,
-    val columns: Vector[ColumnArray],
+    private[frame] val columns: Vector[ColumnArray],
     val rowCount: Int
 ):
   private var closed = false
@@ -812,7 +826,7 @@ object RecordBatch:
 
 final class Table[S <: NamedTuple.AnyNamedTuple] private (
     val schema: Schema,
-    val batches: Vector[RecordBatch]
+    private[frame] val batches: Vector[RecordBatch]
 ):
   private var closed = false
 
@@ -834,7 +848,7 @@ object Table:
       case Some(batch) => Left(StorageError.SchemaMismatch(expected, batch.schema))
       case None => Right(new Table(expected, batches))
 
-trait BatchCursor:
+trait BatchCursor extends AutoCloseable:
   def nextBatch(): Either[StorageError, Option[RecordBatch]]
   def close(): Unit
 
@@ -844,9 +858,11 @@ trait BatchSource:
 
   final def use[A](operation: BatchCursor => Either[StorageError, A]): Either[StorageError, A] =
     open().flatMap: cursor =>
-      try operation(cursor)
-      catch case error: Throwable => Left(StorageError.Unexpected(error.getMessage))
-      finally cursor.close()
+      Using(cursor)(operation)
+        .toEither
+        .left
+        .map(error => StorageError.Unexpected(exceptionDetail(error)))
+        .flatMap(identity)
 
   final def collect[S <: NamedTuple.AnyNamedTuple](using
       descriptor: SchemaDescriptor[S]
@@ -870,6 +886,9 @@ trait BatchSource:
             case left @ Left(_) =>
               batches.foreach(_.close())
               left
+
+private def exceptionDetail(error: Throwable): String =
+  Option(error.getMessage).filter(_.nonEmpty).getOrElse(error.toString)
 
 final class OwnedBatchSource private (
     val schema: Schema,

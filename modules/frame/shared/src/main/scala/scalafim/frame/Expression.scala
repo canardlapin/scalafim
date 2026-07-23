@@ -187,7 +187,10 @@ extension (expression: Expr[Option[Boolean]])
   def isTrue: Expr[Boolean] =
     Expr.unary(UnaryOperator.IsTrue, expression, DataType.Bool, nullable = false)
 
-final case class NamedExpr[Name <: String, A](name: Name, expression: Expr[A])
+final case class NamedExpr[Name <: String & Singleton, A](
+    name: Name,
+    expression: Expr[A]
+)
 
 private[frame] final case class NamedExpression(name: String, expression: ResolvedExpr)
 
@@ -199,7 +202,7 @@ private[frame] object ExpressionSelection:
     def expressions(value: EmptyTuple): Vector[NamedExpression] = Vector.empty
 
   given [
-      Name <: String,
+      Name <: String & Singleton,
       Value,
       Tail <: Tuple
   ](using tail: ExpressionSelection[Tail]): ExpressionSelection[NamedExpr[Name, Value] *: Tail] with
@@ -251,7 +254,10 @@ final class AggregateExpr[A] private[frame] (private[frame] val resolved: Resolv
   def as[Name <: String & Singleton](name: Name): NamedAggregate[Name, A] =
     NamedAggregate(name, this)
 
-final case class NamedAggregate[Name <: String, A](name: Name, expression: AggregateExpr[A])
+final case class NamedAggregate[Name <: String & Singleton, A](
+    name: Name,
+    expression: AggregateExpr[A]
+)
 
 object Aggregate:
   val count: AggregateExpr[Long] =
@@ -302,7 +308,7 @@ private[frame] object AggregateSelection:
     def expressions(value: EmptyTuple): Vector[NamedAggregateExpression] = Vector.empty
 
   given [
-      Name <: String,
+      Name <: String & Singleton,
       Value,
       Tail <: Tuple
   ](using tail: AggregateSelection[Tail]): AggregateSelection[NamedAggregate[Name, Value] *: Tail] with

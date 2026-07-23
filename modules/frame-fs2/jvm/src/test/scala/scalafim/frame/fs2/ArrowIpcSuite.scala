@@ -52,27 +52,28 @@ class ArrowIpcSuite extends munit.FunSuite:
       .write(schema, Stream.emit(input))
       .unsafeRunSync()
       .fold(error => fail(error.message), identity)
-    val source = ArrowIpcFrameSource
-      .fromBytes[IO](written.bytes)
-      .fold(error => fail(error.message), identity)
-
-    val observed = source
-      .plan(ScanRequest())
-      .flatMap:
-        case Left(error) => IO(fail(error.message))
-        case Right(scan) =>
-          scan.batches
-            .evalMap: output =>
-              IO:
-                (
-                  scalars(output, "flag"),
-                  scalars(output, "f32"),
-                  scalars(output, "f64"),
-                  scalars(output, "text"),
-                  scalars(output, "time")
-                )
-            .compile
-            .lastOrError
+    var acquired: Option[ArrowIpcFrameSource[IO]] = None
+    val observed = ArrowIpcFrameSource
+      .resource[IO](written.bytes)
+      .use: source =>
+        acquired = Some(source)
+        source
+          .plan(ScanRequest())
+          .flatMap:
+            case Left(error) => IO(fail(error.message))
+            case Right(scan) =>
+              scan.batches
+                .evalMap: output =>
+                  IO:
+                    (
+                      scalars(output, "flag"),
+                      scalars(output, "f32"),
+                      scalars(output, "f64"),
+                      scalars(output, "text"),
+                      scalars(output, "time")
+                    )
+                .compile
+                .lastOrError
       .unsafeRunSync()
 
     assertEquals(written.receipt.rows, 2L)
@@ -91,5 +92,20 @@ class ArrowIpcSuite extends munit.FunSuite:
       )
     )
 
-    assertEquals(source.close.unsafeRunSync(), Right(()))
+    acquired.get.inspect.unsafeRunSync() match
+      case Left(SourceError.Open(_)) => ()
+      case other => fail(s"expected finalized Arrow source, found $other")
     input.close()
+
+  test("malformed Arrow IPC acquisition is structured and releases native resources"):
+    val malformed = Array[Byte](1, 2, 3, 4)
+    var attempt = 0
+    while attempt < 20 do
+      ArrowIpcFrameSource
+        .resource[IO](malformed)
+        .use(_ => IO.unit)
+        .attempt
+        .unsafeRunSync() match
+          case Left(SourceFailure(SourceError.Open(detail))) => assert(detail.nonEmpty)
+          case other => fail(s"expected structured Arrow open failure, found $other")
+      attempt += 1

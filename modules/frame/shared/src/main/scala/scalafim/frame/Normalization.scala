@@ -68,7 +68,7 @@ object PlanNormalizer:
           LogicalPlan.Filter(input, first, _),
           second,
           output
-        ) =>
+        ) if isTotal(second) =>
       Some((
         LogicalPlan.Filter(input, and(first, second), output),
         NormalizationRule.FuseFilters
@@ -80,14 +80,14 @@ object PlanNormalizer:
           LogicalPlan.Project(input, inner, _),
           outer,
           output
-        ) =>
+        ) if inner.forall(named => isTotal(named.expression)) =>
       substituteAll(outer, inner).map: fused =>
         (LogicalPlan.Project(input, fused, output), NormalizationRule.FuseProjects)
     case LogicalPlan.Filter(
           LogicalPlan.Project(input, expressions, projectOutput),
           predicate,
           output
-        ) =>
+        ) if expressions.forall(named => isTotal(named.expression)) =>
       substitute(predicate, expressions).map: pushed =>
         (
           LogicalPlan.Project(
@@ -106,7 +106,7 @@ object PlanNormalizer:
           LogicalPlan.Project(input, expressions, projectOutput),
           count,
           output
-        ) =>
+        ) if expressions.forall(named => isTotal(named.expression)) =>
       Some((
         LogicalPlan.Project(
           LogicalPlan.Limit(input, count, input.output),
@@ -121,9 +121,32 @@ object PlanNormalizer:
     ResolvedExpr(
       ExprId.derived(s"And(${left.id.value},${right.id.value})"),
       DataType.Bool,
-      nullable = false,
+      nullable = left.nullable || right.nullable,
       ExprNode.Binary(BinaryOperator.And, left, right)
     )
+
+  private def isTotal(expression: ResolvedExpr): Boolean = expression.node match
+    case ExprNode.Column(_, _, _, _) | ExprNode.Literal(_) => true
+    case ExprNode.Unary(UnaryOperator.IsNull | UnaryOperator.IsTrue, input) =>
+      isTotal(input)
+    case ExprNode.Unary(UnaryOperator.Negate, input) =>
+      isFloating(input.dataType) && isTotal(input)
+    case ExprNode.Binary(operator, left, right) =>
+      val operatorIsTotal = operator match
+        case BinaryOperator.Add | BinaryOperator.Subtract |
+            BinaryOperator.Multiply | BinaryOperator.Divide =>
+          isFloating(left.dataType) && left.dataType == right.dataType
+        case BinaryOperator.Equal | BinaryOperator.NullSafeEqual |
+            BinaryOperator.NotEqual | BinaryOperator.LessThan |
+            BinaryOperator.LessThanOrEqual | BinaryOperator.GreaterThan |
+            BinaryOperator.GreaterThanOrEqual | BinaryOperator.And |
+            BinaryOperator.Or =>
+          true
+      operatorIsTotal && isTotal(left) && isTotal(right)
+
+  private def isFloating(dataType: DataType): Boolean = dataType match
+    case DataType.Float32 | DataType.Float64 => true
+    case _ => false
 
   private def isIdentity(
       input: Schema,

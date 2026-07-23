@@ -12,7 +12,9 @@ enum ExecutionError:
   case Storage(error: StorageError)
   case MissingSource(id: SourceId)
   case SourceSchema(expected: Schema, actual: Schema)
+  case InvalidColumnIndex(id: ExprId, input: String, index: Int, width: Int)
   case ExpressionType(id: ExprId, expected: DataType, actual: ScalarValue)
+  case IncompatibleValues(id: ExprId, left: ScalarValue, right: ScalarValue)
   case PredicateType(id: ExprId, actual: ScalarValue)
   case IntegerOverflow(id: ExprId, operator: BinaryOperator)
   case DivisionByZero(id: ExprId)
@@ -24,8 +26,12 @@ enum ExecutionError:
     case MissingSource(id) => s"no reference source is bound for '${id.value}'"
     case SourceSchema(expected, actual) =>
       s"source schema $actual does not match resolved schema $expected"
+    case InvalidColumnIndex(id, input, index, width) =>
+      s"expression ${id.value} references $input column $index in a $width-column batch"
     case ExpressionType(id, expected, actual) =>
       s"expression ${id.value} expected $expected but evaluated to $actual"
+    case IncompatibleValues(id, left, right) =>
+      s"expression ${id.value} cannot combine $left with $right"
     case PredicateType(id, actual) =>
       s"predicate ${id.value} evaluated to $actual instead of boolean or null"
     case IntegerOverflow(id, operator) =>
@@ -541,7 +547,7 @@ object ReferenceInterpreter:
           case Right(ScalarValue.Null) => ()
           case Right(value) if total == ScalarValue.Null => total = value
           case Right(value) =>
-            arithmetic(input.id, BinaryOperator.Add, total, value) match
+            arithmetic(input.id, ArithmeticOperation.Add, total, value) match
               case Right(result) => total = result
               case Left(value) => error = Some(value)
           case Left(value) => error = Some(value)
@@ -610,6 +616,8 @@ object ReferenceInterpreter:
       evaluate(input, EvalContext.current(row.batch), row.row) match
         case Right(ScalarValue.Null) => ()
         case Right(value) if selected == ScalarValue.Null => selected = value
+        case Right(value) if isNaN(value) => selected = value
+        case Right(_) if isNaN(selected) => ()
         case Right(value) =>
           compareValues(input.id, value, selected) match
             case Right(comparison) if (minimum && comparison < 0) || (!minimum && comparison > 0) =>
@@ -619,6 +627,11 @@ object ReferenceInterpreter:
         case Left(value) => error = Some(value)
       index += 1
     error.toLeft(selected)
+
+  private def isNaN(value: ScalarValue): Boolean = value match
+    case ScalarValue.Float32(actual) => actual.isNaN
+    case ScalarValue.Float64(actual) => actual.isNaN
+    case _ => false
 
   private def joinedRow(
       left: RecordBatch,
@@ -711,10 +724,11 @@ object ReferenceInterpreter:
           Right(if item.nulls == NullPlacement.First then -1 else 1)
         case (_, ScalarValue.Null) =>
           Right(if item.nulls == NullPlacement.First then 1 else -1)
-        case _ => compareValues(item.expression.id, leftValue, rightValue)
+        case _ =>
+          compareValues(item.expression.id, leftValue, rightValue).map: value =>
+            if item.direction == SortDirection.Ascending then value else -value
       comparison match
-        case Right(value) =>
-          result = if item.direction == SortDirection.Ascending then value else -value
+        case Right(value) => result = value
         case Left(value) => error = Some(value)
       index += 1
     error match
@@ -730,9 +744,11 @@ object ReferenceInterpreter:
       rightRow: Int
   ): Either[ExecutionError, ScalarValue] = expression.node match
     case ExprNode.Column(InputRef.Left, _, _, index) =>
-      left.columns(index).scalar(leftRow).left.map(ExecutionError.Storage.apply)
+      column(expression.id, InputRef.Left, left, index)
+        .flatMap(_.scalar(leftRow).left.map(ExecutionError.Storage.apply))
     case ExprNode.Column(InputRef.Right, _, _, index) =>
-      right.columns(index).scalar(rightRow).left.map(ExecutionError.Storage.apply)
+      column(expression.id, InputRef.Right, right, index)
+        .flatMap(_.scalar(rightRow).left.map(ExecutionError.Storage.apply))
     case ExprNode.Column(InputRef.Current, _, _, _) =>
       Left(ExecutionError.UnsupportedNode("current expression inside join"))
     case ExprNode.Literal(value) => literal(value)
@@ -765,13 +781,32 @@ object ReferenceInterpreter:
         case InputRef.Right => context.right
       batch match
         case None => Left(ExecutionError.UnsupportedNode(s"${input.qualifier} expression scope"))
-        case Some(value) => value.columns(index).scalar(row).left.map(ExecutionError.Storage.apply)
+        case Some(value) =>
+          column(expression.id, input, value, index)
+            .flatMap(_.scalar(row).left.map(ExecutionError.Storage.apply))
     case ExprNode.Literal(value) => literal(value)
     case ExprNode.Unary(operator, input) =>
       evaluate(input, context, row).flatMap(unary(expression.id, operator, _))
     case ExprNode.Binary(operator, left, right) =>
       evaluate(left, context, row).flatMap: lhs =>
         evaluate(right, context, row).flatMap(rhs => binary(expression.id, operator, lhs, rhs))
+
+  private def column(
+      id: ExprId,
+      input: InputRef,
+      batch: RecordBatch,
+      index: Int
+  ): Either[ExecutionError, ColumnArray] =
+    batch.columns
+      .lift(index)
+      .toRight(
+        ExecutionError.InvalidColumnIndex(
+          id,
+          input.qualifier,
+          index,
+          batch.columns.length
+        )
+      )
 
   private def literal(value: LiteralValue): Either[ExecutionError, ScalarValue] = value match
     case LiteralValue.Null(_) => Right(ScalarValue.Null)
@@ -809,8 +844,16 @@ object ReferenceInterpreter:
       right: ScalarValue
   ): Either[ExecutionError, ScalarValue] = operator match
     case BinaryOperator.NullSafeEqual => Right(ScalarValue.Bool(nullSafeEqual(left, right)))
-    case BinaryOperator.And => Right(fromTri(and(toTri(left), toTri(right))))
-    case BinaryOperator.Or => Right(fromTri(or(toTri(left), toTri(right))))
+    case BinaryOperator.And =>
+      for
+        lhs <- toTri(id, left)
+        rhs <- toTri(id, right)
+      yield fromTri(and(lhs, rhs))
+    case BinaryOperator.Or =>
+      for
+        lhs <- toTri(id, left)
+        rhs <- toTri(id, right)
+      yield fromTri(or(lhs, rhs))
     case _ if left == ScalarValue.Null || right == ScalarValue.Null => Right(ScalarValue.Null)
     case BinaryOperator.Equal => Right(ScalarValue.Bool(equalValues(left, right)))
     case BinaryOperator.NotEqual => Right(ScalarValue.Bool(!equalValues(left, right)))
@@ -818,15 +861,17 @@ object ReferenceInterpreter:
     case BinaryOperator.LessThanOrEqual => compareValues(id, left, right).map(value => ScalarValue.Bool(value <= 0))
     case BinaryOperator.GreaterThan => compareValues(id, left, right).map(value => ScalarValue.Bool(value > 0))
     case BinaryOperator.GreaterThanOrEqual => compareValues(id, left, right).map(value => ScalarValue.Bool(value >= 0))
-    case BinaryOperator.Add => arithmetic(id, operator, left, right)
-    case BinaryOperator.Subtract => arithmetic(id, operator, left, right)
-    case BinaryOperator.Multiply => arithmetic(id, operator, left, right)
-    case BinaryOperator.Divide => arithmetic(id, operator, left, right)
+    case BinaryOperator.Add => arithmetic(id, ArithmeticOperation.Add, left, right)
+    case BinaryOperator.Subtract => arithmetic(id, ArithmeticOperation.Subtract, left, right)
+    case BinaryOperator.Multiply => arithmetic(id, ArithmeticOperation.Multiply, left, right)
+    case BinaryOperator.Divide => arithmetic(id, ArithmeticOperation.Divide, left, right)
 
-  private def toTri(value: ScalarValue): TriBool = value match
-    case ScalarValue.Bool(true) => TriBool.True
-    case ScalarValue.Bool(false) => TriBool.False
-    case _ => TriBool.Unknown
+  private def toTri(id: ExprId, value: ScalarValue): Either[ExecutionError, TriBool] =
+    value match
+      case ScalarValue.Bool(true) => Right(TriBool.True)
+      case ScalarValue.Bool(false) => Right(TriBool.False)
+      case ScalarValue.Null => Right(TriBool.Unknown)
+      case other => Left(ExecutionError.PredicateType(id, other))
 
   private def fromTri(value: TriBool): ScalarValue = value match
     case TriBool.True => ScalarValue.Bool(true)
@@ -866,7 +911,7 @@ object ReferenceInterpreter:
     case (ScalarValue.Utf8(a), ScalarValue.Utf8(b)) => Right(compareUtf8(a, b))
     case (ScalarValue.Timestamp(a, unitA), ScalarValue.Timestamp(b, unitB)) if unitA == unitB =>
       Right(a.compare(b))
-    case _ => Left(ExecutionError.ExpressionType(id, scalarType(left), right))
+    case _ => Left(ExecutionError.IncompatibleValues(id, left, right))
 
   private def compareFloat(left: Double, right: Double): Int =
     if left.isNaN then if right.isNaN then 0 else 1
@@ -886,54 +931,61 @@ object ReferenceInterpreter:
 
   private def arithmetic(
       id: ExprId,
-      operator: BinaryOperator,
+      operator: ArithmeticOperation,
       left: ScalarValue,
       right: ScalarValue
   ): Either[ExecutionError, ScalarValue] = (left, right) match
     case (ScalarValue.Int32(a), ScalarValue.Int32(b)) =>
-      if operator == BinaryOperator.Divide && b == 0 then Left(ExecutionError.DivisionByZero(id))
+      if operator == ArithmeticOperation.Divide && b == 0 then
+        Left(ExecutionError.DivisionByZero(id))
       else
         val result = operator match
-          case BinaryOperator.Add => BigInt(a) + BigInt(b)
-          case BinaryOperator.Subtract => BigInt(a) - BigInt(b)
-          case BinaryOperator.Multiply => BigInt(a) * BigInt(b)
-          case BinaryOperator.Divide => BigInt(a) / BigInt(b)
-          case _ => BigInt(0)
-        if !result.isValidInt then Left(ExecutionError.IntegerOverflow(id, operator))
+          case ArithmeticOperation.Add => BigInt(a) + BigInt(b)
+          case ArithmeticOperation.Subtract => BigInt(a) - BigInt(b)
+          case ArithmeticOperation.Multiply => BigInt(a) * BigInt(b)
+          case ArithmeticOperation.Divide => BigInt(a) / BigInt(b)
+        if !result.isValidInt then
+          Left(ExecutionError.IntegerOverflow(id, operator.binary))
         else Right(ScalarValue.Int32(result.toInt))
     case (ScalarValue.Int64(a), ScalarValue.Int64(b)) =>
-      if operator == BinaryOperator.Divide && b == 0L then Left(ExecutionError.DivisionByZero(id))
+      if operator == ArithmeticOperation.Divide && b == 0L then
+        Left(ExecutionError.DivisionByZero(id))
       else
         val result = operator match
-          case BinaryOperator.Add => BigInt(a) + BigInt(b)
-          case BinaryOperator.Subtract => BigInt(a) - BigInt(b)
-          case BinaryOperator.Multiply => BigInt(a) * BigInt(b)
-          case BinaryOperator.Divide => BigInt(a) / BigInt(b)
-          case _ => BigInt(0)
-        if !result.isValidLong then Left(ExecutionError.IntegerOverflow(id, operator))
+          case ArithmeticOperation.Add => BigInt(a) + BigInt(b)
+          case ArithmeticOperation.Subtract => BigInt(a) - BigInt(b)
+          case ArithmeticOperation.Multiply => BigInt(a) * BigInt(b)
+          case ArithmeticOperation.Divide => BigInt(a) / BigInt(b)
+        if !result.isValidLong then
+          Left(ExecutionError.IntegerOverflow(id, operator.binary))
         else Right(ScalarValue.Int64(result.toLong))
     case (ScalarValue.Float32(a), ScalarValue.Float32(b)) =>
       Right(ScalarValue.Float32(floatOperation(operator, a.toDouble, b.toDouble).toFloat))
     case (ScalarValue.Float64(a), ScalarValue.Float64(b)) =>
       Right(ScalarValue.Float64(floatOperation(operator, a, b)))
-    case _ => Left(ExecutionError.ExpressionType(id, scalarType(left), right))
+    case _ => Left(ExecutionError.IncompatibleValues(id, left, right))
 
-  private def floatOperation(operator: BinaryOperator, left: Double, right: Double): Double = operator match
-    case BinaryOperator.Add => left + right
-    case BinaryOperator.Subtract => left - right
-    case BinaryOperator.Multiply => left * right
-    case BinaryOperator.Divide => left / right
-    case _ => Double.NaN
+  private def floatOperation(
+      operator: ArithmeticOperation,
+      left: Double,
+      right: Double
+  ): Double = operator match
+    case ArithmeticOperation.Add => left + right
+    case ArithmeticOperation.Subtract => left - right
+    case ArithmeticOperation.Multiply => left * right
+    case ArithmeticOperation.Divide => left / right
 
-  private def scalarType(value: ScalarValue): DataType = value match
-    case ScalarValue.Null => DataType.Utf8
-    case ScalarValue.Bool(_) => DataType.Bool
-    case ScalarValue.Int32(_) => DataType.Int32
-    case ScalarValue.Int64(_) => DataType.Int64
-    case ScalarValue.Float32(_) => DataType.Float32
-    case ScalarValue.Float64(_) => DataType.Float64
-    case ScalarValue.Utf8(_) => DataType.Utf8
-    case ScalarValue.Timestamp(_, unit) => DataType.Timestamp(unit)
+  private enum ArithmeticOperation:
+    case Add
+    case Subtract
+    case Multiply
+    case Divide
+
+    def binary: BinaryOperator = this match
+      case Add => BinaryOperator.Add
+      case Subtract => BinaryOperator.Subtract
+      case Multiply => BinaryOperator.Multiply
+      case Divide => BinaryOperator.Divide
 
   private def sequence[A](
       values: Vector[Either[ExecutionError, A]]

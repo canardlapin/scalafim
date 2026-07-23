@@ -58,6 +58,12 @@ delegated to Apache Arrow specifications and tested through the JVM adapter.
 CSV behavior is controlled by explicit schema, delimiter, null-token, and
 coercion options rather than ambient inference.
 
+Owning CSV and Arrow IPC source constructors return Cats Effect `Resource`
+values. Collection and streaming similarly bracket materialized tables,
+execution cursors, and emitted batches. These lifetime contracts include
+failure and cancellation paths; manual source closure is not part of the public
+adapter API.
+
 ## Scope and support
 
 Frame owns a small typed relational algebra, Arrow-compatible local storage,
@@ -66,3 +72,7 @@ source/sink protocols. It does not promise a production vectorized engine,
 distributed execution, spill, Parquet pushdown, dataframe convenience parity,
 or statistical modeling. Production engines and additional formats are
 optional adapters and must report accepted and residual capabilities.
+
+Lawful normalization includes structured-error behavior: a rewrite that would
+evaluate checked arithmetic on additional rows, or suppress an error by moving
+work behind a limit, is not eligible unless the moved expression is total.
