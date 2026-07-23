@@ -5,6 +5,8 @@ cross-compiled sbt build.
 
 ## Modules
 
+- `frame`: immutable typed local dataframe plans using Scala 3 named-tuple schemas, explicit nullability, structured dynamic binding, and a cross-platform semantic core.
+- `frame-fs2`: Cats Effect/FS2 streaming and resource-scoped collection for Frame execution.
 - `graph`: dependency-free ordered vertex bases, canonical simple graph values, alignment, components, paths, cycles, DAG layers, and reusable topology laws.
 - `graph-linalg`: basis-carrying topology/weighted adjacency, incidence, degree/strength, and Laplacian operators over the shared sparse linear-map contracts.
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
@@ -68,6 +70,10 @@ serialization, performance gates, and the cross-platform example.
 ```sh
 sbt compileAll
 sbt testAll
+sbt frameJVM/test
+sbt frameJS/test
+sbt frameFs2JVM/test
+sbt frameFs2JS/test
 sbt graphJVM/test
 sbt graphJS/test
 sbt graphLinalgJVM/test

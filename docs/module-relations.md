@@ -13,6 +13,9 @@ workflow.
 Live dependency edges are declared in `build.sbt`.
 
 ```text
+frame
++-- frame-fs2       Cats Effect and FS2 resource/streaming boundary
+
 graph
 +-- connectivity      also depends on linalg
 +-- graph-linalg      also depends on linalg
@@ -106,6 +109,8 @@ entity parsing.
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
+| `frame` | Scala 3 named-tuple schemas, structured dynamic binding, typed expressions, immutable dataframe logical plans, Arrow-compatible storage contracts, pure normalization/explanation, and the semantic reference interpreter. | Nothing internal. | FS2/Cats Effect, filesystem or network IO, native/backend engine objects, Apache Arrow allocators, Polars/DuckDB policy, distributed execution, or neuroimaging-specific table semantics. |
+| `frame-fs2` | Cats Effect/FS2 execution cursor bracketing, scoped record-batch streams, cancellation/failure cleanup, resource-scoped collection, capability-described sources/sinks, shared CSV IO, JVM Arrow IPC, and physical reference-backend explanation. | `frame`; external Cats Effect and FS2 Core; JVM-only Apache Arrow Java adapter | Logical-plan semantics, core column ownership, production engine policy, Parquet, or silent backend fallback. |
 | `graph` | Ordered keyed vertex bases, graph-local dense coordinates, validated alignment/permutation values, canonical immutable simple directed/undirected graphs, components, nonnegative-cost paths, cycle witnesses, DAG layers, and topology laws. | Nothing internal. | Matrices, Laplacians, spectra, connectivity measures, spatial-domain validation, pipeline execution, multigraphs, or loops. |
 | `graph-linalg` | Basis-carrying topology/weighted adjacency, incidence, degree/strength, combinatorial/normalized Laplacians, spectra/embeddings, aligned spectral feature maps, and explicitly PSD-tagged similarities over shared linalg contracts. | `graph`, `linalg` | Connectivity estimation or projection policy, scientific measurement semantics, solver implementations, generic multivar kernel ownership, or domain-specific convenience APIs. |
 | `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
