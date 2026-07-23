@@ -12,7 +12,7 @@ class PositionSuite extends munit.FunSuite:
       BarDatum("B", 4.0, "blue")
     )
 
-  private def barPlot(position: Position, data: Vector[BarDatum] = bars): TrainedPlot[BarDatum] =
+  private def barPlot(position: Position, data: Vector[BarDatum] = bars): TrainedPlot =
     val band = BandScale("category", DiscreteDomain.empty).fold(e => fail(e.message), identity)
     val mapping = AesSpec
       .empty[BarDatum]

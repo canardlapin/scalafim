@@ -426,8 +426,13 @@ final case class Layer[Row] private (
   def effectiveData(plotData: Vector[Row]): Vector[Row] =
     data.getOrElse(plotData)
 
-  private[graphics] def independentWithData(rows: Vector[Row]): Layer[Row] =
-    copy(data = Some(rows), inheritMapping = false)
+  /** Detach a layer from plot-level mapping inheritance. The rows of an
+    * independent layer are held by [[PlotLayer.Independent]] itself, so `data`
+    * is cleared here rather than carrying a second copy that could disagree
+    * with it.
+    */
+  private[graphics] def selfContained: Layer[Row] =
+    copy(data = None, inheritMapping = false)
 
 object Layer:
   def point[Row](
@@ -759,6 +764,7 @@ object PlotLayer:
 
   private final case class Independent[PlotRow, Row0](
       layer: Layer[Row0],
+      data: Vector[Row0],
       policy: LayerFacetPolicy[Row0]
   ) extends PlotLayer[PlotRow]:
     type Row = Row0
@@ -768,7 +774,7 @@ object PlotLayer:
     val facetPolicy: Option[LayerFacetPolicy[Row]] = Some(policy)
 
     private[graphics] def effectiveData(plotData: Vector[PlotRow]): Vector[Row] =
-      layer.data.getOrElse(Vector.empty)
+      data
 
     private[graphics] def effectiveMapping(plotMapping: AesSpec[PlotRow]): AesSpec[Row] =
       layer.mapping
@@ -791,7 +797,7 @@ object PlotLayer:
       layer: Layer[Row],
       facetPolicy: LayerFacetPolicy[Row]
   ): PlotLayer.Aux[PlotRow, Row] =
-    Independent(layer.independentWithData(data), facetPolicy)
+    Independent(layer.selfContained, data, facetPolicy)
 
 final case class PlotLabels(
     title: Option[String] = None,

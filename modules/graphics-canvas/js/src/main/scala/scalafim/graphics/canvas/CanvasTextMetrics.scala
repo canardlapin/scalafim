@@ -1,7 +1,6 @@
 package scalafim.graphics.canvas
 
 import scala.scalajs.js
-import scala.scalajs.js.JSConverters.*
 import scalafim.graphics.{TextMetrics, TextStyle}
 
 @js.native

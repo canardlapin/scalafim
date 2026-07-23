@@ -128,32 +128,45 @@ final case class PlotLayoutRequest(
     grid: Option[PanelGridRequest] = None
 )
 
+/** The guides to measure as one stacked column. `items` is the single
+  * representation; the two-argument constructors below lift the common
+  * single-legend case into it.
+  */
 final case class LegendRequest(
-    title: Option[String],
-    labels: Vector[String],
-    extraKeyWidthPt: Double = 0.0,
-    items: Vector[GuideLayoutRequest] = Vector.empty
+    items: Vector[GuideLayoutRequest],
+    extraKeyWidthPt: Double = 0.0
 ):
   require(extraKeyWidthPt >= 0.0 && extraKeyWidthPt.isFinite, "`extraKeyWidthPt` must be finite and >= 0")
 
-  private[graphics] def normalizedItems: Vector[GuideLayoutRequest] =
-    if items.nonEmpty then items
-    else Vector(GuideLayoutRequest.Legend(title, labels))
+object LegendRequest:
+  def apply(title: Option[String], labels: Vector[String]): LegendRequest =
+    LegendRequest(Vector(GuideLayoutRequest.Legend(title, labels)))
+
+  def apply(title: Option[String], labels: Vector[String], extraKeyWidthPt: Double): LegendRequest =
+    LegendRequest(Vector(GuideLayoutRequest.Legend(title, labels)), extraKeyWidthPt)
 
 enum GuideLayoutRequest:
   case Legend(title: Option[String], labels: Vector[String])
   case Colorbar(title: Option[String], labels: Vector[String])
 
-enum GuidePlacement:
-  case Legend(
+sealed trait GuidePlacement
+
+object GuidePlacement:
+  final case class Legend(
       xPt: Double,
       topPt: Double,
       rowPitchPt: Double,
       firstRowOffsetPt: Double,
       labelOffsetPt: Double,
       markerSizePt: Double
-  )
-  case Colorbar(
+  ) extends GuidePlacement:
+    require(xPt.isFinite && topPt.isFinite, "legend placement origin must be finite")
+    require(rowPitchPt.isFinite && rowPitchPt >= 0.0, "`rowPitchPt` must be finite and >= 0")
+    require(firstRowOffsetPt.isFinite && firstRowOffsetPt >= 0.0, "`firstRowOffsetPt` must be finite and >= 0")
+    require(labelOffsetPt.isFinite, "`labelOffsetPt` must be finite")
+    require(markerSizePt.isFinite && markerSizePt >= 0.0, "`markerSizePt` must be finite and >= 0")
+
+  final case class Colorbar(
       xPt: Double,
       topPt: Double,
       barTopOffsetPt: Double,
@@ -162,8 +175,19 @@ enum GuidePlacement:
       tickLengthPt: Double,
       labelOffsetPt: Double,
       titleOffsetPt: Double
-  )
+  ) extends GuidePlacement:
+    require(xPt.isFinite && topPt.isFinite, "colorbar placement origin must be finite")
+    require(barTopOffsetPt.isFinite, "`barTopOffsetPt` must be finite")
+    require(barWidthPt.isFinite && barWidthPt >= 0.0, "`barWidthPt` must be finite and >= 0")
+    require(barHeightPt.isFinite && barHeightPt >= 0.0, "`barHeightPt` must be finite and >= 0")
+    require(tickLengthPt.isFinite && tickLengthPt >= 0.0, "`tickLengthPt` must be finite and >= 0")
+    require(labelOffsetPt.isFinite && labelOffsetPt >= 0.0, "`labelOffsetPt` must be finite and >= 0")
+    require(titleOffsetPt.isFinite && titleOffsetPt >= 0.0, "`titleOffsetPt` must be finite and >= 0")
 
+/** Measured guide column. `placements` holds exactly one entry per
+  * `LegendRequest.items` entry, in the same order and of the matching variant,
+  * so callers can associate the two by position.
+  */
 final case class GuideStackPlan(
     widthPt: Double,
     heightPt: Double,
@@ -183,16 +207,13 @@ object GuideStackSolver:
     val placements = Vector.newBuilder[GuidePlacement]
     var widest = 0.0
     var nextTop = policy.legendPaddingPt
-    val items = request.normalizedItems
+    val items = request.items
     var index = 0
     while index < items.length do
       val item = items(index)
-      val labels = item match
-        case GuideLayoutRequest.Legend(_, values)   => values
-        case GuideLayoutRequest.Colorbar(_, values) => values
-      val title = item match
-        case GuideLayoutRequest.Legend(value, _)   => value
-        case GuideLayoutRequest.Colorbar(value, _) => value
+      val (title, labels) = item match
+        case GuideLayoutRequest.Legend(value, values)   => (value, values)
+        case GuideLayoutRequest.Colorbar(value, values) => (value, values)
       val labelWidth = labels.foldLeft(0.0) { (acc, label) =>
         math.max(acc, policy.metrics.widthPt(label, policy.legendTextStyle))
       }

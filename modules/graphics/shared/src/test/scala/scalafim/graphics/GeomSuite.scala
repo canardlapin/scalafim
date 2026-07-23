@@ -19,7 +19,7 @@ class GeomSuite extends munit.FunSuite:
       Observation(3.0, 2.5, 3.5, 3.0, 2.0, 3.0, "b")
     )
 
-  private def resolve(layer: Layer[Observation]): TrainedPlot[Observation] =
+  private def resolve(layer: Layer[Observation]): TrainedPlot =
     Plot(data)
       .addLayer(layer)
       .flatMap(

@@ -120,20 +120,35 @@ enum DisplayBlendMode:
         math.round(outAlpha * 255.0).toInt.max(0).min(255)
       )
 
+/** A value-to-pixel mapping.
+  *
+  * `windowing` and `thresholding` are the single statement of each adjustment
+  * capability: `Some` iff this colorizer can rebuild itself for a new window
+  * or threshold. The capability predicate and the builder are both `final` and
+  * derived from them, so an implementation cannot claim support it does not
+  * provide. Callers that only need to ask — before they hold a `DisplayWindow`
+  * to try — use `supportsWindow`/`supportsThreshold`.
+  */
 trait Colorizer[A]:
   def color(value: A): Rgba32
 
-  def supportsWindow: Boolean =
-    false
-
-  def withWindow(window: DisplayWindow): Option[Colorizer[A]] =
+  def windowing: Option[DisplayWindow => Colorizer[A]] =
     None
 
-  def supportsThreshold: Boolean =
-    false
-
-  def withThreshold(threshold: DisplayThreshold): Option[Colorizer[A]] =
+  def thresholding: Option[DisplayThreshold => Colorizer[A]] =
     None
+
+  final def supportsWindow: Boolean =
+    windowing.isDefined
+
+  final def withWindow(window: DisplayWindow): Option[Colorizer[A]] =
+    windowing.map(_(window))
+
+  final def supportsThreshold: Boolean =
+    thresholding.isDefined
+
+  final def withThreshold(threshold: DisplayThreshold): Option[Colorizer[A]] =
+    thresholding.map(_(threshold))
 
 final case class ColorRamp(low: Rgba32, high: Rgba32):
   def colorAt(fraction: Double): Rgba32 =
@@ -165,17 +180,11 @@ final case class ScalarColorizer(
     else if threshold.hides(value) then ScalarColorizer.Transparent
     else ramp.colorAt(window.normalize(value))
 
-  override def supportsWindow: Boolean =
-    true
+  override def windowing: Option[DisplayWindow => Colorizer[Double]] =
+    Some(value => copy(window = value))
 
-  override def withWindow(value: DisplayWindow): Option[Colorizer[Double]] =
-    Some(copy(window = value))
-
-  override def supportsThreshold: Boolean =
-    true
-
-  override def withThreshold(value: DisplayThreshold): Option[Colorizer[Double]] =
-    Some(copy(threshold = value))
+  override def thresholding: Option[DisplayThreshold => Colorizer[Double]] =
+    Some(value => copy(threshold = value))
 
 object ScalarColorizer:
   private val Transparent: Rgba32 =

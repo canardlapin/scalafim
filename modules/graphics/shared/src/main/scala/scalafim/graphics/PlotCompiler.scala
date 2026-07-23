@@ -129,14 +129,19 @@ object TrainedDroppedRow:
       type Row = Row0
       val value: DroppedRow[Row] = row
 
-final case class TrainedPlot[Row](
+/** A compiled plot. Layers are packed existentially because an independent
+  * layer may carry a row type of its own, so the plot as a whole has no single
+  * row type to name. Per-layer diagnostics stay typed at each layer's own row
+  * via [[TrainedLayer.droppedRows]].
+  */
+final case class TrainedPlot(
     layers: Vector[TrainedLayer],
     layout: Option[PanelLayout],
     guides: Vector[ResolvedGuide],
     scaleRegistry: PlotScaleRegistry,
     panelGrobs: Vector[Grob],
     labelGrobs: Vector[Grob],
-    facetPanels: Vector[ResolvedFacetPanel[Row]] = Vector.empty
+    facetPanels: Vector[ResolvedFacetPanel] = Vector.empty
 ):
   def scene: Scene =
     val layerGrobs = layers.flatMap(_.grobs)
@@ -175,7 +180,7 @@ final case class TrainedPlot[Row](
   def trainedScales: Vector[TrainedScale] =
     scaleRegistry.scales
 
-final case class ResolvedFacetPanel[Row](
+final case class ResolvedFacetPanel(
     cell: FacetCell,
     layout: PanelLayout,
     layers: Vector[TrainedLayer],
@@ -266,7 +271,7 @@ object PlotCompiler:
   def resolve[Row](
       plot: Plot[Row],
       options: PlotCompilerOptions = PlotCompilerOptions.default
-  ): Either[GraphicsError, TrainedPlot[Row]] =
+  ): Either[GraphicsError, TrainedPlot] =
     val resolvedOptions = effectiveOptions(plot, options)
     plot.facet match
       case Some(facet) => FacetCompiler.resolve(plot, facet, resolvedOptions)
@@ -289,7 +294,7 @@ object PlotCompiler:
   private def resolveSingle[Row](
       plot: Plot[Row],
       resolvedOptions: PlotCompilerOptions
-  ): Either[GraphicsError, TrainedPlot[Row]] =
+  ): Either[GraphicsError, TrainedPlot] =
     val layoutPolicy = resolvedOptions.policy.getOrElse(resolvedOptions.theme.layoutPolicy)
     for
       plans <- MappingPhase.plan(plot)
@@ -326,7 +331,7 @@ object PlotCompiler:
         scales.registry,
         panelGrobs,
         labels,
-        Vector.empty[ResolvedFacetPanel[Row]]
+        Vector.empty[ResolvedFacetPanel]
       )
 
   private[graphics] def resolveLayers(
