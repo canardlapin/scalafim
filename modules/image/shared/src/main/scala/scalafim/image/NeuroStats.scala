@@ -343,4 +343,4 @@ object NeuroCompare:
       case Predicate.NEQ => !ord.eqv(left, right)
 
   private def requireSameSpace(a: NeuroSpace, b: NeuroSpace): Unit =
-    require(a.dims == b.dims && a.spacing == b.spacing && a.origin == b.origin, "NeuroSpace mismatch")
+    GridCompatibility.requireExact(a, b)

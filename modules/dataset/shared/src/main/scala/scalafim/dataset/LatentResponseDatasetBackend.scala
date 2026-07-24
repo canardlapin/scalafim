@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{DMat, GridCompatibility, Mask, NeuroSpace}
 import scalafim.latent.{LatentResponse, LatentSelection}
 
 final case class LatentResponseDatasetBackend(
@@ -74,8 +74,7 @@ private def validateMaskSpace(
     mask: Mask.MaskVol,
     shape: DatasetShape
 ): Either[DatasetError, Unit] =
-  if mask.space.spatialDims != shape.spatialDims then
-    Left(DatasetError.ShapeMismatch("mask/space dimension mismatch"))
-  else if mask.space.spacing != shape.space.spacing || mask.space.origin != shape.space.origin then
-    Left(DatasetError.ShapeMismatch("mask/space mismatch"))
-  else Right(())
+  GridCompatibility
+    .spatial(shape.space, mask.space)
+    .left
+    .map(error => DatasetError.ShapeMismatch(error.message))

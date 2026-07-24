@@ -12,12 +12,12 @@ final case class NeuroHyperVec[A](
   label: String = ""
 ):
   require(space.ndim >= 5, "NeuroHyperVec space must be 5D")
-  require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
+  GridCompatibility.requireSpatial(space, mask.space)
 
   val nTrials: Int = space.dims(3)
   val nFeatures: Int = space.dims(4)
 
-  require(map.space.spatialDims == space.spatialDims, "map/space mismatch")
+  GridCompatibility.requireSpatial(space, map.space)
   require(
     data.shape == Vector(nFeatures, nTrials, map.cardinality),
     "data shape must be (features, trials, voxels)"

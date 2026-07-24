@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.Mask
+import scalafim.image.{GridCompatibility, Mask}
 
 opaque type TimepointIndex = Int
 
@@ -143,21 +143,23 @@ object VoxelDomain:
     active(spatialSize, voxels).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def fromMask(mask: Mask.MaskVol, shape: DatasetShape): Either[DatasetError, VoxelDomain] =
-    if mask.space.spatialDims != shape.spatialDims then
-      Left(DatasetError.ShapeMismatch("mask/space dimension mismatch"))
-    else if mask.space.spacing != shape.space.spacing || mask.space.origin != shape.space.origin then
-      Left(DatasetError.ShapeMismatch("mask/space mismatch"))
-    else
-      val maskIndices = Mask.indices(mask)
-      val voxels = Vector.newBuilder[VoxelIndex]
-      voxels.sizeHint(maskIndices.length)
-      var i = 0
-      while i < maskIndices.length do
-        VoxelIndex.make(maskIndices(i)) match
-          case Left(error) => return Left(error)
-          case Right(voxel) => voxels += voxel
-        i += 1
-      fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
+    GridCompatibility.spatial(shape.space, mask.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap: _ =>
+        val maskIndices = Mask.indices(mask)
+        val voxels = Vector.newBuilder[VoxelIndex]
+        voxels.sizeHint(maskIndices.length)
+        var i = 0
+        var failure = Option.empty[DatasetError]
+        while i < maskIndices.length && failure.isEmpty do
+          VoxelIndex.make(maskIndices(i)) match
+            case Left(error) => failure = Some(error)
+            case Right(voxel) => voxels += voxel
+          i += 1
+        failure match
+          case Some(error) => Left(error)
+          case None => fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
 
   private def fromVoxels(
       kind: VoxelDomainKind,

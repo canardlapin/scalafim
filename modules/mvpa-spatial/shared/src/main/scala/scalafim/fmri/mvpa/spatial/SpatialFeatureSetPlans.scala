@@ -2,7 +2,15 @@ package scalafim.fmri.mvpa.spatial
 
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
-import scalafim.image.{Mask, NeuroVol, ROIVolWindow, Searchlight}
+import scalafim.image.{
+  Mask,
+  NeuroVol,
+  ROIVolWindow,
+  Searchlight,
+  SearchlightCenterDomain,
+  SearchlightRadius,
+  SearchlightSupport
+}
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 
 import scala.util.control.NonFatal
@@ -119,10 +127,24 @@ object SpatialFeatureSetPlans:
       label: String = ""
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     captureSpatial("searchlight mask") {
-      roiWindows(
-        name,
-        Searchlight.searchlight(mask, radius, nonzero = constrainToMask, label = label).toVector
-      )
+      for
+        checkedRadius <- SearchlightRadius
+          .make(radius)
+          .left
+          .map(error => SpatialPlanError.AdapterFailure("searchlight radius", error.message))
+        windows <- Searchlight
+          .searchlightChecked(
+            mask,
+            checkedRadius,
+            SearchlightCenterDomain.MaskVoxels,
+            if constrainToMask then SearchlightSupport.InsideMask
+            else SearchlightSupport.FullNeighborhood,
+            label
+          )
+          .left
+          .map(error => SpatialPlanError.AdapterFailure("searchlight mask", error.message))
+        plan <- roiWindows(name, windows.toVector)
+      yield plan
     }
 
   def fromSearchlightMask(
