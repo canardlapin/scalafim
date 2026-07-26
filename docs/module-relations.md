@@ -13,12 +13,27 @@ workflow.
 Live dependency edges are declared in `build.sbt`.
 
 ```text
+locus-kernel
++-- locus-data
+|   +-- image
+|   +-- surface       also depends on image, graph
+|   +-- atlas         also depends on image, surface, graph
+|   +-- spatial       also depends on linalg, image, surface
+|   +-- dataset       also depends on image, hrf, archive, latent, bids
+|   +-- mvpa-spatial  also depends on mvpa, image, surface, atlas
+|   +-- locus-laws    test-support and reference models
++-- graph
++-- latent            also depends on archive
++-- threshold         also depends on image
++-- multivar          also depends on linalg
++-- connectivity      also depends on graph
+
 graph
-+-- connectivity      also depends on linalg
++-- connectivity      also depends on locus-kernel
 +-- graph-linalg      also depends on linalg
-+-- surface           also depends on image
-+-- atlas             also depends on image, surface
-+-- spatial           also depends on linalg, image, surface
++-- surface           also depends on image, locus-data
++-- atlas             also depends on image, surface, locus-data
++-- spatial           also depends on linalg, image, surface, locus-data
 +-- pipeline
 
 linalg
@@ -112,7 +127,10 @@ parsing.
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `graph` | Ordered keyed vertex bases, graph-local dense coordinates, validated alignment/permutation values, canonical immutable simple directed/undirected graphs, components, nonnegative-cost paths, cycle witnesses, DAG layers, and topology laws. | Nothing internal. | Matrices, Laplacians, spectra, connectivity measures, spatial-domain validation, pipeline execution, multigraphs, or loops. |
+| `locus-kernel` | Semantic finite spaces and points, unordered extensional regions, ordered selections, exact total maps, finite relations, and validated map/relation evidence. | Nothing internal. | Geometry, labels, storage, interpolation, graphs, atlas metadata, or ordered region semantics. |
+| `locus-data` | Pure indexed fields and sections, supported parcellations, searchlights, and one-pass commutative aggregation. | `locus-kernel` | Image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
+| `locus-laws` | Exhaustive finite reference models, reusable law groups, differential adapters, and bounded ScalaCheck supplements. | `locus-data` | Production representations or domain policy. |
+| `graph` | Ordered keyed vertex bases, locus-space adaptation, graph-local dense coordinates, validated alignment/permutation values, canonical immutable simple directed/undirected graphs, components, nonnegative-cost paths, cycle witnesses, DAG layers, and topology laws. | `locus-kernel` | Matrices, Laplacians, spectra, connectivity measures, spatial-domain validation, pipeline execution, multigraphs, or loops. |
 | `graph-linalg` | Basis-carrying topology/weighted adjacency, incidence, degree/strength, combinatorial/normalized Laplacians, spectra/embeddings, aligned spectral feature maps, and explicitly PSD-tagged similarities over shared linalg contracts. | `graph`, `linalg` | Connectivity estimation or projection policy, scientific measurement semantics, solver implementations, generic multivar kernel ownership, or domain-specific convenience APIs. |
 | `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
 | `linalg-breeze` | JVM-only Breeze-backed adapters for linalg solver contracts and backend differential tests. | `linalg` | Shared APIs, domain-specific algorithms, Scala.js code, or direct Breeze exposure to domain modules. |
@@ -125,36 +143,36 @@ parsing.
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, `graphics` | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
-| `image` | Volumes, masks, spaces, affine math, low-level coordinate transforms, morphisms, resampling, clustering/searchlights. | Nothing internal. | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
+| `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, affine math, low-level coordinate transforms, morphisms, resampling, clustering, and metric searchlight construction. | `locus-data` | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
 | `registration` | Frame-safe inverse pairs, symmetric midpoint deformation, paired diffeomorphic flow construction, topology/inverse guards, and nonlinear registration optimization. | `image` | Generic tensor/field kernels, image IO, atlas catalogs, dataset policy, or registration-specific shortcuts in Gale. |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, `graphics` | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, `graphics-canvas` | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, `graphics-java2d` | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, `graphics-javafx` | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
-| `threshold` | Spatial inference over statistic maps: masked fields, octrees, set scoring, maxT-style correction. | `image`, `linalg` | Model fitting or group-model definitions. |
+| `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-kernel`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Meshes, topology, vertex fields, surface ROIs, geodesics, labels, graph interop, JVM surface readers. | `graph`, `image` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph interop, and JVM surface readers. | `graph`, `image`, `locus-data` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, `graphics` | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view` | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, `graphics-javafx`; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
 | `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
 | `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | `surface-view`, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
-| `spatial` | Neurofunctor-style domains, graph-delegated morphism routing, route policies, sampled operators, adjoints, provenance, QC, caches, lazy fields. | `graph`, `linalg`, `image`, `surface` | Low-level image interpolation kernels or atlas-specific route catalogs. |
-| `atlas` | Standard atlas descriptors, region metadata, parcel payloads, coordinate/parcel lookup, region-graph interop, transform route descriptors. | `graph`, `image`, `surface` | Generic spatial operator compilation or low-level transform kernels. |
+| `spatial` | Neurofunctor-style domains with locus packages, graph-delegated morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | `graph`, `linalg`, `image`, `surface`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
+| `atlas` | Standard atlas descriptors, parcel metadata, typed locus parcellations, parcel/network quotient operations, explicit display order, one-pass reduction, explicit-alignment overlap, region-graph interop, and transform route descriptors. | `graph`, `image`, `surface`, `locus-data` | Generic spatial operator compilation, low-level transform kernels, or extensional region identity in labels/metadata. |
 | `archive` | Latent NeuroArchive-style manifests, transform descriptors, portable archive transforms, JVM HDF5 store. | `image` | Dataset selection APIs or model-level decoding policy. |
-| `latent` | Latent-response contracts, temporal bases, archive codecs, transport responses. | `linalg`, `archive` | Dataset storage backends or model execution. |
-| `dataset` | Checked source-blind fMRI views, provenance values, study/run keys and queries, run-local windows and coordinates, segmented cross-run reads, backend contracts, and narrow LNA IO composition. | `image`, `hrf`, `archive`, `latent`, `bids` | Storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
+| `latent` | Latent-response contracts, temporal bases, archive codecs, transport responses, and exact locus-backed active/full-grid selection order. | `archive`, `locus-kernel`; Gale on each platform | Dataset storage backends, model execution, or another spatial selection algebra. |
+| `dataset` | Checked source-blind fMRI views, semantic acquisition locus domains, provenance values, study/run keys and queries, ordered run-local windows and coordinates, segmented cross-run reads, backend contracts, and narrow LNA IO composition. | `image`, `hrf`, `archive`, `latent`, `bids`, `locus-data` | Storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
 | `bids` | Pure BIDS names/entities, checked manifests, queries, TSV tables, fMRIPrep confound selection, and domain diagnostics; JVM resource-safe project/store adapters. | Nothing internal; Cats Core in shared, Cats Effect on JVM. | Dataset execution, image decoding, model fitting, remote-store policy, or hidden runtime execution. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over model plans: dense/runwise OLS, contrasts, residual diagnostics. | `linalg`, `model`, `ar` | Model description, dataset storage, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa` | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
-| `multivar` | One layered mathematical lifecycle: semantic `core`, mathematical `contract`, declarative `optimization`, executable `solver`, family-indexed `lifecycle`, fitted `capability`, statistical `family.*` verticals, fold-safe `workflow`, and `validation`; includes typed duality diagrams, GLRM, multiblock, paired/canonical/spectral methods, CPCA and kernels. | `linalg` | Flat catch-all APIs, reciprocal family dependencies, formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
+| `multivar` | One layered mathematical lifecycle: semantic `core`, mathematical `contract`, declarative `optimization`, executable `solver`, family-indexed `lifecycle`, fitted `capability`, statistical `family.*` verticals, fold-safe `workflow`, and `validation`; includes locus selection adapters, typed duality diagrams, GLRM, multiblock, paired/canonical/spectral methods, CPCA and kernels. | `linalg`, `locus-kernel` | Flat catch-all APIs, reciprocal family dependencies, formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
 | `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, projection actions, synthesis capabilities, solver guarantees, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
 | `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | `multivar`, `linalg` | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
-| `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, parcel time series, edge spaces, vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `linalg` | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
+| `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `locus-kernel`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`/`FmriDataset` reads and sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, or spatial feature-set construction. |
-| `mvpa-spatial` | Thin adapters from image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas` | Classifier algorithms or atlas loading. |
+| `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `bids`, `dataset`, `model`, `fit`, `group` | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `zarr` | Dependency-free Zarr v3 metadata plus read-only v2 lowering, runtime-rank hierarchy and factored slice/gather geometry, direct/sharded planning, backpressured chunk fragments, primitive codecs, portable bounded async reads, revision-scoped bounded object/range caches, store-independent sync/async create-only writers, content receipts, and atomic JVM publication. | Nothing internal. | Neuroimaging semantics, BIDS identity, S3 credentials, persistent cache/prefetch/retention policy, mutation, v2 writing, or hidden execution policy. |
@@ -202,18 +220,36 @@ that can see both `dataset` and `archive-zarr`; both paths expose
 catalog/result references and immutable recipes, then delegates IO and numeric
 execution to typed interpreters at module boundaries.
 
+### Finite Indexed Spaces
+
+```text
+locus-kernel -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spatial
+       |             |
+       |             +-----> locus-laws  (test support)
+       +-----> graph/connectivity/threshold/latent/multivar
+```
+
+`locus-kernel` is the sole owner of generic finite spaces, points, regions,
+ordered selections, exact maps, and relations. `locus-data` owns fields,
+sections, parcellations, searchlights, and aggregation. Domain modules add
+geometry, metadata, storage, provenance, or algorithm policy through checked
+adapters; they do not reproduce the generic algebra. Zarr's package-local
+`Geometry.Region` remains an array chunk/slice rectangle, not a spatial ROI,
+and is outside this boundary.
+
 ### Spatial Data And Transforms
 
 ```text
-image -> surface
-  |        |
-  +-----> atlas
-  +-----> spatial <----- surface
+locus-data -> image -> surface
+     |          |        |
+     |          +------> atlas
+     +-----------------> spatial <----- surface
 ```
 
 `image` owns executable low-level volume geometry. `surface` owns mesh geometry.
-`atlas` names standard spaces and parcels. `spatial` compiles reusable
-source-to-target operators with provenance and adjoints.
+`atlas` names standard spaces and attaches metadata to locus parcels.
+`spatial` compiles reusable source-to-target operators with provenance and
+adjoints.
 
 ### Surface Display
 
@@ -297,6 +333,12 @@ descriptors can materialize executable dense morphisms.
   alignment, and reusable graph laws in `graph`. Keep numerical projections in
   `graph-linalg`, and keep scientific
   connectivity semantics in `connectivity`.
+- Put generic finite semantic domains, points, regions, selections, exact maps,
+  and relations in `locus-kernel`; put indexed fields, sections,
+  parcellations, searchlights, and commutative aggregation in `locus-data`;
+  put reusable reference models and adapter law suites in `locus-laws`.
+  Geometry, storage, metadata, and algorithm policy remain in their domain
+  modules.
 - Put primitive matrix/vector/operator math, solver contracts, portable
   eigensolver/SVD/QR/Cholesky/SPD-inverse reference implementations, and backend
   adapter boundaries in `linalg`. Domain modules should receive typed solver

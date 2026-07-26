@@ -27,3 +27,44 @@ Aggregation scans the supported ambient points once. Means should accumulate
 a mergeable `(sum, count)`-like state and divide only at presentation time.
 The exact hierarchy-fusion law applies to lawful commutative monoids; ordinary
 IEEE floating-point addition is not claimed to be exactly associative.
+
+## Minimal example
+
+The phantom type identifies one semantic domain, while the runtime key protects
+existential and deserialized boundaries:
+
+```scala
+import scalafim.locus.*
+
+sealed trait NativeVoxels
+sealed trait Parcels
+
+val voxels =
+  FiniteSpace.make[NativeVoxels](SpaceKey.unsafe("sub-01:native:bold"), 6)
+    .toOption.get
+val parcelAxis =
+  FiniteSpace.make[Parcels](SpaceKey.unsafe("atlas:demo:parcels"), 2)
+    .toOption.get
+
+val left =
+  Region.fromOrdinals(voxels, Vector(0, 1, 2)).toOption.get
+val requestedOrder =
+  Selection.fromOrdinals(voxels, Vector(2, 0, 1)).toOption.get
+
+val parcels =
+  Parcellation
+    .fromAssignments(
+      voxels,
+      parcelAxis,
+      Vector(Some(0), Some(0), Some(0), Some(1), Some(1), None)
+    )
+    .toOption.get
+
+val field =
+  IndexedField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
+val section = field.restrict(left).toOption.get
+val orderedValues = section.valuesIn(requestedOrder).toOption.get.toVector
+```
+
+`orderedValues` is `Vector(12, 10, 11)`: ordering comes from
+`Selection`, never from the set semantics of `Region`.
