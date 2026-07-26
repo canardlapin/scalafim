@@ -15,6 +15,35 @@ All statistical methods execute on the typed operator/program substrate. There
 is no legacy diagram, metric, map/projection, GPCA, paired-GMD, or CPCA engine
 behind the semantic API.
 
+## Package map
+
+The module now makes its mathematical lifecycle visible in the namespace:
+
+```text
+core -> contract -> optimization -> solver -> lifecycle
+                                      |
+                                      +-> capability -> family.*
+                                                           |
+                                                           +-> workflow -> validation
+```
+
+`core` owns portable semantic and numerical primitives; `contract` states the
+mathematics; `optimization` declares programs; `solver` lowers and executes;
+`lifecycle` binds declarations, evidence, receipts and fitted payloads;
+`capability` exposes family-neutral post-fit operations; each `family.*`
+package owns one statistical vertical; and `workflow` owns fold-safe
+`ModelSpec` composition. Tests mirror this layout. The exact ownership and
+extension rules are documented in
+[`multivar-package-hierarchy.md`](../../docs/plans/multivar-package-hierarchy.md).
+
+Import from the semantic owner rather than from a flat façade:
+
+```scala
+import scalafim.multivar.core.{ComponentCount, MatrixView}
+import scalafim.multivar.family.glrm.GeneralizedLowRankProgram
+import scalafim.multivar.workflow.ModelSpec
+```
+
 This module owns the portable algebra below MVPA and neuroimaging adapters:
 
 - nominal semantic spaces plus distinct primal and dual coordinates;
@@ -65,7 +94,14 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   decoders and domain-preserving predictions; and an observation pattern that
   keeps weighted point observations, missingness, structural inapplicability,
   and censoring disjoint. Entry losses and factor penalties remain different
-  types, and missingness declarations carry no automatic MAR/MNAR claim;
+  types, and missingness declarations carry no automatic MAR/MNAR claim.
+  `GeneralizedLowRankProgram.fit` admits curvature-bounded, unconstrained
+  losses with coercive row and decoder penalties to a two-block PALM plan and
+  returns the common family-indexed `FittedModel`: learned factors, exact
+  observation/program bindings, solver trace and certificate, achieved
+  guarantee, and frozen latent encoder travel as one artifact. Poisson,
+  ordered-natural-parameter losses, censoring, and objectives without a
+  bounded-level-set witness fail before execution;
 - `FittedLatentEncoder` for nonlinear new-row inference against a frozen GLRM
   decoder, deliberately separate from linear `FittedProjection`; it consumes
   explicit dense or sparse observation patterns, solves globally
@@ -87,8 +123,10 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
   Lipschitz witnesses, exact or geometrically summable inexactness, explicit
   singular-geometry policy, and KL evidence when critical-point convergence is
   claimed. Receipts retain every objective transition, residual, normalization
-  error, step, and stopping reason; deterministic multi-start retains all
-  SVD-derived and named starts;
+  error, step, and stopping reason. Every run also retains a solver-trace
+  numerical certificate whose convergence flag cannot turn an iteration limit
+  into a convergence claim; deterministic multi-start retains all SVD-derived
+  and named starts;
 - a separate `ConvexLowRankGlobalAdmission` for witnessed convex
   loss-plus-nuclear-norm certificates, so a PALM stopping status cannot be
   relabeled as global optimality;
@@ -132,12 +170,36 @@ This module owns the portable algebra below MVPA and neuroimaging adapters:
 forms, certificates, scale/gauge, centering, singular policy, alignments,
 objectives, unsafe assumptions, and payload hashes—for cross-language
 conformance. Its companion
-`scalafim-mathematical-model-evidence-ir/1.0` envelope binds extant
+`scalafim-mathematical-model-evidence-ir/2.0` envelope binds extant
 operator-program identities to the model family and estimand, explicit
 loss/mask/geometry/penalty declarations, theorem witnesses, solver trace,
 achieved guarantee, certificate set, and reproducibility receipt. The external
 review boundary and counterexamples are documented in
 [`multivar-external-review.md`](../../docs/plans/multivar-external-review.md).
+
+## Penalty identity and ownership
+
+`PenaltyFunctionalIdentity` is the single stable name for shared mathematics:
+L1 is L1 and a squared Frobenius or squared smoothness penalty is a
+`SquaredNorm`. It is intentionally not executable. Each family retains a typed
+`PenaltyFunctionalWitness` with the information needed to use that identity
+lawfully:
+
+- `FunctionalKind` owns operator-program geometry, groups, tuning parameters,
+  traits, and `TargetExpression` compatibility;
+- `GlrmFactorPenalty` owns dense factor evaluation and targets either row codes
+  or the feature decoder through `GlrmFactorTarget`;
+- `BlockStructuredPenaltyKind` owns graph-versus-linear topology and smooth-
+  versus-nonsmooth evaluation on a block-local decoder operator;
+- `QuadraticFamily` records why a squared norm exists, while
+  `QuadraticPlacement` continues to distinguish objective regularization from
+  denominator geometry.
+
+Those targets, capabilities, parameters, placements, and topology choices are
+genuinely family-specific and must not be inferred from the shared identity.
+Evidence IR 2.0 stores the canonical identity together with its explicit owner
+and optional operator identity, so serialization does not invent another
+functional vocabulary.
 
 ## API boundary
 

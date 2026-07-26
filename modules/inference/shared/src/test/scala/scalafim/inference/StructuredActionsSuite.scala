@@ -1,8 +1,8 @@
 package scalafim.inference
 
+import scalafim.multivar.core.{RowProjector, RowWhitening}
+
 import gale.linalg.DMat
-import scalafim.multivar.RowProjector
-import scalafim.multivar.RowWhitening
 
 class StructuredActionsSuite extends munit.FunSuite:
 
@@ -10,7 +10,7 @@ class StructuredActionsSuite extends munit.FunSuite:
     value.fold(error => fail(error.message), identity)
 
   private def acceptedMultivar[A](
-      value: Either[scalafim.multivar.MultivarError, A]
+      value: Either[scalafim.multivar.core.MultivarError, A]
   ): A =
     value.fold(error => fail(error.message), identity)
 

@@ -346,11 +346,12 @@ its assumptions, and a witness identity.
 | Convexified low-rank matrix | convex matrix estimation | exact or epsilon global | certificate is formulation-specific |
 | Structured multiblock factorization | joint estimation | stationary / coordinatewise stationary | shared scores require explicit row alignment |
 
-## Achieved guarantees and proof admission
+## Requested claims, achieved guarantees, and proof admission
 
-`SolverGuarantee` is the compatibility-level guarantee requested by an older
-program contract. It is not evidence that a run attained that guarantee. New
-fits carry an `AchievedOptimizationGuarantee` with one of these disjoint forms:
+A declared program carries a `RequestedOptimizationClaim`; `Unresolved` is not
+representable as a request. A completed fit instead carries an
+`AchievedOptimizationGuarantee`, whose evidence determines one of these
+disjoint outcomes:
 
 - exact global, with a theorem-bound global-optimality witness;
 - epsilon global, with a checked objective-gap bound;
@@ -362,14 +363,18 @@ fits carry an `AchievedOptimizationGuarantee` with one of these disjoint forms:
 - unresolved, with the numerical termination reason retained.
 
 The certificate binds the model contract, program, data, explicit mask state,
-operators, parameters, and returned value. Admission separately checks the
-proof obligations named by the compiler: proper closed convexity, smoothness,
+operators, parameters, and returned value. Admission checks the requested claim
+against the achieved claim class and separately checks every proof obligation
+named by the compiler: proper closed convexity, smoothness,
 strong convexity, PSD structure, nullspace coercivity, norm bounds, exact
 proximal or projection laws, or a controlled inexactness bound. A low-level
 stopping status is retained as trace evidence and cannot select a semantic
 guarantee. Exact spectral and stationary program fits therefore enter through
 different constructors, while anchor-refinement fits expose their quantitative
 gap or distance certificate directly.
+
+Historical `ProgramSolverGuaranteeIr` tags remain only in the versioned IR
+compatibility boundary; they are not a second runtime truth.
 
 ## Exact sparse-smooth compiler
 
@@ -463,7 +468,7 @@ A model is supportable only when all of the following agree:
 5. analytic or independent differential oracle where feasible;
 6. metamorphic and adversarial laws;
 7. fold-local preprocessing and tuning provenance;
-8. a `scalafim-mathematical-model-evidence-ir/1.0` envelope binding the
+8. a `scalafim-mathematical-model-evidence-ir/2.0` envelope binding the
    operator-program identities to the estimand, theorem witnesses, achieved
    certificate, and reproducibility receipt; and
 9. JVM and Scala.js verification at the committed tip.

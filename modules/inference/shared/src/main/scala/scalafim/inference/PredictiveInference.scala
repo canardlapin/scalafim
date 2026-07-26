@@ -1,10 +1,9 @@
 package scalafim.inference
 
+import scalafim.multivar.core.{ComponentCount, MatrixView}
+import scalafim.multivar.family.paired.{ReducedRankRegression, RegressionRegularization}
+
 import gale.linalg.DMat
-import scalafim.multivar.ComponentCount
-import scalafim.multivar.MatrixView
-import scalafim.multivar.ReducedRankRegression
-import scalafim.multivar.RegressionRegularization
 
 final case class HeldOutSplit private (
     rowCount: RowCount,

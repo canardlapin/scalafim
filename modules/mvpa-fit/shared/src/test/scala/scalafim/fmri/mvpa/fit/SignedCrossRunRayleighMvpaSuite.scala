@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.family.canonical.{CanonicalEffectSolution, ResidualRegularization, TraceRidgeFraction}
+
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{
@@ -14,7 +16,6 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.model.FitConfig
 import scalafim.fmri.mvpa.{FeatureSet, FeatureSetPlan, MvpaStreamControl, RoiId}
-import scalafim.multivar.{CanonicalEffectSolution, ResidualRegularization, TraceRidgeFraction}
 
 class SignedCrossRunRayleighMvpaSuite extends munit.FunSuite:
   import SignedCrossRunRayleighReferenceFixtures as R

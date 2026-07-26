@@ -35,14 +35,16 @@ supported coordinate/restriction operations. The validator checks operator
 roles and ports; a frame identity alone is not a decoder capability.
 
 Mathematical release evidence is a third companion document family,
-`scalafim-mathematical-model-evidence-ir/1.0`. It references an existing
+`scalafim-mathematical-model-evidence-ir/2.0`. It references an existing
 operator-program schema and program id; it does not duplicate operators,
 parameters, or numerical payloads. Each model record binds those identities to
 one contract id, model family, estimand, explicit observation mask and entry
 losses, geometry and penalty identities, theorem-assumption witnesses, solver
 and trace receipt, achieved (not merely requested) guarantee, certificate
-identities, and a reproducibility receipt. The corresponding JSON Schema is
-`schema/mathematical-model-evidence-ir-v1.0.schema.json`.
+identities, and a reproducibility receipt. Penalties use the same canonical
+`PenaltyFunctionalIdentity` as runtime witnesses; owner and operator fields
+retain the family-specific target semantics. The corresponding JSON Schema is
+`schema/mathematical-model-evidence-ir-v2.0.schema.json`.
 
 The evidence validator enforces family--estimand and family--contract
 agreement, the exact referenced operator-program version, loss declarations
@@ -63,7 +65,7 @@ if a caller supplies a string with that name.
   at every nesting level. A lowering is data, not an implementation detail: it
   must name the original and lowered programs, its input and output operators,
   a value-bound rewrite proof, provenance, and the equivalence that remains.
-- The mathematical-evidence 1.0 decoder accepts exactly 1.0 and rejects unknown
+- The mathematical-evidence 2.0 decoder accepts exactly 2.0 and rejects unknown
   fields at every level. Reproducibility seeds must be non-negative JSON-safe
   integers; dependency names/versions, generator/result identities,
   conditioning, and tolerances are mandatory rather than implied by a golden
@@ -104,7 +106,7 @@ category. The same cases are embedded in `ConformanceCorpus` so the identical
 suite runs on both JVM and Scala.js. Python and R bindings should consume the
 JSON files and reproduce the category listed in the manifest.
 
-`MathematicalModelEvidenceIrSuite` provides the 1.0 evidence corpus directly in
+`MathematicalModelEvidenceIrSuite` provides the 2.0 evidence corpus directly in
 shared source. It round-trips valid records for all six model families and
 checks invalid version, unknown-field, family/estimand, theorem-assumption,
 global-claim, mask/loss, certificate, numeric-guarantee, solver, and

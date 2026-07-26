@@ -1,8 +1,9 @@
 package scalafim.inference
 
+import scalafim.multivar.core.SpaceId
+
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.SpaceId
 
 class StabilitySuite extends munit.FunSuite:
 

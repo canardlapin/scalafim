@@ -1,6 +1,21 @@
 package scalafim.multivar.ir
 
-import scalafim.multivar.*
+import scalafim.multivar.core.*
+import scalafim.multivar.contract.*
+import scalafim.multivar.optimization.*
+import scalafim.multivar.solver.*
+import scalafim.multivar.lifecycle.*
+import scalafim.multivar.capability.*
+import scalafim.multivar.family.spectral.*
+import scalafim.multivar.family.paired.*
+import scalafim.multivar.family.canonical.*
+import scalafim.multivar.family.cpca.*
+import scalafim.multivar.family.sparse.*
+import scalafim.multivar.family.glrm.*
+import scalafim.multivar.family.multiblock.*
+import scalafim.multivar.family.kernel.*
+import scalafim.multivar.workflow.*
+import scalafim.multivar.validation.*
 
 /** Companion evidence envelope for an extant operator-program document.
   *
@@ -95,14 +110,18 @@ enum PenaltyOwnerEvidenceIr:
   case BlockDecoder(blockIdentity: String)
   case ConvexMatrix
 
-enum PenaltyFunctionalEvidenceIr:
-  case L1
-  case GroupL21
-  case SparseGroup
-  case TotalVariation
-  case SquaredSmoothness
-  case NuclearNorm
-  case SquaredFrobenius
+/** Evidence uses the runtime's canonical mathematical identity directly.
+  * Family-specific targets and executable capabilities remain in `owner`, the
+  * optional operator identity, and the runtime witness that produced this value.
+  */
+type PenaltyFunctionalEvidenceIr = PenaltyFunctionalIdentity
+
+object PenaltyFunctionalEvidenceIr:
+  def from(witness: PenaltyFunctionalWitness): PenaltyFunctionalEvidenceIr =
+    witness.functionalIdentity
+
+  def fromStableKey(value: String): Option[PenaltyFunctionalEvidenceIr] =
+    PenaltyFunctionalIdentity.fromStableKey(value)
 
 final case class PenaltyBindingEvidenceIr(
     owner: PenaltyOwnerEvidenceIr,
@@ -198,7 +217,7 @@ final case class MathematicalModelEvidenceDocumentIr(
 )
 
 object MathematicalModelEvidenceDocumentIr:
-  val schemaV10: String = "scalafim-mathematical-model-evidence-ir/1.0"
+  val schemaV20: String = "scalafim-mathematical-model-evidence-ir/2.0"
 
 object MathematicalModelEvidenceIrValidator:
   def validate(
@@ -206,10 +225,10 @@ object MathematicalModelEvidenceIrValidator:
   ): Either[IrError, MathematicalModelEvidenceDocumentIr] =
     for
       _ <- requireValue(
-        document.schema == MathematicalModelEvidenceDocumentIr.schemaV10,
+        document.schema == MathematicalModelEvidenceDocumentIr.schemaV20,
         RejectionCategory.SchemaVersionMismatch,
         "$.schema",
-        s"expected ${MathematicalModelEvidenceDocumentIr.schemaV10}, got ${document.schema}"
+        s"expected ${MathematicalModelEvidenceDocumentIr.schemaV20}, got ${document.schema}"
       )
       models <- unique(document.models, _.id, "$.models")
       _ <- requireValue(models.nonEmpty, RejectionCategory.Malformed, "$.models", "at least one model evidence record is required")

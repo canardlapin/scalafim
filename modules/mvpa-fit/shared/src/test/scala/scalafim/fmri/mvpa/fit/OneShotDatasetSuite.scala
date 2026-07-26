@@ -1,10 +1,11 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.family.canonical.{TraceRidgeFraction, WithinScatterPolicy}
+
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}
 import scalafim.fmri.mvpa.*
 import gale.linalg.{DMat, Matrix}
-import scalafim.multivar.{TraceRidgeFraction, WithinScatterPolicy}
 
 class OneShotDatasetSuite extends munit.FunSuite:
 

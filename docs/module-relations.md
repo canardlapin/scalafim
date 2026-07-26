@@ -149,7 +149,7 @@ parsing.
 | `fit` | Numerical fit engines over model plans: dense/runwise OLS, contrasts, residual diagnostics. | `linalg`, `model`, `ar` | Model description, dataset storage, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa` | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
-| `multivar` | Typed duality-diagram semantics: nominal primal/dual spaces, directed maps, certified role-specific forms, measures and centering evidence, explicit singular policies, semantic GPCA, exact/partial/coupled/hub row alignment, direct-sum multiset objectives and constraints, fitted full/partial/supplementary/synthesis/paired/multiblock projection capabilities, executable variational lowering, fold-safe `ModelSpec`, sparse-aware matrix views, paired latent decompositions, CPCA, kernels, and pure plans/artifacts. | `linalg` | Formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
+| `multivar` | One layered mathematical lifecycle: semantic `core`, mathematical `contract`, declarative `optimization`, executable `solver`, family-indexed `lifecycle`, fitted `capability`, statistical `family.*` verticals, fold-safe `workflow`, and `validation`; includes typed duality diagrams, GLRM, multiblock, paired/canonical/spectral methods, CPCA and kernels. | `linalg` | Flat catch-all APIs, reciprocal family dependencies, formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
 | `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, projection actions, synthesis capabilities, solver guarantees, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
 | `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | `multivar`, `linalg` | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
 | `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, parcel time series, edge spaces, vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `linalg` | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
@@ -168,8 +168,13 @@ operator representation, `secondOrder` and `compress` as the only second-order
 and component reductions, `FunctionalFrame` as the latent parameter, and named
 methods lowering to one closed `OperatorProgram`. Fitted projection/synthesis
 capabilities remain downstream compositions over the frozen frame, while
-`ModelSpec` is the only owner of data-fitted lifecycle stages. Its
+family-indexed workflows own data-fitted lifecycle stages. Its
 production-consumer table is the authoritative ownership map.
+The source-level ownership law is the
+[multivar package hierarchy](plans/multivar-package-hierarchy.md): packages
+expose the order from semantic algebra through contracts, programs, solvers,
+lifecycle evidence, family verticals, workflow composition, and validation
+without introducing a second runtime model.
 
 ## Main Vertical Flows
 

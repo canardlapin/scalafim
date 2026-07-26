@@ -1,11 +1,10 @@
 package scalafim.inference
 
+import scalafim.multivar.core.{ComponentCount, MatrixView}
+import scalafim.multivar.family.paired.{Cca, CcaFit}
+
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.Cca
-import scalafim.multivar.CcaFit
-import scalafim.multivar.ComponentCount
-import scalafim.multivar.MatrixView
 
 final case class CcaCorrelationState private[inference] (
     x: DMat,

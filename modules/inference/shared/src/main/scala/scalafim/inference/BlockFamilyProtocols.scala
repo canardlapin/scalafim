@@ -1,16 +1,10 @@
 package scalafim.inference
 
+import scalafim.multivar.core.{BlockPartition, ComponentCount, DenseSolvers, MatrixView, StoragePolicy}
+import scalafim.multivar.family.cpca.{CpcaBlock, CpcaBlockRequest, PreparedCpcaOperatorFit, PreparedCpcaOperatorProblem}
+
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.BlockPartition
-import scalafim.multivar.ComponentCount
-import scalafim.multivar.CpcaBlock
-import scalafim.multivar.CpcaBlockRequest
-import scalafim.multivar.DenseSolvers
-import scalafim.multivar.MatrixView
-import scalafim.multivar.PreparedCpcaOperatorFit
-import scalafim.multivar.PreparedCpcaOperatorProblem
-import scalafim.multivar.StoragePolicy
 
 final case class CpcaInferenceState private[inference] (
     problem: PreparedCpcaOperatorProblem,
@@ -130,7 +124,7 @@ final case class CpcaBlockProtocol(
 
   private def adapt[A](
       role: String,
-      value: Either[scalafim.multivar.MultivarError, A]
+      value: Either[scalafim.multivar.core.MultivarError, A]
   ): Either[InferenceError, A] =
     value.left.map(error => InferenceError.NumericalFailure(role, error.message))
 
