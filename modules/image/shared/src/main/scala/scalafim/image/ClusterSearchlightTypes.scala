@@ -55,7 +55,7 @@ enum SearchlightError:
   def message: String =
     this match
       case InvalidRadius(value) =>
-        s"searchlight radius must be finite and positive; got $value"
+        s"searchlight radius must be finite and non-negative; got $value"
       case RadiusBelowVoxelSpacing(radius, minimumSpacing) =>
         s"searchlight radius $radius is smaller than minimum voxel spacing $minimumSpacing"
       case InvalidCenter(error) =>
@@ -73,7 +73,7 @@ opaque type SearchlightRadius = Double
 
 object SearchlightRadius:
   def make(value: Double): Either[SearchlightError, SearchlightRadius] =
-    if value.isFinite && value > 0.0 then Right(value)
+    if value.isFinite && value >= 0.0 then Right(value)
     else Left(SearchlightError.InvalidRadius(value))
 
   def apply(value: Double): SearchlightRadius =

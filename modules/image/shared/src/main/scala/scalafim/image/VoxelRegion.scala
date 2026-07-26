@@ -1,106 +1,78 @@
 package scalafim.image
 
 import narr.NArray
+import scalafim.locus.{Region as LocusRegion, Selection as LocusSelection}
+
+private[image] sealed trait StructuralVolumeVoxel
+
+private[image] object StructuralVolumeLocus:
+  def space(volumeSpace: VolumeSpace): scalafim.locus.FiniteSpace[StructuralVolumeVoxel] =
+    scalafim.locus.FiniteSpace
+      .make[StructuralVolumeVoxel](key(volumeSpace), volumeSpace.nVoxels)
+      .toOption
+      .get
+
+  def key(volumeSpace: VolumeSpace): scalafim.locus.SpaceKey =
+    scalafim.locus.SpaceKey.unsafe:
+      s"scalafim:image:structural:${volumeSpace.toNeuroSpace}"
 
 final class VoxelRegion private (
     val space: VolumeSpace,
-    private val members: VoxelIndexSet
+    private val members: LocusRegion[StructuralVolumeVoxel]
 ):
   def size: Int =
-    members.size
+    members.cardinality
 
   def isEmpty: Boolean =
     members.isEmpty
 
   def contains(index: Int): Boolean =
-    val values = members.unsafeArray
-    var low = 0
-    var high = values.length - 1
-    var found = false
-    while low <= high && !found do
-      val middle = low + (high - low) / 2
-      val value = values(middle)
-      if value == index then found = true
-      else if value < index then low = middle + 1
-      else high = middle - 1
-    found
+    members.space.point(index).exists(members.contains)
 
   def contains(coord: VoxelCoord): Boolean =
     Indexing.gridToIndexChecked(space.shape, coord).exists(contains)
 
   def linearIndices: NArray[Int] =
-    members.indices
+    NArrayUtil.fromArray(members.ordinalsInDomainOrder)
 
   def voxelCoords: Vector[VoxelCoord] =
-    members.voxelCoords
+    members.ordinalsInDomainOrder.toVector.map(Indexing.indexToGrid3D(space.shape, _))
 
   def union(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that, VoxelRegion.Operation.Union)
+    combine(that)(_.union(_))
 
   def intersect(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that, VoxelRegion.Operation.Intersection)
+    combine(that)(_.intersect(_))
 
   def diff(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that, VoxelRegion.Operation.Difference)
+    combine(that)(_.diff(_))
 
   def xor(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that, VoxelRegion.Operation.SymmetricDifference)
+    combine(that)(_.xor(_))
 
   def complement: VoxelRegion =
-    val values = members.unsafeArray
-    val out = Array.newBuilder[Int]
-    out.sizeHint(space.nVoxels - values.length)
-    var voxel = 0
-    var member = 0
-    while voxel < space.nVoxels do
-      if member < values.length && values(member) == voxel then member += 1
-      else out += voxel
-      voxel += 1
-    VoxelRegion.fromSorted(space, out.result())
+    new VoxelRegion(space, members.complement)
 
   def toSelection: VoxelSelection =
     VoxelSelection.fromRegion(this)
 
   private[image] def indexSet: VoxelIndexSet =
+    VoxelIndexSet.unsafe(space, linearIndices)
+
+  private[image] def locusRegion: LocusRegion[StructuralVolumeVoxel] =
     members
 
   private def combine(
-      that: VoxelRegion,
-      operation: VoxelRegion.Operation
+      that: VoxelRegion
+  )(
+      operation: (
+          LocusRegion[StructuralVolumeVoxel],
+          LocusRegion[StructuralVolumeVoxel]
+      ) => Either[scalafim.locus.SpaceMismatch, LocusRegion[StructuralVolumeVoxel]]
   ): Either[GridMismatch, VoxelRegion] =
     GridCompatibility.volume(space, that.space).map: _ =>
-      val left = members.unsafeArray
-      val right = that.members.unsafeArray
-      val out = Array.newBuilder[Int]
-      out.sizeHint(operation.maximumSize(left.length, right.length))
-      var i = 0
-      var j = 0
-
-      while i < left.length && j < right.length do
-        val leftValue = left(i)
-        val rightValue = right(j)
-        if leftValue < rightValue then
-          if operation.includeLeftOnly then out += leftValue
-          i += 1
-        else if rightValue < leftValue then
-          if operation.includeRightOnly then out += rightValue
-          j += 1
-        else
-          if operation.includeShared then out += leftValue
-          i += 1
-          j += 1
-
-      if operation.includeLeftOnly then
-        while i < left.length do
-          out += left(i)
-          i += 1
-
-      if operation.includeRightOnly then
-        while j < right.length do
-          out += right(j)
-          j += 1
-
-      VoxelRegion.fromSorted(space, out.result())
+      val combined = operation(members, that.members).toOption.get
+      new VoxelRegion(space, combined)
 
   override def equals(other: Any): Boolean =
     other match
@@ -115,44 +87,17 @@ final class VoxelRegion private (
     s"VoxelRegion(size=$size, dims=${space.dims})"
 
 object VoxelRegion:
-  private enum Operation:
-    case Union
-    case Intersection
-    case Difference
-    case SymmetricDifference
-
-    def includeLeftOnly: Boolean =
-      this match
-        case Union | Difference | SymmetricDifference => true
-        case Intersection => false
-
-    def includeRightOnly: Boolean =
-      this match
-        case Union | SymmetricDifference => true
-        case Intersection | Difference => false
-
-    def includeShared: Boolean =
-      this match
-        case Union | Intersection => true
-        case Difference | SymmetricDifference => false
-
-    def maximumSize(left: Int, right: Int): Int =
-      this match
-        case Union | SymmetricDifference => left + right
-        case Intersection => math.min(left, right)
-        case Difference => left
-
   def make(
       space: VolumeSpace,
       indices: NArray[Int]
   ): Either[VoxelIndexSetError, VoxelRegion] =
-    VoxelIndexSet.make(space, indices).map(indexSet => new VoxelRegion(space, indexSet))
+    VoxelIndexSet.make(space, indices).map(fromValidated)
 
   def make(
       space: NeuroSpace,
       indices: NArray[Int]
   ): Either[VoxelIndexSetError, VoxelRegion] =
-    VoxelIndexSet.make(space, indices).map(indexSet => new VoxelRegion(indexSet.space, indexSet))
+    VoxelIndexSet.make(space, indices).map(fromValidated)
 
   def fromRoi(roi: VoxelRoi): VoxelRegion =
     fromValidated(roi.linearIndexSet)
@@ -173,15 +118,20 @@ object VoxelRegion:
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
   private[image] def fromValidated(indexSet: VoxelIndexSet): VoxelRegion =
-    val sorted = indexSet.toVector.sorted.toArray
-    fromSorted(indexSet.space, sorted)
+    val locusSpace = StructuralVolumeLocus.space(indexSet.space)
+    val region =
+      LocusRegion.fromOrdinals(locusSpace, indexSet.toVector).toOption.get
+    new VoxelRegion(indexSet.space, region)
 
-  private def fromSorted(space: VolumeSpace, values: Array[Int]): VoxelRegion =
-    new VoxelRegion(space, VoxelIndexSet.unsafe(space, NArrayUtil.fromArray(values)))
+  private[image] def fromLocus(
+      space: VolumeSpace,
+      region: LocusRegion[StructuralVolumeVoxel]
+  ): VoxelRegion =
+    new VoxelRegion(space, region)
 
 final class VoxelSelection private (
     val space: VolumeSpace,
-    private val ordered: VoxelIndexSet,
+    private val ordered: LocusSelection[StructuralVolumeVoxel],
     val region: VoxelRegion
 ):
   def size: Int =
@@ -191,15 +141,18 @@ final class VoxelSelection private (
     ordered.isEmpty
 
   def linearIndices: NArray[Int] =
-    ordered.indices
+    NArrayUtil.fromArray(ordered.ordinals)
 
   def voxelCoords: Vector[VoxelCoord] =
-    ordered.voxelCoords
+    ordered.ordinals.toVector.map(Indexing.indexToGrid3D(space.shape, _))
 
   def toVoxelRoi: VoxelRoi =
     VoxelRoi.fromSelection(this)
 
   private[image] def indexSet: VoxelIndexSet =
+    VoxelIndexSet.unsafe(space, linearIndices)
+
+  private[image] def locusSelection: LocusSelection[StructuralVolumeVoxel] =
     ordered
 
   override def equals(other: Any): Boolean =
@@ -228,7 +181,8 @@ object VoxelSelection:
     VoxelIndexSet.makeUnique(space, indices).map(fromValidated)
 
   def fromRegion(region: VoxelRegion): VoxelSelection =
-    new VoxelSelection(region.space, region.indexSet, region)
+    val selection = LocusSelection.fromRegion(region.locusRegion)
+    new VoxelSelection(region.space, selection, region)
 
   def fromRoi(roi: VoxelRoi): VoxelSelection =
     fromValidated(roi.linearIndexSet)
@@ -246,4 +200,11 @@ object VoxelSelection:
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
   private def fromValidated(indexSet: VoxelIndexSet): VoxelSelection =
-    new VoxelSelection(indexSet.space, indexSet, VoxelRegion.fromValidated(indexSet))
+    val locusSpace = StructuralVolumeLocus.space(indexSet.space)
+    val selection =
+      LocusSelection.fromOrdinals(locusSpace, indexSet.toVector).toOption.get
+    val region = VoxelRegion.fromLocus(
+      indexSet.space,
+      selection.region
+    )
+    new VoxelSelection(indexSet.space, selection, region)

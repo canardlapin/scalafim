@@ -126,12 +126,9 @@ class DomainValiditySuite extends munit.FunSuite:
     )
   }
 
-  test("searchlight radii reject non-positive and non-finite values") {
-    assertEquals(
-      SearchlightRadius.make(0.0),
-      Left(SearchlightError.InvalidRadius(0.0)),
-      clue = ""
-    )
+  test("searchlight radii admit zero and reject negative or non-finite values") {
+    assertEquals(SearchlightRadius.make(0.0).map(_.millimeters), Right(0.0), clue = "")
+    assert(SearchlightRadius.make(-0.1).isLeft, clue = "")
     assert(SearchlightRadius.make(Double.PositiveInfinity).isLeft, clue = "")
     assert(SearchlightRadius.make(Double.NaN).isLeft, clue = "")
   }
