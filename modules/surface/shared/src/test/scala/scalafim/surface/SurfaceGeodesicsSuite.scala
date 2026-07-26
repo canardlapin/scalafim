@@ -42,7 +42,7 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assertEquals(hits.map(_.target).toSet, Set(VertexId(0), VertexId(1), VertexId(2), VertexId(3)))
     assert(hits.exists(hit => hit.source == VertexId(0) && hit.target == VertexId(0) && hit.distance == 0.0))
 
-  test("neighborsWithin uses a strict radius boundary"):
+  test("neighborsWithin uses a closed radius boundary"):
     val hits =
       SurfaceGeodesics.neighborsWithin(
         tetraTopology,
@@ -50,7 +50,7 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
         sources = Vector(VertexId(0))
       )
 
-    assertEquals(hits.map(_.target).toSet, Set(VertexId(0)))
+    assertEquals(hits.map(_.target).toSet, Set(VertexId(0), VertexId(1), VertexId(2), VertexId(3)))
 
   test("euclidean metric ignores mesh paths"):
     val matrix =
@@ -140,8 +140,15 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assertEquals(cache.size, 2)
 
   test("geodesic input validation catches bad radius, vertices, and weights"):
-    interceptMessage[IllegalArgumentException]("requirement failed: radius must be positive and finite"):
-      SurfaceGeodesics.neighborsWithin(tetraTopology, 0.0, Vector(VertexId(0)))
+    assertEquals(
+      SurfaceGeodesics
+        .neighborsWithin(tetraTopology, 0.0, Vector(VertexId(0)))
+        .map(_.target),
+      Vector(VertexId(0))
+    )
+
+    interceptMessage[IllegalArgumentException]("requirement failed: radius must be non-negative and finite"):
+      SurfaceGeodesics.neighborsWithin(tetraTopology, -0.1, Vector(VertexId(0)))
 
     interceptMessage[IllegalArgumentException]("requirement failed: target vertex id out of range"):
       SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(99)))
