@@ -43,24 +43,19 @@ class ConfoundsSuite extends munit.FunSuite:
     assert(ConfoundStrategy.from("bad", Vector("csf"), percentVariance = Some(101.0)).isLeft)
     assert(ConfoundStrategy.from("bad", Vector.empty, percentVariance = Some(80.0)).isLeft)
 
-    val table =
-      value(
-        BidsTable.fromRows(
-          Vector("CSF", "WhiteMatter"),
-          Vector(
-            Vector(Some("1"), Some("2")),
-            Vector(Some("2"), Some("3"))
-          )
-        )
-      )
-    val invalid =
-      ConfoundStrategy(
-        name = "bad",
-        pcaVars = Vector("csf", "white_matter"),
-        npcs = Some(1),
-        percentVariance = Some(80.0)
-      )
-    assert(ConfoundSelector.selectStrategy(table, invalid).isLeft)
+    val components = value(PcaRetention.components(2))
+    val percent = value(PcaRetention.percent(80.0))
+    val byComponents = value(ConfoundStrategy.fromRetention("components", Vector("csf"), pcaRetention = Some(components)))
+    val byPercent = value(ConfoundStrategy.fromRetention("percent", Vector("csf"), pcaRetention = Some(percent)))
+
+    assertEquals(byComponents.pcaRetention, Some(components))
+    assertEquals(byComponents.npcs, Some(2))
+    assertEquals(byComponents.percentVariance, None)
+    assertEquals(byPercent.pcaRetention, Some(percent))
+    assertEquals(byPercent.npcs, None)
+    assertEquals(byPercent.percentVariance, Some(80.0))
+    assert(PcaRetention.components(0).isLeft)
+    assert(PcaRetention.percent(101.0).isLeft)
 
   test("confound resolver supports aliases, wildcards, caps, and derivative suffix aliases"):
     val columns =
@@ -157,12 +152,12 @@ class ConfoundsSuite extends munit.FunSuite:
         )
       )
     val strategy =
-      ConfoundStrategy(
+      value(ConfoundStrategy.fromRetention(
         name = "test-pca",
         pcaVars = Vector("csf", "white_matter"),
         rawVars = Vector("cosine*"),
-        percentVariance = Some(80.0)
-      )
+        pcaRetention = Some(value(PcaRetention.percent(80.0)))
+      ))
 
     val selected = value(ConfoundSelector.selectStrategy(table, strategy))
 
@@ -195,12 +190,12 @@ class ConfoundsSuite extends munit.FunSuite:
         )
       )
     val strategy =
-      ConfoundStrategy(
+      value(ConfoundStrategy.fromRetention(
         name = "two-pc",
         pcaVars = Vector("a_comp_cor_*"),
         rawVars = Vector("cosine*"),
-        npcs = Some(2)
-      )
+        pcaRetention = Some(value(PcaRetention.components(2)))
+      ))
 
     val selected = value(ConfoundSelector.selectStrategy(table, strategy))
 

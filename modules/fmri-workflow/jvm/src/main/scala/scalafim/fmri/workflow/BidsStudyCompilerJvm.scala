@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.{BidsFile, BidsPath, BidsProject}
+import scalafim.bids.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
 import scalafim.dataset.DatasetShape
 import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
@@ -14,6 +14,12 @@ object BidsStudyCompilerJvm:
       recipe: DatasetRecipe
   ): Either[CatalogCompileReport, StudyCatalog] =
     BidsStudyCompiler.compile(project, recipe, readHeaders(project, recipe))
+
+  def compileChecked(
+      project: BidsValidationReport[BidsProject],
+      recipe: DatasetRecipe
+  ): Either[CatalogCompileReport, CatalogCompilation] =
+    BidsStudyCompiler.compileChecked(project, recipe, readHeaders(project.value, recipe))
 
   def readHeaders(project: BidsProject, recipe: DatasetRecipe): ImageHeaderCatalog =
     val selectedBold = project.query(recipe.boldQuery)

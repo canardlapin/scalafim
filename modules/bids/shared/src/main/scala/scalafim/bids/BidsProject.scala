@@ -76,7 +76,7 @@ final case class BidsProject(
       scope: BidsScope = BidsScope.All,
       pipeline: Option[PipelineName] = None
   ): Map[String, Vector[String]] =
-    query(BidsQuery(scope = scope, pipeline = pipeline))
+    query(BidsQuery.unsafe(scope = scope, pipeline = pipeline))
       .flatMap(file => file.entities.get(EntityKey.Subject).map(sub => sub -> file.entities.get(EntityKey.Session)))
       .groupMap(_._1)(_._2)
       .view
@@ -87,7 +87,7 @@ final case class BidsProject(
       scope: BidsScope = BidsScope.All,
       pipeline: Option[PipelineName] = None
   ): Map[String, Vector[String]] =
-    query(BidsQuery(scope = scope, pipeline = pipeline))
+    query(BidsQuery.unsafe(scope = scope, pipeline = pipeline))
       .flatMap(file => file.entities.get(EntityKey.Subject).map(sub => sub -> file.entities.get(EntityKey.Task)))
       .groupMap(_._1)(_._2)
       .view
@@ -98,7 +98,7 @@ final case class BidsProject(
       scope: BidsScope = BidsScope.All,
       pipeline: Option[PipelineName] = None
   ): Map[BidsTaskKey, Vector[String]] =
-    query(BidsQuery(scope = scope, pipeline = pipeline))
+    query(BidsQuery.unsafe(scope = scope, pipeline = pipeline))
       .flatMap { file =>
         for
           sub <- file.entities.get(EntityKey.Subject)
@@ -118,14 +118,14 @@ final case class BidsProject(
       kind: String = "bold"
   ): Vector[BidsFile] =
     query(
-      BidsQuery(
+      BidsQuery.unsafe(
         filename = Vector(s"${kind}\\.nii(\\.gz)?$$"),
         scope = BidsScope.Raw,
         filters = Vector(
-          EntityFilter(EntityKey.Subject, subid),
-          EntityFilter(EntityKey.Task, task),
-          EntityFilter(EntityKey.Run, run),
-          EntityFilter(EntityKey.Session, session)
+          EntityFilter.unsafe(EntityKey.Subject, subid),
+          EntityFilter.unsafe(EntityKey.Task, task),
+          EntityFilter.unsafe(EntityKey.Run, run),
+          EntityFilter.unsafe(EntityKey.Session, session)
         ),
         matchMode = MatchMode.Regex,
         strict = true
@@ -143,16 +143,16 @@ final case class BidsProject(
       pipeline: Option[PipelineName] = Some(PipelineName("fmriprep"))
   ): Vector[BidsFile] =
     query(
-      BidsQuery(
+      BidsQuery.unsafe(
         filename = Vector("\\.nii(\\.gz)?$"),
         scope = BidsScope.Derivatives,
         pipeline = pipeline,
         filters = Vector(
-          EntityFilter(EntityKey.Subject, subid),
-          EntityFilter(EntityKey.Task, task),
-          EntityFilter(EntityKey.Run, run),
-          EntityFilter(EntityKey.Session, session),
-          EntityFilter(EntityKey.Space, space)
+          EntityFilter.unsafe(EntityKey.Subject, subid),
+          EntityFilter.unsafe(EntityKey.Task, task),
+          EntityFilter.unsafe(EntityKey.Run, run),
+          EntityFilter.unsafe(EntityKey.Session, session),
+          EntityFilter.unsafe(EntityKey.Space, space)
         ),
         matchMode = MatchMode.Regex,
         strict = true
@@ -169,15 +169,15 @@ final case class BidsProject(
       pipeline: Option[PipelineName] = None
   ): Vector[BidsFile] =
     query(
-      BidsQuery(
+      BidsQuery.unsafe(
         filename = Vector(s"${kind}\\.nii(\\.gz)?$$"),
         scope = scope,
         pipeline = pipeline,
         filters = Vector(
-          EntityFilter(EntityKey.Subject, subid),
-          EntityFilter(EntityKey.Session, session),
-          EntityFilter(EntityKey.Space, space),
-          EntityFilter(EntityKey.Description, desc)
+          EntityFilter.unsafe(EntityKey.Subject, subid),
+          EntityFilter.unsafe(EntityKey.Session, session),
+          EntityFilter.unsafe(EntityKey.Space, space),
+          EntityFilter.unsafe(EntityKey.Description, desc)
         ),
         matchMode = MatchMode.Regex,
         strict = true
@@ -191,14 +191,14 @@ final case class BidsProject(
       session: String = ".*"
   ): Vector[BidsFile] =
     query(
-      BidsQuery(
+      BidsQuery.unsafe(
         filename = Vector("events\\.tsv$"),
         scope = BidsScope.Raw,
         filters = Vector(
-          EntityFilter(EntityKey.Subject, subid),
-          EntityFilter(EntityKey.Task, task),
-          EntityFilter(EntityKey.Run, run),
-          EntityFilter(EntityKey.Session, session)
+          EntityFilter.unsafe(EntityKey.Subject, subid),
+          EntityFilter.unsafe(EntityKey.Task, task),
+          EntityFilter.unsafe(EntityKey.Run, run),
+          EntityFilter.unsafe(EntityKey.Session, session)
         ),
         matchMode = MatchMode.Regex,
         strict = true
@@ -213,15 +213,15 @@ final case class BidsProject(
       pipeline: Option[PipelineName] = Some(PipelineName("fmriprep"))
   ): Vector[BidsFile] =
     query(
-      BidsQuery(
+      BidsQuery.unsafe(
         filename = Vector(".*\\.tsv$"),
         scope = BidsScope.Derivatives,
         pipeline = pipeline,
         filters = Vector(
-          EntityFilter(EntityKey.Subject, subid),
-          EntityFilter(EntityKey.Task, task),
-          EntityFilter(EntityKey.Run, run),
-          EntityFilter(EntityKey.Session, session)
+          EntityFilter.unsafe(EntityKey.Subject, subid),
+          EntityFilter.unsafe(EntityKey.Task, task),
+          EntityFilter.unsafe(EntityKey.Run, run),
+          EntityFilter.unsafe(EntityKey.Session, session)
         ),
         matchMode = MatchMode.Regex,
         strict = true
@@ -370,7 +370,7 @@ final case class BidsProject(
     }
 
   private def entityValues(key: EntityKey, scope: BidsScope, pipeline: Option[PipelineName]): Vector[String] =
-    query(BidsQuery(scope = scope, pipeline = pipeline))
+    query(BidsQuery.unsafe(scope = scope, pipeline = pipeline))
       .flatMap(_.entities.get(key))
       .distinct
       .sorted

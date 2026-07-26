@@ -40,6 +40,23 @@ class BidsNameSuite extends munit.FunSuite:
     assert(BidsSpecs.Func.validate(value(BidsName.parseGeneric("sub-01_task-rest_space-MNI_bold.nii.gz"))).isLeft)
     assert(BidsName.parse("sub-01_task-rest_run-a_bold.nii.gz").isLeft)
 
+  test("datatype validation accumulates independent kind and entity issues"):
+    val name = value(BidsName.parseGeneric("task-rest_run-a_extra-x_weird.tsv"))
+    val report = BidsSpecs.Func.validateAll(name).left.toOption.getOrElse(fail("expected validation issues"))
+
+    assertEquals(report.issues.length, 4)
+    assertEquals(
+      report.issues.map(issue => issue.code -> issue.field),
+      Vector(
+        BidsIssueCode.InvalidName -> Some("kind"),
+        BidsIssueCode.InvalidEntity -> Some("extra"),
+        BidsIssueCode.InvalidEntity -> Some("run"),
+        BidsIssueCode.MissingRequiredField -> Some("sub")
+      )
+    )
+    assertEquals(BidsSpecs.Func.validateAll(name), BidsSpecs.Func.validateAll(name))
+    assert(BidsSpecs.Func.validate(name).isLeft)
+
   test("path-aware parsing validates datatype folder and exposes typed role"):
     val name = value(BidsRegistry.Builtin.parsePath(BidsPath("sub-01/func/sub-01_task-rest_bold.nii.gz")))
     val role = value(BidsSpecs.Func.roleFor(name))
@@ -54,7 +71,12 @@ class BidsNameSuite extends munit.FunSuite:
     assertEquals(manifest.files.head.parsed, None)
     assertEquals(
       manifest.paths(
-        BidsQuery(filename = Vector("bold\\.nii\\.gz$"), filters = Vector(EntityFilter(EntityKey.Task, "rest")))
+        value(
+          BidsQuery.from(
+            filename = Vector("bold\\.nii\\.gz$"),
+            filters = Vector(value(EntityFilter.from(EntityKey.Task, "rest")))
+          )
+        )
       ),
       Vector.empty
     )

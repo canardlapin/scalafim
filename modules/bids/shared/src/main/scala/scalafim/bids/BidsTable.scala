@@ -1,5 +1,7 @@
 package scalafim.bids
 
+import cats.syntax.all.*
+
 opaque type ColumnName = String
 
 object ColumnName:
@@ -66,15 +68,70 @@ object BidsTable:
     else Right(BidsColumn(name.trim, values))
 
   def fromRows(columns: Vector[String], rows: Vector[Vector[Option[String]]]): Either[BidsError, BidsTable] =
+    fromRowsChecked(columns, rows).left.map(report => BidsError.InvalidTable(report.primary.message))
+
+  def fromRowsChecked(
+      columns: Vector[String],
+      rows: Vector[Vector[Option[String]]]
+  ): Either[BidsIssueReport, BidsTable] =
     val cleanColumns = columns.map(_.trim)
-    if cleanColumns.exists(_.isEmpty) then Left(BidsError.InvalidTable("column names must be non-empty"))
-    else if cleanColumns.distinct.length != cleanColumns.length then Left(BidsError.InvalidTable("column names must be unique"))
-    else if rows.exists(_.length != cleanColumns.length) then Left(BidsError.InvalidTable("all rows must have the same width as the header"))
-    else Right(BidsTable(cleanColumns, rows))
+    val nonEmptyChecks =
+      BidsValidation.all(
+        cleanColumns.zipWithIndex.collect { case (name, index) if name.isEmpty =>
+          BidsValidation.invalid(
+            BidsIssue.error(
+              BidsIssueCode.InvalidTable,
+              None,
+              Some(s"columns[$index]"),
+              "column name must be non-empty"
+            )
+          )
+        }
+      )
+    val duplicateChecks =
+      BidsValidation.all(
+        cleanColumns.zipWithIndex
+          .groupBy(_._1)
+          .toVector
+          .collect { case (name, occurrences) if name.nonEmpty && occurrences.lengthCompare(1) > 0 =>
+            val indexes = occurrences.map(_._2).sorted.mkString(", ")
+            BidsValidation.invalid(
+              BidsIssue.error(
+                BidsIssueCode.InvalidTable,
+                None,
+                Some(name),
+                s"column name '$name' is duplicated at indexes $indexes"
+              )
+            )
+          }
+      )
+    val widthChecks =
+      BidsValidation.all(
+        rows.zipWithIndex.collect { case (row, index) if row.length != cleanColumns.length =>
+          BidsValidation.invalid(
+            BidsIssue.error(
+              BidsIssueCode.InvalidTable,
+              None,
+              Some(s"rows[$index]"),
+              s"row width ${row.length} does not match header width ${cleanColumns.length}"
+            )
+          )
+        }
+      )
+
+    BidsValidation.toEither(
+      (nonEmptyChecks, duplicateChecks, widthChecks).mapN((_, _, _) => BidsTable(cleanColumns, rows))
+    )
 
   def parse(text: String): Either[BidsError, BidsTable] =
+    parseChecked(text).left.map(report => BidsError.InvalidTable(report.primary.message))
+
+  def parseChecked(text: String): Either[BidsIssueReport, BidsTable] =
     val lines = text.linesIterator.filter(_.trim.nonEmpty).toVector
-    if lines.isEmpty then Left(BidsError.InvalidTable("input is empty"))
+    if lines.isEmpty then
+      Left(BidsIssueReport.unsafe(Vector(
+        BidsIssue.error(BidsIssueCode.InvalidTable, None, None, "input is empty")
+      )))
     else
       val tabDelimited = lines.head.contains('\t')
       val split: String => Vector[String] =
@@ -84,7 +141,7 @@ object BidsTable:
       val rows = lines.tail.map { line =>
         split(line).map(cell => Option.when(!MissingTokens(cell))(cell))
       }
-      fromRows(columns, rows)
+      fromRowsChecked(columns, rows)
 
 object BidsEvents:
   def readTable(text: String): Either[BidsError, BidsTable] =
@@ -93,20 +150,16 @@ object BidsEvents:
   def readEventsTable(text: String): Either[BidsError, EventsTable] =
     BidsTable.parse(text).flatMap(EventsTable.from)
 
-final case class EventsTable private (
-    table: BidsTable,
-    onset: BidsColumn,
-    duration: BidsColumn
+final class EventsTable private (
+    val table: BidsTable,
+    val onset: BidsColumn,
+    val duration: BidsColumn,
+    val onsetSeconds: Vector[Option[Double]],
+    val durationSeconds: Vector[Option[Double]]
 ):
   def nrows: Int = table.nrows
   def trialType: Option[BidsColumn] =
     table.columnNamed("trial_type").toOption
-
-  def onsetSeconds: Vector[Option[Double]] =
-    onset.numeric.toOption.getOrElse(Vector.empty)
-
-  def durationSeconds: Vector[Option[Double]] =
-    duration.numeric.toOption.getOrElse(Vector.empty)
 
 object EventsTable:
   val OnsetColumn: ColumnName = ColumnName.unsafe("onset")
@@ -116,9 +169,21 @@ object EventsTable:
     for
       onset <- table.columnNamed(OnsetColumn.value)
       duration <- table.columnNamed(DurationColumn.value)
-      _ <- onset.numeric
-      _ <- duration.numeric
-    yield EventsTable(table, onset, duration)
+      onsetSeconds <- onset.numeric
+      durationSeconds <- duration.numeric
+    yield new EventsTable(table, onset, duration, onsetSeconds, durationSeconds)
+
+final case class BidsEventTableFile(context: BidsTableContext, events: EventsTable):
+  def path: BidsPath = context.path
+  def subject: Option[String] = context.subject
+  def session: Option[String] = context.session
+  def task: Option[String] = context.task
+  def run: Option[String] = context.run
+  def table: BidsTable = events.table
+
+object BidsEventTableFile:
+  def from(file: BidsFile, events: EventsTable): BidsEventTableFile =
+    BidsEventTableFile(BidsTableContext.fromFile(file), events)
 
 final case class BidsTableContext(
     path: BidsPath,

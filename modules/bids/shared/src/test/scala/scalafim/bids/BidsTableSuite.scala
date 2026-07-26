@@ -27,6 +27,39 @@ class BidsTableSuite extends munit.FunSuite:
   test("ragged events tables are rejected"):
     assert(BidsEvents.readTable("onset duration\n0 1 2\n").isLeft)
 
+  test("checked table construction accumulates header and row defects"):
+    val report =
+      BidsTable
+        .fromRowsChecked(
+          Vector("", "value", "value"),
+          Vector(Vector(Some("1")), Vector(None, None, None, None))
+        )
+        .left
+        .toOption
+        .getOrElse(fail("expected validation issues"))
+
+    assertEquals(report.issues.length, 4)
+    assertEquals(
+      report.issues.flatMap(_.field),
+      Vector("columns[0]", "rows[0]", "rows[1]", "value")
+    )
+    assert(BidsTable.fromRows(Vector("", "value", "value"), Vector(Vector(Some("1")))).isLeft)
+
+  test("checked table parsing accumulates header and row defects"):
+    val report =
+      BidsTable
+        .parseChecked("name\tname\t\n1\t2\n1\t2\t3\t4\n")
+        .left
+        .toOption
+        .getOrElse(fail("expected checked parsing defects"))
+
+    assertEquals(report.issues.length, 4)
+    assertEquals(
+      report.issues.flatMap(_.field),
+      Vector("columns[2]", "name", "rows[0]", "rows[1]")
+    )
+    assertEquals(report.issues.map(_.code).distinct, Vector(BidsIssueCode.InvalidTable))
+
   test("typed columns expose safe numeric conversion"):
     val table = value(BidsEvents.readTable("onset duration trial_type\n0 1 go\n2 n/a stop\n"))
     val duration = value(table.columnNamed("duration"))

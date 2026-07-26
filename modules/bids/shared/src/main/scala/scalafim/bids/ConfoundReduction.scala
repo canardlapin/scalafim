@@ -17,7 +17,7 @@ private[bids] object PrincipalComponentConfoundReducer extends ConfoundReducer:
         val standardized = standardize(numeric)
         val covariance = covarianceMatrix(standardized)
         val eigen = SymmetricEigen.decompose(covariance)
-        val components = retainedComponents(eigen.values, strategy.npcs, strategy.percentVariance)
+        val components = retainedComponents(eigen.values, strategy.pcaRetention)
 
         if components <= 0 then
           Left(BidsError.InvalidConfoundStrategy(strategy.name, "PCA retained zero components"))
@@ -102,28 +102,26 @@ private[bids] object PrincipalComponentConfoundReducer extends ConfoundReducer:
 
   private def retainedComponents(
       variances: Vector[Double],
-      npcs: Option[Int],
-      percentVariance: Option[Double]
+      retention: Option[PcaRetention]
   ): Int =
     val available = variances.length
     if available == 0 then 0
     else
-      npcs.filter(_ > 0) match
-        case Some(k) => math.min(k, available)
+      retention match
+        case Some(PcaRetention.Components(value)) =>
+          math.min(value.toInt, available)
+        case Some(PcaRetention.Percent(value)) =>
+          val target = value.toDouble / 100.0
+          val total = variances.filter(_ > 0.0).sum
+          if total <= 0.0 then 1
+          else
+            val cumulative = variances.scanLeft(0.0)(_ + _).tail.map(_ / total)
+            cumulative.indexWhere(_ >= target) match
+              case -1    => available
+              case index => index + 1
         case None =>
-          percentVariance.filter(_ > 0.0) match
-            case Some(percent) =>
-              val target = math.min(percent, 100.0) / 100.0
-              val total = variances.filter(_ > 0.0).sum
-              if total <= 0.0 then 1
-              else
-                val cumulative = variances.scanLeft(0.0)(_ + _).tail.map(_ / total)
-                cumulative.indexWhere(_ >= target) match
-                  case -1    => available
-                  case index => index + 1
-            case None =>
-              val positive = variances.count(_ > 1e-12)
-              if positive > 0 then positive else 1
+          val positive = variances.count(_ > 1e-12)
+          if positive > 0 then positive else 1
 
   private def projectScores(matrix: Vector[Vector[Double]], loadings: Vector[Vector[Double]]): Vector[Vector[Double]] =
     matrix.map { row =>

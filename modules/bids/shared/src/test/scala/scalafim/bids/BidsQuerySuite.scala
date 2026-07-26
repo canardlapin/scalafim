@@ -4,6 +4,20 @@ class BidsQuerySuite extends munit.FunSuite:
   private def value[A](e: Either[BidsError, A]): A =
     e.fold(err => fail(err.message), identity)
 
+  private def filter(key: EntityKey, value0: String): EntityFilter =
+    value(EntityFilter.from(key, value0))
+
+  private def query(
+      filename: Vector[String] = Vector(".*"),
+      filters: Vector[EntityFilter] = Vector.empty,
+      matchMode: MatchMode = MatchMode.Regex,
+      requireEntity: Boolean = false,
+      scope: BidsScope = BidsScope.All,
+      pipeline: Option[PipelineName] = None,
+      strict: Boolean = true
+  ): BidsQuery =
+    value(BidsQuery.from(filename, filters, matchMode, requireEntity, scope, pipeline, strict))
+
   private val manifest =
     BidsManifest.fromRelativePaths(
       Vector(
@@ -18,11 +32,11 @@ class BidsQuerySuite extends munit.FunSuite:
 
   test("query supports exact entity matching"):
     val hits = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector("bold\\.nii\\.gz$"),
         matchMode = MatchMode.Exact,
         scope = BidsScope.Raw,
-        filters = Vector(EntityFilter(EntityKey.Subject, "01"), EntityFilter(EntityKey.Task, "taskA"))
+        filters = Vector(filter(EntityKey.Subject, "01"), filter(EntityKey.Task, "taskA"))
       )
     )
 
@@ -30,11 +44,11 @@ class BidsQuerySuite extends munit.FunSuite:
 
   test("query supports regex entity matching"):
     val hits = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector("bold\\.nii\\.gz$"),
         matchMode = MatchMode.Regex,
         scope = BidsScope.Raw,
-        filters = Vector(EntityFilter(EntityKey.Subject, "0[1]"), EntityFilter(EntityKey.Task, "task.*"))
+        filters = Vector(filter(EntityKey.Subject, "0[1]"), filter(EntityKey.Task, "task.*"))
       )
     )
 
@@ -42,17 +56,17 @@ class BidsQuerySuite extends munit.FunSuite:
 
   test("requireEntity excludes files missing wildcard entity"):
     val lax = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector("T1w\\.nii\\.gz$"),
-        filters = Vector(EntityFilter(EntityKey.Task, ".*")),
+        filters = Vector(filter(EntityKey.Task, ".*")),
         requireEntity = false,
         scope = BidsScope.Raw
       )
     )
     val strict = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector("T1w\\.nii\\.gz$"),
-        filters = Vector(EntityFilter(EntityKey.Task, ".*")),
+        filters = Vector(filter(EntityKey.Task, ".*")),
         requireEntity = true,
         scope = BidsScope.Raw
       )
@@ -63,7 +77,7 @@ class BidsQuerySuite extends munit.FunSuite:
 
   test("query separates raw and derivative scopes and pipelines"):
     val hits = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector("bold\\.nii\\.gz$"),
         scope = BidsScope.Derivatives,
         pipeline = Some(PipelineName("fmriprep"))
@@ -77,10 +91,10 @@ class BidsQuerySuite extends munit.FunSuite:
 
   test("glob matching applies to entity filters"):
     val hits = manifest.paths(
-      BidsQuery(
+      query(
         filename = Vector(".*\\.nii\\.gz$"),
         matchMode = MatchMode.Glob,
-        filters = Vector(EntityFilter(EntityKey.Task, "task?")),
+        filters = Vector(filter(EntityKey.Task, "task?")),
         strict = true
       )
     )
@@ -103,15 +117,26 @@ class BidsQuerySuite extends munit.FunSuite:
 
     assertEquals(hits.map(_.value), Vector("sub-01/func/sub-01_task-taskA_run-01_bold.nii.gz"))
 
-    val directInvalid = BidsQuery(filename = Vector("["))
-    assertEquals(manifest.paths(directInvalid), Vector.empty)
-
-  test("query and filter validation is total and direct constructors do not throw"):
+  test("query and filter smart constructors reject invalid states"):
     assert(EntityFilter.from(EntityKey.Subject, Vector.empty).isLeft)
+    assert(EntityFilter.from(EntityKey.Subject, Vector(" ")).isLeft)
     assert(BidsQuery.from(filename = Vector.empty).isLeft)
+    assert(BidsQuery.from(filename = Vector("["), filters = Vector(filter(EntityKey.Task, "["))).isLeft)
 
-    val emptyFilenameQuery = BidsQuery(filename = Vector.empty)
-    assertEquals(manifest.paths(emptyFilenameQuery), Vector.empty)
+  test("checked query construction accumulates independent pattern and filter issues"):
+    val report =
+      BidsQuery
+        .fromChecked(
+          filename = Vector("[", "("),
+          filters = Vector(filter(EntityKey.Task, "["))
+        )
+        .left
+        .toOption
+        .getOrElse(fail("expected validation issues"))
 
-    val emptyFilterQuery = BidsQuery(filters = Vector(EntityFilter(EntityKey.Subject, Vector.empty)))
-    assertEquals(manifest.paths(emptyFilterQuery), Vector.empty)
+    assertEquals(report.errors.length, 3)
+    assertEquals(
+      report.issues.flatMap(_.field),
+      Vector("filename[0]", "filename[1]", "filters[0].values[0]")
+    )
+    assert(BidsQuery.from(filename = Vector("[", "(")).isLeft)
