@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import munit.FunSuite
-import scalafim.image.{NArrayUtil, NeuroSpace}
+import scalafim.image.{Mask, NArrayUtil, NeuroSpace}
 
 class ResponseBlockSourceSuite extends FunSuite:
   test("composite source preserves requested global time and voxel order") {
@@ -67,6 +67,20 @@ class ResponseBlockSourceSuite extends FunSuite:
 
     assert(source.readBlock(invalid).isLeft)
     assertEquals(source.reads, Vector.empty)
+  }
+
+  test("dataset backend rejects a mask from incompatible geometry during construction") {
+    val source = new RecordingSource(timepoints = 2, base = 0.0)
+    val mask = Mask.all(NeuroSpace(Vector(1, 3, 1)))
+
+    val result =
+      ResponseBlockDatasetBackend.make(
+        DatasetId("geometry-mismatch"),
+        source,
+        mask
+      )
+
+    assert(result.left.exists(_.message.contains("grid mismatch")))
   }
 
   private final class RecordingSource(

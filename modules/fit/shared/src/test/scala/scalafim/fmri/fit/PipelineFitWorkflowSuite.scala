@@ -56,7 +56,7 @@ class PipelineFitWorkflowSuite extends munit.FunSuite:
         Vector(7.0, -1.0, 7.0)
       )
     )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("pipeline-fit-demo"), data, NeuroSpace(Vector(3, 1, 1))),
       samplingFrame = samplingFrame
     )

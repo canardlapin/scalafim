@@ -1,5 +1,6 @@
 package scalafim.dataset.scenarios
 
+import scalafim.archive.RunLabel
 import scalafim.dataset.*
 import scalafim.image.NeuroSpace
 import scalafim.latent.{DctNorm, LatentArchiveCodec}
@@ -33,11 +34,14 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val backend =
-      LatentArchiveDatasetBackend(
-        id = DatasetId("scenario-latent-archive"),
-        archive = archive,
-        metadata = DatasetMetadata(Map("scenario" -> scenarioId, "storage" -> "lna-temporal-dct"))
-      )
+      LatentArchiveDatasetBackend
+        .make(
+          id = DatasetId("scenario-latent-archive"),
+          archive = archive,
+          run = RunLabel.indexed(0),
+          metadata = DatasetMetadata(Map("scenario" -> scenarioId, "storage" -> "lna-temporal-dct"))
+        )
+        .fold(err => fail(err.message), identity)
     val selection =
       DataSelection(
         time = TimepointSelection.indices(3, 1),

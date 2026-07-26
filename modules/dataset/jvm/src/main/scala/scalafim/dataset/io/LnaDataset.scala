@@ -10,7 +10,15 @@ import scalafim.archive.lna.{
   SharedBasisRegistryCodec
 }
 import scalafim.bids.{BidsJson, BidsTable, JsonValue}
-import scalafim.dataset.{DatasetError, DatasetId, DatasetMetadata, InMemoryDatasetBackend, LatentArchiveDatasetBackend, LatentResponseDatasetBackend}
+import scalafim.dataset.{
+  DatasetError,
+  DatasetId,
+  DatasetMetadata,
+  InMemoryDatasetBackend,
+  LatentArchiveDatasetBackend,
+  LatentResponseDatasetBackend,
+  RunId
+}
 import scalafim.latent.{LatentArchiveCodec, LatentArchivePlan, SharedBasisLatentArchive}
 
 import java.nio.file.{Files, Path}
@@ -336,16 +344,32 @@ final case class LnaDataset private (root: Path):
       Left(ArchiveError.InvalidPath(path.toString, "LNA archive path must stay inside the dataset root"))
     else LnaHdf5Store.default.read(normalized)
 
-  def backendFor(path: Path, id: DatasetId): Either[ArchiveError, LatentArchiveDatasetBackend] =
+  def backendFor(
+      path: Path,
+      id: DatasetId,
+      run: RunLabel
+  ): Either[ArchiveError, LatentArchiveDatasetBackend] =
     val normalized = resolveInsideRoot(path)
-    readArchive(path).map { archive =>
-      LatentArchiveDatasetBackend(id = id, archive = archive, metadata = metadataFor(normalized))
+    readArchive(path).flatMap { archive =>
+      LatentArchiveDatasetBackend
+        .make(
+          id = id,
+          archive = archive,
+          run = run,
+          metadata = metadataFor(normalized)
+        )
+        .left
+        .map(error => ArchiveError.InvalidArchive(error.message))
     }
+
+  def backendFor(path: Path, id: DatasetId): Either[ArchiveError, LatentArchiveDatasetBackend] =
+    readArchive(path).flatMap: archive =>
+      uniqueArchiveRun(archive).flatMap(run => backendFor(path, id, run))
 
   def latentBackendFor(
       path: Path,
       id: DatasetId,
-      run: RunLabel = RunLabel.indexed(0)
+      run: RunLabel
   ): Either[ArchiveError, LatentResponseDatasetBackend] =
     val normalized = resolveInsideRoot(path)
     readArchive(path).flatMap { archive =>
@@ -355,10 +379,17 @@ final case class LnaDataset private (root: Path):
       yield backend
     }
 
+  def latentBackendFor(
+      path: Path,
+      id: DatasetId
+  ): Either[ArchiveError, LatentResponseDatasetBackend] =
+    readArchive(path).flatMap: archive =>
+      uniqueArchiveRun(archive).flatMap(run => latentBackendFor(path, id, run))
+
   def materializedBackendFor(
       path: Path,
       id: DatasetId,
-      run: RunLabel = RunLabel.indexed(0)
+      run: RunLabel
   ): Either[ArchiveError, InMemoryDatasetBackend] =
     val normalized = resolveInsideRoot(path)
     readArchive(path).flatMap { archive =>
@@ -377,6 +408,13 @@ final case class LnaDataset private (root: Path):
       )
     }
 
+  def materializedBackendFor(
+      path: Path,
+      id: DatasetId
+  ): Either[ArchiveError, InMemoryDatasetBackend] =
+    readArchive(path).flatMap: archive =>
+      uniqueArchiveRun(archive).flatMap(run => materializedBackendFor(path, id, run))
+
   def readSubject(query: LnaDatasetQuery): Either[ArchiveError, LatentArchiveDatasetBackend] =
     resolveLnaFile(query)
       .left
@@ -385,12 +423,20 @@ final case class LnaDataset private (root: Path):
 
   def readSubjectLatent(
       query: LnaDatasetQuery,
-      run: RunLabel = RunLabel.indexed(0)
+      run: RunLabel
   ): Either[ArchiveError, LatentResponseDatasetBackend] =
     resolveLnaFile(query)
       .left
       .map(_.toArchiveError)
       .flatMap(path => latentBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path)), run))
+
+  def readSubjectLatent(
+      query: LnaDatasetQuery
+  ): Either[ArchiveError, LatentResponseDatasetBackend] =
+    resolveLnaFile(query)
+      .left
+      .map(_.toArchiveError)
+      .flatMap(path => latentBackendFor(path, DatasetId(LnaDataset.datasetIdFromPath(root, path))))
 
   def readSubjectMaterialized(query: LnaDatasetQuery): Either[ArchiveError, InMemoryDatasetBackend] =
     resolveLnaFile(query)
@@ -426,7 +472,7 @@ final case class LnaDataset private (root: Path):
         finally stream.close()
       catch case NonFatal(e) => Left(ArchiveError.UnsupportedStorage(s"could not scan LNA files under $subjectDir: ${e.getMessage}"))
 
-  private def metadataFor(path: Path): DatasetMetadata =
+  private[io] def metadataFor(path: Path): DatasetMetadata =
     DatasetMetadata(
       Map(
         "lna.dataset_root" -> root.toString,
@@ -435,7 +481,7 @@ final case class LnaDataset private (root: Path):
       )
     )
 
-  private def latentBackendFromPlan(
+  private[io] def latentBackendFromPlan(
       plan: LatentArchivePlan,
       archivePath: Path,
       id: DatasetId,
@@ -445,8 +491,11 @@ final case class LnaDataset private (root: Path):
       case LatentArchivePlan.SharedBasis(runInfo, _, responseArchive) =>
         sharedBasisLatentBackend(responseArchive, archivePath, id, runInfo, metadata)
       case other =>
-        other.selectionResponse.map { response =>
-          LatentResponseDatasetBackend(id, response, other.runInfo.shape.space, metadata)
+        other.selectionResponse.flatMap { response =>
+          LatentResponseDatasetBackend
+            .make(id, response, other.runInfo.shape.space, metadata)
+            .left
+            .map(error => ArchiveError.InvalidArchive(error.message))
         }
 
   private def sharedBasisLatentBackend(
@@ -470,13 +519,38 @@ final case class LnaDataset private (root: Path):
         .sampleMask(runInfo.shape.space, artifact)
         .left
         .map(err => ArchiveError.InvalidArchive(err.message))
-    yield LatentResponseDatasetBackend(
-      id = id,
-      response = response,
-      space = runInfo.shape.space,
-      mask = mask,
-      metadata = metadata
-    )
+      backend <- LatentResponseDatasetBackend
+        .make(
+          id = id,
+          response = response,
+          space = runInfo.shape.space,
+          mask = mask,
+          metadata = metadata
+        )
+        .left
+        .map(error => ArchiveError.InvalidArchive(error.message))
+    yield backend
+
+  private def uniqueArchiveRun(archive: LnaArchive): Either[ArchiveError, RunLabel] =
+    archive.manifest.runs.map(_.label) match
+      case Vector(run) =>
+        Right(run)
+      case runs =>
+        Left(ArchiveError.InvalidArchive(
+          s"archive contains ${runs.length} internal runs; select one explicitly"
+        ))
+
+  private[io] def datasetRunId(path: Path): Either[DatasetError, RunId] =
+    val normalized = resolveInsideRoot(path)
+    LnaFileEntities.parse(normalized).flatMap: entities =>
+      entities.run match
+        case Some(run) => RunId.make(s"run-$run")
+        case None =>
+          Left(DatasetError.InvalidLabel(
+            "LNA run entity",
+            root.relativize(normalized).toString,
+            "filename must contain an explicit run-<label> entity"
+          ))
 
   private def resolveInsideRoot(path: Path): Path =
     if path.isAbsolute then path.toAbsolutePath.normalize()

@@ -20,7 +20,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
     val y = Vector(1.0, 3.0, 5.0, 7.0, 10.0, 9.0, 8.0, 7.0)
     val data = ImageDMat.fromRows(y.map(v => Vector(v)))
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("runwise-demo"), data, NeuroSpace(Vector(1, 1, 1))),
         samplingFrame = samplingFrame
       )

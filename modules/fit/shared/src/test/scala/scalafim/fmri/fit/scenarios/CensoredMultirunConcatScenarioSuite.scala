@@ -6,7 +6,6 @@ import scalafim.dataset.{
   DataSelection,
   DatasetEvents,
   DatasetId,
-  DatasetTimeAxis,
   FmriDataset,
   InMemoryDatasetBackend,
   RunId,
@@ -133,29 +132,27 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
       DataSelection(time = TimepointSelection.indices(keepTimepoints*))
 
     def dataset: FmriDataset =
-      val timeAxis =
-        DatasetTimeAxis
-          .fromSamplingFrame(samplingFrame, Vector(RunId("run-1"), RunId("run-2")))
-          .fold(error => fail(error.message), identity)
-      FmriDataset(
-        backend = InMemoryDatasetBackend(
-          DatasetId("scenario-censored-multirun-concat"),
-          ImageDMat.fromRows(responseRows),
-          NeuroSpace(Vector(2, 1, 1))
-        ),
-        samplingFrame = samplingFrame,
-        events = DatasetEvents(
-          task.indices.toVector.map { timepoint =>
-            val run = if timepoint < samplingFrame.blockLens.head then "run-1" else "run-2"
-            Map(
-              "onset" -> timepoint.toString,
-              "run" -> run,
-              "task" -> task(timepoint).toString
-            )
-          }
-        ),
-        timeAxis = timeAxis
-      )
+      FmriDataset
+        .open(
+          backend = InMemoryDatasetBackend(
+            DatasetId("scenario-censored-multirun-concat"),
+            ImageDMat.fromRows(responseRows),
+            NeuroSpace(Vector(2, 1, 1))
+          ),
+          samplingFrame = samplingFrame,
+          events = DatasetEvents(
+            task.indices.toVector.map { timepoint =>
+              val run = if timepoint < samplingFrame.blockLens.head then "run-1" else "run-2"
+              Map(
+                "onset" -> timepoint.toString,
+                "run" -> run,
+                "task" -> task(timepoint).toString
+              )
+            }
+          ),
+          runIds = Vector(RunId("run-1"), RunId("run-2"))
+        )
+        .fold(error => fail(error.message), identity)
 
     def selectedDesign: DMat =
       scalafim.fmri.fit.GaleTestMatrix.fromRows(keepTimepoints.map(designRow))

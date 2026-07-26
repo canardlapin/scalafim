@@ -249,7 +249,7 @@ class LssTrialwiseRecoveryScenarioSuite extends munit.FunSuite:
       dataset(Vector.fill(nTime)(Vector.fill(voxels)(0.0)))
 
     def dataset(rows: Vector[Vector[Double]]): FmriDataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-lss-trialwise-recovery"),
           ImageDMat.fromRows(rows),

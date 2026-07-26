@@ -1,9 +1,19 @@
 package scalafim.dataset.io
 
 import gale.linalg.{DMat as GaleDMat, DVec}
+import scalafim.archive.RunLabel
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
 import scalafim.archive.lna.{LnaPipeline, QuantParams, SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.dataset.{DataSelection, GaleTestData, TimepointSelection, VoxelSelection}
+import scalafim.dataset.{
+  DataSelection,
+  DatasetError,
+  DatasetEvents,
+  FmriDataset,
+  GaleTestData,
+  TimepointSelection,
+  VoxelSelection
+}
+import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.image.{DMat, Mask, NeuroSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
@@ -477,7 +487,7 @@ class LnaDatasetSuite extends munit.FunSuite:
             center = true
           )
           .fold(err => fail(err.message), identity)
-      val archivePath = root.resolve("sub-05/func/sub-05_task-shared_space-MNI_bold.lna.h5")
+      val archivePath = root.resolve("sub-05/func/sub-05_task-shared_run-01_space-MNI_bold.lna.h5")
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
@@ -502,6 +512,29 @@ class LnaDatasetSuite extends munit.FunSuite:
       interceptMessage[IllegalArgumentException]("voxel 1 is outside the latent mask") {
         backend.read(DataSelection(voxels = VoxelSelection.indices(1)))
       }
+
+      val query =
+        LnaDatasetQuery(
+          subject = "05",
+          task = Some("shared"),
+          space = Some("MNI"),
+          run = Some("01")
+        )
+      val timing =
+        SamplingFrame
+          .regular(tr = 1.0, nScans = activeData.rows)
+          .fold(error => fail(error.message), identity)
+      val opened =
+        FmriDataset
+          .openLna(root, query, timing)
+          .fold(error => fail(error.message), identity)
+      val provenance =
+        opened.metadata.provenance.collect:
+          case value: LnaDatasetProvenance => value
+        .getOrElse(fail("expected LNA provenance"))
+      assertEquals(provenance.codecFamily, "shared-basis")
+      assertEquals(provenance.externalBasis, Some(basisId.value))
+      assertEquals(provenance.readMode, LnaDatasetReadMode.SelectionAware)
     finally deleteTree(root)
   }
 
@@ -512,6 +545,84 @@ class LnaDatasetSuite extends munit.FunSuite:
       assert(failed.isLeft)
       assert(failed.left.toOption.exists(_.message.contains("multiple LNA files match")))
     }
+  }
+
+  test("openLna requires timing, derives the external run, and preserves fallback provenance") {
+    val root = Files.createTempDirectory("scalafim-open-lna-")
+    try
+      val archivePath =
+        root.resolve("sub-12/func/sub-12_task-rest_run-01_space-MNI_bold.lna.h5")
+      writeArchive(archivePath, data)
+      val query =
+        LnaDatasetQuery(
+          subject = "12",
+          task = Some("rest"),
+          space = Some("MNI"),
+          run = Some("01")
+        )
+      val timing =
+        SamplingFrame
+          .regular(tr = 0.8, nScans = data.rows)
+          .fold(error => fail(error.message), identity)
+      val dataset =
+        FmriDataset
+          .openLna(root, query, timing)
+          .fold(error => fail(error.message), identity)
+
+      assertEquals(dataset.timeAxis.runIds.map(_.value), Vector("run-01"))
+      val provenance =
+        dataset.metadata.provenance.collect:
+          case value: LnaDatasetProvenance => value
+        .getOrElse(fail("expected LNA provenance"))
+      assertEquals(provenance.archivePath, "sub-12/func/sub-12_task-rest_run-01_space-MNI_bold.lna.h5")
+      assertEquals(provenance.archiveRun.value, "run-01")
+      assertEquals(provenance.codecFamily, "lna-pipeline")
+      assertEquals(provenance.readMode, LnaDatasetReadMode.WholeRunFallback)
+
+      val series =
+        dataset
+          .seriesEither(
+            DataSelection(
+              time = TimepointSelection.indices(2, 0),
+              voxels = VoxelSelection.indices(3, 1)
+            )
+          )
+          .fold(error => fail(error.message), identity)
+      assertRowsClose(series.data.toRows, Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 2e-4)
+      assertEquals(series.metadata.provenance, dataset.metadata.provenance)
+
+      val missingRun =
+        FmriDataset.openLna(
+          root,
+          query,
+          timing,
+          RunLabel("not-present"),
+          DatasetEvents.Empty
+        )
+      assert(missingRun.left.exists(_.message.contains("run 'not-present' not found")))
+    finally deleteTree(root)
+  }
+
+  test("LNA internal run selection rejects ambiguity instead of choosing run zero") {
+    val archive =
+      LnaPipeline
+        .quantArchive(data, space, params = QuantParams(bits = 16))
+        .fold(err => fail(err.message), identity)
+    val first = archive.manifest.runs.head
+    val second = first.copy(label = RunLabel("run-02"))
+    val multiRun = archive.copy(
+      manifest = archive.manifest.copy(runs = Vector(first, second))
+    )
+    val query = LnaDatasetQuery(subject = "12", task = Some("rest"))
+
+    val selected = selectArchiveRun(multiRun, requested = None, query)
+    val exact = selectArchiveRun(multiRun, requested = Some(second.label), query)
+
+    assert(selected.left.exists:
+      case DatasetError.AmbiguousDatasetRun(_, 2) => true
+      case _                                      => false
+    )
+    assertEquals(exact, Right(second.label))
   }
 
   private def withFixture[A](f: Path => A): A =

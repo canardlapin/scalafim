@@ -107,7 +107,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
 
   private def runFirstLevel(subject: SubjectFixture): FirstLevelFit =
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId(s"scenario-known-effect-${subject.id.value}"),
           ImageDMat.fromRows(subject.responseRows),

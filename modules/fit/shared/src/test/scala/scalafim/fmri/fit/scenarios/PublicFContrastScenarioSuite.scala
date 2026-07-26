@@ -35,7 +35,7 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
   private def runScenario(): ScenarioResult =
     val fixture = PublicFContrastNilearnFixture
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-public-f-contrast"),
           ImageDMat.fromRows(fixture.responseRows),

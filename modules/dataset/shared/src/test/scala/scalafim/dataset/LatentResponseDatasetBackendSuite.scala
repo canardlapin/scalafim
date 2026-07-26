@@ -32,7 +32,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
         )
       ).fold(err => fail(err.message), identity)
     val dense = InMemoryDatasetBackend(DatasetId("dense"), denseData, space)
-    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+    val latent = LatentResponseDatasetBackend.unsafe(DatasetId("latent"), response, space, mask)
     val selection =
       DataSelection(
         time = TimepointSelection.indices(2, 0),
@@ -60,7 +60,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
           )
         )
       ).fold(err => fail(err.message), identity)
-    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+    val latent = LatentResponseDatasetBackend.unsafe(DatasetId("latent"), response, space, mask)
     val series = latent.read()
 
     assertEquals(latent.voxelDomain.kind, VoxelDomainKind.ActiveMask)
@@ -89,7 +89,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
           )
         )
       ).fold(err => fail(err.message), identity)
-    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+    val latent = LatentResponseDatasetBackend.unsafe(DatasetId("latent"), response, space, mask)
 
     val failed =
       latent
@@ -114,7 +114,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
           )
         )
       ).fold(err => fail(err.message), identity)
-    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
+    val latent = LatentResponseDatasetBackend.unsafe(DatasetId("latent"), response, space, mask)
 
     val failed =
       latent
@@ -155,10 +155,13 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
         )
       ).fold(err => fail(err.message), identity)
 
-    val error = intercept[IllegalArgumentException] {
-      LatentResponseDatasetBackend(DatasetId("latent"), response, space, mask)
-    }
-    assert(error.getMessage.contains("latent sample count must match mask cardinality"))
+    val error =
+      LatentResponseDatasetBackend
+        .make(DatasetId("latent"), response, space, mask)
+        .left
+        .toOption
+        .getOrElse(fail("expected mask cardinality rejection"))
+    assert(error.message.contains("latent sample count must match mask cardinality"))
   }
 
   test("latent response backend defaults to an all-space mask") {
@@ -175,7 +178,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
         )
       ).fold(err => fail(err.message), identity)
     val dense = InMemoryDatasetBackend(DatasetId("dense"), denseData, space)
-    val latent = LatentResponseDatasetBackend(DatasetId("latent"), response, space)
+    val latent = LatentResponseDatasetBackend.unsafe(DatasetId("latent"), response, space)
     val selection =
       DataSelection(
         time = TimepointSelection.indices(1),

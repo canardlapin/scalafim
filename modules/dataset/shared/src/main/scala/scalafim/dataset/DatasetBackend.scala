@@ -14,17 +14,12 @@ trait DatasetBackend:
   def read(selection: DataSelection = DataSelection.All): FmriSeries =
     readEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class FmriDataset(
-    backend: DatasetBackend,
-    samplingFrame: SamplingFrame,
-    events: DatasetEvents = DatasetEvents.Empty,
-    timeAxis: DatasetTimeAxis
+final class FmriDataset private (
+    val backend: DatasetBackend,
+    val samplingFrame: SamplingFrame,
+    val events: DatasetEvents,
+    val timeAxis: DatasetTimeAxis
 ):
-  require(samplingFrame.blockLens.sum == backend.shape.timepoints, "sampling frame rows must match dataset timepoints")
-  require(timeAxis.timepoints == backend.shape.timepoints, "time axis rows must match dataset timepoints")
-  require(timeAxis.blockLengths == samplingFrame.blockLens, "time axis blocks must match sampling frame block lengths")
-  events.validateAgainst(timeAxis).fold(error => throw new IllegalArgumentException(error.message), _ => ())
-
   def id: DatasetId = backend.id
   def shape: DatasetShape = backend.shape
   def metadata: DatasetMetadata = backend.metadata
@@ -43,32 +38,76 @@ final case class FmriDataset(
     runPartitionsEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object FmriDataset:
-  def apply(
+  def open(
       backend: DatasetBackend,
-      samplingFrame: SamplingFrame
-  ): FmriDataset =
-    FmriDataset(backend, samplingFrame, DatasetEvents.Empty)
+      samplingFrame: SamplingFrame,
+      runIds: Vector[RunId],
+      events: DatasetEvents = DatasetEvents.Empty
+  ): Either[DatasetError, FmriDataset] =
+    for
+      timeAxis <- DatasetTimeAxis.fromSamplingFrame(samplingFrame, runIds)
+      _ <-
+        if backend.shape.timepoints == timeAxis.timepoints then Right(())
+        else
+          Left(
+            DatasetError.ShapeMismatch(
+              s"sampling frame has ${timeAxis.timepoints} timepoints but backend has ${backend.shape.timepoints}"
+            )
+          )
+      _ <- events.validateAgainst(timeAxis)
+    yield new FmriDataset(backend, samplingFrame, events, timeAxis)
 
-  def apply(
+  def open(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame,
+      runId: RunId,
+      events: DatasetEvents
+  ): Either[DatasetError, FmriDataset] =
+    open(backend, samplingFrame, Vector(runId), events)
+
+  def open(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame,
+      runId: RunId
+  ): Either[DatasetError, FmriDataset] =
+    open(backend, samplingFrame, Vector(runId))
+
+  def unsafe(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame,
+      runIds: Vector[RunId],
+      events: DatasetEvents = DatasetEvents.Empty
+  ): FmriDataset =
+    open(backend, samplingFrame, runIds, events)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def unsafe(
       backend: DatasetBackend,
       samplingFrame: SamplingFrame,
       events: DatasetEvents
   ): FmriDataset =
-    new FmriDataset(
-      backend = backend,
-      samplingFrame = samplingFrame,
-      events = events,
-      timeAxis = DatasetTimeAxis.unsafe(samplingFrame)
-    )
+    DatasetTimeAxis
+      .fromSamplingFrame(samplingFrame)
+      .flatMap(timeAxis => open(backend, samplingFrame, timeAxis.runIds, events))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  def apply(
+  def unsafe(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame
+  ): FmriDataset =
+    unsafe(backend, samplingFrame, DatasetEvents.Empty)
+
+  def unsafe(
       backend: DatasetBackend,
       samplingFrame: SamplingFrame,
-      timeAxis: DatasetTimeAxis
+      runId: RunId,
+      events: DatasetEvents
   ): FmriDataset =
-    new FmriDataset(
-      backend = backend,
-      samplingFrame = samplingFrame,
-      events = DatasetEvents.Empty,
-      timeAxis = timeAxis
-    )
+    unsafe(backend, samplingFrame, Vector(runId), events)
+
+  def unsafe(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame,
+      runId: RunId
+  ): FmriDataset =
+    unsafe(backend, samplingFrame, Vector(runId))

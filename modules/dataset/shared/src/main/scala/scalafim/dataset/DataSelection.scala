@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{GridCompatibility, Mask}
+import scalafim.image.{GridCompatibility, Indexing, Mask, NeuroSpace, VoxelCoord}
 
 opaque type TimepointIndex = Int
 
@@ -35,6 +35,7 @@ object VoxelIndex:
 enum TimepointSelection:
   case All
   case Indices(values: Vector[TimepointIndex])
+  case Window(start: TimepointIndex, length: Int)
 
   def resolve(size: Int): Either[DatasetError, Vector[TimepointIndex]] =
     this match
@@ -42,6 +43,8 @@ enum TimepointSelection:
         resolveAllTimepoints(size)
       case TimepointSelection.Indices(values) =>
         validateTimepoints(values, size)
+      case TimepointSelection.Window(start, length) =>
+        resolveWindow(start, length, size)
 
 object TimepointSelection:
   def fromInts(values: Int*): Either[DatasetError, TimepointSelection] =
@@ -51,10 +54,24 @@ object TimepointSelection:
   def indices(values: Int*): TimepointSelection =
     fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
 
+  def window(start: Int, length: Int): Either[DatasetError, TimepointSelection] =
+    for
+      startIndex <- TimepointIndex.make(start)
+      _ <-
+        if length > 0 then Right(())
+        else Left(DatasetError.InvalidTimeAxis(
+          s"timepoint window length must be positive; got $length"
+        ))
+    yield TimepointSelection.Window(startIndex, length)
+
+  def unsafeWindow(start: Int, length: Int): TimepointSelection =
+    window(start, length).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 enum VoxelSelection:
   case All
   case AllSpatial
   case Indices(values: Vector[VoxelIndex])
+  case Coords(values: Vector[VoxelCoord])
 
   def resolve(size: Int): Either[DatasetError, Vector[VoxelIndex]] =
     this match
@@ -62,6 +79,10 @@ enum VoxelSelection:
         resolveAllVoxels(size)
       case VoxelSelection.Indices(values) =>
         validateVoxels(values, size)
+      case VoxelSelection.Coords(_) =>
+        Left(DatasetError.ShapeMismatch(
+          "voxel coordinates require dataset geometry for resolution"
+        ))
 
 object VoxelSelection:
   def fromInts(values: Int*): Either[DatasetError, VoxelSelection] =
@@ -70,6 +91,9 @@ object VoxelSelection:
 
   def indices(values: Int*): VoxelSelection =
     fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def coords(values: VoxelCoord*): VoxelSelection =
+    VoxelSelection.Coords(values.toVector)
 
 enum VoxelDomainKind:
   case FullSpatial
@@ -101,7 +125,10 @@ final class VoxelDomain private (
     val value = VoxelIndex.raw(voxel)
     value >= 0 && value < spatialSize && readableLookup(value)
 
-  def resolve(selection: VoxelSelection): Either[DatasetError, Vector[VoxelIndex]] =
+  def resolve(
+      selection: VoxelSelection,
+      space: NeuroSpace
+  ): Either[DatasetError, Vector[VoxelIndex]] =
     selection match
       case VoxelSelection.All =>
         Right(readableVoxelValues)
@@ -109,6 +136,56 @@ final class VoxelDomain private (
         resolveAllVoxels(spatialSize)
       case VoxelSelection.Indices(values) =>
         validateVoxels(values, spatialSize).flatMap(validateReadable)
+      case VoxelSelection.Coords(values) =>
+        resolveCoordinates(values, space).flatMap(validateReadable)
+
+  def resolve(selection: VoxelSelection): Either[DatasetError, Vector[VoxelIndex]] =
+    selection match
+      case VoxelSelection.Coords(_) =>
+        Left(DatasetError.ShapeMismatch(
+          "voxel coordinates require dataset geometry for resolution"
+        ))
+      case other =>
+        resolveWithoutCoordinates(other)
+
+  private def resolveWithoutCoordinates(
+      selection: VoxelSelection
+  ): Either[DatasetError, Vector[VoxelIndex]] =
+    selection match
+      case VoxelSelection.All =>
+        Right(readableVoxelValues)
+      case VoxelSelection.AllSpatial =>
+        resolveAllVoxels(spatialSize)
+      case VoxelSelection.Indices(values) =>
+        validateVoxels(values, spatialSize).flatMap(validateReadable)
+      case VoxelSelection.Coords(_) =>
+        Left(DatasetError.ShapeMismatch(
+          "voxel coordinates require dataset geometry for resolution"
+        ))
+
+  private def resolveCoordinates(
+      values: Vector[VoxelCoord],
+      space: NeuroSpace
+  ): Either[DatasetError, Vector[VoxelIndex]] =
+    if values.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Voxel))
+    else
+      val resolved = Vector.newBuilder[VoxelIndex]
+      resolved.sizeHint(values.length)
+      var index = 0
+      var failure = Option.empty[DatasetError]
+      while index < values.length && failure.isEmpty do
+        val coordinate = values(index)
+        Indexing.gridToIndexChecked(space.spatialShape, coordinate) match
+          case Left(error) =>
+            failure = Some(DatasetError.InvalidVoxelCoordinate(coordinate, error.message))
+          case Right(linear) =>
+            VoxelIndex.make(linear) match
+              case Left(error) => failure = Some(error)
+              case Right(voxel) => resolved += voxel
+        index += 1
+      failure match
+        case Some(error) => Left(error)
+        case None => validateVoxels(resolved.result(), spatialSize)
 
   private def validateReadable(values: Vector[VoxelIndex]): Either[DatasetError, Vector[VoxelIndex]] =
     var i = 0
@@ -198,7 +275,7 @@ final class DataSelection private (
   ): Either[DatasetError, ResolvedDataSelection] =
     for
       timepoints <- time.resolve(shape.timepoints)
-      voxelIndices <- voxelDomain.resolve(voxels)
+      voxelIndices <- voxelDomain.resolve(voxels, shape.space)
       resolved <- ResolvedDataSelection.make(timepoints, voxelIndices)
     yield resolved
 
@@ -285,6 +362,25 @@ private def resolveAllTimepoints(size: Int): Either[DatasetError, Vector[Timepoi
 private def resolveAllVoxels(size: Int): Either[DatasetError, Vector[VoxelIndex]] =
   if size <= 0 then Left(DatasetError.NonPositiveAxisSize(DatasetAxis.Voxel, size))
   else Right(Vector.tabulate(size)(VoxelIndex.unsafe))
+
+private def resolveWindow(
+    start: TimepointIndex,
+    length: Int,
+    size: Int
+): Either[DatasetError, Vector[TimepointIndex]] =
+  val startValue = TimepointIndex.raw(start)
+  val endExclusive = startValue.toLong + length.toLong
+  if size <= 0 then Left(DatasetError.NonPositiveAxisSize(DatasetAxis.Timepoint, size))
+  else if length <= 0 then
+    Left(DatasetError.InvalidTimeAxis(
+      s"timepoint window length must be positive; got $length"
+    ))
+  else if endExclusive > size.toLong then
+    Left(DatasetError.InvalidTimeAxis(
+      s"timepoint window [$startValue, $endExclusive) exceeds size $size"
+    ))
+  else
+    Right(Vector.tabulate(length)(offset => TimepointIndex.unsafe(startValue + offset)))
 
 private def validateTimepoints(
     values: Vector[TimepointIndex],

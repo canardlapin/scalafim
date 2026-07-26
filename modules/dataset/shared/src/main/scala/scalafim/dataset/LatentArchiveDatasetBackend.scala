@@ -5,17 +5,15 @@ import scalafim.archive.lna.{LnaArchive, LnaPipeline}
 import scalafim.image.{DMat, Mask}
 import scalafim.latent.{LatentArchiveCodec, LatentArchivePlan, LatentSelection}
 
-final case class LatentArchiveDatasetBackend(
-    id: DatasetId,
-    archive: LnaArchive,
-    run: RunLabel = RunLabel.indexed(0),
-    metadata: DatasetMetadata = DatasetMetadata.Empty
+final class LatentArchiveDatasetBackend private (
+    val id: DatasetId,
+    val archive: LnaArchive,
+    val run: RunLabel,
+    val metadata: DatasetMetadata,
+    override val shape: DatasetShape,
+    val mask: Mask.MaskVol,
+    override val voxelDomain: VoxelDomain
 ) extends DatasetBackend:
-
-  private lazy val runInfoEither =
-    archive
-      .run(run)
-      .toRight(DatasetError.ArchiveFailure(ArchiveError.InvalidArchive(s"run '${run.value}' not found")))
 
   private lazy val denseEither: Either[DatasetError, DMat] =
     LnaPipeline
@@ -29,28 +27,15 @@ final case class LatentArchiveDatasetBackend(
       .left
       .map(DatasetError.ArchiveFailure.apply)
 
-  private lazy val shapeEither: Either[DatasetError, DatasetShape] =
-    runInfoEither.flatMap(runInfo => DatasetShape.make(runInfo.shape.space, runInfo.shape.timepoints))
-
-  override lazy val shape: DatasetShape =
-    shapeEither.fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  override lazy val mask: Mask.MaskVol =
-    Mask.all(shape.space)
-
-  override lazy val voxelDomain: VoxelDomain =
-    VoxelDomain.fullUnsafe(shape)
-
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
-      checkedShape <- shapeEither
-      resolved <- selection.resolveEither(checkedShape, voxelDomain)
+      resolved <- selection.resolveEither(shape, voxelDomain)
       data <- selectedData(resolved)
       series <- FmriSeries.make(
         data = data,
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
-        shape = checkedShape,
+        shape = shape,
         metadata = metadata
       )
     yield series
@@ -79,3 +64,35 @@ final case class LatentArchiveDatasetBackend(
           )
         }
     }
+
+object LatentArchiveDatasetBackend:
+  def make(
+      id: DatasetId,
+      archive: LnaArchive,
+      run: RunLabel,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): Either[DatasetError, LatentArchiveDatasetBackend] =
+    for
+      runInfo <- archive
+        .run(run)
+        .toRight(DatasetError.ArchiveFailure(ArchiveError.InvalidArchive(s"run '${run.value}' not found")))
+      shape <- DatasetShape.make(runInfo.shape.space, runInfo.shape.timepoints)
+      voxelDomain <- VoxelDomain.full(shape)
+    yield new LatentArchiveDatasetBackend(
+      id = id,
+      archive = archive,
+      run = run,
+      metadata = metadata,
+      shape = shape,
+      mask = Mask.all(shape.space),
+      voxelDomain = voxelDomain
+    )
+
+  def unsafe(
+      id: DatasetId,
+      archive: LnaArchive,
+      run: RunLabel,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): LatentArchiveDatasetBackend =
+    make(id, archive, run, metadata)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)

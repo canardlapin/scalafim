@@ -3,37 +3,20 @@ package scalafim.dataset
 import scalafim.image.{DMat, GridCompatibility, Mask, NeuroSpace}
 import scalafim.latent.{LatentResponse, LatentSelection}
 
-final case class LatentResponseDatasetBackend(
-    id: DatasetId,
-    response: LatentResponse,
-    space: NeuroSpace,
-    mask: Mask.MaskVol,
-    metadata: DatasetMetadata = DatasetMetadata.Empty
+final class LatentResponseDatasetBackend private (
+    val id: DatasetId,
+    val response: LatentResponse,
+    val space: NeuroSpace,
+    val mask: Mask.MaskVol,
+    val metadata: DatasetMetadata,
+    override val shape: DatasetShape,
+    private val sampleMap: VoxelSampleMap,
+    override val voxelDomain: VoxelDomain
 ) extends DatasetBackend:
-
-  private lazy val shapeEither: Either[DatasetError, DatasetShape] =
-    DatasetShape.make(space, response.shape.timepoints)
-
-  override lazy val shape: DatasetShape =
-    shapeEither.fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  private lazy val sampleMapEither: Either[DatasetError, VoxelSampleMap] =
-    for
-      checkedShape <- shapeEither
-      _ <- validateMaskSpace(mask, checkedShape)
-      sampleMap <- VoxelSampleMap.fromMask(mask, response.shape.samples)
-    yield sampleMap
-
-  private val sampleMap: VoxelSampleMap =
-    sampleMapEither.fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  override lazy val voxelDomain: VoxelDomain =
-    VoxelDomain.activeUnsafe(sampleMap.spatialSize, sampleMap.sampleVoxels)
 
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
-      checkedShape <- shapeEither
-      resolved <- selection.resolveEither(checkedShape, voxelDomain)
+      resolved <- selection.resolveEither(shape, voxelDomain)
       samples <- sampleMap.samplesFor(resolved.voxelIndexValues)
       decoded <- response
         .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(samples)))
@@ -43,19 +26,42 @@ final case class LatentResponseDatasetBackend(
         data = DatasetMatrices.fromGale(decoded),
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
-        shape = checkedShape,
+        shape = shape,
         metadata = metadata
       )
     yield series
 
 object LatentResponseDatasetBackend:
-  def apply(
+  def make(
+      id: DatasetId,
+      response: LatentResponse,
+      space: NeuroSpace,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): Either[DatasetError, LatentResponseDatasetBackend] =
+    for
+      shape <- DatasetShape.make(space, response.shape.timepoints)
+      _ <- validateMaskSpace(mask, shape)
+      sampleMap <- VoxelSampleMap.fromMask(mask, response.shape.samples)
+      voxelDomain <- VoxelDomain.active(sampleMap.spatialSize, sampleMap.sampleVoxels)
+    yield new LatentResponseDatasetBackend(
+      id,
+      response,
+      space,
+      mask,
+      metadata,
+      shape,
+      sampleMap,
+      voxelDomain
+    )
+
+  def make(
       id: DatasetId,
       response: LatentResponse,
       space: NeuroSpace,
       metadata: DatasetMetadata
-  ): LatentResponseDatasetBackend =
-    LatentResponseDatasetBackend(
+  ): Either[DatasetError, LatentResponseDatasetBackend] =
+    make(
       id = id,
       response = response,
       space = space,
@@ -63,12 +69,39 @@ object LatentResponseDatasetBackend:
       metadata = metadata
     )
 
-  def apply(
+  def make(
+      id: DatasetId,
+      response: LatentResponse,
+      space: NeuroSpace
+  ): Either[DatasetError, LatentResponseDatasetBackend] =
+    make(id, response, space, DatasetMetadata.Empty)
+
+  def unsafe(
+      id: DatasetId,
+      response: LatentResponse,
+      space: NeuroSpace,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): LatentResponseDatasetBackend =
+    make(id, response, space, mask, metadata)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def unsafe(
+      id: DatasetId,
+      response: LatentResponse,
+      space: NeuroSpace,
+      metadata: DatasetMetadata
+  ): LatentResponseDatasetBackend =
+    make(id, response, space, metadata)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def unsafe(
       id: DatasetId,
       response: LatentResponse,
       space: NeuroSpace
   ): LatentResponseDatasetBackend =
-    LatentResponseDatasetBackend(id, response, space, DatasetMetadata.Empty)
+    make(id, response, space)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 private def validateMaskSpace(
     mask: Mask.MaskVol,

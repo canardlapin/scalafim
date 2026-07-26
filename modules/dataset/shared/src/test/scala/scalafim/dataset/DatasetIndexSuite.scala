@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, NeuroSpace, VoxelCoord}
 
 class DatasetIndexSuite extends munit.FunSuite:
 
@@ -102,7 +102,10 @@ class DatasetIndexSuite extends munit.FunSuite:
   test("single-run compatibility wraps an existing FmriDataset") {
     val dataset = fmriDataset("single")
     val key = RunKey.unsafe("sub-01", "run-1", task = Some("rest"))
-    val index = DatasetIndex.single(key, dataset)
+    val index =
+      DatasetIndex
+        .single(key, dataset)
+        .fold(err => fail(err.message), identity)
 
     val selected =
       index
@@ -111,6 +114,99 @@ class DatasetIndexSuite extends munit.FunSuite:
 
     assertEquals(selected.dataset, dataset)
     assertEquals(selected.descriptor.shape.timepoints, dataset.shape.timepoints)
+  }
+
+  test("DatasetRun rejects mismatched keys and multi-run datasets expand as zero-copy views") {
+    val single = fmriDataset("single", "run-a")
+    val mismatch =
+      DatasetRun.make(
+        RunKey.unsafe("sub-01", "run-b"),
+        single
+      )
+    assert(mismatch.left.exists(_.message.contains("does not match dataset run run-a")))
+
+    val samplingFrame = SamplingFrame(blockLens = Seq(2, 3), tr = Seq(1.0))
+    val multi =
+      FmriDataset
+        .open(
+          backend = InMemoryDatasetBackend(
+            id = DatasetId("multi"),
+            data = DMat.fromRows(
+              Vector.tabulate(5)(time => Vector(time.toDouble, time.toDouble + 10.0))
+            ),
+            space = NeuroSpace(Vector(2, 1, 1))
+          ),
+          samplingFrame = samplingFrame,
+          runIds = Vector(RunId("run-a"), RunId("run-b"))
+        )
+        .fold(error => fail(error.message), identity)
+    val index =
+      DatasetIndex
+        .fromDataset(
+          DatasetKey.unsafe("sub-01", session = Some("ses-01"), task = Some("rest")),
+          multi
+        )
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(index.keys.map(_.run.value), Vector("run-a", "run-b"))
+    assert(index.runs.forall(_.dataset eq multi))
+    assertEquals(index.descriptors.map(_.shape.timepoints), Vector(2, 3))
+
+    val second = index.runs(1)
+    val (series, partition) =
+      second
+        .partitionedSeriesEither(
+          DataSelection(
+            time = TimepointSelection.Window(TimepointIndex.unsafe(0), length = 2),
+            voxels = VoxelSelection.indices(1)
+          )
+        )
+        .fold(error => fail(error.message), identity)
+    assertEquals(series.timepoints, Vector(2, 3))
+    assertEquals(series.data.toRows, Vector(Vector(12.0), Vector(13.0)))
+    assertEquals(partition.timepoints, Vector(2, 3))
+    assertEquals(partition.localTimepoints, Vector(0, 1))
+
+    assert(second
+      .seriesEither(DataSelection(time = TimepointSelection.indices(3)))
+      .left
+      .exists(_.message.contains("out of bounds for size 3")))
+  }
+
+  test("cross-run coordinate reads require exact grids") {
+    val translated =
+      DMat.fromRows(
+        Vector(
+          Vector(1.0, 0.0, 0.0, 4.0),
+          Vector(0.0, 1.0, 0.0, 0.0),
+          Vector(0.0, 0.0, 1.0, 0.0),
+          Vector(0.0, 0.0, 0.0, 1.0)
+        )
+      )
+    val first =
+      datasetRun(
+        RunKey.unsafe("sub-01", "run-1", space = Some("MNI")),
+        "first-grid",
+        NeuroSpace(Vector(2, 1, 1))
+      )
+    val second =
+      datasetRun(
+        RunKey.unsafe("sub-01", "run-2", space = Some("MNI")),
+        "second-grid",
+        NeuroSpace(Vector(2, 1, 1), trans = Some(translated))
+      )
+    val index =
+      DatasetIndex
+        .fromRuns(Vector(first, second))
+        .fold(error => fail(error.message), identity)
+
+    val result =
+      index.resolveForRead(
+        DatasetRunQuery(subject = Some(SubjectId("sub-01"))),
+        DataSelection(voxels = VoxelSelection.coords(VoxelCoord(0, 0, 0)))
+      )
+
+    assert(result.left.exists(_.message.contains("requires identical run grids")))
   }
 
   private def run(
@@ -125,14 +221,34 @@ class DatasetIndexSuite extends munit.FunSuite:
       RunKey
         .fromStrings(subject = subject, session = session, task = task, space = spaceLabel, run = runId)
         .fold(err => fail(err.message), identity)
-    DatasetRun(key, fmriDataset(id))
+    DatasetRun
+      .make(key, fmriDataset(id, runId))
+      .fold(err => fail(err.message), identity)
 
-  private def fmriDataset(id: String): FmriDataset =
-    FmriDataset(
+  private def fmriDataset(id: String, runId: String = "run-1"): FmriDataset =
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         id = DatasetId(id),
         data = DMat.fromRows(Vector(Vector(1.0), Vector(2.0))),
         space = space
       ),
-      samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0))
+      samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
+      runId = RunId(runId)
     )
+
+  private def datasetRun(
+      key: RunKey,
+      id: String,
+      runSpace: NeuroSpace
+  ): DatasetRun =
+    val dataset =
+      FmriDataset.unsafe(
+        backend = InMemoryDatasetBackend(
+          id = DatasetId(id),
+          data = DMat.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0))),
+          space = runSpace
+        ),
+        samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
+        runId = key.run
+      )
+    DatasetRun.make(key, dataset).fold(error => fail(error.message), identity)

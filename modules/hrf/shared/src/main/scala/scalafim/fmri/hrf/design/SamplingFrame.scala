@@ -65,6 +65,28 @@ final case class SamplingFrame private (
 
 object SamplingFrame:
 
+  def regular(
+      tr: Double,
+      nScans: Int
+  ): Either[SamplingFrameError, SamplingFrame] =
+    validated(
+      blockLens = Seq(nScans),
+      tr = Seq(tr)
+    )
+
+  def regular(
+      tr: Double,
+      nScans: Int,
+      startTime: Double,
+      precision: Double = 0.1
+  ): Either[SamplingFrameError, SamplingFrame] =
+    validated(
+      blockLens = Seq(nScans),
+      tr = Seq(tr),
+      startTime = Seq(startTime),
+      precision = precision
+    )
+
   private def recycle[A](xs: Seq[A], n: Int, name: String): Either[SamplingFrameError, Vector[A]] =
     if xs.length == n then Right(xs.toVector)
     else if xs.length == 1 then Right(Vector.fill(n)(xs.head))

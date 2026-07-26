@@ -152,7 +152,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
     built.fold(error => fail(error.message), identity)
 
   private def dataset(fixture: PublicFContrastNilearnFixture.type): FmriDataset =
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("scenario-pipeline-first-level"),
         ImageDMat.fromRows(fixture.responseRows),

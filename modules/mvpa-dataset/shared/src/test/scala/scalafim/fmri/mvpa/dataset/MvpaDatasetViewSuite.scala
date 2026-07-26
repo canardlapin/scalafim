@@ -24,7 +24,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         Vector(3.0, 1.8, 0.5),
         Vector(-3.0, -1.8, -0.5)
       )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         id = DatasetId("mvpa-demo"),
         data = DMat.fromRows(rows),
