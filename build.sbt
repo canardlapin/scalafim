@@ -739,7 +739,7 @@ lazy val multivar =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/multivar"))
-    .dependsOn(linalg)
+    .dependsOn(linalg, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-multivar"
@@ -831,7 +831,7 @@ lazy val mvpaSpatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
-    .dependsOn(mvpa, image, surface, atlas)
+    .dependsOn(mvpa, image, surface, atlas, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"

@@ -118,9 +118,8 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val featureSet = plan.featureSets.head
 
     spatial.domain match
-      case SpatialFeatureDomain.Searchlight(windows) =>
-        assertEquals(windows.size, 1)
-        assertEquals(windows.windows.head.center.value, 4)
+      case SpatialFeatureDomain.LocusSearchlight(_, centerCount) =>
+        assertEquals(centerCount, 1)
       case other =>
         fail(s"expected searchlight domain, found $other")
 
@@ -128,7 +127,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     assertEquals(featureSet.id.value, 4)
     assertEquals(featureSet.center.map(_.value), Some(4))
     assertEquals(featureSet.label, Some("center"))
-    assertEquals(featureSet.featureIndices.map(_.value), Vector(3, 1, 4, 7, 5))
+    assertEquals(featureSet.featureIndices.map(_.value), Vector(1, 3, 4, 5, 7))
   }
 
   test("searchlight mask plans run through the MVPA engine") {
@@ -233,12 +232,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val typedError = SpatialFeatureSetPlans.roiWindows("bad-window", Vector(window)).swap.toOption.get
     val mvpaError = SpatialFeatureSetPlans.fromRoiWindows("bad-window", Vector(window)).swap.toOption.get
 
-    assertEquals(
-      typedError,
-      SpatialPlanError.SearchlightCenterMissing(
-        scalafim.fmri.mvpa.spatial.SearchlightCenter.unsafe(4)
-      )
-    )
+    assert(typedError.message.contains("center 4"))
     assert(mvpaError.message.contains("center 4"))
   }
 
