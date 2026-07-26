@@ -64,7 +64,10 @@ object SpatialFeatureSetPlans:
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
       lin += 1
 
-    val covered = Vector.newBuilder[(Region, Vector[LinearVoxelIndex])]
+    val covered =
+      Vector.newBuilder[
+        (AtlasRegionMetadata, Vector[LinearVoxelIndex])
+      ]
     val regions = atlas.regions.regions
     var i = 0
     while i < regions.length do

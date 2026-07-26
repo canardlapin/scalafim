@@ -8,10 +8,12 @@ parcel reduction, overlap, and graph relationships. It deliberately leaves
 plotting, Shiny-style interaction, and hidden TemplateFlow downloads out of the
 core.
 
-`RegionGraph.adjacency` keeps its efficient implicit voxel-neighborhood scan.
-`RegionGraph.topology` lowers those deterministic contact counts to a canonical
-`UndirectedGraph[RegionId, Region, Int]` for traversal and graph-linalg without
-changing atlas vocabulary or materializing a voxel graph.
+`RegionGraph.contactCounts` keeps its efficient implicit voxel-neighborhood
+scan. `RegionGraph.relation` is the semantic reference
+`p.converse ; voxelAdjacency ; p`, with self-edges removed.
+`RegionGraph.topology` lowers deterministic contact counts to a canonical
+`UndirectedGraph[RegionId, AtlasRegionMetadata, Int]` for traversal and
+graph-linalg without materializing a voxel graph.
 
 See [docs/plans/atlas.md](../../docs/plans/atlas.md) for the fuller design and
 workflow guide.
@@ -38,13 +40,19 @@ import scalafim.atlas.io.*
 - `AtlasProvenance` is the typed audit trail behind `AtlasRef`: identity,
   spatial support, label schema, source artifacts, derivation steps, citations,
   confidence, and validation issues.
-- `RegionId`, `Hemisphere`, `NetworkId`, `Region`, and `RegionIndex` replace
-  ad hoc atlas list fields with typed metadata.
-- `VolumeAtlas` wraps a `ClusteredNeuroVol` and enforces that metadata region
-  IDs match the non-zero payload IDs.
+- `RegionId`, `Hemisphere`, `NetworkId`, `AtlasRegionMetadata`, and
+  `RegionIndex` replace ad hoc atlas list fields with typed metadata. The old
+  atlas `Region` name is a deprecated compatibility alias; extensional regions
+  are `scalafim.locus.Region`.
+- `VolumeAtlas` wraps a `ClusteredNeuroVol`, enforces that metadata region IDs
+  match the non-zero payload IDs, and exposes its labels as a typed
+  `Parcellation`.
 - `SurfaceAtlas` wraps bilateral `LabeledSurface` payloads from
   `scalafim-surface` and enforces that non-zero vertex labels match the region
-  metadata IDs.
+  metadata IDs. It exposes the same quotient-level API as `VolumeAtlas`.
+- Every atlas `quotient` carries parcel-indexed metadata, an explicit display
+  `Selection`, and an optional validated parcel-to-network `Surjection`.
+  Network regions are derived from quotient composition.
 - `AtlasRegistry` and `AtlasSpec` provide immutable discovery for known atlas
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
@@ -320,7 +328,8 @@ val maskedSeries =
   AtlasReduce.reduceVec(atlas, boldSeries, mask = Some(brainMask))
 ```
 
-Reducers are plain functions over parcel voxels:
+The standard mean and sum reducers use a one-pass quotient aggregation. Custom
+compatibility reducers remain plain functions over parcel voxels:
 
 ```scala
 val summed =
@@ -331,14 +340,28 @@ val summed =
 
 ```scala
 val overlap =
-  atlas.overlap(otherAtlas, resample = false)
+  atlas.overlap(otherAtlas, AtlasAlignment.Exact)
+
+val explicitlyAligned =
+  atlas.overlap(
+    otherAtlas,
+    AtlasAlignment.NearestNeighborToFirst
+  )
 
 val edges =
   atlas.adjacency(VoxelConnectivity.Connect6)
+
+val semanticRelation =
+  RegionGraph.relation(atlas, VoxelConnectivity.Connect6)
+
+val weightedContacts =
+  RegionGraph.contactCounts(atlas, VoxelConnectivity.Connect6)
 ```
 
 Overlap rows include Dice, Jaccard, overlap counts, and both source region
-sizes. Adjacency counts shared voxel faces under the requested connectivity.
+sizes. Exact grid agreement is the default; resampling requires an explicit
+alignment value. Parcel adjacency is an unweighted relation, while boundary
+contact counts are a separate weighted result.
 
 ## Parity Fixtures
 

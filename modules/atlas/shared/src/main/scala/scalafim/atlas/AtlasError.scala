@@ -10,6 +10,7 @@ enum AtlasError:
   case NoTransformRoute(from: AnySpaceId, to: AnySpaceId)
   case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
+  case ExactGridRequired(expected: String, actual: String)
   case InvalidQuery(detail: String)
   case InvalidCoordinate(detail: String)
   case InvalidRegionMetadata(detail: String)
@@ -34,6 +35,8 @@ enum AtlasError:
         s"transform route from '${from.value}' to '${to.value}' is not executable: $reason"
       case SpaceMismatch(expected, actual) =>
         s"expected spatial dimensions ${expected.mkString("x")} but got ${actual.mkString("x")}"
+      case ExactGridRequired(expected, actual) =>
+        s"exact atlas grid required; expected $expected but got $actual"
       case InvalidQuery(detail) =>
         detail
       case InvalidCoordinate(detail) =>

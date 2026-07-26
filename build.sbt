@@ -589,7 +589,7 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(image, surface, graph)
+    .dependsOn(image, surface, graph, locusData, locusLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"

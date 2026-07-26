@@ -111,7 +111,7 @@ object BrainnetomeLoader:
     lutText: String,
     networkText: Option[String] = None,
     spec: Brainnetome246 = Brainnetome246.default
-  ): Vector[Region] =
+  ): Vector[AtlasRegionMetadata] =
     val networkById = networkText.map(parseNetworks).getOrElse(Map.empty)
     lutText.linesIterator
       .map(_.trim)

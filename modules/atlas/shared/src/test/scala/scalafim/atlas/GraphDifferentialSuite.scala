@@ -64,6 +64,31 @@ class GraphDifferentialSuite extends munit.FunSuite:
       regionEdges.map(edge => (edge.from.id.value, edge.to.id.value, edge.weight))
     )
 
+  test("optimized contacts have exactly the relational quotient adjacency"):
+    Vector(
+      VoxelConnectivity.Connect6,
+      VoxelConnectivity.Connect18,
+      VoxelConnectivity.Connect26
+    ).foreach: connectivity =>
+      val projected = RegionGraph.relation(atlas, connectivity)
+      val relationPairs =
+        (for
+          source <- projected.relation.from.points
+          target <- projected.relation.row(source).pointsInDomainOrder
+          if source.ordinal < target.ordinal
+        yield
+          (
+            projected.regionIds(source).value,
+            projected.regionIds(target).value
+          )).toSet
+      val optimizedPairs =
+        RegionGraph
+          .contactCounts(atlas, connectivity)
+          .map(contact => (contact.from.id.value, contact.to.id.value))
+          .toSet
+
+      assertEquals(relationPairs, optimizedPairs, clue = connectivity.toString)
+
   private def oracleContacts(connectivity: VoxelConnectivity): Map[(Int, Int), Int] =
     val counts = mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
     var z = 0
