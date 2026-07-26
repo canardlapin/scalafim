@@ -79,6 +79,44 @@ final class EdgeMask private (
   def selectedIndices: Vector[EdgeSpaceIx] =
     selected.indices.collect { case index if selected(index) => EdgeSpaceIx.unsafe(index) }.toVector
 
+  lazy val region: EdgeMaskRegion =
+    EdgeMaskRegion.from(
+      edgeSpace,
+      selected.iterator.zipWithIndex.collect:
+        case (true, index) => index
+    )
+
+  def union(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)(_ || _)
+
+  def intersect(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)(_ && _)
+
+  def diff(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)((left, right) => left && !right)
+
+  def complement: EdgeMask =
+    new EdgeMask(edgeSpace, selected.map(!_))
+
+  private def combine(
+      that: EdgeMask
+  )(
+      operation: (Boolean, Boolean) => Boolean
+  ): Either[ConnectivityError, EdgeMask] =
+    if !edgeSpace.sameOrderingAs(that.edgeSpace) then
+      Left(
+        ConnectivityError.IncompatibleEdgeSpace(
+          "edge-mask Boolean operation requires the same scientific edge ordering"
+        )
+      )
+    else
+      Right(
+        new EdgeMask(
+          edgeSpace,
+          selected.indices.map(index => operation(selected(index), that.selected(index))).toVector
+        )
+      )
+
 object EdgeMask:
   def from(edgeSpace: EdgeSpace, selected: Iterable[Boolean]): Either[ConnectivityError, EdgeMask] =
     val values = selected.toVector

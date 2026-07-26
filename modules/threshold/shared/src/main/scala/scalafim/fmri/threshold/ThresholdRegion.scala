@@ -1,5 +1,7 @@
 package scalafim.fmri.threshold
 
+import scalafim.locus.{Region as LocusRegion}
+
 final case class BoundingBox(x0: Int, x1: Int, y0: Int, y1: Int, z0: Int, z1: Int):
   require(x0 <= x1 && y0 <= y1 && z0 <= z1, "bounding-box minima must be <= maxima")
 
@@ -38,16 +40,19 @@ object BoundingBox:
       i += 1
     Right(BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax))
 
-final class Region private (
+final class ThresholdRegion private (
     val id: Int,
-    private[threshold] val indexArray: Array[Int],
+    val membership: LocusRegion[ThresholdActiveVoxel],
     val bbox: BoundingBox,
     val priorMass: Double
 ):
-  require(indexArray.nonEmpty, "region must be non-empty")
+  require(!membership.isEmpty, "region must be non-empty")
   require(priorMass.isFinite && priorMass >= 0.0, "prior mass must be finite and non-negative")
 
-  def size: Int = indexArray.length
+  private[threshold] val indexArray: Array[Int] =
+    membership.ordinalsInDomainOrder
+
+  def size: Int = membership.cardinality
 
   def indices: Array[Int] =
     indexArray.clone
@@ -55,33 +60,40 @@ final class Region private (
   def indicesVector: Vector[Int] =
     indexArray.toVector
 
-object Region:
+object ThresholdRegion:
   def fromIndices(
     id: Int,
     indices: Array[Int],
     field: MaskedField,
     priors: PriorWeights
-  ): Either[ThresholdError, Region] =
+  ): Either[ThresholdError, ThresholdRegion] =
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
     if indices.isEmpty then return Left(ThresholdError.EmptyRegion)
 
+    val seen = scala.collection.mutable.HashSet.empty[Int]
     var mass = 0.0
     var i = 0
     while i < indices.length do
       val idx = indices(i)
       if idx < 0 || idx >= field.size then return Left(ThresholdError.IndexOutOfBounds(idx, field.size))
+      if seen.contains(idx) then return Left(ThresholdError.DuplicateRegionIndex(idx))
+      seen += idx
       mass += priors(idx)
       i += 1
 
-    BoundingBox.fromIndices(indices, field).map { bbox =>
-      unsafe(id, indices, bbox, mass)
-    }
+    for
+      membership <- LocusRegion
+        .fromOrdinals(field.activeSpace, indices)
+        .left
+        .map(error => ThresholdError.InvalidArgument("region membership", error.message))
+      bbox <- BoundingBox.fromIndices(membership.ordinalsInDomainOrder, field)
+    yield unsafe(id, membership, bbox, mass)
 
   private[threshold] def unsafe(
     id: Int,
-    indices: Array[Int],
+    membership: LocusRegion[ThresholdActiveVoxel],
     bbox: BoundingBox,
     priorMass: Double
-  ): Region =
-    new Region(id, indices.clone, bbox, priorMass)
+  ): ThresholdRegion =
+    new ThresholdRegion(id, membership, bbox, priorMass)

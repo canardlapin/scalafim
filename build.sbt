@@ -231,7 +231,7 @@ lazy val latent =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/latent"))
-    .dependsOn(archive)
+    .dependsOn(archive, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-latent"
@@ -429,7 +429,7 @@ lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image)
+    .dependsOn(image, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"
@@ -787,7 +787,7 @@ lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/connectivity"))
-    .dependsOn(graph)
+    .dependsOn(graph, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-connectivity"

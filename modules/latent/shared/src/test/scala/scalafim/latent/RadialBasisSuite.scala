@@ -219,6 +219,7 @@ class RadialBasisSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     assertEquals(order.activeToFullGrid, Vector(3, 1))
     assertEquals(order.activeRowsInMaskOrder, Vector(1, 0))
+    assertEquals(order.maskOrderSelection.ordinals.toVector, Vector(1, 0))
     assertEquals(order.maskValues(space.spatialDims.product), Right(Vector(false, true, false, true)))
     assertEquals(order.activeRowsForFullGrid(Vector(1, 3)), Right(Vector(1, 0)))
     assertEquals(
@@ -233,6 +234,38 @@ class RadialBasisSuite extends munit.FunSuite:
     assertEqualsDouble(artifact.loadings(0, 0), basis.loadings(1, 0), 0.0)
     assertEqualsDouble(artifact.loadings(1, 0), basis.loadings(0, 0), 0.0)
     assert(RadialMaskOrder.fromActiveIndices(Vector(1, 1)).isLeft)
+  }
+
+  test("radial locus order is an exact active-to-full injection with checked reverse") {
+    val order =
+      RadialMaskOrder
+        .fromActiveIndices(Vector(3, 1))
+        .fold(error => fail(error.message), identity)
+    val locus =
+      order
+        .locus(maskSize = 4)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      locus.activeSelection.ordinals.toVector,
+      Vector(3, 1)
+    )
+    assertEquals(
+      locus.activeToFull.mapping.targetOrdinals.toVector,
+      Vector(3, 1)
+    )
+    val firstActive = order.activeSpace.point(0).get
+    assertEquals(locus.fullPointFor(firstActive).ordinal, 3)
+    assertEquals(
+      locus.activePointFor(locus.fullGridSpace.point(1).get).map(_.ordinal),
+      Right(1)
+    )
+    assert(
+      locus
+        .activePointFor(locus.fullGridSpace.point(2).get)
+        .left
+        .exists(_.message.contains("not active"))
+    )
   }
 
   test("radial basis encoder delegates through shared-basis projection and reconstructs data in span") {

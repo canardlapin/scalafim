@@ -1,10 +1,28 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{Mask, NArrayUtil, NeuroSpace, NeuroVol}
+import scalafim.image.{
+  GridCompatibility,
+  Mask,
+  NArrayUtil,
+  NeuroSpace,
+  NeuroVol,
+  StructuralCompatibilityVoxel,
+  VolumeDomain
+}
+import scalafim.locus.{
+  FiniteSpace,
+  Injection,
+  Region,
+  Selection,
+  SpaceKey,
+  TotalMap
+}
 
-final case class MaskedField private[threshold] (
-    space: NeuroSpace,
-    mask: NeuroVol[Boolean],
+sealed trait ThresholdActiveVoxel
+
+final class MaskedField private[threshold] (
+    val space: NeuroSpace,
+    val mask: NeuroVol[Boolean],
     private[threshold] val data: Array[Double],
     private[threshold] val volumeIndex: Array[Int],
     private[threshold] val x: Array[Int],
@@ -29,13 +47,52 @@ final case class MaskedField private[threshold] (
   def volumeIndicesCopy: Array[Int] =
     volumeIndex.clone
 
+  lazy val fullDomain: VolumeDomain[StructuralCompatibilityVoxel] =
+    VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
+
+  lazy val activeSpace: FiniteSpace[ThresholdActiveVoxel] =
+    FiniteSpace
+      .make[ThresholdActiveVoxel](
+        SpaceKey.unsafe(
+          s"${fullDomain.finiteSpace.key.value}:threshold-active:${volumeIndex.mkString(",")}"
+        ),
+        size
+      )
+      .toOption
+      .get
+
+  lazy val activeSelection: Selection[StructuralCompatibilityVoxel] =
+    Selection
+      .fromOrdinals(fullDomain.finiteSpace, volumeIndex)
+      .toOption
+      .get
+
+  lazy val support: Region[StructuralCompatibilityVoxel] =
+    activeSelection.region
+
+  lazy val activeToFull: Injection[ThresholdActiveVoxel, StructuralCompatibilityVoxel] =
+    Injection
+      .validate(
+        TotalMap
+          .fromTargetOrdinals(
+            activeSpace,
+            fullDomain.finiteSpace,
+            volumeIndex
+          )
+          .toOption
+          .get
+      )
+      .toOption
+      .get
+
   def volumeIndices(maskSpaceIndices: Array[Int]): Either[ThresholdError, Array[Int]] =
     val out = new Array[Int](maskSpaceIndices.length)
     var i = 0
     while i < maskSpaceIndices.length do
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
-      out(i) = volumeIndex(idx)
+      val active = activeSpace.point(idx).get
+      out(i) = activeToFull.mapping(active).ordinal
       i += 1
     Right(out)
 
@@ -79,16 +136,17 @@ object MaskedField:
       case Right(()) => ()
 
     val stat = statistic.volume
-    if stat.space.spatialDims != mask.space.spatialDims then
-      return Left(
-        ThresholdError.ShapeMismatch(
-          "stat/mask",
-          stat.space.spatialDims.mkString("x"),
-          mask.space.spatialDims.mkString("x")
+    GridCompatibility.spatial(stat.space, mask.space) match
+      case Left(error) =>
+        return Left(
+          ThresholdError.ShapeMismatch(
+            "stat/mask space",
+            stat.space.spatialSpace.toString,
+            error.message
+          )
         )
-      )
-    if stat.space.spacing != mask.space.spacing || stat.space.origin != mask.space.origin then
-      return Left(ThresholdError.ShapeMismatch("stat/mask space", "same spacing and origin", "different spacing or origin"))
+      case Right(_) =>
+        ()
 
     val dims = stat.space.spatialDims
     val nx = dims(0)
@@ -120,7 +178,7 @@ object MaskedField:
     if values.isEmpty then Left(ThresholdError.EmptyMask)
     else
       Right(
-        MaskedField(
+        new MaskedField(
           stat.space.spatialSpace,
           mask,
           values,
