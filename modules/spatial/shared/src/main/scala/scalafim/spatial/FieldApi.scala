@@ -72,8 +72,12 @@ extension (field: Field)
   def mask(included: Vector[Boolean])(using graph: SpatialGraph): Either[FieldApiError, Field] =
     field.select(FieldDemand.mask(included))
 
-  def region(region: VoxelRegion)(using graph: SpatialGraph): Either[FieldApiError, Field] =
-    field.select(FieldDemand.region(region))
+  def box(box: VoxelBox)(using graph: SpatialGraph): Either[FieldApiError, Field] =
+    field.select(FieldDemand.box(box))
+
+  @deprecated("Use box; VoxelBox is geometric rather than extensional.", "0.2.0")
+  def region(region: VoxelBox)(using graph: SpatialGraph): Either[FieldApiError, Field] =
+    field.box(region)
 
   def timeBlock(start: Int, length: Int)(using graph: SpatialGraph): Either[FieldApiError, Field] =
     TimeBlock

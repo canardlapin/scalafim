@@ -15,7 +15,7 @@ final case class InMemoryDatasetBackend(
   override val voxelDomain: VoxelDomain = VoxelDomain.fullUnsafe(shape)
 
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
-    val resolvedEither = selection.resolveEither(shape, voxelDomain)
+    val resolvedEither = selection.resolveEither(acquisitionDomain)
     resolvedEither.flatMap { resolved =>
       val rows =
         resolved.timepoints.map { r =>

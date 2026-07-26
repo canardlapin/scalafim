@@ -50,6 +50,9 @@ final class NodeAxis private (
   def sameIdentityAs(other: NodeAxis): Boolean =
     sameMetadataAs(other)
 
+  lazy val locus: NodeLocusDomain =
+    NodeLocusDomain.make(this)
+
 object NodeAxis:
   def from(
       nodes: Iterable[NodeSpec],

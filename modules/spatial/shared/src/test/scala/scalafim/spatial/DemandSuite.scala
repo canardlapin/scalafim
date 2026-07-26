@@ -67,7 +67,7 @@ class DemandSuite extends munit.FunSuite:
     val volume = volumeDomain("volume")
     val surface = surfaceDomain("surface")
     val block = demandValue(TimeBlock.build(start = 1, length = 2))
-    val region = demandValue(VoxelRegion.build(VoxelCoord(1, 0, 0), VoxelCoord(3, 2, 1)))
+    val region = demandValue(VoxelBox.build(VoxelCoord(1, 0, 0), VoxelCoord(3, 2, 1)))
 
     val voxels = demandValue(
       ResolvedDemand.resolve(
@@ -77,7 +77,7 @@ class DemandSuite extends munit.FunSuite:
       )
     )
     val slice = demandValue(ResolvedDemand.resolve(FieldDemand.slice(SpatialAxis.Z, 1), volume, 4))
-    val box = demandValue(ResolvedDemand.resolve(FieldDemand.region(region), volume, 4))
+    val box = demandValue(ResolvedDemand.resolve(FieldDemand.box(region), volume, 4))
     val mask = demandValue(
       ResolvedDemand.resolve(
         FieldDemand.mask(Vector(true, false, true, false, false, false, false, false, false, false, false, true)),

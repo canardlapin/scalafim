@@ -10,6 +10,10 @@ trait DatasetBackend:
   def voxelDomain: VoxelDomain =
     VoxelDomain.fromMask(mask, shape).fold(error => throw new IllegalArgumentException(error.message), identity)
   def metadata: DatasetMetadata
+  lazy val acquisitionDomain: DatasetAcquisitionDomain =
+    DatasetAcquisitionDomain
+      .semantic(id, shape, voxelDomain)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
   def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries]
   def read(selection: DataSelection = DataSelection.All): FmriSeries =
     readEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -31,7 +35,7 @@ final class FmriDataset private (
     timeAxis.partitions(timepoints)
   def runPartitionsEither(selection: DataSelection = DataSelection.All): Either[DatasetError, Vector[DatasetRunPartition]] =
     for
-      resolved <- selection.resolveEither(shape, backend.voxelDomain)
+      resolved <- selection.resolveEither(backend.acquisitionDomain)
       partitions <- timeAxis.partitions(resolved.timepointIndices)
     yield partitions
   def runPartitions(selection: DataSelection = DataSelection.All): Vector[DatasetRunPartition] =

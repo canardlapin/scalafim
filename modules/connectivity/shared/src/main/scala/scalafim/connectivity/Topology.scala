@@ -67,6 +67,9 @@ final class EdgeSpace private (
   def description: String =
     s"${topology.label}:${order.label}:${rows}x${cols}:${size}"
 
+  lazy val locus: EdgeLocusDomain =
+    EdgeLocusDomain.make(this)
+
 object EdgeSpace:
   def undirected(
       nodeAxis: NodeAxis,

@@ -623,7 +623,7 @@ update it if new overlapping types appear before their phase begins.
 | `dataset.VoxelIndex`, `VoxelSelection`, and `VoxelDomain` | Dataset read policy, requested order, and active/full spatial availability | Retain policy distinctions. Back resolved points/order with locus values once `DatasetShape` owns an explicit finite-space identity. |
 | `dataset.VoxelSampleMap` | Exact injection from active sample rows to full-grid voxels plus partial reverse lookup | Re-express with `Selection` and an injection/lookup adapter; preserve active/full-grid semantics. |
 | `mvpa.FeatureSet` and `FeatureSetPlan` | Algorithm-level feature groups and searchlight execution plans | Retain in `mvpa`. Add constructors from locus regions, selections, parcellations, and searchlights. |
-| `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and `SearchlightWindowSet` | A second spatial searchlight representation | Deprecate after locus-to-MVPA adapters land. No new code constructs it directly. |
+| `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and `SearchlightWindowSet` | A second spatial searchlight representation | Removed in phase 11 after locus-to-MVPA adapters landed and the repository had no remaining consumers. |
 | `multivar.IndexSet` and `RoiPlan` | Ordered, non-empty feature-coordinate blocks with multivar axis policy | Retain as multivar inputs. Add a narrow adapter from locus `Selection`; do not force multivar core to own spatial identity. |
 | `connectivity.NodeAxis` | Keyed node metadata and scientific provenance | Retain and continue reusing `VertexBasis`. Optionally expose a locus finite-space package for node-indexed operations. |
 | `connectivity.EdgeSpace` and `EdgeMask` | Ordered connectivity edges and Boolean edge selection | Adapt `EdgeSpace` to a locus finite space and `EdgeMask` to a region where useful. Preserve vectorization-order provenance. |
@@ -1104,6 +1104,48 @@ Required implementation discipline:
 - retain specialized contact-count scans when they carry weights that a
   Boolean relation does not.
 
+### 11.1 Performance receipts
+
+The implementation keeps benchmark numbers as diagnostic receipts rather than
+portable CI thresholds. Correct work counts, independent reference agreement,
+and asymptotic representation are the stable gates.
+
+The 2026-07-26 focused JVM run used OpenJDK 25.0.1, sbt 1.10.5, and Scala
+3.4.2. It exercised 100 region operations after warm-up:
+
+```text
+operation=union
+elapsed_ns=31127000
+allocated_bytes=17080800
+
+operation=intersection
+elapsed_ns=3238792
+allocated_bytes=4548000
+```
+
+The same run compared the sorted primitive representation with immutable
+`BitSet` over 40 union/intersection iterations:
+
+```text
+workload=sparse sorted_array_ns=11706917 immutable_bitset_ns=2846792
+workload=dense  sorted_array_ns=1783291  immutable_bitset_ns=1811791
+```
+
+The Scala.js receipt ran the identical storage workload and dense-reference
+oracle:
+
+```text
+workload=sparse sorted_array_ns=2150958  immutable_bitset_ns=2944833
+workload=dense  sorted_array_ns=14338667 immutable_bitset_ns=1734042
+```
+
+The figures confirm the expected linear merge behavior without making one
+representation universally fastest; sparse membership density remains a
+future representation-selection input. Every measured result was also checked
+against independent `BitSet` or dense Boolean semantics. Lazy spatial
+allocation and IO narrowing remain covered by
+[`docs/benchmarks/spatial-lazy.md`](../benchmarks/spatial-lazy.md).
+
 ## 12. Compatibility and Removal Policy
 
 Migration uses adapters before removals.
@@ -1154,6 +1196,29 @@ Do not add:
 - equality that ignores runtime space identity;
 - deprecated wrappers with independent mutable or cached membership;
 - a label-based fallback when parcel points do not align.
+
+### 12.5 Implemented compatibility ledger
+
+| Public value retained | Delegation or distinction | Removal condition |
+| --- | --- | --- |
+| `image.VoxelRegion` | Compatibility façade backed by `locus.Region` on an explicit `VolumeDomain`; it does not own a second Boolean algebra. | Retain until downstream image APIs can accept typed existential volume domains directly in a breaking release. |
+| `image.VoxelSelection` | Compatibility façade backed by ordered `locus.Selection`. | Retain until image extraction callers have migrated to explicit typed selections in a breaking release. |
+| Existing image ROI containers and `ROIVolWindow` | Materialized image data/coordinates; searchlight construction itself is a locus relation. | Retain as concrete storage/materialization results; remove only if a separate API deprecation is approved. |
+| `surface.SurfaceRoi` and `SurfaceField` | Geometry/data containers exposing checked `Region`, `IndexedField`, and `Section` views. | Retain while surface payload and annotation convenience remains public API. |
+| `atlas.VolumeAtlas` and `SurfaceAtlas` | Atlas identity, provenance, metadata, and concrete payload around one `AtlasQuotient`. | Retain; these are domain containers, not duplicate parcellations. |
+| Deprecated `atlas.Region` alias/object | Source bridge to `AtlasRegionMetadata`; all repository signatures use the corrected name. | Remove in the next breaking release after downstream source migration. |
+| Deprecated `spatial.VoxelRegion` alias/object | Source bridge to the geometric `VoxelBox`; it never denotes extensional membership. | Remove in the next breaking release after downstream source migration. |
+| `spatial.Field`, `SpatialDemand`, and `RowSelection` | Lazy runtime, provenance, and execution-planning values that lower locus regions/selections explicitly. | Retain; removal would discard distinct runtime semantics. |
+| `dataset.VoxelSelection` and availability policies | Dataset read policy around a resolved locus selection; preserves `All` versus `AllSpatial` and requested order. | Retain while dataset query policy remains a public concern. |
+| `mvpa.FeatureSet`, `FeatureSetPlan`, `multivar.IndexSet`, and `RoiPlan` | Algorithm-level plans built through locus adapters. | Retain; these values carry analysis semantics rather than spatial membership identity. |
+| Graph/connectivity axes and edge order | Scientific keys, metadata, provenance, and vectorization order; locus spaces are checked projections. | Retain; locus deliberately does not replace keyed or scientific axes. |
+| Threshold and latent containers | Scoring, layout, and decode policy around locus membership, selection, and exact maps. | Retain; no generic indexing algebra is duplicated. |
+| Zarr `Geometry.Region` and `CopyRegion` | Physical array chunk/slice rectangles, explicitly outside R6 migration scope. | Retain under the Zarr package; the names are unambiguous at the module boundary. |
+
+The phase-9 `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and
+`SearchlightWindowSet` bridge was removed in phase 11 because all repository
+consumers already lower through `locus.Searchlight` and
+`CenteredSearchlight`. No wrapper remains there.
 
 ## 13. Risks and Decision Gates
 
@@ -1240,6 +1305,29 @@ The epic is complete only when all of the following are true:
 14. Focused benchmarks and allocation receipts are recorded.
 15. `sbt compileAll` and `sbt testAll` pass warning-clean, including JVM and
     Scala.js.
+
+### 14.1 Cross-platform implementation evidence
+
+Focused receipts below are the phase-close gates; the final repository-wide
+gate is recorded in the phase-11 mote bead.
+
+| Slice | JVM | Scala.js | Principal evidence |
+| --- | ---: | ---: | --- |
+| locus kernel | 29 | 28 | Boolean/indexed logic, relation laws, ownership, dense differential, storage benchmark; JVM also runs allocation accounting |
+| locus data | 18 | 18 | restriction, quotient fibers/coarsening, centered searchlights, one-pass aggregation |
+| locus laws | 11 | 11 | bounded exhaustive references, differential models, ScalaCheck supplements |
+| graph relation interop | 40 | 40 | keyed-basis adaptation and explicit loop policy |
+| image migration | 260 | 249 | volume domains, region/selection parity, metric searchlight laws and materialization |
+| surface migration | 113 | 84 | topology identity, field/ROI/label adapters, fragmentation and geodesic laws |
+| atlas migration | 76 | 48 | volume/surface quotients, networks, reductions, overlap, adjacency differential |
+| spatial migration | 132 | 109 | domain locus packages, exact/crisp/sampled transport, lazy demand lowering |
+| dataset migration | 81 | 55 | acquisition identity, ordered selection, active/full injection |
+| MVPA spatial adapters | 12 | 12 | region, selection, parcellation, and centered-searchlight lowering |
+| MVPA core and dataset consumers | 120 | 120 | algorithm compatibility after spatial migration |
+| multivar adapter | 478 | 478 | ordered locus selection lowering |
+| connectivity adapter | 64 | 64 | node/edge spaces, masks, provenance and vectorization order |
+| threshold adapter | 20 | 20 | active support, exact compact/full map, scored-region semantics |
+| latent adapter | 81 | 81 | active order, exact injection/reverse, layout/decode preservation |
 
 ## 15. Tracker Mapping
 

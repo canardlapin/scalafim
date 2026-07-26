@@ -231,7 +231,7 @@ lazy val latent =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/latent"))
-    .dependsOn(archive)
+    .dependsOn(archive, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-latent"
@@ -429,7 +429,7 @@ lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image)
+    .dependsOn(image, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"
@@ -569,7 +569,7 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(linalg, image, surface)
+    .dependsOn(linalg, image, surface, locusData, locusLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-spatial"
@@ -640,7 +640,7 @@ lazy val dataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset"))
-    .dependsOn(image, hrf, archive, latent, bids)
+    .dependsOn(image, hrf, archive, latent, bids, locusData, locusLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset",
@@ -739,7 +739,7 @@ lazy val multivar =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/multivar"))
-    .dependsOn(linalg)
+    .dependsOn(linalg, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-multivar"
@@ -787,7 +787,7 @@ lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/connectivity"))
-    .dependsOn(graph)
+    .dependsOn(graph, locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-connectivity"
@@ -831,7 +831,7 @@ lazy val mvpaSpatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
-    .dependsOn(mvpa, image, surface, atlas)
+    .dependsOn(mvpa, image, surface, atlas, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"

@@ -48,6 +48,15 @@ shared benchmark fixture compared sparse and dense membership/Boolean
 operations against immutable `BitSet` on both supported platforms. The
 representation is intentionally not part of the API.
 
+The JVM suite additionally records current-thread allocation for warmed region
+union and intersection loops. These numbers are diagnostic receipts, not
+machine-independent thresholds:
+
+```sh
+sbt locusKernelJVM/test
+sbt locusKernelJS/test
+```
+
 ## Relations
 
 `Relation[X, Y]` stores a finite set of target points for each source point.

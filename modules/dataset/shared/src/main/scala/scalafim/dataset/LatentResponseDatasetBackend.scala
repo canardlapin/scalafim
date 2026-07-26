@@ -16,7 +16,7 @@ final class LatentResponseDatasetBackend private (
 
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
-      resolved <- selection.resolveEither(shape, voxelDomain)
+      resolved <- selection.resolveEither(acquisitionDomain)
       samples <- sampleMap.samplesFor(resolved.voxelIndexValues)
       decoded <- response
         .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(samples)))

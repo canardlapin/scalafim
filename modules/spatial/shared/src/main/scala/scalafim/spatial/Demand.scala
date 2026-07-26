@@ -37,22 +37,32 @@ enum DemandError:
       case StructuredSelectionRequiresFullDomain(selection) =>
         s"$selection selection requires an unselected target domain"
 
-final case class VoxelRegion private (
+final case class VoxelBox private (
   minInclusive: VoxelCoord,
   maxExclusive: VoxelCoord
 )
 
-object VoxelRegion:
+object VoxelBox:
   def build(
     minInclusive: VoxelCoord,
     maxExclusive: VoxelCoord
-  ): Either[DemandError, VoxelRegion] =
+  ): Either[DemandError, VoxelBox] =
     if minInclusive.x < 0 || minInclusive.y < 0 || minInclusive.z < 0 ||
        maxExclusive.x <= minInclusive.x ||
        maxExclusive.y <= minInclusive.y ||
        maxExclusive.z <= minInclusive.z then
       Left(DemandError.InvalidVoxelRegion(minInclusive, maxExclusive))
-    else Right(new VoxelRegion(minInclusive, maxExclusive))
+    else Right(new VoxelBox(minInclusive, maxExclusive))
+
+@deprecated("Use VoxelBox; this value is a geometric box, not an extensional region.", "0.2.0")
+type VoxelRegion = VoxelBox
+
+object VoxelRegion:
+  def build(
+      minInclusive: VoxelCoord,
+      maxExclusive: VoxelCoord
+  ): Either[DemandError, VoxelBox] =
+    VoxelBox.build(minInclusive, maxExclusive)
 
 enum SpatialDemand:
   case Full
@@ -62,7 +72,7 @@ enum SpatialDemand:
   case Roi(indices: Vector[Int])
   case Slice(axis: SpatialAxis, index: Int)
   case Mask(included: Vector[Boolean])
-  case Region(region: VoxelRegion)
+  case Box(box: VoxelBox)
 
 final case class TimeBlock private (start: Int, length: Int):
   def endExclusive: Int =
@@ -114,8 +124,12 @@ object FieldDemand:
   def mask(included: Vector[Boolean]): FieldDemand =
     FieldDemand(spatial = SpatialDemand.Mask(included))
 
-  def region(region: VoxelRegion): FieldDemand =
-    FieldDemand(spatial = SpatialDemand.Region(region))
+  def box(box: VoxelBox): FieldDemand =
+    FieldDemand(spatial = SpatialDemand.Box(box))
+
+  @deprecated("Use box; VoxelBox is geometric rather than extensional.", "0.2.0")
+  def region(region: VoxelBox): FieldDemand =
+    box(region)
 
   def time(block: TimeBlock): FieldDemand =
     FieldDemand(observations = ObservationDemand.Block(block))
@@ -321,7 +335,7 @@ private def resolveSpatial(
         val rows = included.indices.filter(included).toVector
         if rows.isEmpty then Left(DemandError.EmptySelection("mask"))
         else Right(rows)
-    case SpatialDemand.Region(region) =>
+    case SpatialDemand.Box(region) =>
       volumeDimensions("voxel region", domain).flatMap { dimensions =>
         if region.maxExclusive.x > dimensions.x ||
            region.maxExclusive.y > dimensions.y ||
@@ -405,4 +419,4 @@ private def selectionLabel(selection: SpatialDemand): String =
     case SpatialDemand.Roi(_) => "ROI"
     case SpatialDemand.Slice(_, _) => "slice"
     case SpatialDemand.Mask(_) => "mask"
-    case SpatialDemand.Region(_) => "voxel region"
+    case SpatialDemand.Box(_) => "voxel box"

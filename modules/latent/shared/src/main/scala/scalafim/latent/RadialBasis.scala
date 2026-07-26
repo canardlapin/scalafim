@@ -148,7 +148,11 @@ final case class RadialBasis(
         Left(LatentError.MissingComponent("radial active-index map"))
 
   private def canonicalDMat(order: RadialMaskOrder): ArchiveDMat =
-    ArchiveDMat.fromRows(loadings.selectRows(order.activeRowsInMaskOrder).toRows)
+    ArchiveDMat.fromRows(
+      loadings
+        .selectRows(order.maskOrderSelection.ordinals.toVector)
+        .toRows
+    )
 
   private def selectColumns(matrix: DMat, columns: IndexedSeq[Int]): DMat =
     val out = new Array[Double](matrix.rows * columns.length)

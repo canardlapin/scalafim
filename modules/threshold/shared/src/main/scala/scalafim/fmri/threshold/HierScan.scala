@@ -42,7 +42,7 @@ final case class HierScanNodeTest(
 final case class HierScanRegionHit(
     path: Vector[Int],
     depth: Int,
-    region: Region,
+    region: ThresholdRegion,
     scoreValue: ScoreValue,
     adjustedP: AdjustedP
 ):
@@ -98,7 +98,7 @@ object HierScan:
   private def scan(
     field: MaskedField,
     priors: PriorWeights,
-    root: Region,
+    root: ThresholdRegion,
     nullDraw: NullDraw,
     config: HierScanConfig,
     orientation: EvidenceOrientation
@@ -118,7 +118,7 @@ object HierScan:
     ).map(_ => builder.result())
 
   private def descend(
-    region: Region,
+    region: ThresholdRegion,
     path: Vector[Int],
     depth: Int,
     alphaBudget: Double,
@@ -139,7 +139,7 @@ object HierScan:
       yield ()
 
   private def testChildren(
-    children: Vector[Region],
+    children: Vector[ThresholdRegion],
     parentPath: Vector[Int],
     parentDepth: Int,
     alphaBudget: Double,
@@ -172,7 +172,7 @@ object HierScan:
     yield ()
 
   private def applyTests(
-    children: Vector[Region],
+    children: Vector[ThresholdRegion],
     tests: Vector[AdjustedTest],
     parentPath: Vector[Int],
     parentDepth: Int,
@@ -214,14 +214,14 @@ object HierScan:
       i += 1
     Right(())
 
-  private def terminal(region: Region, depth: Int, alphaBudget: Double, config: HierScanConfig): Boolean =
+  private def terminal(region: ThresholdRegion, depth: Int, alphaBudget: Double, config: HierScanConfig): Boolean =
     region.size <= config.minVoxels ||
       region.bbox.isSingleton ||
       depth >= config.maxDepth ||
       alphaBudget < config.minAlpha
 
   private def childNullMatrix(
-    children: Vector[Region],
+    children: Vector[ThresholdRegion],
     field: MaskedField,
     priors: PriorWeights,
     nullDraw: NullDraw,
