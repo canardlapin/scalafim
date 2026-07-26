@@ -6,7 +6,7 @@ artifact set can serve the JVM and Scala.js modules.
 
 | Component | Scalafim policy | Verified migration baseline |
 | --- | --- | --- |
-| Scala | Scala 3 binary line; Scalafim compiles with 3.7.4 | Scalafim 3.7.4 consuming Gale built with 3.3.8 |
+| Scala | Scala 3 binary line; Scalafim compiles with 3.4.2 | Scalafim 3.4.2 consuming Gale built with 3.3.8 |
 | sbt | version pinned in `project/build.properties` | 1.10.5 |
 | Scala.js | exact plugin version shared with Gale | 1.22.0 |
 | JVM | JDK 21 or newer for portable Gale core | JDK 22 and JDK 25 |

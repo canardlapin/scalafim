@@ -17,7 +17,7 @@ for the module map; this file is the working contract.
 
 ## Build & test
 
-- Toolchain: Scala **3.7.4**, sbt **1.10.5**, [MUnit](https://scalameta.org/munit/) for tests.
+- Toolchain: Scala **3.4.2**, sbt **1.10.5**, [MUnit](https://scalameta.org/munit/) for tests.
 - Commands:
   - `sbt compileAll` / `sbt testAll` — every module, both platforms.
   - `sbt <module>{JVM,JS}/test` — one platform, e.g. `sbt hrfJVM/test`, `sbt imageJS/test`.
