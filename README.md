@@ -19,6 +19,7 @@ cross-compiled sbt build.
 - `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `image`: neuroimaging volumes, masks, spaces, affine/dense-field spatial morphisms, indexing, statistics, clustering, and image IO.
+- `registration`: compact symmetric nonlinear registration algebra with typed inverse pairs, midpoint updates, paired diffeomorphic flows, and topology guards.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
 - `image-view-java2d`: thin JVM Java2D host with direct `Graphics2D` and `BufferedImage` rendering.
@@ -35,7 +36,7 @@ cross-compiled sbt build.
 - `atlas`: typed standard-atlas metadata, registry, transform plans, parcel lookup, reduction, overlap, and adjacency operations.
 - `archive`: typed Latent NeuroArchive-style manifests, transform descriptors, validation, quant roundtrips, and JVM storage boundaries.
 - `bids`: BIDS filename/entity parsing, typed manifests, query semantics, BIDS URIs, event tables, and fMRIPrep confound selections.
-- `dataset`: fMRI dataset shapes, typed ids, selections, backend contracts, and series.
+- `dataset`: source-blind fMRI views, checked archive/backend attachment, typed study/run indexing, spatial/temporal selections, segmented cross-run reads, and series.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable ordinary least squares kernels over timepoints-by-voxels response blocks.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
@@ -51,7 +52,7 @@ cross-compiled sbt build.
 - `zarr`: dependency-free Scala 3 Zarr v3 kernel with read-only v2 lowering, runtime-rank hierarchy and factored selections, portable bounded async reads, revision-scoped LRU range caches, sync/async create-only writers, and atomic JVM publication.
 - `zarr-codec-blosc-zstd`: optional typed Blosc/Zstandard provider using JNI on JVM and embedded WASM on Scala.js.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD semantics, immutable manifests/publication receipts, and measured sharded layout policy.
-- `dataset-zarr`: bounded dataset reads plus streaming NIfTI import and BIDS/NIfTI export over NeuroArchive Zarr revisions.
+- `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
@@ -93,6 +94,8 @@ sbt designJVM/test
 sbt designJS/test
 sbt imageJVM/test
 sbt imageJS/test
+sbt registrationJVM/test
+sbt registrationJS/test
 sbt imageViewJVM/test
 sbt imageViewJS/test
 sbt imageViewCanvasJS/test
