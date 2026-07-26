@@ -1,6 +1,14 @@
 package scalafim.dataset
 
-import scalafim.image.{GridCompatibility, Indexing, Mask, NeuroSpace, VoxelCoord}
+import scalafim.image.{
+  GridCompatibility,
+  Indexing,
+  Mask,
+  NeuroSpace,
+  VoxelCoord,
+  VoxelSelection as ImageVoxelSelection
+}
+import scalafim.locus.Selection as LocusSelection
 
 opaque type TimepointIndex = Int
 
@@ -94,6 +102,17 @@ object VoxelSelection:
 
   def coords(values: VoxelCoord*): VoxelSelection =
     VoxelSelection.Coords(values.toVector)
+
+  def fromImage(
+      selection: ImageVoxelSelection,
+      shape: DatasetShape
+  ): Either[DatasetError, VoxelSelection] =
+    GridCompatibility
+      .volume(shape.volumeSpace, selection.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap: _ =>
+        fromInts(selection.linearIndices.toSeq*)
 
 enum VoxelDomainKind:
   case FullSpatial
@@ -273,11 +292,14 @@ final class DataSelection private (
       shape: DatasetShape,
       voxelDomain: VoxelDomain
   ): Either[DatasetError, ResolvedDataSelection] =
-    for
-      timepoints <- time.resolve(shape.timepoints)
-      voxelIndices <- voxelDomain.resolve(voxels, shape.space)
-      resolved <- ResolvedDataSelection.make(timepoints, voxelIndices)
-    yield resolved
+    DatasetAcquisitionDomain
+      .structuralCompatibility(shape, voxelDomain)
+      .flatMap(resolveEither)
+
+  def resolveEither(
+      domain: DatasetAcquisitionDomain
+  ): Either[DatasetError, ResolvedDataSelection] =
+    domain.resolve(time, voxels)
 
   def resolve(shape: DatasetShape): ResolvedDataSelection =
     resolveEither(shape).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -326,7 +348,8 @@ object DataSelection:
 
 final class ResolvedDataSelection private (
     val timepointIndices: Vector[TimepointIndex],
-    val voxelIndexValues: Vector[VoxelIndex]
+    val voxelIndexValues: Vector[VoxelIndex],
+    val locus: ResolvedLocusSelection
 ):
   def timepoints: Vector[Int] =
     timepointIndices.map(TimepointIndex.raw)
@@ -347,7 +370,53 @@ object ResolvedDataSelection:
   ): Either[DatasetError, ResolvedDataSelection] =
     if timepoints.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Timepoint))
     else if voxels.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Voxel))
-    else Right(new ResolvedDataSelection(timepoints, voxels))
+    else
+      val timeSize = timepoints.map(TimepointIndex.raw).max + 1
+      val voxelSize = voxels.map(VoxelIndex.raw).max + 1
+      for
+        validTimepoints <- validateTimepoints(timepoints, timeSize)
+        validVoxels <- validateVoxels(voxels, voxelSize)
+        shape <- DatasetShape.make(
+          NeuroSpace(Vector(voxelSize, 1, 1)),
+          timeSize
+        )
+        voxelDomain <- VoxelDomain.full(shape)
+        domain <- DatasetAcquisitionDomain.structuralCompatibility(shape, voxelDomain)
+      yield
+          val times =
+            LocusSelection
+              .fromOrdinals(
+                domain.timeSpace,
+                validTimepoints.map(TimepointIndex.raw)
+              )
+              .toOption
+              .get
+          val selectedVoxels =
+            LocusSelection
+              .fromOrdinals(
+                domain.fullVoxelSpace,
+                validVoxels.map(VoxelIndex.raw)
+              )
+              .toOption
+              .get
+          fromLocus(domain, times, selectedVoxels)
+
+  private[dataset] def fromLocus(
+      domain: DatasetAcquisitionDomain,
+      timepoints: LocusSelection[domain.T],
+      voxels: LocusSelection[domain.X]
+  ): ResolvedDataSelection =
+    val locusSelection =
+      new ResolvedLocusSelection:
+        type T = domain.T
+        type X = domain.X
+        val timepoints: LocusSelection[T] = timepoints
+        val voxels: LocusSelection[X] = voxels
+    new ResolvedDataSelection(
+      timepoints.points.map(point => TimepointIndex.unsafe(point.ordinal)).toVector,
+      voxels.points.map(point => VoxelIndex.unsafe(point.ordinal)).toVector,
+      locusSelection
+    )
 
   private[dataset] def unsafe(
       timepoints: Vector[TimepointIndex],

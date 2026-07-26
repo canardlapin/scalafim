@@ -11,11 +11,15 @@ trait ResponseBlockSource:
   def shape: DatasetShape
   def voxelDomain: VoxelDomain
   def metadata: DatasetMetadata
+  lazy val acquisitionDomain: DatasetAcquisitionDomain =
+    DatasetAcquisitionDomain
+      .structuralCompatibility(shape, voxelDomain)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   final def readBlock(
       selection: DataSelection = DataSelection.All
   ): Either[DatasetError, FmriSeries] =
-    selection.resolveEither(shape, voxelDomain).flatMap(readResolved)
+    selection.resolveEither(acquisitionDomain).flatMap(readResolved)
 
   protected[dataset] def readResolved(
       selection: ResolvedDataSelection
@@ -146,7 +150,7 @@ final class ResponseBlockDatasetBackend private (
 ) extends DatasetBackend:
 
   def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
-    source.readBlock(selection)
+    selection.resolveEither(acquisitionDomain).flatMap(source.readResolved)
 
 object ResponseBlockDatasetBackend:
   def make(

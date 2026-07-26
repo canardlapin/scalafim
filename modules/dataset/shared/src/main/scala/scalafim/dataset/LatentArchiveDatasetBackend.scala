@@ -29,7 +29,7 @@ final class LatentArchiveDatasetBackend private (
 
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
-      resolved <- selection.resolveEither(shape, voxelDomain)
+      resolved <- selection.resolveEither(acquisitionDomain)
       data <- selectedData(resolved)
       series <- FmriSeries.make(
         data = data,

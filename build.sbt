@@ -569,7 +569,7 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(linalg, image, surface)
+    .dependsOn(linalg, image, surface, locusData, locusLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-spatial"
@@ -640,7 +640,7 @@ lazy val dataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset"))
-    .dependsOn(image, hrf, archive, latent, bids)
+    .dependsOn(image, hrf, archive, latent, bids, locusData, locusLaws % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset",
