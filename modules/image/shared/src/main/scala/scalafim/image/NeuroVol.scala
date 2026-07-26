@@ -1,5 +1,7 @@
 package scalafim.image
 
+import cats.Applicative
+import cats.syntax.all.*
 import narr.NArray
 import scala.reflect.ClassTag
 import spire.algebra.{Order, Ring}
@@ -31,7 +33,7 @@ final class NeuroVol[A] private[image] (
     out
 
   def apply(roi: VoxelRoi)(using ClassTag[A]): NArray[A] =
-    require(roi.space == volumeSpace, "ROI/space mismatch")
+    GridCompatibility.requireVolume(volumeSpace, roi.space)
     val out = NArrayUtil.ofSize[A](roi.size)
     val coords = roi.coords
     var p = 0
@@ -41,7 +43,23 @@ final class NeuroVol[A] private[image] (
     out
 
   def apply(roi: ROIVol[?])(using ClassTag[A]): NArray[A] =
-    apply(roi.coords)
+    apply(roi.roi)
+
+  def select(selection: VoxelSelection)(using ClassTag[A]): Either[GridMismatch, RoiValues[A]] =
+    GridCompatibility.volume(volumeSpace, selection.space).map: _ =>
+      val indices = selection.indexSet.unsafeArray
+      val out = NArrayUtil.ofSize[A](indices.length)
+      var i = 0
+      while i < indices.length do
+        out(i) = linear(indices(i))
+        i += 1
+      RoiValues.unsafe(selection, out, label)
+
+  def select(region: VoxelRegion)(using ClassTag[A]): Either[GridMismatch, RoiValues[A]] =
+    select(region.toSelection)
+
+  def select(roi: VoxelRoi)(using ClassTag[A]): Either[GridMismatch, RoiValues[A]] =
+    select(VoxelSelection.fromRoi(roi))
 
   def slices(axis: Int = 2)(using ClassTag[A]): Vector[NeuroSlice[A]] =
     slices(SpatialAxis.unsafe(axis))
@@ -60,8 +78,7 @@ final class NeuroVol[A] private[image] (
   def concat(that: NeuroVol[A], rest: NeuroVol[A]*)(using ClassTag[A]): NeuroVec[A] =
     val all = Vector(this, that) ++ rest.toVector
     val base = all.head.space.spatialSpace
-    all.foreach(v => require(v.space.spatialDims == base.spatialDims, "spatial dims mismatch"))
-    all.foreach(v => require(v.space.spacing == base.spacing && v.space.origin == base.origin, "space mismatch"))
+    all.foreach(v => GridCompatibility.requireSpatial(base, v.space))
 
     val spatialNels = base.spatialDims.product
     val totalT = all.length
@@ -101,7 +118,7 @@ final class NeuroVol[A] private[image] (
     Mask.fromIndexSet(VoxelIndexSet(volumeSpace, indices), label)
 
   def asMask(indexSet: VoxelIndexSet, label: String): NeuroVol[Boolean] =
-    require(indexSet.space == volumeSpace, "index set/space mismatch")
+    GridCompatibility.requireVolume(volumeSpace, indexSet.space)
     Mask.fromIndexSet(indexSet, label)
 
   def asMask(indexSet: VoxelIndexSet): NeuroVol[Boolean] =
@@ -111,8 +128,7 @@ final class NeuroVol[A] private[image] (
     asMask(indices, this.label)
 
   def asSparse(mask: NeuroVol[Boolean], label: String = this.label)(using ClassTag[A]): SparseNeuroVol[A] =
-    require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
-    require(mask.space.spacing == space.spacing && mask.space.origin == space.origin, "mask/space mismatch")
+    GridCompatibility.requireSpatial(space, mask.space)
     val idx = Mask.indices(mask)
     asSparse(idx, label)
 
@@ -127,7 +143,7 @@ final class NeuroVol[A] private[image] (
     asSparse(indexSet, this.label)
 
   def asSparse(indexSet: VoxelIndexSet, label: String)(using ClassTag[A]): SparseNeuroVol[A] =
-    require(indexSet.space == volumeSpace, "index set/space mismatch")
+    GridCompatibility.requireVolume(volumeSpace, indexSet.space)
     val out = NArrayUtil.ofSize[A](indexSet.size)
     var p = 0
     while p < indexSet.size do
@@ -197,10 +213,48 @@ final class NeuroVol[A] private[image] (
     val sliceSpace = space.dropDim(axis.index)
     NeuroSlice.fromLinear(out, sliceSpace, label)
 
-  def map[B](f: A => B)(using ClassTag[B]): NeuroVol[B] =
+  def mapValues[B](f: A => B)(using ClassTag[B]): NeuroVol[B] =
     NeuroVol(values.map(f), space, label)
 
-  def copy(values: NDArray[A] = this.values, space: NeuroSpace = this.space, label: String = this.label): NeuroVol[A] =
+  def mapVoxels[B](f: (VoxelCoord, A) => B)(using ClassTag[B]): NeuroVol[B] =
+    val out = NArrayUtil.ofSize[B](values.data.length)
+    var index = 0
+    while index < out.length do
+      out(index) = f(space.indexToVoxel3D(index), values.data(index))
+      index += 1
+    NeuroVol.fromLinear(out, space, label)
+
+  def zipWith[B, C](
+      that: NeuroVol[B]
+  )(
+      f: (A, B) => C
+  )(using ClassTag[C]): Either[GridMismatch, NeuroVol[C]] =
+    GridCompatibility.exact(space, that.space).map: _ =>
+      NeuroVol(values.zipMap(that.values)(f), space, label)
+
+  def traverseValues[F[_], B](
+      f: A => F[B]
+  )(using Applicative[F], ClassTag[B]): F[NeuroVol[B]] =
+    Vector
+      .tabulate(values.data.length)(index => values.data(index))
+      .traverse(f)
+      .map(values => NeuroVol.fromLinear(NArrayUtil.fromArray(values.toArray), space, label))
+
+  def map[B](f: A => B)(using ClassTag[B]): NeuroVol[B] =
+    mapValues(f)
+
+  def reconstruct(
+      values: NDArray[A] = this.values,
+      space: NeuroSpace = this.space,
+      label: String = this.label
+  ): Either[NeuroImageError, NeuroVol[A]] =
+    NeuroVol.make(values, space, label)
+
+  private[scalafim] def copy(
+      values: NDArray[A] = this.values,
+      space: NeuroSpace = this.space,
+      label: String = this.label
+  ): NeuroVol[A] =
     NeuroVol(values, space, label)
 
   override def equals(other: Any): Boolean =
@@ -215,9 +269,30 @@ final class NeuroVol[A] private[image] (
     s"NeuroVol(values=$values, space=$space, label=$label)"
 
 object NeuroVol:
-  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
-    NeuroImage.make[A, Volume3D](values, space, label)
-      .fold(err => throw new IllegalArgumentException(err.message), image => new NeuroVol(image))
+  def make[A](
+      values: NDArray[A],
+      space: NeuroSpace,
+      label: String = ""
+  ): Either[NeuroImageError, NeuroVol[A]] =
+    NeuroImage.make[A, Volume3D](values, space, label).map(new NeuroVol(_))
 
-  def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
+  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
+    make(values, space, label)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def fromLinearChecked[A](
+      data: NArray[A],
+      space: NeuroSpace,
+      label: String = ""
+  )(using ClassTag[A]): Either[NeuroImageError, NeuroVol[A]] =
+    summon[ImageDimEvidence[Volume3D]]
+      .expectedShape(space)
+      .flatMap { shape =>
+        val expected = shape.product
+        if data.length != expected then
+          Left(NeuroImageError.LinearSizeMismatch("NeuroVol", expected, data.length))
+        else make(NDArray.copyOf(data, shape), space, label)
+      }
+
+  private[scalafim] def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVol[A] =
     new NeuroVol(NeuroImage.fromLinear[A, Volume3D](data, space, label))

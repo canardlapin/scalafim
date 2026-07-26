@@ -68,17 +68,19 @@ class BidsProjectLoaderSuite extends munit.FunSuite:
       assertEquals(project.derivatives.map(_.pipeline.value), Vector("fmriprep"))
 
       val rawBold =
-        project.paths(BidsQuery(filename = Vector("bold\\.nii\\.gz$"), scope = BidsScope.Raw))
+        project.paths(value(BidsQuery.from(filename = Vector("bold\\.nii\\.gz$"), scope = BidsScope.Raw)))
       assertEquals(rawBold.map(_.value), Vector("sub-01/func/sub-01_task-rest_run-01_bold.nii.gz"))
       assertEquals(project.funcScans(task = "rest").map(_.path.value), Vector("sub-01/func/sub-01_task-rest_run-01_bold.nii.gz"))
       assertEquals(project.anatScans().map(_.path.value), Vector("sub-01/anat/sub-01_T1w.nii.gz"))
 
       val derivativeBold =
         project.paths(
-          BidsQuery(
-            filename = Vector("bold\\.nii\\.gz$"),
-            scope = BidsScope.Derivatives,
-            pipeline = Some(PipelineName("fmriprep"))
+          value(
+            BidsQuery.from(
+              filename = Vector("bold\\.nii\\.gz$"),
+              scope = BidsScope.Derivatives,
+              pipeline = Some(PipelineName("fmriprep"))
+            )
           )
         )
       assertEquals(
@@ -89,6 +91,29 @@ class BidsProjectLoaderSuite extends munit.FunSuite:
         project.preprocScans(space = "MNI").map(_.path.value),
         Vector("derivatives/fmriprep/sub-01/func/sub-01_task-rest_space-MNI_desc-preproc_bold.nii.gz")
       )
+    }
+
+  test("checked loading preserves legacy output while strict loading rejects structural errors"):
+    withBidsFixture { root =>
+      writeCoreFixture(root)
+      touch(root.resolve("notes.txt"))
+      touch(root.resolve("sub-02/func/sub-02_bold.nii.gz"))
+
+      val legacy = value(BidsProjectLoader.load(root))
+      val checked = value(BidsProjectLoader.loadChecked(root))
+
+      assertEquals(checked.value, legacy)
+      assertEquals(
+        checked.issues.map(issue => issue.path.map(_.value) -> (issue.code, issue.severity)),
+        Vector(
+          Some("notes.txt") -> (BidsIssueCode.UnrecognizedFile, BidsIssueSeverity.Warning),
+          Some("sub-02/func/sub-02_bold.nii.gz") -> (BidsIssueCode.MissingRequiredField, BidsIssueSeverity.Error)
+        )
+      )
+      BidsProjectLoader.loadStrict(root) match
+        case Left(BidsProjectLoadError.Validation(report)) =>
+          assertEquals(report.issues, checked.issues)
+        case other => fail(s"expected strict validation failure, got $other")
     }
 
   test("loader preserves strict and lax behavior for missing participants.tsv"):
@@ -166,6 +191,8 @@ class BidsProjectLoaderSuite extends munit.FunSuite:
       val table = byPath(BidsPath("sub-02/func/sub-02_task-rest_run-01_events.tsv"))
       val tableFiles = value(BidsProjectLoader.readEventTableFiles(project))
       val tableFile = tableFiles.find(_.path == BidsPath("sub-02/func/sub-02_task-rest_run-01_events.tsv")).getOrElse(fail("missing event table file"))
+      val validatedFiles = value(BidsProjectLoader.readValidatedEventTableFiles(project))
+      val validated = validatedFiles.find(_.path == tableFile.path).getOrElse(fail("missing validated event table file"))
 
       assertEquals(table.columns, Vector("onset", "duration", "trial_type"))
       assertEquals(value(table.column("duration")), Vector(Some("1"), None))
@@ -173,6 +200,28 @@ class BidsProjectLoaderSuite extends munit.FunSuite:
       assertEquals(tableFile.task, Some("rest"))
       assertEquals(tableFile.run, Some("01"))
       assertEquals(tableFile.context.scope, BidsScope.Raw)
+      assertEquals(validated.events.onsetSeconds, Vector(Some(0.0), Some(2.0)))
+      assertEquals(validated.events.durationSeconds, Vector(Some(1.0), None))
+      assertEquals(validated.subject, Some("02"))
+    }
+
+  test("validated event loading reports malformed numeric values with path context"):
+    withBidsFixture { root =>
+      writeCoreFixture(root)
+      val invalidPath = "sub-02/func/sub-02_task-rest_run-01_events.tsv"
+      write(root.resolve(invalidPath), "onset duration trial_type\nnever 1 go\n")
+
+      val project = value(BidsProjectLoader.load(root))
+      val error =
+        BidsProjectLoader
+          .readValidatedEventTableFiles(project)
+          .left
+          .toOption
+          .getOrElse(fail("expected invalid event table"))
+
+      assert(error.message.contains(invalidPath))
+      assert(error.message.contains("non-numeric value 'never'"))
+      assertEquals(value(BidsProjectLoader.readEventTableFiles(project)).length, 2)
     }
 
   test("loader discovers fMRIPrep confounds and applies shared selection policy"):

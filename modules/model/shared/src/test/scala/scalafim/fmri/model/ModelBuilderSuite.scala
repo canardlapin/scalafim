@@ -21,7 +21,7 @@ class ModelBuilderSuite extends munit.FunSuite:
         Vector(7.0)
       )
     )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("builder-demo"), data, NeuroSpace(Vector(1, 1, 1))),
       samplingFrame = samplingFrame,
       events = events

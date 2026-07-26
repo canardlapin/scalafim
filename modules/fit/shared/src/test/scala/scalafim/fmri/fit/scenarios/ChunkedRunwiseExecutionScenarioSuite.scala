@@ -259,7 +259,7 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
           intercept = Intercept.Global
         )
       val dataset =
-        FmriDataset(
+        FmriDataset.unsafe(
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-chunked-runwise-execution"),
             ImageDMat.fromRows(responseRows),

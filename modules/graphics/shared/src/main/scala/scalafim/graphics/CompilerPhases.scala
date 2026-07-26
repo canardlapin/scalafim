@@ -1499,19 +1499,7 @@ private[graphics] object LayoutPhase:
     }
     val legend =
       if nonPositionGuides.isEmpty then None
-      else
-        Some(
-          LegendRequest(
-            nonPositionGuides.head match
-              case GuideLayoutRequest.Legend(title, _)   => title
-              case GuideLayoutRequest.Colorbar(title, _) => title,
-            nonPositionGuides.flatMap {
-              case GuideLayoutRequest.Legend(_, values)   => values
-              case GuideLayoutRequest.Colorbar(_, values) => values
-            },
-            items = nonPositionGuides
-          )
-        )
+      else Some(LegendRequest(nonPositionGuides))
     PlotLayoutRequest(axes, legend, labels, panelAspect, grid)
 
   private[graphics] def panelAspect(
@@ -1965,72 +1953,63 @@ private[graphics] object GuidePhase:
           Left(GraphicsError.MissingLayout("guides"))
         case Some(panel) =>
           val legendViewport = frames.flatMap(_.legendViewport())
+          // Each request stays tied to the index of the spec it came from, so a
+          // spec this phase does not measure — an axis, or a guide kind added
+          // later — cannot shift the placements belonging to the others.
+          val requests = specs.zipWithIndex.collect {
+            case (legend: GuideSpec.Legend, at) =>
+              at -> GuideLayoutRequest.Legend(legend.title, legend.entries.map(_.label))
+            case (colorbar: GuideSpec.Colorbar, at) =>
+              at -> GuideLayoutRequest.Colorbar(colorbar.title, colorbar.ticks.map(_.label))
+          }
           val placements =
-            if legendViewport.nonEmpty then
-              val items = specs.collect {
-                case legend: GuideSpec.Legend =>
-                  GuideLayoutRequest.Legend(legend.title, legend.entries.map(_.label))
-                case colorbar: GuideSpec.Colorbar =>
-                  GuideLayoutRequest.Colorbar(colorbar.title, colorbar.ticks.map(_.label))
-              }
-              if items.isEmpty then Vector.empty
-              else
-                GuideStackSolver
-                  .plan(policy, LegendRequest(None, Vector.empty, items = items))
-                  .placements
-            else Vector.empty
+            if legendViewport.isEmpty then Map.empty[Int, GuidePlacement]
+            else
+              val plan = GuideStackSolver.plan(policy, LegendRequest(requests.map(_._2)))
+              requests.map(_._1).zip(plan.placements).toMap
           val out = Vector.newBuilder[ResolvedGuide]
           var idx = 0
-          var placementIndex = 0
           var result: Either[GraphicsError, Unit] = Right(())
           while idx < specs.length && result.isRight do
             val spec = specs(idx)
-            val placed = spec match
-              case _: GuideSpec.Axis => Right(spec)
-              case _ if placementIndex < placements.length =>
-                val placement = placements(placementIndex)
-                placementIndex += 1
-                placeGuide(spec, placement)
-              case _ => Right(spec)
-            result = placed.flatMap(GuideSpec.lower(_, panel, legendViewport, policy, theme)).map { guide =>
+            val placed = placements.get(idx).fold(spec)(placeGuide(spec, _))
+            result = GuideSpec.lower(placed, panel, legendViewport, policy, theme).map { guide =>
               out += guide
               ()
             }
             idx += 1
           result.map(_ => out.result())
 
-  private def placeGuide(
-      spec: GuideSpec,
-      placement: GuidePlacement
-  ): Either[GraphicsError, GuideSpec] =
+  /** Apply a solved placement to the spec it was measured from. Placements are
+    * keyed by that spec's index, so the two variants always agree; the final
+    * case is unreachable and keeps the authored origin rather than inventing an
+    * error for a condition that cannot arise.
+    */
+  private def placeGuide(spec: GuideSpec, placement: GuidePlacement): GuideSpec =
     def x(value: Double): LengthExpr = LengthExpr(Length.pointsUnsafe(value))
     def y(value: Double): LengthExpr = LengthExpr.npcUnsafe(1.0) - ExtentExpr.pointsUnsafe(value)
     (spec, placement) match
       case (legend: GuideSpec.Legend, solved: GuidePlacement.Legend) =>
-        Right(
-          legend.copy(
-            origin = Point(x(solved.xPt), y(solved.topPt)),
-            rowGap = ExtentExpr.pointsUnsafe(solved.rowPitchPt),
-            firstRowOffset = Some(ExtentExpr.pointsUnsafe(solved.firstRowOffsetPt)),
-            labelOffset = x(solved.labelOffsetPt),
-            markerSize = ExtentExpr.pointsUnsafe(solved.markerSizePt)
-          )
+        legend.copy(
+          origin = Point(x(solved.xPt), y(solved.topPt)),
+          rowGap = ExtentExpr.pointsUnsafe(solved.rowPitchPt),
+          firstRowOffset = Some(ExtentExpr.pointsUnsafe(solved.firstRowOffsetPt)),
+          labelOffset = x(solved.labelOffsetPt),
+          markerSize = ExtentExpr.pointsUnsafe(solved.markerSizePt)
         )
       case (colorbar: GuideSpec.Colorbar, solved: GuidePlacement.Colorbar) =>
-        Right(
-          colorbar.copy(
-            origin = Point(
-              x(solved.xPt),
-              y(solved.topPt + solved.barTopOffsetPt + solved.barHeightPt)
-            ),
-            barWidth = ExtentExpr.pointsUnsafe(solved.barWidthPt),
-            barHeight = ExtentExpr.pointsUnsafe(solved.barHeightPt),
-            tickLength = ExtentExpr.pointsUnsafe(solved.tickLengthPt),
-            labelOffset = ExtentExpr.pointsUnsafe(solved.labelOffsetPt),
-            titleOffset = ExtentExpr.pointsUnsafe(solved.titleOffsetPt)
-          )
+        colorbar.copy(
+          origin = Point(
+            x(solved.xPt),
+            y(solved.topPt + solved.barTopOffsetPt + solved.barHeightPt)
+          ),
+          barWidth = ExtentExpr.pointsUnsafe(solved.barWidthPt),
+          barHeight = ExtentExpr.pointsUnsafe(solved.barHeightPt),
+          tickLength = ExtentExpr.pointsUnsafe(solved.tickLengthPt),
+          labelOffset = ExtentExpr.pointsUnsafe(solved.labelOffsetPt),
+          titleOffset = ExtentExpr.pointsUnsafe(solved.titleOffsetPt)
         )
-      case _ => Left(GraphicsError.LayoutOverflow("guide stack plan"))
+      case _ => spec
 
 /** Panel decoration is ordinary renderer-neutral geometry. It is lowered
   * after guide derivation so grid lines use the same tick positions as axes,

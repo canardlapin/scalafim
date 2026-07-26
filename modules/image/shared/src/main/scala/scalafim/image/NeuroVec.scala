@@ -1,5 +1,7 @@
 package scalafim.image
 
+import cats.Applicative
+import cats.syntax.all.*
 import narr.NArray
 import scala.reflect.ClassTag
 
@@ -107,8 +109,12 @@ final class NeuroVec[A] private[image] (
     NDArray(out, Vector(tLen, nVox))
 
   def series(indexSet: VoxelIndexSet)(using ClassTag[A]): NDArray[A] =
-    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    GridCompatibility.requireVolume(seriesSpace.volumeSpace, indexSet.space)
     series(indexSet.unsafeArray)
+
+  def series(roi: VoxelRoi)(using ClassTag[A]): NDArray[A] =
+    GridCompatibility.requireVolume(seriesSpace.volumeSpace, roi.space)
+    series(roi.linearIndexSet.unsafeArray)
 
   def series(roi: ROICoords)(using ClassTag[A]): NDArray[A] =
     series(roi.linearIndices(space.spatialSpace))
@@ -122,6 +128,17 @@ final class NeuroVec[A] private[image] (
   def seriesRoi(roi: ROICoords)(using ClassTag[A]): ROIVec[A] =
     val lin = roi.linearIndices(space.spatialSpace)
     ROIVec(space, roi, series(lin))
+
+  def select(selection: VoxelSelection)(using ClassTag[A]): Either[GridMismatch, RoiSeries[A]] =
+    GridCompatibility.volume(seriesSpace.volumeSpace, selection.space).map: _ =>
+      val selected = series(selection.indexSet.unsafeArray)
+      RoiSeries.unsafe(seriesSpace, selection, selected, label)
+
+  def select(region: VoxelRegion)(using ClassTag[A]): Either[GridMismatch, RoiSeries[A]] =
+    select(region.toSelection)
+
+  def select(roi: VoxelRoi)(using ClassTag[A]): Either[GridMismatch, RoiSeries[A]] =
+    select(VoxelSelection.fromRoi(roi))
 
   def asSparse(mask: NeuroVol[Boolean], label: String = this.label)(using ClassTag[A]): SparseNeuroVec[A] =
     SparseNeuroVec.fromDense(values.data, space, mask, label)
@@ -137,7 +154,7 @@ final class NeuroVec[A] private[image] (
     asSparse(indexSet, this.label)
 
   def asSparse(indexSet: VoxelIndexSet, label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    GridCompatibility.requireVolume(seriesSpace.volumeSpace, indexSet.space)
     val m = Mask.fromIndexSet(indexSet)
     asSparse(m, label)
 
@@ -148,7 +165,7 @@ final class NeuroVec[A] private[image] (
     asSparse(roi.linearIndices(space.spatialSpace), label)
 
   def splitClusters(clusters: ClusteredNeuroVol)(using ClassTag[A]): Vector[ROIVec[A]] =
-    require(clusters.space.spatialDims == space.spatialDims, "cluster space mismatch")
+    GridCompatibility.requireSpatial(space, clusters.space)
     clusters.clusterMap.toVector.sortBy(_._1).map { case (_, idx) =>
       val coords = Vector.tabulate(idx.length)(i => Indexing.indexToGrid3D(space.spatialDims, idx(i)))
       ROIVec(space, ROICoords(coords), series(idx))
@@ -170,8 +187,7 @@ final class NeuroVec[A] private[image] (
 
   def concat(that: NeuroVec[A], rest: NeuroVec[A]*)(using ClassTag[A]): NeuroVec[A] =
     val all = Vector(this, that) ++ rest.toVector
-    all.foreach(v => require(v.space.spatialDims == space.spatialDims, "spatial dims mismatch"))
-    all.foreach(v => require(v.space.spacing == space.spacing && v.space.origin == space.origin, "space mismatch"))
+    all.foreach(v => GridCompatibility.requireSpatial(space, v.space))
 
     val spatialNels = space.spatialDims.product
     val totalT = all.map(_.nVolumes).sum
@@ -185,10 +201,63 @@ final class NeuroVec[A] private[image] (
     val newSpace = space.spatialSpace.addDim(totalT, Some(Axis.Time))
     NeuroVec.fromLinear(out, newSpace, label)
 
-  def map[B](f: A => B)(using ClassTag[B]): NeuroVec[B] =
+  def mapValues[B](f: A => B)(using ClassTag[B]): NeuroVec[B] =
     NeuroVec(values.map(f), space, label)
 
-  def copy(values: NDArray[A] = this.values, space: NeuroSpace = this.space, label: String = this.label): NeuroVec[A] =
+  def mapVoxels[B](f: (VoxelCoord, A) => B)(using ClassTag[B]): NeuroVec[B] =
+    val spatialNels = seriesSpace.volumeSpace.nVoxels
+    val out = NArrayUtil.ofSize[B](values.data.length)
+    var index = 0
+    while index < out.length do
+      val spatialIndex = index % spatialNels
+      out(index) = f(space.indexToVoxel3D(spatialIndex), values.data(index))
+      index += 1
+    NeuroVec.fromLinear(out, space, label)
+
+  def mapSamples[B](
+      f: (VoxelCoord, Int, A) => B
+  )(using ClassTag[B]): NeuroVec[B] =
+    val spatialNels = seriesSpace.volumeSpace.nVoxels
+    val out = NArrayUtil.ofSize[B](values.data.length)
+    var index = 0
+    while index < out.length do
+      val spatialIndex = index % spatialNels
+      val time = index / spatialNels
+      out(index) = f(space.indexToVoxel3D(spatialIndex), time, values.data(index))
+      index += 1
+    NeuroVec.fromLinear(out, space, label)
+
+  def zipWith[B, C](
+      that: NeuroVec[B]
+  )(
+      f: (A, B) => C
+  )(using ClassTag[C]): Either[GridMismatch, NeuroVec[C]] =
+    GridCompatibility.exact(space, that.space).map: _ =>
+      NeuroVec(values.zipMap(that.values)(f), space, label)
+
+  def traverseValues[F[_], B](
+      f: A => F[B]
+  )(using Applicative[F], ClassTag[B]): F[NeuroVec[B]] =
+    Vector
+      .tabulate(values.data.length)(index => values.data(index))
+      .traverse(f)
+      .map(values => NeuroVec.fromLinear(NArrayUtil.fromArray(values.toArray), space, label))
+
+  def map[B](f: A => B)(using ClassTag[B]): NeuroVec[B] =
+    mapValues(f)
+
+  def reconstruct(
+      values: NDArray[A] = this.values,
+      space: NeuroSpace = this.space,
+      label: String = this.label
+  ): Either[NeuroImageError, NeuroVec[A]] =
+    NeuroVec.make(values, space, label)
+
+  private[scalafim] def copy(
+      values: NDArray[A] = this.values,
+      space: NeuroSpace = this.space,
+      label: String = this.label
+  ): NeuroVec[A] =
     NeuroVec(values, space, label)
 
   override def equals(other: Any): Boolean =
@@ -203,9 +272,30 @@ final class NeuroVec[A] private[image] (
     s"NeuroVec(values=$values, space=$space, label=$label)"
 
 object NeuroVec:
-  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
-    NeuroImage.make[A, Series4D](values, space, label)
-      .fold(err => throw new IllegalArgumentException(err.message), image => new NeuroVec(image))
+  def make[A](
+      values: NDArray[A],
+      space: NeuroSpace,
+      label: String = ""
+  ): Either[NeuroImageError, NeuroVec[A]] =
+    NeuroImage.make[A, Series4D](values, space, label).map(new NeuroVec(_))
 
-  def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
+  def apply[A](values: NDArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
+    make(values, space, label)
+      .fold(err => throw new IllegalArgumentException(err.message), identity)
+
+  def fromLinearChecked[A](
+      data: NArray[A],
+      space: NeuroSpace,
+      label: String = ""
+  )(using ClassTag[A]): Either[NeuroImageError, NeuroVec[A]] =
+    summon[ImageDimEvidence[Series4D]]
+      .expectedShape(space)
+      .flatMap { shape =>
+        val expected = shape.product
+        if data.length != expected then
+          Left(NeuroImageError.LinearSizeMismatch("NeuroVec", expected, data.length))
+        else make(NDArray.copyOf(data, shape), space, label)
+      }
+
+  private[scalafim] def fromLinear[A](data: NArray[A], space: NeuroSpace, label: String = ""): NeuroVec[A] =
     new NeuroVec(NeuroImage.fromLinear[A, Series4D](data, space, label))

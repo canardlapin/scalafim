@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, NArrayUtil}
+import scalafim.image.{DMat, GridCompatibility, Mask, NArrayUtil}
 import narr.NArray
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
@@ -136,22 +136,47 @@ object CompositeResponseBlockSource:
   ): CompositeResponseBlockSource =
     make(runs, metadata).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class ResponseBlockDatasetBackend(
-    id: DatasetId,
-    source: ResponseBlockSource,
-    mask: Mask.MaskVol,
-    metadata: DatasetMetadata = DatasetMetadata.Empty
+final class ResponseBlockDatasetBackend private (
+    val id: DatasetId,
+    val source: ResponseBlockSource,
+    val mask: Mask.MaskVol,
+    val metadata: DatasetMetadata,
+    override val shape: DatasetShape,
+    override val voxelDomain: VoxelDomain
 ) extends DatasetBackend:
-  require(mask.space == source.shape.space, "response source mask must match source geometry")
-
-  def shape: DatasetShape =
-    source.shape
-
-  override def voxelDomain: VoxelDomain =
-    source.voxelDomain
 
   def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     source.readBlock(selection)
+
+object ResponseBlockDatasetBackend:
+  def make(
+      id: DatasetId,
+      source: ResponseBlockSource,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): Either[DatasetError, ResponseBlockDatasetBackend] =
+    GridCompatibility
+      .spatial(source.shape.space, mask.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .map: _ =>
+        new ResponseBlockDatasetBackend(
+          id = id,
+          source = source,
+          mask = mask,
+          metadata = metadata,
+          shape = source.shape,
+          voxelDomain = source.voxelDomain
+        )
+
+  def unsafe(
+      id: DatasetId,
+      source: ResponseBlockSource,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): ResponseBlockDatasetBackend =
+    make(id, source, mask, metadata)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 private[dataset] def matrixFromRowMajor(
     rows: Int,

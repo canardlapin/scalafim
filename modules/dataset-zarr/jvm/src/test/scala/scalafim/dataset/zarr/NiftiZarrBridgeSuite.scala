@@ -51,7 +51,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)
     assertEquals(Nifti.readVec(exported).values.data(23), 3.75)
-    BidsProjectLoader.load(fixture.exportRoot).fold(error => fail(error.message), _ => ())
+    BidsProjectLoader.loadStrict(fixture.exportRoot).fold(error => fail(error.message), _ => ())
 
   test("importer rejects unsupported scalar types before publishing"):
     val root = Files.createTempDirectory("scalafim-nifti-zarr-unsupported")

@@ -600,8 +600,7 @@ object SpatialFilters:
     require(dims.length == 3, "volume must be 3D")
 
     mask.foreach { m =>
-      require(m.space.spatialDims == dims, "mask/space mismatch")
-      require(m.space.spacing == sp.spacing && m.space.origin == sp.origin, "mask/space mismatch")
+      GridCompatibility.requireSpatial(sp, m.space)
     }
 
     val nx = dims(0); val ny = dims(1); val nz = dims(2)
@@ -648,8 +647,7 @@ object SpatialFilters:
     val spatialNels = dims.product
 
     mask.foreach { m =>
-      require(m.space.spatialDims == dims, "mask/space mismatch")
-      require(m.space.spacing == spacing && m.space.origin == sp.origin, "mask/space mismatch")
+      GridCompatibility.requireSpatial(sp, m.space)
     }
 
     val idx: Array[Int] =
@@ -759,8 +757,7 @@ object SpatialFilters:
     val spacing = sp.spacing
 
     mask.foreach { m =>
-      require(m.space.spatialDims == dims, "mask/space mismatch")
-      require(m.space.spacing == spacing && m.space.origin == sp.origin, "mask/space mismatch")
+      GridCompatibility.requireSpatial(sp, m.space)
     }
 
     val idx: Array[Int] =
@@ -923,8 +920,7 @@ object SpatialFilters:
     val spacing = sp.spacing
 
     mask.foreach { m =>
-      require(m.space.spatialDims == dims, "mask/space mismatch")
-      require(m.space.spacing == spacing && m.space.origin == sp.origin, "mask/space mismatch")
+      GridCompatibility.requireSpatial(sp, m.space)
     }
 
     val spatialIdx: Array[Int] =

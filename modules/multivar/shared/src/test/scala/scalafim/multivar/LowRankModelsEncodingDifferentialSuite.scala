@@ -1,5 +1,12 @@
 package scalafim.multivar
 
+import scalafim.multivar.core.*
+import scalafim.multivar.contract.*
+import scalafim.multivar.optimization.*
+import scalafim.multivar.solver.*
+import scalafim.multivar.lifecycle.*
+import scalafim.multivar.family.glrm.*
+
 import gale.linalg.DMat
 import gale.linalg.DVec
 
@@ -103,7 +110,7 @@ class LowRankModelsEncodingDifferentialSuite extends munit.FunSuite:
     assertEqualsDouble(result.objective.rowPenalty, fixture.rowPenalty, valueTolerance)
     assertEqualsDouble(result.objective.total, fixture.totalObjective, valueTolerance)
     assert(result.certificate.proxGradientResidual <= 8e-7, s"${fixture.id} ScalaFIM residual")
-    assert(result.achievement.isInstanceOf[LatentEncodingAchievement.EpsilonStationary])
+    assert(result.achievedGuarantee.isInstanceOf[AchievedOptimizationGuarantee.Stationary])
     assert(result.uniqueness.isInstanceOf[LatentCodeUniqueness.UniqueByStrongConvexity])
 
     result.decoded.zipWithIndex.foreach:

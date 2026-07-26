@@ -14,8 +14,16 @@ class GraphicsExtractionGuardSuite extends munit.FunSuite:
     if candidate == null then fail("could not locate the repository root from user.dir")
     candidate
 
-  test("graphics production sources import no ScalaFIM domain outside graphics") {
-    val forbidden = """(?m)^\s*(?:import|export)\s+scalafim\.(?!graphics(?:\.|\s|\{|\*|$))([^\s;]+)""".r
+  test("graphics production sources reference no ScalaFIM domain outside graphics") {
+    // Any occurrence, not only `import`/`export`: a fully qualified inline
+    // reference such as `scalafim.linalg.Matrix.identity(3)` breaks extraction
+    // just as thoroughly as an import. Comments and string literals are scanned
+    // too — an over-approximation we accept, since a mention that trips this
+    // guard can simply be rephrased.
+    // The trailing alternation must keep matching brace and wildcard
+    // selectors (`import scalafim.{linalg, image}`, `import scalafim.*`), not
+    // just a bare identifier.
+    val forbidden = """\bscalafim\.(?!graphics\b)(?:[A-Za-z_][A-Za-z0-9_]*|\{|\*)""".r
     val violations = productionSources.flatMap { path =>
       forbidden.findAllMatchIn(Files.readString(path)).map(found => s"${root.relativize(path)}: ${found.matched.trim}")
     }

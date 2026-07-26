@@ -1,7 +1,6 @@
 package scalafim.fmri.motion.io
 
 import scalafim.bids.*
-import scalafim.bids.io.BidsProjectLoader
 import scalafim.fmri.motion.*
 import scalafim.image.*
 
@@ -101,7 +100,7 @@ class MotionIoSuite extends munit.FunSuite:
       """{"RepetitionTime":2.0}"""
     )
 
-    val project = BidsProjectLoader.load(root).fold(err => fail(err.message), identity)
+    val project = MotionBids.loadProject(root).fold(err => fail(err.message), identity)
     val scans =
       MotionBids
         .rawScans(project, subid = "01", task = "rest", run = "01")
@@ -125,6 +124,18 @@ class MotionIoSuite extends munit.FunSuite:
     assertEquals(preproc.length, 1)
     assertEquals(preproc.head.repetitionTimeSeconds, Some(2.0))
     assertEquals(preproc.head.acquisitionTiming, AcquisitionTiming.Volume)
+  }
+
+  test("BIDS adapter rejects structurally invalid project identities") {
+    val root = Files.createTempDirectory("scalafim-motion-bids-invalid")
+    write(root.resolve("dataset_description.json"), """{"Name":"Invalid Motion Fixture","BIDSVersion":"1.10.0"}""")
+    write(root.resolve("participants.tsv"), "participant_id\nsub-01\n")
+    Files.createDirectories(root.resolve("sub-01/func"))
+    Files.write(root.resolve("sub-01/func/sub-01_bold.nii.gz"), Array.emptyByteArray)
+
+    val error = MotionBids.loadProject(root).left.getOrElse(fail("expected strict BIDS validation failure"))
+    assert(error.message.contains("MissingRequiredField"), clues(error.message))
+    assert(error.message.contains("sub-01/func/sub-01_bold.nii.gz"), clues(error.message))
   }
 
   test("report writer serializes motion, matrices, and summary bundle") {

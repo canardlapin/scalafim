@@ -14,11 +14,25 @@ final case class ClusteredNeuroVec[A](
   label: String = ""
 ):
   require(space.ndim == 4, "ClusteredNeuroVec must be 4D")
-  require(space.spatialDims == cvol.space.spatialDims, "cluster/space mismatch")
+  GridCompatibility.requireSpatial(space, cvol.space)
   require(ts.ndim == 2, "ts must be 2D (time x clusters)")
   require(ts.shape(0) == space.dims(3), "ts/time mismatch")
   require(ts.shape(1) == cvol.numClusters, "ts/cluster mismatch")
   require(clMap.length == space.spatialDims.product, "clMap length mismatch")
+  private val expectedClusterMap = cvol.toDense.values.data
+  private val firstClusterMapMismatch =
+    var mismatch = Option.empty[Int]
+    var i = 0
+    while i < clMap.length && mismatch.isEmpty do
+      if clMap(i) != expectedClusterMap(i) then mismatch = Some(i)
+      i += 1
+    mismatch
+  require(
+    firstClusterMapMismatch.isEmpty,
+    firstClusterMapMismatch
+      .map(index => s"cluster assignment at spatial index $index disagrees with cluster volume")
+      .getOrElse("")
+  )
 
   private val clusterIds: Vector[Int] = cvol.clusterIds
   private val idToCol: Map[Int, Int] = clusterIds.zipWithIndex.toMap
@@ -166,7 +180,7 @@ final case class ClusteredNeuroVec[A](
     copy(ts = newTs, space = newSpace)
 
   def requireCompat(that: ClusteredNeuroVec[?]): Unit =
-    require(this.space == that.space, "space mismatch")
+    GridCompatibility.requireExact(this.space, that.space)
     require(this.numClusters == that.numClusters, "cluster count mismatch")
     require(this.clMap.length == that.clMap.length, "cluster map length mismatch")
     var ok = true
@@ -213,7 +227,7 @@ object ClusteredNeuroVec:
     reducer: NArray[A] => A,
     label: String = ""
   )(using ClassTag[A], Ring[A]): ClusteredNeuroVec[A] =
-    require(vec.space.spatialDims == cvol.space.spatialDims, "spatial dims mismatch")
+    GridCompatibility.requireSpatial(vec.space, cvol.space)
     val lbl = if label.nonEmpty then label else vec.label
     val spatialNels = vec.space.spatialDims.product
     val tLen = vec.nVolumes

@@ -1,0 +1,134 @@
+{
+  "capturedAtUtc": "2026-07-22T12:47:00Z",
+  "capturedOn": "2026-07-22",
+  "schema": "scalafim-half-flow-factored-affine-v1",
+  "admission": {
+    "case": "sub18_orig_to_2009cAsym",
+    "status": "representation-fix-pass_accuracy-diagnostic",
+    "retainedVariant": "exact-affine_midpoint-residual_affine-scaled-result-guard",
+    "claims": [
+      "The final dense pair passes the frozen Jacobian and inverse-composition guard with zero folds.",
+      "The exact-affine factorization is faster than the prior retained sampled-arm diagnostic on this single run.",
+      "Single-case accuracy remains materially below the frozen ANTs comparator and is not admitted as parity."
+    ]
+  },
+  "change": {
+    "state": "Each midpoint arm stores an inverse-tracked work-space residual self-map and an exact affine endpoint isomorphism.",
+    "image": "Scalar image pull fuses the exact affine into the prepared world-to-voxel sampler; no dense affine coordinate field is materialized.",
+    "regrid": "Only residual self-maps are linearly regridded with identity outside sampled support; affine maps are reframed analytically.",
+    "result": "The relative residual is composed on the common work grid, sampled once onto endpoint grids, and followed by exact endpoint affines.",
+    "guard": "The result residual guard scales the Jacobian floor by affine determinant and inverse-error limits by a conservative induced affine norm.",
+    "allocation": "A reusable relative-composition buffer owns two coordinate and two validity pairs and is reused across candidate attempts.",
+    "gale": "No Gale source change. A bespoke 3x3 spectral operation was rejected because the general induced norm bound is small, portable, and conservative."
+  },
+  "plan": {
+    "levels": [
+      { "shrink": 4, "acceptedSteps": 10, "attemptedSteps": 23 },
+      { "shrink": 2, "acceptedSteps": 8, "attemptedSteps": 19 },
+      { "shrink": 1, "acceptedSteps": 6, "attemptedSteps": 16 }
+    ],
+    "totalAcceptedSteps": 24,
+    "totalAttemptedSteps": 58,
+    "guard": {
+      "minimumJacobian": 0.05,
+      "maximumInverseErrorMm": 0.5,
+      "maximumInverseErrorVox": 0.25,
+      "minimumJacobianValidFraction": 0.8,
+      "minimumInverseValidFraction": 0.6
+    }
+  },
+  "result": {
+    "dicePre": 0.6609480584043748,
+    "dicePost": 0.9325895815487062,
+    "globalNccPre": 0.5678517376638429,
+    "globalNccPost": 0.917762805523913,
+    "localNccPre": 0.12629279168,
+    "localNccPost": 0.545255834371,
+    "gradientNccPre": -0.10722456159,
+    "gradientNccPost": 0.280815878732,
+    "centerOfMassDistancePreFixedGridVox": 17.7205578553,
+    "centerOfMassDistancePostFixedGridVox": 1.25118324316,
+    "nonlinearRmsMm": 0.6976492454352033,
+    "nonlinearMaximumMm": 2.431407524955502,
+    "topologySafe": true,
+    "forwardMinimumJacobian": 0.40163936561562125,
+    "backwardMinimumJacobian": 0.7437867837594618,
+    "forwardNonPositiveJacobians": 0,
+    "backwardNonPositiveJacobians": 0,
+    "forwardInverseMaximumMm": 0.40424501955873465,
+    "backwardInverseMaximumMm": 0.3678922861892307,
+    "readSeconds": 5.305433708,
+    "resampleSeconds": 0.597925167,
+    "affineSeconds": 0.925126125,
+    "nonlinearSeconds": 16.475829125,
+    "outputSeconds": 0.36285875,
+    "endToEndSeconds": 23.942560083
+  },
+  "priorRetainedDiagnostic": {
+    "receipt": "half-flow-boundary-ablation-p7-2026-07-22.json",
+    "dice": 0.9324664251554232,
+    "globalNcc": 0.9175131707362224,
+    "localNcc": 0.5418738667842135,
+    "gradientNcc": 0.279891350411,
+    "nonlinearSeconds": 20.355289375,
+    "endToEndSeconds": 27.851721542,
+    "forwardInverseMaximumMm": 0.5570350610572852,
+    "nonlinearTimeReductionFraction": 0.190587,
+    "endToEndTimeReductionFraction": 0.140356
+  },
+  "comparator": {
+    "method": "ANTs SyNQuick fixed-mask",
+    "receipt": "half-flow-ants-sub18-p7-2026-07-22.json",
+    "dockerImage": "antsx/ants:latest",
+    "platform": "linux/amd64 under Apple Silicon emulation",
+    "threads": 1,
+    "dice": 0.979358955715422,
+    "globalNcc": 0.9457095651791,
+    "localNcc": 0.672298050150454,
+    "gradientNcc": 0.439945600516007,
+    "elapsedSeconds": 49.915,
+    "halfFlowEndToEndSpeedup": 2.08478
+  },
+  "verification": {
+    "imageJVM": { "passed": 209, "failed": 0 },
+    "imageJS": { "passed": 202, "failed": 0 },
+    "registrationJVM": { "passed": 36, "failed": 0 },
+    "registrationJS": { "passed": 36, "failed": 0 },
+    "independentEvaluator": "/Users/bbuchsbaum/code/hodgeflow/inst/benchmarks/benchmark_public_t1_registration.R",
+    "contracts": [
+      "fused affine scalar pull matches an explicitly transformed coordinate-field oracle",
+      "identity-extended residual regrid remains valid beyond sampled support",
+      "affine midpoint export remains exact outside the work-grid support",
+      "affine split and nonlinear registration are equivariant under fixed-moving swap"
+    ]
+  },
+  "inputsSha256": {
+    "fixed.nii.gz": "7b168153a9508f5f116ac37d33835fa44dd168ba7a9ae31a3b33e6f63bd23292",
+    "moving.nii.gz": "917dd8c4c6cf6fcc96c445fa0e17f88dfad469853e5bc3509bf17b81fb440d06",
+    "fixed_mask.nii.gz": "745c970d2b45eb5088446528399b6965c2ce912d37ca7cacb993513a302d5161",
+    "moving_mask.nii.gz": "64e089065293eabd54244ea73862f97aa59466b7dd054948bfb5c330abc0f0e3"
+  },
+  "outputs": {
+    "workDirectory": "/private/tmp/halfflow-factored-finalguard-p7.RrzOxt",
+    "summaryCsvSha256": "afd8efda9d5ddafe81cae2a843aad6679b624bf1b52444838a137e18f53d6325",
+    "attemptsCsvSha256": "916f741a77a7eb723c06b90c2f2953cc39f7c1dc3896500ea3aa6e5a2972efe6",
+    "warpedMovingNiftiSha256": "3a3b210da52fe69678c087f581fd3833474b09293defd2baf8a2a5c9f6fc80cf",
+    "warpedMaskNiftiSha256": "d890b836e48728c39d8502d6f49a33d1f94d74185baa7a23e4e61e08e66dbfd1"
+  },
+  "repository": {
+    "headDuringCapture": "e794a4fff993963a73b13845b191c866119f78de",
+    "workingTreePolicy": "Shared checkout is dirty; exact source and output hashes define this diagnostic."
+  },
+  "sourceSha256": {
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldKernels.scala": "2ed817dc9241432f44a97853281db3367808c4f5d7ca72e87939b36c10e38f6c",
+    "modules/image/shared/src/test/scala/scalafim/image/DenseFieldKernelsSuite.scala": "a06d2c12d5c2f36a4431c37df7e11681bccf394f82f9435383cd0cafc6aec0db",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "89517467f7a423d6a5f8a2d92468c5e5147e99164e839d1d0b8b88eef19bdd4c",
+    "modules/registration/shared/src/main/scala/scalafim/registration/AffineInitialization.scala": "49e94cb8ae1b05f5b246e6a518378c79352ab698124483f7ee0e397a5042f38a",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowEngine.scala": "15079edc45acc5e8ee6120f2ec8e73b457723835e4bec9dfd6933eb45b5d5539",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TopologyGuard.scala": "3cccda25ab2611af21814716b3e46af88d9814b0781061d2de6ea191481e148f",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "7bfba6743a1eb0c5ccd7642dda2321086e81c0fee3955a6068b21d503de5c8d8",
+    "modules/registration/shared/src/test/scala/scalafim/registration/AffineInitializationSuite.scala": "dbd97ac9b4306a75a876768b114d504cfda9faab131d6cc5e99d304a32dd4b32",
+    "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowEngineSuite.scala": "0573a21583b4722fe17ea6a49d7464c0cd75cfd6662bb167d43a5b4852024ec5",
+    "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowEvaluationCli.scala": "967e86564b22b852d7d8c2f38d35e93b1df14dde262fc1f468486b4f5354d106"
+  }
+}

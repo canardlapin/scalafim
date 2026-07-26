@@ -92,7 +92,7 @@ object SchaeferLoader:
       )
     )
 
-  def parseLut(text: String, spec: Schaefer2018): Vector[Region] =
+  def parseLut(text: String, spec: Schaefer2018): Vector[AtlasRegionMetadata] =
     val prefix = s"${spec.networks.value}Networks_"
     text.linesIterator
       .map(_.trim)

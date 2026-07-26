@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.family.canonical.{ResidualRegularization, TraceRidgeFraction}
+
 import gale.backend.Backend.given
 import gale.linalg.DMat
 import gale.linalg.Matrix
@@ -19,7 +21,6 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig}
 import scalafim.fmri.mvpa.{FeatureIndex, FeatureSet, FeatureSetPlan, MvpaStreamControl, RoiId}
-import scalafim.multivar.{ResidualRegularization, TraceRidgeFraction}
 
 class CanonicalEffectMvpaSuite extends munit.FunSuite:
 

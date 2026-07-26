@@ -31,7 +31,7 @@ class ImageMapsSuite extends munit.FunSuite:
         Vector(7.0, -1.0, 7.0, -4.0)
       )
     )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("image-map-demo"), data, NeuroSpace(Vector(2, 2, 1))),
       samplingFrame = samplingFrame
     )

@@ -92,7 +92,7 @@ private object MathematicalModelEvidenceIrEncoder:
   private def penalty(value: PenaltyBindingEvidenceIr): IrJson =
     obj(
       "owner" -> penaltyOwner(value.owner),
-      "functional" -> Str(tag(value.functional)),
+      "functional" -> Str(value.functional.stableKey),
       "weight" -> Num(value.weight),
       "operator_identity" -> value.operatorIdentity.fold[IrJson](Null)(Str.apply)
     )
@@ -317,10 +317,16 @@ private object MathematicalModelEvidenceIrDecoder:
     for
       current <- fields(value, path, Set("owner", "functional", "weight", "operator_identity"))
       owner <- required(current, "owner", path, penaltyOwner(_, s"$path.owner"))
-      functional <- required(current, "functional", path, enumValue(_, s"$path.functional", PenaltyFunctionalEvidenceIr.values.toVector))
+      functional <- required(current, "functional", path, penaltyFunctional(_, s"$path.functional"))
       weight <- required(current, "weight", path, number(_, s"$path.weight"))
       operator <- required(current, "operator_identity", path, nullableString(_, s"$path.operator_identity"))
     yield PenaltyBindingEvidenceIr(owner, functional, weight, operator)
+
+  private def penaltyFunctional(value: IrJson, path: String): Either[IrError, PenaltyFunctionalEvidenceIr] =
+    string(value, path).flatMap: stableKey =>
+      PenaltyFunctionalEvidenceIr
+        .fromStableKey(stableKey)
+        .toRight(IrError(RejectionCategory.Malformed, path, s"unknown penalty functional '$stableKey'"))
 
   private def penaltyOwner(value: IrJson, path: String): Either[IrError, PenaltyOwnerEvidenceIr] =
     tagged(value, path).flatMap: (kind, current) =>

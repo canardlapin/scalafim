@@ -1,7 +1,22 @@
 package scalafim.multivar.ir
 
 import gale.linalg.DMat
-import scalafim.multivar.*
+import scalafim.multivar.core.*
+import scalafim.multivar.contract.*
+import scalafim.multivar.optimization.*
+import scalafim.multivar.solver.*
+import scalafim.multivar.lifecycle.*
+import scalafim.multivar.capability.*
+import scalafim.multivar.family.spectral.*
+import scalafim.multivar.family.paired.*
+import scalafim.multivar.family.canonical.*
+import scalafim.multivar.family.cpca.*
+import scalafim.multivar.family.sparse.*
+import scalafim.multivar.family.glrm.*
+import scalafim.multivar.family.multiblock.*
+import scalafim.multivar.family.kernel.*
+import scalafim.multivar.workflow.*
+import scalafim.multivar.validation.*
 
 object SemanticIr:
   def space(value: MvSpace): SpaceIr =
@@ -181,6 +196,7 @@ object SemanticIr:
         case CertificateClaim.Rank(_, _, residual, _) => Some(residual)
         case CertificateClaim.Orthogonal(residual, _) => Some(residual)
         case CertificateClaim.Converged(_, residual, _) => Some(residual)
+        case CertificateClaim.SolverTrace(_, residual, _, _) => Some(residual)
     CertificateIr(
       value.claim.property,
       value.valueIdentity.stableKey,

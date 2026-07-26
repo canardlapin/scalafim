@@ -1,0 +1,145 @@
+{
+  "schema": "scalafim.halfflow-cc.production-oracle-capture.v1",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5175FQ4TRH2WV31DSHTY4M",
+  "captured_at_utc": "2026-07-22T15:27:26Z",
+  "repository_head": "b341c388353df4d947d757b4903c37484caf044d",
+  "engine_contract": {
+    "objective": "true frozen-weight overlapping-window neighborhood CC",
+    "step": "pointwise rank-one LM",
+    "geometry": "whole-grid normalized separable Gaussian",
+    "state": "two authoritative forward midpoint maps",
+    "integration": "paired adaptive scaling-and-squaring",
+    "hard_optimization_gate": "incremental and accumulated sampled Jacobians only",
+    "integration_check": "bidirectional interior p99 inverse error with at least 95 percent valid coverage",
+    "controllers": "objective damping, geometry step scale, and integration depth are independent",
+    "export": "separate admission boundary; inverse tolerance and endpoint topology return typed failures"
+  },
+  "production_derivative_oracle": {
+    "pipeline": [
+      "paired scaling-and-squaring",
+      "ForwardMidpoint.advance",
+      "right-composed sampled maps",
+      "native-source pull",
+      "work-space physical gradients",
+      "frozen partial support",
+      "neighborhood CC"
+    ],
+    "relative_error_limit": 0.005,
+    "epsilon_policy": "physical step ladder scaled by the minimum voxel size",
+    "requires_two_successive_decreases": true,
+    "cases": [
+      {"name": "identity-1mm", "best_relative_error": 2.7271809761660175e-6},
+      {"name": "nonidentity-1mm", "best_relative_error": 4.275830012707618e-4},
+      {"name": "swapped-1mm", "best_relative_error": 4.275830012707618e-4},
+      {"name": "identity-2mm", "best_relative_error": 1.2110486000295305e-5},
+      {"name": "nonidentity-2mm", "best_relative_error": 0.002468719569717654},
+      {"name": "swapped-2mm", "best_relative_error": 0.002468719569717654},
+      {"name": "identity-4mm", "best_relative_error": 3.191222274116546e-5},
+      {"name": "nonidentity-4mm", "best_relative_error": 0.003095455792219459},
+      {"name": "swapped-4mm", "best_relative_error": 0.003095455792219459},
+      {"name": "anisotropic-oblique", "best_relative_error": 5.083609544124315e-6}
+    ],
+    "pure_translation": {
+      "velocity_mm": 2.0,
+      "plus_displacement_mm": 1.0,
+      "minus_displacement_mm": -1.0,
+      "relative_displacement_mm": -2.0,
+      "status": "passed"
+    },
+    "status": "passed"
+  },
+  "synthetic_capture": {
+    "fixture": "deterministic asymmetric multi-blob and low-amplitude textured scalar field",
+    "schedule": [
+      {"shrink": 2, "gaussian_sigma_mm": 10.0, "maximum_velocity_mm": 1.0, "accepted_step_budget": 10},
+      {"shrink": 1, "gaussian_sigma_mm": 6.0, "maximum_velocity_mm": 0.6, "accepted_step_budget": 10}
+    ],
+    "results": [
+      {
+        "input_translation_mm": 2.0,
+        "endpoint_rms_mm": 0.07128029480138107,
+        "endpoint_reduction_fraction": 0.9643598525993095,
+        "accepted_steps": 20,
+        "authoritative_state_nonpositive_jacobians": 0,
+        "export": "admitted",
+        "export_maximum_residual_inverse_p99_mm": 0.00019326850144971223
+      },
+      {
+        "input_translation_mm": 4.0,
+        "endpoint_rms_mm": 0.23002817698449243,
+        "endpoint_reduction_fraction": 0.9424929557538769,
+        "accepted_steps": 20,
+        "authoritative_state_nonpositive_jacobians": 0,
+        "export": "typed topology failure",
+        "export_nonpositive_jacobians": 14,
+        "export_minimum_jacobian": -0.018854806413076585
+      },
+      {
+        "input_translation_mm": 8.0,
+        "endpoint_rms_mm": 5.44622605275818,
+        "endpoint_reduction_fraction": 0.3192217434052275,
+        "accepted_steps": 10,
+        "authoritative_state_nonpositive_jacobians": 0,
+        "export": "typed topology failure",
+        "export_nonpositive_jacobians": 1046,
+        "export_minimum_jacobian": -0.586482313118684
+      },
+      {
+        "input_translation_mm": 12.0,
+        "endpoint_rms_mm": 10.784965913763935,
+        "endpoint_reduction_fraction": 0.10125284051967212,
+        "accepted_steps": 20,
+        "authoritative_state_nonpositive_jacobians": 0,
+        "export": "typed topology failure",
+        "export_nonpositive_jacobians": 2142,
+        "export_minimum_jacobian": -0.607963992921588
+      }
+    ],
+    "required_gate": "2mm and 4mm endpoint RMS reduction at least 80 percent, objective improvement, and zero folds in authoritative midpoint arms",
+    "required_gate_status": "passed",
+    "capture_range_finding": "without a coarse proposal, 8mm and 12mm improve but remain outside the accuracy gate"
+  },
+  "support_contract": {
+    "trial_support": "frozen between current and candidate objective evaluations",
+    "boundary": "partial-window CC over a one-step sampling-safe FoV erosion with soft Gaussian weights",
+    "moving_evaluation_mask_in_objective": false,
+    "moving_optimization_mask_api_result": "MovingOptimizationMaskForbidden"
+  },
+  "failure_attribution": {
+    "metric": "production derivative oracle passed; accepted steps monotonically reduce the frozen trial objective",
+    "sampling": "one-step sampling-safe support removes the zero-step boundary discontinuity found during G4",
+    "topology": "authoritative midpoint arms remain fold-free; endpoint export topology is independently admitted or rejected",
+    "integration": "interior p99 and minimum-valid-coverage checks admit paired increments without using accumulated inverse drift as an anatomical rejection",
+    "support": "active and edge support remain available through partial CC windows; held-out moving masks have no objective path",
+    "inversion": "2mm export is admitted; 4mm, 8mm, and 12mm exports return typed endpoint-topology failures rather than unsafe maps"
+  },
+  "verification": {
+    "command": "sbt registrationJVM/test registrationJS/test",
+    "jvm": {"passed": 66, "failed": 0},
+    "scala_js": {"passed": 66, "failed": 0},
+    "warnings": 0
+  },
+  "source_lines": {
+    "engine": 791,
+    "paired_flow": 279,
+    "forward_midpoint": 313,
+    "export": 384,
+    "production_total": 1767,
+    "g4_test_suite": 463
+  },
+  "sources": [
+    {"path": "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcEngine.scala", "sha256": "f5ae8221d3dded581ae176d7895d730cda7fdb844fedd70eab472f209aaf4b03"},
+    {"path": "modules/registration/shared/src/main/scala/scalafim/registration/PairedFlow.scala", "sha256": "7e3c37fe0ee8730c4a6008a424590d648bd3884ee7173866648f8f9728cc0c1f"},
+    {"path": "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpoint.scala", "sha256": "9b2221bcdae8a9052fb4744920a1d896cb9a0e9bbd99d7cf10944fdf7e6d781a"},
+    {"path": "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala", "sha256": "e84b1a3f1f1de9a69053eed6621cf287b1dd36672a147511f84ad12b3a140e7f"},
+    {"path": "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowCcEngineSuite.scala", "sha256": "815566aa1165e508f9e7510f724441f5e7d57f7acbfd54242c8400f235406acc"}
+  ],
+  "limitations": [
+    "The current no-proposal local engine does not have an adequate 8mm or 12mm capture range.",
+    "The sampled residual inverse/export algorithm admits the 2mm lane but returns a typed topology failure for 4mm and larger lanes.",
+    "The 4mm authoritative midpoint state passes the accuracy and topology gate even though its sampled inverse-pair export is not admissible.",
+    "No labeled-cohort or ANTs-parity claim follows from this synthetic correctness gate.",
+    "The portable production implementation remains longer than the eventual compact API target and has not yet been performance-profiled as a complete engine."
+  ]
+}

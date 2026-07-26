@@ -12,8 +12,8 @@ final case class SparseNeuroVec[A](
   label: String = ""
 ):
   require(space.ndim >= 4, "space must be 4D")
-  require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
-  require(map.space.spatialDims == space.spatialDims, "map/space mismatch")
+  GridCompatibility.requireSpatial(space, mask.space)
+  GridCompatibility.requireSpatial(space, map.space)
   require(data.shape == Vector(space.dims(3), map.cardinality), "data shape mismatch")
   val seriesSpace: SeriesSpace =
     SeriesSpace.make(space).fold(err => throw new IllegalArgumentException(err.message), series => series)
@@ -117,7 +117,7 @@ final case class SparseNeuroVec[A](
     NDArray(out, Vector(tLen, nVox))
 
   def series(indexSet: VoxelIndexSet)(using ClassTag[A], spire.algebra.Ring[A]): NDArray[A] =
-    require(indexSet.space == seriesSpace.volumeSpace, "index set/space mismatch")
+    GridCompatibility.requireVolume(seriesSpace.volumeSpace, indexSet.space)
     series(indexSet.unsafeArray)
 
   def series(roi: ROICoords)(using ClassTag[A], spire.algebra.Ring[A]): NDArray[A] =
@@ -131,6 +131,40 @@ final case class SparseNeuroVec[A](
 
   def seriesRoi(roi: ROICoords)(using ClassTag[A], spire.algebra.Ring[A]): ROIVec[A] =
     ROIVec(space, roi, series(roi))
+
+  def select(
+      selection: VoxelSelection,
+      policy: MissingVoxelPolicy[A]
+  )(using ClassTag[A]): Either[SparseSelectionError, RoiSeries[A]] =
+    GridCompatibility
+      .volume(seriesSpace.volumeSpace, selection.space)
+      .left
+      .map(SparseSelectionError.Grid.apply)
+      .flatMap: _ =>
+        policy match
+          case MissingVoxelPolicy.RequireCovered =>
+            materializeCovered(selection)
+          case MissingVoxelPolicy.DropMissing =>
+            val requested = selection.indexSet.unsafeArray
+            val covered = Array.newBuilder[Int]
+            covered.sizeHint(requested.length)
+            var i = 0
+            while i < requested.length do
+              if map.lookup(requested(i)) >= 0 then covered += requested(i)
+              i += 1
+            VoxelSelection
+              .make(selection.space, NArrayUtil.fromArray(covered.result()))
+              .left
+              .map(SparseSelectionError.InvalidSelection.apply)
+              .flatMap(materializeCovered)
+          case MissingVoxelPolicy.Fill(value) =>
+            Right(materializeFilled(selection, value))
+
+  def select(
+      region: VoxelRegion,
+      policy: MissingVoxelPolicy[A]
+  )(using ClassTag[A]): Either[SparseSelectionError, RoiSeries[A]] =
+    select(region.toSelection, policy)
 
   def volume(t: Int)(using ClassTag[A]): SparseNeuroVol[A] =
     require(t >= 0 && t < space.dims(3), "t out of bounds")
@@ -180,6 +214,64 @@ final case class SparseNeuroVec[A](
       pos += 1
     NeuroVec.fromLinear(full, space, label)
 
+  private def materializeCovered(
+      selection: VoxelSelection
+  )(using ClassTag[A]): Either[SparseSelectionError, RoiSeries[A]] =
+    val requested = selection.indexSet.unsafeArray
+    val missing = Array.newBuilder[Int]
+    var voxel = 0
+    while voxel < requested.length do
+      if map.lookup(requested(voxel)) < 0 then missing += requested(voxel)
+      voxel += 1
+
+    val missingIndices = missing.result()
+    if missingIndices.nonEmpty then
+      VoxelRegion
+        .make(selection.space, NArrayUtil.fromArray(missingIndices))
+        .left
+        .map(SparseSelectionError.InvalidSelection.apply)
+        .flatMap(region => Left(SparseSelectionError.OutsideSupport(region)))
+    else
+      val out = NArrayUtil.ofSize[A](seriesSpace.nVolumes * requested.length)
+      voxel = 0
+      while voxel < requested.length do
+        val source = map.lookup(requested(voxel))
+        var time = 0
+        while time < seriesSpace.nVolumes do
+          out(time + voxel * seriesSpace.nVolumes) = data(time, source)
+          time += 1
+        voxel += 1
+      Right(
+        RoiSeries.unsafe(
+          seriesSpace,
+          selection,
+          NDArray(out, Vector(seriesSpace.nVolumes, requested.length)),
+          label
+        )
+      )
+
+  private def materializeFilled(
+      selection: VoxelSelection,
+      fill: A
+  )(using ClassTag[A]): RoiSeries[A] =
+    val requested = selection.indexSet.unsafeArray
+    val out = NArrayUtil.ofSize[A](seriesSpace.nVolumes * requested.length)
+    var voxel = 0
+    while voxel < requested.length do
+      val source = map.lookup(requested(voxel))
+      var time = 0
+      while time < seriesSpace.nVolumes do
+        out(time + voxel * seriesSpace.nVolumes) =
+          if source >= 0 then data(time, source) else fill
+        time += 1
+      voxel += 1
+    RoiSeries.unsafe(
+      seriesSpace,
+      selection,
+      NDArray(out, Vector(seriesSpace.nVolumes, requested.length)),
+      label
+    )
+
 object SparseNeuroVec:
   def fromDense[A](
     data: NArray[A],
@@ -188,7 +280,7 @@ object SparseNeuroVec:
     label: String = ""
   )(using ClassTag[A]): SparseNeuroVec[A] =
     require(space.ndim >= 4, "space must be 4D")
-    require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
+    GridCompatibility.requireSpatial(space, mask.space)
     val indexSet = Mask.indexSet(mask)
     val spatialNels = space.spatialDims.product
     val tLen = space.dims(3)
@@ -229,8 +321,7 @@ object SparseNeuroVec:
     require(vecs.nonEmpty, "cannot concat empty vector")
     val base = vecs.head.space.spatialSpace
     vecs.foreach { v =>
-      require(v.space.spatialDims == base.spatialDims, "spatial dims mismatch")
-      require(v.space.spacing == base.spacing && v.space.origin == base.origin, "space mismatch")
+      GridCompatibility.requireSpatial(base, v.space)
     }
 
     def toIdx(v: SparseNeuroVec[A]): Vector[Int] =

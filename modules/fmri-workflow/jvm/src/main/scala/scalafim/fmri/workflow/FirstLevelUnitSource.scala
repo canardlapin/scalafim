@@ -17,8 +17,8 @@ final case class OpenedFirstLevelUnit(
   def backend(
       datasetId: DatasetId,
       metadata: DatasetMetadata = DatasetMetadata.Empty
-  ): ResponseBlockDatasetBackend =
-    ResponseBlockDatasetBackend(datasetId, source, mask, metadata)
+  ): Either[DatasetError, ResponseBlockDatasetBackend] =
+    ResponseBlockDatasetBackend.make(datasetId, source, mask, metadata)
 
 object FirstLevelUnitSource:
   def open(

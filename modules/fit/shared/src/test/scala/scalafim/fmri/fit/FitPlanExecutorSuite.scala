@@ -50,7 +50,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         Vector(7.0, -1.0)
       )
     )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("ols-demo"), data, NeuroSpace(Vector(2, 1, 1))),
       samplingFrame = samplingFrame
     )
@@ -92,7 +92,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("pca-sketch-demo"), data, NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = samplingFrame
       )
@@ -118,7 +118,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("rrr-partitioned-demo"),
           ImageDMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
@@ -548,7 +548,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 6).toString))
     )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-trialwise-demo"),
           ImageDMat.fromRows(rows),
@@ -608,7 +608,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector(math.sin(x / 5.0) + x / 20.0, math.cos(x / 7.0) - x / 30.0)
     }
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-reordered-trialwise-demo"),
           ImageDMat.fromRows(rows),
@@ -661,7 +661,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector(math.sin(x / 5.0) + x / 20.0, math.cos(x / 7.0) - x / 30.0)
     }
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-renamed-aggregate-demo"),
           ImageDMat.fromRows(rows),
@@ -712,7 +712,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     val nTime = 24
     val nTrials = 3
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-ambiguous-demo"),
           ImageDMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),

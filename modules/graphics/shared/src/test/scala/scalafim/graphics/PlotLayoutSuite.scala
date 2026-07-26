@@ -152,16 +152,18 @@ class PlotLayoutSuite extends munit.FunSuite:
     val plan = GuideStackSolver.plan(
       policy,
       LegendRequest(
-        None,
-        Vector.empty,
-        items = Vector(
+        Vector(
           GuideLayoutRequest.Legend(Some("group"), Vector("A", "B")),
           GuideLayoutRequest.Colorbar(Some("value"), Vector("0", "100"))
         )
       )
     )
-    val legend = plan.placements.head.asInstanceOf[GuidePlacement.Legend]
-    val colorbar = plan.placements(1).asInstanceOf[GuidePlacement.Colorbar]
+    val legend = plan.placements.head match
+      case placement: GuidePlacement.Legend => placement
+      case other                            => fail(s"expected a legend placement, got $other")
+    val colorbar = plan.placements(1) match
+      case placement: GuidePlacement.Colorbar => placement
+      case other                              => fail(s"expected a colorbar placement, got $other")
     val textHeight = policy.metrics.heightPt(policy.legendTextStyle)
 
     assertEqualsDouble(legend.rowPitchPt, math.max(policy.legendKeyPt, textHeight) + policy.legendRowGapPt, tol)
@@ -178,11 +180,7 @@ class PlotLayoutSuite extends munit.FunSuite:
     val shortDevice = policy.copy(referenceDevice = DeviceContext.unsafe(240.0, 120.0))
     val request = PlotLayoutRequest(
       legend = Some(
-        LegendRequest(
-          None,
-          Vector.empty,
-          items = Vector(GuideLayoutRequest.Colorbar(Some("value"), Vector("0", "100")))
-        )
+        LegendRequest(Vector(GuideLayoutRequest.Colorbar(Some("value"), Vector("0", "100"))))
       )
     )
 

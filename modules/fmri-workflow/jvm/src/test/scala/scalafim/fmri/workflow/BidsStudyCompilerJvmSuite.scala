@@ -16,20 +16,23 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
   test("JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project") {
     withFixture { root =>
       writeProject(root)
-      val project = BidsProjectLoader.load(root).toOption.get
+      val projectReport = BidsProjectLoader.loadChecked(root).toOption.get
+      val project = projectReport.value
       val recipe = DatasetRecipe.unsafe(
         datasetId = DatasetId("fixture"),
         project = WorkflowArtifactRef.unsafe[BidsProjectResource](root.toUri.toString.stripSuffix("/")),
-        boldQuery = BidsQuery(
+        boldQuery = BidsQuery.from(
           filename = Vector("desc-preproc_bold\\.nii(\\.gz)?$"),
           scope = BidsScope.Derivatives,
           pipeline = Some(PipelineName("fmriprep"))
-        ),
+        ).toOption.get,
         maskPolicy = MaskPolicy.IntersectRunMasks,
         confounds = Some(ConfoundSelectionConfig(variables = Vector("motion6")))
       )
 
-      val catalog = BidsStudyCompilerJvm.compile(project, recipe).toOption.get
+      val compilation = BidsStudyCompilerJvm.compileChecked(projectReport, recipe).toOption.get
+      val catalog = compilation.catalog
+      assertEquals(compilation.issues, Vector.empty)
 
       assertEquals(catalog.units.map(_.subject.value), Vector("01", "02"))
       assertEquals(catalog.units.map(_.runs.length), Vector(2, 2))

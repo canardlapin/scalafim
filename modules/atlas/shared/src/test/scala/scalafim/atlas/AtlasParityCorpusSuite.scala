@@ -62,7 +62,13 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
   }
 
   test("overlap corpus matches Dice and Jaccard golden values") {
-    val overlap = AtlasParityFixtures.atlas().overlap(AtlasParityFixtures.comparisonAtlas(), resample = false)
+    val overlap =
+      AtlasParityFixtures
+        .atlas()
+        .overlap(
+          AtlasParityFixtures.comparisonAtlas(),
+          AtlasAlignment.Exact
+        )
 
     assertEquals(
       overlap.map(o => (o.region1.id.value, o.region2.id.value)),

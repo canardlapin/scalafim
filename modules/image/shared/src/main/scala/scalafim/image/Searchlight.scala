@@ -7,6 +7,108 @@ import scala.util.Random
 
 object Searchlight:
 
+  private def checkedCenter(space: NeuroSpace, center: Vector[Int]): SearchlightCenter =
+    val voxel =
+      VoxelCoord
+        .fromVector(center, "searchlight center")
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    SearchlightCenter
+      .make(space, voxel)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private def centerRow(coords: Vector[Vector[Int]], center: VoxelCoord): Int =
+    val row = coords.indexWhere(_ == center.toVector)
+    if row >= 0 then row
+    else throw new IllegalArgumentException(SearchlightError.CenterExcluded(center).message)
+
+  private def validateMask(space: NeuroSpace, mask: Option[NeuroVol[Boolean]]): Unit =
+    mask.foreach(value => GridCompatibility.requireSpatial(space, value.space))
+
+  private def validateRadius(
+      space: NeuroSpace,
+      radius: SearchlightRadius
+  ): Either[SearchlightError, Unit] =
+    val minimumSpacing = space.spacing.min
+    if radius.millimeters >= minimumSpacing then Right(())
+    else Left(SearchlightError.RadiusBelowVoxelSpacing(radius.millimeters, minimumSpacing))
+
+  /** Checked spherical extraction with a grid-bound center and explicit value support. */
+  def sphericalRoiChecked[A: Ring](
+      vol: NeuroVol[A],
+      center: SearchlightCenter,
+      radius: SearchlightRadius,
+      fill: Option[A] = None,
+      support: SearchlightValueSupport = SearchlightValueSupport.AllValues,
+      label: String = ""
+  )(using ClassTag[A]): Either[SearchlightError, ROIVolWindow[A]] =
+    for
+      volumeSpace <- VolumeSpace
+        .fromSpatialPart(vol.space)
+        .left
+        .map(SearchlightError.InvalidSpace.apply)
+      _ <- GridCompatibility
+        .volume(volumeSpace, center.space)
+        .left
+        .map(SearchlightError.Grid.apply)
+      _ <- validateRadius(vol.space, radius)
+      _ <-
+        val centerValue = fill.getOrElse(vol.linear(center.linearIndex))
+        if support == SearchlightValueSupport.NonZero &&
+            centerValue == summon[Ring[A]].zero
+        then Left(SearchlightError.CenterExcluded(center.voxel))
+        else Right(())
+    yield sphericalRoi(
+      vol,
+      center.voxel.toVector,
+      radius.millimeters,
+      fill,
+      nonzero = support == SearchlightValueSupport.NonZero,
+      label
+    )
+
+  /** Checked searchlight construction with explicit center and support policies.
+    *
+    * Mask-constrained support requires mask-voxel centers so every yielded
+    * window contains its center.
+    */
+  def searchlightChecked(
+      mask: NeuroVol[Boolean],
+      radius: SearchlightRadius,
+      centerDomain: SearchlightCenterDomain,
+      support: SearchlightSupport,
+      label: String = ""
+  ): Either[SearchlightError, Iterator[ROIVolWindow[Int]]] =
+    if centerDomain == SearchlightCenterDomain.AllVoxels &&
+        support == SearchlightSupport.InsideMask
+    then Left(SearchlightError.IncompatiblePolicies(centerDomain, support))
+    else
+      validateRadius(mask.space, radius).map { _ =>
+        val spatialNels = mask.space.spatialDims.product
+        val centers =
+          centerDomain match
+            case SearchlightCenterDomain.AllVoxels =>
+              Iterator.range(0, spatialNels)
+            case SearchlightCenterDomain.MaskVoxels =>
+              val indices = Mask.indices(mask)
+              Iterator.tabulate(indices.length)(indices.apply)
+        val selectedMask =
+          support match
+            case SearchlightSupport.FullNeighborhood => None
+            case SearchlightSupport.InsideMask => Some(mask)
+
+        centers.map { linearIndex =>
+          val center = Indexing.indexToGrid3D(mask.space.spatialDims, linearIndex)
+          sphericalRoi(
+            mask.space,
+            center,
+            radius.millimeters,
+            fill = 1,
+            mask = selectedMask,
+            label = label
+          )
+        }
+      }
+
   def sphericalRoi[A: Ring](
     vol: NeuroVol[A],
     center: Vector[Int],
@@ -16,9 +118,8 @@ object Searchlight:
     label: String = ""
   )(using ClassTag[A]): ROIVolWindow[A] =
     val sp = vol.space
-    require(center.length == 3, "center must be length 3")
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
-    require(center.zip(dims).forall((c, d) => c >= 0 && c < d), "center out of bounds")
 
     val spacing = sp.spacing
     require(radius >= spacing.min, "radius too small relative to voxel spacing")
@@ -56,13 +157,10 @@ object Searchlight:
       dataArr(i) = sorted(i)._2
       i += 1
 
-    val centerRow =
-      coords.indexWhere(_ == center) match
-        case -1 => 0
-        case idx => idx
-
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned(sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def sphericalRoi(
     space: NeuroSpace,
@@ -73,11 +171,11 @@ object Searchlight:
     label: String
   ): ROIVolWindow[Int] =
     val sp = space.spatialSpace
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
     val spacing = sp.spacing
-    require(center.length == 3, "center must be length 3")
-    require(center.zip(dims).forall((c, d) => c >= 0 && c < d), "center out of bounds")
     require(radius >= spacing.min, "radius too small relative to voxel spacing")
+    validateMask(sp, mask)
 
     val deltas = spacing.map(s => math.ceil(radius / s).toInt)
     val r2 = radius * radius
@@ -109,11 +207,10 @@ object Searchlight:
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
     val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
-    val centerRow = coords.indexWhere(_ == center) match
-      case -1 => 0
-      case idx => idx
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def sphericalRoi(
     space: NeuroSpace,
@@ -147,12 +244,13 @@ object Searchlight:
     jitter: Double = 0.0,
     fill: Option[A] = None,
     nonzero: Boolean = false,
-    rng: Random = Random,
+    rng: Random,
     label: String = ""
   )(using ClassTag[A]): ROIVolWindow[A] =
     require(scales.length == 3 && scales.forall(_ > 0), "scales must be length-3 positive")
     require(jitter >= 0, "jitter must be >= 0")
     val sp = vol.space
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
     val spacing = sp.spacing
     val zero = summon[Ring[A]].zero
@@ -197,11 +295,10 @@ object Searchlight:
       dataArr(i) = sorted(i)._2
       i += 1
 
-    val centerRow = coords.indexWhere(_ == center) match
-      case -1 => 0
-      case idx => idx
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned(sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def ellipsoidRoi(
     space: NeuroSpace,
@@ -215,10 +312,12 @@ object Searchlight:
     label: String
   ): ROIVolWindow[Int] =
     val sp = space.spatialSpace
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
     val spacing = sp.spacing
     require(scales.length == 3 && scales.forall(_ > 0), "scales must be length-3 positive")
     require(jitter >= 0, "jitter must be >= 0")
+    validateMask(sp, mask)
 
     val sc =
       if jitter == 0.0 then scales
@@ -251,18 +350,17 @@ object Searchlight:
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
     val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
-    val centerRow = coords.indexWhere(_ == center) match
-      case -1 => 0
-      case idx => idx
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def ellipsoidRoi(
     space: NeuroSpace,
     center: Vector[Int],
     radius: Double
   ): ROIVolWindow[Int] =
-    ellipsoidRoi(space, center, radius, Vector(1.0, 1.0, 1.0), 0.0, 1, None, Random, "")
+    ellipsoidRoi(space, center, radius, Vector(1.0, 1.0, 1.0), 0.0, 1, None, new Random(0L), "")
 
   def ellipsoidRoi(
     space: NeuroSpace,
@@ -270,7 +368,7 @@ object Searchlight:
     radius: Double,
     scales: Vector[Double]
   ): ROIVolWindow[Int] =
-    ellipsoidRoi(space, center, radius, scales, 0.0, 1, None, Random, "")
+    ellipsoidRoi(space, center, radius, scales, 0.0, 1, None, new Random(0L), "")
 
   def cubeRoi[A: Ring](
     vol: NeuroVol[A],
@@ -281,6 +379,7 @@ object Searchlight:
     label: String = ""
   )(using ClassTag[A]): ROIVolWindow[A] =
     val sp = vol.space
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
     val spacing = sp.spacing
     val deltas = spacing.map(s => math.ceil(radius / s).toInt)
@@ -311,11 +410,10 @@ object Searchlight:
     while i < coords.length do
       dataArr(i) = sorted(i)._2
       i += 1
-    val centerRow = coords.indexWhere(_ == center) match
-      case -1 => 0
-      case idx => idx
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned(sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def cubeRoi(
     space: NeuroSpace,
@@ -326,8 +424,10 @@ object Searchlight:
     label: String
   ): ROIVolWindow[Int] =
     val sp = space.spatialSpace
+    val typedCenter = checkedCenter(sp, center)
     val dims = sp.spatialDims
     val spacing = sp.spacing
+    validateMask(sp, mask)
     val deltas = spacing.map(s => math.ceil(radius / s).toInt)
 
     val coordsBuf = Vector.newBuilder[Vector[Int]]
@@ -349,11 +449,10 @@ object Searchlight:
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
     val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
-    val centerRow = coords.indexWhere(_ == center) match
-      case -1 => 0
-      case idx => idx
-    val parentIdx = Indexing.gridToIndex3D(dims, center(0), center(1), center(2))
-    ROIVolWindow(sp, ROICoords(coords), dataArr, centerRow, parentIdx, label)
+    val centerIndex = centerRow(coords, typedCenter.voxel)
+    ROIVolWindow
+      .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def cubeRoi(
     space: NeuroSpace,
@@ -387,7 +486,7 @@ object Searchlight:
     edgeFraction: Double = 0.7,
     fill: Option[A] = None,
     nonzero: Boolean = false,
-    rng: Random = Random,
+    rng: Random,
     label: String = ""
   )(using ClassTag[A]): ROIVolWindow[A] =
     require(drop >= 0 && drop <= 1.0, "drop must be in [0,1]")
@@ -437,11 +536,18 @@ object Searchlight:
         fdata(k) = filteredPairs(k)._2
         k += 1
 
-      val centerRow = fcoords.indexWhere(_ == center) match
-        case -1 => 0
-        case idx => idx
-      val parentIdx = Indexing.gridToIndex3D(vol.space.spatialDims, center(0), center(1), center(2))
-      ROIVolWindow(vol.space, ROICoords(fcoords.toVector), fdata, centerRow, parentIdx, label)
+      val typedCenter = checkedCenter(vol.space, center)
+      val centerIndex = centerRow(fcoords.toVector, typedCenter.voxel)
+      ROIVolWindow
+        .fromOwned(
+          vol.space,
+          ROICoords(fcoords.toVector),
+          fdata,
+          centerIndex,
+          typedCenter.linearIndex,
+          label
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def blobbyRoi(
     space: NeuroSpace,
@@ -456,6 +562,7 @@ object Searchlight:
   ): ROIVolWindow[Int] =
     require(drop >= 0 && drop <= 1.0, "drop must be in [0,1]")
     require(edgeFraction > 0 && edgeFraction <= 1.0, "edgeFraction must be in (0,1]")
+    validateMask(space.spatialSpace, mask)
     val base = sphericalRoi(space, center, radius, fill, mask, label)
     val coords0 = base.coords.coords
     if coords0.isEmpty then base
@@ -475,18 +582,19 @@ object Searchlight:
       }.map(coords0)
 
       val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
-      val centerRow = coords.indexWhere(_ == center) match
-        case -1 => 0
-        case idx => idx
+      val centerIndex = centerRow(coords.toVector, checkedCenter(base.space, center).voxel)
       val parentIdx = base.parentIndex
-      ROIVolWindow(base.space, ROICoords(coords.toVector), dataArr, centerRow, parentIdx, label)
+      ROIVolWindow
+        .fromOwned[Int](base.space, ROICoords(coords.toVector), dataArr, centerIndex, parentIdx, label)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def blobbyRoi(
     space: NeuroSpace,
     center: Vector[Int],
-    radius: Double
+    radius: Double,
+    rng: Random
   ): ROIVolWindow[Int] =
-    blobbyRoi(space, center, radius, drop = 0.3, edgeFraction = 0.7, fill = 1, mask = None, rng = Random, label = "")
+    blobbyRoi(space, center, radius, drop = 0.3, edgeFraction = 0.7, fill = 1, mask = None, rng = rng, label = "")
 
   /** Exhaustive spherical searchlight over voxel centers.
     *
@@ -538,10 +646,27 @@ object Searchlight:
     realDistances: Boolean = true,
     label: String = ""
   ): Vector[ROIVec[Double]] =
+    clusterSearchlightSeries(
+      x,
+      k,
+      radius,
+      if realDistances then SpatialCoordinateFrame.World else SpatialCoordinateFrame.Grid,
+      label
+    )
+
+  def clusterSearchlightSeries(
+    x: ClusteredNeuroVec[Double],
+    k: Int,
+    radius: Option[Double],
+    frame: SpatialCoordinateFrame,
+    label: String
+  ): Vector[ROIVec[Double]] =
     require(k > 0, "k must be positive")
     val cvol = x.cvol
-    val centGrid = cvol.centroids(real = false)
-    val centDist = if realDistances then cvol.centroids(real = true) else centGrid
+    val centGrid = cvol.centroids(SpatialCoordinateFrame.Grid)
+    val centDist =
+      if frame == SpatialCoordinateFrame.Grid then centGrid
+      else cvol.centroids(frame)
     val K = centGrid.length
     val tLen = x.nVolumes
     val ids = cvol.clusterIds

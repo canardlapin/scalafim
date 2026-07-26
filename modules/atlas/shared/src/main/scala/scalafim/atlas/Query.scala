@@ -7,7 +7,7 @@ final case class QueryHit(
   input: Point3D,
   atlasPoint: Point3D,
   atlasName: String,
-  region: Option[Region],
+  region: Option[AtlasRegionMetadata],
   distanceMm: Option[Double]
 ):
   def id: Option[RegionId] =

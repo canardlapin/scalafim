@@ -32,18 +32,10 @@ object Ops:
       x.map(_ / a)
 
   private def requireCompat(a: NeuroSpace, b: NeuroSpace): Unit =
-    require(
-      a.dims == b.dims && a.spacing == b.spacing && a.origin == b.origin,
-      "NeuroSpace mismatch"
-    )
+    GridCompatibility.requireExact(a, b)
 
   private def requireCompatSpatial(vecSpace: NeuroSpace, volSpace: NeuroSpace): Unit =
-    require(
-      vecSpace.spatialDims == volSpace.spatialDims &&
-        vecSpace.spacing == volSpace.spacing &&
-        vecSpace.origin == volSpace.origin,
-      "NeuroSpace spatial mismatch"
-    )
+    GridCompatibility.requireSpatial(vecSpace, volSpace)
 
   extension [A: Ring](x: NeuroVol[A])
     def +(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =

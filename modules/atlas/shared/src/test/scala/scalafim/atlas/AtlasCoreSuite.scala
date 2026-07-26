@@ -186,7 +186,7 @@ class AtlasCoreSuite extends munit.FunSuite:
 
   test("overlap and adjacency compute region relationships") {
     val atlas = toyAtlas()
-    val overlap = atlas.overlap(atlas, resample = false)
+    val overlap = atlas.overlap(atlas, AtlasAlignment.Exact)
     val self = overlap.filter(o => o.region1.id == o.region2.id)
     assertEquals(self.length, 3)
     assert(self.forall(o => math.abs(o.dice - 1.0) < 1e-12), clue = "")

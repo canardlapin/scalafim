@@ -1,21 +1,10 @@
 package scalafim.inference
 
+import scalafim.multivar.core.{BlockId, BlockPartition, BlockSpec, ComponentCount, Dimension, IndexAxis, IndexSet, MatrixView, MvSpace, SpaceId, SpaceRole}
+import scalafim.multivar.family.cpca.{CpcaBlock, CpcaConstraint, CpcaOperatorProblem}
+
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.BlockId
-import scalafim.multivar.BlockPartition
-import scalafim.multivar.BlockSpec
-import scalafim.multivar.ComponentCount
-import scalafim.multivar.CpcaBlock
-import scalafim.multivar.CpcaConstraint
-import scalafim.multivar.CpcaOperatorProblem
-import scalafim.multivar.Dimension
-import scalafim.multivar.IndexAxis
-import scalafim.multivar.IndexSet
-import scalafim.multivar.MatrixView
-import scalafim.multivar.MvSpace
-import scalafim.multivar.SpaceId
-import scalafim.multivar.SpaceRole
 import scala.compiletime.testing.typeCheckErrors
 
 class Phase6ProtocolSuite extends munit.FunSuite:
@@ -24,7 +13,7 @@ class Phase6ProtocolSuite extends munit.FunSuite:
     value.fold(error => fail(error.message), identity)
 
   private def acceptedMultivar[A](
-      value: Either[scalafim.multivar.MultivarError, A]
+      value: Either[scalafim.multivar.core.MultivarError, A]
   ): A =
     value.fold(error => fail(error.message), identity)
 

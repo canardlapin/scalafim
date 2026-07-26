@@ -495,7 +495,13 @@ class CoreSuite extends munit.FunSuite:
     val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](9 * 9 * 9, 1.0), sp)
     val center = Vector(4, 4, 4)
     val sphere = Searchlight.sphericalRoi(vol, center, radius = 3.0)
-    val ellip = Searchlight.ellipsoidRoi(vol, center, radius = 3.0, scales = Vector(2.0, 1.0, 1.0))
+    val ellip = Searchlight.ellipsoidRoi(
+      vol,
+      center,
+      radius = 3.0,
+      scales = Vector(2.0, 1.0, 1.0),
+      rng = new scala.util.Random(0L)
+    )
     assert(ellip.coords.size < sphere.coords.size, clue = "")
     assert(ellip.coords.coords.contains(center), clue = "")
   }
@@ -515,7 +521,14 @@ class CoreSuite extends munit.FunSuite:
     val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](343, 1.0), sp)
     val center = Vector(3, 3, 3)
     val sphere = Searchlight.sphericalRoi(vol, center, radius = 2.5)
-    val blob = Searchlight.blobbyRoi(vol, center, radius = 2.5, drop = 1.0, edgeFraction = 1.0)
+    val blob = Searchlight.blobbyRoi(
+      vol,
+      center,
+      radius = 2.5,
+      drop = 1.0,
+      edgeFraction = 1.0,
+      rng = new scala.util.Random(0L)
+    )
     assert(blob.coords.size < sphere.coords.size, clue = "")
     assert(blob.coords.coords.contains(center), clue = "")
   }

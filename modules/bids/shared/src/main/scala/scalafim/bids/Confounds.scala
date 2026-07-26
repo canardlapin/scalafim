@@ -53,6 +53,19 @@ enum PcaRetention:
   case Components(n: PositiveInt)
   case Percent(value: VariancePercent)
 
+object PcaRetention:
+  def components(value: Int): Either[BidsError, PcaRetention] =
+    PositiveInt
+      .from(value)
+      .map(PcaRetention.Components(_))
+      .toRight(BidsError.InvalidConfoundStrategy("PCA retention", "component count must be positive"))
+
+  def percent(value: Double): Either[BidsError, PcaRetention] =
+    VariancePercent
+      .from(value)
+      .map(PcaRetention.Percent(_))
+      .toRight(BidsError.InvalidConfoundStrategy("PCA retention", "percent variance must be in (0, 100]"))
+
 final case class ConfoundDiagnostic(
     column: String,
     reason: ConfoundDiagnosticReason,
@@ -62,21 +75,40 @@ final case class ConfoundDiagnostic(
     rank: Option[Int] = None
 )
 
-final case class ConfoundStrategy(
-    name: String,
-    pcaVars: Vector[String],
-    rawVars: Vector[String] = Vector.empty,
-    npcs: Option[Int] = None,
-    percentVariance: Option[Double] = None
-)
+final class ConfoundStrategy private (
+    val name: String,
+    val pcaVars: Vector[String],
+    val rawVars: Vector[String],
+    val pcaRetention: Option[PcaRetention]
+):
+  def npcs: Option[Int] =
+    pcaRetention.collect { case PcaRetention.Components(value) => value.toInt }
+
+  def percentVariance: Option[Double] =
+    pcaRetention.collect { case PcaRetention.Percent(value) => value.toDouble }
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ConfoundStrategy =>
+        name == that.name &&
+          pcaVars == that.pcaVars &&
+          rawVars == that.rawVars &&
+          pcaRetention == that.pcaRetention
+      case _ => false
+
+  override def hashCode(): Int =
+    (name, pcaVars, rawVars, pcaRetention).##
+
+  override def toString: String =
+    s"ConfoundStrategy($name,$pcaVars,$rawVars,$pcaRetention)"
 
 object ConfoundStrategy:
   val PcaBasic80: ConfoundStrategy =
-    ConfoundStrategy(
+    unsafe(
       name = "pcabasic80",
       pcaVars = ConfoundSets.motion24 ++ Vector("csf", "white_matter", "a_comp_cor_*", "t_comp_cor_*"),
       rawVars = Vector("cosine_*", "cosine*"),
-      percentVariance = Some(80.0)
+      pcaRetention = Some(PcaRetention.Percent(VariancePercent.unsafe(80.0)))
     )
 
   def from(
@@ -86,7 +118,17 @@ object ConfoundStrategy:
       npcs: Option[Int] = None,
       percentVariance: Option[Double] = None
   ): Either[BidsError, ConfoundStrategy] =
-    validate(ConfoundStrategy(name, pcaVars, rawVars, npcs, percentVariance))
+    legacyRetention(name, npcs, percentVariance).flatMap { retention =>
+      fromRetention(name, pcaVars, rawVars, retention)
+    }
+
+  def fromRetention(
+      name: String,
+      pcaVars: Vector[String],
+      rawVars: Vector[String] = Vector.empty,
+      pcaRetention: Option[PcaRetention] = None
+  ): Either[BidsError, ConfoundStrategy] =
+    validate(new ConfoundStrategy(name, pcaVars, rawVars, pcaRetention))
 
   def named(name: String): Either[BidsError, ConfoundStrategy] =
     name.trim.toLowerCase match
@@ -94,17 +136,24 @@ object ConfoundStrategy:
       case other        => Left(BidsError.UnknownConfoundSet(other))
 
   def retention(strategy: ConfoundStrategy): Either[BidsError, Option[PcaRetention]] =
-    (strategy.npcs, strategy.percentVariance) match
+    Right(strategy.pcaRetention)
+
+  private def legacyRetention(
+      name: String,
+      npcs: Option[Int],
+      percentVariance: Option[Double]
+  ): Either[BidsError, Option[PcaRetention]] =
+    (npcs, percentVariance) match
       case (Some(_), Some(_)) =>
-        Left(BidsError.InvalidConfoundStrategy(strategy.name, "choose either npcs or percentVariance, not both"))
+        Left(BidsError.InvalidConfoundStrategy(name, "choose either npcs or percentVariance, not both"))
       case (Some(n), None) =>
         PositiveInt.from(n) match
           case Some(value) => Right(Some(PcaRetention.Components(value)))
-          case None => Left(BidsError.InvalidConfoundStrategy(strategy.name, "npcs must be positive"))
+          case None => Left(BidsError.InvalidConfoundStrategy(name, "npcs must be positive"))
       case (None, Some(percent)) =>
         VariancePercent.from(percent) match
           case Some(value) => Right(Some(PcaRetention.Percent(value)))
-          case None => Left(BidsError.InvalidConfoundStrategy(strategy.name, "percentVariance must be in (0, 100]"))
+          case None => Left(BidsError.InvalidConfoundStrategy(name, "percentVariance must be in (0, 100]"))
       case (None, None) =>
         Right(None)
 
@@ -112,7 +161,17 @@ object ConfoundStrategy:
     val cleanName = strategy.name.trim
     if cleanName.isEmpty then Left(BidsError.InvalidConfoundStrategy(strategy.name, "name must be non-empty"))
     else if strategy.pcaVars.isEmpty then Left(BidsError.InvalidConfoundStrategy(cleanName, "pcaVars must be non-empty"))
-    else retention(strategy).map(_ => strategy.copy(name = cleanName))
+    else Right(new ConfoundStrategy(cleanName, strategy.pcaVars, strategy.rawVars, strategy.pcaRetention))
+
+  private def unsafe(
+      name: String,
+      pcaVars: Vector[String],
+      rawVars: Vector[String] = Vector.empty,
+      pcaRetention: Option[PcaRetention] = None
+  ): ConfoundStrategy =
+    require(name.trim.nonEmpty, "confound strategy name must be non-empty")
+    require(pcaVars.nonEmpty, "confound strategy PCA variables must be non-empty")
+    new ConfoundStrategy(name.trim, pcaVars, rawVars, pcaRetention)
 
 private[bids] object ConfoundAliases:
   val entries: Vector[(String, Vector[String])] =

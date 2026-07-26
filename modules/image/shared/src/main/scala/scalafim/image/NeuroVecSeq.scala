@@ -11,8 +11,7 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
   private val spatialNels = spatialDims.product
 
   vecs.foreach { v =>
-    require(v.space.spatialDims == spatialDims, "spatial dims mismatch")
-    require(v.space.spacing == baseSpace.spacing && v.space.origin == baseSpace.origin, "space mismatch")
+    GridCompatibility.requireSpatial(baseSpace, v.space)
   }
 
   val lens: Vector[Int] = vecs.map(_.nVolumes)

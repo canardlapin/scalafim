@@ -47,7 +47,7 @@ final case class PlotProgram[Row] private[graphics] (
     plot: Plot[Row],
     compilerOptions: PlotCompilerOptions
 ):
-  def resolve: Either[GraphicsError, TrainedPlot[Row]] =
+  def resolve: Either[GraphicsError, TrainedPlot] =
     PlotCompiler.resolve(plot, compilerOptions)
 
   def scene: Either[GraphicsError, Scene] =
@@ -363,7 +363,7 @@ final class PlotBuilder[Row, Position <: PlotPosition[Row]] private[graphics] (
   def build: Either[GraphicsError, PlotProgram[Row]] =
     result.map(PlotProgram(_, options))
 
-  def resolve: Either[GraphicsError, TrainedPlot[Row]] =
+  def resolve: Either[GraphicsError, TrainedPlot] =
     build.flatMap(_.resolve)
 
   def scene: Either[GraphicsError, Scene] =

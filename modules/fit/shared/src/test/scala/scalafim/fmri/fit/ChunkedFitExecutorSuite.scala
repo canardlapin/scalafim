@@ -589,7 +589,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = sampling
       )
@@ -627,7 +627,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId(id), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = sampling
       )
@@ -648,7 +648,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 6).toString))
     )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("chunked-lss-demo"),
           ImageDMat.fromRows(rows),

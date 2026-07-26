@@ -1,0 +1,151 @@
+{
+  "capturedAtUtc": "2026-07-22T03:58:17Z",
+  "capturedOn": "2026-07-21",
+  "commands": {
+    "compileAll": "sbt compileAll",
+    "focusedTests": "sbt 'registrationJVM/test' 'registrationJS/test'",
+    "jmh": "sbt 'registrationBenchJVM/Jmh/clean' 'registrationBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -w 250ms -r 250ms -prof gc -rf json -rff /tmp/halfflow-p3-jmh-final.json .*HalfFlowRegistrationBenchmark.*'",
+    "testAll": "sbt testAll"
+  },
+  "decisions": {
+    "galeBoundary": "P3 found no general Gale defect. Paired flow and topology workspaces are registration-specific and remain in ScalaFIM; Gale stays pinned to the adopted P2 revision.",
+    "mapInterpolation": "Resolution transfer is trilinear in physical coordinates. Cubic map interpolation is excluded from v1.",
+    "state": "Use concrete phantom-frame DensePull, explicit InversePair, and Midpoint rather than a public higher-kinded transform framework.",
+    "workspace": "Production iteration should use borrowed paired-flow and topology workspaces. Allocation-owning wrappers remain checked convenience and benchmark reference paths."
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hardware": "Apple M3 Max, 14 cores, 36 GB",
+    "hostJavaDefault": "OpenJDK 22",
+    "jmhJava": "OpenJDK 64-Bit Server VM 25.0.1",
+    "jmhVersion": "1.37",
+    "node": "v24.1.0",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbtBuildVersion": "1.10.5",
+    "scala": "3.4.2"
+  },
+  "fixture": {
+    "amplitudeMm": 0.8,
+    "boundaryPolicy": "analytic sinusoidal velocity is zero on every boundary",
+    "compositionCalls": 6,
+    "flowWorkspace": {
+      "coordinateBuffers": 4,
+      "validityBuffers": 4
+    },
+    "guardWorkspace": {
+      "scalarBuffers": 4,
+      "validityBuffers": 2
+    },
+    "shape": [32, 32, 32],
+    "squaringDepth": 3,
+    "voxels": 32768
+  },
+  "jmh": {
+    "benchmarks": {
+      "owningPairedExponential": {
+        "allocationBytesPerOperation": 3281626.859,
+        "allocationError99_9": 83.202,
+        "gcCollectionsAcrossMeasurements": 15,
+        "gcMillisAcrossMeasurements": 15,
+        "scoreError99_9Millis": 0.030,
+        "scoreMillisPerOperation": 5.179
+      },
+      "reusablePairedExponential": {
+        "allocationBytesPerOperation": 891.565,
+        "allocationError99_9": 2.075,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Millis": 0.027,
+        "scoreMillisPerOperation": 5.213
+      },
+      "owningTopologyAndInverseGuard": {
+        "allocationBytesPerOperation": 1025370.017,
+        "allocationError99_9": 2.800,
+        "gcCollectionsAcrossMeasurements": 3,
+        "gcMillisAcrossMeasurements": 5,
+        "scoreError99_9Millis": 0.041,
+        "scoreMillisPerOperation": 4.525
+      },
+      "reusableTopologyAndInverseGuard": {
+        "allocationBytesPerOperation": 1720.336,
+        "allocationError99_9": 1.845,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Millis": 0.036,
+        "scoreMillisPerOperation": 4.484
+      }
+    },
+    "derived": {
+      "flowAllocationReduction": 3680.750,
+      "flowOwningToReusableRuntimeRatio": 0.993400,
+      "guardAllocationReduction": 596.029,
+      "guardReusableSpeedup": 1.009112
+    },
+    "forks": 3,
+    "measurementMillis": 250,
+    "measurementsPerFork": 10,
+    "rawPrimaryMillis": {
+      "owningPairedExponential": [
+        [5.1653725, 5.20472334, 5.1838259803921565, 5.16306862745098, 5.184299019607844, 5.169453431372549, 5.191479568627451, 5.14783334, 5.149060450980392, 5.1466438039215685],
+        [5.308482142857143, 5.181684647058823, 5.28181334, 5.18079332, 5.23588916, 5.171601183673469, 5.2209744897959185, 5.058100961538462, 5.173012254901961, 5.174670061224489],
+        [5.192735551020408, 5.173831705882353, 5.122658490196079, 5.183799823529411, 5.147391352941177, 5.16264082, 5.167604568627451, 5.140047372549019, 5.214558673469388, 5.173505]
+      ],
+      "reusablePairedExponential": [
+        [5.266216836734694, 5.191824352941176, 5.24029668, 5.219115, 5.22403, 5.263618916666666, 5.2161625, 5.27240834, 5.25829, 5.21846],
+        [5.23059666, 5.196361098039215, 5.261615458333333, 5.2383061224489795, 5.24825168, 5.257035, 5.25514834, 5.255971354166666, 5.174791666666667, 5.20416416],
+        [5.162910137254902, 5.142766163265306, 5.180278588235294, 5.166190352941176, 5.179332509803921, 5.170458333333333, 5.135102941176471, 5.1899975, 5.228069734693878, 5.15608168627451]
+      ],
+      "owningTopologyAndInverseGuard": [
+        [4.492994965517242, 4.603948490909091, 4.585608192982456, 4.505311051724138, 4.682683035714286, 4.562151586206896, 4.488305327586207, 4.472309322033898, 4.50732974137931, 4.530802431034482],
+        [4.556935344827586, 4.594467842105264, 4.558391517241379, 4.4923545438596495, 4.612427272727273, 4.42837993220339, 4.508567982456141, 4.545654017857143, 4.5556365, 4.552911637931034],
+        [4.552439655172414, 4.4900977068965515, 4.573290210526316, 4.46753448275862, 4.5584389821428575, 4.46308686440678, 4.5077385, 4.4648530701754385, 4.438, 4.404934016666667]
+      ],
+      "reusableTopologyAndInverseGuard": [
+        [4.426602724137931, 4.429162344827586, 4.495227741379311, 4.449086864406779, 4.5083160862068965, 4.423192534482759, 4.39575, 4.436447728813559, 4.413212559322034, 4.54189224137931],
+        [4.596986607142857, 4.586824561403509, 4.536985368421052, 4.493998543859649, 4.570010245614035, 4.550094827586207, 4.488203310344828, 4.454649711864406, 4.525217842105263, 4.5178512931034485],
+        [4.482187859649123, 4.507423120689655, 4.43711793220339, 4.4991783684210525, 4.446280896551724, 4.518460482758621, 4.43400706779661, 4.466389362068965, 4.419684322033898, 4.481315677966101]
+      ]
+    },
+    "rawJmhJsonSha256": "2705d4b9ffc72bd2195e5851ca2ec366beaa20da0f83b3b0aa3ed52dea987e75",
+    "samplesPerBenchmark": 30,
+    "threads": 1,
+    "warmupMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "numericalAdmission": {
+    "accumulatedGuard": "A safe local identity flow followed by a folded accumulated midpoint arm is rejected.",
+    "analyticLinearFlow": "Increasing squaring depth converges toward the independent closed-form exponential on both platforms.",
+    "boundaryFinding": "Strict validity propagation contracts support during repeated composition; analytic probes are placed away from boundaries and the JMH velocity is zero at boundaries.",
+    "export": "The final inverse pair exports as forward/backward DenseFieldMorphism values with validity retained alongside them.",
+    "fold": "An inverse-consistent reflection has non-positive Jacobians and is rejected.",
+    "rk4": "JMH setup compares both directions at fixture points with an independent 4096-step RK4 oracle; maximum allowed error is 1.2e-3 mm.",
+    "status": "pass"
+  },
+  "repository": {
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "Shared checkout may be dirty; exact source hashes define this receipt."
+  },
+  "schema": "scalafim-half-flow-paired-flow-receipt-v1",
+  "sourceSha256": {
+    "README.md": "56e75fe1d48bf537109578cbbda37b8b91b5f70cc017c26ba233da5675c5f5ac",
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowRegistrationBenchmark.scala": "844416087135ef5e993f5ef47541f5b3204316be6b1710f35c74fcd5a5aba4fd",
+    "build.sbt": "2cfadd878d048eaaa93ad68de7406360cd28188c17c42a5a43fea202dd2ab786",
+    "docs/benchmarks/half-flow-lm.md": "e6c8a649dd5e9448b81612f9162a50f3e0c293a36bd1cbc8133d9ac05de9949d",
+    "docs/module-relations.md": "d46ec3ac5357aafb1baffef36958ff3983295874b015615edb9a5ced0e5cd6bc",
+    "modules/registration/shared/src/main/scala/scalafim/registration/PairedFlow.scala": "5237bc884836ebf6c5683f180f4c7bf8a22b2faaeb1cfafb859f754adce701ae",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "f10a1a7147c4e7a0be30a8d8b9a259031919cb6a3717500329977659cdec09f3",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TopologyGuard.scala": "5d4b8cb994701a1684cd45a7e3e54491e02b71ffffa9b486635bbe62f963df73",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "03e88e1aae01e166af666bb8a18b1955ec2fc965e4ed1ba66ff944a50bd2c34c"
+  },
+  "verification": {
+    "compileAll": "pass",
+    "registrationJS": {
+      "passed": 9,
+      "status": "pass"
+    },
+    "registrationJVM": {
+      "passed": 9,
+      "status": "pass"
+    },
+    "testAll": "pass"
+  }
+}

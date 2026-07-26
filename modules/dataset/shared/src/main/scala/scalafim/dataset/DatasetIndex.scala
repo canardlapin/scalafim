@@ -1,6 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.image.GridCompatibility
 
 enum DatasetFieldCriterion[+A]:
   case Any
@@ -92,15 +93,13 @@ object RunKey:
     fromStrings(subject, run, session, task, space)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class DatasetRunDescriptor(
-    key: RunKey,
-    datasetId: DatasetId,
-    shape: DatasetShape,
-    samplingFrame: SamplingFrame,
-    timeAxis: DatasetTimeAxis
+final class DatasetRunDescriptor private (
+    val key: RunKey,
+    val datasetId: DatasetId,
+    val shape: DatasetShape,
+    val samplingFrame: SamplingFrame,
+    val timeAxis: DatasetTimeAxis
 ):
-  require(samplingFrame.blockLens.sum == shape.timepoints, "run descriptor sampling frame rows must match dataset timepoints")
-  require(timeAxis.timepoints == shape.timepoints, "run descriptor time axis must match dataset timepoints")
 
   def subject: SubjectId =
     key.dataset.subject
@@ -118,24 +117,101 @@ final case class DatasetRunDescriptor(
     key.run
 
 object DatasetRunDescriptor:
-  def fromDataset(key: RunKey, dataset: FmriDataset): DatasetRunDescriptor =
-    DatasetRunDescriptor(
-      key = key,
-      datasetId = dataset.id,
-      shape = dataset.shape,
-      samplingFrame = dataset.samplingFrame,
-      timeAxis = dataset.timeAxis
+  private[dataset] def fromRun(run: DatasetRun): DatasetRunDescriptor =
+    val blockIndex = run.block.runIndex
+    val frame =
+      SamplingFrame
+        .validated(
+          blockLens = Seq(run.block.length),
+          tr = Seq(run.dataset.samplingFrame.tr(blockIndex).value),
+          startTime = Seq(run.dataset.samplingFrame.startTime(blockIndex).value),
+          precision = run.dataset.samplingFrame.precision.value
+        )
+        .fold(error => throw new IllegalStateException(error.message), identity)
+    new DatasetRunDescriptor(
+      key = run.key,
+      datasetId = run.dataset.id,
+      shape = DatasetShape.unsafe(run.dataset.shape.space, run.block.length),
+      samplingFrame = frame,
+      timeAxis = DatasetTimeAxis.unsafe(frame, Vector(run.block.run))
     )
 
-final case class DatasetRun(
-    key: RunKey,
-    dataset: FmriDataset
+final class DatasetRun private (
+    val key: RunKey,
+    val dataset: FmriDataset,
+    val block: DatasetTimeBlock
 ):
   def descriptor: DatasetRunDescriptor =
-    DatasetRunDescriptor.fromDataset(key, dataset)
+    DatasetRunDescriptor.fromRun(this)
 
   def id: DatasetId =
     dataset.id
+
+  def seriesEither(
+      selection: DataSelection = DataSelection.All
+  ): Either[DatasetError, FmriSeries] =
+    translatedSelection(selection).flatMap(dataset.seriesEither)
+
+  def series(selection: DataSelection = DataSelection.All): FmriSeries =
+    seriesEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[dataset] def partitionedSeriesEither(
+      selection: DataSelection = DataSelection.All
+  ): Either[DatasetError, (FmriSeries, DatasetRunPartition)] =
+    for
+      translated <- translatedSelection(selection)
+      series <- dataset.seriesEither(translated)
+      partitions <- dataset.runPartitionsFor(series.timepointIndices)
+      partition <- partitions match
+        case Vector(single) if single.run == block.run =>
+          Right(single)
+        case found =>
+          Left(DatasetError.InvalidTimeAxis(
+            s"run-local selection for ${block.run.value} resolved to ${found.length} partitions"
+          ))
+    yield (series, partition)
+
+  private def translatedSelection(
+      selection: DataSelection
+  ): Either[DatasetError, DataSelection] =
+    selection.time.resolve(block.length).map: local =>
+      val global =
+        local.map(index => TimepointIndex.unsafe(block.startValue + index.value))
+      DataSelection(
+        time = TimepointSelection.Indices(global),
+        voxels = selection.voxels
+      )
+
+object DatasetRun:
+  def make(
+      key: RunKey,
+      dataset: FmriDataset
+  ): Either[DatasetError, DatasetRun] =
+    dataset.timeAxis.blocks match
+      case Vector(block) if block.run == key.run =>
+        Right(new DatasetRun(key, dataset, block))
+      case Vector(block) =>
+        Left(DatasetError.InvalidTimeAxis(
+          s"run key ${key.run.value} does not match dataset run ${block.run.value}"
+        ))
+      case blocks =>
+        Left(DatasetError.InvalidTimeAxis(
+          s"direct DatasetRun construction requires exactly one time block, found ${blocks.length}"
+        ))
+
+  def fromDataset(
+      key: DatasetKey,
+      dataset: FmriDataset
+  ): Vector[DatasetRun] =
+    dataset.timeAxis.blocks.map: block =>
+      new DatasetRun(RunKey(key, block.run), dataset, block)
+
+  def unsafe(
+      key: RunKey,
+      dataset: FmriDataset
+  ): DatasetRun =
+    make(key, dataset)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class DatasetRunQuery(
     subject: Option[SubjectId] = None,
@@ -209,6 +285,71 @@ final class DatasetIndex private (
       case many =>
         Left(DatasetError.AmbiguousDatasetRun(query.label, many.length))
 
+  def read(
+      query: DatasetRunQuery,
+      selection: DataSelection = DataSelection.All
+  ): Either[DatasetError, SegmentedFmriSeries] =
+    for
+      selected <- resolveForRead(query, selection)
+      segments <- readSegments(selected, selection)
+      result <- SegmentedFmriSeries.make(segments)
+    yield result
+
+  private[dataset] def resolveForRead(
+      query: DatasetRunQuery,
+      selection: DataSelection
+  ): Either[DatasetError, Vector[DatasetRun]] =
+    resolveEither(query).flatMap: selected =>
+      selection.voxels match
+        case coordinates: VoxelSelection.Coords =>
+          validateCoordinateRuns(selected, coordinates)
+        case _ =>
+          Right(selected)
+
+  private def validateCoordinateRuns(
+      selected: Vector[DatasetRun],
+      coordinates: VoxelSelection.Coords
+  ): Either[DatasetError, Vector[DatasetRun]] =
+    val expected = selected.head.dataset.shape.space
+    var index = 0
+    var failure = Option.empty[DatasetError]
+    while index < selected.length && failure.isEmpty do
+      val run = selected(index)
+      GridCompatibility.exact(expected, run.dataset.shape.space) match
+        case Left(error) =>
+          failure = Some(DatasetError.ShapeMismatch(
+            s"coordinate selection requires identical run grids: ${error.message}"
+          ))
+        case Right(_) =>
+          run.dataset.backend.voxelDomain.resolve(coordinates, run.dataset.shape.space) match
+            case Left(error) => failure = Some(error)
+            case Right(_)    => ()
+      index += 1
+    failure match
+      case Some(error) => Left(error)
+      case None        => Right(selected)
+
+  private def readSegments(
+      selected: Vector[DatasetRun],
+      selection: DataSelection
+  ): Either[DatasetError, Vector[FmriSeriesSegment]] =
+    val segments = Vector.newBuilder[FmriSeriesSegment]
+    segments.sizeHint(selected.length)
+    var index = 0
+    var failure = Option.empty[DatasetError]
+    while index < selected.length && failure.isEmpty do
+      val run = selected(index)
+      val opened =
+        run.partitionedSeriesEither(selection).flatMap: (series, partition) =>
+          FmriSeriesSegment.make(run.key, partition, series)
+      opened match
+        case Left(error)    => failure = Some(error)
+        case Right(segment) => segments += segment
+      index += 1
+    failure match
+      case Some(error) => Left(error)
+      case None        => Right(segments.result())
+
 object DatasetIndex:
   def fromRuns(runs: Vector[DatasetRun]): Either[DatasetError, DatasetIndex] =
     if runs.isEmpty then Left(DatasetError.EmptyDatasetIndex)
@@ -222,8 +363,20 @@ object DatasetIndex:
         i += 1
       Right(new DatasetIndex(runs))
 
-  def single(key: RunKey, dataset: FmriDataset): DatasetIndex =
-    fromRuns(Vector(DatasetRun(key, dataset)))
+  def single(
+      key: RunKey,
+      dataset: FmriDataset
+  ): Either[DatasetError, DatasetIndex] =
+    DatasetRun.make(key, dataset).flatMap(run => fromRuns(Vector(run)))
+
+  def fromDataset(
+      key: DatasetKey,
+      dataset: FmriDataset
+  ): Either[DatasetError, DatasetIndex] =
+    fromRuns(DatasetRun.fromDataset(key, dataset))
+
+  def unsafeSingle(key: RunKey, dataset: FmriDataset): DatasetIndex =
+    single(key, dataset)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def unsafe(runs: Vector[DatasetRun]): DatasetIndex =

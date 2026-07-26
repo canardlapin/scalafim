@@ -23,7 +23,7 @@ class FacetSuite extends munit.FunSuite:
     val annotationLayer = Layer.point[Annotation](_.x, _.y, inheritMapping = false)
     val facet = FacetSpec.wrap[Observation](_.condition).fold(error => fail(error.message), identity)
 
-    def resolve(policy: LayerFacetPolicy[Annotation]): TrainedPlot[Observation] =
+    def resolve(policy: LayerFacetPolicy[Annotation]): TrainedPlot =
       Plot(rows)
         .withFacet(facet)
         .addLayer(Layer.point[Observation](_.x, _.y))
@@ -83,7 +83,7 @@ class FacetSuite extends munit.FunSuite:
   }
 
   test("shared ranges union panels while free position scales train per panel") {
-    def resolve(scales: FacetScales, scaled: Boolean): TrainedPlot[Observation] =
+    def resolve(scales: FacetScales, scaled: Boolean): TrainedPlot =
       val builder =
         plot(rows)
           .aes(_.x, _.y)

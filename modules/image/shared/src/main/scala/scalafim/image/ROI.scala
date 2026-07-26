@@ -1,6 +1,7 @@
 package scalafim.image
 
 import narr.NArray
+import scala.reflect.ClassTag
 
 enum VoxelRoiError:
   case InvalidCoordinate(position: Int, error: GeometryError)
@@ -16,9 +17,33 @@ enum VoxelRoiError:
       case InvalidSpace(error) =>
         error.message
 
+enum ROIVolError:
+  case InvalidRoi(error: VoxelRoiError)
+  case InvalidSpace(error: NeuroSpaceError)
+  case Grid(error: GridMismatch)
+  case DataLengthMismatch(expected: Int, actual: Int)
+
+  def message: String =
+    this match
+      case InvalidRoi(error) =>
+        error.message
+      case InvalidSpace(error) =>
+        error.message
+      case Grid(error) =>
+        error.message
+      case DataLengthMismatch(expected, actual) =>
+        s"ROI data length mismatch: expected $expected, got $actual"
+
+/** Legacy coordinate transport that must be bound to an explicit grid before typed use. */
 final case class ROICoords(coords: Vector[Vector[Int]]):
   require(coords.forall(_.length == 3), "coords must be Nx3")
   def size: Int = coords.length
+
+  def asRegionIn(space: VolumeSpace): Either[VoxelRoiError, VoxelRegion] =
+    VoxelRegion.fromROICoords(space, this)
+
+  def asSelectionIn(space: VolumeSpace): Either[VoxelRoiError, VoxelSelection] =
+    VoxelSelection.fromROICoords(space, this)
 
   def linearIndices(space: NeuroSpace): NArray[Int] =
     val out = narr.NArray.ofSize[Int](coords.length)
@@ -50,6 +75,12 @@ final class VoxelRoi private (
 
   def toROICoords: ROICoords =
     ROICoords(rawCoords)
+
+  def toRegion: VoxelRegion =
+    VoxelRegion.fromRoi(this)
+
+  def toSelection: VoxelSelection =
+    VoxelSelection.fromRoi(this)
 
   override def equals(other: Any): Boolean =
     other match
@@ -103,6 +134,9 @@ object VoxelRoi:
   def fromRawUnsafe(space: NeuroSpace, coords: Vector[Vector[Int]]): VoxelRoi =
     fromRaw(space, coords).fold(err => throw new IllegalArgumentException(err.message), roi => roi)
 
+  private[image] def fromSelection(selection: VoxelSelection): VoxelRoi =
+    new VoxelRoi(selection.space, selection.voxelCoords, selection.indexSet)
+
   private def parseCoords(coords: Vector[Vector[Int]]): Either[VoxelRoiError, Vector[VoxelCoord]] =
     val out = Vector.newBuilder[VoxelCoord]
     out.sizeHint(coords.length)
@@ -118,20 +152,24 @@ object VoxelRoi:
       case Some(err) => Left(err)
       case None => Right(out.result())
 
-final case class ROIVol[A](
-  space: NeuroSpace,
-  coords: ROICoords,
-  data: NArray[A]
+final class ROIVol[A] private[scalafim] (
+    val space: NeuroSpace,
+    private val checkedRoi: VoxelRoi,
+    private[scalafim] val data: NArray[A]
 ):
-  require(coords.size == data.length, "data length must match coords")
-  require(space.ndim >= 3, "space must be at least 3D")
-  private val checkedRoi: VoxelRoi =
-    VoxelRoi.fromRawUnsafe(space, coords.coords)
+  def size: Int = checkedRoi.size
 
-  def size: Int = coords.size
+  def apply(index: Int): A =
+    data(index)
+
+  def coords: ROICoords =
+    checkedRoi.toROICoords
 
   def roi: VoxelRoi =
     checkedRoi
+
+  def toNArray(using ClassTag[A]): NArray[A] =
+    NArray.copy(data)
 
   def linearIndices: NArray[Int] =
     checkedRoi.linearIndices
@@ -164,10 +202,55 @@ object ROICoords:
     VoxelRoi.fromRaw(space, coords).map(_.toROICoords)
 
 object ROIVol:
-  def apply[A](space: NeuroSpace, coords: Vector[Vector[Int]], data: NArray[A]): ROIVol[A] =
-    val roi = VoxelRoi.fromRawUnsafe(space, coords)
-    ROIVol(space, roi.toROICoords, data)
+  def make[A](
+      space: NeuroSpace,
+      coords: Vector[Vector[Int]],
+      data: NArray[A]
+  )(using ClassTag[A]): Either[ROIVolError, ROIVol[A]] =
+    VoxelRoi
+      .fromRaw(space, coords)
+      .left
+      .map(ROIVolError.InvalidRoi.apply)
+      .flatMap(make(space, _, data))
 
-  def apply[A](space: NeuroSpace, roi: VoxelRoi, data: NArray[A]): ROIVol[A] =
-    require(VolumeSpace.fromSpatialPart(space).fold(_ => false, _ == roi.space), "ROI/space mismatch")
-    ROIVol(space, roi.toROICoords, data)
+  def make[A](
+      space: NeuroSpace,
+      roi: VoxelRoi,
+      data: NArray[A]
+  )(using ClassTag[A]): Either[ROIVolError, ROIVol[A]] =
+    for
+      volumeSpace <- VolumeSpace
+        .fromSpatialPart(space)
+        .left
+        .map(ROIVolError.InvalidSpace.apply)
+      _ <- GridCompatibility
+        .volume(volumeSpace, roi.space)
+        .left
+        .map(ROIVolError.Grid.apply)
+      _ <-
+        if data.length == roi.size then Right(())
+        else Left(ROIVolError.DataLengthMismatch(roi.size, data.length))
+    yield new ROIVol(space, roi, NArray.copy(data))
+
+  def apply[A](
+      space: NeuroSpace,
+      coords: Vector[Vector[Int]],
+      data: NArray[A]
+  )(using ClassTag[A]): ROIVol[A] =
+    make(space, coords, data)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def apply[A](
+      space: NeuroSpace,
+      roi: VoxelRoi,
+      data: NArray[A]
+  )(using ClassTag[A]): ROIVol[A] =
+    make(space, roi, data)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[scalafim] def unsafeOwned[A](
+      space: NeuroSpace,
+      roi: VoxelRoi,
+      data: NArray[A]
+  ): ROIVol[A] =
+    new ROIVol(space, roi, data)

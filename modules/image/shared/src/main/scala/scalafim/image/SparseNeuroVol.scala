@@ -49,7 +49,7 @@ object SparseNeuroVol:
     label: String = ""
   ): SparseNeuroVol[A] =
     val actual = VolumeSpace.fromSpatialPart(space).fold(err => throw new IllegalArgumentException(err.message), identity)
-    require(actual == indexSet.space, "index set/space mismatch")
+    GridCompatibility.requireVolume(indexSet.space, actual)
     SparseNeuroVol(data, indexSet.indices, space, label)
 
   def fromMask[A](
@@ -58,7 +58,7 @@ object SparseNeuroVol:
     mask: NeuroVol[Boolean],
     label: String = ""
   )(using ClassTag[A]): SparseNeuroVol[A] =
-    require(mask.space.spatialDims == space.spatialDims, "mask/space mismatch")
+    GridCompatibility.requireSpatial(space, mask.space)
     val flags = mask.values.data
     val buf = Array.newBuilder[Int]
     var i = 0

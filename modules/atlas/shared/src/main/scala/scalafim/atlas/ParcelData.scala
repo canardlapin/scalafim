@@ -1,6 +1,6 @@
 package scalafim.atlas
 
-final case class ParcelRecord[A](region: Region, value: A)
+final case class ParcelRecord[A](region: AtlasRegionMetadata, value: A)
 
 final case class ParcelData[A](
   atlasRef: AtlasRef,

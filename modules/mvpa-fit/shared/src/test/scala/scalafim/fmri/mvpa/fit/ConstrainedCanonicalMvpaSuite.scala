@@ -1,5 +1,9 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.contract.RequestedOptimizationClaim
+import scalafim.multivar.family.canonical.{CanonicalEffectReferenceFixtures as R, ResidualRegularization, TraceRidgeFraction}
+import scalafim.multivar.optimization.FeasibleSetKind
+
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{
@@ -13,13 +17,6 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.model.FitConfig
 import scalafim.fmri.mvpa.{FeatureSet, FeatureSetPlan, MvpaStreamControl, RoiId}
-import scalafim.multivar.{
-  CanonicalEffectReferenceFixtures as R,
-  FeasibleSetKind,
-  ResidualRegularization,
-  SolverGuarantee,
-  TraceRidgeFraction
-}
 
 class ConstrainedCanonicalMvpaSuite extends munit.FunSuite:
   test("complete nonnegative one-shot MVPA agrees with the independent base-R active-face oracle"):
@@ -38,7 +35,10 @@ class ConstrainedCanonicalMvpaSuite extends munit.FunSuite:
         actual.trainingFit.programFit.program.constraints.map(_.feasibleSet),
         Vector(FeasibleSetKind.NonnegativeOrthant)
       )
-      assertEquals(actual.trainingFit.programFit.program.resultSemantics.guarantee, SolverGuarantee.StationaryPoint)
+      assertEquals(
+        actual.trainingFit.programFit.program.resultSemantics.requestedClaim,
+        RequestedOptimizationClaim.Stationary
+      )
       assertEquals(actual.receipt.execution, CanonicalMomentExecution.RunwiseSufficientStatistics)
 
     assertEqualsDouble(payload.meanHeldOutRoot, ConstrainedCanonicalReferenceFixtures.meanHeldOutRoot, 1e-7)

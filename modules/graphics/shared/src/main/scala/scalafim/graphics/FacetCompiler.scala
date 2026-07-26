@@ -23,7 +23,7 @@ private[graphics] object FacetCompiler:
       plot: Plot[Row],
       facet: FacetSpec[Row],
       options: PlotCompilerOptions
-  ): Either[GraphicsError, TrainedPlot[Row]] =
+  ): Either[GraphicsError, TrainedPlot] =
     (options.layout, options.frame, options.policy) match
       case (None, None, Some(policy)) => resolveWithPolicy(plot, facet, options, policy)
       case _                          => Left(GraphicsError.FacetRequiresSolver)
@@ -33,7 +33,7 @@ private[graphics] object FacetCompiler:
       facet: FacetSpec[Row],
       options: PlotCompilerOptions,
       policy: LayoutPolicy
-  ): Either[GraphicsError, TrainedPlot[Row]] =
+  ): Either[GraphicsError, TrainedPlot] =
     plot.coord match
       case _: Coord.Fixed =>
         Left(GraphicsError.FacetFixedCoordinates)
@@ -194,7 +194,7 @@ private[graphics] object FacetCompiler:
       frames: PlotFrames,
       coord: Coord,
       options: PlotCompilerOptions
-  ): Either[GraphicsError, Vector[ResolvedFacetPanel[Row]]] =
+  ): Either[GraphicsError, Vector[ResolvedFacetPanel]] =
     if frames.grid.length != panels.length then Left(GraphicsError.EmptyFacet)
     else
       traverse(panels.zip(frames.grid)) { case (panel, frame) =>
@@ -233,7 +233,7 @@ private[graphics] object FacetCompiler:
     )
 
   private def lowerAxes[Row](
-      resolved: Vector[ResolvedFacetPanel[Row]],
+      resolved: Vector[ResolvedFacetPanel],
       panels: Vector[PanelResolution],
       facetLayout: FacetLayout,
       policy: LayoutPolicy,

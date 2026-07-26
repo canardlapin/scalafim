@@ -1,6 +1,7 @@
 package scalafim.dataset
 
 import gale.linalg.{DMat as GaleDMat, DVec}
+import scalafim.archive.RunLabel
 import scalafim.archive.lna.{LnaPipeline, QuantParams}
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.latent.{
@@ -33,7 +34,10 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         .quantArchive(data, space, params = QuantParams(bits = 16))
         .fold(err => fail(err.message), identity)
 
-    val backend = LatentArchiveDatasetBackend(DatasetId("latent-demo"), archive)
+    val backend =
+      LatentArchiveDatasetBackend
+        .make(DatasetId("latent-demo"), archive, RunLabel.indexed(0))
+        .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
         DataSelection(
@@ -80,7 +84,10 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
       LatentArchiveCodec
         .toTransportArchive(response, space)
         .fold(err => fail(err.message), identity)
-    val backend = LatentArchiveDatasetBackend(DatasetId("transport-latent"), archive)
+    val backend =
+      LatentArchiveDatasetBackend
+        .make(DatasetId("transport-latent"), archive, RunLabel.indexed(0))
+        .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
         DataSelection(
@@ -128,7 +135,10 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
       LatentArchiveCodec
         .toBoldZipArchive(response, space)
         .fold(err => fail(err.message), identity)
-    val backend = LatentArchiveDatasetBackend(DatasetId("boldzip-latent"), archive)
+    val backend =
+      LatentArchiveDatasetBackend
+        .make(DatasetId("boldzip-latent"), archive, RunLabel.indexed(0))
+        .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
         DataSelection(
@@ -142,6 +152,23 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
 
     assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
+  }
+
+  test("latent archive backend rejects a missing internal run during construction") {
+    val space = NeuroSpace(Vector(1, 1, 1))
+    val archive =
+      LnaPipeline
+        .quantArchive(DMat.fromRows(Vector(Vector(1.0))), space, params = QuantParams(bits = 16))
+        .fold(err => fail(err.message), identity)
+
+    val missing =
+      LatentArchiveDatasetBackend.make(
+        DatasetId("missing-run"),
+        archive,
+        RunLabel("not-present")
+      )
+
+    assert(missing.left.exists(_.message.contains("run 'not-present' not found")))
   }
 
   private def assertRowsClose(

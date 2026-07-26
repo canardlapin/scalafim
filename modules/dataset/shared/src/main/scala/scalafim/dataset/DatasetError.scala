@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.archive.ArchiveError
-import scalafim.image.NeuroSpaceError
+import scalafim.image.{NeuroSpaceError, VoxelCoord}
 import scalafim.latent.LatentError
 
 enum DatasetAxis(val label: String):
@@ -19,6 +19,7 @@ enum DatasetError:
   case ShapeMismatch(detail: String)
   case MatrixShapeMismatch(label: String, expectedRows: Int, expectedCols: Int, actualRows: Int, actualCols: Int)
   case VoxelOutsideMask(voxel: Int)
+  case InvalidVoxelCoordinate(coordinate: VoxelCoord, detail: String)
   case ArchiveFailure(error: ArchiveError)
   case LatentFailure(error: LatentError)
   case StorageFailure(detail: String)
@@ -54,6 +55,8 @@ enum DatasetError:
         s"$label expected ${expectedRows}x${expectedCols} but got ${actualRows}x${actualCols}"
       case VoxelOutsideMask(voxel) =>
         s"voxel $voxel is outside the latent mask"
+      case InvalidVoxelCoordinate(coordinate, detail) =>
+        s"invalid voxel coordinate $coordinate: $detail"
       case ArchiveFailure(error) =>
         error.message
       case LatentFailure(error) =>

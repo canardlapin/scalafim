@@ -1,5 +1,7 @@
 package scalafim.bids
 
+import cats.syntax.all.*
+
 enum DatatypeScope:
   case Raw
   case Derivative
@@ -113,8 +115,19 @@ final case class EntityRule(
   def validate(value: String): Boolean =
     pattern.forall(rx => value.matches(rx))
 
-final case class BidsKind(name: String, extensions: Vector[String]):
+final class BidsKind private (val name: String, val extensions: Vector[String]):
   def nonEmpty: Boolean = name.trim.nonEmpty && extensions.nonEmpty
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: BidsKind => name == that.name && extensions == that.extensions
+      case _              => false
+
+  override def hashCode(): Int =
+    (name, extensions).##
+
+  override def toString: String =
+    s"BidsKind($name,$extensions)"
 
 object BidsKind:
   def from(name: String, extensions: Vector[String]): Either[BidsError, BidsKind] =
@@ -122,7 +135,14 @@ object BidsKind:
     val cleanExtensions = extensions.map(_.trim.stripPrefix(".")).filter(_.nonEmpty).distinct
     if cleanName.isEmpty then Left(BidsError.InvalidBidsName(name, "kind name must be non-empty"))
     else if cleanExtensions.isEmpty then Left(BidsError.InvalidBidsName(name, "BidsKind requires at least one extension"))
-    else Right(BidsKind(cleanName, cleanExtensions))
+    else Right(new BidsKind(cleanName, cleanExtensions))
+
+  private[bids] def unsafe(name: String, extensions: Vector[String]): BidsKind =
+    val cleanName = name.trim
+    val cleanExtensions = extensions.map(_.trim.stripPrefix(".")).filter(_.nonEmpty).distinct
+    require(cleanName.nonEmpty, "kind name must be non-empty")
+    require(cleanExtensions.nonEmpty, "BidsKind requires at least one extension")
+    new BidsKind(cleanName, cleanExtensions)
 
 final case class BidsDatatypeSpec(
     name: String,
@@ -137,6 +157,92 @@ final case class BidsDatatypeSpec(
 
   def accepts(bidsName: BidsName): Boolean =
     validate(bidsName).isRight
+
+  def validateAll(bidsName: BidsName): Either[BidsIssueReport, BidsName] =
+    val validKind = kinds.exists(k => k.name == bidsName.kind && k.extensions.contains(bidsName.extension))
+    val kindCheck =
+      if validKind then BidsValidation.valid(())
+      else
+        BidsValidation.invalid(
+          BidsIssue.error(
+            BidsIssueCode.InvalidName,
+            None,
+            Some("kind"),
+            s"kind '${bidsName.kind}.${bidsName.extension}' is not valid for datatype '$name'"
+          )
+        )
+
+    val derivativeCheck =
+      if scope != DatatypeScope.Derivative || (derivativeMarkers.isEmpty && derivativeKinds.isEmpty) then
+        BidsValidation.valid(())
+      else
+        val marked = derivativeMarkers.exists(bidsName.entities.contains)
+        val derivativeKind = derivativeKinds.contains(bidsName.kind)
+        if marked || derivativeKind then BidsValidation.valid(())
+        else
+          BidsValidation.invalid(
+            BidsIssue.error(
+              BidsIssueCode.InvalidName,
+              None,
+              Some("entities"),
+              s"missing derivative marker for datatype '$name'"
+            )
+          )
+
+    val unknownChecks =
+      BidsValidation.all(
+        bidsName.entities.keys
+          .filterNot(rulesByKey.contains)
+          .map { key =>
+            BidsValidation.invalid(
+              BidsIssue.error(
+                BidsIssueCode.InvalidEntity,
+                None,
+                Some(key.short),
+                s"entity '${key.short}' is not valid for datatype '$name'"
+              )
+            )
+          }
+      )
+
+    val requiredChecks =
+      BidsValidation.all(
+        entities
+          .filter(rule => rule.required && !bidsName.entities.contains(rule.key))
+          .map { rule =>
+            BidsValidation.invalid(
+              BidsIssue.error(
+                BidsIssueCode.MissingRequiredField,
+                None,
+                Some(rule.key.short),
+                s"missing required entity '${rule.key.short}' for datatype '$name'"
+              )
+            )
+          }
+      )
+
+    val valueChecks =
+      BidsValidation.all(
+        bidsName.entities.keys.flatMap { key =>
+          val value = bidsName.entities(key)
+          rulesByKey.get(key).filterNot(_.validate(value)).map { rule =>
+            BidsValidation.invalid(
+              BidsIssue.error(
+                BidsIssueCode.InvalidEntity,
+                None,
+                Some(key.short),
+                s"value '$value' does not match ${rule.pattern.getOrElse("<unrestricted>")}"
+              )
+            )
+          }
+        }
+      )
+
+    BidsValidation.toEither(
+      (kindCheck, derivativeCheck, unknownChecks, requiredChecks, valueChecks).mapN { (_, _, _, _, _) =>
+        bidsName.copy(datatype = Some(name))
+      }
+    )
 
   def validateInFolder(bidsName: BidsName, observedFolder: Option[String]): Either[BidsError, BidsName] =
     observedFolder match
@@ -206,10 +312,10 @@ object BidsSpecs:
         rule(EntityKey.Echo, required = false, "[0-9]+")
       ),
       kinds = Vector(
-        BidsKind("bold", Vector("nii.gz", "nii", "json")),
-        BidsKind("events", Vector("tsv")),
-        BidsKind("sbref", Vector("nii.gz", "nii", "json")),
-        BidsKind("physio", Vector("tsv"))
+        BidsKind.unsafe("bold", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("events", Vector("tsv")),
+        BidsKind.unsafe("sbref", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("physio", Vector("tsv"))
       )
     )
 
@@ -241,7 +347,7 @@ object BidsSpecs:
         "inplaneT1",
         "inplaneT2",
         "angio"
-      ).map(kind => BidsKind(kind, Vector("nii.gz", "nii", "json")))
+      ).map(kind => BidsKind.unsafe(kind, Vector("nii.gz", "nii", "json")))
     )
 
   val Dwi: BidsDatatypeSpec =
@@ -257,7 +363,7 @@ object BidsSpecs:
         rule(EntityKey.Reconstruction, required = false),
         rule(EntityKey.Run, required = false, "[0-9]+")
       ),
-      kinds = Vector(BidsKind("dwi", Vector("nii.gz", "nii", "json", "bval", "bvec")))
+      kinds = Vector(BidsKind.unsafe("dwi", Vector("nii.gz", "nii", "json", "bval", "bvec")))
     )
 
   val Fmap: BidsDatatypeSpec =
@@ -273,7 +379,7 @@ object BidsSpecs:
         rule(EntityKey.Run, required = false, "[0-9]+")
       ),
       kinds = Vector("magnitude1", "magnitude2", "phasediff", "phase1", "phase2", "fieldmap", "epi")
-        .map(kind => BidsKind(kind, Vector("nii.gz", "nii", "json")))
+        .map(kind => BidsKind.unsafe(kind, Vector("nii.gz", "nii", "json")))
     )
 
   val FmriprepFunc: BidsDatatypeSpec =
@@ -297,18 +403,18 @@ object BidsSpecs:
         rule(EntityKey.Variant, required = false)
       ),
       kinds = Vector(
-        BidsKind("roi", Vector("nii.gz", "nii", "json")),
-        BidsKind("regressors", Vector("tsv")),
-        BidsKind("latent", Vector("lv.h5")),
-        BidsKind("preproc", Vector("nii.gz", "nii", "json")),
-        BidsKind("bold", Vector("nii.gz", "nii", "json", "lv.h5")),
-        BidsKind("brainmask", Vector("nii.gz", "nii", "json")),
-        BidsKind("mask", Vector("nii.gz", "nii", "json")),
-        BidsKind("confounds", Vector("tsv")),
-        BidsKind("timeseries", Vector("tsv")),
-        BidsKind("MELODICmix", Vector("tsv")),
-        BidsKind("mixing", Vector("tsv")),
-        BidsKind("AROMAnoiseICs", Vector("tsv"))
+        BidsKind.unsafe("roi", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("regressors", Vector("tsv")),
+        BidsKind.unsafe("latent", Vector("lv.h5")),
+        BidsKind.unsafe("preproc", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("bold", Vector("nii.gz", "nii", "json", "lv.h5")),
+        BidsKind.unsafe("brainmask", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("mask", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("confounds", Vector("tsv")),
+        BidsKind.unsafe("timeseries", Vector("tsv")),
+        BidsKind.unsafe("MELODICmix", Vector("tsv")),
+        BidsKind.unsafe("mixing", Vector("tsv")),
+        BidsKind.unsafe("AROMAnoiseICs", Vector("tsv"))
       ),
       derivativeMarkers = Vector(EntityKey.Space, EntityKey.Resolution, EntityKey.Description, EntityKey.Label, EntityKey.Variant),
       derivativeKinds = Vector("roi", "regressors", "latent", "preproc", "brainmask", "mask", "confounds", "timeseries", "MELODICmix", "mixing", "AROMAnoiseICs")
@@ -339,17 +445,17 @@ object BidsSpecs:
         rule(EntityKey.Hemisphere, required = false, "[LR]")
       ),
       kinds = Vector(
-        BidsKind("preproc", Vector("nii.gz", "nii", "json")),
-        BidsKind("brainmask", Vector("nii.gz", "nii", "json")),
-        BidsKind("probtissue", Vector("nii.gz", "nii", "json")),
-        BidsKind("mask", Vector("nii.gz", "nii", "json")),
-        BidsKind("T1w", Vector("nii.gz", "nii", "json")),
-        BidsKind("probseg", Vector("nii.gz", "nii", "json")),
-        BidsKind("dtissue", Vector("nii.gz", "nii", "json")),
-        BidsKind("dseg", Vector("nii.gz", "nii", "json")),
-        BidsKind("warp", Vector("h5")),
-        BidsKind("xfm", Vector("txt", "h5")),
-        BidsKind("affine", Vector("txt"))
+        BidsKind.unsafe("preproc", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("brainmask", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("probtissue", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("mask", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("T1w", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("probseg", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("dtissue", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("dseg", Vector("nii.gz", "nii", "json")),
+        BidsKind.unsafe("warp", Vector("h5")),
+        BidsKind.unsafe("xfm", Vector("txt", "h5")),
+        BidsKind.unsafe("affine", Vector("txt"))
       ),
       derivativeMarkers = Vector(
         EntityKey.From,

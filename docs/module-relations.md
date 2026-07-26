@@ -61,6 +61,7 @@ hrf
             +-- group
 
 image
++-- registration
 +-- image-view        also depends on graphics
 +-- archive
 |   +-- latent         also depends on linalg
@@ -85,6 +86,9 @@ zarr
 +-- zarr-codec-blosc-zstd  optional JVM JNI / Scala.js WASM codec provider
 +-- archive-zarr      also depends on archive
     +-- dataset-zarr  also depends on dataset, image, bids
+
+fit + mvpa
++-- mvpa-fit          run-local trial-readout and pattern-operator composition
 ```
 
 The `graphics` subtree has a stricter extraction boundary: core has no internal
@@ -101,10 +105,12 @@ are no longer part of the ScalaFIM build or internal dependency graph.
 `pipeline` depends only on `graph` for validated DAG layering. It owns generic
 graph orchestration without forcing workflow dependencies into the computational core;
 `fmri-workflow` will add that edge when its orchestration lowering lands.
-`bids` remains dependency-free and parses/describes BIDS projects without
-pulling in dataset, image IO, or modeling dependencies. Dataset IO adapters may
-consume `bids` at the boundary when they need BIDS metadata tables or exact
-entity parsing.
+`bids` remains free of internal ScalaFIM dependencies and parses/describes BIDS
+projects without pulling in dataset, image IO, or modeling dependencies. Cats
+Core is confined to internal shared validation accumulation; Cats Effect is
+confined to the JVM loader/store interpreter. Dataset IO adapters may consume
+`bids` at the boundary when they need BIDS metadata tables or exact entity
+parsing.
 
 ## Module Roles
 
@@ -124,6 +130,7 @@ entity parsing.
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, `graphics` | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `image` | Volumes, masks, spaces, affine math, low-level coordinate transforms, morphisms, resampling, clustering/searchlights. | Nothing internal. | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
+| `registration` | Frame-safe inverse pairs, symmetric midpoint deformation, paired diffeomorphic flow construction, topology/inverse guards, and nonlinear registration optimization. | `image` | Generic tensor/field kernels, image IO, atlas catalogs, dataset policy, or registration-specific shortcuts in Gale. |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, `graphics` | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, `graphics-canvas` | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, `graphics-java2d` | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
@@ -140,13 +147,14 @@ entity parsing.
 | `atlas` | Standard atlas descriptors, region metadata, parcel payloads, coordinate/parcel lookup, region-graph interop, transform route descriptors. | `graph`, `image`, `surface` | Generic spatial operator compilation or low-level transform kernels. |
 | `archive` | Latent NeuroArchive-style manifests, transform descriptors, portable archive transforms, JVM HDF5 store. | `image` | Dataset selection APIs or model-level decoding policy. |
 | `latent` | Latent-response contracts, temporal bases, archive codecs, transport responses. | `linalg`, `archive` | Dataset storage backends or model execution. |
-| `dataset` | Dataset shapes, ids, selections, fMRI series, backend contracts and narrow IO adapters. | `image`, `hrf`, `archive`, `latent`, `bids` | Design formulas, fit kernels, or general BIDS project ownership. |
-| `bids` | BIDS names/entities, manifests, queries, TSV tables, fMRIPrep confound selection. | Nothing internal. | Dataset execution, image decoding, or model fitting. |
+| `dataset` | Checked source-blind fMRI views, provenance values, study/run keys and queries, run-local windows and coordinates, segmented cross-run reads, backend contracts, and narrow LNA IO composition. | `image`, `hrf`, `archive`, `latent`, `bids` | Storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
+| `bids` | Pure BIDS names/entities, checked manifests, queries, TSV tables, fMRIPrep confound selection, and domain diagnostics; JVM resource-safe project/store adapters. | Nothing internal; Cats Core in shared, Cats Effect on JVM. | Dataset execution, image decoding, model fitting, remote-store policy, or hidden runtime execution. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over model plans: dense/runwise OLS, contrasts, residual diagnostics. | `linalg`, `model`, `ar` | Model description, dataset storage, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
-| `multivar` | Typed duality-diagram semantics: nominal primal/dual spaces, directed maps, certified role-specific forms, measures and centering evidence, explicit singular policies, semantic GPCA, exact/partial/coupled/hub row alignment, direct-sum multiset objectives and constraints, sparse-aware matrix views, paired latent decompositions, CPCA, kernels, and pure plans/artifacts. | `linalg` | Formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
-| `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
+| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa` | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
+| `multivar` | One layered mathematical lifecycle: semantic `core`, mathematical `contract`, declarative `optimization`, executable `solver`, family-indexed `lifecycle`, fitted `capability`, statistical `family.*` verticals, fold-safe `workflow`, and `validation`; includes typed duality diagrams, GLRM, multiblock, paired/canonical/spectral methods, CPCA and kernels. | `linalg` | Flat catch-all APIs, reciprocal family dependencies, formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
+| `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, projection actions, synthesis capabilities, solver guarantees, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
 | `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | `multivar`, `linalg` | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
 | `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, parcel time series, edge spaces, vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `linalg` | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`/`FmriDataset` reads and sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, or spatial feature-set construction. |
@@ -156,14 +164,21 @@ entity parsing.
 | `zarr` | Dependency-free Zarr v3 metadata plus read-only v2 lowering, runtime-rank hierarchy and factored slice/gather geometry, direct/sharded planning, backpressured chunk fragments, primitive codecs, portable bounded async reads, revision-scoped bounded object/range caches, store-independent sync/async create-only writers, content receipts, and atomic JVM publication. | Nothing internal. | Neuroimaging semantics, BIDS identity, S3 credentials, persistent cache/prefetch/retention policy, mutation, v2 writing, or hidden execution policy. |
 | `zarr-codec-blosc-zstd` | Optional typed Zarr v3 Blosc/Zstandard capability, bounded frame validation, JVM JNI executor, and Scala.js embedded-WASM executor. | `zarr`; external platform codec dependencies | Generic Zarr planning, neuroimaging semantics, or an implied guarantee that Scala.js can encode every Blosc `typesize`. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement, measured layout profiles, scientific manifests, content identity, immutable publication, and audit. | `zarr`, `archive` | Dataset selection APIs, NIfTI/BIDS IO, catalogs, or generic Zarr mechanics. |
-| `dataset-zarr` | Ordered dataset-selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`, `bids` | Generic array mechanics, fit kernels, catalog policy, or browser file IO. |
+| `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`, `bids` | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 
 The binding `multivar` migration target is the
 [single-layer typed operator core](plans/multivar-operator-core.md): one directed
 operator representation, `secondOrder` and `compress` as the only second-order
 and component reductions, `FunctionalFrame` as the latent parameter, and named
-methods lowering to one closed `OperatorProgram`. Its production-consumer table
-is the authoritative ownership map until the legacy numeric mirror is removed.
+methods lowering to one closed `OperatorProgram`. Fitted projection/synthesis
+capabilities remain downstream compositions over the frozen frame, while
+family-indexed workflows own data-fitted lifecycle stages. Its
+production-consumer table is the authoritative ownership map.
+The source-level ownership law is the
+[multivar package hierarchy](plans/multivar-package-hierarchy.md): packages
+expose the order from semantic algebra through contracts, programs, solvers,
+lifecycle evidence, family verticals, workflow composition, and validation
+without introducing a second runtime model.
 
 ## Main Vertical Flows
 
@@ -175,11 +190,18 @@ bids -> dataset -> model -> fit
         |          |
       archive    design -> hrf
       latent
+        ^
+        |
+archive-zarr -> dataset-zarr
 ```
 
 `bids` describes files and confounds. `dataset` provides selected data.
 `design`/`hrf` describe regressors. `model` joins those descriptions into an
 inspectable plan. `fit` executes the plan with `linalg` and optionally `ar`.
+LNA composes into `dataset` directly because that module already owns the latent
+archive adapter. NeuroArchive Zarr composes in `dataset-zarr`, the lowest module
+that can see both `dataset` and `archive-zarr`; both paths expose
+`Either[DatasetError, FmriDataset]`, and downstream reads are source-blind.
 `fmri-workflow` sits above this flow and `group`: it carries only persistent
 catalog/result references and immutable recipes, then delegates IO and numeric
 execution to typed interpreters at module boundaries.
@@ -222,6 +244,7 @@ dataset -------------+
 
 dataset -> mvpa-dataset -> mvpa
 image/surface/atlas -> mvpa-spatial -> mvpa
+fit + mvpa -> mvpa-fit
 multivar -> inference
 ```
 
@@ -239,6 +262,9 @@ keeps their durable ideas at different layers.
   `IdentityMorphism`, `Affine3DMorphism`, dense displacement/coordinate fields,
   interpolation plans, `GridSpec`, `SpatialPoint`, `ResamplingPlan`, field
   materialization, and local execution-plan compaction/fusion.
+- `registration` owns optimization-time inverse tracking, midpoint updates,
+  paired flows, acceptance guards, and registration diagnostics over those image
+  kernels.
 - `surface` owns surface-specific geometric data, volume-to-surface morphism
   wrappers, and surface-to-surface vertex-map execution.
 - `atlas` owns named known-space route descriptors such as `SpaceTransforms`;
@@ -286,6 +312,9 @@ descriptors can materialize executable dense morphisms.
 - Put renderer-neutral plotting and scene-description contracts in `graphics`; keep concrete rendering backends and domain-specific plot exporters in adapters above it.
 - Put deterministic SVG string rendering in `graphics-svg`, browser Canvas 2D rendering in `graphics-canvas`, and JVM raster rendering in `graphics-java2d`; keep future backends in separate adapters rather than broadening `graphics`.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
+- Put nonlinear registration state, objectives, deformation geometry, and
+  acceptance policy in `registration`; keep reusable image-field kernels in
+  `image` and reusable linear algebra in Gale.
 - Put mesh and vertex-domain algorithms in `surface`.
 - Put surface display state, layers, anatomical cameras, render-plan compilation,
   projection/network visualization primitives, scene documents, and backend
@@ -325,7 +354,9 @@ descriptors can materialize executable dense morphisms.
   outside this structural core.
 - Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
   adapters for MVPA in `mvpa-spatial`; keep `mvpa` over plain sample-by-feature
-  matrices.
+  matrices and linear operators. Put fit-owned time-to-trial readout composition,
+  run stacking, and trial/run metadata in `mvpa-fit` so neither lower module
+  depends back on the other.
 
 If a change wants a new dependency edge, stop and check whether the code belongs
 in a higher adapter module instead. Lower modules should stay reusable and

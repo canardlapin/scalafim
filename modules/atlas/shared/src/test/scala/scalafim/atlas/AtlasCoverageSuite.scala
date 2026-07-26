@@ -211,19 +211,19 @@ class AtlasCoverageSuite extends munit.FunSuite:
       assertEqualsDouble(values._2, reversed._2, 1e-12)
     }
 
-    val self = a.overlap(a, resample = false)
+    val self = a.overlap(a, AtlasAlignment.Exact)
     assert(self.forall(o => o.region1.id == o.region2.id), clue = self.toString)
     assert(self.forall(o => math.abs(o.dice - 1.0) < 1e-12), clue = self.toString)
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
     val mismatched = atlas(Vector(1, 2), space = NeuroSpace(Vector(2, 1, 1)))
     assertEquals(
-      AtlasOverlap.computeEither(a, mismatched, resample = false),
+      AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact),
       Left(AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)))
     )
     val err =
       intercept[IllegalArgumentException]:
-        AtlasOverlap.compute(a, mismatched, resample = false)
+        AtlasOverlap.compute(a, mismatched, AtlasAlignment.Exact)
     assert(err.getMessage.contains("expected spatial dimensions 2x2x1 but got 2x1x1"), clue = err.getMessage)
 
   test("adjacency connectivity is monotone from faces to corners"):
@@ -272,6 +272,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasError.NoTransformRoute(SpaceId.Custom, SpaceId.MNI152) -> "no transform route found from 'custom' to 'MNI152'",
         AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
         AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
+        AtlasError.ExactGridRequired("expected-grid", "actual-grid") -> "exact atlas grid required; expected expected-grid but got actual-grid",
         AtlasError.InvalidQuery("bad query") -> "bad query",
         AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
         AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"

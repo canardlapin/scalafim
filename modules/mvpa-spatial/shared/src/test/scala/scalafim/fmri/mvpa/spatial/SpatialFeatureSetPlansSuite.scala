@@ -222,7 +222,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         origin = Some(Vector(0.0, 0.0, 0.0))
       )
     val window =
-      ROIVolWindow(
+      ROIVolWindow.unsafe(
         space,
         ROICoords(Vector(Vector(0, 0, 0))),
         NArrayUtil.fromArray(Array(1)),
@@ -233,7 +233,12 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val typedError = SpatialFeatureSetPlans.roiWindows("bad-window", Vector(window)).swap.toOption.get
     val mvpaError = SpatialFeatureSetPlans.fromRoiWindows("bad-window", Vector(window)).swap.toOption.get
 
-    assertEquals(typedError, SpatialPlanError.SearchlightCenterMissing(SearchlightCenter.unsafe(4)))
+    assertEquals(
+      typedError,
+      SpatialPlanError.SearchlightCenterMissing(
+        scalafim.fmri.mvpa.spatial.SearchlightCenter.unsafe(4)
+      )
+    )
     assert(mvpaError.message.contains("center 4"))
   }
 

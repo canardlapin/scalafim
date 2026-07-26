@@ -1,5 +1,12 @@
 package scalafim.multivar
 
+import scalafim.multivar.core.*
+import scalafim.multivar.contract.*
+import scalafim.multivar.optimization.*
+import scalafim.multivar.solver.*
+import scalafim.multivar.lifecycle.*
+import scalafim.multivar.family.glrm.*
+
 import gale.linalg.DMat
 
 class LowRankModelsDifferentialSuite extends munit.FunSuite:

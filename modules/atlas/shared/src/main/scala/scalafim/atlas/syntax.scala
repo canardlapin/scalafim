@@ -55,10 +55,42 @@ object syntax:
     ): ClusteredNeuroVec[Double] =
       AtlasReduce.reduceVec(atlas, data, Some(mask), reducer)
 
-    def overlapEither(other: VolumeAtlas, resample: Boolean = true): Either[AtlasError, Vector[RegionOverlap]] =
+    def overlapEither(other: VolumeAtlas): Either[AtlasError, Vector[RegionOverlap]] =
+      AtlasOverlap.computeEither(atlas, other)
+
+    def overlapEither(
+      other: VolumeAtlas,
+      alignment: AtlasAlignment
+    ): Either[AtlasError, Vector[RegionOverlap]] =
+      AtlasOverlap.computeEither(atlas, other, alignment)
+
+    @deprecated(
+      "Use overlapEither(other, AtlasAlignment); alignment must be explicit.",
+      "0.2.0"
+    )
+    def overlapEither(
+      other: VolumeAtlas,
+      resample: Boolean
+    ): Either[AtlasError, Vector[RegionOverlap]] =
       AtlasOverlap.computeEither(atlas, other, resample)
 
-    def overlap(other: VolumeAtlas, resample: Boolean = true): Vector[RegionOverlap] =
+    def overlap(other: VolumeAtlas): Vector[RegionOverlap] =
+      AtlasOverlap.compute(atlas, other)
+
+    def overlap(
+      other: VolumeAtlas,
+      alignment: AtlasAlignment
+    ): Vector[RegionOverlap] =
+      AtlasOverlap.compute(atlas, other, alignment)
+
+    @deprecated(
+      "Use overlap(other, AtlasAlignment); alignment must be explicit.",
+      "0.2.0"
+    )
+    def overlap(
+      other: VolumeAtlas,
+      resample: Boolean
+    ): Vector[RegionOverlap] =
       AtlasOverlap.compute(atlas, other, resample)
 
     def adjacency(connectivity: VoxelConnectivity = VoxelConnectivity.Connect6): Vector[RegionEdge] =

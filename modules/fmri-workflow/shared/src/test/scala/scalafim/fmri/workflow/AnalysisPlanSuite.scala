@@ -151,7 +151,10 @@ class AnalysisPlanSuite extends FunSuite:
     val recipe = DatasetRecipe.unsafe(
       datasetId = datasetId,
       project = WorkflowArtifactRef.unsafe[BidsProjectResource]("file:///bids"),
-      boldQuery = BidsQuery(filename = Vector(".*bold\\.nii(\\.gz)?$"), scope = BidsScope.Derivatives)
+      boldQuery = BidsQuery.from(
+        filename = Vector(".*bold\\.nii(\\.gz)?$"),
+        scope = BidsScope.Derivatives
+      ).toOption.get
     )
     StudyAnalysisSpec.make(
       id = WorkflowId.unsafe("study"),

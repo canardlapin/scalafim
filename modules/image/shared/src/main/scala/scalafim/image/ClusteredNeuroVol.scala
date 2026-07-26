@@ -11,6 +11,17 @@ final case class ClusteredNeuroVol(
   val space: NeuroSpace = mask.space
   private val activeIdx: NArray[Int] = Mask.indices(mask)
   require(clusters.length == activeIdx.length, "clusters length must equal mask cardinality")
+  private val firstInvalidClusterId =
+    var invalid = Option.empty[Int]
+    var i = 0
+    while i < clusters.length && invalid.isEmpty do
+      if clusters(i) <= 0 then invalid = Some(clusters(i))
+      i += 1
+    invalid
+  require(
+    firstInvalidClusterId.isEmpty,
+    firstInvalidClusterId.map(value => ClusterIdError.NonPositive(value).message).getOrElse("")
+  )
 
   private val ids: Vector[Int] =
     Vector.tabulate(clusters.length)(i => clusters(i)).distinct.sorted
@@ -33,6 +44,12 @@ final case class ClusteredNeuroVol(
 
   def clusterIds: Vector[Int] = ids
 
+  def typedClusterIds: Vector[ClusterId] =
+    ids.map(ClusterId.unsafe)
+
+  def indices(id: ClusterId): NArray[Int] =
+    clusterMap(id.value)
+
   def numClusters: Int = ids.length
 
   def toDense: NeuroVol[Int] =
@@ -53,7 +70,15 @@ final case class ClusteredNeuroVol(
 
   /** Cluster centroids (center-of-mass) in grid coordinates by default. */
   def centroids(real: Boolean = false): Vector[Vector[Double]] =
-    centroids(ClusteredNeuroVol.CentroidType.CenterOfMass, real, eps = 1e-6, maxIter = 500)
+    centroids(
+      ClusteredNeuroVol.CentroidType.CenterOfMass,
+      if real then SpatialCoordinateFrame.World else SpatialCoordinateFrame.Grid,
+      eps = 1e-6,
+      maxIter = 500
+    )
+
+  def centroids(frame: SpatialCoordinateFrame): Vector[Vector[Double]] =
+    centroids(ClusteredNeuroVol.CentroidType.CenterOfMass, frame, eps = 1e-6, maxIter = 500)
 
   /** Cluster centroids.
     *
@@ -61,11 +86,24 @@ final case class ClusteredNeuroVol(
     * (Weiszfeld) of cluster coordinates.
     */
   def centroids(centroidType: ClusteredNeuroVol.CentroidType): Vector[Vector[Double]] =
-    centroids(centroidType, real = false, eps = 1e-6, maxIter = 500)
+    centroids(centroidType, SpatialCoordinateFrame.Grid, eps = 1e-6, maxIter = 500)
 
   def centroids(
     centroidType: ClusteredNeuroVol.CentroidType,
     real: Boolean,
+    eps: Double,
+    maxIter: Int
+  ): Vector[Vector[Double]] =
+    centroids(
+      centroidType,
+      if real then SpatialCoordinateFrame.World else SpatialCoordinateFrame.Grid,
+      eps,
+      maxIter
+    )
+
+  def centroids(
+    centroidType: ClusteredNeuroVol.CentroidType,
+    frame: SpatialCoordinateFrame,
     eps: Double,
     maxIter: Int
   ): Vector[Vector[Double]] =
@@ -80,7 +118,7 @@ final case class ClusteredNeuroVol(
           var i = 0
           while i < idx.length do
             val g = Indexing.indexToGrid3D(space.spatialDims, idx(i))
-            if real then
+            if frame == SpatialCoordinateFrame.World then
               val r = space.indexToCoord(g.map(_.toDouble))
               sx += r(0); sy += r(1); sz += r(2)
             else
@@ -96,14 +134,14 @@ final case class ClusteredNeuroVol(
           val m = idx.length
           if m == 1 then
             val g = Indexing.indexToGrid3D(space.spatialDims, idx(0))
-            if real then space.indexToCoord(g.map(_.toDouble)) else g.map(_.toDouble)
+            if frame == SpatialCoordinateFrame.World then space.indexToCoord(g.map(_.toDouble)) else g.map(_.toDouble)
           else
             val pts = Array.ofDim[Double](m, 3)
             var i = 0
             while i < m do
               val g = Indexing.indexToGrid3D(space.spatialDims, idx(i))
               val v =
-                if real then space.indexToCoord(g.map(_.toDouble))
+                if frame == SpatialCoordinateFrame.World then space.indexToCoord(g.map(_.toDouble))
                 else Vector(g(0).toDouble, g(1).toDouble, g(2).toDouble)
               pts(i)(0) = v(0); pts(i)(1) = v(1); pts(i)(2) = v(2)
               i += 1

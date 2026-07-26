@@ -99,7 +99,7 @@ object GlasserLoader:
       )
     )
 
-  def parseLabels(text: String): Vector[Region] =
+  def parseLabels(text: String): Vector[AtlasRegionMetadata] =
     text.linesIterator
       .map(_.trim)
       .filter(line => line.nonEmpty && !line.startsWith("#"))

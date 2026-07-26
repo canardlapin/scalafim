@@ -66,6 +66,7 @@ object ImageSpace:
 enum NeuroImageError:
   case InvalidRank(label: String, expected: Int, actual: Int)
   case ShapeMismatch(label: String, expected: Vector[Int], actual: Vector[Int])
+  case LinearSizeMismatch(label: String, expected: Int, actual: Int)
   case Space(error: NeuroSpaceError)
 
   def message: String =
@@ -74,13 +75,15 @@ enum NeuroImageError:
         s"$label requires $expected-dimensional data; got $actual-dimensional data"
       case ShapeMismatch(label, expected, actual) =>
         s"$label data shape mismatch: expected $expected, got $actual"
+      case LinearSizeMismatch(label, expected, actual) =>
+        s"$label linear data length mismatch: expected $expected, got $actual"
       case Space(error) =>
         error.message
 
-final case class NeuroImage[A, D <: ImageDim] private[image] (
-  values: NDArray[A],
-  space: NeuroSpace,
-  label: String = ""
+final class NeuroImage[A, D <: ImageDim] private[image] (
+  val values: NDArray[A],
+  val space: NeuroSpace,
+  val label: String = ""
 ):
   require(values.shape == space.dims.take(values.ndim), "data/space dimension mismatch")
 
@@ -139,7 +142,7 @@ object NeuroImage:
         else Left(NeuroImageError.ShapeMismatch(dim.label, expected, values.shape))
       }
 
-  def fromLinear[A, D <: ImageDim](
+  private[scalafim] def fromLinear[A, D <: ImageDim](
     data: NArray[A],
     space: NeuroSpace,
     label: String = ""

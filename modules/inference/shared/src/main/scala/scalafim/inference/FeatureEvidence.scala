@@ -1,7 +1,8 @@
 package scalafim.inference
 
+import scalafim.multivar.core.SpaceId
+
 import gale.linalg.DVec
-import scalafim.multivar.SpaceId
 
 enum MultiplicityMethod:
   case Bonferroni

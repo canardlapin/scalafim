@@ -1,0 +1,86 @@
+{
+  "schema": "scalafim-half-flow-cc-g5-next-steps-v1",
+  "status": "diagnostic-not-decision",
+  "capturedAtUtc": "2026-07-22T19:14:06Z",
+  "repository": {
+    "head": "149686d63452821d46845ea9b800ff4b2109d909",
+    "sourceSha256": {
+      "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcEngine.scala": "237776e68bd4dcc0c12663f857eb074256a343fb5fb81cf02bcdd0356ba77b5e",
+      "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowCcEngineSuite.scala": "fe4c55909a6da7c84d2295e206ad367f34b057eaa60578b740b3d105ea15fdf4",
+      "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala": "9c0cc337ecf7016772b5a961de3c1036e5da0628b17374c26a45b42910d43f56",
+      "modules/registration/shared/src/test/scala/scalafim/registration/ForwardMidpointSuite.scala": "a9c6c57996932fe4e1fd40aa2dbb032ae3d429ece8144bf0b8acf830176aea0e",
+      "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowCcAblationCli.scala": "fd7a0a14a01c08705b06ef708fbfbf47999339382d1564880441aa4f9b1f5ab3"
+    }
+  },
+  "case": {
+    "id": "sub18",
+    "role": "single-pair mechanism probe only"
+  },
+  "retained": {
+    "schedule": "budget2x remains a multi-pair candidate only",
+    "regriddedTopologyGate": {
+      "status": "retained",
+      "contract": "every regridded starting state must satisfy the accumulated Jacobian policy before level refinement",
+      "typedFailure": "RegriddedTopologyInvalid",
+      "regressionOnJvmAndScalaJs": true
+    }
+  },
+  "rejected": {
+    "acceptedStepPlateau": {
+      "status": "rejected-and-removed",
+      "reason": "the 24/20/16 profile consumed every accepted-step cap and never triggered the plateau rule",
+      "accepted": 60,
+      "attempted": 60,
+      "dice": 0.9215103268144157,
+      "budget2xDice": 0.9211240876530815,
+      "exportP99Mm": 0.25711867374081837,
+      "budget2xExportP99Mm": 0.1514784619392753,
+      "artifact": {
+        "summary": "/tmp/halfflow-adaptive-sub18-G5b/summary.tsv",
+        "summarySha256": "4f30ce347e686446380a889264b97b00b006cf64508c2db7b357404eaa6cf220",
+        "attempts": "/tmp/halfflow-adaptive-sub18-G5b/attempts.tsv",
+        "attemptsSha256": "ced55775eabecfe2b228e6f01ec3487de481cf099e159dbe56103481ad6d44fa"
+      }
+    },
+    "boundaryTaper": {
+      "status": "rejected-and-removed",
+      "reason": "the matched export-only taper worsened inverse error and slightly changed evaluation metrics",
+      "accepted": 48,
+      "attempted": 48,
+      "dice": 0.9209338959688842,
+      "budget2xDice": 0.9211240876530815,
+      "exportP99Mm": 0.1622677309122041,
+      "budget2xExportP99Mm": 0.1514784619392753,
+      "exportMaximumMm": 1.3399715424724774,
+      "budget2xExportMaximumMm": 1.3284491670387397,
+      "attemptTraceMatchesBudget2x": true,
+      "artifact": {
+        "summary": "/tmp/halfflow-budget2x-taper-sub18-G5b/summary.tsv",
+        "summarySha256": "e8ae559802ddfdf1aab81e682faa0b7031fd772e950b87bb8fc4f22a22ec85ae",
+        "attempts": "/tmp/halfflow-budget2x-taper-sub18-G5b/attempts.tsv",
+        "attemptsSha256": "2ed1d01a0af12b96b6cb00fc09918a400487032195a26dd0e00af308b17a1b47"
+      }
+    },
+    "localBlockCcProposal": {
+      "status": "rejected-and-removed",
+      "reason": "it found the exact 12 mm synthetic correspondence in all 64 blocks, but an aggressive application violated the Jacobian floor; no unverified proposal code remains"
+    }
+  },
+  "verification": {
+    "command": "sbt 'registrationJVM/test' 'registrationJS/test'",
+    "jvm": {
+      "passed": 72,
+      "failed": 0
+    },
+    "scalaJs": {
+      "passed": 72,
+      "failed": 0
+    },
+    "warnings": 0
+  },
+  "remainingGate": {
+    "requiredLabeledDevelopmentPairs": 5,
+    "dataStatus": "blocked: LPBA40 is absent locally and requires manual LONI license acceptance",
+    "decision": "do not promote budget2x or claim ANTs parity from sub18"
+  }
+}

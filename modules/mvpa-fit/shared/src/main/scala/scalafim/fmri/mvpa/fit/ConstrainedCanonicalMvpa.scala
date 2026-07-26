@@ -1,5 +1,8 @@
 package scalafim.fmri.mvpa.fit
 
+import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import scalafim.multivar.family.canonical.{CanonicalFrameConstraint, ConstrainedCanonicalFit, ConstrainedCanonicalProblem, ConstrainedCanonicalSolverSpec, ResidualRegularization}
+
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.RunIndex
 import scalafim.fmri.mvpa.{
@@ -11,16 +14,6 @@ import scalafim.fmri.mvpa.{
   MvpaResult,
   MvpaStreamControl,
   RoiOutcome
-}
-import scalafim.multivar.{
-  CanonicalFrameConstraint,
-  ConstrainedCanonicalFit,
-  ConstrainedCanonicalProblem,
-  ConstrainedCanonicalSolverSpec,
-  ResidualRegularization,
-  SemanticSpace,
-  SpaceRef,
-  SpaceRole
 }
 
 enum ConstrainedCanonicalSelection:

@@ -1,9 +1,10 @@
 package scalafim.inference
 
+import scalafim.multivar.core.MvSpace
+import scalafim.multivar.optimization.OperatorSnapshot
+
 import gale.linalg.DMat
 import gale.linalg.DVec
-import scalafim.multivar.MvSpace
-import scalafim.multivar.OperatorSnapshot
 
 enum OrderedSpectrumKind:
   case Eigenvalues
@@ -34,7 +35,7 @@ object OrderedSpectrum:
       error.toLeft(OrderedSpectrum(kind, InferenceNumerics.vectorFromSeq(Vector.tabulate(source.length)(source(_)))))
 
 final case class DomainBundle private (entries: Vector[MvSpace]):
-  def find(id: scalafim.multivar.SpaceId): Option[MvSpace] =
+  def find(id: scalafim.multivar.core.SpaceId): Option[MvSpace] =
     entries.find(_.id == id)
 
 object DomainBundle:
@@ -53,7 +54,7 @@ trait OrderedFit[F]:
   def domains(fit: F): Either[InferenceError, DomainBundle]
   def coordinates(
       fit: F,
-      domain: scalafim.multivar.SpaceId
+      domain: scalafim.multivar.core.SpaceId
   ): Either[InferenceError, OperatorSnapshot]
 
 trait InferenceTarget[F, A]:
@@ -70,10 +71,10 @@ trait Deflatable[D, F]:
 trait StabilityView[F]:
   def loadings(
       fit: F,
-      domain: scalafim.multivar.SpaceId
+      domain: scalafim.multivar.core.SpaceId
   ): Either[InferenceError, DMat]
 
   def scores(
       fit: F,
-      domain: scalafim.multivar.SpaceId
+      domain: scalafim.multivar.core.SpaceId
   ): Either[InferenceError, DMat]
