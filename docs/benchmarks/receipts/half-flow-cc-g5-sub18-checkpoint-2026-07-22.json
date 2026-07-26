@@ -1,0 +1,165 @@
+{
+  "schema": "scalafim-half-flow-cc-g5-checkpoint-v1",
+  "capturedAtUtc": "2026-07-22T16:37:24Z",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5177SNQYXPK746CQXYT3WV",
+  "status": "diagnostic-not-decision",
+  "repository": {
+    "head": "b341c388353df4d947d757b4903c37484caf044d",
+    "workingTreePolicy": "dirty shared checkout; only reserved HalfFlow-CC paths were edited",
+    "sourceSha256": {
+      "modules/image/jvm/src/main/scala/scalafim/image/io/ItkAffine.scala": "1560ac3318e0648369daeabf0e6face2a571fcdb0d47571fb569e2c088232d13",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/ItkAffineSuite.scala": "6fce7d7985158c43415eef48b52d33824fe90ee6eeb3fa576f7e79a033c20cd9",
+      "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala": "f0943517997360883c1fe81ac9777dc5b35bec74e02ecf7aa224ffdebe765a8e",
+      "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcEngine.scala": "f5ae8221d3dded581ae176d7895d730cda7fdb844fedd70eab472f209aaf4b03",
+      "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowCcAblationCli.scala": "314677a75ab7221fac4a37490c83dfbbd376422b853459b7c17a615302a24741",
+      "modules/registration/shared/src/test/scala/scalafim/registration/ForwardMidpointSuite.scala": "d2b5722985a9637c2c4d6cbbe2a9303c3db95128412746cb6064f7c44fb82ba0"
+    }
+  },
+  "inputs": {
+    "fixedImage": {
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/fixed.nii.gz",
+      "sha256": "7b168153a9508f5f116ac37d33835fa44dd168ba7a9ae31a3b33e6f63bd23292"
+    },
+    "movingImage": {
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/moving.nii.gz",
+      "sha256": "917dd8c4c6cf6fcc96c445fa0e17f88dfad469853e5bc3509bf17b81fb440d06"
+    },
+    "fixedOptimizationMask": {
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/fixed_mask.nii.gz",
+      "sha256": "745c970d2b45eb5088446528399b6965c2ce912d37ca7cacb993513a302d5161"
+    },
+    "movingEvaluationOnlyMask": {
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/moving_mask.nii.gz",
+      "sha256": "64e089065293eabd54244ea73862f97aa59466b7dd054948bfb5c330abc0f0e3"
+    },
+    "suppliedAffine": {
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/synquick_0GenericAffine.mat",
+      "sha256": "7617dd46a0fe9f5a52e44147622cc9e16b67586422b8e2d14fe93822f24b0d4d"
+    }
+  },
+  "affineAdmission": {
+    "format": "ITK AffineTransform_double_3_3 in little-endian MATLAB v4",
+    "readerParity": {
+      "oracle": "hodgeflow .hf_read_itk_affine_mat_v4",
+      "maximumMatrixAbsDifference": 0.0,
+      "unit": "millimetres"
+    },
+    "antsApplyTransformsLinearImageOracle": {
+      "storedRasAsPullback": {
+        "samples": 934737,
+        "rmsError": 2.3575122049012367e-8,
+        "maximumError": 4.4805774312983715e-8
+      },
+      "inverseRasNegativeControl": {
+        "samples": 645046,
+        "rmsError": 0.21449294606355587,
+        "maximumError": 0.6668183968009486
+      },
+      "conclusion": "The stored LPS matrix converted by C*M*C is the ANTs fixed-grid-to-moving-image pullback; it must not be inverted for AffineInitializer.supplied."
+    },
+    "conversionStatus": "image-and-landmark-verified"
+  },
+  "laneA": {
+    "algorithm": "true squared neighborhood CC radius 2 + pointwise rank-one + midpoint + whole-grid normalized Gaussian + separated controls",
+    "schedule": [
+      {"shrink": 4, "acceptedSteps": 10, "smoothSigmaMm": 14.0, "maximumStepMm": 1.5},
+      {"shrink": 2, "acceptedSteps": 8, "smoothSigmaMm": 10.0, "maximumStepMm": 1.0},
+      {"shrink": 1, "acceptedSteps": 6, "smoothSigmaMm": 6.0, "maximumStepMm": 0.6}
+    ],
+    "controller": {
+      "accepted": 24,
+      "attempted": 24,
+      "objectiveRejections": 0,
+      "geometryRejections": 0,
+      "integrationRejections": 0
+    },
+    "objectiveByLevel": [
+      {"shrink": 4, "initial": 0.7365507487092817, "final": 0.6307989718098961},
+      {"shrink": 2, "initial": 0.7905839592358669, "final": 0.7537394822174207},
+      {"shrink": 1, "initial": 0.8455871247570028, "final": 0.8353507623993621}
+    ],
+    "commonRScoring": {
+      "affine": {
+        "dice": 0.8989603,
+        "globalNcc": 0.8535095,
+        "maskedNcc": 0.3483920
+      },
+      "diagnosticCandidate": {
+        "dice": 0.9102005,
+        "globalNcc": 0.8717923,
+        "maskedNcc": 0.4195890
+      }
+    },
+    "authoritativeStateTopology": {
+      "fixedArmMinimumJacobian": 0.47912333579949046,
+      "movingArmMinimumJacobian": 0.5310470250502617,
+      "nonPositive": 0
+    },
+    "export": {
+      "status": "typed-failure",
+      "reason": "fixed residual inverse exceeded the configured 0.2 mm and 0.2 voxel interior maxima",
+      "maximumP99Mm": 0.06138661287895832,
+      "maximumMm": 0.5888752885841915,
+      "candidateUse": "evaluation-only diagnostic; not an admitted registration result"
+    },
+    "timingSeconds": {
+      "read": 5.78906625,
+      "optimization": 10.336753,
+      "exportInspectionAndAdmission": 18.470956459,
+      "endToEnd": 35.69554475,
+      "runtimeClass": "native macOS JVM"
+    },
+    "artifacts": {
+      "summary": {
+        "path": "/tmp/halfflow-g5-a-sub18-diagnostic.KKS5FG/summary.tsv",
+        "sha256": "c3279ce7fe5d01e84a123622b2f51dce131465ff58d4b555e1260c5f59b5ced1"
+      },
+      "attemptTrace": {
+        "path": "/tmp/halfflow-g5-a-sub18-diagnostic.KKS5FG/attempts.tsv",
+        "sha256": "a5c591963a04bce25aaca8258dd79641706ae00c2f2aaae61b828b4ea729d28b"
+      },
+      "diagnosticWarpedImageSha256": "771f571286417021952da9ee85c93d8a21ae26a6d25320f793750730f58a4441",
+      "diagnosticWarpedMaskSha256": "f7f7328dfcc0fc4d8abf985cdff02a1b4c90afe893908b5a35e59d81facddf6b"
+    }
+  },
+  "antsSameAffineComparator": {
+    "profile": "SyN[0.2,3,0], CC radius 2, 8x4x2x1, 100x70x50x0, fixed mask",
+    "affineEstimationDisabled": true,
+    "emittedAffineSha256": "7617dd46a0fe9f5a52e44147622cc9e16b67586422b8e2d14fe93822f24b0d4d",
+    "metrics": {
+      "dice": 0.9793590,
+      "globalNcc": 0.9457096,
+      "maskedNcc": 0.6722981
+    },
+    "registrationElapsedSeconds": 47.6425,
+    "runtimeClass": "linux/amd64 Docker image under Apple-Silicon emulation; one ITK thread",
+    "docker": {
+      "image": "antsx/ants:latest",
+      "imageId": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+      "digest": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+      "version": "2.6.5.dev1-gfdce4d2",
+      "platform": "linux/amd64"
+    },
+    "warpedImageSha256": "0e1341fb93c5ee87a5e5200f1b0e2c9dc31127ffd0ce6e484c6a48f186c2425d",
+    "warpedMaskSha256": "08a10d9192239547671d519dab121ded90447f11928ebbe7264892a1cf1c2140"
+  },
+  "findings": [
+    "The supplied-affine direction is now verified rather than assumed.",
+    "Lane A improves all three sub18 similarity/anatomy diagnostics, but remains far below same-affine ANTs SyN on this one pair.",
+    "All lane-A proposals were accepted and the authoritative midpoint arms remain fold-free, so the prior inverse-gate freeze is absent.",
+    "The sampled export inverse remains the current admission failure; candidate scoring is separated from admission instead of weakening the gate.",
+    "The two-sided inverse correction reduces the worst p99 error, but export cost currently exceeds optimization cost and requires later profiling or a better numerical cache."
+  ],
+  "prohibitedClaims": [
+    "This single plumbing pair does not select or reject the architecture.",
+    "Docker-emulated ANTs time is not a native-hardware speed comparison.",
+    "The diagnostic candidate is not an admitted transform.",
+    "No ANTs parity claim is supported."
+  ],
+  "remainingGate": {
+    "requiredLanes": ["A", "B", "C", "D", "E"],
+    "requiredLabeledDevelopmentPairs": 5,
+    "dataDependency": "An extracted licensed LPBA40 root is not present locally; LONI license acceptance must be performed manually by the user."
+  }
+}

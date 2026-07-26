@@ -1,0 +1,138 @@
+{
+  "schema": "scalafim-half-flow-cc-g5-matrix-checkpoint-v1",
+  "capturedAtUtc": "2026-07-22T17:15:00Z",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5177SNQYXPK746CQXYT3WV",
+  "status": "diagnostic-not-decision",
+  "repository": {
+    "head": "b341c388353df4d947d757b4903c37484caf044d",
+    "sourceSha256": {
+      "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcEngine.scala": "8b6e5c3829d25ea8f887f290da7bf094cb4ace0a9f7c6d9e8b54b454e113cae8",
+      "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowCcEngineSuite.scala": "b785d4590a74fd377e3e310cb35056a4602c7246ad37654bd92f050a9af1a64e",
+      "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowCcAblationCli.scala": "5bf6c784e17c1c74f15f9d9f1d1225593b78af17e02922cecc433db0aad28acd",
+      "tools/registration/run_halfflow_cc_g5.py": "4d0225be592d7238b8e9efded275fd5e1376aabd6189f9a43738894f9d363767"
+    }
+  },
+  "inputContract": {
+    "case": "sub18 plumbing pair",
+    "nativeFixedAndMovingPyramids": true,
+    "movingMaskUse": "evaluation-only",
+    "suppliedAffineSha256": "7617dd46a0fe9f5a52e44147622cc9e16b67586422b8e2d14fe93822f24b0d4d",
+    "affineDirection": "stored ITK LPS converted to RAS and used as fixed-grid-to-moving pullback",
+    "commonRScorer": "hodgeflow inst/benchmarks/benchmark_common.R",
+    "labeledDevelopmentPair": false
+  },
+  "matchedHalfFlowSchedule": [
+    {"shrink": 4, "acceptedSteps": 10, "smoothSigmaMm": 14.0, "maximumStepMm": 1.5},
+    {"shrink": 2, "acceptedSteps": 8, "smoothSigmaMm": 10.0, "maximumStepMm": 1.0},
+    {"shrink": 1, "acceptedSteps": 6, "smoothSigmaMm": 6.0, "maximumStepMm": 0.6}
+  ],
+  "lanes": {
+    "A": {
+      "definition": "true neighborhood CC radius 2 + rank-one + midpoint + separated controllers",
+      "accepted": 24,
+      "attempted": 24,
+      "commonR": {"dice": 0.9102005, "globalNcc": 0.8717923, "maskedNcc": 0.4195890},
+      "minimumArmJacobian": 0.47912333579949046,
+      "nonPositive": 0,
+      "export": {"status": "typed-failure", "p99Mm": 0.06138661287895832, "maximumMm": 0.5888752885841915},
+      "optimizationSeconds": 15.122550667,
+      "artifact": {
+        "summary": "/tmp/halfflow-g5-a-current-sub18.avMqZU/summary.tsv",
+        "summarySha256": "f558c03fa64b8d92c03eb8f11115bedfc7229713c3730d0ac7bbfc9d32f81b0a",
+        "attemptsSha256": "2779ca0f5b156f2b8200517aa7007f848dfc88156fcaca6aa5532069d838a9f5"
+      }
+    },
+    "B": {
+      "definition": "lane A plus the legacy inverse-tracked accumulated hard gate",
+      "accepted": 9,
+      "attempted": 33,
+      "legacyInverseRejections": 24,
+      "legacyUnsafeAccepted": 0,
+      "commonR": {"dice": 0.8996874, "globalNcc": 0.8547500, "maskedNcc": 0.3533901},
+      "minimumArmJacobian": 0.9236738057147255,
+      "nonPositive": 0,
+      "export": {"status": "verified", "p99Mm": 0.0008087281252273938, "maximumMm": 0.04638547401643744},
+      "artifact": {
+        "summary": "/tmp/halfflow-g5-b-sub18.F5LLKX/summary.tsv",
+        "summarySha256": "23b8e0adf550f2f552b25f037efeb51808e4c37128a93b393cfde9de76fec363",
+        "attemptsSha256": "6327e7c5bea8dd76d00c7e1b65777ce857edb478999fb36f0e120d8194fb6202"
+      }
+    },
+    "C": {
+      "definition": "true neighborhood CC radius 2 + rank-one + fixed-anchor one-direction action",
+      "accepted": 24,
+      "attempted": 24,
+      "commonR": {"dice": 0.9070692, "globalNcc": 0.8702657, "maskedNcc": 0.4306206},
+      "minimumArmJacobian": 0.19821701588598015,
+      "nonPositive": 0,
+      "export": {"status": "typed-failure", "p99Mm": 0.10161792066122297, "maximumMm": 1.6822995842338542},
+      "artifact": {
+        "summary": "/tmp/halfflow-g5-c-sub18.DFilTe/summary.tsv",
+        "summarySha256": "e3d91a625a6fbe9f0d6f02f140816650c6e7dac21cc48e69d398ac550b165417",
+        "attemptsSha256": "cb5d3aa4649ed25fba6c57e634d897fd12bd836a4db1feeefe1183d5c2854ce2"
+      }
+    },
+    "D": {
+      "definition": "one-window standardized-center surrogate + rank-one + midpoint + separated controllers",
+      "accepted": 19,
+      "attempted": 49,
+      "candidateInvalidations": 30,
+      "commonR": {"dice": 0.8991647, "globalNcc": 0.8537767, "maskedNcc": 0.3491756},
+      "minimumArmJacobian": 0.993017089037108,
+      "nonPositive": 0,
+      "export": {"status": "verified", "p99Mm": 0.00003428118419409888, "maximumMm": 0.0003253721661030081},
+      "artifact": {
+        "summary": "/tmp/halfflow-g5-d-sub18.h6D71X/summary.tsv",
+        "summarySha256": "04d985008f36787376e30de04bb8d4a95b0f8508241cc16fc3e88680f8278c0b",
+        "attemptsSha256": "652fc8b178c6579c78e9d987735f3972f481dd98a91203892563bc598244ffb1"
+      }
+    },
+    "E": {
+      "definition": "frozen multi-window standardized-feature + pointwise 3x3 HalfFlow-LM with supplied affine",
+      "status": "typed-failure-before-nonlinear-optimization",
+      "failure": "regridded relative midpoint inverse error exceeded the frozen voxel limit",
+      "artifact": {
+        "summary": "/tmp/halfflow-g5-e-sub18.hlR6cx/summary.tsv",
+        "summarySha256": "f488c0a89a50739a8611a95e672a26ac75dea21eb9f81b83a6f1eea32adbd042"
+      }
+    }
+  },
+  "sameAffineAntsReference": {
+    "dice": 0.9793590,
+    "globalNcc": 0.9457096,
+    "maskedNcc": 0.6722981,
+    "affineEstimationDisabled": true,
+    "runtimeClass": "linux/amd64 Docker under Apple-Silicon emulation; not a native speed comparator"
+  },
+  "tests": {
+    "registrationJVM": {"passed": 70, "failed": 0},
+    "registrationJS": {"passed": 70, "failed": 0},
+    "contracts": [
+      "true-CC end-to-end directional derivatives",
+      "fixed-anchor action and relative translation",
+      "legacy inverse rejection is explicit and never accepted",
+      "standardized-center frozen-support invalidation leaves state unchanged",
+      "2/4/8/12 mm synthetic capture reporting"
+    ]
+  },
+  "provisionalInterpretation": [
+    "A versus B localizes the previous freeze to the sampled accumulated-inverse hard gate.",
+    "A versus C does not show a fundamental midpoint failure on this pair: midpoint has better Dice and global NCC, while fixed-anchor has better masked NCC.",
+    "A versus D localizes most of the current metric gap to standardized-center objective/support behavior; every D rejection was a candidate-support invalidation.",
+    "E cannot be fairly scored because its frozen inverse gate rejects the supplied-affine midpoint before nonlinear optimization.",
+    "A improves the affine result but remains materially below same-affine ANTs and its exported inverse is not admitted."
+  ],
+  "prohibitedClaims": [
+    "This unlabeled one-pair checkpoint does not select the final architecture.",
+    "The lane-A diagnostic candidate is not an admitted transform.",
+    "Docker-emulated ANTs timing is not comparable with native ScalaFIM timing.",
+    "No statistical ANTs parity claim is supported."
+  ],
+  "remainingGate": {
+    "requiredLabeledDevelopmentPairs": 5,
+    "protocol": "LPBA40 S02-S06 to S01 with held-out structure labels",
+    "blocker": "licensed LPBA40 data are not present locally and require manual LONI acceptance",
+    "decisionAfterData": "select, reject, or narrow HalfFlow-CC using internal-label Dice/surface metrics, topology, export admission, and runtime"
+  }
+}

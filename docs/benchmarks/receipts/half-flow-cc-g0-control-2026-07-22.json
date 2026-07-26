@@ -1,0 +1,299 @@
+{
+  "schema": "scalafim-half-flow-cc-g0-freeze-v1",
+  "capturedAtUtc": "2026-07-22T14:04:46Z",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY517059SYQ3429D6G4WSNH5",
+  "repository": {
+    "headAtFreeze": "b341c388353df4d947d757b4903c37484caf044d",
+    "historicalCaptureHead": "e794a4fff993963a73b13845b191c866119f78de",
+    "workingTreePolicy": "The shared checkout is dirty. Frozen source, input, affine, comparator, and receipt hashes define the control; global git status does not.",
+    "toolchain": {
+      "scala": "3.4.2",
+      "sbt": "1.10.5",
+      "galeRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a"
+    }
+  },
+  "protocolArtifacts": {
+    "docs/plans/half-flow-cc-experiment.md": "8f4da7530ec810ebfa1f9b18531c276845fa0f168a4057ae7d49d59dbcc74220",
+    "docs/benchmarks/schemas/half-flow-cc-result-v1.schema.json": "5b3b5bf8d7ca677960e435b5595a53f8db683493d8e8d66897926f43a8aaab49",
+    "tools/registration/validate_halfflow_cc_protocol.py": "ca42c29d8573cb1538f1f5eaeed72bd66265f3fc4013c89c2b931e3dbe31b2a4"
+  },
+  "historicalControl": {
+    "id": "E0-exact-affine-half-flow-lm-sub18",
+    "role": "historical-regression-only",
+    "algorithm": "exact affine plus inverse-tracked residual midpoint arms; multi-window standardized-center features; multi-channel pointwise 3x3 LM; masked Helmholtz power 2; paired scaling-and-squaring; trust gain; accumulated Jacobian and inverse hard gate",
+    "comparability": "E0 estimated its own robust affine and pre-resampled moving onto the fixed lattice. It is not an A-E same-affine observation.",
+    "receipt": {
+      "path": "docs/benchmarks/receipts/half-flow-factored-affine-p7-2026-07-22.json",
+      "sha256": "5f65abb4eee89838ba099316f51472d2fb5797bf5fe17ac1ae974812c0ef3213"
+    },
+    "configuration": {
+      "affine": {
+        "coarseShrink": 4,
+        "fineShrink": 1,
+        "smoothingSigmaMm": 2.0,
+        "maximumSamplesPerImage": 16000,
+        "rigidSweepsPerLevel": 6,
+        "affineSweepsPerLevel": 5,
+        "randomSeed": null,
+        "randomness": "deterministic sampling; no RNG seed exposed"
+      },
+      "levels": [
+        {
+          "shrink": 4,
+          "pyramidSigmaMm": 4.0,
+          "featureRadiiMm": [8.0, 16.0, 24.0],
+          "smoothLengthMm": 2.5,
+          "maximumDisplacementMm": 3.0,
+          "acceptedSteps": 10,
+          "maximumAttempts": 30
+        },
+        {
+          "shrink": 2,
+          "pyramidSigmaMm": 2.0,
+          "featureRadiiMm": [5.0, 10.0, 15.0],
+          "smoothLengthMm": 1.5,
+          "maximumDisplacementMm": 2.0,
+          "acceptedSteps": 8,
+          "maximumAttempts": 24
+        },
+        {
+          "shrink": 1,
+          "pyramidSigmaMm": 0.0,
+          "featureRadiiMm": [3.0, 6.0, 9.0],
+          "smoothLengthMm": 0.8,
+          "maximumDisplacementMm": 1.0,
+          "acceptedSteps": 6,
+          "maximumAttempts": 18
+        }
+      ],
+      "features": {
+        "minimumValidWindowFraction": 0.6,
+        "minimumActiveVoxels": 64
+      },
+      "localLm": {
+        "variant": "MultiChannel",
+        "initialDamping": 0.01,
+        "minimumActiveVoxels": 64
+      },
+      "sobolev": {
+        "power": 2,
+        "relativeTolerance": 1e-6,
+        "maximumIterations": 80,
+        "maximumStrain": 0.25
+      },
+      "flow": {
+        "maximumInitialDisplacementMm": 0.4,
+        "maximumInitialGradient": 0.2
+      },
+      "guard": {
+        "minimumJacobian": 0.05,
+        "maximumInverseErrorMm": 0.5,
+        "maximumInverseErrorVox": 0.25,
+        "minimumValidFraction": 0.8,
+        "minimumInverseValidFraction": 0.6
+      },
+      "minimumUsefulVelocityMm": 1e-5
+    },
+    "result": {
+      "acceptedSteps": 24,
+      "attemptedSteps": 58,
+      "dice": 0.9325895815487062,
+      "globalNcc": 0.917762805523913,
+      "localNcc": 0.545255834371,
+      "gradientNcc": 0.280815878732,
+      "nonlinearRmsMm": 0.6976492454352033,
+      "forwardMinimumJacobian": 0.40163936561562125,
+      "backwardMinimumJacobian": 0.7437867837594618,
+      "forwardNonPositiveJacobians": 0,
+      "backwardNonPositiveJacobians": 0,
+      "forwardInverseMaximumMm": 0.40424501955873465,
+      "backwardInverseMaximumMm": 0.3678922861892307,
+      "nonlinearSeconds": 16.475829125,
+      "endToEndSeconds": 23.942560083
+    }
+  },
+  "frozenArtifacts": [
+    {
+      "role": "fixed-image",
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/fixed.nii.gz",
+      "sha256": "7b168153a9508f5f116ac37d33835fa44dd168ba7a9ae31a3b33e6f63bd23292",
+      "use": "optimization-and-evaluation"
+    },
+    {
+      "role": "moving-image",
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/moving.nii.gz",
+      "sha256": "917dd8c4c6cf6fcc96c445fa0e17f88dfad469853e5bc3509bf17b81fb440d06",
+      "use": "optimization-and-evaluation"
+    },
+    {
+      "role": "fixed-mask",
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/fixed_mask.nii.gz",
+      "sha256": "745c970d2b45eb5088446528399b6965c2ce912d37ca7cacb993513a302d5161",
+      "use": "optimization-support"
+    },
+    {
+      "role": "moving-mask",
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/moving_mask.nii.gz",
+      "sha256": "64e089065293eabd54244ea73862f97aa59466b7dd054948bfb5c330abc0f0e3",
+      "use": "evaluation-only"
+    },
+    {
+      "role": "common-supplied-affine",
+      "path": "/Users/bbuchsbaum/code/hodgeflow/tmp/sub18_hodgeflow_vs_ants/ants_synquick_softbrain_fixedmask/synquick_0GenericAffine.mat",
+      "sha256": "7617dd46a0fe9f5a52e44147622cc9e16b67586422b8e2d14fe93822f24b0d4d",
+      "use": "all-A-E-and-fair-ANTs-nonlinear-lanes"
+    },
+    {
+      "role": "historical-ants-receipt",
+      "path": "docs/benchmarks/receipts/half-flow-ants-sub18-p7-2026-07-22.json",
+      "sha256": "23aa6c187904ccc635150d2f6a4846544f75a9b9b8b9cbe476fc660af54f8df9",
+      "use": "historical-comparator-provenance"
+    }
+  ],
+  "sourceSha256": {
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldKernels.scala": "2ed817dc9241432f44a97853281db3367808c4f5d7ca72e87939b36c10e38f6c",
+    "modules/image/shared/src/test/scala/scalafim/image/DenseFieldKernelsSuite.scala": "a06d2c12d5c2f36a4431c37df7e11681bccf394f82f9435383cd0cafc6aec0db",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "89517467f7a423d6a5f8a2d92468c5e5147e99164e839d1d0b8b88eef19bdd4c",
+    "modules/registration/shared/src/main/scala/scalafim/registration/AffineInitialization.scala": "49e94cb8ae1b05f5b246e6a518378c79352ab698124483f7ee0e397a5042f38a",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowEngine.scala": "15079edc45acc5e8ee6120f2ec8e73b457723835e4bec9dfd6933eb45b5d5539",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TopologyGuard.scala": "3cccda25ab2611af21814716b3e46af88d9814b0781061d2de6ea191481e148f",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "7bfba6743a1eb0c5ccd7642dda2321086e81c0fee3955a6068b21d503de5c8d8",
+    "modules/registration/shared/src/test/scala/scalafim/registration/AffineInitializationSuite.scala": "dbd97ac9b4306a75a876768b114d504cfda9faab131d6cc5e99d304a32dd4b32",
+    "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowEngineSuite.scala": "0573a21583b4722fe17ea6a49d7464c0cd75cfd6662bb167d43a5b4852024ec5",
+    "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowEvaluationCli.scala": "967e86564b22b852d7d8c2f38d35e93b1df14dde262fc1f468486b4f5354d106"
+  },
+  "sharedExperiment": {
+    "caseId": "sub18_orig_to_2009cAsym",
+    "caseRole": "plumbing-only-until-cohort-expands",
+    "nativeSourcePolicy": "independent fixed and moving anti-aliased pyramids sampled into a virtual work grid; no early moving-to-fixed resampling",
+    "optimizationInputs": ["fixed-image", "moving-image", "fixed-mask", "common-supplied-affine"],
+    "evaluationOnlyInputs": ["moving-mask", "anatomical-labels", "landmarks"],
+    "suppliedAffine": {
+      "id": "sub18-ants-synquick-affine-7617dd46",
+      "format": "ITK Matlab v4 AffineTransform_double_3_3",
+      "coordinateConvention": "ITK physical LPS; conversion is not admitted until image and landmark parity pass",
+      "currentConversionStatus": "unverified",
+      "suppliedTo": ["A", "B", "C", "D", "E", "ANTS"],
+      "biasNote": "The common affine came from the captured ANTs run and may favor ANTs initialization; using it for every nonlinear lane is conservative and isolates nonlinear behavior."
+    },
+    "acceptedStepBudget": {
+      "total": 24,
+      "levels": [
+        { "shrink": 4, "acceptedSteps": 10, "maximumAttempts": 30 },
+        { "shrink": 2, "acceptedSteps": 8, "maximumAttempts": 24 },
+        { "shrink": 1, "acceptedSteps": 6, "maximumAttempts": 18 }
+      ]
+    },
+    "fixedMaskPolicy": "optimization support, frozen during each trial value/derivative evaluation",
+    "movingMaskPolicy": "evaluation only; inaccessible to objective and proposal code",
+    "smoothingComparison": "A-D use whole-grid Gaussian or normalized convolution in physical units; matched-strength comparisons use impulse-response second moment. E retains its frozen masked Sobolev geometry and reports the difference.",
+    "workDirectoryTemplate": "/private/tmp/halfflow-cc/{caseId}/{lane}/{runId}",
+    "receiptTemplate": "docs/benchmarks/receipts/half-flow-cc-{caseId}-{lane}-{runId}.json",
+    "largeOutputPolicy": "Do not commit NIfTI intermediates; record absolute work path and SHA-256 hashes in the compact receipt."
+  },
+  "lanes": [
+    {
+      "id": "A",
+      "metric": "true-neighborhood-squared-cc-adjoint-boxes",
+      "step": "pointwise-rank-one",
+      "action": "midpoint-opposite-half-flows",
+      "geometry": "whole-grid-gaussian",
+      "controllers": "separated-damping-stepScale-squarings",
+      "hardAccumulatedInverseGate": false
+    },
+    {
+      "id": "B",
+      "metric": "true-neighborhood-squared-cc-adjoint-boxes",
+      "step": "pointwise-rank-one",
+      "action": "midpoint-opposite-half-flows",
+      "geometry": "whole-grid-gaussian",
+      "controllers": "separated-damping-stepScale-squarings",
+      "hardAccumulatedInverseGate": true
+    },
+    {
+      "id": "C",
+      "metric": "true-neighborhood-squared-cc-adjoint-boxes",
+      "step": "pointwise-rank-one",
+      "action": "one-direction-full-flow",
+      "geometry": "whole-grid-gaussian",
+      "controllers": "separated-damping-stepScale-squarings",
+      "hardAccumulatedInverseGate": false
+    },
+    {
+      "id": "D",
+      "metric": "standardized-center-surrogate",
+      "step": "pointwise-rank-one",
+      "action": "midpoint-opposite-half-flows",
+      "geometry": "whole-grid-gaussian",
+      "controllers": "separated-damping-stepScale-squarings",
+      "hardAccumulatedInverseGate": false
+    },
+    {
+      "id": "E",
+      "metric": "frozen-multi-window-standardized-center",
+      "step": "frozen-multi-channel-pointwise-3x3",
+      "action": "midpoint-opposite-half-flows",
+      "geometry": "frozen-masked-sobolev-power-2",
+      "controllers": "frozen-trust-and-accumulated-inverse-policy",
+      "hardAccumulatedInverseGate": true
+    }
+  ],
+  "resultSchema": {
+    "path": "docs/benchmarks/schemas/half-flow-cc-result-v1.schema.json",
+    "schemaVersion": "scalafim-half-flow-cc-result-v1",
+    "requiredDiagnosticGroups": [
+      "provenance",
+      "inputs",
+      "affine",
+      "configuration",
+      "objective",
+      "anatomy",
+      "support",
+      "topology",
+      "inverse",
+      "controller",
+      "performance",
+      "artifacts",
+      "claims"
+    ]
+  },
+  "antsComparators": {
+    "historical": {
+      "id": "ANTS0-synquick-fixedmask-full-pipeline",
+      "profile": "synquick_fixedmask",
+      "randomSeed": 1,
+      "threads": 1,
+      "dockerRetrievalReference": "antsx/ants:latest",
+      "dockerImageId": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+      "dockerRepoDigest": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+      "antsVersion": "2.6.5.dev1-gfdce4d2",
+      "hodgeflowHead": "996141593fc511f4df996d6f0e624a7ad1721960",
+      "runtimeClass": "linux/amd64 Docker image under Apple Silicon emulation",
+      "elapsedSeconds": 49.915,
+      "comparability": "historical accuracy comparator; includes rigid and affine estimation and is not a same-affine timing comparison"
+    },
+    "fairNonlinear": {
+      "id": "ANTS1-synonly-fixedmask-same-affine",
+      "status": "predeclared-not-yet-run",
+      "randomSeed": 1,
+      "threads": 1,
+      "initialTransform": "common-supplied-affine",
+      "stages": ["SyN[0.2,3,0]"],
+      "metric": "CC[fixed,moving,1,2]",
+      "convergence": "[100x70x50x0,1e-6,10]",
+      "shrinkFactors": "8x4x2x1",
+      "smoothingSigmas": "3x2x1x0vox",
+      "mask": "[fixed-mask,NULL]",
+      "runtimeClass": "linux/amd64 Docker image under Apple Silicon emulation",
+      "admission": "The shared affine adapter must pass physical-landmark and warped-image parity before this comparator or any A-E lane is interpreted."
+    }
+  },
+  "claims": [
+    "E0 is a reproducible historical regression target, not a fair A-E observation.",
+    "The A-E matrix is frozen before HalfFlow-CC optimizer implementation begins.",
+    "The moving mask and anatomical labels are evaluation-only.",
+    "No architecture, parity, or general speed conclusion may be drawn from sub18 alone.",
+    "Gale changes remain conditional on a profiled reusable deficiency."
+  ]
+}

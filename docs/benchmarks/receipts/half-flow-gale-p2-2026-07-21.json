@@ -1,0 +1,201 @@
+{
+  "capturedAtUtc": "2026-07-22T03:31:52Z",
+  "capturedOn": "2026-07-21",
+  "commands": {
+    "focusedTests": "sbt 'linalgJVM/test' 'linalgJS/test'",
+    "galeCoreTests": "sbt 'coreJVM/test' 'coreJS/test'",
+    "isolatedPinProof": "sbt compileAll testAll",
+    "jmh": "sbt 'galeBenchJVM/Jmh/clean' 'galeBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -w 250ms -r 250ms -prof gc .*HalfFlowGaleBenchmark.*'",
+    "scalaJs": "sbt 'set linalgJS / Test / scalaJSUseTestModuleInitializer := false' 'set linalgJS / Test / scalaJSUseMainModuleInitializer := true' 'linalgJS / Test / run'"
+  },
+  "decisions": {
+    "galeBoundary": "Gale contains only the general reusable CgWorkspace/cgWith matrix-free solver API. The periodic Helmholtz fixture, HalfFlow benchmark, and 3x3 alternatives remain in ScalaFIM.",
+    "helmholtz": "Gale cgWith is admitted as an allocation-controlled reference and reusable capability, not yet selected as HalfFlow's final production smoother.",
+    "tinySolve": "Select fused scalar Cholesky for the pointwise SPD 3x3 LM solve. Retain Gale dense Cholesky as an oracle. Reject the faster adjugate candidate because it fails the original-system residual on the ill-conditioned SPD adversary."
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hostJavaDefault": "OpenJDK 22",
+    "jmhJava": "OpenJDK 64-Bit Server VM 25.0.1",
+    "jmhVersion": "1.37",
+    "kernel": "Darwin 23.3.0 RELEASE_ARM64_T6031",
+    "node": "v24.1.0",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbtBuildVersion": "1.10.5",
+    "sbtLauncherScriptVersion": "1.11.7"
+  },
+  "jmh": {
+    "benchmarks": {
+      "galeCgSolve": {
+        "allocationBytesPerOperation": 2623288.995,
+        "allocationError99_9": 0.225,
+        "gcCollectionsAcrossMeasurements": 53,
+        "gcMillisAcrossMeasurements": 31,
+        "scoreError99_9Nanos": 4771.839,
+        "scoreNanosPerOperation": 923358.306
+      },
+      "galeDenseCholeskyBatch": {
+        "allocationBytesPerOperation": 552.002,
+        "allocationError99_9": 0.001,
+        "gcCollectionsAcrossMeasurements": 108,
+        "gcMillisAcrossMeasurements": 42,
+        "scoreError99_9Nanos": 1.686,
+        "scoreNanosPerSystem": 86.188
+      },
+      "galeMat3AdjugateBatch": {
+        "allocationBytesPerOperation": "below 1e-4 profiler floor",
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Nanos": 0.081,
+        "scoreNanosPerSystem": 3.705
+      },
+      "helmholtzApplyInto": {
+        "allocationBytesPerOperation": 2.424,
+        "allocationError99_9": 0.020,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Nanos": 339.306,
+        "scoreNanosPerApplication": 90429.395,
+        "side": 32,
+        "voxels": 32768
+      },
+      "reusableCgSolve": {
+        "allocationBytesPerOperation": 56.013,
+        "allocationError99_9": 0.331,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Nanos": 9914.515,
+        "scoreNanosPerOperation": 894155.172
+      },
+      "scalarCholeskyBatch": {
+        "allocationBytesPerOperation": "below 1e-4 profiler floor",
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Nanos": 0.023,
+        "scoreNanosPerSystem": 5.468
+      }
+    },
+    "derived": {
+      "adjugateSpeedupOverScalarCholesky": 1.475843454791,
+      "denseCholeskyToScalarTimeRatio": 15.762253108998,
+      "reusableCgAllocationReduction": 46833.57425954689,
+      "reusableCgFractionFaster": 0.031627087567,
+      "reusableCgSpeedup": 1.032660029170
+    },
+    "forks": 3,
+    "measurementMillis": 250,
+    "measurementsPerFork": 10,
+    "samplesPerBenchmark": 30,
+    "threads": 1,
+    "warmupMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "numericalAdmission": {
+    "adversarialSpd": {
+      "adjugateRelativeResidualIndependentCheck": 1.16058493105298e-08,
+      "choleskyRelativeResidualIndependentCheck": 4.658895493843353e-14,
+      "conditionNumberIndependentCheck": 1000000.0000043127,
+      "residualRatioIndependentCheck": 249111.604367746,
+      "sharedTestContract": "Cholesky residual <= 1e-11; adjugate residual >= 1e-10 and at least 100x Cholesky"
+    },
+    "ordinarySystems": "Fused scalar Cholesky agrees with Gale dense Cholesky and satisfies the original-system residual.",
+    "operator": "Periodic Helmholtz destination-writing application satisfies an analytic Fourier eigenmode oracle.",
+    "reusableCg": "The workspace solve satisfies the analytic Fourier inverse, converges under the declared residual tolerance, and overwrites cleanly on a second constant RHS.",
+    "status": "pass"
+  },
+  "pinSwitch": {
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "baselineScalaFimHead": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "compileAll": "pass",
+    "firstCandidateFailure": "The workspace-only main revision omitted gale.optim from the previously pinned constrained-Rayleigh branch; isolated compileAll rejected it before adoption.",
+    "firstCandidateGaleRevision": "1f4b8372febdad74056d6d44de07f093940fee14",
+    "mergeReason": "Preserve the existing constrained optimizer while adding the general reusable CG workspace.",
+    "oldGaleRevision": "2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100",
+    "proofPatch": "Only galeRevision in build.sbt was changed in the clean detached worktree.",
+    "testAll": "pass",
+    "transientHostRetry": "The first testAll pass attempt exhausted host disk while linking a Scala.js test. After deleting only generated target outputs, testAll completed successfully.",
+    "workspaceSolverBlob": "d9587f531b5b84f1d78ec04da1104036c6b32468",
+    "workspaceSolverBlobSameAtCandidateAndAdoptedRevision": true
+  },
+  "repository": {
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "Shared checkout may be dirty; exact source hashes define this receipt."
+  },
+  "scalaJs": {
+    "benchmarks": {
+      "galeMat3AdjugateBatch": {
+        "checksum": 395.4379228062954,
+        "medianMillis": 0,
+        "p95Millis": 1
+      },
+      "galeReusableCgWith": {
+        "checksum": 5.15514674435617,
+        "medianMillis": 2,
+        "p95Millis": 3
+      },
+      "helmholtzApplyInto": {
+        "checksum": 1.1406042085618164,
+        "medianMillis": 1,
+        "p95Millis": 1
+      },
+      "scalarCholeskyBatch": {
+        "checksum": 395.4379228062955,
+        "medianMillis": 1,
+        "p95Millis": 2
+      }
+    },
+    "helmholtzSide": 24,
+    "samples": 11,
+    "systems3x3": 32768,
+    "timedFullVolumeConstructions": {
+      "scalar": 0,
+      "scratch": 0,
+      "vector": 0,
+      "workspace": 0
+    },
+    "warmups": 5
+  },
+  "schema": "scalafim-half-flow-gale-stress-receipt-v1",
+  "sourceSha256": {
+    "benchmarks/gale-jvm/src/main/scala/scalafim/linalg/HalfFlowGaleBenchmark.scala": "a503fc1f05301d8118e4b0998c95f0a6867d7891438698ed0019d2140659d3a9",
+    "build.sbt": "f63984ecd103644e82e83f319d2450b68d1e72726674589b8beb38d5a6a3c4c4",
+    "docs/benchmarks/half-flow-lm.md": "bba0f7febafc28548b76055916d5fd11b8bd187813c0feb62278f33d4e31d5b4",
+    "modules/linalg/js/src/test/scala/scalafim/linalg/HalfFlowGaleJsProbe.scala": "dd21acfee1b9b8f1bd00504e72dd82d35ff0f650ea29b556ea542aedfffe3120",
+    "modules/linalg/shared/src/test/scala/scalafim/linalg/HalfFlowGaleStressSuite.scala": "f8477b30d3bc3c3aaa32710c9fd3b058ad0e42f438e2c2dcc165301a3ff9da0a"
+  },
+  "upstreamGale": {
+    "adoptedRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "coreJsTests": {
+      "passed": 502,
+      "status": "pass"
+    },
+    "coreJvmTests": {
+      "passed": 512,
+      "status": "pass"
+    },
+    "generalApi": [
+      "gale.solvers.CgWorkspace",
+      "gale.solvers.IterativeSolvers.cgWith",
+      "gale.solvers.cgWith"
+    ],
+    "sourceSha256": {
+      "core/shared/src/main/scala/gale/solvers/Solvers.scala": "c0cf571b5c8c5f783643e0937a5367dd0ee23f753720757f3fbaa8b1bac27dea",
+      "core/shared/src/test/scala/gale/solvers/CgWorkspaceSuite.scala": "817febc905d100361f827f12e3ec558c027e3799d8b6dab0a2a748db9705a84d",
+      "docs/examples.md": "126d599235d5a331394bd4a7e53927a13e569ffc459db02a18d10f74db5f9907",
+      "docs/numerical-contract.md": "e015b7a1db0725ca0fd3c32d3aa2e8701fd7892d683f111af7d69ab09a81eed9"
+    },
+    "workspaceCommit": "1f4b8372febdad74056d6d44de07f093940fee14",
+    "workingTree": "clean"
+  },
+  "verification": {
+    "focusedHalfFlowSuitePerPlatform": {
+      "passed": 5,
+      "status": "pass"
+    },
+    "linalgJS": {
+      "passed": 57,
+      "status": "pass"
+    },
+    "linalgJVM": {
+      "passed": 57,
+      "status": "pass"
+    },
+    "scalaJsProbe": "pass"
+  }
+}

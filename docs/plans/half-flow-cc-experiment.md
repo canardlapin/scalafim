@@ -126,8 +126,10 @@ Validate the frozen protocol from the repository root:
 python tools/registration/validate_halfflow_cc_protocol.py
 ```
 
-The validator checks the JSON Schema and a conforming minimal result, live
-hashes for frozen sources and external inputs, lane identities,
-dependency-sensitive fairness rules, and the evaluation-mask firewall. Its
-in-memory adversarial checks also prove that a moving-mask leak and a lane A/B
-metric drift are rejected.
+The default historical check validates the JSON Schema and a conforming minimal
+result, the recorded source and protocol hash inventories, frozen external
+inputs, lane identities, dependency-sensitive fairness rules, and the
+evaluation-mask firewall. Its in-memory adversarial checks also prove that a
+moving-mask leak and a lane A/B metric drift are rejected. Use
+`--live-sources` as an explicit drift audit when the current checkout is
+expected to match the frozen source and protocol hashes.

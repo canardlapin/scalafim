@@ -1,0 +1,181 @@
+{
+  "capturedAtUtc": "2026-07-22T11:08:39Z",
+  "capturedOn": "2026-07-22",
+  "schema": "scalafim-half-flow-registration-benchmark-v1",
+  "admission": {
+    "case": "sub18_orig_to_2009cAsym",
+    "method": "half-flow-lm-jvm-v1",
+    "status": "diagnostic-fail",
+    "reasons": [
+      "Final forward-backward inverse error 0.557035061055323 mm exceeds the configured 0.50 mm limit.",
+      "Final forward-backward inverse error 0.2785175305276615 fixed-grid voxels exceeds the configured 0.25 voxel limit.",
+      "Single-case Dice, global NCC, local NCC, and gradient NCC remain below the frozen ANTs comparator."
+    ]
+  },
+  "commands": {
+    "run": "/usr/bin/time -l sbt 'registrationJVM/runMain scalafim.registration.HalfFlowEvaluationCli <fixed> <moving> <fixed-mask> <moving-mask> /private/tmp/halfflow-scala-p7-final.oYBScx'",
+    "independentScoring": "Rscript -e '<load benchmark_public_t1_registration.R; call hf_benchmark_case_metrics on ScalaFIM NIfTI outputs>'",
+    "focusedGuardTests": "sbt 'registrationJVM/testOnly scalafim.registration.RegistrationAlgebraSuite' 'registrationJS/testOnly scalafim.registration.RegistrationAlgebraSuite' 'registrationJVM/compile'"
+  },
+  "comparator": {
+    "receipt": "half-flow-ants-sub18-p7-2026-07-22.json",
+    "id": "hodgeflow-synquick-fixedmask-docker-v1@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+    "elapsedSeconds": 49.915,
+    "runtimeClass": "linux/amd64 ANTs under Apple Silicon emulation"
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hardware": "Apple M3 Max, 14 cores, 36 GB",
+    "java": "OpenJDK 64-Bit Server VM 25.0.1",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbt": "1.10.5",
+    "scala": "3.4.2",
+    "threads": 1,
+    "contentionNote": "No ANTs, Hodgeflow, HalfFlow, or other registration benchmark ran concurrently."
+  },
+  "inputs": {
+    "fixedImageSha256": "7b168153a9508f5f116ac37d33835fa44dd168ba7a9ae31a3b33e6f63bd23292",
+    "fixedMaskSha256": "745c970d2b45eb5088446528399b6965c2ce912d37ca7cacb993513a302d5161",
+    "movingImageSha256": "917dd8c4c6cf6fcc96c445fa0e17f88dfad469853e5bc3509bf17b81fb440d06",
+    "movingMaskSha256": "64e089065293eabd54244ea73862f97aa59466b7dd054948bfb5c330abc0f0e3",
+    "fixedShape": [97, 115, 97],
+    "fixedSpacingMm": [2.0, 2.0, 2.0],
+    "movingShape": [176, 265, 265],
+    "movingSpacingMm": [1.0, 1.0, 1.0]
+  },
+  "plan": {
+    "affine": {
+      "coarseShrink": 4,
+      "fineShrink": 1,
+      "maximumSamplesPerImage": 16000,
+      "rigidSweepsPerLevel": 6,
+      "affineSweepsPerLevel": 5,
+      "smoothingSigmaMm": 2.0
+    },
+    "guard": {
+      "minimumJacobian": 0.05,
+      "maximumInverseErrorMm": 0.50,
+      "maximumInverseErrorVox": 0.25,
+      "minimumJacobianValidFraction": 0.60,
+      "minimumInverseValidFraction": 0.60
+    },
+    "levels": [
+      {"shrink": 8, "pyramidSigmaMm": 6.0, "baseFeatureRadiusMm": 12.0, "sobolevLengthMm": 4.0, "maximumDisplacementMm": 4.0, "acceptedStepBudget": 12, "attemptBudget": 36},
+      {"shrink": 4, "pyramidSigmaMm": 4.0, "baseFeatureRadiusMm": 8.0, "sobolevLengthMm": 2.5, "maximumDisplacementMm": 3.0, "acceptedStepBudget": 10, "attemptBudget": 30},
+      {"shrink": 2, "pyramidSigmaMm": 2.0, "baseFeatureRadiusMm": 5.0, "sobolevLengthMm": 1.5, "maximumDisplacementMm": 2.0, "acceptedStepBudget": 8, "attemptBudget": 24},
+      {"shrink": 1, "pyramidSigmaMm": 0.0, "baseFeatureRadiusMm": 3.0, "sobolevLengthMm": 0.8, "maximumDisplacementMm": 1.0, "acceptedStepBudget": 6, "attemptBudget": 18}
+    ],
+    "featureRadiusMultipliers": [1.0, 2.0, 3.0],
+    "localModel": "multi-channel pointwise 3x3 LM",
+    "sobolevPower": 2,
+    "maximumStrain": 0.25
+  },
+  "metrics": {
+    "independentEvaluator": {
+      "headerOnly": {
+        "dice": 0.660948058404,
+        "globalNcc": 0.567851737664,
+        "localNcc": 0.126292791680,
+        "gradientNcc": -0.107224561590,
+        "centerOfMassDistanceFixedGridVox": 17.7205578553
+      },
+      "affineOnly": {
+        "dice": 0.931892939715,
+        "globalNcc": 0.911354224906,
+        "localNcc": 0.485883043209,
+        "gradientNcc": 0.245591294459,
+        "centerOfMassDistanceFixedGridVox": 1.25333597449
+      },
+      "halfFlow": {
+        "dice": 0.932541979141,
+        "globalNcc": 0.917451499008,
+        "localNcc": 0.540957619449,
+        "gradientNcc": 0.275250987395,
+        "centerOfMassDistanceFixedGridVox": 1.18070162417
+      },
+      "ants": {
+        "dice": 0.979358955715,
+        "globalNcc": 0.945709565179,
+        "localNcc": 0.672298050150,
+        "gradientNcc": 0.439945600516,
+        "centerOfMassDistanceFixedGridVox": 0.308368444373
+      }
+    },
+    "physicalCenterOfMassDistanceMm": {
+      "headerOnly": 35.441115710564816,
+      "halfFlow": 2.3614032483377123
+    },
+    "halfFlowMinusAnts": {
+      "dice": -0.046816976574,
+      "globalNcc": -0.028258066171,
+      "localNcc": -0.131340430702,
+      "gradientNcc": -0.164694613121,
+      "centerOfMassDistanceFixedGridVox": 0.872333179797
+    }
+  },
+  "optimization": {
+    "attemptedSteps": 69,
+    "acceptedSteps": 22,
+    "levels": [
+      {"shrink": 8, "initialValue": 1.3849842390510976, "finalValue": 1.3849842390510976, "attempts": 11, "accepted": 0, "termination": "Stationary"},
+      {"shrink": 4, "initialValue": 1.0021845792065616, "finalValue": 0.8699280647555554, "attempts": 23, "accepted": 8, "termination": "Stationary"},
+      {"shrink": 2, "initialValue": 1.1431479503556574, "finalValue": 1.091903093498554, "attempts": 20, "accepted": 8, "termination": "AcceptedStepBudget"},
+      {"shrink": 1, "initialValue": 1.8238640987614854, "finalValue": 1.6481356676262424, "attempts": 15, "accepted": 6, "termination": "AcceptedStepBudget"}
+    ]
+  },
+  "topology": {
+    "safe": false,
+    "forwardMinimumJacobian": 0.4286567846284387,
+    "backwardMinimumJacobian": 0.7249946716947637,
+    "forwardNonPositiveJacobians": 0,
+    "backwardNonPositiveJacobians": 0,
+    "forwardBackwardMaximumErrorMm": 0.557035061055323,
+    "backwardForwardMaximumErrorMm": 0.441695682470933,
+    "forwardBackwardMaximumErrorFixedGridVox": 0.2785175305276615,
+    "backwardForwardMaximumErrorFixedGridVox": 0.2208478412354665
+  },
+  "timing": {
+    "readSeconds": 4.882937792,
+    "initialResampleSeconds": 0.66789425,
+    "affineSeconds": 0.907333334,
+    "nonlinearSeconds": 18.211390375,
+    "outputSeconds": 0.484799417,
+    "endToEndSeconds": 25.206496917,
+    "outerWallIncludingSbtSeconds": 30.93,
+    "antsToHalfFlowEndToEndRatio": 1.98024,
+    "peakResidentBytes": 2663989248,
+    "peakMemoryFootprintBytes": 2698650240
+  },
+  "outputs": {
+    "workDirectory": "/private/tmp/halfflow-scala-p7-final.oYBScx",
+    "summaryCsvSha256": "a474db2c32c42e78120be7b82449e436ebbe53feb0d93b665003e3f53836260d",
+    "attemptsCsvSha256": "456e248cf56d538626edd418f9f2f193144219d40c763e72208afa72dde63eb5",
+    "warpedMovingNiftiSha256": "6332d63d8a3bb92bb28466ab2278f2072fd755c1133cf7293e04e26b8d38edd9",
+    "warpedMaskNiftiSha256": "33bd1485f8df84da6773a168fca7709e12c7c6bb9654161ad1d2c9d88635f931"
+  },
+  "decisions": {
+    "galeBoundary": "No Gale source change. The observed failure is dense self-map boundary composition and inverse tracking, not a missing general linear solver primitive.",
+    "imageBoundary": "Nearest-neighbour scalar pulling was added as a general physical-grid image kernel with destination-writing reuse and JVM/Scala.js oblique-grid tests.",
+    "guardBoundary": "Jacobian support and inverse-composition overlap are distinct numerical contracts and now have separate thresholds.",
+    "next": "Define and test an explicit dense self-map boundary extension, rerun the frozen case, then diagnose the rejected shrink-8 level before tuning features or adding FFT proposals."
+  },
+  "repository": {
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "workingTreePolicy": "Shared checkout is dirty; exact source and output hashes define this diagnostic receipt."
+  },
+  "sourceSha256": {
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldKernels.scala": "909932192ad618888f50ff7a72fd654a055c422211534eded680758f20555174",
+    "modules/image/shared/src/test/scala/scalafim/image/DenseFieldKernelsSuite.scala": "edc25f007cfb7683ea4863682d072314cfd63f01f25dbcc466ffb18728d0cc1c",
+    "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowEvaluationCli.scala": "622e64058fff12a6194be9e9496bc79149280426311059f63e1ce076c9a286f1",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowEngine.scala": "26dd4b79ba5c81a2a69c65de41661cee910856233e83ec3aadf0612446f00ff9",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TopologyGuard.scala": "86f64db9757b8d6a0db8fcb644189186abf9260c4621ba805c78124e4fd4e9d3",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "aa88eb8fb58d2044a660706d7b76721b27e9a52cf4a4f870f4a88b14277d5b19"
+  },
+  "tests": {
+    "registrationJVM": {"passed": 33, "failed": 0},
+    "registrationJS": {"passed": 33, "failed": 0},
+    "imageJVM": {"passed": 206, "failed": 0},
+    "imageJS": {"passed": 199, "failed": 0}
+  }
+}

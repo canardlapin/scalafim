@@ -1,0 +1,160 @@
+{
+  "schema": "scalafim.halfflow-cc.neighborhood-cc-receipt.v1",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5172VC7RCNBGTA02S9V96Z",
+  "captured_at_utc": "2026-07-22T14:35:51Z",
+  "repository_head": "b341c388353df4d947d757b4903c37484caf044d",
+  "objective": {
+    "name": "squared overlapping-window neighborhood correlation",
+    "value": "weighted mean of 1 - covariance^2 / (fixedScatter * movingScatter + epsilon)",
+    "window_radii_tested": [2, 3],
+    "boundary": "truncated finite-lattice boxes",
+    "derivative": "exact adjoint-box intensity derivative conditional on frozen support, reliability, and stabilization",
+    "refresh_policy": "IRLS snapshot may be refreshed only after an accepted update",
+    "stabilization": "epsilon_fraction * local_weight_sum^2 * fixed_global_variance * moving_global_variance",
+    "default_epsilon_fraction": 1e-6,
+    "held_out_data_firewall": "The objective API accepts only fixed intensity, moving intensity, a declared work-space support field, grid, and configuration; moving evaluation masks and labels have no code path into the objective."
+  },
+  "correctness": {
+    "direct_value_oracle": {
+      "tolerance": 2e-12,
+      "fixtures": [
+        "deterministic randomized volumes",
+        "soft partial support",
+        "flat subvolumes",
+        "anticorrelated inputs",
+        "truncated boundary windows"
+      ],
+      "status": "passed"
+    },
+    "intensity_derivative_interior": {
+      "analytic_directional_derivative": -0.005875700269147558,
+      "epsilons": [0.01, 0.003, 0.001, 0.0003, 0.0001, 0.00003, 0.00001, 0.000003, 0.000001],
+      "relative_errors": [
+        1.73585302156777e-6,
+        1.5688249286402337e-7,
+        1.574196313536134e-8,
+        1.678651136699129e-8,
+        3.189805171432841e-8,
+        4.960110522894365e-8,
+        3.3824175400660966e-7,
+        8.898051408478127e-7,
+        4.375251944859252e-6
+      ],
+      "best_relative_error": 1.574196313536134e-8,
+      "required_maximum": 1e-5,
+      "status": "passed"
+    },
+    "intensity_derivative_boundary": {
+      "analytic_directional_derivative": 0.008383076470247566,
+      "epsilons": [0.01, 0.003, 0.001, 0.0003, 0.0001, 0.00003, 0.00001, 0.000003, 0.000001],
+      "relative_errors": [
+        1.8347797226539703e-6,
+        1.6495671056439157e-7,
+        2.0937348157470525e-8,
+        1.2394643080041935e-8,
+        2.6353989872278588e-8,
+        3.64704443345981e-8,
+        9.882234046379984e-9,
+        2.8363637289711476e-7,
+        2.26700177900602e-6
+      ],
+      "best_relative_error": 9.882234046379984e-9,
+      "required_maximum": 1e-3,
+      "status": "passed"
+    },
+    "paired_flow_end_to_end_derivative": {
+      "pipeline": "paired scaling-and-squaring -> trilinear native pull -> frozen neighborhood CC",
+      "analytic_directional_derivative": 0.03944806026336966,
+      "epsilons": [0.01, 0.003, 0.001, 0.0003, 0.0001, 0.00003],
+      "relative_errors": [
+        4.142743833709491e-6,
+        1.376927591349105e-6,
+        4.69975225608256e-7,
+        1.476992876075271e-7,
+        1.7767042221036625e-8,
+        5.0157759419224343e-8
+      ],
+      "best_relative_error": 1.7767042221036625e-8,
+      "required_maximum": 1e-5,
+      "status": "passed"
+    },
+    "metamorphic_checks": [
+      "fixed-moving swap preserves value and swaps intensity gradients",
+      "independent positive affine gain and offset preserve value",
+      "gain-transformed gradients scale by inverse gain",
+      "constant images produce finite zero loss, zero gradient, and zero active windows",
+      "mutating caller support after preparation cannot change the frozen trial"
+    ]
+  },
+  "diagnostics_emitted": [
+    "total loss",
+    "active and total windows",
+    "active fraction",
+    "edge-band active fraction",
+    "support fraction minimum, mean, and maximum",
+    "fixed and moving global variance",
+    "fixed, moving, and joint variance-reliability means"
+  ],
+  "verification": {
+    "command": "sbt 'registrationBenchJVM/compile' 'registrationJVM/test' 'registrationJS/test'",
+    "results": [
+      {
+        "target": "registrationBenchJVM/compile",
+        "status": "passed"
+      },
+      {
+        "target": "registrationJVM/test",
+        "passed": 44,
+        "failed": 0
+      },
+      {
+        "target": "registrationJS/test",
+        "passed": 44,
+        "failed": 0
+      }
+    ]
+  },
+  "benchmark": {
+    "purpose": "short allocation and throughput diagnostic, not a stabilized performance claim",
+    "command": "sbt 'registrationBenchJVM/Jmh/run -wi 2 -i 3 -f 1 -t 1 -w 200ms -r 200ms -p side=32 -prof gc -rf json -rff /private/tmp/halfflow-cc-g2-jmh.json .*neighborhoodCcValueAndGradient.*'",
+    "jmh_version": "1.37",
+    "jvm": "OpenJDK 64-Bit Server VM 25.0.1",
+    "host": "Apple Silicon arm64, Darwin 23.3.0",
+    "configuration": {
+      "side": 32,
+      "voxels": 32768,
+      "threads": 1,
+      "forks": 1,
+      "warmup_iterations": 2,
+      "measurement_iterations": 3,
+      "iteration_milliseconds": 200
+    },
+    "result": {
+      "milliseconds_per_value_and_two_gradients": 2.863479539706912,
+      "reported_error": 0.9108037297468086,
+      "bytes_allocated_per_operation": 408.4568496723619,
+      "gc_collections": 0
+    }
+  },
+  "sources": [
+    {
+      "path": "modules/registration/shared/src/main/scala/scalafim/registration/NeighborhoodCc.scala",
+      "sha256": "c6923b34283889730cd1b627dd1b8cc62b5737b0abfcf5f62b7d1aba5278149b"
+    },
+    {
+      "path": "modules/registration/shared/src/test/scala/scalafim/registration/NeighborhoodCcSuite.scala",
+      "sha256": "9f64a060205557cc9f6267dd09643e6bd344c1f54f4ee65ac4cd80d2c24d7fc5"
+    },
+    {
+      "path": "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowRegistrationBenchmark.scala",
+      "sha256": "025e660deea754bf2bb4f42d0d6b9dd8ca5c76920c265e05bf50e1934e3495f3"
+    }
+  ],
+  "limitations": [
+    "The exact derivative is conditional on the frozen IRLS snapshot, not a joint derivative through reliability-weight refresh.",
+    "The end-to-end derivative fixture is at identity; nonidentity accumulated-map checks belong to the midpoint/controller gate.",
+    "The benchmark is single-machine, single-fork, and intentionally short.",
+    "No anatomical or ANTs-parity claim follows from this operator-level gate."
+  ]
+}
