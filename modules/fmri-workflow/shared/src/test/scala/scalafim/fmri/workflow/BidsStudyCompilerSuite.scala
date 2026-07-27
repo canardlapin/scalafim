@@ -1,7 +1,7 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.*
+import bids4s.*
 import scalafim.dataset.{DatasetId, DatasetShape}
 import scalafim.image.NeuroSpace
 

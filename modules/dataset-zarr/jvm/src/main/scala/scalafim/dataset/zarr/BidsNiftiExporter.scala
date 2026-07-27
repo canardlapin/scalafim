@@ -10,7 +10,7 @@ import java.util.zip.GZIPOutputStream
 import scala.util.Using
 import scala.util.control.NonFatal
 import scalafim.archive.zarr.*
-import scalafim.bids.EntityKey
+import bids4s.EntityKey
 import scalafim.image.Affine
 import scalafim.zarr.*
 

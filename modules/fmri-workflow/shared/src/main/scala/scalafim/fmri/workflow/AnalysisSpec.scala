@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.{BidsQuery, ConfoundSelectionConfig}
+import bids4s.{BidsQuery, ConfoundSelectionConfig}
 import scalafim.dataset.DatasetId
 import scalafim.fmri.design.baseline.BaselineSpec
 import scalafim.fmri.design.formula.ModelFormula
