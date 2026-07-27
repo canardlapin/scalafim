@@ -1,7 +1,7 @@
 package scalafim.inference
 
-import scalafim.multivar.core.{ComponentCount, MatrixView}
-import scalafim.multivar.family.paired.{ReducedRankRegression, RegressionRegularization}
+import multivar.core.{ComponentCount, MatrixView}
+import multivar.family.paired.{ReducedRankRegression, RegressionRegularization}
 
 import gale.linalg.DMat
 

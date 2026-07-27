@@ -47,13 +47,12 @@ object HalfFlowGaleJsProbe:
     val operator = PeriodicHelmholtz(side, side, side, alpha)
     val input = fourierMixture(side)
     val output = MutableDVec.zeros(input.length)
-    val outputView = output.asVec
     val rhs = fourierMixture(side)
     val expected = inverseFourierMixture(side, alpha)
     counter.vector += 4
 
     operator.applyTo(input, output)
-    require(maximumFourierApplyError(side, alpha, outputView) <= 4e-12)
+    require(maximumFourierApplyError(side, alpha, output.toVec) <= 4e-12)
     val initialResult = IterativeSolvers.cg(
       operator,
       rhs,
@@ -71,7 +70,7 @@ object HalfFlowGaleJsProbe:
     val tiny = measure(warmups, samples)(galeTinyAdjugate(values))
     val applyInto = measure(warmups, samples):
       operator.applyTo(input, output)
-      outputView(input.length / 2)
+      output(input.length / 2)
     val galeCg = measure(warmups, samples):
       val result = IterativeSolvers.cg(
         operator,

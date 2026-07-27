@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.family.canonical.ResidualRegularization
+import multivar.family.canonical.ResidualRegularization
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.*

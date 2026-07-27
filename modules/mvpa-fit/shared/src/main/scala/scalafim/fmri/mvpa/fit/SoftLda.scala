@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.core.*
-import scalafim.multivar.family.canonical.*
+import multivar.core.*
+import multivar.family.canonical.*
 
 import gale.linalg.{CholeskyOptions, DMat, Matrix}
 import scalafim.fmri.mvpa.*

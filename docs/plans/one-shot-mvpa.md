@@ -33,7 +33,7 @@ actions, alternate execution strategies, and crossover benchmarks remain open
 Phase 3 work.
 
 Related plans: [`mvpa-engine.md`](mvpa-engine.md),
-[`multivar-operator-core.md`](multivar-operator-core.md), and
+[`multivar-operator-core.md`](https://github.com/canardlapin/multivar/blob/main/docs/plans/multivar-operator-core.md), and
 [`distributed-fit-interpreter.md`](distributed-fit-interpreter.md)
 
 This plan expands the fit-specific convenience-wrapper item in

@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.multivar.core.SpaceId
+import multivar.core.SpaceId
 
 import gale.linalg.DMat
 import gale.linalg.DVec

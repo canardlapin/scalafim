@@ -53,7 +53,7 @@ class HalfFlowGaleStressSuite extends munit.FunSuite:
     val output = MutableDVec.zeros(input.length)
     operator.applyTo(input, output)
 
-    val error = maximumFourierApplyError(side, alpha, output.asVec)
+    val error = maximumFourierApplyError(side, alpha, output.toVec)
     assert(error <= 3e-12, s"maximum Fourier apply error=$error")
 
   test("Gale CG solves independent Helmholtz right-hand sides cleanly"):

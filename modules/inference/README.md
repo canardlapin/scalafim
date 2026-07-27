@@ -2,11 +2,11 @@
 
 Typed perturbation inference for fitted multivariate structures.
 
-`inference` sits directly above `multivar` and `linalg`. It owns inferential
-targets, sampling designs, lawful null and bootstrap actions, deterministic
-Monte Carlo programs, latent units, stability summaries, validity claims, and
-provenance. It does not refit PCA, PLSC, CCA, RRR, CPCA, or multiblock models;
-those fitted geometries remain in `multivar`.
+`inference` sits directly above standalone `multivar` and Gale. It owns
+inferential targets, sampling designs, lawful null and bootstrap actions,
+deterministic Monte Carlo programs, latent units, stability summaries, validity
+claims, and provenance. It does not refit PCA, PLSC, CCA, RRR, CPCA, or
+multiblock models; those fitted geometries remain in standalone `multivar`.
 
 The architectural contract is documented in
 [`docs/plans/inference.md`](../../docs/plans/inference.md). The intended public

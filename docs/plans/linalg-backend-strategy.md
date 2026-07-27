@@ -31,9 +31,11 @@ This is tracked in mote as epic `bd-01KX1P6Z3RW3T4GSZ4MT86Z7QQ`.
   related primitive operations.
 - Portable reference implementations that work on JVM and Scala.js.
 
-Domain modules such as `multivar`, `connectivity`, `fit`, `mvpa`, and `group`
-depend on `linalg` capabilities. They must not define private solver families
-unless the operation is genuinely domain-specific and cannot live below them.
+ScalaFIM domain modules such as `connectivity`, `fit`, `mvpa`, and `group`
+depend on `linalg` capabilities. Standalone `multivar` depends directly on
+Gale's portable matrix, operator, spectral, and first-order capabilities. No
+domain module may define a private solver family unless the operation is
+genuinely domain-specific and cannot live below it.
 
 ## Backend Shape
 
@@ -91,10 +93,9 @@ domain APIs.
 
 ## Migration Plan
 
-1. Move solver traits and result types from `multivar` into `linalg`.
-2. Move the portable Jacobi eigensolver, Gram-SVD, generalized eigensolver, and
-   SPD inverse helper into `linalg`.
-3. Repoint `multivar` to the `linalg` solver capabilities.
+1. Move ScalaFIM solver traits and result types into `linalg`.
+2. Move reusable portable matrix/operator/solver capabilities into Gale.
+3. Repoint standalone `multivar` directly to Gale.
 4. Repoint `connectivity` to the `linalg` solver capabilities and delete the
    connectivity-local Jacobi helper.
 5. Add an optional JVM Breeze backend adapter module.
@@ -107,9 +108,12 @@ Current implementation status:
   `GeneralizedEigenSolver`, `SpdInverseSolver`, `SymmetricEigenResult`,
   `SvdResult`, `DecompositionRank`, and portable
   Jacobi/Gram/generalized/Cholesky-SPD-inverse reference solvers.
-- `multivar` keeps its sparse-aware `MatrixView` SVD adapter, uses `linalg`
-  symmetric/generalized eigen traits directly, and maps `LinearAlgebraError`
+- Standalone `multivar` keeps its sparse-aware `MatrixView` adapter, uses Gale
+  matrix/operator/spectral capabilities directly, and maps numerical failures
   into `MultivarError` only at domain API boundaries.
+- Gale owns the portable proximal-gradient, projected-gradient, primal-dual,
+  exact null-space reduction, and first-order certificate layer formerly
+  implemented in ScalaFIM `linalg`.
 - `connectivity` delegates its symmetric eigendecomposition boundary to
   `linalg` and no longer carries a private Jacobi implementation.
 - `linalg-breeze` is the optional JVM-only adapter module. It exposes

@@ -48,8 +48,7 @@ cross-compiled sbt build.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
-- `multivar`: typed duality-diagram core — nominal primal/dual spaces, certified row/column forms, semantic GPCA, explicit partial row alignment, locus selection adapters, direct-sum multiset objectives, sparse-aware operators, decompositions, and pure execution plans.
-- `multivar-ir`: versioned language-neutral multivar semantics, portable JSON codecs, numeric payload references, and cross-binding conformance fixtures.
+- `multivar-adapter`: thin ScalaFIM locus-selection adapter for the standalone `canardlapin/multivar` package.
 - `inference`: typed perturbation inference over fitted multivariate structures — targets, resampling designs, null actions, Monte Carlo ladders, latent units, stability, validity, and provenance.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
 - `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
@@ -65,6 +64,11 @@ Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
+
+General multivariate analysis and its language-neutral IR now live in the
+standalone [`multivar`](https://github.com/canardlapin/multivar) repository.
+ScalaFIM pins an immutable source revision and retains only its locus-selection
+adapter and downstream neuroimaging integrations.
 
 See [docs/image-viewer.md](docs/image-viewer.md) for the world-coordinate
 contract, slice and layer APIs, interaction reducer, caching receipts, and
@@ -166,10 +170,8 @@ sbt mvpaJVM/test
 sbt mvpaJS/test
 sbt mvpaFitJVM/test
 sbt mvpaFitJS/test
-sbt multivarJVM/test
-sbt multivarJS/test
-sbt multivarIrJVM/test
-sbt multivarIrJS/test
+sbt multivarAdapterJVM/test
+sbt multivarAdapterJS/test
 sbt inferenceJVM/test
 sbt inferenceJS/test
 sbt connectivityJVM/test

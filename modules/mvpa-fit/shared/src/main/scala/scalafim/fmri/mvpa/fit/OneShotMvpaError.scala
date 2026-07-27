@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.core.MultivarError
+import multivar.core.MultivarError
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{FitError, TrainingRunScope}

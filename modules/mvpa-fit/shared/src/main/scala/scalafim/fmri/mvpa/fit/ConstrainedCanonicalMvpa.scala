@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
-import scalafim.multivar.family.canonical.{CanonicalFrameConstraint, ConstrainedCanonicalFit, ConstrainedCanonicalProblem, ConstrainedCanonicalSolverSpec, ResidualRegularization}
+import multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import multivar.family.canonical.{CanonicalFrameConstraint, ConstrainedCanonicalFit, ConstrainedCanonicalProblem, ConstrainedCanonicalSolverSpec, ResidualRegularization}
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.RunIndex

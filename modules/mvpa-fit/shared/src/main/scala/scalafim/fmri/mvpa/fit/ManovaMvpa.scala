@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
-import scalafim.multivar.family.canonical.{CanonicalEffectProblem, CanonicalRootSpectrum, CanonicalSpectrumFit, ManovaStatistics, ResidualRegularization}
+import multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import multivar.family.canonical.{CanonicalEffectProblem, CanonicalRootSpectrum, CanonicalSpectrumFit, ManovaStatistics, ResidualRegularization}
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{

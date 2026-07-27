@@ -1,7 +1,7 @@
 package scalafim.inference
 
-import scalafim.multivar.core.{BlockPartition, ComponentCount, DenseSolvers, MatrixView, StoragePolicy}
-import scalafim.multivar.family.cpca.{CpcaBlock, CpcaBlockRequest, PreparedCpcaOperatorFit, PreparedCpcaOperatorProblem}
+import multivar.core.{BlockPartition, ComponentCount, DenseSolvers, MatrixView, StoragePolicy}
+import multivar.family.cpca.{CpcaBlock, CpcaBlockRequest, PreparedCpcaOperatorFit, PreparedCpcaOperatorProblem}
 
 import gale.linalg.DMat
 import gale.linalg.DVec
@@ -124,7 +124,7 @@ final case class CpcaBlockProtocol(
 
   private def adapt[A](
       role: String,
-      value: Either[scalafim.multivar.core.MultivarError, A]
+      value: Either[multivar.core.MultivarError, A]
   ): Either[InferenceError, A] =
     value.left.map(error => InferenceError.NumericalFailure(role, error.message))
 

@@ -29,7 +29,7 @@ locus-kernel
 +-- graph
 +-- latent            also depends on response, image
 +-- threshold         also depends on image
-+-- multivar          also depends on linalg
++-- multivar-adapter  also depends on standalone multivar
 +-- connectivity      also depends on graph
 
 graph
@@ -46,9 +46,6 @@ linalg
 +-- design           also depends on hrf
 +-- mvpa
 |   +-- mvpa-dataset  also depends on dataset
-+-- multivar
-|   +-- multivar-ir
-|   +-- inference     also depends on linalg
 +-- threshold         also depends on image
 +-- motion            also depends on image
 +-- spatial           also depends on image, surface
@@ -114,6 +111,11 @@ archive
 
 fit + mvpa
 +-- mvpa-fit          run-local trial-readout and pattern-operator composition
+
+standalone multivar
++-- multivar-adapter  also depends on locus-kernel
++-- inference         also depends on Gale
++-- mvpa-fit          also depends on fit, mvpa
 ```
 
 The `graphics` subtree has a stricter extraction boundary: core has no internal
@@ -145,7 +147,7 @@ parsing.
 | `locus-data` | Pure indexed fields and sections, supported parcellations, searchlights, and one-pass commutative aggregation. | `locus-kernel` | Image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
 | `locus-laws` | Exhaustive finite reference models, reusable law groups, differential adapters, and bounded ScalaCheck supplements. | `locus-data` | Production representations or domain policy. |
 | `graph` | Ordered keyed vertex bases, locus-space adaptation, graph-local dense coordinates, validated alignment/permutation values, canonical immutable simple directed/undirected graphs, components, nonnegative-cost paths, cycle witnesses, DAG layers, and topology laws. | `locus-kernel` | Matrices, Laplacians, spectra, connectivity measures, spatial-domain validation, pipeline execution, multigraphs, or loops. |
-| `graph-linalg` | Basis-carrying topology/weighted adjacency, incidence, degree/strength, combinatorial/normalized Laplacians, spectra/embeddings, aligned spectral feature maps, and explicitly PSD-tagged similarities over shared linalg contracts. | `graph`, `linalg` | Connectivity estimation or projection policy, scientific measurement semantics, solver implementations, generic multivar kernel ownership, or domain-specific convenience APIs. |
+| `graph-linalg` | Basis-carrying topology/weighted adjacency, incidence, degree/strength, combinatorial/normalized Laplacians, spectra/embeddings, aligned spectral feature maps, and explicitly PSD-tagged similarities over shared linalg contracts. | `graph`, `linalg`; standalone multivar in tests | Connectivity estimation or projection policy, scientific measurement semantics, solver implementations, generic multivar kernel ownership, or domain-specific convenience APIs. |
 | `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
 | `linalg-breeze` | JVM-only Breeze-backed adapters for linalg solver contracts and backend differential tests. | `linalg` | Shared APIs, domain-specific algorithms, Scala.js code, or direct Breeze exposure to domain modules. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph-delegated deterministic DAG staging, local pure execution, and structured receipts. | `graph` | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
@@ -184,10 +186,9 @@ parsing.
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `linalg`, `model`, `ar` | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
-| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa` | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
-| `multivar` | One layered mathematical lifecycle: semantic `core`, mathematical `contract`, declarative `optimization`, executable `solver`, family-indexed `lifecycle`, fitted `capability`, statistical `family.*` verticals, fold-safe `workflow`, and `validation`; includes locus selection adapters, typed duality diagrams, GLRM, multiblock, paired/canonical/spectral methods, CPCA and kernels. | `linalg`, `locus-kernel` | Flat catch-all APIs, reciprocal family dependencies, formula/model-matrix builders, sample/feature metadata encoders, MVPA ROI adapters, dataset/image IO, language bindings, JVM solver backends, or scheduler-specific execution. |
-| `multivar-ir` | Versioned language-neutral records and portable codecs for multivar spaces, operators, certificates, diagrams, alignments, objectives, projection actions, synthesis capabilities, solver guarantees, payload references, and conformance fixtures. | `multivar` | Statistical algorithms, backend storage ownership, Python/R runtime implementations, or platform-specific IO. |
-| `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | `multivar`, `linalg` | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
+| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
+| `multivar-adapter` | Ordered conversion from ScalaFIM finite-locus selections to standalone multivar index sets and ROI plans. | `locus-kernel`; standalone multivar | Statistical algorithms, solver implementations, multivar IR, dataset/image IO, or scheduler execution. |
+| `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | Standalone multivar; Gale | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
 | `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `locus-kernel`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
@@ -198,19 +199,11 @@ parsing.
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | `zarr`, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`, `bids` | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 
-The binding `multivar` migration target is the
-[single-layer typed operator core](plans/multivar-operator-core.md): one directed
-operator representation, `secondOrder` and `compress` as the only second-order
-and component reductions, `FunctionalFrame` as the latent parameter, and named
-methods lowering to one closed `OperatorProgram`. Fitted projection/synthesis
-capabilities remain downstream compositions over the frozen frame, while
-family-indexed workflows own data-fitted lifecycle stages. Its
-production-consumer table is the authoritative ownership map.
-The source-level ownership law is the
-[multivar package hierarchy](plans/multivar-package-hierarchy.md): packages
-expose the order from semantic algebra through contracts, programs, solvers,
-lifecycle evidence, family verticals, workflow composition, and validation
-without introducing a second runtime model.
+The single-layer typed operator core, language-neutral IR, mathematical
+contracts, and validation matrix are authoritative in the standalone
+[`canardlapin/multivar`](https://github.com/canardlapin/multivar) repository.
+ScalaFIM consumes a pinned source revision and owns only application adapters
+and neuroimaging-facing integrations.
 
 ## Main Vertical Flows
 
@@ -256,7 +249,7 @@ execution to typed interpreters at module boundaries.
 locus-kernel -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spatial
        |             |
        |             +-----> locus-laws  (test support)
-       +-----> graph/connectivity/threshold/latent/multivar
+       +-----> graph/connectivity/threshold/latent/multivar-adapter
 ```
 
 `locus-kernel` is the sole owner of generic finite spaces, points, regions,
@@ -307,7 +300,7 @@ dataset -------------+
 dataset -> mvpa-dataset -> mvpa
 image/surface/atlas -> mvpa-spatial -> mvpa
 fit + mvpa -> mvpa-fit
-multivar -> inference
+standalone multivar -> inference
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
@@ -404,13 +397,13 @@ descriptors can materialize executable dense morphisms.
   payloads, open readers, format implementations, and scheduler types out of it.
 - Put nominal primal/dual algebra, semantic duality diagrams, role-specific
   forms and certificates, row measures/centering, singular policies, explicit
-  row relationships, direct-sum objectives, sparse-aware preprocessing, and
-  decomposition artifacts in `multivar`. Put their versioned language-neutral
-  records and conformance corpus in `multivar-ir`; keep neuroimaging adapters,
-  bindings, and scheduler-specific execution in higher modules.
+  row relationships, direct-sum objectives, sparse-aware preprocessing,
+  decomposition artifacts, and language-neutral IR in standalone `multivar`.
+  Put only finite-locus conversion in `multivar-adapter`; keep dataset, image,
+  MVPA, bindings, and scheduler-specific execution in their ScalaFIM modules.
 - Put perturbation targets, resampling/null actions, Monte Carlo programs,
   latent-unit stability, validity, and evidence provenance in `inference`;
-  consume fitted geometry through small `multivar` capabilities and keep
+  consume fitted geometry through small standalone `multivar` capabilities and keep
   fitting, workflows, IO, and schedulers outside the module.
 - Put shared connectivity structures in `connectivity`: validated series axes,
   explicit edge spaces/vectorization orders, static/dynamic containers,
