@@ -37,7 +37,6 @@ cross-compiled sbt build.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
 - `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
-- `bids`: BIDS filename/entity parsing, typed manifests, query semantics, BIDS URIs, event tables, and fMRIPrep confound selections.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
@@ -58,6 +57,12 @@ Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
+
+Reusable BIDS names, manifests, queries, metadata tables, confound selection,
+and resource-safe loaders formerly incubated here now live in the standalone
+[`bids4s`](https://github.com/canardlapin/bids4s) repository. ScalaFIM pins an
+immutable source revision and consumes it only at BIDS-facing integration
+boundaries.
 
 General multivariate analysis and its language-neutral IR now live in the
 standalone [`multivar`](https://github.com/canardlapin/multivar) repository.
@@ -141,8 +146,6 @@ sbt archiveLnaJVM/test
 sbt archiveLnaJS/test
 sbt archivedResponseInteropJVM/test
 sbt archivedResponseInteropJS/test
-sbt bidsJVM/test
-sbt bidsJS/test
 sbt datasetJVM/test
 sbt datasetJS/test
 sbt modelJVM/test

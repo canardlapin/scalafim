@@ -45,7 +45,7 @@ closed choices and typeclass-style abstractions.
 - `scalafim-archive`: typed Latent NeuroArchive-style manifests, transform
   descriptors, payload references, validation layers, portable transform
   execution, and JVM-only storage boundaries.
-- `scalafim-bids`: BIDS filename/entity parsing, immutable datatype specs,
+- standalone `io.github.canardlapin:bids4s`: BIDS filename/entity parsing, immutable datatype specs,
   typed manifests and queries, BIDS URI resolution, dataframe-like TSV tables,
   and fMRIPrep confound set/strategy definitions. JVM adapters own file walking
   and image-header inspection; the shared core stays platform-neutral.
@@ -289,7 +289,7 @@ Non-goals:
 
 ### `bidser`
 
-Target module: `scalafim-bids`
+Target library: standalone [`bids4s`](https://github.com/canardlapin/bids4s)
 
 `bidser` is the BIDS-facing discovery, query, metadata, events, and fMRIPrep
 confounds layer. The Scala rendering keeps the useful semantics while replacing

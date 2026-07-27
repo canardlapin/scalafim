@@ -181,8 +181,9 @@ This plan extends live code rather than starting a second data model.
   [`NiftiResponseBlockSource`](../../modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiResponseBlockSource.scala)
   proves it with positional reads over uncompressed or atomically staged NIfTI
   data. Zarr should implement this contract, not create another source API.
-- [`bids`](../../modules/bids/README.md) already supplies typed BIDS names,
-  entities, manifests, queries, sidecar metadata, and JVM project loading.
+- standalone [`bids4s`](https://github.com/canardlapin/bids4s) supplies typed
+  BIDS names, entities, manifests, queries, sidecar metadata, and JVM project
+  loading.
 - [`archive`](../../modules/archive/README.md) is already the typed Scala home
   for NeuroArchive manifests, transform descriptors, validation, and
   content-addressed basis artifacts.
@@ -789,7 +790,7 @@ sbt archiveZarrJVM/test archiveZarrJS/test
 sbt datasetZarrJVM/test datasetZarrJS/test
 sbt datasetJVM/test datasetJS/test
 sbt imageJVM/test imageJS/test
-sbt bidsJVM/test bidsJS/test
+(cd ../bids4s && sbt testAll)
 sbt fitJVM/test fitJS/test
 ```
 

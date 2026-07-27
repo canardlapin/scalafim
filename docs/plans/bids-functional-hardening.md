@@ -1,8 +1,13 @@
 # BIDS Validation and Effect-Boundary Hardening
 
-ScalaFIM's BIDS module already has the right large-scale shape: a pure,
-cross-compiled domain core with JVM filesystem adapters. This plan strengthens
-that shape rather than replacing it with a functional-programming framework.
+> Status (2026-07-27): completed and extracted. The implementation now lives in
+> standalone [`bids4s`](https://github.com/canardlapin/bids4s). Historical
+> `bidsJVM`/`bidsJS` project names and test counts below describe the
+> pre-extraction ScalaFIM module; current bids4s projects are `coreJVM` and
+> `coreJS`.
+
+The BIDS library has a pure, cross-compiled domain core with JVM filesystem
+adapters. This plan strengthened that shape before the code moved to bids4s.
 
 The governing rule is:
 
@@ -40,7 +45,7 @@ those require new focused evidence.
 
 ## Architectural Boundary
 
-The shared BIDS core remains pure and cross-platform. The following values must
+The shared BIDS core in bids4s remains pure and cross-platform. The following values must
 not acquire `IO`, `F[_]`, JVM paths, open handles, fibers, or runtime state:
 
 - `BidsName`, `BidsEntities`, and registry/specification values;
@@ -52,9 +57,10 @@ Pure parsing and validation return domain results. Filesystem traversal,
 reading, cancellation, and bounded concurrency live in JVM or store
 interpreters. No library method may call an `unsafeRun*` operation.
 
-The current one-way internal dependency boundary remains authoritative:
-`bids` may be consumed by `dataset`, `motion`, `fmri-workflow`, and
-`dataset-zarr`; it must not depend back on them.
+The current dependency boundary remains authoritative: bids4s may be consumed
+by ScalaFIM's BIDS-facing adapters, but it must not depend back on ScalaFIM.
+The direct consumers are motion JVM, archived-response JVM interop,
+`fmri-workflow`, and `dataset-zarr`; `dataset` has no direct bids4s edge.
 
 ## Operation Taxonomy
 
@@ -192,18 +198,19 @@ are explicitly outside F5.
 
 ## Consumer Inventory
 
-The live repository consumers that constrain migration are:
+The ScalaFIM consumers that constrain ongoing compatibility are:
 
 - `fmri-workflow`: constructs manifests and queries in shared tests and loads
   projects in JVM ingest tests; `BidsStudyCompiler` already owns workflow-level
   issue policy.
 - `motion`: consumes `BidsProject`, metadata records, and JVM paths; BIDS
   diagnostics must map into `MotionIoError` without collapsing useful context.
-- `dataset`: reuses BIDS JSON and table parsing in the LNA JVM adapter.
+- `interop-archived-response`: reuses BIDS JSON and table parsing in the LNA
+  JVM adapter.
 - `dataset-zarr`: uses BIDS name parsing and the synchronous loader in its live
   NIfTI/BIDS bridge; this workstream is independently reserved and must be
   coordinated rather than edited opportunistically.
-- BIDS module tests and README examples: use direct query construction,
+- bids4s tests and README examples: use direct query construction,
   permissive manifests, synchronous loading, event tables, and confound
   strategies.
 
@@ -269,7 +276,8 @@ by the retained abstractions.
 Each shared-code slice must run both platforms:
 
 ```sh
-sbt bidsJVM/test bidsJS/test
+cd ../bids4s
+sbt testAll
 ```
 
 F4 adds JVM effect/resource tests. F6 additionally runs affected consumers and
