@@ -29,7 +29,6 @@ locus-kernel
 +-- graph
 +-- latent            also depends on response, image
 +-- threshold         also depends on image
-+-- multivar-adapter  also depends on standalone multivar
 +-- connectivity      also depends on graph
 
 graph
@@ -113,7 +112,6 @@ fit + mvpa
 +-- mvpa-fit          run-local trial-readout and pattern-operator composition
 
 standalone multivar
-+-- multivar-adapter  also depends on locus-kernel
 +-- inference         also depends on Gale
 +-- mvpa-fit          also depends on fit, mvpa
 ```
@@ -187,7 +185,6 @@ parsing.
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `linalg`, `model`, `ar` | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
-| `multivar-adapter` | Ordered conversion from ScalaFIM finite-locus selections to standalone multivar index sets and ROI plans. | `locus-kernel`; standalone multivar | Statistical algorithms, solver implementations, multivar IR, dataset/image IO, or scheduler execution. |
 | `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | Standalone multivar; Gale | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
 | `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `locus-kernel`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
@@ -249,7 +246,7 @@ execution to typed interpreters at module boundaries.
 locus-kernel -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spatial
        |             |
        |             +-----> locus-laws  (test support)
-       +-----> graph/connectivity/threshold/latent/multivar-adapter
+       +-----> graph/connectivity/threshold/latent
 ```
 
 `locus-kernel` is the sole owner of generic finite spaces, points, regions,
@@ -399,8 +396,8 @@ descriptors can materialize executable dense morphisms.
   forms and certificates, row measures/centering, singular policies, explicit
   row relationships, direct-sum objectives, sparse-aware preprocessing,
   decomposition artifacts, and language-neutral IR in standalone `multivar`.
-  Put only finite-locus conversion in `multivar-adapter`; keep dataset, image,
-  MVPA, bindings, and scheduler-specific execution in their ScalaFIM modules.
+  Keep dataset, image, MVPA, bindings, and scheduler-specific execution in
+  their ScalaFIM modules.
 - Put perturbation targets, resampling/null actions, Monte Carlo programs,
   latent-unit stability, validity, and evidence provenance in `inference`;
   consume fitted geometry through small standalone `multivar` capabilities and keep

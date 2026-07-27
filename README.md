@@ -48,7 +48,6 @@ cross-compiled sbt build.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
-- `multivar-adapter`: thin ScalaFIM locus-selection adapter for the standalone `canardlapin/multivar` package.
 - `inference`: typed perturbation inference over fitted multivariate structures — targets, resampling designs, null actions, Monte Carlo ladders, latent units, stability, validity, and provenance.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
 - `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
@@ -170,8 +169,6 @@ sbt mvpaJVM/test
 sbt mvpaJS/test
 sbt mvpaFitJVM/test
 sbt mvpaFitJS/test
-sbt multivarAdapterJVM/test
-sbt multivarAdapterJS/test
 sbt inferenceJVM/test
 sbt inferenceJS/test
 sbt connectivityJVM/test
