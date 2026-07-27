@@ -30,6 +30,24 @@ lazy val multivarJVM   = ProjectRef(multivarBuild, "coreJVM")
 lazy val multivarJS    = ProjectRef(multivarBuild, "coreJS")
 lazy val multivarIrJVM = ProjectRef(multivarBuild, "irJVM")
 lazy val multivarIrJS  = ProjectRef(multivarBuild, "irJS")
+
+// Renderer-neutral graphics and platform backends are developed independently.
+// Ordinary builds clone the exact public revision; the system property is an
+// explicit local-development override.
+lazy val intaglioRevision = "596b398af380079e4b251535230d0bc03cd88c51"
+lazy val intaglioBuild =
+  uri(
+    sys.props.getOrElse(
+      "scalafim.intaglio.build",
+      s"https://github.com/canardlapin/intaglio.git#$intaglioRevision"
+    )
+  )
+lazy val intaglioCoreJVM   = ProjectRef(intaglioBuild, "coreJVM")
+lazy val intaglioCoreJS    = ProjectRef(intaglioBuild, "coreJS")
+lazy val intaglioSvgJVM    = ProjectRef(intaglioBuild, "svgJVM")
+lazy val intaglioCanvasJS  = ProjectRef(intaglioBuild, "canvasJS")
+lazy val intaglioJava2dJVM = ProjectRef(intaglioBuild, "java2dJVM")
+lazy val intaglioJavafxJVM = ProjectRef(intaglioBuild, "javafxJVM")
 lazy val jhdfVersion = "0.12.0"
 
 lazy val commonSettings = Seq(
@@ -163,60 +181,8 @@ lazy val pipeline =
 lazy val pipelineJS  = pipeline.js
 lazy val pipelineJVM = pipeline.jvm
 
-lazy val graphics =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graphics"))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graphics"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val graphicsJS  = graphics.js
-lazy val graphicsJVM = graphics.jvm
-
-lazy val graphicsSvg =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graphics-svg"))
-    .dependsOn(graphics)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graphics-svg"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val graphicsSvgJS  = graphicsSvg.js
-lazy val graphicsSvgJVM = graphicsSvg.jvm
-
-lazy val graphicsCanvas =
-  crossProject(JSPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graphics-canvas"))
-    .dependsOn(graphics)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graphics-canvas"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val graphicsCanvasJS = graphicsCanvas.js
-
-lazy val graphicsJava2d =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graphics-java2d"))
-    .dependsOn(graphics)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graphics-java2d"
-    )
-
-lazy val graphicsJava2dJVM = graphicsJava2d.jvm
-
 // OpenJFX publishes platform-specific artifacts by classifier; resolve the one
-// matching the build machine so the JavaFX backend compiles and tests locally.
+// matching the build machine so ScalaFIM's JavaFX hosts compile and test locally.
 lazy val javafxPlatformClassifier: String = {
   val os = sys.props.getOrElse("os.name", "").toLowerCase
   val arch = sys.props.getOrElse("os.arch", "").toLowerCase
@@ -226,22 +192,6 @@ lazy val javafxPlatformClassifier: String = {
     else "linux"
   if (arch.contains("aarch64") && base != "win") base + "-aarch64" else base
 }
-
-lazy val graphicsJavafx =
-  crossProject(JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graphics-javafx"))
-    .dependsOn(graphics)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graphics-javafx",
-      libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
-      )
-    )
-
-lazy val graphicsJavafxJVM = graphicsJavafx.jvm
 
 lazy val response =
   crossProject(JSPlatform, JVMPlatform)
@@ -340,7 +290,7 @@ lazy val design =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/design"))
-    .dependsOn(hrf, graphics)
+    .dependsOn(hrf)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-design",
@@ -349,8 +299,8 @@ lazy val design =
         "org.typelevel" %%% "spire"     % "0.18.0"
       )
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, intaglioCoreJVM, intaglioSvgJVM % "test->compile"))
+    .jsConfigure(_.dependsOn(galeCoreJS, intaglioCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val designJS  = design.js
@@ -430,7 +380,9 @@ lazy val imageView =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/image-view"))
-    .dependsOn(image, graphics)
+    .dependsOn(image)
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-image-view"
@@ -444,7 +396,8 @@ lazy val imageViewCanvas =
   crossProject(JSPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/image-view-canvas"))
-    .dependsOn(imageView, graphicsCanvas)
+    .dependsOn(imageView)
+    .jsConfigure(_.dependsOn(intaglioCanvasJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-image-view-canvas"
@@ -457,7 +410,8 @@ lazy val imageViewJava2d =
   crossProject(JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/image-view-java2d"))
-    .dependsOn(imageView, graphicsJava2d)
+    .dependsOn(imageView)
+    .jvmConfigure(_.dependsOn(intaglioJava2dJVM))
     .settings(commonSettings)
     .settings(
       name := "scalafim-image-view-java2d"
@@ -469,7 +423,8 @@ lazy val imageViewJavafx =
   crossProject(JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/image-view-javafx"))
-    .dependsOn(imageView, graphicsJavafx)
+    .dependsOn(imageView)
+    .jvmConfigure(_.dependsOn(intaglioJavafxJVM))
     .settings(commonSettings)
     .settings(
       name := "scalafim-image-view-javafx",
@@ -534,7 +489,9 @@ lazy val surfaceView =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface-view"))
-    .dependsOn(surface, graphics)
+    .dependsOn(surface)
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view"
@@ -549,6 +506,8 @@ lazy val surfaceViewRaster =
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-raster"))
     .dependsOn(surfaceView)
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-raster"
@@ -562,7 +521,8 @@ lazy val surfaceViewJavafx =
   crossProject(JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-javafx"))
-    .dependsOn(surfaceView, graphicsJavafx, surfaceViewRaster % "test->compile")
+    .dependsOn(surfaceView, surfaceViewRaster % "test->compile")
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-javafx",
@@ -580,6 +540,7 @@ lazy val surfaceViewThree =
     .crossType(CrossType.Full)
     .in(file("modules/surface-view-three"))
     .dependsOn(surfaceView)
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-three"
@@ -593,6 +554,8 @@ lazy val surfaceViewExamples =
     .crossType(CrossType.Full)
     .in(file("examples/surface-view"))
     .dependsOn(surfaceView, surfaceViewRaster)
+    .jvmConfigure(_.dependsOn(intaglioCoreJVM))
+    .jsConfigure(_.dependsOn(intaglioCoreJS))
     .settings(commonSettings)
     .settings(
       name := "scalafim-examples-surface-view",
@@ -1039,13 +1002,6 @@ lazy val root =
       linalgBreezeJVM,
       pipelineJS,
       pipelineJVM,
-      graphicsJS,
-      graphicsJVM,
-      graphicsSvgJS,
-      graphicsSvgJVM,
-      graphicsCanvasJS,
-      graphicsJava2dJVM,
-      graphicsJavafxJVM,
       responseJS,
       responseJVM,
       responseLawsJS,
@@ -1134,8 +1090,8 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("compileAll", ";locusKernelJVM/compile;locusKernelJS/compile;locusDataJVM/compile;locusDataJS/compile;locusLawsJVM/compile;locusLawsJS/compile;graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;graphicsJVM/compile;graphicsJS/compile;graphicsSvgJVM/compile;graphicsSvgJS/compile;graphicsCanvasJS/compile;graphicsJava2dJVM/compile;graphicsJavafxJVM/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;inferenceJVM/compile;inferenceJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;zarrJVM/compile;zarrJS/compile;zarrCodecBloscZstdJVM/compile;zarrCodecBloscZstdJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("testAll", ";locusKernelJVM/test;locusKernelJS/test;locusDataJVM/test;locusDataJS/test;locusLawsJVM/test;locusLawsJS/test;graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;graphicsJVM/test;graphicsJS/test;graphicsSvgJVM/test;graphicsSvgJS/test;graphicsCanvasJS/test;graphicsJava2dJVM/test;graphicsJavafxJVM/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;inferenceJVM/test;inferenceJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;zarrJVM/test;zarrJS/test;zarrCodecBloscZstdJVM/test;zarrCodecBloscZstdJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("compileAll", ";locusKernelJVM/compile;locusKernelJS/compile;locusDataJVM/compile;locusDataJS/compile;locusLawsJVM/compile;locusLawsJS/compile;graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;inferenceJVM/compile;inferenceJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;zarrJVM/compile;zarrJS/compile;zarrCodecBloscZstdJVM/compile;zarrCodecBloscZstdJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("testAll", ";locusKernelJVM/test;locusKernelJS/test;locusDataJVM/test;locusDataJS/test;locusLawsJVM/test;locusLawsJS/test;graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;inferenceJVM/test;inferenceJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;zarrJVM/test;zarrJS/test;zarrCodecBloscZstdJVM/test;zarrCodecBloscZstdJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")

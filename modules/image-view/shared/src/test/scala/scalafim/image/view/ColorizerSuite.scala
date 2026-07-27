@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 
 class ColorizerSuite extends munit.FunSuite:
 

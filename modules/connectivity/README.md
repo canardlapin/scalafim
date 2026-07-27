@@ -35,7 +35,7 @@ At that application boundary, ordinary connectivity projections can use the
 shared plotting DSL without moving renderer types into this module:
 
 ```scala
-import scalafim.graphics.*
+import intaglio.*
 
 final case class EdgeSummary(distance: Double, weight: Double, network: String)
 

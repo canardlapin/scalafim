@@ -1,7 +1,7 @@
 package scalafim.fmri.design
 
 import scalafim.fmri.design.event.EventModel
-import scalafim.graphics.*
+import intaglio.*
 
 enum DesignGraphicsError:
   case Export(error: DesignExportError)

@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.RasterImage
+import intaglio.RasterImage
 import scalafim.image.*
 
 private[view] final case class SliceGeometryKey(

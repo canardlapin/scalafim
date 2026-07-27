@@ -1,6 +1,6 @@
 package scalafim.surface.view.three
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.view.*
 
 final case class ThreeCanvasSize private (width: Int, height: Int, pixelRatio: Double)
@@ -171,7 +171,7 @@ private object ThreeSurfaceCompositor:
   def colors(plan: SurfaceRenderPlan): Vector[ThreeSurfaceColors] =
     plan.meshes.map: mesh =>
       val vertexCount = mesh.positions.length / 3
-      val packed = Array.fill(vertexCount)(Base.packedInt)
+      val packed = Array.fill(vertexCount)(Base.toPackedInt)
       val keys = Vector.newBuilder[SurfaceResourceKey]
       var layerIndex = 0
       while layerIndex < plan.layers.length do
@@ -182,7 +182,7 @@ private object ThreeSurfaceCompositor:
           while vertex < vertexCount do
             val under = rgba(packed(vertex))
             val over = rgba(layer.colors(vertex))
-            packed(vertex) = layer.blendMode.composite(under, over, layer.opacity).packedInt
+            packed(vertex) = layer.blendMode.composite(under, over, layer.opacity).toPackedInt
             vertex += 1
         layerIndex += 1
       val rgb = new Array[Float](vertexCount * 3)
@@ -197,9 +197,4 @@ private object ThreeSurfaceCompositor:
       ThreeSurfaceColors(mesh.surface, keys.result(), rgb)
 
   private def rgba(packed: Int): Rgba32 =
-    Rgba32.packUnsafe(
-      (packed >>> 24) & 0xff,
-      (packed >>> 16) & 0xff,
-      (packed >>> 8) & 0xff,
-      packed & 0xff
-    )
+    Rgba32.fromPackedInt(packed)

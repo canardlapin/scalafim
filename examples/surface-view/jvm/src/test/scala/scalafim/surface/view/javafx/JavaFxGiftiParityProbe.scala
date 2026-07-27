@@ -9,7 +9,7 @@ import javafx.scene.input.PickResult
 import javafx.stage.Stage
 
 import scalafim.examples.surfaceview.*
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.view.raster.*
 
 /** Live direct-parity gate for the exact scene used by the WebGL example. */

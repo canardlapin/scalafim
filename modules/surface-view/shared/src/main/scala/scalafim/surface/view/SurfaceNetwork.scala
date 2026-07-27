@@ -2,7 +2,7 @@ package scalafim.surface.view
 
 import scala.util.hashing.MurmurHash3
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.WorldPoint
 import scalafim.surface.*
 
@@ -317,7 +317,7 @@ object SurfaceNetworkCompiler:
             colors(vertex) = layer.colors(vertex)
             vertex += 1
           while vertex < colors.length do
-            colors(vertex) = Rgba32.unsafe(0, 0, 0, 0).packedInt
+            colors(vertex) = Rgba32.unsafe(0, 0, 0, 0).toPackedInt
             vertex += 1
           val key = SurfaceResourceKey(s"${layer.resourceKey.value}:network:$hash")
           layerKeyChanges(layer.resourceKey) = key
@@ -407,8 +407,8 @@ object SurfaceNetworkCompiler:
         writePoint(positions, endVertex, edge.target.world, nx, ny, nz, display.style.radius.value)
         writeNormal(normals, startVertex, nx, ny, nz)
         writeNormal(normals, endVertex, nx, ny, nz)
-        colors(startVertex) = edge.color.packedInt
-        colors(endVertex) = edge.color.packedInt
+        colors(startVertex) = edge.color.toPackedInt
+        colors(endVertex) = edge.color.toPackedInt
         val next = (side + 1) % sides
         val nextStart = edgeIndex * sides * 2 + next
         val nextEnd = nextStart + sides

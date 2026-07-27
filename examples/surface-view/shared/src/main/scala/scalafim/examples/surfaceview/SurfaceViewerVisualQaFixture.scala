@@ -1,6 +1,6 @@
 package scalafim.examples.surfaceview
 
-import scalafim.graphics.RasterDimensions
+import intaglio.RasterDimensions
 import scalafim.surface.view.raster.*
 
 /** One backend-neutral visual contract shared by the live JVM and browser

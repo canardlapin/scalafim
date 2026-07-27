@@ -8,7 +8,7 @@ application-boundary concerns.
 A group result can be projected into the shared renderer-neutral plotting DSL:
 
 ```scala
-import scalafim.graphics.*
+import intaglio.*
 
 final case class GroupEstimate(index: Double, contrast: String, estimate: Double, lower: Double, upper: Double)
 

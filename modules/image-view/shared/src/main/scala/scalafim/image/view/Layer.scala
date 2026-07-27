@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 
 import scala.reflect.ClassTag
@@ -324,9 +324,9 @@ object SliceLayer:
       val pixels = new Array[Int](dimensions.pixelCount)
       var index = 0
       while index < pixels.length do
-        pixels(index) = activeColorizer.color(slice.values(index)).packedInt
+        pixels(index) = activeColorizer.color(slice.values(index)).toPackedInt
         index += 1
-      RasterImage.unsafeFromPackedArray(dimensions, pixels)
+      RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 
 final case class ViewerModel private (
   referenceSpace: VolumeSpace,

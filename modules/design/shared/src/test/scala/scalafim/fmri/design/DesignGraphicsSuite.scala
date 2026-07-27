@@ -3,7 +3,7 @@ package scalafim.fmri.design
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.graphics.*
+import intaglio.*
 
 class DesignGraphicsSuite extends munit.FunSuite:
 

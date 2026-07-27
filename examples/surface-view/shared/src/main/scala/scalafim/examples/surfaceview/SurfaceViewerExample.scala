@@ -1,6 +1,6 @@
 package scalafim.examples.surfaceview
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
@@ -186,7 +186,7 @@ object SurfaceViewerExample:
     while y < image.height do
       var x = 0
       while x < image.width do
-        hash = 31 * hash + image.pixelUnsafe(x, y).packedInt
+        hash = 31 * hash + image.pixelUnsafe(x, y).toPackedInt
         x += 1
       y += 1
     hash

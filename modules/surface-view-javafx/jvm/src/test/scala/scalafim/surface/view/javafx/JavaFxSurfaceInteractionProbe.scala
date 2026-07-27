@@ -7,7 +7,7 @@ import javafx.scene.{Group, ParallelCamera, PerspectiveCamera, Scene}
 import javafx.scene.input.PickResult
 import javafx.stage.Stage
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*

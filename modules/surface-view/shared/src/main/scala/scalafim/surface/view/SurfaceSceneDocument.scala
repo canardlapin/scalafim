@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 
 opaque type SurfaceContentDigest = String

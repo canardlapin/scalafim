@@ -3,7 +3,7 @@ package scalafim.surface.view.javafx
 import javafx.scene.{ParallelCamera, PerspectiveCamera}
 import javafx.scene.shape.VertexFormat
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 

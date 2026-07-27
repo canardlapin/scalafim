@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 
 class AdvancedViewSuite extends munit.FunSuite:

@@ -54,30 +54,27 @@ linalg
 
 pipeline
 
-graphics
-+-- graphics-svg
-+-- graphics-canvas
-+-- graphics-java2d
-+-- graphics-javafx
+standalone Intaglio core
++-- design                 also depends on hrf, linalg
 +-- image-view             also depends on image
-|   +-- image-view-canvas  also depends on graphics-canvas
-|   +-- image-view-java2d  also depends on graphics-java2d
-|   +-- image-view-javafx  also depends on graphics-javafx
+|   +-- image-view-canvas  also depends on Intaglio Canvas
+|   +-- image-view-java2d  also depends on Intaglio Java2D
+|   +-- image-view-javafx  also depends on Intaglio JavaFX
 +-- surface-view           also depends on surface
     +-- surface-view-raster
-    +-- surface-view-javafx  also depends on graphics-javafx
+    +-- surface-view-javafx  also depends on external OpenJFX
     +-- surface-view-three
     +-- surface-view-connectivity  also depends on connectivity
 
 hrf
-+-- design           also depends on linalg, graphics
++-- design           also depends on linalg, Intaglio core
     +-- model
         +-- fit
             +-- group
 
 image
 +-- registration
-+-- image-view        also depends on graphics
++-- image-view        also depends on Intaglio core
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-kernel, and linalg
 +-- dataset          also depends on response, hrf, bids, locus-data
@@ -86,7 +83,7 @@ image
 |   +-- spatial        also depends on linalg, image
 |   +-- atlas          also depends on image
 |   +-- mvpa-spatial   also depends on mvpa, image, atlas
-|   +-- surface-view   also depends on graphics
+|   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on linalg
 +-- motion            also depends on linalg
 +-- group             also depends on linalg, dataset, design, fit
@@ -116,12 +113,11 @@ standalone multivar
 +-- mvpa-fit          also depends on fit, mvpa
 ```
 
-The `graphics` subtree has a stricter extraction boundary: core has no internal
-dependency, and SVG, Canvas, Java2D, and JavaFX each depend only on core. Image
-and design modules consume that public API but are not part of the standalone
-artifact family. The frozen artifact matrix and lift-and-shift procedure are in
-[`plans/graphics-extraction.md`](plans/graphics-extraction.md); the boundary is
-enforced by `GraphicsExtractionGuardSuite` in `graphicsJVM/test`.
+Graphics is developed in standalone
+[`Intaglio`](https://github.com/canardlapin/intaglio). ScalaFIM pins an exact
+public source revision and depends directly on the smallest required Intaglio
+core or backend project. The completed handoff and verification boundary are
+recorded in [`plans/graphics-extraction.md`](plans/graphics-extraction.md).
 
 The local typed dataframe modules formerly incubated here were extracted to the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository. They
@@ -149,28 +145,23 @@ parsing.
 | `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
 | `linalg-breeze` | JVM-only Breeze-backed adapters for linalg solver contracts and backend differential tests. | `linalg` | Shared APIs, domain-specific algorithms, Scala.js code, or direct Breeze exposure to domain modules. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph-delegated deterministic DAG staging, local pure execution, and structured receipts. | `graph` | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
-| `graphics` | Renderer-neutral graphics algebra: grammar-of-graphics plot/layer specs, row-aware typed aesthetics/scales, immutable grid-like grob scene trees (y-up), a phased plot compiler with derived guides and a layout solver, numeric device-scene resolution, and the renderer conformance contract. | Nothing internal. | Java2D/JavaFX/Canvas rendering, device IO, neuroimaging-specific plot exports, or mutable display-list state. |
-| `graphics-svg` | Deterministic SVG string serialization of resolved `graphics` device scenes (numeric-only geometry, clip paths, rotation), validated against the shared renderer conformance contract. | `graphics` | Plot compilation, browser Canvas state, Java2D/raster output, device IO, or domain-specific plot exporters. |
-| `graphics-canvas` | Scala.js Canvas 2D command compilation and browser-context interpretation, with deterministic command logs validated against the shared renderer conformance contract. | `graphics` | Plot compilation, SVG serialization, JVM raster output, browser DOM ownership, or domain-specific plot exporters. |
-| `graphics-java2d` | JVM Java2D command compilation and `Graphics2D` raster interpretation, validated with deterministic commands, shared conformance, and real image assertions. | `graphics` | Plot compilation, SVG/Canvas rendering, Scala.js code, device IO, or domain-specific plot exporters. |
-| `graphics-javafx` | JVM JavaFX Canvas command compilation and `GraphicsContext` interpretation behind a toolkit-free drawing contract, validated with deterministic commands and shared conformance. | `graphics` | Plot compilation, SVG/Canvas/Java2D rendering, Scala.js code, toolkit lifecycle ownership (application threads, stages), or domain-specific plot exporters. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, provenance, axis-keyed locality capabilities, and read receipts. | Nothing internal; Cats Core and Cats Effect externally. | General tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
-| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, `graphics` | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
+| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, affine math, low-level coordinate transforms, morphisms, resampling, clustering, and metric searchlight construction. | `locus-data` | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
 | `registration` | Frame-safe inverse pairs, symmetric midpoint deformation, paired diffeomorphic flow construction, topology/inverse guards, and nonlinear registration optimization. | `image` | Generic tensor/field kernels, image IO, atlas catalogs, dataset policy, or registration-specific shortcuts in Gale. |
-| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, `graphics` | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
-| `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, `graphics-canvas` | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
-| `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, `graphics-java2d` | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
-| `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, `graphics-javafx` | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
+| `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
+| `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
+| `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
+| `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-kernel`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
 | `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph interop, and JVM surface readers. | `graph`, `image`, `locus-data` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
-| `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, `graphics` | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
-| `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view` | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
-| `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, `graphics-javafx`; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
-| `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
+| `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
+| `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
+| `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
+| `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`, Intaglio core; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
 | `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | `surface-view`, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
 | `spatial` | Neurofunctor-style domains with locus packages, graph-delegated morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | `graph`, `linalg`, `image`, `surface`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
 | `atlas` | Standard atlas descriptors, parcel metadata, typed locus parcellations, parcel/network quotient operations, explicit display order, one-pass reduction, explicit-alignment overlap, region-graph interop, and transform route descriptors. | `graph`, `image`, `surface`, `locus-data` | Generic spatial operator compilation, low-level transform kernels, or extensional region identity in labels/metadata. |
@@ -278,7 +269,7 @@ image ----------------------> surface-view <---------------- connectivity
                                ^       |
                                |       +--> surface-view-raster  (JVM + JS)
 surface -----------------------+       +--> surface-view-javafx  (JVM)
-graphics ----------------------+       +--> surface-view-three   (Scala.js)
+Intaglio core -----------------+       +--> surface-view-three   (Scala.js)
                                        +--> surface-view-connectivity
 ```
 
@@ -367,8 +358,9 @@ descriptors can materialize executable dense morphisms.
   appear in shared APIs. The current JVM adapter is `linalg-breeze`; see
   `docs/plans/linalg-backend-strategy.md`.
 - Put generic workflow graph algebra in `pipeline`; keep domain execution in the owning computational modules and adapt it upward.
-- Put renderer-neutral plotting and scene-description contracts in `graphics`; keep concrete rendering backends and domain-specific plot exporters in adapters above it.
-- Put deterministic SVG string rendering in `graphics-svg`, browser Canvas 2D rendering in `graphics-canvas`, and JVM raster rendering in `graphics-java2d`; keep future backends in separate adapters rather than broadening `graphics`.
+- Put general plotting, scene-description contracts, and concrete renderers in
+  standalone Intaglio. ScalaFIM modules may adapt scientific values into that
+  public API but must not recreate renderer or grammar internals.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
 - Put nonlinear registration state, objectives, deformation geometry, and
   acceptance policy in `registration`; keep reusable image-field kernels in

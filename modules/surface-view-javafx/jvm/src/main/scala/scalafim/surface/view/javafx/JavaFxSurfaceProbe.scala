@@ -8,7 +8,7 @@ import javafx.scene.paint.{Color, PhongMaterial}
 import javafx.scene.shape.{CullFace, MeshView, TriangleMesh, VertexFormat}
 import javafx.scene.transform.Affine
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.view.*
 
 enum JavaFxSurfaceError:
@@ -460,7 +460,7 @@ object JavaFxSurfaceProbe:
 
   private[javafx] def compositeColors(plan: SurfaceRenderPlan): Map[SurfaceId, Array[Int]] =
     plan.meshes.map: mesh =>
-      val colors = Array.fill(mesh.positions.length / 3)(Rgba32.unsafe(184, 184, 184).packedInt)
+      val colors = Array.fill(mesh.positions.length / 3)(Rgba32.unsafe(184, 184, 184).toPackedInt)
       var layerIndex = 0
       while layerIndex < plan.layers.length do
         val layer = plan.layers(layerIndex)
@@ -469,7 +469,7 @@ object JavaFxSurfaceProbe:
           while vertex < colors.length do
             val under = unpack(colors(vertex))
             val over = unpack(layer.colors(vertex))
-            colors(vertex) = layer.blendMode.composite(under, over, layer.opacity).packedInt
+            colors(vertex) = layer.blendMode.composite(under, over, layer.opacity).toPackedInt
             vertex += 1
         layerIndex += 1
       mesh.surface -> colors
@@ -560,4 +560,4 @@ object JavaFxSurfaceProbe:
         material.setSelfIlluminationMap(image)
 
   private def unpack(value: Int): Rgba32 =
-    Rgba32.unsafe((value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff)
+    Rgba32.fromPackedInt(value)

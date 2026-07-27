@@ -1,6 +1,6 @@
 package scalafim.surface.view.raster
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.view.*
 
 enum SurfaceRasterError:
@@ -179,7 +179,7 @@ object SurfaceRasterizer:
   ): SurfaceRasterResult =
     val setupStarted = System.nanoTime()
     val pixelCount = dimensions.pixelCount
-    val pixels = Array.fill(pixelCount)(style.background.packedInt)
+    val pixels = Array.fill(pixelCount)(style.background.toPackedInt)
     val depths = Array.fill(pixelCount)(Double.PositiveInfinity)
     val faceAt = Array.fill(pixelCount)(-1)
     val slotAt = Array.fill(pixelCount)(-1)
@@ -188,7 +188,7 @@ object SurfaceRasterizer:
     val baryB = new Array[Float](pixelCount)
     val baryC = new Array[Float](pixelCount)
     val composedColors = plan.meshes.map: mesh =>
-      val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.packedInt)
+      val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
       while layerIndex < plan.layers.length do
         val layer = plan.layers(layerIndex)
@@ -197,7 +197,7 @@ object SurfaceRasterizer:
           while vertex < colors.length do
             val under = packed(colors(vertex))
             val over = packed(layer.colors(vertex))
-            colors(vertex) = layer.blendMode.composite(under, over, layer.opacity).packedInt
+            colors(vertex) = layer.blendMode.composite(under, over, layer.opacity).toPackedInt
             vertex += 1
         layerIndex += 1
       colors
@@ -254,7 +254,7 @@ object SurfaceRasterizer:
       slot += 1
 
     val renderNanos = System.nanoTime() - renderStarted
-    val image = RasterImage.unsafeFromPackedArray(dimensions, pixels)
+    val image = RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
     val receipt = SurfaceRasterReceipt(
       trianglesInput,
       trianglesAfterClipping,
@@ -467,7 +467,7 @@ object SurfaceRasterizer:
     (px - ax) * (by - ay) - (py - ay) * (bx - ax)
 
   private def packed(value: Int): Rgba32 =
-    Rgba32.unsafe((value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff)
+    Rgba32.fromPackedInt(value)
 
   private def clampByte(value: Double): Int =
     math.round(value).toInt.max(0).min(255)

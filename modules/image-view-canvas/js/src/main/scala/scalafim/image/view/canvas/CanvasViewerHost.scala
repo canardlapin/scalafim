@@ -1,7 +1,7 @@
 package scalafim.image.view.canvas
 
 import scala.scalajs.js
-import scalafim.graphics.canvas.*
+import intaglio.canvas.*
 import scalafim.image.AnatomicalPlane
 import scalafim.image.view.*
 

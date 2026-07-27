@@ -13,7 +13,7 @@ import javafx.scene.input.PickResult
 import javafx.stage.Stage
 
 import scalafim.examples.surfaceview.*
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.io.GiftiSurfaceReader
 import scalafim.surface.view.*

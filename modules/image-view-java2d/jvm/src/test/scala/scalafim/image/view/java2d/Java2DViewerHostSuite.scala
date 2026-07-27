@@ -1,7 +1,7 @@
 package scalafim.image.view.java2d
 
-import scalafim.graphics.*
-import scalafim.graphics.java2d.Java2DProgram
+import intaglio.*
+import intaglio.java2d.Java2DProgram
 import scalafim.image.*
 import scalafim.image.view.*
 

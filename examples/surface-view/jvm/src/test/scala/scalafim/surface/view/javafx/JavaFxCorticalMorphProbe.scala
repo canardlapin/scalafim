@@ -9,7 +9,7 @@ import javafx.scene.image.WritableImage
 import javafx.stage.Stage
 
 import scalafim.examples.surfaceview.*
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.io.GiftiSurfaceReader
 import scalafim.surface.view.*

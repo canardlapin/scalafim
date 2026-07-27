@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 
 /** Pinned, allocation-explicit fixture shared by every backend benchmark.
   * The mesh and layer keys deliberately encode only the resource changes that

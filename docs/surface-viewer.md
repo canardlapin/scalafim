@@ -19,8 +19,8 @@ surface geometry + fields          image volume       connectivity result
                  JVM + JS                JVM                 Scala.js
 ```
 
-`surface-view` depends on the existing `surface` and `graphics` cores. It uses
-the project graphics subsystem for renderer-neutral chrome (`Scene`, `Grob`,
+`surface-view` depends on the existing `surface` core and standalone Intaglio.
+It uses Intaglio for renderer-neutral chrome (`Scene`, `Grob`,
 text, orientation marks, legends, and publication composition). Mesh triangles
 are deliberately a separate 3D primitive stream: forcing them through the 2D
 Grob algebra would discard depth, culling, lighting, and native picking.
@@ -39,7 +39,7 @@ The split is intentional:
 ## Minimal shared viewer
 
 ```scala
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 
@@ -227,7 +227,7 @@ currently reject world-plane plans and advertise that limitation in
 unsupported feature. Near/far camera clipping remains available.
 
 Publication presets pin dimensions, margins, font sizes, background, title,
-orientation, and legend. 2D chrome is a normal graphics `Scene`, so the same
+orientation, and legend. 2D chrome is a normal Intaglio `Scene`, so the same
 Grob tree can be composed over a surface snapshot and rendered with Canvas,
 Java2D, JavaFX, or SVG.
 

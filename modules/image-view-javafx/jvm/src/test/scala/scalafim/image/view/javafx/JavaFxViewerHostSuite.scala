@@ -1,7 +1,7 @@
 package scalafim.image.view.javafx
 
-import scalafim.graphics.*
-import scalafim.graphics.javafx.JavaFxProgram
+import intaglio.*
+import intaglio.javafx.JavaFxProgram
 import scalafim.image.*
 import scalafim.image.view.*
 

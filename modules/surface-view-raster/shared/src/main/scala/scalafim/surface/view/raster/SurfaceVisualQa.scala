@@ -1,6 +1,6 @@
 package scalafim.surface.view.raster
 
-import scalafim.graphics.*
+import intaglio.*
 
 enum SurfaceVisualQaError:
   case DimensionMismatch(expectedWidth: Int, expectedHeight: Int, observedWidth: Int, observedHeight: Int)

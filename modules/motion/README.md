@@ -35,7 +35,7 @@ Motion QC values can be projected into a renderer-neutral plot without a
 reporting framework dependency:
 
 ```scala
-import scalafim.graphics.*
+import intaglio.*
 
 final case class MotionQcPoint(frame: Double, displacement: Double)
 

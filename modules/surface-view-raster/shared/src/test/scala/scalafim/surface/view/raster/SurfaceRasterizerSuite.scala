@@ -1,6 +1,6 @@
 package scalafim.surface.view.raster
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
@@ -70,7 +70,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     while y < image.height do
       var x = 0
       while x < image.width do
-        result = 31 * result + image.pixelUnsafe(x, y).packedInt
+        result = 31 * result + image.pixelUnsafe(x, y).toPackedInt
         x += 1
       y += 1
     result

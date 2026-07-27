@@ -1,28 +1,28 @@
 package scalafim.image.view
 
-type ColorizerError = scalafim.graphics.DisplayError
-val ColorizerError = scalafim.graphics.DisplayError
+type ColorizerError = intaglio.DisplayError
+val ColorizerError = intaglio.DisplayError
 
-type DisplayWindow = scalafim.graphics.DisplayWindow
-val DisplayWindow = scalafim.graphics.DisplayWindow
+type DisplayWindow = intaglio.DisplayWindow
+val DisplayWindow = intaglio.DisplayWindow
 
-type ThresholdBand = scalafim.graphics.ThresholdBand
-val ThresholdBand = scalafim.graphics.ThresholdBand
+type ThresholdBand = intaglio.ThresholdBand
+val ThresholdBand = intaglio.ThresholdBand
 
-type DisplayThreshold = scalafim.graphics.DisplayThreshold
-val DisplayThreshold = scalafim.graphics.DisplayThreshold
+type DisplayThreshold = intaglio.DisplayThreshold
+val DisplayThreshold = intaglio.DisplayThreshold
 
-type Colorizer[A] = scalafim.graphics.Colorizer[A]
-val Colorizer = scalafim.graphics.Colorizer
+type Colorizer[A] = intaglio.Colorizer[A]
+val Colorizer = intaglio.Colorizer
 
-type ColorRamp = scalafim.graphics.ColorRamp
-val ColorRamp = scalafim.graphics.ColorRamp
+type ColorRamp = intaglio.ColorRamp
+val ColorRamp = intaglio.ColorRamp
 
-type ScalarColorizer = scalafim.graphics.ScalarColorizer
-val ScalarColorizer = scalafim.graphics.ScalarColorizer
+type ScalarColorizer = intaglio.ScalarColorizer
+val ScalarColorizer = intaglio.ScalarColorizer
 
-type LabelColorizer = scalafim.graphics.LabelColorizer
-val LabelColorizer = scalafim.graphics.LabelColorizer
+type LabelColorizer = intaglio.LabelColorizer
+val LabelColorizer = intaglio.LabelColorizer
 
-type MaskColorizer = scalafim.graphics.MaskColorizer
-val MaskColorizer = scalafim.graphics.MaskColorizer
+type MaskColorizer = intaglio.MaskColorizer
+val MaskColorizer = intaglio.MaskColorizer

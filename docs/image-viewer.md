@@ -25,7 +25,7 @@ any voxel type; linear and cubic sampling are `Double`-only at compile time.
 ## Minimal shared view
 
 ```scala
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 import scalafim.image.view.*
 
@@ -51,7 +51,7 @@ val frame = session.frame(model)
   .fold(error => throw new IllegalArgumentException(error.message), identity)
 ```
 
-`frame.scene` is a normal `graphics.Scene`; `frame.panels` records the exact
+`frame.scene` is a normal Intaglio `Scene`; `frame.panels` records the exact
 world grid and fitted device rectangle for each anatomical view. Scalar,
 integer-label, and Boolean-mask layers can coexist because each layer retains
 its own sampling and colorization types. Layers with different affines are
@@ -147,7 +147,7 @@ are documented in [`benchmarks/image-view-browser.md`](benchmarks/image-view-bro
 
 ## Platform hosts
 
-- `CanvasViewerHost` compiles and draws through `graphics-canvas`; DOM code
+- `CanvasViewerHost` compiles and draws through Intaglio Canvas; DOM code
   supplies canvas-relative pointer coordinates and owns listeners/lifecycle.
   Interactive clients should create one `CanvasViewerRuntime` with
   `CanvasViewerHost.runtime()` and retain it across frames. The runtime owns

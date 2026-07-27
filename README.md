@@ -12,11 +12,6 @@ cross-compiled sbt build.
 - `graph-linalg`: basis-carrying topology/weighted adjacency, incidence, degree/strength, and Laplacian operators over the shared sparse linear-map contracts.
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
-- `graphics`: renderer-neutral grammar-of-graphics core, row-aware typed scales and statistical transforms (count, histogram, summary intervals, density), immutable grid-like scene trees, and plot/layer specifications.
-- `graphics-svg`: deterministic SVG renderer for `graphics` scene trees.
-- `graphics-canvas`: Scala.js Canvas 2D renderer with deterministic command recording.
-- `graphics-java2d`: JVM Java2D raster renderer with deterministic commands and image-level tests.
-- `graphics-javafx`: JVM JavaFX Canvas renderer with deterministic commands behind a toolkit-free drawing contract.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
@@ -66,8 +61,13 @@ standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
 
 General multivariate analysis and its language-neutral IR now live in the
 standalone [`multivar`](https://github.com/canardlapin/multivar) repository.
-ScalaFIM pins an immutable source revision and retains only its locus-selection
-adapter and downstream neuroimaging integrations.
+ScalaFIM pins an immutable source revision and owns only downstream
+neuroimaging integrations.
+
+Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
+live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
+ScalaFIM pins an immutable source revision; design and viewer modules consume
+only the smallest required Intaglio core or backend project.
 
 See [docs/image-viewer.md](docs/image-viewer.md) for the world-coordinate
 contract, slice and layer APIs, interaction reducer, caching receipts, and
@@ -96,13 +96,6 @@ sbt linalgJVM/test
 sbt linalgJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
-sbt graphicsJVM/test
-sbt graphicsJS/test
-sbt graphicsSvgJVM/test
-sbt graphicsSvgJS/test
-sbt graphicsCanvasJS/test
-sbt graphicsJava2dJVM/test
-sbt graphicsJavafxJVM/test
 sbt responseJVM/test
 sbt responseJS/test
 sbt responseLawsJVM/test

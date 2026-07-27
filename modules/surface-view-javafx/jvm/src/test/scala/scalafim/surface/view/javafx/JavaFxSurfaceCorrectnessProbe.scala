@@ -7,7 +7,7 @@ import javafx.scene.Scene
 import javafx.scene.image.WritableImage
 import javafx.stage.Stage
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*

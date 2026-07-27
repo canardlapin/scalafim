@@ -7,7 +7,7 @@ import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import javafx.scene.shape.CullFace
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.view.*
 
 object JavaFxSurfaceBenchmark:

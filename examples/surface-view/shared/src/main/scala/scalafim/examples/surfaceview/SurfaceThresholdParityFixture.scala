@@ -1,6 +1,6 @@
 package scalafim.examples.surfaceview
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*

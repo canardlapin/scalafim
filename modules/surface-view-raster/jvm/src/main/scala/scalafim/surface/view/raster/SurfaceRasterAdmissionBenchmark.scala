@@ -1,6 +1,6 @@
 package scalafim.surface.view.raster
 
-import scalafim.graphics.RasterDimensions
+import intaglio.RasterDimensions
 import scalafim.surface.view.*
 
 /** Deterministic CPU baseline for the pinned admission matrix. Each output

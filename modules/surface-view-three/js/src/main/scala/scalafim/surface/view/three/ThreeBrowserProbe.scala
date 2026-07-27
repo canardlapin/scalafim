@@ -3,7 +3,7 @@ package scalafim.surface.view.three
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 import scalafim.surface.view.*
 

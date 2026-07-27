@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 
 class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
@@ -34,8 +34,8 @@ class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
       Vector(layer)
     ).toOption.get
     val plan = SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get
-    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(48, 48, 48).packedInt)
-    assertEquals(plan.layers.head.colors(2), Rgba32.unsafe(208, 208, 208).packedInt)
+    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(48, 48, 48).toPackedInt)
+    assertEquals(plan.layers.head.colors(2), Rgba32.unsafe(208, 208, 208).toPackedInt)
 
     val rewound = geometry(inflated.mesh.vertices.map(point => Seq(point.x, point.y, point.z)), Seq((0, 2, 1)))
     assertEquals(
@@ -78,9 +78,9 @@ class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
     assertEquals(receipt.title, Some("Curvature"))
     assertEquals(receipt.legendLabels, Vector("sulcus"))
     assertEquals(receipt.background, Rgba32.unsafe(255, 255, 255))
-    val image = RasterImage.unsafeFromPackedArray(
+    val image = RasterImage.unsafeFromOwnedPackedArray(
       RasterDimensions.unsafe(2, 2),
-      Array.fill(4)(Rgba32.unsafe(255, 255, 255).packedInt)
+      Array.fill(4)(Rgba32.unsafe(255, 255, 255).toPackedInt)
     )
     val scene = SurfacePublication.compose(image, decorated)
     assertEquals(scene.size, 5)

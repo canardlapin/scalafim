@@ -3,8 +3,8 @@ package scalafim.image.view.canvas
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.Uint8ClampedArray
-import scalafim.graphics.*
-import scalafim.graphics.canvas.*
+import intaglio.*
+import intaglio.canvas.*
 import scalafim.image.*
 import scalafim.image.view.*
 

@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
 
@@ -97,7 +97,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     val viewer = SurfaceViewerModel.make(Vector(asset), Vector(layer)).toOption.get
     val plan = SurfaceCompiler.compile(viewer, SurfaceViewerState.initial(viewer)).toOption.get
     assertEquals(plan.readouts, Vector.empty)
-    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(0, 0, 0).packedInt)
+    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(0, 0, 0).toPackedInt)
     assert(SurfaceLayer.scalar(scalarId, leftId, left, Array(1.0), ScalarColorizer(DisplayWindow.unsafe(0.0, 1.0))).isLeft)
 
   test("model rejects duplicate ids, unknown surfaces, topology mismatch, and dynamic frame disagreement"):

@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.surface.*
 
 enum SurfaceLayerKind:
@@ -61,7 +61,7 @@ object SurfaceLayer:
       val offset = frame * geometry.vertexCount
       var vertex = 0
       while vertex < target.length do
-        target(vertex) = effective.color(values(offset + vertex)).packedInt
+        target(vertex) = effective.color(values(offset + vertex)).toPackedInt
         vertex += 1
 
     private[view] def describe(vertex: Int, timepoint: Int): String =
@@ -85,7 +85,7 @@ object SurfaceLayer:
       val offset = frame * geometry.vertexCount
       var vertex = 0
       while vertex < target.length do
-        target(vertex) = colorizer.color(values(offset + vertex)).packedInt
+        target(vertex) = colorizer.color(values(offset + vertex)).toPackedInt
         vertex += 1
 
     private[view] def describe(vertex: Int, timepoint: Int): String =
@@ -109,7 +109,7 @@ object SurfaceLayer:
       val offset = frame * geometry.vertexCount
       var vertex = 0
       while vertex < target.length do
-        target(vertex) = colorizer.color(values(offset + vertex)).packedInt
+        target(vertex) = colorizer.color(values(offset + vertex)).toPackedInt
         vertex += 1
 
     private[view] def describe(vertex: Int, timepoint: Int): String =
@@ -233,6 +233,6 @@ object SurfaceLayer:
       val packed = new Array[Int](values.length)
       var index = 0
       while index < values.length do
-        packed(index) = values(index).packedInt
+        packed(index) = values(index).toPackedInt
         index += 1
       new PackedLayer(id, surfaceId, geometry, frameCount, opacity, blendMode, packed)

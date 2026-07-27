@@ -3,7 +3,7 @@ package scalafim.surface.view.three
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*

@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.DeviceContext
+import intaglio.DeviceContext
 import scalafim.image.*
 
 opaque type SliceStep = Double

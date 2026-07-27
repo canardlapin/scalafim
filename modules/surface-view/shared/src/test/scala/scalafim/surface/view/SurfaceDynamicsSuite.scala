@@ -1,6 +1,6 @@
 package scalafim.surface.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 import scalafim.surface.*
 
@@ -248,8 +248,8 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
       Vector(layer)
     ).toOption.get
     val plan = SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get
-    assertEquals(plan.layers.head.colors(1), Rgba32.unsafe(255, 0, 0).packedInt)
-    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(0, 0, 0, 0).packedInt)
+    assertEquals(plan.layers.head.colors(1), Rgba32.unsafe(255, 0, 0).toPackedInt)
+    assertEquals(plan.layers.head.colors(0), Rgba32.unsafe(0, 0, 0, 0).toPackedInt)
     val history0 = SurfaceSelectionHistory.make(2).toOption.get
     val history1 = history0.append(selection, WorldPoint(0.0, 0.0, 0.0), Some(annotationId))
     val history2 = history1.append(selection, WorldPoint(1.0, 0.0, 0.0))

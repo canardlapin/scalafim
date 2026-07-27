@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.{Float32Array, Uint8Array, Uint32Array}
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
