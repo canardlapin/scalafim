@@ -23,7 +23,7 @@ locus-kernel
 |   +-- surface       also depends on image, graph
 |   +-- atlas         also depends on image, surface, graph
 |   +-- spatial       also depends on linalg, image, surface
-|   +-- dataset       also depends on response, image, hrf, bids
+|   +-- dataset       also depends on response, image, hrf
 |   +-- mvpa-spatial  also depends on mvpa, image, surface, atlas
 |   +-- locus-laws    test-support and reference models
 +-- graph
@@ -80,7 +80,7 @@ image
 +-- image-view        also depends on graphics
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-kernel, and linalg
-+-- dataset          also depends on response, hrf, bids, locus-data
++-- dataset          also depends on response, hrf, locus-data
 |   +-- mvpa-dataset  also depends on mvpa
 +-- surface
 |   +-- spatial        also depends on linalg, image
@@ -91,16 +91,19 @@ image
 +-- motion            also depends on linalg
 +-- group             also depends on linalg, dataset, design, fit
 
-bids
-+-- dataset           one-way boundary parsing dependency; bids has no internal deps
+standalone bids4s
++-- motion JVM
++-- interop-archived-response JVM
++-- fmri-workflow
++-- dataset-zarr
 
-bids + dataset + model + fit + group
+bids4s + dataset + model + fit + group
 +-- fmri-workflow     outer composition only; no lower module depends back on it
 
 zarr
 +-- zarr-codec-blosc-zstd  optional JVM JNI / Scala.js WASM codec provider
 +-- archive-zarr      also depends on archive
-    +-- dataset-zarr  also depends on dataset, image, bids
+    +-- dataset-zarr  also depends on dataset, image, standalone bids4s
 
 archive
 +-- archive-lna       also depends on image
@@ -130,12 +133,11 @@ are no longer part of the ScalaFIM build or internal dependency graph.
 `pipeline` depends only on `graph` for validated DAG layering. It owns generic
 graph orchestration without forcing workflow dependencies into the computational core;
 `fmri-workflow` will add that edge when its orchestration lowering lands.
-`bids` remains free of internal ScalaFIM dependencies and parses/describes BIDS
-projects without pulling in dataset, image IO, or modeling dependencies. Cats
-Core is confined to internal shared validation accumulation; Cats Effect is
-confined to the JVM loader/store interpreter. Dataset IO adapters may consume
-`bids` at the boundary when they need BIDS metadata tables or exact entity
-parsing.
+Reusable BIDS semantics live in standalone
+[`bids4s`](https://github.com/canardlapin/bids4s), which has no ScalaFIM
+dependency. ScalaFIM pins an immutable bids4s source revision. Only motion JVM,
+archived-response JVM interop, `fmri-workflow`, and `dataset-zarr` consume that
+boundary; the core `dataset` module does not.
 
 ## Module Roles
 
@@ -165,7 +167,7 @@ parsing.
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, `graphics-java2d` | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, `graphics-javafx` | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-kernel`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
-| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg` | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
+| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg`; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
 | `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph interop, and JVM surface readers. | `graph`, `image`, `locus-data` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, `graphics` | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view` | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
@@ -178,9 +180,8 @@ parsing.
 | `archive-lna` | Typed LNA paths, manifests, descriptors, validation, quant/delta payload codecs, shared-basis artifacts and registries, pure legacy-manifest normalization, JVM HDF5 stores, and the eager whole-payload driver. | `archive`, `image`; jHDF on JVM. | Scientific reconstruction, latent encoders, dataset discovery, response interpretation, runtime family assembly, or ownership of the canonical manifest writer. |
 | `response-laws` | Typed, framework-neutral JVM/Scala.js checks for response ordering, shape, selected/whole and partition decode consistency, raw-bit persistence, axis-keyed receipt conformance, and provenance derivation. | `response` | Runtime execution, representation mathematics, archive bindings, fixtures, effect interpretation, or ownership of production response types. |
 | `latent` | Archive-independent response-representation contracts, typed inspectable decode plans, temporal bases, transport and BOLDZip response semantics, radial/HRBF mathematics, and exact locus-backed active/full-grid selection order. | `response`, `image`, `locus-kernel`; Gale on each platform. | Archive values or paths, physical execution, checksums, dataset storage backends, model execution, a general tensor API, or another spatial selection algebra. |
-| `interop-archived-response` | Typed logical-read lowering between representations and LNA/Zarr archives, legacy LNA reconstruction and archive-specific latent codecs, archive/latent dataset compatibility, first-class narrow persisted envelopes, canonical dense-BOLD response binding, immutable registries, and resource-safe runtime assembly. | `response`, `latent`, `archive`, `archive-lna`, `archive-zarr`, `dataset` | New reconstruction mathematics, core dataset query semantics, manifest attribute scraping, global mutable/plugin-loaded registries, or a universal payload/tensor carrier. |
-| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `bids`, `locus-data` | Archive or concrete representation imports, compatibility dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
-| `bids` | Pure BIDS names/entities, checked manifests, queries, TSV tables, fMRIPrep confound selection, and domain diagnostics; JVM resource-safe project/store adapters. | Nothing internal; Cats Core in shared, Cats Effect on JVM. | Dataset execution, image decoding, model fitting, remote-store policy, or hidden runtime execution. |
+| `interop-archived-response` | Typed logical-read lowering between representations and LNA/Zarr archives, legacy LNA reconstruction and archive-specific latent codecs, archive/latent dataset compatibility, first-class narrow persisted envelopes, canonical dense-BOLD response binding, immutable registries, and resource-safe runtime assembly. | `response`, `latent`, `archive`, `archive-lna`, `archive-zarr`, `dataset`; standalone bids4s on JVM | New reconstruction mathematics, core dataset query semantics, manifest attribute scraping, global mutable/plugin-loaded registries, or a universal payload/tensor carrier. |
+| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data` | Archive or concrete representation imports, compatibility dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `linalg`, `model`, `ar` | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
@@ -190,11 +191,11 @@ parsing.
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
-| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `bids`, `dataset`, `model`, `fit`, `group` | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
+| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `zarr` | Dependency-free Zarr v3 metadata plus read-only v2 lowering, runtime-rank hierarchy and factored slice/gather geometry, direct/sharded planning, backpressured chunk fragments, primitive codecs, portable bounded async reads, revision-scoped bounded object/range caches, store-independent sync/async create-only writers, content receipts, and atomic JVM publication. | Nothing internal. | Neuroimaging semantics, BIDS identity, S3 credentials, persistent cache/prefetch/retention policy, mutation, v2 writing, or hidden execution policy. |
 | `zarr-codec-blosc-zstd` | Optional typed Zarr v3 Blosc/Zstandard capability, bounded frame validation, JVM JNI executor, and Scala.js embedded-WASM executor. | `zarr`; external platform codec dependencies | Generic Zarr planning, neuroimaging semantics, or an implied guarantee that Scala.js can encode every Blosc `typesize`. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | `zarr`, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
-| `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`, `bids` | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
+| `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 
 The single-layer typed operator core, language-neutral IR, mathematical
 contracts, and validation matrix are authoritative in the standalone
@@ -208,9 +209,12 @@ and neuroimaging-facing integrations.
 
 ```text
 response -> dataset -> model -> fit
-             ^          ^
-             |          |
-           bids       design -> hrf
+                        ^
+                        |
+                     design -> hrf
+
+bids4s -> motion / fmri-workflow / dataset-zarr
+      \-> interop-archived-response JVM
 
 archive-lna + archive-zarr + latent + response + dataset
   -> interop-archived-response
@@ -218,12 +222,12 @@ archive-lna + archive-zarr + latent + response + dataset
 response -> response-laws
   -> reusable checks consumed from module test configurations
 
-archive-zarr + dataset + image + bids
+archive-zarr + dataset + image + bids4s
   -> dataset-zarr
 ```
 
-`response` owns the storage-neutral selected-read contract. `bids` describes
-files and confounds. `dataset` provides pure scientific descriptions, explicit
+`response` owns the storage-neutral selected-read contract. Standalone bids4s
+describes BIDS files and confounds. `dataset` provides pure scientific descriptions, explicit
 synchronous readers, and checked effectful attachment over that contract.
 `design`/`hrf` describe regressors. `model` joins those descriptions into an
 inspectable plan. `fit` executes the plan with `linalg` and optionally `ar`.
@@ -384,9 +388,9 @@ descriptors can materialize executable dense morphisms.
 - Put route compilation, sparse projectors, adjoints, QC, provenance, and
   operator caches in `spatial`.
 - Put dataset selection/storage contracts and narrow dataset-backend adapters in
-  `dataset`; put reusable BIDS table/query logic in `bids`, and translate BIDS
-  entities at dataset IO boundaries with exact parsed matches rather than
-  filename substring filters.
+  `dataset`; put reusable BIDS table/query logic in standalone bids4s, and
+  translate BIDS entities at dataset IO boundaries with exact parsed matches
+  rather than filename substring filters.
 - Put inspectable model descriptions in `model`; put numeric execution in
   `fit`; put group-level inference in `group`.
 - Put cross-module BIDS-to-group study recipes, catalog/job identity, structural

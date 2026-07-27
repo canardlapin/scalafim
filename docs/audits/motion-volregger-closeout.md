@@ -48,11 +48,15 @@ The shared motion module depends only on `image` and `linalg`:
 lazy val motion = ...dependsOn(image, linalg)
 ```
 
-JVM-only adapters add the BIDS dependency:
+At the time of this closeout, JVM-only adapters added the in-repository BIDS
+dependency:
 
 ```scala
 lazy val motionJVM = motion.jvm.dependsOn(bidsJVM)
 ```
+
+After the 2026-07-27 extraction, the equivalent edge targets the pinned
+standalone `bids4sJVM` project reference.
 
 The shared source tree contains no file IO, BIDS, plotting, process execution,
 or JVM-only numeric libraries. JVM-only code is isolated in:
