@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.family.canonical.{ResidualRegularization, TraceRidgeFraction}
+import multivar.family.canonical.{ResidualRegularization, TraceRidgeFraction}
 
 import gale.backend.Backend.given
 import gale.linalg.DMat

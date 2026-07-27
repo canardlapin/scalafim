@@ -1,8 +1,8 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.contract.RequestedOptimizationClaim
-import scalafim.multivar.family.canonical.{CanonicalEffectReferenceFixtures as R, ResidualRegularization, TraceRidgeFraction}
-import scalafim.multivar.optimization.FeasibleSetKind
+import multivar.contract.RequestedOptimizationClaim
+import multivar.family.canonical.{CanonicalEffectReferenceFixtures as R, ResidualRegularization, TraceRidgeFraction}
+import multivar.optimization.FeasibleSetKind
 
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.RunId

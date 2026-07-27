@@ -107,8 +107,6 @@ object SobolevBuffer:
 final class SobolevWorkspace[A] private (
     val frame: Frame[A],
     private[registration] val rhs: MutableDVec,
-    private[registration] val rhsView: DVec,
-    private[registration] val rhsGuess: Option[DVec],
     private[registration] val inverseDiagonal: NArray[Double],
     private[registration] val inverseAffine: DMat,
     val ownedOperatorScalarBuffers: Int
@@ -129,12 +127,9 @@ object SobolevWorkspace:
       identity
     )
     val rhs = MutableDVec.zeros(frame.grid.nVoxels)
-    val rhsView = rhs.asVec
     new SobolevWorkspace(
       frame,
       rhs,
-      rhsView,
-      Some(rhsView),
       inverseDiagonal,
       inverse,
       ownedOperatorScalarBuffers
@@ -273,15 +268,16 @@ object SobolevShaper:
       while component < 3 && failure.isEmpty do
         loadComponent(rawValues, component * n, destination.valid, workspace.rhs)
         var pass = 0
-        var solution = workspace.rhsView
+        var currentRhs = workspace.rhs.toVec
+        var solution = currentRhs
         while pass < config.power && failure.isEmpty do
-          val rhsNorm = workspace.rhsView.norm2
+          val rhsNorm = currentRhs.norm2
           val result = IterativeSolvers.cg(
             operator,
-            workspace.rhsView,
+            currentRhs,
             solverConfig,
             preconditioner,
-            initial = workspace.rhsGuess,
+            initial = Some(currentRhs),
             toleranceMode = ToleranceMode.RelativeToRhs
           )
           solution = result.x
@@ -297,7 +293,7 @@ object SobolevShaper:
                 relative
               )
             )
-          else if pass + 1 < config.power then workspace.rhs := solution
+          else if pass + 1 < config.power then currentRhs = solution
           pass += 1
         if failure.isEmpty then copySolution(solution, component * n, destination.values)
         component += 1

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa
 
-import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError, LinearOperator, Matrix, MutableDVec}
+import gale.linalg.{DMat, DVec, DoubleLinearOperator, LinAlgError, LinearOperator, Matrix, MutableDVec}
 import gale.solvers.{SolverConfig, ToleranceMode, lsqr}
 
 opaque type OperatorRidgeTolerance = Double
@@ -392,7 +392,7 @@ object OperatorRidge:
 
             var klass = 0
             while klass < classes.length do
-              val rhs = MutableDVec.zeros(train.samples + train.features)
+              val rhs = DVec.newBuilder(train.samples + train.features)
               var sample = 0
               while sample < train.samples do
                 rhs(sample) = targetValues(sample, klass) - targetMeans(klass)
@@ -400,7 +400,7 @@ object OperatorRidge:
 
               val solved = lsqr(
                 augmented,
-                rhs.asVec,
+                rhs.result(),
                 solverConfig,
                 ToleranceMode.RelativeToRhs
               )
@@ -518,12 +518,12 @@ object OperatorRidge:
           output(centered.rows + feature) = sqrtPenalty * input(feature)
           feature += 1,
       (input, output) =>
-        val centeredInput = MutableDVec.zeros(centered.rows)
+        val centeredInput = DVec.newBuilder(centered.rows)
         var sample = 0
         while sample < centered.rows do
           centeredInput(sample) = input(sample)
           sample += 1
-        centered.transposeApplyTo(centeredInput.asVec, output)
+        centered.transposeApplyTo(centeredInput.result(), output)
         var feature = 0
         while feature < centered.cols do
           output(feature) = output(feature) + sqrtPenalty * input(centered.rows + feature)
@@ -531,13 +531,9 @@ object OperatorRidge:
     )
 
   private def columnMeans(operator: DoubleLinearOperator): Array[Double] =
-    val scaledOnes = MutableDVec.zeros(operator.rows)
-    var sample = 0
-    while sample < operator.rows do
-      scaledOnes(sample) = 1.0 / operator.rows
-      sample += 1
+    val scaledOnes = DVec.fill(operator.rows)(1.0 / operator.rows)
     val output = MutableDVec.zeros(operator.cols)
-    operator.transposeApplyTo(scaledOnes.asVec, output)
+    operator.transposeApplyTo(scaledOnes, output)
     val means = new Array[Double](operator.cols)
     var feature = 0
     while feature < operator.cols do

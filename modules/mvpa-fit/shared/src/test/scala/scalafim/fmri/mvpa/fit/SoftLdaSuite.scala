@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.family.canonical.{LdaObjective, TraceRidgeFraction, TrialNuisanceDesign, WithinScatterPolicy}
+import multivar.family.canonical.{LdaObjective, TraceRidgeFraction, TrialNuisanceDesign, WithinScatterPolicy}
 
 import gale.linalg.{DMat, Matrix}
 import scalafim.fmri.mvpa.*

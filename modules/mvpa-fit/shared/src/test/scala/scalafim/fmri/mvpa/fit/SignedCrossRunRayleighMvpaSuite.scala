@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.family.canonical.{CanonicalEffectSolution, ResidualRegularization, TraceRidgeFraction}
+import multivar.family.canonical.{CanonicalEffectSolution, ResidualRegularization, TraceRidgeFraction}
 
 import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.RunId

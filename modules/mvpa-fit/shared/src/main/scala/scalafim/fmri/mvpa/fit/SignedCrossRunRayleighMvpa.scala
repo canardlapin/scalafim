@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
-import scalafim.multivar.family.canonical.{CanonicalEffectFit, CanonicalEffectProblem, CanonicalEffectSolution, ResidualRegularization}
+import multivar.core.{SemanticSpace, SpaceRef, SpaceRole}
+import multivar.family.canonical.{CanonicalEffectFit, CanonicalEffectProblem, CanonicalEffectSolution, ResidualRegularization}
 
 import gale.linalg.DVec
 import scalafim.dataset.RunId
@@ -17,7 +17,7 @@ import scalafim.fmri.mvpa.{
   RoiOutcome
 }
 
-/** A finite signed Rayleigh quotient. Unlike [[scalafim.multivar.family.canonical.CanonicalRoot]],
+/** A finite signed Rayleigh quotient. Unlike [[multivar.family.canonical.CanonicalRoot]],
   * negative values are scientifically meaningful: they indicate that the
   * held-out contrast projection opposes the aggregate training projection.
   */

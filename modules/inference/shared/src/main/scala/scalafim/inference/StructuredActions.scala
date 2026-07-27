@@ -1,6 +1,6 @@
 package scalafim.inference
 
-import scalafim.multivar.core.{RowProjector, RowWhitening}
+import multivar.core.{RowProjector, RowWhitening}
 
 import gale.linalg.DMat
 
@@ -212,7 +212,7 @@ final case class ResidualPermutationAction private (
 
   private def adapt[A](
       role: String,
-      value: Either[scalafim.multivar.core.MultivarError, A]
+      value: Either[multivar.core.MultivarError, A]
   ): Either[InferenceError, A] =
     value.left.map(error => InferenceError.NumericalFailure(role, error.message))
 
@@ -265,6 +265,6 @@ object ResidualPermutationAction:
           )
 
   private def adaptIdentity(
-      value: Either[scalafim.multivar.core.MultivarError, RowWhitening]
+      value: Either[multivar.core.MultivarError, RowWhitening]
   ): Either[InferenceError, RowWhitening] =
     value.left.map(error => InferenceError.NumericalFailure("identity row whitening", error.message))

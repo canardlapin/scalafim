@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.fit
 
-import scalafim.multivar.family.canonical.{TraceRidgeFraction, WithinScatterPolicy}
+import multivar.family.canonical.{TraceRidgeFraction, WithinScatterPolicy}
 
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}

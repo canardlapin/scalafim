@@ -31,7 +31,6 @@ class HalfFlowGaleBenchmark:
   private var helmholtz: PeriodicHelmholtz = uninitialized
   private var helmholtzInput: DVec = uninitialized
   private var helmholtzOutput: MutableDVec = uninitialized
-  private var helmholtzOutputView: DVec = uninitialized
   private var rhs: DVec = uninitialized
 
   @Setup(Level.Trial)
@@ -84,7 +83,6 @@ class HalfFlowGaleBenchmark:
         0.5 * math.sin(4.0 * math.Pi * y.toDouble / side.toDouble) +
         0.25 * math.cos(6.0 * math.Pi * z.toDouble / side.toDouble)
     helmholtzOutput = MutableDVec.zeros(voxels)
-    helmholtzOutputView = helmholtzOutput.asVec
     helmholtz.applyTo(helmholtzInput, helmholtzOutput)
     require(maximumFourierApplyError() <= 2e-12, "Gale operator apply failed Fourier oracle")
 
@@ -179,7 +177,7 @@ class HalfFlowGaleBenchmark:
     var iteration = 0
     while iteration < 32 do
       helmholtz.applyTo(helmholtzInput, helmholtzOutput)
-      checksum += helmholtzOutputView((iteration * 997) % voxels)
+      checksum += helmholtzOutput((iteration * 997) % voxels)
       iteration += 1
     checksum
 
@@ -214,7 +212,7 @@ class HalfFlowGaleBenchmark:
         PeriodicHelmholtz.eigenvalue(side, 1, 0.6) * math.cos(2.0 * math.Pi * x.toDouble / side.toDouble) +
           0.5 * PeriodicHelmholtz.eigenvalue(side, 2, 0.6) * math.sin(4.0 * math.Pi * y.toDouble / side.toDouble) +
           0.25 * PeriodicHelmholtz.eigenvalue(side, 3, 0.6) * math.cos(6.0 * math.Pi * z.toDouble / side.toDouble)
-      maximum = math.max(maximum, math.abs(helmholtzOutputView(index) - expected))
+      maximum = math.max(maximum, math.abs(helmholtzOutput(index) - expected))
       index += 1
     maximum
 

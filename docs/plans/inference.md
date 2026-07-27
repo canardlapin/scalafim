@@ -5,10 +5,11 @@
 Add a cross-platform `inference` module whose job is perturbation-based
 inference for fitted multivariate structures.
 
-The module should depend on `multivar` and `linalg`, and nothing above them:
+The module should depend on standalone `multivar` and Gale, and nothing above
+them:
 
 ```text
-linalg -> multivar -> inference
+Gale -> standalone multivar -> inference
 ```
 
 It should support one-table, paired-table, and later multiblock contexts through
@@ -27,7 +28,8 @@ but it is not significance testing and must not be represented as if it were.
 
 ## Why this boundary fits ScalaFIM
 
-`multivar` already owns the mathematical objects that inference should consume:
+Standalone `multivar` already owns the mathematical objects that inference
+should consume:
 
 - `DualityDiagram` and `PairedDualityDiagram` provide metric-aware data
   geometry;
@@ -42,7 +44,8 @@ but it is not significance testing and must not be represented as if it were.
   row-conditioning geometry needed by valid residual randomization;
 - current R fixtures already anchor PLSC, CCA, and RRR fitting behavior.
 
-Those are fitting and geometry concepts. They should stay in `multivar`.
+Those are fitting and geometry concepts. They should stay in standalone
+`multivar`.
 
 The missing layer owns a different set of concepts:
 
@@ -55,7 +58,7 @@ The missing layer owns a different set of concepts:
 - replicate alignment and stability summaries;
 - validity, assumptions, Monte Carlo receipts, and provenance.
 
-Keeping these in a new module prevents `multivar` from turning into a mixture of
+Keeping these in a new module prevents standalone `multivar` from turning into a mixture of
 linear algebra, experimental design, randomization policy, and report schemas.
 
 ## Lessons from `multifer`
@@ -667,16 +670,16 @@ no Breeze, dataset, image, Spark, or platform-specific dependencies.
 ## Multivar cohesion boundary
 
 Inference builds on the paired R fixtures, `Spectrum`, `MvMap`, `PairedGmd`,
-constraint diagrams, row projectors, and row whitening already present in
+constraint diagrams, row projectors, and row whitening supplied by standalone
 `multivar`. It does not absorb those fitting or geometry abstractions.
 
 The resulting boundary is deliberate:
 
-- `multivar` owns fitted geometry, constraint resolution, and model-specific
+- standalone `multivar` owns fitted geometry, constraint resolution, and model-specific
   reconstruction;
 - `inference` owns targets, null actions, validity, deterministic perturbation
   programs, evidence, and provenance;
-- solver contracts stay in `linalg`, with no private inverse, SVD, or
+- reusable solver contracts stay in Gale, with no private inverse, SVD, or
   eigensolver family hidden in either domain layer.
 
 New fitted families can therefore acquire inference only by supplying a
