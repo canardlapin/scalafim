@@ -51,12 +51,12 @@ class LatentEncoderSuite extends munit.FunSuite:
         .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     assertEquals(plan.kind, LatentArchiveKind.TemporalDct)
     val decoded =
-      LegacyLatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity)
+      LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity)
 
     decoded match
       case LatentArchiveResponse.TemporalDct(response, returnedSpec, center, _) =>
@@ -114,7 +114,7 @@ class LatentEncoderSuite extends munit.FunSuite:
         .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     assertEquals(plan.kind, LatentArchiveKind.TemporalHaar)
@@ -128,7 +128,7 @@ class LatentEncoderSuite extends munit.FunSuite:
       case other =>
         fail(s"expected temporal Haar archive plan, found $other")
     val decoded =
-      LegacyLatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity)
+      LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity)
 
     decoded match
       case LatentArchiveResponse.TemporalHaar(response, returnedSpec, center, ridge) =>
@@ -218,7 +218,7 @@ class LatentEncoderSuite extends munit.FunSuite:
       LatentEncoder
         .toArchive(data, NeuroSpace(Vector(2, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
-    LegacyLatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity) match
+    LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity) match
       case LatentArchiveResponse.Explicit(decoded) =>
         assertRowsEqual(decoded.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-12)
       case other =>
@@ -273,7 +273,7 @@ class LatentEncoderSuite extends munit.FunSuite:
       LatentEncoder
         .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
-    LegacyLatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity) match
+    LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity) match
       case LatentArchiveResponse.SharedBasis(decoded) =>
         assertEquals(decoded.basis.basisId, basisId)
         assertRowsEqual(decoded.coefficients.toRows, direct.coefficients.toRows, 1e-12)
@@ -345,12 +345,12 @@ class LatentEncoderSuite extends munit.FunSuite:
         .toArchive(data, space, spec)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     assertEquals(plan.kind, LatentArchiveKind.SharedBasis)
 
-    LegacyLatentArchiveCodec.fromArchive(archive).fold(err => fail(err.message), identity) match
+    LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity) match
       case LatentArchiveResponse.SharedBasis(decoded) =>
         assertEquals(decoded.basis.basisId, basisId)
         assertEquals(decoded.basis.checksum, direct.artifact.checksum)

@@ -14,7 +14,7 @@ import scalafim.image.NeuroSpace
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
-private[latent] object ExplicitLatentArchiveCodec:
+object ExplicitLatentArchiveCodec:
   def toArchive(
       response: ExplicitLatentResponse,
       space: NeuroSpace,

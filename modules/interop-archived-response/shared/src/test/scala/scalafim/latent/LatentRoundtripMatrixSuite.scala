@@ -40,7 +40,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
           .toArchive(data, space, temporalCase.spec)
           .fold(err => fail(err.message), identity)
       val temporalDecoded =
-        LegacyLatentArchiveCodec
+        LatentArchiveRegistry.standard
           .fromArchive(temporalArchive)
           .fold(err => fail(err.message), identity)
       val temporalResponse =
@@ -68,7 +68,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
           .toArchive(data, space, sharedSpec)
           .fold(err => fail(err.message), identity)
       val materializedSpatial =
-        LegacyLatentArchiveCodec
+        LatentArchiveRegistry.standard
           .fromArchive(sharedArchive)
           .fold(err => fail(err.message), identity) match
           case LatentArchiveResponse.SharedBasis(response) =>

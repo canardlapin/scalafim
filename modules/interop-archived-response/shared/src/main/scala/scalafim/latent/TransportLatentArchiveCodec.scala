@@ -18,7 +18,7 @@ import scalafim.image.NeuroSpace
 import gale.linalg.DVec
 import scalafim.latent.LatentArchivePayloads.*
 
-private[latent] object TransportLatentArchiveCodec:
+object TransportLatentArchiveCodec:
   private val KindKey = "lna.response.kind"
   private val KindValue = "transport_latent"
   private val NativeDecoderRole = DatasetRole.Other("transport_native_decoder_t")

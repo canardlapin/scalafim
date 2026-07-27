@@ -3,7 +3,11 @@ package scalafim.dataset.scenarios
 import scalafim.archive.RunLabel
 import scalafim.dataset.*
 import scalafim.image.NeuroSpace
-import scalafim.latent.{DctNorm, LegacyLatentArchiveCodec}
+import scalafim.latent.{
+  DctNorm,
+  ExplicitLatentArchiveCodec,
+  LatentArchiveRegistry
+}
 
 class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
   test("dataset latent archive roundtrip scenario receipt passes") {
@@ -22,7 +26,7 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
       )
     val space = NeuroSpace(Vector(2, 2, 1))
     val archive =
-      LegacyLatentArchiveCodec
+      ExplicitLatentArchiveCodec
         .toTemporalDctArchive(
           data = GaleTestData.matrixFromRows(rows),
           space = space,
@@ -39,6 +43,7 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
           id = DatasetId("scenario-latent-archive"),
           archive = archive,
           run = RunLabel.indexed(0),
+          registry = LatentArchiveRegistry.standard,
           metadata = DatasetMetadata(Map("scenario" -> scenarioId, "storage" -> "lna-temporal-dct"))
         )
         .fold(err => fail(err.message), identity)

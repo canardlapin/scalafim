@@ -45,7 +45,7 @@ object LnaArchiveDriver:
       location: ArchiveLocation
   ): Either[ArchiveError, ArchiveRevision] =
     for
-      manifest <- LegacyLnaManifestTranslator.translate(archive.manifest)
+      manifest <- LnaArchiveManifestAdapter.adapt(archive.manifest)
       revisionId <- ArchiveRevisionId.fromString:
         archive.manifest.checksum.fold(
           s"lna-unverified-${location.value.hashCode.toHexString}"

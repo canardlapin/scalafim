@@ -33,18 +33,17 @@ dataset
 
 interop-archived-response
   LNA reconstruction, archive-specific latent codecs, LNA dataset
-  compatibility, representation/archive bindings, registries, and runtime
+  adapters, representation/archive bindings, registries, and runtime
 ```
 
-Legacy package names are retained inside the new artifacts so source migration
-does not require a simultaneous package rewrite. Physical artifact ownership,
-not a package prefix, is the enforced boundary.
+Domain package names remain aligned with the values they describe inside the
+new artifacts. Physical artifact ownership, not a package prefix, is the
+enforced boundary.
 
 The generic `archive` artifact no longer depends on `image` or jHDF.
 `latent` no longer depends on `archive`. `dataset` no longer depends on either
 `archive` or `latent`, and `DatasetError` no longer exposes either domain's
-error algebra. Compatibility failures are attributed to a neutral
-`OperationId`.
+error algebra. Adapter failures are attributed to a neutral `OperationId`.
 
 ## 2. Recorded secondary edges
 
@@ -115,4 +114,3 @@ git diff --check               clean
 The full matrix also verifies downstream model, fit, MVPA, workflow,
 dataset-Zarr, archive-Zarr, JVM-only HDF5, and browser targets against the new
 acyclic graph.
-

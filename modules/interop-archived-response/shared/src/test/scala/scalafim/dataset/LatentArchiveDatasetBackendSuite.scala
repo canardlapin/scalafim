@@ -11,8 +11,10 @@ import scalafim.latent.{
   BoldZipResidualEvent,
   BoldZipSpatialBasis,
   BoldZipTextureEntry,
-  LegacyLatentArchiveCodec,
+  BoldZipLatentArchiveCodec,
+  LatentArchiveRegistry,
   LatentSelection,
+  TransportLatentArchiveCodec,
   TransportLatentResponse
 }
 
@@ -36,7 +38,12 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
 
     val backend =
       LatentArchiveDatasetBackend
-        .make(DatasetId("latent-demo"), archive, RunLabel.indexed(0))
+        .make(
+          DatasetId("latent-demo"),
+          archive,
+          RunLabel.indexed(0),
+          LatentArchiveRegistry.standard
+        )
         .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
@@ -81,12 +88,17 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val archive =
-      LegacyLatentArchiveCodec
-        .toTransportArchive(response, space)
+      TransportLatentArchiveCodec
+        .toArchive(response, space)
         .fold(err => fail(err.message), identity)
     val backend =
       LatentArchiveDatasetBackend
-        .make(DatasetId("transport-latent"), archive, RunLabel.indexed(0))
+        .make(
+          DatasetId("transport-latent"),
+          archive,
+          RunLabel.indexed(0),
+          LatentArchiveRegistry.standard
+        )
         .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
@@ -132,12 +144,17 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         label = "boldzip-dataset"
       ).fold(err => fail(err.message), identity)
     val archive =
-      LegacyLatentArchiveCodec
-        .toBoldZipArchive(response, space)
+      BoldZipLatentArchiveCodec
+        .toArchive(response, space)
         .fold(err => fail(err.message), identity)
     val backend =
       LatentArchiveDatasetBackend
-        .make(DatasetId("boldzip-latent"), archive, RunLabel.indexed(0))
+        .make(
+          DatasetId("boldzip-latent"),
+          archive,
+          RunLabel.indexed(0),
+          LatentArchiveRegistry.standard
+        )
         .fold(err => fail(err.message), identity)
     val series =
       backend.readEither(
@@ -165,7 +182,8 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
       LatentArchiveDatasetBackend.make(
         DatasetId("missing-run"),
         archive,
-        RunLabel("not-present")
+        RunLabel("not-present"),
+        LatentArchiveRegistry.standard
       )
 
     assert(missing.left.exists(_.message.contains("run 'not-present' not found")))

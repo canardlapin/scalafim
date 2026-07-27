@@ -7,7 +7,7 @@ Baseline: [Phase 9 record](response-representation-archive-phase-9.md)
 
 Phase 10 converts the architectural acceptance criteria into reusable laws,
 closes the remaining provenance and corruption gaps, and prevents new
-representations from extending the staged legacy dispatcher. It does not add a
+representations from extending a central codec facade. It does not add a
 general tensor abstraction: response values remain owned row-major
 `ResponseBlock` values over primitive `Double` storage, while representation
 payloads retain their own typed scalar and shape contracts.
@@ -44,7 +44,7 @@ The final executable matrix is:
 | Single- and multi-acquisition attachment and hierarchy | `OpenedDatasetSuite`, `DatasetIndexSuite`, `DatasetMultiRunFixtureSuite` |
 | Archive publication and interrupted-write absence | `CanonicalArchiveManifestSuite`, LNA prefix tests, Zarr publication suites |
 | Immutable registry, duplicate rejection, and unknown representation | `ArchivedResponseRuntimeSuite`, `ArchiveResourceSuite` |
-| Legacy migration and numerical compatibility | `LegacyLnaManifestTranslatorSuite`, `ResponseArchiveMigrationBaselineSuite` |
+| LNA manifest adaptation and numerical regression | `LnaArchiveManifestAdapterSuite`, `ResponseArchiveMigrationBaselineSuite` |
 | Phase 8 dependency and source boundaries | `ResponseArchiveBoundaryGuardSuite` |
 
 Malformed canonical manifests now have explicit truncated framing, invalid tag,
@@ -66,17 +66,30 @@ The dataset law runs both a single acquisition and a two-run acquisition. Each
 bridged segment must agree with the corresponding direct response-source read,
 retain exact order, report segmented assembly, and satisfy the provenance law.
 
-## 4. Legacy-dispatch retirement
+## 4. Pre-release dispatcher removal
 
-Historical archive reconstruction remains available through the explicitly
-named `LegacyLatentArchiveCodec`. The former `LatentArchiveCodec` symbol is a
-deprecated forwarding alias for one compatibility release; repository code
-uses the named legacy entry point and therefore stays warning-clean.
+ScalaFIM is unreleased, so there is no public contract that requires a
+deprecation window. The central `LatentArchiveCodec` entry point and its
+historically named replacement were deleted rather than retained as aliases.
+Archive construction now uses the factual, representation-specific
+`ExplicitLatentArchiveCodec`, `SharedBasisLatentArchiveCodec`,
+`RadialBasisArchiveCodec`, `TransportLatentArchiveCodec`, and
+`BoldZipLatentArchiveCodec` entry points.
 
-The Phase 8 boundary guard freezes the compatibility dispatch callers in main
-sources. A new representation must be installed through the immutable
-`ArchivedResponseRegistry` as an `ArchivedResponseFamily`; adding another
-central match fails the guard.
+Pure LNA recognition uses an explicitly supplied immutable
+`LatentArchiveRegistry` assembled from independent binding values. Registry
+construction rejects invalid, empty, or duplicate binding sets, and archive
+opening rejects ambiguous matches. Dataset LNA construction requires that
+registry as an ordinary dependency. Runtime representations remain installed
+separately through
+`ArchivedResponseRegistry` as `ArchivedResponseFamily` values.
+
+The current generic LNA representation is
+`LnaPipelineRepresentationFamily` with key
+`org.scalafim/lna-pipeline@2`; the current normalized-manifest boundary is
+`LnaArchiveManifestAdapter`. These names describe format and behavior, not
+the age of the code. The Phase 8 boundary guard rejects the removed central
+facade and historical naming pattern.
 
 ## 5. Release evidence
 
@@ -102,5 +115,5 @@ git diff --check                   clean
 
 Static production scans found no response-level tensor abstraction, unchecked
 cast, warning suppression, scientific reconstruction in archive core,
-principal-domain reverse dependency, or newly installed caller of the legacy
-central dispatcher.
+principal-domain reverse dependency, deprecated response/archive alias, or
+central codec facade.

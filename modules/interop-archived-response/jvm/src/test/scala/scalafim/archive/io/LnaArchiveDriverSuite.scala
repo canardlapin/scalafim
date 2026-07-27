@@ -10,7 +10,7 @@ import scalafim.archive.{
   ReadObservation
 }
 import scalafim.archive.lna.{
-  LegacyLnaManifestTranslator,
+  LnaArchiveManifestAdapter,
   LnaDType,
   LnaIntMatrixPlan,
   LnaPayloadRole,
@@ -68,15 +68,15 @@ class LnaArchiveDriverSuite extends munit.FunSuite:
             assertEquals(contents.scope, ArchiveValidationScope.Contents)
             assertEquals(
               revision.manifest.format,
-              LegacyLnaManifestTranslator.Format
+              LnaArchiveManifestAdapter.Format
             )
             assertEquals(
               revision.manifest.key.objectType,
-              LegacyLnaManifestTranslator.ObjectType
+              LnaArchiveManifestAdapter.ObjectType
             )
             assertEquals(
               revision.manifest.representation.map(_.key),
-              Some(LegacyLnaManifestTranslator.LegacyRepresentation)
+              Some(LnaArchiveManifestAdapter.PipelineRepresentation)
             )
             assert(
               revision.manifest.payloads.forall(_.role.isNamespaced)
@@ -85,7 +85,7 @@ class LnaArchiveDriverSuite extends munit.FunSuite:
               revision.manifest.payloads
                 .find(_.id.value == integerRef.path.value)
                 .map(_.role),
-              Some(LnaPayloadRole.fromLegacy(integerRef.role))
+              Some(LnaPayloadRole.fromDatasetRole(integerRef.role))
             )
             revision.publication match
               case PublicationStatus.Published(digest) =>

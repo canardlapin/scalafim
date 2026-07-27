@@ -331,8 +331,8 @@ object DataSelection:
   private def toTimepointSelection(selection: TimeInput): TimepointSelection =
     selection match
       case typed: TimepointSelection => typed
-      case legacy: IndexSelection =>
-        legacy match
+      case untyped: IndexSelection =>
+        untyped match
           case IndexSelection.All => TimepointSelection.All
           case IndexSelection.Indices(values) =>
             TimepointSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -340,8 +340,8 @@ object DataSelection:
   private def toVoxelSelection(selection: VoxelInput): VoxelSelection =
     selection match
       case typed: VoxelSelection => typed
-      case legacy: IndexSelection =>
-        legacy match
+      case untyped: IndexSelection =>
+        untyped match
           case IndexSelection.All => VoxelSelection.All
           case IndexSelection.Indices(values) =>
             VoxelSelection.fromInts(values*).fold(error => throw new IllegalArgumentException(error.message), identity)

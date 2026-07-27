@@ -163,7 +163,7 @@ object SharedBasisLatentArchive:
       i += 1
     error
 
-private[latent] object SharedBasisLatentArchiveCodec:
+object SharedBasisLatentArchiveCodec:
   def toArchive(
       data: DMat,
       space: NeuroSpace,

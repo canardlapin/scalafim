@@ -1,13 +1,15 @@
 package scalafim.latent
 
 import gale.linalg.{DMat, DVec}
+import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{
+  LnaArchive,
   SharedBasisArtifact,
   SharedBasisId,
   SharedBasisLocator,
   SharedBasisMask
 }
-import scalafim.image.{DMat as ArchiveDMat}
+import scalafim.image.{DMat as ArchiveDMat, NeuroSpace}
 
 extension (radialBasis: RadialBasis)
   def sharedBasisParams(
@@ -165,3 +167,51 @@ object RadialBasisEncoder:
       error: RadialBasisError
   ): LatentError =
     LatentError.ProjectionFailed(error.message)
+
+object RadialBasisArchiveCodec:
+  def toArchive(
+      data: DMat,
+      space: NeuroSpace,
+      radialBasis: RadialBasis,
+      maskDims: Vector[Int],
+      basisId: SharedBasisId,
+      locator: Option[SharedBasisLocator] = None,
+      center: Boolean = true,
+      ridge: Double = 0.0,
+      runLabel: RunLabel = RunLabel.indexed(0),
+      creator: String = "scalafim-latent",
+      sourceDomain: DomainId =
+        DomainId.unsafe("radial_basis.coefficients"),
+      targetDomain: DomainId = DomainId.unsafe("voxels"),
+      label: String = "",
+      metadata: Map[String, String] = Map.empty,
+      artifactParams: Map[String, String] = Map.empty
+  ): Either[ArchiveError, LnaArchive] =
+    radialBasis
+      .toSharedBasisArtifact(
+        maskDims = maskDims,
+        params = artifactParams
+      )
+      .left
+      .map(error => ArchiveError.InvalidArchive(error.message))
+      .flatMap: basis =>
+        radialBasis
+          .dataInMaskOrder(data)
+          .left
+          .map(error => ArchiveError.InvalidArchive(error.message))
+          .flatMap: canonicalData =>
+            SharedBasisLatentArchiveCodec.toArchive(
+              data = canonicalData,
+              space = space,
+              basis = basis,
+              basisId = basisId,
+              locator = locator,
+              center = center,
+              ridge = ridge,
+              runLabel = runLabel,
+              creator = creator,
+              sourceDomain = sourceDomain,
+              targetDomain = targetDomain,
+              label = label,
+              metadata = radialBasis.sharedBasisParams(metadata)
+            )

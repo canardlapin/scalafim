@@ -92,7 +92,7 @@ ReadResult(ResponseBlock, Provenance, ReadReceipt)
 ```
 
 This document defines the target architecture, product requirements,
-acceptance laws, migration sequence, compatibility policy, and decision gates.
+acceptance laws, implementation sequence, evolution policy, and decision gates.
 It does not declare the target module graph already implemented.
 
 ## 2. Relationship to Existing Plans
@@ -115,8 +115,8 @@ When these documents overlap:
   interop, and runtime;
 - format plans own their wire formats, physical layouts, conformance subsets,
   and format-specific performance gates;
-- the implemented bridge plan remains the current-state compatibility
-  contract until the corresponding migration phase is complete.
+- the implemented bridge plan remains the current-state behavioral
+  baseline until the corresponding phase is complete.
 
 The current bridge is therefore a baseline to wrap and migrate, not a failed
 prototype to replace in one rewrite.
@@ -395,10 +395,11 @@ Everything below the logical-payload boundary is lossless relative to the
 declared logical payload value. Any transformation that changes numerical meaning or
 reconstruction fidelity belongs above that boundary.
 
-### 8.6 Compatibility is explicit
+### 8.6 Versioned formats are explicit
 
-Legacy formats, eager paths, and closed dispatch remain behind named adapters.
-No compatibility branch silently becomes canonical architecture.
+Container-specific formats and eager paths remain behind factual, versioned
+adapters. No deprecated alias, historical naming layer, or closed central
+dispatch is admitted before the first release.
 
 ## 9. Ownership Matrix
 
@@ -570,7 +571,7 @@ The live Phase 8 graph records two secondary-domain edges that are outside the
 prohibited principal-domain coupling: `latent -> image + locus-kernel` for
 existing HRBF geometry and ordered-mask mathematics, and
 `archive-lna -> image` for the established owned matrix wire values in the LNA
-schema. Cross-domain compatibility still lives in
+schema. Cross-domain integration still lives in
 `interop-archived-response`; these edges do not put archive policy in latent,
 representation dispatch in dataset, or reconstruction in generic archive.
 
@@ -662,7 +663,7 @@ Requirements:
 The first dataset adapter preserves current behavior and rejects duplicate
 scientific selections. Lower-level response and storage planners may support
 ordered gathers with duplicates. A later public duplicate-selection feature
-requires a separate decision and compatibility review.
+requires a separate decision and semantic review.
 
 ### 12.4 Response schema
 
@@ -955,7 +956,7 @@ Grouping, concatenation, and reduction are distinct:
 
 No operation fabricates continuous elapsed time across runs or sessions.
 
-### 13.6 Compatibility with current dataset APIs
+### 13.6 Current dataset surfaces
 
 The first adapter must:
 
@@ -965,8 +966,8 @@ The first adapter must:
 - preserve duplicate rejection at the public dataset boundary;
 - preserve `SegmentedFmriSeries` behavior;
 - adapt `ResponseBlock` to the current `FmriSeries` and matrix types;
-- retain current checked `FmriDataset.open` as a compatibility facade while
-  the new attachment model lands;
+- retain checked `FmriDataset.open` as the explicit synchronous construction
+  path;
 - retain synchronous `seriesEither` only for current synchronous or already
   materialized sources;
 - never block an asynchronous or browser source behind a synchronous facade;
@@ -974,7 +975,7 @@ The first adapter must:
 - pass `OpenedDataset[F]` or a narrower dataset-reader capability to effectful
   model, fit, and MVPA executors.
 
-The compatibility facade and the target opened API must not share a name in a
+The synchronous facade and the effectful opened API must not share a name in a
 way that hides which operations can perform effects.
 
 ## 14. Representation Semantics
@@ -2044,10 +2045,10 @@ identity, and calibration assumptions.
 
 Cross-acquisition reads remain segmented unless explicit assembly is requested.
 
-### DATA-004: Public compatibility
+### DATA-004: Public API continuity
 
-Current typed dataset queries and `DataSelection` remain supported through
-adapters during migration.
+Typed dataset queries and `DataSelection` remain supported directly through
+the neutral dataset adapters.
 
 ### DATA-005: Pure description and effectful opening
 
@@ -2212,10 +2213,11 @@ Scala.js and remote IO do not expose blocking synchronous facades.
 Registries, caches, stores, credentials, and retry policy are explicit
 dependencies.
 
-### NFR-008: Backward compatibility
+### NFR-008: No pre-release shims
 
-Legacy LNA reads and current dataset workflows continue through named adapters
-until replacement behavior passes the same and stronger gates.
+This unreleased system does not retain deprecated aliases or historical API
+names. The current LNA 2 pipeline, normalized manifest adapter, and dataset
+bridges use factual names and explicit dependencies.
 
 ### NFR-009: Independent verification
 
@@ -2224,7 +2226,7 @@ available, not only Scala round trips.
 
 ### NFR-010: Frozen migration baseline
 
-Every phase runs a compatibility corpus frozen from the exact committed
+Every phase runs a numerical regression corpus frozen from the exact committed
 Phase-0 baseline. The corpus covers all live reconstruction and archive
 transform routes, including valid compositions.
 
@@ -2392,31 +2394,39 @@ registry. Resolution is deterministic and registration-order independent.
 
 ### 24.17 Migration-baseline law
 
-Every completed phase reproduces the frozen Phase-0 compatibility corpus under
+Every completed phase reproduces the frozen Phase-0 numerical regression corpus under
 each fixture's declared raw-bit, ULP, or absolute/relative comparator.
 
-## 25. Compatibility and Migration Policy
+## 25. Versioning and Evolution Policy
 
-### 25.1 Read old and new; write new after format admission
+### 25.1 Read admitted formats; write the canonical model
 
 When a normalized manifest is introduced:
 
-- legacy LNA manifests are translated by a pure versioned translator;
-- old and new files remain readable;
-- canonical writers emit the new model only after conformance gates pass;
-- legacy writing remains separately named if retained.
+- the current LNA 2 manifest is adapted by the pure
+  `LnaArchiveManifestAdapter`;
+- each admitted container format remains readable through its versioned
+  driver;
+- canonical writers emit the normalized model only after conformance gates
+  pass;
+- container-specific writers keep factual profile names.
 
-### 25.2 Named legacy adapters
+### 25.2 Factual bindings and registries
 
-Compatibility code uses explicit names such as:
+Cross-domain code uses explicit names such as:
 
 ```text
-LegacyLnaRepresentationFamily
-LegacyWholeRunLnaResponseSource
-LegacyDatasetBackendAdapter
+LnaPipelineRepresentationFamily
+LnaArchiveManifestAdapter
+DatasetResponseSource
+LatentArchiveDatasetBackend
 ```
 
-It does not remain an invisible branch in canonical dispatch.
+LNA construction uses representation-specific codecs. LNA recognition uses an
+explicitly supplied immutable `LatentArchiveRegistry` assembled from
+independent binding values. It rejects invalid or duplicate ownership and
+ambiguous matches. There is no central codec facade or deprecated forwarding
+alias.
 
 ### 25.3 No silent fallback
 
@@ -2428,15 +2438,16 @@ Fallback from selected to whole-payload or whole-run reconstruction:
 - never claims bounded IO;
 - can be forbidden by an explicit strict-read policy.
 
-### 25.4 API deprecation
+### 25.4 Pre-release API replacement
 
-Old public APIs may delegate to the new architecture before deprecation.
-Removal requires:
+ScalaFIM has not published this API surface. When a pre-release API is
+superseded, update repository callers, examples, documentation, and tests, then
+remove the old symbol in the same change. Do not add forwarding aliases,
+deprecation windows, or historical naming layers.
 
-- replacement examples;
-- downstream compile evidence;
-- JVM and Scala.js gates;
-- one release cycle of deprecation unless the API was never released.
+Compatibility policy for a future published API is outside this program and
+must be decided from the actual release contract rather than assumed during
+development.
 
 ## 26. Delivery Plan
 
@@ -2458,7 +2469,7 @@ Deliver:
 - inventory of every production file importing two principal domains;
 - inventory of every live numerical reconstruction route, LNA transform and
   valid transform composition, representation family, and manifest variant;
-- frozen compatibility fixtures for current quant, delta, explicit, temporal
+- frozen numerical regression fixtures for current quant, delta, explicit, temporal
   DCT, temporal Haar, shared-basis, transport, BOLDZip, and dense paths;
 - provisional artifact mapping and normative dependency edges;
 - decision records D1 through D4 and D6 through D10;
@@ -2549,7 +2560,8 @@ cover the resolved response selection exactly.
 The gate mechanically verifies that `response` imports no image, surface,
 graph, archive, latent, or dataset type; no response tensor or public mutable
 buffer exists; archive unknown-representation and resource laws still hold;
-and all JVM/Scala.js tests plus the frozen compatibility corpus remain green.
+and all JVM/Scala.js tests plus the frozen numerical regression corpus remain
+green.
 
 ### Phase 3 — Prove one typed representation plan in memory
 
@@ -2573,7 +2585,7 @@ Acceptance:
 - the plan can be inspected without executing;
 - coefficient and basis results cannot be accidentally exchanged;
 - independent reads can be collected and evaluated applicatively;
-- the frozen numerical compatibility corpus remains green;
+- the frozen numerical regression corpus remains green;
 - JVM and Scala.js behavior agrees.
 
 Stop gate:
@@ -2603,7 +2615,7 @@ Acceptance:
   archive;
 - whole-payload physical fallback is receipted honestly;
 - mathematical code imports no LNA/HDF5 types;
-- the frozen numerical compatibility corpus remains green.
+- the frozen numerical regression corpus remains green.
 
 ### Phase 5 — Introduce explicit representation registry
 
@@ -2615,7 +2627,7 @@ Deliver:
 - namespaced representation keys;
 - immutable duplicate-rejecting registry;
 - narrow representation envelope;
-- named legacy LNA family delegating to current behavior;
+- `LnaPipelineRepresentationFamily` for the current generic LNA pipeline;
 - unsupported-representation error and inspection path;
 - `ScalafimRuntime.openResponse`.
 
@@ -2627,7 +2639,7 @@ Acceptance:
 - file contents cannot load code;
 - runtime assembly closes archive and response resources on success, failure,
   and cancellation;
-- current legacy LNA fixtures still open.
+- generic LNA pipeline fixtures still open.
 
 ### Phase 6 — Attach response sources to datasets
 
@@ -2640,10 +2652,10 @@ Deliver:
 - dataset read lowering to `ResolvedResponseSelection`;
 - provenance and receipt propagation into results;
 - `ScalafimRuntime.openDataset`;
-- explicit synchronous compatibility policy and effectful model, fit, and MVPA
+- explicit synchronous execution policy and effectful model, fit, and MVPA
   executor boundary;
-- deprecation or compatibility migration for dataset errors that directly
-  mention archive or latent types.
+- factual `DatasetError.AdapterFailure` reporting for archive and latent
+  adapters.
 
 Acceptance:
 
@@ -2718,7 +2730,7 @@ JVM and Scala.js gates.
 
 Stop gate:
 
-If the target edges require a dependency cycle, hidden compatibility import,
+If the target edges require a dependency cycle, hidden cross-domain import,
 or ownership exception that is not recorded in the PRD, stop before changing
 the manifest.
 
@@ -2730,15 +2742,15 @@ Deliver:
 - typed payload roles;
 - first-class narrow representation descriptor and output-schema envelope;
 - archive/representation version separation;
-- pure legacy LNA translator;
+- pure `LnaArchiveManifestAdapter`;
 - admitted deterministic canonical manifest encoding;
 - format-neutral transactional canonical writer, with physical sinks remaining
   in their container modules.
 
 Acceptance:
 
-- old and new fixtures read;
-- canonical writer emits only the admitted new form;
+- LNA and canonical fixtures read;
+- canonical writer emits only the admitted normalized form;
 - unknown representations remain structurally validatable;
 - manifest migration is pure and fixture-tested;
 - logical payload identity is stable across physical layouts;
@@ -2748,7 +2760,7 @@ Acceptance:
 - format-specific external conformance and the frozen Phase-0 numerical corpus
   still pass.
 
-### Phase 10 — Lock the architecture with laws and retire canonical legacy dispatch
+### Phase 10 — Lock the architecture and remove pre-release central dispatch
 
 Deliver:
 
@@ -2757,7 +2769,7 @@ Deliver:
 - dataset attachment and hierarchy law suites;
 - access-honesty suites with instrumented interpreters;
 - corruption and unknown-representation fixtures;
-- removal or deprecation of superseded central dispatch.
+- removal of superseded central dispatch and forwarding aliases.
 
 Acceptance:
 
@@ -2766,18 +2778,18 @@ Acceptance:
 - focused JVM and Scala.js gates pass for every affected module;
 - downstream model, fit, MVPA, and group scenarios remain green;
 - Phase-8 dependency and import guards remain green;
-- the frozen Phase-0 numerical compatibility corpus remains green.
+- the frozen Phase-0 numerical regression corpus remains green.
 
 ### Program-level stop policy
 
 When a phase stop gate triggers:
 
 - do not begin its dependent phase;
-- preserve the last verified compatibility path;
+- preserve the last verified implementation path;
 - record the failed assumption, evidence, and affected architectural law;
 - revise this PRD and its tracker dependencies before resuming;
 - do not redefine success by dropping format independence, resource safety,
-  numerical compatibility, or dependency-boundary requirements.
+  numerical parity, or dependency-boundary requirements.
 
 In particular, failure of the Phase-7 memory/LNA/Zarr proof blocks all of
 Track D.
@@ -2834,7 +2846,7 @@ Track D.
 
 - attachment alignment checks;
 - output-domain coordinate resolution;
-- current `DataSelection` compatibility;
+- current `DataSelection` behavior;
 - run-local selection translation;
 - segmentation and assembly laws;
 - single-acquisition and multi-acquisition bridge laws;
@@ -2883,7 +2895,7 @@ The architecture is successful when:
 10. `FmriDataset` and model/fit plans remain pure while opened readers remain
     honestly effectful.
 11. All portable behavior is verified on JVM and Scala.js.
-12. Every phase preserves the frozen numerical compatibility corpus.
+12. Every phase preserves the frozen numerical regression corpus.
 13. Existing model and fit workflows require no source-specific branching.
 
 No compression-ratio or throughput target is defined by this architecture
@@ -2943,14 +2955,15 @@ Mitigation:
 - require the same representation law suite across formats;
 - write new manifests only after cross-format proof.
 
-### Risk: legacy compatibility becomes permanent hidden architecture
+### Risk: pre-release shims become permanent hidden architecture
 
 Mitigation:
 
-- name legacy families explicitly;
+- delete deprecated aliases before release;
+- name current formats and adapters factually;
 - receipt all coarse fallbacks;
-- track migration by representation;
-- forbid new representations from using legacy central dispatch.
+- install representations through immutable registries;
+- forbid central codec dispatch.
 
 ### Risk: provenance volume becomes unmanageable
 
@@ -3097,14 +3110,15 @@ Resolved in Phase 8:
 
 - `response` is the neutral response-kernel artifact;
 - `archive` is the format-neutral archive API artifact;
-- `archive-lna` owns the legacy LNA schema and physical HDF5 driver;
+- `archive-lna` owns the versioned LNA 2 schema and physical HDF5 driver;
 - `archive-zarr` owns the NeuroArchive Zarr profile;
-- `interop-archived-response` owns representation/archive lowering, legacy LNA
-  reconstruction, archive-aware dataset compatibility, and runtime assembly.
+- `interop-archived-response` owns representation/archive lowering, LNA
+  pipeline reconstruction, archive-aware dataset adapters, and runtime
+  assembly.
 
-The graph is acyclic, the legacy packages remain available from their new
-artifacts, every artifact has an ownership README, and an executable guard
-checks both physical source placement and prohibited build edges.
+The graph is acyclic, domain package names follow their owned values, every
+artifact has an ownership README, and an executable guard checks both physical
+source placement and prohibited build edges.
 
 ### D6. Manifest canonical-value representation
 
@@ -3307,7 +3321,7 @@ This PRD is implemented only when:
 - axis-keyed capability claims are enforced by observed-access tests;
 - Phase-8 import and build-edge guards reject archive/latent dependencies from
   dataset core;
-- legacy paths are explicitly named and no longer canonical dispatch;
+- no deprecated alias or historical response/archive name remains;
 - every phase preserves the frozen numerical corpus;
 - module READMEs and `docs/module-relations.md` reflect the live graph;
 - `sbt compileAll` and `sbt testAll` pass warning-clean.
@@ -3315,7 +3329,7 @@ This PRD is implemented only when:
 Until then, implementations and documentation must distinguish:
 
 - current verified behavior;
-- compatibility adapters;
+- current cross-domain adapters;
 - completed migration phases;
 - aspirational target architecture.
 
@@ -3359,7 +3373,7 @@ without moving mathematics into storage or hierarchy into decoding
 
 ```text
 explicitly assembles trusted formats, representation families,
-stores, limits, and compatibility adapters
+stores, limits, and cross-domain adapters
 ```
 
 The product succeeds when these modules feel like parts of one compiler

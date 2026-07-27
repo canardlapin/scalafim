@@ -22,9 +22,13 @@ import scalafim.latent.{
   BoldZipResidualEvent,
   BoldZipSpatialBasis,
   BoldZipTextureEntry,
+  BoldZipLatentArchiveCodec,
   DctNorm,
-  LegacyLatentArchiveCodec,
+  ExplicitLatentArchiveCodec,
+  LatentArchiveRegistry,
   LatentSelection,
+  SharedBasisLatentArchiveCodec,
+  TransportLatentArchiveCodec,
   TransportLatentResponse
 }
 
@@ -44,7 +48,10 @@ class LnaDatasetSuite extends munit.FunSuite:
 
   test("LnaDataset discovers subjects, metadata, participants, and shared basis registry") {
     withFixture { root =>
-      val dataset = LnaDataset.open(root).fold(err => fail(err.message), identity)
+      val dataset =
+        LnaDataset
+          .open(root, LatentArchiveRegistry.standard)
+          .fold(err => fail(err.message), identity)
 
       assertEquals(dataset.subjects.fold(err => fail(err.message), identity), Vector("sub-01", "sub-02"))
 
@@ -75,7 +82,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
   test("LnaDataset filters LNA files by subject session task and space") {
     withFixture { root =>
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
 
       val rest =
         dataset
@@ -120,7 +127,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       writeArchive(root.resolve("sub-09/func/sub-09_task-rest_run-01_acq-hi_desc-denoisedExtra_space-MNI_bold.lna.h5"), data)
       writeArchive(root.resolve("sub-09/func/sub-09_task-resting_run-01_acq-hi_desc-denoised_space-MNI_bold.lna.h5"), data)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val exact =
         dataset
           .findLnaFiles(
@@ -162,7 +169,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       writeArchive(root.resolve("sub-10/ses-01/func/sub-10_ses-01_task-rest_run-01_space-MNI_bold.lna.h5"), data)
       writeArchive(root.resolve("sub-10/ses-01/func/sub-10_ses-01_task-rest_run-02_space-MNI_bold.lna.h5"), data)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val run2 =
         dataset
           .readSubject(
@@ -200,7 +207,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Files.createDirectories(malformed.getParent)
       Files.writeString(malformed, "not an archive")
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val failed =
         dataset
           .findLnaFiles(LnaDatasetQuery(subject = "11", task = Some("rest")))
@@ -219,7 +226,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
   test("LnaDataset loads one archive as a LatentArchiveDatasetBackend") {
     withFixture { root =>
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubject(LnaDatasetQuery(subject = "sub-01", task = Some("rest"), space = Some("MNI")))
@@ -276,7 +283,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubjectMaterialized(LnaDatasetQuery(subject = "03", task = Some("shared"), space = Some("MNI")))
@@ -295,7 +302,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Temporal Latent LNA Derivative"}""")
       val archivePath = root.resolve("sub-04/func/sub-04_task-dct_space-MNI_bold.lna.h5")
       val archive =
-        LegacyLatentArchiveCodec
+        ExplicitLatentArchiveCodec
           .toTemporalDctArchive(
             data = GaleTestData.matrixFromRows(data.toRows),
             space = space,
@@ -307,7 +314,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubjectLatent(LnaDatasetQuery(subject = "04", task = Some("dct"), space = Some("MNI")))
@@ -353,14 +360,14 @@ class LnaDatasetSuite extends munit.FunSuite:
           )
           .fold(err => fail(err.message), identity)
       val archive =
-        LegacyLatentArchiveCodec
-          .toTransportArchive(response, space)
+        TransportLatentArchiveCodec
+          .toArchive(response, space)
           .fold(err => fail(err.message), identity)
       val archivePath = root.resolve("sub-06/func/sub-06_task-transport_space-MNI_bold.lna.h5")
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubjectLatent(LnaDatasetQuery(subject = "06", task = Some("transport"), space = Some("MNI")))
@@ -416,14 +423,14 @@ class LnaDatasetSuite extends munit.FunSuite:
           label = "boldzip-dataset"
         ).fold(err => fail(err.message), identity)
       val archive =
-        LegacyLatentArchiveCodec
-          .toBoldZipArchive(response, boldZipSpace)
+        BoldZipLatentArchiveCodec
+          .toArchive(response, boldZipSpace)
           .fold(err => fail(err.message), identity)
       val archivePath = root.resolve("sub-07/func/sub-07_task-boldzip_space-MNI_bold.lna.h5")
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubjectLatent(LnaDatasetQuery(subject = "07", task = Some("boldzip"), space = Some("MNI")))
@@ -478,8 +485,8 @@ class LnaDatasetSuite extends munit.FunSuite:
           )
         )
       val archive =
-        LegacyLatentArchiveCodec
-          .toSharedBasisArchive(
+        SharedBasisLatentArchiveCodec
+          .toArchive(
             data = activeData,
             space = space,
             basis = basis,
@@ -491,7 +498,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Option(archivePath.getParent).foreach(Files.createDirectories(_))
       LnaHdf5Store.default.write(archivePath, archive).fold(err => fail(err.message), identity)
 
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val backend =
         dataset
           .readSubjectLatent(LnaDatasetQuery(subject = "05", task = Some("shared"), space = Some("MNI")))
@@ -528,7 +535,12 @@ class LnaDatasetSuite extends munit.FunSuite:
           .fold(error => fail(error.message), identity)
       val opened =
         FmriDataset
-          .openLna(root, query, timing)
+          .openLna(
+            root,
+            query,
+            timing,
+            LatentArchiveRegistry.standard
+          )
           .fold(error => fail(error.message), identity)
       val provenance =
         opened.metadata.provenance.collect:
@@ -542,7 +554,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
   test("LnaDataset reports ambiguous subject reads") {
     withFixture { root =>
-      val dataset = LnaDataset.unsafe(root)
+      val dataset = LnaDataset.unsafe(root, LatentArchiveRegistry.standard)
       val failed = dataset.readSubject(LnaDatasetQuery(subject = "sub-01"))
       assert(failed.isLeft)
       assert(failed.left.toOption.exists(_.message.contains("multiple LNA files match")))
@@ -568,7 +580,12 @@ class LnaDatasetSuite extends munit.FunSuite:
           .fold(error => fail(error.message), identity)
       val dataset =
         FmriDataset
-          .openLna(root, query, timing)
+          .openLna(
+            root,
+            query,
+            timing,
+            LatentArchiveRegistry.standard
+          )
           .fold(error => fail(error.message), identity)
 
       assertEquals(dataset.timeAxis.runIds.map(_.value), Vector("run-01"))
@@ -599,6 +616,7 @@ class LnaDatasetSuite extends munit.FunSuite:
           query,
           timing,
           RunLabel("not-present"),
+          LatentArchiveRegistry.standard,
           DatasetEvents.Empty
         )
       assert(missingRun.left.exists(_.message.contains("run 'not-present' not found")))

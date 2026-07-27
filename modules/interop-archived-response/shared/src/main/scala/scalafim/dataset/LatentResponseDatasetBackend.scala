@@ -23,7 +23,7 @@ final class LatentResponseDatasetBackend private (
         .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(samples)))
         .left
         .map(error =>
-          DatasetError.CompatibilityFailure(
+          DatasetError.AdapterFailure(
             OperationId.unsafe("latent-response"),
             error.message
           )

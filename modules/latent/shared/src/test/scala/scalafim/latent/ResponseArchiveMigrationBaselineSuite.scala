@@ -299,9 +299,9 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val archive =
-      archiveValue(LegacyLatentArchiveCodec.toArchive(source, canonicalSpace))
+      archiveValue(ExplicitLatentArchiveCodec.toArchive(source, canonicalSpace))
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.Explicit(response) => response
         case other => throw IllegalStateException(s"expected explicit response, found $other")
 
@@ -316,7 +316,7 @@ object ResponseArchiveMigrationBaseline:
   private def temporalDctCases: Vector[MigrationBaselineCase] =
     val archive =
       archiveValue(
-        LegacyLatentArchiveCodec.toTemporalDctArchive(
+        ExplicitLatentArchiveCodec.toTemporalDctArchive(
           data = LatentNumerics.matrixFromRows(canonicalRows),
           space = canonicalSpace,
           components = canonicalRows.length,
@@ -327,7 +327,7 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.TemporalDct(response, _, _, _) => response
         case other => throw IllegalStateException(s"expected temporal DCT response, found $other")
     val comparator = MigrationComparator.AbsoluteRelative(1e-12, 1e-12)
@@ -364,7 +364,7 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.TemporalHaar(response, _, _, _) => response
         case other => throw IllegalStateException(s"expected temporal Haar response, found $other")
 
@@ -402,7 +402,7 @@ object ResponseArchiveMigrationBaseline:
     val data = denseFromLoadings(coefficients, offset, loadings)
     val archive =
       archiveValue(
-        LegacyLatentArchiveCodec.toSharedBasisArchive(
+        SharedBasisLatentArchiveCodec.toArchive(
           data = data,
           space = NeuroSpace(Vector(3, 1, 1)),
           basis = artifact,
@@ -411,7 +411,7 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.SharedBasis(response) =>
           latentValue(response.materialize(artifact, Some(NeuroSpace(Vector(3, 1, 1)))))
         case other => throw IllegalStateException(s"expected shared-basis response, found $other")
@@ -487,7 +487,7 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.SharedBasis(response) =>
           latentValue(response.materialize(artifact, Some(radialSpace)))
         case other => throw IllegalStateException(s"expected HRBF shared-basis response, found $other")
@@ -511,9 +511,9 @@ object ResponseArchiveMigrationBaseline:
         )
       )
     val archive =
-      archiveValue(LegacyLatentArchiveCodec.toTransportArchive(source, canonicalSpace))
+      archiveValue(TransportLatentArchiveCodec.toArchive(source, canonicalSpace))
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.Transport(response) => response
         case other => throw IllegalStateException(s"expected transport response, found $other")
 
@@ -536,9 +536,9 @@ object ResponseArchiveMigrationBaseline:
           )
       ).payload
     val archive =
-      archiveValue(LegacyLatentArchiveCodec.toBoldZipArchive(payload, canonicalSpace))
+      archiveValue(BoldZipLatentArchiveCodec.toArchive(payload, canonicalSpace))
     val decoded =
-      archiveValue(LegacyLatentArchiveCodec.fromArchive(archive)) match
+      archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.BoldZip(response) => response
         case other => throw IllegalStateException(s"expected BOLDZip response, found $other")
 

@@ -18,7 +18,7 @@ import scalafim.image.NeuroSpace
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
-private[latent] object BoldZipLatentArchiveCodec:
+object BoldZipLatentArchiveCodec:
   private val KindKey = "lna.response.kind"
   private val KindValue = "boldzip_sr"
   private val Kind = TransformKind.Custom(KindValue)

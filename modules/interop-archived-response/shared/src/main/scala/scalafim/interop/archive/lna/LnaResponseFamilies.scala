@@ -68,17 +68,17 @@ object TemporalDctLnaRepresentationFamily:
   def apply[F[_]: Async]: TemporalDctLnaRepresentationFamily[F] =
     new TemporalDctLnaRepresentationFamily[F]()
 
-trait LegacyLnaResponseOpener[F[_]]:
+trait LnaPipelineResponseOpener[F[_]]:
   def open(
       location: ArchiveLocation,
       revisionId: ArchiveRevisionId
   ): EitherT[F, ArchiveError, ResponseSource[F]]
 
-final class LegacyLnaRepresentationFamily[F[_]] private (
-    opener: LegacyLnaResponseOpener[F]
+final class LnaPipelineRepresentationFamily[F[_]] private (
+    opener: LnaPipelineResponseOpener[F]
 )(using F: Async[F]) extends ArchivedResponseFamily[F]:
   val key: RepresentationKey =
-    LegacyLnaRepresentationFamily.Key
+    LnaPipelineRepresentationFamily.Key
 
   def open(
       envelope: RepresentationEnvelope,
@@ -86,19 +86,19 @@ final class LegacyLnaRepresentationFamily[F[_]] private (
   ): ArchiveResource[F, ResponseSource[F]] =
     if envelope.key != key then
       Resource.eval(EitherT.leftT(ArchiveError.InvalidArchive(
-        s"legacy LNA family received '${envelope.key.value}'"
+        s"LNA pipeline family received '${envelope.key.value}'"
       )))
     else
       Resource.eval(opener.open(archive.location, archive.revisionId))
 
-object LegacyLnaRepresentationFamily:
+object LnaPipelineRepresentationFamily:
   val Key: RepresentationKey =
     RepresentationKey.unsafe("org.scalafim/lna-pipeline@2")
 
   def using[F[_]: Async](
-      opener: LegacyLnaResponseOpener[F]
-  ): LegacyLnaRepresentationFamily[F] =
-    new LegacyLnaRepresentationFamily[F](opener)
+      opener: LnaPipelineResponseOpener[F]
+  ): LnaPipelineRepresentationFamily[F] =
+    new LnaPipelineRepresentationFamily[F](opener)
 
   private[lna] def source[F[_]: Async](
       archive: LnaArchive,
@@ -110,10 +110,14 @@ object LegacyLnaRepresentationFamily:
           Right(value)
         case values =>
           Left(ArchiveError.InvalidArchive(
-            s"legacy response opening requires exactly one LNA run, found ${values.length}"
+            s"LNA pipeline response opening requires exactly one run, found ${values.length}"
           ))
       dense <- LnaPipeline.reconstruct(archive, run.label)
-      schema <- legacySchema(revisionId, run.shape.timepoints, run.shape.spatialSize)
+      schema <- pipelineSchema(
+        revisionId,
+        run.shape.timepoints,
+        run.shape.spatialSize
+      )
       values = NArray.ofSize[Double](dense.rows * dense.cols)
       _ =
         var row = 0
@@ -125,7 +129,7 @@ object LegacyLnaRepresentationFamily:
           row += 1
       source <- InMemoryResponseSource
         .copyFromRowMajor[F](
-          SourceId.unsafe(s"legacy-lna:${revisionId.value}"),
+          SourceId.unsafe(s"lna-pipeline:${revisionId.value}"),
           schema,
           values,
           DecodeConsistency.ExactBits
@@ -134,7 +138,7 @@ object LegacyLnaRepresentationFamily:
         .map(error => ArchiveError.InvalidArchive(error.message))
     yield source
 
-  private def legacySchema(
+  private def pipelineSchema(
       revisionId: ArchiveRevisionId,
       timepoints: Int,
       samples: Int
@@ -143,17 +147,17 @@ object LegacyLnaRepresentationFamily:
     for
       time <- TimeDomain
         .regular(
-          DomainId.unsafe[TimeAxis](s"$identity:legacy-time"),
+          DomainId.unsafe[TimeAxis](s"$identity:lna-time"),
           0.0,
           1.0,
           timepoints,
-          UnitId.unsafe("legacy-sample")
+          UnitId.unsafe("sample")
         )
         .left
         .map(error => ArchiveError.InvalidArchive(error.message))
       sampleDomain <- SampleDomain
         .make(
-          DomainId.unsafe[SampleAxis](s"$identity:legacy-samples"),
+          DomainId.unsafe[SampleAxis](s"$identity:lna-samples"),
           samples,
           SampleDomainKind.Volume(
             DomainReference.unsafe("lna-space", identity),
@@ -165,11 +169,11 @@ object LegacyLnaRepresentationFamily:
         .map(error => ArchiveError.InvalidArchive(error.message))
       schema <- ResponseSchema
         .make(
-          ResponseSchemaId.unsafe(s"$identity:legacy-response"),
+          ResponseSchemaId.unsafe(s"$identity:lna-response"),
           time,
           sampleDomain,
           SignalSchema(
-            UnitId.unsafe("legacy-archive-value"),
+            UnitId.unsafe("archive-value"),
             CalibrationState.Applied,
             NonFinitePolicy.Preserve
           )

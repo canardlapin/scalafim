@@ -1,10 +1,22 @@
 package scalafim.latent
 
-import scalafim.archive.lna.{DatasetRole, LnaPipeline, Payload, SharedBasisArtifact, SharedBasisId, SharedBasisMask, TransformKind, TransformParams}
+import scalafim.archive.{ArchiveError, RunLabel}
+import scalafim.archive.lna.{
+  DatasetRole,
+  LnaArchive,
+  LnaPipeline,
+  LnaRun,
+  Payload,
+  SharedBasisArtifact,
+  SharedBasisId,
+  SharedBasisMask,
+  TransformKind,
+  TransformParams
+}
 import scalafim.image.{DMat as ImageDMat, Mask, NeuroSpace}
 import gale.linalg.{DMat, DVec, LinAlgError}
 
-class LatentArchiveCodecSuite extends munit.FunSuite:
+class LatentArchiveRegistrySuite extends munit.FunSuite:
   private val basis =
     LatentNumerics.matrixFromRows(
       Vector(
@@ -27,6 +39,62 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
   private val offset =
     DVec.fromSeq(Vector(1.0, 2.0, 3.0, 4.0))
 
+  test("standard registry installs every typed LNA binding exactly once") {
+    assertEquals(
+      LatentArchiveRegistry.standard.supportedKinds,
+      LatentArchiveKind.values.toVector.sortBy(_.toString)
+    )
+  }
+
+  test("registry construction rejects empty and duplicate binding sets") {
+    assertEquals(
+      LatentArchiveRegistry.build(),
+      Left(LatentArchiveRegistryError.Empty)
+    )
+    assertEquals(
+      LatentArchiveRegistry.build(
+        LatentArchiveBinding.Explicit,
+        LatentArchiveBinding.Explicit
+      ),
+      Left(
+        LatentArchiveRegistryError.DuplicateKind(
+          LatentArchiveKind.Explicit
+        )
+      )
+    )
+
+    val emptyKinds =
+      testBinding("empty-kinds", Vector.empty)
+    assertEquals(
+      LatentArchiveRegistry.build(emptyKinds),
+      Left(
+        LatentArchiveRegistryError.InvalidBinding(
+          "empty-kinds",
+          "at least one archive kind is required"
+        )
+      )
+    )
+
+    val sharedNameA =
+      testBinding(
+        "shared-name",
+        Vector(LatentArchiveKind.Explicit)
+      )
+    val sharedNameB =
+      testBinding(
+        "shared-name",
+        Vector(LatentArchiveKind.Transport)
+      )
+    assertEquals(
+      LatentArchiveRegistry.build(sharedNameB, sharedNameA),
+      Left(
+        LatentArchiveRegistryError.DuplicateName(
+          "shared-name"
+        )
+      )
+    )
+  }
+
   test("explicit latent responses roundtrip through LNA archives") {
     val source =
       ExplicitLatentResponse(
@@ -40,15 +108,15 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       ).fold(err => fail(err.message), identity)
 
     val archive =
-      LegacyLatentArchiveCodec
+      ExplicitLatentArchiveCodec
         .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     val descriptor =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openDescriptor(archive)
         .fold(err => fail(err.message), identity)
 
@@ -63,7 +131,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     assert(plan.latentResponse.nonEmpty)
 
     val decoded =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity) match
         case LatentArchiveResponse.Explicit(response) => response
@@ -94,7 +162,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         )
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .maybeOpenPlan(archive)
         .fold(err => fail(err.message), identity)
 
@@ -113,7 +181,7 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
 
     val archive =
-      LegacyLatentArchiveCodec
+      ExplicitLatentArchiveCodec
         .toTemporalDctArchive(
           data = data,
           space = NeuroSpace(Vector(2, 2, 1)),
@@ -133,15 +201,15 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         fail(s"expected temporal DCT params, found $other")
 
     val decodedVariant =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     val descriptor =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openDescriptor(archive)
         .fold(err => fail(err.message), identity)
 
@@ -215,8 +283,8 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
 
     val archive =
-      LegacyLatentArchiveCodec
-        .toSharedBasisArchive(
+      SharedBasisLatentArchiveCodec
+        .toArchive(
           data = data,
           space = NeuroSpace(Vector(3, 1, 1)),
           basis = sharedBasis,
@@ -257,15 +325,15 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     assert(!rowsClose(storedCoefficients.toRows, rawProjection(data.toRows, storedOffset, sharedLoadings), 1e-8))
 
     val decodedVariant =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     val archiveDescriptor =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openDescriptor(archive)
         .fold(err => fail(err.message), identity)
 
@@ -362,11 +430,11 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       ).fold(err => fail(err.message), identity)
 
     val archive =
-      LegacyLatentArchiveCodec
-        .toTransportArchive(source, NeuroSpace(Vector(2, 2, 1)))
+      TransportLatentArchiveCodec
+        .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
 
-    assert(LegacyLatentArchiveCodec.isTransportArchive(archive))
+    assert(TransportLatentArchiveCodec.isArchive(archive))
     val descriptor = archive.manifest.transforms.head
     assertEquals(descriptor.kind, TransformKind.Embed)
     assert(descriptor.datasets.exists(_.role == DatasetRole.Other("transport_native_decoder_t")))
@@ -380,19 +448,19 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         fail(s"expected transport embed params, found $other")
 
     val decoded =
-      LegacyLatentArchiveCodec
-        .fromTransportArchive(archive)
+      TransportLatentArchiveCodec
+        .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val decodedVariant =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     val archiveDescriptor =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openDescriptor(archive)
         .fold(err => fail(err.message), identity)
     val expectedSelection =
@@ -460,11 +528,11 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
       )
 
     val archive =
-      LegacyLatentArchiveCodec
-        .toBoldZipArchive(source, NeuroSpace(Vector(3, 1, 1)))
+      BoldZipLatentArchiveCodec
+        .toArchive(source, NeuroSpace(Vector(3, 1, 1)))
         .fold(err => fail(err.message), identity)
 
-    assert(LegacyLatentArchiveCodec.isBoldZipArchive(archive))
+    assert(BoldZipLatentArchiveCodec.isArchive(archive))
     val descriptor = archive.manifest.transforms.head
     assertEquals(descriptor.kind, TransformKind.Custom("boldzip_sr"))
     assert(descriptor.datasets.exists(_.role == DatasetRole.Other("boldzip_carrier_theta")))
@@ -488,19 +556,19 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
         fail(s"expected BOLDZip texture index table, found $other")
 
     val decoded =
-      LegacyLatentArchiveCodec
-        .fromBoldZipArchive(archive)
+      BoldZipLatentArchiveCodec
+        .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val decodedVariant =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     val plan =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openPlan(archive)
         .fold(err => fail(err.message), identity)
     val archiveDescriptor =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .openDescriptor(archive)
         .fold(err => fail(err.message), identity)
     val expectedSelection =
@@ -535,6 +603,35 @@ class LatentArchiveCodecSuite extends munit.FunSuite:
     result match
       case Right(value) => value
       case Left(error)  => fail(error.message)
+
+  private def testBinding(
+      bindingName: String,
+      bindingKinds: Vector[LatentArchiveKind]
+  ): LatentArchiveBinding =
+    new LatentArchiveBinding:
+      val name: String =
+        bindingName
+
+      val kinds: Vector[LatentArchiveKind] =
+        bindingKinds
+
+      private[latent] def descriptorOption(
+          archive: LnaArchive,
+          runLabel: RunLabel
+      ): Either[ArchiveError, Option[LatentArchiveDescriptor]] =
+        Right(None)
+
+      private[latent] def openPlan(
+          archive: LnaArchive,
+          runLabel: RunLabel,
+          run: LnaRun,
+          descriptor: LatentArchiveDescriptor
+      ): Either[ArchiveError, LatentArchivePlan] =
+        Left(
+          ArchiveError.InvalidArchive(
+            s"$bindingName test binding cannot open ${descriptor.kind.toString}"
+          )
+        )
 
   private def mapValue[A](result: Either[LinAlgError, A]): A =
     result match

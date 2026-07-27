@@ -23,8 +23,8 @@ immutable `SynchronousDatasetReaders` registry, so an index cannot hide a
 reader in each description.
 
 `DatasetSeriesReader` is the explicit synchronous capability.
-`SynchronousFmriDataset` is the named compatibility facade that pairs a checked
-description with a real `DatasetBackend`. Compatibility methods on a value
+`SynchronousFmriDataset` is the explicit facade that pairs a checked
+description with a real `DatasetBackend`. Synchronous convenience methods on a value
 typed as `FmriDataset` succeed only when that value is this synchronous
 subtype; a pure or asynchronous description returns
 `SynchronousReaderNotFound` immediately. There is no blocking browser facade.
@@ -78,12 +78,12 @@ remain effect-free.
 - current synchronous MVPA construction accepts a `DatasetSeriesReader`;
 - `OpenedDatasetMvpaExecutor` builds pattern views through the same attached
   response path;
-- compatibility overloads resolve only a real `SynchronousFmriDataset`.
+- synchronous overloads resolve only a real `SynchronousFmriDataset`.
 
 Direct public `DatasetError` cases carrying archive- or latent-owned error ADTs
-were removed. Legacy LNA adapters now report a named
-`DatasetCompatibilityLayer` plus a textual boundary detail, avoiding those
-module types in the dataset error surface.
+were removed. LNA adapters now report `DatasetError.AdapterFailure` with a
+typed `OperationId` and textual boundary detail, avoiding those module types
+in the dataset error surface.
 
 ## 4. Runtime ownership
 

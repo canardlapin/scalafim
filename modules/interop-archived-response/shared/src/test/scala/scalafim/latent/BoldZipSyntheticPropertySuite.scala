@@ -66,21 +66,21 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       val synthetic = syntheticCase(s"archive-$caseIndex", rng)
       val payload = synthetic.payload
       val archive =
-        LegacyLatentArchiveCodec
-          .toBoldZipArchive(payload, NeuroSpace(Vector(payload.shape.samples, 1, 1)))
+        BoldZipLatentArchiveCodec
+          .toArchive(payload, NeuroSpace(Vector(payload.shape.samples, 1, 1)))
           .fold(err => fail(err.message), identity)
       val plan =
-        LegacyLatentArchiveCodec
+        LatentArchiveRegistry.standard
           .openPlan(archive)
           .fold(err => fail(err.message), identity)
       val decoded =
-        LegacyLatentArchiveCodec
+        LatentArchiveRegistry.standard
           .fromArchive(archive)
           .fold(err => fail(err.message), identity) match
           case LatentArchiveResponse.BoldZip(response) => response
           case other => fail(s"expected BOLDZip archive response, found $other")
 
-      assert(LegacyLatentArchiveCodec.isBoldZipArchive(archive))
+      assert(BoldZipLatentArchiveCodec.isArchive(archive))
       assertEquals(plan.kind, LatentArchiveKind.BoldZip)
       assertEquals(plan.descriptor.kind, LatentArchiveKind.BoldZip)
       assertEquals(decoded.metadata("case"), synthetic.id)

@@ -13,15 +13,15 @@ import scalafim.response.ResponseSource
 import java.nio.file.Path
 import scala.util.control.NonFatal
 
-object LegacyLnaHdf5RepresentationFamily:
-  def default[F[_]: Async]: LegacyLnaRepresentationFamily[F] =
+object LnaPipelineHdf5RepresentationFamily:
+  def default[F[_]: Async]: LnaPipelineRepresentationFamily[F] =
     using(LnaHdf5Store.default)
 
   def using[F[_]: Async](
       store: LnaHdf5Store
-  ): LegacyLnaRepresentationFamily[F] =
-    LegacyLnaRepresentationFamily.using(
-      new LegacyLnaResponseOpener[F]:
+  ): LnaPipelineRepresentationFamily[F] =
+    LnaPipelineRepresentationFamily.using(
+      new LnaPipelineResponseOpener[F]:
         def open(
             location: ArchiveLocation,
             revisionId: ArchiveRevisionId
@@ -31,7 +31,7 @@ object LegacyLnaHdf5RepresentationFamily:
               store
                 .read(Path.of(location.value))
                 .flatMap(archive =>
-                  LegacyLnaRepresentationFamily.source[F](
+                  LnaPipelineRepresentationFamily.source[F](
                     archive,
                     revisionId
                   )

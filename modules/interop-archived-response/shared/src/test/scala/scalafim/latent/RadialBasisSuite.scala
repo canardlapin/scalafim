@@ -489,11 +489,11 @@ class RadialBasisSuite extends munit.FunSuite:
     assertRowsEqual(encoding.response.reconstruct().fold(err => fail(err.message), identity).toRows, data.toRows, 1e-8)
 
     val archive =
-      LegacyLatentArchiveCodec
-        .toRadialBasisArchive(data, space, radial, space.spatialDims, basisId, center = false)
+      RadialBasisArchiveCodec
+        .toArchive(data, space, radial, space.spatialDims, basisId, center = false)
         .fold(err => fail(err.message), identity)
     val decoded =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity)
     decoded match

@@ -19,7 +19,11 @@ import scalafim.dataset.{
   LatentResponseDatasetBackend,
   RunId
 }
-import scalafim.latent.{LegacyLatentArchiveCodec, LatentArchivePlan, SharedBasisLatentArchive}
+import scalafim.latent.{
+  LatentArchivePlan,
+  LatentArchiveRegistry,
+  SharedBasisLatentArchive
+}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -273,7 +277,10 @@ private object LnaFileEntities:
               )
             )
 
-final case class LnaDataset private (root: Path):
+final case class LnaDataset private (
+    root: Path,
+    registry: LatentArchiveRegistry
+):
   def subjects: Either[ArchiveError, Vector[String]] =
     try
       if !Files.isDirectory(root) then Left(ArchiveError.InvalidPath(root.toString, "LNA dataset root is not a directory"))
@@ -356,6 +363,7 @@ final case class LnaDataset private (root: Path):
           id = id,
           archive = archive,
           run = run,
+          registry = registry,
           metadata = metadataFor(normalized)
         )
         .left
@@ -374,7 +382,7 @@ final case class LnaDataset private (root: Path):
     val normalized = resolveInsideRoot(path)
     readArchive(path).flatMap { archive =>
       for
-        plan <- LegacyLatentArchiveCodec.openPlan(archive, run)
+        plan <- registry.openPlan(archive, run)
         backend <- latentBackendFromPlan(plan, normalized, id, metadataFor(normalized))
       yield backend
     }
@@ -561,14 +569,21 @@ final case class LnaDataset private (root: Path):
     catch case NonFatal(e) => Left(ArchiveError.UnsupportedStorage(s"could not read ${path.toAbsolutePath}: ${e.getMessage}"))
 
 object LnaDataset:
-  def open(root: Path): Either[ArchiveError, LnaDataset] =
+  def open(
+      root: Path,
+      registry: LatentArchiveRegistry
+  ): Either[ArchiveError, LnaDataset] =
     val normalized = root.toAbsolutePath.normalize()
     if !Files.isDirectory(normalized) then
       Left(ArchiveError.InvalidPath(root.toString, "LNA dataset root does not exist or is not a directory"))
-    else Right(LnaDataset(normalized))
+    else Right(LnaDataset(normalized, registry))
 
-  def unsafe(root: Path): LnaDataset =
-    open(root).fold(err => throw IllegalArgumentException(err.message), identity)
+  def unsafe(
+      root: Path,
+      registry: LatentArchiveRegistry
+  ): LnaDataset =
+    open(root, registry)
+      .fold(err => throw IllegalArgumentException(err.message), identity)
 
   private[io] def datasetIdFromPath(root: Path, path: Path): String =
     root

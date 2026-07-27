@@ -4,7 +4,7 @@ Status: complete and repository-wide verified on 2026-07-26
 Issue: `bd-01KYAA8KS1B9F0D6SZ00GCRESJ`  
 Governing plan: [response-representation-archive-architecture.md](response-representation-archive-architecture.md)
 
-This record freezes the input to the response/archive migration. It is not a
+This record freezes the input to the response/archive convergence. It is not a
 description of the target as though it already existed. The baseline sections
 describe committed behavior at the start commit; the decision sections are
 normative for Phases 1 and later.
@@ -28,7 +28,7 @@ Commits `4d2ddddf5b7a7183a16235bb15eb50abcbfe75ed` (the
 Scala 3.7.4 experiment) and `b6a3af2af4dad57413e80ebce0ddf33633d704a9`
 (frame4s extraction) are ancestors of the start commit. They are not unmerged
 prerequisites. The build at the start commit authoritatively selects Scala
-3.4.2. No worktree-only prerequisite is part of this migration.
+3.4.2. No worktree-only prerequisite is part of this convergence.
 
 The historical receipt at
 `docs/benchmarks/receipts/response-archive-phase0-baseline-2026-07-26.json`
@@ -98,14 +98,14 @@ file's own principal package.
 
 | Current file | Current responsibility | Target owner |
 | --- | --- | --- |
-| `dataset-zarr/jvm/.../FmriDatasetZarr.scala` | Opens a Zarr archive and constructs a scientific dataset | runtime composition; retain a deprecated facade during migration |
+| `dataset-zarr/jvm/.../FmriDatasetZarr.scala` | Opens a Zarr archive and constructs a scientific dataset | runtime composition with a directly named synchronous adapter |
 | `dataset-zarr/jvm/.../NiftiCanonicalImporter.scala` | Reads NIfTI/image data and publishes the canonical Zarr profile | format importer assembled by runtime |
 | `dataset-zarr/jvm/.../ZarrResponseBlockSource.scala` | Binds archive reads, image geometry, and dataset blocks | archived-response interop plus volume-domain adapter |
 | `dataset-zarr/shared/.../CanonicalBoldSampling.scala` | Converts persisted acquisition timing into dataset/HRF timing | response-time adapter at the dataset/archive boundary |
-| `dataset/jvm/.../FmriDatasetLna.scala` | Decodes LNA representation families while opening a dataset | runtime/archived-response compatibility facade |
-| `dataset/jvm/.../LnaDataset.scala` | Opens HDF5, resolves BIDS metadata and shared bases, then builds a dataset | JVM runtime compatibility facade |
+| `dataset/jvm/.../FmriDatasetLna.scala` | Decodes LNA representation families while opening a dataset | runtime/archived-response dataset adapter |
+| `dataset/jvm/.../LnaDataset.scala` | Opens HDF5, resolves BIDS metadata and shared bases, then builds a dataset | JVM LNA dataset adapter |
 | `dataset/shared/.../DatasetError.scala` | Exposes archive and latent errors from dataset core | dataset-only error ADT; translate foreign failures at adapters |
-| `dataset/shared/.../LatentArchiveDatasetBackend.scala` | Reconstructs LNA/latent values behind `DatasetBackend` | archived-response interop compatibility adapter |
+| `dataset/shared/.../LatentArchiveDatasetBackend.scala` | Reconstructs LNA/latent values behind `DatasetBackend` | archived-response interop adapter |
 | `latent/shared/.../BoldZipLatentArchiveCodec.scala` | Binds BOLDZip semantics to LNA payloads | archived-response interop |
 | `latent/shared/.../ExplicitLatentArchiveCodec.scala` | Binds explicit latent semantics to LNA payloads | archived-response interop |
 | `latent/shared/.../SharedBasisLatentArchiveCodec.scala` | Binds shared-basis semantics and image masks to LNA | archived-response interop plus geometry adapter |

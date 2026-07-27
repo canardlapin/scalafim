@@ -22,7 +22,7 @@ object LnaPayloadRole:
   private val Namespace =
     "org.scalafim.lna"
 
-  def fromLegacy(
+  def fromDatasetRole(
       role: DatasetRole
   ): PayloadRoleId =
     PayloadRoleId
@@ -33,13 +33,13 @@ object LnaPayloadRole:
       )
 
   val TemporalBasis: PayloadRoleId =
-    fromLegacy(DatasetRole.TemporalBasis)
+    fromDatasetRole(DatasetRole.TemporalBasis)
 
   val Loadings: PayloadRoleId =
-    fromLegacy(DatasetRole.Loadings)
+    fromDatasetRole(DatasetRole.Loadings)
 
   val SampleOffset: PayloadRoleId =
-    fromLegacy(DatasetRole.SampleOffset)
+    fromDatasetRole(DatasetRole.SampleOffset)
 
   private def canonicalName(value: String): String =
     value
@@ -48,20 +48,20 @@ object LnaPayloadRole:
         if character.isLetterOrDigit then character else '-'
       )
 
-object LegacyLnaManifestTranslator:
+object LnaArchiveManifestAdapter:
   val Format: ArchiveFormatKey =
     ArchiveFormatKey.unsafe("lna-hdf5@2")
 
   val ObjectType: ObjectTypeId =
     ObjectTypeId.unsafe("org.scalafim/fmri-response")
 
-  val LegacyRepresentation: RepresentationKey =
+  val PipelineRepresentation: RepresentationKey =
     RepresentationKey.unsafe("org.scalafim/lna-pipeline@2")
 
   val TemporalDctRepresentation: RepresentationKey =
     RepresentationKey.unsafe("org.scalafim/temporal-dct@1")
 
-  def translate(
+  def adapt(
       manifest: LnaManifest
   ): Either[ArchiveError, ArchiveManifest] =
     for
@@ -69,7 +69,7 @@ object LegacyLnaManifestTranslator:
       payloads <- traverse(manifest.datasets): reference =>
         PayloadDescriptor.from(
           PayloadId.unsafe(reference.path.value),
-          LnaPayloadRole.fromLegacy(reference.role),
+          LnaPayloadRole.fromDatasetRole(reference.role),
           ScalarTypeId.unsafe(
             reference.dtype.fold("unknown")(_.toString.toLowerCase)
           ),
@@ -107,7 +107,7 @@ object LegacyLnaManifestTranslator:
         )
       case None =>
         PersistedRepresentation(
-          LegacyRepresentation,
+          PipelineRepresentation,
           CanonicalValue.string(LnaManifestCodec.render(manifest)),
           CanonicalValue.Null
         )

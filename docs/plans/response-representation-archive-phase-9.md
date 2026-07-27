@@ -6,9 +6,9 @@ Governing plan: [response-representation-archive-architecture.md](response-repre
 Baseline: [Phase 8 record](response-representation-archive-phase-8.md)
 
 Phase 9 normalizes the format-neutral archive manifest without changing
-scientific reconstruction or physical payload bytes. Existing LNA manifests
-are translated through a pure compatibility boundary, Zarr revisions emit the
-same normalized identities directly, and new canonical-manifest publication
+scientific reconstruction or physical payload bytes. LNA manifests are
+adapted through a pure format boundary, Zarr revisions emit the same
+normalized identities directly, and canonical-manifest publication
 is admitted only through a checked transactional write plan.
 
 ## 1. Independent identities
@@ -74,19 +74,19 @@ valid without installing executable code.
 The same logical payload retains identity when chunks, shards, compression, or
 container-specific placement changes.
 
-## 3. Legacy translation and current readers
+## 3. LNA adaptation and current readers
 
-`LegacyLnaManifestTranslator` is a pure function from the existing
-`LnaManifest` wire model to the normalized `ArchiveManifest`. It maps legacy
+`LnaArchiveManifestAdapter` is a pure function from the versioned
+`LnaManifest` wire model to the normalized `ArchiveManifest`. It maps typed
 dataset roles to namespaced LNA roles and promotes the persisted
 temporal-DCT descriptor and response schema into the narrow first-class
-envelope. Un-enveloped historical files receive the explicitly named
-`org.scalafim/lna-pipeline@2` legacy representation.
+envelope. Generic LNA manifests receive the factual
+`org.scalafim/lna-pipeline@2` representation.
 
-`LnaArchiveDriver` performs this translation after reading the existing HDF5
-format. Old fixtures therefore continue to read, while a rendered normalized
-manifest parses only through the new canonical codec. No legacy manifest
-branch was added to the canonical writer.
+`LnaArchiveDriver` performs this adaptation after reading LNA HDF5. LNA
+fixtures therefore read through the same driver, while a rendered normalized
+manifest parses only through the canonical codec. No LNA-specific branch was
+added to the canonical writer.
 
 `ZarrArchiveDriver` constructs the normalized revision directly from the
 checked canonical-BOLD profile. Its shared typed payload-role constant is also
@@ -97,7 +97,7 @@ drifting to different string literals.
 
 `CanonicalArchiveDocument` requires an exact one-to-one match between manifest
 descriptors and owned logical payload bytes. `CanonicalArchiveWritePlan`
-rejects legacy unqualified roles and emits this fixed order:
+rejects unqualified roles and emits this fixed order:
 
 ```text
 begin staging
@@ -115,10 +115,10 @@ receipt.
 
 This is a format-neutral publication orchestrator, not a hidden filesystem,
 HDF5, or Zarr writer. Physical sinks and atomic rename/object-store mechanisms
-remain in their container modules. Existing LNA and Zarr writers stay
-separately named compatibility/profile writers.
+remain in their container modules. LNA and Zarr writers keep factual profile
+names.
 
-## 5. Compatibility and executable evidence
+## 5. Executable evidence
 
 The focused final state passed:
 
@@ -135,9 +135,9 @@ Phase 0 numerical corpus        valid, 13 cases
 git diff --check                clean
 ```
 
-The fixtures cover pure old-to-new LNA migration, normalized LNA and Zarr
+The fixtures cover pure LNA-to-normalized-manifest adaptation, LNA and Zarr
 driver revisions, unknown representations, exact raw floating bits,
-layout-independent logical identity, rejection of legacy canonical writes,
+layout-independent logical identity, rejection of unqualified canonical writes,
 and absence after every proper canonical-write prefix.
 
 Phase 9 changes neither the LNA physical payload codec nor the NeuroArchive

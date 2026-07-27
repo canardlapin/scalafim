@@ -12,7 +12,7 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
     val dataset = fixtureDataset()
     val schemaId = ResponseSchemaId.unsafe("dataset-adapter")
     val source =
-      LegacyDatasetResponseSource
+      DatasetResponseSource
         .fromDataset[IO](
           dataset,
           schemaId,
@@ -27,7 +27,7 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
         .read(requested)
         .value
         .unsafeToFuture()
-    val legacy =
+    val direct =
       dataset.series(
         DataSelection(
           TimepointSelection.indices(2, 0),
@@ -37,14 +37,14 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
 
     adapted.map: evaluated =>
       val read = evaluated.fold(error => fail(error.message), identity)
-      assertEquals(read.block.rows, legacy.nTimepoints)
-      assertEquals(read.block.columns, legacy.nVoxels)
+      assertEquals(read.block.rows, direct.nTimepoints)
+      assertEquals(read.block.columns, direct.nVoxels)
       assertEquals(read.block.selection, requested)
       var row = 0
       while row < read.block.rows do
         var column = 0
         while column < read.block.columns do
-          assertEqualsDouble(read.block(row, column), legacy.data(row, column), 0.0)
+          assertEqualsDouble(read.block(row, column), direct.data(row, column), 0.0)
           column += 1
         row += 1
       assertEquals(
@@ -55,12 +55,12 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
         case PhysicalByteEvidence.Unavailable(_) =>
           ()
         case other =>
-          fail(s"legacy physical byte count must be unavailable, got $other")
+          fail(s"dataset physical byte count must be unavailable, got $other")
 
   test("dataset adapter preserves current public duplicate rejection"):
     val dataset = fixtureDataset()
     val source =
-      LegacyDatasetResponseSource
+      DatasetResponseSource
         .fromDataset[IO](
           dataset,
           ResponseSchemaId.unsafe("duplicates"),
@@ -173,7 +173,7 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
 
     val attached =
-      LegacyDatasetResponseSource.fromBackend[IO](
+      DatasetResponseSource.fromBackend[IO](
         dataset.backend,
         foreignSchema,
         SourceId.unsafe("foreign-attachment-source")

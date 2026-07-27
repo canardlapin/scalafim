@@ -420,7 +420,7 @@ object LatentEncoder:
           .left
           .map(archiveError)
           .flatMap { response =>
-            LegacyLatentArchiveCodec.toArchive(
+            ExplicitLatentArchiveCodec.toArchive(
               response = response,
               space = space,
               runLabel = runLabel,
@@ -429,7 +429,7 @@ object LatentEncoder:
           }
 
       case LatentEncodingSpec.TemporalDct(dctSpec, center, ridge, sourceDomain, targetDomain, annotations) =>
-        LegacyLatentArchiveCodec.toTemporalDctArchiveSpec(
+        ExplicitLatentArchiveCodec.toTemporalDctArchiveSpec(
           data = data,
           space = space,
           spec = dctSpec,
@@ -448,7 +448,7 @@ object LatentEncoder:
           .left
           .map(archiveError)
           .flatMap { response =>
-            LegacyLatentArchiveCodec.toArchive(
+            ExplicitLatentArchiveCodec.toArchive(
               response = response,
               space = space,
               runLabel = runLabel,
@@ -457,7 +457,7 @@ object LatentEncoder:
           }
 
       case LatentEncodingSpec.SharedSpatialBasis(basis, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations) =>
-        LegacyLatentArchiveCodec.toSharedBasisArchive(
+        SharedBasisLatentArchiveCodec.toArchive(
           data = data,
           space = space,
           basis = basis,
@@ -474,7 +474,7 @@ object LatentEncoder:
         )
 
       case LatentEncodingSpec.RadialSpatialBasis(radialBasis, maskDims, basisId, locator, center, ridge, sourceDomain, targetDomain, annotations, artifactParams) =>
-        LegacyLatentArchiveCodec.toRadialBasisArchive(
+        RadialBasisArchiveCodec.toArchive(
           data = data,
           space = space,
           radialBasis = radialBasis,

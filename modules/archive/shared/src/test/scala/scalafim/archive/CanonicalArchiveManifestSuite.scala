@@ -151,9 +151,9 @@ class CanonicalArchiveManifestSuite extends munit.FunSuite:
 
     run(program)
 
-  test("canonical writer rejects legacy unqualified payload roles"):
+  test("canonical writer rejects unqualified payload roles"):
     val admitted = fixtureManifest()
-    val legacyDescriptor =
+    val unqualifiedDescriptor =
       PayloadDescriptor
         .from(
           PayloadId.unsafe("payload-01"),
@@ -162,31 +162,31 @@ class CanonicalArchiveManifestSuite extends munit.FunSuite:
           Vector(1L)
         )
         .fold(error => fail(error.message), identity)
-    val legacyManifest =
+    val unqualifiedManifest =
       ArchiveManifest
         .from(
           admitted.format,
           admitted.key,
           admitted.representation,
           admitted.attributes,
-          Vector(legacyDescriptor),
+          Vector(unqualifiedDescriptor),
           admitted.integrity
         )
         .fold(error => fail(error.message), identity)
     val payload =
       CanonicalPayload
-        .from(legacyDescriptor, Vector[Byte](1))
+        .from(unqualifiedDescriptor, Vector[Byte](1))
         .fold(error => fail(error.message), identity)
     val document =
       CanonicalArchiveDocument
-        .from(legacyManifest, Vector(payload))
+        .from(unqualifiedManifest, Vector(payload))
         .fold(error => fail(error.message), identity)
 
     CanonicalArchiveWritePlan.from(document) match
       case Left(ArchiveError.InvalidArchive(message)) =>
         assert(message.contains("namespaced payload role"))
       case other =>
-        fail(s"expected rejected legacy role, found $other")
+        fail(s"expected rejected unqualified role, found $other")
 
   private def fixtureWritePlan()
       : Either[ArchiveError, CanonicalArchiveWritePlan] =

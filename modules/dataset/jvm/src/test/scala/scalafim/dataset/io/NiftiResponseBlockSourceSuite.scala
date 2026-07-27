@@ -5,8 +5,8 @@ import cats.effect.unsafe.implicits.global
 import munit.FunSuite
 import scalafim.dataset.{
   DataSelection,
+  DatasetResponseSource,
   DatasetResponseSchema,
-  LegacyDatasetResponseSource,
   TimepointSelection,
   VoxelSelection
 }
@@ -71,7 +71,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
           .toOption
           .get
       val adapted =
-        LegacyDatasetResponseSource
+        DatasetResponseSource
           .fromBlockSource[IO](
             source,
             schema,

@@ -179,30 +179,30 @@ object DatasetResponseSchema:
   private def rawHex(value: Double): String =
     java.lang.Long.toHexString(java.lang.Double.doubleToRawLongBits(value))
 
-final class LegacyDatasetResponseSource[F[_]] private (
+final class DatasetResponseSource[F[_]] private (
     val sourceId: SourceId,
     val schema: ResponseSchema,
     voxelOrdering: Vector[VoxelIndex],
-    readLegacy: DataSelection => Either[DatasetError, FmriSeries],
+    readDataset: DataSelection => Either[DatasetError, FmriSeries],
     val consistency: DecodeConsistency,
     payloadId: PayloadId,
     objectId: ObjectId,
     val layout: OpenedLayout,
     val provenance: Provenance
 )(using F: Sync[F]) extends scalafim.response.ResponseSource[F]:
-  final case class LegacyReadPlan private[dataset] (
+  final case class DatasetReadPlan private[dataset] (
       selection: ResolvedResponseSelection,
-      legacy: DataSelection
+      datasetSelection: DataSelection
   )
 
-  type Plan = LegacyReadPlan
+  type Plan = DatasetReadPlan
 
   val capabilities: ReadCapabilities =
     ReadCapabilities.uniform(PhysicalLocality.WholePayload)
 
   def plan(
       selection: ResolvedResponseSelection
-  ): Either[ReadPlanningError, LegacyReadPlan] =
+  ): Either[ReadPlanningError, DatasetReadPlan] =
     for
       _ <- ResolvedResponseSelection
         .validateFor(schema, selection)
@@ -219,12 +219,12 @@ final class LegacyDatasetResponseSource[F[_]] private (
           selection.samples.values.map(voxelOrdering)
         )
     yield
-      LegacyReadPlan(
+      DatasetReadPlan(
         selection,
         DataSelection(timeSelection, sampleSelection)
       )
 
-  def summarize(plan: LegacyReadPlan): ReadPlanSummary =
+  def summarize(plan: DatasetReadPlan): ReadPlanSummary =
     ReadPlanSummary(
       sourceId,
       schema.id,
@@ -235,10 +235,10 @@ final class LegacyDatasetResponseSource[F[_]] private (
     )
 
   def execute(
-      plan: LegacyReadPlan
+      plan: DatasetReadPlan
   ): EitherT[F, ReadError, ReadResult] =
     val evaluated =
-      F.delay(readLegacy(plan.legacy)).attempt.map:
+      F.delay(readDataset(plan.datasetSelection)).attempt.map:
         case Left(error) =>
           Left(ReadError.SourceFailure(sourceId, Option(error.getMessage).getOrElse(error.getClass.getName)))
         case Right(Left(error)) =>
@@ -283,13 +283,13 @@ final class LegacyDatasetResponseSource[F[_]] private (
         result <- ReadResult.make(
           block,
           provenance,
-          legacyReceipt(selection),
+          datasetReceipt(selection),
           capabilities,
           layout
         )
       yield result
 
-  private def legacyReceipt(
+  private def datasetReceipt(
       selection: ResolvedResponseSelection
   ): ReadReceipt =
     val logicalBytes =
@@ -312,7 +312,9 @@ final class LegacyDatasetResponseSource[F[_]] private (
             Vector(PhysicalReadUnit.Payload(payloadId))
           )
         ),
-        PhysicalByteEvidence.Unavailable(OperationId.unsafe("legacy-uninstrumented")),
+        PhysicalByteEvidence.Unavailable(
+          OperationId.unsafe("dataset-uninstrumented")
+        ),
         cacheHits = 0
       ),
       Vector(IntegrityEvidence.NotChecked),
@@ -329,14 +331,14 @@ final class LegacyDatasetResponseSource[F[_]] private (
       case None =>
         Right(())
 
-object LegacyDatasetResponseSource:
+object DatasetResponseSource:
   def fromDataset[F[_]: Sync](
       dataset: SynchronousFmriDataset,
       schemaId: ResponseSchemaId,
       sourceId: SourceId,
       signalUnits: UnitId,
       consistency: DecodeConsistency = DecodeConsistency.ExactBits
-  ): Either[ResponseAdapterError, LegacyDatasetResponseSource[F]] =
+  ): Either[ResponseAdapterError, DatasetResponseSource[F]] =
     DatasetResponseSchema
       .fromDataset(dataset.dataset, schemaId, signalUnits)
       .flatMap(schema =>
@@ -348,7 +350,7 @@ object LegacyDatasetResponseSource:
       schema: ResponseSchema,
       sourceId: SourceId,
       consistency: DecodeConsistency = DecodeConsistency.ExactBits
-  ): Either[ResponseAdapterError, LegacyDatasetResponseSource[F]] =
+  ): Either[ResponseAdapterError, DatasetResponseSource[F]] =
     make(
       sourceId,
       schema,
@@ -363,7 +365,7 @@ object LegacyDatasetResponseSource:
       schema: ResponseSchema,
       sourceId: SourceId,
       consistency: DecodeConsistency = DecodeConsistency.ExactBits
-  ): Either[ResponseAdapterError, LegacyDatasetResponseSource[F]] =
+  ): Either[ResponseAdapterError, DatasetResponseSource[F]] =
     make(
       sourceId,
       schema,
@@ -380,7 +382,7 @@ object LegacyDatasetResponseSource:
       voxelDomain: VoxelDomain,
       read: DataSelection => Either[DatasetError, FmriSeries],
       consistency: DecodeConsistency
-  ): Either[ResponseAdapterError, LegacyDatasetResponseSource[F]] =
+  ): Either[ResponseAdapterError, DatasetResponseSource[F]] =
     if schema.time.count != shape.timepoints then
       Left(ResponseAdapterError.TimeCountMismatch(schema.time.count, shape.timepoints))
     else if schema.samples.count != voxelDomain.nVoxels then
@@ -392,7 +394,7 @@ object LegacyDatasetResponseSource:
       )
     else
       val payload = PayloadId.unsafe(s"${sourceId.value}:payload")
-      val objectId = ObjectId.unsafe(s"${sourceId.value}:legacy-object")
+      val objectId = ObjectId.unsafe(s"${sourceId.value}:dataset-object")
       val sourceNode = ProvenanceId.unsafe(s"${sourceId.value}:source")
       val adapterNode = ProvenanceId.unsafe(s"${sourceId.value}:dataset-adapter")
       for
@@ -435,7 +437,7 @@ object LegacyDatasetResponseSource:
           .left
           .map(ResponseAdapterError.Kernel.apply)
       yield
-        new LegacyDatasetResponseSource(
+        new DatasetResponseSource(
           sourceId,
           schema,
           voxelDomain.voxels,

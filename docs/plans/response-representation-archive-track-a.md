@@ -112,5 +112,5 @@ ArchiveResourceSuite JS                  4 passed
 
 The final Track A closure also requires the complete dataset/archive suites,
 the repository-wide `compileAll testAll` aliases, the frozen Phase 0
-compatibility corpus, import-boundary inspection, type-discipline inspection,
+numerical regression corpus, import-boundary inspection, type-discipline inspection,
 and `git diff --check`. Those exact results are lodged on the issue.

@@ -9,20 +9,20 @@ import scalafim.archive.{
 }
 import scalafim.image.NeuroSpace
 
-class LegacyLnaManifestTranslatorSuite extends munit.FunSuite:
-  test("legacy LNA translation is pure namespaced and canonically readable"):
-    val legacy = fixtureManifest()
-    val oldFixture =
+class LnaArchiveManifestAdapterSuite extends munit.FunSuite:
+  test("LNA manifest adaptation is pure namespaced and canonically readable"):
+    val manifest = fixtureManifest()
+    val parsedFixture =
       LnaManifestCodec
-        .parse(LnaManifestCodec.render(legacy))
+        .parse(LnaManifestCodec.render(manifest))
         .fold(error => fail(error.message), identity)
     val first =
-      LegacyLnaManifestTranslator
-        .translate(oldFixture)
+      LnaArchiveManifestAdapter
+        .adapt(parsedFixture)
         .fold(error => fail(error.message), identity)
     val second =
-      LegacyLnaManifestTranslator
-        .translate(oldFixture)
+      LnaArchiveManifestAdapter
+        .adapt(parsedFixture)
         .fold(error => fail(error.message), identity)
 
     assertEquals(first, second)
@@ -44,7 +44,7 @@ class LegacyLnaManifestTranslatorSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
     assertEquals(newFixture, first)
 
-  test("legacy temporal DCT metadata becomes a narrow descriptor envelope"):
+  test("temporal DCT metadata becomes a narrow descriptor envelope"):
     val manifest =
       fixtureManifest().copy(
         header = Map(
@@ -53,8 +53,8 @@ class LegacyLnaManifestTranslatorSuite extends munit.FunSuite:
         )
       )
     val translated =
-      LegacyLnaManifestTranslator
-        .translate(manifest)
+      LnaArchiveManifestAdapter
+        .adapt(manifest)
         .fold(error => fail(error.message), identity)
 
     translated.representation match
@@ -77,7 +77,7 @@ class LegacyLnaManifestTranslatorSuite extends munit.FunSuite:
   private def fixtureManifest(): LnaManifest =
     val path = ArchivePath("/runs/0/raw")
     LnaManifest(
-      creator = "legacy-fixture",
+      creator = "lna-fixture",
       requiredTransforms = Vector.empty,
       transforms = Vector.empty,
       runs = Vector(

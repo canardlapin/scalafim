@@ -24,7 +24,7 @@ enum DatasetError:
   case MatrixShapeMismatch(label: String, expectedRows: Int, expectedCols: Int, actualRows: Int, actualCols: Int)
   case VoxelOutsideMask(voxel: Int)
   case InvalidVoxelCoordinate(coordinate: VoxelCoord, detail: String)
-  case CompatibilityFailure(adapter: OperationId, detail: String)
+  case AdapterFailure(adapter: OperationId, detail: String)
   case StorageFailure(detail: String)
   case InvalidLabel(label: String, value: String, detail: String)
   case EmptyDatasetIndex
@@ -72,8 +72,8 @@ enum DatasetError:
         s"voxel $voxel is outside the readable sample mask"
       case InvalidVoxelCoordinate(coordinate, detail) =>
         s"invalid voxel coordinate $coordinate: $detail"
-      case CompatibilityFailure(adapter, detail) =>
-        s"compatibility adapter '${adapter.value}' failed: $detail"
+      case AdapterFailure(adapter, detail) =>
+        s"dataset adapter '${adapter.value}' failed: $detail"
       case StorageFailure(detail) =>
         detail
       case InvalidLabel(label, value, detail) =>

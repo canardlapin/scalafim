@@ -36,7 +36,7 @@ retains every source node and derives one attachment root that directly
 references every source root, so dataset adaptation is visible without
 discarding the archive or representation history.
 
-`SynchronousFmriDataset` is the named compatibility facade for an actual
+`SynchronousFmriDataset` is the explicit facade for an actual
 synchronous `DatasetBackend`. Asynchronous and Scala.js sources have no
 blocking adapter. New synchronous consumers should accept a
 `DatasetSeriesReader`; effectful consumers should accept `OpenedDataset[F]`.
@@ -58,7 +58,7 @@ val description: Either[DatasetError, FmriDataset] =
 
 For a synchronous backend, `FmriDataset.open` returns a
 `SynchronousFmriDataset`. `FmriDataset.unsafe` is its explicit trusted-input
-compatibility path.
+constructor.
 
 Default voxel selection is backend-readable, not blindly full-volume. A backend
 exposes a typed `VoxelDomain`: dense full-volume backends make every spatial
@@ -131,7 +131,7 @@ Segmentation is the default. `blockConcatenate` never claims that observations
 from different runs or sessions form one elapsed-time axis; its `boundaries`
 retain the original run keys, partitions, and local timepoints.
 
-Event and metadata ingestion keeps legacy string maps at the boundary but stores
+Event and metadata ingestion keeps untyped string maps at the boundary but stores
 typed values in shared code. `DatasetEventRow` parses reserved fields such as
 `onset`, `duration`, `run`, `session`, and `condition` into typed accessors,
 `DatasetEvents` validates rectangular event tables and run labels against the
@@ -141,10 +141,10 @@ instead of reparsing `Map[String, String]` rows.
 Core backends include `InMemoryDatasetBackend`, bounded NIfTI response sources,
 and caller-defined implementations of the neutral reader contracts.
 
-LNA discovery, archive-backed and latent-response compatibility backends, and
+LNA discovery, archive-backed and latent-response backends, and
 archive-receipt adaptation now live physically in
-`interop-archived-response`. Their existing `scalafim.dataset` package names
-remain available to applications that depend on that interop artifact, but the
+`interop-archived-response`. Their `scalafim.dataset` package names remain
+available to applications that depend on that interop artifact, but the
 dataset artifact itself neither imports nor dispatches on archive or
 representation types.
 

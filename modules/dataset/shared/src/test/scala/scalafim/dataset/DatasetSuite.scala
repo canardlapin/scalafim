@@ -136,7 +136,7 @@ class DatasetSuite extends munit.FunSuite:
     }
   }
 
-  test("safe series read preserves the legacy throwing adapter") {
+  test("safe series read agrees with the throwing convenience method") {
     val ds = FmriDataset.unsafe(
       backend = backend,
       samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))

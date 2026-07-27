@@ -5,8 +5,8 @@ Issue: `bd-01KYAA8M2XMHHBPASHKK1871E9`
 Governing plan: [response-representation-archive-architecture.md](response-representation-archive-architecture.md)  
 Baseline: [Phase 0 record](response-representation-archive-phase-0.md)
 
-Phase 1 establishes a storage-neutral response kernel and a compatibility
-bridge from the current dataset API. It deliberately does not move archive or
+Phase 1 establishes a storage-neutral response kernel and a typed bridge from
+the dataset API. It deliberately does not move archive or
 latent behavior. The public response value is one specialized, owned,
 row-major `Double` block; there is no general tensor abstraction.
 
@@ -14,7 +14,7 @@ row-major `Double` block; there is no general tensor abstraction.
 
 The new cross-project `response` module has no internal ScalaFIM dependency.
 Its shared API uses Cats Core, Cats Effect, and `NArray`; it compiles for the
-JVM and Scala.js. `dataset` depends on `response` only to host compatibility
+JVM and Scala.js. `dataset` depends on `response` only to host dataset
 adapters. No dependency points from `response` back into dataset, image,
 surface, graph, archive, latent, or a concrete storage module.
 
@@ -59,18 +59,19 @@ validation remains in image/surface-aware adapters. Time-domain and response
 schema equality include units and raw-bit-preserving coordinates; bounded
 coordinate access reports a typed index error.
 
-## 3. Compatibility adapters
+## 3. Dataset adapters
 
-`LegacyDatasetResponseSource[F]` wraps an existing `FmriDataset`,
+`DatasetResponseSource[F]` wraps an `FmriDataset`,
 `DatasetBackend`, or `ResponseBlockSource` without changing those synchronous
 contracts. It maps response sample ordinals through the dataset's full voxel
 ordering, retains requested order, rejects duplicates, and copies the exposed
 `DMat` buffer into an owned `ResponseBlock`. Attachment checks the complete
 neutral volume-space, mask, and ordering references, not cardinality alone.
 
-The legacy API cannot report actual byte ranges or chunk touches. Its adapter
-therefore declares coarse `WholePayload` locality and records physical-byte
-evidence as explicitly unavailable; it does not fabricate bounded-I/O claims.
+The synchronous dataset API cannot report actual byte ranges or chunk touches.
+Its adapter therefore declares coarse `WholePayload` locality and records
+physical-byte evidence as explicitly unavailable; it does not fabricate
+bounded-I/O claims.
 NIfTI parity is exercised through the existing JVM source test. Archive and
 latent dispatch remain untouched for later phases.
 
@@ -95,7 +96,7 @@ compile check proves that the owned carrier and adoption constructor are not
 public.
 
 The dataset suites cover schema adaptation, selected-read parity, explicit
-coarse receipt evidence, and the real JVM NIfTI path. The Phase 0 migration
+coarse receipt evidence, and the real JVM NIfTI path. The Phase 0 regression
 corpus remains the numerical stop gate and was revalidated without
 regenerating its goldens.
 

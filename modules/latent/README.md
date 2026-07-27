@@ -17,7 +17,7 @@ The shared module owns:
 
 The module does not import archive code and contains no LNA/HDF5, Zarr, object
 key, byte-codec, checksum, or publication policy. Archive-specific encoders,
-payload descriptors, legacy codecs, and shared-basis artifact adapters live in
+payload descriptors, codecs, and shared-basis artifact adapters live in
 `interop-archived-response`. The LNA schema itself lives in `archive-lna`.
 
 This split keeps representation plans executable through memory, LNA, Zarr, or

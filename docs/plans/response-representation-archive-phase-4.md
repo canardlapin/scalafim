@@ -55,9 +55,9 @@ fingerprint covering:
 
 Opening as a response requires a published
 `org.scalafim/temporal-dct@1` revision, the exact expected fingerprint, float64
-payload shapes, and the declared embedded-dependency mode. Legacy temporal-DCT
-archives remain structurally inspectable but do not silently acquire a model
-they never stored.
+payload shapes, and the declared embedded-dependency mode. DCT-bearing LNA
+archives without that typed representation envelope remain structurally
+inspectable but do not silently acquire a model they never stored.
 
 The profile has no external basis dependency: temporal basis, spatial
 loadings, and optional sample offsets are embedded and content-verified by

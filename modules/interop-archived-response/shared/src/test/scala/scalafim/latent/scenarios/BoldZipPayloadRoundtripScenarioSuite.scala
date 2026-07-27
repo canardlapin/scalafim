@@ -44,11 +44,11 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
         )
       )
     val archive =
-      LegacyLatentArchiveCodec
-        .toBoldZipArchive(source, NeuroSpace(Vector(3, 1, 1)))
+      BoldZipLatentArchiveCodec
+        .toArchive(source, NeuroSpace(Vector(3, 1, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity) match
         case LatentArchiveResponse.BoldZip(response) => response
@@ -78,7 +78,7 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
     ScenarioHarness.result(
       "latent.boldzip-payload-roundtrip.v1",
       Vector(
-        ScenarioHarness.fact("archive.variant", LegacyLatentArchiveCodec.isBoldZipArchive(archive), "archive is tagged as BOLDZip-SR"),
+        ScenarioHarness.fact("archive.variant", BoldZipLatentArchiveCodec.isArchive(archive), "archive is tagged as BOLDZip-SR"),
         ScenarioHarness.fact("descriptor.kind", descriptorKind.contains("boldzip_sr"), s"metadata=${descriptorKind.getOrElse("<missing>")}"),
         ScenarioHarness.fact(
           "descriptor.texture",

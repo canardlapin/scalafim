@@ -41,13 +41,13 @@ class ResponseArchiveBoundaryGuardSuite extends munit.FunSuite:
       "archive core executes scientific reconstruction"
     )
 
-  test("legacy format and cross-domain code have explicit physical owners"):
+  test("LNA format and cross-domain code have explicit physical owners"):
     val required =
       Vector(
         "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala",
         "modules/archive-lna/jvm/src/main/scala/scalafim/archive/io/LnaArchiveDriver.scala",
         "modules/interop-archived-response/shared/src/main/scala/scalafim/archive/lna/LnaPipeline.scala",
-        "modules/interop-archived-response/shared/src/main/scala/scalafim/latent/LegacyLatentArchiveCodec.scala",
+        "modules/interop-archived-response/shared/src/main/scala/scalafim/latent/LatentArchiveRegistry.scala",
         "modules/interop-archived-response/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala",
         "modules/interop-archived-response/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala"
       )
@@ -61,6 +61,8 @@ class ResponseArchiveBoundaryGuardSuite extends munit.FunSuite:
       Vector(
         "modules/archive/shared/src/main/scala/scalafim/archive/lna/LnaPipeline.scala",
         "modules/latent/shared/src/main/scala/scalafim/latent/LegacyLatentArchiveCodec.scala",
+        "modules/interop-archived-response/shared/src/main/scala/scalafim/latent/LegacyLatentArchiveCodec.scala",
+        "modules/archive-lna/shared/src/main/scala/scalafim/archive/lna/LegacyLnaManifestTranslator.scala",
         "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala",
         "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala"
       )
@@ -96,42 +98,43 @@ class ResponseArchiveBoundaryGuardSuite extends munit.FunSuite:
     assert(interop.contains("latent"))
     assert(interop.contains("dataset"))
 
-  test("new representations cannot grow legacy central dispatch"):
-    val implementation =
+  test("LNA representation policy is explicit immutable and greenfield"):
+    val registry =
       "modules/interop-archived-response/shared/src/main/scala/" +
-        "scalafim/latent/LegacyLatentArchiveCodec.scala"
-    val allowed =
-      Set(
-        implementation,
-        "modules/interop-archived-response/shared/src/main/scala/" +
-          "scalafim/latent/LatentEncoder.scala",
-        "modules/interop-archived-response/shared/src/main/scala/" +
-          "scalafim/dataset/LatentArchiveDatasetBackend.scala",
-        "modules/interop-archived-response/jvm/src/main/scala/" +
-          "scalafim/dataset/io/FmriDatasetLna.scala",
-        "modules/interop-archived-response/jvm/src/main/scala/" +
-          "scalafim/dataset/io/LnaDataset.scala"
-      )
-    val references =
-      mainSources("interop-archived-response")
-        .filter: path =>
-          Files
-            .readString(path, StandardCharsets.UTF_8)
-            .contains("LegacyLatentArchiveCodec")
-        .map(path =>
-          repositoryRoot.relativize(path).toString
-        )
-        .toSet
-    assertEquals(references, allowed)
+        "scalafim/latent/LatentArchiveRegistry.scala"
 
     val text =
       Files.readString(
-        repositoryRoot.resolve(implementation),
+        repositoryRoot.resolve(registry),
+        StandardCharsets.UTF_8
+    )
+    assert(text.contains("trait LatentArchiveBinding"))
+    assert(!text.contains("enum LatentArchiveBinding"))
+    assert(text.contains("final class LatentArchiveRegistry private"))
+    assert(text.contains("def build("))
+    assert(text.contains("val standard: LatentArchiveRegistry"))
+
+    assertNoMatches(
+      mainSources("interop-archived-response") ++
+        mainSources("archive-lna"),
+      raw"(?i:\blegacy\b)|\bLegacy[A-Z]\w*".r,
+      "response/archive production code contains obsolete-system vocabulary"
+    )
+    assertNoMatches(
+      mainSources("interop-archived-response"),
+      raw"(?m)^\s*object\s+LatentArchiveCodec:".r,
+      "deprecated central archive codec alias remains"
+    )
+
+    val datasetApi =
+      Files.readString(
+        repositoryRoot.resolve(
+          "modules/interop-archived-response/jvm/src/main/scala/" +
+            "scalafim/dataset/io/FmriDatasetLna.scala"
+        ),
         StandardCharsets.UTF_8
       )
-    assert(text.contains("object LegacyLatentArchiveCodec:"))
-    assert(text.contains("@deprecated("))
-    assert(text.contains("object LatentArchiveCodec:"))
+    assert(datasetApi.contains("registry: LatentArchiveRegistry"))
 
   private def mainSources(
       module: String

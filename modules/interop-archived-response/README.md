@@ -32,8 +32,8 @@ The first vertical is temporal-DCT over interchangeable archive bindings:
   representation descriptor and output schema; it does not scrape
   representation metadata from untyped attributes;
 - `TemporalDctLnaRepresentationFamily` reconstructs the typed model from its
-  persisted descriptor; `LegacyLnaRepresentationFamily` separately delegates
-  un-enveloped, single-run LNA files to the existing eager reconstruction
+  persisted descriptor; `LnaPipelineRepresentationFamily` delegates generic,
+  single-run LNA files to the eager reconstruction
   pipeline;
 - the source retains native archive receipts while returning a conforming
   response `ReadResult`;
@@ -58,8 +58,7 @@ code. The framework-neutral checks in `response-laws` are also reused here for
 cross-backend consistency, receipt conformance, and provenance rather than
 being restated as backend-specific assertions.
 
-This artifact is also the physical owner of the staged legacy compatibility
-surface:
+This artifact is also the physical owner of cross-domain LNA integration:
 
 - LNA reconstruction and explicit-latent archive construction;
 - archive-specific latent encoders and payload codecs for temporal, shared
@@ -68,17 +67,20 @@ surface:
 - latent-response and LNA dataset backends;
 - JVM LNA directory discovery and shared-basis resolution.
 
-Compatibility package names remain `scalafim.archive.lna`,
-`scalafim.latent`, and `scalafim.dataset` for this migration, but those sources
-are compiled only into the interop artifact. `archive`, `latent`, and `dataset`
-therefore have no reverse dependency on this module. The unchanged frozen
-Phase 0 numerical corpus is compiled and run here on JVM and Scala.js.
+The package names reflect the domain values being integrated:
+`scalafim.archive.lna`, `scalafim.latent`, and `scalafim.dataset`. These
+sources compile only into the interop artifact, so `archive`, `latent`, and
+`dataset` have no reverse dependency on this module. The frozen Phase 0
+numerical regression corpus is compiled and run here on JVM and Scala.js.
 
-`LegacyLatentArchiveCodec` is the explicitly named compatibility dispatcher
-for historical archive families. The former `LatentArchiveCodec` entry point
-is a deprecated one-release forwarding alias. A boundary test freezes the
-small set of compatibility callers, so a new representation must be installed
-as an `ArchivedResponseFamily` and cannot extend the legacy central match.
+Archive construction is representation-specific through
+`ExplicitLatentArchiveCodec`, `SharedBasisLatentArchiveCodec`,
+`RadialBasisArchiveCodec`, `TransportLatentArchiveCodec`, and
+`BoldZipLatentArchiveCodec`. Reading uses an explicitly supplied,
+immutable `LatentArchiveRegistry` assembled from independent binding values;
+construction rejects invalid or duplicate binding ownership and opening
+rejects ambiguous matches. There is no central codec facade or deprecated
+forwarding alias.
 
 The runtime owns effects, while the scientific dataset and downstream model
 and fit plans remain pure:
@@ -91,5 +93,5 @@ runtime
 ```
 
 There is deliberately no synchronous adapter for this path. Existing
-`DatasetBackend` integrations use the separately named
-`SynchronousFmriDataset` compatibility facade.
+`DatasetBackend` integrations use the explicit
+`SynchronousFmriDataset` capability.

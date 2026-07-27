@@ -40,8 +40,8 @@ cross-compiled sbt build.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
 - `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
-- `archive-lna`: typed LNA schema, pure legacy-manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
-- `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, legacy LNA reconstruction and dataset compatibility, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
+- `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
+- `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
 - `bids`: BIDS filename/entity parsing, typed manifests, query semantics, BIDS URIs, event tables, and fMRIPrep confound selections.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
 - `model`: fMRI model composition and typed fitting plans/configuration.

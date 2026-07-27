@@ -222,13 +222,13 @@ class TemporalDctLnaHdf5Suite extends munit.FunSuite:
           assertEquals(result.block.selection, requested)
           assertBlockAgreesExactly(result.block, expected)
 
-  test("named legacy family opens an un-enveloped LNA fixture"):
-    val fixture = TemporalDctLnaFixtures.fixture("runtime-legacy")
+  test("LNA pipeline family opens a generic LNA fixture"):
+    val fixture = TemporalDctLnaFixtures.fixture("runtime-pipeline")
     val plan =
       TemporalDctLnaWritePlan
         .create(fixture.materialized, fixture.space)
         .fold(error => fail(error.message), identity)
-    val legacy =
+    val pipelineArchive =
       plan.archive.copy(
         manifest = plan.archive.manifest.copy(
           header = plan.archive.manifest.header --
@@ -238,15 +238,15 @@ class TemporalDctLnaHdf5Suite extends munit.FunSuite:
             )
         )
       )
-    withTemporaryDirectory("scalafim-rra5-legacy-"): directory =>
-      val path = directory.resolve("legacy.lna.h5")
+    withTemporaryDirectory("scalafim-rra5-pipeline-"): directory =>
+      val path = directory.resolve("pipeline.lna.h5")
       val location = ArchiveLocation.unsafe(path.toString)
       LnaHdf5Store.default
-        .write(path, legacy)
+        .write(path, pipelineArchive)
         .fold(error => fail(error.message), identity)
 
       val result =
-        legacyRuntime
+        pipelineRuntime
           .openResponse(location)
           .use: source =>
             cats.data.EitherT.fromEither[IO](
@@ -279,14 +279,14 @@ class TemporalDctLnaHdf5Suite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
     ScalafimRuntime.make(drivers, responses)
 
-  private def legacyRuntime: ScalafimRuntime[IO] =
+  private def pipelineRuntime: ScalafimRuntime[IO] =
     val drivers =
       ArchiveDrivers
         .build(LnaArchiveDriverRegistration.default[IO])
         .fold(error => fail(error.message), identity)
     val responses =
       ArchivedResponseRegistry
-        .build(LegacyLnaHdf5RepresentationFamily.default[IO])
+        .build(LnaPipelineHdf5RepresentationFamily.default[IO])
         .fold(error => fail(error.message), identity)
     ScalafimRuntime.make(drivers, responses)
 

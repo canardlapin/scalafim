@@ -3,13 +3,18 @@ package scalafim.dataset
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, LnaPipeline}
 import scalafim.image.{DMat, Mask}
-import scalafim.latent.{LegacyLatentArchiveCodec, LatentArchivePlan, LatentSelection}
+import scalafim.latent.{
+  LatentArchivePlan,
+  LatentArchiveRegistry,
+  LatentSelection
+}
 import scalafim.response.OperationId
 
 final class LatentArchiveDatasetBackend private (
     val id: DatasetId,
     val archive: LnaArchive,
     val run: RunLabel,
+    val registry: LatentArchiveRegistry,
     val metadata: DatasetMetadata,
     override val shape: DatasetShape,
     val mask: Mask.MaskVol,
@@ -21,18 +26,18 @@ final class LatentArchiveDatasetBackend private (
       .reconstruct(archive, run)
       .left
       .map(error =>
-        DatasetError.CompatibilityFailure(
+        DatasetError.AdapterFailure(
           OperationId.unsafe("lna-archive"),
           error.message
         )
       )
 
   private lazy val latentPlanEither: Either[DatasetError, Option[LatentArchivePlan]] =
-    LegacyLatentArchiveCodec
+    registry
       .maybeOpenPlan(archive, run)
       .left
       .map(error =>
-        DatasetError.CompatibilityFailure(
+        DatasetError.AdapterFailure(
           OperationId.unsafe("lna-archive"),
           error.message
         )
@@ -59,7 +64,7 @@ final class LatentArchiveDatasetBackend private (
           .selectionResponse
           .left
           .map(error =>
-            DatasetError.CompatibilityFailure(
+            DatasetError.AdapterFailure(
               OperationId.unsafe("lna-archive"),
               error.message
             )
@@ -69,7 +74,7 @@ final class LatentArchiveDatasetBackend private (
               .reconstruct(LatentSelection(timepoints = Some(resolved.timepoints), samples = Some(resolved.voxels)))
               .left
               .map(error =>
-                DatasetError.CompatibilityFailure(
+                DatasetError.AdapterFailure(
                   OperationId.unsafe("latent-representation"),
                   error.message
                 )
@@ -91,12 +96,13 @@ object LatentArchiveDatasetBackend:
       id: DatasetId,
       archive: LnaArchive,
       run: RunLabel,
+      registry: LatentArchiveRegistry,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, LatentArchiveDatasetBackend] =
     for
       runInfo <- archive
         .run(run)
-        .toRight(DatasetError.CompatibilityFailure(
+        .toRight(DatasetError.AdapterFailure(
           OperationId.unsafe("lna-archive"),
           ArchiveError.InvalidArchive(s"run '${run.value}' not found").message
         ))
@@ -106,6 +112,7 @@ object LatentArchiveDatasetBackend:
       id = id,
       archive = archive,
       run = run,
+      registry = registry,
       metadata = metadata,
       shape = shape,
       mask = Mask.all(shape.space),
@@ -116,7 +123,8 @@ object LatentArchiveDatasetBackend:
       id: DatasetId,
       archive: LnaArchive,
       run: RunLabel,
+      registry: LatentArchiveRegistry,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): LatentArchiveDatasetBackend =
-    make(id, archive, run, metadata)
+    make(id, archive, run, registry, metadata)
       .fold(error => throw new IllegalArgumentException(error.message), identity)

@@ -49,7 +49,7 @@ metadata, or the entire archive manifest. After lookup, execution receives a
 capability-limited `ArchiveResponseAccess[F]`: location, revision identity,
 published root digest, typed payload executor, and content-validation effect.
 Missing descriptor values are represented as canonical `Null`, allowing valid
-unknown and legacy archives to remain structurally inspectable. An installed
+unknown and generic LNA archives to remain structurally inspectable. An installed
 family decides whether its descriptor is valid.
 
 The temporal-DCT LNA profile now stores two deterministic, length-framed
@@ -65,7 +65,7 @@ records:
 records and then uses the Phase 4 typed binding. The stored Phase 4 fingerprint
 remains an independent exact-model check.
 
-## 3. Runtime assembly and compatibility
+## 3. Runtime assembly and the LNA pipeline
 
 `ScalafimRuntime.openResponse` executes this order:
 
@@ -86,12 +86,11 @@ corruption remains distinct from an unsupported representation. The archive
 resource encloses the response-family resource, so release order is response
 then archive.
 
-`LegacyLnaRepresentationFamily` is a separately named compatibility path.
-Only un-enveloped `org.scalafim/lna-pipeline@2` revisions select it. It requires
-an explicit platform opener; the JVM HDF5 opener requires one LNA run and
-delegates its eager compatibility read to the existing `LnaPipeline`. It does
-not become the canonical temporal-DCT binding or expose raw LNA state through
-the generic family contract.
+`LnaPipelineRepresentationFamily` owns the generic
+`org.scalafim/lna-pipeline@2` representation. It requires an explicit platform
+opener; the JVM HDF5 opener requires one LNA run and delegates its eager read
+to `LnaPipeline`. It does not become the canonical temporal-DCT binding or
+expose raw LNA state through the generic family contract.
 
 ## 4. Focused executable evidence
 
@@ -109,8 +108,8 @@ The focused laws cover key parsing, duplicate rejection, insertion-order
 independence, one-family assembly, unsupported-versus-corrupt classification,
 publication-before-lookup ordering, release on success, typed failure,
 family-acquisition failure, and cancellation. JVM integration fixtures open a
-new temporal-DCT archive without a caller-supplied model and open an
-un-enveloped legacy LNA archive through the named compatibility family.
+typed temporal-DCT archive without a caller-supplied model and open a generic
+LNA archive through `LnaPipelineRepresentationFamily`.
 
 The frozen corpus was checked without regenerating live-source expectations.
 Static production scans found no general tensor abstraction, unchecked cast,

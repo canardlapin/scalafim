@@ -5,7 +5,11 @@ import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.LnaArchive
 import scalafim.dataset.*
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.latent.{LegacyLatentArchiveCodec, LatentArchiveKind, LatentArchivePlan}
+import scalafim.latent.{
+  LatentArchiveKind,
+  LatentArchivePlan,
+  LatentArchiveRegistry
+}
 import scalafim.response.OperationId
 
 enum LnaDatasetReadMode:
@@ -26,18 +30,34 @@ extension (factory: FmriDataset.type)
       root: Path,
       query: LnaDatasetQuery,
       timing: SamplingFrame,
+      registry: LatentArchiveRegistry,
       events: DatasetEvents = DatasetEvents.Empty
   ): Either[DatasetError, SynchronousFmriDataset] =
-    openLnaSingle(root, query, timing, archiveRun = None, events)
+    openLnaSingle(
+      root,
+      query,
+      timing,
+      archiveRun = None,
+      registry = registry,
+      events = events
+    )
 
   def openLna(
       root: Path,
       query: LnaDatasetQuery,
       timing: SamplingFrame,
       archiveRun: RunLabel,
+      registry: LatentArchiveRegistry,
       events: DatasetEvents
   ): Either[DatasetError, SynchronousFmriDataset] =
-    openLnaSingle(root, query, timing, archiveRun = Some(archiveRun), events)
+    openLnaSingle(
+      root,
+      query,
+      timing,
+      archiveRun = Some(archiveRun),
+      registry = registry,
+      events = events
+    )
 
   def openLna(
       root: Path,
@@ -45,15 +65,25 @@ extension (factory: FmriDataset.type)
       timing: SamplingFrame,
       runIds: Vector[RunId],
       archiveRun: Option[RunLabel],
+      registry: LatentArchiveRegistry,
       events: DatasetEvents
   ): Either[DatasetError, SynchronousFmriDataset] =
-    openLnaWithRuns(root, query, timing, runIds, archiveRun, events)
+    openLnaWithRuns(
+      root,
+      query,
+      timing,
+      runIds,
+      archiveRun,
+      registry,
+      events
+    )
 
 private def openLnaSingle(
     root: Path,
     query: LnaDatasetQuery,
     timing: SamplingFrame,
     archiveRun: Option[RunLabel],
+    registry: LatentArchiveRegistry,
     events: DatasetEvents
 ): Either[DatasetError, SynchronousFmriDataset] =
   if timing.nBlocks != 1 then
@@ -62,7 +92,7 @@ private def openLnaSingle(
     ))
   else
     for
-      lna <- LnaDataset.open(root).left.map(archiveFailure)
+      lna <- LnaDataset.open(root, registry).left.map(archiveFailure)
       path <- resolvePath(lna, query)
       runId <- lna.datasetRunId(path)
       dataset <- openResolvedLna(lna, path, query, timing, Vector(runId), archiveRun, events)
@@ -74,10 +104,11 @@ private def openLnaWithRuns(
     timing: SamplingFrame,
     runIds: Vector[RunId],
     archiveRun: Option[RunLabel],
+    registry: LatentArchiveRegistry,
     events: DatasetEvents
 ): Either[DatasetError, SynchronousFmriDataset] =
   for
-    lna <- LnaDataset.open(root).left.map(archiveFailure)
+    lna <- LnaDataset.open(root, registry).left.map(archiveFailure)
     path <- resolvePath(lna, query)
     dataset <- openResolvedLna(lna, path, query, timing, runIds, archiveRun, events)
   yield dataset
@@ -137,7 +168,7 @@ private def openBackend(
     archive: LnaArchive,
     archiveRun: RunLabel
 ): Either[DatasetError, DatasetBackend] =
-  LegacyLatentArchiveCodec
+  lna.registry
     .maybeOpenPlan(archive, archiveRun)
     .left
     .map(archiveFailure)
@@ -174,6 +205,7 @@ private def openBackend(
           id = DatasetId(LnaDataset.datasetIdFromPath(lna.root, path)),
           archive = archive,
           run = archiveRun,
+          registry = lna.registry,
           metadata = lna.metadataFor(path).withProvenance(provenance)
         )
 
@@ -194,7 +226,7 @@ private def externalBasis(plan: LatentArchivePlan): Option[String] =
       None
 
 private def archiveFailure(error: ArchiveError): DatasetError =
-  DatasetError.CompatibilityFailure(
+  DatasetError.AdapterFailure(
     OperationId.unsafe("lna-archive"),
     error.message
   )

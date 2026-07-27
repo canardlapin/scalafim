@@ -34,11 +34,11 @@ class BoldZipEncoderSuite extends munit.FunSuite:
     assertRowsClose(payload.decodeCoefficients(payload.coefTime.transpose).fold(err => fail(err.message), identity).toRows, data.transpose.toRows, 1e-12)
 
     val archive =
-      LegacyLatentArchiveCodec
-        .toBoldZipArchive(payload, NeuroSpace(Vector(data.cols, 1, 1)))
+      BoldZipLatentArchiveCodec
+        .toArchive(payload, NeuroSpace(Vector(data.cols, 1, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity) match
         case LatentArchiveResponse.BoldZip(response) => response

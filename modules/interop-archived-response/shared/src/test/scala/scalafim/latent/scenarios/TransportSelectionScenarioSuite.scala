@@ -59,11 +59,11 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
         )
       )
     val archive =
-      LegacyLatentArchiveCodec
-        .toTransportArchive(source, NeuroSpace(Vector(2, 2, 1)))
+      TransportLatentArchiveCodec
+        .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
-      LegacyLatentArchiveCodec
+      LatentArchiveRegistry.standard
         .fromArchive(archive)
         .fold(err => fail(err.message), identity) match
         case LatentArchiveResponse.Transport(response) => response
@@ -93,7 +93,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
     ScenarioHarness.result(
       "latent.transport-selection.v1",
       Vector(
-        ScenarioHarness.fact("archive.variant", LegacyLatentArchiveCodec.isTransportArchive(archive), "archive is tagged as transport latent"),
+        ScenarioHarness.fact("archive.variant", TransportLatentArchiveCodec.isArchive(archive), "archive is tagged as transport latent"),
         ScenarioHarness.fact("descriptor.kind", descriptorKind.contains("transport_latent"), s"metadata=${descriptorKind.getOrElse("<missing>")}"),
         ScenarioHarness.fact("label", decoded.label == "scenario-transport", s"actual=${decoded.label}"),
         ScenarioHarness.fact("metadata.scenario", decoded.metadata.get("scenario").contains("latent.transport-selection.v1"), s"metadata=${decoded.metadata}"),

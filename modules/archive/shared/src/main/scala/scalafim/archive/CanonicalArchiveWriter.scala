@@ -80,10 +80,10 @@ object CanonicalArchiveWritePlan:
   def from(
       document: CanonicalArchiveDocument
   ): Either[ArchiveError, CanonicalArchiveWritePlan] =
-    val legacyRole =
+    val unqualifiedRole =
       document.manifest.payloads.collectFirst:
         case payload if !payload.role.isNamespaced => payload.role
-    legacyRole match
+    unqualifiedRole match
       case Some(role) =>
         Left(ArchiveError.InvalidArchive(
           s"canonical writing requires a namespaced payload role; found '${role.value}'"
