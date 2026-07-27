@@ -9,7 +9,7 @@ import scalafim.archive.lna.{
   SharedBasisRegistry,
   SharedBasisRegistryCodec
 }
-import scalafim.bids.{BidsJson, BidsTable, JsonValue}
+import bids4s.{BidsJson, BidsTable, JsonValue}
 import scalafim.dataset.{
   DatasetError,
   DatasetId,

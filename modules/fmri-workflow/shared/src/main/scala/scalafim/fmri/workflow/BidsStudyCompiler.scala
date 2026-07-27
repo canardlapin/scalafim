@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.*
+import bids4s.*
 import scalafim.dataset.{DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
 
 final case class ImageHeaderDescriptor(shape: DatasetShape)

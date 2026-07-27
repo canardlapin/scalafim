@@ -1,6 +1,6 @@
 package scalafim.fmri.motion.io
 
-import scalafim.bids.*
+import bids4s.*
 import scalafim.fmri.motion.*
 import scalafim.image.*
 

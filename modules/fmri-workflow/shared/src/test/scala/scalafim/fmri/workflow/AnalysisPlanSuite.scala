@@ -1,7 +1,7 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.{BidsQuery, BidsScope}
+import bids4s.{BidsQuery, BidsScope}
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
 import scalafim.fmri.design.formula.ModelFormula
 import scalafim.fmri.fit.SequentialChunkProgramInterpreter

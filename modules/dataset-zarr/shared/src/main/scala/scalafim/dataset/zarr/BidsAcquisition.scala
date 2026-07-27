@@ -1,7 +1,7 @@
 package scalafim.dataset.zarr
 
 import scalafim.archive.zarr.AcquisitionId
-import scalafim.bids.*
+import bids4s.*
 
 final case class BidsAcquisition private (
     relativePath: String,

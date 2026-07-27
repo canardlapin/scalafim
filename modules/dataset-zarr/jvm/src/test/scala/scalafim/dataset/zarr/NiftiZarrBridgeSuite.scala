@@ -2,7 +2,7 @@ package scalafim.dataset.zarr
 
 import java.nio.file.Files
 import scalafim.archive.zarr.{AcquisitionTiming, CanonicalChunkProfile, NeuroArchiveZarr, TimeUnits}
-import scalafim.bids.io.BidsProjectLoader
+import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.fmri.fit.{FitChunkPlan, FitChunkingStrategy}
 import scalafim.image.io.Nifti

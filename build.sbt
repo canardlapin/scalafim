@@ -30,6 +30,21 @@ lazy val multivarJVM   = ProjectRef(multivarBuild, "coreJVM")
 lazy val multivarJS    = ProjectRef(multivarBuild, "coreJS")
 lazy val multivarIrJVM = ProjectRef(multivarBuild, "irJVM")
 lazy val multivarIrJS  = ProjectRef(multivarBuild, "irJS")
+
+// Reusable BIDS semantics are developed independently. Ordinary builds clone
+// the exact reviewed revision; the property is an explicit local-development
+// override for downstream rehearsal.
+lazy val bids4sRevision = "a33678390614a91fadbdef13f22970e78c26e091"
+lazy val bids4sBuild =
+  uri(
+    sys.props.getOrElse(
+      "scalafim.bids4s.build",
+      s"https://github.com/canardlapin/bids4s.git#$bids4sRevision"
+    )
+  )
+lazy val bids4sJVM = ProjectRef(bids4sBuild, "coreJVM")
+lazy val bids4sJS  = ProjectRef(bids4sBuild, "coreJS")
+
 lazy val jhdfVersion = "0.12.0"
 
 lazy val commonSettings = Seq(
@@ -511,7 +526,7 @@ lazy val motion =
     .jsSettings(jsSettingsBase)
 
 lazy val motionJS  = motion.js
-lazy val motionJVM = motion.jvm.dependsOn(bidsJVM)
+lazy val motionJVM = motion.jvm.dependsOn(bids4sJVM)
 
 lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
@@ -730,6 +745,7 @@ lazy val archivedResponseInterop =
           "ResponseArchiveMigrationBaselineSuite.scala"
       )
     )
+    .jvmConfigure(_.dependsOn(bids4sJVM))
     .jsSettings(jsSettingsBase)
 
 lazy val archivedResponseInteropJS  = archivedResponseInterop.js
@@ -744,7 +760,6 @@ lazy val dataset =
       responseLaws % "test->compile",
       image,
       hrf,
-      bids,
       locusData,
       locusLaws % "test->compile"
     )
@@ -945,11 +960,13 @@ lazy val fmriWorkflow =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fmri-workflow"))
-    .dependsOn(bids, dataset, model, fit, group)
+    .dependsOn(dataset, model, fit, group)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-workflow"
     )
+    .jvmConfigure(_.dependsOn(bids4sJVM))
+    .jsConfigure(_.dependsOn(bids4sJS))
     .jsSettings(jsSettingsBase)
 
 lazy val fmriWorkflowJS  = fmriWorkflow.js
@@ -1010,11 +1027,13 @@ lazy val datasetZarr =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset-zarr"))
-    .dependsOn(dataset, archiveZarr, image, bids, fit % "test->compile")
+    .dependsOn(dataset, archiveZarr, image, fit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset-zarr"
     )
+    .jvmConfigure(_.dependsOn(bids4sJVM))
+    .jsConfigure(_.dependsOn(bids4sJS))
     .jsSettings(jsSettingsBase)
 
 lazy val datasetZarrJS  = datasetZarr.js

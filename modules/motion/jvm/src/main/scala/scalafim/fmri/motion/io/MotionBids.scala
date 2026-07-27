@@ -1,7 +1,7 @@
 package scalafim.fmri.motion.io
 
-import scalafim.bids.*
-import scalafim.bids.io.{BidsLoadConfig, BidsProjectLoader}
+import bids4s.*
+import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
 import scalafim.image.NeuroVec
 

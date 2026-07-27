@@ -1,8 +1,8 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.*
-import scalafim.bids.io.BidsProjectLoader
+import bids4s.*
+import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
 import scalafim.image.{DMat, NArrayUtil, NeuroSpace, NeuroVol}

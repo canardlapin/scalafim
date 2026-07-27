@@ -1,6 +1,6 @@
 package scalafim.fmri.motion.io
 
-import scalafim.bids.{BidsFile, JsonValue}
+import bids4s.{BidsFile, JsonValue}
 import scalafim.fmri.motion.*
 import scalafim.image.{DMat, NeuroVec}
 
@@ -63,12 +63,12 @@ final case class MotionBidsScan(
     acquisitionTiming: AcquisitionTiming,
     metadata: JsonValue.Obj
 ):
-  def subject: Option[String] = file.entities.get(scalafim.bids.EntityKey.Subject)
-  def session: Option[String] = file.entities.get(scalafim.bids.EntityKey.Session)
-  def task: Option[String] = file.entities.get(scalafim.bids.EntityKey.Task)
-  def run: Option[String] = file.entities.get(scalafim.bids.EntityKey.Run)
-  def space: Option[String] = file.entities.get(scalafim.bids.EntityKey.Space)
-  def desc: Option[String] = file.entities.get(scalafim.bids.EntityKey.Description)
+  def subject: Option[String] = file.entities.get(bids4s.EntityKey.Subject)
+  def session: Option[String] = file.entities.get(bids4s.EntityKey.Session)
+  def task: Option[String] = file.entities.get(bids4s.EntityKey.Task)
+  def run: Option[String] = file.entities.get(bids4s.EntityKey.Run)
+  def space: Option[String] = file.entities.get(bids4s.EntityKey.Space)
+  def desc: Option[String] = file.entities.get(bids4s.EntityKey.Description)
 
   def plan(base: MotionPlan = MotionPlan.default): MotionPlan =
     base.copy(acquisitionTiming = acquisitionTiming)
