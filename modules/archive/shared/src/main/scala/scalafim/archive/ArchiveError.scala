@@ -20,6 +20,13 @@ enum ArchiveError:
   case NonFiniteValue(index: Int)
   case UnsupportedTransform(kind: String)
   case UnsupportedStorage(detail: String)
+  case UnsupportedRepresentation(
+      found: RepresentationKey,
+      supported: Vector[RepresentationKey]
+  )
+  case UnsupportedPayloadPlan(driver: String, operation: String)
+  case IncompletePublication(detail: String)
+  case ReceiptMismatch(detail: String)
   case ValidationFailed(issues: Vector[ArchiveValidationIssue])
 
   def message: String =
@@ -38,5 +45,16 @@ enum ArchiveError:
         s"unsupported archive transform: $kind"
       case UnsupportedStorage(detail) =>
         s"unsupported archive storage: $detail"
+      case UnsupportedRepresentation(found, supported) =>
+        val rendered =
+          if supported.isEmpty then "none installed"
+          else supported.map(_.value).mkString(", ")
+        s"unsupported archive representation '${found.value}'; supported: $rendered"
+      case UnsupportedPayloadPlan(driver, operation) =>
+        s"archive driver '$driver' cannot execute payload operation '$operation'"
+      case IncompletePublication(detail) =>
+        s"incomplete archive publication: $detail"
+      case ReceiptMismatch(detail) =>
+        s"archive read receipt does not conform: $detail"
       case ValidationFailed(issues) =>
         s"archive validation failed: ${issues.map(_.render).mkString("; ")}"

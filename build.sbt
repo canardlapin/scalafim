@@ -227,14 +227,54 @@ lazy val graphicsJavafx =
 
 lazy val graphicsJavafxJVM = graphicsJavafx.jvm
 
+lazy val response =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/response"))
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-response",
+      libraryDependencies ++= Seq(
+        "ai.dragonfly" %%% "narr"        % "1.0.1",
+        "org.typelevel" %%% "cats-core"   % "2.12.0",
+        "org.typelevel" %%% "cats-effect" % "3.5.4"
+      )
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val responseJS  = response.js
+lazy val responseJVM = response.jvm
+
+lazy val responseLaws =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/response-laws"))
+    .dependsOn(response)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-response-laws"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val responseLawsJS  = responseLaws.js
+lazy val responseLawsJVM = responseLaws.jvm
+
 lazy val latent =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/latent"))
-    .dependsOn(archive, locusKernel)
+    .dependsOn(
+      response,
+      responseLaws % "test->compile",
+      image,
+      locusKernel
+    )
     .settings(commonSettings)
     .settings(
-      name := "scalafim-fmri-latent"
+      name := "scalafim-fmri-latent",
+      Test / unmanagedSources ~= (_.filterNot(
+        _.getName == "ResponseArchiveMigrationBaselineSuite.scala"
+      ))
     )
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))
@@ -623,24 +663,75 @@ lazy val archive =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/archive"))
-    .dependsOn(image)
     .settings(commonSettings)
     .settings(
-      name := "scalafim-archive"
-    )
-    .jvmSettings(
-      libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion
+      name := "scalafim-archive",
+      libraryDependencies ++= Seq(
+        "org.typelevel" %%% "cats-core"   % "2.12.0",
+        "org.typelevel" %%% "cats-effect" % "3.5.4"
+      )
     )
     .jsSettings(jsSettingsBase)
 
 lazy val archiveJS  = archive.js
 lazy val archiveJVM = archive.jvm
 
+lazy val archiveLna =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/archive-lna"))
+    .dependsOn(archive, image)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-archive-lna"
+    )
+    .jvmSettings(
+      libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val archiveLnaJS  = archiveLna.js
+lazy val archiveLnaJVM = archiveLna.jvm
+
+lazy val archivedResponseInterop =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/interop-archived-response"))
+    .dependsOn(
+      response,
+      responseLaws % "test->compile",
+      latent % "compile->compile;test->test",
+      archive,
+      archiveLna % "compile->compile;test->test",
+      archiveZarr % "compile->compile;test->test",
+      dataset % "compile->compile;test->test"
+    )
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-interop-archived-response",
+      Test / unmanagedSources += file(
+        "modules/latent/shared/src/test/scala/scalafim/latent/" +
+          "ResponseArchiveMigrationBaselineSuite.scala"
+      )
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val archivedResponseInteropJS  = archivedResponseInterop.js
+lazy val archivedResponseInteropJVM = archivedResponseInterop.jvm
+
 lazy val dataset =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/dataset"))
-    .dependsOn(image, hrf, archive, latent, bids, locusData, locusLaws % "test->compile")
+    .dependsOn(
+      response,
+      responseLaws % "test->compile",
+      image,
+      hrf,
+      bids,
+      locusData,
+      locusLaws % "test->compile"
+    )
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset",
@@ -911,7 +1002,11 @@ lazy val archiveZarr =
     .dependsOn(archive, zarr)
     .settings(commonSettings)
     .settings(
-      name := "scalafim-archive-zarr"
+      name := "scalafim-archive-zarr",
+      libraryDependencies ++= Seq(
+        "org.typelevel" %%% "cats-core"   % "2.12.0",
+        "org.typelevel" %%% "cats-effect" % "3.5.4"
+      )
     )
     .jsSettings(jsSettingsBase)
 
@@ -958,6 +1053,10 @@ lazy val root =
       graphicsCanvasJS,
       graphicsJava2dJVM,
       graphicsJavafxJVM,
+      responseJS,
+      responseJVM,
+      responseLawsJS,
+      responseLawsJVM,
       latentJS,
       latentJVM,
       arJS,
@@ -995,6 +1094,10 @@ lazy val root =
       atlasJVM,
       archiveJS,
       archiveJVM,
+      archiveLnaJS,
+      archiveLnaJVM,
+      archivedResponseInteropJS,
+      archivedResponseInteropJVM,
       bidsJS,
       bidsJVM,
       datasetJS,
@@ -1042,8 +1145,8 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("compileAll", ";locusKernelJVM/compile;locusKernelJS/compile;locusDataJVM/compile;locusDataJS/compile;locusLawsJVM/compile;locusLawsJS/compile;graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;graphicsJVM/compile;graphicsJS/compile;graphicsSvgJVM/compile;graphicsSvgJS/compile;graphicsCanvasJS/compile;graphicsJava2dJVM/compile;graphicsJavafxJVM/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;multivarJVM/compile;multivarJS/compile;multivarIrJVM/compile;multivarIrJS/compile;inferenceJVM/compile;inferenceJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;zarrJVM/compile;zarrJS/compile;zarrCodecBloscZstdJVM/compile;zarrCodecBloscZstdJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("testAll", ";locusKernelJVM/test;locusKernelJS/test;locusDataJVM/test;locusDataJS/test;locusLawsJVM/test;locusLawsJS/test;graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;graphicsJVM/test;graphicsJS/test;graphicsSvgJVM/test;graphicsSvgJS/test;graphicsCanvasJS/test;graphicsJava2dJVM/test;graphicsJavafxJVM/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;multivarJVM/test;multivarJS/test;multivarIrJVM/test;multivarIrJS/test;inferenceJVM/test;inferenceJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;zarrJVM/test;zarrJS/test;zarrCodecBloscZstdJVM/test;zarrCodecBloscZstdJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("compileAll", ";locusKernelJVM/compile;locusKernelJS/compile;locusDataJVM/compile;locusDataJS/compile;locusLawsJVM/compile;locusLawsJS/compile;graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;graphicsJVM/compile;graphicsJS/compile;graphicsSvgJVM/compile;graphicsSvgJS/compile;graphicsCanvasJS/compile;graphicsJava2dJVM/compile;graphicsJavafxJVM/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;bidsJVM/compile;bidsJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;multivarJVM/compile;multivarJS/compile;multivarIrJVM/compile;multivarIrJS/compile;inferenceJVM/compile;inferenceJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;zarrJVM/compile;zarrJS/compile;zarrCodecBloscZstdJVM/compile;zarrCodecBloscZstdJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("testAll", ";locusKernelJVM/test;locusKernelJS/test;locusDataJVM/test;locusDataJS/test;locusLawsJVM/test;locusLawsJS/test;graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;graphicsJVM/test;graphicsJS/test;graphicsSvgJVM/test;graphicsSvgJS/test;graphicsCanvasJS/test;graphicsJava2dJVM/test;graphicsJavafxJVM/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;bidsJVM/test;bidsJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;multivarJVM/test;multivarJS/test;multivarIrJVM/test;multivarIrJS/test;inferenceJVM/test;inferenceJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;zarrJVM/test;zarrJS/test;zarrCodecBloscZstdJVM/test;zarrCodecBloscZstdJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")

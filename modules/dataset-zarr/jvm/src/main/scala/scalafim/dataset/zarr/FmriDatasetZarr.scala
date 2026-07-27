@@ -18,7 +18,7 @@ extension (factory: FmriDataset.type)
       root: Path,
       run: RunId,
       options: ZarrDatasetOpenOptions = ZarrDatasetOpenOptions()
-  ): Either[DatasetError, FmriDataset] =
+  ): Either[DatasetError, SynchronousFmriDataset] =
     for
       store <- JvmFileStore.open(root).left.map(DatasetError.StorageFailure.apply)
       opened <- NeuroArchiveZarr

@@ -148,19 +148,30 @@ final class DatasetRun private (
     dataset.id
 
   def seriesEither(
+      readers: SynchronousDatasetReaders,
       selection: DataSelection = DataSelection.All
   ): Either[DatasetError, FmriSeries] =
-    translatedSelection(selection).flatMap(dataset.seriesEither)
+    for
+      reader <- readers.readerFor(dataset)
+      translated <- translatedSelection(selection)
+      series <- reader.seriesEither(translated)
+    yield series
 
-  def series(selection: DataSelection = DataSelection.All): FmriSeries =
-    seriesEither(selection).fold(error => throw new IllegalArgumentException(error.message), identity)
+  def series(
+      readers: SynchronousDatasetReaders,
+      selection: DataSelection = DataSelection.All
+  ): FmriSeries =
+    seriesEither(readers, selection)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private[dataset] def partitionedSeriesEither(
+      readers: SynchronousDatasetReaders,
       selection: DataSelection = DataSelection.All
   ): Either[DatasetError, (FmriSeries, DatasetRunPartition)] =
     for
+      reader <- readers.readerFor(dataset)
       translated <- translatedSelection(selection)
-      series <- dataset.seriesEither(translated)
+      series <- reader.seriesEither(translated)
       partitions <- dataset.runPartitionsFor(series.timepointIndices)
       partition <- partitions match
         case Vector(single) if single.run == block.run =>
@@ -286,12 +297,13 @@ final class DatasetIndex private (
         Left(DatasetError.AmbiguousDatasetRun(query.label, many.length))
 
   def read(
+      readers: SynchronousDatasetReaders,
       query: DatasetRunQuery,
       selection: DataSelection = DataSelection.All
   ): Either[DatasetError, SegmentedFmriSeries] =
     for
       selected <- resolveForRead(query, selection)
-      segments <- readSegments(selected, selection)
+      segments <- readSegments(readers, selected, selection)
       result <- SegmentedFmriSeries.make(segments)
     yield result
 
@@ -321,7 +333,7 @@ final class DatasetIndex private (
             s"coordinate selection requires identical run grids: ${error.message}"
           ))
         case Right(_) =>
-          run.dataset.backend.voxelDomain.resolve(coordinates, run.dataset.shape.space) match
+          run.dataset.voxelDomain.resolve(coordinates, run.dataset.shape.space) match
             case Left(error) => failure = Some(error)
             case Right(_)    => ()
       index += 1
@@ -330,6 +342,7 @@ final class DatasetIndex private (
       case None        => Right(selected)
 
   private def readSegments(
+      readers: SynchronousDatasetReaders,
       selected: Vector[DatasetRun],
       selection: DataSelection
   ): Either[DatasetError, Vector[FmriSeriesSegment]] =
@@ -340,7 +353,7 @@ final class DatasetIndex private (
     while index < selected.length && failure.isEmpty do
       val run = selected(index)
       val opened =
-        run.partitionedSeriesEither(selection).flatMap: (series, partition) =>
+        run.partitionedSeriesEither(readers, selection).flatMap: (series, partition) =>
           FmriSeriesSegment.make(run.key, partition, series)
       opened match
         case Left(error)    => failure = Some(error)
@@ -381,6 +394,52 @@ object DatasetIndex:
 
   def unsafe(runs: Vector[DatasetRun]): DatasetIndex =
     fromRuns(runs).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class SynchronousDatasetReaders private (
+    private val byId: Map[DatasetId, DatasetSeriesReader]
+):
+  def ids: Vector[DatasetId] =
+    byId.keys.toVector.sortBy(_.value)
+
+  def readerFor(
+      dataset: FmriDataset
+  ): Either[DatasetError, DatasetSeriesReader] =
+    byId
+      .get(dataset.id)
+      .toRight(DatasetError.SynchronousReaderNotFound(dataset.id))
+      .flatMap: reader =>
+        if reader.dataset.shape != dataset.shape then
+          Left(DatasetError.ShapeMismatch(
+            s"synchronous reader for '${dataset.id.value}' has a different dataset shape"
+          ))
+        else if reader.dataset.voxelDomain.indices != dataset.voxelDomain.indices then
+          Left(DatasetError.SampleOrderingMismatch(
+            dataset.voxelDomain.indices,
+            reader.dataset.voxelDomain.indices
+          ))
+        else
+          Right(reader)
+
+object SynchronousDatasetReaders:
+  def build(
+      readers: DatasetSeriesReader*
+  ): Either[DatasetError, SynchronousDatasetReaders] =
+    val ordered = readers.toVector.sortBy(_.dataset.id.value)
+    var index = 1
+    while index < ordered.length do
+      if ordered(index - 1).dataset.id == ordered(index).dataset.id then
+        return Left(DatasetError.DuplicateSynchronousReader(
+          ordered(index).dataset.id
+        ))
+      index += 1
+    Right(new SynchronousDatasetReaders(
+      ordered.iterator.map(reader => reader.dataset.id -> reader).toMap
+    ))
+
+  def one(
+      reader: DatasetSeriesReader
+  ): SynchronousDatasetReaders =
+    new SynchronousDatasetReaders(Map(reader.dataset.id -> reader))
 
 private def traverseOptional[A](
     value: Option[String],

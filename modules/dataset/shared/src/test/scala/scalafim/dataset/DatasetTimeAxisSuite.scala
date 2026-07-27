@@ -105,4 +105,4 @@ class DatasetTimeAxisSuite extends munit.FunSuite:
         samplingFrame = samplingFrame,
         runIds = runIds
       )
-      .fold(error => fail(error.message), identity)
+      .fold(error => fail(error.message), _.dataset)

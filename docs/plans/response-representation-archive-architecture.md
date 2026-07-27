@@ -1,14 +1,32 @@
 # Response, Representation, Archive, and Dataset Architecture
 
-Status: revised proposed product requirements document and architectural north star
+Status: accepted architectural north star; Phases 0 through 10 implemented
 
 Date: 2026-07-26
 
 Scope: `response`, `latent`, `archive`, `dataset`, their interop modules, and
 runtime assembly
 
-Implementation status: not implemented as a module boundary; the current
-NeuroArchive-dataset bridge remains the working baseline
+Implementation status: the Phase 0 contract, Phase 1 response kernel, Phase 2
+archive revision/resource split, their
+[Track-A receipt/capability integration](response-representation-archive-track-a.md)
+and the
+[Phase 3 typed temporal-DCT plan](response-representation-archive-phase-3.md)
+and
+[Phase 4 LNA binding](response-representation-archive-phase-4.md)
+and the
+[Phase 5 response registry/runtime](response-representation-archive-phase-5.md)
+are implemented. The
+[Phase 6 dataset attachment](response-representation-archive-phase-6.md)
+and the
+[Phase 7 Zarr format-independence proof](response-representation-archive-phase-7.md)
+and the
+[Phase 8 module-boundary extraction](response-representation-archive-phase-8.md)
+and the
+[Phase 9 normalized manifest](response-representation-archive-phase-9.md)
+and the
+[Phase 10 law and release audit](response-representation-archive-phase-10.md)
+are also implemented.
 
 ## 1. Executive Summary
 
@@ -152,7 +170,7 @@ The mature user experience is:
 
 ```scala
 runtime
-  .openDataset(location, acquisition)
+  .openDataset(location, dataset, acquisition)
   .use: dataset =>
     dataset.read(selection)
 ```
@@ -485,11 +503,11 @@ The logical target is:
 
 ```text
                        response
-                    /      |      \
-               latent    dataset   archive
-                  ^         ^         ^
-                  |         |         |
-               linalg    geometry   format modules
+                  /   |      |      \
+      response-laws latent dataset   archive
+                     ^       ^         ^
+                     |       |         |
+                  linalg  geometry   format modules
                          adapters
                         /        \
                      image      surface
@@ -511,6 +529,7 @@ Normative dependency rules:
 ```text
 response ─────▶ no internal scientific module
 
+response-laws ▶ response
 latent  ──────▶ response + linalg
 dataset ──────▶ response
 archive ──────▶ response vocabulary only where the manifest must name it
@@ -546,6 +565,14 @@ The exact artifact names may be staged. The architectural requirements are:
   families;
 - `archive` core no longer executes scientific reconstruction;
 - implementation modules do not create dependency cycles.
+
+The live Phase 8 graph records two secondary-domain edges that are outside the
+prohibited principal-domain coupling: `latent -> image + locus-kernel` for
+existing HRBF geometry and ordered-mask mathematics, and
+`archive-lna -> image` for the established owned matrix wire values in the LNA
+schema. Cross-domain compatibility still lives in
+`interop-archived-response`; these edges do not put archive policy in latent,
+representation dispatch in dataset, or reconstruction in generic archive.
 
 ## 12. Response Kernel
 
@@ -1104,26 +1131,34 @@ logical boundary.
 - applicative-first;
 - executable by an interpreter from logical reads to an effect.
 
-A free applicative is the leading implementation candidate because most
-representation reads are known before IO. It is not frozen as public branding
-until the first vertical slice proves:
+Phase 3 selected a project-owned typed applicative AST after proving Scala 3
+typing, JVM/Scala.js behavior, request collection, and the explicit
+data-dependent barrier. Its semantic nodes are:
 
-- ergonomic Scala 3 typing;
-- acceptable compile times and allocations;
-- Scala.js behavior;
-- request collection and batching;
-- an explicit escape hatch for genuinely data-dependent reads.
-
-The public API may hide the underlying program representation behind:
-
-```scala
-DecodePlan.read(slot, slice)
-DecodePlan.pure(value)
-DecodePlan.mapN(...)
+```text
+Pure[A]
+Request[A](LogicalPayloadRead[A])
+Map[A, B](DecodePlan[A], A => B)
+Zip[A, B](DecodePlan[A], DecodePlan[B])
+Dependent[A, B](DecodePlan[A], A => DecodePlan[B])
 ```
 
-A monadic plan is permitted only when later logical reads truly depend on
-earlier payload contents.
+The public construction and execution surface is:
+
+```scala
+DecodePlan.read(request)
+DecodePlan.pure(value)
+DecodePlan.map2(...)
+DecodePlan.map3(...)
+DecodePlan.inspect(plan)
+DecodePlan.runApplicative(plan, interpreter)
+```
+
+`Dependent` is permitted only when later logical reads truly depend on earlier
+payload contents. It is counted during inspection, rejected by applicative
+execution, and accepted only by the separately named sequential interpreter.
+Typed request/result association never uses casts, `Any`, or string-result
+lookups.
 
 ### 14.7 Dense identity representation
 
@@ -1207,10 +1242,18 @@ final case class ObjectKey(
 )
 
 final case class ArchiveManifest(
+    format: ArchiveFormatKey,
     key: ObjectKey,
+    representation: Option[PersistedRepresentation],
     attributes: CanonicalValue,
-    payloads: Map[PayloadId, PayloadDescriptor],
+    payloads: Vector[PayloadDescriptor],
     integrity: IntegrityManifest
+)
+
+final case class PersistedRepresentation(
+    key: RepresentationKey,
+    descriptor: CanonicalValue,
+    outputSchema: CanonicalValue
 )
 ```
 
@@ -1486,6 +1529,12 @@ It must not receive the entire archive manifest by default. Representation
 code should not gain accidental access to publication policy, unrelated
 objects, container metadata, or physical layouts.
 
+After descriptor parsing and installed-family lookup, binding receives a
+capability-limited `ArchiveResponseAccess[F]` containing only location,
+revision identity, the verified published digest, the typed payload executor,
+and content validation. It does not expose `ArchiveRevision` or
+`ArchiveManifest`.
+
 ### 16.5 Explicit immutable registry
 
 Dynamic logical dispatch is assembled explicitly:
@@ -1535,15 +1584,23 @@ final case class ScalafimRuntime[F[_]](
 ):
   def openResponse(
       location: ArchiveLocation
-  ): Resource[F, ResponseSource[F]]
+  ): ArchiveResource[F, ResponseSource[F]]
 
   def openDataset(
       location: ArchiveLocation,
+      dataset: FmriDataset,
       acquisition: AcquisitionContext
-  ): Resource[F, OpenedDataset[F]]
+  ): RuntimeResource[F, OpenedDataset[F]]
 ```
 
-`openDataset` performs:
+`RuntimeResource` is a `Resource` over an `EitherT` error channel that
+distinguishes archive opening from a non-empty chain of attachment issues. The
+dataset description and acquisition claim are separate arguments so identity,
+run, and schema drift can be reported rather than made unrepresentable by
+construction.
+
+`openResponse` performs steps 1 through 9 below. `openDataset` reuses that
+path and adds checked dataset attachment as step 10:
 
 1. physical driver selection;
 2. resource-safe archive opening;
@@ -2394,6 +2451,8 @@ waits for both phases and verifies their integration before Phase 3 begins.
 Deliver:
 
 - this PRD accepted as the north star;
+- the normative
+  [Phase 0 baseline and decision record](response-representation-archive-phase-0.md);
 - exact committed baseline: Git commit, Scala version, module graph, bridge
   commit, and prerequisite branch commits;
 - inventory of every production file importing two principal domains;
@@ -2420,6 +2479,8 @@ Acceptance:
 
 Deliver:
 
+- the normative
+  [Phase 1 implementation record](response-representation-archive-phase-1.md);
 - axis-safe indices and domain identities;
 - primitive-backed ordered indices built only through companion factories;
 - response schema, neutral sample-domain references, and response-local
@@ -2452,6 +2513,8 @@ proceeding.
 
 Deliver:
 
+- the normative
+  [Phase 2 implementation record](response-representation-archive-phase-2.md);
 - pure `ArchiveRevision`;
 - resource-backed `OpenArchive[F]`;
 - `PayloadExecutor[F]`;
@@ -2473,12 +2536,29 @@ Acceptance:
 - mixed-axis capability claims conform to instrumented receipts;
 - resource closure is tested on success, failure, and cancellation.
 
+### Track A completion gate — response/archive integration
+
+Implemented by the
+[Track A integration record](response-representation-archive-track-a.md).
+The adapter lives in `dataset`, the existing module that can see both
+principal vocabularies. It preserves the ordered archive-native receipt while
+deriving a response-facing logical receipt, capability set, and opened layout.
+One combined-axis archive receipt or separate time and sample receipts must
+cover the resolved response selection exactly.
+
+The gate mechanically verifies that `response` imports no image, surface,
+graph, archive, latent, or dataset type; no response tensor or public mutable
+buffer exists; archive unknown-representation and resource laws still hold;
+and all JVM/Scala.js tests plus the frozen compatibility corpus remain green.
+
 ### Phase 3 — Prove one typed representation plan in memory
 
 Start with temporal DCT or Haar.
 
 Deliver:
 
+- the normative
+  [Phase 3 implementation record](response-representation-archive-phase-3.md);
 - typed logical payload slots;
 - typed `DecodePlan[ResponseBlock]`;
 - in-memory logical payload interpreter;
@@ -2505,6 +2585,8 @@ or pervasive representation-specific branching, redesign it.
 
 Deliver:
 
+- the normative
+  [Phase 4 implementation record](response-representation-archive-phase-4.md);
 - one explicit DCT/Haar LNA binding;
 - logical-slot to LNA-payload lowering;
 - typed payload plans over the current store;
@@ -2524,6 +2606,9 @@ Acceptance:
 - the frozen numerical compatibility corpus remains green.
 
 ### Phase 5 — Introduce explicit representation registry
+
+Implementation record:
+[response-representation-archive-phase-5.md](response-representation-archive-phase-5.md).
 
 Deliver:
 
@@ -2643,10 +2728,12 @@ Deliver:
 
 - namespaced object and representation identities;
 - typed payload roles;
-- representation descriptor envelope;
+- first-class narrow representation descriptor and output-schema envelope;
 - archive/representation version separation;
 - pure legacy LNA translator;
-- new canonical writer.
+- admitted deterministic canonical manifest encoding;
+- format-neutral transactional canonical writer, with physical sinks remaining
+  in their container modules.
 
 Acceptance:
 
@@ -2654,8 +2741,12 @@ Acceptance:
 - canonical writer emits only the admitted new form;
 - unknown representations remain structurally validatable;
 - manifest migration is pure and fixture-tested;
-- interrupted canonical writes never appear published;
-- format-specific external conformance still passes.
+- logical payload identity is stable across physical layouts;
+- raw numeric bits are preserved unless an admitted profile explicitly
+  declares normalization;
+- failure after every proper canonical-write prefix never appears published;
+- format-specific external conformance and the frozen Phase-0 numerical corpus
+  still pass.
 
 ### Phase 10 — Lock the architecture with laws and retire canonical legacy dispatch
 
@@ -3002,18 +3093,18 @@ Evidence required:
 
 ### D5. Artifact names
 
-Before Phase 8:
+Resolved in Phase 8:
 
-- whether existing `archive` becomes the API module;
-- whether `archive-lna` is extracted;
-- exact names for response and interop artifacts.
+- `response` is the neutral response-kernel artifact;
+- `archive` is the format-neutral archive API artifact;
+- `archive-lna` owns the legacy LNA schema and physical HDF5 driver;
+- `archive-zarr` owns the NeuroArchive Zarr profile;
+- `interop-archived-response` owns representation/archive lowering, legacy LNA
+  reconstruction, archive-aware dataset compatibility, and runtime assembly.
 
-Evidence required:
-
-- acyclic build graph;
-- migration cost;
-- publication compatibility;
-- clear README ownership.
+The graph is acyclic, the legacy packages remain available from their new
+artifacts, every artifact has an ownership README, and an executable guard
+checks both physical source placement and prohibited build edges.
 
 ### D6. Manifest canonical-value representation
 

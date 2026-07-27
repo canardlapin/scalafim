@@ -17,7 +17,9 @@ cross-compiled sbt build.
 - `graphics-canvas`: Scala.js Canvas 2D renderer with deterministic command recording.
 - `graphics-java2d`: JVM Java2D raster renderer with deterministic commands and image-level tests.
 - `graphics-javafx`: JVM JavaFX Canvas renderer with deterministic commands behind a toolkit-free drawing contract.
-- `latent`: typed latent fMRI response contracts, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
+- `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
+- `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
+- `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
 - `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
@@ -37,24 +39,26 @@ cross-compiled sbt build.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
 - `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
-- `archive`: typed Latent NeuroArchive-style manifests, transform descriptors, validation, quant roundtrips, and JVM storage boundaries.
+- `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
+- `archive-lna`: typed LNA schema, pure legacy-manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
+- `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, legacy LNA reconstruction and dataset compatibility, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
 - `bids`: BIDS filename/entity parsing, typed manifests, query semantics, BIDS URIs, event tables, and fMRIPrep confound selections.
-- `dataset`: source-blind fMRI views, acquisition locus domains, checked archive/backend attachment, typed study/run indexing, ordered spatial/temporal selections, segmented cross-run reads, and series.
+- `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
 - `model`: fMRI model composition and typed fitting plans/configuration.
-- `fit`: portable ordinary least squares kernels over timepoints-by-voxels response blocks.
+- `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
 - `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
 - `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
 - `multivar`: typed duality-diagram core — nominal primal/dual spaces, certified row/column forms, semantic GPCA, explicit partial row alignment, locus selection adapters, direct-sum multiset objectives, sparse-aware operators, decompositions, and pure execution plans.
 - `multivar-ir`: versioned language-neutral multivar semantics, portable JSON codecs, numeric payload references, and cross-binding conformance fixtures.
 - `inference`: typed perturbation inference over fitted multivariate structures — targets, resampling designs, null actions, Monte Carlo ladders, latent units, stability, validity, and provenance.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
-- `mvpa-dataset`: typed adapters from dataset series and sample metadata into MVPA pattern sources.
+- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
 - `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - `zarr`: dependency-free Scala 3 Zarr v3 kernel with read-only v2 lowering, runtime-rank hierarchy and factored selections, portable bounded async reads, revision-scoped LRU range caches, sync/async create-only writers, and atomic JVM publication.
 - `zarr-codec-blosc-zstd`: optional typed Blosc/Zstandard provider using JNI on JVM and embedded WASM on Scala.js.
-- `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD semantics, immutable manifests/publication receipts, and measured sharded layout policy.
+- `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
@@ -96,6 +100,10 @@ sbt graphicsSvgJS/test
 sbt graphicsCanvasJS/test
 sbt graphicsJava2dJVM/test
 sbt graphicsJavafxJVM/test
+sbt responseJVM/test
+sbt responseJS/test
+sbt responseLawsJVM/test
+sbt responseLawsJS/test
 sbt latentJVM/test
 sbt latentJS/test
 sbt arJVM/test
@@ -133,6 +141,10 @@ sbt atlasJVM/test
 sbt atlasJS/test
 sbt archiveJVM/test
 sbt archiveJS/test
+sbt archiveLnaJVM/test
+sbt archiveLnaJS/test
+sbt archivedResponseInteropJVM/test
+sbt archivedResponseInteropJS/test
 sbt bidsJVM/test
 sbt bidsJS/test
 sbt datasetJVM/test

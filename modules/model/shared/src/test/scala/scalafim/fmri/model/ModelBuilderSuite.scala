@@ -25,7 +25,7 @@ class ModelBuilderSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(DatasetId("builder-demo"), data, NeuroSpace(Vector(1, 1, 1))),
       samplingFrame = samplingFrame,
       events = events
-    )
+    ).dataset
 
   test("eventsTable infers typed columns from dataset event rows") {
     val table = FmriModelBuilder.eventsTable(

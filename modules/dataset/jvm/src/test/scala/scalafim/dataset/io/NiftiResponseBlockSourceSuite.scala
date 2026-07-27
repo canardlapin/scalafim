@@ -1,9 +1,18 @@
 package scalafim.dataset.io
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import munit.FunSuite
-import scalafim.dataset.{DataSelection, TimepointSelection, VoxelSelection}
+import scalafim.dataset.{
+  DataSelection,
+  DatasetResponseSchema,
+  LegacyDatasetResponseSource,
+  TimepointSelection,
+  VoxelSelection
+}
 import scalafim.image.{Axis, NArrayUtil, NeuroSpace, NeuroVec}
 import scalafim.image.io.Nifti
+import scalafim.response.*
 
 import java.nio.file.{Files, Path}
 import java.nio.ByteOrder
@@ -29,6 +38,75 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
       assertMatrixEquals(block.data, Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)))
       assertEquals(block.data.rows * block.data.cols, 4)
       assert(!source.wasStaged)
+    }
+  }
+
+  test("response-kernel adapter preserves uncompressed NIfTI values and order") {
+    withFixture { root =>
+      val source =
+        NiftiResponseBlockSource
+          .open(writeSeries(root.resolve("adapter-bold.nii")))
+          .toOption
+          .get
+      val schemaId = ResponseSchemaId.unsafe("nifti-adapter")
+      val time =
+        TimeDomain
+          .regular(
+            DomainId.unsafe[TimeAxis]("nifti-adapter:time"),
+            origin = 0.5,
+            interval = 1.0,
+            count = source.shape.timepoints,
+            UnitId.unsafe("second")
+          )
+          .toOption
+          .get
+      val schema =
+        DatasetResponseSchema
+          .fromBlockSource(
+            source,
+            schemaId,
+            time,
+            UnitId.unsafe("scanner-unit")
+          )
+          .toOption
+          .get
+      val adapted =
+        LegacyDatasetResponseSource
+          .fromBlockSource[IO](
+            source,
+            schema,
+            SourceId.unsafe("nifti-adapter-source")
+          )
+          .toOption
+          .get
+      val times =
+        OrderedIndices
+          .fromInts(schema.time.id, schema.time.count, Vector(2, 0))
+          .toOption
+          .get
+      val samples =
+        OrderedIndices
+          .fromInts(schema.samples.id, schema.samples.count, Vector(3, 1))
+          .toOption
+          .get
+      val requested =
+        ResolvedResponseSelection
+          .make(schema, times, samples)
+          .toOption
+          .get
+      val result =
+        adapted
+          .read(requested)
+          .value
+          .unsafeRunSync()
+          .toOption
+          .get
+
+      assertEquals(result.block.selection, requested)
+      assertEquals(
+        result.block.rowMajorCopy.toSeq.toVector,
+        Vector(11.0, 9.0, 3.0, 1.0)
+      )
     }
   }
 

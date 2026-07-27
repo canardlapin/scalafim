@@ -24,7 +24,7 @@ class ModelSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("demo"), data, NeuroSpace(Vector(2, 2, 1))),
       samplingFrame = samplingFrame
-    )
+    ).dataset
 
   private def eventModel: EventModel =
     EventModel(

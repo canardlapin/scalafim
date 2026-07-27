@@ -48,9 +48,9 @@ object VoxelSampleMap:
       spatialSize: Int,
       expectedSamples: Int
   ): Either[DatasetError, VoxelSampleMap] =
-    if expectedSamples <= 0 then Left(DatasetError.ShapeMismatch(s"latent sample count must be positive, got $expectedSamples"))
+    if expectedSamples <= 0 then Left(DatasetError.ShapeMismatch(s"response sample count must be positive, got $expectedSamples"))
     else if indices.length != expectedSamples then
-      Left(DatasetError.ShapeMismatch(s"latent sample count must match mask cardinality: expected $expectedSamples samples but mask has ${indices.length}"))
+      Left(DatasetError.ShapeMismatch(s"response sample count must match mask cardinality: expected $expectedSamples samples but mask has ${indices.length}"))
     else
       val lookup = Array.fill(spatialSize)(-1)
       val sampleVoxels = Vector.newBuilder[VoxelIndex]

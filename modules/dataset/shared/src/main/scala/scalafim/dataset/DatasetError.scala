@@ -1,8 +1,7 @@
 package scalafim.dataset
 
-import scalafim.archive.ArchiveError
 import scalafim.image.{NeuroSpaceError, VoxelCoord}
-import scalafim.latent.LatentError
+import scalafim.response.{OperationId, ReadError}
 
 enum DatasetAxis(val label: String):
   case Timepoint extends DatasetAxis("timepoint")
@@ -17,15 +16,21 @@ enum DatasetError:
   case EmptySelection(axis: DatasetAxis)
   case DuplicateSelection(axis: DatasetAxis, index: Int)
   case ShapeMismatch(detail: String)
+  case DatasetIdentityMismatch(expected: DatasetId, actual: DatasetId)
+  case SampleOrderingMismatch(expected: Vector[Int], actual: Vector[Int])
+  case AttachmentPlanMismatch(expected: DatasetAttachmentId, actual: DatasetAttachmentId)
+  case ResponseSelectionFailure(detail: String)
+  case ResponseReadFailure(error: ReadError)
   case MatrixShapeMismatch(label: String, expectedRows: Int, expectedCols: Int, actualRows: Int, actualCols: Int)
   case VoxelOutsideMask(voxel: Int)
   case InvalidVoxelCoordinate(coordinate: VoxelCoord, detail: String)
-  case ArchiveFailure(error: ArchiveError)
-  case LatentFailure(error: LatentError)
+  case CompatibilityFailure(adapter: OperationId, detail: String)
   case StorageFailure(detail: String)
   case InvalidLabel(label: String, value: String, detail: String)
   case EmptyDatasetIndex
   case DuplicateDatasetRun(key: String)
+  case DuplicateSynchronousReader(dataset: DatasetId)
+  case SynchronousReaderNotFound(dataset: DatasetId)
   case DatasetRunNotFound(query: String)
   case AmbiguousDatasetRun(query: String, matches: Int)
   case InvalidTimeAxis(detail: String)
@@ -51,16 +56,24 @@ enum DatasetError:
         s"${axis.label} selection contains duplicate index $index"
       case ShapeMismatch(detail) =>
         s"dataset shape mismatch: $detail"
+      case DatasetIdentityMismatch(expected, actual) =>
+        s"dataset identity mismatch: expected '${expected.value}' but got '${actual.value}'"
+      case SampleOrderingMismatch(expected, actual) =>
+        s"dataset sample ordering mismatch: expected ${expected.mkString("[", ",", "]")} but got ${actual.mkString("[", ",", "]")}"
+      case AttachmentPlanMismatch(expected, actual) =>
+        s"dataset read plan belongs to attachment '${actual.value}', expected '${expected.value}'"
+      case ResponseSelectionFailure(detail) =>
+        s"invalid response selection: $detail"
+      case ResponseReadFailure(error) =>
+        error.message
       case MatrixShapeMismatch(label, expectedRows, expectedCols, actualRows, actualCols) =>
         s"$label expected ${expectedRows}x${expectedCols} but got ${actualRows}x${actualCols}"
       case VoxelOutsideMask(voxel) =>
-        s"voxel $voxel is outside the latent mask"
+        s"voxel $voxel is outside the readable sample mask"
       case InvalidVoxelCoordinate(coordinate, detail) =>
         s"invalid voxel coordinate $coordinate: $detail"
-      case ArchiveFailure(error) =>
-        error.message
-      case LatentFailure(error) =>
-        error.message
+      case CompatibilityFailure(adapter, detail) =>
+        s"compatibility adapter '${adapter.value}' failed: $detail"
       case StorageFailure(detail) =>
         detail
       case InvalidLabel(label, value, detail) =>
@@ -69,6 +82,10 @@ enum DatasetError:
         "dataset index must contain at least one run"
       case DuplicateDatasetRun(key) =>
         s"dataset index contains duplicate run key '$key'"
+      case DuplicateSynchronousReader(dataset) =>
+        s"synchronous reader registry contains duplicate dataset '${dataset.value}'"
+      case SynchronousReaderNotFound(dataset) =>
+        s"no synchronous reader is attached for dataset '${dataset.value}'"
       case DatasetRunNotFound(query) =>
         s"dataset query matched no runs: $query"
       case AmbiguousDatasetRun(query, matches) =>

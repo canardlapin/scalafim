@@ -2,6 +2,7 @@ package scalafim.latent
 
 enum LatentError:
   case EmptyIdentifier(label: String)
+  case InvalidIdentifier(label: String, value: String)
   case NonPositiveDimension(label: String, value: Int)
   case NonPowerOfTwoDimension(label: String, value: Int)
   case DimensionMismatch(label: String, expected: Int, actual: Int)
@@ -20,6 +21,8 @@ enum LatentError:
     this match
       case EmptyIdentifier(label) =>
         s"$label identifier must be non-empty"
+      case InvalidIdentifier(label, value) =>
+        s"$label identifier contains unsupported characters: '$value'"
       case NonPositiveDimension(label, value) =>
         s"$label dimension must be positive, got $value"
       case NonPowerOfTwoDimension(label, value) =>
@@ -51,6 +54,8 @@ enum LatentError:
     this match
       case EmptyIdentifier(label) =>
         LatentError.Payload.Identifier(label)
+      case InvalidIdentifier(label, value) =>
+        LatentError.Payload.InvalidIdentifier(label, value)
       case NonPositiveDimension(label, value) =>
         LatentError.Payload.Dimension(label, value)
       case NonPowerOfTwoDimension(label, value) =>
@@ -81,6 +86,7 @@ enum LatentError:
 object LatentError:
   enum Payload:
     case Identifier(label: String)
+    case InvalidIdentifier(label: String, value: String)
     case Dimension(label: String, value: Int)
     case DimensionMismatch(label: String, expected: Int, actual: Int)
     case MatrixShapeMismatch(label: String, expectedRows: Int, expectedCols: Int, actualRows: Int, actualCols: Int)

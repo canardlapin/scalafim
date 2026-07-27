@@ -40,8 +40,41 @@ class DatasetSuite extends munit.FunSuite:
 
     assertEquals(
       result.left.map(_.message),
-      Left("dataset shape mismatch: sampling frame has 2 timepoints but backend has 3")
+      Left("dataset shape mismatch: sampling frame has 2 timepoints but dataset shape has 3")
     )
+  }
+
+  test("pure dataset descriptions require an explicit synchronous reader") {
+    val synchronous =
+      FmriDataset.unsafe(
+        backend = backend,
+        samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),
+        runId = RunId("run-1")
+      )
+    val description =
+      FmriDataset
+        .describe(
+          synchronous.id,
+          synchronous.shape,
+          synchronous.voxelDomain,
+          synchronous.metadata,
+          synchronous.samplingFrame,
+          synchronous.timeAxis.runIds,
+          synchronous.events
+        )
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      description.seriesEither().left.toOption,
+      Some(DatasetError.SynchronousReaderNotFound(description.id))
+    )
+    val explicit =
+      SynchronousDatasetReaders
+        .one(synchronous)
+        .readerFor(description)
+        .flatMap(_.seriesEither())
+        .fold(error => fail(error.message), identity)
+    assertEquals(explicit.data.toRows, denseRows)
   }
 
   test("dataset shape rejects 4D spaces as spatial-only shapes") {

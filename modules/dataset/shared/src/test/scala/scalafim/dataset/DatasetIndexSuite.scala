@@ -144,18 +144,20 @@ class DatasetIndexSuite extends munit.FunSuite:
       DatasetIndex
         .fromDataset(
           DatasetKey.unsafe("sub-01", session = Some("ses-01"), task = Some("rest")),
-          multi
+          multi.dataset
         )
         .fold(error => fail(error.message), identity)
 
     assertEquals(index.keys.map(_.run.value), Vector("run-a", "run-b"))
-    assert(index.runs.forall(_.dataset eq multi))
+    assert(index.runs.forall(_.dataset.eq(multi.dataset)))
     assertEquals(index.descriptors.map(_.shape.timepoints), Vector(2, 3))
 
     val second = index.runs(1)
+    val readers = SynchronousDatasetReaders.one(multi)
     val (series, partition) =
       second
         .partitionedSeriesEither(
+          readers,
           DataSelection(
             time = TimepointSelection.Window(TimepointIndex.unsafe(0), length = 2),
             voxels = VoxelSelection.indices(1)
@@ -168,7 +170,10 @@ class DatasetIndexSuite extends munit.FunSuite:
     assertEquals(partition.localTimepoints, Vector(0, 1))
 
     assert(second
-      .seriesEither(DataSelection(time = TimepointSelection.indices(3)))
+      .seriesEither(
+        readers,
+        DataSelection(time = TimepointSelection.indices(3))
+      )
       .left
       .exists(_.message.contains("out of bounds for size 3")))
   }
@@ -234,7 +239,7 @@ class DatasetIndexSuite extends munit.FunSuite:
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
       runId = RunId(runId)
-    )
+    ).dataset
 
   private def datasetRun(
       key: RunKey,
@@ -251,4 +256,4 @@ class DatasetIndexSuite extends munit.FunSuite:
         samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
         runId = key.run
       )
-    DatasetRun.make(key, dataset).fold(error => fail(error.message), identity)
+    DatasetRun.make(key, dataset.dataset).fold(error => fail(error.message), identity)

@@ -6,16 +6,22 @@ import scalafim.image.{DMat, NeuroSpace}
 class DatasetMultiRunFixtureSuite extends munit.FunSuite:
 
   test("typed index resolves multi-subject session run datasets into selected series views") {
+    val fixtures =
+      Vector(
+        runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-1", 10.0),
+        runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-2", 20.0),
+        runFixture("sub-01", Some("ses-02"), "nback", "T1w", "run-1", 30.0),
+        runFixture("sub-02", None, "rest", "MNI", "run-1", 40.0)
+      )
     val index = DatasetIndex
       .fromRuns(
-        Vector(
-          runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-1", 10.0),
-          runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-2", 20.0),
-          runFixture("sub-01", Some("ses-02"), "nback", "T1w", "run-1", 30.0),
-          runFixture("sub-02", None, "rest", "MNI", "run-1", 40.0)
-        )
+        fixtures.map(_._1)
       )
       .fold(error => fail(error.message), identity)
+    val readers =
+      SynchronousDatasetReaders
+        .build(fixtures.map(_._2)*)
+        .fold(error => fail(error.message), identity)
 
     assertEquals(index.subjects.map(_.value), Vector("sub-01", "sub-02"))
 
@@ -46,7 +52,8 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
     assertEquals(selected.dataset.events.typedRows.map(_.run.map(_.value)), Vector(Some("run-2"), Some("run-2")))
 
     val series =
-      selected.dataset.series(
+      selected.series(
+        readers,
         DataSelection(
           time = TimepointSelection.indices(0, 2),
           voxels = VoxelSelection.indices(1)
@@ -126,7 +133,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
       spaceLabel: String,
       runId: String,
       base: Double
-  ): DatasetRun =
+  ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey
         .fromStrings(
@@ -137,14 +144,23 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
           run = runId
         )
         .fold(error => fail(error.message), identity)
-    DatasetRun
-      .make(
-        key,
-        runDataset(s"${subject}-${session.getOrElse("nosession")}-$task-$runId", runId, base)
+    val dataset =
+      runDataset(
+        s"${subject}-${session.getOrElse("nosession")}-$task-$runId",
+        runId,
+        base
       )
-      .fold(error => fail(error.message), identity)
+    val run =
+      DatasetRun
+        .make(key, dataset.dataset)
+        .fold(error => fail(error.message), identity)
+    run -> dataset
 
-  private def runDataset(id: String, runId: String, base: Double): FmriDataset =
+  private def runDataset(
+      id: String,
+      runId: String,
+      base: Double
+  ): SynchronousFmriDataset =
     val samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
     val timeAxis =
       DatasetTimeAxis

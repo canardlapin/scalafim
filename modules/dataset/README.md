@@ -8,39 +8,57 @@ Package root:
 import scalafim.dataset.*
 ```
 
-This module is the rewrite target for `fmridataset`. It defines dataset shapes,
-typed identifiers, spatial/temporal selections, fMRI series, and storage-backend
-contracts. It deliberately does not emulate R S3 dispatch; new backends implement
-a small typed `DatasetBackend` trait.
+This module is the rewrite target for `fmridataset`. It defines pure dataset
+descriptions, typed identities, spatial/temporal selections, checked response
+attachment, and fMRI series. It deliberately does not emulate R S3 dispatch.
 
 ## Archive and dataset roles
 
-`FmriDataset` is the readable fMRI view; NeuroArchive is a family of durable
-storage formats. They compose rather than inherit from one another:
+`FmriDataset` is a pure scientific description and query authority. It owns
+shape, sampling, run hierarchy, events, metadata, and voxel-domain identity,
+but it does not own an effect or a storage backend.
 
 ```text
-LNA archive -> latent dataset backend ----+
-                                         +-> FmriDataset -> FmriSeries
-Zarr revision -> response-block backend --+
+FmriDataset + DatasetRunQuery + DataSelection
+  -> pure run-local response selections
+
+FmriDataset + ResponseSource[F] + AcquisitionContext
+  -> checked OpenedDataset[F]
+  -> effectful DatasetReadResult
 ```
 
-Once opened, ordinary consumers use `seriesEither` and do not branch on the
-storage source. Source provenance remains available through
-`dataset.metadata.provenance` and follows every selected `FmriSeries`.
+`OpenedDataset[F]` validates timing, schema, geometry or topology references,
+mask identity, sample ordering, calibration, and non-finite policy before it
+can read. It lowers only to output-domain `ResolvedResponseSelection`; dataset
+code never addresses latent coefficients. `DatasetReadResult` retains the
+source `ReadResult`, including physical-read evidence. Its response provenance
+retains every source node and derives one attachment root that directly
+references every source root, so dataset adaptation is visible without
+discarding the archive or representation history.
 
-Checked construction is canonical:
+`SynchronousFmriDataset` is the named compatibility facade for an actual
+synchronous `DatasetBackend`. Asynchronous and Scala.js sources have no
+blocking adapter. New synchronous consumers should accept a
+`DatasetSeriesReader`; effectful consumers should accept `OpenedDataset[F]`.
+
+Pure checked construction is available without a reader:
 
 ```scala
-val dataset: Either[DatasetError, FmriDataset] =
-  FmriDataset.open(
-    backend = backend,
+val description: Either[DatasetError, FmriDataset] =
+  FmriDataset.describe(
+    id = datasetId,
+    shape = shape,
+    voxelDomain = voxelDomain,
+    metadata = metadata,
     samplingFrame = samplingFrame,
-    runId = RunId("run-01"),
+    runIds = Vector(RunId("run-01")),
     events = events
   )
 ```
 
-`FmriDataset.unsafe` is the explicit trusted-input compatibility path.
+For a synchronous backend, `FmriDataset.open` returns a
+`SynchronousFmriDataset`. `FmriDataset.unsafe` is its explicit trusted-input
+compatibility path.
 
 Default voxel selection is backend-readable, not blindly full-volume. A backend
 exposes a typed `VoxelDomain`: dense full-volume backends make every spatial
@@ -80,6 +98,7 @@ import scalafim.image.VoxelCoord
 
 val selected: Either[DatasetError, SegmentedFmriSeries] =
   index.read(
+    readers = synchronousReaders,
     query = DatasetRunQuery(
       subject = Some(SubjectId("01")),
       session = DatasetFieldCriterion.Any,
@@ -104,6 +123,10 @@ val summaries =
   )
 ```
 
+`DatasetIndex` remains pure. Its read methods require an explicit immutable
+`SynchronousDatasetReaders` registry; constructing an index does not smuggle a
+reader into each run description.
+
 Segmentation is the default. `blockConcatenate` never claims that observations
 from different runs or sessions form one elapsed-time axis; its `boundaries`
 retain the original run keys, partitions, and local timepoints.
@@ -115,60 +138,15 @@ typed values in shared code. `DatasetEventRow` parses reserved fields such as
 dataset `DatasetTimeAxis`, and model-building code consumes typed event values
 instead of reparsing `Map[String, String]` rows.
 
-Backends currently include:
+Core backends include `InMemoryDatasetBackend`, bounded NIfTI response sources,
+and caller-defined implementations of the neutral reader contracts.
 
-- `InMemoryDatasetBackend` for dense time-by-voxel matrices.
-- `LatentArchiveDatasetBackend` for existing archive-backed LNA payloads.
-- `LatentResponseDatasetBackend` for direct `LatentResponse` reads; selected
-  timepoints and voxels are decoded through the latent response without
-  materializing a whole run.
-- JVM-only `LnaDataset` directory adapter for neuroarchive-style
-  `derivatives/lna` trees: subject discovery, metadata tables, shared-basis
-  registries, exact parsed-entity `.lna.h5` lookup over
-  subject/session/task/run/acq/space/desc, archive-backed backend creation,
-  selection-aware latent reads for explicit, temporal, transport, BOLDZip, and
-  shared-basis archives, and opt-in materialized reads that resolve external
-  shared-basis archives through the dataset root.
-
-The high-level LNA composer requires the timing that LNA does not store and
-never silently chooses an internal archive run:
-
-```scala
-import scalafim.dataset.*
-import scalafim.dataset.io.*
-import scalafim.fmri.hrf.design.SamplingFrame
-
-val opened =
-  for
-    query <- LnaDatasetQuery.fromStrings(
-      subject = "01",
-      session = Some("01"),
-      task = Some("rest"),
-      run = Some("01"),
-      space = Some("MNI152NLin2009cAsym")
-    )
-    timing <- SamplingFrame.regular(tr = 0.8, nScans = 600)
-    dataset <- FmriDataset.openLna(
-      root = root,
-      query = query,
-      timing = timing
-    )
-  yield dataset
-
-val signal =
-  opened.flatMap(
-    _.seriesEither(
-      DataSelection(
-        time = TimepointSelection.indices(100, 101, 102, 103),
-        voxels = VoxelSelection.indices(4811, 4812, 9007)
-      )
-    )
-  )
-```
-
-If the selected LNA contains several internal runs, use the overload with an
-explicit `archiveRun: RunLabel`. A multi-block sampling frame likewise requires
-explicit external `runIds`.
+LNA discovery, archive-backed and latent-response compatibility backends, and
+archive-receipt adaptation now live physically in
+`interop-archived-response`. Their existing `scalafim.dataset` package names
+remain available to applications that depend on that interop artifact, but the
+dataset artifact itself neither imports nor dispatches on archive or
+representation types.
 
 Study-scale readers can implement `ResponseBlockSource`, a smaller bounded-read
 contract over resolved timepoint and voxel selections.

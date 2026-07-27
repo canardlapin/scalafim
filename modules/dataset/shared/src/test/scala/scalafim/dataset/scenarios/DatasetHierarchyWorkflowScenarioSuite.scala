@@ -13,15 +13,19 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
 
   private def runScenario(): ScenarioResult =
     val scenarioId = "dataset.cross-session-coordinate-window.v1"
+    val fixtures =
+      Vector(
+        run("ses-01", "run-01", base = 0.0),
+        run("ses-01", "run-02", base = 100.0),
+        run("ses-02", "run-01", base = 200.0)
+      )
     val index =
       DatasetIndex
-        .fromRuns(
-          Vector(
-            run("ses-01", "run-01", base = 0.0),
-            run("ses-01", "run-02", base = 100.0),
-            run("ses-02", "run-01", base = 200.0)
-          )
-        )
+        .fromRuns(fixtures.map(_._1))
+        .fold(error => fail(error.message), identity)
+    val readers =
+      SynchronousDatasetReaders
+        .build(fixtures.map(_._2)*)
         .fold(error => fail(error.message), identity)
     val query =
       DatasetRunQuery(
@@ -35,7 +39,9 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
         voxels = VoxelSelection.coords(VoxelCoord(1, 0, 0))
       )
     val selected =
-      index.read(query, selection).fold(error => fail(error.message), identity)
+      index
+        .read(readers, query, selection)
+        .fold(error => fail(error.message), identity)
     val bySession = selected.groupBy(_.key.dataset.session)
     val concatenated =
       selected.blockConcatenate.fold(error => fail(error.message), identity)
@@ -106,7 +112,11 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
         )
     )
 
-  private def run(sessionId: String, runId: String, base: Double): DatasetRun =
+  private def run(
+      sessionId: String,
+      runId: String,
+      base: Double
+  ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey.unsafe(
         subject = "sub-01",
@@ -134,7 +144,11 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
           runId = key.run
         )
         .fold(error => fail(error.message), identity)
-    DatasetRun.make(key, dataset).fold(error => fail(error.message), identity)
+    val datasetRun =
+      DatasetRun
+        .make(key, dataset.dataset)
+        .fold(error => fail(error.message), identity)
+    datasetRun -> dataset
 
   private def session(value: String): Option[SessionId] =
     Some(SessionId(value))

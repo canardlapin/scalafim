@@ -6,10 +6,11 @@ import scalafim.image.{DMat, NeuroSpace, VoxelCoord}
 class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
   test("indexed reads preserve ordered run origins, partitions, and provenance") {
-    val index = studyIndex()
+    val fixture = studyFixture()
     val result =
-      index
+      fixture.index
         .read(
+          readers = fixture.readers,
           query = DatasetRunQuery(
             subject = Some(SubjectId("sub-01")),
             task = DatasetFieldCriterion.Is(TaskId("rest"))
@@ -43,9 +44,11 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
   }
 
   test("groupBy reorganizes, blockConcatenate relayouts with boundaries, and reduceBy changes values once per group") {
+    val fixture = studyFixture()
     val selected =
-      studyIndex()
+      fixture.index
         .read(
+          fixture.readers,
           DatasetRunQuery(subject = Some(SubjectId("sub-01"))),
           DataSelection(
             time = TimepointSelection.Window(TimepointIndex.unsafe(0), length = 2),
@@ -96,16 +99,23 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val runs =
+    val fixtures =
       Vector(
         runFixture("ses-01", "run-1", 0.0, NeuroSpace(Vector(2, 1, 1))),
         runFixture("ses-01", "run-2", 100.0, NeuroSpace(Vector(2, 1, 1), trans = Some(translated)))
       )
     val index =
-      DatasetIndex.fromRuns(runs).fold(error => fail(error.message), identity)
+      DatasetIndex
+        .fromRuns(fixtures.map(_._1))
+        .fold(error => fail(error.message), identity)
+    val readers =
+      SynchronousDatasetReaders
+        .build(fixtures.map(_._2)*)
+        .fold(error => fail(error.message), identity)
     val selected =
       index
         .read(
+          readers,
           DatasetRunQuery.All,
           DataSelection(voxels = VoxelSelection.indices(0))
         )
@@ -113,7 +123,10 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
     assert(selected.blockConcatenate.left.exists(_.message.contains("identical voxel grids")))
     assert(index
-      .read(DatasetRunQuery(subject = Some(SubjectId("sub-99"))))
+      .read(
+        readers,
+        DatasetRunQuery(subject = Some(SubjectId("sub-99")))
+      )
       .left
       .toOption
       .contains(DatasetError.DatasetRunNotFound(
@@ -121,23 +134,34 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       )))
   }
 
-  private def studyIndex(): DatasetIndex =
-    DatasetIndex
-      .fromRuns(
-        Vector(
-          runFixture("ses-01", "run-1", 0.0),
-          runFixture("ses-01", "run-2", 100.0),
-          runFixture("ses-02", "run-1", 200.0)
-        )
+  private final case class StudyFixture(
+      index: DatasetIndex,
+      readers: SynchronousDatasetReaders
+  )
+
+  private def studyFixture(): StudyFixture =
+    val fixtures =
+      Vector(
+        runFixture("ses-01", "run-1", 0.0),
+        runFixture("ses-01", "run-2", 100.0),
+        runFixture("ses-02", "run-1", 200.0)
       )
-      .fold(error => fail(error.message), identity)
+    val index =
+      DatasetIndex
+        .fromRuns(fixtures.map(_._1))
+        .fold(error => fail(error.message), identity)
+    val readers =
+      SynchronousDatasetReaders
+        .build(fixtures.map(_._2)*)
+        .fold(error => fail(error.message), identity)
+    StudyFixture(index, readers)
 
   private def runFixture(
       session: String,
       run: String,
       base: Double,
       space: NeuroSpace = NeuroSpace(Vector(2, 1, 1))
-  ): DatasetRun =
+  ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey.unsafe(
         subject = "sub-01",
@@ -163,7 +187,11 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
         samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),
         runId = key.run
       )
-    DatasetRun.make(key, dataset).fold(error => fail(error.message), identity)
+    val datasetRun =
+      DatasetRun
+        .make(key, dataset.dataset)
+        .fold(error => fail(error.message), identity)
+    datasetRun -> dataset
 
   private def sessionIdOption(value: String): Option[SessionId] =
     Some(SessionId(value))
