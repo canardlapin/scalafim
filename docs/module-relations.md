@@ -112,7 +112,6 @@ fit + mvpa
 +-- mvpa-fit          run-local trial-readout and pattern-operator composition
 
 standalone multivar
-+-- inference         also depends on Gale
 +-- mvpa-fit          also depends on fit, mvpa
 ```
 
@@ -177,7 +176,6 @@ boundary; the core `dataset` module does not.
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `linalg`, `model`, `ar` | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
-| `inference` | Typed perturbation inference over fitted multivariate structures: invariant targets, resampling designs, lawful null/bootstrap actions, deterministic Monte Carlo ladders, latent units, alignment/stability summaries, validity, evidence, and provenance. | Standalone multivar; Gale | Multivariate fitting, GLM/group contrasts, spatial multiple testing, dataset/image IO, schedulers, or platform-specific random/runtime APIs. |
 | `connectivity` | Shared connectivity algebra and portable kernels: graph-backed ordered node axes with scientific provenance, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | `graph`, `locus-kernel`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
@@ -292,7 +290,7 @@ dataset -------------+
 dataset -> mvpa-dataset -> mvpa
 image/surface/atlas -> mvpa-spatial -> mvpa
 fit + mvpa -> mvpa-fit
-standalone multivar -> inference
+standalone multivar-inference (external)
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
@@ -395,9 +393,9 @@ descriptors can materialize executable dense morphisms.
   Keep dataset, image, MVPA, bindings, and scheduler-specific execution in
   their ScalaFIM modules.
 - Put perturbation targets, resampling/null actions, Monte Carlo programs,
-  latent-unit stability, validity, and evidence provenance in `inference`;
-  consume fitted geometry through small standalone `multivar` capabilities and keep
-  fitting, workflows, IO, and schedulers outside the module.
+  latent-unit stability, validity, and evidence provenance in the external
+  `multivar-inference` artifact. ScalaFIM may add only domain-specific adapters;
+  fitting, workflows, IO, and schedulers remain outside that library.
 - Put shared connectivity structures in `connectivity`: validated series axes,
   explicit edge spaces/vectorization orders, static/dynamic containers,
   estimator/preprocessing plan ADTs, portable ETS/event, partial-correlation,
