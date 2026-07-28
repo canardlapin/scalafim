@@ -502,7 +502,7 @@ sbt compileAll
 sbt testAll
 ```
 
-The build must remain warning-clean on Scala 3.4.2 for JVM and Scala.js.
+The build must remain warning-clean on Scala 3.7.4 for JVM and Scala.js.
 
 ## Mote Work Graph
 

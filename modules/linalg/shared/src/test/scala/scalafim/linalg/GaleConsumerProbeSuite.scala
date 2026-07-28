@@ -10,7 +10,7 @@ import gale.spectral.{Eigen, EigenSelection, EigenVectors}
   * before the pinned Gale revision is advanced.
   */
 class GaleConsumerProbeSuite extends munit.FunSuite:
-  test("Scala 3.4.2 consumes Gale dense and spectral APIs") {
+  test("Scala 3.7.4 consumes Gale dense and spectral APIs") {
     val builder = DMat.newBuilder(2, 2)
     builder(0, 0) = 2.0
     builder(0, 1) = 1.0
