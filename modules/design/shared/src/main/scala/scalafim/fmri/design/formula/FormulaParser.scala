@@ -1,5 +1,7 @@
 package scalafim.fmri.design.formula
 
+import scalafim.fmri.design.{ColumnId, DesignError, TermId}
+
 object FormulaParser:
 
   final case class ParseError(message: String, pos: Int) extends IllegalArgumentException(s"$message (at char $pos)")
@@ -157,6 +159,20 @@ object FormulaParser:
     out += Token(Tok.EOF, n)
     out.result()
 
+  /** Lift an identifier token into the column it names.
+    *
+    * [[isIdentStart]] and [[isIdentPart]] already establish everything
+    * [[ColumnId]] requires — non-empty, no whitespace, no control characters —
+    * so the token has been parsed by the time it gets here.
+    */
+  private def columnId(token: String): ColumnId =
+    ColumnId.unsafe(token)
+
+  private def idDetail(error: DesignError): String =
+    error match
+      case DesignError.InvalidId(_, value, reason) => s"'$value' $reason"
+      case other                                   => other.message
+
   private def isIdentStart(c: Char): Boolean =
     c.isLetter || c == '_'
 
@@ -256,7 +272,7 @@ object FormulaParser:
             ArgValue.Call(v, as)
           else
             ix += 1
-            ArgValue.Ident(v)
+            ArgValue.Ident(columnId(v))
         case Tok.Str(v) =>
           ix += 1
           ArgValue.Str(v)
@@ -292,7 +308,7 @@ object FormulaParser:
         out.result()
 
     def parseFormula(): ModelFormula =
-      val onset = ident()
+      val onset = columnId(ident())
       expect(Tok.Tilde)
       val terms = Vector.newBuilder[TermCall]
       terms += parseTerm()
@@ -340,8 +356,14 @@ object FormulaParser:
       def stringOrIdent(name: String): Option[String] =
         named.get(name).map {
           case ArgValue.Str(v)   => v
-          case ArgValue.Ident(v) => v
+          case ArgValue.Ident(v) => v.value
           case other             => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
+        }
+
+      /** A term label, parsed here so the AST never carries an unvalidated one. */
+      def termId(name: String): Option[TermId] =
+        stringOrIdent(name).map { v =>
+          TermId(v).fold(error => throw ParseError(idDetail(error), cur.pos), identity)
         }
 
       def numeric(name: String): Option[Double] =
@@ -361,10 +383,10 @@ object FormulaParser:
         named.get(name).map {
           case ArgValue.Bool(v) => v
           case ArgValue.Ident(v) =>
-            v.toLowerCase match
+            v.value.toLowerCase match
               case "true"  => true
               case "false" => false
-              case _       => throw ParseError(s"'$name' must be boolean, found $v", cur.pos)
+              case _       => throw ParseError(s"'$name' must be boolean, found ${v.value}", cur.pos)
           case other => throw ParseError(s"'$name' must be boolean, found $other", cur.pos)
         }
 
@@ -398,9 +420,9 @@ object FormulaParser:
       val onsets = schema.vectorRef("onsets")
       val durations = schema.vectorRef("durations")
       val hrfFun = schema.stringOrIdentRef("hrf_fun")
-      val contrasts = schema.stringOrIdentRef("contrasts")
-      val id = schema.stringOrIdent("id").orElse(schema.stringOrIdent("name"))
-      val prefix = schema.stringOrIdent("prefix")
+      val contrasts = schema.stringOrIdent("contrasts")
+      val id = schema.termId("id").orElse(schema.termId("name"))
+      val prefix = schema.termId("prefix")
       val lag = schema.numeric("lag")
       val nbasis = schema.integer("nbasis")
       val summate = schema.boolean("summate")
@@ -434,7 +456,7 @@ object FormulaParser:
       val lag = schema.numeric("lag")
       val nbasis = schema.integer("nbasis")
       val addSum = schema.boolean("add_sum")
-      val label = schema.stringOrIdent("label")
+      val label = schema.termId("label")
       val normalize = schema.boolean("normalize")
 
       val allowed = Set("basis", "durations", "lag", "nbasis", "add_sum", "label", "normalize")
@@ -445,14 +467,14 @@ object FormulaParser:
     private def buildCovariateCall(args: Vector[Arg]): CovariateCall =
       val schema = TermArgs("covariate", args)
       val pos = schema.positional.map {
-        case ArgValue.Ident(v) => ArgValue.Ident(v)
+        case v: ArgValue.Ident => v
         case other             => throw ParseError(s"covariate(...) positional args must be identifiers, found $other", cur.pos)
       }
       if pos.isEmpty then throw ParseError("covariate(...) requires at least one variable", cur.pos)
 
       val data = schema.stringOrIdent("data")
-      val id = schema.stringOrIdent("id")
-      val prefix = schema.stringOrIdent("prefix")
+      val id = schema.termId("id")
+      val prefix = schema.termId("prefix")
 
       val allowed = Set("data", "id", "prefix")
       schema.rejectUnknown(allowed)

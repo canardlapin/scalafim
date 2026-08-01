@@ -62,7 +62,8 @@ final case class ModelRecipe private (
     baseline: BaselineSpec,
     fit: FitStrategy
 ):
-  require(formula.onset.trim.nonEmpty, "model onset column must be non-empty")
+  // `formula.onset` is a `ColumnId`, so "non-empty onset column" is a property
+  // of the type rather than something to re-check here.
   require(baseline.name.trim.nonEmpty, "baseline name must be non-empty")
 
 object ModelRecipe:
@@ -71,9 +72,7 @@ object ModelRecipe:
       baseline: BaselineSpec = BaselineSpec(),
       fit: FitStrategy = FitStrategy.Default
   ): Either[WorkflowError, ModelRecipe] =
-    if formula.onset.trim.isEmpty then
-      Left(WorkflowError.InvalidValue("model onset column", formula.onset, "must be non-empty"))
-    else if baseline.name.trim.isEmpty then
+    if baseline.name.trim.isEmpty then
       Left(WorkflowError.InvalidValue("baseline name", baseline.name, "must be non-empty"))
     else Right(new ModelRecipe(formula, baseline, fit))
 

@@ -2,12 +2,16 @@ package scalafim.fmri.model
 
 import scalafim.dataset.{DatasetEventRow, DatasetEvents, DatasetFieldId, DatasetId, DatasetValue, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
+import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.data.Column
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.image.{DMat, NeuroSpace}
 
 class ModelBuilderSuite extends munit.FunSuite:
+
+  private def col(name: String): ColumnId =
+    ColumnId(name).fold(error => fail(error.message), identity)
 
   private def samplingFrame: SamplingFrame =
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
@@ -38,10 +42,10 @@ class ModelBuilderSuite extends munit.FunSuite:
     )
 
     assertEquals(table.nrows, 2)
-    assertEquals(table.column("run"), Column.Ints(Vector(1, 1)))
-    assertEquals(table.doubles("onset"), Vector(0.0, 1.5))
-    assertEquals(table.strings("condition"), Vector("face", "house"))
-    assertEquals(table.bools("keep"), Vector(true, false))
+    assertEquals(table.column(col("run")), Right(Column.Ints(Vector(1, 1))))
+    assertEquals(table.get[Double](col("onset")), Right(Vector(0.0, 1.5)))
+    assertEquals(table.get[String](col("condition")), Right(Vector("face", "house")))
+    assertEquals(table.get[Boolean](col("keep")), Right(Vector(true, false)))
   }
 
   test("eventsTable preserves explicitly typed text values") {
@@ -63,8 +67,8 @@ class ModelBuilderSuite extends munit.FunSuite:
     val events = DatasetEvents.fromTypedRows(rows).fold(error => fail(error.message), identity)
     val table = FmriModelBuilder.eventsTable(events)
 
-    assertEquals(table.doubles("onset"), Vector(0.0, 1.0))
-    assertEquals(table.column("code"), Column.Strings(Vector("1", "2")))
+    assertEquals(table.get[Double](col("onset")), Right(Vector(0.0, 1.0)))
+    assertEquals(table.column(col("code")), Right(Column.Strings(Vector("1", "2"))))
   }
 
   test("buildModel constructs an inspectable model from dataset-resident events") {

@@ -1,7 +1,8 @@
 package scalafim.fmri.group
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.fmri.design.data.{Column, DataTable}
+import scalafim.fmri.design.{ColumnId, DesignError}
+import scalafim.fmri.design.data.DataTable
 
 /** The second-level design: `[subjects × terms]` with named terms.
   *
@@ -90,36 +91,49 @@ object GroupDesign:
       columns: Vector[CovariateName],
       intercept: InterceptPolicy
   ): Either[GroupError, GroupDesign] =
-    columns.find(c => !table.contains(c.value)) match
-      case Some(c) => Left(GroupError.UnknownColumn(c.value))
-      case None =>
-        columns.find(c => !isNumeric(table.column(c.value))) match
-          case Some(c) => Left(GroupError.NonNumericColumn(c.value))
-          case None =>
-            val n = table.nrows
-            val columnData = columns.map(c => table.doubles(c.value))
-            val termNames = (if intercept.include then Vector(InterceptName) else Vector.empty) ++ columns.map(c => DesignTermName.unsafe(c.value))
-            val p = termNames.length
-            if n == 0 || p == 0 then Left(GroupError.EmptyDesign)
-            else
-              val matrix = Matrix.newBuilder(n, p)
-              var row = 0
-              while row < n do
-                var col = 0
-                if intercept.include then
-                  matrix(row, 0) = 1.0
-                  col = 1
-                var c = 0
-                while c < columns.length do
-                  matrix(row, col + c) = columnData(c)(row)
-                  c += 1
-                row += 1
-              fromTypedMatrix(matrix.result(), termNames)
+    numericColumns(table, columns).flatMap { columnData =>
+      val n = table.nrows
+      val termNames = (if intercept.include then Vector(InterceptName) else Vector.empty) ++ columns.map(c => DesignTermName.unsafe(c.value))
+      val p = termNames.length
+      if n == 0 || p == 0 then Left(GroupError.EmptyDesign)
+      else
+        val matrix = Matrix.newBuilder(n, p)
+        var row = 0
+        while row < n do
+          var col = 0
+          if intercept.include then
+            matrix(row, 0) = 1.0
+            col = 1
+          var c = 0
+          while c < columns.length do
+            matrix(row, col + c) = columnData(c)(row)
+            c += 1
+          row += 1
+        fromTypedMatrix(matrix.result(), termNames)
+    }
 
-  private def isNumeric(column: Column): Boolean =
-    column match
-      case Column.Doubles(_) | Column.Ints(_) => true
-      case _                                  => false
+  /** Read every covariate column as numeric, reporting the first that a design cannot use.
+    *
+    * Missing columns are reported ahead of non-numeric ones so that a caller
+    * naming several bad columns hears about the absent one first.
+    */
+  private def numericColumns(
+      table: DataTable,
+      columns: Vector[CovariateName]
+  ): Either[GroupError, Vector[Vector[Double]]] =
+    val reads = columns.map(c => c.value -> ColumnId(c.value).flatMap(table.get[Double]))
+
+    def firstNaming(name: String => GroupError)(pf: PartialFunction[DesignError, Unit]): Option[GroupError] =
+      reads.collectFirst { case (column, Left(error)) if pf.isDefinedAt(error) => name(column) }
+
+    val absent = firstNaming(GroupError.UnknownColumn.apply) {
+      case DesignError.MissingColumn(_) | DesignError.InvalidId(_, _, _) => ()
+    }
+    val unusable = firstNaming(GroupError.NonNumericColumn.apply) { case _ => () }
+
+    absent.orElse(unusable) match
+      case Some(error) => Left(error)
+      case None        => Right(reads.collect { case (_, Right(values)) => values })
 
   private def allFinite(m: DMat): Boolean =
     var row = 0

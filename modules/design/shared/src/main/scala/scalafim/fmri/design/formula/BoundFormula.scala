@@ -4,12 +4,16 @@ import scalafim.fmri.design.{ColumnId, DesignError, TermId}
 import scalafim.fmri.design.data.DataTable
 import scalafim.fmri.hrf.HrfKind
 
-final case class ColumnRef(id: ColumnId, name: String)
+final case class ColumnRef(id: ColumnId):
+  def name: String = id.value
 
 object ColumnRef:
-  def bind(name: String, data: DataTable): Either[DesignError, ColumnRef] =
-    if data.contains(name) then ColumnId(name).map(ColumnRef(_, name))
-    else Left(DesignError.MissingColumn(name))
+  def bind(id: ColumnId, data: DataTable): Either[DesignError, ColumnRef] =
+    if data.contains(id) then Right(ColumnRef(id))
+    else Left(DesignError.MissingColumn(id.value))
+
+  def bindName(name: String, data: DataTable): Either[DesignError, ColumnRef] =
+    ColumnId(name).flatMap(bind(_, data))
 
 final case class BasisRef(kind: HrfKind, name: String)
 
@@ -95,30 +99,20 @@ object BoundFormula:
     term match
       case h: HrfCall =>
         for
-          id <- bindTermId(h.id.orElse(h.prefix))
           columns <- bindArgColumns(h.vars, data)
           basis <- bindOptionalBasis(h.basis)
           duration <- bindOptionalColumn(h.durations, data, argName = "durations")
           contrast <- bindOptionalContrast(h.contrasts, availableContrastSets, requireKnownContrasts)
-        yield BoundHrfTerm(id, columns, onset, basis, duration, contrast, h)
+        yield BoundHrfTerm(h.id.orElse(h.prefix), columns, onset, basis, duration, contrast, h)
 
       case t: TrialwiseCall =>
         for
-          id <- bindTermId(t.label)
           basis <- bindOptionalBasis(t.basis)
           duration <- bindOptionalColumn(t.durations, data, argName = "durations")
-        yield BoundTrialwiseTerm(id, onset, basis, duration, t)
+        yield BoundTrialwiseTerm(t.label, onset, basis, duration, t)
 
       case c: CovariateCall =>
-        for
-          id <- bindTermId(c.id.orElse(c.prefix))
-          columns <- bindArgColumns(c.vars, data)
-        yield BoundCovariateTerm(id, columns, c)
-
-  private def bindTermId(value: Option[String]): Either[DesignError, Option[TermId]] =
-    value match
-      case None => Right(None)
-      case Some(v) => TermId(v).map(Some(_))
+        bindArgColumns(c.vars, data).map(BoundCovariateTerm(c.id.orElse(c.prefix), _, c))
 
   private def bindOptionalBasis(value: Option[String]): Either[DesignError, Option[BasisRef]] =
     value match
@@ -129,22 +123,19 @@ object BoundFormula:
     value match
       case None => Right(None)
       case Some(ArgValue.Num(_)) => Right(None)
-      case Some(ArgValue.Ident(name)) => ColumnRef.bind(name, data).map(Some(_))
-      case Some(ArgValue.Str(name)) => ColumnRef.bind(name, data).map(Some(_))
+      case Some(ArgValue.Ident(id)) => ColumnRef.bind(id, data).map(Some(_))
+      case Some(ArgValue.Str(name)) => ColumnRef.bindName(name, data).map(Some(_))
       case Some(other) =>
         Left(DesignError.FormulaBinding(s"$argName must be a column reference or numeric scalar, found $other"))
 
   private def bindOptionalContrast(
-      value: Option[ArgValue],
+      value: Option[String],
       availableContrastSets: Set[String],
       requireKnownContrasts: Boolean
   ): Either[DesignError, Option[ContrastRef]] =
     value match
-      case None => Right(None)
-      case Some(ArgValue.Ident(name)) => ContrastRef.bind(name, availableContrastSets, requireKnownContrasts).map(Some(_))
-      case Some(ArgValue.Str(name)) => ContrastRef.bind(name, availableContrastSets, requireKnownContrasts).map(Some(_))
-      case Some(other) =>
-        Left(DesignError.FormulaBinding(s"contrasts must be a string/identifier, found $other"))
+      case None       => Right(None)
+      case Some(name) => ContrastRef.bind(name, availableContrastSets, requireKnownContrasts).map(Some(_))
 
   private def bindArgColumns(values: Vector[ArgValue], data: DataTable): Either[DesignError, Vector[ColumnRef]] =
     val out = Vector.newBuilder[ColumnRef]
@@ -154,12 +145,12 @@ object BoundFormula:
         case Left(error) => return Left(error)
         case Right(refs) => out ++= refs
       i += 1
-    Right(out.result().distinctBy(_.name))
+    Right(out.result().distinct)
 
   private def collectColumns(value: ArgValue, data: DataTable): Either[DesignError, Vector[ColumnRef]] =
     value match
-      case ArgValue.Ident(name) =>
-        ColumnRef.bind(name, data).map(Vector(_))
+      case ArgValue.Ident(id) =>
+        ColumnRef.bind(id, data).map(Vector(_))
       case ArgValue.Call(_, args) =>
         val out = Vector.newBuilder[ColumnRef]
         var i = 0

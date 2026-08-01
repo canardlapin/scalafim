@@ -10,11 +10,9 @@ class CovariateSuite extends munit.FunSuite:
   test("CovariateSpec.construct validates sampling frame row count") {
     val sf = SamplingFrame(blockLens = Seq(5), tr = Seq(1.0))
     val bad = DataTable.fromColumns("x" -> Column.Doubles(Vector(1.0, 2.0)))
-    val spec = CovariateSpec(vars = Vector("x"), data = bad)
+    val spec = CovariateSpec(vars = Vector(ColumnId.unsafe("x")), data = bad)
 
-    intercept[IllegalArgumentException] {
-      spec.construct(sf)
-    }
+    assert(spec.construct(sf).isLeft)
   }
 
   test("EventModel.buildTerms can mix convolved and covariate terms") {
@@ -37,7 +35,9 @@ class CovariateSuite extends munit.FunSuite:
       "x" -> Column.Doubles(Vector.tabulate(10)(_.toDouble)),
       "y" -> Column.Doubles(Vector.fill(10)(1.0))
     )
-    val cov = CovariateSpec(vars = Vector("x", "y"), data = covData, id = Some("motion"), prefix = Some("motion")).construct(sf)
+    val cov = CovariateSpec(vars = Vector("x", "y").map(ColumnId.unsafe), data = covData, id = Some("motion"), prefix = Some("motion"))
+      .construct(sf)
+      .fold(err => fail(err.message), identity)
 
     val model = EventModel.buildTerms(Seq(conv, cov), sf)
 
