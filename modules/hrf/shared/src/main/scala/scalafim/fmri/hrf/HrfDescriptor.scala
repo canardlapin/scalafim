@@ -34,9 +34,7 @@ final case class SpmgParams(
     p1: Double = 5.0,
     p2: Double = 15.0,
     a1: Double = 0.0833
-):
-  def toLegacyMap: Map[String, Any] =
-    Map("P1" -> p1, "P2" -> p2, "A1" -> a1)
+)
 
 enum SampledProfileError:
   case TooShort(label: String, minimum: Int, actual: Int)
@@ -181,35 +179,6 @@ enum HrfParams:
   case Bspline(requested: BasisCount, degree: Int)
   case Tent(requested: BasisCount)
   case Coefficients(baseName: String, coefficients: Vector[Double])
-  case Legacy(values: Map[String, Any])
-
-  def toLegacyMap: Map[String, Any] =
-    this match
-      case Empty => Map.empty
-      case Gamma(shape, rate) => Map("shape" -> shape, "rate" -> rate)
-      case Gaussian(mean, sd) => Map("mean" -> mean, "sd" -> sd)
-      case Spmg(params) => params.toLegacyMap
-      case Mexhat(mean, sd) => Map("mean" -> mean, "sd" -> sd)
-      case InvLogit(mu1, s1, mu2, s2, lag) =>
-        Map("mu1" -> mu1, "s1" -> s1, "mu2" -> mu2, "s2" -> s2, "lag" -> lag.value)
-      case HalfCosine(h1, h2, h3, h4, f1, f2) =>
-        Map("h1" -> h1.value, "h2" -> h2.value, "h3" -> h3.value, "h4" -> h4.value, "f1" -> f1, "f2" -> f2)
-      case Lwu(params, normalize) =>
-        Map("tau" -> params.tau, "sigma" -> params.sigma, "rho" -> params.rho, "normalize" -> normalize.toString)
-      case Boxcar(width, amplitude, normalize) =>
-        Map("width" -> width.value, "amplitude" -> amplitude, "normalize" -> normalize)
-      case Weighted(profile, method, normalize) =>
-        Map("times" -> profile.times.toVector.map(_.value), "weights" -> profile.weights, "method" -> method.toString, "normalize" -> normalize)
-      case Empirical(curve) =>
-        Map("times" -> curve.times.toVector.map(_.value), "values" -> curve.values)
-      case Sine(nBasis) => Map("nbasis" -> nBasis.value)
-      case Fourier(nBasis) => Map("nbasis" -> nBasis.value)
-      case Daguerre(nBasis, scale) => Map("nbasis" -> nBasis.value, "scale" -> scale)
-      case Fir(nBasis) => Map("nbasis" -> nBasis.value)
-      case Bspline(requested, degree) => Map("nbasis" -> requested.value, "degree" -> degree)
-      case Tent(requested) => Map("nbasis" -> requested.value)
-      case Coefficients(baseName, coefficients) => Map("base" -> baseName, "coefficients" -> coefficients)
-      case Legacy(values) => values
 
 enum DerivativePolicy:
   case Numeric
@@ -242,6 +211,7 @@ final case class HrfDescriptor(
     params: HrfParams = HrfParams.Empty,
     derivative: DerivativePolicy = DerivativePolicy.Numeric,
     penalty: PenaltyPolicy = PenaltyPolicy.Identity,
+    integration: IntegrationPolicy = IntegrationPolicy.Quadrature,
     components: Vector[HrfDescriptor] = Vector.empty
 ):
   def nbasis: Int =
@@ -253,14 +223,22 @@ final case class HrfDescriptor(
   def name: String =
     family.label
 
-  def legacyParams: Map[String, Any] =
-    params.toLegacyMap
-
   def withSpan(span: Seconds): HrfDescriptor =
     copy(span = span)
 
-  def derived(label: String, span: Seconds = span, derivative: DerivativePolicy = DerivativePolicy.Numeric): HrfDescriptor =
-    copy(family = HrfFamily.Derived(label), span = span, derivative = derivative)
+  /** Mark this as a kernel derived from the current one.
+    *
+    * `derivative` and `integration` reset rather than carry over: lagging,
+    * blocking or rescaling a kernel produces a different function, and an
+    * inherited primitive would then be a closed form for the wrong shape.
+    */
+  def derived(
+      label: String,
+      span: Seconds = span,
+      derivative: DerivativePolicy = DerivativePolicy.Numeric,
+      integration: IntegrationPolicy = IntegrationPolicy.Quadrature
+  ): HrfDescriptor =
+    copy(family = HrfFamily.Derived(label), span = span, derivative = derivative, integration = integration)
 
 object HrfDescriptor:
   def custom(
@@ -282,7 +260,8 @@ object HrfDescriptor:
       span: Seconds,
       params: HrfParams = HrfParams.Empty,
       derivative: DerivativePolicy = DerivativePolicy.Numeric,
-      penalty: PenaltyPolicy = PenaltyPolicy.Identity
+      penalty: PenaltyPolicy = PenaltyPolicy.Identity,
+      integration: IntegrationPolicy = IntegrationPolicy.Quadrature
   ): HrfDescriptor =
     HrfDescriptor(
       family = HrfFamily.Known(kind),
@@ -290,7 +269,8 @@ object HrfDescriptor:
       span = span,
       params = params,
       derivative = derivative,
-      penalty = penalty
+      penalty = penalty,
+      integration = integration
     )
 
   def scalar(
@@ -298,9 +278,18 @@ object HrfDescriptor:
       span: Seconds,
       params: HrfParams = HrfParams.Empty,
       derivative: DerivativePolicy = DerivativePolicy.Numeric,
-      penalty: PenaltyPolicy = PenaltyPolicy.Identity
+      penalty: PenaltyPolicy = PenaltyPolicy.Identity,
+      integration: IntegrationPolicy = IntegrationPolicy.Quadrature
   ): HrfDescriptor =
-    known(kind, nbasis = 1, span = span, params = params, derivative = derivative, penalty = penalty)
+    known(
+      kind,
+      nbasis = 1,
+      span = span,
+      params = params,
+      derivative = derivative,
+      penalty = penalty,
+      integration = integration
+    )
 
   def spmg(
       kind: HrfKind,
@@ -315,7 +304,12 @@ object HrfDescriptor:
       span = span,
       params = HrfParams.Spmg(params),
       derivative = DerivativePolicy.Spmg(params, basis),
-      penalty = if columns >= 2 then PenaltyPolicy.SpmgDerivatives else PenaltyPolicy.Identity
+      penalty = if columns >= 2 then PenaltyPolicy.SpmgDerivatives else PenaltyPolicy.Identity,
+      // One column is the canonical kernel itself; more columns are the
+      // canonical stacked with its derivatives, each of which has its own
+      // primitive.
+      integration =
+        if columns == 1 then IntegrationPolicy.Spmg1(params) else IntegrationPolicy.Stacked
     )
 
   def derived(
@@ -325,6 +319,7 @@ object HrfDescriptor:
       params: HrfParams = HrfParams.Empty,
       derivative: DerivativePolicy = DerivativePolicy.Numeric,
       penalty: PenaltyPolicy = PenaltyPolicy.Identity,
+      integration: IntegrationPolicy = IntegrationPolicy.Quadrature,
       components: Vector[HrfDescriptor] = Vector.empty
   ): HrfDescriptor =
     HrfDescriptor(
@@ -334,6 +329,7 @@ object HrfDescriptor:
       params = params,
       derivative = derivative,
       penalty = penalty,
+      integration = integration,
       components = components
     )
 
@@ -348,6 +344,7 @@ object HrfDescriptor:
         family = HrfFamily.Composite(name),
         basis = BasisCount(nbasis),
         span = span,
+        integration = IntegrationPolicy.Stacked,
         components = components
       )
     }

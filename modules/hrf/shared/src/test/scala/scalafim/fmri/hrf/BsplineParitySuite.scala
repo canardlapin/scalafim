@@ -6,7 +6,7 @@ class BsplineParitySuite extends munit.FunSuite:
 
   test("bsplineBasis matches R hrf_bspline for non-integer span") {
     val span = Seconds(24.5)
-    val times: Seq[Seconds] = Seq(-1.0, 0.0, 5.0, 12.0, 24.0, 30.0).map(Seconds(_))
+    val times: Seq[Lag] = Seq(-1.0, 0.0, 5.0, 12.0, 24.0, 30.0).map(Lag(_))
     val expected = Vector(
       Array(0.0, 0.0, 0.0, 0.0, 0.0),
       Array(0.0, 0.0, 0.0, 0.0, 0.0),
@@ -25,7 +25,7 @@ class BsplineParitySuite extends munit.FunSuite:
 
   test("bsplineBasis with N < degree+1 matches R minimum-basis behavior") {
     val span = 24.0.s
-    val times: Seq[Seconds] = Seq(0.0, 5.0, 12.0, 24.0).map(Seconds(_))
+    val times: Seq[Lag] = Seq(0.0, 5.0, 12.0, 24.0).map(Lag(_))
     val expected = Vector(
       Array(1.0, 0.0, 0.0, 0.0),
       Array(0.496166087962963, 0.391710069444444, 0.103081597222222, 0.00904224537037037),

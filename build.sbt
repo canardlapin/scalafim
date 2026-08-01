@@ -288,7 +288,8 @@ lazy val hrf =
       name := "scalafim-fmri-hrf",
       libraryDependencies ++= Seq(
         "org.typelevel" %%% "cats-core" % "2.12.0",
-        "org.typelevel" %%% "spire"     % "0.18.0"
+        "org.typelevel" %%% "spire"     % "0.18.0",
+        "org.scalameta" %%% "munit-scalacheck" % "1.1.0" % Test
       )
     )
     .jvmSettings(
@@ -300,6 +301,21 @@ lazy val hrf =
 
 lazy val hrfJS  = hrf.js
 lazy val hrfJVM = hrf.jvm
+
+lazy val hrfLaws =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/hrf-laws"))
+    .dependsOn(hrf)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-fmri-hrf-laws",
+      libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val hrfLawsJS  = hrfLaws.js
+lazy val hrfLawsJVM = hrfLaws.jvm
 
 lazy val design =
   crossProject(JSPlatform, JVMPlatform)
@@ -388,6 +404,17 @@ lazy val registrationBenchJVM =
     .settings(commonSettings)
     .settings(
       name := "scalafim-registration-benchmarks",
+      publish / skip := true
+    )
+
+lazy val hrfBenchJVM =
+  project
+    .in(file("benchmarks/hrf-jvm"))
+    .dependsOn(hrfJVM)
+    .enablePlugins(JmhPlugin)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-hrf-benchmarks",
       publish / skip := true
     )
 
@@ -999,6 +1026,8 @@ lazy val root =
       arJVM,
       hrfJS,
       hrfJVM,
+      hrfLawsJS,
+      hrfLawsJVM,
       designJS,
       designJVM,
       imageJS,

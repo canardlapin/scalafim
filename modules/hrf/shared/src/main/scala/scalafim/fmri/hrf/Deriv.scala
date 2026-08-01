@@ -7,7 +7,7 @@ object Deriv:
 
   def apply(
       hrf: Hrf,
-      times: Seq[Seconds],
+      times: Seq[Lag],
       eps: Seconds = 1e-4.s
   ): Mat =
     val nb = hrf.nbasis
@@ -19,7 +19,7 @@ object Deriv:
       case _ =>
         numeric(hrf, times, eps)
 
-  private def spmg(params: SpmgParams, columns: BasisCount, times: Seq[Seconds], eps: Seconds): Mat =
+  private def spmg(params: SpmgParams, columns: BasisCount, times: Seq[Lag], eps: Seconds): Mat =
     val nb = columns.value
     if nb == 1 then
       val out = times.map(t => HrfFunctions.spmg1Deriv(t, params.p1, params.p2, params.a1)).toArray
@@ -41,29 +41,49 @@ object Deriv:
         val t = times(i)
         out(i * nb) = HrfFunctions.spmg1Deriv(t, params.p1, params.p2, params.a1)
         out(i * nb + 1) = HrfFunctions.spmg1SecondDeriv(t, params.p1, params.p2, params.a1)
-        val tp = Seconds(t.value + h)
-        val tm = Seconds(t.value - h)
+        val tp = Lag(t.value + h)
+        val tm = Lag(t.value - h)
         val fp = HrfFunctions.spmg1SecondDeriv(tp, params.p1, params.p2, params.a1)
         val fm = HrfFunctions.spmg1SecondDeriv(tm, params.p1, params.p2, params.a1)
         out(i * nb + 2) = (fp - fm) / (2.0 * h)
         i += 1
       Mat.unsafe(times.length, nb, out)
 
-  private def numeric(hrf: Hrf, times: Seq[Seconds], eps: Seconds): Mat =
+  private def numeric(hrf: Hrf, times: Seq[Lag], eps: Seconds): Mat =
     val nb = hrf.nbasis
     val h = eps.value
     val out = new Array[Double](times.length * nb)
     var i = 0
     while i < times.length do
       val t = times(i).value
-      val vp = hrf(Seconds(t + h)).data
-      val vm = hrf(Seconds(t - h)).data
+      // A central difference at the origin straddles the causal boundary, so it
+      // reports (h(eps) - 0) / 2eps: half the true one-sided slope, and for a
+      // kernel with a jump at zero an arbitrarily large spurious value. Step
+      // one-sided wherever the stencil would cross a boundary of the support.
+      val horizon = hrf.support.horizonOption.map(_.value)
+      val crossesStart = t - h < 0.0
+      val crossesEnd = horizon.exists(hz => t + h > hz)
       var j = 0
-      while j < nb do
-        out(i * nb + j) = (vp(j) - vm(j)) / (2.0 * h)
-        j += 1
+      if crossesStart && !crossesEnd then
+        val v0 = hrf(Lag(t)).data
+        val v1 = hrf(Lag(t + h)).data
+        while j < nb do
+          out(i * nb + j) = (v1(j) - v0(j)) / h
+          j += 1
+      else if crossesEnd && !crossesStart then
+        val v0 = hrf(Lag(t - h)).data
+        val v1 = hrf(Lag(t)).data
+        while j < nb do
+          out(i * nb + j) = (v1(j) - v0(j)) / h
+          j += 1
+      else
+        val vp = hrf(Lag(t + h)).data
+        val vm = hrf(Lag(t - h)).data
+        while j < nb do
+          out(i * nb + j) = (vp(j) - vm(j)) / (2.0 * h)
+          j += 1
       i += 1
     Mat.unsafe(times.length, nb, out)
 
   def doubles(hrf: Hrf, times: Seq[Double], eps: Double = 1e-4): Mat =
-    apply(hrf, times.map(_.s), eps.s)
+    apply(hrf, times.map(Lag(_)), eps.s)

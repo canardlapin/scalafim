@@ -1,23 +1,55 @@
 package scalafim.fmri.hrf
 
-trait Hrf extends (Seconds => scalafim.fmri.hrf.linalg.Vec):
+/** A hemodynamic response function: a causal kernel on temporal displacement.
+  *
+  * The argument is a [[Lag]] — the displacement from an event onset — and not a
+  * point on a run's time line. The two are separate types precisely so that
+  * handing a kernel an absolute onset does not compile.
+  *
+  * Two invariants hold for every kernel and are enforced here rather than
+  * trusted to each of the ~17 constructors:
+  *
+  *   - '''causality''': `h(lag) = 0` for `lag < 0`;
+  *   - '''support''': `h(lag) = 0` beyond a [[Support.Compact]] horizon.
+  *
+  * Implementors provide [[evaluateInSupport]], which is called only with a lag
+  * that already satisfies both. A kernel therefore cannot accidentally respond
+  * before its event.
+  */
+trait Hrf:
   def name: String
   def nbasis: Int
   def span: Seconds
-  def params: Map[String, Any] = Map.empty
+
+  /** Where this kernel may be non-zero. Defaults to the conservative choice. */
+  def support: Support = Support.Unbounded
+
+  /** Symbolic provenance: family, parameters, derivative and penalty policy.
+    *
+    * This is the typed record of *what kernel this is*, and it is what `Deriv`
+    * and `Penalty` dispatch on. Parameters live in the [[HrfParams]] ADT; there
+    * is deliberately no untyped side channel.
+    */
   def descriptor: HrfDescriptor =
-    HrfDescriptor.custom(name, nbasis, span, HrfParams.Legacy(params))
+    HrfDescriptor.custom(name, nbasis, span)
   def basis: BasisCount =
     descriptor.basis
 
-  protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec
+  /** Evaluate at a lag already known to be causal and within support. */
+  protected def evaluateInSupport(lag: Lag): scalafim.fmri.hrf.linalg.Vec
 
-  final def apply(t: Seconds): scalafim.fmri.hrf.linalg.Vec = eval1(t)
+  final def apply(lag: Lag): scalafim.fmri.hrf.linalg.Vec =
+    if !lag.isCausal || !support.containsNonNegative(lag) then
+      scalafim.fmri.hrf.linalg.Vec.zeros(nbasis)
+    else evaluateInSupport(lag)
 
-  final def eval(grid: IterableOnce[Seconds]): scalafim.fmri.hrf.linalg.Mat =
+  /** Alias for [[apply]]. */
+  final def at(lag: Lag): scalafim.fmri.hrf.linalg.Vec = apply(lag)
+
+  final def eval(grid: IterableOnce[Lag]): scalafim.fmri.hrf.linalg.Mat =
     val it = grid.iterator
     val buf = Vector.newBuilder[scalafim.fmri.hrf.linalg.Vec]
-    while it.hasNext do buf += eval1(it.next())
+    while it.hasNext do buf += apply(it.next())
     val rows = buf.result()
     if rows.isEmpty then scalafim.fmri.hrf.linalg.Mat.zeros(0, nbasis)
     else
@@ -30,23 +62,25 @@ trait Hrf extends (Seconds => scalafim.fmri.hrf.linalg.Vec):
         r += 1
       scalafim.fmri.hrf.linalg.Mat.unsafe(rows.size, nbasis, out)
 
+  /** Sample on a lag axis given as plain doubles. */
   final def evalDoubles(grid: IterableOnce[Double]): scalafim.fmri.hrf.linalg.Mat =
-    eval(grid.iterator.map(Seconds(_)))
+    eval(grid.iterator.map(Lag(_)))
 
-  final def evalScalar(grid: IterableOnce[Seconds]): Array[Double] =
+  final def evalScalar(grid: IterableOnce[Lag]): Array[Double] =
     require(descriptor.isScalar, s"evalScalar only valid for nbasis=1, got $nbasis")
     val it = grid.iterator
     val out = new scala.collection.mutable.ArrayBuffer[Double]()
-    while it.hasNext do out += eval1(it.next()).data(0)
+    while it.hasNext do out += apply(it.next()).data(0)
     out.toArray
 
 trait ScalarHrf extends Hrf:
   final def nbasis: Int = 1
 
-  def scalarAt(t: Seconds): Double
+  /** Evaluate at a lag already known to be causal and within support. */
+  def scalarAt(lag: Lag): Double
 
-  final protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec =
-    scalafim.fmri.hrf.linalg.Vec.unsafe(Array(scalarAt(t)))
+  final protected def evaluateInSupport(lag: Lag): scalafim.fmri.hrf.linalg.Vec =
+    scalafim.fmri.hrf.linalg.Vec.unsafe(Array(scalarAt(lag)))
 
 object ScalarHrf:
   def from(hrf: Hrf): Either[HrfSpecError, ScalarHrf] =
@@ -59,9 +93,9 @@ object ScalarHrf:
             new ScalarHrf:
               def name: String = other.name
               def span: Seconds = other.span
-              override def params: Map[String, Any] = other.params
+              override def support: Support = other.support
               override def descriptor: HrfDescriptor = other.descriptor
-              def scalarAt(t: Seconds): Double = other(t).data(0)
+              def scalarAt(lag: Lag): Double = other(lag).data(0)
           )
 
 object Hrf:
@@ -69,50 +103,48 @@ object Hrf:
       name: String,
       nbasis: Int = 1,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty,
-      descriptor: Option[HrfDescriptor] = None
-  )(f: Seconds => scalafim.fmri.hrf.linalg.Vec): Hrf =
+      descriptor: Option[HrfDescriptor] = None,
+      support: Support = Support.Unbounded
+  )(f: Lag => scalafim.fmri.hrf.linalg.Vec): Hrf =
     val basis0 = BasisCount(nbasis)
     val name0 = name
     val span0 = span
-    val params0 = params
-    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, basis0.value, span0, HrfParams.Legacy(params0)))
+    val support0 = support
+    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, basis0.value, span0))
     require(descriptor0.nbasis == basis0.value, s"descriptor basis ${descriptor0.nbasis} != nbasis ${basis0.value}")
     new Hrf:
       def name: String = name0
       def nbasis: Int = basis0.value
       def span: Seconds = span0
-      override def params: Map[String, Any] =
-        val legacy = descriptor0.legacyParams
-        if legacy.nonEmpty then legacy else params0
+      override def support: Support = support0
       override def descriptor: HrfDescriptor = descriptor0
-      protected def eval1(t: Seconds): scalafim.fmri.hrf.linalg.Vec = f(t)
+      protected def evaluateInSupport(lag: Lag): scalafim.fmri.hrf.linalg.Vec = f(lag)
 
   def scalar(
       name: String,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty,
-      descriptor: Option[HrfDescriptor] = None
-  )(f: Seconds => Double): ScalarHrf =
+      descriptor: Option[HrfDescriptor] = None,
+      support: Support = Support.Unbounded
+  )(f: Lag => Double): ScalarHrf =
     val name0 = name
     val span0 = span
-    val params0 = params
-    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, 1, span0, HrfParams.Legacy(params0)))
+    val support0 = support
+    val descriptor0 = descriptor.getOrElse(HrfDescriptor.custom(name0, 1, span0))
     require(descriptor0.isScalar, s"scalar HRF descriptor must have nbasis=1, got ${descriptor0.nbasis}")
     new ScalarHrf:
       def name: String = name0
       def span: Seconds = span0
-      override def params: Map[String, Any] =
-        val legacy = descriptor0.legacyParams
-        if legacy.nonEmpty then legacy else params0
+      override def support: Support = support0
       override def descriptor: HrfDescriptor = descriptor0
-      def scalarAt(t: Seconds): Double = f(t)
+      def scalarAt(lag: Lag): Double = f(lag)
 
   def multi(
       name: String,
       nbasis: Int,
       span: Seconds = Seconds(24.0),
-      params: Map[String, Any] = Map.empty,
-      descriptor: Option[HrfDescriptor] = None
-  )(f: Seconds => Array[Double]): Hrf =
-    of(name, nbasis = nbasis, span = span, params = params, descriptor = descriptor)(t => scalafim.fmri.hrf.linalg.Vec.unsafe(f(t)))
+      descriptor: Option[HrfDescriptor] = None,
+      support: Support = Support.Unbounded
+  )(f: Lag => Array[Double]): Hrf =
+    of(name, nbasis = nbasis, span = span, descriptor = descriptor, support = support)(t =>
+      scalafim.fmri.hrf.linalg.Vec.unsafe(f(t))
+    )

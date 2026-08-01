@@ -27,7 +27,7 @@ class HrfBasicsSuite extends munit.FunSuite:
 
   test("empirical HRF interpolates and extrapolates to 0") {
     val t = (0 to 40).map(_ * 0.5)
-    val y = t.map(x => HrfFunctions.gaussianPdf(x.s, mean = 6.0, sd = 2.0))
+    val y = t.map(x => HrfFunctions.gaussianPdf(Lag(x), mean = 6.0, sd = 2.0))
     val h = Hrfs.empirical(t.map(_.s), y, name = "test_empirical")
     assertEquals(h.name, "test_empirical")
     assertEquals(h.nbasis, 1)
@@ -149,12 +149,21 @@ class HrfBasicsSuite extends munit.FunSuite:
     assert(TestUtils.maxAbsDiff(sum, mx) > 1e-8)
   }
 
-  test("evaluate precision affects duration convolution") {
+  test("precision is a quadrature knob, and only under quadrature") {
     val h = Hrfs.SPMG1
     val t = (0 to 100).map(_ * 0.2).toVector
-    val fine = Evaluate.doubles(h, t, duration = 2.0, precision = 0.1).data
-    val coarse = Evaluate.doubles(h, t, duration = 2.0, precision = 0.5).data
+
+    // Under the trapezoid, `precision` is the step of the rule, so refining it
+    // moves the answer.
+    val fine = Evaluate.doubles(h, t, duration = 2.0, precision = 0.1, integration = Integration.Trapezoid).data
+    val coarse = Evaluate.doubles(h, t, duration = 2.0, precision = 0.5, integration = Integration.Trapezoid).data
     assert(TestUtils.maxAbsDiff(fine, coarse) > 1e-6)
+
+    // SPMG1 has a primitive, so exact integration returns the same value at any
+    // precision — that is what having a closed form buys.
+    val exactFine = Evaluate.doubles(h, t, duration = 2.0, precision = 0.1, integration = Integration.Exact).data
+    val exactCoarse = Evaluate.doubles(h, t, duration = 2.0, precision = 0.5, integration = Integration.Exact).data
+    assertEqualsDouble(TestUtils.maxAbsDiff(exactFine, exactCoarse), 0.0, 0.0)
   }
 
   test("normalize in Evaluate preserves matrix dimensions") {

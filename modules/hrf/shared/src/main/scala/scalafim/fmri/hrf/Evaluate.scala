@@ -5,83 +5,50 @@ import scalafim.fmri.hrf.linalg.{Mat, Vec}
 
 object Evaluate:
 
+  /** Render a kernel on a lag axis — `grid` is displacement from onset, not
+    * clock time. See [[Lag]].
+    */
   def apply(
       hrf: Hrf,
-      grid: Seq[Seconds],
+      grid: Seq[Lag],
       amplitude: Double = 1.0,
       duration: Seconds = 0.0.s,
       precision: Seconds = 0.2.s,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      integration: Integration = Integration.Exact
   ): Mat =
     require(grid.nonEmpty, "`grid` must be non-empty")
     require(grid.forall(_.value.isFinite), "`grid` must be finite")
     require(precision.value > 0.0, "`precision` must be > 0")
-    val nb = hrf.nbasis
-    val base: Seconds => Vec = t => hrf(t) * amplitude
 
-    val out =
-      if duration.value < precision.value then
-        val vals = grid.map(base).toVector
-        val data = new Array[Double](vals.size * nb)
-        var i = 0
-        while i < vals.size do
-          System.arraycopy(vals(i).data, 0, data, i * nb, nb)
-          i += 1
-        Mat.unsafe(vals.size, nb, data)
-      else
-        val nOffs = math.floor(duration.value / precision.value).toInt + 1
-        val offs = Array.tabulate(nOffs)(i => i * precision.value)
-        val data = Array.fill(grid.size * nb)(0.0)
-        var gi = 0
-        while gi < grid.size do
-          val t = grid(gi).value
-          if nb == 1 && !summate then
-            var maxv = Double.NegativeInfinity
-            var k = 0
-            while k < nOffs do
-              val v = base(Seconds(t - offs(k))).data(0)
-              if v > maxv then maxv = v
-              k += 1
-            data(gi) = maxv
-          else
-            var k = 0
-            while k < nOffs do
-              val v = base(Seconds(t - offs(k))).data
-              var j = 0
-              while j < nb do
-                data(gi * nb + j) += v(j)
-                j += 1
-              k += 1
-          gi += 1
-        Mat.unsafe(grid.size, nb, data)
+    // `normalize` peak-scales the *kernel*, over its own `[0, span]`, before
+    // evaluation. It used to scale the output by the maximum observed on the
+    // supplied `grid`, which made the answer depend on which time points the
+    // caller happened to ask for: the same SPMG1 read 0.206 at t=2 on one grid
+    // and 1.000 on another that merely omitted the peak.
+    val kernel =
+      if normalize then HrfCombinators.normalize(hrf)(precision) else hrf
+    val nb = kernel.nbasis
 
-    if !normalize then out
-    else
-      val scaled = out.data.clone
-      if nb == 1 then
-        val maxAbs = scaled.map(math.abs).maxOption.getOrElse(1.0)
-        val s0 = if maxAbs > 1e-10 then maxAbs else 1.0
-        var i = 0
-        while i < scaled.length do
-          scaled(i) /= s0
-          i += 1
-      else
-        var j = 0
-        while j < nb do
-          var m = 0.0
-          var i = 0
-          while i < out.rows do
-            val a = math.abs(out(i, j))
-            if a > m then m = a
-            i += 1
-          val s0 = if m > 1e-10 then m else 1.0
-          i = 0
-          while i < out.rows do
-            scaled(i * nb + j) /= s0
-            i += 1
-          j += 1
-      Mat.unsafe(out.rows, out.cols, scaled)
+    // `summate` selects the box convention, not a summation strategy:
+    // true  -> unit-height box, mass grows with duration (R `summate = TRUE`);
+    // false -> unit-mass box, the duration-average (R `summate = FALSE`).
+    val pulse =
+      Pulse
+        .fromSummate(duration, summate)
+        .fold(err => throw new IllegalArgumentException(err.message), identity)
+
+    val data = new Array[Double](grid.size * nb)
+    var gi = 0
+    while gi < grid.size do
+      val v = PulseResponse.at(pulse, kernel, grid(gi), precision, integration).data
+      var j = 0
+      while j < nb do
+        data(gi * nb + j) = amplitude * v(j)
+        j += 1
+      gi += 1
+    Mat.unsafe(grid.size, nb, data)
 
   def doubles(
       hrf: Hrf,
@@ -90,6 +57,7 @@ object Evaluate:
       duration: Double = 0.0,
       precision: Double = 0.2,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      integration: Integration = Integration.Exact
   ): Mat =
-    apply(hrf, grid.map(_.s), amplitude, duration.s, precision.s, summate, normalize)
+    apply(hrf, grid.map(Lag(_)), amplitude, duration.s, precision.s, summate, normalize, integration)

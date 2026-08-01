@@ -114,7 +114,7 @@ class RegressorParitySuite extends munit.FunSuite:
     }
   }
 
-  test("per-event filters HRFs alongside zero amplitudes") {
+  test("per-event keeps HRFs aligned with events across a zero amplitude") {
     val h1 = Hrfs.boxcar(4.0.s)
     val h2 = Hrfs.boxcar(6.0.s)
     val h3 = Hrfs.boxcar(8.0.s)
@@ -123,10 +123,32 @@ class RegressorParitySuite extends munit.FunSuite:
       Seq(h1, h2, h3),
       amplitude = Seq(1.0, 0.0, 1.0)
     )
-    assertEquals(reg.onsets.map(_.value), Vector(10.0, 30.0))
+    assertEquals(reg.onsets.map(_.value), Vector(10.0, 20.0, 30.0))
     reg.hrf match
-      case HrfAssignment.PerEvent(hrfs) => assertEquals(hrfs.length, 2)
+      case HrfAssignment.PerEvent(hrfs) =>
+        assertEquals(hrfs.length, 3)
+        // event i still gets kernel i — the trial-wise index contract
+        assertEquals(hrfs.map(_.span.value), Vector(h1.span.value, h2.span.value, h3.span.value))
       case _ => fail("expected per-event HRFs")
+  }
+
+  test("windowing out an onset does not re-bind per-event HRFs") {
+    val h1 = Hrfs.boxcar(2.0.s)
+    val h2 = Hrfs.boxcar(4.0.s)
+    val h3 = Hrfs.boxcar(8.0.s)
+    val reg = Regressor.perEvent(Seq(5.0, 40.0, 60.0), Seq(h1, h2, h3), span = Some(10.0))
+
+    // grid starts at 30, so onset 5.0 falls outside [gridStart - span, gridEnd]
+    val grid = (30 to 80).map(_.toDouble)
+    val windowed = Regressor.evaluate(reg, grid, method = Regressor.EvalMethod.Loop)
+
+    val ref = Regressor.perEvent(Seq(40.0, 60.0), Seq(h2, h3), span = Some(10.0))
+    val expected = Regressor.evaluate(ref, grid, method = Regressor.EvalMethod.Loop)
+
+    var i = 0
+    while i < windowed.data.length do
+      assertEqualsDouble(windowed.data(i), expected.data(i), 1e-12, s"wrong per-event HRF at $i")
+      i += 1
   }
 
   test("per-event works with all evaluation methods") {

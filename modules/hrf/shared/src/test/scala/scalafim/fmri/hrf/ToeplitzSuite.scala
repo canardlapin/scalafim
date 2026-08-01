@@ -25,7 +25,7 @@ class ToeplitzSuite extends munit.FunSuite:
     val time = Seq(0.0, 1.0, 2.0)
     val len = 5
     val H = Toeplitz.matrix(box, time, len)
-    val hreg = box.evalScalar(time.map(_.s))
+    val hreg = box.evalScalar(time.map(Lag(_)))
     val col = hreg ++ Array.fill(len - hreg.length)(0.0)
     val row = Array(hreg.head) ++ Array.fill(len - 1)(0.0)
     val expected = manualToeplitz(col, row)

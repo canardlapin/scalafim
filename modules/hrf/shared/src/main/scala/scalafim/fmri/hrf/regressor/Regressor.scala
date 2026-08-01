@@ -69,8 +69,8 @@ sealed trait HrfAssignment:
   def nbasis: Int = basis.value
   def span: Seconds
   def eventHrf(eventIndex: Int): Hrf
-  def at(t: Seconds, eventIndex: Int): Vec =
-    eventHrf(eventIndex)(t)
+  def at(lag: Lag, eventIndex: Int): Vec =
+    eventHrf(eventIndex)(lag)
 
 object HrfAssignment:
   final case class Shared(hrf: Hrf) extends HrfAssignment:
@@ -137,6 +137,17 @@ object Regressor:
         i += 1
       Right(out.result())
 
+  /** Build a regressor from typed events.
+    *
+    * Every supplied event is retained, including zero-amplitude ones. A
+    * zero-amplitude event contributes nothing to the rendered signal, so
+    * dropping it would be a cheap optimization — but it would also break the
+    * correspondence between input event `i` and output event `i`, which is
+    * exactly what trial-wise models depend on. LSA and LSS address trials by
+    * index; a vanishing trial silently shifts every subsequent one. The
+    * invariant is worth more than the saved convolution, which
+    * [[evalLoop]] skips anyway.
+    */
   def fromEvents(
       events: Seq[StimulusEvent],
       hrf: HrfAssignment,
@@ -144,18 +155,14 @@ object Regressor:
       summate: Boolean
   ): Either[RegressorError, Regressor] =
     Seconds.fromDouble(span.value, "span").left.map(RegressorError.InvalidSpan.apply).flatMap { span0 =>
-      val filtered = events.iterator.filter(_.amplitude != 0.0).toVector
+      val all = events.toVector
       val hrf0: Either[RegressorError, HrfAssignment] =
         hrf match
           case shared: HrfAssignment.Shared => Right(shared)
-          case HrfAssignment.PerEvent(hrfs) =>
-            if hrfs.length != events.size then Left(RegressorError.HrfLengthMismatch(events.size, hrfs.length))
-            else
-              val keep = events.iterator.zipWithIndex.collect { case (event, i) if event.amplitude != 0.0 => i }.toVector
-              val keptHrfs = keep.map(hrfs)
-              if keptHrfs.nonEmpty && keptHrfs.exists(_.basis != keptHrfs.head.basis) then Left(RegressorError.MixedBasisCounts)
-              else Right(HrfAssignment.PerEvent(keptHrfs))
-      hrf0.map(hrf1 => Regressor(filtered, hrf1, span0, summate))
+          case perEvent @ HrfAssignment.PerEvent(hrfs) =>
+            if hrfs.length != all.length then Left(RegressorError.HrfLengthMismatch(all.length, hrfs.length))
+            else Right(perEvent)
+      hrf0.map(hrf1 => Regressor(all, hrf1, span0, summate))
     }
 
   def fromParts(
@@ -265,7 +272,8 @@ object Regressor:
       reg: Regressor,
       grid: Seq[Double],
       precision: Double = 0.33,
-      method: EvalMethod = EvalMethod.Conv
+      method: EvalMethod = EvalMethod.Conv,
+      integration: Integration = Integration.Exact
   ): Mat =
     val dt = Seconds(precision)
     require(dt.value > 0.0, "`precision` must be > 0")
@@ -288,66 +296,50 @@ object Regressor:
       val ons = keepIdx.map(reg.onsets).toVector
       val durs = keepIdx.map(reg.durations).toVector
       val amps = keepIdx.map(reg.amplitudes).toVector
+      // `keepIdx` compacts the event list; per-event HRFs must still be
+      // addressed by the event's *original* index, not its position here.
+      val eventIdx = keepIdx.toVector
 
       (reg.hrf, method) match
         case (_, EvalMethod.Loop) =>
-          evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
+          evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, eventIdx, dt, reg.summate, integration)
         case (HrfAssignment.PerEvent(_), _) =>
-          evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
+          evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, eventIdx, dt, reg.summate, integration)
         case (HrfAssignment.Shared(hrf), EvalMethod.Conv) =>
-          evalConv(hrf, reg.span, sorted, ons, durs, amps, dt)
+          evalConv(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
         case (HrfAssignment.Shared(hrf), EvalMethod.FFT) =>
-          evalFft(hrf, reg.span, sorted, ons, durs, amps, dt)
+          evalFft(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
 
   private def evalHrfEvent(
       hrf: Hrf,
-      relTimes: Array[Seconds],
+      relTimes: Array[Lag],
       amplitude: Double,
       duration: Seconds,
       precision: Seconds,
-      summate: Boolean
+      summate: Boolean,
+      integration: Integration
   ): Array[Array[Double]] =
     val nb = hrf.nbasis
     val out = Array.ofDim[Double](relTimes.length, nb)
-    if duration.value < precision.value then
-      var i = 0
-      while i < relTimes.length do
-        val v = hrf(relTimes(i)).data
-        var j = 0
-        while j < nb do
-          out(i)(j) = amplitude * v(j)
-          j += 1
-        i += 1
-    else
-      val nOffs = math.floor(duration.value / precision.value).toInt + 1
-      val offs = Array.tabulate(nOffs)(i => i * precision.value)
-      var i = 0
-      while i < relTimes.length do
-        val t = relTimes(i).value
-        if nb == 1 then
-          var acc = 0.0
-          var maxv = Double.NegativeInfinity
-          var k = 0
-          while k < nOffs do
-            val v = hrf(Seconds(t - offs(k))).data(0) * amplitude
-            acc += v
-            if v > maxv then maxv = v
-            k += 1
-          out(i)(0) = if summate then acc else maxv
-        else
-          val acc = Array.fill(nb)(0.0)
-          var k = 0
-          while k < nOffs do
-            val v = hrf(Seconds(t - offs(k))).data
-            var j = 0
-            while j < nb do
-              acc(j) += amplitude * v(j)
-              j += 1
-            k += 1
-          out(i) = acc
-        i += 1
+    val pulse =
+      Pulse
+        .fromSummate(duration, summate)
+        .fold(err => throw new IllegalArgumentException(err.message), identity)
+    var i = 0
+    while i < relTimes.length do
+      val v = PulseResponse.at(pulse, hrf, relTimes(i), precision, integration).data
+      var j = 0
+      while j < nb do
+        out(i)(j) = amplitude * v(j)
+        j += 1
+      i += 1
     out
 
+  /** @param eventIdx
+    *   for each entry of `onsets`, the index of that event in the regressor's
+    *   own event vector. Per-event HRFs are looked up through this, so that
+    *   windowing out an event cannot re-bind the survivors to the wrong kernel.
+    */
   private def evalLoop(
       hrfAssign: HrfAssignment,
       span: Seconds,
@@ -355,20 +347,25 @@ object Regressor:
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amps: Vector[Double],
+      eventIdx: Vector[Int],
       precision: Seconds,
-      summate: Boolean
+      summate: Boolean,
+      integration: Integration
   ): Mat =
     val nb = hrfAssign.nbasis
     val out = Array.fill(grid.length * nb)(0.0)
     var e = 0
     while e < onsets.length do
       val onset = onsets(e)
-      val rel = grid.map(g => Seconds(g.value - onset.value))
+      // The one place absolute run time becomes displacement from an onset.
+      val rel = grid.map(g => Lag.between(onset, g))
       val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= span.value)
-      if validIdx.nonEmpty then
+      // A zero-amplitude event scales every basis value to zero, so it is
+      // skipped here rather than dropped from the event vector.
+      if validIdx.nonEmpty && amps(e) != 0.0 then
         val relValid = validIdx.map(rel).toArray
-        val hrf = hrfAssign.eventHrf(e)
-        val resp = evalHrfEvent(hrf, relValid, amps(e), durations(e), precision, summate)
+        val hrf = hrfAssign.eventHrf(eventIdx(e))
+        val resp = evalHrfEvent(hrf, relValid, amps(e), durations(e), precision, summate, integration)
         var i = 0
         while i < validIdx.length do
           val gIdx = validIdx(i)
@@ -380,10 +377,23 @@ object Regressor:
       e += 1
     Mat.unsafe(grid.length, nb, out)
 
-  private def buildImpulseTrain(
+  /** The neural drive as a discrete measure: mass per microtime bin.
+    *
+    * Treating the drive as a measure rather than a sampled signal is what makes
+    * the impulse and box cases one computation. An impulse deposits its whole
+    * amplitude in a single bin; a unit-height box of duration `d` deposits
+    * `amp * dt` per bin, so its total mass is `amp * d` and the subsequent
+    * convolution approximates `∫ x(t-τ) h(τ) dτ` rather than a bin count.
+    *
+    * The previous version deposited `amp` in every box bin, which made the
+    * result scale with `d / dt` — the epoch amplitude then depended on the
+    * `precision` argument.
+    */
+  private def buildDriveMeasure(
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amplitudes: Vector[Double],
+      summate: Boolean,
       t0: Double,
       t1: Double,
       dt: Double
@@ -395,18 +405,21 @@ object Regressor:
       val on = onsets(i).value
       val dur = durations(i).value
       val amp = amplitudes(i)
-      var a =
+      val a =
         if on <= t0 then 0
         else math.floor((on - t0) / dt).toInt
-      if a >= nBins then
-        i += 1
-      else
+      if a < nBins then
         var b = math.floor((on + dur - t0) / dt).toInt
         if b >= nBins then b = nBins - 1
         if a <= b then
-          diff(a) += amp
-          diff(b + 1) -= amp
-        i += 1
+          // Mass deposited in each covered bin.
+          val perBin =
+            if dur <= 0.0 || a == b then amp
+            else if summate then amp * dt // unit-height box: total mass amp*dur
+            else amp * dt / dur // unit-mass box: total mass amp
+          diff(a) += perBin
+          diff(b + 1) -= perBin
+      i += 1
     val out = new Array[Double](nBins)
     var acc = 0.0
     i = 0
@@ -416,15 +429,22 @@ object Regressor:
       i += 1
     out
 
-  private def hrfFineMatrix(hrf: Hrf, span: Seconds, dt: Double): Array[Array[Double]] =
+  /** The kernel sampled on the microtime grid, **column-major**: `out(b)(i)`.
+    *
+    * Column-major because both convolution paths consume one basis column at a
+    * time; a row-major layout forced a fresh `Array` per column per call.
+    */
+  private def hrfFineColumns(hrf: Hrf, span: Seconds, dt: Double): Array[Array[Double]] =
     val n = math.floor(span.value / dt).toInt + 1
     val nb = hrf.nbasis
-    val out = Array.ofDim[Double](n, nb)
+    val out = Array.ofDim[Double](nb, n)
     var i = 0
     while i < n do
-      val t = Seconds(i * dt)
-      val v = hrf(t).data
-      System.arraycopy(v, 0, out(i), 0, nb)
+      val v = hrf(Lag(i * dt)).data
+      var b = 0
+      while b < nb do
+        out(b)(i) = v(b)
+        b += 1
       i += 1
     out
 
@@ -435,7 +455,8 @@ object Regressor:
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amps: Vector[Double],
-      precision: Seconds
+      precision: Seconds,
+      summate: Boolean
   ): Mat =
     val dt = precision.value
     val start = grid.head.value - span.value
@@ -443,26 +464,29 @@ object Regressor:
     val lastOnset = if onsets.isEmpty then grid.last.value else onsets.map(_.value).max
     val end = math.max(grid.last.value, lastOnset + maxDur) + span.value
 
-    val neural = buildImpulseTrain(onsets, durations, amps, start, end, dt)
-    val hrfFine = hrfFineMatrix(hrf, span, dt)
+    val neural = buildDriveMeasure(onsets, durations, amps, summate, start, end, dt)
+    val hrfFine = hrfFineColumns(hrf, span, dt)
     val nb = hrf.nbasis
     val nFine = neural.length
 
     val out = new Array[Double](grid.length * nb)
     var b = 0
     while b < nb do
-      val hcol = hrfFine.map(_(b))
-      val convFull = new Array[Double](nFine + hcol.length - 1)
+      val hcol = hrfFine(b)
+      // Only the first `nFine` samples are ever read, and the drive is mostly
+      // zeros for an impulse design — skipping those is what keeps this ahead
+      // of the FFT path.
+      val conv = new Array[Double](nFine)
       var i = 0
       while i < nFine do
         val ai = neural(i)
         if ai != 0.0 then
           var j = 0
-          while j < hcol.length do
-            convFull(i + j) += ai * hcol(j)
+          val jMax = math.min(hcol.length, nFine - i)
+          while j < jMax do
+            conv(i + j) += ai * hcol(j)
             j += 1
         i += 1
-      val conv = convFull.take(nFine)
 
       var g = 0
       while g < grid.length do
@@ -486,7 +510,8 @@ object Regressor:
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amps: Vector[Double],
-      precision: Seconds
+      precision: Seconds,
+      summate: Boolean
   ): Mat =
     val dt = precision.value
     val start = grid.head.value - span.value
@@ -494,17 +519,18 @@ object Regressor:
     val lastOnset = if onsets.isEmpty then grid.last.value else onsets.map(_.value).max
     val end = math.max(grid.last.value, lastOnset + maxDur) + span.value
 
-    val neural = buildImpulseTrain(onsets, durations, amps, start, end, dt)
-    val hrfFine = hrfFineMatrix(hrf, span, dt)
+    val neural = buildDriveMeasure(onsets, durations, amps, summate, start, end, dt)
+    val hrfFine = hrfFineColumns(hrf, span, dt)
     val nb = hrf.nbasis
     val nFine = neural.length
 
     val out = new Array[Double](grid.length * nb)
     var b = 0
     while b < nb do
-      val hcol = hrfFine.map(_(b))
-      val convFull = Fft.convolveReal(neural, hcol)
-      val conv = convFull.take(nFine)
+      val hcol = hrfFine(b)
+      // `convolveReal` returns the full linear convolution; only the first
+      // `nFine` samples are addressed below, so it is read in place.
+      val conv = Fft.convolveReal(neural, hcol)
 
       var g = 0
       while g < grid.length do
@@ -534,9 +560,10 @@ extension (reg: Regressor)
   def evaluate(
       grid: Seq[Double],
       precision: Double = 0.33,
-      method: Regressor.EvalMethod = Regressor.EvalMethod.Conv
+      method: Regressor.EvalMethod = Regressor.EvalMethod.Conv,
+      integration: Integration = Integration.Exact
   ): Mat =
-    Regressor.evaluate(reg, grid, precision, method)
+    Regressor.evaluate(reg, grid, precision, method, integration)
 
   def neuralInput(
       from: Double = 0.0,

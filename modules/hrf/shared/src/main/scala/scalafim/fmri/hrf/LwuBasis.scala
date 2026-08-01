@@ -1,15 +1,16 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.Seconds
+import scalafim.fmri.hrf.Lag
 import scalafim.fmri.hrf.linalg.Mat
 
 final case class LwuParams(tau: Double, sigma: Double, rho: Double)
 
 object LwuBasis:
 
+  /** @param times lag axis: displacement from onset, not clock time. */
   def apply(
       theta0: LwuParams,
-      times: Seq[Seconds],
+      times: Seq[Lag],
       normalizePrimary: Boolean = false,
       delta: Double = 1e-4
   ): Mat =

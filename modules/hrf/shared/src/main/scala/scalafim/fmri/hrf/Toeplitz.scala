@@ -1,12 +1,13 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.{Hrf, s}
+import scalafim.fmri.hrf.{Hrf, Lag}
 import scalafim.fmri.hrf.linalg.Mat
 
 object Toeplitz:
+  /** @param time lag axis on which the kernel is sampled. */
   def matrix(hrf: Hrf, time: Seq[Double], len: Int): Mat =
     require(hrf.nbasis == 1, "toeplitz currently supports nbasis=1")
-    val hreg = hrf.evalScalar(time.iterator.map(_.toDouble.s))
+    val hreg = hrf.evalScalar(time.iterator.map(Lag(_)))
     require(len >= hreg.length, "`len` must be >= length(time)")
     val col = hreg ++ Array.fill(len - hreg.length)(0.0)
     val row = Array(hreg.headOption.getOrElse(0.0)) ++ Array.fill(len - 1)(0.0)

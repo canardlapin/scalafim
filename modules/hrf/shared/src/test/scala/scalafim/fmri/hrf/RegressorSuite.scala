@@ -9,10 +9,27 @@ class RegressorSuite extends munit.FunSuite:
   private val box: Hrf =
     Hrf.scalar("box", span = 1.0.s)(t => if t.value >= 0.0 && t.value <= 1.0 then 1.0 else 0.0)
 
-  test("regressor filters zero amplitude events") {
+  test("regressor retains zero-amplitude events so event indices stay stable") {
     val reg = Regressor(Seq(1.0, 2.0, 3.0), box, amplitude = Seq(1.0, 0.0, 2.0), span = Some(1.0))
-    assertEquals(reg.onsets.map(_.value), Vector(1.0, 3.0))
-    assertEquals(reg.amplitudes, Vector(1.0, 2.0))
+    assertEquals(reg.onsets.map(_.value), Vector(1.0, 2.0, 3.0))
+    assertEquals(reg.amplitudes, Vector(1.0, 0.0, 2.0))
+  }
+
+  test("a zero-amplitude event occupies an index but contributes no signal") {
+    val grid = (0 to 10).map(_.toDouble)
+    val withZero = Regressor(Seq(1.0, 2.0, 3.0), box, amplitude = Seq(1.0, 0.0, 2.0), span = Some(1.0))
+    val without = Regressor(Seq(1.0, 3.0), box, amplitude = Seq(1.0, 2.0), span = Some(1.0))
+
+    assertEquals(withZero.events.length, 3)
+    assertEquals(without.events.length, 2)
+
+    for method <- Seq(Regressor.EvalMethod.Loop, Regressor.EvalMethod.Conv, Regressor.EvalMethod.FFT) do
+      val a = Regressor.evaluate(withZero, grid, method = method)
+      val b = Regressor.evaluate(without, grid, method = method)
+      var i = 0
+      while i < a.data.length do
+        assertEqualsDouble(a.data(i), b.data(i), 1e-12, s"$method differs at $i")
+        i += 1
   }
 
   test("validated regressor stores typed stimulus events") {
@@ -20,9 +37,9 @@ class RegressorSuite extends munit.FunSuite:
       .validated(Seq(1.0, 2.0, 3.0), box, duration = Seq(0.5), amplitude = Seq(1.0, 0.0, 2.0), span = Some(1.0))
       .fold(err => fail(err.message), identity)
 
-    assertEquals(reg.events.length, 2)
-    assertEquals(reg.events.map(_.onsetSeconds.value), Vector(1.0, 3.0))
-    assertEquals(reg.events.map(_.durationSeconds.value), Vector(0.5, 0.5))
+    assertEquals(reg.events.length, 3)
+    assertEquals(reg.events.map(_.onsetSeconds.value), Vector(1.0, 2.0, 3.0))
+    assertEquals(reg.events.map(_.durationSeconds.value), Vector(0.5, 0.5, 0.5))
     assert(Regressor.validated(Seq(Double.NaN), box).isLeft)
   }
 
