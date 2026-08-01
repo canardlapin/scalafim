@@ -5,18 +5,15 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-kernel`: dependency-free finite indexed spaces, unordered regions, ordered selections, exact maps, relations, and validated map/relation evidence.
-- `locus-data`: indexed fields and sections, supported parcellations, searchlights, and one-pass commutative aggregation over locus spaces.
-- `locus-laws`: cross-platform exhaustive/reference models, differential checks, and reusable law suites for locus implementations and adapters.
-- `graph`: dependency-free ordered vertex bases, canonical simple graph values, alignment, components, paths, cycles, DAG layers, and reusable topology laws.
-- `graph-linalg`: basis-carrying topology/weighted adjacency, incidence, degree/strength, and Laplacian operators over the shared sparse linear-map contracts.
+- `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
-- `hrf`: hemodynamic response functions, bases, sampling, convolution, and regressors.
+- `hrf`: causal hemodynamic kernels with enforced causality and declared support, pulse-shaped neural drive (impulse, unit-height and unit-mass boxes), convergent box quadrature, response bases with typed dual coefficients and reported basis transforms, sampling, convolution, and regressors.
+- `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, affine/dense-field spatial morphisms, statistics, clustering, and image IO.
 - `registration`: compact symmetric nonlinear registration algebra with typed inverse pairs, midpoint updates, paired diffeomorphic flows, and topology guards.
@@ -48,8 +45,7 @@ cross-compiled sbt build.
 - `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
-- `zarr`: dependency-free Scala 3 Zarr v3 kernel with read-only v2 lowering, runtime-rank hierarchy and factored selections, portable bounded async reads, revision-scoped LRU range caches, sync/async create-only writers, and atomic JVM publication.
-- `zarr-codec-blosc-zstd`: optional typed Blosc/Zstandard provider using JNI on JVM and embedded WASM on Scala.js.
+- Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
 - `archive-zarr`: NeuroArchive Zarr 0.1 refinement with canonical BOLD archive metadata, immutable publication, measured sharded layout policy, and resource-safe typed async payload execution with exact object/range evidence.
 - `dataset-zarr`: JVM NeuroArchive-to-`FmriDataset` composition, bounded reads, regular-timing refinement, streaming NIfTI import, and BIDS/NIfTI export over NeuroArchive Zarr revisions.
 
@@ -74,6 +70,33 @@ live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
 ScalaFIM pins an immutable source revision; design and viewer modules consume
 only the smallest required Intaglio core or backend project.
 
+Generic graph topology and algorithms formerly incubated here now live in
+standalone [`graph4s`](https://github.com/canardlapin/graph4s). ScalaFIM pins an
+immutable source revision. The optional `graph4s-gale` module now owns indexed
+numerical graph operators, spectra, embeddings, and similarities. Pipeline,
+surface, atlas, and connectivity retain only ScalaFIM domain metadata and
+adapters.
+
+Generic finite domains, points, regions, selections, maps, relations, indexed
+fields, and their laws formerly incubated here now live in standalone
+[`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
+source revision; `locus-data` retains only ScalaFIM-specific adapters and
+higher-level parcellation, searchlight, and aggregation policy.
+
+An ordinary build loads both libraries from their pinned GitHub revisions. To
+test coordinated changes in sibling checkouts, select those checkouts
+explicitly:
+
+```sh
+sbt \
+  -Dscalafim.graph4s.build=../graph4s \
+  -Dscalafim.locus4s.build=../locus4s \
+  compileAll
+```
+
+The override applies only to that sbt process. Removing the properties restores
+the immutable GitHub source dependencies.
+
 See [docs/image-viewer.md](docs/image-viewer.md) for the world-coordinate
 contract, slice and layer APIs, interaction reducer, caching receipts, and
 platform-host boundaries.
@@ -87,16 +110,8 @@ serialization, performance gates, and the cross-platform example.
 ```sh
 sbt compileAll
 sbt testAll
-sbt locusKernelJVM/test
-sbt locusKernelJS/test
 sbt locusDataJVM/test
 sbt locusDataJS/test
-sbt locusLawsJVM/test
-sbt locusLawsJS/test
-sbt graphJVM/test
-sbt graphJS/test
-sbt graphLinalgJVM/test
-sbt graphLinalgJS/test
 sbt linalgJVM/test
 sbt linalgJS/test
 sbt pipelineJVM/test
@@ -152,11 +167,6 @@ sbt modelJVM/test
 sbt modelJS/test
 sbt fitJVM/test
 sbt fitJS/test
-sbt zarrJVM/test
-sbt zarrJS/test
-npm ci --prefix modules/zarr-codec-blosc-zstd/js
-sbt zarrCodecBloscZstdJVM/test
-sbt zarrCodecBloscZstdJS/test
 sbt archiveZarrJVM/test
 sbt archiveZarrJS/test
 sbt datasetZarrJVM/test

@@ -1,7 +1,6 @@
 package scalafim.registration
 
 import gale.linalg.MutableDVec
-import narr.NArray
 import scalafim.image.*
 
 class SobolevShaperSuite extends munit.FunSuite:
@@ -19,7 +18,7 @@ class SobolevShaperSuite extends munit.FunSuite:
         )
       )
     )
-    val active = NArrayUtil.fill[Boolean](grid.nVoxels)(true)
+    val active = PrimitiveBuffers.fill[Boolean](grid.nVoxels)(true)
     active(0) = false
     val operator = new MaskedHelmholtzOperator(grid, active, lengthMm = 1.7)
     val input = gale.linalg.DVec.tabulate(grid.nVoxels)(i => math.sin(0.17 * i) + 0.03 * i)
@@ -37,7 +36,7 @@ class SobolevShaperSuite extends munit.FunSuite:
     val side = 12
     val grid = GridSpec.identity(Vector(side, side, side))
     val frame = Frame[Work](SpatialDomainId("sobolev-frequency"), grid)
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
     val frequency = 2
     var index = 0
     while index < grid.nVoxels do
@@ -61,7 +60,7 @@ class SobolevShaperSuite extends munit.FunSuite:
     val scale = 1.0 / (lambda * lambda)
     index = 0
     while index < grid.nVoxels do
-      assertEqualsDouble(result.velocity.field.values.data(index), values(index) * scale, 2e-9)
+      assertEqualsDouble(result.velocity.field.linearComponent(index, 0), values(index) * scale, 2e-9)
       index += 1
     assert(result.diagnostics.maximumRelativeResidual <= 1.01e-11)
   }
@@ -69,8 +68,8 @@ class SobolevShaperSuite extends munit.FunSuite:
   test("constant fields are preserved, masks project exactly, and caps are enforced") {
     val grid = GridSpec.identity(Vector(9, 8, 7))
     val frame = Frame[Work](SpatialDomainId("sobolev-mask"), grid)
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
-    val valid = NArrayUtil.fill[Boolean](grid.nVoxels)(true)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
+    val valid = PrimitiveBuffers.fill[Boolean](grid.nVoxels)(true)
     var index = 0
     while index < grid.nVoxels do
       values(index) = 4.0 + 0.5 * (index % grid.shape.x)
@@ -88,15 +87,14 @@ class SobolevShaperSuite extends munit.FunSuite:
       )
       .fold(error => fail(error.message), identity)
     val result = SobolevShaper
-      .shape(velocity(frame, values), FieldValidity.Mask(valid), config)
+      .shape(velocity(frame, values), FieldValidity.copyMask(valid), config)
       .fold(error => fail(error.message), identity)
-    val output = result.velocity.field.values.data
     index = 0
     while index < grid.nVoxels do
       if !valid(index) then
-        assertEqualsDouble(output(index), 0.0, 0.0)
-        assertEqualsDouble(output(index + grid.nVoxels), 0.0, 0.0)
-        assertEqualsDouble(output(index + 2 * grid.nVoxels), 0.0, 0.0)
+        assertEqualsDouble(result.velocity.field.linearComponent(index, 0), 0.0, 0.0)
+        assertEqualsDouble(result.velocity.field.linearComponent(index, 1), 0.0, 0.0)
+        assertEqualsDouble(result.velocity.field.linearComponent(index, 2), 0.0, 0.0)
       index += 1
     assert(result.diagnostics.maximumNormAfterCapMm <= 0.7 * (1.0 + 1e-12))
     assert(result.diagnostics.maximumStrainAfterCap <= 0.08 * (1.0 + 1e-12))
@@ -105,7 +103,7 @@ class SobolevShaperSuite extends munit.FunSuite:
   test("in-place LM storage reuse matches disjoint Sobolev storage") {
     val grid = GridSpec.identity(Vector(8, 7, 6))
     val frame = Frame[Work](SpatialDomainId("sobolev-alias"), grid)
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
     var index = 0
     while index < values.length do
       values(index) = math.sin(0.03 * index) + 0.2 * math.cos(0.07 * index)
@@ -135,7 +133,7 @@ class SobolevShaperSuite extends munit.FunSuite:
     val actual = SobolevShaper
       .shapeInto(
         aliasedRaw,
-        FieldValidity.Mask(local.valid),
+        FieldValidity.copyMask(local.valid),
         config,
         SobolevWorkspace(frame),
         SobolevBuffer.reusing(local)
@@ -143,15 +141,21 @@ class SobolevShaperSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
     index = 0
     while index < values.length do
-      assertEqualsDouble(actual.velocity.field.values.data(index), reference.velocity.field.values.data(index), 1e-12)
+      val component = index / grid.nVoxels
+      val voxel = index % grid.nVoxels
+      assertEqualsDouble(
+        actual.velocity.field.linearComponent(voxel, component),
+        reference.velocity.field.linearComponent(voxel, component),
+        1e-12
+      )
       index += 1
     assertEquals(actual.diagnostics.totalIterations, reference.diagnostics.totalIterations)
   }
 
-  private def velocity[A](frame: Frame[A], values: NArray[Double]): Velocity[A] =
-    val field = DenseVectorField(
+  private def velocity[A](frame: Frame[A], values: Array[Double]): Velocity[A] =
+    val field = DenseVectorField.fromLegacyPlanar(
       frame.grid,
-      NDArray(values, frame.grid.dims :+ 3),
+      values,
       DenseVectorFieldKind.Displacement
     )
     Velocity.make(frame, field).fold(error => fail(error.message), identity)
@@ -159,7 +163,7 @@ class SobolevShaperSuite extends munit.FunSuite:
   private def naiveApply(
       input: gale.linalg.DVec,
       grid: GridSpec,
-      active: NArray[Boolean],
+      active: Array[Boolean],
       length: Double
   ): Array[Double] =
     val spacing = Affine.voxelSizes(grid.affine)

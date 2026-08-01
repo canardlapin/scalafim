@@ -1,6 +1,18 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.DType
+import ravel.NDArray as RavelArray
+import scala.annotation.targetName
+
+private def copyVolumeIntoLegacy[A](
+    source: NeuroVol[A],
+    destination: Array[A],
+    offset: Int
+): Unit =
+  var index = 0
+  while index < source.values.size do
+    destination(offset + index) = source.linear(index)
+    index += 1
 
 object Downsample:
 
@@ -23,7 +35,7 @@ object Downsample:
     val scale = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
 
     val spatialNelsNew = newSpatialDims.product
-    val out = NArray.ofSize[Double](spatialNelsNew * tLen)
+    val out = Array.ofDim[Double](spatialNelsNew * tLen)
 
     def blockRange(d: Int, o: Int): (Int, Int) =
       val start = math.floor(o * scale(d)).toInt
@@ -82,9 +94,11 @@ object Downsample:
       )
     NeuroVec.fromLinear(out, newSpace, vec.label)
 
+  @scala.annotation.targetName("byFactorNeuroVolScalar")
   def byFactor(vol: NeuroVol[Double], factor: Double): NeuroVol[Double] =
     byFactor(vol, Vector.fill(3)(factor))
 
+  @scala.annotation.targetName("byFactorNeuroVolVector")
   def byFactor(vol: NeuroVol[Double], factors: Vector[Double]): NeuroVol[Double] =
     require(factors.length == 3 && factors.forall(f => f > 0 && f <= 1.0), "factors must be length-3 in (0,1]")
     val old = vol.space
@@ -92,6 +106,7 @@ object Downsample:
     val newSpatial = Vector.tabulate(3)(d => math.max(1, math.round(oldSpatial(d) * factors(d)).toInt))
     toDims(vol, newSpatial)
 
+  @scala.annotation.targetName("toDimsNeuroVol")
   def toDims(vol: NeuroVol[Double], newSpatialDims: Vector[Int]): NeuroVol[Double] =
     require(newSpatialDims.length == 3 && newSpatialDims.forall(_ > 0), "newSpatialDims must be length-3 positive")
     val old = vol.space
@@ -99,7 +114,7 @@ object Downsample:
     val scale = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
 
     val spatialNelsNew = newSpatialDims.product
-    val out = NArray.ofSize[Double](spatialNelsNew)
+    val out = Array.ofDim[Double](spatialNelsNew)
 
     def blockRange(d: Int, o: Int): (Int, Int) =
       val start = math.floor(o * scale(d)).toInt
@@ -216,7 +231,7 @@ object Resample:
 
         val targ = target.spatialSpace
         val spatialNels = targ.spatialDims.product
-        val keepFlags = NArrayUtil.fillConst[Boolean](spatialNels, false)
+        val keepFlags = PrimitiveBuffers.fillConst[Boolean](spatialNels, false)
 
         var lin = 0
         while lin < spatialNels do
@@ -225,13 +240,12 @@ object Resample:
 
         val outMask = NeuroVol.fromLinear[Boolean](keepFlags, targ, source.label)
         val activeIdx = Mask.indices(outMask)
-        val outClusters = NArrayUtil.ofSize[Int](activeIdx.length)
-        var i = 0
-        while i < activeIdx.length do
-          outClusters(i) = resLabels.linear(activeIdx(i))
-          i += 1
+        val outClusters =
+          RavelArray.tabulate[Int](activeIdx.size): i =>
+            resLabels.linear(activeIdx(i))
 
-        val idsPresent = Vector.tabulate(outClusters.length)(i => outClusters(i)).distinct.toSet
+        val idsPresent =
+          Vector.tabulate(outClusters.size)(i => outClusters(i)).distinct.toSet
         val outLabelMap =
           if source.labelMap.isEmpty then Map.empty[Int, String]
           else source.labelMap.filter { case (k, _) => idsPresent.contains(k) }
@@ -295,6 +309,7 @@ object Resample:
   ): Either[ResamplingPlanError, ResamplingPlan] =
     ResamplingPlan.make(source, target, morphism, method)
 
+  @targetName("planFromNeuroSpaces")
   def plan(
       source: NeuroSpace,
       target: NeuroSpace,
@@ -312,6 +327,7 @@ object Resample:
   ): Either[ResamplingPlanError, NeuroVol[Double]] =
     plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
 
+  @scala.annotation.targetName("resampleToNeuroVec")
   def resampleTo(
       source: NeuroVec[Double],
       target: GridSpec,
@@ -325,7 +341,7 @@ object Resample:
     val src = vol.space
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
-    val out = NArray.ofSize[Double](targDims.product)
+    val out = Array.ofDim[Double](targDims.product)
 
     var z = 0
     while z < targDims(2) do
@@ -352,12 +368,16 @@ object Resample:
 
     NeuroVol.fromLinear(out, targ, vol.label)
 
-  def nearest[A](vol: NeuroVol[A], target: NeuroSpace, fill: A)(using scala.reflect.ClassTag[A]): NeuroVol[A] =
+  def nearest[A](
+      vol: NeuroVol[A],
+      target: NeuroSpace,
+      fill: A
+  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVol[A] =
     val src = vol.space
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
     val srcDims = src.spatialDims
-    val out = NArrayUtil.fillConst[A](targDims.product, fill)
+    val out = PrimitiveBuffers.fillConst[A](targDims.product, fill)
 
     var z = 0
     while z < targDims(2) do
@@ -384,39 +404,41 @@ object Resample:
 
     NeuroVol.fromLinear(out, targ, vol.label)
 
+  @scala.annotation.targetName("nearestNeuroVec")
   def nearest(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims
-    val out = NArray.ofSize[Double](targDims.product * tLen)
+    val out = Array.ofDim[Double](targDims.product * tLen)
 
     var t = 0
     while t < tLen do
       val volT = vec.volume(t)
       val resT = nearest(volT, targSpatial)
       val spatialNels = targDims.product
-      NArrayUtil.copyInto(resT.values.data, 0, out, t * spatialNels, spatialNels)
+      copyVolumeIntoLegacy(resT, out, t * spatialNels)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
     NeuroVec.fromLinear(out, newSpace, vec.label)
 
+  @scala.annotation.targetName("nearestGenericNeuroVec")
   def nearest[A](
     vec: NeuroVec[A],
     target: NeuroSpace,
     fill: A
-  )(using scala.reflect.ClassTag[A]): NeuroVec[A] =
+  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVec[A] =
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims
-    val out = NArrayUtil.fillConst[A](targDims.product * tLen, fill)
+    val out = PrimitiveBuffers.fillConst[A](targDims.product * tLen, fill)
 
     var t = 0
     while t < tLen do
       val volT = vec.volume(t)
       val resT = nearest(volT, targSpatial, fill)
       val spatialNels = targDims.product
-      NArrayUtil.copyInto(resT.values.data, 0, out, t * spatialNels, spatialNels)
+      copyVolumeIntoLegacy(resT, out, t * spatialNels)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
@@ -427,7 +449,7 @@ object Resample:
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
     val srcDims = src.spatialDims
-    val out = NArray.ofSize[Double](targDims.product)
+    val out = Array.ofDim[Double](targDims.product)
 
     inline def sample(x: Int, y: Int, z: Int): Double =
       if x >= 0 && x < srcDims(0) &&
@@ -486,18 +508,19 @@ object Resample:
 
     NeuroVol.fromLinear(out, targ, vol.label)
 
+  @scala.annotation.targetName("trilinearNeuroVec")
   def trilinear(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims
-    val out = NArray.ofSize[Double](targDims.product * tLen)
+    val out = Array.ofDim[Double](targDims.product * tLen)
 
     var t = 0
     while t < tLen do
       val volT = vec.volume(t)
       val resT = trilinear(volT, targSpatial)
       val spatialNels = targDims.product
-      NArrayUtil.copyInto(resT.values.data, 0, out, t * spatialNels, spatialNels)
+      copyVolumeIntoLegacy(resT, out, t * spatialNels)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
@@ -508,7 +531,7 @@ object Resample:
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
     val srcDims = src.spatialDims
-    val out = NArrayUtil.ofSize[Double](targDims.product)
+    val out = PrimitiveBuffers.ofSize[Double](targDims.product)
 
     inline def sample(x: Int, y: Int, z: Int): Double =
       if x >= 0 && x < srcDims(0) &&
@@ -571,18 +594,19 @@ object Resample:
 
     NeuroVol.fromLinear(out, targ, vol.label)
 
+  @scala.annotation.targetName("tricubicNeuroVec")
   def tricubic(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims
-    val out = NArrayUtil.ofSize[Double](targDims.product * tLen)
+    val out = PrimitiveBuffers.ofSize[Double](targDims.product * tLen)
 
     var t = 0
     while t < tLen do
       val volT = vec.volume(t)
       val resT = tricubic(volT, targSpatial)
       val spatialNels = targDims.product
-      NArrayUtil.copyInto(resT.values.data, 0, out, t * spatialNels, spatialNels)
+      copyVolumeIntoLegacy(resT, out, t * spatialNels)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
@@ -605,8 +629,7 @@ object SpatialFilters:
 
     val nx = dims(0); val ny = dims(1); val nz = dims(2)
     val spatialNels = dims.product
-    val out = NArrayUtil.fillConst[Double](spatialNels, 0.0)
-    val in = vol.values.data
+    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
 
     var lin = 0
     while lin < spatialNels do
@@ -624,7 +647,7 @@ object SpatialFilters:
           val yy = y + kernel.dy(q)
           val zz = z + kernel.dz(q)
           if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-            sum += kernel.w(q) * in(xx + yy * nx + zz * nx * ny)
+            sum += kernel.w(q) * vol(xx, yy, zz)
           q += 1
         out(lin) = sum
       lin += 1
@@ -656,7 +679,7 @@ object SpatialFilters:
           Array.tabulate(spatialNels)(identity)
         case Some(m) =>
           val active = Mask.indices(m)
-          Array.tabulate(active.length)(i => active(i))
+          Array.tabulate(active.size)(i => active(i))
 
     val sz = 2 * window + 1
     val total = sz * sz * sz
@@ -695,8 +718,7 @@ object SpatialFilters:
         kernel(q) = kernel(q) / sumKernel
         q += 1
 
-    val in = vol.values.data
-    val out = NArrayUtil.fillConst[Double](spatialNels, 0.0)
+    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
     var p = 0
     while p < idx.length do
       val lin = idx(p)
@@ -713,7 +735,7 @@ object SpatialFilters:
         val zz = z + dzArr(q)
         val v =
           if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-            in(xx + yy * nx + zz * nx * ny)
+            vol(xx, yy, zz)
           else 0.0
         sum += kernel(q) * v
         q += 1
@@ -725,11 +747,11 @@ object SpatialFilters:
   def gaussianBlur(vec: NeuroVec[Double], sigma: Double, window: Int): NeuroVec[Double] =
     val tLen = vec.nVolumes
     val spatialNels = vec.space.spatialDims.product
-    val out = NArray.ofSize[Double](spatialNels * tLen)
+    val out = Array.ofDim[Double](spatialNels * tLen)
     var t = 0
     while t < tLen do
       val blurred = gaussianBlur(vec.volume(t), sigma = sigma, window = window)
-      NArrayUtil.copyInto(blurred.values.data, 0, out, t * spatialNels, spatialNels)
+      copyVolumeIntoLegacy(blurred, out, t * spatialNels)
       t += 1
     NeuroVec.fromLinear(out, vec.space, vec.label)
 
@@ -766,15 +788,14 @@ object SpatialFilters:
           Array.tabulate(spatialNels)(identity)
         case Some(m) =>
           val active = Mask.indices(m)
-          Array.tabulate(active.length)(i => active(i))
+          Array.tabulate(active.size)(i => active(i))
 
     var sum = 0.0
     var sumsq = 0.0
     var count = 0
-    val in = vol.values.data
     var p = 0
     while p < idx.length do
-      val v = in(idx(p))
+      val v = vol.linear(idx(p))
       if v.isFinite then
         sum += v
         sumsq += v * v
@@ -821,7 +842,7 @@ object SpatialFilters:
         dy += 1
       dz += 1
 
-    val out = NArrayUtil.fillConst[Double](spatialNels, 0.0)
+    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
 
     p = 0
     while p < idx.length do
@@ -830,7 +851,7 @@ object SpatialFilters:
       val yz = lin / nx
       val y = yz % ny
       val z = yz / ny
-      val centerVal = in(lin)
+      val centerVal = vol.linear(lin)
       if !centerVal.isFinite then
         out(lin) = centerVal
       else
@@ -844,7 +865,7 @@ object SpatialFilters:
 
           val neighVal =
             if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-              in(xx + yy * nx + zz * nx * ny)
+              vol(xx, yy, zz)
             else 0.0
 
           if neighVal.isFinite then
@@ -868,14 +889,14 @@ object SpatialFilters:
   ): NeuroVec[Double] =
     val tLen = vec.nVolumes
     val spatialNels = vec.space.spatialDims.product
-    val out = NArrayUtil.fillConst[Double](spatialNels * tLen, 0.0)
+    val out = PrimitiveBuffers.fillConst[Double](spatialNels * tLen, 0.0)
     var t = 0
     while t < tLen do
       val volT = vec.volume(t)
       val filtered = bilateralFilter(volT, mask, window, spatialSigma, intensitySigma)
       var i = 0
       while i < spatialNels do
-        out(i + t * spatialNels) = filtered.values.data(i)
+        out(i + t * spatialNels) = filtered.linear(i)
         i += 1
       t += 1
     NeuroVec.fromLinear(out, vec.space, vec.label)
@@ -886,6 +907,7 @@ object SpatialFilters:
   def bilateralFilter(vec: NeuroVec[Double], mask: Option[NeuroVol[Boolean]]): NeuroVec[Double] =
     bilateralFilterVec(vec, mask, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
 
+  @scala.annotation.targetName("bilateralFilterNeuroVec")
   def bilateralFilter(
     vec: NeuroVec[Double],
     mask: Option[NeuroVol[Boolean]],
@@ -929,13 +951,12 @@ object SpatialFilters:
           Array.tabulate(spatialNels)(identity)
         case Some(m) =>
           val active = Mask.indices(m)
-          Array.tabulate(active.length)(i => active(i))
+          Array.tabulate(active.size)(i => active(i))
 
-    val in = vec.values.data
-    val out = NArrayUtil.ofSize[Double](in.length)
+    val out = PrimitiveBuffers.ofSize[Double](vec.values.size)
     var i0 = 0
-    while i0 < in.length do
-      out(i0) = in(i0)
+    while i0 < out.length do
+      out(i0) = vec.linear(i0)
       i0 += 1
 
     var sum = 0.0
@@ -946,7 +967,7 @@ object SpatialFilters:
       val lin = spatialIdx(p)
       var t = 0
       while t < tLen do
-        val v = in(lin + t * spatialNels)
+        val v = vec.linear(lin + t * spatialNels)
         if v.isFinite then
           sum += v
           sumsq += v * v
@@ -1018,7 +1039,7 @@ object SpatialFilters:
       var t0 = 0
       while t0 < tLen do
         val centerIdx = lin + t0 * spatialNels
-        val centerVal = in(centerIdx)
+        val centerVal = vec.linear(centerIdx)
         if centerVal.isFinite then
           var valSum = 0.0
           var wSum = 0.0
@@ -1031,7 +1052,7 @@ object SpatialFilters:
               val zz = z0 + dzArr(q)
               if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
                 val neighLin = xx + yy * nx + zz * nx * ny
-                val neighVal = in(neighLin + tt * spatialNels)
+                val neighVal = vec.linear(neighLin + tt * spatialNels)
                 if neighVal.isFinite then
                   val diff = centerVal - neighVal
                   val w = kernel(q) * math.exp(-(diff * diff) / intensityVar)

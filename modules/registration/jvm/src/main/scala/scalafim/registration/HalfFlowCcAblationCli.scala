@@ -154,7 +154,7 @@ object HalfFlowCcAblationCli:
     val moving = Nifti.readHeader(movingPath).space.spatialSpace
     val transform = ItkAffine.read(affinePath).fold(error => fail(error.message), identity)
     val movingGrid = GridSpec.fromSpace(moving)
-    val movingValues = NArrayUtil.ofSize[Double](movingGrid.nVoxels)
+    val movingValues = PrimitiveBuffers.ofSize[Double](movingGrid.nVoxels)
     var index = 0
     while index < movingGrid.nVoxels do
       movingValues(index) = linearWorldValue(worldAt(movingGrid, index))
@@ -172,8 +172,8 @@ object HalfFlowCcAblationCli:
       matrix: DMat
   ): Unit =
     val fixedGrid = GridSpec.fromSpace(fixed)
-    val values = NArrayUtil.ofSize[Double](fixedGrid.nVoxels)
-    val valid = NArrayUtil.ofSize[Double](fixedGrid.nVoxels)
+    val values = PrimitiveBuffers.ofSize[Double](fixedGrid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Double](fixedGrid.nVoxels)
     var index = 0
     while index < fixedGrid.nVoxels do
       val sourceWorld = Affine.applyAffine(matrix, worldAt(fixedGrid, index))
@@ -198,9 +198,11 @@ object HalfFlowCcAblationCli:
     var squared = 0.0
     var maximum = 0.0
     var index = 0
-    while index < expected.values.data.length do
-      if valid.values.data(index) > 0.5 && actual.values.data(index).isFinite then
-        val error = math.abs(expected.values.data(index) - actual.values.data(index))
+    while index < expected.values.size do
+      val expectedValue = expected.linear(index)
+      val actualValue = actual.linear(index)
+      if valid.linear(index) > 0.5 && actualValue.isFinite then
+        val error = math.abs(expectedValue - actualValue)
         squared += error * error
         maximum = math.max(maximum, error)
         count += 1
@@ -241,7 +243,7 @@ object HalfFlowCcAblationCli:
     val movingFrame = Frame[Moving](SpatialDomainId(s"halfflow-cc-$caseId-moving"), movingGrid)
     val fixedMask = binaryMask(fixedMaskVolume)
     val fixed = RegistrationImage
-      .make(fixedFrame, fixedVolume, FieldValidity.Mask(fixedMask))
+      .make(fixedFrame, fixedVolume, FieldValidity.copyMask(fixedMask))
       .fold(error => fail(error.message), identity)
     val moving = RegistrationImage
       .make(movingFrame, movingVolume)
@@ -347,7 +349,7 @@ object HalfFlowCcAblationCli:
     val movingFrame = Frame[Moving](SpatialDomainId(s"halfflow-lm-$caseId-moving"), movingGrid)
     val fixedMask = binaryMask(fixedMaskVolume)
     val fixed = RegistrationImage
-      .make(fixedFrame, fixedVolume, FieldValidity.Mask(fixedMask))
+      .make(fixedFrame, fixedVolume, FieldValidity.copyMask(fixedMask))
       .fold(error => fail(error.message), identity)
     val moving = RegistrationImage.make(movingFrame, movingVolume).fold(error => fail(error.message), identity)
     val supplied = ItkAffine.read(affinePath).fold(error => fail(error.message), identity).antsPullbackRas
@@ -438,18 +440,18 @@ object HalfFlowCcAblationCli:
       fixed: NeuroVol[Double],
       moving: NeuroVol[Double],
       movingMask: NeuroVol[Double],
-      fixedMask: narr.NArray[Boolean],
+      fixedMask: Array[Boolean],
       pull: DensePull[A, B],
       output: Path
   ): EvaluationMetrics =
-    val warped = DenseFieldKernels.pullScalar(
+    val warped = HalfFlowKernels.pullScalar(
       moving,
       pull.sourceCoordinates,
       pull.validity,
       FieldValidity.All,
       outside = 0.0
     )
-    val warpedMask = DenseFieldKernels.pullScalarNearest(
+    val warpedMask = HalfFlowKernels.pullScalarNearest(
       movingMask,
       pull.sourceCoordinates,
       pull.validity,
@@ -459,12 +461,11 @@ object HalfFlowCcAblationCli:
     Nifti.writeVol(output.resolve(s"$name-moving.nii"), warped.values)
     Nifti.writeVol(output.resolve(s"$name-moving-mask.nii"), warpedMask.values)
     val evaluationMask = binaryMask(warpedMask.values)
-    val valid = warped.valid.values.data
     EvaluationMetrics(
       dice(fixedMask, evaluationMask),
-      correlation(fixed, warped.values, valid, None),
-      correlation(fixed, warped.values, valid, Some(fixedMask)),
-      countTrue(valid).toDouble / valid.length.toDouble
+      correlation(fixed, warped.values, warped.valid, None),
+      correlation(fixed, warped.values, warped.valid, Some(fixedMask)),
+      countTrue(warped.valid).toDouble / warped.valid.values.size.toDouble
     )
 
   private def writeAttempts(path: Path, diagnostics: HalfFlowCcDiagnostics): Unit =
@@ -643,15 +644,16 @@ object HalfFlowCcAblationCli:
       exported.movingResidualInverse.inverseThenForward.maximumMm
     ).max
 
-  private def binaryMask(volume: NeuroVol[Double]): narr.NArray[Boolean] =
-    val out = NArrayUtil.ofSize[Boolean](volume.values.data.length)
+  private def binaryMask(volume: NeuroVol[Double]): Array[Boolean] =
+    val out = PrimitiveBuffers.ofSize[Boolean](volume.values.size)
     var index = 0
     while index < out.length do
-      out(index) = volume.values.data(index).isFinite && volume.values.data(index) > 0.5
+      val value = volume.linear(index)
+      out(index) = value.isFinite && value > 0.5
       index += 1
     out
 
-  private def dice(left: narr.NArray[Boolean], right: narr.NArray[Boolean]): Double =
+  private def dice(left: Array[Boolean], right: Array[Boolean]): Double =
     require(left.length == right.length)
     var intersection = 0L
     var total = 0L
@@ -666,19 +668,22 @@ object HalfFlowCcAblationCli:
   private def correlation(
       left: NeuroVol[Double],
       right: NeuroVol[Double],
-      valid: narr.NArray[Boolean],
-      mask: Option[narr.NArray[Boolean]]
+      valid: NeuroVol[Boolean],
+      mask: Option[Array[Boolean]]
   ): Double =
-    require(left.values.data.length == right.values.data.length && valid.length == left.values.data.length)
+    require(
+      left.values.size == right.values.size &&
+        valid.values.size == left.values.size
+    )
     var count = 0L
     var sumLeft = 0.0
     var sumRight = 0.0
     var index = 0
-    while index < valid.length do
-      val include = valid(index) && mask.forall(_(index))
+    while index < valid.values.size do
+      val include = valid.linear(index) && mask.forall(_(index))
       if include then
-        sumLeft += left.values.data(index)
-        sumRight += right.values.data(index)
+        sumLeft += left.linear(index)
+        sumRight += right.linear(index)
         count += 1
       index += 1
     if count < 2 then Double.NaN
@@ -689,11 +694,11 @@ object HalfFlowCcAblationCli:
       var squareLeft = 0.0
       var squareRight = 0.0
       index = 0
-      while index < valid.length do
-        val include = valid(index) && mask.forall(_(index))
+      while index < valid.values.size do
+        val include = valid.linear(index) && mask.forall(_(index))
         if include then
-          val dl = left.values.data(index) - meanLeft
-          val dr = right.values.data(index) - meanRight
+          val dl = left.linear(index) - meanLeft
+          val dr = right.linear(index) - meanRight
           cross += dl * dr
           squareLeft += dl * dl
           squareRight += dr * dr
@@ -701,11 +706,11 @@ object HalfFlowCcAblationCli:
       val denominator = math.sqrt(squareLeft * squareRight)
       if denominator > 0.0 then cross / denominator else Double.NaN
 
-  private def countTrue(values: narr.NArray[Boolean]): Long =
+  private def countTrue(values: NeuroVol[Boolean]): Long =
     var count = 0L
     var index = 0
-    while index < values.length do
-      if values(index) then count += 1
+    while index < values.values.size do
+      if values.linear(index) then count += 1
       index += 1
     count
 

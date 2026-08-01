@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, Indexing, NArrayUtil, NDArray, NeuroSpace, Resample, SpatialDomainId, SpatialPoint}
+import ravel.NDArray as RavelArray
+import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId, SpatialPoint}
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
 
 class NonlinearPullbackSuite extends munit.FunSuite:
@@ -33,20 +34,23 @@ class NonlinearPullbackSuite extends munit.FunSuite:
     require(sourceX.length == 4)
     val grid = GridSpec.identity(Vector(4, 1, 1))
     val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
-        val component = i / grid.nVoxels
-        val coordinate = Indexing.indexToGrid3D(grid.shape, i % grid.nVoxels)
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (x, y, z, component) =>
         component match
-          case 0 => sourceX(coordinate.x)
-          case 1 => coordinate.y.toDouble
-          case _ => coordinate.z.toDouble
+          case 0 => sourceX(x)
+          case 1 => y.toDouble
+          case _ => z.toDouble
       }
     imageValue(
       DenseFieldMorphism.coordinates(
         SpatialDomainId(source.id.value),
         SpatialDomainId(target.id.value),
         grid,
-        NDArray(data, grid.dims :+ 3),
+        data,
         interpolation = Resample.Method.Linear
       )
     )

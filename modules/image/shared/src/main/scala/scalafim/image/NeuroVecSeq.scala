@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 import scala.reflect.ClassTag
 
 final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
@@ -46,8 +45,8 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
     val (v, localT) = locate(t)
     v.linear(linSpatial + localT * spatialNels)
 
-  def linear(indices: NArray[Int])(using ClassTag[A]): NArray[A] =
-    val out = NArray.ofSize[A](indices.length)
+  def linear(indices: Array[Int])(using ClassTag[A]): Array[A] =
+    val out = Array.ofDim[A](indices.length)
     var p = 0
     while p < indices.length do
       out(p) = linear(indices(p))

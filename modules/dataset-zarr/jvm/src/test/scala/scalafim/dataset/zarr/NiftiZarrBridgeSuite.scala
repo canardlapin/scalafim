@@ -6,7 +6,7 @@ import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.fmri.fit.{FitChunkPlan, FitChunkingStrategy}
 import scalafim.image.io.Nifti
-import scalafim.zarr.{IndexLocation, JvmCodecRuntime, JvmFileStore, JvmGzip, PhysicalLayout, Shape}
+import zarr4s.{IndexLocation, JvmCodecRuntime, JvmFileStore, JvmGzip, PhysicalLayout, Shape}
 
 class NiftiZarrBridgeSuite extends munit.FunSuite:
   private def assertRegularSeconds(
@@ -50,7 +50,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     assertEquals(header.slope, 0.25)
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)
-    assertEquals(Nifti.readVec(exported).values.data(23), 3.75)
+    assertEquals(Nifti.readVec(exported).linear(23), 3.75)
     BidsProjectLoader.loadStrict(fixture.exportRoot).fold(error => fail(error.message), _ => ())
 
   test("importer rejects unsupported scalar types before publishing"):
@@ -61,7 +61,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     buffer.putShort(70, 512.toShort)
     buffer.putShort(72, 16.toShort)
     Files.write(source, bytes)
-    val chunk = scalafim.zarr.Shape(1L, 1L, 2L, 2L).fold(error => fail(error.message), identity)
+    val chunk = zarr4s.Shape(1L, 1L, 2L, 2L).fold(error => fail(error.message), identity)
     val target = root.resolve("revision.zarr")
     assert(NiftiCanonicalImporter.publish(
       source,

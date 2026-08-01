@@ -29,7 +29,7 @@ import scalafim.response.{
   TimeDomain,
   UnitId
 }
-import scalafim.zarr.{
+import zarr4s.{
   ArrayDescriptor,
   ZarrMetadata,
   ZarrNodeMetadata,

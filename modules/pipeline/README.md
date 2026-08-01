@@ -18,7 +18,7 @@ putting workflow concerns into lower computational modules.
 
 `ExecutionPlan` validates node identity, dependency existence, and artifact
 kinds in pipeline vocabulary, then delegates successful layer construction to
-`scalafim.graph.Dag`. Repeated expression dependencies are collapsed at that
+`graph4s.algorithms.Dag`. Repeated expression dependencies are collapsed at that
 boundary. Cycle errors preserve the existing insertion-ordered set of all
 blocked nodes, including descendants and self-dependencies, rather than leaking
 only a generic cycle witness.

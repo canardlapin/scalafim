@@ -1,10 +1,12 @@
 package scalafim.image
 
+import ravel.{NDArray, Shape}
+
 class MaskedLocalStatsSuite extends munit.FunSuite:
   test("integral-window normalization matches an independent masked loop"):
     val grid = GridSpec.identity(Vector(7, 6, 5))
-    val source = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val mask = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val source = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val mask = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     var z = 0
     while z < grid.shape.z do
       var y = 0
@@ -18,12 +20,12 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
         y += 1
       z += 1
 
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     val workspace = MaskedLocalStatsWorkspace(grid)
     val summary = MaskedLocalStats.normalizeChannelsInto(
       source,
-      FieldValidity.Mask(mask),
+      FieldValidity.Mask(NDArray.fromSeq(Shape(mask.length), mask)),
       grid,
       Vector(VoxelWindowRadius(1, 1, 1)),
       Vector(0.2),
@@ -41,13 +43,13 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
 
   test("minimum nominal window fraction rejects undersupported boundaries"):
     val grid = GridSpec.identity(Vector(5, 5, 5))
-    val source = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val source = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var index = 0
     while index < source.length do
       source(index) = 7.0
       index += 1
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     MaskedLocalStats.normalizeChannelsInto(
       source,
       FieldValidity.All,
@@ -74,7 +76,7 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
       )
     )
     val grid = GridSpec(Vector(6, 6, 6), affine)
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var z = 0
     while z < 6 do
       var y = 0
@@ -87,13 +89,13 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
           x += 1
         y += 1
       z += 1
-    val sourceValid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val sourceValid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     var index = 0
     while index < sourceValid.length do
       sourceValid(index) = true
       index += 1
-    val gradients = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
-    val gradientValid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val gradients = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
+    val gradientValid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     MaskedLocalStats.physicalGradientChannelsInto(
       values,
       sourceValid,
@@ -110,8 +112,8 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
     assertEqualsDouble(gradients(center + 2 * grid.nVoxels), 0.5, 1e-12)
 
   private def naiveNormalized(
-      source: narr.NArray[Double],
-      mask: narr.NArray[Boolean],
+      source: Array[Double],
+      mask: Array[Boolean],
       grid: GridSpec,
       cx: Int,
       cy: Int,
@@ -141,7 +143,7 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
     val center = cx + grid.shape.x * cy + grid.shape.x * grid.shape.y * cz
     (source(center) - mean) / math.sqrt(variance + epsilon * epsilon)
 
-  private def countTrue(values: narr.NArray[Boolean]): Int =
+  private def countTrue(values: Array[Boolean]): Int =
     var count = 0
     var index = 0
     while index < values.length do

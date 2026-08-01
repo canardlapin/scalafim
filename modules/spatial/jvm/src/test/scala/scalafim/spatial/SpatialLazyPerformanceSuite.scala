@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, NArrayUtil, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
 import scalafim.spatial.io.{NiftiFieldSource, NiftiFieldSourceStats}
 
 import java.lang.management.ManagementFactory
@@ -146,7 +146,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
       )
     )
     val fileValues =
-      NArrayUtil.tabulate[Double](rows * observations) { index =>
+      PrimitiveBuffers.tabulate[Double](rows * observations) { index =>
         val frame = index / rows
         val row = index % rows
         frame.toDouble * 1000.0 + row.toDouble

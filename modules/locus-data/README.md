@@ -1,13 +1,17 @@
 # locus-data
 
-`locus-data` adds data and quotient constructions over the dependency-free
-finite spaces in `locus-kernel`. It cross-compiles for the JVM and Scala.js and
-depends only on `locus-kernel` plus Cats Kernel.
+`locus-data` provides ScalaFIM-specific quotient and aggregation operations
+over finite domains from standalone
+[`locus4s`](https://github.com/canardlapin/locus4s). It cross-compiles for the
+JVM and Scala.js and depends on the locus4s core and data projects plus Cats
+Kernel.
 
-The module owns:
+The module provides:
 
-- pure random-access `IndexedField[S, A]` values and restricted `Section`
-  views;
+- `DomainFactory`, which restores a live, unforgeable domain owner from a
+  persistent domain id and size;
+- compatibility aliases for locus4s `IndexedField[S, A]` values and restricted
+  `Section` views;
 - supported `Parcellation[X, P]` quotients with typed parcel points;
 - `Searchlight[S]` center policy over a locus endorelation;
 - one-pass `foldMapBy` aggregation using
@@ -30,21 +34,22 @@ IEEE floating-point addition is not claimed to be exactly associative.
 
 ## Minimal example
 
-The phantom type identifies one semantic domain, while the runtime key protects
-existential and deserialized boundaries:
+Each restored domain has an abstract owner type. Callers cannot choose or
+forge that type, while the persistent id supports serialization and semantic
+comparison:
 
 ```scala
 import scalafim.locus.*
 
-sealed trait NativeVoxels
-sealed trait Parcels
+val voxelDomain =
+  DomainFactory.restore(SpaceKey.unsafe("sub-01:native:bold"), 6).toOption.get
+type NativeVoxels = voxelDomain.S
+val voxels: FiniteSpace[NativeVoxels] = voxelDomain.space
 
-val voxels =
-  FiniteSpace.make[NativeVoxels](SpaceKey.unsafe("sub-01:native:bold"), 6)
-    .toOption.get
-val parcelAxis =
-  FiniteSpace.make[Parcels](SpaceKey.unsafe("atlas:demo:parcels"), 2)
-    .toOption.get
+val parcelDomain =
+  DomainFactory.restore(SpaceKey.unsafe("atlas:demo:parcels"), 2).toOption.get
+type Parcels = parcelDomain.S
+val parcelAxis: FiniteSpace[Parcels] = parcelDomain.space
 
 val left =
   Region.fromOrdinals(voxels, Vector(0, 1, 2)).toOption.get

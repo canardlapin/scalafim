@@ -1,6 +1,6 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.NDArray as RavelArray
 import spire.std.int.given
 
 class DomainValiditySuite extends munit.FunSuite:
@@ -15,20 +15,23 @@ class DomainValiditySuite extends munit.FunSuite:
   }
 
   test("cluster volumes reject non-positive assignments") {
-    val mask = Mask.fromIndices(space, NArray[Int](0, 1))
+    val mask = Mask.fromIndices(space, Array[Int](0, 1))
 
     val error = intercept[IllegalArgumentException] {
-      ClusteredNeuroVol(mask, NArray[Int](1, 0))
+      ClusteredNeuroVol(mask, Array[Int](1, 0))
     }
     assert(error.getMessage.contains("cluster id must be positive"), clue = "")
   }
 
   test("cluster vectors cannot disagree with their cluster volume") {
-    val mask = Mask.fromIndices(space, NArray[Int](0, 1))
-    val clusters = ClusteredNeuroVol(mask, NArray[Int](1, 2))
+    val mask = Mask.fromIndices(space, Array[Int](0, 1))
+    val clusters = ClusteredNeuroVol(mask, Array[Int](1, 2))
     val timeSpace = space.addDim(2, Some(Axis.Time))
-    val series = NDArray[Int](NArray[Int](10, 20, 30, 40), Vector(2, 2))
-    val inconsistentMap = NArrayUtil.fillConst[Int](space.spatialDims.product, 0)
+    val series =
+      RavelArray.tabulate[Int](2, 2) { (time, cluster) =>
+        10 + 10 * (time + 2 * cluster)
+      }
+    val inconsistentMap = PrimitiveBuffers.fillConst[Int](space.spatialDims.product, 0)
     inconsistentMap(0) = 2
     inconsistentMap(1) = 1
 
@@ -44,7 +47,7 @@ class DomainValiditySuite extends munit.FunSuite:
       ROIVolWindow.make(
         space,
         coords,
-        NArray[Int](1, 1),
+        Array[Int](1, 1),
         centerIndex = 1,
         parentIndex = 0
       )
@@ -57,7 +60,7 @@ class DomainValiditySuite extends munit.FunSuite:
   }
 
   test("checked searchlight extraction reports an excluded center") {
-    val values = NArrayUtil.fillConst[Int](space.spatialDims.product, 1)
+    val values = PrimitiveBuffers.fillConst[Int](space.spatialDims.product, 1)
     values(4) = 0
     val volume = NeuroVol.fromLinear[Int](values, space)
     val center =
@@ -83,7 +86,7 @@ class DomainValiditySuite extends munit.FunSuite:
   }
 
   test("checked searchlight policies produce valid mask-bound windows") {
-    val mask = Mask.fromIndices(space, NArray[Int](0, 4))
+    val mask = Mask.fromIndices(space, Array[Int](0, 4))
     val radius =
       SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)
 
@@ -104,7 +107,7 @@ class DomainValiditySuite extends munit.FunSuite:
   }
 
   test("checked searchlight policies reject centers outside constrained support") {
-    val mask = Mask.fromIndices(space, NArray[Int](0))
+    val mask = Mask.fromIndices(space, Array[Int](0))
     val radius =
       SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)
 

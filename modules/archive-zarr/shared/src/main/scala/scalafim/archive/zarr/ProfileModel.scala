@@ -1,6 +1,6 @@
 package scalafim.archive.zarr
 
-import scalafim.zarr.*
+import zarr4s.*
 
 enum NeuroArchiveZarrError:
   case Kernel(cause: ZarrError)

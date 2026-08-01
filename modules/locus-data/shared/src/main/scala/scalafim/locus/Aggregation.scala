@@ -10,19 +10,13 @@ object Aggregation:
       contribution: A => M
   )(using monoid: CommutativeMonoid[M]): Either[SpaceMismatch, IndexedField[P, M]] =
     if !parcellation.ambient.sameIdentityAs(field.space) then
-      Left:
-        SpaceMismatch(
-          parcellation.ambient.key,
-          parcellation.ambient.size,
-          field.space.key,
-          field.space.size
-        )
+      Left(mismatch(parcellation.ambient, field.space))
     else
       val accumulated =
         scala.collection.mutable.ArrayBuffer.fill(parcellation.parcels.size)(monoid.empty)
       var ambientOrdinal = 0
       while ambientOrdinal < parcellation.ambient.size do
-        val ambientPoint = parcellation.ambient.point(ambientOrdinal).get
+        val ambientPoint = parcellation.ambient.pointOption(ambientOrdinal).get
         parcellation.parcelAt(ambientPoint).foreach: parcel =>
           val next = contribution(field(ambientPoint))
           accumulated(parcel.ordinal) =

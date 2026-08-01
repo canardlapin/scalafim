@@ -5,7 +5,7 @@ import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.{DMat, NArrayUtil, NeuroSpace, NeuroVol}
+import scalafim.image.{DMat, PrimitiveBuffers, NeuroSpace, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -122,7 +122,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
         else Array(1.0, 0.0, 1.0, 1.0)
       Nifti.writeVol(
         func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-        NeuroVol.fromLinear(NArrayUtil.fromArray(maskValues), space, s"mask-$run")
+        NeuroVol.fromLinear(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
       )
       write(
         func.resolve(s"${prefix}_desc-confounds_timeseries.tsv"),

@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 import scala.reflect.ClassTag
 
 enum SlicePlanError:
@@ -46,7 +45,7 @@ object SliceSampling:
 /** Row-major, top-to-bottom slice values paired with their world-space grid. */
 final case class SliceImage[A] private (
   grid: SliceGrid,
-  values: NArray[A]
+  values: Array[A]
 ):
   require(values.length == grid.dimensions.pixelCount, "slice value count must match grid dimensions")
 
@@ -59,7 +58,7 @@ final case class SliceImage[A] private (
     values(row * dimensions.width + column)
 
 object SliceImage:
-  private[image] def unsafe[A](grid: SliceGrid, values: NArray[A]): SliceImage[A] =
+  private[image] def unsafe[A](grid: SliceGrid, values: Array[A]): SliceImage[A] =
     new SliceImage(grid, values)
 
 /** Reusable affine stepping plan from a finite slice grid into one source volume.
@@ -86,7 +85,7 @@ final case class SlicePlan private (
       Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
     else
       val dimensions = grid.dimensions
-      val out = NArrayUtil.ofSize[A](dimensions.pixelCount)
+      val out = PrimitiveBuffers.ofSize[A](dimensions.pixelCount)
       val sampleCursor = sampling.cursor(volume, source.shape)
       var row = 0
       var rowX = firstVoxel.x
@@ -151,7 +150,7 @@ final class MappedSlicePlan private (
     if volume.volumeSpace != source then
       Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
     else
-      val out = NArrayUtil.ofSize[A](grid.dimensions.pixelCount)
+      val out = PrimitiveBuffers.ofSize[A](grid.dimensions.pixelCount)
       val sampleCursor = sampling.cursor(volume, source.shape)
       var index = 0
       while index < out.length do

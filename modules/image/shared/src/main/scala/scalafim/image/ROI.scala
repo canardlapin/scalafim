@@ -1,7 +1,11 @@
 package scalafim.image
 
-import narr.NArray
-import scala.reflect.ClassTag
+import ravel.Array1
+import ravel.DType
+import ravel.DType.given
+import ravel.NDArray
+import ravel.Shape
+import scala.annotation.targetName
 
 enum VoxelRoiError:
   case InvalidCoordinate(position: Int, error: GeometryError)
@@ -45,13 +49,14 @@ final case class ROICoords(coords: Vector[Vector[Int]]):
   def asSelectionIn(space: VolumeSpace): Either[VoxelRoiError, VoxelSelection] =
     VoxelSelection.fromROICoords(space, this)
 
-  def linearIndices(space: NeuroSpace): NArray[Int] =
-    val out = narr.NArray.ofSize[Int](coords.length)
-    var i = 0
-    while i < coords.length do
-      out(i) = Indexing.gridToIndex3D(space.spatialDims, coords(i)(0), coords(i)(1), coords(i)(2))
-      i += 1
-    out
+  def linearIndices(space: NeuroSpace): Array1[Int] =
+    NDArray.tabulate[Int](coords.length): i =>
+      Indexing.gridToIndex3D(
+        space.spatialDims,
+        coords(i)(0),
+        coords(i)(1),
+        coords(i)(2)
+      )
 
 final class VoxelRoi private (
     val space: VolumeSpace,
@@ -67,7 +72,7 @@ final class VoxelRoi private (
   def rawCoords: Vector[Vector[Int]] =
     values.map(_.toVector)
 
-  def linearIndices: NArray[Int] =
+  def linearIndices: Array1[Int] =
     indexSet.indices
 
   def linearIndexSet: VoxelIndexSet =
@@ -96,7 +101,7 @@ final class VoxelRoi private (
 
 object VoxelRoi:
   def make(space: VolumeSpace, coords: Vector[VoxelCoord]): Either[VoxelRoiError, VoxelRoi] =
-    val linear = narr.NArray.ofSize[Int](coords.length)
+    val linear = Array.ofDim[Int](coords.length)
     val shape = space.shape
     var i = 0
     var error = Option.empty[VoxelRoiError]
@@ -109,28 +114,35 @@ object VoxelRoi:
     error match
       case Some(err) => Left(err)
       case None =>
-        VoxelIndexSet.makeUnique(space, linear)
+        VoxelIndexSet.makeUnique(
+          space,
+          NDArray.fromSeq(Shape(linear.length), linear)
+        )
           .left.map(VoxelRoiError.InvalidIndexSet.apply)
           .map(indexSet => new VoxelRoi(space, coords, indexSet))
 
+  @targetName("makeFromNeuroSpace")
   def make(space: NeuroSpace, coords: Vector[VoxelCoord]): Either[VoxelRoiError, VoxelRoi] =
     VolumeSpace.fromSpatialPart(space).left.map(VoxelRoiError.InvalidSpace.apply).flatMap(make(_, coords))
 
   def fromRaw(space: VolumeSpace, coords: Vector[Vector[Int]]): Either[VoxelRoiError, VoxelRoi] =
     parseCoords(coords).flatMap(make(space, _))
 
+  @targetName("fromRawNeuroSpace")
   def fromRaw(space: NeuroSpace, coords: Vector[Vector[Int]]): Either[VoxelRoiError, VoxelRoi] =
     VolumeSpace.fromSpatialPart(space).left.map(VoxelRoiError.InvalidSpace.apply).flatMap(fromRaw(_, coords))
 
   def apply(space: VolumeSpace, coords: Vector[VoxelCoord]): VoxelRoi =
     make(space, coords).fold(err => throw new IllegalArgumentException(err.message), roi => roi)
 
+  @targetName("applyNeuroSpace")
   def apply(space: NeuroSpace, coords: Vector[VoxelCoord]): VoxelRoi =
     make(space, coords).fold(err => throw new IllegalArgumentException(err.message), roi => roi)
 
   def fromRawUnsafe(space: VolumeSpace, coords: Vector[Vector[Int]]): VoxelRoi =
     fromRaw(space, coords).fold(err => throw new IllegalArgumentException(err.message), roi => roi)
 
+  @targetName("fromRawUnsafeNeuroSpace")
   def fromRawUnsafe(space: NeuroSpace, coords: Vector[Vector[Int]]): VoxelRoi =
     fromRaw(space, coords).fold(err => throw new IllegalArgumentException(err.message), roi => roi)
 
@@ -155,7 +167,7 @@ object VoxelRoi:
 final class ROIVol[A] private[scalafim] (
     val space: NeuroSpace,
     private val checkedRoi: VoxelRoi,
-    private[scalafim] val data: NArray[A]
+    private[scalafim] val data: Array1[A]
 ):
   def size: Int = checkedRoi.size
 
@@ -168,10 +180,11 @@ final class ROIVol[A] private[scalafim] (
   def roi: VoxelRoi =
     checkedRoi
 
-  def toNArray(using ClassTag[A]): NArray[A] =
-    NArray.copy(data)
+  /** Immutable Ravel storage in ROI order. */
+  def values: Array1[A] =
+    data
 
-  def linearIndices: NArray[Int] =
+  def linearIndices: Array1[Int] =
     checkedRoi.linearIndices
 
   def realCoords: Vector[Vector[Double]] =
@@ -184,13 +197,21 @@ final class ROIVol[A] private[scalafim] (
     SparseNeuroVol.fromIndexSet(data, checkedRoi.linearIndexSet, space, label = "")
 
 object ROICoords:
-  def apply(coords: NArray[Int]): ROICoords =
-    require(coords.length % 3 == 0, "flat coords must be multiple of 3")
-    val n = coords.length / 3
+  def apply(coords: Array1[Int]): ROICoords =
+    require(coords.size % 3 == 0, "flat coords must be multiple of 3")
+    val n = coords.size / 3
     val vec = Vector.tabulate(n) { i =>
       Vector(coords(3 * i), coords(3 * i + 1), coords(3 * i + 2))
     }
     ROICoords(vec)
+
+  def apply(coords: Array[Int]): ROICoords =
+    require(coords.length % 3 == 0, "flat coords must be multiple of 3")
+    val n = coords.length / 3
+    ROICoords(
+      Vector.tabulate(n): i =>
+        Vector(coords(3 * i), coords(3 * i + 1), coords(3 * i + 2))
+    )
 
   def fromRoi(roi: VoxelRoi): ROICoords =
     roi.toROICoords
@@ -198,15 +219,21 @@ object ROICoords:
   def make(space: VolumeSpace, coords: Vector[Vector[Int]]): Either[VoxelRoiError, ROICoords] =
     VoxelRoi.fromRaw(space, coords).map(_.toROICoords)
 
+  @targetName("makeFromNeuroSpace")
   def make(space: NeuroSpace, coords: Vector[Vector[Int]]): Either[VoxelRoiError, ROICoords] =
     VoxelRoi.fromRaw(space, coords).map(_.toROICoords)
 
 object ROIVol:
+  private def ravelValues[A](
+      data: Array[A]
+  )(using DType[A]): Array1[A] =
+    NDArray.fromSeq(Shape(data.length), data)
+
   def make[A](
       space: NeuroSpace,
       coords: Vector[Vector[Int]],
-      data: NArray[A]
-  )(using ClassTag[A]): Either[ROIVolError, ROIVol[A]] =
+      data: Array1[A]
+  ): Either[ROIVolError, ROIVol[A]] =
     VoxelRoi
       .fromRaw(space, coords)
       .left
@@ -215,9 +242,16 @@ object ROIVol:
 
   def make[A](
       space: NeuroSpace,
+      coords: Vector[Vector[Int]],
+      data: Array[A]
+  )(using DType[A]): Either[ROIVolError, ROIVol[A]] =
+    make(space, coords, ravelValues(data))
+
+  def make[A](
+      space: NeuroSpace,
       roi: VoxelRoi,
-      data: NArray[A]
-  )(using ClassTag[A]): Either[ROIVolError, ROIVol[A]] =
+      data: Array1[A]
+  ): Either[ROIVolError, ROIVol[A]] =
     for
       volumeSpace <- VolumeSpace
         .fromSpatialPart(space)
@@ -228,29 +262,50 @@ object ROIVol:
         .left
         .map(ROIVolError.Grid.apply)
       _ <-
-        if data.length == roi.size then Right(())
-        else Left(ROIVolError.DataLengthMismatch(roi.size, data.length))
-    yield new ROIVol(space, roi, NArray.copy(data))
+        if data.size == roi.size then Right(())
+        else Left(ROIVolError.DataLengthMismatch(roi.size, data.size))
+    yield new ROIVol(space, roi, data)
+
+  def make[A](
+      space: NeuroSpace,
+      roi: VoxelRoi,
+      data: Array[A]
+  )(using DType[A]): Either[ROIVolError, ROIVol[A]] =
+    make(space, roi, ravelValues(data))
 
   def apply[A](
       space: NeuroSpace,
       coords: Vector[Vector[Int]],
-      data: NArray[A]
-  )(using ClassTag[A]): ROIVol[A] =
+      data: Array1[A]
+  ): ROIVol[A] =
     make(space, coords, data)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def apply[A](
       space: NeuroSpace,
+      coords: Vector[Vector[Int]],
+      data: Array[A]
+  )(using DType[A]): ROIVol[A] =
+    apply(space, coords, ravelValues(data))
+
+  def apply[A](
+      space: NeuroSpace,
       roi: VoxelRoi,
-      data: NArray[A]
-  )(using ClassTag[A]): ROIVol[A] =
+      data: Array1[A]
+  ): ROIVol[A] =
     make(space, roi, data)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def apply[A](
+      space: NeuroSpace,
+      roi: VoxelRoi,
+      data: Array[A]
+  )(using DType[A]): ROIVol[A] =
+    apply(space, roi, ravelValues(data))
 
   private[scalafim] def unsafeOwned[A](
       space: NeuroSpace,
       roi: VoxelRoi,
-      data: NArray[A]
+      data: Array1[A]
   ): ROIVol[A] =
     new ROIVol(space, roi, data)

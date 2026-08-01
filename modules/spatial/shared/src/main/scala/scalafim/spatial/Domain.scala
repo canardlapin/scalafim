@@ -2,11 +2,13 @@ package scalafim.spatial
 
 import scalafim.image.{GridCompatibility, NeuroSpace, NeuroVol}
 import scalafim.locus.{
+  DomainFactory,
   FiniteSpace,
   Region as LocusRegion,
   Selection as LocusSelection,
   SpaceKey,
-  SpaceMismatch
+  SpaceMismatch,
+  mismatch
 }
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
 
@@ -173,51 +175,35 @@ trait DomainLocus:
   final def regionDemand(
       region: LocusRegion[S]
   ): Either[SpaceMismatch, FieldDemand] =
-    if space.sameIdentityAs(region.space) then
+    if space.sameRuntimeOwnerAs(region.space) then
       Right(FieldDemand.roi(region.ordinalsInDomainOrder.toVector))
     else
-      Left(
-        SpaceMismatch(
-          space.key,
-          space.size,
-          region.space.key,
-          region.space.size
-        )
-      )
+      Left(mismatch(space, region.space))
 
   final def selectionDemand(
       selection: LocusSelection[S]
   ): Either[SpaceMismatch, FieldDemand] =
-    if space.sameIdentityAs(selection.space) then
+    if space.sameRuntimeOwnerAs(selection.space) then
       Right(FieldDemand.rows(selection.ordinals.toVector))
     else
-      Left(
-        SpaceMismatch(
-          space.key,
-          space.size,
-          selection.space.key,
-          selection.space.size
-        )
-      )
+      Left(mismatch(space, selection.space))
 
 object DomainLocus:
   private[spatial] def make(
       requestedId: DomainId,
       size: Int
   ): DomainLocus =
-    final class Element
-    val finite =
-      FiniteSpace
-        .make[Element](
-          SpaceKey.unsafe(s"scalafim:spatial:${requestedId.value}"),
-          size
-        )
-        .toOption
-        .get
+    val resolution =
+      DomainFactory.unsafeRestore(
+        // `size` belongs in the key: a domain key must determine the domain it
+        // names, and the registry now canonicalizes on it.
+        SpaceKey.unsafe(s"scalafim:spatial:${requestedId.value}:$size"),
+        size
+      )
     new DomainLocus:
-      type S = Element
+      type S = resolution.S
       val domainId: DomainId = requestedId
-      val space: FiniteSpace[Element] = finite
+      val space: FiniteSpace[S] = resolution.space
 
 final case class DomainPart private (
   name: PartName,

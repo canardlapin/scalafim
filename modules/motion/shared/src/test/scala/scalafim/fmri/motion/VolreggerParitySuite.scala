@@ -1,22 +1,22 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, NArrayUtil}
+import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
 
 class VolreggerParitySuite extends munit.FunSuite:
 
   private val fixture = VolreggerFixtures.coreFixture
 
   private def run1x1x1(values: Vector[Double]): NeuroVec[Double] =
-    val data = NArrayUtil.tabulate[Double](values.length)(values)
+    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
     NeuroVec.fromLinear(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "volregger-fixture")
 
   private def lineRun(values: Vector[Double]): NeuroVec[Double] =
-    val data = NArrayUtil.tabulate[Double](values.length)(values)
+    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
     NeuroVec.fromLinear(data, NeuroSpace(Vector(values.length, 1, 1)).addDim(1, Some(Axis.Time)), "volregger-apply-fixture")
 
   private def allMask(space: NeuroSpace): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
 
   private def identityEstimatorRun(): NeuroVec[Double] =
     val dims = fixture.doubles("estimator_identity_dims").map(_.toInt)
@@ -27,7 +27,7 @@ class VolreggerParitySuite extends munit.FunSuite:
     val nxyz = nx * ny * nz
     val frame = Array.fill(nxyz)(0.0)
     frame((nx / 2) + nx * ((ny / 2) + ny * (nz / 2))) = 5.0
-    val data = NArrayUtil.ofSize[Double](nxyz * nt)
+    val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     var t = 0
     while t < nt do
       var i = 0
@@ -72,7 +72,7 @@ class VolreggerParitySuite extends munit.FunSuite:
         val srcI = math.min(nx - 1, i + 1)
         fixed(srcI + nx * (j + ny * k))
       }
-    val data = NArrayUtil.ofSize[Double](nxyz * nt)
+    val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     var i = 0
     while i < nxyz do
       data(i) = fixed(i)
@@ -87,7 +87,7 @@ class VolreggerParitySuite extends munit.FunSuite:
     val nz = dims(2)
     val nxyz = nx * ny * nz
     val data =
-      NArrayUtil.tabulate[Boolean](nxyz) { lin =>
+      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
         val i = lin % nx
         val j = (lin / nx) % ny
         val k = lin / (nx * ny)
@@ -218,8 +218,8 @@ class VolreggerParitySuite extends munit.FunSuite:
     val clamp = MotionApplier.apply(run, trace).fold(err => fail(err.message), identity)
     val zero = MotionApplier.apply(run, trace, zeroControl).fold(err => fail(err.message), identity)
 
-    assertVectorClose(clamp.values.data.toVector, fixture.doubles("apply_edge_plus_x_clamp"), 1e-12)
-    assertVectorClose(zero.values.data.toVector, fixture.doubles("apply_edge_plus_x_zero"), 1e-12)
+    assertVectorClose(clamp.copyLegacyLinear.toVector, fixture.doubles("apply_edge_plus_x_clamp"), 1e-12)
+    assertVectorClose(zero.copyLegacyLinear.toVector, fixture.doubles("apply_edge_plus_x_zero"), 1e-12)
   }
 
   test("identity estimator fixture matches generated volregger zero-motion contract") {

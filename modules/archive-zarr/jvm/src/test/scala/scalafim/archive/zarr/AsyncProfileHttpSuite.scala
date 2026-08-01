@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
-import scalafim.zarr.*
+import zarr4s.*
 
 class AsyncProfileHttpSuite extends munit.FunSuite:
   private def zvalue[A](result: Either[ZarrError, A]): A = result match

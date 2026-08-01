@@ -18,12 +18,14 @@ object Octree:
       return Left(ThresholdError.InvalidArgument("minPriorMass", "must be finite and non-negative"))
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
-    if !field.activeSpace.sameIdentityAs(parent.membership.space) then
+    if !field.activeSpace.sameRuntimeOwnerAs(parent.membership.space) then
       return Left(
         ThresholdError.ShapeMismatch(
           "field/region support",
-          field.activeSpace.key.value,
-          parent.membership.space.key.value
+          // `descriptor` rather than `id`: a region's domain need not be
+          // persistent, and this is a diagnostic either way.
+          field.activeSpace.descriptor.toString,
+          parent.membership.space.descriptor.toString
         )
       )
     if parent.bbox.isSingleton then return Right(Vector.empty)

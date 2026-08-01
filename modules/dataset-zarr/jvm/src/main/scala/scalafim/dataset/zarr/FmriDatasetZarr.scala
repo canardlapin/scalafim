@@ -3,8 +3,8 @@ package scalafim.dataset.zarr
 import java.nio.file.Path
 import scalafim.archive.zarr.NeuroArchiveZarr
 import scalafim.dataset.*
-import scalafim.image.{Mask, NArrayUtil}
-import scalafim.zarr.{JvmCodecRuntime, JvmFileStore, ReadLimits}
+import scalafim.image.{Mask, PrimitiveBuffers}
+import zarr4s.{JvmCodecRuntime, JvmFileStore, ReadLimits}
 
 final case class ZarrDatasetOpenOptions(
     precision: SamplingPrecisionPolicy = SamplingPrecisionPolicy.Default,
@@ -55,7 +55,7 @@ private def maskFor(source: ZarrResponseBlockSource): Mask.MaskVol =
   else
     Mask.fromIndices(
       source.shape.space,
-      NArrayUtil.fromArray(source.voxelDomain.indices.toArray),
+      PrimitiveBuffers.fromArray(source.voxelDomain.indices.toArray),
       label = "neuroarchive-zarr-domain"
     )
 

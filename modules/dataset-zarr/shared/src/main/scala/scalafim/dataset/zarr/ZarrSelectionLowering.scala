@@ -1,7 +1,7 @@
 package scalafim.dataset.zarr
 
 import scalafim.dataset.*
-import scalafim.zarr.*
+import zarr4s.*
 
 object ZarrSelectionLowering:
   /** Lowers ordered dataset selections into canonical BOLD [t,z,y,x] points.

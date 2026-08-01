@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 class NeighborhoodCcSuite extends munit.FunSuite:
@@ -196,13 +195,13 @@ class NeighborhoodCcSuite extends munit.FunSuite:
     assert(frozen.supportDiagnostics.minimumFraction < frozen.supportDiagnostics.maximumFraction)
 
   private def assertDerivativeLadder(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       config: NeighborhoodCcConfig,
-      fixedDirection: NArray[Double],
-      movingDirection: NArray[Double],
+      fixedDirection: Array[Double],
+      movingDirection: Array[Double],
       required: Double
   ): Unit =
     val frozen = NeighborhoodCc
@@ -237,9 +236,9 @@ class NeighborhoodCcSuite extends munit.FunSuite:
     )
 
   private def evaluate(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       config: NeighborhoodCcConfig
   ): NeighborhoodCcEvaluation =
@@ -250,8 +249,8 @@ class NeighborhoodCcSuite extends munit.FunSuite:
 
   /** Independent O(N r^3) overlapping-window oracle. */
   private def naiveValue(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights
   ): Double =
     val grid = frozen.grid
@@ -323,7 +322,7 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       )
       .fold(error => fail(error.message), identity)
 
-  private def smoothSignal(grid: GridSpec, phase: Double): NArray[Double] =
+  private def smoothSignal(grid: GridSpec, phase: Double): Array[Double] =
     values(grid): index =>
       val x = index % grid.shape.x
       val yz = index / grid.shape.x
@@ -332,7 +331,7 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       4.0 + 0.8 * math.sin(0.31 * x + phase) + 0.5 * math.cos(0.27 * y - 0.3 * phase) +
         0.35 * math.sin(0.21 * z + 0.11 * x - phase)
 
-  private def smoothDirection(grid: GridSpec, phase: Double): NArray[Double] =
+  private def smoothDirection(grid: GridSpec, phase: Double): Array[Double] =
     values(grid): index =>
       val x = index % grid.shape.x
       val yz = index / grid.shape.x
@@ -340,8 +339,8 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       val z = yz / grid.shape.y
       0.2 * math.sin(0.17 * x + 0.13 * y + phase) - 0.15 * math.cos(0.19 * z - phase)
 
-  private def velocityDirection(grid: GridSpec): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
+  private def velocityDirection(grid: GridSpec): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
     var index = 0
     while index < grid.nVoxels do
       val x = index % grid.shape.x
@@ -354,14 +353,14 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       index += 1
     result
 
-  private def spatialGradient(source: NArray[Double], grid: GridSpec): NArray[Double] =
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+  private def spatialGradient(source: Array[Double], grid: GridSpec): Array[Double] =
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     var index = 0
     while index < valid.length do
       valid(index) = true
       index += 1
-    val destination = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
-    val destinationValid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val destination = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
+    val destinationValid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     MaskedLocalStats.physicalGradientChannelsInto(
       source,
       valid,
@@ -377,30 +376,30 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       fixed: NeuroVol[Double],
       moving: NeuroVol[Double],
       frame: Frame[Work],
-      direction: NArray[Double],
+      direction: Array[Double],
       scale: Double,
       frozen: FrozenCcWeights
   ): Double =
-    val values = NArrayUtil.ofSize[Double](direction.length)
+    val values = PrimitiveBuffers.ofSize[Double](direction.length)
     var index = 0
     while index < values.length do
       values(index) = scale * direction(index)
       index += 1
-    val field = DenseVectorField(
+    val field = DenseVectorField.fromLegacyPlanar(
       frame.grid,
-      NDArray(values, frame.grid.dims :+ 3),
+      values,
       DenseVectorFieldKind.Displacement
     )
     val velocity = Velocity.make(frame, field).fold(error => fail(error.message), identity)
     val flow = PairedScalingAndSquaring.expHalfPair(velocity).fold(error => fail(error.message), identity)
-    val warpedFixed = DenseFieldKernels.pullScalar(
+    val warpedFixed = HalfFlowKernels.pullScalar(
       fixed,
       flow.pair.forward.sourceCoordinates,
       flow.pair.forward.validity,
       FieldValidity.All,
       0.0
     )
-    val warpedMoving = DenseFieldKernels.pullScalar(
+    val warpedMoving = HalfFlowKernels.pullScalar(
       moving,
       flow.pair.backward.sourceCoordinates,
       flow.pair.backward.validity,
@@ -408,35 +407,35 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       0.0
     )
     NeighborhoodCc
-      .value(warpedFixed.values.values.data, warpedMoving.values.values.data, frozen)
+      .value(warpedFixed.values.copyLegacyLinear, warpedMoving.values.copyLegacyLinear, frozen)
       .fold(error => fail(error.message), identity)
 
-  private def affineIntensity(source: NArray[Double], gain: Double, offset: Double): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](source.length)
+  private def affineIntensity(source: Array[Double], gain: Double, offset: Double): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](source.length)
     var index = 0
     while index < source.length do
       result(index) = gain * source(index) + offset
       index += 1
     result
 
-  private def addScaled(source: NArray[Double], direction: NArray[Double], scale: Double): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](source.length)
+  private def addScaled(source: Array[Double], direction: Array[Double], scale: Double): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](source.length)
     var index = 0
     while index < source.length do
       result(index) = source(index) + scale * direction(index)
       index += 1
     result
 
-  private def values(grid: GridSpec)(f: Int => Double): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](grid.nVoxels)
+  private def values(grid: GridSpec)(f: Int => Double): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var index = 0
     while index < result.length do
       result(index) = f(index)
       index += 1
     result
 
-  private def copyOf(source: NArray[Double]): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](source.length)
+  private def copyOf(source: Array[Double]): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](source.length)
     var index = 0
     while index < source.length do
       result(index) = source(index)
@@ -445,7 +444,7 @@ class NeighborhoodCcSuite extends munit.FunSuite:
 
   private def fillBlock(
       grid: GridSpec,
-      destination: NArray[Double],
+      destination: Array[Double],
       x0: Int,
       x1: Int,
       y0: Int,
@@ -469,7 +468,7 @@ class NeighborhoodCcSuite extends munit.FunSuite:
     val mixed = ((index.toLong + 1L) * 1103515245L + seed.toLong * 12345L) & 0x7fffffffL
     mixed.toDouble / 2147483647.0
 
-  private def dot(left: NArray[Double], right: NArray[Double]): Double =
+  private def dot(left: Array[Double], right: Array[Double]): Double =
     var total = 0.0
     var index = 0
     while index < left.length do
@@ -481,8 +480,8 @@ class NeighborhoodCcSuite extends munit.FunSuite:
     math.abs(left - right) / math.max(1e-12, math.max(math.abs(left), math.abs(right)))
 
   private def assertArrayClose(
-      actual: NArray[Double],
-      expected: NArray[Double],
+      actual: Array[Double],
+      expected: Array[Double],
       absolute: Double,
       relative: Double
   ): Unit =
@@ -493,8 +492,8 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       index += 1
 
   private def assertScaledGradient(
-      original: NArray[Double],
-      transformed: NArray[Double],
+      original: Array[Double],
+      transformed: Array[Double],
       gain: Double,
       tolerance: Double
   ): Unit =
@@ -503,7 +502,7 @@ class NeighborhoodCcSuite extends munit.FunSuite:
       assertEqualsDouble(transformed(index), original(index) / gain, tolerance)
       index += 1
 
-  private def assertAllZero(values: NArray[Double]): Unit =
+  private def assertAllZero(values: Array[Double]): Unit =
     var index = 0
     while index < values.length do
       assertEqualsDouble(values(index), 0.0, 0.0)

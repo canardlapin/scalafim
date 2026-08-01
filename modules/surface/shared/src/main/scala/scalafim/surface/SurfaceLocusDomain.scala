@@ -1,6 +1,5 @@
 package scalafim.surface
 
-import narr.nArray2NArr
 import scalafim.locus.*
 
 enum SurfaceLocusError:
@@ -22,15 +21,13 @@ enum SurfaceIdentityBasis:
   case Semantic
   case StructuralCompatibility
 
-sealed trait StructuralSurfaceVertex
-
 final case class SurfaceRoiView[S, A](
     region: Region[S],
     values: Section[S, Option[A]],
     annotation: String
 )
 
-final class SurfaceLocusDomain[S] private (
+final class SurfaceLocusDomain[S] private[surface] (
     val geometry: SurfaceGeometry,
     val meshDomain: SurfaceMeshDomain,
     val finiteSpace: FiniteSpace[S],
@@ -74,7 +71,8 @@ final class SurfaceLocusDomain[S] private (
           .toMap
       val optional =
         IndexedField.tabulate(finiteSpace)(point => valuesByVertex.get(point.ordinal))
-      val section = optional.restrict(region).toOption.get
+      // Total: `region` shares this field's `S`, so there is no mismatch case.
+      val section = optional.restrict(region)
       SurfaceRoiView(region, section, surfaceRoi.label)
 
   def parcellation(
@@ -93,40 +91,28 @@ final class SurfaceLocusDomain[S] private (
         Left(SurfaceLocusError.TopologyMismatch(meshDomain.display, actualDomain.display))
 
 object SurfaceLocusDomain:
-  def semantic[S](
+  def semantic(
       semanticKey: SpaceKey,
       geometry: SurfaceGeometry
-  ): Either[SurfaceLocusError, SurfaceLocusDomain[S]] =
-    SurfaceMeshDomain
-      .from(geometry)
-      .left
-      .map(SurfaceLocusError.InvalidMeshDomain.apply)
-      .map: meshDomain =>
-        val key =
-          SpaceKey.unsafe(s"${semanticKey.value}:surface:${meshDomain.display}")
-        new SurfaceLocusDomain(
-          geometry,
-          meshDomain,
-          FiniteSpace.make[S](key, geometry.vertexCount).toOption.get,
-          SurfaceIdentityBasis.Semantic
-        )
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    SomeSurfaceLocusDomain.make(
+      semanticKey,
+      geometry,
+      SurfaceIdentityBasis.Semantic
+    )
 
   def structuralCompatibility(
       geometry: SurfaceGeometry
-  ): Either[SurfaceLocusError, SurfaceLocusDomain[StructuralSurfaceVertex]] =
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
     SurfaceMeshDomain
       .from(geometry)
       .left
       .map(SurfaceLocusError.InvalidMeshDomain.apply)
       .map: meshDomain =>
-        val key = SpaceKey.unsafe(s"scalafim:surface:structural:${meshDomain.display}")
-        new SurfaceLocusDomain(
+        SomeSurfaceLocusDomain.fromKey(
+          SpaceKey.unsafe(s"scalafim:surface:structural:${meshDomain.display}"),
           geometry,
           meshDomain,
-          FiniteSpace
-            .make[StructuralSurfaceVertex](key, geometry.vertexCount)
-            .toOption
-            .get,
           SurfaceIdentityBasis.StructuralCompatibility
         )
 
@@ -139,11 +125,39 @@ object SomeSurfaceLocusDomain:
       semanticKey: SpaceKey,
       geometry: SurfaceGeometry
   ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
-    final class SurfaceVertex
-    SurfaceLocusDomain.semantic[SurfaceVertex](semanticKey, geometry).map: domain =>
-      new SomeSurfaceLocusDomain:
-        type S = SurfaceVertex
-        val value: SurfaceLocusDomain[SurfaceVertex] = domain
+    make(semanticKey, geometry, SurfaceIdentityBasis.Semantic)
+
+  private[surface] def make(
+      semanticKey: SpaceKey,
+      geometry: SurfaceGeometry,
+      basis: SurfaceIdentityBasis
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    SurfaceMeshDomain
+      .from(geometry)
+      .left
+      .map(SurfaceLocusError.InvalidMeshDomain.apply)
+      .map: meshDomain =>
+        val key =
+          SpaceKey.unsafe(s"${semanticKey.value}:surface:${meshDomain.display}")
+        fromKey(key, geometry, meshDomain, basis)
+
+  private[surface] def fromKey(
+      key: SpaceKey,
+      geometry: SurfaceGeometry,
+      meshDomain: SurfaceMeshDomain,
+      basis: SurfaceIdentityBasis
+  ): SomeSurfaceLocusDomain =
+    val resolution =
+      DomainFactory.unsafeRestore(key, geometry.vertexCount)
+    new SomeSurfaceLocusDomain:
+      type S = resolution.S
+      val value: SurfaceLocusDomain[S] =
+        new SurfaceLocusDomain(
+          geometry,
+          meshDomain,
+          resolution.space,
+          basis
+        )
 
 trait SurfaceParcellation[S]:
   type P
@@ -159,20 +173,19 @@ object SurfaceParcellation:
       ignoredLabels: Set[Int]
   ): Either[SurfaceLocusError, SurfaceParcellation[S]] =
     domain.checkGeometry(labeled.geometry).map: _ =>
-      final class Parcel
       val labels =
         Vector.tabulate(labeled.labels.length)(labeled.labels.apply)
           .filterNot(ignoredLabels)
           .distinct
           .sorted
-      val parcelSpace =
-        FiniteSpace
-          .make[Parcel](
-            SpaceKey.unsafe(s"${domain.finiteSpace.key.value}:parcels:${labels.mkString(",")}"),
-            labels.length
-          )
-          .toOption
-          .get
+      val parcelResolution =
+        DomainFactory.unsafeRestore(
+          SpaceKey.unsafe(
+            s"${domain.finiteSpace.id.value}:parcels:${labels.mkString(",")}"
+          ),
+          labels.length
+        )
+      val parcelSpace = parcelResolution.space
       val ordinalByLabel = labels.zipWithIndex.toMap
       val assignments = Array.fill[Option[Int]](domain.finiteSpace.size)(None)
       var row = 0
@@ -192,8 +205,8 @@ object SurfaceParcellation:
       val order =
         Selection.fromOrdinals(parcelSpace, labels.indices).toOption.get
       new SurfaceParcellation[S]:
-        type P = Parcel
-        val parcellation: Parcellation[S, Parcel] = quotient
-        val labelIds: IndexedField[Parcel, Int] = ids
-        val metadata: IndexedField[Parcel, Option[LabelInfo]] = info
-        val displayOrder: Selection[Parcel] = order
+        type P = parcelResolution.S
+        val parcellation: Parcellation[S, P] = quotient
+        val labelIds: IndexedField[P, Int] = ids
+        val metadata: IndexedField[P, Option[LabelInfo]] = info
+        val displayOrder: Selection[P] = order

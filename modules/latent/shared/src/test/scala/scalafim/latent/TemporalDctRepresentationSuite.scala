@@ -1,7 +1,6 @@
 package scalafim.latent
 
 import cats.instances.either.given
-import narr.NArray
 import scala.compiletime.testing.typeCheckErrors
 import scalafim.response.{
   CalibrationState,
@@ -236,7 +235,7 @@ class TemporalDctRepresentationSuite extends munit.FunSuite:
     val source =
       ResponseBlock
         .copyFromRowMajor(
-          NArray[Double](
+          Array[Double](
             2.0, 4.0, -1.0,
             4.0, 8.0, 3.0,
             7.0, 5.0, 9.0,

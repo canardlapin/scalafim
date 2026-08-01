@@ -9,7 +9,7 @@ import scalafim.archive.{
   RepresentationKey,
   RepresentationMetadata
 }
-import scalafim.zarr.ZarrMetadataRenderer
+import zarr4s.ZarrMetadataRenderer
 
 /** Archive-neutral representation metadata for canonical dense BOLD.
   *

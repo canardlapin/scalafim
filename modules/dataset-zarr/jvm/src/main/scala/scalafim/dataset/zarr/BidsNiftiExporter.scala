@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
 import scalafim.archive.zarr.*
 import bids4s.EntityKey
 import scalafim.image.Affine
-import scalafim.zarr.*
+import zarr4s.*
 
 final case class BidsExportResult(
     nifti: Path,

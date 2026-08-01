@@ -367,7 +367,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
         assertRowsEqual(materialized.loadings.toRows, sharedLoadings.toRows, 1e-12)
         assertEquals(materialized.metadata("basis.id"), basisId.value)
         assertEquals(materialized.metadata("basis.checksum"), sharedBasis.checksum.value)
-        assertEquals(Vector.tabulate(Mask.indices(mask).length)(Mask.indices(mask)(_)), Vector(0, 1, 2))
+        assertEquals(Vector.tabulate(Mask.indices(mask).size)(Mask.indices(mask)(_)), Vector(0, 1, 2))
       case other =>
         fail(s"expected shared-basis archive variant, found $other")
   }

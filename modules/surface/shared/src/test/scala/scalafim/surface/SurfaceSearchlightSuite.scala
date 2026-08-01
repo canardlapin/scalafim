@@ -5,16 +5,16 @@ import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceSearchlightSuite extends munit.FunSuite:
 
-  private final class Vertex
-
-  private val domain =
+  private val packedDomain =
     SurfaceLocusDomain
-      .semantic[Vertex](
+      .semantic(
         SpaceKey.unsafe("subject-01:left-cortex"),
         SurfaceTestFixtures.tetraGeometry
       )
       .toOption
       .get
+  private type Vertex = packedDomain.S
+  private val domain: SurfaceLocusDomain[Vertex] = packedDomain.value
   private val topology = SurfaceTestFixtures.tetraTopology
 
   test("zero-radius metric balls are the identity relation"):
@@ -39,8 +39,6 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
     assert(
       small.searchlight.neighborhoods
         .subsetOf(large.searchlight.neighborhoods)
-        .toOption
-        .get
     )
 
   test("metric-ball composition is contained by the summed radius"):
@@ -51,20 +49,16 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
     val composed =
       radiusOne.searchlight.neighborhoods
         .andThen(radiusOne.searchlight.neighborhoods)
-        .toOption
-        .get
 
     assert(
       composed
         .subsetOf(radiusTwo.searchlight.neighborhoods)
-        .toOption
-        .get
     )
 
   test("metric balls use a closed radius boundary"):
     val searchlight =
       SurfaceSearchlight.metricBalls(domain, topology, 1.0).toOption.get
-    val center = domain.finiteSpace.point(0).get
+    val center = domain.finiteSpace.pointOption(0).get
 
     assertEquals(
       searchlight.searchlight.regionAt(center).get.ordinalsInDomainOrder.toVector,
@@ -80,9 +74,13 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
         .toOption
         .get
 
-    assert(searchlight.searchlight.neighborhoods.row(domain.finiteSpace.point(0).get).isEmpty)
-    assert(searchlight.searchlight.regionAt(domain.finiteSpace.point(0).get).isEmpty)
-    assert(searchlight.searchlight.regionAt(domain.finiteSpace.point(1).get).nonEmpty)
+    assert(
+      searchlight.searchlight.neighborhoods
+        .row(domain.finiteSpace.pointOption(0).get)
+        .isEmpty
+    )
+    assert(searchlight.searchlight.regionAt(domain.finiteSpace.pointOption(0).get).isEmpty)
+    assert(searchlight.searchlight.regionAt(domain.finiteSpace.pointOption(1).get).nonEmpty)
 
   test("equal vertex counts do not excuse a topology mismatch"):
     assert(
@@ -103,12 +101,10 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
         .fromValues(domain.finiteSpace, Vector(10, 20, 30, 40))
         .toOption
         .get
-    val center = domain.finiteSpace.point(1).get
+    val center = domain.finiteSpace.pointOption(1).get
     val section =
       SurfaceSearchlight
         .sectionAt(searchlight.searchlight, center, field)
-        .toOption
-        .flatten
         .get
 
     assertEquals(section.support.ordinalsInDomainOrder.toVector, Vector(0, 1))

@@ -1,5 +1,6 @@
 package scalafim.latent
 
+import scalafim.locus.mapping
 import scalafim.archive.lna.SharedBasisId
 import scalafim.image.NeuroSpace
 import gale.linalg.{DMat, DVec}
@@ -254,15 +255,15 @@ class RadialBasisSuite extends munit.FunSuite:
       locus.activeToFull.mapping.targetOrdinals.toVector,
       Vector(3, 1)
     )
-    val firstActive = order.activeSpace.point(0).get
-    assertEquals(locus.fullPointFor(firstActive).ordinal, 3)
+    val firstActive = locus.order.activeSpace.pointOption(0).get
+    assertEquals(locus.fullPointFor(firstActive).value, 3)
     assertEquals(
-      locus.activePointFor(locus.fullGridSpace.point(1).get).map(_.ordinal),
+      locus.activePointFor(locus.fullGridSpace.pointOption(1).get).map(_.value),
       Right(1)
     )
     assert(
       locus
-        .activePointFor(locus.fullGridSpace.point(2).get)
+        .activePointFor(locus.fullGridSpace.pointOption(2).get)
         .left
         .exists(_.message.contains("not active"))
     )

@@ -1,11 +1,10 @@
 package scalafim.surface
 
-import narr.NArray
-import scalafim.image.NArrayUtil
+import scalafim.image.PrimitiveBuffers
 
 final case class TriangleMesh private (
-  coordinates: NArray[Double],
-  faceIndices: NArray[Int],
+  coordinates: Array[Double],
+  faceIndices: Array[Int],
   vertexCount: Int,
   faceCount: Int
 ):
@@ -100,8 +99,8 @@ object TriangleMesh:
       f += 1
 
     TriangleMesh(
-      coordinates = NArrayUtil.fromArray(coordinates),
-      faceIndices = NArrayUtil.fromArray(faceIndices),
+      coordinates = PrimitiveBuffers.fromArray(coordinates),
+      faceIndices = PrimitiveBuffers.fromArray(faceIndices),
       vertexCount = vertexCount,
       faceCount = faceCount
     )

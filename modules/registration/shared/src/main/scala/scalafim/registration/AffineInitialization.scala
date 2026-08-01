@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 enum AffineInitializationOrigin:
@@ -117,14 +116,13 @@ final case class AffineIso[A, B] private (
     else
       val source = pull.sourceCoordinates
       val n = source.grid.nVoxels
-      val input = source.values.data
-      val output = NArrayUtil.ofSize[Double](3 * n)
+      val output = PrimitiveBuffers.ofSize[Double](3 * n)
       val matrix = transform.matrix
       var index = 0
       while index < n do
-        val x = input(index)
-        val y = input(index + n)
-        val z = input(index + 2 * n)
+        val x = source.linearComponent(index, 0)
+        val y = source.linearComponent(index, 1)
+        val z = source.linearComponent(index, 2)
         output(index) = AffineIso.affineCoordinate(matrix, 0, x, y, z)
         output(index + n) = AffineIso.affineCoordinate(matrix, 1, x, y, z)
         output(index + 2 * n) = AffineIso.affineCoordinate(matrix, 2, x, y, z)
@@ -133,9 +131,9 @@ final case class AffineIso[A, B] private (
         DensePull.unsafe(
           pull.from,
           to,
-          DenseVectorField(
+          DenseVectorField.fromLegacyPlanar(
             source.grid,
-            NDArray(output, source.grid.dims :+ 3),
+            output,
             DenseVectorFieldKind.SourceCoordinates
           ),
           pull.validity
@@ -184,7 +182,7 @@ object AffineIso:
   private def densePull[A, B](from: Frame[A], to: Frame[B], matrix: DMat): DensePull[A, B] =
     val grid = from.grid
     val n = grid.nVoxels
-    val coordinates = NArrayUtil.ofSize[Double](3 * n)
+    val coordinates = PrimitiveBuffers.ofSize[Double](3 * n)
     val sourceWorld = grid.affine
     val nx = grid.shape.x
     val ny = grid.shape.y
@@ -204,7 +202,7 @@ object AffineIso:
     DensePull.unsafe(
       from,
       to,
-      DenseVectorField(grid, NDArray(coordinates, grid.dims :+ 3), DenseVectorFieldKind.SourceCoordinates),
+      DenseVectorField.fromLegacyPlanar(grid, coordinates, DenseVectorFieldKind.SourceCoordinates),
       FieldValidity.All
     )
 
@@ -521,13 +519,13 @@ object AffineInitializer:
     var failure = Option.empty[RegistrationError]
     while index < shrinks.length && failure.isEmpty do
       val shrink = shrinks(index)
-      val result = DenseFieldKernels.buildPyramidLevel(
+      val result = HalfFlowKernels.buildPyramidLevel(
         image.volume,
         shrink,
         config.smoothingSigmaMm,
         image.validity
       )
-      PreparedImage.make(result.values, result.valid.values.data, shrink, config.maximumSamplesPerImage) match
+      PreparedImage.make(result.values, result.valid, shrink, config.maximumSamplesPerImage) match
         case Left(error) => failure = Some(error)
         case Right(level) => levels += level
       index += 1
@@ -550,8 +548,8 @@ private final class AffineSamples(
 private final class PreparedImage private (
     val shrink: Int,
     val grid: GridSpec,
-    val values: NArray[Double],
-    val valid: NArray[Boolean],
+    val volume: NeuroVol[Double],
+    val validity: NeuroVol[Boolean],
     val low: Double,
     val scale: Double,
     val centroid: Array[Double],
@@ -598,8 +596,9 @@ private final class PreparedImage private (
             val weight = wx * wy * wz
             if weight != 0.0 then
               val index = xi + nx * (yi + ny * zi)
-              if !valid(index) || !values(index).isFinite then ok = false
-              else sum += weight * values(index)
+              val value = volume(xi, yi, zi)
+              if !validity(xi, yi, zi) || !value.isFinite then ok = false
+              else sum += weight * value
             dx += 1
           dy += 1
         dz += 1
@@ -617,19 +616,18 @@ private object PreparedImage:
 
   def make(
       volume: NeuroVol[Double],
-      valid: NArray[Boolean],
+      validity: NeuroVol[Boolean],
       shrink: Int,
-      maximumSamples: Int
+    maximumSamples: Int
   ): Either[RegistrationError, PreparedImage] =
     val grid = GridSpec.fromSpace(volume.space)
-    val values = volume.values.data
     var minimum = Double.PositiveInfinity
     var maximum = Double.NegativeInfinity
     var finiteCount = 0
     var index = 0
-    while index < values.length do
-      val value = values(index)
-      if valid(index) && value.isFinite then
+    while index < volume.values.size do
+      val value = volume.linear(index)
+      if validity.linear(index) && value.isFinite then
         minimum = math.min(minimum, value)
         maximum = math.max(maximum, value)
         finiteCount += 1
@@ -640,9 +638,9 @@ private object PreparedImage:
       val histogram = Array.fill(HistogramBins)(0)
       val histogramScale = (HistogramBins - 1).toDouble / (maximum - minimum)
       index = 0
-      while index < values.length do
-        val value = values(index)
-        if valid(index) && value.isFinite then
+      while index < volume.values.size do
+        val value = volume.linear(index)
+        if validity.linear(index) && value.isFinite then
           val bin = math.max(0, math.min(HistogramBins - 1, ((value - minimum) * histogramScale).toInt))
           histogram(bin) += 1
         index += 1
@@ -658,9 +656,10 @@ private object PreparedImage:
         val centroid = Array(0.0, 0.0, 0.0)
         var eligible = 0
         index = 0
-        while index < values.length do
-          val normalized = normalize(values(index), low, normalizationScale)
-          if valid(index) && values(index).isFinite && normalized > 0.05 then
+        while index < volume.values.size do
+          val value = volume.linear(index)
+          val normalized = normalize(value, low, normalizationScale)
+          if validity.linear(index) && value.isFinite && normalized > 0.05 then
             val x = (index % nx).toDouble
             val yz = index / nx
             val y = (yz % ny).toDouble
@@ -690,9 +689,10 @@ private object PreparedImage:
           var foregroundIndex = 0
           var sampleIndex = 0
           index = 0
-          while index < values.length do
-            val normalized = normalize(values(index), low, normalizationScale)
-            if valid(index) && values(index).isFinite && normalized > 0.05 then
+          while index < volume.values.size do
+            val value = volume.linear(index)
+            val normalized = normalize(value, low, normalizationScale)
+            if validity.linear(index) && value.isFinite && normalized > 0.05 then
               if foregroundIndex % stride == 0 then
                 val x = (index % nx).toDouble
                 val yz = index / nx
@@ -718,8 +718,8 @@ private object PreparedImage:
                 new PreparedImage(
                   shrink,
                   grid,
-                  values,
-                  valid,
+                  volume,
+                  validity,
                   low,
                   normalizationScale,
                   centroid,
@@ -775,7 +775,7 @@ private object AffineMatrices:
     )
 
   def fromArray(values: Array[Double]): DMat =
-    val data = NArrayUtil.ofSize[Double](16)
+    val data = PrimitiveBuffers.ofSize[Double](16)
     var index = 0
     while index < 16 do
       data(index) = values(index)
@@ -791,7 +791,7 @@ private object AffineMatrices:
     out
 
   def multiply(left: DMat, right: DMat): DMat =
-    val out = NArrayUtil.ofSize[Double](16)
+    val out = PrimitiveBuffers.ofSize[Double](16)
     var row = 0
     while row < 4 do
       var col = 0
@@ -847,7 +847,7 @@ private object AffineMatrices:
     a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
 
   private def average(left: DMat, right: DMat): DMat =
-    val out = NArrayUtil.ofSize[Double](16)
+    val out = PrimitiveBuffers.ofSize[Double](16)
     var index = 0
     while index < 16 do
       out(index) = 0.5 * (left.data(index) + right.data(index))

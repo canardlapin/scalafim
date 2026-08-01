@@ -2,16 +2,16 @@ package scalafim.latent
 
 import gale.linalg.DVec
 import scalafim.locus.{
+  DomainFactory,
+  FiniteDomain,
   FiniteSpace,
   Injection,
   Point,
   Selection,
   SpaceKey,
-  TotalMap
+  TotalMap,
+  mapping
 }
-
-sealed trait RadialActivePoint
-sealed trait RadialFullGridPoint
 
 opaque type RadialActiveVoxelIndex = Int
 
@@ -39,31 +39,18 @@ object RadialFullGridVoxelIndex:
   extension (index: RadialFullGridVoxelIndex)
     inline def value: Int = index
 
-final case class RadialMaskOrder private (
-    activeToFullGrid: Vector[Int],
-    activeRowsInMaskOrder: Vector[Int]
+sealed abstract class RadialMaskOrder private (
+    val activeToFullGrid: Vector[Int],
+    val activeRowsInMaskOrder: Vector[Int]
 ):
   require(activeToFullGrid.nonEmpty, "radial mask order must be non-empty")
   require(activeRowsInMaskOrder.length == activeToFullGrid.length, "mask-order row count must match active rows")
 
+  type ActivePoint
+  val activeSpace: FiniteDomain[ActivePoint]
+  val maskOrderSelection: Selection[ActivePoint]
+
   def activeCount: Int = activeToFullGrid.length
-
-  lazy val activeSpace: FiniteSpace[RadialActivePoint] =
-    FiniteSpace
-      .make[RadialActivePoint](
-        SpaceKey.unsafe(
-          s"scalafim:latent:radial-active:${activeToFullGrid.mkString(",")}"
-        ),
-        activeCount
-      )
-      .toOption
-      .get
-
-  lazy val maskOrderSelection: Selection[RadialActivePoint] =
-    Selection
-      .fromOrdinals(activeSpace, activeRowsInMaskOrder)
-      .toOption
-      .get
 
   def locus(
       maskSize: Int
@@ -87,7 +74,7 @@ final case class RadialMaskOrder private (
       val values = Array.fill(maskSize)(false)
       val points = domain.activeSelection.points
       while points.hasNext do
-        values(points.next().ordinal) = true
+        values(points.next().value) = true
       values.toVector
     }
 
@@ -129,65 +116,78 @@ final case class RadialMaskOrder private (
         maskRow += 1
       Right(LatentNumerics.vectorFromArray(out))
 
-final class RadialLocusOrder private (
-    val order: RadialMaskOrder,
-    val fullGridSpace: FiniteSpace[RadialFullGridPoint],
-    val activeToFull: Injection[RadialActivePoint, RadialFullGridPoint],
-    val activeSelection: Selection[RadialFullGridPoint],
-    private val fullToActive: Array[Int]
-):
+sealed trait RadialLocusOrder:
+  type ActivePoint
+  type FullGridPoint
+
+  val order: RadialMaskOrder {
+    type ActivePoint = RadialLocusOrder.this.ActivePoint
+  }
+  val fullGridSpace: FiniteSpace[FullGridPoint]
+  val activeToFull: Injection[ActivePoint, FullGridPoint]
+  val activeSelection: Selection[FullGridPoint]
+  private[latent] val fullToActive: Array[Int]
+
   def activePointFor(
-      full: Point[RadialFullGridPoint]
-  ): Either[LatentError, Point[RadialActivePoint]] =
-    val ordinal = fullToActive(full.ordinal)
+      full: Point[FullGridPoint]
+  ): Either[LatentError, Point[ActivePoint]] =
+    val ordinal = fullToActive(full.value)
     if ordinal < 0 then
       Left(
         LatentError.MissingComponent(
-          s"full-grid voxel ${full.ordinal} is not active in radial basis"
+          s"full-grid voxel ${full.value} is not active in radial basis"
         )
       )
     else
-      Right(order.activeSpace.point(ordinal).get)
+      Right(order.activeSpace.pointOption(ordinal).get)
 
   def fullPointFor(
-      active: Point[RadialActivePoint]
-  ): Point[RadialFullGridPoint] =
-    activeToFull.mapping(active)
+      active: Point[ActivePoint]
+  ): Point[FullGridPoint] =
+    // Total: an injection's underlying map is defined on all of its source.
+    activeToFull.mapping.at(active)
 
 object RadialLocusOrder:
   private[latent] def make(
-      order: RadialMaskOrder,
+      requestedOrder: RadialMaskOrder,
       maskSize: Int
   ): RadialLocusOrder =
-    val full =
-      FiniteSpace
-        .make[RadialFullGridPoint](
-          SpaceKey.unsafe(s"scalafim:latent:radial-full:$maskSize"),
-          maskSize
-        )
-        .toOption
-        .get
+    val fullResolution =
+      DomainFactory.unsafeRestore(
+        SpaceKey.unsafe(s"scalafim:latent:radial-full:$maskSize"),
+        maskSize
+      )
+    type Active = requestedOrder.ActivePoint
+    type Full = fullResolution.S
+    val full: FiniteSpace[Full] = fullResolution.space
     val mapping =
       TotalMap
         .fromTargetOrdinals(
-          order.activeSpace,
+          requestedOrder.activeSpace,
           full,
-          order.activeToFullGrid.toArray
+          requestedOrder.activeToFullGrid.toArray
         )
         .toOption
         .get
     val injection = Injection.validate(mapping).toOption.get
     val selection =
       Selection
-        .fromOrdinals(full, order.activeToFullGrid)
+        .fromOrdinals(full, requestedOrder.activeToFullGrid)
         .toOption
         .get
     val reverse = Array.fill(maskSize)(-1)
     var active = 0
-    while active < order.activeToFullGrid.length do
-      reverse(order.activeToFullGrid(active)) = active
+    while active < requestedOrder.activeToFullGrid.length do
+      reverse(requestedOrder.activeToFullGrid(active)) = active
       active += 1
-    new RadialLocusOrder(order, full, injection, selection, reverse)
+    new RadialLocusOrder:
+      type ActivePoint = Active
+      type FullGridPoint = Full
+      val order: requestedOrder.type = requestedOrder
+      val fullGridSpace: FiniteSpace[Full] = full
+      val activeToFull: Injection[Active, Full] = injection
+      val activeSelection: Selection[Full] = selection
+      private[latent] val fullToActive: Array[Int] = reverse
 
 object RadialMaskOrder:
   def fromActiveIndices(indices: Vector[Int]): Either[RadialBasisError, RadialMaskOrder] =
@@ -207,7 +207,7 @@ object RadialMaskOrder:
         case Some(err) =>
           Left(err)
         case None =>
-          Right(RadialMaskOrder(indices, indices.zipWithIndex.sortBy(_._1).map(_._2)))
+          Right(make(indices, indices.zipWithIndex.sortBy(_._1).map(_._2)))
 
   def checked(
       indices: Vector[Int],
@@ -217,6 +217,26 @@ object RadialMaskOrder:
       order <- fromActiveIndices(indices)
       _ <- order.validateMaskSize(maskSize)
     yield order
+
+  private def make(
+      activeToFullGrid: Vector[Int],
+      activeRowsInMaskOrder: Vector[Int]
+  ): RadialMaskOrder =
+    // Derived from the full radial grid; ephemeral rather than keyed by its own
+    // index list, which for a whole-brain mask was a megabyte-scale string.
+    val activeDomain =
+      DomainFactory.unsafeEphemeral("radial-active", activeToFullGrid.length)
+    type Active = activeDomain.S
+    val active: FiniteDomain[Active] = activeDomain.value
+    val selection =
+      Selection
+        .fromOrdinals(active, activeRowsInMaskOrder)
+        .toOption
+        .get
+    new RadialMaskOrder(activeToFullGrid, activeRowsInMaskOrder):
+      type ActivePoint = Active
+      val activeSpace: FiniteDomain[Active] = active
+      val maskOrderSelection: Selection[Active] = selection
 
 enum RadialVoxelSelection:
   case AllActive

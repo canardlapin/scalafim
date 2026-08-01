@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 
 enum BoxBoundary:
   /** Sum only samples inside the finite lattice. */
@@ -8,8 +7,8 @@ enum BoxBoundary:
 
 final class BoxSumWorkspace private (
     val grid: GridSpec,
-    private[image] val first: NArray[Double],
-    private[image] val second: NArray[Double]
+    private[image] val first: Array[Double],
+    private[image] val second: Array[Double]
 ):
   val ownedScalarBuffers: Int = 2
 
@@ -17,17 +16,17 @@ object BoxSumWorkspace:
   def apply(grid: GridSpec): BoxSumWorkspace =
     new BoxSumWorkspace(
       grid,
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Double](grid.nVoxels)
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     )
 
 /** Allocation-controlled rectangular sums on a finite 3D lattice. */
 object BoxSum3D:
   def sumInto(
-      source: NArray[Double],
+      source: Array[Double],
       grid: GridSpec,
       radius: VoxelWindowRadius,
-      destination: NArray[Double],
+      destination: Array[Double],
       workspace: BoxSumWorkspace,
       boundary: BoxBoundary = BoxBoundary.Truncate
   ): Unit =
@@ -41,11 +40,11 @@ object BoxSum3D:
         sumZ(workspace.second, destination, grid.shape, radius.z)
 
   /** Independent O(N r^3) oracle for tests and tiny diagnostic volumes. */
-  private[image] def referenceInto(
-      source: NArray[Double],
+  private[scalafim] def referenceInto(
+      source: Array[Double],
       grid: GridSpec,
       radius: VoxelWindowRadius,
-      destination: NArray[Double],
+      destination: Array[Double],
       boundary: BoxBoundary = BoxBoundary.Truncate
   ): Unit =
     require(source.length >= grid.nVoxels, "reference box-sum source is too small")
@@ -85,8 +84,8 @@ object BoxSum3D:
           z += 1
 
   private def sumX(
-      source: NArray[Double],
-      destination: NArray[Double],
+      source: Array[Double],
+      destination: Array[Double],
       dims: SpatialDims,
       radius: Int
   ): Unit =
@@ -117,8 +116,8 @@ object BoxSum3D:
       z += 1
 
   private def sumY(
-      source: NArray[Double],
-      destination: NArray[Double],
+      source: Array[Double],
+      destination: Array[Double],
       dims: SpatialDims,
       radius: Int
   ): Unit =
@@ -149,8 +148,8 @@ object BoxSum3D:
       z += 1
 
   private def sumZ(
-      source: NArray[Double],
-      destination: NArray[Double],
+      source: Array[Double],
+      destination: Array[Double],
       dims: SpatialDims,
       radius: Int
   ): Unit =
@@ -206,10 +205,10 @@ object GaussianReduction:
 
 final class GaussianWorkspace private (
     val grid: GridSpec,
-    private[image] val numeratorA: NArray[Double],
-    private[image] val numeratorB: NArray[Double],
-    private[image] val denominatorA: NArray[Double],
-    private[image] val denominatorB: NArray[Double]
+    private[image] val numeratorA: Array[Double],
+    private[image] val numeratorB: Array[Double],
+    private[image] val denominatorA: Array[Double],
+    private[image] val denominatorB: Array[Double]
 ):
   private var sigmaX = Double.NaN
   private var sigmaY = Double.NaN
@@ -243,10 +242,10 @@ object GaussianWorkspace:
   def apply(grid: GridSpec): GaussianWorkspace =
     new GaussianWorkspace(
       grid,
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Double](grid.nVoxels)
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     )
 
   private def makeWeights(sigmaVox: Double): Array[Double] =
@@ -271,10 +270,10 @@ object GaussianWorkspace:
 /** Physical-scale separable Gaussian smoothing on caller-owned buffers. */
 object Gaussian3D:
   def smoothInto(
-      source: NArray[Double],
+      source: Array[Double],
       grid: GridSpec,
       sigmaMm: Double,
-      destination: NArray[Double],
+      destination: Array[Double],
       workspace: GaussianWorkspace,
       boundary: GaussianBoundary = GaussianBoundary.Reflect
   ): Unit =
@@ -293,13 +292,13 @@ object Gaussian3D:
     convolveAxis(workspace.numeratorA, destination, grid.shape, wz, 2, boundary)
 
   def normalizedInto(
-      source: NArray[Double],
-      support: NArray[Double],
+      source: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       sigmaMm: Double,
       minimumWeight: Double,
-      destination: NArray[Double],
-      destinationWeight: NArray[Double],
+      destination: Array[Double],
+      destinationWeight: Array[Double],
       workspace: GaussianWorkspace,
       boundary: GaussianBoundary = GaussianBoundary.Reflect
   ): GaussianSummary =
@@ -319,13 +318,13 @@ object Gaussian3D:
     reduction.snapshot
 
   def normalizedInto(
-      source: NArray[Double],
-      support: NArray[Double],
+      source: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       sigmaMm: Double,
       minimumWeight: Double,
-      destination: NArray[Double],
-      destinationWeight: NArray[Double],
+      destination: Array[Double],
+      destinationWeight: Array[Double],
       workspace: GaussianWorkspace,
       boundary: GaussianBoundary,
       reduction: GaussianReduction
@@ -374,10 +373,10 @@ object Gaussian3D:
     reduction.maximumValue = if valid > 0 then maximum else Double.NaN
 
   private def requireInputs(
-      source: NArray[Double],
+      source: Array[Double],
       grid: GridSpec,
       sigmaMm: Double,
-      destination: NArray[Double],
+      destination: Array[Double],
       workspace: GaussianWorkspace
   ): Unit =
     require(workspace.grid == grid, "Gaussian workspace/grid mismatch")
@@ -395,8 +394,8 @@ object Gaussian3D:
     norm
 
   private def convolveAxis(
-      source: NArray[Double],
-      destination: NArray[Double],
+      source: Array[Double],
+      destination: Array[Double],
       dims: SpatialDims,
       weights: Array[Double],
       axis: Int,

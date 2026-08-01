@@ -2,7 +2,7 @@ package scalafim.fmri.workflow
 
 import scalafim.dataset.*
 import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
-import scalafim.image.{Mask, NArrayUtil, NeuroVol}
+import scalafim.image.{Mask, PrimitiveBuffers, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.net.URI
@@ -87,18 +87,18 @@ object FirstLevelUnitSource:
       else
         val indices = Array.newBuilder[Int]
         var voxel = 0
-        while voxel < first.values.data.length do
+        while voxel < first.values.size do
           var keep = true
           var maskIndex = 0
           while maskIndex < masks.length && keep do
-            val value = masks(maskIndex).values.data(voxel)
+            val value = masks(maskIndex).linear(voxel)
             keep = value.isFinite && value != 0.0
             maskIndex += 1
           if keep then indices += voxel
           voxel += 1
         val selected = indices.result()
         if selected.isEmpty then Left(DatasetError.ShapeMismatch("run-mask intersection is empty"))
-        else Right(Mask.fromIndices(first.space, NArrayUtil.fromArray(selected), "run-mask-intersection"))
+        else Right(Mask.fromIndices(first.space, PrimitiveBuffers.fromArray(selected), "run-mask-intersection"))
 
   private def filePath(location: ArtifactLocation): Either[DatasetError, Path] =
     try

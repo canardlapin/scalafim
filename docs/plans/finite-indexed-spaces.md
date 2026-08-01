@@ -8,6 +8,13 @@ Mote epic: `bd-01KYFTRA5BVGEBJN3VKBA256B4`
 
 Planning bead: `bd-01KYFTRWJ168EAKS91N8PM99KR`
 
+Historical note: ScalaFIM implemented this plan, then moved the generic kernel,
+data types, and laws to standalone
+[`locus4s`](https://github.com/canardlapin/locus4s). The body below records the
+original in-repository design. The current build consumes locus4s and retains
+only ScalaFIM-specific adapters and higher-level policies in `locus-data`; see
+[`docs/module-relations.md`](../module-relations.md).
+
 Scope: `locus-kernel`, `locus-data`, `locus-laws`, and migrations across
 `graph`, `image`, `surface`, `atlas`, `spatial`, `dataset`, `mvpa-spatial`,
 `connectivity`, `threshold`, `latent`, and narrow multivar adapters

@@ -7,7 +7,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
-import scalafim.zarr.*
+import zarr4s.*
 
 object JvmNeuroArchivePublisher:
   val writerVersion = "scalafim-archive-zarr-0.1"

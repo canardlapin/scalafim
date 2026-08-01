@@ -1,7 +1,7 @@
 # scalafim-archive-zarr
 
-`archive-zarr` is the strict NeuroArchive Zarr 0.1 profile over the generic
-`zarr` kernel. It refines an ordinary runtime-rank descriptor into canonical
+`archive-zarr` is the strict NeuroArchive Zarr 0.1 profile over the standalone
+`zarr4s` kernel. It refines an ordinary runtime-rank descriptor into canonical
 BOLD only when the array is exactly `[t,z,y,x]` and agrees with typed signal
 calibration, voxel geometry, acquisition timing, BIDS identity, source hashes,
 and an immutable publication receipt.
@@ -47,7 +47,7 @@ plan after execution.
 
 `CanonicalChunkProfile.balancedV01` records the measured canonical layout:
 inner chunks `[16,24,32,32]` inside start-indexed shards `[64,72,96,96]`.
-This choice is profile policy, not a rank-four assumption in `zarr`.
+This choice is profile policy, not a rank-four assumption in `zarr4s`.
 
 NeuroArchive Zarr is a computational profile, not a claim that Zarr is an
 accepted BIDS imaging representation. Compatibility means preserving parsed

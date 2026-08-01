@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scala.util.boundary
 import scala.util.boundary.break
 import scalafim.image.*
@@ -20,7 +19,7 @@ object RegistrationImage:
     val grid = GridSpec.fromSpace(volume.space)
     val validSize = validity match
       case FieldValidity.All => true
-      case FieldValidity.Mask(values) => values.length == grid.nVoxels
+      case FieldValidity.Mask(values) => values.size == grid.nVoxels
     if frame.grid != grid then Left(RegistrationError.GridMismatch("registration image"))
     else if !validSize then Left(RegistrationError.InvalidField("registration image validity"))
     else Right(new RegistrationImage(frame, volume, validity))
@@ -125,13 +124,13 @@ final case class RegistrationResult[F, M](
 private final case class LevelImages[A](image: RegistrationImage[A], sampler: DenseFieldSampler)
 
 private final class WarpBuffer private (
-    val values: NArray[Double],
-    val valid: NArray[Boolean]
+    val values: Array[Double],
+    val valid: Array[Boolean]
 )
 
 private object WarpBuffer:
   def apply(size: Int): WarpBuffer =
-    new WarpBuffer(NArrayUtil.ofSize[Double](size), NArrayUtil.ofSize[Boolean](size))
+    new WarpBuffer(PrimitiveBuffers.ofSize[Double](size), PrimitiveBuffers.ofSize[Boolean](size))
 
 object HalfFlowLm:
   def register[W, F, M](
@@ -153,7 +152,7 @@ object HalfFlowLm:
         val level = plan.levels(levelIndex)
         val workFrame = Frame[W](
           initial.work.domain,
-          DenseFieldKernels.pyramidGrid(initial.work.grid, level.shrink)
+          HalfFlowKernels.pyramidGrid(initial.work.grid, level.shrink)
         )
         val fixedLevel = pyramid(fixed, level, pyramidWorkspace)
         val movingLevel = pyramid(moving, level, pyramidWorkspace)
@@ -444,7 +443,7 @@ object HalfFlowLm:
       fixedBuffer: T1FeatureBuffer[W],
       movingBuffer: T1FeatureBuffer[W]
   ): Either[RegistrationError, (T1FeatureVolume[W], T1FeatureVolume[W])] =
-    DenseFieldKernels.pullScalarAffineInto(
+    HalfFlowKernels.pullScalarAffineInto(
       fixed.image.volume,
       state.fixed.residual.forward.sourceCoordinates,
       state.fixed.affine.transform.matrix,
@@ -455,7 +454,7 @@ object HalfFlowLm:
       fixed.image.validity,
       0.0
     )
-    DenseFieldKernels.pullScalarAffineInto(
+    HalfFlowKernels.pullScalarAffineInto(
       moving.image.volume,
       state.moving.residual.forward.sourceCoordinates,
       state.moving.affine.transform.matrix,
@@ -470,7 +469,7 @@ object HalfFlowLm:
       fixedFeatures <- T1Features.computeInto(
         state.work,
         fixedWarp.values,
-        FieldValidity.Mask(fixedWarp.valid),
+        FieldValidity.copyMask(fixedWarp.valid),
         config,
         workspace,
         fixedBuffer
@@ -478,7 +477,7 @@ object HalfFlowLm:
       movingFeatures <- T1Features.computeInto(
         state.work,
         movingWarp.values,
-        FieldValidity.Mask(movingWarp.valid),
+        FieldValidity.copyMask(movingWarp.valid),
         config,
         workspace,
         movingBuffer
@@ -490,15 +489,15 @@ object HalfFlowLm:
       level: HalfFlowLevel,
       workspace: Option[PyramidWorkspace]
   ): Either[RegistrationError, LevelImages[A]] =
-    val targetGrid = DenseFieldKernels.pyramidGrid(source.frame.grid, level.shrink)
+    val targetGrid = HalfFlowKernels.pyramidGrid(source.frame.grid, level.shrink)
     if targetGrid == source.frame.grid && level.pyramidSigmaMm <= 1e-12 then
       Right(LevelImages(source, DenseFieldSampler(source.frame.grid)))
     else
       val scratch = workspace.getOrElse:
         throw new IllegalStateException("pyramid workspace missing for resampled level")
-      val values = NArrayUtil.ofSize[Double](targetGrid.nVoxels)
-      val valid = NArrayUtil.ofSize[Boolean](targetGrid.nVoxels)
-      DenseFieldKernels.buildPyramidLevelInto(
+      val values = PrimitiveBuffers.ofSize[Double](targetGrid.nVoxels)
+      val valid = PrimitiveBuffers.ofSize[Boolean](targetGrid.nVoxels)
+      HalfFlowKernels.buildPyramidLevelInto(
         source.volume,
         targetGrid,
         level.pyramidSigmaMm,
@@ -509,7 +508,7 @@ object HalfFlowLm:
       )
       val frame = Frame[A](source.frame.domain, targetGrid)
       val volume = NeuroVol.fromLinear[Double](values, targetGrid.toNeuroSpace, source.volume.label)
-      RegistrationImage.make(frame, volume, FieldValidity.Mask(valid)).map: image =>
+      RegistrationImage.make(frame, volume, FieldValidity.copyMask(valid)).map: image =>
         LevelImages(image, DenseFieldSampler(targetGrid))
 
   private def attemptDiagnostics[S, A](

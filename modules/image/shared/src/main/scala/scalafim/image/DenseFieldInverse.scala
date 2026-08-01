@@ -1,5 +1,9 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
+
 final case class DenseFieldInverseOptions(
     maxIterations: Int = 32,
     tolerance: Double = 1e-6,
@@ -25,31 +29,49 @@ object DenseFieldInverse:
   ): Either[MorphismError, DenseFieldInverseResult] =
     validateOptions(options).flatMap { _ =>
       val query = inverseGrid.worldPoints.map(WorldPoint.fromSpatialPoint)
-      val data = NArrayUtil.ofSize[Double](inverseGrid.nVoxels * 3)
       var maxResidual = 0.0
       var maxIterationsUsed = 0
       var converged = true
-      var i = 0
-      while i < query.length do
-        val targetPoint = query(i)
-        val solved = solvePoint(morphism, targetPoint, options)
-        maxResidual = math.max(maxResidual, solved.residual)
-        maxIterationsUsed = math.max(maxIterationsUsed, solved.iterations)
-        if !solved.converged then converged = false
-        val solvedPoint = solved.point.toVector
-        val target = targetPoint.toVector
-        var component = 0
-        while component < 3 do
-          data(component * inverseGrid.nVoxels + i) = solvedPoint(component) - target(component)
-          component += 1
-        i += 1
+      val shape =
+        Shape(
+          inverseGrid.shape.x,
+          inverseGrid.shape.y,
+          inverseGrid.shape.z,
+          3
+        )
+      val data =
+        RavelArray.build[Double, Rank[4]](shape) { builder =>
+          var i = 0
+          while i < query.length do
+            val targetPoint = query(i)
+            val solved = solvePoint(morphism, targetPoint, options)
+            maxResidual = math.max(maxResidual, solved.residual)
+            maxIterationsUsed = math.max(maxIterationsUsed, solved.iterations)
+            if !solved.converged then converged = false
+            val solvedPoint = solved.point.toVector
+            val target = targetPoint.toVector
+            val x = i % inverseGrid.shape.x
+            val yz = i / inverseGrid.shape.x
+            val y = yz % inverseGrid.shape.y
+            val z = yz / inverseGrid.shape.y
+            val base =
+              ((x * inverseGrid.shape.y + y) * inverseGrid.shape.z + z) * 3
+            var component = 0
+            while component < 3 do
+              builder.writeLinear(
+                base + component,
+                solvedPoint(component) - target(component)
+              )
+              component += 1
+            i += 1
+        }
 
       DenseFieldMorphism
         .displacement(
           source = morphism.target,
           target = morphism.source,
           grid = inverseGrid,
-          field = NDArray(data, inverseGrid.dims :+ 3),
+          field = data,
           interpolation = options.interpolation,
           cost = morphism.cost + inversePenalty(maxResidual, converged),
           methodTag = s"${morphism.methodTag}:approx-inverse"

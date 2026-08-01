@@ -15,7 +15,7 @@ import scalafim.dataset.DatasetError
 import scalafim.dataset.io.NiftiStagingCache
 import scalafim.image.DMat
 import scalafim.image.io.{Nifti, NiftiHeader}
-import scalafim.zarr.*
+import zarr4s.*
 
 final case class NiftiImportResult(
     manifest: NeuroArchiveManifest,

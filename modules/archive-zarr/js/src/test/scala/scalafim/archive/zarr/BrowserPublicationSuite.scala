@@ -6,7 +6,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Uint8Array
-import scalafim.zarr.*
+import zarr4s.*
 
 class BrowserPublicationSuite extends munit.FunSuite:
   private def zvalue[A](result: Either[ZarrError, A]): A = result match

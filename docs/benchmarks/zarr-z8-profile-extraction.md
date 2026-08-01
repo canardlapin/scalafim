@@ -5,6 +5,21 @@ Date: 2026-07-22
 Status: final JVM/Scala.js, external-oracle, standalone-consumer, and
 repository-wide gates passed against the combined worktree.
 
+## 2026-07-30 ownership update
+
+The generic kernel and optional Blosc/Zstandard provider described in this
+historical receipt now live in the sibling `zarr4s` repository. Their public
+packages are `zarr4s` and `zarr4s.codec.blosc`; their artifacts are
+`zarr4s-core` and `zarr4s-codec-blosc-zstd`. ScalaFIM retains `archive-zarr`,
+`dataset-zarr`, and archived-response interop as neuroimaging-specific
+consumers, pinned to zarr4s commit
+`2a5ba963b151b62c739d1bf5a19d49202bb6ff29`.
+
+The commands and `scalafim.zarr` names below record the 2026-07-22 pre-move
+gate. Current generic-kernel verification runs `sbt checkAll` in the zarr4s
+checkout; current ScalaFIM verification starts at `archiveZarrJVM/test` and
+`archiveZarrJS/test`.
+
 ## Boundary under test
 
 The generic `scalafim-zarr` kernel remains runtime-rank and contains no BIDS,

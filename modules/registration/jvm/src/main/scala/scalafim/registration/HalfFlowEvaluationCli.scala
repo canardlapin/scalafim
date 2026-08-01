@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 import scalafim.image.io.Nifti
 
@@ -68,7 +67,7 @@ object HalfFlowEvaluationCli:
     val movingFrame = Frame[Moving](SpatialDomainId("half-flow-evaluation-moving"), movingGrid)
     val fixedMask = binaryMask(fixedMaskVolume)
     val fixed = RegistrationImage
-      .make(fixedFrame, fixedOriginal, FieldValidity.Mask(fixedMask))
+      .make(fixedFrame, fixedOriginal, FieldValidity.copyMask(fixedMask))
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     val movingImage = RegistrationImage
       .make(movingFrame, movingOriginal)
@@ -89,14 +88,14 @@ object HalfFlowEvaluationCli:
     val nonlinearSeconds = elapsed(nonlinearStarted)
 
     val outputStarted = System.nanoTime()
-    val warpedMoving = DenseFieldKernels.pullScalar(
+    val warpedMoving = HalfFlowKernels.pullScalar(
       movingOriginal,
       registration.transform.forward.sourceCoordinates,
       registration.transform.forward.validity,
       FieldValidity.All,
       outside = 0.0
     )
-    val warpedMask = DenseFieldKernels.pullScalarNearest(
+    val warpedMask = HalfFlowKernels.pullScalarNearest(
       movingMaskVolume,
       registration.transform.forward.sourceCoordinates,
       registration.transform.forward.validity,
@@ -227,15 +226,16 @@ object HalfFlowEvaluationCli:
       )
       .fold(error => throw new IllegalStateException(error.message), identity)
 
-  private def binaryMask(volume: NeuroVol[Double]): NArray[Boolean] =
-    val out = NArrayUtil.ofSize[Boolean](volume.values.data.length)
+  private def binaryMask(volume: NeuroVol[Double]): Array[Boolean] =
+    val out = PrimitiveBuffers.ofSize[Boolean](volume.values.size)
     var index = 0
     while index < out.length do
-      out(index) = volume.values.data(index).isFinite && volume.values.data(index) > 0.5
+      val value = volume.linear(index)
+      out(index) = value.isFinite && value > 0.5
       index += 1
     out
 
-  private def dice(left: NArray[Boolean], right: NArray[Boolean]): Double =
+  private def dice(left: Array[Boolean], right: Array[Boolean]): Double =
     require(left.length == right.length)
     var intersection = 0L
     var leftCount = 0L
@@ -252,21 +252,22 @@ object HalfFlowEvaluationCli:
   private def correlation(
       left: NeuroVol[Double],
       right: NeuroVol[Double],
-      mask: Option[NArray[Boolean]]
+    mask: Option[Array[Boolean]]
   ): Double =
     require(left.space == right.space)
-    val a = left.values.data
-    val b = right.values.data
+    val size = left.values.size
     var count = 0L
     var sumA = 0.0
     var sumB = 0.0
     var index = 0
-    while index < a.length do
-      val active = mask.forall(_(index)) && a(index).isFinite && b(index).isFinite
+    while index < size do
+      val a = left.linear(index)
+      val b = right.linear(index)
+      val active = mask.forall(_(index)) && a.isFinite && b.isFinite
       if active then
         count += 1
-        sumA += a(index)
-        sumB += b(index)
+        sumA += a
+        sumB += b
       index += 1
     val meanA = sumA / count.toDouble
     val meanB = sumB / count.toDouble
@@ -274,11 +275,13 @@ object HalfFlowEvaluationCli:
     var squareA = 0.0
     var squareB = 0.0
     index = 0
-    while index < a.length do
-      val active = mask.forall(_(index)) && a(index).isFinite && b(index).isFinite
+    while index < size do
+      val a = left.linear(index)
+      val b = right.linear(index)
+      val active = mask.forall(_(index)) && a.isFinite && b.isFinite
       if active then
-        val da = a(index) - meanA
-        val db = b(index) - meanB
+        val da = a - meanA
+        val db = b - meanB
         cross += da * db
         squareA += da * da
         squareB += db * db
@@ -287,8 +290,8 @@ object HalfFlowEvaluationCli:
 
   private def centerOfMassDistance(
       grid: GridSpec,
-      left: NArray[Boolean],
-      right: NArray[Boolean]
+      left: Array[Boolean],
+      right: Array[Boolean]
   ): Double =
     val a = centerOfMass(grid, left)
     val b = centerOfMass(grid, right)
@@ -297,7 +300,7 @@ object HalfFlowEvaluationCli:
     val dz = a.z - b.z
     math.sqrt(dx * dx + dy * dy + dz * dz)
 
-  private def centerOfMass(grid: GridSpec, mask: NArray[Boolean]): WorldPoint =
+  private def centerOfMass(grid: GridSpec, mask: Array[Boolean]): WorldPoint =
     var count = 0L
     var sx = 0.0
     var sy = 0.0
@@ -323,10 +326,8 @@ object HalfFlowEvaluationCli:
   private def fieldDifference(
       affine: DenseVectorField,
       result: DenseVectorField,
-      mask: NArray[Boolean]
+      mask: Array[Boolean]
   ): (Double, Double) =
-    val a = affine.values.data
-    val b = result.values.data
     val n = affine.grid.nVoxels
     var sum = 0.0
     var maximum = 0.0
@@ -334,9 +335,15 @@ object HalfFlowEvaluationCli:
     var index = 0
     while index < n do
       if mask(index) then
-        val dx = b(index) - a(index)
-        val dy = b(index + n) - a(index + n)
-        val dz = b(index + 2 * n) - a(index + 2 * n)
+        val dx =
+          result.linearComponent(index, 0) -
+            affine.linearComponent(index, 0)
+        val dy =
+          result.linearComponent(index, 1) -
+            affine.linearComponent(index, 1)
+        val dz =
+          result.linearComponent(index, 2) -
+            affine.linearComponent(index, 2)
         val squared = dx * dx + dy * dy + dz * dz
         sum += squared
         maximum = math.max(maximum, math.sqrt(squared))
@@ -348,15 +355,15 @@ object HalfFlowEvaluationCli:
       midpoint: Midpoint[Work, Fixed, Moving],
       shrink: Int
   ): Unit =
-    val coarseGrid = DenseFieldKernels.pyramidGrid(midpoint.work.grid, shrink)
+    val coarseGrid = HalfFlowKernels.pyramidGrid(midpoint.work.grid, shrink)
     val work = Frame[Work](midpoint.work.domain, coarseGrid)
     val fixed = Frame[Fixed](
       midpoint.fixed.endpoint.domain,
-      DenseFieldKernels.pyramidGrid(midpoint.fixed.endpoint.grid, shrink)
+      HalfFlowKernels.pyramidGrid(midpoint.fixed.endpoint.grid, shrink)
     )
     val moving = Frame[Moving](
       midpoint.moving.endpoint.domain,
-      DenseFieldKernels.pyramidGrid(midpoint.moving.endpoint.grid, shrink)
+      HalfFlowKernels.pyramidGrid(midpoint.moving.endpoint.grid, shrink)
     )
     val regridded = midpoint
       .regrid(work, fixed, moving)

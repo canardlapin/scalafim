@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
 import scala.annotation.targetName
 
 opaque type SpatialDomainId = String
@@ -332,14 +335,16 @@ final case class DenseFieldMorphism private (
     source: SpatialDomainId,
     target: SpatialDomainId,
     grid: GridSpec,
-    field: NDArray[Double],
+    field: RavelArray[Double, Rank[4]],
     fieldKind: DenseFieldKind,
     interpolation: Resample.Method,
     cost: Double,
     methodTag: String
 ) extends SpatialMorphism:
-  require(field.ndim == 4, "dense field must be 4D")
-  require(field.shape == (grid.dims :+ 3), "dense field shape must be grid dims plus vector components")
+  require(
+    field.shape == Shape(grid.shape.x, grid.shape.y, grid.shape.z, 3),
+    "dense field shape must be grid dims plus vector components"
+  )
   require(cost.isFinite && cost >= 0.0, "dense field morphism cost must be finite and non-negative")
 
   private lazy val inverseGridAffine: DMat =
@@ -404,10 +409,9 @@ final case class DenseFieldMorphism private (
               val yi = math.round(voxelY).toInt
               val zi = math.round(voxelZ).toInt
               if fieldInBounds(xi, yi, zi) then
-                val base = fieldIndex(xi, yi, zi)
-                sampledX = field.data(base)
-                sampledY = field.data(base + grid.nVoxels)
-                sampledZ = field.data(base + 2 * grid.nVoxels)
+                sampledX = field(xi, yi, zi, 0)
+                sampledY = field(xi, yi, zi, 1)
+                sampledZ = field(xi, yi, zi, 2)
               else if fieldKind == DenseFieldKind.AbsoluteCoordinates then
                 sampledX = worldX
                 sampledY = worldY
@@ -546,7 +550,6 @@ final case class DenseFieldMorphism private (
     var sum =
       if fieldKind == DenseFieldKind.Displacement then 0.0
       else outsideWeight * outsideValue
-    val componentOffset = component * grid.nVoxels
     var dz = 0
     while dz <= 1 do
       val wz = if dz == 0 then 1.0 - zd else zd
@@ -561,7 +564,7 @@ final case class DenseFieldMorphism private (
           val xi = x0 + dx
           val weight = wx * wy * wz
           if weight != 0.0 && fieldInBounds(xi, yi, zi) then
-            sum += weight * field.data(fieldIndex(xi, yi, zi) + componentOffset)
+            sum += weight * field(xi, yi, zi, component)
           dx += 1
         dy += 1
       dz += 1
@@ -572,15 +575,12 @@ final case class DenseFieldMorphism private (
       y >= 0 && y < grid.shape.y &&
       z >= 0 && z < grid.shape.z
 
-  private inline def fieldIndex(x: Int, y: Int, z: Int): Int =
-    x + y * grid.shape.x + z * grid.shape.x * grid.shape.y
-
 object DenseFieldMorphism:
   def displacement(
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
       methodTag: String = "dense-displacement"
@@ -591,7 +591,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
       methodTag: String = "dense-coordinate"
@@ -602,7 +602,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       fieldKind: DenseFieldKind,
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
@@ -616,7 +616,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       fieldKind: DenseFieldKind,
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
@@ -626,7 +626,7 @@ object DenseFieldMorphism:
 
   private def validate(
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method
   ): Either[MorphismError, Unit] =
     for

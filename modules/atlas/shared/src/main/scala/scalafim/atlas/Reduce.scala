@@ -1,7 +1,8 @@
 package scalafim.atlas
 
-import narr.NArray
 import cats.kernel.CommutativeMonoid
+import ravel.NDArray as RavelArray
+import ravel.Shape
 import scalafim.image.*
 import scalafim.locus.Aggregation
 import spire.std.double.given
@@ -18,7 +19,7 @@ final case class ParcelValues(atlas: VolumeAtlas, values: Vector[ParcelValue]):
     values.find(_.region.id == regionId).map(_.value)
 
 object Reducers:
-  val mean: NArray[Double] => Double =
+  val mean: Array[Double] => Double =
     values =>
       if values.length == 0 then Double.NaN
       else
@@ -33,7 +34,7 @@ object Reducers:
           i += 1
         if n == 0 then Double.NaN else sum / n.toDouble
 
-  val sum: NArray[Double] => Double =
+  val sum: Array[Double] => Double =
     values =>
       var i = 0
       var sum = 0.0
@@ -47,7 +48,7 @@ object AtlasReduce:
   def reduceVolumeEither(
     atlas: VolumeAtlas,
     data: NeuroVol[Double],
-    reducer: NArray[Double] => Double = Reducers.mean
+    reducer: Array[Double] => Double = Reducers.mean
   ): Either[AtlasError, ParcelValues] =
     requireSameSpatialEither(atlas, data.space).flatMap: _ =>
       if sameReducer(reducer, Reducers.mean) then
@@ -58,9 +59,9 @@ object AtlasReduce:
         val vals =
           atlas.regions.regions.map: region =>
             val idx = atlas.volume.clusterMap(region.id.value)
-            val tmp = NArray.ofSize[Double](idx.length)
+            val tmp = Array.ofDim[Double](idx.size)
             var i = 0
-            while i < idx.length do
+            while i < idx.size do
               tmp(i) = data.linear(idx(i))
               i += 1
             ParcelValue(region, reducer(tmp))
@@ -69,7 +70,7 @@ object AtlasReduce:
   def reduceVolume(
     atlas: VolumeAtlas,
     data: NeuroVol[Double],
-    reducer: NArray[Double] => Double = Reducers.mean
+    reducer: Array[Double] => Double = Reducers.mean
   ): ParcelValues =
     reduceVolumeEither(atlas, data, reducer).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -77,7 +78,7 @@ object AtlasReduce:
     atlas: VolumeAtlas,
     data: NeuroVec[Double],
     mask: Option[NeuroVol[Boolean]] = None,
-    reducer: NArray[Double] => Double = Reducers.mean
+    reducer: Array[Double] => Double = Reducers.mean
   ): Either[AtlasError, ClusteredNeuroVec[Double]] =
     for
       _ <- requireSameSpatialEither(atlas, data.space)
@@ -88,37 +89,36 @@ object AtlasReduce:
       else
         val clusterIds = atlas.volume.clusterIds
         val tLen = data.nVolumes
-        val out = NArray.ofSize[Double](tLen * clusterIds.length)
-        var k = 0
-        while k < clusterIds.length do
-          val id = clusterIds(k)
+        val indices = clusterIds.map: id =>
           val rawIdx = atlas.volume.clusterMap(id)
-          val idx =
-            mask match
-              case None => rawIdx
-              case Some(m) =>
-                val kept = Array.newBuilder[Int]
-                var p = 0
-                while p < rawIdx.length do
-                  if m.linear(rawIdx(p)) then kept += rawIdx(p)
-                  p += 1
-                NArrayUtil.fromArray(kept.result())
-
-          var t = 0
-          while t < tLen do
-            if idx.length == 0 then out(t + k * tLen) = Double.NaN
-            else
-              val tmp = NArray.ofSize[Double](idx.length)
+          mask match
+            case None => rawIdx
+            case Some(m) =>
+              val kept = Array.newBuilder[Int]
               var p = 0
-              while p < idx.length do
-                tmp(p) = data.values.data(idx(p) + t * atlas.space.spatialDims.product)
+              while p < rawIdx.size do
+                if m.linear(rawIdx(p)) then kept += rawIdx(p)
                 p += 1
-              out(t + k * tLen) = reducer(tmp)
-            t += 1
-          k += 1
+              val retained = kept.result()
+              RavelArray.fromSeq(Shape(retained.length), retained)
+        val scratch = indices.map(index => Array.ofDim[Double](index.size))
+        val out =
+          RavelArray.tabulate[Double](tLen, clusterIds.length) {
+            (time, cluster) =>
+              val index = indices(cluster)
+              if index.size == 0 then Double.NaN
+              else
+                val tmp = scratch(cluster)
+                var position = 0
+                while position < index.size do
+                  val voxel = data.space.indexToVoxel3D(index(position))
+                  tmp(position) = data(voxel.x, voxel.y, voxel.z, time)
+                  position += 1
+                reducer(tmp)
+          }
 
         ClusteredNeuroVec.fromMatrix(
-          NDArray(out, Vector(tLen, clusterIds.length)),
+          out,
           atlas.volume,
           data.label
         )
@@ -127,7 +127,7 @@ object AtlasReduce:
     atlas: VolumeAtlas,
     data: NeuroVec[Double],
     mask: Option[NeuroVol[Boolean]] = None,
-    reducer: NArray[Double] => Double = Reducers.mean
+    reducer: Array[Double] => Double = Reducers.mean
   ): ClusteredNeuroVec[Double] =
     reduceVecEither(atlas, data, mask, reducer).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -178,7 +178,10 @@ object AtlasReduce:
         .get
     val values =
       quotient.displayOrder.points.map: parcel =>
-        ParcelValue(quotient.metadata(parcel), finish(summaries(parcel)))
+        ParcelValue(
+          quotient.metadata.at(parcel),
+          finish(summaries.at(parcel))
+        )
       .toVector
     Right(ParcelValues(atlas, values))
 
@@ -186,7 +189,7 @@ object AtlasReduce:
       atlas: VolumeAtlas,
       data: NeuroVec[Double],
       mask: Option[NeuroVol[Boolean]],
-      reducer: NArray[Double] => Double
+      reducer: Array[Double] => Double
   ): ClusteredNeuroVec[Double] =
     val quotient = atlas.quotient
     val parcelCount = quotient.parcellation.parcels.size
@@ -199,45 +202,50 @@ object AtlasReduce:
     while voxel < spatialCount do
       val included = mask.forall(_.linear(voxel))
       if included then
-        val point = quotient.parcellation.ambient.point(voxel).get
+        val coordinate = data.space.indexToVoxel3D(voxel)
+        val point = quotient.parcellation.ambient.pointOption(voxel).get
         quotient.parcellation.parcelAt(point).foreach: parcel =>
           var time = 0
           while time < timeCount do
-            val value = data.values.data(voxel + time * spatialCount)
+            val value = data(coordinate.x, coordinate.y, coordinate.z, time)
             if !value.isNaN then
-              val index = parcel.ordinal * timeCount + time
+              val index = parcel.value * timeCount + time
               sums(index) += value
               counts(index) += 1L
             time += 1
       voxel += 1
 
     val clusterIds = atlas.volume.clusterIds
-    val out = NArray.ofSize[Double](timeCount * clusterIds.length)
-    var column = 0
-    while column < clusterIds.length do
-      val parcel =
-        quotient.parcelPoint(RegionId(clusterIds(column))).get
-      var time = 0
-      while time < timeCount do
-        val index = parcel.ordinal * timeCount + time
-        if counts(index) == 0L then
-          out(time + column * timeCount) = Double.NaN
-        else if sameReducer(reducer, Reducers.sum) then
-          out(time + column * timeCount) = sums(index)
-        else
-          out(time + column * timeCount) =
+    val parcelOrdinals =
+      clusterIds.map { clusterId =>
+        quotient
+          .parcelPoint(RegionId(clusterId))
+          .fold(
+            throw new IllegalStateException(
+              s"validated atlas quotient is missing cluster id $clusterId"
+            )
+          )(_.value)
+      }
+    val out =
+      RavelArray.tabulate[Double](timeCount, clusterIds.length) {
+        (time, column) =>
+          val index = parcelOrdinals(column) * timeCount + time
+          if counts(index) == 0L then
+            Double.NaN
+          else if sameReducer(reducer, Reducers.sum) then
+            sums(index)
+          else
             sums(index) / counts(index).toDouble
-        time += 1
-      column += 1
+      }
 
     ClusteredNeuroVec.fromMatrix(
-      NDArray(out, Vector(timeCount, clusterIds.length)),
+      out,
       atlas.volume,
       data.label
     )
 
   private def sameReducer(
-      left: NArray[Double] => Double,
-      right: NArray[Double] => Double
+      left: Array[Double] => Double,
+      right: Array[Double] => Double
   ): Boolean =
     left.asInstanceOf[AnyRef] eq right.asInstanceOf[AnyRef]

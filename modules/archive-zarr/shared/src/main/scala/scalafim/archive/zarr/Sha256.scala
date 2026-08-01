@@ -1,8 +1,8 @@
 package scalafim.archive.zarr
 
-import scalafim.zarr.OwnedBytes
-import scalafim.zarr.PortableSha256
-import scalafim.zarr.Sha256Hash.*
+import zarr4s.OwnedBytes
+import zarr4s.PortableSha256
+import zarr4s.Sha256Hash.*
 
 /** Domain refinement over the portable hash implementation owned by the Zarr core. */
 object Sha256:

@@ -5,7 +5,7 @@ import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Path
 import scalafim.archive.zarr.*
-import scalafim.zarr.*
+import zarr4s.*
 
 object NiftiRoundTripFixture:
   val relativePath = "sub-01/func/sub-01_task-rest_run-01_bold.nii"

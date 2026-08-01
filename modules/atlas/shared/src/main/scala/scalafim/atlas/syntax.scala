@@ -1,6 +1,5 @@
 package scalafim.atlas
 
-import narr.NArray
 import scalafim.image.*
 
 object syntax:
@@ -23,35 +22,39 @@ object syntax:
     def reduce(data: NeuroVol[Double]): ParcelValues =
       AtlasReduce.reduceVolume(atlas, data, Reducers.mean)
 
-    def reduceEither(data: NeuroVol[Double], reducer: NArray[Double] => Double): Either[AtlasError, ParcelValues] =
+    def reduceEither(data: NeuroVol[Double], reducer: Array[Double] => Double): Either[AtlasError, ParcelValues] =
       AtlasReduce.reduceVolumeEither(atlas, data, reducer)
 
-    def reduce(data: NeuroVol[Double], reducer: NArray[Double] => Double): ParcelValues =
+    def reduce(data: NeuroVol[Double], reducer: Array[Double] => Double): ParcelValues =
       AtlasReduce.reduceVolume(atlas, data, reducer)
 
+    @scala.annotation.targetName("reduceNeuroVecEither")
     def reduceEither(data: NeuroVec[Double]): Either[AtlasError, ClusteredNeuroVec[Double]] =
       AtlasReduce.reduceVecEither(atlas, data, reducer = Reducers.mean)
 
+    @scala.annotation.targetName("reduceNeuroVec")
     def reduce(data: NeuroVec[Double]): ClusteredNeuroVec[Double] =
       AtlasReduce.reduceVec(atlas, data, reducer = Reducers.mean)
 
-    def reduceEither(data: NeuroVec[Double], reducer: NArray[Double] => Double): Either[AtlasError, ClusteredNeuroVec[Double]] =
+    @scala.annotation.targetName("reduceNeuroVecWithEither")
+    def reduceEither(data: NeuroVec[Double], reducer: Array[Double] => Double): Either[AtlasError, ClusteredNeuroVec[Double]] =
       AtlasReduce.reduceVecEither(atlas, data, reducer = reducer)
 
-    def reduce(data: NeuroVec[Double], reducer: NArray[Double] => Double): ClusteredNeuroVec[Double] =
+    @scala.annotation.targetName("reduceNeuroVecWith")
+    def reduce(data: NeuroVec[Double], reducer: Array[Double] => Double): ClusteredNeuroVec[Double] =
       AtlasReduce.reduceVec(atlas, data, reducer = reducer)
 
     def reduceEither(
       data: NeuroVec[Double],
       mask: NeuroVol[Boolean],
-      reducer: NArray[Double] => Double
+      reducer: Array[Double] => Double
     ): Either[AtlasError, ClusteredNeuroVec[Double]] =
       AtlasReduce.reduceVecEither(atlas, data, Some(mask), reducer)
 
     def reduce(
       data: NeuroVec[Double],
       mask: NeuroVol[Boolean],
-      reducer: NArray[Double] => Double
+      reducer: Array[Double] => Double
     ): ClusteredNeuroVec[Double] =
       AtlasReduce.reduceVec(atlas, data, Some(mask), reducer)
 

@@ -1,9 +1,9 @@
 package scalafim.response
 
-import narr.NArray
+import ravel.{Array1, NDArray, Shape}
 
 final class ResponseBlock private (
-    private[response] val ownedRowMajor: NArray[Double],
+    private[response] val ownedRowMajor: Array1[Double],
     val rows: Int,
     val columns: Int,
     val selection: ResolvedResponseSelection
@@ -11,20 +11,15 @@ final class ResponseBlock private (
   inline def apply(row: Int, column: Int): Double =
     ownedRowMajor(row * columns + column)
 
-  def rowMajorCopy: NArray[Double] =
-    val copied = NArray.ofSize[Double](ownedRowMajor.length)
-    var index = 0
-    while index < ownedRowMajor.length do
-      copied(index) = ownedRowMajor(index)
-      index += 1
-    copied
+  def rowMajorCopy: Array[Double] =
+    Array.tabulate(ownedRowMajor.size)(index => ownedRowMajor(index))
 
   def sameRawBits(other: ResponseBlock): Boolean =
     if rows != other.rows || columns != other.columns || selection != other.selection then
       false
     else
       var index = 0
-      while index < ownedRowMajor.length do
+      while index < ownedRowMajor.size do
         val left = java.lang.Double.doubleToRawLongBits(ownedRowMajor(index))
         val right = java.lang.Double.doubleToRawLongBits(other.ownedRowMajor(index))
         if left != right then return false
@@ -33,42 +28,59 @@ final class ResponseBlock private (
 
 object ResponseBlock:
   def copyFromRowMajor(
-      values: NArray[Double],
+      values: Array[Double],
       selection: ResolvedResponseSelection
   ): Either[ResponseShapeError, ResponseBlock] =
     checkedValueCount(selection).flatMap: expected =>
       if values.length != expected then
         Left(ResponseShapeError.ValueCountMismatch(expected, values.length))
       else
-        val copied = NArray.ofSize[Double](values.length)
-        var index = 0
-        while index < values.length do
-          copied(index) = values(index)
-          index += 1
-        Right(new ResponseBlock(copied, selection.rows, selection.columns, selection))
+        Right(
+          new ResponseBlock(
+            NDArray.fromSeq(Shape(values.length), values),
+            selection.rows,
+            selection.columns,
+            selection
+          )
+        )
+
+  def copyFromRowMajor(
+      values: Array1[Double],
+      selection: ResolvedResponseSelection
+  ): Either[ResponseShapeError, ResponseBlock] =
+    fromOwnedRowMajor(values, selection)
 
   private[response] def fromOwnedRowMajor(
-      values: NArray[Double],
+      values: Array1[Double],
       selection: ResolvedResponseSelection
   ): Either[ResponseShapeError, ResponseBlock] =
     checkedValueCount(selection).flatMap: expected =>
-      if values.length != expected then
-        Left(ResponseShapeError.ValueCountMismatch(expected, values.length))
+      if values.size != expected then
+        Left(ResponseShapeError.ValueCountMismatch(expected, values.size))
       else
         Right(new ResponseBlock(values, selection.rows, selection.columns, selection))
 
   private[scalafim] def unsafeFromOwnedRowMajor(
-      values: NArray[Double],
+      values: Array1[Double],
       selection: ResolvedResponseSelection
   ): ResponseBlock =
     val expected =
       checkedValueCount(selection)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
     require(
-      values.length == expected,
-      s"owned response buffer length ${values.length} must equal $expected"
+      values.size == expected,
+      s"owned response buffer length ${values.size} must equal $expected"
     )
     new ResponseBlock(values, selection.rows, selection.columns, selection)
+
+  private[scalafim] def unsafeFromOwnedRowMajor(
+      values: Array[Double],
+      selection: ResolvedResponseSelection
+  ): ResponseBlock =
+    unsafeFromOwnedRowMajor(
+      NDArray.fromSeq(Shape(values.length), values),
+      selection
+    )
 
   private def checkedValueCount(
       selection: ResolvedResponseSelection

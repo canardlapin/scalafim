@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 class AffineInitializationSuite extends munit.FunSuite:
@@ -121,7 +120,7 @@ class AffineInitializationSuite extends munit.FunSuite:
   test("constant images fail at the typed support boundary") {
     val grid = GridSpec.identity(Vector(12, 12, 12))
     val frames = makeFrames(grid)
-    val values = NArrayUtil.fillConst[Double](grid.nVoxels, 1.0)
+    val values = PrimitiveBuffers.fillConst[Double](grid.nVoxels, 1.0)
     val volume = NeuroVol.fromLinear[Double](values, grid.toNeuroSpace, "constant")
     val fixed = RegistrationImage.make(frames._2, volume).fold(error => fail(error.message), identity)
     val moving = RegistrationImage.make(frames._3, volume).fold(error => fail(error.message), identity)
@@ -156,8 +155,8 @@ class AffineInitializationSuite extends munit.FunSuite:
       fixedToMoving: DMat
   ): (RegistrationImage[Fixed], RegistrationImage[Moving]) =
     val inverse = DMat.invert(fixedToMoving).fold(reason => fail(reason), identity)
-    val fixedValues = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val movingValues = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val fixedValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val movingValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     val affine = grid.affine
     val nx = grid.shape.x
     val ny = grid.shape.y
@@ -216,24 +215,27 @@ class AffineInitializationSuite extends munit.FunSuite:
       tolerance: Double
   ): Unit =
     val index = x + pull.from.grid.shape.x * (y + pull.from.grid.shape.y * z)
-    val values = pull.sourceCoordinates.values.data
     val expected = apply(expectedMatrix, WorldPoint(x.toDouble, y.toDouble, z.toDouble))
-    val n = pull.from.grid.nVoxels
-    assertEqualsDouble(values(index), expected.x, tolerance)
-    assertEqualsDouble(values(index + n), expected.y, tolerance)
-    assertEqualsDouble(values(index + 2 * n), expected.z, tolerance)
+    assertEqualsDouble(pull.sourceCoordinates.linearComponent(index, 0), expected.x, tolerance)
+    assertEqualsDouble(pull.sourceCoordinates.linearComponent(index, 1), expected.y, tolerance)
+    assertEqualsDouble(pull.sourceCoordinates.linearComponent(index, 2), expected.z, tolerance)
 
   private def assertFieldsClose[A, B, C, D](
       left: DensePull[A, B],
       right: DensePull[C, D],
       tolerance: Double
   ): Unit =
-    val a = left.sourceCoordinates.values.data
-    val b = right.sourceCoordinates.values.data
-    assertEquals(a.length, b.length)
+    assertEquals(left.from.grid.nVoxels, right.from.grid.nVoxels)
     var index = 0
-    while index < a.length do
-      assertEqualsDouble(a(index), b(index), tolerance)
+    while index < left.from.grid.nVoxels do
+      var component = 0
+      while component < 3 do
+        assertEqualsDouble(
+          left.sourceCoordinates.linearComponent(index, component),
+          right.sourceCoordinates.linearComponent(index, component),
+          tolerance
+        )
+        component += 1
       index += 1
 
   private def landmarkRms(actual: DMat, expected: DMat, landmarks: Vector[WorldPoint]): Double =

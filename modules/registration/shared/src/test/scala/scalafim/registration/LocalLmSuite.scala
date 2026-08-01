@@ -20,8 +20,8 @@ class LocalLmSuite extends munit.FunSuite:
   test("T1 features are invariant to positive common gain and offset on stable support"):
     val grid = GridSpec.identity(Vector(17, 17, 17))
     val frame = Frame[W](SpatialDomainId("work"), grid)
-    val source = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val transformed = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val source = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val transformed = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var z = 0
     while z < 17 do
       var y = 0
@@ -76,10 +76,9 @@ class LocalLmSuite extends munit.FunSuite:
     val weight = 1.0 / math.sqrt(0.2 * 0.2 + epsilon * epsilon)
     val scale = -weight * 0.2 / (0.5 + weight * 6.0)
     val center = 2 + 5 * 2 + 25 * 2
-    val values = loose.rawVelocity.field.values.data
-    assertEqualsDouble(values(center), scale, 1e-12)
-    assertEqualsDouble(values(center + grid.nVoxels), 2.0 * scale, 1e-12)
-    assertEqualsDouble(values(center + 2 * grid.nVoxels), -scale, 1e-12)
+    assertEqualsDouble(loose.rawVelocity.field.linearComponent(center, 0), scale, 1e-12)
+    assertEqualsDouble(loose.rawVelocity.field.linearComponent(center, 1), 2.0 * scale, 1e-12)
+    assertEqualsDouble(loose.rawVelocity.field.linearComponent(center, 2), -scale, 1e-12)
     assert(loose.summary.maximumRawVelocityMm > tight.summary.maximumRawVelocityMm)
     assertEquals(loose.summary.failedSolves, 0)
 
@@ -95,12 +94,11 @@ class LocalLmSuite extends munit.FunSuite:
     )
     val result = right(LocalLm.solve(fixed, moving, config))
     val center = 2 + 5 * 2 + 25 * 2
-    val step = result.rawVelocity.field.values.data
     var channel = 0
     while channel < 3 do
       val epsilon = 0.1 * math.abs(residuals(channel))
       val weight = 1.0 / math.sqrt(residuals(channel) * residuals(channel) + epsilon * epsilon)
-      val actual = step(center + channel * grid.nVoxels)
+      val actual = result.rawVelocity.field.linearComponent(center, channel)
       val residual = (weight + 0.5) * actual + weight * residuals(channel)
       assertEqualsDouble(residual, 0.0, 2e-12)
       channel += 1
@@ -108,6 +106,7 @@ class LocalLmSuite extends munit.FunSuite:
     val predicted = right(
       LocalLm.predictedDrop(fixed, moving, result.rawVelocity, result.rawValidity, result.model)
     )
+    val step = result.rawVelocity.field.copyLegacyPlanar
     val reference = independentPrediction(residuals, result.model.epsilonPerChannel, step, center, grid.nVoxels)
     assertEqualsDouble(predicted, reference, 2e-12)
     assert(predicted > 0.0)
@@ -146,9 +145,9 @@ class LocalLmSuite extends munit.FunSuite:
   ): T1FeatureVolume[W] =
     val n = frame.grid.nVoxels
     val channels = channelValues.length
-    val values = NArrayUtil.ofSize[Double](n * channels)
-    val gradients = NArrayUtil.ofSize[Double](n * channels * 3)
-    val valid = NArrayUtil.ofSize[Boolean](n * channels)
+    val values = PrimitiveBuffers.ofSize[Double](n * channels)
+    val gradients = PrimitiveBuffers.ofSize[Double](n * channels * 3)
+    val valid = PrimitiveBuffers.ofSize[Boolean](n * channels)
     var channel = 0
     while channel < channels do
       val gradient = channelGradients(channel)
@@ -176,7 +175,7 @@ class LocalLmSuite extends munit.FunSuite:
   private def independentPrediction(
       residuals: Vector[Double],
       epsilons: Vector[Double],
-      step: narr.NArray[Double],
+      step: Array[Double],
       index: Int,
       n: Int
   ): Double =
@@ -192,7 +191,7 @@ class LocalLmSuite extends munit.FunSuite:
   private def shiftedEnergy(
       residuals: Vector[Double],
       epsilons: Vector[Double],
-      step: narr.NArray[Double],
+      step: Array[Double],
       index: Int,
       n: Int,
       scale: Double
@@ -210,18 +209,21 @@ class LocalLmSuite extends munit.FunSuite:
       source: Velocity[W],
       scale: Double
   ): Velocity[W] =
-    val input = source.field.values.data
-    val output = NArrayUtil.ofSize[Double](input.length)
-    var index = 0
-    while index < input.length do
-      output(index) = scale * input(index)
-      index += 1
+    val output =
+      ravel.NDArray.tabulate[Double](
+        frame.grid.shape.x,
+        frame.grid.shape.y,
+        frame.grid.shape.z,
+        3
+      ) { (x, y, z, component) =>
+        scale * source.field(x, y, z, component)
+      }
     right(
       Velocity.make(
         frame,
         DenseVectorField(
           frame.grid,
-          NDArray(output, frame.grid.dims :+ 3),
+          output,
           DenseVectorFieldKind.Displacement
         )
       )

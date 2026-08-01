@@ -1,7 +1,0 @@
-{
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "numcodecs": "0.3.2"
-  }
-}

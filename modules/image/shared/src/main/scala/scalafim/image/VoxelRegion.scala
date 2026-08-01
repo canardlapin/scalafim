@@ -1,78 +1,71 @@
 package scalafim.image
 
-import narr.NArray
-import scalafim.locus.{Region as LocusRegion, Selection as LocusSelection}
-
-private[image] sealed trait StructuralVolumeVoxel
-
-private[image] object StructuralVolumeLocus:
-  def space(volumeSpace: VolumeSpace): scalafim.locus.FiniteSpace[StructuralVolumeVoxel] =
-    scalafim.locus.FiniteSpace
-      .make[StructuralVolumeVoxel](key(volumeSpace), volumeSpace.nVoxels)
-      .toOption
-      .get
-
-  def key(volumeSpace: VolumeSpace): scalafim.locus.SpaceKey =
-    scalafim.locus.SpaceKey.unsafe:
-      s"scalafim:image:structural:${volumeSpace.toNeuroSpace}"
+import ravel.Array1
+import scala.annotation.targetName
 
 final class VoxelRegion private (
     val space: VolumeSpace,
-    private val members: LocusRegion[StructuralVolumeVoxel]
+    private val members: VoxelIndexSet
 ):
   def size: Int =
-    members.cardinality
+    members.size
 
   def isEmpty: Boolean =
     members.isEmpty
 
   def contains(index: Int): Boolean =
-    members.space.point(index).exists(members.contains)
+    members.toVector.contains(index)
 
   def contains(coord: VoxelCoord): Boolean =
     Indexing.gridToIndexChecked(space.shape, coord).exists(contains)
 
-  def linearIndices: NArray[Int] =
-    NArrayUtil.fromArray(members.ordinalsInDomainOrder)
+  def linearIndices: Array1[Int] =
+    members.indices
 
   def voxelCoords: Vector[VoxelCoord] =
-    members.ordinalsInDomainOrder.toVector.map(Indexing.indexToGrid3D(space.shape, _))
+    members.voxelCoords
 
   def union(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that)(_.union(_))
+    combine(that)(_ union _)
 
   def intersect(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that)(_.intersect(_))
+    combine(that)(_ intersect _)
 
   def diff(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that)(_.diff(_))
+    combine(that)(_ diff _)
 
   def xor(that: VoxelRegion): Either[GridMismatch, VoxelRegion] =
-    combine(that)(_.xor(_))
+    combine(that)((left, right) => (left diff right) union (right diff left))
 
   def complement: VoxelRegion =
-    new VoxelRegion(space, members.complement)
+    val selected = members.toVector.toSet
+    val complement =
+      Array.tabulate(space.nVoxels)(identity).filterNot(selected)
+    new VoxelRegion(
+      space,
+      VoxelIndexSet.make(space, complement).toOption.get
+    )
 
   def toSelection: VoxelSelection =
     VoxelSelection.fromRegion(this)
 
   private[image] def indexSet: VoxelIndexSet =
-    VoxelIndexSet.unsafe(space, linearIndices)
-
-  private[image] def locusRegion: LocusRegion[StructuralVolumeVoxel] =
     members
 
   private def combine(
       that: VoxelRegion
   )(
-      operation: (
-          LocusRegion[StructuralVolumeVoxel],
-          LocusRegion[StructuralVolumeVoxel]
-      ) => Either[scalafim.locus.SpaceMismatch, LocusRegion[StructuralVolumeVoxel]]
+      operation: (Set[Int], Set[Int]) => Set[Int]
   ): Either[GridMismatch, VoxelRegion] =
     GridCompatibility.volume(space, that.space).map: _ =>
-      val combined = operation(members, that.members).toOption.get
-      new VoxelRegion(space, combined)
+      val combined =
+        operation(members.toVector.toSet, that.members.toVector.toSet)
+          .toArray
+          .sorted
+      new VoxelRegion(
+        space,
+        VoxelIndexSet.make(space, combined).toOption.get
+      )
 
   override def equals(other: Any): Boolean =
     other match
@@ -89,13 +82,27 @@ final class VoxelRegion private (
 object VoxelRegion:
   def make(
       space: VolumeSpace,
-      indices: NArray[Int]
+      indices: Array1[Int]
   ): Either[VoxelIndexSetError, VoxelRegion] =
     VoxelIndexSet.make(space, indices).map(fromValidated)
 
   def make(
+      space: VolumeSpace,
+      indices: Array[Int]
+  ): Either[VoxelIndexSetError, VoxelRegion] =
+    VoxelIndexSet.make(space, indices).map(fromValidated)
+
+  @targetName("makeFromNeuroSpace")
+  def make(
       space: NeuroSpace,
-      indices: NArray[Int]
+      indices: Array1[Int]
+  ): Either[VoxelIndexSetError, VoxelRegion] =
+    VoxelIndexSet.make(space, indices).map(fromValidated)
+
+  @targetName("makeArrayFromNeuroSpace")
+  def make(
+      space: NeuroSpace,
+      indices: Array[Int]
   ): Either[VoxelIndexSetError, VoxelRegion] =
     VoxelIndexSet.make(space, indices).map(fromValidated)
 
@@ -111,6 +118,7 @@ object VoxelRegion:
   ): Either[VoxelRoiError, VoxelRegion] =
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
+  @targetName("fromROICoordsNeuroSpace")
   def fromROICoords(
       space: NeuroSpace,
       coords: ROICoords
@@ -118,20 +126,11 @@ object VoxelRegion:
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
   private[image] def fromValidated(indexSet: VoxelIndexSet): VoxelRegion =
-    val locusSpace = StructuralVolumeLocus.space(indexSet.space)
-    val region =
-      LocusRegion.fromOrdinals(locusSpace, indexSet.toVector).toOption.get
-    new VoxelRegion(indexSet.space, region)
-
-  private[image] def fromLocus(
-      space: VolumeSpace,
-      region: LocusRegion[StructuralVolumeVoxel]
-  ): VoxelRegion =
-    new VoxelRegion(space, region)
+    new VoxelRegion(indexSet.space, indexSet)
 
 final class VoxelSelection private (
     val space: VolumeSpace,
-    private val ordered: LocusSelection[StructuralVolumeVoxel],
+    private val ordered: VoxelIndexSet,
     val region: VoxelRegion
 ):
   def size: Int =
@@ -140,19 +139,16 @@ final class VoxelSelection private (
   def isEmpty: Boolean =
     ordered.isEmpty
 
-  def linearIndices: NArray[Int] =
-    NArrayUtil.fromArray(ordered.ordinals)
+  def linearIndices: Array1[Int] =
+    ordered.indices
 
   def voxelCoords: Vector[VoxelCoord] =
-    ordered.ordinals.toVector.map(Indexing.indexToGrid3D(space.shape, _))
+    ordered.voxelCoords
 
   def toVoxelRoi: VoxelRoi =
     VoxelRoi.fromSelection(this)
 
   private[image] def indexSet: VoxelIndexSet =
-    VoxelIndexSet.unsafe(space, linearIndices)
-
-  private[image] def locusSelection: LocusSelection[StructuralVolumeVoxel] =
     ordered
 
   override def equals(other: Any): Boolean =
@@ -170,18 +166,33 @@ final class VoxelSelection private (
 object VoxelSelection:
   def make(
       space: VolumeSpace,
-      indices: NArray[Int]
+      indices: Array1[Int]
   ): Either[VoxelIndexSetError, VoxelSelection] =
     VoxelIndexSet.makeUnique(space, indices).map(fromValidated)
 
   def make(
+      space: VolumeSpace,
+      indices: Array[Int]
+  ): Either[VoxelIndexSetError, VoxelSelection] =
+    VoxelIndexSet.makeUnique(space, indices).map(fromValidated)
+
+  @targetName("makeFromNeuroSpace")
+  def make(
       space: NeuroSpace,
-      indices: NArray[Int]
+      indices: Array1[Int]
+  ): Either[VoxelIndexSetError, VoxelSelection] =
+    VoxelIndexSet.makeUnique(space, indices).map(fromValidated)
+
+  @targetName("makeArrayFromNeuroSpace")
+  def make(
+      space: NeuroSpace,
+      indices: Array[Int]
   ): Either[VoxelIndexSetError, VoxelSelection] =
     VoxelIndexSet.makeUnique(space, indices).map(fromValidated)
 
   def fromRegion(region: VoxelRegion): VoxelSelection =
-    val selection = LocusSelection.fromRegion(region.locusRegion)
+    val selection =
+      VoxelIndexSet.makeUnique(region.space, region.linearIndices).toOption.get
     new VoxelSelection(region.space, selection, region)
 
   def fromRoi(roi: VoxelRoi): VoxelSelection =
@@ -193,6 +204,7 @@ object VoxelSelection:
   ): Either[VoxelRoiError, VoxelSelection] =
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
+  @targetName("fromROICoordsNeuroSpace")
   def fromROICoords(
       space: NeuroSpace,
       coords: ROICoords
@@ -200,11 +212,10 @@ object VoxelSelection:
     VoxelRoi.fromRaw(space, coords.coords).map(fromRoi)
 
   private def fromValidated(indexSet: VoxelIndexSet): VoxelSelection =
-    val locusSpace = StructuralVolumeLocus.space(indexSet.space)
-    val selection =
-      LocusSelection.fromOrdinals(locusSpace, indexSet.toVector).toOption.get
-    val region = VoxelRegion.fromLocus(
+    val canonical =
+      VoxelIndexSet.make(indexSet.space, indexSet.indices).toOption.get
+    new VoxelSelection(
       indexSet.space,
-      selection.region
+      indexSet,
+      VoxelRegion.fromValidated(canonical)
     )
-    new VoxelSelection(indexSet.space, selection, region)

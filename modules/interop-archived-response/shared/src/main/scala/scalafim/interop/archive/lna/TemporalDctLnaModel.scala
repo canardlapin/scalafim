@@ -1,6 +1,5 @@
 package scalafim.interop.archive.lna
 
-import narr.NArray
 import scalafim.archive.{
   ArchiveError,
   ArchivePath,
@@ -303,7 +302,7 @@ private object TemporalDctLnaModel:
           (basis.rows, basis.components, basis.rowMajorCopy)
         case loadings: SpatialLoadingValues =>
           (loadings.rows, loadings.components, loadings.rowMajorCopy)
-    val owned = NArray.ofSize[Double](source.length)
+    val owned = Array.ofDim[Double](source.length)
     var index = 0
     while index < source.length do
       owned(index) = source(index)

@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 opaque type FeatureRadiusMm = Double
@@ -63,9 +62,9 @@ final case class T1FeatureVolume[A] private (
     radiiMm: Vector[Double],
     radiiVox: Vector[VoxelWindowRadius],
     epsilonPerChannel: Vector[Double],
-    values: NArray[Double],
-    gradients: NArray[Double],
-    valid: NArray[Boolean]
+    values: Array[Double],
+    gradients: Array[Double],
+    valid: Array[Boolean]
 ):
   val channels: Int = radiiVox.length
 
@@ -75,9 +74,9 @@ object T1FeatureVolume:
       radiiMm: Vector[Double],
       radiiVox: Vector[VoxelWindowRadius],
       epsilonPerChannel: Vector[Double],
-      values: NArray[Double],
-      gradients: NArray[Double],
-      valid: NArray[Boolean]
+      values: Array[Double],
+      gradients: Array[Double],
+      valid: Array[Boolean]
   ): Either[RegistrationError, T1FeatureVolume[A]] =
     val channels = radiiVox.length
     val scalarSize = frame.grid.nVoxels * channels
@@ -90,9 +89,9 @@ object T1FeatureVolume:
     else Right(new T1FeatureVolume(frame, radiiMm, radiiVox, epsilonPerChannel, values, gradients, valid))
 
   private def finiteWhereValid(
-      values: NArray[Double],
-      gradients: NArray[Double],
-      valid: NArray[Boolean],
+      values: Array[Double],
+      gradients: Array[Double],
+      valid: Array[Boolean],
       n: Int,
       channels: Int
   ): Boolean =
@@ -115,10 +114,10 @@ final class T1FeatureBuffer[A] private (
     val frame: Frame[A],
     val radiiMm: Vector[Double],
     val radiiVox: Vector[VoxelWindowRadius],
-    private[registration] val values: NArray[Double],
-    private[registration] val gradients: NArray[Double],
-    private[registration] val valid: NArray[Boolean],
-    private[registration] val normalizedValid: NArray[Boolean]
+    private[registration] val values: Array[Double],
+    private[registration] val gradients: Array[Double],
+    private[registration] val valid: Array[Boolean],
+    private[registration] val normalizedValid: Array[Boolean]
 ):
   val channels: Int = radiiVox.length
   val ownedValueBuffers: Int = 2
@@ -132,10 +131,10 @@ object T1FeatureBuffer:
       frame,
       config.radii.map(_.toDouble),
       radiiVox,
-      NArrayUtil.ofSize[Double](scalarSize),
-      NArrayUtil.ofSize[Double](scalarSize * 3),
-      NArrayUtil.ofSize[Boolean](scalarSize),
-      NArrayUtil.ofSize[Boolean](scalarSize)
+      PrimitiveBuffers.ofSize[Double](scalarSize),
+      PrimitiveBuffers.ofSize[Double](scalarSize * 3),
+      PrimitiveBuffers.ofSize[Boolean](scalarSize),
+      PrimitiveBuffers.ofSize[Boolean](scalarSize)
     )
 
 final class T1FeatureWorkspace[A] private (
@@ -159,7 +158,7 @@ object T1FeatureWorkspace:
 object T1Features:
   def compute[A](
       frame: Frame[A],
-      source: NArray[Double],
+      source: Array[Double],
       sourceValidity: FieldValidity,
       config: T1FeatureConfig = T1FeatureConfig.default
   ): Either[RegistrationError, T1FeatureVolume[A]] =
@@ -167,7 +166,7 @@ object T1Features:
 
   def computeWith[A](
       frame: Frame[A],
-      source: NArray[Double],
+      source: Array[Double],
       sourceValidity: FieldValidity,
       config: T1FeatureConfig,
       workspace: T1FeatureWorkspace[A]
@@ -180,7 +179,7 @@ object T1Features:
     */
   def computeInto[A](
       frame: Frame[A],
-      source: NArray[Double],
+      source: Array[Double],
       sourceValidity: FieldValidity,
       config: T1FeatureConfig,
       workspace: T1FeatureWorkspace[A],
@@ -252,7 +251,7 @@ object T1Features:
     }
 
   private def robustScale(
-      source: NArray[Double],
+      source: Array[Double],
       validity: FieldValidity,
       scratch: Array[Double]
   ): Double =

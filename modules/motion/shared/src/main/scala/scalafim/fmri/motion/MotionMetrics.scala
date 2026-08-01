@@ -69,23 +69,28 @@ object MotionMetrics:
   ): Either[MotionError, Vector[DvarsMetric]] =
     validateMask(run, mask).map { maskVol =>
       val dims = run.space.spatialDims
-      val nSpatial = dims.product
       val nt = run.nVolumes
       val values = Array.fill(nt)(Double.NaN)
       var t = 1
       while t < nt do
         var ss = 0.0
         var n = 0
-        var lin = 0
-        while lin < nSpatial do
-          val include = maskVol.forall(_.values.data(lin))
-          if include then
-            val a = run.values.data(lin + (t - 1) * nSpatial)
-            val b = run.values.data(lin + t * nSpatial)
-            val d = b - a
-            ss += d * d
-            n += 1
-          lin += 1
+        var k = 0
+        while k < dims(2) do
+          var j = 0
+          while j < dims(1) do
+            var i = 0
+            while i < dims(0) do
+              val include = maskVol.forall(_(i, j, k))
+              if include then
+                val a = run(i, j, k, t - 1)
+                val b = run(i, j, k, t)
+                val d = b - a
+                ss += d * d
+                n += 1
+              i += 1
+            j += 1
+          k += 1
         if n > 0 then values(t) = math.sqrt(ss / n.toDouble)
         t += 1
 
@@ -160,7 +165,7 @@ object MotionMetrics:
     val out = Vector.newBuilder[Double]
     var lin = 0
     while lin < n do
-      if mask.values.data(lin) then
+      if mask.linear(lin) then
         val grid = mask.space.indexToGrid3D(lin).map(_.toDouble)
         val point = mask.space.indexToCoord(grid)
         val mapped = apply3(mat, point)

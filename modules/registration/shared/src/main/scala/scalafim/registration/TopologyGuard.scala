@@ -65,8 +65,8 @@ final class TopologyGuardWorkspace[A, B] private[registration] (
   val ownedValidityBuffers: Int = 1
 
 private[registration] final class TopologyGuardScratch private (
-    private[registration] val determinants: narr.NArray[Double],
-    private[registration] val valid: narr.NArray[Boolean],
+    private[registration] val determinants: Array[Double],
+    private[registration] val valid: Array[Boolean],
     private[registration] val sorted: Array[Double]
 )
 
@@ -77,8 +77,8 @@ private[registration] object TopologyGuardScratch:
     val eligible = grids.map: grid =>
       math.max(0, grid.shape.x - 2) * math.max(0, grid.shape.y - 2) * math.max(0, grid.shape.z - 2)
     new TopologyGuardScratch(
-      NArrayUtil.ofSize[Double](capacity),
-      NArrayUtil.ofSize[Boolean](capacity),
+      PrimitiveBuffers.ofSize[Double](capacity),
+      PrimitiveBuffers.ofSize[Boolean](capacity),
       new Array[Double](eligible.max)
     )
 
@@ -115,8 +115,8 @@ object TopologyGuardWorkspace:
     )
 
 private[registration] final case class MapGuardBuffers(
-    determinants: narr.NArray[Double],
-    valid: narr.NArray[Boolean],
+    determinants: Array[Double],
+    valid: Array[Boolean],
     sorted: Array[Double],
     sampler: DenseFieldSampler,
     reduction: JacobianReduction
@@ -153,7 +153,7 @@ object TopologyGuard:
   ): PairGuardReport =
     val forward = mapSummary(pair.forward, config.minimumJacobian, workspace.forward)
     val backward = mapSummary(pair.backward, config.minimumJacobian, workspace.backward)
-    DenseFieldKernels.inversePairErrorInto(
+    HalfFlowKernels.inversePairErrorInto(
       pair.forward.sourceCoordinates,
       pair.backward.sourceCoordinates,
       workspace.forward.sampler,
@@ -197,7 +197,7 @@ object TopologyGuard:
       buffers: MapGuardBuffers
   ): MapGuardSummary =
     val grid = pull.from.grid
-    DenseFieldKernels.jacobianDeterminantsReduceInto(
+    HalfFlowKernels.jacobianDeterminantsReduceInto(
       pull.sourceCoordinates,
       buffers.determinants,
       buffers.valid,
@@ -252,11 +252,13 @@ object TopologyGuard:
       Some(sorted(lower) + fraction * (sorted(upper) - sorted(lower)))
 
   private def fieldFinite(field: DenseVectorField): Boolean =
-    val values = field.values.data
     var finite = true
     var index = 0
-    while index < values.length && finite do
-      finite = values(index).isFinite
+    while index < field.grid.nVoxels && finite do
+      var component = 0
+      while component < 3 && finite do
+        finite = field.linearComponent(index, component).isFinite
+        component += 1
       index += 1
     finite
 

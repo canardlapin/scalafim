@@ -2,7 +2,6 @@ package scalafim.interop.archive.zarr
 
 import cats.data.EitherT
 import cats.effect.{Async, Resource}
-import narr.NArray
 import scalafim.archive.{
   ArchiveError,
   ArchiveReadReceipt,
@@ -53,7 +52,7 @@ import scalafim.response.{
   SelectionAxes,
   SourceId
 }
-import scalafim.zarr.{
+import zarr4s.{
   ArraySelection,
   ChunkPlanner,
   Coordinate,
@@ -313,7 +312,7 @@ object DenseBoldZarrSource:
 
   private def resolveCoveringObjects(
       descriptor: DenseBoldZarrDescriptor,
-      values: Vector[scalafim.zarr.ChunkCoordinate]
+      values: Vector[zarr4s.ChunkCoordinate]
   ): Either[ArchiveError, Vector[DenseBoldZarrObject]] =
     val result = Vector.newBuilder[DenseBoldZarrObject]
     val seen = scala.collection.mutable.HashSet.empty[String]
@@ -361,7 +360,7 @@ object DenseBoldZarrSource:
         s"dense Zarr returned ${read.block.elementCount} values, expected $expected"
       ))
     else
-      val values = NArray.ofSize[Double](expected.toInt)
+      val values = Array.ofDim[Double](expected.toInt)
       var index = 0
       while index < values.length do
         val calibrated =

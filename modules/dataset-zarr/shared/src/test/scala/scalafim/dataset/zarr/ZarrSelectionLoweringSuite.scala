@@ -1,7 +1,7 @@
 package scalafim.dataset.zarr
 
 import scalafim.dataset.*
-import scalafim.zarr.*
+import zarr4s.*
 
 class ZarrSelectionLoweringSuite extends munit.FunSuite:
   test("BIDS mapping derives stable acquisition identity from the complete entity key"):

@@ -3,7 +3,6 @@ package scalafim.dataset
 import cats.data.EitherT
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
-import narr.NArray
 import scalafim.response.*
 
 enum ResponseAdapterError:
@@ -261,7 +260,7 @@ final class DatasetResponseSource[F[_]] private (
         )
       ))
     else
-      val copied = NArray.ofSize[Double](selection.rows * selection.columns)
+      val copied = Array.ofDim[Double](selection.rows * selection.columns)
       var row = 0
       while row < selection.rows do
         var column = 0

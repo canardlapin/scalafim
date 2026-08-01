@@ -1,14 +1,12 @@
 package scalafim.surface
 
-import narr.NArray
-import narr.nArray2NArr
-import scalafim.image.NArrayUtil
+import scalafim.image.PrimitiveBuffers
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 
 private[surface] object SurfaceData:
 
-  def validateIndices(indices: NArray[Int], vertexCount: Int): Unit =
+  def validateIndices(indices: Array[Int], vertexCount: Int): Unit =
     val seen = scala.collection.mutable.Set.empty[Int]
     var i = 0
     while i < indices.length do
@@ -29,8 +27,8 @@ private[surface] object SurfaceData:
 
 final case class SurfaceField[A](
   geometry: SurfaceGeometry,
-  indices: NArray[Int],
-  data: NArray[A],
+  indices: Array[Int],
+  data: Array[A],
   label: String = ""
 ):
   require(data.length == indices.length, "field data length must match vertex indices")
@@ -63,8 +61,8 @@ object SurfaceField:
   ): SurfaceField[A] =
     SurfaceField(
       geometry = geometry,
-      indices = NArrayUtil.fromArray(SurfaceData.vertexArray(indices)),
-      data = NArrayUtil.fromArray(data.toArray),
+      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      data = PrimitiveBuffers.fromArray(data.toArray),
       label = label
     )
 
@@ -96,8 +94,8 @@ object SurfaceField:
 
 final case class SurfaceMatrix[A](
   geometry: SurfaceGeometry,
-  indices: NArray[Int],
-  data: NArray[A],
+  indices: Array[Int],
+  data: Array[A],
   columns: Int,
   label: String = ""
 ):
@@ -132,16 +130,16 @@ object SurfaceMatrix:
     require(rows.forall(_.length == columns), "surface matrix rows must have equal length")
     SurfaceMatrix(
       geometry = geometry,
-      indices = NArrayUtil.fromArray(SurfaceData.vertexArray(indices)),
-      data = NArrayUtil.fromArray(rows.iterator.flatten.toArray),
+      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      data = PrimitiveBuffers.fromArray(rows.iterator.flatten.toArray),
       columns = columns,
       label = label
     )
 
 final case class SurfaceRoi[A](
   geometry: SurfaceGeometry,
-  indices: NArray[Int],
-  data: NArray[A],
+  indices: Array[Int],
+  data: Array[A],
   label: String = ""
 ):
   require(data.length == indices.length, "ROI data length must match vertex indices")
@@ -167,8 +165,8 @@ object SurfaceRoi:
     }
     SurfaceRoi(
       geometry = field.geometry,
-      indices = NArrayUtil.fromArray(SurfaceData.vertexArray(vertices)),
-      data = NArrayUtil.fromArray(values.toArray),
+      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(vertices)),
+      data = PrimitiveBuffers.fromArray(values.toArray),
       label = label
     )
 
@@ -177,8 +175,8 @@ final case class LabelInfo(id: Int, name: String, color: Option[String] = None):
 
 final case class LabeledSurface(
   geometry: SurfaceGeometry,
-  indices: NArray[Int],
-  labels: NArray[Int],
+  indices: Array[Int],
+  labels: Array[Int],
   table: Vector[LabelInfo],
   label: String = ""
 ):
@@ -219,8 +217,8 @@ object LabeledSurface:
   ): LabeledSurface =
     LabeledSurface(
       geometry = geometry,
-      indices = NArrayUtil.fromArray(SurfaceData.vertexArray(indices)),
-      labels = NArrayUtil.fromArray(labels.toArray),
+      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      labels = PrimitiveBuffers.fromArray(labels.toArray),
       table = table.toVector,
       label = label
     )

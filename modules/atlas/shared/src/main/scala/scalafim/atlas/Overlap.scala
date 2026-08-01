@@ -93,7 +93,7 @@ object AtlasOverlap:
     val both = scala.collection.mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
 
     var i = 0
-    while i < vol1.values.data.length do
+    while i < vol1.values.size do
       val a = vol1.linear(i)
       val b = vol2.linear(i)
       if a != 0 then n1.update(a, n1(a) + 1)

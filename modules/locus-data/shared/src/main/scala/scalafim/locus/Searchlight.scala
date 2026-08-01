@@ -31,28 +31,14 @@ object Searchlight:
       neighborhoods: Relation[S, S]
   ): Either[SearchlightError, Searchlight[S]] =
     if !centers.space.sameIdentityAs(neighborhoods.from) then
-      Left:
-        SearchlightError.WrongSpace:
-          SpaceMismatch(
-            centers.space.key,
-            centers.space.size,
-            neighborhoods.from.key,
-            neighborhoods.from.size
-          )
+      Left(SearchlightError.WrongSpace(mismatch(centers.space, neighborhoods.from)))
     else if !centers.space.sameIdentityAs(neighborhoods.to) then
-      Left:
-        SearchlightError.WrongSpace:
-          SpaceMismatch(
-            centers.space.key,
-            centers.space.size,
-            neighborhoods.to.key,
-            neighborhoods.to.size
-          )
+      Left(SearchlightError.WrongSpace(mismatch(centers.space, neighborhoods.to)))
     else
       var ordinal = 0
       var invalid = -1
       while ordinal < centers.space.size && invalid < 0 do
-        val point = centers.space.point(ordinal).get
+        val point = centers.space.pointOption(ordinal).get
         if !centers.contains(point) && !neighborhoods.row(point).isEmpty then
           invalid = ordinal
         ordinal += 1

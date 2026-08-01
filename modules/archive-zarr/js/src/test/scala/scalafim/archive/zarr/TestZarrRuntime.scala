@@ -1,6 +1,6 @@
 package scalafim.archive.zarr
 
-import scalafim.zarr.{AsyncCodecRuntime, BrowserCodecRuntime}
+import zarr4s.{AsyncCodecRuntime, BrowserCodecRuntime}
 
 object TestZarrRuntime:
   val runtime: AsyncCodecRuntime =

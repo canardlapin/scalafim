@@ -1,7 +1,6 @@
 package scalafim.latent
 
 import cats.instances.either.given
-import narr.NArray
 import scalafim.response.{
   DecodeConsistency,
   OrderedIndices,
@@ -610,7 +609,7 @@ private def decodeBlock(
     offset.forall(_.length == selection.columns),
     "sample offset length must match selected response columns"
   )
-  val output = NArray.ofSize[Double](selection.rows * selection.columns)
+  val output = Array.ofDim[Double](selection.rows * selection.columns)
   var row = 0
   while row < selection.rows do
     var column = 0

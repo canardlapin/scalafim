@@ -3,9 +3,9 @@ package scalafim.fmri.mvpa.spatial
 import scalafim.fmri.mvpa.{FeatureSetKind, RoiId}
 import scalafim.locus.{
   CenteredSearchlight,
+  DomainFactory,
   FiniteSpace,
   Parcellation,
-  Point,
   Region,
   Relation,
   Searchlight,
@@ -15,14 +15,15 @@ import scalafim.locus.{
 
 class LocusFeatureSetPlansSuite extends munit.FunSuite:
 
-  private final class Voxel
-  private final class Parcel
+  private val voxelResolution =
+    DomainFactory.unsafeRestore(SpaceKey.unsafe("mvpa-voxels"), 5)
+  private type Voxel = voxelResolution.S
+  private val voxels: FiniteSpace[Voxel] = voxelResolution.space
 
-  private val voxels =
-    FiniteSpace
-      .make[Voxel](SpaceKey.unsafe("mvpa-voxels"), 5)
-      .toOption
-      .get
+  private val parcelResolution =
+    DomainFactory.unsafeRestore(SpaceKey.unsafe("mvpa-parcels"), 2)
+  private type Parcel = parcelResolution.S
+  private val parcels: FiniteSpace[Parcel] = parcelResolution.space
 
   test("regions use ambient order while selections preserve explicit order"):
     val region = Region.fromOrdinals(voxels, Vector(4, 1, 3)).toOption.get
@@ -49,11 +50,6 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
     )
 
   test("parcellations become regional plans from quotient fibers"):
-    val parcels =
-      FiniteSpace
-        .make[Parcel](SpaceKey.unsafe("mvpa-parcels"), 2)
-        .toOption
-        .get
     val parcellation =
       Parcellation
         .fromAssignments(
@@ -68,7 +64,7 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
         .fromParcellation(
           "parcels",
           parcellation,
-          parcel => Some(s"parcel-${parcel.ordinal}")
+          parcel => Some(s"parcel-${parcel.value}")
         )
         .toOption
         .get
@@ -93,7 +89,7 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
             Array(2, 3, 4),
             Array.emptyIntArray,
             Array.emptyIntArray
-          )
+          ).iterator.map(_.iterator)
         )
         .toOption
         .get
@@ -104,7 +100,7 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
         .fromSearchlight(
           "searchlights",
           centered,
-          center => Some(s"center-${center.ordinal}")
+          center => Some(s"center-${center.value}")
         )
         .toOption
         .get
@@ -133,7 +129,7 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
             Array.emptyIntArray,
             Array.emptyIntArray,
             Array.emptyIntArray
-          )
+          ).iterator.map(_.iterator)
         )
         .toOption
         .get

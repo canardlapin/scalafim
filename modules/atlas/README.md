@@ -12,8 +12,8 @@ core.
 scan. `RegionGraph.relation` is the semantic reference
 `p.converse ; voxelAdjacency ; p`, with self-edges removed.
 `RegionGraph.topology` lowers deterministic contact counts to a canonical
-`UndirectedGraph[RegionId, AtlasRegionMetadata, Int]` for traversal and
-graph-linalg without materializing a voxel graph.
+graph4s `WeightedGraph[RegionId, Int]` for traversal and optional
+`graph4s-gale` numerical operators without materializing a voxel graph.
 
 See [docs/plans/atlas.md](../../docs/plans/atlas.md) for the fuller design and
 workflow guide.

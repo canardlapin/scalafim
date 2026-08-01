@@ -1,12 +1,11 @@
 package scalafim.dataset
 
-import narr.NArray
+import scalafim.locus.mapping
 import scalafim.image.{
   DMat,
   NeuroSpace,
   VoxelSelection as ImageVoxelSelection
 }
-import scalafim.locus.{FiniteSpace, Selection as LocusSelection}
 
 class DatasetAcquisitionDomainSuite extends munit.FunSuite:
 
@@ -45,8 +44,8 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     val otherDataset = domain("run-b", original, VoxelDomain.fullUnsafe(original))
     val otherGrid = domain("run-a", shifted, VoxelDomain.fullUnsafe(shifted))
 
-    assert(!first.fullVoxelSpace.sameIdentityAs(otherDataset.fullVoxelSpace))
-    assert(!first.fullVoxelSpace.sameIdentityAs(otherGrid.fullVoxelSpace))
+    assert(!first.fullVoxelSpace.sameRuntimeOwnerAs(otherDataset.fullVoxelSpace))
+    assert(!first.fullVoxelSpace.sameRuntimeOwnerAs(otherGrid.fullVoxelSpace))
 
   test("active-to-full injection and checked reverse preserve global voxel identity"):
     val requestedShape = shape()
@@ -58,14 +57,14 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     val acquisition = domain("masked", requestedShape, active)
 
     assertEquals(acquisition.activeToFull.mapping.targetOrdinals.toVector, Vector(0, 2, 3))
-    val activeTwo = acquisition.activeVoxelSpace.point(1).get
-    assertEquals(acquisition.fullPointFor(activeTwo).ordinal, 2)
+    val activeTwo = acquisition.activeVoxelSpace.pointOption(1).get
+    assertEquals(acquisition.fullPointFor(activeTwo).value, 2)
     assertEquals(
-      acquisition.activePointFor(acquisition.fullVoxelSpace.point(2).get).map(_.ordinal),
+      acquisition.activePointFor(acquisition.fullVoxelSpace.pointOption(2).get).map(_.value),
       Right(1)
     )
     assertEquals(
-      acquisition.activePointFor(acquisition.fullVoxelSpace.point(1).get).left.toOption,
+      acquisition.activePointFor(acquisition.fullVoxelSpace.pointOption(1).get).left.toOption,
       Some(DatasetError.VoxelOutsideMask(1))
     )
 
@@ -95,11 +94,17 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     assertEquals(full.ordinals.toVector, Vector(0, 1, 2, 3))
     assertEquals(ordered.ordinals.toVector, Vector(3, 0))
 
-  test("resolved selections reject another acquisition even when sizes match"):
+  test("matching semantic acquisitions share one live owner"):
+    // Previously each construction minted its own owner, so two views of the
+    // same acquisition agreed on persistent identity but were rejected against
+    // each other by every checked operation. `DomainFactory` now canonicalizes
+    // a key to a single live domain, which is what makes a second construction
+    // — a reload, a deserialization, a parallel code path — usable with the
+    // first.
     val requestedShape = shape()
     val full = VoxelDomain.fullUnsafe(requestedShape)
     val first = domain("run-a", requestedShape, full)
-    val second = domain("run-b", requestedShape, full)
+    val second = domain("run-a", requestedShape, full)
     val timepoints =
       scalafim.locus.Selection
         .fromOrdinals(first.timeSpace, Vector(2, 0))
@@ -110,31 +115,35 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
 
     assert(first.fromSelections(timepoints, voxels).isRight)
+    assert(first.timeSpace.samePersistentIdentityAs(second.timeSpace))
+    assert(first.fullVoxelSpace.samePersistentIdentityAs(second.fullVoxelSpace))
+    assert(first.timeSpace.sameRuntimeOwnerAs(second.timeSpace))
+    assert(first.fullVoxelSpace.sameRuntimeOwnerAs(second.fullVoxelSpace))
+    // Note what sharing does and does not buy. The two acquisitions still have
+    // distinct static owner types, so `second.fromSelections(timepoints, ...)`
+    // rightly does not compile — canonicalization is not a way around the type
+    // system. What it changes is the *dynamic* boundary: the runtime-owner
+    // check that every checked operation performs now succeeds, so a
+    // deserialized or independently constructed view can be realigned instead
+    // of being rejected outright.
+    assert(first.timeSpace.align(second.timeSpace).isRight)
+    assert(first.fullVoxelSpace.align(second.fullVoxelSpace).isRight)
 
-    val foreignTimeSpace =
-      FiniteSpace
-        .make[second.T](first.timeSpace.key, second.timeSpace.size)
-        .fold(error => fail(error.message), identity)
-    val foreignVoxelSpace =
-      FiniteSpace
-        .make[second.X](first.fullVoxelSpace.key, second.fullVoxelSpace.size)
-        .fold(error => fail(error.message), identity)
-    val foreignTimepoints =
-      LocusSelection
-        .fromOrdinals(foreignTimeSpace, Vector(2, 0))
-        .fold(error => fail(error.message), identity)
-    val foreignVoxels =
-      LocusSelection
-        .fromOrdinals(foreignVoxelSpace, Vector(3, 1))
-        .fold(error => fail(error.message), identity)
-
-    assert(second.fromSelections(foreignTimepoints, foreignVoxels).isLeft)
+  test("acquisitions differing only in run length get distinct time domains"):
+    // The time key must carry the timepoint count; without it two run lengths
+    // over one grid claimed the same domain id at two different sizes.
+    val full4 = VoxelDomain.fullUnsafe(shape())
+    val short = domain("run-a", shape(timepoints = 2), VoxelDomain.fullUnsafe(shape(timepoints = 2)))
+    val long = domain("run-a", shape(timepoints = 4), full4)
+    assert(!short.timeSpace.sameRuntimeOwnerAs(long.timeSpace))
+    assertEquals(short.timeSpace.size, 2)
+    assertEquals(long.timeSpace.size, 4)
 
   test("image selection adapter preserves requested order and checks exact volume grid"):
     val requestedShape = shape()
     val selected =
       ImageVoxelSelection
-        .make(requestedShape.volumeSpace, NArray[Int](3, 0))
+        .make(requestedShape.volumeSpace, Array[Int](3, 0))
         .fold(error => fail(error.message), identity)
     val adapted =
       VoxelSelection

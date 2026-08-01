@@ -1,6 +1,7 @@
 package scalafim.fmri.motion
 
-import narr.NArray
+import ravel.NDArray
+import ravel.Rank
 
 private[motion] object MotionSampling:
   final case class VoxelMap(ax: Array[Double], ay: Array[Double], az: Array[Double], c: Array[Double])
@@ -78,11 +79,10 @@ private[motion] object MotionSampling:
     )
 
   def trilinear(
-      data: NArray[Double],
+      data: NDArray[Double, Rank[4]],
       nx: Int,
       ny: Int,
       nz: Int,
-      nxyz: Int,
       t: Int,
       x: Double,
       y: Double,
@@ -105,12 +105,12 @@ private[motion] object MotionSampling:
       var kk = k0
       if zeroPad then
         if ii < 0 || ii >= nx || jj < 0 || jj >= ny || kk < 0 || kk >= nz then 0.0
-        else data(ii + nx * (jj + ny * kk) + t * nxyz)
+        else data(ii, jj, kk, t)
       else
         if ii < 0 then ii = 0 else if ii >= nx then ii = nx - 1
         if jj < 0 then jj = 0 else if jj >= ny then jj = ny - 1
         if kk < 0 then kk = 0 else if kk >= nz then kk = nz - 1
-        data(ii + nx * (jj + ny * kk) + t * nxyz)
+        data(ii, jj, kk, t)
 
     val c000 = sample(x0, y0, z0)
     val c100 = sample(x1, y0, z0)

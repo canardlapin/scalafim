@@ -15,13 +15,15 @@ enum ParcellationError:
         s"parcel ordinal $parcel has an empty fiber"
 
 final class Parcellation[X, P] private (
-    val ambient: FiniteSpace[X],
-    val parcels: FiniteSpace[P],
+    val ambient: FiniteDomain[X],
+    val parcels: FiniteDomain[P],
     private val parcelOrdinalAt: Array[Int]
 ):
   def parcelAt(point: Point[X]): Option[Point[P]] =
-    val parcel = parcelOrdinalAt(point.ordinal)
-    if parcel < 0 then None else parcels.point(parcel)
+    if !ambient.contains(point) then None
+    else
+      val parcel = parcelOrdinalAt(point.ordinal)
+      if parcel < 0 then None else parcels.pointOption(parcel)
 
   def support: Region[X] =
     Region.tabulate(ambient)(point => parcelOrdinalAt(point.ordinal) >= 0)
@@ -33,7 +35,10 @@ final class Parcellation[X, P] private (
     val rows = Array.tabulate(ambient.size): source =>
       val parcel = parcelOrdinalAt(source)
       if parcel < 0 then Array.emptyIntArray else Array(parcel)
-    Relation.fromOrdinalRows(ambient, parcels, rows).toOption.get
+    Relation
+      .fromOrdinalRows(ambient, parcels, rows.iterator.map(_.iterator))
+      .toOption
+      .get
 
   def assignmentOrdinals: Vector[Option[Int]] =
     parcelOrdinalAt.toVector.map(ordinal => Option.when(ordinal >= 0)(ordinal))
@@ -47,25 +52,13 @@ final class Parcellation[X, P] private (
         if parcel < 0 then -1 else targets(parcel)
       Right(Parcellation.fromValidated(ambient, mapping.mapping.to, assignments))
     else
-      Left:
-        SpaceMismatch(
-          parcels.key,
-          parcels.size,
-          mapping.mapping.from.key,
-          mapping.mapping.from.size
-        )
+      Left(mismatch(parcels, mapping.mapping.from))
 
   def sameBlocksAs[Q](
       that: Parcellation[X, Q]
   ): Either[SpaceMismatch, Boolean] =
     if !ambient.sameIdentityAs(that.ambient) then
-      Left:
-        SpaceMismatch(
-          ambient.key,
-          ambient.size,
-          that.ambient.key,
-          that.ambient.size
-        )
+      Left(mismatch(ambient, that.ambient))
     else if parcels.size != that.parcels.size then
       Right(false)
     else
@@ -105,8 +98,8 @@ final class Parcellation[X, P] private (
 
 object Parcellation:
   def fromAssignments[X, P](
-      ambient: FiniteSpace[X],
-      parcels: FiniteSpace[P],
+      ambient: FiniteDomain[X],
+      parcels: FiniteDomain[P],
       assignments: IterableOnce[Option[Int]]
   ): Either[ParcellationError, Parcellation[X, P]] =
     val publicAssignments = Vector.from(assignments)
@@ -145,8 +138,8 @@ object Parcellation:
     fromValidated(mapping.mapping.from, mapping.mapping.to, assignments)
 
   private[locus] def fromValidated[X, P](
-      ambient: FiniteSpace[X],
-      parcels: FiniteSpace[P],
+      ambient: FiniteDomain[X],
+      parcels: FiniteDomain[P],
       assignments: Array[Int]
   ): Parcellation[X, P] =
     new Parcellation(ambient, parcels, assignments)

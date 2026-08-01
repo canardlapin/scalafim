@@ -47,7 +47,7 @@ import scalafim.response.{
   SourceId
 }
 import scalafim.response.laws.ResponseLawChecks
-import scalafim.zarr.{
+import zarr4s.{
   ArrayDescriptor,
   ArraySelection,
   AsyncChunkProvider,
@@ -373,12 +373,12 @@ class TemporalDctCrossBackendSuite extends munit.FunSuite:
     def chunk(
         coordinate: ChunkCoordinate,
         storedShape: Shape
-    )(using ExecutionContext): Future[Either[scalafim.zarr.ZarrError, ChunkPayload]] =
+    )(using ExecutionContext): Future[Either[zarr4s.ZarrError, ChunkPayload]] =
       storedShape.elementCount match
         case Left(error) =>
           Future.successful(Left(error))
         case Right(count) if count > Int.MaxValue.toLong =>
-          Future.successful(Left(scalafim.zarr.ZarrError.ResourceLimit(
+          Future.successful(Left(zarr4s.ZarrError.ResourceLimit(
             "test chunk values",
             Int.MaxValue,
             count
@@ -658,7 +658,7 @@ class TemporalDctCrossBackendSuite extends munit.FunSuite:
     )
 
   private def liftZarr[A](
-      value: Either[scalafim.zarr.ZarrError, A]
+      value: Either[zarr4s.ZarrError, A]
   ): IO[A] =
     value.fold(
       error => IO.raiseError(new IllegalArgumentException(error.message)),

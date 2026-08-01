@@ -1,10 +1,7 @@
 package scalafim.response
 
-import narr.NArray
-import scala.scalajs.js.typedarray.{Float64Array, Int32Array}
-
 class PrimitiveStorageJsSuite extends munit.FunSuite:
-  test("axis and response storage use Scala.js typed primitive arrays"):
+  test("axis storage uses a whole canonical Ravel primitive array"):
     val indices =
       OrderedIndices
         .fromInts(
@@ -15,6 +12,6 @@ class PrimitiveStorageJsSuite extends munit.FunSuite:
         .toOption
         .get
 
-    assert(indices.primitiveValues.isInstanceOf[Int32Array])
-    assert(NArray[Double](1.0).isInstanceOf[Float64Array])
-
+    assertEquals(indices.primitiveValues.dtype.name, "Int")
+    assert(indices.primitiveValues.isCanonicalLayout)
+    assert(indices.primitiveValues.isWholeBuffer)

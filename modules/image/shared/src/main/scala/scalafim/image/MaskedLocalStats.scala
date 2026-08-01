@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 
 final case class VoxelWindowRadius(x: Int, y: Int, z: Int):
   require(x >= 0 && y >= 0 && z >= 0, "voxel window radii must be non-negative")
@@ -10,9 +9,9 @@ final case class MaskedLocalStatsSummary(validPerChannel: Vector[Int], voxels: I
 /** Reusable integral-image and physical-gradient workspace. */
 final class MaskedLocalStatsWorkspace private (
     val grid: GridSpec,
-    private[image] val sum: NArray[Double],
-    private[image] val sumSquares: NArray[Double],
-    private[image] val weights: NArray[Double],
+    private[image] val sum: Array[Double],
+    private[image] val sumSquares: Array[Double],
+    private[image] val weights: Array[Double],
     private[image] val inverseAffine: DMat
 ):
   val ownedScalarBuffers: Int = 3
@@ -26,23 +25,23 @@ object MaskedLocalStatsWorkspace:
     )
     new MaskedLocalStatsWorkspace(
       grid,
-      NArrayUtil.ofSize[Double](padded),
-      NArrayUtil.ofSize[Double](padded),
-      NArrayUtil.ofSize[Double](padded),
+      PrimitiveBuffers.ofSize[Double](padded),
+      PrimitiveBuffers.ofSize[Double](padded),
+      PrimitiveBuffers.ofSize[Double](padded),
       inverse
     )
 
 object MaskedLocalStats:
   /** Writes channel-major local z scores for several voxel windows. */
   def normalizeChannelsInto(
-      source: NArray[Double],
+      source: Array[Double],
       sourceValidity: FieldValidity,
       grid: GridSpec,
       radii: Vector[VoxelWindowRadius],
       epsilonPerChannel: Vector[Double],
       minimumValidFraction: Double,
-      destination: NArray[Double],
-      destinationValidity: NArray[Boolean],
+      destination: Array[Double],
+      destinationValidity: Array[Boolean],
       workspace: MaskedLocalStatsWorkspace
   ): MaskedLocalStatsSummary =
     require(workspace.grid == grid, "local-statistics workspace/grid mismatch")
@@ -82,12 +81,12 @@ object MaskedLocalStats:
 
   /** Writes physical covector gradients for channel-major scalar values. */
   def physicalGradientChannelsInto(
-      values: NArray[Double],
-      valueValidity: NArray[Boolean],
+      values: Array[Double],
+      valueValidity: Array[Boolean],
       grid: GridSpec,
       channels: Int,
-      destination: NArray[Double],
-      destinationValidity: NArray[Boolean],
+      destination: Array[Double],
+      destinationValidity: Array[Boolean],
       workspace: MaskedLocalStatsWorkspace
   ): MaskedLocalStatsSummary =
     require(workspace.grid == grid, "gradient workspace/grid mismatch")
@@ -113,7 +112,7 @@ object MaskedLocalStats:
     MaskedLocalStatsSummary(counts.result(), grid.nVoxels)
 
   private def buildIntegrals(
-      source: NArray[Double],
+      source: Array[Double],
       validity: FieldValidity,
       grid: GridSpec,
       workspace: MaskedLocalStatsWorkspace
@@ -159,15 +158,15 @@ object MaskedLocalStats:
       z += 1
 
   private def normalizeChannel(
-      source: NArray[Double],
+      source: Array[Double],
       sourceValidity: FieldValidity,
       grid: GridSpec,
       radius: VoxelWindowRadius,
       epsilon: Double,
       minimumValidFraction: Double,
       offset: Int,
-      destination: NArray[Double],
-      destinationValidity: NArray[Boolean],
+      destination: Array[Double],
+      destinationValidity: Array[Boolean],
       workspace: MaskedLocalStatsWorkspace
   ): Int =
     val nx = grid.shape.x
@@ -214,12 +213,12 @@ object MaskedLocalStats:
     validCount
 
   private def gradientChannel(
-      values: NArray[Double],
-      validity: NArray[Boolean],
+      values: Array[Double],
+      validity: Array[Boolean],
       grid: GridSpec,
       channel: Int,
-      destination: NArray[Double],
-      destinationValidity: NArray[Boolean],
+      destination: Array[Double],
+      destinationValidity: Array[Boolean],
       inverse: DMat
   ): Int =
     val nx = grid.shape.x
@@ -266,7 +265,7 @@ object MaskedLocalStats:
     validCount
 
   private def box(
-      integral: NArray[Double],
+      integral: Array[Double],
       nx: Int,
       ny: Int,
       x0: Int,
@@ -289,7 +288,7 @@ object MaskedLocalStats:
     integral(c111) - integral(c011) - integral(c101) - integral(c110) +
       integral(c001) + integral(c010) + integral(c100) - integral(c000)
 
-  private def clear(values: NArray[Double]): Unit =
+  private def clear(values: Array[Double]): Unit =
     var index = 0
     while index < values.length do
       values(index) = 0.0

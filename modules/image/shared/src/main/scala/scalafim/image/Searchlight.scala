@@ -1,6 +1,10 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.DType
+import ravel.DType.given
+import ravel.NDArray as RavelArray
+import ravel.Shape
+import ravel.NDArray as RavelArray
 import scala.reflect.ClassTag
 import spire.algebra.Ring
 import scala.util.Random
@@ -90,7 +94,7 @@ object Searchlight:
               Iterator.range(0, spatialNels)
             case SearchlightCenterDomain.MaskVoxels =>
               val indices = Mask.indices(mask)
-              Iterator.tabulate(indices.length)(indices.apply)
+              Iterator.tabulate(indices.size)(index => indices(index))
         val selectedMask =
           support match
             case SearchlightSupport.FullNeighborhood => None
@@ -151,11 +155,9 @@ object Searchlight:
 
     val sorted = pairs.result().sortBy { case (c, _) => (c(0), c(1), c(2)) }
     val coords = sorted.map(_._1)
-    val dataArr = NArray.ofSize[A](coords.length)
-    var i = 0
-    while i < coords.length do
-      dataArr(i) = sorted(i)._2
-      i += 1
+    given DType[A] = vol.values.dtype
+    val dataArr =
+      RavelArray.fromSeq(Shape(coords.length), sorted.map(_._2))
 
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
@@ -206,7 +208,7 @@ object Searchlight:
       x += 1
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
-    val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
+    val dataArr = RavelArray.fill(Shape(coords.length), fill)
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
       .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
@@ -289,11 +291,9 @@ object Searchlight:
 
     val sorted = pairs.result().sortBy { case (c, _) => (c(0), c(1), c(2)) }
     val coords = sorted.map(_._1)
-    val dataArr = NArray.ofSize[A](coords.length)
-    var i = 0
-    while i < coords.length do
-      dataArr(i) = sorted(i)._2
-      i += 1
+    given DType[A] = vol.values.dtype
+    val dataArr =
+      RavelArray.fromSeq(Shape(coords.length), sorted.map(_._2))
 
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
@@ -349,7 +349,7 @@ object Searchlight:
       x += 1
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
-    val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
+    val dataArr = RavelArray.fill(Shape(coords.length), fill)
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
       .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
@@ -405,11 +405,9 @@ object Searchlight:
 
     val sorted = pairs.result().sortBy { case (c, _) => (c(0), c(1), c(2)) }
     val coords = sorted.map(_._1)
-    val dataArr = NArray.ofSize[A](coords.length)
-    var i = 0
-    while i < coords.length do
-      dataArr(i) = sorted(i)._2
-      i += 1
+    given DType[A] = vol.values.dtype
+    val dataArr =
+      RavelArray.fromSeq(Shape(coords.length), sorted.map(_._2))
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
       .fromOwned(sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
@@ -448,7 +446,7 @@ object Searchlight:
       x += 1
 
     val coords = coordsBuf.result().sortBy(c => (c(0), c(1), c(2)))
-    val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
+    val dataArr = RavelArray.fill(Shape(coords.length), fill)
     val centerIndex = centerRow(coords, typedCenter.voxel)
     ROIVolWindow
       .fromOwned[Int](sp, ROICoords(coords), dataArr, centerIndex, typedCenter.linearIndex, label)
@@ -510,7 +508,7 @@ object Searchlight:
       }
 
       val coords = keepIdx.map(coords0)
-      val dataArr = NArray.ofSize[A](coords.length)
+      val dataArr = Array.ofDim[A](coords.length)
       var i = 0
       val zero = summon[Ring[A]].zero
       while i < coords.length do
@@ -530,11 +528,12 @@ object Searchlight:
         else coords.zip(Vector.tabulate(coords.length)(i => dataArr(i)))
 
       val fcoords = filteredPairs.map(_._1)
-      val fdata = NArray.ofSize[A](filteredPairs.length)
-      var k = 0
-      while k < filteredPairs.length do
-        fdata(k) = filteredPairs(k)._2
-        k += 1
+      given DType[A] = vol.values.dtype
+      val fdata =
+        RavelArray.fromSeq(
+          Shape(filteredPairs.length),
+          filteredPairs.map(_._2)
+        )
 
       val typedCenter = checkedCenter(vol.space, center)
       val centerIndex = centerRow(fcoords.toVector, typedCenter.voxel)
@@ -581,7 +580,7 @@ object Searchlight:
         !isEdge || rng.nextDouble() >= drop
       }.map(coords0)
 
-      val dataArr = NArrayUtil.fillConst[Int](coords.length, fill)
+      val dataArr = RavelArray.fill(Shape(coords.length), fill)
       val centerIndex = centerRow(coords.toVector, checkedCenter(base.space, center).voxel)
       val parentIdx = base.parentIndex
       ROIVolWindow
@@ -611,7 +610,7 @@ object Searchlight:
     val centers: Iterator[Int] =
       if nonzero then
         val idx = Mask.indices(mask)
-        Iterator.tabulate(idx.length)(i => idx(i))
+        Iterator.tabulate(idx.size)(i => idx(i))
       else Iterator.range(0, spatialNels)
 
     centers.map { lin =>
@@ -628,7 +627,7 @@ object Searchlight:
   ): Iterator[ROIVolWindow[Int]] =
     val sp = mask.space
     val idx = Mask.indices(mask)
-    Iterator.tabulate(idx.length) { i =>
+    Iterator.tabulate(idx.size) { i =>
       val lin = idx(i)
       val center = Indexing.indexToGrid3D(sp.spatialDims, lin)
       sphericalRoi(sp, center, radius, fill = 1, mask = if nonzero then Some(mask) else None, label = label)
@@ -700,20 +699,11 @@ object Searchlight:
             Vector.tabulate(K)(identity).sortBy(j => dists(j)).take(kEff)
 
       val nNeigh = neigh.length
-      val outData = narr.NArray.ofSize[Double](tLen * nNeigh)
-      var c = 0
-      while c < nNeigh do
-        val col = neigh(c)
-        val srcOff = col * tLen
-        val dstOff = c * tLen
-        var t = 0
-        while t < tLen do
-          outData(dstOff + t) = x.ts.data(srcOff + t)
-          t += 1
-        c += 1
-
       val coords = neigh.map(gridInt)
-      val mat = NDArray[Double](outData, Vector(tLen, nNeigh))
+      val mat =
+        RavelArray.tabulate[Double](tLen, nNeigh) { (time, column) =>
+          x.ts(time, neigh(column))
+        }
       ROIVec(x.space, coords, mat)
     }
 
@@ -741,7 +731,7 @@ object Searchlight:
     val sp = cvol.space
     cvol.clusterIds.iterator.map { id =>
       val idx = cvol.clusterMap(id)
-      val coords = Vector.tabulate(idx.length)(i => Indexing.indexToGrid3D(sp.spatialDims, idx(i)))
-      val data = NArrayUtil.fillConst[Int](idx.length, fill)
+      val coords = Vector.tabulate(idx.size)(i => Indexing.indexToGrid3D(sp.spatialDims, idx(i)))
+      val data = RavelArray.fill(Shape(idx.size), fill)
       ROIVol[Int](sp, coords, data)
     }

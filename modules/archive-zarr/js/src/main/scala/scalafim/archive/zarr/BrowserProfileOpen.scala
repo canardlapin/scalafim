@@ -2,7 +2,7 @@ package scalafim.archive.zarr
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scalafim.zarr.*
+import zarr4s.*
 
 /** Scala.js compatibility name for the portable asynchronous profile handle. */
 type BrowserOpenedCanonicalBold = AsyncOpenedCanonicalBold

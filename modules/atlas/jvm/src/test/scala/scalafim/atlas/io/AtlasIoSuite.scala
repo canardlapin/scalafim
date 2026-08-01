@@ -112,7 +112,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps converts finite integer-valued volumes") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val data = NArrayUtil.fillConst[Double](4, 0.0)
+    val data = PrimitiveBuffers.fillConst[Double](4, 0.0)
     data(0) = 1.0
     data(1) = 2.0
     data(2) = 0.0
@@ -132,7 +132,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val fallbackData = NArrayUtil.fromArray(Array(1.0, 2.0, 0.0, 2.0))
+    val fallbackData = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 0.0, 2.0))
     val fallback = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"))
     assertEquals(fallback.label, "source-label")
     assertEquals(fallback.linear(1), 2)
@@ -140,12 +140,12 @@ class AtlasIoSuite extends munit.FunSuite:
     val explicit = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"), "explicit-label")
     assertEquals(explicit.label, "explicit-label")
 
-    val nonFinite = NeuroVol.fromLinear[Double](NArrayUtil.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
+    val nonFinite = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains non-finite value at linear index 1") {
       AtlasLabelMaps.fromDouble(nonFinite)
     }
 
-    val negative = NeuroVol.fromLinear[Double](NArrayUtil.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
+    val negative = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
       AtlasLabelMaps.fromDouble(negative)
     }
@@ -336,7 +336,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
   test("AtlasLabelMaps builds VolumeAtlas from label volume and regions") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val data = NArrayUtil.fillConst[Int](4, 0)
+    val data = PrimitiveBuffers.fillConst[Int](4, 0)
     data(0) = 1
     data(1) = 2
     data(2) = 1

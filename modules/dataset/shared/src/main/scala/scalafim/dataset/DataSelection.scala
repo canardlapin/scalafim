@@ -112,7 +112,8 @@ object VoxelSelection:
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
       .flatMap: _ =>
-        fromInts(selection.linearIndices.toSeq*)
+        val indices = selection.linearIndices
+        fromInts(Vector.tabulate(indices.size)(i => indices(i))*)
 
 enum VoxelDomainKind:
   case FullSpatial
@@ -245,10 +246,10 @@ object VoxelDomain:
       .flatMap: _ =>
         val maskIndices = Mask.indices(mask)
         val voxels = Vector.newBuilder[VoxelIndex]
-        voxels.sizeHint(maskIndices.length)
+        voxels.sizeHint(maskIndices.size)
         var i = 0
         var failure = Option.empty[DatasetError]
-        while i < maskIndices.length && failure.isEmpty do
+        while i < maskIndices.size && failure.isEmpty do
           VoxelIndex.make(maskIndices(i)) match
             case Left(error) => failure = Some(error)
             case Right(voxel) => voxels += voxel
@@ -413,8 +414,8 @@ object ResolvedDataSelection:
         val timepoints: LocusSelection[T] = timepoints
         val voxels: LocusSelection[X] = voxels
     new ResolvedDataSelection(
-      timepoints.points.map(point => TimepointIndex.unsafe(point.ordinal)).toVector,
-      voxels.points.map(point => VoxelIndex.unsafe(point.ordinal)).toVector,
+      timepoints.points.map(point => TimepointIndex.unsafe(point.value)).toVector,
+      voxels.points.map(point => VoxelIndex.unsafe(point.value)).toVector,
       locusSelection
     )
 

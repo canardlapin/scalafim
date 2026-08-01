@@ -1,6 +1,7 @@
 package scalafim.image.view
 
 import intaglio.*
+import ravel.NDArray as RavelArray
 import scalafim.image.*
 
 class AdvancedViewSuite extends munit.FunSuite:
@@ -10,7 +11,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     label: String
   )(value: (Int, Int, Int) => Double): NeuroVol[Double] =
     val shape = space.shape
-    val data = NArrayUtil.tabulate[Double](shape.product) { index =>
+    val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
       val x = index % shape.x
       val y = (index / shape.x) % shape.y
       val z = index / (shape.x * shape.y)
@@ -202,15 +203,15 @@ class AdvancedViewSuite extends munit.FunSuite:
     val space = VolumeSpace(NeuroSpace(Vector(5, 3, 1)))
     val source = volume(space, "x")((x, _, _) => x.toDouble)
     val fieldGrid = GridSpec.fromVolumeSpace(space)
-    val field = NDArray(
-      NArrayUtil.tabulate[Double](fieldGrid.nVoxels * 3) { index =>
-        val component = index / fieldGrid.nVoxels
-        val linear = index % fieldGrid.nVoxels
-        val coord = Indexing.indexToGrid3D(fieldGrid.shape, linear)
-        if component == 0 && coord.x >= 2 then 1.0 else 0.0
-      },
-      fieldGrid.dims :+ 3
-    )
+    val field =
+      RavelArray.tabulate[Double](
+        fieldGrid.shape.x,
+        fieldGrid.shape.y,
+        fieldGrid.shape.z,
+        3
+      ) { (x, _, _, component) =>
+        if component == 0 && x >= 2 then 1.0 else 0.0
+      }
     val morphism = DenseFieldMorphism.displacement(
       SpatialDomainId("source"),
       SpatialDomainId("reference"),

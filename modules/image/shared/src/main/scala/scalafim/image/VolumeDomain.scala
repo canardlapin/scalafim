@@ -1,14 +1,14 @@
 package scalafim.image
 
+import ravel.NDArray
+import ravel.Shape
 import scalafim.locus.*
 
 enum VolumeIdentityBasis:
   case Semantic
   case StructuralCompatibility
 
-sealed trait StructuralCompatibilityVoxel
-
-final class VolumeDomain[S] private (
+final class VolumeDomain[S] private[image] (
     val volumeSpace: VolumeSpace,
     val finiteSpace: FiniteSpace[S],
     val identityBasis: VolumeIdentityBasis
@@ -30,14 +30,23 @@ final class VolumeDomain[S] private (
   def voxelRegion(region: Region[S]): Either[SpaceMismatch, VoxelRegion] =
     checkSpace(region.space).map: _ =>
       VoxelRegion
-        .make(volumeSpace, NArrayUtil.fromArray(region.ordinalsInDomainOrder))
+        .make(
+          volumeSpace,
+          NDArray.fromSeq(
+            Shape(region.cardinality),
+            region.ordinalsInDomainOrder
+          )
+        )
         .toOption
         .get
 
   def voxelSelection(selection: Selection[S]): Either[SpaceMismatch, VoxelSelection] =
     checkSpace(selection.space).map: _ =>
       VoxelSelection
-        .make(volumeSpace, NArrayUtil.fromArray(selection.ordinals))
+        .make(
+          volumeSpace,
+          NDArray.fromSeq(Shape(selection.size), selection.ordinals)
+        )
         .toOption
         .get
 
@@ -45,7 +54,7 @@ final class VolumeDomain[S] private (
       volume: NeuroVol[A]
   ): Either[GridMismatch, IndexedField[S, A]] =
     GridCompatibility.volume(volumeSpace, volume.volumeSpace).map: _ =>
-      IndexedField.tabulate(finiteSpace)(point => volume.linear(point.ordinal))
+      IndexedField.tabulate(finiteSpace)(point => volume.linear(point.value))
 
   def supportWhere[A](
       field: IndexedField[S, A]
@@ -55,40 +64,29 @@ final class VolumeDomain[S] private (
     checkSpace(field.space).map: _ =>
       Region.tabulate(finiteSpace)(point => predicate(field(point)))
 
-  private def checkSpace[T](actual: FiniteSpace[T]): Either[SpaceMismatch, Unit] =
+  /** Regions, selections and fields are indexed by a [[FiniteDomain]], which
+    * need not be a persistent [[FiniteSpace]]. Identity is checked by runtime
+    * owner either way, so the weaker bound is the honest one.
+    */
+  private def checkSpace[T](actual: FiniteDomain[T]): Either[SpaceMismatch, Unit] =
     if finiteSpace.sameIdentityAs(actual) then Right(())
     else
-      Left:
-        SpaceMismatch(
-          finiteSpace.key,
-          finiteSpace.size,
-          actual.key,
-          actual.size
-        )
+      Left(mismatch(finiteSpace, actual))
 
 object VolumeDomain:
-  def semantic[S](
+  def semantic(
       key: SpaceKey,
       volumeSpace: VolumeSpace
-  ): VolumeDomain[S] =
-    new VolumeDomain(
-      volumeSpace,
-      FiniteSpace.make[S](key, volumeSpace.nVoxels).toOption.get,
-      VolumeIdentityBasis.Semantic
-    )
+  ): SomeVolumeDomain =
+    SomeVolumeDomain.make(key, volumeSpace, VolumeIdentityBasis.Semantic)
 
   def structuralCompatibility(
       volumeSpace: VolumeSpace
-  ): VolumeDomain[StructuralCompatibilityVoxel] =
-    new VolumeDomain(
+  ): SomeVolumeDomain =
+    SomeVolumeDomain.make(
+      SpaceKey.unsafe:
+        s"scalafim:image:structural:${volumeSpace.toNeuroSpace}",
       volumeSpace,
-      FiniteSpace
-        .make[StructuralCompatibilityVoxel](
-          StructuralVolumeLocus.key(volumeSpace),
-          volumeSpace.nVoxels
-        )
-        .toOption
-        .get,
       VolumeIdentityBasis.StructuralCompatibility
     )
 
@@ -101,8 +99,20 @@ object SomeVolumeDomain:
       key: SpaceKey,
       volumeSpace: VolumeSpace
   ): SomeVolumeDomain =
-    final class VolumeVoxel
-    val domain = VolumeDomain.semantic[VolumeVoxel](key, volumeSpace)
+    make(key, volumeSpace, VolumeIdentityBasis.Semantic)
+
+  private[image] def make(
+      key: SpaceKey,
+      volumeSpace: VolumeSpace,
+      basis: VolumeIdentityBasis
+  ): SomeVolumeDomain =
+    val resolution =
+      DomainFactory.unsafeRestore(key, volumeSpace.nVoxels)
     new SomeVolumeDomain:
-      type S = VolumeVoxel
-      val value: VolumeDomain[VolumeVoxel] = domain
+      type S = resolution.S
+      val value: VolumeDomain[S] =
+        new VolumeDomain(
+          volumeSpace,
+          resolution.space,
+          basis
+        )

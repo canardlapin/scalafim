@@ -11,13 +11,13 @@ for the module map; this file is the working contract.
 - Source roots: `modules/<name>/{shared,jvm,js}/src/{main,test}/scala/...`.
   - `shared` — portable, JVM-only-dependency-free numeric core (the default home for code).
   - `jvm` — platform IO and JVM-only deps (e.g. NIfTI/atlas loaders, file backends, Breeze).
-  - `js` — Scala.js-specific shims (e.g. `NArray` extensions).
+  - `js` — Scala.js-specific adapters and platform integrations.
 - Packages are `scalafim.*` (`scalafim.linalg`, `scalafim.fmri.hrf`, `scalafim.image`, …).
 - Module dependency edges are declared in `build.sbt`; keep them acyclic and minimal.
 
 ## Build & test
 
-- Toolchain: Scala **3.7.4**, sbt **1.10.5**, [MUnit](https://scalameta.org/munit/) for tests.
+- Toolchain: Scala **3.7.4**, sbt **1.11.7**, [MUnit](https://scalameta.org/munit/) for tests.
 - Commands:
   - `sbt compileAll` / `sbt testAll` — every module, both platforms.
   - `sbt <module>{JVM,JS}/test` — one platform, e.g. `sbt hrfJVM/test`, `sbt imageJS/test`.

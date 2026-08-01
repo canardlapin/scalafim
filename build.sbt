@@ -6,6 +6,19 @@ ThisBuild / organization := "scalafim"
 ThisBuild / scalaVersion := "3.7.4"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 
+// Ravel is the single dense-array substrate shared by response and image
+// semantics. The local override coordinates cross-repository development;
+// ordinary builds remain pinned to an immutable source revision.
+lazy val ravelRevision = "f804ba51242aae3a1442b3855a20bd896ffa8b64"
+lazy val ravelBuild =
+  sys.props
+    .get("scalafim.ravel.build")
+    .orElse(sys.props.get("reframe4s.ravel.build"))
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/ravel.git#$ravelRevision"))
+lazy val ravelCoreJVM = ProjectRef(ravelBuild, "coreJVM")
+lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
+
 // Immutable source dependency: sbt clones this exact Gale commit into its
 // staging area, so a clean checkout never depends on publishLocal or a sibling
 // developer checkout.
@@ -14,6 +27,50 @@ lazy val galeBuild =
   uri(s"https://github.com/canardlapin/gale.git#$galeRevision")
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
 lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
+
+// locus4s is independently owned. Ordinary builds clone the exact reviewed
+// revision; the property is an explicit sibling-checkout override for
+// coordinated development.
+lazy val locus4sRevision = "af063d7fcf2d0d48aed5474c9c9a41376e18531f"
+lazy val locus4sBuild =
+  sys.props
+    .get("scalafim.locus4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/locus4s.git#$locus4sRevision"))
+lazy val locus4sCoreJVM = ProjectRef(locus4sBuild, "locus4s-coreJVM")
+lazy val locus4sCoreJS  = ProjectRef(locus4sBuild, "locus4s-coreJS")
+lazy val locus4sDataJVM = ProjectRef(locus4sBuild, "locus4s-dataJVM")
+lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
+
+// image4s is now independently owned rather than exported through reframe4s.
+// Ordinary builds use its immutable source revision; coordinated development
+// can select a sibling checkout explicitly.
+lazy val image4sRevision = "497bfd164ad514ff3d1944699550c78caa57e85d"
+lazy val image4sBuild = {
+  sys.props
+    .get("scalafim.locus4s.build")
+    .foreach(System.setProperty("image4s.locus4s.build", _))
+  sys.props
+    .get("scalafim.image4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/image4s.git#$image4sRevision"))
+}
+lazy val image4sCoreJVM = ProjectRef(image4sBuild, "image4s-coreJVM")
+lazy val image4sCoreJS  = ProjectRef(image4sBuild, "image4s-coreJS")
+
+// graph4s is an independently owned topology and algorithms library. Ordinary
+// builds clone the exact reviewed revision; the property is an explicit local
+// source override for coordinated development.
+lazy val graph4sRevision = "ea5d2d762f85f5a0f97ee188deb5fac0ef2bcbaf"
+lazy val graph4sBuild =
+  sys.props
+    .get("scalafim.graph4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/graph4s.git#$graph4sRevision"))
+lazy val graph4sCoreJVM       = ProjectRef(graph4sBuild, "coreJVM")
+lazy val graph4sCoreJS        = ProjectRef(graph4sBuild, "coreJS")
+lazy val graph4sAlgorithmsJVM = ProjectRef(graph4sBuild, "algorithmsJVM")
+lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
@@ -63,6 +120,18 @@ lazy val bids4sBuild =
 lazy val bids4sJVM = ProjectRef(bids4sBuild, "coreJVM")
 lazy val bids4sJS  = ProjectRef(bids4sBuild, "coreJS")
 
+// Generic Zarr mechanics are independently owned by zarr4s. Ordinary builds
+// clone the exact reviewed revision; the property is an explicit local source
+// override for coordinated development.
+lazy val zarr4sRevision = "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+lazy val zarr4sBuild =
+  sys.props
+    .get("scalafim.zarr4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/zarr4s.git#$zarr4sRevision"))
+lazy val zarr4sCoreJVM = ProjectRef(zarr4sBuild, "coreJVM")
+lazy val zarr4sCoreJS  = ProjectRef(zarr4sBuild, "coreJS")
+
 lazy val jhdfVersion = "0.12.0"
 
 lazy val commonSettings = Seq(
@@ -81,62 +150,21 @@ lazy val jsSettingsBase = Seq(
   Test / jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv()
 )
 
-lazy val locusKernel =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/locus-kernel"))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-locus-kernel"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val locusKernelJS  = locusKernel.js
-lazy val locusKernelJVM = locusKernel.jvm
-
 lazy val locusData =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/locus-data"))
-    .dependsOn(locusKernel)
     .settings(commonSettings)
     .settings(
       name := "scalafim-locus-data",
       libraryDependencies += "org.typelevel" %%% "cats-kernel" % "2.12.0"
     )
+    .jvmConfigure(_.dependsOn(locus4sCoreJVM, locus4sDataJVM))
+    .jsConfigure(_.dependsOn(locus4sCoreJS, locus4sDataJS))
     .jsSettings(jsSettingsBase)
 
 lazy val locusDataJS  = locusData.js
 lazy val locusDataJVM = locusData.jvm
-
-lazy val locusLaws =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/locus-laws"))
-    .dependsOn(locusData)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-locus-laws",
-      libraryDependencies += "org.scalacheck" %%% "scalacheck" % "1.19.0" % Test
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val locusLawsJS  = locusLaws.js
-lazy val locusLawsJVM = locusLaws.jvm
-
-lazy val graph =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graph"))
-    .dependsOn(locusKernel)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graph"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val graphJS  = graph.js
-lazy val graphJVM = graph.jvm
 
 lazy val linalg =
   crossProject(JSPlatform, JVMPlatform)
@@ -152,22 +180,6 @@ lazy val linalg =
 
 lazy val linalgJS  = linalg.js
 lazy val linalgJVM = linalg.jvm
-
-lazy val graphLinalg =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/graph-linalg"))
-    .dependsOn(graph)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-graph-linalg"
-    )
-    .jvmConfigure(_.dependsOn(galeCoreJVM, multivarJVM % "test->compile"))
-    .jsConfigure(_.dependsOn(galeCoreJS, multivarJS % "test->compile"))
-    .jsSettings(jsSettingsBase)
-
-lazy val graphLinalgJS  = graphLinalg.js
-lazy val graphLinalgJVM = graphLinalg.jvm
 
 lazy val linalgBreeze =
   crossProject(JVMPlatform)
@@ -186,11 +198,17 @@ lazy val pipeline =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/pipeline"))
-    .dependsOn(graph)
     .settings(commonSettings)
     .settings(
-      name := "scalafim-pipeline"
+      name := "scalafim-pipeline",
+      // graph4s is a source ProjectRef. Re-declare its runtime collection
+      // dependency at this public boundary so second-order ScalaFIM consumers
+      // such as fit receive it on both JVM and Scala.js classpaths.
+      libraryDependencies +=
+        "org.typelevel" %%% "cats-collections-core" % "0.9.10"
     )
+    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
+    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val pipelineJS  = pipeline.js
@@ -216,11 +234,12 @@ lazy val response =
     .settings(
       name := "scalafim-response",
       libraryDependencies ++= Seq(
-        "ai.dragonfly" %%% "narr"        % "1.0.1",
         "org.typelevel" %%% "cats-core"   % "2.12.0",
         "org.typelevel" %%% "cats-effect" % "3.5.4"
       )
     )
+    .jvmConfigure(_.dependsOn(ravelCoreJVM))
+    .jsConfigure(_.dependsOn(ravelCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val responseJS  = response.js
@@ -248,7 +267,7 @@ lazy val latent =
       response,
       responseLaws % "test->compile",
       image,
-      locusKernel
+      locusData
     )
     .settings(commonSettings)
     .settings(
@@ -341,18 +360,19 @@ lazy val image =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/image"))
-    .dependsOn(locusData, locusLaws % "test->compile")
+    .dependsOn(locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-image",
       libraryDependencies ++= Seq(
-        "ai.dragonfly" %%% "narr"        % "1.0.1",
         "ai.dragonfly" %%% "slash"       % "0.4.1",
         "org.typelevel" %%% "cats-core"   % "2.12.0",
         "org.typelevel" %%% "cats-effect" % "3.5.4",
         "org.typelevel" %%% "spire"       % "0.18.0"
       )
     )
+    .jvmConfigure(_.dependsOn(image4sCoreJVM))
+    .jsConfigure(_.dependsOn(image4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val imageJS  = image.js
@@ -373,17 +393,6 @@ lazy val registration =
 
 lazy val registrationJS  = registration.js
 lazy val registrationJVM = registration.jvm
-
-lazy val imageBenchJVM =
-  project
-    .in(file("benchmarks/image-jvm"))
-    .dependsOn(imageJVM)
-    .enablePlugins(JmhPlugin)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-image-benchmarks",
-      publish / skip := true
-    )
 
 lazy val galeBenchJVM =
   project
@@ -482,7 +491,7 @@ lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image, locusKernel)
+    .dependsOn(image)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"
@@ -514,14 +523,15 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image, graph, locusData, locusLaws % "test->compile")
+    .dependsOn(image, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
       libraryDependencies ++= Seq(
-        "ai.dragonfly" %%% "narr" % "1.0.1"
       )
     )
+    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
+    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js
@@ -630,7 +640,7 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(linalg, image, surface, locusData, locusLaws % "test->compile")
+    .dependsOn(linalg, image, surface, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-spatial"
@@ -650,11 +660,13 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(image, surface, graph, locusData, locusLaws % "test->compile")
+    .dependsOn(image, surface, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"
     )
+    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
+    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val atlasJS  = atlas.js
@@ -735,7 +747,8 @@ lazy val archivedResponseInterop =
           "ResponseArchiveMigrationBaselineSuite.scala"
       )
     )
-    .jvmConfigure(_.dependsOn(bids4sJVM))
+    .jvmConfigure(_.dependsOn(bids4sJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val archivedResponseInteropJS  = archivedResponseInterop.js
@@ -750,14 +763,12 @@ lazy val dataset =
       responseLaws % "test->compile",
       image,
       hrf,
-      locusData,
-      locusLaws % "test->compile"
+      locusData
     )
     .settings(commonSettings)
     .settings(
       name := "scalafim-dataset",
       libraryDependencies ++= Seq(
-        "ai.dragonfly" %%% "narr" % "1.0.1"
       )
     )
     .jvmConfigure(_.dependsOn(galeCoreJVM))
@@ -844,13 +855,13 @@ lazy val connectivity =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/connectivity"))
-    .dependsOn(graph, locusKernel)
+    .dependsOn(locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-connectivity"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, graph4sCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS, graph4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val connectivityJS  = connectivity.js
@@ -930,44 +941,11 @@ lazy val fmriWorkflow =
 lazy val fmriWorkflowJS  = fmriWorkflow.js
 lazy val fmriWorkflowJVM = fmriWorkflow.jvm
 
-lazy val zarr =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/zarr"))
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-zarr"
-    )
-    .jsSettings(jsSettingsBase)
-
-lazy val zarrJS  = zarr.js
-lazy val zarrJVM = zarr.jvm
-
-lazy val zarrCodecBloscZstd =
-  crossProject(JSPlatform, JVMPlatform)
-    .crossType(CrossType.Full)
-    .in(file("modules/zarr-codec-blosc-zstd"))
-    .dependsOn(zarr)
-    .settings(commonSettings)
-    .settings(
-      name := "scalafim-zarr-codec-blosc-zstd"
-    )
-    .jvmSettings(
-      libraryDependencies += "com.scalableminds" % "blosc-java" % "0.3-1.21.6"
-    )
-    .jsSettings(jsSettingsBase)
-    .jsSettings(
-      scalaJSLinkerConfig ~= (_.withModuleKind(ModuleKind.ESModule))
-    )
-
-lazy val zarrCodecBloscZstdJS  = zarrCodecBloscZstd.js
-lazy val zarrCodecBloscZstdJVM = zarrCodecBloscZstd.jvm
-
 lazy val archiveZarr =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/archive-zarr"))
-    .dependsOn(archive, zarr)
+    .dependsOn(archive)
     .settings(commonSettings)
     .settings(
       name := "scalafim-archive-zarr",
@@ -976,6 +954,8 @@ lazy val archiveZarr =
         "org.typelevel" %%% "cats-effect" % "3.5.4"
       )
     )
+    .jvmConfigure(_.dependsOn(zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val archiveZarrJS  = archiveZarr.js
@@ -990,8 +970,8 @@ lazy val datasetZarr =
     .settings(
       name := "scalafim-dataset-zarr"
     )
-    .jvmConfigure(_.dependsOn(bids4sJVM))
-    .jsConfigure(_.dependsOn(bids4sJS))
+    .jvmConfigure(_.dependsOn(bids4sJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(bids4sJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val datasetZarrJS  = datasetZarr.js
@@ -1001,16 +981,8 @@ lazy val root =
   project
     .in(file("."))
     .aggregate(
-      locusKernelJS,
-      locusKernelJVM,
       locusDataJS,
       locusDataJVM,
-      locusLawsJS,
-      locusLawsJVM,
-      graphJS,
-      graphJVM,
-      graphLinalgJS,
-      graphLinalgJVM,
       linalgJS,
       linalgJVM,
       linalgBreezeJVM,
@@ -1088,10 +1060,6 @@ lazy val root =
       groupJVM,
       fmriWorkflowJS,
       fmriWorkflowJVM,
-      zarrJS,
-      zarrJVM,
-      zarrCodecBloscZstdJS,
-      zarrCodecBloscZstdJVM,
       archiveZarrJS,
       archiveZarrJVM,
       datasetZarrJS,
@@ -1102,8 +1070,8 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("compileAll", ";locusKernelJVM/compile;locusKernelJS/compile;locusDataJVM/compile;locusDataJS/compile;locusLawsJVM/compile;locusLawsJS/compile;graphJVM/compile;graphJS/compile;graphLinalgJVM/compile;graphLinalgJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;zarrJVM/compile;zarrJS/compile;zarrCodecBloscZstdJVM/compile;zarrCodecBloscZstdJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("testAll", ";locusKernelJVM/test;locusKernelJS/test;locusDataJVM/test;locusDataJS/test;locusLawsJVM/test;locusLawsJS/test;graphJVM/test;graphJS/test;graphLinalgJVM/test;graphLinalgJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;zarrJVM/test;zarrJS/test;zarrCodecBloscZstdJVM/test;zarrCodecBloscZstdJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("compileAll", ";locusDataJVM/compile;locusDataJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;registrationJVM/compile;registrationJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("testAll", ";locusDataJVM/test;locusDataJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;registrationJVM/test;registrationJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")

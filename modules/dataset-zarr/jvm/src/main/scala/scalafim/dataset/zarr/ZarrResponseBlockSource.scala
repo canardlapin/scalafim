@@ -3,8 +3,8 @@ package scalafim.dataset.zarr
 import scala.util.control.NonFatal
 import scalafim.archive.zarr.OpenedCanonicalBold
 import scalafim.dataset.*
-import scalafim.image.{Affine, DMat, NArrayUtil, NeuroSpace}
-import scalafim.zarr.*
+import scalafim.image.{Affine, DMat, PrimitiveBuffers, NeuroSpace}
+import zarr4s.*
 
 final class ZarrResponseBlockSource private (
     val opened: OpenedCanonicalBold,
@@ -33,8 +33,8 @@ final class ZarrResponseBlockSource private (
   private def calibrated(
       block: PrimitiveBlock,
       calibration: scalafim.archive.zarr.ScalarCalibration
-  ): Either[DatasetError, narr.NArray[Double]] =
-    val values = NArrayUtil.ofSize[Double](block.elementCount)
+  ): Either[DatasetError, Array[Double]] =
+    val values = PrimitiveBuffers.ofSize[Double](block.elementCount)
     var index = 0
     while index < block.elementCount do
       val stored = block match

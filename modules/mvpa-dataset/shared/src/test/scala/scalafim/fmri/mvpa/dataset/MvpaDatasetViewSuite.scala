@@ -2,7 +2,6 @@ package scalafim.fmri.mvpa.dataset
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import narr.NArray
 import scalafim.dataset.{
   AcquisitionContext,
   DataSelection,
@@ -101,7 +100,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("mvpa-opened-source"),
           schema,
-          NArray[Double](
+          Array[Double](
             2.0, 2.0, 0.0,
             -2.0, -2.0, 0.0,
             3.0, 1.8, 0.5,

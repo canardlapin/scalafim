@@ -2,7 +2,6 @@ package scalafim.fmri.fit
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import narr.NArray
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{
@@ -249,7 +248,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("fit-opened-source"),
           schema,
-          NArray[Double](
+          Array[Double](
             1.0, 2.0,
             3.0, 1.0,
             5.0, 0.0,

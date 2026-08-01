@@ -1,6 +1,6 @@
 package scalafim.registration
 
-import narr.NArray
+import ravel.NDArray as RavelArray
 import scala.util.boundary
 import scala.util.boundary.break
 import scalafim.image.*
@@ -189,26 +189,26 @@ private final case class LegacyInverseGate[W, F, M](
 )
 
 private final class CcWarpBuffer private (
-    val values: NArray[Double],
-    val valid: NArray[Boolean]
+    val values: Array[Double],
+    val valid: Array[Boolean]
 )
 
 private object CcWarpBuffer:
   def apply(size: Int): CcWarpBuffer =
-    new CcWarpBuffer(NArrayUtil.ofSize[Double](size), NArrayUtil.ofSize[Boolean](size))
+    new CcWarpBuffer(PrimitiveBuffers.ofSize[Double](size), PrimitiveBuffers.ofSize[Boolean](size))
 
 private final class CcStepWorkspace[A] private (
     val frame: Frame[A],
     val spatial: MaskedLocalStatsWorkspace,
-    val fixedSpatialGradient: NArray[Double],
-    val movingSpatialGradient: NArray[Double],
-    val fixedGradientValid: NArray[Boolean],
-    val movingGradientValid: NArray[Boolean],
-    val raw: NArray[Double],
-    val component: NArray[Double],
-    val componentSmoothed: NArray[Double],
-    val smoothedWeight: NArray[Double],
-    val velocity: NArray[Double],
+    val fixedSpatialGradient: Array[Double],
+    val movingSpatialGradient: Array[Double],
+    val fixedGradientValid: Array[Boolean],
+    val movingGradientValid: Array[Boolean],
+    val raw: Array[Double],
+    val component: Array[Double],
+    val componentSmoothed: Array[Double],
+    val smoothedWeight: Array[Double],
+    val velocity: Array[Double],
     val gaussian: GaussianWorkspace,
     val gaussianReduction: GaussianReduction
 )
@@ -219,15 +219,15 @@ private object CcStepWorkspace:
     new CcStepWorkspace(
       frame,
       MaskedLocalStatsWorkspace(frame.grid),
-      NArrayUtil.ofSize[Double](3 * n),
-      NArrayUtil.ofSize[Double](3 * n),
-      NArrayUtil.ofSize[Boolean](n),
-      NArrayUtil.ofSize[Boolean](n),
-      NArrayUtil.ofSize[Double](3 * n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](3 * n),
+      PrimitiveBuffers.ofSize[Double](3 * n),
+      PrimitiveBuffers.ofSize[Double](3 * n),
+      PrimitiveBuffers.ofSize[Boolean](n),
+      PrimitiveBuffers.ofSize[Boolean](n),
+      PrimitiveBuffers.ofSize[Double](3 * n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](3 * n),
       GaussianWorkspace(frame.grid),
       GaussianReduction()
     )
@@ -236,14 +236,14 @@ final case class PointwiseRankOneSummary(activeVoxels: Int, maximumNorm: Double)
 
 object PointwiseRankOne:
   def solveInto(
-      gradient: NArray[Double],
-      validity: NArray[Boolean],
+      gradient: Array[Double],
+      validity: Array[Boolean],
       voxels: Int,
       loss: Double,
       damping: Double,
       energyEpsilon: Double,
       scale: Double,
-      destination: NArray[Double]
+      destination: Array[Double]
   ): PointwiseRankOneSummary =
     require(gradient.length >= 3 * voxels && destination.length >= 3 * voxels)
     require(validity.length >= voxels)
@@ -282,7 +282,7 @@ object HalfFlowCc:
     def loss: Double
     def activeFraction: Double
     def edgeActiveFraction: Double
-    def smoothingWeight: NArray[Double]
+    def smoothingWeight: Array[Double]
     def initialize(fixed: CcWarpBuffer, moving: CcWarpBuffer): Either[RegistrationError, Unit]
     def candidateValue(fixed: CcWarpBuffer, moving: CcWarpBuffer): Either[RegistrationError, Double]
     def gradientInto(
@@ -296,8 +296,8 @@ object HalfFlowCc:
       level: HalfFlowCcLevel,
       plan: HalfFlowCcPlan
   ) extends ObjectiveSession[W]:
-    private val supportSource = NArrayUtil.ofSize[Double](frame.grid.nVoxels)
-    private val support = NArrayUtil.ofSize[Double](frame.grid.nVoxels)
+    private val supportSource = PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels)
+    private val support = PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels)
     private val supportWorkspace = GaussianWorkspace(frame.grid)
     private val metricWorkspace = NeighborhoodCcWorkspace(frame.grid)
     private val metricBuffer = NeighborhoodCcBuffer(frame.grid)
@@ -307,7 +307,7 @@ object HalfFlowCc:
     def loss: Double = evaluation.loss
     def activeFraction: Double = evaluation.diagnostics.support.activeFraction
     def edgeActiveFraction: Double = evaluation.diagnostics.support.edgeBandActiveFraction
-    def smoothingWeight: NArray[Double] = frozen.support
+    def smoothingWeight: Array[Double] = frozen.support
 
     def initialize(fixed: CcWarpBuffer, moving: CcWarpBuffer): Either[RegistrationError, Unit] =
       buildSupport(
@@ -388,7 +388,7 @@ object HalfFlowCc:
     private val candidateFixedBuffer = T1FeatureBuffer(frame, featureConfig)
     private val candidateMovingBuffer = T1FeatureBuffer(frame, featureConfig)
     private val residualScratch = new Array[Double](frame.grid.nVoxels)
-    private val weight = NArrayUtil.ofSize[Double](frame.grid.nVoxels)
+    private val weight = PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels)
     private var currentFixed: T1FeatureVolume[W] = null
     private var currentMoving: T1FeatureVolume[W] = null
     private var epsilon = Double.NaN
@@ -399,7 +399,7 @@ object HalfFlowCc:
     def loss: Double = currentLoss
     def activeFraction: Double = active.toDouble / frame.grid.nVoxels.toDouble
     def edgeActiveFraction: Double = edgeActive.toDouble / math.max(1, edgeVoxelCount(frame.grid)).toDouble
-    def smoothingWeight: NArray[Double] = weight
+    def smoothingWeight: Array[Double] = weight
 
     def initialize(fixed: CcWarpBuffer, moving: CcWarpBuffer): Either[RegistrationError, Unit] =
       for
@@ -451,7 +451,7 @@ object HalfFlowCc:
       T1Features.computeInto(
         frame,
         source.values,
-        FieldValidity.Mask(source.valid),
+        FieldValidity.copyMask(source.valid),
         featureConfig,
         workspace,
         destination
@@ -581,7 +581,7 @@ object HalfFlowCc:
           var failure = Option.empty[HalfFlowCcError]
           while levelIndex < plan.levels.length && failure.isEmpty do
             val level = plan.levels(levelIndex)
-            val work = Frame[W](initial.work.domain, DenseFieldKernels.pyramidGrid(initial.work.grid, level.shrink))
+            val work = Frame[W](initial.work.domain, HalfFlowKernels.pyramidGrid(initial.work.grid, level.shrink))
             val fixedLevel = pyramid(fixed, level, pyramidWorkspace)
             val movingLevel = pyramid(moving, level, pyramidWorkspace)
             (fixedLevel, movingLevel) match
@@ -676,7 +676,6 @@ object HalfFlowCc:
             minimumSquaringDepth = control.squarings,
             maximumSquaringDepth = plan.control.maximumSquarings
           )
-          if plan.action == HalfFlowCcAction.FixedAnchor then scaleVelocityInPlace(step._1, 2.0)
           val flow = PairedScalingAndSquaring
             .expHalfPair(step._1, flowConfig)
             .fold(error => break(Left(HalfFlowCcError.Registration(error))), identity)
@@ -902,19 +901,28 @@ object HalfFlowCc:
           workspace.velocity(index) *= scale
           index += 1
         maximum = level.maximumStepMm
+      if plan.action == HalfFlowCcAction.FixedAnchor then
+        index = 0
+        while index < workspace.velocity.length do
+          workspace.velocity(index) *= 2.0
+          index += 1
+      val nx = frame.grid.shape.x
+      val ny = frame.grid.shape.y
       val field = DenseVectorField(
         frame.grid,
-        NDArray(workspace.velocity, frame.grid.dims :+ 3),
+        RavelArray.tabulate[Double](
+          nx,
+          ny,
+          frame.grid.shape.z,
+          3
+        ) { (x, y, z, component) =>
+          workspace.velocity(
+            x + nx * (y + ny * z) + component * n
+          )
+        },
         DenseVectorFieldKind.Displacement
       )
       Velocity.make(frame, field).map(_ -> maximum)
-
-  private def scaleVelocityInPlace[A](velocity: Velocity[A], scale: Double): Unit =
-    val values = velocity.field.values.data
-    var index = 0
-    while index < values.length do
-      values(index) *= scale
-      index += 1
 
   private def warp[W, F, M](
       fixed: CcLevelImage[F],
@@ -923,7 +931,7 @@ object HalfFlowCc:
       fixedDestination: CcWarpBuffer,
       movingDestination: CcWarpBuffer
   ): Unit =
-    DenseFieldKernels.pullScalarAffineInto(
+    HalfFlowKernels.pullScalarAffineInto(
       fixed.image.volume,
       state.fixed.residual.sourceCoordinates,
       state.fixed.affine.transform.matrix,
@@ -934,7 +942,7 @@ object HalfFlowCc:
       fixed.image.validity,
       0.0
     )
-    DenseFieldKernels.pullScalarAffineInto(
+    HalfFlowKernels.pullScalarAffineInto(
       moving.image.volume,
       state.moving.residual.sourceCoordinates,
       state.moving.affine.transform.matrix,
@@ -952,8 +960,8 @@ object HalfFlowCc:
       grid: GridSpec,
       maximumStepMm: Double,
       plan: HalfFlowCcPlan,
-      source: NArray[Double],
-      destination: NArray[Double],
+      source: Array[Double],
+      destination: Array[Double],
       workspace: GaussianWorkspace
   ): Unit =
     val minimumSpacingMm = Affine.voxelSizes(grid.affine).min
@@ -998,13 +1006,13 @@ object HalfFlowCc:
       level: HalfFlowCcLevel,
       workspace: Option[PyramidWorkspace]
   ): Either[RegistrationError, CcLevelImage[A]] =
-    val grid = DenseFieldKernels.pyramidGrid(source.frame.grid, level.shrink)
+    val grid = HalfFlowKernels.pyramidGrid(source.frame.grid, level.shrink)
     if grid == source.frame.grid && level.pyramidSigmaMm <= 0.0 then
       Right(CcLevelImage(source, DenseFieldSampler(grid)))
     else
-      val values = NArrayUtil.ofSize[Double](grid.nVoxels)
-      val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
-      DenseFieldKernels.buildPyramidLevelInto(
+      val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+      val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
+      HalfFlowKernels.buildPyramidLevelInto(
         source.volume,
         grid,
         level.pyramidSigmaMm,
@@ -1015,7 +1023,7 @@ object HalfFlowCc:
       )
       val frame = Frame[A](source.frame.domain, grid)
       val volume = NeuroVol.fromLinear[Double](values, grid.toNeuroSpace, source.volume.label)
-      RegistrationImage.make(frame, volume, FieldValidity.Mask(valid)).map: image =>
+      RegistrationImage.make(frame, volume, FieldValidity.copyMask(valid)).map: image =>
         CcLevelImage(image, DenseFieldSampler(grid))
 
   private def validateInitial[W, F, M](
@@ -1109,7 +1117,7 @@ object HalfFlowCc:
     val nz = grid.shape.z
     grid.nVoxels - math.max(0, nx - 2) * math.max(0, ny - 2) * math.max(0, nz - 2)
 
-  private def maximumNorm(values: NArray[Double], n: Int): Double =
+  private def maximumNorm(values: Array[Double], n: Int): Double =
     var maximum = 0.0
     var index = 0
     while index < n do

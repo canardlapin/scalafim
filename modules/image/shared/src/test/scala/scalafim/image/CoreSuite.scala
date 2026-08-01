@@ -1,20 +1,28 @@
 package scalafim.image
 
-import narr.NArray
 import Ops.*
+import ravel.{NDArray as RavelArray, Rank, Shape}
 import spire.std.double.given
 import spire.std.int.given
 
 class CoreSuite extends munit.FunSuite:
+
+  private def columnMajor2[A](array: RavelArray[A, Rank[2]]): Vector[A] =
+    Vector
+      .tabulate(array.shape(1)): column =>
+        Vector.tabulate(array.shape(0))(row => array(row, column))
+      .flatten
 
   private def assertPointClose(actual: SpatialPoint, expected: SpatialPoint, tol: Double): Unit =
     assertEqualsDouble(actual.x, expected.x, tol)
     assertEqualsDouble(actual.y, expected.y, tol)
     assertEqualsDouble(actual.z, expected.z, tol)
 
-  test("NDArray uses first-dimension-fastest linearization") {
-    val data = NArray[Int](1, 2, 3, 4, 5, 6)
-    val arr = NDArray[Int](data, Vector(2, 3))
+  test("Ravel indices expose logical axis coordinates independent of storage order") {
+    val arr =
+      RavelArray.tabulate[Int](2, 3) { (x, y) =>
+        1 + x + 2 * y
+      }
     assertEquals(arr(0, 0), 1, clue = "")
     assertEquals(arr(1, 0), 2, clue = "")
     assertEquals(arr(0, 1), 3, clue = "")
@@ -57,39 +65,40 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroVol arithmetic is elementwise") {
     val sp = NeuroSpace(Vector(2, 2, 2))
-    val v1 = NeuroVol(NDArray[Double](NArrayUtil.fillConst[Double](8, 1.0), Vector(2, 2, 2)), sp)
-    val v2 = NeuroVol(NDArray[Double](NArrayUtil.fillConst[Double](8, 2.0), Vector(2, 2, 2)), sp)
+    val v1 = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](8, 1.0), sp)
+    val v2 = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](8, 2.0), sp)
 
     val v3 = v1 + v2
-    val vals = (0 until v3.values.data.length).map(i => v3.values.data(i)).toVector
+    val vals = (0 until v3.copyLegacyLinear.length).map(i => v3.copyLegacyLinear(i)).toVector
     assertEquals(vals, Vector.fill(8)(3.0), clue = "")
   }
 
   test("Mask indices roundtrip") {
     val sp = NeuroSpace(Vector(3, 3, 3))
-    val idx = NArray[Int](0, 13, 26)
+    val idx = Array[Int](0, 13, 26)
     val mask = Mask.fromIndices(sp, idx)
     val back = Mask.indices(mask)
-    def toVec(a: NArray[Int]) = Vector.tabulate(a.length)(i => a(i)).sorted
-    assertEquals(toVec(back), toVec(idx), clue = "")
+    val backValues = Vector.tabulate(back.size)(i => back(i)).sorted
+    val inputValues = Vector.tabulate(idx.length)(i => idx(i)).sorted
+    assertEquals(backValues, inputValues, clue = "")
   }
 
   test("ROIVol computes linear indices") {
     val sp = NeuroSpace(Vector(2, 3, 4))
     val coords = Vector(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    val roi = ROIVol[Double](sp, coords, NArray[Double](1.0, 2.0, 3.0))
-    val lin = Vector.tabulate(roi.linearIndices.length)(i => roi.linearIndices(i))
+    val roi = ROIVol[Double](sp, coords, Array[Double](1.0, 2.0, 3.0))
+    val lin = Vector.tabulate(roi.linearIndices.size)(i => roi.linearIndices(i))
     assertEquals(lin, Vector(0, 1, 2), clue = "")
   }
 
   test("NeuroVec volume and series") {
     val sp = NeuroSpace(Vector(2, 2, 1, 3))
     // data: spatial nels=4, t=3 => length=12
-    val data = NArrayUtil.tabulate[Double](12)(_.toDouble)
+    val data = PrimitiveBuffers.tabulate[Double](12)(_.toDouble)
     val vec = NeuroVec.fromLinear[Double](data, sp)
 
     val v1 = vec.volume(1)
-    val linVol1 = Vector.tabulate(v1.values.data.length)(i => v1.values.data(i))
+    val linVol1 = Vector.tabulate(v1.copyLegacyLinear.length)(i => v1.copyLegacyLinear(i))
     assertEquals(linVol1, Vector(4.0, 5.0, 6.0, 7.0), clue = "")
 
     val ts = vec.series(2)
@@ -99,20 +108,21 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroVec subVector keeps spatial layout") {
     val sp = NeuroSpace(Vector(2, 2, 1, 4))
-    val data = NArrayUtil.tabulate[Double](16)(_.toDouble)
+    val data = PrimitiveBuffers.tabulate[Double](16)(_.toDouble)
     val vec = NeuroVec.fromLinear[Double](data, sp)
     val sub = vec.subVector(Seq(1, 3))
     assertEquals(sub.space.dims, Vector(2, 2, 1, 2), clue = "")
-    val subData = Vector.tabulate(sub.values.data.length)(i => sub.values.data(i))
+    val subData = Vector.tabulate(sub.copyLegacyLinear.length)(i => sub.copyLegacyLinear(i))
     assertEquals(subData, Vector(4.0,5.0,6.0,7.0, 12.0,13.0,14.0,15.0), clue = "")
   }
 
   test("NeuroVol slice extracts 2D plane") {
     val sp = NeuroSpace(Vector(2, 3, 1))
-    val data = NArrayUtil.tabulate[Int](6)(i => i + 1)
+    val data = PrimitiveBuffers.tabulate[Int](6)(i => i + 1)
     val vol = NeuroVol.fromLinear[Int](data, sp)
     val sl = vol.slice(axis = 0, index = 1)
-    val slData = Vector.tabulate(sl.values.data.length)(i => sl.values.data(i))
+    val slData =
+      Vector.tabulate(sl.space.dims.product)(sl.linear)
     assertEquals(sl.space.dims, Vector(3, 1), clue = "")
     assertEquals(slData, Vector(2,4,6), clue = "")
   }
@@ -120,12 +130,12 @@ class CoreSuite extends munit.FunSuite:
   test("NeuroVecSeq indexes across runs") {
     val sp1 = NeuroSpace(Vector(2, 1, 1, 2))
     val sp2 = NeuroSpace(Vector(2, 1, 1, 3), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
-    val v1 = NeuroVec.fromLinear[Int](NArrayUtil.tabulate[Int](4)(identity), sp1)
-    val v2 = NeuroVec.fromLinear[Int](NArrayUtil.tabulate[Int](6)(i => i + 100), sp2)
+    val v1 = NeuroVec.fromLinear[Int](PrimitiveBuffers.tabulate[Int](4)(identity), sp1)
+    val v2 = NeuroVec.fromLinear[Int](PrimitiveBuffers.tabulate[Int](6)(i => i + 100), sp2)
     val seq = NeuroVecSeq(Vector(v1, v2))
     assertEquals(seq.length, 5, clue = "")
     val vol3 = seq(3)
-    val vals3 = Vector.tabulate(vol3.values.data.length)(i => vol3.values.data(i))
+    val vals3 = Vector.tabulate(vol3.copyLegacyLinear.length)(i => vol3.copyLegacyLinear(i))
     assertEquals(vals3, Vector(102, 103), clue = "")
   }
 
@@ -147,11 +157,11 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroVec seriesRoi creates ROIVec") {
     val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val data = NArrayUtil.tabulate[Int](6)(identity)
+    val data = PrimitiveBuffers.tabulate[Int](6)(identity)
     val vec = NeuroVec.fromLinear[Int](data, sp)
     val roi = ROICoords(Vector(Vector(0, 0, 0), Vector(1, 0, 0)))
     val rvec = vec.seriesRoi(roi)
-    assertEquals(rvec.data.shape, Vector(3, 2), clue = "")
+    assertEquals(rvec.data.shape, Shape(3, 2), clue = "")
     val s0 = rvec.seriesAt(0)
     val s0v = Vector.tabulate(s0.length)(i => s0(i))
     assertEquals(s0v, Vector(0, 2, 4), clue = "")
@@ -160,28 +170,31 @@ class CoreSuite extends munit.FunSuite:
   test("NeuroHyperVec series and volume") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 1, 1, 2, 3))
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 1))
-    val data = NDArray[Double](NArrayUtil.tabulate[Double](12)(_.toDouble), Vector(3, 2, 2))
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
+    val data =
+      RavelArray.tabulate[Double](3, 2, 2) { (feature, trial, position) =>
+        (feature + 3 * (trial + 2 * position)).toDouble
+      }
     val hvec = NeuroHyperVec(data, sp, mask)
 
     val s = hvec.series(1)
-    val sVals = Vector.tabulate(s.data.length)(i => s.data(i))
+    val sVals = columnMajor2(s)
     assertEquals(sVals, Vector(6, 7, 8, 9, 10, 11).map(_.toDouble), clue = "")
 
     val vol = hvec.volume(trial = 1, feature = 2)
-    val vVals = Vector.tabulate(vol.data.length)(i => vol.data(i))
+    val vVals = Vector.tabulate(vol.data.size)(i => vol.data(i))
     assertEquals(vVals, Vector(5.0, 11.0), clue = "")
   }
 
   test("Dense to sparse and back roundtrip") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 2, 1, 3))
-    val data = NArrayUtil.tabulate[Double](12)(_.toDouble)
+    val data = PrimitiveBuffers.tabulate[Double](12)(_.toDouble)
     val vec = NeuroVec.fromLinear[Double](data, sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 3))
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 3))
     val svec = vec.asSparse(mask)
     val dense2 = svec.toDense
-    val dVals = Vector.tabulate(dense2.values.data.length)(i => dense2.values.data(i))
+    val dVals = Vector.tabulate(dense2.copyLegacyLinear.length)(i => dense2.copyLegacyLinear(i))
     assertEquals(dVals, Vector(0.0, 0.0, 0.0, 3.0, 4.0, 0.0, 0.0, 7.0, 8.0, 0.0, 0.0, 11.0), clue = "")
   }
 
@@ -191,11 +204,11 @@ class CoreSuite extends munit.FunSuite:
     val spatialNels = sp.spatialDims.product
     val tLen = sp.dims(3)
 
-    val data = NArrayUtil.tabulate[Double](spatialNels * tLen)(i => (i.toDouble + 1.0) / 10.0)
+    val data = PrimitiveBuffers.tabulate[Double](spatialNels * tLen)(i => (i.toDouble + 1.0) / 10.0)
     val dense = NeuroVec.fromLinear[Double](data, sp)
 
     // ~30% mask (deterministic)
-    val maskFlags = NArrayUtil.fillConst[Boolean](spatialNels, false)
+    val maskFlags = PrimitiveBuffers.fillConst[Boolean](spatialNels, false)
     var lin = 0
     while lin < spatialNels do
       if (lin % 10) < 3 then maskFlags(lin) = true
@@ -205,14 +218,14 @@ class CoreSuite extends munit.FunSuite:
     val sparse = dense.asSparse(mask)
     val md = dense.asMatrix
     val ms = sparse.asMatrix
-    assertEquals(md.shape, ms.shape, clue = "")
+    assertEquals(ms.shape, md.shape, clue = "")
 
     lin = 0
     while lin < spatialNels do
       var t = 0
       while t < tLen do
-        val expected = if maskFlags(lin) then md.data(lin + t * spatialNels) else 0.0
-        val got = ms.data(lin + t * spatialNels)
+        val expected = if maskFlags(lin) then md(lin, t) else 0.0
+        val got = ms(lin, t)
         assert(math.abs(got - expected) < 1e-7, clue = "")
         t += 1
       lin += 1
@@ -224,29 +237,45 @@ class CoreSuite extends munit.FunSuite:
     val spatialNels = sp.spatialDims.product
 
     // mask pattern: 1,0,1,0, 0,1,0,1  (R column-major order)
-    val maskIdx = NArray(0, 2, 5, 7)
+    val maskIdx = Array(0, 2, 5, 7)
     val mask = Mask.fromIndices(sp.spatialSpace, maskIdx)
     val map = IndexLookupVol(sp, maskIdx)
 
     val nvox = maskIdx.length
-    val dat = NArrayUtil.tabulate[Double](2 * nvox)(i => (i + 1).toDouble) // time x voxels
-    val svec = SparseNeuroVec[Double](NDArray[Double](dat, Vector(2, nvox)), sp, mask, map)
+    val dat = PrimitiveBuffers.tabulate[Double](2 * nvox)(i => (i + 1).toDouble) // time x voxels
+    val compact =
+      RavelArray.tabulate[Double](2, nvox) { (time, position) =>
+        dat(time + position * 2)
+      }
+    val svec = SparseNeuroVec[Double](compact, sp, mask, map)
     val dvec = svec.toDense
 
     val fullS = svec.subArray(0 until 2, 0 until 2, 0 until 2, 0 until 2)
     val fullD = dvec.subArray(0 until 2, 0 until 2, 0 until 2, 0 until 2)
     assertEquals(fullS.shape, fullD.shape, clue = "")
-    val fullSVals = Vector.tabulate(fullS.data.length)(i => fullS.data(i))
-    val fullDVals = Vector.tabulate(fullD.data.length)(i => fullD.data(i))
-    assertEquals(fullSVals, fullDVals, clue = "")
+    var tt = 0
+    while tt < 2 do
+      var kk = 0
+      while kk < 2 do
+        var jj = 0
+        while jj < 2 do
+          var ii = 0
+          while ii < 2 do
+            assertEquals(fullS(ii, jj, kk, tt), fullD(ii, jj, kk, tt), clue = "")
+            ii += 1
+          jj += 1
+        kk += 1
+      tt += 1
 
     assertEquals(svec(0, 0, 0, 0), dvec(0, 0, 0, 0), clue = "")
     val nodropS = svec.subArray(Seq(0), Seq(0), Seq(0), Seq(0))
     val nodropD = dvec.subArray(Seq(0), Seq(0), Seq(0), Seq(0))
-    assertEquals(nodropS.shape, Vector(1, 1, 1, 1), clue = "")
-    val nodropSVals = Vector.tabulate(nodropS.data.length)(i => nodropS.data(i))
-    val nodropDVals = Vector.tabulate(nodropD.data.length)(i => nodropD.data(i))
-    assertEquals(nodropSVals, nodropDVals, clue = "")
+    assertEquals(
+      Vector.tabulate(nodropS.shape.rank)(nodropS.shape.apply),
+      Vector(1, 1, 1, 1),
+      clue = ""
+    )
+    assertEquals(nodropS(0, 0, 0, 0), nodropD(0, 0, 0, 0), clue = "")
 
     // masked-out spatial index: (1,1,0) => linSpatial=3
     val maskedOutSpatial = Indexing.gridToIndex3D(sp.spatialDims, 1, 1, 0)
@@ -254,12 +283,12 @@ class CoreSuite extends munit.FunSuite:
 
     // dense matrix has zeros outside mask rows
     val mat = dvec.asMatrix
-    val maskFlags = mask.values.data
+    val maskFlags = mask.copyLegacyLinear
     var lin = 0
     while lin < spatialNels do
       var t = 0
       while t < sp.dims(3) do
-        val v = mat.data(lin + t * spatialNels)
+        val v = mat(lin, t)
         if !maskFlags(lin) then assertEquals(v, 0.0, clue = "")
         t += 1
       lin += 1
@@ -268,47 +297,47 @@ class CoreSuite extends munit.FunSuite:
   test("Sparse series fills zeros for missing voxels") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val data = NArrayUtil.tabulate[Double](8)(_.toDouble)
+    val data = PrimitiveBuffers.tabulate[Double](8)(_.toDouble)
     val vec = NeuroVec.fromLinear[Double](data, sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 2))
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
     val svec = vec.asSparse(mask)
-    val ts = svec.series(NArray(0, 1, 2))
-    val tsVals = Vector.tabulate(ts.data.length)(i => ts.data(i))
+    val ts = svec.series(Array(0, 1, 2))
+    val tsVals = columnMajor2(ts)
     // voxel 1 is missing => zeros in its column
-    assertEquals(ts.shape, Vector(2, 3), clue = "")
+    assertEquals(ts.shape, Shape(2, 3), clue = "")
     assertEquals(tsVals, Vector(0.0, 4.0, 0.0, 0.0, 2.0, 6.0), clue = "")
   }
 
   test("SparseNeuroVec union arithmetic") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val v1 = NeuroVec.fromLinear[Double](NArrayUtil.tabulate[Double](8)(_.toDouble), sp)
-    val v2 = NeuroVec.fromLinear[Double](NArrayUtil.tabulate[Double](8)(i => (i + 10).toDouble), sp)
-    val m1 = Mask.fromIndices(sp.spatialSpace, NArray(0, 1))
-    val m2 = Mask.fromIndices(sp.spatialSpace, NArray(1, 3))
+    val v1 = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
+    val v2 = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(i => (i + 10).toDouble), sp)
+    val m1 = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
+    val m2 = Mask.fromIndices(sp.spatialSpace, Array(1, 3))
     val s1 = v1.asSparse(m1)
     val s2 = v2.asSparse(m2)
     val s3 = s1 + s2
     val d3 = s3.toDense
-    val vals = Vector.tabulate(d3.values.data.length)(i => d3.values.data(i))
+    val vals = Vector.tabulate(d3.copyLegacyLinear.length)(i => d3.copyLegacyLinear(i))
     assertEquals(vals, Vector(0.0, 12.0, 0.0, 13.0, 4.0, 20.0, 0.0, 17.0), clue = "")
   }
 
   test("ClusteredNeuroVol dense reconstruction") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val mask = Mask.fromIndices(sp, NArray(0, 2, 3))
-    val clusters = NArray(1, 2, 1)
+    val mask = Mask.fromIndices(sp, Array(0, 2, 3))
+    val clusters = Array(1, 2, 1)
     val cvol = ClusteredNeuroVol(mask, clusters)
     assertEquals(cvol.numClusters, 2, clue = "")
     val dense = cvol.toDense
-    val vals = Vector.tabulate(dense.values.data.length)(i => dense.values.data(i))
+    val vals = Vector.tabulate(dense.copyLegacyLinear.length)(i => dense.copyLegacyLinear(i))
     assertEquals(vals, Vector(1, 0, 2, 1), clue = "")
   }
 
   test("Searchlight sphericalRoi includes center and respects radius") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(5, 5, 5))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](125, 1.0), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](125, 1.0), sp)
     val center = Vector(2, 2, 2)
     val roi = Searchlight.sphericalRoi(vol, center, radius = 1.5)
     assert(roi.coords.coords.contains(center), clue = "")
@@ -323,21 +352,21 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroVec splitClusters yields ROIVecs") {
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val vec = NeuroVec.fromLinear[Int](NArrayUtil.tabulate[Int](8)(identity), sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 2, 3))
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 2, 1))
+    val vec = NeuroVec.fromLinear[Int](PrimitiveBuffers.tabulate[Int](8)(identity), sp)
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2, 3))
+    val cvol = ClusteredNeuroVol(mask, Array(1, 2, 1))
     val rois = vec.splitClusters(cvol)
     assertEquals(rois.length, 2, clue = "")
-    assertEquals(rois.head.data.shape, Vector(2, 2), clue = "") // time x voxels in cluster1
-    assertEquals(rois(1).data.shape, Vector(2, 1), clue = "")
+    assertEquals(rois.head.data.shape, Shape(2, 2), clue = "") // time x voxels in cluster1
+    assertEquals(rois(1).data.shape, Shape(2, 1), clue = "")
   }
 
   test("Downsample byFactor uses box averaging") {
     val sp = NeuroSpace(Vector(4, 4, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](16)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](16)(_.toDouble), sp)
     val ds = Downsample.byFactor(vol, 0.5)
     assertEquals(ds.space.dims, Vector(2, 2, 1), clue = "")
-    val vals = Vector.tabulate(ds.values.data.length)(i => ds.values.data(i))
+    val vals = Vector.tabulate(ds.copyLegacyLinear.length)(i => ds.copyLegacyLinear(i))
     assertEquals(vals, Vector(2.5, 4.5, 10.5, 12.5), clue = "")
   }
 
@@ -348,7 +377,7 @@ class CoreSuite extends munit.FunSuite:
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0))
       )
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val ds = Downsample.byFactor(vol, 0.5)
     val expectedTrans =
       Affine.rescaleAffine(
@@ -371,15 +400,15 @@ class CoreSuite extends munit.FunSuite:
 
   test("Resample.nearest preserves data when spaces match") {
     val sp = NeuroSpace(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](9)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
     val res = Resample.nearest(vol, sp)
-    val vals = Vector.tabulate(res.values.data.length)(i => res.values.data(i))
+    val vals = Vector.tabulate(res.copyLegacyLinear.length)(i => res.copyLegacyLinear(i))
     assertEquals(vals, Vector.tabulate(9)(_.toDouble), clue = "")
   }
 
   test("Gaussian blur uses 0-padding at volume boundaries") {
     val sp = NeuroSpace(Vector(3, 3, 3))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](27, 5.0), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](27, 5.0), sp)
     val blurred = SpatialFilters.gaussianBlur(vol, sigma = 1.0, window = 1)
     assert(math.abs(blurred(1, 1, 1) - 5.0) < 1e-9, clue = "")
     assert(blurred(0, 0, 0) < 5.0, clue = "")
@@ -388,9 +417,9 @@ class CoreSuite extends munit.FunSuite:
   test("Gaussian blur respects mask (zeros outside mask)") {
     val sp = NeuroSpace(Vector(5, 5, 5))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](nels)(i => (i % 11).toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 11).toDouble), sp)
 
-    val maskFlags = NArrayUtil.fillConst[Boolean](nels, false)
+    val maskFlags = PrimitiveBuffers.fillConst[Boolean](nels, false)
     var i = 0
     while i < nels do
       if (i % 7) < 3 then maskFlags(i) = true
@@ -408,18 +437,18 @@ class CoreSuite extends munit.FunSuite:
   test("Bilateral filter handles missing mask") {
     val sp = NeuroSpace(Vector(6, 6, 6))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](nels)(i => (i % 13).toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 13).toDouble), sp)
     val filtered = SpatialFilters.bilateralFilter(vol, spatialSigma = 2.0, intensitySigma = 1.0, window = 1)
     assertEquals(filtered.space, sp, clue = "")
-    assertEquals(filtered.values.data.length, vol.values.data.length, clue = "")
-    assert(filtered.values.data.forall(_.isFinite), clue = "")
+    assertEquals(filtered.copyLegacyLinear.length, vol.copyLegacyLinear.length, clue = "")
+    assert(filtered.copyLegacyLinear.forall(_.isFinite), clue = "")
   }
 
   test("Bilateral filter 4D is identity for zero windows") {
     val sp = NeuroSpace(Vector(3, 4, 2, 5))
     val nels = sp.spatialDims.product
     val tLen = sp.dims(3)
-    val data = NArrayUtil.tabulate[Double](nels * tLen)(i => (i.toDouble - 50.0) / 7.0)
+    val data = PrimitiveBuffers.tabulate[Double](nels * tLen)(i => (i.toDouble - 50.0) / 7.0)
     val vec = NeuroVec.fromLinear[Double](data, sp)
     val out =
       SpatialFilters.bilateralFilter4D(
@@ -431,7 +460,7 @@ class CoreSuite extends munit.FunSuite:
         temporalSigma = 1.0,
         temporalSpacing = 1.0
       )
-    val outData = out.values.data
+    val outData = out.copyLegacyLinear
     var i = 0
     while i < outData.length do
       assertEquals(outData(i), data(i), clue = "")
@@ -442,7 +471,7 @@ class CoreSuite extends munit.FunSuite:
     val sp = NeuroSpace(Vector(3, 3, 3, 4))
     val nels = sp.spatialDims.product
     val tLen = sp.dims(3)
-    val data = NArrayUtil.fillConst[Double](nels * tLen, 5.0)
+    val data = PrimitiveBuffers.fillConst[Double](nels * tLen, 5.0)
     val vec = NeuroVec.fromLinear[Double](data, sp)
     val out =
       SpatialFilters.bilateralFilter4D(
@@ -454,7 +483,7 @@ class CoreSuite extends munit.FunSuite:
         temporalSigma = 1.0,
         temporalSpacing = 1.0
       )
-    val outData = out.values.data
+    val outData = out.copyLegacyLinear
     assert(outData.forall(_.isFinite), clue = "")
     var i = 0
     while i < outData.length do
@@ -465,10 +494,10 @@ class CoreSuite extends munit.FunSuite:
   test("NeuroVec-NeuroVol arithmetic broadcasts spatially") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](NArrayUtil.tabulate[Double](8)(_.toDouble), sp)
-    val vol = NeuroVol.fromLinear[Double](NArray[Double](10.0, 20.0, 30.0, 40.0), sp.spatialSpace)
+    val vec = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp.spatialSpace)
     val out = vec + vol
-    val vals = Vector.tabulate(out.values.data.length)(i => out.values.data(i))
+    val vals = Vector.tabulate(out.copyLegacyLinear.length)(i => out.copyLegacyLinear(i))
     assertEquals(vals, Vector(10,21,32,43, 14,25,36,47).map(_.toDouble), clue = "")
   }
 
@@ -476,23 +505,23 @@ class CoreSuite extends munit.FunSuite:
     import spire.std.double.given
     val sp1 = NeuroSpace(Vector(2, 2, 1, 1))
     val sp2 = NeuroSpace(Vector(2, 2, 1, 2), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
-    val v1 = NeuroVec.fromLinear[Double](NArray[Double](1.0, 2.0, 3.0, 4.0), sp1)
-    val v2 = NeuroVec.fromLinear[Double](NArrayUtil.tabulate[Double](8)(i => (i + 10).toDouble), sp2)
-    val m1 = Mask.fromIndices(sp1.spatialSpace, NArray(0, 1))
-    val m2 = Mask.fromIndices(sp2.spatialSpace, NArray(1, 3))
+    val v1 = NeuroVec.fromLinear[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp1)
+    val v2 = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(i => (i + 10).toDouble), sp2)
+    val m1 = Mask.fromIndices(sp1.spatialSpace, Array(0, 1))
+    val m2 = Mask.fromIndices(sp2.spatialSpace, Array(1, 3))
     val s1 = v1.asSparse(m1)
     val s2 = v2.asSparse(m2)
     val s3 = s1.concat(s2)
     assertEquals(s3.space.dims, Vector(2, 2, 1, 3), clue = "")
     val dense = s3.toDense
-    val vals = Vector.tabulate(dense.values.data.length)(i => dense.values.data(i))
+    val vals = Vector.tabulate(dense.copyLegacyLinear.length)(i => dense.copyLegacyLinear(i))
     assertEquals(vals, Vector(1,2,0,0, 0,11,0,13, 0,15,0,17).map(_.toDouble), clue = "")
   }
 
   test("Ellipsoid ROI is subset of spherical") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(9, 9, 9))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](9 * 9 * 9, 1.0), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](9 * 9 * 9, 1.0), sp)
     val center = Vector(4, 4, 4)
     val sphere = Searchlight.sphericalRoi(vol, center, radius = 3.0)
     val ellip = Searchlight.ellipsoidRoi(
@@ -509,7 +538,7 @@ class CoreSuite extends munit.FunSuite:
   test("Cube ROI contains all voxels in bounding cube") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(5, 5, 5))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](125, 1.0), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](125, 1.0), sp)
     val center = Vector(2, 2, 2)
     val cube = Searchlight.cubeRoi(vol, center, radius = 1.0)
     assertEquals(cube.coords.size, 27, clue = "")
@@ -518,7 +547,7 @@ class CoreSuite extends munit.FunSuite:
   test("Blobby ROI drops edge voxels but keeps center") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(7, 7, 7))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.fillConst[Double](343, 1.0), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](343, 1.0), sp)
     val center = Vector(3, 3, 3)
     val sphere = Searchlight.sphericalRoi(vol, center, radius = 2.5)
     val blob = Searchlight.blobbyRoi(
@@ -535,9 +564,9 @@ class CoreSuite extends munit.FunSuite:
 
   test("Resample.trilinear preserves data when spaces match") {
     val sp = NeuroSpace(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](9)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
     val res = Resample.trilinear(vol, sp)
-    val vals = Vector.tabulate(res.values.data.length)(i => res.values.data(i))
+    val vals = Vector.tabulate(res.copyLegacyLinear.length)(i => res.copyLegacyLinear(i))
     assertEquals(vals, Vector.tabulate(9)(_.toDouble), clue = "")
   }
 
@@ -546,7 +575,7 @@ class CoreSuite extends munit.FunSuite:
     val linA = sp.gridToIndex3D(0, 0, 0)
     val linB = sp.gridToIndex3D(1, 0, 0)
     val linC = sp.gridToIndex3D(2, 2, 0)
-    val mask = Mask.fromIndices(sp, NArray(linA, linB, linC))
+    val mask = Mask.fromIndices(sp, Array(linA, linB, linC))
     val (idxVol, sizeVol) = ConnComp.connComp3D(mask, ConnComp.Connectivity.Connect6)
     assertEquals(idxVol.linear(linA), 1, clue = "")
     assertEquals(idxVol.linear(linB), 1, clue = "")
@@ -554,11 +583,11 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(sizeVol.linear(linA), 2, clue = "")
     assertEquals(sizeVol.linear(linC), 1, clue = "")
 
-    val diagMask = Mask.fromIndices(sp, NArray(linA, sp.gridToIndex3D(1, 1, 0)))
+    val diagMask = Mask.fromIndices(sp, Array(linA, sp.gridToIndex3D(1, 1, 0)))
     val (idx6, _) = ConnComp.connComp3D(diagMask, ConnComp.Connectivity.Connect6)
     val (idx26, _) = ConnComp.connComp3D(diagMask, ConnComp.Connectivity.Connect26)
     def nclus(v: NeuroVol[Int]) =
-      Vector.tabulate(v.values.data.length)(i => v.values.data(i)).filter(_ > 0).distinct.length
+      Vector.tabulate(v.copyLegacyLinear.length)(i => v.copyLegacyLinear(i)).filter(_ > 0).distinct.length
     assertEquals(nclus(idx6), 2, clue = "")
     assertEquals(nclus(idx26), 1, clue = "")
   }
@@ -568,7 +597,7 @@ class CoreSuite extends munit.FunSuite:
     val linA = sp.gridToIndex3D(0, 0, 0)
     val linB = sp.gridToIndex3D(1, 0, 0)
     val linC = sp.gridToIndex3D(2, 2, 0)
-    val mask = Mask.fromIndices(sp, NArray(linA, linB, linC))
+    val mask = Mask.fromIndices(sp, Array(linA, linB, linC))
     val cvol = ClusteredNeuroVol.fromMask(mask, ClusteredNeuroVol.Connectivity.Connect6)
     assertEquals(cvol.numClusters, 2, clue = "")
     val dense = cvol.toDense
@@ -584,12 +613,12 @@ class CoreSuite extends munit.FunSuite:
   test("ClusteredNeuroVec reduces by clusters and broadcasts") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val data = NArray[Double](1.0, 3.0, 2.0, 4.0, 3.0, 5.0) // t0:[1,3], t1:[2,4], t2:[3,5]
+    val data = Array[Double](1.0, 3.0, 2.0, 4.0, 3.0, 5.0) // t0:[1,3], t1:[2,4], t2:[3,5]
     val vec = NeuroVec.fromLinear[Double](data, sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 1))
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 1))
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
+    val cvol = ClusteredNeuroVol(mask, Array(1, 1))
     val cv = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
-    val tsVals = Vector.tabulate(cv.ts.data.length)(i => cv.ts.data(i))
+    val tsVals = columnMajor2(cv.ts)
     assertEquals(tsVals, Vector(2.0, 3.0, 4.0), clue = "") // mean across voxels
     val s0 = cv.series(0)
     val s0v = Vector.tabulate(s0.length)(i => s0(i))
@@ -598,7 +627,7 @@ class CoreSuite extends munit.FunSuite:
 
   test("Searchlight iterators respect center selection") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val mask = Mask.fromIndices(sp, NArray(0, 3))
+    val mask = Mask.fromIndices(sp, Array(0, 3))
     val all = Searchlight.searchlightCoords(mask, radius = 1.0, nonzero = false).toVector
     val nz = Searchlight.searchlightCoords(mask, radius = 1.0, nonzero = true).toVector
     assertEquals(all.length, 4, clue = "")
@@ -608,27 +637,27 @@ class CoreSuite extends munit.FunSuite:
   test("ClusteredNeuroVec toDense/toSparse and arithmetic") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 1, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](NArray[Double](1.0, 2.0, 3.0, 4.0), sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, NArray(0, 1))
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 2))
+    val vec = NeuroVec.fromLinear[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
+    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
+    val cvol = ClusteredNeuroVol(mask, Array(1, 2))
     val cv = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
     val dense = cv.toDense
-    val dVals = Vector.tabulate(dense.values.data.length)(i => dense.values.data(i))
+    val dVals = Vector.tabulate(dense.copyLegacyLinear.length)(i => dense.copyLegacyLinear(i))
     assertEquals(dVals, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
     val sparse = cv.toSparse
     val dense2 = sparse.toDense
-    val d2Vals = Vector.tabulate(dense2.values.data.length)(i => dense2.values.data(i))
+    val d2Vals = Vector.tabulate(dense2.copyLegacyLinear.length)(i => dense2.copyLegacyLinear(i))
     assertEquals(d2Vals, dVals, clue = "")
 
     val cv2 = cv + cv
-    val tsVals = Vector.tabulate(cv2.ts.data.length)(i => cv2.ts.data(i))
+    val tsVals = columnMajor2(cv2.ts)
     assertEquals(tsVals, Vector(2.0, 6.0, 4.0, 8.0), clue = "")
   }
 
   test("Clustered searchlight yields one ROI per cluster") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val mask = Mask.fromIndices(sp, NArray(0, 1, 2, 3))
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 1, 2, 2))
+    val mask = Mask.fromIndices(sp, Array(0, 1, 2, 3))
+    val cvol = ClusteredNeuroVol(mask, Array(1, 1, 2, 2))
     val rois = Searchlight.clusteredSearchlight(cvol).toVector
     assertEquals(rois.length, 2, clue = "")
     assertEquals(rois.head.coords.size, 2, clue = "")
@@ -636,14 +665,14 @@ class CoreSuite extends munit.FunSuite:
 
   test("ClusteredNeuroVol medoid centroids use geometric median") {
     val sp = NeuroSpace(Vector(3, 3, 1))
-    val idx = NArray[Int](
+    val idx = Array[Int](
       sp.gridToIndex3D(0, 0, 0),
       sp.gridToIndex3D(2, 0, 0),
       sp.gridToIndex3D(0, 2, 0),
       sp.gridToIndex3D(2, 2, 0)
     )
     val mask = Mask.fromIndices(sp, idx)
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 1, 1, 1))
+    val cvol = ClusteredNeuroVol(mask, Array(1, 1, 1, 1))
     val med = cvol.centroids(ClusteredNeuroVol.CentroidType.Medoid)
     assertEquals(med.length, 1, clue = "")
     assert(math.abs(med.head(0) - 1.0) < 1e-3, clue = "")
@@ -652,66 +681,69 @@ class CoreSuite extends munit.FunSuite:
 
   test("KMeans.partition creates requested number of clusters") {
     val sp = NeuroSpace(Vector(4, 1, 1))
-    val mask = Mask.fromIndices(sp, NArray(0, 1, 2, 3))
+    val mask = Mask.fromIndices(sp, Array(0, 1, 2, 3))
     val cvol = KMeans.partition(mask, k = 2, seed = 42, init = KMeans.Init.KMeansPlusPlus)
     assertEquals(cvol.numClusters, 2, clue = "")
-    assert(cvol.clusterIds.forall(id => id >= 1 && id <= 2), clue = "")
+    assert(
+      Vector.tabulate(cvol.clusterIds.size)(cvol.clusterIds(_)).forall(id => id >= 1 && id <= 2),
+      clue = ""
+    )
   }
 
   test("ConnComp handles empty, single-voxel, and full masks") {
     val sp = NeuroSpace(Vector(5, 5, 5))
     val nels = sp.spatialDims.product
 
-    val emptyFlags = NArrayUtil.fillConst[Boolean](nels, false)
+    val emptyFlags = PrimitiveBuffers.fillConst[Boolean](nels, false)
     val emptyMask = NeuroVol.fromLinear[Boolean](emptyFlags, sp)
     val (idxEmpty, sizeEmpty) = ConnComp.connComp3D(emptyMask)
-    assert(idxEmpty.values.data.forall(_ == 0), clue = "")
-    assert(sizeEmpty.values.data.forall(_ == 0), clue = "")
+    assert(idxEmpty.copyLegacyLinear.forall(_ == 0), clue = "")
+    assert(sizeEmpty.copyLegacyLinear.forall(_ == 0), clue = "")
 
-    val singleMask = Mask.fromIndices(sp, NArray(sp.gridToIndex3D(2, 2, 2)))
+    val singleMask = Mask.fromIndices(sp, Array(sp.gridToIndex3D(2, 2, 2)))
     val (idxSingle, sizeSingle) = ConnComp.connComp3D(singleMask)
-    assertEquals(idxSingle.values.data.max, 1, clue = "")
-    assertEquals(sizeSingle.values.data.max, 1, clue = "")
+    assertEquals(idxSingle.copyLegacyLinear.max, 1, clue = "")
+    assertEquals(sizeSingle.copyLegacyLinear.max, 1, clue = "")
 
-    val fullFlags = NArrayUtil.fillConst[Boolean](nels, true)
+    val fullFlags = PrimitiveBuffers.fillConst[Boolean](nels, true)
     val fullMask = NeuroVol.fromLinear[Boolean](fullFlags, sp)
     val (idxFull, sizeFull) = ConnComp.connComp3D(fullMask)
-    assertEquals(idxFull.values.data.max, 1, clue = "")
-    assertEquals(sizeFull.values.data.max, nels, clue = "")
+    assertEquals(idxFull.copyLegacyLinear.max, 1, clue = "")
+    assertEquals(sizeFull.copyLegacyLinear.max, nels, clue = "")
   }
 
   test("ClusteredNeuroVol splitClusters supports non-contiguous ids") {
     val sp = NeuroSpace(Vector(2, 2, 2))
-    val mask = NeuroVol.fromLinear[Boolean](NArrayUtil.fillConst[Boolean](8, true), sp)
-    val clusters = NArray(2, 4, 6, 2, 4, 6, 2, 4)
+    val mask = NeuroVol.fromLinear[Boolean](PrimitiveBuffers.fillConst[Boolean](8, true), sp)
+    val clusters = Array(2, 4, 6, 2, 4, 6, 2, 4)
     val cvol = ClusteredNeuroVol(mask, clusters)
     val rois = cvol.splitClusters
     assertEquals(rois.length, 3, clue = "")
     val roiIds = rois.map(r => r.data(0)).sorted
     assertEquals(roiIds, Vector(2, 4, 6), clue = "")
     rois.foreach { r =>
-      assert(r.data.forall(_ == r.data(0)), clue = "")
+      assert(Vector.tabulate(r.data.size)(r.data(_)).forall(_ == r.data(0)), clue = "")
     }
   }
 
   test("NeuroVec splitClusters supports non-contiguous ids") {
     val sp = NeuroSpace(Vector(2, 2, 2, 2))
-    val data = NArrayUtil.tabulate[Double](16)(i => (i + 1).toDouble)
+    val data = PrimitiveBuffers.tabulate[Double](16)(i => (i + 1).toDouble)
     val vec = NeuroVec.fromLinear[Double](data, sp)
-    val mask = NeuroVol.fromLinear[Boolean](NArrayUtil.fillConst[Boolean](8, true), sp.spatialSpace)
-    val clusters = NArray(2, 4, 6, 2, 4, 6, 2, 4)
+    val mask = NeuroVol.fromLinear[Boolean](PrimitiveBuffers.fillConst[Boolean](8, true), sp.spatialSpace)
+    val clusters = Array(2, 4, 6, 2, 4, 6, 2, 4)
     val cvol = ClusteredNeuroVol(mask, clusters)
     val splits = vec.splitClusters(cvol)
     assertEquals(splits.length, 3, clue = "")
 
     val vol0 = vec.volume(0)
-    def meanAt(idx: NArray[Int]): Double =
+    def meanAt(idx: ravel.Array1[Int]): Double =
       var s = 0.0
       var i = 0
-      while i < idx.length do
+      while i < idx.size do
         s += vol0.linear(idx(i))
         i += 1
-      s / idx.length.toDouble
+      s / idx.size.toDouble
 
     val expectedMeans = cvol.clusterIds.map(id => meanAt(cvol.clusterMap(id)))
     val gotMeans =
@@ -729,15 +761,15 @@ class CoreSuite extends munit.FunSuite:
   test("ClusteredNeuroVec construction matches neuroim2 broadcast and ts") {
     import spire.std.double.given
     val sp3 = NeuroSpace(Vector(2, 2, 2))
-    val mask = NeuroVol.fromLinear[Boolean](NArrayUtil.fillConst[Boolean](8, true), sp3)
-    val cids = NArray(1, 1, 1, 1, 2, 2, 2, 2)
+    val mask = NeuroVol.fromLinear[Boolean](PrimitiveBuffers.fillConst[Boolean](8, true), sp3)
+    val cids = Array(1, 1, 1, 1, 2, 2, 2, 2)
     val cvol = ClusteredNeuroVol(mask, cids)
 
     val sp4 = NeuroSpace(Vector(2, 2, 2, 3))
     val v1 = Vector(10.0, 12.0, 8.0, 6.0, 1.0, 3.0, 5.0, 7.0)
     val v2 = Vector(20.0, 18.0, 22.0, 20.0, 2.0, 4.0, 6.0, 8.0)
     val v3 = Vector(0.0, 0.0, 0.0, 10.0, 10.0, 10.0, 10.0, 10.0)
-    val linData = NArrayUtil.fromArray((v1 ++ v2 ++ v3).toArray)
+    val linData = PrimitiveBuffers.fromArray((v1 ++ v2 ++ v3).toArray)
     val vec = NeuroVec.fromLinear[Double](linData, sp4)
 
     val cv = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
@@ -750,12 +782,12 @@ class CoreSuite extends munit.FunSuite:
     val vol1 = cv.volume(0)
     val vol2 = cv.volume(1)
     val vol3 = cv.volume(2)
-    assert(vol1.values.data.take(4).forall(_ == m1) && vol1.values.data.drop(4).forall(_ == m2), clue = "")
-    assert(vol2.values.data.take(4).forall(_ == n1) && vol2.values.data.drop(4).forall(_ == n2), clue = "")
-    assert(vol3.values.data.take(4).forall(_ == p1) && vol3.values.data.drop(4).forall(_ == p2), clue = "")
+    assert(vol1.copyLegacyLinear.take(4).forall(_ == m1) && vol1.copyLegacyLinear.drop(4).forall(_ == m2), clue = "")
+    assert(vol2.copyLegacyLinear.take(4).forall(_ == n1) && vol2.copyLegacyLinear.drop(4).forall(_ == n2), clue = "")
+    assert(vol3.copyLegacyLinear.take(4).forall(_ == p1) && vol3.copyLegacyLinear.drop(4).forall(_ == p2), clue = "")
 
     val expectedTs = Vector(m1, n1, p1, m2, n2, p2)
-    val tsVec = Vector.tabulate(cv.ts.data.length)(i => cv.ts.data(i))
+    val tsVec = columnMajor2(cv.ts)
     assertEquals(tsVec, expectedTs, clue = "")
 
     var t = 0
@@ -767,18 +799,18 @@ class CoreSuite extends munit.FunSuite:
   test("clusterSearchlightSeries k-NN and radius parity") {
     import spire.std.double.given
     val sp3 = NeuroSpace(Vector(2, 2, 1))
-    val mask = NeuroVol.fromLinear[Boolean](NArrayUtil.fillConst[Boolean](4, true), sp3)
-    val cvol = ClusteredNeuroVol(mask, NArray(1, 2, 3, 4))
+    val mask = NeuroVol.fromLinear[Boolean](PrimitiveBuffers.fillConst[Boolean](4, true), sp3)
+    val cvol = ClusteredNeuroVol(mask, Array(1, 2, 3, 4))
 
     val sp4 = NeuroSpace(Vector(2, 2, 1, 2))
-    val data = NArray[Double](10.0, 11.0, 12.0, 13.0, 20.0, 21.0, 22.0, 23.0)
+    val data = Array[Double](10.0, 11.0, 12.0, 13.0, 20.0, 21.0, 22.0, 23.0)
     val vec = NeuroVec.fromLinear[Double](data, sp4)
     val cv = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
 
     val wins = Searchlight.clusterSearchlightSeries(cv, k = 2)
     assertEquals(wins.length, 4, clue = "")
     val roi1 = wins.head
-    assertEquals(roi1.data.shape, Vector(2, 2), clue = "")
+    assertEquals(roi1.data.shape, Shape(2, 2), clue = "")
     val s1 = roi1.seriesAt(0)
     val s1v = Vector.tabulate(s1.length)(i => s1(i))
     assertEquals(s1v, Vector(10.0, 20.0), clue = "")
@@ -790,7 +822,7 @@ class CoreSuite extends munit.FunSuite:
   test("Searchlight nonzero filtering yields singleton ROI") {
     val sp = NeuroSpace(Vector(5, 5, 5))
     val lin = sp.gridToIndex3D(2, 2, 2)
-    val mask = Mask.fromIndices(sp, NArray(lin))
+    val mask = Mask.fromIndices(sp, Array(lin))
     val fullRoi = Searchlight.searchlight(mask, radius = 2.0, nonzero = false).next()
     val nzRoi = Searchlight.searchlight(mask, radius = 2.0, nonzero = true).next()
     assert(fullRoi.coords.size > nzRoi.coords.size, clue = "")
@@ -802,9 +834,9 @@ class CoreSuite extends munit.FunSuite:
     import spire.std.double.given
     val sp = NeuroSpace(Vector(8, 8, 8, 5), spacing = Some(Vector(2.0, 2.0, 2.0)))
     val badSp = NeuroSpace(Vector(4, 4, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val badMask = NeuroVol.fromLinear[Boolean](NArrayUtil.fillConst[Boolean](4 * 4 * 4, true), badSp)
-    val map = IndexLookupVol(sp, NArray(0))
-    val dat = NDArray[Double](NArrayUtil.fillConst[Double](5, 0.0), Vector(5, 1))
+    val badMask = NeuroVol.fromLinear[Boolean](PrimitiveBuffers.fillConst[Boolean](4 * 4 * 4, true), badSp)
+    val map = IndexLookupVol(sp, Array(0))
+    val dat = RavelArray.zeros[Double](5, 1)
     intercept[IllegalArgumentException] {
       SparseNeuroVec(dat, sp, badMask, map)
     }
@@ -813,18 +845,18 @@ class CoreSuite extends munit.FunSuite:
   test("SparseNeuroVec validity enforces time x mask-cardinality shapes") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(6, 6, 6, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val maskIdx = NArray(0, 10, 20, 30, 40)
+    val maskIdx = Array(0, 10, 20, 30, 40)
     val mask = Mask.fromIndices(sp.spatialSpace, maskIdx)
     val map = IndexLookupVol(sp, maskIdx)
 
     val wrongTime =
-      NDArray[Double](NArrayUtil.fillConst[Double](3 * maskIdx.length, 0.0), Vector(3, maskIdx.length))
+      RavelArray.zeros[Double](3, maskIdx.length)
     intercept[IllegalArgumentException] {
       SparseNeuroVec(wrongTime, sp, mask, map)
     }
 
     val wrongCols =
-      NDArray[Double](NArrayUtil.fillConst[Double](4 * (maskIdx.length + 1), 0.0), Vector(4, maskIdx.length + 1))
+      RavelArray.zeros[Double](4, maskIdx.length + 1)
     intercept[IllegalArgumentException] {
       SparseNeuroVec(wrongCols, sp, mask, map)
     }
@@ -832,17 +864,21 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroVec preserves input shape and linearization") {
     val sp = NeuroSpace(Vector(2, 2, 2, 2))
-    val data = NArrayUtil.tabulate[Int](16)(i => i + 1)
+    val data = PrimitiveBuffers.tabulate[Int](16)(i => i + 1)
     val vec = NeuroVec.fromLinear[Int](data, sp)
     assertEquals(vec.space.dims, Vector(2, 2, 2, 2), clue = "")
-    assertEquals(vec.values.shape, Vector(2, 2, 2, 2), clue = "")
-    val back = Vector.tabulate(vec.values.data.length)(i => vec.values.data(i))
+    assertEquals(
+      Vector.tabulate(vec.values.shape.rank)(vec.values.shape.apply),
+      Vector(2, 2, 2, 2),
+      clue = ""
+    )
+    val back = Vector.tabulate(vec.copyLegacyLinear.length)(i => vec.copyLegacyLinear(i))
     assertEquals(back, Vector.tabulate(16)(i => i + 1), clue = "")
   }
 
   test("NeuroVec series at voxel matches ROI drop semantics") {
     val sp = NeuroSpace(Vector(2, 2, 2, 3))
-    val data = NArrayUtil.tabulate[Int](24)(i => i + 1)
+    val data = PrimitiveBuffers.tabulate[Int](24)(i => i + 1)
     val vec = NeuroVec.fromLinear[Int](data, sp)
 
     val ts = vec.series(0, 0, 0)
@@ -850,8 +886,8 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(tsVals, Vector(1, 9, 17), clue = "")
 
     val lin0 = sp.gridToIndex3D(0, 0, 0)
-    val mat = vec.series(NArray(lin0))
-    assertEquals(mat.shape, Vector(3, 1), clue = "")
-    val matVals = Vector.tabulate(mat.data.length)(i => mat.data(i))
+    val mat = vec.series(Array(lin0))
+    assertEquals(mat.shape, Shape(3, 1), clue = "")
+    val matVals = columnMajor2(mat)
     assertEquals(matVals, Vector(1, 9, 17), clue = "")
   }

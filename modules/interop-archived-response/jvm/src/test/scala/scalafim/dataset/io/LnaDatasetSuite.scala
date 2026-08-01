@@ -512,7 +512,7 @@ class LnaDatasetSuite extends munit.FunSuite:
           )
         )
 
-      assertEquals(Vector.tabulate(maskIndices.length)(maskIndices(_)), Vector(0, 2, 3))
+      assertEquals(Vector.tabulate(maskIndices.size)(maskIndices(_)), Vector(0, 2, 3))
       assertEquals(backend.shape.spatialSize, 4)
       assertEquals(backend.response.metadata("family"), "shared_basis")
       assertRowsClose(series.data.toRows, Vector(Vector(5.5, 8.0), Vector(7.0, 11.0)), 1e-10)

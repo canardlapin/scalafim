@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 enum LocalLmVariant:
@@ -88,8 +87,8 @@ final case class LocalLmResult[A](
 
 final class LocalLmBuffer[A] private (
     val frame: Frame[A],
-    private[registration] val step: NArray[Double],
-    private[registration] val valid: NArray[Boolean]
+    private[registration] val step: Array[Double],
+    private[registration] val valid: Array[Boolean]
 ):
   val ownedVelocityBuffers: Int = 1
   val ownedValidityBuffers: Int = 1
@@ -98,8 +97,8 @@ object LocalLmBuffer:
   def apply[A](frame: Frame[A]): LocalLmBuffer[A] =
     new LocalLmBuffer(
       frame,
-      NArrayUtil.ofSize[Double](frame.grid.nVoxels * 3),
-      NArrayUtil.ofSize[Boolean](frame.grid.nVoxels)
+      PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels * 3),
+      PrimitiveBuffers.ofSize[Boolean](frame.grid.nVoxels)
     )
 
 final class LocalLmWorkspace[A] private (
@@ -176,16 +175,16 @@ object LocalLm:
           if summary.failedSolves.toDouble / active.toDouble > config.maximumFailedFraction then
             Left(RegistrationError.ExcessiveSolveFailures(summary.failedSolves, active))
           else
-            val field = DenseVectorField(
+            val field = DenseVectorField.fromLegacyPlanar(
               fixed.frame.grid,
-              NDArray(destination.step, fixed.frame.grid.dims :+ 3),
+              destination.step,
               DenseVectorFieldKind.Displacement
             )
             Velocity.make(fixed.frame, field).map { velocity =>
               LocalLmResult(
                 LocalLmModel(config.variant, epsilons, active, summary.value),
                 velocity,
-                FieldValidity.Mask(destination.valid),
+                FieldValidity.copyMask(destination.valid),
                 summary
               )
             }
@@ -277,8 +276,8 @@ object LocalLm:
       moving: T1FeatureVolume[A],
       config: LocalLmConfig,
       epsilons: Vector[Double],
-      destination: NArray[Double],
-      destinationValid: NArray[Boolean],
+      destination: Array[Double],
+      destinationValid: Array[Boolean],
       terms: LocalLmChannelScratch
   ): LocalLmSummary =
     val n = fixed.frame.grid.nVoxels
@@ -370,10 +369,10 @@ object LocalLm:
       moving: T1FeatureVolume[A],
       velocity: Velocity[A],
       velocityValidity: FieldValidity,
-      model: LocalLmModel
+    model: LocalLmModel
   ): (Double, Int) =
     val n = fixed.frame.grid.nVoxels
-    val v = velocity.field.values.data
+    val v = velocity.field
     val terms = new LocalLmChannelScratch()
     var modeledChange = 0.0
     var used = 0
@@ -381,9 +380,9 @@ object LocalLm:
     while index < n do
       if activeAt(fixed, moving, model.variant, index) && validityAt(velocityValidity, index) then
         used += 1
-        val x = v(index)
-        val y = v(index + n)
-        val z = v(index + 2 * n)
+        val x = v.linearComponent(index, 0)
+        val y = v.linearComponent(index, 1)
+        val z = v.linearComponent(index, 2)
         model.variant match
           case LocalLmVariant.RankOne(channel) =>
             channelTermsInto(fixed, moving, channel, index, model.epsilonPerChannel(channel), terms)

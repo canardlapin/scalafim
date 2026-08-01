@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 enum RegistrationError:
@@ -65,8 +64,8 @@ final case class DensePull[A, B] private (
     else if newTo.domain != to.domain then
       Left(RegistrationError.FrameMismatch("pull regrid target", to.domain, newTo.domain))
     else
-      val result = DenseFieldKernels.regridPull(sourceCoordinates, newFrom.grid, validity)
-      Right(DensePull.unsafe(newFrom, newTo, result.field, FieldValidity.Mask(result.valid)))
+      val result = HalfFlowKernels.regridPull(sourceCoordinates, newFrom.grid, validity)
+      Right(DensePull.unsafe(newFrom, newTo, result.field, FieldValidity.copyMask(result.valid)))
 
 object DensePull:
   def make[A, B](
@@ -80,12 +79,12 @@ object DensePull:
       Left(RegistrationError.InvalidField("dense pull coordinate kind"))
     else if !validitySizeMatches(validity, from.grid.nVoxels) then
       Left(RegistrationError.InvalidField("dense pull validity"))
-    else if !allFinite(sourceCoordinates.values.data) then
+    else if !allFinite(sourceCoordinates) then
       Left(RegistrationError.InvalidField("dense pull coordinates"))
     else Right(unsafe(from, to, sourceCoordinates, validity))
 
   def identity[A](frame: Frame[A]): DensePull[A, A] =
-    val result = DenseFieldKernels.identity(frame.grid)
+    val result = HalfFlowKernels.identity(frame.grid)
     unsafe(frame, frame, result.field, FieldValidity.All)
 
   private[registration] def unsafe[A, B](
@@ -105,25 +104,28 @@ object DensePull:
       Left(RegistrationError.FrameMismatch("pull composition", left.to.domain, right.from.domain))
     else if left.to.grid != right.from.grid then Left(RegistrationError.GridMismatch("pull composition"))
     else
-      val result = DenseFieldKernels.composePull(
+      val result = HalfFlowKernels.composePull(
         left.sourceCoordinates,
         right.sourceCoordinates,
         left.validity,
         right.validity,
         outside
       )
-      Right(unsafe(left.from, right.to, result.field, FieldValidity.Mask(result.valid)))
+      Right(unsafe(left.from, right.to, result.field, FieldValidity.copyMask(result.valid)))
 
   private def validitySizeMatches(validity: FieldValidity, size: Int): Boolean =
     validity match
       case FieldValidity.All => true
-      case FieldValidity.Mask(values) => values.length == size
+      case FieldValidity.Mask(values) => values.size == size
 
-  private def allFinite(values: NArray[Double]): Boolean =
+  private def allFinite(field: DenseVectorField): Boolean =
     var finite = true
     var index = 0
-    while index < values.length && finite do
-      finite = values(index).isFinite
+    while index < field.grid.nVoxels && finite do
+      var component = 0
+      while component < 3 && finite do
+        finite = field.linearComponent(index, component).isFinite
+        component += 1
       index += 1
     finite
 
@@ -245,13 +247,13 @@ final case class MidpointArm[W, E] private (
       newWork: Frame[W],
       newEndpoint: Frame[E]
   ): Either[RegistrationError, MidpointArm[W, E]] =
-    val nextForwardResult = DenseFieldKernels.regridPull(
+    val nextForwardResult = HalfFlowKernels.regridPull(
       residual.forward.sourceCoordinates,
       newWork.grid,
       residual.forward.validity,
       CoordinateMapOutside.Identity
     )
-    val nextBackwardResult = DenseFieldKernels.regridPull(
+    val nextBackwardResult = HalfFlowKernels.regridPull(
       residual.backward.sourceCoordinates,
       newWork.grid,
       residual.backward.validity,
@@ -262,13 +264,13 @@ final case class MidpointArm[W, E] private (
         newWork,
         newWork,
         nextForwardResult.field,
-        FieldValidity.Mask(nextForwardResult.valid)
+        FieldValidity.copyMask(nextForwardResult.valid)
       )
       nextBackward <- DensePull.make(
         newWork,
         newWork,
         nextBackwardResult.field,
-        FieldValidity.Mask(nextBackwardResult.valid)
+        FieldValidity.copyMask(nextBackwardResult.valid)
       )
       nextResidual <- InversePair.make(nextForward, nextBackward)
       nextAffine <- affine.reframe(newWork, newEndpoint)
@@ -452,7 +454,7 @@ private[registration] final class MidpointAdvanceBuffer[W, F, M] private (
       right: DensePull[W, W],
       out: MidpointPullBuffer
   ): Unit =
-    DenseFieldKernels.composePullInto(
+    HalfFlowKernels.composePullInto(
       left.sourceCoordinates,
       right.sourceCoordinates,
       out.values,
@@ -467,12 +469,12 @@ private[registration] final class MidpointAdvanceBuffer[W, F, M] private (
     DensePull.unsafe(
       work,
       work,
-      DenseVectorField(
+      DenseVectorField.fromLegacyPlanar(
         work.grid,
-        NDArray(buffer.values, work.grid.dims :+ 3),
+        buffer.values,
         DenseVectorFieldKind.SourceCoordinates
       ),
-      FieldValidity.Mask(buffer.valid)
+      FieldValidity.copyMask(buffer.valid)
     )
 
 private[registration] object MidpointAdvanceBuffer:
@@ -511,7 +513,7 @@ private[registration] final class SelfPairComposeBuffer[A] private (
       right: DensePull[A, A],
       out: MidpointPullBuffer
   ): Unit =
-    DenseFieldKernels.composePullInto(
+    HalfFlowKernels.composePullInto(
       left.sourceCoordinates,
       right.sourceCoordinates,
       out.values,
@@ -526,12 +528,12 @@ private[registration] final class SelfPairComposeBuffer[A] private (
     DensePull.unsafe(
       frame,
       frame,
-      DenseVectorField(
+      DenseVectorField.fromLegacyPlanar(
         frame.grid,
-        NDArray(buffer.values, frame.grid.dims :+ 3),
+        buffer.values,
         DenseVectorFieldKind.SourceCoordinates
       ),
-      FieldValidity.Mask(buffer.valid)
+      FieldValidity.copyMask(buffer.valid)
     )
 
 private[registration] object SelfPairComposeBuffer:
@@ -544,13 +546,13 @@ private[registration] object SelfPairComposeBuffer:
     )
 
 private final class MidpointPullBuffer private (
-    val values: NArray[Double],
-    val valid: NArray[Boolean]
+    val values: Array[Double],
+    val valid: Array[Boolean]
 )
 
 private object MidpointPullBuffer:
   def apply(grid: GridSpec): MidpointPullBuffer =
     new MidpointPullBuffer(
-      NArrayUtil.ofSize[Double](grid.nVoxels * 3),
-      NArrayUtil.ofSize[Boolean](grid.nVoxels)
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3),
+      PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     )

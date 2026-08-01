@@ -4,7 +4,7 @@ import munit.FunSuite
 import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.DatasetId
-import scalafim.image.{Axis, NArrayUtil, NeuroSpace, NeuroVec, NeuroVol}
+import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.nio.charset.StandardCharsets
@@ -92,14 +92,14 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
 
   private def writeHeaderOnlyBold(path: Path): Unit =
     Files.createDirectories(path.getParent)
-    val values = NArrayUtil.fromArray(Array.tabulate(12)(_.toDouble))
+    val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
     val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
     Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def writeHeaderOnlyMask(path: Path): Unit =
     Files.createDirectories(path.getParent)
-    val values = NArrayUtil.fromArray(Array(1.0, 1.0, 1.0, 1.0))
+    val values = PrimitiveBuffers.fromArray(Array(1.0, 1.0, 1.0, 1.0))
     val space = NeuroSpace(Vector(2, 2, 1))
     Nifti.writeVol(path, NeuroVol.fromLinear(values, space, "mask"))
     Files.write(path, Files.readAllBytes(path).take(352))

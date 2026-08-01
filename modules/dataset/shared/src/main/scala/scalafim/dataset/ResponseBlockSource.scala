@@ -1,7 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, GridCompatibility, Mask, NArrayUtil}
-import narr.NArray
+import scalafim.image.{DMat, GridCompatibility, Mask, PrimitiveBuffers}
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
   * Implementations may open local files, archives, or remote objects, but no
@@ -52,7 +51,7 @@ final class CompositeResponseBlockSource private (
     val assignments = assignTimepoints(selection.timepointIndices)
     val nRows = selection.nTimepoints
     val nCols = selection.nVoxels
-    val values = NArrayUtil.ofSize[Double](nRows * nCols)
+    val values = PrimitiveBuffers.ofSize[Double](nRows * nCols)
     var failure = Option.empty[DatasetError]
     var runIndex = 0
 
@@ -185,7 +184,7 @@ object ResponseBlockDatasetBackend:
 private[dataset] def matrixFromRowMajor(
     rows: Int,
     cols: Int,
-    values: NArray[Double]
+    values: Array[Double]
 ): DMat =
   require(rows > 0 && cols > 0, "response block matrix dimensions must be positive")
   require(values.length == rows * cols, "response block data must match matrix dimensions")

@@ -2,7 +2,7 @@ package scalafim.surface
 
 import scalafim.image.Affine
 import scalafim.image.NeuroVol
-import scalafim.image.NArrayUtil
+import scalafim.image.PrimitiveBuffers
 import scala.util.control.NonFatal
 
 final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):

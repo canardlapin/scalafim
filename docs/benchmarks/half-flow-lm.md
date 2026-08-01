@@ -184,7 +184,7 @@ P1 adds an isolated JMH configuration rather than placing wall-clock assertions
 in MUnit. The canonical single-thread diagnostic command will be:
 
 ```sh
-sbt 'imageBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -prof gc .*HalfFlowImageKernelBenchmark.*'
+sbt 'registrationBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -prof gc .*HalfFlowImageKernelBenchmark.*'
 ```
 
 Registration-owned kernels use:
@@ -518,7 +518,7 @@ P1 also retains a deliberately labeled diagnostic probe for the dynamic
 pull-map composition that scaling-and-squaring repeats:
 
 ```sh
-sbt 'imageJVM/Test/runMain scalafim.image.HalfFlowImageKernelProbe 64 6 11'
+sbt 'registrationJVM/Test/runMain scalafim.registration.HalfFlowImageKernelProbe 64 6 11'
 ```
 
 It reports two references. `referencePlanAndSample` rebuilds interpolation
@@ -561,9 +561,10 @@ shared build definition:
 
 ```sh
 sbt \
-  'set imageJS / Test / scalaJSUseTestModuleInitializer := false' \
-  'set imageJS / Test / scalaJSUseMainModuleInitializer := true' \
-  'imageJS / Test / run'
+  'set registrationJS / Test / scalaJSUseTestModuleInitializer := false' \
+  'set registrationJS / Test / scalaJSUseMainModuleInitializer := true' \
+  'set registrationJS / Test / mainClass := Some("scalafim.registration.HalfFlowImageKernelJsProbe")' \
+  'registrationJS / Test / run'
 ```
 
 It reports timing and exact output parity for the dynamic, prepared, and

@@ -1,6 +1,5 @@
 package scalafim.surface
 
-import narr.NArray
 import scala.util.hashing.MurmurHash3
 
 /** Stable compact identity for an exact ordered triangle topology. It is a
@@ -11,7 +10,7 @@ import scala.util.hashing.MurmurHash3
 opaque type MeshTopologyIdentity = Long
 
 object MeshTopologyIdentity:
-  private[surface] def from(vertexCount: Int, faceIndices: NArray[Int]): MeshTopologyIdentity =
+  private[surface] def from(vertexCount: Int, faceIndices: Array[Int]): MeshTopologyIdentity =
     var primary = MurmurHash3.mix(0x3c074a61, vertexCount)
     var secondary = MurmurHash3.mix(0x1b873593, faceIndices.length)
     var index = 0

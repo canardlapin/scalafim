@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 final case class NeighborhoodCcConfig private (
@@ -82,9 +81,9 @@ final case class NeighborhoodCcDiagnostics(
 final class FrozenCcWeights private[registration] (
     val grid: GridSpec,
     val config: NeighborhoodCcConfig,
-    private[registration] val support: NArray[Double],
-    private[registration] val weight: NArray[Double],
-    private[registration] val epsilon: NArray[Double],
+    private[registration] val support: Array[Double],
+    private[registration] val weight: Array[Double],
+    private[registration] val epsilon: Array[Double],
     val activeWindows: Int,
     val supportDiagnostics: CcSupportDiagnostics,
     val varianceDiagnostics: CcVarianceDiagnostics
@@ -92,34 +91,34 @@ final class FrozenCcWeights private[registration] (
 
 final case class NeighborhoodCcEvaluation(
     loss: Double,
-    fixedIntensityGradient: NArray[Double],
-    movingIntensityGradient: NArray[Double],
+    fixedIntensityGradient: Array[Double],
+    movingIntensityGradient: Array[Double],
     diagnostics: NeighborhoodCcDiagnostics
 )
 
 final class NeighborhoodCcBuffer private (
     val grid: GridSpec,
-    private[registration] val fixedGradient: NArray[Double],
-    private[registration] val movingGradient: NArray[Double]
+    private[registration] val fixedGradient: Array[Double],
+    private[registration] val movingGradient: Array[Double]
 )
 
 object NeighborhoodCcBuffer:
   def apply(grid: GridSpec): NeighborhoodCcBuffer =
     new NeighborhoodCcBuffer(
       grid,
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Double](grid.nVoxels)
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     )
 
 final class NeighborhoodCcWorkspace private (
     val grid: GridSpec,
-    private[registration] val count: NArray[Double],
-    private[registration] val meanFixed: NArray[Double],
-    private[registration] val meanMoving: NArray[Double],
-    private[registration] val covariance: NArray[Double],
-    private[registration] val fixedScatter: NArray[Double],
-    private[registration] val movingScatter: NArray[Double],
-    private[registration] val scratch: NArray[Double],
+    private[registration] val count: Array[Double],
+    private[registration] val meanFixed: Array[Double],
+    private[registration] val meanMoving: Array[Double],
+    private[registration] val covariance: Array[Double],
+    private[registration] val fixedScatter: Array[Double],
+    private[registration] val movingScatter: Array[Double],
+    private[registration] val scratch: Array[Double],
     private[registration] val box: BoxSumWorkspace
 ):
   val ownedScalarBuffers: Int = 9
@@ -129,31 +128,31 @@ object NeighborhoodCcWorkspace:
     val n = grid.nVoxels
     new NeighborhoodCcWorkspace(
       grid,
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
-      NArrayUtil.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
+      PrimitiveBuffers.ofSize[Double](n),
       BoxSumWorkspace(grid)
     )
 
 /** Squared, overlapping-window neighborhood correlation with an adjoint-box derivative. */
 object NeighborhoodCc:
   def prepare(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       config: NeighborhoodCcConfig = NeighborhoodCcConfig.default
   ): Either[RegistrationError, FrozenCcWeights] =
     prepareWith(fixed, moving, support, grid, config, NeighborhoodCcWorkspace(grid))
 
   def prepareWith(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       config: NeighborhoodCcConfig,
       workspace: NeighborhoodCcWorkspace
@@ -161,9 +160,9 @@ object NeighborhoodCc:
     validateInputs(fixed, moving, support, grid, workspace).map: _ =>
       statisticsInto(fixed, moving, support, grid, config.radius, workspace)
       val (fixedVariance, movingVariance) = globalVariances(fixed, moving, support, grid.nVoxels)
-      val frozenSupport = NArrayUtil.ofSize[Double](grid.nVoxels)
-      val weights = NArrayUtil.ofSize[Double](grid.nVoxels)
-      val epsilons = NArrayUtil.ofSize[Double](grid.nVoxels)
+      val frozenSupport = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+      val weights = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+      val epsilons = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
       var supportMinimum = Double.PositiveInfinity
       var supportMaximum = 0.0
       var supportTotal = 0.0
@@ -237,15 +236,15 @@ object NeighborhoodCc:
       )
 
   def value(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights
   ): Either[RegistrationError, Double] =
     valueWith(fixed, moving, frozen, NeighborhoodCcWorkspace(frozen.grid))
 
   def valueWith(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights,
       workspace: NeighborhoodCcWorkspace
   ): Either[RegistrationError, Double] =
@@ -254,8 +253,8 @@ object NeighborhoodCc:
       lossAndCoefficients(frozen, workspace, writeCoefficients = false)
 
   def valueAndGradient(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights
   ): Either[RegistrationError, NeighborhoodCcEvaluation] =
     valueAndGradientWith(
@@ -271,8 +270,8 @@ object NeighborhoodCc:
     * The returned arrays borrow `destination` until its next reuse.
     */
   def valueAndGradientWith(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights,
       workspace: NeighborhoodCcWorkspace,
       destination: NeighborhoodCcBuffer
@@ -300,9 +299,9 @@ object NeighborhoodCc:
         )
 
   private def statisticsInto(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       radius: VoxelWindowRadius,
       workspace: NeighborhoodCcWorkspace
@@ -368,8 +367,8 @@ object NeighborhoodCc:
     loss
 
   private def adjointGradientInto(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights,
       workspace: NeighborhoodCcWorkspace,
       destination: NeighborhoodCcBuffer
@@ -409,7 +408,7 @@ object NeighborhoodCc:
       destination.movingGradient(index) -= frozen.support(index) * boxed
 
   private def boxAndAccumulate(
-      source: NArray[Double],
+      source: Array[Double],
       grid: GridSpec,
       frozen: FrozenCcWeights,
       workspace: NeighborhoodCcWorkspace,
@@ -422,9 +421,9 @@ object NeighborhoodCc:
       index += 1
 
   private def validateInputs(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       grid: GridSpec,
       workspace: NeighborhoodCcWorkspace
   ): Either[RegistrationError, Unit] =
@@ -441,8 +440,8 @@ object NeighborhoodCc:
       if valid then Right(()) else Left(RegistrationError.InvalidField("neighborhood CC input values"))
 
   private def validateFrozenInputs(
-      fixed: NArray[Double],
-      moving: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
       frozen: FrozenCcWeights,
       workspace: NeighborhoodCcWorkspace
   ): Either[RegistrationError, Unit] =
@@ -458,9 +457,9 @@ object NeighborhoodCc:
       if finite then Right(()) else Left(RegistrationError.InvalidField("neighborhood CC input values"))
 
   private def globalVariances(
-      fixed: NArray[Double],
-      moving: NArray[Double],
-      support: NArray[Double],
+      fixed: Array[Double],
+      moving: Array[Double],
+      support: Array[Double],
       size: Int
   ): (Double, Double) =
     var totalWeight = 0.0
@@ -528,13 +527,13 @@ object NeighborhoodCc:
       y <= radius.y || y >= grid.shape.y - radius.y - 1 ||
       z <= radius.z || z >= grid.shape.z - radius.z - 1
 
-  private inline def fill(values: NArray[Double], size: Int)(inline value: Int => Double): Unit =
+  private inline def fill(values: Array[Double], size: Int)(inline value: Int => Double): Unit =
     var index = 0
     while index < size do
       values(index) = value(index)
       index += 1
 
-  private def clear(values: NArray[Double], size: Int): Unit =
+  private def clear(values: Array[Double], size: Int): Unit =
     var index = 0
     while index < size do
       values(index) = 0.0

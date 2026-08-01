@@ -143,6 +143,12 @@ class RegistrationAlgebraSuite extends munit.FunSuite:
     assertPoint(valueAt(reused.pair.forward, 4, 4, 4), WorldPoint(4.4, 3.8, 4.1), 2e-12)
     assertEquals(workspace.ownedCoordinateBuffers, 4)
     assertEquals(workspace.ownedValidityBuffers, 4)
+    right(PairedScalingAndSquaring.expHalfPairWith(zero, workspace))
+    assertPoint(
+      valueAt(reused.pair.forward, 4, 4, 4),
+      WorldPoint(4.4, 3.8, 4.1),
+      2e-12
+    )
 
   test("adaptive depth uses the physical velocity-gradient bound"):
     val frame = Frame[W](SpatialDomainId("work"), grid)
@@ -305,15 +311,13 @@ class RegistrationAlgebraSuite extends munit.FunSuite:
     var index = 0
     while index < actual.from.grid.nVoxels do
       assertEquals(validAt(actual.validity, index), validAt(expected.validity, index))
-      assertClose(actual.sourceCoordinates.values.data(index), expected.sourceCoordinates.values.data(index))
-      assertClose(
-        actual.sourceCoordinates.values.data(index + actual.from.grid.nVoxels),
-        expected.sourceCoordinates.values.data(index + expected.from.grid.nVoxels)
-      )
-      assertClose(
-        actual.sourceCoordinates.values.data(index + 2 * actual.from.grid.nVoxels),
-        expected.sourceCoordinates.values.data(index + 2 * expected.from.grid.nVoxels)
-      )
+      var component = 0
+      while component < 3 do
+        assertClose(
+          actual.sourceCoordinates.linearComponent(index, component),
+          expected.sourceCoordinates.linearComponent(index, component)
+        )
+        component += 1
       index += 1
 
   private def validAt(validity: FieldValidity, index: Int): Boolean =
@@ -333,7 +337,7 @@ class RegistrationAlgebraSuite extends munit.FunSuite:
   private def coordinateField(
       fieldGrid: GridSpec
   )(mapping: WorldPoint => WorldPoint): DenseVectorField =
-    val values = NArrayUtil.ofSize[Double](fieldGrid.nVoxels * 3)
+    val values = PrimitiveBuffers.ofSize[Double](fieldGrid.nVoxels * 3)
     var z = 0
     while z < fieldGrid.shape.z do
       var y = 0
@@ -351,16 +355,16 @@ class RegistrationAlgebraSuite extends munit.FunSuite:
           x += 1
         y += 1
       z += 1
-    DenseVectorField(
+    DenseVectorField.fromLegacyPlanar(
       fieldGrid,
-      NDArray(values, fieldGrid.dims :+ 3),
+      values,
       DenseVectorFieldKind.SourceCoordinates
     )
 
   private def displacement(
       fieldGrid: GridSpec
   )(value: (Double, Double, Double) => WorldPoint): DenseVectorField =
-    val values = NArrayUtil.ofSize[Double](fieldGrid.nVoxels * 3)
+    val values = PrimitiveBuffers.ofSize[Double](fieldGrid.nVoxels * 3)
     var z = 0
     while z < fieldGrid.shape.z do
       var y = 0
@@ -376,13 +380,16 @@ class RegistrationAlgebraSuite extends munit.FunSuite:
           x += 1
         y += 1
       z += 1
-    DenseVectorField(fieldGrid, NDArray(values, fieldGrid.dims :+ 3), DenseVectorFieldKind.Displacement)
+    DenseVectorField.fromLegacyPlanar(fieldGrid, values, DenseVectorFieldKind.Displacement)
 
   private def valueAt[X, Y](pull: DensePull[X, Y], x: Int, y: Int, z: Int): WorldPoint =
     val fieldGrid = pull.from.grid
     val index = x + fieldGrid.shape.x * y + fieldGrid.shape.x * fieldGrid.shape.y * z
-    val values = pull.sourceCoordinates.values.data
-    WorldPoint(values(index), values(index + fieldGrid.nVoxels), values(index + 2 * fieldGrid.nVoxels))
+    WorldPoint(
+      pull.sourceCoordinates.linearComponent(index, 0),
+      pull.sourceCoordinates.linearComponent(index, 1),
+      pull.sourceCoordinates.linearComponent(index, 2)
+    )
 
   private def assertPoint(actual: WorldPoint, expected: WorldPoint, tolerance: Double): Unit =
     assertClose(actual.x, expected.x, tolerance)

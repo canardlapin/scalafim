@@ -1,7 +1,7 @@
 package scalafim.archive.zarr
 
 import java.nio.file.Path
-import scalafim.zarr.*
+import zarr4s.*
 
 object PublicationFixtureMain:
   def main(arguments: Array[String]): Unit =

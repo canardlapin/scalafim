@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import scalafim.image.{Indexing, NArrayUtil, NeuroSpace, VoxelIndexSet}
+import scalafim.image.{Indexing, PrimitiveBuffers, NeuroSpace, VoxelIndexSet}
 import gale.linalg.{DMat, DVec}
 
 final case class RadialActiveVoxels private (
@@ -19,7 +19,7 @@ object RadialActiveVoxels:
       activeIndices: IndexedSeq[Int]
   ): Either[RadialBasisError, RadialActiveVoxels] =
     VoxelIndexSet
-      .makeUnique(space, NArrayUtil.fromArray(activeIndices.toArray))
+      .makeUnique(space, PrimitiveBuffers.fromArray(activeIndices.toArray))
       .left
       .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
       .flatMap(fromIndexSet)

@@ -1,5 +1,6 @@
 package scalafim.dataset
 
+import ravel.Array1
 import scalafim.image.Mask
 
 final class VoxelSampleMap private (
@@ -44,20 +45,20 @@ object VoxelSampleMap:
     yield map
 
   private def fromMaskIndices(
-      indices: narr.NArray[Int],
+      indices: Array1[Int],
       spatialSize: Int,
       expectedSamples: Int
   ): Either[DatasetError, VoxelSampleMap] =
     if expectedSamples <= 0 then Left(DatasetError.ShapeMismatch(s"response sample count must be positive, got $expectedSamples"))
-    else if indices.length != expectedSamples then
-      Left(DatasetError.ShapeMismatch(s"response sample count must match mask cardinality: expected $expectedSamples samples but mask has ${indices.length}"))
+    else if indices.size != expectedSamples then
+      Left(DatasetError.ShapeMismatch(s"response sample count must match mask cardinality: expected $expectedSamples samples but mask has ${indices.size}"))
     else
       val lookup = Array.fill(spatialSize)(-1)
       val sampleVoxels = Vector.newBuilder[VoxelIndex]
-      sampleVoxels.sizeHint(indices.length)
+      sampleVoxels.sizeHint(indices.size)
       var i = 0
       var error = Option.empty[DatasetError]
-      while i < indices.length && error.isEmpty do
+      while i < indices.size && error.isEmpty do
         val voxel = indices(i)
         if voxel < 0 || voxel >= spatialSize then
           error = Some(DatasetError.IndexOutOfBounds(DatasetAxis.Voxel, voxel, spatialSize))

@@ -10,7 +10,7 @@ import scalafim.dataset.{
   TimepointSelection,
   VoxelSelection
 }
-import scalafim.image.{Axis, NArrayUtil, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec}
 import scalafim.image.io.Nifti
 import scalafim.response.*
 
@@ -240,7 +240,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
   }
 
   private def writeSeries(path: Path): Path =
-    val values = NArrayUtil.fromArray(Array.tabulate(12)(_.toDouble))
+    val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
     val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
     Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
 

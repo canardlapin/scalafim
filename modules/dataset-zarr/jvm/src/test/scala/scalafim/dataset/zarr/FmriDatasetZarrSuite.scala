@@ -2,7 +2,7 @@ package scalafim.dataset.zarr
 
 import java.nio.file.Files
 import scalafim.dataset.*
-import scalafim.zarr.ReadLimits
+import zarr4s.ReadLimits
 
 class FmriDatasetZarrSuite extends munit.FunSuite:
 

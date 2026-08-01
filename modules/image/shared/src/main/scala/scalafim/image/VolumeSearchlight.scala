@@ -1,7 +1,8 @@
 package scalafim.image
 
-import narr.NArray
-import scala.reflect.ClassTag
+import ravel.DType
+import ravel.NDArray as RavelArray
+import ravel.Shape
 import scalafim.locus.{
   CenteredSearchlight,
   CenteredSearchlightError as LocusCenteredSearchlightError,
@@ -11,7 +12,9 @@ import scalafim.locus.{
   Relation,
   Searchlight as LocusSearchlight,
   SearchlightError as LocusSearchlightError,
-  SpaceMismatch
+  SelectionError,
+  SpaceMismatch,
+  mismatch
 }
 
 enum VolumeSearchlightError:
@@ -21,6 +24,7 @@ enum VolumeSearchlightError:
   case CenterUnavailable(pointOrdinal: Int)
   case CenterExcluded(pointOrdinal: Int)
   case InvalidWindow(error: ROIVolWindowError)
+  case InvalidSelection(error: SelectionError)
 
   def message: String =
     this match
@@ -32,6 +36,7 @@ enum VolumeSearchlightError:
       case CenterExcluded(point) =>
         s"point $point is excluded by the requested field support"
       case InvalidWindow(error) => error.message
+      case InvalidSelection(error) => error.message
 
 object VolumeSearchlight:
   def metricBalls[S](
@@ -39,15 +44,10 @@ object VolumeSearchlight:
       radius: SearchlightRadius,
       centers: Region[S]
   ): Either[VolumeSearchlightError, CenteredSearchlight[S]] =
-    if !domain.finiteSpace.sameIdentityAs(centers.space) then
+    if !domain.finiteSpace.sameRuntimeOwnerAs(centers.space) then
       Left:
         VolumeSearchlightError.WrongSpace:
-          SpaceMismatch(
-            domain.finiteSpace.key,
-            domain.finiteSpace.size,
-            centers.space.key,
-            centers.space.size
-          )
+          mismatch(domain.finiteSpace, centers.space)
     else
       val shape = domain.volumeSpace.shape
       val spacing = domain.volumeSpace.toNeuroSpace.spacing
@@ -84,7 +84,11 @@ object VolumeSearchlight:
 
       val relation =
         Relation
-          .fromOrdinalRows(domain.finiteSpace, domain.finiteSpace, rows)
+          .fromOrdinalRows(
+            domain.finiteSpace,
+            domain.finiteSpace,
+            rows.iterator.map(_.iterator)
+          )
           .toOption
           .get
       LocusSearchlight
@@ -110,45 +114,44 @@ object VolumeSearchlight:
       field: IndexedField[S, A],
       support: Option[Region[S]] = None,
       label: String = ""
-  )(using ClassTag[A]): Either[VolumeSearchlightError, ROIVolWindow[A]] =
+  )(using DType[A]): Either[VolumeSearchlightError, ROIVolWindow[A]] =
     for
       _ <- checkSpace(domain, searchlight.centers.space)
       _ <- checkSpace(domain, field.space)
       neighborhood <- searchlight
         .regionAt(center)
-        .toRight(VolumeSearchlightError.CenterUnavailable(center.ordinal))
-      restricted <- support match
-        case Some(region) =>
-          neighborhood
-            .intersect(region)
-            .left
-            .map(VolumeSearchlightError.WrongSpace.apply)
-        case None =>
-          Right(neighborhood)
+        .toRight(VolumeSearchlightError.CenterUnavailable(center.value))
+      // `support` shares this region's `S`, which *is* the proof that both are
+      // indexed by the same domain, so the intersection is total — there is no
+      // mismatch left to report. Cross-domain callers would use
+      // `intersectChecked`.
+      restricted = support.fold(neighborhood)(neighborhood.intersect)
       _ <-
         if restricted.contains(center) then Right(())
-        else Left(VolumeSearchlightError.CenterExcluded(center.ordinal))
-      locusSelection = scalafim.locus.Selection.fromRegion(restricted)
+        else Left(VolumeSearchlightError.CenterExcluded(center.value))
+      locusSelection <- scalafim.locus.Selection
+        .fromRegion(restricted)
+        .left
+        .map(VolumeSearchlightError.InvalidSelection.apply)
       voxelSelection <- domain
         .voxelSelection(locusSelection)
         .left
         .map(VolumeSearchlightError.WrongSpace.apply)
       orderedPoints = locusSelection.points.toVector
       data =
-        val owned = NArray.ofSize[A](orderedPoints.length)
-        var i = 0
-        while i < orderedPoints.length do
-          owned(i) = field(orderedPoints(i))
-          i += 1
-        owned
-      centerIndex = orderedPoints.indexWhere(_.ordinal == center.ordinal)
+        RavelArray.fromSeq(
+          Shape(orderedPoints.length),
+          // `at` is total: a `Point[S]` is already proof of membership in `S`.
+          orderedPoints.map(point => field.at(point))
+        )
+      centerIndex = orderedPoints.indexWhere(_.value == center.value)
       window <- ROIVolWindow
         .fromOwned(
           domain.volumeSpace.toNeuroSpace,
           ROICoords(voxelSelection.voxelCoords.map(_.toVector)),
           data,
           centerIndex,
-          center.ordinal,
+          center.value,
           label
         )
         .left
@@ -157,15 +160,10 @@ object VolumeSearchlight:
 
   private def checkSpace[S, T](
       domain: VolumeDomain[S],
-      actual: scalafim.locus.FiniteSpace[T]
+      actual: scalafim.locus.FiniteDomain[T]
   ): Either[VolumeSearchlightError, Unit] =
-    if domain.finiteSpace.sameIdentityAs(actual) then Right(())
+    if domain.finiteSpace.sameRuntimeOwnerAs(actual) then Right(())
     else
       Left:
         VolumeSearchlightError.WrongSpace:
-          SpaceMismatch(
-            domain.finiteSpace.key,
-            domain.finiteSpace.size,
-            actual.key,
-            actual.size
-          )
+          mismatch(domain.finiteSpace, actual)

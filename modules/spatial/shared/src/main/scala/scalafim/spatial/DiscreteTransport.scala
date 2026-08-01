@@ -19,13 +19,13 @@ object ExactSpatialMap:
       target: Domain,
       mapping: TotalMap[X, Y]
   ): Either[SpatialError, ExactSpatialMap[X, Y]] =
-    if !source.locus.space.sameIdentityAs(mapping.from) then
+    if !source.locus.space.sameRuntimeOwnerAs(mapping.from) then
       Left(
         SpatialError.OperatorAssemblyFailed(
           s"exact map source space does not match domain ${source.id.value}"
         )
       )
-    else if !target.locus.space.sameIdentityAs(mapping.to) then
+    else if !target.locus.space.sameRuntimeOwnerAs(mapping.to) then
       Left(
         SpatialError.OperatorAssemblyFailed(
           s"exact map target space does not match domain ${target.id.value}"
@@ -51,13 +51,13 @@ object CrispSpatialRelation:
       target: Domain,
       relation: Relation[X, Y]
   ): Either[SpatialError, CrispSpatialRelation[X, Y]] =
-    if !source.locus.space.sameIdentityAs(relation.from) then
+    if !source.locus.space.sameRuntimeOwnerAs(relation.from) then
       Left(
         SpatialError.OperatorAssemblyFailed(
           s"relation source space does not match domain ${source.id.value}"
         )
       )
-    else if !target.locus.space.sameIdentityAs(relation.to) then
+    else if !target.locus.space.sameRuntimeOwnerAs(relation.to) then
       Left(
         SpatialError.OperatorAssemblyFailed(
           s"relation target space does not match domain ${target.id.value}"

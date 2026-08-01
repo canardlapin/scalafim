@@ -294,9 +294,11 @@ object Orientation:
   def reorient[A](vol: NeuroVol[A], orientation: Orientation3D): NeuroVol[A] =
     vol.copy(space = reorient(vol.space, orientation))
 
+  @scala.annotation.targetName("reorientNeuroVecAxes")
   def reorient[A](vec: NeuroVec[A], orient: Seq[String]): NeuroVec[A] =
     vec.copy(space = reorient(vec.space, orient))
 
+  @scala.annotation.targetName("reorientNeuroVecOrientation")
   def reorient[A](vec: NeuroVec[A], orientation: Orientation3D): NeuroVec[A] =
     vec.copy(space = reorient(vec.space, orientation))
 

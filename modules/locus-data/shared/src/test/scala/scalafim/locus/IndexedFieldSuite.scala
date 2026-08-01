@@ -1,9 +1,10 @@
 package scalafim.locus
 
 class IndexedFieldSuite extends munit.FunSuite:
-  private sealed trait S
-
-  private val space = FiniteSpace.make[S](SpaceKey.unsafe("field:test"), 6).toOption.get
+  private val resolution =
+    DomainFactory.unsafeRestore(SpaceKey.unsafe("field:test"), 6)
+  private type S = resolution.S
+  private val space: FiniteSpace[S] = resolution.space
   private val field = IndexedField.fromValues(space, Vector(0, 10, 20, 30, 40, 50)).toOption.get
 
   test("dense field construction validates size and owns input values"):
@@ -11,7 +12,7 @@ class IndexedFieldSuite extends munit.FunSuite:
     val owned = IndexedField.fromValues(space, values).toOption.get
     values(0) = 99
 
-    assertEquals(owned(space.point(0).get), 1)
+    assertEquals(owned(space.pointOption(0).get), 1)
     assertEquals(
       IndexedField.fromValues(space, Vector(1, 2)),
       Left(IndexedFieldError.WrongValueCount(6, 2))
@@ -23,34 +24,32 @@ class IndexedFieldSuite extends munit.FunSuite:
     val b = Region.fromOrdinals(space, Vector(1, 2, 3)).toOption.get
 
     assertEquals(
-      field.restrict(whole).toOption.get.valuesInDomainOrder.toVector,
+      field.restrict(whole).valuesInDomainOrder.toVector,
       Vector(0, 10, 20, 30, 40, 50)
     )
     assertEquals(
-      field.restrict(a).toOption.get
+      field.restrict(a)
         .restrict(b)
-        .toOption
-        .get
         .support,
-      a.intersect(b).toOption.get
+      a.intersect(b)
     )
 
   test("field map commutes with restriction"):
     val region = Region.fromOrdinals(space, Vector(0, 2, 5)).toOption.get
     val mappedThenRestricted =
-      field.map(_ + 1).restrict(region).toOption.get.valuesInDomainOrder.toVector
+      field.map(_ + 1).restrict(region).valuesInDomainOrder.toVector
     val restrictedThenMapped =
-      field.restrict(region).toOption.get.map(_ + 1).valuesInDomainOrder.toVector
+      field.restrict(region).map(_ + 1).valuesInDomainOrder.toVector
 
     assertEquals(mappedThenRestricted, restrictedThenMapped)
 
   test("section access and selection preserve support and explicit order"):
     val support = Region.fromOrdinals(space, Vector(1, 3, 5)).toOption.get
-    val section = field.restrict(support).toOption.get
+    val section = field.restrict(support)
     val selection = Selection.fromOrdinals(space, Vector(5, 1, 3)).toOption.get
 
-    assertEquals(section(space.point(1).get), Some(10))
-    assertEquals(section(space.point(2).get), None)
+    assertEquals(section.at(space.pointOption(1).get).toOption, Some(10))
+    assertEquals(section.at(space.pointOption(2).get).toOption, None)
     assertEquals(section.valuesIn(selection).toOption.get.toVector, Vector(50, 10, 30))
 
     val outside = Selection.fromOrdinals(space, Vector(1, 2)).toOption.get
@@ -60,7 +59,9 @@ class IndexedFieldSuite extends munit.FunSuite:
     )
 
   test("restriction rejects a reused phantom with a different runtime identity"):
-    val other = FiniteSpace.make[S](SpaceKey.unsafe("field:other"), 6).toOption.get
-    val wrongRegion = Region.whole(other)
+    val other =
+      DomainFactory.unsafeRestore(SpaceKey.unsafe("field:other"), 6).space
+    val wrongRegion =
+      Region.whole(other).asInstanceOf[Region[S]]
 
-    assert(field.restrict(wrongRegion).isLeft)
+    assert(field.restrictChecked(wrongRegion).isLeft)

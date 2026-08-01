@@ -3,7 +3,6 @@ package scalafim.response
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
-import narr.NArray
 import scala.compiletime.testing.typeCheckErrors
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
@@ -136,7 +135,7 @@ class ResponseKernelSuite extends munit.FunSuite:
 
   test("response blocks copy public input and never expose case-class copy"):
     val requested = selection(schema("owned"), Vector(1, 0), Vector(2, 0))
-    val input = NArray[Double](12.0, 10.0, 2.0, 0.0)
+    val input = Array[Double](12.0, 10.0, 2.0, 0.0)
     val block =
       ResponseBlock
         .copyFromRowMajor(input, requested)
@@ -154,7 +153,7 @@ class ResponseKernelSuite extends munit.FunSuite:
 
   test("in-memory source obeys selection, order, shape, and ownership laws"):
     val responseSchema = schema("memory")
-    val values = NArray[Double](
+    val values = Array[Double](
       0.0, 1.0, 2.0, 3.0,
       10.0, 11.0, 12.0, 13.0,
       20.0, 21.0, 22.0, 23.0
@@ -192,7 +191,7 @@ class ResponseKernelSuite extends munit.FunSuite:
 
   test("selection and partition reads agree exactly for dense storage"):
     val responseSchema = schema("partition")
-    val values = NArray[Double](
+    val values = Array[Double](
       0.0, 1.0, 2.0, 3.0,
       10.0, 11.0, 12.0, 13.0,
       20.0, 21.0, 22.0, 23.0
@@ -232,7 +231,7 @@ class ResponseKernelSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("planned-first"),
           responseSchema,
-          NArray[Double](
+          Array[Double](
             0.0, 1.0, 2.0, 3.0,
             10.0, 11.0, 12.0, 13.0,
             20.0, 21.0, 22.0, 23.0
@@ -245,7 +244,7 @@ class ResponseKernelSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("planned-second"),
           responseSchema,
-          NArray[Double](
+          Array[Double](
             100.0, 101.0, 102.0, 103.0,
             110.0, 111.0, 112.0, 113.0,
             120.0, 121.0, 122.0, 123.0

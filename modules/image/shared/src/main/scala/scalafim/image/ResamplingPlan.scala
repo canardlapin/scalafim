@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 
 enum ResamplingPlanError:
   case SingularSourceAffine(reason: String)
@@ -68,12 +67,15 @@ final case class ResamplingPlan private (
             Right(sampleCubic(volume, outside))
       sampled.flatMap(vol => modulate(vol, modulation))
 
+  @scala.annotation.targetName("applyNeuroVec")
   def apply(vec: NeuroVec[Double]): Either[ResamplingPlanError, NeuroVec[Double]] =
     apply(vec, outside = 0.0)
 
+  @scala.annotation.targetName("applyNeuroVecOutside")
   def apply(vec: NeuroVec[Double], outside: Double): Either[ResamplingPlanError, NeuroVec[Double]] =
     apply(vec, outside, JacobianModulation.None)
 
+  @scala.annotation.targetName("applyNeuroVecModulated")
   def apply(
       vec: NeuroVec[Double],
       outside: Double,
@@ -96,7 +98,7 @@ final case class ResamplingPlan private (
   ): Either[ResamplingPlanError, NeuroVec[Double]] =
     val tLen = vec.nVolumes
     val spatialNels = target.nVoxels
-    val out = NArrayUtil.ofSize[Double](spatialNels * tLen)
+    val out = PrimitiveBuffers.ofSize[Double](spatialNels * tLen)
     var t = 0
     var error = Option.empty[ResamplingPlanError]
     while t < tLen && error.isEmpty do
@@ -104,7 +106,10 @@ final case class ResamplingPlan private (
         case Left(err) =>
           error = Some(err)
         case Right(sampled) =>
-          NArrayUtil.copyInto(sampled.values.data, 0, out, t * spatialNels, spatialNels)
+          var index = 0
+          while index < spatialNels do
+            out(t * spatialNels + index) = sampled.linear(index)
+            index += 1
       t += 1
     error match
       case Some(err) => Left(err)
@@ -112,7 +117,7 @@ final case class ResamplingPlan private (
 
   private def sampleNearest(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
-    val out = NArrayUtil.ofSize[Double](target.nVoxels)
+    val out = PrimitiveBuffers.ofSize[Double](target.nVoxels)
     var i = 0
     while i < sourceVoxelPoints.length do
       val coord = sourceVoxelPoints(i)
@@ -122,7 +127,7 @@ final case class ResamplingPlan private (
 
   private def sampleLinear(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
-    val out = NArray.ofSize[Double](target.nVoxels)
+    val out = Array.ofDim[Double](target.nVoxels)
     var i = 0
     while i < sourceVoxelPoints.length do
       val coord = sourceVoxelPoints(i)
@@ -133,7 +138,7 @@ final case class ResamplingPlan private (
 
   private def sampleCubic(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
-    val out = NArrayUtil.ofSize[Double](target.nVoxels)
+    val out = PrimitiveBuffers.ofSize[Double](target.nVoxels)
     val workspace = new CubicWorkspace
     var i = 0
     while i < sourceVoxelPoints.length do
@@ -155,7 +160,7 @@ final case class ResamplingPlan private (
           case Left(err) =>
             Left(ResamplingPlanError.MorphismEvaluationFailed(err.message))
           case Right(dets) =>
-            val out = NArrayUtil.ofSize[Double](target.nVoxels)
+            val out = PrimitiveBuffers.ofSize[Double](target.nVoxels)
             var i = 0
             while i < target.nVoxels do
               val base = math.abs(dets(i))
@@ -163,7 +168,7 @@ final case class ResamplingPlan private (
                 modulation match
                   case JacobianModulation.SqrtJacobian => math.sqrt(base)
                   case _ => base
-              out(i) = volume.values.data(i) * factor
+              out(i) = volume.linear(i) * factor
               i += 1
             Right(NeuroVol.fromLinear(out, target.toNeuroSpace, volume.label))
 

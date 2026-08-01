@@ -1,7 +1,7 @@
 package scalafim.spatial.io
 
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, NArrayUtil, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer
@@ -50,7 +50,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
       assertEquals(source.stats, NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
 
-      val values = NArrayUtil.fromArray(Array(0.0, 1.0, 2.0, 3.0, 10.0, 11.0, 12.0, 13.0, 20.0, 21.0, 22.0, 23.0))
+      val values = PrimitiveBuffers.fromArray(Array(0.0, 1.0, 2.0, 3.0, 10.0, 11.0, 12.0, 13.0, 20.0, 21.0, 22.0, 23.0))
       Nifti.writeVec(path, NeuroVec.fromLinear(values, spatial.addDim(3, Some(Axis.Time)), "bold"))
       val runtime = LazyFieldRuntime(summon[SpatialGraph])
       given FieldRuntime = runtime
@@ -110,7 +110,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         case _ => false
       })
 
-      val values = NArrayUtil.fromArray(Array(1.0, 2.0, 3.0, 4.0))
+      val values = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
       Nifti.writeVec(path, NeuroVec.fromLinear(values, spatial.addDim(1, Some(Axis.Time))))
       assertEquals(apiValue(field.value).toRows, Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
       Files.write(path, Array(0.toByte), APPEND)
@@ -140,7 +140,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
       Nifti.writeVec(
         path,
         NeuroVec.fromLinear(
-          NArrayUtil.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
+          PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
           identity.addDim(1, Some(Axis.Time))
         )
       )

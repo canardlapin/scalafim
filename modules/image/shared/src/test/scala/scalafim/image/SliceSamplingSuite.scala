@@ -1,17 +1,20 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+
 import scala.reflect.ClassTag
+import ravel.DType
 
 class SliceSamplingSuite extends munit.FunSuite:
 
   private val Tol = 1e-9
 
-  private def volume[A: ClassTag](
+  private def volume[A: ClassTag: DType](
     dims: SpatialDims,
     affine: Option[DMat] = None,
     label: String = "test"
   )(f: (Int, Int, Int) => A): NeuroVol[A] =
-    val values = NArrayUtil.tabulate[A](dims.product) { index =>
+    val values = PrimitiveBuffers.tabulate[A](dims.product) { index =>
       val x = index % dims.x
       val y = (index / dims.x) % dims.y
       val z = index / (dims.x * dims.y)
@@ -84,7 +87,7 @@ class SliceSamplingSuite extends munit.FunSuite:
       .sample(source, SliceSampling.Nearest(-3.0))
       .toOption
       .get
-    assert(nearest.values.forall(_ == -3.0))
+    assert(Vector.tabulate(nearest.values.size)(nearest.values(_)).forall(_ == -3.0))
 
     val linearGrid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, -0.25))
     val linear = SlicePlan.make(source.volumeSpace, linearGrid)
@@ -225,15 +228,15 @@ class SliceSamplingSuite extends munit.FunSuite:
     val source = volume[Double](dims) { (x, _, _) => x.toDouble }
     val grid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 0.0))
     val fieldGrid = GridSpec.fromVolumeSpace(source.volumeSpace)
-    val field = NDArray(
-      NArrayUtil.tabulate[Double](fieldGrid.nVoxels * 3) { index =>
-        val component = index / fieldGrid.nVoxels
-        val linear = index % fieldGrid.nVoxels
-        val coord = Indexing.indexToGrid3D(fieldGrid.shape, linear)
-        if component == 0 && coord.x >= 2 then 1.0 else 0.0
-      },
-      fieldGrid.dims :+ 3
-    )
+    val field =
+      RavelArray.tabulate[Double](
+        fieldGrid.shape.x,
+        fieldGrid.shape.y,
+        fieldGrid.shape.z,
+        3
+      ) { (x, _, _, component) =>
+        if component == 0 && x >= 2 then 1.0 else 0.0
+      }
     val mapping = DenseFieldMorphism.displacement(
       SpatialDomainId("source"),
       SpatialDomainId("reference"),
@@ -274,31 +277,35 @@ class SliceSamplingSuite extends munit.FunSuite:
       PixelSpacing(0.8, 0.9)
     )
     val fieldGrid = GridSpec.fromVolumeSpace(source.volumeSpace)
-    val displacement = NDArray(
-      NArrayUtil.tabulate[Double](fieldGrid.nVoxels * 3) { index =>
-        val component = index / fieldGrid.nVoxels
-        val linear = index % fieldGrid.nVoxels
-        val coord = Indexing.indexToGrid3D(fieldGrid.shape, linear)
+    val displacement =
+      RavelArray.tabulate[Double](
+        fieldGrid.shape.x,
+        fieldGrid.shape.y,
+        fieldGrid.shape.z,
+        3
+      ) { (x, y, z, component) =>
         component match
-          case 0 => 0.10 * coord.y.toDouble
-          case 1 => -0.05 * coord.x.toDouble
-          case _ => 0.08 * coord.z.toDouble
-      },
-      fieldGrid.dims :+ 3
-    )
-    val absolute = NDArray(
-      NArrayUtil.tabulate[Double](fieldGrid.nVoxels * 3) { index =>
-        val component = index / fieldGrid.nVoxels
-        val linear = index % fieldGrid.nVoxels
-        val coord = Indexing.indexToGrid3D(fieldGrid.shape, linear)
-        val world = fieldGrid.voxelToWorld(VoxelPoint(coord.x.toDouble, coord.y.toDouble, coord.z.toDouble)).toOption.get
+          case 0 => 0.10 * y.toDouble
+          case 1 => -0.05 * x.toDouble
+          case _ => 0.08 * z.toDouble
+      }
+    val absolute =
+      RavelArray.tabulate[Double](
+        fieldGrid.shape.x,
+        fieldGrid.shape.y,
+        fieldGrid.shape.z,
+        3
+      ) { (x, y, z, component) =>
+        val world =
+          fieldGrid
+            .voxelToWorld(VoxelPoint(x.toDouble, y.toDouble, z.toDouble))
+            .toOption
+            .get
         component match
-          case 0 => world.x + 0.10 * coord.y.toDouble
-          case 1 => world.y - 0.05 * coord.x.toDouble
-          case _ => world.z + 0.08 * coord.z.toDouble
-      },
-      fieldGrid.dims :+ 3
-    )
+          case 0 => world.x + 0.10 * y.toDouble
+          case 1 => world.y - 0.05 * x.toDouble
+          case _ => world.z + 0.08 * z.toDouble
+      }
     val domain = SpatialDomainId("source")
     val reference = SpatialDomainId("reference")
     val mappings = Vector(

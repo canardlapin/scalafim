@@ -39,7 +39,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
   private val pair = SurfaceGeometryPair(white, pial)
   private val volumeSpace = NeuroSpace(Vector(5, 5, 5))
   private val volume = NeuroVol.fromLinear(
-    NArrayUtil.tabulate[Double](125): index =>
+    PrimitiveBuffers.tabulate[Double](125): index =>
       val grid = volumeSpace.indexToGrid3D(index)
       grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
     volumeSpace,
@@ -75,7 +75,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
 
   test("projection quality and fill policy preserve rejected samples explicitly"):
     val emptyMask = NeuroVol.fromLinear(
-      NArrayUtil.fillConst[Boolean](125, false),
+      PrimitiveBuffers.fillConst[Boolean](125, false),
       volumeSpace,
       "empty"
     )

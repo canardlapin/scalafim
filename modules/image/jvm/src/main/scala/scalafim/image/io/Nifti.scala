@@ -1,7 +1,6 @@
 package scalafim.image.io
 
 import scalafim.image.*
-import narr.NArray
 
 import java.io.{BufferedInputStream, FileInputStream, InputStream}
 import java.nio.charset.StandardCharsets
@@ -39,10 +38,24 @@ final case class NiftiHeader(
 object Nifti:
 
   def writeVol(path: Path, volume: NeuroVol[Double]): Path =
-    writeBytes(path, niftiBytes(volume.space.dims.take(3), volume.space, volume.values.data))
+    writeBytes(
+      path,
+      niftiBytes(
+        volume.space.dims.take(3),
+        volume.space,
+        volume.copyLegacyLinear
+      )
+    )
 
   def writeVec(path: Path, vec: NeuroVec[Double]): Path =
-    writeBytes(path, niftiBytes(vec.space.dims.take(4), vec.space, vec.values.data))
+    writeBytes(
+      path,
+      niftiBytes(
+        vec.space.dims.take(4),
+        vec.space,
+        vec.copyLegacyLinear
+      )
+    )
 
   def readHeader(path: Path): NiftiHeader =
     val in = open(path)
@@ -185,7 +198,7 @@ object Nifti:
       )
     )
 
-  private def niftiBytes(dims: Vector[Int], space: NeuroSpace, values: narr.NArray[Double]): Array[Byte] =
+  private def niftiBytes(dims: Vector[Int], space: NeuroSpace, values: Array[Double]): Array[Byte] =
     require(dims.length == 3 || dims.length == 4, "NIfTI writer expects a 3D volume or 4D vector")
     require(values.length == dims.product, "NIfTI data length must match dimensions")
     val bytes = Array.ofDim[Byte](352 + values.length * 8)
@@ -236,7 +249,7 @@ object Nifti:
       i += 1
     bytes
 
-  private def readDataAsDouble(path: Path, hdr: NiftiHeader): NArray[Double] =
+  private def readDataAsDouble(path: Path, hdr: NiftiHeader): Array[Double] =
     val in = open(path)
     try
       val skipped = in.skip(hdr.voxOffset.toLong)
@@ -244,7 +257,7 @@ object Nifti:
         throw new IllegalArgumentException("unable to seek to vox_offset")
 
       val nels = hdr.dims.product
-      val out = NArray.ofSize[Double](nels)
+      val out = Array.ofDim[Double](nels)
 
       val bytesPer = hdr.bitpix / 8
       val buf = Array.ofDim[Byte](bytesPer)

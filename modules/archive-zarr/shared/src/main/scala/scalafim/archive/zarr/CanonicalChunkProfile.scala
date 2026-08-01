@@ -1,6 +1,6 @@
 package scalafim.archive.zarr
 
-import scalafim.zarr.*
+import zarr4s.*
 
 /** A measured physical layout for canonical `[t,z,y,x]` BOLD.
   *

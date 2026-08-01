@@ -34,7 +34,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
       volumeRef,
       RegionIndex(metadata),
       NeuroVol.fromLinear(
-        NArrayUtil.fromArray(Array(1, 1, 2, 2)),
+        PrimitiveBuffers.fromArray(Array(1, 1, 2, 2)),
         space
       )
     )
@@ -46,8 +46,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val parcelOne = quotient.parcelPoint(RegionId(1)).get
 
     assertEquals(quotient.displayOrder.ordinals.toVector, Vector(0, 1))
-    assertEquals(quotient.metadata(parcelTwo).label, "Second")
-    assertEquals(quotient.metadata(parcelOne).label, "First")
+    assertEquals(quotient.metadata.at(parcelTwo).label, "Second")
+    assertEquals(quotient.metadata.at(parcelOne).label, "First")
     assertEquals(
       quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1)
@@ -70,7 +70,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     Vector(RegionId(1), RegionId(2)).foreach: id =>
       val left = original.quotient.region(id).get
       val right = renamed.quotient.region(id).get
-      assert(left.space.sameIdentityAs(right.space))
+      assert(left.space.samePersistentIdentityAs(right.space))
       assertEquals(
         left.ordinalsInDomainOrder.toVector,
         right.ordinalsInDomainOrder.toVector
@@ -160,7 +160,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     )
     assertEquals(
       quotient
-        .metadata(quotient.parcelPoint(RegionId(2)).get)
+        .metadata
+        .at(quotient.parcelPoint(RegionId(2)).get)
         .hemisphere,
       Some(Hemisphere.Right)
     )
@@ -193,7 +194,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val atlas = volumeAtlas()
     val data =
       NeuroVol.fromLinear(
-        NArrayUtil.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
+        PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
         atlas.space
       )
     val means = atlas.reduce(data, Reducers.mean)

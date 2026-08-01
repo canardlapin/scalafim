@@ -23,6 +23,9 @@ object NodeId:
   extension (id: NodeId)
     inline def value: String = id
 
+  given cats.Hash[NodeId] =
+    cats.Hash.by(_.value)
+
 opaque type SystemId = String
 
 object SystemId:

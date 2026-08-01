@@ -13,7 +13,7 @@ import scalafim.archive.{
   ReadObservation,
   SelectionAxes
 }
-import scalafim.zarr.{
+import zarr4s.{
   ArraySelection,
   AsyncMemoryStore,
   AsyncObjectReader,

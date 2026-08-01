@@ -2,7 +2,7 @@ package scalafim.response
 
 import cats.{Applicative, Monad}
 import cats.data.EitherT
-import narr.NArray
+import ravel.{Array1, NDArray, Shape}
 
 final case class ReadPlanSummary(
     source: SourceId,
@@ -115,7 +115,7 @@ object ReadResult:
 final class InMemoryResponseSource[F[_]] private (
     val sourceId: SourceId,
     val schema: ResponseSchema,
-    private val ownedFullRowMajor: NArray[Double],
+    private val ownedFullRowMajor: Array1[Double],
     val consistency: DecodeConsistency,
     val provenance: Provenance
 )(using Applicative[F]) extends ResponseSource[F]:
@@ -154,17 +154,13 @@ final class InMemoryResponseSource[F[_]] private (
       plan: DenseReadPlan
   ): EitherT[F, ReadError, ReadResult] =
     val selection = plan.selection
-    val values = NArray.ofSize[Double](selection.rows * selection.columns)
-    var outputRow = 0
-    while outputRow < selection.rows do
-      val sourceRow = selection.timepoints(outputRow).value
-      var outputColumn = 0
-      while outputColumn < selection.columns do
+    val values =
+      NDArray.tabulate[Double](selection.rows * selection.columns): outputIndex =>
+        val outputRow = outputIndex / selection.columns
+        val outputColumn = outputIndex % selection.columns
+        val sourceRow = selection.timepoints(outputRow).value
         val sourceColumn = selection.samples(outputColumn).value
-        values(outputRow * selection.columns + outputColumn) =
-          ownedFullRowMajor(sourceRow * schema.samples.count + sourceColumn)
-        outputColumn += 1
-      outputRow += 1
+        ownedFullRowMajor(sourceRow * schema.samples.count + sourceColumn)
 
     val result =
       for
@@ -186,7 +182,7 @@ object InMemoryResponseSource:
   def copyFromRowMajor[F[_]: Applicative](
       sourceId: SourceId,
       schema: ResponseSchema,
-      values: NArray[Double],
+      values: Array[Double],
       consistency: DecodeConsistency = DecodeConsistency.ExactBits,
       provenanceNode: Option[ProvenanceId] = None
   ): Either[ResponseShapeError, InMemoryResponseSource[F]] =
@@ -196,20 +192,48 @@ object InMemoryResponseSource:
     else if values.length != expected.toInt then
       Left(ResponseShapeError.ValueCountMismatch(expected.toInt, values.length))
     else
-      val copied = NArray.ofSize[Double](values.length)
       var index = 0
       while index < values.length do
         val value = values(index)
         if schema.signal.nonFinite == NonFinitePolicy.Reject && !value.isFinite then
           return Left(ResponseShapeError.NonFiniteValue(index, value))
-        copied(index) = value
         index += 1
       val node = provenanceNode.getOrElse(ProvenanceId.unsafe(s"${sourceId.value}:root"))
       Right(
         new InMemoryResponseSource(
           sourceId,
           schema,
-          copied,
+          NDArray.fromSeq(Shape(values.length), values),
+          consistency,
+          Provenance.source(node, sourceId)
+        )
+      )
+
+  def copyFromRowMajor[F[_]: Applicative](
+      sourceId: SourceId,
+      schema: ResponseSchema,
+      values: Array1[Double],
+      consistency: DecodeConsistency,
+      provenanceNode: Option[ProvenanceId]
+  ): Either[ResponseShapeError, InMemoryResponseSource[F]] =
+    val expected = schema.time.count.toLong * schema.samples.count.toLong
+    if expected > Int.MaxValue.toLong then
+      Left(ResponseShapeError.ValueCountOverflow(schema.time.count, schema.samples.count))
+    else if values.size != expected.toInt then
+      Left(ResponseShapeError.ValueCountMismatch(expected.toInt, values.size))
+    else
+      var index = 0
+      while index < values.size do
+        val value = values(index)
+        if schema.signal.nonFinite == NonFinitePolicy.Reject && !value.isFinite then
+          return Left(ResponseShapeError.NonFiniteValue(index, value))
+        index += 1
+      val node = provenanceNode.getOrElse(ProvenanceId.unsafe(s"${sourceId.value}:root"))
+      Right(
+        new InMemoryResponseSource(
+          sourceId,
+          schema,
+          values,
           consistency,
           Provenance.source(node, sourceId)
         )

@@ -40,16 +40,17 @@ object BoundingBox:
       i += 1
     Right(BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax))
 
-final class ThresholdRegion private (
+sealed abstract class ThresholdRegion private (
     val id: Int,
-    val membership: LocusRegion[ThresholdActiveVoxel],
     val bbox: BoundingBox,
     val priorMass: Double
 ):
-  require(!membership.isEmpty, "region must be non-empty")
+  type ActiveVoxel
+  val membership: LocusRegion[ActiveVoxel]
+
   require(priorMass.isFinite && priorMass >= 0.0, "prior mass must be finite and non-negative")
 
-  private[threshold] val indexArray: Array[Int] =
+  private[threshold] lazy val indexArray: Array[Int] =
     membership.ordinalsInDomainOrder
 
   def size: Int = membership.cardinality
@@ -90,10 +91,13 @@ object ThresholdRegion:
       bbox <- BoundingBox.fromIndices(membership.ordinalsInDomainOrder, field)
     yield unsafe(id, membership, bbox, mass)
 
-  private[threshold] def unsafe(
-    id: Int,
-    membership: LocusRegion[ThresholdActiveVoxel],
-    bbox: BoundingBox,
-    priorMass: Double
+  private[threshold] def unsafe[A](
+      id: Int,
+      requestedMembership: LocusRegion[A],
+      bbox: BoundingBox,
+      priorMass: Double
   ): ThresholdRegion =
-    new ThresholdRegion(id, membership, bbox, priorMass)
+    require(!requestedMembership.isEmpty, "region must be non-empty")
+    new ThresholdRegion(id, bbox, priorMass):
+      type ActiveVoxel = A
+      val membership: LocusRegion[A] = requestedMembership

@@ -1,5 +1,7 @@
 package scalafim.image
 
+import scala.annotation.targetName
+
 enum ClusterIdError:
   case NonPositive(value: Int)
 
@@ -107,6 +109,7 @@ object SearchlightCenter:
       .map(SearchlightError.InvalidCenter.apply)
       .map(index => new SearchlightCenter(space, voxel, index))
 
+  @targetName("makeFromNeuroSpace")
   def make(
       space: NeuroSpace,
       voxel: VoxelCoord

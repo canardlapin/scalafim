@@ -1,6 +1,7 @@
 package scalafim.image
 
 import scala.reflect.ClassTag
+import ravel.DType
 import scala.util.Random
 
 class SliceOrientationOracleSuite extends munit.FunSuite:
@@ -106,11 +107,11 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   private def dot(left: Vector[Double], right: Vector[Double]): Double =
     left(0) * right(0) + left(1) * right(1) + left(2) * right(2)
 
-  private def volume[A: ClassTag](
+  private def volume[A: ClassTag: DType](
     dims: SpatialDims,
     affine: DMat
   )(value: (Int, Int, Int) => A): NeuroVol[A] =
-    val values = NArrayUtil.tabulate[A](dims.product) { index =>
+    val values = PrimitiveBuffers.tabulate[A](dims.product) { index =>
       val x = index % dims.x
       val y = (index / dims.x) % dims.y
       val z = index / (dims.x * dims.y)

@@ -2,7 +2,6 @@ package scalafim.registration
 
 import gale.linalg.{DVec, DoubleLinearOperator, MutableDVec, MutableVec}
 import gale.solvers.{IterativeSolvers, Preconditioner, SolverConfig, ToleranceMode}
-import narr.NArray
 import scalafim.image.*
 
 opaque type SmoothLengthMm = Double
@@ -79,8 +78,8 @@ final case class SobolevResult[A](
 
 final class SobolevBuffer[A] private (
     val frame: Frame[A],
-    private[registration] val values: NArray[Double],
-    private[registration] val valid: NArray[Boolean],
+    private[registration] val values: Array[Double],
+    private[registration] val valid: Array[Boolean],
     val ownedVelocityBuffers: Int,
     val ownedValidityBuffers: Int
 )
@@ -89,8 +88,8 @@ object SobolevBuffer:
   def apply[A](frame: Frame[A]): SobolevBuffer[A] =
     new SobolevBuffer(
       frame,
-      NArrayUtil.ofSize[Double](frame.grid.nVoxels * 3),
-      NArrayUtil.ofSize[Boolean](frame.grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels * 3),
+      PrimitiveBuffers.ofSize[Boolean](frame.grid.nVoxels),
       ownedVelocityBuffers = 1,
       ownedValidityBuffers = 1
     )
@@ -107,7 +106,7 @@ object SobolevBuffer:
 final class SobolevWorkspace[A] private (
     val frame: Frame[A],
     private[registration] val rhs: MutableDVec,
-    private[registration] val inverseDiagonal: NArray[Double],
+    private[registration] val inverseDiagonal: Array[Double],
     private[registration] val inverseAffine: DMat,
     val ownedOperatorScalarBuffers: Int
 ):
@@ -115,11 +114,11 @@ final class SobolevWorkspace[A] private (
 
 object SobolevWorkspace:
   def apply[A](frame: Frame[A]): SobolevWorkspace[A] =
-    make(frame, NArrayUtil.ofSize[Double](frame.grid.nVoxels), ownedOperatorScalarBuffers = 1)
+    make(frame, PrimitiveBuffers.ofSize[Double](frame.grid.nVoxels), ownedOperatorScalarBuffers = 1)
 
   private def make[A](
       frame: Frame[A],
-      inverseDiagonal: NArray[Double],
+      inverseDiagonal: Array[Double],
       ownedOperatorScalarBuffers: Int
   ): SobolevWorkspace[A] =
     val inverse = DMat.invert(frame.grid.affine).fold(
@@ -137,7 +136,7 @@ object SobolevWorkspace:
 
 private[registration] final class MaskedHelmholtzOperator(
     val grid: GridSpec,
-    val active: NArray[Boolean],
+    val active: Array[Boolean],
     val lengthMm: Double
 ) extends DoubleLinearOperator:
   private val nx = grid.shape.x
@@ -175,7 +174,7 @@ private[registration] final class MaskedHelmholtzOperator(
         y += 1
       z += 1
 
-  def prepareInverseDiagonal(destination: NArray[Double]): Unit =
+  def prepareInverseDiagonal(destination: Array[Double]): Unit =
     require(destination.length == rows, "Helmholtz diagonal length mismatch")
     var z = 0
     while z < nz do
@@ -260,13 +259,12 @@ object SobolevShaper:
             into(index) = workspace.inverseDiagonal(index) * residual(index)
             index += 1
       val solverConfig = SolverConfig(config.relativeTolerance, config.maximumIterations)
-      val rawValues = raw.field.values.data
       var totalIterations = 0
       var maximumRelativeResidual = 0.0
       var component = 0
       var failure: Option[RegistrationError] = None
       while component < 3 && failure.isEmpty do
-        loadComponent(rawValues, component * n, destination.valid, workspace.rhs)
+        loadComponent(raw.field, component, destination.valid, workspace.rhs)
         var pass = 0
         var currentRhs = workspace.rhs.toVec
         var solution = currentRhs
@@ -308,15 +306,16 @@ object SobolevShaper:
           if strainScale < 1.0 then scaleActive(destination.values, destination.valid, strainScale, n)
           val afterNorm = maximumNorm(destination.values, destination.valid, n)
           val afterStrain = maximumGradient(destination.values, destination.valid, grid, workspace.inverseAffine)
-          val field = DenseVectorField(
-            grid,
-            NDArray(destination.values, grid.dims :+ 3),
-            DenseVectorFieldKind.Displacement
-          )
+          val field =
+            DenseVectorField.fromLegacyPlanar(
+              grid,
+              destination.values,
+              DenseVectorFieldKind.Displacement
+            )
           Velocity.make(raw.frame, field).map: velocity =>
             SobolevResult(
               velocity,
-              FieldValidity.Mask(destination.valid),
+              FieldValidity.copyMask(destination.valid),
               SobolevDiagnostics(
                 config.power,
                 config.power * 3,
@@ -333,23 +332,25 @@ object SobolevShaper:
             )
 
   private def loadComponent(
-      source: NArray[Double],
-      offset: Int,
-      valid: NArray[Boolean],
+      source: DenseVectorField,
+      component: Int,
+      valid: Array[Boolean],
       destination: MutableDVec
   ): Unit =
     var index = 0
     while index < valid.length do
-      destination(index) = if valid(index) then source(offset + index) else 0.0
+      destination(index) =
+        if valid(index) then source.linearComponent(index, component)
+        else 0.0
       index += 1
 
-  private def copySolution(source: DVec, offset: Int, destination: NArray[Double]): Unit =
+  private def copySolution(source: DVec, offset: Int, destination: Array[Double]): Unit =
     var index = 0
     while index < source.length do
       destination(offset + index) = source(index)
       index += 1
 
-  private def scaleActive(values: NArray[Double], valid: NArray[Boolean], scale: Double, n: Int): Unit =
+  private def scaleActive(values: Array[Double], valid: Array[Boolean], scale: Double, n: Int): Unit =
     var index = 0
     while index < n do
       if valid(index) then
@@ -362,7 +363,7 @@ object SobolevShaper:
         values(index + 2 * n) = 0.0
       index += 1
 
-  private def maximumNorm(values: NArray[Double], valid: NArray[Boolean], n: Int): Double =
+  private def maximumNorm(values: Array[Double], valid: Array[Boolean], n: Int): Double =
     var maximum = 0.0
     var index = 0
     while index < n do
@@ -375,8 +376,8 @@ object SobolevShaper:
     maximum
 
   private def maximumGradient(
-      values: NArray[Double],
-      valid: NArray[Boolean],
+      values: Array[Double],
+      valid: Array[Boolean],
       grid: GridSpec,
       inverse: DMat
   ): Double =
@@ -419,7 +420,7 @@ object SobolevShaper:
   private def validitySizeMatches(validity: FieldValidity, n: Int): Boolean =
     validity match
       case FieldValidity.All => true
-      case FieldValidity.Mask(values) => values.length == n
+      case FieldValidity.Mask(values) => values.size == n
 
   private def validityAt(validity: FieldValidity, index: Int): Boolean =
     validity match

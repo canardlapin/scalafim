@@ -3,9 +3,8 @@ package scalafim.dataset
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
-import narr.NArray
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NArrayUtil, NeuroSpace}
+import scalafim.image.{DMat, PrimitiveBuffers, NeuroSpace}
 import scalafim.response.*
 import scalafim.response.laws.ResponseLawChecks
 
@@ -194,7 +193,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("mismatch-source"),
           wrongSchema,
-          NArrayUtil.tabulate[Double](wrongTime.count * wrongSamples.count)(_.toDouble)
+          PrimitiveBuffers.tabulate[Double](wrongTime.count * wrongSamples.count)(_.toDouble)
         )
         .fold(error => fail(error.message), identity)
 
@@ -247,7 +246,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
         .make(expected.id, expected.time, actualSamples, expected.signal)
         .fold(error => fail(error.message), identity)
     val sourceValues =
-      NArray(
+      Array(
         1.0, 2.0, 0.0,
         11.0, 12.0, 10.0,
         21.0, 22.0, 20.0,
@@ -361,7 +360,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("surface-source"),
           actualSchema,
-          NArrayUtil.tabulate[Double](actualSchema.time.count * actualSchema.samples.count)(_.toDouble)
+          PrimitiveBuffers.tabulate[Double](actualSchema.time.count * actualSchema.samples.count)(_.toDouble)
         )
         .fold(error => fail(error.message), identity)
 
@@ -429,7 +428,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
       .copyFromRowMajor[IO](
         SourceId.unsafe(s"opened-source-$suffix"),
         schema,
-        NArray(
+        Array(
           0.0, 1.0, 2.0,
           10.0, 11.0, 12.0,
           20.0, 21.0, 22.0,

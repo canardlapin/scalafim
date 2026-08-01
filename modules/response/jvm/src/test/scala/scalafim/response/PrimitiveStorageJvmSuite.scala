@@ -1,9 +1,8 @@
 package scalafim.response
 
-import narr.NArray
 
 class PrimitiveStorageJvmSuite extends munit.FunSuite:
-  test("axis and response storage use JVM primitive arrays"):
+  test("axis storage uses a whole canonical Ravel primitive array"):
     val indices =
       OrderedIndices
         .fromInts(
@@ -14,8 +13,9 @@ class PrimitiveStorageJvmSuite extends munit.FunSuite:
         .toOption
         .get
 
-    assertEquals(indices.primitiveValues.getClass.getName, "[I")
-    assertEquals(NArray[Double](1.0).getClass.getName, "[D")
+    assertEquals(indices.primitiveValues.dtype.name, "Int")
+    assert(indices.primitiveValues.isCanonicalLayout)
+    assert(indices.primitiveValues.isWholeBuffer)
 
   test("JVM exact-bit comparison preserves distinct NaN payloads"):
     val first = java.lang.Double.longBitsToDouble(0x7ff8000000000001L)

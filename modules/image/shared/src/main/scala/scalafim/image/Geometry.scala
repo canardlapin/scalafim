@@ -5,6 +5,7 @@ import scala.annotation.targetName
 enum GeometryError:
   case Expected3D(label: String, actual: Int)
   case NonPositiveDimension(axis: SpatialAxis, value: Int)
+  case InvalidGridGeometry(reason: String)
   case InvalidSpatialAxis(value: Int)
   case NonFiniteCoordinate(label: String, axis: SpatialAxis, value: Double)
   case VoxelOutOfBounds(coord: VoxelCoord, dims: SpatialDims)
@@ -16,6 +17,8 @@ enum GeometryError:
         s"$label must contain exactly 3 values; got $actual"
       case NonPositiveDimension(axis, value) =>
         s"${axis.label} dimension must be positive; got $value"
+      case InvalidGridGeometry(reason) =>
+        s"invalid grid geometry: $reason"
       case InvalidSpatialAxis(value) =>
         s"spatial axis must be 0, 1, or 2; got $value"
       case NonFiniteCoordinate(label, axis, value) =>

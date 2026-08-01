@@ -1,6 +1,6 @@
 package scalafim.archive.zarr
 
-import scalafim.zarr.{AsyncCodecRuntime, JvmAsyncCodecRuntime}
+import zarr4s.{AsyncCodecRuntime, JvmAsyncCodecRuntime}
 
 import scala.concurrent.ExecutionContext
 

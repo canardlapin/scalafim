@@ -2,7 +2,7 @@ package scalafim.archive.zarr
 
 import java.nio.file.Files
 import scala.jdk.CollectionConverters.*
-import scalafim.zarr.*
+import zarr4s.*
 
 class JvmPublicationSuite extends munit.FunSuite:
   private def value[A](result: Either[NeuroArchiveZarrError, A]): A = result match

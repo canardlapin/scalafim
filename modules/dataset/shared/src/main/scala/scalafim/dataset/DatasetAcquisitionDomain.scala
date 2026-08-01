@@ -1,13 +1,17 @@
 package scalafim.dataset
 
 import scalafim.locus.{
+  DomainFactory,
+  FiniteDomain,
   FiniteSpace,
   Injection,
   Point,
   Selection,
   SpaceKey,
   SpaceMismatch,
-  TotalMap
+  TotalMap,
+  mapping,
+  mismatch
 }
 
 enum DatasetIdentityBasis:
@@ -24,7 +28,7 @@ trait DatasetAcquisitionDomain:
   val identityBasis: DatasetIdentityBasis
   val timeSpace: FiniteSpace[T]
   val fullVoxelSpace: FiniteSpace[X]
-  val activeVoxelSpace: FiniteSpace[A]
+  val activeVoxelSpace: FiniteDomain[A]
   val activeToFull: Injection[A, X]
 
   def activePointFor(
@@ -34,7 +38,7 @@ trait DatasetAcquisitionDomain:
   final def fullPointFor(
       active: Point[A]
   ): Point[X] =
-    activeToFull.mapping(active)
+    activeToFull.mapping.at(active)
 
   final def resolveTimepoints(
       requested: TimepointSelection
@@ -76,26 +80,16 @@ trait DatasetAcquisitionDomain:
       timepoints: Selection[T],
       voxels: Selection[X]
   ): Either[DatasetError, ResolvedDataSelection] =
-    if !timeSpace.sameIdentityAs(timepoints.space) then
+    if !timeSpace.sameRuntimeOwnerAs(timepoints.space) then
       Left(
         DatasetError.ShapeMismatch(
-          SpaceMismatch(
-            timeSpace.key,
-            timeSpace.size,
-            timepoints.space.key,
-            timepoints.space.size
-          ).message
+          mismatch(timeSpace, timepoints.space).message
         )
       )
-    else if !fullVoxelSpace.sameIdentityAs(voxels.space) then
+    else if !fullVoxelSpace.sameRuntimeOwnerAs(voxels.space) then
       Left(
         DatasetError.ShapeMismatch(
-          SpaceMismatch(
-            fullVoxelSpace.key,
-            fullVoxelSpace.size,
-            voxels.space.key,
-            voxels.space.size
-          ).message
+          mismatch(fullVoxelSpace, voxels.space).message
         )
       )
     else
@@ -142,36 +136,29 @@ object DatasetAcquisitionDomain:
         )
       )
     else
-      final class Timepoint
-      final class FullVoxel
-      final class ActiveVoxel
-
-      val times =
-        FiniteSpace
-          .make[Timepoint](
-            SpaceKey.unsafe(s"${key.value}:time"),
-            requestedShape.timepoints
-          )
-          .toOption
-          .get
-      val full =
-        FiniteSpace
-          .make[FullVoxel](
-            SpaceKey.unsafe(s"${key.value}:voxels"),
-            requestedShape.spatialSize
-          )
-          .toOption
-          .get
-      val active =
-        FiniteSpace
-          .make[ActiveVoxel](
-            SpaceKey.unsafe(
-              s"${key.value}:active:${requestedVoxelDomain.indices.mkString(",")}"
-            ),
-            requestedVoxelDomain.nVoxels
-          )
-          .toOption
-          .get
+      val timeResolution =
+        DomainFactory.unsafeRestore(
+          // The base key carries the spatial identity only, so the timepoint
+          // count has to appear here: two acquisitions over the same grid but
+          // different run lengths are different time domains, and a key that
+          // did not say so named two sizes at once.
+          SpaceKey.unsafe(s"${key.value}:time:${requestedShape.timepoints}"),
+          requestedShape.timepoints
+        )
+      val fullResolution =
+        DomainFactory.unsafeRestore(
+          SpaceKey.unsafe(s"${key.value}:voxels"),
+          requestedShape.spatialSize
+        )
+      // The time and full-voxel domains are structural and keyed, so they
+      // canonicalize. The active domain is a *selection* over the full grid —
+      // derived, meaningful only through `injection` below — so it is ephemeral
+      // rather than keyed by its own index list.
+      val activeDomain =
+        DomainFactory.unsafeEphemeral("dataset-active", requestedVoxelDomain.nVoxels)
+      val times = timeResolution.space
+      val full = fullResolution.space
+      val active = activeDomain.value
       val mapping =
         TotalMap
           .fromTargetOrdinals(
@@ -191,25 +178,25 @@ object DatasetAcquisitionDomain:
 
       Right:
         new DatasetAcquisitionDomain:
-          type T = Timepoint
-          type X = FullVoxel
-          type A = ActiveVoxel
+          type T = timeResolution.S
+          type X = fullResolution.S
+          type A = activeDomain.S
           val shape: DatasetShape = requestedShape
           val voxelDomain: VoxelDomain = requestedVoxelDomain
           val identityBasis: DatasetIdentityBasis = basis
-          val timeSpace: FiniteSpace[Timepoint] = times
-          val fullVoxelSpace: FiniteSpace[FullVoxel] = full
-          val activeVoxelSpace: FiniteSpace[ActiveVoxel] = active
-          val activeToFull: Injection[ActiveVoxel, FullVoxel] = injection
+          val timeSpace: FiniteSpace[T] = times
+          val fullVoxelSpace: FiniteSpace[X] = full
+          val activeVoxelSpace: FiniteDomain[A] = active
+          val activeToFull: Injection[A, X] = injection
 
           def activePointFor(
-              fullPoint: Point[FullVoxel]
-          ): Either[DatasetError, Point[ActiveVoxel]] =
-            val activeOrdinal = reverse(fullPoint.ordinal)
+              fullPoint: Point[X]
+          ): Either[DatasetError, Point[A]] =
+            val activeOrdinal = reverse(fullPoint.value)
             if activeOrdinal < 0 then
-              Left(DatasetError.VoxelOutsideMask(fullPoint.ordinal))
+              Left(DatasetError.VoxelOutsideMask(fullPoint.value))
             else
-              Right(active.point(activeOrdinal).get)
+              Right(active.pointOption(activeOrdinal).get)
 
 trait ResolvedLocusSelection:
   type T

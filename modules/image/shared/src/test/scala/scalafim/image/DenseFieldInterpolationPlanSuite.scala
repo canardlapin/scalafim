@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+
 class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
 
   private def assertClose(actual: Double, expected: Double, tol: Double = 1e-10): Unit =
@@ -12,15 +15,15 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
   private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
     assertClose(actual.toVector, expected.toVector, tol)
 
-  private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
-    val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
-        val component = i / grid.nVoxels
-        val lin = i % grid.nVoxels
-        val coord = Indexing.indexToGrid3D(grid.shape, lin)
-        f(coord, component)
-      }
-    NDArray(data, grid.dims :+ 3)
+  private def denseField(
+      grid: GridSpec
+  )(f: (VoxelCoord, Int) => Double): RavelArray[Double, Rank[4]] =
+    RavelArray.tabulate[Double](
+      grid.shape.x,
+      grid.shape.y,
+      grid.shape.z,
+      3
+    )((i, j, k, component) => f(VoxelCoord(i, j, k), component))
 
   test("linear plans reuse interpolation weights across compatible dense fields") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
@@ -128,12 +131,13 @@ class DenseFieldInterpolationPlanSuite extends munit.FunSuite:
     val plan =
       DenseFieldInterpolationPlan.fromWorldPoints(grid, Vector(point), Resample.Method.Nearest)
         .fold(err => fail(err.message), identity)
-    val wrongShape = NDArray(NArrayUtil.fillConst[Double](6, 0.0), Vector(2, 3))
+    val wrongShape =
+      RavelArray.zeros[Double](2, 1, 1, 2)
     val wrong = plan.sample(wrongShape, DenseFieldOutside.Zero)
     wrong match
       case Left(MorphismError.DenseFieldShapeMismatch(expected, actual)) =>
         assertEquals(expected, Vector(2, 1, 1, 3), clue = "")
-        assertEquals(actual, Vector(2, 3), clue = "")
+        assertEquals(actual, Vector(2, 1, 1, 2), clue = "")
       case other => fail(s"expected dense field shape error, got $other")
   }
 

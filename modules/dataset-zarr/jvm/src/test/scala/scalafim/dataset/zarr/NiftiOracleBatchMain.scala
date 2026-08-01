@@ -3,7 +3,7 @@ package scalafim.dataset.zarr
 import java.nio.file.Files
 import java.nio.file.Path
 import scalafim.archive.zarr.*
-import scalafim.zarr.*
+import zarr4s.*
 
 object NiftiOracleBatchMain:
   private val scalarNames = Vector("uint8", "int16", "int32", "float32", "float64")

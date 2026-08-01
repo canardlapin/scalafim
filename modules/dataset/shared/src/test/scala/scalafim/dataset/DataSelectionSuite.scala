@@ -1,6 +1,5 @@
 package scalafim.dataset
 
-import narr.NArray
 import scalafim.image.{DMat, Mask, NeuroSpace, VoxelCoord}
 
 class DataSelectionSuite extends munit.FunSuite:
@@ -17,7 +16,7 @@ class DataSelectionSuite extends munit.FunSuite:
       )
     val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), timepoints = 3)
     val maskSpace = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val mask = Mask.fromIndices(maskSpace, NArray[Int](0, 1))
+    val mask = Mask.fromIndices(maskSpace, Array[Int](0, 1))
 
     assert(VoxelDomain.fromMask(mask, shape).isLeft)
   }
@@ -36,7 +35,7 @@ class DataSelectionSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
     assertEquals(ordered.voxels, Vector(3, 0))
 
-    val mask = Mask.fromIndices(shape.space, NArray[Int](0, 3))
+    val mask = Mask.fromIndices(shape.space, Array[Int](0, 3))
     val active =
       VoxelDomain.fromMask(mask, shape).fold(error => fail(error.message), identity)
     assert(DataSelection(voxels = VoxelSelection.coords(VoxelCoord(1, 0, 0)))

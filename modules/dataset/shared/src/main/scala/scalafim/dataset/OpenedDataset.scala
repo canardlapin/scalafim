@@ -2,7 +2,6 @@ package scalafim.dataset
 
 import cats.Monad
 import cats.data.{EitherT, NonEmptyChain, NonEmptyVector, Validated, ValidatedNec}
-import narr.NArray
 import scalafim.response.{
   CalibrationState,
   DomainReference,
@@ -412,7 +411,7 @@ final class DatasetReadResult private (
     else
       val totalRows = totalRowsLong.toInt
       val columns = expectedVoxels.length
-      val copied = NArray.ofSize[Double](totalValuesLong.toInt)
+      val copied = Array.ofDim[Double](totalValuesLong.toInt)
       val timepoints = Vector.newBuilder[TimepointIndex]
       timepoints.sizeHint(totalRows)
       var outputRow = 0

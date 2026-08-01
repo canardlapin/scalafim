@@ -50,7 +50,7 @@ object LocusFeatureSetPlans:
   ): Either[MvpaError, FeatureSetPlan] =
     build(parcellation.parcels.points): parcel =>
       fromRegion(
-        RoiId(parcel.ordinal),
+        RoiId(parcel.value),
         parcellation.fiber(parcel),
         label(parcel)
       )
@@ -59,14 +59,17 @@ object LocusFeatureSetPlans:
   def fromSearchlight[S](
       name: String,
       centered: CenteredSearchlight[S],
-      label: Point[S] => Option[String] = (point: Point[S]) => Some(point.ordinal.toString)
+      label: Point[S] => Option[String] = (point: Point[S]) => Some(point.value.toString)
   ): Either[MvpaError, FeatureSetPlan] =
     val searchlight = centered.searchlight
     build(searchlight.centers.pointsInDomainOrder): center =>
       FeatureSet(
-        RoiId(center.ordinal),
-        searchlight.neighborhoods.row(center).ordinalsInDomainOrder.toVector,
-        center = Some(center.ordinal),
+        RoiId(center.value),
+        searchlight.neighborhoods
+          .row(center)
+          .ordinalsInDomainOrder
+          .toVector,
+        center = Some(center.value),
         label = label(center)
       )
     .flatMap(FeatureSetPlan.searchlight(name, _))

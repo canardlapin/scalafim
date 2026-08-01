@@ -4,7 +4,6 @@ import cats.arrow.FunctionK
 import cats.data.EitherT
 import cats.effect.{Deferred, IO, Ref, Resource}
 import cats.effect.unsafe.implicits.global
-import narr.NArray
 import scalafim.archive.{
   ArchiveDriver,
   ArchiveError,
@@ -581,7 +580,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
       .copyFromRowMajor[IO](
         SourceId.unsafe("runtime-source"),
         schema,
-        NArray[Double](1.0)
+        Array[Double](1.0)
       )
       .fold(error => fail(error.message), identity)
 
@@ -624,7 +623,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
       .copyFromRowMajor[IO](
         SourceId.unsafe("runtime-dataset-source"),
         schema,
-        NArray[Double](42.0)
+        Array[Double](42.0)
       )
       .fold(error => fail(error.message), identity)
 

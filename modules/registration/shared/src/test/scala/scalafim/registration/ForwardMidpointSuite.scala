@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 class ForwardMidpointSuite extends munit.FunSuite:
@@ -18,8 +17,8 @@ class ForwardMidpointSuite extends munit.FunSuite:
     val step = HalfStep.make(plus, minus).fold(error => fail(error.message), identity)
     val next = state.advance(step).fold(error => fail(error.message), identity)
     val center = at(frames.work.grid, 3, 3, 3)
-    assertEqualsDouble(next.fixed.residual.sourceCoordinates.values.data(center), 3.4, 1e-12)
-    assertEqualsDouble(next.moving.residual.sourceCoordinates.values.data(center), 2.6, 1e-12)
+    assertEqualsDouble(next.fixed.residual.sourceCoordinates.linearComponent(center, 0), 3.4, 1e-12)
+    assertEqualsDouble(next.moving.residual.sourceCoordinates.linearComponent(center, 0), 2.6, 1e-12)
     assertEquals(next.fixed.residual.from, frames.work)
     assertEquals(next.moving.residual.from, frames.work)
 
@@ -45,10 +44,10 @@ class ForwardMidpointSuite extends munit.FunSuite:
       .flatMap(_.advance(translatedStep))
       .fold(error => fail(error.message), identity)
     val center = at(frames.work.grid, 3, 3, 3)
-    assertEqualsDouble(next.fixed.residual.sourceCoordinates.values.data(center), 1.1 * 3.5, 1e-12)
-    assertEqualsDouble(next.moving.residual.sourceCoordinates.values.data(center), 0.9 * 2.5, 1e-12)
+    assertEqualsDouble(next.fixed.residual.sourceCoordinates.linearComponent(center, 0), 1.1 * 3.5, 1e-12)
+    assertEqualsDouble(next.moving.residual.sourceCoordinates.linearComponent(center, 0), 0.9 * 2.5, 1e-12)
     val boundary = at(frames.work.grid, 6, 3, 3)
-    assertEqualsDouble(next.fixed.residual.sourceCoordinates.values.data(boundary), 6.5, 1e-12)
+    assertEqualsDouble(next.fixed.residual.sourceCoordinates.linearComponent(boundary, 0), 6.5, 1e-12)
 
   test("exact affine factors remain separate and swap is structural"):
     val frames = fixture()
@@ -71,8 +70,8 @@ class ForwardMidpointSuite extends munit.FunSuite:
     val fixedDense = next.fixed.denseForward.fold(error => fail(error.message), identity)
     val movingDense = next.moving.denseForward.fold(error => fail(error.message), identity)
     val center = at(frames.work.grid, 3, 3, 3)
-    assertEqualsDouble(fixedDense.sourceCoordinates.values.data(center), 13.25, 1e-12)
-    assertEqualsDouble(movingDense.sourceCoordinates.values.data(center), -1.25, 1e-12)
+    assertEqualsDouble(fixedDense.sourceCoordinates.linearComponent(center, 0), 13.25, 1e-12)
+    assertEqualsDouble(movingDense.sourceCoordinates.linearComponent(center, 0), -1.25, 1e-12)
     val swapped = next.swap
     assertEquals(swapped.fixed.affine.transform, next.moving.affine.transform)
     assertEquals(swapped.moving.affine.transform, next.fixed.affine.transform)
@@ -80,8 +79,8 @@ class ForwardMidpointSuite extends munit.FunSuite:
       .make(shrinks = Vector(1), iterationsPerLevel = 4, interiorMargin = 1)
       .fold(error => fail(error.message), identity)
     val exported = ForwardMidpointExporter.build(state, exportConfig).fold(error => fail(error.message), identity)
-    assertEqualsDouble(exported.transform.forward.sourceCoordinates.values.data(center), -11.0, 1e-12)
-    assertEqualsDouble(exported.transform.backward.sourceCoordinates.values.data(center), 17.0, 1e-12)
+    assertEqualsDouble(exported.transform.forward.sourceCoordinates.linearComponent(center, 0), -11.0, 1e-12)
+    assertEqualsDouble(exported.transform.backward.sourceCoordinates.linearComponent(center, 0), 17.0, 1e-12)
 
   test("smooth forward midpoint arms retain positive sampled Jacobians"):
     val frames = fixture()
@@ -199,11 +198,11 @@ class ForwardMidpointSuite extends munit.FunSuite:
         interiorMargin = 2
       )
       .fold(error => fail(error.message), identity)
-    val inverse = ResidualInverseRefiner.refine(forward, config).inverse.sourceCoordinates.values.data
-    val x2 = inverse(at(grid, 2, 5, 5))
-    val x3 = inverse(at(grid, 3, 5, 5))
-    val x4 = inverse(at(grid, 4, 5, 5))
-    val x5 = inverse(at(grid, 5, 5, 5))
+    val inverse = ResidualInverseRefiner.refine(forward, config).inverse.sourceCoordinates
+    val x2 = inverse.linearComponent(at(grid, 2, 5, 5), 0)
+    val x3 = inverse.linearComponent(at(grid, 3, 5, 5), 0)
+    val x4 = inverse.linearComponent(at(grid, 4, 5, 5), 0)
+    val x5 = inverse.linearComponent(at(grid, 5, 5, 5), 0)
     assertEqualsDouble(x3 - x2, x4 - x3, 1e-10)
     assertEqualsDouble(x4 - x3, x5 - x4, 1e-10)
 
@@ -228,7 +227,7 @@ class ForwardMidpointSuite extends munit.FunSuite:
       )
       .fold(error => fail(error.message), identity)
     val candidate = ForwardMidpointExporter.inspect(advanced, impossible).fold(error => fail(error.message), identity)
-    assert(candidate.transform.forward.sourceCoordinates.values.data.nonEmpty)
+    assert(candidate.transform.forward.sourceCoordinates.values.size > 0)
     ForwardMidpointExporter.admit(candidate, impossible) match
       case Left(ForwardExportError.InverseDidNotConverge(_, report)) =>
         assert(report.maximumInteriorMm > 1e-15)
@@ -265,7 +264,7 @@ class ForwardMidpointSuite extends munit.FunSuite:
   private def affinePull[A](frame: Frame[A], scale: Double, translation: Double): DensePull[A, A] =
     val grid = frame.grid
     val n = grid.nVoxels
-    val values = NArrayUtil.ofSize[Double](3 * n)
+    val values = PrimitiveBuffers.ofSize[Double](3 * n)
     var index = 0
     while index < n do
       val x = index % grid.shape.x
@@ -280,7 +279,7 @@ class ForwardMidpointSuite extends munit.FunSuite:
       .make(
         frame,
         frame,
-        DenseVectorField(grid, NDArray(values, grid.dims :+ 3), DenseVectorFieldKind.SourceCoordinates)
+        DenseVectorField.fromLegacyPlanar(grid, values, DenseVectorFieldKind.SourceCoordinates)
       )
       .fold(error => fail(error.message), identity)
 
@@ -301,7 +300,7 @@ class ForwardMidpointSuite extends munit.FunSuite:
   private def smoothVelocity[A](frame: Frame[A], amplitude: Double): Velocity[A] =
     val grid = frame.grid
     val n = grid.nVoxels
-    val values = NArrayUtil.ofSize[Double](3 * n)
+    val values = PrimitiveBuffers.ofSize[Double](3 * n)
     val dx = (grid.shape.x - 1).toDouble
     val dy = (grid.shape.y - 1).toDouble
     val dz = (grid.shape.z - 1).toDouble
@@ -316,15 +315,15 @@ class ForwardMidpointSuite extends munit.FunSuite:
       values(index + n) = 0.6 * amplitude * envelope * math.sin(2.0 * math.Pi * z / dz)
       values(index + 2 * n) = 0.4 * amplitude * envelope * math.sin(2.0 * math.Pi * x / dx)
       index += 1
-    val field = DenseVectorField(grid, NDArray(values, grid.dims :+ 3), DenseVectorFieldKind.Displacement)
+    val field = DenseVectorField.fromLegacyPlanar(grid, values, DenseVectorFieldKind.Displacement)
     Velocity.make(frame, field).fold(error => fail(error.message), identity)
 
   private def assertPositiveJacobians[A](pull: DensePull[A, A]): Unit =
     val grid = pull.from.grid
-    val determinants = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val determinants = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     val reduction = JacobianReduction()
-    DenseFieldKernels.jacobianDeterminantsReduceInto(
+    HalfFlowKernels.jacobianDeterminantsReduceInto(
       pull.sourceCoordinates,
       determinants,
       valid,

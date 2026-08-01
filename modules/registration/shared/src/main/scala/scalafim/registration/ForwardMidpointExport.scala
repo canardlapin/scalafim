@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 final case class ResidualInverseConfig private (
@@ -129,9 +128,9 @@ object ResidualInverseRefiner:
     var levelIndex = 0
     while levelIndex < config.shrinks.length do
       val shrink = config.shrinks(levelIndex)
-      val levelGrid = DenseFieldKernels.pyramidGrid(fullFrame.grid, shrink)
+      val levelGrid = HalfFlowKernels.pyramidGrid(fullFrame.grid, shrink)
       val levelFrame = Frame[A](fullFrame.domain, levelGrid)
-      val forwardLevelResult = DenseFieldKernels.regridPull(
+      val forwardLevelResult = HalfFlowKernels.regridPull(
         forward.sourceCoordinates,
         levelGrid,
         forward.validity,
@@ -141,18 +140,18 @@ object ResidualInverseRefiner:
         levelFrame,
         levelFrame,
         forwardLevelResult.field,
-        FieldValidity.Mask(forwardLevelResult.valid)
+        FieldValidity.copyMask(forwardLevelResult.valid)
       )
       val seed = previous match
         case None => DensePull.identity(levelFrame)
         case Some(coarse) =>
-          val result = DenseFieldKernels.regridPull(
+          val result = HalfFlowKernels.regridPull(
             coarse.sourceCoordinates,
             levelGrid,
             coarse.validity,
             CoordinateMapOutside.Identity
           )
-          DensePull.unsafe(levelFrame, levelFrame, result.field, FieldValidity.Mask(result.valid))
+          DensePull.unsafe(levelFrame, levelFrame, result.field, FieldValidity.copyMask(result.valid))
       val (inverse, used) = refineLevel(
         forwardLevel,
         seed,
@@ -182,32 +181,33 @@ object ResidualInverseRefiner:
   ): (DensePull[A, A], Int) =
     val grid = forward.from.grid
     val n = grid.nVoxels
-    val current = copy(seed.sourceCoordinates.values.data)
+    val current = seed.sourceCoordinates.copyLegacyPlanar
     val currentValid = validityCopy(seed.validity, n)
-    val composed = NArrayUtil.ofSize[Double](3 * n)
-    val composedValid = NArrayUtil.ofSize[Boolean](n)
-    val correction = NArrayUtil.ofSize[Double](3 * n)
-    val corrected = NArrayUtil.ofSize[Double](3 * n)
-    val correctedValid = NArrayUtil.ofSize[Boolean](n)
-    val identity = NArrayUtil.ofSize[Double](3 * n)
-    val identityValid = NArrayUtil.ofSize[Boolean](n)
-    DenseFieldKernels.identityInto(grid, identity, identityValid)
+    val composed = PrimitiveBuffers.ofSize[Double](3 * n)
+    val composedValid = PrimitiveBuffers.ofSize[Boolean](n)
+    val correction = PrimitiveBuffers.ofSize[Double](3 * n)
+    val corrected = PrimitiveBuffers.ofSize[Double](3 * n)
+    val correctedValid = PrimitiveBuffers.ofSize[Boolean](n)
+    val identity = PrimitiveBuffers.ofSize[Double](3 * n)
+    val identityValid = PrimitiveBuffers.ofSize[Boolean](n)
+    HalfFlowKernels.identityInto(grid, identity, identityValid)
     val sampler = DenseFieldSampler(grid)
     var used = 0
     var converged = false
     while used < maximumIterations && !converged do
-      val inverseField = DenseVectorField(
-        grid,
-        NDArray(current, grid.dims :+ 3),
-        DenseVectorFieldKind.SourceCoordinates
-      )
-      DenseFieldKernels.composePullInto(
+      val inverseField =
+        DenseVectorField.fromLegacyPlanar(
+          grid,
+          current,
+          DenseVectorFieldKind.SourceCoordinates
+        )
+      HalfFlowKernels.composePullInto(
         inverseField,
         forward.sourceCoordinates,
         composed,
         composedValid,
         sampler,
-        FieldValidity.Mask(currentValid),
+        FieldValidity.copyMask(currentValid),
         forward.validity,
         CoordinateMapOutside.Identity
       )
@@ -225,19 +225,19 @@ object ResidualInverseRefiner:
             maximum = math.max(maximum, math.sqrt(dx * dx + dy * dy + dz * dz))
         else currentValid(index) = false
         index += 1
-      val updatedInverseField = DenseVectorField(
+      val updatedInverseField = DenseVectorField.fromLegacyPlanar(
         grid,
-        NDArray(current, grid.dims :+ 3),
+        current,
         DenseVectorFieldKind.SourceCoordinates
       )
-      DenseFieldKernels.composePullInto(
+      HalfFlowKernels.composePullInto(
         forward.sourceCoordinates,
         updatedInverseField,
         composed,
         composedValid,
         sampler,
         forward.validity,
-        FieldValidity.Mask(currentValid),
+        FieldValidity.copyMask(currentValid),
         CoordinateMapOutside.Identity
       )
       index = 0
@@ -256,19 +256,19 @@ object ResidualInverseRefiner:
           correction(index + n) = identity(index + n)
           correction(index + 2 * n) = identity(index + 2 * n)
         index += 1
-      val correctionField = DenseVectorField(
+      val correctionField = DenseVectorField.fromLegacyPlanar(
         grid,
-        NDArray(correction, grid.dims :+ 3),
+        correction,
         DenseVectorFieldKind.SourceCoordinates
       )
-      DenseFieldKernels.composePullInto(
+      HalfFlowKernels.composePullInto(
         updatedInverseField,
         correctionField,
         corrected,
         correctedValid,
         sampler,
-        FieldValidity.Mask(currentValid),
-        FieldValidity.Mask(composedValid),
+        FieldValidity.copyMask(currentValid),
+        FieldValidity.copyMask(composedValid),
         CoordinateMapOutside.Identity
       )
       index = 0
@@ -281,8 +281,8 @@ object ResidualInverseRefiner:
         index += 1
       used += 1
       converged = maximum <= toleranceMm
-    val field = DenseVectorField(grid, NDArray(current, grid.dims :+ 3), DenseVectorFieldKind.SourceCoordinates)
-    (DensePull.unsafe(forward.from, forward.to, field, FieldValidity.Mask(currentValid)), used)
+    val field = DenseVectorField.fromLegacyPlanar(grid, current, DenseVectorFieldKind.SourceCoordinates)
+    (DensePull.unsafe(forward.from, forward.to, field, FieldValidity.copyMask(currentValid)), used)
 
   private def errorPercentiles[A](
       left: DensePull[A, A],
@@ -291,9 +291,9 @@ object ResidualInverseRefiner:
   ): InverseErrorPercentiles =
     val grid = left.from.grid
     val n = grid.nVoxels
-    val composed = NArrayUtil.ofSize[Double](3 * n)
-    val valid = NArrayUtil.ofSize[Boolean](n)
-    DenseFieldKernels.composePullInto(
+    val composed = PrimitiveBuffers.ofSize[Double](3 * n)
+    val valid = PrimitiveBuffers.ofSize[Boolean](n)
+    HalfFlowKernels.composePullInto(
       left.sourceCoordinates,
       right.sourceCoordinates,
       composed,
@@ -302,9 +302,9 @@ object ResidualInverseRefiner:
       right.validity,
       CoordinateMapOutside.Identity
     )
-    val identity = NArrayUtil.ofSize[Double](3 * n)
-    val identityValid = NArrayUtil.ofSize[Boolean](n)
-    DenseFieldKernels.identityInto(grid, identity, identityValid)
+    val identity = PrimitiveBuffers.ofSize[Double](3 * n)
+    val identityValid = PrimitiveBuffers.ofSize[Boolean](n)
+    HalfFlowKernels.identityInto(grid, identity, identityValid)
     val inverseAffine = DMat.invert(grid.affine).fold(
       reason => throw new IllegalArgumentException(s"inverse-error grid is singular: $reason"),
       matrix => matrix
@@ -362,16 +362,16 @@ object ResidualInverseRefiner:
       val fraction = position - lower.toDouble
       sorted(lower) + fraction * (sorted(upper) - sorted(lower))
 
-  private def copy(source: NArray[Double]): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](source.length)
+  private def copy(source: Array[Double]): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](source.length)
     var index = 0
     while index < source.length do
       result(index) = source(index)
       index += 1
     result
 
-  private def validityCopy(source: FieldValidity, size: Int): NArray[Boolean] =
-    val result = NArrayUtil.ofSize[Boolean](size)
+  private def validityCopy(source: FieldValidity, size: Int): Array[Boolean] =
+    val result = PrimitiveBuffers.ofSize[Boolean](size)
     var index = 0
     while index < size do
       result(index) = source match
@@ -418,7 +418,7 @@ object ForwardMidpointExporter:
       result <- InversePair.make(forward, backward)
     yield result
     pair.left.map(ForwardExportError.Registration.apply).map: transform =>
-      val roundTrip = DenseFieldKernels.inversePairError(
+      val roundTrip = HalfFlowKernels.inversePairError(
         transform.forward.sourceCoordinates,
         transform.backward.sourceCoordinates,
         transform.forward.validity,
@@ -459,10 +459,10 @@ object ForwardMidpointExporter:
       direction: ExportDirection
   ): Either[ForwardExportError, Unit] =
     val grid = pull.from.grid
-    val determinants = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val determinants = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     val reduction = JacobianReduction()
-    DenseFieldKernels.jacobianDeterminantsReduceInto(
+    HalfFlowKernels.jacobianDeterminantsReduceInto(
       pull.sourceCoordinates,
       determinants,
       valid,

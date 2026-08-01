@@ -1,20 +1,23 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.Array1
+import ravel.DType.given
+import ravel.NDArray as RavelArray
+import ravel.Shape
 
 final case class ClusteredNeuroVol(
   mask: NeuroVol[Boolean],
-  clusters: NArray[Int],
+  clusters: Array1[Int],
   labelMap: Map[Int, String] = Map.empty,
   label: String = ""
 ):
   val space: NeuroSpace = mask.space
-  private val activeIdx: NArray[Int] = Mask.indices(mask)
-  require(clusters.length == activeIdx.length, "clusters length must equal mask cardinality")
+  private val activeIdx: Array1[Int] = Mask.indices(mask)
+  require(clusters.size == activeIdx.size, "clusters length must equal mask cardinality")
   private val firstInvalidClusterId =
     var invalid = Option.empty[Int]
     var i = 0
-    while i < clusters.length && invalid.isEmpty do
+    while i < clusters.size && invalid.isEmpty do
       if clusters(i) <= 0 then invalid = Some(clusters(i))
       i += 1
     invalid
@@ -24,7 +27,7 @@ final case class ClusteredNeuroVol(
   )
 
   private val ids: Vector[Int] =
-    Vector.tabulate(clusters.length)(i => clusters(i)).distinct.sorted
+    Vector.tabulate(clusters.size)(i => clusters(i)).distinct.sorted
 
   val labels: Map[Int, String] =
     if labelMap.isEmpty then ids.map(id => id -> s"Clus_$id").toMap
@@ -32,14 +35,15 @@ final case class ClusteredNeuroVol(
       require(labelMap.keySet == ids.toSet, "labelMap keys must match cluster ids")
       labelMap
 
-  val clusterMap: Map[Int, NArray[Int]] =
+  val clusterMap: Map[Int, Array1[Int]] =
     ids.map { id =>
       val buf = Array.newBuilder[Int]
       var i = 0
-      while i < clusters.length do
+      while i < clusters.size do
         if clusters(i) == id then buf += activeIdx(i)
         i += 1
-      id -> NArrayUtil.fromArray(buf.result())
+      val indices = buf.result()
+      id -> RavelArray.fromSeq(Shape(indices.length), indices)
     }.toMap
 
   def clusterIds: Vector[Int] = ids
@@ -47,24 +51,28 @@ final case class ClusteredNeuroVol(
   def typedClusterIds: Vector[ClusterId] =
     ids.map(ClusterId.unsafe)
 
-  def indices(id: ClusterId): NArray[Int] =
+  def indices(id: ClusterId): Array1[Int] =
     clusterMap(id.value)
 
   def numClusters: Int = ids.length
 
   def toDense: NeuroVol[Int] =
-    val full = NArrayUtil.fillConst[Int](space.spatialDims.product, 0)
-    var i = 0
-    while i < activeIdx.length do
-      full(activeIdx(i)) = clusters(i)
-      i += 1
-    NeuroVol.fromLinear(full, space, label)
+    val shape = space.spatialShape
+    val lookup = IndexLookupVol(space, activeIdx)
+    val full =
+      RavelArray.tabulate[Int](shape.x, shape.y, shape.z):
+        (x, y, z) =>
+          val linear = Indexing.gridToIndex3D(shape, x, y, z)
+          val position = lookup.lookup(linear)
+          if position < 0 then 0 else clusters(position)
+    NeuroVol.fromRavel(full, space, label)
 
   def splitClusters: Vector[ROIVol[Int]] =
     ids.map { id =>
       val idx = clusterMap(id)
-      val coords = Vector.tabulate(idx.length)(i => Indexing.indexToGrid3D(space.spatialDims, idx(i)))
-      val vals: NArray[Int] = NArrayUtil.fillConst[Int](idx.length, id)
+      val coords = Vector.tabulate(idx.size)(i => Indexing.indexToGrid3D(space.spatialDims, idx(i)))
+      val vals: Array1[Int] =
+        RavelArray.fill(Shape(idx.size), id)
       ROIVol[Int](space, coords, vals)
     }
 
@@ -111,12 +119,12 @@ final case class ClusteredNeuroVol(
       case ClusteredNeuroVol.CentroidType.CenterOfMass =>
         ids.map { id =>
           val idx = clusterMap(id)
-          require(idx.length > 0, "empty cluster")
+          require(idx.size > 0, "empty cluster")
           var sx = 0.0
           var sy = 0.0
           var sz = 0.0
           var i = 0
-          while i < idx.length do
+          while i < idx.size do
             val g = Indexing.indexToGrid3D(space.spatialDims, idx(i))
             if frame == SpatialCoordinateFrame.World then
               val r = space.indexToCoord(g.map(_.toDouble))
@@ -124,14 +132,14 @@ final case class ClusteredNeuroVol(
             else
               sx += g(0).toDouble; sy += g(1).toDouble; sz += g(2).toDouble
             i += 1
-          val n = idx.length.toDouble
+          val n = idx.size.toDouble
           Vector(sx / n, sy / n, sz / n)
         }
       case ClusteredNeuroVol.CentroidType.Medoid =>
         ids.map { id =>
           val idx = clusterMap(id)
-          require(idx.length > 0, "empty cluster")
-          val m = idx.length
+          require(idx.size > 0, "empty cluster")
+          val m = idx.size
           if m == 1 then
             val g = Indexing.indexToGrid3D(space.spatialDims, idx(0))
             if frame == SpatialCoordinateFrame.World then space.indexToCoord(g.map(_.toDouble)) else g.map(_.toDouble)
@@ -198,6 +206,35 @@ final case class ClusteredNeuroVol(
         }
 
 object ClusteredNeuroVol:
+  private def ravelClusters(values: Array[Int]): Array1[Int] =
+    RavelArray.fromSeq(Shape(values.length), values)
+
+  def apply(
+      mask: NeuroVol[Boolean],
+      clusters: Array[Int]
+  ): ClusteredNeuroVol =
+    new ClusteredNeuroVol(mask, ravelClusters(clusters))
+
+  def apply(
+      mask: NeuroVol[Boolean],
+      clusters: Array[Int],
+      labelMap: Map[Int, String]
+  ): ClusteredNeuroVol =
+    new ClusteredNeuroVol(mask, ravelClusters(clusters), labelMap)
+
+  def apply(
+      mask: NeuroVol[Boolean],
+      clusters: Array[Int],
+      labelMap: Map[Int, String],
+      label: String
+  ): ClusteredNeuroVol =
+    new ClusteredNeuroVol(
+      mask,
+      ravelClusters(clusters),
+      labelMap,
+      label
+    )
+
   enum CentroidType:
     case CenterOfMass, Medoid
 
@@ -211,11 +248,9 @@ object ClusteredNeuroVol:
   ): ClusteredNeuroVol =
     val (idxVol, _) = ConnComp.connComp3D(mask, connectivity, label)
     val activeIdx = Mask.indices(mask)
-    val clusters = narr.NArray.ofSize[Int](activeIdx.length)
-    var i = 0
-    while i < activeIdx.length do
-      clusters(i) = idxVol.linear(activeIdx(i))
-      i += 1
+    val clusters =
+      RavelArray.tabulate[Int](activeIdx.size): i =>
+        idxVol.linear(activeIdx(i))
     ClusteredNeuroVol(mask, clusters, labelMap, label)
 
   def fromThreshold(
@@ -225,10 +260,5 @@ object ClusteredNeuroVol:
     labelMap: Map[Int, String] = Map.empty,
     label: String = ""
   ): ClusteredNeuroVol =
-    val flags = narr.NArray.ofSize[Boolean](vol.values.data.length)
-    var i = 0
-    while i < flags.length do
-      flags(i) = vol.linear(i) > thr
-      i += 1
-    val mask = NeuroVol.fromLinear[Boolean](flags, vol.space.spatialSpace, label)
+    val mask = vol.mapValues(_ > thr).copy(label = label)
     fromMask(mask, connectivity, labelMap, label)

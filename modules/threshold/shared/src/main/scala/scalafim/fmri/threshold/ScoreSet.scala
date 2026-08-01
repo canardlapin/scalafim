@@ -64,12 +64,12 @@ object ScoringInput:
   def apply(field: MaskedField, priors: PriorWeights, region: ThresholdRegion): Either[ThresholdError, ScoringInput] =
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
-    if !field.activeSpace.sameIdentityAs(region.membership.space) then
+    if !field.activeSpace.sameRuntimeOwnerAs(region.membership.space) then
       return Left(
         ThresholdError.ShapeMismatch(
           "field/region support",
-          field.activeSpace.key.value,
-          region.membership.space.key.value
+          field.activeSpace.descriptor.toString,
+          region.membership.space.descriptor.toString
         )
       )
 

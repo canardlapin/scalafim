@@ -1,8 +1,8 @@
 package scalafim.atlas
 
-import narr.nArray2NArr
 import scalafim.image.{ClusteredNeuroVol, VolumeDomain, VolumeSpace}
 import scalafim.locus.{
+  DomainFactory,
   FiniteSpace,
   IndexedField,
   Parcellation,
@@ -20,7 +20,7 @@ trait AtlasNetworkAssignment[P]:
   val parcelToNetwork: Surjection[P, N]
 
   def networkPoint(id: NetworkId): Option[Point[N]] =
-    networkIds.space.points.find(point => networkIds(point) == id)
+    networkIds.space.points.find(point => networkIds.at(point) == id)
 
 trait AtlasNetworkParcellation[X]:
   type N
@@ -41,7 +41,7 @@ trait AtlasQuotient:
     parcellation.support
 
   final def parcelPoint(id: RegionId): Option[Point[P]] =
-    regionIds.space.points.find(point => regionIds(point) == id)
+    regionIds.space.points.find(point => regionIds.at(point) == id)
 
   final def region(id: RegionId): Option[LocusRegion[X]] =
     parcelPoint(id).map(parcellation.fiber)
@@ -61,7 +61,7 @@ trait AtlasQuotient:
   final def networkRegion(id: NetworkId): Option[LocusRegion[X]] =
     networkParcellation.flatMap: network =>
       network.networkIds.space.points
-        .find(point => network.networkIds(point) == id)
+        .find(point => network.networkIds.at(point) == id)
         .map(network.parcellation.fiber)
 
 trait VolumeAtlasQuotient extends AtlasQuotient:
@@ -78,27 +78,25 @@ object AtlasQuotient:
       regions: RegionIndex,
       volume: ClusteredNeuroVol
   ): VolumeAtlasQuotient =
-    final class Voxel
-    final class Parcel
-
     val volumeSpace = VolumeSpace.fromSpatialPart(volume.space).toOption.get
-    val volumeDomain =
-      VolumeDomain.semantic[Voxel](
+    val packedVolumeDomain =
+      VolumeDomain.semantic(
         SpaceKey.unsafe(
           s"scalafim:atlas:volume:$spatialSemanticId:${volumeSpace.hashCode}:${volumeSpace.nVoxels}"
         ),
         volumeSpace
       )
-    val parcels =
-      FiniteSpace
-        .make[Parcel](
-          SpaceKey.unsafe(
-            s"scalafim:atlas:$atlasName:parcels:${regions.ids.map(_.value).mkString(",")}"
-          ),
-          regions.size
-        )
-        .toOption
-        .get
+    type Voxel = packedVolumeDomain.S
+    val volumeDomain: VolumeDomain[Voxel] = packedVolumeDomain.value
+    val parcelResolution =
+      DomainFactory.unsafeRestore(
+        SpaceKey.unsafe(
+          s"scalafim:atlas:$atlasName:parcels:${regions.ids.map(_.value).mkString(",")}"
+        ),
+        regions.size
+      )
+    type Parcel = parcelResolution.S
+    val parcels: FiniteSpace[Parcel] = parcelResolution.space
     val parcelOrdinalById =
       regions.ids.zipWithIndex.toMap
     val dense = volume.toDense
@@ -130,31 +128,26 @@ object AtlasQuotient:
       regions: RegionIndex,
       payload: SurfaceAtlasPayload
   ): SurfaceAtlasQuotient =
-    final class Vertex
-    final class Parcel
-
     val leftCount = payload.left.geometry.vertexCount
     val rightCount = payload.right.geometry.vertexCount
-    val ambient =
-      FiniteSpace
-        .make[Vertex](
-          SpaceKey.unsafe(
-            s"scalafim:atlas:surface:$spatialSemanticId:${payload.left.geometry.mesh.topologyIdentity.stableKey}:${payload.right.geometry.mesh.topologyIdentity.stableKey}"
-          ),
-          leftCount + rightCount
-        )
-        .toOption
-        .get
-    val parcels =
-      FiniteSpace
-        .make[Parcel](
-          SpaceKey.unsafe(
-            s"scalafim:atlas:$atlasName:parcels:${regions.ids.map(_.value).mkString(",")}"
-          ),
-          regions.size
-        )
-        .toOption
-        .get
+    val ambientResolution =
+      DomainFactory.unsafeRestore(
+        SpaceKey.unsafe(
+          s"scalafim:atlas:surface:$spatialSemanticId:${payload.left.geometry.mesh.topologyIdentity.stableKey}:${payload.right.geometry.mesh.topologyIdentity.stableKey}"
+        ),
+        leftCount + rightCount
+      )
+    type Vertex = ambientResolution.S
+    val ambient: FiniteSpace[Vertex] = ambientResolution.space
+    val parcelResolution =
+      DomainFactory.unsafeRestore(
+        SpaceKey.unsafe(
+          s"scalafim:atlas:$atlasName:parcels:${regions.ids.map(_.value).mkString(",")}"
+        ),
+        regions.size
+      )
+    type Parcel = parcelResolution.S
+    val parcels: FiniteSpace[Parcel] = parcelResolution.space
     val parcelOrdinalById =
       regions.ids.zipWithIndex.toMap
     val assignments =
@@ -213,18 +206,16 @@ object AtlasQuotient:
     val assigned = regions.regions.map(_.network)
     if assigned.exists(_.isEmpty) then None
     else
-      final class Network
       val ids = assigned.flatten.distinct
-      val networks =
-        FiniteSpace
-          .make[Network](
-            SpaceKey.unsafe(
-              s"${parcels.key.value}:networks:${ids.map(_.value).mkString(",")}"
-            ),
-            ids.length
-          )
-          .toOption
-          .get
+      val networkResolution =
+        DomainFactory.unsafeRestore(
+          SpaceKey.unsafe(
+            s"${parcels.id.value}:networks:${ids.map(_.value).mkString(",")}"
+          ),
+          ids.length
+        )
+      type Network = networkResolution.S
+      val networks: FiniteSpace[Network] = networkResolution.space
       val ordinalById = ids.zipWithIndex.toMap
       val mapping =
         TotalMap

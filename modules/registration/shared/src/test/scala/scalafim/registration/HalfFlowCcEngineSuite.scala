@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 class HalfFlowCcEngineSuite extends munit.FunSuite:
@@ -9,13 +8,13 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
   private sealed trait Moving
 
   test("pointwise rank-one step matches its scalar closed form"):
-    val gradient = NArrayUtil.ofSize[Double](6)
+    val gradient = PrimitiveBuffers.ofSize[Double](6)
     gradient(0) = 3.0
     gradient(2) = 4.0
-    val valid = NArrayUtil.ofSize[Boolean](2)
+    val valid = PrimitiveBuffers.ofSize[Boolean](2)
     valid(0) = true
     valid(1) = false
-    val destination = NArrayUtil.ofSize[Double](6)
+    val destination = PrimitiveBuffers.ofSize[Double](6)
     val summary = PointwiseRankOne.solveInto(
       gradient,
       valid,
@@ -35,13 +34,13 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
 
   test("moving optimization masks are rejected at the API boundary"):
     val fixture = translationFixture(side = 13, shiftMm = 1.0)
-    val mask = NArrayUtil.ofSize[Boolean](fixture.grid.nVoxels)
+    val mask = PrimitiveBuffers.ofSize[Boolean](fixture.grid.nVoxels)
     var index = 0
     while index < mask.length do
       mask(index) = true
       index += 1
     val maskedMoving = RegistrationImage
-      .make(fixture.moving.frame, fixture.moving.volume, FieldValidity.Mask(mask))
+      .make(fixture.moving.frame, fixture.moving.volume, FieldValidity.copyMask(mask))
       .fold(error => fail(error.message), identity)
     assertEquals(
       HalfFlowCc.register(fixture.fixed, maskedMoving, fixture.initial, compactPlan()),
@@ -69,8 +68,8 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
     val flow = PairedScalingAndSquaring.expHalfPair(velocity).fold(error => fail(error.message), identity)
     val center = 4 + 9 * 4 + 81 * 4
     val identityX = grid.voxelToWorld(SpatialPoint(4.0, 4.0, 4.0)).x
-    val plusX = flow.pair.forward.sourceCoordinates.values.data(center)
-    val minusX = flow.pair.backward.sourceCoordinates.values.data(center)
+    val plusX = flow.pair.forward.sourceCoordinates.linearComponent(center, 0)
+    val minusX = flow.pair.backward.sourceCoordinates.linearComponent(center, 0)
     assertEqualsDouble(plusX - identityX, 1.0, 1e-12)
     assertEqualsDouble(minusX - identityX, -1.0, 1e-12)
     assertEqualsDouble(minusX - plusX, -2.0, 1e-12)
@@ -83,8 +82,8 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
     val identityPull = DensePull.identity(optimization.state.work)
     assertCoordinatesEqual(
-      optimization.state.fixed.residual.sourceCoordinates.values.data,
-      identityPull.sourceCoordinates.values.data,
+      optimization.state.fixed.residual.sourceCoordinates,
+      identityPull.sourceCoordinates,
       1e-12
     )
     val error = midpointTranslationRms(optimization.state, fixture.shiftMm, margin = 6)
@@ -314,7 +313,7 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       )
       .fold(error => fail(error.message), identity)
 
-  private final case class TestWarp(values: NArray[Double], valid: NArray[Boolean])
+  private final case class TestWarp(values: Array[Double], valid: Array[Boolean])
 
   private def assertProductionDerivative[W0, F0, M0](
       fixed: RegistrationImage[F0],
@@ -378,7 +377,7 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       fixed: RegistrationImage[F0],
       moving: RegistrationImage[M0],
       state: ForwardMidpoint[W0, F0, M0],
-      direction: NArray[Double],
+      direction: Array[Double],
       epsilon: Double,
       frozen: FrozenCcWeights
   ): Double =
@@ -398,18 +397,18 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       arm: ForwardMidpointArm[W0, E]
   ): TestWarp =
     val pull = arm.denseForward.fold(error => fail(error.message), identity)
-    val warped = DenseFieldKernels.pullScalar(
+    val warped = HalfFlowKernels.pullScalar(
       source.volume,
       pull.sourceCoordinates,
       pull.validity,
       source.validity,
       0.0
     )
-    TestWarp(warped.values.values.data, warped.valid.values.data)
+    TestWarp(warped.values.copyLegacyLinear, warped.valid.copyLegacyLinear)
 
-  private def spatialGradient(source: TestWarp, grid: GridSpec): (NArray[Double], NArray[Boolean]) =
-    val gradient = NArrayUtil.ofSize[Double](3 * grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+  private def spatialGradient(source: TestWarp, grid: GridSpec): (Array[Double], Array[Boolean]) =
+    val gradient = PrimitiveBuffers.ofSize[Double](3 * grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     MaskedLocalStats.physicalGradientChannelsInto(
       source.values,
       source.valid,
@@ -426,9 +425,9 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       x: Double,
       y: Double,
       z: Double
-  ): NArray[Double] =
+  ): Array[Double] =
     val n = grid.nVoxels
-    val values = NArrayUtil.ofSize[Double](3 * n)
+    val values = PrimitiveBuffers.ofSize[Double](3 * n)
     var index = 0
     while index < n do
       values(index) = x
@@ -447,17 +446,17 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
 
   private def scaledVelocity[A](
       frame: Frame[A],
-      direction: NArray[Double],
+      direction: Array[Double],
       scale: Double
   ): Velocity[A] =
-    val values = NArrayUtil.ofSize[Double](direction.length)
+    val values = PrimitiveBuffers.ofSize[Double](direction.length)
     var index = 0
     while index < direction.length do
       values(index) = scale * direction(index)
       index += 1
-    val field = DenseVectorField(
+    val field = DenseVectorField.fromLegacyPlanar(
       frame.grid,
-      NDArray(values, frame.grid.dims :+ 3),
+      values,
       DenseVectorFieldKind.Displacement
     )
     Velocity.make(frame, field).fold(error => fail(error.message), identity)
@@ -491,8 +490,6 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
     val moving = state.moving.denseForward.fold(error => fail(error.message), identity)
     val grid = state.work.grid
     val n = grid.nVoxels
-    val fixedCoordinates = fixed.sourceCoordinates.values.data
-    val movingCoordinates = moving.sourceCoordinates.values.data
     var sum = 0.0
     var count = 0
     var index = 0
@@ -504,9 +501,16 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       if x >= margin && x < grid.shape.x - margin && y >= margin && y < grid.shape.y - margin &&
           z >= margin && z < grid.shape.z - margin
       then
-        val dx = movingCoordinates(index) - fixedCoordinates(index) - shift
-        val dy = movingCoordinates(index + n) - fixedCoordinates(index + n)
-        val dz = movingCoordinates(index + 2 * n) - fixedCoordinates(index + 2 * n)
+        val dx =
+          moving.sourceCoordinates.linearComponent(index, 0) -
+            fixed.sourceCoordinates.linearComponent(index, 0) -
+            shift
+        val dy =
+          moving.sourceCoordinates.linearComponent(index, 1) -
+            fixed.sourceCoordinates.linearComponent(index, 1)
+        val dz =
+          moving.sourceCoordinates.linearComponent(index, 2) -
+            fixed.sourceCoordinates.linearComponent(index, 2)
         sum += dx * dx + dy * dy + dz * dz
         count += 1
       index += 1
@@ -514,10 +518,10 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
 
   private def assertNoFolds[A, B](pull: DensePull[A, B]): Unit =
     val grid = pull.from.grid
-    val determinants = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val valid = NArrayUtil.ofSize[Boolean](grid.nVoxels)
+    val determinants = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val valid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
     val reduction = JacobianReduction()
-    DenseFieldKernels.jacobianDeterminantsReduceInto(
+    HalfFlowKernels.jacobianDeterminantsReduceInto(
       pull.sourceCoordinates,
       determinants,
       valid,
@@ -530,7 +534,7 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
   private def foldedPull[A](frame: Frame[A]): DensePull[A, A] =
     val grid = frame.grid
     val n = grid.nVoxels
-    val coordinates = NArrayUtil.ofSize[Double](3 * n)
+    val coordinates = PrimitiveBuffers.ofSize[Double](3 * n)
     var index = 0
     while index < n do
       val point = voxel(grid, index)
@@ -542,23 +546,30 @@ class HalfFlowCcEngineSuite extends munit.FunSuite:
       .make(
         frame,
         frame,
-        DenseVectorField(grid, NDArray(coordinates, grid.dims :+ 3), DenseVectorFieldKind.SourceCoordinates)
+        DenseVectorField.fromLegacyPlanar(grid, coordinates, DenseVectorFieldKind.SourceCoordinates)
       )
       .fold(error => fail(error.message), identity)
 
   private def assertCoordinatesEqual(
-      actual: NArray[Double],
-      expected: NArray[Double],
+      actual: DenseVectorField,
+      expected: DenseVectorField,
       tolerance: Double
   ): Unit =
-    assertEquals(actual.length, expected.length)
+    assertEquals(actual.grid, expected.grid)
     var index = 0
-    while index < actual.length do
-      assertEqualsDouble(actual(index), expected(index), tolerance)
+    while index < actual.grid.nVoxels do
+      var component = 0
+      while component < 3 do
+        assertEqualsDouble(
+          actual.linearComponent(index, component),
+          expected.linearComponent(index, component),
+          tolerance
+        )
+        component += 1
       index += 1
 
-  private def values(grid: GridSpec)(f: Int => Double): NArray[Double] =
-    val result = NArrayUtil.ofSize[Double](grid.nVoxels)
+  private def values(grid: GridSpec)(f: Int => Double): Array[Double] =
+    val result = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var index = 0
     while index < result.length do
       result(index) = f(index)

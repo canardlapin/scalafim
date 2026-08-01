@@ -10,7 +10,7 @@ class CanvasViewerHostSuite extends munit.FunSuite:
 
   private val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
   private val volume = NeuroVol.fromLinear(
-    NArrayUtil.tabulate[Double](space.nVoxels)(_.toDouble),
+    PrimitiveBuffers.tabulate[Double](space.nVoxels)(_.toDouble),
     space.toNeuroSpace,
     "canvas"
   )

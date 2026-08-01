@@ -1,6 +1,5 @@
 package scalafim.registration
 
-import narr.NArray
 import scalafim.image.*
 
 class HalfFlowEngineSuite extends munit.FunSuite:
@@ -36,12 +35,12 @@ class HalfFlowEngineSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
     assert(result.diagnostics.acceptedSteps >= 1)
     assert(result.diagnostics.levels.exists(level => level.finalValue < level.initialValue))
-    val map = result.transform.forward.sourceCoordinates.values.data
+    val map = result.transform.forward.sourceCoordinates
     val grid = result.transform.forward.from.grid
     val center = grid.shape.x / 2 + grid.shape.x * (grid.shape.y / 2) +
       grid.shape.x * grid.shape.y * (grid.shape.z / 2)
     val identityX = grid.affine(0, 0) * (grid.shape.x / 2).toDouble + grid.affine(0, 3)
-    val recovered = map(center) - identityX
+    val recovered = map.linearComponent(center, 0) - identityX
     assert(recovered > 0.02, s"recovered fixed-to-moving shift=$recovered")
     assert(recovered < 0.8, s"recovered fixed-to-moving shift=$recovered")
     assert(result.guard.safe, result.guard.reasons.mkString(", "))
@@ -141,8 +140,8 @@ class HalfFlowEngineSuite extends munit.FunSuite:
     val work = Frame[Work](SpatialDomainId("engine-work"), grid)
     val fixedFrame = Frame[Fixed](SpatialDomainId("engine-fixed"), grid)
     val movingFrame = Frame[Moving](SpatialDomainId("engine-moving"), grid)
-    val fixedValues = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val movingValues = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val fixedValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val movingValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var z = 0
     while z < side do
       var y = 0
@@ -169,7 +168,7 @@ class HalfFlowEngineSuite extends munit.FunSuite:
       6.0 * math.sin(scale * (x + 0.4 * z)) + 4.0 * math.cos(scale * (y + z))
 
   private def constantVolume(grid: GridSpec, label: String, value: Double): NeuroVol[Double] =
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var index = 0
     while index < values.length do
       values(index) = value
@@ -224,23 +223,37 @@ class HalfFlowEngineSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
 
   private def assertIdentity[A, B](pull: DensePull[A, B], tolerance: Double): Unit =
-    val expected = DenseFieldKernels.identity(pull.from.grid).field.values.data
-    val actual = pull.sourceCoordinates.values.data
+    val expected = HalfFlowKernels.identity(pull.from.grid).field
+    val actual = pull.sourceCoordinates
     var index = 0
-    while index < actual.length do
-      assertEqualsDouble(actual(index), expected(index), tolerance)
+    while index < pull.from.grid.nVoxels do
+      var component = 0
+      while component < 3 do
+        assertEqualsDouble(
+          actual.linearComponent(index, component),
+          expected.linearComponent(index, component),
+          tolerance
+        )
+        component += 1
       index += 1
 
   private def assertPullClose[A, B](actual: DensePull[A, B], expected: DensePull[A, B], tolerance: Double): Unit =
-    val left = actual.sourceCoordinates.values.data
-    val right = expected.sourceCoordinates.values.data
+    val left = actual.sourceCoordinates
+    val right = expected.sourceCoordinates
     var index = 0
-    while index < left.length do
+    while index < actual.from.grid.nVoxels do
       assertEquals(
-        validAt(actual.validity, index % actual.from.grid.nVoxels),
-        validAt(expected.validity, index % expected.from.grid.nVoxels)
+        validAt(actual.validity, index),
+        validAt(expected.validity, index)
       )
-      assertEqualsDouble(left(index), right(index), tolerance)
+      var component = 0
+      while component < 3 do
+        assertEqualsDouble(
+          left.linearComponent(index, component),
+          right.linearComponent(index, component),
+          tolerance
+        )
+        component += 1
       index += 1
 
   private def validAt(validity: FieldValidity, index: Int): Boolean =

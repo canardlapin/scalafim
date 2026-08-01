@@ -11,7 +11,6 @@ import scalafim.image.{
   SearchlightCenterDomain,
   SearchlightRadius,
   SearchlightSupport,
-  StructuralCompatibilityVoxel,
   VolumeDomain,
   VolumeSpace
 }
@@ -30,13 +29,12 @@ object SpatialFeatureSetPlans:
   def volumeLabels(
       name: String,
       labels: NeuroVol[Int],
-      background: Set[Int] = Set(0)
+    background: Set[Int] = Set(0)
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
-    val values = labels.values.data
     var lin = 0
-    while lin < values.length do
-      val label = values(lin)
+    while lin < labels.values.size do
+      val label = labels.linear(lin)
       if !background.contains(label) then
         if label < 0 then return Left(SpatialPlanError.InvalidVolumeLabel(label))
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
@@ -66,10 +64,9 @@ object SpatialFeatureSetPlans:
       coveragePolicy: ParcelCoveragePolicy = ParcelCoveragePolicy.RequireEveryRegion
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
-    val labels = atlas.labelVolume.values.data
     var lin = 0
-    while lin < labels.length do
-      val label = labels(lin)
+    while lin < atlas.labelVolume.values.size do
+      val label = atlas.labelVolume.linear(lin)
       if label != 0 then
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
       lin += 1
@@ -118,17 +115,17 @@ object SpatialFeatureSetPlans:
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     captureSpatial("ROI windows") {
       locusSearchlight(windows.toVector).flatMap: canonical =>
-        val (centered, labels) = canonical
+        val centered = canonical.centered
         LocusFeatureSetPlans
           .fromSearchlight(
             name,
             centered,
             center =>
               Some(
-                labels
-                  .get(center.ordinal)
+                canonical.labels
+                  .get(center.value)
                   .filter(_.nonEmpty)
-                  .getOrElse(s"searchlight_${center.ordinal}")
+                  .getOrElse(s"searchlight_${center.value}")
               )
           )
           .left
@@ -136,7 +133,7 @@ object SpatialFeatureSetPlans:
           .map: plan =>
             SpatialFeaturePlan(
               SpatialFeatureDomain.LocusSearchlight(
-                centered.searchlight.centers.space.key.value,
+                centered.searchlight.centers.space.descriptor.toString,
                 centered.searchlight.centers.cardinality
               ),
               plan
@@ -247,10 +244,7 @@ object SpatialFeatureSetPlans:
 
   private def locusSearchlight(
       windows: Vector[ROIVolWindow[?]]
-  ): Either[
-    SpatialPlanError,
-    (CenteredSearchlight[StructuralCompatibilityVoxel], Map[Int, String])
-  ] =
+  ): Either[SpatialPlanError, CanonicalSearchlight] =
     if windows.isEmpty then Left(SpatialPlanError.EmptySearchlightWindows)
     else
       for
@@ -264,14 +258,13 @@ object SpatialFeatureSetPlans:
   private def buildLocusSearchlight(
       volumeSpace: VolumeSpace,
       windows: Vector[ROIVolWindow[?]]
-  ): Either[
-    SpatialPlanError,
-    (CenteredSearchlight[StructuralCompatibilityVoxel], Map[Int, String])
-  ] =
-    val domain = VolumeDomain.structuralCompatibility(volumeSpace)
+  ): Either[SpatialPlanError, CanonicalSearchlight] =
+    val packedDomain = VolumeDomain.structuralCompatibility(volumeSpace)
+    type Voxel = packedDomain.S
+    val domain: VolumeDomain[Voxel] = packedDomain.value
     val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
     val centerOrdinals = Array.ofDim[Int](windows.length)
-    val labels = scala.collection.mutable.Map.empty[Int, String]
+    val centerLabels = scala.collection.mutable.Map.empty[Int, String]
     val seenCenters = scala.collection.mutable.HashSet.empty[Int]
     var index = 0
     while index < windows.length do
@@ -288,7 +281,8 @@ object SpatialFeatureSetPlans:
             s"duplicate center $center"
           )
         )
-      val members = window.selection.linearIndices.toArray
+      val linearIndices = window.selection.linearIndices
+      val members = Array.tabulate(linearIndices.size)(i => linearIndices(i))
       if members.distinct.length != members.length then
         return Left(
           SpatialPlanError.InvalidLocusSearchlight(
@@ -304,7 +298,7 @@ object SpatialFeatureSetPlans:
       seenCenters += center
       centerOrdinals(index) = center
       rows(center) = members
-      labels(center) = window.label
+      centerLabels(center) = window.label
       index += 1
 
     for
@@ -313,18 +307,31 @@ object SpatialFeatureSetPlans:
         .left
         .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
       relation <- LocusRelation
-        .fromOrdinalRows(domain.finiteSpace, domain.finiteSpace, rows)
+        .fromOrdinalRows(
+          domain.finiteSpace,
+          domain.finiteSpace,
+          rows.iterator.map(_.iterator)
+        )
         .left
         .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
       searchlight <- LocusSearchlight
         .make(centers, relation)
         .left
         .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-      centered <- CenteredSearchlight
+      validated <- CenteredSearchlight
         .validate(searchlight)
         .left
         .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-    yield (centered, labels.toMap)
+    yield
+      new CanonicalSearchlight:
+        type S = Voxel
+        val centered: CenteredSearchlight[Voxel] = validated
+        val labels: Map[Int, String] = centerLabels.toMap
+
+  private trait CanonicalSearchlight:
+    type S
+    val centered: CenteredSearchlight[S]
+    val labels: Map[Int, String]
 
   private def featureSet(
       id: RoiId,

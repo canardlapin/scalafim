@@ -25,7 +25,7 @@ import scalafim.response.{
   SelectionAxes,
   TimeAxis
 }
-import scalafim.zarr.AsyncMemoryStore
+import zarr4s.AsyncMemoryStore
 
 import scala.concurrent.Future
 

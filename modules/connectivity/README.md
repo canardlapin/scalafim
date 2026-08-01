@@ -25,8 +25,8 @@ the source measure, ordered node keys, scientific basis provenance, selection
 details, realized density, and vertices without incident nonzero transformed
 weight. Rectangular connectivity is deliberately rejected by this v1 bridge.
 
-The module depends on `graph` for ordered keyed node bases and on `linalg` for
-portable numerical primitives. It deliberately excludes dataset backends, atlas
+`NodeAxis` owns ordered scientific node metadata; standalone graph4s owns the
+projected topology. The module deliberately excludes dataset backends, atlas
 registries, BIDS parsing, plotting, JVM IO, multivariate execution adapters,
 TVGL/SRLC, phase/HMM internals, and scheduler/runtime execution. Those belong
 in higher adapter modules once the structural contracts are stable.

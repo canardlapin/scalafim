@@ -3,24 +3,22 @@ package scalafim.fmri.threshold
 import scalafim.image.{
   GridCompatibility,
   Mask,
-  NArrayUtil,
+  PrimitiveBuffers,
   NeuroSpace,
   NeuroVol,
-  StructuralCompatibilityVoxel,
   VolumeDomain
 }
 import scalafim.locus.{
-  FiniteSpace,
+  DomainFactory,
+  FiniteDomain,
   Injection,
   Region,
   Selection,
-  SpaceKey,
-  TotalMap
+  TotalMap,
+  mapping
 }
 
-sealed trait ThresholdActiveVoxel
-
-final class MaskedField private[threshold] (
+sealed abstract class MaskedField private[threshold] (
     val space: NeuroSpace,
     val mask: NeuroVol[Boolean],
     private[threshold] val data: Array[Double],
@@ -31,6 +29,15 @@ final class MaskedField private[threshold] (
 ):
   require(data.length == volumeIndex.length, "masked field arrays must align")
   require(data.length == x.length && x.length == y.length && y.length == z.length, "coordinate arrays must align")
+
+  type FullVoxel
+  type ActiveVoxel
+
+  val fullDomain: VolumeDomain[FullVoxel]
+  val activeSpace: FiniteDomain[ActiveVoxel]
+  val activeSelection: Selection[FullVoxel]
+  val support: Region[FullVoxel]
+  val activeToFull: Injection[ActiveVoxel, FullVoxel]
 
   def size: Int = data.length
 
@@ -47,58 +54,20 @@ final class MaskedField private[threshold] (
   def volumeIndicesCopy: Array[Int] =
     volumeIndex.clone
 
-  lazy val fullDomain: VolumeDomain[StructuralCompatibilityVoxel] =
-    VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
-
-  lazy val activeSpace: FiniteSpace[ThresholdActiveVoxel] =
-    FiniteSpace
-      .make[ThresholdActiveVoxel](
-        SpaceKey.unsafe(
-          s"${fullDomain.finiteSpace.key.value}:threshold-active:${volumeIndex.mkString(",")}"
-        ),
-        size
-      )
-      .toOption
-      .get
-
-  lazy val activeSelection: Selection[StructuralCompatibilityVoxel] =
-    Selection
-      .fromOrdinals(fullDomain.finiteSpace, volumeIndex)
-      .toOption
-      .get
-
-  lazy val support: Region[StructuralCompatibilityVoxel] =
-    activeSelection.region
-
-  lazy val activeToFull: Injection[ThresholdActiveVoxel, StructuralCompatibilityVoxel] =
-    Injection
-      .validate(
-        TotalMap
-          .fromTargetOrdinals(
-            activeSpace,
-            fullDomain.finiteSpace,
-            volumeIndex
-          )
-          .toOption
-          .get
-      )
-      .toOption
-      .get
-
   def volumeIndices(maskSpaceIndices: Array[Int]): Either[ThresholdError, Array[Int]] =
     val out = new Array[Int](maskSpaceIndices.length)
     var i = 0
     while i < maskSpaceIndices.length do
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
-      val active = activeSpace.point(idx).get
-      out(i) = activeToFull.mapping(active).ordinal
+      val active = activeSpace.pointOption(idx).get
+      out(i) = activeToFull.mapping.at(active).value
       i += 1
     Right(out)
 
   def maskFromMaskSpace(indices: Array[Int], label: String = ""): Either[ThresholdError, NeuroVol[Boolean]] =
     volumeIndices(indices).map { full =>
-      Mask.fromIndices(space, NArrayUtil.fromArray(full), label)
+      Mask.fromIndices(space, PrimitiveBuffers.fromArray(full), label)
     }
 
 object MaskedField:
@@ -112,7 +81,7 @@ object MaskedField:
   ): Either[ThresholdError, MaskedField] =
     val stat = statistic.volume
     val n = stat.space.spatialDims.product
-    val flags = NArrayUtil.fillConst[Boolean](n, false)
+    val flags = PrimitiveBuffers.fillConst[Boolean](n, false)
     var i = 0
     while i < n do
       flags(i) = stat.linear(i).isFinite
@@ -178,7 +147,7 @@ object MaskedField:
     if values.isEmpty then Left(ThresholdError.EmptyMask)
     else
       Right(
-        new MaskedField(
+        make(
           stat.space.spatialSpace,
           mask,
           values,
@@ -188,3 +157,51 @@ object MaskedField:
           zBuilder.result()
         )
       )
+
+  private def make(
+      space: NeuroSpace,
+      mask: NeuroVol[Boolean],
+      data: Array[Double],
+      volumeIndex: Array[Int],
+      x: Array[Int],
+      y: Array[Int],
+      z: Array[Int]
+  ): MaskedField =
+    val packedFullDomain =
+      VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
+    type Full = packedFullDomain.S
+    val full: VolumeDomain[Full] = packedFullDomain.value
+    // A derived selection-position domain: it means nothing except relative to
+    // `full`, and `injection` below is what relates the two. Ephemeral, so no
+    // key proportional to the mask has to be built or retained.
+    val activeDomain = DomainFactory.unsafeEphemeral("threshold-active", data.length)
+    type Active = activeDomain.S
+    val active: FiniteDomain[Active] = activeDomain.value
+    val selected =
+      Selection
+        .fromOrdinals(full.finiteSpace, volumeIndex)
+        .toOption
+        .get
+    val injection =
+      Injection
+        .validate(
+          TotalMap
+            .fromTargetOrdinals(
+              active,
+              full.finiteSpace,
+              volumeIndex
+            )
+            .toOption
+            .get
+        )
+        .toOption
+        .get
+
+    new MaskedField(space, mask, data, volumeIndex, x, y, z):
+      type FullVoxel = Full
+      type ActiveVoxel = Active
+      val fullDomain: VolumeDomain[Full] = full
+      val activeSpace: FiniteDomain[Active] = active
+      val activeSelection: Selection[Full] = selected
+      val support: Region[Full] = selected.region
+      val activeToFull: Injection[Active, Full] = injection

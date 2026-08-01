@@ -33,7 +33,7 @@ class ProfileModelSuite extends munit.FunSuite:
 
   test("manifest construction rejects geometry and timing disagreement"):
     val manifest = ProfileFixtures.manifest
-    val wrongSpatial = scalafim.zarr.Shape(2L, 3L, 2L)
+    val wrongSpatial = zarr4s.Shape(2L, 3L, 2L)
       .fold(error => fail(error.message), identity)
     val geometry = VoxelGeometry(wrongSpatial, manifest.geometry.voxelToWorld)
       .fold(error => fail(error.message), identity)
@@ -66,9 +66,9 @@ class ProfileModelSuite extends munit.FunSuite:
     assertEquals(PublicationReceiptCodec.parse(rendered), Right(receipt))
 
   test("measured canonical chunk profile is valid, inspectable, and rank-local"):
-    val shape = scalafim.zarr.Shape(1200L, 72L, 96L, 96L)
+    val shape = zarr4s.Shape(1200L, 72L, 96L, 96L)
       .fold(error => fail(error.message), identity)
-    val dataType = scalafim.zarr.BuiltInDataTypes.all.find(_.name == "int16").get
+    val dataType = zarr4s.BuiltInDataTypes.all.find(_.name == "int16").get
     val sizing = CanonicalChunkProfile.balancedV01.sizing(shape, dataType)
       .fold(error => fail(error.message), identity)
     assertEquals(sizing.innerChunkBytes.toLong, 786432L)
@@ -76,7 +76,7 @@ class ProfileModelSuite extends munit.FunSuite:
     assertEquals(sizing.shardIndexBytes.toLong, 1732L)
     assertEquals(sizing.innerChunksPerShard.toVector, Vector(4L, 3L, 3L, 3L))
 
-    val badShard = scalafim.zarr.Shape(64L, 70L, 96L, 96L)
+    val badShard = zarr4s.Shape(64L, 70L, 96L, 96L)
       .fold(error => fail(error.message), identity)
     assert(CanonicalChunkProfile(
       "invalid",

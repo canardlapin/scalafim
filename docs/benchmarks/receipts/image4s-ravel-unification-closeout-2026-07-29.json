@@ -1,0 +1,125 @@
+{
+  "capturedOn": "2026-07-29",
+  "schema": "scalafim-image4s-ravel-unification-closeout-v1",
+  "commands": {
+    "compileAll": "sbt -J-Xmx4G -Dscalafim.ravel.build=/Users/bbuchsbaum/code/scala/ravel -Dreframe4s.ravel.build=/Users/bbuchsbaum/code/scala/ravel compileAll",
+    "testAll": "sbt -J-Xmx4G -Dscalafim.ravel.build=/Users/bbuchsbaum/code/scala/ravel -Dreframe4s.ravel.build=/Users/bbuchsbaum/code/scala/ravel testAll",
+    "jmh": "sbt -J-Xmx4G -Dscalafim.ravel.build=/Users/bbuchsbaum/code/scala/ravel -Dreframe4s.ravel.build=/Users/bbuchsbaum/code/scala/ravel 'registrationBenchJVM/Jmh/run -wi 1 -i 3 -f 1 -t 1 -w 300ms -r 300ms -p side=64 -prof gc .*HalfFlowImageKernelBenchmark.(primitiveSelfComposeInto|ravelWorkspaceSelfComposeInto).*'",
+    "structuralVerifier": "node scripts/verify-image-unification.mjs --scalafim /Users/bbuchsbaum/code/scala/scalafim --report-only",
+    "forbiddenSymbolScan": "rg -n '\\bnarr\\b|\\bNArray\\b|NArrayUtil|toNArray' /Users/bbuchsbaum/code/scala/scalafim --glob '*.scala' --glob 'build.sbt'"
+  },
+  "environment": {
+    "architecture": "aarch64",
+    "javaVmUsedBySbt": "OpenJDK 64-Bit Server VM 25.0.1",
+    "operatingSystem": "macOS 14.3"
+  },
+  "representation": {
+    "denseStorageOwner": "Ravel",
+    "denseImageOwner": "image4s.Sampled",
+    "neuroVolRuntimeRepresentation": "opaque alias over ranked image4s.Sampled",
+    "neuroVecRuntimeRepresentation": "opaque alias over ranked image4s.Sampled",
+    "scalaFimNdarrayOwner": false,
+    "narrDependency": false,
+    "nArrayReferences": 0
+  },
+  "verification": {
+    "compileAll": "pass",
+    "testAll": "pass",
+    "imageJVM": {
+      "passed": 243,
+      "failed": 0
+    },
+    "imageJS": {
+      "passed": 232,
+      "failed": 0
+    },
+    "registrationJVM": {
+      "passed": 98,
+      "failed": 0
+    },
+    "registrationJS": {
+      "passed": 98,
+      "failed": 0
+    },
+    "image4sCoreJVM": {
+      "passed": 21,
+      "failed": 0
+    },
+    "image4sCoreJS": {
+      "passed": 21,
+      "failed": 0
+    },
+    "ravelCanonicalAccessJVM": {
+      "passed": 6,
+      "failed": 0
+    },
+    "ravelCanonicalAccessJS": {
+      "passed": 6,
+      "failed": 0
+    },
+    "diffCheck": "pass"
+  },
+  "sameRunPerformanceCourt": {
+    "correctnessOracle": "exact validity and component values at every logical voxel",
+    "forks": 1,
+    "warmups": 1,
+    "measurements": 3,
+    "threads": 1,
+    "side": 64,
+    "operationsPerInvocation": 128,
+    "primitiveSelfComposeInto": {
+      "millisecondsPerOperation": 12.693,
+      "allocationBytesPerOperation": 54.375,
+      "gcCollections": 0
+    },
+    "ravelWorkspaceSelfComposeInto": {
+      "millisecondsPerOperation": 10.840,
+      "allocationBytesPerOperation": 54.292,
+      "gcCollections": 0
+    },
+    "ravelToPrimitiveTimeRatio": 0.8540140234775073,
+    "ravelSpeedup": 1.170940959409594,
+    "ravelPercentFaster": 14.598597652249268,
+    "performanceGate": "pass",
+    "allocationGate": "pass"
+  },
+  "canonicalAccessMicrocourt": {
+    "logicalReads": 22440,
+    "primitiveNanosecondsPerSample": 0.717,
+    "ravelCanonicalNanosecondsPerSample": 0.719,
+    "primitiveTotalAllocationBytes": 40,
+    "ravelCanonicalTotalAllocationBytes": 40,
+    "ravelToPrimitiveTimeRatio": 1.00278940027894,
+    "gateMaximumRatio": 3.0
+  },
+  "structuralVerifier": {
+    "filesScanned": 1084,
+    "passed": false,
+    "findingCounts": {
+      "temporary-source-composite": 1
+    },
+    "rawAccessBySourceKind": {},
+    "rawAccessByModule": {}
+  },
+  "interpretation": {
+    "implementationStatus": "complete",
+    "denseHierarchyStatus": "unified",
+    "performanceStatus": "pass",
+    "releaseStatus": "pending immutable dependency coordinates",
+    "remainingReleaseFinding": "ScalaFIM still resolves image4s through a mutable source composite",
+    "noCodeOrPerformanceBlockerRemains": true
+  },
+  "repository": {
+    "scalaFimHead": "6b5d4993d9acc59873e00eed5211b56728968a78",
+    "ravelHead": "942ce831979d3d487bc569ed5c24b02ce65fc922",
+    "reframe4sHead": null,
+    "workingTreePolicy": "shared dirty checkouts; source hashes identify the measured files"
+  },
+  "sourceSha256": {
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowImageKernelBenchmark.scala": "8a170341303e7da3d570bb9c96e3ab8e5d6753f31df7efc10b2ece31397a3012",
+    "build.sbt": "86281563d2b0ec4d1d568766ebf7d26e849a7b658e876e10b54809863f967f17",
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroVol.scala": "4627a368f744ca7d0953f7c2fc8933433eef4a2f7a1f1f0be4b6cfb0c016e7a2",
+    "modules/image/shared/src/main/scala/scalafim/image/NeuroVec.scala": "beb353566ad0e5169873f0084751f990fb7ac5862ce7e0dbcd6c15928e7d86ee",
+    "modules/image/shared/src/main/scala/scalafim/image/PrimitiveBuffers.scala": "8a2c0fafcf5c0a1290090b17a9469c3e2bf4a1a575aa331e62decd4a97589e45"
+  }
+}

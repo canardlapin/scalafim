@@ -1,6 +1,5 @@
 package scalafim.interop.archive.lna
 
-import narr.NArray
 import scalafim.archive.{CanonicalValue, RepresentationMetadata, RunLabel}
 import scalafim.archive.lna.{DatasetRole, Payload}
 import scalafim.image.NeuroSpace
@@ -266,7 +265,7 @@ private[lna] object TemporalDctLnaFixtures:
     val source =
       ResponseBlock
         .copyFromRowMajor(
-          NArray[Double](
+          Array[Double](
             2.0, 4.0, -1.0,
             4.0, 8.0, 3.0,
             7.0, 5.0, 9.0,

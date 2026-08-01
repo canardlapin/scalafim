@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.locus.{FiniteSpace, Region, Relation, Selection, SpaceKey, TotalMap}
+import scalafim.locus.{Region, Relation, Selection, TotalMap, mapping}
 import scalafim.surface.{
   Hemisphere,
   SurfaceField,
@@ -50,24 +50,27 @@ class DomainLocusSuite extends munit.FunSuite:
       Right(SpatialDemand.Rows(Vector(3, 1)))
     )
 
-  test("structured locus demands reject another same-sized semantic domain"):
-    val domain = volumeDomain("native")
-    val locus = domain.locus
-    val foreign =
-      FiniteSpace
-        .make[locus.S](SpaceKey.unsafe("foreign-same-shape"), locus.space.size)
-        .fold(error => fail(error.message), identity)
-    val region =
+  test("same-sized semantic domains retain distinct unforgeable locus owners"):
+    val locus = volumeDomain("native").locus
+    val foreign = volumeDomain("foreign-same-shape").locus
+    val nativeRegion =
       Region
-        .fromOrdinals(foreign, Vector(1, 3))
+        .fromOrdinals(locus.space, Vector(1, 3))
         .fold(error => fail(error.message), identity)
-    val selection =
+    val foreignSelection =
       Selection
-        .fromOrdinals(foreign, Vector(3, 1))
+        .fromOrdinals(foreign.space, Vector(3, 1))
         .fold(error => fail(error.message), identity)
 
-    assert(locus.regionDemand(region).isLeft)
-    assert(locus.selectionDemand(selection).isLeft)
+    assert(!locus.space.sameRuntimeOwnerAs(foreign.space))
+    assertEquals(
+      locus.regionDemand(nativeRegion).map(_.spatial),
+      Right(SpatialDemand.Roi(Vector(1, 3)))
+    )
+    assertEquals(
+      foreign.selectionDemand(foreignSelection).map(_.spatial),
+      Right(SpatialDemand.Rows(Vector(3, 1)))
+    )
 
   test("exact maps, crisp relations, and sampled operators remain distinct contracts"):
     val domain = volumeDomain("native")

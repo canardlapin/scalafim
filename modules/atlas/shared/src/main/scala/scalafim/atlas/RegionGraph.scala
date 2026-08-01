@@ -1,9 +1,9 @@
 package scalafim.atlas
 
+import cats.Hash
+import graph4s.{Graph, Link}
+import graph4s.data.{EdgeField, WeightedGraph}
 import scalafim.image.Indexing
-import scalafim.graph.Graph
-import scalafim.graph.UndirectedGraph
-import scalafim.graph.VertexBasis
 import scalafim.locus.{IndexedField, Relation}
 
 enum VoxelConnectivity:
@@ -30,13 +30,35 @@ object RegionGraph:
   def topology(
       atlas: VolumeAtlas,
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
-  ): UndirectedGraph[RegionId, AtlasRegionMetadata, Int] =
-    val basis = VertexBasis.from(atlas.regions.regions.map(region => region.id -> region)).toOption.get
+  ): WeightedGraph[RegionId, Int] =
+    given Hash[RegionId] =
+      Hash.by(_.value)
+    val vertices = atlas.regions.ids
     val edges = adjacency(atlas, connectivity).map(edge => (edge.from.id, edge.to.id, edge.weight))
-    Graph.undirected(basis, edges) match
-      case Right(graph) => graph
+    Graph
+      .of(vertices, edges.map((from, to, _) => Link(from, to)))
+      .toEither match
+      case Right(graph) =>
+        val weights =
+          edges.map: (from, to, weight) =>
+            val key =
+              if from.value < to.value then from.value -> to.value
+              else to.value -> from.value
+            key -> weight
+        .toMap
+        WeightedGraph.from:
+          EdgeField.total(graph): edge =>
+            val key =
+              if edge.first.value < edge.second.value then
+                edge.first.value -> edge.second.value
+              else
+                edge.second.value -> edge.first.value
+            weights(key)
       case Left(errors) =>
-        throw new IllegalStateException(s"validated atlas adjacency violated graph invariants: ${errors.message}")
+        throw new IllegalStateException(
+          s"validated atlas adjacency violated graph4s invariants: " +
+            errors.toNonEmptyList.toList.mkString(", ")
+        )
 
   def adjacency(atlas: VolumeAtlas, connectivity: VoxelConnectivity = VoxelConnectivity.Connect6): Vector[RegionEdge] =
     contactCounts(atlas, connectivity).map: contact =>
@@ -97,24 +119,25 @@ object RegionGraph:
         atlas.space.spatialDims,
         connectivity
       )
+    // Composition is total when the shared boundary type matches, which it
+    // does here by construction: parcel -> voxel -> voxel -> parcel.
     val projected =
       quotient.parcellation.quotientRelation.converse
         .andThen(voxelRelation)
-        .toOption
-        .get
         .andThen(quotient.parcellation.quotientRelation)
-        .toOption
-        .get
     val withoutSelf =
+      val rows =
+        Iterator.tabulate(quotient.parcellation.parcels.size): source =>
+          projected
+            .row(quotient.parcellation.parcels.pointOption(source).get)
+            .ordinalsInDomainOrder
+            .filter(_ != source)
+            .iterator
       Relation
         .fromOrdinalRows(
           quotient.parcellation.parcels,
           quotient.parcellation.parcels,
-          Array.tabulate(quotient.parcellation.parcels.size): source =>
-            projected
-              .row(quotient.parcellation.parcels.point(source).get)
-              .ordinalsInDomainOrder
-              .filter(_ != source)
+          rows
         )
         .toOption
         .get
@@ -125,7 +148,7 @@ object RegionGraph:
       val regionIds: IndexedField[P, RegionId] = quotient.regionIds
 
   private def ambientRelation[X](
-      space: scalafim.locus.FiniteSpace[X],
+      space: scalafim.locus.FiniteDomain[X],
       dims: Vector[Int],
       connectivity: VoxelConnectivity
   ): Relation[X, X] =
@@ -145,7 +168,10 @@ object RegionGraph:
           then
             targets += Indexing.gridToIndex3D(dims, x, y, z)
         targets.result()
-    Relation.fromOrdinalRows(space, space, rows).toOption.get
+    Relation
+      .fromOrdinalRows(space, space, rows.iterator.map(_.iterator))
+      .toOption
+      .get
 
   private def allOffsets(
       connectivity: VoxelConnectivity

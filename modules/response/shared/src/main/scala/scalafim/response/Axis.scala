@@ -1,6 +1,6 @@
 package scalafim.response
 
-import narr.NArray
+import ravel.{Array1, NDArray, Shape}
 
 sealed trait TimeAxis
 sealed trait SampleAxis
@@ -39,21 +39,21 @@ enum DuplicatePolicy:
 final class OrderedIndices[A] private (
     val domain: DomainId[A],
     val domainSize: Int,
-    private[response] val primitiveValues: NArray[Int]
+    private[response] val primitiveValues: Array1[Int]
 ):
   def size: Int =
-    primitiveValues.length
+    primitiveValues.size
 
   def apply(position: Int): AxisIndex[A] =
     AxisIndex.unsafe(primitiveValues(position))
 
   def values: Vector[Int] =
-    Vector.tabulate(size)(primitiveValues.apply)
+    Vector.tabulate(size)(i => primitiveValues(i))
 
   def indexOfDuplicate: Option[Int] =
     val seen = scala.collection.mutable.HashSet.empty[Int]
     var position = 0
-    while position < primitiveValues.length do
+    while position < primitiveValues.size do
       val value = primitiveValues(position)
       if seen.contains(value) then return Some(value)
       seen += value
@@ -66,11 +66,11 @@ final class OrderedIndices[A] private (
         if this eq that then true
         else if domain.value != that.domain.value ||
             domainSize != that.domainSize ||
-            primitiveValues.length != that.primitiveValues.length
+            primitiveValues.size != that.primitiveValues.size
         then false
         else
           var index = 0
-          while index < primitiveValues.length do
+          while index < primitiveValues.size do
             if primitiveValues(index) != that.primitiveValues(index) then return false
             index += 1
           true
@@ -80,7 +80,7 @@ final class OrderedIndices[A] private (
   override def hashCode(): Int =
     var hash = 31 * domain.value.hashCode + domainSize
     var index = 0
-    while index < primitiveValues.length do
+    while index < primitiveValues.size do
       hash = 31 * hash + primitiveValues(index)
       index += 1
     hash
@@ -98,7 +98,6 @@ object OrderedIndices:
     if domainSize <= 0 then Left(IndexError.InvalidDomainSize(domainSize))
     else if values.isEmpty then Left(IndexError.Empty(domain.value))
     else
-      val copied = NArray.ofSize[Int](values.length)
       val seen = scala.collection.mutable.HashSet.empty[Int]
       var position = 0
       while position < values.length do
@@ -108,9 +107,14 @@ object OrderedIndices:
         if duplicates == DuplicatePolicy.Reject && seen.contains(value) then
           return Left(IndexError.Duplicate(value))
         seen += value
-        copied(position) = value
         position += 1
-      Right(new OrderedIndices(domain, domainSize, copied))
+      Right(
+        new OrderedIndices(
+          domain,
+          domainSize,
+          NDArray.fromSeq(Shape(values.length), values)
+        )
+      )
 
   def all[A](
       domain: DomainId[A],
@@ -118,17 +122,13 @@ object OrderedIndices:
   ): Either[IndexError, OrderedIndices[A]] =
     if domainSize <= 0 then Left(IndexError.InvalidDomainSize(domainSize))
     else
-      val values = NArray.ofSize[Int](domainSize)
-      var index = 0
-      while index < domainSize do
-        values(index) = index
-        index += 1
+      val values = NDArray.tabulate[Int](domainSize)(identity)
       Right(new OrderedIndices(domain, domainSize, values))
 
   private[response] def fromOwned[A](
       domain: DomainId[A],
       domainSize: Int,
-      values: NArray[Int]
+      values: Array1[Int]
   ): OrderedIndices[A] =
     new OrderedIndices(domain, domainSize, values)
 

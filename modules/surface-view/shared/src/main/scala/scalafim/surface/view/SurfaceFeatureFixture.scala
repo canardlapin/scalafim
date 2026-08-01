@@ -22,7 +22,7 @@ object SurfaceFeatureFixture:
     val pial = geometry(2.0, SurfaceKind.Pial)
     val space = NeuroSpace(Vector(5, 5, 5))
     val volume = NeuroVol.fromLinear(
-      NArrayUtil.tabulate[Double](125): index =>
+      PrimitiveBuffers.tabulate[Double](125): index =>
         val grid = space.indexToGrid3D(index)
         grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
       space,

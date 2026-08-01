@@ -17,14 +17,14 @@ class ConnectivityLocusSuite extends munit.FunSuite:
     val locus = nodes.locus
     val point = locus.pointFor(NodeId.unsafe("b")).get
 
-    assertEquals(point.ordinal, 1)
+    assertEquals(point.value, 1)
     assertEquals(locus.nodeAt(point).id.value, "b")
     assertEquals(
       locus.space.points.map(locus.nodeAt).map(_.id.value).toVector,
       Vector("a", "b", "c")
     )
     assert(
-      !nodes.locus.space.sameIdentityAs(
+      !nodes.locus.space.sameRuntimeOwnerAs(
         axis("x", "y", "z").locus.space
       )
     )
@@ -41,10 +41,10 @@ class ConnectivityLocusSuite extends munit.FunSuite:
         .undirected(nodes, VectorizationOrder.AriadneCompatible)
         .toOption
         .get
-    val first = native.locus.space.point(0).get
+    val first = native.locus.space.pointOption(0).get
 
     assertEquals(native.locus.edgeAt(first), native.edge(0))
-    assert(!native.locus.space.sameIdentityAs(ariadne.locus.space))
+    assert(!native.locus.space.sameRuntimeOwnerAs(ariadne.locus.space))
     assertEquals(
       native.locus.space.points.map(native.locus.edgeAt).toVector,
       native.edges

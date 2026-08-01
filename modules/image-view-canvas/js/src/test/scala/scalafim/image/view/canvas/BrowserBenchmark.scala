@@ -5,6 +5,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.Uint8ClampedArray
 import intaglio.*
 import intaglio.canvas.*
+import ravel.NDArray as RavelArray
 import scalafim.image.*
 import scalafim.image.view.*
 
@@ -203,18 +204,18 @@ object BrowserBenchmark:
     val space = VolumeSpace(NeuroSpace(Vector(80, 80, 64)))
     val volume = syntheticVolume(space, "browser-nonlinear")
     val grid = GridSpec.fromVolumeSpace(space)
-    val field = NDArray(
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { index =>
-        val component = index / grid.nVoxels
-        val linear = index % grid.nVoxels
-        val coordinate = Indexing.indexToGrid3D(grid.shape, linear)
+    val field =
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (x, y, _, component) =>
         component match
-          case 0 => 0.35 * math.sin(coordinate.y.toDouble / 9.0)
-          case 1 => 0.25 * math.cos(coordinate.x.toDouble / 11.0)
+          case 0 => 0.35 * math.sin(y.toDouble / 9.0)
+          case 1 => 0.25 * math.cos(x.toDouble / 11.0)
           case _ => 0.0
-      },
-      grid.dims :+ 3
-    )
+      }
     val morphism = DenseFieldMorphism.displacement(
       SpatialDomainId("source"),
       SpatialDomainId("reference"),
@@ -237,7 +238,7 @@ object BrowserBenchmark:
 
   private def syntheticVolume(space: VolumeSpace, label: String): NeuroVol[Double] =
     val shape = space.shape
-    val data = NArrayUtil.tabulate[Double](shape.product) { index =>
+    val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
       val x = index % shape.x
       val y = (index / shape.x) % shape.y
       val z = index / (shape.x * shape.y)

@@ -1,6 +1,8 @@
 package scalafim.registration
 
-import narr.NArray
+import ravel.MutableNDArray as MutableRavelArray
+import ravel.Rank
+import ravel.Shape
 import scalafim.image.*
 
 final case class Velocity[A] private (
@@ -13,14 +15,17 @@ object Velocity:
     if field.grid != frame.grid then Left(RegistrationError.GridMismatch("velocity"))
     else if field.kind != DenseVectorFieldKind.Displacement then
       Left(RegistrationError.InvalidField("velocity kind"))
-    else if !allFinite(field.values.data) then Left(RegistrationError.InvalidField("velocity"))
+    else if !allFinite(field) then Left(RegistrationError.InvalidField("velocity"))
     else Right(new Velocity(frame, field))
 
-  private def allFinite(values: NArray[Double]): Boolean =
+  private def allFinite(field: DenseVectorField): Boolean =
     var finite = true
     var index = 0
-    while index < values.length && finite do
-      finite = values(index).isFinite
+    while index < field.grid.nVoxels && finite do
+      var component = 0
+      while component < 3 && finite do
+        finite = field.linearComponent(index, component).isFinite
+        component += 1
       index += 1
     finite
 
@@ -69,29 +74,20 @@ object PairedFlowWorkspace:
     new PairedFlowWorkspace(frame, buffers(frame.grid), buffers(frame.grid), inverse)
 
   private def buffers(grid: GridSpec): PairedFlowBuffers =
-    val firstValues = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
-    val secondValues = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
+    val shape = Shape(grid.nVoxels * 3)
     PairedFlowBuffers(
-      DenseVectorField(
-        grid,
-        NDArray(firstValues, grid.dims :+ 3),
-        DenseVectorFieldKind.SourceCoordinates
-      ),
-      NArrayUtil.ofSize[Boolean](grid.nVoxels),
-      DenseVectorField(
-        grid,
-        NDArray(secondValues, grid.dims :+ 3),
-        DenseVectorFieldKind.SourceCoordinates
-      ),
-      NArrayUtil.ofSize[Boolean](grid.nVoxels),
+      MutableRavelArray.zeros[Double, Rank[1]](shape),
+      PrimitiveBuffers.ofSize[Boolean](grid.nVoxels),
+      MutableRavelArray.zeros[Double, Rank[1]](shape),
+      PrimitiveBuffers.ofSize[Boolean](grid.nVoxels),
       DenseFieldSampler(grid)
     )
 
 private[registration] final case class PairedFlowBuffers(
-    first: DenseVectorField,
-    firstValid: NArray[Boolean],
-    second: DenseVectorField,
-    secondValid: NArray[Boolean],
+    first: MutableRavelArray[Double, Rank[1]],
+    firstValid: Array[Boolean],
+    second: MutableRavelArray[Double, Rank[1]],
+    secondValid: Array[Boolean],
     sampler: DenseFieldSampler
 )
 
@@ -102,10 +98,8 @@ object PairedScalingAndSquaring:
   ): Either[RegistrationError, PairedFlow[A]] =
     expHalfPairWith(velocity, PairedFlowWorkspace(velocity.frame), config)
 
-  /** Writes through reusable ping-pong buffers.
-    *
-    * The returned maps borrow the workspace and remain valid only until the
-    * next call using the same workspace.
+  /** Reuses canonical Ravel ping-pong storage while returning independently
+    * owned immutable maps.
     */
   def expHalfPairWith[A](
       velocity: Velocity[A],
@@ -130,8 +124,7 @@ object PairedScalingAndSquaring:
       config: FlowConfig
   ): Either[RegistrationError, PairedFlow[A]] =
     val grid = velocity.frame.grid
-    val values = velocity.field.values.data
-    val maximumNorm = maximumVectorNorm(values, grid.nVoxels)
+    val maximumNorm = maximumVectorNorm(velocity.field)
     val maximumGradient = maximumGradientBound(velocity.field, workspace.inverseAffine)
     val displacementDepth = requiredDepth(0.5 * maximumNorm, config.maximumInitialDisplacementMm)
     val gradientDepth = requiredDepth(0.5 * maximumGradient, config.maximumInitialGradient)
@@ -140,21 +133,21 @@ object PairedScalingAndSquaring:
       Left(RegistrationError.SquaringDepthExceeded(depth, config.maximumSquaringDepth))
     else
       val scale = 1.0 / math.pow(2.0, depth.toDouble + 1.0)
-      initialMapInto(grid, values, scale, workspace.plus)
-      initialMapInto(grid, values, -scale, workspace.minus)
-      val squaredPlus = square(workspace.plus, depth)
-      val squaredMinus = square(workspace.minus, depth)
+      initialMapInto(grid, velocity.field, scale, workspace.plus)
+      initialMapInto(grid, velocity.field, -scale, workspace.minus)
+      val squaredPlus = square(grid, workspace.plus, depth)
+      val squaredMinus = square(grid, workspace.minus, depth)
       val plusPull = DensePull.unsafe(
         velocity.frame,
         velocity.frame,
         squaredPlus.field,
-        FieldValidity.Mask(squaredPlus.valid)
+        FieldValidity.copyMask(squaredPlus.valid)
       )
       val minusPull = DensePull.unsafe(
         velocity.frame,
         velocity.frame,
         squaredMinus.field,
-        FieldValidity.Mask(squaredMinus.valid)
+        FieldValidity.copyMask(squaredMinus.valid)
       )
       val pair = InversePair.unsafe(plusPull, minusPull)
       Right(
@@ -176,42 +169,81 @@ object PairedScalingAndSquaring:
 
   private def initialMapInto(
       grid: GridSpec,
-      velocity: NArray[Double],
+      velocity: DenseVectorField,
       scale: Double,
       buffers: PairedFlowBuffers
   ): Unit =
-    val coordinates = buffers.first.values.data
-    DenseFieldKernels.identityInto(grid, coordinates, buffers.firstValid)
+    val values = buffers.first
+    val nx = grid.extentX
+    val ny = grid.extentY
+    val nz = grid.extentZ
+    var z = 0
+    while z < nz do
+      var y = 0
+      while y < ny do
+        var x = 0
+        while x < nx do
+          val voxelBase = 3 * (z + nz * (y + ny * x))
+          var component = 0
+          while component < 3 do
+            val identity =
+              grid.affineElement(component, 0) * x.toDouble +
+                grid.affineElement(component, 1) * y.toDouble +
+                grid.affineElement(component, 2) * z.toDouble +
+                grid.affineElement(component, 3)
+            values(voxelBase + component) =
+              identity + scale * velocity.flatValue(voxelBase + component)
+            component += 1
+          x += 1
+        y += 1
+      z += 1
     var index = 0
-    while index < coordinates.length do
-      coordinates(index) += scale * velocity(index)
+    while index < grid.nVoxels do
+      buffers.firstValid(index) = true
       index += 1
 
-  private def square(buffers: PairedFlowBuffers, depth: Int): DensePullResult =
-    var currentField = buffers.first
+  private def square(
+      grid: GridSpec,
+      buffers: PairedFlowBuffers,
+      depth: Int
+  ): DensePullResult =
+    var currentValues = buffers.first
     var currentValid = buffers.firstValid
-    var destinationField = buffers.second
+    var destinationValues = buffers.second
     var destinationValid = buffers.secondValid
     var iteration = 0
     while iteration < depth do
-      DenseFieldKernels.composePullInto(
-        currentField,
-        currentField,
-        destinationField.values.data,
+      HalfFlowKernels.composeSelfPullInto(
+        grid,
+        currentValues,
+        currentValid,
+        destinationValues,
         destinationValid,
         buffers.sampler,
-        FieldValidity.Mask(currentValid),
-        FieldValidity.Mask(currentValid),
         CoordinateMapOutside.Identity
       )
-      val previousField = currentField
+      val previousValues = currentValues
       val previousValid = currentValid
-      currentField = destinationField
+      currentValues = destinationValues
       currentValid = destinationValid
-      destinationField = previousField
+      destinationValues = previousValues
       destinationValid = previousValid
       iteration += 1
-    DensePullResult(currentField, currentValid)
+    val immutableValues =
+      currentValues
+        .freezeCopy()
+        .reshapeView(
+          Shape(grid.extentX, grid.extentY, grid.extentZ, 3)
+        )
+    val immutableValid = PrimitiveBuffers.ofSize[Boolean](grid.nVoxels)
+    var index = 0
+    while index < grid.nVoxels do
+      immutableValid(index) = currentValid(index)
+      index += 1
+    DensePullResult(
+      DenseVectorField(grid, immutableValues, DenseVectorFieldKind.SourceCoordinates),
+      immutableValid
+    )
 
   private def requiredDepth(value: Double, limit: Double): Int =
     var depth = 0
@@ -221,13 +253,13 @@ object PairedScalingAndSquaring:
       depth += 1
     depth
 
-  private def maximumVectorNorm(values: NArray[Double], n: Int): Double =
+  private def maximumVectorNorm(field: DenseVectorField): Double =
     var maximum = 0.0
     var index = 0
-    while index < n do
-      val x = values(index)
-      val y = values(index + n)
-      val z = values(index + 2 * n)
+    while index < field.grid.nVoxels do
+      val x = field.linearComponent(index, 0)
+      val y = field.linearComponent(index, 1)
+      val z = field.linearComponent(index, 2)
       maximum = math.max(maximum, math.sqrt(x * x + y * y + z * z))
       index += 1
     maximum
@@ -237,12 +269,9 @@ object PairedScalingAndSquaring:
     val grid = field.grid
     if grid.shape.x < 3 || grid.shape.y < 3 || grid.shape.z < 3 then 0.0
     else
-      val values = field.values.data
       val nx = grid.shape.x
       val ny = grid.shape.y
       val nz = grid.shape.z
-      val plane = nx * ny
-      val n = grid.nVoxels
       var maximum = 0.0
       var z = 1
       while z < nz - 1 do
@@ -250,14 +279,12 @@ object PairedScalingAndSquaring:
         while y < ny - 1 do
           var x = 1
           while x < nx - 1 do
-            val index = x + nx * y + plane * z
             var squared = 0.0
             var component = 0
             while component < 3 do
-              val offset = component * n
-              val dx = 0.5 * (values(offset + index + 1) - values(offset + index - 1))
-              val dy = 0.5 * (values(offset + index + nx) - values(offset + index - nx))
-              val dz = 0.5 * (values(offset + index + plane) - values(offset + index - plane))
+              val dx = 0.5 * (field(x + 1, y, z, component) - field(x - 1, y, z, component))
+              val dy = 0.5 * (field(x, y + 1, z, component) - field(x, y - 1, z, component))
+              val dz = 0.5 * (field(x, y, z + 1, component) - field(x, y, z - 1, component))
               var axis = 0
               while axis < 3 do
                 val derivative = dx * inverse(0, axis) + dy * inverse(1, axis) + dz * inverse(2, axis)
@@ -270,7 +297,7 @@ object PairedScalingAndSquaring:
         z += 1
       maximum
 
-  private def countValid(values: NArray[Boolean]): Int =
+  private def countValid(values: Array[Boolean]): Int =
     var count = 0
     var index = 0
     while index < values.length do

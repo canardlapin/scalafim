@@ -1,16 +1,16 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, NArrayUtil}
+import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
 
 class MotionMetricsSuite extends munit.FunSuite:
 
   private def vec1x1x1(values: Vector[Double]): NeuroVec[Double] =
-    val data = NArrayUtil.tabulate[Double](values.length)(values)
+    val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
     NeuroVec.fromLinear(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
 
   private def maskAll(space: NeuroSpace): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
 
   test("framewise displacement matches volregger convention") {
     val trace = MotionTrace.unsafe(VolreggerFixtures.fdTrace)

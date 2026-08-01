@@ -1,35 +1,28 @@
 package scalafim.image
 
-import narr.NArray
 import scalafim.locus.*
-import scalafim.locus.laws.LocusDifferential
 
 class VolumeDomainSuite extends munit.FunSuite:
-  private sealed trait S
-
   private val volumeSpace =
     VolumeSpace(NeuroSpace(Vector(2, 2, 1)))
 
   test("semantic keys distinguish equal-geometry volume domains at runtime"):
     val first =
-      VolumeDomain.semantic[S](SpaceKey.unsafe("subject:01:native"), volumeSpace)
+      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
     val second =
-      VolumeDomain.semantic[S](SpaceKey.unsafe("subject:02:native"), volumeSpace)
-    val voxelRegion = VoxelRegion.make(volumeSpace, NArray(0, 1)).toOption.get
-    val firstRegion = first.region(voxelRegion).toOption.get
-    val secondRegion = second.region(voxelRegion).toOption.get
+      VolumeDomain.semantic(SpaceKey.unsafe("subject:02:native"), volumeSpace).value
 
-    assert(firstRegion.union(secondRegion).isLeft)
+    assert(!first.finiteSpace.sameRuntimeOwnerAs(second.finiteSpace))
 
   test("legacy voxel regions and selections are backed by locus semantics"):
-    val domain = VolumeDomain.structuralCompatibility(volumeSpace)
-    val voxelRegion = VoxelRegion.make(volumeSpace, NArray(3, 1, 1)).toOption.get
-    val voxelSelection = VoxelSelection.make(volumeSpace, NArray(3, 1)).toOption.get
+    val domain = VolumeDomain.structuralCompatibility(volumeSpace).value
+    val voxelRegion = VoxelRegion.make(volumeSpace, Array(3, 1, 1)).toOption.get
+    val voxelSelection = VoxelSelection.make(volumeSpace, Array(3, 1)).toOption.get
     val region = domain.region(voxelRegion).toOption.get
     val selection = domain.selection(voxelSelection).toOption.get
 
     assertEquals(
-      LocusDifferential.region(region).members,
+      region.ordinalsInDomainOrder.toSet,
       Set(1, 3)
     )
     assertEquals(selection.ordinals.toVector, Vector(3, 1))
@@ -38,13 +31,16 @@ class VolumeDomainSuite extends munit.FunSuite:
 
   test("volume values expose a pure indexed field without copying geometry policy"):
     val domain =
-      VolumeDomain.semantic[S](SpaceKey.unsafe("atlas:mni:test"), volumeSpace)
+      VolumeDomain.semantic(SpaceKey.unsafe("atlas:mni:test"), volumeSpace).value
     val volume =
-      NeuroVol.fromLinear(NArray(10, 11, 12, 13), volumeSpace.toNeuroSpace)
+      NeuroVol.fromLinear(Array(10, 11, 12, 13), volumeSpace.toNeuroSpace)
     val field = domain.indexedField(volume).toOption.get
     val even = domain.supportWhere(field)(_ % 2 == 0).toOption.get
 
-    assertEquals(domain.finiteSpace.points.map(field.apply).toVector, Vector(10, 11, 12, 13))
+    assertEquals(
+      domain.finiteSpace.points.map(point => field.at(point)).toVector,
+      Vector(10, 11, 12, 13)
+    )
     assertEquals(even.ordinalsInDomainOrder.toVector, Vector(0, 2))
 
   test("volume adapters reject an exact-grid mismatch"):
@@ -65,8 +61,8 @@ class VolumeDomainSuite extends munit.FunSuite:
         )
       )
     val domain =
-      VolumeDomain.semantic[S](SpaceKey.unsafe("subject:01:native"), volumeSpace)
-    val wrong = VoxelRegion.make(translated, NArray(0)).toOption.get
+      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
+    val wrong = VoxelRegion.make(translated, Array(0)).toOption.get
 
     assert(domain.region(wrong).isLeft)
 
@@ -81,5 +77,5 @@ class VolumeDomainSuite extends munit.FunSuite:
       Vector(0, 3)
     )
 
-  private def intValues(values: NArray[Int]): Vector[Int] =
-    Vector.tabulate(values.length)(values.apply)
+  private def intValues(values: ravel.Array1[Int]): Vector[Int] =
+    Vector.tabulate(values.size)(i => values(i))

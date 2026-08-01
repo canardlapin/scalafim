@@ -1,7 +1,6 @@
 package scalafim.atlas.io
 
 import java.nio.file.Path
-import narr.NArray
 import scalafim.atlas.*
 import scalafim.image.*
 import scalafim.image.io.Nifti
@@ -11,7 +10,7 @@ object AtlasLabelMaps:
     fromDouble(Nifti.readVol(path), label)
 
   def fromDouble(vol: NeuroVol[Double], label: String = ""): NeuroVol[Int] =
-    val out = NArray.ofSize[Int](vol.values.data.length)
+    val out = Array.ofDim[Int](vol.values.size)
     var i = 0
     while i < out.length do
       val value = vol.linear(i)

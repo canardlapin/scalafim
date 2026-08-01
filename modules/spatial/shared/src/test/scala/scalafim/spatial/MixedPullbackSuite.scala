@@ -1,7 +1,7 @@
 package scalafim.spatial
 
-import narr.NArray
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, Indexing, NArrayUtil, NDArray, NeuroSpace, Resample, SpatialDomainId}
+import ravel.NDArray as RavelArray
+import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix}
 import scalafim.surface.*
 
@@ -70,13 +70,16 @@ class MixedPullbackSuite extends munit.FunSuite:
   private def warp(name: String, source: Domain, target: Domain, sourceX: Vector[Double]): Morphism =
     val grid = GridSpec.identity(Vector(6, 1, 1))
     val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { index =>
-        val component = index / grid.nVoxels
-        val coordinate = Indexing.indexToGrid3D(grid.shape, index % grid.nVoxels)
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (x, y, z, component) =>
         component match
-          case 0 => sourceX(coordinate.x)
-          case 1 => coordinate.y.toDouble
-          case _ => coordinate.z.toDouble
+          case 0 => sourceX(x)
+          case 1 => y.toDouble
+          case _ => z.toDouble
       }
     val dense =
       imageValue(
@@ -84,7 +87,7 @@ class MixedPullbackSuite extends munit.FunSuite:
           SpatialDomainId(source.id.value),
           SpatialDomainId(target.id.value),
           grid,
-          NDArray(data, grid.dims :+ 3),
+          data,
           interpolation = Resample.Method.Linear
         )
       )

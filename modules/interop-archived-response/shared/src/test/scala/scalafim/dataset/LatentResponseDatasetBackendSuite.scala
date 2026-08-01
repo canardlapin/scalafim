@@ -1,7 +1,6 @@
 package scalafim.dataset
 
 import gale.linalg.DMat as GaleDMat
-import narr.NArray
 import scalafim.image.{DMat, Mask, NeuroSpace}
 import scalafim.latent.ExplicitLatentResponse
 
@@ -19,7 +18,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     )
 
   test("latent response backend matches dense backend for selected masked voxels") {
-    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
         basis = GaleDMat.eye(3),
@@ -48,7 +47,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("masked latent response default read uses the active voxel domain") {
-    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
         basis = GaleDMat.eye(3),
@@ -77,7 +76,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("masked latent response requires explicit full-spatial reads") {
-    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
         basis = GaleDMat.eye(3),
@@ -102,7 +101,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("latent response backend rejects selected voxels outside mask") {
-    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
         basis = GaleDMat.eye(3),
@@ -132,7 +131,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("voxel sample map preserves mask-to-latent sample order") {
-    val mask = Mask.fromIndices(space, NArray(0, 2, 3))
+    val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val sampleMap = VoxelSampleMap.fromMask(mask, expectedSamples = 3).fold(err => fail(err.message), identity)
     val samples =
       sampleMap
@@ -144,7 +143,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("latent response backend enforces mask cardinality") {
-    val mask = Mask.fromIndices(space, NArray(0, 2))
+    val mask = Mask.fromIndices(space, Array(0, 2))
     val response =
       ExplicitLatentResponse(
         basis = GaleDMat.eye(3),

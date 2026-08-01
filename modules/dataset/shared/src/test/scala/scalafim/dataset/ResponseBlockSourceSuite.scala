@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import munit.FunSuite
-import scalafim.image.{Mask, NArrayUtil, NeuroSpace}
+import scalafim.image.{Mask, PrimitiveBuffers, NeuroSpace}
 
 class ResponseBlockSourceSuite extends FunSuite:
   test("composite source preserves requested global time and voxel order") {
@@ -100,7 +100,7 @@ class ResponseBlockSourceSuite extends FunSuite:
         selection: ResolvedDataSelection
     ): Either[DatasetError, FmriSeries] =
       reads = reads :+ (selection.timepoints -> selection.voxels)
-      val values = NArrayUtil.ofSize[Double](selection.nTimepoints * selection.nVoxels)
+      val values = PrimitiveBuffers.ofSize[Double](selection.nTimepoints * selection.nVoxels)
       var row = 0
       while row < selection.nTimepoints do
         var column = 0

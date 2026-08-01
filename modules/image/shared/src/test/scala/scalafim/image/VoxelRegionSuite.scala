@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 
 class VoxelRegionSuite extends munit.FunSuite:
 
@@ -25,11 +24,11 @@ class VoxelRegionSuite extends munit.FunSuite:
     )
 
   private def region(indices: Int*): VoxelRegion =
-    VoxelRegion.make(space, NArray(indices*)).fold(error => fail(error.message), identity)
+    VoxelRegion.make(space, Array(indices*)).fold(error => fail(error.message), identity)
 
   private def indices(region: VoxelRegion): Vector[Int] =
     val values = region.linearIndices
-    Vector.tabulate(values.length)(values.apply)
+    Vector.tabulate(values.size)(i => values(i))
 
   test("region construction canonicalizes membership and implements set algebra") {
     val left = region(3, 1, 1)
@@ -47,7 +46,7 @@ class VoxelRegionSuite extends munit.FunSuite:
   test("region algebra rejects matching dimensions on a different physical grid") {
     val expected = region(0, 1)
     val translated =
-      VoxelRegion.make(translatedSpace, NArray[Int](0, 1))
+      VoxelRegion.make(translatedSpace, Array[Int](0, 1))
         .fold(error => fail(error.message), identity)
 
     assert(expected.union(translated).isLeft)
@@ -56,40 +55,40 @@ class VoxelRegionSuite extends munit.FunSuite:
 
   test("ordered selections preserve feature order separately from region membership") {
     val selection =
-      VoxelSelection.make(space, NArray[Int](2, 0))
+      VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
 
     assertEquals(selection.voxelCoords, Vector(VoxelCoord(0, 1, 0), VoxelCoord(0, 0, 0)), clue = "")
     assertEquals(indices(selection.region), Vector(0, 2), clue = "")
     val reversed =
-      VoxelSelection.make(space, NArray[Int](0, 2))
+      VoxelSelection.make(space, Array[Int](0, 2))
         .fold(error => fail(error.message), identity)
     assertNotEquals(selection, reversed, clue = "selection equality should preserve extraction order")
-    assert(VoxelSelection.make(space, NArray[Int](2, 2)).isLeft)
+    assert(VoxelSelection.make(space, Array[Int](2, 2)).isLeft)
   }
 
   test("NeuroVol selection preserves ordered geometry and rejects cross-space regions") {
-    val volume = NeuroVol.fromLinear(NArray[Int](10, 11, 12, 13), space.toNeuroSpace)
+    val volume = NeuroVol.fromLinear(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
     val selection =
-      VoxelSelection.make(space, NArray[Int](2, 0))
+      VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
     val selected = volume.select(selection).fold(error => fail(error.message), identity)
-    val values = selected.toNArray
+    val values = selected.values
 
-    assertEquals(Vector.tabulate(values.length)(values.apply), Vector(12, 10), clue = "")
+    assertEquals(Vector.tabulate(values.size)(i => values(i)), Vector(12, 10), clue = "")
     assertEquals(selected.voxelCoords, selection.voxelCoords, clue = "")
 
     val translated =
-      VoxelRegion.make(translatedSpace, NArray[Int](0))
+      VoxelRegion.make(translatedSpace, Array[Int](0))
         .fold(error => fail(error.message), identity)
     assert(volume.select(translated).isLeft)
   }
 
   test("NeuroVec selection returns time by ordered-voxel data") {
     val seriesSpace = space.addTime(2)
-    val vector = NeuroVec.fromLinear(NArray[Int](0, 1, 2, 3, 10, 11, 12, 13), seriesSpace.toNeuroSpace)
+    val vector = NeuroVec.fromLinear(Array[Int](0, 1, 2, 3, 10, 11, 12, 13), seriesSpace.toNeuroSpace)
     val selection =
-      VoxelSelection.make(space, NArray[Int](2, 0))
+      VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
     val selected = vector.select(selection).fold(error => fail(error.message), identity)
 
@@ -111,8 +110,8 @@ class VoxelRegionSuite extends munit.FunSuite:
   }
 
   test("ROIVol extraction no longer drops the ROI physical space") {
-    val volume = NeuroVol.fromLinear(NArray[Int](10, 11, 12, 13), space.toNeuroSpace)
-    val roi = ROIVol[Int](translatedSpace.toNeuroSpace, Vector(Vector(0, 0, 0)), NArray[Int](1))
+    val volume = NeuroVol.fromLinear(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
+    val roi = ROIVol[Int](translatedSpace.toNeuroSpace, Vector(Vector(0, 0, 0)), Array[Int](1))
 
     intercept[IllegalArgumentException] {
       volume(roi)

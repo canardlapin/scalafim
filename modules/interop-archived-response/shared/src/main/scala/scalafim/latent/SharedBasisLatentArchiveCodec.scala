@@ -13,7 +13,7 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat as ArchiveDMat, Mask, NArrayUtil, NeuroSpace}
+import scalafim.image.{DMat as ArchiveDMat, Mask, PrimitiveBuffers, NeuroSpace}
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -102,7 +102,7 @@ object SharedBasisLatentArchive:
       while i < artifact.mask.values.length do
         if artifact.mask.values(i) then indices += i
         i += 1
-      Right(Mask.fromIndices(space, NArrayUtil.fromArray(indices.result()), label = s"shared-basis:${artifact.kind}"))
+      Right(Mask.fromIndices(space, PrimitiveBuffers.fromArray(indices.result()), label = s"shared-basis:${artifact.kind}"))
 
   private def validateArtifact(
       archive: SharedBasisLatentArchive,

@@ -2,7 +2,6 @@ package scalafim.interop.archive.lna
 
 import cats.data.EitherT
 import cats.effect.{Async, Resource}
-import narr.NArray
 import scalafim.archive.{
   ArchiveError,
   ArchiveLocation,
@@ -118,7 +117,7 @@ object LnaPipelineRepresentationFamily:
         run.shape.timepoints,
         run.shape.spatialSize
       )
-      values = NArray.ofSize[Double](dense.rows * dense.cols)
+      values = Array.ofDim[Double](dense.rows * dense.cols)
       _ =
         var row = 0
         while row < dense.rows do

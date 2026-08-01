@@ -65,9 +65,9 @@ object HalfStepNumerics:
   ): Double =
     val grid = left.from.grid
     val n = grid.nVoxels
-    val composed = NArrayUtil.ofSize[Double](3 * n)
-    val valid = NArrayUtil.ofSize[Boolean](n)
-    DenseFieldKernels.composePullInto(
+    val composed = PrimitiveBuffers.ofSize[Double](3 * n)
+    val valid = PrimitiveBuffers.ofSize[Boolean](n)
+    HalfFlowKernels.composePullInto(
       left.sourceCoordinates,
       right.sourceCoordinates,
       composed,
@@ -76,9 +76,9 @@ object HalfStepNumerics:
       right.validity,
       CoordinateMapOutside.Identity
     )
-    val identity = NArrayUtil.ofSize[Double](3 * n)
-    val identityValid = NArrayUtil.ofSize[Boolean](n)
-    DenseFieldKernels.identityInto(grid, identity, identityValid)
+    val identity = PrimitiveBuffers.ofSize[Double](3 * n)
+    val identityValid = PrimitiveBuffers.ofSize[Boolean](n)
+    HalfFlowKernels.identityInto(grid, identity, identityValid)
     val eligible =
       math.max(0, grid.shape.x - 2 * margin) * math.max(0, grid.shape.y - 2 * margin) *
         math.max(0, grid.shape.z - 2 * margin)
@@ -127,8 +127,8 @@ final case class ForwardJacobianReport(
 
 final class ForwardGeometryWorkspace private (
     val grid: GridSpec,
-    private[registration] val determinants: narr.NArray[Double],
-    private[registration] val valid: narr.NArray[Boolean],
+    private[registration] val determinants: Array[Double],
+    private[registration] val valid: Array[Boolean],
     private[registration] val sampler: DenseFieldSampler,
     private[registration] val reduction: JacobianReduction
 )
@@ -137,8 +137,8 @@ object ForwardGeometryWorkspace:
   def apply(grid: GridSpec): ForwardGeometryWorkspace =
     new ForwardGeometryWorkspace(
       grid,
-      NArrayUtil.ofSize[Double](grid.nVoxels),
-      NArrayUtil.ofSize[Boolean](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Double](grid.nVoxels),
+      PrimitiveBuffers.ofSize[Boolean](grid.nVoxels),
       DenseFieldSampler(grid),
       JacobianReduction()
     )
@@ -176,7 +176,7 @@ object ForwardGeometry:
 
   private def report[A](pull: DensePull[A, A], workspace: ForwardGeometryWorkspace): ForwardJacobianReport =
     require(workspace.grid == pull.from.grid, "forward geometry workspace/grid mismatch")
-    DenseFieldKernels.jacobianDeterminantsReduceInto(
+    HalfFlowKernels.jacobianDeterminantsReduceInto(
       pull.sourceCoordinates,
       workspace.determinants,
       workspace.valid,
@@ -219,14 +219,14 @@ final case class ForwardMidpointArm[W, E] private (
       newWork: Frame[W],
       newEndpoint: Frame[E]
   ): Either[RegistrationError, ForwardMidpointArm[W, E]] =
-    val regridded = DenseFieldKernels.regridPull(
+    val regridded = HalfFlowKernels.regridPull(
       residual.sourceCoordinates,
       newWork.grid,
       residual.validity,
       CoordinateMapOutside.Identity
     )
     for
-      pull <- DensePull.make(newWork, newWork, regridded.field, FieldValidity.Mask(regridded.valid))
+      pull <- DensePull.make(newWork, newWork, regridded.field, FieldValidity.copyMask(regridded.valid))
       exactAffine <- affine.reframe(newWork, newEndpoint)
       arm <- ForwardMidpointArm.make(pull, exactAffine)
     yield arm

@@ -1,6 +1,8 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.Array1
+import ravel.DType
+import ravel.NDArray as RavelArray
 import scala.reflect.ClassTag
 import spire.algebra.{Order, Ring}
 
@@ -43,7 +45,17 @@ object NeuroStats:
     totalVoxels: Int
   )
 
-  def summarize(values: NArray[Double], naRm: Boolean = true): ScalarSummary =
+  def summarize(values: Array[Double], naRm: Boolean = true): ScalarSummary =
+    summarizeIndexed(values.length, values.apply, naRm)
+
+  def summarize(values: Array1[Double], naRm: Boolean): ScalarSummary =
+    summarizeIndexed(values.size, index => values(index), naRm)
+
+  private def summarizeIndexed(
+      length: Int,
+      valueAt: Int => Double,
+      naRm: Boolean
+  ): ScalarSummary =
     var i = 0
     var n = 0
     var missing = 0
@@ -55,8 +67,8 @@ object NeuroStats:
     var min = Double.PositiveInfinity
     var max = Double.NegativeInfinity
 
-    while i < values.length do
-      val v = values(i)
+    while i < length do
+      val v = valueAt(i)
       if v.isNaN then
         missing += 1
         if !naRm then
@@ -94,7 +106,7 @@ object NeuroStats:
       spacing = vol.space.spacing,
       origin = vol.space.origin,
       orientation = orientation(vol.space),
-      stats = summarize(vol.values.data, naRm)
+      stats = summarizeIndexed(vol.values.size, vol.linear, naRm)
     )
 
   def summarize(svol: SparseNeuroVol[Double]): NeuroVolSummary =
@@ -114,31 +126,53 @@ object NeuroStats:
     summarize(vec, naRm = true)
 
   def summarize(vec: NeuroVec[Double], naRm: Boolean): NeuroVecSummary =
-    summarizeVec("NeuroVec", vec.space, vec.values.data, vec.nVolumes, vec.space.spatialDims.product, naRm)
+    summarizeVec(
+      "NeuroVec",
+      vec.space,
+      vec.values.size,
+      vec.linear,
+      vec.nVolumes,
+      vec.space.spatialDims.product,
+      naRm
+    )
 
   def summarize(svec: SparseNeuroVec[Double]): NeuroVecSummary =
     summarize(svec, naRm = true)
 
   def summarize(svec: SparseNeuroVec[Double], naRm: Boolean): NeuroVecSummary =
-    summarizeSparseVec("SparseNeuroVec", svec.space, svec.data.data, svec.space.dims(3), svec.map.cardinality, naRm)
+    summarizeSparseVec(
+      "SparseNeuroVec",
+      svec.space,
+      svec.space.dims(3),
+      svec.map.cardinality,
+      svec.data.apply,
+      naRm
+    )
 
   def summarize(cvec: ClusteredNeuroVec[Double]): NeuroVecSummary =
     summarize(cvec, naRm = true)
 
   def summarize(cvec: ClusteredNeuroVec[Double], naRm: Boolean): NeuroVecSummary =
-    summarizeSparseVec("ClusteredNeuroVec", cvec.space, cvec.ts.data, cvec.nVolumes, cvec.numClusters, naRm)
+    summarizeSparseVec(
+      "ClusteredNeuroVec",
+      cvec.space,
+      cvec.nVolumes,
+      cvec.numClusters,
+      (time, cluster) => cvec.ts(time, cluster),
+      naRm
+    )
 
   def temporalMean(vec: NeuroVec[Double]): NeuroVol[Double] =
     val spatialNels = vec.space.spatialDims.product
     val tLen = vec.nVolumes
-    val out = NArrayUtil.ofSize[Double](spatialNels)
+    val out = PrimitiveBuffers.ofSize[Double](spatialNels)
 
     var lin = 0
     while lin < spatialNels do
       var t = 0
       var sum = 0.0
       while t < tLen do
-        sum += vec.values.data(lin + t * spatialNels)
+        sum += vec.linear(lin + t * spatialNels)
         t += 1
       out(lin) = sum / tLen.toDouble
       lin += 1
@@ -148,31 +182,28 @@ object NeuroStats:
   def temporalMean(svec: SparseNeuroVec[Double]): SparseNeuroVol[Double] =
     val tLen = svec.space.dims(3)
     val nVox = svec.map.cardinality
-    val out = NArrayUtil.ofSize[Double](nVox)
-
-    var p = 0
-    while p < nVox do
+    val out = RavelArray.tabulate[Double](nVox): p =>
       var t = 0
       var sum = 0.0
       while t < tLen do
         sum += svec.data(t, p)
         t += 1
-      out(p) = sum / tLen.toDouble
-      p += 1
+      sum / tLen.toDouble
 
     SparseNeuroVol(out, svec.map.indices, svec.space.spatialSpace, svec.label)
 
   private def summarizeVec(
     kind: String,
     space: NeuroSpace,
-    data: NArray[Double],
+    dataLength: Int,
+    valueAt: Int => Double,
     tLen: Int,
     spatialNels: Int,
     naRm: Boolean
   ): NeuroVecSummary =
-    val global = summarize(data, naRm)
-    val means = NArrayUtil.ofSize[Double](spatialNels)
-    val sds = NArrayUtil.ofSize[Double](spatialNels)
+    val global = summarizeIndexed(dataLength, valueAt, naRm)
+    val means = PrimitiveBuffers.ofSize[Double](spatialNels)
+    val sds = PrimitiveBuffers.ofSize[Double](spatialNels)
     var nonZero = 0
 
     var lin = 0
@@ -181,7 +212,7 @@ object NeuroStats:
       var sum = 0.0
       var sumSq = 0.0
       while t < tLen do
-        val v = data(lin + t * spatialNels)
+        val v = valueAt(lin + t * spatialNels)
         sum += v
         sumSq += v * v
         t += 1
@@ -210,14 +241,19 @@ object NeuroStats:
   private def summarizeSparseVec(
     kind: String,
     space: NeuroSpace,
-    data: NArray[Double],
     tLen: Int,
     nColumns: Int,
+    valueAt: (Int, Int) => Double,
     naRm: Boolean
   ): NeuroVecSummary =
-    val global = summarize(data, naRm)
-    val means = NArrayUtil.ofSize[Double](nColumns)
-    val sds = NArrayUtil.ofSize[Double](nColumns)
+    val global =
+      summarizeIndexed(
+        tLen * nColumns,
+        index => valueAt(index % tLen, index / tLen),
+        naRm
+      )
+    val means = PrimitiveBuffers.ofSize[Double](nColumns)
+    val sds = PrimitiveBuffers.ofSize[Double](nColumns)
     var nonZero = 0
 
     var col = 0
@@ -226,7 +262,7 @@ object NeuroStats:
       var sum = 0.0
       var sumSq = 0.0
       while t < tLen do
-        val v = data(t + col * tLen)
+        val v = valueAt(t, col)
         sum += v
         sumSq += v * v
         t += 1
@@ -262,33 +298,41 @@ object NeuroCompare:
 
   def compare[A: Order](x: NeuroVol[A], y: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
     requireSameSpace(x.space, y.space)
-    val out = NArrayUtil.ofSize[Boolean](x.values.data.length)
+    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.values.data(i), y.values.data(i), predicate)
+      out(i) = test(x.linear(i), y.linear(i), predicate)
       i += 1
     NeuroVol.fromLinear(out, x.space, x.label)
 
   def compare[A: Order](x: NeuroVol[A], scalar: A, predicate: Predicate): NeuroVol[Boolean] =
-    val out = NArrayUtil.ofSize[Boolean](x.values.data.length)
+    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.values.data(i), scalar, predicate)
+      out(i) = test(x.linear(i), scalar, predicate)
       i += 1
     NeuroVol.fromLinear(out, x.space, x.label)
 
   def compare[A: Order](scalar: A, x: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
-    val out = NArrayUtil.ofSize[Boolean](x.values.data.length)
+    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(scalar, x.values.data(i), predicate)
+      out(i) = test(scalar, x.linear(i), predicate)
       i += 1
     NeuroVol.fromLinear(out, x.space, x.label)
 
-  def compare[A: Order: Ring: ClassTag](x: SparseNeuroVol[A], scalar: A, predicate: Predicate): NeuroVol[Boolean] =
+  def compare[A: Order: Ring: ClassTag: DType](
+      x: SparseNeuroVol[A],
+      scalar: A,
+      predicate: Predicate
+  ): NeuroVol[Boolean] =
     compare(x.toDense, scalar, predicate)
 
-  def compare[A: Order: Ring: ClassTag](scalar: A, x: SparseNeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
+  def compare[A: Order: Ring: ClassTag: DType](
+      scalar: A,
+      x: SparseNeuroVol[A],
+      predicate: Predicate
+  ): NeuroVol[Boolean] =
     compare(scalar, x.toDense, predicate)
 
   def compare(x: ClusteredNeuroVol, scalar: Int, predicate: Predicate): NeuroVol[Boolean] =
@@ -297,20 +341,22 @@ object NeuroCompare:
   def compare(scalar: Int, x: ClusteredNeuroVol, predicate: Predicate): NeuroVol[Boolean] =
     compare(scalar, x.toDense, predicate)
 
+  @scala.annotation.targetName("compareNeuroVecPair")
   def compare[A: Order](x: NeuroVec[A], y: NeuroVec[A], predicate: Predicate): NeuroVec[Boolean] =
     requireSameSpace(x.space, y.space)
-    val out = NArrayUtil.ofSize[Boolean](x.values.data.length)
+    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.values.data(i), y.values.data(i), predicate)
+      out(i) = test(x.linear(i), y.linear(i), predicate)
       i += 1
     NeuroVec.fromLinear(out, x.space, x.label)
 
+  @scala.annotation.targetName("compareNeuroVecScalar")
   def compare[A: Order](x: NeuroVec[A], scalar: A, predicate: Predicate): NeuroVec[Boolean] =
-    val out = NArrayUtil.ofSize[Boolean](x.values.data.length)
+    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.values.data(i), scalar, predicate)
+      out(i) = test(x.linear(i), scalar, predicate)
       i += 1
     NeuroVec.fromLinear(out, x.space, x.label)
 

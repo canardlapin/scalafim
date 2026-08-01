@@ -40,7 +40,7 @@ import scalafim.archive.{
   ScalarTypeId,
   SelectionAxes
 }
-import scalafim.zarr.*
+import zarr4s.*
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -331,7 +331,7 @@ private final class ObservingAsyncObjectReader(
 
   def read(
       key: StoreKey,
-      range: scalafim.zarr.ByteRange
+      range: zarr4s.ByteRange
   ): Future[Either[StoreError, OwnedBytes]] =
     val slot = reserve()
     underlying.read(key, range).map: result =>

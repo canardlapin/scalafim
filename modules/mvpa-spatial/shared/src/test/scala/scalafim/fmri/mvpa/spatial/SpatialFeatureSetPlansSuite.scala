@@ -42,7 +42,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
   private def labelVolume: NeuroVol[Int] =
     NeuroVol.fromLinear(
-      NArrayUtil.fromArray(Array(0, 2, 1, 2, 1, 0)),
+      PrimitiveBuffers.fromArray(Array(0, 2, 1, 2, 1, 0)),
       volumeSpace
     )
 
@@ -203,7 +203,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
   test("typed spatial errors convert to MVPA compatibility errors") {
     val badLabels =
       NeuroVol.fromLinear(
-        NArrayUtil.fromArray(Array(0, -1, 1, 1, 0, 0)),
+        PrimitiveBuffers.fromArray(Array(0, -1, 1, 1, 0, 0)),
         volumeSpace
       )
     val typedError = SpatialFeatureSetPlans.volumeLabels("bad", badLabels).swap.toOption.get
@@ -224,7 +224,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
       ROIVolWindow.unsafe(
         space,
         ROICoords(Vector(Vector(0, 0, 0))),
-        NArrayUtil.fromArray(Array(1)),
+        ravel.NDArray.fromSeq(ravel.Shape(1), Array(1)),
         centerIndex = 0,
         parentIndex = 4,
         label = "bad-center"

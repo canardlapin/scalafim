@@ -126,7 +126,7 @@ object GlasserLoader:
   private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
     val out = scala.collection.mutable.Set.empty[RegionId]
     var i = 0
-    while i < vol.values.data.length do
+    while i < vol.values.size do
       val id = vol.linear(i)
       if id > 0 then out += RegionId(id)
       i += 1

@@ -10,7 +10,8 @@ import scalafim.locus.{
   Searchlight,
   SearchlightError,
   Section,
-  SpaceMismatch
+  SpaceMismatch,
+  mismatch
 }
 
 enum SurfaceSearchlightError:
@@ -43,15 +44,10 @@ object SurfaceSearchlight:
       Left(SurfaceSearchlightError.InvalidRadius(radius))
     else if !domain.geometry.mesh.hasSameTopology(topology.mesh) then
       Left(SurfaceSearchlightError.TopologyMismatch(domain.meshDomain.display))
-    else if !domain.finiteSpace.sameIdentityAs(centers.space) then
+    else if !domain.finiteSpace.sameRuntimeOwnerAs(centers.space) then
       Left:
         SurfaceSearchlightError.WrongSpace:
-          SpaceMismatch(
-            domain.finiteSpace.key,
-            domain.finiteSpace.size,
-            centers.space.key,
-            centers.space.size
-          )
+          mismatch(domain.finiteSpace, centers.space)
     else
       val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
       val centerOrdinals = centers.ordinalsInDomainOrder
@@ -79,7 +75,11 @@ object SurfaceSearchlight:
 
       val relation =
         Relation
-          .fromOrdinalRows(domain.finiteSpace, domain.finiteSpace, rows)
+          .fromOrdinalRows(
+            domain.finiteSpace,
+            domain.finiteSpace,
+            rows.iterator.map(_.iterator)
+          )
           .toOption
           .get
       Searchlight
@@ -113,11 +113,16 @@ object SurfaceSearchlight:
   ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
     metricBalls(domain, topology, radius, DistanceMetric.Geodesic)
 
+  /** The field restricted to the searchlight at `center`, if `center` is one.
+    *
+    * No error channel: the searchlight and the field share `S`, which is
+    * already proof that they are indexed by the same domain, so restriction
+    * cannot fail. The only partiality left is whether `center` is an allowed
+    * centre, which is what the `Option` says.
+    */
   def sectionAt[S, A](
       searchlight: Searchlight[S],
       center: Point[S],
       field: IndexedField[S, A]
-  ): Either[SpaceMismatch, Option[Section[S, A]]] =
-    searchlight.regionAt(center) match
-      case Some(region) => field.restrict(region).map(Some(_))
-      case None => Right(None)
+  ): Option[Section[S, A]] =
+    searchlight.regionAt(center).map(field.restrict)

@@ -1,7 +1,9 @@
 package scalafim.image
 
-import narr.NArray
-import scala.reflect.ClassTag
+import ravel.Array1
+import ravel.DType
+import ravel.NDArray
+import ravel.Shape
 
 enum ROIVolWindowError:
   case DataLengthMismatch(expected: Int, actual: Int)
@@ -29,7 +31,7 @@ enum ROIVolWindowError:
 final class ROIVolWindow[A] private (
     val space: NeuroSpace,
     val coords: ROICoords,
-    private[scalafim] val data: NArray[A],
+    private[scalafim] val data: Array1[A],
     val centerIndex: Int,
     val parentIndex: Int,
     val label: String,
@@ -41,8 +43,8 @@ final class ROIVolWindow[A] private (
   def apply(index: Int): A =
     data(index)
 
-  def toNArray(using ClassTag[A]): NArray[A] =
-    NArray.copy(data)
+  def values: Array1[A] =
+    data
 
   def region: VoxelRegion =
     selection.region
@@ -51,20 +53,51 @@ final class ROIVolWindow[A] private (
     ROIVol.unsafeOwned(space, selection.toVoxelRoi, data)
 
 object ROIVolWindow:
+  private def ravelValues[A](
+      data: Array[A]
+  )(using DType[A]): Array1[A] =
+    NDArray.fromSeq(Shape(data.length), data)
+
   def make[A](
       space: NeuroSpace,
       coords: ROICoords,
-      data: NArray[A],
+      data: Array1[A],
       centerIndex: Int,
       parentIndex: Int,
       label: String = ""
-  )(using ClassTag[A]): Either[ROIVolWindowError, ROIVolWindow[A]] =
-    fromOwned(space, coords, NArray.copy(data), centerIndex, parentIndex, label)
+  ): Either[ROIVolWindowError, ROIVolWindow[A]] =
+    fromOwned(space, coords, data, centerIndex, parentIndex, label)
+
+  def make[A](
+      space: NeuroSpace,
+      coords: ROICoords,
+      data: Array[A],
+      centerIndex: Int,
+      parentIndex: Int,
+      label: String
+  )(using DType[A]): Either[ROIVolWindowError, ROIVolWindow[A]] =
+    make(
+      space,
+      coords,
+      ravelValues(data),
+      centerIndex,
+      parentIndex,
+      label
+    )
+
+  def make[A](
+      space: NeuroSpace,
+      coords: ROICoords,
+      data: Array[A],
+      centerIndex: Int,
+      parentIndex: Int
+  )(using DType[A]): Either[ROIVolWindowError, ROIVolWindow[A]] =
+    make(space, coords, data, centerIndex, parentIndex, "")
 
   private[scalafim] def fromOwned[A](
       space: NeuroSpace,
       coords: ROICoords,
-      data: NArray[A],
+      data: Array1[A],
       centerIndex: Int,
       parentIndex: Int,
       label: String = ""
@@ -79,8 +112,8 @@ object ROIVolWindow:
         .left
         .map(ROIVolWindowError.InvalidSelection.apply)
       _ <-
-        if data.length == selection.size then Right(())
-        else Left(ROIVolWindowError.DataLengthMismatch(selection.size, data.length))
+        if data.size == selection.size then Right(())
+        else Left(ROIVolWindowError.DataLengthMismatch(selection.size, data.size))
       _ <-
         if centerIndex >= 0 && centerIndex < selection.size then Right(())
         else Left(ROIVolWindowError.CenterIndexOutOfBounds(centerIndex, selection.size))
@@ -96,18 +129,18 @@ object ROIVolWindow:
   def apply[A](
       space: NeuroSpace,
       coords: ROICoords,
-      data: NArray[A],
+      data: Array1[A],
       centerIndex: Int,
       parentIndex: Int,
       label: String = ""
-  )(using ClassTag[A]): ROIVolWindow[A] =
+  ): ROIVolWindow[A] =
     make(space, coords, data, centerIndex, parentIndex, label)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private[scalafim] def unsafe[A](
       space: NeuroSpace,
       coords: ROICoords,
-      data: NArray[A],
+      data: Array1[A],
       centerIndex: Int,
       parentIndex: Int,
       label: String = ""

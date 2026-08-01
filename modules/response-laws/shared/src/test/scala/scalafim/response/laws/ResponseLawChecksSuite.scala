@@ -2,7 +2,6 @@ package scalafim.response.laws
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import narr.NArray
 import scalafim.response.*
 
 import scala.concurrent.ExecutionContext.Implicits.{
@@ -17,7 +16,7 @@ class ResponseLawChecksSuite extends munit.FunSuite:
         .copyFromRowMajor[IO](
           SourceId.unsafe("reusable-source"),
           responseSchema,
-          NArray[Double](
+          Array[Double](
             0.0, 1.0, 2.0, 3.0,
             10.0, 11.0, 12.0, 13.0,
             20.0, 21.0, 22.0, 23.0
@@ -58,11 +57,11 @@ class ResponseLawChecksSuite extends munit.FunSuite:
       selection(responseSchema, Vector(0), Vector(0))
     val positive =
       ResponseBlock
-        .copyFromRowMajor(NArray[Double](0.0), requested)
+        .copyFromRowMajor(Array[Double](0.0), requested)
         .fold(error => fail(error.message), identity)
     val negative =
       ResponseBlock
-        .copyFromRowMajor(NArray[Double](-0.0), requested)
+        .copyFromRowMajor(Array[Double](-0.0), requested)
         .fold(error => fail(error.message), identity)
     val parent =
       Provenance.source(

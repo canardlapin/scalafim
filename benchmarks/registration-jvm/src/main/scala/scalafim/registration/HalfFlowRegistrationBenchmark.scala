@@ -1,7 +1,6 @@
 package scalafim.registration
 
 import java.util.concurrent.TimeUnit
-import narr.NArray
 import org.openjdk.jmh.annotations.*
 import scala.compiletime.uninitialized
 import scalafim.image.*
@@ -24,8 +23,8 @@ class HalfFlowRegistrationBenchmark:
   private var workspace: PairedFlowWorkspace[Work] = uninitialized
   private var guardWorkspace: TopologyGuardWorkspace[Work, Work] = uninitialized
   private var admittedFlow: PairedFlow[Work] = uninitialized
-  private var fixedSource: NArray[Double] = uninitialized
-  private var movingSource: NArray[Double] = uninitialized
+  private var fixedSource: Array[Double] = uninitialized
+  private var movingSource: Array[Double] = uninitialized
   private var ccFrozen: FrozenCcWeights = uninitialized
   private var ccWorkspace: NeighborhoodCcWorkspace = uninitialized
   private var ccBuffer: NeighborhoodCcBuffer = uninitialized
@@ -56,7 +55,7 @@ class HalfFlowRegistrationBenchmark:
   def setup(): Unit =
     val grid = GridSpec.identity(Vector(side, side, side))
     frame = Frame[Work](SpatialDomainId("half-flow-benchmark"), grid)
-    val values = NArrayUtil.ofSize[Double](grid.nVoxels * 3)
+    val values = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
     val denominator = (side - 1).toDouble
     var z = 0
     while z < side do
@@ -73,9 +72,9 @@ class HalfFlowRegistrationBenchmark:
           x += 1
         y += 1
       z += 1
-    val field = DenseVectorField(
+    val field = DenseVectorField.fromLegacyPlanar(
       grid,
-      NDArray(values, grid.dims :+ 3),
+      values,
       DenseVectorFieldKind.Displacement
     )
     velocity = Velocity.make(frame, field).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -213,8 +212,8 @@ class HalfFlowRegistrationBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def setupLocalModel(grid: GridSpec): Unit =
-    fixedSource = NArrayUtil.ofSize[Double](grid.nVoxels)
-    movingSource = NArrayUtil.ofSize[Double](grid.nVoxels)
+    fixedSource = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    movingSource = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     val denominator = (side - 1).toDouble
     var z = 0
     while z < side do
@@ -234,7 +233,7 @@ class HalfFlowRegistrationBenchmark:
           x += 1
         y += 1
       z += 1
-    val ccSupport = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val ccSupport = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     var index = 0
     while index < ccSupport.length do
       ccSupport(index) = 1.0
@@ -322,8 +321,8 @@ class HalfFlowRegistrationBenchmark:
   private def setupRegistration(grid: GridSpec): Unit =
     val fixedFrame = Frame[Fixed](SpatialDomainId("half-flow-fixed"), grid)
     val movingFrame = Frame[Moving](SpatialDomainId("half-flow-moving"), grid)
-    val fixedValues = NArrayUtil.ofSize[Double](grid.nVoxels)
-    val movingValues = NArrayUtil.ofSize[Double](grid.nVoxels)
+    val fixedValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
+    val movingValues = PrimitiveBuffers.ofSize[Double](grid.nVoxels)
     val shift = 0.35
     var z = 0
     while z < side do
@@ -418,13 +417,18 @@ class HalfFlowRegistrationBenchmark:
       6.0 * math.sin(scale * (x + 0.4 * z)) + 4.0 * math.cos(scale * (y + z))
 
   private def mapX[A, B](pull: DensePull[A, B], x: Int, y: Int, z: Int): Double =
-    pull.sourceCoordinates.values.data(x + side * y + side * side * z)
+    pull.sourceCoordinates.linearComponent(
+      x + side * y + side * side * z,
+      0
+    )
 
   private def checksum(flow: PairedFlow[Work]): Double =
-    val forward = flow.pair.forward.sourceCoordinates.values.data
-    val backward = flow.pair.backward.sourceCoordinates.values.data
+    val forward = flow.pair.forward.sourceCoordinates
+    val backward = flow.pair.backward.sourceCoordinates
     val n = frame.grid.nVoxels
-    forward(n / 3) + forward(n + n / 2) + backward(2 * n + 2 * n / 3) +
+    forward.linearComponent(n / 3, 0) +
+      forward.linearComponent(n / 2, 1) +
+      backward.linearComponent(2 * n / 3, 2) +
       flow.diagnostics.plusValid.toDouble + flow.diagnostics.minusValid.toDouble
 
   private def featureChecksum(features: T1FeatureVolume[Work]): Double =
@@ -432,20 +436,26 @@ class HalfFlowRegistrationBenchmark:
     features.values(n / 2) + features.values(n + n / 3) + features.gradients(6 * n + 2 * n / 3)
 
   private def localChecksum(result: LocalLmResult[Work]): Double =
-    val values = result.rawVelocity.field.values.data
+    val values = result.rawVelocity.field
     val n = frame.grid.nVoxels
-    values(n / 2) + values(n + n / 3) + values(2 * n + 2 * n / 3) +
+    values.linearComponent(n / 2, 0) +
+      values.linearComponent(n / 3, 1) +
+      values.linearComponent(2 * n / 3, 2) +
       result.summary.value + result.summary.maximumRawVelocityMm
 
   private def sobolevChecksum(result: SobolevResult[Work]): Double =
-    val values = result.velocity.field.values.data
+    val values = result.velocity.field
     val n = frame.grid.nVoxels
-    values(n / 2) + values(n + n / 3) + values(2 * n + 2 * n / 3) +
+    values.linearComponent(n / 2, 0) +
+      values.linearComponent(n / 3, 1) +
+      values.linearComponent(2 * n / 3, 2) +
       result.diagnostics.totalIterations.toDouble + result.diagnostics.maximumRelativeResidual
 
   private def registrationChecksum(result: RegistrationResult[Fixed, Moving]): Double =
-    val forward = result.transform.forward.sourceCoordinates.values.data
-    val backward = result.transform.backward.sourceCoordinates.values.data
+    val forward = result.transform.forward.sourceCoordinates
+    val backward = result.transform.backward.sourceCoordinates
     val n = result.transform.forward.from.grid.nVoxels
-    forward(n / 2) + forward(n + n / 3) + backward(2 * n + 2 * n / 3) +
+    forward.linearComponent(n / 2, 0) +
+      forward.linearComponent(n / 3, 1) +
+      backward.linearComponent(2 * n / 3, 2) +
       result.diagnostics.acceptedSteps.toDouble + result.diagnostics.levels.last.finalValue

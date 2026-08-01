@@ -1,6 +1,5 @@
 package scalafim.atlas.fixtures
 
-import narr.NArray
 import scalafim.atlas.*
 import scalafim.image.*
 
@@ -112,7 +111,7 @@ object AtlasParityFixtures:
 
   def dataVolume(): NeuroVol[Double] =
     val labels = labelData()
-    val out = NArray.ofSize[Double](labels.length)
+    val out = Array.ofDim[Double](labels.length)
     var i = 0
     while i < labels.length do
       out(i) = parcelMeans.getOrElse(labels(i), 0.0)
@@ -122,7 +121,7 @@ object AtlasParityFixtures:
   def dataVec(nTime: Int = 3): NeuroVec[Double] =
     val labels = labelData()
     val spatialNels = dims.product
-    val out = NArray.ofSize[Double](spatialNels * nTime)
+    val out = Array.ofDim[Double](spatialNels * nTime)
     var t = 0
     while t < nTime do
       var i = 0
@@ -133,20 +132,20 @@ object AtlasParityFixtures:
     NeuroVec.fromLinear(out, space.addDim(nTime, Some(Axis.Time)), label = "parcel-series")
 
   def fullMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](dims.product, true), space, label = "full")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, true), space, label = "full")
 
   def emptyMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](dims.product, false), space, label = "empty")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, false), space, label = "empty")
 
-  def labelData(): NArray[Int] =
-    val out = NArrayUtil.fillConst[Int](dims.product, 0)
+  def labelData(): Array[Int] =
+    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
     fillBlock(out, 0 to 1, 0 to 1, 0 to 1, 10)
     fillBlock(out, 3 to 4, 3 to 4, 3 to 4, 50)
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 90)
     out
 
-  private def comparisonLabelData(): NArray[Int] =
-    val out = NArrayUtil.fillConst[Int](dims.product, 0)
+  private def comparisonLabelData(): Array[Int] =
+    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
     fillBlock(out, 0 to 0, 0 to 1, 0 to 1, 101)
     fillBlock(out, 3 to 4, 3 to 4, 3 to 4, 202)
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 303)
@@ -159,7 +158,7 @@ object AtlasParityFixtures:
       origin = Some(Vector(0.0, 0.0, 0.0))
     )
 
-  private def fillBlock(out: NArray[Int], xs: Range, ys: Range, zs: Range, id: Int): Unit =
+  private def fillBlock(out: Array[Int], xs: Range, ys: Range, zs: Range, id: Int): Unit =
     for
       x <- xs
       y <- ys

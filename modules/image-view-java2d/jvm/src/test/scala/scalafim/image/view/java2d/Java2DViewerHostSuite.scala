@@ -9,7 +9,7 @@ class Java2DViewerHostSuite extends munit.FunSuite:
 
   private val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
   private val volume = NeuroVol.fromLinear(
-    NArrayUtil.fillConst[Double](space.nVoxels, 1.0),
+    PrimitiveBuffers.fillConst[Double](space.nVoxels, 1.0),
     space.toNeuroSpace,
     "java2d"
   )

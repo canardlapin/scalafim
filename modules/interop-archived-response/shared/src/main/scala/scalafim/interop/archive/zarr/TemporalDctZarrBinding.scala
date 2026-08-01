@@ -53,7 +53,7 @@ import scalafim.response.{
   SelectionAxes,
   SourceId
 }
-import scalafim.zarr.{
+import zarr4s.{
   ArrayDescriptor,
   ArraySelection,
   ChunkCoordinate,

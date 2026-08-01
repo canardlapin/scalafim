@@ -1,6 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.locus.{FiniteSpace, Point, Region, SpaceKey}
+import scalafim.locus.{DomainFactory, FiniteSpace, Point, Region, SpaceKey}
 
 trait NodeLocusDomain:
   type N
@@ -8,25 +8,25 @@ trait NodeLocusDomain:
   val space: FiniteSpace[N]
 
   final def pointFor(id: NodeId): Option[Point[N]] =
-    axis.indexOf(id).flatMap(space.point)
+    axis.indexOf(id).flatMap(space.pointOption)
 
   final def nodeAt(point: Point[N]): NodeSpec =
-    axis.nodes(point.ordinal)
+    axis.nodes(point.value)
 
 object NodeLocusDomain:
   private[connectivity] def make(
       requestedAxis: NodeAxis
   ): NodeLocusDomain =
-    final class Node
     val key =
       SpaceKey.unsafe(
         s"scalafim:connectivity:nodes:${axisIdentity(requestedAxis)}"
       )
+    val resolution =
+      DomainFactory.unsafeRestore(key, requestedAxis.size)
     new NodeLocusDomain:
-      type N = Node
+      type N = resolution.S
       val axis: NodeAxis = requestedAxis
-      val space: FiniteSpace[Node] =
-        FiniteSpace.make[Node](key, requestedAxis.size).toOption.get
+      val space: FiniteSpace[N] = resolution.space
 
   private def axisIdentity(axis: NodeAxis): String =
     encode(
@@ -48,32 +48,32 @@ trait EdgeLocusDomain:
   val space: FiniteSpace[E]
 
   final def pointFor(index: EdgeSpaceIx): Point[E] =
-    space.point(index.value).get
+    space.pointOption(index.value).get
 
   final def edgeAt(point: Point[E]): EdgeRef =
-    edgeSpace.edge(point.ordinal)
+    edgeSpace.edge(point.value)
 
 object EdgeLocusDomain:
   private[connectivity] def make(
       requestedSpace: EdgeSpace
   ): EdgeLocusDomain =
-    final class Edge
     val target =
       requestedSpace.targetAxis
-        .map(_.locus.space.key.value)
+        .map(_.locus.space.id.value)
         .getOrElse("square")
     val key =
       SpaceKey.unsafe(
         s"scalafim:connectivity:edges:" +
           s"${requestedSpace.topology.label}:" +
           s"${requestedSpace.order.label}:" +
-          s"${requestedSpace.sourceAxis.locus.space.key.value}:$target"
+          s"${requestedSpace.sourceAxis.locus.space.id.value}:$target"
       )
+    val resolution =
+      DomainFactory.unsafeRestore(key, requestedSpace.size)
     new EdgeLocusDomain:
-      type E = Edge
+      type E = resolution.S
       val edgeSpace: EdgeSpace = requestedSpace
-      val space: FiniteSpace[Edge] =
-        FiniteSpace.make[Edge](key, requestedSpace.size).toOption.get
+      val space: FiniteSpace[E] = resolution.space
 
 trait EdgeMaskRegion:
   type E

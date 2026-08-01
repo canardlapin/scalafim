@@ -41,12 +41,12 @@ class DomainSuite extends munit.FunSuite:
     val geometry = value(SamplingGeometry.volume(space))
     assertEquals(geometry.nElements, 8)
 
-    val mask = Mask.fromIndices(space, scalafim.image.NArrayUtil.fromArray(Array(0, 3, 7)), "mask")
+    val mask = Mask.fromIndices(space, scalafim.image.PrimitiveBuffers.fromArray(Array(0, 3, 7)), "mask")
     val masked = value(SamplingGeometry.volume(space, Some(mask)))
     assertEquals(masked.nElements, 8)
 
     val other = NeuroSpace(Vector(2, 2, 1), trans = Some(DMat.eye(4)))
-    val badMask = Mask.fromIndices(other, scalafim.image.NArrayUtil.fromArray(Array(0)), "bad")
+    val badMask = Mask.fromIndices(other, scalafim.image.PrimitiveBuffers.fromArray(Array(0)), "bad")
     assertEquals(
       SamplingGeometry.volume(space, Some(badMask)).left.toOption,
       Some(SpatialError.MaskSpaceMismatch("volume"))

@@ -1,11 +1,9 @@
 package scalafim.surface
 
+import cats.Hash
+import graph4s.{Graph, Link}
+import graph4s.data.{EdgeField, WeightedGraph}
 import scala.util.control.NonFatal
-
-import scalafim.graph.Distance
-import scalafim.graph.Graph
-import scalafim.graph.UndirectedGraph
-import scalafim.graph.VertexBasis
 
 final case class Edge private (a: VertexId, b: VertexId):
   def vertices: (VertexId, VertexId) =
@@ -34,15 +32,31 @@ final case class MeshTopology private (
     * algorithms. The result is deliberately not retained by `MeshTopology`,
     * so the mesh never owns two persistent full topology representations.
     */
-  def toGraph: UndirectedGraph[VertexId, Point3D, Distance] =
+  def toGraph: WeightedGraph[VertexId, Double] =
+    given Hash[VertexId] =
+      Hash.by(_.index)
     val vertices = Vector.tabulate(mesh.vertexCount)(VertexId.apply)
-    val basis = VertexBasis.from(vertices.map(vertex => vertex -> mesh.vertex(vertex))).toOption.get
-    val weightedEdges = edges.zip(edgeLengths).map: (edge, length) =>
-      (edge.a, edge.b, Distance.unsafe(length))
-    Graph.undirected(basis, weightedEdges) match
-      case Right(graph) => graph
+    val links = edges.map(edge => Link(edge.a, edge.b))
+    Graph.of(vertices, links).toEither match
+      case Right(topology) =>
+        val lengthsByEndpoints =
+          edges.zip(edgeLengths).map: (edge, length) =>
+            (edge.a.index, edge.b.index) -> length
+        .toMap
+        val weights =
+          EdgeField.total(topology): edge =>
+            val key =
+              if edge.first.index < edge.second.index then
+                edge.first.index -> edge.second.index
+              else
+                edge.second.index -> edge.first.index
+            lengthsByEndpoints(key)
+        WeightedGraph.from(weights)
       case Left(errors) =>
-        throw new IllegalStateException(s"validated mesh topology violated graph invariants: ${errors.message}")
+        throw new IllegalStateException(
+          s"validated mesh topology violated graph4s invariants: " +
+            errors.toNonEmptyList.toList.mkString(", ")
+        )
 
   def neighborsOf(vertex: VertexId): Vector[VertexId] =
     val i = vertex.index
