@@ -1,5 +1,9 @@
 # HalfFlow-LM v1 numerical contract
 
+> Historical design record. The implemented contract is now owned by
+> `canardlapin/reframe4s` at commit `e7f469c`; paths below describe the original
+> ScalaFIM implementation before extraction.
+
 - Status: frozen P0 contract
 - Date: 2026-07-21
 - Epic: `bd-01KY3J2R58MPZNKX7ZKTVYPQTM`

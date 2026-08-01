@@ -1,5 +1,10 @@
 # HalfFlow-LM benchmark and evaluation protocol
 
+> Historical migration record. The HalfFlow engine, fixtures, cross-platform
+> tests, probes, and JMH benchmarks moved to `canardlapin/reframe4s` at commit
+> `e7f469c`. Commands and ScalaFIM paths below record pre-extraction evidence;
+> they are not current ScalaFIM entry points.
+
 - Status: frozen protocol; P1-P6 admissions complete; first P7 real-data diagnostic captured
 - Date: 2026-07-21
 - Epic: `bd-01KY3J2R58MPZNKX7ZKTVYPQTM`

@@ -69,7 +69,6 @@ hrf
             +-- group
 
 image
-+-- registration
 +-- image-view        also depends on Intaglio core
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-data, and linalg
@@ -148,7 +147,6 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
 | `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, affine math, low-level coordinate transforms, morphisms, resampling, clustering, and metric searchlight construction. | `locus-data` | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
-| `registration` | Frame-safe inverse pairs, symmetric midpoint deformation, paired diffeomorphic flow construction, topology/inverse guards, and nonlinear registration optimization. | `image` | Generic tensor/field kernels, image IO, atlas catalogs, dataset policy, or registration-specific shortcuts in Gale. |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
@@ -302,9 +300,9 @@ keeps their durable ideas at different layers.
   `IdentityMorphism`, `Affine3DMorphism`, dense displacement/coordinate fields,
   interpolation plans, `GridSpec`, `SpatialPoint`, `ResamplingPlan`, field
   materialization, and local execution-plan compaction/fusion.
-- `registration` owns optimization-time inverse tracking, midpoint updates,
-  paired flows, acceptance guards, and registration diagnostics over those image
-  kernels.
+- Standalone reframe4s owns nonlinear registration, HalfFlow state, midpoint
+  updates, paired flows, acceptance guards, and registration diagnostics.
+  ScalaFIM has no dependency on it after extraction.
 - `surface` owns surface-specific geometric data, volume-to-surface morphism
   wrappers, and surface-to-surface vertex-map execution.
 - `atlas` owns named known-space route descriptors such as `SpaceTransforms`;
@@ -359,8 +357,8 @@ descriptors can materialize executable dense morphisms.
   public API but must not recreate renderer or grammar internals.
 - Put pure image-space kernels in `image`; platform IO goes in `image/jvm`.
 - Put nonlinear registration state, objectives, deformation geometry, and
-  acceptance policy in `registration`; keep reusable image-field kernels in
-  `image` and reusable linear algebra in Gale.
+  acceptance policy in standalone reframe4s. ScalaFIM retains no registration
+  module or adapter dependency.
 - Put mesh and vertex-domain algorithms in `surface`.
 - Put surface display state, layers, anatomical cameras, render-plan compilation,
   projection/network visualization primitives, scene documents, and backend

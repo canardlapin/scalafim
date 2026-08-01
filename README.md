@@ -16,7 +16,6 @@ cross-compiled sbt build.
 - `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, affine/dense-field spatial morphisms, statistics, clustering, and image IO.
-- `registration`: compact symmetric nonlinear registration algebra with typed inverse pairs, midpoint updates, paired diffeomorphic flows, and topology guards.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
 - `image-view-java2d`: thin JVM Java2D host with direct `Graphics2D` and `BufferedImage` rendering.
@@ -64,6 +63,10 @@ General multivariate analysis and its language-neutral IR now live in the
 standalone [`multivar`](https://github.com/canardlapin/multivar) repository.
 ScalaFIM pins an immutable source revision and owns only downstream
 neuroimaging integrations.
+
+Nonlinear registration and the experimental HalfFlow engine now live in
+standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
+does not retain a registration module or depend on reframe4s.
 
 Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
 live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).
@@ -130,8 +133,6 @@ sbt designJVM/test
 sbt designJS/test
 sbt imageJVM/test
 sbt imageJS/test
-sbt registrationJVM/test
-sbt registrationJS/test
 sbt imageViewJVM/test
 sbt imageViewJS/test
 sbt imageViewCanvasJS/test

@@ -1,5 +1,9 @@
 # HalfFlow-LM: compact symmetric nonlinear registration
 
+> Historical design record. The engine and its verification assets moved to
+> `canardlapin/reframe4s` at commit `e7f469c`. This document preserves the
+> original ScalaFIM plan and is no longer a module roadmap for this repository.
+
 - Status: proposed implementation plan
 - Date: 2026-07-21
 - Tracker epic: `bd-01KY3J2R58MPZNKX7ZKTVYPQTM`
