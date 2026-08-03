@@ -4,6 +4,25 @@ import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceParcelsSuite extends munit.FunSuite:
 
+  test("boundary edges derive directly from mesh topology and endpoint labels"):
+    val boundaries = SurfaceParcels.boundaryEdges(sheetLabels, sheetTopology)
+    assertEquals(
+      boundaries.map(boundary => (boundary.edge.a.index, boundary.edge.b.index)),
+      Vector((0, 2), (1, 2), (1, 3))
+    )
+    assert(boundaries.forall(boundary => boundary.atA != boundary.atB))
+
+    val roi = SurfaceParcels.boundaryEdges(
+      sheetLabels,
+      sheetTopology,
+      ignoredLabels = Set(2),
+      includeExterior = true
+    )
+    assertEquals(
+      roi.map(boundary => (boundary.edge.a.index, boundary.edge.b.index)),
+      Vector((0, 2), (1, 2), (1, 3))
+    )
+
   private val sheetTopology = SurfaceTestFixtures.sheetTopology
   private val sheetLabels = SurfaceTestFixtures.sheetLabels
 
@@ -13,6 +32,26 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     assertEquals(parcels.map(_.label), Vector(1, 2))
     assertEquals(parcels.map(_.size), Vector(2, 2))
     assertEquals(parcels.head.info.map(_.name), Some("A"))
+
+  test("parcel operations reject equal-sized but topologically different meshes"):
+    val incompatible =
+      MeshTopology.from(
+        TriangleMesh.fromRows(
+          Vector(
+            Vector(0.0, 0.0, 0.0),
+            Vector(1.0, 0.0, 0.0),
+            Vector(0.0, 1.0, 0.0),
+            Vector(1.0, 1.0, 0.0)
+          ),
+          Vector(
+            (0, 1, 3),
+            (0, 3, 2)
+          )
+        )
+      )
+
+    interceptMessage[IllegalArgumentException]("requirement failed: labeled surface and topology must share ordered triangle topology"):
+      SurfaceParcels.units(sheetLabels, incompatible)
 
   test("fragmented parcel policies error, keep largest, split, or merge"):
     val topology = SurfaceTestFixtures.disconnectedTopology

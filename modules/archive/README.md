@@ -1,71 +1,37 @@
 # scalafim-archive
 
-Cross-compiled JVM/Scala.js archive contract module for `scalafim`.
+Dependency-light, cross-platform archive contracts for ScalaFIM.
 
-Package roots:
+The module owns only format-neutral vocabulary:
 
-```scala
-import scalafim.archive.*
-import scalafim.archive.lna.*
-```
+- immutable revision, manifest, provenance, publication, and integrity values;
+- separate major-versioned archive-format, object-schema, and representation
+  identities;
+- exact canonical values, including raw IEEE-754 floating bits;
+- namespaced typed payload roles, layout-independent logical payload
+  identities, plans, executors, and observed results;
+- resource-safe `ArchiveDriver[F]` and `OpenArchive[F]` boundaries;
+- archive-native object, range, length, byte, and cache receipts;
+- structural and content-validation scopes.
 
-This module captures the core Latent NeuroArchive idea from `neuroarchive` as
-typed Scala 3 values: archive manifests, transform descriptors, payload
-references, validation layers, and executable transform plans. It is not an
-R6/S3 registry port.
+`CanonicalArchiveManifestCodec` is the admitted deterministic
+`org.scalafim/neuroarchive-manifest@1` encoding. It preserves raw `Float64`
+bits, canonical UTF-8 object-key order, sorted payload identities, and rejects
+trailing or merely equivalent non-canonical input. `CanonicalArchiveWriter`
+turns a fully checked document into an ordered staging/payload/manifest/publish
+program. Its resource-owned transaction guarantees that every proper prefix
+remains absent; container modules provide the physical sink and atomic publish
+mechanism.
 
-Shared code contains the pure contract and portable transforms. Platform IO
-adapters, including HDF5, live under JVM sources.
+An archive revision never owns a live handle. `ArchiveDriver[F]` acquires an
+`ArchiveResource`, while the pure revision remains safe to inspect after
+release. Unknown representation keys remain structurally validatable and are
+resolved by an application registry outside this module.
 
-Supported shared transform constructs now include:
-
-- `quant`: global or per-voxel range quantization with typed scale/offset
-  payloads, checked `QuantBits`, explicit centering and clipping policies, and
-  total checked decoders for malformed archive inputs
-- `delta`: first-order time-axis deltas with verbatim first-value references
-  and checked decode errors for unsupported axes or malformed first-value
-  payloads
-- `basis` plus `embed`: explicit basis storage and coefficient projection
-- external shared-basis `embed`: coefficient-only archives that reference a
-  content-addressed shared basis artifact by alias/checksum, with locator and
-  registry-backed JVM resolution
-- `temporal` DCT descriptors for explicit latent responses with persisted
-  temporal bases, loadings, optional sample offsets, and typed DCT params
-- shared basis artifacts: content-addressed dense loadings plus masks,
-  deterministic SHA-256 checksums, and alias registries for reusable group
-  bases
-- composed `delta -> quant` archives reconstructed by walking typed transform
-  descriptors in reverse order
-
-The public model keeps compatibility constructors for existing call sites, but
-new code should prefer checked constructors such as `ArchivePath.parse`,
-`RunLabel.parse`, `DatasetShape(...)`, `DatasetRef.checked`,
-`TransformDescriptor.checked`, `LnaManifest.checked`, and the shared-basis
-`checked` constructors. These return `Either[ArchiveError, A]` and keep path,
-shape, transform-name, port-name, creator, metadata, and finite-value failures
-inside the archive error algebra.
-
-The current delta core is intentionally lossless and simple: no feature-axis
-deltas, run-length coding, entropy coding, or external chunk/filter policy is
-implied by the descriptor yet.
-
-The JVM archive module includes a first jHDF-backed `LnaHdf5Store` for basic
-LNA files and a `JhdfSharedBasisStore` for standalone `.lna_basis.h5` basis
-artifacts. `LnaSharedBasisResolver` materializes coefficient-only shared-basis
-archives by resolving the basis from an archive-relative locator, a
-`bases/registry.json` alias, or a direct content-addressed filename lookup. The
-archive store writes:
-
-- root metadata attributes
-- `/__lna__/manifest_json`
-- `/__lna__/transforms/<index>/descriptor_json`
-- `/__lna__/payloads/...` datasets mirroring archive payload paths
-
-The backend is intentionally restricted to the current `Payload` variants. It
-roundtrips ScalaFIM archives, but jHDF currently writes integer arrays as signed
-fixed-point datasets. ScalaFIM preserves `UInt8`/`UInt16` semantics from the LNA
-manifest on read, while exact unsigned HDF5 datatypes remain a likely jHDF
-fork/upstream target if external tools require them.
+This artifact contains no LNA/HDF5, Zarr, dataset, or scientific reconstruction
+code. LNA schema and physical IO live in `archive-lna`; Zarr profile code lives
+in `archive-zarr`; representation decoding and compatibility assembly live in
+`interop-archived-response`.
 
 Run it directly with:
 

@@ -1,8 +1,9 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.{BidsQuery, BidsScope}
+import bids4s.{BidsQuery, BidsScope}
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
+import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.formula.ModelFormula
 import scalafim.fmri.fit.SequentialChunkProgramInterpreter
 import scalafim.fmri.group.{GroupWeighting, InterceptPolicy}
@@ -13,7 +14,7 @@ class AnalysisPlanSuite extends FunSuite:
     val datasetId = DatasetId("demo")
     val contrast = ContrastWorkflow.t("stim", Vector("stim" -> 1.0)).toOption.get
     val firstLevel = FirstLevelWorkflow.make(
-      ModelRecipe.unsafe(ModelFormula("onset", Vector.empty)),
+      ModelRecipe.unsafe(ModelFormula(ColumnId.unsafe("onset"), Vector.empty)),
       Vector(contrast)
     ).toOption.get
     val group = interceptGroup("stim", GroupWeighting.Unweighted)
@@ -55,7 +56,7 @@ class AnalysisPlanSuite extends FunSuite:
       Vector(Vector("stim" -> 1.0), Vector("stim" -> -1.0))
     ).toOption.get
     val firstLevel = FirstLevelWorkflow.make(
-      ModelRecipe.unsafe(ModelFormula("onset", Vector.empty)),
+      ModelRecipe.unsafe(ModelFormula(ColumnId.unsafe("onset"), Vector.empty)),
       Vector(omnibus)
     ).toOption.get
     val design = GroupDesignRecipe.make(Vector("age"), InterceptPolicy.Include).toOption.get
@@ -92,7 +93,7 @@ class AnalysisPlanSuite extends FunSuite:
     val datasetId = DatasetId("demo")
     val contrast = ContrastWorkflow.t("stim", Vector("stim" -> 1.0)).toOption.get
     val firstLevel = FirstLevelWorkflow.make(
-      ModelRecipe.unsafe(ModelFormula("onset", Vector.empty)),
+      ModelRecipe.unsafe(ModelFormula(ColumnId.unsafe("onset"), Vector.empty)),
       Vector(contrast)
     ).toOption.get
     val spec = analysisSpec(datasetId, firstLevel, Vector(interceptGroup("stim", GroupWeighting.Unweighted)))
@@ -113,7 +114,7 @@ class AnalysisPlanSuite extends FunSuite:
     val datasetId = DatasetId("demo")
     val contrast = ContrastWorkflow.t("stim", Vector("stim" -> 1.0)).toOption.get
     val firstLevel = FirstLevelWorkflow.make(
-      ModelRecipe.unsafe(ModelFormula("onset", Vector.empty)),
+      ModelRecipe.unsafe(ModelFormula(ColumnId.unsafe("onset"), Vector.empty)),
       Vector(contrast)
     ).toOption.get
     val spec = analysisSpec(datasetId, firstLevel, Vector.empty)
@@ -130,7 +131,7 @@ class AnalysisPlanSuite extends FunSuite:
     val datasetId = DatasetId("demo")
     val contrast = ContrastWorkflow.t("stim", Vector("stim" -> 1.0)).toOption.get
     val firstLevel = FirstLevelWorkflow.make(
-      ModelRecipe.unsafe(ModelFormula("onset", Vector.empty)),
+      ModelRecipe.unsafe(ModelFormula(ColumnId.unsafe("onset"), Vector.empty)),
       Vector(contrast)
     ).toOption.get
     val spec = analysisSpec(datasetId, firstLevel, Vector.empty)
@@ -151,7 +152,10 @@ class AnalysisPlanSuite extends FunSuite:
     val recipe = DatasetRecipe.unsafe(
       datasetId = datasetId,
       project = WorkflowArtifactRef.unsafe[BidsProjectResource]("file:///bids"),
-      boldQuery = BidsQuery(filename = Vector(".*bold\\.nii(\\.gz)?$"), scope = BidsScope.Derivatives)
+      boldQuery = BidsQuery.from(
+        filename = Vector(".*bold\\.nii(\\.gz)?$"),
+        scope = BidsScope.Derivatives
+      ).toOption.get
     )
     StudyAnalysisSpec.make(
       id = WorkflowId.unsafe("study"),

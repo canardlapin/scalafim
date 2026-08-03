@@ -1,0 +1,144 @@
+{
+  "schema": "scalafim.halfflow-cc.forward-midpoint-control.v1",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY51743TJET8YEPKT8PQBVHA",
+  "captured_at_utc": "2026-07-22T14:56:34Z",
+  "repository_head": "b341c388353df4d947d757b4903c37484caf044d",
+  "state_contract": {
+    "authoritative_state": "one forward W-to-W residual and one exact affine per midpoint arm",
+    "advance": "fixed residual right-composes h+; moving residual right-composes h-",
+    "sampled_backward_residual_authoritative": false,
+    "inverse_cache": "explicitly approximate, measured, refresh-counted, and absent from anatomical acceptance",
+    "legacy_control_lane_changed": false
+  },
+  "geometry_contract": {
+    "hard_rejections": [
+      "incremental Jacobian below floor or coverage contract",
+      "fixed accumulated forward-arm Jacobian below floor or coverage contract",
+      "moving accumulated forward-arm Jacobian below floor or coverage contract"
+    ],
+    "inverse_error_is_hard_rejection": false,
+    "verdicts": [
+      "Valid",
+      "IncrementJacobianTooSmall",
+      "AccumulatedJacobianTooSmall"
+    ]
+  },
+  "controller_contract": {
+    "objective_observation_changes": ["damping"],
+    "Jacobian_failure_changes": ["stepScale"],
+    "integration_error_changes": ["squarings"],
+    "inverse_cache_drift_changes": [],
+    "inverse_cache_drift_action": "RefreshInverseCache",
+    "level_damping_reset_default": "Initial",
+    "level_damping_reset_alternative": "Retain",
+    "caps": [
+      "minimum and maximum damping",
+      "minimum and maximum step scale",
+      "minimum and maximum squaring depth",
+      "objective, geometry, and integration retry budgets"
+    ],
+    "trace": "every observation returns a ControlTransition with typed observation, action, before, and after states"
+  },
+  "export_contract": {
+    "algorithm": "coarse-to-fine fixed-point inversion of each forward residual with identity extrapolation",
+    "default_shrinks": [4, 2, 1],
+    "affines": "inverted and composed exactly outside residual refinement",
+    "reports": [
+      "interior valid fraction",
+      "p50, p95, p99, and maximum physical error",
+      "maximum voxel error",
+      "all-support maximum physical error",
+      "iterations per level",
+      "endpoint forward-backward and backward-forward round trip"
+    ],
+    "failure": "InverseDidNotConverge identifies the arm and carries its complete report"
+  },
+  "smooth_export_fixture": {
+    "grid": [13, 13, 13],
+    "shrinks": [2, 1],
+    "iterations_by_level": [7, 7],
+    "interior_voxels": 729,
+    "interior_valid_fraction": 1.0,
+    "fixed": {
+      "forward_then_inverse_p99_mm": 0.003993888452318806,
+      "forward_then_inverse_maximum_mm": 0.004103934023003622,
+      "inverse_then_forward_p99_mm": 5.148642842209944e-7,
+      "inverse_then_forward_maximum_mm": 5.921197352474846e-7
+    },
+    "moving": {
+      "forward_then_inverse_p99_mm": 0.004008046578759224,
+      "forward_then_inverse_maximum_mm": 0.004131445990100936,
+      "inverse_then_forward_p99_mm": 4.949131385328303e-7,
+      "inverse_then_forward_maximum_mm": 6.23429936450532e-7
+    },
+    "endpoint_round_trip": {
+      "forward_then_backward_rms_mm": 0.0018150551447721516,
+      "forward_then_backward_maximum_mm": 0.007491595353291089,
+      "backward_then_forward_rms_mm": 0.0018152662299875746,
+      "backward_then_forward_maximum_mm": 0.007446868897786582
+    },
+    "configured_maximum_mm": 0.01,
+    "configured_maximum_vox": 0.01,
+    "status": "passed"
+  },
+  "tests": {
+    "command": "sbt 'registrationJVM/test' 'registrationJS/test' 'registrationBenchJVM/compile'",
+    "jvm": {
+      "passed": 59,
+      "failed": 0
+    },
+    "scala_js": {
+      "passed": 59,
+      "failed": 0
+    },
+    "benchmark_compile": "passed",
+    "contracts": [
+      "identity and opposite half-step signs",
+      "right-composition order",
+      "identity boundary extension",
+      "exact affine separation and export composition",
+      "fixed-moving structural swap",
+      "positive sampled Jacobians",
+      "typed incremental and accumulated fold verdicts",
+      "integration error versus anatomical geometry separation",
+      "multiresolution inverse and endpoint round trip",
+      "typed impossible-tolerance failure",
+      "refreshable approximate inverse cache",
+      "controller noninterference, caps, retry budgets, and level reset"
+    ]
+  },
+  "source_lines": {
+    "forward_midpoint": 258,
+    "export": 353,
+    "controllers": 220,
+    "total": 831
+  },
+  "sources": [
+    {
+      "path": "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpoint.scala",
+      "sha256": "a8f6e8a94ddf48c6aacbc215cbce1c1a1bd9d383fa021e09e66184a43c3fe57e"
+    },
+    {
+      "path": "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala",
+      "sha256": "254ccb49b1a0b9e59b2d182b685713498b3defccc7b02d52d9512da397bafa2f"
+    },
+    {
+      "path": "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcControl.scala",
+      "sha256": "5b1f3238db2a654bfbc99ef59b1098e21ad1402eeb816fa9146c1ed31f65a566"
+    },
+    {
+      "path": "modules/registration/shared/src/test/scala/scalafim/registration/ForwardMidpointSuite.scala",
+      "sha256": "4ab79c710b6237cb6b9c8b9b717ea5c5ea35952e3eb869b83d14dcb18feac7ce"
+    },
+    {
+      "path": "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowCcControlSuite.scala",
+      "sha256": "b09a30c2e6b73d19f42d9f86409ba407bab6c58f0796ef57a1888f994e68f1d0"
+    }
+  ],
+  "limitations": [
+    "The forward-only state and controls are not yet wired into the experimental optimization loop; that occurs with the rank-one/support gate.",
+    "Fixed-point inverse refinement assumes a sufficiently near-identity diffeomorphic residual and returns a typed failure otherwise.",
+    "No anatomical-accuracy or ANTs-parity claim follows from this algebra/export gate."
+  ]
+}

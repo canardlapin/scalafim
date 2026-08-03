@@ -74,6 +74,9 @@ final case class SurfaceAtlas(
     ).message
   )
 
+  lazy val quotient: SurfaceAtlasQuotient =
+    AtlasQuotient.surface(ref.coordSpace.value, ref.name, regions, payload)
+
   require(
     payload.tableIds.subsetOf(regionIdSet),
     AtlasError.InvalidRegionMetadata(
@@ -90,16 +93,16 @@ final case class SurfaceAtlas(
   def surface(hemisphere: SurfaceHemisphere): LabeledSurface =
     payload.surface(hemisphere)
 
-  def region(id: RegionId): Option[Region] =
+  def region(id: RegionId): Option[AtlasRegionMetadata] =
     regions.get(id)
 
-  def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[Region] =
+  def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[AtlasRegionMetadata] =
     regions.find(label, hemisphere)
 
   def labelIdAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[RegionId] =
     surface(hemisphere).labelAt(vertex).filter(_ != 0).map(RegionId(_))
 
-  def regionAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[Region] =
+  def regionAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[AtlasRegionMetadata] =
     labelIdAt(hemisphere, vertex).flatMap(regions.get)
 
   def labelInfo(hemisphere: SurfaceHemisphere, id: RegionId): Option[LabelInfo] =
@@ -109,7 +112,7 @@ final case class SurfaceAtlas(
     hemisphere: SurfaceHemisphere,
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set(0)
-  ): Vector[(Region, ParcelUnit)] =
+  ): Vector[(AtlasRegionMetadata, ParcelUnit)] =
     val labeled = surface(hemisphere)
     val topology = MeshTopology.from(labeled.geometry.mesh)
     SurfaceParcels

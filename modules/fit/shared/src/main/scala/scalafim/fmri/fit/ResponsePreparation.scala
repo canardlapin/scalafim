@@ -111,6 +111,61 @@ final case class ResponsePreparationPlan(
       PreparedFitBlockInput(input = input, provenance = provenance)
     }
 
+  /** Compile this declared temporal preparation into the response-independent
+    * geometry used by one-shot canonical contrast analysis. Unsupported deferred
+    * transforms are rejected rather than silently omitted.
+    */
+  def prepareContrast(
+      design: DesignMatrix,
+      columnNames: Vector[String],
+      contrast: TContrast,
+      selectedTimepoints: SelectedTimepointIndices,
+      partitions: Vector[RunPartition],
+      nuisanceRank: TemporalNuisanceRank,
+      scope: TemporalPreparationScope = TemporalPreparationScope.Fixed,
+      whitening: CanonicalTemporalWhitening = CanonicalTemporalWhitening.Iid,
+      solvePolicy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, PreparedContrastGeometry] =
+    PreparedContrastGeometry.compile(
+      preparation = this,
+      design = design,
+      columnNames = columnNames,
+      contrast = contrast,
+      selectedTimepoints = selectedTimepoints,
+      partitions = partitions,
+      nuisanceRank = nuisanceRank,
+      scope = scope,
+      whitening = whitening,
+      solvePolicy = solvePolicy
+    )
+
+  /** Compile a full-rank multi-contrast hypothesis into normalized temporal
+    * geometry for one-shot MANOVA.
+    */
+  def prepareManova(
+      design: DesignMatrix,
+      columnNames: Vector[String],
+      contrast: FContrast,
+      selectedTimepoints: SelectedTimepointIndices,
+      partitions: Vector[RunPartition],
+      nuisanceRank: TemporalNuisanceRank,
+      scope: TemporalPreparationScope = TemporalPreparationScope.Fixed,
+      whitening: CanonicalTemporalWhitening = CanonicalTemporalWhitening.Iid,
+      solvePolicy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, PreparedManovaGeometry] =
+    PreparedManovaGeometry.compile(
+      preparation = this,
+      design = design,
+      columnNames = columnNames,
+      contrast = contrast,
+      selectedTimepoints = selectedTimepoints,
+      partitions = partitions,
+      nuisanceRank = nuisanceRank,
+      scope = scope,
+      whitening = whitening,
+      solvePolicy = solvePolicy
+    )
+
   private def validateFor(input: FitBlockInput): Either[FitError, Unit] =
     volumeWeighting match
       case VolumeWeighting.Fixed(weights) if weights.length != input.timepoints.length =>

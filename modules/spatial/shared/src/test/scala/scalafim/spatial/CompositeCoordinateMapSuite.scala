@@ -1,7 +1,7 @@
 package scalafim.spatial
 
-import narr.NArray
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NDArray, NeuroSpace, Resample, SpatialDomainId}
+import ravel.NDArray as RavelArray
+import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
 
 class CompositeCoordinateMapSuite extends munit.FunSuite:
 
@@ -45,19 +45,21 @@ class CompositeCoordinateMapSuite extends munit.FunSuite:
 
   private def displacement(source: Domain, target: Domain, x: Double): CoordinateMap =
     val grid = GridSpec.identity(Vector(4, 1, 1))
-    val values = NArray.ofSize[Double](grid.nVoxels * 3)
-    var voxel = 0
-    while voxel < grid.nVoxels do
-      values(voxel) = x
-      values(voxel + grid.nVoxels) = 0.0
-      values(voxel + 2 * grid.nVoxels) = 0.0
-      voxel += 1
+    val values =
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (_, _, _, component) =>
+        if component == 0 then x else 0.0
+      }
     val dense = imageValue(
       DenseFieldMorphism.displacement(
         SpatialDomainId(source.id.value),
         SpatialDomainId(target.id.value),
         grid,
-        NDArray(values, grid.dims :+ 3),
+        values,
         Resample.Method.Linear
       )
     )

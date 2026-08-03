@@ -1,6 +1,7 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.NDArray as RavelArray
+import ravel.Shape
 
 object KMeans:
 
@@ -16,7 +17,7 @@ object KMeans:
       nextInt(Int.MaxValue).toDouble / Int.MaxValue.toDouble
 
   final case class Result(
-    labels: NArray[Int],               // 1-based cluster ids, length = n points
+    labels: Array[Int],               // 1-based cluster ids, length = n points
     centers: Vector[Vector[Double]],   // k x 3 centers
     iterations: Int
   )
@@ -173,7 +174,7 @@ object KMeans:
       iter += 1
       continue = anyChange && maxShift > tol
 
-    val outLabels = narr.NArray.ofSize[Int](n)
+    val outLabels = Array.ofDim[Int](n)
     i = 0
     while i < n do
       outLabels(i) = labelsArr(i) + 1
@@ -199,15 +200,19 @@ object KMeans:
   ): ClusteredNeuroVol =
     val sp = mask.space
     val activeIdx = Mask.indices(mask)
-    require(activeIdx.length >= k, "k must be <= number of active voxels")
+    require(activeIdx.size >= k, "k must be <= number of active voxels")
 
-    val pts = Vector.tabulate(activeIdx.length) { i =>
+    val pts = Vector.tabulate(activeIdx.size) { i =>
       val lin = activeIdx(i)
       val g = Indexing.indexToGrid3D(sp.spatialDims, lin)
       sp.indexToCoord(g.map(_.toDouble))
     }
     val res = fit(pts, k, iterMax = iterMax, seed = seed, init = init)
-    ClusteredNeuroVol(mask, res.labels, label = label)
+    ClusteredNeuroVol(
+      mask,
+      RavelArray.fromSeq(Shape(res.labels.length), res.labels),
+      label = label
+    )
 
   /** Partition a numeric volume by clustering non-zero voxels (as.logical in R). */
   def partitionNonZero(
@@ -218,7 +223,7 @@ object KMeans:
     init: Init,
     label: String
   ): ClusteredNeuroVol =
-    val flags = narr.NArray.ofSize[Boolean](vol.values.data.length)
+    val flags = Array.ofDim[Boolean](vol.values.size)
     var i = 0
     while i < flags.length do
       flags(i) = vol.linear(i) != 0.0

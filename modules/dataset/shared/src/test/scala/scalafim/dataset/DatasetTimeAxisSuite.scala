@@ -86,23 +86,23 @@ class DatasetTimeAxisSuite extends munit.FunSuite:
   }
 
   test("FmriDataset accepts explicit typed run ids when block lengths align") {
-    val customAxis =
-      DatasetTimeAxis
-        .fromSamplingFrame(samplingFrame, Vector(RunId("baseline"), RunId("task"), RunId("localizer")))
-        .fold(err => fail(err.message), identity)
-    val dataset = fmriDataset(timeAxis = customAxis)
+    val dataset = fmriDataset(Vector(RunId("baseline"), RunId("task"), RunId("localizer")))
 
     assertEquals(dataset.timeAxis.runIds.map(_.value), Vector("baseline", "task", "localizer"))
     assertEquals(dataset.timeAxis.blocks(1).globalTimepoints.map(_.value), Vector(2, 3, 4))
   }
 
-  private def fmriDataset(timeAxis: DatasetTimeAxis = DatasetTimeAxis.unsafe(samplingFrame)): FmriDataset =
-    FmriDataset(
-      backend = InMemoryDatasetBackend(
-        id = DatasetId("time-axis-demo"),
-        data = DMat.fromRows(Vector.tabulate(6)(row => Vector(row.toDouble))),
-        space = NeuroSpace(Vector(1, 1, 1))
-      ),
-      samplingFrame = samplingFrame,
-      timeAxis = timeAxis
-    )
+  private def fmriDataset(
+      runIds: Vector[RunId] = Vector(RunId("run-1"), RunId("run-2"), RunId("run-3"))
+  ): FmriDataset =
+    FmriDataset
+      .open(
+        backend = InMemoryDatasetBackend(
+          id = DatasetId("time-axis-demo"),
+          data = DMat.fromRows(Vector.tabulate(6)(row => Vector(row.toDouble))),
+          space = NeuroSpace(Vector(1, 1, 1))
+        ),
+        samplingFrame = samplingFrame,
+        runIds = runIds
+      )
+      .fold(error => fail(error.message), _.dataset)

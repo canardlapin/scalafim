@@ -3,7 +3,7 @@ package scalafim.image.view.java2d
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 
-import scalafim.graphics.java2d.*
+import intaglio.java2d.*
 import scalafim.image.view.*
 
 enum Java2DViewerError:

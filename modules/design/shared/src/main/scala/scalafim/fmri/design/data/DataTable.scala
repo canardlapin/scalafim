@@ -31,6 +31,62 @@ enum Column:
       case DoubleLists(_) => "numeric-list"
       case Hrfs(_)        => "HRF"
 
+/** How a [[Column]] is read as a `Vector[A]`.
+  *
+  * One instance per element type, in place of a per-type family of accessors:
+  * the `Ints`-widen-to-`Doubles` rule lives here once rather than being
+  * restated by every accessor that admits it.
+  */
+trait ColumnType[A]:
+  /** How this element type is named in a [[DesignError.InvalidColumnType]]. */
+  def typeName: String
+
+  def extract(column: Column): Option[Vector[A]]
+
+object ColumnType:
+  given ColumnType[Double] with
+    val typeName: String = "numeric"
+    def extract(column: Column): Option[Vector[Double]] =
+      column match
+        case Column.Doubles(v) => Some(v)
+        case Column.Ints(v)    => Some(v.map(_.toDouble))
+        case _                 => None
+
+  given ColumnType[Int] with
+    val typeName: String = "integer"
+    def extract(column: Column): Option[Vector[Int]] =
+      column match
+        case Column.Ints(v) => Some(v)
+        case _              => None
+
+  given ColumnType[String] with
+    val typeName: String = "string"
+    def extract(column: Column): Option[Vector[String]] =
+      column match
+        case Column.Strings(v) => Some(v)
+        case _                 => None
+
+  given ColumnType[Boolean] with
+    val typeName: String = "boolean"
+    def extract(column: Column): Option[Vector[Boolean]] =
+      column match
+        case Column.Bools(v) => Some(v)
+        case _               => None
+
+  given ColumnType[Vector[Double]] with
+    val typeName: String = "numeric-list"
+    def extract(column: Column): Option[Vector[Vector[Double]]] =
+      column match
+        case Column.DoubleLists(v) => Some(v)
+        case _                     => None
+
+  given ColumnType[Hrf] with
+    val typeName: String = "HRF"
+    def extract(column: Column): Option[Vector[Hrf]] =
+      column match
+        case Column.Hrfs(v) => Some(v)
+        case _              => None
+
 final case class DataTable private (nrows: Int, columns: VectorMap[String, Column]):
   require(nrows >= 0, "`nrows` must be >= 0")
   columns.foreach { case (k, col) =>
@@ -39,103 +95,24 @@ final case class DataTable private (nrows: Int, columns: VectorMap[String, Colum
 
   def names: Vector[String] = columns.keys.toVector
 
-  def contains(name: String): Boolean =
-    columns.contains(name)
+  def contains(id: ColumnId): Boolean =
+    columns.contains(id.value)
 
-  def column(name: String): Column =
-    columns.getOrElse(name, throw new IllegalArgumentException(s"Unknown column: '$name'"))
+  /** The column `id` names, or [[DesignError.MissingColumn]]. */
+  def column(id: ColumnId): Either[DesignError, Column] =
+    columns.get(id.value).toRight(DesignError.MissingColumn(id.value))
 
-  def columnEither(name: String): Either[DesignError, Column] =
-    columns.get(name).toRight(DesignError.MissingColumn(name))
-
-  def columnById(id: ColumnId): Either[DesignError, Column] =
-    columnEither(id.value)
-
-  def doubles(name: String): Vector[Double] =
-    column(name) match
-      case Column.Doubles(v) => v
-      case Column.Ints(v)    => v.map(_.toDouble)
-      case other             => throw new IllegalArgumentException(s"Column '$name' is not numeric: $other")
-
-  def doublesEither(name: String): Either[DesignError, Vector[Double]] =
-    columnEither(name).flatMap {
-      case Column.Doubles(v) => Right(v)
-      case Column.Ints(v)    => Right(v.map(_.toDouble))
-      case other             => Left(DesignError.InvalidColumnType(name, "numeric", other.typeName))
+  /** The column `id` names, read as `Vector[A]`.
+    *
+    * The only fallible column accessor. It reports a missing column and a
+    * mistyped column as the [[DesignError]] cases that exist for them, and
+    * there is no throwing twin a caller could reach for by accident and lose
+    * that distinction to a stringly catch-all.
+    */
+  def get[A](id: ColumnId)(using ct: ColumnType[A]): Either[DesignError, Vector[A]] =
+    column(id).flatMap { col =>
+      ct.extract(col).toRight(DesignError.InvalidColumnType(id.value, ct.typeName, col.typeName))
     }
-
-  def doublesById(id: ColumnId): Either[DesignError, Vector[Double]] =
-    doublesEither(id.value)
-
-  def ints(name: String): Vector[Int] =
-    column(name) match
-      case Column.Ints(v) => v
-      case other          => throw new IllegalArgumentException(s"Column '$name' is not Int: $other")
-
-  def intsEither(name: String): Either[DesignError, Vector[Int]] =
-    columnEither(name).flatMap {
-      case Column.Ints(v) => Right(v)
-      case other          => Left(DesignError.InvalidColumnType(name, "integer", other.typeName))
-    }
-
-  def intsById(id: ColumnId): Either[DesignError, Vector[Int]] =
-    intsEither(id.value)
-
-  def strings(name: String): Vector[String] =
-    column(name) match
-      case Column.Strings(v) => v
-      case other             => throw new IllegalArgumentException(s"Column '$name' is not String: $other")
-
-  def stringsEither(name: String): Either[DesignError, Vector[String]] =
-    columnEither(name).flatMap {
-      case Column.Strings(v) => Right(v)
-      case other             => Left(DesignError.InvalidColumnType(name, "string", other.typeName))
-    }
-
-  def stringsById(id: ColumnId): Either[DesignError, Vector[String]] =
-    stringsEither(id.value)
-
-  def bools(name: String): Vector[Boolean] =
-    column(name) match
-      case Column.Bools(v) => v
-      case other           => throw new IllegalArgumentException(s"Column '$name' is not Boolean: $other")
-
-  def boolsEither(name: String): Either[DesignError, Vector[Boolean]] =
-    columnEither(name).flatMap {
-      case Column.Bools(v) => Right(v)
-      case other           => Left(DesignError.InvalidColumnType(name, "boolean", other.typeName))
-    }
-
-  def boolsById(id: ColumnId): Either[DesignError, Vector[Boolean]] =
-    boolsEither(id.value)
-
-  def hrfs(name: String): Vector[Hrf] =
-    column(name) match
-      case Column.Hrfs(v) => v
-      case other          => throw new IllegalArgumentException(s"Column '$name' is not HRF: $other")
-
-  def hrfsEither(name: String): Either[DesignError, Vector[Hrf]] =
-    columnEither(name).flatMap {
-      case Column.Hrfs(v) => Right(v)
-      case other          => Left(DesignError.InvalidColumnType(name, "HRF", other.typeName))
-    }
-
-  def hrfsById(id: ColumnId): Either[DesignError, Vector[Hrf]] =
-    hrfsEither(id.value)
-
-  def doubleLists(name: String): Vector[Vector[Double]] =
-    column(name) match
-      case Column.DoubleLists(v) => v
-      case other                 => throw new IllegalArgumentException(s"Column '$name' is not a list of numeric vectors: $other")
-
-  def doubleListsEither(name: String): Either[DesignError, Vector[Vector[Double]]] =
-    columnEither(name).flatMap {
-      case Column.DoubleLists(v) => Right(v)
-      case other                 => Left(DesignError.InvalidColumnType(name, "numeric-list", other.typeName))
-    }
-
-  def doubleListsById(id: ColumnId): Either[DesignError, Vector[Vector[Double]]] =
-    doubleListsEither(id.value)
 
   def filterRows(keep: Seq[Boolean]): DataTable =
     require(keep.length == nrows, s"keep mask has length ${keep.length} but expected $nrows")

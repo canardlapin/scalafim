@@ -2,8 +2,10 @@ package scalafim.spatial.io
 
 import gale.backend.Backend.given
 import gale.linalg.{DMat as GaleDMat, DVec}
-import narr.NArray
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NDArray, NeuroSpace, Resample, SpatialDomainId}
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
+import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NeuroSpace, NeuroVec, Resample, SpatialDomainId}
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
 
@@ -555,8 +557,14 @@ object TransformAssetLoader:
           )
         else
           val grid = GridSpec.fromSpace(targetSpace)
-          val coordinates = normalizeDense(native.values.data, grid, sourceSpace, targetSpace, options)
-          val field = NDArray(coordinates, grid.dims :+ 3)
+          val field =
+            normalizeDense(
+              native,
+              grid,
+              sourceSpace,
+              targetSpace,
+              options
+            )
           DenseFieldMorphism
             .coordinates(
               SpatialDomainId(source.id.value),
@@ -587,14 +595,13 @@ object TransformAssetLoader:
         case NonFatal(error) => Left(SpatialIoError.MalformedTransformAsset(path, detail(error)))
 
   private def normalizeDense(
-    native: NArray[Double],
+    native: NeuroVec[Double],
     grid: GridSpec,
     source: NeuroSpace,
     target: NeuroSpace,
     options: TransformLoadOptions
-  ): NArray[Double] =
+  ): RavelArray[Double, Rank[4]] =
     val count = grid.nVoxels
-    val out = NArray.ofSize[Double](count * 3)
     val sourceFslToWorld =
       options.convention match
         case TransformCoordinateConvention.FslScaledVoxel =>
@@ -605,36 +612,61 @@ object TransformAssetLoader:
         case TransformCoordinateConvention.FslScaledVoxel => fslVoxelToScaled(target)
         case _ => GaleDMat.eye(4)
 
-    var voxel = 0
-    while voxel < count do
-      val nativeValue = Vector(native(voxel), native(voxel + count), native(voxel + 2 * count))
-      val voxelCoord = scalafim.image.Indexing.indexToGrid3D(grid.shape, voxel).toVector.map(_.toDouble)
-      val targetWorld = grid.voxelToWorld(voxelCoord)
-      val sourceWorld =
-        options.convention match
-          case TransformCoordinateConvention.RasMillimeters =>
-            options.denseEncoding match
-              case DenseTransformEncoding.Displacement => zip3(targetWorld, nativeValue)(_ + _)
-              case DenseTransformEncoding.AbsoluteCoordinates => nativeValue
-          case TransformCoordinateConvention.LpsMillimeters =>
-            val targetNative = rasToLps(targetWorld)
-            val sourceNative =
+    val shape = Shape(grid.shape.x, grid.shape.y, grid.shape.z, 3)
+    RavelArray.build[Double, Rank[4]](shape) { builder =>
+      var voxel = 0
+      while voxel < count do
+        val coord =
+          scalafim.image.Indexing.indexToGrid3D(grid.shape, voxel)
+        val nativeValue =
+          Vector(
+            native(coord.x, coord.y, coord.z, 0),
+            native(coord.x, coord.y, coord.z, 1),
+            native(coord.x, coord.y, coord.z, 2)
+          )
+        val voxelCoord =
+          Vector(
+            coord.x.toDouble,
+            coord.y.toDouble,
+            coord.z.toDouble
+          )
+        val targetWorld = grid.voxelToWorld(voxelCoord)
+        val sourceWorld =
+          options.convention match
+            case TransformCoordinateConvention.RasMillimeters =>
               options.denseEncoding match
-                case DenseTransformEncoding.Displacement => zip3(targetNative, nativeValue)(_ + _)
-                case DenseTransformEncoding.AbsoluteCoordinates => nativeValue
-            rasToLps(sourceNative)
-          case TransformCoordinateConvention.FslScaledVoxel =>
-            val targetNative = applyAffine(targetVoxelToFsl, voxelCoord)
-            val sourceNative =
-              options.denseEncoding match
-                case DenseTransformEncoding.Displacement => zip3(targetNative, nativeValue)(_ + _)
-                case DenseTransformEncoding.AbsoluteCoordinates => nativeValue
-            applyAffine(sourceFslToWorld, sourceNative)
-      out(voxel) = sourceWorld(0)
-      out(voxel + count) = sourceWorld(1)
-      out(voxel + 2 * count) = sourceWorld(2)
-      voxel += 1
-    out
+                case DenseTransformEncoding.Displacement =>
+                  zip3(targetWorld, nativeValue)(_ + _)
+                case DenseTransformEncoding.AbsoluteCoordinates =>
+                  nativeValue
+            case TransformCoordinateConvention.LpsMillimeters =>
+              val targetNative = rasToLps(targetWorld)
+              val sourceNative =
+                options.denseEncoding match
+                  case DenseTransformEncoding.Displacement =>
+                    zip3(targetNative, nativeValue)(_ + _)
+                  case DenseTransformEncoding.AbsoluteCoordinates =>
+                    nativeValue
+              rasToLps(sourceNative)
+            case TransformCoordinateConvention.FslScaledVoxel =>
+              val targetNative =
+                applyAffine(targetVoxelToFsl, voxelCoord)
+              val sourceNative =
+                options.denseEncoding match
+                  case DenseTransformEncoding.Displacement =>
+                    zip3(targetNative, nativeValue)(_ + _)
+                  case DenseTransformEncoding.AbsoluteCoordinates =>
+                    nativeValue
+              applyAffine(sourceFslToWorld, sourceNative)
+        val base =
+          ((coord.x * grid.shape.y + coord.y) * grid.shape.z +
+            coord.z) * 3
+        var component = 0
+        while component < 3 do
+          builder.writeLinear(base + component, sourceWorld(component))
+          component += 1
+        voxel += 1
+    }
 
   private def parseAffine(
     path: Path,

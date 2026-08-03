@@ -22,7 +22,7 @@ class InferenceSuite extends munit.FunSuite:
   private def noisyModel: FmriModel =
     val data = ImageDMat.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("inference-demo"), data, NeuroSpace(Vector(1, 1, 1))),
         samplingFrame = samplingFrame
       )
@@ -91,7 +91,7 @@ class InferenceSuite extends munit.FunSuite:
       Vector(fitted + noise)
     }
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(1, 1, 1))),
         samplingFrame = sf
       )

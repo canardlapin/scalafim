@@ -1,9 +1,6 @@
 package scalafim.connectivity
 
-import scalafim.graph.Direction
-import scalafim.graph.Graph
-import scalafim.graph.GraphBuildErrors
-import scalafim.graph.VertexBasis
+import graph4s.{ArcInput, Digraph, Graph, Link}
 
 opaque type EdgeSpaceIx = Int
 
@@ -78,6 +75,44 @@ final class EdgeMask private (
 
   def selectedIndices: Vector[EdgeSpaceIx] =
     selected.indices.collect { case index if selected(index) => EdgeSpaceIx.unsafe(index) }.toVector
+
+  lazy val region: EdgeMaskRegion =
+    EdgeMaskRegion.from(
+      edgeSpace,
+      selected.iterator.zipWithIndex.collect:
+        case (true, index) => index
+    )
+
+  def union(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)(_ || _)
+
+  def intersect(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)(_ && _)
+
+  def diff(that: EdgeMask): Either[ConnectivityError, EdgeMask] =
+    combine(that)((left, right) => left && !right)
+
+  def complement: EdgeMask =
+    new EdgeMask(edgeSpace, selected.map(!_))
+
+  private def combine(
+      that: EdgeMask
+  )(
+      operation: (Boolean, Boolean) => Boolean
+  ): Either[ConnectivityError, EdgeMask] =
+    if !edgeSpace.sameOrderingAs(that.edgeSpace) then
+      Left(
+        ConnectivityError.IncompatibleEdgeSpace(
+          "edge-mask Boolean operation requires the same scientific edge ordering"
+        )
+      )
+    else
+      Right(
+        new EdgeMask(
+          edgeSpace,
+          selected.indices.map(index => operation(selected(index), that.selected(index))).toVector
+        )
+      )
 
 object EdgeMask:
   def from(edgeSpace: EdgeSpace, selected: Iterable[Boolean]): Either[ConnectivityError, EdgeMask] =
@@ -201,9 +236,40 @@ final case class ProjectionReceipt(
     zeroWeightedDegreeVertices: Vector[NodeId]
 )
 
-final class ProjectedConnectivityGraph[D <: Direction, W] private[connectivity] (
+enum ProjectionDirection:
+  case Undirected
+  case Directed
+
+enum ProjectedTopology:
+  case Undirected(value: Graph[NodeId])
+  case Directed(value: Digraph[NodeId])
+
+  def containsEdge(source: NodeId, target: NodeId): Boolean =
+    this match
+      case Undirected(value) => value.containsEdge(source, target)
+      case Directed(value)   => value.containsArc(source, target)
+
+final case class ProjectedEdge[+W](
+    source: NodeId,
+    target: NodeId,
+    value: W
+)
+
+final class ProjectedGraph[D <: ProjectionDirection, +W] private[connectivity] (
+    val direction: D,
+    val nodeAxis: NodeAxis,
+    val topology: ProjectedTopology,
+    val edges: Vector[ProjectedEdge[W]]
+):
+  def size: Int =
+    edges.length
+
+  def containsEdge(source: NodeId, target: NodeId): Boolean =
+    topology.containsEdge(source, target)
+
+final class ProjectedConnectivityGraph[D <: ProjectionDirection, W] private[connectivity] (
     val sourceEdgeSpace: EdgeSpace,
-    val graph: Graph[D, NodeId, NodeSpec, W],
+    val graph: ProjectedGraph[D, W],
     val receipt: ProjectionReceipt,
     val sourceCoordinateByGraphEdge: Vector[EdgeSpaceIx]
 ):
@@ -219,7 +285,7 @@ final class ProjectedConnectivityGraph[D <: Direction, W] private[connectivity] 
   def sourceMask: EdgeMask =
     EdgeMask.fromIndices(sourceEdgeSpace, sourceCoordinateByGraphEdge).toOption.get
 
-final class ConnectivityGraphProjection[D <: Direction, W] private (
+final class ConnectivityGraphProjection[D <: ProjectionDirection, W] private (
     val direction: D,
     val eligibility: EdgeEligibility,
     val selectionScore: SelectionScore,
@@ -229,9 +295,9 @@ final class ConnectivityGraphProjection[D <: Direction, W] private (
     val zeroPolicy: ZeroEdgePolicy,
     private val expectedTopology: EdgeTopology,
     private val buildGraph: (
-        VertexBasis[NodeId, NodeSpec],
-        Iterable[(NodeId, NodeId, W)]
-    ) => Either[GraphBuildErrors[NodeId], Graph[D, NodeId, NodeSpec, W]]
+        NodeAxis,
+        Vector[ProjectedEdge[W]]
+    ) => Either[ConnectivityError, ProjectedGraph[D, W]]
 ):
   def project(matrix: ConnectivityMatrix): Either[ConnectivityError, ProjectedConnectivityGraph[D, W]] =
     for
@@ -240,9 +306,12 @@ final class ConnectivityGraphProjection[D <: Direction, W] private (
       selected = select(candidates)
       transformed <- transformSelected(selected, matrix.measure)
       retained = applyZeroPolicy(transformed)
-      graph <- buildGraph(matrix.edgeSpace.sourceAxis.basis, retained.map(candidate => (candidate.edge.source, candidate.edge.target, candidate.weight)))
-        .left.map(errors => ConnectivityError.InvalidPlan(s"projected graph construction failed: ${errors.message}"))
-      correspondence <- correspondenceFor(graph, retained)
+      canonical = retained.sortBy(candidate => endpointIndexKey(candidate.edge.sourceIndex, candidate.edge.targetIndex))
+      graph <- buildGraph(
+        matrix.edgeSpace.sourceAxis,
+        canonical.map(candidate => ProjectedEdge(candidate.edge.source, candidate.edge.target, candidate.weight))
+      )
+      correspondence = canonical.map(_.sourceIndex)
       receipt = receiptFor(matrix, candidates, selected, retained)
     yield new ProjectedConnectivityGraph(matrix.edgeSpace, graph, receipt, correspondence)
 
@@ -359,22 +428,10 @@ final class ConnectivityGraphProjection[D <: Direction, W] private (
       case ZeroEdgePolicy.ExcludeAfterTransform => values.filterNot(candidate => transform.isZero(candidate.weight))
       case ZeroEdgePolicy.PreserveSelected      => values
 
-  private def correspondenceFor(
-      graph: Graph[D, NodeId, NodeSpec, W],
-      retained: Vector[TransformedCandidate[W]]
-  ): Either[ConnectivityError, Vector[EdgeSpaceIx]] =
-    val sourceByEndpoints = retained.map: candidate =>
-      endpointIndexKey(candidate.edge.sourceIndex, candidate.edge.targetIndex) -> candidate.sourceIndex
-    .toMap
-    val correspondence = graph.edges.map: edge =>
-      sourceByEndpoints.get(endpointIndexKey(edge.endpoints.first.toInt, edge.endpoints.second.toInt))
-    if correspondence.forall(_.nonEmpty) then Right(correspondence.flatten)
-    else Left(ConnectivityError.InvalidPlan("canonical graph edge could not be mapped to its source EdgeSpace coordinate"))
-
   private def endpointIndexKey(from: Int, to: Int): (Int, Int) =
     direction match
-      case Direction.Directed => from -> to
-      case Direction.Undirected =>
+      case ProjectionDirection.Directed => from -> to
+      case ProjectionDirection.Undirected =>
         if from <= to then from -> to else to -> from
 
   private def receiptFor(
@@ -471,9 +528,9 @@ object ConnectivityGraphProjection:
       transform: WeightTransform[W],
       diagonal: DiagonalTreatment = DiagonalTreatment.ValidateAndIgnore,
       zeroPolicy: ZeroEdgePolicy = ZeroEdgePolicy.ExcludeAfterTransform
-  ): ConnectivityGraphProjection[Direction.Undirected.type, W] =
+  ): ConnectivityGraphProjection[ProjectionDirection.Undirected.type, W] =
     new ConnectivityGraphProjection(
-      Direction.Undirected,
+      ProjectionDirection.Undirected,
       eligibility,
       score,
       selection,
@@ -481,7 +538,7 @@ object ConnectivityGraphProjection:
       diagonal,
       zeroPolicy,
       EdgeTopology.Undirected,
-      (basis, edges) => Graph.undirected(basis, edges)
+      buildUndirected
     )
 
   def directed[W](
@@ -491,9 +548,9 @@ object ConnectivityGraphProjection:
       transform: WeightTransform[W],
       diagonal: DiagonalTreatment = DiagonalTreatment.ValidateAndIgnore,
       zeroPolicy: ZeroEdgePolicy = ZeroEdgePolicy.ExcludeAfterTransform
-  ): ConnectivityGraphProjection[Direction.Directed.type, W] =
+  ): ConnectivityGraphProjection[ProjectionDirection.Directed.type, W] =
     new ConnectivityGraphProjection(
-      Direction.Directed,
+      ProjectionDirection.Directed,
       eligibility,
       score,
       selection,
@@ -501,16 +558,53 @@ object ConnectivityGraphProjection:
       diagonal,
       zeroPolicy,
       EdgeTopology.Directed,
-      (basis, edges) => Graph.directed(basis, edges)
+      buildDirected
     )
+
+  private def buildUndirected[W](
+      axis: NodeAxis,
+      edges: Vector[ProjectedEdge[W]]
+  ): Either[ConnectivityError, ProjectedGraph[ProjectionDirection.Undirected.type, W]] =
+    Graph
+      .of(axis.ids, edges.map(edge => Link(edge.source, edge.target)))
+      .toEither
+      .left
+      .map(errors => graphBuildError("undirected", errors.toString))
+      .map: topology =>
+        new ProjectedGraph(
+          ProjectionDirection.Undirected,
+          axis,
+          ProjectedTopology.Undirected(topology),
+          edges
+        )
+
+  private def buildDirected[W](
+      axis: NodeAxis,
+      edges: Vector[ProjectedEdge[W]]
+  ): Either[ConnectivityError, ProjectedGraph[ProjectionDirection.Directed.type, W]] =
+    Digraph
+      .of(axis.ids, edges.map(edge => ArcInput(edge.source, edge.target)))
+      .toEither
+      .left
+      .map(errors => graphBuildError("directed", errors.toString))
+      .map: topology =>
+        new ProjectedGraph(
+          ProjectionDirection.Directed,
+          axis,
+          ProjectedTopology.Directed(topology),
+          edges
+        )
+
+  private def graphBuildError(direction: String, details: String): ConnectivityError =
+    ConnectivityError.InvalidPlan(s"$direction projected graph construction failed: $details")
 
 extension (matrix: ConnectivityMatrix)
   def projectUndirected[W](
-      projection: ConnectivityGraphProjection[Direction.Undirected.type, W]
-  ): Either[ConnectivityError, ProjectedConnectivityGraph[Direction.Undirected.type, W]] =
+      projection: ConnectivityGraphProjection[ProjectionDirection.Undirected.type, W]
+  ): Either[ConnectivityError, ProjectedConnectivityGraph[ProjectionDirection.Undirected.type, W]] =
     projection.project(matrix)
 
   def projectDirected[W](
-      projection: ConnectivityGraphProjection[Direction.Directed.type, W]
-  ): Either[ConnectivityError, ProjectedConnectivityGraph[Direction.Directed.type, W]] =
+      projection: ConnectivityGraphProjection[ProjectionDirection.Directed.type, W]
+  ): Either[ConnectivityError, ProjectedConnectivityGraph[ProjectionDirection.Directed.type, W]] =
     projection.project(matrix)

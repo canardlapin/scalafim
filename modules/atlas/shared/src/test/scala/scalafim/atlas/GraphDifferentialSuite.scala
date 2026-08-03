@@ -3,7 +3,7 @@ package scalafim.atlas
 import scala.collection.mutable
 
 import scalafim.image.Indexing
-import scalafim.image.NArrayUtil
+import scalafim.image.PrimitiveBuffers
 import scalafim.image.NeuroSpace
 import scalafim.image.NeuroVol
 
@@ -39,7 +39,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
-      NeuroVol.fromLinear(NArrayUtil.fromArray(labels.toArray), space),
+      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(labels.toArray), space),
       "graph-differential"
     )
 
@@ -55,14 +55,43 @@ class GraphDifferentialSuite extends munit.FunSuite:
     val regionEdges = RegionGraph.adjacency(atlas, VoxelConnectivity.Connect6)
     val graph = RegionGraph.topology(atlas, VoxelConnectivity.Connect6)
 
-    assertEquals(graph.basis.keys, regions.ids)
+    assertEquals(graph.topology.vertices.iterator.toSet, regions.ids.toSet)
     assertEquals(
-      graph.edges.map: edge =>
-        val from = graph.basis.keyAt(edge.endpoints.first).value
-        val to = graph.basis.keyAt(edge.endpoints.second).value
-        (from, to, edge.value),
+      graph.weights.iterator.map: (edge, weight) =>
+        val from = Math.min(edge.first.value, edge.second.value)
+        val to = Math.max(edge.first.value, edge.second.value)
+        (from, to, weight)
+      .toVector
+      .sortBy((from, to, _) => from -> to),
       regionEdges.map(edge => (edge.from.id.value, edge.to.id.value, edge.weight))
     )
+
+  test("optimized contacts have exactly the relational quotient adjacency"):
+    Vector(
+      VoxelConnectivity.Connect6,
+      VoxelConnectivity.Connect18,
+      VoxelConnectivity.Connect26
+    ).foreach: connectivity =>
+      val projected = RegionGraph.relation(atlas, connectivity)
+      val relationPairs =
+        (for
+          source <- projected.relation.from.points
+          target <- projected.relation
+            .row(source)
+            .pointsInDomainOrder
+          if source.value < target.value
+        yield
+          (
+            projected.regionIds.at(source).value,
+            projected.regionIds.at(target).value
+          )).toSet
+      val optimizedPairs =
+        RegionGraph
+          .contactCounts(atlas, connectivity)
+          .map(contact => (contact.from.id.value, contact.to.id.value))
+          .toSet
+
+      assertEquals(relationPairs, optimizedPairs, clue = connectivity.toString)
 
   private def oracleContacts(connectivity: VoxelConnectivity): Map[(Int, Int), Int] =
     val counts = mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)

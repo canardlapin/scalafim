@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>ScalaFIM cortical surface acceptance</title>
+    <style>
+      body { margin: 0; background: #10141b; color: #edf2f7; font: 15px system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: 960px minmax(360px, 1fr); gap: 24px; padding: 24px; }
+      canvas { width: 960px; height: 540px; background: white; border-radius: 8px; }
+      pre { white-space: pre-wrap; color: #b9f6ca; max-height: 70vh; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="surface" width="960" height="540"></canvas>
+      <section>
+        <h1>Production cortical acceptance</h1>
+        <p id="status">Loading checksum-pinned bilateral fsaverage5 GIFTI…</p>
+        <p id="runtime-errors">Runtime error audit pending…</p>
+        <pre id="receipt"></pre>
+      </section>
+    </main>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js"
+        }
+      }
+    </script>
+    <script>
+      window.exports = {};
+      window.__scalafimSurfaceQaErrors = [];
+      window.addEventListener("error", event => {
+        window.__scalafimSurfaceQaErrors.push(event.error?.stack || event.message);
+      });
+      window.addEventListener("unhandledrejection", event => {
+        window.__scalafimSurfaceQaErrors.push(event.reason?.stack || String(event.reason));
+      });
+    </script>
+    <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
+    <script type="module">
+      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
+
+      const corpus = {
+        left: {
+          url: "../../../../../jscode/surfviewjs/tests/data/fsaverage5-lh-pial.gii",
+          sha256: "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"
+        },
+        right: {
+          url: "../../../../../jscode/surfviewjs/tests/data/fsaverage5-rh-pial.gii",
+          sha256: "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9"
+        }
+      };
+      const status = document.querySelector("#status");
+      const runtimeErrors = document.querySelector("#runtime-errors");
+      const receipt = document.querySelector("#receipt");
+
+      const hex = bytes => [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+      async function load(entry) {
+        const response = await fetch(entry.url);
+        if (!response.ok) throw new Error(`HTTP ${response.status} loading ${entry.url}`);
+        const bytes = await response.arrayBuffer();
+        const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+        if (digest !== entry.sha256) throw new Error(`SHA-256 mismatch for ${entry.url}: ${digest}`);
+        return { digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+      }
+
+      try {
+        const started = performance.now();
+        const [left, right] = await Promise.all([load(corpus.left), load(corpus.right)]);
+        const parseMillis = performance.now() - started;
+        const result = exports.mountScalafimCorticalSurfaceViewer(
+          THREE,
+          document.querySelector("#surface"),
+          left.geometry.vertices,
+          left.geometry.faces,
+          right.geometry.vertices,
+          right.geometry.faces
+        );
+        result.leftSha256 = left.digest;
+        result.rightSha256 = right.digest;
+        result.fetchParseMillis = parseMillis;
+        const failures = [...result.visualQa.violations, ...result.cameraViolations];
+        if (result.leftVertices !== 10242 || result.rightVertices !== 10242) failures.push("vertex count drift");
+        if (result.leftFaces !== 20480 || result.rightFaces !== 20480) failures.push("face count drift");
+        if (result.nativePickedSurface !== result.referencePickedSurface) failures.push("native pick surface mismatch");
+        if (!result.nativeFaceCompatible) failures.push("native pick face is not incident to the reference vertex");
+        if (result.nativePickedVertex !== result.referencePickedVertex) failures.push("native pick vertex mismatch");
+        if (result.cameraGeometryUploads !== 0 || result.cameraLayerUploads !== 0) failures.push("camera-only upload regression");
+        const passed = failures.length === 0;
+        document.body.dataset.scalafimCorticalAcceptance = passed ? "pass" : "fail";
+        status.textContent = passed
+          ? "PASS — real bilateral cortex, native pixels/pick, layers, threshold, orientation, and camera cache agree"
+          : `FAIL — ${failures.join("; ")}`;
+        receipt.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.body.dataset.scalafimCorticalAcceptance = "fail";
+        status.textContent = "FAIL";
+        receipt.textContent = error?.stack || String(error);
+      }
+      setTimeout(() => {
+        const errors = window.__scalafimSurfaceQaErrors;
+        runtimeErrors.textContent = `Runtime errors: ${errors.length}`;
+        if (errors.length > 0) {
+          document.body.dataset.scalafimCorticalAcceptance = "fail";
+          status.textContent = `FAIL — ${errors.join("; ")}`;
+        }
+      }, 0);
+    </script>
+  </body>
+</html>

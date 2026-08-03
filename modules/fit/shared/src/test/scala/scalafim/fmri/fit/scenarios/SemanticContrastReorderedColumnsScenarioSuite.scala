@@ -185,7 +185,7 @@ class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:
       responseRows: Vector[Vector[Double]]
   ):
     def dataset: FmriDataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-semantic-contrast-reordered-columns"),
           ImageDMat.fromRows(responseRows),

@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.PipelineName
+import bids4s.PipelineName
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
 
 opaque type RepetitionTime = Double

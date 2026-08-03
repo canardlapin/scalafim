@@ -6,8 +6,8 @@ artifact set can serve the JVM and Scala.js modules.
 
 | Component | Scalafim policy | Verified migration baseline |
 | --- | --- | --- |
-| Scala | Scala 3 binary line; Scalafim compiles with 3.4.2 | Scalafim 3.4.2 consuming Gale built with 3.3.8 |
-| sbt | version pinned in `project/build.properties` | 1.10.5 |
+| Scala | Scala 3 binary line; Scalafim compiles with 3.7.4 | Scalafim 3.7.4 consuming Gale built with 3.3.8 |
+| sbt | version pinned in `project/build.properties` | 1.11.7 |
 | Scala.js | exact plugin version shared with Gale | 1.22.0 |
 | JVM | JDK 21 or newer for portable Gale core | JDK 22 and JDK 25 |
 | Node | Node 22 or newer for Scala.js tests | Node 24.1.0 |
@@ -30,3 +30,11 @@ APIs, passes Gale's JVM, Scala.js, full-link, parity, and backend gates, and add
 the owner-selected Apache-2.0 license plus canonical Git and POM provenance.
 Scalafim consumes the named `coreJVM` and `coreJS` projects directly from that
 Git commit; advancing the pin requires the consumer gate above.
+
+The current immutable pin is Gale commit
+`2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100`. It retains the migration baseline
+and adds the portable projected generalized-Rayleigh kernel, typed termination,
+and KKT/feasibility/normalization certificates required by constrained
+canonical models. The Gale core suites at this revision pass 506 JVM and 496
+Scala.js tests; ScalaFIM's consumer and full repository gates remain mandatory
+for every subsequent pin advance.

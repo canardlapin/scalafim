@@ -23,7 +23,7 @@ class HrfGeneratorsSuite extends munit.FunSuite:
     assertEquals(hrfs.head.name, Hrfs.SPMG1.name)
     assert(hrfs(1).name.contains("_block"))
 
-    val peak = (0 to 260).iterator.map(i => math.abs(hrfs(1)((i.toDouble / 10.0).s).data(0))).max
+    val peak = (0 to 260).iterator.map(i => math.abs(hrfs(1)(Lag(i.toDouble / 10.0)).data(0))).max
     assert(math.abs(peak - 1.0) < 1e-8)
   }
 

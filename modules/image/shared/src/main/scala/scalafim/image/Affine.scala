@@ -1,5 +1,9 @@
 package scalafim.image
 
+import ravel.AnyRank
+import ravel.NDArray as RavelArray
+import ravel.Shape
+
 /** Pure helpers for homogeneous affine transforms.
   *
   * These mirror the pure affine utilities in neuroim2's R core, while keeping
@@ -122,38 +126,52 @@ object Affine:
   def applyAffines(affine: DMat, points: Vector[Vector[Double]]): Vector[Vector[Double]] =
     points.map(point => applyAffine(affine, point))
 
-  def applyAffine(affine: DMat, points: NDArray[Double]): NDArray[Double] =
-    require(points.ndim >= 1, "points must have at least one dimension")
+  def applyAffine(
+      affine: DMat,
+      points: RavelArray[Double, ? <: AnyRank]
+  ): RavelArray[Double, AnyRank] =
+    require(points.rank >= 1, "points must have at least one dimension")
     val ndIn = affine.cols - 1
     val ndOut = affine.rows - 1
-    require(points.shape.last == ndIn, "last points dimension must match affine input dimension")
+    require(
+      points.shape(points.rank - 1) == ndIn,
+      "last points dimension must match affine input dimension"
+    )
 
-    val leadingShape = points.shape.dropRight(1)
+    val leadingShape =
+      Vector.tabulate(points.rank - 1)(points.shape.apply)
     val nPoints = if leadingShape.isEmpty then 1 else leadingShape.product
     val outShape = leadingShape :+ ndOut
-    val out = NArrayUtil.ofSize[Double](outShape.product)
+    val shape =
+      Shape
+        .from(outShape)
+        .fold(error => throw new IllegalArgumentException(error.getMessage), identity)
+    RavelArray.build[Double, AnyRank](shape): out =>
+      var point = 0
+      while point < nPoints do
+        val leading = rowMajorCoordinates(leadingShape, point)
+        var row = 0
+        while row < ndOut do
+          var column = 0
+          var sum = affine(row, affine.cols - 1)
+          while column < ndIn do
+            val indices =
+              IArray.unsafeFromArray((leading :+ column).toArray)
+            sum += affine(row, column) * points.at(indices)
+            column += 1
+          out.writeLinear(point * ndOut + row, sum)
+          row += 1
+        point += 1
 
-    var p = 0
-    while p < nPoints do
-      val leading =
-        if leadingShape.isEmpty then Vector.empty[Int]
-        else Indexing.indexToGrid(leadingShape, p)
-
-      var r = 0
-      while r < ndOut do
-        var c = 0
-        var sum = affine(r, affine.cols - 1)
-        while c < ndIn do
-          val srcIdx = Indexing.gridToIndex(points.shape, leading :+ c)
-          sum += affine(r, c) * points.data(srcIdx)
-          c += 1
-        val dstIdx = Indexing.gridToIndex(outShape, leading :+ r)
-        out(dstIdx) = sum
-        r += 1
-
-      p += 1
-
-    NDArray(out, outShape)
+  private def rowMajorCoordinates(shape: Vector[Int], linear: Int): Vector[Int] =
+    val coordinates = Array.ofDim[Int](shape.length)
+    var remaining = linear
+    var axis = shape.length - 1
+    while axis >= 0 do
+      coordinates(axis) = remaining % shape(axis)
+      remaining /= shape(axis)
+      axis -= 1
+    coordinates.toVector
 
   def toMatVec(transform: DMat): MatVec =
     require(transform.rows >= 2 && transform.cols >= 2, "transform must be at least 2x2")

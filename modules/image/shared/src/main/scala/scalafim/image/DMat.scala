@@ -1,8 +1,7 @@
 package scalafim.image
 
-import narr.NArray
 
-final case class DMat private (rows: Int, cols: Int, data: NArray[Double]):
+final case class DMat private (rows: Int, cols: Int, data: Array[Double]):
   require(rows > 0 && cols > 0, "rows/cols must be positive")
   require(data.length == rows * cols, s"data length ${data.length} != $rows*$cols")
 
@@ -10,7 +9,7 @@ final case class DMat private (rows: Int, cols: Int, data: NArray[Double]):
     data(r * cols + c)
 
   def transpose: DMat =
-    val arr = NArray.ofSize[Double](rows * cols)
+    val arr = Array.ofDim[Double](rows * cols)
     var r = 0
     while r < rows do
       var c = 0
@@ -54,7 +53,7 @@ object DMat:
     * The caller transfers ownership of `data` to the returned matrix and must
     * not mutate the buffer afterwards.
     */
-  def fromRowMajorOwned(rows: Int, cols: Int, data: NArray[Double]): DMat =
+  def fromRowMajorOwned(rows: Int, cols: Int, data: Array[Double]): DMat =
     require(rows > 0 && cols > 0, "rows/cols must be positive")
     val expected = rows.toLong * cols.toLong
     require(expected <= Int.MaxValue.toLong, s"matrix size $rows*$cols exceeds the supported array size")
@@ -67,7 +66,7 @@ object DMat:
     val c = rowsV.head.length
     require(rowsV.forall(_.length == c), "ragged rows")
 
-    val arr = NArray.ofSize[Double](r * c)
+    val arr = Array.ofDim[Double](r * c)
     var i = 0
     var rr = 0
     while rr < r do
@@ -80,7 +79,7 @@ object DMat:
     DMat(r, c, arr)
 
   def eye(n: Int): DMat =
-    val arr = NArrayUtil.fillConst[Double](n * n, 0.0)
+    val arr = PrimitiveBuffers.fillConst[Double](n * n, 0.0)
     var i = 0
     while i < n do
       arr(i * n + i) = 1.0
@@ -142,7 +141,7 @@ object DMat:
 
         i += 1
 
-      val out = NArray.ofSize[Double](n * n)
+      val out = Array.ofDim[Double](n * n)
       var idx = 0
       r = 0
       while r < n do

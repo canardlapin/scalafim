@@ -2,7 +2,8 @@ package scalafim.spatial
 
 import scalafim.image.{Affine, DMat, DenseFieldMorphism, SpatialPoint}
 import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
-import narr.NArray
+import ravel.NDArray as RavelArray
+import ravel.Rank
 
 import scala.util.hashing.MurmurHash3
 
@@ -290,8 +291,12 @@ object CoordinateMap:
       s"dense-v1|${morphism.source.value}|${morphism.target.value}|${morphism.fieldKind}|${morphism.interpolation}|${morphism.grid.dims.mkString(",")}|$boundary"
     )
     hash = hashDoubles(hash, morphism.grid.affine.data)
-    hash = hashDoubles(hash, morphism.field.data)
-    val finalized = MurmurHash3.finalizeHash(hash, morphism.grid.affine.data.length + morphism.field.data.length)
+    hash = hashDenseField(hash, morphism.field)
+    val finalized =
+      MurmurHash3.finalizeHash(
+        hash,
+        morphism.grid.affine.data.length + morphism.field.size
+      )
     CoordinateMapFingerprint.unsafe(s"dense-v1:${java.lang.Integer.toHexString(finalized)}")
 
   private[spatial] def compositeFingerprint(
@@ -339,16 +344,26 @@ object CoordinateMap:
       case SurfaceSamplingPath.NormalLine(offsets) =>
         s"normal:${offsets.mkString(",")}"
 
-  private def numericFingerprint(prefix: String, values: NArray[Double]): String =
+  private def numericFingerprint(prefix: String, values: Array[Double]): String =
     val hash = hashDoubles(MurmurHash3.stringHash(prefix), values)
     s"$prefix:${java.lang.Integer.toHexString(MurmurHash3.finalizeHash(hash, values.length))}"
 
-  private def hashDoubles(seed: Int, values: NArray[Double]): Int =
+  private def hashDoubles(seed: Int, values: Array[Double]): Int =
     var hash = seed
     var i = 0
     while i < values.length do
       hash = MurmurHash3.mix(hash, values(i).hashCode)
       i += 1
+    hash
+
+  private def hashDenseField(
+      seed: Int,
+      values: RavelArray[Double, Rank[4]]
+  ): Int =
+    var hash = seed
+    values.foreachElement { value =>
+      hash = MurmurHash3.mix(hash, value.hashCode)
+    }
     hash
 
 enum Inverse:

@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.{BidsFile, BidsPath, BidsProject}
+import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
 import scalafim.dataset.DatasetShape
 import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
@@ -14,6 +14,12 @@ object BidsStudyCompilerJvm:
       recipe: DatasetRecipe
   ): Either[CatalogCompileReport, StudyCatalog] =
     BidsStudyCompiler.compile(project, recipe, readHeaders(project, recipe))
+
+  def compileChecked(
+      project: BidsValidationReport[BidsProject],
+      recipe: DatasetRecipe
+  ): Either[CatalogCompileReport, CatalogCompilation] =
+    BidsStudyCompiler.compileChecked(project, recipe, readHeaders(project.value, recipe))
 
   def readHeaders(project: BidsProject, recipe: DatasetRecipe): ImageHeaderCatalog =
     val selectedBold = project.query(recipe.boldQuery)
@@ -42,7 +48,7 @@ object BidsStudyCompilerJvm:
   private def isMaskImage(file: BidsFile): Boolean =
     val nifti = file.extension == "nii" || file.extension == "nii.gz"
     nifti && (
-      file.parsed.exists(name => name.kind == "mask" || name.entities.get(scalafim.bids.EntityKey.Description).contains("brain")) ||
+      file.parsed.exists(name => name.kind == "mask" || name.entities.get(bids4s.EntityKey.Description).contains("brain")) ||
         file.fileName.contains("_mask.nii")
     )
 

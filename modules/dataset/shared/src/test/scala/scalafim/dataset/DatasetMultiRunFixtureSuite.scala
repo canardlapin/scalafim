@@ -6,16 +6,22 @@ import scalafim.image.{DMat, NeuroSpace}
 class DatasetMultiRunFixtureSuite extends munit.FunSuite:
 
   test("typed index resolves multi-subject session run datasets into selected series views") {
+    val fixtures =
+      Vector(
+        runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-1", 10.0),
+        runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-2", 20.0),
+        runFixture("sub-01", Some("ses-02"), "nback", "T1w", "run-1", 30.0),
+        runFixture("sub-02", None, "rest", "MNI", "run-1", 40.0)
+      )
     val index = DatasetIndex
       .fromRuns(
-        Vector(
-          runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-1", 10.0),
-          runFixture("sub-01", Some("ses-01"), "rest", "MNI", "run-2", 20.0),
-          runFixture("sub-01", Some("ses-02"), "nback", "T1w", "run-1", 30.0),
-          runFixture("sub-02", None, "rest", "MNI", "run-1", 40.0)
-        )
+        fixtures.map(_._1)
       )
       .fold(error => fail(error.message), identity)
+    val readers =
+      SynchronousDatasetReaders
+        .build(fixtures.map(_._2)*)
+        .fold(error => fail(error.message), identity)
 
     assertEquals(index.subjects.map(_.value), Vector("sub-01", "sub-02"))
 
@@ -46,7 +52,8 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
     assertEquals(selected.dataset.events.typedRows.map(_.run.map(_.value)), Vector(Some("run-2"), Some("run-2")))
 
     val series =
-      selected.dataset.series(
+      selected.series(
+        readers,
         DataSelection(
           time = TimepointSelection.indices(0, 2),
           voxels = VoxelSelection.indices(1)
@@ -71,23 +78,25 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
       )
     )
     val dataset =
-      FmriDataset(
-        backend = InMemoryDatasetBackend(
-          id = DatasetId("sub-01-ses-01-rest"),
-          data = DMat.fromRows(
-            Vector(
-              Vector(1.0, 2.0),
-              Vector(3.0, 4.0),
-              Vector(5.0, 6.0),
-              Vector(7.0, 8.0)
-            )
+      FmriDataset
+        .open(
+          backend = InMemoryDatasetBackend(
+            id = DatasetId("sub-01-ses-01-rest"),
+            data = DMat.fromRows(
+              Vector(
+                Vector(1.0, 2.0),
+                Vector(3.0, 4.0),
+                Vector(5.0, 6.0),
+                Vector(7.0, 8.0)
+              )
+            ),
+            space = NeuroSpace(Vector(2, 1, 1))
           ),
-          space = NeuroSpace(Vector(2, 1, 1))
-        ),
-        samplingFrame = samplingFrame,
-        events = events,
-        timeAxis = timeAxis
-      )
+          samplingFrame = samplingFrame,
+          runIds = timeAxis.runIds,
+          events = events
+        )
+        .fold(error => fail(error.message), identity)
 
     assertEquals(events.validateAgainst(timeAxis), Right(()))
 
@@ -104,15 +113,17 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
       badEvents.validateAgainst(timeAxis),
       Left(DatasetError.InvalidEventRow(0, "run 'run-3' is not present in the dataset time axis"))
     )
-    val thrown = intercept[IllegalArgumentException] {
-      FmriDataset(
+    val rejected =
+      FmriDataset.open(
         backend = dataset.backend,
         samplingFrame = samplingFrame,
         events = badEvents,
-        timeAxis = timeAxis
+        runIds = timeAxis.runIds
       )
-    }
-    assert(thrown.getMessage.contains("run 'run-3' is not present"))
+    assertEquals(
+      rejected,
+      Left(DatasetError.InvalidEventRow(0, "run 'run-3' is not present in the dataset time axis"))
+    )
   }
 
   private def runFixture(
@@ -122,7 +133,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
       spaceLabel: String,
       runId: String,
       base: Double
-  ): DatasetRun =
+  ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey
         .fromStrings(
@@ -133,34 +144,50 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
           run = runId
         )
         .fold(error => fail(error.message), identity)
-    DatasetRun(key, runDataset(s"${subject}-${session.getOrElse("nosession")}-$task-$runId", runId, base))
+    val dataset =
+      runDataset(
+        s"${subject}-${session.getOrElse("nosession")}-$task-$runId",
+        runId,
+        base
+      )
+    val run =
+      DatasetRun
+        .make(key, dataset.dataset)
+        .fold(error => fail(error.message), identity)
+    run -> dataset
 
-  private def runDataset(id: String, runId: String, base: Double): FmriDataset =
+  private def runDataset(
+      id: String,
+      runId: String,
+      base: Double
+  ): SynchronousFmriDataset =
     val samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
     val timeAxis =
       DatasetTimeAxis
         .fromSamplingFrame(samplingFrame, Vector(RunId(runId)))
         .fold(error => fail(error.message), identity)
-    FmriDataset(
-      backend = InMemoryDatasetBackend(
-        id = DatasetId(id),
-        data = DMat.fromRows(
-          Vector.tabulate(3) { time =>
-            val value = base + time.toDouble * 10.0
-            Vector(value, value + 1.0)
-          }
+    FmriDataset
+      .open(
+        backend = InMemoryDatasetBackend(
+          id = DatasetId(id),
+          data = DMat.fromRows(
+            Vector.tabulate(3) { time =>
+              val value = base + time.toDouble * 10.0
+              Vector(value, value + 1.0)
+            }
+          ),
+          space = NeuroSpace(Vector(2, 1, 1))
         ),
-        space = NeuroSpace(Vector(2, 1, 1))
-      ),
-      samplingFrame = samplingFrame,
-      events = DatasetEvents(
-        Vector(
-          Map("onset" -> "0.0", "duration" -> "0.5", "run" -> runId, "condition" -> "face"),
-          Map("onset" -> "1.0", "duration" -> "0.5", "run" -> runId, "condition" -> "house")
-        )
-      ),
-      timeAxis = timeAxis
-    )
+        samplingFrame = samplingFrame,
+        events = DatasetEvents(
+          Vector(
+            Map("onset" -> "0.0", "duration" -> "0.5", "run" -> runId, "condition" -> "face"),
+            Map("onset" -> "1.0", "duration" -> "0.5", "run" -> runId, "condition" -> "house")
+          )
+        ),
+        runIds = timeAxis.runIds
+      )
+      .fold(error => fail(error.message), identity)
 
   private def assertMatrixEquals(
       actual: DMat,

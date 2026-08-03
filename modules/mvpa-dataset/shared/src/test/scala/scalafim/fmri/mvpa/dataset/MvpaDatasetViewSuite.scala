@@ -1,9 +1,31 @@
 package scalafim.fmri.mvpa.dataset
 
-import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import scalafim.dataset.{
+  AcquisitionContext,
+  DataSelection,
+  DatasetId,
+  DatasetKey,
+  DatasetResponseSchema,
+  DatasetRunQuery,
+  FmriDataset,
+  IndexSelection,
+  InMemoryDatasetBackend,
+  OpenedDataset,
+  ResponseKey
+}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.mvpa.*
 import scalafim.image.{DMat, NeuroSpace}
+import scalafim.response.{
+  InMemoryResponseSource,
+  ResponseSchemaId,
+  SourceId,
+  UnitId
+}
+
+import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
 class MvpaDatasetViewSuite extends munit.FunSuite:
 
@@ -24,7 +46,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         Vector(3.0, 1.8, 0.5),
         Vector(-3.0, -1.8, -0.5)
       )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         id = DatasetId("mvpa-demo"),
         data = DMat.fromRows(rows),
@@ -64,6 +86,71 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(view.featureSpace.datasetId.map(_.value), Some("mvpa-demo"))
     assertEquals(view.featureSpace.shape.map(_.spatialSize), Some(3))
     assertEquals(view.featureSpace.voxelIndices, Vector(0, 2))
+  }
+
+  test("OpenedDatasetMvpaExecutor builds patterns from the effectful attachment boundary") {
+    val attachedDataset = dataset
+    val schemaId = ResponseSchemaId.unsafe("mvpa-opened-schema")
+    val schema =
+      DatasetResponseSchema
+        .fromDataset(attachedDataset, schemaId, UnitId.unsafe("unit"))
+        .fold(error => fail(error.message), identity)
+    val source =
+      InMemoryResponseSource
+        .copyFromRowMajor[IO](
+          SourceId.unsafe("mvpa-opened-source"),
+          schema,
+          Array[Double](
+            2.0, 2.0, 0.0,
+            -2.0, -2.0, 0.0,
+            3.0, 1.8, 0.5,
+            -3.0, -1.8, -0.5
+          )
+        )
+        .fold(error => fail(error.message), identity)
+    val acquisition =
+      AcquisitionContext
+        .volume(
+          attachedDataset,
+          DatasetKey.unsafe("sub-01"),
+          ResponseKey.unsafe("bold"),
+          schemaId,
+          UnitId.unsafe("unit")
+        )
+        .fold(error => fail(error.message), identity)
+    val opened =
+      OpenedDataset
+        .attach(attachedDataset, source, acquisition)
+        .toEither
+        .fold(
+          issues =>
+            fail(issues.toNonEmptyList.toList.map(_.message).mkString("; ")),
+          identity
+        )
+    val request =
+      DatasetPatternRequest(
+        selection = DataSelection(
+          time = IndexSelection.indices(1, 3),
+          voxels = IndexSelection.indices(0, 2)
+        ),
+        metadata = SampleMetadataRequest.labeled(
+          labels = Vector("scene", "scene")
+        ),
+        featureSpaceId = FeatureSpaceId.unsafe("opened-voxels")
+      )
+
+    OpenedDatasetMvpaExecutor
+      .view(opened, DatasetRunQuery.All, request)
+      .value
+      .unsafeToFuture()
+      .map: evaluated =>
+        val view = evaluated.fold(error => fail(error.message), identity)
+        assertEquals(
+          rows(view.patterns.value),
+          Vector(Vector(-2.0, 0.0), Vector(-3.0, -0.5))
+        )
+        assertEquals(view.patterns.featureIndices.map(_.value), Vector(0, 2))
+        assertEquals(view.samples.rows.map(_.timepoint), Vector(Some(1), Some(3)))
   }
 
   test("derived pattern rows support beta-like estimates without pretending to be timepoints") {

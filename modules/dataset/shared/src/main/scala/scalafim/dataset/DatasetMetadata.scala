@@ -2,6 +2,9 @@ package scalafim.dataset
 
 import scalafim.fmri.hrf.{NonNegativeSeconds, Seconds}
 
+trait DatasetProvenance:
+  def source: String
+
 enum DatasetValue:
   case Text(value: String)
   case Number(value: Double, source: Option[String] = None)
@@ -66,7 +69,10 @@ object DatasetValue:
       case "false" | "f" => Some(false)
       case _             => None
 
-final class DatasetMetadata private (val typedValues: Map[DatasetFieldId, DatasetValue]):
+final class DatasetMetadata private (
+    val typedValues: Map[DatasetFieldId, DatasetValue],
+    val provenance: Option[DatasetProvenance]
+):
   def values: Map[String, String] =
     typedValues.iterator.map { case (key, value) => key.value -> value.asString }.toMap
 
@@ -77,33 +83,47 @@ final class DatasetMetadata private (val typedValues: Map[DatasetFieldId, Datase
     typedValues.get(key)
 
   def updated(key: String, value: String): DatasetMetadata =
-    DatasetMetadata(values.updated(key, value))
+    DatasetMetadata
+      .fromStrings(values.updated(key, value), provenance)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def updatedValue(key: DatasetFieldId, value: DatasetValue): DatasetMetadata =
-    DatasetMetadata.fromValues(typedValues.updated(key, value)).fold(error => throw new IllegalArgumentException(error.message), identity)
+    DatasetMetadata
+      .fromValues(typedValues.updated(key, value), provenance)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def withProvenance(value: DatasetProvenance): DatasetMetadata =
+    new DatasetMetadata(typedValues, Some(value))
 
   override def equals(other: Any): Boolean =
     other match
-      case that: DatasetMetadata => typedValues == that.typedValues
+      case that: DatasetMetadata =>
+        typedValues == that.typedValues && provenance == that.provenance
       case _                     => false
 
   override def hashCode(): Int =
-    typedValues.hashCode()
+    31 * typedValues.hashCode() + provenance.hashCode()
 
   override def toString: String =
-    s"DatasetMetadata(${values.toString})"
+    s"DatasetMetadata(${values.toString}, provenance=${provenance.map(_.source)})"
 
 object DatasetMetadata:
-  val Empty: DatasetMetadata = new DatasetMetadata(Map.empty)
+  val Empty: DatasetMetadata = new DatasetMetadata(Map.empty, None)
 
   def apply(values: Map[String, String] = Map.empty): DatasetMetadata =
     fromStrings(values).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  def fromStrings(values: Map[String, String]): Either[DatasetError, DatasetMetadata] =
-    parseStringMap(values).map(new DatasetMetadata(_))
+  def fromStrings(
+      values: Map[String, String],
+      provenance: Option[DatasetProvenance] = None
+  ): Either[DatasetError, DatasetMetadata] =
+    parseStringMap(values).map(new DatasetMetadata(_, provenance))
 
-  def fromValues(values: Map[DatasetFieldId, DatasetValue]): Either[DatasetError, DatasetMetadata] =
-    Right(new DatasetMetadata(values))
+  def fromValues(
+      values: Map[DatasetFieldId, DatasetValue],
+      provenance: Option[DatasetProvenance] = None
+  ): Either[DatasetError, DatasetMetadata] =
+    Right(new DatasetMetadata(values, provenance))
 
 private object DatasetEventFields:
   val Onset: DatasetFieldId = DatasetFieldId.unsafe("onset")

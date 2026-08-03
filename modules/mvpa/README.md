@@ -17,6 +17,49 @@ modules provide feature index sets, dataset/backends provide sample-by-feature
 matrices, and `mvpa` owns the small analysis contract that runs over those
 matrices.
 
+`PatternOperator` is the linear representation of a sample-by-feature table.
+Its orientation is features to sample scores, it requires both forward and
+transpose products, and it supports checked row/feature restriction and row
+stacking without first producing a dense `PatternMatrix`. `PatternSource[P]`
+and `RoiAnalysis[P]` make the ordinary `MvpaTask`, `MvpaStream`, and
+`MvpaEngine` boundaries representation-polymorphic: dense analyses use the
+`DensePatternSource`/`DenseRoiAnalysis` aliases, while operator-native analyses
+use `OperatorPatternSource`/`OperatorRoiAnalysis`. The representation types must
+agree at compile time. `RoiAnalysis.materializing` is the explicit dense parity
+adapter; it is an execution choice, not a second MVPA hierarchy.
+
+Operator-native ridge classification is the first analysis that consumes this
+boundary directly. It centers patterns and class targets within each training
+fold, solves the augmented ridge system with Gale LSQR, and applies an
+unpenalized intercept. `ClassMembership` represents either hard one-hot targets
+or validated simplex-valued targets. Ridge predictions expose class scores—not
+probabilities—and the payload records per-class convergence, normal residuals,
+regularization, solver limits, operator provenance, and operator-application
+counts.
+
+```scala
+val ridgeConfig =
+  OperatorRidgeConfig(penalty = 0.5, tolerance = 1e-10).toOption.get
+
+val ridge =
+  CrossValidatedOperatorRidgeAnalysis(
+    ridgeConfig,
+    storePredictions = true
+  )
+
+val result =
+  MvpaEngine.runSource(operatorSource, plan, response, ridge, Some(folds))
+```
+
+Soft targets use the same analysis through a typed response:
+
+```scala
+val membership =
+  ClassMembership.simplex(classes, sampleByClassMemberships).toOption.get
+
+val response = Response.Probabilistic(membership)
+```
+
 Regional and searchlight analyses use the same engine:
 
 ```scala
@@ -47,7 +90,7 @@ val outcome =
   MvpaTask.evaluate(source, plan.featureSets.head, labels, analysis, Some(folds))
 ```
 
-A future Spark adapter should provide a JVM `PatternSource` backed by its data
+A future Spark adapter should provide a JVM `PatternSource[P]` backed by its data
 layout and map `MvpaTask.evaluate` over partitions of `FeatureSetPlan`; a local
 non-collecting runner can use `MvpaStream`.
 
@@ -137,6 +180,28 @@ val rsa =
     scorer = partial
   )
 ```
+
+Operator-backed data also has an exact crossvalidated RSA path. It accumulates
+the condition Gram fold by fold through adjoint operator products and never
+requests the sample-by-feature table. `OperatorCrossnobisAnalysis` emits the
+ordinary labeled RDM payload; `OperatorCrossnobisRsaAnalysis` feeds that same
+RDM to the existing Pearson, Spearman, or partial-Pearson model scorers:
+
+```scala
+val rsa =
+  OperatorCrossnobisRsaAnalysis(
+    models = Vector(targetModel),
+    scorer = RdmScorer.PartialPearson.unsafe(Vector(controlModel)),
+    storeObservedRdm = true
+  )
+
+val result =
+  MvpaEngine.runSource(operatorSource, plan, labels, rsa, Some(folds))
+```
+
+The computation retains signed crossnobis distances, including negative null
+estimates. Its metrics expose a zero trial-pattern materialization count and a
+fold-independent upper bound on working storage owned by the reduction.
 
 Samplewise RSA is the ScalaFIM equivalent of rMVPA's `vector_rsa_model`. It
 keeps the reference RDM item labels unique, then maps repeated sample rows onto

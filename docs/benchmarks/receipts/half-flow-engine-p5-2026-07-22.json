@@ -1,0 +1,121 @@
+{
+  "capturedAtUtc": "2026-07-22T05:03:17Z",
+  "capturedOn": "2026-07-22",
+  "commands": {
+    "focusedTests": "sbt 'registrationJVM/test' 'registrationJS/test' 'registrationBenchJVM/Jmh/compile'",
+    "jmh": "sbt 'registrationBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -w 250ms -r 250ms -prof gc -rf json -rff /tmp/halfflow-p5-jmh.json .*(sobolevShapeWithWorkspace|sobolevPowerOneWithWorkspace|acceptedNonlinearLevel).*'"
+  },
+  "decisions": {
+    "defaultGeometry": "Power-two Helmholtz shaping remains the accuracy-first default. Power one is retained as an explicit speed ablation until synthetic recovery and cohort accuracy justify changing the geometry.",
+    "galeBoundary": "No Gale source change. ScalaFIM supplies the physical masked Helmholtz operator and precomputed Jacobi diagonal; Gale supplies the general reusable CgWorkspace, cgWith recurrence, relative tolerance, initial guess, and preconditioner capability.",
+    "mapLifetime": "Rejected attempts reuse one caller-owned four-map midpoint destination. Accepted state and candidate destinations are ping-ponged lazily, so exact rollback does not allocate new dense maps on every retry.",
+    "pyramidLifetime": "Fixed and moving pyramids share one source-sized scratch workspace. An unsmoothed shrink-one level aliases the original source instead of copying it, and a state already on the requested frames is not regridded.",
+    "workspaceAliasing": "The engine shares feature and topology scratch sequentially and writes the Sobolev result over the consumed raw LM step. A dedicated oracle proves aliased and disjoint Sobolev destinations agree."
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hardware": "Apple M3 Max, 14 cores, 36 GB",
+    "jmhJava": "OpenJDK 64-Bit Server VM 25.0.1",
+    "jmhVersion": "1.37",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbtBuildVersion": "1.10.5",
+    "scala": "3.4.2",
+    "contentionNote": "Unrelated local development servers and agent processes were present. No ANTs, Docker benchmark, or second HalfFlow JMH process was run concurrently."
+  },
+  "fixture": {
+    "acceptedLevel": {
+      "featureRadiiMm": [2.0, 4.0],
+      "shape": [32, 32, 32],
+      "shiftMm": 0.35,
+      "targetAcceptedSteps": 1,
+      "maximumAttempts": 4,
+      "variant": "MultiChannel",
+      "voxels": 32768
+    },
+    "sobolev": {
+      "lengthMm": 0.9,
+      "maximumDisplacementMm": 0.2,
+      "maximumIterations": 80,
+      "maximumStrain": 0.2,
+      "relativeTolerance": 0.000001,
+      "shape": [32, 32, 32],
+      "voxels": 32768
+    }
+  },
+  "jmh": {
+    "benchmarks": {
+      "acceptedNonlinearLevel": {
+        "allocationBytesPerOperation": 24483760.333,
+        "allocationError99_9": 95.077,
+        "gcCollectionsAcrossMeasurements": 8,
+        "gcMillisAcrossMeasurements": 16,
+        "medianMillisPerOperation": 65.799,
+        "p95MillisPerOperation": 66.704,
+        "scoreError99_9Millis": 0.323,
+        "scoreMillisPerOperation": 65.831
+      },
+      "sobolevPowerOneWithWorkspace": {
+        "allocationBytesPerOperation": 1507.158,
+        "allocationError99_9": 2.603,
+        "gcCollectionsAcrossMeasurements": 0,
+        "medianMillisPerOperation": 11.028,
+        "p95MillisPerOperation": 11.250,
+        "scoreError99_9Millis": 0.053,
+        "scoreMillisPerOperation": 11.056
+      },
+      "sobolevShapeWithWorkspace": {
+        "allocationBytesPerOperation": 1764.991,
+        "allocationError99_9": 14.259,
+        "gcCollectionsAcrossMeasurements": 0,
+        "medianMillisPerOperation": 21.336,
+        "p95MillisPerOperation": 21.799,
+        "scoreError99_9Millis": 0.107,
+        "scoreMillisPerOperation": 21.395
+      }
+    },
+    "derived": {
+      "powerOneToPowerTwoRuntimeSpeedup": 1.935,
+      "shortProbeAcceptedLevelAllocationBeforeLifetimeReuse": 36242362.0,
+      "acceptedLevelAllocationReductionFromShortProbe": 0.3245
+    },
+    "forks": 3,
+    "measurementMillis": 250,
+    "measurementsPerFork": 10,
+    "rawJmhJsonSha256": "8be9e3543cccd4e520d0d495cd74f584b8a6fb2b42aa7971f4de4a40f7b7f81a",
+    "samplesPerBenchmark": 30,
+    "threads": 1,
+    "warmupMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "numericalAdmission": {
+    "engine": "Identity is stationary; a smooth two-level 0.35 mm fixture accepts at least one step, lowers the objective, recovers a positive fixed-to-moving displacement, and passes the accumulated topology guard; impossible gain acceptance rejects exactly without changing the selected maps.",
+    "objective": "Candidate energy is evaluated on the fixed current support with the current robust scale. Missing candidate support is a typed rejection rather than a support-changing objective.",
+    "sobolev": "The masked no-flux operator matches an independent stencil; power-two shaping matches the discrete Neumann cosine response; masks and physical displacement/strain caps are exact; aliased LM storage matches disjoint output.",
+    "status": "pass",
+    "topology": "Local and accumulated inverse-pair guards remain mandatory before candidate evaluation and acceptance."
+  },
+  "repository": {
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "Shared checkout may be dirty; exact source hashes define this receipt."
+  },
+  "schema": "scalafim-half-flow-engine-receipt-v1",
+  "sourceSha256": {
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowRegistrationBenchmark.scala": "7f5dde09fbca8f68d8a9c50f62be4253a2f09e1bd9cc5f0466595d4189674066",
+    "build.sbt": "fddb8c46e0038c6491f3309939653504d4b0eaaa9f4863d90b138be6c45e8a7b",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowEngine.scala": "6ee0e0e58c4daddaa13c88a2b09f42a6f84da910bc69b4f65ad03bfbbf370bf8",
+    "modules/registration/shared/src/main/scala/scalafim/registration/LocalLm.scala": "d1f76208f2dbcf5b4da09b44870db1b286c9a62afb36b870f3362dfa2bfca0c3",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "b936284fa456b476db1d739f468e39b91f2b37e762d21a0938660de9a3a62b2e",
+    "modules/registration/shared/src/main/scala/scalafim/registration/SobolevShaper.scala": "36aee7bc297a206a730cf333de00f3dc5fabf825e9c5f9388fb2228c423be140",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TopologyGuard.scala": "87fec658fa0da2e0733000e5cd54b586bbdab5f98e6359330b0dc26cc311a670",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TrustModel.scala": "28e1a487dae9753b37a66ee149ffc9f7cd2a29a5ed7c00f36312c6c24c709f84",
+    "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowEngineSuite.scala": "3d3e05f51fe016d3c4f9fa3a93d508074a5a621c6ba8938ae2b5225324009c30",
+    "modules/registration/shared/src/test/scala/scalafim/registration/LocalLmSuite.scala": "72b3f7a2b6a4206be062f3eef6b08d6f242df665374a2f262c3b2cc9e2e36058",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "dec0f4d8cd2e260a1eaba5445a57b818ff31f025556aa72984dd8bcad467a3d6",
+    "modules/registration/shared/src/test/scala/scalafim/registration/SobolevShaperSuite.scala": "4a43ae76f85f3ae503d7e0b5f8f762b7f5005e322203ec9888876a9900cc96de"
+  },
+  "tests": {
+    "registrationJS": {"passed": 28, "failed": 0},
+    "registrationJVM": {"passed": 28, "failed": 0}
+  }
+}

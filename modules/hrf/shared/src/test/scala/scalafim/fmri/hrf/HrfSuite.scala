@@ -8,7 +8,7 @@ class HrfSuite extends munit.FunSuite:
   test("SPMG1 has expected peak time") {
     val hrf = Hrfs.SPMG1
     val times = (0 to 60).map(_ * 0.5)
-    val vals = hrf.evalScalar(times.map(_.s))
+    val vals = hrf.evalScalar(times.map(Lag(_)))
     val peakIdx = vals.zipWithIndex.maxBy(_._1)._2
     val peakTime = times(peakIdx)
     assert(peakTime >= 4.0 && peakTime <= 7.0)
@@ -40,7 +40,7 @@ class HrfSuite extends munit.FunSuite:
     assertEqualsDouble(spmg3.span.value, 20.0, 0.0)
 
     val scalar = HrfSpec(HrfKind.Gamma).flatMap(_.toScalarHrf).fold(err => fail(err.message), identity)
-    assertEqualsDouble(scalar.scalarAt(0.0.s), Hrfs.Gamma.evalScalar(Seq(0.0.s)).head, 1e-12)
+    assertEqualsDouble(scalar.scalarAt(Lag(0.0)), Hrfs.Gamma.evalScalar(Seq(Lag(0.0))).head, 1e-12)
 
     assert(HrfSpec(HrfKind.Spmg3).flatMap(_.toScalarHrf).isLeft)
     assert(Registry.getEither("not_a_real_hrf").isLeft)

@@ -1,7 +1,7 @@
 package scalafim.image.view.java2d
 
-import scalafim.graphics.*
-import scalafim.graphics.java2d.Java2DProgram
+import intaglio.*
+import intaglio.java2d.Java2DProgram
 import scalafim.image.*
 import scalafim.image.view.*
 
@@ -9,7 +9,7 @@ class Java2DViewerHostSuite extends munit.FunSuite:
 
   private val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
   private val volume = NeuroVol.fromLinear(
-    NArrayUtil.fillConst[Double](space.nVoxels, 1.0),
+    PrimitiveBuffers.fillConst[Double](space.nVoxels, 1.0),
     space.toNeuroSpace,
     "java2d"
   )

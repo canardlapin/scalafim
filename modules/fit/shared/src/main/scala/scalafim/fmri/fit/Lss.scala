@@ -4,6 +4,8 @@ import gale.linalg.{DMat, Matrix, QR, QROptions, QRPivoting}
 
 final case class LssTrialDesign private (value: DMat, trialNames: Vector[String]):
   require(trialNames.length == value.cols, "trial names must match trial-design columns")
+  require(trialNames.forall(_.nonEmpty), "trial names must be non-empty")
+  require(trialNames.distinct.length == trialNames.length, "trial names must be unique")
 
   def timepoints: Int = value.rows
   def trials: Int = value.cols
@@ -17,7 +19,11 @@ object LssTrialDesign:
         else trialNames
       if names.length != value.cols then
         Left(FitError.UnsupportedLssDesign(s"trial names length ${names.length} must match trial-design columns ${value.cols}"))
-      else Right(new LssTrialDesign(value, names))
+      else if names.exists(_.trim.isEmpty) then
+        Left(FitError.UnsupportedLssDesign("trial names must be non-empty"))
+      else if names.map(_.trim).distinct.length != names.length then
+        Left(FitError.UnsupportedLssDesign("trial names must be unique"))
+      else Right(new LssTrialDesign(value, names.map(_.trim)))
 
   def unsafe(value: DMat, trialNames: Vector[String] = Vector.empty): LssTrialDesign =
     fromMatrix(value, trialNames).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -125,6 +131,12 @@ final case class LssPreparedDesign private[fit] (
   def trialWorkspace(trialName: String): Option[LssTrialWorkspace] =
     workspaces.find(_.trialName == trialName)
 
+  private lazy val cachedTrialReadout: Either[FitError, TrialReadout] =
+    LssTrialReadout.fromPrepared(this)
+
+  def trialReadout: Either[FitError, TrialReadout] =
+    cachedTrialReadout
+
   def fit(response: ResponseBlock): Either[FitError, LssFit] =
     LeastSquaresSeparate.fit(this, response)
 
@@ -218,18 +230,13 @@ object LeastSquaresSeparate:
       prepared: LssPreparedDesign,
       response: ResponseBlock
   ): Either[FitError, LssFit] =
-    if response.timepoints != prepared.timepoints then
-      Left(FitError.RowMismatch(prepared.timepoints, response.timepoints))
-    else if containsNonFinite(response.value) then Left(FitError.NonFiniteInput("LSS response block"))
-    else
-      prepared.fixedProjection.residualize(response.value).map { residualizedY =>
-        val beta = computeBetas(prepared, residualizedY)
+    prepared.trialReadout.flatMap: readout =>
+      readout.forward(response).map: coefficients =>
         LssFit(
-          coefficients = CoefficientBlock(beta),
+          coefficients = coefficients,
           trialNames = prepared.trialNames,
           diagnostics = prepared.diagnostics
         )
-      }
 
   def unsafeFit(
       trials: LssTrialDesign,
@@ -261,55 +268,6 @@ object LeastSquaresSeparate:
         col += 1
       row += 1
     false
-
-  private[fit] def computeBetas(prepared: LssPreparedDesign, response: DMat): DMat =
-    require(prepared.timepoints == response.rows, s"prepared design rows ${prepared.timepoints} != response rows ${response.rows}")
-    require(response.cols > 0, "response block must have at least one column")
-
-    val trials = prepared.residualizedTrials
-    val n = prepared.timepoints
-    val nTrials = prepared.trials
-    val nVoxels = response.cols
-    val totalY = new Array[Double](nVoxels)
-    val ctY = new Array[Double](nTrials * nVoxels)
-
-    var row = 0
-    while row < n do
-      val total = prepared.totalTrialSignal(row)
-      var voxel = 0
-      while voxel < nVoxels do
-        totalY(voxel) += total * response(row, voxel)
-        voxel += 1
-
-      var trial = 0
-      while trial < nTrials do
-        val c = trials(row, trial)
-        voxel = 0
-        while voxel < nVoxels do
-          ctY(trial * nVoxels + voxel) += c * response(row, voxel)
-          voxel += 1
-        trial += 1
-
-      row += 1
-
-    val out = Matrix.newBuilder(nTrials, nVoxels)
-    var trial = 0
-    while trial < nTrials do
-      val workspace = prepared.workspaces(trial)
-      workspace.status match
-        case LssTrialStatus.ZeroTrial =>
-          ()
-        case LssTrialStatus.Active | LssTrialStatus.TargetOnly =>
-          var voxel = 0
-          while voxel < nVoxels do
-            val cty = ctY(trial * nVoxels + voxel)
-            val num = (1.0 + workspace.alpha) * cty - workspace.alpha * totalY(voxel)
-            out(trial, voxel) = num / workspace.denominator
-            voxel += 1
-
-      trial += 1
-
-    out.result()
 
   private def buildPreparedDesign(
       residualizedTrials: DMat,

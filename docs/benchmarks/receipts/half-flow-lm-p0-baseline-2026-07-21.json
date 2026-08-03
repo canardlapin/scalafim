@@ -1,0 +1,151 @@
+{
+  "antsComparator": {
+    "containerPlatform": "linux/amd64",
+    "controlledNonlinearSameAffineProfile": "separate and not yet materialized",
+    "digestRequiredBeforeBenchmark": true,
+    "emulated": true,
+    "execution": "serial-only",
+    "hostArchitecture": "Apple Silicon",
+    "imageRetrievalReference": "antsx/ants:latest",
+    "materializedIdentityRule": "repo digest preferred, image ID fallback",
+    "materializedImageIdentity": null,
+    "profile": "synquick_fixedmask",
+    "profileId": "hodgeflow-synquick-fixedmask-docker-v1",
+    "randomSeed": 1,
+    "threads": 1
+  },
+  "capturedOn": "2026-07-21",
+  "docker": {
+    "antsImage": {
+      "imageId": null,
+      "platform": "linux/amd64",
+      "repoDigests": [],
+      "retrievalReference": "antsx/ants:latest",
+      "versionProbeCommand": "docker run --rm --platform linux/amd64 antsx/ants:latest antsRegistration --version",
+      "versionProbeExecuted": false
+    },
+    "available": true,
+    "cli": "/usr/local/bin/docker",
+    "context": "desktop-linux",
+    "contextHost": "unix:///Users/bbuchsbaum/.docker/run/docker.sock",
+    "daemonProbe": "timeout-after-5-seconds",
+    "daemonResponsive": false,
+    "expectedContext": "desktop-linux",
+    "socket": "/Users/bbuchsbaum/.docker/run/docker.sock",
+    "socketExists": true,
+    "version": "Docker version 27.5.1, build 9f9e405"
+  },
+  "environment": {
+    "antsRegistration": {
+      "available": false,
+      "path": null,
+      "version": null
+    },
+    "java": "openjdk version \"22\" 2024-03-19",
+    "node": "v24.1.0",
+    "platform": "macOS-14.3-arm64-arm-64bit-Mach-O",
+    "python": "3.14.3"
+  },
+  "externalHarness": {
+    "commonHarnessSha256": "86e9d3f7e80c40dd080a2fc1e146ed542f0b647ed01840aaf829e88d5548d999",
+    "entrypoint": "/Users/bbuchsbaum/code/hodgeflow/inst/benchmarks/benchmark_sub18_synquick_fixedmask.R",
+    "entrypointSha256": "c21c7da5987921e2357c54a6d597ac846e347bf9bb2d1e18f56e4d7943f5d73d",
+    "head": "996141593fc511f4df996d6f0e624a7ad1721960",
+    "repository": "/Users/bbuchsbaum/code/hodgeflow",
+    "workMount": "/work"
+  },
+  "nextComparableMeasurements": {
+    "jvm": {
+      "harness": "JMH with GC profiler",
+      "metrics": [
+        "ns/op",
+        "bytes/op",
+        "gc.count",
+        "checksum"
+      ],
+      "shapes": [
+        [
+          64,
+          64,
+          64
+        ],
+        [
+          128,
+          128,
+          128
+        ],
+        [
+          256,
+          256,
+          256
+        ]
+      ]
+    },
+    "rule": "P1 records reference and destination-writing candidates in the same harness before selecting or deleting either path",
+    "scalaJs": {
+      "harness": "fullLinkJS Node benchmark",
+      "metrics": [
+        "median-ms",
+        "owned-full-volume-constructions",
+        "checksum"
+      ],
+      "shapes": [
+        [
+          32,
+          32,
+          32
+        ],
+        [
+          64,
+          64,
+          64
+        ],
+        [
+          128,
+          128,
+          128
+        ]
+      ]
+    }
+  },
+  "repository": {
+    "head": "e1fab712e50e65f5787a83be919f25d68a8903ac",
+    "workingTreePolicy": "shared checkout may be dirty; hashes below, not global status, define this baseline"
+  },
+  "schema": "scalafim-half-flow-p0-baseline-v1",
+  "sourceSha256": {
+    "build.sbt": "b2cfa619e67ff312c5aefd55a9389a15c86b89e52af3c6644665076f04330e33",
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldInterpolationPlan.scala": "1e3c75d62c28353fff826c93163765391d3f57c4b80df87fa2122a7f886b7856",
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldInverse.scala": "4240c261175cd91ef8c9ede26298355a825fa1e64a660aa4f1667a908ce19224",
+    "modules/image/shared/src/main/scala/scalafim/image/Morphism.scala": "d28b1e7e9b644185496c520140356723d5ea8861c52979640821ac9189cfac9d",
+    "modules/image/shared/src/main/scala/scalafim/image/MorphismFields.scala": "4c29cc5f4454a73eb210eb323e125e0291756c1d6dad5b683885d49cf4d060a0",
+    "modules/image/shared/src/main/scala/scalafim/image/ResamplingPlan.scala": "f0444c5ea5013e4566a80aee98c7c85f04d1750edbb6644949bdbffc836b9dac",
+    "modules/image/shared/src/main/scala/scalafim/image/SpatialCoordinates.scala": "d10caa16e0f93f9350779effc146a62d2d88f19b0cca93dc80b552dcb8d9ed7a",
+    "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala": "693c6efe877e1784d9b673676b6f9df5b5279cf5863c7b482edcf2ee3d305e48",
+    "modules/registration/fixtures/v1/half-flow-synthetic.json": "d2dccf14914326cee27708039594e1dea1f712d1f5fe6b5210f7cd1fa3815dd4",
+    "project/build.properties": "3d013fad6ecab773b7cfdda92fc04890836e8f33709be272322c054b78ffaa70",
+    "tools/registration/capture_halfflow_p0_baseline.py": "c11f95697592511ee2218208a83c88ef0d0c75d68d88564973c74fe53462f0c0",
+    "tools/registration/generate_halfflow_oracles.py": "adc6a05fa1c0107ef73144cb4b31f127be7f1b04e948c6946eff33b016d98925"
+  },
+  "structuralBaseline": {
+    "gale": {
+      "fieldTensorBackendPresent": false,
+      "registrationSpecificStencilAllowed": false,
+      "role": "tiny-algebra and matrix-free operator reference contracts"
+    },
+    "image": {
+      "denseInterpolationPlan": "Vector[DenseFieldStencil] with per-stencil arrays",
+      "denseVectorStorage": "structure-of-arrays NArray[Double]",
+      "inversePath": "iterative point path; reference-only for HalfFlow optimization",
+      "primitiveCoordinateBridgeVisibility": "private[image]",
+      "sourceCoordinateMaterialization": "GridSpec.worldPoints plus Vector[WorldPoint]"
+    },
+    "reason": "P0 precedes the registration module and allocation-controlled field kernels; timing a semantically different boxed API would not be a comparable leaf-kernel baseline",
+    "registrationKernelMeasurementsPresent": false
+  },
+  "toolchain": {
+    "galeRevision": "2d9c8542607e1cdb78ce8bc1fd4d8ae5b96c8100",
+    "sbt": "1.10.5",
+    "scala": "3.4.2"
+  }
+}

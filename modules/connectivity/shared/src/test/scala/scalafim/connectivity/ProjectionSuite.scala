@@ -1,7 +1,5 @@
 package scalafim.connectivity
 
-import scalafim.graph.Direction
-import scalafim.graph.VertexIx
 import gale.linalg.{DMat, Matrix}
 
 class ProjectionSuite extends munit.FunSuite:
@@ -20,9 +18,9 @@ class ProjectionSuite extends munit.FunSuite:
     )
     val projected = projection.project(matrix).toOption.get
 
-    assertEquals(projected.graph.basis.keys, ids)
+    assertEquals(projected.graph.nodeAxis.ids, ids)
     assertEquals(
-      projected.graph.edges.map(edge => endpointValues(projected, edge.endpoints.first, edge.endpoints.second, edge.value)),
+      projected.graph.edges.map(edge => endpointValues(edge.source, edge.target, edge.value)),
       Vector(("a", "b", -0.9), ("a", "d", 0.7), ("c", "d", -0.8))
     )
     assertEquals(projected.sourceCoordinateByGraphEdge.map(_.value), Vector(0, 2, 5))
@@ -74,7 +72,7 @@ class ProjectionSuite extends munit.FunSuite:
 
     assertEquals(
       projected.graph.edges.map(edge =>
-        projected.graph.basis.keyAt(edge.endpoints.first).value -> projected.graph.basis.keyAt(edge.endpoints.second).value
+        edge.source.value -> edge.target.value
       ),
       Vector("a" -> "d", "b" -> "c")
     )
@@ -199,7 +197,7 @@ class ProjectionSuite extends munit.FunSuite:
       diagonal = DiagonalTreatment.Reject
     ).project(matrix).toOption.get
 
-    assertEquals(projected.graph.direction, Direction.Directed)
+    assertEquals(projected.graph.direction, ProjectionDirection.Directed)
     assert(projected.graph.containsEdge(ids(0), ids(1)))
     assert(projected.graph.containsEdge(ids(2), ids(1)))
     assert(!projected.graph.containsEdge(ids(1), ids(0)))
@@ -246,7 +244,9 @@ class ProjectionSuite extends munit.FunSuite:
     val first = replayable.project(matrix).toOption.get
     val second = replayable.project(matrix).toOption.get
 
-    assertEquals(first.graph, second.graph)
+    assertEquals(first.graph.direction, second.graph.direction)
+    assertEquals(first.graph.nodeAxis.ids, second.graph.nodeAxis.ids)
+    assertEquals(first.graph.edges, second.graph.edges)
     assertEquals(first.receipt, second.receipt)
     assertEquals(first.sourceCoordinateByGraphEdge, second.sourceCoordinateByGraphEdge)
     assertEquals(first.receipt.sourceBasisKeys, ids)
@@ -300,13 +300,12 @@ class ProjectionSuite extends munit.FunSuite:
     ).toOption.get
 
   private def endpointValues(
-      projected: ProjectedConnectivityGraph[Direction.Undirected.type, Double],
-      first: VertexIx,
-      second: VertexIx,
+      first: NodeId,
+      second: NodeId,
       value: Double
   ): (String, String, Double) =
     (
-      projected.graph.basis.keyAt(first).value,
-      projected.graph.basis.keyAt(second).value,
+      first.value,
+      second.value,
       value
     )

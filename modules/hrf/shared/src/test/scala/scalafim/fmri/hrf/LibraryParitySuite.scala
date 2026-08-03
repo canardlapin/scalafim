@@ -21,8 +21,8 @@ class LibraryParitySuite extends munit.FunSuite:
     val expected = scalafim.fmri.hrf.linalg.Mat.fromRows(
       t.map { tt =>
         Seq(
-          2.0 * HrfFunctions.gaussianPdf(tt.s, 0.0, 1.0),
-          2.0 * HrfFunctions.gaussianPdf(tt.s, 2.0, 1.0)
+          2.0 * HrfFunctions.gaussianPdf(Lag(tt), 0.0, 1.0),
+          2.0 * HrfFunctions.gaussianPdf(Lag(tt), 2.0, 1.0)
         )
       }
     )

@@ -1,7 +1,6 @@
 package scalafim.fmri.motion.io
 
-import scalafim.bids.*
-import scalafim.bids.io.BidsProjectLoader
+import bids4s.*
 import scalafim.fmri.motion.*
 import scalafim.image.*
 
@@ -24,10 +23,10 @@ class MotionIoSuite extends munit.FunSuite:
 
     assertEquals(run.space.dims.take(4), Vector(2, 1, 1, 3))
     assertEquals(run.nVolumes, 3)
-    assertEqualsDouble(run.values.data(0), 1.0, 1e-12)
-    assertEqualsDouble(run.values.data(5), 6.0, 1e-12)
-    assert(mask.values.data(0))
-    assert(!mask.values.data(1))
+    assertEqualsDouble(run.linear(0), 1.0, 1e-12)
+    assertEqualsDouble(run.linear(5), 6.0, 1e-12)
+    assert(mask.linear(0))
+    assert(!mask.linear(1))
   }
 
   test("NIfTI metadata adapter roundtrips affine, voxel size, TR, and slice timing") {
@@ -67,8 +66,8 @@ class MotionIoSuite extends munit.FunSuite:
         assertEquals(actual.offsetSeconds, Vector(0.0, 0.4))
       case other =>
         fail(s"expected slice timing, got $other")
-    assertEqualsDouble(loaded.run.values.data(0), 0.25, 1e-12)
-    assertEqualsDouble(loaded.run.values.data(7), 7.25, 1e-12)
+    assertEqualsDouble(loaded.run.linear(0), 0.25, 1e-12)
+    assertEqualsDouble(loaded.run.linear(7), 7.25, 1e-12)
   }
 
   test("NIfTI metadata adapter reports invalid sidecars") {
@@ -101,7 +100,7 @@ class MotionIoSuite extends munit.FunSuite:
       """{"RepetitionTime":2.0}"""
     )
 
-    val project = BidsProjectLoader.load(root).fold(err => fail(err.message), identity)
+    val project = MotionBids.loadProject(root).fold(err => fail(err.message), identity)
     val scans =
       MotionBids
         .rawScans(project, subid = "01", task = "rest", run = "01")
@@ -125,6 +124,18 @@ class MotionIoSuite extends munit.FunSuite:
     assertEquals(preproc.length, 1)
     assertEquals(preproc.head.repetitionTimeSeconds, Some(2.0))
     assertEquals(preproc.head.acquisitionTiming, AcquisitionTiming.Volume)
+  }
+
+  test("BIDS adapter rejects structurally invalid project identities") {
+    val root = Files.createTempDirectory("scalafim-motion-bids-invalid")
+    write(root.resolve("dataset_description.json"), """{"Name":"Invalid Motion Fixture","BIDSVersion":"1.10.0"}""")
+    write(root.resolve("participants.tsv"), "participant_id\nsub-01\n")
+    Files.createDirectories(root.resolve("sub-01/func"))
+    Files.write(root.resolve("sub-01/func/sub-01_bold.nii.gz"), Array.emptyByteArray)
+
+    val error = MotionBids.loadProject(root).left.getOrElse(fail("expected strict BIDS validation failure"))
+    assert(error.message.contains("MissingRequiredField"), clues(error.message))
+    assert(error.message.contains("sub-01/func/sub-01_bold.nii.gz"), clues(error.message))
   }
 
   test("report writer serializes motion, matrices, and summary bundle") {
@@ -252,7 +263,7 @@ class MotionIoSuite extends munit.FunSuite:
         origin = Some(Vector(10.0, 20.0, 30.0)),
         trans = Some(affine)
       )
-    val data = NArrayUtil.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
+    val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
     NeuroVec.fromLinear(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
 
   private def estimatorRun(): NeuroVec[Double] =
@@ -260,7 +271,7 @@ class MotionIoSuite extends munit.FunSuite:
     val nxyz = dims.product
     val space = NeuroSpace(dims)
     val frame =
-      NArrayUtil.tabulate[Double](nxyz) { lin =>
+      PrimitiveBuffers.tabulate[Double](nxyz) { lin =>
         val i = lin % dims(0)
         val j = (lin / dims(0)) % dims(1)
         val k = lin / (dims(0) * dims(1))
@@ -272,7 +283,7 @@ class MotionIoSuite extends munit.FunSuite:
           0.2 * j.toDouble -
           0.15 * k.toDouble
       }
-    val data = NArrayUtil.ofSize[Double](nxyz * 2)
+    val data = PrimitiveBuffers.ofSize[Double](nxyz * 2)
     var t = 0
     while t < 2 do
       var lin = 0

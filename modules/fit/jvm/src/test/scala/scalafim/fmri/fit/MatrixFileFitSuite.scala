@@ -25,7 +25,7 @@ class MatrixFileFitSuite extends munit.FunSuite:
       val events = DatasetEvents(
         Vector.tabulate(4)(i => Map("onset" -> i.toString, "task" -> i.toString))
       )
-      val dataset = FmriDataset(
+      val dataset = FmriDataset.unsafe(
         backend = MatrixFileDatasetBackend(
           id = DatasetId("matrix-fit-demo"),
           path = path,

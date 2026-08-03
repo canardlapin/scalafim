@@ -1,6 +1,6 @@
 package scalafim.image
 
-import narr.NArray
+import ravel.NDArray as RavelArray
 
 class AffineSuite extends munit.FunSuite:
 
@@ -19,7 +19,7 @@ class AffineSuite extends munit.FunSuite:
       assertClose(actual.data(i), expected.data(i), tol)
       i += 1
 
-  test("applyAffine transforms point matrices and preserves NDArray leading dims") {
+  test("applyAffine transforms point matrices and preserves Ravel leading dims") {
     val affine =
       DMat.fromRows(
         Vector(
@@ -34,11 +34,17 @@ class AffineSuite extends munit.FunSuite:
     val expected = Vector(Vector(12.0, 26.0, 42.0), Vector(18.0, 35.0, 54.0))
     assertEquals(Affine.applyAffines(affine, points), expected, clue = "")
 
-    val arr = NDArray[Double](NArray(1.0, 4.0, 2.0, 5.0, 3.0, 6.0), Vector(1, 2, 3))
+    val arr =
+      RavelArray.tabulate[Double](1, 2, 3) { (_, point, component) =>
+        points(point)(component)
+      }
     val out = Affine.applyAffine(affine, arr)
-    assertEquals(out.shape, Vector(1, 2, 3), clue = "")
-    val values = Vector.tabulate(out.data.length)(i => out.data(i))
-    assertEquals(values, Vector(12.0, 18.0, 26.0, 35.0, 42.0, 54.0), clue = "")
+    assertEquals(Vector.tabulate(out.rank)(out.shape.apply), Vector(1, 2, 3), clue = "")
+    val values =
+      Vector.tabulate(2): point =>
+        Vector.tabulate(3)(component => out(0, point, component))
+      .flatten
+    assertEquals(values, Vector(12.0, 26.0, 42.0, 18.0, 35.0, 54.0), clue = "")
   }
 
   test("toMatVec and fromMatVec roundtrip") {

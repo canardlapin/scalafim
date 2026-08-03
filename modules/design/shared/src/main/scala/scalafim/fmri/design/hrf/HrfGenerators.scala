@@ -1,10 +1,23 @@
 package scalafim.fmri.design.hrf
 
-import scalafim.fmri.design.data.DataTable
+import scalafim.fmri.design.ColumnId
+import scalafim.fmri.design.data.{ColumnType, DataTable}
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.HrfCombinators.*
 
 object HrfGenerators:
+
+  /** Read a generator input column, or fail the generator.
+    *
+    * An [[scalafim.fmri.design.hrf.HrfFun]] is a total `DataTable => HrfSelection`, so a
+    * generator has no channel to return a [[scalafim.fmri.design.DesignError]] on. This is
+    * the throwing facade the two-tier convention allows at an entry point;
+    * `EventModelBuilder` catches it back into `DesignError.InvalidHrfFun`.
+    */
+  private def read[A](d: DataTable, name: String)(using ColumnType[A]): Vector[A] =
+    ColumnId(name)
+      .flatMap(d.get[A])
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def duration(
       base: Hrf = Hrfs.SPMG1,
@@ -15,7 +28,7 @@ object HrfGenerators:
     require(minDuration.isFinite && minDuration >= 0.0, "`minDuration` must be finite and >= 0")
     require(precision.value.isFinite && precision.value > 0.0, "`precision` must be finite and > 0")
     (d: DataTable) =>
-      HrfSelection.perEvent(d.doubles("duration").map { x =>
+      HrfSelection.perEvent(read[Double](d, "duration").map { x =>
         val width = math.max(x, minDuration)
         if width <= 0.0 then base
         else base.block(
@@ -30,7 +43,7 @@ object HrfGenerators:
   def boxcar(normalize: Boolean = true, minDuration: Double = 0.1): HrfFun =
     require(minDuration.isFinite && minDuration > 0.0, "`minDuration` must be finite and > 0")
     (d: DataTable) =>
-      val dur = d.doubles("duration")
+      val dur = read[Double](d, "duration")
       HrfSelection.perEvent(dur.map { x =>
         val w = math.max(x, minDuration)
         Hrfs.boxcar(width = w.s, normalize = normalize)
@@ -50,9 +63,9 @@ object HrfGenerators:
         case other      => throw new IllegalArgumentException(s"weighted: unknown method '$other' (expected 'constant' or 'linear')")
 
     (d: DataTable) =>
-      val times = d.doubleLists(timesCol)
-      val weights = d.doubleLists(weightsCol)
-      val onset = d.doubles("onset")
+      val times = read[Vector[Double]](d, timesCol)
+      val weights = read[Vector[Double]](d, weightsCol)
+      val onset = read[Double](d, "onset")
 
       require(times.length == d.nrows && weights.length == d.nrows && onset.length == d.nrows, "weighted: column length mismatch")
 

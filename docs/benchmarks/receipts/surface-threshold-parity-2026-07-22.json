@@ -1,0 +1,120 @@
+{
+  "schema": "scalafim.surface-threshold-parity.v1",
+  "capturedAt": "2026-07-22",
+  "source": {
+    "file": "fsaverage5-lh-pial.gii",
+    "sha256": "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951",
+    "vertices": 10242,
+    "faces": 20480
+  },
+  "overlay": {
+    "seed": 324508639,
+    "smoothingIterations": 5,
+    "thresholdLower": -2.33,
+    "thresholdUpper": 2.33,
+    "visibleNegativeVertices": 115,
+    "visiblePositiveVertices": 88
+  },
+  "artifacts": {
+    "javafx": {
+      "path": "/private/tmp/scalafim-surface-threshold-javafx.png",
+      "sha256": "d22b024f10dd28e047e41f5963b8d52cab06878b191eb49219854b72196972f9"
+    },
+    "webgl": {
+      "path": "/private/tmp/scalafim-surface-threshold-webgl.png",
+      "sha256": "dea0dac2124aa08732cf24b9d8d41a2c66cf746fa25b69beea43e60862b1a1ac"
+    }
+  },
+  "javafx": {
+    "backend": "javafx-scene3d",
+    "cases": [
+      {
+        "label": "Ventral",
+        "cameraDirection": [0.0, 0.0, -1.0],
+        "geometryUploads": 1,
+        "layerUploads": 1,
+        "elapsedMillis": 43.379750,
+        "maskIntersectionOverUnion": 0.993987904,
+        "centroidDistancePixels": 0.069192701,
+        "meanInteriorChannelError": 1.192165287,
+        "orientationMargin": 34.962435970
+      },
+      {
+        "label": "Lateral",
+        "cameraDirection": [-1.0, 0.0, 0.0],
+        "geometryUploads": 0,
+        "layerUploads": 0,
+        "elapsedMillis": 0.649541,
+        "maskIntersectionOverUnion": 0.995218601,
+        "centroidDistancePixels": 0.046975798,
+        "meanInteriorChannelError": 1.193138959,
+        "orientationMargin": 40.556743520
+      },
+      {
+        "label": "Posterior",
+        "cameraDirection": [0.0, -1.0, 0.0],
+        "geometryUploads": 0,
+        "layerUploads": 0,
+        "elapsedMillis": 0.193167,
+        "maskIntersectionOverUnion": 0.993287635,
+        "centroidDistancePixels": 0.021843820,
+        "meanInteriorChannelError": 1.415566309,
+        "orientationMargin": 37.418208788
+      },
+      {
+        "label": "Top",
+        "cameraDirection": [0.0, 0.0, 1.0],
+        "geometryUploads": 0,
+        "layerUploads": 0,
+        "elapsedMillis": 0.167625,
+        "maskIntersectionOverUnion": 0.993934391,
+        "centroidDistancePixels": 0.054778315,
+        "meanInteriorChannelError": 1.613423418,
+        "orientationMargin": 33.836457549
+      }
+    ]
+  },
+  "webgl": {
+    "backend": "three-webgl2",
+    "pageState": "pass",
+    "runtimeErrors": 0,
+    "cases": [
+      {
+        "label": "Ventral",
+        "cameraDirection": [0.0, 0.0, -1.0],
+        "elapsedMillis": 7.700000,
+        "maskIntersectionOverUnion": 0.993934391,
+        "centroidDistancePixels": 0.054778315,
+        "meanInteriorChannelError": 0.459899266,
+        "orientationMargin": 36.019081891
+      },
+      {
+        "label": "Lateral",
+        "cameraDirection": [-1.0, 0.0, 0.0],
+        "elapsedMillis": 4.100001,
+        "maskIntersectionOverUnion": 0.995453910,
+        "centroidDistancePixels": 0.049785152,
+        "meanInteriorChannelError": 0.463317044,
+        "orientationMargin": 41.590975844
+      },
+      {
+        "label": "Posterior",
+        "cameraDirection": [0.0, -1.0, 0.0],
+        "elapsedMillis": 3.000000,
+        "maskIntersectionOverUnion": 0.993381882,
+        "centroidDistancePixels": 0.038533801,
+        "meanInteriorChannelError": 0.580640193,
+        "orientationMargin": 38.604479245
+      },
+      {
+        "label": "Top",
+        "cameraDirection": [0.0, 0.0, 1.0],
+        "elapsedMillis": 2.300000,
+        "maskIntersectionOverUnion": 0.993987904,
+        "centroidDistancePixels": 0.069192701,
+        "meanInteriorChannelError": 0.613551937,
+        "orientationMargin": 35.205335341
+      }
+    ]
+  }
+}

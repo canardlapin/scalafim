@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, Mask, NeuroSpace, NeuroVol, NArrayUtil}
+import scalafim.image.{DMat, Mask, NeuroSpace, NeuroVol, PrimitiveBuffers}
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError, SparseTriplets}
 import scalafim.surface.*
 
@@ -9,7 +9,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
   private val space = NeuroSpace(Vector(3, 3, 3))
   private val volume =
     NeuroVol.fromLinear(
-      NArrayUtil.tabulate[Double](27) { idx =>
+      PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
       },
@@ -111,7 +111,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
   test("source masks keep valid ribbon samples normalized and report partial coverage"):
     val pialVertex0 = space.gridToIndex3D(0, 0, 2)
-    val mask = Mask.fromIndices(space, NArrayUtil.fromArray(Array(pialVertex0)), "pial-only")
+    val mask = Mask.fromIndices(space, PrimitiveBuffers.fromArray(Array(pialVertex0)), "pial-only")
     val source = volumeDomain(Some(mask))
     val target = surfaceDomain()
     val request = VolumeToSurfaceRequest.ribbon(source.id, target.id, pair, fractions = Vector(0.0, 1.0))

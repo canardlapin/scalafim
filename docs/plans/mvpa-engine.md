@@ -71,9 +71,12 @@ The MVPA core then owns:
 - `FeatureSet`: an ROI/searchlight/parcel as global feature indices.
 - `FeatureSetPlan`: a named regional or searchlight feature-set stream.
 - `PatternMatrix`: the canonical samples-by-features numerical view.
-- `PatternSource`: a backend-neutral source that materializes one ROI/searchlight
-  `PatternMatrix` at a time.
-- `RoiAnalysis`: the per-ROI analysis contract.
+- `PatternOperator`: a forward-and-adjoint linear representation of a
+  samples-by-features table.
+- `PatternSource[P]`: a backend-neutral source that selects one ROI/searchlight
+  in representation `P`.
+- `RoiAnalysis[P]`: the per-ROI analysis contract over the same representation;
+  dense and operator aliases keep ordinary signatures concise.
 - `Classifier`: a dependency-free, pluggable classifier contract with fitted
   models that return class probabilities.
 - `MvpaTask`: the single-feature-set kernel that distributed runners can map
@@ -166,10 +169,11 @@ not as separate runner APIs. This keeps the computational core small:
   heavier outputs such as predictions, observed RDMs, or RSA scores.
 
 The distributed execution boundary is deliberately one layer lower than
-`MvpaEngine`: a worker needs a `PatternSource`, one `FeatureSet`, the validated
-response/fold plan, and an immutable `RoiAnalysis`. `MvpaStream` is the
-non-collecting local runner over that same kernel, and `MvpaEngine` is just the
-reference collector:
+`MvpaEngine`: a worker needs a `PatternSource[P]`, one `FeatureSet`, the
+validated response/fold plan, and an immutable `RoiAnalysis[P]`. The shared
+representation parameter makes mismatched source/analysis pairs fail to
+compile. `MvpaStream` is the non-collecting local runner over that same kernel,
+and `MvpaEngine` is just the reference collector:
 
 ```text
 FeatureSetPlan -> partition feature sets -> MvpaTask.evaluate -> RoiOutcome

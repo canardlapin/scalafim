@@ -114,9 +114,10 @@ object MotionNifti:
     bb.put(345, '+'.toByte)
     bb.put(346, '1'.toByte)
     bb.put(347, 0.toByte)
+    val legacyValues = run.copyLegacyLinear
     i = 0
     while i < nels do
-      bb.putDouble(352 + i * 8, run.values.data(i))
+      bb.putDouble(352 + i * 8, legacyValues(i))
       i += 1
     bytes
 

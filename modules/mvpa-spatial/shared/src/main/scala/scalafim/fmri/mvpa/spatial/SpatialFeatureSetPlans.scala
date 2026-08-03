@@ -2,7 +2,24 @@ package scalafim.fmri.mvpa.spatial
 
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
-import scalafim.image.{Mask, NeuroVol, ROIVolWindow, Searchlight}
+import scalafim.image.{
+  GridCompatibility,
+  Mask,
+  NeuroVol,
+  ROIVolWindow,
+  Searchlight,
+  SearchlightCenterDomain,
+  SearchlightRadius,
+  SearchlightSupport,
+  VolumeDomain,
+  VolumeSpace
+}
+import scalafim.locus.{
+  CenteredSearchlight,
+  Region as LocusRegion,
+  Relation as LocusRelation,
+  Searchlight as LocusSearchlight
+}
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 
 import scala.util.control.NonFatal
@@ -12,13 +29,12 @@ object SpatialFeatureSetPlans:
   def volumeLabels(
       name: String,
       labels: NeuroVol[Int],
-      background: Set[Int] = Set(0)
+    background: Set[Int] = Set(0)
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
-    val values = labels.values.data
     var lin = 0
-    while lin < values.length do
-      val label = values(lin)
+    while lin < labels.values.size do
+      val label = labels.linear(lin)
       if !background.contains(label) then
         if label < 0 then return Left(SpatialPlanError.InvalidVolumeLabel(label))
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
@@ -48,15 +64,17 @@ object SpatialFeatureSetPlans:
       coveragePolicy: ParcelCoveragePolicy = ParcelCoveragePolicy.RequireEveryRegion
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
-    val labels = atlas.labelVolume.values.data
     var lin = 0
-    while lin < labels.length do
-      val label = labels(lin)
+    while lin < atlas.labelVolume.values.size do
+      val label = atlas.labelVolume.linear(lin)
       if label != 0 then
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
       lin += 1
 
-    val covered = Vector.newBuilder[(Region, Vector[LinearVoxelIndex])]
+    val covered =
+      Vector.newBuilder[
+        (AtlasRegionMetadata, Vector[LinearVoxelIndex])
+      ]
     val regions = atlas.regions.regions
     var i = 0
     while i < regions.length do
@@ -96,13 +114,30 @@ object SpatialFeatureSetPlans:
       windows: Seq[ROIVolWindow[?]]
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     captureSpatial("ROI windows") {
-      buildVector(windows.toVector)(searchlightWindow).flatMap { parsed =>
-        SearchlightWindowSet(parsed).flatMap { windowSet =>
-          windowSet.toFeatureSets.flatMap { sets =>
-            searchlightPlan(name, SpatialFeatureDomain.Searchlight(windowSet), sets)
-          }
-        }
-      }
+      locusSearchlight(windows.toVector).flatMap: canonical =>
+        val centered = canonical.centered
+        LocusFeatureSetPlans
+          .fromSearchlight(
+            name,
+            centered,
+            center =>
+              Some(
+                canonical.labels
+                  .get(center.value)
+                  .filter(_.nonEmpty)
+                  .getOrElse(s"searchlight_${center.value}")
+              )
+          )
+          .left
+          .map(SpatialPlanError.InvalidFeatureSetPlan.apply)
+          .map: plan =>
+            SpatialFeaturePlan(
+              SpatialFeatureDomain.LocusSearchlight(
+                centered.searchlight.centers.space.descriptor.toString,
+                centered.searchlight.centers.cardinality
+              ),
+              plan
+            )
     }
 
   def fromRoiWindows(
@@ -119,10 +154,24 @@ object SpatialFeatureSetPlans:
       label: String = ""
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     captureSpatial("searchlight mask") {
-      roiWindows(
-        name,
-        Searchlight.searchlight(mask, radius, nonzero = constrainToMask, label = label).toVector
-      )
+      for
+        checkedRadius <- SearchlightRadius
+          .make(radius)
+          .left
+          .map(error => SpatialPlanError.AdapterFailure("searchlight radius", error.message))
+        windows <- Searchlight
+          .searchlightChecked(
+            mask,
+            checkedRadius,
+            SearchlightCenterDomain.MaskVoxels,
+            if constrainToMask then SearchlightSupport.InsideMask
+            else SearchlightSupport.FullNeighborhood,
+            label
+          )
+          .left
+          .map(error => SpatialPlanError.AdapterFailure("searchlight mask", error.message))
+        plan <- roiWindows(name, windows.toVector)
+      yield plan
     }
 
   def fromSearchlightMask(
@@ -193,14 +242,96 @@ object SpatialFeatureSetPlans:
   ): Either[MvpaError, FeatureSetPlan] =
     toMvpaPlan(labeledSurface(name, labeled, topology, policy, ignoredLabels, identityPolicy))
 
-  private def searchlightWindow(window: ROIVolWindow[?]): Either[SpatialPlanError, SearchlightWindow] =
-    val linear = window.coords.linearIndices(window.space)
-    val indices = Vector.tabulate(linear.length)(i => linear(i))
+  private def locusSearchlight(
+      windows: Vector[ROIVolWindow[?]]
+  ): Either[SpatialPlanError, CanonicalSearchlight] =
+    if windows.isEmpty then Left(SpatialPlanError.EmptySearchlightWindows)
+    else
+      for
+        volumeSpace <- VolumeSpace
+          .fromSpatialPart(windows.head.space)
+          .left
+          .map(error => SpatialPlanError.AdapterFailure("ROI window space", error.message))
+        result <- buildLocusSearchlight(volumeSpace, windows)
+      yield result
+
+  private def buildLocusSearchlight(
+      volumeSpace: VolumeSpace,
+      windows: Vector[ROIVolWindow[?]]
+  ): Either[SpatialPlanError, CanonicalSearchlight] =
+    val packedDomain = VolumeDomain.structuralCompatibility(volumeSpace)
+    type Voxel = packedDomain.S
+    val domain: VolumeDomain[Voxel] = packedDomain.value
+    val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
+    val centerOrdinals = Array.ofDim[Int](windows.length)
+    val centerLabels = scala.collection.mutable.Map.empty[Int, String]
+    val seenCenters = scala.collection.mutable.HashSet.empty[Int]
+    var index = 0
+    while index < windows.length do
+      val window = windows(index)
+      GridCompatibility.spatial(volumeSpace.toNeuroSpace, window.space) match
+        case Left(error) =>
+          return Left(SpatialPlanError.AdapterFailure("ROI window grid", error.message))
+        case Right(_) =>
+          ()
+      val center = window.parentIndex
+      if seenCenters.contains(center) then
+        return Left(
+          SpatialPlanError.InvalidLocusSearchlight(
+            s"duplicate center $center"
+          )
+        )
+      val linearIndices = window.selection.linearIndices
+      val members = Array.tabulate(linearIndices.size)(i => linearIndices(i))
+      if members.distinct.length != members.length then
+        return Left(
+          SpatialPlanError.InvalidLocusSearchlight(
+            s"neighborhood at center $center contains duplicate points"
+          )
+        )
+      if !members.contains(center) then
+        return Left(
+          SpatialPlanError.InvalidLocusSearchlight(
+            s"neighborhood at center $center does not contain its center"
+          )
+        )
+      seenCenters += center
+      centerOrdinals(index) = center
+      rows(center) = members
+      centerLabels(center) = window.label
+      index += 1
+
     for
-      center <- SearchlightCenter(window.parentIndex)
-      parsed <- LinearVoxelIndex.fromInts(indices)
-      typed <- SearchlightWindow(center, parsed, Some(window.label))
-    yield typed
+      centers <- LocusRegion
+        .fromOrdinals(domain.finiteSpace, centerOrdinals)
+        .left
+        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
+      relation <- LocusRelation
+        .fromOrdinalRows(
+          domain.finiteSpace,
+          domain.finiteSpace,
+          rows.iterator.map(_.iterator)
+        )
+        .left
+        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
+      searchlight <- LocusSearchlight
+        .make(centers, relation)
+        .left
+        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
+      validated <- CenteredSearchlight
+        .validate(searchlight)
+        .left
+        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
+    yield
+      new CanonicalSearchlight:
+        type S = Voxel
+        val centered: CenteredSearchlight[Voxel] = validated
+        val labels: Map[Int, String] = centerLabels.toMap
+
+  private trait CanonicalSearchlight:
+    type S
+    val centered: CenteredSearchlight[S]
+    val labels: Map[Int, String]
 
   private def featureSet(
       id: RoiId,
@@ -217,16 +348,6 @@ object SpatialFeatureSetPlans:
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     FeatureSetPlan
       .regional(name, sets)
-      .left.map(SpatialPlanError.InvalidFeatureSetPlan.apply)
-      .map(plan => SpatialFeaturePlan(domain, plan))
-
-  private def searchlightPlan(
-      name: String,
-      domain: SpatialFeatureDomain,
-      sets: Seq[FeatureSet]
-  ): Either[SpatialPlanError, SpatialFeaturePlan] =
-    FeatureSetPlan
-      .searchlight(name, sets)
       .left.map(SpatialPlanError.InvalidFeatureSetPlan.apply)
       .map(plan => SpatialFeaturePlan(domain, plan))
 

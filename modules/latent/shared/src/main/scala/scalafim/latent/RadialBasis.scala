@@ -1,8 +1,6 @@
 package scalafim.latent
 
-import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisLocator, SharedBasisMask}
-import scalafim.image.{DMat as ArchiveDMat}
-import scalafim.image.{Indexing, NArrayUtil, NeuroSpace, VoxelIndexSet}
+import scalafim.image.{Indexing, PrimitiveBuffers, NeuroSpace, VoxelIndexSet}
 import gale.linalg.{DMat, DVec}
 
 final case class RadialActiveVoxels private (
@@ -21,7 +19,7 @@ object RadialActiveVoxels:
       activeIndices: IndexedSeq[Int]
   ): Either[RadialBasisError, RadialActiveVoxels] =
     VoxelIndexSet
-      .makeUnique(space, NArrayUtil.fromArray(activeIndices.toArray))
+      .makeUnique(space, PrimitiveBuffers.fromArray(activeIndices.toArray))
       .left
       .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
       .flatMap(fromIndexSet)
@@ -79,43 +77,6 @@ final case class RadialBasis(
       "n_voxels" -> nVoxels.toString
     )
 
-  def sharedBasisParams(extra: Map[String, String] = Map.empty): Map[String, String] =
-    extra ++ Map(
-      "family" -> "hrbf",
-      "radial.kernel" -> kernel.metadataValue,
-      "radial.threshold" -> threshold.metadataValue,
-      "radial.n_atoms" -> nAtoms.toString,
-      "radial.n_voxels" -> nVoxels.toString,
-      "radial.atom_levels" -> atomLevels.mkString(",")
-    )
-
-  def toSharedBasisArtifact(
-      maskDims: Vector[Int],
-      kind: String = "hrbf",
-      params: Map[String, String] = Map.empty,
-      created: Option[String] = None
-  ): Either[RadialBasisError, SharedBasisArtifact] =
-    for
-      order <- activeMaskOrder
-      maskSize <- checkedMaskSize(maskDims)
-      maskValues <- order.maskValues(maskSize)
-      mask <- SharedBasisMask
-        .checked(maskDims, maskValues)
-        .left
-        .map(error => RadialBasisError.InvalidMaskDimensions(error.message))
-      loadings = canonicalDMat(order)
-      artifact <- SharedBasisArtifact
-        .checked(
-          loadings = loadings,
-          mask = mask,
-          kind = kind,
-          params = sharedBasisParams(params),
-          created = created
-        )
-        .left
-        .map(error => RadialBasisError.InvalidSharedBasisArtifact(error.message))
-    yield artifact
-
   def decode(
       coefficients: DMat,
       selection: RadialDecodeSelection = RadialDecodeSelection.All,
@@ -147,9 +108,6 @@ final case class RadialBasis(
       case None =>
         Left(LatentError.MissingComponent("radial active-index map"))
 
-  private def canonicalDMat(order: RadialMaskOrder): ArchiveDMat =
-    ArchiveDMat.fromRows(loadings.selectRows(order.activeRowsInMaskOrder).toRows)
-
   private def selectColumns(matrix: DMat, columns: IndexedSeq[Int]): DMat =
     val out = new Array[Double](matrix.rows * columns.length)
     var row = 0
@@ -160,11 +118,6 @@ final case class RadialBasis(
         outCol += 1
       row += 1
     LatentNumerics.matrixFromRowMajor(matrix.rows, columns.length, out)
-
-  private def checkedMaskSize(maskDims: Vector[Int]): Either[RadialBasisError, Int] =
-    if maskDims.isEmpty then Left(RadialBasisError.InvalidMaskDimensions("mask dimensions must be non-empty"))
-    else if maskDims.exists(_ <= 0) then Left(RadialBasisError.InvalidMaskDimensions("mask dimensions must be positive"))
-    else Right(maskDims.product)
 
   private def validateDecodeInputs(
       coefficients: DMat,
@@ -266,82 +219,6 @@ final case class RadialBasis(
       if !value.isFinite then error = Some(LatentError.NonFiniteValue(label, i, value))
       i += 1
     error
-
-final case class RadialBasisEncoding(
-    encoding: SharedBasisEncoding,
-    radialResponse: ExplicitLatentResponse,
-    radialBasis: RadialBasis,
-    artifact: SharedBasisArtifact,
-    basisId: SharedBasisId,
-    locator: Option[SharedBasisLocator]
-):
-  def response: ExplicitLatentResponse = radialResponse
-  def coefficients: DMat = encoding.coefficients
-  def offset: Option[DVec] = radialResponse.offset
-
-  def decode(selection: RadialDecodeSelection = RadialDecodeSelection.All): Either[LatentError, DMat] =
-    radialBasis.decode(coefficients, selection, offset)
-
-object RadialBasisEncoder:
-  def encode(
-      data: DMat,
-      radialBasis: RadialBasis,
-      maskDims: Vector[Int],
-      basisId: SharedBasisId,
-      locator: Option[SharedBasisLocator] = None,
-      center: Boolean = true,
-      ridge: Double = 0.0,
-      sourceDomain: DomainId = DomainId.unsafe("radial_basis.coefficients"),
-      targetDomain: DomainId = DomainId.unsafe("voxels"),
-      label: String = "",
-      metadata: Map[String, String] = Map.empty,
-      artifactParams: Map[String, String] = Map.empty
-  ): Either[LatentError, RadialBasisEncoding] =
-    radialBasis
-      .toSharedBasisArtifact(maskDims = maskDims, params = artifactParams)
-      .left
-      .map(radialError)
-      .flatMap { artifact =>
-        for
-          canonicalData <- radialBasis.dataInMaskOrder(data)
-          sharedEncoding <-
-            SharedBasisEncoder.encode(
-              data = canonicalData,
-              basis = artifact,
-              basisId = basisId,
-              locator = locator,
-              center = center,
-              ridge = ridge,
-              sourceDomain = sourceDomain,
-              targetDomain = targetDomain,
-              label = label,
-              metadata = radialBasis.sharedBasisParams(metadata)
-            )
-          activeOffset <- sharedEncoding.offset match
-            case Some(values) => radialBasis.vectorInActiveOrderFromMaskOrder(values).map(Some(_))
-            case None         => Right(None)
-          radialResponse <- ExplicitLatentResponse(
-            basis = sharedEncoding.coefficients,
-            loadings = radialBasis.loadings,
-            offset = activeOffset,
-            sourceDomain = sourceDomain,
-            targetDomain = targetDomain,
-            label = sharedEncoding.response.label,
-            metadata = sharedEncoding.response.metadata
-          )
-        yield
-          RadialBasisEncoding(
-            encoding = sharedEncoding,
-            radialResponse = radialResponse,
-            radialBasis = radialBasis,
-            artifact = artifact,
-            basisId = basisId,
-            locator = locator
-          )
-      }
-
-  private def radialError(error: RadialBasisError): LatentError =
-    LatentError.ProjectionFailed(error.message)
 
 object RadialBasis:
   def fromSpec(

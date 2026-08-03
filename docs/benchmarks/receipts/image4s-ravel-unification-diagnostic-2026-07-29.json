@@ -1,0 +1,188 @@
+{
+  "capturedOn": "2026-07-29",
+  "commands": {
+    "compileAll": "sbt compileAll",
+    "imageAndRegistrationTests": "sbt 'registrationJVM/test' 'registrationJS/test' 'imageJVM/test' 'imageJS/test' 'registrationBenchJVM/compile'",
+    "image4sCoreTests": "sbt 'image4s-coreJVM/test' 'image4s-coreJS/test'",
+    "jmh64": "sbt 'registrationBenchJVM/Jmh/run -wi 1 -i 2 -f 1 -t 1 -w 200ms -r 200ms -p side=64 -prof gc .*HalfFlowImageKernelBenchmark.(primitiveComposeInto|ravelWorkspaceSelfComposeInto).*'",
+    "jvmProbe": "sbt 'registrationJVM/Test/runMain scalafim.registration.HalfFlowImageKernelProbe 48 4 9'",
+    "scalaJsProbe": "sbt 'set registrationJS / Test / scalaJSUseTestModuleInitializer := false' 'set registrationJS / Test / scalaJSUseMainModuleInitializer := true' 'set registrationJS / Test / mainClass := Some(\"scalafim.registration.HalfFlowImageKernelJsProbe\")' 'registrationJS / Test / run'",
+    "structuralVerifier": "node scripts/verify-image-unification.mjs --scalafim /Users/bbuchsbaum/code/scala/scalafim --report-only",
+    "testAll": "sbt testAll"
+  },
+  "environment": {
+    "architecture": "aarch64",
+    "javaVmUsedBySbt": "OpenJDK 64-Bit Server VM 25.0.1",
+    "node": "v24.1.0",
+    "operatingSystem": "macOS 14.3"
+  },
+  "interpretation": {
+    "admissionReceipt": false,
+    "allocationGate": "pass",
+    "correctnessGate": "pass",
+    "performanceGate": "fail",
+    "releaseStatus": "blocked",
+    "reason": "Ranked Ravel access preserves exact values and low allocation, but whole-volume hot loops are materially slower than the frozen direct-buffer receipt on both JVM and Scala.js.",
+    "requiredUpstreamContract": "A certified zero-copy contiguous cursor or equivalent kernel contract for whole canonical owned Ravel arrays, without exposing an untracked mutable raw buffer or adding another ndarray owner.",
+    "sameRunOracleStillRequired": true,
+    "sourceDependencyGate": "fail: ScalaFIM still consumes image4s through a mutable source composite",
+    "trackedBy": "bd-01KYQ0RDDQH21EPB8VGAYXN3Q3"
+  },
+  "historicalComparison": {
+    "receipt": "half-flow-image-kernels-p1-2026-07-21.json",
+    "sameRecordedNodeAndJavaVersions": true,
+    "jvm64": {
+      "historicalPrimitiveMillisPerOperation": 8.831,
+      "currentPrimitiveMillisPerOperation": 18.881,
+      "currentToHistoricalRatio": 2.1380364624617827,
+      "currentWorkspaceMillisPerOperation": 15.217,
+      "workspaceToHistoricalRatio": 1.7231344128637756
+    },
+    "scalaJs32": {
+      "historicalPrimitiveMedianMillis": 6.0,
+      "currentPrimitiveMedianMillis": 21.0,
+      "currentToHistoricalRatio": 3.5,
+      "currentWorkspaceMedianMillis": 21.0,
+      "workspaceToHistoricalRatio": 3.5
+    },
+    "warning": "The current JMH run is a short diagnostic with one fork and two measurement iterations, not a replacement formal admission receipt. A same-run primitive planar oracle is required for final attribution."
+  },
+  "jmh64Diagnostic": {
+    "forks": 1,
+    "measurements": 2,
+    "side": 64,
+    "threads": 1,
+    "warmups": 1,
+    "primitiveComposeInto": {
+      "allocationBytesPerOperation": 54.438,
+      "gcCollections": 0,
+      "scoreMillisPerOperation": 18.881
+    },
+    "ravelWorkspaceSelfComposeInto": {
+      "allocationBytesPerOperation": 54.438,
+      "gcCollections": 0,
+      "scoreMillisPerOperation": 15.217
+    }
+  },
+  "jvmProbe": {
+    "dynamicAllocationReductionMedian": 30055410.0,
+    "dynamicSpeedupMedian": 27.434404488826356,
+    "maximumValidError": 0.0,
+    "preparedAllocationReductionMedian": 18984697.333333332,
+    "preparedSpeedupMedian": 18.224765583158206,
+    "primitiveComposeInto": {
+      "checksum": 38680572.7664062,
+      "medianAllocatedBytes": 24,
+      "medianNanos": 5958083,
+      "p95Nanos": 12057334
+    },
+    "ravelWorkspaceComposeInto": {
+      "checksum": 41714915.125,
+      "maximumValidError": 0.0,
+      "medianAllocatedBytes": 24,
+      "medianNanos": 6178875,
+      "p95Nanos": 6220167
+    },
+    "samples": 9,
+    "side": 48,
+    "validCount": 103823,
+    "voxels": 110592,
+    "warmups": 4
+  },
+  "scalaJsProbe": {
+    "constructionCounterStatus": "explicit benchmark-owned allocation boundaries",
+    "dynamicSpeedupMedian": 10.952380952380953,
+    "maximumValidError": 0.0,
+    "preparedSpeedupMedian": 6.761904761904762,
+    "primitiveComposeInto": {
+      "checksum": 7276492.585000044,
+      "medianMillis": 21.0,
+      "p95Millis": 22.0
+    },
+    "primitiveOwnedFullVolumeConstructionsPerOp": {
+      "mask": 0,
+      "scalar": 0,
+      "scratch": 0,
+      "vector": 0
+    },
+    "ravelWorkspaceComposeInto": {
+      "checksum": 8227326.125,
+      "maximumValidError": 0.0,
+      "medianMillis": 21.0,
+      "p95Millis": 22.0
+    },
+    "samples": 11,
+    "side": 32,
+    "validCount": 29791,
+    "voxels": 32768,
+    "warmups": 5
+  },
+  "repository": {
+    "head": "6b5d4993d9acc59873e00eed5211b56728968a78",
+    "workingTreePolicy": "shared dirty checkout; exact source hashes define this diagnostic"
+  },
+  "schema": "scalafim-image4s-ravel-unification-diagnostic-v1",
+  "sourceSha256": {
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowImageKernelBenchmark.scala": "3c495beb5fe6bd332727e98f94f4e441ac47c2a87917391f05d6ffd7bab9da4b",
+    "build.sbt": "add48164bd686c0532488ecb5c4e126d796f2c9b77590591075f29088d0f28e7",
+    "docs/benchmarks/half-flow-lm.md": "3e9da84873c607315c2bf5b327c0e830a8b6a67e0adab856a51a3675d9fb394a",
+    "docs/plans/image4s-unification.md": "9f8e77a85e00537a320c8a66e7633aa55bfb0aec7a4ed418e2597dd7776d0803",
+    "modules/image/shared/src/main/scala/scalafim/image/MorphismFields.scala": "c39c802626cc43d8ff4796c02ff3e0671afae0210a69aa0b2f54554f04838a4e",
+    "modules/registration/js/src/test/scala/scalafim/registration/HalfFlowImageKernelJsProbe.scala": "420d02b51984c9d1c984b9469a1f5c8f93e780cee9a2df6221938a80bfe45995",
+    "modules/registration/jvm/src/test/scala/scalafim/registration/HalfFlowImageKernelProbe.scala": "c4f0a32a2fa9215d8e72482114f8181ff472305909c870845dce372082432075",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowKernels.scala": "bcbd07ac06ae9a90d94904a028a81d2390db88546132466f16f0afc4134b976b",
+    "modules/registration/shared/src/main/scala/scalafim/registration/PairedFlow.scala": "e59edab8b4e3f01a6a8ac6daafd22ffe81a1e1a4accc5626545a23d634bafd32"
+  },
+  "structuralVerifier": {
+    "filesScanned": 1085,
+    "findingCounts": {
+      "temporary-source-composite": 1
+    },
+    "rawAccessByModule": {},
+    "rawAccessBySourceKind": {}
+  },
+  "verification": {
+    "atlasJS": {
+      "passed": 48,
+      "status": "pass"
+    },
+    "atlasJVM": {
+      "passed": 76,
+      "status": "pass"
+    },
+    "compileAll": {
+      "status": "pass"
+    },
+    "image4sCoreJS": {
+      "passed": 19,
+      "status": "pass"
+    },
+    "image4sCoreJVM": {
+      "passed": 19,
+      "status": "pass"
+    },
+    "imageJS": {
+      "passed": 231,
+      "status": "pass"
+    },
+    "imageJVM": {
+      "passed": 242,
+      "status": "pass"
+    },
+    "registrationBenchJVMCompile": {
+      "status": "pass"
+    },
+    "registrationJS": {
+      "passed": 98,
+      "status": "pass"
+    },
+    "registrationJVM": {
+      "passed": 98,
+      "status": "pass"
+    },
+    "testAll": {
+      "status": "incomplete",
+      "detail": "The first run exposed stale atlas raw-buffer assertions. Those tests were migrated and atlasJVM/atlasJS now pass. A clean canonical rerun was denied by the execution approval policy, and the sandboxed retry could not acquire the sbt boot lock."
+    }
+  }
+}

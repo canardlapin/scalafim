@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+
 class MorphismSuite extends munit.FunSuite:
 
   private val native = SpatialDomainId("native")
@@ -48,15 +51,15 @@ class MorphismSuite extends munit.FunSuite:
   private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
     assertClose(actual.toVector, expected.toVector, tol)
 
-  private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
-    val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
-        val component = i / grid.nVoxels
-        val lin = i % grid.nVoxels
-        val coord = Indexing.indexToGrid3D(grid.shape, lin)
-        f(coord, component)
-      }
-    NDArray(data, grid.dims :+ 3)
+  private def denseField(
+      grid: GridSpec
+  )(f: (VoxelCoord, Int) => Double): RavelArray[Double, Rank[4]] =
+    RavelArray.tabulate[Double](
+      grid.shape.x,
+      grid.shape.y,
+      grid.shape.z,
+      3
+    )((i, j, k, component) => f(VoxelCoord(i, j, k), component))
 
   test("affine morphism applies target-to-source pullback coordinates") {
     val morphism = affine(native, mni, translation(10.0, 20.0, 30.0))
@@ -239,22 +242,28 @@ class MorphismSuite extends munit.FunSuite:
 
   test("dense field constructors validate shape, interpolation, values, and grid invertibility") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
-    val wrongShape = NDArray(NArrayUtil.fillConst[Double](6, 0.0), Vector(2, 3))
+    val wrongShape = RavelArray.zeros[Double](2, 1, 1, 2)
     val shapeResult =
       DenseFieldMorphism.displacement(native, mni, grid, wrongShape, Resample.Method.Linear)
     shapeResult match
       case Left(MorphismError.DenseFieldShapeMismatch(expected, actual)) =>
         assertEquals(expected, Vector(2, 1, 1, 3), clue = "")
-        assertEquals(actual, Vector(2, 3), clue = "")
+        assertEquals(actual, Vector(2, 1, 1, 2), clue = "")
       case other => fail(s"expected dense field shape error, got $other")
 
     val cubicResult =
       DenseFieldMorphism.displacement(native, mni, grid, denseField(grid)((_, _) => 0.0), Resample.Method.Cubic)
     assert(cubicResult.isRight, clue = "cubic dense fields should now be supported")
 
-    val badData = NArrayUtil.fillConst[Double](grid.nVoxels * 3, 0.0)
-    badData(1) = Double.NaN
-    val badField = NDArray[Double](badData, grid.dims :+ 3)
+    val badField =
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (_, _, _, component) =>
+        if component == 1 then Double.NaN else 0.0
+      }
     val valueResult =
       DenseFieldMorphism.coordinates(native, mni, grid, badField, Resample.Method.Nearest)
     assertEquals(valueResult, Left(MorphismError.NonFiniteFieldValue(1)), clue = "")
@@ -267,12 +276,9 @@ class MorphismSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    val singularGrid = GridSpec(Vector(2, 1, 1), singular)
-    val singularResult =
-      DenseFieldMorphism.displacement(native, mni, singularGrid, denseField(singularGrid)((_, _) => 0.0))
-    singularResult match
-      case Left(MorphismError.SingularMatrix(_)) => ()
-      case other => fail(s"expected singular grid error, got $other")
+    GridSpec.fromVector(Vector(2, 1, 1), singular) match
+      case Left(GeometryError.InvalidGridGeometry(_)) => ()
+      case other => fail(s"expected singular grid rejection, got $other")
   }
 
   test("path jacobians use the chain rule in pullback order") {

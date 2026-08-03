@@ -1,0 +1,94 @@
+{
+  "schema": "scalafim.surface-benchmark-summary.v1",
+  "recordedAt": "2026-07-21",
+  "command": "sbt surfaceViewAdmissionJVM",
+  "backend": "javafx-scene3d",
+  "metadata": {
+    "platform": "Jvm",
+    "runtimeName": "OpenJDK Runtime Environment",
+    "runtimeVersion": "25.0.1",
+    "operatingSystem": "Mac OS X",
+    "architecture": "aarch64",
+    "graphicsApi": "JavaFX Scene3D",
+    "graphicsDevice": "auto"
+  },
+  "matrix": {
+    "vertexCounts": [32768, 163842],
+    "visibleLayerCounts": [1, 4, 8],
+    "paths": [
+      "ColdLoad",
+      "CameraOnly",
+      "StyleUpdate",
+      "LayerDataUpdate",
+      "TimepointUpdate",
+      "Pick",
+      "Resize",
+      "Snapshot"
+    ],
+    "repetitions": 3,
+    "cases": 48,
+    "admissionViolations": 0
+  },
+  "largestCase": {
+    "vertices": 163842,
+    "visibleLayers": 8,
+    "triangles": 326020,
+    "p95Milliseconds": {
+      "ColdLoad": 40.155833,
+      "CameraOnly": 0.096292,
+      "StyleUpdate": 36.676042,
+      "LayerDataUpdate": 35.860709,
+      "TimepointUpdate": 36.698584,
+      "Pick": 0.13125,
+      "Resize": 0.246416,
+      "Snapshot": 13.123375
+    },
+    "coldLoad": {
+      "meshUploads": 1,
+      "layerAtlasUploads": 1,
+      "uploadedBytes": 28750432,
+      "atlasWidth": 4096,
+      "atlasHeight": 1276
+    },
+    "cameraOnly": {
+      "meshUploads": 0,
+      "layerUploads": 0,
+      "uploadedBytes": 0
+    },
+    "layerDataUpdate": {
+      "meshUploads": 0,
+      "layerAtlasUploads": 1,
+      "uploadedBytes": 20905984
+    },
+    "timepointUpdate": {
+      "meshUploads": 0,
+      "layerAtlasUploads": 1,
+      "uploadedBytes": 20905984
+    }
+  },
+  "differentialSnapshot": {
+    "width": 1200,
+    "height": 1200,
+    "intersectionOverUnion": 0.998369,
+    "maximumChannelError": 6
+  },
+  "directGiftiParity": {
+    "width": 960,
+    "height": 540,
+    "referenceForegroundPixels": 115200,
+    "nativeForegroundPixels": 115520,
+    "referenceForegroundPixelsByHalf": [57600, 57600],
+    "nativeForegroundPixelsByHalf": [57760, 57760],
+    "maskIntersectionOverUnion": 0.997230,
+    "centroidDistancePixels": 0.224042,
+    "meanInteriorChannelError": 0.640985,
+    "pickedSurface": "gifti-left",
+    "pickedFace": 0,
+    "pickedVertex": 0
+  },
+  "allContractsPass": true,
+  "notes": [
+    "Timings are host-specific evidence and are not portable pass thresholds.",
+    "The JavaFX backend advertises world clipping planes as unsupported."
+  ]
+}

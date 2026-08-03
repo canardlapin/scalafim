@@ -1,10 +1,10 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.*
-import scalafim.bids.io.BidsProjectLoader
+import bids4s.*
+import bids4s.io.BidsProjectLoader
 import scalafim.dataset.DatasetId
-import scalafim.image.{Axis, NArrayUtil, NeuroSpace, NeuroVec, NeuroVol}
+import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.nio.charset.StandardCharsets
@@ -16,20 +16,23 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
   test("JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project") {
     withFixture { root =>
       writeProject(root)
-      val project = BidsProjectLoader.load(root).toOption.get
+      val projectReport = BidsProjectLoader.loadChecked(root).toOption.get
+      val project = projectReport.value
       val recipe = DatasetRecipe.unsafe(
         datasetId = DatasetId("fixture"),
         project = WorkflowArtifactRef.unsafe[BidsProjectResource](root.toUri.toString.stripSuffix("/")),
-        boldQuery = BidsQuery(
+        boldQuery = BidsQuery.from(
           filename = Vector("desc-preproc_bold\\.nii(\\.gz)?$"),
           scope = BidsScope.Derivatives,
           pipeline = Some(PipelineName("fmriprep"))
-        ),
+        ).toOption.get,
         maskPolicy = MaskPolicy.IntersectRunMasks,
         confounds = Some(ConfoundSelectionConfig(variables = Vector("motion6")))
       )
 
-      val catalog = BidsStudyCompilerJvm.compile(project, recipe).toOption.get
+      val compilation = BidsStudyCompilerJvm.compileChecked(projectReport, recipe).toOption.get
+      val catalog = compilation.catalog
+      assertEquals(compilation.issues, Vector.empty)
 
       assertEquals(catalog.units.map(_.subject.value), Vector("01", "02"))
       assertEquals(catalog.units.map(_.runs.length), Vector(2, 2))
@@ -89,14 +92,14 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
 
   private def writeHeaderOnlyBold(path: Path): Unit =
     Files.createDirectories(path.getParent)
-    val values = NArrayUtil.fromArray(Array.tabulate(12)(_.toDouble))
+    val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
     val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
     Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def writeHeaderOnlyMask(path: Path): Unit =
     Files.createDirectories(path.getParent)
-    val values = NArrayUtil.fromArray(Array(1.0, 1.0, 1.0, 1.0))
+    val values = PrimitiveBuffers.fromArray(Array(1.0, 1.0, 1.0, 1.0))
     val space = NeuroSpace(Vector(2, 2, 1))
     Nifti.writeVol(path, NeuroVol.fromLinear(values, space, "mask"))
     Files.write(path, Files.readAllBytes(path).take(352))

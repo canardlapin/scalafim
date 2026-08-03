@@ -1,8 +1,23 @@
 package scalafim.fmri.fit
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import scalafim.fmri.fit.GaleTestSyntax.*
 
-import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import scalafim.dataset.{
+  AcquisitionContext,
+  DataSelection,
+  DatasetEvents,
+  DatasetId,
+  DatasetKey,
+  DatasetResponseSchema,
+  DatasetRunQuery,
+  FmriDataset,
+  IndexSelection,
+  InMemoryDatasetBackend,
+  OpenedDataset,
+  ResponseKey
+}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{
   ConvolvedTerm,
@@ -34,7 +49,15 @@ import scalafim.fmri.model.{
   ReducedRankInferencePolicy
 }
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.response.{
+  InMemoryResponseSource,
+  ResponseSchemaId,
+  SourceId,
+  UnitId
+}
 import gale.linalg.{DMat, DVec}
+
+import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
 class FitPlanExecutorSuite extends munit.FunSuite:
 
@@ -50,7 +73,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         Vector(7.0, -1.0)
       )
     )
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("ols-demo"), data, NeuroSpace(Vector(2, 1, 1))),
       samplingFrame = samplingFrame
     )
@@ -92,7 +115,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("pca-sketch-demo"), data, NeuroSpace(Vector(3, 1, 1))),
         samplingFrame = samplingFrame
       )
@@ -118,7 +141,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         intercept = Intercept.Global
       )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("rrr-partitioned-demo"),
           ImageDMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
@@ -210,6 +233,60 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     assertEqualsDouble(result.coefficient("base_constant", 1).get, 2.0, 1e-10)
     assertEqualsDouble(result.residualVariance(0), 0.0, 1e-10)
     assertEqualsDouble(result.residualVariance(1), 0.0, 1e-10)
+  }
+
+  test("OpenedDatasetFitExecutor confines effects to the attached response read") {
+    val plan = FitPlan(model)
+    val attachedDataset = plan.model.dataset
+    val schemaId = ResponseSchemaId.unsafe("fit-opened-schema")
+    val schema =
+      DatasetResponseSchema
+        .fromDataset(attachedDataset, schemaId, UnitId.unsafe("unit"))
+        .fold(error => fail(error.message), identity)
+    val source =
+      InMemoryResponseSource
+        .copyFromRowMajor[IO](
+          SourceId.unsafe("fit-opened-source"),
+          schema,
+          Array[Double](
+            1.0, 2.0,
+            3.0, 1.0,
+            5.0, 0.0,
+            7.0, -1.0
+          )
+        )
+        .fold(error => fail(error.message), identity)
+    val acquisition =
+      AcquisitionContext
+        .volume(
+          attachedDataset,
+          DatasetKey.unsafe("sub-01"),
+          ResponseKey.unsafe("bold"),
+          schemaId,
+          UnitId.unsafe("unit")
+        )
+        .fold(error => fail(error.message), identity)
+    val opened =
+      OpenedDataset
+        .attach(attachedDataset, source, acquisition)
+        .toEither
+        .fold(
+          issues =>
+            fail(issues.toNonEmptyList.toList.map(_.message).mkString("; ")),
+          identity
+        )
+
+    OpenedDatasetFitExecutor
+      .fit(opened, plan, DatasetRunQuery.All)
+      .value
+      .unsafeToFuture()
+      .map: evaluated =>
+        val result =
+          evaluated
+            .fold(error => fail(error.message), identity)
+            .asInstanceOf[DenseFmriFitResult]
+        assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
+        assertEqualsDouble(result.coefficient("task", 1).get, -1.0, 1e-10)
   }
 
   test("FitPlanExecutor preserves voxel selections in the result surface") {
@@ -548,7 +625,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 6).toString))
     )
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-trialwise-demo"),
           ImageDMat.fromRows(rows),
@@ -608,7 +685,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector(math.sin(x / 5.0) + x / 20.0, math.cos(x / 7.0) - x / 30.0)
     }
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-reordered-trialwise-demo"),
           ImageDMat.fromRows(rows),
@@ -661,7 +738,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       Vector(math.sin(x / 5.0) + x / 20.0, math.cos(x / 7.0) - x / 30.0)
     }
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-renamed-aggregate-demo"),
           ImageDMat.fromRows(rows),
@@ -712,7 +789,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     val nTime = 24
     val nTrials = 3
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-ambiguous-demo"),
           ImageDMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),

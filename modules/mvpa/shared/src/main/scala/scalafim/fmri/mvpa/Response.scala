@@ -2,17 +2,21 @@ package scalafim.fmri.mvpa
 
 enum Response:
   case Categorical(labels: Vector[ClassLabel])
+  case Probabilistic(membership: ClassMembership)
   case Continuous(values: Vector[Double])
 
   def length: Int =
     this match
       case Categorical(labels) => labels.length
+      case Probabilistic(membership) => membership.samples
       case Continuous(values) => values.length
 
   def subset(indices: IndexedSeq[Int]): Response =
     this match
       case Categorical(labels) =>
         Categorical(indices.map(i => labels(i)).toVector)
+      case Probabilistic(membership) =>
+        Probabilistic(membership.subset(indices))
       case Continuous(values) =>
         Continuous(indices.map(i => values(i)).toVector)
 
@@ -35,3 +39,9 @@ object Response:
   def continuous(values: Seq[Double]): Either[MvpaError, Response] =
     val response = Response.Continuous(values.toVector)
     response.validate(response.length)
+
+  def probabilistic(
+      classes: Seq[ClassLabel],
+      memberships: gale.linalg.DMat
+  ): Either[MvpaError, Response] =
+    ClassMembership.simplex(classes, memberships).map(Response.Probabilistic.apply)

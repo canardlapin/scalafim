@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://canardlapin.github.io/scalafim/schemas/half-flow-cc-result-v1.schema.json",
+  "title": "ScalaFIM HalfFlow-CC result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "recordId",
+    "capturedAtUtc",
+    "case",
+    "lane",
+    "status",
+    "provenance",
+    "inputs",
+    "affine",
+    "configuration",
+    "objective",
+    "anatomy",
+    "support",
+    "topology",
+    "inverse",
+    "controller",
+    "performance",
+    "artifacts",
+    "claims"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "scalafim-half-flow-cc-result-v1"
+    },
+    "recordId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capturedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "cohort", "role", "labelsHeldOut"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "cohort": { "type": "string", "minLength": 1 },
+        "role": {
+          "enum": ["plumbing", "development", "held-out", "synthetic"]
+        },
+        "labelsHeldOut": { "const": true }
+      }
+    },
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "algorithmId", "historicalControl"],
+      "properties": {
+        "id": { "enum": ["A", "B", "C", "D", "E", "ANTS"] },
+        "algorithmId": { "type": "string", "minLength": 1 },
+        "historicalControl": { "type": "boolean" }
+      }
+    },
+    "status": {
+      "enum": ["diagnostic", "admitted", "rejected", "typed-failure"]
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repositoryHead",
+        "workingTreePolicy",
+        "sourceSha256",
+        "runtimeClass",
+        "threads",
+        "randomSeed"
+      ],
+      "properties": {
+        "repositoryHead": { "$ref": "#/$defs/gitHash" },
+        "workingTreePolicy": { "type": "string", "minLength": 1 },
+        "sourceSha256": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/sha256" }
+        },
+        "runtimeClass": { "type": "string", "minLength": 1 },
+        "threads": { "type": "integer", "minimum": 1 },
+        "randomSeed": {
+          "oneOf": [
+            { "type": "integer" },
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ]
+        },
+        "contention": { "type": "string" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fixedImage", "movingImage", "optimizationSupport", "evaluationOnly"],
+      "properties": {
+        "fixedImage": { "$ref": "#/$defs/artifact" },
+        "movingImage": { "$ref": "#/$defs/artifact" },
+        "optimizationSupport": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact" }
+        },
+        "evaluationOnly": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/evaluationArtifact" }
+        }
+      }
+    },
+    "affine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sourceArtifact", "suppliedTo", "conversionStatus"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "sourceArtifact": { "$ref": "#/$defs/artifact" },
+        "suppliedTo": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "conversionStatus": {
+          "enum": ["unverified", "landmark-verified", "image-and-landmark-verified"]
+        },
+        "maximumLandmarkErrorMm": { "$ref": "#/$defs/measurement" }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptedStepBudget",
+        "levels",
+        "metric",
+        "step",
+        "geometry",
+        "flow",
+        "controllers"
+      ],
+      "properties": {
+        "acceptedStepBudget": { "type": "integer", "minimum": 1 },
+        "levels": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["shrink", "acceptedSteps", "maximumAttempts"],
+            "properties": {
+              "shrink": { "type": "integer", "minimum": 1 },
+              "acceptedSteps": { "type": "integer", "minimum": 1 },
+              "maximumAttempts": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
+        "metric": { "type": "object" },
+        "step": { "type": "object" },
+        "geometry": { "type": "object" },
+        "flow": { "type": "object" },
+        "controllers": { "type": "object" }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/beforeAfter" }
+    },
+    "anatomy": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "region", "before", "after"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "region": { "type": "string", "minLength": 1 },
+          "before": { "$ref": "#/$defs/measurement" },
+          "after": { "$ref": "#/$defs/measurement" }
+        }
+      }
+    },
+    "support": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activeFraction", "edgeActiveFraction", "minimumVariance"],
+      "properties": {
+        "activeFraction": { "$ref": "#/$defs/measurement" },
+        "edgeActiveFraction": { "$ref": "#/$defs/measurement" },
+        "minimumVariance": { "$ref": "#/$defs/measurement" },
+        "diagnosticsArtifact": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["forward", "backward", "admitted"],
+      "properties": {
+        "forward": { "$ref": "#/$defs/topologyArm" },
+        "backward": { "$ref": "#/$defs/topologyArm" },
+        "admitted": { "type": "boolean" }
+      }
+    },
+    "inverse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exportStatus", "forwardThenBackward", "backwardThenForward"],
+      "properties": {
+        "exportStatus": { "enum": ["verified", "typed-failure", "not-requested"] },
+        "failureReason": { "type": ["string", "null"] },
+        "forwardThenBackward": { "$ref": "#/$defs/errorSummary" },
+        "backwardThenForward": { "$ref": "#/$defs/errorSummary" }
+      }
+    },
+    "controller": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepted",
+        "attempted",
+        "retries",
+        "rejectionReasonCounts",
+        "attemptsArtifact"
+      ],
+      "properties": {
+        "accepted": { "type": "integer", "minimum": 0 },
+        "attempted": { "type": "integer", "minimum": 0 },
+        "retries": { "type": "integer", "minimum": 0 },
+        "rejectionReasonCounts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "dampingHistory": { "type": "array", "items": { "type": "number" } },
+        "stepScaleHistory": { "type": "array", "items": { "type": "number" } },
+        "squaringHistory": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "attemptsArtifact": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phasesSeconds", "endToEndSeconds", "peakRssBytes", "allocatedBytes"],
+      "properties": {
+        "phasesSeconds": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/measurement" }
+        },
+        "endToEndSeconds": { "$ref": "#/$defs/measurement" },
+        "peakRssBytes": { "$ref": "#/$defs/measurement" },
+        "allocatedBytes": { "$ref": "#/$defs/measurement" }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "claims": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gitHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "role"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "role": { "type": "string", "minLength": 1 },
+        "evaluationOnly": { "type": "boolean" }
+      }
+    },
+    "evaluationArtifact": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        {
+          "type": "object",
+          "required": ["evaluationOnly"],
+          "properties": { "evaluationOnly": { "const": true } }
+        }
+      ]
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "unit"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "value": { "type": "number" },
+        "unit": { "type": "string" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "available": { "const": true } } },
+          "then": { "required": ["value"] },
+          "else": { "required": ["reason"] }
+        }
+      ]
+    },
+    "beforeAfter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before", "after"],
+      "properties": {
+        "before": { "$ref": "#/$defs/measurement" },
+        "after": { "$ref": "#/$defs/measurement" }
+      }
+    },
+    "topologyArm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimumJacobian", "nonPositive", "quantiles"],
+      "properties": {
+        "minimumJacobian": { "$ref": "#/$defs/measurement" },
+        "nonPositive": { "type": "integer", "minimum": 0 },
+        "quantiles": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/measurement" }
+        }
+      }
+    },
+    "errorSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["p50Mm", "p95Mm", "p99Mm", "maximumMm", "maximumVox"],
+      "properties": {
+        "p50Mm": { "$ref": "#/$defs/measurement" },
+        "p95Mm": { "$ref": "#/$defs/measurement" },
+        "p99Mm": { "$ref": "#/$defs/measurement" },
+        "maximumMm": { "$ref": "#/$defs/measurement" },
+        "maximumVox": { "$ref": "#/$defs/measurement" }
+      }
+    }
+  }
+}

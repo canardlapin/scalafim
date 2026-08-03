@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ScalaFIM Three.js surface probe</title>
+    <style>
+      body { margin: 0; background: #10141b; color: #edf2f7; font: 15px system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: 720px minmax(320px, 1fr); gap: 24px; padding: 24px; }
+      canvas { width: 720px; height: 540px; background: white; border-radius: 8px; }
+      pre { white-space: pre-wrap; color: #b9f6ca; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="surface" width="720" height="540"></canvas>
+      <section>
+        <h1>ScalaFIM Three.js surface probe</h1>
+        <p id="status">Running real WebGL checks…</p>
+        <pre id="receipt"></pre>
+      </section>
+    </main>
+    <script>window.exports = {};</script>
+    <script src="../js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js"></script>
+    <script type="module">
+      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      const status = document.querySelector("#status");
+      const receipt = document.querySelector("#receipt");
+      try {
+        const canvas = document.querySelector("#surface");
+        const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+        window.scalafimWebGlCapability = { available: Boolean(gl), lost: gl?.isContextLost() ?? null };
+        const matrix = exports.runScalafimThreeAdmissionMatrix(THREE, canvas, 1);
+        const anatomical = exports.runScalafimThreeProbe(THREE, canvas);
+        const violations = matrix.flatMap(entry => entry.observations.flatMap(observation => {
+          const reasons = [];
+          if (observation.path === "ColdLoad" &&
+              (observation.geometryUploads === 0 || observation.layerUploads === 0))
+            reasons.push("cold load omitted an upload");
+          if (observation.path === "CameraOnly" &&
+              (observation.geometryUploads !== 0 || observation.layerUploads !== 0))
+            reasons.push("camera-only path uploaded resources");
+          if (["StyleUpdate", "LayerDataUpdate", "TimepointUpdate"].includes(observation.path) &&
+              observation.geometryUploads !== 0)
+            reasons.push("layer-only path uploaded geometry");
+          if (observation.path === "Pick" && !observation.events.some(event => event.kind === "Picked"))
+            reasons.push("pick path missed the surface");
+          if (observation.path === "Resize" && !observation.events.some(event => event.kind === "Resized"))
+            reasons.push("resize path emitted no resize event");
+          if (observation.path === "Snapshot" && !observation.timings.some(timing => timing.phase === "Snapshot"))
+            reasons.push("snapshot path emitted no snapshot timing");
+          return reasons.map(reason => ({ benchmark: entry.benchmark, reason }));
+        }));
+        const paths = Object.fromEntries(
+          ["ColdLoad", "CameraOnly", "StyleUpdate", "LayerDataUpdate", "TimepointUpdate", "Pick", "Resize", "Snapshot"]
+            .map(path => {
+              const rows = matrix.filter(entry => entry.benchmark.path === path);
+              return [path, {
+                cases: rows.length,
+                maximumP95Millis: Math.max(...rows.map(entry => entry.timings[0].p95Nanos / 1e6))
+              }];
+            })
+        );
+        window.scalafimThreeAdmissionMatrix = matrix;
+        const passed = anatomical.status === "pass" &&
+          anatomical.gpuProjection?.status === "pass" &&
+          matrix.length === 48 && violations.length === 0;
+        document.body.dataset.scalafimThree = passed ? "pass" : "fail";
+        status.textContent = passed
+          ? "PASS — Three.js rendering, GPU projection parity, and 48-case admission matrix"
+          : "FAIL — surface admission matrix";
+        receipt.textContent = JSON.stringify({
+          schema: matrix[0]?.schema,
+          backend: matrix[0]?.observations[0]?.backend,
+          metadata: matrix[0]?.metadata,
+          anatomical,
+          matrixCases: matrix.length,
+          violations,
+          paths
+        }, null, 2);
+      } catch (error) {
+        document.body.dataset.scalafimThree = "fail";
+        status.textContent = "FAIL";
+        receipt.textContent = error?.stack || String(error);
+        console.error(error);
+      }
+    </script>
+  </body>
+</html>

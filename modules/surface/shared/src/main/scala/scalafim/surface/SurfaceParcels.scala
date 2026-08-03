@@ -103,7 +103,38 @@ final case class ParcelContactMatrix(
   def touches(row: Int, col: Int): Boolean =
     count(row, col) > 0
 
+/** One canonical mesh edge on which the endpoint parcel assignments differ.
+  * `None` represents an unlabeled or explicitly ignored endpoint, which is
+  * useful for drawing the exterior of an ROI without a second topology graph.
+  */
+final case class ParcelBoundaryEdge(
+  edge: Edge,
+  atA: Option[ParcelLabel],
+  atB: Option[ParcelLabel]
+):
+  require(atA != atB, "parcel boundary endpoints must have different assignments")
+
 object SurfaceParcels:
+
+  def boundaryEdges(
+    labeled: LabeledSurface,
+    topology: MeshTopology,
+    ignoredLabels: Set[Int] = Set.empty,
+    includeExterior: Boolean = false
+  ): Vector[ParcelBoundaryEdge] =
+    require(labeled.geometry.vertexCount == topology.mesh.vertexCount, "labeled surface and topology vertex counts must match")
+    require(labeled.geometry.mesh.hasSameTopology(topology.mesh), "labeled surface and topology must share ordered triangle topology")
+    val assignments = Array.fill[Option[ParcelLabel]](topology.mesh.vertexCount)(None)
+    var index = 0
+    while index < labeled.size do
+      val label = labeled.labels(index)
+      if !ignoredLabels(label) then assignments(labeled.indices(index)) = Some(ParcelLabel(label))
+      index += 1
+    topology.edges.flatMap: edge =>
+      val a = assignments(edge.a.index)
+      val b = assignments(edge.b.index)
+      if a == b || (!includeExterior && (a.isEmpty || b.isEmpty)) then None
+      else Some(ParcelBoundaryEdge(edge, a, b))
 
   def units(
     labeled: LabeledSurface,
@@ -112,6 +143,7 @@ object SurfaceParcels:
     ignoredLabels: Set[Int] = Set.empty
   ): Vector[ParcelUnit] =
     require(labeled.geometry.vertexCount == topology.mesh.vertexCount, "labeled surface and topology vertex counts must match")
+    require(labeled.geometry.mesh.hasSameTopology(topology.mesh), "labeled surface and topology must share ordered triangle topology")
 
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[VertexId]]
     var i = 0

@@ -4,6 +4,9 @@ import scalafim.fmri.design.formula.*
 
 class FormulaParserSuite extends munit.FunSuite:
 
+  private def col(name: String): ArgValue.Ident = ArgValue.Ident(ColumnId.unsafe(name))
+  private def term(name: String): TermId = TermId.unsafe(name)
+
   private def parseError(formula: String): FormulaParser.ParseError =
     FormulaParser.parseEither(formula) match
       case Left(error) => error
@@ -11,16 +14,16 @@ class FormulaParserSuite extends munit.FunSuite:
 
   test("FormulaParser parses hrf + covariate calls") {
     val f = FormulaParser.parse("""onset ~ hrf(cond, basis="spmg3", id="task") + covariate(x, y, data=motion, id="motion", prefix="motion")""")
-    assertEquals(f.onset, "onset")
+    assertEquals(f.onset.value, "onset")
     assertEquals(
       f.terms,
       Vector(
-        HrfCall(vars = Vector(ArgValue.Ident("cond")), basis = Some("spmg3"), id = Some("task")),
+        HrfCall(vars = Vector(col("cond")), basis = Some("spmg3"), id = Some(term("task"))),
         CovariateCall(
-          vars = Vector(ArgValue.Ident("x"), ArgValue.Ident("y")),
+          vars = Vector(col("x"), col("y")),
           data = Some("motion"),
-          id = Some("motion"),
-          prefix = Some("motion")
+          id = Some(term("motion")),
+          prefix = Some(term("motion"))
         )
       )
     )
@@ -32,7 +35,7 @@ class FormulaParserSuite extends munit.FunSuite:
       f.terms,
       Vector(
         HrfCall(
-          vars = Vector(ArgValue.Call("Scale", Vector(Arg(None, ArgValue.Ident("rt")))))
+          vars = Vector(ArgValue.Call("Scale", Vector(Arg(None, col("rt")))))
         )
       )
     )
@@ -46,7 +49,7 @@ class FormulaParserSuite extends munit.FunSuite:
         TrialwiseCall(
           basis = Some("spmg2"),
           addSum = Some(true),
-          label = Some("trialwise")
+          label = Some(term("trialwise"))
         )
       )
     )
@@ -58,8 +61,8 @@ class FormulaParserSuite extends munit.FunSuite:
       f.terms,
       Vector(
         HrfCall(
-          vars = Vector(ArgValue.Ident("cond")),
-          subset = Some(ArgValue.Call("!", Vector(Arg(None, ArgValue.Ident("cond_flag"))))),
+          vars = Vector(col("cond")),
+          subset = Some(ArgValue.Call("!", Vector(Arg(None, col("cond_flag"))))),
           hrfFun = Some(ArgValue.Str("hrfs"))
         )
       )
@@ -72,9 +75,9 @@ class FormulaParserSuite extends munit.FunSuite:
       f.terms,
       Vector(
         HrfCall(
-          vars = Vector(ArgValue.Ident("cond")),
-          contrasts = Some(ArgValue.Ident("myset")),
-          id = Some("task")
+          vars = Vector(col("cond")),
+          contrasts = Some("myset"),
+          id = Some(term("task"))
         )
       )
     )
@@ -86,10 +89,10 @@ class FormulaParserSuite extends munit.FunSuite:
       f.terms,
       Vector(
         HrfCall(
-          vars = Vector(ArgValue.Ident("cond")),
-          onsets = Some(ArgValue.Ident("stim_onset")),
+          vars = Vector(col("cond")),
+          onsets = Some(col("stim_onset")),
           durations = Some(ArgValue.Str("dur")),
-          prefix = Some("pre"),
+          prefix = Some(term("pre")),
           normalize = Some(true)
         )
       )
@@ -102,7 +105,7 @@ class FormulaParserSuite extends munit.FunSuite:
       f.terms,
       Vector(
         TrialwiseCall(
-          durations = Some(ArgValue.Ident("dur")),
+          durations = Some(col("dur")),
           normalize = Some(true)
         )
       )

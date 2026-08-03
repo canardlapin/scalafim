@@ -1,13 +1,9 @@
 package scalafim.pipeline
 
+import cats.{Hash, Order}
+import graph4s.{ArcInput, Digraph}
+import graph4s.algorithms.{Dag, DigraphAlgorithms, DirectedCycle}
 import scala.collection.mutable
-
-import scalafim.graph.Cycle
-import scalafim.graph.Dag
-import scalafim.graph.DirectedGraph
-import scalafim.graph.Graph
-import scalafim.graph.VertexBasis
-import scalafim.graph.stronglyConnectedComponents
 
 final case class PipelineStage(index: Int, nodes: Vector[PipelineNode]):
   require(index >= 0, "pipeline stage index must be non-negative")
@@ -62,15 +58,20 @@ object ExecutionPlan:
     Right(())
 
   private def stage(nodes: Vector[PipelineNode]): Either[PipelineError, Vector[PipelineStage]] =
+    val positionById =
+      nodes.iterator.map(_.id).zipWithIndex.toMap
+    given Order[NodeId] =
+      Order.by(id => (positionById.getOrElse(id, Int.MaxValue), id.value))
+
     dependencyGraph(nodes).flatMap: graph =>
       val selfCycles = nodes.collect:
         case node if node.dependencies.exists(_.nodeId == node.id) => node.id
-      Dag.from(graph) match
+      DigraphAlgorithms.requireDag(graph) match
         case Right(dag) if selfCycles.isEmpty =>
           val byId = nodes.map(node => node.id -> node).toMap
           Right(
-            dag.topologicalLayers.zipWithIndex.map: (layer, index) =>
-              PipelineStage(index, layer.map(byId))
+            dag.layers.zipWithIndex.map: (layer, index) =>
+              PipelineStage(index, layer.toVector.map(byId))
           )
         case Left(witness) =>
           Left(PipelineError.CyclicGraph(blockedByCycles(nodes, graph, selfCycles, Some(witness))))
@@ -79,34 +80,38 @@ object ExecutionPlan:
 
   private def dependencyGraph(
       nodes: Vector[PipelineNode]
-  ): Either[PipelineError, DirectedGraph[NodeId, PipelineNode, Unit]] =
-    val basis =
-      VertexBasis
-        .from(nodes.map(node => node.id -> node))
-        .left
-        .map(error => PipelineError.InvalidGraph(s"pipeline dependency basis failed: ${error.message}"))
-    val edges = nodes.flatMap: node =>
+  ): Either[PipelineError, Digraph[NodeId]] =
+    given Hash[NodeId] =
+      Hash.by(_.value)
+    val arcs = nodes.flatMap: node =>
       node.dependencies
         .map(_.nodeId)
         .distinct
         .filter(_ != node.id)
-        .map(dependency => (dependency, node.id, ()))
-    basis.flatMap: value =>
-      Graph
-        .directed(value, edges)
-        .left
-        .map(errors => PipelineError.InvalidGraph(s"pipeline dependency graph failed: ${errors.message}"))
+        .map(dependency => ArcInput(dependency, node.id))
+    Digraph
+      .of(nodes.map(_.id), arcs)
+      .toEither
+      .left
+      .map: errors =>
+        PipelineError.InvalidGraph(
+          s"pipeline dependency graph failed: ${errors.toNonEmptyList.toList.mkString(", ")}"
+        )
 
   private def blockedByCycles(
       nodes: Vector[PipelineNode],
-      graph: DirectedGraph[NodeId, PipelineNode, Unit],
+      graph: Digraph[NodeId],
       selfCycles: Vector[NodeId],
-      witness: Option[Cycle[NodeId]]
-  ): Vector[NodeId] =
-    val componentCycles = graph.stronglyConnectedComponents
-      .filter(_.keys.length > 1)
-      .flatMap(_.keys)
-    val seeds = (selfCycles ++ componentCycles ++ witness.toVector.flatMap(_.keys.dropRight(1))).toSet
+      witness: Option[DirectedCycle[NodeId]]
+  )(using Order[NodeId]): Vector[NodeId] =
+    val componentCycles =
+      DigraphAlgorithms
+        .stronglyConnectedComponents(graph)
+        .components
+        .filter(_.size > 1)
+        .flatMap(_.iterator)
+    val seeds =
+      (selfCycles ++ componentCycles ++ witness.toVector.flatMap(_.vertices.toVector)).toSet
     val dependents = mutable.HashMap.empty[NodeId, Vector[NodeId]]
     nodes.foreach: node =>
       node.dependencies.map(_.nodeId).distinct.foreach: dependency =>

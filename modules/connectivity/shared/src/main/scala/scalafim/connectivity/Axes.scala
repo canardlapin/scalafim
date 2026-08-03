@@ -2,8 +2,6 @@ package scalafim.connectivity
 
 import scala.collection.mutable
 
-import scalafim.graph.BasisError
-import scalafim.graph.VertexBasis
 import gale.linalg.{DMat, Matrix}
 import gale.linalg.{DVec, Vec}
 
@@ -11,17 +9,15 @@ final case class NodeSpec(id: NodeId, label: String, system: Option[SystemId] = 
   require(label.trim.nonEmpty, "node label must be non-empty")
 
 final class NodeAxis private (
-    val basis: VertexBasis[NodeId, NodeSpec],
+    val nodes: Vector[NodeSpec],
+    private val indexById: Map[NodeId, Int],
     val provenance: NodeAxisProvenance
 ):
-  def nodes: Vector[NodeSpec] =
-    basis.values
-
   def size: Int =
-    basis.size
+    nodes.size
 
   def ids: Vector[NodeId] =
-    basis.keys
+    nodes.map(_.id)
 
   def labels: Vector[String] =
     nodes.map(_.label)
@@ -30,16 +26,16 @@ final class NodeAxis private (
     nodes.map(_.system)
 
   def indexOf(id: NodeId): Option[Int] =
-    basis.indexOf(id).map(_.toInt)
+    indexById.get(id)
 
   def sameKeyOrderAs(other: NodeAxis): Boolean =
-    basis.sameKeyOrderAs(other.basis)
+    ids == other.ids
 
   def sameKeySetAs(other: NodeAxis): Boolean =
-    basis.sameKeySetAs(other.basis)
+    indexById.keySet == other.indexById.keySet
 
   def sameMetadataAs(other: NodeAxis): Boolean =
-    basis.sameMetadataAs(other.basis)
+    nodes == other.nodes
 
   def sameScientificBasisAs(other: NodeAxis): Boolean =
     sameKeyOrderAs(other) && provenance.compatibleWith(other.provenance)
@@ -49,6 +45,9 @@ final class NodeAxis private (
 
   def sameIdentityAs(other: NodeAxis): Boolean =
     sameMetadataAs(other)
+
+  lazy val locus: NodeLocusDomain =
+    NodeLocusDomain.make(this)
 
 object NodeAxis:
   def from(
@@ -60,19 +59,29 @@ object NodeAxis:
     else
       var i = 0
       var error = Option.empty[ConnectivityError]
+      val firstById = mutable.HashMap.empty[NodeId, Int]
       while i < values.length && error.isEmpty do
         val node = values(i)
         if node.label.trim.isEmpty then
           error = Some(ConnectivityError.InvalidId("node label", node.label, "must be non-empty"))
+        else
+          firstById.get(node.id) match
+            case Some(_) =>
+              error = Some(ConnectivityError.DuplicateId("node", node.id.value))
+            case None =>
+              firstById(node.id) = i
         i += 1
 
       error match
         case Some(value) => Left(value)
         case None =>
-          VertexBasis.from(values.map(node => node.id -> node)) match
-            case Left(BasisError.DuplicateKey(key, _, _)) => Left(ConnectivityError.DuplicateId("node", key.value))
-            case Left(value)                              => Left(ConnectivityError.InvalidPlan(value.message))
-            case Right(basis)                             => Right(new NodeAxis(basis, provenance))
+          Right(
+            new NodeAxis(
+              values,
+              values.iterator.map(_.id).zipWithIndex.toMap,
+              provenance
+            )
+          )
 
   def fromIdsAndLabels(
       ids: Iterable[NodeId],

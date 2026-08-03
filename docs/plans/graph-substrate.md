@@ -1,7 +1,15 @@
 # Unified Graph Substrate Plan
 
-Status: planned  
+Status: historical; implemented and extracted
 Mote epic: `bd-01KX92SV3T5RA26J9QWGX79W2F`
+
+Historical note: ScalaFIM implemented this plan, then moved generic topology
+and algorithms to standalone
+[`graph4s`](https://github.com/canardlapin/graph4s). The body and sbt commands
+below record the original in-repository design. The current build consumes
+graph4s; numerical linearization now lives in its optional `graph4s-gale`
+module. See
+[`docs/module-relations.md`](../module-relations.md).
 
 ## Decision
 
@@ -502,7 +510,7 @@ sbt compileAll
 sbt testAll
 ```
 
-The build must remain warning-clean on Scala 3.4.2 for JVM and Scala.js.
+The build must remain warning-clean on Scala 3.7.4 for JVM and Scala.js.
 
 ## Mote Work Graph
 

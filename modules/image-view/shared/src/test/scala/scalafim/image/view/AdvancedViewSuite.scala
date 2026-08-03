@@ -1,6 +1,7 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
+import ravel.NDArray as RavelArray
 import scalafim.image.*
 
 class AdvancedViewSuite extends munit.FunSuite:
@@ -10,7 +11,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     label: String
   )(value: (Int, Int, Int) => Double): NeuroVol[Double] =
     val shape = space.shape
-    val data = NArrayUtil.tabulate[Double](shape.product) { index =>
+    val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
       val x = index % shape.x
       val y = (index / shape.x) % shape.y
       val z = index / (shape.x * shape.y)
@@ -58,14 +59,17 @@ class AdvancedViewSuite extends munit.FunSuite:
     val cache = ViewerCache.empty(6)
 
     val first = ViewerCompiler.compileCached(model, state, device, cache).toOption.get
-    assertEquals(reads, Vector(0, 0, 0))
+    assertEquals(reads, Vector(0))
+    assertEquals(first.profile.sourceReads, 1)
     val second = ViewerCompiler.compileCached(model, state, device, first.cache).toOption.get
-    assertEquals(reads, Vector(0, 0, 0))
+    assertEquals(reads, Vector(0))
     assertEquals(second.profile.cacheHits, 3)
+    assertEquals(second.profile.sourceReads, 0)
 
     val third = ViewerCompiler.compileCached(model, state.copy(timepoint = 1), device, second.cache).toOption.get
-    assertEquals(reads, Vector(0, 0, 0, 1, 1, 1))
+    assertEquals(reads, Vector(0, 1))
     assertEquals(third.profile.cacheMisses, 3)
+    assertEquals(third.profile.sourceReads, 1)
     assert(VolumeSource.lazyFrames[Double](space, 0)(_ => Left("unused")).isLeft)
   }
 
@@ -97,7 +101,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     assertEquals(model.timepointCount, 2)
   }
 
-  test("cache profiles expose hits misses and sampled work without wall-clock noise") {
+  test("cache profiles separate sampling colorization and plane-specific redraw work") {
     val space = VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
     val source = volume(space, "source")((x, y, z) => x + y + z)
     val model = ViewerModel.unsafe(space, Vector(layer("one", source), layer("two", source)))
@@ -110,12 +114,19 @@ class AdvancedViewSuite extends munit.FunSuite:
     assertEquals(cold.profile.cacheHits, 0)
     assertEquals(cold.profile.cacheMisses, 6)
     assert(cold.profile.sampledPixels > 0L)
+    assertEquals(cold.profile.sampleCacheHits, 0)
+    assertEquals(cold.profile.sampleCacheMisses, 6)
+    assertEquals(cold.profile.colorizedPixels, cold.profile.sampledPixels)
+    assertEquals(cold.profile.sourceReads, 2)
     assertEquals(cold.cache.size, 6)
+    assertEquals(cold.cache.sampledSliceCount, 6)
 
     val warm = ViewerCompiler.compileCached(model, state, device, cold.cache).toOption.get
     assertEquals(warm.profile.cacheHits, 6)
     assertEquals(warm.profile.cacheMisses, 0)
     assertEquals(warm.profile.sampledPixels, 0L)
+    assertEquals(warm.profile.colorizedPixels, 0L)
+    assertEquals(warm.profile.sourceReads, 0)
     assertEqualsDouble(warm.profile.hitRate, 1.0, 0.0)
 
     val resized = ViewerCompiler.compileCached(
@@ -126,13 +137,65 @@ class AdvancedViewSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(resized.profile.cacheHits, 6)
 
+    val windowedState = state.copy(
+      layerPresentation = Map(
+        LayerId.unsafe("one") -> LayerPresentation(window = Some(DisplayWindow.unsafe(0.0, 8.0)))
+      )
+    )
+    val windowed = ViewerCompiler.compileCached(model, windowedState, device, resized.cache).toOption.get
+    assertEquals(windowed.profile.cacheHits, 3)
+    assertEquals(windowed.profile.cacheMisses, 3)
+    assertEquals(windowed.profile.sampleCacheHits, 3)
+    assertEquals(windowed.profile.sampleCacheMisses, 0)
+    assertEquals(windowed.profile.sampledPixels, 0L)
+    assert(windowed.profile.colorizedPixels > 0L)
+    assertEquals(windowed.profile.sourceReads, 0)
+
+    val thresholdedState = windowedState.copy(
+      layerPresentation = windowedState.layerPresentation.updated(
+        LayerId.unsafe("one"),
+        LayerPresentation(
+          window = Some(DisplayWindow.unsafe(0.0, 8.0)),
+          threshold = Some(DisplayThreshold.transparentBand(1.0, 2.0).toOption.get)
+        )
+      )
+    )
+    val thresholded = ViewerCompiler.compileCached(
+      model,
+      thresholdedState,
+      device,
+      windowed.cache
+    ).toOption.get
+    assertEquals(thresholded.profile.cacheHits, 3)
+    assertEquals(thresholded.profile.cacheMisses, 3)
+    assertEquals(thresholded.profile.sampleCacheHits, 3)
+    assertEquals(thresholded.profile.sampledPixels, 0L)
+    assert(thresholded.profile.colorizedPixels > 0L)
+    assertEquals(thresholded.profile.sourceReads, 0)
+
     val moved = ViewerCompiler.compileCached(
       model,
       state.copy(cursor = state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0)),
       device,
-      resized.cache
+      thresholded.cache
     ).toOption.get
-    assertEquals(moved.profile.cacheMisses, 6)
+    assertEquals(moved.profile.cacheHits, 4)
+    assertEquals(moved.profile.cacheMisses, 2)
+    assertEquals(moved.profile.sampleCacheHits, 0)
+    assertEquals(moved.profile.sampleCacheMisses, 2)
+    assertEquals(moved.profile.sourceReads, 2)
+
+    val coldMoved = ViewerCompiler.compile(
+      model,
+      state.copy(cursor = state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0)),
+      device
+    ).toOption.get
+    AnatomicalPlane.values.foreach { plane =>
+      assertEquals(images(moved.frame, plane).map(_.image), images(coldMoved, plane).map(_.image))
+    }
+    assert(images(moved.frame, AnatomicalPlane.Sagittal).head.image.eq(images(warm.frame, AnatomicalPlane.Sagittal).head.image))
+    assert(images(moved.frame, AnatomicalPlane.Coronal).head.image.eq(images(warm.frame, AnatomicalPlane.Coronal).head.image))
+    assert(!images(moved.frame, AnatomicalPlane.Axial).head.image.eq(images(warm.frame, AnatomicalPlane.Axial).head.image))
     assert(ViewerCache.make(-1).isLeft)
   }
 
@@ -140,15 +203,15 @@ class AdvancedViewSuite extends munit.FunSuite:
     val space = VolumeSpace(NeuroSpace(Vector(5, 3, 1)))
     val source = volume(space, "x")((x, _, _) => x.toDouble)
     val fieldGrid = GridSpec.fromVolumeSpace(space)
-    val field = NDArray(
-      NArrayUtil.tabulate[Double](fieldGrid.nVoxels * 3) { index =>
-        val component = index / fieldGrid.nVoxels
-        val linear = index % fieldGrid.nVoxels
-        val coord = Indexing.indexToGrid3D(fieldGrid.shape, linear)
-        if component == 0 && coord.x >= 2 then 1.0 else 0.0
-      },
-      fieldGrid.dims :+ 3
-    )
+    val field =
+      RavelArray.tabulate[Double](
+        fieldGrid.shape.x,
+        fieldGrid.shape.y,
+        fieldGrid.shape.z,
+        3
+      ) { (x, _, _, component) =>
+        if component == 0 && x >= 2 then 1.0 else 0.0
+      }
     val morphism = DenseFieldMorphism.displacement(
       SpatialDomainId("source"),
       SpatialDomainId("reference"),
@@ -173,6 +236,29 @@ class AdvancedViewSuite extends munit.FunSuite:
     assertEquals(axial(0).image.pixelUnsafe(2, 1).red, 128)
     assertEquals(axial(1).image.pixelUnsafe(2, 1).red, 191)
     assertEquals(axial(1).image.pixelUnsafe(4, 1).red, 0)
+  }
+
+  test("cache reuse preserves left-right convention and asymmetric raster orientation") {
+    val space = VolumeSpace(NeuroSpace(Vector(5, 3, 2)))
+    val source = volume(space, "asymmetric-x")((x, _, _) => x.toDouble)
+    val model = ViewerModel.unsafe(space, Vector(layer("anatomy", source)))
+    val leftState = ViewerState.centered(space, LeftRightConvention.PatientLeftOnLeft)
+    val rightState = leftState.copy(convention = LeftRightConvention.PatientRightOnLeft)
+    val device = DeviceContext.unsafe(640.0, 480.0)
+
+    val left = ViewerCompiler.compileCached(model, leftState, device, ViewerCache.empty(8)).toOption.get
+    val cachedRight = ViewerCompiler.compileCached(model, rightState, device, left.cache).toOption.get
+    val coldRight = ViewerCompiler.compile(model, rightState, device).toOption.get
+
+    assertEquals(cachedRight.profile.cacheHits, 1)
+    assertEquals(cachedRight.profile.cacheMisses, 2)
+    AnatomicalPlane.values.foreach { plane =>
+      assertEquals(images(cachedRight.frame, plane).map(_.image), images(coldRight, plane).map(_.image))
+    }
+    val leftAxial = images(left.frame, AnatomicalPlane.Axial).head.image
+    val rightAxial = images(cachedRight.frame, AnatomicalPlane.Axial).head.image
+    assertEquals(leftAxial.pixelUnsafe(0, 0), rightAxial.pixelUnsafe(rightAxial.width - 1, 0))
+    assertEquals(leftAxial.pixelUnsafe(leftAxial.width - 1, 0), rightAxial.pixelUnsafe(0, 0))
   }
 
   test("linked view policies synchronize only declared state") {

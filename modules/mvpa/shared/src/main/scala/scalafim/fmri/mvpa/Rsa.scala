@@ -636,7 +636,7 @@ final case class RdmAnalysis(
     method: RdmMethod,
     rows: RdmRows = RdmRows.Samples,
     storeRdm: Boolean = true
-) extends RoiAnalysis:
+) extends DenseRoiAnalysis:
   override def name: String = s"rdm_${method.label}_${rows.label}"
   override val minFeatures: Int = 1
 
@@ -653,7 +653,7 @@ final case class RdmAnalysis(
 final case class CrossnobisAnalysis(
     normalizeByFeatures: Boolean = true,
     storeRdm: Boolean = true
-) extends FoldRequiredRoiAnalysis:
+) extends FoldRequiredDenseRoiAnalysis:
   override def name: String =
     if normalizeByFeatures then "crossnobis_normalized" else "crossnobis"
   override val minFeatures: Int = 1
@@ -679,7 +679,7 @@ final case class RsaAnalysis(
     rows: RdmRows = RdmRows.ClassMeans,
     scorer: RdmScorer = RdmScorer.Pearson,
     storeObservedRdm: Boolean = false
-) extends RoiAnalysis:
+) extends DenseRoiAnalysis:
   require(models.nonEmpty, "RSA analysis requires at least one model")
   require(models.map(_.name).distinct.length == models.length, "RSA model names must be unique")
 
@@ -691,7 +691,7 @@ final case class RsaAnalysis(
       observed <- RdmAnalysisSupport.observedPatterns(roi, context, rows)
       observedRdm <- method.compute(observed.matrix)
       labeledObserved = LabeledRdm.unsafeFromItemIds(observed.items, observedRdm)
-      scores <- scoreModels(labeledObserved)
+      scores <- RsaAnalysisSupport.scoreModels(models, scorer, labeledObserved)
     yield
       val scoreMetrics = scores.map(score => s"${score.modelName}.${scorer.name}" -> score.value)
       val metrics = RdmAnalysisSupport.rdmMetricPairs(observedRdm, observed.matrix.cols) ++ scoreMetrics
@@ -700,7 +700,12 @@ final case class RsaAnalysis(
         else Some(RoiPayload.Rsa(None, scores))
       RoiAnalysisResult(MetricVector.from(metrics), payload)
 
-  private def scoreModels(observed: LabeledRdm): Either[MvpaError, Vector[RsaScore]] =
+private[mvpa] object RsaAnalysisSupport:
+  def scoreModels(
+      models: Vector[RdmModel],
+      scorer: RdmScorer,
+      observed: LabeledRdm
+  ): Either[MvpaError, Vector[RsaScore]] =
     val out = Vector.newBuilder[RsaScore]
     var error: MvpaError | Null = null
     var i = 0
@@ -724,7 +729,7 @@ final case class SamplewiseRsaAnalysis(
     method: RdmMethod = RdmMethod.Correlation,
     scorer: RowSimilarity = RowSimilarity.Pearson,
     storeScores: Boolean = false
-) extends RoiAnalysis:
+) extends DenseRoiAnalysis:
   override def name: String = s"samplewise_rsa_${method.label}_${scorer.name.toLowerCase}"
   override val minFeatures: Int =
     method match

@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+
 class DenseFieldInverseSuite extends munit.FunSuite:
 
   private val native = SpatialDomainId("native")
@@ -15,15 +18,15 @@ class DenseFieldInverseSuite extends munit.FunSuite:
   private def assertClose(actual: WorldPoint, expected: WorldPoint, tol: Double): Unit =
     assertClose(actual.toVector, expected.toVector, tol)
 
-  private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
-    val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
-        val component = i / grid.nVoxels
-        val lin = i % grid.nVoxels
-        val coord = Indexing.indexToGrid3D(grid.shape, lin)
-        f(coord, component)
-      }
-    NDArray(data, grid.dims :+ 3)
+  private def denseField(
+      grid: GridSpec
+  )(f: (VoxelCoord, Int) => Double): RavelArray[Double, Rank[4]] =
+    RavelArray.tabulate[Double](
+      grid.shape.x,
+      grid.shape.y,
+      grid.shape.z,
+      3
+    )((i, j, k, component) => f(VoxelCoord(i, j, k), component))
 
   private def translation(x: Double, y: Double, z: Double): DMat =
     DMat.fromRows(

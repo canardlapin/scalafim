@@ -35,7 +35,7 @@ final case class MatrixFileDatasetBackend(
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     for
       loaded <- loadedEither
-      resolved <- selection.resolveEither(loaded.shape, voxelDomain)
+      resolved <- selection.resolveEither(acquisitionDomain)
       series <- FmriSeries.make(
         data = DMat.fromRows(
           resolved.timepoints.map { r =>

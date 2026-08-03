@@ -1,0 +1,164 @@
+{
+  "schema": "scalafim-half-flow-cc-g5-improvement-probes-v1",
+  "status": "diagnostic-not-decision",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5177SNQYXPK746CQXYT3WV",
+  "capturedAtUtc": "2026-07-22T18:02:14Z",
+  "repositoryHead": "149686d63452821d46845ea9b800ff4b2109d909",
+  "case": {
+    "id": "sub18",
+    "role": "single-pair plumbing and mechanism diagnostic only",
+    "selectionProhibited": "At least five held-out labeled development pairs remain required before architecture or schedule selection."
+  },
+  "sources": {
+    "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowCcAblationCli.scala": "fd7a0a14a01c08705b06ef708fbfbf47999339382d1564880441aa4f9b1f5ab3",
+    "modules/registration/shared/src/main/scala/scalafim/registration/HalfFlowCcEngine.scala": "8b6e5c3829d25ea8f887f290da7bf094cb4ace0a9f7c6d9e8b54b454e113cae8",
+    "modules/registration/shared/src/main/scala/scalafim/registration/ForwardMidpointExport.scala": "9c0cc337ecf7016772b5a961de3c1036e5da0628b17374c26a45b42910d43f56",
+    "modules/registration/shared/src/test/scala/scalafim/registration/ForwardMidpointSuite.scala": "a9c6c57996932fe4e1fd40aa2dbb032ae3d429ece8144bf0b8acf830176aea0e"
+  },
+  "frozenLaneA": {
+    "schedule": [
+      {"shrink": 4, "acceptedSteps": 10, "smoothSigmaMm": 14.0, "maximumStepMm": 1.5},
+      {"shrink": 2, "acceptedSteps": 8, "smoothSigmaMm": 10.0, "maximumStepMm": 1.0},
+      {"shrink": 1, "acceptedSteps": 6, "smoothSigmaMm": 6.0, "maximumStepMm": 0.6}
+    ],
+    "accepted": 24,
+    "attempted": 24,
+    "dice": 0.9102004781574826,
+    "globalNcc": 0.8672323315734038,
+    "maskedNcc": 0.4195890125613371,
+    "nonPositiveJacobians": 0,
+    "exportInverseP99Mm": 0.06138661287895832,
+    "exportInverseMaximumMm": 0.5888752885841915
+  },
+  "probes": {
+    "budget2x": {
+      "interpretation": "Only accepted-step budgets changed relative to frozen lane A.",
+      "schedule": [
+        {"shrink": 4, "acceptedSteps": 20, "smoothSigmaMm": 14.0, "maximumStepMm": 1.5},
+        {"shrink": 2, "acceptedSteps": 16, "smoothSigmaMm": 10.0, "maximumStepMm": 1.0},
+        {"shrink": 1, "acceptedSteps": 12, "smoothSigmaMm": 6.0, "maximumStepMm": 0.6}
+      ],
+      "status": "retained-as-multi-pair-candidate",
+      "accepted": 48,
+      "attempted": 48,
+      "dice": 0.9211240876530815,
+      "globalNcc": 0.8907743592124847,
+      "maskedNcc": 0.5123938454293453,
+      "fixedArmMinimumJacobian": 0.1874985569526002,
+      "movingArmMinimumJacobian": 0.22051303860327118,
+      "nonPositiveJacobians": 0,
+      "optimizationSeconds": 19.350324292,
+      "exportSeconds": 18.257112584,
+      "exportStatus": "typed-failure",
+      "exportInverseP99Mm": 0.1514784619392753,
+      "exportInverseMaximumMm": 1.3284491670387397,
+      "artifact": {
+        "summary": "/tmp/halfflow-budget2x-final-sub18.VINyzC/summary.tsv",
+        "summarySha256": "2fc5bd1f55e4010fb5672b384ddbbe4b4f863a2ff07cd6b8ebe3edbc67dce2ef",
+        "attempts": "/tmp/halfflow-budget2x-final-sub18.VINyzC/attempts.tsv",
+        "attemptsSha256": "2ed1d01a0af12b96b6cb00fc09918a400487032195a26dd0e00af308b17a1b47"
+      }
+    },
+    "softened": {
+      "interpretation": "Only Gaussian widths changed relative to budget2x: 14/10/6 mm to 10/7/4 mm.",
+      "status": "rejected",
+      "reason": "Dice decreased, objective retries appeared, and export error worsened despite a small masked-NCC gain.",
+      "accepted": 48,
+      "attempted": 51,
+      "dice": 0.9176632662547858,
+      "maskedNcc": 0.5321620018618739,
+      "exportInverseMaximumMm": 2.1267340588042525,
+      "summarySha256": "7fba0c6239cf3335d13c29802ad15b21e676dbd2c332138c946036caaca3c278"
+    },
+    "shrink8": {
+      "interpretation": "A shrink-8 level was added to the retained budget2x schedule.",
+      "status": "rejected",
+      "reason": "Dice decreased, the fixed-arm minimum Jacobian fell to 0.122, and an 18.4 mm export outlier appeared.",
+      "accepted": 60,
+      "attempted": 60,
+      "dice": 0.9166252272116502,
+      "globalNcc": 0.8935540478960716,
+      "fixedArmMinimumJacobian": 0.12244398782142986,
+      "exportInverseMaximumMm": 18.40657493304344,
+      "summarySha256": "2314353746ec25f4a779be12390ed2ab7bdba487e3aa268a8f08ac95e9634520"
+    },
+    "fixedPoint150": {
+      "status": "rejected",
+      "reason": "Tripling inverse iterations left the maximum unchanged while export time rose from about 16.6 to 47.5 seconds.",
+      "iterationsByLevel": [150, 150, 150],
+      "exportInverseP99Mm": 0.15147846193601783,
+      "exportInverseMaximumMm": 1.3284424223758444,
+      "exportSeconds": 47.537990125,
+      "summarySha256": "3237b4f9a6d3ed84fb50c6706971e3c024b39f510e94e92831b267053064f55b"
+    },
+    "oneSidedNewtonExport": {
+      "status": "rejected-and-reverted",
+      "reason": "It made f-after-g nearly exact but worsened the opposite discrete composition.",
+      "exportSeconds": 10.586938291,
+      "forwardThenInverseP99Mm": 0.23930827311118277,
+      "forwardThenInverseMaximumMm": 1.6048354451613096,
+      "inverseThenForwardP99Mm": 4.819135301037582e-14,
+      "summarySha256": "78cf4d1a09872b96d6fc069b5d1ef82b1d36fa2773d7d6c491fb68305dd35260"
+    },
+    "boundedTwoSidedNewtonExport": {
+      "status": "rejected-and-reverted",
+      "reason": "It was slower and worse than the original two-sided fixed-point refiner.",
+      "exportSeconds": 29.260499208,
+      "exportInverseP99Mm": 0.21421572022804547,
+      "exportInverseMaximumMm": 1.546388785119537,
+      "summarySha256": "9ea316f23afb2904b41398b6a35a8b1c778dee9fb2433e0b6ce9667ddaebd061"
+    },
+    "globalTranslationStencil": {
+      "status": "rejected-and-removed",
+      "synthetic8Mm": "passed capture gate before the 12 mm case",
+      "synthetic12Mm": {
+        "selectedVelocityMm": [0.0, -4.0, -8.0],
+        "endpointRmsMm": 14.966629547095765
+      },
+      "reason": "True CC selected a lower-loss wrong diagonal displacement; a global proposal lacks spatial correspondence confidence."
+    }
+  },
+  "exportLocalization": {
+    "fixedResidualForwardThenInverse": {
+      "maximumIndex": 536288,
+      "voxel": [72, 8, 48],
+      "edgeDistanceVoxels": 8,
+      "maximumMm": 1.3284491670387397
+    },
+    "fixedResidualInverseThenForward": {
+      "maximumIndex": 435644,
+      "voxel": [17, 6, 39],
+      "edgeDistanceVoxels": 6,
+      "maximumMm": 0.7836465511794148
+    },
+    "finding": "Both strict maxima are near the field-of-view boundary; the second lies exactly on the configured six-voxel interior margin. Keep typed failure and address boundary/extrapolation policy separately."
+  },
+  "sameAffineAntsReference": {
+    "dice": 0.979359,
+    "globalNcc": 0.9457096,
+    "maskedNcc": 0.6722981,
+    "runtimeClass": "Docker linux/amd64 emulation on Apple Silicon; not a native speed comparator"
+  },
+  "verification": {
+    "command": "sbt 'registrationJVM/test' 'registrationJS/test'",
+    "jvm": {"passed": 71, "failed": 0},
+    "scalaJs": {"passed": 71, "failed": 0},
+    "warnings": 0
+  },
+  "decision": {
+    "schedule": "Retain budget2x only as the next multi-pair candidate; do not promote from sub18 alone.",
+    "export": "Strict export remains a typed failure. More fixed-point iterations and the tested Newton variants are rejected.",
+    "proposal": "Do not add a global CC translation proposal. Any future proposal requires local correspondence confidence and a separate reviewed gate.",
+    "gale": "No general Gale deficiency was identified; no Gale-specific or registration-specific code was added."
+  },
+  "remainingGate": {
+    "requiredLabeledDevelopmentPairs": 5,
+    "blockedBy": "Licensed LPBA40 data are absent locally.",
+    "claimsForbidden": [
+      "statistical parity with ANTs",
+      "production schedule selection",
+      "native runtime superiority"
+    ]
+  }
+}

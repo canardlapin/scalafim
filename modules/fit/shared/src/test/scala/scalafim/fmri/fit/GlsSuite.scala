@@ -174,7 +174,7 @@ class GlsSuite extends munit.FunSuite:
     require(y.length == x.length, "response rows must match design rows")
     val frame = samplingFrame(blockLens)
     val dataset =
-      FmriDataset(
+      FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("gls-demo"), ImageDMat.fromRows(y), NeuroSpace(Vector(y.head.length, 1, 1))),
         samplingFrame = frame
       )

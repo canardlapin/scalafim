@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>ScalaFIM cortical morph acceptance</title>
+    <style>
+      body { margin: 0; background: #10141b; color: #edf2f7; font: 15px system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: 960px minmax(420px, 1fr); gap: 24px; padding: 24px; }
+      canvas { width: 960px; height: 540px; background: white; border-radius: 8px; }
+      pre { white-space: pre-wrap; color: #b9f6ca; max-height: 78vh; overflow: auto; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <canvas id="surface" width="960" height="540"></canvas>
+      <section>
+        <h1>Real cortical geometry-family acceptance</h1>
+        <p id="status">Loading checksum-pinned white, pial, and inflated GIFTI families…</p>
+        <p id="runtime-errors">Runtime error audit pending…</p>
+        <pre id="receipt"></pre>
+      </section>
+    </main>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js"
+        }
+      }
+    </script>
+    <script>
+      window.exports = {};
+      window.__scalafimSurfaceMorphQaErrors = [];
+      window.addEventListener("error", event => {
+        window.__scalafimSurfaceMorphQaErrors.push(event.error?.stack || event.message);
+      });
+      window.addEventListener("unhandledrejection", event => {
+        window.__scalafimSurfaceMorphQaErrors.push(event.reason?.stack || String(event.reason));
+      });
+    </script>
+    <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
+    <script type="module">
+      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
+
+      const root = "../../../../../jscode/FROIAtlas/app/public/data/surfaces/";
+      const corpus = [
+        ["lh.white.gii", "b3043744a8ea99d8b497599294f1bdcc0852af648d34460b85bbf2d1d704f500"],
+        ["lh.pial.gii", "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"],
+        ["lh.inflated.gii", "5a6d3f1fc87ab588133bc1656ef2e30d8cdbd89a45effeba6a3bf210433f0520"],
+        ["rh.white.gii", "7e448f16d6deb90b954c671540bcf41e6ef3c35c9a87cc6fc64672dff7e9e232"],
+        ["rh.pial.gii", "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9"],
+        ["rh.inflated.gii", "26abe85f568b4cd63dfa87e0e9d52d3cc473c086e3b3bc1e0415ddf32823f208"]
+      ];
+      const status = document.querySelector("#status");
+      const runtimeErrors = document.querySelector("#runtime-errors");
+      const receipt = document.querySelector("#receipt");
+      const hex = bytes => [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+
+      async function load([fileName, expectedDigest]) {
+        const response = await fetch(root + fileName);
+        if (!response.ok) throw new Error(`HTTP ${response.status} loading ${fileName}`);
+        const bytes = await response.arrayBuffer();
+        const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+        if (digest !== expectedDigest) throw new Error(`SHA-256 mismatch for ${fileName}: ${digest}`);
+        return { fileName, digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+      }
+
+      try {
+        const started = performance.now();
+        const loaded = await Promise.all(corpus.map(load));
+        const result = exports.mountScalafimCorticalMorphViewer(
+          THREE,
+          document.querySelector("#surface"),
+          loaded[0].geometry.vertices, loaded[0].geometry.faces,
+          loaded[1].geometry.vertices, loaded[1].geometry.faces,
+          loaded[2].geometry.vertices, loaded[2].geometry.faces,
+          loaded[3].geometry.vertices, loaded[3].geometry.faces,
+          loaded[4].geometry.vertices, loaded[4].geometry.faces,
+          loaded[5].geometry.vertices, loaded[5].geometry.faces
+        );
+        result.fetchParseMillis = performance.now() - started;
+        result.corpus = loaded.map(entry => ({ fileName: entry.fileName, sha256: entry.digest }));
+        const failures = [];
+        if (result.cases.length !== 15) failures.push(`expected 15 cases; got ${result.cases.length}`);
+        result.cases.forEach((entry, index) => {
+          failures.push(...entry.visualQa.violations.map(reason => `${entry.label}: ${reason}`));
+          if (index === 0) {
+            if (entry.geometryUploads !== 2 || entry.geometryUpdates !== 0 || entry.colorUploads !== 2)
+              failures.push(`${entry.label}: cold-load resource counts drifted`);
+          } else if (entry.geometryUploads !== 0 || entry.colorUploads !== 0 ||
+              ![0, 2].includes(entry.geometryUpdates) || (entry.fraction !== 0 && entry.geometryUpdates !== 2)) {
+            failures.push(`${entry.label}: morph rebuilt topology or colors`);
+          }
+        });
+        const passed = failures.length === 0;
+        result.failures = failures;
+        document.body.dataset.scalafimCorticalMorphAcceptance = passed ? "pass" : "fail";
+        status.textContent = passed
+          ? "PASS — 15 real-cortex morph frames match the raster oracle with stable topology, layers, L/R, and orientation"
+          : `FAIL — ${failures.join("; ")}`;
+        receipt.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.body.dataset.scalafimCorticalMorphAcceptance = "fail";
+        status.textContent = "FAIL";
+        receipt.textContent = error?.stack || String(error);
+      }
+      setTimeout(() => {
+        const errors = window.__scalafimSurfaceMorphQaErrors;
+        runtimeErrors.textContent = `Runtime errors: ${errors.length}`;
+        if (errors.length > 0) {
+          document.body.dataset.scalafimCorticalMorphAcceptance = "fail";
+          status.textContent = `FAIL — ${errors.join("; ")}`;
+        }
+      }, 0);
+    </script>
+  </body>
+</html>

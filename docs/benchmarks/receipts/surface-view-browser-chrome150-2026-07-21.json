@@ -1,0 +1,85 @@
+{
+  "schema": "scalafim.surface-benchmark-summary.v1",
+  "recordedAt": "2026-07-21",
+  "backend": "three-webgl",
+  "metadata": {
+    "platform": "Scala.js",
+    "browser": "Chrome 150",
+    "operatingSystem": "Mac OS X",
+    "graphicsApi": "WebGL2",
+    "graphicsDevice": "browser-reported renderer unavailable"
+  },
+  "matrix": {
+    "vertexCounts": [32768, 163842],
+    "visibleLayerCounts": [1, 4, 8],
+    "paths": [
+      "ColdLoad",
+      "CameraOnly",
+      "StyleUpdate",
+      "LayerDataUpdate",
+      "TimepointUpdate",
+      "Pick",
+      "Resize",
+      "Snapshot"
+    ],
+    "cases": 48,
+    "admissionViolations": 0,
+    "maximumP95MillisecondsAcrossMatrix": {
+      "ColdLoad": 19.600001,
+      "CameraOnly": 0.200001,
+      "StyleUpdate": 1.5,
+      "LayerDataUpdate": 2.0,
+      "TimepointUpdate": 8.0,
+      "Pick": 16.399999,
+      "Resize": 6.2,
+      "Snapshot": 6.700001
+    }
+  },
+  "representativeColdRuns": [
+    {
+      "vertices": 32768,
+      "compileMilliseconds": 89.7,
+      "uploadAndFirstRenderMilliseconds": 5.1,
+      "pickMilliseconds": 2.5
+    },
+    {
+      "vertices": 163842,
+      "compileMilliseconds": 278.4,
+      "uploadAndFirstRenderMilliseconds": 18.7,
+      "pickMilliseconds": 11.6
+    }
+  ],
+  "gpuVolumeProjection": {
+    "featureGate": "WebGL2 plus floating-point render targets",
+    "cpuValues": [111.0, 112.0, 121.0, 211.0],
+    "gpuValues": [111.0, 112.0, 121.0, 211.0],
+    "maximumAbsoluteError": 0.0,
+    "acceptedCountMismatches": 0,
+    "qualityMismatches": 0,
+    "renderedPixels": 4,
+    "expectedPixels": 4,
+    "uploadedBytes": 564,
+    "firstColdProjectionMilliseconds": 386.3
+  },
+  "directGiftiParity": {
+    "width": 960,
+    "height": 540,
+    "referenceForegroundPixels": 115200,
+    "nativeForegroundPixels": 115520,
+    "referenceForegroundPixelsByHalf": [57600, 57600],
+    "nativeForegroundPixelsByHalf": [57760, 57760],
+    "maskIntersectionOverUnion": 0.997229916897507,
+    "centroidDistancePixels": 0.22404226296124125,
+    "meanInteriorChannelError": 0.0010459942838622234,
+    "maximumInteriorChannelError": 1,
+    "pickedSurface": "gifti-left",
+    "pickedFace": 0,
+    "pickedVertex": 0,
+    "runtimeErrors": 0
+  },
+  "allContractsPass": true,
+  "notes": [
+    "Timings include browser scheduling noise and are not portable pass thresholds.",
+    "The Three.js backend advertises world clipping planes as unsupported."
+  ]
+}

@@ -25,8 +25,8 @@ class AxesSuite extends munit.FunSuite:
     assertEquals(axis.size, 2)
     assertEquals(axis.labels, Vector("left", "right"))
     assertEquals(axis.indexOf(n2), Some(1))
-    assertEquals(axis.basis.keys, Vector(n1, n2))
-    assertEquals(axis.basis.values, axis.nodes)
+    assertEquals(axis.ids, Vector(n1, n2))
+    assertEquals(axis.nodes.map(_.id), axis.ids)
     assert(NodeAxis.fromIdsAndLabels(Vector(n1, n2), Vector("only-one")).isLeft)
     assert(NodeAxis.from(Vector(NodeSpec(n1, "a"), NodeSpec(n1, "b"))).isLeft)
   }

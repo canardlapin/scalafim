@@ -1,7 +1,7 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, NArrayUtil}
+import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
 
 class MotionEstimatorSuite extends munit.FunSuite:
 
@@ -78,7 +78,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
     }
 
   private def runFromFrames(frames: Vector[Array[Double]]): NeuroVec[Double] =
-    val out = NArrayUtil.ofSize[Double](nxyz * frames.length)
+    val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
     var t = 0
     while t < frames.length do
       var i = 0
@@ -90,7 +90,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
 
   private def interiorMask: NeuroVol[Boolean] =
     val data =
-      NArrayUtil.tabulate[Boolean](nxyz) { lin =>
+      PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
         val i = lin % dims(0)
         val j = (lin / dims(0)) % dims(1)
         val k = lin / (dims(0) * dims(1))
@@ -101,7 +101,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
     NeuroVol.fromLinear(data, space, "interior")
 
   private def emptyMask: NeuroVol[Boolean] =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](nxyz, false), space, "empty")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
 
   private def plan: MotionPlan =
     MotionPlan(

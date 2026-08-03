@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
 import scala.annotation.targetName
 
 opaque type SpatialDomainId = String
@@ -92,6 +95,38 @@ sealed trait SpatialMorphism:
     transformWorldPoints(points.map(WorldPoint.fromSpatialPoint)).map(_.toSpatialPoint)
 
   def transformWorldPoints(points: Vector[WorldPoint]): Vector[WorldPoint]
+
+  /** Internal primitive bridge for allocation-sensitive callers. Morphisms
+    * without a specialized implementation retain the public typed behavior.
+    */
+  private[image] def transformWorldCoordinatesInto(
+      inputX: Array[Double],
+      inputY: Array[Double],
+      inputZ: Array[Double],
+      outputX: Array[Double],
+      outputY: Array[Double],
+      outputZ: Array[Double]
+  ): Unit =
+    require(
+      inputX.length == inputY.length && inputX.length == inputZ.length,
+      "morphism input coordinate buffers must have equal lengths"
+    )
+    require(
+      outputX.length >= inputX.length && outputY.length >= inputX.length && outputZ.length >= inputX.length,
+      "morphism output coordinate buffers are too small"
+    )
+    val points = Vector.tabulate(inputX.length) { index =>
+      WorldPoint(inputX(index), inputY(index), inputZ(index))
+    }
+    val transformed = transformWorldPoints(points)
+    require(transformed.length == inputX.length, "spatial morphism must preserve mapped point count")
+    var index = 0
+    while index < transformed.length do
+      val point = transformed(index)
+      outputX(index) = point.x
+      outputY(index) = point.y
+      outputZ(index) = point.z
+      index += 1
 
   final def jacobian(
       coords: Vector[Vector[Double]],
@@ -300,15 +335,23 @@ final case class DenseFieldMorphism private (
     source: SpatialDomainId,
     target: SpatialDomainId,
     grid: GridSpec,
-    field: NDArray[Double],
+    field: RavelArray[Double, Rank[4]],
     fieldKind: DenseFieldKind,
     interpolation: Resample.Method,
     cost: Double,
     methodTag: String
 ) extends SpatialMorphism:
-  require(field.ndim == 4, "dense field must be 4D")
-  require(field.shape == (grid.dims :+ 3), "dense field shape must be grid dims plus vector components")
+  require(
+    field.shape == Shape(grid.shape.x, grid.shape.y, grid.shape.z, 3),
+    "dense field shape must be grid dims plus vector components"
+  )
   require(cost.isFinite && cost >= 0.0, "dense field morphism cost must be finite and non-negative")
+
+  private lazy val inverseGridAffine: DMat =
+    DMat.invert(grid.affine).fold(
+      reason => throw new IllegalArgumentException(reason),
+      identity
+    )
 
   def kind: MorphismKind =
     fieldKind match
@@ -328,6 +371,68 @@ final case class DenseFieldMorphism private (
         }
       case DenseFieldKind.AbsoluteCoordinates =>
         sampled.map(point => WorldPoint.unsafeFromVector(point, "dense field transformed world point"))
+
+  private[image] override def transformWorldCoordinatesInto(
+      inputX: Array[Double],
+      inputY: Array[Double],
+      inputZ: Array[Double],
+      outputX: Array[Double],
+      outputY: Array[Double],
+      outputZ: Array[Double]
+  ): Unit =
+    interpolation match
+      case Resample.Method.Cubic =>
+        super.transformWorldCoordinatesInto(inputX, inputY, inputZ, outputX, outputY, outputZ)
+      case Resample.Method.Nearest | Resample.Method.Linear =>
+        require(
+          inputX.length == inputY.length && inputX.length == inputZ.length,
+          "morphism input coordinate buffers must have equal lengths"
+        )
+        require(
+          outputX.length >= inputX.length && outputY.length >= inputX.length && outputZ.length >= inputX.length,
+          "morphism output coordinate buffers are too small"
+        )
+        var index = 0
+        while index < inputX.length do
+          val worldX = inputX(index)
+          val worldY = inputY(index)
+          val worldZ = inputZ(index)
+          val voxelX = affineCoordinate(inverseGridAffine, 0, worldX, worldY, worldZ)
+          val voxelY = affineCoordinate(inverseGridAffine, 1, worldX, worldY, worldZ)
+          val voxelZ = affineCoordinate(inverseGridAffine, 2, worldX, worldY, worldZ)
+          var sampledX = 0.0
+          var sampledY = 0.0
+          var sampledZ = 0.0
+          interpolation match
+            case Resample.Method.Nearest =>
+              val xi = math.round(voxelX).toInt
+              val yi = math.round(voxelY).toInt
+              val zi = math.round(voxelZ).toInt
+              if fieldInBounds(xi, yi, zi) then
+                sampledX = field(xi, yi, zi, 0)
+                sampledY = field(xi, yi, zi, 1)
+                sampledZ = field(xi, yi, zi, 2)
+              else if fieldKind == DenseFieldKind.AbsoluteCoordinates then
+                sampledX = worldX
+                sampledY = worldY
+                sampledZ = worldZ
+            case Resample.Method.Linear =>
+              val outsideWeight = linearOutsideWeight(voxelX, voxelY, voxelZ)
+              sampledX = sampleLinearComponent(voxelX, voxelY, voxelZ, worldX, 0, outsideWeight)
+              sampledY = sampleLinearComponent(voxelX, voxelY, voxelZ, worldY, 1, outsideWeight)
+              sampledZ = sampleLinearComponent(voxelX, voxelY, voxelZ, worldZ, 2, outsideWeight)
+            case Resample.Method.Cubic =>
+              throw new IllegalStateException("cubic dense fields use the typed fallback path")
+          fieldKind match
+            case DenseFieldKind.Displacement =>
+              outputX(index) = worldX + sampledX
+              outputY(index) = worldY + sampledY
+              outputZ(index) = worldZ + sampledZ
+            case DenseFieldKind.AbsoluteCoordinates =>
+              outputX(index) = sampledX
+              outputY(index) = sampledY
+              outputZ(index) = sampledZ
+          index += 1
 
   def jacobianAtWorld(
       points: Vector[WorldPoint],
@@ -386,12 +491,96 @@ final case class DenseFieldMorphism private (
       case DenseFieldKind.Displacement => DenseFieldOutside.Zero
       case DenseFieldKind.AbsoluteCoordinates => DenseFieldOutside.QueryPoint
 
+  private inline def affineCoordinate(
+      matrix: DMat,
+      row: Int,
+      x: Double,
+      y: Double,
+      z: Double
+  ): Double =
+    var sum = matrix(row, 3)
+    sum += matrix(row, 0) * x
+    sum += matrix(row, 1) * y
+    sum += matrix(row, 2) * z
+    sum
+
+  private def linearOutsideWeight(
+      x: Double,
+      y: Double,
+      z: Double
+  ): Double =
+    val x0 = math.floor(x).toInt
+    val y0 = math.floor(y).toInt
+    val z0 = math.floor(z).toInt
+    val xd = x - x0
+    val yd = y - y0
+    val zd = z - z0
+    var outsideWeight = 0.0
+    var dz = 0
+    while dz <= 1 do
+      val wz = if dz == 0 then 1.0 - zd else zd
+      var dy = 0
+      while dy <= 1 do
+        val wy = if dy == 0 then 1.0 - yd else yd
+        var dx = 0
+        while dx <= 1 do
+          val wx = if dx == 0 then 1.0 - xd else xd
+          val weight = wx * wy * wz
+          if weight != 0.0 && !fieldInBounds(x0 + dx, y0 + dy, z0 + dz) then
+            outsideWeight += weight
+          dx += 1
+        dy += 1
+      dz += 1
+    outsideWeight
+
+  private def sampleLinearComponent(
+      x: Double,
+      y: Double,
+      z: Double,
+      outsideValue: Double,
+      component: Int,
+      outsideWeight: Double
+  ): Double =
+    val x0 = math.floor(x).toInt
+    val y0 = math.floor(y).toInt
+    val z0 = math.floor(z).toInt
+    val xd = x - x0
+    val yd = y - y0
+    val zd = z - z0
+    var sum =
+      if fieldKind == DenseFieldKind.Displacement then 0.0
+      else outsideWeight * outsideValue
+    var dz = 0
+    while dz <= 1 do
+      val wz = if dz == 0 then 1.0 - zd else zd
+      val zi = z0 + dz
+      var dy = 0
+      while dy <= 1 do
+        val wy = if dy == 0 then 1.0 - yd else yd
+        val yi = y0 + dy
+        var dx = 0
+        while dx <= 1 do
+          val wx = if dx == 0 then 1.0 - xd else xd
+          val xi = x0 + dx
+          val weight = wx * wy * wz
+          if weight != 0.0 && fieldInBounds(xi, yi, zi) then
+            sum += weight * field(xi, yi, zi, component)
+          dx += 1
+        dy += 1
+      dz += 1
+    sum
+
+  private inline def fieldInBounds(x: Int, y: Int, z: Int): Boolean =
+    x >= 0 && x < grid.shape.x &&
+      y >= 0 && y < grid.shape.y &&
+      z >= 0 && z < grid.shape.z
+
 object DenseFieldMorphism:
   def displacement(
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
       methodTag: String = "dense-displacement"
@@ -402,7 +591,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
       methodTag: String = "dense-coordinate"
@@ -413,7 +602,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       fieldKind: DenseFieldKind,
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
@@ -427,7 +616,7 @@ object DenseFieldMorphism:
       source: SpatialDomainId,
       target: SpatialDomainId,
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       fieldKind: DenseFieldKind,
       interpolation: Resample.Method = Resample.Method.Linear,
       cost: Double = 10.0,
@@ -437,7 +626,7 @@ object DenseFieldMorphism:
 
   private def validate(
       grid: GridSpec,
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       interpolation: Resample.Method
   ): Either[MorphismError, Unit] =
     for

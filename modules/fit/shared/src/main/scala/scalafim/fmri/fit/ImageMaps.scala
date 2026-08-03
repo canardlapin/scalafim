@@ -1,7 +1,8 @@
 package scalafim.fmri.fit
 
 import scalafim.dataset.DatasetShape
-import scalafim.image.{Axis, IndexLookupVol, Mask, NDArray, NeuroVec, NArrayUtil, SparseNeuroVec}
+import ravel.NDArray as RavelArray
+import scalafim.image.{Axis, IndexLookupVol, Mask, NeuroVec, PrimitiveBuffers, SparseNeuroVec}
 import spire.implicits.DoubleAlgebra
 
 final case class FitImageMaps(
@@ -86,25 +87,19 @@ object FitImageMaps:
     val sortedIndices = sorted.map(_._1).toArray
     val nMaps = names.length
     val nVoxels = sorted.length
-    val data = NArrayUtil.ofSize[Double](nMaps * nVoxels)
+    val data =
+      RavelArray.tabulate[Double](nMaps, nVoxels) { (map, outPosition) =>
+        rowsByMap(map)(sorted(outPosition)._2)
+      }
 
-    var outPos = 0
-    while outPos < nVoxels do
-      val sourcePos = sorted(outPos)._2
-      var map = 0
-      while map < nMaps do
-        data(map + outPos * nMaps) = rowsByMap(map)(sourcePos)
-        map += 1
-      outPos += 1
-
-    val idx = NArrayUtil.fromArray(sortedIndices)
+    val idx = PrimitiveBuffers.fromArray(sortedIndices)
     val space = shape.space.spatialSpace.addDim(nMaps, Some(Axis.Time))
     val mask = Mask.fromIndices(shape.space.spatialSpace, idx, label = label)
     val lookup = IndexLookupVol(space, idx)
     FitImageMaps(
       names = names,
       values = SparseNeuroVec(
-        data = NDArray(data, Vector(nMaps, nVoxels)),
+        data = data,
         space = space,
         mask = mask,
         map = lookup,

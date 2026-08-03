@@ -26,9 +26,11 @@ object SpaceUtils:
   def outputAlignedSpace[A](vol: NeuroVol[A], voxelSizes: Option[Vector[Double]]): AlignedSpace =
     outputAlignedSpace(vol.space, voxelSizes)
 
+  @scala.annotation.targetName("outputAlignedNeuroVec")
   def outputAlignedSpace[A](vec: NeuroVec[A]): AlignedSpace =
     outputAlignedSpace(vec.space, None)
 
+  @scala.annotation.targetName("outputAlignedNeuroVecWithVoxelSizes")
   def outputAlignedSpace[A](vec: NeuroVec[A], voxelSizes: Option[Vector[Double]]): AlignedSpace =
     outputAlignedSpace(vec.space, voxelSizes)
 

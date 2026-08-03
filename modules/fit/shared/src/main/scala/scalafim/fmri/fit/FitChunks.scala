@@ -1,9 +1,24 @@
 package scalafim.fmri.fit
 
-import scalafim.dataset.{DataSelection, DatasetError, IndexSelection, ResolvedDataSelection}
+import scalafim.dataset.{
+  DataSelection,
+  DatasetError,
+  DatasetSeriesReader,
+  IndexSelection,
+  ResolvedDataSelection,
+  SynchronousFmriDataset
+}
 import scalafim.fmri.model.{FitEngine, FitPlan}
 
 import scala.concurrent.{ExecutionContext, Future}
+
+private[fit] def legacyDatasetReader(
+    plan: FitPlan
+): Either[FitError, SynchronousFmriDataset] =
+  SynchronousFmriDataset
+    .readerFor(plan.model.dataset)
+    .left
+    .map(error => FitError.InvalidFitAxis("dataset reader", error.message))
 
 opaque type ChunkOrdinal = Int
 
@@ -125,7 +140,10 @@ object FitChunkPlan:
   ): Either[FitError, FitChunkPlan] =
     val resolved =
       selection
-        .resolveEither(plan.model.dataset.shape, plan.model.dataset.backend.voxelDomain)
+        .resolveEither(
+          plan.model.dataset.shape,
+          plan.model.dataset.voxelDomain
+        )
         .left
         .map(mapDatasetError)
     resolved.flatMap(fromResolvedSelection(_, chunking))
@@ -170,13 +188,33 @@ object FitChunkPlan:
     FitError.InvalidFitAxis("data selection", error.message)
 
 private[fit] object PreparedFitContexts:
+  /** Synchronous compatibility overload. */
   def prepare(
       plan: FitPlan,
       chunkPlan: FitChunkPlan
   ): Either[FitError, PreparedFitContext] =
+    legacyDatasetReader(plan).flatMap(prepare(_, plan, chunkPlan))
+
+  def prepare(
+      reader: DatasetSeriesReader,
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan
+  ): Either[FitError, PreparedFitContext] =
     for
+      _ <-
+        if reader.dataset.id == plan.model.dataset.id &&
+            reader.dataset.shape == plan.model.dataset.shape
+        then Right(())
+        else
+          Left(FitError.InvalidFitAxis(
+            "dataset reader",
+            s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
+          ))
       interpreter <- FitInterpreters.forPlan(plan)
-      series <- plan.model.dataset.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
+      series <- reader
+        .seriesEither(chunkPlan.selection)
+        .left
+        .map(FitChunkPlan.mapDatasetError)
       context <- interpreter.prepareContext(plan, series)
     yield context
 
@@ -194,6 +232,7 @@ object FitChunkWork:
     FitChunkWork(chunk)
 
 private[fit] final case class FitChunkProgram private (
+    reader: DatasetSeriesReader,
     plan: FitPlan,
     chunkPlan: FitChunkPlan,
     context: PreparedFitContext,
@@ -218,30 +257,67 @@ private[fit] final case class FitChunkProgram private (
     context.engine
 
 object FitChunkProgram:
+  /** Synchronous compatibility overload. */
   def fromSelection(
+      plan: FitPlan
+  ): Either[FitError, FitChunkProgram] =
+    fromSelection(
+      plan,
+      DataSelection.All,
+      FitChunkingStrategy.WholeSelection
+    )
+
+  /** Synchronous compatibility overload. */
+  def fromSelection(
+      plan: FitPlan,
+      selection: DataSelection
+  ): Either[FitError, FitChunkProgram] =
+    fromSelection(plan, selection, FitChunkingStrategy.WholeSelection)
+
+  /** Synchronous compatibility overload. */
+  def fromSelection(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  ): Either[FitError, FitChunkProgram] =
+    legacyDatasetReader(plan)
+      .flatMap(fromSelection(_, plan, selection, chunking))
+
+  def fromSelection(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FitChunkProgram] =
     FitChunkPlan
       .fromSelection(plan, selection, chunking)
-      .flatMap(fromChunkPlan(plan, _))
+      .flatMap(fromChunkPlan(reader, plan, _))
 
   def fromChunkPlan(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan
   ): Either[FitError, FitChunkProgram] =
     for
       work <- ChunkProgram.make(chunkPlan.indexed.map(FitChunkWork.fromChunk))
-      context <- PreparedFitContexts.prepare(plan, chunkPlan)
-    yield FitChunkProgram(plan, chunkPlan, context, work)
+      context <- PreparedFitContexts.prepare(reader, plan, chunkPlan)
+    yield FitChunkProgram(reader, plan, chunkPlan, context, work)
+
+  /** Synchronous compatibility overload. */
+  def fromChunkPlan(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan
+  ): Either[FitError, FitChunkProgram] =
+    legacyDatasetReader(plan).flatMap(fromChunkPlan(_, plan, chunkPlan))
 
   private[fit] def fromPrepared(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       context: PreparedFitContext
   ): FitChunkProgram =
     FitChunkProgram(
+      reader = reader,
       plan = plan,
       chunkPlan = chunkPlan,
       context = context,
@@ -259,7 +335,12 @@ private[fit] trait FitChunkInterpreter[F[_]]:
 private[fit] object SequentialFitChunkInterpreter extends FitChunkInterpreter[[A] =>> A]:
   def execute(program: FitChunkProgram): Either[FitError, Vector[CompletedFitChunk]] =
     SequentialChunkProgramInterpreter.execute(program.workProgram) { work =>
-      ChunkedFitExecutor.fitChunk(program.plan, work.chunk, program.context)
+      ChunkedFitExecutor.fitChunk(
+        program.reader,
+        program.plan,
+        work.chunk,
+        program.context
+      )
     }
 
 private[fit] final case class FutureFitChunkInterpreter(
@@ -270,29 +351,64 @@ private[fit] final case class FutureFitChunkInterpreter(
   def execute(program: FitChunkProgram): Future[Either[FitError, Vector[CompletedFitChunk]]] =
     FutureChunkProgramInterpreter.execute(program.workProgram, parallelism) { work =>
       Future {
-        ChunkedFitExecutor.fitChunk(program.plan, work.chunk, program.context)
+        ChunkedFitExecutor.fitChunk(
+          program.reader,
+          program.plan,
+          work.chunk,
+          program.context
+        )
       }
     }
 
 object ChunkedFitExecutor:
+  /** Synchronous compatibility overload. */
   def fit(
+      plan: FitPlan
+  ): Either[FitError, FmriFitResult] =
+    fit(plan, DataSelection.All, FitChunkingStrategy.WholeSelection)
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection
+  ): Either[FitError, FmriFitResult] =
+    fit(plan, selection, FitChunkingStrategy.WholeSelection)
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  ): Either[FitError, FmriFitResult] =
+    legacyDatasetReader(plan).flatMap(fit(_, plan, selection, chunking))
+
+  def fit(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FmriFitResult] =
     for
-      program <- FitChunkProgram.fromSelection(plan, selection, chunking)
+      program <- FitChunkProgram.fromSelection(reader, plan, selection, chunking)
       chunks <- SequentialFitChunkInterpreter.execute(program)
       result <- mergeCompletedChunks(program.plan, chunks)
     yield result
 
   def fitChunks(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan
   ): Either[FitError, Vector[FitBlockResult]] =
     FitChunkProgram
-      .fromChunkPlan(plan, chunkPlan)
+      .fromChunkPlan(reader, plan, chunkPlan)
       .flatMap(fitChunks)
+
+  /** Synchronous compatibility overload. */
+  def fitChunks(
+      plan: FitPlan,
+      chunkPlan: FitChunkPlan
+  ): Either[FitError, Vector[FitBlockResult]] =
+    legacyDatasetReader(plan).flatMap(fitChunks(_, plan, chunkPlan))
 
   private[fit] def fitChunks(program: FitChunkProgram): Either[FitError, Vector[FitBlockResult]] =
     SequentialFitChunkInterpreter
@@ -300,13 +416,15 @@ object ChunkedFitExecutor:
       .map(_.map(_.result))
 
   private[fit] def fitChunks(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       context: PreparedFitContext
   ): Either[FitError, Vector[FitBlockResult]] =
-    fitChunks(FitChunkProgram.fromPrepared(plan, chunkPlan, context))
+    fitChunks(FitChunkProgram.fromPrepared(reader, plan, chunkPlan, context))
 
   def fitChunk(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunk: FitChunkSpec
   ): Either[FitError, FitBlockResult] =
@@ -318,15 +436,23 @@ object ChunkedFitExecutor:
       )
     FitChunkPlan
       .make(Vector(normalized))
-      .flatMap(PreparedFitContexts.prepare(plan, _))
-      .flatMap(fitChunk(plan, chunk, _))
+      .flatMap(PreparedFitContexts.prepare(reader, plan, _))
+      .flatMap(fitChunk(reader, plan, chunk, _))
+
+  /** Synchronous compatibility overload. */
+  def fitChunk(
+      plan: FitPlan,
+      chunk: FitChunkSpec
+  ): Either[FitError, FitBlockResult] =
+    legacyDatasetReader(plan).flatMap(fitChunk(_, plan, chunk))
 
   private[fit] def fitChunk(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunk: FitChunkSpec,
       context: PreparedFitContext
   ): Either[FitError, FitBlockResult] =
-    plan.model.dataset.seriesEither(chunk.selection)
+    reader.seriesEither(chunk.selection)
       .left
       .map(FitChunkPlan.mapDatasetError)
       .flatMap(context.fitChunk)
@@ -348,13 +474,66 @@ object ChunkedFitExecutor:
     FitChunkReducer(plan).reduce(chunks)
 
 object FutureChunkedFitExecutor:
+  /** Synchronous compatibility overload. */
   def fit(
+      plan: FitPlan
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fit(
+      plan,
+      DataSelection.All,
+      FitChunkingStrategy.WholeSelection,
+      FitParallelism.unbounded
+    )
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fit(
+      plan,
+      selection,
+      FitChunkingStrategy.WholeSelection,
+      FitParallelism.unbounded
+    )
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      chunking: FitChunkingStrategy,
+      parallelism: FitParallelism
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fit(plan, DataSelection.All, chunking, parallelism)
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fit(plan, selection, chunking, FitParallelism.unbounded)
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy,
+      parallelism: FitParallelism
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    legacyDatasetReader(plan) match
+      case Left(error) =>
+        Future.successful(Left(error))
+      case Right(reader) =>
+        fit(reader, plan, selection, chunking, parallelism)
+
+  def fit(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    FitChunkProgram.fromSelection(plan, selection, chunking) match
+    FitChunkProgram.fromSelection(reader, plan, selection, chunking) match
       case Left(error) =>
         Future.successful(Left(error))
       case Right(program) =>
@@ -366,19 +545,21 @@ object FutureChunkedFitExecutor:
         }
 
   private[fit] def fitChunks(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
-    FitChunkProgram.fromChunkPlan(plan, chunkPlan) match
+    FitChunkProgram.fromChunkPlan(reader, plan, chunkPlan) match
       case Left(error)    => Future.successful(Left(error))
       case Right(program) => FutureFitChunkInterpreter(parallelism).execute(program)
 
   private[fit] def fitChunks(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       chunkPlan: FitChunkPlan,
       context: PreparedFitContext,
       parallelism: FitParallelism
   )(using ExecutionContext): Future[Either[FitError, Vector[CompletedFitChunk]]] =
     FutureFitChunkInterpreter(parallelism)
-      .execute(FitChunkProgram.fromPrepared(plan, chunkPlan, context))
+      .execute(FitChunkProgram.fromPrepared(reader, plan, chunkPlan, context))

@@ -1,5 +1,6 @@
 package scalafim.atlas
 
+import ravel.Shape
 import scalafim.atlas.fixtures.AtlasParityFixtures
 import scalafim.atlas.fixtures.AtlasParityFixtures.OverlapExpected
 import scalafim.atlas.syntax.*
@@ -20,7 +21,7 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
       assertEquals(region.fullLabel, expected.labelFull)
       assertEquals(region.hemisphere, expected.hemisphere)
       assertEquals(region.network.map(_.value), expected.network)
-      assertEquals(atlas.volume.clusterMap(expected.id).length, expected.voxelCount)
+      assertEquals(atlas.volume.clusterMap(expected.id).size, expected.voxelCount)
     }
   }
 
@@ -44,9 +45,9 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     val matrix = cvec.asMatrix
     val tLen = cvec.nVolumes
 
-    assertEquals(matrix.shape, Vector(3, 3))
+    assertEquals(matrix.shape, Shape(3, 3))
     atlas.volume.clusterIds.zipWithIndex.foreach { case (id, col) =>
-      val actual = Vector.tabulate(tLen)(t => matrix.data(t + col * tLen))
+      val actual = Vector.tabulate(tLen)(t => matrix(t, col))
       assertEquals(actual, AtlasParityFixtures.vecSeries(id))
     }
   }
@@ -55,14 +56,24 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     val atlas = AtlasParityFixtures.atlas()
     val cvec = AtlasReduce.reduceVec(atlas, AtlasParityFixtures.dataVec(), Some(AtlasParityFixtures.emptyMask()))
 
-    var i = 0
-    while i < cvec.asMatrix.data.length do
-      assert(cvec.asMatrix.data(i).isNaN, clues(s"i=$i value=${cvec.asMatrix.data(i)}"))
-      i += 1
+    val matrix = cvec.asMatrix
+    var t = 0
+    while t < cvec.nVolumes do
+      var col = 0
+      while col < atlas.volume.clusterIds.length do
+        assert(matrix(t, col).isNaN, clues(s"t=$t col=$col value=${matrix(t, col)}"))
+        col += 1
+      t += 1
   }
 
   test("overlap corpus matches Dice and Jaccard golden values") {
-    val overlap = AtlasParityFixtures.atlas().overlap(AtlasParityFixtures.comparisonAtlas(), resample = false)
+    val overlap =
+      AtlasParityFixtures
+        .atlas()
+        .overlap(
+          AtlasParityFixtures.comparisonAtlas(),
+          AtlasAlignment.Exact
+        )
 
     assertEquals(
       overlap.map(o => (o.region1.id.value, o.region2.id.value)),

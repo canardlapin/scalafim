@@ -2,7 +2,7 @@ package scalafim.fmri.motion.benchmark
 
 import scalafim.fmri.motion.*
 import scalafim.fmri.motion.io.MotionReportWriter
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NArrayUtil}
+import scalafim.image.{Axis, NeuroSpace, NeuroVec, PrimitiveBuffers}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -254,7 +254,7 @@ object MotionBenchmark:
       }
     val rawTsnr = tsnr(run)
     val correctedTsnr = corrected.corrected.map(tsnr).getOrElse(Double.NaN)
-    val approxBytes = run.values.data.length.toLong * 8L + reportChecksum.toLong
+    val approxBytes = run.values.size.toLong * 8L + reportChecksum.toLong
 
     val result =
       MotionBenchmarkResult(
@@ -302,7 +302,7 @@ object MotionBenchmark:
     val ny = dims(1)
     val nz = dims(2)
     val nSpatial = dims.product
-    val data = NArrayUtil.tabulate[Double](nSpatial * scenario.nVolumes) { linear =>
+    val data = PrimitiveBuffers.tabulate[Double](nSpatial * scenario.nVolumes) { linear =>
       val t = linear / nSpatial
       val lin = linear - t * nSpatial
       val i = lin % nx
@@ -384,16 +384,17 @@ object MotionBenchmark:
     val values = Vector.newBuilder[Double]
     var lin = 0
     while lin < nSpatial do
+      val voxel = run.space.indexToVoxel3D(lin)
       var sum = 0.0
       var t = 0
       while t < nt do
-        sum += run.values.data(lin + t * nSpatial)
+        sum += run(voxel.x, voxel.y, voxel.z, t)
         t += 1
       val mean = sum / nt.toDouble
       var ss = 0.0
       t = 0
       while t < nt do
-        val centered = run.values.data(lin + t * nSpatial) - mean
+        val centered = run(voxel.x, voxel.y, voxel.z, t) - mean
         ss += centered * centered
         t += 1
       val sd = math.sqrt(ss / math.max(nt - 1, 1).toDouble)

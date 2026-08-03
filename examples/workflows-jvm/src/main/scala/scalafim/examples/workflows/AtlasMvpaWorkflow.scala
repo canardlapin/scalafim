@@ -1,6 +1,5 @@
 package scalafim.examples.workflows
 
-import narr.NArray
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.spatial.SpatialFeatureSetPlans
@@ -114,14 +113,14 @@ object AtlasMvpaWorkflows:
   private def labelVolume(): NeuroVol[Int] =
     NeuroVol.fromLinear(labelData(), space, label = "workflow-labels")
 
-  private def labelData(): NArray[Int] =
-    val out = NArrayUtil.fillConst[Int](dims.product, 0)
+  private def labelData(): Array[Int] =
+    val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
     fillBlock(out, 0 to 1, 0 to 1, 0 to 0, 1)
     fillBlock(out, 2 to 3, 0 to 1, 0 to 0, 2)
     fillBlock(out, 1 to 2, 2 to 3, 1 to 1, 3)
     out
 
-  private def fillBlock(out: NArray[Int], xs: Range, ys: Range, zs: Range, id: Int): Unit =
+  private def fillBlock(out: Array[Int], xs: Range, ys: Range, zs: Range, id: Int): Unit =
     for
       x <- xs
       y <- ys

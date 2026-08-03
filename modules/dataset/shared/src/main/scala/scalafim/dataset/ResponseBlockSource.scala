@@ -1,7 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, NArrayUtil}
-import narr.NArray
+import scalafim.image.{DMat, GridCompatibility, Mask, PrimitiveBuffers}
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
   * Implementations may open local files, archives, or remote objects, but no
@@ -11,11 +10,15 @@ trait ResponseBlockSource:
   def shape: DatasetShape
   def voxelDomain: VoxelDomain
   def metadata: DatasetMetadata
+  lazy val acquisitionDomain: DatasetAcquisitionDomain =
+    DatasetAcquisitionDomain
+      .structuralCompatibility(shape, voxelDomain)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   final def readBlock(
       selection: DataSelection = DataSelection.All
   ): Either[DatasetError, FmriSeries] =
-    selection.resolveEither(shape, voxelDomain).flatMap(readResolved)
+    selection.resolveEither(acquisitionDomain).flatMap(readResolved)
 
   protected[dataset] def readResolved(
       selection: ResolvedDataSelection
@@ -48,7 +51,7 @@ final class CompositeResponseBlockSource private (
     val assignments = assignTimepoints(selection.timepointIndices)
     val nRows = selection.nTimepoints
     val nCols = selection.nVoxels
-    val values = NArrayUtil.ofSize[Double](nRows * nCols)
+    val values = PrimitiveBuffers.ofSize[Double](nRows * nCols)
     var failure = Option.empty[DatasetError]
     var runIndex = 0
 
@@ -136,27 +139,52 @@ object CompositeResponseBlockSource:
   ): CompositeResponseBlockSource =
     make(runs, metadata).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-final case class ResponseBlockDatasetBackend(
-    id: DatasetId,
-    source: ResponseBlockSource,
-    mask: Mask.MaskVol,
-    metadata: DatasetMetadata = DatasetMetadata.Empty
+final class ResponseBlockDatasetBackend private (
+    val id: DatasetId,
+    val source: ResponseBlockSource,
+    val mask: Mask.MaskVol,
+    val metadata: DatasetMetadata,
+    override val shape: DatasetShape,
+    override val voxelDomain: VoxelDomain
 ) extends DatasetBackend:
-  require(mask.space == source.shape.space, "response source mask must match source geometry")
-
-  def shape: DatasetShape =
-    source.shape
-
-  override def voxelDomain: VoxelDomain =
-    source.voxelDomain
 
   def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
-    source.readBlock(selection)
+    selection.resolveEither(acquisitionDomain).flatMap(source.readResolved)
+
+object ResponseBlockDatasetBackend:
+  def make(
+      id: DatasetId,
+      source: ResponseBlockSource,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): Either[DatasetError, ResponseBlockDatasetBackend] =
+    GridCompatibility
+      .spatial(source.shape.space, mask.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .map: _ =>
+        new ResponseBlockDatasetBackend(
+          id = id,
+          source = source,
+          mask = mask,
+          metadata = metadata,
+          shape = source.shape,
+          voxelDomain = source.voxelDomain
+        )
+
+  def unsafe(
+      id: DatasetId,
+      source: ResponseBlockSource,
+      mask: Mask.MaskVol,
+      metadata: DatasetMetadata = DatasetMetadata.Empty
+  ): ResponseBlockDatasetBackend =
+    make(id, source, mask, metadata)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 private[dataset] def matrixFromRowMajor(
     rows: Int,
     cols: Int,
-    values: NArray[Double]
+    values: Array[Double]
 ): DMat =
   require(rows > 0 && cols > 0, "response block matrix dimensions must be positive")
   require(values.length == rows * cols, "response block data must match matrix dimensions")

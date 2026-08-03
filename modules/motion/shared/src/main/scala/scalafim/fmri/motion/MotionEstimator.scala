@@ -289,7 +289,18 @@ object MotionEstimator:
         val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
         val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
         if inBounds(ctx, sx, sy, sz) then
-          val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+          val fitted =
+            MotionSampling.trilinear(
+              ctx.run.values,
+              ctx.nx,
+              ctx.ny,
+              ctx.nz,
+              frame,
+              sx,
+              sy,
+              sz,
+              zeroPad = false
+            )
           meanResidual += fitted - template(sample.linear)
           var p = 0
           while p < 6 do
@@ -315,7 +326,18 @@ object MotionEstimator:
       val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
       val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
       if inBounds(ctx, sx, sy, sz) then
-        val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+        val fitted =
+          MotionSampling.trilinear(
+            ctx.run.values,
+            ctx.nx,
+            ctx.ny,
+            ctx.nz,
+            frame,
+            sx,
+            sy,
+            sz,
+            zeroPad = false
+          )
         val residual =
           if centered then fitted - template(sample.linear) - meanResidual
           else fitted - template(sample.linear)
@@ -457,7 +479,18 @@ object MotionEstimator:
         val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
         val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
         if inBounds(ctx, sx, sy, sz) then
-          val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+          val fitted =
+            MotionSampling.trilinear(
+              ctx.run.values,
+              ctx.nx,
+              ctx.ny,
+              ctx.nz,
+              frame,
+              sx,
+              sy,
+              sz,
+              zeroPad = false
+            )
           meanResidual += fitted - template(sample.linear)
           meanCount += 1
         s0 += 1
@@ -474,7 +507,18 @@ object MotionEstimator:
       val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
       if inBounds(ctx, sx, sy, sz) then
         inside += 1
-        val fitted = MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+        val fitted =
+          MotionSampling.trilinear(
+            ctx.run.values,
+            ctx.nx,
+            ctx.ny,
+            ctx.nz,
+            frame,
+            sx,
+            sy,
+            sz,
+            zeroPad = false
+          )
         val residual =
           if centered then fitted - template(sample.linear) - meanResidual
           else fitted - template(sample.linear)
@@ -490,7 +534,17 @@ object MotionEstimator:
     val sx = MotionSampling.sourceX(map, sample.i, sample.j, sample.k)
     val sy = MotionSampling.sourceY(map, sample.i, sample.j, sample.k)
     val sz = MotionSampling.sourceZ(map, sample.i, sample.j, sample.k)
-    MotionSampling.trilinear(ctx.run.values.data, ctx.nx, ctx.ny, ctx.nz, ctx.nxyz, frame, sx, sy, sz, zeroPad = false)
+    MotionSampling.trilinear(
+      ctx.run.values,
+      ctx.nx,
+      ctx.ny,
+      ctx.nz,
+      frame,
+      sx,
+      sy,
+      sz,
+      zeroPad = false
+    )
 
   private def buildTemplate(run: NeuroVec[Double], reference: ReferenceStrategy, refIndex: Int): Array[Double] =
     val nxyz = run.space.spatialDims.product
@@ -499,17 +553,19 @@ object MotionEstimator:
       case ReferenceStrategy.RobustMean =>
         var lin = 0
         while lin < nxyz do
+          val voxel = run.space.indexToVoxel3D(lin)
           var t = 0
           var sum = 0.0
           while t < run.nVolumes do
-            sum += run.values.data(lin + t * nxyz)
+            sum += run(voxel.x, voxel.y, voxel.z, t)
             t += 1
           out(lin) = sum / run.nVolumes.toDouble
           lin += 1
       case _ =>
         var lin = 0
         while lin < nxyz do
-          out(lin) = run.values.data(lin + refIndex * nxyz)
+          val voxel = run.space.indexToVoxel3D(lin)
+          out(lin) = run(voxel.x, voxel.y, voxel.z, refIndex)
           lin += 1
     out
 
@@ -582,11 +638,10 @@ object MotionEstimator:
       val sz = MotionSampling.sourceZ(map, i, j, k)
       if inBounds(ctx, sx, sy, sz) then
         values(lin) = MotionSampling.trilinear(
-          ctx.run.values.data,
+          ctx.run.values,
           ctx.nx,
           ctx.ny,
           ctx.nz,
-          ctx.nxyz,
           frame,
           sx,
           sy,
@@ -697,7 +752,7 @@ object MotionEstimator:
         var i = 0
         while i < nx do
           val lin = i + nx * (j + ny * k)
-          val inMask = mask.forall(_.values.data(lin))
+          val inMask = mask.forall(_(i, j, k))
           val inInterior =
             i >= edgeX && i < nx - edgeX &&
               j >= edgeY && j < ny - edgeY &&
@@ -781,12 +836,12 @@ object MotionEstimator:
       nz: Int,
       nxyz: Int
   ): Double =
-    val center = meanAt(run, sample.linear, nxyz)
+    val center = meanAt(run, sample.linear)
     var sum = 0.0
     var n = 0
     def addNeighbor(i: Int, j: Int, k: Int): Unit =
       val lin = i + nx * (j + ny * k)
-      sum += meanAt(run, lin, nxyz)
+      sum += meanAt(run, lin)
       n += 1
 
     if sample.i > 0 then addNeighbor(sample.i - 1, sample.j, sample.k)
@@ -798,11 +853,12 @@ object MotionEstimator:
     if n == 0 then 0.0
     else math.abs(center - sum / n.toDouble)
 
-  private def meanAt(run: NeuroVec[Double], linear: Int, nxyz: Int): Double =
+  private def meanAt(run: NeuroVec[Double], linear: Int): Double =
+    val voxel = run.space.indexToVoxel3D(linear)
     var t = 0
     var sum = 0.0
     while t < run.nVolumes do
-      sum += run.values.data(linear + t * nxyz)
+      sum += run(voxel.x, voxel.y, voxel.z, t)
       t += 1
     sum / run.nVolumes.toDouble
 
@@ -849,10 +905,23 @@ object MotionEstimator:
       out.result()
 
   private def validateFiniteRun(run: NeuroVec[Double]): Either[MotionError, Unit] =
-    var i = 0
-    while i < run.values.data.length do
-      if !run.values.data(i).isFinite then return Left(MotionError.NonFiniteData("run", i))
-      i += 1
+    val dims = run.space.spatialDims
+    var linear = 0
+    var t = 0
+    while t < run.nVolumes do
+      var k = 0
+      while k < dims(2) do
+        var j = 0
+        while j < dims(1) do
+          var i = 0
+          while i < dims(0) do
+            if !run(i, j, k, t).isFinite then
+              return Left(MotionError.NonFiniteData("run", linear))
+            linear += 1
+            i += 1
+          j += 1
+        k += 1
+      t += 1
     Right(())
 
   private def inBounds(ctx: EstimatorContext, x: Double, y: Double, z: Double): Boolean =

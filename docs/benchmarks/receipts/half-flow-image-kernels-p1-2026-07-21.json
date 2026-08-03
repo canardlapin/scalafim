@@ -1,0 +1,239 @@
+{
+  "capturedOn": "2026-07-21",
+  "commands": {
+    "jmh": "sbt 'imageBenchJVM/Jmh/clean' 'imageBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -prof gc .*HalfFlowImageKernelBenchmark.*'",
+    "jvm": "sbt 'imageJVM/Test/runMain scalafim.image.HalfFlowImageKernelProbe 64 6 11'",
+    "scalaJs": "sbt 'set imageJS / Test / scalaJSUseTestModuleInitializer := false' 'set imageJS / Test / scalaJSUseMainModuleInitializer := true' 'imageJS / Test / run'"
+  },
+  "environment": {
+    "architecture": "aarch64",
+    "javaVm": "OpenJDK 64-Bit Server VM 25.0.1",
+    "node": "v24.1.0",
+    "operatingSystem": "Mac OS X"
+  },
+  "interpretation": {
+    "admissionReceipt": true,
+    "compositionAdmissionReceipt": true,
+    "dynamicReferenceRule": "HalfFlow composition changes query coordinates after every squaring, so the existing interpolation plan must be rebuilt for the credible dynamic-map comparison.",
+    "jmhCompositionStillRequired": false,
+    "p1KernelMatrixComplete": true,
+    "preparedReferenceRule": "The static prepared-plan measurement is retained as a favorable lower bound and is not substituted for the dynamic-map comparison.",
+    "remainingFormalKernels": [],
+    "scaleStressStillRequired": true,
+    "scalaJsConstructionCountersComplete": true,
+    "timingScope": "The JMH subsection is the formal representative 64-cubed K1-K5 receipt. JVM System.nanoTime and Scala.js timings are local diagnostics; the Scala.js construction counters are the portable allocation-boundary gate."
+  },
+  "jmh": {
+    "allocationGate": {
+      "allProductionPathsPass": true,
+      "maximumProductionBytesPerLogicalOperation": 54.258,
+      "status": "pass",
+      "targetMaximumBytesPerLogicalOperation": 64.0
+    },
+    "batching": {
+      "primitiveOperationsPerInvocation": {
+        "primitiveComposeInto": 128,
+        "primitiveInversePairReduction": 128,
+        "primitiveJacobianReduction": 128,
+        "primitivePullScalarInto": 128,
+        "primitivePyramidLevelInto": 256,
+        "primitiveRegridPullInto": 128
+      },
+      "reason": "amortize the JMH profiler/invocation floor; scores and allocation are reported per logical operation"
+    },
+    "oracleGates": {
+      "K1": "analytic world-linear scalar pull",
+      "K2": "exact differential checksum and valid support against checked composition",
+      "K3": "analytic physical affine across coarse and fine grids",
+      "K4": "known affine determinant and exact inverse translations",
+      "K5": "mask-normalized constant-field pyramid"
+    },
+    "benchmarks": {
+      "primitiveComposeInto": {
+        "allocationBytesPerOperation": 54.242,
+        "allocationError99_9": 0.030,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.130,
+        "scoreMillisPerOperation": 8.831
+      },
+      "primitiveInversePairReduction": {
+        "allocationBytesPerOperation": 54.217,
+        "allocationError99_9": 0.085,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.099,
+        "scoreMillisPerOperation": 17.770
+      },
+      "primitiveJacobianReduction": {
+        "allocationBytesPerOperation": 53.350,
+        "allocationError99_9": 3.294,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.185,
+        "scoreMillisPerOperation": 2.163
+      },
+      "primitivePullScalarInto": {
+        "allocationBytesPerOperation": 54.258,
+        "allocationError99_9": 0.030,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.028,
+        "scoreMillisPerOperation": 3.245
+      },
+      "primitivePyramidLevelInto": {
+        "allocationBytesPerOperation": 51.117,
+        "allocationError99_9": 0.030,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.538,
+        "scoreMillisPerOperation": 13.063
+      },
+      "primitiveRegridPullInto": {
+        "allocationBytesPerOperation": 54.258,
+        "allocationError99_9": 0.053,
+        "gcCollections": 0,
+        "scoreError99_9Millis": 0.183,
+        "scoreMillisPerOperation": 6.630
+      },
+      "referencePlanAndSample": {
+        "allocationBytesPerOperation": 354248743.307,
+        "allocationError99_9": 80.697,
+        "gcCollectionsAcrossMeasurements": 55,
+        "gcMillisAcrossMeasurements": 162,
+        "scoreError99_9Millis": 2.648,
+        "scoreMillisPerOperation": 59.496
+      },
+      "referencePreparedSample": {
+        "allocationBytesPerOperation": 53647813.447,
+        "allocationError99_9": 40.666,
+        "gcCollectionsAcrossMeasurements": 49,
+        "gcMillisAcrossMeasurements": 130,
+        "scoreError99_9Millis": 1.531,
+        "scoreMillisPerOperation": 10.276
+      }
+    },
+    "dynamicSpeedup": 6.737175857773752,
+    "forks": 3,
+    "java": "OpenJDK 25.0.1",
+    "jmhVersion": "1.37",
+    "measurementsPerFork": 10,
+    "preparedReferenceToPrimitiveTimeRatio": 1.1636281281848035,
+    "samplesPerBenchmark": 30,
+    "side": 64,
+    "threads": 1,
+    "timePerIterationMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "jvm": {
+    "dynamicAllocationReductionMedian": 14760305.0,
+    "dynamicSpeedupMedian": 5.771970043508238,
+    "maximumValidError": 0.0,
+    "preparedAllocationReductionMedian": 2235315.0,
+    "preparedSpeedupMedian": 3.173616889755355,
+    "primitiveComposeInto": {
+      "checksum": 125229178.41671896,
+      "medianAllocatedBytes": 24,
+      "medianNanos": 10515250,
+      "p95Nanos": 17470791
+    },
+    "referencePlanAndSample": {
+      "checksum": 125229178.41671896,
+      "medianAllocatedBytes": 354247320,
+      "medianNanos": 60693708,
+      "p95Nanos": 107771125
+    },
+    "referencePreparedSample": {
+      "checksum": 125229178.41671896,
+      "medianAllocatedBytes": 53647560,
+      "medianNanos": 33371375,
+      "p95Nanos": 40966416
+    },
+    "samples": 11,
+    "side": 64,
+    "validCount": 250047,
+    "voxels": 262144,
+    "warmups": 6
+  },
+  "repository": {
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "shared checkout may be dirty; exact source hashes define this diagnostic"
+  },
+  "scalaJs": {
+    "constructionCounterStatus": "explicit benchmark-owned allocation boundaries",
+    "dynamicSpeedupMedian": 12.666666666666666,
+    "maximumValidError": 0.0,
+    "preparedSpeedupMedian": 2.8333333333333335,
+    "primitiveComposeInto": {
+      "checksum": 7276492.585000044,
+      "medianMillis": 6.0,
+      "p95Millis": 7.0
+    },
+    "primitiveInversePairReduction": {
+      "checksum": 1.0087767680389479e-14,
+      "medianMillis": 18.0,
+      "p95Millis": 18.0
+    },
+    "primitiveJacobianReduction": {
+      "checksum": 1.0049025000004923,
+      "medianMillis": 6.0,
+      "p95Millis": 7.0
+    },
+    "primitiveOwnedFullVolumeConstructionsPerOp": {
+      "mask": 0,
+      "scalar": 0,
+      "scratch": 0,
+      "vector": 0
+    },
+    "primitivePullScalarInto": {
+      "checksum": 9.71875,
+      "medianMillis": 5.0,
+      "p95Millis": 5.0
+    },
+    "primitivePyramidLevelInto": {
+      "checksum": 7.249999999999997,
+      "medianMillis": 6.0,
+      "p95Millis": 6.0
+    },
+    "primitiveRegridPullInto": {
+      "checksum": 16.68,
+      "medianMillis": 5.0,
+      "p95Millis": 6.0
+    },
+    "referencePlanAndSample": {
+      "checksum": 7276492.585000044,
+      "medianMillis": 76.0,
+      "p95Millis": 92.0
+    },
+    "referencePreparedSample": {
+      "checksum": 7276492.585000044,
+      "medianMillis": 17.0,
+      "p95Millis": 19.0
+    },
+    "samples": 11,
+    "side": 32,
+    "validCount": 29791,
+    "voxels": 32768,
+    "warmups": 5
+  },
+  "schema": "scalafim-half-flow-image-kernel-receipt-v3",
+  "sourceSha256": {
+    "benchmarks/image-jvm/src/main/scala/scalafim/image/HalfFlowImageKernelBenchmark.scala": "c770be3355840b4fd5ec84ab2dfecea731909a7a6f50701aca935211e1ad5599",
+    "build.sbt": "981da7b20d7abe520e057611f280762d1d7377e91bceea3fec24ac7fa6aa33ba",
+    "docs/benchmarks/half-flow-lm.md": "758c5e54d5d9d14036d94968f5654bdf59edd0c45eed8e4653551e7208bd8318",
+    "modules/image/js/src/test/scala/scalafim/image/HalfFlowImageKernelJsProbe.scala": "7d3eec973ab2b7d351e6f30408b0a4bef13136a46112d2ab515209cbaba8dc39",
+    "modules/image/jvm/src/test/scala/scalafim/image/HalfFlowImageKernelProbe.scala": "c0de51a197d6d30a43173ad13da09df94e8e82d31232faa1066fa1339d04c36d",
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldKernels.scala": "899be50d47ce8ebe0f781298a9f9f274a7301ab935135b946ed02a9b63114794",
+    "modules/image/shared/src/test/scala/scalafim/image/DenseFieldKernelsSuite.scala": "c56b9eb89c44176c60700079d5e2b2a4ec0268f0d9ac4fc6fe6f844d097d4740",
+    "project/plugins.sbt": "71dd4dac8a55d8ff2cfbd8e9e62e4a2fbee4bd09bd40a75d6247381793ce7111"
+  },
+  "verification": {
+    "imageJS": {
+      "passed": 195,
+      "status": "pass"
+    },
+    "imageJVM": {
+      "passed": 202,
+      "status": "pass"
+    },
+    "newKernelSuitePerPlatform": {
+      "passed": 17,
+      "status": "pass"
+    }
+  }
+}

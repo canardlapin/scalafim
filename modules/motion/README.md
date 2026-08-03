@@ -31,6 +31,22 @@ are staged later layers.
 path; `WhiteningPolicy.IcWhiten` is an explicit unsupported control until the
 template-mode whitening contract is proven.
 
+Motion QC values can be projected into a renderer-neutral plot without a
+reporting framework dependency:
+
+```scala
+import intaglio.*
+
+final case class MotionQcPoint(frame: Double, displacement: Double)
+
+val qcPlot = plot(qcPoints)
+  .aes(_.frame, _.displacement)
+  .geomLine()
+  .hline(0.5)
+  .axisTitles("Frame", "Framewise displacement (mm)")
+  .build
+```
+
 Run it directly with:
 
 ```sh

@@ -2,22 +2,32 @@ package scalafim.fmri.threshold
 
 object Octree:
 
-  def root(field: MaskedField, priors: PriorWeights): Either[ThresholdError, Region] =
+  def root(field: MaskedField, priors: PriorWeights): Either[ThresholdError, ThresholdRegion] =
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
     val indices = Array.tabulate(field.size)(identity)
-    Region.fromIndices(0, indices, field, priors)
+    ThresholdRegion.fromIndices(0, indices, field, priors)
 
   def split(
-    parent: Region,
+    parent: ThresholdRegion,
     field: MaskedField,
     priors: PriorWeights,
     minPriorMass: Double = 1e-10
-  ): Either[ThresholdError, Vector[Region]] =
+  ): Either[ThresholdError, Vector[ThresholdRegion]] =
     if !minPriorMass.isFinite || minPriorMass < 0.0 then
       return Left(ThresholdError.InvalidArgument("minPriorMass", "must be finite and non-negative"))
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
+    if !field.activeSpace.sameRuntimeOwnerAs(parent.membership.space) then
+      return Left(
+        ThresholdError.ShapeMismatch(
+          "field/region support",
+          // `descriptor` rather than `id`: a region's domain need not be
+          // persistent, and this is a diagnostic either way.
+          field.activeSpace.descriptor.toString,
+          parent.membership.space.descriptor.toString
+        )
+      )
     if parent.bbox.isSingleton then return Right(Vector.empty)
 
     val xm = parent.bbox.midX
@@ -40,12 +50,12 @@ object Octree:
       masses(child) += priors(idx)
       i += 1
 
-    val out = Vector.newBuilder[Region]
+    val out = Vector.newBuilder[ThresholdRegion]
     var child = 0
     while child < 8 do
       val idx = builders(child).result()
       if idx.nonEmpty && masses(child) > minPriorMass then
-        Region.fromIndices(child, idx, field, priors) match
+        ThresholdRegion.fromIndices(child, idx, field, priors) match
           case Left(err) => return Left(err)
           case Right(region) => out += region
       child += 1

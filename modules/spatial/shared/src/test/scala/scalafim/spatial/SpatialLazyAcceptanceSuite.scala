@@ -1,7 +1,7 @@
 package scalafim.spatial
 
-import narr.NArray
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, Indexing, NArrayUtil, NDArray, NeuroSpace, Resample, SpatialDomainId}
+import ravel.NDArray as RavelArray
+import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
 import scalafim.linalg.DoubleMatrix
 import scalafim.surface.*
 
@@ -132,13 +132,16 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
     val grid = GridSpec.identity(Vector(6, 1, 1))
     val sourceX = Vector(0.0, 0.5, 1.5, 3.0, 4.0, 5.0)
     val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { index =>
-        val component = index / grid.nVoxels
-        val coordinate = Indexing.indexToGrid3D(grid.shape, index % grid.nVoxels)
+      RavelArray.tabulate[Double](
+        grid.shape.x,
+        grid.shape.y,
+        grid.shape.z,
+        3
+      ) { (x, y, z, component) =>
         component match
-          case 0 => sourceX(coordinate.x)
-          case 1 => coordinate.y.toDouble
-          case _ => coordinate.z.toDouble
+          case 0 => sourceX(x)
+          case 1 => y.toDouble
+          case _ => z.toDouble
       }
     val dense =
       imageValue(
@@ -146,7 +149,7 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
           SpatialDomainId(source.id.value),
           SpatialDomainId(target.id.value),
           grid,
-          NDArray(data, grid.dims :+ 3),
+          data,
           interpolation = Resample.Method.Linear
         )
       )

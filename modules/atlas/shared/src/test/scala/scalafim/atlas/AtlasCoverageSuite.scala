@@ -1,5 +1,6 @@
 package scalafim.atlas
 
+import ravel.Shape
 import scalafim.image.*
 import scalafim.atlas.syntax.*
 
@@ -23,10 +24,10 @@ class AtlasCoverageSuite extends munit.FunSuite:
     )
 
   private def labelVolume(values: Vector[Int]): NeuroVol[Int] =
-    NeuroVol.fromLinear(NArrayUtil.fromArray(values.toArray), NeuroSpace(Vector(2, 2, 1)), "coverage")
+    NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values.toArray), NeuroSpace(Vector(2, 2, 1)), "coverage")
 
   private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(NArrayUtil.fromArray(values.toArray), space), "coverage")
+    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values.toArray), space), "coverage")
 
   test("registry normalizes aliases and reports unknown ids with available atlases"):
     val spec = AtlasRegistry.default.find("Glasser 360 Surface").toOption.get
@@ -143,10 +144,10 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(err.getMessage.contains("atlas region ids must be unique: 1"), clue = err.getMessage)
 
   test("reducers define NaN handling and volume reductions match grouped oracle sums"):
-    assertEquals(Reducers.mean(NArrayUtil.fromArray(Array(1.0, Double.NaN, 5.0))), 3.0)
-    assert(Reducers.mean(NArrayUtil.fromArray(Array(Double.NaN, Double.NaN))).isNaN)
-    assert(Reducers.mean(NArrayUtil.fromArray(Array.empty[Double])).isNaN)
-    assertEquals(Reducers.sum(NArrayUtil.fromArray(Array(1.0, Double.NaN, 5.0))), 6.0)
+    assertEquals(Reducers.mean(PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 5.0))), 3.0)
+    assert(Reducers.mean(PrimitiveBuffers.fromArray(Array(Double.NaN, Double.NaN))).isNaN)
+    assert(Reducers.mean(PrimitiveBuffers.fromArray(Array.empty[Double])).isNaN)
+    assertEquals(Reducers.sum(PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 5.0))), 6.0)
 
     val regions =
       RegionIndex(
@@ -156,7 +157,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         )
       )
     val a = atlas(Vector(2, 5, 2, 5), regions)
-    val data = NeuroVol.fromLinear(NArrayUtil.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
+    val data = NeuroVol.fromLinear(PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
     val reduced = a.reduce(data, Reducers.sum)
     val checkedReduced = AtlasReduce.reduceVolumeEither(a, data, Reducers.sum)
 
@@ -174,25 +175,25 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val tLen = 2
     val data =
       NeuroVec.fromLinear(
-        NArrayUtil.fromArray(Array(1.0, 10.0, 3.0, 20.0, 2.0, 30.0, 4.0, 40.0)),
+        PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0, 2.0, 30.0, 4.0, 40.0)),
         a.space.addDim(tLen, Some(Axis.Time)),
         "timeseries"
       )
     val summed = a.reduce(data, Reducers.sum).asMatrix
 
-    assertEquals(summed.shape, Vector(2, 2))
-    assertEquals(summed.data(0), 4.0)
-    assertEquals(summed.data(1), 6.0)
-    assertEquals(summed.data(2), 30.0)
-    assertEquals(summed.data(3), 70.0)
+    assertEquals(summed.shape, Shape(2, 2))
+    assertEquals(summed(0, 0), 4.0)
+    assertEquals(summed(1, 0), 6.0)
+    assertEquals(summed(0, 1), 30.0)
+    assertEquals(summed(1, 1), 70.0)
 
     val mask =
-      NeuroVol.fromLinear(NArrayUtil.fromArray(Array(true, false, false, true)), a.space, "mask")
+      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(Array(true, false, false, true)), a.space, "mask")
     val masked = a.reduce(data, mask, Reducers.sum).asMatrix
-    assertEquals(masked.data(0), 1.0)
-    assertEquals(masked.data(1), 2.0)
-    assertEquals(masked.data(2), 20.0)
-    assertEquals(masked.data(3), 40.0)
+    assertEquals(masked(0, 0), 1.0)
+    assertEquals(masked(1, 0), 2.0)
+    assertEquals(masked(0, 1), 20.0)
+    assertEquals(masked(1, 1), 40.0)
 
   test("overlap is symmetric by atlas order and self-overlap is identity"):
     val a = atlas(Vector(1, 1, 2, 2))
@@ -211,19 +212,19 @@ class AtlasCoverageSuite extends munit.FunSuite:
       assertEqualsDouble(values._2, reversed._2, 1e-12)
     }
 
-    val self = a.overlap(a, resample = false)
+    val self = a.overlap(a, AtlasAlignment.Exact)
     assert(self.forall(o => o.region1.id == o.region2.id), clue = self.toString)
     assert(self.forall(o => math.abs(o.dice - 1.0) < 1e-12), clue = self.toString)
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
     val mismatched = atlas(Vector(1, 2), space = NeuroSpace(Vector(2, 1, 1)))
     assertEquals(
-      AtlasOverlap.computeEither(a, mismatched, resample = false),
+      AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact),
       Left(AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)))
     )
     val err =
       intercept[IllegalArgumentException]:
-        AtlasOverlap.compute(a, mismatched, resample = false)
+        AtlasOverlap.compute(a, mismatched, AtlasAlignment.Exact)
     assert(err.getMessage.contains("expected spatial dimensions 2x2x1 but got 2x1x1"), clue = err.getMessage)
 
   test("adjacency connectivity is monotone from faces to corners"):
@@ -272,6 +273,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasError.NoTransformRoute(SpaceId.Custom, SpaceId.MNI152) -> "no transform route found from 'custom' to 'MNI152'",
         AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
         AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
+        AtlasError.ExactGridRequired("expected-grid", "actual-grid") -> "exact atlas grid required; expected expected-grid but got actual-grid",
         AtlasError.InvalidQuery("bad query") -> "bad query",
         AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
         AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"

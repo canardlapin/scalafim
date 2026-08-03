@@ -1,0 +1,114 @@
+{
+  "capturedAtUtc": "2026-07-22T04:25:11Z",
+  "capturedOn": "2026-07-22",
+  "commands": {
+    "focusedTests": "sbt 'imageJVM/test' 'imageJS/test' 'registrationJVM/test' 'registrationJS/test' 'registrationBenchJVM/Jmh/compile'",
+    "jmh": "sbt 'registrationBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -w 250ms -r 250ms -prof gc -rf json -rff /tmp/halfflow-p4-jmh.json .*HalfFlowRegistrationBenchmark.(t1FeaturesWithWorkspace|rankOneLocalLmWithWorkspace|multiChannelLocalLmWithWorkspace|predictedDropMultiChannel).*'"
+  },
+  "decisions": {
+    "defaultLocalModel": "MultiChannel is the accuracy-first default because it uses all three admitted correspondence channels. RankOne remains an explicit 2.18x-faster ablation until recovery and cohort accuracy justify changing the default.",
+    "galeBoundary": "No Gale change. The measured allocation defect was the standard-library sort inside ScalaFIM robust feature scaling; the replacement is a registration-module in-place median selector.",
+    "robustScale": "Feature epsilon is tied to 1.4826 times the masked MAD with a machine-scale floor. Residual-channel Charbonnier epsilon is tied to the median absolute residual with an explicit minimum.",
+    "windowRounding": "Each physical radius uses ceil(radiusMm / voxelSpacingMm) independently by axis.",
+    "workspace": "Feature values, gradients, validity, three padded integrals, robust scratch, local velocity, and local validity use caller-owned reusable storage. Returned views borrow those buffers until reuse."
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hardware": "Apple M3 Max, 14 cores, 36 GB",
+    "jmhJava": "OpenJDK 64-Bit Server VM 25.0.1",
+    "jmhVersion": "1.37",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbtBuildVersion": "1.10.5",
+    "scala": "3.4.2"
+  },
+  "fixture": {
+    "featureRadiiMm": [2.0, 4.0, 8.0],
+    "minimumValidWindowFraction": 0.8,
+    "shape": [32, 32, 32],
+    "source": "deterministic smooth T1-like same-modality pair",
+    "voxels": 32768,
+    "workspacePolicy": "all full-volume outputs and scratch allocated in setup and reused"
+  },
+  "jmh": {
+    "benchmarks": {
+      "multiChannelLocalLmWithWorkspace": {
+        "allocationBytesPerOperation": 1000.911,
+        "allocationError99_9": 31.551,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Millis": 0.011,
+        "scoreMillisPerOperation": 0.837
+      },
+      "predictedDropMultiChannel": {
+        "allocationBytesPerOperation": 86.664,
+        "allocationError99_9": 25.374,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Millis": 0.007,
+        "scoreMillisPerOperation": 0.249
+      },
+      "rankOneLocalLmWithWorkspace": {
+        "allocationBytesPerOperation": 899.957,
+        "allocationError99_9": 40.400,
+        "gcCollectionsAcrossMeasurements": 3,
+        "gcMillisAcrossMeasurements": 8,
+        "scoreError99_9Millis": 0.023,
+        "scoreMillisPerOperation": 0.384
+      },
+      "t1FeaturesWithWorkspace": {
+        "allocationBytesPerOperation": 1664.072,
+        "allocationError99_9": 1.823,
+        "gcCollectionsAcrossMeasurements": 0,
+        "scoreError99_9Millis": 0.025,
+        "scoreMillisPerOperation": 1.432
+      }
+    },
+    "derived": {
+      "featureAllocationReductionAfterInPlaceMedian": 158.947,
+      "featureRuntimeSpeedupAfterInPlaceMedian": 2.083,
+      "multiChannelToRankOneRuntimeRatio": 2.178
+    },
+    "diagnosticBeforeInPlaceMedian": {
+      "allocationBytesPerOperation": 264498.504,
+      "jfrAllocationSite": "java.util.DualPivotQuicksort.tryMergeRuns",
+      "scoreMillisPerOperation": 2.982
+    },
+    "forks": 3,
+    "measurementMillis": 250,
+    "measurementsPerFork": 10,
+    "rawJmhJsonSha256": "c9da56748701e5a2a4588a682da96462d9576dbcb89707a0f8f58f462abebf89",
+    "samplesPerBenchmark": 30,
+    "threads": 1,
+    "warmupMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "numericalAdmission": {
+    "features": "Integral-window normalization matches an independent masked loop; oblique physical gradients recover an analytic world covector; positive common T1 gain and offset preserve stable feature support and values.",
+    "localLm": "Rank-one steps match the closed form; multi-channel steps satisfy the original damped 3x3 system; shaped predicted decrease matches an independent quadratic expression and a directional finite-difference check.",
+    "median": "Odd, even, repeated, and active-prefix cases match exact medians on JVM and Scala.js.",
+    "status": "pass",
+    "trust": "High- and low-gain acceptance, objective rejection, topology rejection, non-finite classification, exact rollback, and attempt/accepted termination counters pass."
+  },
+  "repository": {
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "Shared checkout may be dirty; exact source hashes define this receipt."
+  },
+  "schema": "scalafim-half-flow-local-lm-receipt-v1",
+  "sourceSha256": {
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowRegistrationBenchmark.scala": "5d61f547f9f019e4b176b6d8bb7d6903e957a13c98a3fec91ff06565634a7ba7",
+    "modules/image/shared/src/main/scala/scalafim/image/MaskedLocalStats.scala": "8af9418ec764fa5e8d888c2965d218c6bef02ddba5e905d67c09ac73b663062e",
+    "modules/image/shared/src/test/scala/scalafim/image/MaskedLocalStatsSuite.scala": "4025188f70416e27db7ff73935fccea5ca660ee2c05a5687fa72591ae9ebae0f",
+    "modules/registration/shared/src/main/scala/scalafim/registration/InPlaceMedian.scala": "fc42c12713f431b69e124369027bfab90c086ae742bbd1357ffa4257db22a50d",
+    "modules/registration/shared/src/main/scala/scalafim/registration/LocalLm.scala": "80bd9589179e84b77c58696ff90e1d3281fa286efcbfac720ee60f6625434792",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "4ad9fbbba8e5dc887604c3ea849079dfd03f4fd8bdcb81430088903ab80c2971",
+    "modules/registration/shared/src/main/scala/scalafim/registration/T1Features.scala": "892be0d64ea0352a1bdbb3cae94f67e4ff64662c7ddb8dc1d636cee7a576df79",
+    "modules/registration/shared/src/main/scala/scalafim/registration/TrustModel.scala": "cfabfcc1aa97e82f4ff573deb706d8d06733836f15994dd29117ad0bda064908",
+    "modules/registration/shared/src/test/scala/scalafim/registration/LocalLmSuite.scala": "598af34e568129b2226c318e42c6a83e5ac1a018b2a9f493983b8c73d2e49f32",
+    "modules/registration/shared/src/test/scala/scalafim/registration/TrustModelSuite.scala": "e963bbdab80ba6825a96706605d956bf1326d5bae3de6209617dccd006839564"
+  },
+  "tests": {
+    "imageJS": {"passed": 198, "failed": 0},
+    "imageJVM": {"passed": 205, "failed": 0},
+    "registrationJS": {"passed": 19, "failed": 0},
+    "registrationJVM": {"passed": 19, "failed": 0}
+  }
+}

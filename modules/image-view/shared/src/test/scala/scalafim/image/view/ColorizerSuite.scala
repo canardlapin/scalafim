@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 
 class ColorizerSuite extends munit.FunSuite:
 
@@ -19,6 +19,24 @@ class ColorizerSuite extends munit.FunSuite:
     assertEquals(colorizer.color(Double.NaN).alpha, 0)
   }
 
+  test("threshold bands hide only their strict interior and disable explicitly") {
+    assert(ThresholdBand.make(1.0, 1.0).isLeft)
+    assert(ThresholdBand.make(Double.NaN, 2.0).isLeft)
+    val threshold = DisplayThreshold.transparentBand(-0.5, 0.5).toOption.get
+    val thresholded = ScalarColorizer(
+      DisplayWindow.unsafe(-1.0, 1.0),
+      threshold = threshold
+    )
+
+    assertEquals(thresholded.color(-0.5).alpha, 255)
+    assertEquals(thresholded.color(0.0).alpha, 0)
+    assertEquals(thresholded.color(0.5).alpha, 255)
+    assertEquals(thresholded.color(Double.NaN).alpha, 0)
+
+    val disabled = thresholded.withThreshold(DisplayThreshold.Disabled).get
+    assertEquals(disabled.color(0.0).alpha, 255)
+  }
+
   test("ramps interpolate every RGBA channel") {
     val ramp = ColorRamp(
       Rgba32.unsafe(0, 20, 40, 60),
@@ -27,6 +45,26 @@ class ColorizerSuite extends munit.FunSuite:
     val middle = ramp.colorAt(0.5)
 
     assertEquals((middle.red, middle.green, middle.blue, middle.alpha), (50, 70, 90, 110))
+  }
+
+  test("ramp hot path is bit-exact against independently checked channel interpolation") {
+    val low = Rgba32.unsafe(213, 17, 91, 240)
+    val high = Rgba32.unsafe(4, 231, 52, 11)
+    val ramp = ColorRamp(low, high)
+    var step = -32
+    while step <= 288 do
+      val fraction = step.toDouble / 255.0
+      val t = math.max(0.0, math.min(1.0, fraction))
+      def channel(from: Int, to: Int): Int =
+        math.round(from + (to - from) * t).toInt
+      val expected = Rgba32.unsafe(
+        channel(low.red, high.red),
+        channel(low.green, high.green),
+        channel(low.blue, high.blue),
+        channel(low.alpha, high.alpha)
+      )
+      assertEquals(ramp.colorAt(fraction), expected)
+      step += 1
   }
 
   test("label and mask colorizers keep missing data transparent by default") {

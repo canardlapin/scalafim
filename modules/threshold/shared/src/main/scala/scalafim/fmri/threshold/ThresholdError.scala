@@ -9,6 +9,7 @@ enum ThresholdError:
   case InvalidPermutationCount(value: Int)
   case EmptyMask
   case EmptyRegion
+  case DuplicateRegionIndex(index: Int)
   case ShapeMismatch(what: String, expected: String, actual: String)
   case NonFiniteData(what: String)
   case NegativeUnsignedEvidence(index: Int, value: Double)
@@ -37,6 +38,8 @@ enum ThresholdError:
         "analysis mask is empty"
       case EmptyRegion =>
         "region is empty"
+      case DuplicateRegionIndex(index) =>
+        s"region contains duplicate compact index $index"
       case ShapeMismatch(what, expected, actual) =>
         s"$what shape mismatch: expected $expected, got $actual"
       case NonFiniteData(what) =>

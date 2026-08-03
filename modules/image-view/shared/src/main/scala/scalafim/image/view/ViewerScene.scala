@@ -1,7 +1,8 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
+import scala.collection.mutable
 
 final case class ViewerState(
   cursor: WorldPoint,
@@ -11,7 +12,8 @@ final case class ViewerState(
   showCrosshair: Boolean = true,
   showOrientationLabels: Boolean = true,
   timepoint: Int = 0,
-  layerPresentation: Map[LayerId, LayerPresentation] = Map.empty
+  layerPresentation: Map[LayerId, LayerPresentation] = Map.empty,
+  panelViews: PanelReceipts[PanelView] = PanelReceipts.fill(PanelView.Default)
 ):
   def presentation(id: LayerId): LayerPresentation =
     layerPresentation.getOrElse(id, LayerPresentation.Default)
@@ -40,7 +42,8 @@ object ViewerState:
 final case class LayerPresentation(
   visible: Boolean = true,
   opacity: Option[LayerOpacity] = None,
-  window: Option[DisplayWindow] = None
+  window: Option[DisplayWindow] = None,
+  threshold: Option[DisplayThreshold] = None
 )
 
 object LayerPresentation:
@@ -84,44 +87,79 @@ object PanelRect:
     require(width.isFinite && height.isFinite && width > 0.0 && height > 0.0, "panel size must be positive and finite")
     new PanelRect(left, bottom, width, height)
 
-final case class OrthogonalLayout private (margin: Double, gap: Double):
+enum OrthogonalArrangement:
+  case LShape, SingleRow, SingleColumn
+
+final case class OrthogonalLayout private (
+  margin: Double,
+  gap: Double,
+  arrangement: OrthogonalArrangement
+):
   private[view] def cells: PanelReceipts[PanelRect] =
-    val extent = (1.0 - 2.0 * margin - gap) / 2.0
-    val low = margin
-    val high = margin + extent + gap
-    PanelReceipts(
-      sagittal = PanelRect.unsafe(high, high, extent, extent),
-      coronal = PanelRect.unsafe(low, low, extent, extent),
-      axial = PanelRect.unsafe(low, high, extent, extent)
-    )
+    arrangement match
+      case OrthogonalArrangement.LShape =>
+        val extent = (1.0 - 2.0 * margin - gap) / 2.0
+        val low = margin
+        val high = margin + extent + gap
+        PanelReceipts(
+          sagittal = PanelRect.unsafe(high, high, extent, extent),
+          coronal = PanelRect.unsafe(low, low, extent, extent),
+          axial = PanelRect.unsafe(low, high, extent, extent)
+        )
+      case OrthogonalArrangement.SingleRow =>
+        val width = (1.0 - 2.0 * margin - 2.0 * gap) / 3.0
+        val height = 1.0 - 2.0 * margin
+        PanelReceipts(
+          sagittal = PanelRect.unsafe(margin, margin, width, height),
+          coronal = PanelRect.unsafe(margin + width + gap, margin, width, height),
+          axial = PanelRect.unsafe(margin + 2.0 * (width + gap), margin, width, height)
+        )
+      case OrthogonalArrangement.SingleColumn =>
+        val width = 1.0 - 2.0 * margin
+        val height = (1.0 - 2.0 * margin - 2.0 * gap) / 3.0
+        PanelReceipts(
+          sagittal = PanelRect.unsafe(margin, margin + 2.0 * (height + gap), width, height),
+          coronal = PanelRect.unsafe(margin, margin + height + gap, width, height),
+          axial = PanelRect.unsafe(margin, margin, width, height)
+        )
 
 object OrthogonalLayout:
   val Default: OrthogonalLayout =
-    new OrthogonalLayout(margin = 0.02, gap = 0.02)
+    new OrthogonalLayout(margin = 0.02, gap = 0.02, OrthogonalArrangement.LShape)
 
-  def make(margin: Double, gap: Double): Either[ImageViewError, OrthogonalLayout] =
+  def make(
+    margin: Double,
+    gap: Double,
+    arrangement: OrthogonalArrangement = OrthogonalArrangement.LShape
+  ): Either[ImageViewError, OrthogonalLayout] =
+    val gapCount = if arrangement == OrthogonalArrangement.LShape then 1.0 else 2.0
     val valid =
       margin.isFinite && gap.isFinite && margin >= 0.0 && gap >= 0.0 &&
-        2.0 * margin + gap < 1.0
-    if valid then Right(new OrthogonalLayout(margin, gap))
+        2.0 * margin + gapCount * gap < 1.0
+    if valid then Right(new OrthogonalLayout(margin, gap, arrangement))
     else Left(ImageViewError.InvalidOrthogonalLayout(margin, gap))
 
 final case class PanelReceipt(
   anatomicalPlane: AnatomicalPlane,
   rect: PanelRect,
-  grid: SliceGrid
+  grid: SliceGrid,
+  view: PanelView
 ):
   def cursorRootNpc(cursor: WorldPoint): (Double, Double) =
     val projected = grid.project(cursor).pixel
     val localX = (projected.column + 0.5) / grid.dimensions.width
     val localY = 1.0 - (projected.row + 0.5) / grid.dimensions.height
-    rect.left + localX * rect.width -> (rect.bottom + localY * rect.height)
+    val viewedX = view.imageToLocal(localX, view.centerX)
+    val viewedY = view.imageToLocal(localY, view.centerY)
+    rect.left + viewedX * rect.width -> (rect.bottom + viewedY * rect.height)
 
   def worldAtRootNpc(rootX: Double, rootY: Double): Option[WorldPoint] =
     if !rect.contains(rootX, rootY) then None
     else
-      val localX = (rootX - rect.left) / rect.width
-      val localY = (rootY - rect.bottom) / rect.height
+      val viewedX = (rootX - rect.left) / rect.width
+      val viewedY = (rootY - rect.bottom) / rect.height
+      val localX = view.localToImage(viewedX, view.centerX)
+      val localY = view.localToImage(viewedY, view.centerY)
       val column = localX * grid.dimensions.width - 0.5
       val row = (1.0 - localY) * grid.dimensions.height - 0.5
       Some(
@@ -144,9 +182,29 @@ final case class PanelReceipts[A](
   def all: Vector[A] =
     Vector(sagittal, coronal, axial)
 
+  def updated(plane: AnatomicalPlane, value: A): PanelReceipts[A] =
+    plane match
+      case AnatomicalPlane.Sagittal => copy(sagittal = value)
+      case AnatomicalPlane.Coronal => copy(coronal = value)
+      case AnatomicalPlane.Axial => copy(axial = value)
+
+object PanelReceipts:
+  def fill[A](value: A): PanelReceipts[A] =
+    PanelReceipts(value, value, value)
+
+final case class LayerReadout(layer: LayerId, value: LayerSampleValue)
+
+final case class PanelReadout(
+  anatomicalPlane: AnatomicalPlane,
+  world: WorldPoint,
+  referenceVoxel: VoxelPoint,
+  layers: Vector[LayerReadout]
+)
+
 final case class ViewerFrame(
   scene: Scene,
   panels: PanelReceipts[PanelReceipt],
+  readouts: PanelReceipts[PanelReadout],
   state: ViewerState,
   device: DeviceContext
 )
@@ -174,23 +232,33 @@ object ViewerCompiler:
     else
       val panelReceipts = panels(model.referenceSpace, state, device, layout)
       val grobs = Vector.newBuilder[Grob]
+      val readouts = Vector.newBuilder[PanelReadout]
       var currentCache = cache
       var profile = ViewerProfile.Zero
+      val frameResolver = new FrameResolver(state.timepoint)
       var error = Option.empty[ImageViewError]
       var index = 0
       val allPanels = panelReceipts.all
       while index < allPanels.length && error.isEmpty do
-        panelGrob(model, state, allPanels(index), theme, currentCache) match
+        panelGrob(model, state, allPanels(index), theme, currentCache, frameResolver) match
           case Left(value) => error = Some(value)
           case Right(compiled) =>
             grobs += compiled.grob
+            readouts += compiled.readout
             currentCache = compiled.cache
             profile = profile + compiled.profile
         index += 1
       error match
         case Some(value) => Left(value)
         case None =>
-          val frame = ViewerFrame(Scene(grobs.result()), panelReceipts, state, device)
+          val panelReadouts = readouts.result()
+          val frame = ViewerFrame(
+            Scene(grobs.result()),
+            panelReceipts,
+            PanelReceipts(panelReadouts(0), panelReadouts(1), panelReadouts(2)),
+            state,
+            device
+          )
           Right(ViewerCompilation(frame, currentCache, profile))
 
   def panels(
@@ -207,15 +275,16 @@ object ViewerCompiler:
     )
     val cells = layout.cells
     PanelReceipts(
-      sagittal = receipt(AnatomicalPlane.Sagittal, grids.sagittal, cells.sagittal, device),
-      coronal = receipt(AnatomicalPlane.Coronal, grids.coronal, cells.coronal, device),
-      axial = receipt(AnatomicalPlane.Axial, grids.axial, cells.axial, device)
+      sagittal = receipt(AnatomicalPlane.Sagittal, grids.sagittal, cells.sagittal, state.panelViews.sagittal, device),
+      coronal = receipt(AnatomicalPlane.Coronal, grids.coronal, cells.coronal, state.panelViews.coronal, device),
+      axial = receipt(AnatomicalPlane.Axial, grids.axial, cells.axial, state.panelViews.axial, device)
     )
 
   private def receipt(
     anatomicalPlane: AnatomicalPlane,
     grid: SliceGrid,
     cell: PanelRect,
+    view: PanelView,
     device: DeviceContext
   ): PanelReceipt =
     val physicalWidth = grid.dimensions.width * grid.spacing.horizontal
@@ -231,14 +300,15 @@ object ViewerCompiler:
       else
         val width = cellHeightPixels * contentAspect / device.width
         PanelRect.unsafe(cell.left + (cell.width - width) / 2.0, cell.bottom, width, cell.height)
-    PanelReceipt(anatomicalPlane, fitted, grid)
+    PanelReceipt(anatomicalPlane, fitted, grid, view)
 
   private def panelGrob(
     model: ViewerModel,
     state: ViewerState,
     panel: PanelReceipt,
     theme: ViewerTheme,
-    cache: ViewerCache
+    cache: ViewerCache,
+    frameResolver: FrameResolver
   ): Either[ImageViewError, PanelCompilation] =
     val viewport = Viewport.unsafe(
       origin = Point.npcUnsafe(panel.rect.left, panel.rect.bottom),
@@ -256,15 +326,17 @@ object ViewerCompiler:
     )
     val visibleLayers = model.layers.filter(layer => state.presentation(layer.id).visible)
     val images = Vector.newBuilder[Grob]
+    val readouts = Vector.newBuilder[LayerReadout]
     var currentCache = cache
     var profile = ViewerProfile(panelCount = 1, layerRequests = 0, cacheHits = 0, cacheMisses = 0, sampledPixels = 0L)
     var error = Option.empty[ImageViewError]
     var index = 0
     while index < visibleLayers.length && error.isEmpty do
-      layerGrob(visibleLayers(index), panel.grid, state, currentCache) match
+      layerGrob(visibleLayers(index), panel, state, currentCache, frameResolver) match
         case Left(value) => error = Some(value)
         case Right(compiled) =>
           images += compiled.grob
+          compiled.readout.foreach(readouts += _)
           currentCache = compiled.cache
           profile = profile + compiled.profile
       index += 1
@@ -273,60 +345,127 @@ object ViewerCompiler:
       case None =>
         decorationGrobs(state, panel, theme).map { overlay =>
           val group = Grob.group(background +: (images.result() ++ overlay), viewport = Some(viewport))
-          PanelCompilation(group, currentCache, profile)
+          val readout = PanelReadout(
+            panel.anatomicalPlane,
+            state.cursor,
+            model.referenceSpace.worldToVoxel(state.cursor),
+            readouts.result()
+          )
+          PanelCompilation(group, readout, currentCache, profile)
         }
 
   private def layerGrob(
     layer: SliceLayer,
-    grid: SliceGrid,
+    panel: PanelReceipt,
     state: ViewerState,
-    cache: ViewerCache
+    cache: ViewerCache,
+    frameResolver: FrameResolver
   ): Either[ImageViewError, LayerCompilation] =
     val presentation = state.presentation(layer.id)
-    val key = SliceCacheKey(layer, grid, state.timepoint, presentation.window)
-    val (cached, refreshedCache) = cache.lookup(key)
-    val rasterAndProfile =
+    val grid = panel.grid
+    val sampleKey = SliceSampleKey.from(layer, grid, state.timepoint)
+    val rasterKey = SliceRasterKey(sampleKey, presentation.window, presentation.threshold)
+    val (cached, refreshedCache) = cache.lookupRaster(rasterKey)
+    val rasterAndProfile: Either[ImageViewError, (RasterImage, Option[LayerReadout], ViewerCache, ViewerProfile)] =
       cached match
         case Some(raster) =>
+          val (sample, sampleCache) = refreshedCache.lookupSample(sampleKey)
           Right(
             (
               raster,
-              refreshedCache,
+              sample.flatMap(readout(layer.id, _, panel, state.cursor)),
+              sampleCache,
               ViewerProfile(0, 1, 1, 0, 0L)
             )
           )
         case None =>
-          layer.raster(grid, state.timepoint, presentation.window).map { raster =>
-            (
-              raster,
-              cache.store(key, raster),
-              ViewerProfile(0, 1, 0, 1, grid.dimensions.pixelCount.toLong)
-            )
-          }
-    rasterAndProfile.flatMap { case (raster, nextCache, profile) =>
+          val pixelCount = grid.dimensions.pixelCount.toLong
+          val (sampled, sampleCache) = refreshedCache.lookupSample(sampleKey)
+          sampled match
+            case Some(sample) =>
+              val raster = sample.colorize(presentation.window, presentation.threshold)
+              Right(
+                (
+                  raster,
+                  readout(layer.id, sample, panel, state.cursor),
+                  sampleCache.storeRaster(rasterKey, raster),
+                  ViewerProfile(0, 1, 0, 1, 0L, 1, 0, pixelCount)
+                )
+              )
+            case None =>
+              frameResolver.resolve(layer).flatMap { case (frame, sourceRead) =>
+                frame.sample(grid).map { sample =>
+                  val raster = sample.colorize(presentation.window, presentation.threshold)
+                  val nextCache = sampleCache
+                    .storeSample(sampleKey, sample)
+                    .storeRaster(rasterKey, raster)
+                  (
+                    raster,
+                    readout(layer.id, sample, panel, state.cursor),
+                    nextCache,
+                    ViewerProfile(
+                      0,
+                      1,
+                      0,
+                      1,
+                      pixelCount,
+                      0,
+                      1,
+                      pixelCount,
+                      if sourceRead then 1 else 0
+                    )
+                  )
+                }
+              }
+    rasterAndProfile.flatMap { case (raster, layerReadout, nextCache, profile) =>
       Grob.image(
         image = raster,
-        at = Point.npcUnsafe(0.0, 0.0),
-        size = Size.npcUnsafe(1.0, 1.0),
+        at = Point.npcUnsafe(panel.view.imageLeft, panel.view.imageBottom),
+        size = Size.npcUnsafe(panel.view.zoom.factor, panel.view.zoom.factor),
         anchor = Anchor.BottomLeft,
         interpolation = layer.displayInterpolation,
         alpha = presentation.opacity.getOrElse(layer.opacity).toDouble
       ).left.map(ImageViewError.GraphicsFailure.apply).map { grob =>
-        LayerCompilation(grob, nextCache, profile)
+        LayerCompilation(grob, layerReadout, nextCache, profile)
       }
     }
 
+  private def readout(
+    id: LayerId,
+    sample: SampledLayerSlice,
+    panel: PanelReceipt,
+    cursor: WorldPoint
+  ): Option[LayerReadout] =
+    val pixel = panel.grid.project(cursor).pixel
+    val column = math.round(pixel.column).toInt
+    val row = math.round(pixel.row).toInt
+    sample.readout(column, row).map(LayerReadout(id, _))
+
   private final case class LayerCompilation(
     grob: Grob,
+    readout: Option[LayerReadout],
     cache: ViewerCache,
     profile: ViewerProfile
   )
 
   private final case class PanelCompilation(
     grob: Grob,
+    readout: PanelReadout,
     cache: ViewerCache,
     profile: ViewerProfile
   )
+
+  private final class FrameResolver(timepoint: Int):
+    private val frames = mutable.HashMap.empty[LayerId, ResolvedLayerFrame]
+
+    def resolve(layer: SliceLayer): Either[ImageViewError, (ResolvedLayerFrame, Boolean)] =
+      frames.get(layer.id) match
+        case Some(frame) => Right(frame -> false)
+        case None =>
+          layer.resolve(timepoint).map { frame =>
+            frames.update(layer.id, frame)
+            frame -> true
+          }
 
   private def decorationGrobs(
     state: ViewerState,
@@ -339,10 +478,12 @@ object ViewerCompiler:
         val projected = panel.grid.project(state.cursor).pixel
         val x = (projected.column + 0.5) / panel.grid.dimensions.width
         val y = 1.0 - (projected.row + 0.5) / panel.grid.dimensions.height
+        val viewedX = panel.view.imageToLocal(x, panel.view.centerX)
+        val viewedY = panel.view.imageToLocal(y, panel.view.centerY)
         Grob.segments(
           Vector(
-            Point.npcUnsafe(x, 0.0) -> Point.npcUnsafe(x, 1.0),
-            Point.npcUnsafe(0.0, y) -> Point.npcUnsafe(1.0, y)
+            Point.npcUnsafe(viewedX, 0.0) -> Point.npcUnsafe(viewedX, 1.0),
+            Point.npcUnsafe(0.0, viewedY) -> Point.npcUnsafe(1.0, viewedY)
           ),
           gp = GraphicParams.unsafe(stroke = Some(theme.crosshair), lineWidth = 1.0)
         ).left.map(ImageViewError.GraphicsFailure.apply).map(Vector(_))

@@ -72,7 +72,7 @@ object RegionAttributes:
   def unsafe(values: Map[String, String]): RegionAttributes =
     from(values).fold(err => throw new IllegalArgumentException(err.message), identity)
 
-final case class Region(
+final case class AtlasRegionMetadata(
   id: RegionId,
   label: String,
   labelFull: Option[String] = None,
@@ -95,7 +95,7 @@ final case class Region(
   def typedAttributes: RegionAttributes =
     RegionAttributes.unsafe(attributes)
 
-object Region:
+object AtlasRegionMetadata:
   def checked(
     id: RegionId,
     label: String,
@@ -104,14 +104,66 @@ object Region:
     network: Option[NetworkId] = None,
     color: Option[Rgb] = None,
     attributes: Map[String, String] = Map.empty
-  ): Either[AtlasError, Region] =
+  ): Either[AtlasError, AtlasRegionMetadata] =
     for
       _ <- RegionLabel.from(label)
       _ <- labelFull.map(RegionLabel.from).getOrElse(Right(RegionLabel.unsafe(label)))
       _ <- RegionAttributes.from(attributes)
-    yield Region(id, label, labelFull, hemisphere, network, color, attributes)
+    yield AtlasRegionMetadata(id, label, labelFull, hemisphere, network, color, attributes)
 
-final case class RegionIndex(regions: Vector[Region]):
+/** Source-compatibility alias. Region membership now lives in
+  * `scalafim.locus.Region`; atlas `Region` values are metadata only.
+  */
+@deprecated("Use AtlasRegionMetadata; Region is a metadata compatibility alias.", "0.2.0")
+type Region = AtlasRegionMetadata
+
+object Region:
+  def apply(
+    id: RegionId,
+    label: String,
+    labelFull: Option[String] = None,
+    hemisphere: Option[Hemisphere] = None,
+    network: Option[NetworkId] = None,
+    color: Option[Rgb] = None,
+    attributes: Map[String, String] = Map.empty
+  ): AtlasRegionMetadata =
+    AtlasRegionMetadata(id, label, labelFull, hemisphere, network, color, attributes)
+
+  def unapply(
+    metadata: AtlasRegionMetadata
+  ): Option[(RegionId, String, Option[String], Option[Hemisphere], Option[NetworkId], Option[Rgb], Map[String, String])] =
+    Some(
+      (
+        metadata.id,
+        metadata.label,
+        metadata.labelFull,
+        metadata.hemisphere,
+        metadata.network,
+        metadata.color,
+        metadata.attributes
+      )
+    )
+
+  def checked(
+    id: RegionId,
+    label: String,
+    labelFull: Option[String] = None,
+    hemisphere: Option[Hemisphere] = None,
+    network: Option[NetworkId] = None,
+    color: Option[Rgb] = None,
+    attributes: Map[String, String] = Map.empty
+  ): Either[AtlasError, AtlasRegionMetadata] =
+    AtlasRegionMetadata.checked(
+      id,
+      label,
+      labelFull,
+      hemisphere,
+      network,
+      color,
+      attributes
+    )
+
+final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
   require(regions.nonEmpty, AtlasError.EmptyAtlas.message)
   private val duplicateIds =
     regions
@@ -121,13 +173,13 @@ final case class RegionIndex(regions: Vector[Region]):
       .sorted
   require(duplicateIds.isEmpty, AtlasError.DuplicateRegionIds(duplicateIds).message)
 
-  lazy val byId: Map[RegionId, Region] =
+  lazy val byId: Map[RegionId, AtlasRegionMetadata] =
     regions.map(r => r.id -> r).toMap
 
-  lazy val byLabel: Map[String, Vector[Region]] =
+  lazy val byLabel: Map[String, Vector[AtlasRegionMetadata]] =
     regions.groupBy(r => RegionIndex.normalize(r.label))
 
-  lazy val byFullLabel: Map[String, Vector[Region]] =
+  lazy val byFullLabel: Map[String, Vector[AtlasRegionMetadata]] =
     regions.groupBy(r => RegionIndex.normalize(r.fullLabel))
 
   def ids: Vector[RegionId] =
@@ -139,13 +191,13 @@ final case class RegionIndex(regions: Vector[Region]):
   def labels: Vector[String] =
     regions.map(_.label)
 
-  def get(id: RegionId): Option[Region] =
+  def get(id: RegionId): Option[AtlasRegionMetadata] =
     byId.get(id)
 
-  def requireRegion(id: RegionId): Region =
+  def requireRegion(id: RegionId): AtlasRegionMetadata =
     get(id).getOrElse(throw new NoSuchElementException(AtlasError.MissingRegionId(id).message))
 
-  def find(label: String, hemisphere: Option[Hemisphere] = None): Vector[Region] =
+  def find(label: String, hemisphere: Option[Hemisphere] = None): Vector[AtlasRegionMetadata] =
     val key = RegionIndex.normalize(label)
     val matches = byLabel.getOrElse(key, Vector.empty) ++ byFullLabel.getOrElse(key, Vector.empty)
     val distinct = matches.distinct
@@ -153,7 +205,7 @@ final case class RegionIndex(regions: Vector[Region]):
       case None => distinct
       case Some(h) => distinct.filter(_.hemisphere.contains(h))
 
-  def filter(p: Region => Boolean): RegionIndex =
+  def filter(p: AtlasRegionMetadata => Boolean): RegionIndex =
     RegionIndex(regions.filter(p))
 
   def labelMap: Map[Int, String] =

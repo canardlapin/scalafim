@@ -13,7 +13,7 @@ import scalafim.fmri.mvpa.dataset.*
 module is the narrow bridge between the two:
 
 - `MvpaDatasetView` converts an `FmriSeries` or selected `FmriDataset` read into
-  a `PatternMatrix` and backend-neutral `PatternSource`;
+  a `PatternMatrix` and backend-neutral `DensePatternSource`;
 - `LabeledMvpaDatasetView` is the classifier-facing view: it can only be built
   when every sample has a class label and exposes a validated `Response`
   directly;

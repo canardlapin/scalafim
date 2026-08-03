@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="data:,">
+    <title>ScalaFIM image-view browser benchmark</title>
+    <style>
+      body { margin: 24px; font: 14px/1.45 system-ui, sans-serif; color: #18202a; }
+      main { display: grid; grid-template-columns: minmax(640px, 960px) minmax(320px, 1fr); gap: 24px; }
+      canvas { width: 960px; height: 720px; max-width: 100%; border: 1px solid #ccd3dc; background: black; }
+      pre { margin: 0; padding: 16px; overflow: auto; background: #f3f5f7; border-radius: 6px; }
+    </style>
+  </head>
+  <body data-benchmark-state="loading">
+    <h1>ScalaFIM image-view browser workflow and benchmark</h1>
+    <p>The acceptance pass exercises overlay, threshold, slice navigation, zoom/pan, picking, readout, snapshot restore, and lifecycle before timing the render pipeline.</p>
+    <main>
+      <canvas id="viewer-benchmark-canvas" width="960" height="720"></canvas>
+      <pre id="benchmark-output">Linking benchmark…</pre>
+    </main>
+    <script>
+      // Scala.js test links install their RPC bridge even when this page only
+      // calls the exported benchmark entry point.
+      window.scalajsCom = { init: function () {}, send: function () {} };
+    </script>
+    <script src="../modules/image-view-canvas/js/target/scala-3.7.4/scalafim-image-view-canvas-test-opt/main.js"></script>
+    <script>runScalafimImageViewBenchmark();</script>
+  </body>
+</html>

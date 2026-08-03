@@ -1,6 +1,6 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{Axis, NeuroVec, NArrayUtil}
+import scalafim.image.{Axis, NeuroVec, PrimitiveBuffers}
 
 object MotionApplier:
   def apply(
@@ -30,7 +30,7 @@ object MotionApplier:
     val nz = dims(2)
     val nt = run.nVolumes
     val nxyz = nx * ny * nz
-    val out = NArrayUtil.ofSize[Double](nxyz * nt)
+    val out = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     val px = run.space.spacing(0)
     val py = run.space.spacing(1)
     val pz = run.space.spacing(2)
@@ -50,7 +50,18 @@ object MotionApplier:
             val sy = MotionSampling.sourceY(map, i, j, k)
             val sz = MotionSampling.sourceZ(map, i, j, k)
             val dst = i + nx * (j + ny * (k + nz * t))
-            out(dst) = MotionSampling.trilinear(run.values.data, nx, ny, nz, nxyz, t, sx, sy, sz, zeroPad)
+            out(dst) =
+              MotionSampling.trilinear(
+                run.values,
+                nx,
+                ny,
+                nz,
+                t,
+                sx,
+                sy,
+                sz,
+                zeroPad
+              )
             i += 1
           j += 1
         k += 1
@@ -70,7 +81,7 @@ object MotionApplier:
     val nz = dims(2)
     val nt = run.nVolumes
     val nxyz = nx * ny * nz
-    val out = NArrayUtil.ofSize[Double](nxyz * nt)
+    val out = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     val px = run.space.spacing(0)
     val py = run.space.spacing(1)
     val pz = run.space.spacing(2)
@@ -94,7 +105,18 @@ object MotionApplier:
             val sy = MotionSampling.sourceY(map, i, j, k)
             val sz = MotionSampling.sourceZ(map, i, j, k)
             val dst = i + nx * (j + ny * (k + nz * t))
-            out(dst) = MotionSampling.trilinear(run.values.data, nx, ny, nz, nxyz, t, sx, sy, sz, zeroPad)
+            out(dst) =
+              MotionSampling.trilinear(
+                run.values,
+                nx,
+                ny,
+                nz,
+                t,
+                sx,
+                sy,
+                sz,
+                zeroPad
+              )
             i += 1
           j += 1
         k += 1

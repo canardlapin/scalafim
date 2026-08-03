@@ -156,7 +156,7 @@ class BoxcarWeightedSuite extends munit.FunSuite:
 
   test("weighted handles sub-second intervals") {
     val times = (0 to 20).map(_ * 0.25).toVector
-    val weights = times.map(t => HrfFunctions.gaussianPdf(t.s, 2.5, 1.0))
+    val weights = times.map(t => HrfFunctions.gaussianPdf(Lag(t), 2.5, 1.0))
     val timesSec: Vector[Seconds] = times.map(Seconds(_)).toVector
     val h = Hrfs.weighted(weights.toVector, times = Some(timesSec), method = Hrfs.WeightedMethod.Linear)
     val grid = (0 to 90).map(i => -1.0 + i * 0.1).toVector

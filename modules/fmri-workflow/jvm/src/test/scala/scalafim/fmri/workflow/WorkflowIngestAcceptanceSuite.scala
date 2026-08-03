@@ -1,11 +1,11 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.*
-import scalafim.bids.io.BidsProjectLoader
+import bids4s.*
+import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.{DMat, NArrayUtil, NeuroSpace, NeuroVol}
+import scalafim.image.{DMat, PrimitiveBuffers, NeuroSpace, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -19,20 +19,23 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
   test("header-first catalog opens mixed-byte multi-run BOLD lazily with compressed staging") {
     withFixture { root =>
       writeProject(root)
-      val project = BidsProjectLoader.load(root).toOption.get
+      val projectReport = BidsProjectLoader.loadChecked(root).toOption.get
+      val project = projectReport.value
       val recipe = DatasetRecipe.unsafe(
         datasetId = DatasetId("acceptance"),
         project = WorkflowArtifactRef.unsafe[BidsProjectResource](root.toUri.toString.stripSuffix("/")),
-        boldQuery = BidsQuery(
+        boldQuery = BidsQuery.from(
           filename = Vector("desc-preproc_bold\\.nii(\\.gz)?$"),
           scope = BidsScope.Derivatives,
           pipeline = Some(PipelineName("fmriprep"))
-        ),
+        ).toOption.get,
         maskPolicy = MaskPolicy.IntersectRunMasks,
         confounds = Some(ConfoundSelectionConfig(variables = Vector("motion6")))
       )
 
-      val catalog = BidsStudyCompilerJvm.compile(project, recipe).toOption.get
+      val compilation = BidsStudyCompilerJvm.compileChecked(projectReport, recipe).toOption.get
+      val catalog = compilation.catalog
+      assertEquals(compilation.issues, Vector.empty)
 
       assertEquals(catalog.units.length, 1)
       val unit = catalog.units.head
@@ -119,7 +122,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
         else Array(1.0, 0.0, 1.0, 1.0)
       Nifti.writeVol(
         func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-        NeuroVol.fromLinear(NArrayUtil.fromArray(maskValues), space, s"mask-$run")
+        NeuroVol.fromLinear(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
       )
       write(
         func.resolve(s"${prefix}_desc-confounds_timeseries.tsv"),

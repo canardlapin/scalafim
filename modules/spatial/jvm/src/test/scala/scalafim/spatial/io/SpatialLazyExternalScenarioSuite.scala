@@ -1,7 +1,7 @@
 package scalafim.spatial.io
 
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, NArrayUtil, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -70,7 +70,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     val sourceBefore = source.stats
 
     val values =
-      NArrayUtil.fromArray(
+      PrimitiveBuffers.fromArray(
         Array(
           0.0, 1.0, 2.0, 3.0, 4.0, 5.0,
           10.0, 11.0, 12.0, 13.0, 14.0, 15.0,

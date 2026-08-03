@@ -1,6 +1,6 @@
 package scalafim.image.io
 
-import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec, NeuroVol, NArrayUtil}
+import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.Files
@@ -86,7 +86,7 @@ class NiftiSuite extends munit.FunSuite:
   test("writeVec round-trips a 4D double NIfTI through the lightweight reader") {
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val path = dir.resolve("maps.nii")
-    val data = NArrayUtil.fromArray(Array(1.0, 2.0, 3.0, 4.0))
+    val data = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
     val space = NeuroSpace(Vector(2, 1, 1)).addDim(2, Some(Axis.Time))
     val vec = NeuroVec.fromLinear(data, space, "maps")
 
@@ -103,7 +103,7 @@ class NiftiSuite extends munit.FunSuite:
   test("writeVol round-trips a 3D double NIfTI through the lightweight reader") {
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val path = dir.resolve("volume.nii")
-    val data = NArrayUtil.fromArray(Array(5.0, 6.0, 7.0, 8.0))
+    val data = PrimitiveBuffers.fromArray(Array(5.0, 6.0, 7.0, 8.0))
     val space = NeuroSpace(Vector(2, 2, 1))
     val vol = NeuroVol.fromLinear(data, space, "volume")
 

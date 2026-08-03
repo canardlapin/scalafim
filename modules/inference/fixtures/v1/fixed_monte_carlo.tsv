@@ -1,4 +1,0 @@
-case	alternative	observed	null_values	exceedances	draws	p_value	mc_se
-greater_with_ties	greater	2	0,2,3,-1,2	3	5	0.666666666666667	0.210818510677892
-less_lower_tail	less	-1	0,-2,1,-1,3	2	5	0.5	0.223606797749979
-two_sided_magnitude	two_sided	-2	-3,-2,-1,0,2,4	4	6	0.714285714285714	0.184427778390829

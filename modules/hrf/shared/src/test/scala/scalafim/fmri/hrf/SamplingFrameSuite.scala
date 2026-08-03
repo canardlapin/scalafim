@@ -15,6 +15,23 @@ class SamplingFrameSuite extends munit.FunSuite:
     assertEquals(sf2.startTime.map(_.value), Vector(1.0, 0.75))
   }
 
+  test("regular sampling frame sugar preserves default and explicit acquisition origins") {
+    val default =
+      SamplingFrame
+        .regular(tr = 0.8, nScans = 600)
+        .fold(error => fail(error.message), identity)
+    assertEquals(default.blockLens, Vector(600))
+    assertEquals(default.tr.map(_.value), Vector(0.8))
+    assertEquals(default.startTime.map(_.value), Vector(0.4))
+
+    val explicit =
+      SamplingFrame
+        .regular(tr = 0.8, nScans = 600, startTime = 0.0, precision = 0.01)
+        .fold(error => fail(error.message), identity)
+    assertEquals(explicit.startTime.map(_.value), Vector(0.0))
+    assertEquals(explicit.precision.value, 0.01)
+  }
+
   test("sampling frame validates inputs") {
     intercept[IllegalArgumentException] {
       SamplingFrame(blockLens = Seq(-1, 100), tr = Seq(2.0))

@@ -78,9 +78,10 @@ object FmriModelBuilder:
     val durations = durationValues(table, spec)
 
     val eventModel =
-      spec.blockColumn match
-        case Some(column) =>
-          require(table.contains(column), s"block column '$column' is not present in dataset events")
+      spec.blockColumnId match
+        case Some(columnId) =>
+          val column = columnId.value
+          require(table.contains(columnId), s"block column '$column' is not present in dataset events")
           EventModelBuilder.buildWithBlockFormula(
             formula = spec.formulaText.value,
             data = table,
@@ -138,13 +139,16 @@ object FmriModelBuilder:
     DataTable(events.nrows, columns)
 
   private def durationValues(table: DataTable, spec: ModelBuildSpec): Vector[Double] =
-    spec.durationColumn match
-      case None => Vector(0.0)
-      case Some(column) =>
-        require(table.contains(column), s"duration column '$column' is not present in dataset events")
-        val values = table.doubles(column)
+    spec.durationColumnId match
+      case Some(columnId) =>
+        val column = columnId.value
+        require(table.contains(columnId), s"duration column '$column' is not present in dataset events")
+        val values = table
+          .get[Double](columnId)
+          .fold(error => throw new IllegalArgumentException(error.message), identity)
         require(values.forall(v => v.isFinite && v >= 0.0), s"duration column '$column' must be finite and non-negative")
         values
+      case None => Vector(0.0)
 
   private def inferColumn(name: String, values: Vector[DatasetValue]): Column =
     val ints = values.map(_.asInt)

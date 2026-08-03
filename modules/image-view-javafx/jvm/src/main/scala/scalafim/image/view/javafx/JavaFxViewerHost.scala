@@ -2,7 +2,7 @@ package scalafim.image.view.javafx
 
 import javafx.scene.canvas.GraphicsContext
 
-import scalafim.graphics.javafx.*
+import intaglio.javafx.*
 import scalafim.image.view.*
 
 enum JavaFxViewerError:

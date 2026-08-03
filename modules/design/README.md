@@ -11,8 +11,8 @@ import scalafim.fmri.design.*
 This module contains event models, formula parsing, condition bases, baseline
 models, contrast definitions, design-matrix metadata, and design export helpers.
 It depends on `scalafim-fmri-hrf` for sampling/convolution, `scalafim-linalg`
-for shared QR/rank primitives, and `scalafim-graphics` for renderer-neutral
-plot and scene exports.
+for shared QR/rank primitives, and Intaglio core for renderer-neutral plot and
+scene exports.
 
 Preferred typed entry points:
 
@@ -38,19 +38,34 @@ Renderer-neutral event plot export:
 
 ```scala
 import scalafim.fmri.design.*
-import scalafim.graphics.svg.*
+import intaglio.svg.*
 
 val scene = DesignGraphics.eventModelScene(model, termName = Some("task")).toOption.get
 val svg = SvgRenderer.render(scene).toOption.get
 ```
 
-The dependency direction is `design -> graphics -> graphics-svg` at the
-application boundary. `design` produces plot specs/scenes; SVG remains an
-optional renderer adapter.
+`DesignGraphics` itself is implemented with the public plotting DSL. A design
+adapter can use the same surface directly:
+
+```scala
+import intaglio.*
+
+val trained = plot(eventPlotData.points)
+  .aes(_.time, _.response)
+  .group(_.regressor)
+  .scaleColorDiscrete(_.regressor, levels = eventPlotData.regressors, name = "regressor")
+  .geomLine()
+  .resolve
+```
+
+The dependency direction is `design -> Intaglio core`; applications select an
+Intaglio renderer separately. `design` produces plot specs/scenes, while SVG is
+used only by the JVM integration gallery.
 
 Run it directly with:
 
 ```sh
 sbt designJVM/test
 sbt designJS/test
+tools/render_design_gallery.sh
 ```

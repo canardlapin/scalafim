@@ -89,20 +89,18 @@ object r:
       f: Double => Double,
       name: String = "custom",
       nbasis: Int = 1,
-      span: Double = 24.0,
-      params: Map[String, Any] = Map.empty
+      span: Double = 24.0
   ): Hrf =
     require(nbasis == 1, "scalar as_hrf requires nbasis=1")
-    Hrf.scalar(name, span = span.s, params = params)(t => f(t.value))
+    Hrf.scalar(name, span = span.s)(t => f(t.value))
 
   def as_hrf_multi(
       f: Double => Array[Double],
       nbasis: Int,
       name: String = "custom",
-      span: Double = 24.0,
-      params: Map[String, Any] = Map.empty
+      span: Double = 24.0
   ): Hrf =
-    Hrf.multi(name, nbasis = nbasis, span = span.s, params = params)(t => f(t.value))
+    Hrf.multi(name, nbasis = nbasis, span = span.s)(t => f(t.value))
 
   def deriv(hrf: Hrf, t: Seq[Double]): Mat =
     Deriv.doubles(hrf, t)
@@ -110,7 +108,7 @@ object r:
   def hrf_basis_lwu(theta0: Seq[Double], t: Seq[Double], normalize_primary: String = "none"): Mat =
     require(theta0.length == 3, "`theta0` must have length 3")
     val norm = normalize_primary.toLowerCase == "height"
-    LwuBasis(LwuParams(theta0(0), theta0(1), theta0(2)), t.map(_.s), norm)
+    LwuBasis(LwuParams(theta0(0), theta0(1), theta0(2)), t.map(Lag(_)), norm)
 
   def list_available_hrfs(): Vector[String] = Registry.listAvailable
 

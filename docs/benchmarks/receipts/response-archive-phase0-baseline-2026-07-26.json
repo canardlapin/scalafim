@@ -1,0 +1,265 @@
+{
+  "capturedOn": "2026-07-26",
+  "corpus": {
+    "cases": [
+      {
+        "comparator": "raw-bits",
+        "id": "dense"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "lna-quant"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "lna-delta"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "lna-delta-quant"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "lna-basis-embed"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "latent-explicit"
+      },
+      {
+        "comparator": "absolute-relative",
+        "id": "lna-temporal-dct"
+      },
+      {
+        "comparator": "absolute-relative",
+        "id": "latent-temporal-dct"
+      },
+      {
+        "comparator": "absolute-relative",
+        "id": "latent-temporal-haar"
+      },
+      {
+        "comparator": "absolute-relative",
+        "id": "latent-shared-basis"
+      },
+      {
+        "comparator": "absolute-relative",
+        "id": "latent-hrbf-shared-basis"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "latent-transport"
+      },
+      {
+        "comparator": "raw-bits",
+        "id": "latent-boldzip"
+      }
+    ],
+    "definitionPath": "modules/latent/shared/src/test/scala/scalafim/latent/ResponseArchiveMigrationBaselineSuite.scala",
+    "definitionSha256": "e717875f4c3693262f58d0426fad6851c495da0c33cfa42e83b021f7458b5cb9",
+    "execution": {
+      "commands": {
+        "jvm": [
+          "sbt",
+          "latentJVM/Test/runMain scalafim.latent.ResponseArchiveMigrationBaselineMain"
+        ],
+        "scalaJs": [
+          "sbt",
+          "set latentJS / Test / scalaJSUseTestModuleInitializer := false",
+          "set latentJS / Test / scalaJSUseMainModuleInitializer := true",
+          "set latentJS / Test / mainClass := Some(\"scalafim.latent.ResponseArchiveMigrationBaselineMain\")",
+          "latentJS / Test / run"
+        ]
+      },
+      "jvm": {
+        "canonicalSha256": "f07b16fd5ff7b124de67d291a541ed5a4c784e79cca0ba36ec848d294e963a3e",
+        "caseSha256": {
+          "dense": "e9b31b91343ac6a542ddbfd9d54920c64514606df64690f13858e38f34172040",
+          "latent-boldzip": "6ba6c83c2c92bf44ee98c4424a375040a7b2e57348321fae7f2635b51ffa72d9",
+          "latent-explicit": "6c34a0ecbe312264b2e05349226d52f1d52bbff0ef492270bee14f3d932ec254",
+          "latent-hrbf-shared-basis": "98938471a95f556726d8070cfe0a39d54481cf48748c8fd67744c602782a247c",
+          "latent-shared-basis": "128b2e8dddc1dcf7eae64113a1b799e557bfad611e383f9dc8a1680964018497",
+          "latent-temporal-dct": "61ffd2c5a0d2b1357f7160c21a266e3a4ae417d09e7fb4eac1e704cd355da2ff",
+          "latent-temporal-haar": "53d2a92ad6a276095efea5451ff4b3112f70aa47f992e1b02ab8e16c3b3d07ec",
+          "latent-transport": "5497c7fc615260bbe7c11458ab581867c1c53f4e405e30962cab7a32dc0f229e",
+          "lna-basis-embed": "cc86cb682b0ecc6e85dfbe312e6993a9009bb34770174c6919ff6c147ce98157",
+          "lna-delta": "788b51f13ee3c488a75c24f298d65d4642c3cc3be913dea8f46b577fb301a9d7",
+          "lna-delta-quant": "82ccc6cd5b69670cd7a5456dd534834489181325d3047ce2c2527b7256974b97",
+          "lna-quant": "418d31c1a6886e823ba841209ee689e996164d5f40293c8e39d3e2baa4d0314e",
+          "lna-temporal-dct": "14ee8e64bda1da671e1d5f71c010798c0618af616cfc748e0552357c4890f170"
+        }
+      },
+      "scalaJs": {
+        "canonicalSha256": "5790b2796a3635e7039b8ad1d574d9ec0edbc9df72ef1011a8961e58ccae2c92",
+        "caseSha256": {
+          "dense": "e9b31b91343ac6a542ddbfd9d54920c64514606df64690f13858e38f34172040",
+          "latent-boldzip": "6ba6c83c2c92bf44ee98c4424a375040a7b2e57348321fae7f2635b51ffa72d9",
+          "latent-explicit": "6c34a0ecbe312264b2e05349226d52f1d52bbff0ef492270bee14f3d932ec254",
+          "latent-hrbf-shared-basis": "98938471a95f556726d8070cfe0a39d54481cf48748c8fd67744c602782a247c",
+          "latent-shared-basis": "128b2e8dddc1dcf7eae64113a1b799e557bfad611e383f9dc8a1680964018497",
+          "latent-temporal-dct": "7ca96c8a7aff74478ac4c404c7e04235985faeefc7d953b22654c42f9593b4d0",
+          "latent-temporal-haar": "53d2a92ad6a276095efea5451ff4b3112f70aa47f992e1b02ab8e16c3b3d07ec",
+          "latent-transport": "5497c7fc615260bbe7c11458ab581867c1c53f4e405e30962cab7a32dc0f229e",
+          "lna-basis-embed": "cc86cb682b0ecc6e85dfbe312e6993a9009bb34770174c6919ff6c147ce98157",
+          "lna-delta": "788b51f13ee3c488a75c24f298d65d4642c3cc3be913dea8f46b577fb301a9d7",
+          "lna-delta-quant": "82ccc6cd5b69670cd7a5456dd534834489181325d3047ce2c2527b7256974b97",
+          "lna-quant": "418d31c1a6886e823ba841209ee689e996164d5f40293c8e39d3e2baa4d0314e",
+          "lna-temporal-dct": "617cec6afeec400b5aac8af679143a26a1986daf79f1202c6b4976b852f93b15"
+        }
+      },
+      "status": "passed"
+    },
+    "schema": "scalafim-response-archive-migration-baseline-v1"
+  },
+  "decisions": {
+    "datasetEffects": "pure FmriDataset; effects in OpenedDataset and ResponseSource",
+    "deferred": [
+      "D5"
+    ],
+    "resolved": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10"
+    ],
+    "responseBlock": "owned row-major Double buffer; no tensor framework"
+  },
+  "effectsSpike": {
+    "laws": [
+      "release-on-success",
+      "release-on-failure",
+      "release-on-cancel"
+    ],
+    "path": "modules/image/shared/src/test/scala/scalafim/image/CatsEffectSharedBoundarySuite.scala",
+    "scalaJsTestFastLinkBytes": 8353622,
+    "sizeInterpretation": "total image test fast-link output, not marginal production cost; Phase 1 repeats for the response artifact"
+  },
+  "environment": {
+    "java": "openjdk version \"22\" 2024-03-19",
+    "node": "v24.1.0",
+    "platform": "macOS-14.3-arm64-arm-64bit-Mach-O",
+    "python": "3.14.3"
+  },
+  "inventories": {
+    "forbiddenEdges": {
+      "datasetToArchive": [
+        "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala",
+        "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala",
+        "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetError.scala",
+        "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala"
+      ],
+      "datasetToLatent": [
+        "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala",
+        "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala",
+        "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetError.scala",
+        "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala",
+        "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentResponseDatasetBackend.scala"
+      ],
+      "latentToArchive": [
+        "modules/latent/shared/src/main/scala/scalafim/latent/BoldZipLatentArchiveCodec.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/ExplicitLatentArchiveCodec.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchiveCodec.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchiveDescriptors.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchivePayloads.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/LatentEncoder.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/SharedBasisEncoder.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/SharedBasisLatentArchiveCodec.scala",
+        "modules/latent/shared/src/main/scala/scalafim/latent/TransportLatentArchiveCodec.scala"
+      ]
+    },
+    "manifestVariants": {
+      "lna": "LNA R v2.0",
+      "sharedBasisRegistry": "scalafim-lna-basis-registry-0",
+      "zarrProfile": "neuroarchive-zarr-0.1",
+      "zarrPublicationReceipt": 1
+    },
+    "representationFamilies": [
+      "Explicit",
+      "TemporalDct",
+      "TemporalHaar",
+      "SharedBasis",
+      "Transport",
+      "BoldZip"
+    ],
+    "twoPrincipalDomainFiles": [
+      "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/FmriDatasetZarr.scala",
+      "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/NiftiCanonicalImporter.scala",
+      "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala",
+      "modules/dataset-zarr/shared/src/main/scala/scalafim/dataset/zarr/CanonicalBoldSampling.scala",
+      "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala",
+      "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala",
+      "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetError.scala",
+      "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala",
+      "modules/latent/shared/src/main/scala/scalafim/latent/BoldZipLatentArchiveCodec.scala",
+      "modules/latent/shared/src/main/scala/scalafim/latent/ExplicitLatentArchiveCodec.scala",
+      "modules/latent/shared/src/main/scala/scalafim/latent/SharedBasisLatentArchiveCodec.scala",
+      "modules/latent/shared/src/main/scala/scalafim/latent/TransportLatentArchiveCodec.scala"
+    ]
+  },
+  "repository": {
+    "ancestorCommits": {
+      "frame4sExtraction": {
+        "commit": "b6a3af2af4dad57413e80ebce0ddf33633d704a9",
+        "isAncestorOfStartHead": true,
+        "unmergedPrerequisite": false
+      },
+      "scala374Experiment": {
+        "commit": "4d2ddddf5b7a7183a16235bb15eb50abcbfe75ed",
+        "isAncestorOfStartHead": true,
+        "unmergedPrerequisite": false
+      }
+    },
+    "branchAtCapture": "main",
+    "canonical": "canardlapin/scalafim",
+    "datasetBridgeCommit": "b9d96e2a23e24a57beeb36b978b14935c81071f5",
+    "governingPlanCommit": "7afc0ee19167eeb8f2acc4380e7733e3e1f0951e",
+    "startHead": "7c590372dd3cea733f5835b9ca1bb6f62e92292f",
+    "workingHeadAtCapture": "7c590372dd3cea733f5835b9ca1bb6f62e92292f",
+    "workingTreePolicy": "startHead plus sourceSha256 define the baseline; unrelated dirty working-tree state is excluded"
+  },
+  "schema": "scalafim-response-archive-phase0-receipt-v1",
+  "sourceSha256": {
+    "build.sbt": "c734a4a472c6f88eb5cc671bda375284d205122407a792cb10a63ebdff2edba6",
+    "docs/plans/response-representation-archive-architecture.md": "91e94f09c7cbf86261d2bf405d33bf31e6d68ad4c6c93caf634efd6c1901aafa",
+    "docs/plans/response-representation-archive-phase-0.md": "5858474ee1c72566c125207f0955bee7f33dc000f6602cf984372d9f4e20d8b0",
+    "modules/archive/shared/src/main/scala/scalafim/archive/lna/LnaModel.scala": "9172516637cad107669a2c004ba3e4d97abe172023d2865d94d68e3e02bb2a24",
+    "modules/archive/shared/src/main/scala/scalafim/archive/lna/LnaPipeline.scala": "9ac53730891d37cb0693f35282b78a24e4e1809c29411c997d7973ea07731d14",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/FmriDatasetZarr.scala": "51804cf0686253cf9a95211a3320061d5adff5ef32d32761d3d60697946408d2",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/NiftiCanonicalImporter.scala": "c9d8b54f4a061fb28b1190b91afa9d00328b94747b1e9ed6bf27d2c8b2673ea3",
+    "modules/dataset-zarr/jvm/src/main/scala/scalafim/dataset/zarr/ZarrResponseBlockSource.scala": "3bfc7558496f391b7f8380ff3f73fd107133d091c286fa1ca7db580f9a83f687",
+    "modules/dataset-zarr/shared/src/main/scala/scalafim/dataset/zarr/CanonicalBoldSampling.scala": "866944a9b4a4d3fb6febfca4641d22825028e7d1bb1fe27f8a16962d72dae33b",
+    "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala": "57ced2bbe5e239e4161ea644b81ef3a5756e43a7a51ed2a70b3ea2f4af195d4d",
+    "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala": "78b8ffd8a3e77b325f6d0589ec0ab15e4516901c4adb0b58d17f01cb04973e09",
+    "modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetError.scala": "8ce730c18da5a8d9c603d6d8d7393c6272ebc91a8e1fd3e0e7c017b713e0e6d2",
+    "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala": "294ccd6c685e301ba000ca4ede8b72d984cd152959b2bd5d02e5a0e1218ac5a3",
+    "modules/dataset/shared/src/main/scala/scalafim/dataset/LatentResponseDatasetBackend.scala": "561a2c3a6f47c2fe27caf659cd00adcb4da0470dfae52ab54c13097b44936741",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/design/SamplingFrame.scala": "58377184a8507635c59df33ee9a916e8b6b77dde7a7a47657d337c37268ab1b3",
+    "modules/image/shared/src/main/scala/scalafim/image/DMat.scala": "47ffd2de48f1df1064f6d9b698a6bd1d00c24a2f3ea419f41b83df6ad77967d8",
+    "modules/image/shared/src/test/scala/scalafim/image/CatsEffectSharedBoundarySuite.scala": "55d53c7c9f3b07c181b3c1e67b935ec9c897f57c3ef0db2c64352cda59051960",
+    "modules/latent/shared/src/main/scala/scalafim/latent/BoldZipLatentArchiveCodec.scala": "be271e0e672b44dcb4c51fd4f1df00e199dcd42a236c5a8c1af75f3ab82388db",
+    "modules/latent/shared/src/main/scala/scalafim/latent/ExplicitLatentArchiveCodec.scala": "4f17fa8cd68253f6c865ad8d8fb3e0d7f30aa79f9fa2b693863bfc1f7a415ca8",
+    "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchiveCodec.scala": "a5db9917a32486b47983e878286700cdb16e153d965613fcae132932dc2472db",
+    "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchiveDescriptors.scala": "5eb2dc36030c8a0fc5a277bc24da02d66a73474c977ce9965d7d751f6fbd7d2d",
+    "modules/latent/shared/src/main/scala/scalafim/latent/LatentArchivePayloads.scala": "295125dc8df5f7e179d3b26dcbd3fa02b610aff222893537e8558350b9323263",
+    "modules/latent/shared/src/main/scala/scalafim/latent/LatentEncoder.scala": "9e518cf1fe1902e54162bb8089607c5dfcdd1d89308a22e39beed0ab6593f068",
+    "modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala": "089c9004b044d730ca593d6e7e6fbfd7aa065c3740f5a8786de7f2de91ad48f4",
+    "modules/latent/shared/src/main/scala/scalafim/latent/SharedBasisEncoder.scala": "617e753c06207ab83ce5177b99165554f2de3d79c7077ddc11e45dfa7c95d063",
+    "modules/latent/shared/src/main/scala/scalafim/latent/SharedBasisLatentArchiveCodec.scala": "4a287201d5b6a87464712ac605d2908b4b8022e9d9089f0fb599b3c00b702564",
+    "modules/latent/shared/src/main/scala/scalafim/latent/TransportLatentArchiveCodec.scala": "c15312697687c9076433b925c3675b63ba74c3f515a67778d789d782592487fc",
+    "modules/latent/shared/src/test/scala/scalafim/latent/DecodePlanTypingSpikeSuite.scala": "25b749d34bc66cf8bbb8522eb6feee1a4ef84eb5af675011cf4495b9c9020fcf",
+    "modules/latent/shared/src/test/scala/scalafim/latent/ResponseArchiveMigrationBaselineSuite.scala": "e717875f4c3693262f58d0426fad6851c495da0c33cfa42e83b021f7458b5cb9",
+    "project/build.properties": "3d013fad6ecab773b7cfdda92fc04890836e8f33709be272322c054b78ffaa70",
+    "tools/response_archive/capture_phase0_baseline.py": "07dcd2ef6e2c61c6178200182c7e8daf54549e5676219e34e424c8fc0c626700"
+  },
+  "toolchain": {
+    "catsEffect": "3.5.4",
+    "sbt": "1.10.5",
+    "scala": "3.4.2"
+  }
+}

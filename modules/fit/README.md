@@ -40,6 +40,17 @@ The default plan is identity-preserving for current OLS/GLS/LSS behavior;
 non-default transforms that still need engine-specific implementation are
 retained as deferred provenance instead of disappearing into loose config flags.
 
+Prepared LSS designs expose a response-independent `TrialReadout`: a checked
+Gale linear operator from timepoints to a named `TrialCoefficientAxis`. The
+operator folds fixed-design residualization into the trial estimator, applies to
+all voxel columns as one batch, and exposes the true transpose action from trial
+scores back to timepoints. `LeastSquaresSeparate.fit` uses this same readout, so
+ordinary beta estimation and future joint MVPA objectives cannot drift into two
+different LSS implementations. A trial absorbed by the fixed design remains on
+the coefficient axis with `TrialEstimability.ZeroRegressor` and an exactly zero
+readout row; response-dependent preparation such as robust or voxelwise nuisance
+estimation is intentionally not represented as a fixed `TrialReadout`.
+
 GLS normalizes legacy AR options through typed `AutocorrelationConfig` before
 execution. Impossible strategy states such as simultaneous global and voxelwise
 estimation are rejected at construction. Shared/run-level AR estimation supports
@@ -84,6 +95,13 @@ Contrast inference treats zero residual variance and zero contrast variance as
 non-estimable. These paths now return `FitError.NonEstimableContrast` instead of
 emitting non-finite t or F statistics, so callers should handle the typed error
 case rather than interpreting `NaN` or infinity as a valid statistic.
+
+`ResponsePreparationPlan.prepareManova` compiles an `FContrast` into a
+`PreparedManovaGeometry`. The contrast covariance is Cholesky-certified and the
+resulting multi-column effect basis is normalized in the prepared design
+metric. Dependent contrast rows are therefore rejected as non-estimable, while
+any nonsingular change of basis within the same contrast subspace preserves the
+hypothesis projector.
 
 ## Result artifacts
 

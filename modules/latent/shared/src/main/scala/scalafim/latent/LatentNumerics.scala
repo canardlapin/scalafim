@@ -175,12 +175,6 @@ extension (matrix: DMat)
   private[latent] def selectRows(indices: IndexedSeq[Int]): DMat =
     Matrix.tabulate(indices.length, matrix.cols) { (row, col) => matrix(indices(row), col) }
 
-  private[latent] def addToDiagonal(amount: Double): DMat =
-    require(matrix.rows == matrix.cols, "diagonal update requires a square matrix")
-    Matrix.tabulate(matrix.rows, matrix.cols) { (row, col) =>
-      matrix(row, col) + (if row == col then amount else 0.0)
-    }
-
 extension (vector: DVec)
   private[latent] def copyData: Array[Double] =
     vector.toSeq.toArray

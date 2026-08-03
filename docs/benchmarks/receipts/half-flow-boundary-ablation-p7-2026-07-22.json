@@ -1,0 +1,123 @@
+{
+  "capturedAtUtc": "2026-07-22T12:03:00Z",
+  "capturedOn": "2026-07-22",
+  "schema": "scalafim-half-flow-boundary-ablation-v1",
+  "admission": {
+    "case": "sub18_orig_to_2009cAsym",
+    "status": "diagnostic-fail",
+    "retainedVariant": "identity-extended-self-flow_masked-sobolev_shrink-4-2-1",
+    "reasons": [
+      "Final forward-backward inverse error is 0.5570350610572852 mm / 0.2785175305286426 fixed-grid voxels, above the 0.50 mm / 0.25 voxel limits.",
+      "Final backward Jacobian coverage is below the restored 0.80 threshold.",
+      "Single-case accuracy remains below the frozen ANTs comparator."
+    ]
+  },
+  "changes": {
+    "image": "Added an opt-in identity outside policy for coordinate self-map composition; strict composition remains the default.",
+    "registration": "Paired squaring and midpoint inverse-arm updates use identity extension; exact and tiny affine-initialized updates have JVM and Scala.js guard contracts.",
+    "schedule": "Removed the unassisted shrink-8 level from the real-data diagnostic profile after it reduced downstream accuracy.",
+    "guard": {
+      "minimumJacobian": 0.05,
+      "maximumInverseErrorMm": 0.5,
+      "maximumInverseErrorVox": 0.25,
+      "minimumJacobianValidFraction": 0.8,
+      "minimumInverseValidFraction": 0.6
+    },
+    "gale": "No Gale source change; the failures are map-support and representation contracts, not a general solver defect."
+  },
+  "ablations": [
+    {
+      "variant": "full-grid-no-flux",
+      "acceptedSteps": 3,
+      "dice": 0.9257755154960176,
+      "globalNcc": 0.9051319328562939,
+      "localNcc": 0.4820782800360846,
+      "nonlinearSeconds": 19.650544,
+      "endToEndSeconds": 26.748775416,
+      "forwardInverseMaximumMm": 0.18073776247635193,
+      "decision": "reject",
+      "reason": "Boundary motion caused support discontinuity, non-finite candidates, and a 49.26 mm invalid-map excursion."
+    },
+    {
+      "variant": "full-grid-zero-boundary",
+      "acceptedSteps": 25,
+      "dice": 0.9321590780520131,
+      "globalNcc": 0.9121796980545199,
+      "localNcc": 0.49220071293621376,
+      "gradientNcc": 0.248141857396,
+      "nonlinearSeconds": 28.387184125,
+      "endToEndSeconds": 37.420413709,
+      "forwardInverseMaximumMm": 0.39746188446713027,
+      "decision": "reject",
+      "reason": "Numerically stable but slower and materially less accurate than the masked solve."
+    },
+    {
+      "variant": "masked-sobolev-with-unassisted-shrink-8",
+      "acceptedSteps": 17,
+      "dice": 0.931884180893644,
+      "globalNcc": 0.9116624543956305,
+      "localNcc": 0.48824839694801697,
+      "nonlinearSeconds": 17.453606375,
+      "endToEndSeconds": 24.700628459,
+      "forwardInverseMaximumMm": 0.3429764346688678,
+      "decision": "reject",
+      "reason": "The shrink-8 objective improved, but it placed shrink-4 in a poor basin and reduced final accuracy."
+    },
+    {
+      "variant": "masked-sobolev-shrink-4-2-1",
+      "acceptedSteps": 22,
+      "attemptedSteps": 58,
+      "dice": 0.9324664251554232,
+      "globalNcc": 0.9175131707362224,
+      "localNcc": 0.5418738667842135,
+      "gradientNcc": 0.279891350411,
+      "centerOfMassDistanceFixedGridVox": 1.25375427304,
+      "nonlinearSeconds": 20.355289375,
+      "endToEndSeconds": 27.851721542,
+      "forwardMinimumJacobian": 0.42865678462199963,
+      "backwardMinimumJacobian": 0.7249946716954769,
+      "forwardNonPositiveJacobians": 0,
+      "backwardNonPositiveJacobians": 0,
+      "forwardInverseMaximumMm": 0.5570350610572852,
+      "backwardInverseMaximumMm": 0.44169568247128727,
+      "decision": "retain-as-diagnostic"
+    }
+  ],
+  "comparator": {
+    "method": "ANTs SyNQuick fixed-mask",
+    "receipt": "half-flow-ants-sub18-p7-2026-07-22.json",
+    "dice": 0.979358955715422,
+    "globalNcc": 0.9457095651791,
+    "localNcc": 0.672298050150454,
+    "gradientNcc": 0.439945600516007,
+    "elapsedSeconds": 49.915
+  },
+  "verification": {
+    "imageJVM": { "passed": 207, "failed": 0 },
+    "imageJS": { "passed": 200, "failed": 0 },
+    "registrationJVM": { "passed": 35, "failed": 0 },
+    "registrationJS": { "passed": 35, "failed": 0 },
+    "independentEvaluator": "/Users/bbuchsbaum/code/hodgeflow/inst/benchmarks/benchmark_public_t1_registration.R"
+  },
+  "outputs": {
+    "workDirectory": "/private/tmp/halfflow-scala-p7-shrink4.dq9z5Y",
+    "summaryCsvSha256": "e8f68e707f2ef1d97f9ebf4c3e85bd15b6d2939fbc9070e0bc7f1c9102d7f986",
+    "attemptsCsvSha256": "d3972db9642a39a2d0612785996d8acd55a1a739c83c682d9729fd2e6b2d8a54",
+    "warpedMovingNiftiSha256": "e129510846ec54b1626ae47e0d491800d84127d813cb562e240fea519f4cab90",
+    "warpedMaskNiftiSha256": "ccea3e6c89fa9c6ddbd415fe70dc7901dffd13b8fc24539ce7dd35c75a801f87"
+  },
+  "repository": {
+    "headDuringCapture": "9e5ea03b822d63ae44a3d44ad4c104fc86032841",
+    "workingTreePolicy": "Shared checkout is dirty; source and output hashes define this diagnostic."
+  },
+  "sourceSha256": {
+    "modules/image/shared/src/main/scala/scalafim/image/DenseFieldKernels.scala": "e85cae25db0ba3c5d613615aead7cd86825b2d11ab4ba20c53948483f0a2a25b",
+    "modules/image/shared/src/test/scala/scalafim/image/DenseFieldKernelsSuite.scala": "273e35a5f00cae38607e45f731b5d2deeae40e31d18d434000ab57523d4d60bb",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "14b7921f95a5aaa67108321eae4b8b4405e9dc85e5f31dc5219dce951a421c48",
+    "modules/registration/shared/src/main/scala/scalafim/registration/PairedFlow.scala": "933a74e883fe74961f6701b22cc83a984b87653b80fb2dbf1b796e78c5492f3d",
+    "modules/registration/shared/src/test/scala/scalafim/registration/RegistrationAlgebraSuite.scala": "2d9eef22399e2b832ce7dc6391b02a2fa8c7fa69f704dda2c3fe4989fd0c975c",
+    "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowEvaluationCli.scala": "0a33aa0618837f57bf8100f99101808e14f7c641ed162fb9e076d0b728e82d7a",
+    "modules/registration/shared/src/main/scala/scalafim/registration/SobolevShaper.scala": "36aee7bc297a206a730cf333de00f3dc5fabf825e9c5f9388fb2228c423be140",
+    "modules/registration/shared/src/test/scala/scalafim/registration/SobolevShaperSuite.scala": "4a43ae76f85f3ae503d7e0b5f8f762b7f5005e322203ec9888876a9900cc96de"
+  }
+}

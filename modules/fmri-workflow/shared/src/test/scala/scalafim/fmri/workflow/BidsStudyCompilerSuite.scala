@@ -1,7 +1,7 @@
 package scalafim.fmri.workflow
 
 import munit.FunSuite
-import scalafim.bids.*
+import bids4s.*
 import scalafim.dataset.{DatasetId, DatasetShape}
 import scalafim.image.NeuroSpace
 
@@ -192,6 +192,58 @@ class BidsStudyCompilerSuite extends FunSuite:
     assert(duplicate.issues.exists(_.code == CatalogIssueCode.DuplicateParticipant))
   }
 
+  test("checked compilation preserves deterministic BIDS diagnostics and valid legacy parity") {
+    val fixture = identityFixture(task = "demo")
+    val validPaths = fixture.project.manifest.files.map(_.path.value)
+    val defects = Vector(
+      "sub-03/func/sub-03_task-rest_custom.tsv",
+      "sub-02/func/sub-02_bold.nii.gz",
+      "notes.txt",
+      "sub-01/func/sub-01_task-_bold.nii.gz",
+      "../escape.tsv"
+    )
+
+    def checked(paths: Vector[String]): Either[CatalogCompileReport, CatalogCompilation] =
+      val manifest = BidsManifest.fromRelativePathsChecked(paths, fixture.project.derivatives)
+      val project = manifest.map(value => fixture.project.copy(manifest = value))
+      BidsStudyCompiler.compileChecked(project, fixture.recipe, fixture.headers)
+
+    val report = checked(validPaths ++ defects).left.toOption.getOrElse(fail("expected validation errors"))
+    val reversed = checked((validPaths ++ defects).reverse).left.toOption.getOrElse(fail("expected validation errors"))
+
+    assertEquals(report.issues, reversed.issues)
+    assertEquals(report.errors.length, 3)
+    assertEquals(report.warnings.length, 2)
+    assertEquals(
+      report.issues.map(issue => (issue.path.map(_.value), issue.code, issue.severity, issue.field)),
+      Vector(
+        (Some("../escape.tsv"), CatalogIssueCode.BidsValidation(BidsIssueCode.InvalidPath), BidsIssueSeverity.Error, Some("path")),
+        (Some("notes.txt"), CatalogIssueCode.BidsValidation(BidsIssueCode.UnrecognizedFile), BidsIssueSeverity.Warning, None),
+        (Some("sub-01/func/sub-01_task-_bold.nii.gz"), CatalogIssueCode.BidsValidation(BidsIssueCode.InvalidName), BidsIssueSeverity.Error, None),
+        (Some("sub-02/func/sub-02_bold.nii.gz"), CatalogIssueCode.BidsValidation(BidsIssueCode.MissingRequiredField), BidsIssueSeverity.Error, Some("task")),
+        (Some("sub-03/func/sub-03_task-rest_custom.tsv"), CatalogIssueCode.BidsValidation(BidsIssueCode.UnsupportedFileRole), BidsIssueSeverity.Warning, None)
+      )
+    )
+
+    val legacy = BidsStudyCompiler.compile(fixture.project, fixture.recipe, fixture.headers).toOption.get
+    val valid = checked(validPaths).toOption.get
+    assertEquals(valid.catalog, legacy)
+    assertEquals(valid.issues, Vector.empty)
+
+    val warningOnly = checked(validPaths :+ "notes.txt").toOption.get
+    assertEquals(warningOnly.catalog, legacy)
+    assertEquals(
+      warningOnly.warnings.map(issue => (issue.path.map(_.value), issue.code, issue.severity)),
+      Vector(
+        (
+          Some("notes.txt"),
+          CatalogIssueCode.BidsValidation(BidsIssueCode.UnrecognizedFile),
+          BidsIssueSeverity.Warning
+        )
+      )
+    )
+  }
+
   private final case class Fixture(
       project: BidsProject,
       recipe: DatasetRecipe,
@@ -251,11 +303,11 @@ class BidsStudyCompilerSuite extends FunSuite:
     DatasetRecipe.unsafe(
       datasetId = DatasetId("demo"),
       project = WorkflowArtifactRef.unsafe[BidsProjectResource]("file:///study"),
-      boldQuery = BidsQuery(
+      boldQuery = BidsQuery.from(
         filename = Vector("desc-preproc_bold\\.nii$"),
         scope = BidsScope.Derivatives,
         pipeline = Some(PipelineName("fmriprep"))
-      ),
+      ).toOption.get,
       runGrouping = grouping,
       maskPolicy = maskPolicy,
       confounds = confounds
@@ -302,11 +354,11 @@ class BidsStudyCompilerSuite extends FunSuite:
     val recipe = DatasetRecipe.unsafe(
       datasetId = DatasetId("demo"),
       project = WorkflowArtifactRef.unsafe[BidsProjectResource]("file:///study"),
-      boldQuery = BidsQuery(
+      boldQuery = BidsQuery.from(
         filename = Vector("desc-(preproc|denoised)_bold\\.nii$"),
         scope = BidsScope.Derivatives,
         pipeline = Some(PipelineName("fmriprep"))
-      ),
+      ).toOption.get,
       maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii")),
       confounds = None
     )

@@ -1,5 +1,9 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
+
 enum DenseFieldOutside:
   case Zero, QueryPoint
 
@@ -42,7 +46,7 @@ final case class DenseFieldInterpolationPlan private (
     worldPoints.length
 
   def sample(
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       outside: DenseFieldOutside
   ): Either[MorphismError, Vector[Vector[Double]]] =
     DenseFieldInterpolationPlan.validateField(grid, field).map { _ =>
@@ -50,7 +54,7 @@ final case class DenseFieldInterpolationPlan private (
     }
 
   private[image] def sampleUnsafe(
-      field: NDArray[Double],
+      field: RavelArray[Double, Rank[4]],
       outside: DenseFieldOutside
   ): Vector[Vector[Double]] =
     val out = Vector.newBuilder[Vector[Double]]
@@ -65,10 +69,14 @@ final case class DenseFieldInterpolationPlan private (
         var sum =
           if stencil.outsideWeight == 0.0 then 0.0
           else stencil.outsideWeight * outside.value(point, component)
-        val componentOffset = component * grid.nVoxels
         var j = 0
         while j < stencil.size do
-          sum += stencil.weights(j) * field.data(stencil.indices(j) + componentOffset)
+          val linear = stencil.indices(j)
+          val x = linear % grid.shape.x
+          val yz = linear / grid.shape.x
+          val y = yz % grid.shape.y
+          val z = yz / grid.shape.y
+          sum += stencil.weights(j) * field(x, y, z, component)
           j += 1
         sampled(component) = sum
         component += 1
@@ -115,16 +123,20 @@ object DenseFieldInterpolationPlan:
 
   private[image] def validateField(
       grid: GridSpec,
-      field: NDArray[Double]
+      field: RavelArray[Double, Rank[4]]
   ): Either[MorphismError, Unit] =
     val expectedShape = grid.dims :+ 3
-    if field.shape != expectedShape then Left(MorphismError.DenseFieldShapeMismatch(expectedShape, field.shape))
+    val actualShape = Vector.tabulate(field.shape.rank)(field.shape.apply)
+    if field.shape != Shape(grid.shape.x, grid.shape.y, grid.shape.z, 3) then
+      Left(MorphismError.DenseFieldShapeMismatch(expectedShape, actualShape))
     else
       var error = Option.empty[MorphismError]
       var i = 0
-      while i < field.data.length && error.isEmpty do
-        if !field.data(i).isFinite then error = Some(MorphismError.NonFiniteFieldValue(i))
+      field.foreachElement { value =>
+        if error.isEmpty && !value.isFinite then
+          error = Some(MorphismError.NonFiniteFieldValue(i))
         i += 1
+      }
 
       error match
         case Some(err) => Left(err)

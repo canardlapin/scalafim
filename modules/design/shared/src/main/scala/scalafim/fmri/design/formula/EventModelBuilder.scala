@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{DesignError, Names}
+import scalafim.fmri.design.{ColumnId, DesignError, Names}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.basis.{BasisDiagnostic, BasisFit, BasisFitError, BasisRegistry, ParametricBasis}
@@ -49,15 +49,10 @@ object EventModelBuilder:
     case SingleBlock
 
     def resolve(data: DataTable): Either[DesignError, Vector[Int]] =
-      try
-        Right(
-          this match
-            case Explicit(ids) => ids
-            case Formula(text) => parseBlockIds(text, data)
-            case SingleBlock   => Vector.fill(data.nrows)(0)
-        )
-      catch
-        case NonFatal(t) => Left(DesignError.fromThrowable(t))
+      this match
+        case Explicit(ids) => Right(ids)
+        case Formula(text) => parseBlockIds(text, data)
+        case SingleBlock   => Right(Vector.fill(data.nrows)(0))
 
   object BlockPlan:
     def explicit(ids: Seq[Int]): BlockPlan =
@@ -68,9 +63,6 @@ object EventModelBuilder:
       name match
         case None           => Right(eventData)
         case Some(tableKey) => other.get(tableKey).toRight(DesignError.UnknownTable(tableKey))
-
-    def resolve(name: Option[String]): DataTable =
-      resolveEither(name).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   final case class EventDesignRequest(
       formula: ModelFormula,
@@ -326,7 +318,7 @@ object EventModelBuilder:
 
   private final case class CompiledTerm(
       term: EventModelTerm,
-      contrastRef: Option[ArgValue],
+      contrastRef: Option[String],
       diagnostics: Vector[EventModelDiagnostic]
   )
 
@@ -337,7 +329,7 @@ object EventModelBuilder:
 
   private final case class CompiledTerms(
       terms: Vector[EventModelTerm],
-      contrastRefs: Vector[Option[ArgValue]],
+      contrastRefs: Vector[Option[String]],
       diagnostics: Vector[EventModelDiagnostic]
   )
 
@@ -363,7 +355,7 @@ object EventModelBuilder:
       durations: Seq[Double]
   ): Either[DesignError, ResolvedSchedule] =
     for
-      onsetVals <- env.eventData.doublesEither(formula.onset)
+      onsetVals <- env.eventData.get[Double](formula.onset)
       _ <-
         if blockIds.length == onsetVals.length then Right(())
         else Left(DesignError.InvalidSchedule(s"`blockIds` must have length ${onsetVals.length}, not ${blockIds.length}"))
@@ -395,7 +387,7 @@ object EventModelBuilder:
       extensions: DesignExtensionEnv
   ): Either[DesignError, CompiledTerms] =
     val terms = Vector.newBuilder[EventModelTerm]
-    val contrastRefs = Vector.newBuilder[Option[ArgValue]]
+    val contrastRefs = Vector.newBuilder[Option[String]]
     val diagnostics = Vector.newBuilder[EventModelDiagnostic]
     var failed: Option[DesignError] = None
     var i = 0
@@ -440,8 +432,8 @@ object EventModelBuilder:
   ): Either[DesignError, CompiledTerm] =
     val nEvents = schedule.defaultOnsets.length
     for
-      termTag <- catchBuild(DesignError.fromThrowable)(inferTermTag(h, extensions.basisRegistry))
-      expressions <- catchBuild(DesignError.fromThrowable)(h.vars.map(v => toEvent(env.eventData, v, termTag)))
+      termTag <- inferTermTag(h, extensions.basisRegistry)
+      expressions <- toEvents(h.vars, env.eventData, termTag)
       events0 = expressions.map(_.event)
       basisDiagnostics = expressions.flatMap(_.diagnostics)
       termOnsets <- h.onsets.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultOnsets)) { ref =>
@@ -477,7 +469,7 @@ object EventModelBuilder:
       options: BuildOptions
   ): Either[DesignError, CompiledTerm] =
     val nEvents = schedule.defaultOnsets.length
-    val label0 = t.label.getOrElse("trial")
+    val label0 = t.label.fold("trial")(_.value)
     val termTag = Names.sanitize(label0, allowDot = false)
 
     for
@@ -520,15 +512,21 @@ object EventModelBuilder:
   ): Either[DesignError, CompiledTerm] =
     for
       table <- env.resolveEither(c.data)
-      vars <- catchBuild(DesignError.fromThrowable) {
-        c.vars.map {
-          case ArgValue.Ident(v) => v
-          case other             => throw new IllegalArgumentException(s"covariate vars must be identifiers, found $other")
-        }
-      }
-      spec = CovariateSpec(vars = vars, data = table, id = c.id, prefix = c.prefix)
-      term <- catchBuild(DesignError.fromThrowable)(spec.construct(samplingFrame))
+      vars <- covariateVars(c.vars)
+      spec = CovariateSpec(vars = vars, data = table, id = c.id.map(_.value), prefix = c.prefix.map(_.value))
+      term <- spec.construct(samplingFrame)
     yield CompiledTerm(term, None, Vector.empty)
+
+  private def covariateVars(values: Vector[ArgValue]): Either[DesignError, Vector[ColumnId]] =
+    val out = Vector.newBuilder[ColumnId]
+    var i = 0
+    while i < values.length do
+      values(i) match
+        case ArgValue.Ident(id) => out += id
+        case other =>
+          return Left(DesignError.FormulaBinding(s"covariate vars must be identifiers, found $other"))
+      i += 1
+    Right(out.result())
 
   private def assembleModel(
       compiled: CompiledTerms,
@@ -548,7 +546,7 @@ object EventModelBuilder:
 
   private def attachContrastSetsEither(
       model: EventModel,
-      refs: Vector[Option[ArgValue]],
+      refs: Vector[Option[String]],
       available: Map[String, ContrastSpec.ContrastSet]
   ): Either[DesignError, VectorMap[String, ContrastSpec.ContrastSet]] =
     if refs.isEmpty then Right(VectorMap.empty)
@@ -559,17 +557,13 @@ object EventModelBuilder:
       while i < refs.length && failed.isEmpty do
         refs(i) match
           case None => ()
-          case Some(ref) =>
+          case Some(key) =>
             val (termKey, term) = model.terms(i)
             term match
               case _: ConvolvedTerm =>
-                contrastSetKeyEither(ref, termKey).flatMap { key =>
-                  available.get(key) match
-                    case Some(set) => Right(termKey -> set)
-                    case None      => Left(DesignError.UnknownContrast(key, available.keys.toVector.sorted))
-                } match
-                  case Right(entry) => out += entry
-                  case Left(error)  => failed = Some(error)
+                available.get(key) match
+                  case Some(set) => out += (termKey -> set)
+                  case None      => failed = Some(DesignError.UnknownContrast(key, available.keys.toVector.sorted))
               case other =>
                 failed = Some(DesignError.UnsupportedContrastTarget(termKey, other.getClass.getSimpleName))
         i += 1
@@ -577,17 +571,20 @@ object EventModelBuilder:
         case Some(error) => Left(error)
         case None        => Right(out.result())
 
-  private def contrastSetKeyEither(ref: ArgValue, termKey: String): Either[DesignError, String] =
-    ref match
-      case ArgValue.Ident(v) => Right(v)
-      case ArgValue.Str(v)   => Right(v)
-      case other =>
-        Left(DesignError.FormulaBinding(s"contrasts for term '$termKey' must be a string/identifier, found $other"))
-
   private def catchBuild[A](mapError: Throwable => DesignError)(body: => A): Either[DesignError, A] =
     try Right(body)
     catch
       case NonFatal(t) => Left(mapError(t))
+
+  /** Look up a column for the subset evaluator, which reports through `err`.
+    *
+    * `evalSubset` is a recursive expression evaluator with one error protocol —
+    * throw, and let `resolveSubsetMaskEither` turn every failure into
+    * `DesignError.InvalidSubset`, which names the offending expression. This is
+    * the only place in `compile` that still reports a lookup by throwing.
+    */
+  private def subsetColumn(data: DataTable, id: ColumnId): Column =
+    data.column(id).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def throwableMessage(t: Throwable): String =
     Option(t.getMessage).filter(_.nonEmpty).getOrElse(t.toString)
@@ -658,10 +655,10 @@ object EventModelBuilder:
         case ArgValue.Num(v) =>
           if v.isFinite then Right(Vector.fill(nEvents)(v))
           else Left(scheduleArgError(argName, s"$argName scalar must be finite"))
-        case ArgValue.Ident(name) =>
-          data.doublesEither(name)
+        case ArgValue.Ident(id) =>
+          data.get[Double](id)
         case ArgValue.Str(name) =>
-          data.doublesEither(name)
+          ColumnId(name).flatMap(data.get[Double])
         case other =>
           Left(DesignError.FormulaBinding(s"$argName must be a column reference or numeric scalar, found $other"))
 
@@ -714,30 +711,35 @@ object EventModelBuilder:
       termTag: Option[String]
   ): Either[DesignError, Either[Hrf, Vector[Hrf]]] =
     val termLabel = termTag.getOrElse("unknown")
-    catchBuild(t => DesignError.InvalidHrfFun(termLabel, throwableMessage(t))) {
-      resolveHrfFun(ref, eventData, hrfFuns = hrfFuns, termTag = termTag)
-    }
+    val nEvents = eventData.nrows
 
-  private def resolveSeconds(ref: ArgValue, data: DataTable, nEvents: Int, argName: String): Vector[Seconds] =
-    resolveNumericVector(ref, data, nEvents, argName).map(Seconds(_))
+    def invalid(detail: String): DesignError =
+      DesignError.InvalidHrfFun(termLabel, detail)
 
-  private def resolveNumericVector(ref: ArgValue, data: DataTable, nEvents: Int, argName: String): Vector[Double] =
-    val values =
-      ref match
-        case ArgValue.Num(v) =>
-          require(v.isFinite, s"$argName scalar must be finite")
-          Vector.fill(nEvents)(v)
-        case ArgValue.Ident(name) =>
-          data.doubles(name)
-        case ArgValue.Str(name) =>
-          data.doubles(name)
-        case other =>
-          throw new IllegalArgumentException(s"$argName must be a column reference or numeric scalar, found $other")
+    def validateHrfs(hrfs0: Seq[Hrf]): Either[DesignError, Either[Hrf, Vector[Hrf]]] =
+      val hrfs = hrfs0.toVector
+      if hrfs.isEmpty then Left(invalid(s"hrf_fun for term '$termLabel' returned 0 HRFs but $nEvents events exist"))
+      else if hrfs.length == 1 then Right(Left(hrfs.head))
+      else if hrfs.length != nEvents then
+        Left(invalid(s"hrf_fun for term '$termLabel' returned ${hrfs.length} HRFs but $nEvents events exist"))
+      else if !hrfs.forall(_.nbasis == hrfs.head.nbasis) then
+        Left(invalid(s"All HRFs from hrf_fun for term '$termLabel' must have the same nbasis"))
+      else Right(Right(hrfs))
 
-    require(values.length == nEvents, s"$argName has length ${values.length} but expected $nEvents")
-    require(values.forall(_.isFinite), s"$argName must be finite")
-    if argName == "durations" then require(values.forall(_ >= 0.0), "durations must be non-negative")
-    values
+    def hrfColumn(id: ColumnId): Either[DesignError, Either[Hrf, Vector[Hrf]]] =
+      eventData.get[Hrf](id).left.map(error => invalid(error.message)).flatMap(validateHrfs)
+
+    ref match
+      // A generator is user code with no error channel of its own, so its throw
+      // is caught here and named as this term's hrf_fun failure.
+      case ArgValue.Ident(key) if hrfFuns.contains(key.value) =>
+        catchBuild(t => invalid(throwableMessage(t)))(hrfFuns(key.value)(eventData)).flatMap {
+          case HrfSelection.Shared(hrf)    => Right(Left(hrf))
+          case HrfSelection.PerEvent(hrfs) => validateHrfs(hrfs)
+        }
+      case ArgValue.Ident(id) => hrfColumn(id)
+      case ArgValue.Str(name) => ColumnId(name).left.map(error => invalid(error.message)).flatMap(hrfColumn)
+      case other              => Left(invalid(s"hrf_fun for term '$termLabel' must be a string/identifier, found $other"))
 
   private def diagnoseTerm(term: EventTerm, samplingFrame: SamplingFrame): Vector[EventModelDiagnostic] =
     degenerateModulatorDiagnostics(term) ++ onsetBoundDiagnostics(term, samplingFrame)
@@ -860,12 +862,6 @@ object EventModelBuilder:
 
     out.result()
 
-  private def raiseStrictDiagnostics(diagnostics: Vector[EventModelDiagnostic], strict: Boolean): Unit =
-    if strict then
-      val blocking = diagnostics.filter(d => strictDiagnosticKinds.contains(d.kind))
-      if blocking.nonEmpty then
-        throw new IllegalArgumentException(blocking.map(_.message).mkString("; "))
-
   private def buildEventDataForGenerator(term: EventTerm, original: DataTable): DataTable =
     val n = term.onsets.length
     require(original.nrows == n, s"internal: original data rows (${original.nrows}) != term events ($n)")
@@ -915,37 +911,6 @@ object EventModelBuilder:
       r += 1
     out.toVector
 
-  private def resolveHrfFun(
-      ref: ArgValue,
-      eventData: DataTable,
-      hrfFuns: Map[String, HrfFun],
-      termTag: Option[String]
-  ): Either[Hrf, Vector[Hrf]] =
-    val termLabel = termTag.getOrElse("unknown")
-    val nEvents = eventData.nrows
-
-    def validateHrfs(hrfs0: Seq[Hrf]): Either[Hrf, Vector[Hrf]] =
-      val hrfs = hrfs0.toVector
-      if hrfs.isEmpty then throw new IllegalArgumentException(s"hrf_fun for term '$termLabel' returned 0 HRFs but $nEvents events exist")
-      else if hrfs.length == 1 then Left(hrfs.head)
-      else
-        require(hrfs.length == nEvents, s"hrf_fun for term '$termLabel' returned ${hrfs.length} HRFs but $nEvents events exist")
-        val nb = hrfs.head.nbasis
-        require(hrfs.forall(_.nbasis == nb), s"All HRFs from hrf_fun for term '$termLabel' must have the same nbasis")
-        Right(hrfs)
-
-    ref match
-      case ArgValue.Ident(key) if hrfFuns.contains(key) =>
-        hrfFuns(key)(eventData) match
-          case HrfSelection.Shared(hrf)      => Left(hrf)
-          case HrfSelection.PerEvent(hrfs)   => validateHrfs(hrfs)
-      case ArgValue.Ident(key) =>
-        validateHrfs(eventData.hrfs(key))
-      case ArgValue.Str(colName) =>
-        validateHrfs(eventData.hrfs(colName))
-      case other =>
-        throw new IllegalArgumentException(s"hrf_fun for term '$termLabel' must be a string/identifier, found $other")
-
   private enum ScalarVec:
     case Num(values: Vector[Double])
     case Str(values: Vector[String])
@@ -959,12 +924,12 @@ object EventModelBuilder:
     def boolVec(e: ArgValue): Vector[Boolean] =
       e match
         case ArgValue.Bool(v) => Vector.fill(n)(v)
-        case ArgValue.Ident(name) =>
-          data.column(name) match
+        case ArgValue.Ident(id) =>
+          subsetColumn(data, id) match
             case Column.Bools(v) =>
               require(v.length == n, "internal: bool column length mismatch")
               v
-            case other => err(s"identifier '$name' is not a boolean column (found $other)")
+            case other => err(s"identifier '${id.value}' is not a boolean column (found $other)")
         case ArgValue.Call("!", args) =>
           val a = requireArity(args, 1, op = "!")
           boolVec(a).map(b => !b)
@@ -989,14 +954,14 @@ object EventModelBuilder:
         case ArgValue.Num(v)  => ScalarVec.Num(Vector.fill(n)(v))
         case ArgValue.Str(v)  => ScalarVec.Str(Vector.fill(n)(v))
         case ArgValue.Bool(v) => ScalarVec.Bool(Vector.fill(n)(v))
-        case ArgValue.Ident(name) =>
-          data.column(name) match
+        case ArgValue.Ident(id) =>
+          subsetColumn(data, id) match
             case Column.Doubles(v) => ScalarVec.Num(v)
             case Column.Ints(v)    => ScalarVec.Num(v.map(_.toDouble))
             case Column.Strings(v) => ScalarVec.Str(v)
             case Column.Bools(v)   => ScalarVec.Bool(v)
-            case Column.DoubleLists(_) => err(s"column '$name' is a list column and cannot be used in subset comparisons")
-            case Column.Hrfs(_)    => err(s"column '$name' is an HRF list and cannot be used in subset comparisons")
+            case Column.DoubleLists(_) => err(s"column '${id.value}' is a list column and cannot be used in subset comparisons")
+            case Column.Hrfs(_)    => err(s"column '${id.value}' is an HRF list and cannot be used in subset comparisons")
         case other =>
           err(s"expected scalar in comparison but found $other")
 
@@ -1080,45 +1045,46 @@ object EventModelBuilder:
         r += 1
       scalafim.fmri.hrf.linalg.Mat.unsafe(idx.length, m.cols, out)
 
-  private def parseBlockIds(block: String, data: DataTable): Vector[Int] =
-    val rhs0 =
-      val s = block.trim
-      if s.isEmpty then throw new IllegalArgumentException("block formula must be non-empty")
-      if s.startsWith("~") then s.drop(1).trim else s
+  private def parseBlockIds(block: String, data: DataTable): Either[DesignError, Vector[Int]] =
+    val trimmed = block.trim
+    val rhs0 = if trimmed.startsWith("~") then trimmed.drop(1).trim else trimmed
 
-    if rhs0 == "1" || rhs0 == "1.0" then Vector.fill(data.nrows)(0)
+    if trimmed.isEmpty then Left(DesignError.InvalidSchedule("block formula must be non-empty"))
+    else if rhs0 == "1" || rhs0 == "1.0" then Right(Vector.fill(data.nrows)(0))
     else
-      val raw = data.column(rhs0)
-      raw match
-        case Column.Doubles(v) =>
-          requireNonDecreasing(v, name = rhs0)
-          canonicalize(v)
-        case Column.Ints(v) =>
-          requireNonDecreasing(v.map(_.toDouble), name = rhs0)
-          canonicalize(v)
-        case Column.Strings(v) =>
-          requireBlocksContiguous(v, name = rhs0)
-          canonicalize(v)
-        case Column.Bools(v) =>
-          requireBlocksContiguous(v.map(_.toString), name = rhs0)
-          canonicalize(v.map(_.toString))
-        case Column.DoubleLists(_) =>
-          throw new IllegalArgumentException(s"block formula '$rhs0' references a list column")
-        case Column.Hrfs(_) =>
-          throw new IllegalArgumentException(s"block formula '$rhs0' references an HRF column")
+      for
+        id <- ColumnId(rhs0)
+        raw <- data.column(id)
+        ids <- raw match
+          case Column.Doubles(v) =>
+            requireNonDecreasing(v, name = rhs0).map(_ => canonicalize(v))
+          case Column.Ints(v) =>
+            requireNonDecreasing(v.map(_.toDouble), name = rhs0).map(_ => canonicalize(v))
+          case Column.Strings(v) =>
+            requireBlocksContiguous(v, name = rhs0).map(_ => canonicalize(v))
+          case Column.Bools(v) =>
+            requireBlocksContiguous(v.map(_.toString), name = rhs0).map(_ => canonicalize(v.map(_.toString)))
+          case other =>
+            Left(DesignError.InvalidColumnType(rhs0, "usable as a block index", other.typeName))
+      yield ids
 
-  private def requireNonDecreasing(xs: Vector[Double], name: String): Unit =
+  private def requireNonDecreasing(xs: Vector[Double], name: String): Either[DesignError, Unit] =
     var i = 1
     while i < xs.length do
-      if xs(i) < xs(i - 1) then throw new IllegalArgumentException(s"'blockIds' must be non-decreasing (from '$name')")
+      if xs(i) < xs(i - 1) then return Left(nonDecreasingError(name))
       i += 1
+    Right(())
 
-  private def requireBlocksContiguous(xs: Vector[String], name: String): Unit =
+  private def requireBlocksContiguous(xs: Vector[String], name: String): Either[DesignError, Unit] =
     val codes = canonicalize(xs)
     var i = 1
     while i < codes.length do
-      if codes(i) < codes(i - 1) then throw new IllegalArgumentException(s"'blockIds' must be non-decreasing (from '$name')")
+      if codes(i) < codes(i - 1) then return Left(nonDecreasingError(name))
       i += 1
+    Right(())
+
+  private def nonDecreasingError(name: String): DesignError =
+    DesignError.InvalidSchedule(s"'blockIds' must be non-decreasing (from '$name')")
 
   private def canonicalize[A](xs: Vector[A]): Vector[Int] =
     val map = scala.collection.mutable.LinkedHashMap.empty[A, Int]
@@ -1131,62 +1097,98 @@ object EventModelBuilder:
       i += 1
     out.toVector
 
-  private def toEvent(data: DataTable, expr: ArgValue, termTag: Option[String]): EventExpression =
+  private def toEvents(
+      exprs: Vector[ArgValue],
+      data: DataTable,
+      termTag: Option[String]
+  ): Either[DesignError, Vector[EventExpression]] =
+    val out = Vector.newBuilder[EventExpression]
+    var i = 0
+    while i < exprs.length do
+      toEvent(data, exprs(i), termTag) match
+        case Left(error)       => return Left(error)
+        case Right(expression) => out += expression
+      i += 1
+    Right(out.result())
+
+  private def toEvent(data: DataTable, expr: ArgValue, termTag: Option[String]): Either[DesignError, EventExpression] =
     expr match
-      case ArgValue.Ident(name) =>
-        val event = data.column(name) match
-          case Column.Strings(v) => Event.factor(v, name)
-          case Column.Doubles(v) => Event.variable(v, name)
-          case Column.Ints(v)    => Event.variable(v.map(_.toDouble), name)
-          case Column.Bools(v)   => Event.factor(v.map(_.toString), name)
-          case Column.DoubleLists(_) => throw new IllegalArgumentException(s"Column '$name' is a list column and cannot be used as an event variable")
-          case Column.Hrfs(_)    => throw new IllegalArgumentException(s"Column '$name' is an HRF list and cannot be used as an event variable")
-        EventExpression(event, Vector.empty)
+      case ArgValue.Ident(id) =>
+        data.column(id).flatMap {
+          case Column.Strings(v) => Right(Event.factor(v, id.value))
+          case Column.Doubles(v) => Right(Event.variable(v, id.value))
+          case Column.Ints(v)    => Right(Event.variable(v.map(_.toDouble), id.value))
+          case Column.Bools(v)   => Right(Event.factor(v.map(_.toString), id.value))
+          case other =>
+            Left(DesignError.InvalidColumnType(id.value, "usable as an event variable", other.typeName))
+        }.map(EventExpression(_, Vector.empty))
       case ArgValue.Call(fun, args) =>
         evalBasisCall(data, fun, args, termTag)
       case other =>
-        throw new IllegalArgumentException(s"Unsupported event expression: $other")
+        Left(DesignError.FormulaBinding(s"Unsupported event expression: $other"))
 
-  private def evalBasisCall(data: DataTable, funName: String, args: Vector[Arg], termTag: Option[String]): EventExpression =
-    val fun = funName.trim.toLowerCase
-    fun match
+  /** Basis calls the formula grammar understands, for [[DesignError.UnknownBasisFunction]]. */
+  private val basisCalls: Vector[String] =
+    Vector("scale", "standardized", "robustscale", "poly", "bspline", "scalewithin")
+
+  private def evalBasisCall(
+      data: DataTable,
+      funName: String,
+      args: Vector[Arg],
+      termTag: Option[String]
+  ): Either[DesignError, EventExpression] =
+    funName.trim.toLowerCase match
       case "scale" =>
-        val (xVar, xs) = requireNumeric1(data, args, "Scale")
-        basisExpression(ParametricBasis.Scale.fitWithDiagnostics(xs, argName = xVar), termTag)
+        requireNumeric1(data, args, "Scale").flatMap { (xVar, xs) =>
+          basisExpression(ParametricBasis.Scale.fitWithDiagnostics(xs, argName = xVar.value), termTag)
+        }
       case "standardized" =>
-        val (xVar, xs) = requireNumeric1(data, args, "Standardized")
-        basisExpression(ParametricBasis.Standardized.fitWithDiagnostics(xs, argName = xVar), termTag)
+        requireNumeric1(data, args, "Standardized").flatMap { (xVar, xs) =>
+          basisExpression(ParametricBasis.Standardized.fitWithDiagnostics(xs, argName = xVar.value), termTag)
+        }
       case "robustscale" =>
-        val (xVar, xs) = requireNumeric1(data, args, "RobustScale")
-        basisExpression(ParametricBasis.RobustScale.fitWithDiagnostics(xs, argName = xVar), termTag)
+        requireNumeric1(data, args, "RobustScale").flatMap { (xVar, xs) =>
+          basisExpression(ParametricBasis.RobustScale.fitWithDiagnostics(xs, argName = xVar.value), termTag)
+        }
       case "poly" =>
-        val (xVar, xs) = requireNumeric1(data, args, "Poly")
-        val degree = requireIntArg(args, "degree", fallbackPos = 1, ctx = "Poly")
-        val basis = ParametricBasis.Poly.fit(xs, degree = degree, argName = xVar)
-        EventExpression(Event.basis(basis), Vector.empty)
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "Poly")
+          degree <- requireIntArg(args, "degree", fallbackPos = 1, ctx = "Poly")
+          basis <- catchBuild(t => DesignError.FormulaBinding(throwableMessage(t))) {
+            ParametricBasis.Poly.fit(xs, degree = degree, argName = xVar.value)
+          }
+        yield EventExpression(Event.basis(basis), Vector.empty)
       case "bspline" =>
-        val (xVar, xs) = requireNumeric1(data, args, "BSpline")
-        val degree = requireIntArg(args, "degree", fallbackPos = 1, ctx = "BSpline")
-        val basis = ParametricBasis.BSpline.fit(xs, degree = degree, argName = xVar)
-        EventExpression(Event.basis(basis), Vector.empty)
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "BSpline")
+          degree <- requireIntArg(args, "degree", fallbackPos = 1, ctx = "BSpline")
+          basis <- catchBuild(t => DesignError.FormulaBinding(throwableMessage(t))) {
+            ParametricBasis.BSpline.fit(xs, degree = degree, argName = xVar.value)
+          }
+        yield EventExpression(Event.basis(basis), Vector.empty)
       case "scalewithin" =>
-        val xVar = requireIdentArg(args, pos = 0, ctx = "ScaleWithin")
-        val gVar = requireIdentArg(args, pos = 1, ctx = "ScaleWithin")
-        val xs = data.doubles(xVar)
-        val gs = toFactorStrings(data, gVar)
-        basisExpression(ParametricBasis.ScaleWithin.fitWithDiagnostics(xs, gs, argName = xVar, groupName = gVar), termTag)
-      case other =>
-        throw new IllegalArgumentException(s"Unknown basis call '$funName' in formula")
+        for
+          xVar <- requireIdentArg(args, pos = 0, ctx = "ScaleWithin")
+          gVar <- requireIdentArg(args, pos = 1, ctx = "ScaleWithin")
+          xs <- data.get[Double](xVar)
+          gs <- toFactorStrings(data, gVar)
+          expression <- basisExpression(
+            ParametricBasis.ScaleWithin.fitWithDiagnostics(xs, gs, argName = xVar.value, groupName = gVar.value),
+            termTag
+          )
+        yield expression
+      case _ =>
+        Left(DesignError.UnknownBasisFunction(funName, basisCalls))
 
   private def basisExpression[A <: ParametricBasis](
       fitEither: Either[BasisFitError, BasisFit[A]],
       termTag: Option[String]
-  ): EventExpression =
+  ): Either[DesignError, EventExpression] =
     fitEither match
       case Right(fit) =>
-        EventExpression(Event.basis(fit.basis), fit.diagnostics.map(toModelDiagnostic(termTag)))
+        Right(EventExpression(Event.basis(fit.basis), fit.diagnostics.map(toModelDiagnostic(termTag))))
       case Left(error) =>
-        throw new IllegalArgumentException(error.message)
+        Left(DesignError.DegenerateBasis(error.message))
 
   private def toModelDiagnostic(termTag: Option[String])(diagnostic: BasisDiagnostic): EventModelDiagnostic =
     val termLabel = termTag.getOrElse("term")
@@ -1196,58 +1198,77 @@ object EventModelBuilder:
       s"${diagnostic.message} in term '$termLabel'"
     )
 
-  private def requireNumeric1(data: DataTable, args: Vector[Arg], ctx: String): (String, Vector[Double]) =
-    val xVar = requireIdentArg(args, pos = 0, ctx = ctx)
-    (xVar, data.doubles(xVar))
+  private def requireNumeric1(
+      data: DataTable,
+      args: Vector[Arg],
+      ctx: String
+  ): Either[DesignError, (ColumnId, Vector[Double])] =
+    for
+      xVar <- requireIdentArg(args, pos = 0, ctx = ctx)
+      xs <- data.get[Double](xVar)
+    yield (xVar, xs)
 
-  private def requireIdentArg(args: Vector[Arg], pos: Int, ctx: String): String =
+  private def requireIdentArg(args: Vector[Arg], pos: Int, ctx: String): Either[DesignError, ColumnId] =
     args.lift(pos) match
-      case Some(Arg(None, ArgValue.Ident(v))) => v
-      case Some(a)                            => throw new IllegalArgumentException(s"$ctx positional arg ${pos + 1} must be an identifier, found $a")
-      case None                               => throw new IllegalArgumentException(s"$ctx requires at least ${pos + 1} positional args")
+      case Some(Arg(None, ArgValue.Ident(id))) => Right(id)
+      case Some(a) =>
+        Left(DesignError.FormulaBinding(s"$ctx positional arg ${pos + 1} must be an identifier, found $a"))
+      case None =>
+        Left(DesignError.FormulaBinding(s"$ctx requires at least ${pos + 1} positional args"))
 
-  private def requireIntArg(args: Vector[Arg], name: String, fallbackPos: Int, ctx: String): Int =
+  private def requireIntArg(args: Vector[Arg], name: String, fallbackPos: Int, ctx: String): Either[DesignError, Int] =
     val named = args.collectFirst { case Arg(Some(nm), ArgValue.Num(v)) if nm == name => v }
     val pos = args.lift(fallbackPos).collect { case Arg(None, ArgValue.Num(v)) => v }
-    val v0 = named.orElse(pos).getOrElse(throw new IllegalArgumentException(s"$ctx requires '$name' (e.g. $name=3)"))
-    if !v0.isFinite || !v0.isValidInt || v0 != v0.toInt.toDouble then
-      throw new IllegalArgumentException(s"$ctx '$name' must be an integer, got $v0")
-    v0.toInt
+    named.orElse(pos) match
+      case None => Left(DesignError.FormulaBinding(s"$ctx requires '$name' (e.g. $name=3)"))
+      case Some(v0) =>
+        if !v0.isFinite || !v0.isValidInt || v0 != v0.toInt.toDouble then
+          Left(DesignError.FormulaBinding(s"$ctx '$name' must be an integer, got $v0"))
+        else Right(v0.toInt)
 
-  private def toFactorStrings(data: DataTable, name: String): Vector[String] =
-    data.column(name) match
-      case Column.Strings(v) => v
-      case Column.Ints(v)    => v.map(_.toString)
-      case Column.Doubles(v) => v.map(_.toString)
-      case Column.Bools(v)   => v.map(_.toString)
-      case Column.DoubleLists(_) => throw new IllegalArgumentException(s"Column '$name' is a list column and cannot be used as a factor")
-      case Column.Hrfs(v)    => v.map(_.name)
-
-  private def inferTermTag(call: HrfCall, basisRegistry: BasisRegistry): Option[String] =
-    call.id.map(id => Names.sanitize(id, allowDot = false)).orElse(call.prefix.map(p => Names.sanitize(p, allowDot = false))).orElse {
-      if call.vars.length == 1 then
-        call.vars.head match
-          case ArgValue.Call(fun, args) =>
-            val f = fun.trim.toLowerCase
-            if f == "ident" then None
-            else parametricBasisTag(f, args, basisRegistry).orElse(Some(Names.sanitize(exprLabel(call.vars.head), allowDot = false)))
-          case ArgValue.Ident(v) =>
-            Some(Names.sanitize(v, allowDot = false))
-          case other =>
-            Some(Names.sanitize(exprLabel(other), allowDot = false))
-      else
-        Some(Names.sanitize(call.vars.map(exprLabel).mkString("_"), allowDot = false))
+  private def toFactorStrings(data: DataTable, id: ColumnId): Either[DesignError, Vector[String]] =
+    data.column(id).flatMap {
+      case Column.Strings(v) => Right(v)
+      case Column.Ints(v)    => Right(v.map(_.toString))
+      case Column.Doubles(v) => Right(v.map(_.toString))
+      case Column.Bools(v)   => Right(v.map(_.toString))
+      case Column.Hrfs(v)    => Right(v.map(_.name))
+      case other             => Left(DesignError.InvalidColumnType(id.value, "usable as a factor", other.typeName))
     }
 
-  private def parametricBasisTag(funLower: String, args: Vector[Arg], basisRegistry: BasisRegistry): Option[String] =
-    basisRegistry.getFormulaEntry(funLower).flatMap(_.prefix).map { p =>
-      val xVar = requireIdentArg(args, pos = 0, ctx = funLower)
-      s"${p}_${Names.sanitize(xVar, allowDot = false)}"
-    }
+  /** The term tag is a *generated* name, so this is where sanitization belongs. */
+  private def inferTermTag(call: HrfCall, basisRegistry: BasisRegistry): Either[DesignError, Option[String]] =
+    def tagOf(label: String): Option[String] = Some(Names.sanitize(label, allowDot = false))
+
+    call.id.orElse(call.prefix) match
+      case Some(id) => Right(tagOf(id.value))
+      case None =>
+        if call.vars.length != 1 then Right(tagOf(call.vars.map(exprLabel).mkString("_")))
+        else
+          call.vars.head match
+            case ArgValue.Call(fun, args) =>
+              val f = fun.trim.toLowerCase
+              if f == "ident" then Right(None)
+              else
+                parametricBasisTag(f, args, basisRegistry).map(_.orElse(tagOf(exprLabel(call.vars.head))))
+            case ArgValue.Ident(id) => Right(tagOf(id.value))
+            case other              => Right(tagOf(exprLabel(other)))
+
+  private def parametricBasisTag(
+      funLower: String,
+      args: Vector[Arg],
+      basisRegistry: BasisRegistry
+  ): Either[DesignError, Option[String]] =
+    basisRegistry.getFormulaEntry(funLower).flatMap(_.prefix) match
+      case None => Right(None)
+      case Some(p) =>
+        requireIdentArg(args, pos = 0, ctx = funLower).map { xVar =>
+          Some(s"${p}_${Names.sanitize(xVar.value, allowDot = false)}")
+        }
 
   private def exprLabel(v: ArgValue): String =
     v match
-      case ArgValue.Ident(x) => x
+      case ArgValue.Ident(x) => x.value
       case ArgValue.Str(x)   => "\"" + x + "\""
       case ArgValue.Num(x)   => x.toString
       case ArgValue.Bool(x)  => x.toString
@@ -1284,15 +1305,9 @@ object EventModelBuilder:
           else Left(DesignError.FormulaBinding("`lag` must be finite"))
     }
 
-  private def resolveHrf(call: HrfCall, defaultHrf: Hrf): Hrf =
-    resolveHrfEither(call, defaultHrf).fold(err => throw new IllegalArgumentException(err.message), identity)
-
   private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double]): Either[DesignError, Hrf] =
-    val call = HrfCall(vars = Vector(ArgValue.Ident("x")), basis = Some(basis), lag = lag, nbasis = nbasis)
+    val call = HrfCall(vars = Vector(ArgValue.Ident(ColumnId.unsafe("x"))), basis = Some(basis), lag = lag, nbasis = nbasis)
     resolveHrfEither(call, defaultHrf = Hrfs.SPMG1)
-
-  private def resolveHrfBasis(basis: String, nbasis: Option[Int], lag: Option[Double]): Hrf =
-    resolveHrfBasisEither(basis, nbasis, lag).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   private def trialLevels(n: Int): Vector[String] =
     if n <= 0 then Vector.empty

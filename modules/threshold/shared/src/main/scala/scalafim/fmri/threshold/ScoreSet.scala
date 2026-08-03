@@ -52,7 +52,7 @@ object ScoreValue:
 final class ScoringInput private (
     val field: MaskedField,
     val priors: PriorWeights,
-    val region: Region
+    val region: ThresholdRegion
 ):
   private[threshold] def indices: Array[Int] =
     region.indexArray
@@ -61,9 +61,17 @@ final class ScoringInput private (
     field.data
 
 object ScoringInput:
-  def apply(field: MaskedField, priors: PriorWeights, region: Region): Either[ThresholdError, ScoringInput] =
+  def apply(field: MaskedField, priors: PriorWeights, region: ThresholdRegion): Either[ThresholdError, ScoringInput] =
     if field.size != priors.length then
       return Left(ThresholdError.ShapeMismatch("field/priors", field.size.toString, priors.length.toString))
+    if !field.activeSpace.sameRuntimeOwnerAs(region.membership.space) then
+      return Left(
+        ThresholdError.ShapeMismatch(
+          "field/region support",
+          field.activeSpace.descriptor.toString,
+          region.membership.space.descriptor.toString
+        )
+      )
 
     val indices = region.indexArray
     var i = 0

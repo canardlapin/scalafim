@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GIFTI Version="1.0" NumberOfDataArrays="2">
+  <DataArray Intent="NIFTI_INTENT_POINTSET"
+             DataType="NIFTI_TYPE_FLOAT32"
+             ArrayIndexingOrder="RowMajorOrder"
+             Dimensionality="2"
+             Dim0="4"
+             Dim1="3"
+             Encoding="ASCII"
+             Endian="LittleEndian">
+    <CoordinateSystemTransformMatrix>
+      <DataSpace>NIFTI_XFORM_ALIGNED_ANAT</DataSpace>
+      <TransformedSpace>NIFTI_XFORM_TALAIRACH</TransformedSpace>
+      <MatrixData>
+        1 0 0 10
+        0 1 0 20
+        0 0 1 30
+        0 0 0 1
+      </MatrixData>
+    </CoordinateSystemTransformMatrix>
+    <Data>
+      0 0 0
+      1 0 0
+      0 1 0
+      0 0 1
+    </Data>
+  </DataArray>
+  <DataArray Intent="NIFTI_INTENT_TRIANGLE"
+             DataType="NIFTI_TYPE_INT32"
+             ArrayIndexingOrder="RowMajorOrder"
+             Dimensionality="2"
+             Dim0="2"
+             Dim1="3"
+             Encoding="ASCII"
+             Endian="LittleEndian">
+    <Data>
+      0 1 2
+      0 1 3
+    </Data>
+  </DataArray>
+</GIFTI>

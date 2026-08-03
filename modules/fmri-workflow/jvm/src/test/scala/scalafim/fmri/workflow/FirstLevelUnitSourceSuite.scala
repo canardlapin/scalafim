@@ -2,7 +2,7 @@ package scalafim.fmri.workflow
 
 import munit.FunSuite
 import scalafim.dataset.*
-import scalafim.image.{Axis, DMat, NArrayUtil, NeuroSpace, NeuroVec, NeuroVol}
+import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec, NeuroVol}
 import scalafim.image.io.Nifti
 
 import java.nio.file.{Files, Path}
@@ -60,12 +60,12 @@ class FirstLevelUnitSourceSuite extends FunSuite:
     )
 
   private def writeBold(path: Path, space: NeuroSpace, offset: Double): Path =
-    val values = NArrayUtil.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
+    val values = PrimitiveBuffers.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
     val seriesSpace = space.addDim(2, Some(Axis.Time))
     Nifti.writeVec(path, NeuroVec.fromLinear(values, seriesSpace, "bold"))
 
   private def writeMask(path: Path, space: NeuroSpace, values: Array[Double]): Path =
-    Nifti.writeVol(path, NeuroVol.fromLinear(NArrayUtil.fromArray(values), space, "mask"))
+    Nifti.writeVol(path, NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values), space, "mask"))
 
   private def withFixture[A](body: Path => A): A =
     val root = Files.createTempDirectory("scalafim-unit-source-")

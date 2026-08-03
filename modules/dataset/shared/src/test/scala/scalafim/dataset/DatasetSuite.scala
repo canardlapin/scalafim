@@ -18,12 +18,63 @@ class DatasetSuite extends munit.FunSuite:
   }
 
   test("dataset shape validates sampling frame alignment") {
-    val ds = FmriDataset(
-      backend = backend,
-      samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
-    )
+    val ds =
+      FmriDataset
+        .open(
+          backend = backend,
+          samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),
+          runId = RunId("run-1")
+        )
+        .fold(error => fail(error.message), identity)
     assertEquals(ds.shape.timepoints, 3)
     assertEquals(ds.shape.spatialSize, 4)
+  }
+
+  test("checked dataset construction reports temporal incompatibility") {
+    val result =
+      FmriDataset.open(
+        backend = backend,
+        samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
+        runId = RunId("run-1")
+      )
+
+    assertEquals(
+      result.left.map(_.message),
+      Left("dataset shape mismatch: sampling frame has 2 timepoints but dataset shape has 3")
+    )
+  }
+
+  test("pure dataset descriptions require an explicit synchronous reader") {
+    val synchronous =
+      FmriDataset.unsafe(
+        backend = backend,
+        samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),
+        runId = RunId("run-1")
+      )
+    val description =
+      FmriDataset
+        .describe(
+          synchronous.id,
+          synchronous.shape,
+          synchronous.voxelDomain,
+          synchronous.metadata,
+          synchronous.samplingFrame,
+          synchronous.timeAxis.runIds,
+          synchronous.events
+        )
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      description.seriesEither().left.toOption,
+      Some(DatasetError.SynchronousReaderNotFound(description.id))
+    )
+    val explicit =
+      SynchronousDatasetReaders
+        .one(synchronous)
+        .readerFor(description)
+        .flatMap(_.seriesEither())
+        .fold(error => fail(error.message), identity)
+    assertEquals(explicit.data.toRows, denseRows)
   }
 
   test("dataset shape rejects 4D spaces as spatial-only shapes") {
@@ -38,7 +89,7 @@ class DatasetSuite extends munit.FunSuite:
   }
 
   test("selection reads timepoints x voxels in canonical orientation") {
-    val ds = FmriDataset(
+    val ds = FmriDataset.unsafe(
       backend = backend,
       samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
     )
@@ -85,8 +136,8 @@ class DatasetSuite extends munit.FunSuite:
     }
   }
 
-  test("safe series read preserves the legacy throwing adapter") {
-    val ds = FmriDataset(
+  test("safe series read agrees with the throwing convenience method") {
+    val ds = FmriDataset.unsafe(
       backend = backend,
       samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
     )

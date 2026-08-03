@@ -4,8 +4,9 @@ import gale.backend.Backend.given
 import gale.linalg.{DMat as GaleDMat}
 import io.jhdf.HdfFile
 import io.jhdf.api.{Dataset, Group}
-import narr.NArray
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NDArray, Resample, SpatialDomainId}
+import ravel.NDArray as RavelArray
+import ravel.Rank
+import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, Resample, SpatialDomainId}
 import scalafim.spatial.{CoordinateMap, DomainId, SpatialError}
 
 import java.nio.file.{Files, Path}
@@ -346,13 +347,13 @@ private[io] object AntsHdf5TransformAdapter:
       parameters <- requiredValues(path, component, component.parameters, "TransformParameters", count * 3)
       _ <- finiteValues(path, component.index, "displacement parameters", parameters)
       grid <- displacementGrid(path, component.index, dims, fixed)
-      field = displacementField(parameters, count)
+      field = displacementField(parameters, grid)
       dense <- DenseFieldMorphism
         .displacement(
           SpatialDomainId(mapSource.value),
           SpatialDomainId(mapTarget.value),
           grid,
-          NDArray(field, grid.dims :+ 3),
+          field,
           interpolation,
           cost,
           s"ants-hdf5-component-${component.index}"
@@ -471,16 +472,18 @@ private[io] object AntsHdf5TransformAdapter:
         val ras = LpsToRas * native.result()
         Right(GridSpec(dims, toImage(ras)))
 
-  private def displacementField(parameters: ItkHdf5NumericValues, count: Int): NArray[Double] =
-    val out = NArray.ofSize[Double](parameters.length)
-    var voxel = 0
-    while voxel < count do
-      val offset = voxel * 3
-      out(voxel) = -parameters(offset)
-      out(voxel + count) = -parameters(offset + 1)
-      out(voxel + 2 * count) = parameters(offset + 2)
-      voxel += 1
-    out
+  private def displacementField(
+    parameters: ItkHdf5NumericValues,
+    grid: GridSpec
+  ): RavelArray[Double, Rank[4]] =
+    val nx = grid.shape.x
+    val ny = grid.shape.y
+    RavelArray.tabulate[Double](nx, ny, grid.shape.z, 3) {
+      (x, y, z, component) =>
+        val voxel = x + nx * (y + ny * z)
+        val value = parameters(voxel * 3 + component)
+        if component < 2 then -value else value
+    }
 
   private def determinant3(values: Array[Double]): Double =
     values(0) * (values(4) * values(8) - values(5) * values(7)) -

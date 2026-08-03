@@ -21,7 +21,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
       Vector.tabulate(4)(i => Map("onset" -> i.toString, "task" -> i.toString))
     )
 
-    FmriDataset(
+    FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-ols-demo"),
         ImageDMat.fromRows(rows),
@@ -57,7 +57,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     val events = DatasetEvents(
       task.indices.toVector.map(i => Map("onset" -> i.toString, "task" -> task(i).toString))
     )
-    val dataset = FmriDataset(
+    val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-nuisance-demo"),
         ImageDMat.fromRows(rows),

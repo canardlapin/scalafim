@@ -1,6 +1,5 @@
 package scalafim.image
 
-import narr.NArray
 
 object ConnComp:
 
@@ -56,13 +55,13 @@ object ConnComp:
     val dims = sp.spatialDims
     val spatialNels = dims.product
     val activeIdx = Mask.indices(mask)
-    if activeIdx.length == 0 then
-      val zeros = NArrayUtil.fillConst[Int](spatialNels, 0)
+    if activeIdx.size == 0 then
+      val zeros = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
       val zvol = NeuroVol.fromLinear[Int](zeros, sp, label)
       (zvol, zvol)
     else
-      val labels = NArrayUtil.fillConst[Int](spatialNels, 0)
-      val nodes = Array.ofDim[Int](activeIdx.length + 1) // 1-based provisional labels
+      val labels = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
+      val nodes = Array.ofDim[Int](activeIdx.size + 1) // 1-based provisional labels
 
       def find(i0: Int): Int =
         var root = i0
@@ -78,7 +77,7 @@ object ConnComp:
 
       var nextLabel = 1
       var p = 0
-      while p < activeIdx.length do
+      while p < activeIdx.size do
         val lin = activeIdx(p)
         val g = Indexing.indexToGrid3D(dims, lin)
         val x0 = g(0); val y0 = g(1); val z0 = g(2)
@@ -120,7 +119,7 @@ object ConnComp:
       // Second pass: resolve labels, count cluster sizes
       val counts = scala.collection.mutable.Map.empty[Int, Int]
       p = 0
-      while p < activeIdx.length do
+      while p < activeIdx.size do
         val lin = activeIdx(p)
         val root = find(labels(lin))
         labels(lin) = root
@@ -131,11 +130,11 @@ object ConnComp:
         counts.toVector.sortBy { case (lab, size) => (-size, lab) }
       val rootToNew = sortedRoots.zipWithIndex.map { case ((lab, _), i) => lab -> (i + 1) }.toMap
 
-      val idxOut = NArrayUtil.fillConst[Int](spatialNels, 0)
-      val sizeOut = NArrayUtil.fillConst[Int](spatialNels, 0)
+      val idxOut = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
+      val sizeOut = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
 
       p = 0
-      while p < activeIdx.length do
+      while p < activeIdx.size do
         val lin = activeIdx(p)
         val root = labels(lin)
         val nid = rootToNew(root)

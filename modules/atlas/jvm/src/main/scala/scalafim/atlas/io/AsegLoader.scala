@@ -95,7 +95,7 @@ object AsegLoader:
       LabelRow(RegionId(60), "VentralDC", Some(Hemisphere.Right), Rgb(165, 42, 42), "Right-VentralDC")
     )
 
-  def regionsFor(spec: FreeSurferAseg = FreeSurferAseg.default): Vector[Region] =
+  def regionsFor(spec: FreeSurferAseg = FreeSurferAseg.default): Vector[AtlasRegionMetadata] =
     labelRows.map { row =>
       Region(
         id = row.id,
@@ -110,7 +110,7 @@ object AsegLoader:
       )
     }
 
-  def parseColorLut(text: String): Vector[Region] =
+  def parseColorLut(text: String): Vector[AtlasRegionMetadata] =
     text.linesIterator
       .map(_.trim)
       .filter(line => line.nonEmpty && !line.startsWith("#"))
@@ -157,7 +157,7 @@ object AsegLoader:
   private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
     val out = scala.collection.mutable.Set.empty[RegionId]
     var i = 0
-    while i < vol.values.data.length do
+    while i < vol.values.size do
       val id = vol.linear(i)
       if id > 0 then out += RegionId(id)
       i += 1

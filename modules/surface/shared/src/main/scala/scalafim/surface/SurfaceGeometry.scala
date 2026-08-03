@@ -21,6 +21,12 @@ final case class SurfaceGeometry private (
   def domainEither: Either[SurfaceError, SurfaceDomain] =
     SurfaceDomain.fromTag(hemisphere, vertexCount)
 
+  def meshDomainEither: Either[SurfaceError, SurfaceMeshDomain] =
+    SurfaceMeshDomain.from(this)
+
+  def hasSameMeshDomain(other: SurfaceGeometry): Boolean =
+    hemisphere == other.hemisphere && mesh.hasSameTopology(other.mesh)
+
   def domain: SurfaceDomain =
     domainEither.fold(error => throw new IllegalArgumentException(error.message), identity)
 

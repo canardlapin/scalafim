@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import scalafim.bids.*
+import bids4s.*
 import scalafim.dataset.{DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
 
 final case class ImageHeaderDescriptor(shape: DatasetShape)
@@ -18,6 +18,7 @@ final case class ImageHeaderCatalog(
     failures.get(path)
 
 enum CatalogIssueCode:
+  case BidsValidation(code: BidsIssueCode)
   case NoBoldFiles
   case MissingEntity
   case InvalidIdentity
@@ -36,9 +37,21 @@ enum CatalogIssueCode:
 final case class CatalogIssue(
     code: CatalogIssueCode,
     path: Option[BidsPath],
-    message: String
+    message: String,
+    severity: BidsIssueSeverity = BidsIssueSeverity.Error,
+    field: Option[String] = None
 ):
   require(message.trim.nonEmpty, "catalog issue message must be non-empty")
+
+object CatalogIssue:
+  def fromBids(issue: BidsIssue): CatalogIssue =
+    CatalogIssue(
+      code = CatalogIssueCode.BidsValidation(issue.code),
+      path = issue.path,
+      message = issue.message,
+      severity = issue.severity,
+      field = issue.field
+    )
 
 final case class CatalogCompileReport(
     matchedBoldFiles: Int,
@@ -46,8 +59,25 @@ final case class CatalogCompileReport(
 ):
   require(matchedBoldFiles >= 0, "matched BOLD count must be non-negative")
 
+  def errors: Vector[CatalogIssue] =
+    issues.filter(_.severity == BidsIssueSeverity.Error)
+
+  def warnings: Vector[CatalogIssue] =
+    issues.filter(_.severity == BidsIssueSeverity.Warning)
+
   def canCompile: Boolean =
-    issues.isEmpty
+    errors.isEmpty
+
+final case class CatalogCompilation(
+    catalog: StudyCatalog,
+    issues: Vector[CatalogIssue]
+):
+  require(
+    issues.forall(_.severity == BidsIssueSeverity.Warning),
+    "successful catalog compilation may contain warnings but not errors"
+  )
+
+  def warnings: Vector[CatalogIssue] = issues
 
 private final case class CandidateRun(
     bold: BidsFile,
@@ -162,6 +192,22 @@ object BidsStudyCompiler:
             boldFiles.length,
             Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, None, error.message))
           ))
+
+  def compileChecked(
+      project: BidsValidationReport[BidsProject],
+      recipe: DatasetRecipe,
+      imageHeaders: ImageHeaderCatalog
+  ): Either[CatalogCompileReport, CatalogCompilation] =
+    val bidsIssues = project.issues.map(CatalogIssue.fromBids)
+    compile(project.value, recipe, imageHeaders) match
+      case Left(report) =>
+        Left(report.copy(issues = bidsIssues ++ report.issues))
+      case Right(catalog) =>
+        val errors = bidsIssues.filter(_.severity == BidsIssueSeverity.Error)
+        if errors.nonEmpty then
+          val matchedBoldFiles = project.value.query(recipe.boldQuery).count(isBoldImage)
+          Left(CatalogCompileReport(matchedBoldFiles, bidsIssues))
+        else Right(CatalogCompilation(catalog, bidsIssues))
 
   private def compileRun(
       project: BidsProject,

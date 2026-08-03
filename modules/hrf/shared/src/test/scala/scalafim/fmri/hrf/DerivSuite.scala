@@ -8,7 +8,7 @@ class DerivSuite extends munit.FunSuite:
   test("Deriv matches analytic SPMG1 derivative") {
     val t = (0 to 40).map(_ * 0.5)
     val d = Deriv.doubles(Hrfs.SPMG1, t)
-    val expected = t.map(x => HrfFunctions.spmg1Deriv(x.s)).toArray
+    val expected = t.map(x => HrfFunctions.spmg1Deriv(Lag(x))).toArray
     assert(d.cols == 1)
     assert(TestUtils.maxAbsDiff(d.data, expected) < 1e-9)
     assertEquals(d.data.head, 0.0)
@@ -18,8 +18,8 @@ class DerivSuite extends munit.FunSuite:
     val t = (0 to 40).map(_ * 0.5)
     val d = Deriv.doubles(Hrfs.SPMG2, t)
     assertEquals(d.cols, 2)
-    val col1 = t.map(x => HrfFunctions.spmg1Deriv(x.s)).toArray
-    val col2 = t.map(x => HrfFunctions.spmg1SecondDeriv(x.s)).toArray
+    val col1 = t.map(x => HrfFunctions.spmg1Deriv(Lag(x))).toArray
+    val col2 = t.map(x => HrfFunctions.spmg1SecondDeriv(Lag(x))).toArray
     val got1 = d.col(0).data
     val got2 = d.col(1).data
     assert(TestUtils.maxAbsDiff(got1, col1) < 1e-6)

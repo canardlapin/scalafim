@@ -73,12 +73,14 @@ class TypedCoreSuite extends munit.FunSuite:
   }
 
   test("DataTable typed accessors report missing and mistyped columns as DesignError") {
-    val onsetId = ColumnId("onset").fold(err => fail(err.message), identity)
-    assertEquals(table.doublesById(onsetId), Right(Vector(1.0, 3.0)))
+    def id(name: String): ColumnId = ColumnId(name).fold(err => fail(err.message), identity)
 
-    assertEquals(table.columnEither("missing"), Left(DesignError.MissingColumn("missing")))
+    assertEquals(table.get[Double](id("onset")), Right(Vector(1.0, 3.0)))
+    assertEquals(table.get[String](id("cond")), Right(Vector("A", "B")))
+
+    assertEquals(table.column(id("missing")), Left(DesignError.MissingColumn("missing")))
     assertEquals(
-      table.doublesEither("cond"),
+      table.get[Double](id("cond")),
       Left(DesignError.InvalidColumnType("cond", "numeric", "string"))
     )
   }

@@ -15,8 +15,8 @@ class MvpaCoreSuite extends munit.FunSuite:
   private def toyResponse: Response =
     Response.categorical(Vector("a", "a", "b", "b")).toOption.get
 
-  private def meanAnalysis: RoiAnalysis =
-    new RoiAnalysis:
+  private def meanAnalysis: DenseRoiAnalysis =
+    new DenseRoiAnalysis:
       override val name: String = "mean-signal"
 
       override def evaluate(roi: PatternMatrix, context: RoiContext): Either[MvpaError, RoiAnalysisResult] =
@@ -30,7 +30,7 @@ class MvpaCoreSuite extends munit.FunSuite:
           row += 1
         Right(RoiAnalysisResult(MetricVector("mean" -> (sum / (roi.value.rows * roi.value.cols)))))
 
-  private final class CountingSource(data: PatternMatrix) extends PatternSource:
+  private final class CountingSource(data: PatternMatrix) extends DensePatternSource:
     var selections: Int = 0
 
     override def samples: Int =

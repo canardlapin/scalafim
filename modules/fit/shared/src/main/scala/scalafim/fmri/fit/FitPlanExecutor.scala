@@ -1,42 +1,186 @@
 package scalafim.fmri.fit
 
-import scalafim.dataset.{DataSelection, FmriSeries}
+import scalafim.dataset.{
+  DataSelection,
+  DatasetSeriesReader,
+  FmriSeries,
+  SynchronousFmriDataset
+}
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
 import scalafim.fmri.model.FitPlan
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object FitPlanExecutor:
+  /** Synchronous compatibility overload. */
   def fit(
+      plan: FitPlan
+  ): Either[FitError, FmriFitResult] =
+    fit(plan, DataSelection.All)
+
+  /** Synchronous compatibility overload. */
+  def fit(
+      plan: FitPlan,
+      selection: DataSelection
+  ): Either[FitError, FmriFitResult] =
+    legacyReader(plan).flatMap(fit(_, plan, selection))
+
+  def fit(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All
   ): Either[FitError, FmriFitResult] =
     for
+      _ <-
+        if reader.dataset.id == plan.model.dataset.id then Right(())
+        else
+          Left(FitError.InvalidFitAxis(
+            "dataset reader",
+            s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
+          ))
       interpreter <- FitInterpreters.forPlan(plan)
-      series <- plan.model.dataset.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError)
+      series <- reader
+        .seriesEither(selection)
+        .left
+        .map(FitChunkPlan.mapDatasetError)
       result <- interpreter.fit(plan, series)
     yield result
 
   def unsafeFit(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All
   ): FmriFitResult =
-    fit(plan, selection).fold(error => throw new IllegalArgumentException(error.message), identity)
+    fit(reader, plan, selection)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  /** Synchronous compatibility overload. */
+  def unsafeFit(
+      plan: FitPlan
+  ): FmriFitResult =
+    unsafeFit(plan, DataSelection.All)
+
+  /** Synchronous compatibility overload. */
+  def unsafeFit(
+      plan: FitPlan,
+      selection: DataSelection
+  ): FmriFitResult =
+    fit(plan, selection)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  /** Synchronous compatibility overload. */
+  def fitChunked(
+      plan: FitPlan
+  ): Either[FitError, FmriFitResult] =
+    fitChunked(
+      plan,
+      DataSelection.All,
+      FitChunkingStrategy.WholeSelection
+    )
+
+  /** Synchronous compatibility overload. */
+  def fitChunked(
+      plan: FitPlan,
+      selection: DataSelection
+  ): Either[FitError, FmriFitResult] =
+    fitChunked(plan, selection, FitChunkingStrategy.WholeSelection)
+
+  /** Synchronous compatibility overload. */
+  def fitChunked(
+      plan: FitPlan,
+      chunking: FitChunkingStrategy
+  ): Either[FitError, FmriFitResult] =
+    fitChunked(plan, DataSelection.All, chunking)
+
+  /** Synchronous compatibility overload. */
+  def fitChunked(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  ): Either[FitError, FmriFitResult] =
+    legacyReader(plan).flatMap(fitChunked(_, plan, selection, chunking))
 
   def fitChunked(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FmriFitResult] =
-    ChunkedFitExecutor.fit(plan, selection, chunking)
+    ChunkedFitExecutor.fit(reader, plan, selection, chunking)
 
   def fitChunkedFuture(
+      reader: DatasetSeriesReader,
       plan: FitPlan,
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    FutureChunkedFitExecutor.fit(plan, selection, chunking, parallelism)
+    FutureChunkedFitExecutor.fit(
+      reader,
+      plan,
+      selection,
+      chunking,
+      parallelism
+    )
+
+  /** Synchronous compatibility overload. */
+  def fitChunkedFuture(
+      plan: FitPlan
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fitChunkedFuture(
+      plan,
+      DataSelection.All,
+      FitChunkingStrategy.WholeSelection,
+      FitParallelism.unbounded
+    )
+
+  /** Synchronous compatibility overload. */
+  def fitChunkedFuture(
+      plan: FitPlan,
+      selection: DataSelection
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fitChunkedFuture(
+      plan,
+      selection,
+      FitChunkingStrategy.WholeSelection,
+      FitParallelism.unbounded
+    )
+
+  /** Synchronous compatibility overload. */
+  def fitChunkedFuture(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    fitChunkedFuture(
+      plan,
+      selection,
+      chunking,
+      FitParallelism.unbounded
+    )
+
+  /** Synchronous compatibility overload. */
+  def fitChunkedFuture(
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy,
+      parallelism: FitParallelism
+  )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
+    legacyReader(plan) match
+      case Left(error) =>
+        Future.successful(Left(error))
+      case Right(reader) =>
+        fitChunkedFuture(reader, plan, selection, chunking, parallelism)
+
+  private def legacyReader(
+      plan: FitPlan
+  ): Either[FitError, SynchronousFmriDataset] =
+    SynchronousFmriDataset
+      .readerFor(plan.model.dataset)
+      .left
+      .map(error =>
+        FitError.InvalidFitAxis("dataset reader", error.message)
+      )
 
   private[fit] def fitBlockInput(
       plan: FitPlan,

@@ -77,6 +77,17 @@ private def validateContrastId(kind: String, value: String): Either[ContrastErro
   if trimmed.isEmpty then Left(ContrastError.InvalidId(kind, value, "must be non-empty"))
   else Right(trimmed)
 
+/** Lift a user-supplied variable name into the design's factor vocabulary.
+  *
+  * A [[FactorId]] is matched against `Event.factor`'s `varName`, which is
+  * produced by `Names.sanitize`. Normalizing into that namespace is a caller's
+  * job, not [[FactorId]]'s: parsing an id preserves what it is given.
+  */
+private def designFactorId(name: String): Either[ContrastError, FactorId] =
+  FactorId(Names.sanitize(name, allowDot = true))
+    .left
+    .map(err => ContrastError.InvalidId("factor id", name, err.message))
+
 opaque type ContrastId = String
 
 object ContrastId:
@@ -211,7 +222,7 @@ enum CellSelector:
 
 object CellSelector:
   def factor(name: String): Either[ContrastError, FactorSelector] =
-    FactorId(name).left.map(err => ContrastError.InvalidId("factor id", name, err.message)).map(FactorSelector(_))
+    designFactorId(name).map(FactorSelector(_))
 
   def factorUnsafe(name: String): FactorSelector =
     FactorSelector(FactorId.unsafe(Names.sanitize(name, allowDot = true)))
@@ -590,7 +601,7 @@ object ContrastExpr:
   ): Either[ContrastError, ContrastExpr] =
     for
       id <- ContrastId(name)
-      fac <- FactorId(factor).left.map(err => ContrastError.InvalidId("factor id", factor, err.message))
+      fac <- designFactorId(factor)
     yield ContrastExpr.Oneway(id, fac, where, basis)
 
   def interaction(
@@ -602,8 +613,8 @@ object ContrastExpr:
   ): Either[ContrastError, ContrastExpr] =
     for
       id <- ContrastId(name)
-      f1 <- FactorId(factor1).left.map(err => ContrastError.InvalidId("factor id", factor1, err.message))
-      f2 <- FactorId(factor2).left.map(err => ContrastError.InvalidId("factor id", factor2, err.message))
+      f1 <- designFactorId(factor1)
+      f2 <- designFactorId(factor2)
     yield ContrastExpr.Interaction(id, f1, f2, where, basis)
 
   def column(name: String, patternA: Regex, patternB: Option[Regex] = None): Either[ContrastError, ContrastExpr] =

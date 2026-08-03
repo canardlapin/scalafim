@@ -3,7 +3,7 @@ package scalafim.surface
 import scalafim.image.DMat
 import scalafim.image.NeuroSpace
 import scalafim.image.NeuroVol
-import scalafim.image.NArrayUtil
+import scalafim.image.PrimitiveBuffers
 import scalafim.image.SpatialDomainId
 
 class SurfaceSamplingSuite extends munit.FunSuite:
@@ -11,7 +11,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
   private val space = NeuroSpace(Vector(3, 3, 3))
   private val volume =
     NeuroVol.fromLinear(
-      NArrayUtil.tabulate[Double](27) { idx =>
+      PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
       },
@@ -106,7 +106,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
   test("masking can produce explicit empty samples"):
     val mask =
       NeuroVol.fromLinear(
-        NArrayUtil.fillConst[Boolean](27, false),
+        PrimitiveBuffers.fillConst[Boolean](27, false),
         space,
         "empty-mask"
       )
@@ -187,6 +187,23 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must have the same hemisphere"):
       SurfaceGeometryPair(pair.white, SurfaceGeometry(pair.pial.mesh, Hemisphere.Right, SurfaceKind.Pial))
 
+    val rewound =
+      SurfaceGeometry(
+        TriangleMesh.fromRows(
+          Vector(
+            Vector(0.0, 0.0, 2.0),
+            Vector(1.0, 0.0, 2.0),
+            Vector(0.0, 1.0, 2.0)
+          ),
+          Vector((0, 2, 1))
+        ),
+        Hemisphere.Left,
+        SurfaceKind.Pial
+      )
+    interceptMessage[IllegalArgumentException]("requirement failed: white and pial surfaces must share ordered triangle topology"):
+      SurfaceGeometryPair(pair.white, rewound)
+    assert(SurfaceGeometryPair.fromEither(pair.white, rewound).isLeft)
+
     interceptMessage[IllegalArgumentException]("requirement failed: fractional thickness path must contain at least one fraction"):
       VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.FractionalThickness(Vector.empty))
 
@@ -198,7 +215,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
     val badMask =
       NeuroVol.fromLinear(
-        NArrayUtil.fillConst[Boolean](8, true),
+        PrimitiveBuffers.fillConst[Boolean](8, true),
         NeuroSpace(Vector(2, 2, 2)),
         "bad-mask"
       )

@@ -21,5 +21,7 @@ modules/*/js/target/
 modules/*/jvm/target/
 modules/*/shared/target/
 *.class
+*.jfr
 *.log
 *.semanticdb
+__pycache__/

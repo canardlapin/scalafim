@@ -118,7 +118,7 @@ object SurfaceGeodesics:
     metric: DistanceMetric = DistanceMetric.Geodesic,
     edgeWeights: Option[Seq[Double]] = None
   ): Vector[NeighborHit] =
-    require(radius > 0.0 && radius.isFinite, "radius must be positive and finite")
+    require(radius >= 0.0 && radius.isFinite, "radius must be non-negative and finite")
     val allTargets = Vector.tabulate(topology.mesh.vertexCount)(VertexId.unsafe)
     val matrix = distanceMatrix(topology, sources, allTargets, metric, edgeWeights)
     val hits = Vector.newBuilder[NeighborHit]
@@ -128,7 +128,7 @@ object SurfaceGeodesics:
       var c = 0
       while c < matrix.cols do
         val d = matrix(r, c)
-        if d < radius then hits += NeighborHit(matrix.rowVertices(r), matrix.colVertices(c), d)
+        if d <= radius then hits += NeighborHit(matrix.rowVertices(r), matrix.colVertices(c), d)
         c += 1
       r += 1
 
@@ -185,7 +185,7 @@ object SurfaceGeodesics:
     val visited = Array.fill(topology.mesh.vertexCount)(false)
     val queue =
       scala.collection.mutable.PriorityQueue.empty[(Double, Int)](
-        Ordering.by[(Double, Int), Double] { case (distance, _) => -distance }
+        using Ordering.by[(Double, Int), Double](entry => -entry._1)
       )
 
     distances(source.index) = 0.0

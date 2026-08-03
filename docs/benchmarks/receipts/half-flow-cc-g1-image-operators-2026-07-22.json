@@ -1,0 +1,141 @@
+{
+  "schema": "scalafim.halfflow-cc.image-operators-receipt.v1",
+  "epic": "bd-01KY514GPNG0P1W5AJ1TW96CEP",
+  "gate": "bd-01KY5171E8GBJ6EQC5X7ARRE1J",
+  "captured_at_utc": "2026-07-22T14:22:40Z",
+  "repository_head": "b341c388353df4d947d757b4903c37484caf044d",
+  "status": "gate_evidence",
+  "scope": {
+    "implemented": [
+      "independent native fixed and moving endpoint grids in the registration evaluation path",
+      "physical work-grid sampling verified on an oblique anisotropic signed-axis affine",
+      "destination-writing separable 3D box sums with explicit truncated boundary semantics",
+      "independent cubic-cost box-sum oracle and adjoint inner-product test",
+      "destination-writing physical-scale separable Gaussian smoothing",
+      "support-normalized Gaussian convolution on the whole lattice"
+    ],
+    "excluded": [
+      "registration-specific policy in the image operators",
+      "kernel fusion",
+      "GPU specialization",
+      "Gale changes"
+    ],
+    "gale_changed": false
+  },
+  "contracts": {
+    "box_boundary": "truncate to the finite lattice",
+    "box_reference_tolerance": {
+      "absolute": 1e-10,
+      "relative": 1e-10
+    },
+    "box_adjoint": "verified by inner products for the only admitted boundary mode",
+    "gaussian_boundaries": [
+      "zero",
+      "half-sample symmetric reflection"
+    ],
+    "gaussian_scale": "sigma in millimetres, converted independently using each affine column norm",
+    "normalized_convolution": "nonnegative support is smoothed with the weighted numerator; output is divided only above the declared minimum weight",
+    "native_sampling": "optimization retains the native moving image and grid; fixed-grid moving resampling remains evaluation-only"
+  },
+  "verification": {
+    "command": "sbt 'imageJVM/test' 'imageJS/test' 'registrationJVM/test' 'registrationJS/test' 'imageBenchJVM/compile'",
+    "results": [
+      {
+        "target": "imageJVM/test",
+        "passed": 214,
+        "failed": 0
+      },
+      {
+        "target": "imageJS/test",
+        "passed": 207,
+        "failed": 0
+      },
+      {
+        "target": "registrationJVM/test",
+        "passed": 37,
+        "failed": 0
+      },
+      {
+        "target": "registrationJS/test",
+        "passed": 37,
+        "failed": 0
+      },
+      {
+        "target": "imageBenchJVM/compile",
+        "status": "passed"
+      }
+    ]
+  },
+  "benchmark": {
+    "purpose": "short allocation and throughput diagnostic before metric integration; not a stabilized performance claim",
+    "command": "sbt 'imageBenchJVM/Jmh/run -wi 2 -i 3 -f 1 -t 1 -w 200ms -r 200ms -p side=64 -prof gc -rf json -rff /private/tmp/halfflow-cc-g1-jmh.json .*separableBoxSumInto.* .*physicalGaussianInto.* .*normalizedGaussianInto.*'",
+    "jmh_version": "1.37",
+    "jvm_reported_by_jmh": "OpenJDK 64-Bit Server VM 25.0.1",
+    "host": "Apple Silicon arm64, Darwin 23.3.0",
+    "configuration": {
+      "side": 64,
+      "voxels": 262144,
+      "threads": 1,
+      "forks": 1,
+      "warmup_iterations": 2,
+      "measurement_iterations": 3,
+      "iteration_milliseconds": 200,
+      "mode": "average time"
+    },
+    "results": [
+      {
+        "operator": "separableBoxSumInto",
+        "radius_voxels": [2, 2, 2],
+        "milliseconds_per_operation": 2.1617995885416668,
+        "reported_error": 0.7061918944485832,
+        "bytes_allocated_per_operation": 54.25,
+        "gc_collections": 0
+      },
+      {
+        "operator": "physicalGaussianInto",
+        "sigma_mm": 1.5,
+        "milliseconds_per_operation": 19.475317708333336,
+        "reported_error": 7.508189885218717,
+        "bytes_allocated_per_operation": 265.0,
+        "gc_collections": 0
+      },
+      {
+        "operator": "normalizedGaussianInto",
+        "sigma_mm": 1.5,
+        "milliseconds_per_operation": 40.68385026041667,
+        "reported_error": 58.127896906898485,
+        "bytes_allocated_per_operation": 265.0,
+        "gc_collections": 0
+      }
+    ],
+    "interpretation": "All operators reuse caller-owned volume workspaces. The small fixed B/op values and zero observed collections are compatible with allocation-controlled hot paths, but the deliberately short run has wide confidence intervals and is only a diagnostic baseline."
+  },
+  "sources": [
+    {
+      "path": "modules/image/shared/src/main/scala/scalafim/image/SeparableVolumeFilters.scala",
+      "sha256": "599ee30207b13c4777829fb1364521d5ea0e235c21b56541d6802fa970f4dfa5"
+    },
+    {
+      "path": "modules/image/shared/src/test/scala/scalafim/image/SeparableVolumeFiltersSuite.scala",
+      "sha256": "55878584cf016098fb620308656e012c3ed67cfc03deffe9722d5e3886d94d17"
+    },
+    {
+      "path": "modules/registration/jvm/src/main/scala/scalafim/registration/HalfFlowEvaluationCli.scala",
+      "sha256": "2bd0c5582064d268e9079fb80578a7ef6e9af79f25920f698b86f155786ac6a0"
+    },
+    {
+      "path": "modules/registration/shared/src/test/scala/scalafim/registration/HalfFlowEngineSuite.scala",
+      "sha256": "b318dd45f0c3a1548bbaac19fcf4113efc093241ba6b45b4f7e5f62b077c19f7"
+    },
+    {
+      "path": "benchmarks/image-jvm/src/main/scala/scalafim/image/HalfFlowImageKernelBenchmark.scala",
+      "sha256": "85d46a0a5b5cf0db3b25497f0b14a3f2c3b898f76e0e88bfcb953bff3ae13205"
+    }
+  ],
+  "limitations": [
+    "The benchmark is single-machine and single-fork.",
+    "The JMH uncertainty is intentionally large because this is a short diagnostic run.",
+    "The native-grid test establishes endpoint and sampling contracts; full true-CC optimization is a later gate.",
+    "No claim about ANTs parity follows from this receipt."
+  ]
+}

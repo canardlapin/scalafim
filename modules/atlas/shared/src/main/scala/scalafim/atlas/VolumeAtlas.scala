@@ -6,6 +6,7 @@ trait Atlas:
   def ref: AtlasRef
   def provenance: AtlasProvenance
   def regions: RegionIndex
+  def quotient: AtlasQuotient
 
   def family: String = ref.family
   def model: String = ref.model
@@ -24,24 +25,27 @@ final case class VolumeAtlas(
   private val payloadIdSet = volume.clusterIds.map(RegionId(_)).toSet
   require(regionIdSet == payloadIdSet, "region ids must match volume cluster ids")
 
+  lazy val quotient: VolumeAtlasQuotient =
+    AtlasQuotient.volume(ref.coordSpace.value, ref.name, regions, volume)
+
   def space: NeuroSpace =
     volume.space
 
   lazy val labelVolume: NeuroVol[Int] =
     volume.toDense
 
-  def region(id: RegionId): Option[Region] =
+  def region(id: RegionId): Option[AtlasRegionMetadata] =
     regions.get(id)
 
-  def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[Region] =
+  def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[AtlasRegionMetadata] =
     regions.find(label, hemisphere)
 
-  def subset(p: Region => Boolean): VolumeAtlas =
+  def subset(p: AtlasRegionMetadata => Boolean): VolumeAtlas =
     val kept = regions.regions.filter(p)
     require(kept.nonEmpty, "atlas subset must keep at least one region")
     val keepIds = kept.map(_.id.value).toSet
     val dense = volume.toDense
-    val flags = scalafim.image.NArrayUtil.fillConst[Boolean](space.spatialDims.product, false)
+    val flags = scalafim.image.PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, false)
     val values = Array.newBuilder[Int]
     var lin = 0
     while lin < flags.length do
@@ -52,7 +56,7 @@ final case class VolumeAtlas(
       lin += 1
     val mask = NeuroVol.fromLinear[Boolean](flags, space, volume.label)
     val outRegions = RegionIndex(kept)
-    val clusters = scalafim.image.NArrayUtil.fromArray(values.result())
+    val clusters = scalafim.image.PrimitiveBuffers.fromArray(values.result())
     copy(
       regions = outRegions,
       volume = ClusteredNeuroVol(mask, clusters, outRegions.labelMap, volume.label),
@@ -74,7 +78,7 @@ object VolumeAtlas:
     provenance: AtlasProvenance
   ): VolumeAtlas =
     val ids = regions.ids.map(_.value).toSet
-    val flags = scalafim.image.NArrayUtil.fillConst[Boolean](labels.space.spatialDims.product, false)
+    val flags = scalafim.image.PrimitiveBuffers.fillConst[Boolean](labels.space.spatialDims.product, false)
     val values = Array.newBuilder[Int]
     var lin = 0
     while lin < flags.length do
@@ -91,5 +95,5 @@ object VolumeAtlas:
     require(missing.isEmpty, s"label volume is missing region ids: ${missing.toVector.sorted.mkString(", ")}")
 
     val mask = NeuroVol.fromLinear[Boolean](flags, labels.space, label)
-    val clusters = scalafim.image.NArrayUtil.fromArray(clusterValues)
+    val clusters = scalafim.image.PrimitiveBuffers.fromArray(clusterValues)
     VolumeAtlas(ref, regions, ClusteredNeuroVol(mask, clusters, regions.labelMap, label), provenance)

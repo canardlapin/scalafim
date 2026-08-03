@@ -1,6 +1,5 @@
 package scalafim.spatial.io
 
-import narr.NArray
 import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec}
 import scalafim.image.io.Nifti
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
@@ -56,7 +55,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
   private def writeDenseField(path: Path, space: NeuroSpace, components: Vector[Vector[Double]]): Unit =
     require(components.length == 3)
     require(components.forall(_.length == space.spatialDims.product))
-    val values = NArray.ofSize[Double](components.map(_.length).sum)
+    val values = Array.ofDim[Double](components.map(_.length).sum)
     var component = 0
     var offset = 0
     while component < components.length do

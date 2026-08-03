@@ -1,0 +1,94 @@
+{
+  "capturedAtUtc": "2026-07-22T05:25:46Z",
+  "capturedOn": "2026-07-22",
+  "commands": {
+    "focusedTests": "sbt 'registrationJVM/test' 'registrationJS/test' 'registrationBenchJVM/Jmh/compile'",
+    "fullGate": "sbt compileAll testAll",
+    "jmh": "sbt 'registrationBenchJVM/Jmh/run -wi 5 -i 10 -f 3 -t 1 -w 250ms -r 250ms -prof gc -rf json -rff /tmp/halfflow-p6-affine-jmh.json .*robustAffineInitialization.*'"
+  },
+  "decisions": {
+    "accuracyFloor": "Native-grid final affine refinement is the default. A shrink-two final refinement measured about 1.0 mm landmark RMS on the analytic oracle and failed the frozen 0.8 mm gate.",
+    "galeBoundary": "No Gale source change. The hot path is registration scoring and image sampling; the small 4x4 affine control algebra runs once per initialization and does not justify a registration-shaped Gale primitive.",
+    "midpoint": "The fixed-to-moving and inverted moving-to-fixed fits are reconciled by an affine-group midpoint, then split into opposite inverse half maps before nonlinear refinement.",
+    "objective": "Every candidate is scored in both directions with clipped gain/offset-invariant correlation and explicit overlap admission."
+  },
+  "environment": {
+    "architecture": "arm64",
+    "hardware": "Apple M3 Max, 14 cores, 36 GB",
+    "jmhJava": "OpenJDK 64-Bit Server VM 25.0.1",
+    "jmhVersion": "1.37",
+    "operatingSystem": "macOS 14.3 (23D56)",
+    "sbtBuildVersion": "1.10.5",
+    "scala": "3.4.2",
+    "contentionNote": "Unrelated local development servers and agent processes were present. No ANTs, Docker benchmark, or second HalfFlow JMH process was run concurrently."
+  },
+  "fixture": {
+    "benchmark": {
+      "shape": [32, 32, 32],
+      "voxels": 32768,
+      "coarseShrink": 4,
+      "fineShrink": 1,
+      "maximumSamplesPerImage": 12000,
+      "directionalSearches": 2,
+      "scoreDirectionsPerCandidate": 2
+    },
+    "accuracyOracle": {
+      "kind": "analytic asymmetric three-component physical-world signal",
+      "landmarks": 4,
+      "maximumLandmarkRmsMm": 0.8,
+      "swapInverseToleranceMm": 0.000002
+    }
+  },
+  "jmh": {
+    "benchmark": {
+      "robustAffineInitialization": {
+        "allocationBytesPerOperation": 9660218.756,
+        "allocationError99_9": 3278.824,
+        "gcCollectionsAcrossMeasurements": 3,
+        "gcMillisAcrossMeasurements": 7,
+        "medianMillisPerOperation": 116.296,
+        "p95MillisPerOperation": 119.037,
+        "scoreError99_9Millis": 0.659,
+        "scoreMillisPerOperation": 116.516
+      }
+    },
+    "forks": 3,
+    "measurementMillis": 250,
+    "measurementsPerFork": 10,
+    "rawJmhJsonSha256": "c5fad1aec5d85eea62d3f12c0fd04acbcb475bc05dc142c509241cb072426788",
+    "samplesPerBenchmark": 30,
+    "threads": 1,
+    "warmupMillis": 250,
+    "warmupsPerFork": 5
+  },
+  "numericalAdmission": {
+    "recovery": "The independently generated analytic physical-world fixture passes the 0.8 mm four-landmark RMS gate after robust affine estimation.",
+    "split": "A supplied affine and its inverse produce exchanged midpoint arms, and midpoint composition recovers both affine directions.",
+    "status": "pass",
+    "swap": "Repeating estimation with fixed and moving exchanged yields the inverse transform and exchanged midpoint arms within 2e-6 mm.",
+    "support": "Constant images fail at the typed insufficient-support boundary."
+  },
+  "repository": {
+    "adoptedGaleRevision": "d7e661a12033a6b0949a606f5ea73baf5a34574a",
+    "head": "e60f59d65871db8c475f9b4eddf426d737aaf749",
+    "workingTreePolicy": "Shared checkout may be dirty; exact source hashes define this receipt."
+  },
+  "schema": "scalafim-half-flow-affine-receipt-v1",
+  "sourceSha256": {
+    "benchmarks/registration-jvm/src/main/scala/scalafim/registration/HalfFlowRegistrationBenchmark.scala": "7224e9edd6ecf730348fcb1ee676c2fc6aafbe08a6d40db88f42168840af9cd3",
+    "build.sbt": "fddb8c46e0038c6491f3309939653504d4b0eaaa9f4863d90b138be6c45e8a7b",
+    "modules/registration/shared/src/main/scala/scalafim/registration/AffineInitialization.scala": "c46e5851b0018d554798170b3702519a72f3662eade2e8bb54b5d5e913613a64",
+    "modules/registration/shared/src/main/scala/scalafim/registration/RegistrationAlgebra.scala": "6d69873c705bb83278d1b24e79ad406e08b9389dec4c929a84312cf61ac08414",
+    "modules/registration/shared/src/test/scala/scalafim/registration/AffineInitializationSuite.scala": "2f6a39229340cd5b1b0b0343eae5c180ad48d0e17c4195a0a65fcb3da1ed2b83"
+  },
+  "tests": {
+    "registrationJS": {
+      "passed": 32,
+      "failed": 0
+    },
+    "registrationJVM": {
+      "passed": 32,
+      "failed": 0
+    }
+  }
+}

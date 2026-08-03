@@ -3,6 +3,10 @@
 Date: 2026-07-11  
 Tracker: `bd-01KX92VRXXB3WJQRR5Z4YE0EJZ`
 
+Status: historical. The audited in-repository graph substrate was subsequently
+extracted to standalone graph4s; numerical graph consumers now use its optional
+`graph4s-gale` module.
+
 ## Outcome
 
 The reusable `graph` module is a sound semantic oracle for the surveyed
@@ -57,7 +61,7 @@ must include every atlas region, including regions with no selected adjacency.
 
 - Keep the voxel contact scanner specialized.
 - Add graph conversion/result APIs only where a consumer needs traversal or
-  graph-linalg.
+  `graph4s-gale`.
 - Do not make the scanner construct a voxel graph internally.
 - Keep `SpaceTransforms.shortestRoute` as a separate later seam: its weighted
   status/confidence policy is not part of region adjacency and is outside the
@@ -112,7 +116,8 @@ assertions.
   `SurfaceParcels` by sharing one surface-local filtered traversal now; graph
   delegation can follow when the filtered-view gate is met.
 - A graph interop adapter remains useful for downstream topology and
-  graph-linalg consumers, provided it is cached once or transient and measured.
+  `graph4s-gale` consumers, provided it is cached once or transient and
+  measured.
 
 ## Spatial
 

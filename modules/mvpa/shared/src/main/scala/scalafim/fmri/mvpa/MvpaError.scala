@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa
 
+import gale.linalg.LinAlgError
+
 enum MvpaError:
   case EmptyResponse
   case ResponseLengthMismatch(expected: Int, actual: Int)
@@ -17,6 +19,10 @@ enum MvpaError:
   case MissingFeature(id: RoiId, index: FeatureIndex)
   case TooFewFeatures(id: RoiId, count: Int, required: Int)
   case MatrixShapeMismatch(detail: String)
+  case InvalidClassMembership(detail: String)
+  case InvalidPatternOperatorInput(detail: String)
+  case PatternOperatorFailed(cause: LinAlgError)
+  case OperatorRidgeFailed(cause: OperatorRidgeError)
   case InvalidRdmInput(detail: String)
   case InvalidClassifierInput(detail: String)
   case InvalidFeatureModelInput(detail: String)
@@ -57,6 +63,14 @@ enum MvpaError:
         s"feature set ${id.value} has $count feature(s), required $required"
       case MatrixShapeMismatch(detail) =>
         detail
+      case InvalidClassMembership(detail) =>
+        detail
+      case InvalidPatternOperatorInput(detail) =>
+        detail
+      case PatternOperatorFailed(cause) =>
+        s"pattern operator failed: ${cause.getMessage}"
+      case OperatorRidgeFailed(cause) =>
+        s"operator ridge failed: ${cause.message}"
       case InvalidRdmInput(detail) =>
         detail
       case InvalidClassifierInput(detail) =>

@@ -6,7 +6,9 @@ import scalafim.dataset.{
   DatasetShape,
   FmriDataset,
   FmriSeries,
+  DatasetSeriesReader,
   RunId,
+  SynchronousFmriDataset,
   TimepointIndex,
   VoxelIndex
 }
@@ -903,7 +905,7 @@ final case class MvpaDatasetView private[dataset] (
   require(patterns.samples == samples.size, "pattern rows must match sample table")
   require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
 
-  def source: PatternSource =
+  def source: DensePatternSource =
     PatternSource.fromMatrix(patterns)
 
   def featureSpace: FeatureSpaceRef =
@@ -931,7 +933,7 @@ final case class LabeledMvpaDatasetView private[dataset] (
   require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
   require(response.length == samples.size, "response length must match sample table")
 
-  def source: PatternSource =
+  def source: DensePatternSource =
     PatternSource.fromMatrix(patterns)
 
   def featureSpace: FeatureSpaceRef =
@@ -963,6 +965,30 @@ object LabeledMvpaDatasetView:
       datasetId: Option[DatasetId] = None
   ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
     MvpaDatasetView.fromSeries(series, metadata, featureSpaceId, datasetId).flatMap(fromView)
+
+  def fromReader(
+      reader: DatasetSeriesReader,
+      request: DatasetPatternRequest
+  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
+    MvpaDatasetView.fromReader(reader, request).flatMap(fromView)
+
+  def fromReader(
+      reader: DatasetSeriesReader,
+      labels: Seq[String],
+      selection: DataSelection = DataSelection.All,
+      blocks: Option[Seq[String]] = None,
+      runs: Option[Seq[String]] = None,
+      items: Option[Seq[String]] = None,
+      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
+  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
+    fromReader(
+      reader,
+      DatasetPatternRequest(
+        selection = selection,
+        metadata = SampleMetadataRequest.labeled(labels, blocks = blocks, runs = runs, items = items),
+        featureSpaceId = featureSpaceId
+      )
+    )
 
   def fromDataset(
       dataset: FmriDataset,
@@ -1062,20 +1088,53 @@ object MvpaDatasetView:
       datasetId
     )
 
-  def fromDataset(
-      dataset: FmriDataset,
+  def fromReader(
+      reader: DatasetSeriesReader,
       request: DatasetPatternRequest
   ): Either[MvpaDatasetError, MvpaDatasetView] =
-    dataset.seriesEither(request.selection) match
+    reader.seriesEither(request.selection) match
       case Left(error) =>
-        Left(MvpaDatasetError.DatasetReadFailed(dataset.id.value, error.message))
+        Left(MvpaDatasetError.DatasetReadFailed(
+          reader.dataset.id.value,
+          error.message
+        ))
       case Right(series) =>
         fromSeries(
           series = series,
           metadata = request.metadata,
           featureSpaceId = request.featureSpaceId,
-          datasetId = Some(dataset.id)
+          datasetId = Some(reader.dataset.id)
         )
+
+  def fromReader(
+      reader: DatasetSeriesReader,
+      selection: DataSelection = DataSelection.All,
+      labels: Option[Seq[String]] = None,
+      blocks: Option[Seq[String]] = None,
+      runs: Option[Seq[String]] = None,
+      items: Option[Seq[String]] = None,
+      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
+  ): Either[MvpaDatasetError, MvpaDatasetView] =
+    fromReader(
+      reader,
+      DatasetPatternRequest(
+        selection = selection,
+        metadata = SampleMetadataRequest(labels = labels, blocks = blocks, runs = runs, items = items),
+        featureSpaceId = featureSpaceId
+      )
+    )
+
+  def fromDataset(
+      dataset: FmriDataset,
+      request: DatasetPatternRequest
+  ): Either[MvpaDatasetError, MvpaDatasetView] =
+    SynchronousFmriDataset
+      .readerFor(dataset)
+      .left
+      .map(error =>
+        MvpaDatasetError.DatasetReadFailed(dataset.id.value, error.message)
+      )
+      .flatMap(fromReader(_, request))
 
   def fromDataset(
       dataset: FmriDataset,

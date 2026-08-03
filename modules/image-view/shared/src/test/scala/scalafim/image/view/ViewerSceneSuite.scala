@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 
 class ViewerSceneSuite extends munit.FunSuite:
@@ -10,7 +10,7 @@ class ViewerSceneSuite extends munit.FunSuite:
 
   private val anatomy =
     NeuroVol.fromLinear(
-      NArrayUtil.tabulate[Double](referenceSpace.nVoxels)(_.toDouble),
+      PrimitiveBuffers.tabulate[Double](referenceSpace.nVoxels)(_.toDouble),
       referenceSpace.toNeuroSpace,
       "anatomy"
     )
@@ -27,7 +27,7 @@ class ViewerSceneSuite extends munit.FunSuite:
     VolumeSpace(NeuroSpace(Vector(1, 1, 1), trans = Some(affine)))
 
   private val shiftedMask =
-    NeuroVol.fromLinear(NArrayUtil.fillConst[Boolean](1, true), shiftedMaskSpace.toNeuroSpace, "mask")
+    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](1, true), shiftedMaskSpace.toNeuroSpace, "mask")
 
   private val anatomyLayer =
     SliceLayer(
@@ -88,6 +88,20 @@ class ViewerSceneSuite extends munit.FunSuite:
     }
   }
 
+  test("orthogonal layouts support checked row and column arrangements") {
+    val device = DeviceContext.unsafe(1200.0, 800.0)
+    val row = OrthogonalLayout.make(0.02, 0.01, OrthogonalArrangement.SingleRow).toOption.get
+    val rowPanels = ViewerCompiler.panels(referenceSpace, state, device, row)
+    assert(rowPanels.sagittal.rect.right < rowPanels.coronal.rect.left)
+    assert(rowPanels.coronal.rect.right < rowPanels.axial.rect.left)
+
+    val column = OrthogonalLayout.make(0.02, 0.01, OrthogonalArrangement.SingleColumn).toOption.get
+    val columnPanels = ViewerCompiler.panels(referenceSpace, state, device, column)
+    assert(columnPanels.axial.rect.top < columnPanels.coronal.rect.bottom)
+    assert(columnPanels.coronal.rect.top < columnPanels.sagittal.rect.bottom)
+    assert(OrthogonalLayout.make(0.1, 0.5, OrthogonalArrangement.SingleRow).isLeft)
+  }
+
   test("heterogeneous layers sample in world space and retain draw order") {
     val frame = ViewerCompiler.compile(model, state, DeviceContext.unsafe(800.0, 800.0)).toOption.get
     val axialIndex = frame.panels.all.indexWhere(_.anatomicalPlane == AnatomicalPlane.Axial)
@@ -99,6 +113,22 @@ class ViewerSceneSuite extends munit.FunSuite:
     val maskRaster = images(1).image
     assertEquals(maskRaster.pixelUnsafe(1, 1), Rgba32.unsafe(255, 0, 0, 180))
     assertEquals(maskRaster.pixelUnsafe(0, 0).alpha, 0)
+  }
+
+  test("frames expose typed per-layer cursor readouts without backend knowledge") {
+    val frame = ViewerCompiler.compile(model, state, DeviceContext.unsafe(800.0, 800.0)).toOption.get
+
+    frame.readouts.all.foreach { readout =>
+      assertEquals(readout.world, state.cursor)
+      assertEquals(readout.referenceVoxel, VoxelPoint(1.0, 1.0, 0.0))
+      assertEquals(
+        readout.layers,
+        Vector(
+          LayerReadout(LayerId.unsafe("anatomy"), LayerSampleValue.Scalar(5.0)),
+          LayerReadout(LayerId.unsafe("mask"), LayerSampleValue.Mask(true))
+        )
+      )
+    }
   }
 
   test("crosshairs and orientation labels are explicit removable decorations") {

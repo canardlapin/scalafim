@@ -80,7 +80,12 @@ class SpaceUtilsSuite extends munit.FunSuite:
     assert(Affine.obliquity(sp.trans).max > 0.0, clue = "")
 
     val deob = Deoblique.target(sp)
-    assertClose(Vector(deob.trans(0, 0), deob.trans(1, 1), deob.trans(2, 2)), Vector(2.0, 2.0, 2.0), 1e-10)
+    val canonicalMinSpacing = Affine.voxelSizes(tx).min
+    assertClose(
+      Vector(deob.trans(0, 0), deob.trans(1, 1), deob.trans(2, 2)),
+      Vector.fill(3)(canonicalMinSpacing),
+      1e-10
+    )
     assertClose(Affine.obliquity(deob.trans), Vector(0.0, 0.0, 0.0), 1e-10)
 
     val grid = NeuroSpace(Vector(20, 20, 20), spacing = Some(Vector(1.0, 1.0, 1.0)), origin = Some(Vector(-5.0, -6.0, -7.0)))
@@ -98,7 +103,7 @@ class SpaceUtilsSuite extends munit.FunSuite:
         )
       )
     val sp = NeuroSpace(Vector(8, 6, 4), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
-    val vol = NeuroVol.fromLinear[Double](NArrayUtil.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
+    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val out = Deoblique(vol, newgrid = 2.0, method = Resample.Method.Linear)
 
     assertEquals(out.space.spacing, Vector(2.0, 2.0, 2.0), clue = "")

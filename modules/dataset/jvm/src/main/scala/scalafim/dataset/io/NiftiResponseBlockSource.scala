@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.*
-import scalafim.image.{NArrayUtil, NeuroSpace}
+import scalafim.image.{PrimitiveBuffers, NeuroSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
 
 import java.io.BufferedInputStream
@@ -102,7 +102,7 @@ final class NiftiResponseBlockSource private (
       Left(DatasetError.StorageFailure(s"requested NIfTI block has $valueCount values and exceeds the supported array size"))
     else
       NiftiReadPlan.make(selection.voxels, bytesPerValue).flatMap { plan =>
-        val values = NArrayUtil.ofSize[Double](valueCount.toInt)
+        val values = PrimitiveBuffers.ofSize[Double](valueCount.toInt)
         val buffer = ByteBuffer.allocateDirect(plan.maxBufferBytes).order(header.byteOrder)
         val slope = if header.slope == 0.0 then 1.0 else header.slope
 

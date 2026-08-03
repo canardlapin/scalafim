@@ -1,5 +1,8 @@
 package scalafim.image
 
+import ravel.NDArray as RavelArray
+import ravel.Rank
+
 class ResamplingPlanSuite extends munit.FunSuite:
 
   private val sourceDomain = SpatialDomainId("source")
@@ -22,8 +25,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertEquals(actual.space, expected.space, clue = "")
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     var i = 0
-    while i < actual.values.data.length do
-      assertClose(actual.values.data(i), expected.values.data(i), tol)
+    while i < actual.copyLegacyLinear.length do
+      assertClose(actual.copyLegacyLinear(i), expected.copyLegacyLinear(i), tol)
       i += 1
 
   private def assertSameVec(actual: NeuroVec[Double], expected: NeuroVec[Double], tol: Double = 1e-10): Unit =
@@ -31,14 +34,14 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     assertEquals(actual.nVolumes, expected.nVolumes, clue = "")
     var i = 0
-    while i < actual.values.data.length do
-      assertClose(actual.values.data(i), expected.values.data(i), tol)
+    while i < actual.copyLegacyLinear.length do
+      assertClose(actual.copyLegacyLinear(i), expected.copyLegacyLinear(i), tol)
       i += 1
 
   private def testVolume(space: NeuroSpace): NeuroVol[Double] =
     val dims = space.spatialDims
     val data =
-      NArrayUtil.tabulate[Double](dims.product) { lin =>
+      PrimitiveBuffers.tabulate[Double](dims.product) { lin =>
         val g = Indexing.indexToGrid3D(dims, lin)
         valueAt(g(0), g(1), g(2))
       }
@@ -49,22 +52,22 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val dims = spatial.spatialDims
     val spatialNels = dims.product
     val data =
-      NArrayUtil.tabulate[Double](spatialNels * nVolumes) { lin =>
+      PrimitiveBuffers.tabulate[Double](spatialNels * nVolumes) { lin =>
         val t = lin / spatialNels
         val g = Indexing.indexToGrid3D(dims, lin % spatialNels)
         valueAt(g(0), g(1), g(2)) + 1000.0 * t.toDouble
       }
     NeuroVec.fromLinear(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
 
-  private def denseField(grid: GridSpec)(f: (VoxelCoord, Int) => Double): NDArray[Double] =
-    val data =
-      NArrayUtil.tabulate[Double](grid.nVoxels * 3) { i =>
-        val component = i / grid.nVoxels
-        val lin = i % grid.nVoxels
-        val coord = Indexing.indexToGrid3D(grid.shape, lin)
-        f(coord, component)
-      }
-    NDArray(data, grid.dims :+ 3)
+  private def denseField(
+      grid: GridSpec
+  )(f: (VoxelCoord, Int) => Double): RavelArray[Double, Rank[4]] =
+    RavelArray.tabulate[Double](
+      grid.shape.x,
+      grid.shape.y,
+      grid.shape.z,
+      3
+    )((i, j, k, component) => f(VoxelCoord(i, j, k), component))
 
   private def valueAt(x: Int, y: Int, z: Int): Double =
     x.toDouble + 10.0 * y.toDouble + 100.0 * z.toDouble
@@ -313,7 +316,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceSpace = NeuroSpace(Vector(1, 1, 1))
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume =
-      NeuroVol.fromLinear(NArrayUtil.fillConst[Double](1, 2.0), sourceSpace, "constant")
+      NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
     val morphism = affine(scale(2.0, 3.0, 1.0))
     val p = plan(grid, grid, morphism, Resample.Method.Nearest)
 
@@ -340,10 +343,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
 
     assertEquals(source.kind, DenseVectorFieldKind.SourceCoordinates, clue = "")
     assertEquals(displacement.kind, DenseVectorFieldKind.Displacement, clue = "")
-    assertClose(source.values.data(0), 1.0)
-    assertClose(source.values.data(1), 2.0)
-    assertClose(displacement.values.data(0), 1.0)
-    assertClose(displacement.values.data(1), 1.0)
+    assertClose(source.linearComponent(0, 0), 1.0)
+    assertClose(source.linearComponent(1, 0), 2.0)
+    assertClose(displacement.linearComponent(0, 0), 1.0)
+    assertClose(displacement.linearComponent(1, 0), 1.0)
     assertClose(jacobian(0, 0, 0), 1.0)
     assertClose(jacobian(1, 0, 0), 1.0)
   }

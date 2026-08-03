@@ -7,6 +7,8 @@ enum DesignError:
   case UnknownTable(name: String)
   case InvalidColumnType(name: String, expected: String, actual: String)
   case UnknownBasis(name: String)
+  case UnknownBasisFunction(name: String, known: Vector[String])
+  case DegenerateBasis(detail: String)
   case UnknownContrast(name: String, known: Vector[String])
   case InvalidSubset(detail: String)
   case InvalidHrfFun(term: String, detail: String)
@@ -29,6 +31,11 @@ enum DesignError:
         s"Column '$name' is not $expected: $actual"
       case UnknownBasis(name) =>
         s"Unknown HRF basis: '$name'"
+      case UnknownBasisFunction(name, known) =>
+        val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
+        s"Unknown basis call '$name' in formula$suffix"
+      case DegenerateBasis(detail) =>
+        detail
       case UnknownContrast(name, known) =>
         val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
         s"Unknown contrast set '$name'$suffix"
@@ -50,141 +57,118 @@ object DesignError:
     val msg = Option(t.getMessage).filter(_.nonEmpty).getOrElse(t.toString)
     BuildFailed(msg)
 
-private def validateDesignId(kind: String, value: String, allowDot: Boolean): Either[DesignError, String] =
-  val trimmed = value.trim
-  if trimmed.isEmpty then Left(DesignError.InvalidId(kind, value, "must be non-empty"))
-  else Right(Names.sanitize(trimmed, allowDot = allowDot))
+/** Parse a design identifier.
+  *
+  * Parsing is total on valid input, injective, and rejecting: an accepted value
+  * is returned unchanged, so `Id(s).map(_.value) == Right(s)` for every `s` this
+  * accepts. An id is a lookup key, and rewriting a key means it may no longer
+  * name the thing the caller named.
+  *
+  * Making a *generated* name R-safe is the opposite job — lossy by design — and
+  * lives in [[Names]], applied where output names are produced.
+  */
+private def validateDesignId(kind: String, value: String): Either[DesignError, String] =
+  def reject(reason: String): Either[DesignError, String] =
+    Left(DesignError.InvalidId(kind, value, reason))
+
+  if value.trim.isEmpty then reject("must be non-empty")
+  else if value.exists(_.isControl) then reject("must not contain control characters")
+  else if value.trim != value then reject("must not have leading or trailing whitespace")
+  else Right(value)
 
 private def validateOneBasedIndex(kind: String, value: Int): Either[DesignError, Int] =
   if value >= 1 then Right(value)
   else Left(DesignError.InvalidId(kind, value.toString, "must be >= 1"))
 
-opaque type DesignColumnIndex = Int
+/** A design identifier, distinguished from other kinds by a phantom `Tag`.
+  *
+  * `DesignId[IdTag.Event]` and `DesignId[IdTag.Term]` are different types and
+  * cannot be interchanged; only the *definition* is shared. See
+  * [[validateDesignId]] for what parsing one means.
+  */
+opaque type DesignId[Tag] = String
 
-object DesignColumnIndex:
-  def fromOneBased(value: Int): Either[DesignError, DesignColumnIndex] =
-    validateOneBasedIndex("design column index", value)
+object DesignId:
+  def parse[Tag](kind: String, value: String): Either[DesignError, DesignId[Tag]] =
+    validateDesignId(kind, value)
 
-  def fromZeroBased(value: Int): Either[DesignError, DesignColumnIndex] =
-    fromOneBased(value + 1)
+  inline def unsafe[Tag](value: String): DesignId[Tag] = value
 
-  inline def unsafeOneBased(value: Int): DesignColumnIndex = value
+  extension [Tag](id: DesignId[Tag])
+    inline def value: String = id
 
-  extension (index: DesignColumnIndex)
+/** A one-based position, distinguished from other kinds by a phantom `Tag`. */
+opaque type OneBasedIndex[Tag] = Int
+
+object OneBasedIndex:
+  def fromOneBased[Tag](kind: String, value: Int): Either[DesignError, OneBasedIndex[Tag]] =
+    validateOneBasedIndex(kind, value)
+
+  inline def unsafe[Tag](value: Int): OneBasedIndex[Tag] = value
+
+  extension [Tag](index: OneBasedIndex[Tag])
     inline def oneBased: Int = index
     inline def zeroBased: Int = index - 1
 
-opaque type ScanIndex = Int
+/** The companion each concrete id type is; `kind` is what its errors call it. */
+sealed abstract class IdCompanion[Tag](kind: String):
+  def apply(value: String): Either[DesignError, DesignId[Tag]] =
+    DesignId.parse(kind, value)
 
-object ScanIndex:
-  def fromOneBased(value: Int): Either[DesignError, ScanIndex] =
-    validateOneBasedIndex("scan index", value)
+  def unsafe(value: String): DesignId[Tag] =
+    DesignId.unsafe(value)
 
-  def fromZeroBased(value: Int): Either[DesignError, ScanIndex] =
+sealed abstract class IndexCompanion[Tag](kind: String):
+  def fromOneBased(value: Int): Either[DesignError, OneBasedIndex[Tag]] =
+    OneBasedIndex.fromOneBased(kind, value)
+
+  def fromZeroBased(value: Int): Either[DesignError, OneBasedIndex[Tag]] =
     fromOneBased(value + 1)
 
-  inline def unsafeOneBased(value: Int): ScanIndex = value
+  def unsafeOneBased(value: Int): OneBasedIndex[Tag] =
+    OneBasedIndex.unsafe(value)
 
-  extension (index: ScanIndex)
-    inline def oneBased: Int = index
-    inline def zeroBased: Int = index - 1
+/** Phantom tags. They have no instances; they exist to keep the ids apart. */
+object IdTag:
+  sealed trait Event
+  sealed trait Condition
+  sealed trait Factor
+  sealed trait Term
+  sealed trait Column
 
-opaque type RunIndex = Int
+object IndexTag:
+  sealed trait DesignColumn
+  sealed trait Scan
+  sealed trait Run
+  sealed trait Basis
+  sealed trait Term
 
-object RunIndex:
-  def fromOneBased(value: Int): Either[DesignError, RunIndex] =
-    validateOneBasedIndex("run index", value)
+type EventId = DesignId[IdTag.Event]
+object EventId extends IdCompanion[IdTag.Event]("event")
 
-  def fromZeroBased(value: Int): Either[DesignError, RunIndex] =
-    fromOneBased(value + 1)
+type ConditionId = DesignId[IdTag.Condition]
+object ConditionId extends IdCompanion[IdTag.Condition]("condition")
 
-  inline def unsafeOneBased(value: Int): RunIndex = value
+type FactorId = DesignId[IdTag.Factor]
+object FactorId extends IdCompanion[IdTag.Factor]("factor")
 
-  extension (index: RunIndex)
-    inline def oneBased: Int = index
-    inline def zeroBased: Int = index - 1
+type TermId = DesignId[IdTag.Term]
+object TermId extends IdCompanion[IdTag.Term]("term")
 
-opaque type BasisIndex = Int
+type ColumnId = DesignId[IdTag.Column]
+object ColumnId extends IdCompanion[IdTag.Column]("column")
 
-object BasisIndex:
-  def fromOneBased(value: Int): Either[DesignError, BasisIndex] =
-    validateOneBasedIndex("basis index", value)
+type DesignColumnIndex = OneBasedIndex[IndexTag.DesignColumn]
+object DesignColumnIndex extends IndexCompanion[IndexTag.DesignColumn]("design column index")
 
-  def fromZeroBased(value: Int): Either[DesignError, BasisIndex] =
-    fromOneBased(value + 1)
+type ScanIndex = OneBasedIndex[IndexTag.Scan]
+object ScanIndex extends IndexCompanion[IndexTag.Scan]("scan index")
 
-  inline def unsafeOneBased(value: Int): BasisIndex = value
+type RunIndex = OneBasedIndex[IndexTag.Run]
+object RunIndex extends IndexCompanion[IndexTag.Run]("run index")
 
-  extension (index: BasisIndex)
-    inline def oneBased: Int = index
-    inline def zeroBased: Int = index - 1
+type BasisIndex = OneBasedIndex[IndexTag.Basis]
+object BasisIndex extends IndexCompanion[IndexTag.Basis]("basis index")
 
-opaque type TermIndex = Int
-
-object TermIndex:
-  def fromOneBased(value: Int): Either[DesignError, TermIndex] =
-    validateOneBasedIndex("term index", value)
-
-  def fromZeroBased(value: Int): Either[DesignError, TermIndex] =
-    fromOneBased(value + 1)
-
-  inline def unsafeOneBased(value: Int): TermIndex = value
-
-  extension (index: TermIndex)
-    inline def oneBased: Int = index
-    inline def zeroBased: Int = index - 1
-
-opaque type EventId = String
-
-object EventId:
-  def apply(value: String): Either[DesignError, EventId] =
-    validateDesignId("event", value, allowDot = false)
-
-  inline def unsafe(value: String): EventId = value
-
-  extension (id: EventId)
-    inline def value: String = id
-
-opaque type ConditionId = String
-
-object ConditionId:
-  def apply(value: String): Either[DesignError, ConditionId] =
-    validateDesignId("condition", value, allowDot = true)
-
-  inline def unsafe(value: String): ConditionId = value
-
-  extension (id: ConditionId)
-    inline def value: String = id
-
-opaque type FactorId = String
-
-object FactorId:
-  def apply(value: String): Either[DesignError, FactorId] =
-    validateDesignId("factor", value, allowDot = true)
-
-  inline def unsafe(value: String): FactorId = value
-
-  extension (id: FactorId)
-    inline def value: String = id
-
-opaque type TermId = String
-
-object TermId:
-  def apply(value: String): Either[DesignError, TermId] =
-    validateDesignId("term", value, allowDot = false)
-
-  inline def unsafe(value: String): TermId = value
-
-  extension (id: TermId)
-    inline def value: String = id
-
-opaque type ColumnId = String
-
-object ColumnId:
-  def apply(value: String): Either[DesignError, ColumnId] =
-    validateDesignId("column", value, allowDot = true)
-
-  inline def unsafe(value: String): ColumnId = value
-
-  extension (id: ColumnId)
-    inline def value: String = id
+type TermIndex = OneBasedIndex[IndexTag.Term]
+object TermIndex extends IndexCompanion[IndexTag.Term]("term index")

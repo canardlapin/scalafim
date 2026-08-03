@@ -1,6 +1,15 @@
 package scalafim.spatial
 
-import scalafim.image.{NeuroSpace, NeuroVol}
+import scalafim.image.{GridCompatibility, NeuroSpace, NeuroVol}
+import scalafim.locus.{
+  DomainFactory,
+  FiniteSpace,
+  Region as LocusRegion,
+  Selection as LocusSelection,
+  SpaceKey,
+  SpaceMismatch,
+  mismatch
+}
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, SurfaceRoi}
 
 enum DomainKind:
@@ -51,9 +60,12 @@ enum SamplingGeometry:
 
   this match
     case SamplingGeometry.Volume(space, Some(mask)) =>
-      require(mask.space.spatialDims == space.spatialDims && mask.space.trans == space.trans, "volume mask geometry mismatch")
+      require(GridCompatibility.spatial(space, mask.space).isRight, "volume mask geometry mismatch")
     case SamplingGeometry.Surface(geometry, Some(mask)) =>
-      require(mask.geometry.vertexCount == geometry.vertexCount, "surface mask geometry mismatch")
+      require(
+        geometry.mesh.hasSameTopology(mask.geometry.mesh),
+        "surface mask geometry mismatch"
+      )
     case SamplingGeometry.Hybrid(parts) =>
       require(parts.nonEmpty, "hybrid geometry must contain at least one part")
       require(parts.map(_.name.value).distinct.length == parts.length, "hybrid part names must be unique")
@@ -83,7 +95,7 @@ enum SamplingGeometry:
 object SamplingGeometry:
   def volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]] = None): Either[SpatialError, SamplingGeometry] =
     mask match
-      case Some(m) if m.space.spatialDims != space.spatialDims || m.space.trans != space.trans =>
+      case Some(m) if GridCompatibility.spatial(space, m.space).isLeft =>
         Left(SpatialError.MaskSpaceMismatch("volume"))
       case _ =>
         Right(SamplingGeometry.Volume(space.spatialSpace, mask))
@@ -93,7 +105,7 @@ object SamplingGeometry:
     mask: Option[SurfaceRoi[Boolean]] = None
   ): Either[SpatialError, SamplingGeometry] =
     mask match
-      case Some(m) if m.geometry.vertexCount != geometry.vertexCount =>
+      case Some(m) if !geometry.mesh.hasSameTopology(m.geometry.mesh) =>
         Left(SpatialError.MaskSpaceMismatch("surface"))
       case _ =>
         Right(SamplingGeometry.Surface(geometry, mask))
@@ -130,6 +142,9 @@ final case class Domain private (
   def nElements: Int =
     geometry.nElements
 
+  lazy val locus: DomainLocus =
+    DomainLocus.make(id, nElements)
+
 object Domain:
   def build(
     id: DomainId,
@@ -151,6 +166,44 @@ object Domain:
           Left(SpatialError.LatentDimensionMismatch(id, dim, geometryDim))
         case _ =>
           Right(())
+
+trait DomainLocus:
+  type S
+  val domainId: DomainId
+  val space: FiniteSpace[S]
+
+  final def regionDemand(
+      region: LocusRegion[S]
+  ): Either[SpaceMismatch, FieldDemand] =
+    if space.sameRuntimeOwnerAs(region.space) then
+      Right(FieldDemand.roi(region.ordinalsInDomainOrder.toVector))
+    else
+      Left(mismatch(space, region.space))
+
+  final def selectionDemand(
+      selection: LocusSelection[S]
+  ): Either[SpaceMismatch, FieldDemand] =
+    if space.sameRuntimeOwnerAs(selection.space) then
+      Right(FieldDemand.rows(selection.ordinals.toVector))
+    else
+      Left(mismatch(space, selection.space))
+
+object DomainLocus:
+  private[spatial] def make(
+      requestedId: DomainId,
+      size: Int
+  ): DomainLocus =
+    val resolution =
+      DomainFactory.unsafeRestore(
+        // `size` belongs in the key: a domain key must determine the domain it
+        // names, and the registry now canonicalizes on it.
+        SpaceKey.unsafe(s"scalafim:spatial:${requestedId.value}:$size"),
+        size
+      )
+    new DomainLocus:
+      type S = resolution.S
+      val domainId: DomainId = requestedId
+      val space: FiniteSpace[S] = resolution.space
 
 final case class DomainPart private (
   name: PartName,

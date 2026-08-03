@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 
 import scala.reflect.ClassTag
@@ -12,12 +12,15 @@ enum ImageViewError:
   case DuplicateLayerId(id: LayerId)
   case UnknownLayer(id: LayerId)
   case WindowUnsupported(id: LayerId)
+  case ThresholdUnsupported(id: LayerId)
   case IncompatibleFrameCounts(counts: Vector[Int])
   case TimepointOutOfBounds(index: Int, count: Int)
   case PointerOutsidePanel(plane: AnatomicalPlane)
   case PointerOutsideViewer
   case InvalidPointer(x: Double, y: Double)
   case InvalidSliceStep(value: Double)
+  case InvalidZoom(value: Double)
+  case InvalidViewCenter(x: Double, y: Double, zoom: Double)
   case SourceFailed(id: LayerId, cause: VolumeSourceError)
   case InvalidCacheCapacity(value: Int)
   case InvalidOrthogonalLayout(margin: Double, gap: Double)
@@ -38,6 +41,8 @@ enum ImageViewError:
         s"viewer layer '${id.asString}' does not exist"
       case WindowUnsupported(id) =>
         s"viewer layer '${id.asString}' does not support display windows"
+      case ThresholdUnsupported(id) =>
+        s"viewer layer '${id.asString}' does not support display thresholds"
       case IncompatibleFrameCounts(counts) =>
         s"temporal viewer layers must have the same frame count; got ${counts.mkString(", ")}"
       case TimepointOutOfBounds(index, count) =>
@@ -50,6 +55,10 @@ enum ImageViewError:
         s"viewer pointer coordinates must be finite; got ($x, $y)"
       case InvalidSliceStep(value) =>
         s"slice step must be finite and positive; got $value"
+      case InvalidZoom(value) =>
+        s"viewer zoom must be finite and at least 1; got $value"
+      case InvalidViewCenter(x, y, zoom) =>
+        s"viewer center ($x, $y) must keep zoom $zoom inside the image"
       case SourceFailed(id, cause) =>
         s"layer '${id.asString}' source failed: ${cause.message}"
       case InvalidCacheCapacity(value) =>
@@ -78,8 +87,10 @@ opaque type LayerOpacity = Double
 
 object LayerOpacity:
   def make(value: Double): Either[ImageViewError, LayerOpacity] =
-    if value.isFinite && value >= 0.0 && value <= 1.0 then Right(value)
-    else Left(ImageViewError.InvalidOpacity(value))
+    DisplayOpacity.make(value)
+      .left
+      .map(_ => ImageViewError.InvalidOpacity(value))
+      .map(DisplayOpacity.value)
 
   def unsafe(value: Double): LayerOpacity =
     make(value).fold(err => throw new IllegalArgumentException(err.message), identity)
@@ -151,6 +162,38 @@ enum LayerMapping:
   case WorldAligned
   case Pullback(referenceToSource: SpatialMorphism)
 
+enum LayerSampleValue:
+  case Scalar(value: Double)
+  case Label(value: Int)
+  case Mask(value: Boolean)
+
+trait LayerValue[A]:
+  def sampleValue(value: A): LayerSampleValue
+
+object LayerValue:
+  given LayerValue[Double] with
+    def sampleValue(value: Double): LayerSampleValue =
+      LayerSampleValue.Scalar(value)
+
+  given LayerValue[Int] with
+    def sampleValue(value: Int): LayerSampleValue =
+      LayerSampleValue.Label(value)
+
+  given LayerValue[Boolean] with
+    def sampleValue(value: Boolean): LayerSampleValue =
+      LayerSampleValue.Mask(value)
+
+private[view] sealed trait SampledLayerSlice:
+  def dimensions: SliceDimensions
+  def readout(column: Int, row: Int): Option[LayerSampleValue]
+  def colorize(
+    window: Option[DisplayWindow],
+    threshold: Option[DisplayThreshold]
+  ): RasterImage
+
+private[view] sealed trait ResolvedLayerFrame:
+  def sample(grid: SliceGrid): Either[ImageViewError, SampledLayerSlice]
+
 sealed trait SliceLayer:
   def id: LayerId
   def opacity: LayerOpacity
@@ -158,15 +201,25 @@ sealed trait SliceLayer:
   def frameCount: Int
   def timeInvariant: Boolean
   def supportsWindow: Boolean
+  def supportsThreshold: Boolean
   private[view] def sourceSpace: VolumeSpace
-  private[view] def raster(
+  private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
+  private[view] def sample(
+    grid: SliceGrid,
+    timepoint: Int
+  ): Either[ImageViewError, SampledLayerSlice] =
+    resolve(timepoint).flatMap(_.sample(grid))
+
+  private[view] final def raster(
     grid: SliceGrid,
     timepoint: Int,
-    window: Option[DisplayWindow]
-  ): Either[ImageViewError, RasterImage]
+    window: Option[DisplayWindow],
+    threshold: Option[DisplayThreshold]
+  ): Either[ImageViewError, RasterImage] =
+    sample(grid, timepoint).map(_.colorize(window, threshold))
 
 object SliceLayer:
-  def apply[A: ClassTag](
+  def apply[A: ClassTag: LayerValue](
     id: LayerId,
     volume: NeuroVol[A],
     sampling: SliceSampling[A],
@@ -177,7 +230,7 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.static(volume), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def series[A: ClassTag](
+  def series[A: ClassTag: LayerValue](
     id: LayerId,
     series: NeuroVec[A],
     sampling: SliceSampling[A],
@@ -188,7 +241,7 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.series(series), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def fromSource[A: ClassTag](
+  def fromSource[A: ClassTag: LayerValue](
     id: LayerId,
     source: VolumeSource[A],
     sampling: SliceSampling[A],
@@ -199,7 +252,7 @@ object SliceLayer:
   ): SliceLayer =
     Typed(id, source, sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  private final case class Typed[A: ClassTag](
+  private final case class Typed[A: ClassTag: LayerValue](
     id: LayerId,
     source: VolumeSource[A],
     sampling: SliceSampling[A],
@@ -217,32 +270,63 @@ object SliceLayer:
     def supportsWindow: Boolean =
       colorizer.supportsWindow
 
+    def supportsThreshold: Boolean =
+      colorizer.supportsThreshold
+
     private[view] def sourceSpace: VolumeSpace =
       source.space
 
-    private[view] def raster(
-      grid: SliceGrid,
-      timepoint: Int,
-      window: Option[DisplayWindow]
-    ): Either[ImageViewError, RasterImage] =
-      source.volumeAt(timepoint).left.map(error => ImageViewError.SourceFailed(id, error)).flatMap { volume =>
-        val activeColorizer = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
-        val sampled =
-          mapping match
-            case LayerMapping.WorldAligned =>
-              SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
-            case LayerMapping.Pullback(referenceToSource) =>
-              MappedSlicePlan.make(volume.volumeSpace, grid, referenceToSource).sample(volume, sampling)
-        sampled
-          .left
-          .map(error => ImageViewError.SamplingFailed(id, error))
-          .map { slice =>
-            val dimensions = RasterDimensions.unsafe(slice.dimensions.width, slice.dimensions.height)
-            RasterImage.tabulate(dimensions) { (column, row) =>
-              activeColorizer.color(slice(column, row))
-            }
-          }
-      }
+    private[view] def resolve(
+      timepoint: Int
+    ): Either[ImageViewError, ResolvedLayerFrame] =
+      source.volumeAt(timepoint)
+        .left
+        .map(error => ImageViewError.SourceFailed(id, error))
+        .map(volume => TypedFrame(id, volume, sampling, colorizer, mapping))
+
+  private final case class TypedFrame[A: ClassTag: LayerValue](
+    id: LayerId,
+    volume: NeuroVol[A],
+    sampling: SliceSampling[A],
+    colorizer: Colorizer[A],
+    mapping: LayerMapping
+  ) extends ResolvedLayerFrame:
+    def sample(grid: SliceGrid): Either[ImageViewError, SampledLayerSlice] =
+      val sampled =
+        mapping match
+          case LayerMapping.WorldAligned =>
+            SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
+          case LayerMapping.Pullback(referenceToSource) =>
+            MappedSlicePlan.make(volume.volumeSpace, grid, referenceToSource).sample(volume, sampling)
+      sampled
+        .left
+        .map(error => ImageViewError.SamplingFailed(id, error))
+        .map(slice => TypedSample(slice, colorizer))
+
+  private final case class TypedSample[A](
+    slice: SliceImage[A],
+    colorizer: Colorizer[A]
+  )(using layerValue: LayerValue[A]) extends SampledLayerSlice:
+    def dimensions: SliceDimensions =
+      slice.dimensions
+
+    def readout(column: Int, row: Int): Option[LayerSampleValue] =
+      if column < 0 || column >= dimensions.width || row < 0 || row >= dimensions.height then None
+      else Some(layerValue.sampleValue(slice(column, row)))
+
+    def colorize(
+      window: Option[DisplayWindow],
+      threshold: Option[DisplayThreshold]
+    ): RasterImage =
+      val windowed = window.flatMap(colorizer.withWindow).getOrElse(colorizer)
+      val activeColorizer = threshold.flatMap(windowed.withThreshold).getOrElse(windowed)
+      val dimensions = RasterDimensions.unsafe(slice.dimensions.width, slice.dimensions.height)
+      val pixels = new Array[Int](dimensions.pixelCount)
+      var index = 0
+      while index < pixels.length do
+        pixels(index) = activeColorizer.color(slice.values(index)).toPackedInt
+        index += 1
+      RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 
 final case class ViewerModel private (
   referenceSpace: VolumeSpace,

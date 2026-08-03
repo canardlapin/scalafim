@@ -1,6 +1,6 @@
 package scalafim.image.view
 
-import scalafim.graphics.*
+import intaglio.*
 import scalafim.image.*
 
 class InteractionSuite extends munit.FunSuite:
@@ -10,7 +10,7 @@ class InteractionSuite extends munit.FunSuite:
 
   private def constantVolume(value: Double, label: String): NeuroVol[Double] =
     NeuroVol.fromLinear(
-      NArrayUtil.fillConst[Double](space.nVoxels, value),
+      PrimitiveBuffers.fillConst[Double](space.nVoxels, value),
       space.toNeuroSpace,
       label
     )
@@ -28,7 +28,7 @@ class InteractionSuite extends munit.FunSuite:
     SliceLayer(
       maskId,
       NeuroVol.fromLinear(
-        NArrayUtil.fillConst[Boolean](space.nVoxels, true),
+        PrimitiveBuffers.fillConst[Boolean](space.nVoxels, true),
         space.toNeuroSpace,
         "mask"
       ),
@@ -99,7 +99,44 @@ class InteractionSuite extends munit.FunSuite:
     assertEquals(mirroredAxial.state.cursor, axial.state.cursor)
   }
 
-  test("window opacity and visibility actions alter presentation without mutating layers") {
+  test("zoomed panel views preserve inverse picking and stay plane-local") {
+    val view = PanelView.unsafe(ZoomLevel.unsafe(2.0), centerX = 0.6, centerY = 0.4)
+    val zoomed = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.SetPanelView(AnatomicalPlane.Axial, view)
+    ).toOption.get
+    val panel = ViewerCompiler.panels(space, zoomed.state, zoomed.device).axial
+    val rootX = panel.rect.left + panel.rect.width * 0.5
+    val rootY = panel.rect.bottom + panel.rect.height * 0.5
+    val pickedWorld = panel.worldAtRootNpc(rootX, rootY).get
+    val (roundtripX, roundtripY) = panel.cursorRootNpc(pickedWorld)
+
+    assertEqualsDouble(roundtripX, rootX, 1e-12)
+    assertEqualsDouble(roundtripY, rootY, 1e-12)
+    assertEquals(zoomed.state.panelViews.axial, view)
+    assertEquals(zoomed.state.panelViews.coronal, PanelView.Default)
+
+    val image = images(zoomed.frame(model).toOption.get, AnatomicalPlane.Axial).head
+    image.at.x match
+      case LengthExpr.Const(length) => assertEqualsDouble(length.value, -0.7, 1e-12)
+      case other => fail(s"expected a constant x location, got $other")
+    image.at.y match
+      case LengthExpr.Const(length) => assertEqualsDouble(length.value, -0.3, 1e-12)
+      case other => fail(s"expected a constant y location, got $other")
+    assertEquals(image.size, Size.npcUnsafe(2.0, 2.0))
+
+    val reset = ViewerReducer.reduce(
+      model,
+      zoomed,
+      ViewerAction.ResetPanelView(AnatomicalPlane.Axial)
+    ).toOption.get
+    assertEquals(reset.state.panelViews.axial, PanelView.Default)
+    assert(ZoomLevel.make(0.5).isLeft)
+    assert(PanelView.make(ZoomLevel.unsafe(2.0), 0.1, 0.5).isLeft)
+  }
+
+  test("window threshold opacity and visibility actions alter presentation without mutating layers") {
     val windowed = ViewerReducer.reduce(
       model,
       initial,
@@ -110,16 +147,31 @@ class InteractionSuite extends munit.FunSuite:
       windowed,
       ViewerAction.SetOpacity(scalarId, LayerOpacity.unsafe(0.25))
     ).toOption.get
-    val frame = faded.frame(model).toOption.get
+    val thresholded = ViewerReducer.reduce(
+      model,
+      faded,
+      ViewerAction.SetThreshold(
+        scalarId,
+        DisplayThreshold.transparentBand(1.5, 2.5).toOption.get
+      )
+    ).toOption.get
+    val frame = thresholded.frame(model).toOption.get
     val scalar = images(frame, AnatomicalPlane.Axial).head
 
     assertEqualsDouble(scalar.alpha, 0.25, 0.0)
-    assertEquals(scalar.image.pixelUnsafe(1, 1).red, 0)
+    assertEquals(scalar.image.pixelUnsafe(1, 1).alpha, 0)
     assertEquals(model.layers.head.opacity, LayerOpacity.Opaque)
+
+    val disabled = ViewerReducer.reduce(
+      model,
+      thresholded,
+      ViewerAction.SetThreshold(scalarId, DisplayThreshold.Disabled)
+    ).toOption.get
+    assertEquals(images(disabled.frame(model).toOption.get, AnatomicalPlane.Axial).head.image.pixelUnsafe(1, 1).alpha, 255)
 
     val hidden = ViewerReducer.reduce(
       model,
-      faded,
+      thresholded,
       ViewerAction.SetVisibility(scalarId, false)
     ).toOption.get
     assertEquals(images(hidden.frame(model).toOption.get, AnatomicalPlane.Axial).length, 1)
@@ -130,6 +182,13 @@ class InteractionSuite extends munit.FunSuite:
       ViewerAction.SetWindow(maskId, DisplayWindow.unsafe(0.0, 1.0))
     )
     assert(unsupported.isLeft)
+    assert(
+      ViewerReducer.reduce(
+        model,
+        initial,
+        ViewerAction.SetThreshold(maskId, DisplayThreshold.Disabled)
+      ).isLeft
+    )
   }
 
   test("timepoint actions drive temporal layers while static overlays persist") {

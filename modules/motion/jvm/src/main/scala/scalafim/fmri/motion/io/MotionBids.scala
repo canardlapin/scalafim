@@ -1,12 +1,22 @@
 package scalafim.fmri.motion.io
 
-import scalafim.bids.*
+import bids4s.*
+import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
 import scalafim.image.NeuroVec
 
 import java.nio.file.{Path, Paths}
 
 object MotionBids:
+  def loadProject(
+      root: Path,
+      config: BidsLoadConfig = BidsLoadConfig()
+  ): Either[MotionIoError, BidsProject] =
+    BidsProjectLoader
+      .loadStrict(root, config)
+      .left
+      .map(error => MotionIoError.fromBids(error.message))
+
   def rawScans(
       project: BidsProject,
       subid: String = ".*",
