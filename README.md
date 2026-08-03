@@ -3,6 +3,10 @@
 This repository consolidates the Scala fMRI and neuroimaging libraries into one
 cross-compiled sbt build.
 
+> **Maturity:** `0.1-development` / pre-release research software. Module
+> ownership and workflow boundaries are still being consolidated; APIs may
+> change and no stable production-support promise is implied.
+
 ## Modules
 
 - `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
