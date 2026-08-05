@@ -25,10 +25,9 @@ object NeuroVec:
 
     /** The image4s representation underlying vector compatibility view. */
     inline def sampled: image4s.Sampled[
-      ? <: image4s.geometry.Frame[image4s.geometry.D3],
-      image4s.geometry.D3,
+      ? <: image4s.SampleSpace[?, ?],
       A,
-      image4s.FieldRole,
+      ScalaFimValues,
       Rank[4]
     ] =
       vector

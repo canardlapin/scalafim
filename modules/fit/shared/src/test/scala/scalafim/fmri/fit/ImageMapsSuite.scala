@@ -8,7 +8,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, GridCompatibility, NeuroSpace}
 import gale.linalg.DMat
 
 class ImageMapsSuite extends munit.FunSuite:
@@ -102,7 +102,7 @@ class ImageMapsSuite extends munit.FunSuite:
         .get
         .dense
 
-    assertEquals(adapted.space, legacy.space)
+    assert(GridCompatibility.exact(adapted.space, legacy.space).isRight)
     assertVectorClose(adapted.series(0).toVector, legacy.series(0).toVector, 1e-10)
     assertVectorClose(adapted.series(1).toVector, legacy.series(1).toVector, 1e-10)
     assertVectorClose(adapted.series(2).toVector, legacy.series(2).toVector, 1e-10)

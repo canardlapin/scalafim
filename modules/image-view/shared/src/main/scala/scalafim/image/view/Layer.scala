@@ -133,8 +133,11 @@ final class VolumeSource[A] private (
         .left
         .map(reason => VolumeSourceError.ReadFailed(index, reason))
         .flatMap { volume =>
-          if volume.volumeSpace == space then Right(volume)
-          else Left(VolumeSourceError.SpaceMismatch(space, volume.volumeSpace))
+          GridCompatibility
+            .volume(space, volume.volumeSpace)
+            .left
+            .map(_ => VolumeSourceError.SpaceMismatch(space, volume.volumeSpace))
+            .map(_ => volume)
         }
 
 object VolumeSource:

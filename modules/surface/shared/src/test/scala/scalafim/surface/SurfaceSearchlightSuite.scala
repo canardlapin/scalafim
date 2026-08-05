@@ -58,7 +58,7 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
   test("metric balls use a closed radius boundary"):
     val searchlight =
       SurfaceSearchlight.metricBalls(domain, topology, 1.0).toOption.get
-    val center = domain.finiteSpace.pointOption(0).get
+    val center = domain.finiteSpace.indexOption(0).get
 
     assertEquals(
       searchlight.searchlight.regionAt(center).get.ordinalsInDomainOrder.toVector,
@@ -76,11 +76,11 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
 
     assert(
       searchlight.searchlight.neighborhoods
-        .row(domain.finiteSpace.pointOption(0).get)
+        .row(domain.finiteSpace.indexOption(0).get)
         .isEmpty
     )
-    assert(searchlight.searchlight.regionAt(domain.finiteSpace.pointOption(0).get).isEmpty)
-    assert(searchlight.searchlight.regionAt(domain.finiteSpace.pointOption(1).get).nonEmpty)
+    assert(searchlight.searchlight.regionAt(domain.finiteSpace.indexOption(0).get).isEmpty)
+    assert(searchlight.searchlight.regionAt(domain.finiteSpace.indexOption(1).get).nonEmpty)
 
   test("equal vertex counts do not excuse a topology mismatch"):
     assert(
@@ -101,7 +101,7 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
         .fromValues(domain.finiteSpace, Vector(10, 20, 30, 40))
         .toOption
         .get
-    val center = domain.finiteSpace.pointOption(1).get
+    val center = domain.finiteSpace.indexOption(1).get
     val section =
       SurfaceSearchlight
         .sectionAt(searchlight.searchlight, center, field)

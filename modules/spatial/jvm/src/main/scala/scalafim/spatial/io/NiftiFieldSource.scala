@@ -1,5 +1,6 @@
 package scalafim.spatial.io
 
+import scalafim.image.GridCompatibility
 import scalafim.image.io.{Nifti, NiftiHeader}
 import scalafim.linalg.DoubleMatrix
 import scalafim.spatial.*
@@ -139,7 +140,8 @@ final class NiftiFieldSource private (
         Left(SpatialError.FieldObservationMismatch(descriptor.observations, actualObservations))
       else
         descriptor.geometry match
-          case SamplingGeometry.Volume(space, _) if header.space.spatialSpace == space =>
+          case SamplingGeometry.Volume(space, _)
+              if GridCompatibility.spatial(space, header.space).isRight =>
             Right(())
           case SamplingGeometry.Volume(_, _) =>
             Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))

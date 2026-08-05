@@ -89,7 +89,10 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
           .fold(err => fail(err.message), identity)
 
       assertEquals(LnaValidator.validate(loaded), Vector.empty)
-      assertEquals(loaded.manifest.copy(checksum = None), archive.manifest)
+      assertEquals(
+        LnaManifestCodec.render(loaded.manifest.copy(checksum = None)),
+        LnaManifestCodec.render(archive.manifest)
+      )
       assert(loaded.manifest.checksum.exists(_.matches("[A-Fa-f0-9]{64}")))
       assertEquals(loaded.payloads.keySet, archive.payloads.keySet)
 

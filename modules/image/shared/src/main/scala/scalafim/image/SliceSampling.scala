@@ -81,9 +81,9 @@ final case class SlicePlan private (
     volume: NeuroVol[A],
     sampling: SliceSampling[A]
   ): Either[SlicePlanError, SliceImage[A]] =
-    if volume.volumeSpace != source then
-      Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
-    else
+    GridCompatibility.volume(source, volume.volumeSpace).left.map { _ =>
+      SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace)
+    }.map { _ =>
       val dimensions = grid.dimensions
       val out = PrimitiveBuffers.ofSize[A](dimensions.pixelCount)
       val sampleCursor = sampling.cursor(volume, source.shape)
@@ -107,7 +107,8 @@ final case class SlicePlan private (
         rowY += rowStep.y
         rowZ += rowStep.z
         row += 1
-      Right(SliceImage.unsafe(grid, out))
+      SliceImage.unsafe(grid, out)
+    }
 
 object SlicePlan:
   def make(source: VolumeSpace, grid: SliceGrid): SlicePlan =

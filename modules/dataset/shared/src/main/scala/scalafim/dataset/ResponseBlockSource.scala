@@ -119,7 +119,11 @@ object CompositeResponseBlockSource:
         Left(DatasetError.StorageFailure(s"composite response source has duplicate run ids: ${duplicateIds.mkString(", ")}"))
       else
         val first = runs.head.source
-        val incompatibleSpace = runs.tail.find(_.source.shape.space != first.shape.space)
+        val incompatibleSpace =
+          runs.tail.find: run =>
+            GridCompatibility
+              .exact(run.source.shape.space, first.shape.space)
+              .isLeft
         val incompatibleVoxels = runs.tail.find(_.source.voxelDomain.indices != first.voxelDomain.indices)
         incompatibleSpace match
           case Some(run) =>

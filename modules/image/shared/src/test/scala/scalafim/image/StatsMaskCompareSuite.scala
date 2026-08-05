@@ -32,7 +32,11 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
     assertEquals(mean.space.dims, Vector(2, 1, 1), clue = "")
     assertEquals(vals, Vector(2.0, 3.0), clue = "")
-    assertEquals(vec.temporalMean.space, mean.space, clue = "")
+    assertEquals(
+      GridCompatibility.exact(vec.temporalMean.space, mean.space),
+      Right(()),
+      clue = ""
+    )
     assertEquals(Vector.tabulate(vec.temporalMean.copyLegacyLinear.length)(i => vec.temporalMean.copyLegacyLinear(i)), vals, clue = "")
   }
 
@@ -62,7 +66,17 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
     val sparseMask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
     val svec = vec.asSparse(sparseMask)
-    assertEquals(Mask.of(svec), sparseMask, clue = "")
+    val recovered = Mask.of(svec)
+    assertEquals(
+      GridCompatibility.exact(recovered.space, sparseMask.space),
+      Right(()),
+      clue = ""
+    )
+    assertEquals(
+      recovered.copyLegacyLinear.toVector,
+      sparseMask.copyLegacyLinear.toVector,
+      clue = ""
+    )
   }
 
   test("NeuroCompare builds logical volumes and vectors") {

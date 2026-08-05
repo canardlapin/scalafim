@@ -12,10 +12,9 @@ final class NeuroSlice[A] private[image] (
     packed.data
 
   inline def sampled: image4s.Sampled[
-    ? <: image4s.geometry.Frame[image4s.geometry.D2],
-    image4s.geometry.D2,
+    ? <: image4s.SampleSpace[?, ?],
     A,
-    image4s.FieldRole,
+    ScalaFimValues,
     Rank[2]
   ] =
     packed

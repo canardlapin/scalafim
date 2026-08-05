@@ -4,13 +4,12 @@ import image4s.ImageError
 import image4s.ImageMetadata
 import image4s.Axis as ImageAxis
 import image4s.AxisKind
-import image4s.ComponentImage
-import image4s.FieldRole
+import image4s.Continuous
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.Sampled
-import image4s.Scalar
-import image4s.SomeSampled
+import image4s.SomeSampleSpace
+import image4s.ValueSemantics
 import ravel.DType
 import ravel.DType.given
 import ravel.NDArray as RavelArray
@@ -34,8 +33,18 @@ enum Image4sInteropError derives CanEqual:
 enum Image4sStorageTransfer derives CanEqual:
   case CanonicalizedLegacy
 
+sealed trait ScalaFimValues
+
+object ScalaFimValues:
+  given [A]: ValueSemantics[A, ScalaFimValues] with {}
+
 final case class ImportedScalarVolume(
-    sampled: SomeSampled[Double, Scalar],
+    sampled: Sampled[
+      ? <: SampleSpace[?, ?],
+      Double,
+      Continuous,
+      Rank[3]
+    ],
     transfer: Image4sStorageTransfer
 )
 
@@ -53,35 +62,33 @@ final case class DenseImageImport[+I](
 object Image4sInterop:
   private[image] type PackedSlice[A] =
     Sampled[
-      ? <: Frame[D2],
-      D2,
+      ? <: SampleSpace[?, ?],
       A,
-      FieldRole,
+      ScalaFimValues,
       Rank[2]
     ]
 
   private[image] type PackedVolume[A] =
     Sampled[
-      ? <: Frame[D3],
-      D3,
+      ? <: SampleSpace[?, ?],
       A,
-      FieldRole,
+      ScalaFimValues,
       Rank[3]
     ]
 
   private[image] type PackedSeries[A] =
     Sampled[
-      ? <: Frame[D3],
-      D3,
+      ? <: SampleSpace[?, ?],
       A,
-      FieldRole,
+      ScalaFimValues,
       Rank[4]
     ]
 
   private[image] type PackedComponents =
-    ComponentImage[
-      ? <: Frame[D3],
-      D3,
+    Sampled[
+      ? <: SampleSpace[?, ?],
+      Double,
+      Continuous,
       Rank[4]
     ]
 
@@ -100,17 +107,11 @@ object Image4sInterop:
           )
         )
       sampled <- Sampled
-        .create[
-          Frame[D3],
-          D3,
-          Double,
-          Scalar,
-          Rank[3]
-        ](space, volume.values)
+        .continuous[Double, Rank[3]](space.typed, volume.values)
         .left
         .map(Image4sInteropError.Image.apply)
     yield ImportedScalarVolume(
-      SomeSampled.d3(sampled),
+      sampled,
       Image4sStorageTransfer.CanonicalizedLegacy
     )
 
@@ -171,13 +172,11 @@ object Image4sInterop:
     for
       canonical <- canonicalD3(space.spatialSpace)
       sampled <- Sampled
-        .create[
-          Frame[D3],
-          D3,
-          A,
-          FieldRole,
-          Rank[3]
-        ](canonical, data, ImageMetadata.named(label))
+        .create[A, ScalaFimValues, Rank[3]](
+          canonical.typed,
+          data,
+          ImageMetadata.named(label)
+        )
         .left
         .map(NeuroImageError.Image.apply)
     yield sampled
@@ -193,13 +192,11 @@ object Image4sInterop:
       for
         canonical <- canonicalD2(space)
         sampled <- Sampled
-          .create[
-            Frame[D2],
-            D2,
-            A,
-            FieldRole,
-            Rank[2]
-          ](canonical, data, ImageMetadata.named(label))
+          .create[A, ScalaFimValues, Rank[2]](
+            canonical.typed,
+            data,
+            ImageMetadata.named(label)
+          )
           .left
           .map(NeuroImageError.Image.apply)
       yield sampled
@@ -212,13 +209,11 @@ object Image4sInterop:
     for
       canonical <- canonicalD3(space)
       sampled <- Sampled
-        .create[
-          Frame[D3],
-          D3,
-          A,
-          FieldRole,
-          Rank[4]
-        ](canonical, data, ImageMetadata.named(label))
+        .create[A, ScalaFimValues, Rank[4]](
+          canonical.typed,
+          data,
+          ImageMetadata.named(label)
+        )
         .left
         .map(NeuroImageError.Image.apply)
     yield sampled
@@ -238,10 +233,10 @@ object Image4sInterop:
         .from(Vector(direction))
         .left
         .map(NeuroImageError.Image.apply)
+      componentSpace = SampleSpace.create(canonical.grid, axes)
       sampled <- Sampled
-        .components(
-          canonical.grid,
-          axes,
+        .continuous(
+          componentSpace,
           data,
           ImageMetadata.named(label)
         )
@@ -262,22 +257,28 @@ object Image4sInterop:
       space: NeuroSpace
   ): Either[
     NeuroImageError,
-    SampleSpace[Frame[D2], D2]
+    SomeSampleSpace
   ] =
-    NeuroSpace
-      .canonical(space)
-      .requireD2
-      .left
-      .map(NeuroImageError.Image.apply)
+    val canonical = NeuroSpace.canonical(space)
+    Either.cond(
+      canonical.spatialRank == 2,
+      canonical,
+      NeuroImageError.Image(
+        ImageError.SpatialDimensionMismatch(2, canonical.spatialRank)
+      )
+    )
 
   private def canonicalD3(
       space: NeuroSpace
   ): Either[
     NeuroImageError,
-    SampleSpace[Frame[D3], D3]
+    SomeSampleSpace
   ] =
-    NeuroSpace
-      .canonical(space)
-      .requireD3
-      .left
-      .map(NeuroImageError.Image.apply)
+    val canonical = NeuroSpace.canonical(space)
+    Either.cond(
+      canonical.spatialRank == 3,
+      canonical,
+      NeuroImageError.Image(
+        ImageError.SpatialDimensionMismatch(3, canonical.spatialRank)
+      )
+    )

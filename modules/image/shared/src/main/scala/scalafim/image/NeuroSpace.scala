@@ -10,6 +10,7 @@ import image4s.geometry.D2
 import image4s.geometry.D3
 import image4s.geometry.CoordinateConvention
 import image4s.geometry.Frame
+import image4s.geometry.FrameId
 import image4s.geometry.FrameMetadata
 import image4s.geometry.Grid
 
@@ -58,6 +59,16 @@ enum NeuroSpaceError:
 opaque type NeuroSpace = SomeSampleSpace
 
 object NeuroSpace:
+  private val rasD2FrameId =
+    FrameId
+      .parse("scalafim-ras-d2")
+      .fold(error => throw new IllegalStateException(error.message), identity)
+
+  private val rasD3FrameId =
+    FrameId
+      .parse("scalafim-ras-d3")
+      .fold(error => throw new IllegalStateException(error.message), identity)
+
   private[image] def fromCanonical(space: SomeSampleSpace): NeuroSpace =
     space
 
@@ -315,13 +326,14 @@ object NeuroSpace:
     if dims.length == 2 then
       for
         metadata <- FrameMetadata
-          .create(
-            "scalafim-space",
-            convention = CoordinateConvention.RAS
-          )
+          .create("scalafim-space")
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
-        frame = Frame.fresh[D2](metadata)
+        frame = Frame.createPersistent[D2](
+          rasD2FrameId,
+          metadata,
+          convention = CoordinateConvention.RAS
+        )
         affine <- GeometryAffine
           .fromRowMajor[D2](
             Vector(
@@ -348,13 +360,14 @@ object NeuroSpace:
     else
       for
         metadata <- FrameMetadata
-          .create(
-            "scalafim-space",
-            convention = CoordinateConvention.RAS
-          )
+          .create("scalafim-space")
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
-        frame = Frame.fresh[D3](metadata)
+        frame = Frame.createPersistent[D3](
+          rasD3FrameId,
+          metadata,
+          convention = CoordinateConvention.RAS
+        )
         affine <- GeometryAffine
           .fromRowMajor[D3](
             Vector.tabulate(16)(transform.data.apply)

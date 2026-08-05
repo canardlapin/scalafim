@@ -1,6 +1,6 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{Axis, NeuroVec, PrimitiveBuffers}
+import scalafim.image.{NeuroVec, PrimitiveBuffers}
 
 object MotionApplier:
   def apply(
@@ -67,7 +67,7 @@ object MotionApplier:
         k += 1
       t += 1
 
-    NeuroVec.fromLinear(out, run.space.spatialSpace.addDim(nt, Some(Axis.Time)), run.label)
+    NeuroVec.fromLinear(out, run.space, run.label)
 
   private def applyLinearPacketAware(
       run: NeuroVec[Double],
@@ -122,4 +122,4 @@ object MotionApplier:
         k += 1
       t += 1
 
-    Right(NeuroVec.fromLinear(out, run.space.spatialSpace.addDim(nt, Some(Axis.Time)), run.label))
+    Right(NeuroVec.fromLinear(out, run.space, run.label))

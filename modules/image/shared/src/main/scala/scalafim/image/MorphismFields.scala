@@ -1,6 +1,8 @@
 package scalafim.image
 
-import image4s.ComponentImage
+import image4s.Continuous
+import image4s.SampleSpace
+import image4s.Sampled
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
@@ -18,7 +20,12 @@ enum DenseVectorFieldKind:
   */
 final class DenseVectorField private (
     val grid: GridSpec,
-    val sampled: ComponentImage[? <: Frame[D3], D3, Rank[4]],
+    val sampled: Sampled[
+      ? <: SampleSpace[?, ?],
+      Double,
+      Continuous,
+      Rank[4]
+    ],
     val kind: DenseVectorFieldKind
 ):
   val values: RavelArray[Double, Rank[4]] =
