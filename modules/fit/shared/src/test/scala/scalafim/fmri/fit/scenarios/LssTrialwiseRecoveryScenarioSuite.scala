@@ -19,7 +19,6 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
-import gale.linalg.DMat
 
 class LssTrialwiseRecoveryScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)

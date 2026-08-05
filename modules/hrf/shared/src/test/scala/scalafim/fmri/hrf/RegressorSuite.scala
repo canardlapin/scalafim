@@ -1,6 +1,5 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.HrfCombinators.*
 import scalafim.fmri.hrf.regressor.*
 import scalafim.fmri.hrf.TestUtils.*
 

@@ -1,13 +1,14 @@
 package scalafim.fmri.fit.io
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*
-import scalafim.fmri.model.{FitEngine, FitSummary}
+import scalafim.fmri.design.{DesignSchema, ModelSource}
+import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.linalg.Mat
+import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
 import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DVec
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -15,7 +16,10 @@ import java.nio.file.Files
 class ResultManifestWriterSuite extends munit.FunSuite:
 
   test("ResultManifestWriter writes BIDS-style NIfTI, covariance TSV, and sidecar artifacts") {
-    val result = denseResult()
+    val result = denseResult().copy(
+      olsDiagnostics = Some(fullRankDiagnostics),
+      preparationProvenance = Some(ResponsePreparationPlan.fromConfig(FitConfig()).provenance)
+    )
     val provenance = AnalysisProvenance.fromResult(result, source = "writer-suite")
     val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
     val tMaps = ContrastMap.fromTContrast(t, shape, provenance).toOption.get
@@ -65,6 +69,15 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(sidecar.contains("\"nifti_map_layout\": \"bundled\""))
     assert(sidecar.contains("parameter-coefficient"))
     assert(sidecar.contains("contrast-task"))
+    assert(sidecar.contains("\"design_fingerprint\": \"design-schema/v1:"))
+    assert(sidecar.contains("\"structural_columns\": [{\"id\":"))
+    assert(sidecar.contains("\"inferable_column_ids\": [\"legacy|Event|0|task\", \"legacy|Event|1|base_constant\"]"))
+    assert(sidecar.contains("\"response_preparation\": ["))
+    assert(sidecar.contains("\"step\": \"missing_data\""))
+    assert(sidecar.contains("\"rank_reports\": ["))
+    assert(sidecar.contains("\"rank\": 2"))
+    assert(sidecar.contains("\"tolerance_convention\": \"ScaleAware\""))
+    assert(sidecar.contains("\"aliased_column_ids\": []"))
   }
 
   test("ResultManifestWriter can write one named NIfTI per parameter and contrast map") {
@@ -198,6 +211,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     val sidecar = Files.readString(root.resolve("sub-01_task-restricted_resultmanifest.json"), StandardCharsets.UTF_8)
     assert(sidecar.contains("reduced_rank_conditional"))
     assert(sidecar.contains("\"inferable_columns\": [\"task\"]"))
+    assert(sidecar.contains("\"inferable_column_ids\": [\"legacy|Event|0|task\"]"))
   }
 
   private def shape: DatasetShape =
@@ -250,5 +264,33 @@ class ResultManifestWriterSuite extends munit.FunSuite:
         voxels = 2,
         robust = false,
         autocorrelated = false
+      ),
+      coefficientAxis = Some(coefficientAxis)
+    )
+
+  private def coefficientAxis: scalafim.fmri.design.CoefficientAxis =
+    DesignSchema
+      .legacy(
+        matrix = Mat.unsafe(4, 2, Array(1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 1.0)),
+        samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
+        columnNames = Vector("task", "base_constant"),
+        source = ModelSource.Event
       )
+      .coefficientAxis
+
+  private def fullRankDiagnostics: OlsDiagnostics =
+    val report = RankDiagnostics.fromPivotedQr(
+      predictorCount = 2,
+      rank = 2,
+      tolerance = 1e-7,
+      pivotOrder = Vector(0, 1),
+      diagonalR = Vector(2.0, 1.0),
+      toleranceConvention = scalafim.fmri.design.RankToleranceConvention.ScaleAware
+    )
+    OlsDiagnostics(
+      solveMethod = OlsSolveMethod.QrRankRevealing,
+      predictors = 2,
+      rank = 2,
+      policy = OlsSolvePolicy.Default,
+      rankReport = report
     )

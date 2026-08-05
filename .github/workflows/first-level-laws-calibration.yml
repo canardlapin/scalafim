@@ -1,0 +1,51 @@
+name: first-level-laws-calibration
+run-name: generated first-level calibration (${{ github.event_name }})
+
+on:
+  schedule:
+    - cron: "41 5 * * 3"
+  workflow_dispatch:
+
+concurrency:
+  group: first-level-laws-calibration-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  generated-laws:
+    name: generated laws on JVM and Scala.js
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      SCALAFIM_LAW_PROFILE: calibration
+      SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-laws-sbt
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up the declared JDK baseline
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up the declared Scala.js Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Run the calibration profile
+        shell: bash
+        run: |
+          cache_root="$SCALAFIM_SBT_CACHE_ROOT"
+          mkdir -p "$cache_root"
+          export COURSIER_CACHE="$cache_root/coursier"
+          sbt \
+            -Dsbt.boot.directory="$cache_root/boot" \
+            -Dsbt.global.base="$cache_root/global" \
+            -Dsbt.ivy.home="$cache_root/ivy" \
+            -Dsbt.supershell=false \
+            firstLevelLawsJVM/test \
+            firstLevelLawsJS/test

@@ -1,7 +1,5 @@
 package scalafim.fmri.fit.fixtures
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import gale.linalg.DMat
 
 object ReducedRankGlsFmriregFixtures:

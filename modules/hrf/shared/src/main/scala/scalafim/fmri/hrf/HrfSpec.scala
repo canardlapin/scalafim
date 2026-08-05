@@ -1,7 +1,5 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.HrfCombinators.*
-
 enum HrfSpecError:
   case UnknownKind(name: String, available: Vector[String])
   case UnsupportedKind(kind: HrfKind, detail: String)

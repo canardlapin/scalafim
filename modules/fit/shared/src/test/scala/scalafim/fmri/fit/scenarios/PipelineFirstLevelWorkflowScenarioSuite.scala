@@ -234,7 +234,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
           ScenarioHarness.fact("selected voxel order", lFit.voxelIndices == VoxelOrder, s"actual=${lFit.voxelIndices.mkString(",")} expected=${VoxelOrder.mkString(",")}"),
           ScenarioHarness.fact("task t voxel order", lT.voxelIndices == VoxelOrder, s"actual=${lT.voxelIndices.mkString(",")}"),
           ScenarioHarness.fact("task f voxel order", lF.voxelIndices == VoxelOrder, s"actual=${lF.voxelIndices.mkString(",")}"),
-          ScenarioHarness.fact("column names", lFit.columnNames == PublicFContrastNilearnFixture.columnNames, s"actual=${lFit.columnNames.mkString(",")}"),
+          ScenarioHarness.fact("column names", lFit.columnNames == Vector("task", "base_constant", "motion_x"), s"actual=${lFit.columnNames.mkString(",")} expected=task,base_constant,motion_x"),
           ScenarioHarness.fact("task row exists", taskRow >= 0, s"taskRow=$taskRow"),
           ScenarioHarness.fact("future fit metadata matches local", fFit.columnNames == lFit.columnNames && fFit.voxelIndices == lFit.voxelIndices, s"future=${fFit.columnNames}/${fFit.voxelIndices} local=${lFit.columnNames}/${lFit.voxelIndices}"),
           ScenarioHarness.fact("future t metadata matches local", fT.voxelIndices == lT.voxelIndices && fT.residualDegreesOfFreedom == lT.residualDegreesOfFreedom, s"future=${fT.voxelIndices} local=${lT.voxelIndices}"),

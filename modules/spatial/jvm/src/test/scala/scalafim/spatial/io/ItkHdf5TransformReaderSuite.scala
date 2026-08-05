@@ -1,7 +1,6 @@
 package scalafim.spatial.io
 
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -18,7 +17,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     result.fold(error => fail(error.message), identity)
 
   private def linearValue[A](result: Either[LinearMapError, A]): A =
-    result.fold(error => fail(error.message), identity)
+    result.fold(error => fail(error.getMessage), identity)
 
   private def fixture(name: String): Path =
     Path.of(

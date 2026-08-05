@@ -1,16 +1,20 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.DatasetShape
+import scalafim.fmri.design.{DesignSchema, ModelSource}
+import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitSummary}
 import scalafim.image.NeuroSpace
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DVec
 
 class ResultArtifactsSuite extends munit.FunSuite:
 
   test("ResultManifest from dense fit preserves parameter metadata and provenance") {
-    val result = denseResult()
+    val result = denseResult().copy(
+      olsDiagnostics = Some(fullRankDiagnostics),
+      preparationProvenance = Some(ResponsePreparationPlan.fromConfig(scalafim.fmri.model.FitConfig()).provenance)
+    )
     val manifest =
       ResultManifest
         .fromDenseFit(
@@ -26,7 +30,20 @@ class ResultArtifactsSuite extends munit.FunSuite:
     val covariance = manifest.coefficientCovariance.get
 
     assertEquals(manifest.provenance.engine, FitEngine.OrdinaryLeastSquares)
+    assertEquals(manifest.provenance.responsePreparation, result.preparationProvenance)
     assertEquals(manifest.provenance.columnNames, Vector("task", "base_constant"))
+    assertEquals(manifest.provenance.coefficientAxis, result.coefficientAxis)
+    assertEquals(manifest.provenance.rankReports.length, 1)
+    assertEquals(manifest.provenance.rankReports.head.numericalRank, 2)
+    assertEquals(manifest.provenance.rankReports.head.aliasedColumnIds, Vector.empty)
+    assertEquals(
+      manifest.provenance.coefficientAxis.map(_.columnIds),
+      result.coefficientAxis.map(_.columnIds)
+    )
+    assertEquals(
+      manifest.provenance.coefficientInference.map(_.inferableColumnIds),
+      result.coefficientAxis.map(_.columnIds)
+    )
     assertEquals(manifest.provenance.timepoints.toVector, Vector(0, 1, 2, 3))
     assertEquals(coefficientMaps.map(_.parameter), Vector("task", "base_constant"))
     assertEquals(standardErrorMaps.map(_.parameter), Vector("task", "base_constant"))
@@ -173,6 +190,10 @@ class ResultArtifactsSuite extends munit.FunSuite:
       manifest.provenance.coefficientInference.map(_.inferableColumns),
       Some(Vector("task"))
     )
+    assertEquals(
+      manifest.provenance.coefficientInference.map(_.inferableColumnIds),
+      result.coefficientAxis.map(axis => Vector(axis.columnIds.head))
+    )
 
     val covariance = manifest.coefficientCovariance.get
     assertEquals(covariance.parameterNames.map(_.value), Vector("task"))
@@ -231,7 +252,35 @@ class ResultArtifactsSuite extends munit.FunSuite:
         voxels = 2,
         robust = false,
         autocorrelated = false
+      ),
+      coefficientAxis = Some(coefficientAxis)
+    )
+
+  private def coefficientAxis: scalafim.fmri.design.CoefficientAxis =
+    DesignSchema
+      .legacy(
+        matrix = Mat.unsafe(4, 2, Array(1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 1.0)),
+        samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
+        columnNames = Vector("task", "base_constant"),
+        source = ModelSource.Event
       )
+      .coefficientAxis
+
+  private def fullRankDiagnostics: OlsDiagnostics =
+    val report = RankDiagnostics.fromPivotedQr(
+      predictorCount = 2,
+      rank = 2,
+      tolerance = 1e-7,
+      pivotOrder = Vector(0, 1),
+      diagonalR = Vector(2.0, 1.0),
+      toleranceConvention = scalafim.fmri.design.RankToleranceConvention.ScaleAware
+    )
+    OlsDiagnostics(
+      solveMethod = OlsSolveMethod.QrRankRevealing,
+      predictors = 2,
+      rank = 2,
+      policy = OlsSolvePolicy.Default,
+      rankReport = report
     )
 
   private def restrictedDenseResult(): DenseFmriFitResult =

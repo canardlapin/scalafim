@@ -12,15 +12,6 @@ import scalafim.fmri.design.event.{
 }
 import scalafim.fmri.design.hrf.HrfBasisRegistry
 
-enum ModelSource:
-  case Event, Baseline
-
-enum ColumnRole:
-  case Task, Trial, TrialAggregate, Covariate, Drift, Intercept, Nuisance, Baseline
-
-enum ModulationType:
-  case Amplitude, Parametric, Covariate
-
 final case class DesignColumnMeta(
     col: Int,
     name: String,
@@ -133,6 +124,19 @@ object DesignColmap:
       basisRegistry: BasisRegistry = BasisRegistry.default,
       hrfRegistry: HrfBasisRegistry = HrfBasisRegistry.default
   ): Vector[DesignColumnMeta] =
+    x.compiledSchema match
+      case Some(schema) =>
+        val currentSchema =
+          if schema.columnNames == x.columnNames then schema
+          else
+            schema.withRenderedLabels(x.columnNames).fold(
+              error => throw new IllegalArgumentException(error.message),
+              identity
+            )
+        return fromStructuralEventModel(x, currentSchema, hrfRegistry)
+      case None =>
+        ()
+
     val nCols = x.designMatrix.cols
     if nCols == 0 then return Vector.empty
 
@@ -272,7 +276,157 @@ object DesignColmap:
 
     out.result()
 
+  /** Compatibility rendering over the canonical schema.  The structural
+    * origin is authoritative; the only label-based fallback is the explicitly
+    * named trial/legacy condition renderer needed by old export consumers.
+    */
+  private def fromStructuralEventModel(
+      x: EventModel,
+      schema: DesignSchema,
+      hrfRegistry: HrfBasisRegistry
+  ): Vector[DesignColumnMeta] =
+    schema.columns.map { column =>
+      val origin = column.origin
+      val termIndexAndTerm = origin match
+        case StructuralColumnOrigin.Event(term, _, _, _, _, _, _) =>
+          x.termKeys.indexWhere(_ == term.value) match
+            case i if i >= 0 => Some((i + 1, x.terms(i)._2))
+            case _           => None
+        case _ => None
+      val termIndex = termIndexAndTerm.map(_._1)
+      val termTag =
+        termIndexAndTerm.map(_ => originTermTag(origin, x)).orElse {
+          origin match
+            case _: StructuralColumnOrigin.Sampled => Some(originTermTag(origin, x))
+            case _                                  => None
+        }
+      val basis = origin match
+        case StructuralColumnOrigin.Event(_, _, _, _, ref, _, _) => ref
+        case StructuralColumnOrigin.Drift(_, component, _)        => component
+        case StructuralColumnOrigin.Baseline(_, _, component, _)  => component
+        case _                                                    => None
+      val basisName = basis.map(_.basisId)
+      val basisIx = basis.map(_.index.oneBased)
+      val localColumn = origin match
+        case StructuralColumnOrigin.Event(term, _, _, _, _, _, _) =>
+          x.colIndices.get(term.value).flatMap { indices =>
+            val local = indices.indexOf(column.ordinal.oneBased - 1)
+            if local >= 0 then Some(local) else None
+          }
+        case _ => None
+      val basisTotal = termIndexAndTerm.flatMap { case (_, term) =>
+        term match
+          case ct: ConvolvedTerm => Some(localColumn.fold(ct.hrf.nbasis)(ct.hrfForColumn(_).nbasis))
+          case _                 => None
+      }
+      val condition = structuralCondition(column, x)
+      val metadata: (ColumnRole, ModelSource, Option[ModulationType], Option[String], Option[Int], Boolean) =
+        origin match
+          case StructuralColumnOrigin.Event(_, _, _, modulator, _, columnRole, _) =>
+            val mt = if modulator.nonEmpty then ModulationType.Parametric else ModulationType.Amplitude
+            (columnRole, ModelSource.Event, Some(mt), modulator.map(_.value), None, false)
+          case StructuralColumnOrigin.Sampled(regressor, columnRole, _) =>
+            (columnRole, ModelSource.Event, Some(ModulationType.Covariate), Some(regressor.value), None, false)
+          case StructuralColumnOrigin.Intercept(scope) =>
+            (ColumnRole.Intercept, ModelSource.Baseline, None, None, runFromScope(scope), true)
+          case StructuralColumnOrigin.Drift(_, _, scope) =>
+            (ColumnRole.Drift, ModelSource.Baseline, None, None, runFromScope(scope), true)
+          case StructuralColumnOrigin.Nuisance(_, regressor, scope) =>
+            (ColumnRole.Nuisance, ModelSource.Baseline, Some(ModulationType.Covariate), Some(regressor.value), runFromScope(scope), true)
+          case StructuralColumnOrigin.Baseline(_, columnRole, _, scope) =>
+            (columnRole, ModelSource.Baseline, None, None, runFromScope(scope), false)
+          case StructuralColumnOrigin.Legacy(source0, _, _) =>
+            (ColumnRole.Task, source0, Some(ModulationType.Amplitude), None, None, false)
+      val (role, source, modulationType, modulationId, run, blockDiagonal) = metadata
+      val prettyName =
+        modulationType match
+          case Some(ModulationType.Parametric) =>
+            (modulationId, basisTotal, basisIx, basisName) match
+              case (Some(mid), Some(total), Some(ix), Some(name)) if total > 1 =>
+                s"${mid}_${hrfRegistry.labelForName(name, ix)}"
+              case (Some(mid), _, _, _) => mid
+              case _                    => column.label
+          case _ => column.prettyLabel match
+            case value if value.trim.nonEmpty => value
+            case _                            => column.label
+      DesignColumnMeta(
+        col = column.ordinal.oneBased,
+        name = column.label,
+        termTag = termTag,
+        termIndex = termIndex,
+        condition = condition,
+        run = run,
+        role = role,
+        modelSource = source,
+        basisName = basisName,
+        basisIx = basisIx,
+        basisTotal = basisTotal,
+        basisLabel = for
+          bix <- basisIx
+          bn <- basisName
+        yield hrfRegistry.labelForName(bn, bix),
+        prettyName = prettyName,
+        isBlockDiagonal = blockDiagonal,
+        modulationType = modulationType,
+        modulationId = modulationId
+      )
+    }
+
+  private def originTermTag(origin: StructuralColumnOrigin, x: EventModel): String =
+    origin match
+      case StructuralColumnOrigin.Event(term, _, _, _, _, _, _) =>
+        x.termKeys.find(_ == term.value).getOrElse(term.value)
+      case StructuralColumnOrigin.Sampled(regressor, _, _) =>
+        x.terms.collectFirst {
+          case (key, cv: CovariateConvolvedTerm) if cv.id == regressor.value => key
+        }.getOrElse(regressor.value)
+      case _ => ""
+
+  private def structuralCondition(column: StructuralColumn, x: EventModel): Option[String] =
+    column.origin match
+      case StructuralColumnOrigin.Event(_, _, cell, modulator, _, _, _) if !cell.assignments.isEmpty =>
+        val cellTag = Names.makeCondTag(
+          cell.assignments.sortBy(_.factor.value).map(a => Names.levelToken(a.factor.value, a.level.value))
+        )
+        modulator match
+          case Some(mod) => Some(s"${cellTag}_${mod.value}")
+          case None      => Some(cellTag)
+      case StructuralColumnOrigin.Event(_, _, _, Some(modulator), _, _, _) =>
+        Some(modulator.value)
+      case _ =>
+        legacyConditionFromLabel(column.label, x)
+
+  private def legacyConditionFromLabel(label: String, x: EventModel): Option[String] =
+    x.termKeys.find(key => label.startsWith(key + "_")) match
+      case Some(key) =>
+        val remainder = label.drop(key.length + 1)
+        val basisFree =
+          val marker = remainder.lastIndexOf("_b")
+          if marker >= 0 && remainder.drop(marker + 2).nonEmpty && remainder.drop(marker + 2).forall(_.isDigit) then
+            remainder.take(marker)
+          else remainder
+        if basisFree.nonEmpty then Some(basisFree) else None
+      case None => None
+
+  private def runFromScope(scope: RunScope): Option[Int] =
+    scope match
+      case RunScope.Run(index) => Some(index.oneBased)
+      case _                   => None
+
   def forBaselineModel(x: BaselineModel): Vector[DesignColumnMeta] =
+    x.compiledSchema match
+      case Some(schema) =>
+        val currentSchema =
+          if schema.columnNames == x.columnNames then schema
+          else
+            schema.withRenderedLabels(x.columnNames).fold(
+              error => throw new IllegalArgumentException(error.message),
+              identity
+            )
+        return fromStructuralBaselineModel(x, currentSchema)
+      case None =>
+        ()
+
     val nCols = x.designMatrix.cols
     if nCols == 0 then return Vector.empty
 
@@ -367,6 +521,53 @@ object DesignColmap:
 
     out.result()
 
+  private def fromStructuralBaselineModel(
+      x: BaselineModel,
+      schema: DesignSchema
+  ): Vector[DesignColumnMeta] =
+    schema.columns.map { column =>
+      val zeroBased = column.ordinal.zeroBased
+      val termIndex0 = x.termSpans.indexWhere { case (start, endExcl) => zeroBased >= start && zeroBased < endExcl }
+      val termIndex = if termIndex0 >= 0 then Some(termIndex0 + 1) else None
+      val termTag = termIndex.map(i => x.termKeys(i - 1))
+      val term = termIndex.map(i => x.terms(i - 1)._2)
+      val (role, basisName, basisIx, basisTotal, basisLabel, run, blockDiagonal) =
+        column.origin match
+          case StructuralColumnOrigin.Drift(_, component, scope) =>
+            val total = component.flatMap(_ => term.flatMap(t => t.colInd.find(_.nonEmpty).map(_.length)))
+            (ColumnRole.Drift, component.map(_.basisId), component.map(_.index.oneBased), total, component.flatMap(_.role).map(_.stableLabel), runFromScope(scope), true)
+          case StructuralColumnOrigin.Intercept(scope) =>
+            (ColumnRole.Intercept, Some("constant"), None, Some(x.samplingFrame.nBlocks), Some("intercept"), runFromScope(scope), true)
+          case StructuralColumnOrigin.Nuisance(_, _, scope) =>
+            (ColumnRole.Nuisance, Some("nuisance"), None, None, None, runFromScope(scope), true)
+          case StructuralColumnOrigin.Baseline(_, columnRole, component, scope) =>
+            (columnRole, component.map(_.basisId), component.map(_.index.oneBased), None, component.flatMap(_.role).map(_.stableLabel), runFromScope(scope), false)
+          case StructuralColumnOrigin.Legacy(_, _, _) =>
+            (ColumnRole.Baseline, None, None, None, None, None, false)
+          case _ =>
+            (ColumnRole.Baseline, None, None, None, None, None, false)
+      DesignColumnMeta(
+        col = column.ordinal.oneBased,
+        name = column.label,
+        termTag = termTag,
+        termIndex = termIndex,
+        condition = None,
+        run = run,
+        role = role,
+        modelSource = ModelSource.Baseline,
+        basisName = basisName,
+        basisIx = basisIx,
+        basisTotal = basisTotal,
+        basisLabel = basisLabel,
+        prettyName = column.prettyLabel match
+          case value if value.trim.nonEmpty => value
+          case _                            => column.label,
+        isBlockDiagonal = blockDiagonal,
+        modulationType = None,
+        modulationId = None
+      )
+    }
+
   private final case class BaselineColumnSemantics(
       run: Option[Int],
       component: Option[Int],
@@ -441,38 +642,3 @@ object DesignColmap:
       case EventTermColumnRole.Trial          => ColumnRole.Trial
       case EventTermColumnRole.TrialAggregate => ColumnRole.TrialAggregate
       case EventTermColumnRole.Covariate      => ColumnRole.Covariate
-
-  private def parseTrailingInt(name: String, sep: String): Option[Int] =
-    val idx = name.lastIndexOf(sep)
-    if idx < 0 || idx + sep.length >= name.length then None
-    else
-      val digits = name.substring(idx + sep.length)
-      if digits.nonEmpty && digits.forall(_.isDigit) then Some(digits.toInt) else None
-
-  private def parseAfterHash(name: String): Option[Int] =
-    val idx = name.lastIndexOf('#')
-    if idx < 0 || idx + 1 >= name.length then None
-    else
-      val rest = name.substring(idx + 1)
-      val end = rest.indexOf('_')
-      val digits = if end < 0 then rest else rest.substring(0, end)
-      if digits.nonEmpty && digits.forall(_.isDigit) then Some(digits.toInt) else None
-
-  private def parseBlockAndComponent(name: String, blockMarker: String): (Option[Int], Option[Int]) =
-    val blockIx = name.lastIndexOf(blockMarker)
-    if blockIx < 0 then (None, None)
-    else
-      val runDigits = name.substring(blockIx + blockMarker.length)
-      val run = if runDigits.nonEmpty && runDigits.forall(_.isDigit) then Some(runDigits.toInt) else None
-
-      val before = name.substring(0, blockIx)
-      val kDigits = before.reverseIterator.takeWhile(_.isDigit).toVector.reverse.mkString
-      val k = if kDigits.nonEmpty then Some(kDigits.toInt) else None
-      (run, k)
-
-  private def maxComponentIndex(names: Vector[String], blockMarker: String): Option[Int] =
-    val ks = names.iterator.flatMap { n =>
-      val (_, k) = parseBlockAndComponent(n, blockMarker)
-      k
-    }.toVector
-    ks.maxOption

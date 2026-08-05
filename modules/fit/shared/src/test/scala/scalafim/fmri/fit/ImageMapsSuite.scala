@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
@@ -9,7 +7,6 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
-import gale.linalg.DMat
 
 class ImageMapsSuite extends munit.FunSuite:
 

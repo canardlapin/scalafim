@@ -2,7 +2,6 @@ package scalafim.spatial
 
 import ravel.NDArray as RavelArray
 import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
-import scalafim.linalg.DoubleMatrix
 import scalafim.surface.*
 
 enum ScenarioStatus:

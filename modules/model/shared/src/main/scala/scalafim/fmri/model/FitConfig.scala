@@ -20,14 +20,84 @@ enum ArStructure:
   case Iid
   case Ar(order: Int)
 
+/** How a fixed temporal weight vector is aligned to a fit selection. */
+enum FixedWeightAlignment:
+  /** The vector is indexed by the model's full zero-based timepoint axis. */
+  case FullSeries
+  /** The vector is already aligned, in order, to the selected response rows. */
+  case SelectedRows
+
+/** The population over which DVARS and the resulting weights are normalized. */
+enum DvarsWeightScope:
+  /** Normalize independently within each run, never across a run boundary. */
+  case WithinRun
+  /** Normalize once over the selected rows, while still resetting derivatives at run and censor gaps. */
+  case AcrossSelection
+
+final class VolumeWeightThreshold private (val value: Double):
+  require(value > 0.0 && value.isFinite, "volume-weight threshold must be positive and finite")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: VolumeWeightThreshold => value == that.value
+      case _                           => false
+
+  override def hashCode(): Int = value.hashCode()
+  override def toString: String = value.toString
+
+object VolumeWeightThreshold:
+  val Default: VolumeWeightThreshold = unsafe(1.5)
+
+  def apply(value: Double): Either[ModelError, VolumeWeightThreshold] =
+    if value > 0.0 && value.isFinite then Right(new VolumeWeightThreshold(value))
+    else Left(ModelError.InvalidParameter("volume-weight threshold", "must be positive and finite"))
+
+  def unsafe(value: Double): VolumeWeightThreshold =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final class SoftThresholdSteepness private (val value: Double):
+  require(value > 0.0 && value.isFinite, "soft-threshold steepness must be positive and finite")
+
+  override def equals(other: Any): Boolean =
+    other match
+      case that: SoftThresholdSteepness => value == that.value
+      case _                            => false
+
+  override def hashCode(): Int = value.hashCode()
+  override def toString: String = value.toString
+
+object SoftThresholdSteepness:
+  val Default: SoftThresholdSteepness = unsafe(2.0)
+
+  def apply(value: Double): Either[ModelError, SoftThresholdSteepness] =
+    if value > 0.0 && value.isFinite then Right(new SoftThresholdSteepness(value))
+    else Left(ModelError.InvalidParameter("soft-threshold steepness", "must be positive and finite"))
+
+  def unsafe(value: Double): SoftThresholdSteepness =
+    apply(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+/** A DVARS-to-weight function whose parameters exist only where they are meaningful. */
+enum DvarsWeightFunction:
+  case InverseSquared
+  case SoftThreshold(
+      threshold: VolumeWeightThreshold = VolumeWeightThreshold.Default,
+      steepness: SoftThresholdSteepness = SoftThresholdSteepness.Default
+  )
+  case TukeyBisquare(threshold: VolumeWeightThreshold = VolumeWeightThreshold.Default)
+
+/** A complete, executable response-derived volume-weight estimator. */
+final case class DvarsWeightEstimator(
+    function: DvarsWeightFunction = DvarsWeightFunction.InverseSquared,
+    scope: DvarsWeightScope = DvarsWeightScope.WithinRun
+)
+
 enum VolumeWeighting:
   case Disabled
-  case Estimated(method: VolumeWeighting.Method, threshold: Double)
-  case Fixed(weights: Vector[Double])
-
-object VolumeWeighting:
-  enum Method:
-    case InverseSquared, SoftThreshold, Tukey
+  case Estimated(estimator: DvarsWeightEstimator)
+  case Fixed(
+      weights: Vector[Double],
+      alignment: FixedWeightAlignment = FixedWeightAlignment.FullSeries
+  )
 
 enum Regularization:
   case Auto, Gcv
@@ -122,12 +192,10 @@ final case class FitConfig(
     lss: LssConfig = LssConfig()
 ):
   volumeWeighting match
-    case VolumeWeighting.Estimated(_, threshold) =>
-      require(threshold > 0.0 && threshold.isFinite, "volume-weight threshold must be positive and finite")
-    case VolumeWeighting.Fixed(weights) =>
+    case VolumeWeighting.Fixed(weights, _) =>
       require(weights.nonEmpty, "fixed volume weights must be non-empty")
       require(weights.forall(w => w >= 0.0 && w.isFinite), "fixed volume weights must be non-negative and finite")
-    case VolumeWeighting.Disabled => ()
+    case VolumeWeighting.Disabled | VolumeWeighting.Estimated(_) => ()
 
   nuisanceProjection match
     case NuisanceProjection.MatrixProjection(matrix, regularization) =>
@@ -449,7 +517,7 @@ final class TimepointWeights private (val values: Vector[Double]):
   override def hashCode(): Int =
     values.hashCode()
 
-  def validateLength(nTimepoints: Int): Either[ModelError, Unit] =
+  def validateFullSeriesLength(nTimepoints: Int): Either[ModelError, Unit] =
     if values.length == nTimepoints then Right(())
     else Left(ModelError.VectorLengthMismatch("fixed volume weights", nTimepoints, values.length))
 
@@ -465,30 +533,46 @@ object TimepointWeights:
 
 enum ModelVolumeWeighting:
   case Disabled
-  case Estimated(method: VolumeWeighting.Method, threshold: Double)
-  case Fixed(weights: TimepointWeights)
+  case Estimated(estimator: DvarsWeightEstimator)
+  case Fixed(
+      weights: TimepointWeights,
+      alignment: FixedWeightAlignment = FixedWeightAlignment.FullSeries
+  )
 
   def toLegacy: VolumeWeighting =
     this match
       case Disabled => VolumeWeighting.Disabled
-      case Estimated(method, threshold) => VolumeWeighting.Estimated(method, threshold)
-      case Fixed(weights) => VolumeWeighting.Fixed(weights.values)
+      case Estimated(estimator) => VolumeWeighting.Estimated(estimator)
+      case Fixed(weights, alignment) => VolumeWeighting.Fixed(weights.values, alignment)
 
   def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
     this match
-      case Fixed(weights) => weights.validateLength(nTimepoints)
-      case Disabled | Estimated(_, _) => Right(())
+      case Fixed(weights, FixedWeightAlignment.FullSeries) =>
+        weights.validateFullSeriesLength(nTimepoints)
+      case Fixed(_, FixedWeightAlignment.SelectedRows) | Disabled | Estimated(_) =>
+        Right(())
 
 object ModelVolumeWeighting:
   def fromLegacy(value: VolumeWeighting): Either[ModelError, ModelVolumeWeighting] =
     value match
       case VolumeWeighting.Disabled =>
         Right(Disabled)
-      case VolumeWeighting.Estimated(method, threshold) =>
-        if threshold > 0.0 && threshold.isFinite then Right(Estimated(method, threshold))
-        else Left(ModelError.InvalidParameter("volume-weight threshold", "must be positive and finite"))
-      case VolumeWeighting.Fixed(weights) =>
-        TimepointWeights(weights).map(Fixed.apply)
+      case VolumeWeighting.Estimated(estimator) =>
+        Right(Estimated(estimator))
+      case VolumeWeighting.Fixed(weights, alignment) =>
+        TimepointWeights(weights).map(Fixed(_, alignment))
+
+  def fixed(
+      weights: Vector[Double],
+      alignment: FixedWeightAlignment = FixedWeightAlignment.FullSeries
+  ): Either[ModelError, ModelVolumeWeighting] =
+    TimepointWeights(weights).map(Fixed(_, alignment))
+
+  def estimatedDvars(
+      function: DvarsWeightFunction = DvarsWeightFunction.InverseSquared,
+      scope: DvarsWeightScope = DvarsWeightScope.WithinRun
+  ): ModelVolumeWeighting =
+    Estimated(DvarsWeightEstimator(function, scope))
 
 final class NuisanceMatrix private (val matrix: DMat):
   require(matrix.rows > 0 && matrix.cols > 0, "nuisance matrix must be non-empty")
@@ -994,6 +1078,7 @@ object ReducedRankGlsConfig:
 enum FitStrategy:
   case OrdinaryLeastSquares(controls: FitControls = FitControls())
   case RunwiseLeastSquares(controls: FitControls = FitControls())
+  case SeparateRunsThenFixedEffects(controls: FitControls = FitControls())
   case GeneralizedLeastSquares(
       autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
       controls: FitControls = FitControls()
@@ -1020,6 +1105,7 @@ enum FitStrategy:
     this match
       case OrdinaryLeastSquares(_) => FitEngine.OrdinaryLeastSquares
       case RunwiseLeastSquares(_) => FitEngine.RunwiseLeastSquares
+      case SeparateRunsThenFixedEffects(_) => FitEngine.FixedEffects
       case GeneralizedLeastSquares(_, _) => FitEngine.GeneralizedLeastSquares
       case RobustLeastSquares(_, _, _) => FitEngine.RobustLeastSquares
       case LeastSquaresSeparate(_, _) => FitEngine.LeastSquaresSeparate
@@ -1031,6 +1117,8 @@ enum FitStrategy:
       case OrdinaryLeastSquares(controls) =>
         controls.toLegacyConfig()
       case RunwiseLeastSquares(controls) =>
+        controls.toLegacyConfig()
+      case SeparateRunsThenFixedEffects(controls) =>
         controls.toLegacyConfig()
       case GeneralizedLeastSquares(autocorrelation, controls) =>
         controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
@@ -1046,36 +1134,45 @@ enum FitStrategy:
       case ReducedRankGls(lowRank, controls) =>
         lowRank.toLegacyConfig(controls)
 
+  /** The coefficient estimand exposed by this strategy. */
+  def coefficientScope: CoefficientScope =
+    this match
+      case RunwiseLeastSquares(_) => CoefficientScope.RunSpecific
+      case SeparateRunsThenFixedEffects(_) => CoefficientScope.SeparateRunsThenFixedEffects
+      case _                      => CoefficientScope.SharedAcrossRuns
+
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val nTimepoints = model.nTimepoints
     this match
       case OrdinaryLeastSquares(controls) =>
-        controls.validateFor(nTimepoints)
+        FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = true)
       case RunwiseLeastSquares(controls) =>
-        controls.validateFor(nTimepoints)
+        FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
+      case SeparateRunsThenFixedEffects(controls) =>
+        FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
       case GeneralizedLeastSquares(autocorrelation, controls) =>
         for
-          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- autocorrelation.validateFor(nTimepoints)
         yield ()
       case RobustLeastSquares(robust, controls, autocorrelation) =>
         for
-          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- FitStrategy.validateRobustAutocorrelation(robust, autocorrelation, nTimepoints)
         yield ()
       case LeastSquaresSeparate(lss, controls) =>
         for
-          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- lss.validateFor(model)
         yield ()
       case LatentSketch(sketch, controls) =>
         for
-          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- sketch.validateFor(model)
         yield ()
       case ReducedRankGls(lowRank, controls) =>
         for
-          _ <- controls.validateFor(nTimepoints)
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- lowRank.validateFor(model)
         yield ()
 
@@ -1099,6 +1196,13 @@ object FitStrategy:
             _ <- requireNoAutocorrelation(engine, config)
             _ <- requireDefaultLss(engine, config)
           yield FitStrategy.RunwiseLeastSquares(controls)
+
+        case FitEngine.FixedEffects =>
+          for
+            _ <- requireNoRobust(engine, config)
+            _ <- requireNoAutocorrelation(engine, config)
+            _ <- requireDefaultLss(engine, config)
+          yield FitStrategy.SeparateRunsThenFixedEffects(controls)
 
         case FitEngine.GeneralizedLeastSquares =>
           for
@@ -1145,6 +1249,23 @@ object FitStrategy:
 
   def unsafeFromLegacy(engine: FitEngine, config: FitConfig = FitConfig()): FitStrategy =
     fromLegacy(engine, config).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private def validateControls(
+      engine: FitEngine,
+      controls: FitControls,
+      nTimepoints: Int,
+      allowVolumeWeighting: Boolean
+  ): Either[ModelError, Unit] =
+    for
+      _ <- controls.validateFor(nTimepoints)
+      _ <-
+        if allowVolumeWeighting || controls.volumeWeighting == ModelVolumeWeighting.Disabled then Right(())
+        else
+          Left(ModelError.InvalidFitConfig(
+            engine,
+            "volume weighting is currently executable only for ordinary least squares"
+          ))
+    yield ()
 
   private def requireNoRobust(engine: FitEngine, config: FitConfig): Either[ModelError, Unit] =
     if config.robust == RobustOptions() then Right(())

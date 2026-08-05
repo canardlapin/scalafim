@@ -1,6 +1,7 @@
 package scalafim.fmri.design.event
 
-import scalafim.fmri.design.{DesignError, TermId}
+import scalafim.fmri.design.{CellKey, ConditionProvenance, DesignError, EventRowProvenance, FactorId, HrfColumnScale, HrfColumnScaling, ModulatorId, PhaseId, TermId, CellAssignment}
+import scalafim.fmri.design.contrast.LevelId
 import scalafim.fmri.design.Names
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -19,7 +20,11 @@ final case class ConvolvedTerm(
     role: EventTermRole = EventTermRole.Task,
     columnRoles: Vector[EventTermColumnRole] = Vector.empty,
     columnConditions: Vector[Option[String]] = Vector.empty,
-    columnBasisIx: Vector[Option[Int]] = Vector.empty
+    columnBasisIx: Vector[Option[Int]] = Vector.empty,
+    columnCells: Vector[Option[CellKey]] = Vector.empty,
+    columnModulators: Vector[Option[ModulatorId]] = Vector.empty,
+    columnHrfs: Vector[Hrf] = Vector.empty,
+    columnScales: Vector[HrfColumnScale] = Vector.empty
 ) extends EventModelTerm:
   requireColumnMetadata()
   require(
@@ -30,16 +35,58 @@ final case class ConvolvedTerm(
     columnBasisIx.isEmpty || columnBasisIx.length == data.cols,
     s"columnBasisIx has ${columnBasisIx.length} entries for ${data.cols} data columns"
   )
+  require(
+    columnCells.isEmpty || columnCells.length == data.cols,
+    s"columnCells has ${columnCells.length} entries for ${data.cols} data columns"
+  )
+  require(
+    columnModulators.isEmpty || columnModulators.length == data.cols,
+    s"columnModulators has ${columnModulators.length} entries for ${data.cols} data columns"
+  )
+  require(
+    columnHrfs.isEmpty || columnHrfs.length == data.cols,
+    s"columnHrfs has ${columnHrfs.length} entries for ${data.cols} data columns"
+  )
+  require(
+    columnScales.isEmpty || columnScales.length == data.cols,
+    s"columnScales has ${columnScales.length} entries for ${data.cols} data columns"
+  )
 
   def keyHint: Option[String] = term.termTag
   def hrfOpt: Option[Hrf] = Some(hrf)
+
+  def hrfForColumn(localColumn: Int): Hrf =
+    require(localColumn >= 0 && localColumn < data.cols, "local column is out of bounds")
+    columnHrfs.lift(localColumn).getOrElse(hrf)
+
+  def scaleForColumn(localColumn: Int): HrfColumnScale =
+    require(localColumn >= 0 && localColumn < data.cols, "local column is out of bounds")
+    columnScales.lift(localColumn).getOrElse(HrfColumnScale.identity)
+
+  /** Distinct basis cardinalities represented by this term's realized columns.
+    *
+    * A conventional term has one shared HRF and therefore one cardinality.
+    * Cell-specific lowering records the assigned HRF for every realized
+    * column, so consumers can detect mixed-width terms before applying a
+    * homogeneous-basis contrast algorithm.
+    */
+  def basisWidths: Vector[Int] =
+    if columnHrfs.nonEmpty then columnHrfs.map(_.nbasis).distinct.sorted
+    else Vector(hrf.nbasis)
+
+  def hasHeterogeneousBasis: Boolean =
+    basisWidths.lengthCompare(1) > 0
 
 final case class EventTerm(
     events: Vector[Event],
     onsets: Vector[Seconds],
     durations: Vector[Seconds] = Vector.empty,
     blockIds: Vector[Int] = Vector.empty,
-    termTag: Option[String] = None
+    termTag: Option[String] = None,
+    /** The phase identity when this term was lowered from a multiphase trial. */
+    phaseId: Option[PhaseId] = None,
+    /** Source-row identity retained alongside the numerical event schedule. */
+    eventProvenance: Vector[EventRowProvenance] = Vector.empty
 ):
 
   val schedule: EventSchedule =
@@ -51,6 +98,15 @@ final case class EventTerm(
     val n0 = schedule.size
     require(events.forall(_.nEvents == n0), "all events must match onsets length")
     n0
+
+  require(
+    eventProvenance.isEmpty || eventProvenance.length == n,
+    s"event provenance has ${eventProvenance.length} entries but expected $n"
+  )
+  require(
+    phaseId.forall(id => eventProvenance.isEmpty || eventProvenance.forall(_.phase.contains(id))),
+    "term phase id must agree with every event provenance entry"
+  )
 
   val durations0: Vector[Seconds] =
     schedule.durations
@@ -65,6 +121,57 @@ final case class EventTerm(
       val rows = expandGrid(tokenLists)
       rows.map(Names.makeCondTag)
 
+  /** Structural provenance for each retained condition column.
+    *
+    * This is deliberately computed from the event values and factor levels,
+    * not from a rendered condition token.  The order follows the same
+    * interaction/grid order as [[designMatrix]], so basis-major lowering can
+    * attach the result to realized columns without parsing names.
+    */
+  def conditionProvenance(dropEmpty: Boolean = true): Vector[ConditionProvenance] =
+    val choices = events.map {
+      case c: CategoricalEvent =>
+        c.levels.map { level =>
+          (
+            Names.levelToken(c.varName, level),
+            Some(CellAssignment(FactorId.unsafe(c.varName), LevelId.unsafe(level))),
+            Option.empty[ModulatorId]
+          )
+        }
+      case c: ContinuousEvent =>
+        c.columnTags.zip(c.modulatorIds).map { case (tag, modulator) =>
+          (
+            tag,
+            Option.empty[CellAssignment],
+            Some(modulator)
+          )
+        }
+    }.filter(_.nonEmpty)
+
+    if choices.isEmpty then Vector.empty
+    else
+      val rows =
+        choices.foldLeft(Vector(Vector.empty[(String, Option[CellAssignment], Option[ModulatorId])])) {
+          (acc, next) =>
+            val out = Vector.newBuilder[Vector[(String, Option[CellAssignment], Option[ModulatorId])]]
+            next.foreach(item => acc.foreach(row => out += (row :+ item)))
+            out.result()
+        }
+      val all = rows.map { row =>
+        val cells = row.flatMap(_._2)
+        val modulators = row.flatMap(_._3).map(_.value)
+        val modulator =
+          modulators match
+            case Vector() => None
+            case xs        => Some(ModulatorId.unsafe(xs.mkString("+")))
+        ConditionProvenance(CellKey.unsafe(cells), modulator)
+      }
+
+      val perEvent = events.map(eventMatrix)
+      val full = perEvent.reduceOption(interaction).getOrElse(Mat.zeros(n, 0))
+      val keep = keepConditionIndices(full, dropEmpty)
+      keep.map(all)
+
   def designMatrix(dropEmpty: Boolean = true): TermDesignMatrix =
     if n == 0 then TermDesignMatrix(Mat.zeros(0, 0), Vector.empty)
     else
@@ -75,21 +182,7 @@ final case class EventTerm(
       val full =
         perEvent.reduceOption(interaction).getOrElse(Mat.zeros(n, 0))
 
-      val keepCols =
-        if !dropEmpty || full.cols == 0 then (0 until full.cols).toVector
-        else
-          val tol = 0.0
-          val kept = Vector.newBuilder[Int]
-          var c = 0
-          while c < full.cols do
-            var acc = 0.0
-            var r = 0
-            while r < full.rows do
-              acc += math.abs(full.data(r * full.cols + c))
-              r += 1
-            if acc > tol then kept += c
-            c += 1
-          kept.result()
+      val keepCols = keepConditionIndices(full, dropEmpty)
 
       val outMat =
         if keepCols.length == full.cols then full
@@ -116,7 +209,7 @@ final case class EventTerm(
       precision: Seconds = 0.3.s,
       dropEmpty: Boolean = true,
       summate: Boolean = true,
-      normalize: Boolean = false
+      scaling: HrfColumnScaling = HrfColumnScaling.AsConvolved
   ): ConvolvedTerm =
     val dm = designMatrix(dropEmpty = dropEmpty)
     val nConds = dm.conditionTags.length
@@ -124,10 +217,14 @@ final case class EventTerm(
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
     val finalConditions = columnConditionsFor(dm.conditionTags, nb)
     val finalBasisIx = columnBasisIxFor(nConds, nb)
+    val provenance = conditionProvenance(dropEmpty)
+    val finalCells = provenanceFor(provenance, p => Some(p.cell), nb)
+    val finalModulators = provenanceFor(provenance, _.modulator, nb)
 
     val totalRows = samplingFrame.blockLens.sum
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
+    val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
       return ConvolvedTerm(
@@ -136,7 +233,10 @@ final case class EventTerm(
         Mat.unsafe(totalRows, totalCols, out),
         finalNames,
         columnConditions = finalConditions,
-        columnBasisIx = finalBasisIx
+        columnBasisIx = finalBasisIx,
+        columnCells = finalCells,
+        columnModulators = finalModulators,
+        columnScales = emptyScales
       )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
@@ -173,14 +273,129 @@ final case class EventTerm(
       rowOffset += blockLen
       b += 1
 
-    if normalize then normalizeColumnsInPlace(out, totalRows, totalCols)
+    val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
     ConvolvedTerm(
       this,
       hrf,
       Mat.unsafe(totalRows, totalCols, out),
       finalNames,
       columnConditions = finalConditions,
-      columnBasisIx = finalBasisIx
+      columnBasisIx = finalBasisIx,
+      columnCells = finalCells,
+      columnModulators = finalModulators,
+      columnScales = columnScales
+    )
+
+  /** Convolve one HRF per realized condition cell.  Unlike
+    * [[convolvePerEvent]], this path permits different basis cardinalities:
+    * each condition owns a contiguous block whose width is derived from its
+    * assigned HRF.  Structural metadata is emitted alongside every column,
+    * so downstream consumers never need to recover offsets from names.
+    */
+  def convolveByCondition(
+      hrfs: Seq[Hrf],
+      samplingFrame: SamplingFrame,
+      precision: Seconds = 0.3.s,
+      dropEmpty: Boolean = true,
+      summate: Boolean = true,
+      scaling: HrfColumnScaling = HrfColumnScaling.AsConvolved
+  ): ConvolvedTerm =
+    val dm = designMatrix(dropEmpty = dropEmpty)
+    val nConds = dm.conditionTags.length
+    val hrfs0: Vector[Hrf] =
+      if hrfs.length == nConds then hrfs.toVector
+      else if hrfs.length == 1 then Vector.fill(nConds)(hrfs.head)
+      else throw new IllegalArgumentException(s"`hrfs` must have length 1 or $nConds, not ${hrfs.length}")
+    val provenance = conditionProvenance(dropEmpty)
+    require(provenance.length == nConds, "condition provenance and design columns must have equal length")
+
+    val representative = hrfs0.headOption.getOrElse(Hrfs.SPMG1)
+    val totalRows = samplingFrame.blockLens.sum
+    val totalCols = hrfs0.map(_.nbasis).sum
+    val finalNames =
+      dm.conditionTags.zip(hrfs0).flatMap { case (condition, conditionHrf) =>
+        Names.makeColumnNames(termTag, Vector(condition), conditionHrf.nbasis)
+      }
+    val finalConditions =
+      dm.conditionTags.zip(hrfs0).flatMap { case (condition, conditionHrf) =>
+        Vector.fill(conditionHrf.nbasis)(Some(condition))
+      }
+    val finalBasisIx =
+      hrfs0.flatMap(conditionHrf => (1 to conditionHrf.nbasis).map(Some(_)))
+    val finalCells =
+      provenance.zip(hrfs0).flatMap { case (p, conditionHrf) => Vector.fill(conditionHrf.nbasis)(Some(p.cell)) }
+    val finalModulators =
+      provenance.zip(hrfs0).flatMap { case (p, conditionHrf) => Vector.fill(conditionHrf.nbasis)(p.modulator) }
+    val finalHrfs = hrfs0.flatMap(conditionHrf => Vector.fill(conditionHrf.nbasis)(conditionHrf))
+    val out = new Array[Double](totalRows * totalCols)
+    val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+
+    if nConds == 0 || totalCols == 0 || totalRows == 0 then
+      return ConvolvedTerm(
+        this,
+        representative,
+        Mat.unsafe(totalRows, totalCols, out),
+        finalNames,
+        columnConditions = finalConditions,
+        columnBasisIx = finalBasisIx,
+        columnCells = finalCells,
+        columnModulators = finalModulators,
+        columnHrfs = finalHrfs,
+        columnScales = emptyScales
+      )
+
+    require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
+
+    val globOns = samplingFrame.globalOnsets(onsets, blockIds0)
+    var rowOffset = 0
+    var columnOffset = 0
+    var b = 0
+    while b < samplingFrame.nBlocks do
+      val blockLen = samplingFrame.blockLens(b)
+      val grid = samplingFrame.samples(blocks = Seq(b), global = true).map(_.value)
+      val eIdx = blockIds0.indices.filter(i => blockIds0(i) == b).toVector
+      val onsB = eIdx.map(i => globOns(i).value)
+      val durB = eIdx.map(i => durations0(i).value)
+
+      var cond = 0
+      columnOffset = 0
+      while cond < nConds do
+        val conditionHrf = hrfs0(cond)
+        val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
+        val reg = sharedRegressor(
+          onsets = onsB,
+          hrf = conditionHrf,
+          duration = durB,
+          amplitude = ampB,
+          summate = summate
+        )
+        val ev = Regressor.evaluate(reg, grid, precision = precision.value)
+        var basis = 0
+        while basis < conditionHrf.nbasis do
+          val outCol = columnOffset + basis
+          var r = 0
+          while r < blockLen do
+            out((rowOffset + r) * totalCols + outCol) = ev.data(r * conditionHrf.nbasis + basis)
+            r += 1
+          basis += 1
+        columnOffset += conditionHrf.nbasis
+        cond += 1
+
+      rowOffset += blockLen
+      b += 1
+
+    val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
+    ConvolvedTerm(
+      this,
+      representative,
+      Mat.unsafe(totalRows, totalCols, out),
+      finalNames,
+      columnConditions = finalConditions,
+      columnBasisIx = finalBasisIx,
+      columnCells = finalCells,
+      columnModulators = finalModulators,
+      columnHrfs = finalHrfs,
+      columnScales = columnScales
     )
 
   def convolvePerEvent(
@@ -189,7 +404,7 @@ final case class EventTerm(
       precision: Seconds = 0.3.s,
       dropEmpty: Boolean = true,
       summate: Boolean = true,
-      normalize: Boolean = false
+      scaling: HrfColumnScaling = HrfColumnScaling.AsConvolved
   ): ConvolvedTerm =
     val dm = designMatrix(dropEmpty = dropEmpty)
     val nConds = dm.conditionTags.length
@@ -206,10 +421,14 @@ final case class EventTerm(
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
     val finalConditions = columnConditionsFor(dm.conditionTags, nb)
     val finalBasisIx = columnBasisIxFor(nConds, nb)
+    val provenance = conditionProvenance(dropEmpty)
+    val finalCells = provenanceFor(provenance, p => Some(p.cell), nb)
+    val finalModulators = provenanceFor(provenance, _.modulator, nb)
 
     val totalRows = samplingFrame.blockLens.sum
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
+    val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 || n == 0 then
       return ConvolvedTerm(
@@ -218,7 +437,10 @@ final case class EventTerm(
         Mat.unsafe(totalRows, totalCols, out),
         finalNames,
         columnConditions = finalConditions,
-        columnBasisIx = finalBasisIx
+        columnBasisIx = finalBasisIx,
+        columnCells = finalCells,
+        columnModulators = finalModulators,
+        columnScales = emptyScales
       )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
@@ -254,14 +476,17 @@ final case class EventTerm(
       rowOffset += blockLen
       b += 1
 
-    if normalize then normalizeColumnsInPlace(out, totalRows, totalCols)
+    val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
     ConvolvedTerm(
       this,
       rep,
       Mat.unsafe(totalRows, totalCols, out),
       finalNames,
       columnConditions = finalConditions,
-      columnBasisIx = finalBasisIx
+      columnBasisIx = finalBasisIx,
+      columnCells = finalCells,
+      columnModulators = finalModulators,
+      columnScales = columnScales
     )
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =
@@ -278,22 +503,58 @@ final case class EventTerm(
         Some((c / nConditions) + 1)
       }
 
-  private def normalizeColumnsInPlace(data: Array[Double], rows: Int, cols: Int): Unit =
-    var c = 0
-    while c < cols do
-      var maxAbs = 0.0
-      var r = 0
-      while r < rows do
-        val a = math.abs(data(r * cols + c))
-        if a > maxAbs then maxAbs = a
-        r += 1
-      if maxAbs > 1e-10 then
-        r = 0
-        while r < rows do
-          val idx = r * cols + c
-          data(idx) = data(idx) / maxAbs
+  private def provenanceFor[A](
+      provenance: Vector[ConditionProvenance],
+      select: ConditionProvenance => Option[A],
+      nbasis: Int
+  ): Vector[Option[A]] =
+    if provenance.isEmpty || nbasis <= 0 then Vector.empty
+    else Vector.tabulate(provenance.length * nbasis)(c => select(provenance(c % provenance.length)))
+
+  private def keepConditionIndices(full: Mat, dropEmpty: Boolean): Vector[Int] =
+    if !dropEmpty || full.cols == 0 then (0 until full.cols).toVector
+    else
+      val kept = Vector.newBuilder[Int]
+      var c = 0
+      while c < full.cols do
+        var acc = 0.0
+        var r = 0
+        while r < full.rows do
+          acc += math.abs(full.data(r * full.cols + c))
           r += 1
-      c += 1
+        if acc > 0.0 then kept += c
+        c += 1
+      kept.result()
+
+  private def scaleColumnsInPlace(
+      data: Array[Double],
+      rows: Int,
+      cols: Int,
+      policy: HrfColumnScaling
+  ): Vector[HrfColumnScale] =
+    if policy == HrfColumnScaling.AsConvolved then
+      Vector.fill(cols)(HrfColumnScale.identity)
+    else
+      val scales = Vector.newBuilder[HrfColumnScale]
+      scales.sizeHint(cols)
+      var c = 0
+      while c < cols do
+        var maxAbs = 0.0
+        var r = 0
+        while r < rows do
+          val a = math.abs(data(r * cols + c))
+          if a > maxAbs then maxAbs = a
+          r += 1
+        val divisor = if maxAbs > 0.0 then maxAbs else 1.0
+        if divisor != 1.0 then
+          r = 0
+          while r < rows do
+            val idx = r * cols + c
+            data(idx) = data(idx) / divisor
+            r += 1
+        scales += HrfColumnScale.applied(policy, divisor)
+        c += 1
+      scales.result()
 
   private def sharedRegressor(
       onsets: Seq[Double],
@@ -391,14 +652,22 @@ final case class EventTerm(
       out.result()
     }
 
-  private def isStrictlyDecreasing(xs: Vector[Int]): Boolean =
-    var i = 1
-    while i < xs.length do
-      if xs(i) < xs(i - 1) then return true
-      i += 1
-    false
-
 object EventTerm:
+
+  /** Lower one checked phase without rebuilding or independently filtering its
+    * factor/modulator event values. */
+  def fromPhase(
+      events: Vector[Event],
+      phase: EventPhase,
+      termTag: Option[String] = None
+  ): Either[DesignError, EventTerm] =
+    validated(
+      events = events,
+      onsets = phase.onsets,
+      durations = phase.durations,
+      blockIds = phase.blockIds,
+      termTag = termTag
+    ).map(_.copy(phaseId = Some(phase.id), eventProvenance = phase.provenance))
   def validated(
       events: Vector[Event],
       onsets: Vector[Seconds],

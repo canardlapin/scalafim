@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, TermId}
+import scalafim.fmri.design.{ColumnId, HrfColumnScaling, PhaseId, TermId}
 
 sealed trait ArgValue
 
@@ -26,6 +26,14 @@ final case class Arg(name: Option[String], value: ArgValue)
 
 sealed trait TermCall
 
+/** A phase term's stable identity and the source column that identifies its
+  * parent trials.
+  *
+  * Keeping these values together prevents a formula from representing a phase
+  * with no parent axis, or a parent axis whose phase identity is absent.
+  */
+final case class PhaseRef(id: PhaseId, parent: ColumnId)
+
 /** `basis` and `contrasts` stay `String`: both key user-extensible registries,
   * so an open set is the right model for them.
   */
@@ -35,6 +43,7 @@ final case class HrfCall(
     subset: Option[ArgValue] = None,
     onsets: Option[ArgValue] = None,
     durations: Option[ArgValue] = None,
+    phase: Option[PhaseRef] = None,
     hrfFun: Option[ArgValue] = None,
     contrasts: Option[String] = None,
     id: Option[TermId] = None,
@@ -42,6 +51,8 @@ final case class HrfCall(
     lag: Option[Double] = None,
     nbasis: Option[Int] = None,
     summate: Option[Boolean] = None,
+    scaling: Option[HrfColumnScaling] = None,
+    /** Compatibility spelling for scan-space unit-maximum scaling. */
     normalize: Option[Boolean] = None
 ) extends TermCall
 
@@ -52,6 +63,8 @@ final case class TrialwiseCall(
     nbasis: Option[Int] = None,
     addSum: Option[Boolean] = None,
     label: Option[TermId] = None,
+    scaling: Option[HrfColumnScaling] = None,
+    /** Compatibility spelling for scan-space unit-maximum scaling. */
     normalize: Option[Boolean] = None
 ) extends TermCall
 

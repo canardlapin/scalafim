@@ -1,7 +1,8 @@
 package scalafim.spatial
 
 import scalafim.image.SpatialPoint
-import scalafim.linalg.{CsrMatrix, DoubleMatrix}
+import gale.linalg.DMat
+import gale.sparse.CSR
 
 opaque type MorphismCompilerId = String
 
@@ -506,7 +507,7 @@ private object SparseOperatorSupportPlanner extends PullbackSupportPlanner:
       Left(SpatialError.OperatorAssemblyFailed("support operator rows do not match pullback demand"))
     else
       operator.map match
-        case csr: CsrMatrix =>
+        case csr: CSR =>
           val rows = csr.toTriplets.colIndices.distinct.sorted.toVector
           Right(PullbackSupport(program.fingerprint, rows, SupportPrecision.Exact))
         case _ =>
@@ -527,5 +528,5 @@ trait PullbackOperatorAssembler:
 trait PullbackExecutor:
   def execute(
     operator: SpatialOperator,
-    rootData: DoubleMatrix
-  ): Either[SpatialError, DoubleMatrix]
+    rootData: DMat
+  ): Either[SpatialError, DMat]

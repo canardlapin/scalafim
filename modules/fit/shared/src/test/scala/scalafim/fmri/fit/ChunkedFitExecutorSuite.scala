@@ -4,7 +4,7 @@ import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
-import scalafim.fmri.design.event.{ConvolvedTerm, EventModel, EventTermColumnRole}
+import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{
@@ -12,6 +12,8 @@ import scalafim.fmri.model.{
   ArStructure,
   ArCoefficientSpec,
   AutocorrelationConfig,
+  DvarsWeightEstimator,
+  DvarsWeightFunction,
   FitConfig,
   FitEngine,
   FitPlan,
@@ -25,7 +27,8 @@ import scalafim.fmri.model.{
   ReducedRankBootstrapConfig,
   ReducedRankComponentSpec,
   ReducedRankGlsConfig,
-  ReducedRankInferencePolicy
+  ReducedRankInferencePolicy,
+  VolumeWeighting
 }
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
 import gale.linalg.{DMat, DVec}
@@ -130,6 +133,64 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertDenseClose(actual, expected)
   }
 
+  test("ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses") {
+    val weights = Vector.tabulate(8)(row => 1.0 + row.toDouble / 3.0)
+    val plan = FitPlan(
+      olsModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(volumeWeighting = VolumeWeighting.Fixed(weights))
+    )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.fit(plan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
+    val actual =
+      FitPlanExecutor
+        .fitChunked(plan, selection, chunking)
+        .toOption
+        .get
+        .asInstanceOf[DenseFmriFitResult]
+
+    assertDenseClose(actual, expected)
+    assertEquals(actual.preparationProvenance, expected.preparationProvenance)
+    assert(actual.preparationProvenance.exists(_.applied.exists(_.step match
+      case ResponsePreparationStep.VolumeWeights(VolumeWeighting.Fixed(_, _)) => true
+      case _ => false
+    )))
+  }
+
+  test("ChunkedFitExecutor estimates DVARS once from the whole selected response") {
+    val rows = Vector.tabulate(8) { row =>
+      val x = row.toDouble
+      Vector(
+        1.0 + 2.0 * x,
+        3.0 - x,
+        -2.0 + 0.25 * x + (if row == 4 then 30.0 else 0.0)
+      )
+    }
+    val model = modelFromRows(
+      id = "chunked-estimated-volume-weights",
+      sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0)),
+      task = Vector.tabulate(8)(_.toDouble),
+      rows = rows
+    )
+    val estimator = DvarsWeightEstimator(DvarsWeightFunction.InverseSquared)
+    val plan = FitPlan(
+      model,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(volumeWeighting = VolumeWeighting.Estimated(estimator))
+    )
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+    val expected = FitPlanExecutor.fit(plan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
+    val actual = FitPlanExecutor
+      .fitChunked(plan, selection, singleVoxelChunking)
+      .toOption
+      .get
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertDenseClose(actual, expected)
+    assertEquals(actual.preparationProvenance, expected.preparationProvenance)
+    assert(actual.preparationProvenance.flatMap(_.volumeWeighting).exists(_.source == VolumeWeightingSource.ResponseDvars(estimator)))
+  }
+
   test("FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism") {
     val plan = FitPlan(olsModel)
     val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
@@ -143,7 +204,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, chunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future chunked OLS failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
       }
   }
@@ -156,7 +217,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future full-rank LatentSketch failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
         assertEquals(actual.engine, FitEngine.LatentSketch)
       }
@@ -179,7 +240,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future voxelwise-AR chunk reuse failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
         assertEquals(actual.engine, FitEngine.LatentSketch)
         assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
@@ -204,7 +265,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future principal-component LatentSketch failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
         assertEquals(actual.engine, FitEngine.LatentSketch)
         assertEquals(actual.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
@@ -358,7 +419,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future voxelwise-AR reduced-rank fallback failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         assertDenseClose(actual, expected)
         assertEquals(actual.inferenceScope.allowedIndices(actual.predictors), Vector(0))
       }
@@ -392,7 +453,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     FutureChunkedFitExecutor
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
-        val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+        val actual = result.fold(error => fail(s"future voxelwise-AR chunk reuse failed: ${error.message}"), identity).asInstanceOf[DenseFmriFitResult]
         val diagnostics = actual.autocorrelation.get
         val voxelRhos = diagnostics.runs.head.voxelwiseCoefficients.map(_.head)
 

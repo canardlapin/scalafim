@@ -65,7 +65,18 @@ private[fit] final case class PreparedFitContext private[fit] (
   def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
     combine(chunks)
 
+private[fit] final case class OlsExecutionPrepared(
+    solver: OlsPrepared,
+    responsePreparation: ResolvedResponsePreparation,
+    partitions: Vector[RunPartition]
+)
+
 object FitInterpreters:
+  private def bindRankFailure(input: FitBlockInput, error: FitError): FitError =
+    input.coefficientAxis match
+      case Some(axis) => FitKernel.bindRankFailure(error, axis)
+      case None       => error
+
   def forPlan(plan: FitPlan): Either[FitError, FitInterpreter] =
     forEngine(plan.engine)
 
@@ -75,6 +86,7 @@ object FitInterpreters:
       case FitEngine.GeneralizedLeastSquares => Right(GeneralizedLeastSquares)
       case FitEngine.RobustLeastSquares      => Right(RobustLeastSquares)
       case FitEngine.RunwiseLeastSquares     => Right(RunwiseLeastSquares)
+      case FitEngine.FixedEffects            => Right(SeparateRunsThenFixedEffects)
       case FitEngine.LeastSquaresSeparate    => Right(LeastSquaresSeparate)
       case FitEngine.LatentSketch            => Right(LatentSketch)
       case FitEngine.ReducedRankGls          => Right(ReducedRankGls)
@@ -105,38 +117,41 @@ object FitInterpreters:
     ReducedRankDesignPartition.fromColumns(plan.model.nPredictors, targets.result(), nuisance.result())
 
   private object OrdinaryLeastSquares extends FitInterpreter:
-    type Prepared = OlsPrepared
+    type Prepared = OlsExecutionPrepared
     type Block = DenseFitBlockResult
     type Result = DenseFmriFitResult
 
     val engine: FitEngine = FitEngine.OrdinaryLeastSquares
 
     def fit(plan: FitPlan, series: FmriSeries): Either[FitError, DenseFmriFitResult] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
-        input <- FitPlanExecutor.fitBlockInput(plan, series)
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         dense <- FitKernel.fitDense(input, engine, plan.config)
       yield FitPlanExecutor.denseResult(plan, dense)
 
-    def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, OlsPrepared] =
+    def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, OlsExecutionPrepared] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
-        input <- FitPlanExecutor.fitBlockInput(plan, series)
-        prepared <- Ols.prepare(input.design)
-      yield prepared
+        raw <- FitPlanExecutor.rawFitBlockInput(plan, series, partitions = partitions)
+        responsePreparation <- ResponsePreparationPlan.fromPlan(plan).resolve(raw)
+        prepared <- responsePreparation.prepare(raw)
+        solver <- Ols.prepare(prepared.input.design).left.map(error => bindRankFailure(prepared.input, error))
+      yield OlsExecutionPrepared(solver, responsePreparation, partitions)
 
     def fitChunk(
         plan: FitPlan,
         series: FmriSeries,
-        prepared: OlsPrepared
+        prepared: OlsExecutionPrepared
     ): Either[FitError, DenseFitBlockResult] =
       for
-        response <- MatrixAdapters.responseBlock(series)
-        input = FitBlockInput(
-          design = prepared.design,
-          response = response,
-          voxelIndices = series.voxelIndices,
-          timepoints = series.timepoints
+        input <- FitPlanExecutor.fitBlockInput(
+          plan,
+          series,
+          prepared.partitions,
+          prepared.responsePreparation
         )
-        fit <- prepared.fit(response)
+        fit <- prepared.solver.fit(input.response)
       yield DenseFitBlockResult.fromOls(input, fit, engine)
 
     def merge(
@@ -166,7 +181,10 @@ object FitInterpreters:
       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-        prepared <- Gls.prepare(input.design, input.response, partitions, plan.config.autocorrelation, series.voxelIndices)
+        prepared <- Gls
+          .prepare(input.design, input.response, partitions, plan.config.autocorrelation, series.voxelIndices)
+          .left
+          .map(error => bindRankFailure(input, error))
       yield prepared
 
     def fitChunk(
@@ -175,15 +193,8 @@ object FitInterpreters:
         prepared: GlsPrepared
     ): Either[FitError, DenseFitBlockResult] =
       for
-        response <- MatrixAdapters.responseBlock(series)
-        input = FitBlockInput(
-          design = prepared.design,
-          response = response,
-          voxelIndices = series.voxelIndices,
-          timepoints = series.timepoints,
-          partitions = prepared.partitions
-        )
-        fit <- prepared.fit(response, series.voxelIndices)
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = prepared.partitions)
+        fit <- prepared.fit(input.response, input.voxelIndices)
       yield DenseFitBlockResult.fromGls(input, fit)
 
     def merge(
@@ -213,7 +224,9 @@ object FitInterpreters:
         voxelIndices = runwise.voxelIndices,
         timepoints = runwise.timepoints,
         engine = engine,
-        summary = plan.summary
+        summary = plan.summary,
+        coefficientAxis = runwise.coefficientAxis,
+        preparationProvenance = runwise.preparationProvenance
       )
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, Vector[RunPartition]] =
@@ -240,9 +253,76 @@ object FitInterpreters:
           voxelIndices = merged.voxelIndices,
           timepoints = merged.timepoints,
           engine = engine,
-          summary = plan.summary
+          summary = plan.summary,
+          coefficientAxis = merged.coefficientAxis,
+          preparationProvenance = merged.preparationProvenance
         )
       }
+
+    protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[RunwiseFitBlockResult]] =
+      FitBlockCollectors.runwise(chunks)
+
+  /** Fit each run with the existing runwise OLS kernel, then combine the
+    * resulting coefficient covariances as a fixed-effects estimand.  Keeping
+    * the runwise block path here means chunking and multi-response execution
+    * reuse the same numerical and boundary checks as RunwiseLeastSquares.
+    */
+  private object SeparateRunsThenFixedEffects extends FitInterpreter:
+    type Prepared = Vector[RunPartition]
+    type Block = RunwiseFitBlockResult
+    type Result = FixedEffectsFmriFitResult
+
+    val engine: FitEngine = FitEngine.FixedEffects
+
+    def fit(plan: FitPlan, series: FmriSeries): Either[FitError, FixedEffectsFmriFitResult] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      for
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
+        runwise <- FitKernel.fitRunwise(input)
+        runwiseResult = RunwiseFmriFitResult(
+          runs = runwise.runs,
+          columnNames = plan.model.columnNames,
+          voxelIndices = runwise.voxelIndices,
+          timepoints = runwise.timepoints,
+          engine = FitEngine.RunwiseLeastSquares,
+          summary = plan.summary,
+          coefficientAxis = runwise.coefficientAxis,
+          preparationProvenance = runwise.preparationProvenance
+        )
+        fixed <- FixedEffects.combine(runwiseResult)
+      yield fixed
+
+    def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, Vector[RunPartition]] =
+      Right(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints))
+
+    def fitChunk(
+        plan: FitPlan,
+        series: FmriSeries,
+        prepared: Vector[RunPartition]
+    ): Either[FitError, RunwiseFitBlockResult] =
+      for
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = prepared)
+        runwise <- FitKernel.fitRunwise(input)
+      yield runwise
+
+    def merge(
+        plan: FitPlan,
+        chunks: IndexedSeq[RunwiseFitBlockResult]
+    ): Either[FitError, FixedEffectsFmriFitResult] =
+      for
+        merged <- RunwiseFitBlockResult.merge(chunks)
+        runwise = RunwiseFmriFitResult(
+          runs = merged.runs,
+          columnNames = plan.model.columnNames,
+          voxelIndices = merged.voxelIndices,
+          timepoints = merged.timepoints,
+          engine = FitEngine.RunwiseLeastSquares,
+          summary = plan.summary,
+          coefficientAxis = merged.coefficientAxis,
+          preparationProvenance = merged.preparationProvenance
+        )
+        fixed <- FixedEffects.combine(runwise)
+      yield fixed
 
     protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[RunwiseFitBlockResult]] =
       FitBlockCollectors.runwise(chunks)
@@ -265,7 +345,10 @@ object FitInterpreters:
       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
-        prepared <- Robust.prepare(input.design, input.response, partitions, series.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
+        prepared <- Robust
+          .prepare(input.design, input.response, partitions, series.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
+          .left
+          .map(error => bindRankFailure(input, error))
       yield prepared
 
     def fitChunk(
@@ -274,15 +357,8 @@ object FitInterpreters:
         prepared: RobustPrepared
     ): Either[FitError, DenseFitBlockResult] =
       for
-        response <- MatrixAdapters.responseBlock(series)
-        input = FitBlockInput(
-          design = prepared.design,
-          response = response,
-          voxelIndices = series.voxelIndices,
-          timepoints = series.timepoints,
-          partitions = prepared.partitions
-        )
-        fit <- Robust.fitPrepared(prepared, response, series.voxelIndices)
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = prepared.partitions)
+        fit <- Robust.fitPrepared(prepared, input.response, input.voxelIndices)
       yield DenseFitBlockResult.fromRobust(input, fit)
 
     def merge(
@@ -312,7 +388,9 @@ object FitInterpreters:
         voxelIndices = lss.voxelIndices,
         timepoints = lss.timepoints,
         engine = engine,
-        summary = plan.summary
+        summary = plan.summary,
+        coefficientAxis = lss.coefficientAxis,
+        preparationProvenance = input.preparationProvenance
       )
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, LssBlockDesign] =
@@ -340,7 +418,9 @@ object FitInterpreters:
           voxelIndices = merged.voxelIndices,
           timepoints = merged.timepoints,
           engine = engine,
-          summary = plan.summary
+          summary = plan.summary,
+          coefficientAxis = merged.coefficientAxis,
+          preparationProvenance = merged.preparationProvenance
         )
       }
 
@@ -373,13 +453,7 @@ object FitInterpreters:
         prepared: LatentSketchPrepared
     ): Either[FitError, DenseFitBlockResult] =
       for
-        response <- MatrixAdapters.responseBlock(series)
-        input = FitBlockInput(
-          design = prepared.design,
-          response = response,
-          voxelIndices = series.voxelIndices,
-          timepoints = series.timepoints
-        )
+        input <- FitPlanExecutor.fitBlockInput(plan, series)
         fit <- prepared.fitBlock(input)
       yield fit
 
@@ -420,14 +494,7 @@ object FitInterpreters:
         prepared: ReducedRankGlsPrepared
     ): Either[FitError, DenseFitBlockResult] =
       for
-        response <- MatrixAdapters.responseBlock(series)
-        input = FitBlockInput(
-          design = prepared.design,
-          response = response,
-          voxelIndices = series.voxelIndices,
-          timepoints = series.timepoints,
-          partitions = prepared.partitions
-        )
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = prepared.partitions)
         fit <- prepared.fitBlock(input)
       yield fit
 

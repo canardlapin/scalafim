@@ -64,27 +64,30 @@ object FContrasts:
     unsafe(forConvolvedTermEither(term, maxInter = maxInter))
 
   def forConvolvedTermEither(term: ConvolvedTerm, maxInter: Int = 4): Either[ContrastError, VectorMap[String, ContrastWeights]] =
-    for
-      local <- forEventTermEither(term.term, maxInter = maxInter)
-      out <- local.foldLeft(Right(VectorMap.empty): Either[ContrastError, VectorMap[String, ContrastWeights]]) {
-        case (acc, (name, cw)) =>
-          for
-            out0 <- acc
-            lifted <- liftToTermConditionsEither(term.term, cw)
-          yield
-            val (baseCondNames, liftedWeights) = lifted
-            val (_, expanded) = ContrastWeights.expandWeights(liftedWeights, baseCondNames, nbasis = term.hrf.nbasis)
-            val fullNames = Names.makeColumnNames(term.term.termTag, baseCondNames, term.hrf.nbasis)
-            val full = ContrastWeights(
-              name = name,
-              condNames = fullNames,
-              contrastNames = cw.contrastNames,
-              weights = expanded,
-              selectedCondNames = fullNames
-            )
-            out0.updated(name, full.embedIn(term.columnNames))
-      }
-    yield out
+    if term.hasHeterogeneousBasis then
+      Left(ContrastError.HeterogeneousBasisUnsupported(term.term.termTag.getOrElse("FContrasts"), term.basisWidths))
+    else
+      for
+        local <- forEventTermEither(term.term, maxInter = maxInter)
+        out <- local.foldLeft(Right(VectorMap.empty): Either[ContrastError, VectorMap[String, ContrastWeights]]) {
+          case (acc, (name, cw)) =>
+            for
+              out0 <- acc
+              lifted <- liftToTermConditionsEither(term.term, cw)
+            yield
+              val (baseCondNames, liftedWeights) = lifted
+              val (_, expanded) = ContrastWeights.expandWeights(liftedWeights, baseCondNames, nbasis = term.hrf.nbasis)
+              val fullNames = Names.makeColumnNames(term.term.termTag, baseCondNames, term.hrf.nbasis)
+              val full = ContrastWeights(
+                name = name,
+                condNames = fullNames,
+                contrastNames = cw.contrastNames,
+                weights = expanded,
+                selectedCondNames = fullNames
+              )
+              out0.updated(name, full.embedIn(term.columnNames))
+        }
+      yield out
 
   def compiledForConvolvedTerm(term: ConvolvedTerm, maxInter: Int = 4): Either[ContrastError, VectorMap[String, CompiledContrast]] =
     for

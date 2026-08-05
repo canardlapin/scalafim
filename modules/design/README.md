@@ -10,9 +10,9 @@ import scalafim.fmri.design.*
 
 This module contains event models, formula parsing, condition bases, baseline
 models, contrast definitions, design-matrix metadata, and design export helpers.
-It depends on `scalafim-fmri-hrf` for sampling/convolution, `scalafim-linalg`
-for shared QR/rank primitives, and Intaglio core for renderer-neutral plot and
-scene exports.
+It depends on `scalafim-fmri-hrf` for sampling/convolution, standalone Gale for
+shared QR/rank primitives, and Intaglio core for renderer-neutral plot and scene
+exports.
 
 Preferred typed entry points:
 

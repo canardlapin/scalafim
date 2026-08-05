@@ -164,11 +164,18 @@ object Gls:
 
   private[fit] def validatePartitions(partitions: Vector[RunPartition]): Either[FitError, Unit] =
     if partitions.isEmpty then Left(FitError.UnsupportedAutocorrelation("GLS requires at least one run partition"))
-    else if partitions.exists(p => !isContiguous(p.timepoints)) then
-      Left(FitError.UnsupportedAutocorrelation("AR GLS requires contiguous selected timepoints within each run"))
+    else if partitions.exists(p => !isStrictlyIncreasing(p.timepoints)) then
+      Left(FitError.UnsupportedAutocorrelation("AR GLS requires strictly increasing selected timepoints within each run"))
     else if partitions.exists(p => !isContiguous(p.rowIndices)) then
       Left(FitError.UnsupportedAutocorrelation("AR GLS requires contiguous selected rows within each run"))
     else Right(())
+
+  private def isStrictlyIncreasing(values: Vector[Int]): Boolean =
+    var i = 1
+    while i < values.length do
+      if values(i) <= values(i - 1) then return false
+      i += 1
+    true
 
   private def isContiguous(timepoints: Vector[Int]): Boolean =
     var i = 1
@@ -195,14 +202,21 @@ object Gls:
     if missingCensors.nonEmpty then
       Left(FitError.UnsupportedAutocorrelation(s"censored timepoints are not selected: ${missingCensors.mkString(", ")}"))
     else
-      val censoredRows =
+      val explicitResetRows =
         censoredTimepoints.flatMap { timepoint =>
           partitions.iterator
             .flatMap(partition => partition.timepoints.zip(partition.rowIndices))
             .find { case (candidate, _) => candidate == timepoint }
             .map(_._2)
         }.toSet
-      val segments = TimeSegments.withCensorResets(base, censoredRows)
+      val gapResetRows =
+        partitions.iterator.flatMap { partition =>
+          partition.timepoints.zip(partition.rowIndices).sliding(2).collect {
+            case Vector((leftTimepoint, leftRow), (rightTimepoint, _))
+                if rightTimepoint > leftTimepoint + 1 => leftRow
+          }
+        }.toSet
+      val segments = TimeSegments.withCensorResets(base, explicitResetRows ++ gapResetRows)
       TimeSegments.validateCoverage(segments, base.last.endExclusive).left.map(arToFitError).map(_ => segments)
 
   private def whiteningPlan(
@@ -355,9 +369,7 @@ object Gls:
       val standardErrorData = Matrix.newBuilder(design.cols, response.cols)
       val residualVarianceData = Vec.newBuilder(response.cols)
       val covarianceMatrices = Vector.newBuilder[DMat]
-      var covariance: DMat | Null = null
-      var diagnostics: OlsDiagnostics | Null = null
-      var residualDf: ResidualDegreesOfFreedom | Null = null
+      var representative: Option[OlsFit] = None
 
       var voxel = 0
       while voxel < response.cols do
@@ -372,22 +384,23 @@ object Gls:
               predictor += 1
             residualVarianceData(voxel) = fit.residualVariance(0)
             covarianceMatrices += fit.normalizedCovariance
-            if covariance == null then covariance = fit.normalizedCovariance
-            if diagnostics == null then diagnostics = fit.diagnostics
-            if residualDf == null then residualDf = fit.residualDegreesOfFreedom
+            if representative.isEmpty then representative = Some(fit)
         voxel += 1
 
-      Right(
-        OlsFit(
-          coefficients = CoefficientBlock(coefficientData.result()),
-          residualVariance = residualVarianceData.result(),
-          residualDegreesOfFreedom = residualDf.asInstanceOf[ResidualDegreesOfFreedom],
-          normalizedCovariance = covariance.asInstanceOf[DMat],
-          standardErrors = StandardErrorBlock(standardErrorData.result()),
-          diagnostics = diagnostics.asInstanceOf[OlsDiagnostics],
-          coefficientCovariance = CoefficientCovariance.unsafeVoxelwise(covarianceMatrices.result())
-        )
-      )
+      representative match
+        case None => Left(FitError.EmptyResponse)
+        case Some(first) =>
+          Right(
+            OlsFit(
+              coefficients = CoefficientBlock(coefficientData.result()),
+              residualVariance = residualVarianceData.result(),
+              residualDegreesOfFreedom = first.residualDegreesOfFreedom,
+              normalizedCovariance = first.normalizedCovariance,
+              standardErrors = StandardErrorBlock(standardErrorData.result()),
+              diagnostics = first.diagnostics,
+              coefficientCovariance = CoefficientCovariance.unsafeVoxelwise(covarianceMatrices.result())
+            )
+          )
 
   private[fit] def residualMatrix(
       design: DMat,
@@ -433,7 +446,8 @@ object Gls:
               coefficients = phi
             )
           },
-          iterations = iterations
+          iterations = iterations,
+          whitening = whiteningProvenance(plan, partitions)
         )
 
       case GlsWhitening.Voxelwise(plans) =>
@@ -457,8 +471,49 @@ object Gls:
             )
           },
           iterations = iterations,
-          sharedNormalizedCovariance = false
+          sharedNormalizedCovariance = false,
+          whitening = whiteningProvenance(plans.head, partitions)
         )
+
+  private def whiteningProvenance(
+      plan: WhiteningPlan,
+      partitions: Vector[RunPartition]
+  ): ArWhiteningProvenance =
+    val segments =
+      plan.segments.map { segment =>
+        val partition =
+          partitions.find(_.runIndex == segment.runIndex).getOrElse {
+            throw new IllegalArgumentException(s"whitening segment has no run partition: ${segment.runIndex}")
+          }
+        val sourceTimepoints =
+          partition.rowIndices.zip(partition.timepoints).collect {
+            case (row, timepoint) if segment.contains(row) => timepoint
+          }
+        ArWhiteningSegment(
+          runIndex = segment.runIndex,
+          startRow = segment.start,
+          endRowExclusive = segment.endExclusive,
+          startTimepoint = sourceTimepoints.head,
+          endTimepointExclusive = sourceTimepoints.last + 1
+        )
+      }
+    val gaps =
+      segments.sliding(2).collect {
+        case Vector(left, right)
+            if left.runIndex == right.runIndex && right.startTimepoint > left.endTimepointExclusive =>
+          ArCensorGap(
+            runIndex = left.runIndex,
+            startTimepoint = left.endTimepointExclusive,
+            endTimepointExclusive = right.startTimepoint
+          )
+      }.toVector
+    ArWhiteningProvenance(
+      method = plan.method,
+      pooling = plan.pooling,
+      initialCondition = plan.initialCondition,
+      segments = segments,
+      censorGaps = gaps
+    )
 
   private[fit] def diagnosticIterations(config: AutocorrelationConfig): Int =
     config.coefficients match

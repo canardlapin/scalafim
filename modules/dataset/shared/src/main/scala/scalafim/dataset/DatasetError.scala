@@ -35,6 +35,7 @@ enum DatasetError:
   case AmbiguousDatasetRun(query: String, matches: Int)
   case InvalidTimeAxis(detail: String)
   case InvalidDatasetValue(field: String, value: String, detail: String)
+  case InvalidEventTable(detail: String)
   case InvalidEventRow(row: Int, detail: String)
   case DatasetColumnNotFound(field: String)
 
@@ -94,6 +95,8 @@ enum DatasetError:
         s"invalid dataset time axis: $detail"
       case InvalidDatasetValue(field, value, detail) =>
         s"invalid dataset value for '$field'='$value': $detail"
+      case InvalidEventTable(detail) =>
+        s"invalid dataset event table: $detail"
       case InvalidEventRow(row, detail) =>
         s"invalid dataset event row $row: $detail"
       case DatasetColumnNotFound(field) =>

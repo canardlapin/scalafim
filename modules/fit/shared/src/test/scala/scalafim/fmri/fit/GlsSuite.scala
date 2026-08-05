@@ -6,7 +6,7 @@ import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, 
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegments, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
-import scalafim.fmri.fit.fixtures.FmriregGlsFixtures
+import scalafim.fmri.fit.fixtures.{ArCensorGlsRFixture, FmriregGlsFixtures}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
@@ -39,22 +39,13 @@ class GlsSuite extends munit.FunSuite:
 
   private val rho = 0.4
 
-  private def samplingFrame(length: Int = 6): SamplingFrame =
-    samplingFrame(Vector(length))
-
   private def samplingFrame(blockLens: Vector[Int]): SamplingFrame =
     SamplingFrame(blockLens = blockLens, tr = Vector.fill(blockLens.length)(1.0))
-
-  private def whitenRows(rows: Vector[Vector[Double]], rho: Double): Vector[Vector[Double]] =
-    whitenRows(rows, Vector(rho))
-
-  private def orthogonalInnovation(designRows: Vector[Vector[Double]], seed: Vector[Double], rho: Double): Vector[Double] =
-    orthogonalInnovation(designRows, seed, Vector(rho))
 
   private def whitenRows(
       rows: Vector[Vector[Double]],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Vector[Double]] =
     var segmentStart = 0
     rows.indices.toVector.map { row =>
@@ -75,7 +66,7 @@ class GlsSuite extends munit.FunSuite:
       designRows: Vector[Vector[Double]],
       seed: Vector[Double],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Double] =
     val whitened = whitenRows(designRows, phi, resetAfterRows)
     val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(whitened))
@@ -91,13 +82,10 @@ class GlsSuite extends munit.FunSuite:
       value - fitted
     }
 
-  private def unwhitenInnovation(z: Vector[Double], rho: Double): Vector[Double] =
-    unwhitenInnovation(z, Vector(rho))
-
   private def unwhitenInnovation(
       z: Vector[Double],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Double] =
     val out = Array.ofDim[Double](z.length)
     var segmentStart = 0
@@ -601,19 +589,58 @@ class GlsSuite extends munit.FunSuite:
     })
   }
 
-  test("GeneralizedLeastSquares rejects non-contiguous selected timepoints") {
+  test("GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries") {
     val plan = FitPlan(
       glsModel,
       engine = FitEngine.GeneralizedLeastSquares,
       config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(rho)))
     )
-    val result = FitPlanExecutor.fit(
-      plan,
-      DataSelection(time = IndexSelection.indices(0, 2, 3, 4, 5))
-    )
+    val result = FitPlanExecutor
+      .fit(plan, DataSelection(time = IndexSelection.indices(0, 2, 3, 4, 5)))
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+    val whitening = result.autocorrelation.get.whitening
 
-    assert(result.left.toOption.exists {
-      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("contiguous")
-      case _                                       => false
-    })
+    assertEquals(result.timepoints, Vector(0, 2, 3, 4, 5))
+    assertEquals(
+      whitening.segments,
+      Vector(
+        ArWhiteningSegment(0, 0, 1, 0, 1),
+        ArWhiteningSegment(0, 1, 5, 2, 6)
+      )
+    )
+    assertEquals(whitening.censorGaps, Vector(ArCensorGap(0, 1, 2)))
+  }
+
+  test("row-deleted whitening matches independent segmented L X and L Y") {
+    val fixture = ArCensorGlsRFixture
+    val design = GaleTestMatrix.fromRows(fixture.selectedDesignRows)
+    val response = GaleTestMatrix.fromRows(fixture.selectedResponseRows)
+    val partitions =
+      RunPartition.fromSamplingFrame(
+        samplingFrame(fixture.blockLengths),
+        fixture.selectedTimepoints
+      )
+    val segments =
+      Gls.timeSegments(partitions, Vector.empty)
+        .fold(error => fail(error.message), identity)
+    val whitening =
+      WhiteningPlan.global(
+        ArmaCoefficients.ar(fixture.rho),
+        segments,
+        exactFirstAr1 = fixture.exactFirst
+      )
+    val transformed =
+      WhiteningTransform(whitening, design, response)
+        .fold(error => fail(error.message), identity)
+    val direct =
+      Ols.fit(
+        DesignMatrix.unsafe(GaleTestMatrix.fromRows(fixture.whitenedDesignRows)),
+        ResponseBlock.unsafe(GaleTestMatrix.fromRows(fixture.whitenedResponseRows))
+      ).fold(error => fail(error.message), identity)
+
+    assertMatrixClose(transformed.design, GaleTestMatrix.fromRows(fixture.whitenedDesignRows), 1e-12)
+    assertMatrixClose(transformed.response, GaleTestMatrix.fromRows(fixture.whitenedResponseRows), 1e-12)
+    assertMatrixClose(direct.coefficients.value, GaleTestMatrix.fromRows(fixture.coefficients), 1e-12)
+    assertMatrixClose(direct.normalizedCovariance, GaleTestMatrix.fromRows(fixture.normalizedCovariance), 1e-12)
   }

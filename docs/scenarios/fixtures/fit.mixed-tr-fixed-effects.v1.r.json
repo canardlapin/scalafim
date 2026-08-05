@@ -1,0 +1,451 @@
+{
+  "inputs": {
+    "contrast": [
+      1,
+      -1,
+      0
+    ],
+    "design": [
+      [
+        -1.004169506511882e-20,
+        0,
+        1
+      ],
+      [
+        0.3607497304303039,
+        0,
+        1
+      ],
+      [
+        1.562306838179021,
+        -1.3388926753491808e-20,
+        1
+      ],
+      [
+        1.605440375355558,
+        0.3607497304303036,
+        1
+      ],
+      [
+        0.914165871718248,
+        1.562306838179021,
+        1
+      ],
+      [
+        0.3723950712934601,
+        1.605440375355558,
+        1
+      ],
+      [
+        0.11529024084491422,
+        0.914165871718248,
+        1
+      ],
+      [
+        0.02076590422646219,
+        0.3723950712934601,
+        1
+      ],
+      [
+        0,
+        0,
+        1
+      ],
+      [
+        0.012264768376326854,
+        0,
+        1
+      ],
+      [
+        0.17634930139988497,
+        0,
+        1
+      ],
+      [
+        0.6017200032563107,
+        0,
+        1
+      ],
+      [
+        1.1393377208302187,
+        0,
+        1
+      ],
+      [
+        1.5623068381790217,
+        0,
+        1
+      ],
+      [
+        1.7467604935225134,
+        0.012264768376326854,
+        1
+      ],
+      [
+        1.6963516399114977,
+        0.17634930139988497,
+        1
+      ],
+      [
+        1.4858794279560483,
+        0.6017200032563107,
+        1
+      ],
+      [
+        1.2026475304096278,
+        1.1393377208302187,
+        1
+      ],
+      [
+        0.9141658717182475,
+        1.5623068381790217,
+        1
+      ],
+      [
+        0.6598000688990147,
+        1.7467604935225134,
+        1
+      ]
+    ],
+    "events": {
+      "cond": [
+        "A",
+        "B",
+        "A",
+        "B"
+      ],
+      "cond_levels": [
+        "A",
+        "B"
+      ],
+      "onset": [
+        0,
+        4,
+        0,
+        4
+      ],
+      "run": [
+        "run-1",
+        "run-1",
+        "run-2",
+        "run-2"
+      ]
+    },
+    "formula": "onset ~ hrf(cond)",
+    "precision": 0.1,
+    "response": [
+      [
+        0.42,
+        -0.94
+      ],
+      [
+        0.9728996765163647,
+        -1.2442998921721216
+      ],
+      [
+        2.484768205814825,
+        -1.5849227352716084
+      ],
+      [
+        2.160078612168488,
+        -1.2335763657979801
+      ],
+      [
+        0.7296149431544852,
+        -0.18582087814408238
+      ],
+      [
+        -0.13639013966118263,
+        0.22539427176706242
+      ],
+      [
+        0.11984876598294822,
+        -0.3447833989633672
+      ],
+      [
+        0.3914820422956785,
+        -0.7903903046558167
+      ],
+      [
+        0.65,
+        -0.8400000000000001
+      ],
+      [
+        0.5271706757268576,
+        -0.6973588610257961
+      ],
+      [
+        0.976889021959839,
+        -0.965809580839931
+      ],
+      [
+        1.402408004558835,
+        -1.0810320019537865
+      ],
+      [
+        2.2750728091623063,
+        -1.6036026324981312
+      ],
+      [
+        2.6772295734506306,
+        -1.707384102907413
+      ],
+      [
+        3.0544263993928245,
+        -1.7457915277371812
+      ],
+      [
+        2.9161779246162003,
+        -1.7114616825470137
+      ],
+      [
+        2.0786831962077876,
+        -1.0398076535173184
+      ],
+      [
+        1.328302593826282,
+        -0.482250797415558
+      ],
+      [
+        0.44375606604442674,
+        0.3438073151480733
+      ],
+      [
+        0.07163565228835822,
+        0.5308804521831045
+      ]
+    ],
+    "sampling_frame": {
+      "blocklens": [
+        8,
+        12
+      ],
+      "start_time": [
+        0,
+        0
+      ],
+      "tr": [
+        2,
+        0.8
+      ]
+    }
+  },
+  "outputs": {
+    "contrast_estimate": [
+      2.1204692218337517,
+      -1.3605939409467858
+    ],
+    "contrast_standard_error": [
+      0.045119306748442924,
+      0.04524371798514012
+    ],
+    "contrast_statistic": [
+      46.9969371128897,
+      -30.07254932924965
+    ],
+    "fixed_coefficients": [
+      [
+        1.33364600478328,
+        -0.46009345125256423
+      ],
+      [
+        -0.7868232170504718,
+        0.9005004896942215
+      ],
+      [
+        0.5983899055664161,
+        -0.9392575343519285
+      ]
+    ],
+    "fixed_covariance_by_voxel": [
+      [
+        [
+          0.0010547744159842476,
+          2.518530607889391e-05,
+          -0.000873231502542938
+        ],
+        [
+          2.5185306078893933e-05,
+          0.0010313480376336272,
+          -0.0005343577346857746
+        ],
+        [
+          -0.0008732315025429382,
+          -0.0005343577346857747,
+          0.0014040197235306773
+        ]
+      ],
+      [
+        [
+          0.0010677968076142701,
+          3.409089823606826e-05,
+          -0.0008717949955683558
+        ],
+        [
+          3.409089823606826e-05,
+          0.0010473790059767577,
+          -0.0005577349295958884
+        ],
+        [
+          -0.0008717949955683561,
+          -0.0005577349295958885,
+          0.0014118508371011578
+        ]
+      ]
+    ],
+    "fixed_residual_df": 14,
+    "fixed_standard_errors": [
+      [
+        0.03247729077346581,
+        0.03267716033584115
+      ],
+      [
+        0.03211460785427135,
+        0.03236323540650344
+      ],
+      [
+        0.03747025118051222,
+        0.037574603618683165
+      ]
+    ],
+    "run_coefficients": [
+      [
+        [
+          1.222048577857482,
+          -0.34586720006718014
+        ],
+        [
+          -0.6275343963415799,
+          0.805367372132248
+        ],
+        [
+          0.5141768361313477,
+          -1.0329827341073936
+        ]
+      ],
+      [
+        [
+          1.3862184945552622,
+          -0.6065499770605637
+        ],
+        [
+          -0.8748143630587267,
+          1.0081625665213392
+        ],
+        [
+          0.6218648815494282,
+          -0.7907848033720345
+        ]
+      ]
+    ],
+    "run_normalized_covariance": [
+      [
+        [
+          0.32775457098645083,
+          0.02659229628492415,
+          -0.21884921267980254
+        ],
+        [
+          0.02659229628492413,
+          0.31226764387017564,
+          -0.2044060340931689
+        ],
+        [
+          -0.21884921267980254,
+          -0.20440603409316893,
+          0.3834717868009424
+        ]
+      ],
+      [
+        [
+          0.2211551629247845,
+          -0.012518784428373928,
+          -0.20090173282398702
+        ],
+        [
+          -0.01251878442837393,
+          0.20494243017745534,
+          -0.077788315953735
+        ],
+        [
+          -0.20090173282398704,
+          -0.077788315953735,
+          0.3047605546608261
+        ]
+      ]
+    ],
+    "run_residual_df": [
+      5,
+      9
+    ],
+    "run_residual_variance": [
+      [
+        0.009126302388511542,
+        0.008168743620065564
+      ],
+      [
+        0.008136086980381804,
+        0.008975045295542597
+      ]
+    ]
+  },
+  "receipt": {
+    "accepted_differences": [
+      "ScalaFIM preserves typed run and coefficient-axis provenance that is additional to the R numeric receipt.",
+      "The fixed-effects receipt combines each voxel's full coefficient covariance; it does not use coefficientwise diagonal-only meta-analysis.",
+      "Event onsets are exactly representable at 0 and 4 seconds so this receipt isolates mixed-TR and fixed-effects semantics from the separately tracked off-grid interpolation convention."
+    ],
+    "comparison_policy": {
+      "alignment": "identity_only_no_post_hoc_lag_shift",
+      "correlation_role": "diagnostic_only_requires_error_and_norm_bounds",
+      "disagreement_triage": "truth_boundary_local",
+      "tolerance_scope": "comparison_local_no_global_override"
+    },
+    "conventions": {
+      "dtype": "float64",
+      "fixed_effects": "sum full coefficient precision matrices and precision-weighted coefficient vectors independently per voxel",
+      "json_encoding": "sorted-key UTF-8 JSON",
+      "matrix_orientation": "rows are acquisition samples or coefficients; columns preserve declared condition/voxel order",
+      "residual_df": "sum of the two runwise residual degrees of freedom",
+      "runwise_fit": "independent base-R lm.fit per run",
+      "sampling": "two runs with TR 2.0 and 0.8 seconds, zero scan start, and 0.1-second convolution precision"
+    },
+    "environment": {
+      "generator_sha256": "4844eec18f9a36b07b0198c3a7970b3c79ca4e3706c4e7c62cba5d824f127c2c",
+      "locale": "C",
+      "lock_path": "tools/r-parity/reference-lock.json",
+      "lock_sha256": "8fcccdb83ab6ad29da592218dcf9816534c7df896a058bad218f3e28f86f5548",
+      "runtime": "R 4.5.1"
+    },
+    "hashes": {
+      "generated_scala_sha256": "f5335bf3bad7e72ecb4b2adb51a679d736b3cb3aab8cb8df440b4a0eba9938b2",
+      "inputs_sha256": "4ad1577a884e566ffacb25a67c0517dd614b5d19e5a172b5958306fb7f09972a",
+      "outputs_sha256": "6f5c2b7838f6d07b70021bc6943536370d9df8222d58c9fb5092acc16f6fea0a"
+    },
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
+    "schema_version": "scalafim-r-fixed-effects-fixture/v1",
+    "source": {
+      "fmridesign_revision": "148658557317987535477166746fae09b2e630b7",
+      "fmridesign_version": "0.6.0",
+      "fmrihrf_revision": "9423be3f3c6eb65dbee180630779a5d4a6fb3867",
+      "fmrihrf_version": "0.4.0",
+      "producer": "tools/r-parity/generate_mixed_tr_fixed_effects_receipt.R",
+      "r_version": "4.5.1",
+      "reference": "R fmridesign event_model plus base-R lm.fit and full inverse-covariance fixed effects",
+      "stats_version": "4.5.1"
+    }
+  },
+  "scenario_id": "fit.mixed-tr-fixed-effects.v1",
+  "schema_version": "scalafim-r-fixed-effects-fixture/v1",
+  "source": {
+    "fmridesign_revision": "148658557317987535477166746fae09b2e630b7",
+    "fmridesign_version": "0.6.0",
+    "fmrihrf_revision": "9423be3f3c6eb65dbee180630779a5d4a6fb3867",
+    "fmrihrf_version": "0.4.0",
+    "producer": "tools/r-parity/generate_mixed_tr_fixed_effects_receipt.R",
+    "r_version": "4.5.1",
+    "reference": "R fmridesign event_model plus base-R lm.fit and full inverse-covariance fixed effects",
+    "stats_version": "4.5.1"
+  },
+  "truth_boundary": "independent_end_to_end"
+}

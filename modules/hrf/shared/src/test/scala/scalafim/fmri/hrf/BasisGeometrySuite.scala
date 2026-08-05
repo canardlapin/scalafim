@@ -122,12 +122,92 @@ class BasisGeometrySuite extends munit.FunSuite:
     val changed = (0 until 5).exists(i => math.abs(transported(i, i) - penalty(i, i)) > 1e-9)
     assert(changed, "rescaling left the penalty untouched; it should not have")
 
+  test("basis transforms transport covariance and adjusted linear hypotheses"):
+    val covariance = Mat.fromRows(
+      Seq(
+        Seq(2.0, 0.2, -0.1),
+        Seq(0.2, 1.5, 0.3),
+        Seq(-0.1, 0.3, 0.8)
+      )
+    )
+    val beta = Vector(0.7, -1.1, 0.4)
+    val weights = Vector(0.2, -0.5, 1.3)
+    val transforms = Vector[BasisTransform](
+      BasisTransform.Diagonal(Vector(2.0, 0.5, 3.0)),
+      BasisTransform.Permutation(Vector(2, 0, 1))
+    )
+
+    def dot(left: Vector[Double], right: Vector[Double]): Double =
+      left.zip(right).map(_ * _).sum
+
+    transforms.foreach { transform =>
+      val betaPrime = transform
+        .transportCoefficients(BasisCoefficients.unsafe[Unit](beta))
+        .fold(error => fail(error.message), identity)
+      val covariancePrime = transform
+        .transportCovariance(covariance)
+        .fold(error => fail(error.message), identity)
+      val weightsPrime = transform
+        .transportLinearWeights(weights)
+        .fold(error => fail(error.message), identity)
+
+      assertEqualsDouble(dot(weights, beta), dot(weightsPrime, betaPrime.values), 1e-12)
+      val originalVariance = dot(weights, covariance.data.grouped(3).map(row => dot(weights, row.toVector)).toVector)
+      val transformedVariance = dot(
+        weightsPrime,
+        covariancePrime.data.grouped(3).map(row => dot(weightsPrime, row.toVector)).toVector
+      )
+      assertEqualsDouble(transformedVariance, originalVariance, 1e-12)
+    }
+
+    assert(BasisTransform.Diagonal(Vector(1.0, 2.0)).transportCovariance(covariance).isLeft)
+    assert(BasisTransform.Permutation(Vector(0, 0, 1)).transportLinearWeights(weights).isLeft)
+
   test("diagonal transforms invert, and singular ones report it"):
     val t = BasisTransform.Diagonal(Vector(2.0, 4.0, 0.5))
     val inv = t.inverse.fold(e => fail(e.message), identity)
     assertEquals(inv, BasisTransform.Diagonal(Vector(0.5, 0.25, 2.0)))
     assert(BasisTransform.Diagonal(Vector(1.0, 0.0)).inverse.isLeft)
     assertEquals(BasisTransform.Identity(3).inverse, Right(BasisTransform.Identity(3)))
+
+  test("basis permutations transport coefficients and penalties contragrediently"):
+    val source = Hrfs.SPMG3
+    val sourceBasis = ResponseBasis.of(source)
+    val order = Vector(2, 0, 1)
+    val transform = BasisTransform.Permutation(order)
+    val beta = Vector(0.7, -1.1, 0.4)
+    val transported = transform
+      .transportCoefficients(BasisCoefficients.unsafe[Unit](beta))
+      .fold(error => fail(error.message), identity)
+    assertEquals(transported.values, Vector(beta(2), beta(0), beta(1)))
+    assertEquals(transform.inverse, Right(BasisTransform.Permutation(Vector(1, 2, 0))))
+    assert(BasisTransform.Permutation(Vector(0, 0, 1)).inverse.isLeft)
+
+    val permuted = Hrf.multi("SPMG3-permuted", nbasis = 3, span = source.span) { lag =>
+      val values = source(lag).data
+      order.map(i => values(i)).toArray
+    }
+    val permutedBasis = ResponseBasis.of(permuted)
+    val originalKernel = sourceBasis.reconstruct(sourceBasis.coefficients(beta).fold(error => fail(error.message), identity))
+    val permutedKernel = permutedBasis.reconstruct(BasisCoefficients.unsafe(transported.values))
+    times.foreach { t =>
+      assertEqualsDouble(
+        originalKernel(Lag(t)).data(0),
+        permutedKernel(Lag(t)).data(0),
+        1e-12,
+        s"permutation changed reconstructed response at t=$t"
+      )
+    }
+
+    val penalty = source.penaltyMatrix()
+    val transportedPenalty = transform.transportPenalty(penalty).fold(error => fail(error.message), identity)
+    var r = 0
+    while r < 3 do
+      var c = 0
+      while c < 3 do
+        assertEqualsDouble(transportedPenalty(r, c), penalty(order(r), order(c)), 1e-12)
+        c += 1
+      r += 1
 
   test("Evaluate normalization does not depend on the query grid"):
     // Regression: normalization used to divide by the maximum observed on the
@@ -168,3 +248,90 @@ class BasisGeometrySuite extends munit.FunSuite:
       ResponseBasis.of(Hrfs.SPMG3).labels,
       Vector("SPMG3_b01", "SPMG3_b02", "SPMG3_b03")
     )
+
+  test("basis elements expose stable semantic roles rather than labels"):
+    val first = ResponseBasis.of(Hrfs.SPMG3).elements
+    val second = ResponseBasis.of(Hrfs.SPMG3).elements
+    assertEquals(first.map(_.role), Vector(BasisRole.Canonical, BasisRole.TemporalDerivative, BasisRole.DispersionDerivative))
+    assertEquals(first.map(_.id.value), second.map(_.id.value))
+    assertEquals(first.map(_.label), ResponseBasis.of(Hrfs.SPMG3).labels)
+
+    val fir = ResponseBasis.of(Hrfs.fir(nBasis = 4)).elements
+    assertEquals(fir.map(_.index), Vector(1, 2, 3, 4))
+    fir.zipWithIndex.foreach { case (element, index) =>
+      element.role match
+        case BasisRole.FirBin(bin, from, until) =>
+          assertEquals(bin, index + 1)
+          assertEqualsDouble(from.value, index.toDouble * 6.0, 1e-12)
+          assertEqualsDouble(until.value, (index + 1).toDouble * 6.0, 1e-12)
+        case other => fail(s"expected FIR role, got $other")
+    }
+
+  test("custom bases retain caller-supplied identities and validate cardinality"):
+    val elements = Vector(
+      BasisElement(BasisElementId("early"), 1, BasisRole.Custom(1, "early"), "early response"),
+      BasisElement(BasisElementId("late"), 2, BasisRole.Custom(2, "late"), "late response")
+    )
+    val custom = Hrf.multiWithBasisElements("identified", elements, span = Seconds(8.0))(_ => Array(1.0, 2.0))
+      .fold(error => fail(error.message), identity)
+    assertEquals(custom.basisElementsValidated.toOption.get.map(_.id.value), Vector("early", "late"))
+    assertEquals(custom.basisElements.map(_.label), Vector("early response", "late response"))
+
+    val duplicate = elements.updated(1, elements(1).copy(id = elements(0).id))
+    assert(Hrf.multiWithBasisElements("duplicate", duplicate, span = Seconds(8.0))(_ => Array(1.0, 2.0)).left.exists(_.isInstanceOf[BasisIdentityError.DuplicateId]))
+    assert(Hrf.withBasisElements(Hrf.multi("wrong-width", 2)(_ => Array(1.0, 2.0)), Vector(elements.head)).left.exists(_.isInstanceOf[BasisIdentityError.CardinalityMismatch]))
+    assert(Hrf.multiWithBasisElements("empty", Vector.empty, span = Seconds(8.0))(_ => Array.empty[Double]).left.exists(_.isInstanceOf[BasisIdentityError.CardinalityMismatch]))
+
+  test("basis roles distinguish coefficient selection from an omnibus basis"):
+    val basis = ResponseBasis.of(Hrfs.SPMG3)
+    val canonical = basis.element(BasisRole.Canonical).fold(error => fail(error.message), identity)
+    assertEquals(canonical.index, 1)
+    assert(basis.element(BasisRole.FirBin(1, 0.s, 1.s)).isLeft)
+    assertEquals(basis.elements.size, 3)
+
+  test("response functionals compile to explicit basis weights with units"):
+    val basis = ResponseBasis.of(Hrfs.SPMG3)
+    val atSix = basis
+      .responseFunctional(ResponseFunctional.At(6.s))
+      .fold(error => fail(error.message), identity)
+    assertEquals(atSix.units, ResponseUnits.ResponseValue)
+    assertEquals(atSix.weights.dimension, 3)
+    assertEquals(atSix.receipt.samples, 1)
+    basis.kernel(Lag.ofSeconds(6.s)).data.zip(atSix.values).foreach { case (expected, actual) =>
+      assertEqualsDouble(expected, actual, 1e-12)
+    }
+
+    val mean = basis
+      .responseFunctional(
+        ResponseFunctional.WindowMean(4.s, 8.s),
+        FunctionalDiscretization.Exact
+      )
+      .fold(error => fail(error.message), identity)
+    val integral = basis
+      .responseFunctional(
+        ResponseFunctional.WindowIntegral(4.s, 8.s),
+        FunctionalDiscretization.Exact
+      )
+      .fold(error => fail(error.message), identity)
+    assertEquals(mean.units, ResponseUnits.ResponseValue)
+    assertEquals(integral.units, ResponseUnits.ResponseIntegral)
+    mean.values.zip(integral.values).foreach { case (average, area) =>
+      assertEqualsDouble(average * 4.0, area, 1e-12)
+    }
+
+  test("non-primitive windows require an explicit discretization"):
+    val basis = ResponseBasis.of(Hrfs.invLogit())
+    val exact = basis.responseFunctional(ResponseFunctional.WindowMean(4.s, 8.s))
+    assert(exact.isLeft)
+    val step = PositiveSeconds.fromSeconds(0.05.s).fold(error => fail(error.message), identity)
+    val sampled = basis
+      .responseFunctional(ResponseFunctional.WindowMean(4.s, 8.s), FunctionalDiscretization.Trapezoid(step))
+      .fold(error => fail(error.message), identity)
+    assertEquals(sampled.units, ResponseUnits.ResponseValue)
+    assert(sampled.receipt.samples > 1)
+
+  test("invalid response functionals and absent roles are typed failures"):
+    val basis = ResponseBasis.of(Hrfs.SPMG3)
+    assert(basis.responseFunctional(ResponseFunctional.At((-1.0).s)).isLeft)
+    assert(basis.responseFunctional(ResponseFunctional.WindowMean(8.s, 4.s), FunctionalDiscretization.Exact).isLeft)
+    assert(basis.element(BasisRole.Spline(1)).isLeft)

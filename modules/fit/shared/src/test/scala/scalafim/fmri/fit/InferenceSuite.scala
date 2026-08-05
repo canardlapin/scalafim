@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.contrast.ContrastSpec
@@ -12,7 +10,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DVec
 
 class InferenceSuite extends munit.FunSuite:
 

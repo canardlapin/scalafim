@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset}
 import scalafim.dataset.io.MatrixFileDatasetBackend
 import scalafim.fmri.design.baseline.Intercept
@@ -18,7 +16,8 @@ class MatrixFileFitSuite extends munit.FunSuite:
     val path = Files.createTempFile("scalafim-fit-matrix-", ".csv")
     Files.writeString(path, contents, StandardCharsets.UTF_8)
     try f(path)
-    finally Files.deleteIfExists(path)
+    finally
+      val _ = Files.deleteIfExists(path)
 
   test("matrix-file dataset backend runs through builder-created OLS plan") {
     withMatrixFile("1,2\n3,1\n5,0\n7,-1\n") { path =>

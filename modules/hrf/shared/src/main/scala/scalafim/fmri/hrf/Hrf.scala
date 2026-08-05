@@ -35,6 +35,18 @@ trait Hrf:
   def basis: BasisCount =
     descriptor.basis
 
+  /** Structural coordinates for this response space.
+    *
+    * The validated form is available to trust-boundary code. The total form
+    * keeps ordinary kernel use ergonomic while still failing immediately if a
+    * custom descriptor cannot account for its declared cardinality.
+    */
+  def basisElementsValidated: Either[BasisIdentityError, Vector[BasisElement]] =
+    BasisElement.infer(this)
+
+  def basisElements: Vector[BasisElement] =
+    basisElementsValidated.fold(error => throw new IllegalArgumentException(error.message), values => values)
+
   /** Evaluate at a lag already known to be causal and within support. */
   protected def evaluateInSupport(lag: Lag): scalafim.fmri.hrf.linalg.Vec
 
@@ -99,6 +111,37 @@ object ScalarHrf:
           )
 
 object Hrf:
+  /** Attach caller-supplied identities to a custom kernel after validating
+    * cardinality, ordering, ids, and labels.  Inferred identities remain the
+    * default for built-ins; custom bases use this boundary when generated
+    * names are not sufficient scientific provenance.
+    */
+  def withBasisElements(
+      hrf: Hrf,
+      elements: Vector[BasisElement]
+  ): Either[BasisIdentityError, Hrf] =
+    BasisElement.validate(hrf.name, hrf.nbasis, elements).map { _ =>
+      new Hrf:
+        def name: String = hrf.name
+        def nbasis: Int = hrf.nbasis
+        def span: Seconds = hrf.span
+        override def support: Support = hrf.support
+        override def descriptor: HrfDescriptor = hrf.descriptor
+        override def basisElementsValidated: Either[BasisIdentityError, Vector[BasisElement]] = Right(elements)
+        protected def evaluateInSupport(lag: Lag): scalafim.fmri.hrf.linalg.Vec = hrf(lag)
+    }
+
+  /** Convenience constructor for explicitly identified multi-basis kernels. */
+  def multiWithBasisElements(
+      name: String,
+      elements: Vector[BasisElement],
+      span: Seconds = Seconds(24.0),
+      descriptor: Option[HrfDescriptor] = None,
+      support: Support = Support.Unbounded
+  )(f: Lag => Array[Double]): Either[BasisIdentityError, Hrf] =
+    if elements.isEmpty then Left(BasisIdentityError.CardinalityMismatch(name, 1, 0))
+    else withBasisElements(multi(name, elements.length, span, descriptor, support)(f), elements)
+
   def of(
       name: String,
       nbasis: Int = 1,

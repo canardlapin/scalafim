@@ -17,6 +17,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val cw0 = ContrastWeights.pair(
       term = term.term,
       name = name,
@@ -36,6 +37,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val cw0 = ContrastWeights.unit(
       term = term.term,
       name = name,
@@ -55,6 +57,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val cw0 = ContrastWeights.poly(
       term = term.term,
       name = name,
@@ -75,6 +78,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val cw0 = ContrastWeights.mask(
       term = term.term,
       name = name,
@@ -210,6 +214,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val (baseMat, outCols) = mainEffectWeights(term.term, name, factor, where)
 
     val baseCondNames = term.term.conditions
@@ -234,6 +239,7 @@ object ConvolvedContrastWeights:
       basis: Option[Seq[Int]] = None,
       basisWeights: Option[Seq[Double]] = None
   ): ContrastWeights =
+    requireHomogeneousBasis(term, name)
     val (baseMat, outCols) = interactionWeights(term.term, name, factor1, factor2, where)
 
     val baseCondNames = term.term.conditions
@@ -395,6 +401,12 @@ object ConvolvedContrastWeights:
           case _                      => cond
       }
     }
+
+  private def requireHomogeneousBasis(term: ConvolvedTerm, contrast: String): Unit =
+    if term.hasHeterogeneousBasis then
+      throw new IllegalArgumentException(
+        ContrastError.HeterogeneousBasisUnsupported(contrast, term.basisWidths).message
+      )
 
   private def legacyColumnKey(raw: String, prefix: Option[String]): String =
     prefix match

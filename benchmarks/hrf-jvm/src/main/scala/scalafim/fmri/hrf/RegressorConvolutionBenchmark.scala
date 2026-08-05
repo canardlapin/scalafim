@@ -3,7 +3,7 @@ package scalafim.fmri.hrf
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations.*
 import scala.compiletime.uninitialized
-import scalafim.fmri.hrf.regressor.{HrfAssignment, Regressor, StimulusEvent}
+import scalafim.fmri.hrf.regressor.Regressor
 
 /** Cost of the three `Regressor.EvalMethod` paths.
   *

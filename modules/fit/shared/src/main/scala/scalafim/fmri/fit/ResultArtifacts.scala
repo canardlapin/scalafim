@@ -1,6 +1,7 @@
 package scalafim.fmri.fit
 
 import scalafim.dataset.DatasetShape
+import scalafim.fmri.design.{CoefficientAxis, ColumnId}
 import scalafim.fmri.model.{FitEngine, FitSummary}
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
@@ -107,11 +108,14 @@ enum ResultExportIntent:
 final case class CoefficientInferenceProvenance(
     method: CoefficientInferenceMethod,
     inferableColumns: Vector[String],
-    scopeLabel: String
+    scopeLabel: String,
+    inferableColumnIds: Vector[ColumnId] = Vector.empty
 ):
   require(inferableColumns.nonEmpty, "coefficient inference provenance must contain inferable columns")
   require(inferableColumns.distinct.length == inferableColumns.length, "coefficient inference provenance columns must be unique")
   require(scopeLabel.trim.nonEmpty, "coefficient inference provenance scope label must be non-empty")
+  require(inferableColumnIds.isEmpty || inferableColumnIds.length == inferableColumns.length, "structural inference ids must align with inferable columns")
+  require(inferableColumnIds.distinct.length == inferableColumnIds.length, "structural inference ids must be unique")
 
 final case class AnalysisProvenance(
     engine: FitEngine,
@@ -120,12 +124,19 @@ final case class AnalysisProvenance(
     columnNames: Vector[String],
     source: String,
     coefficientInference: Option[CoefficientInferenceProvenance] = None,
-    notes: Vector[String] = Vector.empty
+    notes: Vector[String] = Vector.empty,
+    coefficientAxis: Option[CoefficientAxis] = None,
+    responsePreparation: Option[ResponsePreparationProvenance] = None,
+    rankReports: Vector[StructuralRankReport] = Vector.empty
 ):
   require(columnNames.nonEmpty, "analysis provenance column names must be non-empty")
   require(source.trim.nonEmpty, "analysis provenance source must be non-empty")
   require(coefficientInference.forall(value => value.inferableColumns.forall(columnNames.contains)), "inferable columns must belong to analysis columns")
+  require(coefficientAxis.forall(_.predictors == columnNames.length), "coefficient axis must match analysis columns")
+  require(coefficientInference.forall(value => value.inferableColumnIds.isEmpty || coefficientAxis.exists(axis => value.inferableColumnIds.forall(axis.columnIds.contains))), "structural inference ids must belong to the coefficient axis")
   require(notes.forall(_.trim.nonEmpty), "analysis provenance notes must be non-empty")
+  require(rankReports.forall(_.predictorCount == columnNames.length), "rank reports must match analysis columns")
+  require(rankReports.forall(report => coefficientAxis.exists(_.designFingerprint == report.designFingerprint)), "rank reports require the matching structural coefficient axis")
 
 object AnalysisProvenance:
   def fromResult(
@@ -140,10 +151,19 @@ object AnalysisProvenance:
           Some(CoefficientInferenceProvenance(
             method = dense.inference.method,
             inferableColumns = allowed.map(dense.columnNames),
-            scopeLabel = dense.inferenceScope.label
+            scopeLabel = dense.inferenceScope.label,
+            inferableColumnIds = dense.coefficientAxis.map(axis => allowed.map(index => axis.columns(index).id)).getOrElse(Vector.empty)
           ))
         case _ =>
           None
+    val rankReports =
+      result match
+        case dense: DenseFmriFitResult =>
+          dense.structuralRankReport.toOption.toVector
+        case runwise: RunwiseFmriFitResult =>
+          runwise.structuralRankReports.toOption.getOrElse(Vector.empty)
+        case _ =>
+          Vector.empty
     AnalysisProvenance(
       engine = result.engine,
       summary = result.summary,
@@ -151,7 +171,10 @@ object AnalysisProvenance:
       columnNames = result.columnNames,
       source = source,
       coefficientInference = coefficientInference,
-      notes = notes
+      notes = notes,
+      coefficientAxis = result.coefficientAxis,
+      responsePreparation = result.preparationProvenance,
+      rankReports = rankReports
     )
 
 final case class StatMap private (
@@ -254,7 +277,8 @@ final case class ContrastMap(
     contrastId: ContrastId,
     statistic: ContrastMapKind,
     map: StatMap,
-    degreesOfFreedom: Option[ContrastDegreesOfFreedom]
+    degreesOfFreedom: Option[ContrastDegreesOfFreedom],
+    hypothesis: Option[HypothesisMetadata] = None
 ):
   require(map.kind == StatisticKind.Contrast(statistic), "contrast map statistic kind must match map kind")
   def contrast: String = contrastId.value
@@ -268,6 +292,7 @@ object ContrastMap:
       selectedVoxels: SelectedVoxelIndices,
       provenance: AnalysisProvenance,
       degreesOfFreedom: Option[ContrastDegreesOfFreedom] = None,
+      hypothesis: Option[HypothesisMetadata] = None,
       exportIntent: ResultExportIntent = ResultExportIntent.InMemory
   ): Either[FitError, ContrastMap] =
     for
@@ -281,7 +306,7 @@ object ContrastMap:
         provenance = provenance,
         exportIntent = exportIntent
       )
-    yield ContrastMap(id, statistic, statMap, degreesOfFreedom)
+    yield ContrastMap(id, statistic, statMap, degreesOfFreedom, hypothesis)
 
   def fromTContrast(
       result: TContrastResult,
@@ -297,7 +322,7 @@ object ContrastMap:
         ContrastMapKind.TStatistic -> result.statistics
       )
     ) { case (kind, values) =>
-      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, exportIntent)
+      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, result.hypothesis, exportIntent)
     }
 
   def fromFContrast(
@@ -317,7 +342,7 @@ object ContrastMap:
         ContrastMapKind.Estimate(row + 1) -> matrixRow(result.estimates, row)
       }
     buildAll(estimateMaps :+ (ContrastMapKind.FStatistic -> result.statistics)) { case (kind, values) =>
-      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, exportIntent)
+      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, result.hypothesis, exportIntent)
     }
 
 final case class CoefficientCovarianceArtifact private (

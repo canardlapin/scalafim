@@ -69,6 +69,30 @@ object DatasetValue:
       case "false" | "f" => Some(false)
       case _             => None
 
+/** One homogeneous, typed column in an event table.
+  *
+  * Numeric columns deliberately retain non-finite values. Missing-value
+  * policy belongs to model construction, not dataset parsing.
+  */
+final class DatasetEventColumn private[dataset] (
+    private[dataset] val typedValues: Vector[DatasetValue]
+):
+  def length: Int =
+    typedValues.length
+
+object DatasetEventColumn:
+  def text(values: Seq[String]): DatasetEventColumn =
+    new DatasetEventColumn(values.iterator.map(DatasetValue.Text.apply).toVector)
+
+  def numbers(values: Seq[Double]): DatasetEventColumn =
+    new DatasetEventColumn(values.iterator.map(DatasetValue.Number(_)).toVector)
+
+  def integers(values: Seq[Int]): DatasetEventColumn =
+    new DatasetEventColumn(values.iterator.map(DatasetValue.Integer(_)).toVector)
+
+  def booleans(values: Seq[Boolean]): DatasetEventColumn =
+    new DatasetEventColumn(values.iterator.map(DatasetValue.Bool(_)).toVector)
+
 final class DatasetMetadata private (
     val typedValues: Map[DatasetFieldId, DatasetValue],
     val provenance: Option[DatasetProvenance]
@@ -282,6 +306,66 @@ object DatasetEvents:
     error match
       case Some(err) => Left(err)
       case None      => fromTypedRows(typed.result())
+
+  /** Build an event table in the same column-oriented shape used by formulas.
+    *
+    * Column names are validated once, duplicate names and ragged columns are
+    * rejected, and reserved event fields retain their normal typed validation.
+    */
+  def fromColumns(columns: (String, DatasetEventColumn)*): Either[DatasetError, DatasetEvents] =
+    if columns.isEmpty then Right(Empty)
+    else
+      val checked = Vector.newBuilder[(DatasetFieldId, DatasetEventColumn)]
+      val iterator = columns.iterator
+      var error = Option.empty[DatasetError]
+      while iterator.hasNext && error.isEmpty do
+        val (name, column) = iterator.next()
+        DatasetFieldId.make(name) match
+          case Left(err)    => error = Some(err)
+          case Right(field) => checked += field -> column
+
+      error match
+        case Some(err) => Left(err)
+        case None =>
+          val typedColumns = checked.result()
+          val duplicate = typedColumns
+            .groupMapReduce(_._1.value)(_ => 1)(_ + _)
+            .iterator
+            .collect { case (name, count) if count > 1 => name }
+            .toVector
+            .sorted
+            .headOption
+          duplicate match
+            case Some(name) =>
+              Left(DatasetError.InvalidEventTable(s"duplicate column '$name'"))
+            case None =>
+              val rowCount = typedColumns.head._2.length
+              if rowCount == 0 then
+                Left(DatasetError.InvalidEventTable("event columns must contain at least one row"))
+              else
+                typedColumns.find(_._2.length != rowCount) match
+                  case Some((field, column)) =>
+                    Left(
+                      DatasetError.InvalidEventTable(
+                        s"column '${field.value}' has ${column.length} rows; expected $rowCount"
+                      )
+                    )
+                  case None =>
+                    val rows = Vector.newBuilder[DatasetEventRow]
+                    rows.sizeHint(rowCount)
+                    var row = 0
+                    var rowError = Option.empty[DatasetError]
+                    while row < rowCount && rowError.isEmpty do
+                      val values = typedColumns.iterator.map { case (field, column) =>
+                        field -> column.typedValues(row)
+                      }.toMap
+                      DatasetEventRow.fromValues(values) match
+                        case Left(err)    => rowError = Some(DatasetError.InvalidEventRow(row, err.message))
+                        case Right(value) => rows += value
+                      row += 1
+                    rowError match
+                      case Some(err) => Left(err)
+                      case None      => fromTypedRows(rows.result())
 
   def fromTypedRows(rows: Vector[DatasetEventRow]): Either[DatasetError, DatasetEvents] =
     validateRows(rows).map(_ => new DatasetEvents(rows))

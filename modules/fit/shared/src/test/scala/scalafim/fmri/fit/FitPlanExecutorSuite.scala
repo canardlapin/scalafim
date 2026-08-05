@@ -46,7 +46,8 @@ import scalafim.fmri.model.{
   ReducedRankBootstrapConfig,
   ReducedRankComponentSpec,
   ReducedRankGlsConfig,
-  ReducedRankInferencePolicy
+  ReducedRankInferencePolicy,
+  RobustConfig
 }
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
 import scalafim.response.{
@@ -57,9 +58,9 @@ import scalafim.response.{
 }
 import gale.linalg.{DMat, DVec}
 
-import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
-
 class FitPlanExecutorSuite extends munit.FunSuite:
+
+  private given scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
 
   private def samplingFrame: SamplingFrame =
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
@@ -220,19 +221,125 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       i += 1
 
   test("FitPlanExecutor runs end-to-end OLS against an in-memory dataset") {
-    val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
+    val result = FitPlanExecutor.fitDense(FitPlan(model)).toOption.getOrElse(fail("OLS should produce a dense result"))
 
     assertEquals(result.engine, FitEngine.OrdinaryLeastSquares)
     assertEquals(result.columnNames, Vector("task", "base_constant"))
     assertEquals(result.voxelIndices, Vector(0, 1))
     assertEquals(result.timepoints, Vector(0, 1, 2, 3))
+    assertEquals(result.coefficientAxis, FitPlan(model).coefficientAxis)
+    assertEquals(result.coefficientAxis.map(_.columnIds), Some(Vector(
+      model.designBlock.columnIds(0),
+      model.designBlock.columnIds(1)
+    )))
     assertEquals(result.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
+    val rankComparison = result.rankPreviewComparison.toOption.getOrElse(fail("full OLS fit should compare with its design preview"))
+    assert(rankComparison.exact)
+    assertEquals(rankComparison.preview.pivotOrder, rankComparison.fitted.pivotOrder.map(_.id))
+    assertEquals(rankComparison.preview.numericalRank, result.predictors)
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("task", 1).get, -1.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 1.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 1).get, 2.0, 1e-10)
     assertEqualsDouble(result.residualVariance(0), 0.0, 1e-10)
     assertEqualsDouble(result.residualVariance(1), 0.0, 1e-10)
+  }
+
+  test("fitDense rejects engines with a different result shape") {
+    FitPlanExecutor.fitDense(FitPlan(model, FitEngine.RunwiseLeastSquares)) match
+      case Left(FitError.NonDenseFitResult(FitEngine.RunwiseLeastSquares)) => ()
+      case other => fail(s"expected a typed non-dense-result failure, got $other")
+  }
+
+  test("public fit failures name aliased structural columns") {
+    val duplicateEvent = EventModel(
+      terms = Vector.empty,
+      samplingFrame = samplingFrame,
+      designMatrix = Mat.fromRows(Vector.fill(4)(Vector(1.0))),
+      columnNames = Vector("task"),
+      termSpans = Vector(0 -> 1),
+      colIndices = Map("task" -> Vector(0))
+    )
+    val baseline = BaselineModel.build(
+      samplingFrame = samplingFrame,
+      basis = BaselineBasis.Constant,
+      intercept = Intercept.Global
+    )
+    val duplicateModel = FmriModel(duplicateEvent, baseline, dataset)
+    val plan = FitPlan(duplicateModel)
+
+    FitPlanExecutor.fit(plan) match
+      case Left(FitError.StructuralRankDeficientDesign(report)) =>
+        val axisIds = plan.coefficientAxis.toVector.flatMap(_.columnIds)
+        assertEquals(report.numericalRank, 1)
+        assertEquals(report.predictorCount, 2)
+        assertEquals(report.pivotOrder.map(_.id).toSet, axisIds.toSet)
+        assertEquals(report.aliasedColumnIds.length, 1)
+        assert(axisIds.contains(report.aliasedColumnIds.head))
+      case other =>
+        fail(s"expected structural rank-deficiency evidence, got $other")
+
+    val nearEvent = EventModel(
+      terms = Vector.empty,
+      samplingFrame = samplingFrame,
+      designMatrix = Mat.fromRows(
+        Vector(
+          Vector(1.0, 1.0),
+          Vector(2.0, 2.0),
+          Vector(3.0, 3.0),
+          Vector(4.0, 4.0 + 1.0e-15)
+        )
+      ),
+      columnNames = Vector("task", "near_task"),
+      termSpans = Vector(0 -> 2),
+      colIndices = Map("task" -> Vector(0), "near_task" -> Vector(1))
+    )
+    val noBaseline = BaselineModel.build(
+      samplingFrame = samplingFrame,
+      basis = BaselineBasis.Constant,
+      intercept = Intercept.None
+    )
+    val nearPlan = FitPlan(FmriModel(nearEvent, noBaseline, dataset))
+    FitPlanExecutor.fit(nearPlan) match
+      case Left(FitError.StructuralRankDeficientDesign(report)) =>
+        assertEquals(report.numericalRank, 2)
+        assertEquals(report.predictorCount, 3)
+        assertEquals(report.aliasedColumnIds.length, 1)
+        assert(nearPlan.coefficientAxis.exists(axis => axis.columnIds.contains(report.aliasedColumnIds.head)))
+      case other =>
+        fail(s"expected near-singular structural rank-deficiency evidence, got $other")
+  }
+
+  test("GLS retains structural rank evidence and explains preview differences") {
+    val ar = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.0))
+    val result = FitPlanExecutor
+      .unsafeFit(FitPlan(model, FitEngine.GeneralizedLeastSquares, FitConfig(autocorrelation = ar)))
+      .asInstanceOf[DenseFmriFitResult]
+    val report = result.structuralRankReport.toOption.getOrElse(fail("GLS should retain a structural rank report"))
+    val comparison = result.rankPreviewComparison.toOption.getOrElse(fail("GLS should compare against the design preview"))
+
+    assertEquals(report.pivotOrder.map(_.id).toSet, result.coefficientAxis.toVector.flatMap(_.columnIds).toSet)
+    assertEquals(report.numericalRank, result.predictors)
+    assert(comparison.differences.contains(RankPreviewDifference.GeneralizedLeastSquares))
+  }
+
+  test("every supported dense engine preserves the same structural coefficient axis") {
+    val ar = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.0))
+    val robust = RobustConfig.huber(maxIterations = 2).toOption.get
+    val plans = Vector(
+      FitPlan(model),
+      FitPlan(model, FitEngine.GeneralizedLeastSquares, FitConfig(autocorrelation = ar)),
+      FitPlan(model, FitEngine.RunwiseLeastSquares),
+      FitPlan(model, FitStrategy.RobustLeastSquares(robust)),
+      FitPlan(model, FitStrategy.LatentSketch()),
+      FitPlan(model, FitStrategy.ReducedRankGls())
+    )
+
+    plans.foreach { plan =>
+      val result = FitPlanExecutor.unsafeFit(plan)
+      assertEquals(result.coefficientAxis, plan.coefficientAxis, plan.engine.toString)
+      assertEquals(result.coefficientAxis.map(_.columnIds), plan.coefficientAxis.map(_.columnIds), plan.engine.toString)
+    }
   }
 
   test("OpenedDatasetFitExecutor confines effects to the attached response read") {
@@ -671,6 +778,8 @@ class FitPlanExecutorSuite extends munit.FunSuite:
 
     assertEquals(result.engine, FitEngine.LeastSquaresSeparate)
     assertEquals(result.trialNames, trialCols.map(plan.model.eventModel.columnNames))
+    assertEquals(result.coefficientAxis.map(_.columnIds), Some(trialCols.map(plan.model.designBlock.columnIds)))
+    assertEquals(result.coefficientAxis.map(_.designFingerprint), plan.coefficientAxis.map(_.designFingerprint))
     assert(aggregateCols.map(plan.model.eventModel.columnNames).forall(name => !result.trialNames.contains(name)))
     assertEquals(result.voxelIndices, Vector(0, 1))
     assertEquals(result.lssDiagnostics.fixedRank, expected.diagnostics.fixedRank)

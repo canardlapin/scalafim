@@ -12,7 +12,7 @@ for the module map; this file is the working contract.
   - `shared` — portable, JVM-only-dependency-free numeric core (the default home for code).
   - `jvm` — platform IO and JVM-only deps (e.g. NIfTI/atlas loaders, file backends, Breeze).
   - `js` — Scala.js-specific adapters and platform integrations.
-- Packages are `scalafim.*` (`scalafim.linalg`, `scalafim.fmri.hrf`, `scalafim.image`, …).
+- Packages are `scalafim.*` (`scalafim.fmri.hrf`, `scalafim.image`, `scalafim.spatial`, …).
 - Module dependency edges are declared in `build.sbt`; keep them acyclic and minimal.
 
 ## Build & test
@@ -51,15 +51,16 @@ construction points, but the core model should express its invariants in types.
 
 ## Performance discipline
 
-- Hot numeric kernels use **primitive `Array[Double]`**, row-major indexing, and `while`
-  loops with explicit allocation discipline (see `linalg`). Keep the *public* API idiomatic
+- Hot numeric kernels use **primitive `Array[Double]`**, row-major indexing, Gale builders,
+  and `while` loops with explicit allocation discipline. Keep the *public* API idiomatic
   and readable; keep the *inner loop* allocation-free.
 - Shared code must avoid JVM-only numeric deps (Breeze, JTransforms) on hot paths — those
   belong behind a `jvm` boundary. If you need one in `shared`, it's a design smell; stop.
-- Linear algebra solver contracts and portable reference implementations belong in `linalg`;
-  do not add private eigensolver/SVD/inverse helper families in domain modules. JVM-only
-  libraries such as Breeze belong behind explicit adapter modules such as `linalg-breeze` and typed solver
-  capabilities. See [`docs/plans/linalg-backend-strategy.md`](docs/plans/linalg-backend-strategy.md).
+- Generic matrix/vector/operator math, solver contracts, and portable reference
+  implementations belong in standalone Gale; do not add private eigensolver/SVD/inverse
+  helper families in domain modules. Domain modules may retain typed scientific policy and
+  explicit Gale adapters. JVM-only libraries such as Breeze belong upstream behind Gale
+  capabilities and must not appear in ScalaFIM shared APIs.
 
 ## Testing
 

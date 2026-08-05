@@ -1,0 +1,111 @@
+{
+  "benchmarks": {
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit": {
+      "max_allocation_bytes_per_op": 3000000,
+      "max_score": 60.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPreparedFit": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 30.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPlanAndFit": {
+      "max_allocation_bytes_per_op": 1500000,
+      "max_score": 30.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedChunked": {
+      "max_allocation_bytes_per_op": 1500000,
+      "max_score": 30.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedMultiresponse": {
+      "max_allocation_bytes_per_op": 1000000,
+      "max_score": 30.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedSingleResponse": {
+      "max_allocation_bytes_per_op": 32768,
+      "max_score": 1.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPlanAndFit": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 40.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPreparedFit": {
+      "max_allocation_bytes_per_op": 1000000,
+      "max_score": 30.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.hrf.BasisResponseBenchmark.directContraction": {
+      "max_allocation_bytes_per_op": 512,
+      "max_score": 2.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.BasisResponseBenchmark.exactWindowFunctional": {
+      "max_allocation_bytes_per_op": 2048,
+      "max_score": 5.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.BasisResponseBenchmark.pointFunctional": {
+      "max_allocation_bytes_per_op": 1024,
+      "max_score": 3.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.BasisResponseBenchmark.trapezoidWindowFunctional": {
+      "max_allocation_bytes_per_op": 65536,
+      "max_score": 300.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.BasisResponseBenchmark.typedReconstruction": {
+      "max_allocation_bytes_per_op": 2048,
+      "max_score": 3.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.EpochIntegrationBenchmark.exact": {
+      "max_allocation_bytes_per_op": 131072,
+      "max_score": 3000.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.EpochIntegrationBenchmark.trapezoid": {
+      "max_allocation_bytes_per_op": 8388608,
+      "max_score": 60000.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv": {
+      "max_allocation_bytes_per_op": 5242880,
+      "max_score": 5000.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft": {
+      "max_allocation_bytes_per_op": 9437184,
+      "max_score": 30000.0,
+      "score_unit": "us/op"
+    },
+    "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop": {
+      "max_allocation_bytes_per_op": 12582912,
+      "max_score": 20000.0,
+      "score_unit": "us/op"
+    }
+  },
+  "profile": {
+    "fit": {
+      "predictors": "32",
+      "responses": "128",
+      "timepoints": "360"
+    },
+    "hrf_convolution": {
+      "nScans": "1200",
+      "nbasis": "3",
+      "precision": "0.1"
+    },
+    "hrf_integration": {
+      "precision": "0.05",
+      "width": "12.0"
+    }
+  },
+  "schema_version": "scalafim-first-level-benchmark-budgets/v1"
+}

@@ -1,7 +1,6 @@
 package scalafim.spatial
 
 import scalafim.image.{DMat, NeuroSpace, SpatialAxis, VoxelCoord}
-import scalafim.linalg.DoubleMatrix
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class FieldApiSuite extends munit.FunSuite:

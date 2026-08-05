@@ -6,7 +6,7 @@
     "fail": "ScenarioResult.status is Fail when any unexpected shape, finite-value, identity, tolerance, blocking caveat, or oracle check failed. A pass_with_caveats result with an undeclared caveat is a CI policy failure, not a clean pass."
   },
   "default_acceptance_commands": [
-    "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+    "python -S tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
     "sbt connectivityJVM/test",
     "sbt connectivityJS/test",
     "sbt designJVM/test",
@@ -51,17 +51,304 @@
       "platforms": ["jvm", "js"],
       "reference": {
         "kind": "direct_ols_plus_fmrimod_nilearn_fixture",
+        "evidence_scope": "fit_inference",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df", "log_p"],
         "description": "Public model/fit/T/F contrast path compared with a direct OLS oracle and a generated fmrimod/Nilearn reference fixture.",
         "exporter_path": "tools/scenarios/export_fit_public_f_contrast_fixture.py",
         "fixture_path": "docs/scenarios/fixtures/fit.public-f-contrast.v1.nilearn.json",
-        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastNilearnFixture.scala"
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastNilearnFixture.scala",
+        "receipt_schema": "scalafim-external-fixture/v1"
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": [
-        "python tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
+        "python -S tools/scenarios/export_fit_public_f_contrast_fixture.py --check",
         "sbt fitJVM/test",
         "sbt fitJS/test"
       ],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s07-2x2.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "r_fmridesign_design_receipt_plus_public_semantic_fit",
+        "evidence_scope": "design_construction",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment"],
+      "description": "A public 2x2 cell-means design has a paired R fmridesign design receipt, while the fit scenario evaluates structural semantic hypotheses and planted effects through the public model path.",
+        "exporter_path": "tools/r-parity/generate_structural_2x2_design_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_structural_2x2_design_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/design.structural-2x2.v1.r.json",
+        "generated_scala_fixture_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/Structural2x2RFixture.scala",
+        "receipt_schema": "scalafim-r-design-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "python -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt designJVM/test",
+        "sbt designJS/test",
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s08-3x3-trends.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_planted_effect_public_semantic_fit",
+        "description": "A public 3x3 cell-means design uses declared factor levels, unequal ordinal scores, linear and quadratic trend contrasts, and a linear-by-linear interaction without numeric column offsets."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s09-heterogeneous-hrf.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "solver_only_compiled_design_semantic_fit",
+        "description": "A public first-level model assigns canonical, informed, and FIR bases to distinct structural cells, derives five event columns from the assigned basis widths, and evaluates semantic canonical and FIR omnibus hypotheses. Responses are generated from the inspected compiled design, so this scenario is explicitly a solver/provenance acceptance case rather than an independent end-to-end design oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt modelJVM/test", "sbt modelJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "design.modulator-policies.v1",
+      "tier": "workflow_parity",
+      "module": "design",
+      "suite_class": "scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite",
+      "suite_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/ModulatorPolicyScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "base_r_ordered_qr_policy_fixture",
+        "evidence_scope": "design_construction",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment"],
+        "description": "An explicit additive modulator family is residualized in declared order, globally and within cells, and compared with base-R QR residuals. The receipt names the intentional difference that neither fmridesign orthogonalization nor R missing-value defaults are imported implicitly.",
+        "exporter_path": "tools/r-parity/generate_modulator_policy_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_modulator_policy_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/design.modulator-policies.v1.r.json",
+        "generated_scala_fixture_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/ModulatorPolicyRFixture.scala",
+        "receipt_schema": "scalafim-r-policy-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "python3 tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt designJVM/testOnly scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite",
+        "sbt designJS/testOnly scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "design.heterogeneous-hrf.v1",
+      "tier": "workflow_parity",
+      "module": "design",
+      "suite_class": "scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite",
+      "suite_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/HeterogeneousHrfScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "base_r_continuous_time_mixed_width_kernel_fixture",
+        "evidence_scope": "hrf_evaluation",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "peak_timing", "integral", "semantic_alignment"],
+        "description": "One public multiphase formula assigns an exhaustive shared sample HRF and cell-specific probe HRFs with different widths. Structural phase, cell, basis-role, element, and parent-trial provenance are compared with an independent base-R continuous-time event-summation oracle.",
+        "exporter_path": "tools/r-parity/generate_heterogeneous_hrf_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_heterogeneous_hrf_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/design.heterogeneous-hrf.v1.r.json",
+        "generated_scala_fixture_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/HeterogeneousHrfRFixture.scala",
+        "receipt_schema": "scalafim-r-kernel-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "LC_ALL=C LANG=C Rscript tools/r-parity/generate_heterogeneous_hrf_receipt.R",
+        "python3 tools/r-parity/finalize_heterogeneous_hrf_receipt.py",
+        "python3 tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt designJVM/testOnly scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite",
+        "sbt designJS/testOnly scalafim.fmri.design.scenarios.HeterogeneousHrfScenarioSuite"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s06-factor-modulator.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "solver_only_compiled_design_policy_fit",
+        "description": "A public factor-plus-modulator model distinguishes categorical, per-cell slope, and shared slope columns; explicit centering and zero/impute/drop/reject missing-value policies are retained in receipts. Responses are generated from the inspected compiled design, so this is explicitly a solver/provenance and policy acceptance case rather than an independent end-to-end design oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt modelJVM/test", "sbt modelJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s10-response-functional.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_response_functional_contract",
+        "description": "Canonical and derivative coefficient hypotheses, basis omnibus tests, exact at-time/window functionals, and FIR-window weights are checked through structural provenance and explicit units/discretization receipts."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.dms-multiphase-dsl.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_r_multiphase_design_runwise_fit_and_full_covariance_fixed_effects",
+        "evidence_scope": "independent_end_to_end",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "peak_timing", "integral", "semantic_alignment", "rank", "residual_df"],
+        "description": "One typed trial table and one public model specification own sample, delay, probe, and RT-modulated probe phases, including the expected 2 + 24 + 12 + 12 task columns, provenance, centering, missingness, and an explicit empty cell. A checked-in R receipt validates the same formula structure, independently constructs per-run semantic coordinates with fmrihrf, plants the response, fits each run with base-R lm.fit, performs full-covariance fixed effects, and supplies five semantic T and two omnibus F results.",
+        "exporter_path": "tools/r-parity/generate_dms_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_dms_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.dms-multiphase-dsl.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/DmsRFixture.scala",
+        "receipt_schema": "scalafim-r-dms-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.mixed-block-transient.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "structural_public_mixed_timing_contract",
+        "description": "One typed event table and one public formula combine sustained instruction blocks, transient cue and feedback impulses, variable-duration epochs, a centered cue modulator, and canonical, informed, and FIR phase-specific bases. Structural phase, basis, parent-trial, source-row, empty-cell, scaling, rank-preview, and run-scope evidence are asserted independently of the S15 numerical fit receipt."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.realistic-nuisance.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_r_fmrihrf_sampled_nuisance_direct_qr",
+        "evidence_scope": "independent_end_to_end",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
+        "description": "Public scan-aligned nuisance regressors retain semantic motion, derivative, declared-square, CompCor-like, and spike identities across two runs. Explicit Drop and 0.999 duplicate-report policies remove a constant and exact duplicate while retaining a near duplicate; structural diagnostics and a planted task fit are checked against independent fmrihrf rendering and base-R lm.fit T/F inference.",
+        "exporter_path": "tools/r-parity/generate_realistic_nuisance_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_realistic_nuisance_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.realistic-nuisance.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/RealisticNuisanceRFixture.scala",
+        "receipt_schema": "scalafim-r-realistic-nuisance-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "python3 tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.ar-censor-boundary-gls.v1",
+      "tier": "workflow_parity",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ArCensorBoundaryGlsScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_base_r_segmented_ar1_direct_qr",
+        "evidence_scope": "fit_inference",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
+        "description": "A public two-run GLS fit row-deletes isolated and consecutive censored scans, derives whitening segments from source-axis gaps, and retains typed censor and whitening provenance. Fixed exact-first AR(1) coefficients, covariance, standard errors, T/F inference, and complete/chunked agreement are checked against an independent base-R segmented transform and direct QR receipt; estimated-AR pooling is asserted as an explicit ScalaFIM policy.",
+        "exporter_path": "tools/r-parity/generate_ar_censor_gls_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_ar_censor_gls_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.ar-censor-boundary-gls.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/ArCensorGlsRFixture.scala",
+        "receipt_schema": "scalafim-r-ar-censor-gls-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "python3 tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s16-rank-deficient.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_reduced_design_projection_oracle",
+      "description": "Duplicate-column structural hypotheses are checked by an independent full-rank reduced-design oracle on fitted values, residuals, projection action, rank, and estimable functions; typed structural rejection covers the non-estimable duplicate component."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.structural-s18-wls.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_base_r_lm_wfit_and_dvars_fixture",
+        "evidence_scope": "fit_inference",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
+        "description": "A public typed fixed/estimated volume-weight plan is compared with a checked-in base-R stats::lm.wfit and direct weighted-crossproduct receipt, including DVARS transformations, exact zero-row exclusion, coefficients, normalized covariance, residual variance, standard errors, degrees of freedom, semantic contrast statistics, multiresponse execution, and chunking.",
+        "exporter_path": "tools/r-parity/generate_wls_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_wls_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.structural-s18-wls.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/WlsRFixture.scala",
+        "receipt_schema": "scalafim-r-wls-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
       "caveats": []
     },
     {
@@ -106,7 +393,7 @@
       "platforms": ["jvm", "js"],
       "reference": {
         "kind": "analytic_selected_ols",
-        "description": "Public multi-run fit with selected timepoints is compared with direct OLS on the row-deleted design and response; censored rows contain outliers to prove they are omitted."
+        "description": "Public multi-run fit keeps only six of twelve timepoints with gaps in both runs and is compared with direct OLS on the row-deleted design and response; censored rows contain outliers, residual degrees of freedom use the six fitted rows and effective rank, and typed rank-preview comparison records the selected-row factorization."
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
@@ -122,10 +409,53 @@
       "platforms": ["jvm", "js"],
       "reference": {
         "kind": "analytic_runwise_chunk_oracle",
-        "description": "Public chunked and future chunked RunwiseLeastSquares execution are compared with unchunked runwise fitting and analytic per-run coefficients while checking chunk ordinals, selected voxel order, and selected-row run partitions."
+        "description": "Public chunked and future chunked runwise execution are compared with unchunked fitting and analytic per-run coefficients while checking chunk ordinals, selected voxel order, selected-row run partitions, explicit RunSpecific scope, and structural per-run coefficient axes. The same public fixture also exercises SeparateRunsThenFixedEffects, retaining per-run precision-weighted sufficient statistics, associative combination, effective degrees of freedom, and a structural cross-run hypothesis."
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.mixed-tr-fixed-effects.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedTrFixedEffectsScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "independent_r_mixed_tr_runwise_and_full_covariance_fixed_effects",
+        "evidence_scope": "independent_end_to_end",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
+        "description": "One public formula and semantic contrast preserve heterogeneous per-run acquisition grids, run partitions, structural coefficient axes, inverse-covariance sufficient-statistic provenance, and chunking equivalence. The checked-in R receipt independently constructs the mixed-TR fmridesign matrix and response, fits each run with base-R lm.fit, and combines each voxel with full coefficient precision matrices.",
+        "exporter_path": "tools/r-parity/generate_mixed_tr_fixed_effects_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_mixed_tr_fixed_effects_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/fit.mixed-tr-fixed-effects.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/MixedTrFixedEffectsRFixture.scala",
+        "receipt_schema": "scalafim-r-fixed-effects-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt fitJVM/test", "sbt fitJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "fit.run-local-axes.v1",
+      "tier": "cross_level_workflow",
+      "module": "fit",
+      "suite_class": "scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite",
+      "suite_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/RunLocalAxesScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "analytic_local_projection_solver_provenance",
+        "evidence_scope": "fit_inference",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
+        "description": "A public mixed-TR multi-run model lowers run-local intercept columns to per-run axes, retains structural source mappings, and executes selected-row censor gaps on both complete and chunked fits. RetainZero records typed non-estimability, Omit records a run-scoped omission that cannot align by position, and Reject fails model construction at the typed policy boundary. Each projected local fit is compared with an independent small-matrix normal-equation oracle; the response remains compiled-design truth, so this is not an independent end-to-end design oracle.",
+        "fixture_path": "docs/scenarios/fixtures/fit.run-local-axes.v1.json",
+        "receipt_schema": "scalafim-local-axis-oracle/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
       "caveats": []
     },
     {
@@ -158,6 +488,51 @@
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "design.multiphase-provenance.v1",
+      "tier": "cross_level_workflow",
+      "module": "design",
+      "suite_class": "scalafim.fmri.design.scenarios.MultiphaseProvenanceScenarioSuite",
+      "suite_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/MultiphaseProvenanceScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "structural_multiphase_provenance",
+        "description": "One ordinary runtime DataTable and one public formula lower sample and probe phases with distinct epochs and HRF widths. Checked parent-trial, phase, source-row, run, missing-modulator, and centering provenance survive into the design fingerprint; overlapping responses superpose. This is a provenance acceptance slice, not the full delayed-match-to-sample 50-column oracle."
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test"],
+      "caveats": []
+    },
+    {
+      "id": "design.r-parity-structural-2x2.v1",
+      "tier": "design_parity",
+      "module": "design",
+      "suite_class": "scalafim.fmri.design.RParityCorpusSuite",
+      "suite_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/RParityCorpusSuite.scala",
+      "public_seam": true,
+      "platforms": ["jvm", "js"],
+      "reference": {
+        "kind": "r_fmridesign_design_matrix",
+        "evidence_scope": "design_construction",
+        "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment"],
+        "description": "The fully crossed 2x2 SPMG3 event design, structural term span, column identities, and basis-major values are compared with an R fmridesign receipt.",
+        "exporter_path": "tools/r-parity/generate_structural_2x2_design_receipt.R",
+        "finalizer_path": "tools/r-parity/finalize_structural_2x2_design_receipt.py",
+        "fixture_path": "docs/scenarios/fixtures/design.structural-2x2.v1.r.json",
+        "generated_scala_fixture_path": "modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/Structural2x2RFixture.scala",
+        "receipt_schema": "scalafim-r-design-fixture/v1"
+      },
+      "allowed_statuses": ["pass"],
+      "acceptance_commands": [
+        "LC_ALL=C LANG=C Rscript tools/r-parity/generate_structural_2x2_design_receipt.R",
+        "python tools/r-parity/finalize_structural_2x2_design_receipt.py",
+        "python -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt designJVM/test",
+        "sbt designJS/test"
+      ],
       "caveats": []
     },
     {
@@ -229,7 +604,7 @@
       "tier": "workflow_parity",
       "module": "dataset",
       "suite_class": "scalafim.dataset.scenarios.LatentArchiveRoundtripScenarioSuite",
-      "suite_path": "modules/dataset/shared/src/test/scala/scalafim/dataset/scenarios/LatentArchiveRoundtripScenarioSuite.scala",
+      "suite_path": "modules/interop-archived-response/shared/src/test/scala/scalafim/dataset/scenarios/LatentArchiveRoundtripScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -245,7 +620,7 @@
       "tier": "workflow_parity",
       "module": "latent",
       "suite_class": "scalafim.latent.scenarios.TransportSelectionScenarioSuite",
-      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/TransportSelectionScenarioSuite.scala",
+      "suite_path": "modules/interop-archived-response/shared/src/test/scala/scalafim/latent/scenarios/TransportSelectionScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -261,7 +636,7 @@
       "tier": "numeric_canary",
       "module": "latent",
       "suite_class": "scalafim.latent.scenarios.BoldZipPayloadRoundtripScenarioSuite",
-      "suite_path": "modules/latent/shared/src/test/scala/scalafim/latent/scenarios/BoldZipPayloadRoundtripScenarioSuite.scala",
+      "suite_path": "modules/interop-archived-response/shared/src/test/scala/scalafim/latent/scenarios/BoldZipPayloadRoundtripScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {

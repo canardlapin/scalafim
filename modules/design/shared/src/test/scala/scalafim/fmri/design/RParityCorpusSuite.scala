@@ -3,7 +3,7 @@ package scalafim.fmri.design
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NuisanceCheck}
 import scalafim.fmri.design.contrast.{ContrastRegistry, ContrastSpec}
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.fmri.design.fixtures.RParityFixtures
+import scalafim.fmri.design.fixtures.{RParityFixtures, Structural2x2RFixture}
 import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.design.hrf.HrfGenerators
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -144,6 +144,31 @@ class RParityCorpusSuite extends munit.FunSuite:
     assertEventFixture(model, basisMajorFixture, tol = 1e-6)
   }
 
+  test("R parity corpus: fully crossed 2x2 SPMG3 structural design") {
+    val fixture = Structural2x2RFixture.eventStructural2x2
+    val sf = SamplingFrame(blockLens = Seq(80), tr = Seq(1.0))
+    val events = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(2.0, 12.0, 22.0, 32.0, 42.0, 52.0, 62.0, 70.0)),
+      "block" -> Column.Ints(Vector.fill(8)(1)),
+      "f1" -> Column.Strings(Vector("A", "B", "A", "B", "A", "B", "A", "B")),
+      "f2" -> Column.Strings(Vector("X", "X", "Y", "Y", "X", "X", "Y", "Y"))
+    )
+
+    val model = EventModelBuilder.buildWithBlockFormula(
+      formula = "onset ~ hrf(f1, f2, basis = \"spmg3\", id = \"task\")",
+      data = events,
+      samplingFrame = sf,
+      block = "~block",
+      precision = scalafim.fmri.hrf.Seconds(0.1)
+    )
+
+    // fmridesign emits multi-condition values in condition-major order while
+    // naming the realized columns in basis-major order. Align the external
+    // matrix to the names before asserting the semantic design contract.
+    val basisMajorFixture = fixture.copy(matrix = conditionMajorToBasisMajor(fixture.matrix, nConditions = 4, nbasis = 3))
+    assertEventFixture(model, basisMajorFixture, tol = 1e-6)
+  }
+
   test("R parity corpus: subset expression drops empty condition columns") {
     val fixture = RParityFixtures.eventSubset
     val sf = SamplingFrame(blockLens = Seq(20), tr = Seq(1.0))
@@ -252,6 +277,23 @@ class RParityCorpusSuite extends munit.FunSuite:
     )
 
     assertEquals(model.termKeys, fixture.termKeys)
-    assertEquals(model.columnNames, fixture.matrix.columnNames)
+    assertEquals(model.columnNames.take(2), fixture.matrix.columnNames.take(2))
+    assertEquals(fixture.matrix.columnNames.drop(2), Vector("nuis#01_1", "nuis#01_2", "nuis#02_1"))
+    assertEquals(model.columnNames.drop(2), Vector("dvars", "motion", "motion_x"))
+    assertEquals(
+      model.nuisanceReport.map(_.retainedByBlock),
+      Some(Vector(Vector("dvars", "motion"), Vector("motion_x")))
+    )
+    assertEquals(
+      model.designSchema.columns.collect {
+        case StructuralColumn(_, _, StructuralColumnOrigin.Nuisance(_, regressor, scope), _, _, _) =>
+          regressor.value -> scope
+      },
+      Vector(
+        "dvars" -> RunScope.Run(RunIndex.unsafeOneBased(1)),
+        "motion" -> RunScope.Run(RunIndex.unsafeOneBased(1)),
+        "motion_x" -> RunScope.Run(RunIndex.unsafeOneBased(2))
+      )
+    )
     assertMatrixClose(model.designMatrix, fixture.matrix, tol = 1e-12)
   }

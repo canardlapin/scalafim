@@ -2,7 +2,6 @@ package scalafim.spatial
 
 import ravel.NDArray as RavelArray
 import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId, SpatialPoint}
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
 
 class NonlinearPullbackSuite extends munit.FunSuite:
 
@@ -16,7 +15,7 @@ class NonlinearPullbackSuite extends munit.FunSuite:
     result.fold(error => fail(error.message), identity)
 
   private def linearValue[A](result: Either[LinearMapError, A]): A =
-    result.fold(error => fail(error.message), identity)
+    result.fold(error => fail(error.getMessage), identity)
 
   private def domain(name: String): Domain =
     val id = spatialValue(DomainId(name))

@@ -10,7 +10,6 @@ cross-compiled sbt build.
 ## Modules
 
 - `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
-- `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
@@ -18,6 +17,8 @@ cross-compiled sbt build.
 - `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
 - `hrf`: causal hemodynamic kernels with enforced causality and declared support, pulse-shaped neural drive (impulse, unit-height and unit-mass boxes), convergent box quadrature, response bases with typed dual coefficients and reported basis transforms, sampling, convolution, and regressors.
 - `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
+- `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
+- `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
 - `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, affine/dense-field spatial morphisms, statistics, clustering, and image IO.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
@@ -90,6 +91,12 @@ fields, and their laws formerly incubated here now live in standalone
 source revision; `locus-data` retains only ScalaFIM-specific adapters and
 higher-level parcellation, searchlight, and aggregation policy.
 
+Generic dense and sparse matrices, linear operators, factorizations, and
+spectral algorithms now live in standalone
+[`Gale`](https://github.com/canardlapin/gale). ScalaFIM pins an immutable source
+revision and keeps only neuroimaging-specific numerical policy and adapters; it
+does not retain local `linalg` or Breeze-adapter modules.
+
 An ordinary build loads both libraries from their pinned GitHub revisions. To
 test coordinated changes in sibling checkouts, select those checkouts
 explicitly:
@@ -103,6 +110,14 @@ sbt \
 
 The override applies only to that sbt process. Removing the properties restores
 the immutable GitHub source dependencies.
+
+See [docs/release-assurance.md](docs/release-assurance.md) for the enforced
+first-level compiler, formatting, coverage, parity, and CI courts, including
+the gates intentionally deferred during `0.1-development`.
+
+See [docs/first-level-analysis.md](docs/first-level-analysis.md) for the staged,
+executable first-level workflow: compile and inspect a model plan, fit it, then
+compile basis-aware semantic hypotheses without column-number bookkeeping.
 
 See [docs/image-viewer.md](docs/image-viewer.md) for the world-coordinate
 contract, slice and layer APIs, interaction reducer, caching receipts, and
@@ -119,8 +134,6 @@ sbt compileAll
 sbt testAll
 sbt locusDataJVM/test
 sbt locusDataJS/test
-sbt linalgJVM/test
-sbt linalgJS/test
 sbt pipelineJVM/test
 sbt pipelineJS/test
 sbt responseJVM/test
@@ -133,6 +146,8 @@ sbt arJVM/test
 sbt arJS/test
 sbt hrfJVM/test
 sbt hrfJS/test
+sbt scenarioTestkitJVM/test
+sbt scenarioTestkitJS/test
 sbt designJVM/test
 sbt designJS/test
 sbt imageJVM/test

@@ -1,7 +1,5 @@
 package scalafim.fmri.hrf.regressor
 
-import scalafim.fmri.hrf.s
-
 object NeuralInput:
   def apply(
       reg: Regressor,

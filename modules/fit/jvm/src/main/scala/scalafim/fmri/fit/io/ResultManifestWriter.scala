@@ -345,6 +345,19 @@ object ResultManifestWriter:
         }
         .mkString("[\n", ",\n", "\n  ]")
     val columns = manifest.provenance.columnNames.map(value => "\"" + escape(value) + "\"").mkString("[", ", ", "]")
+    val structuralColumns =
+      manifest.provenance.coefficientAxis match
+        case None => "[]"
+        case Some(axis) =>
+          axis.columns
+            .map(column =>
+              s"{\"id\": \"${escape(column.id.value)}\", \"label\": \"${escape(column.renderedLabel)}\", \"ordinal\": ${column.ordinal.oneBased}, \"origin\": \"${escape(column.origin.canonical)}\"}"
+            )
+            .mkString("[", ", ", "]")
+    val designFingerprint =
+      manifest.provenance.coefficientAxis
+        .map(axis => s"\"${escape(axis.designFingerprint.value)}\"")
+        .getOrElse("null")
     val notes = manifest.provenance.notes.map(value => "\"" + escape(value) + "\"").mkString("[", ", ", "]")
     val inference =
       manifest.provenance.coefficientInference match
@@ -352,7 +365,29 @@ object ResultManifestWriter:
           "null"
         case Some(value) =>
           val inferable = value.inferableColumns.map(column => "\"" + escape(column) + "\"").mkString("[", ", ", "]")
-          s"""{"method": "${escape(value.method.label)}", "scope": "${escape(value.scopeLabel)}", "inferable_columns": $inferable}"""
+          val inferableIds = value.inferableColumnIds.map(column => "\"" + escape(column.value) + "\"").mkString("[", ", ", "]")
+          s"""{"method": "${escape(value.method.label)}", "scope": "${escape(value.scopeLabel)}", "inferable_columns": $inferable, "inferable_column_ids": $inferableIds}"""
+    val responsePreparation =
+      manifest.provenance.responsePreparation match
+        case None =>
+          "null"
+        case Some(value) =>
+          value.records
+            .map { record =>
+              s"""{"step": "${escape(record.step.label)}", "disposition": "${escape(record.disposition.label)}", "detail": "${escape(record.disposition.detailText)}"}"""
+            }
+            .mkString("[", ", ", "]")
+    val rankReports =
+      manifest.provenance.rankReports
+        .map { report =>
+          val pivotIds = report.pivotOrder.map(column => "\"" + escape(column.id.value) + "\"").mkString("[", ", ", "]")
+          val independentIds = report.independentColumnIds.map(column => "\"" + escape(column.value) + "\"").mkString("[", ", ", "]")
+          val aliasedIds = report.aliasedColumnIds.map(column => "\"" + escape(column.value) + "\"").mkString("[", ", ", "]")
+          val diagonal = report.diagonalR.map(formatDouble).mkString("[", ", ", "]")
+          val condition = report.conditionEstimate.map(formatDouble).getOrElse("null")
+          s"""{"design_fingerprint": "${escape(report.designFingerprint.value)}", "method": "${escape(report.method.toString)}", "predictors": ${report.predictorCount}, "rank": ${report.numericalRank}, "tolerance_convention": "${escape(report.toleranceConvention.toString)}", "tolerance": ${formatDouble(report.tolerance)}, "pivot_column_ids": $pivotIds, "independent_column_ids": $independentIds, "aliased_column_ids": $aliasedIds, "diagonal_r": $diagonal, "condition_estimate": $condition}"""
+        }
+        .mkString("[", ", ", "]")
     s"""{
        |  "format": "${target.format.label}",
        |  "stem": "${escape(target.stemValue)}",
@@ -360,7 +395,11 @@ object ResultManifestWriter:
        |  "engine": "${escape(manifest.provenance.engine.toString)}",
        |  "source": "${escape(manifest.provenance.source)}",
        |  "columns": $columns,
+       |  "design_fingerprint": $designFingerprint,
+       |  "structural_columns": $structuralColumns,
        |  "inference": $inference,
+       |  "response_preparation": $responsePreparation,
+       |  "rank_reports": $rankReports,
        |  "notes": $notes,
        |  "artifacts": $artifactJson
        |}

@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
+import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
 
@@ -121,7 +121,7 @@ object InMemoryEvaluationPlanCache:
     new InMemoryEvaluationPlanCache(mutable.LinkedHashMap.empty)
 
 final case class CachedFieldResult(
-  data: DoubleMatrix,
+  data: DMat,
   evaluation: CompiledEvaluation
 )
 
@@ -194,7 +194,7 @@ final class LazyFieldRuntime private (
   override def view(field: Field, operator: SpatialOperator): Either[SpatialError, Field] =
     legacyRuntime.view(field, operator)
 
-  override def data(field: Field): Either[SpatialError, DoubleMatrix] =
+  override def data(field: Field): Either[SpatialError, DMat] =
     val key = EvaluationCacheKey.from(field, graph, registry, backend.id)
     validateSource(field).flatMap { _ =>
       resultCache.get(key) match
@@ -313,7 +313,7 @@ final class LazyFieldRuntime private (
   private def rootData(
     field: Field,
     evaluation: CompiledEvaluation
-  ): Either[SpatialError, DoubleMatrix] =
+  ): Either[SpatialError, DMat] =
     val observations = rootObservationDemand(field, evaluation.program)
     field.data.fieldSource match
       case Some(source) =>
@@ -344,8 +344,8 @@ final class LazyFieldRuntime private (
   private def finalizeObservationDemand(
     field: Field,
     program: PullbackProgram,
-    data: DoubleMatrix
-  ): Either[SpatialError, DoubleMatrix] =
+    data: DMat
+  ): Either[SpatialError, DMat] =
     if hasObservationTransform(program) then
       selectObservations(data, field.plan.intent.demand.observationIndices)
     else Right(data)
@@ -360,8 +360,8 @@ final class LazyFieldRuntime private (
   private def expandSourceBlock(
     field: Field,
     request: FieldSourceRequest,
-    block: DoubleMatrix
-  ): Either[SpatialError, DoubleMatrix] =
+    block: DMat
+  ): Either[SpatialError, DMat] =
     val valueCount = field.plan.rootSampleCount.toLong * request.columns.toLong
     if valueCount > Int.MaxValue.toLong then
       Left(SpatialError.FieldSourceReadFailed(field.data.fieldSource.get.descriptor.id, s"expanded block has $valueCount values"))
@@ -376,12 +376,12 @@ final class LazyFieldRuntime private (
           expanded(sourceRow * request.columns + column) = compact(compactRow * request.columns + column)
           column += 1
         compactRow += 1
-      Right(DoubleMatrix.unsafe(field.plan.rootSampleCount, request.columns, expanded))
+      Right(GaleSpatialSupport.unsafeOwnedMatrix(field.plan.rootSampleCount, request.columns, expanded))
 
   private def selectObservations(
-    data: DoubleMatrix,
+    data: DMat,
     observations: Vector[Int]
-  ): Either[SpatialError, DoubleMatrix] =
+  ): Either[SpatialError, DMat] =
     var i = 0
     while i < observations.length do
       val observation = observations(i)
@@ -401,9 +401,9 @@ final class LazyFieldRuntime private (
           selected(row * observations.length + outCol) = source(row * data.cols + observations(outCol))
           outCol += 1
         row += 1
-      Right(DoubleMatrix.unsafe(data.rows, observations.length, selected))
+      Right(GaleSpatialSupport.unsafeOwnedMatrix(data.rows, observations.length, selected))
 
-  private def validateResult(field: Field, result: DoubleMatrix): Either[SpatialError, Unit] =
+  private def validateResult(field: Field, result: DMat): Either[SpatialError, Unit] =
     if result.rows != field.sampleCount then
       Left(SpatialError.FieldShapeMismatch(field.sampleCount, result.rows))
     else if result.cols != field.observations then
@@ -450,8 +450,8 @@ final class LazyFieldRuntime private (
     traces.update(trace.key, trace)
     latestTrace = Some(trace)
 
-  private def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
 object LazyFieldRuntime:
   def apply(

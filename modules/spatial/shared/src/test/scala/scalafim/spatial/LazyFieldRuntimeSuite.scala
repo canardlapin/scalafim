@@ -1,7 +1,6 @@
 package scalafim.spatial
 
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
 
 class LazyFieldRuntimeSuite extends munit.FunSuite:
 

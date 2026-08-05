@@ -2,7 +2,6 @@ package scalafim.spatial.io
 
 import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec}
 import scalafim.image.io.Nifti
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -16,7 +15,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
     result.fold(error => fail(error.message), identity)
 
   private def linearValue[A](result: Either[LinearMapError, A]): A =
-    result.fold(error => fail(error.message), identity)
+    result.fold(error => fail(error.getMessage), identity)
 
   private def domain(name: String, space: NeuroSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
     val id = spatialValue(DomainId(name))

@@ -337,7 +337,6 @@ private[fit] object SequentialFitChunkInterpreter extends FitChunkInterpreter[[A
     SequentialChunkProgramInterpreter.execute(program.workProgram) { work =>
       ChunkedFitExecutor.fitChunk(
         program.reader,
-        program.plan,
         work.chunk,
         program.context
       )
@@ -353,7 +352,6 @@ private[fit] final case class FutureFitChunkInterpreter(
       Future {
         ChunkedFitExecutor.fitChunk(
           program.reader,
-          program.plan,
           work.chunk,
           program.context
         )
@@ -437,7 +435,7 @@ object ChunkedFitExecutor:
     FitChunkPlan
       .make(Vector(normalized))
       .flatMap(PreparedFitContexts.prepare(reader, plan, _))
-      .flatMap(fitChunk(reader, plan, chunk, _))
+      .flatMap(fitChunk(reader, chunk, _))
 
   /** Synchronous compatibility overload. */
   def fitChunk(
@@ -448,7 +446,6 @@ object ChunkedFitExecutor:
 
   private[fit] def fitChunk(
       reader: DatasetSeriesReader,
-      plan: FitPlan,
       chunk: FitChunkSpec,
       context: PreparedFitContext
   ): Either[FitError, FitBlockResult] =

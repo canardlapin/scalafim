@@ -116,7 +116,7 @@ object WeightedProfile:
   ): Either[SampledProfileError, WeightedProfile] =
     validateWeights(weights).flatMap { ws =>
       PositiveSeconds.fromSeconds(width, "width") match
-        case Left(error) => Left(SampledProfileError.NonFiniteValue("width", 0, width.value))
+        case Left(_) => Left(SampledProfileError.NonFiniteValue("width", 0, width.value))
         case Right(width0) =>
           val n = ws.length
           val times = Vector.tabulate(n)(i => Seconds(i.toDouble * width0.value / (n - 1).toDouble))
@@ -222,6 +222,16 @@ final case class HrfDescriptor(
 
   def name: String =
     family.label
+
+  /** Stable, structural identity used by basis elements and provenance.
+    *
+    * This is intentionally independent of a rendered column label. Descriptor
+    * case-class rendering is deterministic for the closed parameter ADTs and
+    * keeps custom parameter values in the identity as well.
+    */
+  def canonicalId: String =
+    val childIds = components.map(_.canonicalId).mkString("[", ",", "]")
+    s"family=${family.toString}|basis=${basis.value}|span=${span.value}|params=$params|derivative=$derivative|penalty=$penalty|integration=$integration|components=$childIds"
 
   def withSpan(span: Seconds): HrfDescriptor =
     copy(span = span)

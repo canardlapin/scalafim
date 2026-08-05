@@ -265,8 +265,7 @@ lines <- c(
   "    durations.find(_.name == name).getOrElse(sys.error(s\"no R duration fixture named '$name'\"))",
   "",
   "  def regressor(name: String): RegressorFixture =",
-  "    regressors.find(_.name == name).getOrElse(sys.error(s\"no R regressor fixture named '$name'\"))",
-  ""
+  "    regressors.find(_.name == name).getOrElse(sys.error(s\"no R regressor fixture named '$name'\"))"
 )
 
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)

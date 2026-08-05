@@ -2,7 +2,6 @@ package scalafim.spatial
 
 import gale.linalg.DMat as GaleDMat
 import scalafim.image.{DMat, NeuroSpace}
-import scalafim.linalg.DoubleMatrix
 
 class StagedPluginSuite extends munit.FunSuite:
 

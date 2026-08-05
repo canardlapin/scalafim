@@ -1,5 +1,6 @@
 package scalafim.fmri.design.baseline
 
+import scalafim.fmri.design.*
 import scalafim.fmri.design.basis.ParametricBasis
 import scalafim.fmri.design.linalg.QrDecomposition
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -290,7 +291,6 @@ object BaselineTerm:
         val blockLen = blockMat.rows
         val colsThis = blockMat.cols
 
-        val rowIdx = (rowOffset until (rowOffset + blockLen)).toVector
         val colIdx = (colOffset until (colOffset + colsThis)).toVector
         colInd += colIdx
 
@@ -358,6 +358,7 @@ object BaselineTerm:
   def nuisance(
       nuisanceList: Seq[Mat],
       samplingFrame: SamplingFrame,
+      names: Option[Seq[Seq[String]]] = None,
       prefix: String = "nuis"
   ): BaselineTerm =
     val bl = samplingFrame.blockLens
@@ -366,6 +367,12 @@ object BaselineTerm:
     require(nuisanceList.length == nb, "nuisanceList length must match samplingFrame.nBlocks")
     nuisanceList.zipWithIndex.foreach { case (m, b) =>
       require(m.rows == bl(b), s"nuisance matrix row mismatch for block $b")
+    }
+    names.foreach { byBlock =>
+      require(byBlock.length == nuisanceList.length, "nuisance names must match nuisance runs")
+      byBlock.zip(nuisanceList).zipWithIndex.foreach { case ((columns, matrix), block) =>
+        require(columns.length == matrix.cols, s"nuisance names must match columns for block $block")
+      }
     }
 
     val totalRows = bl.sum
@@ -393,11 +400,15 @@ object BaselineTerm:
         System.arraycopy(m.data, r * cols, out, dstBase, cols)
         r += 1
 
-      val blk = f"${b + 1}%02d"
-      var j = 0
-      while j < cols do
-        colNames += s"${prefix}#${blk}_${j + 1}"
-        j += 1
+      names match
+        case Some(byBlock) =>
+          colNames ++= byBlock(b)
+        case None =>
+          val blk = f"${b + 1}%02d"
+          var j = 0
+          while j < cols do
+            colNames += s"${prefix}#${blk}_${j + 1}"
+            j += 1
 
       rowOffset += len
       colOffset += cols
@@ -442,9 +453,25 @@ final case class BaselineModel(
     columnNames: Vector[String],
     termSpans: Vector[(Int, Int)],
     colIndices: Map[String, Vector[Int]],
-    nuisanceReport: Option[NuisanceReport] = None
+    nuisanceReport: Option[NuisanceReport] = None,
+    compiledSchema: Option[DesignSchema] = None
 ):
   def termKeys: Vector[String] = terms.map(_._1)
+
+  def designSchema: DesignSchema =
+    compiledSchema.getOrElse(
+      DesignSchema.legacy(
+        matrix = designMatrix,
+        samplingFrame = samplingFrame,
+        columnNames = columnNames,
+        source = ModelSource.Baseline
+      )
+    )
+
+  def designSchemaValidation: Either[DesignError, Unit] =
+    compiledSchema match
+      case Some(schema) => schema.validate
+      case None         => Right(())
 
   def designMatrixFor(blockId: Option[Int] = None, allRows: Boolean = false): Mat =
     val mats = terms.map { case (_, t) => t.designMatrix(blockId = blockId, allRows = allRows) }
@@ -529,16 +556,16 @@ object BaselineModel:
       baselineTerms += drift
       blockTerm.foreach(baselineTerms += _)
 
-      val checkedNuisanceEither: Either[BaselineError, Option[(Vector[Mat], Option[NuisanceReport])]] =
+      val checkedNuisanceEither: Either[BaselineError, Option[(Vector[Mat], Vector[Vector[String]], Option[NuisanceReport])]] =
         nuisanceList match
           case None => Right(None)
           case Some(ns) =>
             val prepared = prepareNuisance(ns, samplingFrame, nuisanceNames, naAction)
-            if nuisanceCheck == NuisanceCheck.None then Right(Some((prepared.matrices, _root_.scala.None)))
+            if nuisanceCheck == NuisanceCheck.None then
+              Right(Some((prepared.matrices, prepared.names, _root_.scala.None)))
             else
               val report = checkPreparedNuisance(
                 prepared,
-                samplingFrame,
                 baselineTerms.result(),
                 nuisanceTol,
                 duplicateThreshold
@@ -548,18 +575,18 @@ object BaselineModel:
                   case NuisanceCheck.Error =>
                     Left(BaselineError.NuisanceProblems(report))
                   case NuisanceCheck.Drop =>
-                    Right(Some((dropNuisanceColumns(report), Some(report))))
+                    Right(Some((dropNuisanceColumns(report), report.retainedByBlock, Some(report))))
                   case NuisanceCheck.Warn =>
-                    Right(Some((prepared.matrices, Some(report))))
+                    Right(Some((prepared.matrices, prepared.names, Some(report))))
                   case NuisanceCheck.None =>
-                    Right(Some((prepared.matrices, _root_.scala.None)))
-              else Right(Some((prepared.matrices, Some(report))))
+                    Right(Some((prepared.matrices, prepared.names, _root_.scala.None)))
+              else Right(Some((prepared.matrices, prepared.names, Some(report))))
 
       checkedNuisanceEither.map { checkedNuisance =>
-        val nuisTerm = checkedNuisance.map { case (mats, _) =>
-          BaselineTerm.nuisance(mats, samplingFrame)
+        val nuisTerm = checkedNuisance.map { case (mats, names, _) =>
+          BaselineTerm.nuisance(mats, samplingFrame, Some(names))
         }
-        val nuisanceReport = checkedNuisance.flatMap(_._2)
+        val nuisanceReport = checkedNuisance.flatMap(_._3)
 
         val terms = Vector.newBuilder[(String, BaselineTerm)]
         terms += ("drift" -> drift)
@@ -595,19 +622,89 @@ object BaselineModel:
           colOffset += cols
           i += 1
 
+        val matrix = Mat.unsafe(totalRows, totalCols, out)
+        val compiledSchema =
+          DesignSchema.validated(
+            matrix = matrix,
+            rows = RowLayout.fromSamplingFrame(samplingFrame),
+            columns = structuralColumns(ts, driftSpec),
+            audit = DesignAudit(
+              policyReceipts = Vector(
+                PolicyReceipt("baseline", s"basis=${driftSpec.basis};degree=${driftSpec.degree};intercept=${driftSpec.intercept}")
+              )
+            )
+          ).fold(error => throw new IllegalArgumentException(error.message), identity)
+
         BaselineModel(
           terms = ts,
           driftSpec = driftSpec,
           samplingFrame = samplingFrame,
-          designMatrix = Mat.unsafe(totalRows, totalCols, out),
+          designMatrix = matrix,
           columnNames = colNames.result(),
           termSpans = spans.result(),
           colIndices = indices.toMap,
-          nuisanceReport = nuisanceReport
+          nuisanceReport = nuisanceReport,
+          compiledSchema = Some(compiledSchema)
         )
       }
     catch
       case NonFatal(t) => Left(BaselineError.fromThrowable(t))
+
+  private def structuralColumns(
+      terms: Vector[(String, BaselineTerm)],
+      driftSpec: BaselineSpec
+  ): Vector[StructuralColumn] =
+    val out = Vector.newBuilder[StructuralColumn]
+    var ordinal = 1
+    terms.foreach { case (key, term) =>
+      var local = 0
+      while local < term.data.cols do
+        val memberships = term.colInd.zipWithIndex.flatMap { case (cols, block0) =>
+          val pos = cols.indexOf(local)
+          if pos < 0 then None else Some((block0, pos))
+        }
+        val runScope =
+          if memberships.length == 1 then RunScope.Run(RunIndex.unsafeOneBased(memberships.head._1 + 1))
+          else RunScope.Global
+        val component =
+          memberships.headOption.map { case (_, pos) =>
+            BasisElementRef(
+              basisId =
+                if key == "drift" then driftSpec.basis.toString.toLowerCase
+                else if key == "block" then "constant"
+                else key,
+              index = BasisIndex.unsafeOneBased(pos + 1),
+              role = Some(scalafim.fmri.hrf.BasisRole.Generic(pos + 1))
+            )
+          }
+        val origin =
+          key match
+            case "drift" =>
+              StructuralColumnOrigin.Drift(TermId.unsafe(key), component, runScope)
+            case "block" =>
+              StructuralColumnOrigin.Intercept(runScope)
+            case "nuisance" =>
+              StructuralColumnOrigin.Nuisance(
+                term = TermId.unsafe(key),
+                regressor = ModulatorId.unsafe(term.columnNames(local)),
+                runScope = runScope
+              )
+            case _ =>
+              StructuralColumnOrigin.Baseline(
+                term = TermId.unsafe(key),
+                role = ColumnRole.Baseline,
+                component = component,
+                runScope = runScope
+              )
+        val label = term.columnNames(local)
+        out += StructuralColumn.fromOrigin(ordinal, origin, label, label).fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
+        ordinal += 1
+        local += 1
+    }
+    out.result()
 
   def checkNuisance(plan: BaselinePlan): NuisanceReport =
     unsafe(checkNuisanceEither(plan))
@@ -674,7 +771,7 @@ object BaselineModel:
       val baselineTerms = Vector(drift) ++ blockTerm.toVector
       val prepared = prepareNuisance(nuisanceList, samplingFrame, nuisanceNames, naAction)
 
-      Right(checkPreparedNuisance(prepared, samplingFrame, baselineTerms, tol, duplicateThreshold))
+      Right(checkPreparedNuisance(prepared, baselineTerms, tol, duplicateThreshold))
     catch
       case NonFatal(t) => Left(BaselineError.fromThrowable(t))
 
@@ -744,9 +841,6 @@ object BaselineModel:
       CleanedNuisance(dropNuisanceColumns(report), report)
     }
 
-  private def requireNuisance(plan: BaselinePlan): NuisanceInput =
-    unsafe(requireNuisanceEither(plan))
-
   private def requireNuisanceEither(plan: BaselinePlan): Either[BaselineError, NuisanceInput] =
     plan.nuisance.toRight(BaselineError.MissingNuisance)
 
@@ -780,7 +874,6 @@ object BaselineModel:
 
   private def checkPreparedNuisance(
       nuisance: PreparedNuisance,
-      samplingFrame: SamplingFrame,
       baselineTerms: Vector[BaselineTerm],
       tol: Double,
       duplicateThreshold: Double

@@ -377,17 +377,12 @@ object Regressor:
       e += 1
     Mat.unsafe(grid.length, nb, out)
 
-  /** The neural drive as a discrete measure: mass per microtime bin.
+  /** The neural drive projected onto the microtime grid's linear hat basis.
     *
-    * Treating the drive as a measure rather than a sampled signal is what makes
-    * the impulse and box cases one computation. An impulse deposits its whole
-    * amplitude in a single bin; a unit-height box of duration `d` deposits
-    * `amp * dt` per bin, so its total mass is `amp * d` and the subsequent
-    * convolution approximates `∫ x(t-τ) h(τ) dτ` rather than a bin count.
-    *
-    * The previous version deposited `amp` in every box bin, which made the
-    * result scale with `d / dt` — the epoch amplitude then depended on the
-    * `precision` argument.
+    * Point events split their unit mass between the two surrounding bins.
+    * Blocks are differences of running hat integrals at their exact start and
+    * end positions. This preserves `amp * duration` for every sub-bin
+    * alignment and gives trapezoid quadrature for grid-aligned edges.
     */
   private def buildDriveMeasure(
       onsets: Vector[Seconds],
@@ -399,26 +394,30 @@ object Regressor:
       dt: Double
   ): Array[Double] =
     val nBins = math.floor((t1 - t0) / dt).toInt + 1
-    val diff = Array.fill(nBins + 1)(0.0)
+    val diff = Array.fill(nBins + 2)(0.0)
+    val maxPosition = (nBins - 1).toDouble
     var i = 0
     while i < onsets.length do
-      val on = onsets(i).value
-      val dur = durations(i).value
+      var startPosition = (onsets(i).value - t0) / dt
+      val duration = durations(i).value
       val amp = amplitudes(i)
-      val a =
-        if on <= t0 then 0
-        else math.floor((on - t0) / dt).toInt
-      if a < nBins then
-        var b = math.floor((on + dur - t0) / dt).toInt
-        if b >= nBins then b = nBins - 1
-        if a <= b then
-          // Mass deposited in each covered bin.
-          val perBin =
-            if dur <= 0.0 || a == b then amp
-            else if summate then amp * dt // unit-height box: total mass amp*dur
-            else amp * dt / dur // unit-mass box: total mass amp
-          diff(a) += perBin
-          diff(b + 1) -= perBin
+      if startPosition <= maxPosition then
+        if duration <= 0.0 then
+          if startPosition < 0.0 then startPosition = 0.0
+          val lower = math.floor(startPosition).toInt
+          val fraction = startPosition - lower
+          val lowerWeight = amp * (1.0 - fraction)
+          val upperWeight = amp * fraction
+          diff(lower) += lowerWeight
+          diff(lower + 1) -= lowerWeight
+          diff(lower + 1) += upperWeight
+          diff(lower + 2) -= upperWeight
+        else
+          val endPosition = (onsets(i).value + duration - t0) / dt
+          if endPosition > 0.0 then
+            val scale = amp * (if summate then 1.0 else 1.0 / duration)
+            addHatStep(diff, endPosition, scale, dt, nBins)
+            addHatStep(diff, startPosition, -scale, dt, nBins)
       i += 1
     val out = new Array[Double](nBins)
     var acc = 0.0
@@ -428,6 +427,29 @@ object Regressor:
       out(i) = acc
       i += 1
     out
+
+  /** Add `coefficient` times the running integral of one linear hat basis. */
+  private def addHatStep(
+      diff: Array[Double],
+      position0: Double,
+      coefficient: Double,
+      dt: Double,
+      nBins: Int
+  ): Unit =
+    if position0 > 0.0 then
+      val position = math.min(position0, (nBins - 1).toDouble)
+      val lower = math.floor(position).toInt
+      val fraction = position - lower
+      val scaled = coefficient * dt
+      if lower > 0 then
+        diff(0) += scaled
+        diff(lower) -= scaled
+      val lowerWeight = scaled * (0.5 + fraction - 0.5 * fraction * fraction)
+      val upperWeight = scaled * 0.5 * fraction * fraction
+      diff(lower) += lowerWeight
+      diff(lower + 1) -= lowerWeight
+      diff(lower + 1) += upperWeight
+      diff(lower + 2) -= upperWeight
 
   /** The kernel sampled on the microtime grid, **column-major**: `out(b)(i)`.
     *

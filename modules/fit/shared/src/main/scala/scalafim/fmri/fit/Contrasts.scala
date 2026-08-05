@@ -1,9 +1,13 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.design.contrast.{ContrastRegistry, ContrastWeights}
+import scalafim.fmri.design.CoefficientAxis
 import scalafim.fmri.model.FmriModel
 import gale.linalg.{Cholesky, CholeskyOptions, DMat, DVec, Matrix, Vec}
 
+/** Compatibility-only rendered-name contrast.  New code should compile a
+  * [[StructuralTContrast]] against a [[scalafim.fmri.design.DesignSchema]] so
+  * structural column identity and estimability evidence are retained. */
 final case class TContrast(name: String, weights: Map[String, Double]):
   require(name.nonEmpty, "contrast name must be non-empty")
   require(weights.nonEmpty, "contrast weights must be non-empty")
@@ -16,7 +20,7 @@ final case class TContrast(name: String, weights: Map[String, Double]):
     for
       weights <- weightVector(result.columnNames)
       _ <- result.inferenceScope.validateTContrast(name, weights, result.columnNames)
-      evaluated <- evaluateEstimable(result, weights)
+      evaluated <- evaluateEstimable(result, weights, None)
     yield evaluated
 
   /** Align this named contrast to an explicit design axis. The resulting value
@@ -32,9 +36,25 @@ final case class TContrast(name: String, weights: Map[String, Double]):
         col += 1
       AlignedTContrast.unsafe(name, columnNames, row.result())
 
+  private[fit] def evaluateAligned(
+      result: InferenceReadyDenseFit,
+      aligned: AlignedTContrast,
+      metadata: Option[HypothesisMetadata]
+  ): Either[FitError, TContrastResult] =
+    val values = new Array[Double](aligned.weights.cols)
+    var index = 0
+    while index < aligned.weights.cols do
+      values(index) = aligned.weights(0, index)
+      index += 1
+    for
+      _ <- result.inferenceScope.validateTContrast(aligned.name, values, aligned.columnNames)
+      evaluated <- evaluateEstimable(result, values, metadata)
+    yield evaluated
+
   private def evaluateEstimable(
       result: InferenceReadyDenseFit,
-      weights: Array[Double]
+      weights: Array[Double],
+      metadata: Option[HypothesisMetadata]
   ): Either[FitError, TContrastResult] =
     val estimates = Vec.newBuilder(result.voxels)
     val standardErrors = Vec.newBuilder(result.voxels)
@@ -75,7 +95,8 @@ final case class TContrast(name: String, weights: Map[String, Double]):
           standardErrors = standardErrors.result(),
           statistics = statistics.result(),
           residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-          voxelIndices = result.voxelIndices
+          voxelIndices = result.voxelIndices,
+          hypothesis = metadata
         ))
       case error => Left(error)
 
@@ -106,6 +127,13 @@ final case class TContrast(name: String, weights: Map[String, Double]):
     out
 
 object TContrast:
+  private[fit] def evaluateAligned(
+      result: InferenceReadyDenseFit,
+      aligned: AlignedTContrast,
+      metadata: Option[HypothesisMetadata]
+  ): Either[FitError, TContrastResult] =
+    TContrast(aligned.name, Map(aligned.name -> 1.0)).evaluateAligned(result, aligned, metadata)
+
   def column(columnName: String): TContrast =
     TContrast(columnName, Map(columnName -> 1.0))
 
@@ -131,17 +159,27 @@ object TContrast:
 final case class AlignedTContrast private (
     name: String,
     columnNames: Vector[String],
-    weights: DMat
+    weights: DMat,
+    coefficientAxis: Option[CoefficientAxis]
 ):
   require(name.nonEmpty, "aligned contrast name must be non-empty")
   require(columnNames.nonEmpty, "aligned contrast must have design columns")
-  require(columnNames.distinct.length == columnNames.length, "aligned contrast columns must be unique")
+  require(
+    coefficientAxis.nonEmpty || columnNames.distinct.length == columnNames.length,
+    "rendered-name aligned contrast columns must be unique"
+  )
   require(weights.rows == 1, "aligned T contrast must contain exactly one row")
   require(weights.cols == columnNames.length, "aligned contrast weights must match design columns")
+  require(coefficientAxis.forall(_.predictors == columnNames.length), "aligned contrast axis must match design columns")
 
 object AlignedTContrast:
-  private[fit] def unsafe(name: String, columnNames: Vector[String], weights: DMat): AlignedTContrast =
-    new AlignedTContrast(name, columnNames, weights)
+  private[fit] def unsafe(
+      name: String,
+      columnNames: Vector[String],
+      weights: DMat,
+      coefficientAxis: Option[CoefficientAxis] = None
+  ): AlignedTContrast =
+    new AlignedTContrast(name, columnNames, weights, coefficientAxis)
 
 final case class TContrastResult(
     name: String,
@@ -149,13 +187,17 @@ final case class TContrastResult(
     standardErrors: DVec,
     statistics: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    voxelIndices: Vector[Int]
+    voxelIndices: Vector[Int],
+    hypothesis: Option[HypothesisMetadata] = None
 ):
   require(estimates.length == voxelIndices.length, "contrast estimates must match voxel indices")
   require(standardErrors.length == voxelIndices.length, "contrast standard errors must match voxel indices")
   require(statistics.length == voxelIndices.length, "contrast statistics must match voxel indices")
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
 
+/** Compatibility-only rendered-name F contrast.  New hypotheses should use
+  * [[StructuralFContrast]] and compile it against a [[scalafim.fmri.design.DesignSchema]].
+  */
 final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   require(name.nonEmpty, "contrast name must be non-empty")
   require(weights.nonEmpty, "F contrast must contain at least one row")
@@ -168,8 +210,15 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
     result.inferenceReady.flatMap(evaluate)
 
   def evaluate(result: InferenceReadyDenseFit): Either[FitError, FContrastResult] =
+    align(result.columnNames).flatMap(aligned => evaluateAligned(result, aligned, None))
+
+  private[fit] def evaluateAligned(
+      result: InferenceReadyDenseFit,
+      aligned: AlignedFContrast,
+      metadata: Option[HypothesisMetadata]
+  ): Either[FitError, FContrastResult] =
+    val w = aligned.weights
     for
-      w <- weightMatrix(result.columnNames)
       _ <- result.inferenceScope.validateFContrast(name, w, result.columnNames)
       evaluated <- result.coefficientCovariance.scope match
         case CoefficientCovarianceScope.Shared =>
@@ -179,16 +228,18 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
               .cholesky(CholeskyOptions(choleskyTolerance(covariance)))
               .left
               .map(error => FitError.NonEstimableContrast(name, error.getMessage))
-            evaluated <- evaluateEstimable(result, w, factor)
+            evaluated <- evaluateEstimable(result, w, factor, aligned.rank, metadata)
           yield evaluated
         case CoefficientCovarianceScope.Voxelwise =>
-          evaluateEstimableVoxelwise(result, w)
+          evaluateEstimableVoxelwise(result, w, aligned.rank, metadata)
     yield evaluated
 
   private def evaluateEstimable(
       result: InferenceReadyDenseFit,
       weights: DMat,
-      factor: Cholesky
+      factor: Cholesky,
+      numeratorRank: Int,
+      metadata: Option[HypothesisMetadata]
   ): Either[FitError, FContrastResult] =
     val estimates = contrastEstimates(weights, result.coefficients.value)
     factor
@@ -224,9 +275,10 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
                 name = name,
                 estimates = estimates,
                 statistics = statistics.result(),
-                numeratorDegreesOfFreedom = q,
+                numeratorDegreesOfFreedom = numeratorRank,
                 residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-                voxelIndices = result.voxelIndices
+                voxelIndices = result.voxelIndices,
+                hypothesis = metadata
               )
             )
           case error =>
@@ -235,7 +287,9 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
 
   private def evaluateEstimableVoxelwise(
       result: InferenceReadyDenseFit,
-      weights: DMat
+      weights: DMat,
+      numeratorRank: Int,
+      metadata: Option[HypothesisMetadata]
   ): Either[FitError, FContrastResult] =
     val estimates = contrastEstimates(weights, result.coefficients.value)
     val statistics = Vec.newBuilder(result.voxels)
@@ -286,9 +340,10 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
             name = name,
             estimates = estimates,
             statistics = statistics.result(),
-            numeratorDegreesOfFreedom = q,
+            numeratorDegreesOfFreedom = numeratorRank,
             residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-            voxelIndices = result.voxelIndices
+            voxelIndices = result.voxelIndices,
+            hypothesis = metadata
           )
         )
       case error =>
@@ -375,6 +430,13 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
     diagonalMax * 1e-12
 
 object FContrast:
+  private[fit] def evaluateAligned(
+      result: InferenceReadyDenseFit,
+      aligned: AlignedFContrast,
+      metadata: Option[HypothesisMetadata]
+  ): Either[FitError, FContrastResult] =
+    FContrast(aligned.name, Vector(Map(aligned.name -> 1.0))).evaluateAligned(result, aligned, metadata)
+
   def fromContrastWeights(name: String, weights: ContrastWeights): FContrast =
     val rows = Vector.newBuilder[Map[String, Double]]
     var col = 0
@@ -392,17 +454,29 @@ object FContrast:
 final case class AlignedFContrast private (
     name: String,
     columnNames: Vector[String],
-    weights: DMat
+    weights: DMat,
+    coefficientAxis: Option[CoefficientAxis],
+    testRank: Int
 ):
   require(name.nonEmpty, "aligned F contrast name must be non-empty")
   require(columnNames.length == weights.rows, "aligned F contrast columns must match weight rows")
   require(weights.cols > 0, "aligned F contrast must contain at least one row")
+  require(testRank > 0 && testRank <= weights.cols, "aligned F contrast test rank must be positive and no greater than supplied columns")
 
-  def rank: Int = weights.cols
+  def rank: Int = testRank
 
 object AlignedFContrast:
   private[fit] def unsafe(name: String, columnNames: Vector[String], weights: DMat): AlignedFContrast =
-    new AlignedFContrast(name, columnNames, weights)
+    new AlignedFContrast(name, columnNames, weights, None, weights.cols)
+
+  private[fit] def unsafe(
+      name: String,
+      columnNames: Vector[String],
+      weights: DMat,
+      coefficientAxis: Option[CoefficientAxis] = None,
+      testRank: Int
+  ): AlignedFContrast =
+    new AlignedFContrast(name, columnNames, weights, coefficientAxis, testRank)
 
 final case class FContrastResult(
     name: String,
@@ -410,9 +484,10 @@ final case class FContrastResult(
     statistics: DVec,
     numeratorDegreesOfFreedom: Int,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    voxelIndices: Vector[Int]
+    voxelIndices: Vector[Int],
+    hypothesis: Option[HypothesisMetadata] = None
 ):
-  require(estimates.rows == numeratorDegreesOfFreedom, "F contrast estimates must match numerator df")
+  require(estimates.rows >= numeratorDegreesOfFreedom, "F contrast estimates must contain at least the effective numerator df")
   require(estimates.cols == voxelIndices.length, "F contrast estimates must match voxel indices")
   require(statistics.length == voxelIndices.length, "F statistics must match voxel indices")
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)

@@ -187,14 +187,58 @@
       ]
     }
   },
+  "receipt": {
+    "accepted_differences": [],
+    "comparison_policy": {
+      "alignment": "identity_only_no_post_hoc_lag_shift",
+      "correlation_role": "diagnostic_only_requires_error_and_norm_bounds",
+      "disagreement_triage": "truth_boundary_local",
+      "tolerance_scope": "comparison_local_no_global_override"
+    },
+    "conventions": {
+      "dtype": "float64",
+      "json_encoding": "sorted-key UTF-8 JSON",
+      "matrix_orientation": "rows=timepoints, columns=regressors or responses",
+      "nilearn_glm": "run_glm(noise_model=ols)",
+      "p_values": "two-sided t and Nilearn F contrast probabilities"
+    },
+    "environment": {
+      "generator_sha256": "597bcf0350f1a1a8654b7601bf93e74463f3eea60eb674481ce9896f599f712c",
+      "locale": "C",
+      "lock_path": "tools/r-parity/reference-lock.json",
+      "lock_sha256": "8fcccdb83ab6ad29da592218dcf9816534c7df896a058bad218f3e28f86f5548",
+      "runtime": "Python 3.11"
+    },
+    "hashes": {
+      "generated_scala_sha256": "5ec09a73a805b615d3395b2003802b2fee086fc32b1d223dbe3e5d483025c705",
+      "inputs_sha256": "1e33319760787516e03cb253ddcda18f2edd287c7d1c8bb63e176be1cb8747c6",
+      "outputs_sha256": "d491a2a828c0d8407b3bb05055aa059a158c3a19c6cce467cec6e70c949e382a"
+    },
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --python-only",
+    "schema_version": "scalafim-external-fixture/v1",
+    "source": {
+      "fmrimod_fitlins_parity_sha256": "92efa46186141fd491304075b07f8a72958fdb149dc8c732ef7e1bd3d3601677",
+      "fmrimod_revision": "f3dd9dbfbd8d3aa196f17477579a073840b007ef",
+      "nilearn_version": "0.12.1",
+      "numpy_version": "1.26.4",
+      "reference_revision": "f3dd9dbfbd8d3aa196f17477579a073840b007ef",
+      "scipy_version": "1.13.1"
+    }
+  },
   "scenario_id": "fit.public-f-contrast.v1",
   "schema_version": "scalafim-external-fixture/v1",
   "source": {
     "fmrimod_fitlins_parity": "cross_testing/fitlins_parity.py",
+    "fmrimod_fitlins_parity_sha256": "92efa46186141fd491304075b07f8a72958fdb149dc8c732ef7e1bd3d3601677",
+    "fmrimod_revision": "f3dd9dbfbd8d3aa196f17477579a073840b007ef",
     "fmrimod_root": "provided by --fmrimod-root",
     "nilearn_version": "0.12.1",
     "numpy_version": "1.26.4",
     "producer": "tools/scenarios/export_fit_public_f_contrast_fixture.py",
-    "reference": "Algorithm mirrored from fmrimod cross_testing.fitlins_parity.fit_fitlins_reference_ols plus nilearn run_glm/compute_contrast"
-  }
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --python-only",
+    "reference": "Algorithm mirrored from fmrimod cross_testing.fitlins_parity.fit_fitlins_reference_ols plus nilearn run_glm/compute_contrast",
+    "reference_revision": "f3dd9dbfbd8d3aa196f17477579a073840b007ef",
+    "scipy_version": "1.13.1"
+  },
+  "truth_boundary": "fit_inference"
 }

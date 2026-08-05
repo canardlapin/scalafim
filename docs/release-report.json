@@ -1,0 +1,128 @@
+{
+  "blocking_caveats": [
+    {
+      "detail": "the source checkout contains tracked or untracked changes",
+      "kind": "dirty_worktree"
+    },
+    {
+      "detail": "the selected benchmark receipt is not release eligible",
+      "kind": "benchmark_receipt"
+    },
+    {
+      "detail": "external evidence branch_protection has not been supplied",
+      "kind": "external_evidence"
+    },
+    {
+      "detail": "external evidence remote_first_level_ci has not been supplied",
+      "kind": "external_evidence"
+    },
+    {
+      "detail": "external evidence reference_regeneration has not been supplied",
+      "kind": "external_evidence"
+    }
+  ],
+  "evidence": {
+    "benchmark_receipt": {
+      "path": "docs/benchmarks/receipts/first-level-current.json",
+      "schema_version": "scalafim-first-level-benchmark-receipt/v1",
+      "sha256": "ad155bf48a2ae13a62ec51bce012e09d165470cdfee945d362df6b216f312dd6",
+      "status": "pass"
+    },
+    "commit": "https://github.com/canardlapin/scalafim/commit/245531a3c3befaa71b885d281575c5136278f167",
+    "reference_lock": "tools/r-parity/reference-lock.json",
+    "scenario_manifest": "docs/scenarios/manifest.json"
+  },
+  "external_evidence": {
+    "branch_protection": {
+      "environment_variable": "SCALAFIM_RELEASE_BRANCH_PROTECTION_URL",
+      "status": "unverified",
+      "url": null
+    },
+    "reference_regeneration": {
+      "environment_variable": "SCALAFIM_RELEASE_RECEIPTS_URL",
+      "status": "unverified",
+      "url": null
+    },
+    "remote_first_level_ci": {
+      "environment_variable": "SCALAFIM_RELEASE_CI_URL",
+      "status": "unverified",
+      "url": null
+    }
+  },
+  "generated_at": "2026-08-04T23:02:59.887648+00:00",
+  "local_gates": {
+    "compile_all": {
+      "command": "sbt -Dsbt.boot.directory=/private/tmp/scalafim-p03-sbt/boot -Dsbt.global.base=/private/tmp/scalafim-p03-sbt/global -Dsbt.ivy.home=/private/tmp/scalafim-p03-sbt/ivy -Dsbt.supershell=false compileAll",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/compile_all.log",
+      "status": "pass"
+    },
+    "documentation": {
+      "command": "python -S tools/docs/check_first_level_docs.py --check",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/documentation.log",
+      "status": "pass"
+    },
+    "focused_first_level": {
+      "command": "bash tools/ci/first-level-gate.sh",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/focused_first_level.log",
+      "status": "pass"
+    },
+    "performance": {
+      "command": "python -S tools/benchmark/finalize_first_level_receipt.py --check docs/benchmarks/receipts/first-level-current.json",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/performance.log",
+      "status": "pass"
+    },
+    "scientific_coverage": {
+      "command": "bash tools/ci/first-level-coverage.sh",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/scientific_coverage.log",
+      "status": "pass"
+    },
+    "test_all": {
+      "command": "sbt -Djava.awt.headless=true -Dsbt.boot.directory=/private/tmp/scalafim-p03-sbt/boot -Dsbt.global.base=/private/tmp/scalafim-p03-sbt/global -Dsbt.ivy.home=/private/tmp/scalafim-p03-sbt/ivy -Dsbt.supershell=false testAll",
+      "exit_code": 0,
+      "log": "target/first-level-release-diagnostics/gates/test_all.log",
+      "status": "pass"
+    }
+  },
+  "release_eligible": false,
+  "schema_version": "scalafim-first-level-release-report/v1",
+  "source": {
+    "commit": "245531a3c3befaa71b885d281575c5136278f167",
+    "dirty": true,
+    "dirty_path_count": 262,
+    "files": {
+      ".github/workflows/first-level-performance.yml": "27eecab3e99b06209ec2011825ebd44491a91bc558ca78fc7385d42082f9f100",
+      ".github/workflows/first-level.yml": "b25f40ad8466a1101679458a9b53d700a2c7e9059f47ab9c957c37ffd9bfa6c1",
+      ".github/workflows/scenario-receipts.yml": "4bf5669bb3e30ca15b1156cde781a1c9b8af78e7c2f2e159039b5c2be168986c",
+      "build.sbt": "f72c3c432e09ac2a05b77a19076888208f2aaa0e6fa0e9356d6e757c83c8b259",
+      "docs/benchmarks/first-level.md": "fa366ff7b5e49b4155b90b236e583a45fe9f4253c408fad7ab3592fed5b8336d",
+      "docs/first-level-analysis.md": "554077e219678b68c825f04bdbdb28736be7db71c73fa2ad8af6d4c27d6908aa",
+      "docs/release-assurance.md": "14aa59baaaed134ae71c54e6bfc17f5d7cfd75b6720a45fd13f4b3956c5cd488",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala": "20c333d21fe58ca665f3ff73278c5db5ed93c911b745c56be0854a8002aecf71",
+      "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
+      "tools/benchmark/finalize_first_level_receipt.py": "573617f1d6cb28d8ef86fc6a966f3ae8b4c8f8b80a1d1151f622df91c18f7a66",
+      "tools/benchmark/first-level-budgets.json": "c13b5fde6be998e298376df3124b5a65cd3c095a274ac39487c7fb049459c0ae",
+      "tools/ci/finalize_first_level_release.py": "9ee71fb1d5385c2a4e70e022eae5e51f7386b9f285704fafbc3aa7ba713d85f4",
+      "tools/ci/first-level-benchmark.sh": "8ccaf3d6b1b8d1cf80aded5facf4447988a0b201765927a162b36cc4937e6d28",
+      "tools/ci/first-level-coverage.sh": "5b911b30f3c7af2a51bbb94c1cfa9a2c413d5f34c76f0c12510e943ef293d467",
+      "tools/ci/first-level-gate.sh": "4371425d066c7a4c1cbc245828bed55805fc232938352349e41df18a23817d33",
+      "tools/ci/first-level-release.sh": "a256d5f58840311e9b643e23d509517243a8723eb35eba37f7fe790ca2573e93",
+      "tools/docs/check_first_level_docs.py": "01e550285c1f9a44b725bcd9e971677a56ece66d29a2239c1fbf3c459b072193"
+    }
+  },
+  "status": "blocked",
+  "toolchain": {
+    "architecture": "arm64",
+    "java": "openjdk version \"22\" 2024-03-19",
+    "java_home": "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+    "node": "v24.1.0",
+    "os": "macOS-14.3-arm64-arm-64bit",
+    "python": "3.9.22",
+    "sbt": "1.11.7",
+    "scala": "3.7.4"
+  }
+}

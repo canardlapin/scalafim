@@ -6,8 +6,9 @@ The first engine is full-rank ordinary least squares over timepoints-by-voxels
 response blocks. It is cross-built for the JVM and Scala.js and uses the
 `scalafim-linalg` primitive array-backed matrix layer rather than Breeze.
 
-The low-level `Ols` kernel is matrix-only. `FitPlanExecutor` is the stable
-fMRI-aware public execution facade: it adapts `FitPlan` plus an in-memory
+The low-level `Ols` kernel is matrix-only. During `0.1-development`,
+`FitPlanExecutor` is the canonical fMRI-aware execution facade: it adapts
+`FitPlan` plus an in-memory
 timepoints-by-voxels dataset into typed coefficient and residual-variance
 results while preserving column names, voxel indices, and timepoint indices.
 Engine-specific behavior is routed through typed `FitInterpreter` instances, so
@@ -39,6 +40,21 @@ steps. Preparing a block returns a provenance-bearing `PreparedFitBlockInput`.
 The default plan is identity-preserving for current OLS/GLS/LSS behavior;
 non-default transforms that still need engine-specific implementation are
 retained as deferred provenance instead of disappearing into loose config flags.
+
+OLS volume weighting is executable rather than advisory. Fixed weights declare
+whether they align to the full acquisition series or the selected response rows;
+estimated weights use a typed DVARS estimator with an explicit transform and
+within-run or across-selection normalization scope. Both paths apply `sqrt(w)`
+to the design and response. Exact zero weights remove their rows before QR, so
+rank and residual degrees of freedom describe the fitted weighted system rather
+than counting observations with no influence. The result provenance records the
+weight source, normalization, input and retained timepoints, zero/excluded rows,
+partition scope, and the resolved weights. Chunked OLS resolves response-derived
+weights once from the complete selected response and reuses that immutable
+temporal geometry for every voxel chunk. Other fit engines reject volume
+weighting when the plan is built until they have an equally explicit execution
+contract; response-independent canonical geometry likewise cannot estimate
+DVARS without a response.
 
 Prepared LSS designs expose a response-independent `TrialReadout`: a checked
 Gale linear operator from timepoints to a named `TrialCoefficientAxis`. The

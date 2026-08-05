@@ -1,7 +1,6 @@
 package scalafim.fmri.fit
 
 import gale.linalg.DMat
-
 final case class DesignMatrix private (value: DMat):
   def timepoints: Int = value.rows
   def predictors: Int = value.cols

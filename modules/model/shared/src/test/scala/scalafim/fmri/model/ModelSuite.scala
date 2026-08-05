@@ -53,6 +53,56 @@ class ModelSuite extends munit.FunSuite:
     assertEquals(model.designBlock.columnNames, Vector("task", "base_constant"))
   }
 
+  test("model and fit plan retain the canonical structural coefficient axis") {
+    val model = FmriModel(eventModel, baselineModel, dataset)
+    val plan = FitPlan(model)
+
+    assert(model.designSchema.nonEmpty)
+    assertEquals(model.designSchema.map(_.columns.length), Some(model.nPredictors))
+    assertEquals(model.designBlock.columnIds, model.designSchema.toVector.flatMap(_.columns).map(_.id))
+    assertEquals(model.designBlock.structuralColumns.length, model.nPredictors)
+    assertEquals(plan.designFingerprint, model.designFingerprint)
+    assertEquals(plan.structuralColumns.map(_.id), model.designBlock.columnIds)
+    val origins = model.designSchema.toVector.flatMap(_.columns.map(_.origin))
+    assert(origins.exists {
+      case scalafim.fmri.design.StructuralColumnOrigin.Event(_, _, _, _, _, _, _) => true
+      case scalafim.fmri.design.StructuralColumnOrigin.Legacy(scalafim.fmri.design.ModelSource.Event, _, _) => true
+      case _ => false
+    })
+    assert(origins.exists {
+      case scalafim.fmri.design.StructuralColumnOrigin.Baseline(_, _, _, _) => true
+      case scalafim.fmri.design.StructuralColumnOrigin.Intercept(_) => true
+      case scalafim.fmri.design.StructuralColumnOrigin.Drift(_, _, _) => true
+      case _ => false
+    })
+  }
+
+  test("compatibility label changes do not change structural identity") {
+    val canonical = eventModel.copy(compiledSchema = Some(eventModel.designSchema))
+    val renamed = canonical.copy(columnNames = Vector("renamed-task"))
+    val original = FmriModel(canonical, baselineModel, dataset)
+    val model = FmriModel(renamed, baselineModel, dataset)
+
+    assertEquals(model.columnNames.head, "renamed-task")
+    assertEquals(model.designBlock.columnIds, original.designBlock.columnIds)
+    assertEquals(model.designFingerprint, original.designFingerprint)
+    assertEquals(model.designBlock.structuralColumns.map(_.renderedLabel).head, "renamed-task")
+  }
+
+  test("FmriModel.make reports design row mismatch before fitting") {
+    val shortEvent = eventModel.copy(
+      samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
+      designMatrix = Mat.fromRows(Vector(Vector(1.0), Vector(0.0)))
+    )
+
+    val result = FmriModel.make(shortEvent, baselineModel, dataset)
+    assert(result.left.toOption.exists {
+      case ModelError.DesignRowMismatch(source, expected, actual) =>
+        source == "event" && expected == 3 && actual == 2
+      case _ => false
+    })
+  }
+
   test("FitConfig validates algebraic options") {
     intercept[IllegalArgumentException] {
       ArOptions(structure = ArStructure.Ar(0))
@@ -90,12 +140,25 @@ class ModelSuite extends munit.FunSuite:
     assertEquals(plan.summary.predictors, 2)
     assertEquals(plan.summary.voxels, 4)
     assert(plan.summary.autocorrelated)
+    assertEquals(plan.coefficientScope, CoefficientScope.SharedAcrossRuns)
+    assertEquals(plan.summary.coefficientScope, CoefficientScope.SharedAcrossRuns)
   }
 
   test("FitPlan can describe a LeastSquaresSeparate engine") {
     val plan = FitPlan(FmriModel(eventModel, baselineModel, dataset), FitEngine.LeastSquaresSeparate)
     assertEquals(plan.summary.engine, FitEngine.LeastSquaresSeparate)
     assertEquals(plan.summary.predictors, 2)
+    assertEquals(plan.coefficientScope, CoefficientScope.SharedAcrossRuns)
+  }
+
+  test("FitPlan exposes separate-runs-then-fixed-effects as an executable scope") {
+    val model = FmriModel(eventModel, baselineModel, dataset)
+    val plan = FitPlan(model, FitStrategy.SeparateRunsThenFixedEffects())
+    assertEquals(plan.engine, FitEngine.FixedEffects)
+    assertEquals(plan.coefficientScope, CoefficientScope.SeparateRunsThenFixedEffects)
+    assert(plan.coefficientScope.executable)
+    assertEquals(plan.summary.coefficientScope, CoefficientScope.SeparateRunsThenFixedEffects)
+    assertEquals(FitStrategy.fromLegacy(FitEngine.FixedEffects).map(_.coefficientScope), Right(CoefficientScope.SeparateRunsThenFixedEffects))
   }
 
   test("FitPlan validates strategy-dependent dimensions at construction") {
@@ -116,6 +179,32 @@ class ModelSuite extends munit.FunSuite:
 
     val ar = AutocorrelationConfig.unsafe(order = 1, censoredTimepoints = Vector(3))
     assert(FitPlan.make(model, FitStrategy.GeneralizedLeastSquares(ar)).isLeft)
+  }
+
+  test("volume weighting has typed estimator parameters and fails unsupported engines during planning") {
+    val model = FmriModel(eventModel, baselineModel, dataset)
+    assert(VolumeWeightThreshold(0.0).isLeft)
+    assert(SoftThresholdSteepness(Double.NaN).isLeft)
+
+    val estimator = DvarsWeightEstimator(
+      function = DvarsWeightFunction.SoftThreshold(
+        VolumeWeightThreshold.unsafe(1.75),
+        SoftThresholdSteepness.unsafe(3.0)
+      ),
+      scope = DvarsWeightScope.WithinRun
+    )
+    val controls = FitControls(
+      volumeWeighting = ModelVolumeWeighting.Estimated(estimator)
+    )
+    val ols = FitPlan.make(model, FitStrategy.OrdinaryLeastSquares(controls))
+    val runwise = FitPlan.make(model, FitStrategy.RunwiseLeastSquares(controls))
+
+    assertEquals(ols.map(_.config.volumeWeighting), Right(VolumeWeighting.Estimated(estimator)))
+    assert(runwise.left.toOption.exists {
+      case ModelError.InvalidFitConfig(FitEngine.RunwiseLeastSquares, detail) =>
+        detail.contains("only for ordinary least squares")
+      case _ => false
+    })
   }
 
   test("Low-rank strategies validate component requests before execution") {

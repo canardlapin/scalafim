@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel

@@ -5,12 +5,12 @@ import scalafim.fmri.hrf.design.{Design, SamplingFrame}
 import scalafim.fmri.hrf.HrfCombinators.*
 import scalafim.fmri.hrf.regressor.{NeuralInput, Regressor, RegressorSet}
 import scalafim.fmri.hrf.linalg.Mat
-import scala.annotation.targetName
-
 object r:
 
   // ---- HRF constructors / objects ----
-  def hrf_gamma(t: Double = 0.0, shape: Double = 6.0, rate: Double = 1.0): Hrf = Hrfs.gamma(shape, rate)
+  def hrf_gamma(t: Double = 0.0, shape: Double = 6.0, rate: Double = 1.0): Hrf =
+    val _ = t // Retained for source compatibility with fmrihrf's constructor surface.
+    Hrfs.gamma(shape, rate)
   def hrf_gaussian(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.gaussian(mean, sd)
   def hrf_spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Hrf = Hrfs.spmg1(P1, P2, A1)
   def hrf_mexhat(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.mexhat(mean, sd)

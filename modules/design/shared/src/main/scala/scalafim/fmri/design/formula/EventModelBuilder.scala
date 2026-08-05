@@ -1,9 +1,11 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, DesignError, Names}
+import scalafim.fmri.design.{CellAssignment, CellKey, CenteringOutcome, CenteringPolicy, CenteringReceipt, CenteringGroupReceipt, ColumnId, DegenerateModulatorOutcome, DegenerateModulatorPolicy, DegenerateModulatorReceipt, DesignError, EmptyCellAudit, EmptyCellDisposition, EmptyCellPolicy, EmptyCellScope, EventRowProvenance, FactorLevelAudit, FactorLevelRegistry, FactorId, FactorPartitionAudit, FactorSchemaBinding, HrfAssignment, HrfByCell, HrfByPhase, HrfColumnScale, HrfColumnScaling, MissingValuePolicy, MissingValueResolution, ModulatorId, ModulatorOrthogonalization, ModulatorOrthogonalizationPlan, Names, OrthogonalizationGroupReceipt, OrthogonalizationOutcome, OrthogonalizationReceipt, OrthogonalizationScope, OrthogonalizationStepReceipt, PhaseId, PolicyReceipt, RunIndex, TermId, TrialId}
 import scalafim.fmri.design.contrast.ContrastSpec
+import scalafim.fmri.design.contrast.{LevelId, TermCells}
 import scalafim.fmri.design.data.{Column, DataTable}
 import scalafim.fmri.design.basis.{BasisDiagnostic, BasisFit, BasisFitError, BasisRegistry, ParametricBasis}
+import scalafim.fmri.design.linalg.QrDecomposition
 import scalafim.fmri.design.event.*
 import scalafim.fmri.design.hrf.{HrfFun, HrfSelection}
 import scalafim.fmri.hrf.*
@@ -20,8 +22,35 @@ object EventModelBuilder:
       precision: Seconds = 0.3.s,
       dropEmpty: Boolean = true,
       summate: Boolean = true,
-      strict: Boolean = false
-  )
+      strict: Boolean = false,
+      missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
+      factorLevels: FactorLevelRegistry = FactorLevelRegistry.empty,
+      emptyCellPolicy: EmptyCellPolicy = EmptyCellPolicy.UseDropEmptyFlag,
+      factorSchemaBinding: Option[FactorSchemaBinding] = None,
+      hrfByCell: Option[HrfByCell] = None,
+      hrfByPhase: Option[HrfByPhase] = None,
+      degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
+      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
+  ):
+    def validate: Either[DesignError, Unit] =
+      for
+        _ <- missingValuePolicy.validate
+        _ <- factorSchemaBinding match
+          case Some(binding) if !factorLevels.isEmpty && binding.registry.canonical != factorLevels.canonical =>
+            Left(DesignError.InvalidSchema("factor schema binding registry does not match factorLevels"))
+          case _ => Right(())
+        _ <- hrfByCell match
+          case Some(assignments) if assignments.assignments.isEmpty =>
+            Left(DesignError.InvalidSchema("HRF-by-cell assignment must not be empty"))
+          case _ => Right(())
+        _ <-
+          if hrfByCell.nonEmpty && hrfByPhase.nonEmpty then
+            Left(DesignError.InvalidSchema("hrfByCell and hrfByPhase are alternative assignment plans"))
+          else Right(())
+      yield ()
+
+    def factorRegistry: FactorLevelRegistry =
+      factorSchemaBinding.fold(factorLevels)(_.registry)
 
   final case class DesignExtensionEnv(
       hrfFuns: Map[String, HrfFun] = Map.empty,
@@ -115,7 +144,14 @@ object EventModelBuilder:
       hrfFuns: Map[String, HrfFun] = Map.empty,
       contrastSets: Map[String, ContrastSpec.ContrastSet] = Map.empty,
       strict: Boolean = false,
-      basisRegistry: BasisRegistry = BasisRegistry.default
+      basisRegistry: BasisRegistry = BasisRegistry.default,
+      factorLevels: FactorLevelRegistry = FactorLevelRegistry.empty,
+      emptyCellPolicy: EmptyCellPolicy = EmptyCellPolicy.UseDropEmptyFlag,
+      factorSchemaBinding: Option[FactorSchemaBinding] = None,
+      hrfByCell: Option[HrfByCell] = None,
+      missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
+      degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
+      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
   ): EventModel =
     build(
       EventDesignRequest.fromText(
@@ -130,7 +166,14 @@ object EventModelBuilder:
           precision = precision,
           dropEmpty = dropEmpty,
           summate = summate,
-          strict = strict
+          strict = strict,
+          factorLevels = factorLevels,
+          emptyCellPolicy = emptyCellPolicy,
+          factorSchemaBinding = factorSchemaBinding,
+          hrfByCell = hrfByCell,
+          missingValuePolicy = missingValuePolicy,
+          degenerateModulatorPolicy = degenerateModulatorPolicy,
+          orthogonalization = orthogonalization
         ),
         extensions = DesignExtensionEnv(
           hrfFuns = hrfFuns,
@@ -169,7 +212,14 @@ object EventModelBuilder:
       hrfFuns: Map[String, HrfFun] = Map.empty,
       contrastSets: Map[String, ContrastSpec.ContrastSet] = Map.empty,
       strict: Boolean = false,
-      basisRegistry: BasisRegistry = BasisRegistry.default
+      basisRegistry: BasisRegistry = BasisRegistry.default,
+      factorLevels: FactorLevelRegistry = FactorLevelRegistry.empty,
+      emptyCellPolicy: EmptyCellPolicy = EmptyCellPolicy.UseDropEmptyFlag,
+      factorSchemaBinding: Option[FactorSchemaBinding] = None,
+      hrfByCell: Option[HrfByCell] = None,
+      missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
+      degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
+      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
   ): EventModel =
     val parsed = FormulaParser.parse(formula)
     val env = TableEnv(eventData = data, other = tables)
@@ -185,7 +235,14 @@ object EventModelBuilder:
           precision = precision,
           dropEmpty = dropEmpty,
           summate = summate,
-          strict = strict
+          strict = strict,
+          factorLevels = factorLevels,
+          emptyCellPolicy = emptyCellPolicy,
+          factorSchemaBinding = factorSchemaBinding,
+          hrfByCell = hrfByCell,
+          missingValuePolicy = missingValuePolicy,
+          degenerateModulatorPolicy = degenerateModulatorPolicy,
+          orthogonalization = orthogonalization
         ),
         extensions = DesignExtensionEnv(
           hrfFuns = hrfFuns,
@@ -209,7 +266,14 @@ object EventModelBuilder:
       hrfFuns: Map[String, HrfFun] = Map.empty,
       contrastSets: Map[String, ContrastSpec.ContrastSet] = Map.empty,
       strict: Boolean = false,
-      basisRegistry: BasisRegistry = BasisRegistry.default
+      basisRegistry: BasisRegistry = BasisRegistry.default,
+      factorLevels: FactorLevelRegistry = FactorLevelRegistry.empty,
+      emptyCellPolicy: EmptyCellPolicy = EmptyCellPolicy.UseDropEmptyFlag,
+      factorSchemaBinding: Option[FactorSchemaBinding] = None,
+      hrfByCell: Option[HrfByCell] = None,
+      missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
+      degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
+      orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
   ): Either[DesignError, EventModel] =
     FormulaParser.parseEither(formula).left.map(parseError).flatMap { parsed =>
       buildEither(
@@ -224,7 +288,14 @@ object EventModelBuilder:
             precision = precision,
             dropEmpty = dropEmpty,
             summate = summate,
-            strict = strict
+            strict = strict,
+            factorLevels = factorLevels,
+            emptyCellPolicy = emptyCellPolicy,
+            factorSchemaBinding = factorSchemaBinding,
+            hrfByCell = hrfByCell,
+            missingValuePolicy = missingValuePolicy,
+            degenerateModulatorPolicy = degenerateModulatorPolicy,
+            orthogonalization = orthogonalization
           ),
           extensions = DesignExtensionEnv(
             hrfFuns = hrfFuns,
@@ -265,15 +336,18 @@ object EventModelBuilder:
       options: BuildOptions,
       extensions: DesignExtensionEnv
   ): Either[DesignError, EventModel] =
-    compile(
-      formula,
-      env,
-      samplingFrame,
-      blockIds = blockIds,
-      durations = durations,
-      options = options,
-      extensions = extensions
-    )
+    for
+      _ <- options.validate
+      model <- compile(
+        formula,
+        env,
+        samplingFrame,
+        blockIds = blockIds,
+        durations = durations,
+        options = options,
+        extensions = extensions
+      )
+    yield model
 
   def build(
       formula: ModelFormula,
@@ -316,21 +390,89 @@ object EventModelBuilder:
       blockIds0: Vector[Int]
   )
 
+  private final case class ResolvedPhase(
+      id: PhaseId,
+      parentTrialIds: Vector[TrialId]
+  )
+
+  /** Parallel event-row axes kept in one value so subsetting cannot advance
+    * timing, run, and source provenance independently.
+    */
+  private final case class TermRows(
+      events: Vector[Event],
+      onsets: Vector[Seconds],
+      durations: Vector[Seconds],
+      blockIds: Vector[Int],
+      sourceRows: Vector[Int]
+  ):
+    private val size = onsets.length
+    require(durations.length == size, "term rows: duration length mismatch")
+    require(blockIds.length == size, "term rows: block-id length mismatch")
+    require(sourceRows.length == size, "term rows: source-row length mismatch")
+    require(events.forall(_.nEvents == size), "term rows: event length mismatch")
+
   private final case class CompiledTerm(
       term: EventModelTerm,
       contrastRef: Option[String],
-      diagnostics: Vector[EventModelDiagnostic]
+      diagnostics: Vector[EventModelDiagnostic],
+      missingValues: Vector[MissingValueResolution] = Vector.empty,
+      centeringReceipts: Vector[CenteringReceipt] = Vector.empty,
+      degenerateModulatorReceipts: Vector[DegenerateModulatorReceipt] = Vector.empty,
+      orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
+      policyReceipts: Vector[PolicyReceipt] = Vector.empty,
+      factorLevels: Vector[FactorLevelAudit] = Vector.empty,
+      emptyCells: Vector[CellKey] = Vector.empty,
+      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty
   )
 
   private final case class EventExpression(
       event: Event,
-      diagnostics: Vector[EventModelDiagnostic]
+      diagnostics: Vector[EventModelDiagnostic],
+      centering: Vector[CenteringRequest] = Vector.empty
+  )
+
+  /** A formula-level centering request retained until term subsetting and
+    * missing-value handling have been resolved.  Applying it earlier would
+    * let excluded trials influence the centering reference.
+    */
+  private final case class CenteringRequest(
+      source: ColumnId,
+      policy: CenteringPolicy,
+      groupKeys: Vector[String] = Vector.empty
+  ):
+    def subset(mask: Vector[Boolean]): CenteringRequest =
+      if groupKeys.isEmpty then this
+      else copy(groupKeys = groupKeys.zip(mask).collect { case (key, keep) if keep => key })
+
+  private final case class CenteredEvents(
+      events: Vector[Event],
+      receipts: Vector[CenteringReceipt]
+  )
+
+  private final case class OrthogonalizedEvents(
+      events: Vector[Event],
+      receipts: Vector[OrthogonalizationReceipt]
+  )
+
+  /** Exact location of one sibling parametric-modulator column. */
+  private final case class ModulatorColumn(
+      continuousEventIndex: Int,
+      columnIndex: Int,
+      id: ModulatorId
   )
 
   private final case class CompiledTerms(
       terms: Vector[EventModelTerm],
       contrastRefs: Vector[Option[String]],
-      diagnostics: Vector[EventModelDiagnostic]
+      diagnostics: Vector[EventModelDiagnostic],
+      missingValues: Vector[MissingValueResolution] = Vector.empty,
+      centeringReceipts: Vector[CenteringReceipt] = Vector.empty,
+      degenerateModulatorReceipts: Vector[DegenerateModulatorReceipt] = Vector.empty,
+      orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
+      policyReceipts: Vector[PolicyReceipt] = Vector.empty,
+      factorLevels: Vector[FactorLevelAudit] = Vector.empty,
+      emptyCells: Vector[CellKey] = Vector.empty,
+      emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty
   )
 
   private def compile(
@@ -344,7 +486,24 @@ object EventModelBuilder:
   ): Either[DesignError, EventModel] =
     for
       schedule <- resolveSchedule(formula, env, blockIds, durations)
+      hrfTermCount = formula.terms.count {
+        case _: HrfCall => true
+        case _          => false
+      }
+      _ <-
+        if options.hrfByCell.nonEmpty && hrfTermCount != 1 then
+          Left(
+            DesignError.InvalidSchema(
+              s"hrfByCell requires exactly one HRF term, found $hrfTermCount; use hrfByPhase for multiphase formulas"
+            )
+          )
+        else Right(())
+      declaredPhases = formula.terms.collect { case term: HrfCall => term.phase.map(_.id) }.flatten
+      _ <- options.hrfByPhase.fold[Either[DesignError, Unit]](Right(()))(_.validateCoverage(declaredPhases))
       compiled <- compileTerms(formula, env, samplingFrame, schedule, options, extensions)
+      _ <- validateFactorRegistryCoverage(options.factorRegistry, compiled.factorLevels)
+      realizedTerms = compiled.terms.flatMap(_.keyHint.flatMap(value => TermId(value).toOption))
+      _ <- options.orthogonalization.validateCoverage(realizedTerms)
       model <- assembleModel(compiled, samplingFrame, extensions.contrastSets)
     yield model
 
@@ -389,6 +548,14 @@ object EventModelBuilder:
     val terms = Vector.newBuilder[EventModelTerm]
     val contrastRefs = Vector.newBuilder[Option[String]]
     val diagnostics = Vector.newBuilder[EventModelDiagnostic]
+    val missingValues = Vector.newBuilder[MissingValueResolution]
+    val centeringReceipts = Vector.newBuilder[CenteringReceipt]
+    val degenerateModulatorReceipts = Vector.newBuilder[DegenerateModulatorReceipt]
+    val orthogonalizationReceipts = Vector.newBuilder[OrthogonalizationReceipt]
+    val policyReceipts = Vector.newBuilder[PolicyReceipt]
+    val factorLevels = Vector.newBuilder[FactorLevelAudit]
+    val emptyCells = Vector.newBuilder[CellKey]
+    val emptyCellAudits = Vector.newBuilder[EmptyCellAudit]
     var failed: Option[DesignError] = None
     var i = 0
     while i < formula.terms.length && failed.isEmpty do
@@ -399,12 +566,34 @@ object EventModelBuilder:
           terms += compiled.term
           contrastRefs += compiled.contrastRef
           diagnostics ++= compiled.diagnostics
+          missingValues ++= compiled.missingValues
+          centeringReceipts ++= compiled.centeringReceipts
+          degenerateModulatorReceipts ++= compiled.degenerateModulatorReceipts
+          orthogonalizationReceipts ++= compiled.orthogonalizationReceipts
+          policyReceipts ++= compiled.policyReceipts
+          factorLevels ++= compiled.factorLevels
+          emptyCells ++= compiled.emptyCells
+          emptyCellAudits ++= compiled.emptyCellAudits
       i += 1
 
     failed match
       case Some(error) => Left(error)
       case None =>
-        Right(CompiledTerms(terms.result(), contrastRefs.result(), diagnostics.result()))
+        Right(
+          CompiledTerms(
+            terms.result(),
+            contrastRefs.result(),
+            diagnostics.result(),
+            missingValues.result(),
+            centeringReceipts.result(),
+            degenerateModulatorReceipts.result(),
+            orthogonalizationReceipts.result(),
+            policyReceipts.result(),
+            factorLevels.result(),
+            emptyCells.result(),
+            emptyCellAudits.result()
+          )
+        )
 
   private def compileTerm(
       call: TermCall,
@@ -433,8 +622,9 @@ object EventModelBuilder:
     val nEvents = schedule.defaultOnsets.length
     for
       termTag <- inferTermTag(h, extensions.basisRegistry)
-      expressions <- toEvents(h.vars, env.eventData, termTag)
+      expressions <- toEvents(h.vars, env.eventData, termTag, options.factorRegistry, schedule.blockIds0)
       events0 = expressions.map(_.event)
+      centering0 = expressions.map(_.centering)
       basisDiagnostics = expressions.flatMap(_.diagnostics)
       termOnsets <- h.onsets.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultOnsets)) { ref =>
         resolveSecondsEither(ref, env.eventData, nEvents, argName = "onsets")
@@ -442,24 +632,146 @@ object EventModelBuilder:
       termDurs <- h.durations.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultDurs)) { ref =>
         resolveSecondsEither(ref, env.eventData, nEvents, argName = "durations")
       }
+      phase0 <- resolvePhase(h.phase, env.eventData, nEvents)
       subsetMask <- resolveSubsetMaskEither(h.subset, env.eventData, nEvents)
-      originalSub = if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
-      subset = if subsetMask.forall(identity) then (events0, termOnsets, termDurs, schedule.blockIds0)
-        else subsetTerm(events0, termOnsets, termDurs, schedule.blockIds0, subsetMask)
-      (events, onsetsS, dursS, blockIdsS) = subset
-      cleaned = sanitizeContinuousEvents(events, termTag)
-      (eventsClean, nonFiniteDiagnostics) = cleaned
+      originalSub0 = if subsetMask.forall(identity) then env.eventData else env.eventData.filterRows(subsetMask)
+      rows0 = TermRows(events0, termOnsets, termDurs, schedule.blockIds0, Vector.tabulate(nEvents)(identity))
+      subset0 = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
+      phase0s <- resolveEventPhase(phase0, subset0)
+      centering0s = subsetCenteringRequests(centering0, subsetMask)
+      missingRows = nonFiniteRows(subset0.events)
+      dropMissingMask = options.missingValuePolicy match
+        case MissingValuePolicy.DropFromTerm => missingRows.map(!_)
+        case _ => Vector.empty
+      originalSub =
+        if dropMissingMask.isEmpty || dropMissingMask.forall(identity) then originalSub0
+        else originalSub0.filterRows(dropMissingMask)
+      subset =
+        if dropMissingMask.isEmpty || dropMissingMask.forall(identity) then subset0
+        else subsetTerm(subset0, dropMissingMask)
+      phase <- resolveEventPhase(phase0, subset)
+      centeringS = subsetCenteringRequests(centering0s, dropMissingMask)
+      factorAudits0 = factorLevelAudits(
+        subset.events,
+        options.factorRegistry,
+        subset.blockIds,
+        schedule.blockIds0.distinct.sorted
+      )
+      droppedMissing =
+        if options.missingValuePolicy == MissingValuePolicy.DropFromTerm then
+          missingValueResolutions(
+            subset0.events,
+            options.missingValuePolicy,
+            action = "dropped-event",
+            provenance = phase0s.toVector.flatMap(_.provenance)
+          )
+        else Vector.empty
+      centered <- applyCentering(subset.events, centeringS, subset.blockIds)
+      rawDegenerateModulators <- classifyDegenerateModulators(
+        events = centered.events,
+        termTag = termTag,
+        sourceRows = subset.sourceRows,
+        parentTrials = phase.toVector.flatMap(_.parentTrialIds),
+        policy = options.degenerateModulatorPolicy
+      )
+      cleaned <- sanitizeContinuousEvents(
+        centered.events,
+        termTag,
+        options.missingValuePolicy,
+        provenance = phase.toVector.flatMap(_.provenance)
+      )
+      _ <- validateDegenerateModulatorReceipts(rawDegenerateModulators)
+      orthogonalized <- applyOrthogonalization(
+        events = cleaned.events,
+        termTag = termTag,
+        blockIds = subset.blockIds,
+        sourceRows = subset.sourceRows,
+        parentTrials = phase.toVector.flatMap(_.parentTrialIds),
+        policy = options.orthogonalization.forTerm(termTag)
+      )
+      eventsClean = orthogonalized.events
+      nonFiniteDiagnostics = cleaned.diagnostics
       term <- eventTermEither(
         events = eventsClean,
-        onsets = onsetsS,
-        durations = dursS,
-        blockIds = blockIdsS,
-        termTag = termTag
+        onsets = subset.onsets,
+        durations = subset.durations,
+        blockIds = subset.blockIds,
+        termTag = termTag,
+        phase = phase
       )
+      emptyCells = emptyCellsFor(term)
+      _ <- validateEmptyCellPolicy(termTag, emptyCells, options.emptyCellPolicy)
+      runEmptyCells = emptyCellsByRunFor(term, options.emptyCellPolicy)
+      _ <- validateRunEmptyCellPolicy(termTag, runEmptyCells, options.emptyCellPolicy)
+      globalEmptyCellAudits = emptyCells.map { cell =>
+        EmptyCellAudit(
+          term = termTag.flatMap(value => TermId(value).toOption),
+          cell = cell,
+          policy = options.emptyCellPolicy,
+          disposition = if effectiveDropEmpty(options) then EmptyCellDisposition.Omitted else EmptyCellDisposition.RetainedZero
+        )
+      }
+      runEmptyCellAudits = runEmptyCells.flatMap { scoped =>
+        scoped.cells.map { cell =>
+          EmptyCellAudit(
+            term = termTag.flatMap(value => TermId(value).toOption),
+            cell = cell,
+            policy = options.emptyCellPolicy,
+            disposition = if effectiveDropEmpty(options) then EmptyCellDisposition.Omitted else EmptyCellDisposition.RetainedZero,
+            scope = EmptyCellScope.Run(scoped.run)
+          )
+        }
+      }
+      emptyCellAudits = globalEmptyCellAudits ++ runEmptyCellAudits
       termDiagnostics = basisDiagnostics ++ nonFiniteDiagnostics ++ diagnoseTerm(term, samplingFrame)
       _ <- validateStrictDiagnostics(termDiagnostics, options.strict)
       conv <- convolveHrfTermEither(h, term, originalSub, samplingFrame, options, extensions)
-    yield CompiledTerm(conv, h.contrasts, termDiagnostics)
+      schemaBindingReceipt = options.factorSchemaBinding.toVector.map { binding =>
+        PolicyReceipt("factor-schema-binding", binding.canonical)
+      }
+      hrfCellReceipt = options.hrfByCell.toVector.map { assignments =>
+        PolicyReceipt("hrf-by-cell", assignments.canonical)
+      }
+      hrfPhaseReceipt = options.hrfByPhase.toVector.flatMap { assignments =>
+        term.phaseId.map { phase =>
+          PolicyReceipt("hrf-by-phase", s"phase=${phase.value};${assignments.canonical}")
+        }
+      }
+    yield CompiledTerm(
+      conv,
+      h.contrasts,
+      termDiagnostics,
+      missingValues = droppedMissing ++ cleaned.missingValues,
+      centeringReceipts = centered.receipts,
+      degenerateModulatorReceipts = rawDegenerateModulators,
+      orthogonalizationReceipts = orthogonalized.receipts,
+      policyReceipts = schemaBindingReceipt ++ hrfCellReceipt ++ hrfPhaseReceipt ++ Vector(
+        PolicyReceipt(
+          "modulator-missing-values",
+          s"term=${termTag.getOrElse("term")};policy=${options.missingValuePolicy.label}"
+        ),
+        PolicyReceipt(
+          "factor-levels",
+          factorAudits0.map(_.canonical).mkString("term=", ";", "")
+        ),
+        PolicyReceipt(
+          "degenerate-modulators",
+          s"term=${termTag.getOrElse("term")};policy=${options.degenerateModulatorPolicy.label}"
+        ),
+        PolicyReceipt(
+          "modulator-orthogonalization",
+          options.orthogonalization.forTerm(termTag).fold(s"term=${termTag.getOrElse("term")};policy=none")(_.canonical)
+        ),
+        PolicyReceipt(
+          "empty-cells",
+          s"term=${termTag.getOrElse("term")};policy=${options.emptyCellPolicy.label};effective=${if effectiveDropEmpty(options) then "omit" else "retain-zero"};" +
+            s"cells=${emptyCells.map(_.canonical).mkString(",")};runs=${runEmptyCells.map(_.canonical).mkString("|")}"
+        )
+      ),
+      factorLevels = factorAudits0,
+      emptyCells = emptyCells,
+      emptyCellAudits = emptyCellAudits
+    )
 
   private def compileTrialwiseCall(
       t: TrialwiseCall,
@@ -493,9 +805,9 @@ object EventModelBuilder:
           hrf0,
           samplingFrame,
           precision = options.precision,
-          dropEmpty = options.dropEmpty,
+          dropEmpty = effectiveDropEmpty(options),
           summate = options.summate,
-          normalize = t.normalize.getOrElse(false)
+          scaling = effectiveScaling(t.scaling, t.normalize)
         )
       }
       conv = conv0.copy(
@@ -539,10 +851,18 @@ object EventModelBuilder:
         if compiled.contrastRefs.length == model0.terms.length then Right(compiled.contrastRefs)
         else Left(DesignError.BuildFailed("internal: contrastRefs length mismatch"))
       attached <- attachContrastSetsEither(model0, refs, contrastSets)
-    yield model0.copy(
-      contrastSetsByTerm = attached,
-      diagnostics = compiled.diagnostics
-    )
+      diagnosed <- model0.withDiagnosticsEither(compiled.diagnostics)
+      evidenced <- diagnosed.withPolicyEvidenceEither(
+        compiled.missingValues,
+        compiled.policyReceipts,
+        factorLevels = compiled.factorLevels,
+        emptyCells = compiled.emptyCells,
+        emptyCellAudits = compiled.emptyCellAudits,
+        centering = compiled.centeringReceipts,
+        degenerateModulators = compiled.degenerateModulatorReceipts,
+        orthogonalization = compiled.orthogonalizationReceipts
+      )
+    yield evidenced.copy(contrastSetsByTerm = attached)
 
   private def attachContrastSetsEither(
       model: EventModel,
@@ -594,17 +914,20 @@ object EventModelBuilder:
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       blockIds: Vector[Int],
-      termTag: Option[String]
+      termTag: Option[String],
+      phase: Option[EventPhase] = None
   ): Either[DesignError, EventTerm] =
-    catchBuild(t => DesignError.InvalidSchedule(throwableMessage(t))) {
-      EventTerm(
-        events = events,
-        onsets = onsets,
-        durations = durations,
-        blockIds = blockIds,
-        termTag = termTag
-      )
-    }
+    phase match
+      case None =>
+        EventTerm.validated(
+          events = events,
+          onsets = onsets,
+          durations = durations,
+          blockIds = blockIds,
+          termTag = termTag
+        )
+      case Some(value) =>
+        value.term(events, termTag)
 
   private def validateStrictDiagnostics(
       diagnostics: Vector[EventModelDiagnostic],
@@ -644,6 +967,61 @@ object EventModelBuilder:
   ): Either[DesignError, Vector[Seconds]] =
     resolveNumericVectorEither(ref, data, nEvents, argName).map(_.map(Seconds(_)))
 
+  private def resolvePhase(
+      phase: Option[PhaseRef],
+      data: DataTable,
+      nEvents: Int
+  ): Either[DesignError, Option[ResolvedPhase]] =
+    phase match
+      case None => Right(None)
+      case Some(ref) =>
+        data.column(ref.parent).flatMap { column =>
+          val valuesEither: Either[DesignError, Vector[String]] =
+            column match
+              case Column.Strings(values) => Right(values)
+              case Column.Ints(values)    => Right(values.map(_.toString))
+              case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(_.toString))
+              case Column.Doubles(_) => Left(DesignError.InvalidColumnType(ref.parent.value, "finite trial identifiers", "numeric with non-finite values"))
+              case Column.Bools(values) => Right(values.map(_.toString))
+              case other => Left(DesignError.InvalidColumnType(ref.parent.value, "scalar trial identifiers", other.typeName))
+          valuesEither.flatMap { values =>
+            if values.length != nEvents then
+              Left(DesignError.InvalidSchedule(s"parent column '${ref.parent.value}' has length ${values.length} but expected $nEvents"))
+            else
+              val out = Vector.newBuilder[TrialId]
+              var failed: Option[DesignError] = None
+              var i = 0
+              while i < values.length && failed.isEmpty do
+                TrialId(values(i)) match
+                  case Left(error) => failed = Some(error)
+                  case Right(id)   => out += id
+                i += 1
+              failed match
+                case Some(error) => Left(error)
+                case None        => Right(Some(ResolvedPhase(ref.id, out.result())))
+          }
+        }
+
+  /** Materialize selected phase rows once after row policies have been
+    * applied. Policy receipts and the final event term then share one checked
+    * source identity instead of indexing parallel provenance vectors.
+    */
+  private def resolveEventPhase(
+      phase: Option[ResolvedPhase],
+      rows: TermRows
+  ): Either[DesignError, Option[EventPhase]] =
+    phase match
+      case None => Right(None)
+      case Some(value) =>
+        EventPhase.fromParts(
+          id = value.id,
+          onsets = rows.onsets,
+          durations = rows.durations,
+          blockIds = rows.blockIds,
+          parentTrialIds = rows.sourceRows.map(value.parentTrialIds),
+          sourceRows = rows.sourceRows
+        ).map(Some(_))
+
   private def resolveNumericVectorEither(
       ref: ArgValue,
       data: DataTable,
@@ -681,28 +1059,90 @@ object EventModelBuilder:
       extensions: DesignExtensionEnv
   ): Either[DesignError, ConvolvedTerm] =
     val summate0 = h.summate.getOrElse(options.summate)
-    val normalize0 = h.normalize.getOrElse(false)
+    val scaling0 = effectiveScaling(h.scaling, h.normalize)
 
-    (h.hrfFun, term.onsets.nonEmpty) match
-      case (Some(ref), true) =>
-        for
-          eventData <- catchBuild(DesignError.fromThrowable)(buildEventDataForGenerator(term, originalSub))
-          hsel <- resolveHrfFunEither(ref, eventData, hrfFuns = extensions.hrfFuns, termTag = term.termTag)
-          conv <- catchBuild(DesignError.fromThrowable) {
-            hsel match
-              case Left(shared) =>
-                term.convolve(shared, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
-              case Right(perEvent) =>
-                term.convolvePerEvent(perEvent, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
-          }
-        yield conv
-      case _ =>
-        for
-          hrf0 <- resolveHrfEither(h, options.defaultHrf)
-          conv <- catchBuild(DesignError.fromThrowable) {
-            term.convolve(hrf0, samplingFrame, precision = options.precision, dropEmpty = options.dropEmpty, summate = summate0, normalize = normalize0)
-          }
-        yield conv
+    val assigned =
+      options.hrfByCell.map(HrfAssignment.ByCell.apply) match
+        case some @ Some(_) => Right(some)
+        case None =>
+          (options.hrfByPhase, term.phaseId) match
+            case (Some(plan), Some(phase)) => plan.resolve(phase).map(Some(_))
+            case _                         => Right(None)
+
+    assigned.flatMap {
+      case Some(_) if h.hrfFun.nonEmpty =>
+        Left(DesignError.InvalidSchema("explicit HRF assignment cannot be combined with hrf_fun on the same term"))
+      case Some(_) if h.basis.nonEmpty || h.lag.nonEmpty || h.nbasis.nonEmpty =>
+        Left(DesignError.InvalidSchema("explicit HRF assignment cannot be combined with formula basis, lag, or nbasis on the same term"))
+      case Some(HrfAssignment.Shared(assignedHrf)) =>
+        catchBuild(DesignError.fromThrowable) {
+          term.convolve(
+            assignedHrf,
+            samplingFrame,
+            precision = options.precision,
+            dropEmpty = effectiveDropEmpty(options),
+            summate = summate0,
+            scaling = scaling0
+          )
+        }
+      case Some(HrfAssignment.ByCell(assignments)) =>
+        convolveByCell(term, assignments, samplingFrame, options, summate0, scaling0)
+      case None =>
+        (h.hrfFun, term.onsets.nonEmpty) match
+          case (Some(ref), true) =>
+            for
+              eventData <- catchBuild(DesignError.fromThrowable)(buildEventDataForGenerator(term, originalSub))
+              hsel <- resolveHrfFunEither(ref, eventData, hrfFuns = extensions.hrfFuns, termTag = term.termTag)
+              conv <- catchBuild(DesignError.fromThrowable) {
+                hsel match
+                  case Left(shared) =>
+                    term.convolve(shared, samplingFrame, precision = options.precision, dropEmpty = effectiveDropEmpty(options), summate = summate0, scaling = scaling0)
+                  case Right(perEvent) =>
+                    term.convolvePerEvent(perEvent, samplingFrame, precision = options.precision, dropEmpty = effectiveDropEmpty(options), summate = summate0, scaling = scaling0)
+              }
+            yield conv
+          case _ =>
+            for
+              hrf0 <- resolveHrfEither(h, options.defaultHrf)
+              conv <- catchBuild(DesignError.fromThrowable) {
+                term.convolve(hrf0, samplingFrame, precision = options.precision, dropEmpty = effectiveDropEmpty(options), summate = summate0, scaling = scaling0)
+              }
+            yield conv
+    }
+
+  private def convolveByCell(
+      term: EventTerm,
+      assignments: HrfByCell,
+      samplingFrame: SamplingFrame,
+      options: BuildOptions,
+      summate: Boolean,
+      scaling: HrfColumnScaling
+  ): Either[DesignError, ConvolvedTerm] =
+    val schemaCells = term.conditionProvenance(dropEmpty = false).map(_.cell)
+    val realizedCells = term.conditionProvenance(dropEmpty = effectiveDropEmpty(options)).map(_.cell)
+    assignments.resolve(schemaCells, term.termTag.getOrElse("term")).flatMap { schemaHrfs =>
+      val byCell = schemaCells.zip(schemaHrfs).toMap
+      val hrfs = realizedCells.map(byCell)
+      catchBuild(DesignError.fromThrowable) {
+        term.convolveByCondition(
+          hrfs,
+          samplingFrame,
+          precision = options.precision,
+          dropEmpty = effectiveDropEmpty(options),
+          summate = summate,
+          scaling = scaling
+        )
+      }
+    }
+
+  private def effectiveScaling(
+      scaling: Option[HrfColumnScaling],
+      normalize: Option[Boolean]
+  ): HrfColumnScaling =
+    scaling.getOrElse {
+      if normalize.contains(true) then HrfColumnScaling.UnitMaximumAbsolute
+      else HrfColumnScaling.AsConvolved
+    }
 
   private def resolveHrfFunEither(
       ref: ArgValue,
@@ -744,49 +1184,755 @@ object EventModelBuilder:
   private def diagnoseTerm(term: EventTerm, samplingFrame: SamplingFrame): Vector[EventModelDiagnostic] =
     degenerateModulatorDiagnostics(term) ++ onsetBoundDiagnostics(term, samplingFrame)
 
-  private def sanitizeContinuousEvents(
+  private def classifyDegenerateModulators(
       events: Vector[Event],
-      termTag: Option[String]
-  ): (Vector[Event], Vector[EventModelDiagnostic]) =
-    val termLabel = termTag.getOrElse("term")
-    val diagnostics = Vector.newBuilder[EventModelDiagnostic]
+      termTag: Option[String],
+      sourceRows: Vector[Int],
+      parentTrials: Vector[TrialId],
+      policy: DegenerateModulatorPolicy,
+      tolerance: Double = 1e-8
+  ): Either[DesignError, Vector[DegenerateModulatorReceipt]] =
+    val eventRows = events.headOption.map(_.nEvents).getOrElse(sourceRows.length)
+    if sourceRows.length != eventRows then
+      Left(DesignError.InvalidSchema("degenerate-modulator source rows do not align with term rows"))
+    else if parentTrials.nonEmpty && parentTrials.length != eventRows then
+      Left(DesignError.InvalidSchema("degenerate-modulator parent trials do not align with term rows"))
+    else
+      val term = TermId.unsafe(termTag.getOrElse("term"))
+      val receipts = Vector.newBuilder[DegenerateModulatorReceipt]
+      events.foreach {
+        case event: ContinuousEvent =>
+          var column = 0
+          while column < event.value.cols do
+            val finiteRows = Vector.newBuilder[Int]
+            var min = Double.PositiveInfinity
+            var max = Double.NegativeInfinity
+            var maxAbs = 0.0
+            var allZero = true
+            var row = 0
+            while row < event.value.rows do
+              val value = event.value(row, column)
+              if value.isFinite then
+                finiteRows += row
+                if value < min then min = value
+                if value > max then max = value
+                val absolute = math.abs(value)
+                if absolute > maxAbs then maxAbs = absolute
+                if absolute > tolerance then allZero = false
+              row += 1
 
-    val cleaned = events.map {
-      case e: ContinuousEvent =>
-        val m = e.value
-        var out: Array[Double] = null
+            val finite = finiteRows.result()
+            val outcome =
+              if event.value.rows == 0 then Some(DegenerateModulatorOutcome.EmptyScope)
+              else if finite.isEmpty then Some(DegenerateModulatorOutcome.AllNonFinite)
+              else if allZero then Some(DegenerateModulatorOutcome.AllZero)
+              else if (max - min) <= tolerance * math.max(1.0, maxAbs) then
+                Some(DegenerateModulatorOutcome.Constant)
+              else None
 
-        var c = 0
-        while c < m.cols do
-          var hasNonFinite = false
-          var r = 0
-          while r < m.rows do
-            val idx = r * m.cols + c
-            val v = m.data(idx)
-            if !v.isFinite then
-              hasNonFinite = true
-              if out == null then out = m.data.clone()
-              out(idx) = 0.0
-            r += 1
+            outcome.foreach { value =>
+              receipts += DegenerateModulatorReceipt(
+                term = term,
+                modulator = event.modulatorIds(column),
+                sourceRows = sourceRows,
+                finiteSourceRows = finite.map(sourceRows),
+                parentTrials = parentTrials,
+                outcome = value,
+                policy = policy
+              )
+            }
+            column += 1
+        case _ => ()
+      }
+      Right(receipts.result())
 
-          if hasNonFinite then
-            val colLabel =
-              if m.cols == 1 then e.varName
-              else e.columnTags.lift(c).getOrElse(s"${e.varName}_${c + 1}")
-            diagnostics += EventModelDiagnostic(
-              EventModelDiagnosticKind.NonFiniteModulator,
-              termLabel,
-              s"NA or non-finite values detected in continuous modulator '$colLabel' in term '$termLabel'; replacing them with 0.0"
-            )
-          c += 1
+  private def validateDegenerateModulatorReceipts(
+      receipts: Vector[DegenerateModulatorReceipt]
+  ): Either[DesignError, Unit] =
+    receipts.find(_.policy == DegenerateModulatorPolicy.Reject) match
+      case None => Right(())
+      case Some(receipt) =>
+        Left(
+          DesignError.DegenerateModulator(
+            receipt.term.value,
+            receipt.modulator,
+            receipt.outcome.label,
+            receipt.policy
+          )
+        )
 
-        if out == null then e
-        else e.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(m.rows, m.cols, out))
-
-      case other => other
+  private def factorLevelAudits(
+      events: Vector[Event],
+      registry: FactorLevelRegistry,
+      blockIds: Vector[Int],
+      partitions: Vector[Int]
+  ): Vector[FactorLevelAudit] =
+    events.collect { case categorical: CategoricalEvent =>
+      val factor = FactorId.unsafe(categorical.varName)
+      def levelsFor(codes: Vector[Int]): Vector[LevelId] =
+        categorical.levels.indices
+          .filter(codes.contains)
+          .map(index => LevelId.unsafe(categorical.levels(index)))
+          .toVector
+      val observed = levelsFor(categorical.codes)
+      val partitionAudits = partitions.map { partition =>
+        val codes = blockIds.zip(categorical.codes).collect { case (block, code) if block == partition => code }
+        FactorPartitionAudit(
+          partition = s"run-${partition + 1}",
+          observed = levelsFor(codes)
+        )
+      }
+      FactorLevelAudit(
+        factor = factor,
+        declared = registry.get(factor).map(_.levels),
+        observed = observed,
+        partitions = partitionAudits
+      )
     }
 
-    (cleaned, diagnostics.result())
+  private def emptyCellsFor(term: EventTerm): Vector[CellKey] =
+    val cells = TermCells.from(term, dropEmpty = false)
+    if cells.vars.isEmpty then Vector.empty
+    else
+      cells.rows.collect {
+        case row if row.count == 0 =>
+          CellKey.unsafe(
+            cells.vars.zip(row.levels).map { case (factor, level) =>
+              CellAssignment(FactorId.unsafe(factor), LevelId.unsafe(level))
+            }
+          )
+      }
+
+  private final case class RunEmptyCells(run: RunIndex, cells: Vector[CellKey]):
+    require(cells.nonEmpty, "a run empty-cell scope must contain at least one cell")
+
+    def canonical: String =
+      s"run-${run.oneBased}[${cells.map(_.canonical).mkString(",")}]"
+
+  /** Find cells missing within a run even when they are represented elsewhere
+    * in the same compiled term.  The legacy drop-empty compatibility mode did
+    * not define a run-local policy, so it deliberately retains the historical
+    * non-estimable projection behavior.
+    */
+  private def emptyCellsByRunFor(
+      term: EventTerm,
+      policy: EmptyCellPolicy
+  ): Vector[RunEmptyCells] =
+    if policy == EmptyCellPolicy.UseDropEmptyFlag then Vector.empty
+    else
+      val categorical = term.events.collect { case event: CategoricalEvent => event }
+      if categorical.isEmpty then Vector.empty
+      else
+        val declared = TermCells.from(term, dropEmpty = false).rows.map { row =>
+          CellKey.unsafe(
+            categorical.zip(row.levels).map { case (event, level) =>
+              CellAssignment(FactorId.unsafe(event.varName), LevelId.unsafe(level))
+            }
+          )
+        }
+        term.blockIds0.distinct.sorted.flatMap { block =>
+          val observed = term.blockIds0.indices.collect {
+            case eventIndex if term.blockIds0(eventIndex) == block =>
+              CellKey.unsafe(
+                categorical.map { event =>
+                  val code = event.codes(eventIndex)
+                  CellAssignment(FactorId.unsafe(event.varName), LevelId.unsafe(event.levels(code)))
+                }
+              )
+          }.toSet
+          val missing = declared.filterNot(observed.contains)
+          if missing.isEmpty then None
+          else Some(RunEmptyCells(RunIndex.unsafeOneBased(block + 1), missing))
+        }
+
+  private def validateEmptyCellPolicy(
+      termTag: Option[String],
+      emptyCells: Vector[CellKey],
+      policy: EmptyCellPolicy
+  ): Either[DesignError, Unit] =
+    policy match
+      case EmptyCellPolicy.Reject =>
+        emptyCells.headOption match
+          case Some(cell) =>
+            Left(
+              DesignError.EmptyFactorCell(
+                termTag.getOrElse("term"),
+                cell.canonical,
+                policy.label
+              )
+            )
+          case None => Right(())
+      case _ => Right(())
+
+  private def validateRunEmptyCellPolicy(
+      termTag: Option[String],
+      emptyCells: Vector[RunEmptyCells],
+      policy: EmptyCellPolicy
+  ): Either[DesignError, Unit] =
+    policy match
+      case EmptyCellPolicy.Reject =>
+        emptyCells.collectFirst { case RunEmptyCells(run, cell +: _) =>
+          DesignError.EmptyFactorCellInRun(
+            term = termTag.getOrElse("term"),
+            cell = cell,
+            run = run,
+            policy = policy
+          )
+        }.toLeft(())
+      case _ => Right(())
+
+  private def validateFactorRegistryCoverage(
+      registry: FactorLevelRegistry,
+      audits: Vector[FactorLevelAudit]
+  ): Either[DesignError, Unit] =
+    val used = audits.map(_.factor.value).toSet
+    registry.factorIds.find(factor => !used.contains(factor.value)) match
+      case Some(unused) =>
+        Left(DesignError.InvalidSchema(s"declared factor '${unused.value}' is not used by any event term"))
+      case None => Right(())
+
+  private def effectiveDropEmpty(options: BuildOptions): Boolean =
+    options.emptyCellPolicy match
+      case EmptyCellPolicy.UseDropEmptyFlag => options.dropEmpty
+      case EmptyCellPolicy.Omit             => true
+      case EmptyCellPolicy.RetainZero       => false
+      case EmptyCellPolicy.Reject           => true
+
+  private def subsetCenteringRequests(
+      requests: Vector[Vector[CenteringRequest]],
+      mask: Vector[Boolean]
+  ): Vector[Vector[CenteringRequest]] =
+    if mask.isEmpty || mask.forall(identity) then requests
+    else requests.map(_.map(_.subset(mask)))
+
+  private def applyCentering(
+      events: Vector[Event],
+      requests: Vector[Vector[CenteringRequest]],
+      blockIds: Vector[Int]
+  ): Either[DesignError, CenteredEvents] =
+    if events.length != requests.length then
+      Left(DesignError.InvalidSchema("centering request count does not match event count"))
+    else
+      val out = Vector.newBuilder[Event]
+      val receipts = Vector.newBuilder[CenteringReceipt]
+      var i = 0
+      while i < events.length do
+        (events(i), requests(i)) match
+          case (event: ContinuousEvent, eventRequests) =>
+            var current = event
+            var requestIndex = 0
+            var failed: Option[DesignError] = None
+            while requestIndex < eventRequests.length && failed.isEmpty do
+              centerEvent(current, eventRequests(requestIndex), blockIds) match
+                case Left(error) => failed = Some(error)
+                case Right((centered, receipt)) =>
+                  current = centered
+                  receipts += receipt
+              requestIndex += 1
+            failed match
+              case Some(error) => return Left(error)
+              case None        => out += current
+          case (_: CategoricalEvent, eventRequests) if eventRequests.isEmpty =>
+            out += events(i)
+          case (_: CategoricalEvent, _) =>
+            return Left(DesignError.InvalidColumnType(events(i).varName, "continuous event for centering", "categorical"))
+        i += 1
+      Right(CenteredEvents(out.result(), receipts.result()))
+
+  private def applyOrthogonalization(
+      events: Vector[Event],
+      termTag: Option[String],
+      blockIds: Vector[Int],
+      sourceRows: Vector[Int],
+      parentTrials: Vector[TrialId],
+      policy: Option[ModulatorOrthogonalization]
+  ): Either[DesignError, OrthogonalizedEvents] =
+    policy match
+      case None => Right(OrthogonalizedEvents(events, Vector.empty))
+      case Some(value) =>
+        val term = termTag.getOrElse(value.term.value)
+        val continuousEvents = events.zipWithIndex.collect {
+          case (event: ContinuousEvent, originalEventIndex) => originalEventIndex -> event
+        }
+        val columns = continuousEvents.zipWithIndex.flatMap {
+          case ((_, event), continuousEventIndex) =>
+            event.modulatorIds.zipWithIndex.map { case (id, columnIndex) =>
+              ModulatorColumn(continuousEventIndex, columnIndex, id)
+            }
+        }
+        for
+          orderedColumns <- resolveOrderedModulatorColumns(columns, value.order, term)
+          _ <-
+            if sourceRows.length == blockIds.length then Right(())
+            else Left(DesignError.InvalidOrthogonalization(term, "source rows do not align with term rows"))
+          _ <-
+            if parentTrials.isEmpty || parentTrials.length == blockIds.length then Right(())
+            else Left(DesignError.InvalidOrthogonalization(term, "parent trials do not align with term rows"))
+          groups <- orthogonalizationGroups(events, blockIds, value.scope, term)
+          _ <-
+            if groups.nonEmpty then Right(())
+            else Left(DesignError.InvalidOrthogonalization(term, "ordered orthogonalization has an empty event scope"))
+          lowered <- orthogonalizeColumns(
+            events = events,
+            continuousEvents = continuousEvents,
+            orderedColumns = orderedColumns,
+            policy = value,
+            groups = groups,
+            sourceRows = sourceRows,
+            parentTrials = parentTrials,
+            term = term
+          )
+        yield lowered
+
+  private def resolveOrderedModulatorColumns(
+      columns: Vector[ModulatorColumn],
+      order: Vector[ModulatorId],
+      term: String
+  ): Either[DesignError, Vector[ModulatorColumn]] =
+    val occurrences = columns.groupBy(_.id)
+    val resolved = Vector.newBuilder[ModulatorColumn]
+    var index = 0
+    var failed: Option[DesignError] = None
+    while index < order.length && failed.isEmpty do
+      val id = order(index)
+      occurrences.getOrElse(id, Vector.empty) match
+        case Vector(column) => resolved += column
+        case Vector() =>
+          failed = Some(
+            DesignError.InvalidOrthogonalization(
+              term,
+              s"ordered modulator '${id.value}' is absent (available: ${occurrences.keys.toVector.map(_.value).sorted.mkString(", ")})"
+            )
+          )
+        case matches =>
+          failed = Some(
+            DesignError.InvalidOrthogonalization(
+              term,
+              s"ordered modulator '${id.value}' must identify exactly one sibling column, found ${matches.length}"
+            )
+          )
+      index += 1
+    failed.fold[Either[DesignError, Vector[ModulatorColumn]]](Right(resolved.result()))(Left(_))
+
+  private def orthogonalizeColumns(
+      events: Vector[Event],
+      continuousEvents: Vector[(Int, ContinuousEvent)],
+      orderedColumns: Vector[ModulatorColumn],
+      policy: ModulatorOrthogonalization,
+      groups: Vector[(String, Vector[Int])],
+      sourceRows: Vector[Int],
+      parentTrials: Vector[TrialId],
+      term: String
+  ): Either[DesignError, OrthogonalizedEvents] =
+    var current = continuousEvents.map(_._2)
+    val receipts = Vector.newBuilder[OrthogonalizationStepReceipt]
+    var targetIndex = 1
+    var failed: Option[DesignError] = None
+    while targetIndex < policy.order.length && failed.isEmpty do
+      val targetId = policy.order(targetIndex)
+      val targetColumn = orderedColumns(targetIndex)
+      val targetEvent = current(targetColumn.continuousEventIndex)
+      val predecessors = policy.order.take(targetIndex)
+      val referenceColumns = orderedColumns.take(targetIndex)
+      val residualData = targetEvent.value.data.clone()
+      val groupReceipts = Vector.newBuilder[OrthogonalizationGroupReceipt]
+      var groupIndex = 0
+      while groupIndex < groups.length && failed.isEmpty do
+        val (key, rows) = groups(groupIndex)
+        val reference = bindModulatorRows(current, referenceColumns, rows)
+        val target = selectModulatorRows(current, targetColumn, rows)
+        val qr = QrDecomposition.decomposeScaleAware(reference.data, reference.rows, reference.cols, pivoting = true)
+        val residual = residualize(qr, target)
+        writeModulatorRows(
+          destination = residualData,
+          columns = targetEvent.value.cols,
+          targetColumn = targetColumn.columnIndex,
+          rows = rows,
+          values = residual
+        )
+        val sourceNorm = frobeniusNorm(target.data)
+        val residualNorm = frobeniusNorm(residual.data)
+        val degenerate = residualNorm == 0.0 || residualNorm <= policy.tolerance * sourceNorm
+        val outcome =
+          if degenerate then OrthogonalizationOutcome.DegenerateRetained
+          else OrthogonalizationOutcome.Applied
+        if degenerate && policy.degenerate == DegenerateModulatorPolicy.Reject then
+          failed = Some(DesignError.DegenerateModulator(term, targetId, key, policy.degenerate))
+        else
+          groupReceipts += OrthogonalizationGroupReceipt(
+            key = key,
+            sourceRows = rows.map(sourceRows),
+            parentTrials = if parentTrials.isEmpty then Vector.empty else rows.map(parentTrials),
+            referenceRank = qr.rank,
+            sourceNorm = sourceNorm,
+            residualNorm = residualNorm,
+            outcome = outcome
+          )
+        groupIndex += 1
+
+      failed match
+        case Some(_) => ()
+        case None =>
+          val updated = targetEvent.copy(
+            value = scalafim.fmri.hrf.linalg.Mat.unsafe(targetEvent.value.rows, targetEvent.value.cols, residualData)
+          )
+          current = current.updated(targetColumn.continuousEventIndex, updated)
+          receipts += OrthogonalizationStepReceipt(targetId, predecessors, groupReceipts.result())
+      targetIndex += 1
+
+    failed match
+      case Some(error) => Left(error)
+      case None =>
+        val lowered = continuousEvents.zipWithIndex.foldLeft(events) {
+          case (result, ((originalEventIndex, _), continuousEventIndex)) =>
+            result.updated(originalEventIndex, current(continuousEventIndex))
+        }
+        Right(
+          OrthogonalizedEvents(
+            lowered,
+            Vector(OrthogonalizationReceipt(policy, receipts.result()))
+          )
+        )
+
+  private def orthogonalizationGroups(
+      events: Vector[Event],
+      blockIds: Vector[Int],
+      scope: OrthogonalizationScope,
+      term: String
+  ): Either[DesignError, Vector[(String, Vector[Int])]] =
+    scope match
+      case OrthogonalizationScope.WholeTerm =>
+        Right(if blockIds.isEmpty then Vector.empty else Vector("whole-term" -> blockIds.indices.toVector))
+      case OrthogonalizationScope.WithinRun =>
+        Right(groupIndices(blockIds.map(run => s"run-${run + 1}")))
+      case OrthogonalizationScope.WithinCells(factors) =>
+        val categorical = events.collect { case event: CategoricalEvent => FactorId.unsafe(event.varName) -> event }.toMap
+        factors.find(factor => !categorical.contains(factor)) match
+          case Some(missing) =>
+            Left(DesignError.InvalidOrthogonalization(term, s"scope factor '${missing.value}' is absent from the term"))
+          case None =>
+            val scopedEvents = factors.flatMap(categorical.get)
+            val keys = blockIds.indices.map { row =>
+              factors.zip(scopedEvents).map { case (factor, event) =>
+                s"${factor.value}=${event.levels(event.codes(row))}"
+              }.mkString("cell:", ",", "")
+            }.toVector
+            Right(groupIndices(keys))
+
+  private def groupIndices(keys: Vector[String]): Vector[(String, Vector[Int])] =
+    keys.zipWithIndex.groupBy(_._1).toVector.sortBy(_._1).map { case (key, rows) =>
+      key -> rows.map(_._2).sorted
+    }
+
+  private def bindModulatorRows(
+      events: Vector[ContinuousEvent],
+      columns: Vector[ModulatorColumn],
+      rows: Vector[Int]
+  ): scalafim.fmri.hrf.linalg.Mat =
+    val out = new Array[Double](rows.length * columns.length)
+    var outRow = 0
+    while outRow < rows.length do
+      val sourceRow = rows(outRow)
+      var columnIndex = 0
+      while columnIndex < columns.length do
+        val column = columns(columnIndex)
+        val event = events(column.continuousEventIndex)
+        out(outRow * columns.length + columnIndex) = event.value(sourceRow, column.columnIndex)
+        columnIndex += 1
+      outRow += 1
+    scalafim.fmri.hrf.linalg.Mat.unsafe(rows.length, columns.length, out)
+
+  private def selectModulatorRows(
+      events: Vector[ContinuousEvent],
+      column: ModulatorColumn,
+      rows: Vector[Int]
+  ): scalafim.fmri.hrf.linalg.Mat =
+    val event = events(column.continuousEventIndex)
+    val out = new Array[Double](rows.length)
+    var outRow = 0
+    while outRow < rows.length do
+      val sourceRow = rows(outRow)
+      out(outRow) = event.value(sourceRow, column.columnIndex)
+      outRow += 1
+    scalafim.fmri.hrf.linalg.Mat.unsafe(rows.length, 1, out)
+
+  private def residualize(
+      qr: QrDecomposition,
+      target: scalafim.fmri.hrf.linalg.Mat
+  ): scalafim.fmri.hrf.linalg.Mat =
+    val out = target.data.clone()
+    qr.applyQtInPlace(out, target.cols)
+    var row = 0
+    while row < qr.rank do
+      var column = 0
+      while column < target.cols do
+        out(row * target.cols + column) = 0.0
+        column += 1
+      row += 1
+    qr.applyQInPlace(out, target.cols)
+    scalafim.fmri.hrf.linalg.Mat.unsafe(target.rows, target.cols, out)
+
+  private def writeModulatorRows(
+      destination: Array[Double],
+      columns: Int,
+      targetColumn: Int,
+      rows: Vector[Int],
+      values: scalafim.fmri.hrf.linalg.Mat
+  ): Unit =
+    require(values.cols == 1, "internal: residualized modulator must be a single column")
+    var outRow = 0
+    while outRow < rows.length do
+      destination(rows(outRow) * columns + targetColumn) = values(outRow, 0)
+      outRow += 1
+
+  private def frobeniusNorm(values: Array[Double]): Double =
+    var sum = 0.0
+    var index = 0
+    while index < values.length do
+      sum += values(index) * values(index)
+      index += 1
+    math.sqrt(sum)
+
+  private def centerEvent(
+      event: ContinuousEvent,
+      request: CenteringRequest,
+      blockIds: Vector[Int]
+  ): Either[DesignError, (ContinuousEvent, CenteringReceipt)] =
+    for
+      _ <- request.policy.validate
+      requestedModulator = ModulatorId.unsafe(request.source.value)
+      matchingColumns = event.modulatorIds.zipWithIndex.collect {
+        case (modulator, column) if modulator == requestedModulator => column
+      }
+      targetColumn <- matchingColumns match
+        case Vector(column) => Right(column)
+        case Vector() =>
+          Left(
+            DesignError.InvalidSchema(
+              s"centering source '${request.source.value}' is not represented by continuous event '${event.varName}'"
+            )
+          )
+        case columns =>
+          Left(
+            DesignError.InvalidSchema(
+              s"centering source '${request.source.value}' identifies ${columns.length} columns in continuous event '${event.varName}'"
+            )
+          )
+      centered <- centerEventColumn(event, request, blockIds, requestedModulator, targetColumn)
+    yield centered
+
+  private def centerEventColumn(
+      event: ContinuousEvent,
+      request: CenteringRequest,
+      blockIds: Vector[Int],
+      requestedModulator: ModulatorId,
+      targetColumn: Int
+  ): Either[DesignError, (ContinuousEvent, CenteringReceipt)] =
+    val n = event.value.rows
+    val keys: Vector[String] =
+      request.policy match
+        case CenteringPolicy.None => Vector.fill(n)("global")
+        case CenteringPolicy.GrandMean | CenteringPolicy.At(_) => Vector.fill(n)("global")
+        case CenteringPolicy.WithinRun =>
+          if request.groupKeys.length == n then request.groupKeys else blockIds.map(b => b.toString)
+        case CenteringPolicy.WithinFactor(_) | CenteringPolicy.WithinCells(_) =>
+          request.groupKeys
+
+    if keys.length != n then
+      Left(
+        DesignError.InvalidSchema(
+          s"centering grouping has ${keys.length} rows but modulator '${event.varName}' has $n"
+        )
+      )
+    else
+      val grouped =
+        if keys.isEmpty then Vector("empty-scope" -> Vector.empty[(String, Int)])
+        else keys.zipWithIndex.groupBy(_._1).toVector.sortBy(_._1)
+      val values = event.value.data
+      val centered = values.clone()
+      val groupReceipts = Vector.newBuilder[CenteringGroupReceipt]
+      val affected = Vector.newBuilder[Int]
+      var g = 0
+      while g < grouped.length do
+        val key = grouped(g)._1
+        val indices = grouped(g)._2.map(_._2).sorted
+        val finite = indices.filter(index => values(index * event.value.cols + targetColumn).isFinite)
+        val reference =
+          request.policy match
+            case CenteringPolicy.At(value) => Some(value)
+            case _ if finite.nonEmpty =>
+              Some(finite.map(index => values(index * event.value.cols + targetColumn)).sum / finite.length.toDouble)
+            case _ => None
+        val outcome =
+          if indices.isEmpty then CenteringOutcome.EmptyScope
+          else if finite.isEmpty then CenteringOutcome.AllNonFinite
+          else if reference.exists(ref => finite.forall(index => values(index * event.value.cols + targetColumn) == ref)) then CenteringOutcome.Constant
+          else CenteringOutcome.Applied
+
+        reference.foreach { ref =>
+          var j = 0
+          while j < finite.length do
+            val index = finite(j)
+            val offset = index * event.value.cols + targetColumn
+            centered(offset) = values(offset) - ref
+            affected += index
+            j += 1
+        }
+        groupReceipts += CenteringGroupReceipt(
+          key = key,
+          eventIndices = indices,
+          finiteEventIndices = finite,
+          center = reference,
+          outcome = outcome
+        )
+        g += 1
+
+      val receipt =
+        CenteringReceipt(
+          modulator = requestedModulator,
+          source = request.source,
+          policy = request.policy,
+          groups = groupReceipts.result(),
+          affectedEvents = affected.result().distinct.sorted
+        )
+      Right(
+        (
+          event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(n, event.value.cols, centered)),
+          receipt
+        )
+      )
+
+  private final case class SanitizedEvents(
+      events: Vector[Event],
+      diagnostics: Vector[EventModelDiagnostic],
+      missingValues: Vector[MissingValueResolution]
+  )
+
+  private def sanitizeContinuousEvents(
+      events: Vector[Event],
+      termTag: Option[String],
+      policy: MissingValuePolicy,
+      provenance: Vector[EventRowProvenance]
+  ): Either[DesignError, SanitizedEvents] =
+    val termLabel = termTag.getOrElse("term")
+    val diagnostics = Vector.newBuilder[EventModelDiagnostic]
+    val missingValues = Vector.newBuilder[MissingValueResolution]
+
+    val cleaned = Vector.newBuilder[Event]
+    var eventPosition = 0
+    while eventPosition < events.length do
+      val event = events(eventPosition)
+      event match
+        case e: ContinuousEvent =>
+          val m = e.value
+          var out = m.data
+          var copied = false
+
+          var c = 0
+          while c < m.cols do
+            var hasNonFinite = false
+            var firstMissingRow: Option[Int] = None
+            var r = 0
+            while r < m.rows do
+              val idx = r * m.cols + c
+              val v = m.data(idx)
+              if !v.isFinite then
+                hasNonFinite = true
+                if firstMissingRow.isEmpty then firstMissingRow = Some(r)
+                val column = e.columnTags.lift(c).getOrElse(s"${e.varName}_${c + 1}")
+                val modulator = e.modulatorIds(c)
+                missingValues += MissingValueResolution(
+                  modulator = modulator,
+                  eventIndex = r,
+                  policy = policy.label,
+                  action = policy match
+                    case MissingValuePolicy.ZeroContribution  => "zero-contribution"
+                    case MissingValuePolicy.ImputeConstant(_) => "imputed-constant"
+                    case MissingValuePolicy.DropFromTerm      => "dropped-event"
+                    case MissingValuePolicy.Reject            => "rejected",
+                  column = Some(column),
+                  source = provenance.lift(r)
+                )
+                policy match
+                  case MissingValuePolicy.Reject =>
+                    return Left(DesignError.MissingModulatorValue(termLabel, column, r, policy.label))
+                  case MissingValuePolicy.DropFromTerm =>
+                    return Left(DesignError.InvalidSchema("drop-from-term must remove non-finite rows before sanitization"))
+                  case MissingValuePolicy.ZeroContribution =>
+                    if !copied then
+                      out = m.data.clone()
+                      copied = true
+                    out(idx) = 0.0
+                  case MissingValuePolicy.ImputeConstant(value) =>
+                    if !copied then
+                      out = m.data.clone()
+                      copied = true
+                    out(idx) = value
+              r += 1
+
+            if hasNonFinite then
+              val colLabel =
+                if m.cols == 1 then e.varName
+                else e.columnTags.lift(c).getOrElse(s"${e.varName}_${c + 1}")
+              diagnostics += EventModelDiagnostic(
+                EventModelDiagnosticKind.NonFiniteModulator,
+                termLabel,
+                s"NA or non-finite values detected in continuous modulator '$colLabel' in term '$termLabel'; policy=${policy.label}",
+                eventIndex = firstMissingRow,
+                column = Some(colLabel)
+              )
+            c += 1
+
+          cleaned += (if copied then e.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(m.rows, m.cols, out)) else e)
+
+        case other => cleaned += other
+      eventPosition += 1
+
+    Right(SanitizedEvents(cleaned.result(), diagnostics.result(), missingValues.result()))
+
+  private def nonFiniteRows(events: Vector[Event]): Vector[Boolean] =
+    val n = events.headOption.map(_.nEvents).getOrElse(0)
+    Vector.tabulate(n) { row =>
+      events.exists {
+        case e: ContinuousEvent =>
+          var col = 0
+          var found = false
+          while col < e.value.cols && !found do
+            found = !e.value.data(row * e.value.cols + col).isFinite
+            col += 1
+          found
+        case _ => false
+      }
+    }
+
+  private def missingValueResolutions(
+      events: Vector[Event],
+      policy: MissingValuePolicy,
+      action: String,
+      provenance: Vector[EventRowProvenance]
+  ): Vector[MissingValueResolution] =
+    val out = Vector.newBuilder[MissingValueResolution]
+    var eventIndex = 0
+    while eventIndex < events.headOption.map(_.nEvents).getOrElse(0) do
+      events.foreach {
+        case e: ContinuousEvent =>
+          var col = 0
+          while col < e.value.cols do
+            val value = e.value.data(eventIndex * e.value.cols + col)
+            if !value.isFinite then
+              out += MissingValueResolution(
+                modulator = e.modulatorIds(col),
+                eventIndex = eventIndex,
+                policy = policy.label,
+                action = action,
+                column = e.columnTags.lift(col),
+                source = provenance.lift(eventIndex)
+              )
+            col += 1
+        case _ => ()
+      }
+      eventIndex += 1
+    out.result()
 
   private def degenerateModulatorDiagnostics(term: EventTerm, tol: Double = 1e-8): Vector[EventModelDiagnostic] =
     val termLabel = term.termTag.getOrElse("term")
@@ -800,6 +1946,7 @@ object EventModelBuilder:
           val colLabel =
             if m.cols == 1 then e.varName
             else e.columnTags.lift(c).getOrElse(s"${e.varName}_${c + 1}")
+          val modulator = e.modulatorIds(c)
 
           var nFinite = 0
           var min = Double.PositiveInfinity
@@ -826,7 +1973,12 @@ object EventModelBuilder:
             else None
 
           msg.foreach { m =>
-            out += EventModelDiagnostic(EventModelDiagnosticKind.DegenerateModulator, termLabel, m)
+            out += EventModelDiagnostic(
+              EventModelDiagnosticKind.DegenerateModulator,
+              termLabel,
+              m,
+              column = Some(modulator.value)
+            )
           }
           c += 1
 
@@ -1002,24 +2154,17 @@ object EventModelBuilder:
     if args.length != 2 then throw new IllegalArgumentException(s"subset: '$op' expects 2 arguments, got ${args.length}")
     (args(0).value, args(1).value)
 
-  private def subsetTerm(
-      events: Vector[Event],
-      onsets: Vector[Seconds],
-      durs: Vector[Seconds],
-      blockIds: Vector[Int],
-      keep: Vector[Boolean]
-  ): (Vector[Event], Vector[Seconds], Vector[Seconds], Vector[Int]) =
-    require(onsets.length == keep.length, "subset: onsets/mask length mismatch")
-    require(durs.length == keep.length, "subset: durations/mask length mismatch")
-    require(blockIds.length == keep.length, "subset: blockIds/mask length mismatch")
+  private def subsetTerm(rows: TermRows, keep: Vector[Boolean]): TermRows =
+    require(rows.onsets.length == keep.length, "subset: rows/mask length mismatch")
     val idx = keep.iterator.zipWithIndex.collect { case (true, i) => i }.toVector
 
-    val onS = idx.map(onsets)
-    val duS = idx.map(durs)
-    val blS = idx.map(blockIds)
-
-    val evS = events.map(ev => subsetEvent(ev, idx, keep))
-    (evS, onS, duS, blS)
+    TermRows(
+      events = rows.events.map(ev => subsetEvent(ev, idx, keep)),
+      onsets = idx.map(rows.onsets),
+      durations = idx.map(rows.durations),
+      blockIds = idx.map(rows.blockIds),
+      sourceRows = idx.map(rows.sourceRows)
+    )
 
   private def subsetEvent(ev: Event, idx: Vector[Int], keep: Vector[Boolean]): Event =
     ev match
@@ -1100,44 +2245,93 @@ object EventModelBuilder:
   private def toEvents(
       exprs: Vector[ArgValue],
       data: DataTable,
-      termTag: Option[String]
+      termTag: Option[String],
+      factorLevels: FactorLevelRegistry,
+      blockIds: Vector[Int]
   ): Either[DesignError, Vector[EventExpression]] =
     val out = Vector.newBuilder[EventExpression]
     var i = 0
     while i < exprs.length do
-      toEvent(data, exprs(i), termTag) match
+      toEvent(data, exprs(i), termTag, factorLevels, blockIds) match
         case Left(error)       => return Left(error)
         case Right(expression) => out += expression
       i += 1
     Right(out.result())
 
-  private def toEvent(data: DataTable, expr: ArgValue, termTag: Option[String]): Either[DesignError, EventExpression] =
+  private def toEvent(
+      data: DataTable,
+      expr: ArgValue,
+      termTag: Option[String],
+      factorLevels: FactorLevelRegistry,
+      blockIds: Vector[Int]
+  ): Either[DesignError, EventExpression] =
     expr match
       case ArgValue.Ident(id) =>
         data.column(id).flatMap {
-          case Column.Strings(v) => Right(Event.factor(v, id.value))
-          case Column.Doubles(v) => Right(Event.variable(v, id.value))
-          case Column.Ints(v)    => Right(Event.variable(v.map(_.toDouble), id.value))
-          case Column.Bools(v)   => Right(Event.factor(v.map(_.toString), id.value))
+          case Column.Strings(v) =>
+            factorEventOr(id, v, factorLevels)
+          case Column.Doubles(v) =>
+            factorLevels.get(FactorId.unsafe(Names.sanitize(id.value, allowDot = true))) match
+              case Some(_) => factorEventOr(id, v.map(canonicalNumericLevel), factorLevels)
+              case None    => Right(Event.variable(v, id.value))
+          case Column.Ints(v) =>
+            factorLevels.get(FactorId.unsafe(Names.sanitize(id.value, allowDot = true))) match
+              case Some(_) => factorEventOr(id, v.map(_.toString), factorLevels)
+              case None    => Right(Event.variable(v.map(_.toDouble), id.value))
+          case Column.Bools(v) =>
+            factorEventOr(id, v.map(_.toString), factorLevels)
           case other =>
             Left(DesignError.InvalidColumnType(id.value, "usable as an event variable", other.typeName))
         }.map(EventExpression(_, Vector.empty))
       case ArgValue.Call(fun, args) =>
-        evalBasisCall(data, fun, args, termTag)
+        evalBasisCall(data, fun, args, termTag, factorLevels, blockIds)
       case other =>
         Left(DesignError.FormulaBinding(s"Unsupported event expression: $other"))
 
-  /** Basis calls the formula grammar understands, for [[DesignError.UnknownBasisFunction]]. */
+  private def factorEventOr(
+      id: ColumnId,
+      values: Vector[String],
+      factorLevels: FactorLevelRegistry
+  ): Either[DesignError, Event] =
+    val factor = FactorId.unsafe(Names.sanitize(id.value, allowDot = true))
+    factorLevels.get(factor) match
+      case Some(levelSet) => Event.factorWithLevels(values, id.value, levelSet)
+      case None           => Right(Event.factor(values, id.value))
+
+  private def canonicalNumericLevel(value: Double): String =
+    val raw = value.toString
+    val normalized =
+      if raw.endsWith(".0") then raw.dropRight(2)
+      else raw.replace(".0E", "E").replace(".0e", "e")
+    if normalized == "-0" then "0" else normalized
+
+  /** Event/basis calls the formula grammar understands, for [[DesignError.UnknownBasisFunction]]. */
   private val basisCalls: Vector[String] =
-    Vector("scale", "standardized", "robustscale", "poly", "bspline", "scalewithin")
+    Vector(
+      "modulators",
+      "scale",
+      "standardized",
+      "robustscale",
+      "poly",
+      "bspline",
+      "scalewithin",
+      "center",
+      "center_at",
+      "center_within",
+      "center_within_run"
+    )
 
   private def evalBasisCall(
       data: DataTable,
       funName: String,
       args: Vector[Arg],
-      termTag: Option[String]
+      termTag: Option[String],
+      factorLevels: FactorLevelRegistry,
+      blockIds: Vector[Int]
   ): Either[DesignError, EventExpression] =
     funName.trim.toLowerCase match
+      case "modulators" =>
+        modulatorFamilyExpression(data, args, termTag, factorLevels, blockIds)
       case "scale" =>
         requireNumeric1(data, args, "Scale").flatMap { (xVar, xs) =>
           basisExpression(ParametricBasis.Scale.fitWithDiagnostics(xs, argName = xVar.value), termTag)
@@ -1177,8 +2371,120 @@ object EventModelBuilder:
             termTag
           )
         yield expression
+      case "center" =>
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "Center")
+          _ <- requireArgumentCount(args, expected = 1, ctx = "Center")
+          _ <- CenteringPolicy.GrandMean.validate
+        yield EventExpression(
+          Event.variable(xs, xVar.value),
+          Vector.empty,
+          Vector(CenteringRequest(xVar, CenteringPolicy.GrandMean))
+        )
+      case "center_at" =>
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "CenterAt")
+          _ <- requireArgumentCount(args, expected = 2, ctx = "CenterAt")
+          value <- requireCenterValue(args, ctx = "CenterAt")
+          policy = CenteringPolicy.At(value)
+          _ <- policy.validate
+        yield EventExpression(
+          Event.variable(xs, xVar.value),
+          Vector.empty,
+          Vector(CenteringRequest(xVar, policy))
+        )
+      case "center_within_run" =>
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "CenterWithinRun")
+          _ <- requireArgumentCount(args, expected = 1, ctx = "CenterWithinRun")
+          _ <-
+            if blockIds.length == xs.length then Right(())
+            else Left(DesignError.InvalidSchedule(s"CenterWithinRun block ids have length ${blockIds.length} but expected ${xs.length}"))
+        yield EventExpression(
+          Event.variable(xs, xVar.value),
+          Vector.empty,
+          Vector(CenteringRequest(xVar, CenteringPolicy.WithinRun, blockIds.map(_.toString)))
+        )
+      case "center_within" =>
+        for
+          (xVar, xs) <- requireNumeric1(data, args, "CenterWithin")
+          groupVars <- requireGroupArgs(args, ctx = "CenterWithin")
+          groups <- groupValues(data, groupVars)
+          factors = groupVars.map(v => FactorId.unsafe(Names.sanitize(v.value, allowDot = true)))
+          policy = if factors.length == 1 then CenteringPolicy.WithinFactor(factors.head) else CenteringPolicy.WithinCells(factors)
+          _ <- policy.validate
+        yield EventExpression(
+          Event.variable(xs, xVar.value),
+          Vector.empty,
+          Vector(CenteringRequest(xVar, policy, groups))
+        )
       case _ =>
         Left(DesignError.UnknownBasisFunction(funName, basisCalls))
+
+  private def modulatorFamilyExpression(
+      data: DataTable,
+      args: Vector[Arg],
+      termTag: Option[String],
+      factorLevels: FactorLevelRegistry,
+      blockIds: Vector[Int]
+  ): Either[DesignError, EventExpression] =
+    if args.isEmpty then
+      Left(DesignError.FormulaBinding("modulators(...) requires at least one numeric expression"))
+    else if args.exists(_.name.nonEmpty) then
+      Left(DesignError.FormulaBinding("modulators(...) accepts ordered positional expressions only"))
+    else
+      val members = Vector.newBuilder[(ModulatorId, ContinuousEvent, Vector[EventModelDiagnostic], Vector[CenteringRequest])]
+      var failed: Option[DesignError] = None
+      var index = 0
+      while index < args.length && failed.isEmpty do
+        args(index).value match
+          case ArgValue.Call(fun, _) if fun.trim.equalsIgnoreCase("modulators") =>
+            failed = Some(DesignError.FormulaBinding("modulators(...) cannot be nested"))
+          case value =>
+            toEvent(data, value, termTag, factorLevels, blockIds) match
+              case Left(error) => failed = Some(error)
+              case Right(expression) =>
+                expression.event match
+                  case event: ContinuousEvent if event.value.cols == 1 =>
+                    event.modulatorIds match
+                      case Vector(modulator) =>
+                        members += ((modulator, event, expression.diagnostics, expression.centering))
+                      case identities =>
+                        failed = Some(
+                          DesignError.InvalidSchema(
+                            s"modulators(...) expression ${index + 1} has ${identities.length} scientific identities for one numerical column"
+                          )
+                        )
+                  case event: ContinuousEvent =>
+                    failed = Some(
+                      DesignError.FormulaBinding(
+                        s"modulators(...) expression ${index + 1} realizes ${event.value.cols} columns; each member must realize exactly one"
+                      )
+                    )
+                  case event: CategoricalEvent =>
+                    failed = Some(
+                      DesignError.InvalidColumnType(
+                        event.varName,
+                        "a continuous modulator expression",
+                        "categorical"
+                      )
+                    )
+        index += 1
+
+      failed match
+        case Some(error) => Left(error)
+        case None =>
+          val values = members.result()
+          val columns = values.map { case (modulator, event, _, _) =>
+            modulator -> matCol(event.value, 0)
+          }
+          Event.modulatorFamily(columns, termTag.fold("modulators")(_ + "_modulators")).map { event =>
+            EventExpression(
+              event = event,
+              diagnostics = values.flatMap(_._3),
+              centering = values.flatMap(_._4)
+            )
+          }
 
   private def basisExpression[A <: ParametricBasis](
       fitEither: Either[BasisFitError, BasisFit[A]],
@@ -1207,6 +2513,60 @@ object EventModelBuilder:
       xVar <- requireIdentArg(args, pos = 0, ctx = ctx)
       xs <- data.get[Double](xVar)
     yield (xVar, xs)
+
+  private def requireArgumentCount(args: Vector[Arg], expected: Int, ctx: String): Either[DesignError, Unit] =
+    if args.length == expected then Right(())
+    else Left(DesignError.FormulaBinding(s"$ctx expects $expected argument${if expected == 1 then "" else "s"}, found ${args.length}"))
+
+  private def requireCenterValue(args: Vector[Arg], ctx: String): Either[DesignError, Double] =
+    val candidate =
+      args.drop(1).collectFirst { case Arg(Some("value"), value) => value }
+        .orElse(args.drop(1).collectFirst { case Arg(None, value) => value })
+    candidate match
+      case Some(ArgValue.Num(value)) if value.isFinite => Right(value)
+      case Some(ArgValue.Num(value)) => Left(DesignError.FormulaBinding(s"$ctx reference value must be finite, got $value"))
+      case Some(ArgValue.Ident(id)) =>
+        Left(DesignError.FormulaBinding(s"$ctx reference value must be a numeric literal, found '${id.value}'"))
+      case Some(other) => Left(DesignError.FormulaBinding(s"$ctx reference value must be numeric, found $other"))
+      case None => Left(DesignError.FormulaBinding(s"$ctx requires a numeric reference value"))
+
+  private def requireGroupArgs(args: Vector[Arg], ctx: String): Either[DesignError, Vector[ColumnId]] =
+    if args.length < 2 then
+      Left(DesignError.FormulaBinding(s"$ctx requires an x column and at least one grouping factor"))
+    else
+      val out = Vector.newBuilder[ColumnId]
+      var i = 1
+      while i < args.length do
+        args(i) match
+          case Arg(None, ArgValue.Ident(id)) => out += id
+          case other => return Left(DesignError.FormulaBinding(s"$ctx grouping args must be identifiers, found $other"))
+        i += 1
+      Right(out.result())
+
+  private def groupValues(
+      data: DataTable,
+      columns: Vector[ColumnId]
+  ): Either[DesignError, Vector[String]] =
+    val values = Vector.newBuilder[Vector[String]]
+    var i = 0
+    while i < columns.length do
+      toFactorStrings(data, columns(i)) match
+        case Left(error) => return Left(error)
+        case Right(xs)   => values += xs
+      i += 1
+    val columns0 = values.result()
+    val n = columns0.headOption.map(_.length).getOrElse(0)
+    if columns0.exists(_.length != n) then
+      Left(DesignError.InvalidSchema("centering grouping columns must have equal row counts"))
+    else
+      Right(
+        Vector.tabulate(n) { row =>
+          columns0.map { column =>
+            val value = column(row)
+            s"${value.length}:$value"
+          }.mkString("|")
+        }
+      )
 
   private def requireIdentArg(args: Vector[Arg], pos: Int, ctx: String): Either[DesignError, ColumnId] =
     args.lift(pos) match
@@ -1337,5 +2697,11 @@ object EventModelBuilder:
         columnNames = term.columnNames :+ meanName,
         columnRoles = term.resolvedColumnRoles :+ EventTermColumnRole.TrialAggregate,
         columnConditions = term.columnConditions :+ Some("mean"),
-        columnBasisIx = term.columnBasisIx :+ None
+        columnBasisIx = term.columnBasisIx :+ None,
+        columnCells =
+          (if term.columnCells.isEmpty then Vector.fill(m.cols)(None) else term.columnCells) :+ Some(scalafim.fmri.design.CellKey.empty),
+        columnModulators =
+          (if term.columnModulators.isEmpty then Vector.fill(m.cols)(None) else term.columnModulators) :+ None,
+        columnScales =
+          (if term.columnScales.isEmpty then Vector.fill(m.cols)(HrfColumnScale.identity) else term.columnScales) :+ HrfColumnScale.identity
       )

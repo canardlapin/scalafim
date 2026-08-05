@@ -1,7 +1,6 @@
 package scalafim.spatial
 
 import scalafim.image.{DMat, NeuroSpace, SpatialAxis, VoxelCoord}
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DemandSuite extends munit.FunSuite:
@@ -19,7 +18,7 @@ class DemandSuite extends munit.FunSuite:
   private def linearValue[A](result: Either[LinearMapError, A]): A =
     result match
       case Right(value) => value
-      case Left(error) => fail(error.message)
+      case Left(error) => fail(error.getMessage)
 
   private def planValue[A](result: Either[ViewPlanError, A]): A =
     result match

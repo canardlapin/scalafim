@@ -1,0 +1,132 @@
+{
+  "inputs": {
+    "degenerate": {
+      "x": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "y": [
+        2,
+        4,
+        6,
+        8,
+        10,
+        12
+      ]
+    },
+    "whole_term": {
+      "x": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "y": [
+        1,
+        5,
+        6,
+        9,
+        9,
+        12
+      ]
+    },
+    "within_cells": {
+      "cell": [
+        "A",
+        "A",
+        "B",
+        "B"
+      ],
+      "x": [
+        1,
+        2,
+        1,
+        2
+      ],
+      "y": [
+        1,
+        7,
+        5,
+        5
+      ]
+    }
+  },
+  "outputs": {
+    "degenerate_residual": [
+      -1.1513044283252838e-15,
+      -9.209159776006343e-17,
+      -1.3813739664009516e-16,
+      -1.8418319552012687e-16,
+      8.288562711054692e-16,
+      -2.762747932801903e-16
+    ],
+    "whole_term_residual": [
+      -0.9999999999999988,
+      0.9999999999999999,
+      -2.333370953598864e-16,
+      0.9999999999999998,
+      -0.9999999999999993,
+      -4.666741907197728e-16
+    ],
+    "within_cells_residual": [
+      -1.9999999999999996,
+      0.9999999999999999,
+      2,
+      -1
+    ]
+  },
+  "receipt": {
+    "accepted_differences": [
+      "R fmridesign does not implicitly apply ScalaFIM ordered modulator policies; base-R QR supplies only the independent numerical reference.",
+      "R model-frame na.action defaults are not used; ScalaFIM missing-value behavior is selected explicitly by MissingValuePolicy."
+    ],
+    "comparison_policy": {
+      "alignment": "identity_only_no_post_hoc_lag_shift",
+      "correlation_role": "diagnostic_only_requires_error_and_norm_bounds",
+      "disagreement_triage": "truth_boundary_local",
+      "tolerance_scope": "comparison_local_no_global_override"
+    },
+    "conventions": {
+      "dtype": "float64",
+      "grouping": "independent QR residualization within each declared cell",
+      "json_encoding": "sorted-key UTF-8 JSON",
+      "missing_values": "no R na.action policy is imported into ScalaFIM",
+      "orthogonalization": "ordered residualization without an implicit intercept"
+    },
+    "environment": {
+      "generator_sha256": "3474fc731dc4ad3628b25d0e86f538bee384764b3e6da9da248517854efed6f4",
+      "locale": "C",
+      "lock_path": "tools/r-parity/reference-lock.json",
+      "lock_sha256": "8fcccdb83ab6ad29da592218dcf9816534c7df896a058bad218f3e28f86f5548",
+      "runtime": "R 4.5.1"
+    },
+    "hashes": {
+      "generated_scala_sha256": "c67364d135217a1c3914cb4d95cf46ea04a008828dd95c7d3237d2f51f55a563",
+      "inputs_sha256": "536bed50f0285e72f863b34e701042d7fc75e633598da351cf84d212e293391c",
+      "outputs_sha256": "e797cf631ce4ed4cbcb8dc0428519bdb777b8df1d363f42c7fb14c8c1037acce"
+    },
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
+    "schema_version": "scalafim-r-policy-fixture/v1",
+    "source": {
+      "producer": "tools/r-parity/generate_modulator_policy_receipt.R",
+      "r_version": "4.5.1",
+      "reference": "base R qr and qr.resid",
+      "stats_version": "4.5.1"
+    }
+  },
+  "scenario_id": "design.modulator-policies.v1",
+  "schema_version": "scalafim-r-policy-fixture/v1",
+  "source": {
+    "producer": "tools/r-parity/generate_modulator_policy_receipt.R",
+    "r_version": "4.5.1",
+    "reference": "base R qr and qr.resid",
+    "stats_version": "4.5.1"
+  },
+  "truth_boundary": "design_construction"
+}

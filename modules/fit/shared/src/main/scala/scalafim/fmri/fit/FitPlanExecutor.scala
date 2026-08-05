@@ -7,6 +7,7 @@ import scalafim.dataset.{
   SynchronousFmriDataset
 }
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
+import scalafim.fmri.design.{RunCoefficientProjection, RunIndex as DesignRunIndex, ScanIndex}
 import scalafim.fmri.model.FitPlan
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,6 +46,29 @@ object FitPlanExecutor:
         .map(FitChunkPlan.mapDatasetError)
       result <- interpreter.fit(plan, series)
     yield result
+
+  /** Execute a plan whose result is required for coefficient-level inference.
+    *
+    * The method uses the same executor as [[fit]] and reports a typed error when
+    * the selected engine returns a runwise, fixed-effects, or trialwise result.
+    */
+  def fitDense(
+      plan: FitPlan
+  ): Either[FitError, DenseFmriFitResult] =
+    fitDense(plan, DataSelection.All)
+
+  def fitDense(
+      plan: FitPlan,
+      selection: DataSelection
+  ): Either[FitError, DenseFmriFitResult] =
+    fit(plan, selection).flatMap(requireDense)
+
+  def fitDense(
+      reader: DatasetSeriesReader,
+      plan: FitPlan,
+      selection: DataSelection = DataSelection.All
+  ): Either[FitError, DenseFmriFitResult] =
+    fit(reader, plan, selection).flatMap(requireDense)
 
   def unsafeFit(
       reader: DatasetSeriesReader,
@@ -182,6 +206,11 @@ object FitPlanExecutor:
         FitError.InvalidFitAxis("dataset reader", error.message)
       )
 
+  private def requireDense(result: FmriFitResult): Either[FitError, DenseFmriFitResult] =
+    result match
+      case dense: DenseFmriFitResult => Right(dense)
+      case other                     => Left(FitError.NonDenseFitResult(other.engine))
+
   private[fit] def fitBlockInput(
       plan: FitPlan,
       series: FmriSeries,
@@ -190,28 +219,84 @@ object FitPlanExecutor:
   ): Either[FitError, FitBlockInput] =
     preparedFitBlockInput(plan, series, partitions, lssDesign).map(_.input)
 
-  private[fit] def preparedFitBlockInput(
+  private[fit] def fitBlockInput(
+      plan: FitPlan,
+      series: FmriSeries,
+      partitions: Vector[RunPartition],
+      preparation: ResolvedResponsePreparation
+  ): Either[FitError, FitBlockInput] =
+    preparedFitBlockInput(
+      plan = plan,
+      series = series,
+      partitions = partitions,
+      lssDesign = None,
+      resolvedPreparation = Some(preparation)
+    ).map(_.input)
+
+  private[fit] def rawFitBlockInput(
       plan: FitPlan,
       series: FmriSeries,
       partitions: Vector[RunPartition] = Vector.empty,
       lssDesign: Option[Either[FitError, LssBlockDesign]] = None
-  ): Either[FitError, PreparedFitBlockInput] =
+  ): Either[FitError, FitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, series.timepoints)
       response <- MatrixAdapters.responseBlock(series)
+      runwiseProjections <- runwiseProjections(plan, series.timepoints, partitions)
       lss <- lssDesign match
         case None        => Right(None)
         case Some(value) => value.map(design => Some(design): Option[LssBlockDesign])
-      input = FitBlockInput(
-        design = design,
-        response = response,
-        voxelIndices = series.voxelIndices,
-        timepoints = series.timepoints,
-        partitions = partitions,
-        lssDesign = lss
-      )
-      prepared <- ResponsePreparationPlan.fromPlan(plan).prepare(input)
+    yield FitBlockInput(
+      design = design,
+      response = response,
+      voxelIndices = series.voxelIndices,
+      timepoints = series.timepoints,
+      partitions = partitions,
+      lssDesign = lss,
+      coefficientAxis = plan.coefficientAxis,
+      runwiseProjections = runwiseProjections
+    )
+
+  private[fit] def preparedFitBlockInput(
+      plan: FitPlan,
+      series: FmriSeries,
+      partitions: Vector[RunPartition] = Vector.empty,
+      lssDesign: Option[Either[FitError, LssBlockDesign]] = None,
+      resolvedPreparation: Option[ResolvedResponsePreparation] = None
+  ): Either[FitError, PreparedFitBlockInput] =
+    for
+      input <- rawFitBlockInput(plan, series, partitions, lssDesign)
+      prepared <- resolvedPreparation match
+        case Some(value) => value.prepare(input)
+        case None        => ResponsePreparationPlan.fromPlan(plan).prepare(input)
     yield prepared
+
+  private def runwiseProjections(
+      plan: FitPlan,
+      timepoints: IndexedSeq[Int],
+      partitions: Vector[RunPartition]
+  ): Either[FitError, Vector[RunCoefficientProjection]] =
+    plan.engine match
+      case scalafim.fmri.model.FitEngine.RunwiseLeastSquares | scalafim.fmri.model.FitEngine.FixedEffects =>
+        plan.model.designSchema match
+          case None => Right(Vector.empty)
+          case Some(schema) if schema.columns.exists(_.origin.isInstanceOf[scalafim.fmri.design.StructuralColumnOrigin.Legacy]) =>
+            // Pre-schema models retain the old common-axis runwise behavior.
+            Right(Vector.empty)
+          case Some(schema) =>
+            val selectedRows = timepoints.map { timepoint => ScanIndex.unsafeOneBased(timepoint + 1) }.toVector
+            val out = Vector.newBuilder[RunCoefficientProjection]
+            var index = 0
+            while index < partitions.length do
+              val partition = partitions(index)
+              val run = DesignRunIndex.unsafeOneBased(partition.runIndex + 1)
+              schema.runwiseProjection(run, selectedRows) match
+                case Left(error) =>
+                  return Left(FitError.InvalidFitAxis("runwise coefficient projection", error.message))
+                case Right(projection) => out += projection
+              index += 1
+            Right(out.result())
+      case _ => Right(Vector.empty)
 
   private[fit] def denseResult(plan: FitPlan, block: DenseFitBlockResult): DenseFmriFitResult =
     DenseFmriFitResult(
@@ -226,7 +311,9 @@ object FitPlanExecutor:
       summary = plan.summary,
       olsDiagnostics = block.olsDiagnostics,
       autocorrelation = block.autocorrelation,
-      robustDiagnostics = block.robustDiagnostics
+      robustDiagnostics = block.robustDiagnostics,
+      coefficientAxis = block.coefficientAxis,
+      preparationProvenance = block.preparationProvenance
     )
 
   private[fit] def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =
@@ -243,7 +330,7 @@ object FitPlanExecutor:
         fixed = fixed,
         options = LssOptions(eps = plan.config.lss.eps, rankTol = plan.config.lss.rankTol)
       )
-    yield LssBlockDesign(prepared)
+    yield LssBlockDesign(prepared, trialColumns = termCols.trials)
 
   private final case class TrialwiseTerm(key: String, index: Int, term: ConvolvedTerm)
   private final case class TrialColumnSelection(trials: Vector[Int], aggregates: Vector[Int])

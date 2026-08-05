@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.NuisanceCheck
 import scalafim.fmri.design.baseline.Intercept
@@ -89,5 +87,5 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     assertEquals(plan.model.baselineModel.nuisanceReport.map(_.droppedByBlock).get, Vector(Vector("motion_y_dup", "constant_conf")))
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)
-    assertEqualsDouble(result.coefficient("nuis#01_1", 0).get, 5.0, 1e-10)
+    assertEqualsDouble(result.coefficient("motion_y", 0).get, 5.0, 1e-10)
   }

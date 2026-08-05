@@ -1,7 +1,7 @@
 package scalafim.fmri.fit
 
 import scalafim.fmri.model.{LatentSketchConfig, LatentSketchMethod, LowRankComponentSpec}
-import gale.linalg.{DMat, DVec, Matrix, Vec}
+import gale.linalg.{DMat, DVec, Matrix}
 import gale.spectral.{SingularOrder, SingularSelection, Svds}
 
 final class LatentSketchPrepared private[fit] (
@@ -39,7 +39,8 @@ final class LatentSketchPrepared private[fit] (
         voxelIndices = input.voxelIndices,
         timepoints = input.timepoints,
         engine = scalafim.fmri.model.FitEngine.LatentSketch,
-        olsDiagnostics = Some(latentFit.diagnostics)
+        olsDiagnostics = Some(latentFit.diagnostics),
+        coefficientAxis = input.coefficientAxis
       )
 
 object LatentSketchPrepared:

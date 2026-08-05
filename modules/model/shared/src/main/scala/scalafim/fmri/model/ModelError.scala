@@ -1,6 +1,7 @@
 package scalafim.fmri.model
 
 import scalafim.fmri.design.DesignError
+import scalafim.fmri.design.baseline.BaselineError
 
 enum ModelError:
   case InvalidId(kind: String, value: String, reason: String)
@@ -14,6 +15,8 @@ enum ModelError:
   case MatrixRowMismatch(name: String, expected: Int, actual: Int)
   case TimepointOutOfBounds(name: String, value: Int, size: Int)
   case UnknownLssTrialTerm(term: String, known: Vector[String])
+  case DesignFailure(error: DesignError)
+  case BaselineFailure(error: BaselineError)
   case BuildFailed(detail: String)
 
   def message: String =
@@ -41,6 +44,10 @@ enum ModelError:
       case UnknownLssTrialTerm(term, known) =>
         val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
         s"unknown LSS trial term '$term'$suffix"
+      case DesignFailure(error) =>
+        error.message
+      case BaselineFailure(error) =>
+        error.message
       case BuildFailed(detail) =>
         detail
 
@@ -50,4 +57,7 @@ object ModelError:
     BuildFailed(msg)
 
   def fromDesignError(error: DesignError): ModelError =
-    BuildFailed(error.message)
+    DesignFailure(error)
+
+  def fromBaselineError(error: BaselineError): ModelError =
+    BaselineFailure(error)

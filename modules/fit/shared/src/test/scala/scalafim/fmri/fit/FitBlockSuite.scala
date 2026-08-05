@@ -3,6 +3,9 @@ package scalafim.fmri.fit
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine}
+import scalafim.fmri.design.{DesignSchema, ModelSource}
+import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.linalg.Mat
 import gale.linalg.DMat
 
 class FitBlockSuite extends munit.FunSuite:
@@ -42,6 +45,32 @@ class FitBlockSuite extends munit.FunSuite:
     val merged = DenseFitBlockResult.merge(Vector(left, right)).toOption.get
 
     assertDenseClose(merged, full, tol = 1e-12)
+  }
+
+  test("dense blocks tolerate scale-aware cutoff differences with the same rank partition") {
+    val design = DesignMatrix.unsafe(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble)))
+    )
+    val response = ResponseBlock.unsafe(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(i.toDouble, (i + 1).toDouble)))
+    )
+    val left = denseKernel(
+      FitBlockInput(design, selectResponse(response, Vector(0)), Vector(0), timepoints),
+      FitEngine.OrdinaryLeastSquares
+    )
+    val right0 = denseKernel(
+      FitBlockInput(design, selectResponse(response, Vector(1)), Vector(1), timepoints),
+      FitEngine.OrdinaryLeastSquares
+    )
+    val diagnostics0 = right0.olsDiagnostics.getOrElse(fail("OLS block should retain diagnostics"))
+    val report0 = diagnostics0.rankReport
+    val right = right0.copy(
+      olsDiagnostics = Some(
+        diagnostics0.copy(rankReport = report0.copy(tolerance = report0.tolerance * 2.0))
+      )
+    )
+
+    assert(DenseFitBlockResult.merge(Vector(left, right)).isRight)
   }
 
   test("fixed AR(1) GLS block results merge with identical diagnostics") {
@@ -173,6 +202,45 @@ class FitBlockSuite extends munit.FunSuite:
     assert(DenseFitBlockResult.merge(Vector(block, incompatible)).left.toOption.exists {
       case FitError.IncompatibleFitBlocks(detail) => detail.contains("timepoints")
       case _                                      => false
+    })
+  }
+
+  test("dense block merge preserves and validates the structural coefficient axis") {
+    val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(1.0, i.toDouble))))
+    val response = ResponseBlock.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(timepoints.map(i => Vector(i.toDouble, (i + 1).toDouble))))
+    val frame = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0))
+    val schema = DesignSchema.legacy(
+      Mat.fromRows(timepoints.map(i => Vector(1.0, i.toDouble))),
+      frame,
+      Vector("task", "baseline"),
+      ModelSource.Event
+    )
+    val changed = DesignSchema.legacy(
+      Mat.fromRows(timepoints.map(i => Vector(2.0, i.toDouble))),
+      frame,
+      Vector("task", "baseline"),
+      ModelSource.Event
+    )
+    val axis = schema.coefficientAxis
+    val changedAxis = changed.coefficientAxis
+    val left = denseKernel(
+      FitBlockInput(design, selectResponse(response, Vector(0)), Vector(0), timepoints, coefficientAxis = Some(axis)),
+      FitEngine.OrdinaryLeastSquares
+    )
+    val right = denseKernel(
+      FitBlockInput(design, selectResponse(response, Vector(1)), Vector(1), timepoints, coefficientAxis = Some(axis)),
+      FitEngine.OrdinaryLeastSquares
+    )
+    val merged = DenseFitBlockResult.merge(Vector(left, right)).toOption.get
+    assertEquals(merged.coefficientAxis, Some(axis))
+
+    val incompatible = denseKernel(
+      FitBlockInput(design, selectResponse(response, Vector(1)), Vector(1), timepoints, coefficientAxis = Some(changedAxis)),
+      FitEngine.OrdinaryLeastSquares
+    )
+    assert(DenseFitBlockResult.merge(Vector(left, incompatible)).left.toOption.exists {
+      case FitError.IncompatibleFitBlocks(detail) => detail.contains("structural coefficient axis")
+      case _ => false
     })
   }
 

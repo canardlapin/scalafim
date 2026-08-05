@@ -1,7 +1,5 @@
 package scalafim.fmri.fit.scenarios
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 class ScenarioHarnessSuite extends munit.FunSuite:
 
   test("clean observations produce a CI-passable scenario"):

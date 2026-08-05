@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
@@ -84,6 +82,8 @@ class RunwiseOlsSuite extends munit.FunSuite:
 
     val result = RunwiseOls.fit(design, response, partitions)
     result match
+      case Left(FitError.RunwiseFitFailed(0, FitError.RankDeficientDesign(report))) =>
+        assert(report.deficient)
       case Left(FitError.RunwiseFitFailed(0, FitError.SingularDesign(_))) => assert(true)
       case other => fail(s"unexpected result: $other")
   }

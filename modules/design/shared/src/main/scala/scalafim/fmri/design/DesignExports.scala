@@ -751,13 +751,6 @@ object DesignExports:
       else Left(DesignExportError.EmptySelection(s"selector: $selector"))
     }
 
-  private def selectEventColumns(
-      model: EventModel,
-      termName: Option[String],
-      selector: DesignColumnSelector
-  ): Vector[Int] =
-    unsafe(selectEventColumnsEither(model, termName, selector))
-
   private def selectEventColumnsEither(
       model: EventModel,
       termName: Option[String],
@@ -826,9 +819,6 @@ object DesignExports:
           modulationId = None
         )
       }
-
-  private def selectBaselineTerm(model: BaselineModel, termName: Option[String], zeroTol: Double): String =
-    unsafe(selectBaselineTermEither(model, termName, zeroTol))
 
   private def selectBaselineTermEither(
       model: BaselineModel,
