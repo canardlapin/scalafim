@@ -55,7 +55,10 @@ final case class ResamplingPlan private (
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, NeuroVol[Double]] =
     val actual = GridSpec.fromSpace(volume.space)
-    if actual != source then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
+    if GridCompatibility
+        .exact(source.toNeuroSpace, actual.toNeuroSpace)
+        .isLeft
+    then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
     else
       val sampled =
         method match
@@ -82,7 +85,10 @@ final case class ResamplingPlan private (
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, NeuroVec[Double]] =
     val actual = GridSpec.fromSpace(vec.space)
-    if actual != source then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
+    if GridCompatibility
+        .exact(source.toNeuroSpace, actual.toNeuroSpace)
+        .isLeft
+    then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
     else
       method match
         case Resample.Method.Nearest =>

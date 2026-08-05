@@ -70,7 +70,11 @@ class TypedImageCoreSuite extends munit.FunSuite:
 
     assertEquals(volume.shape, SpatialDims(2, 3, 4), clue = "")
     assertEquals(series.nVolumes, 5, clue = "")
-    assertEquals(series.volumeSpace, volume, clue = "")
+    assertEquals(
+      GridCompatibility.volume(series.volumeSpace, volume),
+      Right(()),
+      clue = ""
+    )
     assert(VolumeSpace.make(series.toNeuroSpace).isLeft, clue = "4D space should not be a VolumeSpace")
     assert(SeriesSpace.make(volume.toNeuroSpace).isLeft, clue = "3D space should not be a SeriesSpace")
     assert(
@@ -97,7 +101,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assert(volumeCanonical.grid.frame eq roundTripCanonical.grid.frame)
     assertEquals(seriesCanonical.nonSpatialAxes(0).map(_.kind), Some(image4s.AxisKind.Time))
     assertEquals(
-      volumeCanonical.grid.frame.metadata.convention,
+      volumeCanonical.grid.frame.convention,
       CoordinateConvention.RAS
     )
   }
@@ -115,7 +119,11 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertEquals(volume.ndim, 3, clue = "")
     assertEquals(mapped.linear(1), 21, clue = "")
     assertEquals(series.typedSpace.toNeuroSpace.ndim, 4, clue = "")
-    assertEquals(series.volume(0).space, volume.space, clue = "")
+    assertEquals(
+      GridCompatibility.exact(series.volume(0).space, volume.space),
+      Right(()),
+      clue = ""
+    )
     assertEquals(series.sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).linear(1), volume.linear(1), clue = "")

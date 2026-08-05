@@ -1,5 +1,6 @@
 package scalafim.spatial
 
+import scalafim.image.GridCompatibility
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
 
 import scala.collection.mutable
@@ -239,7 +240,7 @@ object Field:
     val descriptor = source.descriptor
     if descriptor.domain != domain.id then
       Left(SpatialError.FieldSourceDomainMismatch(descriptor.id, domain.id, descriptor.domain))
-    else if descriptor.geometry != domain.geometry then
+    else if !sameGeometry(descriptor.geometry, domain.geometry) then
       Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
     else if descriptor.rows != domain.nElements then
       Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, domain.nElements, descriptor.rows))
@@ -253,6 +254,14 @@ object Field:
           provenance = FieldProvenance.root(domain.id)
         )
       )
+
+  private def sameGeometry(expected: SamplingGeometry, actual: SamplingGeometry): Boolean =
+    (expected, actual) match
+      case (SamplingGeometry.Volume(expectedSpace, expectedMask), SamplingGeometry.Volume(actualSpace, actualMask)) =>
+        GridCompatibility.spatial(expectedSpace, actualSpace).isRight &&
+          expectedMask == actualMask
+      case _ =>
+        expected == actual
 
   private[spatial] def viewOf(
     field: Field,

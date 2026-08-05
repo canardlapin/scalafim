@@ -82,7 +82,15 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labelVolume).toOption.get
     val plan = spatial.plan
 
-    assertEquals(spatial.domain, SpatialFeatureDomain.VolumeLabels(volumeSpace, Set(0)))
+    spatial.domain match
+      case SpatialFeatureDomain.VolumeLabels(actual, background) =>
+        assertEquals(background, Set(0))
+        assertEquals(
+          GridCompatibility.exact(actual, volumeSpace),
+          Right(())
+        )
+      case other =>
+        fail(s"expected volume-label domain, found $other")
     assertEquals(plan.kind, FeatureSetKind.Region)
     assertEquals(plan.featureSets.map(_.id.value), Vector(1, 2))
     assertEquals(plan.featureSets.map(_.label), Vector(Some("1"), Some("2")))

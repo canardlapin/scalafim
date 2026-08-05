@@ -75,15 +75,15 @@ class GraphDifferentialSuite extends munit.FunSuite:
       val projected = RegionGraph.relation(atlas, connectivity)
       val relationPairs =
         (for
-          source <- projected.relation.from.points
+          source <- projected.relation.from.indices
           target <- projected.relation
             .row(source)
-            .pointsInDomainOrder
+            .indicesInDomainOrder
           if source.value < target.value
         yield
           (
-            projected.regionIds.at(source).value,
-            projected.regionIds.at(target).value
+            projected.regionIds(source).value,
+            projected.regionIds(target).value
           )).toSet
       val optimizedPairs =
         RegionGraph

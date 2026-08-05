@@ -19,7 +19,7 @@ for the module map; this file is the working contract.
 
 - Toolchain: Scala **3.7.4**, sbt **1.11.7**, [MUnit](https://scalameta.org/munit/) for tests.
 - Commands:
-  - `sbt compileAll` / `sbt testAll` — every module, both platforms.
+  - `sbt scalafimCompileAll` / `sbt scalafimTestAll` — every module, both platforms.
   - `sbt <module>{JVM,JS}/test` — one platform, e.g. `sbt hrfJVM/test`, `sbt imageJS/test`.
 - **A feature is not done until it compiles and its tests pass on _both_ JVM and JS.**
   Never verify only one platform. Run the tests — evidence over assertion.
@@ -112,9 +112,9 @@ pinned GitHub source dependencies (`ravel`, `gale`, `locus4s`, `image4s`,
 `graph4s`, `multivar`, `intaglio`, `zarr4s`, plus transitive `bids4s`) into
 `~/.sbt/1.0/staging` — those clones are cached in the snapshot. Standard build,
 test, and per-module commands live in `README.md` ("Common Commands") and the
-`compileAll`/`testAll`/`examplesTest` aliases in `build.sbt`.
+`scalafimCompileAll`/`scalafimTestAll`/`examplesTest` aliases in `build.sbt`.
 
-- **Do NOT run `sbt testAll` in one shot on this VM.** It links and runs all ~35
+- **Do NOT run `sbt scalafimTestAll` in one shot on this VM.** It links and runs all ~35
   Scala.js module test suites inside a single long-lived sbt JVM (`.jvmopts`
   pins `-Xmx6g`), spawning a Node runner per JS module and accumulating heap
   until the ~15 GiB VM exhausts memory and thrashes so hard the whole machine
@@ -122,7 +122,7 @@ test, and per-module commands live in `README.md` ("Common Commands") and the
   batches so sbt exits and frees memory between batches** — e.g. a handful of
   `<module>JVM/test` in one `sbt` invocation, then a handful of `<module>JS/test`
   in another. JVM suites are cheap; the JS link + Node runners are the memory
-  hog. `sbt compileAll` (both platforms) is fine and stays well under memory; it
+  hog. `sbt scalafimCompileAll` (both platforms) is fine and stays well under memory; it
   is also warning-clean and serves as the lint gate (`-deprecation -feature
   -unchecked`).
 - If a run does wedge the VM, recover by killing the sbt launcher by its
@@ -131,7 +131,7 @@ test, and per-module commands live in `README.md` ("Common Commands") and the
 - Headless VM: the JavaFX modules/examples (`imageViewJavafxJVM`,
   `surfaceViewJavafxJVM`, and the `examples/surface-view` JavaFX app) need
   OpenJFX natives + a display and are not runnable here; they are excluded from
-  `compileAll`/`testAll` anyway. The core library and its Java2D/Canvas/Three.js
+  `scalafimCompileAll`/`scalafimTestAll` anyway. The core library and its Java2D/Canvas/Three.js
   view backends need no display.
 - Quick end-to-end smoke of core functionality (atlas → MVPA) without a GUI:
   `sbt "workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow"`

@@ -13,11 +13,16 @@ enum GridMismatch:
 
 object GridCompatibility:
   def exact(expected: NeuroSpace, actual: NeuroSpace): Either[GridMismatch, Unit] =
-    if expected == actual then Right(())
+    if sameCanonicalSpace(expected, actual, includeNonSpatial = true) then Right(())
     else Left(GridMismatch.Image(expected, actual))
 
   def volume(expected: VolumeSpace, actual: VolumeSpace): Either[GridMismatch, Unit] =
-    if expected == actual then Right(())
+    if sameCanonicalSpace(
+        expected.toNeuroSpace,
+        actual.toNeuroSpace,
+        includeNonSpatial = false
+      )
+    then Right(())
     else Left(GridMismatch.Volume(expected, actual))
 
   def spatial(expected: NeuroSpace, actual: NeuroSpace): Either[GridMismatch, Unit] =
@@ -41,3 +46,24 @@ object GridCompatibility:
 
   private[scalafim] def requireSpatial(expected: NeuroSpace, actual: NeuroSpace): Unit =
     spatial(expected, actual).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private def sameCanonicalSpace(
+      expected: NeuroSpace,
+      actual: NeuroSpace,
+      includeNonSpatial: Boolean
+  ): Boolean =
+    val left = NeuroSpace.canonical(expected)
+    val right = NeuroSpace.canonical(actual)
+    val leftFrame = left.grid.frame
+    val rightFrame = right.grid.frame
+    val alignedFrames =
+      leftFrame.sameRuntimeOwnerAs(rightFrame) ||
+        leftFrame.samePersistentKeyAs(rightFrame)
+    val sameGrid =
+      left.spatialRank == right.spatialRank &&
+        alignedFrames &&
+        left.grid.shape == right.grid.shape &&
+        left.grid.indexToFrame.rowMajor == right.grid.indexToFrame.rowMajor
+    sameGrid &&
+      (!includeNonSpatial ||
+        left.nonSpatialAxes.records == right.nonSpatialAxes.records)

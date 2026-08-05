@@ -14,7 +14,7 @@ import scalafim.dataset.{
   VoxelSelection
 }
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{DMat, GridCompatibility, Mask, NeuroSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -240,7 +240,8 @@ class LnaDatasetSuite extends munit.FunSuite:
         dataset
           .backendFor(root.relativize(root.resolve("sub-01/func/sub-01_task-rest_space-MNI_bold.lna.h5")), backend.id)
           .fold(err => fail(err.message), identity)
-      assertEquals(relativeBackend.shape, backend.shape)
+      assert(GridCompatibility.exact(relativeBackend.shape.space, backend.shape.space).isRight)
+      assertEquals(relativeBackend.shape.timepoints, backend.shape.timepoints)
 
       val series =
         backend.readEither(

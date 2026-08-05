@@ -462,7 +462,7 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaManifestCodec
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
 
     val failed = LnaPipeline.reconstruct(archive)
     assert(failed.isLeft)
@@ -605,7 +605,7 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaManifestCodec
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
   }
 
   test("validation catches missing explicit latent pieces") {
@@ -638,7 +638,7 @@ class LnaCoreSuite extends munit.FunSuite:
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
 
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
   }
 
   test("quant rejects non-finite values") {

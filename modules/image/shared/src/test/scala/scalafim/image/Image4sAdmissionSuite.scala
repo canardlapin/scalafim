@@ -40,15 +40,12 @@ final class Image4sAdmissionSuite extends FunSuite:
       imported.transfer,
       Image4sStorageTransfer.CanonicalizedLegacy
     )
-    imported.sampled.fold(
-      _ => fail("expected a D3 sampled image"),
-      d3 =>
-        val ranked =
-          d3.value
-            .requireDataRank[3]
-            .fold(error => fail(error.message), identity)
-        assertEquals(ranked.logicalShape, shape)
-        assertEquals(ranked.grid.indexToFrame.rowMajor, affine.toRows.flatten)
-        assertEquals(ranked(1, 2, 3), 123.0)
-        assertEquals(ranked(0, 1, 2), 12.0)
-    )
+    assertEquals(imported.sampled.sampleSpace.spatialRank, 3)
+    val ranked =
+      imported.sampled
+        .requireDataRank[3]
+        .fold(error => fail(error.message), identity)
+    assertEquals(ranked.logicalShape, shape)
+    assertEquals(ranked.grid.indexToFrame.rowMajor, affine.toRows.flatten)
+    assertEquals(ranked(1, 2, 3), 123.0)
+    assertEquals(ranked(0, 1, 2), 12.0)

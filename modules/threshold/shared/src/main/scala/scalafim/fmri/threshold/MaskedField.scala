@@ -60,8 +60,8 @@ sealed abstract class MaskedField private[threshold] (
     while i < maskSpaceIndices.length do
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
-      val active = activeSpace.pointOption(idx).get
-      out(i) = activeToFull.mapping.at(active).value
+      val active = activeSpace.indexOption(idx).get
+      out(i) = activeToFull.mapping(active).value
       i += 1
     Right(out)
 

@@ -129,7 +129,7 @@ object RegionGraph:
       val rows =
         Iterator.tabulate(quotient.parcellation.parcels.size): source =>
           projected
-            .row(quotient.parcellation.parcels.pointOption(source).get)
+            .row(quotient.parcellation.parcels.indexOption(source).get)
             .ordinalsInDomainOrder
             .filter(_ != source)
             .iterator

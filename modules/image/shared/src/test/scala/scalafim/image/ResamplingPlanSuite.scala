@@ -30,7 +30,11 @@ class ResamplingPlanSuite extends munit.FunSuite:
       i += 1
 
   private def assertSameVec(actual: NeuroVec[Double], expected: NeuroVec[Double], tol: Double = 1e-10): Unit =
-    assertEquals(actual.space, expected.space, clue = "")
+    assertEquals(
+      GridCompatibility.exact(actual.space, expected.space),
+      Right(()),
+      clue = ""
+    )
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     assertEquals(actual.nVolumes, expected.nVolumes, clue = "")
     var i = 0

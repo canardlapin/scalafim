@@ -20,7 +20,7 @@ trait AtlasNetworkAssignment[P]:
   val parcelToNetwork: Surjection[P, N]
 
   def networkPoint(id: NetworkId): Option[Point[N]] =
-    networkIds.space.points.find(point => networkIds.at(point) == id)
+    networkIds.space.indices.find(index => networkIds(index) == id)
 
 trait AtlasNetworkParcellation[X]:
   type N
@@ -41,7 +41,7 @@ trait AtlasQuotient:
     parcellation.support
 
   final def parcelPoint(id: RegionId): Option[Point[P]] =
-    regionIds.space.points.find(point => regionIds.at(point) == id)
+    regionIds.space.indices.find(index => regionIds(index) == id)
 
   final def region(id: RegionId): Option[LocusRegion[X]] =
     parcelPoint(id).map(parcellation.fiber)
@@ -60,8 +60,8 @@ trait AtlasQuotient:
 
   final def networkRegion(id: NetworkId): Option[LocusRegion[X]] =
     networkParcellation.flatMap: network =>
-      network.networkIds.space.points
-        .find(point => network.networkIds.at(point) == id)
+      network.networkIds.space.indices
+        .find(index => network.networkIds(index) == id)
         .map(network.parcellation.fiber)
 
 trait VolumeAtlasQuotient extends AtlasQuotient:
@@ -82,7 +82,7 @@ object AtlasQuotient:
     val packedVolumeDomain =
       VolumeDomain.semantic(
         SpaceKey.unsafe(
-          s"scalafim:atlas:volume:$spatialSemanticId:${volumeSpace.hashCode}:${volumeSpace.nVoxels}"
+          s"scalafim:atlas:volume:$spatialSemanticId:${volumeGeometryIdentity(volumeSpace)}"
         ),
         volumeSpace
       )
@@ -121,6 +121,18 @@ object AtlasQuotient:
       val metadata: IndexedField[Parcel, AtlasRegionMetadata] = fields._2
       val displayOrder: Selection[Parcel] = fields._3
       val networkAssignment: Option[AtlasNetworkAssignment[Parcel]] = networks
+
+  private def volumeGeometryIdentity(space: VolumeSpace): String =
+    val dimensions = space.dims.mkString(",")
+    val affineBits =
+      space.toNeuroSpace.trans.data.iterator
+        .map: value =>
+          val normalized = if value == 0.0 then 0.0 else value
+          java.lang.Long.toHexString(
+            java.lang.Double.doubleToLongBits(normalized)
+          )
+        .mkString(",")
+    s"shape=$dimensions:affine=$affineBits"
 
   def surface(
       spatialSemanticId: String,

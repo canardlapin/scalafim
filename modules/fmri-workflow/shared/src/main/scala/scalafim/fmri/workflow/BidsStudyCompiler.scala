@@ -2,6 +2,7 @@ package scalafim.fmri.workflow
 
 import bids4s.*
 import scalafim.dataset.{DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
+import scalafim.image.GridCompatibility
 
 final case class ImageHeaderDescriptor(shape: DatasetShape)
 
@@ -326,7 +327,7 @@ object BidsStudyCompiler:
 
     val referenceSpace = runs.head.header.shape.space
     runs.foreach { run =>
-      if run.header.shape.space != referenceSpace then
+      if GridCompatibility.exact(run.header.shape.space, referenceSpace).isLeft then
         issues += CatalogIssue(
           CatalogIssueCode.IncompatibleGeometry,
           Some(run.bold.path),
@@ -337,7 +338,8 @@ object BidsStudyCompiler:
           case None =>
             val detail = imageHeaders.failure(mask.path).map(reason => s": $reason").getOrElse("")
             issues += CatalogIssue(CatalogIssueCode.MissingHeader, Some(mask.path), s"mask header is unavailable$detail")
-          case Some(maskHeader) if maskHeader.shape.space != run.header.shape.space =>
+          case Some(maskHeader)
+              if GridCompatibility.exact(maskHeader.shape.space, run.header.shape.space).isLeft =>
             issues += CatalogIssue(CatalogIssueCode.IncompatibleGeometry, Some(mask.path), "mask and BOLD spatial geometry differ")
           case Some(_) => ()
       }

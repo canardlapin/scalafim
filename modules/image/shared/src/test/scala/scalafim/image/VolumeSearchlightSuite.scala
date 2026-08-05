@@ -31,7 +31,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val radius = SearchlightRadius.make(1.0).toOption.get
     val relation =
       VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight.neighborhoods
-    val center = domain.finiteSpace.pointOption(4).get
+    val center = domain.finiteSpace.indexOption(4).get
 
     assertEquals(
       relation.row(center).ordinalsInDomainOrder.toVector,
@@ -48,7 +48,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val field = domain.indexedField(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight
-    val center = domain.finiteSpace.pointOption(4).get
+    val center = domain.finiteSpace.indexOption(4).get
     val materialized =
       VolumeSearchlight.materialize[S, Int](domain, searchlight, center, field).toOption.get
     val legacy =
@@ -67,7 +67,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val field = domain.indexedField(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight
-    val center = domain.finiteSpace.pointOption(4).get
+    val center = domain.finiteSpace.indexOption(4).get
     val geometry = searchlight.neighborhoods.row(center)
     val nonZero = domain.supportWhere(field)(_ != 0).toOption.get
     val materialized =

@@ -87,7 +87,10 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
     assert(header.sform.nonEmpty)
     assertEquals(header.preferredAffine, header.sform)
     assertEquals(volume.space.dims, Vector(4, 5, 6))
-    assertEquals(volume.space, header.space)
+    assertEquals(
+      GridCompatibility.exact(volume.space, header.space),
+      Right(())
+    )
   }
 
   test("file-to-reslice pixels match nibabel in every plane and display convention") {
