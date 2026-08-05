@@ -20,7 +20,6 @@ jobs:
     timeout-minutes: 30
     env:
       SCALAFIM_LAW_PROFILE: calibration
-      SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-laws-sbt
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -38,6 +37,8 @@ jobs:
 
       - name: Run the calibration profile
         shell: bash
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-laws-sbt
         run: |
           cache_root="$SCALAFIM_SBT_CACHE_ROOT"
           mkdir -p "$cache_root"

@@ -19,8 +19,6 @@ jobs:
     name: focused first-level JVM/Scala.js gates
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    env:
-      SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-sbt
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -37,14 +35,14 @@ jobs:
           node-version: "20"
 
       - name: Run manifest, fixture, JVM, and Scala.js gates
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-sbt
         run: bash tools/ci/first-level-gate.sh
 
   scientific-coverage:
     name: scoped first-level scientific coverage
     runs-on: ubuntu-24.04
     timeout-minutes: 45
-    env:
-      SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-coverage-sbt
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -56,4 +54,6 @@ jobs:
           java-version: "17"
 
       - name: Enforce per-module scientific coverage floors
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-coverage-sbt
         run: bash tools/ci/first-level-coverage.sh

@@ -18,9 +18,6 @@ jobs:
     name: HRF and fit JMH admission court
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    env:
-      SCALAFIM_BENCHMARK_OUT: ${{ runner.temp }}/first-level-benchmarks
-      SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-benchmark-sbt
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -32,6 +29,9 @@ jobs:
           java-version: "17"
 
       - name: Run HRF and fit admission benchmarks
+        env:
+          SCALAFIM_BENCHMARK_OUT: ${{ runner.temp }}/first-level-benchmarks
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-benchmark-sbt
         run: bash tools/ci/first-level-benchmark.sh
 
       - name: Upload raw JMH reports and admission receipt
