@@ -50,7 +50,17 @@ trait FitInterpreter:
       plan: FitPlan,
       chunks: IndexedSeq[FitBlockResult]
   ): Either[FitError, FmriFitResult] =
-    collect(chunks).flatMap(typed => merge(plan, typed))
+    val fittedBlocks = chunks.filter {
+      case _: ExcludedFitBlockResult => false
+      case _                         => true
+    }
+    for
+      excluded <- VoxelInferenceExclusions.combine(chunks.iterator.flatMap(_.fitExclusions))
+      result <-
+        if fittedBlocks.isEmpty then Left(FitError.AllVoxelsExcluded(excluded))
+        else collect(fittedBlocks).flatMap(typed => merge(plan, typed))
+      withExclusions <- FmriFitResults.mergeFitExclusions(result, excluded)
+    yield withExclusions
 
   protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[Block]]
 
@@ -60,7 +70,10 @@ private[fit] final case class PreparedFitContext private[fit] (
     private val combine: IndexedSeq[FitBlockResult] => Either[FitError, FmriFitResult]
 ):
   def fitChunk(series: FmriSeries): Either[FitError, FitBlockResult] =
-    runChunk(series)
+    runChunk(series) match
+      case Left(FitError.AllVoxelsExcluded(exclusions)) =>
+        Right(ExcludedFitBlockResult(exclusions.map(_.voxelIndex), series.timepoints, engine, exclusions))
+      case other => other
 
   def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
     combine(chunks)
@@ -182,7 +195,7 @@ object FitInterpreters:
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         prepared <- Gls
-          .prepare(input.design, input.response, partitions, plan.config.autocorrelation, series.voxelIndices)
+          .prepare(input.design, input.response, partitions, plan.config.autocorrelation, input.voxelIndices)
           .left
           .map(error => bindRankFailure(input, error))
       yield prepared
@@ -226,7 +239,8 @@ object FitInterpreters:
         engine = engine,
         summary = plan.summary,
         coefficientAxis = runwise.coefficientAxis,
-        preparationProvenance = runwise.preparationProvenance
+        preparationProvenance = runwise.preparationProvenance,
+        fitExclusions = runwise.fitExclusions
       )
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, Vector[RunPartition]] =
@@ -255,7 +269,8 @@ object FitInterpreters:
           engine = engine,
           summary = plan.summary,
           coefficientAxis = merged.coefficientAxis,
-          preparationProvenance = merged.preparationProvenance
+          preparationProvenance = merged.preparationProvenance,
+          fitExclusions = merged.fitExclusions
         )
       }
 
@@ -287,7 +302,8 @@ object FitInterpreters:
           engine = FitEngine.RunwiseLeastSquares,
           summary = plan.summary,
           coefficientAxis = runwise.coefficientAxis,
-          preparationProvenance = runwise.preparationProvenance
+          preparationProvenance = runwise.preparationProvenance,
+          fitExclusions = runwise.fitExclusions
         )
         fixed <- FixedEffects.combine(runwiseResult)
       yield fixed
@@ -319,7 +335,8 @@ object FitInterpreters:
           engine = FitEngine.RunwiseLeastSquares,
           summary = plan.summary,
           coefficientAxis = merged.coefficientAxis,
-          preparationProvenance = merged.preparationProvenance
+          preparationProvenance = merged.preparationProvenance,
+          fitExclusions = merged.fitExclusions
         )
         fixed <- FixedEffects.combine(runwise)
       yield fixed
@@ -346,7 +363,7 @@ object FitInterpreters:
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         prepared <- Robust
-          .prepare(input.design, input.response, partitions, series.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
+          .prepare(input.design, input.response, partitions, input.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
           .left
           .map(error => bindRankFailure(input, error))
       yield prepared
@@ -390,7 +407,8 @@ object FitInterpreters:
         engine = engine,
         summary = plan.summary,
         coefficientAxis = lss.coefficientAxis,
-        preparationProvenance = input.preparationProvenance
+        preparationProvenance = input.preparationProvenance,
+        fitExclusions = input.fitExclusions
       )
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, LssBlockDesign] =
@@ -420,7 +438,8 @@ object FitInterpreters:
           engine = engine,
           summary = plan.summary,
           coefficientAxis = merged.coefficientAxis,
-          preparationProvenance = merged.preparationProvenance
+          preparationProvenance = merged.preparationProvenance,
+          fitExclusions = merged.fitExclusions
         )
       }
 
@@ -444,7 +463,7 @@ object FitInterpreters:
       for
         sketch <- latentSketchConfig(plan)
         input <- FitPlanExecutor.fitBlockInput(plan, series)
-        prepared <- LatentSketchPrepared.prepare(input.design, input.response, series.voxelIndices, sketch)
+        prepared <- LatentSketchPrepared.prepare(input.design, input.response, input.voxelIndices, sketch)
       yield prepared
 
     def fitChunk(
@@ -485,7 +504,7 @@ object FitInterpreters:
         config <- reducedRankGlsConfig(plan)
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         designPartition <- reducedRankDesignPartition(plan)
-        prepared <- ReducedRankGlsPrepared.prepare(input.design, input.response, partitions, config, series.voxelIndices, designPartition)
+        prepared <- ReducedRankGlsPrepared.prepare(input.design, input.response, partitions, config, input.voxelIndices, designPartition)
       yield prepared
 
     def fitChunk(

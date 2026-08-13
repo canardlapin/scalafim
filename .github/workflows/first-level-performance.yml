@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   jmh-admission:
-    name: HRF and fit JMH admission court
+    name: HRF, AR, and fit JMH admission court
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -28,7 +28,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Run HRF and fit admission benchmarks
+      - name: Run HRF, AR, and fit admission benchmarks
         env:
           SCALAFIM_BENCHMARK_OUT: ${{ runner.temp }}/first-level-benchmarks
           SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-benchmark-sbt

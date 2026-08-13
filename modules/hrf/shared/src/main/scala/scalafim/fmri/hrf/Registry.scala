@@ -21,7 +21,8 @@ object Registry:
       width: Seconds = 0.0.s,
       precision: Seconds = 0.1.s,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      normalization: HrfNormalization = HrfNormalization.None
   ): Either[HrfSpecError, Hrf] =
     HrfSpec
       .fromName(
@@ -32,7 +33,8 @@ object Registry:
         width = width,
         precision = precision,
         summate = summate,
-        normalize = normalize
+        normalize = normalize,
+        normalization = normalization
       )
       .flatMap(_.toLegacyHrf)
 
@@ -44,7 +46,8 @@ object Registry:
       width: Seconds = 0.0.s,
       precision: Seconds = 0.1.s,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      normalization: HrfNormalization = HrfNormalization.None
   ): Hrf =
     getEither(
       name = name,
@@ -54,5 +57,6 @@ object Registry:
       width = width,
       precision = precision,
       summate = summate,
-      normalize = normalize
+      normalize = normalize,
+      normalization = normalization
     ).fold(err => throw new IllegalArgumentException(err.message), identity)

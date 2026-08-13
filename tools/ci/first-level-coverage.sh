@@ -14,7 +14,7 @@ sbt_args=(
   "-Dsbt.ivy.home=$sbt_cache_root/ivy"
   "-Dsbt.supershell=false"
 )
-modules=(hrfJVM designJVM modelJVM fitJVM)
+modules=(arJVM hrfJVM designJVM modelJVM fitJVM)
 
 echo "[first-level-coverage] enforcing per-module scientific coverage floors"
 for module in "${modules[@]}"; do

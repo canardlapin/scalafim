@@ -94,10 +94,39 @@ final case class Regressor private (
   def durations: Vector[Seconds] = events.map(_.durationSeconds)
   def amplitudes: Vector[Double] = events.map(_.amplitude)
 
+/** Immutable samples of one shared HRF kernel for repeated direct
+  * convolutions. The sample arrays stay encapsulated so callers cannot mutate
+  * the numerical plan between evaluations.
+  */
+private[scalafim] final class PreparedConvolutionKernel private[regressor] (
+    val hrf: Hrf,
+    val span: PositiveSeconds,
+    val precision: PositiveSeconds,
+    private[regressor] val fineColumns: Array[Array[Double]]
+):
+  def evaluate(regressor: Regressor, grid: Seq[Double]): Mat =
+    Regressor.evaluatePrepared(regressor, grid, this)
+
 object Regressor:
 
   enum EvalMethod:
     case Conv, FFT, Loop
+
+  private[scalafim] def prepareConvolution(
+      hrf: Hrf,
+      span: Seconds,
+      precision: Seconds
+  ): Either[TimeError, PreparedConvolutionKernel] =
+    for
+      span0 <- PositiveSeconds.fromSeconds(span, "span")
+      precision0 <- PositiveSeconds.fromSeconds(precision, "precision")
+    yield
+      new PreparedConvolutionKernel(
+        hrf = hrf,
+        span = span0,
+        precision = precision0,
+        fineColumns = hrfFineColumns(hrf, span0.seconds, precision0.value)
+      )
 
   private def recycleOrError[A](xs: Seq[A], n: Int, name: String): Either[RegressorError, Vector[A]] =
     if xs.length == n then Right(xs.toVector)
@@ -275,6 +304,36 @@ object Regressor:
       method: EvalMethod = EvalMethod.Conv,
       integration: Integration = Integration.Exact
   ): Mat =
+    evaluateImpl(reg, grid, precision, method, integration, prepared = None)
+
+  private[regressor] def evaluatePrepared(
+      reg: Regressor,
+      grid: Seq[Double],
+      prepared: PreparedConvolutionKernel
+  ): Mat =
+    require(reg.span.value == prepared.span.value, "prepared kernel span does not match regressor span")
+    reg.hrf match
+      case HrfAssignment.Shared(hrf) =>
+        require(hrf eq prepared.hrf, "prepared kernel HRF does not match regressor HRF")
+      case HrfAssignment.PerEvent(_) =>
+        throw new IllegalArgumentException("a shared prepared kernel cannot evaluate per-event HRFs")
+    evaluateImpl(
+      reg,
+      grid,
+      prepared.precision.value,
+      EvalMethod.Conv,
+      Integration.Exact,
+      prepared = Some(prepared)
+    )
+
+  private def evaluateImpl(
+      reg: Regressor,
+      grid: Seq[Double],
+      precision: Double,
+      method: EvalMethod,
+      integration: Integration,
+      prepared: Option[PreparedConvolutionKernel]
+  ): Mat =
     val dt = Seconds(precision)
     require(dt.value > 0.0, "`precision` must be > 0")
     require(grid.nonEmpty, "`grid` must be non-empty")
@@ -288,7 +347,8 @@ object Regressor:
     val onsetMin = sorted.head.value - reg.span.value
     val onsetMax = sorted.last.value
     val keepIdx = reg.onsets.indices.filter(i =>
-      reg.onsets(i).value >= onsetMin && reg.onsets(i).value <= onsetMax
+      reg.onsets(i).value + reg.durations(i).value >= onsetMin &&
+        reg.onsets(i).value <= onsetMax
     )
 
     if keepIdx.isEmpty then Mat.zeros(sorted.length, nb)
@@ -306,7 +366,8 @@ object Regressor:
         case (HrfAssignment.PerEvent(_), _) =>
           evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, eventIdx, dt, reg.summate, integration)
         case (HrfAssignment.Shared(hrf), EvalMethod.Conv) =>
-          evalConv(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
+          val fineColumns = prepared.map(_.fineColumns).getOrElse(hrfFineColumns(hrf, reg.span, dt.value))
+          evalConv(reg.span, sorted, ons, durs, amps, dt, reg.summate, fineColumns)
         case (HrfAssignment.Shared(hrf), EvalMethod.FFT) =>
           evalFft(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
 
@@ -359,7 +420,10 @@ object Regressor:
       val onset = onsets(e)
       // The one place absolute run time becomes displacement from an onset.
       val rel = grid.map(g => Lag.between(onset, g))
-      val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= span.value)
+      // A pulse of width `duration` widens the response support by that width:
+      // `(q_d * h)(lag)` can remain non-zero through `span + duration`.
+      val eventSpan = span.value + durations(e).value
+      val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= eventSpan)
       // A zero-amplitude event scales every basis value to zero, so it is
       // skipped here rather than dropped from the event vector.
       if validIdx.nonEmpty && amps(e) != 0.0 then
@@ -471,14 +535,14 @@ object Regressor:
     out
 
   private def evalConv(
-      hrf: Hrf,
       span: Seconds,
       grid: Array[Seconds],
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amps: Vector[Double],
       precision: Seconds,
-      summate: Boolean
+      summate: Boolean,
+      hrfFine: Array[Array[Double]]
   ): Mat =
     val dt = precision.value
     val start = grid.head.value - span.value
@@ -487,8 +551,7 @@ object Regressor:
     val end = math.max(grid.last.value, lastOnset + maxDur) + span.value
 
     val neural = buildDriveMeasure(onsets, durations, amps, summate, start, end, dt)
-    val hrfFine = hrfFineColumns(hrf, span, dt)
-    val nb = hrf.nbasis
+    val nb = hrfFine.length
     val nFine = neural.length
 
     val out = new Array[Double](grid.length * nb)

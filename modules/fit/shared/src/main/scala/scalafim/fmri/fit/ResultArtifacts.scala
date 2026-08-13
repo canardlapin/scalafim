@@ -127,7 +127,8 @@ final case class AnalysisProvenance(
     notes: Vector[String] = Vector.empty,
     coefficientAxis: Option[CoefficientAxis] = None,
     responsePreparation: Option[ResponsePreparationProvenance] = None,
-    rankReports: Vector[StructuralRankReport] = Vector.empty
+    rankReports: Vector[StructuralRankReport] = Vector.empty,
+    voxelStatuses: Option[Vector[VoxelFitStatusRecord]] = None
 ):
   require(columnNames.nonEmpty, "analysis provenance column names must be non-empty")
   require(source.trim.nonEmpty, "analysis provenance source must be non-empty")
@@ -137,6 +138,8 @@ final case class AnalysisProvenance(
   require(notes.forall(_.trim.nonEmpty), "analysis provenance notes must be non-empty")
   require(rankReports.forall(_.predictorCount == columnNames.length), "rank reports must match analysis columns")
   require(rankReports.forall(report => coefficientAxis.exists(_.designFingerprint == report.designFingerprint)), "rank reports require the matching structural coefficient axis")
+  require(voxelStatuses.forall(_.nonEmpty), "present voxel status provenance must be non-empty")
+  require(voxelStatuses.forall(records => records.map(_.voxelIndex).distinct.length == records.length), "voxel status provenance indices must be unique")
 
 object AnalysisProvenance:
   def fromResult(
@@ -164,6 +167,35 @@ object AnalysisProvenance:
           runwise.structuralRankReports.toOption.getOrElse(Vector.empty)
         case _ =>
           Vector.empty
+    val voxelStatuses =
+      val retained =
+        result match
+          case dense: DenseFmriFitResult =>
+            dense.voxelIndices
+              .zip(dense.resolvedVoxelStatuses)
+              .map(VoxelFitStatusRecord.apply)
+          case runwise: RunwiseFmriFitResult =>
+            runwise.voxelIndices.zipWithIndex.map { case (voxelIndex, position) =>
+              val statuses = runwise.runs.map(_.resolvedVoxelStatuses(position))
+              VoxelFitStatusRecord(voxelIndex, VoxelFitStatus.aggregate(statuses))
+            }
+          case fixed: FixedEffectsFmriFitResult =>
+            fixed.voxelIndices.map(VoxelFitStatusRecord(_, VoxelFitStatus.Estimable))
+          case patterned: PatternedFmriFitResult =>
+            patterned.voxelIndices.map { voxelIndex =>
+              val status = patterned.resultForVoxel(voxelIndex) match
+                case Some(dense: DenseFmriFitResult) =>
+                  dense.voxelStatus(voxelIndex).getOrElse(VoxelFitStatus.Estimable)
+                case Some(runwise: RunwiseFmriFitResult) =>
+                  val position = runwise.voxelIndices.indexOf(voxelIndex)
+                  VoxelFitStatus.aggregate(runwise.runs.map(_.resolvedVoxelStatuses(position)))
+                case _ => VoxelFitStatus.Estimable
+              VoxelFitStatusRecord(voxelIndex, status)
+            }
+          case _: LssFmriFitResult =>
+            Vector.empty
+      val records = retained ++ result.fitExclusions.map(_.statusRecord)
+      Option.when(records.nonEmpty)(records)
     AnalysisProvenance(
       engine = result.engine,
       summary = result.summary,
@@ -174,7 +206,8 @@ object AnalysisProvenance:
       notes = notes,
       coefficientAxis = result.coefficientAxis,
       responsePreparation = result.preparationProvenance,
-      rankReports = rankReports
+      rankReports = rankReports,
+      voxelStatuses = voxelStatuses
     )
 
 final case class StatMap private (
@@ -278,9 +311,20 @@ final case class ContrastMap(
     statistic: ContrastMapKind,
     map: StatMap,
     degreesOfFreedom: Option[ContrastDegreesOfFreedom],
-    hypothesis: Option[HypothesisMetadata] = None
+    hypothesis: Option[HypothesisMetadata] = None,
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
 ):
   require(map.kind == StatisticKind.Contrast(statistic), "contrast map statistic kind must match map kind")
+  require(excludedVoxels.map(_.voxelIndex).distinct.length == excludedVoxels.length, "contrast map exclusions must be unique")
+  require(excludedVoxels.forall(exclusion => !map.voxelIndices.contains(exclusion.voxelIndex)), "contrast map retained and excluded voxels must be disjoint")
+  require(
+    excludedVoxels.isEmpty || map.provenance.voxelStatuses.exists { records =>
+      excludedVoxels.forall { exclusion =>
+        records.exists(record => record.voxelIndex == exclusion.voxelIndex && record.status == exclusion.status)
+      }
+    },
+    "contrast map exclusions must agree with voxel status provenance"
+  )
   def contrast: String = contrastId.value
 
 object ContrastMap:
@@ -293,7 +337,8 @@ object ContrastMap:
       provenance: AnalysisProvenance,
       degreesOfFreedom: Option[ContrastDegreesOfFreedom] = None,
       hypothesis: Option[HypothesisMetadata] = None,
-      exportIntent: ResultExportIntent = ResultExportIntent.InMemory
+      exportIntent: ResultExportIntent = ResultExportIntent.InMemory,
+      excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
   ): Either[FitError, ContrastMap] =
     for
       id <- ContrastId(contrastId)
@@ -306,7 +351,7 @@ object ContrastMap:
         provenance = provenance,
         exportIntent = exportIntent
       )
-    yield ContrastMap(id, statistic, statMap, degreesOfFreedom, hypothesis)
+    yield ContrastMap(id, statistic, statMap, degreesOfFreedom, hypothesis, excludedVoxels)
 
   def fromTContrast(
       result: TContrastResult,
@@ -322,7 +367,18 @@ object ContrastMap:
         ContrastMapKind.TStatistic -> result.statistics
       )
     ) { case (kind, values) =>
-      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, result.hypothesis, exportIntent)
+      make(
+        contrastId = result.name,
+        statistic = kind,
+        values = values,
+        shape = shape,
+        selectedVoxels = result.selectedVoxels,
+        provenance = provenance,
+        degreesOfFreedom = df,
+        hypothesis = result.hypothesis,
+        exportIntent = exportIntent,
+        excludedVoxels = result.excludedVoxels
+      )
     }
 
   def fromFContrast(
@@ -342,7 +398,18 @@ object ContrastMap:
         ContrastMapKind.Estimate(row + 1) -> matrixRow(result.estimates, row)
       }
     buildAll(estimateMaps :+ (ContrastMapKind.FStatistic -> result.statistics)) { case (kind, values) =>
-      make(result.name, kind, values, shape, result.selectedVoxels, provenance, df, result.hypothesis, exportIntent)
+      make(
+        contrastId = result.name,
+        statistic = kind,
+        values = values,
+        shape = shape,
+        selectedVoxels = result.selectedVoxels,
+        provenance = provenance,
+        degreesOfFreedom = df,
+        hypothesis = result.hypothesis,
+        exportIntent = exportIntent,
+        excludedVoxels = result.excludedVoxels
+      )
     }
 
 final case class CoefficientCovarianceArtifact private (
@@ -436,6 +503,14 @@ final case class ResultManifest(
   require(parameters.forall(_.map.provenance == provenance), "parameter map provenance must match manifest")
   require(contrasts.forall(_.map.provenance == provenance), "contrast map provenance must match manifest")
   require(coefficientCovariance.forall(_.provenance == provenance), "coefficient covariance provenance must match manifest")
+  require(
+    contrasts.forall { contrast =>
+      contrasts
+        .filter(_.contrastId == contrast.contrastId)
+        .forall(_.excludedVoxels == contrast.excludedVoxels)
+    },
+    "maps for one contrast must carry the same voxel exclusions"
+  )
 
   def maps: Vector[StatMap] =
     parameters.map(_.map) ++ contrasts.map(_.map)

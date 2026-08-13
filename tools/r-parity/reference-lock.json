@@ -3,6 +3,12 @@
   "r": {
     "locale": "C",
     "packages": {
+      "fmriAR": {
+        "environment_variable": "FMRIAR_R",
+        "repository": "bbuchsbaum/fmriAR",
+        "revision": "f563f2df20264ffa7db9be116f11d631551e9132",
+        "version": "0.3.3"
+      },
       "fmridesign": {
         "environment_variable": "FMRIDESIGN_R",
         "repository": "bbuchsbaum/fmridesign",

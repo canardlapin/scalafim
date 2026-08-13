@@ -44,9 +44,17 @@ jobs:
         shell: bash
         run: |
           echo "r_version=$(jq -r '.r.version' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
+          echo "fmriar=$(jq -r '.r.packages.fmriAR.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmridesign=$(jq -r '.r.packages.fmridesign.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmrihrf=$(jq -r '.r.packages.fmrihrf.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
           echo "fmrireg=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out fmriAR at the locked revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: bbuchsbaum/fmriAR
+          ref: ${{ steps.lock.outputs.fmriar }}
+          path: reference/fmriAR
 
       - name: Check out fmridesign at the locked revision
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -87,14 +95,27 @@ jobs:
           install-pandoc: false
           install-quarto: false
 
+      - name: Install fmriAR dependencies
+        uses: r-lib/actions/setup-r-dependencies@aae88a2d9cd3d63571eb05980b09f44611788515 # v2-branch
+        with:
+          working-directory: reference/fmriAR
+          dependencies: '"hard"'
+          packages: |
+            deps::.
+            any::jsonlite
+          install-pandoc: false
+          install-quarto: false
+
       - name: Install the locked local R references
         shell: bash
         run: |
+          R CMD INSTALL reference/fmriAR
           R CMD INSTALL reference/fmrihrf
           R CMD INSTALL reference/fmridesign
 
       - name: Regenerate every R receipt
         env:
+          FMRIAR_R: ${{ github.workspace }}/reference/fmriAR
           FMRIDESIGN_R: ${{ github.workspace }}/reference/fmridesign
           FMRIHRF_R: ${{ github.workspace }}/reference/fmrihrf
           FMRIREG_R: ${{ github.workspace }}/reference/fmrireg
@@ -106,8 +127,10 @@ jobs:
         run: |
           git diff -- \
             'docs/scenarios/fixtures/*.r.json' \
+            'modules/ar/shared/src/test/scala/scalafim/fmri/ar/fixtures/*RFixture.scala' \
             'modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/*RFixture.scala' \
             'modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/*RFixture.scala' \
+            modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArEstimatedGlsFixture.scala \
             > scenario-r-receipts.patch
 
       - name: Require checked-in R receipts to be current

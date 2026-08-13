@@ -32,22 +32,28 @@ import scalafim.fmri.model.{
   ArStructure,
   ArCoefficientSpec,
   AutocorrelationConfig,
+  DvarsWeightEstimator,
   FitConfig,
   FitEngine,
   FitPlan,
   FitStrategy,
+  FixedWeightAlignment,
   FmriModel,
   FmriModelBuilder,
   LatentSketchConfig,
   LatentSketchMethod,
   LowRankComponentSpec,
   LssStrategyConfig,
+  MissingDataPolicy,
   ModelBuildSpec,
+  NuisanceProjection,
   ReducedRankBootstrapConfig,
   ReducedRankComponentSpec,
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy,
-  RobustConfig
+  Regularization,
+  RobustConfig,
+  VolumeWeighting
 }
 import scalafim.image.{DMat as ImageDMat, NeuroSpace}
 import scalafim.response.{
@@ -121,6 +127,23 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         samplingFrame = samplingFrame
       )
     FmriModel(eventModel, baseline, dataset)
+
+  private def missingDataModel: FmriModel =
+    val data = ImageDMat.fromRows(
+      Vector(
+        Vector(1.0, 2.0, -1.0),
+        Vector(2.0, Double.NaN, 0.0),
+        Vector(2.0, 0.0, 3.0),
+        Vector(4.0, -1.0, 2.0)
+      )
+    )
+    val source = model
+    val missingDataset =
+      FmriDataset.unsafe(
+        backend = InMemoryDatasetBackend(DatasetId("missing-data-demo"), data, NeuroSpace(Vector(3, 1, 1))),
+        samplingFrame = samplingFrame
+      )
+    source.copy(dataset = missingDataset)
 
   private def partitionedReducedRankModel: FmriModel =
     val frame = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0))
@@ -243,6 +266,463 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     assertEqualsDouble(result.coefficient("base_constant", 1).get, 2.0, 1e-10)
     assertEqualsDouble(result.residualVariance(0), 0.0, 1e-10)
     assertEqualsDouble(result.residualVariance(1), 0.0, 1e-10)
+  }
+
+  test("missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock") {
+    val strictPlan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Error)
+    )
+    val propagatePlan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Propagate)
+    )
+    val excludePlan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.ExcludeVoxel)
+    )
+
+    assertEquals(
+      FitPlanExecutor.fitDense(strictPlan).left.toOption,
+      Some(FitError.NonFiniteInput("response block"))
+    )
+
+    val expected = FitPlanExecutor
+      .fitDense(strictPlan, DataSelection(voxels = IndexSelection.indices(0, 2)))
+      .fold(error => fail(error.message), identity)
+    val actual = FitPlanExecutor.fitDense(propagatePlan).fold(error => fail(error.message), identity)
+    val explicitlyExcluded = FitPlanExecutor.fitDense(excludePlan).fold(error => fail(error.message), identity)
+
+    assertEquals(actual.voxelIndices, Vector(0, 2))
+    assertEquals(actual.fitExclusions, Vector(VoxelInferenceExclusion(1, VoxelFitStatus.NonFinite)))
+    assertEquals(actual.voxelStatus(1), Some(VoxelFitStatus.NonFinite))
+    assertEquals(actual.coefficient("task", 1), None)
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-12)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-12)
+    assertMatrixClose(explicitlyExcluded.coefficients.value, actual.coefficients.value, 1e-12)
+    assertEquals(explicitlyExcluded.fitExclusions, actual.fitExclusions)
+    assert(actual.coefficients.value.toRows.flatten.forall(_.isFinite))
+    assert(actual.standardErrors.value.toRows.flatten.forall(_.isFinite))
+    assert(actual.preparationProvenance.exists(_.applied.exists(
+      _.step == ResponsePreparationStep.MissingData(MissingDataPolicy.Propagate)
+    )))
+
+    val contrast = TContrast("task", Map("task" -> 1.0)).evaluate(actual).fold(error => fail(error.message), identity)
+    assertEquals(contrast.voxelIndices, Vector(0, 2))
+    assertEquals(contrast.excludedVoxels, actual.fitExclusions)
+    assert(contrast.statistics.toVector.forall(_.isFinite))
+
+    val statuses = AnalysisProvenance.fromResult(actual).voxelStatuses.getOrElse(fail("missing voxel statuses"))
+    assert(statuses.contains(VoxelFitStatusRecord(1, VoxelFitStatus.NonFinite)))
+  }
+
+  test("missing-data propagation reports an all-excluded selection explicitly") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Propagate)
+    )
+    val selection = DataSelection(voxels = IndexSelection.indices(1))
+
+    FitPlanExecutor.fit(plan, selection) match
+      case Left(FitError.AllVoxelsExcluded(exclusions)) =>
+        assertEquals(exclusions, Vector(VoxelInferenceExclusion(1, VoxelFitStatus.NonFinite)))
+      case other =>
+        fail(s"expected typed all-voxel exclusion, got $other")
+  }
+
+  test("voxel-specific row omission preserves pattern-specific OLS geometry and inference") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+
+    val result = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity)
+    val patterned = result match
+      case value: PatternedFmriFitResult => value
+      case other => fail(s"expected patterned missing-response result, got $other")
+
+    assertEquals(patterned.voxelIndices, Vector(0, 1, 2))
+    assertEquals(patterned.timepoints, Vector(0, 1, 2, 3))
+    assertEquals(patterned.patternResults.length, 2)
+    val complete = patterned.patternForVoxel(0).getOrElse(fail("complete pattern"))
+    val incomplete = patterned.patternForVoxel(1).getOrElse(fail("incomplete pattern"))
+    assertEquals(complete.sourceTimepoints, Vector(0, 1, 2, 3))
+    assertEquals(complete.sourceVoxels, Vector(0, 2))
+    assertEquals(incomplete.sourceTimepoints, Vector(0, 2, 3))
+    assertEquals(incomplete.sourceVoxels, Vector(1))
+
+    val completeResult = patterned.resultForVoxel(0).get.asInstanceOf[DenseFmriFitResult]
+    val incompleteResult = patterned.resultForVoxel(1).get.asInstanceOf[DenseFmriFitResult]
+    assertEquals(completeResult.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(2))
+    assertEquals(incompleteResult.residualDegreesOfFreedom, ResidualDegreesOfFreedom.unsafe(1))
+
+    val explicit = FitPlanExecutor
+      .fitDense(
+        FitPlan(missingDataModel, FitEngine.OrdinaryLeastSquares, FitConfig()),
+        DataSelection(
+          time = IndexSelection.indices(0, 2, 3),
+          voxels = IndexSelection.indices(1)
+        )
+      )
+      .fold(error => fail(error.message), identity)
+    assertMatrixClose(incompleteResult.coefficients.value, explicit.coefficients.value, 1e-12)
+    assertMatrixClose(incompleteResult.standardErrors.value, explicit.standardErrors.value, 1e-12)
+
+    val contrast = TContrast("task", Map("task" -> 1.0))
+      .evaluate(patterned)
+      .fold(error => fail(error.message), identity)
+    assertEquals(
+      contrast.residualDegreesOfFreedomByVoxel,
+      Map(
+        0 -> ResidualDegreesOfFreedom.unsafe(2),
+        1 -> ResidualDegreesOfFreedom.unsafe(1),
+        2 -> ResidualDegreesOfFreedom.unsafe(2)
+      )
+    )
+    assertEquals(contrast.voxelIndices, Vector(0, 1, 2))
+    assert(contrast.patternResults.flatMap(_._2.statistics.toVector).forall(_.isFinite))
+
+    val fContrast = FContrast("task-f", Vector(Map("task" -> 1.0)))
+      .evaluate(patterned)
+      .fold(error => fail(error.message), identity)
+    assertEquals(fContrast.residualDegreesOfFreedomByVoxel, contrast.residualDegreesOfFreedomByVoxel)
+    assertEquals(fContrast.voxelIndices, Vector(0, 1, 2))
+    assert(fContrast.patternResults.flatMap(_._2.statistics.toVector).forall(_.isFinite))
+  }
+
+  test("fitDense rejects unlike voxel observation patterns explicitly") {
+    val plan = FitPlan(
+      missingDataModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    FitPlanExecutor.fitDense(plan) match
+      case Left(FitError.UnsupportedMissingDataPolicy(detail)) =>
+        assert(detail.contains("do not share one dense inference geometry"))
+      case other => fail(s"expected patterned dense-result rejection, got $other")
+  }
+
+  test("row omission preserves an explicitly reordered OLS time selection") {
+    val maskedPlan = FitPlan(
+      missingDataModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val strictPlan = FitPlan(missingDataModel, FitEngine.OrdinaryLeastSquares, FitConfig())
+    val selection = DataSelection(time = IndexSelection.indices(3, 0, 2, 1))
+    val patterned = FitPlanExecutor.fit(maskedPlan, selection)
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+    val incompletePattern = patterned.patternForVoxel(1).getOrElse(fail("incomplete pattern"))
+    val actual = patterned.resultForVoxel(1).get.asInstanceOf[DenseFmriFitResult]
+    val expected = FitPlanExecutor.fitDense(
+      strictPlan,
+      DataSelection(
+        time = IndexSelection.indices(3, 0, 2),
+        voxels = IndexSelection.indices(1)
+      )
+    ).fold(error => fail(error.message), identity)
+
+    assertEquals(incompletePattern.rows, Vector(0, 1, 2))
+    assertEquals(incompletePattern.sourceTimepoints, Vector(3, 0, 2))
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-12)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-12)
+  }
+
+  test("row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary") {
+    val dvarsPlan = FitPlan(
+      missingDataModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(
+        missingData = MissingDataPolicy.OmitRowsPerVoxel,
+        volumeWeighting = VolumeWeighting.Estimated(DvarsWeightEstimator())
+      )
+    )
+    val nuisancePlan = FitPlan(
+      missingDataModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(
+        missingData = MissingDataPolicy.OmitRowsPerVoxel,
+        nuisanceProjection = NuisanceProjection.MatrixProjection(
+          DMat.tabulate(4, 1)((row, _) => row.toDouble),
+          Regularization.Fixed(0.0)
+        )
+      )
+    )
+
+    assert(FitPlanExecutor.fit(dvarsPlan).left.toOption.exists {
+      case FitError.UnsupportedVolumeWeighting(detail) => detail.contains("observation patterns")
+      case _ => false
+    })
+    assert(FitPlanExecutor.fit(nuisancePlan).left.toOption.exists {
+      case FitError.UnsupportedMissingDataPolicy(detail) => detail.contains("nuisance-projection matrix")
+      case _ => false
+    })
+  }
+
+  test("fixed AR row omission matches explicit selection and records the reset gap") {
+    val ar = ArOptions(
+      structure = ArStructure.Ar(1),
+      iterations = 1,
+      exactFirst = true,
+      rho = Some(0.25)
+    )
+    val maskedPlan = FitPlan(
+      missingDataModel,
+      FitEngine.GeneralizedLeastSquares,
+      FitConfig(
+        autocorrelation = ar,
+        missingData = MissingDataPolicy.OmitRowsPerVoxel
+      )
+    )
+    val strictPlan = FitPlan(
+      missingDataModel,
+      FitEngine.GeneralizedLeastSquares,
+      FitConfig(autocorrelation = ar)
+    )
+    val patterned = FitPlanExecutor.fit(maskedPlan).fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+    val actual = patterned.resultForVoxel(1).get.asInstanceOf[DenseFmriFitResult]
+    val expected = FitPlanExecutor.fitDense(
+      strictPlan,
+      DataSelection(
+        time = IndexSelection.indices(0, 2, 3),
+        voxels = IndexSelection.indices(1)
+      )
+    ).fold(error => fail(error.message), identity)
+
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-12)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-12)
+    assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
+    val whitening = actual.autocorrelation.toVector.flatMap(_.whitening.segments)
+    assertEquals(whitening.map(segment => segment.startTimepoint -> segment.endTimepointExclusive), Vector(0 -> 1, 2 -> 4))
+  }
+
+  test("row omission subsets selected-row weights by original observation position") {
+    val weightedDataset = FmriDataset.unsafe(
+      backend = InMemoryDatasetBackend(
+        DatasetId("masked-selected-row-weights"),
+        ImageDMat.fromRows(
+          Vector(
+            Vector(1.0, 2.0, -1.0),
+            Vector(2.0, Double.NaN, 0.0),
+            Vector(2.0, 0.4, 3.0),
+            Vector(4.0, -1.0, 2.0)
+          )
+        ),
+        NeuroSpace(Vector(3, 1, 1))
+      ),
+      samplingFrame = samplingFrame
+    )
+    val weightedModel = missingDataModel.copy(dataset = weightedDataset)
+    val outerWeights = Vector(1.0, 4.0, 9.0, 16.0)
+    val maskedPlan = FitPlan(
+      weightedModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(
+        missingData = MissingDataPolicy.OmitRowsPerVoxel,
+        volumeWeighting = VolumeWeighting.Fixed(outerWeights, FixedWeightAlignment.SelectedRows)
+      )
+    )
+    val strictPlan = FitPlan(
+      weightedModel,
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(
+        volumeWeighting = VolumeWeighting.Fixed(
+          Vector(outerWeights(0), outerWeights(2), outerWeights(3)),
+          FixedWeightAlignment.SelectedRows
+        )
+      )
+    )
+    val patterned = FitPlanExecutor.fit(maskedPlan).fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+    val actual = patterned.resultForVoxel(1).get.asInstanceOf[DenseFmriFitResult]
+    val expected = FitPlanExecutor.fitDense(
+      strictPlan,
+      DataSelection(
+        time = IndexSelection.indices(0, 2, 3),
+        voxels = IndexSelection.indices(1)
+      )
+    ).fold(error => fail(error.message), identity)
+
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-12)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-12)
+  }
+
+  test("row omission reports an all-missing voxel without contaminating finite voxels") {
+    val data = ImageDMat.fromRows(
+      Vector(
+        Vector(1.0, Double.NaN, -1.0),
+        Vector(2.0, Double.PositiveInfinity, 0.0),
+        Vector(2.0, Double.NegativeInfinity, 3.0),
+        Vector(4.0, Double.NaN, 2.0)
+      )
+    )
+    val dataset = FmriDataset.unsafe(
+      backend = InMemoryDatasetBackend(DatasetId("all-missing-voxel"), data, NeuroSpace(Vector(3, 1, 1))),
+      samplingFrame = samplingFrame
+    )
+    val plan = FitPlan(
+      model.copy(dataset = dataset),
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val result = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(result.voxelIndices, Vector(0, 2))
+    assertEquals(
+      result.fitExclusions,
+      Vector(VoxelInferenceExclusion(1, VoxelFitStatus.NoObservedResponses))
+    )
+    assertEquals(result.voxelStatus(1), Some(VoxelFitStatus.NoObservedResponses))
+    assert(result.coefficients.value.toRows.flatten.forall(_.isFinite))
+  }
+
+  test("row omission gives insufficient residual degrees of freedom a typed voxel status") {
+    val data = ImageDMat.fromRows(
+      Vector(
+        Vector(1.0, 2.0, -1.0),
+        Vector(2.0, Double.NaN, 0.0),
+        Vector(2.0, Double.NaN, 3.0),
+        Vector(4.0, 5.0, 2.0)
+      )
+    )
+    val dataset = FmriDataset.unsafe(
+      backend = InMemoryDatasetBackend(DatasetId("zero-df-observed-pattern"), data, NeuroSpace(Vector(3, 1, 1))),
+      samplingFrame = samplingFrame
+    )
+    val plan = FitPlan(
+      model.copy(dataset = dataset),
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val result = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(result.voxelIndices, Vector(0, 2))
+    assertEquals(
+      result.fitExclusions,
+      Vector(VoxelInferenceExclusion(1, VoxelFitStatus.InsufficientResidualDegreesOfFreedom))
+    )
+  }
+
+  test("row-omission exclusions preserve requested voxel order across failure classes") {
+    val data = ImageDMat.fromRows(
+      Vector(
+        Vector(Double.NaN, 2.0, 1.0),
+        Vector(Double.PositiveInfinity, Double.NaN, 2.0),
+        Vector(Double.NegativeInfinity, Double.NaN, 2.0),
+        Vector(Double.NaN, Double.NaN, 4.0)
+      )
+    )
+    val dataset = FmriDataset.unsafe(
+      backend = InMemoryDatasetBackend(
+        DatasetId("ordered-masked-response-exclusions"),
+        data,
+        NeuroSpace(Vector(3, 1, 1))
+      ),
+      samplingFrame = samplingFrame
+    )
+    val plan = FitPlan(
+      model.copy(dataset = dataset),
+      FitEngine.OrdinaryLeastSquares,
+      FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val result = FitPlanExecutor
+      .fit(plan, DataSelection(voxels = IndexSelection.indices(2, 1, 0)))
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(result.voxelIndices, Vector(2))
+    assertEquals(
+      result.fitExclusions,
+      Vector(
+        VoxelInferenceExclusion(1, VoxelFitStatus.RankDeficientObservedDesign),
+        VoxelInferenceExclusion(0, VoxelFitStatus.NoObservedResponses)
+      )
+    )
+  }
+
+  test("estimated AR row omission matches a separately estimated explicit-row GLS fit") {
+    val frame = SamplingFrame(blockLens = Seq(16), tr = Seq(1.0))
+    val task = Vector.tabulate(16)(row => math.sin((row + 1).toDouble * 0.41) + row.toDouble * 0.025)
+    val states = Array.fill(3)(0.0)
+    val finiteRows = Vector.tabulate(16) { row =>
+      Vector.tabulate(3) { voxel =>
+        val innovation = math.sin((row + 1).toDouble * 1.73 + voxel.toDouble * 0.91) * 0.18
+        states(voxel) = 0.42 * states(voxel) + innovation
+        0.7 + (0.35 + voxel.toDouble * 0.2) * task(row) + states(voxel)
+      }
+    }
+    val rows = finiteRows.updated(5, finiteRows(5).updated(1, Double.NaN))
+    val eventModel = EventModel(
+      terms = Vector.empty,
+      samplingFrame = frame,
+      designMatrix = Mat.fromRows(task.map(value => Vector(value))),
+      columnNames = Vector("task"),
+      termSpans = Vector(0 -> 1),
+      colIndices = Map("task" -> Vector(0))
+    )
+    val baseline = BaselineModel.build(
+      samplingFrame = frame,
+      basis = BaselineBasis.Constant,
+      intercept = Intercept.Global
+    )
+    val dataset = FmriDataset.unsafe(
+      backend = InMemoryDatasetBackend(
+        DatasetId("estimated-ar-masked-response"),
+        ImageDMat.fromRows(rows),
+        NeuroSpace(Vector(3, 1, 1))
+      ),
+      samplingFrame = frame
+    )
+    val ar = ArOptions(
+      structure = ArStructure.Ar(1),
+      iterations = 1,
+      global = true,
+      exactFirst = false
+    )
+    val maskedPlan = FitPlan(
+      FmriModel(eventModel, baseline, dataset),
+      FitEngine.GeneralizedLeastSquares,
+      FitConfig(autocorrelation = ar, missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val strictPlan = FitPlan(
+      maskedPlan.model,
+      FitEngine.GeneralizedLeastSquares,
+      FitConfig(autocorrelation = ar)
+    )
+    val retained = (0 until 16).filterNot(_ == 5).toVector
+    val patterned = FitPlanExecutor.fit(maskedPlan).fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+    val actual = patterned.resultForVoxel(1).get.asInstanceOf[DenseFmriFitResult]
+    val expected = FitPlanExecutor.fitDense(
+      strictPlan,
+      DataSelection(
+        time = IndexSelection.indices(retained*),
+        voxels = IndexSelection.indices(1)
+      )
+    ).fold(error => fail(error.message), identity)
+
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value, 1e-12)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, 1e-12)
+    assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
+    assertEquals(
+      actual.autocorrelation.toVector.flatMap(_.whitening.segments)
+        .map(segment => segment.startTimepoint -> segment.endTimepointExclusive),
+      Vector(0 -> 5, 6 -> 16)
+    )
+    assertEqualsDouble(
+      actual.autocorrelation.get.runs.head.rho,
+      expected.autocorrelation.get.runs.head.rho,
+      1e-12
+    )
   }
 
   test("fitDense rejects engines with a different result shape") {

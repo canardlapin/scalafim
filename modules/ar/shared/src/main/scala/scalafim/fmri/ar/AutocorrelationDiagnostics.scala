@@ -57,6 +57,58 @@ object AcorrDiagnostics:
       aggregation = aggregation
     )
 
+  /** Run-aware diagnostics. Means are removed once per run while lag products
+    * stay inside the supplied contiguous segments, so neither run boundaries
+    * nor censor resets create artificial autocorrelation.
+    */
+  def compute(
+      residuals: DMat,
+      segments: Vector[TimeSegment],
+      maxLag: Int,
+      aggregation: AcfAggregation
+  ): Either[ArError, AcorrDiagnostics] =
+    if residuals.rows <= 1 then Left(ArError.NonPositiveRows(residuals.rows))
+    else if maxLag < 1 then Left(ArError.InvalidArLag(maxLag))
+    else
+      val maxEstimable = segments.map(_.length - 1).maxOption.getOrElse(0)
+      val lagCount = math.min(maxLag, residuals.rows - 1)
+      val covarianceLag = math.min(lagCount, maxEstimable)
+      if lagCount < 1 then Left(ArError.ArOrderNotEstimable(ArOrderValue.unsafe(1), ArLag.Zero))
+      else
+        val source =
+          aggregation match
+            case AcfAggregation.None   => residuals
+            case AcfAggregation.Mean   => columnMatrix(rowAggregate(residuals, median = false))
+            case AcfAggregation.Median => columnMatrix(rowAggregate(residuals, median = true))
+        val out = Matrix.newBuilder(lagCount, source.cols)
+        var col = 0
+        var error = Option.empty[ArError]
+        while col < source.cols && error.isEmpty do
+          val series = Matrix.tabulate(source.rows, 1)((row, _) => source(row, col))
+          ArEstimation.autocovariances(series, segments, ArLag.unsafe(covarianceLag)) match
+            case Left(value) => error = Some(value)
+            case Right(gamma) =>
+              val gamma0 = gamma.lagZero
+              var lag = 1
+              while lag <= lagCount do
+                out(lag - 1, col) =
+                  if gamma0 <= 0.0 then 0.0
+                  else if lag > covarianceLag then 0.0
+                  else gamma.at(ArLag.unsafe(lag)) / gamma0
+                lag += 1
+          col += 1
+        error match
+          case Some(value) => Left(value)
+          case None =>
+            Right(
+              AcorrDiagnostics(
+                lags = (1 to lagCount).toVector,
+                acf = out.result(),
+                confidenceInterval = 1.96 / math.sqrt(residuals.rows.toDouble),
+                aggregation = aggregation
+              )
+            )
+
   private def acfSeries(values: Vector[Double], maxLag: Int): Vector[Double] =
     val mean = values.sum / values.length.toDouble
     var denom = 0.0

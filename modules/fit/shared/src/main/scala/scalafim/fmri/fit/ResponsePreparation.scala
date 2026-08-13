@@ -140,8 +140,14 @@ final case class ResponsePreparationPlan(
         missingData match
           case MissingDataPolicy.Error =>
             ResponsePreparationDisposition.Applied("dense input constructors reject non-finite response values")
-          case MissingDataPolicy.Propagate =>
-            ResponsePreparationDisposition.Deferred("per-voxel non-finite propagation is not implemented in shared preparation yet")
+          case MissingDataPolicy.ExcludeVoxel | MissingDataPolicy.Propagate =>
+            ResponsePreparationDisposition.Applied(
+              "response columns containing any non-finite selected value are excluded before finite block construction"
+            )
+          case MissingDataPolicy.OmitRowsPerVoxel =>
+            ResponsePreparationDisposition.Applied(
+              "response columns are grouped by exact finite-row mask and each observation pattern is fit independently"
+            )
       ),
       ResponsePreparationRecord(
         ResponsePreparationStep.Censoring(censoredTimepoints),
@@ -492,11 +498,13 @@ private[fit] object ResolvedVolumeWeighting:
         if kept.isEmpty then None
         else Some(RunPartition(partition.runIndex, kept.map(_._1), kept.map(_._2)))
       }
+      val preparedResponse = ResponseBlock.unsafe(response.result())
       Right(input.copy(
         design = DesignMatrix.unsafe(design.result()),
-        response = ResponseBlock.unsafe(response.result()),
+        response = preparedResponse,
         timepoints = keptRows.map(input.timepoints),
-        partitions = partitions
+        partitions = partitions,
+        voxelStatuses = Some(VoxelFitStatus.classify(preparedResponse))
       ))
 
 private[fit] object DvarsVolumeWeightEstimator:

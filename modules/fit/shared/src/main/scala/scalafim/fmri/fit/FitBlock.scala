@@ -23,13 +23,17 @@ final case class FitBlockInput(
     lssDesign: Option[LssBlockDesign] = None,
     coefficientAxis: Option[CoefficientAxis] = None,
     runwiseProjections: Vector[RunCoefficientProjection] = Vector.empty,
-    preparationProvenance: Option[ResponsePreparationProvenance] = None
+    preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ):
   require(design.timepoints == response.timepoints, "block design and response rows must match")
   require(timepoints.length == design.timepoints, "block timepoint indices must match design rows")
   require(voxelIndices.length == response.voxels, "block voxel indices must match response columns")
   require(voxelIndices.nonEmpty, "fit block must contain at least one voxel")
   require(timepoints.nonEmpty, "fit block must contain at least one timepoint")
+  require(voxelStatuses.forall(_.length == response.voxels), "voxel statuses must match response columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "fit block input")
   coefficientAxis.foreach { axis =>
     require(axis.predictors == design.predictors, "coefficient axis must match design predictors")
   }
@@ -48,6 +52,8 @@ final case class FitBlockInput(
 
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
   def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(VoxelFitStatus.classify(response))
 
 sealed trait FitBlockResult:
   def voxelIndices: Vector[Int]
@@ -55,6 +61,7 @@ sealed trait FitBlockResult:
   def engine: FitEngine
   def coefficientAxis: Option[CoefficientAxis] = None
   def preparationProvenance: Option[ResponsePreparationProvenance] = None
+  def fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   def voxels: Int = voxelIndices.length
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
   def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
@@ -71,18 +78,24 @@ final case class DenseFitBlockResult(
     autocorrelation: Option[ArDiagnostics] = None,
     robustDiagnostics: Option[RobustDiagnostics] = None,
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FitBlockResult:
   require(voxelIndices.length == coefficients.voxels, "block voxel indices must match coefficient columns")
   require(residualVariance.length == coefficients.voxels, "block residual variances must match coefficient columns")
   require(inference.predictors == coefficients.predictors, "block inference must match coefficient rows")
   require(inference.voxels == coefficients.voxels, "block inference must match coefficient columns")
+  require(voxelStatuses.forall(_.length == coefficients.voxels), "block voxel statuses must match coefficient columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "dense fit block")
 
   def standardErrors: StandardErrorBlock = inference.standardErrors
   def normalizedCovariance: DMat = inference.normalizedCovariance
   def coefficientCovariance: CoefficientCovariance = inference.covariance
   def inferenceScope: CoefficientInferenceScope = inference.scope
   def rankReport: Option[RankDiagnostics] = olsDiagnostics.map(_.rankReport)
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
 
   def structuralRankReport: Either[FitError, StructuralRankReport] =
     for
@@ -109,7 +122,9 @@ object DenseFitBlockResult:
       engine = engine,
       olsDiagnostics = Some(fit.diagnostics),
       coefficientAxis = input.coefficientAxis,
-      preparationProvenance = input.preparationProvenance
+      preparationProvenance = input.preparationProvenance,
+      voxelStatuses = Some(VoxelFitStatus.refine(input.resolvedVoxelStatuses, fit.residualVariance)),
+      fitExclusions = input.fitExclusions
     )
 
   def fromGls(
@@ -134,7 +149,9 @@ object DenseFitBlockResult:
       olsDiagnostics = Some(fit.finalOlsDiagnostics),
       autocorrelation = Some(fit.diagnostics),
       coefficientAxis = input.coefficientAxis,
-      preparationProvenance = input.preparationProvenance
+      preparationProvenance = input.preparationProvenance,
+      voxelStatuses = Some(VoxelFitStatus.refine(input.resolvedVoxelStatuses, fit.residualVariance)),
+      fitExclusions = input.fitExclusions
     )
 
   def fromRobust(input: FitBlockInput, fit: RobustFit): DenseFitBlockResult =
@@ -156,7 +173,9 @@ object DenseFitBlockResult:
       autocorrelation = fit.autocorrelation,
       robustDiagnostics = Some(fit.diagnostics),
       coefficientAxis = input.coefficientAxis,
-      preparationProvenance = input.preparationProvenance
+      preparationProvenance = input.preparationProvenance,
+      voxelStatuses = Some(VoxelFitStatus.refine(input.resolvedVoxelStatuses, fit.residualVariance)),
+      fitExclusions = input.fitExclusions
     )
 
   def merge(blocks: IndexedSeq[DenseFitBlockResult]): Either[FitError, DenseFitBlockResult] =
@@ -168,6 +187,7 @@ object DenseFitBlockResult:
         robust <- mergeRobustDiagnostics(blocks)
         inference <- CoefficientInference.mergeByVoxel(blocks.map(_.inference))
         _ <- validateCompatible(blocks, first)
+        exclusions <- VoxelInferenceExclusions.combine(blocks.iterator.flatMap(_.fitExclusions))
       yield
         DenseFitBlockResult(
           coefficients = CoefficientBlock(bindMatrixColumns(blocks, _.coefficients.value)),
@@ -181,7 +201,9 @@ object DenseFitBlockResult:
           autocorrelation = autocorrelation,
           robustDiagnostics = robust,
           coefficientAxis = first.coefficientAxis,
-          preparationProvenance = first.preparationProvenance
+          preparationProvenance = first.preparationProvenance,
+          voxelStatuses = Some(blocks.iterator.flatMap(_.resolvedVoxelStatuses).toVector),
+          fitExclusions = exclusions
         )
 
   private def validateCompatible(
@@ -292,10 +314,12 @@ final case class RunwiseFitBlockResult(
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FitBlockResult:
   require(runs.nonEmpty, "runwise block result must contain at least one run")
   require(runs.forall(_.coefficients.voxels == voxelIndices.length), "runwise block runs must match block voxel count")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "runwise fit block")
   def engine: FitEngine = FitEngine.RunwiseLeastSquares
 
 object RunwiseFitBlockResult:
@@ -318,28 +342,38 @@ object RunwiseFitBlockResult:
             }
           },
           sourceColumnIndices = run.projection.map(_.sourceColumnIndices).getOrElse(Vector.empty),
-          projection = run.projection
+          projection = run.projection,
+          voxelStatuses = Some(
+            VoxelFitStatus.refine(
+              VoxelFitStatus.classify(input.response.value, run.partition.rowIndices),
+              run.fit.residualVariance
+            )
+          )
         )
       },
       voxelIndices = input.voxelIndices,
       timepoints = input.timepoints,
       coefficientAxis = input.coefficientAxis,
-      preparationProvenance = input.preparationProvenance
+      preparationProvenance = input.preparationProvenance,
+      fitExclusions = input.fitExclusions
     )
 
   def merge(blocks: IndexedSeq[RunwiseFitBlockResult]): Either[FitError, RunwiseFitBlockResult] =
     if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one runwise block is required"))
     else
       val first = blocks.head
-      validateCompatible(blocks, first).map { _ =>
+      for
+        _ <- validateCompatible(blocks, first)
+        exclusions <- VoxelInferenceExclusions.combine(blocks.iterator.flatMap(_.fitExclusions))
+      yield
         RunwiseFitBlockResult(
           runs = mergeRuns(blocks),
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
           coefficientAxis = first.coefficientAxis,
-          preparationProvenance = first.preparationProvenance
+          preparationProvenance = first.preparationProvenance,
+          fitExclusions = exclusions
         )
-      }
 
   private def validateCompatible(
       blocks: IndexedSeq[RunwiseFitBlockResult],
@@ -411,7 +445,8 @@ object RunwiseFitBlockResult:
         olsDiagnostics = firstRun.olsDiagnostics,
         coefficientAxis = firstRun.coefficientAxis,
         sourceColumnIndices = firstRun.sourceColumns,
-        projection = firstRun.projection
+        projection = firstRun.projection,
+        voxelStatuses = Some(currentRuns.iterator.flatMap(_.resolvedVoxelStatuses).toVector)
       )
       runIndex += 1
     out.result()
@@ -476,11 +511,13 @@ final case class LssFitBlockResult(
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FitBlockResult:
   require(trialNames.length == coefficients.predictors, "LSS block trial names must match coefficient rows")
   require(voxelIndices.length == coefficients.voxels, "LSS block voxel indices must match coefficient columns")
   require(coefficientAxis.forall(_.predictors == coefficients.predictors), "LSS coefficient axis must match coefficient rows")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "LSS fit block")
   def engine: FitEngine = FitEngine.LeastSquaresSeparate
 
 object LssFitBlockResult:
@@ -498,14 +535,18 @@ object LssFitBlockResult:
           if lss.trialColumns.nonEmpty
           selected <- axis.select(lss.trialColumns).toOption
         yield selected,
-      preparationProvenance = input.preparationProvenance
+      preparationProvenance = input.preparationProvenance,
+      fitExclusions = input.fitExclusions
     )
 
   def merge(blocks: IndexedSeq[LssFitBlockResult]): Either[FitError, LssFitBlockResult] =
     if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one LSS block is required"))
     else
       val first = blocks.head
-      validateCompatible(blocks, first).map { _ =>
+      for
+        _ <- validateCompatible(blocks, first)
+        exclusions <- VoxelInferenceExclusions.combine(blocks.iterator.flatMap(_.fitExclusions))
+      yield
         LssFitBlockResult(
           coefficients = CoefficientBlock(bindCoefficientColumns(blocks)),
           trialNames = first.trialNames,
@@ -513,9 +554,9 @@ object LssFitBlockResult:
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
           coefficientAxis = first.coefficientAxis,
-          preparationProvenance = first.preparationProvenance
+          preparationProvenance = first.preparationProvenance,
+          fitExclusions = exclusions
         )
-      }
 
   private def validateCompatible(
       blocks: IndexedSeq[LssFitBlockResult],
@@ -562,6 +603,20 @@ object LssFitBlockResult:
       blockIndex += 1
 
     out.result()
+
+/** A chunk whose selected response columns were all excluded before numerical
+  * fitting. It participates only in chunk reduction so healthy chunks can
+  * complete; no numerical result is fabricated for these voxels.
+  */
+private[fit] final case class ExcludedFitBlockResult(
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    engine: FitEngine,
+    override val fitExclusions: Vector[VoxelInferenceExclusion]
+) extends FitBlockResult:
+  require(fitExclusions.nonEmpty, "excluded fit block must contain exclusions")
+  require(voxelIndices == fitExclusions.map(_.voxelIndex), "excluded fit block voxel indices must match exclusions")
+  require(timepoints.nonEmpty, "excluded fit block must retain selected timepoints")
 
 object FitKernel:
   /** Lift numerical predictor positions to the structural axis at a public fit boundary. */

@@ -6,9 +6,12 @@ import scalafim.fmri.ar.{
   ArFitOptions,
   ArmaCoefficients,
   ArOrder,
+  InitialConditionPolicy,
+  NoiseEstimationLayout,
   NoisePooling,
   TimeSegment,
   TimeSegments,
+  WhiteningMethod,
   WhiteningPlan,
   WhiteningTransform
 }
@@ -90,9 +93,9 @@ object Gls:
       _ <- validateVoxelIndices(response, selectedVoxelIndices)
       config <- autocorrelationConfig(options)
       _ <- validatePartitions(partitions)
-      segments <- timeSegments(partitions, options.censoredTimepoints)
+      noiseLayout <- noiseEstimationLayout(partitions, options.censoredTimepoints)
       initial <- Ols.fit(design, response)
-      whiteningAndMethod <- whiteningPlan(design.value, response.value, initial.coefficients.value, segments, config)
+      whiteningAndMethod <- whiteningPlan(design.value, response.value, initial.coefficients.value, noiseLayout, config)
       (whitening, method) = whiteningAndMethod
     yield GlsPrepared(
       design = design,
@@ -219,32 +222,69 @@ object Gls:
       val segments = TimeSegments.withCensorResets(base, explicitResetRows ++ gapResetRows)
       TimeSegments.validateCoverage(segments, base.last.endExclusive).left.map(arToFitError).map(_ => segments)
 
+  private[fit] def noiseEstimationLayout(
+      partitions: Vector[RunPartition],
+      censoredTimepoints: Vector[Int]
+  ): Either[FitError, NoiseEstimationLayout] =
+    for
+      segments <- timeSegments(partitions, censoredTimepoints)
+      excludedRows =
+        censoredTimepoints.flatMap { timepoint =>
+          partitions.iterator
+            .flatMap(partition => partition.timepoints.zip(partition.rowIndices))
+            .find { case (candidate, _) => candidate == timepoint }
+            .map(_._2)
+        }.toSet
+      layout <- NoiseEstimationLayout
+        .excludingRows(segments, segments.last.endExclusive, excludedRows)
+        .left
+        .map(arToFitError)
+    yield layout
+
   private def whiteningPlan(
       design: DMat,
       response: DMat,
       coefficients: DMat,
-      segments: Vector[TimeSegment],
+      noiseLayout: NoiseEstimationLayout,
       config: AutocorrelationConfig
   ): Either[FitError, (GlsWhitening, String)] =
     config.coefficients match
       case ArCoefficientSpec.Rho(rho) =>
-        Right(GlsWhitening.Shared(WhiteningPlan.global(ArmaCoefficients(Vector(rho)), segments, exactFirstAr1 = config.exactFirst)) -> "fixed")
+        WhiteningPlan
+          .globalWithInitialCondition(
+            ArmaCoefficients(Vector(rho)),
+            noiseLayout.whiteningSegments,
+            initialCondition = InitialConditionPolicy.fromExactFirstAr1(config.exactFirst),
+            method = WhiteningMethod.Fixed
+          )
+          .left
+          .map(arToFitError)
+          .map(plan => GlsWhitening.Shared(plan) -> "fixed")
 
       case ArCoefficientSpec.Phi(phi) =>
-        Right(GlsWhitening.Shared(WhiteningPlan.global(ArmaCoefficients(phi), segments, exactFirstAr1 = config.exactFirst)) -> "fixed")
+        WhiteningPlan
+          .globalWithInitialCondition(
+            ArmaCoefficients(phi),
+            noiseLayout.whiteningSegments,
+            initialCondition = InitialConditionPolicy.fromExactFirstAr1(config.exactFirst),
+            method = WhiteningMethod.Fixed
+          )
+          .left
+          .map(arToFitError)
+          .map(plan => GlsWhitening.Shared(plan) -> "fixed")
 
       case ArCoefficientSpec.Estimate =>
         if config.voxelwise then
-          iterateEstimatedVoxelwiseWhitening(design, response, coefficients, segments, config)
+          iterateEstimatedVoxelwiseWhitening(design, response, coefficients, noiseLayout, config)
             .map(GlsWhitening.Voxelwise.apply)
             .map(_ -> "voxelwise-estimated")
-        else iterateEstimatedWhitening(design, response, coefficients, segments, config).map(GlsWhitening.Shared.apply).map(_ -> "estimated")
+        else iterateEstimatedWhitening(design, response, coefficients, noiseLayout, config).map(GlsWhitening.Shared.apply).map(_ -> "estimated")
 
   private def iterateEstimatedWhitening(
       design: DMat,
       response: DMat,
       initialCoefficients: DMat,
-      segments: Vector[TimeSegment],
+      noiseLayout: NoiseEstimationLayout,
       config: AutocorrelationConfig
   ): Either[FitError, WhiteningPlan] =
     val pooling = if config.global then NoisePooling.Global else NoisePooling.Run
@@ -258,7 +298,7 @@ object Gls:
     def estimate(coefficients: DMat): Either[FitError, WhiteningPlan] =
       val residuals = residualMatrix(design, response, coefficients)
       ArEstimation
-        .fitNoise(residuals, segments, arOptions)
+        .fitNoise(residuals, noiseLayout, arOptions)
         .left
         .map(arToFitError)
 
@@ -278,7 +318,7 @@ object Gls:
       design: DMat,
       response: DMat,
       initialCoefficients: DMat,
-      segments: Vector[TimeSegment],
+      noiseLayout: NoiseEstimationLayout,
       config: AutocorrelationConfig
   ): Either[FitError, Vector[WhiteningPlan]] =
     val plans = Vector.newBuilder[WhiteningPlan]
@@ -288,7 +328,7 @@ object Gls:
         design = design,
         response = matrixColumn(response, voxel),
         initialCoefficients = matrixColumn(initialCoefficients, voxel),
-        segments = segments,
+        noiseLayout = noiseLayout,
         config = config
       ) match
         case Left(error) =>

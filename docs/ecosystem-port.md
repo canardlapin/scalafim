@@ -32,8 +32,8 @@ closed choices and typeclass-style abstractions.
 
 - `scalafim-linalg`: primitive array-backed vectors, matrices, cross-products,
   and linear solves for portable numerical kernels.
-- `scalafim-fmri-ar`: immutable AR/ARMA whitening plans, run/censor-aware
-  segment construction, and pure design/data prewhitening.
+- `scalafim-fmri-ar`: checked run/censor-aware AR estimation, immutable AR/ARMA
+  whitening plans, diagnostics, and pure design/data prewhitening.
 - `scalafim-image`: spatial data structures, masks, resampling, clustering, and
   image IO contracts.
 - `scalafim-surface`: surface-mesh data structures, topology views,
@@ -359,6 +359,11 @@ Implemented first:
   t-contrast evaluation by design-column name.
 - AR/ARMA whitening plans, Yule-Walker AR estimation, ACF diagnostics, and dense
   plan-based GLS execution for fixed AR(1)/AR(p) and estimated AR models.
+- Strict whole-response rejection, explicit whole-voxel exclusion, and
+  voxel-specific finite-row omission. Voxel-specific omission groups identical
+  row masks for execution but returns pattern-partitioned results so rank,
+  covariance, ordinary residual degrees of freedom, and AR reset geometry are
+  never falsely shared across unlike voxels.
 
 Later ports:
 

@@ -7,6 +7,11 @@
     }
   ],
   "budget_profile": {
+    "ar_estimation": {
+      "order": "4",
+      "responses": "128",
+      "timepoints": "360"
+    },
     "fit": {
       "predictors": "32",
       "responses": "128",
@@ -28,7 +33,7 @@
       "enforced": true,
       "left": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
       "metric": "score",
-      "ratio_left_over_right": 0.06556768489333924,
+      "ratio_left_over_right": 0.1642429718968678,
       "right": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
       "status": "pass"
     },
@@ -36,7 +41,7 @@
       "enforced": true,
       "left": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
       "metric": "score",
-      "ratio_left_over_right": 0.22013268549462087,
+      "ratio_left_over_right": 0.35036114592629675,
       "right": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
       "status": "pass"
     },
@@ -44,7 +49,7 @@
       "enforced": true,
       "left": "scalafim.fmri.hrf.EpochIntegrationBenchmark.exact",
       "metric": "score",
-      "ratio_left_over_right": 0.020826958922904933,
+      "ratio_left_over_right": 0.0213388399492844,
       "right": "scalafim.fmri.hrf.EpochIntegrationBenchmark.trapezoid",
       "status": "pass"
     },
@@ -52,15 +57,39 @@
       "enforced": false,
       "left": "scalafim.fmri.hrf.BasisResponseBenchmark.typedReconstruction",
       "metric": "score",
-      "ratio_left_over_right": 1.1701743410041827,
+      "ratio_left_over_right": 1.3731735170072414,
       "right": "scalafim.fmri.hrf.BasisResponseBenchmark.directContraction",
+      "status": "pass"
+    },
+    {
+      "enforced": false,
+      "left": "scalafim.fmri.ar.ArEstimationBenchmark.automaticGlobal",
+      "metric": "score",
+      "ratio_left_over_right": 0.8964192574034074,
+      "right": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderGlobal",
+      "status": "pass"
+    },
+    {
+      "enforced": false,
+      "left": "scalafim.fmri.ar.ArEstimationBenchmark.automaticGlobal",
+      "metric": "allocation_bytes_per_op",
+      "ratio_left_over_right": 1.5388801860569394,
+      "right": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderGlobal",
+      "status": "pass"
+    },
+    {
+      "enforced": false,
+      "left": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderRun",
+      "metric": "score",
+      "ratio_left_over_right": 1.0660090543734706,
+      "right": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderGlobal",
       "status": "pass"
     },
     {
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedMultiresponse",
       "metric": "score",
-      "ratio_left_over_right": 0.9314336540559257,
+      "ratio_left_over_right": 0.885472339964919,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPlanAndFit",
       "status": "pass"
     },
@@ -68,7 +97,7 @@
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedMultiresponse",
       "metric": "allocation_bytes_per_op",
-      "ratio_left_over_right": 0.6686785832890941,
+      "ratio_left_over_right": 0.6686740440434914,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPlanAndFit",
       "status": "pass"
     },
@@ -76,7 +105,7 @@
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPreparedFit",
       "metric": "score",
-      "ratio_left_over_right": 0.9167829711612393,
+      "ratio_left_over_right": 0.7953315978098572,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPlanAndFit",
       "status": "pass"
     },
@@ -84,7 +113,7 @@
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPreparedFit",
       "metric": "allocation_bytes_per_op",
-      "ratio_left_over_right": 0.3502523737188497,
+      "ratio_left_over_right": 0.3483413440699561,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPlanAndFit",
       "status": "pass"
     },
@@ -92,7 +121,7 @@
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPreparedFit",
       "metric": "score",
-      "ratio_left_over_right": 0.5031025188892576,
+      "ratio_left_over_right": 0.48540768426330755,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit",
       "status": "pass"
     },
@@ -100,7 +129,7 @@
       "enforced": true,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPreparedFit",
       "metric": "allocation_bytes_per_op",
-      "ratio_left_over_right": 0.5997777706524194,
+      "ratio_left_over_right": 0.597069840501178,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit",
       "status": "pass"
     },
@@ -108,7 +137,7 @@
       "enforced": false,
       "left": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedChunked",
       "metric": "score",
-      "ratio_left_over_right": 0.8102553433866955,
+      "ratio_left_over_right": 1.050755869085726,
       "right": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedMultiresponse",
       "status": "pass"
     }
@@ -116,25 +145,110 @@
   "raw_reports": [
     {
       "name": "hrf-basis.json",
-      "sha256": "00e0757c8e05030278dfc422453a1564a682a1d7df77d07c7df832def9633b42"
+      "sha256": "3fbfcd12876cd296204994046e81df1c95628c30f69a2062800cfffaf36370dd"
     },
     {
       "name": "hrf-convolution.json",
-      "sha256": "9fdee3f8bf08c524dcf1def0f5fd5b1318b71af0e434c22d81cf7bdad16336f3"
+      "sha256": "699a0a1827af2537ab26174399d9a6b6a24140547f3c3ca03c25097539f93558"
     },
     {
       "name": "hrf-integration.json",
-      "sha256": "98b000a22b601c60134d281b09ff3cbce9c3d3b8a4d0bd5785a1fe84a028e26e"
+      "sha256": "edbd2a96cdf5329691c388ac789d2a524aa4adeb47a0e83612a8d40b92e0b91c"
+    },
+    {
+      "name": "ar-estimation.json",
+      "sha256": "67c00fd260ee75cbd4165a2d79666a46b940523c0b11e881d1734209e56b8e93"
     },
     {
       "name": "fit.json",
-      "sha256": "992fe9486cb8bcb0e7aba20eeaf6d55dc636650f2e40c8c68ad5498713f82d70"
+      "sha256": "b3a8206269ee8e97f5dd323ea039f6f04b5b0733333799749ac534255501dc7e"
     }
   ],
   "release_eligible": false,
   "results": [
     {
-      "allocation_bytes_per_op": 1892971.2067736187,
+      "allocation_bytes_per_op": 49193.40441914986,
+      "benchmark": "scalafim.fmri.ar.ArEstimationBenchmark.automaticGlobal",
+      "budget": {
+        "max_allocation_bytes_per_op": 2000000.0,
+        "max_score": 20.0,
+        "score_unit": "ms/op"
+      },
+      "jmh": {
+        "forks": 1,
+        "measurement_iterations": 4,
+        "measurement_time": "500 ms",
+        "mode": "avgt",
+        "threads": 1,
+        "warmup_iterations": 2,
+        "warmup_time": "500 ms"
+      },
+      "params": {
+        "order": "4",
+        "responses": "128",
+        "timepoints": "360"
+      },
+      "passes_allocation_budget": true,
+      "passes_time_budget": true,
+      "score": 1.0602693661154527,
+      "score_unit": "ms/op"
+    },
+    {
+      "allocation_bytes_per_op": 31967.01397865011,
+      "benchmark": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderGlobal",
+      "budget": {
+        "max_allocation_bytes_per_op": 2000000.0,
+        "max_score": 20.0,
+        "score_unit": "ms/op"
+      },
+      "jmh": {
+        "forks": 1,
+        "measurement_iterations": 4,
+        "measurement_time": "500 ms",
+        "mode": "avgt",
+        "threads": 1,
+        "warmup_iterations": 2,
+        "warmup_time": "500 ms"
+      },
+      "params": {
+        "order": "4",
+        "responses": "128",
+        "timepoints": "360"
+      },
+      "passes_allocation_budget": true,
+      "passes_time_budget": true,
+      "score": 1.1827828969077014,
+      "score_unit": "ms/op"
+    },
+    {
+      "allocation_bytes_per_op": 32092.641808676446,
+      "benchmark": "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderRun",
+      "budget": {
+        "max_allocation_bytes_per_op": 2000000.0,
+        "max_score": 20.0,
+        "score_unit": "ms/op"
+      },
+      "jmh": {
+        "forks": 1,
+        "measurement_iterations": 4,
+        "measurement_time": "500 ms",
+        "mode": "avgt",
+        "threads": 1,
+        "warmup_iterations": 2,
+        "warmup_time": "500 ms"
+      },
+      "params": {
+        "order": "4",
+        "responses": "128",
+        "timepoints": "360"
+      },
+      "passes_allocation_budget": true,
+      "passes_time_budget": true,
+      "score": 1.2608572774616928,
+      "score_unit": "ms/op"
+    },
+    {
+      "allocation_bytes_per_op": 1901641.3876633989,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit",
       "budget": {
         "max_allocation_bytes_per_op": 3000000.0,
@@ -157,11 +271,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 15.345414969474152,
+      "score": 23.870915451065493,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 1135362.050307901,
+      "allocation_bytes_per_op": 1135412.7200226244,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPreparedFit",
       "budget": {
         "max_allocation_bytes_per_op": 2000000.0,
@@ -184,11 +298,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 7.720316924543367,
+      "score": 11.587125790346908,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 664616.4231884058,
+      "allocation_bytes_per_op": 664659.9179810338,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPlanAndFit",
       "budget": {
         "max_allocation_bytes_per_op": 1500000.0,
@@ -211,11 +325,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 7.3258177533643885,
+      "score": 10.193815179483694,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 562388.4899665553,
+      "allocation_bytes_per_op": 591614.6270613108,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedChunked",
       "budget": {
         "max_allocation_bytes_per_op": 1500000.0,
@@ -238,11 +352,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 5.528788030130196,
+      "score": 9.484481181561167,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 444414.76828828827,
+      "allocation_bytes_per_op": 444440.8352699932,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedMultiresponse",
       "budget": {
         "max_allocation_bytes_per_op": 1000000.0,
@@ -265,11 +379,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 6.823513198963965,
+      "score": 9.026341380147338,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 12288.5928578837,
+      "allocation_bytes_per_op": 12289.116270653622,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.olsPreparedSingleResponse",
       "budget": {
         "max_allocation_bytes_per_op": 32768.0,
@@ -292,11 +406,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 0.042649472804697844,
+      "score": 0.08200461071961113,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 1268851.9407547053,
+      "allocation_bytes_per_op": 1275902.12084059,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPlanAndFit",
       "budget": {
         "max_allocation_bytes_per_op": 2000000.0,
@@ -319,11 +433,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 7.768469097046237,
+      "score": 12.346180907046762,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 444418.4041471048,
+      "allocation_bytes_per_op": 444449.4596753187,
       "benchmark": "scalafim.fmri.fit.FirstLevelFitBenchmark.weightedPreparedFit",
       "budget": {
         "max_allocation_bytes_per_op": 1000000.0,
@@ -346,11 +460,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 7.122000180164319,
+      "score": 9.819307787651052,
       "score_unit": "ms/op"
     },
     {
-      "allocation_bytes_per_op": 272.0076249770588,
+      "allocation_bytes_per_op": 272.0103548885396,
       "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.directContraction",
       "budget": {
         "max_allocation_bytes_per_op": 512.0,
@@ -369,11 +483,11 @@
       "params": {},
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 0.5515213883497563,
+      "score": 0.7632478755509917,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 1000.0176146410049,
+      "allocation_bytes_per_op": 1000.0248139520552,
       "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.exactWindowFunctional",
       "budget": {
         "max_allocation_bytes_per_op": 2048.0,
@@ -392,11 +506,11 @@
       "params": {},
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 1.2706415652082832,
+      "score": 1.843556033763188,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 424.00808968140853,
+      "allocation_bytes_per_op": 424.0116914799926,
       "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.pointFunctional",
       "budget": {
         "max_allocation_bytes_per_op": 1024.0,
@@ -415,11 +529,11 @@
       "params": {},
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 0.584925781899968,
+      "score": 0.854521345941158,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 44065.209222360834,
+      "allocation_bytes_per_op": 44065.63434802303,
       "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.trapezoidWindowFunctional",
       "budget": {
         "max_allocation_bytes_per_op": 65536.0,
@@ -438,11 +552,11 @@
       "params": {},
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 86.86708787026974,
+      "score": 119.80672316257636,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 912.0094977700646,
+      "allocation_bytes_per_op": 912.0145087146034,
       "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.typedReconstruction",
       "budget": {
         "max_allocation_bytes_per_op": 2048.0,
@@ -461,11 +575,11 @@
       "params": {},
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 0.645376177161888,
+      "score": 1.0480717696186606,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 55876.874229844514,
+      "allocation_bytes_per_op": 113586.34503536727,
       "benchmark": "scalafim.fmri.hrf.EpochIntegrationBenchmark.exact",
       "budget": {
         "max_allocation_bytes_per_op": 131072.0,
@@ -487,11 +601,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 298.7896843258621,
+      "score": 490.6585853821365,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 5864222.426984128,
+      "allocation_bytes_per_op": 5864329.052286843,
       "benchmark": "scalafim.fmri.hrf.EpochIntegrationBenchmark.trapezoid",
       "budget": {
         "max_allocation_bytes_per_op": 8388608.0,
@@ -513,11 +627,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 14346.294407738096,
+      "score": 22993.685999251837,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 3527284.5705264607,
+      "allocation_bytes_per_op": 4684164.78028583,
       "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
       "budget": {
         "max_allocation_bytes_per_op": 5242880.0,
@@ -540,11 +654,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 565.7765688167459,
+      "score": 2187.187724281259,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 6679493.473232028,
+      "allocation_bytes_per_op": 7836349.335805314,
       "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
       "budget": {
         "max_allocation_bytes_per_op": 9437184.0,
@@ -567,11 +681,11 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 8628.893482164427,
+      "score": 13316.78122370221,
       "score_unit": "us/op"
     },
     {
-      "allocation_bytes_per_op": 8763707.599987704,
+      "allocation_bytes_per_op": 9915756.23345451,
       "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
       "budget": {
         "max_allocation_bytes_per_op": 12582912.0,
@@ -594,23 +708,24 @@
       },
       "passes_allocation_budget": true,
       "passes_time_budget": true,
-      "score": 2570.1615711700892,
+      "score": 6242.666316490938,
       "score_unit": "us/op"
     }
   ],
   "schema_version": "scalafim-first-level-benchmark-receipt/v1",
   "source": {
-    "commit": "245531a3c3befaa71b885d281575c5136278f167",
+    "commit": "a9f5509fca812dca2743aaf045b9b3f0094d5777",
     "dirty": true,
     "files": {
+      "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala": "57446cc7917d3025c6c5044eb4f985c62d786dbc4740501475652046ada6a3a3",
       "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/FirstLevelFitBenchmark.scala": "0ae56a246b8fc78e8088e66a45b29fa38e3294319d0c40c6540388495216ca41",
       "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/BasisResponseBenchmark.scala": "5333372da36c578a5693e36b168a3d1671876859b22974d72d57520dbcf4ad95",
       "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/DenseDriveBenchmark.scala": "8786c30d6b1b9cc178a5011f959af91ea5cb7f63b95250de7b6d7a478a78f521",
       "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/RegressorConvolutionBenchmark.scala": "6c043bd61fe9a7a78dcb7c17a42b21082a480347fc76ddf2f99d9a9380377ff6",
-      "build.sbt": "f72c3c432e09ac2a05b77a19076888208f2aaa0e6fa0e9356d6e757c83c8b259",
-      "tools/benchmark/finalize_first_level_receipt.py": "573617f1d6cb28d8ef86fc6a966f3ae8b4c8f8b80a1d1151f622df91c18f7a66",
-      "tools/benchmark/first-level-budgets.json": "c13b5fde6be998e298376df3124b5a65cd3c095a274ac39487c7fb049459c0ae",
-      "tools/ci/first-level-benchmark.sh": "8ccaf3d6b1b8d1cf80aded5facf4447988a0b201765927a162b36cc4937e6d28"
+      "build.sbt": "76b2f1559c2d805c6f0537424172aa9d37cc39eaf018a7eecf55e91efb2eefc6",
+      "tools/benchmark/finalize_first_level_receipt.py": "1023bab85d457ee7acd74f99e09cb353324e97ca7a32eedf01ea02ca6d426a81",
+      "tools/benchmark/first-level-budgets.json": "b2d649ebcdaf5e3002a18d281da5cca85860215be7bf59a6a80634272c5f0814",
+      "tools/ci/first-level-benchmark.sh": "62592f869723da778d91024a0897b7a6b3caa2c2391ccb6c7e8ad0dbc75ed401"
     }
   },
   "toolchain": {

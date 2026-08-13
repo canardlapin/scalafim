@@ -438,7 +438,7 @@ final case class CompiledTContrast private[fit] (
     for
       run <- result.run(runIndex).toRight(FitError.EmptyRunPartition(runIndex))
       _ <- StructuralHypothesis.validateResultAxis(metadata.id, coefficientAxis, run.coefficientAxis)
-      dense <- run.denseResult(result.columnNames, result.voxelIndices, result.summary)
+      dense <- run.denseResult(result.columnNames, result.voxelIndices, result.summary, result.fitExclusions)
       ready <- dense.inferenceReady
       evaluated <- TContrast.evaluateAligned(ready, aligned, Some(metadata))
     yield evaluated
@@ -475,7 +475,7 @@ final case class CompiledFContrast private[fit] (
     for
       run <- result.run(runIndex).toRight(FitError.EmptyRunPartition(runIndex))
       _ <- StructuralHypothesis.validateResultAxis(metadata.id, coefficientAxis, run.coefficientAxis)
-      dense <- run.denseResult(result.columnNames, result.voxelIndices, result.summary)
+      dense <- run.denseResult(result.columnNames, result.voxelIndices, result.summary, result.fitExclusions)
       ready <- dense.inferenceReady
       evaluated <- FContrast.evaluateAligned(ready, aligned, Some(metadata))
     yield evaluated

@@ -206,7 +206,7 @@
       "generator_sha256": "597bcf0350f1a1a8654b7601bf93e74463f3eea60eb674481ce9896f599f712c",
       "locale": "C",
       "lock_path": "tools/r-parity/reference-lock.json",
-      "lock_sha256": "8fcccdb83ab6ad29da592218dcf9816534c7df896a058bad218f3e28f86f5548",
+      "lock_sha256": "083b2f7014de600b7184c79d9a06366202805abbf74eb8a1dfa104310f0836e3",
       "runtime": "Python 3.11"
     },
     "hashes": {

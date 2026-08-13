@@ -20,14 +20,31 @@ enum FixedEffectsWeighting:
 enum FixedEffectsSharedRunPolicy:
   case RequireAllRuns
 
+/** Availability policy for voxelwise fixed-effects contributions. Requiring
+  * every run keeps one shared reference degrees of freedom and prevents a
+  * zero variance from being misread as infinite precision.
+  */
+enum FixedEffectsVoxelPolicy:
+  case RequireAllRuns
+
 /** Policies that affect fixed-effects estimands.  These are retained in the
   * result so a coefficient vector is never detached from its combination
   * convention.
   */
 final case class FixedEffectsPolicy(
     weighting: FixedEffectsWeighting = FixedEffectsWeighting.InverseCovariance,
-    sharedRunPolicy: FixedEffectsSharedRunPolicy = FixedEffectsSharedRunPolicy.RequireAllRuns
+    sharedRunPolicy: FixedEffectsSharedRunPolicy = FixedEffectsSharedRunPolicy.RequireAllRuns,
+    voxelPolicy: FixedEffectsVoxelPolicy = FixedEffectsVoxelPolicy.RequireAllRuns
 )
+
+private final case class FixedEffectsVoxelSelection(
+    positions: Vector[Int],
+    voxelIndices: Vector[Int],
+    exclusions: Vector[VoxelInferenceExclusion]
+):
+  require(positions.nonEmpty, "fixed-effects voxel selection must retain at least one voxel")
+  require(positions.length == voxelIndices.length, "fixed-effects voxel positions must match voxel identities")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, exclusions, "fixed-effects voxel selection")
 
 /** One run's contribution to a fixed-effects sufficient-statistics fold.
   *
@@ -141,14 +158,16 @@ object FixedEffects:
   ): Either[FitError, FixedEffectsFmriFitResult] =
     for
       axis <- result.coefficientAxis.toRight(FitError.MissingStructuralIdentity("fixed-effects coefficient axis"))
-      statistics <- fromRunwise(result, axis, policy)
+      selection <- selectVoxels(result, policy)
+      statistics <- fromRunwise(result, axis, policy, selection.positions, selection.voxelIndices)
+      exclusions <- VoxelInferenceExclusions.combine(result.fitExclusions, selection.exclusions)
       names <- columnNamesFor(result.columnNames, statistics.effectiveSourceColumnIndices)
       fixedSummary = result.summary.copy(
         engine = FitEngine.FixedEffects,
         predictors = statistics.coefficientAxis.predictors,
         coefficientScope = scalafim.fmri.model.CoefficientScope.SeparateRunsThenFixedEffects
       )
-      combined <- combine(statistics, names, result.timepoints, fixedSummary, result.preparationProvenance)
+      combined <- combine(statistics, names, result.timepoints, fixedSummary, result.preparationProvenance, exclusions)
     yield combined
 
   /** Combine two disjoint fixed-effects statistics folds. */
@@ -158,11 +177,12 @@ object FixedEffects:
       columnNames: Vector[String],
       timepoints: Vector[Int],
       summary: FitSummary,
-      preparationProvenance: Option[ResponsePreparationProvenance]
+      preparationProvenance: Option[ResponsePreparationProvenance],
+      fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   ): Either[FitError, FixedEffectsFmriFitResult] =
     left.combine(right).flatMap { stats =>
       val normalizedSummary = summary.copy(predictors = stats.coefficientAxis.predictors)
-      combine(stats, columnNames, timepoints, normalizedSummary, preparationProvenance)
+      combine(stats, columnNames, timepoints, normalizedSummary, preparationProvenance, fitExclusions)
     }
 
   private def combine(
@@ -170,7 +190,8 @@ object FixedEffects:
       columnNames: Vector[String],
       timepoints: Vector[Int],
       summary: FitSummary,
-      preparationProvenance: Option[ResponsePreparationProvenance]
+      preparationProvenance: Option[ResponsePreparationProvenance],
+      fitExclusions: Vector[VoxelInferenceExclusion]
   ): Either[FitError, FixedEffectsFmriFitResult] =
     if summary.engine != FitEngine.FixedEffects then
       Left(FitError.FixedEffectsIncompatible("fixed-effects result summary must use FitEngine.FixedEffects"))
@@ -191,14 +212,58 @@ object FixedEffects:
           sufficientStatistics = statistics,
           policy = statistics.policy,
           coefficientAxis = Some(statistics.coefficientAxis),
-          preparationProvenance = preparationProvenance
+          preparationProvenance = preparationProvenance,
+          fitExclusions = fitExclusions
         )
       }
+
+  private def selectVoxels(
+      result: RunwiseFmriFitResult,
+      policy: FixedEffectsPolicy
+  ): Either[FitError, FixedEffectsVoxelSelection] =
+    policy.voxelPolicy match
+      case FixedEffectsVoxelPolicy.RequireAllRuns =>
+        val positions = Vector.newBuilder[Int]
+        val voxelIndices = Vector.newBuilder[Int]
+        val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
+        var voxel = 0
+        while voxel < result.voxelIndices.length do
+          val statuses = result.runs.map(run => fixedEffectsStatus(run, voxel))
+          val status = VoxelFitStatus.aggregate(statuses)
+          if status.supportsInference then
+            positions += voxel
+            voxelIndices += result.voxelIndices(voxel)
+          else
+            exclusions += VoxelInferenceExclusion(result.voxelIndices(voxel), status)
+          voxel += 1
+
+        val retainedPositions = positions.result()
+        val retainedVoxelIndices = voxelIndices.result()
+        val omitted = exclusions.result()
+        if retainedPositions.isEmpty then
+          VoxelInferenceExclusions
+            .combine(result.fitExclusions, omitted)
+            .flatMap(all => Left(FitError.AllVoxelsExcluded(all)))
+        else Right(FixedEffectsVoxelSelection(retainedPositions, retainedVoxelIndices, omitted))
+
+  private def fixedEffectsStatus(
+      run: RunwiseFmriRunResult,
+      voxelPosition: Int
+  ): VoxelFitStatus =
+    run.resolvedVoxelStatuses(voxelPosition) match
+      case VoxelFitStatus.Estimable =>
+        val variance = run.residualVariance(voxelPosition)
+        if !variance.isFinite then VoxelFitStatus.NonFinite
+        else if variance <= 0.0 then VoxelFitStatus.ZeroResidualVariance
+        else VoxelFitStatus.Estimable
+      case status => status
 
   private def fromRunwise(
       result: RunwiseFmriFitResult,
       axis: CoefficientAxis,
-      policy: FixedEffectsPolicy
+      policy: FixedEffectsPolicy,
+      voxelPositions: Vector[Int],
+      voxelIndices: Vector[Int]
   ): Either[FitError, FixedEffectsSufficientStatistics] =
     val projections = result.runs.flatMap(_.projection)
     if projections.nonEmpty && projections.length != result.runs.length then
@@ -235,16 +300,17 @@ object FixedEffects:
       val runAxis = run.coefficientAxis.get
       if runAxis.designFingerprint != axis.designFingerprint then
         return Left(FitError.FixedEffectsIncompatible(s"run ${run.runIndex} design fingerprint differs from the shared axis"))
-      contribution(run, policy, sharedColumns) match
+      contribution(run, policy, sharedColumns, voxelPositions) match
         case Left(error) => return Left(error)
         case Right(value) => contributions += value
       runPosition += 1
-    Right(FixedEffectsSufficientStatistics(selectedAxis, result.voxelIndices, contributions.result(), policy, sharedColumns))
+    Right(FixedEffectsSufficientStatistics(selectedAxis, voxelIndices, contributions.result(), policy, sharedColumns))
 
   private def contribution(
       run: RunwiseFmriRunResult,
       policy: FixedEffectsPolicy,
-      sourceColumns: Vector[Int]
+      sourceColumns: Vector[Int],
+      voxelPositions: Vector[Int]
   ): Either[FitError, FixedEffectsRunContribution] =
     policy.weighting match
       case FixedEffectsWeighting.InverseCovariance =>
@@ -256,7 +322,7 @@ object FixedEffects:
           ))
         else
           val predictors = localPositions.length
-          val localCoefficients = selectRows(run.coefficients.value, localPositions)
+          val localCoefficients = selectColumns(selectRows(run.coefficients.value, localPositions), voxelPositions)
           val localCovariance = selectRowsCols(run.normalizedCovariance, localPositions)
           if run.residualVariance.length != run.coefficients.voxels then
             Left(FitError.FixedEffectsContributionFailure(run.runIndex, -1, "residual variance count does not match coefficients"))
@@ -265,24 +331,25 @@ object FixedEffects:
           else
             inverse(localCovariance, run.runIndex, -1).flatMap { basePrecision =>
               val precision = Vector.newBuilder[DMat]
-              var invalid: FitError | Null = null
+              var invalid: Option[FitError] = None
               var voxel = 0
-              while voxel < run.coefficients.voxels && invalid == null do
-                val variance = run.residualVariance(voxel)
+              while voxel < voxelPositions.length && invalid.isEmpty do
+                val sourceVoxel = voxelPositions(voxel)
+                val variance = run.residualVariance(sourceVoxel)
                 if !(variance > 0.0 && variance.isFinite) then
-                  invalid = FitError.FixedEffectsContributionFailure(run.runIndex, voxel, s"residual variance must be positive and finite, got $variance")
+                  invalid = Some(FitError.FixedEffectsContributionFailure(run.runIndex, sourceVoxel, s"residual variance must be positive and finite, got $variance"))
                 else precision += scale(basePrecision, 1.0 / variance)
                 voxel += 1
               invalid match
-                case error: FitError => Left(error)
-                case null =>
+                case Some(error) => Left(error)
+                case None =>
                   val baseWeighted = basePrecision * localCoefficients
-                  val weighted = Matrix.newBuilder(predictors, run.coefficients.voxels)
+                  val weighted = Matrix.newBuilder(predictors, voxelPositions.length)
                   var row = 0
                   while row < predictors do
                     voxel = 0
-                    while voxel < run.coefficients.voxels do
-                      weighted(row, voxel) = baseWeighted(row, voxel) / run.residualVariance(voxel)
+                    while voxel < voxelPositions.length do
+                      weighted(row, voxel) = baseWeighted(row, voxel) / run.residualVariance(voxelPositions(voxel))
                       voxel += 1
                     row += 1
                   Right(FixedEffectsRunContribution(
@@ -308,6 +375,9 @@ object FixedEffects:
 
   private def selectRows(matrix: DMat, rows: IndexedSeq[Int]): DMat =
     Matrix.tabulate(rows.length, matrix.cols) { (row, col) => matrix(rows(row), col) }
+
+  private def selectColumns(matrix: DMat, columns: IndexedSeq[Int]): DMat =
+    Matrix.tabulate(matrix.rows, columns.length) { (row, col) => matrix(row, columns(col)) }
 
   private def selectRowsCols(matrix: DMat, rows: IndexedSeq[Int]): DMat =
     Matrix.tabulate(rows.length, rows.length) { (row, col) => matrix(rows(row), rows(col)) }

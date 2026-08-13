@@ -106,6 +106,7 @@ class InferenceSuite extends munit.FunSuite:
         )
       )
     )
+
     val response = ResponseBlock.unsafe(
       scalafim.fmri.fit.GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(3.0), Vector(5.0), Vector(7.0)))
     )
@@ -135,6 +136,55 @@ class InferenceSuite extends munit.FunSuite:
         robust = false,
         autocorrelated = false
       )
+    )
+
+  private def mixedDegenerateResult: DenseFmriFitResult =
+    val design = DesignMatrix.unsafe(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
+        Vector(
+          Vector(1.0, 0.0),
+          Vector(1.0, 1.0),
+          Vector(1.0, 2.0),
+          Vector(1.0, 3.0)
+        )
+      )
+    )
+    val response = ResponseBlock.unsafe(
+      scalafim.fmri.fit.GaleTestMatrix.fromRows(
+        Vector(
+          Vector(0.0, 1.0),
+          Vector(0.0, 2.0),
+          Vector(0.0, 2.0),
+          Vector(0.0, 4.0)
+        )
+      )
+    )
+    val fit = Ols.unsafeFit(design, response)
+    val statuses = VoxelFitStatus.refine(VoxelFitStatus.classify(response), fit.residualVariance)
+    DenseFmriFitResult(
+      coefficients = fit.coefficients,
+      inference = CoefficientInference.unsafeFromExisting(
+        CoefficientInferenceScope.All,
+        fit.standardErrors,
+        fit.coefficientCovariance,
+        fit.residualVariance,
+        fit.residualDegreesOfFreedom
+      ),
+      residualVariance = fit.residualVariance,
+      residualDegreesOfFreedom = fit.residualDegreesOfFreedom,
+      columnNames = Vector("base_constant", "task"),
+      voxelIndices = Vector(10, 20),
+      timepoints = Vector(0, 1, 2, 3),
+      engine = FitEngine.OrdinaryLeastSquares,
+      summary = FitSummary(
+        engine = FitEngine.OrdinaryLeastSquares,
+        timepoints = 4,
+        predictors = 2,
+        voxels = 2,
+        robust = false,
+        autocorrelated = false
+      ),
+      voxelStatuses = Some(statuses)
     )
 
   test("Dense OLS results expose standard errors and diagnostics") {
@@ -287,6 +337,22 @@ class InferenceSuite extends munit.FunSuite:
       case FitError.NonEstimableContrast("task", detail) => detail.contains("residual variance")
       case _                                             => false
     })
+  }
+
+  test("mixed fits retain typed voxel status and isolate T/F inference") {
+    val result = mixedDegenerateResult
+    assertEquals(result.resolvedVoxelStatuses, Vector(VoxelFitStatus.AllZero, VoxelFitStatus.Estimable))
+    assertEquals(result.voxelStatus(10), Some(VoxelFitStatus.AllZero))
+
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
+    val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
+
+    assertEquals(t.voxelIndices, Vector(20))
+    assertEquals(f.voxelIndices, Vector(20))
+    assertEquals(t.excludedVoxels, Vector(VoxelInferenceExclusion(10, VoxelFitStatus.AllZero)))
+    assertEquals(f.excludedVoxels, Vector(VoxelInferenceExclusion(10, VoxelFitStatus.AllZero)))
+    assert(t.statistics.toSeq.forall(_.isFinite))
+    assert(f.statistics.toSeq.forall(_.isFinite))
   }
 
   test("F contrasts reject unknown and non-estimable columns explicitly") {

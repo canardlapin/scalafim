@@ -8,7 +8,7 @@ import scalafim.dataset.{
 }
 import scalafim.fmri.design.event.{ConvolvedTerm, EventTermColumnRole}
 import scalafim.fmri.design.{RunCoefficientProjection, RunIndex as DesignRunIndex, ScanIndex}
-import scalafim.fmri.model.FitPlan
+import scalafim.fmri.model.{FitPlan, MissingDataPolicy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -44,7 +44,10 @@ object FitPlanExecutor:
         .seriesEither(selection)
         .left
         .map(FitChunkPlan.mapDatasetError)
-      result <- interpreter.fit(plan, series)
+      result <-
+        plan.config.missingData match
+          case MissingDataPolicy.OmitRowsPerVoxel => MaskedResponseExecutor.fit(plan, series)
+          case _                                  => interpreter.fit(plan, series)
     yield result
 
   /** Execute a plan whose result is required for coefficient-level inference.
@@ -209,6 +212,10 @@ object FitPlanExecutor:
   private def requireDense(result: FmriFitResult): Either[FitError, DenseFmriFitResult] =
     result match
       case dense: DenseFmriFitResult => Right(dense)
+      case _: PatternedFmriFitResult =>
+        Left(FitError.UnsupportedMissingDataPolicy(
+          "voxel-specific observed-row patterns do not share one dense inference geometry; use fit and inspect patternResults"
+        ))
       case other                     => Left(FitError.NonDenseFitResult(other.engine))
 
   private[fit] def fitBlockInput(
@@ -241,20 +248,22 @@ object FitPlanExecutor:
   ): Either[FitError, FitBlockInput] =
     for
       design <- MatrixAdapters.designMatrix(plan.model, series.timepoints)
-      response <- MatrixAdapters.responseBlock(series)
+      adaptedResponse <- MatrixAdapters.responseBlock(series, plan.config.missingData)
       runwiseProjections <- runwiseProjections(plan, series.timepoints, partitions)
       lss <- lssDesign match
         case None        => Right(None)
         case Some(value) => value.map(design => Some(design): Option[LssBlockDesign])
     yield FitBlockInput(
       design = design,
-      response = response,
-      voxelIndices = series.voxelIndices,
+      response = adaptedResponse.response,
+      voxelIndices = adaptedResponse.voxelIndices,
       timepoints = series.timepoints,
       partitions = partitions,
       lssDesign = lss,
       coefficientAxis = plan.coefficientAxis,
-      runwiseProjections = runwiseProjections
+      runwiseProjections = runwiseProjections,
+      voxelStatuses = Some(VoxelFitStatus.classify(adaptedResponse.response)),
+      fitExclusions = adaptedResponse.fitExclusions
     )
 
   private[fit] def preparedFitBlockInput(
@@ -313,7 +322,9 @@ object FitPlanExecutor:
       autocorrelation = block.autocorrelation,
       robustDiagnostics = block.robustDiagnostics,
       coefficientAxis = block.coefficientAxis,
-      preparationProvenance = block.preparationProvenance
+      preparationProvenance = block.preparationProvenance,
+      voxelStatuses = Some(block.resolvedVoxelStatuses),
+      fitExclusions = block.fitExclusions
     )
 
   private[fit] def lssExecutionDesign(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, LssBlockDesign] =

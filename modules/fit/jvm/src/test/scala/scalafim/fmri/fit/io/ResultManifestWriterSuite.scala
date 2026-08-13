@@ -124,6 +124,27 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(sidecar.contains("\"labels\": [\"task_t\"]"))
   }
 
+  test("ResultManifestWriter persists voxel status and contrast exclusions") {
+    val result = denseResult().copy(
+      voxelStatuses = Some(Vector(VoxelFitStatus.Constant, VoxelFitStatus.Estimable))
+    )
+    val provenance = AnalysisProvenance.fromResult(result, source = "voxel-status-writer-suite")
+    val contrast = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
+    val manifest =
+      ResultManifest
+        .fromDenseFit(result, shape, source = "voxel-status-writer-suite")
+        .toOption
+        .get
+        .withContrasts(ContrastMap.fromTContrast(contrast, shape, provenance).toOption.get)
+    val root = Files.createTempDirectory("scalafim-voxel-status-writer")
+
+    ResultManifestWriter.writeBidsDirectory(manifest, root, "sub-01_task-status").toOption.get
+
+    val sidecar = Files.readString(root.resolve("sub-01_task-status_resultmanifest.json"), StandardCharsets.UTF_8)
+    assert(sidecar.contains("\"voxel_statuses\": [{\"voxel\": 0, \"status\": \"constant\"}, {\"voxel\": 1, \"status\": \"ok\"}]"))
+    assert(sidecar.contains("\"contrast_exclusions\": [{\"contrast_id\": \"task\", \"voxels\": [{\"voxel\": 0, \"status\": \"constant\"}]}]"))
+  }
+
   test("ResultManifestWriter rejects unsafe stems and colliding named-map paths before writing") {
     val root = Files.createTempDirectory("scalafim-result-writer-preflight")
     assert(ResultManifestExportTarget.bidsDirectory(root, "../outside").left.toOption.exists {

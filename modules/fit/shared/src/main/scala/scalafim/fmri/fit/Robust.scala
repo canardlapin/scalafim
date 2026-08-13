@@ -1,6 +1,6 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArOrder as ArFitOrder, NoisePooling, TimeSegment, WhiteningPlan, WhiteningTransform}
+import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArOrder as ArFitOrder, NoiseEstimationLayout, NoisePooling, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, AutocorrelationConfig, RobustOptions, RobustPsi, ScaleScope}
 import gale.linalg.{DMat, DVec, Matrix, Vec}
 
@@ -257,14 +257,14 @@ object Robust:
       config <- Gls.autocorrelationConfig(arOptions)
       _ <- validateRobustAutocorrelation(config)
       _ <- Gls.validatePartitions(partitions)
-      segments <- Gls.timeSegments(partitions, arOptions.censoredTimepoints)
+      noiseLayout <- Gls.noiseEstimationLayout(partitions, arOptions.censoredTimepoints)
       plan <- iterateRobustWhitening(
         design = design,
         response = response,
         partitions = partitions,
         options = options.copy(reestimateAutocorrelation = false),
         initialCoefficients = firstRobust.coefficients.value,
-        segments = segments,
+        noiseLayout = noiseLayout,
         config = config
       )
       input <- whitenedInput(plan, design, response)
@@ -299,7 +299,7 @@ object Robust:
       partitions: Vector[RunPartition],
       options: RobustOptions,
       initialCoefficients: DMat,
-      segments: Vector[TimeSegment],
+      noiseLayout: NoiseEstimationLayout,
       config: AutocorrelationConfig
   ): Either[FitError, WhiteningPlan] =
     val pooling = if config.global then NoisePooling.Global else NoisePooling.Run
@@ -313,7 +313,7 @@ object Robust:
     def estimate(coefficients: DMat): Either[FitError, WhiteningPlan] =
       val residuals = residualMatrix(design.value, response.value, coefficients)
       ArEstimation
-        .fitNoise(residuals, segments, arOptions)
+        .fitNoise(residuals, noiseLayout, arOptions)
         .left
         .map(Gls.arToFitError)
 

@@ -22,7 +22,18 @@ object LawRunProfile:
         )
 
   val initialSeed: String =
-    val configured = sys.env.getOrElse("SCALAFIM_LAW_SEED", Seed(0x5ca1af1L).toBase64)
+    val configured =
+      sys.env
+        .get("SCALAFIM_LAW_SEED")
+        .orElse(
+          sys.env.get("SCALAFIM_LAW_SEED_LONG").map { raw =>
+            val value = raw.toLongOption.getOrElse(
+              throw new IllegalArgumentException("SCALAFIM_LAW_SEED_LONG must be a signed 64-bit integer")
+            )
+            Seed(value).toBase64
+          }
+        )
+        .getOrElse(Seed(0x5ca1af1L).toBase64)
     require(
       Seed.fromBase64(configured).isSuccess,
       "SCALAFIM_LAW_SEED must be a ScalaCheck base64 seed"

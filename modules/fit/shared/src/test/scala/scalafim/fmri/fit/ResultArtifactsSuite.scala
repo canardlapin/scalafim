@@ -13,7 +13,8 @@ class ResultArtifactsSuite extends munit.FunSuite:
   test("ResultManifest from dense fit preserves parameter metadata and provenance") {
     val result = denseResult().copy(
       olsDiagnostics = Some(fullRankDiagnostics),
-      preparationProvenance = Some(ResponsePreparationPlan.fromConfig(scalafim.fmri.model.FitConfig()).provenance)
+      preparationProvenance = Some(ResponsePreparationPlan.fromConfig(scalafim.fmri.model.FitConfig()).provenance),
+      voxelStatuses = Some(Vector(VoxelFitStatus.AllZero, VoxelFitStatus.Estimable))
     )
     val manifest =
       ResultManifest
@@ -37,6 +38,15 @@ class ResultArtifactsSuite extends munit.FunSuite:
     assertEquals(manifest.provenance.rankReports.head.numericalRank, 2)
     assertEquals(manifest.provenance.rankReports.head.aliasedColumnIds, Vector.empty)
     assertEquals(
+      manifest.provenance.voxelStatuses,
+      Some(
+        Vector(
+          VoxelFitStatusRecord(3, VoxelFitStatus.AllZero),
+          VoxelFitStatusRecord(1, VoxelFitStatus.Estimable)
+        )
+      )
+    )
+    assertEquals(
       manifest.provenance.coefficientAxis.map(_.columnIds),
       result.coefficientAxis.map(_.columnIds)
     )
@@ -59,7 +69,9 @@ class ResultArtifactsSuite extends munit.FunSuite:
   }
 
   test("ContrastMap preserves statistic kind and degrees of freedom") {
-    val result = denseResult()
+    val result = denseResult().copy(
+      voxelStatuses = Some(Vector(VoxelFitStatus.AllZero, VoxelFitStatus.Estimable))
+    )
     val provenance = AnalysisProvenance.fromResult(result)
     val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
     val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
@@ -71,8 +83,30 @@ class ResultArtifactsSuite extends munit.FunSuite:
     assertEquals(tMaps.map(_.contrast), Vector("task", "task", "task"))
     assertEquals(tMaps.map(_.map.label), Vector("task_estimate", "task_standard_error", "task_t"))
     assertEquals(tMaps.flatMap(_.degreesOfFreedom).map(_.residual.value).distinct, Vector(2))
+    assertEquals(
+      tMaps.map(_.excludedVoxels).distinct,
+      Vector(Vector(VoxelInferenceExclusion(3, VoxelFitStatus.AllZero)))
+    )
     assertEquals(fMaps.map(_.statistic), Vector(ContrastMapKind.Estimate(1), ContrastMapKind.FStatistic))
     assertEquals(fMaps.last.degreesOfFreedom.flatMap(_.numerator), Some(1))
+    assertEquals(
+      fMaps.map(_.excludedVoxels).distinct,
+      Vector(Vector(VoxelInferenceExclusion(3, VoxelFitStatus.AllZero)))
+    )
+
+    val sourceMap = tMaps.head.map
+    val withoutVoxelStatusProvenance = StatMap.unsafe(
+      name = sourceMap.label,
+      kind = sourceMap.kind,
+      values = sourceMap.values,
+      shape = sourceMap.shape,
+      selectedVoxels = sourceMap.selectedVoxels,
+      provenance = provenance.copy(voxelStatuses = None),
+      exportIntent = sourceMap.exportIntent
+    )
+    interceptMessage[IllegalArgumentException]("requirement failed: contrast map exclusions must agree with voxel status provenance") {
+      tMaps.head.copy(map = withoutVoxelStatusProvenance)
+    }
   }
 
   test("StatMap rejects value and voxel-space mismatches") {

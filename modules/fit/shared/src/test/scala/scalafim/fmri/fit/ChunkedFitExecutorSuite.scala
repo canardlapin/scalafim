@@ -23,6 +23,7 @@ import scalafim.fmri.model.{
   LatentSketchConfig,
   LatentSketchMethod,
   LowRankComponentSpec,
+  MissingDataPolicy,
   ModelBuildSpec,
   ReducedRankBootstrapConfig,
   ReducedRankComponentSpec,
@@ -131,6 +132,116 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         .asInstanceOf[DenseFmriFitResult]
 
     assertDenseClose(actual, expected)
+  }
+
+  test("single-voxel chunks preserve propagated non-finite exclusions") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Propagate)
+    )
+    val expected = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity).asInstanceOf[DenseFmriFitResult]
+    val actual = FitPlanExecutor
+      .fitChunked(plan, chunking = singleVoxelChunking)
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertDenseClose(actual, expected)
+    assertEquals(actual.fitExclusions, Vector(VoxelInferenceExclusion(1, VoxelFitStatus.NonFinite)))
+    assertEquals(
+      TContrast("task", Map("task" -> 1.0)).evaluate(actual).toOption.map(_.excludedVoxels),
+      Some(actual.fitExclusions)
+    )
+  }
+
+  test("chunked voxel-specific row omission matches whole patterned OLS") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val expected = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+    val actual = FitPlanExecutor
+      .fitChunked(plan, chunking = singleVoxelChunking)
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+
+    assertEquals(actual.voxelIndices, expected.voxelIndices)
+    assertEquals(actual.patternResults.map(_.pattern), expected.patternResults.map(_.pattern))
+    actual.voxelIndices.foreach { voxelIndex =>
+      val left = actual.resultForVoxel(voxelIndex).get.asInstanceOf[DenseFmriFitResult]
+      val right = expected.resultForVoxel(voxelIndex).get.asInstanceOf[DenseFmriFitResult]
+      assertMatrixClose(left.coefficients.value, right.coefficients.value, 1e-12)
+      assertMatrixClose(left.standardErrors.value, right.standardErrors.value, 1e-12)
+      assertEquals(left.residualDegreesOfFreedom, right.residualDegreesOfFreedom)
+    }
+  }
+
+  test("future single-voxel chunks preserve propagated non-finite exclusions") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Propagate)
+    )
+    val expected = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity).asInstanceOf[DenseFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, chunking = singleVoxelChunking, parallelism = FitParallelism.unsafe(2))
+      .map { evaluated =>
+        val actual = evaluated.fold(error => fail(error.message), identity).asInstanceOf[DenseFmriFitResult]
+        assertDenseClose(actual, expected)
+        assertEquals(actual.fitExclusions, expected.fitExclusions)
+    }
+  }
+
+  test("future chunking preserves voxel-specific observation patterns") {
+    val plan = FitPlan(
+      missingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
+    )
+    val expected = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity)
+      .asInstanceOf[PatternedFmriFitResult]
+
+    FutureChunkedFitExecutor
+      .fit(plan, chunking = singleVoxelChunking, parallelism = FitParallelism.unsafe(2))
+      .map { evaluated =>
+        val actual = evaluated.fold(error => fail(error.message), identity)
+          .asInstanceOf[PatternedFmriFitResult]
+        assertEquals(actual.voxelIndices, expected.voxelIndices)
+        assertEquals(actual.patternResults.map(_.pattern), expected.patternResults.map(_.pattern))
+        actual.voxelIndices.foreach { voxelIndex =>
+          val left = actual.resultForVoxel(voxelIndex).get.asInstanceOf[DenseFmriFitResult]
+          val right = expected.resultForVoxel(voxelIndex).get.asInstanceOf[DenseFmriFitResult]
+          assertMatrixClose(left.coefficients.value, right.coefficients.value, 1e-12)
+          assertMatrixClose(left.standardErrors.value, right.standardErrors.value, 1e-12)
+          assertEquals(left.residualDegreesOfFreedom, right.residualDegreesOfFreedom)
+        }
+      }
+  }
+
+  test("all-excluded and partially-excluded chunks preserve source exclusion order") {
+    val plan = FitPlan(
+      interleavedMissingDataModel,
+      engine = FitEngine.OrdinaryLeastSquares,
+      config = FitConfig(missingData = MissingDataPolicy.Propagate)
+    )
+    val expected = FitPlanExecutor.fit(plan).fold(error => fail(error.message), identity).asInstanceOf[DenseFmriFitResult]
+    val actual = FitPlanExecutor
+      .fitChunked(plan, chunking = chunking)
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertDenseClose(actual, expected)
+    assertEquals(
+      actual.fitExclusions,
+      Vector(
+        VoxelInferenceExclusion(0, VoxelFitStatus.NonFinite),
+        VoxelInferenceExclusion(1, VoxelFitStatus.NonFinite),
+        VoxelInferenceExclusion(3, VoxelFitStatus.NonFinite)
+      )
+    )
   }
 
   test("ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses") {
@@ -656,6 +767,37 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     FmriModel(eventModel, baseline, dataset)
 
+  private def missingDataModel: FmriModel =
+    modelFromRows(
+      id = "chunked-missing-data-demo",
+      sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0)),
+      task = Vector.tabulate(8)(_.toDouble),
+      rows = Vector.tabulate(8) { row =>
+        val x = row.toDouble
+        Vector(
+          1.0 + 0.75 * x + (if row % 3 == 0 then 0.2 else -0.1),
+          if row == 3 then Double.NaN else 2.0 - x,
+          -1.0 + 0.25 * x + (if row % 2 == 0 then 0.15 else -0.05)
+        )
+      }
+    )
+
+  private def interleavedMissingDataModel: FmriModel =
+    modelFromRows(
+      id = "chunked-interleaved-missing-data-demo",
+      sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0)),
+      task = Vector.tabulate(8)(_.toDouble),
+      rows = Vector.tabulate(8) { row =>
+        val x = row.toDouble
+        Vector(
+          if row == 1 then Double.NaN else 1.0 + x,
+          if row == 3 then Double.PositiveInfinity else 2.0 - x,
+          -1.0 + 0.4 * x + (if row % 2 == 0 then 0.2 else -0.1),
+          if row == 5 then Double.NegativeInfinity else 0.5 * x
+        )
+      }
+    )
+
   private def ar1Residual(phi: Double, n: Int, offset: Int): Vector[Double] =
     val out = Array.ofDim[Double](n)
     var i = 0
@@ -689,7 +831,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId(id), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId(id), ImageDMat.fromRows(rows), NeuroSpace(Vector(rows.head.length, 1, 1))),
         samplingFrame = sampling
       )
     FmriModel(eventModel, baseline, dataset)
@@ -735,6 +877,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
     assertEquals(actual.inferenceScope, expected.inferenceScope)
     assertEquals(actual.inference.method, expected.inference.method)
+    assertEquals(actual.fitExclusions, expected.fitExclusions)
     assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
     assertEquals(actual.autocorrelation, expected.autocorrelation)
     assertMatrixClose(actual.coefficients.value, expected.coefficients.value, tol = 1e-10)

@@ -275,10 +275,12 @@ lazy val ar =
     .crossType(CrossType.Full)
     .in(file("modules/ar"))
     .settings(commonSettings)
+    .settings(strictFirstLevelCompilerSettings)
     .settings(
       name := "scalafim-fmri-ar"
     )
     .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jvmSettings(scientificCoverageSettings(statementMinimum = 75.0, branchMinimum = 62.0))
     .jsConfigure(_.dependsOn(galeCoreJS))
     .jsSettings(jsSettingsBase)
 

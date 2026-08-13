@@ -57,6 +57,51 @@ class EventModelSuite extends munit.FunSuite:
     assertEquals(conv.data.cols, 6)
   }
 
+  test("convolve does not evaluate an HRF for an explicit all-zero column") {
+    val term = EventTerm(
+      events = Vector(Event.matrix(Mat.zeros(2, 1), name = "zero")),
+      onsets = Vector(1.0, 2.0).map(Seconds(_)),
+      blockIds = Vector(0, 0),
+      termTag = Some("zero")
+    )
+    val hrf = Hrf.scalar("must_not_run", span = 1.0.s) { _ =>
+      fail("an all-zero design column reached HRF evaluation")
+    }
+
+    val conv = term.convolve(
+      hrf,
+      SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
+      precision = 0.5.s,
+      dropEmpty = false
+    )
+
+    assertEquals(conv.data.data.toVector, Vector.fill(4)(0.0))
+    assertEquals(conv.columnNames, Vector("zero_f1"))
+  }
+
+  test("convolve prepares one shared HRF kernel across conditions and blocks") {
+    var evaluations = 0
+    val hrf = Hrf.scalar("counted", span = 1.0.s, support = Support.Compact(1.0.s)) { lag =>
+      evaluations += 1
+      1.0 - lag.value
+    }
+    val term = EventTerm(
+      events = Vector(Event.factor(Vector("A", "B", "A", "B"), "condition")),
+      onsets = Vector(0.0, 1.0, 0.0, 1.0).map(Seconds(_)),
+      blockIds = Vector(0, 0, 1, 1),
+      termTag = Some("condition")
+    )
+
+    val conv = term.convolve(
+      hrf,
+      SamplingFrame(blockLens = Seq(4, 4), tr = Seq(1.0)),
+      precision = 0.5.s
+    )
+
+    assertEquals(conv.data.cols, 2)
+    assertEquals(evaluations, 3, "the [0, 1] kernel at 0.5 s should be sampled once")
+  }
+
   test("EventModel rejects term metadata that does not match matrix columns") {
     val sf = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0))
     val badTerm = new EventModelTerm:

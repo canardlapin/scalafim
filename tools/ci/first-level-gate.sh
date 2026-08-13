@@ -64,6 +64,8 @@ gates=(
   firstLevelLawsJVM/Test/scalafmtCheck
   scenarioTestkitJVM/test
   scenarioTestkitJS/test
+  arJVM/test
+  arJS/test
   hrfJVM/test
   hrfJS/test
   hrfLawsJVM/test

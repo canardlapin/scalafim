@@ -14,7 +14,7 @@ bash tools/ci/first-level-benchmark.sh
 
 The script compiles the benchmark sources with the strict first-level compiler
 policy, runs single-threaded JMH forks with the allocation profiler, and writes
-four raw reports plus a machine-readable admission receipt under
+five raw reports plus a machine-readable admission receipt under
 `target/first-level-benchmarks/` by default. Set `SCALAFIM_BENCHMARK_OUT` to use
 another output directory.
 
@@ -26,11 +26,14 @@ another output directory.
 | Basis reconstruction | typed reconstruction, direct contraction | What is the explicit cost of reconstructing through the public typed basis surface? |
 | Regressor convolution | production convolution, FFT, direct loop | Does the selected production path remain preferable at the admitted first-level shape? |
 | Epoch integration | exact, trapezoid | Does analytic integration retain its intended time and allocation advantage? |
+| AR estimation | fixed global, fixed runwise, automatic global | What do multiresponse AR(4) estimation, pooling, and order selection allocate and cost? |
 | OLS | plan-and-fit, prepared multiresponse, prepared single response, prepared chunking | How much work is planning, how much is response fitting, and what does chunk assembly cost? |
 | WLS | plan-and-fit, prepared fit | Is factorization reuse visible for weighted fits? |
 | fixed GLS | plan-and-fit, prepared fit | Is covariance preparation separated from repeated response fitting? |
 
 The admitted fit shape has 360 time points, 32 predictors, and 128 responses.
+AR estimation uses the same 360-by-128 response shape, two runs, explicit
+censor resets, and a maximum order of four.
 The convolution shape has 1,200 scans, a three-element basis, and 0.1-second
 precision. Epoch integration uses a 12-second window at 0.05-second precision.
 These are stable comparison points, not claims that one shape represents every
@@ -49,9 +52,11 @@ a breached ceiling. It additionally requires:
   faster than their plan-and-fit counterparts.
 
 Typed reconstruction versus direct contraction and chunked versus unchunked
-multiresponse execution are recorded as advisory ratios. They make overhead
-visible without encoding a false expectation that the higher-level path must
-beat the lower-level primitive in every run.
+multiresponse execution are recorded as advisory ratios. Automatic versus
+fixed-order AR estimation and runwise versus global pooling are also recorded
+without imposing a scientifically arbitrary ordering. These comparisons make
+overhead visible without encoding a false expectation that one valid policy
+must beat another in every run.
 
 Budgets are deliberately broad enough to tolerate ordinary shared-runner noise
 while still catching order-of-magnitude regressions. Change them only with a
@@ -91,23 +96,26 @@ not release eligible because the source checkout was dirty.
 
 | Work | Time | Allocation |
 | --- | ---: | ---: |
-| typed basis reconstruction | 0.645 us/op | 912 B/op |
-| direct coordinate contraction | 0.552 us/op | 272 B/op |
-| exact basis window functional | 1.271 us/op | 1,000 B/op |
-| trapezoid basis window functional | 86.867 us/op | 44,065 B/op |
-| production convolution | 565.777 us/op | 3,527,285 B/op |
-| retained FFT convolution | 8,628.893 us/op | 6,679,493 B/op |
-| retained direct-loop convolution | 2,570.162 us/op | 8,763,708 B/op |
-| exact epoch integration | 298.790 us/op | 55,877 B/op |
-| trapezoid epoch integration | 14,346.294 us/op | 5,864,222 B/op |
-| OLS plan and fit | 7.326 ms/op | 664,616 B/op |
-| prepared OLS multiresponse fit | 6.824 ms/op | 444,415 B/op |
-| prepared OLS chunk assembly | 5.529 ms/op | 562,388 B/op |
-| prepared OLS single response | 0.043 ms/op | 12,289 B/op |
-| WLS plan and fit | 7.768 ms/op | 1,268,852 B/op |
-| prepared WLS fit | 7.122 ms/op | 444,418 B/op |
-| fixed-GLS plan and fit | 15.345 ms/op | 1,892,971 B/op |
-| prepared fixed-GLS fit | 7.720 ms/op | 1,135,362 B/op |
+| typed basis reconstruction | 1.048 us/op | 912 B/op |
+| direct coordinate contraction | 0.763 us/op | 272 B/op |
+| exact basis window functional | 1.844 us/op | 1,000 B/op |
+| trapezoid basis window functional | 119.807 us/op | 44,066 B/op |
+| production convolution | 2,187.188 us/op | 4,684,165 B/op |
+| retained FFT convolution | 13,316.781 us/op | 7,836,349 B/op |
+| retained direct-loop convolution | 6,242.666 us/op | 9,915,756 B/op |
+| exact epoch integration | 490.659 us/op | 113,586 B/op |
+| trapezoid epoch integration | 22,993.686 us/op | 5,864,329 B/op |
+| automatic global AR(4) estimation | 1.060 ms/op | 49,193 B/op |
+| fixed global AR(4) estimation | 1.183 ms/op | 31,967 B/op |
+| fixed runwise AR(4) estimation | 1.261 ms/op | 32,093 B/op |
+| OLS plan and fit | 10.194 ms/op | 664,660 B/op |
+| prepared OLS multiresponse fit | 9.026 ms/op | 444,441 B/op |
+| prepared OLS chunk assembly | 9.484 ms/op | 591,615 B/op |
+| prepared OLS single response | 0.082 ms/op | 12,289 B/op |
+| WLS plan and fit | 12.346 ms/op | 1,275,902 B/op |
+| prepared WLS fit | 9.819 ms/op | 444,449 B/op |
+| fixed-GLS plan and fit | 23.871 ms/op | 1,901,641 B/op |
+| prepared fixed-GLS fit | 11.587 ms/op | 1,135,413 B/op |
 
 These rounded values are for reading; the JSON receipt retains full precision,
 parameters, source hashes, and comparison ratios.

@@ -27,12 +27,14 @@ sbt "${sbt_args[@]}" \
   "hrfBenchJVM/Jmh/run $jmh_common -rff $output_dir/hrf-basis.json .*BasisResponseBenchmark.*" \
   "hrfBenchJVM/Jmh/run $jmh_common -p nScans=1200 -p nbasis=3 -p precision=0.1 -rff $output_dir/hrf-convolution.json .*RegressorConvolutionBenchmark.*" \
   "hrfBenchJVM/Jmh/run $jmh_common -p width=12.0 -p precision=0.05 -rff $output_dir/hrf-integration.json .*EpochIntegrationBenchmark.*" \
+  "fitBenchJVM/Jmh/run $jmh_common -p timepoints=360 -p responses=128 -p order=4 -rff $output_dir/ar-estimation.json .*ArEstimationBenchmark.*" \
   "fitBenchJVM/Jmh/run $jmh_common -p timepoints=360 -p predictors=32 -p responses=128 -rff $output_dir/fit.json .*FirstLevelFitBenchmark.*"
 
 python -S tools/benchmark/finalize_first_level_receipt.py \
   --raw "$output_dir/hrf-basis.json" \
   --raw "$output_dir/hrf-convolution.json" \
   --raw "$output_dir/hrf-integration.json" \
+  --raw "$output_dir/ar-estimation.json" \
   --raw "$output_dir/fit.json" \
   --output "$output_dir/receipt.json"
 

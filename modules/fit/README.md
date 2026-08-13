@@ -33,6 +33,28 @@ Dense `DesignMatrix` and `ResponseBlock` constructors reject non-finite values a
 the boundary. Use the public constructors when accepting external data; reserve
 the `.unsafe` constructors for already-validated internal paths and tests.
 
+`MissingDataPolicy` keeps that finite-block invariant intact. `Error` rejects a
+selected response containing any non-finite value; `ExcludeVoxel` removes a
+whole affected response column; `Propagate` is the compatibility name for that
+same whole-column behavior. `OmitRowsPerVoxel` scans before `ResponseBlock`
+construction, groups voxels by their exact finite-row mask, and fits each group
+with its own selected design. Unlike masks produce `PatternedFmriFitResult`,
+whose children retain their own timepoints, rank/covariance geometry, ordinary
+residual degrees of freedom, AR plan, and contrast result. All-missing,
+insufficient-df, and rank-deficient patterns become typed per-voxel exclusions;
+healthy patterns still complete. `fitDense` succeeds only when the retained
+voxels genuinely share one observation geometry.
+
+Row omission is available for OLS, GLS, runwise OLS, and separate-run fixed
+effects, including sequential/future voxel chunking. A missing timepoint is a
+real gap on the source time axis, so AR whitening and estimation reset across
+it rather than compacting adjacent observations. Estimated shared/global AR is
+estimated independently within each observation pattern; ScalaFIM does not
+invent a pooled AR estimator across incompatible masks. Fixed selected-row
+weights are subset by original row position. Response-derived DVARS weights and an
+explicit nuisance-projection matrix are rejected for this policy until their
+cross-pattern estimation/alignment contracts are defined.
+
 Response preparation is represented explicitly by `ResponsePreparationPlan`.
 The plan records missing-data policy, censoring, volume weights, nuisance
 projection, whitening/autocorrelation preparation, and robust weighting as typed

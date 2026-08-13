@@ -63,7 +63,7 @@ class ResponsePreparationSuite extends munit.FunSuite:
       case _ => false
     ))
     assert(provenance.rejected.isEmpty)
-    assert(provenance.deferred.exists(_.step == ResponsePreparationStep.MissingData(MissingDataPolicy.Propagate)))
+    assert(provenance.applied.exists(_.step == ResponsePreparationStep.MissingData(MissingDataPolicy.Propagate)))
   }
 
   test("fixed volume weights apply by full-model timepoint index") {

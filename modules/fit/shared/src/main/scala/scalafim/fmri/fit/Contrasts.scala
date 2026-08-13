@@ -5,6 +5,37 @@ import scalafim.fmri.design.CoefficientAxis
 import scalafim.fmri.model.FmriModel
 import gale.linalg.{Cholesky, CholeskyOptions, DMat, DVec, Matrix, Vec}
 
+private final case class ContrastVoxelSelection(
+    positions: Vector[Int],
+    voxelIndices: Vector[Int],
+    exclusions: Vector[VoxelInferenceExclusion]
+)
+
+private object ContrastVoxelSelection:
+  def from(
+      contrastName: String,
+      result: InferenceReadyDenseFit
+  ): Either[FitError, ContrastVoxelSelection] =
+    val positions = Vector.newBuilder[Int]
+    val indices = Vector.newBuilder[Int]
+    val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
+    exclusions ++= result.fitExclusions
+    var voxel = 0
+    while voxel < result.voxels do
+      val status = result.voxelStatuses(voxel)
+      if status.supportsInference then
+        positions += voxel
+        indices += result.voxelIndices(voxel)
+      else
+        exclusions += VoxelInferenceExclusion(result.voxelIndices(voxel), status)
+      voxel += 1
+    val kept = positions.result()
+    val omitted = exclusions.result()
+    if kept.isEmpty then
+      val detail = omitted.map(exclusion => s"${exclusion.voxelIndex}:${exclusion.status.label}").mkString(", ")
+      Left(FitError.NonEstimableContrast(contrastName, s"all voxels are excluded from inference ($detail)"))
+    else Right(ContrastVoxelSelection(kept, indices.result(), omitted))
+
 /** Compatibility-only rendered-name contrast.  New code should compile a
   * [[StructuralTContrast]] against a [[scalafim.fmri.design.DesignSchema]] so
   * structural column identity and estimability evidence are retained. */
@@ -16,11 +47,19 @@ final case class TContrast(name: String, weights: Map[String, Double]):
   def evaluate(result: DenseFmriFitResult): Either[FitError, TContrastResult] =
     result.inferenceReady.flatMap(evaluate)
 
+  def evaluate(result: PatternedFmriFitResult): Either[FitError, PatternedTContrastResult] =
+    result.densePatterns.flatMap { patterns =>
+      traversePatterns(patterns) { (pattern, dense) =>
+        evaluate(dense).map(pattern -> _)
+      }.map(PatternedTContrastResult(name, _, result.voxelIndices, result.fitExclusions))
+    }
+
   def evaluate(result: InferenceReadyDenseFit): Either[FitError, TContrastResult] =
     for
       weights <- weightVector(result.columnNames)
       _ <- result.inferenceScope.validateTContrast(name, weights, result.columnNames)
-      evaluated <- evaluateEstimable(result, weights, None)
+      selection <- ContrastVoxelSelection.from(name, result)
+      evaluated <- evaluateEstimable(result, weights, selection, None)
     yield evaluated
 
   /** Align this named contrast to an explicit design axis. The resulting value
@@ -48,21 +87,24 @@ final case class TContrast(name: String, weights: Map[String, Double]):
       index += 1
     for
       _ <- result.inferenceScope.validateTContrast(aligned.name, values, aligned.columnNames)
-      evaluated <- evaluateEstimable(result, values, metadata)
+      selection <- ContrastVoxelSelection.from(name, result)
+      evaluated <- evaluateEstimable(result, values, selection, metadata)
     yield evaluated
 
   private def evaluateEstimable(
       result: InferenceReadyDenseFit,
       weights: Array[Double],
+      selection: ContrastVoxelSelection,
       metadata: Option[HypothesisMetadata]
   ): Either[FitError, TContrastResult] =
-    val estimates = Vec.newBuilder(result.voxels)
-    val standardErrors = Vec.newBuilder(result.voxels)
-    val statistics = Vec.newBuilder(result.voxels)
-    var failure: FitError | Null = null
+    val estimates = Vector.newBuilder[Double]
+    val standardErrors = Vector.newBuilder[Double]
+    val statistics = Vector.newBuilder[Double]
+    var failure: Option[FitError] = None
 
-    var voxel = 0
-    while voxel < result.voxels && failure == null do
+    var retained = 0
+    while retained < selection.positions.length && failure.isEmpty do
+      val voxel = selection.positions(retained)
       var estimate = 0.0
       var predictor = 0
       while predictor < weights.length do
@@ -71,34 +113,35 @@ final case class TContrast(name: String, weights: Map[String, Double]):
 
       result.coefficientCovariance.matrixForVoxelPosition(voxel) match
         case Left(error) =>
-          failure = error
+          failure = Some(error)
         case Right(normalizedCovariance) =>
           val scale = contrastScale(weights, normalizedCovariance)
           if !(scale > 0.0 && scale.isFinite) then
-            failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast covariance scale $scale")
+            failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast covariance scale $scale"))
           else
             val variance = scale * result.varianceScale(voxel)
             if !(variance > 0.0 && variance.isFinite) then
-              failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast variance $variance")
+              failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has contrast variance $variance"))
             else
               val se = math.sqrt(variance)
-              estimates(voxel) = estimate
-              standardErrors(voxel) = se
-              statistics(voxel) = estimate / se
-      voxel += 1
+              estimates += estimate
+              standardErrors += se
+              statistics += estimate / se
+      retained += 1
 
     failure match
-      case null =>
+      case None =>
         Right(TContrastResult(
           name = name,
-          estimates = estimates.result(),
-          standardErrors = standardErrors.result(),
-          statistics = statistics.result(),
+          estimates = DVec.fromSeq(estimates.result()),
+          standardErrors = DVec.fromSeq(standardErrors.result()),
+          statistics = DVec.fromSeq(statistics.result()),
           residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-          voxelIndices = result.voxelIndices,
-          hypothesis = metadata
+          voxelIndices = selection.voxelIndices,
+          hypothesis = metadata,
+          excludedVoxels = selection.exclusions
         ))
-      case error => Left(error)
+      case Some(error) => Left(error)
 
   private def weightVector(columnNames: Vector[String]): Either[FitError, Array[Double]] =
     val known = columnNames.toSet
@@ -125,6 +168,20 @@ final case class TContrast(name: String, weights: Map[String, Double]):
         j += 1
       i += 1
     out
+
+  private def traversePatterns[A](
+      patterns: Vector[(ObservationPattern, DenseFmriFitResult)]
+  )(
+      evaluate: (ObservationPattern, DenseFmriFitResult) => Either[FitError, A]
+  ): Either[FitError, Vector[A]] =
+    val out = Vector.newBuilder[A]
+    var index = 0
+    while index < patterns.length do
+      evaluate(patterns(index)._1, patterns(index)._2) match
+        case Left(error)  => return Left(error)
+        case Right(value) => out += value
+      index += 1
+    Right(out.result())
 
 object TContrast:
   private[fit] def evaluateAligned(
@@ -188,12 +245,45 @@ final case class TContrastResult(
     statistics: DVec,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
-    hypothesis: Option[HypothesisMetadata] = None
+    hypothesis: Option[HypothesisMetadata] = None,
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
 ):
   require(estimates.length == voxelIndices.length, "contrast estimates must match voxel indices")
   require(standardErrors.length == voxelIndices.length, "contrast standard errors must match voxel indices")
   require(statistics.length == voxelIndices.length, "contrast statistics must match voxel indices")
+  require(excludedVoxels.map(_.voxelIndex).distinct.length == excludedVoxels.length, "excluded contrast voxels must be unique")
+  require(excludedVoxels.forall(exclusion => !voxelIndices.contains(exclusion.voxelIndex)), "retained and excluded contrast voxels must be disjoint")
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+
+final case class PatternedTContrastResult(
+    name: String,
+    patternResults: Vector[(ObservationPattern, TContrastResult)],
+    voxelIndices: Vector[Int],
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
+):
+  require(patternResults.nonEmpty, "patterned T contrast must contain at least one observation pattern")
+  require(patternResults.forall(_._2.name == name), "patterned T contrast child names must match")
+  require(voxelIndices.distinct.length == voxelIndices.length, "patterned T contrast voxels must be unique")
+  require(
+    patternResults.flatMap(_._2.voxelIndices).toSet == voxelIndices.toSet,
+    "patterned T contrast children must cover exactly the retained voxels"
+  )
+  require(
+    patternResults.flatMap(_._2.voxelIndices).distinct.length == voxelIndices.length,
+    "patterned T contrast child voxel sets must be disjoint"
+  )
+  require(
+    excludedVoxels.map(_.voxelIndex).distinct.length == excludedVoxels.length,
+    "excluded patterned T contrast voxels must be unique"
+  )
+  require(
+    excludedVoxels.forall(exclusion => !voxelIndices.contains(exclusion.voxelIndex)),
+    "retained and excluded patterned T contrast voxels must be disjoint"
+  )
+  def residualDegreesOfFreedomByVoxel: Map[Int, ResidualDegreesOfFreedom] =
+    patternResults.flatMap { case (_, result) =>
+      result.voxelIndices.map(_ -> result.residualDegreesOfFreedom)
+    }.toMap
 
 /** Compatibility-only rendered-name F contrast.  New hypotheses should use
   * [[StructuralFContrast]] and compile it against a [[scalafim.fmri.design.DesignSchema]].
@@ -209,6 +299,19 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
   def evaluate(result: DenseFmriFitResult): Either[FitError, FContrastResult] =
     result.inferenceReady.flatMap(evaluate)
 
+  def evaluate(result: PatternedFmriFitResult): Either[FitError, PatternedFContrastResult] =
+    result.densePatterns.flatMap { patterns =>
+      patterns
+        .foldLeft[Either[FitError, Vector[(ObservationPattern, FContrastResult)]]](Right(Vector.empty)) {
+          case (accumulated, (pattern, dense)) =>
+            for
+              values <- accumulated
+              value <- evaluate(dense)
+            yield values :+ (pattern -> value)
+        }
+        .map(PatternedFContrastResult(name, _, result.voxelIndices, result.fitExclusions))
+    }
+
   def evaluate(result: InferenceReadyDenseFit): Either[FitError, FContrastResult] =
     align(result.columnNames).flatMap(aligned => evaluateAligned(result, aligned, None))
 
@@ -220,6 +323,7 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
     val w = aligned.weights
     for
       _ <- result.inferenceScope.validateFContrast(name, w, result.columnNames)
+      selection <- ContrastVoxelSelection.from(name, result)
       evaluated <- result.coefficientCovariance.scope match
         case CoefficientCovarianceScope.Shared =>
           for
@@ -228,10 +332,10 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
               .cholesky(CholeskyOptions(choleskyTolerance(covariance)))
               .left
               .map(error => FitError.NonEstimableContrast(name, error.getMessage))
-            evaluated <- evaluateEstimable(result, w, factor, aligned.rank, metadata)
+            evaluated <- evaluateEstimable(result, w, factor, aligned.rank, selection, metadata)
           yield evaluated
         case CoefficientCovarianceScope.Voxelwise =>
-          evaluateEstimableVoxelwise(result, w, aligned.rank, metadata)
+          evaluateEstimableVoxelwise(result, w, aligned.rank, selection, metadata)
     yield evaluated
 
   private def evaluateEstimable(
@@ -239,23 +343,25 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
       weights: DMat,
       factor: Cholesky,
       numeratorRank: Int,
+      selection: ContrastVoxelSelection,
       metadata: Option[HypothesisMetadata]
   ): Either[FitError, FContrastResult] =
-    val estimates = contrastEstimates(weights, result.coefficients.value)
+    val estimates = contrastEstimates(weights, result.coefficients.value, selection.positions)
     factor
       .solve(estimates)
       .left
       .map(error => FitError.NonEstimableContrast(name, error.getMessage))
       .flatMap { solved =>
-        val statistics = Vec.newBuilder(result.voxels)
+        val statistics = Vec.newBuilder(selection.positions.length)
         val q = weights.cols
-        var failure: FitError | Null = null
+        var failure: Option[FitError] = None
 
         var voxel = 0
-        while voxel < result.voxels && failure == null do
-          val residualVariance = result.varianceScale(voxel)
+        while voxel < selection.positions.length && failure.isEmpty do
+          val sourceVoxel = selection.positions(voxel)
+          val residualVariance = result.varianceScale(sourceVoxel)
           if !(residualVariance > 0.0 && residualVariance.isFinite) then
-            failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has residual variance $residualVariance")
+            failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(sourceVoxel)} has residual variance $residualVariance"))
           else
             var quadratic = 0.0
             var row = 0
@@ -264,12 +370,12 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
               row += 1
             val statistic = quadratic / q.toDouble / residualVariance
             if !statistic.isFinite then
-              failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} produced non-finite F statistic")
+              failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(sourceVoxel)} produced non-finite F statistic"))
             else statistics(voxel) = statistic
           voxel += 1
 
         failure match
-          case null =>
+          case None =>
             Right(
               FContrastResult(
                 name = name,
@@ -277,11 +383,12 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
                 statistics = statistics.result(),
                 numeratorDegreesOfFreedom = numeratorRank,
                 residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-                voxelIndices = result.voxelIndices,
-                hypothesis = metadata
+                voxelIndices = selection.voxelIndices,
+                hypothesis = metadata,
+                excludedVoxels = selection.exclusions
               )
             )
-          case error =>
+          case Some(error) =>
             Left(error)
       }
 
@@ -289,26 +396,28 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
       result: InferenceReadyDenseFit,
       weights: DMat,
       numeratorRank: Int,
+      selection: ContrastVoxelSelection,
       metadata: Option[HypothesisMetadata]
   ): Either[FitError, FContrastResult] =
-    val estimates = contrastEstimates(weights, result.coefficients.value)
-    val statistics = Vec.newBuilder(result.voxels)
+    val estimates = contrastEstimates(weights, result.coefficients.value, selection.positions)
+    val statistics = Vec.newBuilder(selection.positions.length)
     val q = weights.cols
-    var failure: FitError | Null = null
+    var failure: Option[FitError] = None
 
     var voxel = 0
-    while voxel < result.voxels && failure == null do
-      val residualVariance = result.varianceScale(voxel)
+    while voxel < selection.positions.length && failure.isEmpty do
+      val sourceVoxel = selection.positions(voxel)
+      val residualVariance = result.varianceScale(sourceVoxel)
       if !(residualVariance > 0.0 && residualVariance.isFinite) then
-        failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} has residual variance $residualVariance")
+        failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(sourceVoxel)} has residual variance $residualVariance"))
       else
-        result.coefficientCovariance.matrixForVoxelPosition(voxel) match
+        result.coefficientCovariance.matrixForVoxelPosition(sourceVoxel) match
           case Left(error) =>
-            failure = error
+            failure = Some(error)
           case Right(normalizedCovariance) =>
             contrastCovariance(weights, normalizedCovariance) match
               case Left(error) =>
-                failure = error
+                failure = Some(error)
               case Right(covariance) =>
                 val factorEither = covariance
                   .cholesky(CholeskyOptions(choleskyTolerance(covariance)))
@@ -316,11 +425,11 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
                   .map(error => FitError.NonEstimableContrast(name, error.getMessage))
                 factorEither match
                   case Left(error) =>
-                    failure = error
+                    failure = Some(error)
                   case Right(factor) =>
                     factor.solve(estimateColumn(estimates, voxel)) match
                       case Left(error) =>
-                        failure = FitError.NonEstimableContrast(name, error.getMessage)
+                        failure = Some(FitError.NonEstimableContrast(name, error.getMessage))
                       case Right(solved) =>
                         var quadratic = 0.0
                         var row = 0
@@ -329,12 +438,12 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
                           row += 1
                         val statistic = quadratic / q.toDouble / residualVariance
                         if !statistic.isFinite then
-                          failure = FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(voxel)} produced non-finite F statistic")
+                          failure = Some(FitError.NonEstimableContrast(name, s"voxel ${result.voxelIndices(sourceVoxel)} produced non-finite F statistic"))
                         else statistics(voxel) = statistic
       voxel += 1
 
     failure match
-      case null =>
+      case None =>
         Right(
           FContrastResult(
             name = name,
@@ -342,11 +451,12 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
             statistics = statistics.result(),
             numeratorDegreesOfFreedom = numeratorRank,
             residualDegreesOfFreedom = result.residualDegreesOfFreedom,
-            voxelIndices = result.voxelIndices,
-            hypothesis = metadata
+            voxelIndices = selection.voxelIndices,
+            hypothesis = metadata,
+            excludedVoxels = selection.exclusions
           )
         )
-      case error =>
+      case Some(error) =>
         Left(error)
 
   private def weightMatrix(columnNames: Vector[String]): Either[FitError, DMat] =
@@ -396,17 +506,19 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
         a += 1
       Right(out.result())
 
-  private def contrastEstimates(weights: DMat, coefficients: DMat): DMat =
+  private def contrastEstimates(weights: DMat, coefficients: DMat, voxelPositions: Vector[Int]): DMat =
     require(weights.rows == coefficients.rows, "contrast weights must match coefficient rows")
-    val out = Matrix.newBuilder(weights.cols, coefficients.cols)
+    require(voxelPositions.forall(voxel => voxel >= 0 && voxel < coefficients.cols), "contrast voxel position out of bounds")
+    val out = Matrix.newBuilder(weights.cols, voxelPositions.length)
     var contrast = 0
     while contrast < weights.cols do
       var voxel = 0
-      while voxel < coefficients.cols do
+      while voxel < voxelPositions.length do
+        val sourceVoxel = voxelPositions(voxel)
         var estimate = 0.0
         var predictor = 0
         while predictor < weights.rows do
-          estimate += weights(predictor, contrast) * coefficients(predictor, voxel)
+          estimate += weights(predictor, contrast) * coefficients(predictor, sourceVoxel)
           predictor += 1
         out(contrast, voxel) = estimate
         voxel += 1
@@ -485,12 +597,45 @@ final case class FContrastResult(
     numeratorDegreesOfFreedom: Int,
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
-    hypothesis: Option[HypothesisMetadata] = None
+    hypothesis: Option[HypothesisMetadata] = None,
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
 ):
   require(estimates.rows >= numeratorDegreesOfFreedom, "F contrast estimates must contain at least the effective numerator df")
   require(estimates.cols == voxelIndices.length, "F contrast estimates must match voxel indices")
   require(statistics.length == voxelIndices.length, "F statistics must match voxel indices")
+  require(excludedVoxels.map(_.voxelIndex).distinct.length == excludedVoxels.length, "excluded F contrast voxels must be unique")
+  require(excludedVoxels.forall(exclusion => !voxelIndices.contains(exclusion.voxelIndex)), "retained and excluded F contrast voxels must be disjoint")
   def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+
+final case class PatternedFContrastResult(
+    name: String,
+    patternResults: Vector[(ObservationPattern, FContrastResult)],
+    voxelIndices: Vector[Int],
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
+):
+  require(patternResults.nonEmpty, "patterned F contrast must contain at least one observation pattern")
+  require(patternResults.forall(_._2.name == name), "patterned F contrast child names must match")
+  require(voxelIndices.distinct.length == voxelIndices.length, "patterned F contrast voxels must be unique")
+  require(
+    patternResults.flatMap(_._2.voxelIndices).toSet == voxelIndices.toSet,
+    "patterned F contrast children must cover exactly the retained voxels"
+  )
+  require(
+    patternResults.flatMap(_._2.voxelIndices).distinct.length == voxelIndices.length,
+    "patterned F contrast child voxel sets must be disjoint"
+  )
+  require(
+    excludedVoxels.map(_.voxelIndex).distinct.length == excludedVoxels.length,
+    "excluded patterned F contrast voxels must be unique"
+  )
+  require(
+    excludedVoxels.forall(exclusion => !voxelIndices.contains(exclusion.voxelIndex)),
+    "retained and excluded patterned F contrast voxels must be disjoint"
+  )
+  def residualDegreesOfFreedomByVoxel: Map[Int, ResidualDegreesOfFreedom] =
+    patternResults.flatMap { case (_, result) =>
+      result.voxelIndices.map(_ -> result.residualDegreesOfFreedom)
+    }.toMap
 
 object DesignContrasts:
 

@@ -4,7 +4,16 @@ import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.FmriSeries
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.FmriModel
+import scalafim.fmri.model.MissingDataPolicy
 import scalafim.image.DMat as ImageDMat
+
+private[fit] final case class AdaptedResponseBlock(
+    response: ResponseBlock,
+    voxelIndices: Vector[Int],
+    fitExclusions: Vector[VoxelInferenceExclusion]
+):
+  require(voxelIndices.length == response.voxels, "adapted response voxel indices must match response columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "adapted response")
 
 object MatrixAdapters:
   def fromHrfMatrix(matrix: Mat): DMat =
@@ -82,3 +91,53 @@ object MatrixAdapters:
 
   def responseBlock(series: FmriSeries): Either[FitError, ResponseBlock] =
     ResponseBlock.fromMatrix(fromDMat(series.data))
+
+  private[fit] def responseBlock(
+      series: FmriSeries,
+      policy: MissingDataPolicy
+  ): Either[FitError, AdaptedResponseBlock] =
+    policy match
+      case MissingDataPolicy.Error =>
+        responseBlock(series).map(AdaptedResponseBlock(_, series.voxelIndices, Vector.empty))
+      case MissingDataPolicy.ExcludeVoxel | MissingDataPolicy.Propagate =>
+        excludeNonFiniteVoxels(series)
+      case MissingDataPolicy.OmitRowsPerVoxel =>
+        Left(FitError.UnsupportedMissingDataPolicy(
+          "voxel-specific row omission must be executed through the observation-pattern planner"
+        ))
+
+  private def excludeNonFiniteVoxels(
+      series: FmriSeries
+  ): Either[FitError, AdaptedResponseBlock] =
+    val retainedPositions = Vector.newBuilder[Int]
+    val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
+    var voxel = 0
+    while voxel < series.data.cols do
+      var row = 0
+      var finite = true
+      while row < series.data.rows && finite do
+        if !series.data(row, voxel).isFinite then finite = false
+        row += 1
+      if finite then retainedPositions += voxel
+      else exclusions += VoxelInferenceExclusion(series.voxelIndices(voxel), VoxelFitStatus.NonFinite)
+      voxel += 1
+
+    val retained = retainedPositions.result()
+    val omitted = exclusions.result()
+    if retained.isEmpty then Left(FitError.AllVoxelsExcluded(omitted))
+    else
+      val matrix = Matrix.newBuilder(series.data.rows, retained.length)
+      var row = 0
+      while row < series.data.rows do
+        var localVoxel = 0
+        while localVoxel < retained.length do
+          matrix(row, localVoxel) = series.data(row, retained(localVoxel))
+          localVoxel += 1
+        row += 1
+      ResponseBlock.fromMatrix(matrix.result()).map { response =>
+        AdaptedResponseBlock(
+          response = response,
+          voxelIndices = retained.map(series.voxelIndices),
+          fitExclusions = omitted
+        )
+      }

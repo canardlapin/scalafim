@@ -9,12 +9,14 @@ enum FitError:
   case EmptyResponse
   case RowMismatch(designRows: Int, responseRows: Int)
   case NonFiniteInput(component: String)
+  case AllVoxelsExcluded(exclusions: Vector[VoxelInferenceExclusion])
   case SingularDesign(cause: LinAlgError)
   case RankDeficientDesign(report: RankDiagnostics)
   case StructuralRankDeficientDesign(report: StructuralRankReport)
   case DesignRankPreviewUnavailable(reason: RankPreviewUnavailableReason)
   case UnsupportedLeastSquaresPolicy(detail: String)
   case UnsupportedVolumeWeighting(detail: String)
+  case UnsupportedMissingDataPolicy(detail: String)
   case InvalidVolumeWeights(detail: String)
   case UnsupportedEngine(engine: String)
   case NonDenseFitResult(engine: FitEngine)
@@ -58,6 +60,9 @@ enum FitError:
         s"design rows $designRows do not match response rows $responseRows"
       case NonFiniteInput(component) =>
         s"$component contains non-finite values"
+      case AllVoxelsExcluded(exclusions) =>
+        val detail = exclusions.map(exclusion => s"${exclusion.voxelIndex}:${exclusion.status.label}").mkString(", ")
+        s"all selected voxels were excluded from fitting ($detail)"
       case SingularDesign(cause) =>
         s"design matrix is singular or ill-conditioned: ${cause.getMessage}"
       case RankDeficientDesign(report) =>
@@ -72,6 +77,8 @@ enum FitError:
         s"unsupported least-squares policy: $detail"
       case UnsupportedVolumeWeighting(detail) =>
         s"unsupported volume-weighting policy: $detail"
+      case UnsupportedMissingDataPolicy(detail) =>
+        s"unsupported missing-data policy: $detail"
       case InvalidVolumeWeights(detail) =>
         s"invalid volume weights: $detail"
       case UnsupportedEngine(engine) =>

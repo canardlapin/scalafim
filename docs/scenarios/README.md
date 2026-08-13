@@ -23,7 +23,7 @@ The same stdlib-only validator used by CI is:
 python -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json
 ```
 
-Check every generated R or Python receipt and its checked-in Scala fixture
+Check every generated scenario or auxiliary R/Python receipt and its checked-in Scala fixture
 without starting R, importing Nilearn, or rewriting either artifact:
 
 ```sh
@@ -70,7 +70,7 @@ bash tools/r-parity/regenerate_receipts.sh
 This command expects the locked R and Python dependencies to be installed. Use
 `--r-only` or `--python-only` when working in one reference environment. The
 source checkout locations default to the sibling repositories and can be set
-with `FMRIDESIGN_R`, `FMRIHRF_R`, `FMRIREG_R`, and `FMRIMOD_ROOT`.
+with `FMRIAR_R`, `FMRIDESIGN_R`, `FMRIHRF_R`, `FMRIREG_R`, and `FMRIMOD_ROOT`.
 
 The scheduled and manually dispatched
 [`scenario-receipts.yml`](../../.github/workflows/scenario-receipts.yml)
@@ -115,3 +115,11 @@ The two-run AR(1)/GLS receipt fixes `rho = 0.42` so the oracle isolates row dele
 boundaries, exact-first whitening, and direct GLS inference. The shared
 scenario separately exercises ScalaFIM's declared run-pooled AR estimation
 policy; it does not treat a different estimator as fixed-coefficient parity.
+
+Two auxiliary receipts lock the lower-level `fmriAR` boundary even though they
+are not standalone user scenarios. One checks PACF conversion, fixed and
+automatic AR estimation, run/censor pooling, ACF diagnostics, and ARMA
+whitening. The other checks estimated global AR(2) GLS through coefficients,
+normalized covariance, residual variance, and ordinary residual degrees of
+freedom. Both use the same environment lock, hashes, generated-Scala check,
+and scheduled regeneration lane as scenario receipts.

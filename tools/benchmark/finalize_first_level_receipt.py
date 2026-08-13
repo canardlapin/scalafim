@@ -22,6 +22,7 @@ SOURCE_PATHS = (
   "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/BasisResponseBenchmark.scala",
   "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/DenseDriveBenchmark.scala",
   "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/RegressorConvolutionBenchmark.scala",
+  "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala",
   "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/FirstLevelFitBenchmark.scala",
   "tools/benchmark/first-level-budgets.json",
   "tools/benchmark/finalize_first_level_receipt.py",
@@ -150,12 +151,16 @@ def comparison(
 def comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
   rows = {str(row["benchmark"]): row for row in results}
   hrf = "scalafim.fmri.hrf."
+  ar = "scalafim.fmri.ar.ArEstimationBenchmark."
   fit = "scalafim.fmri.fit.FirstLevelFitBenchmark."
   return [
     comparison(rows, hrf + "RegressorConvolutionBenchmark.conv", hrf + "RegressorConvolutionBenchmark.fft", "score", True),
     comparison(rows, hrf + "RegressorConvolutionBenchmark.conv", hrf + "RegressorConvolutionBenchmark.loop", "score", True),
     comparison(rows, hrf + "EpochIntegrationBenchmark.exact", hrf + "EpochIntegrationBenchmark.trapezoid", "score", True),
     comparison(rows, hrf + "BasisResponseBenchmark.typedReconstruction", hrf + "BasisResponseBenchmark.directContraction", "score", False),
+    comparison(rows, ar + "automaticGlobal", ar + "fixedOrderGlobal", "score", False),
+    comparison(rows, ar + "automaticGlobal", ar + "fixedOrderGlobal", "allocation_bytes_per_op", False),
+    comparison(rows, ar + "fixedOrderRun", ar + "fixedOrderGlobal", "score", False),
     comparison(rows, fit + "olsPreparedMultiresponse", fit + "olsPlanAndFit", "score", True),
     comparison(rows, fit + "olsPreparedMultiresponse", fit + "olsPlanAndFit", "allocation_bytes_per_op", True),
     comparison(rows, fit + "weightedPreparedFit", fit + "weightedPlanAndFit", "score", True),

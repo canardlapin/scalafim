@@ -14,7 +14,7 @@ cross-compiled sbt build.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
 - `latent`: archive-independent fMRI response mathematics, inspectable applicative decode plans, explicit basis/loadings responses, coefficient projection, and locus-backed active/full-grid selections.
-- `ar`: AR/ARMA whitening plans, run/censor-aware segment construction, and pure design/data prewhitening.
+- `ar`: checked run/censor-aware AR estimation, AR/ARMA whitening plans, diagnostics, and pure design/data prewhitening.
 - `hrf`: causal hemodynamic kernels with enforced causality and declared support, pulse-shaped neural drive (impulse, unit-height and unit-mass boxes), convergent box quadrature, response bases with typed dual coefficients and reported basis transforms, sampling, convolution, and regressors.
 - `hrf-laws`: reusable JVM/Scala.js law checks for kernel causality and support, event additivity, homogeneity, permutation invariance, translation equivariance, pulse and quadrature convergence, basis reconstruction and gauge invariance, and evaluation-plan equivalence.
 - `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.

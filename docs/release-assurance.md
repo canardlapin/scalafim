@@ -13,7 +13,7 @@ bash tools/ci/first-level-gate.sh
 ```
 
 It validates the scenario manifest and checked-in parity receipts without
-external Python packages, then runs the scenario testkit, HRF, HRF laws,
+external Python packages, then runs the scenario testkit, AR, HRF, HRF laws,
 design, model, fit, and generated first-level laws on both the JVM and
 Scala.js. It also checks the formatting of the non-published
 `first-level-laws` assurance module.
@@ -26,7 +26,7 @@ bash tools/ci/first-level-coverage.sh
 
 Coverage is assessed per scientific module rather than aggregated with IO,
 viewer, or adapter code. The floors leave a small amount of ordinary source
-movement below the measured 2026-08-04 baseline while still rejecting a
+movement below the measured 2026-08-12 baseline while still rejecting a
 material loss of exercised decisions.
 
 The focused court also proves that the public first-level guide still contains
@@ -35,14 +35,15 @@ benchmark receipt matches every benchmark and admission-policy source hash.
 
 | Module | Statement baseline | Branch baseline | Enforced floor |
 | --- | ---: | ---: | ---: |
-| `hrfJVM` | 72.88% | 63.02% | 70% / 60% |
-| `designJVM` | 72.84% | 61.16% | 70% / 58% |
+| `arJVM` | 78.84% | 65.29% | 75% / 62% |
+| `hrfJVM` | 72.77% | 63.21% | 70% / 60% |
+| `designJVM` | 72.84% | 61.20% | 70% / 58% |
 | `modelJVM` | 61.53% | 56.00% | 58% / 52% |
-| `fitJVM` | 77.28% | 64.69% | 75% / 62% |
+| `fitJVM` | 77.31% | 64.86% | 75% / 62% |
 
 ## Compiler and source policy
 
-Production and test sources in `hrf`, `design`, `model`, `fit`, and
+Production and test sources in `ar`, `hrf`, `design`, `model`, `fit`, and
 `first-level-laws` compile with deprecation, feature, unchecked, unused-symbol,
 and value-discard diagnostics promoted to errors. There are no warning
 exceptions in this court. `compileAll` includes these strict projects, but the
@@ -71,12 +72,13 @@ runtime tests.
 
 | Lane | Trigger | Policy status | Evidence |
 | --- | --- | --- | --- |
+| Full repository | pull request and push to the default branch | required by project policy | `compileAll` and `testAll` across every JVM and Scala.js module |
 | Focused first-level | pull request and push to the default branch | required by project policy | portable receipts plus JVM/Scala.js tests and generated-law PR profile |
 | Scientific coverage | pull request and push to the default branch | required by project policy | per-module JVM statement and branch floors |
-| Generated-law calibration | weekly schedule or manual dispatch | advisory | 300 deterministic cases per property on JVM and Scala.js |
+| Generated-law calibration | weekly schedule or manual dispatch | advisory | 300 cases per property for three fixed, reproducible seeds on JVM and Scala.js |
 | Scenario receipts | weekly schedule | advisory freshness signal | regeneration in locked R and Python/Nilearn environments |
 | Scenario receipts | manual `release` dispatch | required release evidence | clean regeneration diff in both reference environments |
-| First-level performance | weekly schedule or manual dispatch | required release evidence | raw HRF/fit JMH reports plus a budgeted time/allocation receipt |
+| First-level performance | weekly schedule or manual dispatch | required release evidence | raw HRF/AR/fit JMH reports plus a budgeted time/allocation receipt |
 
 The workflow files configure these lanes, but a local checkout cannot prove
 that GitHub branch protection marks a check as required or that an unpublished
@@ -94,11 +96,15 @@ MiMa is not applicable while the project makes no stable binary-compatibility
 promise. Enable it, record the first public artifact baseline, and define the
 compatibility policy before the first compatibility-bearing release.
 
-Mutation testing is deferred while generated algebraic laws, independent R and
-Nilearn receipts, and scoped coverage supply the stronger immediate signal.
-Pilot mutation testing on OLS rank decisions, censor/reset GLS branches, and
-design policy lowering once the current baseline is stable; it becomes a
-release decision before a compatibility-bearing release.
+A scheduled, deterministic mutation pilot now seeds 22 AR-estimation,
+PACF/Yule-Walker, censor/reset, whitening, missing-response grouping/identity,
+weight-alignment/status, and fixed-effects variance defects. Run it with
+`python3 tools/mutation/ar_na_pilot.py`; every seeded mutant must be killed and
+compile-invalid mutants fail the pilot rather than counting as test evidence.
+This focused JVM pilot complements, but does not replace, portable JVM and
+Scala.js laws. Broader mutation testing of general OLS rank decisions and
+design policy lowering remains a release decision before a
+compatibility-bearing release.
 
 ## Performance and final release court
 
@@ -109,8 +115,9 @@ sensitive, and materially slower than the portable correctness court. Run:
 bash tools/ci/first-level-benchmark.sh
 ```
 
-The court distinguishes basis response, convolution, integration, fit
-planning, reusable factorization, multiresponse fitting, and chunk assembly.
+The court distinguishes basis response, convolution, integration, AR
+estimation, fit planning, reusable factorization, multiresponse fitting, and
+chunk assembly.
 It enforces both time and allocation budgets without changing scientific
 tolerances. See [`benchmarks/first-level.md`](benchmarks/first-level.md) for the
 workloads, required comparisons, current receipt, and interpretation policy.

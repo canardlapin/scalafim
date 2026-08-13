@@ -16,8 +16,10 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "docs" / "scenarios" / "manifest.json"
+AUXILIARY_MANIFEST = REPO_ROOT / "tools" / "r-parity" / "auxiliary-manifest.json"
 LOCK_PATH = REPO_ROOT / "tools" / "r-parity" / "reference-lock.json"
 LOCK_SCHEMA = "scalafim-parity-environment-lock/v1"
+AUXILIARY_SCHEMA = "scalafim-auxiliary-receipt-manifest/v1"
 
 
 @dataclass(frozen=True, order=True)
@@ -42,6 +44,19 @@ def receipt_jobs() -> tuple[ReceiptJob, ...]:
     for reference in (scenario.get("reference"),)
     if isinstance(reference, dict) and isinstance(reference.get("exporter_path"), str)
   }
+  auxiliary = load_json(AUXILIARY_MANIFEST)
+  if auxiliary.get("schema_version") != AUXILIARY_SCHEMA:
+    raise SystemExit(f"auxiliary receipt manifest schema must be {AUXILIARY_SCHEMA}")
+  receipts = auxiliary.get("receipts")
+  if not isinstance(receipts, list):
+    raise SystemExit("auxiliary receipt manifest receipts must be an array")
+  for receipt in receipts:
+    if not isinstance(receipt, dict) or not isinstance(receipt.get("exporter_path"), str):
+      raise SystemExit("every auxiliary receipt must declare exporter_path")
+    finalizer = receipt.get("finalizer_path")
+    if finalizer is not None and not isinstance(finalizer, str):
+      raise SystemExit("auxiliary finalizer_path must be a string when present")
+    jobs.add(ReceiptJob(receipt["exporter_path"], finalizer))
   if not jobs:
     raise SystemExit("scenario manifest declares no external receipt generators")
   return tuple(sorted(jobs))
@@ -77,6 +92,7 @@ def locked_sources(section: dict[str, Any]) -> dict[str, Path]:
     raise SystemExit("environment lock packages must be an object")
 
   default_roots = {
+    "fmriAR": Path.home() / "code" / "fmriAR",
     "fmridesign": Path.home() / "code" / "fmridesign",
     "fmrihrf": Path.home() / "code" / "fmrihrf",
     "fmrireg": Path.home() / "code" / "fmrireg",

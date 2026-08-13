@@ -29,6 +29,50 @@ class MixedTrFixedEffectsScenarioSuite extends munit.FunSuite:
     if !result.ciPass then fail(result.render)
   }
 
+  test("fixed effects omit one invalid run-voxel contribution without failing healthy voxels") {
+    val fixture = MixedTrFixture()
+    val runwise = runwiseResult(
+      FitPlanExecutor.fit(FitPlan(fixture.model, FitStrategy.RunwiseLeastSquares()))
+    )
+    val invalidVoxelPosition = 1
+    val invalidVoxelIndex = runwise.voxelIndices(invalidVoxelPosition)
+    val affectedRun = runwise.runs(1)
+    val invalidVariance = DVec.fromSeq(
+      affectedRun.residualVariance.toVector.updated(invalidVoxelPosition, 0.0)
+    )
+    val altered = runwise.copy(
+      runs = runwise.runs.updated(
+        1,
+        affectedRun.copy(
+          residualVariance = invalidVariance,
+          voxelStatuses = Some(
+            affectedRun.resolvedVoxelStatuses.updated(invalidVoxelPosition, VoxelFitStatus.Estimable)
+          )
+        )
+      )
+    )
+
+    val fixed = FixedEffects.combine(altered).fold(error => fail(error.message), identity)
+    val schema = fixture.model.designSchema.getOrElse(fail("mixed-TR model must expose structural identity"))
+    val contrast = fixture.crossRunContrast.compile(schema).flatMap(_.evaluate(fixed)).fold(error => fail(error.message), identity)
+
+    assertEquals(fixed.voxelIndices, Vector(runwise.voxelIndices.head))
+    assertEquals(
+      fixed.fitExclusions,
+      Vector(VoxelInferenceExclusion(invalidVoxelIndex, VoxelFitStatus.ZeroResidualVariance))
+    )
+    assertEquals(fixed.policy.voxelPolicy, FixedEffectsVoxelPolicy.RequireAllRuns)
+    assert(fixed.coefficients.value.toRows.flatten.forall(_.isFinite))
+    assertEquals(contrast.voxelIndices, fixed.voxelIndices)
+    assertEquals(contrast.excludedVoxels, fixed.fitExclusions)
+    assert(contrast.statistics.toVector.forall(_.isFinite))
+    assert(
+      AnalysisProvenance.fromResult(fixed).voxelStatuses.exists(
+        _.contains(VoxelFitStatusRecord(invalidVoxelIndex, VoxelFitStatus.ZeroResidualVariance))
+      )
+    )
+  }
+
   private def runScenario(): ScenarioResult =
     val fixture = MixedTrFixture()
     val runwisePlan = FitPlan(fixture.model, FitStrategy.RunwiseLeastSquares())

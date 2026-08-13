@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import gale.linalg.DMat
+import gale.linalg.{CholeskyOptions, DMat, Matrix}
 
 enum ArOrder:
   case Fixed(order: ArOrderValue)
@@ -63,102 +63,178 @@ final case class YuleWalkerEstimate(
 
 object ArEstimation:
 
+  private val RelativePositiveDefiniteMargin = 1e-6
+
+  private final case class PooledAutocovariance(
+      sums: Array[Double],
+      pairCounts: Array[Long]
+  ):
+    require(sums.length == pairCounts.length, "autocovariance sums and pair counts must align")
+    require(sums.nonEmpty, "pooled autocovariance must contain lag zero")
+
+    def maxLag: ArLag =
+      var lag = pairCounts.length - 1
+      while lag > 0 && pairCounts(lag) == 0L do lag -= 1
+      ArLag.unsafe(lag)
+
+    def through(order: ArOrderValue): Either[ArError, Autocovariances] =
+      val required = order.value + 1
+      if required > sums.length then Left(ArError.InsufficientAutocovariances(required, sums.length))
+      else
+        var lag = 0
+        while lag < required do
+          if pairCounts(lag) == 0L then
+            return Left(ArError.InsufficientAutocovariances(required, lag))
+          lag += 1
+        val values = Vector.tabulate(required)(lag => sums(lag) / pairCounts(lag).toDouble)
+        Autocovariances(values).map(stabilizeAutocovariances)
+
+  private final case class RunEstimate(
+      coefficients: ArmaCoefficients,
+      observations: Int
+  ):
+    require(observations >= 0, "run estimate observations must be non-negative")
+
   def fitNoise(
       residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions = ArFitOptions()
   ): Either[ArError, WhiteningPlan] =
-    TimeSegments.validateCoverage(segments, residuals.rows).flatMap { _ =>
-      options.pooling match
-        case NoisePooling.Global =>
-          estimateForSegments(residuals, segments, options).flatMap { estimate =>
-            WhiteningPlan.globalWithInitialCondition(
-              estimate.coefficients,
-              segments,
-              initialCondition = options.initialCondition,
-              method = WhiteningMethod.Estimated
-            )
-          }
+    NoiseEstimationLayout
+      .allRows(segments, residuals.rows)
+      .flatMap(layout => fitNoise(residuals, layout, options))
 
-        case NoisePooling.Run =>
-          val runCount = segments.map(_.runIndex).max + 1
-          val estimates =
-            Vector
-              .range(0, runCount)
-              .foldLeft[Either[ArError, Vector[ArmaCoefficients]]](Right(Vector.empty)) {
-                case (Left(error), _) => Left(error)
-                case (Right(acc), run) =>
-                  val runSegments = segments.filter(_.runIndex == run)
-                  if runSegments.isEmpty then
-                    Left(ArError.MissingRunSegments(run))
-                  else
-                    estimateForSegments(residuals, runSegments, options)
-                      .map(result => acc :+ result.coefficients)
-              }
+  def fitNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions
+  ): Either[ArError, WhiteningPlan] =
+    for
+      _ <- layout.coveredSegments.validateRows(residuals.rows)
+      _ <- validateFinite(residuals)
+      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+      plan <-
+        options.pooling match
+          case NoisePooling.Global =>
+            for
+              estimates <- estimateByRun(residuals, layout, options)
+              coefficients <- poolRunCoefficients(estimates, options.stationarity)
+              plan <-
+                WhiteningPlan.globalWithInitialCondition(
+                  coefficients,
+                  layout.whiteningSegments,
+                  initialCondition = options.initialCondition,
+                  method = WhiteningMethod.Estimated
+                )
+            yield plan
 
-          estimates.flatMap { coefficients =>
-            WhiteningPlan.byRunWithInitialCondition(
-              coefficients,
-              segments,
-              initialCondition = options.initialCondition,
-              method = WhiteningMethod.Estimated
-            )
-          }
-    }
+          case NoisePooling.Run =>
+            estimateByRun(residuals, layout, options).flatMap { estimates =>
+              WhiteningPlan.byRunWithInitialCondition(
+                estimates.map(_.coefficients),
+                layout.whiteningSegments,
+                initialCondition = options.initialCondition,
+                method = WhiteningMethod.Estimated
+              )
+            }
+    yield plan
+
+  private def estimateByRun(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions
+  ): Either[ArError, Vector[RunEstimate]] =
+    val estimates = Vector.newBuilder[RunEstimate]
+    var run = 0
+    while run < layout.runCount do
+      val segments = layout.segmentsForRun(run)
+      val observations = effectiveObservations(segments)
+      if observations <= 1 then
+        estimates += RunEstimate(ArmaCoefficients.Iid, observations)
+      else
+        estimateForSegmentsUnchecked(residuals, segments, options) match
+          case Left(error) => return Left(error)
+          case Right(estimate) =>
+            estimates += RunEstimate(estimate.coefficients, observations)
+      run += 1
+    Right(estimates.result())
+
+  private def poolRunCoefficients(
+      estimates: Vector[RunEstimate],
+      stationarityBound: StationarityBound
+  ): Either[ArError, ArmaCoefficients] =
+    val observations = estimates.map(_.observations).sum
+    if observations <= 0 then Left(ArError.NoEstimableRows)
+    else
+      val order = estimates.map(_.coefficients.arOrder).maxOption.getOrElse(0)
+      if order == 0 then Right(ArmaCoefficients.Iid)
+      else
+        val pooled = Array.fill(order)(0.0)
+        estimates.foreach { estimate =>
+          val weight = estimate.observations.toDouble / observations.toDouble
+          var lag = 0
+          while lag < estimate.coefficients.arOrder do
+            pooled(lag) += weight * estimate.coefficients.phi(lag)
+            lag += 1
+        }
+        Pacf
+          .enforceStationaryChecked(pooled.toVector, stationarityBound)
+          .map(phi => ArmaCoefficients.ar(phi*))
 
   def estimateForSegments(
       residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions
   ): Either[ArError, YuleWalkerEstimate] =
-    val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, maxEstimableLag(segments).value))
-    options.order match
-      case ArOrder.Fixed(order) =>
-        if order.value > maxLag.value then
-          Left(ArError.ArOrderNotEstimable(order, maxLag))
-        else
-          val gamma = autocovariances(residuals, segments, ArLag.unsafe(order.value))
-          yuleWalker(gamma, order, options.stationarity)
+    for
+      layout <- NoiseEstimationLayout.allRows(segments, residuals.rows)
+      _ <- validateFinite(residuals)
+      estimate <- estimateForSegmentsUnchecked(residuals, layout.estimationSegments, options)
+    yield estimate
 
-      case ArOrder.Auto(_) =>
-        val gamma = autocovariances(residuals, segments, maxLag)
-        selectByBic(gamma, effectiveObservations(segments), maxLag, options.stationarity)
+  private def estimateForSegmentsUnchecked(
+      residuals: DMat,
+      segments: Vector[TimeSegment],
+      options: ArFitOptions
+  ): Either[ArError, YuleWalkerEstimate] =
+    val observations = effectiveObservations(segments)
+    if observations <= 1 then
+      Right(YuleWalkerEstimate(ArmaCoefficients.Iid, 0.0))
+    else
+      pooledAutocovariance(residuals, segments, options.order.maxRequestedOrder).flatMap { pooled =>
+        val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
+        options.order match
+          case ArOrder.Fixed(order) =>
+            if order.value > maxLag.value then
+              Left(ArError.ArOrderNotEstimable(order, maxLag))
+            else
+              pooled.through(order).flatMap(yuleWalker(_, order, options.stationarity))
+
+          case ArOrder.Auto(_) =>
+            selectByBic(pooled, observations, maxLag, options.stationarity)
+      }
 
   def autocovariance(
       residuals: DMat,
       segments: Vector[TimeSegment],
       maxLag: Int
-  ): Vector[Double] =
-    autocovariances(residuals, segments, ArLag.unsafe(maxLag)).toVector
+  ): Either[ArError, Vector[Double]] =
+    ArLag(maxLag).flatMap(autocovariances(residuals, segments, _)).map(_.toVector)
 
   def autocovariances(
       residuals: DMat,
       segments: Vector[TimeSegment],
       maxLag: ArLag
-  ): Autocovariances =
-    val lagCount = maxLag.value
-    val sums = Array.fill(lagCount + 1)(0.0)
-    val counts = Array.fill(lagCount + 1)(0)
-
-    segments.foreach { segment =>
-      var col = 0
-      while col < residuals.cols do
-        val mean = segmentMean(residuals, segment, col)
-        var lag = 0
-        while lag <= lagCount do
-          var row = segment.start + lag
-          while row < segment.endExclusive do
-            sums(lag) += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
-            counts(lag) += 1
-            row += 1
-          lag += 1
-        col += 1
-    }
-
-    val values = sums.indices.map { lag =>
-      if counts(lag) == 0 then 0.0 else sums(lag) / counts(lag).toDouble
-    }.toVector
-    Autocovariances.unsafe(values)
+  ): Either[ArError, Autocovariances] =
+    for
+      layout <- NoiseEstimationLayout.allRows(segments, residuals.rows)
+      _ <- validateFinite(residuals)
+      pooled <- pooledAutocovariance(residuals, layout.estimationSegments, ArOrderValue.unsafe(maxLag.value))
+      _ <-
+        if maxLag.value <= pooled.maxLag.value then Right(())
+        else Left(ArError.ArOrderNotEstimable(ArOrderValue.unsafe(maxLag.value), pooled.maxLag))
+      gamma <- pooled.through(ArOrderValue.unsafe(maxLag.value))
+    yield gamma
 
   def yuleWalker(
       gamma: Vector[Double],
@@ -183,7 +259,7 @@ object ArEstimation:
       else if scopedGamma.lagZero <= 0.0 || !scopedGamma.lagZero.isFinite then
         Right(YuleWalkerEstimate(ArmaCoefficients.ar(Vector.fill(order.value)(0.0)*), 0.0))
       else
-        yuleWalkerNonZero(scopedGamma, order, stationarityBound)
+        yuleWalkerNonZero(stabilizeAutocovariances(scopedGamma), order, stationarityBound)
     }
 
   private def yuleWalkerNonZero(
@@ -218,23 +294,37 @@ object ArEstimation:
         previous = current
         m += 1
 
-      val stable = Pacf.enforceStationary(previous.toVector, stationarityBound)
-      Right(YuleWalkerEstimate(ArmaCoefficients.ar(stable*), sigma2))
+      Pacf.enforceStationaryChecked(previous.toVector, stationarityBound).map { stable =>
+        var innovationVariance = gamma.lagZero
+        var lag = 0
+        while lag < stable.length do
+          innovationVariance -= stable(lag) * gamma.at(ArLag.unsafe(lag + 1))
+          lag += 1
+        val boundedVariance = math.min(gamma.lagZero, math.max(1e-12, innovationVariance))
+        YuleWalkerEstimate(ArmaCoefficients.ar(stable*), boundedVariance)
+      }
 
   private def selectByBic(
-      gamma: Autocovariances,
+      pooled: PooledAutocovariance,
       observations: Int,
       maxOrder: ArLag,
       stationarityBound: StationarityBound
   ): Either[ArError, YuleWalkerEstimate] =
     var best: Option[(Double, YuleWalkerEstimate)] = None
     var order = 0
-    while order <= maxOrder.value do
-      yuleWalker(gamma, ArOrderValue.unsafe(order), stationarityBound) match
+    val selectionLimit = math.min(maxOrder.value, observations / 5)
+    while order <= selectionLimit do
+      val estimate =
+        pooled
+          .through(ArOrderValue.unsafe(order))
+          .flatMap(yuleWalker(_, ArOrderValue.unsafe(order), stationarityBound))
+      estimate match
         case Left(error) => return Left(error)
         case Right(estimate) =>
           val sigma2 = math.max(estimate.innovationVariance, 1e-12)
-          val bic = observations.toDouble * math.log(sigma2) + (order + 1).toDouble * math.log(observations.toDouble)
+          val bic =
+            2.0 * observations.toDouble * math.log(sigma2) +
+              (order + 1).toDouble * math.log(observations.toDouble)
           best match
             case None => best = Some(bic -> estimate)
             case Some((current, _)) if bic < current => best = Some(bic -> estimate)
@@ -243,16 +333,92 @@ object ArEstimation:
 
     best.map(_._2).toRight(ArError.UnableToEstimateArModel)
 
-  private def maxEstimableLag(segments: Vector[TimeSegment]): ArLag =
-    ArLag.unsafe(segments.map(_.length - 1).max)
-
   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
     segments.map(_.length).sum
 
-  private def segmentMean(matrix: DMat, segment: TimeSegment, col: Int): Double =
-    var sum = 0.0
-    var row = segment.start
-    while row < segment.endExclusive do
-      sum += matrix(row, col)
+  private def pooledAutocovariance(
+      residuals: DMat,
+      segments: Vector[TimeSegment],
+      maxOrder: ArOrderValue
+  ): Either[ArError, PooledAutocovariance] =
+    if segments.isEmpty then Left(ArError.NoEstimableRows)
+    else
+      val maxRun = segments.map(_.runIndex).max
+      val runRows = Array.fill(maxRun + 1)(0)
+      val runSums = Array.fill((maxRun + 1) * residuals.cols)(0.0)
+      segments.foreach { segment =>
+        var row = segment.start
+        while row < segment.endExclusive do
+          runRows(segment.runIndex) += 1
+          var col = 0
+          while col < residuals.cols do
+            runSums(segment.runIndex * residuals.cols + col) += residuals(row, col)
+            col += 1
+          row += 1
+      }
+
+      val lagCount = maxOrder.value
+      val sums = Array.fill(lagCount + 1)(0.0)
+      val pairCounts = Array.fill(lagCount + 1)(0L)
+      segments.foreach { segment =>
+        var col = 0
+        while col < residuals.cols do
+          val mean = runSums(segment.runIndex * residuals.cols + col) / runRows(segment.runIndex).toDouble
+          var lag = 0
+          while lag <= lagCount do
+            var row = segment.start + lag
+            while row < segment.endExclusive do
+              sums(lag) += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
+              pairCounts(lag) += 1L
+              row += 1
+            lag += 1
+          col += 1
+      }
+      Right(PooledAutocovariance(sums, pairCounts))
+
+  private def validateFinite(residuals: DMat): Either[ArError, Unit] =
+    var row = 0
+    while row < residuals.rows do
+      var col = 0
+      while col < residuals.cols do
+        val value = residuals(row, col)
+        if !value.isFinite then return Left(ArError.NonFiniteResidual(row, col, value))
+        col += 1
       row += 1
-    sum / segment.length.toDouble
+    Right(())
+
+  private[ar] def stabilizeAutocovariances(
+      gamma: Autocovariances
+  ): Autocovariances =
+    if gamma.lagZero <= 0.0 || gamma.length <= 1 || isStrictlyPositiveDefinite(gamma.toVector) then gamma
+    else
+      var lower = 0.0
+      var upper = 1.0
+      var iteration = 0
+      while iteration < 50 do
+        val scale = 0.5 * (lower + upper)
+        val candidate = gamma.toVector.zipWithIndex.map { case (value, lag) =>
+          if lag == 0 then value else value * scale
+        }
+        if isStrictlyPositiveDefinite(candidate) then lower = scale
+        else upper = scale
+        iteration += 1
+      Autocovariances.unsafe(
+        gamma.toVector.zipWithIndex.map { case (value, lag) =>
+          if lag == 0 then value else value * lower
+        }
+      )
+
+  private[ar] def isStrictlyPositiveDefinite(values: Vector[Double]): Boolean =
+    if values.isEmpty || !values.forall(_.isFinite) || values.head <= 0.0 then false
+    else
+      val margin = RelativePositiveDefiniteMargin * values.head
+      val toeplitz = Matrix.newBuilder(values.length, values.length)
+      var row = 0
+      while row < values.length do
+        var col = 0
+        while col < values.length do
+          toeplitz(row, col) = values(math.abs(row - col)) - (if row == col then margin else 0.0)
+          col += 1
+        row += 1
+      toeplitz.result().cholesky(CholeskyOptions(0.0)).isRight

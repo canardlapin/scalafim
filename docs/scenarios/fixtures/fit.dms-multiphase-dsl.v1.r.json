@@ -25724,7 +25724,7 @@
       "generator_sha256": "a79343862c149c323b61b29a432cc72c5e97e524f31f6f64637f01e2b6a643a0",
       "locale": "C",
       "lock_path": "tools/r-parity/reference-lock.json",
-      "lock_sha256": "8fcccdb83ab6ad29da592218dcf9816534c7df896a058bad218f3e28f86f5548",
+      "lock_sha256": "083b2f7014de600b7184c79d9a06366202805abbf74eb8a1dfa104310f0836e3",
       "runtime": "R 4.5.1"
     },
     "hashes": {

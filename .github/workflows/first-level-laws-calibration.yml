@@ -15,11 +15,19 @@ permissions:
 
 jobs:
   generated-laws:
-    name: generated laws on JVM and Scala.js
+    name: generated laws on JVM and Scala.js (seed ${{ matrix.seed_long }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        seed_long:
+          - "97131249"
+          - "324508639"
+          - "610839776"
     env:
       SCALAFIM_LAW_PROFILE: calibration
+      SCALAFIM_LAW_SEED_LONG: ${{ matrix.seed_long }}
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

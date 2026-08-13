@@ -1,5 +1,20 @@
 {
   "benchmarks": {
+    "scalafim.fmri.ar.ArEstimationBenchmark.automaticGlobal": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 20.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderGlobal": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 20.0,
+      "score_unit": "ms/op"
+    },
+    "scalafim.fmri.ar.ArEstimationBenchmark.fixedOrderRun": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 20.0,
+      "score_unit": "ms/op"
+    },
     "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit": {
       "max_allocation_bytes_per_op": 3000000,
       "max_score": 60.0,
@@ -92,6 +107,11 @@
     }
   },
   "profile": {
+    "ar_estimation": {
+      "order": "4",
+      "responses": "128",
+      "timepoints": "360"
+    },
     "fit": {
       "predictors": "32",
       "responses": "128",

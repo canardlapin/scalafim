@@ -388,6 +388,29 @@ object ResultManifestWriter:
           s"""{"design_fingerprint": "${escape(report.designFingerprint.value)}", "method": "${escape(report.method.toString)}", "predictors": ${report.predictorCount}, "rank": ${report.numericalRank}, "tolerance_convention": "${escape(report.toleranceConvention.toString)}", "tolerance": ${formatDouble(report.tolerance)}, "pivot_column_ids": $pivotIds, "independent_column_ids": $independentIds, "aliased_column_ids": $aliasedIds, "diagonal_r": $diagonal, "condition_estimate": $condition}"""
         }
         .mkString("[", ", ", "]")
+    val voxelStatuses =
+      manifest.provenance.voxelStatuses match
+        case None =>
+          "null"
+        case Some(records) =>
+          records
+            .map(record => s"""{"voxel": ${record.voxelIndex}, "status": "${escape(record.status.label)}"}""")
+            .mkString("[", ", ", "]")
+    val contrastExclusions =
+      manifest.contrasts
+        .map(_.contrastId.value)
+        .distinct
+        .flatMap { contrastId =>
+          val exclusions = manifest.contrasts.find(_.contrastId.value == contrastId).toVector.flatMap(_.excludedVoxels)
+          if exclusions.isEmpty then None
+          else
+            val voxels =
+              exclusions
+                .map(exclusion => s"""{"voxel": ${exclusion.voxelIndex}, "status": "${escape(exclusion.status.label)}"}""")
+                .mkString("[", ", ", "]")
+            Some(s"""{"contrast_id": "${escape(contrastId)}", "voxels": $voxels}""")
+        }
+        .mkString("[", ", ", "]")
     s"""{
        |  "format": "${target.format.label}",
        |  "stem": "${escape(target.stemValue)}",
@@ -400,6 +423,8 @@ object ResultManifestWriter:
        |  "inference": $inference,
        |  "response_preparation": $responsePreparation,
        |  "rank_reports": $rankReports,
+       |  "voxel_statuses": $voxelStatuses,
+       |  "contrast_exclusions": $contrastExclusions,
        |  "notes": $notes,
        |  "artifacts": $artifactJson
        |}

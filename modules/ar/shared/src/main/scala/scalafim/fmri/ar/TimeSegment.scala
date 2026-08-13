@@ -28,12 +28,16 @@ object SegmentLayout:
     if segments.isEmpty then Left(ArError.EmptySegments)
     else
       var expectedStart = 0
+      var previousRunIndex = -1
       var index = 0
       while index < segments.length do
         val segment = segments(index)
         if segment.start != expectedStart then
           return Left(ArError.SegmentGap(index, expectedStart, segment.start))
+        if segment.runIndex != previousRunIndex && segment.runIndex != previousRunIndex + 1 then
+          return Left(ArError.NonContiguousRunIndex(index, previousRunIndex, segment.runIndex))
         expectedStart = segment.endExclusive
+        previousRunIndex = segment.runIndex
         index += 1
       Right(new SegmentLayout(segments))
 
@@ -70,6 +74,59 @@ object CoveredSegments:
   def unsafe(segments: Vector[TimeSegment], rows: Int): CoveredSegments =
     fromSegments(segments, rows).fold(error => throw new IllegalArgumentException(error.message), identity)
 
+/** Separates the rows retained for whitening from the rows allowed to estimate
+  * the noise model. Whitening must preserve the complete matrix row axis;
+  * censored rows may remain on that axis while being absent from
+  * `estimationSegments`.
+  */
+final case class NoiseEstimationLayout private (
+    coveredSegments: CoveredSegments,
+    estimationSegments: Vector[TimeSegment],
+    excludedRows: Vector[Int]
+):
+  def whiteningSegments: Vector[TimeSegment] = coveredSegments.segments
+  def rows: Int = coveredSegments.nTimepoints
+  def retainedRows: Int = estimationSegments.map(_.length).sum
+  def runCount: Int = coveredSegments.runCount
+
+  def segmentsForRun(runIndex: Int): Vector[TimeSegment] =
+    estimationSegments.filter(_.runIndex == runIndex)
+
+object NoiseEstimationLayout:
+
+  def allRows(
+      whiteningSegments: Vector[TimeSegment],
+      rows: Int
+  ): Either[ArError, NoiseEstimationLayout] =
+    excludingRows(whiteningSegments, rows, Set.empty)
+
+  def excludingRows(
+      whiteningSegments: Vector[TimeSegment],
+      rows: Int,
+      excludedRows: Set[Int]
+  ): Either[ArError, NoiseEstimationLayout] =
+    CoveredSegments.fromSegments(whiteningSegments, rows).flatMap { covered =>
+      excludedRows.find(row => row < 0 || row >= rows) match
+        case Some(row) => Left(ArError.ExcludedRowOutOfBounds(row, rows))
+        case None =>
+          val estimation = Vector.newBuilder[TimeSegment]
+          covered.segments.foreach { segment =>
+            var retainedStart = -1
+            var row = segment.start
+            while row < segment.endExclusive do
+              if excludedRows.contains(row) then
+                if retainedStart >= 0 then
+                  estimation += TimeSegment(retainedStart, row, segment.runIndex)
+                  retainedStart = -1
+              else if retainedStart < 0 then
+                retainedStart = row
+              row += 1
+            if retainedStart >= 0 then
+              estimation += TimeSegment(retainedStart, segment.endExclusive, segment.runIndex)
+          }
+          Right(new NoiseEstimationLayout(covered, estimation.result(), excludedRows.toVector.sorted))
+    }
+
 object TimeSegments:
 
   def continuous(length: Int): Vector[TimeSegment] =
@@ -90,20 +147,31 @@ object TimeSegments:
     }
     out.result()
 
-  def fromRunLabels(labels: IndexedSeq[Int]): Vector[TimeSegment] =
-    require(labels.nonEmpty, "run labels must be non-empty")
-    val out = Vector.newBuilder[TimeSegment]
-    var start = 0
-    var run = 0
-    var row = 1
-    while row < labels.length do
-      if labels(row) != labels(row - 1) then
-        out += TimeSegment(start, row, run)
-        start = row
-        run += 1
-      row += 1
-    out += TimeSegment(start, labels.length, run)
-    out.result()
+  def fromRunLabels[A](labels: IndexedSeq[A]): Either[ArError, Vector[TimeSegment]] =
+    if labels.isEmpty then Left(ArError.EmptySegments)
+    else
+      val out = Vector.newBuilder[TimeSegment]
+      val firstRows = scala.collection.mutable.HashMap.empty[A, Int]
+      firstRows += labels.head -> 0
+      var start = 0
+      var run = 0
+      var row = 1
+      while row < labels.length do
+        if labels(row) != labels(row - 1) then
+          firstRows.get(labels(row)) match
+            case Some(firstRow) =>
+              return Left(ArError.NonContiguousRunLabel(firstRow, row))
+            case None =>
+              out += TimeSegment(start, row, run)
+              firstRows += labels(row) -> row
+              start = row
+              run += 1
+        row += 1
+      out += TimeSegment(start, labels.length, run)
+      Right(out.result())
+
+  def unsafeFromRunLabels[A](labels: IndexedSeq[A]): Vector[TimeSegment] =
+    fromRunLabels(labels).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def withCensorResets(segments: Vector[TimeSegment], censoredTimepoints: Set[Int]): Vector[TimeSegment] =
     require(segments.nonEmpty, "segments must be non-empty")

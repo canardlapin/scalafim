@@ -161,6 +161,7 @@ sealed trait FmriFitResult:
   def summary: FitSummary
   def coefficientAxis: Option[CoefficientAxis] = None
   def preparationProvenance: Option[ResponsePreparationProvenance] = None
+  def fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   def voxels: Int = voxelIndices.length
 
 final case class DenseFmriFitResult(
@@ -177,7 +178,9 @@ final case class DenseFmriFitResult(
     autocorrelation: Option[ArDiagnostics] = None,
     robustDiagnostics: Option[RobustDiagnostics] = None,
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FmriFitResult:
   require(columnNames.length == coefficients.predictors, "column names must match coefficient rows")
   require(voxelIndices.length == coefficients.voxels, "voxel indices must match coefficient columns")
@@ -187,6 +190,8 @@ final case class DenseFmriFitResult(
   require(inference.voxels == coefficients.voxels, "coefficient inference must match coefficient columns")
   require(olsDiagnostics.forall(_.predictors == coefficients.predictors), "OLS diagnostics must match coefficient rows")
   require(coefficientAxis.forall(_.predictors == coefficients.predictors), "coefficient axis must match coefficient rows")
+  require(voxelStatuses.forall(_.length == coefficients.voxels), "voxel statuses must match coefficient columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "dense fit result")
 
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
@@ -195,6 +200,13 @@ final case class DenseFmriFitResult(
   def coefficientCovariance: CoefficientCovariance = inference.covariance
   def inferenceScope: CoefficientInferenceScope = inference.scope
   def rankReport: Option[RankDiagnostics] = olsDiagnostics.map(_.rankReport)
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
+
+  def voxelStatus(voxelIndex: Int): Option[VoxelFitStatus] =
+    val position = voxelIndices.indexOf(voxelIndex)
+    if position >= 0 then Some(resolvedVoxelStatuses(position))
+    else fitExclusions.find(_.voxelIndex == voxelIndex).map(_.status)
 
   /**
     * Resolve numerical rank evidence against the result's structural axis.
@@ -276,13 +288,15 @@ final case class LssFmriFitResult(
     engine: FitEngine,
     summary: FitSummary,
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FmriFitResult:
   require(trialNames.length == coefficients.predictors, "trial names must match coefficient rows")
   require(voxelIndices.length == coefficients.voxels, "voxel indices must match coefficient columns")
   require(timepoints.nonEmpty, "LSS result must contain at least one timepoint")
   require(engine == FitEngine.LeastSquaresSeparate, "LSS result engine must be LeastSquaresSeparate")
   require(coefficientAxis.forall(_.predictors == coefficients.predictors), "LSS coefficient axis must match coefficient rows")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "LSS fit result")
 
   def columnNames: Vector[String] = trialNames
   def trials: Int = coefficients.predictors
@@ -307,7 +321,8 @@ final case class RunwiseFmriRunResult(
     olsDiagnostics: OlsDiagnostics,
     coefficientAxis: Option[CoefficientAxis] = None,
     sourceColumnIndices: Vector[Int] = Vector.empty,
-    projection: Option[RunCoefficientProjection] = None
+    projection: Option[RunCoefficientProjection] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None
 ):
   require(rowIndices.nonEmpty, "run result must contain at least one selected row")
   require(rowIndices.length == timepoints.length, "run rows and timepoints must align")
@@ -318,6 +333,7 @@ final case class RunwiseFmriRunResult(
   require(normalizedCovariance.cols == coefficients.predictors, "run covariance cols must match predictors")
   require(olsDiagnostics.predictors == coefficients.predictors, "run OLS diagnostics must match coefficient rows")
   require(coefficientAxis.forall(_.predictors == coefficients.predictors), "run coefficient axis must match coefficient rows")
+  require(voxelStatuses.forall(_.length == coefficients.voxels), "run voxel statuses must match coefficient columns")
   require(
     sourceColumnIndices.isEmpty || sourceColumnIndices.length == coefficients.predictors,
     "run source column mapping must match coefficient rows"
@@ -337,6 +353,8 @@ final case class RunwiseFmriRunResult(
     if sourceColumnIndices.nonEmpty then sourceColumnIndices else (0 until coefficients.predictors).toVector
 
   def sourceColumns: Vector[Int] = effectiveSourceColumnIndices
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
 
   def localColumnNames(globalColumnNames: Vector[String]): Either[FitError, Vector[String]] =
     if globalColumnNames.isEmpty then
@@ -365,7 +383,8 @@ final case class RunwiseFmriRunResult(
   private[fit] def denseResult(
       columnNames: Vector[String],
       voxelIndices: Vector[Int],
-      summary: FitSummary
+      summary: FitSummary,
+      fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
   ): Either[FitError, DenseFmriFitResult] =
     if voxelIndices.length != coefficients.voxels then
       Left(FitError.InvalidFitAxis("runwise result voxels", s"expected ${coefficients.voxels}, got ${voxelIndices.length}"))
@@ -391,7 +410,9 @@ final case class RunwiseFmriRunResult(
           engine = FitEngine.RunwiseLeastSquares,
           summary = summary.copy(predictors = coefficients.predictors),
           olsDiagnostics = Some(olsDiagnostics),
-          coefficientAxis = coefficientAxis
+          coefficientAxis = coefficientAxis,
+          voxelStatuses = Some(resolvedVoxelStatuses),
+          fitExclusions = fitExclusions
         )
       }
 
@@ -409,12 +430,14 @@ final case class RunwiseFmriFitResult(
     engine: FitEngine,
     summary: FitSummary,
     override val coefficientAxis: Option[CoefficientAxis] = None,
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FmriFitResult:
   require(runs.nonEmpty, "runwise result must contain at least one run")
   require(timepoints.nonEmpty, "runwise result must contain at least one timepoint")
   require(runs.forall(_.coefficients.voxels == voxelIndices.length), "run coefficients must match voxel indices")
   require(coefficientAxis.forall(_.predictors == columnNames.length), "coefficient axis must match column names")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "runwise fit result")
   require(runs.forall(_.sourceColumns.forall(index => index < columnNames.length)), "run source columns must match column names")
   require(
     runs.forall { run =>
@@ -457,7 +480,8 @@ final case class FixedEffectsFmriFitResult(
     sufficientStatistics: FixedEffectsSufficientStatistics,
     policy: FixedEffectsPolicy,
     override val coefficientAxis: Option[CoefficientAxis],
-    override val preparationProvenance: Option[ResponsePreparationProvenance] = None
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FmriFitResult:
   require(columnNames.length == coefficients.predictors, "fixed-effects column names must match coefficients")
   require(voxelIndices.length == coefficients.voxels, "fixed-effects voxel indices must match coefficients")
@@ -469,6 +493,7 @@ final case class FixedEffectsFmriFitResult(
   require(summary.coefficientScope == scalafim.fmri.model.CoefficientScope.SeparateRunsThenFixedEffects, "fixed-effects result summary must expose its coefficient scope")
   require(policy == sufficientStatistics.policy, "fixed-effects result policy must match sufficient-statistics policy")
   require(coefficientAxis.forall(_.structurallyCompatible(sufficientStatistics.coefficientAxis)), "fixed-effects result axis must match sufficient-statistics axis")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "fixed-effects fit result")
 
   def predictors: Int = coefficients.predictors
   override def voxels: Int = coefficients.voxels
@@ -496,8 +521,113 @@ final case class FixedEffectsFmriFitResult(
       engine = FitEngine.FixedEffects,
       summary = summary,
       coefficientAxis = coefficientAxis,
-      preparationProvenance = preparationProvenance
+      preparationProvenance = preparationProvenance,
+      fitExclusions = fitExclusions
     )
 
   def inferenceReady: Either[FitError, InferenceReadyDenseFit] =
     Right(InferenceReadyDenseFit(denseInferenceResult, residualDegreesOfFreedom))
+
+/** One independently fitted response observation pattern. */
+final case class ObservationPatternFitResult(
+    pattern: ObservationPattern,
+    result: FmriFitResult
+):
+  require(
+    result.voxelIndices.nonEmpty && result.voxelIndices.forall(pattern.sourceVoxels.contains),
+    "observation-pattern result voxels must be a non-empty subset of its pattern"
+  )
+  require(
+    result.timepoints == pattern.sourceTimepoints,
+    "observation-pattern result timepoints must match its pattern"
+  )
+
+/** A scientifically heterogeneous fit whose voxels do not share one temporal
+  * design geometry.
+  *
+  * Each child result retains its own rows, rank diagnostics, normalized
+  * covariance, and ordinary residual degrees of freedom. The outer result
+  * retains the source selection order without inventing a shared inference
+  * geometry.
+  */
+final case class PatternedFmriFitResult(
+    patternResults: Vector[ObservationPatternFitResult],
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    summary: FitSummary,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+) extends FmriFitResult:
+  require(patternResults.nonEmpty, "patterned fit result must contain at least one fitted pattern")
+  require(timepoints.nonEmpty, "patterned fit result must retain the outer selected timepoints")
+  require(voxelIndices.nonEmpty, "patterned fit result must retain at least one fitted voxel")
+  require(voxelIndices.distinct.length == voxelIndices.length, "patterned fit result voxels must be unique")
+  require(
+    patternResults.map(_.pattern.id.value).distinct.length == patternResults.length,
+    "patterned fit result ids must be unique"
+  )
+  require(
+    patternResults.flatMap(_.result.voxelIndices).toSet == voxelIndices.toSet,
+    "patterned fit result children must cover exactly the retained voxels"
+  )
+  require(
+    patternResults.flatMap(_.result.voxelIndices).distinct.length == voxelIndices.length,
+    "patterned fit result child voxel sets must be disjoint"
+  )
+  require(
+    patternResults.forall(_.result.engine == patternResults.head.result.engine),
+    "patterned fit result children must use one engine"
+  )
+  require(
+    patternResults.forall(_.result.columnNames == patternResults.head.result.columnNames),
+    "patterned fit result children must share structural columns"
+  )
+  require(
+    patternResults.forall(_.result.coefficientAxis == patternResults.head.result.coefficientAxis),
+    "patterned fit result children must share one structural coefficient axis"
+  )
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "patterned fit result")
+
+  val engine: FitEngine = patternResults.head.result.engine
+  val columnNames: Vector[String] = patternResults.head.result.columnNames
+  override val coefficientAxis: Option[CoefficientAxis] = patternResults.head.result.coefficientAxis
+
+  def patternForVoxel(voxelIndex: Int): Option[ObservationPattern] =
+    patternResults.find(_.pattern.sourceVoxels.contains(voxelIndex)).map(_.pattern)
+
+  def resultForVoxel(voxelIndex: Int): Option[FmriFitResult] =
+    patternResults.find(_.result.voxelIndices.contains(voxelIndex)).map(_.result)
+
+  def densePatterns: Either[FitError, Vector[(ObservationPattern, DenseFmriFitResult)]] =
+    val out = Vector.newBuilder[(ObservationPattern, DenseFmriFitResult)]
+    var index = 0
+    while index < patternResults.length do
+      patternResults(index) match
+        case ObservationPatternFitResult(pattern, dense: DenseFmriFitResult) =>
+          out += pattern -> dense
+        case ObservationPatternFitResult(_, other) =>
+          return Left(FitError.NonDenseFitResult(other.engine))
+      index += 1
+    Right(out.result())
+
+private[fit] object FmriFitResults:
+  /** Reconcile a result's exclusions with an ordered outer execution stream.
+    * The outer order is authoritative so chunking cannot reorder source voxel
+    * identities when some chunks are entirely excluded.
+    */
+  def mergeFitExclusions(
+      result: FmriFitResult,
+      ordered: Vector[VoxelInferenceExclusion]
+  ): Either[FitError, FmriFitResult] =
+    VoxelInferenceExclusions.combine(ordered, result.fitExclusions).map { combined =>
+      result match
+        case dense: DenseFmriFitResult =>
+          dense.copy(fitExclusions = combined)
+        case lss: LssFmriFitResult =>
+          lss.copy(fitExclusions = combined)
+        case runwise: RunwiseFmriFitResult =>
+          runwise.copy(fitExclusions = combined)
+        case fixed: FixedEffectsFmriFitResult =>
+          fixed.copy(fitExclusions = combined)
+        case patterned: PatternedFmriFitResult =>
+          patterned.copy(fitExclusions = combined)
+    }

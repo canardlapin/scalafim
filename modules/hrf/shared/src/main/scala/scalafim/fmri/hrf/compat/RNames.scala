@@ -58,8 +58,12 @@ object r:
       summate: Boolean = true,
       normalize: Boolean = false,
       name: Option[String] = None,
-      span: Option[Double] = None
+      span: Option[Double] = None,
+      hrf_norm: String = "none"
   ): Hrf =
+    val normalization = HrfNormalization
+      .fromString(hrf_norm)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     HrfCombinators.gen(
       base = hrf,
       lag = lag.s,
@@ -69,13 +73,21 @@ object r:
       summate = summate,
       normalize = normalize,
       name = name,
-      span = span.map(_.s)
+      span = span.map(_.s),
+      normalization = normalization
     )
 
   def lag_hrf(hrf: Hrf, lag: Double): Hrf = hrf.lag(lag.s)
   def block_hrf(hrf: Hrf, width: Double, precision: Double = 0.1, half_life: Double = Double.PositiveInfinity, summate: Boolean = true, normalize: Boolean = false): Hrf =
     hrf.block(width.s, precision.s, half_life, summate, normalize)
-  def normalise_hrf(hrf: Hrf): Hrf = hrf.normalize(0.1.s)
+  def normalize_hrf(hrf: Hrf, mode: String): Hrf =
+    val normalization = HrfNormalization
+      .fromString(mode)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    hrf.normalize(normalization).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def normalise_hrf(hrf: Hrf): Hrf =
+    normalize_hrf(hrf, HrfNormalization.UnitPeakPerBasis.label)
   def hrf_from_coefficients(hrf: Hrf, h: Seq[Double], name: Option[String] = None): Hrf =
     hrf.withCoefficients(h.toArray, name)
 

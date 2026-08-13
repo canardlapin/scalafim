@@ -1,0 +1,44 @@
+name: first-level-mutation-pilot
+run-name: first-level AR and NA mutation pilot (${{ github.event_name }})
+
+on:
+  schedule:
+    - cron: "17 6 * * 6"
+  workflow_dispatch:
+
+concurrency:
+  group: first-level-mutation-pilot-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mutation-pilot:
+    name: 22 seeded AR and missing-data mutants
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up the declared JDK baseline
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Run the focused mutation pilot
+        env:
+          SCALAFIM_MUTATION_OUT: ${{ runner.temp }}/first-level-mutation-pilot
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-mutation-pilot-sbt
+        run: python3 tools/mutation/ar_na_pilot.py
+
+      - name: Upload mutation logs and summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: first-level-mutation-pilot-${{ github.sha }}
+          path: ${{ runner.temp }}/first-level-mutation-pilot
+          if-no-files-found: error
+          retention-days: 30

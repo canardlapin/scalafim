@@ -1,0 +1,311 @@
+{
+  "inputs": {
+    "ar_order": 2,
+    "censor_one_based": [
+      4,
+      9,
+      14,
+      20
+    ],
+    "design": [
+      [
+        -1.25,
+        1
+      ],
+      [
+        -0.75,
+        1
+      ],
+      [
+        -0.25,
+        1
+      ],
+      [
+        0.25,
+        1
+      ],
+      [
+        0.75,
+        1
+      ],
+      [
+        1.25,
+        1
+      ],
+      [
+        -1.25,
+        1
+      ],
+      [
+        -0.75,
+        1
+      ],
+      [
+        -0.25,
+        1
+      ],
+      [
+        0.25,
+        1
+      ],
+      [
+        0.75,
+        1
+      ],
+      [
+        1.25,
+        1
+      ],
+      [
+        -0.95,
+        1
+      ],
+      [
+        -0.45,
+        1
+      ],
+      [
+        0.04999999999999999,
+        1
+      ],
+      [
+        0.55,
+        1
+      ],
+      [
+        1.05,
+        1
+      ],
+      [
+        1.55,
+        1
+      ],
+      [
+        -0.95,
+        1
+      ],
+      [
+        -0.45,
+        1
+      ],
+      [
+        0.04999999999999999,
+        1
+      ],
+      [
+        0.55,
+        1
+      ],
+      [
+        1.05,
+        1
+      ],
+      [
+        1.55,
+        1
+      ]
+    ],
+    "exact_first": "none",
+    "pooling": "global",
+    "response": [
+      [
+        -1.53233035160265,
+        2.2682401887105645
+      ],
+      [
+        -0.9946164380437948,
+        1.511469019609342
+      ],
+      [
+        -0.6369155192588595,
+        0.6766972728846502
+      ],
+      [
+        -0.5236270611744637,
+        1.5379253311162455
+      ],
+      [
+        0.922027537543396,
+        0.8094219165861546
+      ],
+      [
+        1.8571746954236097,
+        0.3411710432236058
+      ],
+      [
+        -1.5954171369561252,
+        2.0494467602873767
+      ],
+      [
+        -1.111228370467538,
+        0.9767451714713449
+      ],
+      [
+        -0.5669965268540538,
+        0.697849859950932
+      ],
+      [
+        -0.9901828948661129,
+        0.6117854323681023
+      ],
+      [
+        0.20320371188404768,
+        0.4266562363414218
+      ],
+      [
+        1.178372502651132,
+        -0.31278721351426103
+      ],
+      [
+        -1.7986245907346585,
+        1.4061107518557923
+      ],
+      [
+        -0.40299109094082575,
+        0.9609925983188334
+      ],
+      [
+        -0.370663668045568,
+        -0.03687802640627902
+      ],
+      [
+        0.09157122850133148,
+        0.4968524312021622
+      ],
+      [
+        0.25785024495906406,
+        -0.046609859327276904
+      ],
+      [
+        2.1295668004105384,
+        -0.1480419958692878
+      ],
+      [
+        -0.864398509680563,
+        1.8812722867965266
+      ],
+      [
+        0.14381702369450688,
+        1.4641692762803773
+      ],
+      [
+        0.9523933301660652,
+        0.2897110571778754
+      ],
+      [
+        0.06135324697807182,
+        0.4479091365187982
+      ],
+      [
+        1.0217414565847744,
+        0.0350184933693434
+      ],
+      [
+        2.4421288410150925,
+        -0.10388124612185523
+      ]
+    ],
+    "run_labels": [
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-b",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a",
+      "run-a"
+    ]
+  },
+  "outputs": {
+    "coefficients": [
+      [
+        1.2501373058862255,
+        -0.7546031550254187
+      ],
+      [
+        -0.18272064871243765,
+        0.8765975457169093
+      ]
+    ],
+    "estimated_phi": [
+      0.21261356550749974,
+      -0.30211449746882546
+    ],
+    "normalized_covariance": [
+      [
+        0.0636159358588043,
+        -0.010363251078950307
+      ],
+      [
+        -0.010363251078950307,
+        0.0434174487386817
+      ]
+    ],
+    "residual_degrees_of_freedom": 22,
+    "residual_variance": [
+      0.29699523344665535,
+      0.15910428451507283
+    ]
+  },
+  "receipt": {
+    "accepted_differences": [],
+    "comparison_policy": {
+      "alignment": "identity_only_no_post_hoc_lag_shift",
+      "correlation_role": "diagnostic_only_requires_error_and_norm_bounds",
+      "disagreement_triage": "truth_boundary_local",
+      "tolerance_scope": "comparison_local_no_global_override"
+    },
+    "conventions": {
+      "censoring": "fmriAR receives one-based censor rows; Scala stores zero-based source timepoints",
+      "dtype": "float64",
+      "residual_df": "selected row count minus the final whitened design rank"
+    },
+    "environment": {
+      "generator_sha256": "fa57161a65bcb49b4d1f61e46d4872aa280e3236dd5605f1b33316df858914d8",
+      "locale": "C",
+      "lock_path": "tools/r-parity/reference-lock.json",
+      "lock_sha256": "083b2f7014de600b7184c79d9a06366202805abbf74eb8a1dfa104310f0836e3",
+      "runtime": "R 4.5.1"
+    },
+    "hashes": {
+      "generated_scala_sha256": "d4fc25acac16eb1e6b7ad843994ead04c56f913d4abd4ba5311f02e0466bd924",
+      "inputs_sha256": "9fc56f673ba620aa110fcbe8e9a64889dcff1cf4724488cc0ffa176bca0744c4",
+      "outputs_sha256": "40109c39499dad6045570ac2cf9f8538e2975bbaca89f160ef962d767a2e043b"
+    },
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
+    "schema_version": "scalafim-r-fmriar-estimated-gls-fixture/v1",
+    "source": {
+      "fmriAR_revision": "f563f2df20264ffa7db9be116f11d631551e9132",
+      "fmriAR_version": "0.3.3",
+      "producer": "modules/fit/tools/generate_fmriar_estimated_gls_parity.R",
+      "r_version": "4.5.1",
+      "reference": "fmriAR global AR(2) estimation, censor-aware whitening, and direct GLS inference"
+    }
+  },
+  "scenario_id": "fit.fmriar-estimated-gls.v1",
+  "schema_version": "scalafim-r-fmriar-estimated-gls-fixture/v1",
+  "source": {
+    "fmriAR_revision": "f563f2df20264ffa7db9be116f11d631551e9132",
+    "fmriAR_version": "0.3.3",
+    "producer": "modules/fit/tools/generate_fmriar_estimated_gls_parity.R",
+    "r_version": "4.5.1",
+    "reference": "fmriAR global AR(2) estimation, censor-aware whitening, and direct GLS inference"
+  },
+  "truth_boundary": "fit_inference"
+}

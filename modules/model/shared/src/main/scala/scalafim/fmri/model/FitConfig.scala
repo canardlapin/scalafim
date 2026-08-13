@@ -6,7 +6,24 @@ import scalafim.fmri.design.TermId
 import scala.util.control.NonFatal
 
 enum MissingDataPolicy:
-  case Error, Propagate
+  /** Reject the selected response when any value is NA, NaN, or infinite. */
+  case Error
+
+  /** Exclude a response column as a whole when any selected value is NA, NaN,
+    * or infinite. Healthy columns remain fit together in one finite block.
+    */
+  case ExcludeVoxel
+
+  /** Fit each response column on its own finite selected rows. Voxels sharing
+    * the same observed-row mask are grouped into one numerical block; result
+    * inference remains partitioned by observation pattern.
+    */
+  case OmitRowsPerVoxel
+
+  /** Compatibility alias for the original whole-voxel exclusion behavior.
+    * New code should use [[ExcludeVoxel]].
+    */
+  case Propagate
 
 enum ScaleScope:
   case Run, Global, Voxel

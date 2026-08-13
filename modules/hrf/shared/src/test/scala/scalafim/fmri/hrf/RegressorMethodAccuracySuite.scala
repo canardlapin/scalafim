@@ -26,6 +26,13 @@ class RegressorMethodAccuracySuite extends munit.FunSuite:
 
   private def peak(m: Mat): Double = m.data.map(math.abs).max
 
+  private val triangularHrf =
+    Hrf.scalar(
+      name = "triangle",
+      span = Seconds(1.0),
+      support = Support.Compact(Seconds(1.0))
+    )(lag => 1.0 - lag.value)
+
   test("Conv and FFT are the same algorithm and agree to machine precision"):
     val reg = Regressor(Seq(10.0, 23.5, 44.2), Hrfs.SPMG1)
     Seq(0.33, 0.1, 0.05).foreach { p =>
@@ -97,3 +104,20 @@ class RegressorMethodAccuracySuite extends munit.FunSuite:
       val gap = maxAbsDiff(loop, other) / peak(loop)
       assert(gap < 0.02, s"$m differs from the exact loop by ${gap * 100}% of peak")
     }
+
+  test("a block overlapping a one-point grid is retained by every method"):
+    val reg = Regressor(Seq(0.0), triangularHrf, duration = Seq(2.0))
+    // At lag 2.5 only u in [1.5, 2] contributes:
+    // integral_1.5^2 (u - 1.5) du = 0.125.
+    val expected = 0.125
+
+    Regressor.EvalMethod.values.foreach { method =>
+      val actual = reg.evaluate(Seq(2.5), precision = 0.01, method = method)
+      assertEqualsDouble(actual(0, 0), expected, 1e-6, s"$method discarded the overlapping block")
+    }
+
+  test("Loop support includes the duration tail of an already-retained block"):
+    val reg = Regressor(Seq(0.0), triangularHrf, duration = Seq(2.0))
+    val actual = reg.evaluate(Seq(0.0, 2.5), precision = 0.01, method = Regressor.EvalMethod.Loop)
+
+    assertEqualsDouble(actual(1, 0), 0.125, 1e-6)

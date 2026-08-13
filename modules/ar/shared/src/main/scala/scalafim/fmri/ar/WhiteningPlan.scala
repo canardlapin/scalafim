@@ -30,12 +30,19 @@ enum CoefficientScope:
       case ByRun(_)  => NoisePooling.Run
 
   def validate(layout: SegmentLayout): Either[ArError, Unit] =
-    this match
+    val scopeValidation = this match
       case Global(_) =>
         Right(())
       case ByRun(coefficients) =>
         if coefficients.length == layout.runCount then Right(())
         else Left(ArError.CoefficientScopeMismatch(CoefficientScopeKind.ByRun, coefficients.length, layout.runCount))
+    scopeValidation.flatMap { _ =>
+      allCoefficients.foldLeft[Either[ArError, Unit]](Right(())) {
+        case (Left(error), _) => Left(error)
+        case (Right(_), coefficients) =>
+          Pacf.validateStationary(coefficients.phi).flatMap(_ => Pacf.validateInvertible(coefficients.theta))
+      }
+    }
 
   def coefficientsFor(segment: TimeSegment): ArmaCoefficients =
     this match

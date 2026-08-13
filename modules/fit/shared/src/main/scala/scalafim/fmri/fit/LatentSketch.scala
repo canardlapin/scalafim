@@ -40,7 +40,10 @@ final class LatentSketchPrepared private[fit] (
         timepoints = input.timepoints,
         engine = scalafim.fmri.model.FitEngine.LatentSketch,
         olsDiagnostics = Some(latentFit.diagnostics),
-        coefficientAxis = input.coefficientAxis
+        coefficientAxis = input.coefficientAxis,
+        preparationProvenance = input.preparationProvenance,
+        voxelStatuses = Some(VoxelFitStatus.refine(input.resolvedVoxelStatuses, residualVariance)),
+        fitExclusions = input.fitExclusions
       )
 
 object LatentSketchPrepared:

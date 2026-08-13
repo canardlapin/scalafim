@@ -243,6 +243,14 @@ final case class EventTerm(
 
     val globOns = samplingFrame.globalOnsets(onsets, blockIds0)
 
+    // Sampling the shared kernel is response-independent and can be reused for
+    // every condition and run. Keep it lazy so an explicitly retained all-zero
+    // term never evaluates the HRF at all.
+    lazy val preparedKernel =
+      Regressor
+        .prepareConvolution(hrf, hrf.span, precision)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+
     var rowOffset = 0
     var b = 0
     while b < samplingFrame.nBlocks do
@@ -257,17 +265,18 @@ final case class EventTerm(
       var cond = 0
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
-        val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
-        val ev = Regressor.evaluate(reg, grid, precision = precision.value)
-        // Store basis-major: [b01: all conds] [b02: all conds] ...
-        var basis = 0
-        while basis < nb do
-          val outCol = basis * nConds + cond
-          var r = 0
-          while r < blockLen do
-            out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
-            r += 1
-          basis += 1
+        if ampB.exists(_ != 0.0) then
+          val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
+          val ev = preparedKernel.evaluate(reg, grid)
+          // Store basis-major: [b01: all conds] [b02: all conds] ...
+          var basis = 0
+          while basis < nb do
+            val outCol = basis * nConds + cond
+            var r = 0
+            while r < blockLen do
+              out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
+              r += 1
+            basis += 1
         cond += 1
 
       rowOffset += blockLen
