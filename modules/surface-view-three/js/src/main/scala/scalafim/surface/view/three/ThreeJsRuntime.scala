@@ -31,9 +31,11 @@ final class ThreeJsRuntime private (
   private val bundles = mutable.LinkedHashMap.empty[SurfaceId, Bundle]
   private var slots = Vector.empty[SurfaceViewSlot]
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
+  private var disposed = false
 
   def contextState: ThreeContextState =
-    if missing(canvas) || missing(renderer) then ThreeContextState.Absent
+    if disposed then ThreeContextState.Lost
+    else if missing(canvas) || missing(renderer) then ThreeContextState.Absent
     else
       try
         val context = renderer.applyDynamic("getContext")()
@@ -229,9 +231,27 @@ final class ThreeJsRuntime private (
     attempt("backend disposal"):
       bundles.valuesIterator.foreach(disposeBundle)
       bundles.clear()
-      renderer.applyDynamic("dispose")()
       slots = Vector.empty
+      if !disposed then
+        disposed = true
+        renderer.applyDynamic("dispose")()
+        loseContext()
       ()
+
+  /** `renderer.dispose()` releases Three.js state but leaves the WebGL context
+    * alive until the canvas is collected, and browsers evict the oldest live
+    * contexts once a small budget is exceeded. Forcing loss returns this
+    * canvas's slot immediately.
+    */
+  private def loseContext(): Unit =
+    try
+      val webgl2 = canvas.applyDynamic("getContext")("webgl2")
+      val context = if missing(webgl2) then canvas.applyDynamic("getContext")("webgl") else webgl2
+      if !missing(context) && js.typeOf(context.selectDynamic("getExtension")) == "function" then
+        val extension = context.applyDynamic("getExtension")("WEBGL_lose_context")
+        if !missing(extension) && js.typeOf(extension.selectDynamic("loseContext")) == "function" then
+          extension.applyDynamic("loseContext")()
+    catch case _: Throwable => ()
 
   private def decodePick(bundle: Bundle, slot: SurfaceViewSlot, hit: js.Dynamic): Option[ThreePick] =
     val faceIndexValue = hit.selectDynamic("faceIndex")

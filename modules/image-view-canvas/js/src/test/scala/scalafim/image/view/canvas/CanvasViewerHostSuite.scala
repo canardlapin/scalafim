@@ -150,38 +150,7 @@ class CanvasViewerHostSuite extends munit.FunSuite:
         uploads += 1
         js.Dynamic.literal().asInstanceOf[CanvasImageSource]
 
-    def noArgs: js.Function0[Unit] =
-      () => ()
-    val context = js.Dynamic
-      .literal(
-        save = noArgs,
-        restore = noArgs,
-        beginPath = noArgs,
-        closePath = noArgs,
-        fill = noArgs,
-        stroke = noArgs,
-        clip = noArgs,
-        moveTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
-        lineTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
-        rect = ((_: Double, _: Double, _: Double, _: Double) => ()): js.Function4[Double, Double, Double, Double, Unit],
-        arc = ((_: Double, _: Double, _: Double, _: Double, _: Double, _: Boolean) => ()): js.Function6[Double, Double, Double, Double, Double, Boolean, Unit],
-        translate = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
-        rotate = ((_: Double) => ()): js.Function1[Double, Unit],
-        setLineDash = ((_: js.Array[Double]) => ()): js.Function1[js.Array[Double], Unit],
-        fillText = ((_: String, _: Double, _: Double) => ()): js.Function3[String, Double, Double, Unit],
-        drawImage = ((_: CanvasImageSource, _: Double, _: Double, _: Double, _: Double) => ()): js.Function5[CanvasImageSource, Double, Double, Double, Double, Unit],
-        strokeStyle = "",
-        fillStyle = "",
-        globalAlpha = 1.0,
-        lineWidth = 1.0,
-        lineCap = "",
-        lineJoin = "",
-        font = "",
-        textAlign = "start",
-        textBaseline = "alphabetic",
-        imageSmoothingEnabled = true
-      )
-      .asInstanceOf[CanvasRenderingContext2D]
+    val context = fakeContext()
     val runtime = CanvasViewerHost.runtime(viewerCacheCapacity = 8, rasterCacheCapacity = 4).toOption.get
 
     val cold = runtime.render(model, session, context).toOption.get
@@ -216,3 +185,74 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(moved.canvasProfile.cacheMisses, 1)
     assertEquals(uploads, 4)
   }
+
+  test("dispose closes the controller, empties both caches, and closes tracked bitmaps") {
+    var closed = 0
+    given CanvasRasterFactory with
+      def create(image: RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
+        val close: js.Function0[Unit] = () => closed += 1
+        js.Dynamic.literal(close = close).asInstanceOf[CanvasImageSource]
+
+    val context = fakeContext()
+    val controller = CanvasViewerHost.controller(
+      model,
+      session,
+      viewerCacheCapacity = 8,
+      rasterCacheCapacity = 4
+    ).toOption.get
+    assert(controller.render(context).isRight)
+    assertEquals(controller.runtime.rasterCache.size, 3)
+    assertEquals(controller.runtime.rasterCount, 3)
+    assertEquals(controller.runtime.sampledSliceCount, 3)
+
+    controller.dispose()
+    assert(controller.isClosed)
+    assert(controller.runtime.isDisposed)
+    assertEquals(controller.runtime.rasterCache.size, 0)
+    assertEquals(controller.runtime.rasterCount, 0)
+    assertEquals(controller.runtime.sampledSliceCount, 0)
+    assertEquals(closed, 3)
+    assertEquals(controller.render(context), Left(CanvasViewerError.ControllerClosed))
+    assertEquals(
+      controller.dispatch(ViewerAction.Scroll(AnatomicalPlane.Axial, 1)),
+      Left(CanvasViewerError.ControllerClosed)
+    )
+
+    controller.dispose()
+    assertEquals(closed, 3)
+    assertEquals(controller.runtime.rasterCache.size, 0)
+  }
+
+  private def fakeContext(): CanvasRenderingContext2D =
+    def noArgs: js.Function0[Unit] =
+      () => ()
+    js.Dynamic
+      .literal(
+        save = noArgs,
+        restore = noArgs,
+        beginPath = noArgs,
+        closePath = noArgs,
+        fill = noArgs,
+        stroke = noArgs,
+        clip = noArgs,
+        moveTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        lineTo = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        rect = ((_: Double, _: Double, _: Double, _: Double) => ()): js.Function4[Double, Double, Double, Double, Unit],
+        arc = ((_: Double, _: Double, _: Double, _: Double, _: Double, _: Boolean) => ()): js.Function6[Double, Double, Double, Double, Double, Boolean, Unit],
+        translate = ((_: Double, _: Double) => ()): js.Function2[Double, Double, Unit],
+        rotate = ((_: Double) => ()): js.Function1[Double, Unit],
+        setLineDash = ((_: js.Array[Double]) => ()): js.Function1[js.Array[Double], Unit],
+        fillText = ((_: String, _: Double, _: Double) => ()): js.Function3[String, Double, Double, Unit],
+        drawImage = ((_: CanvasImageSource, _: Double, _: Double, _: Double, _: Double) => ()): js.Function5[CanvasImageSource, Double, Double, Double, Double, Unit],
+        strokeStyle = "",
+        fillStyle = "",
+        globalAlpha = 1.0,
+        lineWidth = 1.0,
+        lineCap = "",
+        lineJoin = "",
+        font = "",
+        textAlign = "start",
+        textBaseline = "alphabetic",
+        imageSmoothingEnabled = true
+      )
+      .asInstanceOf[CanvasRenderingContext2D]
