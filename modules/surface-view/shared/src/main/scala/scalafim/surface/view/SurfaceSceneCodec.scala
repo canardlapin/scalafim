@@ -188,6 +188,23 @@ object SurfaceSceneCodec:
           "lower" -> number(band.lower),
           "upper" -> number(band.upper)
         )
+        case DisplayThreshold.Below(cutoff) => SceneJson.obj(
+          "kind" -> SceneJson.Str("below"),
+          "cutoff" -> number(cutoff)
+        )
+        case DisplayThreshold.Above(cutoff) => SceneJson.obj(
+          "kind" -> SceneJson.Str("above"),
+          "cutoff" -> number(cutoff)
+        )
+        case DisplayThreshold.TwoSided(inner, outer) =>
+          val base = Vector(
+            "kind" -> SceneJson.Str("two-sided"),
+            "lower" -> number(inner.lower),
+            "upper" -> number(inner.upper)
+          )
+          val extra = outer.toVector.flatMap: band =>
+            Vector("outerLower" -> number(band.lower), "outerUpper" -> number(band.upper))
+          SceneJson.Obj(base ++ extra)
     )
 
   private def provenanceJson(provenance: SurfaceProvenance): SceneJson =
@@ -410,19 +427,59 @@ object SurfaceSceneCodec:
       case SceneJson.Null => Right(None)
       case other =>
         for
-          obj <- SceneJsonRead.obj(other, path, Set("kind", "lower", "upper"), policy)
+          obj <- SceneJsonRead.obj(other, path, ThresholdFields, policy)
           kind <- SceneJsonRead.string(obj, "kind", s"$path.kind")
           threshold <- kind match
             case "disabled" => SceneJsonRead.checkFields(obj, path, Set("kind"), policy).map(_ => DisplayThreshold.Disabled)
             case "transparent-band" =>
               for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "lower", "upper"), policy)
                 lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
                 upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
-                result <- DisplayThreshold.transparentBand(lower, upper)
-                  .left.map(error => SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error)))
+                result <- DisplayThreshold.transparentBand(lower, upper).left.map(displayFailure)
+              yield result
+            case "below" =>
+              for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
+                cutoff <- SceneJsonRead.double(obj, "cutoff", s"$path.cutoff")
+                result <- DisplayThreshold.below(cutoff).left.map(displayFailure)
+              yield result
+            case "above" =>
+              for
+                _ <- SceneJsonRead.checkFields(obj, path, Set("kind", "cutoff"), policy)
+                cutoff <- SceneJsonRead.double(obj, "cutoff", s"$path.cutoff")
+                result <- DisplayThreshold.above(cutoff).left.map(displayFailure)
+              yield result
+            case "two-sided" =>
+              for
+                _ <- SceneJsonRead.checkFields(obj, path, ThresholdFields - "cutoff", policy)
+                lower <- SceneJsonRead.double(obj, "lower", s"$path.lower")
+                upper <- SceneJsonRead.double(obj, "upper", s"$path.upper")
+                inner <- ThresholdBand.make(lower, upper).left.map(displayFailure)
+                outer <- parseOuterBand(obj, path)
+                result <- DisplayThreshold.twoSided(inner, outer).left.map(displayFailure)
               yield result
             case unknown => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown threshold '$unknown'"))
         yield Some(threshold)
+
+  private val ThresholdFields: Set[String] =
+    Set("kind", "lower", "upper", "cutoff", "outerLower", "outerUpper")
+
+  private def displayFailure(error: DisplayError): SurfaceSceneError =
+    SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(error))
+
+  private def parseOuterBand(obj: SceneJson.Obj, path: String): Either[SurfaceSceneError, Option[ThresholdBand]] =
+    val hasLower = obj.fields.exists(_._1 == "outerLower")
+    val hasUpper = obj.fields.exists(_._1 == "outerUpper")
+    if !hasLower && !hasUpper then Right(None)
+    else if hasLower != hasUpper then
+      Left(SurfaceSceneError.InvalidJson(path, "outerLower and outerUpper must be given together"))
+    else
+      for
+        lower <- SceneJsonRead.double(obj, "outerLower", s"$path.outerLower")
+        upper <- SceneJsonRead.double(obj, "outerUpper", s"$path.outerUpper")
+        band <- ThresholdBand.make(lower, upper).left.map(displayFailure)
+      yield Some(band)
 
   private def parseProvenance(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceProvenance] =
     val path = "$.provenance"
