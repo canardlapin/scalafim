@@ -133,7 +133,49 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     val invalidTime = encoded.replace("\"timepoint\":1", "\"timepoint\":99")
     assert(SurfaceSceneCodec.decode(invalidTime).left.exists(_.message.contains("timepoint 99")))
 
-  private def fixture(): (SurfaceViewerModel, SurfaceViewerState, SurfaceSceneBindings, SurfaceProvenance) =
+  private val thresholds: Map[String, DisplayThreshold] = Map(
+    "disabled" -> DisplayThreshold.Disabled,
+    "transparent-band" -> DisplayThreshold.transparentBand(-0.2, 0.3).toOption.get,
+    "below" -> DisplayThreshold.below(0.25).toOption.get,
+    "above" -> DisplayThreshold.above(-0.5).toOption.get,
+    "two-sided" -> DisplayThreshold.twoSided(ThresholdBand.unsafe(-0.2, 0.3), None).toOption.get,
+    "two-sided-outer" -> DisplayThreshold.twoSidedMagnitude(0.4, Some(1.5)).toOption.get
+  )
+
+  thresholds.foreach: (name, threshold) =>
+    test(s"threshold '$name' survives a document roundtrip"):
+      val (model, state, bindings, provenance) = fixture(threshold)
+      val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+      val encoded = SurfaceSceneCodec.encode(document)
+      val decoded = SurfaceSceneCodec.decode(encoded).toOption.get
+      assertEquals(SurfaceSceneCodec.encode(decoded), encoded)
+      assertEquals(decoded.layerStates.map(_.threshold), document.layerStates.map(_.threshold))
+      assertEquals(decoded.restore(model, bindings).toOption.get, state)
+      assert(encoded.contains(s""""kind":"${name.stripSuffix("-outer")}""""))
+      if name == "two-sided-outer" then assert(encoded.contains("\"outerLower\""))
+      else assert(!encoded.contains("\"outerLower\""))
+
+  test("two-sided threshold with an outer band that does not contain the inner band is rejected"):
+    val (model, state, bindings, provenance) = fixture(thresholds("two-sided-outer"))
+    val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val encoded = SurfaceSceneCodec.encode(document)
+    assert(encoded.contains("\"outerUpper\""))
+    val unnested = encoded.replaceAll("\"outerUpper\":[^,}]+", "\"outerUpper\":0.1")
+    assertEquals(
+      SurfaceSceneCodec.decode(unnested).left.toOption,
+      Some(SurfaceSceneError.InvalidState(SurfaceViewError.DisplayFailure(
+        DisplayError.InvalidThresholdNesting(ThresholdBand.unsafe(-0.4, 0.4), ThresholdBand.unsafe(-1.5, 0.1))
+      )))
+    )
+    val halfOuter = encoded.replaceAll(",\"outerUpper\":[^,}]+", "")
+    assert(SurfaceSceneCodec.decode(halfOuter).left.toOption.exists {
+      case SurfaceSceneError.InvalidJson(_, _) => true
+      case _ => false
+    })
+
+  private def fixture(
+    threshold: DisplayThreshold = DisplayThreshold.transparentBand(-0.2, 0.3).toOption.get
+  ): (SurfaceViewerModel, SurfaceViewerState, SurfaceSceneBindings, SurfaceProvenance) =
     val left = geometry(Hemisphere.Left, SurfaceKind.Inflated, -1.0)
     val right = geometry(Hemisphere.Right, SurfaceKind.Inflated, 1.0)
     val activation = SurfaceLayer.scalar(
@@ -181,10 +223,7 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
       SurfaceViewerAction.SetLayerVisible(labelsId, false),
       SurfaceViewerAction.SetLayerOpacity(activationId, DisplayOpacity.unsafe(0.55)),
       SurfaceViewerAction.SetLayerWindow(activationId, DisplayWindow.unsafe(-0.75, 1.5)),
-      SurfaceViewerAction.SetLayerThreshold(
-        activationId,
-        DisplayThreshold.transparentBand(-0.2, 0.3).toOption.get
-      ),
+      SurfaceViewerAction.SetLayerThreshold(activationId, threshold),
       SurfaceViewerAction.MoveLayer(labelsId, 0)
     )
     var state = SurfaceViewerState.initial(model)

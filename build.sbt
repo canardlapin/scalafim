@@ -34,7 +34,7 @@ lazy val multivarIrJS  = ProjectRef(multivarBuild, "irJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "596b398af380079e4b251535230d0bc03cd88c51"
+lazy val intaglioRevision = "cdf156254e7dc917360f14c7e6d6775149f72efc"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
