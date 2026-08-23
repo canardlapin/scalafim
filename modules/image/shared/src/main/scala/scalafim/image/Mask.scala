@@ -79,6 +79,3 @@ object Mask:
 
   def of[A](cvec: ClusteredNeuroVec[A]): MaskVol =
     cvec.cvol.mask
-
-  def of[A](hvec: NeuroHyperVec[A]): MaskVol =
-    hvec.mask

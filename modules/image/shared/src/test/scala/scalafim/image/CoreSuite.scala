@@ -169,25 +169,6 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(s0v, Vector(0, 2, 4), clue = "")
   }
 
-  test("NeuroHyperVec series and volume") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(2, 1, 1, 2, 3))
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
-    val data =
-      RavelArray.tabulate[Double](3, 2, 2) { (feature, trial, position) =>
-        (feature + 3 * (trial + 2 * position)).toDouble
-      }
-    val hvec = NeuroHyperVec(data, sp, mask)
-
-    val s = hvec.series(1)
-    val sVals = columnMajor2(s)
-    assertEquals(sVals, Vector(6, 7, 8, 9, 10, 11).map(_.toDouble), clue = "")
-
-    val vol = hvec.volume(trial = 1, feature = 2)
-    val vVals = Vector.tabulate(vol.data.size)(i => vol.data(i))
-    assertEquals(vVals, Vector(5.0, 11.0), clue = "")
-  }
-
   test("Dense to sparse and back roundtrip") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 2, 1, 3))
