@@ -35,7 +35,6 @@ enum VolumeParcellationError:
   case InvalidMetadata(error: FieldConstructionError)
   case WrongVoxelOwner(error: SpaceMismatch)
   case WrongParcelOwner(error: SpaceMismatch)
-  case EmptyParcelDomain
   case InvalidImage(error: image4s.ImageError)
 
   def message: String =
@@ -46,7 +45,6 @@ enum VolumeParcellationError:
       case InvalidMetadata(error) => error.message
       case WrongVoxelOwner(error) => error.message
       case WrongParcelOwner(error) => error.message
-      case EmptyParcelDomain => "a volume parcellation requires at least one parcel"
       case InvalidImage(error) => error.message
 
 /** One exact partial assignment from a D3 voxel owner onto a parcel owner.
@@ -201,40 +199,37 @@ object VolumeParcellation:
     VolumeParcellationError,
     VolumeParcellationResolution[F, S, M]
   ] =
-    if metadata.isEmpty then
-      Left(VolumeParcellationError.EmptyParcelDomain)
-    else
-      FiniteDomain
-        .ephemeral(parcelDomainName, metadata.length)
-        .left
-        .map(VolumeParcellationError.InvalidParcelDomain.apply)
-        .flatMap: packed =>
-          type Parcel = packed.S
-          val parcelDomain: FiniteDomain[Parcel] = packed.value
-          VectorField
-            .fromValues(parcelDomain, metadata)
-            .left
-            .map(VolumeParcellationError.InvalidMetadata.apply)
-            .flatMap: metadataField =>
-              PartialSurjection
-                .fromOptionalTargetOrdinals(
-                  domain.space,
-                  parcelDomain,
-                  targetOrdinals
-                )
-                .left
-                .map(mappingError)
-                .flatMap: assignment =>
-                  create(
-                    domain,
-                    assignment,
-                    metadataField,
-                    imageMetadata
-                  ).map: parcellation =>
-                    new VolumeParcellationResolution[F, S, M]:
-                      type P = Parcel
-                      val value: VolumeParcellation[F, S, P, M] =
-                        parcellation
+    FiniteDomain
+      .ephemeral(parcelDomainName, metadata.length)
+      .left
+      .map(VolumeParcellationError.InvalidParcelDomain.apply)
+      .flatMap: packed =>
+        type Parcel = packed.S
+        val parcelDomain: FiniteDomain[Parcel] = packed.value
+        VectorField
+          .fromValues(parcelDomain, metadata)
+          .left
+          .map(VolumeParcellationError.InvalidMetadata.apply)
+          .flatMap: metadataField =>
+            PartialSurjection
+              .fromOptionalTargetOrdinals(
+                domain.space,
+                parcelDomain,
+                targetOrdinals
+              )
+              .left
+              .map(mappingError)
+              .flatMap: assignment =>
+                create(
+                  domain,
+                  assignment,
+                  metadataField,
+                  imageMetadata
+                ).map: parcellation =>
+                  new VolumeParcellationResolution[F, S, M]:
+                    type P = Parcel
+                    val value: VolumeParcellation[F, S, P, M] =
+                      parcellation
 
   private def mappingError(
       error: PartialMapError | CertifiedMapError

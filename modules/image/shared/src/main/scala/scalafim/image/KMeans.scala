@@ -1,7 +1,44 @@
 package scalafim.image
 
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError
+import image4s.locus.GridDomain
+import image4s.locus.GridDomainError
+import locus4s.Region
+import locus4s.SpaceMismatch
 import ravel.NDArray as RavelArray
 import ravel.Shape
+
+final case class KMeansParcelMetadata(label: String):
+  require(label.nonEmpty, "k-means parcel label must be non-empty")
+
+enum KMeansPartitionError:
+  case WrongVoxelOwner(error: SpaceMismatch)
+  case InvalidClusterCount(value: Int, activeVoxels: Int)
+  case InvalidMaximumIterations(value: Int)
+  case InvalidTolerance(value: Double)
+  case InvalidGridIndex(error: GridDomainError)
+  case InvalidWorldCoordinate(error: GeometryError)
+  case InvalidParcellation(error: VolumeParcellationError)
+
+  def message: String =
+    this match
+      case WrongVoxelOwner(error) => error.message
+      case InvalidClusterCount(value, activeVoxels) =>
+        s"k-means cluster count must be in [1, $activeVoxels], found $value"
+      case InvalidMaximumIterations(value) =>
+        s"k-means maximum iterations must be positive, found $value"
+      case InvalidTolerance(value) =>
+        s"k-means tolerance must be finite and non-negative, found $value"
+      case InvalidGridIndex(error) => error.message
+      case InvalidWorldCoordinate(error) => error.message
+      case InvalidParcellation(error) => error.message
+
+sealed trait KMeansParcellationResolution[F <: Frame[D3], S]:
+  type P
+  val value: VolumeParcellation[F, S, P, KMeansParcelMetadata]
+  val iterations: Int
 
 object KMeans:
 
@@ -21,6 +58,120 @@ object KMeans:
     centers: Vector[Vector[Double]],   // k x 3 centers
     iterations: Int
   )
+
+  /** Partition an exact voxel region by world-coordinate k-means.
+    *
+    * The returned assignment is the sole cluster-membership representation;
+    * centers are derived from its fibers when needed.
+    */
+  def partitionRegion[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      active: Region[T],
+      k: Int,
+      iterMax: Int = 200,
+      seed: Int = 0,
+      tolerance: Double = 1e-6,
+      init: Init = Init.Random,
+      parcelDomainName: String = "k-means parcels"
+  ): Either[
+    KMeansPartitionError,
+    KMeansParcellationResolution[F, S]
+  ] =
+    Region
+      .whole(domain.space)
+      .intersectChecked(active)
+      .left
+      .map(KMeansPartitionError.WrongVoxelOwner.apply)
+      .flatMap: exactActive =>
+        if k <= 0 || k > exactActive.cardinality then
+          Left(
+            KMeansPartitionError.InvalidClusterCount(
+              k,
+              exactActive.cardinality
+            )
+          )
+        else if iterMax <= 0 then
+          Left(KMeansPartitionError.InvalidMaximumIterations(iterMax))
+        else if !tolerance.isFinite || tolerance < 0.0 then
+          Left(KMeansPartitionError.InvalidTolerance(tolerance))
+        else
+          worldCoordinates(domain, exactActive).flatMap: points =>
+            val result =
+              if k == 1 then
+                Result(
+                  Array.fill(points.length)(1),
+                  Vector(coordinateMean(points)),
+                  0
+                )
+              else
+                fit(
+                  points,
+                  k,
+                  iterMax = iterMax,
+                  seed = seed,
+                  tol = tolerance,
+                  init = init
+                )
+            val targetOrdinals =
+              Array.fill[Option[Int]](domain.space.size)(None)
+            val activeIndices = exactActive.indicesInDomainOrder
+            var position = 0
+            while activeIndices.hasNext do
+              targetOrdinals(activeIndices.next().ordinal) =
+                Some(result.labels(position) - 1)
+              position += 1
+            val metadata =
+              Vector.tabulate(k): parcelOrdinal =>
+                KMeansParcelMetadata(s"Cluster_${parcelOrdinal + 1}")
+            VolumeParcellation
+              .resolve(
+                domain,
+                parcelDomainName,
+                metadata,
+                targetOrdinals
+              )
+              .left
+              .map(KMeansPartitionError.InvalidParcellation.apply)
+              .map: resolved =>
+                new KMeansParcellationResolution[F, S]:
+                  type P = resolved.P
+                  val value = resolved.value
+                  val iterations = result.iterations
+
+  private def worldCoordinates[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      active: Region[S]
+  ): Either[KMeansPartitionError, Vector[Vector[Double]]] =
+    val output = Vector.newBuilder[Vector[Double]]
+    val indices = active.indicesInDomainOrder
+    var error = Option.empty[KMeansPartitionError]
+    while indices.hasNext && error.isEmpty do
+      domain.indexOf(indices.next()) match
+        case Left(gridError) =>
+          error = Some(KMeansPartitionError.InvalidGridIndex(gridError))
+        case Right(lattice) =>
+          domain.grid.indexToFrame.apply(lattice.values.map(_.toDouble)) match
+            case Left(geometryError) =>
+              error = Some(
+                KMeansPartitionError.InvalidWorldCoordinate(geometryError)
+              )
+            case Right(point) => output += point
+    error match
+      case Some(value) => Left(value)
+      case None        => Right(output.result())
+
+  private def coordinateMean(
+      points: Vector[Vector[Double]]
+  ): Vector[Double] =
+    val sums = Array.ofDim[Double](3)
+    var point = 0
+    while point < points.length do
+      var axis = 0
+      while axis < 3 do
+        sums(axis) += points(point)(axis)
+        axis += 1
+      point += 1
+    Vector.tabulate(3)(axis => sums(axis) / points.length.toDouble)
 
   def fit(
     points: Vector[Vector[Double]],
