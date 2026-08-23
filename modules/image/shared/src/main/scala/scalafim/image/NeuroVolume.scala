@@ -9,9 +9,11 @@ import image4s.Sampled
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import ravel.CanonicalArray
+import ravel.DType
 import ravel.NDArray
 import ravel.NonContiguousLayout
 import ravel.Rank
+import ravel.Shape
 
 /** A zero-wrapper three-dimensional neuroimaging refinement.
   *
@@ -85,6 +87,11 @@ object AnyNeuroVolume:
       volume.materializedCopy
 
 object SomeNeuroVolume:
+  inline def eraseSpace[S <: SampleSpace[?, D3], A, Sem](
+      volume: NeuroVolume[S, A, Sem]
+  ): SomeNeuroVolume[A, Sem] =
+    volume
+
   private[image] inline def unsafeFromSampled[A, Sem](
       sampled: Sampled[
         ? <: SampleSpace[?, D3],
@@ -172,6 +179,79 @@ object NeuroVolume:
     MaskVolume[sampleSpace.type]
   ] =
     fromRavel[Boolean, MaskSemantics](sampleSpace, data, metadata)
+
+  def copyContinuousFromCanonicalArray[A](
+      sampleSpace: SampleSpace[?, D3],
+      data: Array[A],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      DType[A],
+      ValueSemantics[A, Continuous]
+  ): Either[
+    NativeImageError,
+    ScalarVolume[sampleSpace.type, A]
+  ] =
+    copyFromCanonicalArray[A, Continuous](sampleSpace, data, metadata)
+
+  def copyCategoricalFromCanonicalArray[A](
+      sampleSpace: SampleSpace[?, D3],
+      data: Array[A],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      DType[A],
+      ValueSemantics[A, Categorical]
+  ): Either[
+    NativeImageError,
+    LabelVolume[sampleSpace.type, A]
+  ] =
+    copyFromCanonicalArray[A, Categorical](sampleSpace, data, metadata)
+
+  def copyMaskFromCanonicalArray(
+      sampleSpace: SampleSpace[?, D3],
+      data: Array[Boolean],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      DType[Boolean],
+      ValueSemantics[Boolean, MaskSemantics]
+  ): Either[
+    NativeImageError,
+    MaskVolume[sampleSpace.type]
+  ] =
+    copyFromCanonicalArray[Boolean, MaskSemantics](
+      sampleSpace,
+      data,
+      metadata
+    )
+
+  private def copyFromCanonicalArray[A, Sem](
+      sampleSpace: SampleSpace[?, D3],
+      data: Array[A],
+      metadata: ImageMetadata
+  )(using
+      DType[A],
+      ValueSemantics[A, Sem]
+  ): Either[
+    NativeImageError,
+    NeuroVolume[sampleSpace.type, A, Sem]
+  ] =
+    val shape = sampleSpace.grid.shape
+    val expected = shape.product
+    if data.length != expected then
+      Left(
+        NativeImageError.CanonicalArraySizeMismatch(
+          expected,
+          data.length
+        )
+      )
+    else
+      val copied =
+        NDArray.fromSeq(
+          Shape(shape(0), shape(1), shape(2)),
+          data
+        )
+      fromRavel[A, Sem](sampleSpace, copied, metadata)
+        .left
+        .map(NativeImageError.Image.apply)
 
   extension [S <: SampleSpace[?, D3], A, Sem](
       volume: NeuroVolume[S, A, Sem]

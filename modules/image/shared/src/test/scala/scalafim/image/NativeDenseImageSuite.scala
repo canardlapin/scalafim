@@ -75,6 +75,74 @@ class NativeDenseImageSuite extends munit.FunSuite:
     assertEqualsDouble(canonical.readLinear(12), 100.0, 0.0)
     assertEqualsDouble(canonical.readLinear(23), 123.0, 0.0)
 
+  test("canonical Scala arrays cross an explicitly copying boundary"):
+    val volumeInput = Array.tabulate(24)(_.toDouble)
+    val volume =
+      right(
+        NeuroVolume.copyContinuousFromCanonicalArray(
+          volumeSpace,
+          volumeInput
+        )
+      )
+    volumeInput(0) = -1.0
+
+    assertEqualsDouble(volume(0, 0, 0), 0.0, 0.0)
+    assertEqualsDouble(volume(0, 0, 1), 1.0, 0.0)
+    assertEqualsDouble(volume(1, 0, 0), 12.0, 0.0)
+
+    val seriesInput = Array.tabulate(120)(_.toDouble)
+    val series =
+      right(
+        NeuroSeries.copyContinuousFromCanonicalArray(
+          seriesSpace,
+          seriesInput
+        )
+      )
+    seriesInput(0) = -1.0
+
+    assertEqualsDouble(series(0, 0, 0, 0), 0.0, 0.0)
+    assertEqualsDouble(series(0, 0, 0, 1), 1.0, 0.0)
+    assertEqualsDouble(series(1, 0, 0, 0), 60.0, 0.0)
+
+    NeuroVolume.copyContinuousFromCanonicalArray(
+      volumeSpace,
+      Array(1.0)
+    ) match
+      case Left(NativeImageError.CanonicalArraySizeMismatch(24, 1)) => ()
+      case other => fail(s"expected a canonical-size error, found $other")
+
+  test("temporary first-axis-fastest ingress is explicit and exact"):
+    val dynamicVolumeSpace = NeuroSpace(Vector(2, 3, 4))
+    val volumeInput = Array.tabulate(24)(_.toDouble)
+    val volume =
+      right(
+        NativeImageIngress.copyContinuousVolumeFromFirstAxisFastest(
+          volumeInput,
+          dynamicVolumeSpace
+        )
+      )
+    volumeInput(0) = -1.0
+
+    assertEqualsDouble(volume(0, 0, 0), 0.0, 0.0)
+    assertEqualsDouble(volume(1, 0, 0), 1.0, 0.0)
+    assertEqualsDouble(volume(0, 0, 1), 6.0, 0.0)
+
+    val dynamicSeriesSpace =
+      dynamicVolumeSpace.addDim(5, Some(scalafim.image.Axis.Time))
+    val seriesInput = Array.tabulate(120)(_.toDouble)
+    val series =
+      right(
+        NativeImageIngress.copyContinuousSeriesFromFirstAxisFastest(
+          seriesInput,
+          dynamicSeriesSpace
+        )
+      )
+    seriesInput(0) = -1.0
+
+    assertEqualsDouble(series(0, 0, 0, 0), 0.0, 0.0)
+    assertEqualsDouble(series(1, 0, 0, 0), 1.0, 0.0)
+    assertEqualsDouble(series(0, 0, 0, 1), 24.0, 0.0)
+
   test("crop, flip, stride, and singleton planes remain immutable views"):
     val volume =
       right(NeuroVolume.continuous(volumeSpace, volumeData))

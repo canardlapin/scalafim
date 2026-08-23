@@ -75,6 +75,40 @@ object NeuroSpace:
   private[image] def canonical(space: NeuroSpace): SomeSampleSpace =
     space
 
+  /** Recover the checked D3 provider type at a dynamic compatibility boundary.
+    *
+    * `SomeSampleSpace` can contain only the sealed image4s dimensions. The
+    * runtime rank check therefore justifies the erased cast; the retained
+    * object is still the exact original SampleSpace and grid owner.
+    */
+  private[scalafim] def requireD3(
+      space: NeuroSpace
+  ): Either[
+    NeuroSpaceError,
+    SampleSpace[? <: Frame[D3], D3]
+  ] =
+    val canonical = space.typed
+    if canonical.spatialRank == 3 then
+      Right(
+        canonical.asInstanceOf[SampleSpace[Frame[D3], D3]]
+      )
+    else
+      Left(
+        NeuroSpaceError.ExpectedDimensionality(
+          "D3 sample space",
+          3,
+          canonical.spatialRank
+        )
+      )
+
+  private[scalafim] def requireSpatialD3(
+      space: NeuroSpace
+  ): Either[
+    NeuroSpaceError,
+    SampleSpace[? <: Frame[D3], D3]
+  ] =
+    requireD3(space).map(_.spatialOnly)
+
   private[image] def logicalDims(space: NeuroSpace): Vector[Int] =
     space.logicalShape
 
