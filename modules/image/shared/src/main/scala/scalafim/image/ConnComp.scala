@@ -57,7 +57,7 @@ object ConnComp:
     val activeIdx = Mask.indices(mask)
     if activeIdx.size == 0 then
       val zeros = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
-      val zvol = NeuroVol.fromLinear[Int](zeros, sp, label)
+      val zvol = NeuroVol.copyFromCanonicalArray[Int](zeros, sp, label)
       (zvol, zvol)
     else
       val labels = PrimitiveBuffers.fillConst[Int](spatialNels, 0)
@@ -143,4 +143,4 @@ object ConnComp:
         sizeOut(lin) = sz
         p += 1
 
-      (NeuroVol.fromLinear[Int](idxOut, sp, label), NeuroVol.fromLinear[Int](sizeOut, sp, label))
+      (NeuroVol.copyFromCanonicalArray[Int](idxOut, sp, label), NeuroVol.copyFromCanonicalArray[Int](sizeOut, sp, label))

@@ -24,7 +24,7 @@ object NeuroVol:
       volume.metadata.label
 
     /** Canonical dense storage. This is the same Ravel value retained by
-      * `sampled`; no legacy dense buffer is cached alongside it.
+      * `sampled`; no second dense buffer is cached alongside it.
       */
     inline def values: RavelArray[A, Rank[3]] =
       volume.data
@@ -83,7 +83,9 @@ object NeuroVol:
         val indices = selection.indexSet.unsafeArray
         given DType[A] = values.dtype
         val out =
-          RavelArray.tabulate[A](indices.size)(i => linear(indices(i)))
+          RavelArray.tabulate[A](indices.size)(i =>
+            valueAtCanonicalOrdinal(indices(i))
+          )
         RoiValues.unsafe(selection, out, label)
 
     def select(region: VoxelRegion): Either[GridMismatch, RoiValues[A]] =
@@ -135,7 +137,7 @@ object NeuroVol:
     def asMatrix: RavelArray[A, Rank[2]] =
       given DType[A] = values.dtype
       val spatialNels = space.spatialDims.product
-      RavelArray.tabulate[A](spatialNels, 1)((index, _) => linear(index))
+      RavelArray.tabulate[A](spatialNels, 1)((index, _) => valueAtCanonicalOrdinal(index))
 
     def asLogical(using Ring[A], ClassTag[Boolean]): NeuroVol[Boolean] =
       val zero = summon[Ring[A]].zero
@@ -206,7 +208,7 @@ object NeuroVol:
       GridCompatibility.requireVolume(volumeSpace, indexSet.space)
       given DType[A] = values.dtype
       val out =
-        RavelArray.tabulate[A](indexSet.size)(p => linear(indexSet(p)))
+        RavelArray.tabulate[A](indexSet.size)(p => valueAtCanonicalOrdinal(indexSet(p)))
       SparseNeuroVol.fromIndexSet(out, indexSet, space, label)
 
     def gridToIndex(i: Int, j: Int, k: Int): Int =
@@ -221,18 +223,16 @@ object NeuroVol:
     def indexToVoxel(idx: Int): VoxelCoord =
       space.indexToVoxel3D(idx)
 
-    def linear(i: Int): A =
+    private[scalafim] def valueAtCanonicalOrdinal(i: Int): A =
       val voxel = space.indexToVoxel3D(i)
       apply(voxel)
 
-    /** Explicit compatibility export in ScalaFIM's historical
-      * first-axis-fastest order. This always materializes a fresh buffer.
-      */
-    def copyLegacyLinear(using ClassTag[A]): Array[A] =
+    /** Explicitly copy logical values in canonical last-axis-fastest order. */
+    def copyToCanonicalArray(using ClassTag[A]): Array[A] =
       val out = PrimitiveBuffers.ofSize[A](values.size)
       var index = 0
       while index < out.length do
-        out(index) = linear(index)
+        out(index) = valueAtCanonicalOrdinal(index)
         index += 1
       out
 
@@ -283,9 +283,9 @@ object NeuroVol:
         MigrationValueSemantics[B]
     ): F[NeuroVol[B]] =
       Vector
-        .tabulate(values.size)(linear)
+        .tabulate(values.size)(valueAtCanonicalOrdinal)
         .traverse(f)
-        .map(values => NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values.toArray), space, label))
+        .map(values => NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space, label))
 
     def map[B](f: A => B)(using
         ClassTag[B],
@@ -325,7 +325,7 @@ object NeuroVol:
     makeRavel(values, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  def fromLinearChecked[A](
+  private[scalafim] def copyFromCanonicalArrayChecked[A](
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
@@ -333,30 +333,27 @@ object NeuroVol:
       DType[A],
       MigrationValueSemantics[A]
   ): Either[NeuroImageError, NeuroVol[A]] =
-    importLegacyLinear(data, space, label).map(_.image)
-
-  /** Checked legacy-linear ingress with an explicit materialization receipt. */
-  def importLegacyLinear[A](
-      data: Array[A],
-      space: NeuroSpace,
-      label: String = ""
-  )(using
-      DType[A],
-      MigrationValueSemantics[A]
-  ): Either[
-    NeuroImageError,
-    DenseImageImport[NeuroVol[A]]
-  ] =
-    Image4sInterop
-      .volumeFromLegacyLinear(data, space, label)
-      .map(volume =>
-        DenseImageImport(
-          volume,
-          Image4sStorageTransfer.CanonicalizedLegacy
+    val shape = space.spatialDims
+    val expected = shape.product
+    if data.length != expected then
+      Left(
+        NeuroImageError.LinearSizeMismatch(
+          "NeuroVolume canonical array",
+          expected,
+          data.length
         )
       )
+    else
+      makeRavel(
+        RavelArray.fromSeq(
+          Shape(shape(0), shape(1), shape(2)),
+          data
+        ),
+        space,
+        label
+      )
 
-  private[scalafim] def fromLinear[A](
+  private[scalafim] def copyFromCanonicalArray[A](
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
@@ -364,5 +361,5 @@ object NeuroVol:
       DType[A],
       MigrationValueSemantics[A]
   ): NeuroVol[A] =
-    fromLinearChecked(data, space, label)
+    copyFromCanonicalArrayChecked(data, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)

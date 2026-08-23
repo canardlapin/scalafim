@@ -39,13 +39,13 @@ object Mask:
     var count = 0
     var i = 0
     while i < mask.values.size do
-      if mask.linear(i) then count += 1
+      if mask.valueAtCanonicalOrdinal(i) then count += 1
       i += 1
     NDArray.build[Int, Rank[1]](Shape(count)): output =>
       var linear = 0
       var position = 0
       while linear < mask.values.size do
-        if mask.linear(linear) then
+        if mask.valueAtCanonicalOrdinal(linear) then
           output.writeLinear(position, linear)
           position += 1
         linear += 1

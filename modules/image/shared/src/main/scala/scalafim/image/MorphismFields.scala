@@ -142,7 +142,7 @@ object MorphismFields:
       val ny = grid.shape.y
       val values =
         RavelArray.tabulate[Double](nx, ny, grid.shape.z): (x, y, z) =>
-          dets(x + nx * (y + ny * z))
+          dets(Indexing.gridToIndex3D(grid.shape, x, y, z))
       NeuroVol.fromRavel(values, grid.toNeuroSpace, "jacobian-det")
     }
 
@@ -152,7 +152,8 @@ object MorphismFields:
     val ny = grid.shape.y
     RavelArray.tabulate[Double](nx, ny, grid.shape.z, 3) {
       (i, j, k, component) =>
-        val vector = vectors(i + nx * (j + ny * k))
+        val vector =
+          vectors(Indexing.gridToIndex3D(grid.shape, i, j, k))
         require(vector.length == 3, "field vectors must be 3D")
         vector(component)
     }

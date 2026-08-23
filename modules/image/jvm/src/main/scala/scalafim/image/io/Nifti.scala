@@ -43,7 +43,7 @@ object Nifti:
       niftiBytes(
         volume.space.dims.take(3),
         volume.space,
-        volume.copyLegacyLinear
+        volume.copyToCanonicalArray
       )
     )
 
@@ -53,7 +53,7 @@ object Nifti:
       niftiBytes(
         vec.space.dims.take(4),
         vec.space,
-        vec.copyLegacyLinear
+        vec.copyToCanonicalArray
       )
     )
 
@@ -142,15 +142,15 @@ object Nifti:
     val hdr = readHeader(path)
     require(hdr.dims.length == 3 || (hdr.dims.length == 4 && hdr.dims(3) == 1), "expected 3D nifti")
     val sp = if hdr.dims.length == 4 then hdr.space.spatialSpace else hdr.space
-    val data = readDataAsDouble(path, hdr)
-    NeuroVol.fromLinear(data, sp)
+    val data = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
+    NeuroVol.copyFromCanonicalArray(data, sp)
 
   def readVec(path: Path): NeuroVec[Double] =
     val hdr = readHeader(path)
     require(hdr.dims.length == 4 && hdr.dims(3) > 1, "expected 4D nifti with time dimension")
     val sp = hdr.space
-    val data = readDataAsDouble(path, hdr)
-    NeuroVec.fromLinear(data, sp)
+    val data = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
+    NeuroVec.copyFromCanonicalArray(data, sp)
 
   private def open(path: Path): InputStream =
     val base: InputStream = new BufferedInputStream(new FileInputStream(path.toFile))
@@ -243,11 +243,60 @@ object Nifti:
     bb.put(346, magic(2))
     bb.put(347, 0.toByte)
 
+    val niftiValues = canonicalToNifti(values, dims)
     i = 0
-    while i < values.length do
-      bb.putDouble(352 + i * 8, values(i))
+    while i < niftiValues.length do
+      bb.putDouble(352 + i * 8, niftiValues(i))
       i += 1
     bytes
+
+  /** Convert Ravel C-order samples to the NIfTI-1 storage convention, where
+    * the x axis varies fastest, followed by y, z, and time.
+    */
+  private def canonicalToNifti(
+      canonical: Array[Double],
+      dims: Vector[Int]
+  ): Array[Double] =
+    reorderSamples(canonical, dims, sourceIsNifti = false)
+
+  /** Convert NIfTI-1 x-fastest samples to canonical Ravel C order. */
+  private def niftiToCanonical(
+      nifti: Array[Double],
+      dims: Vector[Int]
+  ): Array[Double] =
+    reorderSamples(nifti, dims, sourceIsNifti = true)
+
+  private def reorderSamples(
+      source: Array[Double],
+      dims: Vector[Int],
+      sourceIsNifti: Boolean
+  ): Array[Double] =
+    val nx = dims(0)
+    val ny = dims(1)
+    val nz = dims(2)
+    val nt = if dims.length == 4 then dims(3) else 1
+    val out = Array.ofDim[Double](source.length)
+    var time = 0
+    while time < nt do
+      var z = 0
+      while z < nz do
+        var y = 0
+        while y < ny do
+          var x = 0
+          while x < nx do
+            val niftiOrdinal =
+              x + nx * (y + ny * (z + nz * time))
+            val canonicalOrdinal =
+              ((x * ny + y) * nz + z) * nt + time
+            if sourceIsNifti then
+              out(canonicalOrdinal) = source(niftiOrdinal)
+            else
+              out(niftiOrdinal) = source(canonicalOrdinal)
+            x += 1
+          y += 1
+        z += 1
+      time += 1
+    out
 
   private def readDataAsDouble(path: Path, hdr: NiftiHeader): Array[Double] =
     val in = open(path)

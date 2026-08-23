@@ -2,6 +2,7 @@ package scalafim.image
 
 import scala.reflect.ClassTag
 import ravel.DType
+import ravel.NDArray as RavelArray
 import scala.util.Random
 
 class SliceOrientationOracleSuite extends munit.FunSuite:
@@ -111,13 +112,13 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
     dims: SpatialDims,
     affine: DMat
   )(value: (Int, Int, Int) => A): NeuroVol[A] =
-    val values = PrimitiveBuffers.tabulate[A](dims.product) { index =>
-      val x = index % dims.x
-      val y = (index / dims.x) % dims.y
-      val z = index / (dims.x * dims.y)
-      value(x, y, z)
-    }
-    NeuroVol.fromLinear(values, NeuroSpace(dims.toVector, trans = Some(affine)), "orientation-oracle")
+    val values =
+      RavelArray.tabulate[A](dims.x, dims.y, dims.z)(value)
+    NeuroVol.fromRavel(
+      values,
+      NeuroSpace(dims.toVector, trans = Some(affine)),
+      "orientation-oracle"
+    )
 
   private def encoded(storage: Vector[Int]): Int =
     storage(0) + 10 * storage(1) + 100 * storage(2)

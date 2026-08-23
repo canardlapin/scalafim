@@ -248,19 +248,19 @@ object GridSpec:
       val tx = affine
       val out = Vector.newBuilder[SpatialPoint]
       out.sizeHint(nVoxels)
-      var z = 0
-      while z < gridShape.z do
+      var x = 0
+      while x < gridShape.x do
         var y = 0
         while y < gridShape.y do
-          var x = 0
-          while x < gridShape.x do
+          var z = 0
+          while z < gridShape.z do
             out += SpatialCoordinates.voxelToWorld(
               SpatialPoint(x.toDouble, y.toDouble, z.toDouble),
               tx
             )
-            x += 1
+            z += 1
           y += 1
-        z += 1
+        x += 1
       out.result()
 
     def typedWorldPoints: Either[Affine3DError, Vector[WorldPoint]] =
@@ -268,18 +268,18 @@ object GridSpec:
         val gridShape = shape
         val out = Vector.newBuilder[WorldPoint]
         out.sizeHint(nVoxels)
-        var z = 0
-        while z < gridShape.z do
+        var x = 0
+        while x < gridShape.x do
           var y = 0
           while y < gridShape.y do
-            var x = 0
-            while x < gridShape.x do
+            var z = 0
+            while z < gridShape.z do
               out += tx.voxelToWorld(
                 VoxelPoint(x.toDouble, y.toDouble, z.toDouble)
               )
-              x += 1
+              z += 1
             y += 1
-          z += 1
+          x += 1
         out.result()
       }
 

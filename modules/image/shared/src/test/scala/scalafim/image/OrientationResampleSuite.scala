@@ -97,7 +97,7 @@ class OrientationResampleSuite extends munit.FunSuite:
 
   test("resampleTo maps method strings to internal interpolators") {
     val spSrc = NeuroSpace(Vector(4, 4, 4))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
     val spTarg = NeuroSpace(Vector(3, 3, 3))
 
     val n = Resample.resampleTo(vol, spTarg, method = "nearest", engine = "internal")
@@ -114,7 +114,7 @@ class OrientationResampleSuite extends munit.FunSuite:
 
   test("resampleTo refuses unknown engine") {
     val spSrc = NeuroSpace(Vector(4, 4, 4))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](64)(i => (i + 1).toDouble), spSrc)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(i => (i + 1).toDouble), spSrc)
     val spTarg = NeuroSpace(Vector(2, 2, 2))
 
     interceptMessage[IllegalArgumentException]("Only engine = 'internal'") {
@@ -124,7 +124,7 @@ class OrientationResampleSuite extends munit.FunSuite:
 
   test("resampleToEither reports parser failures without throwing") {
     val spSrc = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
     val spTarg = NeuroSpace(Vector(2, 2, 2))
 
     val ok = Resample.resampleTo(vol, spTarg, method = Resample.Method.Nearest, engine = Resample.Engine.Internal)
@@ -164,7 +164,7 @@ class OrientationResampleSuite extends munit.FunSuite:
     assertEquals(out.clusterIds, Vector(1, 2), clue = "")
     assertEquals(out.labelMap, labelMap, clue = "")
 
-    val targVol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](4 * 4 * 4, 0.0), sp)
+    val targVol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](4 * 4 * 4, 0.0), sp)
     val out2 = Resample.resampleTo(cvol, targVol, method = "linear")
     assertEquals(out2.space, sp, clue = "")
     assertEquals(out2.clusterIds, Vector(1, 2), clue = "")
@@ -177,16 +177,16 @@ class OrientationResampleSuite extends munit.FunSuite:
 
   test("resampleTo accepts NeuroVol/NeuroVec targets (plus Ops syntax)") {
     val spSrc = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
 
-    val targVol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), NeuroSpace(Vector(3, 3, 3)))
+    val targVol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), NeuroSpace(Vector(3, 3, 3)))
     val outVol = Resample.resampleTo(vol, targVol, method = Resample.Method.Nearest)
     assertEquals(outVol.space.dims, Vector(3, 3, 3), clue = "")
 
     val spVec = NeuroSpace(Vector(2, 2, 2, 3))
-    val vec = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](2 * 2 * 2 * 3)(_.toDouble), spVec)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](2 * 2 * 2 * 3)(_.toDouble), spVec)
 
-    val targVec = NeuroVec.fromLinear[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), NeuroSpace(Vector(3, 3, 3, 2)))
+    val targVec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), NeuroSpace(Vector(3, 3, 3, 2)))
     val outVec = Resample.resampleTo(vec, targVec, method = Resample.Method.Linear)
     assertEquals(outVec.space.dims, Vector(3, 3, 3, 3), clue = "")
 

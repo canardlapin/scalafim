@@ -56,7 +56,8 @@ object Searchlight:
         .map(SearchlightError.Grid.apply)
       _ <- validateRadius(vol.space, radius)
       _ <-
-        val centerValue = fill.getOrElse(vol.linear(center.linearIndex))
+        val centerValue =
+          fill.getOrElse(vol.valueAtCanonicalOrdinal(center.linearIndex))
         if support == SearchlightValueSupport.NonZero &&
             centerValue == summon[Ring[A]].zero
         then Left(SearchlightError.CenterExcluded(center.voxel))
@@ -147,7 +148,7 @@ object Searchlight:
                 if dx * dx + dy * dy + dz * dz <= r2 then
                   val coord = Vector(x, y, z)
                   val lin = Indexing.gridToIndex3D(dims, x, y, z)
-                  val v = fill.getOrElse(vol.linear(lin))
+                  val v = fill.getOrElse(vol.valueAtCanonicalOrdinal(lin))
                   if !nonzero || v != zero then pairs += ((coord, v))
               z += 1
           y += 1
@@ -200,7 +201,7 @@ object Searchlight:
                   val lin = Indexing.gridToIndex3D(dims, x, y, z)
                   val keep =
                     mask match
-                      case Some(m) => m.linear(lin)
+                      case Some(m) => m.valueAtCanonicalOrdinal(lin)
                       case None => true
                   if keep then coordsBuf += coord
               z += 1
@@ -283,7 +284,7 @@ object Searchlight:
                 if dx * dx + dy * dy + dz * dz <= r2 then
                   val coord = Vector(x, y, z)
                   val lin = Indexing.gridToIndex3D(dims, x, y, z)
-                  val v = fill.getOrElse(vol.linear(lin))
+                  val v = fill.getOrElse(vol.valueAtCanonicalOrdinal(lin))
                   if !nonzero || v != zero then pairs += ((coord, v))
               z += 1
           y += 1
@@ -342,7 +343,8 @@ object Searchlight:
                 if dx * dx + dy * dy + dz * dz <= r2 then
                   val coord = Vector(x, y, z)
                   val lin = Indexing.gridToIndex3D(dims, x, y, z)
-                  val keep = mask.forall(_.linear(lin))
+                  val keep =
+                    mask.forall(_.valueAtCanonicalOrdinal(lin))
                   if keep then coordsBuf += coord
               z += 1
           y += 1
@@ -397,7 +399,7 @@ object Searchlight:
               if z >= 0 && z < dims(2) then
                 val coord = Vector(x, y, z)
                 val lin = Indexing.gridToIndex3D(dims, x, y, z)
-                val v = fill.getOrElse(vol.linear(lin))
+                val v = fill.getOrElse(vol.valueAtCanonicalOrdinal(lin))
                 if !nonzero || v != zero then pairs += ((coord, v))
               z += 1
           y += 1
@@ -439,7 +441,7 @@ object Searchlight:
             while z <= center(2) + deltas(2) do
               if z >= 0 && z < dims(2) then
                 val lin = Indexing.gridToIndex3D(dims, x, y, z)
-                val keep = mask.forall(_.linear(lin))
+                val keep = mask.forall(_.valueAtCanonicalOrdinal(lin))
                 if keep then coordsBuf += Vector(x, y, z)
               z += 1
           y += 1
@@ -513,7 +515,7 @@ object Searchlight:
       val zero = summon[Ring[A]].zero
       while i < coords.length do
         val lin = Indexing.gridToIndex3D(vol.space.spatialDims, coords(i)(0), coords(i)(1), coords(i)(2))
-        val v = fill.getOrElse(vol.linear(lin))
+        val v = fill.getOrElse(vol.valueAtCanonicalOrdinal(lin))
         dataArr(i) = v
         i += 1
 

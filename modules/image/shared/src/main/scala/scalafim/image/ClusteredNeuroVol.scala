@@ -250,7 +250,7 @@ object ClusteredNeuroVol:
     val activeIdx = Mask.indices(mask)
     val clusters =
       RavelArray.tabulate[Int](activeIdx.size): i =>
-        idxVol.linear(activeIdx(i))
+        idxVol.valueAtCanonicalOrdinal(activeIdx(i))
     ClusteredNeuroVol(mask, clusters, labelMap, label)
 
   def fromThreshold(

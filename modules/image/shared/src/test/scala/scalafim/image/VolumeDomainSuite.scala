@@ -1,81 +1,145 @@
 package scalafim.image
 
-import scalafim.locus.*
+import VolumeDomain.*
+import image4s.locus.GridDomainError
+import image4s.locus.GridDomainLayout
+import locus4s.DomainRegistry
+import ravel.CanonicalArray
+import ravel.CanonicalArray.*
+import ravel.DType.given
+import ravel.NDArray
 
 class VolumeDomainSuite extends munit.FunSuite:
   private val volumeSpace =
-    VolumeSpace(NeuroSpace(Vector(2, 2, 1)))
+    VolumeSpace(NeuroSpace(Vector(2, 3, 5)))
+  private val seriesSpace =
+    volumeSpace.toNeuroSpace.addDim(7, Some(Axis.Time))
 
-  test("semantic keys distinguish equal-geometry volume domains at runtime"):
-    val first =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
-    val second =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:02:native"), volumeSpace).value
+  private val volumeData =
+    NDArray.tabulate[Double](2, 3, 5): (x, y, z) =>
+      100.0 * x + 10.0 * y + z
 
-    assert(!first.finiteSpace.sameRuntimeOwnerAs(second.finiteSpace))
+  private val seriesData =
+    NDArray.tabulate[Double](2, 3, 5, 7): (x, y, z, time) =>
+      1000.0 * x + 100.0 * y + 10.0 * z + time
 
-  test("legacy voxel regions and selections are backed by locus semantics"):
-    val domain = VolumeDomain.structuralCompatibility(volumeSpace).value
-    val voxelRegion = VoxelRegion.make(volumeSpace, Array(3, 1, 1)).toOption.get
-    val voxelSelection = VoxelSelection.make(volumeSpace, Array(3, 1)).toOption.get
-    val region = domain.region(voxelRegion).toOption.get
-    val selection = domain.selection(voxelSelection).toOption.get
+  private val volume =
+    NeuroVol.fromRavel(volumeData, volumeSpace.toNeuroSpace, "oracle-volume")
+  private val series =
+    NeuroVec.fromRavel(seriesData, seriesSpace, "oracle-series")
+  private val registered =
+    right(
+      VolumeDomain.register(
+        volumeSpace,
+        "2x3x5 oracle voxels",
+        DomainRegistry.empty
+      )
+    )
+  private type Voxel = registered.S
+  private val domain: VolumeDomain[Voxel] = registered.value
+
+  test("2x3x5x7 uses one canonical Ravel and GridDomain order"):
+    val spatialField = right(domain.spatialField(volume.sampled))
+    val seriesField = right(domain.seriesField(series.sampled))
+    val canonicalVolume = right(CanonicalArray.from(volume.values))
+    val canonicalSeries = right(CanonicalArray.from(series.values))
 
     assertEquals(
-      region.ordinalsInDomainOrder.toSet,
-      Set(1, 3)
+      domain.layout,
+      GridDomainLayout.RowMajorLastAxisFastestV1
     )
-    assertEquals(selection.ordinals.toVector, Vector(3, 1))
-    assertEquals(domain.voxelRegion(region).toOption.get, voxelRegion)
-    assertEquals(domain.voxelSelection(selection).toOption.get, voxelSelection)
+    assert(spatialField.sourceData.eq(volume.values))
+    assert(seriesField.sourceData.eq(series.values))
 
-  test("volume values expose a pure indexed field without copying geometry policy"):
-    val domain =
-      VolumeDomain.semantic(SpaceKey.unsafe("atlas:mni:test"), volumeSpace).value
-    val volume =
-      NeuroVol.fromLinear(Array(10, 11, 12, 13), volumeSpace.toNeuroSpace)
-    val field = domain.indexedField(volume).toOption.get
-    val even = domain.supportWhere(field)(_ % 2 == 0).toOption.get
+    var x = 0
+    while x < 2 do
+      var y = 0
+      while y < 3 do
+        var z = 0
+        while z < 5 do
+          val voxelOrdinal = (x * 3 + y) * 5 + z
+          val lattice = right(domain.indexOfOrdinal(voxelOrdinal))
+          val index = right(domain.space.index(voxelOrdinal))
+          val expectedVolume = 100.0 * x + 10.0 * y + z
 
-    assertEquals(
-      domain.finiteSpace.indices.map(field.apply).toVector,
-      Vector(10, 11, 12, 13)
-    )
-    assertEquals(even.ordinalsInDomainOrder.toVector, Vector(0, 2))
-
-  test("volume adapters reject an exact-grid mismatch"):
-    val translated =
-      VolumeSpace(
-        NeuroSpace(
-          Vector(2, 2, 1),
-          trans = Some(
-            DMat.fromRows(
-              Vector(
-                Vector(1.0, 0.0, 0.0, 2.0),
-                Vector(0.0, 1.0, 0.0, 0.0),
-                Vector(0.0, 0.0, 1.0, 0.0),
-                Vector(0.0, 0.0, 0.0, 1.0)
-              )
-            )
+          assertEquals(lattice.values, Vector(x, y, z))
+          assertEquals(right(domain.ordinalOf(lattice)), voxelOrdinal)
+          assertEqualsDouble(
+            canonicalVolume.readLinear(voxelOrdinal),
+            expectedVolume,
+            0.0,
+            clue = ""
           )
+          assertEqualsDouble(
+            spatialField(index),
+            expectedVolume,
+            0.0,
+            clue = ""
+          )
+
+          var time = 0
+          while time < 7 do
+            val sampleOrdinal = voxelOrdinal * 7 + time
+            val expectedSeries =
+              1000.0 * x + 100.0 * y + 10.0 * z + time
+            assertEqualsDouble(
+              canonicalSeries.readLinear(sampleOrdinal),
+              expectedSeries,
+              0.0,
+              clue = ""
+            )
+            assertEqualsDouble(
+              right(seriesField(index).valueAt(Vector(time))),
+              expectedSeries,
+              0.0,
+              clue = ""
+            )
+            time += 1
+          z += 1
+        y += 1
+      x += 1
+
+  test("same persistent grid key does not admit a foreign live owner"):
+    val foreignSpace =
+      VolumeSpace(NeuroSpace(Vector(2, 3, 5)))
+    val foreignVolume =
+      NeuroVol.fromRavel(
+        volumeData,
+        foreignSpace.toNeuroSpace,
+        "foreign-owner"
+      )
+
+    assert(
+      domain.grid.samePersistentKeyAs(foreignSpace.sampleSpace.grid)
+    )
+    assert(
+      domain.validateGrid(foreignSpace.sampleSpace.grid) match
+        case Left(_: GridDomainError.GridRuntimeOwnerMismatch) => true
+        case _                                                  => false
+    )
+    assert(
+      domain.fieldOf(foreignVolume) match
+        case Left(_: GridDomainError.ImageGridRuntimeOwnerMismatch) =>
+          true
+        case _ => false
+    )
+
+  test("versioned domain evidence restores through the same registry"):
+    val restored =
+      right(
+        VolumeDomain.restore(
+          domain.record,
+          volumeSpace,
+          registered.registry
         )
       )
-    val domain =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
-    val wrong = VoxelRegion.make(translated, Array(0)).toOption.get
 
-    assert(domain.region(wrong).isLeft)
-
-  test("runtime-loaded volume domains retain a fresh path-dependent point type"):
-    val loaded =
-      SomeVolumeDomain.semantic(SpaceKey.unsafe("runtime:volume"), volumeSpace)
-    val domain = loaded.value
-    val region = Region.fromOrdinals(domain.finiteSpace, Vector(0, 3)).toOption.get
-
-    assertEquals(
-      intValues(domain.voxelRegion(region).toOption.get.linearIndices),
-      Vector(0, 3)
+    assertEquals(restored.value.record, domain.record)
+    assert(
+      restored.value.space.sameRuntimeOwnerAs(domain.space)
     )
 
-  private def intValues(values: ravel.Array1[Int]): Vector[Int] =
-    Vector.tabulate(values.size)(i => values(i))
+  private def right[E, A](value: Either[E, A]): A =
+    value match
+      case Right(result) => result
+      case Left(error)   => fail(s"expected Right, found Left($error)")

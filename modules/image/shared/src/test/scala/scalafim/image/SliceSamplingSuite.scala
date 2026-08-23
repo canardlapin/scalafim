@@ -14,13 +14,13 @@ class SliceSamplingSuite extends munit.FunSuite:
     affine: Option[DMat] = None,
     label: String = "test"
   )(f: (Int, Int, Int) => A): NeuroVol[A] =
-    val values = PrimitiveBuffers.tabulate[A](dims.product) { index =>
-      val x = index % dims.x
-      val y = (index / dims.x) % dims.y
-      val z = index / (dims.x * dims.y)
-      f(x, y, z)
-    }
-    NeuroVol.fromLinear(values, NeuroSpace(dims.toVector, trans = affine), label)
+    val values =
+      RavelArray.tabulate[A](dims.x, dims.y, dims.z)(f)
+    NeuroVol.fromRavel(
+      values,
+      NeuroSpace(dims.toVector, trans = affine),
+      label
+    )
 
   private def gridAt(
     space: VolumeSpace,

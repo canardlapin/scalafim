@@ -1,44 +1,41 @@
 package scalafim.image
 
+import ravel.DType.given
 import ravel.NDArray as RavelArray
 
 class OwnershipSuite extends munit.FunSuite:
 
-  test("checked dense image construction owns its input buffer") {
-    val space = NeuroSpace(Vector(2, 2, 1))
+  test("canonical array construction copies its input buffer") {
+    val space = VolumeSpace(NeuroSpace(Vector(2, 2, 1))).sampleSpace
     val input = Array[Int](1, 2, 3, 4)
     val volume =
-      NeuroVol
-        .fromLinearChecked[Int](input, space)
+      NeuroVolume
+        .copyCategoricalFromCanonicalArray[Int](space, input)
         .fold(error => fail(error.message), identity)
 
-    input(0) = 99
-    assertEquals(volume.linear(0), 1, clue = "")
-  }
-
-  test("legacy ingress reports materialization and retains one Ravel value") {
-    val space = NeuroSpace(Vector(2, 3, 2))
-    val input =
-      PrimitiveBuffers.tabulate[Int](12)(index => index + 1)
-    val imported =
-      NeuroVol
-        .importLegacyLinear[Int](input, space, "receipt")
-        .fold(error => fail(error.message), identity)
-    val volume = imported.image
-
-    assertEquals(
-      imported.transfer,
-      Image4sStorageTransfer.CanonicalizedLegacy,
-      clue = ""
-    )
-    assert(
-      volume.asInstanceOf[AnyRef] eq volume.sampled.asInstanceOf[AnyRef],
-      clue = "NeuroVol must be the Sampled value, not an allocating wrapper"
-    )
-    assert(volume.values.eq(volume.sampled.data), clue = "")
-    assert(volume.values.isCanonicalLayout, clue = "")
     input(0) = 99
     assertEquals(volume(0, 0, 0), 1, clue = "")
+  }
+
+  test("canonical ingress retains one Sampled and Ravel value") {
+    val space = VolumeSpace(NeuroSpace(Vector(2, 3, 2))).sampleSpace
+    val input =
+      PrimitiveBuffers.tabulate[Int](12)(index => index + 1)
+    val volume =
+      NeuroVolume
+        .copyCategoricalFromCanonicalArray[Int](space, input)
+        .fold(error => fail(error.message), identity)
+
+    assert(
+      volume.asInstanceOf[AnyRef].eq(volume.sampled.asInstanceOf[AnyRef]),
+      clue = "NeuroVolume must be the Sampled value, not an allocating wrapper"
+    )
+    assert(volume.data.eq(volume.sampled.data), clue = "")
+    assert(volume.data.isCanonicalLayout, clue = "")
+    input(0) = 99
+    assertEquals(volume(0, 0, 0), 1, clue = "")
+    assertEquals(volume(0, 0, 1), 2, clue = "")
+    assertEquals(volume(1, 0, 0), 7, clue = "")
   }
 
   test("dense compatibility geometry is the sampled SampleSpace itself") {
@@ -84,7 +81,7 @@ class OwnershipSuite extends munit.FunSuite:
   test("series volume selection is a zero-copy Ravel view") {
     val space = NeuroSpace(Vector(2, 2, 2, 3))
     val series =
-      NeuroVec.fromLinear[Int](
+      NeuroVec.copyFromCanonicalArray[Int](
         PrimitiveBuffers.tabulate[Int](24)(index => index + 1),
         space,
         "series"
@@ -182,11 +179,11 @@ class OwnershipSuite extends munit.FunSuite:
 
   test("checked dense reconstruction reports shape failures") {
     val space = NeuroSpace(Vector(2, 2, 1))
-    val result = NeuroVol.fromLinearChecked(Array[Int](1, 2, 3), space)
+    val result = NeuroVol.copyFromCanonicalArrayChecked(Array[Int](1, 2, 3), space)
 
     assertEquals(
       result,
-      Left(NeuroImageError.LinearSizeMismatch("NeuroVol", 4, 3)),
+      Left(NeuroImageError.LinearSizeMismatch("NeuroVolume canonical array", 4, 3)),
       clue = ""
     )
   }
@@ -215,7 +212,7 @@ class OwnershipSuite extends munit.FunSuite:
     val input = Array[Int](10, 20)
     val window =
       ROIVolWindow
-        .make[Int](space, coords, input, centerIndex = 1, parentIndex = 1)
+        .make[Int](space, coords, input, centerIndex = 1, parentIndex = space.gridToIndex3D(1, 0, 0))
         .fold(error => fail(error.message), identity)
 
     input(1) = 99

@@ -4,14 +4,16 @@ import ravel.DType
 import ravel.NDArray as RavelArray
 import scala.annotation.targetName
 
-private def copyVolumeIntoLegacy[A](
+private def copyVolumeIntoSeries[A](
     source: NeuroVol[A],
     destination: Array[A],
-    offset: Int
+    time: Int,
+    timeCount: Int
 ): Unit =
   var index = 0
   while index < source.values.size do
-    destination(offset + index) = source.linear(index)
+    destination(index * timeCount + time) =
+      source.valueAtCanonicalOrdinal(index)
     index += 1
 
 object Downsample:
@@ -92,7 +94,7 @@ object Downsample:
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, newSpace, vec.label)
 
   @scala.annotation.targetName("byFactorNeuroVolScalar")
   def byFactor(vol: NeuroVol[Double], factor: Double): NeuroVol[Double] =
@@ -168,7 +170,7 @@ object Downsample:
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVol.fromLinear(out, newSpace, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, newSpace, vol.label)
 
 object Resample:
 
@@ -235,14 +237,16 @@ object Resample:
 
         var lin = 0
         while lin < spatialNels do
-          if resMask.linear(lin) && resLabels.linear(lin) != 0 then keepFlags(lin) = true
+          if resMask.valueAtCanonicalOrdinal(lin) &&
+              resLabels.valueAtCanonicalOrdinal(lin) != 0
+          then keepFlags(lin) = true
           lin += 1
 
-        val outMask = NeuroVol.fromLinear[Boolean](keepFlags, targ, source.label)
+        val outMask = NeuroVol.copyFromCanonicalArray[Boolean](keepFlags, targ, source.label)
         val activeIdx = Mask.indices(outMask)
         val outClusters =
           RavelArray.tabulate[Int](activeIdx.size): i =>
-            resLabels.linear(activeIdx(i))
+            resLabels.valueAtCanonicalOrdinal(activeIdx(i))
 
         val idsPresent =
           Vector.tabulate(outClusters.size)(i => outClusters(i)).distinct.toSet
@@ -366,7 +370,7 @@ object Resample:
         y += 1
       z += 1
 
-    NeuroVol.fromLinear(out, targ, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, targ, vol.label)
 
   def nearest[A](
       vol: NeuroVol[A],
@@ -406,7 +410,7 @@ object Resample:
         y += 1
       z += 1
 
-    NeuroVol.fromLinear(out, targ, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, targ, vol.label)
 
   @scala.annotation.targetName("nearestNeuroVec")
   def nearest(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
@@ -419,12 +423,11 @@ object Resample:
     while t < tLen do
       val volT = vec.volume(t)
       val resT = nearest(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
+      copyVolumeIntoSeries(resT, out, t, tLen)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, newSpace, vec.label)
 
   @scala.annotation.targetName("nearestGenericNeuroVec")
   def nearest[A](
@@ -445,12 +448,11 @@ object Resample:
     while t < tLen do
       val volT = vec.volume(t)
       val resT = nearest(volT, targSpatial, fill)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
+      copyVolumeIntoSeries(resT, out, t, tLen)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, newSpace, vec.label)
 
   def trilinear(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
     val src = vol.space
@@ -514,7 +516,7 @@ object Resample:
         yt += 1
       zt += 1
 
-    NeuroVol.fromLinear(out, targ, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, targ, vol.label)
 
   @scala.annotation.targetName("trilinearNeuroVec")
   def trilinear(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
@@ -527,12 +529,11 @@ object Resample:
     while t < tLen do
       val volT = vec.volume(t)
       val resT = trilinear(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
+      copyVolumeIntoSeries(resT, out, t, tLen)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, newSpace, vec.label)
 
   def tricubic(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
     val src = vol.space
@@ -600,7 +601,7 @@ object Resample:
         yt += 1
       zt += 1
 
-    NeuroVol.fromLinear(out, targ, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, targ, vol.label)
 
   @scala.annotation.targetName("tricubicNeuroVec")
   def tricubic(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
@@ -613,12 +614,11 @@ object Resample:
     while t < tLen do
       val volT = vec.volume(t)
       val resT = tricubic(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
+      copyVolumeIntoSeries(resT, out, t, tLen)
       t += 1
 
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, newSpace, vec.label)
 
 object SpatialFilters:
 
@@ -641,12 +641,12 @@ object SpatialFilters:
 
     var lin = 0
     while lin < spatialNels do
-      val keep = mask.forall(_.linear(lin))
+      val keep = mask.forall(_.valueAtCanonicalOrdinal(lin))
       if keep then
-        val x = lin % nx
-        val yz = lin / nx
-        val y = yz % ny
-        val z = yz / ny
+        val voxel = sp.indexToVoxel3D(lin)
+        val x = voxel.x
+        val y = voxel.y
+        val z = voxel.z
 
         var sum = 0.0
         var q = 0
@@ -660,7 +660,7 @@ object SpatialFilters:
         out(lin) = sum
       lin += 1
 
-    NeuroVol.fromLinear(out, sp, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, sp, vol.label)
 
   def gaussianBlur(
     vol: NeuroVol[Double],
@@ -730,10 +730,10 @@ object SpatialFilters:
     var p = 0
     while p < idx.length do
       val lin = idx(p)
-      val x = lin % nx
-      val yz = lin / nx
-      val y = yz % ny
-      val z = yz / ny
+      val voxel = sp.indexToVoxel3D(lin)
+      val x = voxel.x
+      val y = voxel.y
+      val z = voxel.z
 
       var sum = 0.0
       q = 0
@@ -750,7 +750,7 @@ object SpatialFilters:
       out(lin) = sum
       p += 1
 
-    NeuroVol.fromLinear(out, sp, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, sp, vol.label)
 
   def gaussianBlur(vec: NeuroVec[Double], sigma: Double, window: Int): NeuroVec[Double] =
     val tLen = vec.nVolumes
@@ -759,9 +759,9 @@ object SpatialFilters:
     var t = 0
     while t < tLen do
       val blurred = gaussianBlur(vec.volume(t), sigma = sigma, window = window)
-      copyVolumeIntoLegacy(blurred, out, t * spatialNels)
+      copyVolumeIntoSeries(blurred, out, t, tLen)
       t += 1
-    NeuroVec.fromLinear(out, vec.space, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, vec.space, vec.label)
 
   def gaussianBlur(vec: NeuroVec[Double]): NeuroVec[Double] =
     gaussianBlur(vec, sigma = 2.0, window = 1)
@@ -803,7 +803,7 @@ object SpatialFilters:
     var count = 0
     var p = 0
     while p < idx.length do
-      val v = vol.linear(idx(p))
+      val v = vol.valueAtCanonicalOrdinal(idx(p))
       if v.isFinite then
         sum += v
         sumsq += v * v
@@ -855,11 +855,11 @@ object SpatialFilters:
     p = 0
     while p < idx.length do
       val lin = idx(p)
-      val x = lin % nx
-      val yz = lin / nx
-      val y = yz % ny
-      val z = yz / ny
-      val centerVal = vol.linear(lin)
+      val voxel = sp.indexToVoxel3D(lin)
+      val x = voxel.x
+      val y = voxel.y
+      val z = voxel.z
+      val centerVal = vol.valueAtCanonicalOrdinal(lin)
       if !centerVal.isFinite then
         out(lin) = centerVal
       else
@@ -886,7 +886,7 @@ object SpatialFilters:
         out(lin) = if wSum == 0.0 then centerVal else valSum / wSum
       p += 1
 
-    NeuroVol.fromLinear(out, sp, vol.label)
+    NeuroVol.copyFromCanonicalArray(out, sp, vol.label)
 
   private def bilateralFilterVec(
     vec: NeuroVec[Double],
@@ -904,10 +904,10 @@ object SpatialFilters:
       val filtered = bilateralFilter(volT, mask, window, spatialSigma, intensitySigma)
       var i = 0
       while i < spatialNels do
-        out(i + t * spatialNels) = filtered.linear(i)
+        out(i * tLen + t) = filtered.valueAtCanonicalOrdinal(i)
         i += 1
       t += 1
-    NeuroVec.fromLinear(out, vec.space, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, vec.space, vec.label)
 
   def bilateralFilter(vec: NeuroVec[Double]): NeuroVec[Double] =
     bilateralFilterVec(vec, mask = None, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
@@ -964,7 +964,7 @@ object SpatialFilters:
     val out = PrimitiveBuffers.ofSize[Double](vec.values.size)
     var i0 = 0
     while i0 < out.length do
-      out(i0) = vec.linear(i0)
+      out(i0) = vec.valueAtCanonicalOrdinal(i0)
       i0 += 1
 
     var sum = 0.0
@@ -975,7 +975,7 @@ object SpatialFilters:
       val lin = spatialIdx(p)
       var t = 0
       while t < tLen do
-        val v = vec.linear(lin + t * spatialNels)
+        val v = vec.valueAtVoxelOrdinal(lin, t)
         if v.isFinite then
           sum += v
           sumsq += v * v
@@ -1039,15 +1039,15 @@ object SpatialFilters:
     p = 0
     while p < spatialIdx.length do
       val lin = spatialIdx(p)
-      val x0 = lin % nx
-      val yz = lin / nx
-      val y0 = yz % ny
-      val z0 = yz / ny
+      val voxel = sp.indexToVoxel3D(lin)
+      val x0 = voxel.x
+      val y0 = voxel.y
+      val z0 = voxel.z
 
       var t0 = 0
       while t0 < tLen do
-        val centerIdx = lin + t0 * spatialNels
-        val centerVal = vec.linear(centerIdx)
+        val centerIdx = lin * tLen + t0
+        val centerVal = vec(x0, y0, z0, t0)
         if centerVal.isFinite then
           var valSum = 0.0
           var wSum = 0.0
@@ -1059,8 +1059,7 @@ object SpatialFilters:
               val yy = y0 + dyArr(q)
               val zz = z0 + dzArr(q)
               if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-                val neighLin = xx + yy * nx + zz * nx * ny
-                val neighVal = vec.linear(neighLin + tt * spatialNels)
+                val neighVal = vec(xx, yy, zz, tt)
                 if neighVal.isFinite then
                   val diff = centerVal - neighVal
                   val w = kernel(q) * math.exp(-(diff * diff) / intensityVar)
@@ -1071,4 +1070,4 @@ object SpatialFilters:
         t0 += 1
       p += 1
 
-    NeuroVec.fromLinear(out, sp, vec.label)
+    NeuroVec.copyFromCanonicalArray(out, sp, vec.label)

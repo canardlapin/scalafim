@@ -44,8 +44,8 @@ class GridCompatibilitySuite extends munit.FunSuite:
   test("pointwise volume arithmetic rejects a different physical grid") {
     val expected = NeuroSpace(Vector(2, 2, 1))
     val reflected = NeuroSpace(Vector(2, 2, 1), trans = Some(reflectedAffine))
-    val left = NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val right = NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](4, 2.0), reflected)
+    val left = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
+    val right = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), reflected)
 
     intercept[IllegalArgumentException] {
       left + right
@@ -55,8 +55,8 @@ class GridCompatibilitySuite extends munit.FunSuite:
   test("volume concatenation rejects a different physical grid") {
     val expected = NeuroSpace(Vector(2, 2, 1))
     val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val left = NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val right = NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](4, 2.0), translated)
+    val left = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
+    val right = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), translated)
 
     intercept[IllegalArgumentException] {
       left.concat(right)
@@ -66,8 +66,8 @@ class GridCompatibilitySuite extends munit.FunSuite:
   test("mask-based sparse conversion rejects a different physical grid") {
     val expected = NeuroSpace(Vector(2, 2, 1))
     val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val volume = NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val mask = NeuroVol.fromLinear(Array[Boolean](true, true, false, false), translated)
+    val volume = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
+    val mask = NeuroVol.copyFromCanonicalArray(Array[Boolean](true, true, false, false), translated)
 
     intercept[IllegalArgumentException] {
       volume.asSparse(mask)

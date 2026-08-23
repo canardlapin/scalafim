@@ -88,16 +88,16 @@ class NiftiSuite extends munit.FunSuite:
     val path = dir.resolve("maps.nii")
     val data = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
     val space = NeuroSpace(Vector(2, 1, 1)).addDim(2, Some(Axis.Time))
-    val vec = NeuroVec.fromLinear(data, space, "maps")
+    val vec = NeuroVec.copyFromCanonicalArray(data, space, "maps")
 
     Nifti.writeVec(path, vec)
     val loaded = Nifti.readVec(path)
 
     assertEquals(loaded.space.dims.take(4), Vector(2, 1, 1, 2))
-    assertEqualsDouble(loaded.linear(0), 1.0, 1e-12)
-    assertEqualsDouble(loaded.linear(1), 2.0, 1e-12)
-    assertEqualsDouble(loaded.linear(2), 3.0, 1e-12)
-    assertEqualsDouble(loaded.linear(3), 4.0, 1e-12)
+    assertEqualsDouble(loaded(0, 0, 0, 0), 1.0, 1e-12)
+    assertEqualsDouble(loaded(0, 0, 0, 1), 2.0, 1e-12)
+    assertEqualsDouble(loaded(1, 0, 0, 0), 3.0, 1e-12)
+    assertEqualsDouble(loaded(1, 0, 0, 1), 4.0, 1e-12)
   }
 
   test("writeVol round-trips a 3D double NIfTI through the lightweight reader") {
@@ -105,16 +105,16 @@ class NiftiSuite extends munit.FunSuite:
     val path = dir.resolve("volume.nii")
     val data = PrimitiveBuffers.fromArray(Array(5.0, 6.0, 7.0, 8.0))
     val space = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear(data, space, "volume")
+    val vol = NeuroVol.copyFromCanonicalArray(data, space, "volume")
 
     Nifti.writeVol(path, vol)
     val loaded = Nifti.readVol(path)
 
     assertEquals(loaded.space.dims.take(3), Vector(2, 2, 1))
-    assertEqualsDouble(loaded.linear(0), 5.0, 1e-12)
-    assertEqualsDouble(loaded.linear(1), 6.0, 1e-12)
-    assertEqualsDouble(loaded.linear(2), 7.0, 1e-12)
-    assertEqualsDouble(loaded.linear(3), 8.0, 1e-12)
+    assertEqualsDouble(loaded(0, 0, 0), 5.0, 1e-12)
+    assertEqualsDouble(loaded(0, 1, 0), 6.0, 1e-12)
+    assertEqualsDouble(loaded(1, 0, 0), 7.0, 1e-12)
+    assertEqualsDouble(loaded(1, 1, 0), 8.0, 1e-12)
   }
 
   test("qform-only headers reconstruct quaternion rotation, spacing, qfac, and offset") {
@@ -197,6 +197,6 @@ class NiftiSuite extends munit.FunSuite:
 
     assertEquals(loaded.space.ndim, 3)
     assertMatrix(loaded.space.trans, expected)
-    assertEqualsDouble(loaded.linear(0), 2.0, 1e-12)
-    assertEqualsDouble(loaded.linear(1), 5.0, 1e-12)
+    assertEqualsDouble(loaded(0, 0, 0), 2.0, 1e-12)
+    assertEqualsDouble(loaded(1, 0, 0), 5.0, 1e-12)
   }

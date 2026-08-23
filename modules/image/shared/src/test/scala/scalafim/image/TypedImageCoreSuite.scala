@@ -108,7 +108,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
 
   test("image4s Sampled backs singleton-D3 plane, volume, and series views") {
     val volumeSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(affineMatrix))
-    val volume = NeuroVol.fromLinear[Int](Array(10, 20), volumeSpace, "vol")
+    val volume = NeuroVol.copyFromCanonicalArray[Int](Array(10, 20), volumeSpace, "vol")
     val mapped = volume.map(_ + 1)
     val series = volume.toVec
     val plane =
@@ -120,7 +120,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertEquals(volume.label, "vol", clue = "")
     assertEquals(volume.sampled.metadata.label, "vol", clue = "")
     assertEquals(volume.ndim, 3, clue = "")
-    assertEquals(mapped.linear(1), 21, clue = "")
+    assertEquals(mapped.valueAtCanonicalOrdinal(1), 21, clue = "")
     assertEquals(series.typedSpace.toNeuroSpace.ndim, 4, clue = "")
     assertEquals(
       GridCompatibility.exact(series.volume(0).space, volume.space),
@@ -129,7 +129,11 @@ class TypedImageCoreSuite extends munit.FunSuite:
     )
     assertEquals(series.sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).sampled.metadata.label, "vol", clue = "")
-    assertEquals(series.volume(0).linear(1), volume.linear(1), clue = "")
+    assertEquals(
+      series.volume(0).valueAtCanonicalOrdinal(1),
+      volume.valueAtCanonicalOrdinal(1),
+      clue = ""
+    )
     assertEquals(plane.grid.shape, Vector(2, 1, 1), clue = "")
     assertEquals(plane(1, 0, 0), 20, clue = "")
   }
@@ -161,7 +165,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
   test("VoxelRoi validates coordinates before ROI extraction") {
     val space = NeuroSpace(Vector(3, 1, 1), trans = Some(affineMatrix))
     val roi = VoxelRoi.fromRawUnsafe(space, Vector(Vector(0, 0, 0), Vector(2, 0, 0)))
-    val vol = NeuroVol.fromLinear[Int](Array(10, 20, 30), space)
+    val vol = NeuroVol.copyFromCanonicalArray[Int](Array(10, 20, 30), space)
 
     val values = vol(roi)
     assertEquals(Vector.tabulate(values.size)(i => values(i)), Vector(10, 30), clue = "")

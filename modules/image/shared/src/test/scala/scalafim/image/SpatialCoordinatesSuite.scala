@@ -99,14 +99,14 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
     assert(out.isLeft, clue = "singular affine should be represented as an error")
   }
 
-  test("GridSpec generates world coordinates in first-dimension-fastest order") {
+  test("GridSpec generates world coordinates in canonical last-axis-fastest order") {
     val grid = GridSpec(Vector(2, 2, 1), affine)
     val coords = grid.worldCoords
 
     assertEquals(coords.length, 4, clue = "")
     assertClose(coords(0), Vector(10.0, 20.0, 30.0), 1e-10)
-    assertClose(coords(1), Vector(12.0, 20.0, 30.0), 1e-10)
-    assertClose(coords(2), Vector(10.0, 23.0, 30.0), 1e-10)
+    assertClose(coords(1), Vector(10.0, 23.0, 30.0), 1e-10)
+    assertClose(coords(2), Vector(12.0, 20.0, 30.0), 1e-10)
     assertClose(coords(3), Vector(12.0, 23.0, 30.0), 1e-10)
 
     val fromObject = SpatialCoordinates.gridCoords(grid)

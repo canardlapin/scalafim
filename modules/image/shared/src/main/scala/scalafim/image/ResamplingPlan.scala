@@ -114,12 +114,13 @@ final case class ResamplingPlan private (
         case Right(sampled) =>
           var index = 0
           while index < spatialNels do
-            out(t * spatialNels + index) = sampled.linear(index)
+            out(index * tLen + t) =
+              sampled.valueAtCanonicalOrdinal(index)
             index += 1
       t += 1
     error match
       case Some(err) => Left(err)
-      case None => Right(NeuroVec.fromLinear(out, target.toNeuroSpace.addDim(tLen, Some(Axis.Time)), vec.label))
+      case None => Right(NeuroVec.copyFromCanonicalArray(out, target.toNeuroSpace.addDim(tLen, Some(Axis.Time)), vec.label))
 
   private def sampleNearest(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
@@ -129,7 +130,7 @@ final case class ResamplingPlan private (
       val coord = sourceVoxelPoints(i)
       out(i) = VoxelSamplingKernel.nearest(volume, dims, coord.x, coord.y, coord.z, outside)
       i += 1
-    NeuroVol.fromLinear(out, target.toNeuroSpace, volume.label)
+    NeuroVol.copyFromCanonicalArray(out, target.toNeuroSpace, volume.label)
 
   private def sampleLinear(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
@@ -140,7 +141,7 @@ final case class ResamplingPlan private (
       out(i) = VoxelSamplingKernel.linear(volume, dims, coord.x, coord.y, coord.z, outside)
       i += 1
 
-    NeuroVol.fromLinear(out, target.toNeuroSpace, volume.label)
+    NeuroVol.copyFromCanonicalArray(out, target.toNeuroSpace, volume.label)
 
   private def sampleCubic(volume: NeuroVol[Double], outside: Double): NeuroVol[Double] =
     val dims = source.shape
@@ -152,7 +153,7 @@ final case class ResamplingPlan private (
       out(i) = VoxelSamplingKernel.cubic(volume, dims, coord.x, coord.y, coord.z, outside, workspace)
       i += 1
 
-    NeuroVol.fromLinear(out, target.toNeuroSpace, volume.label)
+    NeuroVol.copyFromCanonicalArray(out, target.toNeuroSpace, volume.label)
 
   private def modulate(
       volume: NeuroVol[Double],
@@ -174,9 +175,9 @@ final case class ResamplingPlan private (
                 modulation match
                   case JacobianModulation.SqrtJacobian => math.sqrt(base)
                   case _ => base
-              out(i) = volume.linear(i) * factor
+              out(i) = volume.valueAtCanonicalOrdinal(i) * factor
               i += 1
-            Right(NeuroVol.fromLinear(out, target.toNeuroSpace, volume.label))
+            Right(NeuroVol.copyFromCanonicalArray(out, target.toNeuroSpace, volume.label))
 
 object ResamplingPlan:
   def make(

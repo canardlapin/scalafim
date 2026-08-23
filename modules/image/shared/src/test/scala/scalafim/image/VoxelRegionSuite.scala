@@ -58,7 +58,7 @@ class VoxelRegionSuite extends munit.FunSuite:
       VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
 
-    assertEquals(selection.voxelCoords, Vector(VoxelCoord(0, 1, 0), VoxelCoord(0, 0, 0)), clue = "")
+    assertEquals(selection.voxelCoords, Vector(VoxelCoord(1, 0, 0), VoxelCoord(0, 0, 0)), clue = "")
     assertEquals(indices(selection.region), Vector(0, 2), clue = "")
     val reversed =
       VoxelSelection.make(space, Array[Int](0, 2))
@@ -68,7 +68,7 @@ class VoxelRegionSuite extends munit.FunSuite:
   }
 
   test("NeuroVol selection preserves ordered geometry and rejects cross-space regions") {
-    val volume = NeuroVol.fromLinear(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
+    val volume = NeuroVol.copyFromCanonicalArray(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
     val selection =
       VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
@@ -86,7 +86,7 @@ class VoxelRegionSuite extends munit.FunSuite:
 
   test("NeuroVec selection returns time by ordered-voxel data") {
     val seriesSpace = space.addTime(2)
-    val vector = NeuroVec.fromLinear(Array[Int](0, 1, 2, 3, 10, 11, 12, 13), seriesSpace.toNeuroSpace)
+    val vector = NeuroVec.copyFromCanonicalArray(Array[Int](0, 10, 1, 11, 2, 12, 3, 13), seriesSpace.toNeuroSpace)
     val selection =
       VoxelSelection.make(space, Array[Int](2, 0))
         .fold(error => fail(error.message), identity)
@@ -101,7 +101,7 @@ class VoxelRegionSuite extends munit.FunSuite:
     assertEquals(selected.mapValues(_ + 1)(0, 0), 3)
   }
 
-  test("legacy coordinate adapters validate against an explicit target space") {
+  test("coordinate adapters validate against an explicit target space") {
     val coords = ROICoords(Vector(Vector(0, 0, 0), Vector(1, 1, 0)))
     val region = coords.asRegionIn(space).fold(error => fail(error.message), identity)
 
@@ -110,7 +110,7 @@ class VoxelRegionSuite extends munit.FunSuite:
   }
 
   test("ROIVol extraction no longer drops the ROI physical space") {
-    val volume = NeuroVol.fromLinear(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
+    val volume = NeuroVol.copyFromCanonicalArray(Array[Int](10, 11, 12, 13), space.toNeuroSpace)
     val roi = ROIVol[Int](translatedSpace.toNeuroSpace, Vector(Vector(0, 0, 0)), Array[Int](1))
 
     intercept[IllegalArgumentException] {

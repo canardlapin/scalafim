@@ -2,9 +2,10 @@ package scalafim.image
 
 import image4s.apply
 import munit.FunSuite
+import ravel.NDArray
 
 final class Image4sAdmissionSuite extends FunSuite:
-  test("legacy scalar volume enters image4s with logical and affine parity"):
+  test("native scalar volume is already an image4s Sampled value"):
     val shape = Vector(2, 3, 4)
     val affine =
       DMat.fromRows(
@@ -16,36 +17,26 @@ final class Image4sAdmissionSuite extends FunSuite:
         )
       )
     val space = NeuroSpace(shape, trans = Some(affine))
-    val values = Array.ofDim[Double](shape.product)
-    var k = 0
-    while k < shape(2) do
-      var j = 0
-      while j < shape(1) do
-        var i = 0
-        while i < shape(0) do
-          values(i + shape(0) * (j + shape(1) * k)) =
-            100.0 * i.toDouble + 10.0 * j.toDouble + k.toDouble
-          i += 1
-        j += 1
-      k += 1
+    val values =
+      NDArray.tabulate[Double](2, 3, 4): (x, y, z) =>
+        100.0 * x.toDouble + 10.0 * y.toDouble + z.toDouble
+    val volume =
+      NeuroVol.fromRavel(values, space, "admission-volume")
 
-    val legacy =
-      NeuroVol.fromLinear[Double](values, space, "admission-volume")
-    val imported =
-      Image4sInterop
-        .canonicalizeScalarVolume(legacy)
-        .fold(error => fail(error.message), identity)
-
-    assertEquals(
-      imported.transfer,
-      Image4sStorageTransfer.CanonicalizedLegacy
+    assert(
+      volume.asInstanceOf[AnyRef].eq(volume.sampled.asInstanceOf[AnyRef])
     )
-    assertEquals(imported.sampled.sampleSpace.spatialRank, 3)
+    assert(volume.values.eq(values))
+    assertEquals(volume.sampled.sampleSpace.spatialRank, 3, clue = "")
     val ranked =
-      imported.sampled
+      volume.sampled
         .requireDataRank[3]
         .fold(error => fail(error.message), identity)
-    assertEquals(ranked.logicalShape, shape)
-    assertEquals(ranked.grid.indexToFrame.rowMajor, affine.toRows.flatten)
-    assertEquals(ranked(1, 2, 3), 123.0)
-    assertEquals(ranked(0, 1, 2), 12.0)
+    assertEquals(ranked.logicalShape, shape, clue = "")
+    assertEquals(
+      ranked.grid.indexToFrame.rowMajor,
+      affine.toRows.flatten,
+      clue = ""
+    )
+    assertEqualsDouble(ranked(1, 2, 3), 123.0, 0.0, clue = "")
+    assertEqualsDouble(ranked(0, 1, 2), 12.0, 0.0, clue = "")

@@ -103,7 +103,7 @@ class SpaceUtilsSuite extends munit.FunSuite:
         )
       )
     val sp = NeuroSpace(Vector(8, 6, 4), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val out = Deoblique(vol, newgrid = 2.0, method = Resample.Method.Linear)
 
     assertEquals(out.space.spacing, Vector(2.0, 2.0, 2.0), clue = "")

@@ -41,12 +41,17 @@ final class SparseNeuroVec[A] private (
   def apply(ts: Seq[Int])(using ClassTag[A]): SparseNeuroVec[A] =
     subVector(ts)
 
-  def linear(fullIndex: Int)(using Ring[A]): A =
+  private[scalafim] def valueAtCanonicalOrdinal(
+      fullIndex: Int
+  )(using Ring[A]): A =
     val spatialNels = space.spatialDims.product
     val tLen = space.dims(3)
-    require(fullIndex >= 0 && fullIndex < spatialNels * tLen, "linear index out of bounds")
-    val linSpatial = fullIndex % spatialNels
-    val t = fullIndex / spatialNels
+    require(
+      fullIndex >= 0 && fullIndex < spatialNels * tLen,
+      "canonical ordinal out of bounds"
+    )
+    val linSpatial = fullIndex / tLen
+    val t = fullIndex % tLen
     val pos = map.lookup(linSpatial)
     if pos < 0 then summon[Ring[A]].zero else data(t, pos)
 
@@ -223,7 +228,8 @@ final class SparseNeuroVec[A] private (
     val full =
       RavelArray.tabulate[A](nx, ny, space.spatialDims(2), tLen) {
         (i, j, k, time) =>
-          val linearVoxel = i + nx * (j + ny * k)
+          val linearVoxel =
+            Indexing.gridToIndex3D(space.spatialDims, i, j, k)
           val position = support.positionOf(linearVoxel)
           if position < 0 then zero else data(time, position)
       }
@@ -322,12 +328,12 @@ object SparseNeuroVec:
 
     val compact =
       RavelArray.tabulate[A](tLen, idx.length) { (time, position) =>
-        data(idx(position) + time * spatialNels)
+        data(idx(position) * tLen + time)
       }
     SparseNeuroVec(compact, space, support, label)
 
   /** Gather a canonical dense series directly into compact rank-2 Ravel
-    * storage. No full-volume legacy staging buffer is allocated.
+    * storage. No full-volume staging buffer is allocated.
     */
   def fromDense[A](
       source: NeuroVec[A],

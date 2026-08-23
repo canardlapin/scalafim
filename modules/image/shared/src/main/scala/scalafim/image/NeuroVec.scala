@@ -18,7 +18,7 @@ object NeuroVec:
       vector.metadata.label
 
     /** Canonical dense storage. This is the same Ravel value retained by
-      * `sampled`; no legacy dense buffer is cached alongside it.
+      * `sampled`; no second dense buffer is cached alongside it.
       */
     inline def values: RavelArray[A, Rank[4]] =
       vector.data
@@ -67,18 +67,23 @@ object NeuroVec:
     def indexToGrid(idx: Int): Vector[Int] =
       Indexing.indexToGrid(space.dims.take(4), idx)
 
-    def linear(i: Int): A =
+    private[scalafim] def valueAtCanonicalOrdinal(i: Int): A =
       val index = indexToGrid(i)
       apply(index(0), index(1), index(2), index(3))
 
-    /** Explicit compatibility export in ScalaFIM's historical
-      * first-axis-fastest order. This always materializes a fresh buffer.
-      */
-    def copyLegacyLinear(using ClassTag[A]): Array[A] =
+    private[scalafim] def valueAtVoxelOrdinal(
+        voxelOrdinal: Int,
+        time: Int
+    ): A =
+      val voxel = space.indexToVoxel3D(voxelOrdinal)
+      apply(voxel.x, voxel.y, voxel.z, time)
+
+    /** Explicitly copy logical values in canonical last-axis-fastest order. */
+    def copyToCanonicalArray(using ClassTag[A]): Array[A] =
       val out = PrimitiveBuffers.ofSize[A](values.size)
       var index = 0
       while index < out.length do
-        out(index) = linear(index)
+        out(index) = valueAtCanonicalOrdinal(index)
         index += 1
       out
 
@@ -341,9 +346,9 @@ object NeuroVec:
         MigrationValueSemantics[B]
     ): F[NeuroVec[B]] =
       Vector
-        .tabulate(values.size)(linear)
+        .tabulate(values.size)(valueAtCanonicalOrdinal)
         .traverse(f)
-        .map(values => NeuroVec.fromLinear(PrimitiveBuffers.fromArray(values.toArray), space, label))
+        .map(values => NeuroVec.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space, label))
 
     def map[B](f: A => B)(using
         ClassTag[B],
@@ -383,7 +388,7 @@ object NeuroVec:
     makeRavel(values, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  def fromLinearChecked[A](
+  private[scalafim] def copyFromCanonicalArrayChecked[A](
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
@@ -391,30 +396,27 @@ object NeuroVec:
       DType[A],
       MigrationValueSemantics[A]
   ): Either[NeuroImageError, NeuroVec[A]] =
-    importLegacyLinear(data, space, label).map(_.image)
-
-  /** Checked legacy-linear ingress with an explicit materialization receipt. */
-  def importLegacyLinear[A](
-      data: Array[A],
-      space: NeuroSpace,
-      label: String = ""
-  )(using
-      DType[A],
-      MigrationValueSemantics[A]
-  ): Either[
-    NeuroImageError,
-    DenseImageImport[NeuroVec[A]]
-  ] =
-    Image4sInterop
-      .seriesFromLegacyLinear(data, space, label)
-      .map(vector =>
-        DenseImageImport(
-          vector,
-          Image4sStorageTransfer.CanonicalizedLegacy
+    val shape = space.dims.take(4)
+    val expected = shape.product
+    if data.length != expected then
+      Left(
+        NeuroImageError.LinearSizeMismatch(
+          "NeuroSeries canonical array",
+          expected,
+          data.length
         )
       )
+    else
+      makeRavel(
+        RavelArray.fromSeq(
+          Shape(shape(0), shape(1), shape(2), shape(3)),
+          data
+        ),
+        space,
+        label
+      )
 
-  private[scalafim] def fromLinear[A](
+  private[scalafim] def copyFromCanonicalArray[A](
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
@@ -422,5 +424,5 @@ object NeuroVec:
       DType[A],
       MigrationValueSemantics[A]
   ): NeuroVec[A] =
-    fromLinearChecked(data, space, label)
+    copyFromCanonicalArrayChecked(data, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)

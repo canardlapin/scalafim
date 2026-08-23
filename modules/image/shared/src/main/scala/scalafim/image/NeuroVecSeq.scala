@@ -41,18 +41,23 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
   ): NeuroVecSeq[A] =
     subVector(ts)
 
-  def linear(i: Int): A =
-    require(i >= 0 && i < spatialNels * length, "linear index out of bounds")
-    val t = i / spatialNels
-    val linSpatial = i % spatialNels
+  private[scalafim] def valueAtCanonicalOrdinal(i: Int): A =
+    require(
+      i >= 0 && i < spatialNels * length,
+      "canonical ordinal out of bounds"
+    )
+    val linSpatial = i / length
+    val t = i % length
     val (v, localT) = locate(t)
-    v.linear(linSpatial + localT * spatialNels)
+    v.valueAtVoxelOrdinal(linSpatial, localT)
 
-  def linear(indices: Array[Int])(using ClassTag[A]): Array[A] =
+  private[scalafim] def valuesAtCanonicalOrdinals(
+      indices: Array[Int]
+  )(using ClassTag[A]): Array[A] =
     val out = Array.ofDim[A](indices.length)
     var p = 0
     while p < indices.length do
-      out(p) = linear(indices(p))
+      out(p) = valueAtCanonicalOrdinal(indices(p))
       p += 1
     out
 

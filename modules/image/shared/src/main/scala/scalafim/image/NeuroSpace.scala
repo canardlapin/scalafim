@@ -13,6 +13,7 @@ import image4s.geometry.Frame
 import image4s.geometry.FrameId
 import image4s.geometry.FrameMetadata
 import image4s.geometry.Grid
+import image4s.geometry.GridId
 
 enum NeuroSpaceError:
   case EmptyDimensions
@@ -158,7 +159,7 @@ object NeuroSpace:
       val spatial = defaultAxes(space.spatialRank, trans).spatialAxes
       val additional =
         space.nonSpatialAxes.values.map: axis =>
-          legacyAxis(axis)
+          publicAxis(axis)
       AxisSet((spatial ++ additional)*)
 
     def trans: DMat =
@@ -384,8 +385,9 @@ object NeuroSpace:
           )
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+        gridId <- persistentGridId(2, dims, affine.rowMajor)
         grid <- Grid
-          .in(frame)(dims, affine)
+          .createPersistent(gridId, frame)(dims, affine)
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
       yield fromCanonical(
@@ -408,12 +410,32 @@ object NeuroSpace:
           )
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+        spatialShape = dims.take(3)
+        gridId <- persistentGridId(3, spatialShape, affine.rowMajor)
         grid <- Grid
-          .in(frame)(dims.take(3), affine)
+          .createPersistent(gridId, frame)(spatialShape, affine)
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
         nonSpatial <- canonicalAxes(dims.drop(3), axes.axes.drop(3))
       yield fromCanonical(SampleSpace.create(grid, nonSpatial))
+
+  private def persistentGridId(
+      rank: Int,
+      shape: Vector[Int],
+      affineRowMajor: Vector[Double]
+  ): Either[NeuroSpaceError, GridId] =
+    val affineBits =
+      affineRowMajor.map: value =>
+        java.lang.Long.toUnsignedString(
+          java.lang.Double.doubleToRawLongBits(value),
+          16
+        )
+    GridId
+      .parse(
+        s"scalafim-grid-d$rank-${shape.mkString("x")}-${affineBits.mkString("-")}"
+      )
+      .left
+      .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
 
   private def canonicalAxes(
       extents: Vector[Int],
@@ -424,9 +446,9 @@ object NeuroSpace:
         Either[NeuroSpaceError, Vector[ImageAxis]]
       ](Right(Vector.empty)):
         case (acc, (extent, index)) =>
-          val legacy = axes.lift(index).getOrElse(Axis.NoneAxis)
+          val exposed = axes.lift(index).getOrElse(Axis.NoneAxis)
           val kind =
-            if legacy == Axis.Time then AxisKind.Time
+            if exposed == Axis.Time then AxisKind.Time
             else AxisKind.Other
           val name =
             if kind == AxisKind.Time then "time"
@@ -446,7 +468,7 @@ object NeuroSpace:
         .left
         .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
 
-  private def legacyAxis(axis: ImageAxis): Axis =
+  private def publicAxis(axis: ImageAxis): Axis =
     axis.kind match
       case AxisKind.Time => Axis.Time
       case _             => Axis(axis.name.value)
@@ -624,6 +646,14 @@ opaque type VolumeSpace = NeuroSpace
 
 object VolumeSpace:
   extension (space: VolumeSpace)
+    def sampleSpace: SampleSpace[? <: Frame[D3], D3] =
+      NeuroSpace
+        .requireD3(space)
+        .fold(
+          error => throw new IllegalStateException(error.message),
+          _.spatialOnly
+        )
+
     def shape: SpatialDims =
       NeuroSpace.spatialShapeOf(space)
 

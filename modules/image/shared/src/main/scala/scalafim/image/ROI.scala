@@ -38,7 +38,7 @@ enum ROIVolError:
       case DataLengthMismatch(expected, actual) =>
         s"ROI data length mismatch: expected $expected, got $actual"
 
-/** Legacy coordinate transport that must be bound to an explicit grid before typed use. */
+/** Coordinate transport that must be bound to an explicit grid before typed use. */
 final case class ROICoords(coords: Vector[Vector[Int]]):
   require(coords.forall(_.length == 3), "coords must be Nx3")
   def size: Int = coords.length

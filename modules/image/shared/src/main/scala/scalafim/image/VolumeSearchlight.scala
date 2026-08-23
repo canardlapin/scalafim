@@ -1,12 +1,15 @@
 package scalafim.image
 
+import VolumeDomain.*
+import image4s.geometry.D3
+import image4s.geometry.LatticeIndex
+import locus4s.data.Field
 import ravel.DType
 import ravel.NDArray as RavelArray
 import ravel.Shape
 import scalafim.locus.{
   CenteredSearchlight,
   CenteredSearchlightError as LocusCenteredSearchlightError,
-  IndexedField,
   Point,
   Region,
   Relation,
@@ -44,10 +47,10 @@ object VolumeSearchlight:
       radius: SearchlightRadius,
       centers: Region[S]
   ): Either[VolumeSearchlightError, CenteredSearchlight[S]] =
-    if !domain.finiteSpace.sameRuntimeOwnerAs(centers.space) then
+    if !domain.space.sameRuntimeOwnerAs(centers.space) then
       Left:
         VolumeSearchlightError.WrongSpace:
-          mismatch(domain.finiteSpace, centers.space)
+          mismatch(domain.space, centers.space)
     else
       val shape = domain.volumeSpace.shape
       val spacing = domain.volumeSpace.toNeuroSpace.spacing
@@ -55,12 +58,18 @@ object VolumeSearchlight:
       val squaredRadius = distance * distance
       val deltas = Vector.tabulate(3): axis =>
         math.ceil(distance / spacing(axis)).toInt
-      val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
+      val rows = Array.fill(domain.space.size)(Array.emptyIntArray)
       val centerOrdinals = centers.ordinalsInDomainOrder
       var centerIndex = 0
       while centerIndex < centerOrdinals.length do
         val centerOrdinal = centerOrdinals(centerIndex)
-        val center = Indexing.indexToGrid3D(shape, centerOrdinal)
+        val centerLattice =
+          domain.indexOfOrdinal(centerOrdinal).toOption.get
+        val center = VoxelCoord(
+          centerLattice.values(0),
+          centerLattice.values(1),
+          centerLattice.values(2)
+        )
         val targets = Array.newBuilder[Int]
         var x = math.max(0, center.x - deltas(0))
         val maxX = math.min(shape.x - 1, center.x + deltas(0))
@@ -75,7 +84,12 @@ object VolumeSearchlight:
               val dy = (y - center.y) * spacing(1)
               val dz = (z - center.z) * spacing(2)
               if dx * dx + dy * dy + dz * dz <= squaredRadius then
-                targets += Indexing.gridToIndex3D(shape, x, y, z)
+                val target =
+                  LatticeIndex
+                    .fromVector[D3](Vector(x, y, z))
+                    .toOption
+                    .get
+                targets += domain.ordinalOf(target).toOption.get
               z += 1
             y += 1
           x += 1
@@ -85,8 +99,8 @@ object VolumeSearchlight:
       val relation =
         Relation
           .fromOrdinalRows(
-            domain.finiteSpace,
-            domain.finiteSpace,
+            domain.space,
+            domain.space,
             rows.iterator.map(_.iterator)
           )
           .toOption
@@ -105,13 +119,13 @@ object VolumeSearchlight:
       domain: VolumeDomain[S],
       radius: SearchlightRadius
   ): Either[VolumeSearchlightError, CenteredSearchlight[S]] =
-    metricBalls(domain, radius, Region.whole(domain.finiteSpace))
+    metricBalls(domain, radius, Region.whole(domain.space))
 
   def materialize[S, A](
       domain: VolumeDomain[S],
       searchlight: LocusSearchlight[S],
       center: Point[S],
-      field: IndexedField[S, A],
+      field: Field[S, A],
       support: Option[Region[S]] = None,
       label: String = ""
   )(using DType[A]): Either[VolumeSearchlightError, ROIVolWindow[A]] =
@@ -161,8 +175,8 @@ object VolumeSearchlight:
       domain: VolumeDomain[S],
       actual: scalafim.locus.FiniteDomain[T]
   ): Either[VolumeSearchlightError, Unit] =
-    if domain.finiteSpace.sameRuntimeOwnerAs(actual) then Right(())
+    if domain.space.sameRuntimeOwnerAs(actual) then Right(())
     else
       Left:
         VolumeSearchlightError.WrongSpace:
-          mismatch(domain.finiteSpace, actual)
+          mismatch(domain.space, actual)

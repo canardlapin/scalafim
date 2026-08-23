@@ -25,8 +25,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertEquals(actual.space, expected.space, clue = "")
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     var i = 0
-    while i < actual.copyLegacyLinear.length do
-      assertClose(actual.copyLegacyLinear(i), expected.copyLegacyLinear(i), tol)
+    while i < actual.copyToCanonicalArray.length do
+      assertClose(actual.copyToCanonicalArray(i), expected.copyToCanonicalArray(i), tol)
       i += 1
 
   private def assertSameVec(actual: NeuroVec[Double], expected: NeuroVec[Double], tol: Double = 1e-10): Unit =
@@ -38,8 +38,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     assertEquals(actual.nVolumes, expected.nVolumes, clue = "")
     var i = 0
-    while i < actual.copyLegacyLinear.length do
-      assertClose(actual.copyLegacyLinear(i), expected.copyLegacyLinear(i), tol)
+    while i < actual.copyToCanonicalArray.length do
+      assertClose(actual.copyToCanonicalArray(i), expected.copyToCanonicalArray(i), tol)
       i += 1
 
   private def testVolume(space: NeuroSpace): NeuroVol[Double] =
@@ -49,19 +49,16 @@ class ResamplingPlanSuite extends munit.FunSuite:
         val g = Indexing.indexToGrid3D(dims, lin)
         valueAt(g(0), g(1), g(2))
       }
-    NeuroVol.fromLinear(data, space, "plan-fixture")
+    NeuroVol.copyFromCanonicalArray(data, space, "plan-fixture")
 
   private def testVec(space: NeuroSpace, nVolumes: Int): NeuroVec[Double] =
     val spatial = space.spatialSpace
     val dims = spatial.spatialDims
-    val spatialNels = dims.product
     val data =
-      PrimitiveBuffers.tabulate[Double](spatialNels * nVolumes) { lin =>
-        val t = lin / spatialNels
-        val g = Indexing.indexToGrid3D(dims, lin % spatialNels)
-        valueAt(g(0), g(1), g(2)) + 1000.0 * t.toDouble
+      RavelArray.tabulate[Double](dims(0), dims(1), dims(2), nVolumes) { (x, y, z, t) =>
+        valueAt(x, y, z) + 1000.0 * t.toDouble
       }
-    NeuroVec.fromLinear(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
+    NeuroVec.fromRavel(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
 
   private def denseField(
       grid: GridSpec
@@ -320,7 +317,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceSpace = NeuroSpace(Vector(1, 1, 1))
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume =
-      NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
+      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
     val morphism = affine(scale(2.0, 3.0, 1.0))
     val p = plan(grid, grid, morphism, Resample.Method.Nearest)
 

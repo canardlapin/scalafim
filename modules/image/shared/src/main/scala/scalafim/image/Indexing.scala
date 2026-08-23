@@ -11,20 +11,18 @@ object Indexing:
        coord.z < 0 || coord.z >= dims.z then
       Left(GeometryError.VoxelOutOfBounds(coord, dims))
     else
-      Right(coord.x + coord.y * dims.x + coord.z * dims.x * dims.y)
+      Right((coord.x * dims.y + coord.y) * dims.z + coord.z)
 
   def gridToIndex(dims: Vector[Int], coords: Vector[Int]): Int =
     require(dims.nonEmpty, "dims must be non-empty")
     require(coords.length == dims.length, s"expected ${dims.length} coords")
-    var stride = 1
     var lin = 0
     var d = 0
     while d < dims.length do
       val c = coords(d)
       val dim = dims(d)
       require(c >= 0 && c < dim, s"coord $c out of bounds for dim $d")
-      lin += c * stride
-      stride *= dim
+      lin = lin * dim + c
       d += 1
     lin
 
@@ -35,10 +33,10 @@ object Indexing:
     val size = dims.product
     if idx < 0 || idx >= size then Left(GeometryError.LinearIndexOutOfBounds(idx, size))
     else
-      val x = idx % dims.x
-      val yz = idx / dims.x
-      val y = yz % dims.y
-      val z = yz / dims.y
+      val z = idx % dims.z
+      val xy = idx / dims.z
+      val y = xy % dims.y
+      val x = xy / dims.y
       Right(VoxelCoord(x, y, z))
 
   def indexToGrid(dims: Vector[Int], idx: Int): Vector[Int] =
@@ -46,12 +44,12 @@ object Indexing:
     require(idx >= 0 && idx < dims.product, "index out of bounds")
     var rem = idx
     val out = Array.ofDim[Int](dims.length)
-    var d = 0
-    while d < dims.length do
+    var d = dims.length - 1
+    while d >= 0 do
       val dim = dims(d)
       out(d) = rem % dim
       rem = rem / dim
-      d += 1
+      d -= 1
     out.toVector
 
   inline def gridToIndex3D(dims: SpatialDims, coord: VoxelCoord): Int =

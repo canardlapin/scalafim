@@ -226,7 +226,7 @@ object KMeans:
     val flags = Array.ofDim[Boolean](vol.values.size)
     var i = 0
     while i < flags.length do
-      flags(i) = vol.linear(i) != 0.0
+      flags(i) = vol.valueAtCanonicalOrdinal(i) != 0.0
       i += 1
-    val mask = NeuroVol.fromLinear[Boolean](flags, vol.space.spatialSpace, label)
+    val mask = NeuroVol.copyFromCanonicalArray[Boolean](flags, vol.space.spatialSpace, label)
     partition(mask, k, iterMax, seed, init, label)

@@ -28,7 +28,8 @@ final case class ClusteredNeuroVec[A](
     var mismatch = Option.empty[Int]
     var i = 0
     while i < clMap.length && mismatch.isEmpty do
-      if clMap(i) != expectedClusterMap.linear(i) then mismatch = Some(i)
+      if clMap(i) != expectedClusterMap.valueAtCanonicalOrdinal(i) then
+        mismatch = Some(i)
       i += 1
     mismatch
   require(
@@ -156,7 +157,7 @@ final case class ClusteredNeuroVec[A](
         val col = idToCol(cid)
         out(lin) = ts(t, col)
       lin += 1
-    NeuroVol.fromLinear(out, space.spatialSpace, label)
+    NeuroVol.copyFromCanonicalArray(out, space.spatialSpace, label)
 
   def toDense(using
       ClassTag[A],
@@ -274,12 +275,12 @@ object ClusteredNeuroVec:
       RavelArray.tabulate[A](tLen, kLen) { (time, cluster) =>
         val idxArr = clusterIndices(cluster)
         if idxArr.size == 1 then
-          vec.linear(idxArr(0) + time * spatialNels)
+          vec.valueAtVoxelOrdinal(idxArr(0), time)
         else
           val tmp = scratch(cluster)
           var p = 0
           while p < idxArr.size do
-            tmp(p) = vec.linear(idxArr(p) + time * spatialNels)
+            tmp(p) = vec.valueAtVoxelOrdinal(idxArr(p), time)
             p += 1
           reducer(tmp)
       }

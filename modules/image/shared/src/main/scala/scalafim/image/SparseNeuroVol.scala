@@ -97,7 +97,7 @@ object SparseNeuroVol:
     val buf = Array.newBuilder[Int]
     var i = 0
     while i < mask.values.size do
-      if mask.linear(i) then buf += i
+      if mask.valueAtCanonicalOrdinal(i) then buf += i
       i += 1
     val maskIdx = buf.result()
     val vals =

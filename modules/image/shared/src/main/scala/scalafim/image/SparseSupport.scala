@@ -45,7 +45,7 @@ object SparseSupport:
     var position = 0
     while position < ordered.size do
       require(
-        mask.linear(ordered(position)),
+        mask.valueAtCanonicalOrdinal(ordered(position)),
         s"compact lookup voxel ${ordered(position)} is outside the mask"
       )
       position += 1

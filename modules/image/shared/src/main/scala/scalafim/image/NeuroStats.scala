@@ -106,7 +106,11 @@ object NeuroStats:
       spacing = vol.space.spacing,
       origin = vol.space.origin,
       orientation = orientation(vol.space),
-      stats = summarizeIndexed(vol.values.size, vol.linear, naRm)
+      stats = summarizeIndexed(
+        vol.values.size,
+        vol.valueAtCanonicalOrdinal,
+        naRm
+      )
     )
 
   def summarize(svol: SparseNeuroVol[Double]): NeuroVolSummary =
@@ -130,7 +134,7 @@ object NeuroStats:
       "NeuroVec",
       vec.space,
       vec.values.size,
-      vec.linear,
+      vec.valueAtCanonicalOrdinal,
       vec.nVolumes,
       vec.space.spatialDims.product,
       naRm
@@ -172,12 +176,12 @@ object NeuroStats:
       var t = 0
       var sum = 0.0
       while t < tLen do
-        sum += vec.linear(lin + t * spatialNels)
+        sum += vec.valueAtVoxelOrdinal(lin, t)
         t += 1
       out(lin) = sum / tLen.toDouble
       lin += 1
 
-    NeuroVol.fromLinear(out, vec.space.spatialSpace, vec.label)
+    NeuroVol.copyFromCanonicalArray(out, vec.space.spatialSpace, vec.label)
 
   def temporalMean(svec: SparseNeuroVec[Double]): SparseNeuroVol[Double] =
     val tLen = svec.space.dims(3)
@@ -212,7 +216,7 @@ object NeuroStats:
       var sum = 0.0
       var sumSq = 0.0
       while t < tLen do
-        val v = valueAt(lin + t * spatialNels)
+        val v = valueAt(lin * tLen + t)
         sum += v
         sumSq += v * v
         t += 1
@@ -249,7 +253,7 @@ object NeuroStats:
     val global =
       summarizeIndexed(
         tLen * nColumns,
-        index => valueAt(index % tLen, index / tLen),
+        index => valueAt(index / nColumns, index % nColumns),
         naRm
       )
     val means = PrimitiveBuffers.ofSize[Double](nColumns)
@@ -301,25 +305,29 @@ object NeuroCompare:
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.linear(i), y.linear(i), predicate)
+      out(i) = test(
+        x.valueAtCanonicalOrdinal(i),
+        y.valueAtCanonicalOrdinal(i),
+        predicate
+      )
       i += 1
-    NeuroVol.fromLinear(out, x.space, x.label)
+    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
 
   def compare[A: Order](x: NeuroVol[A], scalar: A, predicate: Predicate): NeuroVol[Boolean] =
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.linear(i), scalar, predicate)
+      out(i) = test(x.valueAtCanonicalOrdinal(i), scalar, predicate)
       i += 1
-    NeuroVol.fromLinear(out, x.space, x.label)
+    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
 
   def compare[A: Order](scalar: A, x: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(scalar, x.linear(i), predicate)
+      out(i) = test(scalar, x.valueAtCanonicalOrdinal(i), predicate)
       i += 1
-    NeuroVol.fromLinear(out, x.space, x.label)
+    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
 
   def compare[A: Order: Ring: ClassTag: DType: MigrationValueSemantics](
       x: SparseNeuroVol[A],
@@ -347,18 +355,22 @@ object NeuroCompare:
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.linear(i), y.linear(i), predicate)
+      out(i) = test(
+        x.valueAtCanonicalOrdinal(i),
+        y.valueAtCanonicalOrdinal(i),
+        predicate
+      )
       i += 1
-    NeuroVec.fromLinear(out, x.space, x.label)
+    NeuroVec.copyFromCanonicalArray(out, x.space, x.label)
 
   @scala.annotation.targetName("compareNeuroVecScalar")
   def compare[A: Order](x: NeuroVec[A], scalar: A, predicate: Predicate): NeuroVec[Boolean] =
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
     var i = 0
     while i < out.length do
-      out(i) = test(x.linear(i), scalar, predicate)
+      out(i) = test(x.valueAtCanonicalOrdinal(i), scalar, predicate)
       i += 1
-    NeuroVec.fromLinear(out, x.space, x.label)
+    NeuroVec.copyFromCanonicalArray(out, x.space, x.label)
 
   def gt[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
     compare(x, scalar, Predicate.GT)

@@ -249,7 +249,7 @@ private[image] object VoxelSamplingKernel:
     val yi = math.round(y).toInt
     val zi = math.round(z).toInt
     if inBounds(dims, xi, yi, zi) then
-      volume.linear(xi + yi * dims.x + zi * dims.x * dims.y)
+      volume(xi, yi, zi)
     else outside
 
   inline def valueOrOutside(
@@ -261,7 +261,7 @@ private[image] object VoxelSamplingKernel:
     outside: Double
   ): Double =
     if inBounds(dims, x, y, z) then
-      volume.linear(x + y * dims.x + z * dims.x * dims.y)
+      volume(x, y, z)
     else outside
 
   def linear(

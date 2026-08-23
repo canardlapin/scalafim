@@ -9,7 +9,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
   test("NeuroStats summarizes dense volumes") {
     val sp = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
     val summary = NeuroStats.summarize(vol)
 
     assertEquals(summary.dims, Vector(2, 2, 2), clue = "")
@@ -26,9 +26,9 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
   test("temporalMean for dense NeuroVec matches row means") {
     val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), sp)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val mean = NeuroStats.temporalMean(vec)
-    val vals = Vector.tabulate(mean.copyLegacyLinear.length)(i => mean.copyLegacyLinear(i))
+    val vals = Vector.tabulate(mean.copyToCanonicalArray.length)(i => mean.copyToCanonicalArray(i))
 
     assertEquals(mean.space.dims, Vector(2, 1, 1), clue = "")
     assertEquals(vals, Vector(2.0, 3.0), clue = "")
@@ -37,7 +37,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
       Right(()),
       clue = ""
     )
-    assertEquals(Vector.tabulate(vec.temporalMean.copyLegacyLinear.length)(i => vec.temporalMean.copyLegacyLinear(i)), vals, clue = "")
+    assertEquals(Vector.tabulate(vec.temporalMean.copyToCanonicalArray.length)(i => vec.temporalMean.copyToCanonicalArray(i)), vals, clue = "")
   }
 
   test("temporalMean for sparse NeuroVec preserves active indices") {
@@ -60,9 +60,9 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
   test("Mask.of returns full masks for dense objects and stored masks for sparse objects") {
     val sp = NeuroSpace(Vector(3, 1, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
     val denseMask = Mask.of(vec)
-    assertEquals(Vector.tabulate(denseMask.copyLegacyLinear.length)(i => denseMask.copyLegacyLinear(i)), Vector(true, true, true), clue = "")
+    assertEquals(Vector.tabulate(denseMask.copyToCanonicalArray.length)(i => denseMask.copyToCanonicalArray(i)), Vector(true, true, true), clue = "")
 
     val sparseMask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
     val svec = vec.asSparse(sparseMask)
@@ -73,42 +73,42 @@ class StatsMaskCompareSuite extends munit.FunSuite:
       clue = ""
     )
     assertEquals(
-      recovered.copyLegacyLinear.toVector,
-      sparseMask.copyLegacyLinear.toVector,
+      recovered.copyToCanonicalArray.toVector,
+      sparseMask.copyToCanonicalArray.toVector,
       clue = ""
     )
   }
 
   test("NeuroCompare builds logical volumes and vectors") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
     val gt = vol.gt(1.0)
 
     assertEquals(gt.space, sp, clue = "")
-    assertEquals(Vector.tabulate(gt.copyLegacyLinear.length)(i => gt.copyLegacyLinear(i)), Vector(false, false, true, true), clue = "")
-    assertEquals(Vector.tabulate(vol.eqv(vol).copyLegacyLinear.length)(i => vol.eqv(vol).copyLegacyLinear(i)), Vector.fill(4)(true), clue = "")
+    assertEquals(Vector.tabulate(gt.copyToCanonicalArray.length)(i => gt.copyToCanonicalArray(i)), Vector(false, false, true, true), clue = "")
+    assertEquals(Vector.tabulate(vol.eqv(vol).copyToCanonicalArray.length)(i => vol.eqv(vol).copyToCanonicalArray(i)), Vector.fill(4)(true), clue = "")
 
     val sp4 = NeuroSpace(Vector(2, 1, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
     val lt = vec.lt(5.0)
-    assertEquals(Vector.tabulate(lt.copyLegacyLinear.length)(i => lt.copyLegacyLinear(i)), Vector(true, true, true, false), clue = "")
+    assertEquals(Vector.tabulate(lt.copyToCanonicalArray.length)(i => lt.copyToCanonicalArray(i)), Vector(true, true, true, false), clue = "")
   }
 
   test("NeuroCompare supports sparse and clustered volumes") {
     val sp = NeuroSpace(Vector(3, 1, 1))
     val sparse = SparseNeuroVol(Array(2.0, 5.0), Array(0, 2), sp)
     val sgt = sparse.gt(1.0)
-    assertEquals(Vector.tabulate(sgt.copyLegacyLinear.length)(i => sgt.copyLegacyLinear(i)), Vector(true, false, true), clue = "")
+    assertEquals(Vector.tabulate(sgt.copyToCanonicalArray.length)(i => sgt.copyToCanonicalArray(i)), Vector(true, false, true), clue = "")
 
     val mask = Mask.fromIndices(sp, Array(0, 2))
     val cvol = ClusteredNeuroVol(mask, Array(1, 2))
     val cgt = cvol.gt(1)
-    assertEquals(Vector.tabulate(cgt.copyLegacyLinear.length)(i => cgt.copyLegacyLinear(i)), Vector(false, false, true), clue = "")
+    assertEquals(Vector.tabulate(cgt.copyToCanonicalArray.length)(i => cgt.copyToCanonicalArray(i)), Vector(false, false, true), clue = "")
   }
 
   test("NeuroStats summarizes NeuroVec temporal ranges") {
     val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), sp)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val summary = vec.summary
 
     assertEquals(summary.timePoints, 3, clue = "")

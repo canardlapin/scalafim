@@ -12,7 +12,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     val sv = SparseNeuroVol[Double](vals, idx, sp)
     val dense = sv.toDense
 
-    val out = Vector.tabulate(dense.copyLegacyLinear.length)(i => dense.copyLegacyLinear(i))
+    val out = Vector.tabulate(dense.copyToCanonicalArray.length)(i => dense.copyToCanonicalArray(i))
     assertEquals(out(1), 1.0, clue = "")
     assertEquals(out(4), 2.0, clue = "")
     assertEquals(out(9), 3.0, clue = "")
@@ -21,31 +21,31 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
 
   test("NeuroVol.asLogical flags all non-zero values") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
     val m = vol.asLogical
-    val flags = Vector.tabulate(m.copyLegacyLinear.length)(i => m.copyLegacyLinear(i))
+    val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, true, true, false), clue = "")
   }
 
   test("NeuroVol.asMask flags positive values only") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
     val m = vol.asMask
-    val flags = Vector.tabulate(m.copyLegacyLinear.length)(i => m.copyLegacyLinear(i))
+    val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, false, true, false), clue = "")
   }
 
   test("NeuroVol.asMask(indices) sets specified indices true") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](4, 0.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](4, 0.0), sp)
     val m = vol.asMask(Array[Int](1, 3))
-    val flags = Vector.tabulate(m.copyLegacyLinear.length)(i => m.copyLegacyLinear(i))
+    val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, true, false, true), clue = "")
   }
 
   test("NeuroVol.asSparse from mask/indices roundtrips when outside-mask values are zero") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array[Double](0.0, 1.0, 0.0, 1.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, 1.0, 0.0, 1.0), sp)
     val mask = vol.asMask
     val idx = Mask.indices(mask)
 
@@ -55,9 +55,9 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     val dense1 = svol1.toDense
     val dense2 = svol2.toDense
 
-    val v0 = Vector.tabulate(vol.copyLegacyLinear.length)(i => vol.copyLegacyLinear(i))
-    val v1 = Vector.tabulate(dense1.copyLegacyLinear.length)(i => dense1.copyLegacyLinear(i))
-    val v2 = Vector.tabulate(dense2.copyLegacyLinear.length)(i => dense2.copyLegacyLinear(i))
+    val v0 = Vector.tabulate(vol.copyToCanonicalArray.length)(i => vol.copyToCanonicalArray(i))
+    val v1 = Vector.tabulate(dense1.copyToCanonicalArray.length)(i => dense1.copyToCanonicalArray(i))
+    val v2 = Vector.tabulate(dense2.copyToCanonicalArray.length)(i => dense2.copyToCanonicalArray(i))
     assertEquals(v1, v0, clue = "")
     assertEquals(v2, v0, clue = "")
   }
@@ -89,7 +89,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
 
   test("NeuroVol.asMatrix matches linear ordering") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Int](Array[Int](1, 2, 3, 4), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 3, 4), sp)
     val m = vol.asMatrix
     assertEquals(
       Vector.tabulate(m.shape.rank)(m.shape.apply),
@@ -102,23 +102,23 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
 
   test("mapValues maps label ids with numeric keys and defaults missing to 0") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Int](Array[Int](1, 2, 1, 2), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
 
     val out = vol.mapValues(Map(1 -> 10, 2 -> 20), default = 0)
-    val vals = Vector.tabulate(out.copyLegacyLinear.length)(i => out.copyLegacyLinear(i)).distinct.sorted
+    val vals = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i)).distinct.sorted
     assertEquals(vals, Vector(10, 20), clue = "")
 
     val out2 = vol.mapValues(Map(1 -> 10), default = 0)
-    val vals2 = Vector.tabulate(out2.copyLegacyLinear.length)(i => out2.copyLegacyLinear(i)).distinct.sorted
+    val vals2 = Vector.tabulate(out2.copyToCanonicalArray.length)(i => out2.copyToCanonicalArray(i)).distinct.sorted
     assertEquals(vals2, Vector(0, 10), clue = "")
   }
 
   test("mapValues accepts string keys when parseable and rejects non-numeric keys") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Int](Array[Int](1, 2, 1, 2), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
 
     val out = vol.mapValues(Map("1" -> 10, "2" -> 20), default = 0)
-    val vals = Vector.tabulate(out.copyLegacyLinear.length)(i => out.copyLegacyLinear(i)).distinct.sorted
+    val vals = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i)).distinct.sorted
     assertEquals(vals, Vector(10, 20), clue = "")
 
     intercept[IllegalArgumentException] {
@@ -129,7 +129,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   test("mapf produces expected size and respects mask") {
     val sp = NeuroSpace(Vector(5, 5, 5))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.fromLinear[Double](PrimitiveBuffers.fillConst[Double](nels, 1.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](nels, 1.0), sp)
 
     val kdim = Vector(3, 3, 3)
     val ker = Kernel3D(kdim, vdim = Vector(1.0, 1.0, 1.0)) { d =>
@@ -140,19 +140,19 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     val center = Vector(2, 2, 2)
     val centerLin = Indexing.gridToIndex3D(sp.spatialDims, center(0), center(1), center(2))
     maskFlags(centerLin) = true
-    val mask = NeuroVol.fromLinear[Boolean](maskFlags, sp)
+    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, sp)
 
     val out = SpatialFilters.mapf(vol, ker, mask = Some(mask))
     assertEquals(out.space.dims, vol.space.dims, clue = "")
     assertEquals(out(center(0), center(1), center(2)), 1.0, clue = "")
-    val sum = Vector.tabulate(out.copyLegacyLinear.length)(i => out.copyLegacyLinear(i)).sum
+    val sum = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i)).sum
     assertEquals(sum, 1.0, clue = "")
   }
 
   test("NeuroVol(ROIVol) extracts values at ROI coords") {
     val sp = NeuroSpace(Vector(4, 4, 4))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.fromLinear[Int](PrimitiveBuffers.tabulate[Int](nels)(i => i + 1), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](nels)(i => i + 1), sp)
 
     val coords = Vector(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0), Vector(3, 3, 3))
     val roi = ROIVol[Int](sp, coords, PrimitiveBuffers.fillConst[Int](coords.length, 0))
@@ -161,28 +161,28 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     val got = Vector.tabulate(out.size)(i => out(i))
     def lin(c: Vector[Int]): Int =
       Indexing.gridToIndex3D(sp.spatialDims, c(0), c(1), c(2))
-    val exp = coords.map(c => vol.linear(lin(c)))
+    val exp = coords.map(c => vol.valueAtCanonicalOrdinal(lin(c)))
     assertEquals(got, exp, clue = "")
   }
 
   test("NeuroVol.toVec produces a 4D NeuroVec with one volume") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
     val vec = vol.toVec
     assertEquals(vec.space.dims, Vector(2, 2, 1, 1), clue = "")
     val v0 = vec.volume(0)
-    val got = Vector.tabulate(v0.copyLegacyLinear.length)(i => v0.copyLegacyLinear(i))
+    val got = Vector.tabulate(v0.copyToCanonicalArray.length)(i => v0.copyToCanonicalArray(i))
     assertEquals(got, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
   }
 
   test("NeuroVol.concat stacks volumes along time into a NeuroVec") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val v1 = NeuroVol.fromLinear[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
-    val v2 = NeuroVol.fromLinear[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp)
+    val v1 = NeuroVol.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
+    val v2 = NeuroVol.copyFromCanonicalArray[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp)
     val vec = v1.concat(v2)
     assertEquals(vec.space.dims, Vector(2, 2, 1, 2), clue = "")
-    val lin = Vector.tabulate(vec.copyLegacyLinear.length)(i => vec.copyLegacyLinear(i))
-    assertEquals(lin, Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0), clue = "")
+    val lin = Vector.tabulate(vec.copyToCanonicalArray.length)(i => vec.copyToCanonicalArray(i))
+    assertEquals(lin, Vector(1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0), clue = "")
   }
 
   test("NeuroVol planes are zero-copy singleton-D3 image views") {
@@ -201,7 +201,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
         y += 1
       z += 1
 
-    val vol = NeuroVol.fromLinear[Double](data, sp)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](data, sp)
     val planes =
       Vector.tabulate(nz): index =>
         vol

@@ -54,7 +54,7 @@ class DomainValiditySuite extends munit.FunSuite:
 
     assertEquals(
       result,
-      Left(ROIVolWindowError.CenterMismatch(1, 0, 1)),
+      Left(ROIVolWindowError.CenterMismatch(1, 0, space.gridToIndex3D(1, 0, 0))),
       clue = ""
     )
   }
@@ -62,7 +62,7 @@ class DomainValiditySuite extends munit.FunSuite:
   test("checked searchlight extraction reports an excluded center") {
     val values = PrimitiveBuffers.fillConst[Int](space.spatialDims.product, 1)
     values(4) = 0
-    val volume = NeuroVol.fromLinear[Int](values, space)
+    val volume = NeuroVol.copyFromCanonicalArray[Int](values, space)
     val center =
       SearchlightCenter
         .make(volumeSpace, VoxelCoord(1, 1, 0))
