@@ -9,6 +9,7 @@ import locus4s.{
   DomainRestoreError,
   FiniteSpace
 }
+import locus4s.data.Field
 import scalafim.locus.IndexedField
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,
@@ -1006,8 +1007,8 @@ private[atlas] object AtlasPublicationProjection:
     else Right(())
 
   def metadata[P](
-      keys: IndexedField[P, String],
-      metadata: IndexedField[P, AtlasRegionMetadata]
+      keys: Field[P, String],
+      metadata: Field[P, AtlasRegionMetadata]
   ): Vector[NeuropublishParcelMetadataV1] =
     keys.space.indices
       .map: point =>
