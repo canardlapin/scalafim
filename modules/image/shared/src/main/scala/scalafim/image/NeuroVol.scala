@@ -213,7 +213,16 @@ object NeuroVol:
       Vector
         .tabulate(values.size)(valueAtCanonicalOrdinal)
         .traverse(f)
-        .map(values => NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space, label))
+        .map: traversed =>
+          val shape = space.spatialDims
+          NeuroVol.fromRavel(
+            RavelArray.fromSeq(
+              Shape(shape(0), shape(1), shape(2)),
+              traversed
+            ),
+            space,
+            label
+          )
 
     def map[B](f: A => B)(using
         ClassTag[B],

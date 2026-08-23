@@ -1,5 +1,9 @@
 package scalafim.image
 
+import ravel.DType
+import ravel.NDArray
+import ravel.Rank
+import ravel.Shape
 import scala.reflect.ClassTag
 
 enum SlicePlanError:
@@ -20,23 +24,35 @@ private[image] trait SliceSampleCursor[A]:
   * requested for label or Boolean volumes.
   */
 sealed trait SliceSampling[A]:
-  private[image] def cursor(volume: NeuroVol[A], dims: SpatialDims): SliceSampleCursor[A]
+  private[image] def cursor(
+      volume: AnyNeuroVolume[A],
+      dims: SpatialDims
+  ): SliceSampleCursor[A]
 
 object SliceSampling:
   final case class Nearest[A](outside: A) extends SliceSampling[A]:
-    private[image] def cursor(volume: NeuroVol[A], dims: SpatialDims): SliceSampleCursor[A] =
+    private[image] def cursor(
+        volume: AnyNeuroVolume[A],
+        dims: SpatialDims
+    ): SliceSampleCursor[A] =
       new SliceSampleCursor[A]:
         def sample(x: Double, y: Double, z: Double): A =
           VoxelSamplingKernel.nearest(volume, dims, x, y, z, outside)
 
   final case class Linear(outside: Double = 0.0) extends SliceSampling[Double]:
-    private[image] def cursor(volume: NeuroVol[Double], dims: SpatialDims): SliceSampleCursor[Double] =
+    private[image] def cursor(
+        volume: AnyNeuroVolume[Double],
+        dims: SpatialDims
+    ): SliceSampleCursor[Double] =
       new SliceSampleCursor[Double]:
         def sample(x: Double, y: Double, z: Double): Double =
           VoxelSamplingKernel.linear(volume, dims, x, y, z, outside)
 
   final case class Cubic(outside: Double = 0.0) extends SliceSampling[Double]:
-    private[image] def cursor(volume: NeuroVol[Double], dims: SpatialDims): SliceSampleCursor[Double] =
+    private[image] def cursor(
+        volume: AnyNeuroVolume[Double],
+        dims: SpatialDims
+    ): SliceSampleCursor[Double] =
       val workspace = new CubicWorkspace
       new SliceSampleCursor[Double]:
         def sample(x: Double, y: Double, z: Double): Double =
@@ -45,9 +61,13 @@ object SliceSampling:
 /** Row-major, top-to-bottom slice values paired with their world-space grid. */
 final case class SliceImage[A] private (
   grid: SliceGrid,
-  values: Array[A]
+  values: NDArray[A, Rank[2]]
 ):
-  require(values.length == grid.dimensions.pixelCount, "slice value count must match grid dimensions")
+  require(
+    values.shape(0) == grid.dimensions.height &&
+      values.shape(1) == grid.dimensions.width,
+    "slice shape must be (row, column)"
+  )
 
   def dimensions: SliceDimensions =
     grid.dimensions
@@ -55,10 +75,14 @@ final case class SliceImage[A] private (
   inline def apply(column: Int, row: Int): A =
     require(column >= 0 && column < dimensions.width, "slice column out of bounds")
     require(row >= 0 && row < dimensions.height, "slice row out of bounds")
-    values(row * dimensions.width + column)
+    values(row, column)
+
+  inline def valueAtCanonicalOrdinal(index: Int): A =
+    require(index >= 0 && index < dimensions.pixelCount, "slice ordinal out of bounds")
+    values(index / dimensions.width, index % dimensions.width)
 
 object SliceImage:
-  private[image] def unsafe[A](grid: SliceGrid, values: Array[A]): SliceImage[A] =
+  private[image] def unsafe[A](grid: SliceGrid, values: NDArray[A, Rank[2]]): SliceImage[A] =
     new SliceImage(grid, values)
 
 /** Reusable affine stepping plan from a finite slice grid into one source volume.
@@ -78,35 +102,42 @@ final case class SlicePlan private (
     grid.worldAt(pixel).map(source.worldToVoxel)
 
   def sample[A: ClassTag](
-    volume: NeuroVol[A],
+    volume: AnyNeuroVolume[A],
     sampling: SliceSampling[A]
   ): Either[SlicePlanError, SliceImage[A]] =
     GridCompatibility.volume(source, volume.volumeSpace).left.map { _ =>
       SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace)
     }.map { _ =>
       val dimensions = grid.dimensions
-      val out = PrimitiveBuffers.ofSize[A](dimensions.pixelCount)
+      given DType[A] = volume.data.dtype
       val sampleCursor = sampling.cursor(volume, source.shape)
-      var row = 0
-      var rowX = firstVoxel.x
-      var rowY = firstVoxel.y
-      var rowZ = firstVoxel.z
-      while row < dimensions.height do
-        var column = 0
-        var x = rowX
-        var y = rowY
-        var z = rowZ
-        val rowOffset = row * dimensions.width
-        while column < dimensions.width do
-          out(rowOffset + column) = sampleCursor.sample(x, y, z)
-          x += columnStep.x
-          y += columnStep.y
-          z += columnStep.z
-          column += 1
-        rowX += rowStep.x
-        rowY += rowStep.y
-        rowZ += rowStep.z
-        row += 1
+      val out =
+        NDArray.build[A, Rank[2]](
+          Shape(dimensions.height, dimensions.width)
+        ): output =>
+          var row = 0
+          var rowX = firstVoxel.x
+          var rowY = firstVoxel.y
+          var rowZ = firstVoxel.z
+          while row < dimensions.height do
+            var column = 0
+            var x = rowX
+            var y = rowY
+            var z = rowZ
+            val rowOffset = row * dimensions.width
+            while column < dimensions.width do
+              output.writeLinear(
+                rowOffset + column,
+                sampleCursor.sample(x, y, z)
+              )
+              x += columnStep.x
+              y += columnStep.y
+              z += columnStep.z
+              column += 1
+            rowX += rowStep.x
+            rowY += rowStep.y
+            rowZ += rowStep.z
+            row += 1
       SliceImage.unsafe(grid, out)
     }
 
@@ -145,18 +176,30 @@ final class MappedSlicePlan private (
     }
 
   def sample[A: ClassTag](
-    volume: NeuroVol[A],
+    volume: AnyNeuroVolume[A],
     sampling: SliceSampling[A]
   ): Either[SlicePlanError, SliceImage[A]] =
     if volume.volumeSpace != source then
       Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
     else
-      val out = PrimitiveBuffers.ofSize[A](grid.dimensions.pixelCount)
+      given DType[A] = volume.data.dtype
       val sampleCursor = sampling.cursor(volume, source.shape)
-      var index = 0
-      while index < out.length do
-        out(index) = sampleCursor.sample(sourceX(index), sourceY(index), sourceZ(index))
-        index += 1
+      val dimensions = grid.dimensions
+      val out =
+        NDArray.build[A, Rank[2]](
+          Shape(dimensions.height, dimensions.width)
+        ): output =>
+          var index = 0
+          while index < dimensions.pixelCount do
+            output.writeLinear(
+              index,
+              sampleCursor.sample(
+                sourceX(index),
+                sourceY(index),
+                sourceZ(index)
+              )
+            )
+            index += 1
       Right(SliceImage.unsafe(grid, out))
 
 object MappedSlicePlan:
@@ -238,7 +281,7 @@ private[image] object VoxelSamplingKernel:
       z >= 0 && z < dims.z
 
   inline def nearest[A](
-    volume: NeuroVol[A],
+    volume: AnyNeuroVolume[A],
     dims: SpatialDims,
     x: Double,
     y: Double,
@@ -253,7 +296,7 @@ private[image] object VoxelSamplingKernel:
     else outside
 
   inline def valueOrOutside(
-    volume: NeuroVol[Double],
+    volume: AnyNeuroVolume[Double],
     dims: SpatialDims,
     x: Int,
     y: Int,
@@ -265,7 +308,7 @@ private[image] object VoxelSamplingKernel:
     else outside
 
   def linear(
-    volume: NeuroVol[Double],
+    volume: AnyNeuroVolume[Double],
     dims: SpatialDims,
     x: Double,
     y: Double,
@@ -300,7 +343,7 @@ private[image] object VoxelSamplingKernel:
     c0 * (1.0 - zd) + c1 * zd
 
   def cubic(
-    volume: NeuroVol[Double],
+    volume: AnyNeuroVolume[Double],
     dims: SpatialDims,
     x: Double,
     y: Double,

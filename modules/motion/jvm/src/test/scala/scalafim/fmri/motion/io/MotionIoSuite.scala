@@ -310,6 +310,10 @@ class MotionIoSuite extends munit.FunSuite:
     bb.putFloat(108, 352.0f)
     bb.putFloat(112, 1.0f)
     bb.putFloat(116, 0.0f)
+    bb.put(344, 'n'.toByte)
+    bb.put(345, '+'.toByte)
+    bb.put(346, '1'.toByte)
+    bb.put(347, 0.toByte)
 
     val data = ByteBuffer.allocate(values.length * 4).order(ByteOrder.LITTLE_ENDIAN)
     values.foreach(value => data.putFloat(value.toFloat))

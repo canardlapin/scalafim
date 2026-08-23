@@ -79,7 +79,11 @@ object NiftiCanonicalImporter:
     else Right(source)
 
   private def readHeader(path: Path): Either[NeuroArchiveZarrError, NiftiHeader] =
-    try Right(Nifti.readHeader(path))
+    try
+      Nifti
+        .readHeader(path)
+        .left
+        .map(error => NeuroArchiveZarrError.PublicationFailure(error.message))
     catch case NonFatal(error) => Left(NeuroArchiveZarrError.PublicationFailure(error.getMessage))
 
   private def canonicalShape(header: NiftiHeader): Either[NeuroArchiveZarrError, Shape] =

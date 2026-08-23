@@ -101,6 +101,57 @@ class DenseFieldInverseSuite extends munit.FunSuite:
     assertClose(morphism.transform(typedInversePoint), typedQuery, 1e-8)
   }
 
+  test("asymmetric inverse fields retain canonical x-y-z-component order") {
+    val grid = GridSpec.identity(Vector(6, 7, 9))
+    val shift = Vector(0.15, -0.1, 0.2)
+    val field =
+      denseField(grid) { (coord, component) =>
+        component match
+          case 0 => coord.x.toDouble + shift(0)
+          case 1 => coord.y.toDouble + shift(1)
+          case _ => coord.z.toDouble + shift(2)
+      }
+    val morphism =
+      DenseFieldMorphism
+        .coordinates(native, mni, grid, field, Resample.Method.Linear)
+        .fold(err => fail(err.message), identity)
+    val inverseGrid =
+      GridSpec(Vector(2, 3, 5), translation(1.0, 1.0, 1.0))
+
+    val result =
+      morphism
+        .approximateInverse(inverseGrid)
+        .fold(err => fail(err.message), identity)
+
+    assert(result.converged, clue = s"maxResidual=${result.maxResidual}")
+    var x = 0
+    while x < 2 do
+      var y = 0
+      while y < 3 do
+        var z = 0
+        while z < 5 do
+          val query =
+            WorldPoint(
+              x.toDouble + 1.0,
+              y.toDouble + 1.0,
+              z.toDouble + 1.0
+            )
+          val inverse = result.morphism.transform(query)
+          assertClose(
+            inverse,
+            WorldPoint(
+              query.x - shift(0),
+              query.y - shift(1),
+              query.z - shift(2)
+            ),
+            1e-8
+          )
+          assertClose(morphism.transform(inverse), query, 1e-8)
+          z += 1
+        y += 1
+      x += 1
+  }
+
   test("inverse options validate directly") {
     val grid = GridSpec.identity(Vector(2, 2, 2))
     val field = denseField(grid)((_, _) => 0.0)

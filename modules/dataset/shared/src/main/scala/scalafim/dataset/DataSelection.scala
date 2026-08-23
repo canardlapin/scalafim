@@ -256,20 +256,36 @@ object VoxelDomain:
     GridCompatibility.spatial(shape.space, mask.space)
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
-      .flatMap: _ =>
-        val maskIndices = Mask.indices(mask)
-        val voxels = Vector.newBuilder[VoxelIndex]
-        voxels.sizeHint(maskIndices.size)
-        var i = 0
-        var failure = Option.empty[DatasetError]
-        while i < maskIndices.size && failure.isEmpty do
-          VoxelIndex.make(maskIndices(i)) match
-            case Left(error) => failure = Some(error)
-            case Right(voxel) => voxels += voxel
-          i += 1
-        failure match
-          case Some(error) => Left(error)
-          case None => fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
+      .flatMap(_ => fromAlignedMask(mask, shape))
+
+  def fromMask(
+      mask: Mask.MaskVol,
+      shape: DatasetShape,
+      congruence: scalafim.image.CertifiedGridCongruence
+  ): Either[DatasetError, VoxelDomain] =
+    GridCompatibility
+      .acceptCertifiedSpatial(congruence, shape.space, mask.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap(_ => fromAlignedMask(mask, shape))
+
+  private def fromAlignedMask(
+      mask: Mask.MaskVol,
+      shape: DatasetShape
+  ): Either[DatasetError, VoxelDomain] =
+    val maskIndices = Mask.indices(mask)
+    val voxels = Vector.newBuilder[VoxelIndex]
+    voxels.sizeHint(maskIndices.size)
+    var i = 0
+    var failure = Option.empty[DatasetError]
+    while i < maskIndices.size && failure.isEmpty do
+      VoxelIndex.make(maskIndices(i)) match
+        case Left(error) => failure = Some(error)
+        case Right(voxel) => voxels += voxel
+      i += 1
+    failure match
+      case Some(error) => Left(error)
+      case None => fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
 
   private def fromVoxels(
       kind: VoxelDomainKind,

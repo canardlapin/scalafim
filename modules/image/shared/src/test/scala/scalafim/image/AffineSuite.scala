@@ -42,7 +42,7 @@ class AffineSuite extends munit.FunSuite:
     assertEquals(Vector.tabulate(out.rank)(out.shape.apply), Vector(1, 2, 3), clue = "")
     val values =
       Vector.tabulate(2): point =>
-        Vector.tabulate(3)(component => out(0, point, component))
+        Vector.tabulate(3)(component => out.at(IArray(0, point, component)))
       .flatten
     assertEquals(values, Vector(12.0, 26.0, 42.0, 18.0, 35.0, 54.0), clue = "")
   }

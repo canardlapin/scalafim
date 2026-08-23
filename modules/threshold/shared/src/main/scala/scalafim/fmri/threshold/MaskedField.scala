@@ -4,7 +4,6 @@ import scalafim.image.{
   GridCompatibility,
   Indexing,
   Mask,
-  PrimitiveBuffers,
   NeuroSpace,
   NeuroVol,
   VolumeDomain
@@ -69,7 +68,7 @@ sealed abstract class MaskedField private[threshold] (
 
   def maskFromMaskSpace(indices: Array[Int], label: String = ""): Either[ThresholdError, NeuroVol[Boolean]] =
     volumeIndices(indices).map { full =>
-      Mask.fromIndices(space, PrimitiveBuffers.fromArray(full), label)
+      Mask.fromIndices(space, full, label)
     }
 
 object MaskedField:
@@ -82,13 +81,11 @@ object MaskedField:
     alternative: ThresholdAlternative = ThresholdAlternative.Greater
   ): Either[ThresholdError, MaskedField] =
     val stat = statistic.volume
-    val n = stat.space.spatialDims.product
-    val flags = PrimitiveBuffers.fillConst[Boolean](n, false)
-    var i = 0
-    while i < n do
-      flags(i) = stat.valueAtCanonicalOrdinal(i).isFinite
-      i += 1
-    fromStatisticMap(statistic, NeuroVol.copyFromCanonicalArray(flags, stat.space.spatialSpace, stat.label), alternative)
+    fromStatisticMap(
+      statistic,
+      stat.mapValues(_.isFinite),
+      alternative
+    )
 
   def fromVolume(
     stat: NeuroVol[Double],

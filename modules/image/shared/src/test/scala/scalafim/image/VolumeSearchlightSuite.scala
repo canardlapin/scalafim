@@ -3,6 +3,7 @@ package scalafim.image
 import VolumeDomain.*
 import locus4s.DomainRegistry
 import locus4s.Relation
+import ravel.NDArray
 import spire.std.int.given
 
 class VolumeSearchlightSuite extends munit.FunSuite:
@@ -158,6 +159,45 @@ class VolumeSearchlightSuite extends munit.FunSuite:
       Vector(3, 4, 5, 7)
     )
     assertEquals(searchlight.relation.row(center), geometry)
+
+  test("prepared native-volume execution reuses exact support and Ravel order"):
+    val data =
+      NDArray.tabulate[Double](3, 3, 1): (x, y, _) =>
+        10.0 * x + y
+    val native: SomeScalarVolume[Double] =
+      NeuroVolume
+        .continuous(volumeSpace.sampleSpace, data)
+        .fold(error => fail(error.message), identity)
+    val field =
+      domain
+        .spatialField(native)
+        .fold(error => fail(error.message), identity)
+    val radius = SearchlightRadius.make(1.0).toOption.get
+    val searchlight =
+      ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
+    val center = domain.space.indexOption(4).get
+    val prepared =
+      ExactVolumeSearchlight
+        .prepare(searchlight, center)
+        .fold(error => fail(error.message), identity)
+    val fromField =
+      ExactVolumeSearchlight
+        .materializeContinuous(domain, searchlight, center, field)
+        .fold(error => fail(error.message), identity)
+    val fromNative =
+      ExactVolumeSearchlight
+        .materializePreparedVolume(domain, prepared, native)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      fromNative.values.selection.ordinals.toVector,
+      fromField.values.selection.ordinals.toVector
+    )
+    assertEquals(
+      fromNative.values.data.iterator.toVector,
+      fromField.values.data.iterator.toVector
+    )
+    assertEquals(fromNative.centerPosition, fromField.centerPosition)
 
   private def right[E, A](value: Either[E, A]): A =
     value match

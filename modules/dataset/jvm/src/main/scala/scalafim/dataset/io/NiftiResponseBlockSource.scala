@@ -197,7 +197,11 @@ object NiftiResponseBlockSource:
     }
 
   private def readHeader(path: Path): Either[DatasetError, NiftiHeader] =
-    try Right(Nifti.readHeader(path))
+    try
+      Nifti
+        .readHeader(path)
+        .left
+        .map(error => DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.message}"))
     catch
       case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.getMessage}"))
 

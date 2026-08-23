@@ -1,0 +1,120 @@
+{
+  "schema": "scalafim-native-image-kernel-allocation-v1",
+  "capturedOn": "2026-08-23",
+  "environment": {
+    "architecture": "arm64",
+    "operatingSystem": "Darwin 23.3.0",
+    "sbtJvm": "OpenJDK 64-Bit Server VM 25.0.1"
+  },
+  "providers": {
+    "ravel": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "image4s": "6b9016b7aa622df8dec3d887080ee512fa7439c6",
+    "reframe4s": "357426b4fd1e35ddead0068375016f55b082c9e2"
+  },
+  "source": {
+    "baseHead": "8b463acf5dee9025a13753ececef7d0023c29269",
+    "suite": "modules/image/jvm/src/test/scala/scalafim/image/NativeImageAllocationSuite.scala",
+    "shapePolicy": "asymmetric correctness oracles use 2x3x5x7; allocation cases use the sample counts recorded below"
+  },
+  "method": {
+    "accounting": "com.sun.management.ThreadMXBean per-thread allocated bytes",
+    "warmupsPerCase": 4,
+    "measurementsPerCase": 7,
+    "summary": "median",
+    "retention": "each callback retains its complete result to prevent dead-code elimination"
+  },
+  "observations": [
+    {
+      "name": "map-view-safe",
+      "classification": "view-safe",
+      "samples": 64000,
+      "allocatedBytes": 519440,
+      "limitBytes": 708608,
+      "retainedDestinationBytes": 512000,
+      "status": "pass"
+    },
+    {
+      "name": "zip-view-safe",
+      "classification": "view-safe",
+      "samples": 64000,
+      "allocatedBytes": 518600,
+      "limitBytes": 708608,
+      "retainedDestinationBytes": 512000,
+      "status": "pass"
+    },
+    {
+      "name": "temporal-reduction",
+      "classification": "view-safe-reduction",
+      "samples": 32000,
+      "allocatedBytes": 261248,
+      "limitBytes": 452608,
+      "retainedDestinationBytes": 256000,
+      "status": "pass"
+    },
+    {
+      "name": "linear-resampling",
+      "classification": "affine-provider",
+      "samples": 64000,
+      "allocatedBytes": 531000,
+      "limitBytes": 708608,
+      "retainedDestinationBytes": 512000,
+      "materializedCoordinateCount": 0,
+      "status": "pass"
+    },
+    {
+      "name": "ravel-stencil",
+      "classification": "provider-workspace-plus-result",
+      "samples": 64000,
+      "allocatedBytes": 1054416,
+      "limitBytes": 1286144,
+      "retainedDestinationBytes": 512000,
+      "boundedWorkspaceBytes": 512000,
+      "status": "pass"
+    },
+    {
+      "name": "dense-to-selected",
+      "classification": "exact-selection-gather",
+      "samples": 21334,
+      "allocatedBytes": 685200,
+      "limitBytes": 879296,
+      "retainedDestinationBytes": 170672,
+      "status": "pass"
+    },
+    {
+      "name": "selected-to-dense",
+      "classification": "exact-selection-scatter",
+      "samples": 64000,
+      "allocatedBytes": 1029216,
+      "limitBytes": 1220608,
+      "retainedDestinationBytes": 512000,
+      "status": "pass"
+    },
+    {
+      "name": "prepared-exact-searchlight",
+      "classification": "workload-prepared",
+      "samples": 64000,
+      "allocatedBytes": 2050712,
+      "limitBytes": 2244608,
+      "retainedDestinationBytes": 512000,
+      "status": "pass"
+    }
+  ],
+  "correctness": {
+    "command": "sbt -J-Xmx4G -Dsbt.supershell=false 'imageJVM/test' 'imageJS/test' 'imageViewJVM/test' 'imageViewJS/test' 'spatialJVM/test' 'spatialJS/test' 'motionJVM/test' 'motionJS/test' 'thresholdJVM/test' 'thresholdJS/test' 'atlasJVM/test' 'atlasJS/test' 'mvpaJVM/test' 'mvpaJS/test' 'mvpaFitJVM/test' 'mvpaFitJS/test' 'mvpaDatasetJVM/test' 'mvpaDatasetJS/test' 'mvpaSpatialJVM/test' 'mvpaSpatialJS/test'",
+    "targets": 20,
+    "testsPassed": 1498,
+    "failed": 0,
+    "status": "pass",
+    "oracles": [
+      "asymmetric 2x3x5x7 canonical and transformed-layout parity",
+      "affine nearest and linear provider execution with zero coordinate staging",
+      "continuous stencil parity at zero-valued boundaries",
+      "exact selected gather, scatter, and prepared searchlight order"
+    ]
+  },
+  "interpretation": {
+    "admissionReceipt": true,
+    "result": "Every representative kernel stays within its declared retained-result, bounded-workspace, and fixed-overhead budget.",
+    "scope": "This is a same-process allocation and correctness admission, not a cross-machine throughput claim."
+  }
+}

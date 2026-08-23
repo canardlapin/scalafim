@@ -224,7 +224,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
               clue = s"${orientation.clue} plane=$plane convention=$convention fixed=$fixed"
             )
             val sampled = SlicePlan.make(source.volumeSpace, grid)
-              .sample(source, SliceSampling.Nearest(-1))
+              .sample(source.toNative, SliceSampling.Nearest(-1))
               .toOption
               .get
             var row = 0
@@ -263,7 +263,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
           PixelSpacing(0.8, 1.1)
         )
         val sampled = SlicePlan.make(source.volumeSpace, grid)
-          .sample(source, SliceSampling.Linear())
+          .sample(source.toNative, SliceSampling.Linear())
           .toOption
           .get
         var row = 0

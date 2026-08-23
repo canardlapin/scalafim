@@ -187,7 +187,7 @@ object SelectedVolume:
       selection: Selection[T]
   ): Either[SelectedImageError, SelectedVolume[F, S, A, Sem]] =
     SelectedSampled
-      .gatherSpatial(domain, volume, selection)
+      .gatherVolume(domain, volume, selection)
       .left
       .map(SelectedImageError.Provider.apply)
       .map(fromSelected)
@@ -258,15 +258,10 @@ object SelectedVolume:
     ): Either[SelectedImageError, SomeNeuroVolume[A, Sem]] =
       volume
         .selected
-        .scatter(fill)
+        .scatterVolume(fill)
         .left
         .map(SelectedImageError.Provider.apply)
-        .flatMap: sampled =>
-          sampled
-            .requireDataRank[3]
-            .left
-            .map(SelectedImageError.Image.apply)
-            .map(SomeNeuroVolume.unsafeFromSampled)
+        .map(SomeNeuroVolume.unsafeFromSampled)
 
     def reselect[T](
         requested: Selection[T],

@@ -179,21 +179,31 @@ object NeuroStats:
     )
 
   def temporalMean(vec: NeuroVec[Double]): NeuroVol[Double] =
-    val spatialNels = vec.space.spatialDims.product
+    val shape = vec.space.spatialDims
     val tLen = vec.nVolumes
-    val out = PrimitiveBuffers.ofSize[Double](spatialNels)
+    val out =
+      RavelArray.build[Double, ravel.Rank[3]](
+        ravel.Shape(shape(0), shape(1), shape(2))
+      ): output =>
+        var ordinal = 0
+        var x = 0
+        while x < shape(0) do
+          var y = 0
+          while y < shape(1) do
+            var z = 0
+            while z < shape(2) do
+              var time = 0
+              var sum = 0.0
+              while time < tLen do
+                sum += vec(x, y, z, time)
+                time += 1
+              output.writeLinear(ordinal, sum / tLen.toDouble)
+              ordinal += 1
+              z += 1
+            y += 1
+          x += 1
 
-    var lin = 0
-    while lin < spatialNels do
-      var t = 0
-      var sum = 0.0
-      while t < tLen do
-        sum += vec.valueAtVoxelOrdinal(lin, t)
-        t += 1
-      out(lin) = sum / tLen.toDouble
-      lin += 1
-
-    NeuroVol.copyFromCanonicalArray(out, vec.space.spatialSpace, vec.label)
+    NeuroVol.fromRavel(out, vec.space.spatialSpace, vec.label)
 
   def temporalMean[F <: Frame[D3], S](
       series: SelectedSeries[F, S, Double, Continuous]
@@ -203,13 +213,19 @@ object NeuroStats:
   ] =
     given DType[Double] = series.dtype
     val tLen = series.nTime
-    val out = RavelArray.tabulate[Double](series.selection.size): position =>
-      var time = 0
-      var sum = 0.0
-      while time < tLen do
-        sum += series.data(position, time)
-        time += 1
-      sum / tLen.toDouble
+    val out =
+      RavelArray.build[Double, ravel.Rank[1]](
+        ravel.Shape(series.selection.size)
+      ): output =>
+        var position = 0
+        while position < series.selection.size do
+          var time = 0
+          var sum = 0.0
+          while time < tLen do
+            sum += series.data(position, time)
+            time += 1
+          output.writeLinear(position, sum / tLen.toDouble)
+          position += 1
     SelectedVolume.continuous(
       series.domain,
       series.selection,
@@ -227,9 +243,11 @@ object NeuroStats:
     naRm: Boolean
   ): NeuroVecSummary =
     val global = summarizeIndexed(dataLength, valueAt, naRm)
-    val means = PrimitiveBuffers.ofSize[Double](spatialNels)
-    val sds = PrimitiveBuffers.ofSize[Double](spatialNels)
     var nonZero = 0
+    var minimumMean = Double.PositiveInfinity
+    var maximumMean = Double.NegativeInfinity
+    var minimumSd = Double.PositiveInfinity
+    var maximumSd = Double.NegativeInfinity
 
     var lin = 0
     while lin < spatialNels do
@@ -242,11 +260,16 @@ object NeuroStats:
         sumSq += v * v
         t += 1
       val mean = sum / tLen.toDouble
-      means(lin) = mean
       if mean != 0.0 then nonZero += 1
-      sds(lin) =
+      if !mean.isNaN then
+        if mean < minimumMean then minimumMean = mean
+        if mean > maximumMean then maximumMean = mean
+      val sd =
         if tLen <= 1 then 0.0
         else math.sqrt(math.max(0.0, (sumSq - (sum * sum) / tLen.toDouble) / (tLen - 1).toDouble))
+      if !sd.isNaN then
+        if sd < minimumSd then minimumSd = sd
+        if sd > maximumSd then maximumSd = sd
       lin += 1
 
     NeuroVecSummary(
@@ -257,8 +280,8 @@ object NeuroStats:
       orientation = orientation(space),
       timePoints = tLen,
       global = global,
-      temporalMeanRange = summarize(means).range,
-      temporalSdRange = summarize(sds).range,
+      temporalMeanRange = minimumMean -> maximumMean,
+      temporalSdRange = minimumSd -> maximumSd,
       nonZeroVoxels = nonZero,
       totalVoxels = spatialNels
     )
@@ -277,9 +300,11 @@ object NeuroStats:
         index => valueAt(index / nColumns, index % nColumns),
         naRm
       )
-    val means = PrimitiveBuffers.ofSize[Double](nColumns)
-    val sds = PrimitiveBuffers.ofSize[Double](nColumns)
     var nonZero = 0
+    var minimumMean = Double.PositiveInfinity
+    var maximumMean = Double.NegativeInfinity
+    var minimumSd = Double.PositiveInfinity
+    var maximumSd = Double.NegativeInfinity
 
     var col = 0
     while col < nColumns do
@@ -292,11 +317,16 @@ object NeuroStats:
         sumSq += v * v
         t += 1
       val mean = sum / tLen.toDouble
-      means(col) = mean
       if mean != 0.0 then nonZero += 1
-      sds(col) =
+      if !mean.isNaN then
+        if mean < minimumMean then minimumMean = mean
+        if mean > maximumMean then maximumMean = mean
+      val sd =
         if tLen <= 1 then 0.0
         else math.sqrt(math.max(0.0, (sumSq - (sum * sum) / tLen.toDouble) / (tLen - 1).toDouble))
+      if !sd.isNaN then
+        if sd < minimumSd then minimumSd = sd
+        if sd > maximumSd then maximumSd = sd
       col += 1
 
     NeuroVecSummary(
@@ -307,8 +337,8 @@ object NeuroStats:
       orientation = orientation(space),
       timePoints = tLen,
       global = global,
-      temporalMeanRange = summarize(means).range,
-      temporalSdRange = summarize(sds).range,
+      temporalMeanRange = minimumMean -> maximumMean,
+      temporalSdRange = minimumSd -> maximumSd,
       nonZeroVoxels = nonZero,
       totalVoxels = space.spatialDims.product
     )
@@ -323,24 +353,18 @@ object NeuroCompare:
 
   def compare[A: Order](x: NeuroVol[A], y: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
     requireSameSpace(x.space, y.space)
-    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
-    var i = 0
-    while i < out.length do
-      out(i) = test(
-        x.valueAtCanonicalOrdinal(i),
-        y.valueAtCanonicalOrdinal(i),
-        predicate
-      )
-      i += 1
-    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
+    val shape = x.space.spatialDims
+    val out =
+      RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
+        (i, j, k) => test(x(i, j, k), y(i, j, k), predicate)
+    NeuroVol.fromRavel(out, x.space, x.label)
 
   def compare[A: Order](x: NeuroVol[A], scalar: A, predicate: Predicate): NeuroVol[Boolean] =
-    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
-    var i = 0
-    while i < out.length do
-      out(i) = test(x.valueAtCanonicalOrdinal(i), scalar, predicate)
-      i += 1
-    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
+    val shape = x.space.spatialDims
+    val out =
+      RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
+        (i, j, k) => test(x(i, j, k), scalar, predicate)
+    NeuroVol.fromRavel(out, x.space, x.label)
 
   def compare[F <: Frame[D3], S, A: Order, Sem](
       volume: SelectedVolume[F, S, A, Sem],
@@ -369,35 +393,36 @@ object NeuroCompare:
     )
 
   def compare[A: Order](scalar: A, x: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
-    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
-    var i = 0
-    while i < out.length do
-      out(i) = test(scalar, x.valueAtCanonicalOrdinal(i), predicate)
-      i += 1
-    NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
+    val shape = x.space.spatialDims
+    val out =
+      RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
+        (i, j, k) => test(scalar, x(i, j, k), predicate)
+    NeuroVol.fromRavel(out, x.space, x.label)
 
   @scala.annotation.targetName("compareNeuroVecPair")
   def compare[A: Order](x: NeuroVec[A], y: NeuroVec[A], predicate: Predicate): NeuroVec[Boolean] =
     requireSameSpace(x.space, y.space)
-    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
-    var i = 0
-    while i < out.length do
-      out(i) = test(
-        x.valueAtCanonicalOrdinal(i),
-        y.valueAtCanonicalOrdinal(i),
-        predicate
-      )
-      i += 1
-    NeuroVec.copyFromCanonicalArray(out, x.space, x.label)
+    val shape = x.space.spatialDims
+    val out =
+      RavelArray.tabulate[Boolean](
+        shape(0),
+        shape(1),
+        shape(2),
+        x.nVolumes
+      )((i, j, k, t) => test(x(i, j, k, t), y(i, j, k, t), predicate))
+    NeuroVec.fromRavel(out, x.space, x.label)
 
   @scala.annotation.targetName("compareNeuroVecScalar")
   def compare[A: Order](x: NeuroVec[A], scalar: A, predicate: Predicate): NeuroVec[Boolean] =
-    val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)
-    var i = 0
-    while i < out.length do
-      out(i) = test(x.valueAtCanonicalOrdinal(i), scalar, predicate)
-      i += 1
-    NeuroVec.copyFromCanonicalArray(out, x.space, x.label)
+    val shape = x.space.spatialDims
+    val out =
+      RavelArray.tabulate[Boolean](
+        shape(0),
+        shape(1),
+        shape(2),
+        x.nVolumes
+      )((i, j, k, t) => test(x(i, j, k, t), scalar, predicate))
+    NeuroVec.fromRavel(out, x.space, x.label)
 
   def gt[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
     compare(x, scalar, Predicate.GT)

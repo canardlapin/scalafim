@@ -111,8 +111,12 @@ final class NiftiFieldSource private (
   private def readAndValidateHeader(stamp: NiftiFileStamp): Either[SpatialError, ValidatedNiftiState] =
     try
       headerReadCount += 1L
-      val header = Nifti.readHeader(path)
-      validateHeader(header).map(_ => ValidatedNiftiState(stamp, header))
+      Nifti
+        .readHeader(path)
+        .left
+        .map(error => SpatialError.FieldSourceReadFailed(descriptor.id, error.message))
+        .flatMap: header =>
+          validateHeader(header).map(_ => ValidatedNiftiState(stamp, header))
     catch
       case NonFatal(error) =>
         Left(SpatialError.FieldSourceReadFailed(descriptor.id, detail(error)))

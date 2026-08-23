@@ -9,7 +9,7 @@ ThisBuild / version      := "0.1.0-SNAPSHOT"
 // Ravel is the single dense-array substrate shared by response and image
 // semantics. The local override coordinates cross-repository development;
 // ordinary builds remain pinned to an immutable source revision.
-lazy val ravelRevision = "f804ba51242aae3a1442b3855a20bd896ffa8b64"
+lazy val ravelRevision = "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4"
 lazy val ravelBuild =
   sys.props
     .get("scalafim.ravel.build")
@@ -43,7 +43,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "31bc8f87d8349fd3296496979c95eeb3ec11ae21"
+lazy val image4sRevision = "6b9016b7aa622df8dec3d887080ee512fa7439c6"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -57,6 +57,23 @@ lazy val image4sCoreJVM = ProjectRef(image4sBuild, "image4s-coreJVM")
 lazy val image4sCoreJS  = ProjectRef(image4sBuild, "image4s-coreJS")
 lazy val image4sLocusJVM = ProjectRef(image4sBuild, "image4s-locusJVM")
 lazy val image4sLocusJS  = ProjectRef(image4sBuild, "image4s-locusJS")
+lazy val image4sFilterJVM = ProjectRef(image4sBuild, "image4s-filterJVM")
+lazy val image4sFilterJS  = ProjectRef(image4sBuild, "image4s-filterJS")
+lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
+
+// reframe4s owns generic spatial maps and resampling execution. ScalaFIM
+// retains neuroimaging policy and delegates affine kernels to this exact
+// reviewed source revision.
+lazy val reframe4sRevision = "357426b4fd1e35ddead0068375016f55b082c9e2"
+lazy val reframe4sBuild =
+  sys.props
+    .get("scalafim.reframe4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/reframe4s.git#$reframe4sRevision"))
+lazy val reframe4sLieJVM      = ProjectRef(reframe4sBuild, "reframe4s-lieJVM")
+lazy val reframe4sLieJS       = ProjectRef(reframe4sBuild, "reframe4s-lieJS")
+lazy val reframe4sResampleJVM = ProjectRef(reframe4sBuild, "reframe4s-resampleJVM")
+lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS")
 
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
@@ -374,13 +391,20 @@ lazy val image =
     .jvmConfigure(
       _.dependsOn(
         image4sCoreJVM,
-        image4sLocusJVM
+        image4sLocusJVM,
+        image4sFilterJVM,
+        image4sNiftiJVM,
+        reframe4sLieJVM,
+        reframe4sResampleJVM
       )
     )
     .jsConfigure(
       _.dependsOn(
         image4sCoreJS,
-        image4sLocusJS
+        image4sLocusJS,
+        image4sFilterJS,
+        reframe4sLieJS,
+        reframe4sResampleJS
       )
     )
     .jsSettings(jsSettingsBase)

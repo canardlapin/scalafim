@@ -124,7 +124,8 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(linVol1, Vector(1.0, 4.0, 7.0, 10.0), clue = "")
 
     val ts = vec.series(2)
-    val tsVec = Vector.tabulate(ts.length)(i => ts(i))
+    val tsVec = Vector.tabulate(ts.size)(i => ts(i))
+    assert(!ts.isWholeBuffer, clue = "single-voxel series must share the rank-4 owner")
     assertEquals(tsVec, Vector(6.0, 7.0, 8.0), clue = "")
   }
 
@@ -805,12 +806,21 @@ class CoreSuite extends munit.FunSuite:
     val vec = NeuroVec.copyFromCanonicalArray[Int](data, sp)
 
     val ts = vec.series(0, 0, 0)
-    val tsVals = Vector.tabulate(ts.length)(i => ts(i))
+    val tsVals = Vector.tabulate(ts.size)(i => ts(i))
+    assert(!ts.isWholeBuffer, clue = "single-voxel series must be a Ravel view")
     assertEquals(tsVals, Vector(1, 2, 3), clue = "")
 
     val lin0 = sp.gridToIndex3D(0, 0, 0)
-    val mat = vec.series(Array(lin0))
-    assertEquals(mat.shape, Shape(3, 1), clue = "")
-    val matVals = columnMajor2(mat)
-    assertEquals(matVals, Vector(1, 2, 3), clue = "")
+    val lin1 = sp.gridToIndex3D(1, 1, 1)
+    val mat = vec.series(Array(lin1, lin0))
+    assertEquals(mat.shape, Shape(2, 3), clue = "")
+    val matVals =
+      Vector.tabulate(2)(position =>
+        Vector.tabulate(3)(time => mat(position, time))
+      )
+    assertEquals(
+      matVals,
+      Vector(Vector(22, 23, 24), Vector(1, 2, 3)),
+      clue = ""
+    )
   }

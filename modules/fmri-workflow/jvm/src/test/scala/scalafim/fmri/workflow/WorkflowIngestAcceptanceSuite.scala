@@ -45,7 +45,10 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       assert(unit.mask.isInstanceOf[UnitMask.Intersection])
 
       val cache = NiftiStagingCache.unsafe(root.resolve("nifti-cache"))
-      val opened = FirstLevelUnitSource.open(unit, staging = Some(cache)).toOption.get
+      val opened =
+        FirstLevelUnitSource
+          .open(unit, staging = Some(cache))
+          .fold(error => fail(error.message), identity)
       val block = opened.source.readBlock(
         DataSelection(
           time = TimepointSelection.indices(3, 0, 2),

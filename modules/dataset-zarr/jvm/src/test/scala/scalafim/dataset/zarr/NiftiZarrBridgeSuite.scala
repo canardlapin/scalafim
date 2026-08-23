@@ -43,7 +43,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     ))
 
     val exported = fixture.exportRoot.resolve(NiftiRoundTripFixture.relativePath)
-    val header = Nifti.readHeader(exported)
+    val header = Nifti.readHeader(exported).toOption.get
     assertEquals(header.datatype, 4)
     assertEquals(header.bitpix, 16)
     assertEquals(header.dims, Vector(3, 2, 2, 2))

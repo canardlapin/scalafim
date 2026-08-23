@@ -1,375 +1,439 @@
 package scalafim.image.io
 
+import image4s.AxisKind
+import image4s.Continuous
+import image4s.ImageError
+import image4s.SampleSpace
+import image4s.Sampled
+import image4s.SomeSampled
+import image4s.geometry.Affine as ImageAffine
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.nifti.DecodedNifti
+import image4s.nifti.Nifti as ImageNifti
+import image4s.nifti.NiftiByteOrder
+import image4s.nifti.NiftiError
+import image4s.nifti.NiftiExtension
+import image4s.nifti.NiftiFiles
+import image4s.nifti.NiftiIoLimits
+import image4s.nifti.NiftiIoStrategy
+import image4s.nifti.NiftiReadOptions
+import image4s.nifti.NiftiScalarStored
+import image4s.nifti.NiftiTemporalUnit
+import image4s.nifti.NiftiUnknownTemporalUnitPolicy
+import image4s.nifti.NiftiWriteOptions
+import ravel.Rank
 import scalafim.image.*
 
-import java.io.{BufferedInputStream, FileInputStream, InputStream}
-import java.nio.charset.StandardCharsets
-import java.nio.{ByteBuffer, ByteOrder}
-import java.nio.file.Files
+import java.nio.ByteOrder
 import java.nio.file.Path
-import java.util.zip.GZIPInputStream
 
-final case class NiftiHeader(
-  dims: Vector[Int],
-  pixdim: Vector[Double],
-  datatype: Int,
-  bitpix: Int,
-  voxOffset: Int,
-  slope: Double,
-  intercept: Double,
-  qoffset: Vector[Double],
-  qformCode: Int,
-  qform: Option[DMat],
-  sformCode: Int,
-  sform: Option[DMat],
-  byteOrder: ByteOrder
+/** Neuroimaging-facing view of the authoritative image4s NIfTI header.
+  *
+  * The provider header is retained directly. Compatibility field spellings
+  * are derived views used by ScalaFIM's bounded block readers; there is no
+  * second parser or separately owned header state.
+  */
+final class NiftiHeader private[io] (
+    val native: image4s.nifti.NiftiHeader
 ):
-  def preferredAffine: Option[DMat] =
-    sform.orElse(qform)
+  inline def dims: Vector[Int] =
+    native.dimensions
 
-  def space: NeuroSpace =
-    preferredAffine match
-      case Some(affine) =>
-        val origin = Vector(affine(0, 3), affine(1, 3), affine(2, 3))
-        NeuroSpace(dims, spacing = Some(Affine.voxelSizes(affine)), origin = Some(origin), trans = Some(affine))
-      case None =>
-        NeuroSpace(dims, spacing = Some(pixdim.take(3)), origin = Some(Vector.fill(3)(0.0)))
+  inline def pixdim: Vector[Double] =
+    native.pixelDimensions
 
+  inline def datatype: Int =
+    native.datatype.code
+
+  inline def bitpix: Int =
+    native.datatype.bitsPerValue
+
+  inline def voxOffset: Int =
+    native.voxelOffset
+
+  inline def slope: Double =
+    native.slope
+
+  inline def intercept: Double =
+    native.intercept
+
+  lazy val qoffset: Vector[Double] =
+    native.qform
+      .map: affine =>
+        val values = affine.rowMajor
+        Vector(values(3), values(7), values(11))
+      .getOrElse(Vector.fill(3)(0.0))
+
+  inline def qformCode: Int =
+    native.qformCode
+
+  lazy val qform: Option[DMat] =
+    native.qform.map(NiftiHeader.toDMat)
+
+  inline def sformCode: Int =
+    native.sformCode
+
+  lazy val sform: Option[DMat] =
+    native.sform.map(NiftiHeader.toDMat)
+
+  lazy val byteOrder: ByteOrder =
+    native.byteOrder match
+      case NiftiByteOrder.LittleEndian => ByteOrder.LITTLE_ENDIAN
+      case NiftiByteOrder.BigEndian    => ByteOrder.BIG_ENDIAN
+
+  lazy val preferredAffine: Option[DMat] =
+    native.sform.orElse(native.qform).map(NiftiHeader.toDMat)
+
+  lazy val selectedAffine: DMat =
+    NiftiHeader.toDMat(
+      native.sform.orElse(native.qform).getOrElse(native.fallbackAffine)
+    )
+
+  lazy val space: NeuroSpace =
+    val affine = selectedAffine
+    val origin = Vector(affine(0, 3), affine(1, 3), affine(2, 3))
+    NeuroSpace(
+      dims,
+      spacing = Some(Affine.voxelSizes(affine)),
+      origin = Some(origin),
+      trans = Some(affine)
+    )
+
+object NiftiHeader:
+  private[io] def fromNative(
+      header: image4s.nifti.NiftiHeader
+  ): NiftiHeader =
+    new NiftiHeader(header)
+
+  private def toDMat(affine: ImageAffine[D3]): DMat =
+    DMat.fromRowMajorOwned(4, 4, affine.rowMajor.toArray)
+
+/** Native NIfTI I/O over image4s streaming and Ravel-owned destinations.
+  *
+  * Public entry points return typed provider errors. The package-scoped old
+  * names remain only while ScalaFIM consumers migrate their dense type names;
+  * they delegate to these methods without reordering or staging values.
+  */
 object Nifti:
+  type Error = NiftiError
+  type ReadOptions = NiftiReadOptions
+  type WriteOptions = NiftiWriteOptions
+  type IoLimits = NiftiIoLimits
+  type StoredScalar = NiftiScalarStored
 
-  def writeVol(path: Path, volume: NeuroVol[Double]): Path =
-    writeBytes(
+  val ReadOptions = NiftiReadOptions
+  val WriteOptions = NiftiWriteOptions
+  val IoLimits = NiftiIoLimits
+
+  def ioStrategy(path: Path): NiftiIoStrategy =
+    ImageNifti.ioStrategy(path)
+
+  def readHeader(
+      path: Path,
+      limits: NiftiIoLimits = NiftiIoLimits.default
+  ): Either[NiftiError, NiftiHeader] =
+    ImageNifti.readHeader(path, limits).map(NiftiHeader.fromNative)
+
+  def readStored(
+      path: Path,
+      options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[NiftiError, DecodedNifti[NiftiScalarStored]] =
+    ImageNifti.readScalarStored(path, options)
+
+  def readVolume(
+      path: Path,
+      options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[
+    NiftiError,
+    DecodedNifti[SomeScalarVolume[Double]]
+  ] =
+    ImageNifti
+      .readScaledDouble(path, options)
+      .flatMap: decoded =>
+        volumeFrom(decoded.image).map: volume =>
+          DecodedNifti(
+            volume,
+            decoded.header,
+            decoded.affineSelection
+          )
+
+  def readSeries(
+      path: Path,
+      options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
+  ): Either[
+    NiftiError,
+    DecodedNifti[SomeScalarSeries[Double]]
+  ] =
+    ImageNifti
+      .readScaledDouble(path, options)
+      .flatMap: decoded =>
+        seriesFrom(decoded.image).map: series =>
+          DecodedNifti(
+            series,
+            decoded.header,
+            decoded.affineSelection
+          )
+
+  def writeVolume(
+      path: Path,
+      volume: SomeScalarVolume[Double],
+      options: NiftiWriteOptions = NiftiWriteOptions.default,
+      extensions: Vector[NiftiExtension] = Vector.empty
+  ): Either[NiftiError, NiftiFiles[Path]] =
+    ImageNifti.writeScalar(
       path,
-      niftiBytes(
-        volume.space.dims.take(3),
-        volume.space,
-        volume.copyToCanonicalArray
-      )
+      volume.asInstanceOf[
+        Sampled[
+          SampleSpace[Frame[D3], D3],
+          Double,
+          Continuous,
+          Rank[3]
+        ]
+      ],
+      options,
+      extensions
     )
 
-  def writeVec(path: Path, vec: NeuroVec[Double]): Path =
-    writeBytes(
+  def writeSeries(
+      path: Path,
+      series: SomeScalarSeries[Double],
+      options: NiftiWriteOptions = Nifti.defaultSeriesWriteOptions,
+      extensions: Vector[NiftiExtension] = Vector.empty
+  ): Either[NiftiError, NiftiFiles[Path]] =
+    ImageNifti.writeScalar(
       path,
-      niftiBytes(
-        vec.space.dims.take(4),
-        vec.space,
-        vec.copyToCanonicalArray
-      )
+      series.asInstanceOf[
+        Sampled[
+          SampleSpace[Frame[D3], D3],
+          Double,
+          Continuous,
+          Rank[4]
+        ]
+      ],
+      options,
+      extensions
     )
 
-  def writeDenseVectorField[Role <: DenseVectorFieldKind](
+  def readDisplacementField(
+      path: Path,
+      options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[NiftiError, DisplacementField] =
+    readDenseVectorFieldData(path, options).map: (grid, data) =>
+      DenseVectorField.displacement(grid, data)
+
+  def readSourceCoordinateField(
+      path: Path,
+      options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[NiftiError, SourceCoordinateField] =
+    readDenseVectorFieldData(path, options).map: (grid, data) =>
+      DenseVectorField.sourceCoordinates(grid, data)
+
+  private val defaultSeriesReadOptions: NiftiReadOptions =
+    NiftiReadOptions.default.copy(
+      unknownTemporalUnit = NiftiUnknownTemporalUnitPolicy.AssumeSeconds
+    )
+
+  private val defaultSeriesWriteOptions: NiftiWriteOptions =
+    NiftiWriteOptions
+      .create(
+        datatype = image4s.nifti.NiftiDatatype.Float64,
+        slope = 1.0,
+        intercept = 0.0,
+        nonSpatialPixelDimensions = Vector(1.0),
+        temporalUnit = NiftiTemporalUnit.Second
+      )
+      .fold(
+        error => throw new IllegalStateException(error.message),
+        identity
+      )
+
+  private def volumeFrom(
+      image: SomeSampled[Double, Continuous]
+  ): Either[NiftiError, SomeScalarVolume[Double]] =
+    image.fold(
+      d2 =>
+        Left(
+          NiftiError.Image(
+            ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+          )
+        ),
+      d3 =>
+        d3.storageRank match
+          case 3 =>
+            d3.value
+              .requireDataRank[3]
+              .left
+              .map(NiftiError.Image.apply)
+              .map(SomeNeuroVolume.unsafeFromSampled)
+          case 4
+              if d3.value.nonSpatialAxes.size == 1 &&
+                d3.value.nonSpatialAxes.values.head.extent == 1 =>
+            d3.value
+              .requireDataRank[4]
+              .flatMap(_.selectNonSpatial(0, 0))
+              .flatMap(_.requireDataRank[3])
+              .left
+              .map(NiftiError.Image.apply)
+              .map(SomeNeuroVolume.unsafeFromSampled)
+          case actual =>
+            Left(
+              NiftiError.Image(
+                ImageError.StorageRankMismatch(3, actual)
+              )
+            )
+    )
+
+  private def seriesFrom(
+      image: SomeSampled[Double, Continuous]
+  ): Either[NiftiError, SomeScalarSeries[Double]] =
+    image.fold(
+      d2 =>
+        Left(
+          NiftiError.Image(
+            ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+          )
+        ),
+      d3 =>
+        d3.value
+          .requireDataRank[4]
+          .left
+          .map(NiftiError.Image.apply)
+          .flatMap: ranked =>
+            val axes = ranked.nonSpatialAxes.values
+            if axes.size != 1 || axes.head.kind != AxisKind.Time then
+              Left(
+                NiftiError.Image(
+                  ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+                )
+              )
+            else
+              NeuroSeries
+                .fromSampled(ranked)
+                .left
+                .map(nativeImageError)
+                .map(SomeNeuroSeries.eraseSpace)
+    )
+
+  private def readDenseVectorFieldData(
+      path: Path,
+      options: NiftiReadOptions
+  ): Either[
+    NiftiError,
+    (GridSpec, ravel.NDArray[Double, Rank[4]])
+  ] =
+    ImageNifti
+      .readScaledDouble(path, options)
+      .flatMap: decoded =>
+        decoded.image.fold(
+          d2 =>
+            Left(
+              NiftiError.Image(
+                ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+              )
+            ),
+          d3 =>
+            if d3.value.nonSpatialAxes.size != 1 ||
+              d3.value.nonSpatialAxes.values.head.extent != 3
+            then
+              Left(
+                NiftiError.Image(
+                  ImageError.SampledShapeMismatch(
+                    d3.value.grid.shape :+ 3,
+                    d3.value.logicalShape
+                  )
+                )
+              )
+            else
+              d3.value
+                .requireDataRank[4]
+                .left
+                .map(NiftiError.Image.apply)
+                .map: ranked =>
+                  val space =
+                    NeuroSpace.fromCanonical(ranked.sampleSpace).spatialSpace
+                  GridSpec.fromSpace(space) -> ranked.data
+        )
+
+  private def nativeImageError(error: NativeImageError): NiftiError =
+    error match
+      case NativeImageError.Image(cause) =>
+        NiftiError.Image(cause)
+      case _ =>
+        NiftiError.Image(
+          ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+        )
+
+  private[scalafim] def readHeaderUnsafe(path: Path): NiftiHeader =
+    readHeader(path).fold(
+      error => throw new IllegalArgumentException(error.message),
+      identity
+    )
+
+  private[scalafim] def readVol(path: Path): NeuroVol[Double] =
+    readVolume(path)
+      .map: decoded =>
+        NeuroVol.fromPacked(
+          AnyNeuroVolume.eraseSemantics(decoded.image)
+        )
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        identity
+      )
+
+  private[scalafim] def readVec(path: Path): NeuroVec[Double] =
+    readSeries(path)
+      .map(decoded => NeuroVec.fromNative(decoded.image))
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        identity
+      )
+
+  private[scalafim] def writeVol(
+      path: Path,
+      volume: NeuroVol[Double]
+  ): Path =
+    ImageNifti
+      .writeScalar(path, ContinuousImageRefinement.volume(volume))
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        _.paths.head
+      )
+
+  private[scalafim] def writeVec(
+      path: Path,
+      series: NeuroVec[Double]
+  ): Path =
+    ImageNifti
+      .writeScalar(
+        path,
+        ContinuousImageRefinement.series(series),
+        defaultSeriesWriteOptions
+      )
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        _.paths.head
+      )
+
+  private[scalafim] def writeDenseVectorField[
+      Role <: DenseVectorFieldKind
+  ](
       path: Path,
       field: DenseVectorField[Role]
   ): Path =
-    writeBytes(
-      path,
-      niftiBytes(
-        Vector.tabulate(4)(field.values.shape(_)),
-        field.space.spatialSpace,
-        field.copyToCanonicalArray
+    ImageNifti
+      .writeScalar(
+        path,
+        field.sampled.asInstanceOf[
+          Sampled[
+            SampleSpace[Frame[D3], D3],
+            Double,
+            Continuous,
+            Rank[4]
+          ]
+        ]
       )
-    )
-
-  def readHeader(path: Path): NiftiHeader =
-    val in = open(path)
-    try
-      val hdrBytes = in.readNBytes(348)
-      if hdrBytes.length != 348 then
-        throw new IllegalArgumentException("file too small for NIfTI header")
-
-      val bbLE = ByteBuffer.wrap(hdrBytes).order(ByteOrder.LITTLE_ENDIAN)
-      val bbBE = ByteBuffer.wrap(hdrBytes).order(ByteOrder.BIG_ENDIAN)
-
-      val order =
-        val szLE = bbLE.getInt(0)
-        val szBE = bbBE.getInt(0)
-        if szLE == 348 then ByteOrder.LITTLE_ENDIAN
-        else if szBE == 348 then ByteOrder.BIG_ENDIAN
-        else throw new IllegalArgumentException("not a NIfTI-1 header (sizeof_hdr != 348)")
-
-      val bb = ByteBuffer.wrap(hdrBytes).order(order)
-
-      val dim0 = bb.getShort(40).toInt
-      val dims = Vector.tabulate(dim0)(i => bb.getShort(42 + i * 2).toInt).map(_.max(1))
-
-      val datatype = bb.getShort(70).toInt & 0xffff
-      val bitpix = bb.getShort(72).toInt & 0xffff
-
-      val rawQfac = bb.getFloat(76).toDouble
-      val qfac = if rawQfac < 0.0 then -1.0 else 1.0
-      val pixdim = Vector.tabulate(3) { i =>
-        val value = math.abs(bb.getFloat(76 + (i + 1) * 4).toDouble)
-        if value == 0.0 then 1.0 else value
-      }
-
-      val voxOffset = bb.getFloat(108).toInt
-      val slope = bb.getFloat(112).toDouble
-      val intercept = bb.getFloat(116).toDouble
-
-      val qoffset =
-        Vector(
-          bb.getFloat(268).toDouble,
-          bb.getFloat(272).toDouble,
-          bb.getFloat(276).toDouble
-        )
-
-      val qformCode = bb.getShort(252).toInt
-      val qform =
-        if qformCode > 0 then
-          val b = bb.getFloat(256).toDouble
-          val c = bb.getFloat(260).toDouble
-          val d = bb.getFloat(264).toDouble
-          Some(quaternionAffine(b, c, d, qoffset, pixdim, qfac))
-        else None
-
-      val sformCode = bb.getShort(254).toInt
-      val sform =
-        if sformCode > 0 then
-          val rows = Vector(
-            Vector.tabulate(4)(i => bb.getFloat(280 + i * 4).toDouble),
-            Vector.tabulate(4)(i => bb.getFloat(296 + i * 4).toDouble),
-            Vector.tabulate(4)(i => bb.getFloat(312 + i * 4).toDouble),
-            Vector(0.0, 0.0, 0.0, 1.0)
-          )
-          Some(DMat.fromRows(rows))
-        else None
-
-      NiftiHeader(
-        dims = dims,
-        pixdim = pixdim,
-        datatype = datatype,
-        bitpix = bitpix,
-        voxOffset = voxOffset,
-        slope = slope,
-        intercept = intercept,
-        qoffset = qoffset,
-        qformCode = qformCode,
-        qform = qform,
-        sformCode = sformCode,
-        sform = sform,
-        byteOrder = order
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        _.paths.head
       )
-    finally in.close()
-
-  def readVol(path: Path): NeuroVol[Double] =
-    val hdr = readHeader(path)
-    require(hdr.dims.length == 3 || (hdr.dims.length == 4 && hdr.dims(3) == 1), "expected 3D nifti")
-    val sp = if hdr.dims.length == 4 then hdr.space.spatialSpace else hdr.space
-    val data = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
-    NeuroVol.copyFromCanonicalArray(data, sp)
-
-  def readVec(path: Path): NeuroVec[Double] =
-    val hdr = readHeader(path)
-    require(hdr.dims.length == 4 && hdr.dims(3) > 1, "expected 4D nifti with time dimension")
-    val sp = hdr.space
-    val data = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
-    NeuroVec.copyFromCanonicalArray(data, sp)
-
-  def readDisplacementField(path: Path): DisplacementField =
-    val (grid, data) = readDenseVectorFieldData(path)
-    DenseVectorField.displacement(grid, data)
-
-  def readSourceCoordinateField(path: Path): SourceCoordinateField =
-    val (grid, data) = readDenseVectorFieldData(path)
-    DenseVectorField.sourceCoordinates(grid, data)
-
-  private def readDenseVectorFieldData(
-      path: Path
-  ): (GridSpec, ravel.NDArray[Double, ravel.Rank[4]]) =
-    val hdr = readHeader(path)
-    require(
-      hdr.dims.length == 4 && hdr.dims(3) == 3,
-      "expected 4D NIfTI with three direction components"
-    )
-    val canonical = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
-    val data =
-      ravel.NDArray.fromSeq(
-        ravel.Shape(hdr.dims(0), hdr.dims(1), hdr.dims(2), 3),
-        canonical
-      )
-    (GridSpec.fromSpace(hdr.space.spatialSpace), data)
-
-  private def open(path: Path): InputStream =
-    val base: InputStream = new BufferedInputStream(new FileInputStream(path.toFile))
-    if path.toString.endsWith(".gz") then new GZIPInputStream(base) else base
-
-  private def writeBytes(path: Path, bytes: Array[Byte]): Path =
-    if path.toString.endsWith(".gz") then
-      throw new UnsupportedOperationException("writing compressed NIfTI is not supported by the lightweight adapter")
-    Option(path.getParent).foreach(Files.createDirectories(_))
-    Files.write(path, bytes)
-    path
-
-  private def quaternionAffine(
-      b0: Double,
-      c0: Double,
-      d0: Double,
-      offset: Vector[Double],
-      spacing: Vector[Double],
-      qfac: Double
-  ): DMat =
-    val squaredVector = b0 * b0 + c0 * c0 + d0 * d0
-    val (a, b, c, d) =
-      if squaredVector > 1.0 - 1e-7 then
-        val scale = 1.0 / math.sqrt(squaredVector)
-        (0.0, b0 * scale, c0 * scale, d0 * scale)
-      else
-        (math.sqrt(1.0 - squaredVector), b0, c0, d0)
-
-    val r11 = a * a + b * b - c * c - d * d
-    val r12 = 2.0 * (b * c - a * d)
-    val r13 = 2.0 * (b * d + a * c)
-    val r21 = 2.0 * (b * c + a * d)
-    val r22 = a * a + c * c - b * b - d * d
-    val r23 = 2.0 * (c * d - a * b)
-    val r31 = 2.0 * (b * d - a * c)
-    val r32 = 2.0 * (c * d + a * b)
-    val r33 = a * a + d * d - c * c - b * b
-
-    DMat.fromRows(
-      Vector(
-        Vector(r11 * spacing(0), r12 * spacing(1), r13 * spacing(2) * qfac, offset(0)),
-        Vector(r21 * spacing(0), r22 * spacing(1), r23 * spacing(2) * qfac, offset(1)),
-        Vector(r31 * spacing(0), r32 * spacing(1), r33 * spacing(2) * qfac, offset(2)),
-        Vector(0.0, 0.0, 0.0, 1.0)
-      )
-    )
-
-  private def niftiBytes(dims: Vector[Int], space: NeuroSpace, values: Array[Double]): Array[Byte] =
-    require(dims.length == 3 || dims.length == 4, "NIfTI writer expects a 3D volume or 4D vector")
-    require(values.length == dims.product, "NIfTI data length must match dimensions")
-    val bytes = Array.ofDim[Byte](352 + values.length * 8)
-    val bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-
-    bb.putInt(0, 348)
-    bb.putShort(40, dims.length.toShort)
-    var d = 0
-    while d < 7 do
-      val dim = if d < dims.length then dims(d) else 1
-      bb.putShort(42 + d * 2, dim.toShort)
-      d += 1
-
-    bb.putShort(70, 64.toShort)
-    bb.putShort(72, 64.toShort)
-    bb.putFloat(76, 1.0f)
-    val spacing = space.spacing.padTo(3, 1.0)
-    var i = 0
-    while i < 3 do
-      bb.putFloat(80 + i * 4, spacing(i).toFloat)
-      i += 1
-    if dims.length == 4 then bb.putFloat(92, 1.0f)
-    bb.putFloat(108, 352.0f)
-    bb.putFloat(112, 1.0f)
-    bb.putFloat(116, 0.0f)
-
-    val affine = space.trans
-    bb.putShort(254, 1.toShort)
-    bb.putFloat(268, affine(0, 3).toFloat)
-    bb.putFloat(272, affine(1, 3).toFloat)
-    bb.putFloat(276, affine(2, 3).toFloat)
-    var c = 0
-    while c < 4 do
-      bb.putFloat(280 + c * 4, affine(0, c).toFloat)
-      bb.putFloat(296 + c * 4, affine(1, c).toFloat)
-      bb.putFloat(312 + c * 4, affine(2, c).toFloat)
-      c += 1
-
-    val magic = "n+1".getBytes(StandardCharsets.US_ASCII)
-    bb.put(344, magic(0))
-    bb.put(345, magic(1))
-    bb.put(346, magic(2))
-    bb.put(347, 0.toByte)
-
-    val niftiValues = canonicalToNifti(values, dims)
-    i = 0
-    while i < niftiValues.length do
-      bb.putDouble(352 + i * 8, niftiValues(i))
-      i += 1
-    bytes
-
-  /** Convert Ravel C-order samples to the NIfTI-1 storage convention, where
-    * the x axis varies fastest, followed by y, z, and time.
-    */
-  private def canonicalToNifti(
-      canonical: Array[Double],
-      dims: Vector[Int]
-  ): Array[Double] =
-    reorderSamples(canonical, dims, sourceIsNifti = false)
-
-  /** Convert NIfTI-1 x-fastest samples to canonical Ravel C order. */
-  private def niftiToCanonical(
-      nifti: Array[Double],
-      dims: Vector[Int]
-  ): Array[Double] =
-    reorderSamples(nifti, dims, sourceIsNifti = true)
-
-  private def reorderSamples(
-      source: Array[Double],
-      dims: Vector[Int],
-      sourceIsNifti: Boolean
-  ): Array[Double] =
-    val nx = dims(0)
-    val ny = dims(1)
-    val nz = dims(2)
-    val nt = if dims.length == 4 then dims(3) else 1
-    val out = Array.ofDim[Double](source.length)
-    var time = 0
-    while time < nt do
-      var z = 0
-      while z < nz do
-        var y = 0
-        while y < ny do
-          var x = 0
-          while x < nx do
-            val niftiOrdinal =
-              x + nx * (y + ny * (z + nz * time))
-            val canonicalOrdinal =
-              ((x * ny + y) * nz + z) * nt + time
-            if sourceIsNifti then
-              out(canonicalOrdinal) = source(niftiOrdinal)
-            else
-              out(niftiOrdinal) = source(canonicalOrdinal)
-            x += 1
-          y += 1
-        z += 1
-      time += 1
-    out
-
-  private def readDataAsDouble(path: Path, hdr: NiftiHeader): Array[Double] =
-    val in = open(path)
-    try
-      val skipped = in.skip(hdr.voxOffset.toLong)
-      if skipped < hdr.voxOffset then
-        throw new IllegalArgumentException("unable to seek to vox_offset")
-
-      val nels = hdr.dims.product
-      val out = Array.ofDim[Double](nels)
-
-      val bytesPer = hdr.bitpix / 8
-      val buf = Array.ofDim[Byte](bytesPer)
-      val bb = ByteBuffer.wrap(buf).order(hdr.byteOrder)
-
-      val slope = if hdr.slope == 0.0 then 1.0 else hdr.slope
-      val intercept = hdr.intercept
-
-      var i = 0
-      while i < nels do
-        val read = in.readNBytes(buf, 0, bytesPer)
-        if read != bytesPer then
-          throw new IllegalArgumentException("unexpected EOF in data")
-
-        bb.rewind()
-        val raw =
-          hdr.datatype match
-            case 16 => bb.getFloat(0).toDouble
-            case 64 => bb.getDouble(0)
-            case 2  => (bb.get(0) & 0xff).toDouble
-            case 4  => bb.getShort(0).toDouble
-            case 8  => bb.getInt(0).toDouble
-            case other =>
-              throw new UnsupportedOperationException(s"unsupported datatype $other")
-
-        out(i) = raw * slope + intercept
-        i += 1
-      out
-    finally in.close()

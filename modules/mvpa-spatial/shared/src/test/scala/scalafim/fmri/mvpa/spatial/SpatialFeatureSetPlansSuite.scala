@@ -54,8 +54,8 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "semantic"),
-          Region(RegionId(2), "visual")
+          AtlasRegionMetadata(RegionId(1), "semantic"),
+          AtlasRegionMetadata(RegionId(2), "visual")
         )
       )
     val ref =

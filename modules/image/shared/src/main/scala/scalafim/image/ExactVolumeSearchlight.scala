@@ -67,6 +67,16 @@ final class VolumeNeighborhoods[S] private[image] (
   def regionAt(center: Index[S]): Option[Region[S]] =
     Option.when(centers.contains(center))(relation.row(center))
 
+/** Reusable exact searchlight support. Geometry and selection construction are
+  * workload preparation; applying image values retains only the compact Ravel
+  * destination and this already-certified selection.
+  */
+final class PreparedVolumeWindow[S] private[image] (
+    val selection: Selection[S],
+    val center: Index[S],
+    val centerPosition: Int
+)
+
 object ExactVolumeSearchlight:
   /** Validate an exact sparse neighborhood relation as centered searchlight
     * policy. Both relation ends must be the same live owner as `centers`.
@@ -88,6 +98,44 @@ object ExactVolumeSearchlight:
         )
       )
     else validateCentered(centers, relation)
+
+  def prepare[S](
+      searchlight: VolumeNeighborhoods[S],
+      center: Index[S],
+      support: Option[Region[S]] = None
+  ): Either[ExactVolumeSearchlightError, PreparedVolumeWindow[S]] =
+    for
+      neighborhood <- searchlight
+        .regionAt(center)
+        .toRight(
+          ExactVolumeSearchlightError.CenterUnavailable(center.ordinal)
+        )
+      restricted = support.fold(neighborhood)(neighborhood.intersect)
+      _ <-
+        if restricted.contains(center) then Right(())
+        else
+          Left(
+            ExactVolumeSearchlightError.CenterExcluded(center.ordinal)
+          )
+      selection <- Selection
+        .fromRegion(restricted)
+        .left
+        .map(ExactVolumeSearchlightError.InvalidSelection.apply)
+      centerPosition =
+        var position = 0
+        var found = -1
+        while position < selection.size && found < 0 do
+          val selectedPosition =
+            selection.positions.indexAtValidatedOrdinal(position)
+          if selection(selectedPosition).ordinal == center.ordinal then
+            found = position
+          position += 1
+        found
+    yield new PreparedVolumeWindow(
+      selection,
+      center,
+      centerPosition
+    )
 
   def metricBalls[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
@@ -294,41 +342,98 @@ object ExactVolumeSearchlight:
     for
       _ <- checkSpace(domain, searchlight.centers.space)
       _ <- checkSpace(domain, field.space)
-      neighborhood <- searchlight
-        .regionAt(center)
-        .toRight(
-          ExactVolumeSearchlightError.CenterUnavailable(center.ordinal)
-        )
-      restricted = support.fold(neighborhood)(neighborhood.intersect)
-      _ <-
-        if restricted.contains(center) then Right(())
-        else
-          Left(
-            ExactVolumeSearchlightError.CenterExcluded(center.ordinal)
+      prepared <- prepare(searchlight, center, support)
+      data = NDArray.build[A, ravel.Rank[1]](
+        ravel.Shape(prepared.selection.size)
+      ): output =>
+        var position = 0
+        while position < prepared.selection.size do
+          val selectedPosition =
+            prepared.selection.positions.indexAtValidatedOrdinal(position)
+          output.writeLinear(
+            position,
+            field(prepared.selection(selectedPosition))
           )
-      selection <- Selection
-        .fromRegion(restricted)
-        .left
-        .map(ExactVolumeSearchlightError.InvalidSelection.apply)
-      indices = selection.indices.toVector
-      data = NDArray.fromSeq(
-        ravel.Shape(indices.length),
-        indices.map(field.apply)
-      )
+          position += 1
       selected <- SelectedVolume
         .create(
           domain,
-          selection,
+          prepared.selection,
           data,
           ImageMetadata(label)
         )
         .left
         .map(ExactVolumeSearchlightError.InvalidSelectedImage.apply)
-      centerPosition = indices.indexWhere(_.ordinal == center.ordinal)
       window <- SelectedVolumeWindow
-        .make(selected, center, centerPosition)
+        .make(selected, center, prepared.centerPosition)
         .left
         .map(ExactVolumeSearchlightError.InvalidWindow.apply)
+    yield window
+
+  /** Apply one prepared searchlight directly to a native D3 image. This hot
+    * path delegates dense-to-selected execution to image4s-locus and does not
+    * rebuild the exact selection for every image or statistical map.
+    */
+  def materializePreparedVolume[
+      F <: Frame[D3],
+      S,
+      A,
+      Sem
+  ](
+      domain: GridDomain[F, D3, S],
+      prepared: PreparedVolumeWindow[S],
+      volume: SomeNeuroVolume[A, Sem],
+      label: String = ""
+  )(using
+      DType[A],
+      ValueSemantics[A, Sem]
+  ): Either[
+    ExactVolumeSearchlightError,
+    SelectedVolumeWindow[F, S, A, Sem]
+  ] =
+    val labeled =
+      if label.isEmpty then volume
+      else SomeNeuroVolume.unsafeFromSampled(
+        volume.withMetadata(ImageMetadata(label))
+      )
+    for
+      selected <- SelectedVolume
+        .gather(domain, labeled, prepared.selection)
+        .left
+        .map(ExactVolumeSearchlightError.InvalidSelectedImage.apply)
+      window <- SelectedVolumeWindow
+        .make(
+          selected,
+          prepared.center,
+          prepared.centerPosition
+        )
+        .left
+        .map(ExactVolumeSearchlightError.InvalidWindow.apply)
+    yield window
+
+  def materializeVolume[F <: Frame[D3], S, A, Sem](
+      domain: GridDomain[F, D3, S],
+      searchlight: VolumeNeighborhoods[S],
+      center: Index[S],
+      volume: SomeNeuroVolume[A, Sem],
+      support: Option[Region[S]] = None,
+      label: String = ""
+  )(using
+      DType[A],
+      ValueSemantics[A, Sem]
+  ): Either[
+    ExactVolumeSearchlightError,
+    SelectedVolumeWindow[F, S, A, Sem]
+  ] =
+    for
+      _ <- checkSpace(domain, searchlight.centers.space)
+      prepared <- prepare(searchlight, center, support)
+      window <- materializePreparedVolume(
+        domain,
+        prepared,
+        volume,
+        label
+      )
     yield window
 
   /** Materialize a scalar-valued searchlight without asking inference to

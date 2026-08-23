@@ -51,16 +51,6 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
     val (v, localT) = locate(t)
     v.valueAtVoxelOrdinal(linSpatial, localT)
 
-  private[scalafim] def valuesAtCanonicalOrdinals(
-      indices: Array[Int]
-  )(using ClassTag[A]): Array[A] =
-    val out = Array.ofDim[A](indices.length)
-    var p = 0
-    while p < indices.length do
-      out(p) = valueAtCanonicalOrdinal(indices(p))
-      p += 1
-    out
-
   def subVector(ts: Seq[Int])(using
       ClassTag[A],
       MigrationValueSemantics[A]

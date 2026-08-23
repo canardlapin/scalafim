@@ -2,7 +2,11 @@ package scalafim.fmri.workflow
 
 import scalafim.dataset.*
 import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
-import scalafim.image.{GridCompatibility, Mask, PrimitiveBuffers, NeuroVol}
+import scalafim.image.CertifiedGridCongruence
+import scalafim.image.GridCompatibility
+import scalafim.image.Mask
+import scalafim.image.NeuroVol
+import scalafim.image.PrimitiveBuffers
 import scalafim.image.io.Nifti
 
 import java.net.URI
@@ -12,13 +16,20 @@ import scala.util.control.NonFatal
 final case class OpenedFirstLevelUnit(
     unit: FirstLevelUnit,
     source: CompositeResponseBlockSource,
-    mask: Mask.MaskVol
+    mask: Mask.MaskVol,
+    maskCongruence: CertifiedGridCongruence
 ):
   def backend(
       datasetId: DatasetId,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, ResponseBlockDatasetBackend] =
-    ResponseBlockDatasetBackend.make(datasetId, source, mask, metadata)
+    ResponseBlockDatasetBackend.makeCongruent(
+      datasetId,
+      source,
+      mask,
+      maskCongruence,
+      metadata
+    )
 
 object FirstLevelUnitSource:
   def open(
@@ -28,37 +39,56 @@ object FirstLevelUnitSource:
   ): Either[DatasetError, OpenedFirstLevelUnit] =
     for
       mask <- readMask(unit.mask)
-      _ <-
-        if GridCompatibility.exact(mask.space, unit.shape.space).isRight then Right(())
-        else Left(DatasetError.ShapeMismatch("unit mask does not match catalog geometry"))
-      voxelDomain <- VoxelDomain.fromMask(mask, unit.shape)
-      runSources <- traverse(unit.runs) { run =>
+      maskCongruence <- GridCompatibility
+        .certifySpatialCongruence(unit.shape.space, mask.space, 1e-6)
+        .left
+        .map(_ => DatasetError.ShapeMismatch("unit mask does not match catalog geometry"))
+      voxelDomain <- VoxelDomain.fromMask(mask, unit.shape, maskCongruence)
+      openedRuns <- traverse(unit.runs) { run =>
         for
           path <- filePath(run.bold.location)
           source <- NiftiResponseBlockSource.open(path, staging, Some(voxelDomain), metadata)
-          _ <- validateRunSource(unit, run, source)
-        yield RunResponseBlockSource(run.id, source)
+          congruence <- validateRunSource(unit, run, source)
+        yield RunResponseBlockSource(run.id, source) -> congruence
       }
-      composite <- CompositeResponseBlockSource.make(runSources, metadata)
+      composite <- CompositeResponseBlockSource.makeCongruent(
+        openedRuns.map(_._1),
+        unit.shape.space,
+        openedRuns.map(_._2),
+        metadata
+      )
       _ <-
         if sameShape(composite.shape, unit.shape) then Right(())
         else Left(DatasetError.ShapeMismatch("opened run sources do not match catalog unit shape"))
-    yield OpenedFirstLevelUnit(unit, composite, mask)
+    yield OpenedFirstLevelUnit(unit, composite, mask, maskCongruence)
 
   private def validateRunSource(
       unit: FirstLevelUnit,
       run: RunInput,
       source: NiftiResponseBlockSource
-  ): Either[DatasetError, Unit] =
-    if GridCompatibility.exact(source.shape.space, unit.shape.space).isLeft then
-      Left(DatasetError.ShapeMismatch(s"run '${run.id.value}' geometry differs from its catalog unit"))
-    else if source.shape.timepoints != run.timepoints then
-      Left(
-        DatasetError.ShapeMismatch(
-          s"run '${run.id.value}' header has ${source.shape.timepoints} timepoints; catalog records ${run.timepoints}"
+  ): Either[DatasetError, CertifiedGridCongruence] =
+    for
+      congruence <- GridCompatibility
+        .certifySpatialCongruence(
+          unit.shape.space,
+          source.shape.space,
+          1e-6
         )
-      )
-    else Right(())
+        .left
+        .map(_ =>
+          DatasetError.ShapeMismatch(
+            s"run '${run.id.value}' geometry differs from its catalog unit"
+          )
+        )
+      _ <-
+        if source.shape.timepoints != run.timepoints then
+          Left(
+            DatasetError.ShapeMismatch(
+              s"run '${run.id.value}' header has ${source.shape.timepoints} timepoints; catalog records ${run.timepoints}"
+            )
+          )
+        else Right(())
+    yield congruence
 
   private def readMask(mask: UnitMask): Either[DatasetError, Mask.MaskVol] =
     mask match
@@ -82,9 +112,22 @@ object FirstLevelUnitSource:
     if masks.isEmpty then Left(DatasetError.StorageFailure("mask intersection requires at least one mask"))
     else
       val first = masks.head
-      val incompatible = masks.tail.exists(mask => GridCompatibility.exact(mask.space, first.space).isLeft)
-      if incompatible then Left(DatasetError.ShapeMismatch("run masks have incompatible geometry"))
-      else
+      val alignments =
+        masks.tail.foldLeft[Either[DatasetError, Vector[CertifiedGridCongruence]]](
+          Right(Vector.empty)
+        ): (acc, mask) =>
+          for
+            collected <- acc
+            alignment <- GridCompatibility
+              .certifySpatialCongruence(first.space, mask.space, 1e-6)
+              .left
+              .map(_ =>
+                DatasetError.ShapeMismatch(
+                  "run masks have incompatible geometry"
+                )
+              )
+          yield collected :+ alignment
+      alignments.map: _ =>
         val indices = Array.newBuilder[Int]
         var voxel = 0
         while voxel < first.values.size do
@@ -97,8 +140,18 @@ object FirstLevelUnitSource:
           if keep then indices += voxel
           voxel += 1
         val selected = indices.result()
-        if selected.isEmpty then Left(DatasetError.ShapeMismatch("run-mask intersection is empty"))
-        else Right(Mask.fromIndices(first.space, PrimitiveBuffers.fromArray(selected), "run-mask-intersection"))
+        selected
+      .flatMap: selected =>
+        if selected.isEmpty then
+          Left(DatasetError.ShapeMismatch("run-mask intersection is empty"))
+        else
+          Right(
+            Mask.fromIndices(
+              first.space,
+              PrimitiveBuffers.fromArray(selected),
+              "run-mask-intersection"
+            )
+          )
 
   private def sameShape(expected: DatasetShape, actual: DatasetShape): Boolean =
     expected.timepoints == actual.timepoints &&

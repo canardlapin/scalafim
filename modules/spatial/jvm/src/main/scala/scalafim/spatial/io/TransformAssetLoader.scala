@@ -545,57 +545,72 @@ object TransformAssetLoader:
       try
         val sourceSpace = volumeSpace(source)
         val targetSpace = volumeSpace(target)
-        val (native, nativeSpace): (RavelArray[Double, Rank[4]], NeuroSpace) =
+        val nativeResult =
           options.denseEncoding match
             case DenseTransformEncoding.Displacement =>
-              val field = Nifti.readDisplacementField(path)
-              (field.values, field.space)
+              Nifti
+                .readDisplacementField(path)
+                .map(field => field.values -> field.space)
             case DenseTransformEncoding.AbsoluteCoordinates =>
-              val field = Nifti.readSourceCoordinateField(path)
-              (field.values, field.space)
-        if !sameGrid(nativeSpace.spatialSpace, targetSpace) then
-          Left(
-            SpatialIoError.TransformGeometryMismatch(
-              path,
-              "dense transform grid must equal the target domain grid"
-            )
+              Nifti
+                .readSourceCoordinateField(path)
+                .map(field => field.values -> field.space)
+        nativeResult
+          .left
+          .map(error =>
+            SpatialIoError.MalformedTransformAsset(path, error.message)
           )
-        else
-          val grid = GridSpec.fromSpace(targetSpace)
-          val field =
-            normalizeDense(
-              native,
-              grid,
-              sourceSpace,
-              targetSpace,
-              options
-            )
-          DenseFieldMorphism
-            .coordinates(
-              SpatialDomainId(source.id.value),
-              SpatialDomainId(target.id.value),
-              grid,
-              field,
-              options.interpolation,
-              descriptor.cost,
-              s"${format.tool.toString.toLowerCase}-${format.toString.toLowerCase}-pullback"
-            )
-            .left
-            .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
-            .flatMap { dense =>
-              for
-                coordinateMap <- CoordinateMap
-                  .dense3D(dense)
-                  .left
-                  .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
-                stamp <- fingerprint(path)
-              yield
-                LoadedMap(
-                  coordinateMap,
-                  s"${options.convention}:${options.denseEncoding}:${options.direction}->absolute-RAS-mm-pullback",
-                  stamp
+          .flatMap: (native, nativeSpace) =>
+            if !sameGrid(nativeSpace.spatialSpace, targetSpace) then
+              Left(
+                SpatialIoError.TransformGeometryMismatch(
+                  path,
+                  "dense transform grid must equal the target domain grid"
                 )
-            }
+              )
+            else
+              val grid = GridSpec.fromSpace(targetSpace)
+              val field =
+                normalizeDense(
+                  native,
+                  grid,
+                  sourceSpace,
+                  targetSpace,
+                  options
+                )
+              DenseFieldMorphism
+                .coordinates(
+                  SpatialDomainId(source.id.value),
+                  SpatialDomainId(target.id.value),
+                  grid,
+                  field,
+                  options.interpolation,
+                  descriptor.cost,
+                  s"${format.tool.toString.toLowerCase}-${format.toString.toLowerCase}-pullback"
+                )
+                .left
+                .map(error =>
+                  SpatialIoError.MalformedTransformAsset(path, error.message)
+                )
+                .flatMap { dense =>
+                  for
+                    coordinateMap <- CoordinateMap
+                      .dense3D(dense)
+                      .left
+                      .map(error =>
+                        SpatialIoError.MalformedTransformAsset(
+                          path,
+                          error.message
+                        )
+                      )
+                    stamp <- fingerprint(path)
+                  yield
+                    LoadedMap(
+                      coordinateMap,
+                      s"${options.convention}:${options.denseEncoding}:${options.direction}->absolute-RAS-mm-pullback",
+                      stamp
+                    )
+                }
       catch
         case NonFatal(error) => Left(SpatialIoError.MalformedTransformAsset(path, detail(error)))
 

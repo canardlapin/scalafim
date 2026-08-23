@@ -9,9 +9,9 @@ import image4s.Sampled
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import ravel.CanonicalArray
+import ravel.CanonicalLayoutError
 import ravel.DType
 import ravel.NDArray
-import ravel.NonContiguousLayout
 import ravel.Rank
 import ravel.Shape
 
@@ -92,7 +92,7 @@ object AnyNeuroVolume:
       volume.data(voxel.x, voxel.y, voxel.z)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[3]]
     ] =
       CanonicalArray.from(volume.data)
@@ -154,7 +154,7 @@ object SomeNeuroVolume:
       volume.data(voxel.x, voxel.y, voxel.z)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[3]]
     ] =
       CanonicalArray.from(volume.data)
@@ -310,7 +310,7 @@ object NeuroVolume:
       volume.data(voxel.x, voxel.y, voxel.z)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[3]]
     ] =
       CanonicalArray.from(volume.data)

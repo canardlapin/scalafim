@@ -1,6 +1,9 @@
 package scalafim.image
 
 import image4s.SomeSampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
 import scala.annotation.targetName
 
 enum CoordinateError:
@@ -157,6 +160,10 @@ opaque type GridSpec = SomeSampleSpace
 
 object GridSpec:
   extension (gridSpec: GridSpec)
+    /** Exact image4s grid retained by this checked D3 refinement. */
+    private[image] inline def nativeGrid: Grid[Frame[D3], D3] =
+      gridSpec.grid.asInstanceOf[Grid[Frame[D3], D3]]
+
     def shape: SpatialDims =
       SpatialDims.unsafeFromVector(gridSpec.grid.shape, "GridSpec dims")
 

@@ -34,7 +34,10 @@ class FirstLevelUnitSourceSuite extends FunSuite:
         ))
       )
 
-      val opened = FirstLevelUnitSource.open(unit).toOption.get
+      val opened =
+        FirstLevelUnitSource
+          .open(unit)
+          .fold(error => fail(error.message), identity)
       val block = opened.source.readBlock(
         DataSelection(
           time = TimepointSelection.indices(3, 0),

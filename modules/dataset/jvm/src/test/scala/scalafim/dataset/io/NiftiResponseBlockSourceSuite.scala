@@ -235,7 +235,13 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         bitpix = 32,
         rawValues = Vector.empty
       )
-      assert(NiftiResponseBlockSource.open(mismatched).left.toOption.exists(_.message.contains("bitpix 32")))
+      assert(
+        NiftiResponseBlockSource
+          .open(mismatched)
+          .left
+          .toOption
+          .exists(_.message.contains("datatype 64 with 32 bits"))
+      )
     }
   }
 

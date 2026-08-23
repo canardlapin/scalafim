@@ -5,7 +5,7 @@
 - ScalaFIM epic: `bd-01KYNR99SWCFEW94T4JGD9QPBS`
 - Contract issue: `bd-01M0QG00P8A73RG1F6K6SJGH8A`
 - Atlas follow-up: `bd-01M0NS3FBVXXG1CRQWSH60EAKC`
-- Admitted providers: Ravel `f804ba51242aae3a1442b3855a20bd896ffa8b64`, image4s `31bc8f87d8349fd3296496979c95eeb3ec11ae21`, and locus4s `58c9739be51345ad9adc4bc9c9e7335023254ec9`
+- Admitted providers: Ravel `9c5669399ab8e2a11402e71973dd5f1e2f2c13f4`, image4s `6b9016b7aa622df8dec3d887080ee512fa7439c6`, reframe4s `357426b4fd1e35ddead0068375016f55b082c9e2`, and locus4s `58c9739be51345ad9adc4bc9c9e7335023254ec9`
 
 ## Context
 

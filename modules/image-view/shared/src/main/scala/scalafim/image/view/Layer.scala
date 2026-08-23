@@ -298,9 +298,11 @@ object SliceLayer:
       val sampled =
         mapping match
           case LayerMapping.WorldAligned =>
-            SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
+            SlicePlan.make(volume.volumeSpace, grid).sample(volume.toNative, sampling)
           case LayerMapping.Pullback(referenceToSource) =>
-            MappedSlicePlan.make(volume.volumeSpace, grid, referenceToSource).sample(volume, sampling)
+            MappedSlicePlan
+              .make(volume.volumeSpace, grid, referenceToSource)
+              .sample(volume.toNative, sampling)
       sampled
         .left
         .map(error => ImageViewError.SamplingFailed(id, error))
@@ -327,7 +329,10 @@ object SliceLayer:
       val pixels = new Array[Int](dimensions.pixelCount)
       var index = 0
       while index < pixels.length do
-        pixels(index) = activeColorizer.color(slice.values(index)).toPackedInt
+        pixels(index) =
+          activeColorizer
+            .color(slice.valueAtCanonicalOrdinal(index))
+            .toPackedInt
         index += 1
       RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 

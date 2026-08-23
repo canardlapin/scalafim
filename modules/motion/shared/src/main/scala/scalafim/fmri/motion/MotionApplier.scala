@@ -1,6 +1,9 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{NeuroVec, PrimitiveBuffers}
+import ravel.NDArray
+import ravel.Rank
+import ravel.Shape
+import scalafim.image.NeuroVec
 
 object MotionApplier:
   def apply(
@@ -29,45 +32,59 @@ object MotionApplier:
     val ny = dims(1)
     val nz = dims(2)
     val nt = run.nVolumes
-    val nxyz = nx * ny * nz
-    val out = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     val px = run.space.spacing(0)
     val py = run.space.spacing(1)
     val pz = run.space.spacing(2)
     val zeroPad = control.padMode == PadMode.Zero || control.zpad > 0
 
-    var t = 0
-    while t < nt do
-      val pose = trace.unsafeFrame(t)
-      val map = MotionSampling.voxelMap(nx, ny, nz, control.zpad, px, py, pz, pose)
-      var k = 0
-      while k < nz do
-        var j = 0
-        while j < ny do
-          var i = 0
-          while i < nx do
-            val sx = MotionSampling.sourceX(map, i, j, k)
-            val sy = MotionSampling.sourceY(map, i, j, k)
-            val sz = MotionSampling.sourceZ(map, i, j, k)
-            val dst = (((i * ny) + j) * nz + k) * nt + t
-            out(dst) =
-              MotionSampling.trilinear(
-                run.values,
+    val out =
+      NDArray.build[Double, Rank[4]](Shape(nx, ny, nz, nt)):
+        output =>
+          var time = 0
+          while time < nt do
+            val pose = trace.unsafeFrame(time)
+            val map =
+              MotionSampling.voxelMap(
                 nx,
                 ny,
                 nz,
-                t,
-                sx,
-                sy,
-                sz,
-                zeroPad
+                control.zpad,
+                px,
+                py,
+                pz,
+                pose
               )
-            i += 1
-          j += 1
-        k += 1
-      t += 1
+            var k = 0
+            while k < nz do
+              var j = 0
+              while j < ny do
+                var i = 0
+                while i < nx do
+                  val sx = MotionSampling.sourceX(map, i, j, k)
+                  val sy = MotionSampling.sourceY(map, i, j, k)
+                  val sz = MotionSampling.sourceZ(map, i, j, k)
+                  val destination =
+                    (((i * ny) + j) * nz + k) * nt + time
+                  output.writeLinear(
+                    destination,
+                    MotionSampling.trilinear(
+                      run.values,
+                      nx,
+                      ny,
+                      nz,
+                      time,
+                      sx,
+                      sy,
+                      sz,
+                      zeroPad
+                    )
+                  )
+                  i += 1
+                j += 1
+              k += 1
+            time += 1
 
-    NeuroVec.copyFromCanonicalArray(out, run.space, run.label)
+    NeuroVec.fromRavel(out, run.space, run.label)
 
   private def applyLinearPacketAware(
       run: NeuroVec[Double],
@@ -80,46 +97,69 @@ object MotionApplier:
     val ny = dims(1)
     val nz = dims(2)
     val nt = run.nVolumes
-    val nxyz = nx * ny * nz
-    val out = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     val px = run.space.spacing(0)
     val py = run.space.spacing(1)
     val pz = run.space.spacing(2)
     val zeroPad = control.padMode == PadMode.Zero || control.zpad > 0
     val spline = PoseSpline.fromTrace(trace)
 
-    var t = 0
-    while t < nt do
+    val poses = Vector.newBuilder[RigidPose]
+    poses.sizeHint(nt * nz)
+    var time = 0
+    while time < nt do
       var k = 0
       while k < nz do
-        val pose =
-          spline.poseAt(t, normalizedOffsets(k)) match
+        spline.poseAt(time, normalizedOffsets(k)) match
             case Left(error) => return Left(error)
-            case Right(value) => value
-        val map = MotionSampling.voxelMap(nx, ny, nz, control.zpad, px, py, pz, pose)
-        var j = 0
-        while j < ny do
-          var i = 0
-          while i < nx do
-            val sx = MotionSampling.sourceX(map, i, j, k)
-            val sy = MotionSampling.sourceY(map, i, j, k)
-            val sz = MotionSampling.sourceZ(map, i, j, k)
-            val dst = (((i * ny) + j) * nz + k) * nt + t
-            out(dst) =
-              MotionSampling.trilinear(
-                run.values,
-                nx,
-                ny,
-                nz,
-                t,
-                sx,
-                sy,
-                sz,
-                zeroPad
-              )
-            i += 1
-          j += 1
+            case Right(value) => poses += value
         k += 1
-      t += 1
+      time += 1
+    val preparedPoses = poses.result()
 
-    Right(NeuroVec.copyFromCanonicalArray(out, run.space, run.label))
+    val out =
+      NDArray.build[Double, Rank[4]](Shape(nx, ny, nz, nt)):
+        output =>
+          time = 0
+          while time < nt do
+            var k = 0
+            while k < nz do
+              val map =
+                MotionSampling.voxelMap(
+                  nx,
+                  ny,
+                  nz,
+                  control.zpad,
+                  px,
+                  py,
+                  pz,
+                  preparedPoses(time * nz + k)
+                )
+              var j = 0
+              while j < ny do
+                var i = 0
+                while i < nx do
+                  val sx = MotionSampling.sourceX(map, i, j, k)
+                  val sy = MotionSampling.sourceY(map, i, j, k)
+                  val sz = MotionSampling.sourceZ(map, i, j, k)
+                  val destination =
+                    (((i * ny) + j) * nz + k) * nt + time
+                  output.writeLinear(
+                    destination,
+                    MotionSampling.trilinear(
+                      run.values,
+                      nx,
+                      ny,
+                      nz,
+                      time,
+                      sx,
+                      sy,
+                      sz,
+                      zeroPad
+                    )
+                  )
+                  i += 1
+                j += 1
+              k += 1
+            time += 1
+
+    Right(NeuroVec.fromRavel(out, run.space, run.label))

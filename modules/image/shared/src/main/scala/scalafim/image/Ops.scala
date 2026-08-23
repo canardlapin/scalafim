@@ -6,8 +6,10 @@ import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import scala.reflect.ClassTag
+import ravel.ArithmeticDType
 import ravel.DType
-import ravel.{map, zipMapExact}
+import ravel.FloatingDType
+import ravel.{`*` as ravelTimes, `+` as ravelPlus, `-` as ravelMinus, `/` as ravelDivide}
 import spire.algebra.{Field, Order, Ring}
 import spire.syntax.field.*
 import spire.syntax.ring.*
@@ -21,61 +23,82 @@ object Ops:
   private def requireCompatSpatial(vecSpace: NeuroSpace, volSpace: NeuroSpace): Unit =
     GridCompatibility.requireSpatial(vecSpace, volSpace)
 
-  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVol[A])
+  extension [A: Ring: ArithmeticDType: MigrationValueSemantics](x: NeuroVol[A])
     def +(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ + _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVol.fromRavel(ravelPlus(x.values)(y.values), x.space, x.label)
     def -(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ - _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVol.fromRavel(ravelMinus(x.values)(y.values), x.space, x.label)
     def *(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ * _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVol.fromRavel(ravelTimes(x.values)(y.values), x.space, x.label)
 
     def +(a: A)(using ClassTag[A]): NeuroVol[A] =
-      x.map(_ + a)
+      NeuroVol.fromRavel(
+        ravelPlus(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
     def -(a: A)(using ClassTag[A]): NeuroVol[A] =
-      x.map(_ - a)
+      NeuroVol.fromRavel(
+        ravelMinus(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
     def *(a: A)(using ClassTag[A]): NeuroVol[A] =
-      x.map(_ * a)
+      NeuroVol.fromRavel(
+        ravelTimes(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
 
-  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVol[A])
+  extension [A: Field: FloatingDType: MigrationValueSemantics](x: NeuroVol[A])
     def /(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ / _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVol.fromRavel(ravelDivide(x.values)(y.values), x.space, x.label)
     def /(a: A)(using ClassTag[A]): NeuroVol[A] =
-      x.map(_ / a)
+      NeuroVol.fromRavel(
+        ravelDivide(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
 
-  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVec[A])
+  extension [A: Ring: ArithmeticDType: MigrationValueSemantics](x: NeuroVec[A])
     @scala.annotation.targetName("neuroVecPlusVec")
     def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ + _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVec.fromRavel(ravelPlus(x.values)(y.values), x.space, x.label)
     @scala.annotation.targetName("neuroVecMinusVec")
     def -(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ - _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVec.fromRavel(ravelMinus(x.values)(y.values), x.space, x.label)
     @scala.annotation.targetName("neuroVecTimesVec")
     def *(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ * _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVec.fromRavel(ravelTimes(x.values)(y.values), x.space, x.label)
 
     @scala.annotation.targetName("neuroVecPlusScalar")
     def +(a: A)(using ClassTag[A]): NeuroVec[A] =
-      x.map(_ + a)
+      NeuroVec.fromRavel(
+        ravelPlus(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
     @scala.annotation.targetName("neuroVecMinusScalar")
     def -(a: A)(using ClassTag[A]): NeuroVec[A] =
-      x.map(_ - a)
+      NeuroVec.fromRavel(
+        ravelMinus(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
     @scala.annotation.targetName("neuroVecTimesScalar")
     def *(a: A)(using ClassTag[A]): NeuroVec[A] =
-      x.map(_ * a)
+      NeuroVec.fromRavel(
+        ravelTimes(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
 
     @scala.annotation.targetName("neuroVecPlusVol")
     def +(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
@@ -92,22 +115,25 @@ object Ops:
       requireCompatSpatial(x.space, v.space)
       x.mapSamples((voxel, _, value) => value * v(voxel))
 
-  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVec[A])
+  extension [A: Field: FloatingDType: MigrationValueSemantics](x: NeuroVec[A])
     @scala.annotation.targetName("neuroVecDivideVec")
     def /(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
-      x.zipWith(y)(_ / _)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
+      NeuroVec.fromRavel(ravelDivide(x.values)(y.values), x.space, x.label)
     @scala.annotation.targetName("neuroVecDivideScalar")
     def /(a: A)(using ClassTag[A]): NeuroVec[A] =
-      x.map(_ / a)
+      NeuroVec.fromRavel(
+        ravelDivide(x.values)(ravel.NDArray.scalar(a)),
+        x.space,
+        x.label
+      )
 
     @scala.annotation.targetName("neuroVecDivideVol")
     def /(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompatSpatial(x.space, v.space)
       x.mapSamples((voxel, _, value) => value / v(voxel))
 
-  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVol[A])
+  extension [A: Ring: ArithmeticDType: MigrationValueSemantics](x: NeuroVol[A])
     @scala.annotation.targetName("neuroVolPlusVec")
     def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       y + x
@@ -119,7 +145,7 @@ object Ops:
     def *(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       y * x
 
-  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVol[A])
+  extension [A: Field: FloatingDType: MigrationValueSemantics](x: NeuroVol[A])
     @scala.annotation.targetName("neuroVolDivideVec")
     def /(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompatSpatial(y.space, x.space)

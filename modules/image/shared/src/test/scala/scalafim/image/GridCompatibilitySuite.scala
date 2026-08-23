@@ -1,5 +1,11 @@
 package scalafim.image
 
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
 import Ops.*
 import spire.std.double.given
 
@@ -39,6 +45,42 @@ class GridCompatibilitySuite extends munit.FunSuite:
 
     assert(GridCompatibility.exact(first, second).isLeft)
     assertEquals(GridCompatibility.spatial(first, second), Right(()), clue = "")
+  }
+
+  test("certified congruence is explicit evidence bound to its exact live grids") {
+    def liveSpace(label: String): NeuroSpace =
+      val frame =
+        Frame.named[D3](label).fold(error => fail(error.message), identity)
+      val grid =
+        Grid
+          .in(frame)(Vector(2, 2, 1), Affine.identity[D3])
+          .fold(error => fail(error.message), identity)
+      NeuroSpace.fromCanonical(SampleSpace.create(grid, NonSpatialAxes.empty))
+
+    val expected = liveSpace("certified-grid-expected")
+    val actual = liveSpace("certified-grid-actual")
+    val unrelated = liveSpace("certified-grid-unrelated")
+
+    assert(GridCompatibility.exact(expected, actual).isLeft)
+    val certificate =
+      GridCompatibility
+        .certifySpatialCongruence(expected, actual, tolerance = 0.0)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      GridCompatibility.acceptCertifiedSpatial(certificate, expected, actual),
+      Right(())
+    )
+    assert(
+      GridCompatibility
+        .acceptCertifiedSpatial(certificate, expected, unrelated)
+        .isLeft,
+      clue = "a certificate must not be reusable for a third grid"
+    )
+    assert(
+      GridCompatibility.acceptCertifiedExact(certificate, expected, actual).isLeft,
+      clue = "a spatial certificate must not satisfy an exact-axis admission"
+    )
   }
 
   test("pointwise volume arithmetic rejects a different physical grid") {

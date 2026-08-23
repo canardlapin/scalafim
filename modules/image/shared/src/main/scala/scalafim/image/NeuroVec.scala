@@ -8,6 +8,7 @@ import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
 import ravel.map
+import ravel.select
 import scala.reflect.ClassTag
 
 opaque type NeuroVec[A] = AnyNeuroSeries[A]
@@ -130,19 +131,17 @@ object NeuroVec:
           .fold(err => throw new IllegalArgumentException(err.message), identity)
       NeuroVol.fromPacked(selected)
 
-    def series(linearSpatial: Int)(using ClassTag[A]): Array[A] =
+    /** Zero-copy time-series view for one canonical voxel ordinal. */
+    def series(linearSpatial: Int): Array1[A] =
       val spatialNels = space.spatialDims.product
       require(linearSpatial >= 0 && linearSpatial < spatialNels, "spatial index out of bounds")
-      val tLen = nVolumes
-      val out = Array.ofDim[A](tLen)
       val voxel = space.indexToVoxel3D(linearSpatial)
-      var t = 0
-      while t < tLen do
-        out(t) = apply(voxel.x, voxel.y, voxel.z, t)
-        t += 1
-      out
+      values
+        .select(0, voxel.x)
+        .select(0, voxel.y)
+        .select(0, voxel.z)
 
-    def series(i: Int, j: Int, k: Int)(using ClassTag[A]): Array[A] =
+    def series(i: Int, j: Int, k: Int): Array1[A] =
       val lin = Indexing.gridToIndex3D(space.spatialDims, i, j, k)
       series(lin)
 
@@ -151,7 +150,7 @@ object NeuroVec:
       val tLen = nVolumes
       val nVox = linearSpatial.size
       given DType[A] = values.dtype
-      RavelArray.tabulate[A](tLen, nVox) { (time, position) =>
+      RavelArray.tabulate[A](nVox, tLen) { (position, time) =>
         val lin = linearSpatial(position)
         require(lin >= 0 && lin < spatialNels, "spatial index out of bounds")
         val voxel = space.indexToVoxel3D(lin)
@@ -285,7 +284,16 @@ object NeuroVec:
       Vector
         .tabulate(values.size)(valueAtCanonicalOrdinal)
         .traverse(f)
-        .map(values => NeuroVec.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space, label))
+        .map: traversed =>
+          val shape = space.spatialDims
+          NeuroVec.fromRavel(
+            RavelArray.fromSeq(
+              Shape(shape(0), shape(1), shape(2), nVolumes),
+              traversed
+            ),
+            space,
+            label
+          )
 
     def map[B](f: A => B)(using
         ClassTag[B],

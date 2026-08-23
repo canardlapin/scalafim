@@ -10,9 +10,9 @@ import image4s.Sampled
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import ravel.CanonicalArray
+import ravel.CanonicalLayoutError
 import ravel.DType
 import ravel.NDArray
-import ravel.NonContiguousLayout
 import ravel.Rank
 import ravel.Shape
 
@@ -81,7 +81,7 @@ object AnyNeuroSeries:
       series.data(x, y, z, time)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[4]]
     ] =
       CanonicalArray.from(series.data)
@@ -112,13 +112,13 @@ object SomeNeuroSeries:
       series.data(x, y, z, time)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[4]]
     ] =
       CanonicalArray.from(series.data)
 
     def voxelTimeMatrix: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       NDArray[A, Rank[2]]
     ] =
       wholeCanonical.map: canonical =>
@@ -307,14 +307,14 @@ object NeuroSeries:
       series.data(x, y, z, time)
 
     def wholeCanonical: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       CanonicalArray[A, Rank[4]]
     ] =
       CanonicalArray.from(series.data)
 
     /** Zero-copy `(voxel, time)` reshape for a whole canonical series. */
     def voxelTimeMatrix: Either[
-      NonContiguousLayout,
+      CanonicalLayoutError,
       NDArray[A, Rank[2]]
     ] =
       wholeCanonical.map: canonical =>

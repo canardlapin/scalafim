@@ -170,7 +170,11 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val volume = testVolume(sourceSpace)
     val morphism = affine(translation(1.0, 0.0, 0.0))
 
-    val resampled = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
+    val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
+    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.materializedCoordinateCount, 0)
+
+    val resampled = p
       .apply(volume, outside = -1.0)
       .fold(err => fail(err.message), identity)
 
@@ -218,7 +222,11 @@ class ResamplingPlanSuite extends munit.FunSuite:
       DenseFieldMorphism.displacement(sourceDomain, targetDomain, targetGrid, field, Resample.Method.Nearest)
         .fold(err => fail(err.message), identity)
 
-    val resampled = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
+    val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
+    assertEquals(p.executionModel, ResamplingExecutionModel.WorkloadPrepared)
+    assertEquals(p.materializedCoordinateCount, targetGrid.nVoxels)
+
+    val resampled = p
       .apply(volume, outside = -1.0)
       .fold(err => fail(err.message), identity)
 
@@ -228,7 +236,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertClose(resampled(3, 0, 0), -1.0)
   }
 
-  test("affine scale plan precomputes source voxel coordinates") {
+  test("affine scale plan delegates without coordinate materialization") {
     val sourceSpace = NeuroSpace(Vector(5, 1, 1))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(3, 1, 1))
@@ -236,20 +244,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val morphism = affine(scale(2.0, 1.0, 1.0))
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
 
-    assertEquals(p.targetWorldCoords, targetGrid.worldCoords, clue = "")
-    assertClose(p.targetWorldPoints(0), WorldPoint(0.0, 0.0, 0.0), 1e-10)
-    assertClose(p.targetWorldPoints(1), WorldPoint(1.0, 0.0, 0.0), 1e-10)
-    assertClose(p.targetWorldPoints(2), WorldPoint(2.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldCoords(0), Vector(0.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldCoords(1), Vector(2.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldCoords(2), Vector(4.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldPoints(0), WorldPoint(0.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldPoints(1), WorldPoint(2.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceWorldPoints(2), WorldPoint(4.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceVoxelPoints(0), VoxelPoint(0.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceVoxelPoints(1), VoxelPoint(2.0, 0.0, 0.0), 1e-10)
-    assertClose(p.sourceVoxelPoints(2), VoxelPoint(4.0, 0.0, 0.0), 1e-10)
-    assertEquals(p.sourceVoxelCoords, p.sourceWorldCoords, clue = "")
+    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.materializedCoordinateCount, 0)
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
     assertClose(resampled(0, 0, 0), valueAt(0, 0, 0))
@@ -265,8 +261,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val morphism = affine(translation(0.5, 0.5, 0.5))
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Linear)
 
-    assertClose(p.sourceVoxelCoords.head, Vector(0.5, 0.5, 0.5), 1e-10)
-    assertClose(p.sourceVoxelPoints.head, VoxelPoint(0.5, 0.5, 0.5), 1e-10)
+    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.materializedCoordinateCount, 0)
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
     val expected =
@@ -307,6 +303,9 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume = testVolume(sourceSpace)
     val p = plan(grid, grid, IdentityMorphism(sourceDomain), Resample.Method.Cubic)
+
+    assertEquals(p.executionModel, ResamplingExecutionModel.WorkloadPrepared)
+    assertEquals(p.materializedCoordinateCount, grid.nVoxels)
 
     val result = p(volume).fold(err => fail(err.message), identity)
     val existing = Resample.tricubic(volume, sourceSpace)
