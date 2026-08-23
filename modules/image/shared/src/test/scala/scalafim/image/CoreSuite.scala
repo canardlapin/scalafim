@@ -475,22 +475,6 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(vals, Vector(1, 0, 2, 1), clue = "")
   }
 
-  test("Searchlight sphericalRoi includes center and respects radius") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(5, 5, 5))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](125, 1.0), sp)
-    val center = Vector(2, 2, 2)
-    val roi = Searchlight.sphericalRoi(vol, center, radius = 1.5)
-    assert(roi.coords.coords.contains(center), clue = "")
-    val spacing = sp.spacing
-    roi.coords.coords.foreach { c =>
-      val dx = (c(0) - center(0)) * spacing(0)
-      val dy = (c(1) - center(1)) * spacing(1)
-      val dz = (c(2) - center(2)) * spacing(2)
-      assert(dx * dx + dy * dy + dz * dz <= 1.5 * 1.5 + 1e-9, clue = "")
-    }
-  }
-
   test("cluster supports gather exact position-first selected series") {
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
     val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
@@ -766,50 +750,6 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(vals, Vector(1, 0, 0, 2, 12, 13, 0, 0, 0, 0, 16, 17).map(_.toDouble), clue = "")
   }
 
-  test("Ellipsoid ROI is subset of spherical") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(9, 9, 9))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](9 * 9 * 9, 1.0), sp)
-    val center = Vector(4, 4, 4)
-    val sphere = Searchlight.sphericalRoi(vol, center, radius = 3.0)
-    val ellip = Searchlight.ellipsoidRoi(
-      vol,
-      center,
-      radius = 3.0,
-      scales = Vector(2.0, 1.0, 1.0),
-      rng = new scala.util.Random(0L)
-    )
-    assert(ellip.coords.size < sphere.coords.size, clue = "")
-    assert(ellip.coords.coords.contains(center), clue = "")
-  }
-
-  test("Cube ROI contains all voxels in bounding cube") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(5, 5, 5))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](125, 1.0), sp)
-    val center = Vector(2, 2, 2)
-    val cube = Searchlight.cubeRoi(vol, center, radius = 1.0)
-    assertEquals(cube.coords.size, 27, clue = "")
-  }
-
-  test("Blobby ROI drops edge voxels but keeps center") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(7, 7, 7))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](343, 1.0), sp)
-    val center = Vector(3, 3, 3)
-    val sphere = Searchlight.sphericalRoi(vol, center, radius = 2.5)
-    val blob = Searchlight.blobbyRoi(
-      vol,
-      center,
-      radius = 2.5,
-      drop = 1.0,
-      edgeFraction = 1.0,
-      rng = new scala.util.Random(0L)
-    )
-    assert(blob.coords.size < sphere.coords.size, clue = "")
-    assert(blob.coords.coords.contains(center), clue = "")
-  }
-
   test("Resample.trilinear preserves data when spaces match") {
     val sp = NeuroSpace(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
     val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
@@ -873,15 +813,6 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(s0v, Vector(2.0, 3.0, 4.0), clue = "")
   }
 
-  test("Searchlight iterators respect center selection") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val mask = Mask.fromIndices(sp, Array(0, 3))
-    val all = Searchlight.searchlightCoords(mask, radius = 1.0, nonzero = false).toVector
-    val nz = Searchlight.searchlightCoords(mask, radius = 1.0, nonzero = true).toVector
-    assertEquals(all.length, 4, clue = "")
-    assertEquals(nz.length, 2, clue = "")
-  }
-
   test("ClusteredNeuroVec broadcasts and gathers through exact selected storage") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 1, 1, 2))
@@ -926,15 +857,6 @@ class CoreSuite extends munit.FunSuite:
     val cv2 = cv + cv
     val tsVals = columnMajor2(cv2.ts)
     assertEquals(tsVals, Vector(2.0, 4.0, 6.0, 8.0), clue = "")
-  }
-
-  test("Clustered searchlight yields one ROI per cluster") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val mask = Mask.fromIndices(sp, Array(0, 1, 2, 3))
-    val cvol = ClusteredNeuroVol(mask, Array(1, 1, 2, 2))
-    val rois = Searchlight.clusteredSearchlight(cvol).toVector
-    assertEquals(rois.length, 2, clue = "")
-    assertEquals(rois.head.coords.size, 2, clue = "")
   }
 
   test("ClusteredNeuroVol medoid centroids use geometric median") {
@@ -1101,40 +1023,6 @@ class CoreSuite extends munit.FunSuite:
     while t < 3 do
       assertEquals(cv(0, 0, 0, t), cv(0, 1, 0, t), clue = "")
       t += 1
-  }
-
-  test("clusterSearchlightSeries k-NN and radius parity") {
-    import spire.std.double.given
-    val sp3 = NeuroSpace(Vector(2, 2, 1))
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](PrimitiveBuffers.fillConst[Boolean](4, true), sp3)
-    val cvol = ClusteredNeuroVol(mask, Array(1, 2, 3, 4))
-
-    val sp4 = NeuroSpace(Vector(2, 2, 1, 2))
-    val data = Array[Double](10.0, 20.0, 11.0, 21.0, 12.0, 22.0, 13.0, 23.0)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp4)
-    val cv = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
-
-    val wins = Searchlight.clusterSearchlightSeries(cv, k = 2)
-    assertEquals(wins.length, 4, clue = "")
-    val roi1 = wins.head
-    assertEquals(roi1.data.shape, Shape(2, 2), clue = "")
-    val s1 = roi1.seriesAt(0)
-    val s1v = Vector.tabulate(s1.length)(i => s1(i))
-    assertEquals(s1v, Vector(10.0, 20.0), clue = "")
-
-    val winsr = Searchlight.clusterSearchlightSeries(cv, radius = Some(1.1))
-    assertEquals(winsr.head.data.shape(1), 3, clue = "")
-  }
-
-  test("Searchlight nonzero filtering yields singleton ROI") {
-    val sp = NeuroSpace(Vector(5, 5, 5))
-    val lin = sp.gridToIndex3D(2, 2, 2)
-    val mask = Mask.fromIndices(sp, Array(lin))
-    val fullRoi = Searchlight.searchlight(mask, radius = 2.0, nonzero = false).next()
-    val nzRoi = Searchlight.searchlight(mask, radius = 2.0, nonzero = true).next()
-    assert(fullRoi.coords.size > nzRoi.coords.size, clue = "")
-    assertEquals(nzRoi.coords.size, 1, clue = "")
-    assertEquals(nzRoi.coords.coords(nzRoi.centerIndex), Vector(2, 2, 2), clue = "")
   }
 
   test("selected-series gather rejects a foreign support owner") {

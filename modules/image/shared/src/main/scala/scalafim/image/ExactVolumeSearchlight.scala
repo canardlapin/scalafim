@@ -18,6 +18,7 @@ import locus4s.SpaceMismatch
 import locus4s.data.Field
 import ravel.DType
 import ravel.NDArray
+import scala.util.Random
 
 enum ExactVolumeSearchlightError:
   case WrongSpace(error: SpaceMismatch)
@@ -29,6 +30,10 @@ enum ExactVolumeSearchlightError:
   case InvalidSelection(error: SelectionError)
   case InvalidSelectedImage(error: SelectedImageError)
   case InvalidWindow(error: SelectedVolumeWindowError)
+  case InvalidScales(values: Vector[Double])
+  case InvalidJitter(value: Double)
+  case InvalidDrop(value: Double)
+  case InvalidEdgeFraction(value: Double)
 
   def message: String =
     this match
@@ -45,6 +50,14 @@ enum ExactVolumeSearchlightError:
       case InvalidSelection(error) => error.message
       case InvalidSelectedImage(error) => error.message
       case InvalidWindow(error) => error.message
+      case InvalidScales(values) =>
+        s"ellipsoid scales must contain three finite positive values; got $values"
+      case InvalidJitter(value) =>
+        s"ellipsoid jitter must be finite and non-negative; got $value"
+      case InvalidDrop(value) =>
+        s"blobby-ball drop probability must be finite and in [0, 1]; got $value"
+      case InvalidEdgeFraction(value) =>
+        s"blobby-ball edge fraction must be finite and in (0, 1]; got $value"
 
 /** Domain-specific policy pairing allowed centers with exact locus rows. */
 final class VolumeNeighborhoods[S] private[image] (
@@ -88,71 +101,149 @@ object ExactVolumeSearchlight:
         )
       )
     else
-      val shape = domain.grid.shape
-      val affine = domain.grid.indexToFrame
-      val spacing = Vector.tabulate(3): axis =>
-        math.sqrt(
-          affine.matrix(0, axis) * affine.matrix(0, axis) +
-            affine.matrix(1, axis) * affine.matrix(1, axis) +
-            affine.matrix(2, axis) * affine.matrix(2, axis)
-        )
       val distance = radius.millimeters
       val squaredRadius = distance * distance
-      val deltas = Vector.tabulate(3): axis =>
-        math.ceil(distance / spacing(axis)).toInt
-      val rows = Array.fill(domain.space.size)(Array.emptyIntArray)
-      val centerOrdinals = centers.ordinalsInDomainOrder
-      var centerIndex = 0
-      while centerIndex < centerOrdinals.length do
-        val centerOrdinal = centerOrdinals(centerIndex)
-        val centerLattice =
-          domain.indexOfOrdinal(centerOrdinal).toOption.get
-        val center = VoxelCoord(
-          centerLattice.values(0),
-          centerLattice.values(1),
-          centerLattice.values(2)
-        )
-        val targets = Array.newBuilder[Int]
-        var x = math.max(0, center.x - deltas(0))
-        val maxX = math.min(shape(0) - 1, center.x + deltas(0))
-        while x <= maxX do
-          var y = math.max(0, center.y - deltas(1))
-          val maxY = math.min(shape(1) - 1, center.y + deltas(1))
-          while y <= maxY do
-            var z = math.max(0, center.z - deltas(2))
-            val maxZ = math.min(shape(2) - 1, center.z + deltas(2))
-            while z <= maxZ do
-              val dx = (x - center.x) * spacing(0)
-              val dy = (y - center.y) * spacing(1)
-              val dz = (z - center.z) * spacing(2)
-              if dx * dx + dy * dy + dz * dz <= squaredRadius then
-                val target =
-                  LatticeIndex
-                    .fromVector[D3](Vector(x, y, z))
-                    .toOption
-                    .get
-                targets += domain.ordinalOf(target).toOption.get
-              z += 1
-            y += 1
-          x += 1
-        rows(centerOrdinal) = targets.result()
-        centerIndex += 1
-
-      Relation
-        .fromOrdinalRows(
-          domain.space,
-          domain.space,
-          rows.iterator.map(_.iterator)
-        )
-        .left
-        .map(ExactVolumeSearchlightError.InvalidRelation.apply)
-        .flatMap(fromRelation(centers, _))
+      val deltas = physicalBallBounds(domain, distance, Vector(1.0, 1.0, 1.0))
+      buildNeighborhoods(domain, centers, deltas): (dx, dy, dz) =>
+        worldSquaredDistance(domain, dx, dy, dz) <= squaredRadius
 
   def metricBalls[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       radius: SearchlightRadius
   ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
     metricBalls(domain, radius, Region.whole(domain.space))
+
+  /** Grid-axis-aligned boxes with half-width expressed in physical units. */
+  def cubes[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius,
+      centers: Region[S]
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    checkSpace(domain, centers.space).flatMap: _ =>
+      val distance = radius.millimeters
+      val deltas = Vector.tabulate(3): axis =>
+        math.ceil(distance / axisSpacing(domain, axis)).toInt
+      buildNeighborhoods(domain, centers, deltas)((_, _, _) => true)
+
+  def cubes[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    cubes(domain, radius, Region.whole(domain.space))
+
+  /** Ellipsoids obtained by scaling the grid-axis contributions before
+    * applying the grid's complete affine linear transform.
+    *
+    * Optional jitter is sampled once per center while constructing the
+    * immutable relation. The resulting relation itself is deterministic and
+    * contains no retained random state.
+    */
+  def ellipsoids[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius,
+      scales: Vector[Double],
+      centers: Region[S],
+      jitter: Double = 0.0,
+      rng: Random = new Random(0L)
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    if scales.length != 3 || scales.exists(value => !value.isFinite || value <= 0.0)
+    then Left(ExactVolumeSearchlightError.InvalidScales(scales))
+    else if !jitter.isFinite || jitter < 0.0 then
+      Left(ExactVolumeSearchlightError.InvalidJitter(jitter))
+    else
+      checkSpace(domain, centers.space).flatMap: _ =>
+        buildNeighborhoods(domain, centers): center =>
+          val actualScales =
+            if jitter == 0.0 then scales
+            else
+              scales.map: scale =>
+                val candidate = scale * (1.0 + rng.nextGaussian() * jitter)
+                if candidate.isFinite then math.max(candidate, 1e-12)
+                else Double.MaxValue
+          val distance = radius.millimeters
+          val squaredRadius = distance * distance
+          val deltas = physicalBallBounds(domain, distance, actualScales)
+          boundedOrdinals(domain, center, deltas): (dx, dy, dz) =>
+            worldSquaredDistance(
+              domain,
+              dx.toDouble * actualScales(0),
+              dy.toDouble * actualScales(1),
+              dz.toDouble * actualScales(2)
+            ) <= squaredRadius
+
+  def ellipsoids[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius,
+      scales: Vector[Double]
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    ellipsoids(
+      domain,
+      radius,
+      scales,
+      Region.whole(domain.space)
+    )
+
+  /** Metric balls with randomized edge deletion, materialized once as an
+    * exact relation. Centers are always retained.
+    */
+  def blobbyBalls[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius,
+      drop: Double,
+      edgeFraction: Double,
+      centers: Region[S],
+      rng: Random = new Random(0L)
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    if !drop.isFinite || drop < 0.0 || drop > 1.0 then
+      Left(ExactVolumeSearchlightError.InvalidDrop(drop))
+    else if !edgeFraction.isFinite || edgeFraction <= 0.0 || edgeFraction > 1.0
+    then Left(ExactVolumeSearchlightError.InvalidEdgeFraction(edgeFraction))
+    else
+      checkSpace(domain, centers.space).flatMap: _ =>
+        buildNeighborhoods(domain, centers): center =>
+          val distance = radius.millimeters
+          val squaredRadius = distance * distance
+          val deltas = physicalBallBounds(domain, distance, Vector(1.0, 1.0, 1.0))
+          val ball =
+            boundedOrdinals(domain, center, deltas): (dx, dy, dz) =>
+              worldSquaredDistance(domain, dx, dy, dz) <= squaredRadius
+          val distances = ball.map: ordinal =>
+            val target = domain.indexOfOrdinal(ordinal).toOption.get.values
+            math.sqrt(
+              worldSquaredDistance(
+                domain,
+                target(0) - center.x,
+                target(1) - center.y,
+                target(2) - center.z
+              )
+            )
+          val threshold =
+            distances.sorted.apply(
+              math.floor(edgeFraction * (distances.length - 1)).toInt
+            )
+          val centerOrdinal = ordinalOf(domain, center)
+          ball.indices.collect:
+            case index
+                if ball(index) == centerOrdinal ||
+                  distances(index) < threshold ||
+                  rng.nextDouble() >= drop =>
+              ball(index)
+
+  def blobbyBalls[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: SearchlightRadius,
+      drop: Double,
+      edgeFraction: Double,
+      rng: Random
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    blobbyBalls(
+      domain,
+      radius,
+      drop,
+      edgeFraction,
+      Region.whole(domain.space),
+      rng
+    )
 
   /** Intersect every neighborhood with one exact support region.
     *
@@ -290,6 +381,119 @@ object ExactVolumeSearchlight:
       support,
       label
     )
+
+  private def buildNeighborhoods[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      centers: Region[S],
+      deltas: Vector[Int]
+  )(
+      include: (Int, Int, Int) => Boolean
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    buildNeighborhoods(domain, centers): center =>
+      boundedOrdinals(domain, center, deltas)(include)
+
+  private def buildNeighborhoods[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      centers: Region[S]
+  )(
+      rowAt: VoxelCoord => IterableOnce[Int]
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    val rows = Array.fill(domain.space.size)(Vector.empty[Int])
+    centers.indicesInDomainOrder.foreach: centerIndex =>
+      val lattice = domain.indexOf(centerIndex).toOption.get
+      val center = VoxelCoord(
+        lattice.values(0),
+        lattice.values(1),
+        lattice.values(2)
+      )
+      rows(centerIndex.ordinal) = rowAt(center).iterator.toVector
+
+    Relation
+      .fromOrdinalRows(
+        domain.space,
+        domain.space,
+        rows.iterator.map(_.iterator)
+      )
+      .left
+      .map(ExactVolumeSearchlightError.InvalidRelation.apply)
+      .flatMap(fromRelation(centers, _))
+
+  private def boundedOrdinals[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      center: VoxelCoord,
+      deltas: Vector[Int]
+  )(
+      include: (Int, Int, Int) => Boolean
+  ): Vector[Int] =
+    val shape = domain.grid.shape
+    val targets = Vector.newBuilder[Int]
+    var x = math.max(0, center.x - deltas(0))
+    val maxX = math.min(shape(0) - 1, center.x + deltas(0))
+    while x <= maxX do
+      var y = math.max(0, center.y - deltas(1))
+      val maxY = math.min(shape(1) - 1, center.y + deltas(1))
+      while y <= maxY do
+        var z = math.max(0, center.z - deltas(2))
+        val maxZ = math.min(shape(2) - 1, center.z + deltas(2))
+        while z <= maxZ do
+          val dx = x - center.x
+          val dy = y - center.y
+          val dz = z - center.z
+          if include(dx, dy, dz) then
+            targets += ordinalOf(domain, VoxelCoord(x, y, z))
+          z += 1
+        y += 1
+      x += 1
+    targets.result()
+
+  private def ordinalOf[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      voxel: VoxelCoord
+  ): Int =
+    val target =
+      LatticeIndex
+        .fromVector[D3](voxel.toVector)
+        .toOption
+        .get
+    domain.ordinalOf(target).toOption.get
+
+  private def axisSpacing[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      axis: Int
+  ): Double =
+    val matrix = domain.grid.indexToFrame.matrix
+    math.sqrt(
+      matrix(0, axis) * matrix(0, axis) +
+        matrix(1, axis) * matrix(1, axis) +
+        matrix(2, axis) * matrix(2, axis)
+    )
+
+  private def physicalBallBounds[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      radius: Double,
+      gridAxisScales: Vector[Double]
+  ): Vector[Int] =
+    val inverse = domain.grid.indexToFrame.inverse.matrix
+    Vector.tabulate(3): axis =>
+      val inverseRowNorm =
+        math.sqrt(
+          inverse(axis, 0) * inverse(axis, 0) +
+            inverse(axis, 1) * inverse(axis, 1) +
+            inverse(axis, 2) * inverse(axis, 2)
+        )
+      math.ceil(radius * inverseRowNorm / gridAxisScales(axis)).toInt
+
+  private def worldSquaredDistance[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      dx: Double,
+      dy: Double,
+      dz: Double
+  ): Double =
+    val matrix = domain.grid.indexToFrame.matrix
+    val wx = matrix(0, 0) * dx + matrix(0, 1) * dy + matrix(0, 2) * dz
+    val wy = matrix(1, 0) * dx + matrix(1, 1) * dy + matrix(1, 2) * dz
+    val wz = matrix(2, 0) * dx + matrix(2, 1) * dy + matrix(2, 2) * dz
+    wx * wx + wy * wy + wz * wz
 
   private def validateCentered[S](
       centers: Region[S],

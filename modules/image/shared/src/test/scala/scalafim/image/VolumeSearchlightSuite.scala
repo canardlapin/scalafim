@@ -49,6 +49,60 @@ class VolumeSearchlightSuite extends munit.FunSuite:
       Vector(1, 3, 4, 5, 7)
     )
 
+  test("exact cube, ellipsoid, and blobby geometries retain centered relations"):
+    val radius = SearchlightRadius.make(1.0).toOption.get
+    val center = domain.space.indexOption(4).get
+    val cube = ExactVolumeSearchlight.cubes(domain, radius).toOption.get
+    val ellipsoid =
+      ExactVolumeSearchlight
+        .ellipsoids(domain, radius, Vector(2.0, 1.0, 1.0))
+        .toOption
+        .get
+    val blobby =
+      ExactVolumeSearchlight
+        .blobbyBalls(
+          domain,
+          radius,
+          drop = 1.0,
+          edgeFraction = 1.0,
+          rng = new scala.util.Random(0L)
+        )
+        .toOption
+        .get
+
+    assertEquals(
+      cube.relation.row(center).ordinalsInDomainOrder.toVector,
+      Vector(0, 1, 2, 3, 4, 5, 6, 7, 8)
+    )
+    assertEquals(
+      ellipsoid.relation.row(center).ordinalsInDomainOrder.toVector,
+      Vector(3, 4, 5)
+    )
+    assertEquals(
+      blobby.relation.row(center).ordinalsInDomainOrder.toVector,
+      Vector(4)
+    )
+
+  test("exact neighborhood shape policies reject invalid parameters"):
+    val radius = SearchlightRadius.make(1.0).toOption.get
+
+    assert(
+      ExactVolumeSearchlight
+        .ellipsoids(domain, radius, Vector(1.0, 0.0, 1.0))
+        .isLeft
+    )
+    assert(
+      ExactVolumeSearchlight
+        .blobbyBalls(
+          domain,
+          radius,
+          drop = 1.1,
+          edgeFraction = 0.5,
+          rng = new scala.util.Random(0L)
+        )
+        .isLeft
+    )
+
   test("relation rows materialize an exact selected window"):
     val values = Array.ofDim[Int](volumeSpace.nVoxels)
     var i = 0
