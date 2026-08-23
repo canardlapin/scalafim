@@ -19,20 +19,30 @@ import ravel.Rank
   * Its only dense owner is the retained Ravel array. The static D3 plus rank-3
   * contract implies that the sample space has no non-spatial axes.
   */
-opaque type NeuroVolume[
-    S <: SampleSpace[?, D3],
-    A,
-    Sem
-] <: Sampled[S, A, Sem, Rank[3]] = Sampled[S, A, Sem, Rank[3]]
+opaque type AnyNeuroVolume[A] <:
+    Sampled[
+      ? <: SampleSpace[?, D3],
+      A,
+      ?,
+      Rank[3]
+    ] =
+  Sampled[? <: SampleSpace[?, D3], A, ?, Rank[3]]
 
 opaque type SomeNeuroVolume[A, Sem] <:
-    Sampled[
+    AnyNeuroVolume[A] & Sampled[
       ? <: SampleSpace[?, D3],
       A,
       Sem,
       Rank[3]
     ] =
   Sampled[? <: SampleSpace[?, D3], A, Sem, Rank[3]]
+
+opaque type NeuroVolume[
+    S <: SampleSpace[?, D3],
+    A,
+    Sem
+] <: SomeNeuroVolume[A, Sem] & Sampled[S, A, Sem, Rank[3]] =
+  Sampled[S, A, Sem, Rank[3]]
 
 type ScalarVolume[S <: SampleSpace[?, D3], A] =
   NeuroVolume[S, A, Continuous]
@@ -52,6 +62,28 @@ type MaskVolume[S <: SampleSpace[?, D3]] =
 type SomeMaskVolume =
   SomeNeuroVolume[Boolean, MaskSemantics]
 
+object AnyNeuroVolume:
+  inline def eraseSemantics[A, Sem](
+      volume: SomeNeuroVolume[A, Sem]
+  ): AnyNeuroVolume[A] =
+    volume
+
+  extension [A](volume: AnyNeuroVolume[A])
+    inline def apply(x: Int, y: Int, z: Int): A =
+      volume.data(x, y, z)
+
+    inline def apply(voxel: VoxelCoord): A =
+      volume.data(voxel.x, voxel.y, voxel.z)
+
+    def wholeCanonical: Either[
+      NonContiguousLayout,
+      CanonicalArray[A, Rank[3]]
+    ] =
+      CanonicalArray.from(volume.data)
+
+    def materializedCanonical: AnyNeuroVolume[A] =
+      volume.materializedCopy
+
 object SomeNeuroVolume:
   private[image] inline def unsafeFromSampled[A, Sem](
       sampled: Sampled[
@@ -62,6 +94,22 @@ object SomeNeuroVolume:
       ]
   ): SomeNeuroVolume[A, Sem] =
     sampled
+
+  extension [A, Sem](volume: SomeNeuroVolume[A, Sem])
+    inline def apply(x: Int, y: Int, z: Int): A =
+      volume.data(x, y, z)
+
+    inline def apply(voxel: VoxelCoord): A =
+      volume.data(voxel.x, voxel.y, voxel.z)
+
+    def wholeCanonical: Either[
+      NonContiguousLayout,
+      CanonicalArray[A, Rank[3]]
+    ] =
+      CanonicalArray.from(volume.data)
+
+    def materializedCanonical: SomeNeuroVolume[A, Sem] =
+      unsafeFromSampled(volume.materializedCopy)
 
 object NeuroVolume:
   /** Retain an already checked image4s value without allocating a wrapper. */

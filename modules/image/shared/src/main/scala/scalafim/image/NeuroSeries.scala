@@ -16,20 +16,30 @@ import ravel.Rank
 import ravel.Shape
 
 /** A zero-wrapper D3 sampled series with exactly one non-spatial Time axis. */
-opaque type NeuroSeries[
-    S <: SampleSpace[?, D3],
-    A,
-    Sem
-] <: Sampled[S, A, Sem, Rank[4]] = Sampled[S, A, Sem, Rank[4]]
+opaque type AnyNeuroSeries[A] <:
+    Sampled[
+      ? <: SampleSpace[?, D3],
+      A,
+      ?,
+      Rank[4]
+    ] =
+  Sampled[? <: SampleSpace[?, D3], A, ?, Rank[4]]
 
 opaque type SomeNeuroSeries[A, Sem] <:
-    Sampled[
+    AnyNeuroSeries[A] & Sampled[
       ? <: SampleSpace[?, D3],
       A,
       Sem,
       Rank[4]
     ] =
   Sampled[? <: SampleSpace[?, D3], A, Sem, Rank[4]]
+
+opaque type NeuroSeries[
+    S <: SampleSpace[?, D3],
+    A,
+    Sem
+] <: SomeNeuroSeries[A, Sem] & Sampled[S, A, Sem, Rank[4]] =
+  Sampled[S, A, Sem, Rank[4]]
 
 type ScalarSeries[S <: SampleSpace[?, D3], A] =
   NeuroSeries[S, A, Continuous]
@@ -49,6 +59,25 @@ type MaskSeries[S <: SampleSpace[?, D3]] =
 type SomeMaskSeries =
   SomeNeuroSeries[Boolean, MaskSemantics]
 
+object AnyNeuroSeries:
+  inline def eraseSemantics[A, Sem](
+      series: SomeNeuroSeries[A, Sem]
+  ): AnyNeuroSeries[A] =
+    series
+
+  extension [A](series: AnyNeuroSeries[A])
+    inline def apply(x: Int, y: Int, z: Int, time: Int): A =
+      series.data(x, y, z, time)
+
+    def wholeCanonical: Either[
+      NonContiguousLayout,
+      CanonicalArray[A, Rank[4]]
+    ] =
+      CanonicalArray.from(series.data)
+
+    def materializedCanonical: AnyNeuroSeries[A] =
+      series.materializedCopy
+
 object SomeNeuroSeries:
   private[image] def fromSampled[A, Sem](
       sampled: Sampled[
@@ -61,6 +90,38 @@ object SomeNeuroSeries:
     val axes = sampled.nonSpatialAxes.values
     if axes.size == 1 && axes.head.kind == AxisKind.Time then Right(sampled)
     else Left(NativeImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
+
+  extension [A, Sem](series: SomeNeuroSeries[A, Sem])
+    inline def apply(x: Int, y: Int, z: Int, time: Int): A =
+      series.data(x, y, z, time)
+
+    def wholeCanonical: Either[
+      NonContiguousLayout,
+      CanonicalArray[A, Rank[4]]
+    ] =
+      CanonicalArray.from(series.data)
+
+    def voxelTimeMatrix: Either[
+      NonContiguousLayout,
+      NDArray[A, Rank[2]]
+    ] =
+      wholeCanonical.map: canonical =>
+        canonical.reshapeView(
+          Shape(series.grid.shape.product, series.nonSpatialAxes.values.head.extent)
+        )
+
+    def materializedCanonical: SomeNeuroSeries[A, Sem] =
+      unsafeFromSampled(series.materializedCopy)
+
+  private inline def unsafeFromSampled[A, Sem](
+      sampled: Sampled[
+        ? <: SampleSpace[?, D3],
+        A,
+        Sem,
+        Rank[4]
+      ]
+  ): SomeNeuroSeries[A, Sem] =
+    sampled
 
 object NeuroSeries:
   private def validateSome[A, Sem](

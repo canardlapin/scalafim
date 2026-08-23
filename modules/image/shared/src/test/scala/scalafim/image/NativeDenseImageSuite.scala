@@ -51,8 +51,12 @@ class NativeDenseImageSuite extends munit.FunSuite:
     val sampled =
       right(Sampled.continuous(volumeSpace, volumeData))
     val volume = NeuroVolume.fromSampled(sampled)
+    val semantic: SomeScalarVolume[Double] = volume
+    val agnostic: AnyNeuroVolume[Double] = volume
 
     assert(volume.sampled eq sampled)
+    assert(semantic.asInstanceOf[AnyRef] eq sampled)
+    assert(agnostic.asInstanceOf[AnyRef] eq sampled)
     assert(volume.data eq volumeData)
     assertEqualsDouble(volume(1, 2, 3), 123.0, 0.0)
 
@@ -110,8 +114,12 @@ class NativeDenseImageSuite extends munit.FunSuite:
     val sampled =
       right(Sampled.continuous(seriesSpace, seriesData))
     val series = right(NeuroSeries.fromSampled(sampled))
+    val semantic: SomeScalarSeries[Double] = series
+    val agnostic: AnyNeuroSeries[Double] = series
 
     assert(series.sampled eq sampled)
+    assert(semantic.asInstanceOf[AnyRef] eq sampled)
+    assert(agnostic.asInstanceOf[AnyRef] eq sampled)
     assert(series.data eq seriesData)
     assertEqualsDouble(series(1, 2, 3, 4), 1234.0, 0.0)
 
