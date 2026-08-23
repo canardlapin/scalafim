@@ -106,14 +106,17 @@ class OwnershipSuite extends munit.FunSuite:
           i.toDouble + 10.0 * j + 100.0 * k + 1000.0 * component
       }
     val field =
-      DenseVectorField(
+      DenseVectorField.sourceCoordinates(
         grid,
-        data,
-        DenseVectorFieldKind.SourceCoordinates
+        data
       )
 
     assert(field.values.eq(data), clue = "")
     assert(field.values.eq(field.sampled.data), clue = "")
+    assert(
+      field.sampled.asInstanceOf[AnyRef] eq field.asInstanceOf[AnyRef],
+      clue = "DenseVectorField must be the exact Sampled object"
+    )
     assertEquals(field.sampled.nonSpatialAxes.shape, Vector(3), clue = "")
     assertEquals(field.sampled.grid.shape, grid.dims, clue = "")
     assertEquals(field(1, 1, 1, 2), 2111.0, clue = "")

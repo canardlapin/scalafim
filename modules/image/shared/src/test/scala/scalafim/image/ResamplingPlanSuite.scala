@@ -347,10 +347,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
 
     assertEquals(source.kind, DenseVectorFieldKind.SourceCoordinates, clue = "")
     assertEquals(displacement.kind, DenseVectorFieldKind.Displacement, clue = "")
-    assertClose(source.linearComponent(0, 0), 1.0)
-    assertClose(source.linearComponent(1, 0), 2.0)
-    assertClose(displacement.linearComponent(0, 0), 1.0)
-    assertClose(displacement.linearComponent(1, 0), 1.0)
+    assertClose(source(VoxelCoord(0, 0, 0), 0), 1.0)
+    assertClose(source(VoxelCoord(1, 0, 0), 0), 2.0)
+    assertClose(displacement(VoxelCoord(0, 0, 0), 0), 1.0)
+    assertClose(displacement(VoxelCoord(1, 0, 0), 0), 1.0)
     assertClose(jacobian(0, 0, 0), 1.0)
     assertClose(jacobian(1, 0, 0), 1.0)
   }

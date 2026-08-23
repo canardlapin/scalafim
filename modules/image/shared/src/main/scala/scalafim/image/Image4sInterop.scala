@@ -2,10 +2,7 @@ package scalafim.image
 
 import image4s.ImageError
 import image4s.ImageMetadata
-import image4s.Axis as ImageAxis
-import image4s.AxisKind
 import image4s.Continuous
-import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.Sampled
 import image4s.SomeSampleSpace
@@ -58,14 +55,6 @@ object Image4sInterop:
 
   private[image] type PackedSeries[A] =
     AnyNeuroSeries[A]
-
-  private[image] type PackedComponents =
-    Sampled[
-      ? <: SampleSpace[?, ?],
-      Double,
-      Continuous,
-      Rank[4]
-    ]
 
   def canonicalizeScalarVolume(
       volume: NeuroVol[Double]
@@ -201,32 +190,6 @@ object Image4sInterop:
     yield AnyNeuroSeries.eraseSemantics(
       SomeNeuroSeries.eraseSpace(sampled)
     )
-
-  private[image] def componentsFromRavel(
-      data: RavelArray[Double, Rank[4]],
-      gridSpec: GridSpec,
-      label: String
-  ): Either[NeuroImageError, PackedComponents] =
-    for
-      canonical <- canonicalD3(gridSpec.toNeuroSpace)
-      direction <- ImageAxis
-        .create("direction", 3, AxisKind.Direction)
-        .left
-        .map(NeuroImageError.Image.apply)
-      axes <- NonSpatialAxes
-        .from(Vector(direction))
-        .left
-        .map(NeuroImageError.Image.apply)
-      componentSpace = SampleSpace.create(canonical.grid, axes)
-      sampled <- Sampled
-        .continuous(
-          componentSpace,
-          data,
-          ImageMetadata.named(label)
-        )
-        .left
-        .map(NeuroImageError.Image.apply)
-    yield sampled
 
   private[image] def volumeFromSeriesView[A](
       series: PackedSeries[A],

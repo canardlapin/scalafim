@@ -1,123 +1,125 @@
 package scalafim.image
 
 import image4s.Continuous
+import image4s.Axis as ImageAxis
+import image4s.AxisKind
+import image4s.ImageMetadata
+import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.Sampled
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
 import image4s.geometry.D3
-import image4s.geometry.Frame
 
 enum DenseVectorFieldKind:
   case SourceCoordinates, Displacement
 
-/** Zero-copy compatibility view over image4s' canonical component image.
+/** A continuous D3 image with one three-valued Direction axis.
   *
-  * The `ComponentImage` owns both Ravel storage and sampled-image geometry.
-  * This class retains the historical ScalaFIM name and field-kind semantic
-  * while delegating all value access to that one canonical value.
+  * `Role` is a phantom scientific invariant. The runtime value is exactly the
+  * image4s `Sampled` object and retains its Ravel array without a wrapper.
   */
-final class DenseVectorField private (
-    val grid: GridSpec,
-    val sampled: Sampled[
-      ? <: SampleSpace[?, ?],
+opaque type DenseVectorField[Role <: DenseVectorFieldKind] =
+  Sampled[
+    ? <: SampleSpace[?, D3],
+    Double,
+    Continuous,
+    Rank[4]
+  ]
+
+type SourceCoordinateField =
+  DenseVectorField[DenseVectorFieldKind.SourceCoordinates.type]
+
+type DisplacementField =
+  DenseVectorField[DenseVectorFieldKind.Displacement.type]
+
+object DenseVectorField:
+  extension [Role <: DenseVectorFieldKind](
+      field: DenseVectorField[Role]
+  )
+    inline def sampled: Sampled[
+      ? <: SampleSpace[?, D3],
       Double,
       Continuous,
       Rank[4]
-    ],
-    val kind: DenseVectorFieldKind
-):
-  val values: RavelArray[Double, Rank[4]] =
-    sampled.data
-  private[scalafim] val flatValues: RavelArray[Double, Rank[1]] =
-    values.reshapeView(Shape(values.size))
+    ] = field
 
-  inline def apply(i: Int, j: Int, k: Int, component: Int): Double =
-    values(i, j, k, component)
+    inline def values: RavelArray[Double, Rank[4]] =
+      field.data
 
-  inline def apply(voxel: VoxelCoord, component: Int): Double =
-    apply(voxel.x, voxel.y, voxel.z, component)
+    inline def kind(using role: ValueOf[Role]): Role =
+      role.value
 
-  def linearComponent(linearVoxel: Int, component: Int): Double =
-    require(linearVoxel >= 0 && linearVoxel < grid.nVoxels, "linear voxel index out of bounds")
-    require(component >= 0 && component < 3, "vector component out of bounds")
-    val nx = grid.shape.x
-    val ny = grid.shape.y
-    val x = linearVoxel % nx
-    val yz = linearVoxel / nx
-    val y = yz % ny
-    val z = yz / ny
-    flatValues(component + 3 * (z + grid.extentZ * (y + grid.extentY * x)))
+    inline def apply(
+        x: Int,
+        y: Int,
+        z: Int,
+        component: Int
+    ): Double =
+      field.data(x, y, z, component)
 
-  private[scalafim] inline def flatValue(storageIndex: Int): Double =
-    flatValues(storageIndex)
+    inline def apply(voxel: VoxelCoord, component: Int): Double =
+      apply(voxel.x, voxel.y, voxel.z, component)
 
-  /** Explicit compatibility export in ScalaFIM's historical
-    * component-planar, first-axis-fastest order. Always copies.
-    */
-  def copyLegacyPlanar: Array[Double] =
-    val out = PrimitiveBuffers.ofSize[Double](grid.nVoxels * 3)
-    var linear = 0
-    while linear < grid.nVoxels do
-      var component = 0
-      while component < 3 do
-        out(linear + component * grid.nVoxels) =
-          linearComponent(linear, component)
-        component += 1
-      linear += 1
-    out
-
-object DenseVectorField:
-  def apply(
+  def sourceCoordinates(
       grid: GridSpec,
-      values: RavelArray[Double, Rank[4]],
-      kind: DenseVectorFieldKind
-  ): DenseVectorField =
+      values: RavelArray[Double, Rank[4]]
+  ): SourceCoordinateField =
+    make[DenseVectorFieldKind.SourceCoordinates.type](grid, values)
+
+  def displacement(
+      grid: GridSpec,
+      values: RavelArray[Double, Rank[4]]
+  ): DisplacementField =
+    make[DenseVectorFieldKind.Displacement.type](grid, values)
+
+  private def make[Role <: DenseVectorFieldKind](
+      grid: GridSpec,
+      values: RavelArray[Double, Rank[4]]
+  )(using role: ValueOf[Role]): DenseVectorField[Role] =
     require(
       values.shape == Shape(grid.dims(0), grid.dims(1), grid.dims(2), 3),
       "dense vector field must have grid dims plus three components"
     )
-    require(
-      values.isCanonicalLayout && values.isWholeBuffer,
-      "dense vector field storage must be a whole canonical Ravel buffer"
-    )
-    val sampled =
-      Image4sInterop
-        .componentsFromRavel(values, grid, kind.toString)
+    val spatial =
+      NeuroSpace
+        .requireSpatialD3(grid.toNeuroSpace)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    new DenseVectorField(grid, sampled, kind)
-
-  /** Materializing ingress from component-planar, x-fastest values. */
-  def fromLegacyPlanar(
-      grid: GridSpec,
-      values: Array[Double],
-      kind: DenseVectorFieldKind
-  ): DenseVectorField =
-    require(values.length == grid.nVoxels * 3, "dense vector field data length mismatch")
-    val nx = grid.shape.x
-    val ny = grid.shape.y
-    val packed =
-      RavelArray.tabulate[Double](nx, ny, grid.shape.z, 3) {
-        (i, j, k, component) =>
-          values(i + nx * (j + ny * k) + component * grid.nVoxels)
-      }
-    apply(grid, packed, kind)
+    val direction =
+      ImageAxis
+        .create("direction", 3, AxisKind.Direction)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val axes =
+      NonSpatialAxes
+        .from(Vector(direction))
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val componentSpace = SampleSpace.create(spatial.grid, axes)
+    Sampled
+      .continuous(
+        componentSpace,
+        values,
+        ImageMetadata.named(s"dense-vector-field:${role.value}")
+      )
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object MorphismFields:
 
   def sourceCoordinates(
       morphism: SpatialMorphism,
       grid: GridSpec
-  ): DenseVectorField =
+  ): SourceCoordinateField =
     val targetPoints = grid.worldPoints
     val sourcePoints = morphism.transformPoints(targetPoints)
-    DenseVectorField(grid, vectorField(grid, sourcePoints.map(_.toVector)), DenseVectorFieldKind.SourceCoordinates)
+    DenseVectorField.sourceCoordinates(
+      grid,
+      vectorField(grid, sourcePoints.map(_.toVector))
+    )
 
   def displacement(
       morphism: SpatialMorphism,
       grid: GridSpec
-  ): DenseVectorField =
+  ): DisplacementField =
     val targetPoints = grid.worldPoints
     val sourcePoints = morphism.transformPoints(targetPoints)
     val deltas =
@@ -126,7 +128,7 @@ object MorphismFields:
         val target = targetPoints(i)
         Vector(source.x - target.x, source.y - target.y, source.z - target.z)
       }
-    DenseVectorField(grid, vectorField(grid, deltas), DenseVectorFieldKind.Displacement)
+    DenseVectorField.displacement(grid, vectorField(grid, deltas))
 
   def jacobianDeterminant(
       morphism: SpatialMorphism,
@@ -136,7 +138,12 @@ object MorphismFields:
   ): Either[MorphismError, NeuroVol[Double]] =
     val points = grid.worldPoints
     morphism.jacobianDetAt(points, log, mode).map { dets =>
-      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(dets.toArray), grid.toNeuroSpace, "jacobian-det")
+      val nx = grid.shape.x
+      val ny = grid.shape.y
+      val values =
+        RavelArray.tabulate[Double](nx, ny, grid.shape.z): (x, y, z) =>
+          dets(x + nx * (y + ny * z))
+      NeuroVol.fromRavel(values, grid.toNeuroSpace, "jacobian-det")
     }
 
   private def vectorField(grid: GridSpec, vectors: Vector[Vector[Double]]): RavelArray[Double, Rank[4]] =
