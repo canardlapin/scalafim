@@ -13,6 +13,15 @@ import scala.reflect.ClassTag
 opaque type NeuroVec[A] = AnyNeuroSeries[A]
 
 object NeuroVec:
+  /** Zero-copy compatibility admission from a semantics-preserving native
+    * series. Kept package-scoped while downstream modules migrate their
+    * public signatures.
+    */
+  private[scalafim] inline def fromNative[A, Sem](
+      series: SomeNeuroSeries[A, Sem]
+  ): NeuroVec[A] =
+    series
+
   extension [A](vector: NeuroVec[A])
     inline def label: String =
       vector.metadata.label
@@ -152,80 +161,8 @@ object NeuroVec:
     def series(linearSpatial: Array[Int]): RavelArray[A, Rank[2]] =
       series(RavelArray.fromSeq(Shape(linearSpatial.length), linearSpatial))
 
-    def series(indexSet: VoxelIndexSet): RavelArray[A, Rank[2]] =
-      GridCompatibility.requireVolume(seriesSpace.volumeSpace, indexSet.space)
-      series(indexSet.unsafeArray)
-
-    def series(roi: VoxelRoi): RavelArray[A, Rank[2]] =
-      GridCompatibility.requireVolume(seriesSpace.volumeSpace, roi.space)
-      series(roi.linearIndexSet.unsafeArray)
-
-    def series(roi: ROICoords): RavelArray[A, Rank[2]] =
-      series(roi.linearIndices(space.spatialSpace))
-
-    def series(coords: Vector[Vector[Int]]): RavelArray[A, Rank[2]] =
-      series(ROICoords(coords))
-
     def series(mask: NeuroVol[Boolean]): RavelArray[A, Rank[2]] =
-      series(Mask.indexSet(mask))
-
-    def seriesRoi(roi: ROICoords): ROIVec[A] =
-      val lin = roi.linearIndices(space.spatialSpace)
-      ROIVec(space, roi, series(lin))
-
-    def select(selection: VoxelSelection): Either[GridMismatch, RoiSeries[A]] =
-      GridCompatibility.volume(seriesSpace.volumeSpace, selection.space).map: _ =>
-        val selected = series(selection.indexSet.unsafeArray)
-        RoiSeries.unsafe(seriesSpace, selection, selected, label)
-
-    def select(region: VoxelRegion): Either[GridMismatch, RoiSeries[A]] =
-      select(region.toSelection)
-
-    def select(roi: VoxelRoi): Either[GridMismatch, RoiSeries[A]] =
-      select(VoxelSelection.fromRoi(roi))
-
-    def asSparse(mask: NeuroVol[Boolean], label: String = vector.label)(using ClassTag[A]): SparseNeuroVec[A] =
-      SparseNeuroVec.fromDense(vector, mask, label)
-
-    def asSparse(indices: Array1[Int])(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(indices, vector.label)
-
-    def asSparse(indices: Array1[Int], label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-      val indexSet = VoxelIndexSet.unique(seriesSpace.volumeSpace, indices)
-      asSparse(indexSet, label)
-
-    def asSparse(indices: Array[Int])(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(
-        RavelArray.fromSeq(Shape(indices.length), indices),
-        vector.label
-      )
-
-    def asSparse(indices: Array[Int], label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(RavelArray.fromSeq(Shape(indices.length), indices), label)
-
-    def asSparse(indexSet: VoxelIndexSet)(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(indexSet, vector.label)
-
-    def asSparse(indexSet: VoxelIndexSet, label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-      GridCompatibility.requireVolume(seriesSpace.volumeSpace, indexSet.space)
-      SparseNeuroVec.fromDense(
-        vector,
-        SparseSupport.fromIndexSet(indexSet),
-        label
-      )
-
-    def asSparse(roi: ROICoords)(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(roi, vector.label)
-
-    def asSparse(roi: ROICoords, label: String)(using ClassTag[A]): SparseNeuroVec[A] =
-      asSparse(roi.linearIndices(space.spatialSpace), label)
-
-    def splitClusters(clusters: ClusteredNeuroVol)(using ClassTag[A]): Vector[ROIVec[A]] =
-      GridCompatibility.requireSpatial(space, clusters.space)
-      clusters.clusterMap.toVector.sortBy(_._1).map { case (_, idx) =>
-        val coords = Vector.tabulate(idx.size)(i => Indexing.indexToGrid3D(space.spatialDims, idx(i)))
-        ROIVec(space, ROICoords(coords), series(idx))
-      }
+      series(Mask.indices(mask))
 
     def subVector(ts: Seq[Int])(using
         ClassTag[A],

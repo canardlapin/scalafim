@@ -60,7 +60,7 @@ class ImageMapsSuite extends munit.FunSuite:
     val se = result.standardErrorMaps(dataset.shape)
 
     assertEquals(coef.names, Vector("task", "base_constant"))
-    assertEquals(coef.values.map.cardinality, 4)
+    assertEquals(coef.values.value.selection.size, 4)
     assertVectorClose(coef.dense.series(0).toVector, Vector(2.0, 1.0), 1e-10)
     assertVectorClose(coef.dense.series(1).toVector, Vector(-1.0, 2.0), 1e-10)
     assertVectorClose(coef.dense.series(2).toVector, Vector(-1.0, 10.0), 1e-10)
@@ -80,7 +80,7 @@ class ImageMapsSuite extends munit.FunSuite:
     val coef = result.coefficientMaps(dataset.shape)
     val dense = coef.dense
 
-    assertEquals(coef.values.map.cardinality, 2)
+    assertEquals(coef.values.value.selection.size, 2)
     assertVectorClose(dense.series(0).toVector, Vector(0.0, 0.0), 1e-10)
     assertVectorClose(dense.series(1).toVector, Vector(-1.0, 2.0), 1e-10)
     assertVectorClose(dense.series(2).toVector, Vector(0.0, 0.0), 1e-10)

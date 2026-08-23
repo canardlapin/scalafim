@@ -113,15 +113,45 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     assertEquals(plan.featureSets.map(_.featureIndices.map(_.value)), Vector(Vector(2, 4), Vector(1, 3)))
   }
 
-  test("ROI windows become searchlight plans with deterministic coordinate ordering") {
+  test("exact volume neighborhoods become searchlight plans in domain order") {
     val space =
       NeuroSpace(
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
     )
-    val window = Searchlight.sphericalRoi(space, Vector(1, 1, 0), radius = 1.0, fill = 1, mask = None, label = "center")
-    val spatial = SpatialFeatureSetPlans.roiWindows("window", Vector(window)).toOption.get
+    val volumeSpace = VolumeSpace(space)
+    val packed =
+      VolumeDomain
+        .register(
+          volumeSpace,
+          "MVPA window test voxels",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val centers =
+      locus4s.Region.fromOrdinals(domain.space, Vector(4)).toOption.get
+    val neighborhoods =
+      ExactVolumeSearchlight
+        .metricBalls(
+          domain,
+          SearchlightRadius.make(1.0).toOption.get,
+          centers
+        )
+        .toOption
+        .get
+    val spatial =
+      SpatialFeatureSetPlans
+        .volumeSearchlight(
+          "window",
+          neighborhoods,
+          _ => Some("center")
+        )
+        .toOption
+        .get
     val plan = spatial.plan
     val featureSet = plan.featureSets.head
 
@@ -221,27 +251,42 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     assert(mvpaError.message.contains("non-negative"))
   }
 
-  test("typed searchlight windows reject centers missing from their voxel index set") {
+  test("exact searchlight construction rejects a missing center") {
     val space =
       NeuroSpace(
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
       )
-    val window =
-      ROIVolWindow.unsafe(
-        space,
-        ROICoords(Vector(Vector(0, 0, 0))),
-        ravel.NDArray.fromSeq(ravel.Shape(1), Array(1)),
-        centerIndex = 0,
-        parentIndex = 4,
-        label = "bad-center"
-      )
-    val typedError = SpatialFeatureSetPlans.roiWindows("bad-window", Vector(window)).swap.toOption.get
-    val mvpaError = SpatialFeatureSetPlans.fromRoiWindows("bad-window", Vector(window)).swap.toOption.get
+    val volumeSpace = VolumeSpace(space)
+    val packed =
+      VolumeDomain
+        .register(
+          volumeSpace,
+          "MVPA invalid window test voxels",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val centers =
+      locus4s.Region.fromOrdinals(domain.space, Vector(4)).toOption.get
+    val rows = Vector.tabulate(domain.space.size): ordinal =>
+      if ordinal == 4 then Vector(0) else Vector.empty[Int]
+    val relation =
+      locus4s.Relation
+        .fromOrdinalRows(domain.space, domain.space, rows)
+        .toOption
+        .get
+    val error =
+      ExactVolumeSearchlight
+        .fromRelation(centers, relation)
+        .swap
+        .toOption
+        .get
 
-    assert(typedError.message.contains("center 4"))
-    assert(mvpaError.message.contains("center 4"))
+    assertEquals(error, ExactVolumeSearchlightError.MissingCenter(4))
   }
 
   test("parcel key identity policy reports fragmented parcel id collisions") {

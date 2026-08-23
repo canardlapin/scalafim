@@ -147,11 +147,9 @@ object VolumeSearchlight:
         .fromRegion(restricted)
         .left
         .map(VolumeSearchlightError.InvalidSelection.apply)
-      voxelSelection <- domain
-        .voxelSelection(locusSelection)
-        .left
-        .map(VolumeSearchlightError.WrongSpace.apply)
       orderedIndices = locusSelection.indices.toVector
+      orderedCoords = orderedIndices.map: index =>
+        domain.indexOf(index).toOption.get.values
       data =
         RavelArray.fromSeq(
           Shape(orderedIndices.length),
@@ -161,7 +159,7 @@ object VolumeSearchlight:
       window <- ROIVolWindow
         .fromOwned(
           domain.volumeSpace.toNeuroSpace,
-          ROICoords(voxelSelection.voxelCoords.map(_.toVector)),
+          ROICoords(orderedCoords),
           data,
           centerIndex,
           center.value,

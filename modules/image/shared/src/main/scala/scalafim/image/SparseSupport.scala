@@ -18,7 +18,7 @@ final class SparseSupport private (
     lookup.lookup(linearVoxel)
 
   def toMask(label: String = ""): NeuroVol[Boolean] =
-    Mask.fromIndexSet(indexSet, label)
+    Mask.fromIndices(indexSet.space.toNeuroSpace, indexSet.indices, label)
 
 object SparseSupport:
   def fromIndexSet(indexSet: VoxelIndexSet): SparseSupport =
@@ -26,7 +26,12 @@ object SparseSupport:
     new SparseSupport(indexSet, lookup)
 
   def fromMask(mask: NeuroVol[Boolean]): SparseSupport =
-    fromIndexSet(Mask.indexSet(mask))
+    fromIndexSet(
+      VoxelIndexSet(
+        VolumeSpace.unsafe(mask.space.spatialSpace),
+        Mask.indices(mask)
+      )
+    )
 
   private[image] def checkedCompatibility(
       space: NeuroSpace,
@@ -37,7 +42,11 @@ object SparseSupport:
     GridCompatibility.requireSpatial(space, lookup.space)
     val ordered =
       VoxelIndexSet.unique(space, lookup.indices)
-    val maskSet = Mask.indexSet(mask)
+    val maskSet =
+      VoxelIndexSet(
+        VolumeSpace.unsafe(mask.space.spatialSpace),
+        Mask.indices(mask)
+      )
     require(
       ordered.size == maskSet.size,
       "mask and compact lookup must have the same cardinality"

@@ -83,12 +83,34 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(backValues, inputValues, clue = "")
   }
 
-  test("ROIVol computes linear indices") {
+  test("ordered voxel selections use canonical grid ordinals") {
     val sp = NeuroSpace(Vector(2, 3, 4))
     val coords = Vector(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    val roi = ROIVol[Double](sp, coords, Array[Double](1.0, 2.0, 3.0))
-    val lin = Vector.tabulate(roi.linearIndices.size)(i => roi.linearIndices(i))
-    assertEquals(lin, Vector(0, 12, 4), clue = "")
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "core ordered voxel selection",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val ordinals = coords.map: coord =>
+      val index =
+        image4s.geometry.LatticeIndex
+          .fromVector[image4s.geometry.D3](coord)
+          .toOption
+          .get
+      domain.ordinalOf(index).toOption.get
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, ordinals)
+        .toOption
+        .get
+
+    assertEquals(selection.ordinals.toVector, Vector(0, 12, 4), clue = "")
   }
 
   test("NeuroVec volume and series") {
@@ -157,152 +179,288 @@ class CoreSuite extends munit.FunSuite:
     assert(SpatialDims.fromVector(Vector(2, 3)).isLeft, clue = "SpatialDims should reject non-3D input")
   }
 
-  test("NeuroVec seriesRoi creates ROIVec") {
+  test("selected series retain position-first storage and contiguous time") {
     val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val data = PrimitiveBuffers.tabulate[Int](6)(identity)
-    val vec = NeuroVec.copyFromCanonicalArray[Int](data, sp)
-    val roi = ROICoords(Vector(Vector(0, 0, 0), Vector(1, 0, 0)))
-    val rvec = vec.seriesRoi(roi)
-    assertEquals(rvec.data.shape, Shape(3, 2), clue = "")
-    val s0 = rvec.seriesAt(0)
-    val s0v = Vector.tabulate(s0.length)(i => s0(i))
-    assertEquals(s0v, Vector(0, 1, 2), clue = "")
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val data = RavelArray.tabulate[Int](2, 1, 1, 3):
+      (x, _, _, time) => x * 3 + time
+    val series =
+      NeuroSeries
+        .categorical(sampleSpace, data)
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected series",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(0, 1))
+        .toOption
+        .get
+    val selected =
+      SelectedSeries.gather(domain, series, selection).toOption.get
+    val provider = selected.selected
+    val first =
+      provider.seriesAt(
+        provider.selection.positions.indexAtValidatedOrdinal(0)
+      )
+
+    assertEquals(selected.data.shape, Shape(2, 3), clue = "")
+    assertEquals(first.iterator.toVector, Vector(0, 1, 2), clue = "")
   }
 
-  test("Dense to sparse and back roundtrip") {
-    import spire.std.double.given
+  test("dense series gather and explicit fill scatter roundtrip") {
     val sp = NeuroSpace(Vector(2, 2, 1, 3))
-    val data = PrimitiveBuffers.tabulate[Double](12)(_.toDouble)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 3))
-    val svec = vec.asSparse(mask)
-    val dense2 = svec.toDense
-    val dVals = Vector.tabulate(dense2.copyToCanonicalArray.length)(i => dense2.copyToCanonicalArray(i))
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 3):
+            (x, y, _, time) =>
+              (x * 2 * 1 * 3 + y * 1 * 3 + time).toDouble
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core dense selected roundtrip",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(0, 3))
+        .toOption
+        .get
+    val selected =
+      SelectedSeries.gather(domain, series, selection).toOption.get
+    val dense2 = selected.toDense(0.0).toOption.get
+    val dVals = dense2.data.iterator.toVector
     assertEquals(dVals, Vector(0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 10.0, 11.0), clue = "")
   }
 
-  test("asMatrix(SparseNeuroVec) matches dense with mask zeros") {
-    import spire.std.double.given
+  test("selected series rows match the canonical dense voxel-time view") {
     val sp = NeuroSpace(Vector(10, 10, 10, 3))
     val spatialNels = sp.spatialDims.product
     val tLen = sp.dims(3)
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val dense =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](10, 10, 10, 3):
+            (x, y, z, time) =>
+              val ordinal = ((x * 10 + y) * 10 + z) * 3 + time
+              (ordinal.toDouble + 1.0) / 10.0
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected matrix",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val ordinals = Vector.range(0, spatialNels).filter(ordinal => ordinal % 10 < 3)
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, ordinals)
+        .toOption
+        .get
+    val selected =
+      SelectedSeries.gather(domain, dense, selection).toOption.get
+    val matrix = dense.voxelTimeMatrix.toOption.get
 
-    val data = PrimitiveBuffers.tabulate[Double](spatialNels * tLen)(i => (i.toDouble + 1.0) / 10.0)
-    val dense = NeuroVec.copyFromCanonicalArray[Double](data, sp)
-
-    // ~30% mask (deterministic)
-    val maskFlags = PrimitiveBuffers.fillConst[Boolean](spatialNels, false)
-    var lin = 0
-    while lin < spatialNels do
-      if (lin % 10) < 3 then maskFlags(lin) = true
-      lin += 1
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, sp.spatialSpace)
-
-    val sparse = dense.asSparse(mask)
-    val md = dense.asMatrix
-    val ms = sparse.asMatrix
-    assertEquals(ms.shape, md.shape, clue = "")
-
-    lin = 0
-    while lin < spatialNels do
+    assertEquals(selected.data.shape, Shape(ordinals.length, tLen), clue = "")
+    var position = 0
+    while position < ordinals.length do
       var t = 0
       while t < tLen do
-        val expected = if maskFlags(lin) then md(lin, t) else 0.0
-        val got = ms(lin, t)
-        assert(math.abs(got - expected) < 1e-7, clue = "")
+        assertEqualsDouble(
+          selected(position, t),
+          matrix(ordinals(position), t),
+          1e-12
+        )
         t += 1
-      lin += 1
+      position += 1
   }
 
-  test("SparseNeuroVec subArray + linear access parity") {
-    import spire.std.double.given
+  test("selected series preserve explicit support order and dense parity") {
     val sp = NeuroSpace(Vector(2, 2, 2, 2))
-    val spatialNels = sp.spatialDims.product
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 2, 2):
+            (x, y, z, time) =>
+              (((x * 2 + y) * 2 + z) * 2 + time + 1).toDouble
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected parity",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val ordinals = Vector(0, 2, 5, 7)
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, ordinals)
+        .toOption
+        .get
+    val selected =
+      SelectedSeries.gather(domain, series, selection).toOption.get
+    val dense = selected.toDense(0.0).toOption.get
 
-    // mask pattern: 1,0,1,0, 0,1,0,1  (R column-major order)
-    val maskIdx = Array(0, 2, 5, 7)
-    val mask = Mask.fromIndices(sp.spatialSpace, maskIdx)
-    val map = IndexLookupVol(sp, maskIdx)
+    assertEquals(selected.selection.ordinals.toVector, ordinals, clue = "")
+    assertEquals(selected.data.shape, Shape(4, 2), clue = "")
+    var position = 0
+    while position < ordinals.length do
+      val lattice = domain.indexOfOrdinal(ordinals(position)).toOption.get.values
+      var time = 0
+      while time < 2 do
+        assertEqualsDouble(
+          selected(position, time),
+          dense.data(lattice(0), lattice(1), lattice(2), time),
+          1e-12
+        )
+        time += 1
+      position += 1
+  }
 
-    val nvox = maskIdx.length
-    val dat = PrimitiveBuffers.tabulate[Double](2 * nvox)(i => (i + 1).toDouble) // time x voxels
-    val compact =
-      RavelArray.tabulate[Double](2, nvox) { (time, position) =>
-        dat(time + position * 2)
-      }
-    val svec = SparseNeuroVec[Double](compact, sp, mask, map)
-    val dvec = svec.toDense
+  test("selected-series fill policy is explicit for missing voxels") {
+    val sp = NeuroSpace(Vector(2, 2, 1, 2))
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 2):
+            (x, y, _, time) => ((x * 2 + y) * 2 + time).toDouble
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected fill",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val support =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val requested =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 2)).toOption.get
+    val selected =
+      SelectedSeries.gather(domain, series, support).toOption.get
+    val filled =
+      selected.reselect(requested, MissingVoxelPolicy.Fill(0.0)).toOption.get
 
-    val fullS = svec.subArray(0 until 2, 0 until 2, 0 until 2, 0 until 2)
-    val fullD = dvec.subArray(0 until 2, 0 until 2, 0 until 2, 0 until 2)
-    assertEquals(fullS.shape, fullD.shape, clue = "")
-    var tt = 0
-    while tt < 2 do
-      var kk = 0
-      while kk < 2 do
-        var jj = 0
-        while jj < 2 do
-          var ii = 0
-          while ii < 2 do
-            assertEquals(fullS(ii, jj, kk, tt), fullD(ii, jj, kk, tt), clue = "")
-            ii += 1
-          jj += 1
-        kk += 1
-      tt += 1
-
-    assertEquals(svec(0, 0, 0, 0), dvec(0, 0, 0, 0), clue = "")
-    val nodropS = svec.subArray(Seq(0), Seq(0), Seq(0), Seq(0))
-    val nodropD = dvec.subArray(Seq(0), Seq(0), Seq(0), Seq(0))
+    assertEquals(filled.data.shape, Shape(3, 2), clue = "")
     assertEquals(
-      Vector.tabulate(nodropS.shape.rank)(nodropS.shape.apply),
-      Vector(1, 1, 1, 1),
+      filled.data.iterator.toVector,
+      Vector(0.0, 1.0, 0.0, 0.0, 4.0, 5.0),
       clue = ""
     )
-    assertEquals(nodropS(0, 0, 0, 0), nodropD(0, 0, 0, 0), clue = "")
-
-    // masked-out spatial index: (1,1,0) => linSpatial=3
-    val maskedOutSpatial = Indexing.gridToIndex3D(sp.spatialDims, 1, 1, 0)
-    assertEquals(svec(1, 1, 0, 0), 0.0, clue = "")
-
-    // dense matrix has zeros outside mask rows
-    val mat = dvec.asMatrix
-    val maskFlags = mask.copyToCanonicalArray
-    var lin = 0
-    while lin < spatialNels do
-      var t = 0
-      while t < sp.dims(3) do
-        val v = mat(lin, t)
-        if !maskFlags(lin) then assertEquals(v, 0.0, clue = "")
-        t += 1
-      lin += 1
   }
 
-  test("Sparse series fills zeros for missing voxels") {
-    import spire.std.double.given
+  test("selected-series union arithmetic requires an explicit fill policy") {
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val data = PrimitiveBuffers.tabulate[Double](8)(_.toDouble)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
-    val svec = vec.asSparse(mask)
-    val ts = svec.series(Array(0, 1, 2))
-    val tsVals = columnMajor2(ts)
-    // voxel 1 is missing => zeros in its column
-    assertEquals(ts.shape, Shape(2, 3), clue = "")
-    assertEquals(tsVals, Vector(0.0, 1.0, 0.0, 0.0, 4.0, 5.0), clue = "")
-  }
-
-  test("SparseNeuroVec union arithmetic") {
-    import spire.std.double.given
-    val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val v1 = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
-    val v2 = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(i => (i + 10).toDouble), sp)
-    val m1 = Mask.fromIndices(sp.spatialSpace, Array(0, 1))
-    val m2 = Mask.fromIndices(sp.spatialSpace, Array(1, 3))
-    val s1 = v1.asSparse(m1)
-    val s2 = v2.asSparse(m2)
-    val s3 = s1 + s2
-    val d3 = s3.toDense
-    val vals = Vector.tabulate(d3.copyToCanonicalArray.length)(i => d3.copyToCanonicalArray(i))
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val first =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 2):
+            (x, y, _, time) => ((x * 2 + y) * 2 + time).toDouble
+        )
+        .toOption
+        .get
+    val second =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 2):
+            (x, y, _, time) => ((x * 2 + y) * 2 + time + 10).toDouble
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected union",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val leftSupport =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1)).toOption.get
+    val rightSupport =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 3)).toOption.get
+    val union =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 3)).toOption.get
+    val left =
+      SelectedSeries
+        .gather(domain, first, leftSupport)
+        .toOption
+        .get
+        .reselect(union, MissingVoxelPolicy.Fill(0.0))
+        .toOption
+        .get
+    val right =
+      SelectedSeries
+        .gather(domain, second, rightSupport)
+        .toOption
+        .get
+        .reselect(union, MissingVoxelPolicy.Fill(0.0))
+        .toOption
+        .get
+    val summedData =
+      RavelArray.tabulate[Double](union.size, 2): (position, time) =>
+        left(position, time) + right(position, time)
+    val summed =
+      left.selected
+        .withSelectionData(union, summedData)
+        .toOption
+        .get
+        .requireDataRank[2]
+        .toOption
+        .get
+    val selectedSum = SelectedSeries.fromSelected(summed).toOption.get
+    val vals = selectedSum.toDense(0.0).toOption.get.data.iterator.toVector
     assertEquals(vals, Vector(0.0, 1.0, 14.0, 16.0, 0.0, 0.0, 16.0, 17.0), clue = "")
   }
 
@@ -333,15 +491,40 @@ class CoreSuite extends munit.FunSuite:
     }
   }
 
-  test("NeuroVec splitClusters yields ROIVecs") {
+  test("cluster supports gather exact position-first selected series") {
     val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val vec = NeuroVec.copyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](8)(identity), sp)
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .categorical(
+          sampleSpace,
+          RavelArray.tabulate[Int](2, 2, 1, 2):
+            (x, y, _, time) => (x * 2 + y) * 2 + time
+        )
+        .toOption
+        .get
     val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2, 3))
     val cvol = ClusteredNeuroVol(mask, Array(1, 2, 1))
-    val rois = vec.splitClusters(cvol)
-    assertEquals(rois.length, 2, clue = "")
-    assertEquals(rois.head.data.shape, Shape(2, 2), clue = "") // time x voxels in cluster1
-    assertEquals(rois(1).data.shape, Shape(2, 1), clue = "")
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core cluster selected series",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selected = cvol.clusterIds.map: id =>
+      val ordinals = cvol.clusterMap(id).iterator.toVector
+      val selection =
+        locus4s.Selection.fromOrdinals(domain.space, ordinals).toOption.get
+      SelectedSeries.gather(domain, series, selection).toOption.get
+
+    assertEquals(selected.length, 2, clue = "")
+    assertEquals(selected.head.data.shape, Shape(2, 2), clue = "")
+    assertEquals(selected(1).data.shape, Shape(1, 2), clue = "")
   }
 
   test("Downsample byFactor uses box averaging") {
@@ -489,20 +672,97 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(vals, Vector(10, 11, 22, 23, 34, 35, 46, 47).map(_.toDouble), clue = "")
   }
 
-  test("SparseNeuroVec concat unions masks") {
-    import spire.std.double.given
-    val sp1 = NeuroSpace(Vector(2, 2, 1, 1))
-    val sp2 = NeuroSpace(Vector(2, 2, 1, 2), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
-    val v1 = NeuroVec.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp1)
-    val v2 = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(i => (i + 10).toDouble), sp2)
-    val m1 = Mask.fromIndices(sp1.spatialSpace, Array(0, 1))
-    val m2 = Mask.fromIndices(sp2.spatialSpace, Array(1, 3))
-    val s1 = v1.asSparse(m1)
-    val s2 = v2.asSparse(m2)
-    val s3 = s1.concat(s2)
-    assertEquals(s3.space.dims, Vector(2, 2, 1, 3), clue = "")
-    val dense = s3.toDense
-    val vals = Vector.tabulate(dense.copyToCanonicalArray.length)(i => dense.copyToCanonicalArray(i))
+  test("selected-series time concatenation uses an explicit union support") {
+    val sp = NeuroSpace(Vector(2, 2, 1))
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "core selected time concatenation",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val timeOne =
+      image4s.Axis
+        .ordinal("time", image4s.AxisKind.Time, 1)
+        .toOption
+        .get
+    val timeTwo =
+      image4s.Axis
+        .ordinal("time", image4s.AxisKind.Time, 2)
+        .toOption
+        .get
+    val firstSpace =
+      image4s.SampleSpace.create(
+        domain.grid,
+        image4s.NonSpatialAxes.from(Vector(timeOne)).toOption.get
+      )
+    val secondSpace =
+      image4s.SampleSpace.create(
+        domain.grid,
+        image4s.NonSpatialAxes.from(Vector(timeTwo)).toOption.get
+      )
+    val first =
+      NeuroSeries
+        .continuous(
+          firstSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 1):
+            (x, y, _, _) => (x * 2 + y + 1).toDouble
+        )
+        .toOption
+        .get
+    val second =
+      NeuroSeries
+        .continuous(
+          secondSpace,
+          RavelArray.tabulate[Double](2, 2, 1, 2):
+            (x, y, _, time) => ((x * 2 + y) * 2 + time + 10).toDouble
+        )
+        .toOption
+        .get
+    val leftSupport =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1)).toOption.get
+    val rightSupport =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 3)).toOption.get
+    val union =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 3)).toOption.get
+    val left =
+      SelectedSeries
+        .gather(domain, first, leftSupport)
+        .toOption
+        .get
+        .reselect(union, MissingVoxelPolicy.Fill(0.0))
+        .toOption
+        .get
+    val right =
+      SelectedSeries
+        .gather(domain, second, rightSupport)
+        .toOption
+        .get
+        .reselect(union, MissingVoxelPolicy.Fill(0.0))
+        .toOption
+        .get
+    val concatenated =
+      RavelArray.tabulate[Double](union.size, 3): (position, time) =>
+        if time == 0 then left(position, 0)
+        else right(position, time - 1)
+    val selected =
+      SelectedSeries
+        .create(
+          domain,
+          union,
+          image4s.Axis
+            .ordinal("time", image4s.AxisKind.Time, 3)
+            .toOption
+            .get,
+          concatenated
+        )
+        .toOption
+        .get
+    val vals = selected.toDense(0.0).toOption.get.data.iterator.toVector
     assertEquals(vals, Vector(1, 0, 0, 2, 12, 13, 0, 0, 0, 0, 16, 17).map(_.toDouble), clue = "")
   }
 
@@ -700,50 +960,78 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(sizeFull.copyToCanonicalArray.max, nels, clue = "")
   }
 
-  test("ClusteredNeuroVol splitClusters supports non-contiguous ids") {
+  test("cluster fibers support non-contiguous ids as exact regions") {
     val sp = NeuroSpace(Vector(2, 2, 2))
     val mask = NeuroVol.copyFromCanonicalArray[Boolean](PrimitiveBuffers.fillConst[Boolean](8, true), sp)
     val clusters = Array(2, 4, 6, 2, 4, 6, 2, 4)
     val cvol = ClusteredNeuroVol(mask, clusters)
-    val rois = cvol.splitClusters
-    assertEquals(rois.length, 3, clue = "")
-    val roiIds = rois.map(r => r.data(0)).sorted
-    assertEquals(roiIds, Vector(2, 4, 6), clue = "")
-    rois.foreach { r =>
-      assert(Vector.tabulate(r.data.size)(r.data(_)).forall(_ == r.data(0)), clue = "")
-    }
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "core non-contiguous cluster fibers",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val fibers = cvol.clusterIds.map: id =>
+      locus4s.Region
+        .fromOrdinals(domain.space, cvol.clusterMap(id).iterator)
+        .toOption
+        .get
+
+    assertEquals(cvol.clusterIds, Vector(2, 4, 6), clue = "")
+    assertEquals(fibers.map(_.cardinality), Vector(3, 3, 2), clue = "")
+    assertEquals(
+      fibers.reduce(_.union(_)).ordinalsInDomainOrder.toVector,
+      Vector.range(0, 8),
+      clue = ""
+    )
   }
 
-  test("NeuroVec splitClusters supports non-contiguous ids") {
+  test("non-contiguous cluster fibers gather correct selected-series means") {
     val sp = NeuroSpace(Vector(2, 2, 2, 2))
-    val data = PrimitiveBuffers.tabulate[Double](16)(i => (i + 1).toDouble)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .continuous(
+          sampleSpace,
+          RavelArray.tabulate[Double](2, 2, 2, 2):
+            (x, y, z, time) =>
+              (((x * 2 + y) * 2 + z) * 2 + time + 1).toDouble
+        )
+        .toOption
+        .get
     val mask = NeuroVol.copyFromCanonicalArray[Boolean](PrimitiveBuffers.fillConst[Boolean](8, true), sp.spatialSpace)
     val clusters = Array(2, 4, 6, 2, 4, 6, 2, 4)
     val cvol = ClusteredNeuroVol(mask, clusters)
-    val splits = vec.splitClusters(cvol)
-    assertEquals(splits.length, 3, clue = "")
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core non-contiguous cluster series",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val means = cvol.clusterIds.map: id =>
+      val ordinals = cvol.clusterMap(id).iterator.toVector
+      val selection =
+        locus4s.Selection.fromOrdinals(domain.space, ordinals).toOption.get
+      val selected =
+        SelectedSeries.gather(domain, series, selection).toOption.get
+      var sum = 0.0
+      var position = 0
+      while position < selection.size do
+        sum += selected(position, 0)
+        position += 1
+      sum / selection.size.toDouble
 
-    val vol0 = vec.volume(0)
-    def meanAt(idx: ravel.Array1[Int]): Double =
-      var s = 0.0
-      var i = 0
-      while i < idx.size do
-        s += vol0.valueAtCanonicalOrdinal(idx(i))
-        i += 1
-      s / idx.size.toDouble
-
-    val expectedMeans = cvol.clusterIds.map(id => meanAt(cvol.clusterMap(id)))
-    val gotMeans =
-      splits.map { rv =>
-        var s = 0.0
-        var i = 0
-        while i < rv.nVoxels do
-          s += rv.data(0, i).asInstanceOf[Double]
-          i += 1
-        s / rv.nVoxels.toDouble
-      }
-    assertEquals(gotMeans, expectedMeans, clue = "")
+    assertEquals(means, Vector(7.0, 9.0, 8.0), clue = "")
   }
 
   test("ClusteredNeuroVec construction matches neuroim2 broadcast and ts") {
@@ -823,36 +1111,78 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(nzRoi.coords.coords(nzRoi.centerIndex), Vector(2, 2, 2), clue = "")
   }
 
-  test("SparseNeuroVec validity catches mismatched mask/space") {
-    import spire.std.double.given
+  test("selected-series gather rejects a foreign support owner") {
     val sp = NeuroSpace(Vector(8, 8, 8, 5), spacing = Some(Vector(2.0, 2.0, 2.0)))
     val badSp = NeuroSpace(Vector(4, 4, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val badMask = NeuroVol.copyFromCanonicalArray[Boolean](PrimitiveBuffers.fillConst[Boolean](4 * 4 * 4, true), badSp)
-    val map = IndexLookupVol(sp, Array(0))
-    val dat = RavelArray.zeros[Double](5, 1)
-    intercept[IllegalArgumentException] {
-      SparseNeuroVec(dat, sp, badMask, map)
-    }
+    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val series =
+      NeuroSeries
+        .continuous(sampleSpace, RavelArray.zeros[Double](8, 8, 8, 5))
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected owner",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val foreignPacked =
+      VolumeDomain
+        .register(
+          VolumeSpace(badSp),
+          "core foreign selected owner",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    val foreignSelection =
+      locus4s.Selection
+        .fromOrdinals(foreignPacked.value.space, Vector(0))
+        .toOption
+        .get
+
+    assert(SelectedSeries.gather(domain, series, foreignSelection).isLeft)
   }
 
-  test("SparseNeuroVec validity enforces time x mask-cardinality shapes") {
-    import spire.std.double.given
+  test("selected-series validity enforces position x time shape") {
     val sp = NeuroSpace(Vector(6, 6, 6, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val maskIdx = Array(0, 10, 20, 30, 40)
-    val mask = Mask.fromIndices(sp.spatialSpace, maskIdx)
-    val map = IndexLookupVol(sp, maskIdx)
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "core selected shape",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(0, 10, 20, 30, 40))
+        .toOption
+        .get
+    val time =
+      image4s.Axis
+        .ordinal("time", image4s.AxisKind.Time, 4)
+        .toOption
+        .get
 
-    val wrongTime =
-      RavelArray.zeros[Double](3, maskIdx.length)
-    intercept[IllegalArgumentException] {
-      SparseNeuroVec(wrongTime, sp, mask, map)
-    }
-
-    val wrongCols =
-      RavelArray.zeros[Double](4, maskIdx.length + 1)
-    intercept[IllegalArgumentException] {
-      SparseNeuroVec(wrongCols, sp, mask, map)
-    }
+    assert(
+      SelectedSeries
+        .create(domain, selection, time, RavelArray.zeros[Double](5, 3))
+        .isLeft
+    )
+    assert(
+      SelectedSeries
+        .create(domain, selection, time, RavelArray.zeros[Double](6, 4))
+        .isLeft
+    )
   }
 
   test("NeuroVec preserves input shape and linearization") {

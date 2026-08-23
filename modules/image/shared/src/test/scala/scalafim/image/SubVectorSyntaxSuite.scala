@@ -1,5 +1,11 @@
 package scalafim.image
 
+import image4s.Axis
+import image4s.AxisKind
+import image4s.ImageMetadata
+import locus4s.DomainRegistry
+import locus4s.Selection
+import ravel.NDArray
 import ravel.Shape
 import spire.std.double.given
 
@@ -18,23 +24,51 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
     assertEquals(Vector.tabulate(sub.copyToCanonicalArray.length)(i => sub.copyToCanonicalArray(i)), Vector(1.0, 2.0, 3.0, 5.0, 6.0, 7.0), clue = "")
   }
 
-  test("SparseNeuroVec supports volume and subVector apply syntax") {
-    val sp = NeuroSpace(Vector(3, 1, 1, 4))
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
-    val dense = Array(1.0, 2.0, 3.0, 4.0, 0.0, 0.0, 0.0, 0.0, 10.0, 20.0, 30.0, 40.0)
-    val svec = SparseNeuroVec.fromDense[Double](dense, sp, mask)
+  test("selected series use exact support and contiguous position-time rows") {
+    val spatial = NeuroSpace(Vector(3, 1, 1))
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(spatial),
+          "sub-vector selected series",
+          DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val time = Axis.create("time", 4, AxisKind.Time).toOption.get
+    val selected =
+      SelectedSeries
+        .continuous(
+          domain,
+          selection,
+          time,
+          NDArray.fromSeq(
+            Shape(2, 4),
+            Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0)
+          ),
+          ImageMetadata("selected")
+        )
+        .toOption
+        .get
 
-    val vol = svec(2)
-    assertEquals(Vector.tabulate(vol.indices.size)(i => vol.indices(i)), Vector(0, 2), clue = "")
-    assertEquals(Vector.tabulate(vol.data.size)(i => vol.data(i)), Vector(3.0, 30.0), clue = "")
-
-    val sub = svec(Vector(1, 3))
-    assertEquals(sub.space.dims, Vector(3, 1, 1, 2), clue = "")
-    val compact =
-      Vector.tabulate(sub.data.shape(1)) { position =>
-        Vector.tabulate(sub.data.shape(0))(time => sub.data(time, position))
-      }.flatten
-    assertEquals(compact, Vector(2.0, 4.0, 20.0, 40.0), clue = "")
+    assertEquals(selected.selection.ordinals.toVector, Vector(0, 2), clue = "")
+    assertEquals(selected.data.shape, Shape(2, 4), clue = "")
+    assertEquals(
+      selected.data.iterator.toVector,
+      Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0),
+      clue = ""
+    )
+    val provider = selected.selected
+    val first =
+      provider.seriesAt(
+        provider.selection.positions.indexAtValidatedOrdinal(0)
+      )
+    assert(first.isContiguous, clue = "")
+    assertEquals(first.iterator.toVector, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
   }
 
   test("ClusteredNeuroVec and NeuroVecSeq support apply subsetting syntax") {

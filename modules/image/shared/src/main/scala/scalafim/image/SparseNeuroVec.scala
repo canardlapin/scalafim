@@ -138,7 +138,7 @@ final class SparseNeuroVec[A] private (
       ClassTag[A],
       spire.algebra.Ring[A]
   ): RavelArray[A, Rank[2]] =
-    series(Mask.indexSet(mask))
+    series(Mask.indices(mask))
 
   def seriesRoi(roi: ROICoords)(using ClassTag[A], spire.algebra.Ring[A]): ROIVec[A] =
     ROIVec(space, roi, series(roi))
@@ -318,7 +318,11 @@ object SparseNeuroVec:
   )(using ClassTag[A], DType[A]): SparseNeuroVec[A] =
     require(space.ndim >= 4, "space must be 4D")
     GridCompatibility.requireSpatial(space, mask.space)
-    val indexSet = Mask.indexSet(mask)
+    val indexSet =
+      VoxelIndexSet(
+        VolumeSpace.unsafe(mask.space.spatialSpace),
+        Mask.indices(mask)
+      )
     val spatialNels = space.spatialDims.product
     val tLen = space.dims(3)
     require(data.length == spatialNels * tLen, "data length mismatch")

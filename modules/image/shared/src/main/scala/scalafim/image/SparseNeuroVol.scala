@@ -24,7 +24,7 @@ final case class SparseNeuroVol[A](
     toMask(this.label)
 
   def toMask(label: String): NeuroVol[Boolean] =
-    Mask.fromIndexSet(indexSet, label)
+    Mask.fromIndices(space, indexSet.indices, label)
 
   def toDense(using
       spire.algebra.Ring[A],

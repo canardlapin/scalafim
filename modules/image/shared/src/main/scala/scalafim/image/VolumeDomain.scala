@@ -11,11 +11,8 @@ import image4s.locus.GridDomainResolution
 import locus4s.DomainRegistry
 import locus4s.FiniteDomain
 import locus4s.Region
-import locus4s.Selection
 import locus4s.SpaceMismatch
 import locus4s.data.Field
-import ravel.NDArray
-import ravel.Shape
 
 /** Direct image4s-locus domain for a D3 voxel grid.
   *
@@ -63,61 +60,6 @@ object VolumeDomain:
           SampleSpace.create(domain.grid, NonSpatialAxes.empty)
         )
       )
-
-    /** Transitional conversion for raw voxel regions. New code should carry
-      * `Region[S]` directly.
-      */
-    private[scalafim] def region(
-        voxelRegion: VoxelRegion
-    ): Either[GridMismatch, Region[S]] =
-      GridCompatibility.volume(volumeSpace, voxelRegion.space).map: _ =>
-        Region
-          .fromOrdinals(domain.space, voxelRegion.linearIndices.iterator)
-          .toOption
-          .get
-
-    /** Transitional conversion for ordered raw voxel selections. */
-    private[scalafim] def selection(
-        voxelSelection: VoxelSelection
-    ): Either[GridMismatch, Selection[S]] =
-      GridCompatibility.volume(volumeSpace, voxelSelection.space).map: _ =>
-        Selection
-          .fromOrdinals(
-            domain.space,
-            voxelSelection.linearIndices.iterator
-          )
-          .toOption
-          .get
-
-    private[scalafim] def voxelRegion(
-        region: Region[S]
-    ): Either[SpaceMismatch, VoxelRegion] =
-      checkSpace(domain, region.space).map: _ =>
-        VoxelRegion
-          .make(
-            volumeSpace,
-            NDArray.fromSeq(
-              Shape(region.cardinality),
-              region.ordinalsInDomainOrder
-            )
-          )
-          .toOption
-          .get
-
-    private[scalafim] def voxelSelection(
-        selection: Selection[S]
-    ): Either[SpaceMismatch, VoxelSelection] =
-      checkSpace(domain, selection.space).map: _ =>
-        VoxelSelection
-          .make(
-            volumeSpace,
-            NDArray.fromSeq(
-              Shape(selection.size),
-              selection.ordinals
-            )
-          )
-          .toOption
-          .get
 
     /** Zero-copy field exposure checked against the bridge's exact live grid
       * owner.

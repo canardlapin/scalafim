@@ -5,14 +5,34 @@ import spire.std.double.given
 
 class NeuroVolRegressionSuite extends munit.FunSuite:
 
-  test("SparseNeuroVol.toDense preserves indices (others are zero)") {
+  test("selected-volume scatter preserves indices and explicit fill") {
     val sp = NeuroSpace(Vector(3, 3, 3))
-    val idx = Array[Int](1, 4, 9)
-    val vals = Array[Double](1.0, 2.0, 3.0)
-    val sv = SparseNeuroVol[Double](vals, idx, sp)
-    val dense = sv.toDense
-
-    val out = Vector.tabulate(dense.copyToCanonicalArray.length)(i => dense.copyToCanonicalArray(i))
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "selected volume scatter regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(1, 4, 9))
+        .toOption
+        .get
+    val selected =
+      SelectedVolume
+        .create(
+          domain,
+          selection,
+          ravel.NDArray.fromSeq(ravel.Shape(3), Vector(1.0, 2.0, 3.0))
+        )
+        .toOption
+        .get
+    val out = selected.toDense(0.0).toOption.get.data.iterator.toVector
     assertEquals(out(1), 1.0, clue = "")
     assertEquals(out(4), 2.0, clue = "")
     assertEquals(out(9), 3.0, clue = "")
@@ -43,48 +63,109 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     assertEquals(flags, Vector(false, true, false, true), clue = "")
   }
 
-  test("NeuroVol.asSparse from mask/indices roundtrips when outside-mask values are zero") {
+  test("native volume gather and scatter roundtrip on an exact selection") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, 1.0, 0.0, 1.0), sp)
-    val mask = vol.asMask
-    val idx = Mask.indices(mask)
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "selected volume roundtrip regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val sampleSpace =
+      image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
+    val volume =
+      NeuroVolume
+        .continuous(
+          sampleSpace,
+          ravel.NDArray.fromSeq(
+            ravel.Shape(2, 2, 1),
+            Vector(0.0, 1.0, 0.0, 1.0)
+          )
+        )
+        .toOption
+        .get
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(1, 3))
+        .toOption
+        .get
+    val selected =
+      SelectedVolume.gather(domain, volume, selection).toOption.get
+    val dense = selected.toDense(0.0).toOption.get
 
-    val svol1 = vol.asSparse(mask)
-    val svol2 = vol.asSparse(idx)
-
-    val dense1 = svol1.toDense
-    val dense2 = svol2.toDense
-
-    val v0 = Vector.tabulate(vol.copyToCanonicalArray.length)(i => vol.copyToCanonicalArray(i))
-    val v1 = Vector.tabulate(dense1.copyToCanonicalArray.length)(i => dense1.copyToCanonicalArray(i))
-    val v2 = Vector.tabulate(dense2.copyToCanonicalArray.length)(i => dense2.copyToCanonicalArray(i))
-    assertEquals(v1, v0, clue = "")
-    assertEquals(v2, v0, clue = "")
+    assertEquals(
+      dense.data.iterator.toVector,
+      volume.data.iterator.toVector,
+      clue = ""
+    )
   }
 
-  test("SparseNeuroVol.toMask matches stored indices") {
+  test("dense semantic masks convert explicitly to and from exact regions") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    val idx = Array[Int](1, 3)
-    val vals = Array[Double](10.0, 20.0)
-    val sv = SparseNeuroVol[Double](vals, idx, sp)
-    val mask = sv.toMask
-    val back = Mask.indices(mask)
-    val got = Vector.tabulate(back.size)(i => back(i))
-    assertEquals(got, Vector(1, 3), clue = "")
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "mask region regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val region =
+      locus4s.Region.fromOrdinals(domain.space, Vector(1, 3)).toOption.get
+    val mask = Mask.fromRegion(domain, region).toOption.get
+    val back = Mask.region(domain, mask).toOption.get
+
+    assertEquals(back.ordinalsInDomainOrder.toVector, Vector(1, 3), clue = "")
   }
 
-  test("SparseNeuroVol rejects out-of-range indices") {
+  test("exact selection rejects out-of-range voxel ordinals") {
     val sp = NeuroSpace(Vector(2, 2, 2))
-    intercept[IllegalArgumentException] {
-      SparseNeuroVol[Double](Array[Double](1.0), Array[Int](8), sp)
-    }
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "selection bounds regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+
+    assert(locus4s.Selection.fromOrdinals(packed.value.space, Vector(8)).isLeft)
   }
 
-  test("SparseNeuroVol rejects mismatched data/indices lengths") {
+  test("selected-volume construction rejects mismatched data and support lengths") {
     val sp = NeuroSpace(Vector(2, 2, 1))
-    intercept[IllegalArgumentException] {
-      SparseNeuroVol[Double](Array[Double](1.0, 2.0), Array[Int](0), sp)
-    }
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "selected shape regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0)).toOption.get
+
+    assert(
+      SelectedVolume
+        .create(
+          domain,
+          selection,
+          ravel.NDArray.fromSeq(ravel.Shape(2), Vector(1.0, 2.0))
+        )
+        .isLeft
+    )
   }
 
   test("NeuroVol.asMatrix matches linear ordering") {
@@ -149,19 +230,48 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     assertEquals(sum, 1.0, clue = "")
   }
 
-  test("NeuroVol(ROIVol) extracts values at ROI coords") {
+  test("selected-volume gather extracts values at exact voxel coordinates") {
     val sp = NeuroSpace(Vector(4, 4, 4))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.copyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](nels)(i => i + 1), sp)
-
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp),
+          "coordinate gather regression",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val sampleSpace =
+      image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
+    val volume =
+      NeuroVolume
+        .categorical(
+          sampleSpace,
+          ravel.NDArray.tabulate[Int](4, 4, 4):
+            (x, y, z) => ((x * 4 + y) * 4 + z) + 1
+        )
+        .toOption
+        .get
     val coords = Vector(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0), Vector(3, 3, 3))
-    val roi = ROIVol[Int](sp, coords, PrimitiveBuffers.fillConst[Int](coords.length, 0))
-    val out = vol(roi)
-
-    val got = Vector.tabulate(out.size)(i => out(i))
-    def lin(c: Vector[Int]): Int =
-      Indexing.gridToIndex3D(sp.spatialDims, c(0), c(1), c(2))
-    val exp = coords.map(c => vol.valueAtCanonicalOrdinal(lin(c)))
+    val ordinals = coords.map: coord =>
+      domain
+        .ordinalOf(
+          image4s.geometry.LatticeIndex
+            .fromVector[image4s.geometry.D3](coord)
+            .toOption
+            .get
+        )
+        .toOption
+        .get
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, ordinals).toOption.get
+    val selected =
+      SelectedVolume.gather(domain, volume, selection).toOption.get
+    val got = selected.data.iterator.toVector
+    val exp = coords.map(c => volume.data(c(0), c(1), c(2)))
     assertEquals(got, exp, clue = "")
   }
 

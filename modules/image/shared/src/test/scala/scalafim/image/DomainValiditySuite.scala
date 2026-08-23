@@ -7,6 +7,17 @@ class DomainValiditySuite extends munit.FunSuite:
 
   private val space = NeuroSpace(Vector(3, 3, 1))
   private val volumeSpace = VolumeSpace(space)
+  private val packedDomain =
+    VolumeDomain
+      .register(
+        volumeSpace,
+        "domain validity voxels",
+        locus4s.DomainRegistry.empty
+      )
+      .toOption
+      .get
+  private type Voxel = packedDomain.S
+  private val domain: VolumeDomain[Voxel] = packedDomain.value
 
   test("cluster ids are positive domain values") {
     assertEquals(ClusterId.make(0), Left(ClusterIdError.NonPositive(0)), clue = "")
@@ -41,90 +52,110 @@ class DomainValiditySuite extends munit.FunSuite:
     assert(error.getMessage.contains("disagrees with cluster volume"), clue = "")
   }
 
-  test("ROI windows validate that the selected center is the parent voxel") {
-    val coords = ROICoords(Vector(Vector(0, 0, 0), Vector(1, 0, 0)))
-    val result =
-      ROIVolWindow.make(
-        space,
-        coords,
-        Array[Int](1, 1),
-        centerIndex = 1,
-        parentIndex = 0
-      )
+  test("selected windows validate that the selected center is the exact voxel") {
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 3)).toOption.get
+    val selected =
+      SelectedVolume
+        .categorical(
+          domain,
+          selection,
+          RavelArray.fromSeq(ravel.Shape(2), Vector(1, 1))
+        )
+        .toOption
+        .get
+    val result = SelectedVolumeWindow.make(
+      selected,
+      domain.space.indexAtValidatedOrdinal(0),
+      centerPosition = 1
+    )
 
     assertEquals(
       result,
-      Left(ROIVolWindowError.CenterMismatch(1, 0, space.gridToIndex3D(1, 0, 0))),
+      Left(SelectedVolumeWindowError.CenterMismatch(1, 0, 3)),
       clue = ""
     )
   }
 
-  test("checked searchlight extraction reports an excluded center") {
-    val values = PrimitiveBuffers.fillConst[Int](space.spatialDims.product, 1)
-    values(4) = 0
-    val volume = NeuroVol.copyFromCanonicalArray[Int](values, space)
-    val center =
-      SearchlightCenter
-        .make(volumeSpace, VoxelCoord(1, 1, 0))
-        .fold(error => fail(error.message), identity)
+  test("exact searchlight materialization reports an excluded center") {
+    val sampleSpace =
+      image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
+    val volume =
+      NeuroVolume
+        .categorical(
+          sampleSpace,
+          RavelArray.tabulate[Int](3, 3, 1): (x, y, _) =>
+            if x == 1 && y == 1 then 0 else 1
+        )
+        .toOption
+        .get
+    val field = domain.spatialField(volume).toOption.get
+    val center = domain.space.indexAtValidatedOrdinal(4)
     val radius =
       SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)
+    val searchlight =
+      ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
+    val support =
+      locus4s.Region.tabulate(domain.space)(index => field(index) != 0)
 
     val result =
-      Searchlight.sphericalRoiChecked(
-        volume,
+      ExactVolumeSearchlight.materializeCategorical(
+        domain,
+        searchlight,
         center,
-        radius,
-        support = SearchlightValueSupport.NonZero
+        field,
+        support = Some(support)
       )
 
     assertEquals(
       result,
-      Left(SearchlightError.CenterExcluded(VoxelCoord(1, 1, 0))),
+      Left(ExactVolumeSearchlightError.CenterExcluded(4)),
       clue = ""
     )
   }
 
-  test("checked searchlight policies produce valid mask-bound windows") {
-    val mask = Mask.fromIndices(space, Array[Int](0, 4))
+  test("exact searchlight support produces valid region-bound windows") {
+    val support =
+      locus4s.Region.fromOrdinals(domain.space, Vector(0, 4)).toOption.get
     val radius =
       SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)
-
-    val windows =
-      Searchlight
-        .searchlightChecked(
-          mask,
-          radius,
-          SearchlightCenterDomain.MaskVoxels,
-          SearchlightSupport.InsideMask
+    val searchlight =
+      ExactVolumeSearchlight.metricBalls(domain, radius, support).toOption.get
+    val field = locus4s.data.Field.view(domain.space)(_ => 1)
+    val windows = support.indicesInDomainOrder.map: center =>
+      ExactVolumeSearchlight
+        .materializeCategorical(
+          domain,
+          searchlight,
+          center,
+          field,
+          support = Some(support)
         )
-        .fold(error => fail(error.message), identity)
-        .toVector
+        .toOption
+        .get
+    val materialized = windows.toVector
 
-    assertEquals(windows.length, 2, clue = "")
-    assert(windows.forall(window => window.region.size == 1), clue = "")
-    assert(windows.forall(window => window.region.contains(window.centerVoxel)), clue = "")
+    assertEquals(materialized.length, 2, clue = "")
+    assert(materialized.forall(window => window.values.selection.size == 1), clue = "")
+    assert(materialized.forall(window => window.values.selection.region.contains(window.center)), clue = "")
   }
 
-  test("checked searchlight policies reject centers outside constrained support") {
-    val mask = Mask.fromIndices(space, Array[Int](0))
-    val radius =
-      SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)
+  test("exact searchlight relations reject non-empty rows outside centers") {
+    val centers =
+      locus4s.Region.fromOrdinals(domain.space, Vector(0)).toOption.get
+    val rows = Vector.tabulate(domain.space.size): ordinal =>
+      if ordinal == 0 then Vector(0)
+      else if ordinal == 1 then Vector(1)
+      else Vector.empty[Int]
+    val relation =
+      locus4s.Relation
+        .fromOrdinalRows(domain.space, domain.space, rows)
+        .toOption
+        .get
 
     assertEquals(
-      Searchlight
-        .searchlightChecked(
-          mask,
-          radius,
-          SearchlightCenterDomain.AllVoxels,
-          SearchlightSupport.InsideMask
-        ),
-      Left(
-        SearchlightError.IncompatiblePolicies(
-          SearchlightCenterDomain.AllVoxels,
-          SearchlightSupport.InsideMask
-        )
-      ),
+      ExactVolumeSearchlight.fromRelation(centers, relation),
+      Left(ExactVolumeSearchlightError.NonEmptyOutsideCenters(1)),
       clue = ""
     )
   }

@@ -119,62 +119,116 @@ class OwnershipSuite extends munit.FunSuite:
     assertEquals(field(1, 1, 1, 2), 2111.0, clue = "")
   }
 
-  test("sparse series retains one compact Ravel value and ordered typed support") {
-    import spire.std.double.given
+  test("selected series retains one compact Ravel value and exact ordered support") {
     val space = NeuroSpace(Vector(3, 1, 1, 2))
-    val indexSet =
-      VoxelIndexSet.unique(space.spatialSpace, Array(2, 0))
-    val support = SparseSupport.fromIndexSet(indexSet)
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space.spatialSpace),
+          "ownership selected series",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val compact =
-      RavelArray.tabulate[Double](2, 2) { (time, position) =>
+      RavelArray.tabulate[Double](2, 2) { (position, time) =>
         10.0 * position.toDouble + time.toDouble
       }
-    val sparse =
-      SparseNeuroVec(compact, space, support, "compact")
+    val selected =
+      SelectedSeries
+        .create(
+          domain,
+          selection,
+          image4s.Axis
+            .ordinal("time", image4s.AxisKind.Time, 2)
+            .toOption
+            .get,
+          compact,
+          image4s.ImageMetadata.named("compact")
+        )
+        .toOption
+        .get
 
-    assert(sparse.data.eq(compact), clue = "")
-    assert(sparse.support.eq(support), clue = "")
-    assertEquals(sparse.support.indexSet.toVector, Vector(2, 0), clue = "")
-    assertEquals(sparse.support.positionOf(2), 0, clue = "")
-    assertEquals(sparse.support.positionOf(0), 1, clue = "")
-    assertEquals(sparse(2, 0, 0, 1), 1.0, clue = "")
-    assertEquals(sparse(0, 0, 0, 1), 11.0, clue = "")
-    assertEquals(sparse(1, 0, 0, 1), 0.0, clue = "")
+    assert(selected.data.eq(compact), clue = "")
+    assert(selected.selection.eq(selection), clue = "")
+    assertEquals(selected.selection.ordinals.toVector, Vector(2, 0), clue = "")
+    assertEquals(selected(0, 1), 1.0, clue = "")
+    assertEquals(selected(1, 1), 11.0, clue = "")
+    val dense = selected.toDense(0.0).toOption.get
+    assertEquals(dense.data(1, 0, 0, 1), 0.0, clue = "")
   }
 
-  test("ordered sparse support survives time slicing and dense roundtrips") {
-    import spire.std.double.given
+  test("ordered selected support survives time selection and dense roundtrips") {
     val space = NeuroSpace(Vector(3, 1, 1, 3))
-    val support =
-      SparseSupport.fromIndexSet(
-        VoxelIndexSet.unique(space.spatialSpace, Array(2, 0))
-      )
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space.spatialSpace),
+          "ownership ordered selected series",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val compact =
-      RavelArray.tabulate[Double](3, 2) { (time, position) =>
+      RavelArray.tabulate[Double](2, 3) { (position, time) =>
         100.0 * position + time.toDouble
       }
-    val sparse = SparseNeuroVec(compact, space, support, "ordered")
+    val selected =
+      SelectedSeries
+        .create(
+          domain,
+          selection,
+          image4s.Axis
+            .ordinal("time", image4s.AxisKind.Time, 3)
+            .toOption
+            .get,
+          compact,
+          image4s.ImageMetadata.named("ordered")
+        )
+        .toOption
+        .get
+    val slicedData =
+      RavelArray.tabulate[Double](2, 2): (position, time) =>
+        selected(position, if time == 0 then 2 else 0)
+    val sliced =
+      SelectedSeries
+        .create(
+          domain,
+          selection,
+          image4s.Axis
+            .ordinal("time", image4s.AxisKind.Time, 2)
+            .toOption
+            .get,
+          slicedData,
+          selected.metadata
+        )
+        .toOption
+        .get
 
-    val sliced = sparse.subVector(Seq(2, 0))
-    assertEquals(sliced.support.indexSet.toVector, Vector(2, 0), clue = "")
-    assertEquals(sliced.data(0, 0), 2.0, clue = "")
-    assertEquals(sliced.data(0, 1), 102.0, clue = "")
-    assertEquals(sliced.data(1, 0), 0.0, clue = "")
-    assertEquals(sliced.data(1, 1), 100.0, clue = "")
+    assertEquals(sliced.selection.ordinals.toVector, Vector(2, 0), clue = "")
+    assertEquals(sliced.data.iterator.toVector, Vector(2.0, 0.0, 102.0, 100.0), clue = "")
 
-    val dense = sparse.toDense
-    val gathered = dense.asSparse(support.indexSet)
-    assertEquals(gathered.support.indexSet.toVector, Vector(2, 0), clue = "")
+    val dense = selected.toDense(0.0).toOption.get
+    val gathered = SelectedSeries.gather(domain, dense, selection).toOption.get
+    assertEquals(gathered.selection.ordinals.toVector, Vector(2, 0), clue = "")
     assertEquals(gathered.data.shape, compact.shape, clue = "")
-    var time = 0
-    while time < 3 do
-      var position = 0
-      while position < 2 do
-        assertEquals(gathered.data(time, position), compact(time, position), clue = "")
-        position += 1
-      time += 1
+    var position = 0
+    while position < 2 do
+      var time = 0
+      while time < 3 do
+        assertEquals(gathered(position, time), compact(position, time), clue = "")
+        time += 1
+      position += 1
     assertEquals(gathered.data.size, 6, clue = "")
-    assert(gathered.data.size < dense.values.size, clue = "")
+    assert(gathered.data.size < dense.data.size, clue = "")
   }
 
   test("checked dense reconstruction reports shape failures") {
@@ -188,37 +242,71 @@ class OwnershipSuite extends munit.FunSuite:
     )
   }
 
-  test("ROI construction copies mutable ingress into immutable canonical storage") {
+  test("selected-volume construction copies mutable ingress into immutable storage") {
     val space = NeuroSpace(Vector(2, 2, 1))
-    val roi =
-      VoxelRoi(
-        VolumeSpace(space),
-        Vector(VoxelCoord(0, 0, 0), VoxelCoord(1, 0, 0))
-      )
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space),
+          "ownership selected volume",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val input = Array[Int](10, 20)
     val values =
-      ROIVol.make[Int](space, roi, input).fold(error => fail(error.message), identity)
+      SelectedVolume
+        .categorical(
+          domain,
+          selection,
+          RavelArray.fromSeq(ravel.Shape(2), input)
+        )
+        .fold(error => fail(error.message), identity)
 
     input(0) = 99
     assertEquals(values(0), 10, clue = "")
-
-    val exported = values.values
-    assertEquals(Vector.tabulate(exported.size)(i => exported(i)), Vector(10, 20), clue = "")
+    assertEquals(values.data.iterator.toVector, Vector(10, 20), clue = "")
   }
 
-  test("ROI windows own public input and reconstruct only compatible geometry") {
+  test("selected windows add only a certified center to selected storage") {
     val space = NeuroSpace(Vector(2, 2, 1))
-    val coords = ROICoords(Vector(Vector(0, 0, 0), Vector(1, 0, 0)))
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space),
+          "ownership selected window",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val input = Array[Int](10, 20)
+    val selected =
+      SelectedVolume
+        .categorical(
+          domain,
+          selection,
+          RavelArray.fromSeq(ravel.Shape(2), input)
+        )
+        .fold(error => fail(error.message), identity)
+    val center = domain.space.indexAtValidatedOrdinal(2)
     val window =
-      ROIVolWindow
-        .make[Int](space, coords, input, centerIndex = 1, parentIndex = space.gridToIndex3D(1, 0, 0))
+      SelectedVolumeWindow
+        .make(selected, center, centerPosition = 1)
         .fold(error => fail(error.message), identity)
 
     input(1) = 99
     assertEquals(window(1), 20, clue = "")
-
-    val exported = window.values
-    assertEquals(Vector.tabulate(exported.size)(i => exported(i)), Vector(10, 20), clue = "")
-    assertEquals(window.toROIVol.roi, window.selection.toVoxelRoi, clue = "")
+    assert(
+      window.values.asInstanceOf[AnyRef].eq(selected.asInstanceOf[AnyRef]),
+      clue = ""
+    )
+    assertEquals(window.center.ordinal, 2, clue = "")
   }

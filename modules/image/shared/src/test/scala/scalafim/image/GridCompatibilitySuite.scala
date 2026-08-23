@@ -63,13 +63,43 @@ class GridCompatibilitySuite extends munit.FunSuite:
     }
   }
 
-  test("mask-based sparse conversion rejects a different physical grid") {
+  test("selected-volume gather rejects a different exact grid owner") {
     val expected = NeuroSpace(Vector(2, 2, 1))
     val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val volume = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val mask = NeuroVol.copyFromCanonicalArray(Array[Boolean](true, true, false, false), translated)
+    val sampleSpace = NeuroSpace.requireSpatialD3(expected).toOption.get
+    val volume =
+      NeuroVolume
+        .continuous(
+          sampleSpace,
+          ravel.NDArray.fill(ravel.Shape(2, 2, 1), 1.0)
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(expected),
+          "grid compatibility expected",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val foreign =
+      VolumeDomain
+        .register(
+          VolumeSpace(translated),
+          "grid compatibility translated",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(foreign.value.space, Vector(0, 1))
+        .toOption
+        .get
 
-    intercept[IllegalArgumentException] {
-      volume.asSparse(mask)
-    }
+    assert(SelectedVolume.gather(domain, volume, selection).isLeft)
   }

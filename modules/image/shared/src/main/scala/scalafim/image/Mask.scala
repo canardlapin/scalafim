@@ -1,39 +1,114 @@
 package scalafim.image
 
+import image4s.ImageError
+import image4s.ImageMetadata
+import image4s.Mask as MaskSemantics
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.locus.GridDomain
+import image4s.locus.GridDomainError
+import locus4s.Region
+import locus4s.SpaceMismatch
 import ravel.Array1
 import ravel.DType.given
 import ravel.NDArray
 import ravel.Rank
 import ravel.Shape
 
+enum MaskRegionError:
+  case Domain(error: GridDomainError)
+  case RegionSpace(error: SpaceMismatch)
+  case Image(error: ImageError)
+
+  def message: String =
+    this match
+      case Domain(error) => error.message
+      case RegionSpace(error) => error.message
+      case Image(error) => error.message
+
 object Mask:
 
   type MaskVol = NeuroVol[Boolean]
 
+  /** Convert a semantic dense mask into an exact voxel region. */
+  def region[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
+      mask: SomeMaskVolume
+  ): Either[MaskRegionError, Region[S]] =
+    domain
+      .spatialField(mask)
+      .left
+      .map(MaskRegionError.Domain.apply)
+      .map: field =>
+        Region.tabulate(domain.space)(index => field(index))
+
+  /** Materialize a semantic dense mask from an exact voxel region. */
+  def fromRegion[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      region: Region[T],
+      metadata: ImageMetadata = ImageMetadata.empty
+  ): Either[
+    MaskRegionError,
+    SomeMaskVolume
+  ] =
+    if !domain.space.sameRuntimeOwnerAs(region.space) then
+      Left(
+        MaskRegionError.RegionSpace(
+          SpaceMismatch.between(domain.space, region.space)
+        )
+      )
+    else
+      val shape = domain.grid.shape
+      val values =
+        NDArray.build[Boolean, Rank[3]](
+          Shape(shape(0), shape(1), shape(2))
+        ): output =>
+          var ordinal = 0
+          while ordinal < domain.space.size do
+            output.writeLinear(ordinal, false)
+            ordinal += 1
+          region.foreachIndex: index =>
+            output.writeLinear(index.ordinal, true)
+      val sampleSpace =
+        SampleSpace.create(domain.grid, NonSpatialAxes.empty)
+      NeuroVolume
+        .mask(sampleSpace, values, metadata)
+        .left
+        .map(MaskRegionError.Image.apply)
+        .map(SomeNeuroVolume.eraseSpace)
+
   def fromIndices(space: NeuroSpace, indices: Array1[Int], label: String = ""): MaskVol =
-    fromIndexSet(VoxelIndexSet(space, indices), label)
-
-  def fromIndices(space: NeuroSpace, indices: Array[Int], label: String): MaskVol =
-    fromIndexSet(VoxelIndexSet(space, indices), label)
-
-  def fromIndices(space: NeuroSpace, indices: Array[Int]): MaskVol =
-    fromIndices(space, indices, "")
-
-  def fromIndexSet(indexSet: VoxelIndexSet, label: String = ""): MaskVol =
-    val volumeSpace = indexSet.space
+    val volumeSpace =
+      VolumeSpace
+        .fromSpatialPart(space)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
     val shape = volumeSpace.shape
     val flags =
       NDArray.build[Boolean, Rank[3]](
         Shape(shape.x, shape.y, shape.z)
       ): output =>
-        var i = 0
-        while i < indexSet.size do
-          val voxel = Indexing.indexToGrid3D(shape, indexSet(i))
-          val canonical =
-            (voxel.x * shape.y + voxel.y) * shape.z + voxel.z
-          output.writeLinear(canonical, true)
-          i += 1
+        var position = 0
+        while position < indices.size do
+          val ordinal = indices(position)
+          require(
+            ordinal >= 0 && ordinal < volumeSpace.nVoxels,
+            s"mask ordinal $ordinal is outside [0, ${volumeSpace.nVoxels})"
+          )
+          output.writeLinear(ordinal, true)
+          position += 1
     NeuroVol.fromRavel(flags, volumeSpace.toNeuroSpace, label)
+
+  def fromIndices(space: NeuroSpace, indices: Array[Int], label: String): MaskVol =
+    fromIndices(
+      space,
+      NDArray.fromSeq(Shape(indices.length), indices),
+      label
+    )
+
+  def fromIndices(space: NeuroSpace, indices: Array[Int]): MaskVol =
+    fromIndices(space, indices, "")
 
   def indices(mask: MaskVol): Array1[Int] =
     var count = 0
@@ -50,9 +125,6 @@ object Mask:
           position += 1
         linear += 1
 
-  def indexSet(mask: MaskVol): VoxelIndexSet =
-    VoxelIndexSet(VolumeSpace.unsafe(mask.space.spatialSpace), indices(mask))
-
   def all(space: NeuroSpace, label: String = ""): MaskVol =
     val shape = space.spatialShape
     NeuroVol.fromRavel[Boolean](
@@ -67,12 +139,6 @@ object Mask:
   @scala.annotation.targetName("ofNeuroVec")
   def of[A](vec: NeuroVec[A]): MaskVol =
     all(vec.space.spatialSpace, vec.label)
-
-  def of[A](svol: SparseNeuroVol[A]): MaskVol =
-    svol.toMask
-
-  def of[A](svec: SparseNeuroVec[A]): MaskVol =
-    svec.mask
 
   def of(cvol: ClusteredNeuroVol): MaskVol =
     cvol.mask

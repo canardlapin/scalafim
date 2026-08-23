@@ -75,7 +75,7 @@ class SelectedImageSuite extends munit.FunSuite:
     assertEquals(selected.data.shape, Shape(3))
     assertEquals(selected.data.iterator.toVector, Vector(101.0, 1.0, 120.0))
 
-    val scattered = right(selected.scatter(-1.0))
+    val scattered = right(selected.toDense(-1.0))
     assertEqualsDouble(scattered.data(1, 0, 1), 101.0, 0.0)
     assertEqualsDouble(scattered.data(0, 0, 1), 1.0, 0.0)
     assertEqualsDouble(scattered.data(1, 2, 0), 120.0, 0.0)
@@ -106,7 +106,7 @@ class SelectedImageSuite extends munit.FunSuite:
     assert(firstSeries.isContiguous)
     assertEquals(firstSeries.iterator.toVector, Vector(1010.0, 1011.0, 1012.0))
 
-    val scattered = right(selected.scatter(-1.0))
+    val scattered = right(selected.toDense(-1.0))
     assertEqualsDouble(scattered.data(1, 0, 1, 2), 1012.0, 0.0)
     assertEqualsDouble(scattered.data(0, 0, 0, 2), -1.0, 0.0)
 

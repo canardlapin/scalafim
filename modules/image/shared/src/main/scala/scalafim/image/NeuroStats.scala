@@ -1,10 +1,17 @@
 package scalafim.image
 
+import image4s.Continuous
+import image4s.Mask as MaskSemantics
+import image4s.ValueSemantics
+import image4s.geometry.D3
+import image4s.geometry.Frame
 import ravel.Array1
 import ravel.DType
 import ravel.NDArray as RavelArray
 import scala.reflect.ClassTag
 import spire.algebra.{Order, Ring}
+
+import VolumeDomain.*
 
 object NeuroStats:
 
@@ -126,6 +133,29 @@ object NeuroStats:
       stats = summarize(svol.data, naRm)
     )
 
+  def summarize[F <: Frame[D3], S](
+      volume: SelectedVolume[F, S, Double, Continuous]
+  ): NeuroVolSummary =
+    summarize(volume, naRm = true)
+
+  def summarize[F <: Frame[D3], S](
+      volume: SelectedVolume[F, S, Double, Continuous],
+      naRm: Boolean
+  ): NeuroVolSummary =
+    val space = volume.domain.volumeSpace.toNeuroSpace
+    NeuroVolSummary(
+      kind = "SelectedVolume",
+      dims = space.spatialDims,
+      spacing = space.spacing,
+      origin = space.origin,
+      orientation = orientation(space),
+      stats = summarizeIndexed(
+        volume.data.size,
+        volume.data.apply,
+        naRm
+      )
+    )
+
   def summarize(vec: NeuroVec[Double]): NeuroVecSummary =
     summarize(vec, naRm = true)
 
@@ -150,6 +180,28 @@ object NeuroStats:
       svec.space.dims(3),
       svec.map.cardinality,
       svec.data.apply,
+      naRm
+    )
+
+  def summarize[F <: Frame[D3], S](
+      series: SelectedSeries[F, S, Double, Continuous]
+  ): NeuroVecSummary =
+    summarize(series, naRm = true)
+
+  def summarize[F <: Frame[D3], S](
+      series: SelectedSeries[F, S, Double, Continuous],
+      naRm: Boolean
+  ): NeuroVecSummary =
+    val space = series.domain.volumeSpace.toNeuroSpace.addDim(
+      series.nTime,
+      Some(Axis.Time)
+    )
+    summarizeSparseVec(
+      "SelectedSeries",
+      space,
+      series.nTime,
+      series.selection.size,
+      (time, position) => series.data(position, time),
       naRm
     )
 
@@ -195,6 +247,28 @@ object NeuroStats:
       sum / tLen.toDouble
 
     SparseNeuroVol(out, svec.map.indices, svec.space.spatialSpace, svec.label)
+
+  def temporalMean[F <: Frame[D3], S](
+      series: SelectedSeries[F, S, Double, Continuous]
+  ): Either[
+    SelectedImageError,
+    SelectedVolume[F, S, Double, Continuous]
+  ] =
+    given DType[Double] = series.dtype
+    val tLen = series.nTime
+    val out = RavelArray.tabulate[Double](series.selection.size): position =>
+      var time = 0
+      var sum = 0.0
+      while time < tLen do
+        sum += series.data(position, time)
+        time += 1
+      sum / tLen.toDouble
+    SelectedVolume.continuous(
+      series.domain,
+      series.selection,
+      out,
+      series.metadata
+    )
 
   private def summarizeVec(
     kind: String,
@@ -320,6 +394,32 @@ object NeuroCompare:
       out(i) = test(x.valueAtCanonicalOrdinal(i), scalar, predicate)
       i += 1
     NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
+
+  def compare[F <: Frame[D3], S, A: Order, Sem](
+      volume: SelectedVolume[F, S, A, Sem],
+      scalar: A,
+      predicate: Predicate
+  )(using
+      DType[Boolean],
+      ValueSemantics[Boolean, MaskSemantics]
+  ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+    SelectedVolume.fromSelected(
+      volume.selected.mapValues[Boolean, MaskSemantics]: value =>
+        test(value, scalar, predicate)
+    )
+
+  def compare[F <: Frame[D3], S, A: Order, Sem](
+      scalar: A,
+      volume: SelectedVolume[F, S, A, Sem],
+      predicate: Predicate
+  )(using
+      DType[Boolean],
+      ValueSemantics[Boolean, MaskSemantics]
+  ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+    SelectedVolume.fromSelected(
+      volume.selected.mapValues[Boolean, MaskSemantics]: value =>
+        test(scalar, value, predicate)
+    )
 
   def compare[A: Order](scalar: A, x: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
     val out = PrimitiveBuffers.ofSize[Boolean](x.values.size)

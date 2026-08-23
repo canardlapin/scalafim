@@ -59,41 +59,6 @@ object NeuroVol:
     inline def apply(coord: VoxelCoord): A =
       apply(coord.x, coord.y, coord.z)
 
-    def apply(coords: ROICoords): Array1[A] =
-      val dims = space.spatialDims
-      given DType[A] = values.dtype
-      RavelArray.tabulate[A](coords.size): p =>
-        val c = coords.coords(p)
-        require(c(0) >= 0 && c(0) < dims(0), "roi coord out of bounds")
-        require(c(1) >= 0 && c(1) < dims(1), "roi coord out of bounds")
-        require(c(2) >= 0 && c(2) < dims(2), "roi coord out of bounds")
-        apply(c(0), c(1), c(2))
-
-    def apply(roi: VoxelRoi): Array1[A] =
-      GridCompatibility.requireVolume(volumeSpace, roi.space)
-      given DType[A] = values.dtype
-      val coords = roi.coords
-      RavelArray.tabulate[A](coords.length)(p => apply(coords(p)))
-
-    def apply(roi: ROIVol[?]): Array1[A] =
-      apply(roi.roi)
-
-    def select(selection: VoxelSelection): Either[GridMismatch, RoiValues[A]] =
-      GridCompatibility.volume(volumeSpace, selection.space).map: _ =>
-        val indices = selection.indexSet.unsafeArray
-        given DType[A] = values.dtype
-        val out =
-          RavelArray.tabulate[A](indices.size)(i =>
-            valueAtCanonicalOrdinal(indices(i))
-          )
-        RoiValues.unsafe(selection, out, label)
-
-    def select(region: VoxelRegion): Either[GridMismatch, RoiValues[A]] =
-      select(region.toSelection)
-
-    def select(roi: VoxelRoi): Either[GridMismatch, RoiValues[A]] =
-      select(VoxelSelection.fromRoi(roi))
-
     /** Temporary old-name bridge to the native singleton-D3 plane view. */
     def plane(
         axis: SpatialAxis,
@@ -159,57 +124,16 @@ object NeuroVol:
       }
 
     def asMask(indices: Array1[Int], label: String): NeuroVol[Boolean] =
-      Mask.fromIndexSet(VoxelIndexSet(volumeSpace, indices), label)
+      Mask.fromIndices(space, indices, label)
 
     def asMask(indices: Array[Int], label: String): NeuroVol[Boolean] =
-      Mask.fromIndexSet(VoxelIndexSet(volumeSpace, indices), label)
-
-    def asMask(indexSet: VoxelIndexSet, label: String): NeuroVol[Boolean] =
-      GridCompatibility.requireVolume(volumeSpace, indexSet.space)
-      Mask.fromIndexSet(indexSet, label)
-
-    def asMask(indexSet: VoxelIndexSet): NeuroVol[Boolean] =
-      asMask(indexSet, volume.label)
+      Mask.fromIndices(space, indices, label)
 
     def asMask(indices: Array1[Int]): NeuroVol[Boolean] =
       asMask(indices, volume.label)
 
     def asMask(indices: Array[Int]): NeuroVol[Boolean] =
       asMask(indices, volume.label)
-
-    def asSparse(mask: NeuroVol[Boolean], label: String = volume.label)(using ClassTag[A]): SparseNeuroVol[A] =
-      GridCompatibility.requireSpatial(space, mask.space)
-      val idx = Mask.indices(mask)
-      asSparse(idx, label)
-
-    def asSparse(indices: Array1[Int]): SparseNeuroVol[A] =
-      asSparse(indices, volume.label)
-
-    def asSparse(indices: Array[Int]): SparseNeuroVol[A] =
-      asSparse(
-        RavelArray.fromSeq(ravel.Shape(indices.length), indices),
-        volume.label
-      )
-
-    def asSparse(indices: Array1[Int], label: String): SparseNeuroVol[A] =
-      val indexSet = VoxelIndexSet.unique(volumeSpace, indices)
-      asSparse(indexSet, label)
-
-    def asSparse(indices: Array[Int], label: String): SparseNeuroVol[A] =
-      asSparse(
-        RavelArray.fromSeq(ravel.Shape(indices.length), indices),
-        label
-      )
-
-    def asSparse(indexSet: VoxelIndexSet): SparseNeuroVol[A] =
-      asSparse(indexSet, volume.label)
-
-    def asSparse(indexSet: VoxelIndexSet, label: String): SparseNeuroVol[A] =
-      GridCompatibility.requireVolume(volumeSpace, indexSet.space)
-      given DType[A] = values.dtype
-      val out =
-        RavelArray.tabulate[A](indexSet.size)(p => valueAtCanonicalOrdinal(indexSet(p)))
-      SparseNeuroVol.fromIndexSet(out, indexSet, space, label)
 
     def gridToIndex(i: Int, j: Int, k: Int): Int =
       space.gridToIndex3D(i, j, k)

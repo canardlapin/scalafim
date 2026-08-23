@@ -3,6 +3,7 @@ package scalafim.image
 import ravel.Array1
 import ravel.DType.given
 import ravel.NDArray as RavelArray
+import ravel.Rank
 import ravel.Shape
 
 final case class ClusteredNeuroVol(
@@ -58,13 +59,18 @@ final case class ClusteredNeuroVol(
 
   def toDense: NeuroVol[Int] =
     val shape = space.spatialShape
-    val lookup = IndexLookupVol(space, activeIdx)
     val full =
-      RavelArray.tabulate[Int](shape.x, shape.y, shape.z):
-        (x, y, z) =>
-          val linear = Indexing.gridToIndex3D(shape, x, y, z)
-          val position = lookup.lookup(linear)
-          if position < 0 then 0 else clusters(position)
+      RavelArray.build[Int, Rank[3]](
+        Shape(shape.x, shape.y, shape.z)
+      ): output =>
+        var ordinal = 0
+        while ordinal < shape.product do
+          output.writeLinear(ordinal, 0)
+          ordinal += 1
+        var position = 0
+        while position < activeIdx.size do
+          output.writeLinear(activeIdx(position), clusters(position))
+          position += 1
     NeuroVol.fromRavel(full, space, label)
 
   def splitClusters: Vector[ROIVol[Int]] =

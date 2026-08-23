@@ -2,11 +2,14 @@ package scalafim.image
 
 import image4s.Axis
 import image4s.AxisKind
+import image4s.Categorical
+import image4s.Continuous
 import image4s.ImageError
 import image4s.ImageMetadata
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.ValueSemantics
+import image4s.Mask as MaskSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridDomain
@@ -59,6 +62,25 @@ opaque type SelectedVolume[
 ] <: SelectedSampled[F, D3, S, A, Sem, Rank[1]] =
   SelectedSampled[F, D3, S, A, Sem, Rank[1]]
 
+/** Dynamic-boundary package preserving the precise grid and voxel owners.
+  *
+  * The package owns no support or sample storage; `value` remains the one
+  * image4s-locus object.
+  */
+sealed trait SomeSelectedVolume[A, Sem]:
+  type F <: Frame[D3]
+  type S
+  val value: SelectedVolume[F, S, A, Sem]
+
+object SomeSelectedVolume:
+  def apply[F0 <: Frame[D3], S0, A, Sem](
+      selected: SelectedVolume[F0, S0, A, Sem]
+  ): SomeSelectedVolume[A, Sem] =
+    new SomeSelectedVolume[A, Sem]:
+      type F = F0
+      type S = S0
+      val value: SelectedVolume[F, S, A, Sem] = selected
+
 object SelectedVolume:
   def fromSelected[
       F <: Frame[D3],
@@ -96,20 +118,67 @@ object SelectedVolume:
       .map(SelectedImageError.Provider.apply)
       .map(fromSelected)
 
+  def continuous[F <: Frame[D3], S, T, A](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      data: NDArray[A, Rank[1]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[A, Continuous]
+  ): Either[SelectedImageError, SelectedVolume[F, S, A, Continuous]] =
+    create[F, S, T, A, Continuous](
+      domain,
+      selection,
+      data,
+      metadata
+    )
+
+  def categorical[F <: Frame[D3], S, T, A](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      data: NDArray[A, Rank[1]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[A, Categorical]
+  ): Either[SelectedImageError, SelectedVolume[F, S, A, Categorical]] =
+    create[F, S, T, A, Categorical](
+      domain,
+      selection,
+      data,
+      metadata
+    )
+
+  def mask[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      data: NDArray[Boolean, Rank[1]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[Boolean, MaskSemantics]
+  ): Either[
+    SelectedImageError,
+    SelectedVolume[F, S, Boolean, MaskSemantics]
+  ] =
+    create[F, S, T, Boolean, MaskSemantics](
+      domain,
+      selection,
+      data,
+      metadata
+    )
+
   def gather[
       F <: Frame[D3],
       S,
       T,
-      I <: SampleSpace[?, D3],
       A,
       Sem
   ](
       domain: GridDomain[F, D3, S],
-      volume: NeuroVolume[I, A, Sem],
+      volume: SomeNeuroVolume[A, Sem],
       selection: Selection[T]
   ): Either[SelectedImageError, SelectedVolume[F, S, A, Sem]] =
     SelectedSampled
-      .gatherSpatial(domain, volume.sampled, selection)
+      .gatherSpatial(domain, volume, selection)
       .left
       .map(SelectedImageError.Provider.apply)
       .map(fromSelected)
@@ -123,7 +192,7 @@ object SelectedVolume:
     inline def apply(position: Int): A =
       volume.data(position)
 
-    def scatter(
+    def toDense(
         fill: A
     ): Either[SelectedImageError, SomeNeuroVolume[A, Sem]] =
       volume
@@ -211,6 +280,23 @@ opaque type SelectedSeries[
 ] <: SelectedSampled[F, D3, S, A, Sem, Rank[2]] =
   SelectedSampled[F, D3, S, A, Sem, Rank[2]]
 
+/** Dynamic-boundary package preserving the precise grid and voxel owners.
+  * The compact provider value remains the sole support and storage owner.
+  */
+sealed trait SomeSelectedSeries[A, Sem]:
+  type F <: Frame[D3]
+  type S
+  val value: SelectedSeries[F, S, A, Sem]
+
+object SomeSelectedSeries:
+  def apply[F0 <: Frame[D3], S0, A, Sem](
+      selected: SelectedSeries[F0, S0, A, Sem]
+  ): SomeSelectedSeries[A, Sem] =
+    new SomeSelectedSeries[A, Sem]:
+      type F = F0
+      type S = S0
+      val value: SelectedSeries[F, S, A, Sem] = selected
+
 object SelectedSeries:
   def fromSelected[
       F <: Frame[D3],
@@ -257,20 +343,73 @@ object SelectedSeries:
             .map(SelectedImageError.Provider.apply)
             .flatMap(fromSelected)
 
+  def continuous[F <: Frame[D3], S, T, A](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      timeAxis: Axis,
+      data: NDArray[A, Rank[2]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[A, Continuous]
+  ): Either[SelectedImageError, SelectedSeries[F, S, A, Continuous]] =
+    create[F, S, T, A, Continuous](
+      domain,
+      selection,
+      timeAxis,
+      data,
+      metadata
+    )
+
+  def categorical[F <: Frame[D3], S, T, A](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      timeAxis: Axis,
+      data: NDArray[A, Rank[2]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[A, Categorical]
+  ): Either[SelectedImageError, SelectedSeries[F, S, A, Categorical]] =
+    create[F, S, T, A, Categorical](
+      domain,
+      selection,
+      timeAxis,
+      data,
+      metadata
+    )
+
+  def mask[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
+      timeAxis: Axis,
+      data: NDArray[Boolean, Rank[2]],
+      metadata: ImageMetadata = ImageMetadata.empty
+  )(using
+      ValueSemantics[Boolean, MaskSemantics]
+  ): Either[
+    SelectedImageError,
+    SelectedSeries[F, S, Boolean, MaskSemantics]
+  ] =
+    create[F, S, T, Boolean, MaskSemantics](
+      domain,
+      selection,
+      timeAxis,
+      data,
+      metadata
+    )
+
   def gather[
       F <: Frame[D3],
       S,
       T,
-      I <: SampleSpace[?, D3],
       A,
       Sem
   ](
       domain: GridDomain[F, D3, S],
-      series: NeuroSeries[I, A, Sem],
+      series: SomeNeuroSeries[A, Sem],
       selection: Selection[T]
   ): Either[SelectedImageError, SelectedSeries[F, S, A, Sem]] =
     SelectedSampled
-      .gatherSingleAxis(domain, series.sampled, selection)
+      .gatherSingleAxis(domain, series, selection)
       .left
       .map(SelectedImageError.Provider.apply)
       .flatMap(fromSelected)
@@ -287,7 +426,7 @@ object SelectedSeries:
     inline def nTime: Int =
       series.nonSpatialAxes.values.head.extent
 
-    def scatter(
+    def toDense(
         fill: A
     ): Either[SelectedImageError, SomeNeuroSeries[A, Sem]] =
       series

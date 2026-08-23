@@ -1,49 +1,87 @@
 package scalafim.latent
 
-import scalafim.image.{Indexing, PrimitiveBuffers, NeuroSpace, VoxelIndexSet}
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.locus.GridDomain
+import locus4s.DomainRegistry
+import locus4s.Selection
+import scalafim.image.{Indexing, NeuroSpace}
 import gale.linalg.{DMat, DVec}
 
-final case class RadialActiveVoxels private (
-    indexSet: VoxelIndexSet,
-    coordinates: Vector[WorldCoordinate3D]
-):
-  require(!indexSet.isEmpty, "radial basis active index set must be non-empty")
-  require(coordinates.length == indexSet.size, "active coordinate count must match index set size")
+sealed trait RadialActiveVoxels:
+  type F <: Frame[D3]
+  type S
+  val domain: GridDomain[F, D3, S]
+  val selection: Selection[S]
 
-  def size: Int = indexSet.size
-  def indices: Vector[Int] = indexSet.toVector
+  final def size: Int = selection.size
+
+  final def indices: Vector[Int] =
+    selection.ordinals.toVector
+
+  final lazy val coordinates: Vector[WorldCoordinate3D] =
+    indices.map: ordinal =>
+      val lattice =
+        domain
+          .indexOfOrdinal(ordinal)
+          .fold(error => throw new IllegalStateException(error.message), identity)
+      val point =
+        domain.grid
+          .pointAt(lattice)
+          .fold(error => throw new IllegalStateException(error.message), identity)
+      WorldCoordinate3D(
+        point.coordinates(0),
+        point.coordinates(1),
+        point.coordinates(2)
+      )
+        .fold(error => throw new IllegalStateException(error.message), identity)
 
 object RadialActiveVoxels:
   def fromIndices(
       space: NeuroSpace,
       activeIndices: IndexedSeq[Int]
   ): Either[RadialBasisError, RadialActiveVoxels] =
-    VoxelIndexSet
-      .makeUnique(space, PrimitiveBuffers.fromArray(activeIndices.toArray))
-      .left
-      .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
-      .flatMap(fromIndexSet)
+    for
+      spatial <- NeuroSpace
+        .requireSpatialD3(space)
+        .left
+        .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
+      resolution <- GridDomain
+        .register(
+          spatial.grid,
+          "radial active voxels",
+          DomainRegistry.empty
+        )
+        .left
+        .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
+      selection <- Selection
+        .fromOrdinals(resolution.value.space, activeIndices)
+        .left
+        .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
+      result <- fromSelection(resolution.value, selection)
+    yield result
 
-  def fromIndexSet(indexSet: VoxelIndexSet): Either[RadialBasisError, RadialActiveVoxels] =
-    if indexSet.isEmpty then Left(RadialBasisError.EmptyActiveCoordinates)
+  def fromSelection[F0 <: Frame[D3], S0, T](
+      domain0: GridDomain[F0, D3, S0],
+      selection0: Selection[T]
+  ): Either[RadialBasisError, RadialActiveVoxels] =
+    if !domain0.space.sameRuntimeOwnerAs(selection0.space) then
+      Left(
+        RadialBasisError.InvalidActiveVoxelIndices(
+          "active selection belongs to a different live voxel domain"
+        )
+      )
+    else if selection0.isEmpty then
+      Left(RadialBasisError.EmptyActiveCoordinates)
     else
-      val space = indexSet.space.toNeuroSpace
-      val out = Vector.newBuilder[WorldCoordinate3D]
-      out.sizeHint(indexSet.size)
-      var i = 0
-      var error = Option.empty[RadialBasisError]
-
-      while i < indexSet.size && error.isEmpty do
-        val grid = space.indexToGrid3D(indexSet(i)).map(_.toDouble)
-        val world = space.indexToCoord(grid)
-        WorldCoordinate3D(world(0), world(1), world(2)) match
-          case Left(err)      => error = Some(err)
-          case Right(coord)   => out += coord
-        i += 1
-
-      error match
-        case Some(err) => Left(err)
-        case None      => Right(RadialActiveVoxels(indexSet, out.result()))
+      val native = selection0.asInstanceOf[Selection[S0]]
+      Right(
+        new RadialActiveVoxels:
+          type F = F0
+          type S = S0
+          val domain: GridDomain[F, D3, S] = domain0
+          val selection: Selection[S] = native
+      )
 
 final case class RadialBasis(
     kernel: RadialKernel,
@@ -353,7 +391,7 @@ private object RadialAtomGenerator:
     else if spec.tinyMaskIdentity && candidates.length <= spec.tinyMaskLimit then
       Right(tinyIdentityAtoms(candidates, spec))
     else
-      val components = connectedComponents(candidates, activeVoxels.indexSet.space.dims)
+      val components = connectedComponents(candidates, activeVoxels.domain.grid.shape)
       val atoms = Vector.newBuilder[RadialAtom]
 
       var level = 0
@@ -379,12 +417,14 @@ private object RadialAtomGenerator:
       if result.isEmpty then Left(RadialBasisError.EmptyAtoms) else Right(result)
 
   private def activeCandidates(activeVoxels: RadialActiveVoxels): Vector[Candidate] =
+    val shape = activeVoxels.domain.grid.shape
+    val ordinals = activeVoxels.selection.ordinals
     Vector.tabulate(activeVoxels.size) { i =>
-      val index = activeVoxels.indexSet(i)
+      val index = ordinals(i)
       Candidate(
         index = index,
         coordinate = activeVoxels.coordinates(i),
-        grid = activeVoxels.indexSet.space.toNeuroSpace.indexToGrid3D(index)
+        grid = scalafim.image.Indexing.indexToGrid3D(shape, index)
       )
     }
 

@@ -148,28 +148,76 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertClose(back, voxel, 1e-10)
   }
 
-  test("validated index sets canonicalize masks and reject duplicate sparse positions") {
+  test("regions canonicalize support while ordered selections reject duplicates") {
     val space = NeuroSpace(Vector(3, 1, 1))
-    val indexSet = VoxelIndexSet(space, Array(2, 0, 2))
-    val mask = Mask.fromIndexSet(indexSet)
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space),
+          "typed region selection",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val region =
+      locus4s.Region
+        .fromOrdinals(domain.space, Vector(2, 0, 2))
+        .toOption
+        .get
+    val mask = Mask.fromRegion(domain, region).toOption.get
 
-    assertEquals(indexSet.toVector, Vector(0, 2), clue = "")
-    assertEquals(toVector(Mask.indices(mask)), Vector(0, 2), clue = "")
-    assert(VoxelIndexSet.makeUnique(space, Array(1, 1)).isLeft, clue = "sparse index sets should reject duplicates")
-
-    intercept[IllegalArgumentException] {
-      SparseNeuroVol(Array(10.0, 20.0), Array(1, 1), space)
-    }
+    assertEquals(region.ordinalsInDomainOrder.toVector, Vector(0, 2), clue = "")
+    assertEquals(
+      Mask.region(domain, mask).toOption.get.ordinalsInDomainOrder.toVector,
+      Vector(0, 2),
+      clue = ""
+    )
+    assert(
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 1)).isLeft,
+      clue = "ordered selections should reject duplicates"
+    )
   }
 
-  test("VoxelRoi validates coordinates before ROI extraction") {
+  test("exact grid indices validate coordinates before selected extraction") {
     val space = NeuroSpace(Vector(3, 1, 1), trans = Some(affineMatrix))
-    val roi = VoxelRoi.fromRawUnsafe(space, Vector(Vector(0, 0, 0), Vector(2, 0, 0)))
-    val vol = NeuroVol.copyFromCanonicalArray[Int](Array(10, 20, 30), space)
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(space),
+          "typed coordinate selection",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val sampleSpace =
+      image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
+    val volume =
+      NeuroVolume
+        .categorical(
+          sampleSpace,
+          ravel.NDArray.fromSeq(ravel.Shape(3, 1, 1), Vector(10, 20, 30))
+        )
+        .toOption
+        .get
+    val values =
+      SelectedVolume.gather(domain, volume, selection).toOption.get
 
-    val values = vol(roi)
-    assertEquals(Vector.tabulate(values.size)(i => values(i)), Vector(10, 30), clue = "")
-    assertEquals(toVector(roi.linearIndices), Vector(0, 2), clue = "")
-    assert(VoxelRoi.fromRaw(space, Vector(Vector(3, 0, 0))).isLeft, clue = "ROI bounds should be checked")
-    assert(VoxelRoi.fromRaw(space, Vector(Vector(1, 0, 0), Vector(1, 0, 0))).isLeft, clue = "ROI duplicates should be rejected")
+    assertEquals(values.data.iterator.toVector, Vector(10, 30), clue = "")
+    assertEquals(values.selection.ordinals.toVector, Vector(0, 2), clue = "")
+    val outOfBounds =
+      image4s.geometry.LatticeIndex
+        .fromVector[image4s.geometry.D3](Vector(3, 0, 0))
+        .toOption
+        .get
+    assert(domain.domainIndexAt(outOfBounds).isLeft, clue = "voxel bounds should be checked")
+    assert(
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 1)).isLeft,
+      clue = "selection duplicates should be rejected"
+    )
   }

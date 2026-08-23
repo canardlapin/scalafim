@@ -2,7 +2,7 @@ package scalafim.image
 
 import VolumeDomain.*
 import locus4s.DomainRegistry
-import scalafim.locus.Relation
+import locus4s.Relation
 import spire.std.int.given
 
 class VolumeSearchlightSuite extends munit.FunSuite:
@@ -21,18 +21,18 @@ class VolumeSearchlightSuite extends munit.FunSuite:
 
   test("radius zero is the identity relation"):
     val radius = SearchlightRadius.make(0.0).toOption.get
-    val searchlight = VolumeSearchlight.metricBalls(domain, radius).toOption.get
+    val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
 
     assertEquals(
-      searchlight.searchlight.neighborhoods,
+      searchlight.relation,
       Relation.identity(domain.space)
     )
 
   test("metric balls are symmetric, monotone, and obey triangle composition"):
     val radiusOne = SearchlightRadius.make(1.0).toOption.get
     val radiusTwo = SearchlightRadius.make(2.0).toOption.get
-    val one = VolumeSearchlight.metricBalls(domain, radiusOne).toOption.get.searchlight.neighborhoods
-    val two = VolumeSearchlight.metricBalls(domain, radiusTwo).toOption.get.searchlight.neighborhoods
+    val one = ExactVolumeSearchlight.metricBalls(domain, radiusOne).toOption.get.relation
+    val two = ExactVolumeSearchlight.metricBalls(domain, radiusTwo).toOption.get.relation
 
     assertEquals(one, one.converse)
     assert(one.subsetOf(two))
@@ -41,7 +41,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
   test("closed metric balls include points exactly on the radius boundary"):
     val radius = SearchlightRadius.make(1.0).toOption.get
     val relation =
-      VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight.neighborhoods
+      ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get.relation
     val center = domain.space.indexOption(4).get
 
     assertEquals(
@@ -49,7 +49,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
       Vector(1, 3, 4, 5, 7)
     )
 
-  test("relation rows materialize the same full window as the coordinate constructor"):
+  test("relation rows materialize an exact selected window"):
     val values = Array.ofDim[Int](volumeSpace.nVoxels)
     var i = 0
     while i < values.length do
@@ -58,23 +58,23 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val volume = NeuroVol.copyFromCanonicalArray[Int](values, volumeSpace.toNeuroSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
-    val searchlight = VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight
+    val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
     val center = domain.space.indexOption(4).get
     val materialized =
-      VolumeSearchlight.materialize[S, Int](domain, searchlight, center, field).toOption.get
-    val coordinateWindow =
-      Searchlight.sphericalRoi(volume, Vector(1, 1, 0), radius = 1.0)
+      ExactVolumeSearchlight
+        .materializeCategorical(domain, searchlight, center, field)
+        .toOption
+        .get
 
     assertEquals(
-      intValues(materialized.region.linearIndices),
-      intValues(coordinateWindow.region.linearIndices)
+      materialized.values.selection.region.ordinalsInDomainOrder.toVector,
+      Vector(1, 3, 4, 5, 7)
     )
     assertEquals(
-      materialized.selection.voxelCoords.zip(intValues(materialized.values)).toMap,
-      coordinateWindow.selection.voxelCoords
-        .zip(intValues(coordinateWindow.values))
-        .toMap
+      materialized.values.data.iterator.toVector,
+      Vector(2, 4, 5, 6, 8)
     )
+    assertEquals(materialized.centerPosition, 2)
 
   test("value support restricts materialization without changing metric geometry"):
     val values = PrimitiveBuffers.fillConst[Int](volumeSpace.nVoxels, 1)
@@ -82,22 +82,28 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val volume = NeuroVol.copyFromCanonicalArray[Int](values, volumeSpace.toNeuroSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
-    val searchlight = VolumeSearchlight.metricBalls(domain, radius).toOption.get.searchlight
+    val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
     val center = domain.space.indexOption(4).get
-    val geometry = searchlight.neighborhoods.row(center)
+    val geometry = searchlight.relation.row(center)
     val nonZero = domain.supportWhere(field)(_ != 0).toOption.get
     val materialized =
-      VolumeSearchlight
-        .materialize[S, Int](domain, searchlight, center, field, support = Some(nonZero))
+      ExactVolumeSearchlight
+        .materializeCategorical(
+          domain,
+          searchlight,
+          center,
+          field,
+          support = Some(nonZero)
+        )
         .toOption
         .get
 
     assertEquals(geometry.ordinalsInDomainOrder.toVector, Vector(1, 3, 4, 5, 7))
-    assertEquals(intValues(materialized.region.linearIndices), Vector(3, 4, 5, 7))
-    assertEquals(searchlight.neighborhoods.row(center), geometry)
-
-  private def intValues(values: ravel.Array1[Int]): Vector[Int] =
-    Vector.tabulate(values.size)(i => values(i))
+    assertEquals(
+      materialized.values.selection.region.ordinalsInDomainOrder.toVector,
+      Vector(3, 4, 5, 7)
+    )
+    assertEquals(searchlight.relation.row(center), geometry)
 
   private def right[E, A](value: Either[E, A]): A =
     value match

@@ -1,19 +1,31 @@
 package scalafim.fmri.fit
 
+import image4s.Axis as ImageAxis
+import image4s.AxisKind
+import image4s.Continuous
+import image4s.ImageMetadata
+import image4s.locus.GridDomain
+import locus4s.DomainRegistry
+import locus4s.Selection
 import scalafim.dataset.DatasetShape
 import ravel.NDArray as RavelArray
-import scalafim.image.{Axis, IndexLookupVol, Mask, NeuroVec, PrimitiveBuffers, SparseNeuroVec}
+import scalafim.image.{NeuroSpace, NeuroVec, SelectedSeries, SomeSelectedSeries}
 import spire.implicits.DoubleAlgebra
 
 final case class FitImageMaps(
     names: Vector[String],
-    values: SparseNeuroVec[Double]
+    values: SomeSelectedSeries[Double, Continuous]
 ):
   require(names.nonEmpty, "image map names must be non-empty")
-  require(values.space.dims(3) == names.length, "image map names must match map volumes")
+  require(values.value.nTime == names.length, "image map names must match map volumes")
 
   def nMaps: Int = names.length
-  def dense: NeuroVec[Double] = values.toDense
+  def dense: NeuroVec[Double] =
+    val native =
+      values.value
+        .toDense(0.0)
+        .fold(error => throw new IllegalStateException(error.message), identity)
+    NeuroVec.fromNative(native)
   def mapIndex(name: String): Option[Int] = names.indexOf(name) match
     case -1 => None
     case i  => Some(i)
@@ -88,23 +100,38 @@ object FitImageMaps:
     val nMaps = names.length
     val nVoxels = sorted.length
     val data =
-      RavelArray.tabulate[Double](nMaps, nVoxels) { (map, outPosition) =>
+      RavelArray.tabulate[Double](nVoxels, nMaps) { (outPosition, map) =>
         rowsByMap(map)(sorted(outPosition)._2)
       }
-
-    val idx = PrimitiveBuffers.fromArray(sortedIndices)
-    val space = shape.space.spatialSpace.addDim(nMaps, Some(Axis.Time))
-    val mask = Mask.fromIndices(shape.space.spatialSpace, idx, label = label)
-    val lookup = IndexLookupVol(space, idx)
+    val spatial =
+      NeuroSpace
+        .requireSpatialD3(shape.space)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val resolution =
+      GridDomain
+        .register(spatial.grid, s"$label selected voxels", DomainRegistry.empty)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val selection =
+      Selection
+        .fromOrdinals(resolution.value.space, sortedIndices)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val mapAxis =
+      ImageAxis
+        .create("map", nMaps, AxisKind.Time)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val selected =
+      SelectedSeries
+        .create(
+          resolution.value,
+          selection,
+          mapAxis,
+          data,
+          ImageMetadata(label)
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
     FitImageMaps(
       names = names,
-      values = SparseNeuroVec(
-        data = data,
-        space = space,
-        mask = mask,
-        map = lookup,
-        label = label
-      )
+      values = SomeSelectedSeries(selected)
     )
 
   private def validateCompatibleParameterMaps(maps: Vector[ParameterMap]): Either[FitError, Unit] =
