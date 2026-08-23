@@ -1,6 +1,7 @@
 package scalafim.atlas
 
 import scalafim.image.{ClusteredNeuroVol, VolumeDomain, VolumeSpace}
+import locus4s.DomainRegistry
 import scalafim.locus.{
   DomainFactory,
   FiniteSpace,
@@ -80,12 +81,14 @@ object AtlasQuotient:
   ): VolumeAtlasQuotient =
     val volumeSpace = VolumeSpace.fromSpatialPart(volume.space).toOption.get
     val packedVolumeDomain =
-      VolumeDomain.semantic(
-        SpaceKey.unsafe(
-          s"scalafim:atlas:volume:$spatialSemanticId:${volumeGeometryIdentity(volumeSpace)}"
-        ),
-        volumeSpace
-      )
+      VolumeDomain
+        .register(
+          volumeSpace,
+          s"$atlasName voxels",
+          DomainRegistry.empty
+        )
+        .toOption
+        .get
     type Voxel = packedVolumeDomain.S
     val volumeDomain: VolumeDomain[Voxel] = packedVolumeDomain.value
     val parcelResolution =
@@ -101,12 +104,12 @@ object AtlasQuotient:
       regions.ids.zipWithIndex.toMap
     val dense = volume.toDense
     val assignments =
-      Vector.tabulate(volumeDomain.finiteSpace.size): ordinal =>
-        val id = dense.linear(ordinal)
+      Vector.tabulate(volumeDomain.space.size): ordinal =>
+        val id = dense.valueAtCanonicalOrdinal(ordinal)
         Option.when(id != 0)(parcelOrdinalById(RegionId(id)))
     val quotient =
       Parcellation
-        .fromAssignments(volumeDomain.finiteSpace, parcels, assignments)
+        .fromAssignments(volumeDomain.space, parcels, assignments)
         .toOption
         .get
     val fields = parcelFields(parcels, regions)

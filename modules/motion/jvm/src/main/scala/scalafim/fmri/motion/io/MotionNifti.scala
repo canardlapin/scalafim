@@ -114,11 +114,21 @@ object MotionNifti:
     bb.put(345, '+'.toByte)
     bb.put(346, '1'.toByte)
     bb.put(347, 0.toByte)
-    val legacyValues = run.copyLegacyLinear
-    i = 0
-    while i < nels do
-      bb.putDouble(352 + i * 8, legacyValues(i))
-      i += 1
+    var valueOffset = 352
+    var t = 0
+    while t < dims(3) do
+      var z = 0
+      while z < dims(2) do
+        var y = 0
+        while y < dims(1) do
+          var x = 0
+          while x < dims(0) do
+            bb.putDouble(valueOffset, run(x, y, z, t))
+            valueOffset += 8
+            x += 1
+          y += 1
+        z += 1
+      t += 1
     bytes
 
   private def sidecarJson(metadata: MotionNiftiMetadata): String =

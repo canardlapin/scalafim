@@ -46,7 +46,7 @@ class FirstLevelUnitSourceSuite extends FunSuite:
       assertEquals(opened.source.blockLengths, Vector(2, 2))
       assertEquals(block.timepoints, Vector(3, 0))
       assertEquals(block.voxelIndices, Vector(0, 2))
-      assertMatrixEquals(block.data, Vector(Vector(104.0, 106.0), Vector(0.0, 2.0)))
+      assertMatrixEquals(block.data, Vector(Vector(101.0, 105.0), Vector(0.0, 4.0)))
     }
   }
 
@@ -62,10 +62,10 @@ class FirstLevelUnitSourceSuite extends FunSuite:
   private def writeBold(path: Path, space: NeuroSpace, offset: Double): Path =
     val values = PrimitiveBuffers.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
     val seriesSpace = space.addDim(2, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, seriesSpace, "bold"))
+    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, seriesSpace, "bold"))
 
   private def writeMask(path: Path, space: NeuroSpace, values: Array[Double]): Path =
-    Nifti.writeVol(path, NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values), space, "mask"))
+    Nifti.writeVol(path, NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values), space, "mask"))
 
   private def withFixture[A](body: Path => A): A =
     val root = Files.createTempDirectory("scalafim-unit-source-")

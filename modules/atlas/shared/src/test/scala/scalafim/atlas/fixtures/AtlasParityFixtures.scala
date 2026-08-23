@@ -91,7 +91,7 @@ object AtlasParityFixtures:
     )
 
   def atlas(): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(labelData(), space), label = "noncontig")
+    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(labelData(), space), label = "noncontig")
 
   def comparisonAtlas(): VolumeAtlas =
     val comparisonRegions =
@@ -105,7 +105,7 @@ object AtlasParityFixtures:
     VolumeAtlas.fromLabelVolume(
       ref.copy(family = "neuroatlas-parity-comparison", model = "ComparisonFixture"),
       comparisonRegions,
-      NeuroVol.fromLinear(comparisonLabelData(), space),
+      NeuroVol.copyFromCanonicalArray(comparisonLabelData(), space),
       label = "comparison"
     )
 
@@ -116,7 +116,7 @@ object AtlasParityFixtures:
     while i < labels.length do
       out(i) = parcelMeans.getOrElse(labels(i), 0.0)
       i += 1
-    NeuroVol.fromLinear(out, space, label = "parcel-means")
+    NeuroVol.copyFromCanonicalArray(out, space, label = "parcel-means")
 
   def dataVec(nTime: Int = 3): NeuroVec[Double] =
     val labels = labelData()
@@ -126,16 +126,16 @@ object AtlasParityFixtures:
     while t < nTime do
       var i = 0
       while i < spatialNels do
-        out(i + t * spatialNels) = parcelMeans.getOrElse(labels(i), 0.0) * (t + 1).toDouble
+        out(i * nTime + t) = parcelMeans.getOrElse(labels(i), 0.0) * (t + 1).toDouble
         i += 1
       t += 1
-    NeuroVec.fromLinear(out, space.addDim(nTime, Some(Axis.Time)), label = "parcel-series")
+    NeuroVec.copyFromCanonicalArray(out, space.addDim(nTime, Some(Axis.Time)), label = "parcel-series")
 
   def fullMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, true), space, label = "full")
+    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](dims.product, true), space, label = "full")
 
   def emptyMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, false), space, label = "empty")
+    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](dims.product, false), space, label = "empty")
 
   def labelData(): Array[Int] =
     val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
@@ -151,7 +151,7 @@ object AtlasParityFixtures:
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 303)
     out
 
-  private def space: NeuroSpace =
+  private lazy val space: NeuroSpace =
     NeuroSpace(
       dims = dims,
       spacing = Some(Vector(1.0, 1.0, 1.0)),

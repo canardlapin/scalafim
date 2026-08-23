@@ -147,11 +147,11 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
     )
     val fileValues =
       PrimitiveBuffers.tabulate[Double](rows * observations) { index =>
-        val frame = index / rows
-        val row = index % rows
+        val frame = index % observations
+        val row = index / observations
         frame.toDouble * 1000.0 + row.toDouble
       }
-    Nifti.writeVec(path, NeuroVec.fromLinear(fileValues, space.addDim(observations, Some(Axis.Time)), "benchmark"))
+    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(fileValues, space.addDim(observations, Some(Axis.Time)), "benchmark"))
 
     val bean = allocationBean()
     val chainIterations = 500

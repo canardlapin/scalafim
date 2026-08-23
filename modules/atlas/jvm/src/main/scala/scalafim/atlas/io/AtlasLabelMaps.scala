@@ -13,7 +13,7 @@ object AtlasLabelMaps:
     val out = Array.ofDim[Int](vol.values.size)
     var i = 0
     while i < out.length do
-      val value = vol.linear(i)
+      val value = vol.valueAtCanonicalOrdinal(i)
       if !value.isFinite then
         throw new IllegalArgumentException(s"label volume contains non-finite value at linear index $i")
       val rounded = math.round(value).toInt
@@ -24,7 +24,7 @@ object AtlasLabelMaps:
       out(i) = rounded
       i += 1
     val outLabel = if label.nonEmpty then label else vol.label
-    NeuroVol.fromLinear[Int](out, vol.space, outLabel)
+    NeuroVol.copyFromCanonicalArray[Int](out, vol.space, outLabel)
 
   def buildAtlas(ref: AtlasRef, regions: RegionIndex, labels: NeuroVol[Int], label: String = ""): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(ref, regions, labels, label)

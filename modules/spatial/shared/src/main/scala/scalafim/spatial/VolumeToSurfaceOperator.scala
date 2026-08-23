@@ -242,7 +242,7 @@ object VolumeToSurfaceOperatorCompiler:
     val z = math.round(voxel.z).toInt
     if inBounds(sourceDims, x, y, z) then
       val col = Indexing.gridToIndex3D(sourceDims, x, y, z)
-      if sourceMask.forall(_.linear(col)) then SurfacePointWeights(Vector(col), Vector(1.0), 1.0)
+      if sourceMask.forall(_.valueAtCanonicalOrdinal(col)) then SurfacePointWeights(Vector(col), Vector(1.0), 1.0)
       else SurfacePointWeights.empty
     else SurfacePointWeights.empty
 
@@ -292,7 +292,7 @@ object VolumeToSurfaceOperatorCompiler:
     if weight == 0.0 || !inBounds(dims, x, y, z) then 0.0
     else
       val col = Indexing.gridToIndex3D(dims, x, y, z)
-      if mask.exists(m => !m.linear(col)) then 0.0
+      if mask.exists(m => !m.valueAtCanonicalOrdinal(col)) then 0.0
       else
         cols += col
         values += weight

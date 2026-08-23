@@ -4,7 +4,7 @@ import cats.kernel.CommutativeMonoid
 import ravel.NDArray as RavelArray
 import ravel.Shape
 import scalafim.image.*
-import scalafim.locus.Aggregation
+import locus4s.data.Aggregation
 import spire.std.double.given
 
 final case class ParcelValue(
@@ -50,22 +50,22 @@ object AtlasReduce:
     data: NeuroVol[Double],
     reducer: Array[Double] => Double = Reducers.mean
   ): Either[AtlasError, ParcelValues] =
-    requireSameSpatialEither(atlas, data.space).flatMap: _ =>
-      if sameReducer(reducer, Reducers.mean) then
-        onePassVolume(atlas, data, _.mean)
-      else if sameReducer(reducer, Reducers.sum) then
-        onePassVolume(atlas, data, _.sum)
-      else
+    if sameReducer(reducer, Reducers.mean) then
+      onePassVolume(atlas, data, _.mean)
+    else if sameReducer(reducer, Reducers.sum) then
+      onePassVolume(atlas, data, _.sum)
+    else
+      requireExactVolumeGrid(atlas, data).map: _ =>
         val vals =
           atlas.regions.regions.map: region =>
             val idx = atlas.volume.clusterMap(region.id.value)
             val tmp = Array.ofDim[Double](idx.size)
             var i = 0
             while i < idx.size do
-              tmp(i) = data.linear(idx(i))
+              tmp(i) = data.valueAtCanonicalOrdinal(idx(i))
               i += 1
             ParcelValue(region, reducer(tmp))
-        Right(ParcelValues(atlas, vals))
+        ParcelValues(atlas, vals)
 
   def reduceVolume(
     atlas: VolumeAtlas,
@@ -81,8 +81,8 @@ object AtlasReduce:
     reducer: Array[Double] => Double = Reducers.mean
   ): Either[AtlasError, ClusteredNeuroVec[Double]] =
     for
-      _ <- requireSameSpatialEither(atlas, data.space)
-      _ <- mask.map(m => requireSameSpatialEither(atlas, m.space)).getOrElse(Right(()))
+      _ <- requireExactSeriesGrid(atlas, data)
+      _ <- mask.map(m => requireExactVolumeGrid(atlas, m)).getOrElse(Right(()))
     yield
       if sameReducer(reducer, Reducers.mean) || sameReducer(reducer, Reducers.sum) then
         onePassVec(atlas, data, mask, reducer)
@@ -97,7 +97,7 @@ object AtlasReduce:
               val kept = Array.newBuilder[Int]
               var p = 0
               while p < rawIdx.size do
-                if m.linear(rawIdx(p)) then kept += rawIdx(p)
+                if m.valueAtCanonicalOrdinal(rawIdx(p)) then kept += rawIdx(p)
                 p += 1
               val retained = kept.result()
               RavelArray.fromSeq(Shape(retained.length), retained)
@@ -131,19 +131,37 @@ object AtlasReduce:
   ): ClusteredNeuroVec[Double] =
     reduceVecEither(atlas, data, mask, reducer).fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  private def requireSameSpatialEither(atlas: VolumeAtlas, space: NeuroSpace): Either[AtlasError, Unit] =
-    GridCompatibility.spatial(atlas.space, space) match
-      case Right(_) =>
-        Right(())
-      case Left(_) if atlas.space.spatialDims != space.spatialDims =>
-        Left(AtlasError.SpaceMismatch(atlas.space.spatialDims, space.spatialDims))
-      case Left(_) =>
-        Left(
-          AtlasError.ExactGridRequired(
-            atlas.space.spatialSpace.toString,
-            space.spatialSpace.toString
-          )
-        )
+  private def requireExactVolumeGrid[A](
+      atlas: VolumeAtlas,
+      data: NeuroVol[A]
+  ): Either[AtlasError, Unit] =
+    atlas.quotient.domain
+      .spatialField(data.sampled)
+      .map(_ => ())
+      .left
+      .map(_ => exactGridError(atlas, data.space))
+
+  private def requireExactSeriesGrid[A](
+      atlas: VolumeAtlas,
+      data: NeuroVec[A]
+  ): Either[AtlasError, Unit] =
+    atlas.quotient.domain
+      .seriesField(data.sampled)
+      .map(_ => ())
+      .left
+      .map(_ => exactGridError(atlas, data.space))
+
+  private def exactGridError(
+      atlas: VolumeAtlas,
+      actual: NeuroSpace
+  ): AtlasError =
+    if atlas.space.spatialDims != actual.spatialDims then
+      AtlasError.SpaceMismatch(atlas.space.spatialDims, actual.spatialDims)
+    else
+      AtlasError.ExactGridRequired(
+        atlas.space.spatialSpace.toString,
+        actual.spatialSpace.toString
+      )
 
   private final case class SumCount(sum: Double, count: Long):
     def mean: Double =
@@ -169,21 +187,24 @@ object AtlasReduce:
       finish: SumCount => Double
   ): Either[AtlasError, ParcelValues] =
     val quotient = atlas.quotient
-    val field =
-      quotient.domain.indexedField(data).toOption.get
-    val summaries =
-      Aggregation
-        .foldMapBy(quotient.parcellation, field)(SumCount.from)
-        .toOption
-        .get
-    val values =
-      quotient.displayOrder.indices.map: parcel =>
-        ParcelValue(
-          quotient.metadata(parcel),
-          finish(summaries(parcel))
-        )
-      .toVector
-    Right(ParcelValues(atlas, values))
+    quotient.domain
+      .spatialField(data.sampled)
+      .left
+      .map(_ => exactGridError(atlas, data.space))
+      .map: field =>
+        val summaries =
+          Aggregation
+            .foldMapBy(quotient.parcellation.quotientRelation, field)(SumCount.empty)(SumCount.from)(
+              summon[CommutativeMonoid[SumCount]].combine
+            )
+        val values =
+          quotient.displayOrder.indices.map: parcel =>
+            ParcelValue(
+              quotient.metadata(parcel),
+              finish(summaries(parcel))
+            )
+          .toVector
+        ParcelValues(atlas, values)
 
   private def onePassVec(
       atlas: VolumeAtlas,
@@ -200,7 +221,7 @@ object AtlasReduce:
 
     var voxel = 0
     while voxel < spatialCount do
-      val included = mask.forall(_.linear(voxel))
+      val included = mask.forall(_.valueAtCanonicalOrdinal(voxel))
       if included then
         val coordinate = data.space.indexToVoxel3D(voxel)
         val point = quotient.parcellation.ambient.indexOption(voxel).get

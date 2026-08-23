@@ -45,15 +45,15 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
     val coefficientImage = Nifti.readVec(coefficientPath)
     assertEquals(coefficientImage.space.dims.take(4), Vector(2, 1, 1, 2))
-    assertEqualsDouble(coefficientImage.linear(0), 2.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(1), -1.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(2), 3.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(3), 4.0, 1e-12)
+    assertEqualsDouble(coefficientImage(0, 0, 0, 0), 2.0, 1e-12)
+    assertEqualsDouble(coefficientImage(0, 0, 0, 1), 3.0, 1e-12)
+    assertEqualsDouble(coefficientImage(1, 0, 0, 0), -1.0, 1e-12)
+    assertEqualsDouble(coefficientImage(1, 0, 0, 1), 4.0, 1e-12)
 
     val contrastImage = Nifti.readVec(contrastPath)
     assertEquals(contrastImage.space.dims.take(4), Vector(2, 1, 1, 3))
-    assertEqualsDouble(contrastImage.linear(0), t.estimates(0), 1e-12)
-    assertEqualsDouble(contrastImage.linear(1), t.estimates(1), 1e-12)
+    assertEqualsDouble(contrastImage(0, 0, 0, 0), t.estimates(0), 1e-12)
+    assertEqualsDouble(contrastImage(1, 0, 0, 0), t.estimates(1), 1e-12)
 
     val covariance = Files.readString(covariancePath, StandardCharsets.UTF_8)
     assert(covariance.contains("scope\tparameter_i\tparameter_j\tvalue"))
@@ -101,8 +101,8 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
     val taskCoefficient = Nifti.readVol(expectedNiftis.head)
     assertEquals(taskCoefficient.space.dims, Vector(2, 1, 1))
-    assertEqualsDouble(taskCoefficient.linear(0), 2.0, 1e-12)
-    assertEqualsDouble(taskCoefficient.linear(1), -1.0, 1e-12)
+    assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(0), 2.0, 1e-12)
+    assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(1), -1.0, 1e-12)
 
     val sidecar = Files.readString(root.resolve("sub-01_task-demo_resultmanifest.json"), StandardCharsets.UTF_8)
     assert(sidecar.contains("\"nifti_map_layout\": \"individual\""))

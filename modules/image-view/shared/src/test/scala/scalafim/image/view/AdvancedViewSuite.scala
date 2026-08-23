@@ -12,12 +12,13 @@ class AdvancedViewSuite extends munit.FunSuite:
   )(value: (Int, Int, Int) => Double): NeuroVol[Double] =
     val shape = space.shape
     val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
-      val x = index % shape.x
-      val y = (index / shape.x) % shape.y
-      val z = index / (shape.x * shape.y)
+      val z = index % shape.z
+      val xy = index / shape.z
+      val y = xy % shape.y
+      val x = xy / shape.y
       value(x, y, z)
     }
-    NeuroVol.fromLinear(data, space.toNeuroSpace, label)
+    NeuroVol.copyFromCanonicalArray(data, space.toNeuroSpace, label)
 
   private def layer(
     id: String,

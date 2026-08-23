@@ -21,6 +21,7 @@ import scalafim.locus.{
   Searchlight as LocusSearchlight
 }
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
+import locus4s.DomainRegistry
 
 import scala.util.control.NonFatal
 
@@ -34,7 +35,7 @@ object SpatialFeatureSetPlans:
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
     var lin = 0
     while lin < labels.values.size do
-      val label = labels.linear(lin)
+      val label = labels.valueAtCanonicalOrdinal(lin)
       if !background.contains(label) then
         if label < 0 then return Left(SpatialPlanError.InvalidVolumeLabel(label))
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
@@ -66,7 +67,7 @@ object SpatialFeatureSetPlans:
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
     var lin = 0
     while lin < atlas.labelVolume.values.size do
-      val label = atlas.labelVolume.linear(lin)
+      val label = atlas.labelVolume.valueAtCanonicalOrdinal(lin)
       if label != 0 then
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
       lin += 1
@@ -259,10 +260,14 @@ object SpatialFeatureSetPlans:
       volumeSpace: VolumeSpace,
       windows: Vector[ROIVolWindow[?]]
   ): Either[SpatialPlanError, CanonicalSearchlight] =
-    val packedDomain = VolumeDomain.structuralCompatibility(volumeSpace)
+    val packedDomain =
+      VolumeDomain
+        .register(volumeSpace, "MVPA searchlight voxels", DomainRegistry.empty)
+        .toOption
+        .get
     type Voxel = packedDomain.S
     val domain: VolumeDomain[Voxel] = packedDomain.value
-    val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
+    val rows = Array.fill(domain.space.size)(Array.emptyIntArray)
     val centerOrdinals = Array.ofDim[Int](windows.length)
     val centerLabels = scala.collection.mutable.Map.empty[Int, String]
     val seenCenters = scala.collection.mutable.HashSet.empty[Int]
@@ -303,13 +308,13 @@ object SpatialFeatureSetPlans:
 
     for
       centers <- LocusRegion
-        .fromOrdinals(domain.finiteSpace, centerOrdinals)
+        .fromOrdinals(domain.space, centerOrdinals)
         .left
         .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
       relation <- LocusRelation
         .fromOrdinalRows(
-          domain.finiteSpace,
-          domain.finiteSpace,
+          domain.space,
+          domain.space,
           rows.iterator.map(_.iterator)
         )
         .left

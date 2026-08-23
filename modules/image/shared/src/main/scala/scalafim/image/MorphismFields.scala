@@ -48,6 +48,9 @@ object DenseVectorField:
     inline def values: RavelArray[Double, Rank[4]] =
       field.data
 
+    inline def space: NeuroSpace =
+      NeuroSpace.fromCanonical(field.sampleSpace)
+
     inline def kind(using role: ValueOf[Role]): Role =
       role.value
 
@@ -61,6 +64,26 @@ object DenseVectorField:
 
     inline def apply(voxel: VoxelCoord, component: Int): Double =
       apply(voxel.x, voxel.y, voxel.z, component)
+
+    /** Explicitly copy values in canonical `(x,y,z,direction)` order. */
+    def copyToCanonicalArray: Array[Double] =
+      val shape = field.data.shape
+      val out = Array.ofDim[Double](field.data.size)
+      var x = 0
+      while x < shape(0) do
+        var y = 0
+        while y < shape(1) do
+          var z = 0
+          while z < shape(2) do
+            var component = 0
+            while component < shape(3) do
+              val ordinal = (((x * shape(1)) + y) * shape(2) + z) * shape(3) + component
+              out(ordinal) = field.data(x, y, z, component)
+              component += 1
+            z += 1
+          y += 1
+        x += 1
+      out
 
   def sourceCoordinates(
       grid: GridSpec,

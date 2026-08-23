@@ -91,7 +91,7 @@ object FirstLevelUnitSource:
           var keep = true
           var maskIndex = 0
           while maskIndex < masks.length && keep do
-            val value = masks(maskIndex).linear(voxel)
+            val value = masks(maskIndex).valueAtCanonicalOrdinal(voxel)
             keep = value.isFinite && value != 0.0
             maskIndex += 1
           if keep then indices += voxel

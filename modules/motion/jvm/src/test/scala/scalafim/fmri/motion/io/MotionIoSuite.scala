@@ -23,10 +23,10 @@ class MotionIoSuite extends munit.FunSuite:
 
     assertEquals(run.space.dims.take(4), Vector(2, 1, 1, 3))
     assertEquals(run.nVolumes, 3)
-    assertEqualsDouble(run.linear(0), 1.0, 1e-12)
-    assertEqualsDouble(run.linear(5), 6.0, 1e-12)
-    assert(mask.linear(0))
-    assert(!mask.linear(1))
+    assertEqualsDouble(run.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
+    assertEqualsDouble(run.valueAtCanonicalOrdinal(5), 6.0, 1e-12)
+    assert(mask.valueAtCanonicalOrdinal(0))
+    assert(!mask.valueAtCanonicalOrdinal(1))
   }
 
   test("NIfTI metadata adapter roundtrips affine, voxel size, TR, and slice timing") {
@@ -66,8 +66,8 @@ class MotionIoSuite extends munit.FunSuite:
         assertEquals(actual.offsetSeconds, Vector(0.0, 0.4))
       case other =>
         fail(s"expected slice timing, got $other")
-    assertEqualsDouble(loaded.run.linear(0), 0.25, 1e-12)
-    assertEqualsDouble(loaded.run.linear(7), 7.25, 1e-12)
+    assertEqualsDouble(loaded.run.valueAtCanonicalOrdinal(0), 0.25, 1e-12)
+    assertEqualsDouble(loaded.run.valueAtCanonicalOrdinal(7), 7.25, 1e-12)
   }
 
   test("NIfTI metadata adapter reports invalid sidecars") {
@@ -264,7 +264,7 @@ class MotionIoSuite extends munit.FunSuite:
         trans = Some(affine)
       )
     val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
-    NeuroVec.fromLinear(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
+    NeuroVec.copyFromCanonicalArray(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
 
   private def estimatorRun(): NeuroVec[Double] =
     val dims = Vector(7, 5, 5)
@@ -272,26 +272,24 @@ class MotionIoSuite extends munit.FunSuite:
     val space = NeuroSpace(dims)
     val frame =
       PrimitiveBuffers.tabulate[Double](nxyz) { lin =>
-        val i = lin % dims(0)
-        val j = (lin / dims(0)) % dims(1)
-        val k = lin / (dims(0) * dims(1))
-        val dx = i.toDouble - 3.0
-        val dy = j.toDouble - 2.0
-        val dz = k.toDouble - 2.0
+        val voxel = space.indexToVoxel3D(lin)
+        val dx = voxel.x.toDouble - 3.0
+        val dy = voxel.y.toDouble - 2.0
+        val dz = voxel.z.toDouble - 2.0
         10.0 * math.exp(-(dx * dx / 5.0 + dy * dy / 3.0 + dz * dz / 4.0)) +
-          0.4 * i.toDouble +
-          0.2 * j.toDouble -
-          0.15 * k.toDouble
+          0.4 * voxel.x.toDouble +
+          0.2 * voxel.y.toDouble -
+          0.15 * voxel.z.toDouble
       }
     val data = PrimitiveBuffers.ofSize[Double](nxyz * 2)
-    var t = 0
-    while t < 2 do
-      var lin = 0
-      while lin < nxyz do
-        data(lin + t * nxyz) = frame(lin)
-        lin += 1
-      t += 1
-    NeuroVec.fromLinear(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
+    var lin = 0
+    while lin < nxyz do
+      var t = 0
+      while t < 2 do
+        data(lin * 2 + t) = frame(lin)
+        t += 1
+      lin += 1
+    NeuroVec.copyFromCanonicalArray(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)

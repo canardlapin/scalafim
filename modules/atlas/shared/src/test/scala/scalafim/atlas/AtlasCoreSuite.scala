@@ -46,7 +46,7 @@ class AtlasCoreSuite extends munit.FunSuite:
         confidence = Confidence.Exact
       )
 
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(labels, sp), label = "toy")
+    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(labels, sp), label = "toy")
 
   test("registry resolves standard atlas aliases") {
     val spec = AtlasRegistry.default("hcp-mmp")
@@ -140,9 +140,9 @@ class AtlasCoreSuite extends munit.FunSuite:
     var lin = 0
     val labelVol = atlas.labelVolume
     while lin < volData.length do
-      volData(lin) = labelVol.linear(lin).toDouble
+      volData(lin) = labelVol.valueAtCanonicalOrdinal(lin).toDouble
       lin += 1
-    val vol = NeuroVol.fromLinear[Double](volData, atlas.space)
+    val vol = NeuroVol.copyFromCanonicalArray[Double](volData, atlas.space)
     val values = atlas.reduce(vol)
     assertEquals(values.value(RegionId(1)), Some(1.0))
     assertEquals(values.value(RegionId(2)), Some(2.0))
@@ -155,11 +155,11 @@ class AtlasCoreSuite extends munit.FunSuite:
     while t < tLen do
       lin = 0
       while lin < atlas.space.spatialDims.product do
-        val id = labelVol.linear(lin)
-        vecData(lin + t * atlas.space.spatialDims.product) = id.toDouble * (t + 1).toDouble
+        val id = labelVol.valueAtCanonicalOrdinal(lin)
+        vecData(lin * tLen + t) = id.toDouble * (t + 1).toDouble
         lin += 1
       t += 1
-    val vec = NeuroVec.fromLinear[Double](vecData, sp4)
+    val vec = NeuroVec.copyFromCanonicalArray[Double](vecData, sp4)
     val cvec = atlas.reduce(vec)
     assertEquals(cvec.asMatrix.shape, Shape(3, 3))
     assertEquals(cvec.asMatrix(0, 0), 1.0)
@@ -171,7 +171,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     val atlas = toyAtlas()
     val tLen = 2
     val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 1.0)
-    val vec = NeuroVec.fromLinear[Double](vecData, atlas.space.addDim(tLen, Some(Axis.Time)))
+    val vec = NeuroVec.copyFromCanonicalArray[Double](vecData, atlas.space.addDim(tLen, Some(Axis.Time)))
 
     val maskFlags = PrimitiveBuffers.fillConst[Boolean](atlas.space.spatialDims.product, false)
     val cluster = atlas.volume.clusterMap(1)
@@ -179,7 +179,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     while i < cluster.size do
       maskFlags(cluster(i)) = true
       i += 1
-    val mask = NeuroVol.fromLinear[Boolean](maskFlags, atlas.space)
+    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, atlas.space)
     val cvec = AtlasReduce.reduceVec(atlas, vec, Some(mask))
 
     assertEquals(cvec.asMatrix.shape, Shape(2, 3))

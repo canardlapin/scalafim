@@ -39,7 +39,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
-      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(labels.toArray), space),
+      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(labels.toArray), space),
       "graph-differential"
     )
 

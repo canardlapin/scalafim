@@ -99,7 +99,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     points.foreach { point =>
       nearestGrid(volume, point).foreach { grid =>
         val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-        if mask.forall(_.linear(lin)) then out += volume.linear(lin)
+        if mask.forall(_.valueAtCanonicalOrdinal(lin)) then out += volume.valueAtCanonicalOrdinal(lin)
       }
     }
     out.result()

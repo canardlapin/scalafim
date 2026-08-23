@@ -46,7 +46,7 @@ object MotionEstimator:
       trace = preserveReferenceFrame(spline.trace, rigid.trace, refIndex)
     yield rigid.copy(trace = trace)
 
-  private final case class SamplePoint(i: Int, j: Int, k: Int, linear: Int)
+  private final case class SamplePoint(i: Int, j: Int, k: Int, ordinal: Int)
 
   private final case class PyramidLevel(downsample: Int, maxIterations: Int, samples: Vector[SamplePoint])
 
@@ -301,7 +301,7 @@ object MotionEstimator:
               sz,
               zeroPad = false
             )
-          meanResidual += fitted - template(sample.linear)
+          meanResidual += fitted - template(sample.ordinal)
           var p = 0
           while p < 6 do
             val plus = addOne(pose, p, eps(p))
@@ -339,8 +339,8 @@ object MotionEstimator:
             zeroPad = false
           )
         val residual =
-          if centered then fitted - template(sample.linear) - meanResidual
-          else fitted - template(sample.linear)
+          if centered then fitted - template(sample.ordinal) - meanResidual
+          else fitted - template(sample.ordinal)
         val weight = huberWeight(residual, ctx.control.optimizer.huberK)
         var p = 0
         while p < 6 do
@@ -491,7 +491,7 @@ object MotionEstimator:
               sz,
               zeroPad = false
             )
-          meanResidual += fitted - template(sample.linear)
+          meanResidual += fitted - template(sample.ordinal)
           meanCount += 1
         s0 += 1
       if meanCount > 0 then meanResidual /= meanCount.toDouble
@@ -520,8 +520,8 @@ object MotionEstimator:
             zeroPad = false
           )
         val residual =
-          if centered then fitted - template(sample.linear) - meanResidual
-          else fitted - template(sample.linear)
+          if centered then fitted - template(sample.ordinal) - meanResidual
+          else fitted - template(sample.ordinal)
         loss += huberLoss(residual, ctx.control.optimizer.huberK)
         n += 1
       s += 1
@@ -630,9 +630,10 @@ object MotionEstimator:
     val counts = Array.ofDim[Int](ctx.nxyz)
     var lin = 0
     while lin < ctx.nxyz do
-      val i = lin % ctx.nx
-      val j = (lin / ctx.nx) % ctx.ny
-      val k = lin / (ctx.nx * ctx.ny)
+      val k = lin % ctx.nz
+      val xy = lin / ctx.nz
+      val j = xy % ctx.ny
+      val i = xy / ctx.ny
       val sx = MotionSampling.sourceX(map, i, j, k)
       val sy = MotionSampling.sourceY(map, i, j, k)
       val sz = MotionSampling.sourceZ(map, i, j, k)
@@ -751,7 +752,7 @@ object MotionEstimator:
       while j < ny do
         var i = 0
         while i < nx do
-          val lin = i + nx * (j + ny * k)
+          val lin = (i * ny + j) * nz + k
           val inMask = mask.forall(_(i, j, k))
           val inInterior =
             i >= edgeX && i < nx - edgeX &&
@@ -795,7 +796,7 @@ object MotionEstimator:
       var s = 0
       while s < samples.length do
         val sample = samples(s)
-        val score = informationScore(run, sample, nx, ny, nz, nxyz)
+        val score = informationScore(run, sample, nx, ny, nz)
         val b = stencilBin(sample, nx, ny, nz, stencil.bins)
         builders(b) += ScoredSample(sample, score)
         weights(b) += math.pow(score + 1e-12, stencil.gamma)
@@ -803,7 +804,7 @@ object MotionEstimator:
 
       val bins =
         Vector.tabulate(binCount) { b =>
-          builders(b).result().sortBy(scored => (-scored.score, scored.sample.linear))
+          builders(b).result().sortBy(scored => (-scored.score, scored.sample.ordinal))
         }
       val order =
         bins.indices
@@ -833,14 +834,13 @@ object MotionEstimator:
       sample: SamplePoint,
       nx: Int,
       ny: Int,
-      nz: Int,
-      nxyz: Int
+      nz: Int
   ): Double =
-    val center = meanAt(run, sample.linear)
+    val center = meanAt(run, sample.ordinal)
     var sum = 0.0
     var n = 0
     def addNeighbor(i: Int, j: Int, k: Int): Unit =
-      val lin = i + nx * (j + ny * k)
+      val lin = (i * ny + j) * nz + k
       sum += meanAt(run, lin)
       n += 1
 

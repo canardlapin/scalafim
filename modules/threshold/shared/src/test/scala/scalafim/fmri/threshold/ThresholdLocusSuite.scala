@@ -10,7 +10,7 @@ class ThresholdLocusSuite extends munit.FunSuite:
   ): MaskedField =
     val space = NeuroSpace(Vector(4, 1, 1))
     val stat =
-      NeuroVol.fromLinear[Double](
+      NeuroVol.copyFromCanonicalArray[Double](
         Array(1.0, 2.0, 3.0, 4.0),
         space
       )

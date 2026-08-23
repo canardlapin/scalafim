@@ -302,12 +302,13 @@ object MotionBenchmark:
     val ny = dims(1)
     val nz = dims(2)
     val nSpatial = dims.product
-    val data = PrimitiveBuffers.tabulate[Double](nSpatial * scenario.nVolumes) { linear =>
-      val t = linear / nSpatial
-      val lin = linear - t * nSpatial
-      val i = lin % nx
-      val j = (lin / nx) % ny
-      val k = lin / (nx * ny)
+    val data = PrimitiveBuffers.tabulate[Double](nSpatial * scenario.nVolumes) { ordinal =>
+      val t = ordinal % scenario.nVolumes
+      val lin = ordinal / scenario.nVolumes
+      val k = lin % nz
+      val xy = lin / nz
+      val j = xy % ny
+      val i = xy / ny
       val pose = scenario.truth.poses(t)
       val base = templateValue(i.toDouble - pose.tx, j.toDouble - pose.ty, k.toDouble - pose.tz, dims)
       val phase = if scenario.nVolumes > 1 then t.toDouble / (scenario.nVolumes - 1).toDouble else 0.0
@@ -316,7 +317,7 @@ object MotionBenchmark:
       nuisance * base + noise
     }
     val space = NeuroSpace(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(scenario.nVolumes, Some(Axis.Time))
-    NeuroVec.fromLinear(data, space, label = scenario.name)
+    NeuroVec.copyFromCanonicalArray(data, space, label = scenario.name)
 
   private def templateValue(x: Double, y: Double, z: Double, dims: Vector[Int]): Double =
     val cx = 0.5 * (dims(0) - 1).toDouble

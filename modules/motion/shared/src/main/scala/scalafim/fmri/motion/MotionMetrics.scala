@@ -165,7 +165,7 @@ object MotionMetrics:
     val out = Vector.newBuilder[Double]
     var lin = 0
     while lin < n do
-      if mask.linear(lin) then
+      if mask.valueAtCanonicalOrdinal(lin) then
         val grid = mask.space.indexToGrid3D(lin).map(_.toDouble)
         val point = mask.space.indexToCoord(grid)
         val mapped = apply3(mat, point)

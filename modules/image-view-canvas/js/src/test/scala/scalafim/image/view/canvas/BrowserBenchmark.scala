@@ -244,7 +244,7 @@ object BrowserBenchmark:
       val z = index / (shape.x * shape.y)
       x.toDouble * 3.0 + y.toDouble * 2.0 + z.toDouble * 5.0
     }
-    NeuroVol.fromLinear(data, space.toNeuroSpace, label)
+    NeuroVol.copyFromCanonicalArray(data, space.toNeuroSpace, label)
 
   private def makeRuntime(): CanvasViewerRuntime =
     CanvasViewerHost.runtime(viewerCacheCapacity = 96, rasterCacheCapacity = 48)

@@ -2,6 +2,7 @@ package scalafim.fmri.threshold
 
 import scalafim.image.{
   GridCompatibility,
+  Indexing,
   Mask,
   PrimitiveBuffers,
   NeuroSpace,
@@ -17,6 +18,7 @@ import scalafim.locus.{
   TotalMap,
   mapping
 }
+import locus4s.DomainRegistry
 
 sealed abstract class MaskedField private[threshold] (
     val space: NeuroSpace,
@@ -84,9 +86,9 @@ object MaskedField:
     val flags = PrimitiveBuffers.fillConst[Boolean](n, false)
     var i = 0
     while i < n do
-      flags(i) = stat.linear(i).isFinite
+      flags(i) = stat.valueAtCanonicalOrdinal(i).isFinite
       i += 1
-    fromStatisticMap(statistic, NeuroVol.fromLinear(flags, stat.space.spatialSpace, stat.label), alternative)
+    fromStatisticMap(statistic, NeuroVol.copyFromCanonicalArray(flags, stat.space.spatialSpace, stat.label), alternative)
 
   def fromVolume(
     stat: NeuroVol[Double],
@@ -118,9 +120,6 @@ object MaskedField:
         ()
 
     val dims = stat.space.spatialDims
-    val nx = dims(0)
-    val ny = dims(1)
-    val plane = nx * ny
     val n = dims.product
 
     val valueBuilder = Array.newBuilder[Double]
@@ -131,16 +130,17 @@ object MaskedField:
 
     var lin = 0
     while lin < n do
-      if mask.linear(lin) then
-        val raw = stat.linear(lin)
+      if mask.valueAtCanonicalOrdinal(lin) then
+        val raw = stat.valueAtCanonicalOrdinal(lin)
         if !raw.isFinite then return Left(ThresholdError.NonFiniteData("stat volume inside mask"))
         if statistic.orientation == EvidenceOrientation.Unsigned && raw < 0.0 then
           return Left(ThresholdError.NegativeUnsignedEvidence(lin, raw))
+        val coord = Indexing.indexToGrid3D(dims, lin)
         valueBuilder += alternative.applyTo(raw)
         indexBuilder += lin
-        xBuilder += (lin % nx)
-        yBuilder += ((lin / nx) % ny)
-        zBuilder += (lin / plane)
+        xBuilder += coord(0)
+        yBuilder += coord(1)
+        zBuilder += coord(2)
       lin += 1
 
     val values = valueBuilder.result()
@@ -165,10 +165,17 @@ object MaskedField:
       volumeIndex: Array[Int],
       x: Array[Int],
       y: Array[Int],
-      z: Array[Int]
+    z: Array[Int]
   ): MaskedField =
     val packedFullDomain =
-      VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
+      VolumeDomain
+        .register(
+          space.asVolumeSpace.toOption.get,
+          "threshold-full",
+          DomainRegistry.empty
+        )
+        .toOption
+        .get
     type Full = packedFullDomain.S
     val full: VolumeDomain[Full] = packedFullDomain.value
     // A derived selection-position domain: it means nothing except relative to
@@ -179,7 +186,7 @@ object MaskedField:
     val active: FiniteDomain[Active] = activeDomain.value
     val selected =
       Selection
-        .fromOrdinals(full.finiteSpace, volumeIndex)
+        .fromOrdinals(full.space, volumeIndex)
         .toOption
         .get
     val injection =
@@ -188,7 +195,7 @@ object MaskedField:
           TotalMap
             .fromTargetOrdinals(
               active,
-              full.finiteSpace,
+              full.space,
               volumeIndex
             )
             .toOption

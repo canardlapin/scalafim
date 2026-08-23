@@ -7,10 +7,10 @@ class MotionMetricsSuite extends munit.FunSuite:
 
   private def vec1x1x1(values: Vector[Double]): NeuroVec[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
+    NeuroVec.copyFromCanonicalArray(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
 
   private def maskAll(space: NeuroSpace): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
+    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
 
   test("framewise displacement matches volregger convention") {
     val trace = MotionTrace.unsafe(VolreggerFixtures.fdTrace)

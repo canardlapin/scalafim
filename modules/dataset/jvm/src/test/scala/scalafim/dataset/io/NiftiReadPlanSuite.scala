@@ -41,6 +41,24 @@ class NiftiReadPlanSuite extends FunSuite:
     assertEquals(readPlan.stats(2).plannedBytes, 160L)
   }
 
+  test("canonical voxel ordinals map explicitly to x-fastest NIfTI windows") {
+    val readPlan =
+      NiftiReadPlan
+        .fromCanonicalVoxels(
+          voxels = Vector(5, 1, 4),
+          spatialDims = Vector(2, 3, 2),
+          bytesPerValue = 8,
+          maxGapBytes = 0
+        )
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(readPlan.windows.map(_.startVoxel), Vector(4, 6, 10))
+    assertEquals(
+      readPlan.windows.map(_.outputColumns.toVector),
+      Vector(Vector(2), Vector(1), Vector(0))
+    )
+  }
+
   test("planner rejects invalid and duplicate voxel inputs") {
     assertEquals(
       NiftiReadPlan.make(Vector.empty, bytesPerValue = 8),

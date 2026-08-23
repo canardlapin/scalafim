@@ -5,7 +5,7 @@ import gale.linalg.{DMat as GaleDMat, DVec}
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NeuroSpace, NeuroVec, Resample, SpatialDomainId}
+import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
 
@@ -545,10 +545,15 @@ object TransformAssetLoader:
       try
         val sourceSpace = volumeSpace(source)
         val targetSpace = volumeSpace(target)
-        val native = Nifti.readVec(path)
-        if native.nVolumes != 3 then
-          Left(SpatialIoError.MalformedTransformAsset(path, s"expected three vector components, got ${native.nVolumes}"))
-        else if !sameGrid(native.space.spatialSpace, targetSpace) then
+        val (native, nativeSpace): (RavelArray[Double, Rank[4]], NeuroSpace) =
+          options.denseEncoding match
+            case DenseTransformEncoding.Displacement =>
+              val field = Nifti.readDisplacementField(path)
+              (field.values, field.space)
+            case DenseTransformEncoding.AbsoluteCoordinates =>
+              val field = Nifti.readSourceCoordinateField(path)
+              (field.values, field.space)
+        if !sameGrid(nativeSpace.spatialSpace, targetSpace) then
           Left(
             SpatialIoError.TransformGeometryMismatch(
               path,
@@ -595,7 +600,7 @@ object TransformAssetLoader:
         case NonFatal(error) => Left(SpatialIoError.MalformedTransformAsset(path, detail(error)))
 
   private def normalizeDense(
-    native: NeuroVec[Double],
+    native: RavelArray[Double, Rank[4]],
     grid: GridSpec,
     source: NeuroSpace,
     target: NeuroSpace,

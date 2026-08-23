@@ -72,12 +72,15 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     val values =
       PrimitiveBuffers.fromArray(
         Array(
-          0.0, 1.0, 2.0, 3.0, 4.0, 5.0,
-          10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
-          20.0, 21.0, 22.0, 23.0, 24.0, 25.0
+          0.0, 10.0, 20.0,
+          1.0, 11.0, 21.0,
+          2.0, 12.0, 22.0,
+          3.0, 13.0, 23.0,
+          4.0, 14.0, 24.0,
+          5.0, 15.0, 25.0
         )
       )
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, space.addDim(3, Some(Axis.Time)), "bold"))
+    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, space.addDim(3, Some(Axis.Time)), "bold"))
 
     val runtime = LazyFieldRuntime(summon[SpatialGraph])
     given FieldRuntime = runtime

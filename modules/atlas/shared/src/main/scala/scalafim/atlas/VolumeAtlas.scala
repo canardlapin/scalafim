@@ -49,12 +49,12 @@ final case class VolumeAtlas(
     val values = Array.newBuilder[Int]
     var lin = 0
     while lin < flags.length do
-      val id = dense.linear(lin)
+      val id = dense.valueAtCanonicalOrdinal(lin)
       if keepIds.contains(id) then
         flags(lin) = true
         values += id
       lin += 1
-    val mask = NeuroVol.fromLinear[Boolean](flags, space, volume.label)
+    val mask = NeuroVol.copyFromCanonicalArray[Boolean](flags, space, volume.label)
     val outRegions = RegionIndex(kept)
     val clusters = scalafim.image.PrimitiveBuffers.fromArray(values.result())
     copy(
@@ -82,7 +82,7 @@ object VolumeAtlas:
     val values = Array.newBuilder[Int]
     var lin = 0
     while lin < flags.length do
-      val id = labels.linear(lin)
+      val id = labels.valueAtCanonicalOrdinal(lin)
       if id != 0 then
         require(ids.contains(id), AtlasError.MissingRegionId(RegionId(id)).message)
         flags(lin) = true
@@ -94,6 +94,6 @@ object VolumeAtlas:
     val missing = ids.diff(present)
     require(missing.isEmpty, s"label volume is missing region ids: ${missing.toVector.sorted.mkString(", ")}")
 
-    val mask = NeuroVol.fromLinear[Boolean](flags, labels.space, label)
+    val mask = NeuroVol.copyFromCanonicalArray[Boolean](flags, labels.space, label)
     val clusters = scalafim.image.PrimitiveBuffers.fromArray(clusterValues)
     VolumeAtlas(ref, regions, ClusteredNeuroVol(mask, clusters, regions.labelMap, label), provenance)

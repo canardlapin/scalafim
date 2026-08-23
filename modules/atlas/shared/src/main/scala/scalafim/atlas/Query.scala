@@ -117,7 +117,7 @@ object AtlasQuery:
     if !inBounds(atlas, grid) then None
     else
       val lin = Indexing.gridToIndex3D(atlas.space.spatialDims, grid(0), grid(1), grid(2))
-      val id = atlas.labelVolume.linear(lin)
+      val id = atlas.labelVolume.valueAtCanonicalOrdinal(lin)
       if id == 0 then None else Some(RegionId(id))
 
   private def inBounds(atlas: VolumeAtlas, grid: Vector[Int]): Boolean =

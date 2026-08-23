@@ -117,35 +117,35 @@ class AtlasIoSuite extends munit.FunSuite:
     data(1) = 2.0
     data(2) = 0.0
     data(3) = 2.0
-    val labels = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](data, sp), "toy")
+    val labels = AtlasLabelMaps.fromDouble(NeuroVol.copyFromCanonicalArray[Double](data, sp), "toy")
 
-    assertEquals(labels.linear(0), 1)
-    assertEquals(labels.linear(1), 2)
-    assertEquals(labels.linear(2), 0)
-    assertEquals(labels.linear(3), 2)
+    assertEquals(labels.valueAtCanonicalOrdinal(0), 1)
+    assertEquals(labels.valueAtCanonicalOrdinal(1), 2)
+    assertEquals(labels.valueAtCanonicalOrdinal(2), 0)
+    assertEquals(labels.valueAtCanonicalOrdinal(3), 2)
 
     data(0) = 1.25
     interceptMessage[IllegalArgumentException]("label volume contains non-integer value 1.25 at linear index 0") {
-      AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](data, sp))
+      AtlasLabelMaps.fromDouble(NeuroVol.copyFromCanonicalArray[Double](data, sp))
     }
   }
 
   test("AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback") {
     val sp = NeuroSpace(Vector(2, 2, 1))
     val fallbackData = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 0.0, 2.0))
-    val fallback = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"))
+    val fallback = AtlasLabelMaps.fromDouble(NeuroVol.copyFromCanonicalArray[Double](fallbackData, sp, "source-label"))
     assertEquals(fallback.label, "source-label")
-    assertEquals(fallback.linear(1), 2)
+    assertEquals(fallback.valueAtCanonicalOrdinal(1), 2)
 
-    val explicit = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"), "explicit-label")
+    val explicit = AtlasLabelMaps.fromDouble(NeuroVol.copyFromCanonicalArray[Double](fallbackData, sp, "source-label"), "explicit-label")
     assertEquals(explicit.label, "explicit-label")
 
-    val nonFinite = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
+    val nonFinite = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains non-finite value at linear index 1") {
       AtlasLabelMaps.fromDouble(nonFinite)
     }
 
-    val negative = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
+    val negative = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
       AtlasLabelMaps.fromDouble(negative)
     }
@@ -341,7 +341,7 @@ class AtlasIoSuite extends munit.FunSuite:
     data(1) = 2
     data(2) = 1
     data(3) = 2
-    val labelVol = NeuroVol.fromLinear[Int](data, sp, "toy")
+    val labelVol = NeuroVol.copyFromCanonicalArray[Int](data, sp, "toy")
     val regions =
       RegionIndex(
         Vector(

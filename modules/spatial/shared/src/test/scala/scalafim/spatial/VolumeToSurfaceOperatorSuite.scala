@@ -8,7 +8,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
   private val space = NeuroSpace(Vector(3, 3, 3))
   private val volume =
-    NeuroVol.fromLinear(
+    NeuroVol.copyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
@@ -63,7 +63,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     value(SpatialGraph.build(Vector(source, target), Vector(volumeToSurface(source, target))))
 
   private def sourceMatrix: DoubleMatrix =
-    DoubleMatrix.fromRows(Vector.tabulate(space.spatialDims.product)(i => Vector(volume.linear(i))))
+    DoubleMatrix.fromRows(Vector.tabulate(space.spatialDims.product)(i => Vector(volume.valueAtCanonicalOrdinal(i))))
 
   private def compile(source: Domain, target: Domain, request: VolumeToSurfaceRequest): SpatialOperator =
     value(VolumeToSurfaceOperatorCompiler.compile(graph(source, target), request))
@@ -88,9 +88,9 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     assertEquals(operator.qc.coverage.rowCoverage, Vector(1.0, 1.0, 1.0))
 
     val back = linValue(operator.map.adjoint.forward(DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))))
-    assertEqualsDouble(back(9, 0), 1.0, 1e-12)
+    assertEqualsDouble(back(1, 0), 1.0, 1e-12)
     assertEqualsDouble(back(10, 0), 2.0, 1e-12)
-    assertEqualsDouble(back(12, 0), 3.0, 1e-12)
+    assertEqualsDouble(back(4, 0), 3.0, 1e-12)
 
   test("ribbon operator averages normalized white-to-pial sample weights"):
     val source = volumeDomain()
@@ -107,7 +107,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     val row0 = t.rowIndices.zip(t.colIndices).zip(t.values).collect {
       case ((row, col), value) if row == 0 => col -> value
     }.toVector
-    assertEquals(row0, Vector(0 -> 0.5, 18 -> 0.5))
+    assertEquals(row0, Vector(0 -> 0.5, 2 -> 0.5))
 
   test("source masks keep valid ribbon samples normalized and report partial coverage"):
     val pialVertex0 = space.gridToIndex3D(0, 0, 2)

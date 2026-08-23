@@ -57,6 +57,19 @@ object Nifti:
       )
     )
 
+  def writeDenseVectorField[Role <: DenseVectorFieldKind](
+      path: Path,
+      field: DenseVectorField[Role]
+  ): Path =
+    writeBytes(
+      path,
+      niftiBytes(
+        Vector.tabulate(4)(field.values.shape(_)),
+        field.space.spatialSpace,
+        field.copyToCanonicalArray
+      )
+    )
+
   def readHeader(path: Path): NiftiHeader =
     val in = open(path)
     try
@@ -151,6 +164,30 @@ object Nifti:
     val sp = hdr.space
     val data = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
     NeuroVec.copyFromCanonicalArray(data, sp)
+
+  def readDisplacementField(path: Path): DisplacementField =
+    val (grid, data) = readDenseVectorFieldData(path)
+    DenseVectorField.displacement(grid, data)
+
+  def readSourceCoordinateField(path: Path): SourceCoordinateField =
+    val (grid, data) = readDenseVectorFieldData(path)
+    DenseVectorField.sourceCoordinates(grid, data)
+
+  private def readDenseVectorFieldData(
+      path: Path
+  ): (GridSpec, ravel.NDArray[Double, ravel.Rank[4]]) =
+    val hdr = readHeader(path)
+    require(
+      hdr.dims.length == 4 && hdr.dims(3) == 3,
+      "expected 4D NIfTI with three direction components"
+    )
+    val canonical = niftiToCanonical(readDataAsDouble(path, hdr), hdr.dims)
+    val data =
+      ravel.NDArray.fromSeq(
+        ravel.Shape(hdr.dims(0), hdr.dims(1), hdr.dims(2), 3),
+        canonical
+      )
+    (GridSpec.fromSpace(hdr.space.spatialSpace), data)
 
   private def open(path: Path): InputStream =
     val base: InputStream = new BufferedInputStream(new FileInputStream(path.toFile))

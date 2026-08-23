@@ -240,9 +240,16 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
   }
 
   private def writeSeries(path: Path): Path =
-    val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
+    val values = PrimitiveBuffers.fromArray(
+      Array(
+        0.0, 4.0, 8.0,
+        1.0, 5.0, 9.0,
+        2.0, 6.0, 10.0,
+        3.0, 7.0, 11.0
+      )
+    )
     val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
+    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, space, "bold"))
 
   private def gzip(source: Path, target: Path): Path =
     val input = Files.newInputStream(source)

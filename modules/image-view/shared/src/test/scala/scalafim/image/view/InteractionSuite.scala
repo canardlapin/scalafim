@@ -9,7 +9,7 @@ class InteractionSuite extends munit.FunSuite:
     VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
 
   private def constantVolume(value: Double, label: String): NeuroVol[Double] =
-    NeuroVol.fromLinear(
+    NeuroVol.copyFromCanonicalArray(
       PrimitiveBuffers.fillConst[Double](space.nVoxels, value),
       space.toNeuroSpace,
       label
@@ -27,7 +27,7 @@ class InteractionSuite extends munit.FunSuite:
   private val maskLayer =
     SliceLayer(
       maskId,
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](space.nVoxels, true),
         space.toNeuroSpace,
         "mask"

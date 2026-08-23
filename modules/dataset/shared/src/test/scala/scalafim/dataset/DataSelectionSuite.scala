@@ -42,7 +42,7 @@ class DataSelectionSuite extends munit.FunSuite:
       .resolveEither(shape, active)
       .left
       .toOption
-      .contains(DatasetError.VoxelOutsideMask(1)))
+      .contains(DatasetError.VoxelOutsideMask(2)))
 
     assert(DataSelection(voxels = VoxelSelection.coords(VoxelCoord(2, 0, 0)))
       .resolveEither(shape, full)

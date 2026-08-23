@@ -41,7 +41,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     )
 
   private def labelVolume: NeuroVol[Int] =
-    NeuroVol.fromLinear(
+    NeuroVol.copyFromCanonicalArray(
       PrimitiveBuffers.fromArray(Array(0, 2, 1, 2, 1, 0)),
       volumeSpace
     )
@@ -210,7 +210,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
   test("typed spatial errors convert to MVPA compatibility errors") {
     val badLabels =
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fromArray(Array(0, -1, 1, 1, 0, 0)),
         volumeSpace
       )

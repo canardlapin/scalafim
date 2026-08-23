@@ -24,10 +24,10 @@ class AtlasCoverageSuite extends munit.FunSuite:
     )
 
   private def labelVolume(values: Vector[Int]): NeuroVol[Int] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values.toArray), NeuroSpace(Vector(2, 2, 1)), "coverage")
+    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), NeuroSpace(Vector(2, 2, 1)), "coverage")
 
   private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(PrimitiveBuffers.fromArray(values.toArray), space), "coverage")
+    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space), "coverage")
 
   test("registry normalizes aliases and reports unknown ids with available atlases"):
     val spec = AtlasRegistry.default.find("Glasser 360 Surface").toOption.get
@@ -157,7 +157,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         )
       )
     val a = atlas(Vector(2, 5, 2, 5), regions)
-    val data = NeuroVol.fromLinear(PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
+    val data = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
     val reduced = a.reduce(data, Reducers.sum)
     val checkedReduced = AtlasReduce.reduceVolumeEither(a, data, Reducers.sum)
 
@@ -174,8 +174,8 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val a = atlas(Vector(1, 2, 1, 2))
     val tLen = 2
     val data =
-      NeuroVec.fromLinear(
-        PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0, 2.0, 30.0, 4.0, 40.0)),
+      NeuroVec.copyFromCanonicalArray(
+        PrimitiveBuffers.fromArray(Array(1.0, 2.0, 10.0, 30.0, 3.0, 4.0, 20.0, 40.0)),
         a.space.addDim(tLen, Some(Axis.Time)),
         "timeseries"
       )
@@ -188,7 +188,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(summed(1, 1), 70.0)
 
     val mask =
-      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(Array(true, false, false, true)), a.space, "mask")
+      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(Array(true, false, false, true)), a.space, "mask")
     val masked = a.reduce(data, mask, Reducers.sum).asMatrix
     assertEquals(masked(0, 0), 1.0)
     assertEquals(masked(1, 0), 2.0)

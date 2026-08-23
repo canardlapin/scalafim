@@ -1,6 +1,7 @@
 package scalafim.spatial.io
 
-import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec}
+import ravel.NDArray as RavelArray
+import scalafim.image.{DMat, DenseVectorField, GridSpec, NeuroSpace}
 import scalafim.image.io.Nifti
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
 import scalafim.spatial.*
@@ -55,18 +56,17 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
   private def writeDenseField(path: Path, space: NeuroSpace, components: Vector[Vector[Double]]): Unit =
     require(components.length == 3)
     require(components.forall(_.length == space.spatialDims.product))
-    val values = Array.ofDim[Double](components.map(_.length).sum)
-    var component = 0
-    var offset = 0
-    while component < components.length do
-      var i = 0
-      while i < components(component).length do
-        values(offset + i) = components(component)(i)
-        i += 1
-      offset += components(component).length
-      component += 1
-    val vectorSpace = space.addDim(3, Some(Axis("Vector")))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, vectorSpace))
+    val grid = GridSpec.fromSpace(space)
+    val values =
+      RavelArray.tabulate[Double](
+        space.spatialDims(0),
+        space.spatialDims(1),
+        space.spatialDims(2),
+        3
+      ) { (x, y, z, component) =>
+        components(component)(space.gridToIndex3D(x, y, z))
+      }
+    Nifti.writeDenseVectorField(path, DenseVectorField.displacement(grid, values))
 
   test("ANTs, FSL, and AFNI affine adapters normalize native direction and orientation to one RAS pullback"):
     withDirectory { directory =>

@@ -9,7 +9,7 @@ class ViewerSceneSuite extends munit.FunSuite:
     VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
 
   private val anatomy =
-    NeuroVol.fromLinear(
+    NeuroVol.copyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](referenceSpace.nVoxels)(_.toDouble),
       referenceSpace.toNeuroSpace,
       "anatomy"
@@ -27,7 +27,7 @@ class ViewerSceneSuite extends munit.FunSuite:
     VolumeSpace(NeuroSpace(Vector(1, 1, 1), trans = Some(affine)))
 
   private val shiftedMask =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](1, true), shiftedMaskSpace.toNeuroSpace, "mask")
+    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](1, true), shiftedMaskSpace.toNeuroSpace, "mask")
 
   private val anatomyLayer =
     SliceLayer(
@@ -124,7 +124,7 @@ class ViewerSceneSuite extends munit.FunSuite:
       assertEquals(
         readout.layers,
         Vector(
-          LayerReadout(LayerId.unsafe("anatomy"), LayerSampleValue.Scalar(5.0)),
+          LayerReadout(LayerId.unsafe("anatomy"), LayerSampleValue.Scalar(8.0)),
           LayerReadout(LayerId.unsafe("mask"), LayerSampleValue.Mask(true))
         )
       )

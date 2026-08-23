@@ -60,9 +60,9 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       assertMatrixEquals(
         block.data,
         Vector(
-          Vector(24.0, 34.0),
-          Vector(3.0, 7.0),
-          Vector(4.0, 14.0)
+          Vector(24.0, 29.0),
+          Vector(3.0, 5.0),
+          Vector(4.0, 9.0)
         )
       )
 
@@ -122,7 +122,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
         else Array(1.0, 0.0, 1.0, 1.0)
       Nifti.writeVol(
         func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-        NeuroVol.fromLinear(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
+        NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
       )
       write(
         func.resolve(s"${prefix}_desc-confounds_timeseries.tsv"),

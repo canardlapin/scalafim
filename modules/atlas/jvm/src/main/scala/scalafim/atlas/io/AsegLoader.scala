@@ -158,7 +158,7 @@ object AsegLoader:
     val out = scala.collection.mutable.Set.empty[RegionId]
     var i = 0
     while i < vol.values.size do
-      val id = vol.linear(i)
+      val id = vol.valueAtCanonicalOrdinal(i)
       if id > 0 then out += RegionId(id)
       i += 1
     out.toSet

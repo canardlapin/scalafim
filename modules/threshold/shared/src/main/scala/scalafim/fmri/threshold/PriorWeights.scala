@@ -77,6 +77,6 @@ object PriorWeights:
     val out = new Array[Double](field.size)
     var i = 0
     while i < field.size do
-      out(i) = prior.linear(field.originalIndex(i))
+      out(i) = prior.valueAtCanonicalOrdinal(field.originalIndex(i))
       i += 1
     fromArray(out)

@@ -94,14 +94,14 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
     Files.createDirectories(path.getParent)
     val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
     val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
+    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, space, "bold"))
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def writeHeaderOnlyMask(path: Path): Unit =
     Files.createDirectories(path.getParent)
     val values = PrimitiveBuffers.fromArray(Array(1.0, 1.0, 1.0, 1.0))
     val space = NeuroSpace(Vector(2, 2, 1))
-    Nifti.writeVol(path, NeuroVol.fromLinear(values, space, "mask"))
+    Nifti.writeVol(path, NeuroVol.copyFromCanonicalArray(values, space, "mask"))
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def gzip(source: Path, target: Path): Unit =

@@ -82,14 +82,14 @@ object RegionGraph:
       while y < dims(1) do
         var x = 0
         while x < dims(0) do
-          val a = vol.linear(Indexing.gridToIndex3D(dims, x, y, z))
+          val a = vol.valueAtCanonicalOrdinal(Indexing.gridToIndex3D(dims, x, y, z))
           if a != 0 then
             offsets.foreach { off =>
               val x2 = x + off(0)
               val y2 = y + off(1)
               val z2 = z + off(2)
               if x2 >= 0 && x2 < dims(0) && y2 >= 0 && y2 < dims(1) && z2 >= 0 && z2 < dims(2) then
-                val b = vol.linear(Indexing.gridToIndex3D(dims, x2, y2, z2))
+                val b = vol.valueAtCanonicalOrdinal(Indexing.gridToIndex3D(dims, x2, y2, z2))
                 if b != 0 && b != a then
                   val key = if a < b then (a, b) else (b, a)
                   counts.update(key, counts(key) + 1)

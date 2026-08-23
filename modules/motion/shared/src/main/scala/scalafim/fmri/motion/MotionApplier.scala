@@ -49,7 +49,7 @@ object MotionApplier:
             val sx = MotionSampling.sourceX(map, i, j, k)
             val sy = MotionSampling.sourceY(map, i, j, k)
             val sz = MotionSampling.sourceZ(map, i, j, k)
-            val dst = i + nx * (j + ny * (k + nz * t))
+            val dst = (((i * ny) + j) * nz + k) * nt + t
             out(dst) =
               MotionSampling.trilinear(
                 run.values,
@@ -67,7 +67,7 @@ object MotionApplier:
         k += 1
       t += 1
 
-    NeuroVec.fromLinear(out, run.space, run.label)
+    NeuroVec.copyFromCanonicalArray(out, run.space, run.label)
 
   private def applyLinearPacketAware(
       run: NeuroVec[Double],
@@ -104,7 +104,7 @@ object MotionApplier:
             val sx = MotionSampling.sourceX(map, i, j, k)
             val sy = MotionSampling.sourceY(map, i, j, k)
             val sz = MotionSampling.sourceZ(map, i, j, k)
-            val dst = i + nx * (j + ny * (k + nz * t))
+            val dst = (((i * ny) + j) * nz + k) * nt + t
             out(dst) =
               MotionSampling.trilinear(
                 run.values,
@@ -122,4 +122,4 @@ object MotionApplier:
         k += 1
       t += 1
 
-    Right(NeuroVec.fromLinear(out, run.space, run.label))
+    Right(NeuroVec.copyFromCanonicalArray(out, run.space, run.label))

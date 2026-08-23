@@ -105,7 +105,7 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
       VolumeAtlas.fromLabelVolume(
         AtlasParityFixtures.ref,
         AtlasParityFixtures.regions,
-        scalafim.image.NeuroVol.fromLinear(badLabels, AtlasParityFixtures.atlas().space)
+        scalafim.image.NeuroVol.copyFromCanonicalArray(badLabels, AtlasParityFixtures.atlas().space)
       )
     }
   }

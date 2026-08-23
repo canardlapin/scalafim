@@ -33,7 +33,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       volumeRef,
       RegionIndex(metadata),
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fromArray(Array(1, 1, 2, 2)),
         space
       )
@@ -193,7 +193,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
   test("one-pass standard reducers retain NaN and non-contiguous id semantics"):
     val atlas = volumeAtlas()
     val data =
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
         atlas.space
       )

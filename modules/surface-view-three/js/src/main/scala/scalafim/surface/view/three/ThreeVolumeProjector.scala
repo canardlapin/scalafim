@@ -81,7 +81,7 @@ object ThreeVolumeProjector:
           val volumeData = new Float32Array(volumeValues)
           var valueIndex = 0
           while valueIndex < volumeValues do
-            volumeData(valueIndex) = volume.linear(valueIndex).toFloat
+            volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(valueIndex).toFloat
             valueIndex += 1
 
           val coordinateTexture = js.Dynamic.newInstance(three.selectDynamic("DataTexture"))(

@@ -10,7 +10,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   private val space = NeuroSpace(Vector(3, 3, 3))
   private val volume =
-    NeuroVol.fromLinear(
+    NeuroVol.copyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
@@ -105,7 +105,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   test("masking can produce explicit empty samples"):
     val mask =
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](27, false),
         space,
         "empty-mask"
@@ -214,7 +214,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
       VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.NormalLine(Vector.empty))
 
     val badMask =
-      NeuroVol.fromLinear(
+      NeuroVol.copyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](8, true),
         NeuroSpace(Vector(2, 2, 2)),
         "bad-mask"

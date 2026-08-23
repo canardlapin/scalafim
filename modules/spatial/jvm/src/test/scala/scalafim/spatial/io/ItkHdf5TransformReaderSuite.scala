@@ -154,7 +154,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     val values = DoubleMatrix.fromRows(Vector.tabulate(source.nElements)(index => Vector(index.toDouble)))
     val result = linearValue(operator.forward(values))
 
-    assertEquals(result.copyData.toVector, Vector(2.0))
+    assertEquals(result.copyData.toVector, Vector(5.0))
     assertEquals(operator.provenance.compiler, "volume-pullback-fused-v1")
     assertEquals(loaded.provenance.options.direction, TransformDirection.PullbackTargetToSource)
     assertEquals(loaded.provenance.container.map(_.components.length), Some(2))

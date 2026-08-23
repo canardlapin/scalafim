@@ -56,6 +56,57 @@ private[io] object NiftiReadPlan:
   val DefaultMaxGapBytes: Int = 4096
   val DefaultMaxWindowBytes: Int = 8 * 1024 * 1024
 
+  /** Plan file windows from canonical Ravel voxel ordinals.
+    *
+    * NIfTI stores x fastest, so conversion belongs explicitly at this format
+    * boundary. Output columns retain the caller's canonical selection order.
+    */
+  def fromCanonicalVoxels(
+      voxels: Vector[Int],
+      spatialDims: Vector[Int],
+      bytesPerValue: Int,
+      maxGapBytes: Int = DefaultMaxGapBytes,
+      maxWindowBytes: Int = DefaultMaxWindowBytes
+  ): Either[DatasetError, NiftiReadPlan] =
+    if spatialDims.length != 3 || spatialDims.exists(_ <= 0) then
+      Left(
+        DatasetError.StorageFailure(
+          s"NIfTI read planning requires three positive spatial dimensions; got ${spatialDims.mkString("x")}"
+        )
+      )
+    else
+      val nx = spatialDims(0)
+      val ny = spatialDims(1)
+      val nz = spatialDims(2)
+      val spatialSize = nx * ny * nz
+      val fileOrdinals = Vector.newBuilder[Int]
+      fileOrdinals.sizeHint(voxels.length)
+      var index = 0
+      while index < voxels.length do
+        val canonical = voxels(index)
+        if canonical < 0 then
+          return Left(DatasetError.NegativeIndex(DatasetAxis.Voxel, canonical))
+        if canonical >= spatialSize then
+          return Left(
+            DatasetError.IndexOutOfBounds(
+              DatasetAxis.Voxel,
+              canonical,
+              spatialSize
+            )
+          )
+        val z = canonical % nz
+        val xy = canonical / nz
+        val y = xy % ny
+        val x = xy / ny
+        fileOrdinals += x + nx * (y + ny * z)
+        index += 1
+      make(
+        fileOrdinals.result(),
+        bytesPerValue,
+        maxGapBytes,
+        maxWindowBytes
+      )
+
   def make(
       voxels: Vector[Int],
       bytesPerValue: Int,

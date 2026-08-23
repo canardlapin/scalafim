@@ -50,7 +50,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     assertEquals(header.slope, 0.25)
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)
-    assertEquals(Nifti.readVec(exported).linear(23), 3.75)
+    assertEquals(Nifti.readVec(exported).valueAtCanonicalOrdinal(23), 3.75)
     BidsProjectLoader.loadStrict(fixture.exportRoot).fold(error => fail(error.message), _ => ())
 
   test("importer rejects unsupported scalar types before publishing"):
