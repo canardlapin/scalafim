@@ -882,7 +882,7 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(nz.length, 2, clue = "")
   }
 
-  test("ClusteredNeuroVec toDense/toSparse and arithmetic") {
+  test("ClusteredNeuroVec broadcasts and gathers through exact selected storage") {
     import spire.std.double.given
     val sp = NeuroSpace(Vector(2, 1, 1, 2))
     val vec = NeuroVec.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
@@ -892,10 +892,36 @@ class CoreSuite extends munit.FunSuite:
     val dense = cv.toDense
     val dVals = Vector.tabulate(dense.copyToCanonicalArray.length)(i => dense.copyToCanonicalArray(i))
     assertEquals(dVals, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
-    val sparse = cv.toSparse
-    val dense2 = sparse.toDense
-    val d2Vals = Vector.tabulate(dense2.copyToCanonicalArray.length)(i => dense2.copyToCanonicalArray(i))
-    assertEquals(d2Vals, dVals, clue = "")
+    val nativeSpace = NeuroSpace.requireD3(sp).toOption.get
+    val native =
+      NeuroSeries
+        .continuous(
+          nativeSpace,
+          dense.values
+        )
+        .toOption
+        .get
+    val packed =
+      VolumeDomain
+        .register(
+          VolumeSpace(sp.spatialSpace),
+          "cluster selected storage",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain: VolumeDomain[Voxel] = packed.value
+    val selection =
+      locus4s.Selection
+        .fromOrdinals(domain.space, Vector(0, 1))
+        .toOption
+        .get
+    val selected =
+      SelectedSeries.gather(domain, native, selection).toOption.get
+    assertEquals(selected.data.shape, Shape(2, 2), clue = "")
+    val dense2 = selected.toDense(0.0).toOption.get
+    assertEquals(dense2.data.iterator.toVector, dVals, clue = "")
 
     val cv2 = cv + cv
     val tsVals = columnMajor2(cv2.ts)

@@ -111,33 +111,12 @@ final case class ClusteredNeuroVec[A](
   ): RavelArray[A, Rank[2]] =
     series(RavelArray.fromSeq(Shape(linearSpatial.length), linearSpatial))
 
-  def series(roi: ROICoords)(using
-      ClassTag[A],
-      Ring[A],
-      DType[A]
-  ): RavelArray[A, Rank[2]] =
-    series(roi.linearIndices(space.spatialSpace))
-
-  def series(coords: Vector[Vector[Int]])(using
-      ClassTag[A],
-      Ring[A],
-      DType[A]
-  ): RavelArray[A, Rank[2]] =
-    series(ROICoords(coords))
-
   def series(mask: NeuroVol[Boolean])(using
       ClassTag[A],
       Ring[A],
       DType[A]
   ): RavelArray[A, Rank[2]] =
     series(Mask.indices(mask))
-
-  def seriesRoi(roi: ROICoords)(using
-      ClassTag[A],
-      Ring[A],
-      DType[A]
-  ): ROIVec[A] =
-    ROIVec(space, roi, series(roi))
 
   def volume(t: Int)(using
       ClassTag[A],
@@ -185,17 +164,6 @@ final case class ClusteredNeuroVec[A](
       MigrationValueSemantics[A]
   ): NeuroVec[A] =
     toDense
-
-  def toSparse(using ClassTag[A], Ring[A], DType[A]): SparseNeuroVec[A] =
-    val tLen = nVolumes
-    val activeIdx = Mask.indices(cvol.mask)
-    val compact =
-      RavelArray.tabulate[A](tLen, activeIdx.size) { (time, position) =>
-        val cluster = cvol.clusters(position)
-        ts(time, idToCol(cluster))
-      }
-    val map = IndexLookupVol(space, activeIdx)
-    SparseNeuroVec(compact, space, cvol.mask, map, label)
 
   def subVector(tsIdx: Seq[Int])(using
       ClassTag[A],

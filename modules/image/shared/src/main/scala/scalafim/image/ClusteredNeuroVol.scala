@@ -73,15 +73,6 @@ final case class ClusteredNeuroVol(
           position += 1
     NeuroVol.fromRavel(full, space, label)
 
-  def splitClusters: Vector[ROIVol[Int]] =
-    ids.map { id =>
-      val idx = clusterMap(id)
-      val coords = Vector.tabulate(idx.size)(i => Indexing.indexToGrid3D(space.spatialDims, idx(i)))
-      val vals: Array1[Int] =
-        RavelArray.fill(Shape(idx.size), id)
-      ROIVol[Int](space, coords, vals)
-    }
-
   /** Cluster centroids (center-of-mass) in grid coordinates by default. */
   def centroids(real: Boolean = false): Vector[Vector[Double]] =
     centroids(

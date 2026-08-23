@@ -73,10 +73,14 @@ class StatsMaskCompareSuite extends munit.FunSuite:
         )
         .toOption
         .get
-    val mean = NeuroStats.temporalMean(selected).toOption.get
+    val mean = selected.temporalMean.toOption.get
+    val summary = selected.summary
 
     assertEquals(mean.selection.ordinals.toVector, Vector(0, 2), clue = "")
     assertEquals(mean.data.iterator.toVector, Vector(3.0, 4.0), clue = "")
+    assertEquals(summary.kind, "SelectedSeries", clue = "")
+    assertEquals(summary.timePoints, 3, clue = "")
+    assertEquals(summary.global.count, 6, clue = "")
   }
 
   test("mask images and exact selected support convert only through named operations") {
@@ -142,8 +146,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
         )
         .toOption
         .get
-    val compared =
-      NeuroCompare.compare(selected, 1.0, NeuroCompare.Predicate.GT)
+    val compared = selected.gt(1.0)
     val denseCompared = compared.toDense(false).toOption.get
     assertEquals(denseCompared.data.iterator.toVector, Vector(true, false, true), clue = "")
 

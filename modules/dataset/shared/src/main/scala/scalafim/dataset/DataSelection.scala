@@ -6,8 +6,14 @@ import scalafim.image.{
   Mask,
   NeuroSpace,
   VoxelCoord,
-  VoxelSelection as ImageVoxelSelection
+  VolumeDomain
 }
+import scalafim.image.VolumeDomain.*
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.locus.GridDomain
+import locus4s.Selection
+import locus4s.SpaceMismatch
 import scalafim.locus.Selection as LocusSelection
 
 opaque type TimepointIndex = Int
@@ -103,17 +109,24 @@ object VoxelSelection:
   def coords(values: VoxelCoord*): VoxelSelection =
     VoxelSelection.Coords(values.toVector)
 
-  def fromImage(
-      selection: ImageVoxelSelection,
+  def fromImage[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
       shape: DatasetShape
   ): Either[DatasetError, VoxelSelection] =
-    GridCompatibility
-      .volume(shape.volumeSpace, selection.space)
+    val ownerCheck =
+      if domain.space.sameRuntimeOwnerAs(selection.space) then Right(())
+      else Left(SpaceMismatch.between(domain.space, selection.space))
+    ownerCheck
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
       .flatMap: _ =>
-        val indices = selection.linearIndices
-        fromInts(Vector.tabulate(indices.size)(i => indices(i))*)
+        GridCompatibility
+          .volume(shape.volumeSpace, domain.volumeSpace)
+          .left
+          .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap: _ =>
+        fromInts(selection.ordinals.toVector*)
 
 enum VoxelDomainKind:
   case FullSpatial

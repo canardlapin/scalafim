@@ -31,6 +31,11 @@ enum SelectedImageError:
   case SelectionSpace(error: SpaceMismatch)
   case ExpectedSingleTimeAxis(actual: Vector[AxisKind])
   case OutsideSupport(missing: Region[?])
+  case SelectionOrderMismatch(left: Vector[Int], right: Vector[Int])
+  case NonSpatialAxesMismatch(
+      left: Vector[image4s.AxisRecord],
+      right: Vector[image4s.AxisRecord]
+  )
 
   def message: String =
     this match
@@ -48,6 +53,10 @@ enum SelectedImageError:
         s"SelectedSeries requires exactly one Time axis; found $actual"
       case OutsideSupport(missing) =>
         s"${missing.cardinality} requested positions are outside selected support"
+      case SelectionOrderMismatch(left, right) =>
+        s"selected operands use different position order: $left versus $right"
+      case NonSpatialAxesMismatch(left, right) =>
+        s"selected operands use different non-spatial axes: $left versus $right"
 
 /** One compact value per position in an exact ordered voxel selection.
   *
@@ -182,6 +191,58 @@ object SelectedVolume:
       .left
       .map(SelectedImageError.Provider.apply)
       .map(fromSelected)
+
+  /** Combine two scalar selections only when their exact owner and order
+    * agree. Call `reselect` first when support union or filling is intended.
+    */
+  def zipExact[F <: Frame[D3], S, A, B, C, LeftSem, RightSem, OutSem](
+      left: SelectedVolume[F, S, A, LeftSem],
+      right: SelectedVolume[F, S, B, RightSem]
+  )(
+      combine: (A, B) => C
+  )(using
+      DType[C],
+      ValueSemantics[C, OutSem]
+  ): Either[SelectedImageError, SelectedVolume[F, S, C, OutSem]] =
+    SelectedImageSelection
+      .requireSameOwner(left.domain, right.domain)
+      .flatMap: _ =>
+        SelectedImageSelection.requireSameOrder(
+          left.selection,
+          right.selection
+        )
+      .flatMap: _ =>
+        val data =
+          NDArray.tabulate[C](left.selection.size): position =>
+            combine(left.data(position), right.data(position))
+        create(
+          left.domain,
+          left.selection,
+          data,
+          left.metadata
+        )
+
+  /** Align both inputs to an explicitly requested support before combining.
+    * Each side states its own missing-voxel policy; no numeric zero is
+    * inferred as background.
+    */
+  def combineAt[F <: Frame[D3], S, T, A, Sem](
+      left: SelectedVolume[F, S, A, Sem],
+      right: SelectedVolume[F, S, A, Sem],
+      requested: Selection[T],
+      leftMissing: MissingVoxelPolicy[A],
+      rightMissing: MissingVoxelPolicy[A]
+  )(
+      combine: (A, A) => A
+  )(using
+      DType[A],
+      ValueSemantics[A, Sem]
+  ): Either[SelectedImageError, SelectedVolume[F, S, A, Sem]] =
+    for
+      alignedLeft <- left.reselect(requested, leftMissing)
+      alignedRight <- right.reselect(requested, rightMissing)
+      result <- zipExact(alignedLeft, alignedRight)(combine)
+    yield result
 
   extension [F <: Frame[D3], S, A, Sem](
       volume: SelectedVolume[F, S, A, Sem]
@@ -414,6 +475,72 @@ object SelectedSeries:
       .map(SelectedImageError.Provider.apply)
       .flatMap(fromSelected)
 
+  /** Combine two selected series with the same exact support order and time
+    * axis. Use `combineAt` when support must first be aligned explicitly.
+    */
+  def zipExact[F <: Frame[D3], S, A, B, C, LeftSem, RightSem, OutSem](
+      left: SelectedSeries[F, S, A, LeftSem],
+      right: SelectedSeries[F, S, B, RightSem]
+  )(
+      combine: (A, B) => C
+  )(using
+      DType[C],
+      ValueSemantics[C, OutSem]
+  ): Either[SelectedImageError, SelectedSeries[F, S, C, OutSem]] =
+    SelectedImageSelection
+      .requireSameOwner(left.domain, right.domain)
+      .flatMap: _ =>
+        SelectedImageSelection.requireSameOrder(
+          left.selection,
+          right.selection
+        )
+      .flatMap: _ =>
+        val leftAxes = left.nonSpatialAxes.records
+        val rightAxes = right.nonSpatialAxes.records
+        if leftAxes != rightAxes then
+          Left(
+            SelectedImageError.NonSpatialAxesMismatch(
+              leftAxes,
+              rightAxes
+            )
+          )
+        else
+          val data =
+            NDArray.tabulate[C](left.selection.size, left.nTime):
+              (position, time) =>
+                combine(
+                  left.data(position, time),
+                  right.data(position, time)
+                )
+          create(
+            left.domain,
+            left.selection,
+            left.nonSpatialAxes.values.head,
+            data,
+            left.metadata
+          )
+
+  /** Align both series to one requested voxel order under explicit missing
+    * policies, then combine their position-time arrays.
+    */
+  def combineAt[F <: Frame[D3], S, T, A, Sem](
+      left: SelectedSeries[F, S, A, Sem],
+      right: SelectedSeries[F, S, A, Sem],
+      requested: Selection[T],
+      leftMissing: MissingVoxelPolicy[A],
+      rightMissing: MissingVoxelPolicy[A]
+  )(
+      combine: (A, A) => A
+  )(using
+      DType[A],
+      ValueSemantics[A, Sem]
+  ): Either[SelectedImageError, SelectedSeries[F, S, A, Sem]] =
+    for
+      alignedLeft <- left.reselect(requested, leftMissing)
+      alignedRight <- right.reselect(requested, rightMissing)
+      result <- zipExact(alignedLeft, alignedRight)(combine)
+    yield result
+
   extension [F <: Frame[D3], S, A, Sem](
       series: SelectedSeries[F, S, A, Sem]
   )
@@ -549,3 +676,30 @@ private object SelectedImageSelection:
       result(ordinals(position)) = position
       position += 1
     result
+
+  def requireSameOwner[F <: Frame[D3], S, T](
+      left: GridDomain[F, D3, S],
+      right: GridDomain[F, D3, T]
+  ): Either[SelectedImageError, Unit] =
+    if left.space.sameRuntimeOwnerAs(right.space) then Right(())
+    else
+      Left(
+        SelectedImageError.SelectionSpace(
+          SpaceMismatch.between(left.space, right.space)
+        )
+      )
+
+  def requireSameOrder[S, T](
+      left: Selection[S],
+      right: Selection[T]
+  ): Either[SelectedImageError, Unit] =
+    val leftOrder = left.ordinals.toVector
+    val rightOrder = right.ordinals.toVector
+    if leftOrder == rightOrder then Right(())
+    else
+      Left(
+        SelectedImageError.SelectionOrderMismatch(
+          leftOrder,
+          rightOrder
+        )
+      )

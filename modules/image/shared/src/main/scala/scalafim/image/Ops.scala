@@ -1,5 +1,10 @@
 package scalafim.image
 
+import image4s.Continuous
+import image4s.Mask as MaskSemantics
+import image4s.ValueSemantics
+import image4s.geometry.D3
+import image4s.geometry.Frame
 import scala.reflect.ClassTag
 import ravel.Array1
 import ravel.DType
@@ -258,6 +263,54 @@ object Ops:
     def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): ClusteredNeuroVol =
       Resample.resampleTo(c, target, method, engine)
 
+  extension [F <: Frame[D3], S, A: Ring: DType](
+      x: SelectedVolume[F, S, A, Continuous]
+  )
+    def addExact(
+        y: SelectedVolume[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedVolume[F, S, A, Continuous]
+    ] =
+      SelectedVolume.zipExact(x, y)(_ + _)
+
+    def subtractExact(
+        y: SelectedVolume[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedVolume[F, S, A, Continuous]
+    ] =
+      SelectedVolume.zipExact(x, y)(_ - _)
+
+  extension [F <: Frame[D3], S, A: Ring: DType](
+      x: SelectedSeries[F, S, A, Continuous]
+  )
+    @targetName("selectedSeriesAddExact")
+    def addExact(
+        y: SelectedSeries[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedSeries[F, S, A, Continuous]
+    ] =
+      SelectedSeries.zipExact(x, y)(_ + _)
+
+    @targetName("selectedSeriesSubtractExact")
+    def subtractExact(
+        y: SelectedSeries[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedSeries[F, S, A, Continuous]
+    ] =
+      SelectedSeries.zipExact(x, y)(_ - _)
+
   private def unionSparse[A](
     x: SparseNeuroVec[A],
     y: SparseNeuroVec[A]
@@ -369,12 +422,30 @@ object Ops:
     def summary: NeuroStats.NeuroVolSummary =
       NeuroStats.summarize(x)
 
+  extension [F <: Frame[D3], S](
+      x: SelectedVolume[F, S, Double, Continuous]
+  )
+    def summary: NeuroStats.NeuroVolSummary =
+      NeuroStats.summarize(x)
+
   extension (x: SparseNeuroVol[Double])
     def summary: NeuroStats.NeuroVolSummary =
       NeuroStats.summarize(x)
 
   extension (x: NeuroVec[Double])
     def temporalMean: NeuroVol[Double] =
+      NeuroStats.temporalMean(x)
+
+    def summary: NeuroStats.NeuroVecSummary =
+      NeuroStats.summarize(x)
+
+  extension [F <: Frame[D3], S](
+      x: SelectedSeries[F, S, Double, Continuous]
+  )
+    def temporalMean: Either[
+      SelectedImageError,
+      SelectedVolume[F, S, Double, Continuous]
+    ] =
       NeuroStats.temporalMean(x)
 
     def summary: NeuroStats.NeuroVecSummary =
@@ -412,6 +483,45 @@ object Ops:
     def eqv(a: A): NeuroVol[Boolean] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.EQV)
     def neq(a: A): NeuroVol[Boolean] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
+
+  extension [F <: Frame[D3], S, A: Order, Sem](
+      x: SelectedVolume[F, S, A, Sem]
+  )
+    def lt(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LT)
+
+    def lte(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LTE)
+
+    def gt(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GT)
+
+    def gte(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GTE)
+
+    def eqv(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
+      NeuroCompare.compare(x, a, NeuroCompare.Predicate.EQV)
+
+    def neq(a: A)(using
+        DType[Boolean],
+        ValueSemantics[Boolean, MaskSemantics]
+    ): SelectedVolume[F, S, Boolean, MaskSemantics] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
 
   extension [A: Order: Ring: DType: MigrationValueSemantics](x: SparseNeuroVol[A])

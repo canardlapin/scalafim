@@ -4,27 +4,18 @@ import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.image.{
   ExactVolumeSearchlight,
-  GridCompatibility,
   Mask,
   NeuroVol,
-  ROIVolWindow,
-  Searchlight,
-  SearchlightCenterDomain,
+  SelectedVolumeWindow,
   SearchlightRadius,
-  SearchlightSupport,
   VolumeDomain,
   VolumeNeighborhoods,
   VolumeSpace
 }
-import scalafim.locus.{
-  CenteredSearchlight,
-  Region as LocusRegion,
-  Relation as LocusRelation,
-  Searchlight as LocusSearchlight
-}
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 import locus4s.DomainRegistry
 import locus4s.Index
+import locus4s.Region
 
 import scala.util.control.NonFatal
 
@@ -113,42 +104,59 @@ object SpatialFeatureSetPlans:
   ): Either[MvpaError, FeatureSetPlan] =
     toMvpaPlan(volumeAtlas(name, atlas, coveragePolicy))
 
-  def roiWindows(
+  def selectedWindows[F <: image4s.geometry.Frame[image4s.geometry.D3], S, A, Sem](
       name: String,
-      windows: Seq[ROIVolWindow[?]]
+      windows: Seq[SelectedVolumeWindow[F, S, A, Sem]]
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
-    captureSpatial("ROI windows") {
-      locusSearchlight(windows.toVector).flatMap: canonical =>
-        val centered = canonical.centered
-        LocusFeatureSetPlans
-          .fromSearchlight(
-            name,
-            centered,
-            center =>
-              Some(
-                canonical.labels
-                  .get(center.value)
-                  .filter(_.nonEmpty)
-                  .getOrElse(s"searchlight_${center.value}")
-              )
+    if windows.isEmpty then Left(SpatialPlanError.EmptySearchlightWindows)
+    else
+      val owner = windows.head.values.domain.space
+      val seen = scala.collection.mutable.HashSet.empty[Int]
+      buildVector(windows): window =>
+        val actual = window.values.domain.space
+        if !owner.sameRuntimeOwnerAs(actual) then
+          Left(
+            SpatialPlanError.InvalidLocusSearchlight(
+              locus4s.SpaceMismatch.between(owner, actual).message
+            )
           )
+        else if seen.contains(window.center.ordinal) then
+          Left(
+            SpatialPlanError.InvalidLocusSearchlight(
+              s"duplicate center ${window.center.ordinal}"
+            )
+          )
+        else
+          seen += window.center.ordinal
+          featureSet(
+            RoiId(window.center.ordinal),
+            window.values.selection.ordinals.toVector,
+            center = Some(window.center.ordinal),
+            label = Some(
+              Option(window.values.metadata.label)
+                .filter(_.nonEmpty)
+                .getOrElse(s"searchlight_${window.center.ordinal}")
+            )
+          )
+      .flatMap: sets =>
+        FeatureSetPlan
+          .searchlight(name, sets)
           .left
           .map(SpatialPlanError.InvalidFeatureSetPlan.apply)
           .map: plan =>
             SpatialFeaturePlan(
               SpatialFeatureDomain.LocusSearchlight(
-                centered.searchlight.centers.space.descriptor.toString,
-                centered.searchlight.centers.cardinality
+                owner.descriptor.toString,
+                windows.size
               ),
               plan
             )
-    }
 
-  def fromRoiWindows(
+  def fromSelectedWindows[F <: image4s.geometry.Frame[image4s.geometry.D3], S, A, Sem](
       name: String,
-      windows: Seq[ROIVolWindow[?]]
+      windows: Seq[SelectedVolumeWindow[F, S, A, Sem]]
   ): Either[MvpaError, FeatureSetPlan] =
-    toMvpaPlan(roiWindows(name, windows))
+    toMvpaPlan(selectedWindows(name, windows))
 
   /** Build a feature plan directly from one exact voxel-domain relation. */
   def volumeSearchlight[S](
@@ -206,13 +214,13 @@ object SpatialFeatureSetPlans:
           .make(radius)
           .left
           .map(error => SpatialPlanError.AdapterFailure("searchlight radius", error.message))
-        canonical <- exactMaskSearchlight(
+        plan <- exactMaskSearchlight(
+          name,
           mask,
           checkedRadius,
           constrainToMask,
           label
         )
-        plan <- planFromCanonical(name, canonical)
       yield plan
     }
 
@@ -284,25 +292,13 @@ object SpatialFeatureSetPlans:
   ): Either[MvpaError, FeatureSetPlan] =
     toMvpaPlan(labeledSurface(name, labeled, topology, policy, ignoredLabels, identityPolicy))
 
-  private def locusSearchlight(
-      windows: Vector[ROIVolWindow[?]]
-  ): Either[SpatialPlanError, CanonicalSearchlight] =
-    if windows.isEmpty then Left(SpatialPlanError.EmptySearchlightWindows)
-    else
-      for
-        volumeSpace <- VolumeSpace
-          .fromSpatialPart(windows.head.space)
-          .left
-          .map(error => SpatialPlanError.AdapterFailure("ROI window space", error.message))
-        result <- buildLocusSearchlight(volumeSpace, windows)
-      yield result
-
   private def exactMaskSearchlight(
+      name: String,
       mask: Mask.MaskVol,
       radius: SearchlightRadius,
       constrainToMask: Boolean,
       label: String
-  ): Either[SpatialPlanError, CanonicalSearchlight] =
+  ): Either[SpatialPlanError, SpatialFeaturePlan] =
     for
       volumeSpace <- VolumeSpace
         .fromSpatialPart(mask.space)
@@ -321,7 +317,7 @@ object SpatialFeatureSetPlans:
         val domain: VolumeDomain[Voxel] = packedDomain.value
         val maskOrdinals = Mask.indices(mask)
         for
-          centers <- LocusRegion
+          centers <- Region
             .fromOrdinals(
               domain.space,
               Iterator.tabulate(maskOrdinals.size)(maskOrdinals.apply)
@@ -332,147 +328,27 @@ object SpatialFeatureSetPlans:
             .metricBalls(domain, radius, centers)
             .left
             .map(error => SpatialPlanError.AdapterFailure("searchlight geometry", error.message))
-          relation <-
-            if !constrainToMask then Right(neighborhoods.relation)
+          selectedNeighborhoods <-
+            if !constrainToMask then Right(neighborhoods)
             else
-              LocusRelation
-                .fromOrdinalRows(
-                  domain.space,
-                  domain.space,
-                  Iterator.tabulate(domain.space.size): ordinal =>
-                    val center = domain.space.indexAtValidatedOrdinal(ordinal)
-                    neighborhoods.relation
-                      .row(center)
-                      .intersect(centers)
-                      .ordinalsInDomainOrder
-                )
+              ExactVolumeSearchlight
+                .restrictTargets(neighborhoods, centers)
                 .left
-                .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-          searchlight <- LocusSearchlight
-            .make(centers, relation)
-            .left
-            .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-          validated <- CenteredSearchlight
-            .validate(searchlight)
-            .left
-            .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-        yield
-          new CanonicalSearchlight:
-            type S = Voxel
-            val centered: CenteredSearchlight[Voxel] = validated
-            val labels: Map[Int, String] =
-              centers.ordinalsInDomainOrder.iterator.map(_ -> label).toMap
+                .map(error =>
+                  SpatialPlanError.InvalidLocusSearchlight(error.message)
+                )
+          plan <- volumeSearchlight(
+            name,
+            selectedNeighborhoods,
+            center =>
+              Some(
+                Option(label)
+                  .filter(_.nonEmpty)
+                  .getOrElse(s"searchlight_${center.ordinal}")
+              )
+          )
+        yield plan
     yield result
-
-  private def planFromCanonical(
-      name: String,
-      canonical: CanonicalSearchlight
-  ): Either[SpatialPlanError, SpatialFeaturePlan] =
-    val centered = canonical.centered
-    LocusFeatureSetPlans
-      .fromSearchlight(
-        name,
-        centered,
-        center =>
-          Some(
-            canonical.labels
-              .get(center.value)
-              .filter(_.nonEmpty)
-              .getOrElse(s"searchlight_${center.value}")
-          )
-      )
-      .left
-      .map(SpatialPlanError.InvalidFeatureSetPlan.apply)
-      .map: plan =>
-        SpatialFeaturePlan(
-          SpatialFeatureDomain.LocusSearchlight(
-            centered.searchlight.centers.space.descriptor.toString,
-            centered.searchlight.centers.cardinality
-          ),
-          plan
-        )
-
-  private def buildLocusSearchlight(
-      volumeSpace: VolumeSpace,
-      windows: Vector[ROIVolWindow[?]]
-  ): Either[SpatialPlanError, CanonicalSearchlight] =
-    val packedDomain =
-      VolumeDomain
-        .register(volumeSpace, "MVPA searchlight voxels", DomainRegistry.empty)
-        .toOption
-        .get
-    type Voxel = packedDomain.S
-    val domain: VolumeDomain[Voxel] = packedDomain.value
-    val rows = Array.fill(domain.space.size)(Array.emptyIntArray)
-    val centerOrdinals = Array.ofDim[Int](windows.length)
-    val centerLabels = scala.collection.mutable.Map.empty[Int, String]
-    val seenCenters = scala.collection.mutable.HashSet.empty[Int]
-    var index = 0
-    while index < windows.length do
-      val window = windows(index)
-      GridCompatibility.spatial(volumeSpace.toNeuroSpace, window.space) match
-        case Left(error) =>
-          return Left(SpatialPlanError.AdapterFailure("ROI window grid", error.message))
-        case Right(_) =>
-          ()
-      val center = window.parentIndex
-      if seenCenters.contains(center) then
-        return Left(
-          SpatialPlanError.InvalidLocusSearchlight(
-            s"duplicate center $center"
-          )
-        )
-      val linearIndices = window.selection.linearIndices
-      val members = Array.tabulate(linearIndices.size)(i => linearIndices(i))
-      if members.distinct.length != members.length then
-        return Left(
-          SpatialPlanError.InvalidLocusSearchlight(
-            s"neighborhood at center $center contains duplicate points"
-          )
-        )
-      if !members.contains(center) then
-        return Left(
-          SpatialPlanError.InvalidLocusSearchlight(
-            s"neighborhood at center $center does not contain its center"
-          )
-        )
-      seenCenters += center
-      centerOrdinals(index) = center
-      rows(center) = members
-      centerLabels(center) = window.label
-      index += 1
-
-    for
-      centers <- LocusRegion
-        .fromOrdinals(domain.space, centerOrdinals)
-        .left
-        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-      relation <- LocusRelation
-        .fromOrdinalRows(
-          domain.space,
-          domain.space,
-          rows.iterator.map(_.iterator)
-        )
-        .left
-        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-      searchlight <- LocusSearchlight
-        .make(centers, relation)
-        .left
-        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-      validated <- CenteredSearchlight
-        .validate(searchlight)
-        .left
-        .map(error => SpatialPlanError.InvalidLocusSearchlight(error.message))
-    yield
-      new CanonicalSearchlight:
-        type S = Voxel
-        val centered: CenteredSearchlight[Voxel] = validated
-        val labels: Map[Int, String] = centerLabels.toMap
-
-  private trait CanonicalSearchlight:
-    type S
-    val centered: CenteredSearchlight[S]
-    val labels: Map[Int, String]
 
   private def featureSet(
       id: RoiId,

@@ -18,6 +18,8 @@ import locus4s.Selection
 import ravel.DType.given
 import ravel.NDArray
 import ravel.Shape
+import scalafim.image.Ops.*
+import spire.std.double.given
 
 class SelectedImageSuite extends munit.FunSuite:
   private val frame =
@@ -136,6 +138,52 @@ class SelectedImageSuite extends munit.FunSuite:
     assertEquals(
       filled.data.iterator.toVector,
       Vector(10.0, 11.0, 12.0, -5.0, -5.0, -5.0, 1200.0, 1201.0, 1202.0)
+    )
+
+  test("selected arithmetic requires exact order or explicit support policies"):
+    val left = right(SelectedSeries.gather(domain, series, selection))
+    val rightSupport =
+      right(Selection.fromOrdinals(domain.space, Vector(1, 0, 10)))
+    val rightSeries =
+      right(SelectedSeries.gather(domain, series, rightSupport))
+
+    left.addExact(rightSeries) match
+      case Left(SelectedImageError.SelectionOrderMismatch(actualLeft, actualRight)) =>
+        assertEquals(actualLeft, Vector(7, 1, 10))
+        assertEquals(actualRight, Vector(1, 0, 10))
+      case other =>
+        fail(s"expected selected-order mismatch, found $other")
+
+    val union =
+      right(Selection.fromOrdinals(domain.space, Vector(7, 1, 0, 10)))
+    val combined =
+      right(
+        SelectedSeries.combineAt(
+          left,
+          rightSeries,
+          union,
+          MissingVoxelPolicy.Fill(0.0),
+          MissingVoxelPolicy.Fill(0.0)
+        )(_ + _)
+      )
+
+    assertEquals(combined.selection.ordinals.toVector, Vector(7, 1, 0, 10))
+    assertEquals(
+      combined.data.iterator.toVector,
+      Vector(
+        1010.0,
+        1011.0,
+        1012.0,
+        20.0,
+        22.0,
+        24.0,
+        0.0,
+        1.0,
+        2.0,
+        2400.0,
+        2402.0,
+        2404.0
+      )
     )
 
   test("foreign domain owners fail closed"):

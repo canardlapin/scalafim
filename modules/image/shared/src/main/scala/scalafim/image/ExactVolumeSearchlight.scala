@@ -154,6 +154,38 @@ object ExactVolumeSearchlight:
   ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
     metricBalls(domain, radius, Region.whole(domain.space))
 
+  /** Intersect every neighborhood with one exact support region.
+    *
+    * Centers are retained, so the operation fails when the supplied support
+    * excludes any center instead of silently producing an invalid searchlight.
+    */
+  def restrictTargets[S](
+      searchlight: VolumeNeighborhoods[S],
+      support: Region[S]
+  ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
+    if !searchlight.centers.space.sameRuntimeOwnerAs(support.space) then
+      Left(
+        ExactVolumeSearchlightError.WrongSpace(
+          SpaceMismatch.between(searchlight.centers.space, support.space)
+        )
+      )
+    else
+      Relation
+        .fromOrdinalRows(
+          searchlight.centers.space,
+          searchlight.centers.space,
+          Iterator.tabulate(searchlight.centers.space.size): ordinal =>
+            val center =
+              searchlight.centers.space.indexAtValidatedOrdinal(ordinal)
+            searchlight.relation
+              .row(center)
+              .intersect(support)
+              .ordinalsInDomainOrder
+        )
+        .left
+        .map(ExactVolumeSearchlightError.InvalidRelation.apply)
+        .flatMap(fromRelation(searchlight.centers, _))
+
   def materialize[F <: Frame[D3], S, A, Sem](
       domain: GridDomain[F, D3, S],
       searchlight: VolumeNeighborhoods[S],
