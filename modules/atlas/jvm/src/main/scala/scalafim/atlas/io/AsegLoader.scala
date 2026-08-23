@@ -35,7 +35,7 @@ object AsegLoader:
 
   def loadFromPaths(spec: FreeSurferAseg, volumePath: Path): VolumeAtlas =
     val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
-    val presentIds = presentRegionIds(labelVol)
+    val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val allRegions = regionsFor(spec)
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))
     val ref = refFor(spec)
@@ -44,7 +44,7 @@ object AsegLoader:
         AtlasProvenance.loaded(ref, regions, allRegions.map(_.id)),
         ArtifactRole.ParcellationVolume -> volumePath
       )
-    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
+    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, provenance)
 
   def refFor(spec: FreeSurferAseg = FreeSurferAseg.default): VolumeAtlasRef =
     val a = assets(spec)
@@ -153,12 +153,3 @@ object AsegLoader:
     val neuroatlasLabel =
       if clean == "BrainStem" then "Brainstem" else clean
     (hemi, neuroatlasLabel)
-
-  private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
-    val out = scala.collection.mutable.Set.empty[RegionId]
-    var i = 0
-    while i < vol.values.size do
-      val id = vol.valueAtCanonicalOrdinal(i)
-      if id > 0 then out += RegionId(id)
-      i += 1
-    out.toSet

@@ -122,7 +122,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     assertEquals(Vector.tabulate(lt.copyToCanonicalArray.length)(i => lt.copyToCanonicalArray(i)), Vector(true, true, true, false), clue = "")
   }
 
-  test("NeuroCompare preserves selected support and supports clustered volumes") {
+  test("NeuroCompare preserves selected support") {
     val sp = NeuroSpace(Vector(3, 1, 1))
     val packed =
       VolumeDomain
@@ -150,10 +150,6 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     val denseCompared = compared.toDense(false).toOption.get
     assertEquals(denseCompared.data.iterator.toVector, Vector(true, false, true), clue = "")
 
-    val mask = Mask.fromIndices(sp, Array(0, 2))
-    val cvol = ClusteredNeuroVol(mask, Array(1, 2))
-    val cgt = cvol.gt(1)
-    assertEquals(Vector.tabulate(cgt.copyToCanonicalArray.length)(i => cgt.copyToCanonicalArray(i)), Vector(false, false, true), clue = "")
   }
 
   test("NeuroStats summarizes NeuroVec temporal ranges") {

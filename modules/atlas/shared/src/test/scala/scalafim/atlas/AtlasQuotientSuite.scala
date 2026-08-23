@@ -33,27 +33,28 @@ class AtlasQuotientSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       volumeRef,
       RegionIndex(metadata),
-      NeuroVol.copyFromCanonicalArray(
+      AtlasTestImages.labelVolume(
+        space,
         PrimitiveBuffers.fromArray(Array(1, 1, 2, 2)),
-        space
+        "quotient"
       )
     )
 
-  test("volume atlases expose quotient fibers, parcel metadata, and display order"):
+  test("volume atlases expose exact fibers, parcel metadata, and display order"):
     val atlas = volumeAtlas()
-    val quotient = atlas.quotient
-    val parcelTwo = quotient.parcelPoint(RegionId(2)).get
-    val parcelOne = quotient.parcelPoint(RegionId(1)).get
+    val realization = atlas.realization
+    val parcelTwo = realization.parcelPoint(RegionId(2)).get
+    val parcelOne = realization.parcelPoint(RegionId(1)).get
 
-    assertEquals(quotient.displayOrder.ordinals.toVector, Vector(0, 1))
-    assertEquals(quotient.metadata(parcelTwo).label, "Second")
-    assertEquals(quotient.metadata(parcelOne).label, "First")
+    assertEquals(realization.displayOrder.ordinals.toVector, Vector(0, 1))
+    assertEquals(realization.metadata(parcelTwo).label, "Second")
+    assertEquals(realization.metadata(parcelOne).label, "First")
     assertEquals(
-      quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
+      realization.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1)
     )
     assertEquals(
-      quotient.region(RegionId(2)).get.ordinalsInDomainOrder.toVector,
+      realization.region(RegionId(2)).get.ordinalsInDomainOrder.toVector,
       Vector(2, 3)
     )
 
@@ -68,21 +69,21 @@ class AtlasQuotientSuite extends munit.FunSuite:
       )
 
     Vector(RegionId(1), RegionId(2)).foreach: id =>
-      val left = original.quotient.region(id).get
-      val right = renamed.quotient.region(id).get
+      val left = original.realization.region(id).get
+      val right = renamed.realization.region(id).get
       assert(left.space.samePersistentIdentityAs(right.space))
       assertEquals(
         left.ordinalsInDomainOrder.toVector,
         right.ordinalsInDomainOrder.toVector
       )
 
-  test("network regions are fibers of the composed quotient"):
-    val quotient = volumeAtlas().quotient
-    val networks = quotient.networkParcellation.get
+  test("network regions are fibers of the composed realization"):
+    val realization = volumeAtlas().realization
+    val networks = realization.networkRealization.get
 
-    assertEquals(networks.parcellation.parcels.size, 1)
+    assertEquals(networks.assignment.to.size, 1)
     assertEquals(
-      quotient
+      realization
         .networkRegion(NetworkId("Visual"))
         .get
         .ordinalsInDomainOrder
@@ -99,9 +100,9 @@ class AtlasQuotientSuite extends munit.FunSuite:
         )
       )
 
-    assert(atlas.quotient.networkAssignment.isEmpty)
+    assert(atlas.realization.networkAssignment.isEmpty)
 
-  test("surface atlases expose the same bilateral quotient operations"):
+  test("surface atlases expose the same bilateral realization operations"):
     val mesh =
       TriangleMesh.fromRows(
         Vector(
@@ -147,21 +148,21 @@ class AtlasQuotientSuite extends munit.FunSuite:
         left,
         right
       )
-    val quotient = atlas.quotient
+    val realization = atlas.realization
 
-    assertEquals(quotient.parcellation.ambient.size, 6)
+    assertEquals(realization.parcelAssignment.from.size, 6)
     assertEquals(
-      quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
+      realization.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1, 2)
     )
     assertEquals(
-      quotient.region(RegionId(2)).get.ordinalsInDomainOrder.toVector,
+      realization.region(RegionId(2)).get.ordinalsInDomainOrder.toVector,
       Vector(3, 4, 5)
     )
     assertEquals(
-      quotient
+      realization
         .metadata
-        .apply(quotient.parcelPoint(RegionId(2)).get)
+        .apply(realization.parcelPoint(RegionId(2)).get)
         .hemisphere,
       Some(Hemisphere.Right)
     )
@@ -193,9 +194,9 @@ class AtlasQuotientSuite extends munit.FunSuite:
   test("one-pass standard reducers retain NaN and non-contiguous id semantics"):
     val atlas = volumeAtlas()
     val data =
-      NeuroVol.copyFromCanonicalArray(
+      AtlasTestImages.scalarVolume(
+        atlas,
         PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
-        atlas.space
       )
     val means = atlas.reduce(data, Reducers.mean)
     val sums = atlas.reduce(data, Reducers.sum)

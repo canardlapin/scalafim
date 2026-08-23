@@ -139,9 +139,3 @@ object Mask:
   @scala.annotation.targetName("ofNeuroVec")
   def of[A](vec: NeuroVec[A]): MaskVol =
     all(vec.space.spatialSpace, vec.label)
-
-  def of(cvol: ClusteredNeuroVol): MaskVol =
-    cvol.mask
-
-  def of[A](cvec: ClusteredNeuroVec[A]): MaskVol =
-    cvec.cvol.mask

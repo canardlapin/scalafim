@@ -46,7 +46,11 @@ class AtlasCoreSuite extends munit.FunSuite:
         confidence = Confidence.Exact
       )
 
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(labels, sp), label = "toy")
+    VolumeAtlas.fromLabelVolume(
+      ref,
+      regions,
+      AtlasTestImages.labelVolume(sp, labels, label = "toy")
+    )
 
   test("registry resolves standard atlas aliases") {
     val spec = AtlasRegistry.default("hcp-mmp")
@@ -117,7 +121,7 @@ class AtlasCoreSuite extends munit.FunSuite:
 
     val netA = atlas.subset(_.network.contains(NetworkId("NetA")))
     assertEquals(netA.regions.ids, Vector(RegionId(1), RegionId(2)))
-    assertEquals(netA.volume.clusterIds, Vector(1, 2))
+    assertEquals(netA.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(netA.provenance.labels.regionIds, Vector(RegionId(1), RegionId(2)))
   }
 
@@ -140,52 +144,49 @@ class AtlasCoreSuite extends munit.FunSuite:
     var lin = 0
     val labelVol = atlas.labelVolume
     while lin < volData.length do
-      volData(lin) = labelVol.valueAtCanonicalOrdinal(lin).toDouble
+      volData(lin) =
+        AtlasTestImages.labelAtCanonicalOrdinal(labelVol, lin).toDouble
       lin += 1
-    val vol = NeuroVol.copyFromCanonicalArray[Double](volData, atlas.space)
+    val vol = AtlasTestImages.scalarVolume(atlas, volData)
     val values = atlas.reduce(vol)
     assertEquals(values.value(RegionId(1)), Some(1.0))
     assertEquals(values.value(RegionId(2)), Some(2.0))
     assertEquals(values.value(RegionId(3)), Some(3.0))
 
     val tLen = 3
-    val sp4 = atlas.space.addDim(tLen, Some(Axis.Time))
     val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 0.0)
     var t = 0
     while t < tLen do
       lin = 0
       while lin < atlas.space.spatialDims.product do
-        val id = labelVol.valueAtCanonicalOrdinal(lin)
+        val id = AtlasTestImages.labelAtCanonicalOrdinal(labelVol, lin)
         vecData(lin * tLen + t) = id.toDouble * (t + 1).toDouble
         lin += 1
       t += 1
-    val vec = NeuroVec.copyFromCanonicalArray[Double](vecData, sp4)
+    val vec = AtlasTestImages.scalarSeries(atlas, vecData, tLen)
     val cvec = atlas.reduce(vec)
-    assertEquals(cvec.asMatrix.shape, Shape(3, 3))
-    assertEquals(cvec.asMatrix(0, 0), 1.0)
-    assertEquals(cvec.asMatrix(1, 0), 2.0)
-    assertEquals(cvec.asMatrix(0, 1), 2.0)
+    assertEquals(cvec.data.shape, Shape(3, 3))
+    assertEquals(cvec.data(0, 0), 1.0)
+    assertEquals(cvec.data(0, 1), 2.0)
+    assertEquals(cvec.data(1, 0), 2.0)
   }
 
   test("reduceVec preserves all parcels and writes NaN for parcels outside mask") {
     val atlas = toyAtlas()
     val tLen = 2
     val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 1.0)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](vecData, atlas.space.addDim(tLen, Some(Axis.Time)))
+    val vec = AtlasTestImages.scalarSeries(atlas, vecData, tLen)
 
     val maskFlags = PrimitiveBuffers.fillConst[Boolean](atlas.space.spatialDims.product, false)
-    val cluster = atlas.volume.clusterMap(1)
-    var i = 0
-    while i < cluster.size do
-      maskFlags(cluster(i)) = true
-      i += 1
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, atlas.space)
-    val cvec = AtlasReduce.reduceVec(atlas, vec, Some(mask))
+    atlas.realization.region(RegionId(1)).get.foreachIndex: voxel =>
+      maskFlags(voxel.ordinal) = true
+    val mask = AtlasTestImages.maskVolume(atlas, maskFlags)
+    val cvec = AtlasReduce.reduceSeries(atlas, vec, Some(mask))
 
-    assertEquals(cvec.asMatrix.shape, Shape(2, 3))
-    assertEquals(cvec.asMatrix(0, 0), 1.0)
-    assert(cvec.asMatrix(0, 1).isNaN, clue = "region 2 should be NaN at t=1")
-    assert(cvec.asMatrix(0, 2).isNaN, clue = "region 3 should be NaN at t=1")
+    assertEquals(cvec.data.shape, Shape(3, 2))
+    assertEquals(cvec.data(0, 0), 1.0)
+    assert(cvec.data(1, 0).isNaN, clue = "region 2 should be NaN at t=0")
+    assert(cvec.data(2, 0).isNaN, clue = "region 3 should be NaN at t=0")
   }
 
   test("overlap and adjacency compute region relationships") {

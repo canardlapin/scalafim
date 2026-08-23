@@ -23,11 +23,23 @@ class AtlasCoverageSuite extends munit.FunSuite:
       )
     )
 
-  private def labelVolume(values: Vector[Int]): NeuroVol[Int] =
-    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), NeuroSpace(Vector(2, 2, 1)), "coverage")
+  private def labelVolume(values: Vector[Int]): SomeLabelVolume[Int] =
+    AtlasTestImages.labelVolume(
+      NeuroSpace(Vector(2, 2, 1)),
+      PrimitiveBuffers.fromArray(values.toArray),
+      "coverage"
+    )
 
   private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values.toArray), space), "coverage")
+    VolumeAtlas.fromLabelVolume(
+      ref,
+      regions,
+      AtlasTestImages.labelVolume(
+        space,
+        PrimitiveBuffers.fromArray(values.toArray),
+        "coverage"
+      )
+    )
 
   test("registry normalizes aliases and reports unknown ids with available atlases"):
     val spec = AtlasRegistry.default.find("Glasser 360 Surface").toOption.get
@@ -82,11 +94,19 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val regions = twoRegionIndex
 
     val unknown = intercept[IllegalArgumentException]:
-      VolumeAtlas.fromLabelVolume(ref, regions, labelVolume(Vector(1, 2, 99, 0)), "bad")
+      VolumeAtlas.fromLabelVolume(
+        ref,
+        regions,
+        labelVolume(Vector(1, 2, 99, 0))
+      )
     assert(unknown.getMessage.contains("atlas payload is missing region id 99"), clue = unknown.getMessage)
 
     val absent = intercept[IllegalArgumentException]:
-      VolumeAtlas.fromLabelVolume(ref, regions, labelVolume(Vector(1, 1, 1, 0)), "missing")
+      VolumeAtlas.fromLabelVolume(
+        ref,
+        regions,
+        labelVolume(Vector(1, 1, 1, 0))
+      )
     assert(absent.getMessage.contains("label volume is missing region ids: 2"), clue = absent.getMessage)
 
   test("space transforms expose no-route and non-affine execution limits"):
@@ -157,9 +177,13 @@ class AtlasCoverageSuite extends munit.FunSuite:
         )
       )
     val a = atlas(Vector(2, 5, 2, 5), regions)
-    val data = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0)), a.space)
+    val data =
+      AtlasTestImages.scalarVolume(
+        a,
+        PrimitiveBuffers.fromArray(Array(1.0, 10.0, 3.0, 20.0))
+      )
     val reduced = a.reduce(data, Reducers.sum)
-    val checkedReduced = AtlasReduce.reduceVolumeEither(a, data, Reducers.sum)
+    val checkedReduced = AtlasReduce.summarizeVolumeEither(a, data, Reducers.sum)
 
     assertEquals(reduced.value(RegionId(2)), Some(4.0))
     assertEquals(reduced.value(RegionId(5)), Some(30.0))
@@ -174,25 +198,30 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val a = atlas(Vector(1, 2, 1, 2))
     val tLen = 2
     val data =
-      NeuroVec.copyFromCanonicalArray(
+      AtlasTestImages.scalarSeries(
+        a,
         PrimitiveBuffers.fromArray(Array(1.0, 2.0, 10.0, 30.0, 3.0, 4.0, 20.0, 40.0)),
-        a.space.addDim(tLen, Some(Axis.Time)),
+        tLen,
         "timeseries"
       )
-    val summed = a.reduce(data, Reducers.sum).asMatrix
+    val summed = a.reduce(data, Reducers.sum).data
 
     assertEquals(summed.shape, Shape(2, 2))
     assertEquals(summed(0, 0), 4.0)
-    assertEquals(summed(1, 0), 6.0)
-    assertEquals(summed(0, 1), 30.0)
+    assertEquals(summed(0, 1), 6.0)
+    assertEquals(summed(1, 0), 30.0)
     assertEquals(summed(1, 1), 70.0)
 
     val mask =
-      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(Array(true, false, false, true)), a.space, "mask")
-    val masked = a.reduce(data, mask, Reducers.sum).asMatrix
+      AtlasTestImages.maskVolume(
+        a,
+        PrimitiveBuffers.fromArray(Array(true, false, false, true)),
+        "mask"
+      )
+    val masked = a.reduce(data, mask, Reducers.sum).data
     assertEquals(masked(0, 0), 1.0)
-    assertEquals(masked(1, 0), 2.0)
-    assertEquals(masked(0, 1), 20.0)
+    assertEquals(masked(0, 1), 2.0)
+    assertEquals(masked(1, 0), 20.0)
     assertEquals(masked(1, 1), 40.0)
 
   test("overlap is symmetric by atlas order and self-overlap is identity"):

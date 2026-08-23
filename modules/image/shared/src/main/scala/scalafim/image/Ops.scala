@@ -107,31 +107,6 @@ object Ops:
       requireCompatSpatial(x.space, v.space)
       x.mapSamples((voxel, _, value) => value / v(voxel))
 
-  extension [A: Ring: DType](x: ClusteredNeuroVec[A])
-    def +(y: ClusteredNeuroVec[A])(using ClassTag[A]): ClusteredNeuroVec[A] =
-      x.requireCompat(y)
-      ClusteredNeuroVec(x.cvol, x.ts.zipMapExact(y.ts)(_ + _), x.clMap, x.space, x.label)
-    def -(y: ClusteredNeuroVec[A])(using ClassTag[A]): ClusteredNeuroVec[A] =
-      x.requireCompat(y)
-      ClusteredNeuroVec(x.cvol, x.ts.zipMapExact(y.ts)(_ - _), x.clMap, x.space, x.label)
-    def *(y: ClusteredNeuroVec[A])(using ClassTag[A]): ClusteredNeuroVec[A] =
-      x.requireCompat(y)
-      ClusteredNeuroVec(x.cvol, x.ts.zipMapExact(y.ts)(_ * _), x.clMap, x.space, x.label)
-
-    def +(a: A)(using ClassTag[A]): ClusteredNeuroVec[A] =
-      ClusteredNeuroVec(x.cvol, x.ts.map(_ + a), x.clMap, x.space, x.label)
-    def -(a: A)(using ClassTag[A]): ClusteredNeuroVec[A] =
-      ClusteredNeuroVec(x.cvol, x.ts.map(_ - a), x.clMap, x.space, x.label)
-    def *(a: A)(using ClassTag[A]): ClusteredNeuroVec[A] =
-      ClusteredNeuroVec(x.cvol, x.ts.map(_ * a), x.clMap, x.space, x.label)
-
-  extension [A: Field: DType](x: ClusteredNeuroVec[A])
-    def /(y: ClusteredNeuroVec[A])(using ClassTag[A]): ClusteredNeuroVec[A] =
-      x.requireCompat(y)
-      ClusteredNeuroVec(x.cvol, x.ts.zipMapExact(y.ts)(_ / _), x.clMap, x.space, x.label)
-    def /(a: A)(using ClassTag[A]): ClusteredNeuroVec[A] =
-      ClusteredNeuroVec(x.cvol, x.ts.map(_ / a), x.clMap, x.space, x.label)
-
   extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVol[A])
     @scala.annotation.targetName("neuroVolPlusVec")
     def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
@@ -207,16 +182,6 @@ object Ops:
     def reorient(orient: Seq[String]): NeuroVec[A] =
       Orientation.reorient(v, orient)
 
-  extension (c: ClusteredNeuroVol)
-    def reorient(orientation: Orientation3D): ClusteredNeuroVol =
-      Orientation.reorient(c, orientation)
-
-    def reorient(axis1: String, axis2: String, axis3: String): ClusteredNeuroVol =
-      Orientation.reorient(c, Seq(axis1, axis2, axis3))
-
-    def reorient(orient: Seq[String]): ClusteredNeuroVol =
-      Orientation.reorient(c, orient)
-
   extension (v: NeuroVol[Double])
     def resampleTo[T](target: T)(using Resample.HasSpace[T]): NeuroVol[Double] =
       Resample.resampleTo(v, target)
@@ -246,19 +211,6 @@ object Ops:
     @scala.annotation.targetName("resampleNeuroVecEngine")
     def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): NeuroVec[Double] =
       Resample.resampleTo(v, target, method, engine)
-
-  extension (c: ClusteredNeuroVol)
-    def resampleTo[T](target: T)(using Resample.HasSpace[T]): ClusteredNeuroVol =
-      Resample.resampleTo(c, target)
-
-    def resampleTo[T](target: T, method: Resample.Method)(using Resample.HasSpace[T]): ClusteredNeuroVol =
-      Resample.resampleTo(c, target, method)
-
-    def resampleTo[T](target: T, method: String)(using Resample.HasSpace[T]): ClusteredNeuroVol =
-      Resample.resampleTo(c, target, method)
-
-    def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): ClusteredNeuroVol =
-      Resample.resampleTo(c, target, method, engine)
 
   extension [F <: Frame[D3], S, A: Ring: DType](
       x: SelectedVolume[F, S, A, Continuous]
@@ -449,20 +401,6 @@ object Ops:
         DType[Boolean],
         ValueSemantics[Boolean, MaskSemantics]
     ): SelectedVolume[F, S, Boolean, MaskSemantics] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
-
-  extension (x: ClusteredNeuroVol)
-    def lt(a: Int): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LT)
-    def lte(a: Int): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LTE)
-    def gt(a: Int): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GT)
-    def gte(a: Int): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GTE)
-    def eqv(a: Int): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.EQV)
-    def neq(a: Int): NeuroVol[Boolean] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
 
   extension [A: Order](x: NeuroVec[A])

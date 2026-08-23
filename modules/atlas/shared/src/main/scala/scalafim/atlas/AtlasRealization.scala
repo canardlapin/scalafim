@@ -31,6 +31,14 @@ import scalafim.image.VolumeParcellation
 import scalafim.image.VolumeParcellationError
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 
+trait AtlasNetworkAssignment[P]:
+  type N
+  val networkIds: Field[N, NetworkId]
+  val parcelToNetwork: Surjection[P, N]
+
+  def networkPoint(id: NetworkId): Option[Index[N]] =
+    networkIds.space.indices.find(index => networkIds(index) == id)
+
 trait AtlasNetworkRealization[X]:
   type N
   val assignment: PartialSurjection[X, N]
@@ -190,6 +198,21 @@ object AtlasRealization:
       labels: SomeLabelVolume[Int],
       atlasProvenance: AtlasProvenance
   ): Either[AtlasRealizationError, VolumeAtlasRealization] =
+    volumeFromImageIn(
+      registry,
+      atlasRef,
+      regions,
+      labels,
+      atlasProvenance
+    )
+
+  private[atlas] def volumeFromImageIn(
+      registry: DomainRegistry,
+      atlasRef: AtlasRef,
+      regions: RegionIndex,
+      labels: AnyNeuroVolume[Int],
+      atlasProvenance: AtlasProvenance
+  ): Either[AtlasRealizationError, VolumeAtlasRealization] =
     GridDomain
       .register(
         labels.grid,
@@ -253,6 +276,7 @@ object AtlasRealization:
         labelField,
         regions.ids.zipWithIndex.toMap
       )
+      _ <- validateVolumeCoverage(assignments, regions)
       assignmentValue <- PartialSurjection
         .fromOptionalTargetOrdinals(
           gridDomain.space,
@@ -334,6 +358,22 @@ object AtlasRealization:
           Vector(volumeSupport)
         val neuropublishAssignments: Vector[NeuropublishHardAssignmentV1] =
           Vector(publicationAssignment)
+
+  private def validateVolumeCoverage(
+      assignments: Vector[Option[Int]],
+      regions: RegionIndex
+  ): Either[AtlasRealizationError, Unit] =
+    val present = assignments.iterator.flatten.toSet
+    val missing =
+      regions.ids.zipWithIndex.collect:
+        case (id, ordinal) if !present.contains(ordinal) => id
+    if missing.isEmpty then Right(())
+    else
+      Left(
+        AtlasRealizationError.InvalidAtlas(
+          AtlasError.MissingPayloadRegionIds(missing)
+        )
+      )
 
   def surfaceIn(
       registry: DomainRegistry,
@@ -423,6 +463,7 @@ object AtlasRealization:
         leftCount,
         regions.ids.zipWithIndex.toMap
       )
+      _ <- validateVolumeCoverage(assignments, regions)
       assignmentValue <- PartialSurjection
         .fromOptionalTargetOrdinals(
           ambientResolution.space,

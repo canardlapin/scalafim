@@ -2,30 +2,6 @@ package scalafim.image
 
 import scala.annotation.targetName
 
-enum ClusterIdError:
-  case NonPositive(value: Int)
-
-  def message: String =
-    this match
-      case NonPositive(value) =>
-        s"cluster id must be positive; got $value"
-
-opaque type ClusterId = Int
-
-object ClusterId:
-  def make(value: Int): Either[ClusterIdError, ClusterId] =
-    if value > 0 then Right(value)
-    else Left(ClusterIdError.NonPositive(value))
-
-  def apply(value: Int): ClusterId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  extension (id: ClusterId)
-    inline def value: Int = id
-
-  private[image] inline def unsafe(value: Int): ClusterId =
-    value
-
 enum SpatialCoordinateFrame:
   case Grid
   case World

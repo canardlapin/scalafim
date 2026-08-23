@@ -19,39 +19,6 @@ class DomainValiditySuite extends munit.FunSuite:
   private type Voxel = packedDomain.S
   private val domain: VolumeDomain[Voxel] = packedDomain.value
 
-  test("cluster ids are positive domain values") {
-    assertEquals(ClusterId.make(0), Left(ClusterIdError.NonPositive(0)), clue = "")
-    assertEquals(ClusterId.make(-2), Left(ClusterIdError.NonPositive(-2)), clue = "")
-    assertEquals(ClusterId.make(3).map(_.value), Right(3), clue = "")
-  }
-
-  test("cluster volumes reject non-positive assignments") {
-    val mask = Mask.fromIndices(space, Array[Int](0, 1))
-
-    val error = intercept[IllegalArgumentException] {
-      ClusteredNeuroVol(mask, Array[Int](1, 0))
-    }
-    assert(error.getMessage.contains("cluster id must be positive"), clue = "")
-  }
-
-  test("cluster vectors cannot disagree with their cluster volume") {
-    val mask = Mask.fromIndices(space, Array[Int](0, 1))
-    val clusters = ClusteredNeuroVol(mask, Array[Int](1, 2))
-    val timeSpace = space.addDim(2, Some(Axis.Time))
-    val series =
-      RavelArray.tabulate[Int](2, 2) { (time, cluster) =>
-        10 + 10 * (time + 2 * cluster)
-      }
-    val inconsistentMap = PrimitiveBuffers.fillConst[Int](space.spatialDims.product, 0)
-    inconsistentMap(0) = 2
-    inconsistentMap(1) = 1
-
-    val error = intercept[IllegalArgumentException] {
-      ClusteredNeuroVec(clusters, series, inconsistentMap, timeSpace)
-    }
-    assert(error.getMessage.contains("disagrees with cluster volume"), clue = "")
-  }
-
   test("selected windows validate that the selected center is the exact voxel") {
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 3)).toOption.get

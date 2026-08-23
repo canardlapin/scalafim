@@ -59,7 +59,7 @@ class AsegLoaderSuite extends munit.FunSuite:
     val atlas = AsegLoader.loadFromPaths(FreeSurferAseg.default, volumePath)
 
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
-    assertEquals(atlas.volume.clusterIds, Vector(10, 16, 49))
+    assertEquals(atlas.regions.ids.map(_.value), Vector(10, 16, 49))
     assertEquals(atlas.regions.ids, Vector(RegionId(10), RegionId(16), RegionId(49)))
     assertEquals(atlas.region(RegionId(10)).map(_.label), Some("Thalamus"))
     assertEquals(atlas.region(RegionId(10)).flatMap(_.hemisphere), Some(Hemisphere.Left))

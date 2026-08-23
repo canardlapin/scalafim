@@ -7,8 +7,6 @@ import image4s.locus.GridDomain
 import image4s.locus.GridDomainError
 import locus4s.Region
 import locus4s.SpaceMismatch
-import ravel.NDArray as RavelArray
-import ravel.Shape
 
 final case class KMeansParcelMetadata(label: String):
   require(label.nonEmpty, "k-means parcel label must be non-empty")
@@ -337,47 +335,3 @@ object KMeans:
       }
 
     Result(outLabels, outCenters, iter)
-
-  /** Partition a boolean mask into k clusters using k-means on real coordinates.
-    * Mirrors neuroim2 `partition(LogicalNeuroVol, k)`.
-    */
-  def partition(
-    mask: NeuroVol[Boolean],
-    k: Int,
-    iterMax: Int = 200,
-    seed: Int = 0,
-    init: Init = Init.Random,
-    label: String = ""
-  ): ClusteredNeuroVol =
-    val sp = mask.space
-    val activeIdx = Mask.indices(mask)
-    require(activeIdx.size >= k, "k must be <= number of active voxels")
-
-    val pts = Vector.tabulate(activeIdx.size) { i =>
-      val lin = activeIdx(i)
-      val g = Indexing.indexToGrid3D(sp.spatialDims, lin)
-      sp.indexToCoord(g.map(_.toDouble))
-    }
-    val res = fit(pts, k, iterMax = iterMax, seed = seed, init = init)
-    ClusteredNeuroVol(
-      mask,
-      RavelArray.fromSeq(Shape(res.labels.length), res.labels),
-      label = label
-    )
-
-  /** Partition a numeric volume by clustering non-zero voxels (as.logical in R). */
-  def partitionNonZero(
-    vol: NeuroVol[Double],
-    k: Int,
-    iterMax: Int,
-    seed: Int,
-    init: Init,
-    label: String
-  ): ClusteredNeuroVol =
-    val flags = Array.ofDim[Boolean](vol.values.size)
-    var i = 0
-    while i < flags.length do
-      flags(i) = vol.valueAtCanonicalOrdinal(i) != 0.0
-      i += 1
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](flags, vol.space.spatialSpace, label)
-    partition(mask, k, iterMax, seed, init, label)

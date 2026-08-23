@@ -224,38 +224,6 @@ object Resample:
           case Method.Linear => trilinear(source, target)
           case Method.Cubic => tricubic(source, target)
 
-    given Resampleable[ClusteredNeuroVol] with
-      type Out = ClusteredNeuroVol
-      def apply(source: ClusteredNeuroVol, target: NeuroSpace, method: Method): ClusteredNeuroVol =
-        val labelVol: NeuroVol[Int] = source.toDense
-        val resLabels = nearest(labelVol, target, fill = 0)
-        val resMask = nearest(source.mask, target, fill = false)
-
-        val targ = target.spatialSpace
-        val spatialNels = targ.spatialDims.product
-        val keepFlags = PrimitiveBuffers.fillConst[Boolean](spatialNels, false)
-
-        var lin = 0
-        while lin < spatialNels do
-          if resMask.valueAtCanonicalOrdinal(lin) &&
-              resLabels.valueAtCanonicalOrdinal(lin) != 0
-          then keepFlags(lin) = true
-          lin += 1
-
-        val outMask = NeuroVol.copyFromCanonicalArray[Boolean](keepFlags, targ, source.label)
-        val activeIdx = Mask.indices(outMask)
-        val outClusters =
-          RavelArray.tabulate[Int](activeIdx.size): i =>
-            resLabels.valueAtCanonicalOrdinal(activeIdx(i))
-
-        val idsPresent =
-          Vector.tabulate(outClusters.size)(i => outClusters(i)).distinct.toSet
-        val outLabelMap =
-          if source.labelMap.isEmpty then Map.empty[Int, String]
-          else source.labelMap.filter { case (k, _) => idsPresent.contains(k) }
-
-        ClusteredNeuroVol(outMask, outClusters, outLabelMap, source.label)
-
   trait HasSpace[T]:
     def spaceOf(target: T): NeuroSpace
 
@@ -268,9 +236,6 @@ object Resample:
 
     given [A]: HasSpace[NeuroVec[A]] with
       def spaceOf(target: NeuroVec[A]): NeuroSpace = target.space
-
-    given HasSpace[ClusteredNeuroVol] with
-      def spaceOf(target: ClusteredNeuroVol): NeuroSpace = target.space
 
   def resampleTo[A, T](
     source: A,

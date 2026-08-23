@@ -46,6 +46,10 @@ object RadialActiveVoxels:
         .requireSpatialD3(space)
         .left
         .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
+      _ <- RadialMaskOrder.checked(
+        activeIndices.toVector,
+        spatial.grid.shape.product
+      )
       resolution <- GridDomain
         .register(
           spatial.grid,

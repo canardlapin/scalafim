@@ -1,5 +1,6 @@
 package scalafim.fmri.mvpa.spatial
 
+import image4s.ImageMetadata
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.image.*
@@ -40,11 +41,14 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
       origin = Some(Vector(0.0, 0.0, 0.0))
     )
 
-  private def labelVolume: NeuroVol[Int] =
-    NeuroVol.copyFromCanonicalArray(
-      PrimitiveBuffers.fromArray(Array(0, 2, 1, 2, 1, 0)),
-      volumeSpace
-    )
+  private def labelVolume: SomeLabelVolume[Int] =
+    NeuroVolume
+      .copyCategoricalFromCanonicalArray(
+        VolumeSpace(volumeSpace).sampleSpace,
+        PrimitiveBuffers.fromArray(Array(0, 2, 1, 2, 1, 0)),
+        ImageMetadata.named("labels")
+      )
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def toyVolumeAtlas: VolumeAtlas =
     val regions =
@@ -63,7 +67,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         coordSpace = SpaceId.Custom,
         confidence = Confidence.Exact
       )
-    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume, label = "toy")
+    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume)
 
   private def fourFeaturePatterns: PatternMatrix =
     PatternMatrix.fromRows(
@@ -239,11 +243,18 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
   }
 
   test("typed spatial errors convert to MVPA compatibility errors") {
-    val badLabels =
-      NeuroVol.copyFromCanonicalArray(
-        PrimitiveBuffers.fromArray(Array(0, -1, 1, 1, 0, 0)),
-        volumeSpace
-      )
+    val badLabels: SomeLabelVolume[Int] =
+      NeuroVolume
+        .copyCategoricalFromCanonicalArray(
+          VolumeSpace(volumeSpace).sampleSpace,
+          PrimitiveBuffers.fromArray(Array(0, -1, 1, 1, 0, 0)),
+          ImageMetadata.named("bad labels")
+        )
+        .map(SomeNeuroVolume.eraseSpace)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
     val typedError = SpatialFeatureSetPlans.volumeLabels("bad", badLabels).swap.toOption.get
     val mvpaError = SpatialFeatureSetPlans.fromVolumeLabels("bad", badLabels).swap.toOption.get
 

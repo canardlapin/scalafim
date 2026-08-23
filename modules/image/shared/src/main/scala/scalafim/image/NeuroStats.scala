@@ -178,19 +178,6 @@ object NeuroStats:
       naRm
     )
 
-  def summarize(cvec: ClusteredNeuroVec[Double]): NeuroVecSummary =
-    summarize(cvec, naRm = true)
-
-  def summarize(cvec: ClusteredNeuroVec[Double], naRm: Boolean): NeuroVecSummary =
-    summarizeSparseVec(
-      "ClusteredNeuroVec",
-      cvec.space,
-      cvec.nVolumes,
-      cvec.numClusters,
-      (time, cluster) => cvec.ts(time, cluster),
-      naRm
-    )
-
   def temporalMean(vec: NeuroVec[Double]): NeuroVol[Double] =
     val spatialNels = vec.space.spatialDims.product
     val tLen = vec.nVolumes
@@ -388,12 +375,6 @@ object NeuroCompare:
       out(i) = test(scalar, x.valueAtCanonicalOrdinal(i), predicate)
       i += 1
     NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
-
-  def compare(x: ClusteredNeuroVol, scalar: Int, predicate: Predicate): NeuroVol[Boolean] =
-    compare(x.toDense, scalar, predicate)
-
-  def compare(scalar: Int, x: ClusteredNeuroVol, predicate: Predicate): NeuroVol[Boolean] =
-    compare(scalar, x.toDense, predicate)
 
   @scala.annotation.targetName("compareNeuroVecPair")
   def compare[A: Order](x: NeuroVec[A], y: NeuroVec[A], predicate: Predicate): NeuroVec[Boolean] =

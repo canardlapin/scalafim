@@ -20,6 +20,10 @@ object NeuroVol:
     volume
 
   extension [A](volume: NeuroVol[A])
+    /** Zero-wrapper escape from the temporary compatibility name. */
+    inline def toNative: AnyNeuroVolume[A] =
+      volume
+
     inline def label: String =
       volume.metadata.label
 

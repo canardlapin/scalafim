@@ -44,7 +44,7 @@ object BrainnetomeLoader:
     networkPath: Option[Path] = None
   ): VolumeAtlas =
     val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
-    val presentIds = presentRegionIds(labelVol)
+    val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val networkText = networkPath.map(path => Files.readString(path, StandardCharsets.UTF_8))
     val allRegions = parseLut(Files.readString(lutPath, StandardCharsets.UTF_8), networkText, spec)
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))
@@ -59,7 +59,7 @@ object BrainnetomeLoader:
         AtlasProvenance.loaded(ref, regions, allRegions.map(_.id)),
         localFiles*
       )
-    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
+    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, provenance)
 
   def refFor(spec: Brainnetome246 = Brainnetome246.default): VolumeAtlasRef =
     val a = assets(spec)
@@ -246,12 +246,3 @@ object BrainnetomeLoader:
       case "16" => Some("Default A")
       case "17" => Some("Default B")
       case _ => None
-
-  private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
-    val out = scala.collection.mutable.Set.empty[RegionId]
-    var i = 0
-    while i < vol.values.size do
-      val id = vol.valueAtCanonicalOrdinal(i)
-      if id > 0 then out += RegionId(id)
-      i += 1
-    out.toSet

@@ -50,7 +50,7 @@ object GlasserLoader:
 
   def loadFromPaths(spec: GlasserHcpMmp1, volumePath: Path, labelPath: Path): VolumeAtlas =
     val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
-    val presentIds = presentRegionIds(labelVol)
+    val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val allRegions = parseLabels(Files.readString(labelPath, StandardCharsets.UTF_8))
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))
     val ref = refFor(spec)
@@ -60,7 +60,7 @@ object GlasserLoader:
         ArtifactRole.ParcellationVolume -> volumePath,
         ArtifactRole.LabelTable -> labelPath
       )
-    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
+    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, provenance)
 
   def refFor(spec: GlasserHcpMmp1): VolumeAtlasRef =
     val a = assets(spec)
@@ -122,12 +122,3 @@ object GlasserLoader:
         )
       }
       .toVector
-
-  private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
-    val out = scala.collection.mutable.Set.empty[RegionId]
-    var i = 0
-    while i < vol.values.size do
-      val id = vol.valueAtCanonicalOrdinal(i)
-      if id > 0 then out += RegionId(id)
-      i += 1
-    out.toSet

@@ -3,8 +3,10 @@ package scalafim.atlas
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
+import locus4s.FiniteDomain
+import locus4s.Relation
+import locus4s.data.Field
 import scalafim.image.Indexing
-import scalafim.locus.{IndexedField, Relation}
 
 enum VoxelConnectivity:
   case Connect6, Connect18, Connect26
@@ -24,7 +26,7 @@ final case class ParcelContact(
 trait ParcelAdjacencyRelation:
   type P
   val relation: Relation[P, P]
-  val regionIds: IndexedField[P, RegionId]
+  val regionIds: Field[P, RegionId]
 
 object RegionGraph:
   def topology(
@@ -71,8 +73,8 @@ object RegionGraph:
       atlas: VolumeAtlas,
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
   ): Vector[ParcelContact] =
-    val vol = atlas.labelVolume
-    val dims = atlas.space.spatialDims
+    val realization = atlas.realization
+    val dims = realization.domain.grid.shape
     val counts = scala.collection.mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
     val offsets = positiveOffsets(connectivity)
 
@@ -82,16 +84,26 @@ object RegionGraph:
       while y < dims(1) do
         var x = 0
         while x < dims(0) do
-          val a = vol.valueAtCanonicalOrdinal(Indexing.gridToIndex3D(dims, x, y, z))
-          if a != 0 then
+          val a =
+            regionIdAtOrdinal(
+              realization,
+              Indexing.gridToIndex3D(dims, x, y, z)
+            )
+          a.foreach: first =>
             offsets.foreach { off =>
               val x2 = x + off(0)
               val y2 = y + off(1)
               val z2 = z + off(2)
               if x2 >= 0 && x2 < dims(0) && y2 >= 0 && y2 < dims(1) && z2 >= 0 && z2 < dims(2) then
-                val b = vol.valueAtCanonicalOrdinal(Indexing.gridToIndex3D(dims, x2, y2, z2))
-                if b != 0 && b != a then
-                  val key = if a < b then (a, b) else (b, a)
+                val b =
+                  regionIdAtOrdinal(
+                    realization,
+                    Indexing.gridToIndex3D(dims, x2, y2, z2)
+                  )
+                b.filter(_ != first).foreach: second =>
+                  val key =
+                    if first < second then (first, second)
+                    else (second, first)
                   counts.update(key, counts(key) + 1)
             }
           x += 1
@@ -112,43 +124,43 @@ object RegionGraph:
       atlas: VolumeAtlas,
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
   ): ParcelAdjacencyRelation =
-    val quotient = atlas.quotient
+    val realization = atlas.realization
     val voxelRelation =
       ambientRelation(
-        quotient.parcellation.ambient,
-        atlas.space.spatialDims,
+        realization.domain.space,
+        realization.domain.grid.shape,
         connectivity
       )
     // Composition is total when the shared boundary type matches, which it
     // does here by construction: parcel -> voxel -> voxel -> parcel.
     val projected =
-      quotient.parcellation.quotientRelation.converse
+      realization.parcelAssignment.toRelation.toOption.get.converse
         .andThen(voxelRelation)
-        .andThen(quotient.parcellation.quotientRelation)
+        .andThen(realization.parcelAssignment.toRelation.toOption.get)
     val withoutSelf =
       val rows =
-        Iterator.tabulate(quotient.parcellation.parcels.size): source =>
+        Iterator.tabulate(realization.parcelDomain.size): source =>
           projected
-            .row(quotient.parcellation.parcels.indexOption(source).get)
+            .row(realization.parcelDomain.indexOption(source).get)
             .ordinalsInDomainOrder
             .filter(_ != source)
             .iterator
       Relation
         .fromOrdinalRows(
-          quotient.parcellation.parcels,
-          quotient.parcellation.parcels,
+          realization.parcelDomain,
+          realization.parcelDomain,
           rows
         )
         .toOption
         .get
 
     new ParcelAdjacencyRelation:
-      type P = quotient.P
+      type P = realization.P
       val relation: Relation[P, P] = withoutSelf
-      val regionIds: IndexedField[P, RegionId] = quotient.regionIds
+      val regionIds: Field[P, RegionId] = realization.regionIds
 
   private def ambientRelation[X](
-      space: scalafim.locus.FiniteDomain[X],
+      space: FiniteDomain[X],
       dims: Vector[Int],
       connectivity: VoxelConnectivity
   ): Relation[X, X] =
@@ -172,6 +184,14 @@ object RegionGraph:
       .fromOrdinalRows(space, space, rows.iterator.map(_.iterator))
       .toOption
       .get
+
+  private def regionIdAtOrdinal(
+      realization: VolumeAtlasRealization,
+      ordinal: Int
+  ): Option[Int] =
+    val voxel = realization.domain.space.indexAtValidatedOrdinal(ordinal)
+    realization.parcelAssignment(voxel).map: parcel =>
+      realization.metadata(parcel).id.value
 
   private def allOffsets(
       connectivity: VoxelConnectivity

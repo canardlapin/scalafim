@@ -141,40 +141,6 @@ class OrientationResampleSuite extends munit.FunSuite:
       case other => fail(s"expected UnknownMethod, got $other")
   }
 
-  test("ClusteredNeuroVol resampling is nearest-only and preserves labelMap") {
-    val sp = NeuroSpace(Vector(4, 4, 4))
-    val idx = Array(
-      sp.gridToIndex3D(0, 0, 0),
-      sp.gridToIndex3D(1, 0, 0),
-      sp.gridToIndex3D(0, 1, 0),
-      sp.gridToIndex3D(1, 1, 0),
-      sp.gridToIndex3D(0, 0, 1),
-      sp.gridToIndex3D(1, 0, 1),
-      sp.gridToIndex3D(0, 1, 1),
-      sp.gridToIndex3D(1, 1, 1)
-    )
-    val mask = Mask.fromIndices(sp, idx)
-    val clusters = Array(1, 1, 1, 1, 2, 2, 2, 2)
-    val labelMap = Map(1 -> "regionA", 2 -> "regionB")
-    val cvol = ClusteredNeuroVol(mask, clusters, labelMap)
-
-    // method is ignored for clustered resampling
-    val out = Resample.resampleTo(cvol, sp, method = Resample.Method.Cubic)
-    assertEquals(out.space, sp, clue = "")
-    assertEquals(out.clusterIds, Vector(1, 2), clue = "")
-    assertEquals(out.labelMap, labelMap, clue = "")
-
-    val targVol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](4 * 4 * 4, 0.0), sp)
-    val out2 = Resample.resampleTo(cvol, targVol, method = "linear")
-    assertEquals(out2.space, sp, clue = "")
-    assertEquals(out2.clusterIds, Vector(1, 2), clue = "")
-
-    // Ops syntax
-    val ras = sp.reorient("R", "A", "S")
-    val v2 = targVol.resampleTo(ras, "nearest")
-    assertEquals(v2.space.dims, ras.dims, clue = "")
-  }
-
   test("resampleTo accepts NeuroVol/NeuroVec targets (plus Ops syntax)") {
     val spSrc = NeuroSpace(Vector(2, 2, 2))
     val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)

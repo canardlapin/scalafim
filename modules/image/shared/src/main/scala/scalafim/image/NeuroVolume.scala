@@ -81,6 +81,10 @@ object AnyNeuroVolume:
     volume
 
   extension [A](volume: AnyNeuroVolume[A])
+    /** Exact spatial sample space retained by this native volume. */
+    def volumeSpace: VolumeSpace =
+      VolumeSpace.unsafe(NeuroSpace.fromCanonical(volume.sampleSpace))
+
     inline def apply(x: Int, y: Int, z: Int): A =
       volume.data(x, y, z)
 
@@ -139,6 +143,10 @@ object SomeNeuroVolume:
     sampled
 
   extension [A, Sem](volume: SomeNeuroVolume[A, Sem])
+    /** Exact spatial sample space retained by this semantic volume. */
+    def volumeSpace: VolumeSpace =
+      VolumeSpace.unsafe(NeuroSpace.fromCanonical(volume.sampleSpace))
+
     inline def apply(x: Int, y: Int, z: Int): A =
       volume.data(x, y, z)
 

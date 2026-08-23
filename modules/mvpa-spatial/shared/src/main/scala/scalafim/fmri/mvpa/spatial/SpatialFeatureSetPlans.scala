@@ -4,14 +4,17 @@ import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.image.{
   ExactVolumeSearchlight,
+  Indexing,
   Mask,
-  NeuroVol,
   SelectedVolumeWindow,
   SearchlightRadius,
+  SomeLabelVolume,
   VolumeDomain,
   VolumeNeighborhoods,
   VolumeSpace
 }
+import scalafim.image.SomeNeuroVolume.*
+import scalafim.image.VolumeSpace.*
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 import locus4s.DomainRegistry
 import locus4s.Index
@@ -23,13 +26,14 @@ object SpatialFeatureSetPlans:
 
   def volumeLabels(
       name: String,
-      labels: NeuroVol[Int],
+      labels: SomeLabelVolume[Int],
     background: Set[Int] = Set(0)
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
     var lin = 0
-    while lin < labels.values.size do
-      val label = labels.valueAtCanonicalOrdinal(lin)
+    while lin < labels.data.size do
+      val coordinate = Indexing.indexToGrid3D(labels.grid.shape, lin)
+      val label = labels(coordinate(0), coordinate(1), coordinate(2))
       if !background.contains(label) then
         if label < 0 then return Left(SpatialPlanError.InvalidVolumeLabel(label))
         byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
@@ -43,12 +47,19 @@ object SpatialFeatureSetPlans:
         label = Some(id.toString)
       )
     }.flatMap { sets =>
-      regionalPlan(name, SpatialFeatureDomain.VolumeLabels(labels.space, background), sets)
+      regionalPlan(
+        name,
+        SpatialFeatureDomain.VolumeLabels(
+          labels.volumeSpace.toNeuroSpace,
+          background
+        ),
+        sets
+      )
     }
 
   def fromVolumeLabels(
       name: String,
-      labels: NeuroVol[Int],
+      labels: SomeLabelVolume[Int],
       background: Set[Int] = Set(0)
   ): Either[MvpaError, FeatureSetPlan] =
     toMvpaPlan(volumeLabels(name, labels, background))
@@ -58,14 +69,6 @@ object SpatialFeatureSetPlans:
       atlas: VolumeAtlas,
       coveragePolicy: ParcelCoveragePolicy = ParcelCoveragePolicy.RequireEveryRegion
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
-    val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
-    var lin = 0
-    while lin < atlas.labelVolume.values.size do
-      val label = atlas.labelVolume.valueAtCanonicalOrdinal(lin)
-      if label != 0 then
-        byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += LinearVoxelIndex.unsafe(lin)
-      lin += 1
-
     val covered =
       Vector.newBuilder[
         (AtlasRegionMetadata, Vector[LinearVoxelIndex])
@@ -74,7 +77,12 @@ object SpatialFeatureSetPlans:
     var i = 0
     while i < regions.length do
       val region = regions(i)
-      val indices = byLabel.get(region.id.value).map(_.toVector).getOrElse(Vector.empty)
+      val indices =
+        atlas.realization
+          .region(region.id)
+          .fold(Vector.empty[LinearVoxelIndex])(
+            _.ordinalsInDomainOrder.map(LinearVoxelIndex.unsafe).toVector
+          )
       if indices.isEmpty then
         coveragePolicy match
           case ParcelCoveragePolicy.RequireEveryRegion =>

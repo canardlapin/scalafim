@@ -310,12 +310,6 @@ object Orientation:
   ): NeuroVec[A] =
     vec.copy(space = reorient(vec.space, orientation))
 
-  def reorient(cvol: ClusteredNeuroVol, orient: Seq[String]): ClusteredNeuroVol =
-    cvol.copy(mask = reorient(cvol.mask, orient))
-
-  def reorient(cvol: ClusteredNeuroVol, orientation: Orientation3D): ClusteredNeuroVol =
-    cvol.copy(mask = reorient(cvol.mask, orientation))
-
   private def axisFromCode(code: Int): Either[OrientationError, AnatomicalAxis] =
     code match
       case 1 => Right(AnatomicalAxis.L)

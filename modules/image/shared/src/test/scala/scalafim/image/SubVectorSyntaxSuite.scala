@@ -71,17 +71,9 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
     assertEquals(first.iterator.toVector, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
   }
 
-  test("ClusteredNeuroVec and NeuroVecSeq support apply subsetting syntax") {
+  test("NeuroVecSeq supports apply subsetting syntax") {
     val sp = NeuroSpace(Vector(2, 2, 1, 3))
     val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](12)(_.toDouble), sp)
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 1, 2, 3))
-    val cvol = ClusteredNeuroVol(mask, Array(1, 1, 2, 2))
-    val cvec = ClusteredNeuroVec.fromNeuroVecMean(vec, cvol)
-    val csub = cvec(Seq(0, 2))
-
-    assertEquals(csub.space.dims, Vector(2, 2, 1, 2), clue = "")
-    assertEquals(csub.ts.shape, Shape(2, 2), clue = "")
-
     val seq = NeuroVecSeq(Vector(vec.subVector(Seq(0, 1)), vec.subVector(Seq(2))))
     val seqSub = seq(Seq(1, 2))
     assertEquals(seqSub.length, 2, clue = "")

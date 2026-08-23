@@ -13,6 +13,7 @@ import scalafim.surface.{
   ParcelUnit,
   SurfaceKind,
   SurfaceParcels,
+  SurfaceGeometry,
   VertexId
 }
 
@@ -53,45 +54,67 @@ final case class SurfaceAtlasPayload(labels: HemispherePair[LabeledSurface]):
   private def labelTableIds(surface: LabeledSurface): Set[Int] =
     surface.table.iterator.map(_.id).filter(_ != 0).toSet
 
-final case class SurfaceAtlas(
-  ref: AtlasRef,
-  regions: RegionIndex,
-  payload: SurfaceAtlasPayload,
-  provenance: AtlasProvenance
+/** A surface atlas whose sole membership owner is its bilateral exact map.
+  *
+  * Surface geometry and label-table metadata are retained because they are
+  * not membership representations. `LabeledSurface` values are explicit
+  * materializations derived from the assignment.
+  */
+final class SurfaceAtlas private (
+    val realization: SurfaceAtlasRealization,
+    private val leftGeometry: SurfaceGeometry,
+    private val rightGeometry: SurfaceGeometry,
+    private val leftTable: Vector[LabelInfo],
+    private val rightTable: Vector[LabelInfo],
+    private val leftLabel: String,
+    private val rightLabel: String
 ) extends Atlas:
-  require(ref.representation == AtlasRepresentation.Surface, "SurfaceAtlas requires surface representation")
+  def ref: AtlasRef =
+    realization.ref
 
-  private val regionIdSet: Set[Int] =
-    regions.ids.map(_.value).toSet
+  def provenance: AtlasProvenance =
+    realization.provenance
 
-  private val payloadIdSet: Set[Int] =
-    payload.presentLabelIds
-
-  require(
-    payloadIdSet == regionIdSet,
-    AtlasError.InvalidRegionMetadata(
-      s"surface payload labels must match region ids; missing=${regionIdSet.diff(payloadIdSet).toVector.sorted.mkString(",")} extra=${payloadIdSet.diff(regionIdSet).toVector.sorted.mkString(",")}"
-    ).message
-  )
-
-  lazy val quotient: SurfaceAtlasQuotient =
-    AtlasQuotient.surface(ref.coordSpace.value, ref.name, regions, payload)
-
-  require(
-    payload.tableIds.subsetOf(regionIdSet),
-    AtlasError.InvalidRegionMetadata(
-      s"surface label tables contain ids not present in regions: ${payload.tableIds.diff(regionIdSet).toVector.sorted.mkString(",")}"
-    ).message
-  )
+  lazy val regions: RegionIndex =
+    RegionIndex(
+      realization.displayOrder.indices
+        .map(realization.metadata.apply)
+        .toVector
+    )
 
   def left: LabeledSurface =
-    payload.left
+    materialize(
+      SurfaceHemisphere.Left,
+      leftGeometry,
+      leftTable,
+      leftLabel
+    )
 
   def right: LabeledSurface =
-    payload.right
+    materialize(
+      SurfaceHemisphere.Right,
+      rightGeometry,
+      rightTable,
+      rightLabel
+    )
 
   def surface(hemisphere: SurfaceHemisphere): LabeledSurface =
-    payload.surface(hemisphere)
+    hemisphere match
+      case SurfaceHemisphere.Left => left
+      case SurfaceHemisphere.Right => right
+      case other =>
+        throw new IllegalArgumentException(
+          s"surface atlas requires left or right hemisphere, got ${other.code}"
+        )
+
+  def vertexCount(hemisphere: SurfaceHemisphere): Int =
+    hemisphere match
+      case SurfaceHemisphere.Left => realization.leftVertexCount
+      case SurfaceHemisphere.Right => realization.rightVertexCount
+      case other =>
+        throw new IllegalArgumentException(
+          s"surface atlas requires left or right hemisphere, got ${other.code}"
+        )
 
   def region(id: RegionId): Option[AtlasRegionMetadata] =
     regions.get(id)
@@ -100,13 +123,34 @@ final case class SurfaceAtlas(
     regions.find(label, hemisphere)
 
   def labelIdAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[RegionId] =
-    surface(hemisphere).labelAt(vertex).filter(_ != 0).map(RegionId(_))
+    val offset =
+      hemisphere match
+        case SurfaceHemisphere.Left => 0
+        case SurfaceHemisphere.Right => realization.leftVertexCount
+        case other =>
+          throw new IllegalArgumentException(
+            s"surface atlas requires left or right hemisphere, got ${other.code}"
+          )
+    if vertex.index < 0 || vertex.index >= vertexCount(hemisphere) then None
+    else
+      realization.parcelAssignment.from
+        .indexOption(offset + vertex.index)
+        .flatMap(realization.parcelAssignment.apply)
+        .map(parcel => realization.metadata(parcel).id)
 
   def regionAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[AtlasRegionMetadata] =
     labelIdAt(hemisphere, vertex).flatMap(regions.get)
 
   def labelInfo(hemisphere: SurfaceHemisphere, id: RegionId): Option[LabelInfo] =
-    surface(hemisphere).info(id.value)
+    val table =
+      hemisphere match
+        case SurfaceHemisphere.Left => leftTable
+        case SurfaceHemisphere.Right => rightTable
+        case other =>
+          throw new IllegalArgumentException(
+            s"surface atlas requires left or right hemisphere, got ${other.code}"
+          )
+    table.find(_.id == id.value)
 
   def parcelUnits(
     hemisphere: SurfaceHemisphere,
@@ -136,10 +180,30 @@ final case class SurfaceAtlas(
     val labeled = surface(hemisphere)
     SurfaceParcels.distanceMatrix(labeled, MeshTopology.from(labeled.geometry.mesh), method, policy = policy, ignoredLabels = ignoredLabels)
 
-object SurfaceAtlas:
-  def apply(ref: AtlasRef, regions: RegionIndex, payload: SurfaceAtlasPayload): SurfaceAtlas =
-    new SurfaceAtlas(ref, regions, payload, AtlasProvenance.fromRef(ref, regions))
+  private def materialize(
+      hemisphere: SurfaceHemisphere,
+      geometry: SurfaceGeometry,
+      table: Vector[LabelInfo],
+      label: String
+  ): LabeledSurface =
+    val size = vertexCount(hemisphere)
+    val indices = Array.newBuilder[Int]
+    val labels = Array.newBuilder[Int]
+    var vertex = 0
+    while vertex < size do
+      labelIdAt(hemisphere, VertexId(vertex)).foreach: id =>
+        indices += vertex
+        labels += id.value
+      vertex += 1
+    LabeledSurface(
+      geometry,
+      indices.result(),
+      labels.result(),
+      table,
+      label
+    )
 
+object SurfaceAtlas:
   def fromLabeledSurfaces(
     ref: AtlasRef,
     regions: RegionIndex,
@@ -155,7 +219,34 @@ object SurfaceAtlas:
     right: LabeledSurface,
     provenance: AtlasProvenance
   ): SurfaceAtlas =
-    SurfaceAtlas(ref, regions, SurfaceAtlasPayload(HemispherePair(left, right)), provenance)
+    val payload =
+      SurfaceAtlasPayload(HemispherePair(left, right))
+    val regionIds = regions.ids.iterator.map(_.value).toSet
+    val payloadIds = payload.presentLabelIds
+    require(
+      payloadIds == regionIds,
+      AtlasError.InvalidRegionMetadata(
+        s"surface payload labels must match region ids; missing=${regionIds.diff(payloadIds).toVector.sorted.mkString(",")} extra=${payloadIds.diff(regionIds).toVector.sorted.mkString(",")}"
+      ).message
+    )
+    val unknownTableIds = payload.tableIds.diff(regionIds)
+    require(
+      unknownTableIds.isEmpty,
+      AtlasError.InvalidRegionMetadata(
+        s"surface label tables contain ids not present in regions: ${unknownTableIds.toVector.sorted.mkString(",")}"
+      ).message
+    )
+    val realization =
+      AtlasRealization.surface(ref, regions, payload, provenance)
+    new SurfaceAtlas(
+      realization,
+      left.geometry,
+      right.geometry,
+      left.table,
+      right.table,
+      left.label,
+      right.label
+    )
 
 enum SurfaceSamplingMethod:
   case NearestLabel, RibbonMode, RibbonMean

@@ -91,7 +91,11 @@ object AtlasParityFixtures:
     )
 
   def atlas(): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.copyFromCanonicalArray(labelData(), space), label = "noncontig")
+    VolumeAtlas.fromLabelVolume(
+      ref,
+      regions,
+      AtlasTestImages.labelVolume(space, labelData(), label = "noncontig")
+    )
 
   def comparisonAtlas(): VolumeAtlas =
     val comparisonRegions =
@@ -105,20 +109,26 @@ object AtlasParityFixtures:
     VolumeAtlas.fromLabelVolume(
       ref.copy(family = "neuroatlas-parity-comparison", model = "ComparisonFixture"),
       comparisonRegions,
-      NeuroVol.copyFromCanonicalArray(comparisonLabelData(), space),
-      label = "comparison"
+      AtlasTestImages.labelVolume(
+        space,
+        comparisonLabelData(),
+        label = "comparison"
+      )
     )
 
-  def dataVolume(): NeuroVol[Double] =
+  def dataVolume(atlas: VolumeAtlas): SomeScalarVolume[Double] =
     val labels = labelData()
     val out = Array.ofDim[Double](labels.length)
     var i = 0
     while i < labels.length do
       out(i) = parcelMeans.getOrElse(labels(i), 0.0)
       i += 1
-    NeuroVol.copyFromCanonicalArray(out, space, label = "parcel-means")
+    AtlasTestImages.scalarVolume(atlas, out, label = "parcel-means")
 
-  def dataVec(nTime: Int = 3): NeuroVec[Double] =
+  def dataSeries(
+      atlas: VolumeAtlas,
+      nTime: Int = 3
+  ): SomeScalarSeries[Double] =
     val labels = labelData()
     val spatialNels = dims.product
     val out = Array.ofDim[Double](spatialNels * nTime)
@@ -129,13 +139,26 @@ object AtlasParityFixtures:
         out(i * nTime + t) = parcelMeans.getOrElse(labels(i), 0.0) * (t + 1).toDouble
         i += 1
       t += 1
-    NeuroVec.copyFromCanonicalArray(out, space.addDim(nTime, Some(Axis.Time)), label = "parcel-series")
+    AtlasTestImages.scalarSeries(
+      atlas,
+      out,
+      nTime,
+      label = "parcel-series"
+    )
 
-  def fullMask(): NeuroVol[Boolean] =
-    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](dims.product, true), space, label = "full")
+  def fullMask(atlas: VolumeAtlas): SomeMaskVolume =
+    AtlasTestImages.maskVolume(
+      atlas,
+      PrimitiveBuffers.fillConst[Boolean](dims.product, true),
+      label = "full"
+    )
 
-  def emptyMask(): NeuroVol[Boolean] =
-    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](dims.product, false), space, label = "empty")
+  def emptyMask(atlas: VolumeAtlas): SomeMaskVolume =
+    AtlasTestImages.maskVolume(
+      atlas,
+      PrimitiveBuffers.fillConst[Boolean](dims.product, false),
+      label = "empty"
+    )
 
   def labelData(): Array[Int] =
     val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)

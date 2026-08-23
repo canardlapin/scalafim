@@ -58,6 +58,12 @@ enum ParcelSeriesError:
       case InvalidImage(error) => error.message
       case InvalidNativeImage(error) => error.message
 
+type SomeParcelSeries[A, Sem] =
+  ParcelSeries[? <: Frame[D3], ?, ?, A, Sem]
+
+type SomeScalarParcelSeries[A] =
+  SomeParcelSeries[A, image4s.Continuous]
+
 /** Parcel-major samples retaining one exact parcellation and one Ravel array.
   *
   * Storage shape is `(parcel, time)`. Ravel's last-axis-fastest layout makes

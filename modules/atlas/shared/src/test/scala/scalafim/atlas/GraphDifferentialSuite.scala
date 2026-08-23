@@ -5,7 +5,6 @@ import scala.collection.mutable
 import scalafim.image.Indexing
 import scalafim.image.PrimitiveBuffers
 import scalafim.image.NeuroSpace
-import scalafim.image.NeuroVol
 
 class GraphDifferentialSuite extends munit.FunSuite:
   private val dimensions = Vector(3, 3, 2)
@@ -39,8 +38,11 @@ class GraphDifferentialSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
-      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(labels.toArray), space),
-      "graph-differential"
+      AtlasTestImages.labelVolume(
+        space,
+        PrimitiveBuffers.fromArray(labels.toArray),
+        "graph-differential"
+      )
     )
 
   test("region contact counts match an independent full-neighborhood oracle"):
