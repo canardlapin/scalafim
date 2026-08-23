@@ -26,7 +26,10 @@ final case class VolumeAtlas(
   require(regionIdSet == payloadIdSet, "region ids must match volume cluster ids")
 
   lazy val quotient: VolumeAtlasQuotient =
-    AtlasQuotient.volume(ref.coordSpace.value, ref.name, regions, volume)
+    AtlasQuotient.volume(ref, regions, volume, provenance)
+
+  lazy val realization: VolumeAtlasRealization =
+    quotient
 
   def space: NeuroSpace =
     volume.space

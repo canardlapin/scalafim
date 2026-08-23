@@ -138,6 +138,46 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     assertEquals(featureSet.featureIndices.map(_.value), Vector(1, 3, 4, 5, 7))
   }
 
+  test("asymmetric ROI centers and members use canonical locus ordinals") {
+    val space =
+      NeuroSpace(
+        dims = Vector(2, 3, 2),
+        spacing = Some(Vector(1.0, 1.0, 1.0)),
+        origin = Some(Vector(0.0, 0.0, 0.0))
+      )
+    val window =
+      Searchlight.sphericalRoi(
+        space,
+        Vector(1, 0, 0),
+        radius = 1.0,
+        fill = 1,
+        mask = None,
+        label = "asymmetric-center"
+      )
+    val plan =
+      SpatialFeatureSetPlans
+        .roiWindows("asymmetric-window", Vector(window))
+        .toOption
+        .get
+        .plan
+    val featureSet = plan.featureSets.head
+
+    assertEquals(window.parentIndex, 1)
+    assertEquals(
+      Vector.tabulate(window.selection.size)(
+        window.selection.linearIndices.apply
+      ),
+      Vector(0, 1, 7, 3)
+    )
+    assertEquals(featureSet.id.value, 6)
+    assertEquals(featureSet.center.map(_.value), Some(6))
+    assertEquals(
+      featureSet.featureIndices.map(_.value),
+      Vector(0, 6, 7, 8)
+    )
+    assertEquals(featureSet.label, Some("asymmetric-center"))
+  }
+
   test("searchlight mask plans run through the MVPA engine") {
     val space =
       NeuroSpace(

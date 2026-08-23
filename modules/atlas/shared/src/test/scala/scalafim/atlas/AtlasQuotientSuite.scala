@@ -1,5 +1,6 @@
 package scalafim.atlas
 
+import locus4s.DomainRegistry
 import scalafim.atlas.syntax.*
 import scalafim.image.*
 import scalafim.surface.{
@@ -49,13 +50,100 @@ class AtlasQuotientSuite extends munit.FunSuite:
     assertEquals(quotient.metadata(parcelTwo).label, "Second")
     assertEquals(quotient.metadata(parcelOne).label, "First")
     assertEquals(
-      quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
+      intValues(
+        quotient.domain
+          .voxelRegion(quotient.region(RegionId(1)).get)
+          .toOption
+          .get
+          .linearIndices
+      ),
       Vector(0, 1)
     )
     assertEquals(
-      quotient.region(RegionId(2)).get.ordinalsInDomainOrder.toVector,
+      intValues(
+        quotient.domain
+          .voxelRegion(quotient.region(RegionId(2)).get)
+          .toOption
+          .get
+          .linearIndices
+      ),
       Vector(2, 3)
     )
+
+  test("asymmetric volume assignment fibers preserve legacy label coordinates"):
+    val space = NeuroSpace(Vector(2, 3, 2))
+    val atlas =
+      VolumeAtlas.fromLabelVolume(
+        volumeRef,
+        RegionIndex(
+          Vector(
+            Region(RegionId(1), "Even x"),
+            Region(RegionId(2), "Odd x")
+          )
+        ),
+        NeuroVol.fromLinear(
+          PrimitiveBuffers.fromArray(
+            Array.tabulate(12)(legacy =>
+              if legacy % 2 == 0 then 1 else 2
+            )
+          ),
+          space
+        )
+      )
+    val quotient = atlas.quotient
+
+    assertEquals(
+      intValues(
+        quotient.domain
+          .voxelRegion(quotient.region(RegionId(1)).get)
+          .toOption
+          .get
+          .linearIndices
+      ),
+      Vector(0, 2, 4, 6, 8, 10)
+    )
+    assertEquals(
+      intValues(
+        quotient.domain
+          .voxelRegion(quotient.region(RegionId(2)).get)
+          .toOption
+          .get
+          .linearIndices
+      ),
+      Vector(1, 3, 5, 7, 9, 11)
+    )
+
+  test("atlas voxel, parcel, and network domains share one explicit scope"):
+    val atlas = volumeAtlas()
+    val first =
+      AtlasQuotient
+        .volumeIn(
+          DomainRegistry.empty,
+          atlas.ref,
+          atlas.regions,
+          atlas.volume,
+          atlas.provenance
+        )
+        .toOption
+        .get
+    val restored =
+      AtlasQuotient
+        .volumeIn(
+          first.registry,
+          atlas.ref,
+          atlas.regions,
+          atlas.volume,
+          atlas.provenance
+        )
+        .toOption
+        .get
+    val independent = atlas.quotient
+
+    assert(first.domain.finiteSpace.sameRuntimeOwnerAs(restored.domain.finiteSpace))
+    assert(first.parcelAssignment.to.sameRuntimeOwnerAs(restored.parcelAssignment.to))
+    assert(!first.domain.finiteSpace.sameRuntimeOwnerAs(independent.domain.finiteSpace))
+    assert(first.domain.finiteSpace.samePersistentIdentityAs(independent.domain.finiteSpace))
+    assertEquals(first.registry.size, 3)
 
   test("metadata changes do not change extensional region identity"):
     val original = volumeAtlas()
@@ -78,9 +166,9 @@ class AtlasQuotientSuite extends munit.FunSuite:
 
   test("network regions are fibers of the composed quotient"):
     val quotient = volumeAtlas().quotient
-    val networks = quotient.networkParcellation.get
+    val networks = quotient.networkQuotient.get
 
-    assertEquals(networks.parcellation.parcels.size, 1)
+    assertEquals(networks.assignment.to.size, 1)
     assertEquals(
       quotient
         .networkRegion(NetworkId("Visual"))
@@ -149,7 +237,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
       )
     val quotient = atlas.quotient
 
-    assertEquals(quotient.parcellation.ambient.size, 6)
+    assertEquals(quotient.parcelAssignment.from.size, 6)
     assertEquals(
       quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1, 2)
@@ -204,3 +292,6 @@ class AtlasQuotientSuite extends munit.FunSuite:
     assertEquals(means.value(RegionId(2)), Some(15.0))
     assertEquals(sums.value(RegionId(1)), Some(1.0))
     assertEquals(sums.value(RegionId(2)), Some(30.0))
+
+  private def intValues(values: ravel.Array1[Int]): Vector[Int] =
+    Vector.tabulate(values.size)(values.apply)

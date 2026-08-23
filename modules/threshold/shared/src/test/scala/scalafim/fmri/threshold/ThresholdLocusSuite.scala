@@ -33,6 +33,36 @@ class ThresholdLocusSuite extends munit.FunSuite:
       Right(Vector(3, 0))
     )
 
+  test("asymmetric masks convert legacy volume indices before locus injection"):
+    val space = NeuroSpace(Vector(2, 3, 2))
+    val stat =
+      NeuroVol.fromLinear[Double](
+        Array.tabulate(12)(_.toDouble),
+        space
+      )
+    val mask = Mask.fromIndices(space, Array(1, 2, 5, 11))
+    val masked =
+      MaskedField
+        .fromVolume(stat, mask, Tail.Positive)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      masked.activeSelection.ordinals.toVector,
+      Vector(6, 2, 10, 11)
+    )
+    assertEquals(
+      masked.support.ordinalsInDomainOrder.toVector,
+      Vector(2, 6, 10, 11)
+    )
+    assertEquals(
+      masked.activeToFull.mapping.targetOrdinals.toVector,
+      Vector(6, 2, 10, 11)
+    )
+    assertEquals(
+      masked.volumeIndices(Array(0, 2)).map(_.toVector),
+      Right(Vector(1, 5))
+    )
+
   test("threshold regions carry locus membership and reject foreign compact support"):
     val first = field(0, 2, 3)
     val second = field(0, 1, 3)

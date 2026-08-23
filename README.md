@@ -9,7 +9,7 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
+- `locus-data`: ScalaFIM domain and searchlight adapters plus a thin commutative-monoid adapter over standalone locus4s assignment aggregation.
 - `linalg`: small primitive array-backed vectors, matrices, and linear solves for portable fitting kernels.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
@@ -33,7 +33,7 @@ cross-compiled sbt build.
 - `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
-- `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
+- `atlas`: typed standard-atlas metadata plus locus4s parcel assignments, exact volume/surface realizations, language-neutral publication records, registry, transform plans, parcel/network lookup, reduction, overlap, and quotient adjacency.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
 - `archive-lna`: typed LNA 2 schema, pure manifest normalization, validation, shared-basis artifacts, payload codecs, JVM HDF5 stores, and the eager physical driver; no scientific reconstruction.
 - `interop-archived-response`: typed representation-to-archive lowering for LNA and Zarr, LNA pipeline reconstruction, archive-aware dataset adapters, first-class narrow representation envelopes, canonical dense-BOLD response binding, explicit registries, and resource-safe runtime assembly.
@@ -45,7 +45,7 @@ cross-compiled sbt build.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
 - `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
-- `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
+- `mvpa-spatial`: adapters from locus regions, selections, partial-surjective parcel assignments, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
@@ -88,7 +88,8 @@ Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
 source revision; `locus-data` retains only ScalaFIM-specific adapters and
-higher-level parcellation, searchlight, and aggregation policy.
+higher-level searchlight and aggregation policy. Generic parcel assignments
+are authoritative locus4s `PartialSurjection` values.
 
 An ordinary build loads both libraries from their pinned GitHub revisions. To
 test coordinated changes in sibling checkouts, select those checkouts

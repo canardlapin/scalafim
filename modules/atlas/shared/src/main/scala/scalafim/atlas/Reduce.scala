@@ -173,7 +173,7 @@ object AtlasReduce:
       quotient.domain.indexedField(data).toOption.get
     val summaries =
       Aggregation
-        .foldMapBy(quotient.parcellation, field)(SumCount.from)
+        .foldMapBy(quotient.parcelAssignment, field)(SumCount.from)
         .toOption
         .get
     val values =
@@ -192,19 +192,25 @@ object AtlasReduce:
       reducer: Array[Double] => Double
   ): ClusteredNeuroVec[Double] =
     val quotient = atlas.quotient
-    val parcelCount = quotient.parcellation.parcels.size
+    val parcelCount = quotient.parcelAssignment.to.size
     val timeCount = data.nVolumes
     val spatialCount = atlas.space.spatialDims.product
     val sums = Array.fill(parcelCount * timeCount)(0.0)
     val counts = Array.fill(parcelCount * timeCount)(0L)
 
-    var voxel = 0
-    while voxel < spatialCount do
-      val included = mask.forall(_.linear(voxel))
+    var canonicalOrdinal = 0
+    while canonicalOrdinal < spatialCount do
+      val point =
+        quotient.parcelAssignment.from
+          .indexOption(canonicalOrdinal)
+          .get
+      val legacyOrdinal =
+        quotient.domain.legacyOrdinalOf(point)
+      val included = mask.forall(_.linear(legacyOrdinal))
       if included then
-        val coordinate = data.space.indexToVoxel3D(voxel)
-        val point = quotient.parcellation.ambient.indexOption(voxel).get
-        quotient.parcellation.parcelAt(point).foreach: parcel =>
+        val coordinate =
+          data.space.indexToVoxel3D(legacyOrdinal)
+        quotient.parcelAssignment(point).foreach: parcel =>
           var time = 0
           while time < timeCount do
             val value = data(coordinate.x, coordinate.y, coordinate.z, time)
@@ -213,7 +219,7 @@ object AtlasReduce:
               sums(index) += value
               counts(index) += 1L
             time += 1
-      voxel += 1
+      canonicalOrdinal += 1
 
     val clusterIds = atlas.volume.clusterIds
     val parcelOrdinals =

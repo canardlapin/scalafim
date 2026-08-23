@@ -1,5 +1,7 @@
 package scalafim.connectivity
 
+import locus4s.DomainRegistry
+
 class ConnectivityLocusSuite extends munit.FunSuite:
 
   private val provenance =
@@ -28,6 +30,19 @@ class ConnectivityLocusSuite extends munit.FunSuite:
         axis("x", "y", "z").locus.space
       )
     )
+
+  test("node and edge resources retain their explicit registry scope"):
+    val nodes = axis("a", "b", "c")
+    val first = nodes.locusIn(DomainRegistry.empty).toOption.get
+    val restored = nodes.locusIn(first.registry).toOption.get
+    val independent = axis("a", "b", "c").locus
+    val edges = EdgeSpace.undirected(nodes).toOption.get
+    val edgeLocus = edges.locusIn(first.registry).toOption.get
+
+    assert(first.space.sameRuntimeOwnerAs(restored.space))
+    assert(!first.space.sameRuntimeOwnerAs(independent.space))
+    assert(first.space.samePersistentIdentityAs(independent.space))
+    assertEquals(edgeLocus.registry.size, 2)
 
   test("edge finite spaces retain topology and vectorization order"):
     val nodes = axis("a", "b", "c")

@@ -1,26 +1,15 @@
 package scalafim.locus
 
 import cats.kernel.CommutativeMonoid
+import locus4s.PartialSurjection
+import locus4s.data.{Aggregation as LocusAggregation, Field}
 
 object Aggregation:
   def foldMapBy[X, P, A, M](
-      parcellation: Parcellation[X, P],
-      field: IndexedField[X, A]
+      assignment: PartialSurjection[X, P],
+      field: Field[X, A]
   )(
       contribution: A => M
-  )(using monoid: CommutativeMonoid[M]): Either[SpaceMismatch, IndexedField[P, M]] =
-    if !parcellation.ambient.sameIdentityAs(field.space) then
-      Left(mismatch(parcellation.ambient, field.space))
-    else
-      val accumulated =
-        scala.collection.mutable.ArrayBuffer.fill(parcellation.parcels.size)(monoid.empty)
-      var ambientOrdinal = 0
-      while ambientOrdinal < parcellation.ambient.size do
-        val ambientPoint = parcellation.ambient.pointOption(ambientOrdinal).get
-        parcellation.parcelAt(ambientPoint).foreach: parcel =>
-          val next = contribution(field(ambientPoint))
-          accumulated(parcel.ordinal) =
-            monoid.combine(accumulated(parcel.ordinal), next)
-        ambientOrdinal += 1
-      Right:
-        IndexedField.fromValues(parcellation.parcels, accumulated).toOption.get
+  )(using monoid: CommutativeMonoid[M]): Either[SpaceMismatch, Field[P, M]] =
+    LocusAggregation
+      .foldMapByChecked(assignment, field)(monoid.empty)(contribution)(monoid.combine)

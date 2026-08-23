@@ -374,13 +374,13 @@ lazy val image =
     .jvmConfigure(
       _.dependsOn(
         image4sCoreJVM,
-        image4sLocusJVM % "test->compile"
+        image4sLocusJVM
       )
     )
     .jsConfigure(
       _.dependsOn(
         image4sCoreJS,
-        image4sLocusJS % "test->compile"
+        image4sLocusJS
       )
     )
     .jsSettings(jsSettingsBase)

@@ -1,10 +1,19 @@
 package scalafim.connectivity
 
-import scalafim.locus.{DomainFactory, FiniteSpace, Point, Region, SpaceKey}
+import locus4s.DomainRegistry
+import scalafim.locus.{
+  DomainFactory,
+  DomainFactoryError,
+  FiniteSpace,
+  Point,
+  Region,
+  SpaceKey
+}
 
 trait NodeLocusDomain:
   type N
   val axis: NodeAxis
+  val registry: DomainRegistry
   val space: FiniteSpace[N]
 
   final def pointFor(id: NodeId): Option[Point[N]] =
@@ -15,18 +24,21 @@ trait NodeLocusDomain:
 
 object NodeLocusDomain:
   private[connectivity] def make(
+      registry: DomainRegistry,
       requestedAxis: NodeAxis
-  ): NodeLocusDomain =
+  ): Either[DomainFactoryError, NodeLocusDomain] =
     val key =
       SpaceKey.unsafe(
         s"scalafim:connectivity:nodes:${axisIdentity(requestedAxis)}"
       )
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedAxis.size)
-    new NodeLocusDomain:
-      type N = resolution.S
-      val axis: NodeAxis = requestedAxis
-      val space: FiniteSpace[N] = resolution.space
+    DomainFactory
+      .restore(registry, key, requestedAxis.size)
+      .map: resolution =>
+        new NodeLocusDomain:
+          type N = resolution.S
+          val axis: NodeAxis = requestedAxis
+          val registry: DomainRegistry = resolution.registry
+          val space: FiniteSpace[N] = resolution.space
 
   private def axisIdentity(axis: NodeAxis): String =
     encode(
@@ -45,6 +57,7 @@ object NodeLocusDomain:
 trait EdgeLocusDomain:
   type E
   val edgeSpace: EdgeSpace
+  val registry: DomainRegistry
   val space: FiniteSpace[E]
 
   final def pointFor(index: EdgeSpaceIx): Point[E] =
@@ -55,25 +68,34 @@ trait EdgeLocusDomain:
 
 object EdgeLocusDomain:
   private[connectivity] def make(
+      registry: DomainRegistry,
       requestedSpace: EdgeSpace
-  ): EdgeLocusDomain =
-    val target =
-      requestedSpace.targetAxis
-        .map(_.locus.space.id.value)
-        .getOrElse("square")
-    val key =
-      SpaceKey.unsafe(
-        s"scalafim:connectivity:edges:" +
-          s"${requestedSpace.topology.label}:" +
-          s"${requestedSpace.order.label}:" +
-          s"${requestedSpace.sourceAxis.locus.space.id.value}:$target"
-      )
-    val resolution =
-      DomainFactory.unsafeRestore(key, requestedSpace.size)
-    new EdgeLocusDomain:
-      type E = resolution.S
-      val edgeSpace: EdgeSpace = requestedSpace
-      val space: FiniteSpace[E] = resolution.space
+  ): Either[DomainFactoryError, EdgeLocusDomain] =
+    requestedSpace.sourceAxis.locusIn(registry).flatMap: source =>
+      val target =
+        requestedSpace.targetAxis match
+          case Some(axis) =>
+            axis
+              .locusIn(source.registry)
+              .map(locus => (locus.registry, locus.space.id.value))
+          case None =>
+            Right((source.registry, "square"))
+      target.flatMap: (axisRegistry, targetId) =>
+        val key =
+          SpaceKey.unsafe(
+            s"scalafim:connectivity:edges:" +
+              s"${requestedSpace.topology.label}:" +
+              s"${requestedSpace.order.label}:" +
+              s"${source.space.id.value}:$targetId"
+          )
+        DomainFactory
+          .restore(axisRegistry, key, requestedSpace.size)
+          .map: resolution =>
+            new EdgeLocusDomain:
+              type E = resolution.S
+              val edgeSpace: EdgeSpace = requestedSpace
+              val registry: DomainRegistry = resolution.registry
+              val space: FiniteSpace[E] = resolution.space
 
 trait EdgeMaskRegion:
   type E

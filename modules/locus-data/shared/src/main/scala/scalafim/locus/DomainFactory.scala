@@ -1,6 +1,5 @@
 package scalafim.locus
 
-import java.util.concurrent.atomic.AtomicReference
 import locus4s.DomainError
 import locus4s.DomainRecord
 import locus4s.DomainRegistry
@@ -18,34 +17,22 @@ enum DomainFactoryError:
 
 object DomainFactory:
 
-  /** The process-wide canonical registry.
+  /** Restore one live owner from a stable domain id in an explicit registry.
     *
-    * A [[SpaceKey]] is meant to name one domain, so restoring the same key
-    * twice must yield the same live owner — otherwise two independently
-    * constructed views of the same domain (a second load, a deserialization,
-    * two code paths that each build it) would not interoperate, and every
-    * checked operation between them would fail despite their persistent
-    * identities agreeing.
+    * The returned resolution contains both the unforgeable owner and the
+    * updated immutable registry. A dataset, archive session, workflow, or
+    * application service owns that returned snapshot and must pass it to the
+    * next restoration in the same scope. Restoring through the returned
+    * registry canonicalizes an existing key; starting from another registry
+    * deliberately creates an independent live owner.
     *
-    * `DomainRegistry` is an immutable value whose `restore` returns the
-    * *existing* owner when the id is already present, so canonicalization is
-    * just a matter of keeping one. locus4s deliberately leaves that policy to
-    * "an effectful/atomic factory"; this is it.
-    *
-    * A conflicting record for a known id still fails rather than silently
-    * sharing: `DomainRegistry.restore` rejects a different key for the same id.
-    */
-  private val registry: AtomicReference[DomainRegistry] =
-    new AtomicReference(DomainRegistry.empty)
-
-  /** Restore one live, registry-created owner from a stable domain id.
-    *
-    * The returned abstract owner type must be carried by the domain adapter;
-    * callers cannot choose or forge it. Two calls with the same key return
-    * resolutions whose owner types are statically distinct but whose runtime
-    * owner is identical, so the checked operations can realign them.
+    * Concurrent applications may serialize updates through a scoped effect
+    * reference, but this module publishes no process-global mutable state and
+    * no generic effectful store. Dropping the owning registry releases its
+    * canonicalization scope.
     */
   def restore(
+      registry: DomainRegistry,
       key: SpaceKey,
       size: Int,
       name: Option[String] = None
@@ -57,27 +44,11 @@ object DomainFactory:
           .left
           .map(DomainFactoryError.InvalidRecord.apply)
       resolution <-
-        canonicalize(record).left.map(DomainFactoryError.RestoreFailed.apply)
+        registry
+          .restore(record)
+          .left
+          .map(DomainFactoryError.RestoreFailed.apply)
     yield resolution
-
-  /** Install `record` in the shared registry, or return the owner already
-    * registered under its id.
-    */
-  private def canonicalize(
-      record: DomainRecord
-  ): Either[DomainRestoreError, DomainResolution] =
-    @annotation.tailrec
-    def attempt(): Either[DomainRestoreError, DomainResolution] =
-      val current = registry.get()
-      current.restore(record) match
-        case Left(error) => Left(error)
-        case Right(resolution) =>
-          // When the id was already present the registry is returned
-          // unchanged, so this compare-and-set is a no-op that still
-          // serialises against a concurrent first registration.
-          if registry.compareAndSet(current, resolution.registry) then Right(resolution)
-          else attempt()
-    attempt()
 
   /** A derived, process-local domain with no persistent identity.
     *
@@ -110,14 +81,11 @@ object DomainFactory:
     ephemeral(name, size)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  /** Number of distinct domains canonicalized so far. Diagnostics only. */
-  private[scalafim] def registeredCount: Int =
-    registry.get().size
-
   private[scalafim] def unsafeRestore(
+      registry: DomainRegistry,
       key: SpaceKey,
       size: Int,
       name: Option[String] = None
   ): DomainResolution =
-    restore(key, size, name)
+    restore(registry, key, size, name)
       .fold(error => throw new IllegalArgumentException(error.message), identity)

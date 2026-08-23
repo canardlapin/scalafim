@@ -1,8 +1,10 @@
 package scalafim.spatial
 
+import locus4s.DomainRegistry
 import scalafim.image.{GridCompatibility, NeuroSpace, NeuroVol}
 import scalafim.locus.{
   DomainFactory,
+  DomainFactoryError,
   FiniteSpace,
   Region as LocusRegion,
   Selection as LocusSelection,
@@ -142,8 +144,14 @@ final case class Domain private (
   def nElements: Int =
     geometry.nElements
 
+  def locusIn(
+      registry: DomainRegistry
+  ): Either[DomainFactoryError, DomainLocus] =
+    DomainLocus.make(registry, id, nElements)
+
   lazy val locus: DomainLocus =
-    DomainLocus.make(id, nElements)
+    locusIn(DomainRegistry.empty)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object Domain:
   def build(
@@ -170,6 +178,7 @@ object Domain:
 trait DomainLocus:
   type S
   val domainId: DomainId
+  val registry: DomainRegistry
   val space: FiniteSpace[S]
 
   final def regionDemand(
@@ -190,20 +199,24 @@ trait DomainLocus:
 
 object DomainLocus:
   private[spatial] def make(
+      registry: DomainRegistry,
       requestedId: DomainId,
       size: Int
-  ): DomainLocus =
-    val resolution =
-      DomainFactory.unsafeRestore(
+  ): Either[DomainFactoryError, DomainLocus] =
+    DomainFactory
+      .restore(
+        registry,
         // `size` belongs in the key: a domain key must determine the domain it
-        // names, and the registry now canonicalizes on it.
+        // names, and a caller-owned registry canonicalizes on it.
         SpaceKey.unsafe(s"scalafim:spatial:${requestedId.value}:$size"),
         size
       )
-    new DomainLocus:
-      type S = resolution.S
-      val domainId: DomainId = requestedId
-      val space: FiniteSpace[S] = resolution.space
+      .map: resolution =>
+        new DomainLocus:
+          type S = resolution.S
+          val domainId: DomainId = requestedId
+          val registry: DomainRegistry = resolution.registry
+          val space: FiniteSpace[S] = resolution.space
 
 final case class DomainPart private (
   name: PartName,

@@ -75,7 +75,10 @@ final case class SurfaceAtlas(
   )
 
   lazy val quotient: SurfaceAtlasQuotient =
-    AtlasQuotient.surface(ref.coordSpace.value, ref.name, regions, payload)
+    AtlasQuotient.surface(ref, regions, payload, provenance)
+
+  lazy val realization: SurfaceAtlasRealization =
+    quotient
 
   require(
     payload.tableIds.subsetOf(regionIdSet),

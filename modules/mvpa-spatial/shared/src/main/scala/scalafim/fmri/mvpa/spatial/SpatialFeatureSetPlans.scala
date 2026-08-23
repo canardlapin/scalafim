@@ -259,7 +259,7 @@ object SpatialFeatureSetPlans:
       volumeSpace: VolumeSpace,
       windows: Vector[ROIVolWindow[?]]
   ): Either[SpatialPlanError, CanonicalSearchlight] =
-    val packedDomain = VolumeDomain.structuralCompatibility(volumeSpace)
+    val packedDomain = VolumeDomain.canonical(volumeSpace)
     type Voxel = packedDomain.S
     val domain: VolumeDomain[Voxel] = packedDomain.value
     val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
@@ -274,25 +274,42 @@ object SpatialFeatureSetPlans:
           return Left(SpatialPlanError.AdapterFailure("ROI window grid", error.message))
         case Right(_) =>
           ()
-      val center = window.parentIndex
+      val legacyCenter = window.parentIndex
+      val center =
+        domain.pointAtLegacyOrdinal(legacyCenter) match
+          case Left(error) =>
+            return Left(
+              SpatialPlanError.InvalidLocusSearchlight(error.message)
+            )
+          case Right(point) => point.ordinal
       if seenCenters.contains(center) then
         return Left(
           SpatialPlanError.InvalidLocusSearchlight(
-            s"duplicate center $center"
+            s"duplicate center $legacyCenter"
           )
         )
       val linearIndices = window.selection.linearIndices
-      val members = Array.tabulate(linearIndices.size)(i => linearIndices(i))
+      val members = Array.ofDim[Int](linearIndices.size)
+      var memberIndex = 0
+      while memberIndex < members.length do
+        domain.pointAtLegacyOrdinal(linearIndices(memberIndex)) match
+          case Left(error) =>
+            return Left(
+              SpatialPlanError.InvalidLocusSearchlight(error.message)
+            )
+          case Right(point) =>
+            members(memberIndex) = point.ordinal
+        memberIndex += 1
       if members.distinct.length != members.length then
         return Left(
           SpatialPlanError.InvalidLocusSearchlight(
-            s"neighborhood at center $center contains duplicate points"
+            s"neighborhood at center $legacyCenter contains duplicate points"
           )
         )
       if !members.contains(center) then
         return Left(
           SpatialPlanError.InvalidLocusSearchlight(
-            s"neighborhood at center $center does not contain its center"
+            s"neighborhood at center $legacyCenter does not contain its center"
           )
         )
       seenCenters += center

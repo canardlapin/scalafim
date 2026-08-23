@@ -1,21 +1,58 @@
 package scalafim.image
 
+import locus4s.DomainRegistry
 import scalafim.locus.*
 
 class VolumeDomainSuite extends munit.FunSuite:
   private val volumeSpace =
     VolumeSpace(NeuroSpace(Vector(2, 2, 1)))
 
-  test("semantic keys distinguish equal-geometry volume domains at runtime"):
+  test("fresh registry scopes keep equal exact grids runtime-distinct"):
     val first =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
+      VolumeDomain.canonical(volumeSpace).value
     val second =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:02:native"), volumeSpace).value
+      VolumeDomain.canonical(volumeSpace).value
 
     assert(!first.finiteSpace.sameRuntimeOwnerAs(second.finiteSpace))
+    assert(first.finiteSpace.samePersistentIdentityAs(second.finiteSpace))
+
+  test("explicit registry ownership canonicalizes restores without leaking across resources"):
+    val first =
+      VolumeDomain
+        .canonicalIn(DomainRegistry.empty, volumeSpace)
+        .toOption
+        .get
+    val restored =
+      VolumeDomain
+        .canonicalIn(first.registry, volumeSpace)
+        .toOption
+        .get
+    val independentlyOpened = VolumeDomain.canonical(volumeSpace)
+
+    assert(first.value.finiteSpace.sameRuntimeOwnerAs(restored.value.finiteSpace))
+    assert(!first.value.finiteSpace.sameRuntimeOwnerAs(independentlyOpened.value.finiteSpace))
+    assert(first.value.finiteSpace.samePersistentIdentityAs(independentlyOpened.value.finiteSpace))
+
+  test("different exact grids have different canonical records in one registry"):
+    val first =
+      VolumeDomain
+        .canonicalIn(DomainRegistry.empty, volumeSpace)
+        .toOption
+        .get
+    val differentSize = VolumeSpace(NeuroSpace(Vector(3, 2, 1)))
+    val second =
+      VolumeDomain
+        .canonicalIn(first.registry, differentSize)
+        .toOption
+        .get
+
+    assertNotEquals(
+      first.value.gridDomainRecord.domain.key,
+      second.value.gridDomainRecord.domain.key
+    )
 
   test("legacy voxel regions and selections are backed by locus semantics"):
-    val domain = VolumeDomain.structuralCompatibility(volumeSpace).value
+    val domain = VolumeDomain.canonical(volumeSpace).value
     val voxelRegion = VoxelRegion.make(volumeSpace, Array(3, 1, 1)).toOption.get
     val voxelSelection = VoxelSelection.make(volumeSpace, Array(3, 1)).toOption.get
     val region = domain.region(voxelRegion).toOption.get
@@ -23,15 +60,15 @@ class VolumeDomainSuite extends munit.FunSuite:
 
     assertEquals(
       region.ordinalsInDomainOrder.toSet,
-      Set(1, 3)
+      Set(2, 3)
     )
-    assertEquals(selection.ordinals.toVector, Vector(3, 1))
+    assertEquals(selection.ordinals.toVector, Vector(3, 2))
     assertEquals(domain.voxelRegion(region).toOption.get, voxelRegion)
     assertEquals(domain.voxelSelection(selection).toOption.get, voxelSelection)
 
   test("volume values expose a pure indexed field without copying geometry policy"):
     val domain =
-      VolumeDomain.semantic(SpaceKey.unsafe("atlas:mni:test"), volumeSpace).value
+      VolumeDomain.canonical(volumeSpace).value
     val volume =
       NeuroVol.fromLinear(Array(10, 11, 12, 13), volumeSpace.toNeuroSpace)
     val field = domain.indexedField(volume).toOption.get
@@ -39,9 +76,9 @@ class VolumeDomainSuite extends munit.FunSuite:
 
     assertEquals(
       domain.finiteSpace.indices.map(field.apply).toVector,
-      Vector(10, 11, 12, 13)
+      Vector(10, 12, 11, 13)
     )
-    assertEquals(even.ordinalsInDomainOrder.toVector, Vector(0, 2))
+    assertEquals(even.ordinalsInDomainOrder.toVector, Vector(0, 1))
 
   test("volume adapters reject an exact-grid mismatch"):
     val translated =
@@ -61,14 +98,14 @@ class VolumeDomainSuite extends munit.FunSuite:
         )
       )
     val domain =
-      VolumeDomain.semantic(SpaceKey.unsafe("subject:01:native"), volumeSpace).value
+      VolumeDomain.canonical(volumeSpace).value
     val wrong = VoxelRegion.make(translated, Array(0)).toOption.get
 
     assert(domain.region(wrong).isLeft)
 
   test("runtime-loaded volume domains retain a fresh path-dependent point type"):
     val loaded =
-      SomeVolumeDomain.semantic(SpaceKey.unsafe("runtime:volume"), volumeSpace)
+      SomeVolumeDomain.canonical(volumeSpace)
     val domain = loaded.value
     val region = Region.fromOrdinals(domain.finiteSpace, Vector(0, 3)).toOption.get
 

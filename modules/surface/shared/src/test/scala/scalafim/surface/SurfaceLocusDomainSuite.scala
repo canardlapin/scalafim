@@ -1,5 +1,6 @@
 package scalafim.surface
 
+import locus4s.DomainRegistry
 import scalafim.locus.SpaceKey
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
@@ -69,18 +70,18 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
     assertEquals(view.values(d.finiteSpace.indexOption(1).get).toOption, Some(Some(2)))
     assertEquals(view.values(d.finiteSpace.indexOption(0).get).toOption, None)
 
-  test("labeled surfaces become quotients with metadata and explicit display order"):
+  test("labeled surfaces become partial surjections with metadata and explicit display order"):
     val d = domain(SurfaceTestFixtures.sheetGeometry).value
-    val atlas = d.parcellation(SurfaceTestFixtures.sheetLabels).toOption.get
-    val firstParcel = atlas.parcellation.parcels.indexOption(0).get
-    val secondParcel = atlas.parcellation.parcels.indexOption(1).get
+    val parcels = d.parcelAssignment(SurfaceTestFixtures.sheetLabels).toOption.get
+    val firstParcel = parcels.assignment.to.indexOption(0).get
+    val secondParcel = parcels.assignment.to.indexOption(1).get
 
-    assertEquals(atlas.parcellation.assignmentOrdinals, Vector(Some(0), Some(0), Some(1), Some(1)))
-    assertEquals(atlas.parcellation.fiber(firstParcel).ordinalsInDomainOrder.toVector, Vector(0, 1))
-    assertEquals(atlas.parcellation.fiber(secondParcel).ordinalsInDomainOrder.toVector, Vector(2, 3))
-    assertEquals(atlas.labelIds(firstParcel), 1)
-    assertEquals(atlas.metadata(secondParcel).map(_.name), Some("B"))
-    assertEquals(atlas.displayOrder.ordinals.toVector, Vector(0, 1))
+    assertEquals(parcels.assignment.toPartialMap.optionalTargetOrdinals, Vector(Some(0), Some(0), Some(1), Some(1)))
+    assertEquals(parcels.assignment.fiber(firstParcel).ordinalsInDomainOrder.toVector, Vector(0, 1))
+    assertEquals(parcels.assignment.fiber(secondParcel).ordinalsInDomainOrder.toVector, Vector(2, 3))
+    assertEquals(parcels.labelIds(firstParcel), 1)
+    assertEquals(parcels.metadata(secondParcel).map(_.name), Some("B"))
+    assertEquals(parcels.displayOrder.ordinals.toVector, Vector(0, 1))
 
   test("a disconnected label remains one valid extensional quotient fiber"):
     val geometry =
@@ -97,16 +98,16 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
         Vector(LabelInfo(9, "fragmented"))
       )
     val d = domain(geometry).value
-    val atlas =
-      d.parcellation(labels).toOption.get
-    val parcel = atlas.parcellation.parcels.indexOption(0).get
+    val parcels =
+      d.parcelAssignment(labels).toOption.get
+    val parcel = parcels.assignment.to.indexOption(0).get
 
-    assertEquals(atlas.parcellation.parcels.size, 1)
+    assertEquals(parcels.assignment.to.size, 1)
     assertEquals(
-      atlas.parcellation.fiber(parcel).ordinalsInDomainOrder.toVector,
+      parcels.assignment.fiber(parcel).ordinalsInDomainOrder.toVector,
       Vector(0, 1, 3, 4)
     )
-    assertEquals(atlas.metadata(parcel).map(_.name), Some("fragmented"))
+    assertEquals(parcels.metadata(parcel).map(_.name), Some("fragmented"))
 
   test("runtime-loaded domains preserve the hidden semantic space type"):
     val packed =
@@ -130,3 +131,41 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
         .get
 
     assertEquals(field(space.indexOption(3).get), 4)
+
+  test("surface and parcel owners canonicalize only in an explicit registry scope"):
+    val key = SpaceKey.unsafe("runtime:scoped-left-cortex")
+    val first =
+      SomeSurfaceLocusDomain
+        .semanticIn(DomainRegistry.empty, key, SurfaceTestFixtures.sheetGeometry)
+        .toOption
+        .get
+    val restored =
+      SomeSurfaceLocusDomain
+        .semanticIn(first.registry, key, SurfaceTestFixtures.sheetGeometry)
+        .toOption
+        .get
+    val independent =
+      SomeSurfaceLocusDomain
+        .semantic(key, SurfaceTestFixtures.sheetGeometry)
+        .toOption
+        .get
+    val parcels =
+      first.value
+        .parcelAssignment(SurfaceTestFixtures.sheetLabels)
+        .toOption
+        .get
+    val restoredParcels =
+      first.value
+        .parcelAssignmentIn(
+          parcels.registry,
+          SurfaceTestFixtures.sheetLabels
+        )
+        .toOption
+        .get
+
+    assert(first.value.finiteSpace.sameRuntimeOwnerAs(restored.value.finiteSpace))
+    assert(!first.value.finiteSpace.sameRuntimeOwnerAs(independent.value.finiteSpace))
+    assert(
+      parcels.assignment.to.sameRuntimeOwnerAs(restoredParcels.assignment.to)
+    )
+    assertEquals(parcels.registry.size, 2)

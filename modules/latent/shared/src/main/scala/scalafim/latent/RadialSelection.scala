@@ -1,6 +1,7 @@
 package scalafim.latent
 
 import gale.linalg.DVec
+import locus4s.DomainRegistry
 import scalafim.locus.{
   DomainFactory,
   FiniteDomain,
@@ -55,8 +56,14 @@ sealed abstract class RadialMaskOrder private (
   def locus(
       maskSize: Int
   ): Either[RadialBasisError, RadialLocusOrder] =
+    locusIn(DomainRegistry.empty, maskSize)
+
+  def locusIn(
+      registry: DomainRegistry,
+      maskSize: Int
+  ): Either[RadialBasisError, RadialLocusOrder] =
     validateMaskSize(maskSize).map: _ =>
-      RadialLocusOrder.make(this, maskSize)
+      RadialLocusOrder.make(registry, this, maskSize)
 
   def validateMaskSize(maskSize: Int): Either[RadialBasisError, Unit] =
     if maskSize <= 0 then Left(RadialBasisError.InvalidMaskDimensions("mask size must be positive"))
@@ -123,6 +130,7 @@ sealed trait RadialLocusOrder:
   val order: RadialMaskOrder {
     type ActivePoint = RadialLocusOrder.this.ActivePoint
   }
+  val registry: DomainRegistry
   val fullGridSpace: FiniteSpace[FullGridPoint]
   val activeToFull: Injection[ActivePoint, FullGridPoint]
   val activeSelection: Selection[FullGridPoint]
@@ -149,11 +157,13 @@ sealed trait RadialLocusOrder:
 
 object RadialLocusOrder:
   private[latent] def make(
+      registry: DomainRegistry,
       requestedOrder: RadialMaskOrder,
       maskSize: Int
   ): RadialLocusOrder =
     val fullResolution =
       DomainFactory.unsafeRestore(
+        registry,
         SpaceKey.unsafe(s"scalafim:latent:radial-full:$maskSize"),
         maskSize
       )
@@ -184,6 +194,7 @@ object RadialLocusOrder:
       type ActivePoint = Active
       type FullGridPoint = Full
       val order: requestedOrder.type = requestedOrder
+      val registry: DomainRegistry = fullResolution.registry
       val fullGridSpace: FiniteSpace[Full] = full
       val activeToFull: Injection[Active, Full] = injection
       val activeSelection: Selection[Full] = selection

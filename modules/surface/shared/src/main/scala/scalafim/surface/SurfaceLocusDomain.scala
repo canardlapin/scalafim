@@ -1,5 +1,6 @@
 package scalafim.surface
 
+import locus4s.{DomainRegistry, PartialSurjection}
 import scalafim.locus.*
 
 enum SurfaceLocusError:
@@ -7,6 +8,7 @@ enum SurfaceLocusError:
   case TopologyMismatch(expected: String, actual: String)
   case NotFullField(expectedVertices: Int, actualVertices: Int)
   case WrongSpace(error: SpaceMismatch)
+  case DomainRestoreFailed(error: DomainFactoryError)
 
   def message: String =
     this match
@@ -16,6 +18,8 @@ enum SurfaceLocusError:
       case NotFullField(expected, actual) =>
         s"full surface field requires $expected vertices, found $actual"
       case WrongSpace(error) => error.message
+      case DomainRestoreFailed(error) =>
+        s"surface domain restoration failed: ${error.message}"
 
 enum SurfaceIdentityBasis:
   case Semantic
@@ -31,6 +35,7 @@ final class SurfaceLocusDomain[S] private[surface] (
     val geometry: SurfaceGeometry,
     val meshDomain: SurfaceMeshDomain,
     val finiteSpace: FiniteSpace[S],
+    val registry: DomainRegistry,
     val identityBasis: SurfaceIdentityBasis
 ):
   def optionalField[A](
@@ -75,11 +80,18 @@ final class SurfaceLocusDomain[S] private[surface] (
       val section = optional.restrict(region)
       SurfaceRoiView(region, section, surfaceRoi.label)
 
-  def parcellation(
+  def parcelAssignment(
       labeled: LabeledSurface,
       ignoredLabels: Set[Int] = Set.empty
-  ): Either[SurfaceLocusError, SurfaceParcellation[S]] =
-    SurfaceParcellation.from(this, labeled, ignoredLabels)
+  ): Either[SurfaceLocusError, SurfaceParcelAssignment[S]] =
+    parcelAssignmentIn(registry, labeled, ignoredLabels)
+
+  def parcelAssignmentIn(
+      registry: DomainRegistry,
+      labeled: LabeledSurface,
+      ignoredLabels: Set[Int] = Set.empty
+  ): Either[SurfaceLocusError, SurfaceParcelAssignment[S]] =
+    SurfaceParcelAssignment.from(registry, this, labeled, ignoredLabels)
 
   private[surface] def checkGeometry(
       actual: SurfaceGeometry
@@ -95,7 +107,15 @@ object SurfaceLocusDomain:
       semanticKey: SpaceKey,
       geometry: SurfaceGeometry
   ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    semanticIn(DomainRegistry.empty, semanticKey, geometry)
+
+  def semanticIn(
+      registry: DomainRegistry,
+      semanticKey: SpaceKey,
+      geometry: SurfaceGeometry
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
     SomeSurfaceLocusDomain.make(
+      registry,
       semanticKey,
       geometry,
       SurfaceIdentityBasis.Semantic
@@ -104,12 +124,19 @@ object SurfaceLocusDomain:
   def structuralCompatibility(
       geometry: SurfaceGeometry
   ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    structuralCompatibilityIn(DomainRegistry.empty, geometry)
+
+  def structuralCompatibilityIn(
+      registry: DomainRegistry,
+      geometry: SurfaceGeometry
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
     SurfaceMeshDomain
       .from(geometry)
       .left
       .map(SurfaceLocusError.InvalidMeshDomain.apply)
-      .map: meshDomain =>
+      .flatMap: meshDomain =>
         SomeSurfaceLocusDomain.fromKey(
+          registry,
           SpaceKey.unsafe(s"scalafim:surface:structural:${meshDomain.display}"),
           geometry,
           meshDomain,
@@ -118,6 +145,7 @@ object SurfaceLocusDomain:
 
 trait SomeSurfaceLocusDomain:
   type S
+  val registry: DomainRegistry
   val value: SurfaceLocusDomain[S]
 
 object SomeSurfaceLocusDomain:
@@ -125,9 +153,17 @@ object SomeSurfaceLocusDomain:
       semanticKey: SpaceKey,
       geometry: SurfaceGeometry
   ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
-    make(semanticKey, geometry, SurfaceIdentityBasis.Semantic)
+    semanticIn(DomainRegistry.empty, semanticKey, geometry)
+
+  def semanticIn(
+      registry: DomainRegistry,
+      semanticKey: SpaceKey,
+      geometry: SurfaceGeometry
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    make(registry, semanticKey, geometry, SurfaceIdentityBasis.Semantic)
 
   private[surface] def make(
+      registry: DomainRegistry,
       semanticKey: SpaceKey,
       geometry: SurfaceGeometry,
       basis: SurfaceIdentityBasis
@@ -136,77 +172,90 @@ object SomeSurfaceLocusDomain:
       .from(geometry)
       .left
       .map(SurfaceLocusError.InvalidMeshDomain.apply)
-      .map: meshDomain =>
+      .flatMap: meshDomain =>
         val key =
           SpaceKey.unsafe(s"${semanticKey.value}:surface:${meshDomain.display}")
-        fromKey(key, geometry, meshDomain, basis)
+        fromKey(registry, key, geometry, meshDomain, basis)
 
   private[surface] def fromKey(
+      registry: DomainRegistry,
       key: SpaceKey,
       geometry: SurfaceGeometry,
       meshDomain: SurfaceMeshDomain,
       basis: SurfaceIdentityBasis
-  ): SomeSurfaceLocusDomain =
-    val resolution =
-      DomainFactory.unsafeRestore(key, geometry.vertexCount)
-    new SomeSurfaceLocusDomain:
-      type S = resolution.S
-      val value: SurfaceLocusDomain[S] =
-        new SurfaceLocusDomain(
-          geometry,
-          meshDomain,
-          resolution.space,
-          basis
-        )
+  ): Either[SurfaceLocusError, SomeSurfaceLocusDomain] =
+    DomainFactory
+      .restore(registry, key, geometry.vertexCount)
+      .left
+      .map(SurfaceLocusError.DomainRestoreFailed.apply)
+      .map: resolution =>
+        new SomeSurfaceLocusDomain:
+          type S = resolution.S
+          val registry: DomainRegistry = resolution.registry
+          val value: SurfaceLocusDomain[S] =
+            new SurfaceLocusDomain(
+              geometry,
+              meshDomain,
+              resolution.space,
+              resolution.registry,
+              basis
+            )
 
-trait SurfaceParcellation[S]:
+trait SurfaceParcelAssignment[S]:
   type P
-  val parcellation: Parcellation[S, P]
+  val registry: DomainRegistry
+  val assignment: PartialSurjection[S, P]
   val labelIds: IndexedField[P, Int]
   val metadata: IndexedField[P, Option[LabelInfo]]
   val displayOrder: Selection[P]
 
-object SurfaceParcellation:
+object SurfaceParcelAssignment:
   def from[S](
+      registry: DomainRegistry,
       domain: SurfaceLocusDomain[S],
       labeled: LabeledSurface,
       ignoredLabels: Set[Int]
-  ): Either[SurfaceLocusError, SurfaceParcellation[S]] =
-    domain.checkGeometry(labeled.geometry).map: _ =>
+  ): Either[SurfaceLocusError, SurfaceParcelAssignment[S]] =
+    domain.checkGeometry(labeled.geometry).flatMap: _ =>
       val labels =
         Vector.tabulate(labeled.labels.length)(labeled.labels.apply)
           .filterNot(ignoredLabels)
           .distinct
           .sorted
-      val parcelResolution =
-        DomainFactory.unsafeRestore(
+      DomainFactory
+        .restore(
+          registry,
           SpaceKey.unsafe(
             s"${domain.finiteSpace.id.value}:parcels:${labels.mkString(",")}"
           ),
           labels.length
         )
-      val parcelSpace = parcelResolution.space
-      val ordinalByLabel = labels.zipWithIndex.toMap
-      val assignments = Array.fill[Option[Int]](domain.finiteSpace.size)(None)
-      var row = 0
-      while row < labeled.indices.length do
-        val label = labeled.labels(row)
-        ordinalByLabel.get(label).foreach: parcel =>
-          assignments(labeled.indices(row)) = Some(parcel)
-        row += 1
-      val quotient =
-        Parcellation
-          .fromAssignments(domain.finiteSpace, parcelSpace, assignments)
-          .toOption
-          .get
-      val ids = IndexedField.fromValues(parcelSpace, labels).toOption.get
-      val info =
-        IndexedField.fromValues(parcelSpace, labels.map(labeled.info)).toOption.get
-      val order =
-        Selection.fromOrdinals(parcelSpace, labels.indices).toOption.get
-      new SurfaceParcellation[S]:
-        type P = parcelResolution.S
-        val parcellation: Parcellation[S, P] = quotient
-        val labelIds: IndexedField[P, Int] = ids
-        val metadata: IndexedField[P, Option[LabelInfo]] = info
-        val displayOrder: Selection[P] = order
+        .left
+        .map(SurfaceLocusError.DomainRestoreFailed.apply)
+        .map: parcelResolution =>
+          val parcelSpace = parcelResolution.space
+          val ordinalByLabel = labels.zipWithIndex.toMap
+          val assignments = Array.fill[Option[Int]](domain.finiteSpace.size)(None)
+          var row = 0
+          while row < labeled.indices.length do
+            val label = labeled.labels(row)
+            ordinalByLabel.get(label).foreach: parcel =>
+              assignments(labeled.indices(row)) = Some(parcel)
+            row += 1
+          val assignmentValue =
+            PartialSurjection
+              .fromOptionalTargetOrdinals(domain.finiteSpace, parcelSpace, assignments)
+              .toOption
+              .get
+          val ids = IndexedField.fromValues(parcelSpace, labels).toOption.get
+          val info =
+            IndexedField.fromValues(parcelSpace, labels.map(labeled.info)).toOption.get
+          val order =
+            Selection.fromOrdinals(parcelSpace, labels.indices).toOption.get
+          new SurfaceParcelAssignment[S]:
+            type P = parcelResolution.S
+            val registry: DomainRegistry = parcelResolution.registry
+            val assignment: PartialSurjection[S, P] = assignmentValue
+            val labelIds: IndexedField[P, Int] = ids
+            val metadata: IndexedField[P, Option[LabelInfo]] = info
+            val displayOrder: Selection[P] = order

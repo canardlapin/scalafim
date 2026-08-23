@@ -61,7 +61,10 @@ sealed abstract class MaskedField private[threshold] (
       val idx = maskSpaceIndices(i)
       if idx < 0 || idx >= size then return Left(ThresholdError.IndexOutOfBounds(idx, size))
       val active = activeSpace.indexOption(idx).get
-      out(i) = activeToFull.mapping(active).value
+      out(i) =
+        fullDomain.legacyOrdinalOf(
+          activeToFull.mapping(active)
+        )
       i += 1
     Right(out)
 
@@ -168,7 +171,7 @@ object MaskedField:
       z: Array[Int]
   ): MaskedField =
     val packedFullDomain =
-      VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
+      VolumeDomain.canonical(space.asVolumeSpace.toOption.get)
     type Full = packedFullDomain.S
     val full: VolumeDomain[Full] = packedFullDomain.value
     // A derived selection-position domain: it means nothing except relative to
@@ -178,10 +181,17 @@ object MaskedField:
     type Active = activeDomain.S
     val active: FiniteDomain[Active] = activeDomain.value
     val selected =
-      Selection
-        .fromOrdinals(full.finiteSpace, volumeIndex)
+      val legacySelection =
+        scalafim.image.VoxelSelection
+          .make(full.volumeSpace, volumeIndex)
+          .toOption
+          .get
+      full
+        .selection(legacySelection)
         .toOption
         .get
+    val canonicalVolumeIndex =
+      selected.ordinals.toArray
     val injection =
       Injection
         .validate(
@@ -189,7 +199,7 @@ object MaskedField:
             .fromTargetOrdinals(
               active,
               full.finiteSpace,
-              volumeIndex
+              canonicalVolumeIndex
             )
             .toOption
             .get

@@ -2,6 +2,8 @@ package scalafim.connectivity
 
 import gale.linalg.{DMat, Matrix}
 import gale.linalg.{DVec, Vec}
+import locus4s.DomainRegistry
+import scalafim.locus.DomainFactoryError
 
 enum EdgeTopology:
   case Undirected
@@ -67,8 +69,14 @@ final class EdgeSpace private (
   def description: String =
     s"${topology.label}:${order.label}:${rows}x${cols}:${size}"
 
+  def locusIn(
+      registry: DomainRegistry
+  ): Either[DomainFactoryError, EdgeLocusDomain] =
+    EdgeLocusDomain.make(registry, this)
+
   lazy val locus: EdgeLocusDomain =
-    EdgeLocusDomain.make(this)
+    locusIn(DomainRegistry.empty)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object EdgeSpace:
   def undirected(

@@ -46,13 +46,18 @@ import scalafim.atlas.io.*
   are `scalafim.locus.Region`.
 - `VolumeAtlas` wraps a `ClusteredNeuroVol`, enforces that metadata region IDs
   match the non-zero payload IDs, and exposes its labels as a typed
-  `Parcellation`.
+  locus4s `PartialSurjection`.
 - `SurfaceAtlas` wraps bilateral `LabeledSurface` payloads from
   `scalafim-surface` and enforces that non-zero vertex labels match the region
   metadata IDs. It exposes the same quotient-level API as `VolumeAtlas`.
 - Every atlas `quotient` carries parcel-indexed metadata, an explicit display
-  `Selection`, and an optional validated parcel-to-network `Surjection`.
-  Network regions are derived from quotient composition.
+  `Selection`, the authoritative partial-surjective parcel assignment, and an
+  optional validated parcel-to-network `Surjection`. Network regions are
+  derived from upstream map composition.
+- `atlas.realization` exposes that quotient together with exact ordered parcel
+  identity and exact volume-grid or surface-topology support records. Its
+  `neuropublishProjection` is a language-neutral publication value with fixed
+  v1 domain preimages and little-endian assignment bytes.
 - `AtlasRegistry` and `AtlasSpec` provide immutable discovery for known atlas
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
@@ -92,6 +97,47 @@ val hcpMmpSurface = registry("hcp-mmp-surface")
 
 Descriptors are pure values. They do not download or parse atlas payloads until
 you call a JVM loader or supply already-loaded surface labels.
+
+## Exact Publication Realizations
+
+An atlas realization keeps scientific annotations separate from persistent
+domain identity:
+
+```scala
+val realization = atlas.realization
+val parcels = realization.parcelDomain
+val labels = realization.metadata
+val publication = realization.neuropublishProjection
+
+val parcelFingerprint =
+  publication.parcelDomain.identity.structuralFingerprint
+val assignmentBytes = publication.assignments.head.assetBytes
+val provenanceRecord = publication.atlasProvenance
+val sourceLabelTable =
+  publication.assignments.head.provenance.sourceLabelToParcelKeys
+```
+
+Parcel identity commits to a versioned atlas namespace and every ordered parcel
+key. Labels, colors, display order, and other metadata remain indexed
+annotations, so renaming a parcel does not silently create a new domain.
+Schaefer parcel/network variants contribute to the namespace explicitly.
+
+Volume support identity uses the canonical image4s grid shape, coordinate
+frame, affine, unit, convention, and ordinal layout. Surface support identity
+uses the surface space, hemisphere, vertex count, and every ordered triangle
+index; coordinates are data on that topology rather than topology identity.
+The projection exposes the exact descriptor preimages and SHA-256 fingerprints
+so a non-Scala producer can reproduce them without a Scala case-class or JSON
+encoding convention. It also projects atlas identity, release, declared support,
+label schema, source artifacts, licenses, derivation, citations, and confidence
+into portable records. Each hard assignment references that provenance and
+records the exact source-label-to-parcel-key conversion table; local filesystem
+paths are deliberately not published.
+
+Equal size is never alignment evidence. `assignmentAlignedTo` accepts only a
+locus4s domain with the same persistent ordered identity. A deliberately
+different ordering must be related by an explicit, caller-certified
+`Bijection` and passed to `assignmentRetargeted`.
 
 ## Runnable Examples
 

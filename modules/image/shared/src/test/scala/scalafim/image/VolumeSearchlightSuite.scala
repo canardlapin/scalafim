@@ -7,7 +7,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
   private val volumeSpace =
     VolumeSpace(NeuroSpace(Vector(3, 3, 1)))
   private val packedDomain =
-    VolumeDomain.semantic(SpaceKey.unsafe("searchlight:volume"), volumeSpace)
+    VolumeDomain.canonical(volumeSpace)
   private type S = packedDomain.S
   private val domain: VolumeDomain[S] = packedDomain.value
 

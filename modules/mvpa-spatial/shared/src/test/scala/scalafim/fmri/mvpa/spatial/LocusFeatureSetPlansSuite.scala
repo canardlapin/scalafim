@@ -1,11 +1,11 @@
 package scalafim.fmri.mvpa.spatial
 
+import locus4s.{DomainRegistry, PartialSurjection}
 import scalafim.fmri.mvpa.{FeatureSetKind, RoiId}
 import scalafim.locus.{
   CenteredSearchlight,
   DomainFactory,
   FiniteSpace,
-  Parcellation,
   Region,
   Relation,
   Searchlight,
@@ -16,12 +16,20 @@ import scalafim.locus.{
 class LocusFeatureSetPlansSuite extends munit.FunSuite:
 
   private val voxelResolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("mvpa-voxels"), 5)
+    DomainFactory.unsafeRestore(
+      DomainRegistry.empty,
+      SpaceKey.unsafe("mvpa-voxels"),
+      5
+    )
   private type Voxel = voxelResolution.S
   private val voxels: FiniteSpace[Voxel] = voxelResolution.space
 
   private val parcelResolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("mvpa-parcels"), 2)
+    DomainFactory.unsafeRestore(
+      voxelResolution.registry,
+      SpaceKey.unsafe("mvpa-parcels"),
+      2
+    )
   private type Parcel = parcelResolution.S
   private val parcels: FiniteSpace[Parcel] = parcelResolution.space
 
@@ -49,10 +57,10 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
       Vector(4, 1, 3)
     )
 
-  test("parcellations become regional plans from quotient fibers"):
-    val parcellation =
-      Parcellation
-        .fromAssignments(
+  test("parcel assignments become regional plans from one materialized fiber relation"):
+    val assignment =
+      PartialSurjection
+        .fromOptionalTargetOrdinals(
           voxels,
           parcels,
           Vector(Some(0), None, Some(1), Some(0), Some(1))
@@ -61,9 +69,9 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
         .get
     val plan =
       LocusFeatureSetPlans
-        .fromParcellation(
+        .fromParcelAssignment(
           "parcels",
-          parcellation,
+          assignment,
           parcel => Some(s"parcel-${parcel.value}")
         )
         .toOption
@@ -74,6 +82,48 @@ class LocusFeatureSetPlansSuite extends munit.FunSuite:
     assertEquals(
       plan.featureSets.map(_.featureIndices.map(_.value)),
       Vector(Vector(0, 3), Vector(2, 4))
+    )
+
+  test("all-parcel performance court stays O(|X| + |P|) through one fiber relation"):
+    val sourceCount = 50000
+    val parcelCount = 2000
+    val sourceResolution =
+      DomainFactory.unsafeEphemeral("mvpa-performance-sources", sourceCount)
+    type Source = sourceResolution.S
+    val sources = sourceResolution.value
+    val targetResolution =
+      DomainFactory.unsafeEphemeral("mvpa-performance-parcels", parcelCount)
+    type Target = targetResolution.S
+    val targets = targetResolution.value
+    val assignment =
+      PartialSurjection
+        .fromOptionalTargetOrdinals(
+          sources,
+          targets,
+          Vector.tabulate(sourceCount)(source => Some(source % parcelCount))
+        )
+        .toOption
+        .get
+    var labelCalls = 0
+
+    val plan =
+      LocusFeatureSetPlans
+        .fromParcelAssignment(
+          "performance-court",
+          assignment,
+          target =>
+            labelCalls += 1
+            Some(s"parcel-${target.value}")
+        )
+        .toOption
+        .get
+
+    assertEquals(plan.featureSets.length, parcelCount)
+    assertEquals(plan.featureSets.iterator.map(_.featureIndices.length).sum, sourceCount)
+    assertEquals(labelCalls, parcelCount)
+    assertEquals(
+      plan.featureSets.head.featureIndices.map(_.value).take(3),
+      Vector(0, 2000, 4000)
     )
 
   test("centered locus searchlights become searchlight plans without geometry"):

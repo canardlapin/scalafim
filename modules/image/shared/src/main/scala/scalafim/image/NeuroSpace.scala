@@ -13,6 +13,7 @@ import image4s.geometry.Frame
 import image4s.geometry.FrameId
 import image4s.geometry.FrameMetadata
 import image4s.geometry.Grid
+import image4s.geometry.GridId
 
 enum NeuroSpaceError:
   case EmptyDimensions
@@ -350,8 +351,9 @@ object NeuroSpace:
           )
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+        gridId <- persistentGridId(dims, affine.rowMajor)
         grid <- Grid
-          .in(frame)(dims, affine)
+          .createPersistent(gridId, frame)(dims, affine)
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
       yield fromCanonical(
@@ -374,8 +376,9 @@ object NeuroSpace:
           )
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+        gridId <- persistentGridId(dims.take(3), affine.rowMajor)
         grid <- Grid
-          .in(frame)(dims.take(3), affine)
+          .createPersistent(gridId, frame)(dims.take(3), affine)
           .left
           .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
         nonSpatial <- canonicalAxes(dims.drop(3), axes.axes.drop(3))
@@ -411,6 +414,33 @@ object NeuroSpace:
         .from(values)
         .left
         .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+
+  /** Stable structural grid id used by image4s persistent grid records.
+    *
+    * The id is deliberately content-derived from the complete logical shape
+    * and the raw affine bits. It is therefore reproducible on JVM and
+    * Scala.js and never depends on a runtime `hashCode`. image4s still records
+    * the full shape, frame and affine alongside this id, so the string is only
+    * an address for that exact structural record, not a substitute for it.
+    */
+  private def persistentGridId(
+      shape: Vector[Int],
+      rowMajorAffine: Vector[Double]
+  ): Either[NeuroSpaceError, GridId] =
+    val affineBits = rowMajorAffine.map(encodeDouble).mkString(",")
+    GridId
+      .parse(
+        s"scalafim-grid/v1|shape=${shape.mkString(",")}|affine=$affineBits"
+      )
+      .left
+      .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+
+  private def encodeDouble(value: Double): String =
+    val unpadded =
+      java.lang.Long.toHexString(
+        java.lang.Double.doubleToRawLongBits(value)
+      )
+    "0" * (16 - unpadded.length) + unpadded
 
   private def legacyAxis(axis: ImageAxis): Axis =
     axis.kind match

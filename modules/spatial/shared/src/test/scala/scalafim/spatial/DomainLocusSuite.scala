@@ -1,5 +1,6 @@
 package scalafim.spatial
 
+import locus4s.DomainRegistry
 import scalafim.image.{DMat, NeuroSpace}
 import scalafim.locus.{Region, Relation, Selection, TotalMap, mapping}
 import scalafim.surface.{
@@ -71,6 +72,17 @@ class DomainLocusSuite extends munit.FunSuite:
       foreign.selectionDemand(foreignSelection).map(_.spatial),
       Right(SpatialDemand.Rows(Vector(3, 1)))
     )
+
+  test("domain locus restoration is canonical only in the supplied scope"):
+    val domain = volumeDomain("scoped")
+    val first = domain.locusIn(DomainRegistry.empty).toOption.get
+    val restored = domain.locusIn(first.registry).toOption.get
+    val independentlyOpened = volumeDomain("scoped").locus
+
+    assert(first.space.sameRuntimeOwnerAs(restored.space))
+    assert(!first.space.sameRuntimeOwnerAs(independentlyOpened.space))
+    assert(first.space.samePersistentIdentityAs(independentlyOpened.space))
+    assertEquals(first.registry.size, 1)
 
   test("exact maps, crisp relations, and sampled operators remain distinct contracts"):
     val domain = volumeDomain("native")

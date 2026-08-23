@@ -60,7 +60,10 @@ object VolumeSearchlight:
       var centerIndex = 0
       while centerIndex < centerOrdinals.length do
         val centerOrdinal = centerOrdinals(centerIndex)
-        val center = Indexing.indexToGrid3D(shape, centerOrdinal)
+        val center =
+          domain.coordinateOf(
+            domain.finiteSpace.indexOption(centerOrdinal).get
+          )
         val targets = Array.newBuilder[Int]
         var x = math.max(0, center.x - deltas(0))
         val maxX = math.min(shape.x - 1, center.x + deltas(0))
@@ -75,7 +78,12 @@ object VolumeSearchlight:
               val dy = (y - center.y) * spacing(1)
               val dz = (z - center.z) * spacing(2)
               if dx * dx + dy * dy + dz * dz <= squaredRadius then
-                targets += Indexing.gridToIndex3D(shape, x, y, z)
+                targets +=
+                  domain
+                    .pointAt(VoxelCoord(x, y, z))
+                    .toOption
+                    .get
+                    .ordinal
               z += 1
             y += 1
           x += 1
@@ -150,7 +158,7 @@ object VolumeSearchlight:
           ROICoords(voxelSelection.voxelCoords.map(_.toVector)),
           data,
           centerIndex,
-          center.value,
+          domain.legacyOrdinalOf(center),
           label
         )
         .left

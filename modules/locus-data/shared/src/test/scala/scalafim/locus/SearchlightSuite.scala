@@ -1,8 +1,14 @@
 package scalafim.locus
 
+import locus4s.DomainRegistry
+
 class SearchlightSuite extends munit.FunSuite:
   private val resolution =
-    DomainFactory.unsafeRestore(SpaceKey.unsafe("searchlight:test"), 4)
+    DomainFactory.unsafeRestore(
+      DomainRegistry.empty,
+      SpaceKey.unsafe("searchlight:test"),
+      4
+    )
   private type S = resolution.S
   private val space: FiniteSpace[S] = resolution.space
   private val centers =
@@ -23,10 +29,10 @@ class SearchlightSuite extends munit.FunSuite:
     val searchlight = Searchlight.make(centers, relation).toOption.get
 
     assertEquals(
-      searchlight.regionAt(space.pointOption(0).get).map(_.ordinalsInDomainOrder.toVector),
+      searchlight.regionAt(space.indexOption(0).get).map(_.ordinalsInDomainOrder.toVector),
       Some(Vector(0, 1))
     )
-    assertEquals(searchlight.regionAt(space.pointOption(1).get), None)
+    assertEquals(searchlight.regionAt(space.indexOption(1).get), None)
     assert(CenteredSearchlight.validate(searchlight).isRight)
 
   test("rows outside the center domain must be empty"):
@@ -58,7 +64,13 @@ class SearchlightSuite extends munit.FunSuite:
 
   test("searchlight construction checks exact runtime space identity"):
     val other =
-      DomainFactory.unsafeRestore(SpaceKey.unsafe("searchlight:other"), 4).space
+      DomainFactory
+        .unsafeRestore(
+          resolution.registry,
+          SpaceKey.unsafe("searchlight:other"),
+          4
+        )
+        .space
     val wrong =
       Relation.identity(other).asInstanceOf[Relation[S, S]]
 

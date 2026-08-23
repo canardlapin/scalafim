@@ -4,6 +4,8 @@ import scala.collection.mutable
 
 import gale.linalg.{DMat, Matrix}
 import gale.linalg.{DVec, Vec}
+import locus4s.DomainRegistry
+import scalafim.locus.DomainFactoryError
 
 final case class NodeSpec(id: NodeId, label: String, system: Option[SystemId] = None):
   require(label.trim.nonEmpty, "node label must be non-empty")
@@ -46,8 +48,14 @@ final class NodeAxis private (
   def sameIdentityAs(other: NodeAxis): Boolean =
     sameMetadataAs(other)
 
+  def locusIn(
+      registry: DomainRegistry
+  ): Either[DomainFactoryError, NodeLocusDomain] =
+    NodeLocusDomain.make(registry, this)
+
   lazy val locus: NodeLocusDomain =
-    NodeLocusDomain.make(this)
+    locusIn(DomainRegistry.empty)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object NodeAxis:
   def from(

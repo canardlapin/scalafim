@@ -3,7 +3,7 @@ package scalafim.atlas
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
-import scalafim.image.Indexing
+import scalafim.image.{Indexing, VolumeDomain, VoxelCoord}
 import scalafim.locus.{IndexedField, Relation}
 
 enum VoxelConnectivity:
@@ -113,30 +113,31 @@ object RegionGraph:
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
   ): ParcelAdjacencyRelation =
     val quotient = atlas.quotient
+    val assignmentRelation =
+      quotient.parcelAssignment.toRelation.toOption.get
     val voxelRelation =
       ambientRelation(
-        quotient.parcellation.ambient,
-        atlas.space.spatialDims,
+        quotient.domain,
         connectivity
       )
     // Composition is total when the shared boundary type matches, which it
     // does here by construction: parcel -> voxel -> voxel -> parcel.
     val projected =
-      quotient.parcellation.quotientRelation.converse
+      assignmentRelation.converse
         .andThen(voxelRelation)
-        .andThen(quotient.parcellation.quotientRelation)
+        .andThen(assignmentRelation)
     val withoutSelf =
       val rows =
-        Iterator.tabulate(quotient.parcellation.parcels.size): source =>
+        Iterator.tabulate(quotient.parcelAssignment.to.size): source =>
           projected
-            .row(quotient.parcellation.parcels.indexOption(source).get)
+            .row(quotient.parcelAssignment.to.indexOption(source).get)
             .ordinalsInDomainOrder
             .filter(_ != source)
             .iterator
       Relation
         .fromOrdinalRows(
-          quotient.parcellation.parcels,
-          quotient.parcellation.parcels,
+          quotient.parcelAssignment.to,
+          quotient.parcelAssignment.to,
           rows
         )
         .toOption
@@ -148,25 +149,32 @@ object RegionGraph:
       val regionIds: IndexedField[P, RegionId] = quotient.regionIds
 
   private def ambientRelation[X](
-      space: scalafim.locus.FiniteDomain[X],
-      dims: Vector[Int],
+      domain: VolumeDomain[X],
       connectivity: VoxelConnectivity
   ): Relation[X, X] =
+    val space = domain.finiteSpace
+    val dims = domain.volumeSpace.shape
     val offsets = allOffsets(connectivity)
     val rows =
       Array.tabulate(space.size): source =>
-        val xyz = Indexing.indexToGrid3D(dims, source)
+        val xyz =
+          domain.coordinateOf(space.indexOption(source).get)
         val targets = Array.newBuilder[Int]
         offsets.foreach: offset =>
-          val x = xyz(0) + offset(0)
-          val y = xyz(1) + offset(1)
-          val z = xyz(2) + offset(2)
+          val x = xyz.x + offset(0)
+          val y = xyz.y + offset(1)
+          val z = xyz.z + offset(2)
           if
-            x >= 0 && x < dims(0) &&
-            y >= 0 && y < dims(1) &&
-            z >= 0 && z < dims(2)
+            x >= 0 && x < dims.x &&
+            y >= 0 && y < dims.y &&
+            z >= 0 && z < dims.z
           then
-            targets += Indexing.gridToIndex3D(dims, x, y, z)
+            targets +=
+              domain
+                .pointAt(VoxelCoord(x, y, z))
+                .toOption
+                .get
+                .ordinal
         targets.result()
     Relation
       .fromOrdinalRows(space, space, rows.iterator.map(_.iterator))

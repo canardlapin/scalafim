@@ -1,6 +1,11 @@
 package scalafim.dataset
 
-import scalafim.image.{NeuroSpaceError, VoxelCoord}
+import scalafim.locus.DomainFactoryError
+import scalafim.image.{
+  NeuroSpaceError,
+  VolumeOrdinalBridgeError,
+  VoxelCoord
+}
 import scalafim.response.{OperationId, ReadError}
 
 enum DatasetAxis(val label: String):
@@ -16,6 +21,8 @@ enum DatasetError:
   case EmptySelection(axis: DatasetAxis)
   case DuplicateSelection(axis: DatasetAxis, index: Int)
   case ShapeMismatch(detail: String)
+  case DomainRestoreFailed(error: DomainFactoryError)
+  case VolumeDomainFailed(error: VolumeOrdinalBridgeError)
   case DatasetIdentityMismatch(expected: DatasetId, actual: DatasetId)
   case SampleOrderingMismatch(expected: Vector[Int], actual: Vector[Int])
   case AttachmentPlanMismatch(expected: DatasetAttachmentId, actual: DatasetAttachmentId)
@@ -56,6 +63,10 @@ enum DatasetError:
         s"${axis.label} selection contains duplicate index $index"
       case ShapeMismatch(detail) =>
         s"dataset shape mismatch: $detail"
+      case DomainRestoreFailed(error) =>
+        s"dataset domain restoration failed: ${error.message}"
+      case VolumeDomainFailed(error) =>
+        s"dataset voxel-domain restoration failed: ${error.message}"
       case DatasetIdentityMismatch(expected, actual) =>
         s"dataset identity mismatch: expected '${expected.value}' but got '${actual.value}'"
       case SampleOrderingMismatch(expected, actual) =>

@@ -1,5 +1,6 @@
 package scalafim.fmri.mvpa.spatial
 
+import locus4s.PartialSurjection
 import scalafim.fmri.mvpa.{
   FeatureSet,
   FeatureSetPlan,
@@ -8,7 +9,6 @@ import scalafim.fmri.mvpa.{
 }
 import scalafim.locus.{
   CenteredSearchlight,
-  Parcellation,
   Point,
   Region,
   Selection
@@ -16,7 +16,7 @@ import scalafim.locus.{
 
 /** Pure adapters from finite indexed spaces to MVPA algorithm plans.
   *
-  * Geometry constructs regions, parcellations, and searchlights in their
+  * Geometry constructs regions, parcel assignments, and searchlights in their
   * owning modules. MVPA consumes only their finite indices and validated
   * evidence.
   */
@@ -43,18 +43,22 @@ object LocusFeatureSetPlans:
       label = label
     )
 
-  def fromParcellation[X, P](
+  def fromParcelAssignment[X, P](
       name: String,
-      parcellation: Parcellation[X, P],
+      assignment: PartialSurjection[X, P],
       label: Point[P] => Option[String] = (_: Point[P]) => None
   ): Either[MvpaError, FeatureSetPlan] =
-    build(parcellation.parcels.indices): parcel =>
-      fromRegion(
-        RoiId(parcel.value),
-        parcellation.fiber(parcel),
-        label(parcel)
-      )
-    .flatMap(FeatureSetPlan.regional(name, _))
+    assignment.fibers
+      .left
+      .map(error => MvpaError.InvalidFeatureSetPlan(error.message))
+      .flatMap: fibers =>
+        build(assignment.to.indices): parcel =>
+          fromRegion(
+            RoiId(parcel.value),
+            fibers.row(parcel),
+            label(parcel)
+          )
+        .flatMap(FeatureSetPlan.regional(name, _))
 
   def fromSearchlight[S](
       name: String,
