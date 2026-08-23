@@ -372,7 +372,11 @@ object Resample:
       vol: NeuroVol[A],
       target: NeuroSpace,
       fill: A
-  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVol[A] =
+  )(using
+      scala.reflect.ClassTag[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVol[A] =
     val src = vol.space
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
@@ -427,7 +431,11 @@ object Resample:
     vec: NeuroVec[A],
     target: NeuroSpace,
     fill: A
-  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVec[A] =
+  )(using
+      scala.reflect.ClassTag[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims

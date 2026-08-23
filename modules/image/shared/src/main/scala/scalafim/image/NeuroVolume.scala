@@ -65,6 +65,16 @@ type SomeMaskVolume =
   SomeNeuroVolume[Boolean, MaskSemantics]
 
 object AnyNeuroVolume:
+  private[image] inline def unsafeFromSampled[A](
+      sampled: Sampled[
+        ? <: SampleSpace[?, D3],
+        A,
+        ?,
+        Rank[3]
+      ]
+  ): AnyNeuroVolume[A] =
+    sampled
+
   inline def eraseSemantics[A, Sem](
       volume: SomeNeuroVolume[A, Sem]
   ): AnyNeuroVolume[A] =
@@ -85,6 +95,32 @@ object AnyNeuroVolume:
 
     def materializedCanonical: AnyNeuroVolume[A] =
       volume.materializedCopy
+
+    /** Select an affine-honest plane as a zero-copy singleton-D3 view. */
+    def plane(
+        axis: Int,
+        index: Int
+    ): Either[NativeImageError, AnyNeuroVolume[A]] =
+      if axis < 0 || axis >= 3 then
+        Left(NativeImageError.SpatialAxisOutOfBounds(axis))
+      else
+        val extent = volume.grid.shape(axis)
+        if index < 0 || index >= extent then
+          Left(
+            NativeImageError.SpatialIndexOutOfBounds(
+              axis,
+              index,
+              extent
+            )
+          )
+        else
+          val origin = Vector.tabulate(3)(i => if i == axis then index else 0)
+          val shape = Vector.tabulate(3)(i => if i == axis then 1 else volume.grid.shape(i))
+          volume
+            .crop(origin, shape)
+            .left
+            .map(NativeImageError.Image.apply)
+            .map(unsafeFromSampled)
 
 object SomeNeuroVolume:
   inline def eraseSpace[S <: SampleSpace[?, D3], A, Sem](

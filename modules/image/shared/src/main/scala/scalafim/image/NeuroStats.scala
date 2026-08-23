@@ -321,14 +321,14 @@ object NeuroCompare:
       i += 1
     NeuroVol.fromLinear(out, x.space, x.label)
 
-  def compare[A: Order: Ring: ClassTag: DType](
+  def compare[A: Order: Ring: ClassTag: DType: MigrationValueSemantics](
       x: SparseNeuroVol[A],
       scalar: A,
       predicate: Predicate
   ): NeuroVol[Boolean] =
     compare(x.toDense, scalar, predicate)
 
-  def compare[A: Order: Ring: ClassTag: DType](
+  def compare[A: Order: Ring: ClassTag: DType: MigrationValueSemantics](
       scalar: A,
       x: SparseNeuroVol[A],
       predicate: Predicate

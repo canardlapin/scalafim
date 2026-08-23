@@ -61,6 +61,16 @@ type SomeMaskSeries =
   SomeNeuroSeries[Boolean, MaskSemantics]
 
 object AnyNeuroSeries:
+  private[image] inline def unsafeFromSampled[A](
+      sampled: Sampled[
+        ? <: SampleSpace[?, D3],
+        A,
+        ?,
+        Rank[4]
+      ]
+  ): AnyNeuroSeries[A] =
+    sampled
+
   inline def eraseSemantics[A, Sem](
       series: SomeNeuroSeries[A, Sem]
   ): AnyNeuroSeries[A] =

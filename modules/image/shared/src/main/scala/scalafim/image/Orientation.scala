@@ -288,18 +288,26 @@ object Orientation:
       trans = Some(tx)
     )
 
-  def reorient[A](vol: NeuroVol[A], orient: Seq[String]): NeuroVol[A] =
+  def reorient[A](vol: NeuroVol[A], orient: Seq[String])(using
+      MigrationValueSemantics[A]
+  ): NeuroVol[A] =
     vol.copy(space = reorient(vol.space, orient))
 
-  def reorient[A](vol: NeuroVol[A], orientation: Orientation3D): NeuroVol[A] =
+  def reorient[A](vol: NeuroVol[A], orientation: Orientation3D)(using
+      MigrationValueSemantics[A]
+  ): NeuroVol[A] =
     vol.copy(space = reorient(vol.space, orientation))
 
   @scala.annotation.targetName("reorientNeuroVecAxes")
-  def reorient[A](vec: NeuroVec[A], orient: Seq[String]): NeuroVec[A] =
+  def reorient[A](vec: NeuroVec[A], orient: Seq[String])(using
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     vec.copy(space = reorient(vec.space, orient))
 
   @scala.annotation.targetName("reorientNeuroVecOrientation")
-  def reorient[A](vec: NeuroVec[A], orientation: Orientation3D): NeuroVec[A] =
+  def reorient[A](vec: NeuroVec[A], orientation: Orientation3D)(using
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     vec.copy(space = reorient(vec.space, orientation))
 
   def reorient(cvol: ClusteredNeuroVol, orient: Seq[String]): ClusteredNeuroVol =

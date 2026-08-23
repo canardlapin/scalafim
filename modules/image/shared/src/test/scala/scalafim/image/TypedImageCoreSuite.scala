@@ -106,12 +106,15 @@ class TypedImageCoreSuite extends munit.FunSuite:
     )
   }
 
-  test("image4s Sampled backs slice, volume, and series compatibility views") {
+  test("image4s Sampled backs singleton-D3 plane, volume, and series views") {
     val volumeSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(affineMatrix))
     val volume = NeuroVol.fromLinear[Int](Array(10, 20), volumeSpace, "vol")
     val mapped = volume.map(_ + 1)
     val series = volume.toVec
-    val slice = volume.slice(SpatialAxis.Z, 0)
+    val plane =
+      volume
+        .plane(SpatialAxis.Z, 0)
+        .fold(error => fail(error.message), identity)
 
     assertEquals(volume.typedSpace.toNeuroSpace, volumeSpace, clue = "")
     assertEquals(volume.label, "vol", clue = "")
@@ -127,12 +130,8 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertEquals(series.sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).linear(1), volume.linear(1), clue = "")
-    assertEquals(slice.typedSpace.toNeuroSpace.ndim, 2, clue = "")
-    assertEquals(slice(1, 0), 20, clue = "")
-
-    intercept[IllegalArgumentException] {
-      NeuroSlice.fromLinear[Int](Array(1, 2), volumeSpace)
-    }
+    assertEquals(plane.grid.shape, Vector(2, 1, 1), clue = "")
+    assertEquals(plane(1, 0, 0), 20, clue = "")
   }
 
   test("typed coordinate overloads keep voxel and world points separate") {

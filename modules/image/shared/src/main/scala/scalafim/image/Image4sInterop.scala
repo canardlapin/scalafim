@@ -9,13 +9,11 @@ import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.Sampled
 import image4s.SomeSampleSpace
-import image4s.ValueSemantics
 import ravel.DType
 import ravel.DType.given
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import image4s.geometry.Affine
-import image4s.geometry.D2
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
@@ -32,11 +30,6 @@ enum Image4sInteropError derives CanEqual:
 
 enum Image4sStorageTransfer derives CanEqual:
   case CanonicalizedLegacy
-
-sealed trait ScalaFimValues
-
-object ScalaFimValues:
-  given [A]: ValueSemantics[A, ScalaFimValues] with {}
 
 final case class ImportedScalarVolume(
     sampled: Sampled[
@@ -60,29 +53,11 @@ final case class DenseImageImport[+I](
   * `(i,j,k)` values exactly once; it never adopts the legacy flat buffer.
   */
 object Image4sInterop:
-  private[image] type PackedSlice[A] =
-    Sampled[
-      ? <: SampleSpace[?, ?],
-      A,
-      ScalaFimValues,
-      Rank[2]
-    ]
-
   private[image] type PackedVolume[A] =
-    Sampled[
-      ? <: SampleSpace[?, ?],
-      A,
-      ScalaFimValues,
-      Rank[3]
-    ]
+    AnyNeuroVolume[A]
 
   private[image] type PackedSeries[A] =
-    Sampled[
-      ? <: SampleSpace[?, ?],
-      A,
-      ScalaFimValues,
-      Rank[4]
-    ]
+    AnyNeuroSeries[A]
 
   private[image] type PackedComponents =
     Sampled[
@@ -119,7 +94,10 @@ object Image4sInterop:
       values: Array[A],
       space: NeuroSpace,
       label: String
-  )(using DType[A]): Either[NeuroImageError, PackedVolume[A]] =
+  )(using
+      DType[A],
+      MigrationValueSemantics[A]
+  ): Either[NeuroImageError, PackedVolume[A]] =
     val shape = space.spatialDims
     val expected = shape.product
     if values.length != expected then
@@ -143,7 +121,10 @@ object Image4sInterop:
       values: Array[A],
       space: NeuroSpace,
       label: String
-  )(using DType[A]): Either[NeuroImageError, PackedSeries[A]] =
+  )(using
+      DType[A],
+      MigrationValueSemantics[A]
+  ): Either[NeuroImageError, PackedSeries[A]] =
     val shape = space.dims.take(4)
     val expected = shape.product
     if values.length != expected then
@@ -168,55 +149,58 @@ object Image4sInterop:
       data: RavelArray[A, Rank[3]],
       space: NeuroSpace,
       label: String
+  )(using
+      policy: MigrationValueSemantics[A]
   ): Either[NeuroImageError, PackedVolume[A]] =
+    given image4s.ValueSemantics[A, policy.Sem] = policy.evidence
     for
-      canonical <- canonicalD3(space.spatialSpace)
-      sampled <- Sampled
-        .create[A, ScalaFimValues, Rank[3]](
-          canonical.typed,
+      canonical <- NeuroSpace
+        .requireSpatialD3(space)
+        .left
+        .map(NeuroImageError.Space.apply)
+      sampled <- NeuroVolume
+        .fromRavel[A, policy.Sem](
+          canonical,
           data,
           ImageMetadata.named(label)
         )
         .left
         .map(NeuroImageError.Image.apply)
-    yield sampled
-
-  private[image] def sliceFromRavel[A](
-      data: RavelArray[A, Rank[2]],
-      space: NeuroSpace,
-      label: String
-  ): Either[NeuroImageError, PackedSlice[A]] =
-    if space.ndim != 2 then
-      Left(NeuroImageError.InvalidRank("NeuroSlice", 2, space.ndim))
-    else
-      for
-        canonical <- canonicalD2(space)
-        sampled <- Sampled
-          .create[A, ScalaFimValues, Rank[2]](
-            canonical.typed,
-            data,
-            ImageMetadata.named(label)
-          )
-          .left
-          .map(NeuroImageError.Image.apply)
-      yield sampled
+    yield AnyNeuroVolume.eraseSemantics(
+      SomeNeuroVolume.eraseSpace(sampled)
+    )
 
   private[image] def seriesFromRavel[A](
       data: RavelArray[A, Rank[4]],
       space: NeuroSpace,
       label: String
+  )(using
+      policy: MigrationValueSemantics[A]
   ): Either[NeuroImageError, PackedSeries[A]] =
+    given image4s.ValueSemantics[A, policy.Sem] = policy.evidence
     for
-      canonical <- canonicalD3(space)
-      sampled <- Sampled
-        .create[A, ScalaFimValues, Rank[4]](
-          canonical.typed,
+      canonical <- NeuroSpace
+        .requireD3(space)
+        .left
+        .map(NeuroImageError.Space.apply)
+      sampled <- NeuroSeries
+        .fromRavel[A, policy.Sem](
+          canonical,
           data,
           ImageMetadata.named(label)
         )
-        .left
-        .map(NeuroImageError.Image.apply)
-    yield sampled
+        .left.map:
+          case NativeImageError.Image(error) => NeuroImageError.Image(error)
+          case NativeImageError.Space(error) => NeuroImageError.Space(error)
+          case error =>
+            NeuroImageError.InvalidRank(
+              error.message,
+              4,
+              data.rank
+            )
+    yield AnyNeuroSeries.eraseSemantics(
+      SomeNeuroSeries.eraseSpace(sampled)
+    )
 
   private[image] def componentsFromRavel(
       data: RavelArray[Double, Rank[4]],
@@ -252,21 +236,7 @@ object Image4sInterop:
       .selectTime(index)
       .left
       .map(NeuroImageError.Image.apply)
-
-  private def canonicalD2(
-      space: NeuroSpace
-  ): Either[
-    NeuroImageError,
-    SomeSampleSpace
-  ] =
-    val canonical = NeuroSpace.canonical(space)
-    Either.cond(
-      canonical.spatialRank == 2,
-      canonical,
-      NeuroImageError.Image(
-        ImageError.SpatialDimensionMismatch(2, canonical.spatialRank)
-      )
-    )
+      .map(AnyNeuroVolume.unsafeFromSampled)
 
   private def canonicalD3(
       space: NeuroSpace

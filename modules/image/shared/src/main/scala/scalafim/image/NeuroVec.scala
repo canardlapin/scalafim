@@ -10,7 +10,7 @@ import ravel.Shape
 import ravel.map
 import scala.reflect.ClassTag
 
-opaque type NeuroVec[A] = Image4sInterop.PackedSeries[A]
+opaque type NeuroVec[A] = AnyNeuroSeries[A]
 
 object NeuroVec:
   extension [A](vector: NeuroVec[A])
@@ -25,9 +25,9 @@ object NeuroVec:
 
     /** The image4s representation underlying vector compatibility view. */
     inline def sampled: image4s.Sampled[
-      ? <: image4s.SampleSpace[?, ?],
+      ? <: image4s.SampleSpace[?, image4s.geometry.D3],
       A,
-      ScalaFimValues,
+      ?,
       Rank[4]
     ] =
       vector
@@ -55,7 +55,10 @@ object NeuroVec:
     def apply(t: Int)(using ClassTag[A]): NeuroVol[A] =
       volume(t)
 
-    def apply(ts: Seq[Int])(using ClassTag[A]): NeuroVec[A] =
+    def apply(ts: Seq[Int])(using
+        ClassTag[A],
+        MigrationValueSemantics[A]
+    ): NeuroVec[A] =
       subVector(ts)
 
     def gridToIndex(i: Int, j: Int, k: Int, t: Int): Int =
@@ -219,7 +222,10 @@ object NeuroVec:
         ROIVec(space, ROICoords(coords), series(idx))
       }
 
-    def subVector(ts: Seq[Int])(using ClassTag[A]): NeuroVec[A] =
+    def subVector(ts: Seq[Int])(using
+        ClassTag[A],
+        MigrationValueSemantics[A]
+    ): NeuroVec[A] =
       given DType[A] = values.dtype
       val tLen = nVolumes
       require(ts.nonEmpty, "ts must be non-empty")
@@ -236,7 +242,8 @@ object NeuroVec:
       NeuroVec.fromRavel(out, newSpace, label)
 
     def concat(that: NeuroVec[A], rest: NeuroVec[A]*)(using
-        ClassTag[A]
+        ClassTag[A],
+        MigrationValueSemantics[A]
     ): NeuroVec[A] =
       given DType[A] = values.dtype
       val all = Vector(vector, that) ++ rest.toVector
@@ -263,13 +270,15 @@ object NeuroVec:
 
     def mapValues[B](f: A => B)(using
         ClassTag[B],
-        DType[B]
+        DType[B],
+        MigrationValueSemantics[B]
     ): NeuroVec[B] =
       NeuroVec.fromRavel(ravel.map(values)(f), space, label)
 
     def mapVoxels[B](f: (VoxelCoord, A) => B)(using
         ClassTag[B],
-        DType[B]
+        DType[B],
+        MigrationValueSemantics[B]
     ): NeuroVec[B] =
       val shape = space.spatialDims
       val out =
@@ -286,7 +295,11 @@ object NeuroVec:
 
     def mapSamples[B](
         f: (VoxelCoord, Int, A) => B
-    )(using ClassTag[B], DType[B]): NeuroVec[B] =
+    )(using
+        ClassTag[B],
+        DType[B],
+        MigrationValueSemantics[B]
+    ): NeuroVec[B] =
       val shape = space.spatialDims
       val out =
         RavelArray.tabulate[B](
@@ -303,7 +316,11 @@ object NeuroVec:
         that: NeuroVec[B]
     )(
         f: (A, B) => C
-    )(using ClassTag[C], DType[C]): Either[GridMismatch, NeuroVec[C]] =
+    )(using
+        ClassTag[C],
+        DType[C],
+        MigrationValueSemantics[C]
+    ): Either[GridMismatch, NeuroVec[C]] =
       GridCompatibility.exact(space, that.space).map: _ =>
         val shape = space.spatialDims
         val out =
@@ -317,34 +334,43 @@ object NeuroVec:
 
     def traverseValues[F[_], B](
         f: A => F[B]
-    )(using Applicative[F], ClassTag[B], DType[B]): F[NeuroVec[B]] =
+    )(using
+        Applicative[F],
+        ClassTag[B],
+        DType[B],
+        MigrationValueSemantics[B]
+    ): F[NeuroVec[B]] =
       Vector
         .tabulate(values.size)(linear)
         .traverse(f)
         .map(values => NeuroVec.fromLinear(PrimitiveBuffers.fromArray(values.toArray), space, label))
 
-    def map[B](f: A => B)(using ClassTag[B], DType[B]): NeuroVec[B] =
+    def map[B](f: A => B)(using
+        ClassTag[B],
+        DType[B],
+        MigrationValueSemantics[B]
+    ): NeuroVec[B] =
       mapValues(f)
 
     def reconstruct(
         values: RavelArray[A, Rank[4]] = vector.values,
         space: NeuroSpace = vector.space,
         label: String = vector.label
-    ): Either[NeuroImageError, NeuroVec[A]] =
+    )(using MigrationValueSemantics[A]): Either[NeuroImageError, NeuroVec[A]] =
       NeuroVec.makeRavel(values, space, label)
 
     private[scalafim] def copy(
         values: RavelArray[A, Rank[4]] = vector.values,
         space: NeuroSpace = vector.space,
         label: String = vector.label
-    ): NeuroVec[A] =
+    )(using MigrationValueSemantics[A]): NeuroVec[A] =
       NeuroVec.fromRavel(values, space, label)
 
   def makeRavel[A](
       values: RavelArray[A, Rank[4]],
       space: NeuroSpace,
       label: String = ""
-  ): Either[NeuroImageError, NeuroVec[A]] =
+  )(using MigrationValueSemantics[A]): Either[NeuroImageError, NeuroVec[A]] =
     Image4sInterop
       .seriesFromRavel(values, space, label)
       .map(value => value)
@@ -353,7 +379,7 @@ object NeuroVec:
       values: RavelArray[A, Rank[4]],
       space: NeuroSpace,
       label: String = ""
-  ): NeuroVec[A] =
+  )(using MigrationValueSemantics[A]): NeuroVec[A] =
     makeRavel(values, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -361,7 +387,10 @@ object NeuroVec:
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
-  )(using DType[A]): Either[NeuroImageError, NeuroVec[A]] =
+  )(using
+      DType[A],
+      MigrationValueSemantics[A]
+  ): Either[NeuroImageError, NeuroVec[A]] =
     importLegacyLinear(data, space, label).map(_.image)
 
   /** Checked legacy-linear ingress with an explicit materialization receipt. */
@@ -369,7 +398,10 @@ object NeuroVec:
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
-  )(using DType[A]): Either[
+  )(using
+      DType[A],
+      MigrationValueSemantics[A]
+  ): Either[
     NeuroImageError,
     DenseImageImport[NeuroVec[A]]
   ] =
@@ -386,6 +418,9 @@ object NeuroVec:
       data: Array[A],
       space: NeuroSpace,
       label: String = ""
-  )(using DType[A]): NeuroVec[A] =
+  )(using
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     fromLinearChecked(data, space, label)
       .fold(err => throw new IllegalArgumentException(err.message), identity)

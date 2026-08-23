@@ -185,7 +185,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     assertEquals(lin, Vector(1.0, 2.0, 3.0, 4.0, 10.0, 20.0, 30.0, 40.0), clue = "")
   }
 
-  test("NeuroVol.slices returns per-plane NeuroSlice objects") {
+  test("NeuroVol planes are zero-copy singleton-D3 image views") {
     val sp = NeuroSpace(Vector(2, 2, 3))
     val nx = sp.dims(0); val ny = sp.dims(1); val nz = sp.dims(2)
     val data = PrimitiveBuffers.ofSize[Double](nx * ny * nz)
@@ -202,18 +202,24 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
       z += 1
 
     val vol = NeuroVol.fromLinear[Double](data, sp)
-    val sl = vol.slices()
-    assertEquals(sl.length, nz, clue = "")
-    assertEquals(sl.head.space.dims, Vector(2, 2), clue = "")
+    val planes =
+      Vector.tabulate(nz): index =>
+        vol
+          .plane(SpatialAxis.Z, index)
+          .fold(error => fail(error.message), identity)
+    assertEquals(planes.length, nz, clue = "")
+    assertEquals(planes.head.grid.shape, Vector(2, 2, 1), clue = "")
     val means =
-      sl.map { s =>
+      planes.map { plane =>
         var sum = 0.0
-        var i = 0
-        val size = s.space.dims.product
-        while i < size do
-          sum += s.linear(i)
-          i += 1
-        sum / size.toDouble
+        var x = 0
+        while x < plane.grid.shape(0) do
+          var y = 0
+          while y < plane.grid.shape(1) do
+            sum += plane(x, y, 0)
+            y += 1
+          x += 1
+        sum / plane.grid.shape.take(2).product.toDouble
       }
     assertEquals(means, Vector(1.0, 2.0, 3.0), clue = "")
   }

@@ -53,7 +53,12 @@ final case class ClusteredNeuroVec[A](
       val col = idToCol(cid)
       ts(t, col)
 
-  def apply(t: Int)(using ClassTag[A], Ring[A], DType[A]): NeuroVol[A] =
+  def apply(t: Int)(using
+      ClassTag[A],
+      Ring[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVol[A] =
     volume(t)
 
   def apply(tsIdx: Seq[Int])(using ClassTag[A], DType[A]): ClusteredNeuroVec[A] =
@@ -133,7 +138,12 @@ final case class ClusteredNeuroVec[A](
   ): ROIVec[A] =
     ROIVec(space, roi, series(roi))
 
-  def volume(t: Int)(using ClassTag[A], Ring[A], DType[A]): NeuroVol[A] =
+  def volume(t: Int)(using
+      ClassTag[A],
+      Ring[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVol[A] =
     require(t >= 0 && t < nVolumes, "t out of bounds")
     val spatialNels = space.spatialDims.product
     val out = Array.ofDim[A](spatialNels)
@@ -148,7 +158,12 @@ final case class ClusteredNeuroVec[A](
       lin += 1
     NeuroVol.fromLinear(out, space.spatialSpace, label)
 
-  def toDense(using ClassTag[A], Ring[A], DType[A]): NeuroVec[A] =
+  def toDense(using
+      ClassTag[A],
+      Ring[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     val spatialNels = space.spatialDims.product
     val tLen = nVolumes
     val zero = summon[Ring[A]].zero
@@ -162,7 +177,12 @@ final case class ClusteredNeuroVec[A](
       }
     NeuroVec.fromRavel(out, space, label)
 
-  def asDense(using ClassTag[A], Ring[A], DType[A]): NeuroVec[A] =
+  def asDense(using
+      ClassTag[A],
+      Ring[A],
+      DType[A],
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     toDense
 
   def toSparse(using ClassTag[A], Ring[A], DType[A]): SparseNeuroVec[A] =

@@ -9,7 +9,7 @@ class SliceSamplingSuite extends munit.FunSuite:
 
   private val Tol = 1e-9
 
-  private def volume[A: ClassTag: DType](
+  private def volume[A: ClassTag: DType: MigrationValueSemantics](
     dims: SpatialDims,
     affine: Option[DMat] = None,
     label: String = "test"

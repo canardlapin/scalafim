@@ -35,7 +35,10 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
     val (v, localT) = locate(t)
     v.volume(localT)
 
-  def apply(ts: Seq[Int])(using ClassTag[A]): NeuroVecSeq[A] =
+  def apply(ts: Seq[Int])(using
+      ClassTag[A],
+      MigrationValueSemantics[A]
+  ): NeuroVecSeq[A] =
     subVector(ts)
 
   def linear(i: Int): A =
@@ -53,7 +56,10 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
       p += 1
     out
 
-  def subVector(ts: Seq[Int])(using ClassTag[A]): NeuroVecSeq[A] =
+  def subVector(ts: Seq[Int])(using
+      ClassTag[A],
+      MigrationValueSemantics[A]
+  ): NeuroVecSeq[A] =
     require(ts.nonEmpty, "ts must be non-empty")
     require(ts.forall(t => t >= 0 && t < length), "time index out of bounds")
     val perBucket = Array.fill(lens.length)(Vector.empty[Int])
@@ -76,5 +82,8 @@ final case class NeuroVecSeq[A](vecs: Vector[NeuroVec[A]]):
 
     NeuroVecSeq(subVecs)
 
-  def toNeuroVec(using ClassTag[A]): NeuroVec[A] =
+  def toNeuroVec(using
+      ClassTag[A],
+      MigrationValueSemantics[A]
+  ): NeuroVec[A] =
     vecs.reduce(_.concat(_))

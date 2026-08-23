@@ -28,7 +28,8 @@ final case class SparseNeuroVol[A](
 
   def toDense(using
       spire.algebra.Ring[A],
-      DType[A]
+      DType[A],
+      MigrationValueSemantics[A]
   ): NeuroVol[A] =
     val zero = summon[Ring[A]].zero
     val shape = space.spatialShape

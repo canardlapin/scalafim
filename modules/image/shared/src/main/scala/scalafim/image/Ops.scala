@@ -19,7 +19,7 @@ object Ops:
   private def requireCompatSpatial(vecSpace: NeuroSpace, volSpace: NeuroSpace): Unit =
     GridCompatibility.requireSpatial(vecSpace, volSpace)
 
-  extension [A: Ring: DType](x: NeuroVol[A])
+  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVol[A])
     def +(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
       x.zipWith(y)(_ + _)
@@ -40,7 +40,7 @@ object Ops:
     def *(a: A)(using ClassTag[A]): NeuroVol[A] =
       x.map(_ * a)
 
-  extension [A: Field: DType](x: NeuroVol[A])
+  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVol[A])
     def /(y: NeuroVol[A])(using ClassTag[A]): NeuroVol[A] =
       requireCompat(x.space, y.space)
       x.zipWith(y)(_ / _)
@@ -48,7 +48,7 @@ object Ops:
     def /(a: A)(using ClassTag[A]): NeuroVol[A] =
       x.map(_ / a)
 
-  extension [A: Ring: DType](x: NeuroVec[A])
+  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVec[A])
     @scala.annotation.targetName("neuroVecPlusVec")
     def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
@@ -90,7 +90,7 @@ object Ops:
       requireCompatSpatial(x.space, v.space)
       x.mapSamples((voxel, _, value) => value * v(voxel))
 
-  extension [A: Field: DType](x: NeuroVec[A])
+  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVec[A])
     @scala.annotation.targetName("neuroVecDivideVec")
     def /(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompat(x.space, y.space)
@@ -130,7 +130,7 @@ object Ops:
     def /(a: A)(using ClassTag[A]): ClusteredNeuroVec[A] =
       ClusteredNeuroVec(x.cvol, x.ts.map(_ / a), x.clMap, x.space, x.label)
 
-  extension [A: Ring: DType](x: NeuroVol[A])
+  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVol[A])
     @scala.annotation.targetName("neuroVolPlusVec")
     def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       y + x
@@ -142,7 +142,7 @@ object Ops:
     def *(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       y * x
 
-  extension [A: Field: DType](x: NeuroVol[A])
+  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVol[A])
     @scala.annotation.targetName("neuroVolDivideVec")
     def /(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       requireCompatSpatial(y.space, x.space)
@@ -158,7 +158,7 @@ object Ops:
     def reorient(orient: Seq[String]): NeuroSpace =
       Orientation.reorient(s, orient)
 
-  extension [A](v: NeuroVol[A])
+  extension [A: MigrationValueSemantics](v: NeuroVol[A])
     def reorient(orientation: Orientation3D): NeuroVol[A] =
       Orientation.reorient(v, orientation)
 
@@ -171,14 +171,16 @@ object Ops:
   extension (v: NeuroVol[Int])
     def mapValues[B](lookup: Map[Int, B], default: B)(using
         ClassTag[B],
-        DType[B]
+        DType[B],
+        MigrationValueSemantics[B]
     ): NeuroVol[B] =
       v.map(i => lookup.getOrElse(i, default))
 
     @targetName("mapValuesStringKeys")
     def mapValues[B](lookup: Map[String, B], default: B)(using
         ClassTag[B],
-        DType[B]
+        DType[B],
+        MigrationValueSemantics[B]
     ): NeuroVol[B] =
       val parsed =
         lookup.map { case (k, value) =>
@@ -190,7 +192,7 @@ object Ops:
         }
       v.mapValues(parsed, default)
 
-  extension [A](v: NeuroVec[A])
+  extension [A: MigrationValueSemantics](v: NeuroVec[A])
     @scala.annotation.targetName("reorientNeuroVecOrientation")
     def reorient(orientation: Orientation3D): NeuroVec[A] =
       Orientation.reorient(v, orientation)
@@ -316,7 +318,7 @@ object Ops:
 
     SparseNeuroVec(compact, x.space, newMask, newMap, x.label)
 
-  extension [A: Ring: DType](x: SparseNeuroVec[A])
+  extension [A: Ring: DType: MigrationValueSemantics](x: SparseNeuroVec[A])
     def +(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
       unionSparse(x, y)(_ + _)
     def -(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
@@ -341,7 +343,7 @@ object Ops:
     def *(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
       x.toDense * v
 
-  extension [A: Field: DType](x: SparseNeuroVec[A])
+  extension [A: Field: DType: MigrationValueSemantics](x: SparseNeuroVec[A])
     def /(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
       unionSparse(x, y)(_ / _)
 
@@ -351,7 +353,7 @@ object Ops:
     def /(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
       x.toDense / v
 
-  extension [A: Ring: DType](x: NeuroVec[A])
+  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVec[A])
     def +(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       x + y.toDense
     def -(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
@@ -359,7 +361,7 @@ object Ops:
     def *(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       x * y.toDense
 
-  extension [A: Field: DType](x: NeuroVec[A])
+  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVec[A])
     def /(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
       x / y.toDense
 
@@ -412,7 +414,7 @@ object Ops:
     def neq(a: A): NeuroVol[Boolean] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
 
-  extension [A: Order: Ring: DType](x: SparseNeuroVol[A])
+  extension [A: Order: Ring: DType: MigrationValueSemantics](x: SparseNeuroVol[A])
     def lt(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.LT)
     def lte(a: A)(using ClassTag[A]): NeuroVol[Boolean] =

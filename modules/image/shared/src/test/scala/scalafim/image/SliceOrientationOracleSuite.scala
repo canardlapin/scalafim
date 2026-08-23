@@ -107,7 +107,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   private def dot(left: Vector[Double], right: Vector[Double]): Double =
     left(0) * right(0) + left(1) * right(1) + left(2) * right(2)
 
-  private def volume[A: ClassTag: DType](
+  private def volume[A: ClassTag: DType: MigrationValueSemantics](
     dims: SpatialDims,
     affine: DMat
   )(value: (Int, Int, Int) => A): NeuroVol[A] =

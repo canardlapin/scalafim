@@ -116,15 +116,17 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(subData, Vector(4.0,5.0,6.0,7.0, 12.0,13.0,14.0,15.0), clue = "")
   }
 
-  test("NeuroVol slice extracts 2D plane") {
+  test("NeuroVol plane retains an affine-honest singleton-D3 view") {
     val sp = NeuroSpace(Vector(2, 3, 1))
     val data = PrimitiveBuffers.tabulate[Int](6)(i => i + 1)
     val vol = NeuroVol.fromLinear[Int](data, sp)
-    val sl = vol.slice(axis = 0, index = 1)
-    val slData =
-      Vector.tabulate(sl.space.dims.product)(sl.linear)
-    assertEquals(sl.space.dims, Vector(3, 1), clue = "")
-    assertEquals(slData, Vector(2,4,6), clue = "")
+    val plane =
+      vol
+        .plane(SpatialAxis.X, 1)
+        .fold(error => fail(error.message), identity)
+    val planeData = Vector.tabulate(3)(y => plane(0, y, 0))
+    assertEquals(plane.grid.shape, Vector(1, 3, 1), clue = "")
+    assertEquals(planeData, Vector(2,4,6), clue = "")
   }
 
   test("NeuroVecSeq indexes across runs") {

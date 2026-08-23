@@ -187,7 +187,8 @@ final class SparseNeuroVec[A] private (
   def asDense(using
       ClassTag[A],
       spire.algebra.Ring[A],
-      DType[A]
+      DType[A],
+      MigrationValueSemantics[A]
   ): NeuroVec[A] =
     toDense
 
@@ -210,7 +211,8 @@ final class SparseNeuroVec[A] private (
   def toDense(using
       ClassTag[A],
       spire.algebra.Ring[A],
-      DType[A]
+      DType[A],
+      MigrationValueSemantics[A]
   ): NeuroVec[A] =
     val spatialNels = space.spatialDims.product
     val tLen = space.dims(3)
