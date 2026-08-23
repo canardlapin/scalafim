@@ -6,10 +6,7 @@ import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import scala.reflect.ClassTag
-import ravel.Array1
 import ravel.DType
-import ravel.NDArray as RavelArray
-import ravel.Shape
 import ravel.{map, zipMapExact}
 import spire.algebra.{Field, Order, Ring}
 import spire.syntax.field.*
@@ -286,6 +283,29 @@ object Ops:
     ] =
       SelectedVolume.zipExact(x, y)(_ - _)
 
+    def multiplyExact(
+        y: SelectedVolume[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedVolume[F, S, A, Continuous]
+    ] =
+      SelectedVolume.zipExact(x, y)(_ * _)
+
+  extension [F <: Frame[D3], S, A: Field: DType](
+      x: SelectedVolume[F, S, A, Continuous]
+  )
+    def divideExact(
+        y: SelectedVolume[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedVolume[F, S, A, Continuous]
+    ] =
+      SelectedVolume.zipExact(x, y)(_ / _)
+
   extension [F <: Frame[D3], S, A: Ring: DType](
       x: SelectedSeries[F, S, A, Continuous]
   )
@@ -311,112 +331,30 @@ object Ops:
     ] =
       SelectedSeries.zipExact(x, y)(_ - _)
 
-  private def unionSparse[A](
-    x: SparseNeuroVec[A],
-    y: SparseNeuroVec[A]
-  )(op: (A, A) => A)(using Ring[A], DType[A], ClassTag[A]): SparseNeuroVec[A] =
-    requireCompat(x.space, y.space)
+    @targetName("selectedSeriesMultiplyExact")
+    def multiplyExact(
+        y: SelectedSeries[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedSeries[F, S, A, Continuous]
+    ] =
+      SelectedSeries.zipExact(x, y)(_ * _)
 
-    def toVec(arr: Array1[Int]): Vector[Int] =
-      Vector.tabulate(arr.size)(i => arr(i))
-
-    val idx1 = toVec(x.map.indices)
-    val idx2 = toVec(y.map.indices)
-    val unionIdx = (idx1 ++ idx2).distinct.sorted
-    require(unionIdx.nonEmpty, "Resulting SparseNeuroVec has no non-zero elements")
-
-    val tLen = x.space.dims(3)
-    val zero = summon[Ring[A]].zero
-    val keep = Array.ofDim[Boolean](unionIdx.length)
-
-    var c = 0
-    while c < unionIdx.length do
-      val lin = unionIdx(c)
-      val p1 = x.map.lookup(lin)
-      val p2 = y.map.lookup(lin)
-      var t = 0
-      var anyNz = false
-      while t < tLen do
-        val v1 = if p1 >= 0 then x.data(t, p1) else zero
-        val v2 = if p2 >= 0 then y.data(t, p2) else zero
-        val r = op(v1, v2)
-        if r != zero then anyNz = true
-        t += 1
-      keep(c) = anyNz
-      c += 1
-
-    val kept =
-      unionIdx.zipWithIndex.collect { case (lin, i) if keep(i) => (lin, i) }
-    val keptIdx = kept.map(_._1)
-    require(keptIdx.nonEmpty, "Resulting SparseNeuroVec has no non-zero elements")
-
-    val keptArr =
-      RavelArray.fromSeq(Shape(keptIdx.length), keptIdx)
-    val newMask = Mask.fromIndices(x.space.spatialSpace, keptArr)
-    val newMap = IndexLookupVol(x.space, keptArr)
-
-    val compact =
-      RavelArray.tabulate[A](tLen, keptIdx.length) { (time, column) =>
-        val linearVoxel = keptIdx(column)
-        val leftPosition = x.support.positionOf(linearVoxel)
-        val rightPosition = y.support.positionOf(linearVoxel)
-        val left =
-          if leftPosition >= 0 then x.data(time, leftPosition)
-          else zero
-        val right =
-          if rightPosition >= 0 then y.data(time, rightPosition)
-          else zero
-        op(left, right)
-      }
-
-    SparseNeuroVec(compact, x.space, newMask, newMap, x.label)
-
-  extension [A: Ring: DType: MigrationValueSemantics](x: SparseNeuroVec[A])
-    def +(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
-      unionSparse(x, y)(_ + _)
-    def -(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
-      unionSparse(x, y)(_ - _)
-    def *(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
-      unionSparse(x, y)(_ * _)
-
-    def +(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense + y
-    def -(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense - y
-    def *(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense * y
-
-    @scala.annotation.targetName("sparseNeuroVecPlusVol")
-    def +(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense + v
-    @scala.annotation.targetName("sparseNeuroVecMinusVol")
-    def -(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense - v
-    @scala.annotation.targetName("sparseNeuroVecTimesVol")
-    def *(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense * v
-
-  extension [A: Field: DType: MigrationValueSemantics](x: SparseNeuroVec[A])
-    def /(y: SparseNeuroVec[A])(using ClassTag[A]): SparseNeuroVec[A] =
-      unionSparse(x, y)(_ / _)
-
-    def /(y: NeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense / y
-    @scala.annotation.targetName("sparseNeuroVecDivideVol")
-    def /(v: NeuroVol[A])(using ClassTag[A]): NeuroVec[A] =
-      x.toDense / v
-
-  extension [A: Ring: DType: MigrationValueSemantics](x: NeuroVec[A])
-    def +(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x + y.toDense
-    def -(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x - y.toDense
-    def *(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x * y.toDense
-
-  extension [A: Field: DType: MigrationValueSemantics](x: NeuroVec[A])
-    def /(y: SparseNeuroVec[A])(using ClassTag[A]): NeuroVec[A] =
-      x / y.toDense
+  extension [F <: Frame[D3], S, A: Field: DType](
+      x: SelectedSeries[F, S, A, Continuous]
+  )
+    @targetName("selectedSeriesDivideExact")
+    def divideExact(
+        y: SelectedSeries[F, S, A, Continuous]
+    )(using
+        ValueSemantics[A, Continuous]
+    ): Either[
+      SelectedImageError,
+      SelectedSeries[F, S, A, Continuous]
+    ] =
+      SelectedSeries.zipExact(x, y)(_ / _)
 
   extension (x: NeuroVol[Double])
     def summary: NeuroStats.NeuroVolSummary =
@@ -425,10 +363,6 @@ object Ops:
   extension [F <: Frame[D3], S](
       x: SelectedVolume[F, S, Double, Continuous]
   )
-    def summary: NeuroStats.NeuroVolSummary =
-      NeuroStats.summarize(x)
-
-  extension (x: SparseNeuroVol[Double])
     def summary: NeuroStats.NeuroVolSummary =
       NeuroStats.summarize(x)
 
@@ -446,13 +380,6 @@ object Ops:
       SelectedImageError,
       SelectedVolume[F, S, Double, Continuous]
     ] =
-      NeuroStats.temporalMean(x)
-
-    def summary: NeuroStats.NeuroVecSummary =
-      NeuroStats.summarize(x)
-
-  extension (x: SparseNeuroVec[Double])
-    def temporalMean: SparseNeuroVol[Double] =
       NeuroStats.temporalMean(x)
 
     def summary: NeuroStats.NeuroVecSummary =
@@ -522,20 +449,6 @@ object Ops:
         DType[Boolean],
         ValueSemantics[Boolean, MaskSemantics]
     ): SelectedVolume[F, S, Boolean, MaskSemantics] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
-
-  extension [A: Order: Ring: DType: MigrationValueSemantics](x: SparseNeuroVol[A])
-    def lt(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LT)
-    def lte(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.LTE)
-    def gt(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GT)
-    def gte(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.GTE)
-    def eqv(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
-      NeuroCompare.compare(x, a, NeuroCompare.Predicate.EQV)
-    def neq(a: A)(using ClassTag[A]): NeuroVol[Boolean] =
       NeuroCompare.compare(x, a, NeuroCompare.Predicate.NEQ)
 
   extension (x: ClusteredNeuroVol)

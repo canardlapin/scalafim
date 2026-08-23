@@ -154,6 +154,10 @@ class SelectedImageSuite extends munit.FunSuite:
       case other =>
         fail(s"expected selected-order mismatch, found $other")
 
+    val squared = right(left.multiplyExact(left))
+    val normalized = right(squared.divideExact(left))
+    assertEquals(normalized.data.iterator.toVector, left.data.iterator.toVector)
+
     val union =
       right(Selection.fromOrdinals(domain.space, Vector(7, 1, 0, 10)))
     val combined =

@@ -8,8 +8,7 @@ import image4s.geometry.Frame
 import ravel.Array1
 import ravel.DType
 import ravel.NDArray as RavelArray
-import scala.reflect.ClassTag
-import spire.algebra.{Order, Ring}
+import spire.algebra.Order
 
 import VolumeDomain.*
 
@@ -120,19 +119,6 @@ object NeuroStats:
       )
     )
 
-  def summarize(svol: SparseNeuroVol[Double]): NeuroVolSummary =
-    summarize(svol, naRm = true)
-
-  def summarize(svol: SparseNeuroVol[Double], naRm: Boolean): NeuroVolSummary =
-    NeuroVolSummary(
-      kind = "SparseNeuroVol",
-      dims = svol.space.spatialDims,
-      spacing = svol.space.spacing,
-      origin = svol.space.origin,
-      orientation = orientation(svol.space),
-      stats = summarize(svol.data, naRm)
-    )
-
   def summarize[F <: Frame[D3], S](
       volume: SelectedVolume[F, S, Double, Continuous]
   ): NeuroVolSummary =
@@ -167,19 +153,6 @@ object NeuroStats:
       vec.valueAtCanonicalOrdinal,
       vec.nVolumes,
       vec.space.spatialDims.product,
-      naRm
-    )
-
-  def summarize(svec: SparseNeuroVec[Double]): NeuroVecSummary =
-    summarize(svec, naRm = true)
-
-  def summarize(svec: SparseNeuroVec[Double], naRm: Boolean): NeuroVecSummary =
-    summarizeSparseVec(
-      "SparseNeuroVec",
-      svec.space,
-      svec.space.dims(3),
-      svec.map.cardinality,
-      svec.data.apply,
       naRm
     )
 
@@ -234,19 +207,6 @@ object NeuroStats:
       lin += 1
 
     NeuroVol.copyFromCanonicalArray(out, vec.space.spatialSpace, vec.label)
-
-  def temporalMean(svec: SparseNeuroVec[Double]): SparseNeuroVol[Double] =
-    val tLen = svec.space.dims(3)
-    val nVox = svec.map.cardinality
-    val out = RavelArray.tabulate[Double](nVox): p =>
-      var t = 0
-      var sum = 0.0
-      while t < tLen do
-        sum += svec.data(t, p)
-        t += 1
-      sum / tLen.toDouble
-
-    SparseNeuroVol(out, svec.map.indices, svec.space.spatialSpace, svec.label)
 
   def temporalMean[F <: Frame[D3], S](
       series: SelectedSeries[F, S, Double, Continuous]
@@ -428,20 +388,6 @@ object NeuroCompare:
       out(i) = test(scalar, x.valueAtCanonicalOrdinal(i), predicate)
       i += 1
     NeuroVol.copyFromCanonicalArray(out, x.space, x.label)
-
-  def compare[A: Order: Ring: ClassTag: DType: MigrationValueSemantics](
-      x: SparseNeuroVol[A],
-      scalar: A,
-      predicate: Predicate
-  ): NeuroVol[Boolean] =
-    compare(x.toDense, scalar, predicate)
-
-  def compare[A: Order: Ring: ClassTag: DType: MigrationValueSemantics](
-      scalar: A,
-      x: SparseNeuroVol[A],
-      predicate: Predicate
-  ): NeuroVol[Boolean] =
-    compare(scalar, x.toDense, predicate)
 
   def compare(x: ClusteredNeuroVol, scalar: Int, predicate: Predicate): NeuroVol[Boolean] =
     compare(x.toDense, scalar, predicate)

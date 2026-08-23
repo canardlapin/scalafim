@@ -193,9 +193,6 @@ final class ROIVol[A] private[scalafim] (
       checkedRoi.space.voxelToWorld(voxel).toVector
     }
 
-  def toSparse: SparseNeuroVol[A] =
-    SparseNeuroVol.fromIndexSet(data, checkedRoi.linearIndexSet, space, label = "")
-
 object ROICoords:
   def apply(coords: Array1[Int]): ROICoords =
     require(coords.size % 3 == 0, "flat coords must be multiple of 3")
