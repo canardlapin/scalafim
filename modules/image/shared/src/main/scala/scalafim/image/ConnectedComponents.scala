@@ -6,7 +6,7 @@ import image4s.locus.GridDomain
 import locus4s.Region
 import locus4s.SpaceMismatch
 
-enum VoxelConnectivity:
+enum SpatialConnectivity3D:
   case Face6
   case FaceEdge18
   case FaceEdgeCorner26
@@ -33,7 +33,7 @@ object ConnectedComponents:
   def fromMask[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       mask: SomeMaskVolume,
-      connectivity: VoxelConnectivity = VoxelConnectivity.FaceEdgeCorner26,
+      connectivity: SpatialConnectivity3D = SpatialConnectivity3D.FaceEdgeCorner26,
       parcelDomainName: String = "connected components"
   ): Either[
     ConnectedComponentsError,
@@ -49,7 +49,7 @@ object ConnectedComponents:
   def fromRegion[F <: Frame[D3], S, T](
       domain: GridDomain[F, D3, S],
       active: Region[T],
-      connectivity: VoxelConnectivity = VoxelConnectivity.FaceEdgeCorner26,
+      connectivity: SpatialConnectivity3D = SpatialConnectivity3D.FaceEdgeCorner26,
       parcelDomainName: String = "connected components"
   ): Either[
     ConnectedComponentsError,
@@ -90,7 +90,7 @@ object ConnectedComponents:
   private def findComponents[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
       active: Region[S],
-      connectivity: VoxelConnectivity
+      connectivity: SpatialConnectivity3D
   ): Vector[Array[Int]] =
     val shape = domain.grid.shape
     val voxelCount = domain.space.size
@@ -139,12 +139,12 @@ object ConnectedComponents:
     components.result()
 
   private def offsets(
-      connectivity: VoxelConnectivity
+      connectivity: SpatialConnectivity3D
   ): Vector[(Int, Int, Int)] =
     connectivity match
-      case VoxelConnectivity.Face6 => face6
-      case VoxelConnectivity.FaceEdge18 => faceEdge18
-      case VoxelConnectivity.FaceEdgeCorner26 => faceEdgeCorner26
+      case SpatialConnectivity3D.Face6 => face6
+      case SpatialConnectivity3D.FaceEdge18 => faceEdge18
+      case SpatialConnectivity3D.FaceEdgeCorner26 => faceEdgeCorner26
 
   private val face6: Vector[(Int, Int, Int)] =
     Vector(

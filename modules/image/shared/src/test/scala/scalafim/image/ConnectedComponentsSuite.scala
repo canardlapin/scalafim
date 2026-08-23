@@ -49,7 +49,7 @@ class ConnectedComponentsSuite extends munit.FunSuite:
         ConnectedComponents.fromRegion(
           domain,
           active,
-          VoxelConnectivity.Face6
+          SpatialConnectivity3D.Face6
         )
       )
     val components = result.value
@@ -91,7 +91,7 @@ class ConnectedComponentsSuite extends munit.FunSuite:
         ConnectedComponents.fromRegion(
           domain,
           diagonal,
-          VoxelConnectivity.Face6
+          SpatialConnectivity3D.Face6
         )
       ).value
     val corner =
@@ -99,7 +99,7 @@ class ConnectedComponentsSuite extends munit.FunSuite:
         ConnectedComponents.fromRegion(
           domain,
           diagonal,
-          VoxelConnectivity.FaceEdgeCorner26
+          SpatialConnectivity3D.FaceEdgeCorner26
         )
       ).value
 
@@ -121,7 +121,7 @@ class ConnectedComponentsSuite extends munit.FunSuite:
         ConnectedComponents.fromMask(
           domain,
           mask,
-          VoxelConnectivity.Face6
+          SpatialConnectivity3D.Face6
         )
       ).value
 
@@ -134,7 +134,7 @@ class ConnectedComponentsSuite extends munit.FunSuite:
         ConnectedComponents.fromRegion(
           domain,
           Region.empty(domain.space),
-          VoxelConnectivity.Face6
+          SpatialConnectivity3D.Face6
         )
       ).value
 
