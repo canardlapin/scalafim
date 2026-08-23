@@ -18,8 +18,8 @@ class AtlasCoverageSuite extends munit.FunSuite:
   private def twoRegionIndex: RegionIndex =
     RegionIndex(
       Vector(
-        Region(RegionId(1), "Left V1", labelFull = Some("Network/Left V1"), hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(2), "Right V1", labelFull = Some("Network/Right V1"), hemisphere = Some(Hemisphere.Right))
+        AtlasRegionMetadata(RegionId(1), "Left V1", labelFull = Some("Network/Left V1"), hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(2), "Right V1", labelFull = Some("Network/Right V1"), hemisphere = Some(Hemisphere.Right))
       )
     )
 
@@ -61,9 +61,9 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val index =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "Left V1", labelFull = Some("Network/Left V1"), hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(2), "Left-V1", labelFull = Some("Network/Right V1"), hemisphere = Some(Hemisphere.Right)),
-          Region(RegionId(3), "Area 3", labelFull = Some("Full Area 3"), hemisphere = Some(Hemisphere.Bilateral))
+          AtlasRegionMetadata(RegionId(1), "Left V1", labelFull = Some("Network/Left V1"), hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(2), "Left-V1", labelFull = Some("Network/Right V1"), hemisphere = Some(Hemisphere.Right)),
+          AtlasRegionMetadata(RegionId(3), "Area 3", labelFull = Some("Full Area 3"), hemisphere = Some(Hemisphere.Bilateral))
         )
       )
 
@@ -74,11 +74,11 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(index.regions.head.typedLabel, RegionLabel.unsafe("Left V1"))
     assertEquals(index.regions.head.typedFullLabel, RegionLabel.unsafe("Network/Left V1"))
     assertEquals(
-      Region.checked(RegionId(10), "Area 10", attributes = Map("system" -> "visual")).map(_.typedAttributes.toMap),
+      AtlasRegionMetadata.checked(RegionId(10), "Area 10", attributes = Map("system" -> "visual")).map(_.typedAttributes.toMap),
       Right(Map("system" -> "visual"))
     )
     assertEquals(
-      Region.checked(RegionId(10), " ", attributes = Map.empty),
+      AtlasRegionMetadata.checked(RegionId(10), " ", attributes = Map.empty),
       Left(AtlasError.InvalidRegionMetadata("region label must be non-empty"))
     )
 
@@ -87,7 +87,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(missing.getMessage, "atlas payload is missing region id 99")
 
     val duplicate = intercept[IllegalArgumentException]:
-      RegionIndex(Vector(Region(RegionId(1), "A"), Region(RegionId(1), "B")))
+      RegionIndex(Vector(AtlasRegionMetadata(RegionId(1), "A"), AtlasRegionMetadata(RegionId(1), "B")))
     assert(duplicate.getMessage.contains("atlas region ids must be unique: 1"), clue = duplicate.getMessage)
 
   test("volume atlas construction rejects unknown and absent payload labels"):
@@ -155,8 +155,8 @@ class AtlasCoverageSuite extends munit.FunSuite:
 
     val duplicate =
       Vector(
-        ParcelRecord(Region(RegionId(1), "A"), 1.0),
-        ParcelRecord(Region(RegionId(1), "A duplicate"), 2.0)
+        ParcelRecord(AtlasRegionMetadata(RegionId(1), "A"), 1.0),
+        ParcelRecord(AtlasRegionMetadata(RegionId(1), "A duplicate"), 2.0)
       )
     val err =
       intercept[IllegalArgumentException]:
@@ -172,8 +172,8 @@ class AtlasCoverageSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(2), "A", hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(5), "B", hemisphere = Some(Hemisphere.Right))
+          AtlasRegionMetadata(RegionId(2), "A", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(5), "B", hemisphere = Some(Hemisphere.Right))
         )
       )
     val a = atlas(Vector(2, 5, 2, 5), regions)

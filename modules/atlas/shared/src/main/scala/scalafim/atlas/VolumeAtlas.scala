@@ -2,7 +2,6 @@ package scalafim.atlas
 
 import locus4s.DomainRegistry
 import scalafim.image.*
-import scalafim.image.VolumeDomain.*
 
 trait Atlas:
   def ref: AtlasRef
@@ -37,7 +36,7 @@ final class VolumeAtlas private (
     )
 
   def space: NeuroSpace =
-    realization.domain.volumeSpace.toNeuroSpace
+    VolumeSpace.fromGridDomain(realization.domain).toNeuroSpace
 
   /** Materialize categorical labels in canonical Ravel order.
     *

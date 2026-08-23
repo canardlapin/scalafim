@@ -308,7 +308,7 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
+          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
         )
       )
     val ref =
@@ -345,8 +345,8 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
+          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
         )
       )
     val ref =

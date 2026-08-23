@@ -109,8 +109,8 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: atlas region ids must be unique: 10") {
       RegionIndex(
         Vector(
-          Region(RegionId(10), "A"),
-          Region(RegionId(10), "A-duplicate")
+          AtlasRegionMetadata(RegionId(10), "A"),
+          AtlasRegionMetadata(RegionId(10), "A-duplicate")
         )
       )
     }

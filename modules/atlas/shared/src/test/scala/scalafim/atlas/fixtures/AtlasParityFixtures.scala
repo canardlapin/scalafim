@@ -39,7 +39,7 @@ object AtlasParityFixtures:
   val regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(
+        AtlasRegionMetadata(
           RegionId(10),
           "RegionA",
           labelFull = Some("left_RegionA"),
@@ -47,7 +47,7 @@ object AtlasParityFixtures:
           network = Some(NetworkId("NetA")),
           color = Some(Rgb(255, 0, 0))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(50),
           "RegionB",
           labelFull = Some("right_RegionB"),
@@ -55,7 +55,7 @@ object AtlasParityFixtures:
           network = Some(NetworkId("NetA")),
           color = Some(Rgb(0, 255, 0))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(90),
           "RegionC",
           labelFull = Some("midline_RegionC"),
@@ -101,9 +101,9 @@ object AtlasParityFixtures:
     val comparisonRegions =
       RegionIndex(
         Vector(
-          Region(RegionId(101), "RegionA-left-half", hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(202), "RegionB-copy", hemisphere = Some(Hemisphere.Right)),
-          Region(RegionId(303), "RegionC-copy", hemisphere = Some(Hemisphere.Midline))
+          AtlasRegionMetadata(RegionId(101), "RegionA-left-half", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(202), "RegionB-copy", hemisphere = Some(Hemisphere.Right)),
+          AtlasRegionMetadata(RegionId(303), "RegionC-copy", hemisphere = Some(Hemisphere.Midline))
         )
       )
     VolumeAtlas.fromLabelVolume(

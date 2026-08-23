@@ -117,7 +117,7 @@ object SchaeferLoader:
               if tokens.length >= 2 then tokens.takeRight(2).mkString("_")
               else canonical
             Some(
-              Region(
+              AtlasRegionMetadata(
                 id = RegionId(id),
                 label = label,
                 labelFull = Some(full),

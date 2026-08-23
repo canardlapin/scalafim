@@ -56,7 +56,9 @@ final case class Schaefer2018(
       source = Some("cbig_mni"),
       lineage = Some("Computed on fsaverage6 and sampled to MNI volume in CBIG release."),
       confidence = confidence,
-      notes = Some(s"${parcels.value} parcels, ${networks.value} Yeo networks")
+      notes = Some(s"${parcels.value} parcels, ${networks.value} Yeo networks"),
+      parcelVariant =
+        Some(s"${parcels.value}Parcels_${networks.value}Networks")
     )
 
 object Schaefer2018:
@@ -97,7 +99,9 @@ final case class Schaefer2018Surface(
           license = Some("Unspecified: consult CBIG upstream repository terms"),
           notes = Some("Descriptor only; no shared-core asset download.")
         )
-      )
+      ),
+      parcelVariant =
+        Some(s"${parcels.value}Parcels_${networks.value}Networks")
     )
 
 object Schaefer2018Surface:

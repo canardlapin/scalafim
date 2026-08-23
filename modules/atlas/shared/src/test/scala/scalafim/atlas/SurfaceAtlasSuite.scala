@@ -15,10 +15,10 @@ class SurfaceAtlasSuite extends munit.FunSuite:
   private def regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
-        Region(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
+        AtlasRegionMetadata(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
+        AtlasRegionMetadata(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
       )
     )
 

@@ -22,13 +22,13 @@ class AtlasRealizationSuite extends munit.FunSuite:
   private val regions =
     RegionIndex(
       Vector(
-        Region(
+        AtlasRegionMetadata(
           RegionId(10),
           "Left",
           hemisphere = Some(Hemisphere.Left),
           network = Some(NetworkId("NetA"))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(20),
           "Right",
           hemisphere = Some(Hemisphere.Right),

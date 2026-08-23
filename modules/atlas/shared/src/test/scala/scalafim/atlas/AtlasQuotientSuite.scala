@@ -25,8 +25,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
 
   private def volumeAtlas(
       metadata: Vector[AtlasRegionMetadata] = Vector(
-        Region(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
-        Region(RegionId(1), "First", network = Some(NetworkId("Visual")))
+        AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
+        AtlasRegionMetadata(RegionId(1), "First", network = Some(NetworkId("Visual")))
       ),
       space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))
   ): VolumeAtlas =
@@ -63,8 +63,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val renamed =
       volumeAtlas(
         Vector(
-          Region(RegionId(2), "Renamed second", network = Some(NetworkId("Visual"))),
-          Region(RegionId(1), "Renamed first", network = Some(NetworkId("Visual")))
+          AtlasRegionMetadata(RegionId(2), "Renamed second", network = Some(NetworkId("Visual"))),
+          AtlasRegionMetadata(RegionId(1), "Renamed first", network = Some(NetworkId("Visual")))
         )
       )
 
@@ -95,8 +95,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val atlas =
       volumeAtlas(
         Vector(
-          Region(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
-          Region(RegionId(1), "First")
+          AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
+          AtlasRegionMetadata(RegionId(1), "First")
         )
       )
 
@@ -141,8 +141,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
         ),
         RegionIndex(
           Vector(
-            Region(RegionId(1), "Left", hemisphere = Some(Hemisphere.Left)),
-            Region(RegionId(2), "Right", hemisphere = Some(Hemisphere.Right))
+            AtlasRegionMetadata(RegionId(1), "Left", hemisphere = Some(Hemisphere.Left)),
+            AtlasRegionMetadata(RegionId(2), "Right", hemisphere = Some(Hemisphere.Right))
           )
         ),
         left,

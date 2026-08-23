@@ -97,7 +97,7 @@ object AsegLoader:
 
   def regionsFor(spec: FreeSurferAseg = FreeSurferAseg.default): Vector[AtlasRegionMetadata] =
     labelRows.map { row =>
-      Region(
+      AtlasRegionMetadata(
         id = row.id,
         label = row.label,
         labelFull = Some(row.label),
@@ -124,7 +124,7 @@ object AsegLoader:
             val fsLabel = parts(1)
             val (hemi, label) = normalizeFreeSurferLabel(fsLabel)
             Some(
-              Region(
+              AtlasRegionMetadata(
                 id = RegionId(id),
                 label = label,
                 labelFull = Some(label),

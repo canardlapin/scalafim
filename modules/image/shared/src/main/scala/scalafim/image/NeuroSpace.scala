@@ -14,6 +14,7 @@ import image4s.geometry.FrameId
 import image4s.geometry.FrameMetadata
 import image4s.geometry.Grid
 import image4s.geometry.GridId
+import image4s.locus.GridDomain
 
 enum NeuroSpaceError:
   case EmptyDimensions
@@ -706,6 +707,19 @@ object VolumeSpace:
           NeuroSpace.logicalDims(space).length
         )
       )
+
+  /** Derive the spatial sample-space view of an exact image4s grid domain.
+    * The live `GridDomain` remains the identity owner; this allocates no image
+    * data and creates no second finite domain.
+    */
+  def fromGridDomain[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S]
+  ): VolumeSpace =
+    unsafe(
+      NeuroSpace.fromCanonical(
+        SampleSpace.create(domain.grid, NonSpatialAxes.empty)
+      )
+    )
 
   def apply(space: NeuroSpace): VolumeSpace =
     make(space)

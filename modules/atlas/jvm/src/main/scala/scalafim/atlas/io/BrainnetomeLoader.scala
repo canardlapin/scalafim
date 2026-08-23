@@ -135,7 +135,7 @@ object BrainnetomeLoader:
                 "parcels" -> "246"
               ) ++ net.toVector.flatMap(_.attributes)
             Some(
-              Region(
+              AtlasRegionMetadata(
                 id = RegionId(id),
                 label = label,
                 labelFull = net.flatMap(_.region).map(region => s"$region: $label").orElse(Some(label)),

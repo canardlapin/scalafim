@@ -113,7 +113,7 @@ object GlasserLoader:
             case Some("r") | Some("rh") | Some("right") => Some(Hemisphere.Right)
             case _ => None
         val label = parts.lift(1).getOrElse(name)
-        Region(
+        AtlasRegionMetadata(
           id = RegionId(idx + 1),
           label = label,
           labelFull = Some(name),

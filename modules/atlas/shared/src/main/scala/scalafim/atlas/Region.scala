@@ -111,58 +111,6 @@ object AtlasRegionMetadata:
       _ <- RegionAttributes.from(attributes)
     yield AtlasRegionMetadata(id, label, labelFull, hemisphere, network, color, attributes)
 
-/** Source-compatibility alias. Region membership now lives in
-  * `scalafim.locus.Region`; atlas `Region` values are metadata only.
-  */
-@deprecated("Use AtlasRegionMetadata; Region is a metadata compatibility alias.", "0.2.0")
-type Region = AtlasRegionMetadata
-
-object Region:
-  def apply(
-    id: RegionId,
-    label: String,
-    labelFull: Option[String] = None,
-    hemisphere: Option[Hemisphere] = None,
-    network: Option[NetworkId] = None,
-    color: Option[Rgb] = None,
-    attributes: Map[String, String] = Map.empty
-  ): AtlasRegionMetadata =
-    AtlasRegionMetadata(id, label, labelFull, hemisphere, network, color, attributes)
-
-  def unapply(
-    metadata: AtlasRegionMetadata
-  ): Option[(RegionId, String, Option[String], Option[Hemisphere], Option[NetworkId], Option[Rgb], Map[String, String])] =
-    Some(
-      (
-        metadata.id,
-        metadata.label,
-        metadata.labelFull,
-        metadata.hemisphere,
-        metadata.network,
-        metadata.color,
-        metadata.attributes
-      )
-    )
-
-  def checked(
-    id: RegionId,
-    label: String,
-    labelFull: Option[String] = None,
-    hemisphere: Option[Hemisphere] = None,
-    network: Option[NetworkId] = None,
-    color: Option[Rgb] = None,
-    attributes: Map[String, String] = Map.empty
-  ): Either[AtlasError, AtlasRegionMetadata] =
-    AtlasRegionMetadata.checked(
-      id,
-      label,
-      labelFull,
-      hemisphere,
-      network,
-      color,
-      attributes
-    )
-
 final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
   require(regions.nonEmpty, AtlasError.EmptyAtlas.message)
   private val duplicateIds =

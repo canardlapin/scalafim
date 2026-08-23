@@ -31,9 +31,9 @@ class AtlasCoreSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "RegionA", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetA"))),
-          Region(RegionId(2), "RegionB", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("NetA"))),
-          Region(RegionId(3), "RegionC", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetB")))
+          AtlasRegionMetadata(RegionId(1), "RegionA", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetA"))),
+          AtlasRegionMetadata(RegionId(2), "RegionB", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("NetA"))),
+          AtlasRegionMetadata(RegionId(3), "RegionC", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetB")))
         )
       )
 
