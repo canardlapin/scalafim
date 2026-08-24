@@ -40,7 +40,7 @@ class AggregationSuite extends munit.FunSuite:
         .toOption
         .get
     assertEquals(reads, partition.support.cardinality)
-    assertEquals(parcels.points.map(result.apply).toVector, Vector(3, 4, 11))
+    assertEquals(parcels.indices.map(result.apply).toVector, Vector(3, 4, 11))
 
   test("aggregation fusion is exact for a lawful commutative monoid"):
     val networkResolution =
@@ -63,7 +63,7 @@ class AggregationSuite extends munit.FunSuite:
     val hierarchical =
       Aggregation.foldMapBy(networkPartition, parcelValues)(identity).toOption.get
 
-    networks.points.foreach: network =>
+    networks.indices.foreach: network =>
       assertEquals(hierarchical(network), direct(network))
 
   test("aggregation rejects a field from a different runtime space"):

@@ -427,8 +427,8 @@ object ResolvedDataSelection:
         val timepoints: LocusSelection[T] = timepoints
         val voxels: LocusSelection[X] = voxels
     new ResolvedDataSelection(
-      timepoints.points.map(point => TimepointIndex.unsafe(point.value)).toVector,
-      voxels.points.map(point => VoxelIndex.unsafe(point.value)).toVector,
+      timepoints.indices.map(point => TimepointIndex.unsafe(point.value)).toVector,
+      voxels.indices.map(point => VoxelIndex.unsafe(point.value)).toVector,
       locusSelection
     )
 

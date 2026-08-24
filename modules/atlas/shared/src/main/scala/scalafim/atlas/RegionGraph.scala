@@ -4,7 +4,7 @@ import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
 import scalafim.image.Indexing
-import scalafim.locus.{IndexedField, Relation}
+import scalafim.locus.{IndexedField, Relation, RelationError}
 
 enum VoxelConnectivity:
   case Connect6, Connect18, Connect26
@@ -111,7 +111,7 @@ object RegionGraph:
   def relation(
       atlas: VolumeAtlas,
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
-  ): ParcelAdjacencyRelation =
+  ): Either[RelationError, ParcelAdjacencyRelation] =
     val quotient = atlas.quotient
     val voxelRelation =
       ambientRelation(
@@ -119,17 +119,16 @@ object RegionGraph:
         atlas.space.spatialDims,
         connectivity
       )
-    // Composition is total when the shared boundary type matches, which it
-    // does here by construction: parcel -> voxel -> voxel -> parcel.
-    val projected =
-      quotient.parcellation.quotientRelation.converse
+    quotient.parcellation.quotientRelation.converse.flatMap: converse =>
+      // Composition is total when the shared boundary type matches, which it
+      // does here by construction: parcel -> voxel -> voxel -> parcel.
+      val projected = converse
         .andThen(voxelRelation)
         .andThen(quotient.parcellation.quotientRelation)
-    val withoutSelf =
       val rows =
         Iterator.tabulate(quotient.parcellation.parcels.size): source =>
           projected
-            .row(quotient.parcellation.parcels.pointOption(source).get)
+            .row(quotient.parcellation.parcels.indexOption(source).get)
             .ordinalsInDomainOrder
             .filter(_ != source)
             .iterator
@@ -139,13 +138,11 @@ object RegionGraph:
           quotient.parcellation.parcels,
           rows
         )
-        .toOption
-        .get
-
-    new ParcelAdjacencyRelation:
-      type P = quotient.P
-      val relation: Relation[P, P] = withoutSelf
-      val regionIds: IndexedField[P, RegionId] = quotient.regionIds
+        .map: withoutSelf =>
+          new ParcelAdjacencyRelation:
+            type P = quotient.P
+            val relation: Relation[P, P] = withoutSelf
+            val regionIds: IndexedField[P, RegionId] = quotient.regionIds
 
   private def ambientRelation[X](
       space: scalafim.locus.FiniteDomain[X],
