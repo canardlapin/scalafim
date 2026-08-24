@@ -41,7 +41,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
 
     assertEquals(genericComponents, domainComponents)
 
-  test("surface geodesics match graph shortest paths for default and custom weights"):
+  test("surface edge-graph distances match graph shortest paths for default and custom weights"):
     val topology = SurfaceTestFixtures.tetraTopology
     val weightSets = Vector(
       topology.edgeLengths,
@@ -49,6 +49,10 @@ class GraphDifferentialSuite extends munit.FunSuite:
     )
 
     weightSets.foreach: weights =>
+      val typedWeights =
+        SurfaceEdgeWeights
+          .fromLegacyLexicographic(topology, weights)
+          .fold(error => fail(error.message), identity)
       val graph =
         if weights == topology.edgeLengths then topology.toGraph
         else topologyGraph(topology, weights)
@@ -57,7 +61,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
         topology,
         vertices,
         vertices,
-        edgeWeights = Some(weights)
+        edgeWeights = Some(typedWeights)
       )
 
       vertices.indices.foreach: row =>
@@ -90,7 +94,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
       topology.edgeLengths
     )
 
-  test("unreachable surface geodesics correspond to graph NoPath"):
+  test("unreachable surface edge paths correspond to graph NoPath"):
     val topology = SurfaceTestFixtures.disconnectedTopology
     val graph = topologyGraph(topology, topology.edgeLengths)
     val domain = SurfaceGeodesics.distanceMatrix(

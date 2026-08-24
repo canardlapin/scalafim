@@ -26,7 +26,7 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
       Relation.identity(domain.finiteSpace).toOption.get
     )
 
-  test("geodesic metric balls are symmetric and monotone in radius"):
+  test("edge-graph metric balls are symmetric and monotone in radius"):
     val small =
       SurfaceSearchlight.metricBalls(domain, topology, 1.0).toOption.get
     val large =

@@ -1,7 +1,14 @@
 package scalafim.surface
 
 enum DistanceMetric:
-  case Euclidean, Geodesic, Spherical
+  case Euclidean, EdgeGraphShortestPath, Spherical
+
+object DistanceMetric:
+  @deprecated(
+    "use EdgeGraphShortestPath; this mode follows mesh edges and is not a continuous surface geodesic",
+    "0.1.0"
+  )
+  val Geodesic: DistanceMetric = EdgeGraphShortestPath
 
 final case class NeighborHit(source: VertexId, target: VertexId, distance: Double)
 
@@ -41,6 +48,7 @@ final class GeodesicCache:
 
 object GeodesicCache:
   final case class Key(
+    topologyOwner: mesh4s.TriangleTopology,
     metric: DistanceMetric,
     rows: Vector[Int],
     cols: Vector[Int],
@@ -62,8 +70,8 @@ object SurfaceGeodesics:
     topology: MeshTopology,
     sources: Seq[VertexId],
     targets: Seq[VertexId],
-    metric: DistanceMetric = DistanceMetric.Geodesic,
-    edgeWeights: Option[Seq[Double]] = None,
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+    edgeWeights: Option[SurfaceEdgeWeights] = None,
     chunkSize: Int = 2000,
     cachePolicy: CachePolicy = CachePolicy.Disabled
   ): DistanceMatrix =
@@ -79,6 +87,7 @@ object SurfaceGeodesics:
     val weights = weightsFor(topology, edgeWeights, metric)
     val key =
       GeodesicCache.Key(
+        topologyOwner = topology.mesh.topology,
         metric = metric,
         rows = src.map(_.index),
         cols = tgt.map(_.index),
@@ -97,7 +106,7 @@ object SurfaceGeodesics:
 
   def allPairsDistanceMatrix(
     topology: MeshTopology,
-    metric: DistanceMetric = DistanceMetric.Geodesic
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath
   ): DistanceMatrix =
     val all = Vector.tabulate(topology.mesh.vertexCount)(VertexId.unsafe)
     distanceMatrix(topology, all, all, metric)
@@ -106,8 +115,8 @@ object SurfaceGeodesics:
     topology: MeshTopology,
     source: VertexId,
     targets: Seq[VertexId],
-    metric: DistanceMetric = DistanceMetric.Geodesic,
-    edgeWeights: Option[Seq[Double]] = None
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+    edgeWeights: Option[SurfaceEdgeWeights] = None
   ): Vector[Double] =
     distanceMatrix(topology, Vector(source), targets, metric, edgeWeights).data
 
@@ -115,8 +124,8 @@ object SurfaceGeodesics:
     topology: MeshTopology,
     radius: Double,
     sources: Seq[VertexId],
-    metric: DistanceMetric = DistanceMetric.Geodesic,
-    edgeWeights: Option[Seq[Double]] = None
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+    edgeWeights: Option[SurfaceEdgeWeights] = None
   ): Vector[NeighborHit] =
     require(radius >= 0.0 && radius.isFinite, "radius must be non-negative and finite")
     val allTargets = Vector.tabulate(topology.mesh.vertexCount)(VertexId.unsafe)
@@ -139,7 +148,7 @@ object SurfaceGeodesics:
     sources: Vector[VertexId],
     targets: Vector[VertexId],
     metric: DistanceMetric,
-    weights: Vector[Double],
+    weights: SurfaceEdgeWeights,
     chunkSize: Int
   ): DistanceMatrix =
     val out = Array.fill(sources.length * targets.length)(Double.PositiveInfinity)
@@ -155,7 +164,7 @@ object SurfaceGeodesics:
             fillDirect(topology, sources(row), targets, row, out, euclideanDistance)
           case DistanceMetric.Spherical =>
             fillDirect(topology, sources(row), targets, row, out, sphericalDistance(topology))
-          case DistanceMetric.Geodesic =>
+          case DistanceMetric.EdgeGraphShortestPath =>
             val d = dijkstra(topology, sources(row), weights)
             targetIndex.foreach { case (vertex, col) =>
               out(row * targets.length + col) = d(vertex)
@@ -179,7 +188,11 @@ object SurfaceGeodesics:
       out(row * targets.length + col) = distance(srcPoint, topology.mesh.vertex(targets(col)))
       col += 1
 
-  private def dijkstra(topology: MeshTopology, source: VertexId, weights: Vector[Double]): Array[Double] =
+  private def dijkstra(
+      topology: MeshTopology,
+      source: VertexId,
+      weights: SurfaceEdgeWeights
+  ): Array[Double] =
     val adjacency = weightedAdjacency(topology, weights)
     val distances = Array.fill(topology.mesh.vertexCount)(Double.PositiveInfinity)
     val visited = Array.fill(topology.mesh.vertexCount)(false)
@@ -204,15 +217,17 @@ object SurfaceGeodesics:
 
     distances
 
-  private def weightedAdjacency(topology: MeshTopology, weights: Vector[Double]): Vector[Vector[(Int, Double)]] =
+  private def weightedAdjacency(
+      topology: MeshTopology,
+      weights: SurfaceEdgeWeights
+  ): Vector[Vector[(Int, Double)]] =
     val rows = Array.fill(topology.mesh.vertexCount)(Vector.newBuilder[(Int, Double)])
-    var i = 0
-    while i < topology.edges.length do
-      val edge = topology.edges(i)
-      val w = weights(i)
-      rows(edge.a.index) += ((edge.b.index, w))
-      rows(edge.b.index) += ((edge.a.index, w))
-      i += 1
+    val owner = topology.mesh.topology
+    owner.edges.foreachIndex: edge =>
+      val endpoints = owner.endpointsOf(edge)
+      val weight = weights.valueAtOrdinal(edge.ordinal)
+      rows(endpoints.first.ordinal) += ((endpoints.second.ordinal, weight))
+      rows(endpoints.second.ordinal) += ((endpoints.first.ordinal, weight))
     rows.toVector.map(_.result())
 
   private def euclideanDistance(a: Point3D, b: Point3D): Double =
@@ -234,17 +249,24 @@ object SurfaceGeodesics:
 
   private def weightsFor(
     topology: MeshTopology,
-    edgeWeights: Option[Seq[Double]],
+    edgeWeights: Option[SurfaceEdgeWeights],
     metric: DistanceMetric
-  ): Vector[Double] =
+  ): SurfaceEdgeWeights =
     val weights =
       edgeWeights match
-        case Some(values) => values.toVector
-        case None => topology.edgeLengths
-    require(weights.length == topology.edgeCount, "edgeWeights length must equal topology edge count")
-    require(weights.forall(w => w.isFinite && w >= 0.0), "edgeWeights must be finite and non-negative")
-    if metric == DistanceMetric.Geodesic then
-      require(weights.exists(_ > 0.0), "geodesic edgeWeights must contain at least one positive value")
+        case Some(values) => values
+        case None =>
+          SurfaceEdgeWeights
+            .euclidean(topology)
+            .fold(error => throw new IllegalArgumentException(error.message), identity)
+    SurfaceEdgeWeights
+      .validateOwner(topology, weights)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    if metric == DistanceMetric.EdgeGraphShortestPath then
+      require(
+        weights.valuesInTopologyOrder.exists(_ > 0.0),
+        "edge-graph weights must contain at least one positive value"
+      )
     weights
 
   private def validateVertices(topology: MeshTopology, vertices: Seq[VertexId], role: String): Unit =
@@ -252,9 +274,9 @@ object SurfaceGeodesics:
       require(vertex.index >= 0 && vertex.index < topology.mesh.vertexCount, s"$role vertex id out of range")
     }
 
-  private def weightsHash(weights: Vector[Double]): Int =
+  private def weightsHash(weights: SurfaceEdgeWeights): Int =
     var h = 1
-    weights.foreach { weight =>
+    weights.valuesInTopologyOrder.foreach { weight =>
       val bits = java.lang.Double.doubleToLongBits(if weight == 0.0 then 0.0 else weight)
       h = 31 * h + (bits ^ (bits >>> 32)).toInt
     }

@@ -3,6 +3,14 @@ package scalafim.surface
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
+import mesh4s.graph4s.{GraphProjectionError, GraphProjections, PrimalGraphProjection}
+
+/** ScalaFIM policy for combining incident face normals at a vertex. */
+enum VertexNormalWeighting derives CanEqual:
+  /** Accumulate unnormalized face cross-products, so each contribution is
+    * proportional to face area, then normalize once per vertex.
+    */
+  case FaceArea
 
 final case class Edge private (a: VertexId, b: VertexId):
   def vertices: (VertexId, VertexId) =
@@ -31,8 +39,9 @@ final case class MeshTopology private (
   def edgeCount: Int =
     mesh.topology.edges.size
 
-  /** Legacy lexicographic edge view. mesh4s remains the edge-domain owner; S5
-    * will replace positional weight consumers with a typed edge field.
+  /** Legacy lexicographic edge view. mesh4s remains the edge-domain owner.
+    * Positional compatibility weights must enter through
+    * `SurfaceEdgeWeights.fromLegacyLexicographic`.
     */
   def edges: Vector[Edge] =
     val result = Vector.newBuilder[Edge]
@@ -47,6 +56,15 @@ final case class MeshTopology private (
   def edgeLengths: Vector[Double] =
     edges.map(edgeLength)
 
+  /** The explicitly named topology-forgetting primal graph projection with
+    * total mesh vertex/edge correspondence.
+    */
+  def primalGraphProjection: Either[
+    GraphProjectionError,
+    PrimalGraphProjection[mesh.topology.type]
+  ] =
+    GraphProjections.primal(mesh.topology)
+
   /** Materialize a reusable graph value for interop and downstream graph
     * algorithms. The result is deliberately not retained by `MeshTopology`,
     * so the mesh never owns two persistent full topology representations.
@@ -54,14 +72,41 @@ final case class MeshTopology private (
   def toGraph: WeightedGraph[VertexId, Double] =
     given Hash[VertexId] =
       Hash.by(_.index)
-    val compatibilityEdges = edges
+    val projection =
+      primalGraphProjection.fold(
+        error =>
+          throw new IllegalStateException(
+            s"validated mesh topology could not form its primal graph: ${error.message}"
+          ),
+        identity
+      )
+    val compatibilityEdges =
+      projection.graph.edges
+        .map: graphEdge =>
+          val meshEdge = projection.meshEdge(graphEdge)
+          val endpoints = mesh.topology.endpointsOf(meshEdge)
+          Edge.between(
+            VertexId.unsafe(endpoints.first.ordinal),
+            VertexId.unsafe(endpoints.second.ordinal)
+          )
+        .toVector
+        .sortBy(edge => (edge.a.index, edge.b.index))
     val vertices = Vector.tabulate(mesh.vertexCount)(VertexId.apply)
     val links = compatibilityEdges.map(edge => Link(edge.a, edge.b))
     Graph.of(vertices, links).toEither match
       case Right(topology) =>
+        val typedLengths =
+          SurfaceEdgeWeights
+            .euclidean(this)
+            .fold(
+              error => throw new IllegalStateException(error.message),
+              identity
+            )
         val lengthsByEndpoints =
-          compatibilityEdges.iterator.map: edge =>
-            (edge.a.index, edge.b.index) -> edgeLength(edge)
+          mesh.topology.edges.indices.map: edge =>
+            val endpoints = mesh.topology.endpointsOf(edge)
+            (endpoints.first.ordinal, endpoints.second.ordinal) ->
+              typedLengths.valueAtOrdinal(edge.ordinal)
         .toMap
         val weights =
           EdgeField.total(topology): edge =>
@@ -137,25 +182,29 @@ final case class MeshTopology private (
   def eulerCharacteristic: Int =
     mesh.topology.eulerCharacteristic
 
-  def vertexNormals: Vector[Point3D] =
-    val sums = Array.fill(mesh.vertexCount)(Point3D.Zero)
+  def vertexNormals(
+      weighting: VertexNormalWeighting = VertexNormalWeighting.FaceArea
+  ): Vector[Point3D] =
+    weighting match
+      case VertexNormalWeighting.FaceArea =>
+        val sums = Array.fill(mesh.vertexCount)(Point3D.Zero)
 
-    var i = 0
-    while i < mesh.faceCount do
-      val triangle = mesh.face(FaceId.unsafe(i))
-      val a = mesh.vertex(triangle.a)
-      val b = mesh.vertex(triangle.b)
-      val c = mesh.vertex(triangle.c)
-      val normal = (b - a).cross(c - a)
-      val ia = triangle.a.index
-      val ib = triangle.b.index
-      val ic = triangle.c.index
-      sums(ia) = sums(ia) + normal
-      sums(ib) = sums(ib) + normal
-      sums(ic) = sums(ic) + normal
-      i += 1
+        var i = 0
+        while i < mesh.faceCount do
+          val triangle = mesh.face(FaceId.unsafe(i))
+          val a = mesh.vertex(triangle.a)
+          val b = mesh.vertex(triangle.b)
+          val c = mesh.vertex(triangle.c)
+          val normal = (b - a).cross(c - a)
+          val ia = triangle.a.index
+          val ib = triangle.b.index
+          val ic = triangle.c.index
+          sums(ia) = sums(ia) + normal
+          sums(ib) = sums(ib) + normal
+          sums(ic) = sums(ic) + normal
+          i += 1
 
-    sums.toVector.map(_.normalized)
+        sums.toVector.map(_.normalized)
 
 object MeshTopology:
 

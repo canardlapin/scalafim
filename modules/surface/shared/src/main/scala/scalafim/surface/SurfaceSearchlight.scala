@@ -37,8 +37,8 @@ object SurfaceSearchlight:
       topology: MeshTopology,
       radius: Double,
       centers: Region[S],
-      metric: DistanceMetric = DistanceMetric.Geodesic,
-      edgeWeights: Option[Seq[Double]] = None
+      metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+      edgeWeights: Option[SurfaceEdgeWeights] = None
   ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
     if !radius.isFinite || radius < 0.0 then
       Left(SurfaceSearchlightError.InvalidRadius(radius))
@@ -111,7 +111,7 @@ object SurfaceSearchlight:
       topology: MeshTopology,
       radius: Double
   ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
-    metricBalls(domain, topology, radius, DistanceMetric.Geodesic)
+    metricBalls(domain, topology, radius, DistanceMetric.EdgeGraphShortestPath)
 
   /** The field restricted to the searchlight at `center`, if `center` is one.
     *

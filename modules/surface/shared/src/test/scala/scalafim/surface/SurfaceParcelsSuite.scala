@@ -95,14 +95,14 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     assertEquals(key.display, "9.2")
     assert(ParcelKey.fromEither(1, Some(0)).isLeft)
 
-  test("centroid and geodesic medoid can select different parcel representatives"):
+  test("centroid and edge-graph medoid can select different parcel representatives"):
     val topology = SurfaceTestFixtures.skewedCentroidTopology
     val parcel = SurfaceTestFixtures.skewedCentroidParcel
 
     assertEquals(SurfaceParcels.centroidVertex(topology, parcel), VertexId(1))
-    assertEquals(SurfaceParcels.geodesicMedoidVertex(topology, parcel), VertexId(0))
+    assertEquals(SurfaceParcels.edgeGraphMedoidVertex(topology, parcel), VertexId(0))
 
-  test("geodesic medoid rejects merged disconnected parcel"):
+  test("edge-graph medoid rejects merged disconnected parcel"):
     val merged =
       SurfaceParcels.units(
         SurfaceTestFixtures.fragmentedLabels,
@@ -111,7 +111,7 @@ class SurfaceParcelsSuite extends munit.FunSuite:
       ).head
 
     interceptMessage[IllegalArgumentException]("requirement failed: parcel 9 contains unreachable vertices"):
-      SurfaceParcels.geodesicMedoidVertex(SurfaceTestFixtures.disconnectedTopology, merged)
+      SurfaceParcels.edgeGraphMedoidVertex(SurfaceTestFixtures.disconnectedTopology, merged)
 
   test("distance matrices are symmetric for centroid and minimum methods"):
     val centroid =
@@ -119,14 +119,14 @@ class SurfaceParcelsSuite extends munit.FunSuite:
         sheetLabels,
         sheetTopology,
         method = ParcelDistanceMethod.Centroid,
-        metric = DistanceMetric.Geodesic
+        metric = DistanceMetric.EdgeGraphShortestPath
       )
     val minimum =
       SurfaceParcels.distanceMatrix(
         sheetLabels,
         sheetTopology,
         method = ParcelDistanceMethod.Minimum,
-        metric = DistanceMetric.Geodesic
+        metric = DistanceMetric.EdgeGraphShortestPath
       )
 
     assertEquals(centroid.size, 2)
@@ -135,7 +135,7 @@ class SurfaceParcelsSuite extends munit.FunSuite:
     assertEqualsDouble(centroid(0, 0), 0.0, 1e-12)
     assertEqualsDouble(minimum(0, 0), 0.0, 1e-12)
 
-  test("medoid distance matrix uses geodesic medoid representatives"):
+  test("medoid distance matrix uses edge-graph medoid representatives"):
     val topology = SurfaceTestFixtures.skewedCentroidTopology
     val parcelA = SurfaceTestFixtures.skewedCentroidParcel
     val parcelB = ParcelUnit(ParcelKey(2), Vector(VertexId(5)), Some(LabelInfo(2, "helper")))
@@ -144,7 +144,7 @@ class SurfaceParcelsSuite extends munit.FunSuite:
         Vector(parcelA, parcelB),
         topology,
         method = ParcelDistanceMethod.Medoid,
-        metric = DistanceMetric.Geodesic
+        metric = DistanceMetric.EdgeGraphShortestPath
       )
 
     assertEquals(matrix.parcels.map(_.key), Vector(ParcelKey(1), ParcelKey(2)))

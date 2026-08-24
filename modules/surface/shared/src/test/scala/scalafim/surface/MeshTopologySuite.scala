@@ -35,12 +35,25 @@ class MeshTopologySuite extends munit.FunSuite:
 
   test("MeshTopology computes unit vertex normals when possible"):
     val topology = SurfaceTestFixtures.tetraTopology
-    val normals = topology.vertexNormals
+    val normals = topology.vertexNormals(VertexNormalWeighting.FaceArea)
 
     assertEquals(normals.length, 4)
     normals.foreach { normal =>
       assertEqualsDouble(normal.norm, 1.0, 1e-12)
     }
+
+  test("MeshTopology exposes mesh4s's named primal graph correspondence"):
+    val topology = SurfaceTestFixtures.tetraTopology
+    val projection =
+      topology.primalGraphProjection.fold(error => fail(error.message), identity)
+
+    assert(
+      projection.topology.vertices.sameRuntimeOwnerAs(
+        topology.mesh.topology.vertices
+      )
+    )
+    topology.mesh.topology.edges.foreachIndex: edge =>
+      assertEquals(projection.meshEdge(projection.graphEdge(edge)), edge)
 
   test("MeshTopology handles lawful disconnected open components"):
     val mesh =

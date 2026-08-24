@@ -194,11 +194,11 @@ object SurfaceParcels:
       (distance, vertex.index)
     }
 
-  def geodesicMedoidVertex(
+  def edgeGraphMedoidVertex(
     topology: MeshTopology,
     parcel: ParcelUnit,
-    metric: DistanceMetric = DistanceMetric.Geodesic,
-    edgeWeights: Option[Seq[Double]] = None
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+    edgeWeights: Option[SurfaceEdgeWeights] = None
   ): VertexId =
     if parcel.vertices.length == 1 then parcel.vertices.head
     else
@@ -225,11 +225,28 @@ object SurfaceParcels:
       require(best._2.isFinite, s"parcel ${parcel.key.display} contains unreachable vertices")
       best._1
 
+  @deprecated(
+    "use edgeGraphMedoidVertex; this computation follows mesh edges and is not a continuous surface geodesic",
+    "0.1.0"
+  )
+  def geodesicMedoidVertex(
+      topology: MeshTopology,
+      parcel: ParcelUnit,
+      metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
+      edgeWeights: Option[Seq[Double]] = None
+  ): VertexId =
+    val typed =
+      edgeWeights.map: values =>
+        SurfaceEdgeWeights
+          .fromLegacyLexicographic(topology, values)
+          .fold(error => throw new IllegalArgumentException(error.message), identity)
+    edgeGraphMedoidVertex(topology, parcel, metric, typed)
+
   def distanceMatrix(
     labeled: LabeledSurface,
     topology: MeshTopology,
     method: ParcelDistanceMethod = ParcelDistanceMethod.Centroid,
-    metric: DistanceMetric = DistanceMetric.Geodesic,
+    metric: DistanceMetric = DistanceMetric.EdgeGraphShortestPath,
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set.empty
   ): ParcelDistanceMatrix =
@@ -248,7 +265,7 @@ object SurfaceParcels:
       case ParcelDistanceMethod.Centroid =>
         fillRepresentativeDistances(parcels, topology, metric, data, parcel => centroidVertex(topology, parcel))
       case ParcelDistanceMethod.Medoid =>
-        fillRepresentativeDistances(parcels, topology, metric, data, parcel => geodesicMedoidVertex(topology, parcel, metric))
+        fillRepresentativeDistances(parcels, topology, metric, data, parcel => edgeGraphMedoidVertex(topology, parcel, metric))
       case ParcelDistanceMethod.Minimum =>
         fillMinimumDistances(parcels, topology, metric, data)
 

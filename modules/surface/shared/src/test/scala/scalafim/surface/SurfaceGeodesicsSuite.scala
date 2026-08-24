@@ -1,12 +1,18 @@
 package scalafim.surface
 
 import scalafim.surface.fixtures.SurfaceTestFixtures
+import scala.compiletime.testing.typeCheckErrors
 
 class SurfaceGeodesicsSuite extends munit.FunSuite:
 
   private val tetraTopology = SurfaceTestFixtures.tetraTopology
 
-  test("geodesic distance matrix matches tetrahedron edge distances"):
+  private def legacyWeights(values: Seq[Double]): SurfaceEdgeWeights =
+    SurfaceEdgeWeights
+      .fromLegacyLexicographic(tetraTopology, values)
+      .fold(error => fail(error.message), identity)
+
+  test("edge-graph distance matrix matches tetrahedron edge distances"):
     val matrix = SurfaceGeodesics.allPairsDistanceMatrix(tetraTopology)
 
     assertEquals(matrix.rows, 4)
@@ -36,7 +42,7 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
         tetraTopology,
         radius = 1.01,
         sources = Vector(VertexId(0)),
-        metric = DistanceMetric.Geodesic
+        metric = DistanceMetric.EdgeGraphShortestPath
       )
 
     assertEquals(hits.map(_.target).toSet, Set(VertexId(0), VertexId(1), VertexId(2), VertexId(3)))
@@ -79,7 +85,7 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assert(matrix(0, 1).isFinite)
     assert(matrix(0, 2).isFinite)
 
-  test("unreachable vertices remain Infinity for geodesic metric"):
+  test("unreachable vertices remain Infinity for edge-graph metric"):
     val topology = SurfaceTestFixtures.disconnectedTopology
 
     val matrix =
@@ -113,10 +119,10 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assertEquals(cache.size, 1)
     assertEquals(second, first)
 
-  test("custom edge weights drive geodesic distances and cache keys"):
+  test("custom edge weights drive edge-graph distances and cache keys"):
     val cache = GeodesicCache()
-    val weightsA = Vector.fill(tetraTopology.edgeCount)(1.0)
-    val weightsB = Vector.tabulate(tetraTopology.edgeCount)(i => if i == 0 then 5.0 else 1.0)
+    val weightsA = legacyWeights(Vector.fill(tetraTopology.edgeCount)(1.0))
+    val weightsB = legacyWeights(Vector.tabulate(tetraTopology.edgeCount)(i => if i == 0 then 5.0 else 1.0))
 
     val directA =
       SurfaceGeodesics.distanceMatrix(
@@ -139,7 +145,7 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     assertEqualsDouble(directB(0, 0), 2.0, 1e-12)
     assertEquals(cache.size, 2)
 
-  test("geodesic input validation catches bad radius, vertices, and weights"):
+  test("edge-graph input validation catches bad radius, vertices, and weights"):
     assertEquals(
       SurfaceGeodesics
         .neighborsWithin(tetraTopology, 0.0, Vector(VertexId(0)))
@@ -153,11 +159,110 @@ class SurfaceGeodesicsSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: target vertex id out of range"):
       SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(99)))
 
-    interceptMessage[IllegalArgumentException]("requirement failed: edgeWeights length must equal topology edge count"):
-      SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(1)), edgeWeights = Some(Vector(1.0)))
+    assertEquals(
+      SurfaceEdgeWeights.fromTopologyOrder(tetraTopology, Vector(1.0)).left.map(_.message),
+      Left("surface edge weights require 6 values, found 1")
+    )
+    assertEquals(
+      SurfaceEdgeWeights
+        .fromTopologyOrder(tetraTopology, Vector.fill(tetraTopology.edgeCount)(Double.NaN))
+        .left
+        .map(_.message),
+      Left("surface edge weight 0 must be finite, found NaN")
+    )
+    val zeroWeights = legacyWeights(Vector.fill(tetraTopology.edgeCount)(0.0))
+    interceptMessage[IllegalArgumentException]("requirement failed: edge-graph weights must contain at least one positive value"):
+      SurfaceGeodesics.distanceMatrix(
+        tetraTopology,
+        Vector(VertexId(0)),
+        Vector(VertexId(1)),
+        edgeWeights = Some(zeroWeights)
+      )
 
-    interceptMessage[IllegalArgumentException]("requirement failed: edgeWeights must be finite and non-negative"):
-      SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(1)), edgeWeights = Some(Vector.fill(tetraTopology.edgeCount)(Double.NaN)))
+  test("legacy lexicographic weights are checked and permuted into mesh4s edge order"):
+    val legacyValues = Vector.tabulate(tetraTopology.edgeCount)(_.toDouble + 1.0)
+    val weights = legacyWeights(legacyValues)
+    val expected = tetraTopology.edges.zip(legacyValues).toMap
+    val topologyPairs =
+      weights.topology.edges.indices.map: edge =>
+        val endpoints = weights.topology.endpointsOf(edge)
+        val compatibility =
+          Edge.between(
+            VertexId(endpoints.first.ordinal),
+            VertexId(endpoints.second.ordinal)
+          )
+        assertEqualsDouble(weights(edge), expected(compatibility), 1e-12)
+        compatibility
+      .toVector
 
-    interceptMessage[IllegalArgumentException]("requirement failed: geodesic edgeWeights must contain at least one positive value"):
-      SurfaceGeodesics.distanceMatrix(tetraTopology, Vector(VertexId(0)), Vector(VertexId(1)), edgeWeights = Some(Vector.fill(tetraTopology.edgeCount)(0.0)))
+    assertNotEquals(topologyPairs, tetraTopology.edges)
+    assert(weights.belongsTo(tetraTopology))
+
+  test("edge fields reject a foreign edge index at compile time"):
+    val errors = typeCheckErrors("""
+      import scalafim.surface.SurfaceEdgeWeights
+      import locus4s.Index
+
+      def exact(weights: SurfaceEdgeWeights, edge: Index[weights.Edge]) =
+        weights(edge)
+
+      def foreign(left: SurfaceEdgeWeights, right: SurfaceEdgeWeights) =
+        val edge = left.edges.indexAtValidatedOrdinal(0)
+        right(edge)
+    """)
+
+    assert(errors.nonEmpty)
+
+  test("edge weights reject a structurally equal but foreign topology owner"):
+    val geometry = SurfaceTestFixtures.tetraGeometry
+    val duplicate =
+      MeshTopology.from:
+        TriangleMesh.fromRows(
+          geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+          geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+        )
+    val foreign =
+      SurfaceEdgeWeights
+        .euclidean(duplicate)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(
+      duplicate.mesh.connectivityFingerprint,
+      tetraTopology.mesh.connectivityFingerprint
+    )
+    assert(!foreign.belongsTo(tetraTopology))
+    val error =
+      intercept[IllegalArgumentException]:
+        SurfaceGeodesics.distanceMatrix(
+          tetraTopology,
+          Vector(VertexId(0)),
+          Vector(VertexId(1)),
+          edgeWeights = Some(foreign)
+        )
+    assert(error.getMessage.contains("belong to another topology owner"))
+
+  test("distance caches distinguish exact topology owners"):
+    val geometry = SurfaceTestFixtures.tetraGeometry
+    val duplicate =
+      MeshTopology.from:
+        TriangleMesh.fromRows(
+          geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+          geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+        )
+    val cache = GeodesicCache()
+    val policy = CachePolicy.Use(cache)
+
+    SurfaceGeodesics.distanceMatrix(
+      tetraTopology,
+      Vector(VertexId(0)),
+      Vector(VertexId(1)),
+      cachePolicy = policy
+    )
+    SurfaceGeodesics.distanceMatrix(
+      duplicate,
+      Vector(VertexId(0)),
+      Vector(VertexId(1)),
+      cachePolicy = policy
+    )
+
+    assertEquals(cache.size, 2)
