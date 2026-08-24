@@ -16,9 +16,9 @@ object SurfaceTestFixtures:
   val tetraFaces: Vector[(Int, Int, Int)] =
     Vector(
       (0, 1, 2),
-      (0, 1, 3),
+      (0, 3, 1),
       (0, 2, 3),
-      (1, 2, 3)
+      (1, 3, 2)
     )
 
   val tetraMesh: TriangleMesh =
@@ -102,12 +102,12 @@ object SurfaceTestFixtures:
         ),
         Vector(
           (0, 1, 2),
-          (1, 2, 3)
+          (1, 3, 2)
         )
       )
     )
 
-  /** Folded star fixture where Euclidean centroid and graph geodesic medoid diverge. */
+  /** Lawful folded fan where Euclidean centroid and graph medoid diverge. */
   val skewedCentroidGeometry: SurfaceGeometry =
     SurfaceGeometry(
       TriangleMesh.fromRows(
@@ -124,8 +124,11 @@ object SurfaceTestFixtures:
         ),
         Vector(
           (0, 1, 5),
+          (0, 5, 2),
           (0, 2, 6),
+          (0, 6, 3),
           (0, 3, 7),
+          (0, 7, 4),
           (0, 4, 8)
         )
       )

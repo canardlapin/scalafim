@@ -1,5 +1,6 @@
 package scalafim.surface
 
+import mesh4s.TopologyIssue
 import scalafim.image.{DMat, SpatialPoint}
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
@@ -19,6 +20,9 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(mesh.faceCount, 4)
     assertEquals(mesh.vertex(VertexId(2)), Point3D(0.0, 1.0, 0.0))
     assertEquals(mesh.face(FaceId(0)), Triangle(VertexId(0), VertexId(1), VertexId(2)))
+    assertEquals(mesh.topology.vertices.size, 4)
+    assertEquals(mesh.topology.faces.size, 4)
+    assertEquals(mesh.orientationReceipt, TriangleMeshOrientationReceipt.Strict)
 
   test("mesh topology identity ignores coordinates but preserves exact face ordering"):
     val mesh = SurfaceTestFixtures.tetraMesh
@@ -35,7 +39,8 @@ class SurfaceCoreSuite extends munit.FunSuite:
     val rewound =
       TriangleMesh.fromRows(
         SurfaceTestFixtures.tetraVertices,
-        SurfaceTestFixtures.tetraFaces.updated(0, (0, 2, 1))
+        SurfaceTestFixtures.tetraFaces.map: (first, second, third) =>
+          (first, third, second)
       )
 
     assertEquals(mesh.topologyIdentity, moved.topologyIdentity)
@@ -56,11 +61,58 @@ class SurfaceCoreSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: face indices out of range"):
       TriangleMesh.fromRows(SurfaceTestFixtures.tetraVertices, Vector((0, 1, 4)))
 
-    interceptMessage[IllegalArgumentException]("requirement failed: triangle faces must reference three distinct vertices"):
+    val repeatedVertex = intercept[IllegalArgumentException]:
       TriangleMesh.fromRows(SurfaceTestFixtures.tetraVertices, Vector((0, 1, 1)))
+    assert(repeatedVertex.getMessage.contains("face 0 repeats vertex 1"))
 
     interceptMessage[IllegalArgumentException]("requirement failed: vertex coordinates must be finite"):
       TriangleMesh.fromRows(Vector(Vector(Double.NaN, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)), Vector((0, 1, 2)))
+
+  test("strict topology rejection retains the mesh4s audit witness"):
+    val inconsistent =
+      Vector(
+        (0, 1, 2),
+        (0, 1, 3),
+        (0, 2, 3),
+        (1, 2, 3)
+      )
+
+    TriangleMesh.fromRowsEither(SurfaceTestFixtures.tetraVertices, inconsistent) match
+      case Left(TriangleMeshError.TopologyRejected(audit)) =>
+        assert(
+          audit.issues.exists:
+            case TopologyIssue.OrientationConflict(_, _, _, _) => true
+            case _                                             => false
+        )
+      case other =>
+        fail(s"expected an orientation audit, found $other")
+
+  test("orientation repair is explicit and retains flipped face ids"):
+    val inconsistent =
+      Vector(
+        (0, 1, 2),
+        (0, 1, 3),
+        (0, 2, 3),
+        (1, 2, 3)
+      )
+    val mesh =
+      TriangleMesh
+        .fromRowsEither(
+          SurfaceTestFixtures.tetraVertices,
+          inconsistent,
+          TriangleMeshOrientationPolicy.Orient
+        )
+        .toOption
+        .get
+
+    mesh.orientationReceipt match
+      case TriangleMeshOrientationReceipt.Oriented(flippedFaces) =>
+        assert(flippedFaces.nonEmpty)
+        assert(flippedFaces.forall(_.index < mesh.faceCount))
+      case TriangleMeshOrientationReceipt.Strict =>
+        fail("explicit orientation must retain an oriented-build receipt")
+    assert(mesh.topology.isClosed)
+    assertEquals(mesh.topology.eulerCharacteristic, 2)
 
   test("SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform"):
     val mesh = SurfaceTestFixtures.tetraMesh

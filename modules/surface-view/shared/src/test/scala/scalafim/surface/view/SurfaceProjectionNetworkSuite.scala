@@ -20,7 +20,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
           Vector(0.0, 1.0, z),
           Vector(0.0, 0.0, z + 0.5)
         ),
-        Vector((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+        Vector((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
       ),
       Hemisphere.Left,
       kind,
@@ -116,7 +116,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     assertEquals(plan.layers.head.colors.length, inflated.vertexCount)
     val rewound = SurfaceGeometry(
       TriangleMesh.fromRows(inflated.mesh.vertices.map(p => Vector(p.x, p.y, p.z)), Vector(
-        (0, 2, 1), (0, 1, 3), (0, 2, 3), (1, 2, 3)
+        (0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3)
       )),
       Hemisphere.Left,
       SurfaceKind.Inflated,

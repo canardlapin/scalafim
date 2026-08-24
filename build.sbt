@@ -41,6 +41,29 @@ lazy val locus4sCoreJS  = ProjectRef(locus4sBuild, "locus4s-coreJS")
 lazy val locus4sDataJVM = ProjectRef(locus4sBuild, "locus4s-dataJVM")
 lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
+// mesh4s is the independently owned lawful triangular-topology substrate.
+// Coordinated local builds must share the same locus4s source owner; forwarding
+// the override prevents two incompatible locus4s composites from reaching the
+// surface classpath during cross-repository development.
+lazy val mesh4sRevision = "dfcb87507a53f73c42a38af5b0fc27b4029774dc"
+lazy val mesh4sBuild = {
+  sys.props
+    .get("scalafim.locus4s.build")
+    .foreach(System.setProperty("mesh4s.locus4s.build", _))
+  sys.props
+    .get("scalafim.graph4s.build")
+    .foreach(System.setProperty("mesh4s.graph4s.build", _))
+  sys.props
+    .get("scalafim.spatial4s.build")
+    .foreach(System.setProperty("mesh4s.spatial4s.build", _))
+  sys.props
+    .get("scalafim.mesh4s.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/mesh4s.git#$mesh4sRevision"))
+}
+lazy val mesh4sCoreJVM = ProjectRef(mesh4sBuild, "mesh4s-coreJVM")
+lazy val mesh4sCoreJS  = ProjectRef(mesh4sBuild, "mesh4s-coreJS")
+
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
 lazy val image4sRevision = "497bfd164ad514ff3d1944699550c78caa57e85d"
@@ -504,8 +527,8 @@ lazy val surface =
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM, mesh4sCoreJVM))
+    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS, mesh4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js

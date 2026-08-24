@@ -217,8 +217,8 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     reversed: Boolean = false
   ): SurfaceGeometry =
     val faces =
-      if reversed then Vector((0, 2, 1), (0, 1, 3), (0, 2, 3), (1, 2, 3))
-      else Vector((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+      if reversed then Vector((0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3))
+      else Vector((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
     SurfaceGeometry(
       TriangleMesh.fromRows(
         Vector(

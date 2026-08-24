@@ -14,7 +14,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
         Seq(offset + 0.0, 1.0, 0.0),
         Seq(offset + 0.0, 0.0, 1.0)
       ),
-      Seq((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+      Seq((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
     )
 
   private def geometry(
@@ -111,7 +111,10 @@ class SurfaceViewerSuite extends munit.FunSuite:
       Some(SurfaceViewError.UnknownSurface(SurfaceId.unsafe("missing")))
     )
 
-    val rewound = TriangleMesh.fromRows(left.mesh.vertices.map(p => Seq(p.x, p.y, p.z)), Seq((0, 2, 1), (0, 1, 3), (0, 2, 3), (1, 2, 3)))
+    val rewound = TriangleMesh.fromRows(
+      left.mesh.vertices.map(p => Seq(p.x, p.y, p.z)),
+      Seq((0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3))
+    )
     val wrongGeometry = SurfaceGeometry(rewound, Hemisphere.Left, SurfaceKind.Pial)
     val wrongLayer = scalarLayer(wrongGeometry)
     assertEquals(
