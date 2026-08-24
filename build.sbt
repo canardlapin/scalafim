@@ -45,7 +45,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 // Coordinated local builds must share the same locus4s source owner; forwarding
 // the override prevents two incompatible locus4s composites from reaching the
 // surface classpath during cross-repository development.
-lazy val mesh4sRevision = "dfcb87507a53f73c42a38af5b0fc27b4029774dc"
+lazy val mesh4sRevision = "13090e1ae8a5f4c440a4d29cb62a540ab885e402"
 lazy val mesh4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -70,7 +70,7 @@ lazy val mesh4sGraph4sJS  = ProjectRef(mesh4sBuild, "mesh4s-graph4sJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "497bfd164ad514ff3d1944699550c78caa57e85d"
+lazy val image4sRevision = "61c5a34168bdbb1fe1f54ac763c71f7e361dab7b"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
