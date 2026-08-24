@@ -1,12 +1,16 @@
 package scalafim.examples.surfaceview
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scala.scalajs.js.typedarray.{Float32Array, Uint8Array, Uint32Array}
+import scala.scalajs.js.typedarray.{Float32Array, Float64Array, Uint8Array, Uint32Array}
 
 import intaglio.*
 import scalafim.image.DMat
 import scalafim.surface.*
+import scalafim.surface.io.GiftiSurfaceReader
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*
 import scalafim.surface.view.three.*
@@ -16,6 +20,22 @@ object ThreeSurfaceViewerExample:
     visualQa: SurfaceVisualQaReceipt,
     pick: SurfacePick
   )
+
+  /** Browser-example ingestion boundary. The returned object is a host-local
+    * rendition for transfer to the renderer, not a portable mesh file format.
+    */
+  @JSExportTopLevel("readScalafimGiftiSurface")
+  def readGiftiSurface(
+    bytes: Uint8Array,
+    hemisphere: String,
+    kind: String
+  ): js.Promise[js.Dynamic] =
+    Future(Hemisphere.fromString(hemisphere) -> SurfaceKind.fromString(kind))
+      .flatMap { case (hemisphereTag, surfaceKind) =>
+        GiftiSurfaceReader.read(bytes, hemisphereTag, surfaceKind)
+      }
+      .map(_.fold(error => throw new IllegalArgumentException(error.message), surfaceRendition))
+      .toJSPromise
 
   @JSExportTopLevel("mountScalafimSurfaceViewerExample")
   def mount(three: js.Dynamic, canvas: js.Dynamic): js.Dynamic =
@@ -82,11 +102,15 @@ object ThreeSurfaceViewerExample:
     canvas: js.Dynamic,
     leftVertices: Float32Array,
     leftFaces: Uint32Array,
+    leftSurfaceToWorld: Float64Array,
     rightVertices: Float32Array,
-    rightFaces: Uint32Array
+    rightFaces: Uint32Array,
+    rightSurfaceToWorld: Float64Array
   ): js.Dynamic =
-    val left = geometry(leftVertices, leftFaces, Hemisphere.Left, SurfaceKind.Pial)
-    val right = geometry(rightVertices, rightFaces, Hemisphere.Right, SurfaceKind.Pial)
+    val left =
+      geometry(leftVertices, leftFaces, leftSurfaceToWorld, Hemisphere.Left, SurfaceKind.Pial)
+    val right =
+      geometry(rightVertices, rightFaces, rightSurfaceToWorld, Hemisphere.Right, SurfaceKind.Pial)
     val example = CorticalSurfaceAcceptance.build(left, right)
       .fold(error => throw new IllegalStateException(error.message), identity)
     val runtime = ThreeJsRuntime.create(three, canvas)
@@ -152,24 +176,66 @@ object ThreeSurfaceViewerExample:
     canvas: js.Dynamic,
     leftWhiteVertices: Float32Array,
     leftWhiteFaces: Uint32Array,
+    leftWhiteSurfaceToWorld: Float64Array,
     leftPialVertices: Float32Array,
     leftPialFaces: Uint32Array,
+    leftPialSurfaceToWorld: Float64Array,
     leftInflatedVertices: Float32Array,
     leftInflatedFaces: Uint32Array,
+    leftInflatedSurfaceToWorld: Float64Array,
     rightWhiteVertices: Float32Array,
     rightWhiteFaces: Uint32Array,
+    rightWhiteSurfaceToWorld: Float64Array,
     rightPialVertices: Float32Array,
     rightPialFaces: Uint32Array,
+    rightPialSurfaceToWorld: Float64Array,
     rightInflatedVertices: Float32Array,
-    rightInflatedFaces: Uint32Array
+    rightInflatedFaces: Uint32Array,
+    rightInflatedSurfaceToWorld: Float64Array
   ): js.Dynamic =
     val example = CorticalSurfaceMorphAcceptance.build(
-      geometry(leftWhiteVertices, leftWhiteFaces, Hemisphere.Left, SurfaceKind.White),
-      geometry(leftPialVertices, leftPialFaces, Hemisphere.Left, SurfaceKind.Pial),
-      geometry(leftInflatedVertices, leftInflatedFaces, Hemisphere.Left, SurfaceKind.Inflated),
-      geometry(rightWhiteVertices, rightWhiteFaces, Hemisphere.Right, SurfaceKind.White),
-      geometry(rightPialVertices, rightPialFaces, Hemisphere.Right, SurfaceKind.Pial),
-      geometry(rightInflatedVertices, rightInflatedFaces, Hemisphere.Right, SurfaceKind.Inflated)
+      geometry(
+        leftWhiteVertices,
+        leftWhiteFaces,
+        leftWhiteSurfaceToWorld,
+        Hemisphere.Left,
+        SurfaceKind.White
+      ),
+      geometry(
+        leftPialVertices,
+        leftPialFaces,
+        leftPialSurfaceToWorld,
+        Hemisphere.Left,
+        SurfaceKind.Pial
+      ),
+      geometry(
+        leftInflatedVertices,
+        leftInflatedFaces,
+        leftInflatedSurfaceToWorld,
+        Hemisphere.Left,
+        SurfaceKind.Inflated
+      ),
+      geometry(
+        rightWhiteVertices,
+        rightWhiteFaces,
+        rightWhiteSurfaceToWorld,
+        Hemisphere.Right,
+        SurfaceKind.White
+      ),
+      geometry(
+        rightPialVertices,
+        rightPialFaces,
+        rightPialSurfaceToWorld,
+        Hemisphere.Right,
+        SurfaceKind.Pial
+      ),
+      geometry(
+        rightInflatedVertices,
+        rightInflatedFaces,
+        rightInflatedSurfaceToWorld,
+        Hemisphere.Right,
+        SurfaceKind.Inflated
+      )
     ).fold(error => throw new IllegalStateException(error.message), identity)
     val cases = CorticalSurfaceMorphAcceptance.cases(example)
       .fold(error => throw new IllegalStateException(error.message), identity)
@@ -219,11 +285,12 @@ object ThreeSurfaceViewerExample:
     three: js.Dynamic,
     canvases: js.Array[js.Dynamic],
     leftVertices: Float32Array,
-    leftFaces: Uint32Array
+    leftFaces: Uint32Array,
+    leftSurfaceToWorld: Float64Array
   ): js.Dynamic =
     require(canvases.length == SurfaceThresholdParityFixture.Viewpoints.length,
       s"expected ${SurfaceThresholdParityFixture.Viewpoints.length} canvases; got ${canvases.length}")
-    val surface = geometry(leftVertices, leftFaces, Hemisphere.Left, SurfaceKind.Pial)
+    val surface = geometry(leftVertices, leftFaces, leftSurfaceToWorld, Hemisphere.Left, SurfaceKind.Pial)
     val fixture = SurfaceThresholdParityFixture.build(surface)
       .fold(error => throw new IllegalStateException(error.message), identity)
     val dimensions = SurfaceThresholdParityFixture.Dimensions
@@ -284,14 +351,22 @@ object ThreeSurfaceViewerExample:
     canvases: js.Array[js.Dynamic],
     pialVertices: Float32Array,
     pialFaces: Uint32Array,
+    pialSurfaceToWorld: Float64Array,
     inflatedVertices: Float32Array,
-    inflatedFaces: Uint32Array
+    inflatedFaces: Uint32Array,
+    inflatedSurfaceToWorld: Float64Array
   ): js.Dynamic =
     require(canvases.length == CorticalSurfaceLensAcceptance.Fractions.length,
       s"expected ${CorticalSurfaceLensAcceptance.Fractions.length} canvases; got ${canvases.length}")
     val buildStarted = System.nanoTime()
-    val pial = geometry(pialVertices, pialFaces, Hemisphere.Left, SurfaceKind.Pial)
-    val inflated = geometry(inflatedVertices, inflatedFaces, Hemisphere.Left, SurfaceKind.Inflated)
+    val pial = geometry(pialVertices, pialFaces, pialSurfaceToWorld, Hemisphere.Left, SurfaceKind.Pial)
+    val inflated = geometry(
+      inflatedVertices,
+      inflatedFaces,
+      inflatedSurfaceToWorld,
+      Hemisphere.Left,
+      SurfaceKind.Inflated
+    )
     val example = CorticalSurfaceLensAcceptance.build(pial, inflated)
       .fold(error => throw new IllegalStateException(error.message), identity)
     val buildMillis = (System.nanoTime() - buildStarted).toDouble / 1e6
@@ -389,9 +464,11 @@ object ThreeSurfaceViewerExample:
   private def geometry(
     vertices: Float32Array,
     faces: Uint32Array,
+    surfaceToWorld: Float64Array,
     hemisphere: Hemisphere,
     kind: SurfaceKind
   ): SurfaceGeometry =
+    require(surfaceToWorld.length == 16, s"surface-to-world affine requires 16 values; got ${surfaceToWorld.length}")
     val coordinates = new Array[Double](vertices.length)
     var index = 0
     while index < coordinates.length do
@@ -402,11 +479,46 @@ object ThreeSurfaceViewerExample:
     while index < indices.length do
       indices(index) = faces(index).toInt
       index += 1
+    val transform = DMat.fromRows(
+      Vector.tabulate(4)(row => Vector.tabulate(4)(column => surfaceToWorld(row * 4 + column)))
+    )
     SurfaceGeometry(
       TriangleMesh.fromArrays(coordinates, indices),
       hemisphere,
       kind,
-      DMat.eye(4)
+      transform
+    )
+
+  private def surfaceRendition(geometry: SurfaceGeometry): js.Dynamic =
+    val coordinates = geometry.mesh.coordinates
+    val vertices = new Float32Array(coordinates.length)
+    var index = 0
+    while index < coordinates.length do
+      vertices(index) = coordinates(index).toFloat
+      index += 1
+
+    val faceIndices = geometry.mesh.faceIndices
+    val faces = new Uint32Array(faceIndices.length)
+    index = 0
+    while index < faceIndices.length do
+      faces(index) = faceIndices(index).toDouble
+      index += 1
+
+    val surfaceToWorld = new Float64Array(16)
+    var row = 0
+    while row < 4 do
+      var column = 0
+      while column < 4 do
+        surfaceToWorld(row * 4 + column) = geometry.surfaceToWorld(row, column)
+        column += 1
+      row += 1
+
+    js.Dynamic.literal(
+      vertices = vertices,
+      faces = faces,
+      surfaceToWorld = surfaceToWorld,
+      hemisphere = geometry.hemisphere.code,
+      kind = geometry.kind.label
     )
 
   private def visualQaLiteral(receipt: SurfaceVisualQaReceipt, violations: Vector[String]): js.Dynamic =

@@ -96,7 +96,6 @@
     <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
     <script type="module">
       import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
-      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
 
       const root = "../../../../../jscode/FROIAtlas/app/public/data/surfaces/";
       const corpus = [
@@ -113,7 +112,9 @@
         const bytes = await response.arrayBuffer();
         const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (digest !== expectedDigest) throw new Error(`SHA-256 mismatch for ${fileName}: ${digest}`);
-        return { fileName, digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+        const kind = fileName.split(".")[1];
+        const geometry = await exports.readScalafimGiftiSurface(new Uint8Array(bytes), "left", kind);
+        return { fileName, digest, geometry };
       }
 
       try {
@@ -124,8 +125,10 @@
           [...document.querySelectorAll("canvas")],
           pial.geometry.vertices,
           pial.geometry.faces,
+          pial.geometry.surfaceToWorld,
           inflated.geometry.vertices,
-          inflated.geometry.faces
+          inflated.geometry.faces,
+          inflated.geometry.surfaceToWorld
         );
         result.corpus = [pial, inflated].map(entry => ({ fileName: entry.fileName, sha256: entry.digest }));
         result.fetchParseBuildRenderMillis = performance.now() - started;

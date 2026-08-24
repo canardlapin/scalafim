@@ -42,7 +42,6 @@
     <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
     <script type="module">
       import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
-      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
 
       const root = "../../../../../jscode/FROIAtlas/app/public/data/surfaces/";
       const corpus = [
@@ -64,7 +63,10 @@
         const bytes = await response.arrayBuffer();
         const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (digest !== expectedDigest) throw new Error(`SHA-256 mismatch for ${fileName}: ${digest}`);
-        return { fileName, digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+        const hemisphere = fileName.startsWith("lh.") ? "left" : "right";
+        const kind = fileName.split(".")[1];
+        const geometry = await exports.readScalafimGiftiSurface(new Uint8Array(bytes), hemisphere, kind);
+        return { fileName, digest, geometry };
       }
 
       try {
@@ -73,12 +75,12 @@
         const result = exports.mountScalafimCorticalMorphViewer(
           THREE,
           document.querySelector("#surface"),
-          loaded[0].geometry.vertices, loaded[0].geometry.faces,
-          loaded[1].geometry.vertices, loaded[1].geometry.faces,
-          loaded[2].geometry.vertices, loaded[2].geometry.faces,
-          loaded[3].geometry.vertices, loaded[3].geometry.faces,
-          loaded[4].geometry.vertices, loaded[4].geometry.faces,
-          loaded[5].geometry.vertices, loaded[5].geometry.faces
+          loaded[0].geometry.vertices, loaded[0].geometry.faces, loaded[0].geometry.surfaceToWorld,
+          loaded[1].geometry.vertices, loaded[1].geometry.faces, loaded[1].geometry.surfaceToWorld,
+          loaded[2].geometry.vertices, loaded[2].geometry.faces, loaded[2].geometry.surfaceToWorld,
+          loaded[3].geometry.vertices, loaded[3].geometry.faces, loaded[3].geometry.surfaceToWorld,
+          loaded[4].geometry.vertices, loaded[4].geometry.faces, loaded[4].geometry.surfaceToWorld,
+          loaded[5].geometry.vertices, loaded[5].geometry.faces, loaded[5].geometry.surfaceToWorld
         );
         result.fetchParseMillis = performance.now() - started;
         result.corpus = loaded.map(entry => ({ fileName: entry.fileName, sha256: entry.digest }));
