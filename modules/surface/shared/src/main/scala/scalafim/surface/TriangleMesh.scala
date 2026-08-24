@@ -290,18 +290,13 @@ object TriangleMesh:
     source: TriangleMesh,
     coordinates: Array[Double]
   ): Either[TriangleMeshError, TriangleMesh] =
-    validateCoordinates(coordinates, source.vertexCount).flatMap: _ =>
-      attachOwnedCoordinates(source, PrimitiveBuffers.fromArray(coordinates), validated = true)
+    attachOwnedCoordinates(source, PrimitiveBuffers.fromArray(coordinates))
 
   private def attachOwnedCoordinates(
     source: TriangleMesh,
-    coordinates: Array[Double],
-    validated: Boolean = false
+    coordinates: Array[Double]
   ): Either[TriangleMeshError, TriangleMesh] =
-    val validation =
-      if validated then Right(())
-      else validateCoordinates(coordinates, source.vertexCount)
-    validation.flatMap: _ =>
+    validateCoordinates(coordinates, source.vertexCount).flatMap: _ =>
       createOwned(
         coordinates,
         source.packedFaceIndices,
