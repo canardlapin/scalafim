@@ -30,7 +30,7 @@ lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "58c9739be51345ad9adc4bc9c9e7335023254ec9"
+lazy val locus4sRevision = "abafedbb135f3b8c0ca7b63ae9095643827ecd7d"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
