@@ -78,7 +78,15 @@ class DomainLocusSuite extends munit.FunSuite:
     val other = volumeDomain("other")
     val locus = domain.locus
     val exact = TotalMap.identity(locus.space)
-    val crisp = Relation.identity(locus.space).toOption.get
+    val crisp =
+      Relation
+        .fromOrdinalRows(
+          locus.space,
+          locus.space,
+          Iterator.tabulate(locus.space.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
 
     val exactLowering =
       ExactSpatialMap

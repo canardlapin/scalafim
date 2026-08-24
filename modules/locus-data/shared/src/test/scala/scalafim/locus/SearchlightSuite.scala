@@ -60,6 +60,14 @@ class SearchlightSuite extends munit.FunSuite:
     val other =
       DomainFactory.unsafeRestore(SpaceKey.unsafe("searchlight:other"), 4).space
     val wrong =
-      Relation.identity(other).toOption.get.asInstanceOf[Relation[S, S]]
+      Relation
+        .fromOrdinalRows(
+          other,
+          other,
+          Iterator.tabulate(other.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
+        .asInstanceOf[Relation[S, S]]
 
     assert(Searchlight.make(centers, wrong).isLeft)

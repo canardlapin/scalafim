@@ -26,7 +26,14 @@ class VolumeSearchlightSuite extends munit.FunSuite:
 
     assertEquals(
       searchlight.relation,
-      Relation.identity(domain.space).toOption.get
+      Relation
+        .fromOrdinalRows(
+          domain.space,
+          domain.space,
+          Iterator.tabulate(domain.space.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
     )
 
   test("metric balls are symmetric, monotone, and obey triangle composition"):
@@ -35,7 +42,13 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     val one = ExactVolumeSearchlight.metricBalls(domain, radiusOne).toOption.get.relation
     val two = ExactVolumeSearchlight.metricBalls(domain, radiusTwo).toOption.get.relation
 
-    assertEquals(one, one.converse.toOption.get)
+    val rows = one.ordinalRows
+    rows.zipWithIndex.foreach: (targets, source) =>
+      targets.foreach: target =>
+        assert(
+          rows(target).contains(source),
+          s"expected symmetric edge $target -> $source"
+        )
     assert(one.subsetOf(two))
     assert(one.andThen(one).subsetOf(two))
 

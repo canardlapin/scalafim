@@ -131,7 +131,7 @@ object RegionGraph:
         connectivity
       )
       assignmentRelation <- realization.parcelAssignment.toRelation
-      converse <- assignmentRelation.converse
+      converse <- realization.parcelAssignment.fibers
       withoutSelf <-
         // Composition is total when the shared boundary type matches, which it
         // does here by construction: parcel -> voxel -> voxel -> parcel.

@@ -290,7 +290,14 @@ class VolumeParcellationSuite extends munit.FunSuite:
       )
     assertEquals(
       nearestOne.relation,
-      Relation.identity(parcellation.parcels).toOption.get
+      Relation
+        .fromOrdinalRows(
+          parcellation.parcels,
+          parcellation.parcels,
+          Iterator.tabulate(parcellation.parcels.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
     )
 
     val radiusBelow =
@@ -303,7 +310,14 @@ class VolumeParcellationSuite extends munit.FunSuite:
       )
     assertEquals(
       radiusBelow.relation,
-      Relation.identity(parcellation.parcels).toOption.get
+      Relation
+        .fromOrdinalRows(
+          parcellation.parcels,
+          parcellation.parcels,
+          Iterator.tabulate(parcellation.parcels.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
     )
 
     val radiusBoundary =
