@@ -4,14 +4,17 @@ import scala.scalajs.js
 import intaglio.*
 import intaglio.canvas.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 import scalafim.image.view.*
 
 class CanvasViewerHostSuite extends munit.FunSuite:
 
-  private val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
+  private val sampleSpace =
+    SampleSpaces.requireVolumeD3(SampleSpaces(Vector(3, 3, 3))).toOption.get
+  private val space = sampleSpace.grid
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
     PrimitiveBuffers.tabulate[Double](space.nVoxels)(_.toDouble),
-    space.toSampleSpace,
+    sampleSpace,
     "canvas"
   )
   private val layer = SliceLayer(

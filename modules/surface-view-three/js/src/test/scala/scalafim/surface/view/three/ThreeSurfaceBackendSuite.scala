@@ -1,10 +1,11 @@
 package scalafim.surface.view.three
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scala.collection.mutable.ArrayBuffer
 import scala.scalajs.js
 
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
 
@@ -228,7 +229,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       template.mesh.vertices.map(point => Seq(point.x + 2.0, point.y, point.z)),
       template.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
     )
-    val pial = SurfaceGeometry(shiftedMesh, Hemisphere.Left, SurfaceKind.Pial, DMat.eye(4))
+    val pial = SurfaceGeometry(shiftedMesh, Hemisphere.Left, SurfaceKind.Pial, Affine.identity[D3])
     val asset = SurfaceAsset.make(
       surfaceId,
       SurfaceSet.of(SurfaceKind.White, white, SurfaceKind.Pial -> pial)
@@ -388,7 +389,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       ),
       Seq((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
     )
-    SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Inflated, DMat.eye(4))
+    SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Inflated, Affine.identity[D3])
 
   private def compiledColors(viewer: SurfaceViewerModel, state: SurfaceViewerState): Array[Float] =
     val program = ThreeSurfaceProgram.compile(None, compile(viewer, state), size).toOption.get
