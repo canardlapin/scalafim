@@ -1,6 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.{DMat, Matrix}
+import image4s.geometry.GeometryError
 import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdCoreSuite extends munit.FunSuite:
@@ -67,6 +68,21 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assertEquals(
       MaskedField.fromVolume(stat, mask, Tail.Positive).left.toOption,
       Some(ThresholdError.NonFiniteData("stat volume inside mask"))
+    )
+  }
+
+  test("masked field preserves exact provider geometry failures") {
+    val statSpace = SampleSpaces(Vector(2, 2, 1))
+    val maskSpace = SampleSpaces(
+      Vector(2, 2, 1),
+      origin = Some(Vector(3.0, 0.0, 0.0))
+    )
+    val stat = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array.fill(4)(1.0), statSpace)
+    val mask = Mask.fromIndices(maskSpace, Array(0))
+
+    assertEquals(
+      MaskedField.fromVolume(stat, mask, Tail.Positive).left.toOption,
+      Some(ThresholdError.Geometry(GeometryError.GridsNotCongruent(0.0)))
     )
   }
 

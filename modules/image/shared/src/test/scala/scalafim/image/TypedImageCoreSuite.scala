@@ -1,6 +1,11 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.geometry.CoordinateConvention
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.Grid
 
 class TypedImageCoreSuite extends munit.FunSuite:
 
@@ -17,8 +22,8 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertClose(actual.y, expected.y, tol)
     assertClose(actual.z, expected.z, tol)
 
-  private def affineMatrix: DMat =
-    DMat.fromRows(
+  private def affineMatrix: Affine[D3] =
+    ProviderSpaces.affine(
       Vector(
         Vector(2.0, 0.0, 0.0, 10.0),
         Vector(0.0, 3.0, 0.0, 20.0),
@@ -33,64 +38,61 @@ class TypedImageCoreSuite extends munit.FunSuite:
   private def toVector(indices: ravel.Array1[Int]): Vector[Int] =
     Vector.tabulate(indices.size)(i => indices(i))
 
-  test("Affine3D is finite homogeneous and invertible") {
-    val affine = Affine3D(affineMatrix)
+  test("provider Affine is finite homogeneous and invertible") {
+    val affine = affineMatrix
     val voxel = VoxelPoint(1.5, 2.0, 3.0)
-    val world = affine.voxelToWorld(voxel)
+    val world = SpatialCoordinates.voxelToWorld(voxel, affine).fold(error => fail(error.message), identity)
 
     assertClose(world, WorldPoint(13.0, 26.0, 42.0), 1e-10)
-    assertClose(affine.worldToVoxel(world), voxel, 1e-10)
+    assertClose(
+      SpatialCoordinates.worldToVoxel(world, affine).fold(error => fail(error.message), identity),
+      voxel,
+      1e-10
+    )
 
     val singular =
-      DMat.fromRows(
+      Affine.fromRowMajor[D3](
         Vector(
           Vector(1.0, 0.0, 0.0, 0.0),
           Vector(0.0, 0.0, 0.0, 0.0),
           Vector(0.0, 0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 0.0, 1.0)
-        )
+        ).flatten
       )
-    assert(Affine3D.make(singular).isLeft, clue = "singular affine should be rejected")
+    assert(singular.isLeft, clue = "singular affine should be rejected")
 
     val projective =
-      DMat.fromRows(
+      Affine.fromRowMajor[D3](
         Vector(
           Vector(1.0, 0.0, 0.0, 0.0),
           Vector(0.0, 1.0, 0.0, 0.0),
           Vector(0.0, 0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 0.1, 1.0)
-        )
+        ).flatten
       )
-    assert(Affine3D.make(projective).isLeft, clue = "non-affine homogeneous row should be rejected")
+    assert(projective.isLeft, clue = "non-affine homogeneous row should be rejected")
   }
 
-  test("VolumeSpace and SeriesSpace distinguish exact 3D and 4D spaces") {
-    val volume = VolumeSpace(SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix)))
-    val series = volume.addTime(5)
+  test("provider SampleSpace owns volume and series sampling metadata") {
+    val volume =
+      ProviderSpaces.volume(
+        SampleSpaces(Vector(2, 3, 4), affine = Some(affineMatrix))
+      )
+    val series =
+      volume.appendNonSpatial(ProviderAxes.time(5)).toOption.get
 
-    assertEquals(volume.shape, SpatialDims(2, 3, 4), clue = "")
-    assertEquals(series.nVolumes, 5, clue = "")
-    assertEquals(
-      GridCompatibility.volume(series.volumeSpace, volume),
-      Right(()),
-      clue = ""
-    )
-    assert(VolumeSpace.make(series.toSampleSpace).isLeft, clue = "4D space should not be a VolumeSpace")
-    assert(SeriesSpace.make(volume.toSampleSpace).isLeft, clue = "3D space should not be a SeriesSpace")
-    assert(
-      volume.asInstanceOf[AnyRef] eq volume.toSampleSpace.asInstanceOf[AnyRef],
-      clue = "VolumeSpace must be a zero-allocation refinement"
-    )
-    assert(
-      series.asInstanceOf[AnyRef] eq series.toSampleSpace.asInstanceOf[AnyRef],
-      clue = "SeriesSpace must be a zero-allocation refinement"
-    )
+    assertEquals(volume.grid.spatialShape, SpatialDims(2, 3, 4), clue = "")
+    assertEquals(series.nonSpatialAxes.values.head.extent, 5, clue = "")
+    assert(Grid.exactCongruence(series.grid, volume.grid).isRight)
+    assert(SampleSpaces.requireVolumeD3(series).isLeft, clue = "series axes must not enter a volume boundary")
+    assertEquals(SampleSpaces.requireVolumeD3(volume), Right(volume), clue = "")
+    assert(volume.grid eq series.grid, clue = "adding an axis must retain the exact provider grid")
   }
 
   test("non-spatial refinements retain the exact image4s grid and frame") {
-    val volume = SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix))
+    val volume = SampleSpaces(Vector(2, 3, 4), affine = Some(affineMatrix))
     val volumeCanonical = SampleSpaces.canonical(volume)
-    val series = volume.addDim(5, Some(Axis.Time))
+    val series = volume.addDim(ProviderAxes.time(5))
     val seriesCanonical = SampleSpaces.canonical(series)
     val roundTrip = series.dropDim(3)
     val roundTripCanonical = SampleSpaces.canonical(roundTrip)
@@ -107,7 +109,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("image4s Sampled backs singleton-D3 plane, volume, and series views") {
-    val volumeSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(affineMatrix))
+    val volumeSpace = SampleSpaces(Vector(2, 1, 1), affine = Some(affineMatrix))
     val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array(10, 20), volumeSpace, "vol")
     val mapped = volume.mapValues[Int, image4s.Categorical](_ + 1)
     val series = volume.toSeries
@@ -116,16 +118,14 @@ class TypedImageCoreSuite extends munit.FunSuite:
         .plane(SpatialAxis.Z, 0)
         .fold(error => fail(error.message), identity)
 
-    assertEquals(volume.typedSpace.toSampleSpace, volumeSpace, clue = "")
     assertEquals(volume.label, "vol", clue = "")
     assertEquals(volume.sampled.metadata.label, "vol", clue = "")
     assertEquals(volume.ndim, 3, clue = "")
     assertEquals(mapped.valueAtCanonicalOrdinal(1), 21, clue = "")
-    assertEquals(series.typedSpace.toSampleSpace.ndim, 4, clue = "")
-    assertEquals(
-      GridCompatibility.exact(series.volume(0).space, volume.space),
-      Right(()),
-      clue = ""
+    assert(
+      Grid
+        .exactCongruence(series.volume(0).grid, volume.grid)
+        .isRight
     )
     assertEquals(series.sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).sampled.metadata.label, "vol", clue = "")
@@ -139,10 +139,10 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("typed coordinate overloads keep voxel and world points separate") {
-    val affine = Affine3D(affineMatrix)
+    val affine = affineMatrix
     val voxel = VoxelPoint(1.0, 2.0, 3.0)
-    val world = SpatialCoordinates.voxelToWorld(voxel, affine)
-    val back = SpatialCoordinates.worldToVoxel(world, affine)
+    val world = SpatialCoordinates.voxelToWorld(voxel, affine).fold(error => fail(error.message), identity)
+    val back = SpatialCoordinates.worldToVoxel(world, affine).fold(error => fail(error.message), identity)
 
     assertClose(world, WorldPoint(12.0, 26.0, 42.0), 1e-10)
     assertClose(back, voxel, 1e-10)
@@ -153,7 +153,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space).sampleSpace.grid,
+          ProviderSpaces.grid(space),
           "typed region selection",
           locus4s.DomainRegistry.empty
         )
@@ -181,11 +181,11 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("exact grid indices validate coordinates before selected extraction") {
-    val space = SampleSpaces(Vector(3, 1, 1), trans = Some(affineMatrix))
+    val space = SampleSpaces(Vector(3, 1, 1), affine = Some(affineMatrix))
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space).sampleSpace.grid,
+          ProviderSpaces.grid(space),
           "typed coordinate selection",
           locus4s.DomainRegistry.empty
         )
@@ -206,7 +206,10 @@ class TypedImageCoreSuite extends munit.FunSuite:
         .toOption
         .get
     val values =
-      SelectedVolume.gather(domain, volume, selection).toOption.get
+      SelectedVolume
+        .gather(domain, SomeNeuroVolume.eraseSpace(volume), selection)
+        .toOption
+        .get
 
     assertEquals(values.data.iterator.toVector, Vector(10, 30), clue = "")
     assertEquals(values.selection.ordinals.toVector, Vector(0, 2), clue = "")

@@ -1,5 +1,6 @@
 package scalafim.dataset
 
+import image4s.geometry.GeometryError
 import scalafim.image.{SampleSpaceError, VoxelCoord}
 import scalafim.response.{OperationId, ReadError}
 
@@ -7,8 +8,14 @@ enum DatasetAxis(val label: String):
   case Timepoint extends DatasetAxis("timepoint")
   case Voxel extends DatasetAxis("voxel")
 
+enum CongruenceEndpoint(val label: String):
+  case Left extends CongruenceEndpoint("left")
+  case Right extends CongruenceEndpoint("right")
+
 enum DatasetError:
   case InvalidSpace(error: SampleSpaceError)
+  case Geometry(error: GeometryError)
+  case CongruenceEndpointMismatch(endpoint: CongruenceEndpoint)
   case NonPositiveTimepoints(value: Int)
   case NonPositiveAxisSize(axis: DatasetAxis, value: Int)
   case NegativeIndex(axis: DatasetAxis, index: Int)
@@ -43,6 +50,10 @@ enum DatasetError:
     this match
       case InvalidSpace(error) =>
         error.message
+      case Geometry(error) =>
+        error.message
+      case CongruenceEndpointMismatch(endpoint) =>
+        s"grid congruence certificate ${endpoint.label} endpoint does not belong to the supplied dataset grid"
       case NonPositiveTimepoints(value) =>
         s"timepoints must be positive; got $value"
       case NonPositiveAxisSize(axis, value) =>

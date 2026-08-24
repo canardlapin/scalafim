@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import java.lang.management.ManagementFactory
 
 import com.sun.management.ThreadMXBean
@@ -17,13 +19,14 @@ class NativeImageAllocationSuite extends munit.FunSuite:
 
   test("representative native kernels retain one Ravel value destination"):
     val edge = 40
-    val volumeSpace = VolumeSpace(SampleSpaces(Vector(edge, edge, edge)))
+    val volumeSpace = ProviderSpaces.volume(SampleSpaces(Vector(edge, edge, edge)))
     val data =
       NDArray.tabulate[Double](edge, edge, edge): (x, y, z) =>
         ((x * 17 + y * 5 + z) % 101).toDouble
     val nativeVolume: SomeScalarVolume[Double] =
       NeuroVolume
-        .continuous(volumeSpace.sampleSpace, data)
+        .continuous(volumeSpace, data)
+        .map(SomeNeuroVolume.eraseSpace)
         .fold(error => fail(error.message), identity)
     val volume: SomeScalarVolume[Double] = nativeVolume
     val other = volume.mapValues(_ * 0.25)
@@ -37,13 +40,13 @@ class NativeImageAllocationSuite extends munit.FunSuite:
     val series =
       SomeScalarSeries.unsafeFromRavel(seriesData, seriesSpace, "allocation-series")
 
-    val grid = GridSpec.fromSpace(volumeSpace.toSampleSpace)
+    val grid = GridSpec.fromSpace(volumeSpace)
     val resampling =
       ResamplingPlan
         .make(
           grid,
           grid,
-          IdentityMorphism(SpatialDomainId("allocation-resampling")),
+          SpatialPullbacks.worldAligned(grid, grid),
           Resample.Method.Linear
         )
         .fold(error => fail(error.message), identity)
@@ -51,7 +54,7 @@ class NativeImageAllocationSuite extends munit.FunSuite:
     val registered =
       GridDomain
         .register(
-          volumeSpace.sampleSpace.grid,
+          volumeSpace.grid,
           "native image allocation voxels",
           DomainRegistry.empty
         )

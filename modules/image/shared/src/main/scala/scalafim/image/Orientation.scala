@@ -1,11 +1,15 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import gale.linalg.DMat
+import image4s.geometry.Affine as GeometryAffine
+import image4s.geometry.D3
+
 enum OrientationError:
   case UnknownAxisAbbreviation(value: String)
-  case NonSpatialAxis(axis: Axis)
   case DuplicateAnatomicalAxes(axes: Vector[AnatomicalAxis])
   case Expected3Axes(actual: Int)
-  case MissingAxisDirection(index: Int)
   case MatrixTooSmall(rows: Int, cols: Int)
   case SingularMatrix
   case InvalidAxisCode(code: Int)
@@ -14,15 +18,11 @@ enum OrientationError:
     this match
       case UnknownAxisAbbreviation(value) =>
         s"unknown axis abbreviation: '$value'"
-      case NonSpatialAxis(axis) =>
-        s"axis is not a spatial anatomical axis: $axis"
       case DuplicateAnatomicalAxes(axes) =>
         val codes = axes.map(a => math.abs(a.code)).mkString(",")
         s"axes must be orthogonal (one each of x/y/z): got $codes"
       case Expected3Axes(actual) =>
         s"orient must be length 3; got $actual"
-      case MissingAxisDirection(index) =>
-        s"axis $index has no direction"
       case MatrixTooSmall(rows, cols) =>
         s"pmat must be at least 3x3; got ${rows}x$cols"
       case SingularMatrix =>
@@ -30,13 +30,26 @@ enum OrientationError:
       case InvalidAxisCode(code) =>
         s"invalid axis code: $code"
 
-enum AnatomicalAxis(val abbrev: String, val axis: Axis, val code: Int):
-  case L extends AnatomicalAxis("L", Axis.LeftRight, 1)
-  case R extends AnatomicalAxis("R", Axis.RightLeft, -1)
-  case P extends AnatomicalAxis("P", Axis.PosteriorAnterior, 2)
-  case A extends AnatomicalAxis("A", Axis.AnteriorPosterior, -2)
-  case I extends AnatomicalAxis("I", Axis.InferiorSuperior, 3)
-  case S extends AnatomicalAxis("S", Axis.SuperiorInferior, -3)
+/** One signed anatomical direction in RAS world coordinates. */
+enum AnatomicalAxis(
+    val abbrev: String,
+    val code: Int,
+    private val x: Double,
+    private val y: Double,
+    private val z: Double
+):
+  case L extends AnatomicalAxis("L", 1, 1.0, 0.0, 0.0)
+  case R extends AnatomicalAxis("R", -1, -1.0, 0.0, 0.0)
+  case P extends AnatomicalAxis("P", 2, 0.0, 1.0, 0.0)
+  case A extends AnatomicalAxis("A", -2, 0.0, -1.0, 0.0)
+  case I extends AnatomicalAxis("I", 3, 0.0, 0.0, 1.0)
+  case S extends AnatomicalAxis("S", -3, 0.0, 0.0, -1.0)
+
+  def component(axis: SpatialAxis): Double =
+    axis match
+      case SpatialAxis.X => x
+      case SpatialAxis.Y => y
+      case SpatialAxis.Z => z
 
 object AnatomicalAxis:
   private val byAbbrev: Map[String, AnatomicalAxis] =
@@ -58,16 +71,6 @@ object AnatomicalAxis:
   def fromAbbrev(value: String): Either[OrientationError, AnatomicalAxis] =
     byAbbrev.get(value.trim.toUpperCase).toRight(OrientationError.UnknownAxisAbbreviation(value))
 
-  def fromAxis(axis: Axis): Either[OrientationError, AnatomicalAxis] =
-    axis match
-      case Axis.LeftRight => Right(L)
-      case Axis.RightLeft => Right(R)
-      case Axis.PosteriorAnterior => Right(P)
-      case Axis.AnteriorPosterior => Right(A)
-      case Axis.InferiorSuperior => Right(I)
-      case Axis.SuperiorInferior => Right(S)
-      case other => Left(OrientationError.NonSpatialAxis(other))
-
 final case class Orientation3D private (
   first: AnatomicalAxis,
   second: AnatomicalAxis,
@@ -75,9 +78,6 @@ final case class Orientation3D private (
 ):
   def axes: Vector[AnatomicalAxis] =
     Vector(first, second, third)
-
-  def axisSet: AxisSet =
-    AxisSet(axes.map(_.axis)*)
 
 object Orientation3D:
   val LPI: Orientation3D =
@@ -112,58 +112,41 @@ object Orientation3D:
 
 object Orientation:
 
-  def findAnatomy3D(axis1: String = "L", axis2: String = "P", axis3: String = "I"): AxisSet =
+  def findAnatomy3D(axis1: String = "L", axis2: String = "P", axis3: String = "I"): Orientation3D =
     findAnatomy3DEither(axis1, axis2, axis3).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   def findAnatomy3DEither(
     axis1: String = "L",
     axis2: String = "P",
     axis3: String = "I"
-  ): Either[OrientationError, AxisSet] =
-    Orientation3D.fromStrings(Seq(axis1, axis2, axis3)).map(_.axisSet)
-
-  def findAnatomy3D(orientation: Orientation3D): AxisSet =
-    orientation.axisSet
+  ): Either[OrientationError, Orientation3D] =
+    Orientation3D.fromStrings(Seq(axis1, axis2, axis3))
 
   def findAnatomy3D(
     axis1: AnatomicalAxis,
     axis2: AnatomicalAxis,
     axis3: AnatomicalAxis
-  ): Either[OrientationError, AxisSet] =
-    Orientation3D.make(axis1, axis2, axis3).map(_.axisSet)
-
-  def permMat3D(axes: AxisSet): DMat =
-    permMat3DEither(axes).fold(err => throw new IllegalArgumentException(err.message), identity)
+  ): Either[OrientationError, Orientation3D] =
+    Orientation3D.make(axis1, axis2, axis3)
 
   def permMat3D(orientation: Orientation3D): DMat =
-    permMat3D(orientation.axisSet)
+    val axes = orientation.axes
+    DMat.dense(
+      3,
+      3,
+      SpatialAxis.all.flatMap: row =>
+        Vector.tabulate(3)(column => axes(column).component(row))
+    )
 
-  def permMat3DEither(axes: AxisSet): Either[OrientationError, DMat] =
-    if axes.ndim < 3 then Left(OrientationError.Expected3Axes(axes.ndim))
-    else
-      val a0 = axes(0).direction.toRight(OrientationError.MissingAxisDirection(0))
-      val a1 = axes(1).direction.toRight(OrientationError.MissingAxisDirection(1))
-      val a2 = axes(2).direction.toRight(OrientationError.MissingAxisDirection(2))
-
-      for
-        v0 <- a0
-        v1 <- a1
-        v2 <- a2
-      yield
-        val rows = Vector.tabulate(3) { r =>
-          Vector(v0(r), v1(r), v2(r))
-        }
-        DMat.fromRows(rows)
-
-  def findAnatomy(pmat: DMat, tol: Double = 1e-10): AxisSet =
+  def findAnatomy(pmat: DMat, tol: Double = 1e-10): Orientation3D =
     findAnatomyEither(pmat, tol).fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  def findAnatomyEither(pmat: DMat, tol: Double = 1e-10): Either[OrientationError, AxisSet] =
+  def findAnatomyEither(pmat: DMat, tol: Double = 1e-10): Either[OrientationError, Orientation3D] =
     if pmat.rows < 3 || pmat.cols < 3 then Left(OrientationError.MatrixTooSmall(pmat.rows, pmat.cols))
     else
       findAnatomyUnchecked(pmat, tol)
 
-  private def findAnatomyUnchecked(pmat: DMat, tol: Double): Either[OrientationError, AxisSet] =
+  private def findAnatomyUnchecked(pmat: DMat, tol: Double): Either[OrientationError, Orientation3D] =
 
     def col(c: Int): Array[Double] =
       Array(pmat(0, c), pmat(1, c), pmat(2, c))
@@ -232,7 +215,8 @@ object Orientation:
         ax1 <- axisFromCode(ibest * pbest)
         ax2 <- axisFromCode(jbest * qbest)
         ax3 <- axisFromCode(kbest * rbest)
-      yield AxisSet(ax1.axis, ax2.axis, ax3.axis)
+        orientation <- Orientation3D.make(ax1, ax2, ax3)
+      yield orientation
 
   def reorient(space: SomeSampleSpace, orient: Seq[String]): SomeSampleSpace =
     val orientation =
@@ -240,11 +224,12 @@ object Orientation:
     reorient(space, orientation)
 
   def reorient(space: SomeSampleSpace, orientation: Orientation3D): SomeSampleSpace =
-    val anat = orientation.axisSet
     val pmat = permMat3D(orientation)
 
-    val old = space.trans
-    require(old.rows >= 4 && old.cols >= 4, "space.trans must be 4x4")
+    val old =
+      space.affineD3
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+        .matrix
 
     val top = Array.ofDim[Double](3, 4)
     var r = 0
@@ -276,16 +261,19 @@ object Orientation:
       Vector(newTop(2)(0), newTop(2)(1), newTop(2)(2), newTop(2)(3)),
       Vector(0.0, 0.0, 0.0, 1.0)
     )
-    val tx = DMat.fromRows(rows)
-    val newOrigin = Vector(tx(0, 3), tx(1, 3), tx(2, 3))
+    val tx =
+      GeometryAffine
+        .fromRowMajor[D3](rows.flatten)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val newOrigin =
+      Vector(tx.matrix(0, 3), tx.matrix(1, 3), tx.matrix(2, 3))
 
-    val newAxes = AxisSet((anat.axes ++ space.axes.additionalAxes)*)
     SampleSpaces(
       dims = space.dims,
       spacing = Some(space.spacing),
       origin = Some(newOrigin),
-      axes = Some(newAxes),
-      trans = Some(tx)
+      axes = Some(space.nonSpatialAxes),
+      affine = Some(tx)
     )
 
   def reorient[A, Sem](vol: SomeNeuroVolume[A, Sem], orient: Seq[String])(using

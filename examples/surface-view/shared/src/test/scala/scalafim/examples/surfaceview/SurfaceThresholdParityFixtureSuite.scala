@@ -1,6 +1,7 @@
 package scalafim.examples.surfaceview
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*
@@ -88,5 +89,5 @@ class SurfaceThresholdParityFixtureSuite extends munit.FunSuite:
       TriangleMesh.fromRows(coordinates.result(), faces.result()),
       Hemisphere.Left,
       SurfaceKind.Pial,
-      DMat.eye(4)
+      Affine.identity[D3]
     )

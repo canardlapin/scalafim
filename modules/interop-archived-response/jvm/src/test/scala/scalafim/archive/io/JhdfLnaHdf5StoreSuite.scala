@@ -7,7 +7,9 @@ import io.jhdf.api.WritableGroup
 import io.jhdf.`object`.datatype.FixedPoint
 import scalafim.archive.ArchivePath
 import scalafim.archive.lna.{LnaArchive, LnaDType, LnaExplicitLatent, LnaManifestCodec, LnaPipeline, LnaTemporalDct, LnaValidator, Payload, QuantMethod, QuantParams, QuantScaleScope, TemporalDctNorm, TemporalDctParams, TransformKind, TransformParams, TransformReport}
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 
 import java.nio.file.Files
 
@@ -15,7 +17,7 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0, 7.0),
@@ -24,7 +26,7 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
     )
 
   private val curvedData =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(1.0, 3.0, 6.0, 10.0),
@@ -34,7 +36,7 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
     )
 
   private val spikyData =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector.tabulate(25) {
         case 23 => Vector(100.0, 0.0, 0.0, 0.0)
         case 24 => Vector(-100.0, 0.0, 0.0, 0.0)
@@ -44,14 +46,14 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
 
   private val explicitLatent =
     LnaExplicitLatent.Response(
-      basis = DMat.fromRows(
+      basis = GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.5, 1.0),
           Vector(0.0, 2.0)
         )
       ),
-      loadings = DMat.fromRows(
+      loadings = GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(10.0, 1.0),
           Vector(20.0, 2.0),
@@ -103,8 +105,8 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
           .reconstruct(loaded)
           .fold(err => fail(err.message), identity)
 
-      val actual = reconstructed.toRows.flatten
-      val expected = data.toRows.flatten
+      val actual = GaleArchiveTestData.toRows(reconstructed).flatten
+      val expected = GaleArchiveTestData.toRows(data).flatten
       actual.zip(expected).foreach { case (a, e) =>
         assert(math.abs(a - e) < 2e-4, s"$a was not close to $e")
       }
@@ -181,7 +183,7 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
 
       assertEquals(reconstructed.rows, spikyData.rows)
       assertEquals(reconstructed.cols, spikyData.cols)
-      assert(reconstructed.toRows.flatten.forall(_.isFinite))
+      assert(GaleArchiveTestData.toRows(reconstructed).flatten.forall(_.isFinite))
     finally Files.deleteIfExists(file)
   }
 
@@ -204,8 +206,8 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
           .reconstruct(loaded)
           .fold(err => fail(err.message), identity)
 
-      val actual = reconstructed.toRows.flatten
-      val expected = curvedData.toRows.flatten
+      val actual = GaleArchiveTestData.toRows(reconstructed).flatten
+      val expected = GaleArchiveTestData.toRows(curvedData).flatten
       actual.zip(expected).foreach { case (a, e) =>
         assert(math.abs(a - e) < 1e-3, s"$a was not close to $e")
       }
@@ -214,7 +216,7 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
 
   test("jHDF store roundtrips basis/embed archives") {
     val identityBasis =
-      DMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, 0.0),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -234,7 +236,10 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
       val loaded = LnaHdf5Store.default.read(file).fold(err => fail(err.message), identity)
 
       assertEquals(loaded.manifest.transforms.map(_.kind), Vector(TransformKind.Basis, TransformKind.Embed))
-      assertEquals(LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity), data)
+      assertEquals(
+        GaleArchiveTestData.toRows(LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity)),
+        GaleArchiveTestData.toRows(data)
+      )
     finally Files.deleteIfExists(file)
   }
 
@@ -251,8 +256,27 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
 
       assertEquals(LnaValidator.validate(loaded), Vector.empty)
       assertEquals(loaded.manifest.transforms.map(_.kind), Vector(TransformKind.Basis, TransformKind.Embed))
-      assertEquals(LnaExplicitLatent.read(loaded).fold(err => fail(err.message), identity), explicitLatent)
-      assertEquals(LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity), LnaExplicitLatent.dense(explicitLatent))
+      val decoded =
+        LnaExplicitLatent.read(loaded).fold(err => fail(err.message), identity)
+      assertEquals(
+        GaleArchiveTestData.toRows(decoded.basis),
+        GaleArchiveTestData.toRows(explicitLatent.basis)
+      )
+      assertEquals(
+        GaleArchiveTestData.toRows(decoded.loadings),
+        GaleArchiveTestData.toRows(explicitLatent.loadings)
+      )
+      assertEquals(decoded.offset, explicitLatent.offset)
+      assertEquals(decoded.sourceDomain, explicitLatent.sourceDomain)
+      assertEquals(decoded.targetDomain, explicitLatent.targetDomain)
+      assertEquals(decoded.label, explicitLatent.label)
+      assertEquals(decoded.metadata, explicitLatent.metadata)
+      assertEquals(
+        GaleArchiveTestData.toRows(
+          LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity)
+        ),
+        GaleArchiveTestData.toRows(LnaExplicitLatent.dense(explicitLatent))
+      )
     finally Files.deleteIfExists(file)
   }
 
@@ -276,7 +300,12 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
         case other =>
           fail(s"expected temporal DCT params, found $other")
       assertEquals(LnaExplicitLatent.read(loaded).fold(err => fail(err.message), identity).metadata("basis"), "dct")
-      assertEquals(LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity), LnaExplicitLatent.dense(explicitLatent))
+      assertEquals(
+        GaleArchiveTestData.toRows(
+          LnaPipeline.reconstruct(loaded).fold(err => fail(err.message), identity)
+        ),
+        GaleArchiveTestData.toRows(LnaExplicitLatent.dense(explicitLatent))
+      )
     finally Files.deleteIfExists(file)
   }
 

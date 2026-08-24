@@ -2,16 +2,18 @@ package scalafim.image.view
 
 import intaglio.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class InteractionSuite extends munit.FunSuite:
 
-  private val space =
-    VolumeSpace(SampleSpaces(Vector(4, 3, 2)))
+  private val sampleSpace =
+    SampleSpaces.requireVolumeD3(SampleSpaces(Vector(4, 3, 2))).toOption.get
+  private val space = sampleSpace.grid
 
   private def constantVolume(value: Double, label: String): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.fillConst[Double](space.nVoxels, value),
-      space.toSampleSpace,
+      sampleSpace,
       label
     )
 
@@ -29,7 +31,7 @@ class InteractionSuite extends munit.FunSuite:
       maskId,
       SomeMaskVolume.unsafeCopyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](space.nVoxels, true),
-        space.toSampleSpace,
+        sampleSpace,
         "mask"
       ),
       SliceSampling.Nearest(false),

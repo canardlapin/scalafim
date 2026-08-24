@@ -1,5 +1,7 @@
 package scalafim.image.io
 
+import scalafim.image.SampleSpaces.*
+
 import image4s.AxisKind
 import image4s.Continuous
 import image4s.ImageError
@@ -25,6 +27,7 @@ import image4s.nifti.NiftiWriteOptions
 import ravel.Rank
 import ravel.AnyRank
 import scalafim.image.*
+import scalafim.image.NeuroAffineSyntax.*
 
 import java.nio.ByteOrder
 import java.nio.file.Path
@@ -69,36 +72,39 @@ final class NiftiHeader private[io] (
   inline def qformCode: Int =
     native.qformCode
 
-  lazy val qform: Option[DMat] =
-    native.qform.map(NiftiHeader.toDMat)
+  lazy val qform: Option[ImageAffine[D3]] =
+    native.qform
 
   inline def sformCode: Int =
     native.sformCode
 
-  lazy val sform: Option[DMat] =
-    native.sform.map(NiftiHeader.toDMat)
+  lazy val sform: Option[ImageAffine[D3]] =
+    native.sform
 
   lazy val byteOrder: ByteOrder =
     native.byteOrder match
       case NiftiByteOrder.LittleEndian => ByteOrder.LITTLE_ENDIAN
       case NiftiByteOrder.BigEndian    => ByteOrder.BIG_ENDIAN
 
-  lazy val preferredAffine: Option[DMat] =
-    native.sform.orElse(native.qform).map(NiftiHeader.toDMat)
+  lazy val preferredAffine: Option[ImageAffine[D3]] =
+    native.sform.orElse(native.qform)
 
-  lazy val selectedAffine: DMat =
-    NiftiHeader.toDMat(
-      native.sform.orElse(native.qform).getOrElse(native.fallbackAffine)
-    )
+  lazy val selectedAffine: ImageAffine[D3] =
+    native.sform.orElse(native.qform).getOrElse(native.fallbackAffine)
 
   lazy val space: SomeSampleSpace =
     val affine = selectedAffine
-    val origin = Vector(affine(0, 3), affine(1, 3), affine(2, 3))
+    val origin =
+      Vector(
+        affine.matrix(0, 3),
+        affine.matrix(1, 3),
+        affine.matrix(2, 3)
+      )
     SampleSpaces(
       dims,
-      spacing = Some(Affine.voxelSizes(affine)),
+      spacing = Some(affine.neuroVoxelSizes),
       origin = Some(origin),
-      trans = Some(affine)
+      affine = Some(affine)
     )
 
 object NiftiHeader:
@@ -107,16 +113,25 @@ object NiftiHeader:
   ): NiftiHeader =
     new NiftiHeader(header)
 
-  private def toDMat(affine: ImageAffine[D3]): DMat =
-    DMat.fromRowMajorOwned(4, 4, affine.rowMajor.toArray)
+enum NiftiImageReadError derives CanEqual:
+  case Provider(error: NiftiError)
+  case Image(error: NeuroImageError)
+
+  def message: String =
+    this match
+      case Provider(error) => error.message
+      case Image(error)    => error.message
 
 /** Native NIfTI I/O over image4s streaming and Ravel-owned destinations.
   *
-  * Public entry points return typed provider errors and preserve the native
-  * image4s/Ravel representation without compatibility staging.
+  * Image reads retain provider and ScalaFIM refinement failures as typed
+  * causes. Other entry points return provider errors directly. All paths
+  * preserve the native image4s/Ravel representation without compatibility
+  * staging.
   */
 object Nifti:
   type Error = NiftiError
+  type ImageReadError = NiftiImageReadError
   type ReadOptions = NiftiReadOptions
   type WriteOptions = NiftiWriteOptions
   type IoLimits = NiftiIoLimits
@@ -145,11 +160,13 @@ object Nifti:
       path: Path,
       options: NiftiReadOptions = NiftiReadOptions.default
   ): Either[
-    NiftiError,
+    NiftiImageReadError,
     DecodedNifti[SomeScalarVolume[Double]]
   ] =
     ImageNifti
       .readScaledDouble(path, options)
+      .left
+      .map(NiftiImageReadError.Provider.apply)
       .flatMap: decoded =>
         volumeFrom(decoded.image).map: volume =>
           DecodedNifti(
@@ -162,11 +179,13 @@ object Nifti:
       path: Path,
       options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
   ): Either[
-    NiftiError,
+    NiftiImageReadError,
     DecodedNifti[SomeScalarSeries[Double]]
   ] =
     ImageNifti
       .readScaledDouble(path, options)
+      .left
+      .map(NiftiImageReadError.Provider.apply)
       .flatMap: decoded =>
         seriesFrom(decoded.image).map: series =>
           DecodedNifti(
@@ -236,12 +255,14 @@ object Nifti:
 
   private def volumeFrom(
       image: SomeSampled[Double, Continuous]
-  ): Either[NiftiError, SomeScalarVolume[Double]] =
+  ): Either[NiftiImageReadError, SomeScalarVolume[Double]] =
     image.fold(
       d2 =>
         Left(
-          NiftiError.Image(
-            ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+          NiftiImageReadError.Provider(
+            NiftiError.Image(
+              ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+            )
           )
         ),
       d3 =>
@@ -251,7 +272,7 @@ object Nifti:
               .requireDataRank[3]
               .flatMap(persistDecoded)
               .left
-              .map(NiftiError.Image.apply)
+              .map(providerImageError)
               .map(SomeNeuroVolume.unsafeFromSampled)
           case 4
               if d3.value.nonSpatialAxes.size == 1 &&
@@ -262,48 +283,54 @@ object Nifti:
               .flatMap(_.requireDataRank[3])
               .flatMap(persistDecoded)
               .left
-              .map(NiftiError.Image.apply)
+              .map(providerImageError)
               .map(SomeNeuroVolume.unsafeFromSampled)
           case actual =>
             Left(
-              NiftiError.Image(
-                ImageError.StorageRankMismatch(3, actual)
+              NiftiImageReadError.Provider(
+                NiftiError.Image(
+                  ImageError.StorageRankMismatch(3, actual)
+                )
               )
             )
     )
 
   private def seriesFrom(
       image: SomeSampled[Double, Continuous]
-  ): Either[NiftiError, SomeScalarSeries[Double]] =
+  ): Either[NiftiImageReadError, SomeScalarSeries[Double]] =
     image.fold(
       d2 =>
         Left(
-          NiftiError.Image(
-            ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+          NiftiImageReadError.Provider(
+            NiftiError.Image(
+              ImageError.SpatialDimensionMismatch(3, d2.spatialRank)
+            )
           )
         ),
       d3 =>
         d3.value
           .requireDataRank[4]
           .left
-          .map(NiftiError.Image.apply)
+          .map(providerImageError)
           .flatMap: ranked =>
             val axes = ranked.nonSpatialAxes.values
             if axes.size != 1 || axes.head.kind != AxisKind.Time then
               Left(
-                NiftiError.Image(
-                  ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+                NiftiImageReadError.Provider(
+                  NiftiError.Image(
+                    ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+                  )
                 )
               )
             else
               persistDecoded(ranked)
                 .left
-                .map(NiftiError.Image.apply)
+                .map(providerImageError)
                 .flatMap: persistent =>
                   NeuroSeries
                     .fromSampled(persistent)
                     .left
-                    .map(nativeImageError)
+                    .map(NiftiImageReadError.Image.apply)
                     .map(SomeNeuroSeries.eraseSpace)
     )
 
@@ -372,28 +399,8 @@ object Nifti:
                   GridSpec.fromSpace(space) -> ranked.data
         )
 
-  private def nativeImageError(error: NativeImageError): NiftiError =
-    error match
-      case NativeImageError.Image(cause) =>
-        NiftiError.Image(cause)
-      case NativeImageError.ExpectedSingleTimeAxis(_) =>
-        NiftiError.Image(
-          ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
-        )
-      case NativeImageError.Space(cause) =>
-        NiftiError.InvalidArrayShape(cause.message)
-      case NativeImageError.CanonicalArraySizeMismatch(expected, actual) =>
-        NiftiError.InvalidArrayShape(
-          s"expected $expected canonical values, found $actual"
-        )
-      case NativeImageError.SpatialAxisOutOfBounds(axis) =>
-        NiftiError.InvalidArrayShape(
-          s"spatial axis $axis is outside D3"
-        )
-      case NativeImageError.SpatialIndexOutOfBounds(axis, index, extent) =>
-        NiftiError.InvalidArrayShape(
-          s"spatial index $index on axis $axis is outside [0, $extent)"
-        )
+  private def providerImageError(error: ImageError): NiftiImageReadError =
+    NiftiImageReadError.Provider(NiftiError.Image(error))
 
   private[scalafim] def readHeaderUnsafe(path: Path): NiftiHeader =
     readHeader(path).fold(

@@ -1,6 +1,14 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import gale.linalg.DMat
 import image4s.Continuous
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError as ImageGeometryError
+import image4s.geometry.Grid
+import image4s.geometry.Point
 import ravel.DType
 import ravel.NDArray
 import ravel.Rank
@@ -8,12 +16,15 @@ import ravel.Shape
 import scala.reflect.ClassTag
 
 enum SlicePlanError:
-  case SourceSpaceMismatch(expected: VolumeSpace, actual: VolumeSpace)
+  case Geometry(error: ImageGeometryError)
+  case Map(error: reframe4s.core.MapError)
 
   def message: String =
     this match
-      case SourceSpaceMismatch(expected, actual) =>
-        s"slice plan source space does not match volume: expected ${expected.dims}, got ${actual.dims}"
+      case Geometry(error) =>
+        error.message
+      case Map(error) =>
+        error.message
 
 private[image] trait SliceSampleCursor[A]:
   def sample(x: Double, y: Double, z: Double): A
@@ -93,62 +104,75 @@ object SliceImage:
   * point objects per pixel.
   */
 final case class SlicePlan private (
-  source: VolumeSpace,
+  source: Grid[? <: Frame[D3], D3],
   grid: SliceGrid,
   firstVoxel: VoxelPoint,
   private val columnStep: VoxelStep,
   private val rowStep: VoxelStep
 ):
   def sourceVoxelAt(pixel: PixelCoord): Either[SliceGeometryError, VoxelPoint] =
-    grid.worldAt(pixel).map(source.worldToVoxel)
+    grid.worldAt(pixel).map(worldToSourceVoxel)
+
+  private def worldToSourceVoxel(world: WorldPoint): VoxelPoint =
+    source.worldToVoxel(world).fold(
+      error => throw new IllegalStateException(error.message),
+      identity
+    )
 
   def sample[A: ClassTag, Sem](
     volume: SomeNeuroVolume[A, Sem],
     sampling: SliceSampling[A, Sem]
   ): Either[SlicePlanError, SliceImage[A]] =
-    GridCompatibility.volume(source, volume.volumeSpace).left.map { _ =>
-      SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace)
-    }.map { _ =>
-      val dimensions = grid.dimensions
-      given DType[A] = volume.values.dtype
-      val sampleCursor = sampling.cursor(volume, source.shape)
-      val out =
-        NDArray.build[A, Rank[2]](
-          Shape(dimensions.height, dimensions.width)
-        ): output =>
-          var row = 0
-          var rowX = firstVoxel.x
-          var rowY = firstVoxel.y
-          var rowZ = firstVoxel.z
-          while row < dimensions.height do
-            var column = 0
-            var x = rowX
-            var y = rowY
-            var z = rowZ
-            val rowOffset = row * dimensions.width
-            while column < dimensions.width do
-              output.writeLinear(
-                rowOffset + column,
-                sampleCursor.sample(x, y, z)
-              )
-              x += columnStep.x
-              y += columnStep.y
-              z += columnStep.z
-              column += 1
-            rowX += rowStep.x
-            rowY += rowStep.y
-            rowZ += rowStep.z
-            row += 1
-      SliceImage.unsafe(grid, out)
-    }
+    Grid
+      .exactCongruence(source, volume.grid)
+      .left
+      .map(SlicePlanError.Geometry.apply)
+      .map: _ =>
+        val dimensions = grid.dimensions
+        given DType[A] = volume.values.dtype
+        val sampleCursor = sampling.cursor(volume, source.spatialShape)
+        val out =
+          NDArray.build[A, Rank[2]](
+            Shape(dimensions.height, dimensions.width)
+          ): output =>
+            var row = 0
+            var rowX = firstVoxel.x
+            var rowY = firstVoxel.y
+            var rowZ = firstVoxel.z
+            while row < dimensions.height do
+              var column = 0
+              var x = rowX
+              var y = rowY
+              var z = rowZ
+              val rowOffset = row * dimensions.width
+              while column < dimensions.width do
+                output.writeLinear(
+                  rowOffset + column,
+                  sampleCursor.sample(x, y, z)
+                )
+                x += columnStep.x
+                y += columnStep.y
+                z += columnStep.z
+                column += 1
+              rowX += rowStep.x
+              rowY += rowStep.y
+              rowZ += rowStep.z
+              row += 1
+        SliceImage.unsafe(grid, out)
 
 object SlicePlan:
-  def make(source: VolumeSpace, grid: SliceGrid): SlicePlan =
-    val first = source.worldToVoxel(grid.topLeftCenter)
+  def make(source: Grid[? <: Frame[D3], D3], grid: SliceGrid): SlicePlan =
+    def voxelAt(world: WorldPoint): VoxelPoint =
+      source.worldToVoxel(world).fold(
+        error => throw new IllegalStateException(error.message),
+        identity
+      )
+
+    val first = voxelAt(grid.topLeftCenter)
     val nextColumnWorld = grid.topLeftCenter + grid.plane.screenRight.scaled(grid.spacing.horizontal)
     val nextRowWorld = grid.topLeftCenter + grid.plane.screenUp.scaled(-grid.spacing.vertical)
-    val nextColumn = source.worldToVoxel(nextColumnWorld)
-    val nextRow = source.worldToVoxel(nextRowWorld)
+    val nextColumn = voxelAt(nextColumnWorld)
+    val nextRow = voxelAt(nextRowWorld)
     new SlicePlan(
       source,
       grid,
@@ -163,7 +187,7 @@ object SlicePlan:
   * only primitive source-voxel coordinates, just like [[SlicePlan]].
   */
 final class MappedSlicePlan private (
-  val source: VolumeSpace,
+  val source: Grid[? <: Frame[D3], D3],
   val grid: SliceGrid,
   val mappingBatchCount: Int,
   private val sourceX: Array[Double],
@@ -180,81 +204,123 @@ final class MappedSlicePlan private (
     volume: SomeNeuroVolume[A, Sem],
     sampling: SliceSampling[A, Sem]
   ): Either[SlicePlanError, SliceImage[A]] =
-    if volume.volumeSpace != source then
-      Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
-    else
-      given DType[A] = volume.values.dtype
-      val sampleCursor = sampling.cursor(volume, source.shape)
-      val dimensions = grid.dimensions
-      val out =
-        NDArray.build[A, Rank[2]](
-          Shape(dimensions.height, dimensions.width)
-        ): output =>
-          var index = 0
-          while index < dimensions.pixelCount do
-            output.writeLinear(
-              index,
-              sampleCursor.sample(
-                sourceX(index),
-                sourceY(index),
-                sourceZ(index)
+    Grid
+      .exactCongruence(source, volume.grid)
+      .left
+      .map(SlicePlanError.Geometry.apply)
+      .map: _ =>
+        given DType[A] = volume.values.dtype
+        val sampleCursor = sampling.cursor(volume, source.spatialShape)
+        val dimensions = grid.dimensions
+        val out =
+          NDArray.build[A, Rank[2]](
+            Shape(dimensions.height, dimensions.width)
+          ): output =>
+            var index = 0
+            while index < dimensions.pixelCount do
+              output.writeLinear(
+                index,
+                sampleCursor.sample(
+                  sourceX(index),
+                  sourceY(index),
+                  sourceZ(index)
+                )
               )
-            )
-            index += 1
-      Right(SliceImage.unsafe(grid, out))
+              index += 1
+        SliceImage.unsafe(grid, out)
 
 object MappedSlicePlan:
   def make(
-    source: VolumeSpace,
+    source: Grid[? <: Frame[D3], D3],
     grid: SliceGrid,
-    referenceToSource: SpatialMorphism
-  ): MappedSlicePlan =
+    referenceToSource: SpatialPullback
+  ): Either[SlicePlanError, MappedSlicePlan] =
     val count = grid.dimensions.pixelCount
     val width = grid.dimensions.width
     val xs = new Array[Double](count)
     val ys = new Array[Double](count)
     val zs = new Array[Double](count)
-    val referenceX = new Array[Double](width)
-    val referenceY = new Array[Double](width)
-    val referenceZ = new Array[Double](width)
-    val mappedX = new Array[Double](width)
-    val mappedY = new Array[Double](width)
-    val mappedZ = new Array[Double](width)
-    val sourceInverse = source.affine.inverse
+    val sourceInverse = source.indexToFrame.inverse.matrix
+    val referenceFrame: Frame[D3] = referenceToSource.source
+    var failure =
+      reframe4s.core.SpatialMap
+        .validateResultFrame(source.frame, referenceToSource.target)
+        .left
+        .toOption
     var row = 0
-    while row < grid.dimensions.height do
+    while row < grid.dimensions.height && failure.isEmpty do
       val upDistance = -row.toDouble * grid.spacing.vertical
       var column = 0
-      while column < width do
+      while column < width && failure.isEmpty do
         val rightDistance = column.toDouble * grid.spacing.horizontal
-        referenceX(column) =
+        val referenceX =
           grid.topLeftCenter.x + grid.plane.screenRight.x * rightDistance +
             grid.plane.screenUp.x * upDistance
-        referenceY(column) =
+        val referenceY =
           grid.topLeftCenter.y + grid.plane.screenRight.y * rightDistance +
             grid.plane.screenUp.y * upDistance
-        referenceZ(column) =
+        val referenceZ =
           grid.topLeftCenter.z + grid.plane.screenRight.z * rightDistance +
             grid.plane.screenUp.z * upDistance
-        column += 1
-      referenceToSource.transformWorldCoordinatesInto(
-        referenceX,
-        referenceY,
-        referenceZ,
-        mappedX,
-        mappedY,
-        mappedZ
-      )
-      val rowOffset = row * width
-      column = 0
-      while column < width do
-        val index = rowOffset + column
-        xs(index) = affineCoordinate(sourceInverse, 0, mappedX(column), mappedY(column), mappedZ(column))
-        ys(index) = affineCoordinate(sourceInverse, 1, mappedX(column), mappedY(column), mappedZ(column))
-        zs(index) = affineCoordinate(sourceInverse, 2, mappedX(column), mappedY(column), mappedZ(column))
+        val mapped =
+          for
+            raw <- Point
+              .in[D3](referenceFrame)(referenceX, referenceY, referenceZ)
+              .left
+              .map(reframe4s.core.MapError.Geometry.apply)
+            alignment <- Frame
+              .alignOwners[D3, referenceFrame.type, Frame[D3]](
+                referenceFrame,
+                referenceFrame
+              )
+              .left
+              .map(reframe4s.core.MapError.Geometry.apply)
+            point <- alignment
+              .pointToRight(raw)
+              .left
+              .map(reframe4s.core.MapError.Geometry.apply)
+            result <- referenceToSource(point)
+          yield result
+        mapped match
+          case Left(error) => failure = Some(error)
+          case Right(point) =>
+            val index = row * width + column
+            xs(index) = affineCoordinate(
+              sourceInverse,
+              0,
+              point.coordinates(0),
+              point.coordinates(1),
+              point.coordinates(2)
+            )
+            ys(index) = affineCoordinate(
+              sourceInverse,
+              1,
+              point.coordinates(0),
+              point.coordinates(1),
+              point.coordinates(2)
+            )
+            zs(index) = affineCoordinate(
+              sourceInverse,
+              2,
+              point.coordinates(0),
+              point.coordinates(1),
+              point.coordinates(2)
+            )
         column += 1
       row += 1
-    new MappedSlicePlan(source, grid, grid.dimensions.height, xs, ys, zs)
+    failure match
+      case Some(error) => Left(SlicePlanError.Map(error))
+      case None =>
+        Right(
+          new MappedSlicePlan(
+            source,
+            grid,
+            grid.dimensions.height,
+            xs,
+            ys,
+            zs
+          )
+        )
 
   private inline def affineCoordinate(
       matrix: DMat,

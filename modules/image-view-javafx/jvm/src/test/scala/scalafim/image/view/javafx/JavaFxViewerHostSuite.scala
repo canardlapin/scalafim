@@ -3,14 +3,17 @@ package scalafim.image.view.javafx
 import intaglio.*
 import intaglio.javafx.JavaFxProgram
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 import scalafim.image.view.*
 
 class JavaFxViewerHostSuite extends munit.FunSuite:
 
-  private val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
+  private val sampleSpace =
+    SampleSpaces.requireVolumeD3(SampleSpaces(Vector(3, 3, 3))).toOption.get
+  private val space = sampleSpace.grid
   private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
     PrimitiveBuffers.fillConst[Double](space.nVoxels, 1.0),
-    space.toSampleSpace,
+    sampleSpace,
     "javafx"
   )
   private val layer = SliceLayer(

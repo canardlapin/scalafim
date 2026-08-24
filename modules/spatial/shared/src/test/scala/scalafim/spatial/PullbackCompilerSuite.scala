@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialPoint}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
 
 class PullbackCompilerSuite extends munit.FunSuite:
@@ -15,11 +16,11 @@ class PullbackCompilerSuite extends munit.FunSuite:
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
     val geometry =
-      value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
+      value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, y),
@@ -32,7 +33,7 @@ class PullbackCompilerSuite extends munit.FunSuite:
     name: String,
     source: Domain,
     target: Domain,
-    matrix: DMat
+    matrix: Affine[D3]
   ): Morphism =
     value(
       Morphism.build(
@@ -42,7 +43,7 @@ class PullbackCompilerSuite extends munit.FunSuite:
         kind = MorphismKind.Affine3D,
         routeTag = RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = value(CoordinateMap.affine3D(matrix))
+        coordinateMap = value(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -80,7 +81,7 @@ class PullbackCompilerSuite extends munit.FunSuite:
   test("program fingerprints include row demand and sampling policy"):
     val root = domain("root")
     val target = domain("target")
-    val transform = affine("root-target", root, target, DMat.eye(4))
+    val transform = affine("root-target", root, target, ProviderAffines.identity)
     val g = graph(Vector(root, target), Vector(transform))
     val full = value(PullbackProgram.compile(g, CompileRequest(root.id, target.id)))
     val selected =

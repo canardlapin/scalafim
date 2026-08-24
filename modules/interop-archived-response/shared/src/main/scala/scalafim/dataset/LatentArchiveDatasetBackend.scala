@@ -2,7 +2,8 @@ package scalafim.dataset
 
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, LnaPipeline}
-import scalafim.image.{DMat, Mask}
+import gale.linalg.DMat
+import scalafim.image.Mask
 import scalafim.latent.{
   LatentArchivePlan,
   LatentArchiveRegistry,
@@ -79,15 +80,11 @@ final class LatentArchiveDatasetBackend private (
                   error.message
                 )
               )
-              .map(DatasetMatrices.fromGale)
           }
       case None =>
         denseEither.map { dense =>
-          DMat.fromRows(
-            resolved.timepoints.map { r =>
-              resolved.voxels.map(c => dense(r, c))
-            }
-          )
+          DMat.tabulate(resolved.timepoints.length, resolved.voxels.length): (row, column) =>
+            dense(resolved.timepoints(row), resolved.voxels(column))
         }
     }
 

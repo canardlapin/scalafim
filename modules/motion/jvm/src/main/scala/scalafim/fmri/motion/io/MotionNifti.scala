@@ -1,5 +1,9 @@
 package scalafim.fmri.motion.io
 
+import scalafim.image.SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import image4s.nifti.NiftiDatatype
 import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
@@ -79,7 +83,7 @@ object MotionNifti:
       path: Path,
       dims: Vector[Int],
       voxelSize: Vector[Double],
-      affine: Option[DMat]
+      affine: Option[Affine[D3]]
   ): Either[MotionIoError, MotionNiftiMetadata] =
     if !Files.isRegularFile(path) then
       Right(MotionNiftiMetadata(path, dims, voxelSize, affine, repetitionTime = None, acquisitionTiming = None))
@@ -138,7 +142,10 @@ object MotionNifti:
         val dimensionsMatch = value.dims == runDims
         val spacingMatches = sameValues(value.voxelSize, runSpacing)
         val affineMatches = value.affine.forall: affine =>
-          sameValues(affine.data.toVector, run.space.trans.data.toVector)
+          sameValues(
+            affine.rowMajor,
+            run.space.grid.indexToFrame.rowMajor
+          )
         if !dimensionsMatch then
           Left(
             MotionIoError.WriteFailed(

@@ -1,7 +1,10 @@
 package scalafim.atlas
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import ravel.Shape
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 import scalafim.atlas.syntax.*
 
 class AtlasCoreSuite extends munit.FunSuite:
@@ -107,11 +110,68 @@ class AtlasCoreSuite extends munit.FunSuite:
     assert(math.abs(pt.y + 18.406) < 0.01, clue = pt.toString)
     assert(math.abs(pt.z - 36.139) < 0.01, clue = pt.toString)
 
-    val morphism = SpaceTransforms.spatialMorphism(SpaceId.MNI305, SpaceId.MNI152).toOption.get
-    val pulledBack = morphism.transform(pt.toVector)
-    assertEqualsDouble(pulledBack(0), 10.0, 1e-10)
-    assertEqualsDouble(pulledBack(1), -20.0, 1e-10)
-    assertEqualsDouble(pulledBack(2), 35.0, 1e-10)
+    val sourceGrid = GridSpec.identity(Vector(2, 2, 2))
+    val targetGrid = GridSpec.identity(Vector(2, 2, 2))
+    val pullback =
+      SpaceTransforms
+        .spatialPullback(
+          SpaceId.MNI305,
+          SpaceId.MNI152,
+          sourceGrid,
+          targetGrid
+        )
+        .toOption
+        .get
+    val pulledBack = SpatialPullbacks.transform(pullback, pt).toOption.get
+    assertEqualsDouble(pulledBack.x, 10.0, 1e-10)
+    assertEqualsDouble(pulledBack.y, -20.0, 1e-10)
+    assertEqualsDouble(pulledBack.z, 35.0, 1e-10)
+  }
+
+  test("executable affine routes follow provider andThen order") {
+    def affine(values: Vector[Double]): Affine[D3] =
+      Affine.fromRowMajor[D3](values).toOption.get
+
+    val translate = affine(Vector(
+      1.0, 0.0, 0.0, 1.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    ))
+    val scale = affine(Vector(
+      2.0, 0.0, 0.0, 0.0,
+      0.0, 1.0, 0.0, 0.0,
+      0.0, 0.0, 1.0, 0.0,
+      0.0, 0.0, 0.0, 1.0
+    ))
+    def step(from: AnySpaceId, to: AnySpaceId, value: Affine[D3]) =
+      TransformStep(
+        from,
+        to,
+        TransformKind.Affine,
+        TransformBackend.InternalAffine,
+        Confidence.Exact,
+        reversible = true,
+        dataFiles = Vector.empty,
+        TransformStatus.Available,
+        affine = Some(value)
+      )
+    val route = TransformPlan(
+      SpaceId.MNI305,
+      SpaceId.MNI152NLin6Asym,
+      Vector(
+        step(SpaceId.MNI305, SpaceId.MNI152, translate),
+        step(SpaceId.MNI152, SpaceId.MNI152NLin6Asym, scale)
+      ),
+      TransformStatus.Available,
+      Confidence.Exact,
+      Vector.empty
+    )
+    val actual = route.executableCoordinatePlan.toOption.get.transform(Vector(Point3D.Origin)).head
+
+    assertEqualsDouble(actual.x, 2.0, 1e-12)
+    assertEqualsDouble(actual.y, 0.0, 1e-12)
+    assertEqualsDouble(actual.z, 0.0, 1e-12)
   }
 
   test("VolumeAtlas validates region ids and supports metadata subset") {

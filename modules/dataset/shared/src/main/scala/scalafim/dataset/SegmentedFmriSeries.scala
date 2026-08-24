@@ -1,6 +1,7 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, GridCompatibility}
+import image4s.geometry.Grid
+import gale.linalg.DMat
 
 final class FmriSeriesSegment private (
     val key: RunKey,
@@ -106,8 +107,15 @@ object BlockConcatenatedFmriSeries:
         _ <- validateVoxelAxes(segments)
         totalRows <- totalRowCount(segments)
         shape <- DatasetShape.make(segments.head.series.shape.space, totalRows)
+        data = DMat.tabulate(totalRows, segments.head.series.data.cols): (row, column) =>
+          var segmentIndex = 0
+          var localRow = row
+          while localRow >= segments(segmentIndex).series.nTimepoints do
+            localRow -= segments(segmentIndex).series.nTimepoints
+            segmentIndex += 1
+          segments(segmentIndex).series.data(localRow, column)
         series <- FmriSeries.make(
-          data = DMat.fromRows(segments.flatMap(_.series.data.toRows)),
+          data = data,
           voxelIndices = segments.head.series.voxelIndexValues,
           timepoints = Vector.tabulate(totalRows)(TimepointIndex.unsafe),
           shape = shape,
@@ -127,11 +135,9 @@ object BlockConcatenatedFmriSeries:
     var failure = Option.empty[DatasetError]
     while index < segments.length && failure.isEmpty do
       val current = segments(index).series
-      GridCompatibility.exact(first.shape.space, current.shape.space) match
+      Grid.exactCongruence(first.shape.grid, current.shape.grid) match
         case Left(error) =>
-          failure = Some(DatasetError.ShapeMismatch(
-            s"block concatenation requires identical voxel grids: ${error.message}"
-          ))
+          failure = Some(DatasetError.Geometry(error))
         case Right(_) =>
           if current.voxelIndexValues != first.voxelIndexValues then
             failure = Some(DatasetError.ShapeMismatch(

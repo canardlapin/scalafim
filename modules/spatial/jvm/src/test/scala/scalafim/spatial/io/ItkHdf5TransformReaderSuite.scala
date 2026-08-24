@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.{GridSpec, SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
@@ -40,7 +40,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
 
   private def domain(
     name: String,
-    space: SomeSampleSpace = SampleSpaces(Vector(5, 2, 2), trans = Some(DMat.eye(4)))
+    space: SomeSampleSpace = SampleSpaces(Vector(5, 2, 2), affine = Some(ProviderAffines.identity))
   ): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
@@ -64,6 +64,11 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
         inverseQuality = inverseQuality
       )
     )
+
+  private def grid(domain: Domain): GridSpec =
+    domain.geometry match
+      case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
+      case _ => fail(s"domain ${domain.id.value} is not volumetric")
 
   private def assertPoint(actual: Vector[Double], expected: Vector[Double], tolerance: Double): Unit =
     actual.zip(expected).foreach { case (observed, oracle) =>
@@ -94,10 +99,9 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     val decoded = ioValue(
       AntsHdf5TransformAdapter.read(
         fixture("composite_affine_displacement_double.h5"),
-        source.id,
-        target.id,
-        scalafim.image.Resample.Method.Linear,
-        1.0
+        grid(source),
+        grid(target),
+        scalafim.image.Resample.Method.Linear
       )
     )
 
@@ -105,10 +109,10 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
       assertPoint(spatialValue(decoded.coordinateMap.transform(oracle.input)), oracle.output, 1e-10)
     }
     decoded.coordinateMap match
-      case CoordinateMap.Composite3D(composite) =>
-        assertEquals(composite.components.length, 2)
-        assert(composite.containsDense)
-      case other => fail(s"expected composite map, got $other")
+      case CoordinateMap.Geometric(binding) =>
+        assertEquals(binding.componentCount, 2)
+        assert(binding.containsDense)
+      case other => fail(s"expected provider geometric map, got $other")
 
   test("historic Tranform aliases and float datasets retain the same semantics"):
     val source = domain("source")
@@ -116,10 +120,9 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     val decoded = ioValue(
       AntsHdf5TransformAdapter.read(
         fixture("composite_affine_displacement_legacy_float.h5"),
-        source.id,
-        target.id,
-        scalafim.image.Resample.Method.Linear,
-        1.0
+        grid(source),
+        grid(target),
+        scalafim.image.Resample.Method.Linear
       )
     )
 
@@ -131,7 +134,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
 
   test("TransformAssetLoader executes an HDF5 pullback through the one-pass operator compiler"):
     val rasGrid =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(-1.0, 0.0, 0.0, 0.0),
           Vector(0.0, -1.0, 0.0, 0.0),
@@ -139,7 +142,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val space = SampleSpaces(Vector(5, 2, 2), trans = Some(rasGrid))
+    val space = SampleSpaces(Vector(5, 2, 2), affine = Some(rasGrid))
     val source = domain("source", space)
     val target = domain("target", space)
     val asset = descriptor(source, target, fixture("pullback_plus_one.h5"))

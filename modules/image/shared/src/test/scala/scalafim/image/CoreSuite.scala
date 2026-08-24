@@ -1,7 +1,13 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import Ops.*
+import image4s.NonSpatialAxes
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import ravel.{NDArray as RavelArray, Rank, Shape}
+import scalafim.image.NeuroAffineSyntax.*
 import spire.std.double.given
 import spire.std.int.given
 
@@ -43,11 +49,15 @@ class CoreSuite extends munit.FunSuite:
     val shortSpacing = SampleSpaces.make(Vector(2, 2, 2), spacing = Some(Vector(1.0, 2.0)))
     assertEquals(shortSpacing.left.map(_.message), Left("'spacing' must contain 3 spatial values; got 2"), clue = "")
 
-    val badTransform = SampleSpaces.make(Vector(2, 2, 2), trans = Some(DMat.eye(3)))
-    assertEquals(badTransform.left.map(_.message), Left("spatial transform must be 4x4; got 3x3"), clue = "")
+    val badTransform = Affine.fromRowMajor[D3](Vector.fill(9)(0.0))
+    assert(badTransform.isLeft, clue = "provider affine must reject a 3x3 representation")
 
-    val badAxes = SampleSpaces.make(Vector(2, 2, 2, 4), axes = Some(AxisSet.standard(3)))
-    assertEquals(badAxes.left.map(_.message), Left("axis count must match dimensionality: expected 4, got 3"), clue = "")
+    val badAxes = SampleSpaces.make(Vector(2, 2, 2, 4), axes = Some(NonSpatialAxes.empty))
+    assertEquals(
+      badAxes.left.map(_.message),
+      Left("non-spatial axis count must match trailing dimensionality: expected 1, got 0"),
+      clue = ""
+    )
   }
 
   test("SomeSampleSpace exposes typed 3D coordinate roundtrip") {
@@ -89,7 +99,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "core ordered voxel selection",
           locus4s.DomainRegistry.empty
         )
@@ -133,7 +143,7 @@ class CoreSuite extends munit.FunSuite:
     val sp = SampleSpaces(Vector(2, 2, 1, 4))
     val data = PrimitiveBuffers.tabulate[Double](16)(_.toDouble)
     val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](data, sp)
-    val sub = vec.selectTimes(Seq(1, 3))
+    val sub = right(vec.selectTimes(Seq(1, 3)))
     assertEquals(sub.space.dims, Vector(2, 2, 1, 2), clue = "")
     val subData = Vector.tabulate(sub.copyToCanonicalArray.length)(i => sub.copyToCanonicalArray(i))
     assertEquals(subData, Vector(1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0), clue = "")
@@ -154,7 +164,12 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroSeriesSeq indexes across runs") {
     val sp1 = SampleSpaces(Vector(2, 1, 1, 2))
-    val sp2 = SampleSpaces(Vector(2, 1, 1, 3), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
+    val sp2 = SampleSpaces(
+      Vector(2, 1, 1, 3),
+      spacing = Some(sp1.spacing),
+      origin = Some(sp1.origin),
+      affine = Some(sp1.affineD3.toOption.get)
+    )
     val v1 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](4)(identity), sp1)
     val v2 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](6)(i => i + 100), sp2)
     val seq = NeuroSeriesSeq(Vector(v1, v2))
@@ -193,7 +208,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected series",
           locus4s.DomainRegistry.empty
         )
@@ -207,7 +222,10 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val selected =
-      SelectedSeries.gather(domain, series, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(series), selection)
+        .toOption
+        .get
     val provider = selected.selected
     val first =
       provider.seriesAt(
@@ -234,7 +252,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core dense selected roundtrip",
           locus4s.DomainRegistry.empty
         )
@@ -248,7 +266,10 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val selected =
-      SelectedSeries.gather(domain, series, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(series), selection)
+        .toOption
+        .get
     val dense2 = selected.toDense(0.0).toOption.get
     val dVals = dense2.data.iterator.toVector
     assertEquals(dVals, Vector(0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 10.0, 11.0), clue = "")
@@ -273,7 +294,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected matrix",
           locus4s.DomainRegistry.empty
         )
@@ -288,7 +309,10 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val selected =
-      SelectedSeries.gather(domain, dense, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(dense), selection)
+        .toOption
+        .get
     val matrix = dense.voxelTimeMatrix.toOption.get
 
     assertEquals(selected.data.shape, Shape(ordinals.length, tLen), clue = "")
@@ -321,7 +345,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected parity",
           locus4s.DomainRegistry.empty
         )
@@ -336,7 +360,10 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val selected =
-      SelectedSeries.gather(domain, series, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(series), selection)
+        .toOption
+        .get
     val dense = selected.toDense(0.0).toOption.get
 
     assertEquals(selected.selection.ordinals.toVector, ordinals, clue = "")
@@ -370,7 +397,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected fill",
           locus4s.DomainRegistry.empty
         )
@@ -383,7 +410,10 @@ class CoreSuite extends munit.FunSuite:
     val requested =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 2)).toOption.get
     val selected =
-      SelectedSeries.gather(domain, series, support).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(series), support)
+        .toOption
+        .get
     val filled =
       selected.reselect(requested, MissingVoxelPolicy.Fill(0.0)).toOption.get
 
@@ -419,7 +449,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected union",
           locus4s.DomainRegistry.empty
         )
@@ -435,7 +465,11 @@ class CoreSuite extends munit.FunSuite:
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 3)).toOption.get
     val left =
       SelectedSeries
-        .gather(domain, first, leftSupport)
+        .gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(first),
+          leftSupport
+        )
         .toOption
         .get
         .reselect(union, MissingVoxelPolicy.Fill(0.0))
@@ -443,7 +477,11 @@ class CoreSuite extends munit.FunSuite:
         .get
     val right =
       SelectedSeries
-        .gather(domain, second, rightSupport)
+        .gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(second),
+          rightSupport
+        )
         .toOption
         .get
         .reselect(union, MissingVoxelPolicy.Fill(0.0))
@@ -484,22 +522,21 @@ class CoreSuite extends munit.FunSuite:
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val ds = Downsample.byFactor(vol, 0.5)
     val expectedTrans =
-      Affine.rescaleAffine(
-        sp.trans,
+      sp.affineD3.toOption.get.rescaledVoxelGeometry(
         shape = Vector(4, 6, 8),
-        zooms = Vector(4.0, 6.0, 8.0),
+        voxelSizes = Vector(4.0, 6.0, 8.0),
         newShape = Some(Vector(2, 3, 4))
-      )
+      ).toOption.get
 
     assertEquals(ds.space.dims, Vector(2, 3, 4), clue = "")
     assertEquals(ds.space.spacing, Vector(4.0, 6.0, 8.0), clue = "")
     assertEquals(ds.space.origin, Vector(12.0, 20.0, 34.0), clue = "")
-    assertEquals(ds.space.trans, expectedTrans, clue = "")
+    assertEquals(ds.space.affineD3.toOption.get, expectedTrans, clue = "")
 
     val vec = vol.concatenate(vol)
     val vds = Downsample.byFactor(vec, 0.5)
     assertEquals(vds.space.dims, Vector(2, 3, 4, 2), clue = "")
-    assertEquals(vds.space.trans, expectedTrans, clue = "")
+    assertEquals(vds.space.affineD3.toOption.get, expectedTrans, clue = "")
   }
 
   test("Resample.nearest preserves data when spaces match") {
@@ -615,7 +652,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "core selected time concatenation",
           locus4s.DomainRegistry.empty
         )
@@ -669,7 +706,11 @@ class CoreSuite extends munit.FunSuite:
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1, 3)).toOption.get
     val left =
       SelectedSeries
-        .gather(domain, first, leftSupport)
+        .gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(first),
+          leftSupport
+        )
         .toOption
         .get
         .reselect(union, MissingVoxelPolicy.Fill(0.0))
@@ -677,7 +718,11 @@ class CoreSuite extends munit.FunSuite:
         .get
     val right =
       SelectedSeries
-        .gather(domain, second, rightSupport)
+        .gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(second),
+          rightSupport
+        )
         .toOption
         .get
         .reselect(union, MissingVoxelPolicy.Fill(0.0))
@@ -724,7 +769,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected owner",
           locus4s.DomainRegistry.empty
         )
@@ -735,7 +780,7 @@ class CoreSuite extends munit.FunSuite:
     val foreignPacked =
       GridDomain
         .register(
-          VolumeSpace(badSp).sampleSpace.grid,
+          ProviderSpaces.grid(badSp),
           "core foreign selected owner",
           locus4s.DomainRegistry.empty
         )
@@ -747,7 +792,15 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
 
-    assert(SelectedSeries.gather(domain, series, foreignSelection).isLeft)
+    assert(
+      SelectedSeries
+        .gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(series),
+          foreignSelection
+        )
+        .isLeft
+    )
   }
 
   test("selected-series validity enforces position x time shape") {
@@ -755,7 +808,7 @@ class CoreSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "core selected shape",
           locus4s.DomainRegistry.empty
         )
@@ -824,3 +877,6 @@ class CoreSuite extends munit.FunSuite:
       clue = ""
     )
   }
+
+  private def right[E, A](value: Either[E, A]): A =
+    value.fold(error => fail(error.toString), identity)

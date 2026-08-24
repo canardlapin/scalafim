@@ -1,6 +1,6 @@
 package scalafim.dataset.scenarios
 
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 enum ScenarioStatus:
   case Pass, PassWithCaveats, Fail

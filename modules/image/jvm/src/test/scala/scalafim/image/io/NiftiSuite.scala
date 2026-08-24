@@ -1,6 +1,10 @@
 package scalafim.image.io
 
+import scalafim.image.SampleSpaces.*
+
 import image4s.ImageMetadata
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import image4s.nifti.NiftiAffinePolicy
 import image4s.nifti.NiftiDatatype
 import image4s.nifti.NiftiError
@@ -27,20 +31,23 @@ class NiftiSuite extends munit.FunSuite:
       qfac: Double
   )
 
-  private def assertMatrix(actual: DMat, expected: DMat, tolerance: Double = 1e-6): Unit =
-    assertEquals(actual.rows, expected.rows)
-    assertEquals(actual.cols, expected.cols)
+  private def assertMatrix(actual: Affine[?], expected: Affine[?], tolerance: Double = 1e-6): Unit =
+    assertEquals(actual.matrix.rows, expected.matrix.rows)
+    assertEquals(actual.matrix.cols, expected.matrix.cols)
     var i = 0
-    while i < actual.data.length do
-      assertEqualsDouble(actual.data(i), expected.data(i), tolerance)
+    while i < actual.rowMajor.length do
+      assertEqualsDouble(actual.rowMajor(i), expected.rowMajor(i), tolerance)
       i += 1
+
+  private def affine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).toOption.get
 
   private def writeFixture(
       path: Path,
       dims: Vector[Int],
       spacing: Vector[Double],
       qform: Option[QForm],
-      sform: Option[DMat],
+      sform: Option[Affine[D3]],
       values: Vector[Double],
       datatype: NiftiDatatype = NiftiDatatype.Float64,
       slope: Double = 1.0,
@@ -83,9 +90,9 @@ class NiftiSuite extends munit.FunSuite:
       bb.putShort(254, 2.toShort)
       var column = 0
       while column < 4 do
-        bb.putFloat(280 + column * 4, affine(0, column).toFloat)
-        bb.putFloat(296 + column * 4, affine(1, column).toFloat)
-        bb.putFloat(312 + column * 4, affine(2, column).toFloat)
+        bb.putFloat(280 + column * 4, affine.matrix(0, column).toFloat)
+        bb.putFloat(296 + column * 4, affine.matrix(1, column).toFloat)
+        bb.putFloat(312 + column * 4, affine.matrix(2, column).toFloat)
         column += 1
     }
 
@@ -109,7 +116,7 @@ class NiftiSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val sourceSpace =
       SampleSpaces.requireD3(
-        SampleSpaces(Vector(2, 3, 5)).addDim(7, Some(Axis.Time))
+        SampleSpaces(Vector(2, 3, 5)).addDim(ProviderAxes.time(7))
       ).toOption.get
     val data =
       NDArray.tabulate[Double](2, 3, 5, 7): (x, y, z, time) =>
@@ -240,7 +247,7 @@ class NiftiSuite extends munit.FunSuite:
     )
 
     val header = Nifti.readHeader(path).toOption.get
-    val expected = DMat.fromRows(
+    val expected = affine(
       Vector(
         Vector(0.0, -3.0, 0.0, 10.0),
         Vector(2.0, 0.0, 0.0, 20.0),
@@ -252,13 +259,13 @@ class NiftiSuite extends munit.FunSuite:
     assertEquals(header.qformCode, 1)
     assertEquals(header.sformCode, 0)
     assertMatrix(header.qform.getOrElse(fail("expected qform")), expected)
-    assertMatrix(header.space.trans, expected)
+    assertMatrix(header.space.affineD3.toOption.get, expected)
   }
 
   test("sform remains the preferred affine when both qform and sform are present") {
     val dir = Files.createTempDirectory("scalafim-nifti-sform-precedence")
     val path = dir.resolve("both-forms.nii")
-    val sform = DMat.fromRows(
+    val sform = affine(
       Vector(
         Vector(-2.0, 0.0, 0.0, 40.0),
         Vector(0.0, 3.0, 0.0, 50.0),
@@ -279,13 +286,13 @@ class NiftiSuite extends munit.FunSuite:
     assert(header.qform.nonEmpty)
     assert(header.sform.nonEmpty)
     assertMatrix(header.preferredAffine.getOrElse(fail("expected preferred affine")), sform)
-    assertMatrix(header.space.trans, sform)
+    assertMatrix(header.space.affineD3.toOption.get, sform)
   }
 
   test("affine conflicts, unsupported encodings, and resource limits fail with typed errors") {
     val dir = Files.createTempDirectory("scalafim-nifti-policy")
     val conflictPath = dir.resolve("affine-conflict.nii")
-    val shifted = DMat.fromRows(
+    val shifted = affine(
       Vector(
         Vector(1.0, 0.0, 0.0, 30.0),
         Vector(0.0, 1.0, 0.0, 0.0),
@@ -308,7 +315,11 @@ class NiftiSuite extends munit.FunSuite:
         affinePolicy = NiftiAffinePolicy.RequireAgreement(1e-6)
       )
     ) match
-      case Left(NiftiError.AffineFormsDisagree(30.0, 1e-6)) => ()
+      case Left(
+            NiftiImageReadError.Provider(
+              NiftiError.AffineFormsDisagree(30.0, 1e-6)
+            )
+          ) => ()
       case other => fail(s"expected typed affine disagreement, got $other")
 
     val limited = Nifti.ReadOptions.default.copy(
@@ -351,7 +362,7 @@ class NiftiSuite extends munit.FunSuite:
     )
 
     val loaded = Nifti.readVolume(path).toOption.get.image
-    val expected = DMat.fromRows(
+    val expected = affine(
       Vector(
         Vector(2.0, 0.0, 0.0, 10.0),
         Vector(0.0, 3.0, 0.0, 20.0),
@@ -361,14 +372,7 @@ class NiftiSuite extends munit.FunSuite:
     )
 
     assertEquals(loaded.sampleSpace.logicalShape.size, 3)
-    assertMatrix(
-      DMat.fromRowMajorOwned(
-        4,
-        4,
-        loaded.sampleSpace.grid.indexToFrame.rowMajor.toArray
-      ),
-      expected
-    )
+    assertMatrix(loaded.sampleSpace.grid.indexToFrame, expected)
     assertEqualsDouble(loaded(0, 0, 0), 2.0, 1e-12)
     assertEqualsDouble(loaded(1, 0, 0), 5.0, 1e-12)
   }

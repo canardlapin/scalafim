@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class SpatialQcSuite extends munit.FunSuite:
@@ -19,11 +20,11 @@ class SpatialQcSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, y),
@@ -32,7 +33,7 @@ class SpatialQcSuite extends munit.FunSuite:
       )
     )
 
-  private def affine(idValue: String, source: Domain, target: Domain, matrix: DMat): Morphism =
+  private def affine(idValue: String, source: Domain, target: Domain, matrix: Affine[D3]): Morphism =
     value(
       Morphism.build(
         id = value(MorphismId(idValue)),
@@ -42,7 +43,7 @@ class SpatialQcSuite extends munit.FunSuite:
         routeTag = RouteTag.Anatomical,
         cost = 1.0,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = value(CoordinateMap.affine3D(matrix))
+        coordinateMap = value(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -99,7 +100,7 @@ class SpatialQcSuite extends munit.FunSuite:
   test("ROI restriction law preserves selected target rows"):
     val source = domain("source", Vector(3, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
-    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val morphism = affine("source-to-target", source, target, ProviderAffines.identity)
     val g = graph(Vector(source, target), Vector(morphism))
     val full = compile(g, CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest))
     val restricted = compile(g, CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest, roi = Some(Vector(2, 0))))
@@ -112,7 +113,7 @@ class SpatialQcSuite extends munit.FunSuite:
   test("coverage law reports invalid target samples explicitly"):
     val source = domain("source", Vector(2, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
-    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val morphism = affine("source-to-target", source, target, ProviderAffines.identity)
     val operator = compile(graph(Vector(source, target), Vector(morphism)), CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest))
 
     val check = SpatialQc.coverageLaw(operator, Vector(1.0, 1.0, 0.0))

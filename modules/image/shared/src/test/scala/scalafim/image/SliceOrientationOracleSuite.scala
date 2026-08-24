@@ -1,5 +1,9 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scala.reflect.ClassTag
 import ravel.DType
 import ravel.NDArray as RavelArray
@@ -17,9 +21,9 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
     require(worldAxisForVoxel.sorted == Vector(0, 1, 2))
     require(signs.forall(sign => sign == -1 || sign == 1))
 
-    def affine(dims: SpatialDims): DMat =
+    def affine(dims: SpatialDims): Affine[D3] =
       val sizes = dims.toVector
-      DMat.fromRows(
+      ProviderSpaces.affine(
         (0 until 3).map { worldAxis =>
           val voxelAxis = worldAxisForVoxel.indexOf(worldAxis)
           val sign = signs(voxelAxis)
@@ -67,8 +71,8 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
     require(linear.length == 3 && linear.forall(_.length == 3))
     require(offset.length == 3)
 
-    def matrix: DMat =
-      DMat.fromRows(
+    def matrix: Affine[D3] =
+      ProviderSpaces.affine(
         Vector.tabulate(3) { row =>
           linear(row) :+ offset(row)
         } :+ Vector(0.0, 0.0, 0.0, 1.0)
@@ -110,13 +114,13 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
 
   private def volume[A: ClassTag: DType, Sem](
     dims: SpatialDims,
-    affine: DMat
+    affine: Affine[D3]
   )(value: (Int, Int, Int) => A)(using image4s.ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
     val values =
       RavelArray.tabulate[A](dims.x, dims.y, dims.z)(value)
     SomeNeuroVolume.unsafeFromRavel[A, Sem](
       values,
-      SampleSpaces(dims.toVector, trans = Some(affine)),
+      SampleSpaces(dims.toVector, affine = Some(affine)),
       "orientation-oracle"
     )
 
@@ -214,7 +218,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
           var fixed = 0
           while fixed < worldDimensions(axis) do
             val grid = SliceGrid.covering(
-              source.volumeSpace,
+              source.grid,
               SlicePlane.canonical(plane, pointOnPlane(plane, fixed), convention),
               PixelSpacing(1.0, 1.0)
             )
@@ -223,7 +227,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
               planeDimensions(plane, worldDimensions),
               clue = s"${orientation.clue} plane=$plane convention=$convention fixed=$fixed"
             )
-            val sampled = SlicePlan.make(source.volumeSpace, grid)
+            val sampled = SlicePlan.make(source.grid, grid)
               .sample(source, SliceSampling.Nearest(-1))
               .toOption
               .get
@@ -258,11 +262,11 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
       val cursor = fixture.voxelToWorld(2.5, 3.0, 3.5)
       AnatomicalPlane.values.foreach { plane =>
         val grid = SliceGrid.covering(
-          source.volumeSpace,
+          source.grid,
           SlicePlane.canonical(plane, cursor),
           PixelSpacing(0.8, 1.1)
         )
-        val sampled = SlicePlan.make(source.volumeSpace, grid)
+        val sampled = SlicePlan.make(source.grid, grid)
           .sample(source, SliceSampling.Linear())
           .toOption
           .get

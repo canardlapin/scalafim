@@ -2,10 +2,11 @@ package scalafim.dataset
 
 import scalafim.image.SampleSpaces
 
-import gale.linalg.{DMat as GaleDMat, DVec}
+import gale.linalg.{DMat, DVec}
+import scalafim.archive.lna.GaleArchiveTestData
 import scalafim.archive.RunLabel
 import scalafim.archive.lna.{LnaPipeline, QuantParams}
-import scalafim.image.{DMat, SomeSampleSpace}
+import scalafim.image.SomeSampleSpace
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -25,7 +26,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
   test("latent archive backend exposes reconstructed selections as FmriSeries") {
     val space = SampleSpaces(Vector(2, 2, 1))
     val data =
-      DMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(0.0, 1.0, 2.0, 3.0),
           Vector(4.0, 5.0, 6.0, 7.0),
@@ -58,7 +59,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
     assertEquals(series.nTimepoints, 2)
     assertEquals(series.nVoxels, 2)
     val expected = Vector(Vector(1.0, 3.0), Vector(9.0, 11.0))
-    series.data.toRows.zip(expected).foreach { case (actualRow, expectedRow) =>
+    GaleTestData.toRows(series.data).zip(expected).foreach { case (actualRow, expectedRow) =>
       actualRow.zip(expectedRow).foreach { case (actual, expectedValue) =>
         assert(math.abs(actual - expectedValue) < 2e-4)
       }
@@ -114,7 +115,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         .reconstruct(LatentSelection(timepoints = Some(Vector(1, 0)), samples = Some(Vector(3, 1))))
         .fold(err => fail(err.message), identity)
 
-    assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
+    assertRowsClose(GaleTestData.toRows(series.data), GaleTestData.toRows(expected), 1e-12)
   }
 
   test("latent archive backend reads BOLDZip archives through a typed latent plan") {
@@ -128,7 +129,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
       ).fold(err => fail(err.message), identity)
     val response =
       BoldZipPayload(
-        temporalBasis = GaleDMat.eye(4),
+        temporalBasis = DMat.eye(4),
         carrierTheta = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 2.0, 3.0, 4.0),
@@ -170,14 +171,14 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
         .reconstruct(LatentSelection(timepoints = Some(Vector(3, 1)), samples = Some(Vector(2, 0))))
         .fold(err => fail(err.message), identity)
 
-    assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
+    assertRowsClose(GaleTestData.toRows(series.data), GaleTestData.toRows(expected), 1e-12)
   }
 
   test("latent archive backend rejects a missing internal run during construction") {
     val space = SampleSpaces(Vector(1, 1, 1))
     val archive =
       LnaPipeline
-        .quantArchive(DMat.fromRows(Vector(Vector(1.0))), space, params = QuantParams(bits = 16))
+        .quantArchive(GaleArchiveTestData.matrixFromRows(Vector(Vector(1.0))), space, params = QuantParams(bits = 16))
         .fold(err => fail(err.message), identity)
 
     val missing =

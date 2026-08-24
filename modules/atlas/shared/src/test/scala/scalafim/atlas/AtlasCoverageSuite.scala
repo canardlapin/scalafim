@@ -1,5 +1,6 @@
 package scalafim.atlas
 
+import image4s.geometry.GeometryError
 import ravel.Shape
 import scalafim.image.*
 import scalafim.atlas.syntax.*
@@ -247,14 +248,16 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
     val mismatched = atlas(Vector(1, 2), space = SampleSpaces(Vector(2, 1, 1)))
-    assertEquals(
-      AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact),
-      Left(AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)))
-    )
+    val cause = GeometryError.GridsNotCongruent(0.0)
+    AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact) match
+      case Left(AtlasError.Geometry(GeometryError.GridsNotCongruent(tolerance))) =>
+        assertEqualsDouble(tolerance, 0.0, 0.0)
+      case result =>
+        fail(s"expected typed grid-congruence failure, got $result")
     val err =
       intercept[IllegalArgumentException]:
         AtlasOverlap.compute(a, mismatched, AtlasAlignment.Exact)
-    assert(err.getMessage.contains("expected spatial dimensions 2x2x1 but got 2x1x1"), clue = err.getMessage)
+    assertEquals(err.getMessage, cause.message)
 
   test("adjacency connectivity is monotone from faces to corners"):
     val space = SampleSpaces(Vector(2, 2, 2))
@@ -291,6 +294,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(err.getMessage.contains("no transform route found from 'fsLR_32k' to 'MNI152'"), clue = err.getMessage)
 
   test("atlas error messages and provenance helper aliases remain explicit"):
+    val gridMismatch = GeometryError.GridsNotCongruent(0.0)
     val errors =
       Vector(
         AtlasError.EmptyAtlas -> "atlas must contain at least one region",
@@ -303,6 +307,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasError.TransformNotExecutable(SpaceId.FsAverage, SpaceId.FsLR32k, "non-affine") -> "transform route from 'fsaverage' to 'fsLR_32k' is not executable: non-affine",
         AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)) -> "expected spatial dimensions 2x2x1 but got 2x1x1",
         AtlasError.ExactGridRequired("expected-grid", "actual-grid") -> "exact atlas grid required; expected expected-grid but got actual-grid",
+        AtlasError.Geometry(gridMismatch) -> gridMismatch.message,
         AtlasError.InvalidQuery("bad query") -> "bad query",
         AtlasError.InvalidCoordinate("bad coordinate") -> "bad coordinate",
         AtlasError.InvalidRegionMetadata("bad metadata") -> "bad metadata"

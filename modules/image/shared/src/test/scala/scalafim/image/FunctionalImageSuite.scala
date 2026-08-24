@@ -5,14 +5,14 @@ import cats.implicits.*
 class FunctionalImageSuite extends munit.FunSuite:
 
   private val volumeSpace =
-    VolumeSpace(SampleSpaces(Vector(2, 2, 1)))
+    ProviderSpaces.volume(SampleSpaces(Vector(2, 2, 1)))
 
   private val translatedSpace =
-    VolumeSpace(
+    ProviderSpaces.volume(
       SampleSpaces(
         Vector(2, 2, 1),
-        trans = Some(
-          DMat.fromRows(
+        affine = Some(
+          ProviderSpaces.affine(
             Vector(
               Vector(1.0, 0.0, 0.0, 10.0),
               Vector(0.0, 1.0, 0.0, 0.0),
@@ -27,7 +27,7 @@ class FunctionalImageSuite extends munit.FunSuite:
   private val packedDomain =
     GridDomain
       .register(
-        volumeSpace.sampleSpace.grid,
+        volumeSpace.grid,
         "functional image voxels",
         locus4s.DomainRegistry.empty
       )
@@ -65,7 +65,7 @@ class FunctionalImageSuite extends munit.FunSuite:
     Vector.tabulate(values.size)(i => values(i))
 
   test("mapValues and coordinate-aware volume mapping preserve geometry") {
-    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toSampleSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace)
     val mapped = volume.mapValues[Int, image4s.Categorical](_ + 1)
     val located = volume.mapVoxels[Int, image4s.Categorical]: (coord, value) =>
       value + coord.x + 10 * coord.y
@@ -76,8 +76,8 @@ class FunctionalImageSuite extends munit.FunSuite:
   }
 
   test("SomeNeuroSeries mapping distinguishes voxel coordinates from time samples") {
-    val space = volumeSpace.addTime(2)
-    val series = SomeScalarSeries.unsafeCopyFromCanonicalArray(Array[Int](0, 0, 0, 0, 0, 0, 0, 0), space.toSampleSpace)
+    val space = volumeSpace.appendNonSpatial(ProviderAxes.time(2)).toOption.get
+    val series = SomeScalarSeries.unsafeCopyFromCanonicalArray(Array[Int](0, 0, 0, 0, 0, 0, 0, 0), space)
     val mapped = series.mapSamples[Int, image4s.Continuous]: (coord, time, _) =>
       coord.x + 10 * coord.y + 100 * time
 
@@ -85,9 +85,9 @@ class FunctionalImageSuite extends munit.FunSuite:
   }
 
   test("checked zipExact rejects a different physical grid") {
-    val left = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toSampleSpace)
-    val right = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toSampleSpace)
-    val translated = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), translatedSpace.toSampleSpace)
+    val left = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace)
+    val right = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace)
+    val translated = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), translatedSpace)
 
     val summed =
       left
@@ -102,7 +102,7 @@ class FunctionalImageSuite extends munit.FunSuite:
   }
 
   test("effectful traversal sequences failures without adding an image monad") {
-    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toSampleSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace)
     val success =
       volume.traverseValues[Option, Int, image4s.Categorical](value => Some(value * 2))
     val failure =
@@ -116,7 +116,10 @@ class FunctionalImageSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val selected =
-      SelectedSeries.gather(domain, nativeSeries, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(nativeSeries), selection)
+        .toOption
+        .get
     val mappedData =
       ravel.NDArray.tabulate[Int](selection.size, 2): (position, time) =>
         val ordinal = selection.ordinals(position)
@@ -147,7 +150,10 @@ class FunctionalImageSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromRegion(left.union(right)).toOption.get
     val selected =
-      SelectedSeries.gather(domain, nativeSeries, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(nativeSeries), selection)
+        .toOption
+        .get
     val mapped =
       selected.selected
         .mapValues[Int, image4s.Categorical](_ + 1)
@@ -164,7 +170,10 @@ class FunctionalImageSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 1, 0)).toOption.get
     val sparse =
-      SelectedSeries.gather(domain, nativeSeries, support).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(nativeSeries), support)
+        .toOption
+        .get
 
     val required = sparse.reselect(selection, MissingVoxelPolicy.RequireCovered)
     required match
@@ -197,7 +206,7 @@ class FunctionalImageSuite extends munit.FunSuite:
     val foreignPacked =
       GridDomain
         .register(
-          translatedSpace.sampleSpace.grid,
+          translatedSpace.grid,
           "functional translated voxels",
           locus4s.DomainRegistry.empty
         )

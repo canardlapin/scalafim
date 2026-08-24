@@ -111,7 +111,7 @@ math.
 Linear algebra uses Gale directly. Plugin matrices are `gale.linalg.DMat`;
 sampled maps use Gale `DoubleLinearOperator`, `COO`, and `CSR`; and JVM transform
 ingestion uses Gale factorization. Spatial image geometry still exposes its
-current `scalafim.image.DMat` ABI, so conversions at that domain boundary are
+current Gale `DMat` ABI, so conversions at that domain boundary are
 deliberate rather than a second generic linear-algebra implementation.
 
 ## JVM sources and transform assets

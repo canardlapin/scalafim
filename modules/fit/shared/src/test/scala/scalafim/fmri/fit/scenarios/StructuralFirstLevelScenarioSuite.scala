@@ -19,7 +19,7 @@ import scalafim.fmri.model.{
   ModelError,
   ModelVolumeWeighting
 }
-import scalafim.image.{DMat as ImageDMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import gale.linalg.DMat
 
 /** Acceptance scenarios for the structural design/hypothesis seam.
@@ -943,7 +943,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level"),
-        ImageDMat.fromRows(response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(response),
         SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
@@ -967,7 +967,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-3x3"),
-        ImageDMat.fromRows(response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(response),
         SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
@@ -988,7 +988,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-factor-modulator"),
-        ImageDMat.fromRows(response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(response),
         SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
@@ -1008,7 +1008,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-wls"),
-        ImageDMat.fromRows(WlsRFixture.response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(WlsRFixture.response),
         SampleSpaces(Vector(2, 1, 1))
       ),
       scalafim.fmri.hrf.design.SamplingFrame(blockLens = Seq(WlsRFixture.response.length), tr = Seq(1.0)),
@@ -1027,7 +1027,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-estimated-volume-weights"),
-        ImageDMat.fromRows(WlsRFixture.dvarsResponse),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(WlsRFixture.dvarsResponse),
         SampleSpaces(Vector(3, 1, 1))
       ),
       scalafim.fmri.hrf.design.SamplingFrame(blockLens = Seq(WlsRFixture.dvarsResponse.length), tr = Seq(1.0)),
@@ -1049,7 +1049,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-heterogeneous-hrf"),
-        ImageDMat.fromRows(response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(response),
         SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,

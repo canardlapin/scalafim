@@ -1,15 +1,13 @@
 package scalafim.spatial
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{SampleSpaces, DMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId, SpatialPoint}
+import reframe4s.field.DenseMap
+import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPoint, SpatialPullback, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
 
 class NonlinearPullbackSuite extends munit.FunSuite:
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
-    result.fold(error => fail(error.message), identity)
-
-  private def imageValue[A](result: Either[scalafim.image.MorphismError, A]): A =
     result.fold(error => fail(error.message), identity)
 
   private def apiValue[A](result: Either[FieldApiError, A]): A =
@@ -23,21 +21,27 @@ class NonlinearPullbackSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
     val geometry =
-      spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))))
+      spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
+
+  private def grid(domain: Domain): GridSpec =
+    domain.geometry match
+      case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
+      case _ => fail(s"domain ${domain.id.value} is not volumetric")
 
   private def denseCoordinates(
     source: Domain,
     target: Domain,
     sourceX: Vector[Double]
-  ): DenseFieldMorphism =
+  ): SpatialPullback =
     require(sourceX.length == 4)
-    val grid = GridSpec.identity(Vector(4, 1, 1))
+    val sourceGrid = grid(source)
+    val targetGrid = grid(target)
     val data =
       RavelArray.tabulate[Double](
-        grid.shape.x,
-        grid.shape.y,
-        grid.shape.z,
+        targetGrid.shape.x,
+        targetGrid.shape.y,
+        targetGrid.shape.z,
         3
       ) { (x, y, z, component) =>
         component match
@@ -45,22 +49,21 @@ class NonlinearPullbackSuite extends munit.FunSuite:
           case 1 => y.toDouble
           case _ => z.toDouble
       }
-    imageValue(
-      DenseFieldMorphism.coordinates(
-        SpatialDomainId(source.id.value),
-        SpatialDomainId(target.id.value),
-        grid,
+    SpatialPullbacks
+      .coordinates(
+        sourceGrid,
+        targetGrid,
         data,
-        interpolation = Resample.Method.Linear
+        method = Resample.Method.Linear
       )
-    )
+      .fold(error => fail(error.message), identity)
 
   private def warp(
     name: String,
     source: Domain,
     target: Domain,
-    forward: DenseFieldMorphism,
-    inverse: Option[DenseFieldMorphism] = None,
+    forward: SpatialPullback,
+    inverse: Option[SpatialPullback] = None,
     inverseClaim: Inverse = Inverse.None
   ): Morphism =
     spatialValue(
@@ -71,13 +74,13 @@ class NonlinearPullbackSuite extends munit.FunSuite:
         kind = MorphismKind.Warp3D,
         routeTag = RouteTag.Anatomical,
         inverse = inverseClaim,
-        coordinateMap = spatialValue(CoordinateMap.dense3D(forward, inverse))
+        coordinateMap = spatialValue(CoordinateMap.dense(forward, inverse))
       )
     )
 
   private def affine(source: Domain, target: Domain, translation: Double): Morphism =
     val matrix =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, translation),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -93,7 +96,7 @@ class NonlinearPullbackSuite extends munit.FunSuite:
         kind = MorphismKind.Affine3D,
         routeTag = RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(matrix))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -172,7 +175,9 @@ class NonlinearPullbackSuite extends munit.FunSuite:
       spatialValue(reversed.coordinateMap.transform(SpatialPoint(2.0, 0.0, 0.0))),
       SpatialPoint(2.0, 0.0, 0.0)
     )
-    assertEquals(ImageMorphismBridge.lower(available).map(_.kind).toOption, Some(scalafim.image.MorphismKind.DenseCoordinateField))
+    available.coordinateMap match
+      case CoordinateMap.Geometric(binding) => assert(DenseMap.isDense(binding.pullback))
+      case other => fail(s"expected provider dense map, got $other")
 
   test("the default lazy runtime materializes nonlinear views with one value resampling"):
     val root = domain("root")

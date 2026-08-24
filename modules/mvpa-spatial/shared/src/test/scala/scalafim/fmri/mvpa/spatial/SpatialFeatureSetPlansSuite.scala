@@ -1,6 +1,7 @@
 package scalafim.fmri.mvpa.spatial
 
 import image4s.ImageMetadata
+import image4s.SamplingAlignment
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.image.*
@@ -44,10 +45,11 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
   private def labelVolume: SomeLabelVolume[Int] =
     NeuroVolume
       .copyCategoricalFromCanonicalArray(
-        VolumeSpace(volumeSpace).sampleSpace,
+        SampleSpaces.requireVolumeD3(volumeSpace).toOption.get,
         PrimitiveBuffers.fromArray(Array(0, 2, 1, 2, 1, 0)),
         ImageMetadata.named("labels")
       )
+      .map(SomeNeuroVolume.eraseSpace)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def toyVolumeAtlas: VolumeAtlas =
@@ -89,9 +91,10 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     spatial.domain match
       case SpatialFeatureDomain.VolumeLabels(actual, background) =>
         assertEquals(background, Set(0))
-        assertEquals(
-          GridCompatibility.exact(actual, volumeSpace),
-          Right(())
+        val actualD3 = SampleSpaces.requireD3(actual).toOption.get
+        val expectedD3 = SampleSpaces.requireD3(volumeSpace).toOption.get
+        assert(
+          SamplingAlignment.exact(actualD3, expectedD3).isRight
         )
       case other =>
         fail(s"expected volume-label domain, found $other")
@@ -124,11 +127,11 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
     )
-    val volumeSpace = VolumeSpace(space)
+    val volumeGrid = SampleSpaces.requireVolumeD3(space).toOption.get.grid
     val packed =
       GridDomain
         .register(
-          volumeSpace.sampleSpace.grid,
+          volumeGrid,
           "MVPA window test voxels",
           locus4s.DomainRegistry.empty
         )
@@ -246,7 +249,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val badLabels: SomeLabelVolume[Int] =
       NeuroVolume
         .copyCategoricalFromCanonicalArray(
-          VolumeSpace(volumeSpace).sampleSpace,
+          SampleSpaces.requireVolumeD3(volumeSpace).toOption.get,
           PrimitiveBuffers.fromArray(Array(0, -1, 1, 1, 0, 0)),
           ImageMetadata.named("bad labels")
         )
@@ -269,11 +272,11 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
       )
-    val volumeSpace = VolumeSpace(space)
+    val volumeGrid = SampleSpaces.requireVolumeD3(space).toOption.get.grid
     val packed =
       GridDomain
         .register(
-          volumeSpace.sampleSpace.grid,
+          volumeGrid,
           "MVPA invalid window test voxels",
           locus4s.DomainRegistry.empty
         )

@@ -1,6 +1,8 @@
 package scalafim.image.io
 
-import scalafim.image.{Affine, DMat}
+import gale.linalg.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, ByteOrder}
@@ -15,14 +17,14 @@ class ItkAffineSuite extends munit.FunSuite:
     3.0, -4.0, 5.0
   )
   private val center = Vector(10.0, 20.0, 30.0)
-  private val expectedLps = DMat.fromRows(
+  private val expectedLps = Affine.fromRowMajor[D3](
     Vector(
       Vector(1.1, 0.1, 0.0, 0.0),
       Vector(-0.2, 0.9, 0.05, -1.5),
       Vector(0.0, 0.03, 1.2, -1.6),
       Vector(0.0, 0.0, 0.0, 1.0)
-    )
-  )
+    ).flatten
+  ).toOption.get
 
   test("MATLAB v4 ITK affine reconstructs the centered stored LPS transform") {
     val path = Files.createTempDirectory("scalafim-itk-mat").resolve("affine.mat")
@@ -30,7 +32,7 @@ class ItkAffineSuite extends munit.FunSuite:
 
     val transform = read(path)
 
-    assertMatrix(transform.storedLps.matrix, expectedLps, 1e-12)
+    assertAffine(transform.storedLps, expectedLps, 1e-12)
     assertEquals(transform.parameters, parameters)
     assertEquals(transform.fixedParameters, center)
   }
@@ -47,7 +49,7 @@ class ItkAffineSuite extends munit.FunSuite:
          |""".stripMargin
     Files.writeString(text, content, StandardCharsets.UTF_8)
 
-    assertMatrix(read(binary).storedLps.matrix, read(text).storedLps.matrix, 2e-6)
+    assertAffine(read(binary).storedLps, read(text).storedLps, 2e-6)
   }
 
   test("RAS conversion, ANTs pullback adapter, and inverse agree pointwise") {
@@ -56,13 +58,13 @@ class ItkAffineSuite extends munit.FunSuite:
     val transform = read(path)
     val rasPoint = Vector(-2.0, -3.0, 4.0)
     val lpsPoint = Vector(2.0, 3.0, 4.0)
-    val expectedLpsTarget = Affine.applyAffine(transform.storedLps.matrix, lpsPoint)
+    val expectedLpsTarget = transform.storedLps(lpsPoint).toOption.get
     val expectedRasTarget = Vector(-expectedLpsTarget(0), -expectedLpsTarget(1), expectedLpsTarget(2))
-    val rasTarget = Affine.applyAffine(transform.storedRas.matrix, rasPoint)
+    val rasTarget = transform.storedRas(rasPoint).toOption.get
 
     assertVector(rasTarget, expectedRasTarget, 1e-12)
-    assertMatrix(transform.antsPullbackRas.matrix, transform.storedRas.matrix, 0.0)
-    assertVector(Affine.applyAffine(transform.inverseRas.matrix, rasTarget), rasPoint, 1e-11)
+    assertAffine(transform.antsPullbackRas, transform.storedRas, 0.0)
+    assertVector(transform.inverseRas(rasTarget).toOption.get, rasPoint, 1e-11)
   }
 
   test("truncated and unsupported MATLAB v4 records fail with typed errors") {
@@ -118,10 +120,16 @@ class ItkAffineSuite extends munit.FunSuite:
   private def assertMatrix(actual: DMat, expected: DMat, tolerance: Double): Unit =
     assertEquals(actual.rows, expected.rows)
     assertEquals(actual.cols, expected.cols)
-    var index = 0
-    while index < actual.data.length do
-      assertEqualsDouble(actual.data(index), expected.data(index), tolerance)
-      index += 1
+    var row = 0
+    while row < actual.rows do
+      var column = 0
+      while column < actual.cols do
+        assertEqualsDouble(actual(row, column), expected(row, column), tolerance)
+        column += 1
+      row += 1
+
+  private def assertAffine(actual: Affine[D3], expected: Affine[D3], tolerance: Double): Unit =
+    assertMatrix(actual.matrix, expected.matrix, tolerance)
 
   private def assertVector(actual: Vector[Double], expected: Vector[Double], tolerance: Double): Unit =
     assertEquals(actual.length, expected.length)

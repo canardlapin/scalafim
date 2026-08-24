@@ -1,12 +1,13 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, SampleSpaces, SomeSampleSpace, VoxelCoord}
+import gale.linalg.DMat
+import scalafim.image.{Mask, SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DataSelectionSuite extends munit.FunSuite:
 
   test("mask domains reject equal-shaped spaces with different affines") {
     val translatedAffine =
-      DMat.fromRows(
+      GaleTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, 10.0),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -15,7 +16,7 @@ class DataSelectionSuite extends munit.FunSuite:
         )
       )
     val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), timepoints = 3)
-    val maskSpace = SampleSpaces(Vector(2, 2, 1), trans = Some(translatedAffine))
+    val maskSpace = SampleSpaces(Vector(2, 2, 1), affine = Some(GaleTestData.affineD3(translatedAffine)))
     val mask = Mask.fromIndices(maskSpace, Array[Int](0, 1))
 
     assert(VoxelDomain.fromMask(mask, shape).isLeft)

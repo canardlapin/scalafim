@@ -1,5 +1,8 @@
 package scalafim.atlas
 
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.geometry.D3
 import locus4s.DomainRegistry
 import scalafim.image.*
 
@@ -35,8 +38,8 @@ final class VolumeAtlas private (
         .toVector
     )
 
-  def space: SomeSampleSpace =
-    VolumeSpace.fromGridDomain(realization.domain).toSampleSpace
+  def space: SampleSpace[realization.F, D3] =
+    SampleSpace.create(realization.domain.grid, NonSpatialAxes.empty)
 
   /** Materialize categorical labels in canonical Ravel order.
     *

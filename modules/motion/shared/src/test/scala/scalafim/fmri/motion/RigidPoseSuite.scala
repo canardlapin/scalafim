@@ -7,8 +7,8 @@ class RigidPoseSuite extends munit.FunSuite:
   private def assertClose(actual: Double, expected: Double, tol: Double = 1e-10): Unit =
     assertEqualsDouble(actual, expected, tol)
 
-  test("identity pose converts to identity matrix") {
-    val matrix = RigidPose.identity.toMatrix
+  test("identity pose converts to the provider identity affine") {
+    val matrix = RigidPose.identity.toAffine.matrix
     var r = 0
     while r < 4 do
       var c = 0
@@ -19,8 +19,8 @@ class RigidPoseSuite extends munit.FunSuite:
       r += 1
   }
 
-  test("pose to matrix uses volregger ZYX rotation convention") {
-    val matrix = VolreggerFixtures.translationAndYaw.toMatrix
+  test("pose affine uses volregger ZYX rotation convention") {
+    val matrix = VolreggerFixtures.translationAndYaw.toAffine.matrix
     assertClose(matrix(0, 0), 0.0)
     assertClose(matrix(0, 1), -1.0)
     assertClose(matrix(0, 2), 0.0)
@@ -35,9 +35,9 @@ class RigidPoseSuite extends munit.FunSuite:
     assertClose(matrix(2, 3), 3.0)
   }
 
-  test("matrix roundtrip preserves a finite rigid pose") {
+  test("provider affine roundtrip preserves a finite rigid pose") {
     val pose = RigidPose.unsafe(0.25, -0.5, 1.5, 0.1, -0.2, 0.3)
-    val roundtrip = RigidPose.fromMatrix(pose.toMatrix).fold(err => fail(err.message), identity)
+    val roundtrip = RigidPose.fromAffine(pose.toAffine).fold(err => fail(err.message), identity)
     assertClose(roundtrip.tx, pose.tx)
     assertClose(roundtrip.ty, pose.ty)
     assertClose(roundtrip.tz, pose.tz)
@@ -64,13 +64,24 @@ class RigidPoseSuite extends munit.FunSuite:
   test("inverse composes back to identity") {
     val pose = RigidPose.unsafe(0.25, -0.5, 1.5, 0.1, -0.2, 0.3)
     val inv = pose.inverse.fold(err => fail(err.message), identity)
-    val composed = pose.compose(inv).fold(err => fail(err.message), identity)
+    val composed = pose.andThen(inv).fold(err => fail(err.message), identity)
     assertClose(composed.tx, 0.0)
     assertClose(composed.ty, 0.0)
     assertClose(composed.tz, 0.0)
     assertClose(composed.rx, 0.0)
     assertClose(composed.ry, 0.0)
     assertClose(composed.rz, 0.0)
+  }
+
+  test("andThen follows provider application order") {
+    val translate = RigidPose.unsafe(1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    val rotate = RigidPose.unsafe(0.0, 0.0, 0.0, 0.0, 0.0, math.Pi / 2.0)
+    val composed = translate.andThen(rotate).fold(err => fail(err.message), identity)
+    val point = composed.toAffine(Vector(0.0, 0.0, 0.0)).toOption.get
+
+    assertClose(point(0), 0.0)
+    assertClose(point(1), 1.0)
+    assertClose(point(2), 0.0)
   }
 
   test("non-finite pose is rejected by smart constructor") {

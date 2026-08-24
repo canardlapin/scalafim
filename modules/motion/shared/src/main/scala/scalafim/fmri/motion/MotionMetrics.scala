@@ -1,5 +1,9 @@
 package scalafim.fmri.motion
 
+import scalafim.image.SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.image.*
 
 final case class DisplacementSummary(
@@ -143,8 +147,8 @@ object MotionMetrics:
       reference: Option[RigidPose] = None
   ): Double =
     val points = radiusCube(radius.value)
-    val mat = motion.toMatrix
-    val ref = reference.map(_.toMatrix)
+    val mat = motion.toAffine
+    val ref = reference.map(_.toAffine)
     var i = 0
     var sum = 0.0
     while i < points.length do
@@ -159,8 +163,8 @@ object MotionMetrics:
       motion: RigidPose,
       reference: Option[RigidPose] = None
   ): Vector[Double] =
-    val mat = motion.toMatrix
-    val ref = reference.map(_.toMatrix)
+    val mat = motion.toAffine
+    val ref = reference.map(_.toAffine)
     val n = mask.space.spatialDims.product
     val out = Vector.newBuilder[Double]
     var lin = 0
@@ -238,8 +242,11 @@ object MotionMetrics:
       Vector(-radius, -radius, -radius)
     )
 
-  private def apply3(matrix: DMat, point: Vector[Double]): Vector[Double] =
-    Affine.applyAffine(matrix, point)
+  private def apply3(affine: Affine[D3], point: Vector[Double]): Vector[Double] =
+    affine(point).fold(
+      error => throw new IllegalStateException(error.message),
+      identity
+    )
 
   private def distance(a: Vector[Double], b: Vector[Double]): Double =
     val dx = a(0) - b(0)

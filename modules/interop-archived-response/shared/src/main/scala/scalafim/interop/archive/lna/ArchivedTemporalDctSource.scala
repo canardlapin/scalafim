@@ -3,6 +3,7 @@ package scalafim.interop.archive.lna
 import cats.data.{EitherT, WriterT}
 import cats.effect.Async
 import cats.syntax.all.*
+import gale.linalg.DMat
 import scalafim.archive.{
   ArchiveError,
   ArchiveReadReceipt,
@@ -422,7 +423,7 @@ private final class TemporalDctLnaInterpreter[F[_]](
       .map(error => ArchiveError.InvalidArchive(error.message))
 
   private def copyRows(
-      data: scalafim.image.DMat,
+      data: DMat,
       indices: Vector[Int],
       output: Array[Double]
   ): Unit =

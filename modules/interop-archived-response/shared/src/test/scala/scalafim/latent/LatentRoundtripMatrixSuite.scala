@@ -3,7 +3,8 @@ package scalafim.latent
 import scalafim.image.SampleSpaces
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 class LatentRoundtripMatrixSuite extends munit.FunSuite:
@@ -29,7 +30,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
       )
     val sharedBasis =
       SharedBasisArtifact(
-        loadings = ImageDMat.fromRows(spatialLoadings.toRows),
+        loadings = spatialLoadings,
         mask = SharedBasisMask(Vector(3), Vector(true, true, true)),
         kind = "roundtrip-matrix",
         params = Map("suite" -> "LatentRoundtripMatrixSuite")

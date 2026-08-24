@@ -1,12 +1,16 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.AxisKind
+import image4s.AxisConcatenationPolicy
 import image4s.Categorical
 import image4s.Continuous
 import image4s.ImageMetadata
 import image4s.Mask as MaskSemantics
 import image4s.SampleSpace
 import image4s.Sampled
+import image4s.SamplingAlignment
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
@@ -29,7 +33,7 @@ opaque type NeuroSeries[
     S <: SampleSpace[?, D3],
     A,
     Sem
-] <: Sampled[S, A, Sem, Rank[4]] & SomeNeuroSeries[A, Sem] =
+] =
   Sampled[S, A, Sem, Rank[4]]
 
 type ScalarSeries[S <: SampleSpace[?, D3], A] =
@@ -49,6 +53,14 @@ type MaskSeries[S <: SampleSpace[?, D3]] =
 
 type SomeMaskSeries =
   SomeNeuroSeries[Boolean, MaskSemantics]
+
+/** Policy for combining metadata when concatenating admitted series. */
+enum SeriesMetadataPolicy derives CanEqual:
+  /** Require every input to carry the same metadata. */
+  case RequireEqual
+
+  /** Retain the first input's metadata after an explicit caller choice. */
+  case UseLeft
 
 object SomeScalarSeries:
   def fromRavel[A](
@@ -113,7 +125,7 @@ object SomeNeuroSeries:
   inline def eraseSpace[S <: SampleSpace[?, D3], A, Sem](
       series: NeuroSeries[S, A, Sem]
   ): SomeNeuroSeries[A, Sem] =
-    series
+    unsafeFromSampled(NeuroSeries.sampled(series))
 
   private[image] def fromSampled[A, Sem](
       sampled: Sampled[
@@ -122,11 +134,11 @@ object SomeNeuroSeries:
         Sem,
         Rank[4]
       ]
-  ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+  ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
     val axes = sampled.nonSpatialAxes.values
     if axes.size == 1 && axes.head.kind == AxisKind.Time then
       Right(sampled)
-    else Left(NativeImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
+    else Left(NeuroImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
 
   extension [A, Sem](series: SomeNeuroSeries[A, Sem])
     inline def apply(x: Int, y: Int, z: Int, time: Int): A =
@@ -176,12 +188,6 @@ object SomeNeuroSeries:
         .map(NeuroImageError.Space.apply)
       sampled <- NeuroSeries
         .fromRavel[A, Sem](sampleSpace, data, metadata)
-        .left
-        .map:
-          case NativeImageError.Image(error) => NeuroImageError.Image(error)
-          case NativeImageError.Space(error) => NeuroImageError.Space(error)
-          case error =>
-            NeuroImageError.InvalidRank(error.message, 4, data.rank)
     yield eraseSpace(sampled)
 
   def unsafeFromRavel[A, Sem](
@@ -241,6 +247,91 @@ object SomeNeuroSeries:
     copyFromCanonicalArray[A, Sem](data, space, ImageMetadata.named(label))
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
+  private def mapDynamic[A, Sem, B, OutSem](
+      series: SomeNeuroSeries[A, Sem]
+  )(
+      f: A => B
+  )(using
+      DType[B],
+      ValueSemantics[B, OutSem]
+  ): SomeNeuroSeries[B, OutSem] =
+    unsafeFromSampled(series.mapValuesAs[B, OutSem](f))
+
+  /** Reattach data constructed directly from this series' complete logical shape. */
+  private def replaceValuesSameShape[S <: SampleSpace[?, D3], A, Sem, B, OutSem](
+      series: NeuroSeries[S, A, Sem],
+      data: NDArray[B, Rank[4]]
+  )(using ValueSemantics[B, OutSem]): NeuroSeries[S, B, OutSem] =
+    NeuroSeries.unsafeFromSampled(
+      NeuroSeries
+        .sampled(series)
+        .replaceDataChecked[B, OutSem, Rank[4]](data)
+        .fold(
+          error =>
+            throw new IllegalStateException(
+              s"internally constructed series shape was invalid: ${error.message}"
+            ),
+          identity
+        )
+    )
+
+  private def mapSamplesExact[S <: SampleSpace[?, D3], A, Sem, B, OutSem](
+      series: NeuroSeries[S, A, Sem]
+  )(
+      f: (VoxelCoord, Int, A) => B
+  )(using
+      DType[B],
+      ValueSemantics[B, OutSem]
+  ): NeuroSeries[S, B, OutSem] =
+    val sampled = NeuroSeries.sampled(series)
+    val shape = sampled.grid.shape
+    val nVolumes = sampled.nonSpatialAxes.values.head.extent
+    val mapped =
+      NDArray.tabulate[B](shape(0), shape(1), shape(2), nVolumes):
+        (x, y, z, time) =>
+          f(VoxelCoord(x, y, z), time, sampled.data(x, y, z, time))
+    replaceValuesSameShape(series, mapped)
+
+  private def selectTimesChecked[A, Sem](
+      series: Sampled[
+        ? <: SampleSpace[?, D3],
+        A,
+        Sem,
+        Rank[4]
+      ],
+      times: IterableOnce[Int]
+  )(using
+      ValueSemantics[A, Sem]
+  ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
+    val copied = times.iterator.toVector
+    val sourceAxis = series.nonSpatialAxes.values.head
+    given DType[A] = series.data.dtype
+    for
+      selectedAxis <- sourceAxis
+        .select(copied)
+        .left
+        .map(NeuroImageError.Image.apply)
+      selectedAxes <- series.nonSpatialAxes
+        .updated(0, selectedAxis)
+        .left
+        .map(NeuroImageError.Image.apply)
+      targetSpace = SampleSpace.create(series.grid, selectedAxes)
+      shape = series.grid.shape
+      selectedData =
+        NDArray.tabulate[A](shape(0), shape(1), shape(2), copied.size):
+          (x, y, z, position) =>
+            series.data(x, y, z, copied(position))
+      selected <- Sampled
+        .create[A, Sem, Rank[4]](
+          targetSpace,
+          selectedData,
+          series.metadata
+        )
+        .left
+        .map(NeuroImageError.Image.apply)
+      admitted <- fromSampled(selected)
+    yield admitted
+
   extension [A, Sem](series: SomeNeuroSeries[A, Sem])
     @targetName("seriesSampled")
     def sampled: Sampled[
@@ -284,17 +375,6 @@ object SomeNeuroSeries:
     def ndim: Int =
       series.data.rank
 
-    @targetName("seriesTypedSpace")
-    def typedSpace: ImageSpace[Series4D] =
-      ImageSpace
-        .make[Series4D](space)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
-
-    def seriesSpace: SeriesSpace =
-      SeriesSpace
-        .make(space)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
-
     def nVolumes: Int =
       series.nonSpatialAxes.values.head.extent
 
@@ -302,18 +382,18 @@ object SomeNeuroSeries:
       series
         .selectTime(time)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .map(SomeNeuroVolume.unsafeFromSampled)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
 
     inline def apply(time: Int): SomeNeuroVolume[A, Sem] =
       volume(time)
 
-    def volumeAt(time: Int): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
+    def volumeAt(time: Int): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
       series
         .selectTime(time)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .map(SomeNeuroVolume.unsafeFromSampled)
 
     @targetName("seriesValueAtCanonicalOrdinal")
@@ -390,47 +470,98 @@ object SomeNeuroSeries:
     def timeSeries(voxelOrdinals: Array[Int]): NDArray[A, Rank[2]] =
       timeSeries(NDArray.fromSeq(Shape(voxelOrdinals.length), voxelOrdinals))
 
-    def timeSeries(mask: SomeMaskVolume): NDArray[A, Rank[2]] =
-      timeSeries(Mask.indices(mask))
+    def timeSeries(
+        mask: SomeMaskVolume
+    ): Either[NeuroImageError, NDArray[A, Rank[2]]] =
+      Grid
+        .exactCongruence(series.grid, mask.grid)
+        .left
+        .map(NeuroImageError.Geometry.apply)
+        .flatMap: _ =>
+          if series.grid.sameRuntimeOwnerAs(mask.grid) then
+            Right(timeSeries(Mask.indices(mask)))
+          else
+            Left(
+              NeuroImageError.GridOwnerMismatch(
+                series.grid.persistentId,
+                mask.grid.persistentId
+              )
+            )
 
     def selectTimes(times: Seq[Int])(using
         ValueSemantics[A, Sem]
-    ): SomeNeuroSeries[A, Sem] =
-      require(times.nonEmpty, "times must be non-empty")
-      require(times.forall(time => time >= 0 && time < nVolumes), "time index out of bounds")
-      given DType[A] = series.data.dtype
-      val shape = space.spatialDims
-      val data =
-        NDArray.tabulate[A](shape(0), shape(1), shape(2), times.length):
-          (x, y, z, position) => series.data(x, y, z, times(position))
-      unsafeFromRavel[A, Sem](
-        data,
-        space.spatialSpace.addDim(times.length, Some(Axis.Time)),
-        series.metadata
-      )
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
+      selectTimesChecked(series, times)
 
     @targetName("concatenateSeries")
     def concatenate(
         that: SomeNeuroSeries[A, Sem],
         rest: SomeNeuroSeries[A, Sem]*
-    )(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
+    )(
+        axisPolicy: AxisConcatenationPolicy,
+        metadataPolicy: SeriesMetadataPolicy
+    )(using
+        ValueSemantics[A, Sem]
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
       given DType[A] = series.data.dtype
       val all = Vector(series, that) ++ rest.toVector
-      all.foreach(value => GridCompatibility.requireSpatial(space, value.space))
-      val boundaries = all.scanLeft(0)((offset, value) => offset + value.nVolumes)
-      val totalTimes = boundaries.last
-      val shape = space.spatialDims
-      val data =
-        NDArray.tabulate[A](shape(0), shape(1), shape(2), totalTimes):
-          (x, y, z, time) =>
-            var block = 0
-            while boundaries(block + 1) <= time do block += 1
-            all(block).data(x, y, z, time - boundaries(block))
-      unsafeFromRavel[A, Sem](
-        data,
-        space.spatialSpace.addDim(totalTimes, Some(Axis.Time)),
-        series.metadata
-      )
+      val compatibleGrids =
+        all.tail.foldLeft[Either[NeuroImageError, Unit]](Right(())):
+          (result, next) =>
+            result.flatMap: _ =>
+              Grid
+                .exactCongruence(series.grid, next.grid)
+                .left
+                .map(NeuroImageError.Geometry.apply)
+                .map(_ => ())
+      val selectedMetadata =
+        metadataPolicy match
+          case SeriesMetadataPolicy.UseLeft =>
+            Right(series.metadata)
+          case SeriesMetadataPolicy.RequireEqual =>
+            all.tail
+              .find(_.metadata != series.metadata)
+              .map(next =>
+                NeuroImageError.ConcatenationMetadataMismatch(
+                  series.metadata,
+                  next.metadata
+                )
+              )
+              .toLeft(series.metadata)
+      val concatenatedAxis =
+        all.tail.foldLeft[Either[NeuroImageError, image4s.Axis]](
+          Right(all.head.nonSpatialAxes.values.head)
+        ): (result, next) =>
+          result.flatMap: axis =>
+            axis
+              .concatenate(next.nonSpatialAxes.values.head, axisPolicy)
+              .left
+              .map(NeuroImageError.Image.apply)
+      for
+        _ <- compatibleGrids
+        metadata <- selectedMetadata
+        axis <- concatenatedAxis
+        axes <- series.nonSpatialAxes
+          .updated(0, axis)
+          .left
+          .map(NeuroImageError.Image.apply)
+        targetSpace = SampleSpace.create(series.grid, axes)
+        boundaries =
+          all.scanLeft(0)((offset, value) => offset + value.nVolumes)
+        totalTimes = boundaries.last
+        shape = space.spatialDims
+        data =
+          NDArray.tabulate[A](shape(0), shape(1), shape(2), totalTimes):
+            (x, y, z, time) =>
+              var block = 0
+              while boundaries(block + 1) <= time do block += 1
+              all(block).data(x, y, z, time - boundaries(block))
+        sampled <- Sampled
+          .create[A, Sem, Rank[4]](targetSpace, data, metadata)
+          .left
+          .map(NeuroImageError.Image.apply)
+        admitted <- fromSampled(sampled)
+      yield admitted
 
     @targetName("mapSeriesValues")
     def mapValues[B, OutSem](
@@ -439,17 +570,7 @@ object SomeNeuroSeries:
         DType[B],
         ValueSemantics[B, OutSem]
     ): SomeNeuroSeries[B, OutSem] =
-      val mapped = ravel.map(series.data)(f)
-      Sampled
-        .create[B, OutSem, Rank[4]](
-          series.sampleSpace,
-          mapped,
-          series.metadata
-        )
-        .left
-        .map(NativeImageError.Image.apply)
-        .flatMap(fromSampled)
-        .fold(error => throw new IllegalStateException(error.message), identity)
+      mapDynamic[A, Sem, B, OutSem](series)(f)
 
     @targetName("mapSeries")
     def map[B, OutSem](
@@ -458,7 +579,7 @@ object SomeNeuroSeries:
         DType[B],
         ValueSemantics[B, OutSem]
     ): SomeNeuroSeries[B, OutSem] =
-      mapValues(f)
+      mapDynamic[A, Sem, B, OutSem](series)(f)
 
     @targetName("mapSeriesVoxels")
     def mapVoxels[B, OutSem](
@@ -467,7 +588,12 @@ object SomeNeuroSeries:
         DType[B],
         ValueSemantics[B, OutSem]
     ): SomeNeuroSeries[B, OutSem] =
-      mapSamples[B, OutSem]((voxel, _, value) => f(voxel, value))
+      val shape = space.spatialDims
+      val mapped =
+        NDArray.tabulate[B](shape(0), shape(1), shape(2), nVolumes):
+          (x, y, z, time) =>
+            f(VoxelCoord(x, y, z), series.data(x, y, z, time))
+      unsafeFromRavel[B, OutSem](mapped, space, series.metadata)
 
     def mapSamples[B, OutSem](
         f: (VoxelCoord, Int, A) => B
@@ -490,14 +616,90 @@ object SomeNeuroSeries:
     )(using
         DType[C],
         ValueSemantics[C, OutSem]
-    ): Either[GridMismatch, SomeNeuroSeries[C, OutSem]] =
-      GridCompatibility.exact(space, that.space).map: _ =>
+    ): Either[NeuroImageError, SomeNeuroSeries[C, OutSem]] =
+      for
+        left <- SampleSpaces
+          .requireD3(series.space)
+          .left
+          .map(NeuroImageError.Space.apply)
+        right <- SampleSpaces
+          .requireD3(that.space)
+          .left
+          .map(NeuroImageError.Space.apply)
+        _ <- SamplingAlignment
+          .exact(left, right)
+          .left
+          .map(NeuroImageError.Image.apply)
+      yield
         val shape = space.spatialDims
         val data =
           NDArray.tabulate[C](shape(0), shape(1), shape(2), nVolumes):
             (x, y, z, time) =>
               f(series.data(x, y, z, time), that.data(x, y, z, time))
         unsafeFromRavel[C, OutSem](data, space, series.metadata)
+
+  extension [S <: SampleSpace[?, D3], A, Sem](
+      series: NeuroSeries[S, A, Sem]
+  )
+    @targetName("materializedSeriesOwned")
+    def materializedCanonical: NeuroSeries[S, A, Sem] =
+      NeuroSeries.unsafeFromSampled(
+        NeuroSeries.sampled(series).materializedCopy
+      )
+
+    @targetName("metadataSeriesOwned")
+    def withImageMetadata(
+        metadata: ImageMetadata
+    ): NeuroSeries[S, A, Sem] =
+      NeuroSeries.unsafeFromSampled(
+        NeuroSeries.sampled(series).withMetadata(metadata)
+      )
+
+    @targetName("mapSeriesValuesOwned")
+    def mapValues[B, OutSem](
+        f: A => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroSeries[S, B, OutSem] =
+      NeuroSeries.unsafeFromSampled(
+        NeuroSeries.sampled(series).mapValuesAs[B, OutSem](f)
+      )
+
+    @targetName("mapSeriesOwned")
+    def map[B, OutSem](
+        f: A => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroSeries[S, B, OutSem] =
+      NeuroSeries.unsafeFromSampled(
+        NeuroSeries.sampled(series).mapValuesAs[B, OutSem](f)
+      )
+
+    @targetName("mapSeriesVoxelsOwned")
+    def mapVoxels[B, OutSem](
+        f: (VoxelCoord, A) => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroSeries[S, B, OutSem] =
+      mapSamplesExact(series)((voxel, _, value) => f(voxel, value))
+
+    @targetName("mapSeriesSamplesOwned")
+    def mapSamples[B, OutSem](
+        f: (VoxelCoord, Int, A) => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroSeries[S, B, OutSem] =
+      mapSamplesExact(series)(f)
+
+    @targetName("selectSeriesTimesOwned")
+    def selectTimes(times: Seq[Int])(using
+        ValueSemantics[A, Sem]
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
+      selectTimesChecked(NeuroSeries.sampled(series), times)
 
 object NeuroSeries:
   private def validateSome[A, Sem](
@@ -507,7 +709,7 @@ object NeuroSeries:
         Sem,
         Rank[4]
       ]
-  ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+  ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
     SomeNeuroSeries.fromSampled(sampled)
 
   def fromSampled[
@@ -516,10 +718,10 @@ object NeuroSeries:
       Sem
   ](
       sampled: Sampled[S, A, Sem, Rank[4]]
-  ): Either[NativeImageError, NeuroSeries[S, A, Sem]] =
+  ): Either[NeuroImageError, NeuroSeries[S, A, Sem]] =
     val axes = sampled.nonSpatialAxes.values
     if axes.size == 1 && axes.head.kind == AxisKind.Time then Right(sampled)
-    else Left(NativeImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
+    else Left(NeuroImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
 
   private[image] inline def unsafeFromSampled[
       S <: SampleSpace[?, D3],
@@ -537,13 +739,13 @@ object NeuroSeries:
   )(using
       ValueSemantics[A, Sem]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     NeuroSeries[sampleSpace.type, A, Sem]
   ] =
     Sampled
       .create[A, Sem, Rank[4]](sampleSpace, data, metadata)
       .left
-      .map(NativeImageError.Image.apply)
+      .map(NeuroImageError.Image.apply)
       .flatMap(fromSampled)
 
   def continuous[A](
@@ -553,7 +755,7 @@ object NeuroSeries:
   )(using
       ValueSemantics[A, Continuous]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     ScalarSeries[sampleSpace.type, A]
   ] =
     fromRavel[A, Continuous](sampleSpace, data, metadata)
@@ -565,7 +767,7 @@ object NeuroSeries:
   )(using
       ValueSemantics[A, Categorical]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     LabelSeries[sampleSpace.type, A]
   ] =
     fromRavel[A, Categorical](sampleSpace, data, metadata)
@@ -577,7 +779,7 @@ object NeuroSeries:
   )(using
       ValueSemantics[Boolean, MaskSemantics]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     MaskSeries[sampleSpace.type]
   ] =
     fromRavel[Boolean, MaskSemantics](sampleSpace, data, metadata)
@@ -590,7 +792,7 @@ object NeuroSeries:
       DType[A],
       ValueSemantics[A, Continuous]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     ScalarSeries[sampleSpace.type, A]
   ] =
     copyFromCanonicalArray[A, Continuous](sampleSpace, data, metadata)
@@ -603,7 +805,7 @@ object NeuroSeries:
       DType[A],
       ValueSemantics[A, Categorical]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     LabelSeries[sampleSpace.type, A]
   ] =
     copyFromCanonicalArray[A, Categorical](sampleSpace, data, metadata)
@@ -616,7 +818,7 @@ object NeuroSeries:
       DType[Boolean],
       ValueSemantics[Boolean, MaskSemantics]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     MaskSeries[sampleSpace.type]
   ] =
     copyFromCanonicalArray[Boolean, MaskSemantics](
@@ -633,18 +835,18 @@ object NeuroSeries:
       DType[A],
       ValueSemantics[A, Sem]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     NeuroSeries[sampleSpace.type, A, Sem]
   ] =
     val axes = sampleSpace.nonSpatialAxes.values
     if axes.size != 1 || axes.head.kind != AxisKind.Time then
-      Left(NativeImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
+      Left(NeuroImageError.ExpectedSingleTimeAxis(axes.map(_.kind)))
     else
       val shape = sampleSpace.logicalShape
       val expected = shape.product
       if data.length != expected then
         Left(
-          NativeImageError.CanonicalArraySizeMismatch(
+          NeuroImageError.CanonicalArraySizeMismatch(
             expected,
             data.length
           )
@@ -684,11 +886,11 @@ object NeuroSeries:
 
     def volumeAt(
         time: Int
-    ): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
       series
         .selectTime(time)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .map(SomeNeuroVolume.unsafeFromSampled)
 
     /** Explicitly copy logical values into a whole canonical Ravel owner. */
@@ -703,36 +905,36 @@ object NeuroSeries:
     def cropSeries(
         origin: Vector[Int],
         shape: Vector[Int]
-    ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
       series
         .crop(origin, shape)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .flatMap(validateSome)
 
     def flipSeries(
         axis: Int
-    ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
       series
         .flipSpatial(axis)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .flatMap(validateSome)
 
     def permuteSeries(
         sourceAxisForTarget: IterableOnce[Int]
-    ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
       series
         .permuteSpatial(sourceAxisForTarget)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .flatMap(validateSome)
 
     def strideSeries(
         steps: IterableOnce[Int]
-    ): Either[NativeImageError, SomeNeuroSeries[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroSeries[A, Sem]] =
       series
         .strideSpatial(steps)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
         .flatMap(validateSome)

@@ -1,7 +1,8 @@
 package scalafim.dataset
 
+import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class DatasetTimeAxisSuite extends munit.FunSuite:
 
@@ -99,7 +100,7 @@ class DatasetTimeAxisSuite extends munit.FunSuite:
       .open(
         backend = InMemoryDatasetBackend(
           id = DatasetId("time-axis-demo"),
-          data = DMat.fromRows(Vector.tabulate(6)(row => Vector(row.toDouble))),
+          data = GaleTestData.matrixFromRows(Vector.tabulate(6)(row => Vector(row.toDouble))),
           space = SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = samplingFrame,

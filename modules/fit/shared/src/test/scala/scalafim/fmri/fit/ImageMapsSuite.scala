@@ -1,5 +1,6 @@
 package scalafim.fmri.fit
 
+import image4s.SamplingAlignment
 import scalafim.image.SampleSpaces
 import scalafim.image.{space, timeSeries}
 
@@ -9,7 +10,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat as ImageDMat, GridCompatibility}
+import gale.linalg.DMat
 
 class ImageMapsSuite extends munit.FunSuite:
 
@@ -23,7 +24,7 @@ class ImageMapsSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, 10.0, -1.0),
         Vector(3.0, 1.0, 9.0, -2.0),
@@ -102,7 +103,9 @@ class ImageMapsSuite extends munit.FunSuite:
         .get
         .dense
 
-    assert(GridCompatibility.exact(adapted.space, legacy.space).isRight)
+    val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get
+    val legacySpace = SampleSpaces.requireD3(legacy.space).toOption.get
+    assert(SamplingAlignment.exact(adaptedSpace, legacySpace).isRight)
     assertVectorClose(adapted.timeSeries(0).iterator.toVector, legacy.timeSeries(0).iterator.toVector, 1e-10)
     assertVectorClose(adapted.timeSeries(1).iterator.toVector, legacy.timeSeries(1).iterator.toVector, 1e-10)
     assertVectorClose(adapted.timeSeries(2).iterator.toVector, legacy.timeSeries(2).iterator.toVector, 1e-10)

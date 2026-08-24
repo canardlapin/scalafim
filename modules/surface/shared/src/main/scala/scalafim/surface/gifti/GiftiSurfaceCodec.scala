@@ -1,6 +1,7 @@
 package scalafim.surface.gifti
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.surface.*
 
 import scala.util.control.NonFatal
@@ -76,25 +77,21 @@ private[surface] object GiftiSurfaceCodec:
     if payload.columns == columns then Right(())
     else Left(GiftiError.InvalidDataArray(message))
 
-  private def transformMatrix(pointSet: GiftiDataArray): Either[GiftiError, DMat] =
+  private def transformMatrix(pointSet: GiftiDataArray): Either[GiftiError, Affine[D3]] =
     pointSet.transforms.headOption match
-      case None => Right(DMat.eye(4))
+      case None => Right(Affine.identity[D3])
       case Some(transform) =>
-        val values = transform.matrixData
-        try
-          Right(
-            DMat.fromRows(
-              Vector.tabulate(4)(row => Vector.tabulate(4)(column => values(row * 4 + column)))
-            )
-          )
-        catch case NonFatal(error) => Left(GiftiError.InvalidDataArray(error.getMessage))
+        Affine
+          .fromRowMajor[D3](transform.matrixData)
+          .left
+          .map(GiftiError.Geometry.apply)
 
   private def buildGeometry(
     coordinates: GiftiMatrix[Double],
     faces: GiftiMatrix[Int],
     hemisphere: Hemisphere,
     kind: SurfaceKind,
-    transform: DMat
+    transform: Affine[D3]
   ): Either[GiftiError, SurfaceGeometry] =
     try
       Right(

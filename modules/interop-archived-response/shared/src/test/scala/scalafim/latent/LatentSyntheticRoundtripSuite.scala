@@ -4,7 +4,8 @@ import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.spatialDims
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class LatentSyntheticRoundtripSuite extends munit.FunSuite:
@@ -170,7 +171,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       rng: Lcg
   ): SpatialCase =
     val loadings =
-      ImageDMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.25, -0.2),
           Vector(0.4, 1.0, 0.3),
@@ -286,7 +287,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
     }
 
   private def spatialDataFrom(
-      loadings: ImageDMat,
+      loadings: DMat,
       coefficients: DMat,
       offset: Vector[Double]
   ): DMat =

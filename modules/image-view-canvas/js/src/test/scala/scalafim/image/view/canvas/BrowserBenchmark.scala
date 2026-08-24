@@ -3,6 +3,9 @@ package scalafim.image.view.canvas
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.Uint8ClampedArray
+import image4s.SampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
 import intaglio.*
 import intaglio.canvas.*
 import ravel.NDArray as RavelArray
@@ -173,8 +176,9 @@ object BrowserBenchmark:
     document.body.dataset.benchmarkState = "ready"
 
   private def affineWorkload(): Workload =
-    val space = VolumeSpace(SampleSpaces(Vector(160, 192, 128)))
-    val volume = syntheticVolume(space, "browser-affine")
+    val sampleSpace = checkedSampleSpace(Vector(160, 192, 128))
+    val space = sampleSpace.grid
+    val volume = syntheticVolume(sampleSpace, "browser-affine")
     var reads = 0
     val source = VolumeSource.lazyFrames(space, 1) { _ =>
       reads += 1
@@ -201,9 +205,10 @@ object BrowserBenchmark:
     )
 
   private def nonlinearWorkload(): Workload =
-    val space = VolumeSpace(SampleSpaces(Vector(80, 80, 64)))
-    val volume = syntheticVolume(space, "browser-nonlinear")
-    val grid = GridSpec.fromVolumeSpace(space)
+    val sampleSpace = checkedSampleSpace(Vector(80, 80, 64))
+    val space = sampleSpace.grid
+    val volume = syntheticVolume(sampleSpace, "browser-nonlinear")
+    val grid = GridSpec.fromGrid(space)
     val field =
       RavelArray.tabulate[Double](
         grid.shape.x,
@@ -216,19 +221,17 @@ object BrowserBenchmark:
           case 1 => 0.25 * math.cos(x.toDouble / 11.0)
           case _ => 0.0
       }
-    val morphism = DenseFieldMorphism.displacement(
-      SpatialDomainId("source"),
-      SpatialDomainId("reference"),
+    val pullback = SpatialPullbacks.displacement(
       grid,
-      field,
-      Resample.Method.Linear
+      grid,
+      field
     ).fold(error => throw new IllegalArgumentException(error.message), identity)
     val layer = SliceLayer(
       LayerId.unsafe("warped"),
       volume,
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 700.0)),
-      mapping = LayerMapping.Pullback(morphism)
+      mapping = LayerMapping.Pullback(pullback)
     )
     Workload(
       ViewerModel.unsafe(space, Vector(layer)),
@@ -236,15 +239,23 @@ object BrowserBenchmark:
       () => 0
     )
 
-  private def syntheticVolume(space: VolumeSpace, label: String): SomeScalarVolume[Double] =
-    val shape = space.shape
+  private def syntheticVolume(
+    space: SampleSpace[? <: Frame[D3], D3],
+    label: String
+  ): SomeScalarVolume[Double] =
+    val shape = space.grid.shape
     val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
-      val x = index % shape.x
-      val y = (index / shape.x) % shape.y
-      val z = index / (shape.x * shape.y)
+      val x = index % shape(0)
+      val y = (index / shape(0)) % shape(1)
+      val z = index / (shape(0) * shape(1))
       x.toDouble * 3.0 + y.toDouble * 2.0 + z.toDouble * 5.0
     }
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space.toSampleSpace, label)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, label)
+
+  private def checkedSampleSpace(
+    dims: Vector[Int]
+  ): SampleSpace[? <: Frame[D3], D3] =
+    SampleSpaces.requireVolumeD3(SampleSpaces(dims)).toOption.get
 
   private def makeRuntime(): CanvasViewerRuntime =
     CanvasViewerHost.runtime(viewerCacheCapacity = 96, rasterCacheCapacity = 48)

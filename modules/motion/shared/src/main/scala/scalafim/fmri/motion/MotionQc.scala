@@ -1,5 +1,7 @@
 package scalafim.fmri.motion
 
+import scalafim.image.SampleSpaces.*
+
 import scalafim.image.*
 
 final case class MotionQcThresholds(

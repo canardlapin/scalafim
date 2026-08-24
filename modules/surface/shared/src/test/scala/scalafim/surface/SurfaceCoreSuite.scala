@@ -1,6 +1,8 @@
 package scalafim.surface
 
-import scalafim.image.{DMat, SpatialPoint}
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import scalafim.image.SpatialPoint
 import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceCoreSuite extends munit.FunSuite:
@@ -65,14 +67,14 @@ class SurfaceCoreSuite extends munit.FunSuite:
   test("SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform"):
     val mesh = SurfaceTestFixtures.tetraMesh
     val transform =
-      DMat.fromRows(
+      Affine.fromRowMajor[D3](
         Vector(
-          Vector(1.0, 0.0, 0.0, 10.0),
-          Vector(0.0, 1.0, 0.0, 20.0),
-          Vector(0.0, 0.0, 1.0, 30.0),
-          Vector(0.0, 0.0, 0.0, 1.0)
+          1.0, 0.0, 0.0, 10.0,
+          0.0, 1.0, 0.0, 20.0,
+          0.0, 0.0, 1.0, 30.0,
+          0.0, 0.0, 0.0, 1.0
         )
-      )
+      ).toOption.get
     val geom = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Pial, transform)
 
     assertEquals(geom.vertexCount, 4)
@@ -87,14 +89,14 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(meshDomain.faceCount, 4)
     assertEquals(meshDomain.topology, mesh.topologyIdentity)
 
-  test("SurfaceGeometry rejects non-4x4 transforms"):
-    val mesh = SurfaceTestFixtures.tetraMesh
-    val bad = DMat.eye(3)
+  test("SurfaceGeometry accepts only provider-validated D3 affines"):
+    val malformed = Affine.fromRowMajor[D3](Vector.fill(9)(0.0))
 
-    interceptMessage[IllegalArgumentException]("requirement failed: surfaceToWorld must be 4x4"):
-      SurfaceGeometry(mesh, surfaceToWorld = bad)
-
-    assert(SurfaceGeometry.readEither(mesh, surfaceToWorld = bad).isLeft)
+    assert(malformed.isLeft)
+    assertEquals(
+      SurfaceGeometry(SurfaceTestFixtures.tetraMesh).surfaceToWorld,
+      Affine.identity[D3]
+    )
 
   test("surface domains reject IO-only hemisphere tags"):
     val mesh = SurfaceTestFixtures.tetraMesh

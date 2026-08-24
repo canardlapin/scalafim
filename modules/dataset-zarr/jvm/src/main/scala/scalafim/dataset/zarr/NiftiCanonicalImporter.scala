@@ -13,7 +13,7 @@ import scala.util.control.NonFatal
 import scalafim.archive.zarr.*
 import scalafim.dataset.DatasetError
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.DMat
+import image4s.geometry.{Affine, D3}
 import scalafim.image.io.{Nifti, NiftiHeader}
 import zarr4s.*
 
@@ -137,7 +137,7 @@ object NiftiCanonicalImporter:
         if header.slope == 0.0 then 1.0 else header.slope,
         header.intercept
       )
-      affine <- Affine4x4(selectedAffine(header).toRows.flatten)
+      affine <- Affine4x4(selectedAffine(header).rowMajor)
       spatial <- Shape(shape.axis(1), shape.axis(2), shape.axis(3))
         .left.map(NeuroArchiveZarrError.Kernel.apply)
       geometry <- VoxelGeometry(spatial, affine)
@@ -158,13 +158,15 @@ object NiftiCanonicalImporter:
       )
     yield manifest
 
-  private def selectedAffine(header: NiftiHeader): DMat = header.preferredAffine.getOrElse:
-    DMat.fromRows(Vector(
-      Vector(header.pixdim(0), 0.0, 0.0, 0.0),
-      Vector(0.0, header.pixdim(1), 0.0, 0.0),
-      Vector(0.0, 0.0, header.pixdim(2), 0.0),
-      Vector(0.0, 0.0, 0.0, 1.0)
-    ))
+  private def selectedAffine(header: NiftiHeader): Affine[D3] = header.preferredAffine.getOrElse:
+    Affine
+      .fromRowMajor[D3](Vector(
+        header.pixdim(0), 0.0, 0.0, 0.0,
+        0.0, header.pixdim(1), 0.0, 0.0,
+        0.0, 0.0, header.pixdim(2), 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def repetitionTimeSeconds(
       path: Path,

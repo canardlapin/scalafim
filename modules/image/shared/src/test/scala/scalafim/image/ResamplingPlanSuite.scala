@@ -1,12 +1,14 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.SamplingAlignment
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import ravel.NDArray as RavelArray
 import ravel.Rank
 
 class ResamplingPlanSuite extends munit.FunSuite:
-
-  private val sourceDomain = SpatialDomainId("source")
-  private val targetDomain = SpatialDomainId("target")
 
   private def assertClose(actual: Double, expected: Double, tol: Double = 1e-10): Unit =
     assert(math.abs(actual - expected) <= tol, clue = s"actual=$actual expected=$expected")
@@ -30,11 +32,13 @@ class ResamplingPlanSuite extends munit.FunSuite:
       i += 1
 
   private def assertSameVec(actual: SomeScalarSeries[Double], expected: SomeScalarSeries[Double], tol: Double = 1e-10): Unit =
-    assertEquals(
-      GridCompatibility.exact(actual.space, expected.space),
-      Right(()),
-      clue = ""
-    )
+    val alignment =
+      for
+        left <- SampleSpaces.requireD3(actual.space).left.map(_.message)
+        right <- SampleSpaces.requireD3(expected.space).left.map(_.message)
+        evidence <- SamplingAlignment.exact(left, right).left.map(_.message)
+      yield evidence
+    assert(alignment.isRight)
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     assertEquals(actual.nVolumes, expected.nVolumes, clue = "")
     var i = 0
@@ -58,7 +62,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
       RavelArray.tabulate[Double](dims(0), dims(1), dims(2), nVolumes) { (x, y, z, t) =>
         valueAt(x, y, z) + 1000.0 * t.toDouble
       }
-    SomeScalarSeries.unsafeFromRavel(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
+    SomeScalarSeries.unsafeFromRavel(data, spatial.addDim(ProviderAxes.time(nVolumes)), "plan-vec-fixture")
 
   private def denseField(
       grid: GridSpec
@@ -73,8 +77,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
   private def valueAt(x: Int, y: Int, z: Int): Double =
     x.toDouble + 10.0 * y.toDouble + 100.0 * z.toDouble
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderSpaces.affine(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, y),
@@ -83,8 +87,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
       )
     )
 
-  private def scale(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def scale(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderSpaces.affine(
       Vector(
         Vector(x, 0.0, 0.0, 0.0),
         Vector(0.0, y, 0.0, 0.0),
@@ -93,22 +97,26 @@ class ResamplingPlanSuite extends munit.FunSuite:
       )
     )
 
-  private def affine(matrix: DMat): Affine3DMorphism =
-    Affine3DMorphism.make(sourceDomain, targetDomain, matrix).fold(err => fail(err.message), identity)
+  private def affine(
+      source: GridSpec,
+      target: GridSpec,
+      matrix: Affine[D3]
+  ): SpatialPullback =
+    SpatialPullbacks.affine(source, target, matrix)
 
   private def plan(
       source: GridSpec,
       target: GridSpec,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Resample.Method
   ): ResamplingPlan =
-    ResamplingPlan.make(source, target, morphism, method).fold(err => fail(err.message), identity)
+    ResamplingPlan.make(source, target, pullback, method).fold(err => fail(err.message), identity)
 
   test("identity plan matches existing nearest and linear resampling") {
     val space = SampleSpaces(Vector(4, 4, 4))
     val volume = testVolume(space)
     val grid = GridSpec.fromSpace(space)
-    val id = IdentityMorphism(sourceDomain)
+    val id = SpatialPullbacks.worldAligned(grid, grid)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(volume).fold(err => fail(err.message), identity)
@@ -126,7 +134,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(4, 4, 4))
     val vec = testVec(space, nVolumes = 2)
     val grid = GridSpec.fromSpace(space)
-    val id = IdentityMorphism(sourceDomain)
+    val id = SpatialPullbacks.worldAligned(grid, grid)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(vec).fold(err => fail(err.message), identity)
@@ -143,7 +151,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   test("Resample plan helpers build and execute morphism-aware plans") {
     val space = SampleSpaces(Vector(3, 2, 1))
     val grid = GridSpec.fromSpace(space)
-    val id = IdentityMorphism(sourceDomain)
+    val id = SpatialPullbacks.worldAligned(grid, grid)
     val volume = testVolume(space)
     val vec = testVec(space, nVolumes = 2)
 
@@ -168,10 +176,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(4, 2, 1))
     val volume = testVolume(sourceSpace)
-    val morphism = affine(translation(1.0, 0.0, 0.0))
+    val morphism = affine(sourceGrid, targetGrid, translation(1.0, 0.0, 0.0))
 
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
-    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.executionModel, ResamplingExecutionModel.ProviderAffine)
     assertEquals(p.materializedCoordinateCount, 0)
 
     val resampled = p
@@ -191,7 +199,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(4, 1, 1))
     val vec = testVec(sourceSpace, nVolumes = 2)
-    val morphism = affine(translation(1.0, 0.0, 0.0))
+    val morphism = affine(sourceGrid, targetGrid, translation(1.0, 0.0, 0.0))
 
     val resampled = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
       .apply(vec, outside = -1.0)
@@ -219,11 +227,17 @@ class ResamplingPlanSuite extends munit.FunSuite:
         if component == 0 then 1.0 else 0.0
       }
     val morphism =
-      DenseFieldMorphism.displacement(sourceDomain, targetDomain, targetGrid, field, Resample.Method.Nearest)
+      SpatialPullbacks
+        .displacement(
+          sourceGrid,
+          targetGrid,
+          field,
+          Resample.Method.Nearest
+        )
         .fold(err => fail(err.message), identity)
 
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
-    assertEquals(p.executionModel, ResamplingExecutionModel.WorkloadPrepared)
+    assertEquals(p.executionModel, ResamplingExecutionModel.ProviderMapped)
     assertEquals(p.materializedCoordinateCount, targetGrid.nVoxels)
 
     val resampled = p
@@ -241,10 +255,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(3, 1, 1))
     val volume = testVolume(sourceSpace)
-    val morphism = affine(scale(2.0, 1.0, 1.0))
+    val morphism = affine(sourceGrid, targetGrid, scale(2.0, 1.0, 1.0))
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Nearest)
 
-    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.executionModel, ResamplingExecutionModel.ProviderAffine)
     assertEquals(p.materializedCoordinateCount, 0)
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
@@ -258,10 +272,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(1, 1, 1))
     val volume = testVolume(sourceSpace)
-    val morphism = affine(translation(0.5, 0.5, 0.5))
+    val morphism = affine(sourceGrid, targetGrid, translation(0.5, 0.5, 0.5))
     val p = plan(sourceGrid, targetGrid, morphism, Resample.Method.Linear)
 
-    assertEquals(p.executionModel, ResamplingExecutionModel.AffineProvider)
+    assertEquals(p.executionModel, ResamplingExecutionModel.ProviderAffine)
     assertEquals(p.materializedCoordinateCount, 0)
 
     val resampled = p(volume).fold(err => fail(err.message), identity)
@@ -284,14 +298,14 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(1, 1, 1))
     val volume = testVolume(sourceSpace)
-    val outsideMorphism = affine(translation(9.0, 0.0, 0.0))
+    val outsideMorphism = affine(sourceGrid, targetGrid, translation(9.0, 0.0, 0.0))
 
     val nearest = plan(sourceGrid, targetGrid, outsideMorphism, Resample.Method.Nearest)
       .apply(volume, outside = -99.0)
       .fold(err => fail(err.message), identity)
     assertClose(nearest(0, 0, 0), -99.0)
 
-    val edgeMorphism = affine(translation(1.5, 0.0, 0.0))
+    val edgeMorphism = affine(sourceGrid, targetGrid, translation(1.5, 0.0, 0.0))
     val linear = plan(sourceGrid, targetGrid, edgeMorphism, Resample.Method.Linear)
       .apply(volume, outside = -10.0)
       .fold(err => fail(err.message), identity)
@@ -302,10 +316,15 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val sourceSpace = SampleSpaces(Vector(4, 4, 4))
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume = testVolume(sourceSpace)
-    val p = plan(grid, grid, IdentityMorphism(sourceDomain), Resample.Method.Cubic)
+    val p = plan(
+      grid,
+      grid,
+      SpatialPullbacks.worldAligned(grid, grid),
+      Resample.Method.Cubic
+    )
 
-    assertEquals(p.executionModel, ResamplingExecutionModel.WorkloadPrepared)
-    assertEquals(p.materializedCoordinateCount, grid.nVoxels)
+    assertEquals(p.executionModel, ResamplingExecutionModel.ProviderAffine)
+    assertEquals(p.materializedCoordinateCount, 0)
 
     val result = p(volume).fold(err => fail(err.message), identity)
     val existing = Resample.tricubic(volume, sourceSpace)
@@ -317,7 +336,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume =
       SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
-    val morphism = affine(scale(2.0, 3.0, 1.0))
+    val morphism = affine(grid, grid, scale(2.0, 3.0, 1.0))
     val p = plan(grid, grid, morphism, Resample.Method.Nearest)
 
     val jacobian =
@@ -331,32 +350,51 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertClose(sqrtJacobian(0, 0, 0), 2.0 * math.sqrt(6.0), 1e-10)
   }
 
-  test("morphism fields materialize source coordinates, displacements, and Jacobian determinants") {
+  test("coordinate-field rendition returns a provider map with preserved owners") {
     val grid = GridSpec.identity(Vector(2, 1, 1))
-    val morphism = affine(translation(1.0, 0.0, 0.0))
-
-    val source = MorphismFields.sourceCoordinates(morphism, grid)
-    val displacement = MorphismFields.displacement(morphism, grid)
-    val jacobian =
-      MorphismFields.jacobianDeterminant(morphism, grid)
+    val coordinates =
+      denseField(grid): (voxel, component) =>
+        if component == 0 then voxel.x.toDouble + 1.0
+        else voxel.toVector(component).toDouble
+    val map =
+      SpatialPullbacks
+        .coordinates(grid, grid, coordinates)
         .fold(err => fail(err.message), identity)
+    val sourceFrame: image4s.geometry.Frame[D3] = map.source
+    val point = image4s.geometry.Point
+      .in[D3](sourceFrame)(0.5, 0.0, 0.0)
+      .fold(err => fail(err.message), identity)
+    val rebound = image4s.geometry.Frame
+      .alignOwners[D3, sourceFrame.type, image4s.geometry.Frame[D3]](
+        sourceFrame,
+        sourceFrame
+      )
+      .flatMap(_.pointToRight(point))
+      .fold(err => fail(err.message), identity)
+    val mapped = map(rebound).fold(err => fail(err.message), identity)
 
-    assertEquals(source.kind, DenseVectorFieldKind.SourceCoordinates, clue = "")
-    assertEquals(displacement.kind, DenseVectorFieldKind.Displacement, clue = "")
-    assertClose(source(VoxelCoord(0, 0, 0), 0), 1.0)
-    assertClose(source(VoxelCoord(1, 0, 0), 0), 2.0)
-    assertClose(displacement(VoxelCoord(0, 0, 0), 0), 1.0)
-    assertClose(displacement(VoxelCoord(1, 0, 0), 0), 1.0)
-    assertClose(jacobian(0, 0, 0), 1.0)
-    assertClose(jacobian(1, 0, 0), 1.0)
+    assertClose(mapped.coordinates, Vector(1.5, 0.0, 0.0), 1e-10)
+    assert(mapped.frame eq map.target)
   }
 
   test("plan rejects volumes whose source grid differs from the planned source") {
     val plannedSource = GridSpec.identity(Vector(2, 2, 2))
     val target = GridSpec.identity(Vector(2, 2, 2))
     val volume = testVolume(SampleSpaces(Vector(3, 2, 2)))
-    val p = plan(plannedSource, target, IdentityMorphism(sourceDomain), Resample.Method.Nearest)
+    val p = plan(
+      plannedSource,
+      target,
+      SpatialPullbacks.worldAligned(plannedSource, target),
+      Resample.Method.Nearest
+    )
 
-    val result = p(volume)
-    assert(result.isLeft, clue = "source mismatch should be represented directly")
+    p(volume) match
+      case Left(
+            ResamplingPlanError.Geometry(
+              image4s.geometry.GeometryError.GridsNotCongruent(0.0)
+            )
+          ) =>
+        ()
+      case other =>
+        fail(s"expected typed provider geometry mismatch, found $other")
   }

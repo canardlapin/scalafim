@@ -188,7 +188,7 @@ object MotionReportWriter:
     lines += "frame,row,c0,c1,c2,c3"
     var t = 0
     while t < trace.length do
-      val matrix = trace.unsafeFrame(t).toMatrix
+      val matrix = trace.unsafeFrame(t).toAffine.matrix
       var row = 0
       while row < 4 do
         lines += Vector(

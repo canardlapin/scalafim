@@ -1,7 +1,7 @@
 package scalafim.fmri.group
 
 import scalafim.image.SomeSampleSpace
-import scalafim.image.spatialDims
+import scalafim.image.SampleSpaces.*
 
 /** The sample axis of a group analysis. fmrigds's insight is that a "sample"
   * can be a voxel, a parcel, a surface vertex, or a latent component; the group

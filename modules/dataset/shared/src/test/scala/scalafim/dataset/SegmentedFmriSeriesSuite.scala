@@ -1,7 +1,9 @@
 package scalafim.dataset
 
+import gale.linalg.DMat
+import image4s.geometry.GeometryError
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
@@ -30,7 +32,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
     assertEquals(result.segments.map(_.partition.timepoints), Vector(Vector(0, 1), Vector(0, 1), Vector(0, 1)))
     assertEquals(result.segments.map(_.partition.localTimepoints), Vector(Vector(0, 1), Vector(0, 1), Vector(0, 1)))
     assertEquals(
-      result.segments.map(_.series.data.toRows),
+      result.segments.map(segment => GaleTestData.toRows(segment.series.data)),
       Vector(
         Vector(Vector(2.0), Vector(12.0)),
         Vector(Vector(102.0), Vector(112.0)),
@@ -65,7 +67,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
     val concatenated =
       selected.blockConcatenate.fold(error => fail(error.message), identity)
     assertEquals(
-      concatenated.series.data.toRows,
+      GaleTestData.toRows(concatenated.series.data),
       Vector(Vector(1.0), Vector(11.0), Vector(101.0), Vector(111.0), Vector(201.0), Vector(211.0))
     )
     assertEquals(concatenated.series.timepoints, Vector(0, 1, 2, 3, 4, 5))
@@ -82,7 +84,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
         .reduceBy(_.key.dataset.session): group =>
           val session = group.segments.head.key.dataset.session
           calls.update(session, calls.getOrElse(session, 0) + 1)
-          Right(group.segments.map(_.series.data.toRows.flatten.sum).sum)
+          Right(group.segments.map(segment => GaleTestData.toRows(segment.series.data).flatten.sum).sum)
         .fold(error => fail(error.message), identity)
     assertEquals(calls.toMap, Map(sessionIdOption("ses-01") -> 1, sessionIdOption("ses-02") -> 1))
     assertEquals(reduced(sessionIdOption("ses-01")), 224.0)
@@ -91,7 +93,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
   test("block concatenation rejects incompatible voxel grids and empty queries stay typed") {
     val translated =
-      DMat.fromRows(
+      GaleTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, 5.0),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -102,7 +104,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
     val fixtures =
       Vector(
         runFixture("ses-01", "run-1", 0.0, SampleSpaces(Vector(2, 1, 1))),
-        runFixture("ses-01", "run-2", 100.0, SampleSpaces(Vector(2, 1, 1), trans = Some(translated)))
+        runFixture("ses-01", "run-2", 100.0, SampleSpaces(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated))))
       )
     val index =
       DatasetIndex
@@ -121,7 +123,10 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
         )
         .fold(error => fail(error.message), identity)
 
-    assert(selected.blockConcatenate.left.exists(_.message.contains("identical voxel grids")))
+    assertEquals(
+      selected.blockConcatenate.left.toOption,
+      Some(DatasetError.Geometry(GeometryError.GridsNotCongruent(0.0)))
+    )
     assert(index
       .read(
         readers,
@@ -177,7 +182,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           id = DatasetId(s"$session-$run"),
-          data = DMat.fromRows(
+          data = GaleTestData.matrixFromRows(
             Vector.tabulate(3): time =>
               Vector(base + time.toDouble * 10.0 + 1.0, base + time.toDouble * 10.0 + 2.0)
           ),

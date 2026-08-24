@@ -8,7 +8,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 
 class RunwiseOlsSuite extends munit.FunSuite:
 
@@ -18,7 +18,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
   private def model: FmriModel =
     val x = Vector(0.0, 1.0, 2.0, 3.0, 0.0, 1.0, 2.0, 3.0)
     val y = Vector(1.0, 3.0, 5.0, 7.0, 10.0, 9.0, 8.0, 7.0)
-    val data = ImageDMat.fromRows(y.map(v => Vector(v)))
+    val data = GaleTestMatrix.fromRows(y.map(v => Vector(v)))
     val dataset =
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("runwise-demo"), data, SampleSpaces(Vector(1, 1, 1))),

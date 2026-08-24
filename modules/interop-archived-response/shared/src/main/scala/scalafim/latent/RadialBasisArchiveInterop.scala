@@ -9,7 +9,7 @@ import scalafim.archive.lna.{
   SharedBasisLocator,
   SharedBasisMask
 }
-import scalafim.image.{DMat as ArchiveDMat, SomeSampleSpace}
+import scalafim.image.SomeSampleSpace
 
 extension (radialBasis: RadialBasis)
   def sharedBasisParams(
@@ -56,12 +56,8 @@ extension (radialBasis: RadialBasis)
 private def canonicalDMat(
     radialBasis: RadialBasis,
     order: RadialMaskOrder
-): ArchiveDMat =
-  ArchiveDMat.fromRows(
-    radialBasis.loadings
-      .selectRows(order.maskOrderSelection.ordinals.toVector)
-      .toRows
-  )
+): DMat =
+  radialBasis.loadings.selectRows(order.maskOrderSelection.ordinals.toVector)
 
 private def checkedMaskSize(
     maskDims: Vector[Int]

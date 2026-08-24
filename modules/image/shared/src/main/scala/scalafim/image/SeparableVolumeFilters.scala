@@ -1,5 +1,10 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
+
 
 enum BoxBoundary:
   /** Sum only samples inside the finite lattice. */
@@ -384,7 +389,8 @@ object Gaussian3D:
     require(destination.length >= grid.nVoxels, "Gaussian destination is too small")
     require(sigmaMm.isFinite && sigmaMm >= 0.0, "Gaussian sigma must be finite and non-negative")
 
-  private def columnNorm(matrix: DMat, column: Int): Double =
+  private def columnNorm(affine: Affine[D3], column: Int): Double =
+    val matrix = affine.matrix
     val norm = math.sqrt(
       matrix(0, column) * matrix(0, column) +
         matrix(1, column) * matrix(1, column) +

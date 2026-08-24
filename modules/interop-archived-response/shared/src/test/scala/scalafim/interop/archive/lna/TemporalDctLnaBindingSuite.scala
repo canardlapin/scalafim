@@ -221,7 +221,7 @@ class TemporalDctLnaBindingSuite extends munit.FunSuite:
     )
 
   private def assertRawMatrix(
-      matrix: scalafim.image.DMat,
+      matrix: gale.linalg.DMat,
       expected: Array[Double]
   ): Unit =
     assertEquals(matrix.rows * matrix.cols, expected.length)

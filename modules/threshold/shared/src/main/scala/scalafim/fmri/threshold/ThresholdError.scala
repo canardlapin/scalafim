@@ -1,5 +1,7 @@
 package scalafim.fmri.threshold
 
+import image4s.geometry.GeometryError
+
 enum ThresholdError:
   case InvalidAlpha(value: Double)
   case InvalidQValue(value: Double)
@@ -11,6 +13,7 @@ enum ThresholdError:
   case EmptyRegion
   case DuplicateRegionIndex(index: Int)
   case ShapeMismatch(what: String, expected: String, actual: String)
+  case Geometry(cause: GeometryError)
   case NonFiniteData(what: String)
   case NegativeUnsignedEvidence(index: Int, value: Double)
   case IncompatibleAlternative(alternative: ThresholdAlternative, orientation: EvidenceOrientation)
@@ -42,6 +45,8 @@ enum ThresholdError:
         s"region contains duplicate compact index $index"
       case ShapeMismatch(what, expected, actual) =>
         s"$what shape mismatch: expected $expected, got $actual"
+      case Geometry(cause) =>
+        cause.message
       case NonFiniteData(what) =>
         s"$what contains non-finite values"
       case NegativeUnsignedEvidence(index, value) =>

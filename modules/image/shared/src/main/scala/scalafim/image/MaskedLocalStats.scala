@@ -1,5 +1,8 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import gale.linalg.DMat
 
 final case class VoxelWindowRadius(x: Int, y: Int, z: Int):
   require(x >= 0 && y >= 0 && z >= 0, "voxel window radii must be non-negative")
@@ -19,10 +22,7 @@ final class MaskedLocalStatsWorkspace private (
 object MaskedLocalStatsWorkspace:
   def apply(grid: GridSpec): MaskedLocalStatsWorkspace =
     val padded = (grid.shape.x + 1) * (grid.shape.y + 1) * (grid.shape.z + 1)
-    val inverse = DMat.invert(grid.affine).fold(
-      reason => throw new IllegalArgumentException(s"local-statistics grid affine is singular: $reason"),
-      identity
-    )
+    val inverse = grid.affine.inverse.matrix
     new MaskedLocalStatsWorkspace(
       grid,
       PrimitiveBuffers.ofSize[Double](padded),

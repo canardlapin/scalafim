@@ -1,7 +1,14 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.Continuous
+import image4s.Axis
+import image4s.AxisKind
 import image4s.Mask as MaskSemantics
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.SamplingAlignment
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
@@ -11,6 +18,10 @@ import ravel.NDArray as RavelArray
 import spire.algebra.Order
 
 object NeuroStats:
+  private def timeAxis(extent: Int): Axis =
+    Axis
+      .ordinal("time", AxisKind.Time, extent)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   final case class ScalarSummary(
     count: Int,
@@ -126,7 +137,7 @@ object NeuroStats:
       volume: SelectedVolume[F, S, Double, Continuous],
       naRm: Boolean
   ): NeuroVolumeSummary =
-    val space = volume.domain.volumeSpace.toSampleSpace
+    val space = SampleSpace.create(volume.domain.grid, NonSpatialAxes.empty)
     NeuroVolumeSummary(
       kind = "SelectedVolume",
       dims = space.spatialDims,
@@ -163,10 +174,7 @@ object NeuroStats:
       series: SelectedSeries[F, S, Double, Continuous],
       naRm: Boolean
   ): NeuroSeriesSummary =
-    val space = series.domain.volumeSpace.toSampleSpace.addDim(
-      series.nTime,
-      Some(Axis.Time)
-    )
+    val space = SampleSpace.create(series.domain.grid, series.nonSpatialAxes)
     summarizeSparseVec(
       "SelectedSeries",
       space,
@@ -342,7 +350,7 @@ object NeuroStats:
     )
 
   private def orientation(space: SomeSampleSpace): String =
-    space.axes.spatialAxes.map(_.toString).mkString(" / ")
+    space.orientation.axes.map(_.abbrev).mkString(" / ")
 
 object NeuroCompare:
 
@@ -451,4 +459,16 @@ object NeuroCompare:
       case Predicate.NEQ => !ord.eqv(left, right)
 
   private def requireSameSpace(a: SomeSampleSpace, b: SomeSampleSpace): Unit =
-    GridCompatibility.requireExact(a, b)
+    val checked =
+      for
+        left <- SampleSpaces.requireD3(a).left.map(NeuroImageError.Space.apply)
+        right <- SampleSpaces.requireD3(b).left.map(NeuroImageError.Space.apply)
+        _ <- SamplingAlignment
+          .exact(left, right)
+          .left
+          .map(NeuroImageError.Image.apply)
+      yield ()
+    checked.fold(
+      error => throw new IllegalArgumentException(error.message),
+      identity
+    )

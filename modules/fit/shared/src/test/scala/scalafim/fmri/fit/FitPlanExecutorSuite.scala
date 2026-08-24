@@ -57,7 +57,7 @@ import scalafim.fmri.model.{
   RobustConfig,
   VolumeWeighting
 }
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
@@ -74,7 +74,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0),
         Vector(3.0, 1.0),
@@ -107,7 +107,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
 
   private def pcaModel: FmriModel =
     val signal = Vector(1.0, 3.0, 5.0, 7.0)
-    val data = ImageDMat.fromRows(signal.map(value => Vector(value, -2.0 * value, 0.5 * value)))
+    val data = GaleTestMatrix.fromRows(signal.map(value => Vector(value, -2.0 * value, 0.5 * value)))
     val eventModel =
       EventModel(
         terms = Vector.empty,
@@ -131,7 +131,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     FmriModel(eventModel, baseline, dataset)
 
   private def missingDataModel: FmriModel =
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, -1.0),
         Vector(2.0, Double.NaN, 0.0),
@@ -170,7 +170,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("rrr-partitioned-demo"),
-          ImageDMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
+          GaleTestMatrix.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
           SampleSpaces(Vector(3, 1, 1))
         ),
         samplingFrame = frame
@@ -509,7 +509,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     val weightedDataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("masked-selected-row-weights"),
-        ImageDMat.fromRows(
+        GaleTestMatrix.fromRows(
           Vector(
             Vector(1.0, 2.0, -1.0),
             Vector(2.0, Double.NaN, 0.0),
@@ -557,7 +557,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
   }
 
   test("row omission reports an all-missing voxel without contaminating finite voxels") {
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, Double.NaN, -1.0),
         Vector(2.0, Double.PositiveInfinity, 0.0),
@@ -587,7 +587,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
   }
 
   test("row omission gives insufficient residual degrees of freedom a typed voxel status") {
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, -1.0),
         Vector(2.0, Double.NaN, 0.0),
@@ -615,7 +615,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
   }
 
   test("row-omission exclusions preserve requested voxel order across failure classes") {
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(Double.NaN, 2.0, 1.0),
         Vector(Double.PositiveInfinity, Double.NaN, 2.0),
@@ -679,7 +679,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("estimated-ar-masked-response"),
-        ImageDMat.fromRows(rows),
+        GaleTestMatrix.fromRows(rows),
         SampleSpaces(Vector(3, 1, 1))
       ),
       samplingFrame = frame
@@ -1217,7 +1217,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-trialwise-demo"),
-          ImageDMat.fromRows(rows),
+          GaleTestMatrix.fromRows(rows),
           SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -1279,7 +1279,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-reordered-trialwise-demo"),
-          ImageDMat.fromRows(rows),
+          GaleTestMatrix.fromRows(rows),
           SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -1332,7 +1332,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-renamed-aggregate-demo"),
-          ImageDMat.fromRows(rows),
+          GaleTestMatrix.fromRows(rows),
           SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
@@ -1383,7 +1383,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("lss-ambiguous-demo"),
-          ImageDMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),
+          GaleTestMatrix.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),
           SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),

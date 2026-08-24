@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.ImageError
 import image4s.ImageMetadata
 import image4s.Mask as MaskSemantics
@@ -80,11 +82,11 @@ object Mask:
         .map(SomeNeuroVolume.eraseSpace)
 
   def fromIndices(space: SomeSampleSpace, indices: Array1[Int], label: String = ""): MaskVol =
-    val volumeSpace =
-      VolumeSpace
-        .fromSpatialPart(space)
+    val sampleSpace =
+      SampleSpaces
+        .requireSpatialD3(space)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    val shape = volumeSpace.shape
+    val shape = sampleSpace.grid.spatialShape
     val flags =
       NDArray.build[Boolean, Rank[3]](
         Shape(shape.x, shape.y, shape.z)
@@ -93,12 +95,12 @@ object Mask:
         while position < indices.size do
           val ordinal = indices(position)
           require(
-            ordinal >= 0 && ordinal < volumeSpace.nVoxels,
-            s"mask ordinal $ordinal is outside [0, ${volumeSpace.nVoxels})"
+            ordinal >= 0 && ordinal < sampleSpace.grid.nVoxels,
+            s"mask ordinal $ordinal is outside [0, ${sampleSpace.grid.nVoxels})"
           )
           output.writeLinear(ordinal, true)
           position += 1
-    SomeNeuroVolume.unsafeFromRavel(flags, volumeSpace.toSampleSpace, label)
+    SomeNeuroVolume.unsafeFromRavel(flags, sampleSpace, label)
 
   def fromIndices(space: SomeSampleSpace, indices: Array[Int], label: String): MaskVol =
     fromIndices(

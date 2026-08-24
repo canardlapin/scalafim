@@ -2,7 +2,8 @@ package scalafim.fmri.workflow
 
 import bids4s.*
 import scalafim.dataset.{DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
-import scalafim.image.GridCompatibility
+import image4s.geometry.GeometryError
+import image4s.geometry.Grid
 
 final case class ImageHeaderDescriptor(shape: DatasetShape)
 
@@ -35,12 +36,16 @@ enum CatalogIssueCode:
   case MissingParticipant
   case DuplicateParticipant
 
+enum CatalogIssueCause derives CanEqual:
+  case Geometry(error: GeometryError)
+
 final case class CatalogIssue(
     code: CatalogIssueCode,
     path: Option[BidsPath],
     message: String,
     severity: BidsIssueSeverity = BidsIssueSeverity.Error,
-    field: Option[String] = None
+    field: Option[String] = None,
+    cause: Option[CatalogIssueCause] = None
 ):
   require(message.trim.nonEmpty, "catalog issue message must be non-empty")
 
@@ -327,21 +332,30 @@ object BidsStudyCompiler:
 
     val referenceSpace = runs.head.header.shape.space
     runs.foreach { run =>
-      if GridCompatibility.exact(run.header.shape.space, referenceSpace).isLeft then
-        issues += CatalogIssue(
-          CatalogIssueCode.IncompatibleGeometry,
-          Some(run.bold.path),
-          "BOLD spatial geometry does not match the other runs in its analysis unit"
-        )
+      Grid.exactCongruence(run.header.shape.grid, referenceSpace.grid) match
+        case Left(error) =>
+          issues += CatalogIssue(
+            CatalogIssueCode.IncompatibleGeometry,
+            Some(run.bold.path),
+            "BOLD spatial geometry does not match the other runs in its analysis unit",
+            cause = Some(CatalogIssueCause.Geometry(error))
+          )
+        case Right(_) => ()
       run.mask.foreach { mask =>
         imageHeaders.get(mask.path) match
           case None =>
             val detail = imageHeaders.failure(mask.path).map(reason => s": $reason").getOrElse("")
             issues += CatalogIssue(CatalogIssueCode.MissingHeader, Some(mask.path), s"mask header is unavailable$detail")
-          case Some(maskHeader)
-              if GridCompatibility.exact(maskHeader.shape.space, run.header.shape.space).isLeft =>
-            issues += CatalogIssue(CatalogIssueCode.IncompatibleGeometry, Some(mask.path), "mask and BOLD spatial geometry differ")
-          case Some(_) => ()
+          case Some(maskHeader) =>
+            Grid.exactCongruence(maskHeader.shape.grid, run.header.shape.grid) match
+              case Left(error) =>
+                issues += CatalogIssue(
+                  CatalogIssueCode.IncompatibleGeometry,
+                  Some(mask.path),
+                  "mask and BOLD spatial geometry differ",
+                  cause = Some(CatalogIssueCause.Geometry(error))
+                )
+              case Right(_) => ()
       }
     }
 

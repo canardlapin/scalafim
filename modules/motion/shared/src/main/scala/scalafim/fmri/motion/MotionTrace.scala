@@ -1,6 +1,7 @@
 package scalafim.fmri.motion
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 
 final case class MotionTrace private (aligned: FrameAligned[RigidPose]):
   require(aligned.nonEmpty, "MotionTrace must be non-empty")
@@ -17,8 +18,8 @@ final case class MotionTrace private (aligned: FrameAligned[RigidPose]):
   def unsafeFrame(index: Int): RigidPose =
     aligned.unsafeFrame(index)
 
-  def matrices: Vector[DMat] =
-    poses.map(_.toMatrix)
+  def affines: Vector[Affine[D3]] =
+    poses.map(_.toAffine)
 
 object MotionTrace:
   def make(poses: Vector[RigidPose]): Either[MotionError, MotionTrace] =

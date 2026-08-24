@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.io.{NiftiFieldSource, NiftiFieldSourceStats}
 
@@ -70,7 +70,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
 
   private def affine(name: String, source: Domain, target: Domain, x: Double): Morphism =
     val matrix =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, x),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -86,7 +86,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
         MorphismKind.Affine3D,
         RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(matrix))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -134,7 +134,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
     assert(receipt.checksum.isFinite)
 
   private def runBenchmark(path: Path): SpatialLazyBenchmarkReceipt =
-    val space = SampleSpaces(Vector(rows, 1, 1), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(rows, 1, 1), affine = Some(ProviderAffines.identity))
     val root = volumeDomain("native", space)
     val mid = volumeDomain("mid", space)
     val target = volumeDomain("target", space)
@@ -153,7 +153,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
         frame.toDouble * 1000.0 + row.toDouble
       }
     Nifti
-      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(fileValues, space.addDim(observations, Some(Axis.Time)), "benchmark"))
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(fileValues, space.addDim(ProviderAxes.time(observations)), "benchmark"))
       .fold(error => fail(error.message), _ => ())
 
     val bean = allocationBean()

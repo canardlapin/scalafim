@@ -1,9 +1,13 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import cats.Applicative
 import cats.syntax.all.*
 import image4s.Categorical
 import image4s.Continuous
+import image4s.Axis
+import image4s.AxisKind
 import image4s.ImageMetadata
 import image4s.Mask as MaskSemantics
 import image4s.SampleSpace
@@ -18,23 +22,31 @@ import ravel.DType
 import ravel.NDArray
 import ravel.Rank
 import ravel.Shape
+import scala.annotation.targetName
 import scala.reflect.ClassTag
 import spire.algebra.{Order, Ring}
 
-/** A zero-wrapper three-dimensional neuroimaging refinement.
+/** Owner-erased view of an admitted three-dimensional neuroimaging value.
   *
   * The value is the exact image4s `Sampled` object supplied at construction.
-  * Its only dense owner is the retained Ravel array. The static D3 plus rank-3
-  * contract implies that the sample space has no non-spatial axes.
+  * Its only dense owner is the retained Ravel array. Callers cross from an
+  * exact owner through [[SomeNeuroVolume.eraseSpace]] and back to the provider
+  * surface explicitly through `sampled`.
   */
 opaque type SomeNeuroVolume[A, Sem] =
   Sampled[? <: SampleSpace[?, D3], A, Sem, Rank[3]]
 
+/** Exact-owner view of an admitted three-dimensional neuroimaging value.
+  *
+  * The static D3 plus rank-3 provider contract implies that the sample space
+  * has no non-spatial axes. The opaque boundary prevents a provider operation
+  * from silently erasing `S`.
+  */
 opaque type NeuroVolume[
     S <: SampleSpace[?, D3],
     A,
     Sem
-] <: Sampled[S, A, Sem, Rank[3]] & SomeNeuroVolume[A, Sem] =
+] =
   Sampled[S, A, Sem, Rank[3]]
 
 type ScalarVolume[S <: SampleSpace[?, D3], A] =
@@ -122,10 +134,15 @@ object SomeMaskVolume:
     SomeNeuroVolume.unsafeCopyFromCanonicalArray[Boolean, MaskSemantics](data, space, label)
 
 object SomeNeuroVolume:
+  private def timeAxis(extent: Int): Axis =
+    Axis
+      .ordinal("time", AxisKind.Time, extent)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
   inline def eraseSpace[S <: SampleSpace[?, D3], A, Sem](
       volume: NeuroVolume[S, A, Sem]
   ): SomeNeuroVolume[A, Sem] =
-    volume
+    unsafeFromSampled(NeuroVolume.sampled(volume))
 
   private[image] inline def unsafeFromSampled[A, Sem](
       sampled: Sampled[
@@ -146,14 +163,11 @@ object SomeNeuroVolume:
   ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
     for
       sampleSpace <- SampleSpaces
-        .requireSpatialD3(space)
+        .requireVolumeD3(space)
         .left
         .map(NeuroImageError.Space.apply)
-      sampled <- NeuroVolume
-        .fromRavel[A, Sem](sampleSpace, data, metadata)
-        .left
-        .map(NeuroImageError.Image.apply)
-    yield eraseSpace(sampled)
+      volume <- fromAdmittedRavel(data, sampleSpace, metadata)
+    yield volume
 
   def unsafeFromRavel[A, Sem](
       data: NDArray[A, Rank[3]],
@@ -182,22 +196,40 @@ object SomeNeuroVolume:
       DType[A],
       ValueSemantics[A, Sem]
   ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
-    val shape = space.spatialDims
-    val expected = shape.product
-    if data.length != expected then
-      Left(
-        NeuroImageError.LinearSizeMismatch(
-          "NeuroVolume canonical array",
-          expected,
-          data.length
-        )
-      )
-    else
-      fromRavel[A, Sem](
-        NDArray.fromSeq(Shape(shape(0), shape(1), shape(2)), data),
-        space,
-        metadata
-      )
+    SampleSpaces
+      .requireVolumeD3(space)
+      .left
+      .map(NeuroImageError.Space.apply)
+      .flatMap: sampleSpace =>
+        val shape = sampleSpace.grid.shape
+        val expected = shape.product
+        if data.length != expected then
+          Left(
+            NeuroImageError.LinearSizeMismatch(
+              "NeuroVolume canonical array",
+              expected,
+              data.length
+            )
+          )
+        else
+          fromAdmittedRavel(
+            NDArray.fromSeq(Shape(shape(0), shape(1), shape(2)), data),
+            sampleSpace,
+            metadata
+          )
+
+  private def fromAdmittedRavel[A, Sem](
+      data: NDArray[A, Rank[3]],
+      sampleSpace: SampleSpace[? <: Frame[D3], D3],
+      metadata: ImageMetadata
+  )(using
+      ValueSemantics[A, Sem]
+  ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
+    NeuroVolume
+      .fromRavel[A, Sem](sampleSpace, data, metadata)
+      .left
+      .map(NeuroImageError.Image.apply)
+      .map(eraseSpace)
 
   def unsafeCopyFromCanonicalArray[A, Sem](
       data: Array[A],
@@ -209,6 +241,16 @@ object SomeNeuroVolume:
   ): SomeNeuroVolume[A, Sem] =
     copyFromCanonicalArray[A, Sem](data, space, ImageMetadata.named(label))
       .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private def mapDynamic[A, Sem, B, OutSem](
+      volume: SomeNeuroVolume[A, Sem]
+  )(
+      f: A => B
+  )(using
+      DType[B],
+      ValueSemantics[B, OutSem]
+  ): SomeNeuroVolume[B, OutSem] =
+    unsafeFromSampled(volume.mapValuesAs[B, OutSem](f))
 
   extension [A, Sem](volume: SomeNeuroVolume[A, Sem])
     def sampled: Sampled[
@@ -244,15 +286,6 @@ object SomeNeuroVolume:
     def ndim: Int =
       volume.data.rank
 
-    def typedSpace: ImageSpace[Volume3D] =
-      ImageSpace
-        .make[Volume3D](space)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
-
-    /** Exact spatial sample space retained by this semantic volume. */
-    def volumeSpace: VolumeSpace =
-      VolumeSpace.unsafe(SampleSpaces.fromCanonical(volume.sampleSpace))
-
     inline def apply(x: Int, y: Int, z: Int): A =
       volume.data(x, y, z)
 
@@ -271,18 +304,18 @@ object SomeNeuroVolume:
     def plane(
         axis: SpatialAxis,
         index: Int
-    ): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
       val axisIndex = axis.index
       val extent = volume.grid.shape(axisIndex)
       if index < 0 || index >= extent then
-        Left(NativeImageError.SpatialIndexOutOfBounds(axisIndex, index, extent))
+        Left(NeuroImageError.SpatialIndexOutOfBounds(axisIndex, index, extent))
       else
         val origin = Vector.tabulate(3)(i => if i == axisIndex then index else 0)
         val shape = Vector.tabulate(3)(i => if i == axisIndex then 1 else volume.grid.shape(i))
         volume
           .crop(origin, shape)
           .left
-          .map(NativeImageError.Image.apply)
+          .map(NeuroImageError.Image.apply)
           .map(unsafeFromSampled)
 
     def gridToIndex(i: Int, j: Int, k: Int): Int =
@@ -342,14 +375,14 @@ object SomeNeuroVolume:
       Mask.fromIndices(space, indices, label)
 
     def asMask(indices: ravel.Array1[Int]): SomeMaskVolume =
-      asMask(indices, volume.metadata.label)
+      Mask.fromIndices(space, indices, volume.metadata.label)
 
     def asMask(indices: Array[Int]): SomeMaskVolume =
-      asMask(indices, volume.metadata.label)
+      Mask.fromIndices(space, indices, volume.metadata.label)
 
     def toSeries(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       val shape = space.spatialDims
-      val seriesSpace = space.spatialSpace.addDim(1, Some(Axis.Time))
+      val seriesSpace = space.spatialSpace.addDim(timeAxis(1))
       SomeNeuroSeries.unsafeFromRavel[A, Sem](
         volume.data.reshape(Shape(shape(0), shape(1), shape(2), 1)),
         seriesSpace,
@@ -363,14 +396,20 @@ object SomeNeuroVolume:
       given DType[A] = volume.data.dtype
       val volumes = Vector(volume, that) ++ rest.toVector
       val base = space.spatialSpace
-      volumes.foreach(value => GridCompatibility.requireSpatial(base, value.space))
+      volumes.foreach: value =>
+        Grid
+          .exactCongruence(volume.grid, value.grid)
+          .fold(
+            error => throw new IllegalArgumentException(error.message),
+            identity
+          )
       val shape = base.spatialDims
       val data =
         NDArray.tabulate[A](shape(0), shape(1), shape(2), volumes.length):
           (x, y, z, time) => volumes(time).data(x, y, z)
       SomeNeuroSeries.unsafeFromRavel[A, Sem](
         data,
-        base.addDim(volumes.length, Some(Axis.Time)),
+        base.addDim(timeAxis(volumes.length)),
         volume.metadata
       )
 
@@ -380,15 +419,7 @@ object SomeNeuroVolume:
         DType[B],
         ValueSemantics[B, OutSem]
     ): SomeNeuroVolume[B, OutSem] =
-      val mapped = ravel.map(volume.data)(f)
-      Sampled
-        .create[B, OutSem, Rank[3]](
-          volume.sampleSpace,
-          mapped,
-          volume.metadata
-        )
-        .map(unsafeFromSampled)
-        .fold(error => throw new IllegalStateException(error.message), identity)
+      mapDynamic[A, Sem, B, OutSem](volume)(f)
 
     def map[B, OutSem](
         f: A => B
@@ -396,7 +427,7 @@ object SomeNeuroVolume:
         DType[B],
         ValueSemantics[B, OutSem]
     ): SomeNeuroVolume[B, OutSem] =
-      mapValues(f)
+      mapDynamic[A, Sem, B, OutSem](volume)(f)
 
     def mapVoxels[B, OutSem](
         f: (VoxelCoord, A) => B
@@ -417,13 +448,17 @@ object SomeNeuroVolume:
     )(using
         DType[C],
         ValueSemantics[C, OutSem]
-    ): Either[GridMismatch, SomeNeuroVolume[C, OutSem]] =
-      GridCompatibility.exact(space, that.space).map: _ =>
-        val shape = space.spatialDims
-        val data =
-          NDArray.tabulate[C](shape(0), shape(1), shape(2)):
-            (x, y, z) => f(volume.data(x, y, z), that.data(x, y, z))
-        unsafeFromRavel[C, OutSem](data, space, volume.metadata)
+    ): Either[NeuroImageError, SomeNeuroVolume[C, OutSem]] =
+      Grid
+        .exactCongruence(volume.grid, that.grid)
+        .left
+        .map(NeuroImageError.Geometry.apply)
+        .map: _ =>
+          val shape = space.spatialDims
+          val data =
+            NDArray.tabulate[C](shape(0), shape(1), shape(2)):
+              (x, y, z) => f(volume.data(x, y, z), that.data(x, y, z))
+          unsafeFromRavel[C, OutSem](data, space, volume.metadata)
 
     def traverseValues[F[_], B, OutSem](
         f: A => F[B]
@@ -442,6 +477,117 @@ object SomeNeuroVolume:
             space,
             volume.metadata
           )
+
+  /** Reattach data whose shape was constructed directly from this volume's grid.
+    * A failure here is an internal invariant violation, not a caller error.
+    */
+  private def replaceValuesSameShape[S <: SampleSpace[?, D3], A, Sem, B, OutSem](
+      volume: NeuroVolume[S, A, Sem],
+      data: NDArray[B, Rank[3]]
+  )(using ValueSemantics[B, OutSem]): NeuroVolume[S, B, OutSem] =
+    val sampled = NeuroVolume.sampled(volume)
+    NeuroVolume.fromSampled(
+      sampled
+        .replaceDataChecked[B, OutSem, Rank[3]](data)
+        .fold(
+          error =>
+            throw new IllegalStateException(
+              s"internally constructed volume shape was invalid: ${error.message}"
+            ),
+          identity
+        )
+    )
+
+  extension [S <: SampleSpace[?, D3], A, Sem](
+      volume: NeuroVolume[S, A, Sem]
+  )
+    @targetName("materializedCanonicalOwned")
+    def materializedCanonical: NeuroVolume[S, A, Sem] =
+      NeuroVolume.fromSampled(NeuroVolume.sampled(volume).materializedCopy)
+
+    @targetName("asLogicalOwned")
+    def asLogical(using Ring[A]): MaskVolume[S] =
+      val zero = summon[Ring[A]].zero
+      NeuroVolume.fromSampled(
+        NeuroVolume.sampled(volume).mapValuesAs[Boolean, MaskSemantics]: value =>
+          value match
+            case d: Double => !d.isNaN && d != 0.0
+            case f: Float => !f.isNaN && f != 0.0f
+            case _ => value != zero
+      )
+
+    @targetName("asMaskOwned")
+    def asMask(using Ring[A], Order[A]): MaskVolume[S] =
+      val zero = summon[Ring[A]].zero
+      val order = summon[Order[A]]
+      NeuroVolume.fromSampled(
+        NeuroVolume.sampled(volume).mapValuesAs[Boolean, MaskSemantics]: value =>
+          value match
+            case d: Double => d.isFinite && d > 0.0
+            case f: Float => f.isFinite && f > 0.0f
+            case _ => order.gt(value, zero)
+      )
+
+    @targetName("mapValuesOwned")
+    def mapValues[B, OutSem](
+        f: A => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroVolume[S, B, OutSem] =
+      NeuroVolume.fromSampled(
+        NeuroVolume.sampled(volume).mapValuesAs[B, OutSem](f)
+      )
+
+    @targetName("mapOwned")
+    def map[B, OutSem](
+        f: A => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroVolume[S, B, OutSem] =
+      NeuroVolume.fromSampled(
+        NeuroVolume.sampled(volume).mapValuesAs[B, OutSem](f)
+      )
+
+    @targetName("mapVoxelsOwned")
+    def mapVoxels[B, OutSem](
+        f: (VoxelCoord, A) => B
+    )(using
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): NeuroVolume[S, B, OutSem] =
+      val sampled = NeuroVolume.sampled(volume)
+      val shape = sampled.grid.shape
+      val mapped =
+        NDArray.tabulate[B](shape(0), shape(1), shape(2)):
+          (x, y, z) => f(VoxelCoord(x, y, z), sampled.data(x, y, z))
+      replaceValuesSameShape(volume, mapped)
+
+    @targetName("traverseValuesOwned")
+    def traverseValues[F[_], B, OutSem](
+        f: A => F[B]
+    )(using
+        Applicative[F],
+        DType[B],
+        ValueSemantics[B, OutSem]
+    ): F[NeuroVolume[S, B, OutSem]] =
+      val sampled = NeuroVolume.sampled(volume)
+      val shape = sampled.grid.shape
+      Vector
+        .tabulate(sampled.data.size): index =>
+          val z = index % shape(2)
+          val y = (index / shape(2)) % shape(1)
+          val x = index / (shape(1) * shape(2))
+          sampled.data(x, y, z)
+        .traverse(f)
+        .map: values =>
+          val mapped =
+            NDArray.fromSeq(
+              Shape(shape(0), shape(1), shape(2)),
+              values
+            )
+          replaceValuesSameShape(volume, mapped)
 
 object NeuroVolume:
   /** Retain an already checked image4s value without allocating a wrapper. */
@@ -513,7 +659,7 @@ object NeuroVolume:
       DType[A],
       ValueSemantics[A, Continuous]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     ScalarVolume[sampleSpace.type, A]
   ] =
     copyFromCanonicalArray[A, Continuous](sampleSpace, data, metadata)
@@ -526,7 +672,7 @@ object NeuroVolume:
       DType[A],
       ValueSemantics[A, Categorical]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     LabelVolume[sampleSpace.type, A]
   ] =
     copyFromCanonicalArray[A, Categorical](sampleSpace, data, metadata)
@@ -539,7 +685,7 @@ object NeuroVolume:
       DType[Boolean],
       ValueSemantics[Boolean, MaskSemantics]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     MaskVolume[sampleSpace.type]
   ] =
     copyFromCanonicalArray[Boolean, MaskSemantics](
@@ -556,14 +702,14 @@ object NeuroVolume:
       DType[A],
       ValueSemantics[A, Sem]
   ): Either[
-    NativeImageError,
+    NeuroImageError,
     NeuroVolume[sampleSpace.type, A, Sem]
   ] =
     val shape = sampleSpace.grid.shape
     val expected = shape.product
     if data.length != expected then
       Left(
-        NativeImageError.CanonicalArraySizeMismatch(
+        NeuroImageError.CanonicalArraySizeMismatch(
           expected,
           data.length
         )
@@ -576,7 +722,7 @@ object NeuroVolume:
         )
       fromRavel[A, Sem](sampleSpace, copied, metadata)
         .left
-        .map(NativeImageError.Image.apply)
+        .map(NeuroImageError.Image.apply)
 
   extension [S <: SampleSpace[?, D3], A, Sem](
       volume: NeuroVolume[S, A, Sem]
@@ -632,14 +778,14 @@ object NeuroVolume:
     def plane(
         axis: Int,
         index: Int
-    ): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
+    ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
       if axis < 0 || axis >= 3 then
-        Left(NativeImageError.SpatialAxisOutOfBounds(axis))
+        Left(NeuroImageError.SpatialAxisOutOfBounds(axis))
       else
         val extent = volume.grid.shape(axis)
         if index < 0 || index >= extent then
           Left(
-            NativeImageError.SpatialIndexOutOfBounds(
+            NeuroImageError.SpatialIndexOutOfBounds(
               axis,
               index,
               extent
@@ -648,4 +794,4 @@ object NeuroVolume:
         else
           val origin = Vector.tabulate(3)(i => if i == axis then index else 0)
           val shape = Vector.tabulate(3)(i => if i == axis then 1 else volume.grid.shape(i))
-          cropVolume(origin, shape).left.map(NativeImageError.Image.apply)
+          cropVolume(origin, shape).left.map(NeuroImageError.Image.apply)

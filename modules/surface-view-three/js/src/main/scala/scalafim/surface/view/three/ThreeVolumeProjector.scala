@@ -1,5 +1,7 @@
 package scalafim.surface.view.three
 
+import scalafim.image.SampleSpaces.*
+
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.Float32Array
 

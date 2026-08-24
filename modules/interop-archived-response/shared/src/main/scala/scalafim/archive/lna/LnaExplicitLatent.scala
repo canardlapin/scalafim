@@ -1,8 +1,9 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
-import scalafim.image.{DMat, SomeSampleSpace}
-import scalafim.image.spatialDims
+import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
+import scalafim.image.SampleSpaces.*
 
 object LnaExplicitLatent:
   val MetadataKindKey: String =
@@ -129,18 +130,13 @@ object LnaExplicitLatent:
     ExplicitLatentDescriptor.matches(desc)
 
   def dense(response: Response): DMat =
-    DMat.fromRows(
-      Vector.tabulate(response.timepoints) { time =>
-        Vector.tabulate(response.samples) { sample =>
-          var sum = response.offset.fold(0.0)(_(sample))
-          var component = 0
-          while component < response.coefficients do
-            sum += response.basis(time, component) * response.loadings(sample, component)
-            component += 1
-          sum
-        }
-      }
-    )
+    DMat.tabulate(response.timepoints, response.samples): (time, sample) =>
+      var sum = response.offset.fold(0.0)(_(sample))
+      var component = 0
+      while component < response.coefficients do
+        sum += response.basis(time, component) * response.loadings(sample, component)
+        component += 1
+      sum
 
   private[lna] def descriptorResponse(
       archive: LnaArchive,

@@ -1,7 +1,5 @@
 package scalafim.image
 
-import image4s.NonSpatialAxes
-import image4s.SampleSpace
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridDomain
@@ -14,14 +12,6 @@ import locus4s.data.Field
 /** Neuroimaging algorithms over the provider-owned exact grid domain. */
 object GridDomainOps:
   extension [F <: Frame[D3], S](domain: GridDomain[F, D3, S])
-    /** Spatial-only sample-space view of the exact live grid owner. */
-    def volumeSpace: VolumeSpace =
-      VolumeSpace.unsafe(
-        SampleSpaces.fromCanonical(
-          SampleSpace.create(domain.grid, NonSpatialAxes.empty)
-        )
-      )
-
     /** Zero-copy field exposure checked against the exact live grid owner. */
     def fieldOf[A, Sem](
         volume: SomeNeuroVolume[A, Sem]

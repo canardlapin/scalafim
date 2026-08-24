@@ -1,6 +1,7 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, GridCompatibility, Mask, SomeSampleSpace}
+import image4s.geometry.Grid
+import scalafim.image.{Mask, SomeSampleSpace}
 import scalafim.image.space
 import scalafim.latent.{LatentResponse, LatentSelection}
 import scalafim.response.OperationId
@@ -30,7 +31,7 @@ final class LatentResponseDatasetBackend private (
           )
         )
       series <- FmriSeries.make(
-        data = DatasetMatrices.fromGale(decoded),
+        data = decoded,
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
         shape = shape,
@@ -114,7 +115,8 @@ private def validateMaskSpace(
     mask: Mask.MaskVol,
     shape: DatasetShape
 ): Either[DatasetError, Unit] =
-  GridCompatibility
-    .spatial(shape.space, mask.space)
+  Grid
+    .exactCongruence(shape.grid, mask.grid)
     .left
-    .map(error => DatasetError.ShapeMismatch(error.message))
+    .map(DatasetError.Geometry.apply)
+    .map(_ => ())

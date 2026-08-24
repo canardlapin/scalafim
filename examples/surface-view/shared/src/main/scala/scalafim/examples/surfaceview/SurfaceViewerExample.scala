@@ -1,7 +1,8 @@
 package scalafim.examples.surfaceview
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*
@@ -69,12 +70,12 @@ object SurfaceViewerExample:
       ),
       Hemisphere.Left,
       SurfaceKind.Midthickness,
-      DMat.fromRows(Vector(
+      Affine.fromRowMajor[D3](Vector(
         Vector(1.0, 0.0, 0.0, 10.0),
         Vector(0.0, 1.0, 0.0, 20.0),
         Vector(0.0, 0.0, 1.0, 30.0),
         Vector(0.0, 0.0, 0.0, 1.0)
-      ))
+      ).flatten).toOption.get
     )
 
   def fromGifti(left: SurfaceGeometry): Either[SurfaceViewError, SurfaceViewerExample] =

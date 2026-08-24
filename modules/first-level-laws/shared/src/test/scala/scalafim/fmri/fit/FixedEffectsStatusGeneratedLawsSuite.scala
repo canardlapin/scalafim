@@ -10,7 +10,7 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.laws.GeneratedLawSuite
 import scalafim.fmri.model.{FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
 
@@ -112,7 +112,7 @@ class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
     val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("fixed-effects-status-generated-law"),
-        ImageDMat.fromRows(response),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(response),
         SampleSpaces(Vector(3, 1, 1))
       ),
       samplingFrame = sampling,

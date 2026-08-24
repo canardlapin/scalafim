@@ -23,8 +23,8 @@ object ExplicitLatentArchiveCodec:
   ): Either[ArchiveError, LnaArchive] =
     LnaExplicitLatent.archive(
       response = LnaExplicitLatent.Response(
-        basis = toDMat(response.basis),
-        loadings = toDMat(response.loadings),
+        basis = response.basis,
+        loadings = response.loadings,
         offset = response.offset.map(_.toVector),
         sourceDomain = response.sourceDomain.value,
         targetDomain = response.targetDomain.value,
@@ -97,8 +97,8 @@ object ExplicitLatentArchiveCodec:
       .flatMap { response =>
         LnaTemporalDct.archive(
           response = LnaExplicitLatent.Response(
-            basis = toDMat(response.basis),
-            loadings = toDMat(response.loadings),
+            basis = response.basis,
+            loadings = response.loadings,
             offset = response.offset.map(_.toVector),
             sourceDomain = response.sourceDomain.value,
             targetDomain = response.targetDomain.value,
@@ -126,8 +126,8 @@ object ExplicitLatentArchiveCodec:
         sourceDomain <- DomainId(response.sourceDomain).left.map(error)
         targetDomain <- DomainId(response.targetDomain).left.map(error)
         latent <- ExplicitLatentResponse(
-          basis = toDoubleMatrix(response.basis),
-          loadings = toDoubleMatrix(response.loadings),
+          basis = response.basis,
+          loadings = response.loadings,
           offset = response.offset.map(DVec.fromSeq),
           sourceDomain = sourceDomain,
           targetDomain = targetDomain,

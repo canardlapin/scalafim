@@ -1,7 +1,7 @@
 package scalafim.archive.lna
 
 import scalafim.archive.ArchiveError
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 object Quant:
   final case class Encoded(
@@ -49,15 +49,11 @@ object Quant:
     else if scale.length != offset.length then
       Left(ArchiveError.ShapeMismatch("quant scale and offset vectors must have the same length"))
     else
-      val rows =
-        Vector.tabulate(quantized.rows) { r =>
-          Vector.tabulate(quantized.cols) { c =>
-            val scaleAt = if scale.length == 1 then scale(0) else scale(c)
-            val offsetAt = if offset.length == 1 then offset(0) else offset(c)
-            quantized(r, c).toDouble * scaleAt + offsetAt
-          }
-        }
-      Right(DMat.fromRows(rows))
+      Right(DMat.tabulate(quantized.rows, quantized.cols): (row, column) =>
+        val scaleAt = if scale.length == 1 then scale(0) else scale(column)
+        val offsetAt = if offset.length == 1 then offset(0) else offset(column)
+        quantized(row, column).toDouble * scaleAt + offsetAt
+      )
 
   private final case class ColumnStats(min: Double, max: Double, mean: Double, sampleSd: Double)
   private final case class QuantStats(scale: Vector[Double], offset: Vector[Double])
@@ -67,7 +63,7 @@ object Quant:
     val levels = bits.levels
     val dtype = bits.storageDType
     val out = Vector.newBuilder[Int]
-    out.sizeHint(data.data.length)
+    out.sizeHint(data.rows * data.cols)
 
     var nClipped = 0
     var r = 0
@@ -91,7 +87,7 @@ object Quant:
         method = params.method,
         scaleScope = params.scaleScope,
         nClippedTotal = nClipped,
-        clipPct = 100.0 * nClipped.toDouble / data.data.length.toDouble
+        clipPct = 100.0 * nClipped.toDouble / (data.rows * data.cols).toDouble
       )
 
     if nClipped > 0 && !params.clipPolicy.allowClip then
@@ -162,20 +158,16 @@ object Quant:
     scaleOffset(out.result(), params)
 
   private def matrixStats(data: DMat): ColumnStats =
-    val values = data.data
     var min = Double.PositiveInfinity
     var max = Double.NegativeInfinity
     var sum = 0.0
     var sumSquares = 0.0
-    var i = 0
-    while i < values.length do
-      val value = values(i)
+    data.foreachRowMajor: value =>
       if value < min then min = value
       if value > max then max = value
       sum += value
       sumSquares += value * value
-      i += 1
-    statsFromMoments(min, max, sum, sumSquares, values.length)
+    statsFromMoments(min, max, sum, sumSquares, data.rows * data.cols)
 
   private def statsFromMoments(min: Double, max: Double, sum: Double, sumSquares: Double, n: Int): ColumnStats =
     val mean = sum / n.toDouble
@@ -185,8 +177,8 @@ object Quant:
     ColumnStats(min, max, mean, math.sqrt(sampleVariance))
 
   private def firstNonFinite(data: DMat): Option[Int] =
-    var i = 0
-    while i < data.data.length do
-      if !data.data(i).isFinite then return Some(i)
-      i += 1
+    var index = 0
+    while index < data.rows * data.cols do
+      if !data(index / data.cols, index % data.cols).isFinite then return Some(index)
+      index += 1
     None

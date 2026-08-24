@@ -1,7 +1,8 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries, VoxelDomain}
-import scalafim.image.{DMat, Mask, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.image.{Mask, SomeSampleSpace}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -37,11 +38,8 @@ final case class MatrixFileDatasetBackend(
       loaded <- loadedEither
       resolved <- selection.resolveEither(acquisitionDomain)
       series <- FmriSeries.make(
-        data = DMat.fromRows(
-          resolved.timepoints.map { r =>
-            resolved.voxels.map(c => loaded.data(r, c))
-          }
-        ),
+        data = DMat.tabulate(resolved.timepoints.length, resolved.voxels.length): (row, column) =>
+          loaded.data(resolved.timepoints(row), resolved.voxels(column)),
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
         shape = loaded.shape,
@@ -70,7 +68,7 @@ object MatrixFileDatasetBackend:
             loaded <-
               if cols != shape.spatialSize then
                 Left(DatasetError.ShapeMismatch(s"matrix file '$path' has $cols columns but space has ${shape.spatialSize} voxels"))
-              else Right(LoadedMatrix(DMat.fromRows(rows), shape))
+              else Right(LoadedMatrix(DMat.tabulate(rows.length, cols)((row, column) => rows(row)(column)), shape))
           yield loaded
     catch case NonFatal(e) => Left(DatasetError.StorageFailure(e.getMessage))
 

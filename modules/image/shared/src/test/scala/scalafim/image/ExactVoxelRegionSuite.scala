@@ -3,14 +3,14 @@ package scalafim.image
 class ExactVoxelRegionSuite extends munit.FunSuite:
 
   private val volumeSpace =
-    VolumeSpace(SampleSpaces(Vector(2, 2, 1)))
+    ProviderSpaces.volume(SampleSpaces(Vector(2, 2, 1)))
 
   private val translatedSpace =
-    VolumeSpace(
+    ProviderSpaces.volume(
       SampleSpaces(
         Vector(2, 2, 1),
-        trans = Some(
-          DMat.fromRows(
+        affine = Some(
+          ProviderSpaces.affine(
             Vector(
               Vector(1.0, 0.0, 0.0, 10.0),
               Vector(0.0, 1.0, 0.0, 0.0),
@@ -25,7 +25,7 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
   private val packedDomain =
     GridDomain
       .register(
-        volumeSpace.sampleSpace.grid,
+        volumeSpace.grid,
         "exact voxel region suite",
         locus4s.DomainRegistry.empty
       )
@@ -53,7 +53,7 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     val foreign =
       GridDomain
         .register(
-          translatedSpace.sampleSpace.grid,
+          translatedSpace.grid,
           "translated exact voxel region suite",
           locus4s.DomainRegistry.empty
         )
@@ -94,7 +94,10 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val selected =
-      SelectedVolume.gather(domain, volume, selection).toOption.get
+      SelectedVolume
+        .gather(domain, SomeNeuroVolume.eraseSpace(volume), selection)
+        .toOption
+        .get
 
     assertEquals(selected.data.iterator.toVector, Vector(12, 10))
     assert(selected.selection.eq(selection))
@@ -102,7 +105,7 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     val foreign =
       GridDomain
         .register(
-          translatedSpace.sampleSpace.grid,
+          translatedSpace.grid,
           "translated exact selected volume suite",
           locus4s.DomainRegistry.empty
         )
@@ -110,7 +113,11 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
         .get
     val foreignSelection =
       locus4s.Selection.fromOrdinals(foreign.value.space, Vector(0)).toOption.get
-    assert(SelectedVolume.gather(domain, volume, foreignSelection).isLeft)
+    assert(
+      SelectedVolume
+        .gather(domain, SomeNeuroVolume.eraseSpace(volume), foreignSelection)
+        .isLeft
+    )
 
   test("selected series use position by time storage"):
     val time =
@@ -134,7 +141,10 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val selected =
-      SelectedSeries.gather(domain, series, selection).toOption.get
+      SelectedSeries
+        .gather(domain, SomeNeuroSeries.eraseSpace(series), selection)
+        .toOption
+        .get
     val mapped =
       selected.selected.mapValues[Int, image4s.Categorical](_ + 1)
     val result = SelectedSeries.fromSelected(mapped).toOption.get

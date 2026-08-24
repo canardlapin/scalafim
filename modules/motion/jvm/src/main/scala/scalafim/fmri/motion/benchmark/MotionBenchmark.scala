@@ -1,5 +1,7 @@
 package scalafim.fmri.motion.benchmark
 
+import scalafim.image.SampleSpaces.*
+
 import scalafim.fmri.motion.*
 import scalafim.fmri.motion.io.MotionReportWriter
 import scalafim.image.*
@@ -97,6 +99,11 @@ final case class ExternalBenchmarkSummary(
     missingColumns.isEmpty && nRows > 0
 
 object MotionBenchmark:
+  private def timeAxis(extent: Int): image4s.Axis =
+    image4s.Axis
+      .ordinal("time", image4s.AxisKind.Time, extent)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
   val RawColumns: Vector[String] =
     Vector(
       "scenario",
@@ -316,7 +323,7 @@ object MotionBenchmark:
       val noise = scenario.noiseScale * math.sin(12.9898 * (lin + 1).toDouble + 78.233 * (t + 1).toDouble)
       nuisance * base + noise
     }
-    val space = SampleSpaces(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(scenario.nVolumes, Some(Axis.Time))
+    val space = SampleSpaces(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(timeAxis(scenario.nVolumes))
     SomeNeuroSeries.unsafeCopyFromCanonicalArray[Double, image4s.Continuous](
       data,
       space,

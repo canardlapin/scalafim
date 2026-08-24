@@ -8,7 +8,8 @@ import scalafim.fmri.design.data.Column
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.Hrfs
-import scalafim.image.{DMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import gale.linalg.Matrix
 
 class ModelBuilderSuite extends munit.FunSuite:
 
@@ -19,14 +20,14 @@ class ModelBuilderSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset(events: DatasetEvents): FmriDataset =
-    val data = DMat.fromRows(
+    val rows =
       Vector(
         Vector(1.0),
         Vector(3.0),
         Vector(5.0),
         Vector(7.0)
       )
-    )
+    val data = Matrix.dense(rows.length, rows.head.length, rows.flatten)
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("builder-demo"), data, SampleSpaces(Vector(1, 1, 1))),
       samplingFrame = samplingFrame,

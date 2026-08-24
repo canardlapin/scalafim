@@ -11,7 +11,7 @@ import image4s.nifti.NiftiWriteOptions
 import munit.FunSuite
 import ravel.DType.given
 import ravel.NDArray
-import scalafim.image.Axis
+import scalafim.image.ProviderAxes
 import scalafim.image.NeuroSeries
 import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.*
@@ -28,7 +28,7 @@ final class NativeNiftiAllocationSuite extends FunSuite:
     val sourceSpace =
       SampleSpaces
         .requireD3(
-          SampleSpaces(spatialShape).addDim(timePoints, Some(Axis.Time))
+          SampleSpaces(spatialShape).addDim(ProviderAxes.time(timePoints))
         )
         .toOption
         .get

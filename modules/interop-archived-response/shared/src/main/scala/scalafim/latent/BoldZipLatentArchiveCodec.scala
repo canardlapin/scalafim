@@ -15,7 +15,7 @@ import scalafim.archive.lna.{
   TransformParams
 }
 import scalafim.image.SomeSampleSpace
-import scalafim.image.spatialDims
+import scalafim.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -129,12 +129,12 @@ object BoldZipLatentArchiveCodec:
 
       val payloads =
         Map[ArchivePath, Payload](
-          temporalPath -> Payload.DoubleMatrix(toDMat(response.temporalBasis)),
-          thetaPath -> Payload.DoubleMatrix(toDMat(response.carrierTheta))
+          temporalPath -> Payload.DoubleMatrix(response.temporalBasis),
+          thetaPath -> Payload.DoubleMatrix(response.carrierTheta)
         ) ++
-          loadingsRef.map(_ => loadingsPath -> Payload.DoubleMatrix(toDMat(response.carrierLoadings))).toMap ++
-          response.spatialBasis.phiCoarse.map(matrix => coarsePath -> Payload.DoubleMatrix(toDMat(matrix))).toMap ++
-          response.spatialBasis.phiDetail.map(matrix => detailPath -> Payload.DoubleMatrix(toDMat(matrix))).toMap ++
+          loadingsRef.map(_ => loadingsPath -> Payload.DoubleMatrix(response.carrierLoadings)).toMap ++
+          response.spatialBasis.phiCoarse.map(matrix => coarsePath -> Payload.DoubleMatrix(matrix)).toMap ++
+          response.spatialBasis.phiDetail.map(matrix => detailPath -> Payload.DoubleMatrix(matrix)).toMap ++
           texturePayloads(response.texture, textureIndexPath, textureAmplitudePath) ++
           eventPayloads(response.events, eventIndexPath, eventAmplitudePath) ++
           response.offset.map(values => offsetPath -> Payload.DoubleVector(values.toVector)).toMap
@@ -185,8 +185,8 @@ object BoldZipLatentArchiveCodec:
         detailMatrix <- optionalDoubleMatrix(valid, desc, DetailBasisRole, "BOLDZip detail spatial basis")
         spatialBasis <- BoldZipSpatialBasis(
           sampleCount = run.shape.spatialSize,
-          coarse = coarseMatrix.map(matrix => BoldZipCoarseBasis.MatrixBasis(toDoubleMatrix(matrix))).getOrElse(BoldZipCoarseBasis.Absent),
-          detail = detailMatrix.map(matrix => BoldZipDetailBasis.MatrixBasis(toDoubleMatrix(matrix))).getOrElse(BoldZipDetailBasis.IdentitySamples),
+          coarse = coarseMatrix.map(BoldZipCoarseBasis.MatrixBasis.apply).getOrElse(BoldZipCoarseBasis.Absent),
+          detail = detailMatrix.map(BoldZipDetailBasis.MatrixBasis.apply).getOrElse(BoldZipDetailBasis.IdentitySamples),
           label = params.metadata.getOrElse(SpatialBasisLabelKey, "")
         ).left.map(error)
         carrierLoadings <- readCarrierLoadings(valid, desc, spatialBasis, carrierTheta.rows)
@@ -196,8 +196,8 @@ object BoldZipLatentArchiveCodec:
         source <- DomainId(sourceDomain).left.map(error)
         target <- DomainId(targetDomain).left.map(error)
         response <- BoldZipPayload(
-          temporalBasis = toDoubleMatrix(temporalBasis),
-          carrierTheta = toDoubleMatrix(carrierTheta),
+          temporalBasis = temporalBasis,
+          carrierTheta = carrierTheta,
           carrierLoadings = carrierLoadings,
           spatialBasis = spatialBasis,
           texture = texture,
@@ -249,7 +249,7 @@ object BoldZipLatentArchiveCodec:
   ): Either[ArchiveError, DMat] =
     optionalDoubleMatrix(archive, desc, CarrierLoadingsRole, "BOLDZip carrier loadings").flatMap {
       case Some(matrix) =>
-        val values = toDoubleMatrix(matrix)
+        val values = matrix
         if values.rows != spatialBasis.coarseAtoms then
           Left(ArchiveError.ShapeMismatch(s"BOLDZip carrier loadings have ${values.rows} rows but coarse basis has ${spatialBasis.coarseAtoms} atoms"))
         else if values.cols != carriers then

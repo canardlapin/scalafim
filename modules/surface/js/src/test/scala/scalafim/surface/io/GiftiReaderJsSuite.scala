@@ -34,9 +34,9 @@ class GiftiReaderJsSuite extends munit.FunSuite:
         assertEqualsDouble(sample.x, 100.0, 0.0)
         assertEqualsDouble(sample.y, 50.0, 0.0)
         assertEqualsDouble(sample.z, 3.0, 0.0)
-        assertEqualsDouble(geometry.surfaceToWorld(0, 3), 10.0, 0.0)
-        assertEqualsDouble(geometry.surfaceToWorld(1, 3), 20.0, 0.0)
-        assertEqualsDouble(geometry.surfaceToWorld(2, 3), 30.0, 0.0)
+        assertEqualsDouble(geometry.surfaceToWorld.matrix(0, 3), 10.0, 0.0)
+        assertEqualsDouble(geometry.surfaceToWorld.matrix(1, 3), 20.0, 0.0)
+        assertEqualsDouble(geometry.surfaceToWorld.matrix(2, 3), 30.0, 0.0)
       }
 
   test("Scala.js byte ingestion accepts an outer gzip stream"):

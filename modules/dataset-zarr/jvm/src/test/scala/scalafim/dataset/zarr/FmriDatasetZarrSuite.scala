@@ -48,7 +48,7 @@ class FmriDatasetZarrSuite extends munit.FunSuite:
         )
         .fold(error => fail(error.message), identity)
     assertEquals(
-      series.data.toRows,
+      GaleTestData.toRows(series.data),
       Vector(
         Vector(3.75, 1.0, 2.25),
         Vector(0.75, -2.0, -0.75)

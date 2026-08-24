@@ -2,6 +2,7 @@ package scalafim.image
 
 import image4s.Axis as ImageAxis
 import image4s.AxisKind
+import image4s.ImageError
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
 import image4s.SomeSampleSpace
@@ -17,6 +18,8 @@ import image4s.geometry.Grid
 import image4s.geometry.GridId
 import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
+import gale.linalg.DMat
+import scalafim.image.NeuroAffineSyntax.*
 
 enum SampleSpaceError:
   case EmptyDimensions
@@ -24,13 +27,12 @@ enum SampleSpaceError:
   case SpatialVectorLengthMismatch(label: String, expected: Int, actual: Int)
   case NonFiniteSpatialValue(label: String, axis: SpatialAxis, value: Double)
   case NonPositiveSpacing(axis: SpatialAxis, value: Double)
-  case InvalidTransformShape(rows: Int, cols: Int)
-  case NonFiniteTransformValue(index: Int)
-  case InvalidTransformBottomRow(actual: Vector[Double])
-  case SingularTransform(reason: String)
   case AxisCountMismatch(expected: Int, actual: Int)
+  case AxisExtentMismatch(index: Int, expected: Int, actual: Int)
   case ExpectedDimensionality(label: String, expected: Int, actual: Int)
-  case CanonicalGeometry(reason: String)
+  case UnexpectedNonSpatialAxes(actual: Vector[AxisKind])
+  case Geometry(cause: GeometryError)
+  case Image(cause: ImageError)
 
   def message: String =
     this match
@@ -44,20 +46,19 @@ enum SampleSpaceError:
         s"'$label' ${axis.label} value must be finite; got $value"
       case NonPositiveSpacing(axis, value) =>
         s"'spacing' ${axis.label} value must be positive; got $value"
-      case InvalidTransformShape(rows, cols) =>
-        s"spatial transform must be 4x4; got ${rows}x${cols}"
-      case NonFiniteTransformValue(index) =>
-        s"spatial transform value at linear index $index is not finite"
-      case InvalidTransformBottomRow(actual) =>
-        s"spatial transform bottom row must be [0, 0, 0, 1]; got $actual"
-      case SingularTransform(reason) =>
-        s"transformation matrix not invertible: $reason"
       case AxisCountMismatch(expected, actual) =>
-        s"axis count must match dimensionality: expected $expected, got $actual"
+        s"non-spatial axis count must match trailing dimensionality: expected $expected, got $actual"
+      case AxisExtentMismatch(index, expected, actual) =>
+        s"non-spatial axis $index extent must match its dimension: expected $expected, got $actual"
       case ExpectedDimensionality(label, expected, actual) =>
         s"$label requires exactly $expected dimensions; got $actual"
-      case CanonicalGeometry(reason) =>
-        s"canonical sampling geometry is invalid: $reason"
+      case UnexpectedNonSpatialAxes(actual) =>
+        val kinds = actual.map(_.id).mkString(", ")
+        s"spatial-only sample space requires no non-spatial axes; got [$kinds]"
+      case Geometry(cause) =>
+        cause.message
+      case Image(cause) =>
+        cause.message
 
 /** Neuroimaging constructors and checked refinements for image4s sampling
   * geometry. Values remain the exact provider-owned `SomeSampleSpace` object.
@@ -113,6 +114,18 @@ object SampleSpaces:
   ] =
     requireD3(space).map(_.spatialOnly)
 
+  /** Admit a volume space without silently discarding non-spatial axes. */
+  private[scalafim] def requireVolumeD3(
+      space: SomeSampleSpace
+  ): Either[
+    SampleSpaceError,
+    SampleSpace[? <: Frame[D3], D3]
+  ] =
+    requireD3(space).flatMap: spatial =>
+      val nonSpatialKinds = spatial.nonSpatialAxes.values.map(_.kind)
+      if nonSpatialKinds.isEmpty then Right(spatial)
+      else Left(SampleSpaceError.UnexpectedNonSpatialAxes(nonSpatialKinds))
+
   /** Assign deterministic persistent identity to exact D3 sampling geometry.
     *
     * External decoders intentionally produce ephemeral frame and grid owners.
@@ -160,124 +173,81 @@ object SampleSpaces:
   ): SpatialDims =
     SpatialDims.unsafeFromVector(space.grid.shape)
 
-  private[image] def affineOf(space: SomeSampleSpace): Affine3D =
-    val transform = canonicalTransform(space)
-    Affine3D.unsafe(
-      transform,
-      DMat
-        .invert(transform)
-        .fold(reason => throw new IllegalStateException(reason), identity)
-    )
-
   private[image] def spatialPart(space: SomeSampleSpace): SomeSampleSpace =
     fromCanonical(space.typed.spatialOnly)
 
-  private[image] def withTime(
-      space: SomeSampleSpace,
-      extent: Int
-  ): SomeSampleSpace =
-    space.addDim(extent, Some(Axis.Time))
-
   extension (space: SomeSampleSpace)
-    def dims: Vector[Int] =
+    private[scalafim] def dims: Vector[Int] =
       space.logicalShape
 
-    def ndim: Int =
+    private[scalafim] def ndim: Int =
       dims.length
 
-    def spatialDims: Vector[Int] =
+    private[scalafim] def spatialDims: Vector[Int] =
       space.grid.shape
 
-    def spatialShape: SpatialDims =
+    private[scalafim] def spatialShape: SpatialDims =
       SpatialDims.unsafeFromVector(spatialDims)
 
-    def spacing: Vector[Double] =
-      Affine.voxelSizes(trans).take(space.spatialRank)
+    private[scalafim] def spacing: Vector[Double] =
+      val matrix = space.grid.indexToFrame.matrix
+      Vector.tabulate(space.spatialRank): column =>
+        var row = 0
+        var sum = 0.0
+        while row < space.spatialRank do
+          val value = matrix(row, column)
+          sum += value * value
+          row += 1
+        math.sqrt(sum)
 
-    def origin: Vector[Double] =
-      Vector.tabulate(space.spatialRank)(axis => trans(axis, 3))
+    private[scalafim] def origin: Vector[Double] =
+      val matrix = space.grid.indexToFrame.matrix
+      Vector.tabulate(space.spatialRank)(axis =>
+        matrix(axis, space.spatialRank)
+      )
 
-    def axes: AxisSet =
-      val spatial = defaultAxes(space.spatialRank, trans).spatialAxes
-      val additional =
-        space.nonSpatialAxes.values.map: axis =>
-          publicAxis(axis)
-      AxisSet((spatial ++ additional)*)
+    private[scalafim] def orientation: Orientation3D =
+      val matrix = space.grid.indexToFrame.matrix
+      Orientation.findAnatomy(matrix)
 
-    def trans: DMat =
-      canonicalTransform(space)
+    private[scalafim] def affineD3: Either[SampleSpaceError, GeometryAffine[D3]] =
+      requireD3(space).map(_.grid.indexToFrame)
 
-    def inverse: DMat =
-      DMat
-        .invert(trans)
-        .fold(reason => throw new IllegalStateException(reason), identity)
+    private[scalafim] def inverseAffineD3: Either[SampleSpaceError, GeometryAffine[D3]] =
+      affineD3.map(_.inverse)
 
-    def affine3D: Affine3D =
-      Affine3D.unsafe(trans, inverse)
-
-    def asVolumeSpace: Either[SampleSpaceError, VolumeSpace] =
-      VolumeSpace.make(space)
-
-    def asSeriesSpace: Either[SampleSpaceError, SeriesSpace] =
-      SeriesSpace.make(space)
-
-    def gridToIndex(coords: Vector[Int]): Int =
+    private[scalafim] def gridToIndex(coords: Vector[Int]): Int =
       Indexing.gridToIndex(dims, coords)
 
-    def indexToGrid(idx: Int): Vector[Int] =
+    private[scalafim] def indexToGrid(idx: Int): Vector[Int] =
       Indexing.indexToGrid(dims, idx)
 
-    def gridToIndex3D(x: Int, y: Int, z: Int): Int =
+    private[scalafim] def gridToIndex3D(x: Int, y: Int, z: Int): Int =
       gridToIndex3D(VoxelCoord(x, y, z))
 
-    def gridToIndex3D(coord: VoxelCoord): Int =
+    private[scalafim] def gridToIndex3D(coord: VoxelCoord): Int =
       Indexing.gridToIndex3D(spatialShape, coord)
 
-    def indexToGrid3D(idx: Int): Vector[Int] =
+    private[scalafim] def indexToGrid3D(idx: Int): Vector[Int] =
       indexToVoxel3D(idx).toVector
 
-    def indexToVoxel3D(idx: Int): VoxelCoord =
+    private[scalafim] def indexToVoxel3D(idx: Int): VoxelCoord =
       Indexing.indexToGrid3D(spatialShape, idx)
 
-    def spatialSpace: SomeSampleSpace =
+    private[scalafim] def spatialSpace: SomeSampleSpace =
       fromCanonical(space.typed.spatialOnly)
 
-    def addDim(n: Int, axis: Option[Axis] = None): SomeSampleSpace =
-      require(n > 0, "added dimension must be positive")
-      val newDims = dims :+ n
-      val newAxis =
-        axis.getOrElse {
-          if newDims.length == 4 then Axis.Time else Axis.NoneAxis
-        }
-      if space.spatialRank < 3 &&
-          space.nonSpatialAxes.size == 0 &&
-          axis != Some(Axis.Time)
-      then
-        SampleSpaces(
-          dims = newDims,
-          spacing = Some(spacing :+ 1.0),
-          origin = Some(origin :+ 0.0),
-          axes = Some(AxisSet((axes.axes :+ newAxis)*)),
-          trans = None
-        )
-      else
-        val axisIndex = space.spatialRank + space.nonSpatialAxes.size
-        val appended =
-          for
-            canonical <- imageAxis(newAxis, n, axisIndex)
-            refined <- space.typed
-              .appendNonSpatial(canonical)
-              .left
-              .map(error =>
-                SampleSpaceError.CanonicalGeometry(error.message)
-              )
-          yield fromCanonical(refined)
-        appended.fold(
+    /** Append one exact provider-owned non-spatial sampling axis. */
+    private[scalafim] def addDim(axis: ImageAxis): SomeSampleSpace =
+      space.typed
+        .appendNonSpatial(axis)
+        .map(fromCanonical)
+        .fold(
           error => throw new IllegalArgumentException(error.message),
           identity
         )
 
-    def dropDim(dimnum: Int = space.ndim - 1): SomeSampleSpace =
+    private[scalafim] def dropDim(dimnum: Int = space.ndim - 1): SomeSampleSpace =
       require(ndim >= 2, "cannot drop from <2D space")
       require(dimnum >= 0 && dimnum < ndim, "dimnum out of range")
       if dimnum >= space.spatialRank then
@@ -291,56 +261,85 @@ object SampleSpaces:
       else
         val keepIdx = dims.indices.filter(_ != dimnum).toVector
         val newDims = keepIdx.map(dims)
-        val newAxes = AxisSet(keepIdx.map(axes.axes(_))*)
         val newSpacing = spacing.patch(dimnum, Nil, 1)
         val newOrigin = origin.patch(dimnum, Nil, 1)
         SampleSpaces(
           dims = newDims,
           spacing = Some(newSpacing),
           origin = Some(newOrigin),
-          axes = Some(newAxes),
-          trans = None
+          axes = Some(space.nonSpatialAxes),
+          affine = None
         )
 
-    def indexToCoord(index: Vector[Double]): Vector[Double] =
-      transformCoordinates(trans, index)
+    private[scalafim] def indexToCoord(index: Vector[Double]): Vector[Double] =
+      transformCoordinates(space.grid.indexToFrame.matrix, index)
 
-    def indexToPoint(index: SpatialPoint): SpatialPoint =
+    private[scalafim] def indexToPoint(index: SpatialPoint): SpatialPoint =
       SpatialPoint.unsafeFromVector(
         indexToCoord(index.toVector),
         "world coordinate"
       )
 
-    def voxelToWorld(voxel: VoxelPoint): WorldPoint =
-      affine3D.voxelToWorld(voxel)
+    private[scalafim] def voxelToWorld(
+        voxel: VoxelPoint
+    ): Either[SampleSpaceError, WorldPoint] =
+      affineD3
+        .flatMap(
+          _.apply(voxel.toVector).left.map(SampleSpaceError.Geometry.apply)
+        )
+        .map(value => WorldPoint.unsafeFromVector(value, "world point"))
 
-    def coordToIndex(coord: Vector[Double]): Vector[Double] =
-      transformCoordinates(inverse, coord)
+    private[scalafim] def coordToIndex(coord: Vector[Double]): Vector[Double] =
+      transformCoordinates(space.grid.indexToFrame.inverse.matrix, coord)
 
-    def coordToIndexPoint(coord: SpatialPoint): SpatialPoint =
+    private[scalafim] def coordToIndexPoint(coord: SpatialPoint): SpatialPoint =
       SpatialPoint.unsafeFromVector(
         coordToIndex(coord.toVector),
         "voxel coordinate"
       )
 
-    def worldToVoxel(world: WorldPoint): VoxelPoint =
-      affine3D.worldToVoxel(world)
+    private[scalafim] def worldToVoxel(
+        world: WorldPoint
+    ): Either[SampleSpaceError, VoxelPoint] =
+      inverseAffineD3
+        .flatMap(
+          _.apply(world.toVector).left.map(SampleSpaceError.Geometry.apply)
+        )
+        .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
+
+  extension [F <: Frame[D3]](grid: Grid[F, D3])
+    private[scalafim] def spatialShape: SpatialDims =
+      SpatialDims.unsafeFromVector(grid.shape)
+
+    private[scalafim] def affine: GeometryAffine[D3] =
+      grid.indexToFrame
+
+    private[scalafim] def nVoxels: Int =
+      grid.shape.product
+
+    private[scalafim] def voxelToWorld(voxel: VoxelPoint): Either[GeometryError, WorldPoint] =
+      affine(voxel.toVector)
+        .map(value => WorldPoint.unsafeFromVector(value, "world point"))
+
+    private[scalafim] def worldToVoxel(world: WorldPoint): Either[GeometryError, VoxelPoint] =
+      affine.inverse(world.toVector)
+        .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
   def fromSpatialDims(
       dims: SpatialDims,
       spacing: Option[Vector[Double]] = None,
       origin: Option[Vector[Double]] = None,
-      axes: Option[AxisSet] = None,
-      trans: Option[DMat] = None
+      axes: Option[NonSpatialAxes] = None,
+      affine: Option[GeometryAffine[D3]] = None
   ): SomeSampleSpace =
-    SampleSpaces(dims.toVector, spacing, origin, axes, trans)
+    SampleSpaces(dims.toVector, spacing, origin, axes, affine)
 
   def make(
       dims: Vector[Int],
       spacing: Option[Vector[Double]] = None,
       origin: Option[Vector[Double]] = None,
-      axes: Option[AxisSet] = None,
-      trans: Option[DMat] = None
+      axes: Option[NonSpatialAxes] = None,
+      affine: Option[GeometryAffine[D3]] = None
   ): Either[SampleSpaceError, SomeSampleSpace] =
     validateDims(dims).flatMap: checkedDims =>
       val spatialDimCount = math.min(checkedDims.length, 3)
@@ -369,43 +368,42 @@ object SampleSpaces:
           defaultOrigin,
           requirePositive = false
         )
-        matrix <- validateTransform(
-          trans.getOrElse(defaultTransform(sp, org, spatialDimCount))
-        )
-        _ <- DMat
-          .invert(matrix)
-          .left
-          .map(SampleSpaceError.SingularTransform.apply)
+        transform <- affine match
+          case Some(value) => Right(value)
+          case None =>
+            defaultAffine(sp, org, spatialDimCount)
+              .left
+              .map(SampleSpaceError.Geometry.apply)
         checkedAxes <- axes match
           case Some(value) =>
-            validateAxes(checkedDims.length, value).map(_ => value)
+            validateAxes(checkedDims.drop(spatialDimCount), value).map(_ => value)
           case None =>
-            Right(defaultAxes(checkedDims.length, matrix))
+            defaultNonSpatialAxes(checkedDims.drop(spatialDimCount))
         canonical <-
-          canonicalSpace(checkedDims, matrix, checkedAxes)
+          canonicalSpace(checkedDims, transform, checkedAxes)
       yield canonical
 
   def apply(
       dims: Vector[Int],
       spacing: Option[Vector[Double]] = None,
       origin: Option[Vector[Double]] = None,
-      axes: Option[AxisSet] = None,
-      trans: Option[DMat] = None
+      axes: Option[NonSpatialAxes] = None,
+      affine: Option[GeometryAffine[D3]] = None
   ): SomeSampleSpace =
-    make(dims, spacing, origin, axes, trans)
+    make(dims, spacing, origin, axes, affine)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
   private def canonicalSpace(
       dims: Vector[Int],
-      transform: DMat,
-      axes: AxisSet
+      transform: GeometryAffine[D3],
+      axes: NonSpatialAxes
   ): Either[SampleSpaceError, SomeSampleSpace] =
     if dims.length == 2 then
       for
         metadata <- FrameMetadata
           .create("scalafim-space")
           .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+          .map(SampleSpaceError.Geometry.apply)
         frame = Frame.createPersistent[D2](
           rasD2FrameId,
           metadata,
@@ -414,52 +412,45 @@ object SampleSpaces:
         affine <- GeometryAffine
           .fromRowMajor[D2](
             Vector(
-              transform(0, 0),
-              transform(0, 1),
-              transform(0, 3),
-              transform(1, 0),
-              transform(1, 1),
-              transform(1, 3),
+              transform.matrix(0, 0),
+              transform.matrix(0, 1),
+              transform.matrix(0, 3),
+              transform.matrix(1, 0),
+              transform.matrix(1, 1),
+              transform.matrix(1, 3),
               0.0,
               0.0,
               1.0
             )
           )
           .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+          .map(SampleSpaceError.Geometry.apply)
         gridId <- persistentGridId(2, dims, affine.rowMajor)
         grid <- Grid
           .createPersistent(gridId, frame)(dims, affine)
           .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+          .map(SampleSpaceError.Geometry.apply)
       yield fromCanonical(
-        SampleSpace.create(grid, NonSpatialAxes.empty)
+        SampleSpace.create(grid, axes)
       )
     else
       for
         metadata <- FrameMetadata
           .create("scalafim-space")
           .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+          .map(SampleSpaceError.Geometry.apply)
         frame = Frame.createPersistent[D3](
           rasD3FrameId,
           metadata,
           convention = CoordinateConvention.RAS
         )
-        affine <- GeometryAffine
-          .fromRowMajor[D3](
-            Vector.tabulate(16)(transform.data.apply)
-          )
-          .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         spatialShape = dims.take(3)
-        gridId <- persistentGridId(3, spatialShape, affine.rowMajor)
+        gridId <- persistentGridId(3, spatialShape, transform.rowMajor)
         grid <- Grid
-          .createPersistent(gridId, frame)(spatialShape, affine)
+          .createPersistent(gridId, frame)(spatialShape, transform)
           .left
-          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
-        nonSpatial <- canonicalAxes(dims.drop(3), axes.axes.drop(3))
-      yield fromCanonical(SampleSpace.create(grid, nonSpatial))
+          .map(SampleSpaceError.Geometry.apply)
+      yield fromCanonical(SampleSpace.create(grid, axes))
 
   private def persistentGridId(
       rank: Int,
@@ -468,7 +459,7 @@ object SampleSpaces:
   ): Either[SampleSpaceError, GridId] =
     parseGridId(rank, None, shape, affineRowMajor)
       .left
-      .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+      .map(SampleSpaceError.Geometry.apply)
 
   private def admittedGridId(
       rank: Int,
@@ -525,82 +516,28 @@ object SampleSpaces:
       case CoordinateConvention.RAS         => "ras"
       case CoordinateConvention.LPS         => "lps"
 
-  private def canonicalAxes(
-      extents: Vector[Int],
-      axes: Vector[Axis]
+  private def defaultNonSpatialAxes(
+      extents: Vector[Int]
   ): Either[SampleSpaceError, NonSpatialAxes] =
     val built =
       extents.zipWithIndex.foldLeft[
         Either[SampleSpaceError, Vector[ImageAxis]]
       ](Right(Vector.empty)):
         case (acc, (extent, index)) =>
-          val exposed = axes.lift(index).getOrElse(Axis.NoneAxis)
-          val kind =
-            if exposed == Axis.Time then AxisKind.Time
-            else AxisKind.Other
-          val name =
-            if kind == AxisKind.Time then "time"
-            else s"axis-${index + 3}"
+          val kind = if index == 0 then AxisKind.Time else AxisKind.Other
+          val name = if index == 0 then "time" else s"axis-${index + 3}"
           for
             values <- acc
             axis <- ImageAxis
-              .create(name, extent, kind)
+              .ordinal(name, kind, extent)
               .left
-              .map(error =>
-                SampleSpaceError.CanonicalGeometry(error.message)
-              )
+              .map(SampleSpaceError.Image.apply)
           yield values :+ axis
     built.flatMap: values =>
       NonSpatialAxes
         .from(values)
         .left
-        .map(error => SampleSpaceError.CanonicalGeometry(error.message))
-
-  private def publicAxis(axis: ImageAxis): Axis =
-    axis.kind match
-      case AxisKind.Time => Axis.Time
-      case _             => Axis(axis.name.value)
-
-  private def imageAxis(
-      axis: Axis,
-      extent: Int,
-      index: Int
-  ): Either[SampleSpaceError, ImageAxis] =
-    val kind =
-      if axis == Axis.Time then AxisKind.Time
-      else
-        axis.label.toLowerCase match
-          case "channel"   => AxisKind.Channel
-          case "echo"      => AxisKind.Echo
-          case "coil"      => AxisKind.Coil
-          case "direction" => AxisKind.Direction
-          case "batch"     => AxisKind.Batch
-          case _           => AxisKind.Other
-    val name =
-      if axis == Axis.NoneAxis then s"axis-$index"
-      else axis.label.toLowerCase
-    ImageAxis
-      .create(name, extent, kind)
-      .left
-      .map(error => SampleSpaceError.CanonicalGeometry(error.message))
-
-  private def canonicalTransform(space: SomeSampleSpace): DMat =
-    val matrix = space.grid.indexToFrame.matrix
-    if space.spatialRank == 3 then
-      DMat.fromRows(
-        Vector.tabulate(4)(row =>
-          Vector.tabulate(4)(column => matrix(row, column))
-        )
-      )
-    else
-      DMat.fromRows(
-        Vector(
-          Vector(matrix(0, 0), matrix(0, 1), 0.0, matrix(0, 2)),
-          Vector(matrix(1, 0), matrix(1, 1), 0.0, matrix(1, 2)),
-          Vector(0.0, 0.0, 1.0, 0.0),
-          Vector(0.0, 0.0, 0.0, 1.0)
-        )
-      )
+        .map(SampleSpaceError.Image.apply)
 
   private def transformCoordinates(
       matrix: DMat,
@@ -665,202 +602,37 @@ object SampleSpaces:
         case Some(error) => Left(error)
         case None => Right(values)
 
-  private def defaultTransform(
+  private def defaultAffine(
       spacing: Vector[Double],
       origin: Vector[Double],
       spatialDimCount: Int
-  ): DMat =
-    DMat.fromRows(
-      Vector.tabulate(4)(row =>
-        Vector.tabulate(4)(column =>
-          if row == column && row < spatialDimCount then spacing(row)
-          else if column == 3 && row < spatialDimCount then origin(row)
-          else if row == column then 1.0
-          else 0.0
-        )
-      )
+  ): Either[GeometryError, GeometryAffine[D3]] =
+    GeometryAffine.fromRowMajor[D3](
+      Vector.tabulate(16): flat =>
+        val row = flat / 4
+        val column = flat % 4
+        if row == column && row < spatialDimCount then spacing(row)
+        else if column == 3 && row < spatialDimCount then origin(row)
+        else if row == column then 1.0
+        else 0.0
     )
-
-  private def validateTransform(
-      transform: DMat
-  ): Either[SampleSpaceError, DMat] =
-    if transform.rows != 4 || transform.cols != 4 then
-      Left(
-        SampleSpaceError.InvalidTransformShape(
-          transform.rows,
-          transform.cols
-        )
-      )
-    else
-      val nonFinite =
-        Vector
-          .tabulate(transform.data.length)(identity)
-          .find(index => !transform.data(index).isFinite)
-      nonFinite match
-        case Some(index) =>
-          Left(SampleSpaceError.NonFiniteTransformValue(index))
-        case None =>
-          val bottom =
-            Vector(
-              transform(3, 0),
-              transform(3, 1),
-              transform(3, 2),
-              transform(3, 3)
-            )
-          if bottom == Vector(0.0, 0.0, 0.0, 1.0) then
-            Right(transform)
-          else
-            Left(SampleSpaceError.InvalidTransformBottomRow(bottom))
 
   private def validateAxes(
-      expected: Int,
-      axes: AxisSet
+      expectedExtents: Vector[Int],
+      axes: NonSpatialAxes
   ): Either[SampleSpaceError, Unit] =
-    if axes.ndim == expected then Right(())
-    else
-      Left(SampleSpaceError.AxisCountMismatch(expected, axes.ndim))
-
-  private def defaultAxes(
-      dimsLength: Int,
-      transform: DMat
-  ): AxisSet =
-    val base = AxisSet.standard(dimsLength)
-    if dimsLength >= 3 then
-      val inferred = Orientation.findAnatomy(transform)
-      AxisSet((inferred.axes ++ base.additionalAxes)*)
-    else base
-
-opaque type VolumeSpace = SomeSampleSpace
-
-object VolumeSpace:
-  extension (space: VolumeSpace)
-    def sampleSpace: SampleSpace[? <: Frame[D3], D3] =
-      SampleSpaces
-        .requireD3(space)
-        .fold(
-          error => throw new IllegalStateException(error.message),
-          _.spatialOnly
-        )
-
-    def shape: SpatialDims =
-      SampleSpaces.spatialShapeOf(space)
-
-    def dims: Vector[Int] =
-      SampleSpaces.logicalDims(space)
-
-    def affine: Affine3D =
-      SampleSpaces.affineOf(space)
-
-    def nVoxels: Int =
-      shape.product
-
-    def toSampleSpace: SomeSampleSpace =
-      space
-
-    def voxelToWorld(voxel: VoxelPoint): WorldPoint =
-      affine.voxelToWorld(voxel)
-
-    def worldToVoxel(world: WorldPoint): VoxelPoint =
-      affine.worldToVoxel(world)
-
-    def addTime(n: Int): SeriesSpace =
-      SeriesSpace.unsafe(SampleSpaces.withTime(space, n))
-
-  def make(
-      space: SomeSampleSpace
-  ): Either[SampleSpaceError, VolumeSpace] =
-    if SampleSpaces.canonical(space).spatialRank == 3 &&
-        SampleSpaces.canonical(space).nonSpatialAxes.size == 0
-    then Right(space)
-    else
+    if axes.size != expectedExtents.size then
       Left(
-        SampleSpaceError.ExpectedDimensionality(
-          "VolumeSpace",
-          3,
-          SampleSpaces.logicalDims(space).length
+        SampleSpaceError.AxisCountMismatch(
+          expectedExtents.size,
+          axes.size
         )
       )
-
-  def fromSpatialPart(
-      space: SomeSampleSpace
-  ): Either[SampleSpaceError, VolumeSpace] =
-    if SampleSpaces.canonical(space).spatialRank == 3 then
-      Right(SampleSpaces.spatialPart(space))
     else
-      Left(
-        SampleSpaceError.ExpectedDimensionality(
-          "VolumeSpace spatial part",
-          3,
-          SampleSpaces.logicalDims(space).length
-        )
-      )
-
-  /** Derive the spatial sample-space view of an exact image4s grid domain.
-    * The live `GridDomain` remains the identity owner; this allocates no image
-    * data and creates no second finite domain.
-    */
-  def fromGridDomain[F <: Frame[D3], S](
-      domain: GridDomain[F, D3, S]
-  ): VolumeSpace =
-    unsafe(
-      SampleSpaces.fromCanonical(
-        SampleSpace.create(domain.grid, NonSpatialAxes.empty)
-      )
-    )
-
-  def apply(space: SomeSampleSpace): VolumeSpace =
-    make(space)
-      .fold(err => throw new IllegalArgumentException(err.message), identity)
-
-  def unsafe(space: SomeSampleSpace): VolumeSpace =
-    space
-
-opaque type SeriesSpace = SomeSampleSpace
-
-object SeriesSpace:
-  import VolumeSpace.*
-
-  extension (space: SeriesSpace)
-    def volumeSpace: VolumeSpace =
-      VolumeSpace.unsafe(SampleSpaces.spatialPart(space))
-
-    def spatialShape: SpatialDims =
-      volumeSpace.shape
-
-    def dims: Vector[Int] =
-      SampleSpaces.logicalDims(space).take(4)
-
-    def nVolumes: Int =
-      space.dims(3)
-
-    def affine: Affine3D =
-      SampleSpaces.affineOf(space)
-
-    def toSampleSpace: SomeSampleSpace =
-      space
-
-  def make(
-      space: SomeSampleSpace
-  ): Either[SampleSpaceError, SeriesSpace] =
-    if SampleSpaces.canonical(space).spatialRank == 3 &&
-        SampleSpaces.canonical(space).nonSpatialAxes.size == 1 &&
-        SampleSpaces
-          .canonical(space)
-          .nonSpatialAxes(0)
-          .exists(_.kind == AxisKind.Time)
-    then Right(space)
-    else
-      Left(
-        SampleSpaceError.ExpectedDimensionality(
-          "SeriesSpace",
-          4,
-          SampleSpaces.logicalDims(space).length
-        )
-      )
-
-  def apply(space: SomeSampleSpace): SeriesSpace =
-    make(space)
-      .fold(err => throw new IllegalArgumentException(err.message), identity)
-
-  def unsafe(space: SomeSampleSpace): SeriesSpace =
-    space
+      val mismatch =
+        expectedExtents.zip(axes.values).zipWithIndex.collectFirst:
+          case ((expected, axis), index) if axis.extent != expected =>
+            SampleSpaceError.AxisExtentMismatch(index, expected, axis.extent)
+      mismatch match
+        case Some(error) => Left(error)
+        case None        => Right(())

@@ -1,17 +1,16 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.SomeSampleSpace
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import scala.annotation.targetName
-
-enum CoordinateError:
-  case SingularAffine(reason: String)
-
-  def message: String =
-    this match
-      case SingularAffine(reason) => s"affine is singular: $reason"
 
 object SpatialCoordinates:
 
@@ -73,69 +72,93 @@ object SpatialCoordinates:
     validatePoint(cRas, "cRas")
     points.map(point => rasToTkras(point, cRas))
 
-  def voxelToWorld(voxel: Vector[Double], affine: DMat): Vector[Double] =
+  def voxelToWorld(
+      voxel: Vector[Double],
+      affine: Affine[D3]
+  ): Vector[Double] =
     validatePoint(voxel, "voxel")
-    Affine3DMorphism.requireAffine3D(affine)
-    Affine.applyAffine(affine, voxel)
+    affine(voxel).fold(
+      error => throw new IllegalArgumentException(error.message),
+      identity
+    )
 
-  def voxelToWorld(voxel: SpatialPoint, affine: DMat): SpatialPoint =
-    Affine3DMorphism.requireAffine3D(affine)
-    SpatialPoint.unsafeFromVector(Affine.applyAffine(affine, voxel.toVector), "world coordinate")
+  def voxelToWorld(
+      voxel: SpatialPoint,
+      affine: Affine[D3]
+  ): SpatialPoint =
+    SpatialPoint.unsafeFromVector(
+      voxelToWorld(voxel.toVector, affine),
+      "world coordinate"
+    )
 
-  def voxelToWorld(voxel: VoxelPoint, affine: Affine3D): WorldPoint =
-    affine.voxelToWorld(voxel)
+  def voxelToWorld(
+      voxel: VoxelPoint,
+      affine: Affine[D3]
+  ): Either[GeometryError, WorldPoint] =
+    affine(voxel.toVector)
+      .map(value => WorldPoint.unsafeFromVector(value, "world point"))
 
-  def voxelsToWorld(voxels: Vector[Vector[Double]], affine: DMat): Vector[Vector[Double]] =
+  def voxelsToWorld(
+      voxels: Vector[Vector[Double]],
+      affine: Affine[D3]
+  ): Vector[Vector[Double]] =
     validatePoints(voxels, "voxels")
-    Affine3DMorphism.requireAffine3D(affine)
-    voxels.map(voxel => Affine.applyAffine(affine, voxel))
+    voxels.map(voxel => voxelToWorld(voxel, affine))
 
-  def voxelPointsToWorld(voxels: Vector[SpatialPoint], affine: DMat): Vector[SpatialPoint] =
-    Affine3DMorphism.requireAffine3D(affine)
-    voxels.map { voxel =>
-      SpatialPoint.unsafeFromVector(Affine.applyAffine(affine, voxel.toVector), "world coordinate")
-    }
+  def voxelPointsToWorld(
+      voxels: Vector[SpatialPoint],
+      affine: Affine[D3]
+  ): Vector[SpatialPoint] =
+    voxels.map(voxel => voxelToWorld(voxel, affine))
 
-  def voxelPointsToWorld(voxels: Vector[VoxelPoint], affine: Affine3D): Vector[WorldPoint] =
-    affine.voxelsToWorld(voxels)
+  def voxelPointsToWorld(
+      voxels: Vector[VoxelPoint],
+      affine: Affine[D3]
+  ): Either[GeometryError, Vector[WorldPoint]] =
+    traverse(voxels)(voxel => voxelToWorld(voxel, affine))
 
-  def worldToVoxel(world: Vector[Double], affine: DMat): Either[CoordinateError, Vector[Double]] =
+  def worldToVoxel(
+      world: Vector[Double],
+      affine: Affine[D3]
+  ): Either[GeometryError, Vector[Double]] =
     validatePoint(world, "world")
-    Affine3DMorphism.requireAffine3D(affine)
-    DMat.invert(affine) match
-      case Left(reason) => Left(CoordinateError.SingularAffine(reason))
-      case Right(inverse) => Right(Affine.applyAffine(inverse, world))
+    affine.inverse(world)
 
-  def worldToVoxel(world: SpatialPoint, affine: DMat): Either[CoordinateError, SpatialPoint] =
-    Affine3DMorphism.requireAffine3D(affine)
-    DMat.invert(affine) match
-      case Left(reason) => Left(CoordinateError.SingularAffine(reason))
-      case Right(inverse) =>
-        Right(SpatialPoint.unsafeFromVector(Affine.applyAffine(inverse, world.toVector), "voxel coordinate"))
+  def worldToVoxel(
+      world: SpatialPoint,
+      affine: Affine[D3]
+  ): Either[GeometryError, SpatialPoint] =
+    affine.inverse(world.toVector)
+      .map(value =>
+        SpatialPoint.unsafeFromVector(value, "voxel coordinate")
+      )
 
-  def worldToVoxel(world: WorldPoint, affine: Affine3D): VoxelPoint =
-    affine.worldToVoxel(world)
+  def worldToVoxel(
+      world: WorldPoint,
+      affine: Affine[D3]
+  ): Either[GeometryError, VoxelPoint] =
+    affine.inverse(world.toVector)
+      .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
-  def worldsToVoxel(worlds: Vector[Vector[Double]], affine: DMat): Either[CoordinateError, Vector[Vector[Double]]] =
+  def worldsToVoxel(
+      worlds: Vector[Vector[Double]],
+      affine: Affine[D3]
+  ): Either[GeometryError, Vector[Vector[Double]]] =
     validatePoints(worlds, "worlds")
-    Affine3DMorphism.requireAffine3D(affine)
-    DMat.invert(affine) match
-      case Left(reason) => Left(CoordinateError.SingularAffine(reason))
-      case Right(inverse) => Right(worlds.map(world => Affine.applyAffine(inverse, world)))
+    traverse(worlds)(world => affine.inverse(world))
 
-  def worldPointsToVoxel(worlds: Vector[SpatialPoint], affine: DMat): Either[CoordinateError, Vector[SpatialPoint]] =
-    Affine3DMorphism.requireAffine3D(affine)
-    DMat.invert(affine) match
-      case Left(reason) => Left(CoordinateError.SingularAffine(reason))
-      case Right(inverse) =>
-        Right(
-          worlds.map { world =>
-            SpatialPoint.unsafeFromVector(Affine.applyAffine(inverse, world.toVector), "voxel coordinate")
-          }
-        )
+  def worldPointsToVoxel(
+      worlds: Vector[SpatialPoint],
+      affine: Affine[D3]
+  ): Either[GeometryError, Vector[SpatialPoint]] =
+    traverse(worlds)(world => worldToVoxel(world, affine))
 
-  def worldPointsToVoxel(worlds: Vector[WorldPoint], affine: Affine3D): Vector[VoxelPoint] =
-    affine.worldsToVoxel(worlds)
+  @targetName("worldTypedPointsToVoxel")
+  def worldPointsToVoxel(
+      worlds: Vector[WorldPoint],
+      affine: Affine[D3]
+  ): Either[GeometryError, Vector[VoxelPoint]] =
+    traverse(worlds)(world => worldToVoxel(world, affine))
 
   def gridCoords(grid: GridSpec): Vector[Vector[Double]] =
     grid.worldCoords
@@ -151,6 +174,16 @@ object SpatialCoordinates:
   private[image] def validatePoints(points: Vector[Vector[Double]], label: String): Unit =
     points.foreach(point => validatePoint(point, label))
 
+  private def traverse[A, B](
+      values: Vector[A]
+  )(f: A => Either[GeometryError, B]): Either[GeometryError, Vector[B]] =
+    values.foldLeft[Either[GeometryError, Vector[B]]](Right(Vector.empty)):
+      case (acc, value) =>
+        for
+          built <- acc
+          next <- f(value)
+        yield built :+ next
+
 /** Zero-wrapper 3D grid view over image4s' canonical sampling geometry.
   *
   * The opaque name preserves ScalaFIM's domain vocabulary without retaining a
@@ -164,14 +197,15 @@ object GridSpec:
     private[image] inline def nativeGrid: Grid[Frame[D3], D3] =
       gridSpec.grid.asInstanceOf[Grid[Frame[D3], D3]]
 
+    /** Checked provider endpoint retained by this admitted D3 grid. */
+    private[scalafim] inline def providerFrame: Frame[D3] =
+      nativeGrid.frame
+
     def shape: SpatialDims =
       SpatialDims.unsafeFromVector(gridSpec.grid.shape, "GridSpec dims")
 
-    def affine: DMat =
-      gridSpec.toSampleSpace.trans
-
-    def affine3D: Either[Affine3DError, Affine3D] =
-      Affine3D.make(affine)
+    def affine: Affine[D3] =
+      nativeGrid.indexToFrame
 
     def dims: Vector[Int] =
       gridSpec.grid.shape
@@ -197,8 +231,8 @@ object GridSpec:
     def voxelToWorld(voxel: SpatialPoint): SpatialPoint =
       SpatialCoordinates.voxelToWorld(voxel, affine)
 
-    def voxelToWorld(voxel: VoxelPoint): Either[Affine3DError, WorldPoint] =
-      affine3D.map(_.voxelToWorld(voxel))
+    def voxelToWorld(voxel: VoxelPoint): Either[GeometryError, WorldPoint] =
+      SpatialCoordinates.voxelToWorld(voxel, affine)
 
     def voxelsToWorld(
         voxels: Vector[Vector[Double]]
@@ -213,39 +247,39 @@ object GridSpec:
     @targetName("voxelTypedPointsToWorld")
     def voxelPointsToWorld(
         voxels: Vector[VoxelPoint]
-    ): Either[Affine3DError, Vector[WorldPoint]] =
-      affine3D.map(_.voxelsToWorld(voxels))
+    ): Either[GeometryError, Vector[WorldPoint]] =
+      SpatialCoordinates.voxelPointsToWorld(voxels, affine)
 
     def worldToVoxel(
         world: Vector[Double]
-    ): Either[CoordinateError, Vector[Double]] =
+    ): Either[GeometryError, Vector[Double]] =
       SpatialCoordinates.worldToVoxel(world, affine)
 
     def worldToVoxel(
         world: SpatialPoint
-    ): Either[CoordinateError, SpatialPoint] =
+    ): Either[GeometryError, SpatialPoint] =
       SpatialCoordinates.worldToVoxel(world, affine)
 
     def worldToVoxel(
         world: WorldPoint
-    ): Either[Affine3DError, VoxelPoint] =
-      affine3D.map(_.worldToVoxel(world))
+    ): Either[GeometryError, VoxelPoint] =
+      SpatialCoordinates.worldToVoxel(world, affine)
 
     def worldsToVoxel(
         worlds: Vector[Vector[Double]]
-    ): Either[CoordinateError, Vector[Vector[Double]]] =
+    ): Either[GeometryError, Vector[Vector[Double]]] =
       SpatialCoordinates.worldsToVoxel(worlds, affine)
 
     def worldPointsToVoxel(
         worlds: Vector[SpatialPoint]
-    ): Either[CoordinateError, Vector[SpatialPoint]] =
+    ): Either[GeometryError, Vector[SpatialPoint]] =
       SpatialCoordinates.worldPointsToVoxel(worlds, affine)
 
     @targetName("worldTypedPointsToVoxel")
     def worldPointsToVoxel(
         worlds: Vector[WorldPoint]
-    ): Either[Affine3DError, Vector[VoxelPoint]] =
-      affine3D.map(_.worldsToVoxel(worlds))
+    ): Either[GeometryError, Vector[VoxelPoint]] =
+      SpatialCoordinates.worldPointsToVoxel(worlds, affine)
 
     def worldCoords: Vector[Vector[Double]] =
       worldPoints.map(_.toVector)
@@ -270,55 +304,60 @@ object GridSpec:
         x += 1
       out.result()
 
-    def typedWorldPoints: Either[Affine3DError, Vector[WorldPoint]] =
-      affine3D.map { tx =>
-        val gridShape = shape
-        val out = Vector.newBuilder[WorldPoint]
-        out.sizeHint(nVoxels)
-        var x = 0
-        while x < gridShape.x do
-          var y = 0
-          while y < gridShape.y do
-            var z = 0
-            while z < gridShape.z do
-              out += tx.voxelToWorld(
-                VoxelPoint(x.toDouble, y.toDouble, z.toDouble)
-              )
-              z += 1
-            y += 1
-          x += 1
-        out.result()
-      }
+    def typedWorldPoints: Either[GeometryError, Vector[WorldPoint]] =
+      val tx = affine
+      val gridShape = shape
+      val voxels = Vector.newBuilder[VoxelPoint]
+      voxels.sizeHint(nVoxels)
+      var x = 0
+      while x < gridShape.x do
+        var y = 0
+        while y < gridShape.y do
+          var z = 0
+          while z < gridShape.z do
+            voxels += VoxelPoint(x.toDouble, y.toDouble, z.toDouble)
+            z += 1
+          y += 1
+        x += 1
+      SpatialCoordinates.voxelPointsToWorld(voxels.result(), tx)
 
     def toSampleSpace: SomeSampleSpace =
       SampleSpaces.fromCanonical(gridSpec)
 
-  def apply(dims: Vector[Int], affine: DMat): GridSpec =
+  def apply(dims: Vector[Int], affine: Affine[D3]): GridSpec =
     fromVector(dims, affine)
       .fold(err => throw new IllegalArgumentException(err.message), grid => grid)
 
-  def fromVector(dims: Vector[Int], affine: DMat): Either[GeometryError, GridSpec] =
-    for
-      shape <- SpatialDims.fromVector(dims, "GridSpec dims")
-      space <- SampleSpaces
-        .make(shape.toVector, trans = Some(affine))
-        .left
-        .map(error => GeometryError.InvalidGridGeometry(error.message))
-    yield SampleSpaces.canonical(space)
+  def fromVector(
+      dims: Vector[Int],
+      affine: Affine[D3]
+  ): Either[SampleSpaceError, GridSpec] =
+    if dims.length != 3 then
+      Left(
+        SampleSpaceError.ExpectedDimensionality(
+          "GridSpec dims",
+          3,
+          dims.length
+        )
+      )
+    else
+      SampleSpaces
+        .make(dims, affine = Some(affine))
+        .map(SampleSpaces.canonical)
 
-  def fromSpatialDims(dims: SpatialDims, affine: DMat): GridSpec =
+  def fromSpatialDims(dims: SpatialDims, affine: Affine[D3]): GridSpec =
     fromVector(dims.toVector, affine)
       .fold(error => throw new IllegalArgumentException(error.message), grid => grid)
 
   def identity(dims: Vector[Int]): GridSpec =
-    GridSpec(dims, DMat.eye(4))
+    GridSpec(dims, Affine.identity[D3])
 
   def identity(dims: SpatialDims): GridSpec =
-    fromSpatialDims(dims, DMat.eye(4))
+    fromSpatialDims(dims, Affine.identity[D3])
 
   def fromSpace(space: SomeSampleSpace): GridSpec =
     require(space.spatialDims.length == 3, "GridSpec requires 3D geometry")
     SampleSpaces.canonical(space.spatialSpace)
 
-  def fromVolumeSpace(space: VolumeSpace): GridSpec =
-    SampleSpaces.canonical(space.toSampleSpace)
+  def fromGrid[F <: Frame[D3]](grid: Grid[F, D3]): GridSpec =
+    SampleSpace.create(grid, NonSpatialAxes.empty)

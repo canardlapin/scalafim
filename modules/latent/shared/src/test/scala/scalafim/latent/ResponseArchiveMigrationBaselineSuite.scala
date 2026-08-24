@@ -11,7 +11,8 @@ import scalafim.archive.lna.{
   SharedBasisId,
   SharedBasisMask
 }
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 
 enum MigrationComparator:
   case RawBits
@@ -226,7 +227,7 @@ object ResponseArchiveMigrationBaseline:
   private val canonicalSpace = SampleSpaces(Vector(2, 2, 1))
 
   private def lnaPipelineCases: Vector[MigrationBaselineCase] =
-    val data = ImageDMat.fromRows(canonicalRows)
+    val data = GaleArchiveTestData.matrixFromRows(canonicalRows)
     val quant =
       archiveValue(
         LnaPipeline.quantArchive(
@@ -250,7 +251,7 @@ object ResponseArchiveMigrationBaseline:
         LnaPipeline.basisEmbedArchive(
           data,
           canonicalSpace,
-          ImageDMat.eye(data.cols)
+          DMat.eye(data.cols)
         )
       )
 
@@ -380,7 +381,7 @@ object ResponseArchiveMigrationBaseline:
 
   private def sharedBasisCase: Vector[MigrationBaselineCase] =
     val loadings =
-      ImageDMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -555,7 +556,7 @@ object ResponseArchiveMigrationBaseline:
   private def denseFromLoadings(
       coefficients: Vector[Vector[Double]],
       offset: Vector[Double],
-      loadings: ImageDMat
+      loadings: DMat
   ): DMat =
     LatentNumerics.matrixFromRows(
       coefficients.map: row =>
@@ -571,7 +572,7 @@ object ResponseArchiveMigrationBaseline:
   private def imageCase(
       id: String,
       comparator: MigrationComparator,
-      matrix: ImageDMat
+      matrix: DMat
   ): MigrationBaselineCase =
     matrixCase(id, comparator, matrix.toRows)
 

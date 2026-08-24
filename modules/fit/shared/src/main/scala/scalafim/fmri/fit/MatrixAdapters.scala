@@ -5,7 +5,6 @@ import scalafim.dataset.FmriSeries
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.FmriModel
 import scalafim.fmri.model.MissingDataPolicy
-import scalafim.image.DMat as ImageDMat
 
 private[fit] final case class AdaptedResponseBlock(
     response: ResponseBlock,
@@ -75,22 +74,11 @@ object MatrixAdapters:
         row += 1
       out.result()
 
-  def fromDMat(matrix: ImageDMat): DMat =
-    val out = Matrix.newBuilder(matrix.rows, matrix.cols)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < matrix.cols do
-        out(row, col) = matrix(row, col)
-        col += 1
-      row += 1
-    out.result()
-
   def designMatrix(model: FmriModel, timepoints: IndexedSeq[Int]): Either[FitError, DesignMatrix] =
     DesignMatrix.fromMatrix(fromHrfMatrixRows(model.designMatrix, timepoints))
 
   def responseBlock(series: FmriSeries): Either[FitError, ResponseBlock] =
-    ResponseBlock.fromMatrix(fromDMat(series.data))
+    ResponseBlock.fromMatrix(series.data)
 
   private[fit] def responseBlock(
       series: FmriSeries,

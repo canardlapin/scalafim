@@ -1,5 +1,6 @@
 package scalafim.fmri.workflow
 
+import gale.linalg.DMat
 import scalafim.image.SampleSpaces
 
 import munit.FunSuite
@@ -7,7 +8,7 @@ import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.{DMat, PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
+import scalafim.image.{PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
 import scalafim.image.SomeScalarVolume
 import scalafim.image.io.Nifti
 

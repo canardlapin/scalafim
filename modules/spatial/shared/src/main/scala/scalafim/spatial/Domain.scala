@@ -1,6 +1,10 @@
 package scalafim.spatial
 
-import scalafim.image.{GridCompatibility, SomeMaskVolume, SomeSampleSpace}
+import image4s.SampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+import scalafim.image.{SampleSpaces, SomeMaskVolume, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.SomeNeuroVolume.*
 import scalafim.locus.{
@@ -54,39 +58,18 @@ object SpaceRef:
     if dim <= 0 then Left(SpatialError.NonPositiveDimension("latent", dim))
     else Right(SpaceRef.Latent(dim, basis, support))
 
-enum SamplingGeometry:
-  case Volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume])
-  case Surface(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
-  case Hybrid(parts: Vector[DomainPart])
-  case Latent(dim: Int)
-
-  this match
-    case SamplingGeometry.Volume(space, Some(mask)) =>
-      require(GridCompatibility.spatial(space, mask.space).isRight, "volume mask geometry mismatch")
-    case SamplingGeometry.Surface(geometry, Some(mask)) =>
-      require(
-        geometry.mesh.hasSameTopology(mask.geometry.mesh),
-        "surface mask geometry mismatch"
-      )
-    case SamplingGeometry.Hybrid(parts) =>
-      require(parts.nonEmpty, "hybrid geometry must contain at least one part")
-      require(parts.map(_.name.value).distinct.length == parts.length, "hybrid part names must be unique")
-    case SamplingGeometry.Latent(dim) =>
-      require(dim > 0, "latent geometry dimension must be positive")
-    case _ =>
-      ()
-
+sealed trait SamplingGeometry:
   def kind: DomainKind =
     this match
-      case SamplingGeometry.Volume(_, _) => DomainKind.Volume
+      case _: SamplingGeometry.Volume => DomainKind.Volume
       case SamplingGeometry.Surface(_, _) => DomainKind.Surface
       case SamplingGeometry.Hybrid(_) => DomainKind.Hybrid
       case SamplingGeometry.Latent(_) => DomainKind.Latent
 
   def nElements: Int =
     this match
-      case SamplingGeometry.Volume(space, _) =>
-        space.spatialDims.product
+      case volume: SamplingGeometry.Volume =>
+        volume.space.spatialDims.product
       case SamplingGeometry.Surface(geometry, _) =>
         geometry.vertexCount
       case SamplingGeometry.Hybrid(parts) =>
@@ -95,12 +78,72 @@ enum SamplingGeometry:
         dim
 
 object SamplingGeometry:
+  final class Volume private[SamplingGeometry] (
+      val space: SampleSpace[? <: Frame[D3], D3],
+      val mask: Option[SomeMaskVolume]
+  ) extends SamplingGeometry:
+    override def equals(other: Any): Boolean =
+      other match
+        case that: Volume =>
+          space == that.space && mask == that.mask
+        case _ =>
+          false
+
+    override def hashCode(): Int =
+      31 * space.hashCode() + mask.hashCode()
+
+    override def toString: String =
+      s"Volume($space,$mask)"
+
+  object Volume:
+    private[SamplingGeometry] def admitted(
+        space: SampleSpace[? <: Frame[D3], D3],
+        mask: Option[SomeMaskVolume]
+    ): Volume =
+      new Volume(space, mask)
+
+    def unapply(
+        geometry: SamplingGeometry
+    ): Option[(SampleSpace[? <: Frame[D3], D3], Option[SomeMaskVolume])] =
+      geometry match
+        case volume: Volume =>
+          Some((volume.space, volume.mask))
+        case _ =>
+          None
+
+  final case class Surface(
+      geometry: SurfaceGeometry,
+      mask: Option[SurfaceRoi[Boolean]]
+  ) extends SamplingGeometry:
+    mask.foreach: value =>
+      require(
+        geometry.mesh.hasSameTopology(value.geometry.mesh),
+        "surface mask geometry mismatch"
+      )
+
+  final case class Hybrid(parts: Vector[DomainPart]) extends SamplingGeometry:
+    require(parts.nonEmpty, "hybrid geometry must contain at least one part")
+    require(parts.map(_.name.value).distinct.length == parts.length, "hybrid part names must be unique")
+
+  final case class Latent(dim: Int) extends SamplingGeometry:
+    require(dim > 0, "latent geometry dimension must be positive")
+
   def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
-    mask match
-      case Some(m) if GridCompatibility.spatial(space, m.space).isLeft =>
-        Left(SpatialError.MaskSpaceMismatch("volume"))
-      case _ =>
-        Right(SamplingGeometry.Volume(space.spatialSpace, mask))
+    for
+      admitted <- SampleSpaces
+        .requireSpatialD3(space)
+        .left
+        .map(SpatialError.SampleSpaceAdmission.apply)
+      _ <- mask match
+        case Some(value) =>
+          Grid
+            .exactCongruence(admitted.grid, value.grid)
+            .left
+            .map(SpatialError.Geometry.apply)
+            .map(_ => ())
+        case None =>
+          Right(())
+    yield SamplingGeometry.Volume.admitted(admitted, mask)
 
   def surface(
     geometry: SurfaceGeometry,

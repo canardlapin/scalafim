@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
@@ -22,7 +22,7 @@ class SpatialIngestSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   test("missing inverse quality is explicit and becomes a non-geometric inverse"):
@@ -64,7 +64,7 @@ class SpatialIngestSuite extends munit.FunSuite:
           kind = TransformKind.Affine3D,
           path = Path.of("sub-01_from-bold_to-T1w.mat"),
           inverseQuality = inverseQuality,
-          coordinateMap = value(CoordinateMap.affine3D(DMat.eye(4)))
+          coordinateMap = value(CoordinateMap.affine(func, t1w, ProviderAffines.identity))
         )
       )
     val subject = value(SubjectId("sub-01"))

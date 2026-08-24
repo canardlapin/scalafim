@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialPoint}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
 
 class OperatorCompilerSuite extends munit.FunSuite:
@@ -19,11 +20,11 @@ class OperatorCompilerSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, y),
@@ -36,7 +37,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
     idValue: String,
     source: Domain,
     target: Domain,
-    matrix: DMat
+    matrix: Affine[D3]
   ): Morphism =
     value(
       Morphism.build(
@@ -47,7 +48,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
         routeTag = RouteTag.Anatomical,
         cost = 1.0,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = value(CoordinateMap.affine3D(matrix))
+        coordinateMap = value(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -96,7 +97,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
   test("ROI rows preserve order and report out-of-bounds coverage"):
     val source = domain("source", Vector(2, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
-    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val morphism = affine("source-to-target", source, target, ProviderAffines.identity)
     val request =
       CompileRequest(
         source = source.id,
@@ -121,7 +122,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
   test("typed row selections produce the same cache signature as ROI adapters"):
     val source = domain("source", Vector(2, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
-    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val morphism = affine("source-to-target", source, target, ProviderAffines.identity)
     val g = graph(Vector(source, target), Vector(morphism))
     val rows = value(RowSelection.rows(Vector(2, 1)))
     val typed =
@@ -145,7 +146,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
   test("compiler rejects duplicate and out-of-bounds ROI rows"):
     val source = domain("source", Vector(2, 1, 1))
     val target = domain("target", Vector(2, 1, 1))
-    val morphism = affine("source-to-target", source, target, DMat.eye(4))
+    val morphism = affine("source-to-target", source, target, ProviderAffines.identity)
     val g = graph(Vector(source, target), Vector(morphism))
 
     val duplicate = OperatorCompiler.compile(g, CompileRequest(source.id, target.id, roi = Some(Vector(0, 0))))
@@ -172,16 +173,22 @@ class OperatorCompilerSuite extends munit.FunSuite:
 
     assertEquals(result.left.toOption, Some(SpatialError.MissingCoordinateMap(morphism.id)))
 
-  test("image bridge lowers executable spatial affine paths"):
+  test("spatial affine paths compile without a second image transform hierarchy"):
     val source = domain("source", Vector(3, 1, 1))
     val mid = domain("mid", Vector(3, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
     val first = affine("source-to-mid", source, mid, translation(1.0, 0.0, 0.0))
     val second = affine("mid-to-target", mid, target, translation(0.0, 2.0, 0.0))
     val path = value(graph(Vector(source, mid, target), Vector(first, second)).path(source.id, target.id))
-    val lowered = value(ImageMorphismBridge.lower(path))
+    val executable = value(ExecutableAffinePath.from(path))
 
-    assertEquals(lowered.source.value, source.id.value)
-    assertEquals(lowered.target.value, target.id.value)
-    assertEquals(lowered.transform(Vector(0.0, 0.0, 0.0)), Vector(1.0, 2.0, 0.0))
-    assertEquals(lowered.transform(SpatialPoint.Origin), SpatialPoint(1.0, 2.0, 0.0))
+    assertEquals(executable.source, source.id)
+    assertEquals(executable.target, target.id)
+    assertEquals(
+      value(executable.coordinateMap.transform(Vector(0.0, 0.0, 0.0))),
+      Vector(1.0, 2.0, 0.0)
+    )
+    assertEquals(
+      value(executable.coordinateMap.transform(SpatialPoint.Origin)),
+      SpatialPoint(1.0, 2.0, 0.0)
+    )

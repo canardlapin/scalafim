@@ -24,7 +24,7 @@ import scalafim.fmri.model.{
   ScaleScope
 }
 import scalafim.fmri.fit.fixtures.FmriregRobustFixtures
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -261,7 +261,7 @@ class RobustSuite extends munit.FunSuite:
   private def model(outlier: Boolean): FmriModel =
     val frame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
     val data =
-      ImageDMat.fromRows(
+      GaleTestMatrix.fromRows(
         rows.map { i =>
           val clean = targetSlope * i.toDouble + targetIntercept
           val value = if outlier && i == nTime - 1 then clean + 80.0 else clean
@@ -293,7 +293,7 @@ class RobustSuite extends munit.FunSuite:
   private def twoVoxelModel: FmriModel =
     val frame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0))
     val data =
-      ImageDMat.fromRows(
+      GaleTestMatrix.fromRows(
         rows.map { i =>
           val clean = targetSlope * i.toDouble + targetIntercept
           val outlying = if i == nTime - 1 then clean + 80.0 else clean
@@ -343,7 +343,7 @@ class RobustSuite extends munit.FunSuite:
     val frame = SamplingFrame(blockLens = Seq(arTime), tr = Seq(1.0))
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), ImageDMat.fromRows(robustArResponseRows), SampleSpaces(Vector(2, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), GaleTestMatrix.fromRows(robustArResponseRows), SampleSpaces(Vector(2, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =

@@ -8,7 +8,7 @@ final class Image4sAdmissionSuite extends FunSuite:
   test("native scalar volume is already an image4s Sampled value"):
     val shape = Vector(2, 3, 4)
     val affine =
-      DMat.fromRows(
+      ProviderSpaces.affine(
         Vector(
           Vector(0.0, -2.0, 0.0, 11.0),
           Vector(3.0, 0.0, 0.0, -7.0),
@@ -16,7 +16,7 @@ final class Image4sAdmissionSuite extends FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val space = SampleSpaces(shape, trans = Some(affine))
+    val space = SampleSpaces(shape, affine = Some(affine))
     val values =
       NDArray.tabulate[Double](2, 3, 4): (x, y, z) =>
         100.0 * x.toDouble + 10.0 * y.toDouble + z.toDouble
@@ -35,7 +35,7 @@ final class Image4sAdmissionSuite extends FunSuite:
     assertEquals(ranked.logicalShape, shape, clue = "")
     assertEquals(
       ranked.grid.indexToFrame.rowMajor,
-      affine.toRows.flatten,
+      affine.rowMajor,
       clue = ""
     )
     assertEqualsDouble(ranked(1, 2, 3), 123.0, 0.0, clue = "")

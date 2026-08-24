@@ -4,7 +4,7 @@ import munit.FunSuite
 import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.DatasetId
-import scalafim.image.{Axis, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
 import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
@@ -95,7 +95,7 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
   private def writeHeaderOnlyBold(path: Path): Unit =
     Files.createDirectories(path.getParent)
     val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
-    val space = SampleSpaces(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
+    val space = SampleSpaces(Vector(2, 2, 1)).addDim(ProviderAxes.time(3))
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
       .fold(error => fail(error.message), _ => ())

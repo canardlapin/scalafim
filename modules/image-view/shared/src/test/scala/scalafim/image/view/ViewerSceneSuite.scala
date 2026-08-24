@@ -1,22 +1,29 @@
 package scalafim.image.view
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class ViewerSceneSuite extends munit.FunSuite:
 
-  private val referenceSpace =
-    VolumeSpace(SampleSpaces(Vector(4, 3, 2)))
+  private def providerAffine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).fold(error => fail(error.message), identity)
+
+  private val referenceSampleSpace =
+    SampleSpaces.requireVolumeD3(SampleSpaces(Vector(4, 3, 2))).toOption.get
+  private val referenceSpace = referenceSampleSpace.grid
 
   private val anatomy =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](referenceSpace.nVoxels)(_.toDouble),
-      referenceSpace.toSampleSpace,
+      referenceSampleSpace,
       "anatomy"
     )
 
-  private val shiftedMaskSpace =
-    val affine = DMat.fromRows(
+  private val shiftedMaskSampleSpace =
+    val affine = providerAffine(
       Vector(
         Vector(1.0, 0.0, 0.0, 1.0),
         Vector(0.0, 1.0, 0.0, 1.0),
@@ -24,10 +31,19 @@ class ViewerSceneSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    VolumeSpace(SampleSpaces(Vector(1, 1, 1), trans = Some(affine)))
+    SampleSpaces
+      .requireVolumeD3(
+        SampleSpaces(Vector(1, 1, 1), affine = Some(affine))
+      )
+      .toOption
+      .get
 
   private val shiftedMask =
-    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](1, true), shiftedMaskSpace.toSampleSpace, "mask")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(
+      PrimitiveBuffers.fillConst[Boolean](1, true),
+      shiftedMaskSampleSpace,
+      "mask"
+    )
 
   private val anatomyLayer =
     SliceLayer(

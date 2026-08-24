@@ -3,7 +3,6 @@ package scalafim
 package object image:
   export image4s.SomeSampleSpace
   export image4s.locus.GridDomain
-  export SampleSpaces.*
   export GridDomainOps.*
 
   export SomeNeuroVolume.{
@@ -11,8 +10,6 @@ package object image:
     values,
     space,
     ndim,
-    typedSpace,
-    volumeSpace,
     apply,
     wholeCanonical,
     materializedCanonical,
@@ -39,8 +36,6 @@ package object image:
     values,
     space,
     ndim,
-    typedSpace,
-    seriesSpace,
     nVolumes,
     apply,
     wholeCanonical,

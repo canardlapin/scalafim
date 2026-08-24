@@ -1,6 +1,9 @@
 package scalafim.surface
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class SurfaceSamplingSuite extends munit.FunSuite:
 
@@ -114,8 +117,8 @@ class SurfaceSamplingSuite extends munit.FunSuite:
   test("volume-to-surface morphism wraps reusable sampling plans"):
     val morphism =
       VolToSurfMorphism(
-        SpatialDomainId("volume"),
-        SpatialDomainId("surface"),
+        SurfaceDomainId("volume"),
+        SurfaceDomainId("surface"),
         VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest)
       )
     val result = morphism.sample(volume)
@@ -134,7 +137,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
         sourceForTarget = Vector(VertexId(2), VertexId(1), VertexId(0))
       )
     val morphism =
-      SurfToSurfMorphism(SpatialDomainId("source-surface"), SpatialDomainId("target-surface"), mapping)
+      SurfToSurfMorphism(SurfaceDomainId("source-surface"), SurfaceDomainId("target-surface"), mapping)
     val out = morphism.resample(field)
 
     assertEquals(morphism.kind, SurfaceMorphismKind.SurfaceToSurface)
@@ -235,12 +238,12 @@ class SurfaceSamplingSuite extends munit.FunSuite:
   private def flatTriangle(kind: SurfaceKind): SurfaceGeometry =
     surfaceAtZ(0.0, kind)
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    Affine.fromRowMajor[D3](
       Vector(
-        Vector(1.0, 0.0, 0.0, x),
-        Vector(0.0, 1.0, 0.0, y),
-        Vector(0.0, 0.0, 1.0, z),
-        Vector(0.0, 0.0, 0.0, 1.0)
+        1.0, 0.0, 0.0, x,
+        0.0, 1.0, 0.0, y,
+        0.0, 0.0, 1.0, z,
+        0.0, 0.0, 0.0, 1.0
       )
-    )
+    ).toOption.get

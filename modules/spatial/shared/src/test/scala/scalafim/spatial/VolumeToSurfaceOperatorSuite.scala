@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
+import scalafim.image.{SampleSpaces, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.valueAtCanonicalOrdinal
 import scalafim.surface.*

@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, GridSpec, Indexing, SomeSampleSpace, SpatialDims, SpatialPoint}
+import scalafim.image.{GridSpec, Indexing, SomeSampleSpace, SpatialDims, SpatialPoint}
 import scalafim.image.SampleSpaces.*
 import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
 

@@ -50,9 +50,9 @@ object SurfaceIoExamples:
       edgeCount = topology.edgeCount,
       surfaceArea = topology.surfaceArea,
       worldOffset = Vector(
-        geometry.surfaceToWorld(0, 3),
-        geometry.surfaceToWorld(1, 3),
-        geometry.surfaceToWorld(2, 3)
+        geometry.surfaceToWorld.matrix(0, 3),
+        geometry.surfaceToWorld.matrix(1, 3),
+        geometry.surfaceToWorld.matrix(2, 3)
       )
     )
 

@@ -1,5 +1,9 @@
 package scalafim.image.io
 
+import scalafim.image.SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.image.*
 
 import java.nio.file.Paths
@@ -102,12 +106,12 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
       val dimensions = pixels.head.dimensions
       assertEquals(pixels.length, dimensions.pixelCount)
       val grid = SliceGrid.covering(
-        volume.volumeSpace,
+        volume.grid,
         SlicePlane.canonical(plane, expected.cursor, convention),
         expected.spacing
       )
       assertEquals(grid.dimensions, dimensions, clue = s"plane=$plane convention=$convention")
-      val plan = SlicePlan.make(volume.volumeSpace, grid)
+      val plan = SlicePlan.make(volume.grid, grid)
       val nearest = plan.sample(volume, SliceSampling.Nearest(-1.0)).toOption.get
       val linear = plan.sample(volume, SliceSampling.Linear(-1.0)).toOption.get
 
@@ -124,8 +128,8 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
 
   private def assertMatrixEquals(
       actual: Vector[Double],
-      expected: DMat
+      expected: Affine[D3]
   ): Unit =
-    assertEquals(actual.size, expected.data.size)
-    actual.zip(expected.data).foreach: (observed, target) =>
+    assertEquals(actual.size, expected.rowMajor.size)
+    actual.zip(expected.rowMajor).foreach: (observed, target) =>
       assertEqualsDouble(observed, target, WorldTolerance)

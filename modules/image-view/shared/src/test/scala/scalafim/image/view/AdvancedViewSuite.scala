@@ -1,25 +1,36 @@
 package scalafim.image.view
 
 import image4s.Continuous
+import image4s.SampleSpace
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError
 import intaglio.*
 import ravel.NDArray as RavelArray
 import scalafim.image.*
 
 class AdvancedViewSuite extends munit.FunSuite:
 
+  private def affine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).fold(error => fail(error.message), identity)
+
   private def volume(
-    space: VolumeSpace,
+    space: SampleSpace[? <: Frame[D3], D3],
     label: String
   )(value: (Int, Int, Int) => Double): SomeScalarVolume[Double] =
-    val shape = space.shape
+    val shape = space.grid.shape
     val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
-      val z = index % shape.z
-      val xy = index / shape.z
-      val y = xy % shape.y
-      val x = xy / shape.y
+      val z = index % shape(2)
+      val xy = index / shape(2)
+      val y = xy % shape(1)
+      val x = xy / shape(1)
       value(x, y, z)
     }
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space.toSampleSpace, label)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, label)
+
+  private def sampleSpace(dims: Vector[Int]): SampleSpace[? <: Frame[D3], D3] =
+    SampleSpaces.requireVolumeD3(SampleSpaces(dims)).toOption.get
 
   private def layer(
     id: String,
@@ -39,10 +50,11 @@ class AdvancedViewSuite extends munit.FunSuite:
     frame.scene.grobs(index).asInstanceOf[Grob.Group].children.collect { case image: Grob.Image => image }
 
   test("lazy frame sources load only requested timepoints and report failures") {
-    val space = VolumeSpace(SampleSpaces(Vector(3, 3, 2)))
+    val sampledSpace = sampleSpace(Vector(3, 3, 2))
+    val space = sampledSpace.grid
     val frames = Vector(
-      volume(space, "zero")((_, _, _) => 0.0),
-      volume(space, "one")((_, _, _) => 1.0)
+      volume(sampledSpace, "zero")((_, _, _) => 0.0),
+      volume(sampledSpace, "one")((_, _, _) => 1.0)
     )
     var reads = Vector.empty[Int]
     val source = VolumeSource.lazyFrames(space, 2) { index =>
@@ -75,9 +87,52 @@ class AdvancedViewSuite extends munit.FunSuite:
     assert(VolumeSource.lazyFrames[Double, Continuous](space, 0)(_ => Left("unused")).isLeft)
   }
 
+  test("lazy frame sources preserve exact provider grid failures") {
+    val declared = sampleSpace(Vector(2, 2, 1))
+    val exact = volume(declared, "exact")((x, y, _) => x + y)
+    val exactSource = VolumeSource.lazyFrames(declared.grid, 1)(_ => Right(exact)).toOption.get
+    assertEquals(exactSource.volumeAt(0), Right(exact))
+
+    val foreignAffines =
+      Vector(
+        "translated" -> affine(
+          Vector(
+            Vector(1.0, 0.0, 0.0, 5.0),
+            Vector(0.0, 1.0, 0.0, 0.0),
+            Vector(0.0, 0.0, 1.0, 0.0),
+            Vector(0.0, 0.0, 0.0, 1.0)
+          )
+        ),
+        "reflected" -> affine(
+          Vector(
+            Vector(-1.0, 0.0, 0.0, 1.0),
+            Vector(0.0, 1.0, 0.0, 0.0),
+            Vector(0.0, 0.0, 1.0, 0.0),
+            Vector(0.0, 0.0, 0.0, 1.0)
+          )
+        )
+      )
+
+    foreignAffines.foreach { case (label, affine) =>
+      val foreign =
+        SampleSpaces
+          .requireVolumeD3(SampleSpaces(Vector(2, 2, 1), affine = Some(affine)))
+          .toOption
+          .get
+      val frame = volume(foreign, label)((x, y, _) => x + y)
+      val source = VolumeSource.lazyFrames(declared.grid, 1)(_ => Right(frame)).toOption.get
+      assertEquals(
+        source.volumeAt(0).left.toOption,
+        Some(VolumeSourceError.Geometry(GeometryError.GridsNotCongruent(0.0))),
+        clue = label
+      )
+    }
+  }
+
   test("temporal models reject implicit one-frame sources but accept explicit invariants") {
-    val space = VolumeSpace(SampleSpaces(Vector(2, 2, 2)))
-    val frame = volume(space, "frame")((_, _, _) => 1.0)
+    val sampledSpace = sampleSpace(Vector(2, 2, 2))
+    val space = sampledSpace.grid
+    val frame = volume(sampledSpace, "frame")((_, _, _) => 1.0)
     val temporal = SliceLayer.series(
       LayerId.unsafe("temporal"),
       frame.concatenate(frame),
@@ -104,8 +159,9 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("cache profiles separate sampling colorization and plane-specific redraw work") {
-    val space = VolumeSpace(SampleSpaces(Vector(4, 3, 2)))
-    val source = volume(space, "source")((x, y, z) => x + y + z)
+    val sampledSpace = sampleSpace(Vector(4, 3, 2))
+    val space = sampledSpace.grid
+    val source = volume(sampledSpace, "source")((x, y, z) => x + y + z)
     val model = ViewerModel.unsafe(space, Vector(layer("one", source), layer("two", source)))
     val state = ViewerState.centered(space)
     val device = DeviceContext.unsafe(800.0, 500.0)
@@ -202,9 +258,10 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("nonlinear pullback layers sample reference grids in their own source coordinates") {
-    val space = VolumeSpace(SampleSpaces(Vector(5, 3, 1)))
-    val source = volume(space, "x")((x, _, _) => x.toDouble)
-    val fieldGrid = GridSpec.fromVolumeSpace(space)
+    val sampledSpace = sampleSpace(Vector(5, 3, 1))
+    val space = sampledSpace.grid
+    val source = volume(sampledSpace, "x")((x, _, _) => x.toDouble)
+    val fieldGrid = GridSpec.fromGrid(space)
     val field =
       RavelArray.tabulate[Double](
         fieldGrid.shape.x,
@@ -214,9 +271,8 @@ class AdvancedViewSuite extends munit.FunSuite:
       ) { (x, _, _, component) =>
         if component == 0 && x >= 2 then 1.0 else 0.0
       }
-    val morphism = DenseFieldMorphism.displacement(
-      SpatialDomainId("source"),
-      SpatialDomainId("reference"),
+    val pullback = SpatialPullbacks.displacement(
+      fieldGrid,
       fieldGrid,
       field,
       Resample.Method.Nearest
@@ -225,7 +281,7 @@ class AdvancedViewSuite extends munit.FunSuite:
       space,
       Vector(
         layer("aligned", source),
-        layer("warped", source, LayerMapping.Pullback(morphism))
+        layer("warped", source, LayerMapping.Pullback(pullback))
       )
     )
     val frame = ViewerCompiler.compile(
@@ -241,8 +297,9 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("cache reuse preserves left-right convention and asymmetric raster orientation") {
-    val space = VolumeSpace(SampleSpaces(Vector(5, 3, 2)))
-    val source = volume(space, "asymmetric-x")((x, _, _) => x.toDouble)
+    val sampledSpace = sampleSpace(Vector(5, 3, 2))
+    val space = sampledSpace.grid
+    val source = volume(sampledSpace, "asymmetric-x")((x, _, _) => x.toDouble)
     val model = ViewerModel.unsafe(space, Vector(layer("anatomy", source)))
     val leftState = ViewerState.centered(space, LeftRightConvention.PatientLeftOnLeft)
     val rightState = leftState.copy(convention = LeftRightConvention.PatientRightOnLeft)
@@ -264,8 +321,9 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("linked view policies synchronize only declared state") {
-    val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
-    val source = volume(space, "source")((_, _, _) => 1.0)
+    val sampledSpace = sampleSpace(Vector(3, 3, 3))
+    val space = sampledSpace.grid
+    val source = volume(sampledSpace, "source")((_, _, _) => 1.0)
     val temporal = SliceLayer.series(
       LayerId.unsafe("temporal"),
       source.concatenate(source),

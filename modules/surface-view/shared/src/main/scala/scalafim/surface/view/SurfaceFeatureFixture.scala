@@ -1,5 +1,7 @@
 package scalafim.surface.view
 
+import scalafim.image.SampleSpaces.*
+
 import intaglio.*
 import scalafim.image.*
 import scalafim.surface.*
@@ -30,8 +32,8 @@ object SurfaceFeatureFixture:
     )
     SurfaceProjectionFixtureCase(
       VolToSurfMorphism(
-        SpatialDomainId("advanced-volume"),
-        SpatialDomainId("advanced-surface"),
+        SurfaceDomainId("advanced-volume"),
+        SurfaceDomainId("advanced-surface"),
         VolumeSurfaceSamplingPlan(
           SurfaceGeometryPair(white, pial),
           SurfaceSamplingPath.Midpoint,

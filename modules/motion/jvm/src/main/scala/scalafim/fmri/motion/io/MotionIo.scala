@@ -1,6 +1,8 @@
 package scalafim.fmri.motion.io
 
 import bids4s.{BidsFile, JsonValue}
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.fmri.motion.*
 import scalafim.image.*
 
@@ -49,7 +51,7 @@ final case class MotionNiftiMetadata(
     path: Path,
     dims: Vector[Int],
     voxelSize: Vector[Double],
-    affine: Option[DMat],
+    affine: Option[Affine[D3]],
     repetitionTime: Option[Double],
     acquisitionTiming: Option[AcquisitionTiming]
 )

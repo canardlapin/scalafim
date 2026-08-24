@@ -1,7 +1,8 @@
 package scalafim.examples.surfaceview
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*
@@ -127,5 +128,5 @@ class SurfaceViewerExampleSuite extends munit.FunSuite:
       TriangleMesh.fromArrays(coordinates, faces),
       hemisphere,
       SurfaceKind.Pial,
-      DMat.eye(4)
+      Affine.identity[D3]
     )

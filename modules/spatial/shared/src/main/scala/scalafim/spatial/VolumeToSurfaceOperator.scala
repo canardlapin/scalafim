@@ -1,7 +1,6 @@
 package scalafim.spatial
 
 import scalafim.image.{
-  Affine,
   GridSpec,
   Indexing,
   SomeMaskVolume,
@@ -340,9 +339,12 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def worldPoint(surface: SurfaceGeometry, vertex: VertexId): Either[SpatialError, SpatialPoint] =
     val point = surface.mesh.vertex(vertex)
-    SpatialPoint
-      .fromVector(Affine.applyAffine(surface.surfaceToWorld, point.toVector), "surface sample point")
-      .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
+    surface.surfaceToWorld(point.toVector)
+      .left.map(SpatialError.Geometry.apply)
+      .flatMap: values =>
+        SpatialPoint
+          .fromVector(values, "surface sample point")
+          .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
 
   private[spatial] def surfaceMaskAllows(mask: Option[SurfaceRoi[Boolean]], vertex: VertexId): Boolean =
     mask match

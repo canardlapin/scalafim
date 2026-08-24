@@ -2,12 +2,14 @@ package scalafim.spatial.io
 
 import gale.backend.Backend.given
 import gale.linalg.{DMat as GaleDMat}
+import image4s.geometry.{Affine, D3, Frame}
 import io.jhdf.HdfFile
 import io.jhdf.api.{Dataset, Group}
 import ravel.NDArray as RavelArray
 import ravel.Rank
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, Resample, SpatialDomainId}
-import scalafim.spatial.{CoordinateMap, DomainId, SpatialError}
+import reframe4s.field.CoordinateBoundaryPolicy
+import scalafim.image.{GridSpec, Resample, SpatialPullbacks}
+import scalafim.spatial.{CoordinateMap, SpatialError}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -264,25 +266,36 @@ private[io] object AntsHdf5TransformAdapter:
 
   def read(
     path: Path,
-    mapSource: DomainId,
-    mapTarget: DomainId,
-    interpolation: Resample.Method,
-    cost: Double
+    sourceGrid: GridSpec,
+    targetGrid: GridSpec,
+    interpolation: Resample.Method
   ): Either[SpatialIoError, DecodedItkHdf5Transform] =
-    ItkHdf5TransformReader.read(path).flatMap(decode(path, _, mapSource, mapTarget, interpolation, cost))
+    ItkHdf5TransformReader.read(path).flatMap(
+      decode(path, _, sourceGrid, targetGrid, interpolation)
+    )
 
   private def decode(
     path: Path,
     file: ItkHdf5TransformFile,
-    mapSource: DomainId,
-    mapTarget: DomainId,
-    interpolation: Resample.Method,
-    cost: Double
+    sourceGrid: GridSpec,
+    targetGrid: GridSpec,
+    interpolation: Resample.Method
   ): Either[SpatialIoError, DecodedItkHdf5Transform] =
+    val executableCount = file.components.count(component => CompositePattern.findFirstIn(component.transformType).isEmpty)
+    val intermediateFrames = Vector.newBuilder[Frame[D3]]
+    var boundaryIndex = 1
+    var boundaryError = Option.empty[SpatialIoError]
+    while boundaryIndex < executableCount && boundaryError.isEmpty do
+      Frame.named[D3](s"itk-hdf5-${path.getFileName}-stage-$boundaryIndex") match
+        case Left(cause) => boundaryError = Some(SpatialIoError.Geometry(path, cause))
+        case Right(frame) => intermediateFrames += frame
+      boundaryIndex += 1
+    val boundaries = Vector(targetGrid.providerFrame) ++ intermediateFrames.result() ++ Vector(sourceGrid.providerFrame)
     val maps = Vector.newBuilder[CoordinateMap]
     var position = 0
+    var executablePosition = 0
     var markerSeen = false
-    var error = Option.empty[SpatialIoError]
+    var error = boundaryError
     while position < file.components.length && error.isEmpty do
       val component = file.components(position)
       component.transformType match
@@ -293,13 +306,19 @@ private[io] object AntsHdf5TransformAdapter:
             )
           else markerSeen = true
         case AffinePattern() =>
-          decodeAffine(path, component) match
+          val inputFrame = boundaries(executableCount - 1 - executablePosition)
+          val outputFrame = boundaries(executableCount - executablePosition)
+          decodeAffine(path, component, outputFrame, inputFrame) match
             case Left(err) => error = Some(err)
             case Right(map) => maps += map
+          executablePosition += 1
         case DisplacementPattern() =>
-          decodeDisplacement(path, component, mapSource, mapTarget, interpolation, cost) match
+          val inputFrame = boundaries(executableCount - 1 - executablePosition)
+          val outputFrame = boundaries(executableCount - executablePosition)
+          decodeDisplacement(path, component, outputFrame, inputFrame, interpolation) match
             case Left(err) => error = Some(err)
             case Right(map) => maps += map
+          executablePosition += 1
         case unsupported =>
           error = Some(SpatialIoError.UnsupportedItkTransformType(path, component.index, unsupported))
       position += 1
@@ -308,14 +327,16 @@ private[io] object AntsHdf5TransformAdapter:
       case Some(err) => Left(err)
       case None =>
         CoordinateMap
-          .composite3D(maps.result())
+          .compose(maps.result().reverse)
           .left
           .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
           .map(map => DecodedItkHdf5Transform(map, file.provenance))
 
   private def decodeAffine(
     path: Path,
-    component: ItkHdf5Component
+    component: ItkHdf5Component,
+    outputFrame: Frame[D3],
+    inputFrame: Frame[D3]
   ): Either[SpatialIoError, CoordinateMap] =
     for
       parameters <- requiredValues(path, component, component.parameters, "TransformParameters", 12)
@@ -324,20 +345,22 @@ private[io] object AntsHdf5TransformAdapter:
       _ <- finiteValues(path, component.index, "affine fixed parameters", fixed)
       native = affineMatrix(parameters, fixed)
       ras = LpsToRas * native * LpsToRas
-      _ <- ras.lu.left.map(error => SpatialIoError.MalformedTransformAsset(path, s"component ${component.index} affine is singular: $error"))
+      affine <- Affine
+        .fromRowMajor[D3](ras.valuesRowMajor)
+        .left
+        .map(cause => SpatialIoError.Geometry(path, cause))
       map <- CoordinateMap
-        .affine3D(toImage(ras))
+        .affineBetween(outputFrame, inputFrame, affine)
         .left
         .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
-    yield map
+    yield CoordinateMap.Geometric(map)
 
   private def decodeDisplacement(
     path: Path,
     component: ItkHdf5Component,
-    mapSource: DomainId,
-    mapTarget: DomainId,
-    interpolation: Resample.Method,
-    cost: Double
+    outputFrame: Frame[D3],
+    inputFrame: Frame[D3],
+    interpolation: Resample.Method
   ): Either[SpatialIoError, CoordinateMap] =
     for
       fixed <- requiredValues(path, component, component.fixedParameters, "TransformFixedParameters", 18)
@@ -348,20 +371,19 @@ private[io] object AntsHdf5TransformAdapter:
       _ <- finiteValues(path, component.index, "displacement parameters", parameters)
       grid <- displacementGrid(path, component.index, dims, fixed)
       field = displacementField(parameters, grid)
-      dense <- DenseFieldMorphism
-        .displacement(
-          SpatialDomainId(mapSource.value),
-          SpatialDomainId(mapTarget.value),
+      pullback <- SpatialPullbacks
+        .displacementBetween(
+          outputFrame,
+          inputFrame,
           grid,
           field,
           interpolation,
-          cost,
-          s"ants-hdf5-component-${component.index}"
+          CoordinateBoundaryPolicy.PreserveSource
         )
         .left
         .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
       map <- CoordinateMap
-        .dense3D(dense)
+        .dense(pullback)
         .left
         .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
     yield map
@@ -470,7 +492,11 @@ private[io] object AntsHdf5TransformAdapter:
         native(3, 2) = 0.0
         native(3, 3) = 1.0
         val ras = LpsToRas * native.result()
-        Right(GridSpec(dims, toImage(ras)))
+        Affine
+          .fromRowMajor[D3](ras.valuesRowMajor)
+          .left
+          .map(cause => SpatialIoError.Geometry(path, cause))
+          .map(affine => GridSpec(dims, affine))
 
   private def displacementField(
     parameters: ItkHdf5NumericValues,
@@ -489,8 +515,3 @@ private[io] object AntsHdf5TransformAdapter:
     values(0) * (values(4) * values(8) - values(5) * values(7)) -
       values(1) * (values(3) * values(8) - values(5) * values(6)) +
       values(2) * (values(3) * values(7) - values(4) * values(6))
-
-  private def toImage(matrix: GaleDMat): ImageDMat =
-    ImageDMat.fromRows(
-      Vector.tabulate(matrix.rows)(row => Vector.tabulate(matrix.cols)(col => matrix(row, col)))
-    )

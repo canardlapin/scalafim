@@ -1,6 +1,7 @@
 package scalafim.surface
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 
 class SurfaceDataSuite extends munit.FunSuite:
 
@@ -138,12 +139,12 @@ class SurfaceDataSuite extends munit.FunSuite:
         inflatedMesh,
         Hemisphere.Left,
         SurfaceKind.Inflated,
-        DMat.fromRows(Vector(
+        Affine.fromRowMajor[D3](Vector(
           Vector(1.0, 0.0, 0.0, 1.0),
           Vector(0.0, 1.0, 0.0, 0.0),
           Vector(0.0, 0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 0.0, 1.0)
-        ))
+        ).flatten).toOption.get
       )
     interceptMessage[IllegalArgumentException]("requirement failed: all surface geometries must share a surface-to-world transform"):
       SurfaceSet.of(SurfaceKind.Pial, geometry, SurfaceKind.Inflated -> translated)

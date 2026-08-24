@@ -1,5 +1,11 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
 import ravel.NDArray as RavelArray
 
 import scala.reflect.ClassTag
@@ -11,19 +17,19 @@ class SliceSamplingSuite extends munit.FunSuite:
 
   private def volume[A: ClassTag: DType, Sem](
     dims: SpatialDims,
-    affine: Option[DMat] = None,
+    affine: Option[Affine[D3]] = None,
     label: String = "test"
   )(f: (Int, Int, Int) => A)(using image4s.ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
     val values =
       RavelArray.tabulate[A](dims.x, dims.y, dims.z)(f)
     SomeNeuroVolume.unsafeFromRavel[A, Sem](
       values,
-      SampleSpaces(dims.toVector, trans = affine),
+      SampleSpaces(dims.toVector, affine = affine),
       label
     )
 
   private def gridAt(
-    space: VolumeSpace,
+    space: Grid[? <: Frame[D3], D3],
     anatomicalPlane: AnatomicalPlane,
     cursor: WorldPoint,
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
@@ -39,10 +45,10 @@ class SliceSamplingSuite extends munit.FunSuite:
     val source = volume[Double, image4s.Continuous](dims) { (x, y, z) =>
       2.0 * x + 3.0 * y - 4.0 * z + 7.0
     }
-    val grid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.25))
+    val grid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.25))
     val sampled =
       SlicePlan
-        .make(source.volumeSpace, grid)
+        .make(source.grid, grid)
         .sample(source, SliceSampling.Linear())
         .toOption
         .get
@@ -51,7 +57,7 @@ class SliceSamplingSuite extends munit.FunSuite:
     while row < sampled.dimensions.height do
       var column = 0
       while column < sampled.dimensions.width do
-        val voxel = source.volumeSpace.worldToVoxel(grid.unsafeWorldAt(column, row))
+        val voxel = source.grid.worldToVoxel(grid.unsafeWorldAt(column, row)).fold(error => fail(error.message), identity)
         val expected = 2.0 * voxel.x + 3.0 * voxel.y - 4.0 * voxel.z + 7.0
         assertEqualsDouble(sampled(column, row), expected, Tol)
         column += 1
@@ -61,8 +67,8 @@ class SliceSamplingSuite extends munit.FunSuite:
   test("nearest sampling preserves label values and the top-to-bottom row contract") {
     val dims = SpatialDims(10, 10, 10)
     val labels = volume[Int, image4s.Categorical](dims) { (x, y, z) => x + 10 * y + 100 * z }
-    val grid = gridAt(labels.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.4))
-    val sampled = SlicePlan.make(labels.volumeSpace, grid)
+    val grid = gridAt(labels.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.4))
+    val sampled = SlicePlan.make(labels.grid, grid)
       .sample(labels, SliceSampling.Nearest(-1))
       .toOption
       .get
@@ -75,10 +81,10 @@ class SliceSamplingSuite extends munit.FunSuite:
   test("cubic sampling shares the kernel contract and reproduces a linear field") {
     val dims = SpatialDims(10, 10, 10)
     val source = volume[Double, image4s.Continuous](dims) { (_, _, z) => 5.0 + 2.5 * z }
-    val grid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.25))
+    val grid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 4.25))
     val sampled =
       SlicePlan
-        .make(source.volumeSpace, grid)
+        .make(source.grid, grid)
         .sample(source, SliceSampling.Cubic())
         .toOption
         .get
@@ -92,8 +98,8 @@ class SliceSamplingSuite extends munit.FunSuite:
   test("outside values participate explicitly in interpolation") {
     val dims = SpatialDims(4, 4, 4)
     val source = volume[Double, image4s.Continuous](dims)((_, _, _) => 8.0)
-    val nearestGrid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, -2.0))
-    val nearest = SlicePlan.make(source.volumeSpace, nearestGrid)
+    val nearestGrid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, -2.0))
+    val nearest = SlicePlan.make(source.grid, nearestGrid)
       .sample(source, SliceSampling.Nearest(-3.0))
       .toOption
       .get
@@ -103,8 +109,8 @@ class SliceSamplingSuite extends munit.FunSuite:
         .forall(_ == -3.0)
     )
 
-    val linearGrid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, -0.25))
-    val linear = SlicePlan.make(source.volumeSpace, linearGrid)
+    val linearGrid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, -0.25))
+    val linear = SlicePlan.make(source.grid, linearGrid)
       .sample(source, SliceSampling.Linear(0.0))
       .toOption
       .get
@@ -162,22 +168,22 @@ class SliceSamplingSuite extends munit.FunSuite:
     val source = volume[Double, image4s.Continuous](dims) { (x, y, z) => x + 10.0 * y + 100.0 * z }
     val cursor = WorldPoint(0.0, 0.0, 2.0)
     val leftGrid = gridAt(
-      source.volumeSpace,
+      source.grid,
       AnatomicalPlane.Axial,
       cursor,
       LeftRightConvention.PatientLeftOnLeft
     )
     val rightGrid = gridAt(
-      source.volumeSpace,
+      source.grid,
       AnatomicalPlane.Axial,
       cursor,
       LeftRightConvention.PatientRightOnLeft
     )
-    val left = SlicePlan.make(source.volumeSpace, leftGrid)
+    val left = SlicePlan.make(source.grid, leftGrid)
       .sample(source, SliceSampling.Nearest(-1.0))
       .toOption
       .get
-    val right = SlicePlan.make(source.volumeSpace, rightGrid)
+    val right = SlicePlan.make(source.grid, rightGrid)
       .sample(source, SliceSampling.Nearest(-1.0))
       .toOption
       .get
@@ -196,7 +202,7 @@ class SliceSamplingSuite extends munit.FunSuite:
   }
 
   test("affine stepping agrees with direct world-to-voxel conversion") {
-    val affine = DMat.fromRows(
+    val affine = ProviderSpaces.affine(
       Vector(
         Vector(0.0, -2.0, 0.25, 5.0),
         Vector(1.5, 0.0, 0.10, -4.0),
@@ -207,13 +213,13 @@ class SliceSamplingSuite extends munit.FunSuite:
     val source = volume[Double, image4s.Continuous](SpatialDims(8, 7, 6), Some(affine)) { (x, y, z) =>
       x + 10.0 * y + 100.0 * z
     }
-    val cursor = source.volumeSpace.voxelToWorld(VoxelPoint(3.5, 3.0, 2.5))
+    val cursor = source.grid.voxelToWorld(VoxelPoint(3.5, 3.0, 2.5)).fold(error => fail(error.message), identity)
     val grid = SliceGrid.covering(
-      source.volumeSpace,
+      source.grid,
       SlicePlane.canonical(AnatomicalPlane.Coronal, cursor),
       PixelSpacing(0.7, 0.9)
     )
-    val plan = SlicePlan.make(source.volumeSpace, grid)
+    val plan = SlicePlan.make(source.grid, grid)
     val pixels = Vector(
       PixelCoord(0, 0),
       PixelCoord(grid.dimensions.width / 2, grid.dimensions.height / 2),
@@ -221,7 +227,7 @@ class SliceSamplingSuite extends munit.FunSuite:
     )
 
     pixels.foreach { pixel =>
-      val direct = source.volumeSpace.worldToVoxel(grid.worldAt(pixel).toOption.get)
+      val direct = source.grid.worldToVoxel(grid.worldAt(pixel).toOption.get).fold(error => fail(error.message), identity)
       val planned = plan.sourceVoxelAt(pixel).toOption.get
       assertEqualsDouble(planned.x, direct.x, Tol)
       assertEqualsDouble(planned.y, direct.y, Tol)
@@ -235,7 +241,7 @@ class SliceSamplingSuite extends munit.FunSuite:
     val shifted = volume[Double, image4s.Continuous](
       dims,
       Some(
-        DMat.fromRows(
+        ProviderSpaces.affine(
           Vector(
             Vector(1.0, 0.0, 0.0, 10.0),
             Vector(0.0, 1.0, 0.0, 0.0),
@@ -245,10 +251,10 @@ class SliceSamplingSuite extends munit.FunSuite:
         )
       )
     )((x, y, z) => x + y + z)
-    val grid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 1.0))
+    val grid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 1.0))
     val result =
       SlicePlan
-        .make(source.volumeSpace, grid)
+        .make(source.grid, grid)
         .sample(shifted, SliceSampling.Linear())
 
     assert(result.isLeft)
@@ -257,8 +263,8 @@ class SliceSamplingSuite extends munit.FunSuite:
   test("mapped slice plans materialize nonlinear pullback coordinates once") {
     val dims = SpatialDims(5, 3, 1)
     val source = volume[Double, image4s.Continuous](dims) { (x, _, _) => x.toDouble }
-    val grid = gridAt(source.volumeSpace, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 0.0))
-    val fieldGrid = GridSpec.fromVolumeSpace(source.volumeSpace)
+    val grid = gridAt(source.grid, AnatomicalPlane.Axial, WorldPoint(0.0, 0.0, 0.0))
+    val fieldGrid = GridSpec.fromGrid(source.grid)
     val field =
       RavelArray.tabulate[Double](
         fieldGrid.shape.x,
@@ -268,14 +274,16 @@ class SliceSamplingSuite extends munit.FunSuite:
       ) { (x, _, _, component) =>
         if component == 0 && x >= 2 then 1.0 else 0.0
       }
-    val mapping = DenseFieldMorphism.displacement(
-      SpatialDomainId("source"),
-      SpatialDomainId("reference"),
+    val mapping = SpatialPullbacks.displacement(
+      fieldGrid,
       fieldGrid,
       field,
       Resample.Method.Nearest
-    ).toOption.get
-    val plan = MappedSlicePlan.make(source.volumeSpace, grid, mapping)
+    ).fold(error => fail(error.message), identity)
+    val plan =
+      MappedSlicePlan
+        .make(source.grid, grid, mapping)
+        .fold(error => fail(error.message), identity)
     val sampled =
       plan
         .sample(source, SliceSampling.Nearest(-1.0))
@@ -294,7 +302,7 @@ class SliceSamplingSuite extends munit.FunSuite:
 
   test("primitive dense-field slice mapping agrees with the typed morphism oracle") {
     val dims = SpatialDims(6, 5, 4)
-    val affine = DMat.fromRows(
+    val affine = ProviderSpaces.affine(
       Vector(
         Vector(1.5, 0.10, 0.00, 4.0),
         Vector(0.0, 2.00, 0.15, -3.0),
@@ -305,13 +313,13 @@ class SliceSamplingSuite extends munit.FunSuite:
     val source = volume[Double, image4s.Continuous](dims, Some(affine)) { (x, y, z) =>
       x.toDouble + 10.0 * y.toDouble + 100.0 * z.toDouble
     }
-    val cursor = source.volumeSpace.voxelToWorld(VoxelPoint(2.4, 2.1, 1.6))
+    val cursor = source.grid.voxelToWorld(VoxelPoint(2.4, 2.1, 1.6)).fold(error => fail(error.message), identity)
     val grid = SliceGrid.covering(
-      source.volumeSpace,
+      source.grid,
       SlicePlane.canonical(AnatomicalPlane.Coronal, cursor),
       PixelSpacing(0.8, 0.9)
     )
-    val fieldGrid = GridSpec.fromVolumeSpace(source.volumeSpace)
+    val fieldGrid = GridSpec.fromGrid(source.grid)
     val displacement =
       RavelArray.tabulate[Double](
         fieldGrid.shape.x,
@@ -341,26 +349,50 @@ class SliceSamplingSuite extends munit.FunSuite:
           case 1 => world.y - 0.05 * x.toDouble
           case _ => world.z + 0.08 * z.toDouble
       }
-    val domain = SpatialDomainId("source")
-    val reference = SpatialDomainId("reference")
     val mappings = Vector(
-      DenseFieldMorphism.displacement(domain, reference, fieldGrid, displacement, Resample.Method.Nearest).toOption.get,
-      DenseFieldMorphism.displacement(domain, reference, fieldGrid, displacement, Resample.Method.Linear).toOption.get,
-      DenseFieldMorphism.displacement(domain, reference, fieldGrid, displacement, Resample.Method.Cubic).toOption.get,
-      DenseFieldMorphism.coordinates(domain, reference, fieldGrid, absolute, Resample.Method.Nearest).toOption.get,
-      DenseFieldMorphism.coordinates(domain, reference, fieldGrid, absolute, Resample.Method.Linear).toOption.get,
-      DenseFieldMorphism.coordinates(domain, reference, fieldGrid, absolute, Resample.Method.Cubic).toOption.get
+      SpatialPullbacks.displacement(fieldGrid, fieldGrid, displacement, Resample.Method.Nearest),
+      SpatialPullbacks.displacement(fieldGrid, fieldGrid, displacement, Resample.Method.Linear),
+      SpatialPullbacks.displacement(fieldGrid, fieldGrid, displacement, Resample.Method.Cubic),
+      SpatialPullbacks.coordinates(fieldGrid, fieldGrid, absolute, Resample.Method.Nearest),
+      SpatialPullbacks.coordinates(fieldGrid, fieldGrid, absolute, Resample.Method.Linear),
+      SpatialPullbacks.coordinates(fieldGrid, fieldGrid, absolute, Resample.Method.Cubic)
+    ).map(
+      _.fold(error => fail(error.message), identity)
     )
 
     mappings.foreach { mapping =>
-      val plan = MappedSlicePlan.make(source.volumeSpace, grid, mapping)
+      val plan =
+        MappedSlicePlan
+          .make(source.grid, grid, mapping)
+          .fold(error => fail(error.message), identity)
       var row = 0
       while row < grid.dimensions.height do
         var column = 0
         while column < grid.dimensions.width do
           val pixel = PixelCoord(column, row)
           val referenceWorld = grid.worldAt(pixel).toOption.get
-          val expected = source.volumeSpace.worldToVoxel(mapping.transform(referenceWorld))
+          val mapFrame: image4s.geometry.Frame[D3] = mapping.source
+          val raw = image4s.geometry.Point
+            .in[D3](mapFrame)(
+              referenceWorld.x,
+              referenceWorld.y,
+              referenceWorld.z
+            )
+            .fold(error => fail(error.message), identity)
+          val point = image4s.geometry.Frame
+            .alignOwners[D3, mapFrame.type, image4s.geometry.Frame[D3]](
+              mapFrame,
+              mapFrame
+            )
+            .flatMap(_.pointToRight(raw))
+            .fold(error => fail(error.message), identity)
+          val mapped = mapping(point).fold(error => fail(error.message), identity)
+          val mappedWorld = WorldPoint(
+            mapped.coordinates(0),
+            mapped.coordinates(1),
+            mapped.coordinates(2)
+          )
+          val expected = source.grid.worldToVoxel(mappedWorld).fold(error => fail(error.message), identity)
           val actual = plan.sourceVoxelAt(pixel).toOption.get
           assertEqualsDouble(actual.x, expected.x, Tol)
           assertEqualsDouble(actual.y, expected.y, Tol)

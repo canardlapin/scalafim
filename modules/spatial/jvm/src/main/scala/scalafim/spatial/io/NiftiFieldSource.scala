@@ -1,6 +1,7 @@
 package scalafim.spatial.io
 
-import scalafim.image.GridCompatibility
+import image4s.geometry.Grid
+import scalafim.image.{SampleSpaceError, SampleSpaces}
 import scalafim.image.io.{Nifti, NiftiHeader}
 import scalafim.spatial.*
 
@@ -128,28 +129,44 @@ final class NiftiFieldSource private (
         (header.datatype == 8 && bytesPerValue == 4) ||
         (header.datatype == 16 && bytesPerValue == 4) ||
         (header.datatype == 64 && bytesPerValue == 8)
-    if header.dims.length < 3 || header.dims.length > 4 then
-      Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"expected a 3D or 4D NIfTI, got ${header.dims.mkString("x")}"))
-    else if !supported then
-      Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"unsupported NIfTI datatype ${header.datatype} with bitpix ${header.bitpix}"))
-    else if header.voxOffset < 0 then
-      Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"negative vox_offset ${header.voxOffset}"))
-    else
-      val actualRows = header.dims.take(3).product
-      val actualObservations = if header.dims.length == 4 then header.dims(3) else 1
-      if actualRows != descriptor.rows then
-        Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, descriptor.rows, actualRows))
-      else if actualObservations != descriptor.observations then
-        Left(SpatialError.FieldObservationMismatch(descriptor.observations, actualObservations))
-      else
-        descriptor.geometry match
-          case SamplingGeometry.Volume(space, _)
-              if GridCompatibility.spatial(space, header.space).isRight =>
-            Right(())
-          case SamplingGeometry.Volume(_, _) =>
-            Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
-          case _ =>
-            Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
+    descriptor.geometry match
+      case SamplingGeometry.Volume(expectedSpace, _) =>
+        val admittedHeaderSpace =
+          if header.dims.length < 3 then
+            Left(
+              SampleSpaceError.ExpectedDimensionality(
+                "D3 sample space",
+                expected = 3,
+                actual = header.dims.length
+              )
+            )
+          else
+            SampleSpaces.requireSpatialD3(header.space)
+        admittedHeaderSpace
+          .left
+          .map(error => SpatialError.FieldSourceSampleSpaceAdmission(descriptor.id, error))
+          .flatMap: actualSpace =>
+            if header.dims.length > 4 then
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"expected a 3D or 4D NIfTI, got ${header.dims.mkString("x")}"))
+            else if !supported then
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"unsupported NIfTI datatype ${header.datatype} with bitpix ${header.bitpix}"))
+            else if header.voxOffset < 0 then
+              Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"negative vox_offset ${header.voxOffset}"))
+            else
+              val actualRows = header.dims.take(3).product
+              val actualObservations = if header.dims.length == 4 then header.dims(3) else 1
+              if actualRows != descriptor.rows then
+                Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, descriptor.rows, actualRows))
+              else if actualObservations != descriptor.observations then
+                Left(SpatialError.FieldObservationMismatch(descriptor.observations, actualObservations))
+              else
+                Grid
+                  .exactCongruence(expectedSpace.grid, actualSpace.grid)
+                  .left
+                  .map(error => SpatialError.FieldSourceGridMismatch(descriptor.id, error))
+                  .map(_ => ())
+      case _ =>
+        Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
 
   private def readBlock(
     header: NiftiHeader,

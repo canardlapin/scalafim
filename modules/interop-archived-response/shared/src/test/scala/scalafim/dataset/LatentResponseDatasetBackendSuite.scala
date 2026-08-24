@@ -2,8 +2,9 @@ package scalafim.dataset
 
 import scalafim.image.SampleSpaces
 
-import gale.linalg.DMat as GaleDMat
-import scalafim.image.{DMat, Mask, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.{Mask, SomeSampleSpace}
 import scalafim.latent.ExplicitLatentResponse
 
 class LatentResponseDatasetBackendSuite extends munit.FunSuite:
@@ -11,7 +12,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val denseData =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(1.0, 2.0, 3.0, 4.0),
         Vector(5.0, 6.0, 7.0, 8.0),
@@ -23,7 +24,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -45,14 +46,14 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
 
     assertEquals(actual.timepoints, expected.timepoints)
     assertEquals(actual.voxelIndices, expected.voxelIndices)
-    assertEquals(actual.data.toRows, expected.data.toRows)
+    assertEquals(GaleTestData.toRows(actual.data), GaleTestData.toRows(expected.data))
   }
 
   test("masked latent response default read uses the active voxel domain") {
     val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -68,7 +69,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     assertEquals(latent.voxelDomain.indices, Vector(0, 2, 3))
     assertEquals(series.voxelIndices, Vector(0, 2, 3))
     assertEquals(
-      series.data.toRows,
+      GaleTestData.toRows(series.data),
       Vector(
         Vector(1.0, 3.0, 4.0),
         Vector(5.0, 7.0, 8.0),
@@ -81,7 +82,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -106,7 +107,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, Array(0, 2, 3))
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -148,7 +149,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
     val mask = Mask.fromIndices(space, Array(0, 2))
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -174,7 +175,7 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
   test("latent response backend defaults to an all-space mask") {
     val response =
       ExplicitLatentResponse(
-        basis = GaleDMat.eye(3),
+        basis = DMat.eye(3),
         loadings = GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 5.0, 9.0),
@@ -192,5 +193,8 @@ class LatentResponseDatasetBackendSuite extends munit.FunSuite:
         voxels = VoxelSelection.indices(2, 1)
       )
 
-    assertEquals(latent.read(selection).data.toRows, dense.read(selection).data.toRows)
+    assertEquals(
+      GaleTestData.toRows(latent.read(selection).data),
+      GaleTestData.toRows(dense.read(selection).data)
+    )
   }

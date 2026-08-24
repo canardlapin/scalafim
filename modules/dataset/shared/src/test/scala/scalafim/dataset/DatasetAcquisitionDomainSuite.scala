@@ -1,9 +1,9 @@
 package scalafim.dataset
 
 import scalafim.locus.mapping
+import gale.linalg.DMat
 import image4s.locus.GridDomain
 import scalafim.image.{
-  DMat,
   SampleSpaces,
   SomeSampleSpace,
 }
@@ -15,7 +15,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
       timepoints: Int = 3
   ): DatasetShape =
     DatasetShape.unsafe(
-      SampleSpaces(Vector(4, 1, 1), trans = Some(affine)),
+      SampleSpaces(Vector(4, 1, 1), affine = Some(GaleTestData.affineD3(affine))),
       timepoints
     )
 
@@ -32,7 +32,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     val original = shape()
     val shifted =
       shape(
-        DMat.fromRows(
+        GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0, 0.0, 10.0),
             Vector(0.0, 1.0, 0.0, 0.0),
@@ -145,7 +145,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          requestedShape.volumeSpace.sampleSpace.grid,
+          requestedShape.grid,
           "dataset image selection adapter",
           locus4s.DomainRegistry.empty
         )
@@ -169,7 +169,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
 
     val shifted =
       shape(
-        DMat.fromRows(
+        GaleTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0, 0.0, 10.0),
             Vector(0.0, 1.0, 0.0, 0.0),

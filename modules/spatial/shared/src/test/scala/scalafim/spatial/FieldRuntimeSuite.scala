@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class FieldRuntimeSuite extends munit.FunSuite:
@@ -19,11 +20,11 @@ class FieldRuntimeSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double, y: Double, z: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double, y: Double, z: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, y),
@@ -32,7 +33,7 @@ class FieldRuntimeSuite extends munit.FunSuite:
       )
     )
 
-  private def affine(idValue: String, source: Domain, target: Domain, matrix: DMat): Morphism =
+  private def affine(idValue: String, source: Domain, target: Domain, matrix: Affine[D3]): Morphism =
     value(
       Morphism.build(
         id = value(MorphismId(idValue)),
@@ -42,7 +43,7 @@ class FieldRuntimeSuite extends munit.FunSuite:
         routeTag = RouteTag.Anatomical,
         cost = 1.0,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = value(CoordinateMap.affine3D(matrix))
+        coordinateMap = value(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -148,7 +149,7 @@ class FieldRuntimeSuite extends munit.FunSuite:
     val source = domain("source")
     val target = domain("target")
     val op = compile(
-      graph(Vector(source, target), Vector(affine("source-to-target", source, target, DMat.eye(4)))),
+      graph(Vector(source, target), Vector(affine("source-to-target", source, target, ProviderAffines.identity))),
       CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest)
     )
     val field = Field.fromMatrix(source.id, DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))), "bold")
@@ -165,7 +166,7 @@ class FieldRuntimeSuite extends munit.FunSuite:
     val other = domain("other")
     val target = domain("target")
     val op = compile(
-      graph(Vector(other, target), Vector(affine("other-to-target", other, target, DMat.eye(4)))),
+      graph(Vector(other, target), Vector(affine("other-to-target", other, target, ProviderAffines.identity))),
       CompileRequest(other.id, target.id, sampling = SamplingPolicy.Nearest)
     )
     val field = Field.fromMatrix(source.id, DoubleMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0))), "bold")

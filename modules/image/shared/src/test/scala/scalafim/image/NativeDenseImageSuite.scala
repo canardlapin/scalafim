@@ -51,18 +51,20 @@ class NativeDenseImageSuite extends munit.FunSuite:
     val sampled =
       right(Sampled.continuous(volumeSpace, volumeData))
     val volume = NeuroVolume.fromSampled(sampled)
-    val semantic: SomeScalarVolume[Double] = volume
-    val agnostic: SomeScalarVolume[Double] = volume
+    val semantic: SomeScalarVolume[Double] =
+      SomeNeuroVolume.eraseSpace(volume)
+    val agnostic: SomeScalarVolume[Double] =
+      SomeNeuroVolume.eraseSpace(volume)
 
     assert(volume.sampled eq sampled)
     assert(semantic.asInstanceOf[AnyRef] eq sampled)
     assert(agnostic.asInstanceOf[AnyRef] eq sampled)
-    assert(volume.data eq volumeData)
+    assert(volume.sampled.data eq volumeData)
     assertEqualsDouble(volume(1, 2, 3), 123.0, 0.0)
 
     val direct =
       right(NeuroVolume.continuous(volumeSpace, volumeData))
-    assert(direct.data eq volumeData)
+    assert(direct.sampled.data eq volumeData)
 
   test("whole-canonical access uses Ravel last-axis-fastest order"):
     val volume =
@@ -108,7 +110,7 @@ class NativeDenseImageSuite extends munit.FunSuite:
       volumeSpace,
       Array(1.0)
     ) match
-      case Left(NativeImageError.CanonicalArraySizeMismatch(24, 1)) => ()
+      case Left(NeuroImageError.CanonicalArraySizeMismatch(24, 1)) => ()
       case other => fail(s"expected a canonical-size error, found $other")
 
   test("crop, flip, stride, and singleton planes remain immutable views"):
@@ -149,26 +151,52 @@ class NativeDenseImageSuite extends munit.FunSuite:
     val sampled =
       right(Sampled.continuous(seriesSpace, seriesData))
     val series = right(NeuroSeries.fromSampled(sampled))
-    val semantic: SomeScalarSeries[Double] = series
-    val agnostic: SomeScalarSeries[Double] = series
+    val semantic: SomeScalarSeries[Double] =
+      SomeNeuroSeries.eraseSpace(series)
+    val agnostic: SomeScalarSeries[Double] =
+      SomeNeuroSeries.eraseSpace(series)
 
     assert(series.sampled eq sampled)
     assert(semantic.asInstanceOf[AnyRef] eq sampled)
     assert(agnostic.asInstanceOf[AnyRef] eq sampled)
-    assert(series.data eq seriesData)
+    assert(series.sampled.data eq seriesData)
     assertEqualsDouble(series(1, 2, 3, 4), 1234.0, 0.0)
 
-  test("NeuroSeries rejects a non-Time fourth axis"):
+  test("SomeNeuroSeries reports the exact non-Time-axis error"):
     val channel = right(Axis.create("channel", 5, AxisKind.Channel))
     val axes = right(NonSpatialAxes.from(Vector(channel)))
     val channelSpace = SampleSpace.create(grid, axes)
-    val sampled = right(Sampled.continuous(channelSpace, seriesData))
 
-    NeuroSeries.fromSampled(sampled) match
-      case Left(NativeImageError.ExpectedSingleTimeAxis(actual)) =>
+    SomeScalarSeries.fromRavel(seriesData, channelSpace) match
+      case Left(NeuroImageError.ExpectedSingleTimeAxis(actual)) =>
         assertEquals(actual, Vector(AxisKind.Channel))
       case other =>
         fail(s"expected a Time-axis error, found $other")
+
+  test("NeuroSeries reports multiple Time axes without constructing rank-4 data"):
+    val secondTime = right(Axis.create("repeat-time", 2, AxisKind.Time))
+    val axes = right(NonSpatialAxes.from(Vector(timeAxis, secondTime)))
+    val multipleTimeSpace = SampleSpace.create(grid, axes)
+
+    NeuroSeries.copyContinuousFromCanonicalArray(
+      multipleTimeSpace,
+      Array.fill(240)(0.0)
+    ) match
+      case Left(NeuroImageError.ExpectedSingleTimeAxis(actual)) =>
+        assertEquals(actual, Vector(AxisKind.Time, AxisKind.Time))
+      case other =>
+        fail(s"expected a multiple-Time-axis error, found $other")
+
+  test("volume planes report exact spatial-bound errors"):
+    val volume = right(NeuroVolume.continuous(volumeSpace, volumeData))
+
+    volume.plane(axis = -1, index = 0) match
+      case Left(NeuroImageError.SpatialAxisOutOfBounds(-1)) => ()
+      case other => fail(s"expected a spatial-axis error, found $other")
+
+    volume.plane(axis = 2, index = 4) match
+      case Left(NeuroImageError.SpatialIndexOutOfBounds(2, 4, 4)) => ()
+      case other => fail(s"expected a spatial-index error, found $other")
 
   test("canonical series reshapes to voxel-by-time without copying values"):
     val series =

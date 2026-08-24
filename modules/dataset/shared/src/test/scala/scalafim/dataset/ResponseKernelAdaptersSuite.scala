@@ -2,8 +2,9 @@ package scalafim.dataset
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.response.*
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
@@ -190,7 +191,7 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
     val backend =
       InMemoryDatasetBackend(
         DatasetId("response-adapter-fixture"),
-        DMat.fromRows(
+        GaleTestData.matrixFromRows(
           Vector(
             Vector(0.0, 1.0, 2.0, 3.0),
             Vector(10.0, 11.0, 12.0, 13.0),

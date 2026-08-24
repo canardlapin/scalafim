@@ -15,7 +15,7 @@ import scalafim.archive.lna.{
   TransformParams
 }
 import scalafim.image.SomeSampleSpace
-import scalafim.image.spatialDims
+import scalafim.image.SampleSpaces.*
 import gale.linalg.DVec
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -107,12 +107,12 @@ object TransportLatentArchiveCodec:
 
         val payloads =
           Map[ArchivePath, Payload](
-            coeffPath -> Payload.DoubleMatrix(toDMat(response.coefficientsAnalysis)),
-            nativeDecoderPath -> Payload.DoubleMatrix(toDMat(nativeDecoder.transpose)),
-            toAnalysisPath -> Payload.DoubleMatrix(toDMat(toAnalysis)),
-            toRawPath -> Payload.DoubleMatrix(toDMat(toRaw))
+            coeffPath -> Payload.DoubleMatrix(response.coefficientsAnalysis),
+            nativeDecoderPath -> Payload.DoubleMatrix(nativeDecoder.transpose),
+            toAnalysisPath -> Payload.DoubleMatrix(toAnalysis),
+            toRawPath -> Payload.DoubleMatrix(toRaw)
           ) ++
-            templateDecoder.map(decoder => templateDecoderPath -> Payload.DoubleMatrix(toDMat(decoder.transpose))).toMap ++
+            templateDecoder.map(decoder => templateDecoderPath -> Payload.DoubleMatrix(decoder.transpose)).toMap ++
             response.offset.map(values => offsetPath -> Payload.DoubleVector(values.toVector)).toMap
 
         LnaArchive(
@@ -160,10 +160,10 @@ object TransportLatentArchiveCodec:
         _ <-
           if coefficients.rows == run.shape.timepoints then Right(())
           else Left(ArchiveError.ShapeMismatch(s"transport coefficients have ${coefficients.rows} rows but run has ${run.shape.timepoints} timepoints"))
-        nativeDecoder <- linearMapFromMatrix(toDoubleMatrix(nativeDecoderT).transpose)
+        nativeDecoder <- linearMapFromMatrix(nativeDecoderT.transpose)
         templateDecoder <- templateDecoderT match
           case None           => Right(None)
-          case Some(decoderT) => linearMapFromMatrix(toDoubleMatrix(decoderT).transpose).map(Some(_))
+          case Some(decoderT) => linearMapFromMatrix(decoderT.transpose).map(Some(_))
         toAnalysis <- linearMapFromMatrix(toAnalysisMatrix)
         toRaw <- linearMapFromMatrix(toRawMatrix)
         transform <- CoefficientTransform(toAnalysis, toRaw).left.map(error)
@@ -171,7 +171,7 @@ object TransportLatentArchiveCodec:
         target <- DomainId(targetDomain).left.map(error)
         adjoint <- transportAdjoint(params.metadata.getOrElse("adjoint_convention", "euclidean_discrete"))
         response <- TransportLatentResponse(
-          coefficientsAnalysis = toDoubleMatrix(coefficients),
+          coefficientsAnalysis = coefficients,
           nativeDecoder = nativeDecoder,
           transform = transform,
           templateDecoder = templateDecoder,

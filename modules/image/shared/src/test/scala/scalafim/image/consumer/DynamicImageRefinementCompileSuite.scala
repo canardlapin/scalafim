@@ -4,7 +4,7 @@ import scala.compiletime.testing.typeCheckErrors
 
 final class DynamicImageRefinementCompileSuite extends munit.FunSuite:
 
-  test("validated concrete images widen to their dynamic refinements"):
+  test("validated concrete images cross their intended dynamic boundaries"):
     val errors = typeCheckErrors(
       """
 import image4s.*
@@ -13,11 +13,11 @@ import scalafim.image.*
 
 def widenVolume[S <: SampleSpace[?, D3], A](
     volume: ScalarVolume[S, A]
-): SomeScalarVolume[A] = volume
+): SomeScalarVolume[A] = SomeNeuroVolume.eraseSpace(volume)
 
 def widenSeries[S <: SampleSpace[?, D3], A](
     series: ScalarSeries[S, A]
-): SomeScalarSeries[A] = series
+): SomeScalarSeries[A] = SomeNeuroSeries.eraseSpace(series)
 """
     )
 

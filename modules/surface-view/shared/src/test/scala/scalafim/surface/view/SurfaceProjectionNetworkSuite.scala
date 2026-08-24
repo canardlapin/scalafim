@@ -1,7 +1,10 @@
 package scalafim.surface.view
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 import scalafim.surface.*
 
 class SurfaceProjectionNetworkSuite extends munit.FunSuite:
@@ -10,7 +13,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
   private def geometry(
     z: Double,
     kind: SurfaceKind,
-    transform: DMat = DMat.eye(4)
+    transform: Affine[D3] = Affine.identity[D3]
   ): SurfaceGeometry =
     SurfaceGeometry(
       TriangleMesh.fromRows(
@@ -27,12 +30,12 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
       transform
     )
 
-  private val translation = DMat.fromRows(Vector(
+  private val translation = Affine.fromRowMajor[D3](Vector(
     Vector(1.0, 0.0, 0.0, 1.0),
     Vector(0.0, 1.0, 0.0, 0.0),
     Vector(0.0, 0.0, 1.0, 0.0),
     Vector(0.0, 0.0, 0.0, 1.0)
-  ))
+  ).flatten).toOption.get
 
   private val white = geometry(0.0, SurfaceKind.White, translation)
   private val pial = geometry(2.0, SurfaceKind.Pial, translation)
@@ -48,8 +51,8 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
 
   private def morphism(path: SurfaceSamplingPath, reducer: SurfaceSampleAggregation): VolToSurfMorphism =
     VolToSurfMorphism(
-      SpatialDomainId("volume"),
-      SpatialDomainId("left-surface"),
+      SurfaceDomainId("volume"),
+      SurfaceDomainId("left-surface"),
       VolumeSurfaceSamplingPlan(pair, path, reducer)
     )
 

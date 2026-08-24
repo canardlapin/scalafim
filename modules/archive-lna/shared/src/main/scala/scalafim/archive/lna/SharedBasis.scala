@@ -1,7 +1,7 @@
 package scalafim.archive.lna
 
 import scalafim.archive.ArchiveError
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 opaque type SharedBasisId = String
 

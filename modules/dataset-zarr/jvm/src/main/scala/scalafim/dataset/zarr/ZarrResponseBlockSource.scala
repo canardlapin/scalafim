@@ -1,9 +1,12 @@
 package scalafim.dataset.zarr
 
 import scala.util.control.NonFatal
+import gale.linalg.DMat
+import image4s.geometry.{Affine, D3}
 import scalafim.archive.zarr.OpenedCanonicalBold
 import scalafim.dataset.*
-import scalafim.image.{Affine, DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import scalafim.image.NeuroAffineSyntax.*
 import scalafim.image.SampleSpaces.*
 import zarr4s.*
 
@@ -66,9 +69,10 @@ object ZarrResponseBlockSource:
   ): Either[DatasetError, ZarrResponseBlockSource] =
     try
       val manifest = opened.canonical.manifest
-      val affine = DMat.fromRows(Vector.tabulate(4): row =>
-        Vector.tabulate(4)(column => manifest.geometry.voxelToWorld(row, column))
-      )
+      val affineMatrix = DMat.tabulate(4, 4)(manifest.geometry.voxelToWorld.apply)
+      val affine = Affine.fromRowMajor[D3](affineMatrix.valuesRowMajor) match
+        case Left(error)  => return Left(DatasetError.Geometry(error))
+        case Right(value) => value
       val dimensions = manifest.shape.toVector
       if dimensions.exists(_ > Int.MaxValue.toLong) then
         return Left(DatasetError.ShapeMismatch("canonical dimensions exceed the dataset Int boundary"))
@@ -78,9 +82,9 @@ object ZarrResponseBlockSource:
       val spatial = dimensions.drop(1).reverse.map(_.toInt)
       val space = SampleSpaces(
         spatial,
-        spacing = Some(Affine.voxelSizes(affine)),
-        origin = Some(Vector(affine(0, 3), affine(1, 3), affine(2, 3))),
-        trans = Some(affine)
+        spacing = Some(affine.neuroVoxelSizes),
+        origin = Some(Vector(affine.matrix(0, 3), affine.matrix(1, 3), affine.matrix(2, 3))),
+        affine = Some(affine)
       )
       DatasetShape.make(space, manifest.shape.axis(0).toInt).flatMap: shape =>
         val domain = voxelDomain.getOrElse(VoxelDomain.fullUnsafe(shape))

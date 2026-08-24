@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
@@ -28,7 +28,7 @@ class SpatialTripletFileCacheSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def assertSameTriplets(actual: SparseTriplets, expected: SparseTriplets): Unit =

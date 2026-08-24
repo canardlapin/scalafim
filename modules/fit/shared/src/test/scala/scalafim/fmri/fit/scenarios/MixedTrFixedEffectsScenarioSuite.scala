@@ -11,7 +11,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 
 /** S13 extension: mixed acquisition grids remain explicit through a public
@@ -278,7 +278,7 @@ class MixedTrFixedEffectsScenarioSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-mixed-tr-fixed-effects"),
-          ImageDMat.fromRows(MixedTrFixedEffectsRFixture.response),
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(MixedTrFixedEffectsRFixture.response),
           SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = samplingFrame,

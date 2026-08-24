@@ -2,7 +2,8 @@ package scalafim.archive.io
 
 import io.jhdf.HdfFile
 import scalafim.archive.lna.*
-import scalafim.image.DMat
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -15,7 +16,7 @@ class JhdfSharedBasisStoreSuite extends munit.FunSuite:
     )
 
   private val loadings =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.5, 0.5),
@@ -50,7 +51,7 @@ class JhdfSharedBasisStoreSuite extends munit.FunSuite:
           .read(result.file)
           .fold(err => fail(err.message), identity)
 
-      assertEquals(loaded.loadings, artifact.loadings)
+      assertEquals(GaleArchiveTestData.toRows(loaded.loadings), GaleArchiveTestData.toRows(artifact.loadings))
       assertEquals(loaded.mask, artifact.mask)
       assertEquals(loaded.kind, artifact.kind)
       assertEquals(loaded.params, artifact.params)
@@ -101,7 +102,7 @@ class JhdfSharedBasisStoreSuite extends munit.FunSuite:
 
   private def writeCorruptFixture(path: Path, source: SharedBasisArtifact): Unit =
     val changed =
-      DMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(2.0, 0.0),
           Vector(0.5, 0.5),

@@ -1,7 +1,6 @@
 package scalafim.fmri.threshold
 
 import scalafim.image.{
-  GridCompatibility,
   Indexing,
   Mask,
   SampleSpaces,
@@ -14,6 +13,7 @@ import scalafim.image.SampleSpaces.*
 import scalafim.image.SomeNeuroVolume.*
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.Grid
 import scalafim.locus.{
   DomainFactory,
   FiniteDomain,
@@ -110,15 +110,9 @@ object MaskedField:
       case Right(()) => ()
 
     val stat = statistic.volume
-    GridCompatibility.spatial(stat.space, mask.space) match
+    Grid.exactCongruence(stat.grid, mask.grid) match
       case Left(error) =>
-        return Left(
-          ThresholdError.ShapeMismatch(
-            "stat/mask space",
-            stat.space.spatialSpace.toString,
-            error.message
-          )
-        )
+        return Left(ThresholdError.Geometry(error))
       case Right(_) =>
         ()
 

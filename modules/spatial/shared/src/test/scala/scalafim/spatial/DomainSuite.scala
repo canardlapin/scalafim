@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, Mask, SomeSampleSpace}
+import image4s.geometry.GeometryError
+import scalafim.image.{SampleSpaceError, SampleSpaces, Mask, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
@@ -15,7 +16,7 @@ class DomainSuite extends munit.FunSuite:
     val id = value(DomainId(idValue))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality("bold"))
-    val space = SampleSpaces(dims, trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(dims, affine = Some(ProviderAffines.identity))
     val geometry = value(SamplingGeometry.volume(space))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
@@ -38,7 +39,7 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(PartName("").left.toOption, Some(SpatialError.EmptyIdentifier("part")))
 
   test("volume geometry counts sampled voxels and validates masks"):
-    val space = SampleSpaces(Vector(2, 2, 2), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(2, 2, 2), affine = Some(ProviderAffines.identity))
     val geometry = value(SamplingGeometry.volume(space))
     assertEquals(geometry.nElements, 8)
 
@@ -46,12 +47,37 @@ class DomainSuite extends munit.FunSuite:
     val masked = value(SamplingGeometry.volume(space, Some(mask)))
     assertEquals(masked.nElements, 8)
 
-    val other = SampleSpaces(Vector(2, 2, 1), trans = Some(DMat.eye(4)))
+    val other = SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity))
     val badMask = Mask.fromIndices(other, scalafim.image.PrimitiveBuffers.fromArray(Array(0)), "bad")
     assertEquals(
       SamplingGeometry.volume(space, Some(badMask)).left.toOption,
-      Some(SpatialError.MaskSpaceMismatch("volume"))
+      Some(SpatialError.Geometry(GeometryError.GridsNotCongruent(0.0)))
     )
+
+  test("volume geometry preserves exact D3 admission failures"):
+    val d2 = SampleSpaces(Vector(2, 2))
+    val cause =
+      SampleSpaceError.ExpectedDimensionality(
+        "D3 sample space",
+        expected = 3,
+        actual = 2
+      )
+
+    assertEquals(
+      SamplingGeometry.volume(d2).left.toOption,
+      Some(SpatialError.SampleSpaceAdmission(cause))
+    )
+
+  test("volume geometry exposes its admitted provider D3 space for matching"):
+    val requested = SampleSpaces(Vector(2, 2, 1))
+    val geometry = value(SamplingGeometry.volume(requested))
+
+    geometry match
+      case SamplingGeometry.Volume(space, None) =>
+        assertEquals(space.spatialRank, 3)
+        assert(space.grid.eq(requested.grid))
+      case other =>
+        fail(s"expected admitted volume geometry, got $other")
 
   test("surface geometry counts vertices"):
     val geometry = value(SamplingGeometry.surface(surfaceGeometry))
@@ -78,7 +104,7 @@ class DomainSuite extends munit.FunSuite:
     val id = value(DomainId("bad-surface"))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality("bold"))
-    val volume = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 2, 1), trans = Some(DMat.eye(4)))))
+    val volume = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity))))
 
     assertEquals(
       Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.White), volume).left.toOption,

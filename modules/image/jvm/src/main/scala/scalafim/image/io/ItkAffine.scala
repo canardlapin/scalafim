@@ -1,6 +1,8 @@
 package scalafim.image.io
 
-import scalafim.image.{Affine, Affine3D, DMat}
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.GeometryError
 
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, ByteOrder}
@@ -12,7 +14,7 @@ enum ItkAffineReadError:
   case UnsupportedFormat(path: Path)
   case Malformed(path: Path, reason: String)
   case UnsupportedMatlabV4Precision(path: Path, code: Int)
-  case InvalidAffine(path: Path, reason: String)
+  case InvalidAffine(path: Path, cause: GeometryError)
 
   def message: String =
     this match
@@ -21,7 +23,8 @@ enum ItkAffineReadError:
       case Malformed(path, reason) => s"malformed ITK affine $path: $reason"
       case UnsupportedMatlabV4Precision(path, code) =>
         s"unsupported MATLAB v4 precision code $code in ITK affine $path"
-      case InvalidAffine(path, reason) => s"invalid ITK affine $path: $reason"
+      case InvalidAffine(path, cause) =>
+        s"invalid ITK affine $path: ${cause.message}"
 
 /** One ITK affine with storage and coordinate conventions named explicitly.
   *
@@ -33,28 +36,27 @@ enum ItkAffineReadError:
 final case class ItkAffineTransform private (
     parameters: Vector[Double],
     fixedParameters: Vector[Double],
-    storedLps: Affine3D
+    storedLps: Affine[D3],
+    storedRas: Affine[D3]
 ):
-  lazy val storedRas: Affine3D =
-    val converted = Affine.multiply(ItkAffineTransform.lpsToRas, Affine.multiply(storedLps.matrix, ItkAffineTransform.lpsToRas))
-    Affine3D(converted)
-
-  def antsPullbackRas: Affine3D =
+  def antsPullbackRas: Affine[D3] =
     storedRas
 
-  lazy val inverseRas: Affine3D =
-    storedRas.inverseAffine
+  lazy val inverseRas: Affine[D3] =
+    storedRas.inverse
 
 object ItkAffineTransform:
-  private[io] val lpsToRas: DMat =
-    DMat.fromRows(
-      Vector(
+  private[io] val lpsToRas: Affine[D3] =
+    Affine
+      .fromRowMajor[D3](
+        Vector(
         Vector(-1.0, 0.0, 0.0, 0.0),
         Vector(0.0, -1.0, 0.0, 0.0),
         Vector(0.0, 0.0, 1.0, 0.0),
         Vector(0.0, 0.0, 0.0, 1.0)
+        ).flatten
       )
-    )
+      .fold(error => throw new IllegalStateException(error.message), identity)
 
   private[io] def make(
       path: Path,
@@ -79,11 +81,26 @@ object ItkAffineTransform:
           Vector.tabulate(3)(column => parameters(row * 3 + column)) :+
             (parameters(9 + row) + center(row) - centered)
         } :+ Vector(0.0, 0.0, 0.0, 1.0)
-        Affine3D
-          .make(DMat.fromRows(rows))
+        Affine
+          .fromRowMajor[D3](rows.flatten)
           .left
-          .map(error => ItkAffineReadError.InvalidAffine(path, error.message))
-          .map(affine => new ItkAffineTransform(parameters.take(12), center, affine))
+          .map(error => ItkAffineReadError.InvalidAffine(path, error))
+          .flatMap: storedLps =>
+            for
+              fromLps <- lpsToRas
+                .andThen(storedLps)
+                .left
+                .map(error => ItkAffineReadError.InvalidAffine(path, error))
+              storedRas <- fromLps
+                .andThen(lpsToRas)
+                .left
+                .map(error => ItkAffineReadError.InvalidAffine(path, error))
+            yield new ItkAffineTransform(
+              parameters.take(12),
+              center,
+              storedLps,
+              storedRas
+            )
 
 object ItkAffine:
   private final case class MatlabVariable(rows: Int, columns: Int, values: Vector[Double])

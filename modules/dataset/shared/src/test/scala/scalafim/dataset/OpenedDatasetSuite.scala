@@ -3,8 +3,9 @@ package scalafim.dataset
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
+import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
 import scalafim.response.*
 import scalafim.response.laws.ResponseLawChecks
 
@@ -396,7 +397,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
     val backend =
       InMemoryDatasetBackend(
         DatasetId("opened-fixture"),
-        DMat.fromRows(
+        GaleTestData.matrixFromRows(
           Vector(
             Vector(0.0, 1.0, 2.0),
             Vector(10.0, 11.0, 12.0),

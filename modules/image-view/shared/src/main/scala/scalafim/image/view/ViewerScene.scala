@@ -1,7 +1,13 @@
 package scalafim.image.view
 
+import scalafim.image.SampleSpaces.*
+
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
 import intaglio.*
 import scalafim.image.*
+import scalafim.image.NeuroAffineSyntax.*
 import scala.collection.mutable
 
 final case class ViewerState(
@@ -20,18 +26,18 @@ final case class ViewerState(
 
 object ViewerState:
   def centered(
-    referenceSpace: VolumeSpace,
+    referenceSpace: Grid[? <: Frame[D3], D3],
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
   ): ViewerState =
-    val shape = referenceSpace.shape
+    val shape = referenceSpace.spatialShape
     val center = referenceSpace.voxelToWorld(
       VoxelPoint(
         (shape.x - 1).toDouble / 2.0,
         (shape.y - 1).toDouble / 2.0,
         (shape.z - 1).toDouble / 2.0
       )
-    )
-    val nativeStep = referenceSpace.affine.voxelSizes.min
+    ).fold(error => throw new IllegalArgumentException(error.message), identity)
+    val nativeStep = referenceSpace.indexToFrame.neuroVoxelSizes.min
     ViewerState(
       cursor = center,
       pixelSpacing = PixelSpacing(nativeStep, nativeStep),
@@ -262,7 +268,7 @@ object ViewerCompiler:
           Right(ViewerCompilation(frame, currentCache, profile))
 
   def panels(
-    referenceSpace: VolumeSpace,
+    referenceSpace: Grid[? <: Frame[D3], D3],
     state: ViewerState,
     device: DeviceContext,
     layout: OrthogonalLayout = OrthogonalLayout.Default
@@ -343,15 +349,19 @@ object ViewerCompiler:
     error match
       case Some(value) => Left(value)
       case None =>
-        decorationGrobs(state, panel, theme).map { overlay =>
-          val group = Grob.group(background +: (images.result() ++ overlay), viewport = Some(viewport))
-          val readout = PanelReadout(
-            panel.anatomicalPlane,
-            state.cursor,
-            model.referenceSpace.worldToVoxel(state.cursor),
-            readouts.result()
-          )
-          PanelCompilation(group, readout, currentCache, profile)
+        decorationGrobs(state, panel, theme).flatMap { overlay =>
+          model.referenceSpace.worldToVoxel(state.cursor)
+            .left.map(ImageViewError.GeometryFailure.apply)
+            .map { referenceVoxel =>
+              val group = Grob.group(background +: (images.result() ++ overlay), viewport = Some(viewport))
+              val readout = PanelReadout(
+                panel.anatomicalPlane,
+                state.cursor,
+                referenceVoxel,
+                readouts.result()
+              )
+              PanelCompilation(group, readout, currentCache, profile)
+            }
         }
 
   private def layerGrob(

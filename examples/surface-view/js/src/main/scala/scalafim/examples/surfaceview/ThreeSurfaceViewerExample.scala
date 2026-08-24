@@ -1,5 +1,7 @@
 package scalafim.examples.surfaceview
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -8,7 +10,6 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import scala.scalajs.js.typedarray.{Float32Array, Float64Array, Uint8Array, Uint32Array}
 
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.io.GiftiSurfaceReader
 import scalafim.surface.view.*
@@ -479,9 +480,9 @@ object ThreeSurfaceViewerExample:
     while index < indices.length do
       indices(index) = faces(index).toInt
       index += 1
-    val transform = DMat.fromRows(
-      Vector.tabulate(4)(row => Vector.tabulate(4)(column => surfaceToWorld(row * 4 + column)))
-    )
+    val transform = Affine
+      .fromRowMajor[D3](Vector.tabulate(16)(surfaceToWorld.apply))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     SurfaceGeometry(
       TriangleMesh.fromArrays(coordinates, indices),
       hemisphere,
@@ -509,7 +510,7 @@ object ThreeSurfaceViewerExample:
     while row < 4 do
       var column = 0
       while column < 4 do
-        surfaceToWorld(row * 4 + column) = geometry.surfaceToWorld(row, column)
+        surfaceToWorld(row * 4 + column) = geometry.surfaceToWorld.matrix(row, column)
         column += 1
       row += 1
 

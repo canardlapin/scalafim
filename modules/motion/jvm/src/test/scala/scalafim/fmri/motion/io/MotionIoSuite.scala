@@ -1,8 +1,11 @@
 package scalafim.fmri.motion.io
 
 import bids4s.*
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.fmri.motion.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -33,14 +36,14 @@ class MotionIoSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("scalafim-motion-nifti-meta")
     val path = dir.resolve("sub-01_task-rest_bold.nii")
     val affine =
-      DMat.fromRows(
+      Affine.fromRowMajor[D3](
         Vector(
-          Vector(2.0, 0.0, 0.0, 10.0),
-          Vector(0.0, 3.0, 0.0, 20.0),
-          Vector(0.0, 0.0, 4.0, 30.0),
-          Vector(0.0, 0.0, 0.0, 1.0)
+          2.0, 0.0, 0.0, 10.0,
+          0.0, 3.0, 0.0, 20.0,
+          0.0, 0.0, 4.0, 30.0,
+          0.0, 0.0, 0.0, 1.0
         )
-      )
+      ).toOption.get
     val timing = SliceTiming.unsafe(Vector(0.0, 0.4))
     val run = tinyRun(affine)
     val metadata =
@@ -60,7 +63,7 @@ class MotionIoSuite extends munit.FunSuite:
     assertEquals(loaded.metadata.dims, Vector(2, 1, 2, 2))
     assertEquals(loaded.metadata.voxelSize, Vector(2.0, 3.0, 4.0))
     assertEqualsDouble(loaded.metadata.repetitionTime.getOrElse(Double.NaN), 1.5, 1e-12)
-    assertEquals(loaded.metadata.affine.map(_.toRows), Some(affine.toRows))
+    assertEquals(loaded.metadata.affine.map(_.rowMajor), Some(affine.rowMajor))
     loaded.metadata.acquisitionTiming match
       case Some(AcquisitionTiming.Slice(actual)) =>
         assertEquals(actual.offsetSeconds, Vector(0.0, 0.4))
@@ -255,16 +258,16 @@ class MotionIoSuite extends munit.FunSuite:
     Files.createDirectories(path.getParent)
     Files.writeString(path, text)
 
-  private def tinyRun(affine: DMat): SomeScalarSeries[Double] =
+  private def tinyRun(affine: Affine[D3]): SomeScalarSeries[Double] =
     val spatial =
       SampleSpaces(
         Vector(2, 1, 2),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0)),
-        trans = Some(affine)
+        affine = Some(affine)
       )
     val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.addDim(ProviderAxes.time(2)), "motion-io-fixture")
 
   private def estimatorRun(): SomeScalarSeries[Double] =
     val dims = Vector(7, 5, 5)
@@ -289,7 +292,7 @@ class MotionIoSuite extends munit.FunSuite:
         data(lin * 2 + t) = frame(lin)
         t += 1
       lin += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(2)), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)

@@ -14,10 +14,12 @@ import scalafim.image.NeuroVolume
 import scalafim.image.Indexing
 import scalafim.image.SomeLabelVolume
 import scalafim.image.SomeMaskVolume
+import scalafim.image.SomeNeuroSeries
+import scalafim.image.SomeNeuroVolume
 import scalafim.image.SomeScalarSeries
 import scalafim.image.SomeScalarVolume
+import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.*
-import scalafim.image.VolumeSpace.*
 
 private[atlas] object AtlasTestImages:
   def labelVolume(
@@ -26,10 +28,11 @@ private[atlas] object AtlasTestImages:
       label: String = ""
   ): SomeLabelVolume[Int] =
     val sampleSpace =
-      space.asVolumeSpace
+      SampleSpaces
+        .requireVolumeD3(space)
         .fold(
           error => throw new IllegalArgumentException(error.message),
-          _.sampleSpace
+          identity
         )
     NeuroVolume
       .copyCategoricalFromCanonicalArray(
@@ -37,6 +40,7 @@ private[atlas] object AtlasTestImages:
         values,
         ImageMetadata.named(label)
       )
+      .map(SomeNeuroVolume.eraseSpace)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def labelAtCanonicalOrdinal(
@@ -62,6 +66,7 @@ private[atlas] object AtlasTestImages:
         values,
         ImageMetadata.named(label)
       )
+      .map(SomeNeuroVolume.eraseSpace)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def scalarSeries(
@@ -92,6 +97,7 @@ private[atlas] object AtlasTestImages:
         data,
         ImageMetadata.named(label)
       )
+      .map(SomeNeuroSeries.eraseSpace)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def maskVolume(
@@ -110,4 +116,5 @@ private[atlas] object AtlasTestImages:
         values,
         ImageMetadata.named(label)
       )
+      .map(SomeNeuroVolume.eraseSpace)
       .fold(error => throw new IllegalArgumentException(error.message), identity)

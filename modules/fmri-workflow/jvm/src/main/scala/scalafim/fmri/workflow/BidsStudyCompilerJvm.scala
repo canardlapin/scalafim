@@ -3,7 +3,7 @@ package scalafim.fmri.workflow
 import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
 import scalafim.dataset.DatasetShape
 import scalafim.image.SomeSampleSpace
-import scalafim.image.spatialSpace
+import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 
 import java.nio.file.Path

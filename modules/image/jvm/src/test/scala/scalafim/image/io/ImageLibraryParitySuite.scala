@@ -1,6 +1,10 @@
 package scalafim.image.io
 
+import scalafim.image.SampleSpaces.*
+
 import image4s.ImageMetadata
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import image4s.nifti.NiftiDatatype
 import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
@@ -8,7 +12,6 @@ import ravel.DType.given
 import ravel.NDArray
 import ravel.Shape
 import scalafim.image.*
-import scalafim.image.SeriesSpace.*
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path, Paths}
@@ -34,7 +37,7 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
       source: String,
       shape: Vector[Int],
       axisCodes: Vector[String],
-      affine: DMat,
+      affine: Affine[D3],
       temporalSpacingSeconds: Double,
       rows: Vector[OracleRow]
   )
@@ -78,15 +81,15 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
       source = metadata("source").head,
       shape = metadata("shape").map(_.toInt),
       axisCodes = metadata("axis_codes"),
-      affine = DMat.fromRows(affineValues.grouped(4).map(_.toVector).toVector),
+      affine = Affine.fromRowMajor[D3](affineValues).toOption.get,
       temporalSpacingSeconds = metadata("temporal_spacing_seconds").head.toDouble,
       rows = records
     )
 
-  private def assertMatrix(actual: DMat, expected: DMat): Unit =
-    assertEquals(actual.rows, expected.rows)
-    assertEquals(actual.cols, expected.cols)
-    actual.data.zip(expected.data).zipWithIndex.foreach:
+  private def assertMatrix(actual: Affine[?], expected: Affine[?]): Unit =
+    assertEquals(actual.matrix.rows, expected.matrix.rows)
+    assertEquals(actual.matrix.cols, expected.matrix.cols)
+    actual.rowMajor.zip(expected.rowMajor).zipWithIndex.foreach:
       case ((observed, target), index) =>
         assertEqualsDouble(observed, target, Tolerance, clue = s"affine element $index")
 
@@ -167,11 +170,11 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
       )
       assertEquals(series.indexToGrid(python.ravelOrdinal), coordinates)
       assertEqualsDouble(series.valueAtCanonicalOrdinal(python.ravelOrdinal), python.value, 0.0)
-      val world = series.seriesSpace.affine.voxelToWorld(
+      val world = series.grid.voxelToWorld(
         VoxelPoint(python.x.toDouble, python.y.toDouble, python.z.toDouble)
-      )
+      ).fold(error => fail(error.message), identity)
       assertWorld(world, python.world, s"coordinates=$coordinates")
-      val roundTrip = series.seriesSpace.affine.worldToVoxel(world)
+      val roundTrip = series.grid.worldToVoxel(world).fold(error => fail(error.message), identity)
       assertEqualsDouble(roundTrip.x, python.x.toDouble, Tolerance)
       assertEqualsDouble(roundTrip.y, python.y.toDouble, Tolerance)
       assertEqualsDouble(roundTrip.z, python.z.toDouble, Tolerance)
@@ -188,8 +191,8 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
     val sampleSpace = SampleSpaces.requireD3(
       SampleSpaces(
         dims = oracle.shape.take(3),
-        trans = Some(oracle.affine)
-      ).addDim(oracle.shape(3), Some(Axis.Time))
+        affine = Some(oracle.affine)
+      ).addDim(ProviderAxes.time(oracle.shape(3)))
     ).fold(error => fail(error.message), identity)
     val data = NDArray.tabulate[Double](2, 3, 4, 3): (x, y, z, time) =>
       0.25 + 1000.0 * time + 100.0 * x + 10.0 * y + z
@@ -227,7 +230,7 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
           val offset = 280 + row * 16 + column * 4
           assertEqualsDouble(
             buffer.getFloat(offset).toDouble,
-            oracle.affine(row, column),
+            oracle.affine.matrix(row, column),
             Tolerance,
             clue = s"sform($row,$column)"
           )

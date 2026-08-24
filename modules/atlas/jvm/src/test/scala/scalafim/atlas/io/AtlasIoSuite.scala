@@ -5,6 +5,7 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class AtlasIoSuite extends munit.FunSuite:
 

@@ -4,7 +4,7 @@ import io.jhdf.HdfFile
 import io.jhdf.api.{Attribute, Dataset, Group}
 import scalafim.archive.{ArchiveError, ArchiveStorageFormatId}
 import scalafim.archive.lna.*
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.time.Instant
@@ -193,7 +193,7 @@ object JhdfSharedBasisStore:
         throw IllegalArgumentException(s"shared basis HDF5 masks support 1D, 2D, or 3D dims, got $other")
 
   private def matrixFromFlat(values: Array[Double], rows: Int, cols: Int): DMat =
-    DMat.fromRows(Vector.tabulate(rows)(r => Vector.tabulate(cols)(c => values(r * cols + c))))
+    DMat.tabulate(rows, cols)((row, column) => values(row * cols + column))
 
   private def group(hdf: HdfFile, path: String): Either[ArchiveError, Group] =
     hdf.getByPath(path) match

@@ -3,9 +3,11 @@ package scalafim.image
 import image4s.Categorical
 import image4s.Continuous
 import image4s.Mask as MaskSemantics
+import image4s.SamplingAlignment
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.Grid
 import scala.reflect.ClassTag
 import ravel.ArithmeticDType
 import ravel.DType
@@ -19,10 +21,46 @@ import scala.annotation.targetName
 object Ops:
 
   private def requireCompat(a: SomeSampleSpace, b: SomeSampleSpace): Unit =
-    GridCompatibility.requireExact(a, b)
+    val aligned =
+      for
+        left <- SampleSpaces
+          .requireD3(a)
+          .left
+          .map(NeuroImageError.Space.apply)
+        right <- SampleSpaces
+          .requireD3(b)
+          .left
+          .map(NeuroImageError.Space.apply)
+        _ <- SamplingAlignment
+          .exact(left, right)
+          .left
+          .map(NeuroImageError.Image.apply)
+      yield ()
+    aligned.fold(
+      error => throw new IllegalArgumentException(error.message),
+      identity
+    )
 
   private def requireCompatSpatial(vecSpace: SomeSampleSpace, volSpace: SomeSampleSpace): Unit =
-    GridCompatibility.requireSpatial(vecSpace, volSpace)
+    val aligned =
+      for
+        left <- SampleSpaces
+          .requireD3(vecSpace)
+          .left
+          .map(NeuroImageError.Space.apply)
+        right <- SampleSpaces
+          .requireD3(volSpace)
+          .left
+          .map(NeuroImageError.Space.apply)
+        _ <- Grid
+          .exactCongruence(left.grid, right.grid)
+          .left
+          .map(NeuroImageError.Geometry.apply)
+      yield ()
+    aligned.fold(
+      error => throw new IllegalArgumentException(error.message),
+      identity
+    )
 
   extension [A: Ring: ArithmeticDType](x: SomeScalarVolume[A])
     def +(y: SomeScalarVolume[A])(using ValueSemantics[A, Continuous]): SomeScalarVolume[A] =

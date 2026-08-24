@@ -1,7 +1,8 @@
 package scalafim.fmri.fit.io
 
 import scalafim.image.SampleSpaces
-import scalafim.image.{apply, dims, space, valueAtCanonicalOrdinal}
+import scalafim.image.{apply, space, valueAtCanonicalOrdinal}
+import scalafim.image.SampleSpaces.*
 
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*

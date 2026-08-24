@@ -1,8 +1,9 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, TransformName, TransformPort}
-import scalafim.image.{DMat, SomeSampleSpace}
-import scalafim.image.spatialDims
+import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
+import scalafim.image.SampleSpaces.*
 
 enum LnaVersion(val id: String):
   case V2 extends LnaVersion("LNA R v2.0")

@@ -3,14 +3,15 @@ package scalafim.archive.lna
 import scalafim.image.SampleSpaces
 
 import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, RunScopedPath, TransformName, TransformPort}
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
 
 class LnaCoreSuite extends munit.FunSuite:
 
   private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0, 7.0),
@@ -19,7 +20,7 @@ class LnaCoreSuite extends munit.FunSuite:
     )
 
   private val curvedData =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(1.0, 3.0, 6.0, 10.0),
@@ -29,7 +30,7 @@ class LnaCoreSuite extends munit.FunSuite:
     )
 
   private val spikyData =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector.tabulate(25) {
         case 23 => Vector(100.0, 0.0, 0.0, 0.0)
         case 24 => Vector(-100.0, 0.0, 0.0, 0.0)
@@ -39,14 +40,14 @@ class LnaCoreSuite extends munit.FunSuite:
 
   private val explicitLatent =
     LnaExplicitLatent.Response(
-      basis = DMat.fromRows(
+      basis = GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(0.5, 1.0),
           Vector(0.0, 2.0)
         )
       ),
-      loadings = DMat.fromRows(
+      loadings = GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(10.0, 1.0),
           Vector(20.0, 2.0),
@@ -191,8 +192,8 @@ class LnaCoreSuite extends munit.FunSuite:
 
     assertEquals(reconstructed.rows, data.rows)
     assertEquals(reconstructed.cols, data.cols)
-    val actual = reconstructed.toRows.flatten
-    val expected = data.toRows.flatten
+    val actual = GaleArchiveTestData.toRows(reconstructed).flatten
+    val expected = GaleArchiveTestData.toRows(data).flatten
     actual.zip(expected).foreach { case (a, e) =>
       assert(math.abs(a - e) < 2e-4, s"$a was not close to $e")
     }
@@ -222,8 +223,8 @@ class LnaCoreSuite extends munit.FunSuite:
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
 
-    val actual = reconstructed.toRows.flatten
-    val expected = curvedData.toRows.flatten
+    val actual = GaleArchiveTestData.toRows(reconstructed).flatten
+    val expected = GaleArchiveTestData.toRows(curvedData).flatten
     actual.zip(expected).foreach { case (a, e) =>
       assert(math.abs(a - e) < 1e-3, s"$a was not close to $e")
     }
@@ -274,7 +275,7 @@ class LnaCoreSuite extends munit.FunSuite:
         .fold(err => fail(err.message), identity)
     assertEquals(reconstructed.rows, spikyData.rows)
     assertEquals(reconstructed.cols, spikyData.cols)
-    assert(reconstructed.toRows.flatten.forall(_.isFinite))
+    assert(GaleArchiveTestData.toRows(reconstructed).flatten.forall(_.isFinite))
   }
 
   test("voxel-scoped sd quant stores per-column stats and clipping report") {
@@ -330,12 +331,12 @@ class LnaCoreSuite extends munit.FunSuite:
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
 
-    assertEquals(reconstructed, data)
+    assertEquals(GaleArchiveTestData.toRows(reconstructed), GaleArchiveTestData.toRows(data))
   }
 
   test("delta checked decoder reports unsupported feature-axis payloads") {
-    val deltas = DMat.fromRows(Vector(Vector(1.0, 2.0)))
-    val first = DMat.fromRows(Vector(Vector(0.0, 0.0)))
+    val deltas = GaleArchiveTestData.matrixFromRows(Vector(Vector(1.0, 2.0)))
+    val first = GaleArchiveTestData.matrixFromRows(Vector(Vector(0.0, 0.0)))
     val result = Delta.decodeChecked(deltas, first, DeltaParams(axis = DeltaAxis.Feature))
 
     assertEquals(result.left.toOption, Some(ArchiveError.UnsupportedTransform("delta axis=feature")))
@@ -356,8 +357,8 @@ class LnaCoreSuite extends munit.FunSuite:
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
 
-    val actual = reconstructed.toRows.flatten
-    val expected = curvedData.toRows.flatten
+    val actual = GaleArchiveTestData.toRows(reconstructed).flatten
+    val expected = GaleArchiveTestData.toRows(curvedData).flatten
     actual.zip(expected).foreach { case (a, e) =>
       assert(math.abs(a - e) < 1e-3, s"$a was not close to $e")
     }
@@ -411,7 +412,7 @@ class LnaCoreSuite extends munit.FunSuite:
 
   test("basis and embed archive reconstructs from explicit stored basis") {
     val identityBasis =
-      DMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, 0.0),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -433,7 +434,7 @@ class LnaCoreSuite extends munit.FunSuite:
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
 
-    assertEquals(reconstructed, data)
+    assertEquals(GaleArchiveTestData.toRows(reconstructed), GaleArchiveTestData.toRows(data))
   }
 
   test("shared basis embed archive stores an external basis reference") {
@@ -475,7 +476,7 @@ class LnaCoreSuite extends munit.FunSuite:
     val basisId = SharedBasisId.unsafe("sparse_basis")
     val sparseBasis =
       SharedBasisArtifact(
-        loadings = DMat.fromRows(
+        loadings = GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0),
             Vector(1.0, 1.0),
@@ -487,7 +488,7 @@ class LnaCoreSuite extends munit.FunSuite:
         params = Map("source" -> "unit-test")
       )
     val coefficients =
-      DMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 2.0),
           Vector(3.0, -1.0)
@@ -549,7 +550,10 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaPipeline
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
-    assertEquals(reconstructed, LnaExplicitLatent.dense(explicitLatent))
+    assertEquals(
+      GaleArchiveTestData.toRows(reconstructed),
+      GaleArchiveTestData.toRows(LnaExplicitLatent.dense(explicitLatent))
+    )
 
     val parsed =
       LnaManifestCodec
@@ -601,7 +605,10 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaPipeline
         .reconstruct(archive)
         .fold(err => fail(err.message), identity)
-    assertEquals(reconstructed, LnaExplicitLatent.dense(decoded))
+    assertEquals(
+      GaleArchiveTestData.toRows(reconstructed),
+      GaleArchiveTestData.toRows(LnaExplicitLatent.dense(decoded))
+    )
 
     val parsed =
       LnaManifestCodec
@@ -644,7 +651,7 @@ class LnaCoreSuite extends munit.FunSuite:
   }
 
   test("quant rejects non-finite values") {
-    val bad = DMat.fromRows(Vector(Vector(1.0, Double.NaN, 2.0, 3.0)))
+    val bad = GaleArchiveTestData.matrixFromRows(Vector(Vector(1.0, Double.NaN, 2.0, 3.0)))
     val result = LnaPipeline.quantArchive(bad, space)
     assert(result.isLeft)
     assert(result.left.toOption.exists(_.message.contains("non-finite")))

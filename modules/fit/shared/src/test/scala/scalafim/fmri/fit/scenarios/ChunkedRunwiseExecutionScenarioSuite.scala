@@ -26,11 +26,12 @@ import scalafim.fmri.fit.{
   StructuralTContrast,
   StructuralWeight
 }
+import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{CoefficientScope, FitEngine, FitPlan, FitStrategy, FmriModel}
-import scalafim.image.DMat as ImageDMat
-import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
+import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -507,7 +508,7 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
         FmriDataset.unsafe(
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-chunked-runwise-execution"),
-            ImageDMat.fromRows(responseRows),
+            GaleTestMatrix.fromRows(responseRows),
             SampleSpaces(Vector(5, 1, 1))
           ),
           samplingFrame = samplingFrame

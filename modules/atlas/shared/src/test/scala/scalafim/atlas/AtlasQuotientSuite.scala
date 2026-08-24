@@ -1,5 +1,6 @@
 package scalafim.atlas
 
+import image4s.geometry.GeometryError
 import scalafim.atlas.syntax.*
 import scalafim.image.*
 import scalafim.surface.{
@@ -177,7 +178,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val shifted = volumeAtlas(space = shiftedSpace)
 
     AtlasOverlap.computeEither(reference, shifted) match
-      case Left(AtlasError.ExactGridRequired(_, _)) =>
+      case Left(AtlasError.Geometry(GeometryError.GridsNotCongruent(0.0))) =>
         ()
       case other =>
         fail(s"expected exact-grid rejection, got $other")

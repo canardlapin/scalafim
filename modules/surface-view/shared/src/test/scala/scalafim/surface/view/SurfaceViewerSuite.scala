@@ -1,10 +1,14 @@
 package scalafim.surface.view
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 
 class SurfaceViewerSuite extends munit.FunSuite:
+
+  private def testAffine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).toOption.get
 
   private def mesh(offset: Double = 0.0): TriangleMesh =
     TriangleMesh.fromRows(
@@ -20,7 +24,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
   private def geometry(
     hemisphere: Hemisphere = Hemisphere.Left,
     offset: Double = 0.0,
-    transform: DMat = DMat.eye(4),
+    transform: Affine[D3] = Affine.identity[D3],
     kind: SurfaceKind = SurfaceKind.Inflated
   ): SurfaceGeometry =
     SurfaceGeometry(mesh(offset), hemisphere, kind, transform)
@@ -171,7 +175,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assert(SurfaceViewer.reduce(viewer, initial, SurfaceViewerAction.SetLayout(reversed)).isLeft)
 
   test("compiler applies surfaceToWorld before packing positions and readouts"):
-    val transform = DMat.fromRows(Vector(
+    val transform = testAffine(Vector(
       Vector(1.0, 0.0, 0.0, 10.0),
       Vector(0.0, 2.0, 0.0, 20.0),
       Vector(0.0, 0.0, 3.0, 30.0),
@@ -199,7 +203,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assertEquals(plan.chrome.size, 1)
 
   test("compiler centers the camera on transformed world bounds"):
-    val transform = DMat.fromRows(Vector(
+    val transform = testAffine(Vector(
       Vector(1.0, 0.0, 0.0, 10.0),
       Vector(0.0, 2.0, 0.0, 20.0),
       Vector(0.0, 0.0, 3.0, 30.0),
@@ -238,7 +242,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assertNotEquals(plan.receipt.cameraKey, untranslatedPlan.receipt.cameraKey)
 
   test("anatomical camera distance scales beyond millimetre-space geometry"):
-    val millimetres = DMat.fromRows(Vector(
+    val millimetres = testAffine(Vector(
       Vector(100.0, 0.0, 0.0, 0.0),
       Vector(0.0, 100.0, 0.0, 0.0),
       Vector(0.0, 0.0, 100.0, 0.0),

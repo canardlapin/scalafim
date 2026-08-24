@@ -1,7 +1,7 @@
 package scalafim.archive.lna
 
 import scalafim.archive.ArchiveError
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 object Delta:
   final case class Encoded(
@@ -39,16 +39,12 @@ object Delta:
     else if params.codingMethod != DeltaCodingMethod.None then
       Left(ArchiveError.UnsupportedTransform(s"delta coding_method=${params.codingMethod.value}"))
     else
-      val first = DMat.fromRows(Vector(Vector.tabulate(data.cols)(c => data(0, c))))
-      val rows =
-        Vector.tabulate(data.rows - 1) { r =>
-          Vector.tabulate(data.cols) { c =>
-            data(r + 1, c) - data(r, c)
-          }
-        }
+      val first = DMat.tabulate(1, data.cols)((_, column) => data(0, column))
+      val deltas = DMat.tabulate(data.rows - 1, data.cols): (row, column) =>
+        data(row + 1, column) - data(row, column)
       Right(
         Encoded(
-          deltas = Payload.DoubleMatrix(DMat.fromRows(rows)),
+          deltas = Payload.DoubleMatrix(deltas),
           firstValues = Payload.DoubleMatrix(first),
           params = params
         )
@@ -64,15 +60,16 @@ object Delta:
       Right(decodeTimeUnchecked(deltas, firstValues))
 
   private def decodeTimeUnchecked(deltas: DMat, firstValues: DMat): DMat =
-    val rows = Vector.newBuilder[Vector[Double]]
-    var prev = Vector.tabulate(firstValues.cols)(c => firstValues(0, c))
-    rows += prev
-
-    var r = 0
-    while r < deltas.rows do
-      val next = Vector.tabulate(deltas.cols)(c => prev(c) + deltas(r, c))
-      rows += next
-      prev = next
-      r += 1
-
-    DMat.fromRows(rows.result())
+    val out = DMat.newBuilder(deltas.rows + 1, deltas.cols)
+    var column = 0
+    while column < firstValues.cols do
+      out(0, column) = firstValues(0, column)
+      column += 1
+    var row = 0
+    while row < deltas.rows do
+      column = 0
+      while column < deltas.cols do
+        out(row + 1, column) = out(row, column) + deltas(row, column)
+        column += 1
+      row += 1
+    out.result()

@@ -15,8 +15,9 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat as ImageDMat, Mask, SomeSampleSpace}
+import scalafim.image.{Mask, SomeSampleSpace}
 import gale.linalg.{DMat, DVec, LinAlgError}
+import scalafim.archive.lna.GaleArchiveTestData
 
 class LatentArchiveRegistrySuite extends munit.FunSuite:
   private val basis =
@@ -159,7 +160,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
     val archive =
       LnaPipeline
         .quantArchive(
-          ImageDMat.fromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
+          GaleArchiveTestData.matrixFromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
           SampleSpaces(Vector(2, 2, 1))
         )
         .fold(err => fail(err.message), identity)
@@ -249,7 +250,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
 
   test("shared-basis archives are encoded through the latent Gram solver and store offsets") {
     val sharedLoadings =
-      ImageDMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -663,7 +664,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
   private def rawProjection(
       rows: Vector[Vector[Double]],
       offset: Vector[Double],
-      loadings: ImageDMat
+      loadings: DMat
   ): Vector[Vector[Double]] =
     rows.map { row =>
       Vector.tabulate(loadings.cols) { atom =>

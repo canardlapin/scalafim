@@ -2,12 +2,13 @@ package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class MotionMetricsSuite extends munit.FunSuite:
 
   private def vec1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)), "dvars-fixture")
 
   private def maskAll(space: SomeSampleSpace): SomeMaskVolume =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")

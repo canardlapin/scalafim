@@ -23,10 +23,11 @@ import scalafim.fmri.fit.{
   TContrast,
   TContrastResult
 }
+import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 import scalafim.pipeline.*
 
@@ -157,7 +158,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("scenario-pipeline-first-level"),
-        ImageDMat.fromRows(fixture.responseRows),
+        GaleTestMatrix.fromRows(fixture.responseRows),
         SampleSpaces(Vector(2, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),

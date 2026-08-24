@@ -13,6 +13,7 @@ import scalafim.dataset.{
   RunId,
   TimepointSelection
 }
+import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.fit.{
   DenseFmriFitResult,
@@ -29,8 +30,8 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.DMat as ImageDMat
-import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
+import gale.linalg.{DMat, DVec}
 
 class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -146,7 +147,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
         .open(
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-censored-multirun-concat"),
-            ImageDMat.fromRows(responseRows),
+            GaleTestMatrix.fromRows(responseRows),
             SampleSpaces(Vector(2, 1, 1))
           ),
           samplingFrame = samplingFrame,

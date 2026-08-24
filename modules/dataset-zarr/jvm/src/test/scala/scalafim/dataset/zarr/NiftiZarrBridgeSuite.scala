@@ -39,7 +39,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     )).fold(error => fail(error.message), identity)
     assertEquals(block.timepoints, Vector(1, 0))
     assertEquals(block.voxelIndices, Vector(11, 0, 5))
-    assertEquals(block.data.toRows, Vector(
+    assertEquals(GaleTestData.toRows(block.data), Vector(
       Vector(3.75, 1.0, 2.25),
       Vector(0.75, -2.0, -0.75)
     ))
@@ -141,7 +141,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
         TimepointSelection.indices(1, 0),
         VoxelSelection.indices(11, 0, 5)
       )).fold(error => fail(error.message), identity)
-    assertEquals(block.data.toRows, Vector(
+    assertEquals(GaleTestData.toRows(block.data), Vector(
       Vector(3.75, 1.0, 2.25),
       Vector(0.75, -2.0, -0.75)
     ))

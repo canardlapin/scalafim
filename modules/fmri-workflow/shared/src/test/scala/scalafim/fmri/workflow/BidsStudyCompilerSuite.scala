@@ -1,5 +1,12 @@
 package scalafim.fmri.workflow
 
+import image4s.NonSpatialAxes
+import image4s.SampleSpace
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError
+import image4s.geometry.Grid
 import scalafim.image.SampleSpaces
 
 import munit.FunSuite
@@ -123,11 +130,39 @@ class BidsStudyCompilerSuite extends FunSuite:
       .left
       .toOption
       .get
-    assert(incompatible.issues.exists(_.code == CatalogIssueCode.IncompatibleGeometry))
+    val runGeometryIssue = incompatible.issues.find: issue =>
+      issue.code == CatalogIssueCode.IncompatibleGeometry &&
+        issue.path.exists(path => path.value.contains("run-02") && path.value.endsWith("_bold.nii"))
+    assertEquals(
+      runGeometryIssue.flatMap(_.cause),
+      Some(CatalogIssueCause.Geometry(GeometryError.GridsNotCongruent(0.0)))
+    )
 
     val duplicate = duplicateRunFixture()
     val duplicateReport = BidsStudyCompiler.compile(duplicate.project, duplicate.recipe, duplicate.headers).left.toOption.get
     assert(duplicateReport.issues.exists(_.code == CatalogIssueCode.DuplicateRun))
+  }
+
+  test("compiler preserves provider frame failures for mask geometry") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val incompatibleHeaders = fixture.headers.headers.map { case (path, descriptor) =>
+      if path.value.endsWith("_mask.nii") then
+        path -> ImageHeaderDescriptor(ephemeralShape("compiler-mask-ephemeral", 1))
+      else path -> descriptor
+    }
+    val incompatible = BidsStudyCompiler
+      .compile(fixture.project, fixture.recipe, ImageHeaderCatalog(incompatibleHeaders))
+      .left
+      .toOption
+      .get
+    val maskGeometryIssue = incompatible.issues.find: issue =>
+      issue.code == CatalogIssueCode.IncompatibleGeometry &&
+        issue.path.exists(_.value.endsWith("_mask.nii"))
+
+    assertEquals(
+      maskGeometryIssue.flatMap(_.cause),
+      Some(CatalogIssueCause.Geometry(GeometryError.EphemeralFrameMismatch))
+    )
   }
 
   test("catalog reports empty matches, missing entities, and invalid unit identities") {
@@ -397,3 +432,16 @@ class BidsStudyCompilerSuite extends FunSuite:
 
   private def metadata(repetitionTime: Double): JsonValue.Obj =
     BidsJson.parseObject(s"{\"RepetitionTime\":$repetitionTime}").toOption.get
+
+  private def ephemeralShape(label: String, timepoints: Int): DatasetShape =
+    val frame = right(Frame.named[D3](label))
+    val grid = right(Grid.in(frame)(Vector(2, 2, 1), Affine.identity[D3]))
+    DatasetShape.unsafe(
+      SampleSpace.create(grid, NonSpatialAxes.empty),
+      timepoints
+    )
+
+  private def right[E, A](value: Either[E, A]): A =
+    value match
+      case Right(result) => result
+      case Left(error) => fail(s"expected Right, found Left($error)")

@@ -27,7 +27,7 @@ import ravel.Rank
 enum SelectedImageError:
   case Provider(error: SelectedSampledError)
   case Image(error: ImageError)
-  case Native(error: NativeImageError)
+  case NeuroImage(error: NeuroImageError)
   case Selection(error: SelectionError)
   case InvalidRegion(error: RegionError)
   case SelectionSpace(error: SpaceMismatch)
@@ -45,7 +45,7 @@ enum SelectedImageError:
         error.message
       case Image(error) =>
         error.message
-      case Native(error) =>
+      case NeuroImage(error) =>
         error.message
       case Selection(error) =>
         error.message
@@ -573,7 +573,7 @@ object SelectedSeries:
               SomeNeuroSeries
                 .fromSampled(ranked)
                 .left
-                .map(SelectedImageError.Native.apply)
+                .map(SelectedImageError.NeuroImage.apply)
 
     def reselect[T](
         requested: Selection[T],

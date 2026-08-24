@@ -1,6 +1,6 @@
 package scalafim.dataset.io
 
-import scalafim.dataset.{DataSelection, DatasetId, TimepointSelection, VoxelSelection}
+import scalafim.dataset.{DataSelection, DatasetId, GaleTestData, TimepointSelection, VoxelSelection}
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 import java.nio.charset.StandardCharsets
@@ -31,7 +31,7 @@ class MatrixFileDatasetBackendSuite extends munit.FunSuite:
           voxels = VoxelSelection.indices(1, 3)
         )
       )
-      assertEquals(series.data.toRows, Vector(Vector(2.0, 4.0), Vector(10.0, 12.0)))
+      assertEquals(GaleTestData.toRows(series.data), Vector(Vector(2.0, 4.0), Vector(10.0, 12.0)))
       assertEquals(series.timepoints, Vector(0, 2))
       assertEquals(series.voxelIndices, Vector(1, 3))
     }

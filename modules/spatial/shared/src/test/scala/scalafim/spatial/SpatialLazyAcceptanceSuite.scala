@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{SampleSpaces, DMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
+import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.*
 
@@ -68,15 +68,12 @@ private object NeurotransformPullbackOracleV1:
 
 class SpatialLazyAcceptanceSuite extends munit.FunSuite:
 
-  private val volumeSpace = SampleSpaces(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
+  private val volumeSpace = SampleSpaces(Vector(6, 1, 1), affine = Some(ProviderAffines.identity))
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
 
   private def apiValue[A](result: Either[FieldApiError, A]): A =
-    result.fold(error => fail(error.message), identity)
-
-  private def imageValue[A](result: Either[scalafim.image.MorphismError, A]): A =
     result.fold(error => fail(error.message), identity)
 
   private def volumeDomain(name: String): Domain =
@@ -91,6 +88,11 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-acceptance"))
     val sampled = spatialValue(SamplingGeometry.surface(geometry))
     spatialValue(Domain.build(id, SpaceRef.Surface(subject, geometry.hemisphere, geometry.kind), sampled))
+
+  private def volumeGrid(domain: Domain): GridSpec =
+    domain.geometry match
+      case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
+      case _ => fail(s"domain ${domain.id.value} is not volumetric")
 
   private def surfaceAt(xs: Vector[Double], kind: SurfaceKind): SurfaceGeometry =
     SurfaceGeometry(
@@ -108,7 +110,7 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
 
   private def affine(name: String, source: Domain, target: Domain, x: Double): Morphism =
     val matrix =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, x),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -124,18 +126,19 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
         MorphismKind.Affine3D,
         RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(matrix))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, matrix))
       )
     )
 
   private def warp(name: String, source: Domain, target: Domain): Morphism =
-    val grid = GridSpec.identity(Vector(6, 1, 1))
+    val sourceGrid = volumeGrid(source)
+    val targetGrid = volumeGrid(target)
     val sourceX = Vector(0.0, 0.5, 1.5, 3.0, 4.0, 5.0)
     val data =
       RavelArray.tabulate[Double](
-        grid.shape.x,
-        grid.shape.y,
-        grid.shape.z,
+        targetGrid.shape.x,
+        targetGrid.shape.y,
+        targetGrid.shape.z,
         3
       ) { (x, y, z, component) =>
         component match
@@ -143,16 +146,15 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
           case 1 => y.toDouble
           case _ => z.toDouble
       }
-    val dense =
-      imageValue(
-        DenseFieldMorphism.coordinates(
-          SpatialDomainId(source.id.value),
-          SpatialDomainId(target.id.value),
-          grid,
+    val pullback =
+      SpatialPullbacks
+        .coordinates(
+          sourceGrid,
+          targetGrid,
           data,
-          interpolation = Resample.Method.Linear
+          method = Resample.Method.Linear
         )
-      )
+        .fold(error => fail(error.message), identity)
     spatialValue(
       Morphism.between(
         spatialValue(MorphismId(name)),
@@ -160,7 +162,7 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
         target,
         MorphismKind.Warp3D,
         RouteTag.Anatomical,
-        coordinateMap = spatialValue(CoordinateMap.dense3D(dense))
+        coordinateMap = spatialValue(CoordinateMap.dense(pullback))
       )
     )
 

@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class AffineFusionSuite extends munit.FunSuite:
@@ -20,11 +21,11 @@ class AffineFusionSuite extends munit.FunSuite:
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
     val geometry =
-      value(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))))
+      value(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, 0.0),
@@ -39,6 +40,14 @@ class AffineFusionSuite extends munit.FunSuite:
     target: Domain,
     x: Double
   ): Morphism =
+    affineMap(name, source, target, translation(x))
+
+  private def affineMap(
+    name: String,
+    source: Domain,
+    target: Domain,
+    transform: Affine[D3]
+  ): Morphism =
     value(
       Morphism.build(
         id = value(MorphismId(name)),
@@ -47,7 +56,17 @@ class AffineFusionSuite extends munit.FunSuite:
         kind = MorphismKind.Affine3D,
         routeTag = RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = value(CoordinateMap.affine3D(translation(x)))
+        coordinateMap = value(CoordinateMap.affine(source, target, transform))
+      )
+    )
+
+  private def scaleX(value: Double): Affine[D3] =
+    ProviderAffines.fromRows(
+      Vector(
+        Vector(value, 0.0, 0.0, 0.0),
+        Vector(0.0, 1.0, 0.0, 0.0),
+        Vector(0.0, 0.0, 1.0, 0.0),
+        Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
 
@@ -56,6 +75,28 @@ class AffineFusionSuite extends munit.FunSuite:
 
   private def sampled(operator: SpatialOperator, input: DoubleMatrix): DoubleMatrix =
     linearValue(operator.forward(input))
+
+  test("executable affine paths compose provider affines in pullback order"):
+    val root = domain("provider-root")
+    val mid = domain("provider-mid")
+    val target = domain("provider-target")
+    val first = affineMap("provider-scale", root, mid, scaleX(2.0))
+    val second = affineMap("provider-translate", mid, target, translation(1.0))
+    val path = value(MorphismPath.build(Vector(first, second)))
+    val executable = value(ExecutableAffinePath.from(path))
+    val expected =
+      translation(1.0)
+        .andThen(scaleX(2.0))
+        .fold(error => fail(error.message), identity)
+
+    executable.coordinateMap match
+      case CoordinateMap.Geometric(binding) if binding.affineOperator.nonEmpty =>
+        val actual = binding.affineOperator.get
+        assertEquals(actual.rowMajor, expected.rowMajor)
+        val transformed = actual(Vector(0.5, 0.0, 0.0)).fold(error => fail(error.message), identity)
+        assertEqualsDouble(transformed.head, 3.0, 1e-12)
+      case other =>
+        fail(s"expected provider affine map, got $other")
 
   test("an affine route samples the root once and agrees with an independent direct composite"):
     val root = domain("root")

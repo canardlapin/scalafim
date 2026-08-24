@@ -1,8 +1,9 @@
 package scalafim.dataset.scenarios
 
+import gale.linalg.DMat
 import scalafim.dataset.*
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
 
@@ -48,7 +49,7 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
     val sums =
       selected
         .reduceBy(_.key.dataset.session): group =>
-          Right(group.segments.flatMap(_.series.data.toRows).flatten.sum)
+          Right(group.segments.flatMap(segment => GaleTestData.toRows(segment.series.data)).flatten.sum)
         .fold(error => fail(error.message), identity)
 
     ScenarioHarness.result(
@@ -130,7 +131,7 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
         .open(
           backend = InMemoryDatasetBackend(
             id = DatasetId(s"$sessionId-$runId"),
-            data = DMat.fromRows(
+            data = GaleTestData.matrixFromRows(
               Vector.tabulate(3): time =>
                 Vector(
                   base + time.toDouble * 10.0 + 1.0,

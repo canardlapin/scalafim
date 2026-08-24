@@ -1,72 +1,61 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import gale.linalg.DMat
 import image4s.BoundaryPolicy
 import image4s.Continuous
 import image4s.SampleSpace
 import image4s.Sampled
-import image4s.geometry.Affine as GeometryAffine
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.GeometryError
+import image4s.geometry.Grid
+import image4s.geometry.LatticeIndex
+import image4s.geometry.Point
 import ravel.AnyRank
 import ravel.ArrayBuilder
 import ravel.DType
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
-import reframe4s.lie.FramedAffine
+import reframe4s.core.AffineMap
+import reframe4s.core.MapError
+import reframe4s.core.SmoothMap
+import reframe4s.core.SpatialDifferential
+import reframe4s.core.SpatialMap
 import reframe4s.resample.Interpolation
+import reframe4s.resample.ResamplingError
 import reframe4s.resample.ResamplingPlan as ReframeResamplingPlan
 import reframe4s.resample.ResamplingSink
 
+/** Dynamic D3 boundary used by ScalaFIM's owner-erased image API.
+  *
+  * The value is the provider `SpatialMap` itself. Endpoints are widened only
+  * after runtime owner checks against the source and target grids.
+  */
+type SpatialPullback = SpatialMap[Frame[D3], Frame[D3], D3]
+
 enum ResamplingPlanError:
-  case SingularSourceAffine(reason: String)
-  case SourceSpaceMismatch(expected: GridSpec, actual: GridSpec)
-  case UnsupportedMethod(method: Resample.Method)
-  case MorphismEvaluationFailed(reason: String)
-  case ProviderFailure(reason: String)
+  case Geometry(error: GeometryError)
+  case Map(error: MapError)
+  case Provider(error: ResamplingError)
 
   def message: String =
     this match
-      case SingularSourceAffine(reason) =>
-        s"source affine is singular: $reason"
-      case SourceSpaceMismatch(expected, actual) =>
-        s"source volume space does not match plan source grid: expected ${expected.dims}, actual ${actual.dims}"
-      case UnsupportedMethod(method) =>
-        s"resampling plan does not support method $method"
-      case MorphismEvaluationFailed(reason) =>
-        s"morphism evaluation failed: $reason"
-      case ProviderFailure(reason) =>
-        s"reframe4s resampling failed: $reason"
+      case Geometry(error) => error.message
+      case Map(error)      => error.message
+      case Provider(error) => error.message
 
 enum JacobianModulation:
   case None, Jacobian, SqrtJacobian
 
 enum ResamplingExecutionModel:
-  /** Affine coordinates are fused by reframe4s; no coordinate collection is retained. */
-  case AffineProvider
+  /** Provider affine scanline kernel; no coordinate collection is retained. */
+  case ProviderAffine
 
-  /** Non-affine or cubic execution retains one prepared source-voxel coordinate per target voxel. */
-  case WorkloadPrepared
-
-private sealed trait ResamplingBackend:
-  def executionModel: ResamplingExecutionModel
-  def materializedCoordinateCount: Int
-
-private object ResamplingBackend:
-  final case class AffineProvider(
-      pull: GeometryAffine[D3],
-      interpolation: Interpolation[Continuous]
-  ) extends ResamplingBackend:
-    val executionModel: ResamplingExecutionModel =
-      ResamplingExecutionModel.AffineProvider
-    val materializedCoordinateCount: Int = 0
-
-  final case class WorkloadPrepared(
-      sourceVoxelPoints: Vector[VoxelPoint]
-  ) extends ResamplingBackend:
-    val executionModel: ResamplingExecutionModel =
-      ResamplingExecutionModel.WorkloadPrepared
-    val materializedCoordinateCount: Int = sourceVoxelPoints.length
+  /** Provider arbitrary-map kernel; one coordinate is prepared per target voxel. */
+  case ProviderMapped
 
 private sealed trait ModulationFactors:
   def atVoxel(ordinal: Int): Double
@@ -78,24 +67,43 @@ private object ModulationFactors:
   final case class PerVoxel(values: Vector[Double]) extends ModulationFactors:
     def atVoxel(ordinal: Int): Double = values(ordinal)
 
+/** Neuroimaging facade over reframe4s mapped resampling.
+  *
+  * This class owns only ScalaFIM policy: admitted D3 grids, output image
+  * construction, and optional Jacobian modulation. Map evaluation,
+  * interpolation, boundary handling, and prepared coordinates belong to
+  * reframe4s.
+  */
 final class ResamplingPlan private (
     val source: GridSpec,
     val target: GridSpec,
-    val morphism: SpatialMorphism,
-    val method: Resample.Method,
-    private val backend: ResamplingBackend
+    val pullback: SpatialPullback,
+    val method: Resample.Method
 ):
+  private def timeAxis(extent: Int): image4s.Axis =
+    image4s.Axis
+      .ordinal("time", image4s.AxisKind.Time, extent)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
   def executionModel: ResamplingExecutionModel =
-    backend.executionModel
+    pullback match
+      case _: AffineMap[?, ?, ?] => ResamplingExecutionModel.ProviderAffine
+      case _                     => ResamplingExecutionModel.ProviderMapped
 
-  /** Number of coordinate triples retained by the immutable plan. */
   def materializedCoordinateCount: Int =
-    backend.materializedCoordinateCount
+    executionModel match
+      case ResamplingExecutionModel.ProviderAffine => 0
+      case ResamplingExecutionModel.ProviderMapped => target.nVoxels
 
-  def apply(volume: SomeScalarVolume[Double]): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
+  def apply(
+      volume: SomeScalarVolume[Double]
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     apply(volume, outside = 0.0)
 
-  def apply(volume: SomeScalarVolume[Double], outside: Double): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
+  def apply(
+      volume: SomeScalarVolume[Double],
+      outside: Double
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     apply(volume, outside, JacobianModulation.None)
 
   def apply(
@@ -103,181 +111,103 @@ final class ResamplingPlan private (
       outside: Double,
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
-    val actual = GridSpec.fromSpace(volume.space)
-    if GridCompatibility
-        .exact(source.toSampleSpace, actual.toSampleSpace)
-        .isLeft
-    then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
-    else
-      modulationFactors(modulation).flatMap: factors =>
-        backend match
-          case affine: ResamplingBackend.AffineProvider =>
-            sampleVolumeWithProvider(volume, outside, factors, affine)
-          case prepared: ResamplingBackend.WorkloadPrepared =>
-            Right(samplePreparedVolume(volume, outside, factors, prepared))
+    Grid
+      .exactCongruence(source.nativeGrid, volume.grid)
+      .left
+      .map(ResamplingPlanError.Geometry.apply)
+      .flatMap: _ =>
+        modulationFactors(modulation).flatMap: factors =>
+          sampleVolume(volume, outside, factors)
 
   @scala.annotation.targetName("applyNeuroSeries")
-  def apply(vec: SomeScalarSeries[Double]): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    apply(vec, outside = 0.0)
+  def apply(
+      series: SomeScalarSeries[Double]
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
+    apply(series, outside = 0.0)
 
   @scala.annotation.targetName("applyNeuroSeriesOutside")
-  def apply(vec: SomeScalarSeries[Double], outside: Double): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    apply(vec, outside, JacobianModulation.None)
+  def apply(
+      series: SomeScalarSeries[Double],
+      outside: Double
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
+    apply(series, outside, JacobianModulation.None)
 
   @scala.annotation.targetName("applyNeuroSeriesModulated")
   def apply(
-      vec: SomeScalarSeries[Double],
+      series: SomeScalarSeries[Double],
       outside: Double,
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    val actual = GridSpec.fromSpace(vec.space)
-    if GridCompatibility
-        .exact(source.toSampleSpace, actual.toSampleSpace)
-        .isLeft
-    then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
-    else
-      modulationFactors(modulation).flatMap: factors =>
-        backend match
-          case affine: ResamplingBackend.AffineProvider =>
-            sampleSeriesWithProvider(vec, outside, factors, affine)
-          case prepared: ResamplingBackend.WorkloadPrepared =>
-            Right(samplePreparedSeries(vec, outside, factors, prepared))
+    Grid
+      .exactCongruence(source.nativeGrid, series.grid)
+      .left
+      .map(ResamplingPlanError.Geometry.apply)
+      .flatMap: _ =>
+        modulationFactors(modulation).flatMap: factors =>
+          sampleSeries(series, outside, factors)
 
-  private def sampleVolumeWithProvider(
+  private def sampleVolume(
       volume: SomeScalarVolume[Double],
       outside: Double,
-      factors: ModulationFactors,
-      backend: ResamplingBackend.AffineProvider
+      factors: ModulationFactors
   ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     given DType[Double] = volume.values.dtype
     val targetShape = target.shape
     var failure = Option.empty[ResamplingPlanError]
-    val out =
+    val output =
       RavelArray.build[Double, Rank[3]](
         Shape(targetShape.x, targetShape.y, targetShape.z)
-      ): output =>
+      ): builder =>
         failure =
           scanProvider(
             volume.sampled,
-            output,
+            builder,
             trailingSize = 1,
             outside,
-            factors,
-            backend
+            factors
           ).left.toOption
     failure match
       case Some(error) => Left(error)
       case None =>
-        Right(SomeNeuroVolume.unsafeFromRavel(out, target.toSampleSpace, volume.label))
+        Right(
+          SomeNeuroVolume.unsafeFromRavel(
+            output,
+            target.toSampleSpace,
+            volume.metadata
+          )
+        )
 
-  private def sampleSeriesWithProvider(
-      vec: SomeScalarSeries[Double],
+  private def sampleSeries(
+      series: SomeScalarSeries[Double],
       outside: Double,
-      factors: ModulationFactors,
-      backend: ResamplingBackend.AffineProvider
+      factors: ModulationFactors
   ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    given DType[Double] = vec.values.dtype
+    given DType[Double] = series.values.dtype
     val targetShape = target.shape
-    val tLen = vec.nVolumes
+    val volumes = series.nVolumes
     var failure = Option.empty[ResamplingPlanError]
-    val out =
+    val output =
       RavelArray.build[Double, Rank[4]](
-        Shape(targetShape.x, targetShape.y, targetShape.z, tLen)
-      ): output =>
+        Shape(targetShape.x, targetShape.y, targetShape.z, volumes)
+      ): builder =>
         failure =
           scanProvider(
-            vec.sampled,
-            output,
-            trailingSize = tLen,
+            series.sampled,
+            builder,
+            trailingSize = volumes,
             outside,
-            factors,
-            backend
+            factors
           ).left.toOption
     failure match
       case Some(error) => Left(error)
       case None =>
         Right(
           SomeNeuroSeries.unsafeFromRavel(
-            out,
-            target.toSampleSpace.addDim(tLen, Some(Axis.Time)),
-            vec.label
+            output,
+            target.toSampleSpace.addDim(timeAxis(volumes)),
+            series.metadata
           )
         )
-
-  /** View-safe execution into one whole-canonical destination. Input volumes
-    * may be arbitrary immutable Ravel views; coordinate access honors their
-    * strides and no hidden canonicalization occurs.
-    */
-  private def samplePreparedVolume(
-      volume: SomeScalarVolume[Double],
-      outside: Double,
-      factors: ModulationFactors,
-      backend: ResamplingBackend.WorkloadPrepared
-  ): SomeScalarVolume[Double] =
-    given DType[Double] = volume.values.dtype
-    val dims = source.shape
-    val targetShape = target.shape
-    val workspace = new CubicWorkspace
-    val out =
-      RavelArray.build[Double, Rank[3]](
-        Shape(targetShape.x, targetShape.y, targetShape.z)
-      ): output =>
-        var ordinal = 0
-        while ordinal < backend.sourceVoxelPoints.length do
-          val coord = backend.sourceVoxelPoints(ordinal)
-          val sampled =
-            sampleAt(volume, dims, coord, outside, workspace)
-          output.writeLinear(
-            ordinal,
-            sampled * factors.atVoxel(ordinal)
-          )
-          ordinal += 1
-    SomeNeuroVolume.unsafeFromRavel(out, target.toSampleSpace, volume.label)
-
-  /** Series execution is fused across time so it retains one destination and
-    * never materializes a temporary volume for each frame.
-    */
-  private def samplePreparedSeries(
-      vec: SomeScalarSeries[Double],
-      outside: Double,
-      factors: ModulationFactors,
-      backend: ResamplingBackend.WorkloadPrepared
-  ): SomeScalarSeries[Double] =
-    given DType[Double] = vec.values.dtype
-    val tLen = vec.nVolumes
-    val volumes = Vector.tabulate(tLen)(vec.volume)
-    val dims = source.shape
-    val targetShape = target.shape
-    val workspace = new CubicWorkspace
-    val out =
-      RavelArray.build[Double, Rank[4]](
-        Shape(targetShape.x, targetShape.y, targetShape.z, tLen)
-      ): output =>
-        var voxelOrdinal = 0
-        while voxelOrdinal < backend.sourceVoxelPoints.length do
-          val coord = backend.sourceVoxelPoints(voxelOrdinal)
-          val factor = factors.atVoxel(voxelOrdinal)
-          var time = 0
-          while time < tLen do
-            val sampled =
-              sampleAt(
-                volumes(time),
-                dims,
-                coord,
-                outside,
-                workspace
-              )
-            output.writeLinear(
-              voxelOrdinal * tLen + time,
-              sampled * factor
-            )
-            time += 1
-          voxelOrdinal += 1
-    SomeNeuroSeries.unsafeFromRavel(
-      out,
-      target.toSampleSpace.addDim(tLen, Some(Axis.Time)),
-      vec.label
-    )
 
   private def scanProvider[R <: AnyRank](
       sampled: Sampled[
@@ -289,31 +219,21 @@ final class ResamplingPlan private (
       output: ArrayBuilder[Double],
       trailingSize: Int,
       outside: Double,
-      factors: ModulationFactors,
-      backend: ResamplingBackend.AffineProvider
+      factors: ModulationFactors
   ): Either[ResamplingPlanError, Unit] =
-    val targetGrid = target.nativeGrid
-    // Sampled is immutable and its existential owner is already D3. Scala
-    // loses the nested frame-to-space relationship while inferring the
-    // reframe4s parameters, so restore it only at this provider boundary.
     val captured = sampled.asInstanceOf[
       Sampled[SampleSpace[Frame[D3], D3], Double, Continuous, R]
     ]
-    val pull =
-      FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](
-        targetGrid.frame,
-        captured.frame
-      )(backend.pull)
     ReframeResamplingPlan
-      .affine(
+      .mapped(
         captured,
-        targetGrid,
-        pull,
-        backend.interpolation,
+        target.nativeGrid,
+        pullback,
+        ResamplingPlan.interpolation(method),
         BoundaryPolicy.Constant(outside)
       )
       .left
-      .map(error => ResamplingPlanError.ProviderFailure(error.message))
+      .map(ResamplingPlanError.Provider.apply)
       .flatMap: plan =>
         plan
           .scan(
@@ -331,44 +251,7 @@ final class ResamplingPlan private (
                 )
           )
           .left
-          .map(error => ResamplingPlanError.ProviderFailure(error.message))
-
-  private inline def sampleAt(
-      volume: SomeScalarVolume[Double],
-      dims: SpatialDims,
-      coord: VoxelPoint,
-      outside: Double,
-      workspace: CubicWorkspace
-  ): Double =
-    method match
-      case Resample.Method.Nearest =>
-        VoxelSamplingKernel.nearest(
-          volume,
-          dims,
-          coord.x,
-          coord.y,
-          coord.z,
-          outside
-        )
-      case Resample.Method.Linear =>
-        VoxelSamplingKernel.linear(
-          volume,
-          dims,
-          coord.x,
-          coord.y,
-          coord.z,
-          outside
-        )
-      case Resample.Method.Cubic =>
-        VoxelSamplingKernel.cubic(
-          volume,
-          dims,
-          coord.x,
-          coord.y,
-          coord.z,
-          outside,
-          workspace
-        )
+          .map(ResamplingPlanError.Provider.apply)
 
   private def modulationFactors(
       modulation: JacobianModulation
@@ -377,131 +260,111 @@ final class ResamplingPlan private (
       case JacobianModulation.None =>
         Right(ModulationFactors.Constant(1.0))
       case JacobianModulation.Jacobian | JacobianModulation.SqrtJacobian =>
-        constantJacobianMagnitude match
-          case Some(magnitude) =>
-            Right(
-              ModulationFactors.Constant(
-                if modulation == JacobianModulation.SqrtJacobian then
-                  math.sqrt(magnitude)
-                else magnitude
-              )
-            )
-          case None =>
-            val targetWorldPoints =
-              target.worldPoints.map(WorldPoint.fromSpatialPoint)
-            morphism
-              .jacobianDetAtWorld(
-                targetWorldPoints,
-                log = false,
-                mode = JacobianMode.Pullback
-              )
-              .left
-              .map(error =>
-                ResamplingPlanError.MorphismEvaluationFailed(error.message)
-              )
-              .map: determinants =>
+        targetPoints.flatMap: points =>
+          val determinants = Vector.newBuilder[Double]
+          var index = 0
+          var failure = Option.empty[MapError]
+          while index < points.length && failure.isEmpty do
+            differentialAt(points(index)) match
+              case Left(error) => failure = Some(error)
+              case Right(matrix) =>
+                determinants += math.abs(ResamplingPlan.determinant3(matrix))
+            index += 1
+          failure match
+            case Some(error) => Left(ResamplingPlanError.Map(error))
+            case None =>
+              val values = determinants.result()
+              Right(
                 ModulationFactors.PerVoxel(
-                  determinants.map: determinant =>
-                    val magnitude = math.abs(determinant)
-                    if modulation == JacobianModulation.SqrtJacobian then
-                      math.sqrt(magnitude)
-                    else magnitude
+                  if modulation == JacobianModulation.SqrtJacobian then
+                    values.map(math.sqrt)
+                  else values
                 )
+              )
 
-  private def constantJacobianMagnitude: Option[Double] =
-    morphism match
-      case _: IdentityMorphism => Some(1.0)
-      case affine: Affine3DMorphism =>
-        Some(math.abs(ResamplingPlan.linearDeterminant(affine.matrix)))
-      case _ => None
+  private def differentialAt(
+      point: Point[Frame[D3], D3]
+  ): Either[MapError, DMat] =
+    pullback match
+      case smooth: SmoothMap[?, ?, ?] =>
+        smooth
+          .asInstanceOf[SmoothMap[Frame[D3], Frame[D3], D3]]
+          .jet1At(point)
+          .map(_.differential)
+      case _ =>
+        SpatialDifferential
+          .centralDifference(pullback, point, step = 1e-3)
+          .map(_.differential)
+
+  private def targetPoints: Either[ResamplingPlanError, Vector[Point[Frame[D3], D3]]] =
+    val grid = target.nativeGrid
+    val points = Vector.newBuilder[Point[Frame[D3], D3]]
+    var linear = 0
+    var failure = Option.empty[GeometryError]
+    while linear < target.nVoxels && failure.isEmpty do
+      val coordinate = Indexing.indexToGrid3D(target.shape, linear)
+      val point =
+        for
+          index <- LatticeIndex.fromVector[D3](coordinate.toVector)
+          value <- grid.pointAt(index)
+        yield value
+      point match
+        case Left(error)  => failure = Some(error)
+        case Right(value) => points += value
+      linear += 1
+    failure
+      .map(error => Left(ResamplingPlanError.Geometry(error)))
+      .getOrElse(Right(points.result()))
 
 object ResamplingPlan:
   def make(
       source: GridSpec,
       target: GridSpec,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Resample.Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    providerBackend(morphism, method) match
-      case Left(error) => Left(error)
-      case Right(Some(backend)) =>
-        Right(new ResamplingPlan(source, target, morphism, method, backend))
-      case Right(None) =>
-        val targetWorldPoints =
-          target.worldPoints.map(WorldPoint.fromSpatialPoint)
-        val sourceWorldPoints =
-          morphism.transformWorldPoints(targetWorldPoints)
-        source.worldPointsToVoxel(sourceWorldPoints) match
-          case Left(error) =>
-            Left(ResamplingPlanError.SingularSourceAffine(error.message))
-          case Right(sourceVoxelPoints) =>
-            Right(
-              new ResamplingPlan(
-                source,
-                target,
-                morphism,
-                method,
-                ResamplingBackend.WorkloadPrepared(sourceVoxelPoints)
-              )
-            )
+    for
+      _ <- SpatialMap
+        .validateSourceFrame(pullback.source, target.nativeGrid.frame)
+        .left
+        .map(ResamplingPlanError.Map.apply)
+      _ <- SpatialMap
+        .validateResultFrame(source.nativeGrid.frame, pullback.target)
+        .left
+        .map(ResamplingPlanError.Map.apply)
+    yield new ResamplingPlan(source, target, pullback, method)
 
   def identity(
       source: GridSpec,
       method: Resample.Method = Resample.Method.Linear
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    val domain = SpatialDomainId("identity")
-    make(source, source, IdentityMorphism(domain), method)
+    val frame = source.nativeGrid.frame
+    val pullback = AffineMap.identity[D3, Frame[D3]](frame)
+    make(source, source, pullback, method)
 
   def fromSpaces(
       source: SomeSampleSpace,
       target: SomeSampleSpace,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Resample.Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    make(GridSpec.fromSpace(source), GridSpec.fromSpace(target), morphism, method)
+    make(
+      GridSpec.fromSpace(source),
+      GridSpec.fromSpace(target),
+      pullback,
+      method
+    )
 
-  private def providerBackend(
-      morphism: SpatialMorphism,
+  private def interpolation(
       method: Resample.Method
-  ): Either[ResamplingPlanError, Option[ResamplingBackend.AffineProvider]] =
-    val interpolation =
-      method match
-        case Resample.Method.Nearest =>
-          Some(Interpolation.Nearest: Interpolation[Continuous])
-        case Resample.Method.Linear =>
-          Some(Interpolation.Linear)
-        case Resample.Method.Cubic => None
+  ): Interpolation[Continuous] =
+    method match
+      case Resample.Method.Nearest => Interpolation.Nearest
+      case Resample.Method.Linear  => Interpolation.Linear
+      case Resample.Method.Cubic   => Interpolation.Cubic
 
-    interpolation match
-      case None => Right(None)
-      case Some(kernel) =>
-        morphism match
-          case _: IdentityMorphism =>
-            Right(
-              Some(
-                ResamplingBackend.AffineProvider(
-                  GeometryAffine.identity[D3],
-                  kernel
-                )
-              )
-            )
-          case affine: Affine3DMorphism =>
-            GeometryAffine
-              .fromRowMajor[D3](
-                Vector.tabulate(16)(index => affine.matrix.data(index))
-              )
-              .left
-              .map(error =>
-                ResamplingPlanError.MorphismEvaluationFailed(error.message)
-              )
-              .map(operator =>
-                Some(
-                  ResamplingBackend.AffineProvider(operator, kernel)
-                )
-              )
-          case _ => Right(None)
-
-  private def linearDeterminant(matrix: DMat): Double =
+  private def determinant3(matrix: DMat): Double =
+    require(matrix.rows == 3 && matrix.cols == 3, "D3 differential must be 3x3")
     val a = matrix(0, 0)
     val b = matrix(0, 1)
     val c = matrix(0, 2)

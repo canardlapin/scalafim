@@ -6,11 +6,11 @@ import spire.std.int.given
 class DomainValiditySuite extends munit.FunSuite:
 
   private val space = SampleSpaces(Vector(3, 3, 1))
-  private val volumeSpace = VolumeSpace(space)
+  private val volumeSpace = ProviderSpaces.volume(space)
   private val packedDomain =
     GridDomain
       .register(
-        volumeSpace.sampleSpace.grid,
+        volumeSpace.grid,
         "domain validity voxels",
         locus4s.DomainRegistry.empty
       )
@@ -56,7 +56,7 @@ class DomainValiditySuite extends munit.FunSuite:
         )
         .toOption
         .get
-    val field = domain.spatialField(volume).toOption.get
+    val field = domain.spatialField(volume.sampled).toOption.get
     val center = domain.space.indexAtValidatedOrdinal(4)
     val radius =
       SearchlightRadius.make(1.0).fold(error => fail(error.message), identity)

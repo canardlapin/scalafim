@@ -71,7 +71,14 @@ class SelectedImageSuite extends munit.FunSuite:
     )
 
   test("selected volume retains exact selection and compact Ravel order"):
-    val selected = right(SelectedVolume.gather(domain, volume, selection))
+    val selected =
+      right(
+        SelectedVolume.gather(
+          domain,
+          SomeNeuroVolume.eraseSpace(volume),
+          selection
+        )
+      )
 
     assert(selected.selection eq selection)
     assertEquals(selected.data.shape, Shape(3))
@@ -84,7 +91,13 @@ class SelectedImageSuite extends munit.FunSuite:
     assertEqualsDouble(scattered.data(0, 0, 0), -1.0, 0.0)
 
   test("selected series are position-time with contiguous voxel rows"):
-    val selected = right(SelectedSeries.gather(domain, series, selection))
+    val selected = right(
+      SelectedSeries.gather(
+        domain,
+        SomeNeuroSeries.eraseSpace(series),
+        selection
+      )
+    )
 
     assert(selected.selection eq selection)
     assertEquals(selected.data.shape, Shape(3, 3))
@@ -113,7 +126,13 @@ class SelectedImageSuite extends munit.FunSuite:
     assertEqualsDouble(scattered.data(0, 0, 0, 2), -1.0, 0.0)
 
   test("require, drop, and fill make missing-support policy explicit"):
-    val selected = right(SelectedSeries.gather(domain, series, selection))
+    val selected = right(
+      SelectedSeries.gather(
+        domain,
+        SomeNeuroSeries.eraseSpace(series),
+        selection
+      )
+    )
     val requested =
       right(Selection.fromOrdinals(domain.space, Vector(1, 0, 10)))
 
@@ -141,11 +160,23 @@ class SelectedImageSuite extends munit.FunSuite:
     )
 
   test("selected arithmetic requires exact order or explicit support policies"):
-    val left = right(SelectedSeries.gather(domain, series, selection))
+    val left = right(
+      SelectedSeries.gather(
+        domain,
+        SomeNeuroSeries.eraseSpace(series),
+        selection
+      )
+    )
     val rightSupport =
       right(Selection.fromOrdinals(domain.space, Vector(1, 0, 10)))
     val rightSeries =
-      right(SelectedSeries.gather(domain, series, rightSupport))
+      right(
+        SelectedSeries.gather(
+          domain,
+          SomeNeuroSeries.eraseSpace(series),
+          rightSupport
+        )
+      )
 
     left.addExact(rightSeries) match
       case Left(SelectedImageError.SelectionOrderMismatch(actualLeft, actualRight)) =>
@@ -202,12 +233,22 @@ class SelectedImageSuite extends munit.FunSuite:
       )
 
     assert(
-      SelectedSeries.gather(domain, series, foreignSelection) match
+      SelectedSeries.gather(
+        domain,
+        SomeNeuroSeries.eraseSpace(series),
+        foreignSelection
+      ) match
         case Left(SelectedImageError.Provider(_)) => true
         case _                                    => false
     )
 
-    val selected = right(SelectedSeries.gather(domain, series, selection))
+    val selected = right(
+      SelectedSeries.gather(
+        domain,
+        SomeNeuroSeries.eraseSpace(series),
+        selection
+      )
+    )
     assert(
       selected.reselect(foreignSelection, MissingVoxelPolicy.DropMissing) match
         case Left(SelectedImageError.SelectionSpace(_)) => true

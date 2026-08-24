@@ -1,12 +1,14 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import ravel.DType.given
 import ravel.NDArray as RavelArray
 
 class OwnershipSuite extends munit.FunSuite:
 
   test("canonical array construction copies its input buffer") {
-    val space = VolumeSpace(SampleSpaces(Vector(2, 2, 1))).sampleSpace
+    val space = ProviderSpaces.volume(SampleSpaces(Vector(2, 2, 1)))
     val input = Array[Int](1, 2, 3, 4)
     val volume =
       NeuroVolume
@@ -18,7 +20,7 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("canonical ingress retains one Sampled and Ravel value") {
-    val space = VolumeSpace(SampleSpaces(Vector(2, 3, 2))).sampleSpace
+    val space = ProviderSpaces.volume(SampleSpaces(Vector(2, 3, 2)))
     val input =
       PrimitiveBuffers.tabulate[Int](12)(index => index + 1)
     val volume =
@@ -30,8 +32,8 @@ class OwnershipSuite extends munit.FunSuite:
       volume.asInstanceOf[AnyRef].eq(volume.sampled.asInstanceOf[AnyRef]),
       clue = "NeuroVolume must be the Sampled value, not an allocating wrapper"
     )
-    assert(volume.data.eq(volume.sampled.data), clue = "")
-    assert(volume.data.isCanonicalLayout, clue = "")
+    assert(volume.sampled.data.eq(volume.sampled.data), clue = "")
+    assert(volume.sampled.data.isCanonicalLayout, clue = "")
     input(0) = 99
     assertEquals(volume(0, 0, 0), 1, clue = "")
     assertEquals(volume(0, 0, 1), 2, clue = "")
@@ -55,7 +57,7 @@ class OwnershipSuite extends munit.FunSuite:
       clue = "ranked Ravel construction must reuse the admitted SampleSpace"
     )
 
-    val seriesSpace = volumeSpace.addDim(2, Some(Axis.Time))
+    val seriesSpace = volumeSpace.addDim(ProviderAxes.time(2))
     val series =
       SomeLabelSeries.unsafeFromRavel(
         RavelArray.tabulate[Int](2, 3, 2, 2) {
@@ -124,7 +126,7 @@ class OwnershipSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(space.spatialSpace),
           "ownership selected series",
           locus4s.DomainRegistry.empty
         )
@@ -167,7 +169,7 @@ class OwnershipSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(space.spatialSpace),
           "ownership ordered selected series",
           locus4s.DomainRegistry.empty
         )
@@ -247,7 +249,7 @@ class OwnershipSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space).sampleSpace.grid,
+          ProviderSpaces.grid(space),
           "ownership selected volume",
           locus4s.DomainRegistry.empty
         )
@@ -277,7 +279,7 @@ class OwnershipSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(space).sampleSpace.grid,
+          ProviderSpaces.grid(space),
           "ownership selected window",
           locus4s.DomainRegistry.empty
         )

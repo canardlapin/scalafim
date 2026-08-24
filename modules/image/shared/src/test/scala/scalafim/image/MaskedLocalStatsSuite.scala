@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import ravel.{NDArray, Shape}
 
 class MaskedLocalStatsSuite extends munit.FunSuite:
@@ -67,7 +69,7 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
     assertEqualsDouble(values(center), 0.0, 1e-12)
 
   test("physical channel gradients recover an analytic world covector on an oblique grid"):
-    val affine = DMat.fromRows(
+    val affine = ProviderSpaces.affine(
       Vector(
         Vector(2.0, 0.3, 0.0, 10.0),
         Vector(0.0, 1.5, 0.2, -4.0),

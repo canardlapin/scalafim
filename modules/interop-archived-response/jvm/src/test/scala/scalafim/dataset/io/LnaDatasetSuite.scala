@@ -2,7 +2,7 @@ package scalafim.dataset.io
 
 import scalafim.image.SampleSpaces
 
-import gale.linalg.{DMat as GaleDMat, DVec}
+import gale.linalg.{DMat, DVec}
 import scalafim.archive.RunLabel
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
 import scalafim.archive.lna.{LnaPipeline, QuantParams, SharedBasisArtifact, SharedBasisId, SharedBasisMask}
@@ -16,7 +16,9 @@ import scalafim.dataset.{
   VoxelSelection
 }
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, GridCompatibility, Mask, SomeSampleSpace}
+import image4s.geometry.Grid
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.{Mask, SomeSampleSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -40,7 +42,7 @@ import scala.jdk.CollectionConverters.*
 class LnaDatasetSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(2, 2, 1))
   private val data =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0, 7.0),
@@ -242,7 +244,7 @@ class LnaDatasetSuite extends munit.FunSuite:
         dataset
           .backendFor(root.relativize(root.resolve("sub-01/func/sub-01_task-rest_space-MNI_bold.lna.h5")), backend.id)
           .fold(err => fail(err.message), identity)
-      assert(GridCompatibility.exact(relativeBackend.shape.space, backend.shape.space).isRight)
+      assert(Grid.exactCongruence(relativeBackend.shape.grid, backend.shape.grid).isRight)
       assertEquals(relativeBackend.shape.timepoints, backend.shape.timepoints)
 
       val series =
@@ -254,7 +256,7 @@ class LnaDatasetSuite extends munit.FunSuite:
         ).fold(err => fail(err.message), identity)
 
       val expected = Vector(Vector(1.0, 3.0), Vector(9.0, 11.0))
-      series.data.toRows.zip(expected).foreach { case (actualRow, expectedRow) =>
+      GaleTestData.toRows(series.data).zip(expected).foreach { case (actualRow, expectedRow) =>
         actualRow.zip(expectedRow).foreach { case (actual, expectedValue) =>
           assert(math.abs(actual - expectedValue) < 2e-4)
         }
@@ -294,7 +296,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
       assertEquals(backend.shape.timepoints, data.rows)
       assertEquals(backend.shape.spatialSize, data.cols)
-      assertEquals(backend.data, data)
+      assertEquals(GaleTestData.toRows(backend.data), GaleTestData.toRows(data))
       assertEquals(backend.metadata.get("lna.archive_relative_path"), Some("sub-03/func/sub-03_task-shared_space-MNI_bold.lna.h5"))
     finally deleteTree(root)
   }
@@ -307,7 +309,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       val archive =
         ExplicitLatentArchiveCodec
           .toTemporalDctArchive(
-            data = GaleTestData.matrixFromRows(data.toRows),
+            data = GaleTestData.matrixFromRows(GaleTestData.toRows(data)),
             space = space,
             components = data.rows,
             norm = DctNorm.Ortho,
@@ -332,7 +334,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
       assertEquals(backend.shape.timepoints, data.rows)
       assertEquals(backend.shape.spatialSize, data.cols)
-      assertRowsClose(series.data.toRows, Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 1e-10)
+      assertRowsClose(GaleTestData.toRows(series.data), Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 1e-10)
     finally deleteTree(root)
   }
 
@@ -390,7 +392,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.shape.timepoints, 2)
       assertEquals(backend.shape.spatialSize, 4)
       assertEquals(backend.response.metadata("family"), "transport")
-      assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
+      assertRowsClose(GaleTestData.toRows(series.data), GaleTestData.toRows(expected), 1e-12)
     finally deleteTree(root)
   }
 
@@ -408,7 +410,7 @@ class LnaDatasetSuite extends munit.FunSuite:
         ).fold(err => fail(err.message), identity)
       val response =
         BoldZipPayload(
-          temporalBasis = GaleDMat.eye(4),
+          temporalBasis = DMat.eye(4),
           carrierTheta = GaleTestData.matrixFromRows(
             Vector(
               Vector(1.0, 2.0, 3.0, 4.0),
@@ -453,7 +455,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(backend.shape.timepoints, 4)
       assertEquals(backend.shape.spatialSize, 3)
       assertEquals(backend.response.metadata("family"), "boldzip_sr")
-      assertRowsClose(series.data.toRows, GaleTestData.toRows(expected), 1e-12)
+      assertRowsClose(GaleTestData.toRows(series.data), GaleTestData.toRows(expected), 1e-12)
     finally deleteTree(root)
   }
 
@@ -463,7 +465,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       Files.writeString(root.resolve("dataset_description.json"), """{"Name":"Sparse Shared Basis LNA Derivative"}""")
       val basis =
         SharedBasisArtifact(
-          loadings = DMat.fromRows(
+          loadings = GaleArchiveTestData.matrixFromRows(
             Vector(
               Vector(1.0, 0.0),
               Vector(1.0, 1.0),
@@ -518,7 +520,7 @@ class LnaDatasetSuite extends munit.FunSuite:
       assertEquals(Vector.tabulate(maskIndices.size)(maskIndices(_)), Vector(0, 2, 3))
       assertEquals(backend.shape.spatialSize, 4)
       assertEquals(backend.response.metadata("family"), "shared_basis")
-      assertRowsClose(series.data.toRows, Vector(Vector(5.5, 8.0), Vector(7.0, 11.0)), 1e-10)
+      assertRowsClose(GaleTestData.toRows(series.data), Vector(Vector(5.5, 8.0), Vector(7.0, 11.0)), 1e-10)
       interceptMessage[IllegalArgumentException](
         "voxel 1 is outside the readable sample mask"
       ) {
@@ -610,7 +612,7 @@ class LnaDatasetSuite extends munit.FunSuite:
             )
           )
           .fold(error => fail(error.message), identity)
-      assertRowsClose(series.data.toRows, Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 2e-4)
+      assertRowsClose(GaleTestData.toRows(series.data), Vector(Vector(11.0, 9.0), Vector(3.0, 1.0)), 2e-4)
       assertEquals(series.metadata.provenance, dataset.metadata.provenance)
 
       val missingRun =
@@ -671,7 +673,7 @@ class LnaDatasetSuite extends munit.FunSuite:
   private def writeBasis(dir: Path): Unit =
     val artifact =
       SharedBasisArtifact(
-        loadings = DMat.fromRows(
+        loadings = GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0),
             Vector(0.5, 0.5),

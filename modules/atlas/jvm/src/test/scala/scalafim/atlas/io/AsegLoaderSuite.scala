@@ -3,7 +3,7 @@ package scalafim.atlas.io
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.Files
 import scalafim.atlas.*
-import scalafim.image.spatialDims
+import scalafim.image.SampleSpaces.*
 
 class AsegLoaderSuite extends munit.FunSuite:
 

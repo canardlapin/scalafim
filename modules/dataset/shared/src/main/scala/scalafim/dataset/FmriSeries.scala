@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 final class FmriSeries private (
     val data: DMat,

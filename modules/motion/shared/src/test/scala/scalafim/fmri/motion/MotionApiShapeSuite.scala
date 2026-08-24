@@ -1,13 +1,14 @@
 package scalafim.fmri.motion
 
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class MotionApiShapeSuite extends munit.FunSuite:
 
   private def run(values: Vector[Double]): SomeScalarSeries[Double] =
     SomeScalarSeries.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](values.length)(values),
-      SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)),
+      SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)),
       "api-shape"
     )
 

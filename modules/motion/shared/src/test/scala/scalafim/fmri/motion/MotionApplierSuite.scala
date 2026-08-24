@@ -1,6 +1,7 @@
 package scalafim.fmri.motion
 
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class MotionApplierSuite extends munit.FunSuite:
 
@@ -8,13 +9,13 @@ class MotionApplierSuite extends munit.FunSuite:
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
     SomeScalarSeries.unsafeCopyFromCanonicalArray(
       data,
-      SampleSpaces(Vector(values.length / nVolumes, 1, 1)).addDim(nVolumes, Some(Axis.Time)),
+      SampleSpaces(Vector(values.length / nVolumes, 1, 1)).addDim(ProviderAxes.time(nVolumes)),
       "line"
     )
 
   private def volume(values: Vector[Double], dims: Vector[Int], nVolumes: Int): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(dims).addDim(nVolumes, Some(Axis.Time)), "volume")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(dims).addDim(ProviderAxes.time(nVolumes)), "volume")
 
   private def assertSameValues(actual: SomeScalarSeries[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
     val actualValues = actual.copyToCanonicalArray

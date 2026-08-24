@@ -2,6 +2,7 @@ package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class MotionEstimatorSuite extends munit.FunSuite:
 
@@ -76,7 +77,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(frames.length, Some(Axis.Time)), "estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(ProviderAxes.time(frames.length)), "estimate-fixture")
 
   private def interiorMask: SomeMaskVolume =
     val data =

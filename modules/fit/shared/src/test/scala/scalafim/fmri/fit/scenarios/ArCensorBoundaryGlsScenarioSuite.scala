@@ -24,7 +24,7 @@ import scalafim.fmri.model.{
   ModelBuildSpec,
   ModelError
 }
-import scalafim.image.{DMat as ImageDMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import gale.linalg.DVec
 
 /** Public run/censor GLS workflow anchored to an independent exact-first R receipt. */
@@ -255,7 +255,7 @@ class ArCensorBoundaryGlsScenarioSuite extends munit.FunSuite:
       FmriDataset.open(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-ar-censor-boundary-gls"),
-          ImageDMat.fromRows(responseRows),
+          scalafim.fmri.fit.GaleTestMatrix.fromRows(responseRows),
           SampleSpaces(Vector(responseRows.head.length, 1, 1))
         ),
         samplingFrame = samplingFrame,

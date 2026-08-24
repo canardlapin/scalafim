@@ -1,5 +1,7 @@
 package scalafim.surface.view
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
 import scalafim.image.*
 import scalafim.surface.*
@@ -11,7 +13,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
   private def geometry(
     offset: Double = 0.0,
     faces: Seq[(Int, Int, Int)] = Seq((0, 1, 2)),
-    transform: DMat = DMat.eye(4)
+    transform: Affine[D3] = Affine.identity[D3]
   ): SurfaceGeometry =
     SurfaceGeometry(
       TriangleMesh.fromRows(
@@ -194,7 +196,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
 
     val rewound = geometry(2.0, faces = Seq((0, 2, 1)))
     assert(SurfaceMorph.interpolate(from, rewound, SurfaceMorphFraction.unsafe(0.5)).isLeft)
-    val translated = geometry(2.0, transform = DMat.fromRows(Vector(
+    val translated = geometry(2.0, transform = testAffine(Vector(
       Vector(1.0, 0.0, 0.0, 1.0),
       Vector(0.0, 1.0, 0.0, 0.0),
       Vector(0.0, 0.0, 1.0, 0.0),
@@ -203,7 +205,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     assert(SurfaceMorph.interpolate(from, translated, SurfaceMorphFraction.unsafe(0.5)).isLeft)
 
   test("linked surface and image selections roundtrip through world coordinates without flips"):
-    val transform = DMat.fromRows(Vector(
+    val transform = testAffine(Vector(
       Vector(1.0, 0.0, 0.0, 10.0),
       Vector(0.0, 1.0, 0.0, 20.0),
       Vector(0.0, 0.0, 1.0, 30.0),
@@ -211,7 +213,8 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     ))
     val target = geometry(transform = transform)
     val selection = SurfaceSelection(surfaceId, VertexId(2))
-    val volume = VolumeSpace(SampleSpaces(Vector(64, 64, 64)))
+    val volume =
+      SampleSpaces.requireVolumeD3(SampleSpaces(Vector(64, 64, 64))).toOption.get.grid
     val linked = SurfaceWorldLink.toVolume(selection, target, volume).toOption.get
     assertEquals(linked.world, WorldPoint(10.0, 21.0, 30.0))
     assertEquals(linked.voxel, VoxelPoint(10.0, 21.0, 30.0))
@@ -256,3 +259,6 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     val history3 = history2.append(selection, WorldPoint(2.0, 0.0, 0.0))
     assertEquals(history3.records.map(_.sequence), Vector(1L, 2L))
     assertEquals(history3.records.head.world, WorldPoint(1.0, 0.0, 0.0))
+
+  private def testAffine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).toOption.get

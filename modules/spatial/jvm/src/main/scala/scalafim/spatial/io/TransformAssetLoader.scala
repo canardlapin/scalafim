@@ -2,10 +2,12 @@ package scalafim.spatial.io
 
 import gale.backend.Backend.given
 import gale.linalg.{DMat as GaleDMat, DVec}
+import image4s.SampleSpace
+import image4s.geometry.{Affine, D3, Frame, Grid}
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
+import scalafim.image.{GridSpec, SomeSampleSpace, Resample, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
@@ -195,16 +197,17 @@ object TransformAssetLoader:
   ): Either[SpatialIoError, LoadedTransform] =
     for
       _ <- validateHdf5Options(descriptor.path, options)
+      sourceGrid = GridSpec.fromSpace(volumeSpace(source))
+      targetGrid = GridSpec.fromSpace(volumeSpace(target))
       primaryRole =
         options.direction match
-          case TransformDirection.PullbackTargetToSource => source.id -> target.id
-          case TransformDirection.ForwardSourceToTarget => target.id -> source.id
+          case TransformDirection.PullbackTargetToSource => sourceGrid -> targetGrid
+          case TransformDirection.ForwardSourceToTarget => targetGrid -> sourceGrid
       primary <- AntsHdf5TransformAdapter.read(
         descriptor.path,
         primaryRole._1,
         primaryRole._2,
-        options.interpolation,
-        descriptor.cost
+        options.interpolation
       )
       primaryStamp <- fingerprint(descriptor.path)
       assembled <- assembleHdf5CoordinateMap(descriptor, source, target, options, primary, inverseAsset)
@@ -262,10 +265,9 @@ object TransformAssetLoader:
               _ <- validateHdf5Options(asset.path, asset.options)
               inverse <- AntsHdf5TransformAdapter.read(
                 asset.path,
-                target.id,
-                source.id,
-                asset.options.interpolation,
-                descriptor.cost
+                GridSpec.fromSpace(volumeSpace(target)),
+                GridSpec.fromSpace(volumeSpace(source)),
+                asset.options.interpolation
               )
               map <- attachCompositeInverse(descriptor, primary.coordinateMap, inverse.coordinateMap)
               stamp <- fingerprint(asset.path)
@@ -283,10 +285,9 @@ object TransformAssetLoader:
               _ <- validateHdf5Options(asset.path, asset.options)
               inverse <- AntsHdf5TransformAdapter.read(
                 asset.path,
-                source.id,
-                target.id,
-                asset.options.interpolation,
-                descriptor.cost
+                GridSpec.fromSpace(volumeSpace(source)),
+                GridSpec.fromSpace(volumeSpace(target)),
+                asset.options.interpolation
               )
               map <- attachCompositeInverse(descriptor, inverse.coordinateMap, primary.coordinateMap)
               stamp <- fingerprint(asset.path)
@@ -351,27 +352,18 @@ object TransformAssetLoader:
     primary: CoordinateMap,
     inverse: CoordinateMap
   ): Either[SpatialIoError, CoordinateMap] =
-    (primary, inverse) match
-      case (CoordinateMap.Composite3D(forward), CoordinateMap.Composite3D(reverse)) =>
-        CoordinateMap
-          .composite3D(forward.components, Some(reverse.components))
-          .left
-          .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
-      case _ =>
-        Left(
-          SpatialIoError.InvalidTransformDescriptor(
-            descriptor.id.value,
-            "HDF5 decoding did not produce ordered composite coordinate maps"
-          )
-        )
+    CoordinateMap
+      .attachInverse(primary, inverse)
+      .left
+      .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
 
   private def requireDeclaredCompositeInverse(
     descriptor: TransformDescriptor,
     coordinateMap: CoordinateMap
   ): Either[SpatialIoError, Unit] =
     coordinateMap match
-      case CoordinateMap.Composite3D(map)
-          if descriptor.inverseQuality.declared && map.containsDense && map.inverseComponents.isEmpty =>
+      case CoordinateMap.Geometric(binding)
+          if descriptor.inverseQuality.declared && binding.containsDense && binding.inversePullback.isEmpty =>
         Left(
           SpatialIoError.InvalidTransformDescriptor(
             descriptor.id.value,
@@ -440,7 +432,7 @@ object TransformAssetLoader:
     inverseAsset: Option[TransformAssetSpec]
   ): Either[SpatialIoError, (CoordinateMap, Option[(TransformAssetSpec, TransformAssetFingerprint)])] =
     primary.coordinateMap match
-      case CoordinateMap.Dense3D(primaryDense) =>
+      case CoordinateMap.Geometric(primaryBinding) if primaryBinding.containsDense =>
         inverseAsset match
           case None if descriptor.inverseQuality.declared =>
             Left(
@@ -467,9 +459,10 @@ object TransformAssetLoader:
               )
             inverseDescriptor.flatMap { checked =>
               loadMap(asset.path, asset.format, asset.options, checked, target, source).flatMap {
-                case LoadedMap(CoordinateMap.Dense3D(inverseDense), _, fingerprint) =>
+                case LoadedMap(inverseMap @ CoordinateMap.Geometric(inverseBinding), _, fingerprint)
+                    if inverseBinding.containsDense =>
                   CoordinateMap
-                    .dense3D(primaryDense.pullback, Some(inverseDense.pullback), primaryDense.boundary)
+                    .attachInverse(primary.coordinateMap, inverseMap)
                     .left
                     .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
                     .map(map => (map, Some(asset -> fingerprint)))
@@ -511,17 +504,30 @@ object TransformAssetLoader:
     for
       text <- readText(path)
       native <- parseAffine(path, format, text)
-      pullback <- normalizeAffine(path, native, options, volumeSpace(source), volumeSpace(target))
-      _ <- validateAffine(path, pullback)
+      validatedNative <- Affine
+        .fromRowMajor[D3](native.valuesRowMajor)
+        .left
+        .map(cause => SpatialIoError.Geometry(path, cause))
+      pullback <- normalizeAffine(
+        path,
+        validatedNative.matrix,
+        options,
+        volumeSpace(source),
+        volumeSpace(target)
+      )
+      affine <- Affine
+        .fromRowMajor[D3](pullback.valuesRowMajor)
+        .left
+        .map(cause => SpatialIoError.Geometry(path, cause))
       coordinateMap <- CoordinateMap
-        .affine3D(toImage(pullback))
+        .affine(source, target, affine)
         .left
         .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
       stamp <- fingerprint(path)
     yield
       LoadedMap(
         coordinateMap,
-        s"${options.convention}:${options.direction}->RAS-mm-pullback;matrix=gale.linalg.DMat",
+        s"${options.convention}:${options.direction}->RAS-mm-pullback;affine=image4s.geometry.Affine[D3]",
         stamp
       )
 
@@ -551,67 +557,65 @@ object TransformAssetLoader:
             case DenseTransformEncoding.Displacement =>
               Nifti
                 .readDisplacementField(path)
-                .map(field => field.values -> field.space)
+                .map(field => field.values -> field.sampled.sampleSpace)
             case DenseTransformEncoding.AbsoluteCoordinates =>
               Nifti
                 .readSourceCoordinateField(path)
-                .map(field => field.values -> field.space)
+                .map(field => field.values -> field.sampled.sampleSpace)
         nativeResult
           .left
           .map(error =>
             SpatialIoError.MalformedTransformAsset(path, error.message)
           )
           .flatMap: (native, nativeSpace) =>
-            if !sameGrid(nativeSpace.spatialSpace, targetSpace) then
-              Left(
-                SpatialIoError.TransformGeometryMismatch(
-                  path,
-                  "dense transform grid must equal the target domain grid"
-                )
+            Grid
+              .approximateGeometryMatch(
+                nativeSpace.grid,
+                targetSpace.grid,
+                1e-5
               )
-            else
-              val grid = GridSpec.fromSpace(targetSpace)
-              val field =
-                normalizeDense(
-                  native,
-                  grid,
-                  sourceSpace,
-                  targetSpace,
-                  options
-                )
-              DenseFieldMorphism
-                .coordinates(
-                  SpatialDomainId(source.id.value),
-                  SpatialDomainId(target.id.value),
-                  grid,
-                  field,
-                  options.interpolation,
-                  descriptor.cost,
-                  s"${format.tool.toString.toLowerCase}-${format.toString.toLowerCase}-pullback"
-                )
-                .left
-                .map(error =>
-                  SpatialIoError.MalformedTransformAsset(path, error.message)
-                )
-                .flatMap { dense =>
-                  for
-                    coordinateMap <- CoordinateMap
-                      .dense3D(dense)
-                      .left
-                      .map(error =>
-                        SpatialIoError.MalformedTransformAsset(
-                          path,
-                          error.message
+              .left
+              .map(cause => SpatialIoError.Geometry(path, cause))
+              .flatMap: _ =>
+                val grid = GridSpec.fromSpace(targetSpace)
+                val field =
+                  normalizeDense(
+                    native,
+                    grid,
+                    sourceSpace,
+                    targetSpace,
+                    options
+                  )
+                SpatialPullbacks
+                  .coordinates(
+                    GridSpec.fromSpace(sourceSpace),
+                    GridSpec.fromSpace(targetSpace),
+                    field,
+                    options.interpolation
+                  )
+                  .left
+                  .map(error =>
+                    SpatialIoError.MalformedTransformAsset(path, error.message)
+                  )
+                  .flatMap { pullback =>
+                    for
+                      coordinateMap <- CoordinateMap
+                        .dense(pullback)
+                        .left
+                        .map(error =>
+                          SpatialIoError.MalformedTransformAsset(
+                            path,
+                            error.message
+                          )
                         )
+                      stamp <- fingerprint(path)
+                    yield
+                      LoadedMap(
+                        coordinateMap,
+                        s"${options.convention}:${options.denseEncoding}:${options.direction}->absolute-RAS-mm-pullback",
+                        stamp
                       )
-                    stamp <- fingerprint(path)
-                  yield
-                    LoadedMap(
-                      coordinateMap,
-                      s"${options.convention}:${options.denseEncoding}:${options.direction}->absolute-RAS-mm-pullback",
-                      stamp
-                    )
-                }
+                  }
       catch
         case NonFatal(error) => Left(SpatialIoError.MalformedTransformAsset(path, detail(error)))
 
@@ -626,7 +630,7 @@ object TransformAssetLoader:
     val sourceFslToWorld =
       options.convention match
         case TransformCoordinateConvention.FslScaledVoxel =>
-          multiply(toGale(source.trans), inverseOrThrow(fslVoxelToScaled(source)))
+          multiply(source.grid.indexToFrame.matrix, inverseOrThrow(fslVoxelToScaled(source)))
         case _ => GaleDMat.eye(4)
     val targetVoxelToFsl =
       options.convention match
@@ -767,10 +771,10 @@ object TransformAssetLoader:
         nativePullback.flatMap { pullback =>
           for
             sourceFslInverse <- inverse(path, fslVoxelToScaled(source))
-            targetWorldInverse <- inverse(path, toGale(target.trans))
+            targetWorldInverse <- inverse(path, target.grid.indexToFrame.matrix)
           yield
             multiply(
-              toGale(source.trans),
+              source.grid.indexToFrame.matrix,
               multiply(
                 sourceFslInverse,
                 multiply(pullback, multiply(fslVoxelToScaled(target), targetWorldInverse))
@@ -788,7 +792,7 @@ object TransformAssetLoader:
       case TransformDirection.ForwardSourceToTarget => inverse(path, matrix)
 
   private def fslVoxelToScaled(space: SomeSampleSpace): GaleDMat =
-    val affine = toGale(space.trans)
+    val affine = space.grid.indexToFrame.matrix
     val sx = columnNorm(affine, 0)
     val sy = columnNorm(affine, 1)
     val sz = columnNorm(affine, 2)
@@ -839,52 +843,12 @@ object TransformAssetLoader:
       matrix(row, 3) + matrix(row, 0) * point(0) + matrix(row, 1) * point(1) + matrix(row, 2) * point(2)
     }
 
-  private def validateAffine(path: Path, matrix: GaleDMat): Either[SpatialIoError, Unit] =
-    val finite = matrix.valuesRowMajor.forall(_.isFinite)
-    val homogeneous =
-      math.abs(matrix(3, 0)) <= 1e-12 &&
-        math.abs(matrix(3, 1)) <= 1e-12 &&
-        math.abs(matrix(3, 2)) <= 1e-12 &&
-        math.abs(matrix(3, 3) - 1.0) <= 1e-12
-    if !finite then Left(SpatialIoError.MalformedTransformAsset(path, "affine contains non-finite values"))
-    else if !homogeneous then Left(SpatialIoError.MalformedTransformAsset(path, "affine bottom row must be [0, 0, 0, 1]"))
-    else inverse(path, matrix).map(_ => ())
-
-  private def sameGrid(actual: SomeSampleSpace, expected: SomeSampleSpace): Boolean =
-    actual.spatialDims == expected.spatialDims && matricesClose(actual.trans, expected.trans, 1e-5)
-
-  private def matricesClose(left: ImageDMat, right: ImageDMat, tolerance: Double): Boolean =
-    if left.rows != right.rows || left.cols != right.cols then false
-    else
-      var row = 0
-      while row < left.rows do
-        var col = 0
-        while col < left.cols do
-          if math.abs(left(row, col) - right(row, col)) > tolerance then return false
-          col += 1
-        row += 1
-      true
-
-  private def volumeSpace(domain: Domain): SomeSampleSpace =
+  private def volumeSpace(
+    domain: Domain
+  ): SampleSpace[? <: Frame[D3], D3] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => space
       case _ => throw new IllegalArgumentException(s"domain ${domain.id.value} is not volumetric")
-
-  private def toGale(matrix: ImageDMat): GaleDMat =
-    val builder = GaleDMat.newBuilder(matrix.rows, matrix.cols)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < matrix.cols do
-        builder(row, col) = matrix(row, col)
-        col += 1
-      row += 1
-    builder.result()
-
-  private def toImage(matrix: GaleDMat): ImageDMat =
-    ImageDMat.fromRows(
-      Vector.tabulate(matrix.rows)(row => Vector.tabulate(matrix.cols)(col => matrix(row, col)))
-    )
 
   private def fromRows(rows: Vector[Vector[Double]]): GaleDMat =
     GaleDMat.dense(rows.length, rows.head.length, rows.flatten)

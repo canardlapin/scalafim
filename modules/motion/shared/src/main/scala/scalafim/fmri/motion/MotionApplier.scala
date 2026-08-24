@@ -1,5 +1,7 @@
 package scalafim.fmri.motion
 
+import scalafim.image.SampleSpaces.*
+
 import ravel.NDArray
 import ravel.Rank
 import ravel.Shape

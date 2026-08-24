@@ -1,6 +1,9 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import Ops.*
+import image4s.geometry.Grid
 import ravel.NDArray as RavelArray
 import spire.std.double.given
 import spire.std.int.given
@@ -32,11 +35,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
     assertEquals(mean.space.dims, Vector(2, 1, 1), clue = "")
     assertEquals(vals, Vector(2.0, 3.0), clue = "")
-    assertEquals(
-      GridCompatibility.exact(vec.temporalMean.space, mean.space),
-      Right(()),
-      clue = ""
-    )
+    assert(Grid.exactCongruence(vec.temporalMean.grid, mean.grid).isRight)
     assertEquals(Vector.tabulate(vec.temporalMean.copyToCanonicalArray.length)(i => vec.temporalMean.copyToCanonicalArray(i)), vals, clue = "")
   }
 
@@ -45,7 +44,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "stats selected temporal mean",
           locus4s.DomainRegistry.empty
         )
@@ -91,7 +90,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          ProviderSpaces.grid(sp.spatialSpace),
           "stats mask region",
           locus4s.DomainRegistry.empty
         )
@@ -127,7 +126,7 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "stats selected comparison",
           locus4s.DomainRegistry.empty
         )

@@ -3,7 +3,9 @@ package scalafim.archive.io
 import scalafim.image.SampleSpaces
 
 import scalafim.archive.lna.*
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -11,7 +13,7 @@ import scala.jdk.CollectionConverters.*
 class LnaSharedBasisResolverSuite extends munit.FunSuite:
   private val space = SampleSpaces(Vector(2, 2, 1))
   private val data =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0, 7.0),
@@ -34,7 +36,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
   private val nonorthogonalBasis =
     SharedBasisArtifact(
       loadings =
-        DMat.fromRows(
+        GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0),
             Vector(1.0, 1.0),
@@ -60,7 +62,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
           .readAndReconstruct(archivePath, datasetRoot = Some(root))
           .fold(err => fail(err.message), identity)
 
-      assertEquals(reconstructed, data)
+      assertEquals(GaleArchiveTestData.toRows(reconstructed), GaleArchiveTestData.toRows(data))
     finally deleteTree(root)
   }
 
@@ -83,7 +85,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
           .readAndReconstruct(archivePath)
           .fold(err => fail(err.message), identity)
 
-      assertEquals(reconstructed, data)
+      assertEquals(GaleArchiveTestData.toRows(reconstructed), GaleArchiveTestData.toRows(data))
     finally deleteTree(root)
   }
 
@@ -127,7 +129,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
         .writeContentAddressed(root.resolve("bases"), nonorthogonalBasis, basisId = Some(nonorthogonalBasisId), created = "2026-07-06T22:30:00Z")
         .fold(err => fail(err.message), identity)
       val coefficients =
-        DMat.fromRows(
+        GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 2.0),
             Vector(3.0, -1.0),
@@ -136,7 +138,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
         )
       val offset = Vector(10.0, -2.0, 5.0)
       val expected =
-        DMat.fromRows(
+        GaleArchiveTestData.matrixFromRows(
           Vector.tabulate(coefficients.rows) { row =>
             Vector.tabulate(nonorthogonalBasis.nVoxels) { voxel =>
               var sum = offset(voxel)
@@ -167,7 +169,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
           .readAndReconstruct(archivePath, datasetRoot = Some(root))
           .fold(err => fail(err.message), identity)
 
-      assertEquals(reconstructed, expected)
+      assertEquals(GaleArchiveTestData.toRows(reconstructed), GaleArchiveTestData.toRows(expected))
     finally deleteTree(root)
   }
 
@@ -182,7 +184,7 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
         .writeContentAddressed(root.resolve("bases"), sparseBasis, basisId = Some(nonorthogonalBasisId), created = "2026-07-06T22:45:00Z")
         .fold(err => fail(err.message), identity)
       val coefficients =
-        DMat.fromRows(
+        GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 2.0),
             Vector(3.0, -1.0)
@@ -209,12 +211,10 @@ class LnaSharedBasisResolverSuite extends munit.FunSuite:
           .fold(err => fail(err.message), identity)
 
       assertEquals(
-        reconstructed,
-        DMat.fromRows(
-          Vector(
-            Vector(11.0, 0.0, 1.0, 7.0),
-            Vector(13.0, 0.0, 0.0, 4.0)
-          )
+        GaleArchiveTestData.toRows(reconstructed),
+        Vector(
+          Vector(11.0, 0.0, 1.0, 7.0),
+          Vector(13.0, 0.0, 0.0, 4.0)
         )
       )
     finally deleteTree(root)

@@ -1,8 +1,10 @@
 package scalafim.fmri.workflow
 
+import gale.linalg.DMat
 import munit.FunSuite
+import image4s.geometry.GeometryError
 import scalafim.dataset.*
-import scalafim.image.{Axis, DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
+import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
 import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
@@ -52,6 +54,60 @@ class FirstLevelUnitSourceSuite extends FunSuite:
       assertEquals(block.timepoints, Vector(3, 0))
       assertEquals(block.voxelIndices, Vector(0, 2))
       assertMatrixEquals(block.data, Vector(Vector(101.0, 105.0), Vector(0.0, 4.0)))
+      assert(opened.maskCongruence.right eq opened.mask.grid)
+      assert(opened.backend(DatasetId("opened-unit")).isRight)
+
+      val replacementMask =
+        Mask.fromIndices(
+          SampleSpaces(Vector(2, 2, 1)),
+          Array(0, 2),
+          "replacement-mask"
+        )
+      assert(replacementMask.grid ne opened.mask.grid)
+      opened.copy(mask = replacementMask).backend(DatasetId("replacement-mask")) match
+        case Left(DatasetError.CongruenceEndpointMismatch(CongruenceEndpoint.Right)) => ()
+        case other => fail(s"expected right-endpoint mismatch, found $other")
+    }
+  }
+
+  test("unit source preserves provider geometry failure beyond the admitted tolerance") {
+    withFixture { root =>
+      val space = SampleSpaces(Vector(2, 2, 1))
+      val translated =
+        SampleSpaces(
+          Vector(2, 2, 1),
+          affine = Some(
+            ProviderAxes.affineD3(DMat.dense(4, 4, Vector(
+              1.0, 0.0, 0.0, 1e-4,
+              0.0, 1.0, 0.0, 0.0,
+              0.0, 0.0, 1.0, 0.0,
+              0.0, 0.0, 0.0, 1.0
+            )))
+          )
+        )
+      val bold = writeBold(root.resolve("run.nii"), space, 0.0)
+      val mask = writeMask(
+        root.resolve("mask.nii"),
+        translated,
+        Array(1.0, 1.0, 1.0, 1.0)
+      )
+      val unit = FirstLevelUnit.unsafe(
+        id = FirstLevelUnitId.unsafe("sub-01.task-tolerance.space-MNI"),
+        subject = SubjectId("01"),
+        session = None,
+        task = TaskId("tolerance"),
+        space = SpaceId("MNI"),
+        shape = DatasetShape.unsafe(space, 2),
+        runs = Vector(runInput("1", bold)),
+        mask = UnitMask.Single(
+          WorkflowArtifactRef.unsafe[MaskImageResource](mask.toUri.toString)
+        )
+      )
+
+      FirstLevelUnitSource.open(unit) match
+        case Left(DatasetError.Geometry(GeometryError.GridsNotCongruent(tolerance))) =>
+          assertEqualsDouble(tolerance, 1e-6, 0.0)
+        case other => fail(s"expected provider grid-congruence failure, found $other")
     }
   }
 
@@ -66,7 +122,7 @@ class FirstLevelUnitSourceSuite extends FunSuite:
 
   private def writeBold(path: Path, space: SomeSampleSpace, offset: Double): Path =
     val values = PrimitiveBuffers.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
-    val seriesSpace = space.addDim(2, Some(Axis.Time))
+    val seriesSpace = space.addDim(ProviderAxes.time(2))
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, seriesSpace, "bold"))
       .fold(error => fail(error.message), _ => path)

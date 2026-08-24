@@ -40,7 +40,9 @@ import scalafim.dataset.{
   RunId
 }
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 import scalafim.response.{
   CalibrationState,
   DomainId,
@@ -590,7 +592,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
     val backend =
       InMemoryDatasetBackend(
         DatasetId("runtime-dataset"),
-        DMat.fromRows(Vector(Vector(42.0))),
+        GaleArchiveTestData.matrixFromRows(Vector(Vector(42.0))),
         SampleSpaces(Vector(1, 1, 1))
       )
     FmriDataset.unsafe(

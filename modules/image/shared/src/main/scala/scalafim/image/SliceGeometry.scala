@@ -1,5 +1,13 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import scalafim.image.NeuroAffineSyntax.*
+
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+
 enum SliceGeometryError:
   case NonFiniteVector(x: Double, y: Double, z: Double)
   case ZeroDirection
@@ -284,7 +292,7 @@ final case class SliceGrid private (
 
 object SliceGrid:
   def covering(
-    space: VolumeSpace,
+    space: Grid[? <: Frame[D3], D3],
     plane: SlicePlane,
     spacing: PixelSpacing
   ): SliceGrid =
@@ -311,12 +319,12 @@ object SliceGrid:
       plane.screenUp.scaled(maxVertical - 0.5 * spacing.vertical)
     new SliceGrid(plane, SliceDimensions(width, height), spacing, topLeft)
 
-  def native(space: VolumeSpace, plane: SlicePlane): SliceGrid =
-    val size = space.affine.voxelSizes.min
+  def native(space: Grid[? <: Frame[D3], D3], plane: SlicePlane): SliceGrid =
+    val size = space.indexToFrame.neuroVoxelSizes.min
     covering(space, plane, PixelSpacing(size, size))
 
-  private[image] def boundaryCorners(space: VolumeSpace): Vector[WorldPoint] =
-    val shape = space.shape
+  private[image] def boundaryCorners(space: Grid[? <: Frame[D3], D3]): Vector[WorldPoint] =
+    val shape = space.spatialShape
     val xs = Vector(-0.5, shape.x.toDouble - 0.5)
     val ys = Vector(-0.5, shape.y.toDouble - 0.5)
     val zs = Vector(-0.5, shape.z.toDouble - 0.5)
@@ -324,7 +332,9 @@ object SliceGrid:
       z <- zs
       y <- ys
       x <- xs
-    yield space.voxelToWorld(VoxelPoint(x, y, z))
+    yield space
+      .voxelToWorld(VoxelPoint(x, y, z))
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class OrthogonalSliceGrids private (
   cursor: WorldPoint,
@@ -343,7 +353,7 @@ final case class OrthogonalSliceGrids private (
 
 object OrthogonalSliceGrids:
   def covering(
-    space: VolumeSpace,
+    space: Grid[? <: Frame[D3], D3],
     cursor: WorldPoint,
     spacing: PixelSpacing,
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
@@ -359,9 +369,9 @@ object OrthogonalSliceGrids:
     )
 
   def native(
-    space: VolumeSpace,
+    space: Grid[? <: Frame[D3], D3],
     cursor: WorldPoint,
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
   ): OrthogonalSliceGrids =
-    val size = space.affine.voxelSizes.min
+    val size = space.indexToFrame.neuroVoxelSizes.min
     covering(space, cursor, PixelSpacing(size, size), convention)

@@ -1,6 +1,6 @@
 package scalafim.archive.lna
 
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 class SharedBasisSuite extends munit.FunSuite:
   private val mask =
@@ -10,7 +10,7 @@ class SharedBasisSuite extends munit.FunSuite:
     )
 
   private val loadings =
-    DMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(0.5, 0.5),
@@ -56,7 +56,7 @@ class SharedBasisSuite extends munit.FunSuite:
       )
     val changed =
       SharedBasisArtifact(
-        loadings = DMat.fromRows(
+        loadings = GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(2.0, 0.0),
             Vector(0.5, 0.5),
@@ -86,7 +86,7 @@ class SharedBasisSuite extends munit.FunSuite:
 
     val bad =
       SharedBasisArtifact(
-        loadings = DMat.fromRows(
+        loadings = GaleArchiveTestData.matrixFromRows(
           Vector(
             Vector(1.0, 0.0),
             Vector(0.5, Double.NaN),
@@ -125,7 +125,7 @@ class SharedBasisSuite extends munit.FunSuite:
     assert(
       SharedBasisArtifact
         .checked(
-          loadings = DMat.fromRows(Vector(Vector(1.0, Double.NaN), Vector(0.0, 1.0), Vector(0.5, 0.5), Vector(1.0, 0.0))),
+          loadings = GaleArchiveTestData.matrixFromRows(Vector(Vector(1.0, Double.NaN), Vector(0.0, 1.0), Vector(0.5, 0.5), Vector(1.0, 0.0))),
           mask = mask,
           kind = "slepian"
         )

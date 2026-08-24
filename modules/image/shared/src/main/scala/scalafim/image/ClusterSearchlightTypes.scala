@@ -1,5 +1,11 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError as ImageGeometryError
+import image4s.geometry.Grid
 import scala.annotation.targetName
 
 enum SpatialCoordinateFrame:
@@ -23,7 +29,7 @@ enum SearchlightError:
   case RadiusBelowVoxelSpacing(radius: Double, minimumSpacing: Double)
   case InvalidCenter(error: GeometryError)
   case InvalidSpace(error: SampleSpaceError)
-  case Grid(error: GridMismatch)
+  case Geometry(error: ImageGeometryError)
   case CenterExcluded(center: VoxelCoord)
   case IncompatiblePolicies(
       centerDomain: SearchlightCenterDomain,
@@ -40,7 +46,7 @@ enum SearchlightError:
         error.message
       case InvalidSpace(error) =>
         error.message
-      case Grid(error) =>
+      case Geometry(error) =>
         error.message
       case CenterExcluded(center) =>
         s"searchlight center ${center.toVector} is excluded by the selected support policy"
@@ -61,37 +67,37 @@ object SearchlightRadius:
     inline def millimeters: Double = radius
 
 final class SearchlightCenter private (
-    val space: VolumeSpace,
+    val grid: Grid[? <: Frame[D3], D3],
     val voxel: VoxelCoord,
     val linearIndex: Int
 ):
   override def equals(other: Any): Boolean =
     other match
       case that: SearchlightCenter =>
-        space == that.space && voxel == that.voxel
+        grid.sameRuntimeOwnerAs(that.grid) && voxel == that.voxel
       case _ => false
 
   override def hashCode(): Int =
-    31 * space.hashCode() + voxel.hashCode()
+    voxel.hashCode()
 
 object SearchlightCenter:
   def make(
-      space: VolumeSpace,
+      grid: Grid[? <: Frame[D3], D3],
       voxel: VoxelCoord
   ): Either[SearchlightError, SearchlightCenter] =
     Indexing
-      .gridToIndexChecked(space.shape, voxel)
+      .gridToIndexChecked(grid.spatialShape, voxel)
       .left
       .map(SearchlightError.InvalidCenter.apply)
-      .map(index => new SearchlightCenter(space, voxel, index))
+      .map(index => new SearchlightCenter(grid, voxel, index))
 
   @targetName("makeFromSampleSpace")
   def make(
       space: SomeSampleSpace,
       voxel: VoxelCoord
   ): Either[SearchlightError, SearchlightCenter] =
-    VolumeSpace
-      .fromSpatialPart(space)
+    SampleSpaces
+      .requireSpatialD3(space)
       .left
       .map(SearchlightError.InvalidSpace.apply)
-      .flatMap(make(_, voxel))
+      .flatMap(sampleSpace => make(sampleSpace.grid, voxel))

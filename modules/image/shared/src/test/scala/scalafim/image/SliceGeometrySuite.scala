@@ -1,5 +1,11 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+
 class SliceGeometrySuite extends munit.FunSuite:
 
   private val Tol = 1e-10
@@ -12,12 +18,12 @@ class SliceGeometrySuite extends munit.FunSuite:
     assertClose(actual.y, expected.y)
     assertClose(actual.z, expected.z)
 
-  private def axisAlignedSpace: VolumeSpace =
-    VolumeSpace(
+  private def axisAlignedSpace: Grid[? <: Frame[D3], D3] =
+    ProviderSpaces.grid(
       SampleSpaces(
         Vector(4, 3, 2),
-        trans = Some(
-          DMat.fromRows(
+        affine = Some(
+          ProviderSpaces.affine(
             Vector(
               Vector(2.0, 0.0, 0.0, 10.0),
               Vector(0.0, 3.0, 0.0, 20.0),
@@ -29,7 +35,10 @@ class SliceGeometrySuite extends munit.FunSuite:
       )
     )
 
-  private def assertFootprintCovered(space: VolumeSpace, grid: SliceGrid): Unit =
+  private def assertFootprintCovered(
+      space: Grid[? <: Frame[D3], D3],
+      grid: SliceGrid
+  ): Unit =
     SliceGrid.boundaryCorners(space).foreach { corner =>
       val pixel = grid.project(corner).pixel
       assert(pixel.column >= -0.5 - Tol, clue = s"column ${pixel.column}")
@@ -89,7 +98,7 @@ class SliceGeometrySuite extends munit.FunSuite:
 
   test("axis-aligned grids cover voxel-cell boundaries and roundtrip pixel centers") {
     val space = axisAlignedSpace
-    val cursor = space.voxelToWorld(VoxelPoint(1.5, 1.0, 0.5))
+    val cursor = space.voxelToWorld(VoxelPoint(1.5, 1.0, 0.5)).fold(error => fail(error.message), identity)
     val plane = SlicePlane.canonical(AnatomicalPlane.Axial, cursor)
     val grid = SliceGrid.covering(space, plane, PixelSpacing(1.0, 1.0))
 
@@ -108,7 +117,7 @@ class SliceGeometrySuite extends munit.FunSuite:
 
   test("screen mirroring changes presentation, never the world-space footprint") {
     val space = axisAlignedSpace
-    val cursor = space.voxelToWorld(VoxelPoint(1.5, 1.0, 0.5))
+    val cursor = space.voxelToWorld(VoxelPoint(1.5, 1.0, 0.5)).fold(error => fail(error.message), identity)
     val left = SliceGrid.covering(
       space,
       SlicePlane.canonical(AnatomicalPlane.Axial, cursor, LeftRightConvention.PatientLeftOnLeft),
@@ -127,7 +136,7 @@ class SliceGeometrySuite extends munit.FunSuite:
   }
 
   test("oblique grids cover all transformed boundary corners") {
-    val affine = DMat.fromRows(
+    val affine = ProviderSpaces.affine(
       Vector(
         Vector(0.0, -2.0, 0.25, 5.0),
         Vector(1.5, 0.0, 0.10, -4.0),
@@ -135,8 +144,8 @@ class SliceGeometrySuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    val space = VolumeSpace(SampleSpaces(Vector(5, 4, 3), trans = Some(affine)))
-    val cursor = space.voxelToWorld(VoxelPoint(2.0, 1.5, 1.0))
+    val space = ProviderSpaces.grid(SampleSpaces(Vector(5, 4, 3), affine = Some(affine)))
+    val cursor = space.voxelToWorld(VoxelPoint(2.0, 1.5, 1.0)).fold(error => fail(error.message), identity)
 
     AnatomicalPlane.values.foreach { anatomicalPlane =>
       val grid = SliceGrid.covering(
@@ -150,7 +159,7 @@ class SliceGeometrySuite extends munit.FunSuite:
 
   test("orthogonal plans are named, share one cursor, and pass through it") {
     val space = axisAlignedSpace
-    val cursor = space.voxelToWorld(VoxelPoint(2.0, 1.0, 1.0))
+    val cursor = space.voxelToWorld(VoxelPoint(2.0, 1.0, 1.0)).fold(error => fail(error.message), identity)
     val grids = OrthogonalSliceGrids.native(space, cursor)
 
     assertEquals(grids.cursor, cursor)

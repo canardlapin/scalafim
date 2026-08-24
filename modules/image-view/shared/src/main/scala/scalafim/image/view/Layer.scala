@@ -1,5 +1,9 @@
 package scalafim.image.view
 
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError
+import image4s.geometry.Grid
 import intaglio.*
 import scalafim.image.*
 
@@ -25,6 +29,7 @@ enum ImageViewError:
   case InvalidCacheCapacity(value: Int)
   case InvalidOrthogonalLayout(margin: Double, gap: Double)
   case SamplingFailed(id: LayerId, cause: SlicePlanError)
+  case GeometryFailure(cause: GeometryError)
   case GraphicsFailure(cause: GraphicsError)
 
   def message: String =
@@ -67,6 +72,8 @@ enum ImageViewError:
         s"viewer margin and gap must be finite, non-negative, and leave positive panels; got ($margin, $gap)"
       case SamplingFailed(id, cause) =>
         s"layer '${id.asString}' could not be sampled: ${cause.message}"
+      case GeometryFailure(cause) =>
+        cause.message
       case GraphicsFailure(cause) =>
         cause.message
 
@@ -105,7 +112,7 @@ enum VolumeSourceError:
   case InvalidFrameCount(value: Int)
   case TimepointOutOfBounds(index: Int, count: Int)
   case ReadFailed(index: Int, reason: String)
-  case SpaceMismatch(expected: VolumeSpace, actual: VolumeSpace)
+  case Geometry(cause: GeometryError)
 
   def message: String =
     this match
@@ -115,11 +122,11 @@ enum VolumeSourceError:
         s"source timepoint $index is outside 0..${count - 1}"
       case ReadFailed(index, reason) =>
         s"could not read source timepoint $index: $reason"
-      case SpaceMismatch(expected, actual) =>
-        s"source returned space ${actual.dims} instead of declared space ${expected.dims}"
+      case Geometry(cause) =>
+        cause.message
 
 final class VolumeSource[A, Sem] private (
-  val space: VolumeSpace,
+  val space: Grid[? <: Frame[D3], D3],
   val frameCount: Int,
   val timeInvariant: Boolean,
   readFrame: Int => Either[String, SomeNeuroVolume[A, Sem]]
@@ -133,16 +140,16 @@ final class VolumeSource[A, Sem] private (
         .left
         .map(reason => VolumeSourceError.ReadFailed(index, reason))
         .flatMap { volume =>
-          GridCompatibility
-            .volume(space, volume.volumeSpace)
+          Grid
+            .exactCongruence(space, volume.grid)
             .left
-            .map(_ => VolumeSourceError.SpaceMismatch(space, volume.volumeSpace))
+            .map(VolumeSourceError.Geometry.apply)
             .map(_ => volume)
         }
 
 object VolumeSource:
   def lazyFrames[A, Sem](
-    space: VolumeSpace,
+    space: Grid[? <: Frame[D3], D3],
     frameCount: Int
   )(
     readFrame: Int => Either[String, SomeNeuroVolume[A, Sem]]
@@ -151,11 +158,11 @@ object VolumeSource:
     else Right(new VolumeSource(space, frameCount, timeInvariant = false, readFrame))
 
   def static[A, Sem](volume: SomeNeuroVolume[A, Sem]): VolumeSource[A, Sem] =
-    new VolumeSource(volume.volumeSpace, 1, timeInvariant = true, _ => Right(volume))
+    new VolumeSource(volume.grid, 1, timeInvariant = true, _ => Right(volume))
 
   def series[A: ClassTag, Sem](series: SomeNeuroSeries[A, Sem]): VolumeSource[A, Sem] =
     new VolumeSource(
-      series.seriesSpace.volumeSpace,
+      series.grid,
       series.nVolumes,
       timeInvariant = series.nVolumes == 1,
       index => series.volumeAt(index).left.map(_.message)
@@ -163,7 +170,7 @@ object VolumeSource:
 
 enum LayerMapping:
   case WorldAligned
-  case Pullback(referenceToSource: SpatialMorphism)
+  case Pullback(referenceToSource: SpatialPullback)
 
 enum LayerSampleValue:
   case Scalar(value: Double)
@@ -205,7 +212,7 @@ sealed trait SliceLayer:
   def timeInvariant: Boolean
   def supportsWindow: Boolean
   def supportsThreshold: Boolean
-  private[view] def sourceSpace: VolumeSpace
+  private[view] def sourceSpace: Grid[? <: Frame[D3], D3]
   private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
   private[view] def sample(
     grid: SliceGrid,
@@ -276,7 +283,7 @@ object SliceLayer:
     def supportsThreshold: Boolean =
       colorizer.supportsThreshold
 
-    private[view] def sourceSpace: VolumeSpace =
+    private[view] def sourceSpace: Grid[? <: Frame[D3], D3] =
       source.space
 
     private[view] def resolve(
@@ -298,11 +305,11 @@ object SliceLayer:
       val sampled =
         mapping match
           case LayerMapping.WorldAligned =>
-            SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
+            SlicePlan.make(volume.grid, grid).sample(volume, sampling)
           case LayerMapping.Pullback(referenceToSource) =>
             MappedSlicePlan
-              .make(volume.volumeSpace, grid, referenceToSource)
-              .sample(volume, sampling)
+              .make(volume.grid, grid, referenceToSource)
+              .flatMap(_.sample(volume, sampling))
       sampled
         .left
         .map(error => ImageViewError.SamplingFailed(id, error))
@@ -337,7 +344,7 @@ object SliceLayer:
       RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 
 final case class ViewerModel private (
-  referenceSpace: VolumeSpace,
+  referenceSpace: Grid[? <: Frame[D3], D3],
   layers: Vector[SliceLayer]
 ): 
   val timepointCount: Int =
@@ -348,7 +355,7 @@ final case class ViewerModel private (
 
 object ViewerModel:
   def make(
-    referenceSpace: VolumeSpace,
+    referenceSpace: Grid[? <: Frame[D3], D3],
     layers: Vector[SliceLayer]
   ): Either[ImageViewError, ViewerModel] =
     if layers.isEmpty then Left(ImageViewError.EmptyLayers)
@@ -364,5 +371,8 @@ object ViewerModel:
   def fromLayers(first: SliceLayer, rest: SliceLayer*): Either[ImageViewError, ViewerModel] =
     make(first.sourceSpace, first +: rest.toVector)
 
-  def unsafe(referenceSpace: VolumeSpace, layers: Vector[SliceLayer]): ViewerModel =
+  def unsafe(
+      referenceSpace: Grid[? <: Frame[D3], D3],
+      layers: Vector[SliceLayer]
+  ): ViewerModel =
     make(referenceSpace, layers).fold(err => throw new IllegalArgumentException(err.message), identity)

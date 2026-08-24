@@ -169,11 +169,7 @@ object DatasetResponseSchema:
     val dimensions = space.dims.mkString("x")
     val spacing = space.spacing.map(rawHex).mkString(",")
     val origin = space.origin.map(rawHex).mkString(",")
-    val transform =
-      Vector.tabulate(space.trans.rows * space.trans.cols): index =>
-        val row = index / space.trans.cols
-        val column = index % space.trans.cols
-        rawHex(space.trans(row, column))
+    val transform = space.grid.indexToFrame.rowMajor.map(rawHex)
     s"$dimensions:$spacing:$origin:${transform.mkString(",")}"
 
   private def rawHex(value: Double): String =

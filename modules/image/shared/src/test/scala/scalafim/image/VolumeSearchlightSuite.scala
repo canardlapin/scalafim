@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import GridDomainOps.*
 import locus4s.DomainRegistry
 import locus4s.Relation
@@ -8,11 +10,11 @@ import spire.std.int.given
 
 class VolumeSearchlightSuite extends munit.FunSuite:
   private val volumeSpace =
-    VolumeSpace(SampleSpaces(Vector(3, 3, 1)))
+    ProviderSpaces.volume(SampleSpaces(Vector(3, 3, 1)))
   private val packedDomain =
     right(
       GridDomain.register(
-        volumeSpace.sampleSpace.grid,
+        volumeSpace.grid,
         "searchlight voxels",
         DomainRegistry.empty
       )
@@ -118,12 +120,12 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     )
 
   test("relation rows materialize an exact selected window"):
-    val values = Array.ofDim[Int](volumeSpace.nVoxels)
+    val values = Array.ofDim[Int](volumeSpace.grid.nVoxels)
     var i = 0
     while i < values.length do
       values(i) = i + 1
       i += 1
-    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace.toSampleSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
@@ -145,9 +147,9 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     assertEquals(materialized.centerPosition, 2)
 
   test("value support restricts materialization without changing metric geometry"):
-    val values = PrimitiveBuffers.fillConst[Int](volumeSpace.nVoxels, 1)
+    val values = PrimitiveBuffers.fillConst[Int](volumeSpace.grid.nVoxels, 1)
     values(1) = 0
-    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace.toSampleSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
@@ -179,7 +181,8 @@ class VolumeSearchlightSuite extends munit.FunSuite:
         10.0 * x + y
     val native: SomeScalarVolume[Double] =
       NeuroVolume
-        .continuous(volumeSpace.sampleSpace, data)
+        .continuous(volumeSpace, data)
+        .map(SomeNeuroVolume.eraseSpace)
         .fold(error => fail(error.message), identity)
     val field =
       domain

@@ -1,5 +1,7 @@
 package scalafim.surface.gifti
 
+import image4s.geometry.GeometryError
+
 enum GiftiIntent(val code: String):
   case PointSet extends GiftiIntent("NIFTI_INTENT_POINTSET")
   case Triangle extends GiftiIntent("NIFTI_INTENT_TRIANGLE")
@@ -309,6 +311,7 @@ enum GiftiError:
   case MissingDataArray(intent: GiftiIntent)
   case InvalidDocument(reason: String)
   case InvalidDataArray(reason: String)
+  case Geometry(cause: GeometryError)
   case UnsupportedEncoding(encoding: GiftiEncoding)
   case UnsupportedEndian(endian: GiftiEndian)
   case UnsupportedArrayOrder(order: GiftiArrayOrder)
@@ -321,6 +324,7 @@ enum GiftiError:
       case MissingDataArray(intent) => s"GIFTI document is missing ${intent.code} DataArray"
       case InvalidDocument(msg) => s"invalid GIFTI document: $msg"
       case InvalidDataArray(msg) => s"invalid GIFTI DataArray: $msg"
+      case Geometry(cause) => cause.message
       case UnsupportedEncoding(encoding) => s"unsupported GIFTI encoding: ${encoding.code}"
       case UnsupportedEndian(endian) => s"unsupported GIFTI endian: ${endian.code}"
       case UnsupportedArrayOrder(order) => s"unsupported GIFTI array order: ${order.code}"

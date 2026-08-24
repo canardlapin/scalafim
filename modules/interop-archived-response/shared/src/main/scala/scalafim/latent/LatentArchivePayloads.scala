@@ -2,7 +2,6 @@ package scalafim.latent
 
 import scalafim.archive.{ArchiveError, ArchivePath}
 import scalafim.archive.lna.{DatasetRole, LnaArchive, Payload, TemporalDctNorm, TransformDescriptor}
-import scalafim.image.{DMat as ArchiveDMat}
 import gale.linalg.{DMat, DoubleLinearOperator}
 
 private[latent] object LatentArchivePayloads:
@@ -16,7 +15,7 @@ private[latent] object LatentArchivePayloads:
       archive: LnaArchive,
       path: ArchivePath,
       label: String
-  ): Either[ArchiveError, ArchiveDMat] =
+  ): Either[ArchiveError, DMat] =
     archive.payload(path) match
       case Some(Payload.DoubleMatrix(data, _)) => Right(data)
       case Some(_)                             => Left(ArchiveError.ShapeMismatch(s"$label payload is not a double matrix"))
@@ -27,7 +26,7 @@ private[latent] object LatentArchivePayloads:
       desc: TransformDescriptor,
       role: DatasetRole,
       label: String
-  ): Either[ArchiveError, Option[ArchiveDMat]] =
+  ): Either[ArchiveError, Option[DMat]] =
     desc.datasets.find(_.role == role) match
       case None =>
         Right(None)
@@ -74,9 +73,6 @@ private[latent] object LatentArchivePayloads:
       .left
       .map(err => ArchiveError.InvalidArchive(err.message))
 
-  def linearMapFromMatrix(matrix: ArchiveDMat): Either[ArchiveError, DoubleLinearOperator] =
-    linearMapFromMatrix(toDoubleMatrix(matrix))
-
   def linearMapFromMatrix(matrix: DMat): Either[ArchiveError, DoubleLinearOperator] =
     val rows = scala.collection.mutable.ArrayBuffer.empty[Int]
     val cols = scala.collection.mutable.ArrayBuffer.empty[Int]
@@ -97,12 +93,6 @@ private[latent] object LatentArchivePayloads:
       .csrFromTriplets(matrix.rows, matrix.cols, rows.toArray, cols.toArray, values.toArray)
       .left
       .map(err => ArchiveError.InvalidArchive(err.message))
-
-  def toDMat(matrix: DMat): ArchiveDMat =
-    ArchiveDMat.fromRows(matrix.toRows)
-
-  def toDoubleMatrix(matrix: ArchiveDMat): DMat =
-    LatentNumerics.matrixFromRows(matrix.toRows)
 
   def archiveNorm(norm: DctNorm): TemporalDctNorm =
     norm match

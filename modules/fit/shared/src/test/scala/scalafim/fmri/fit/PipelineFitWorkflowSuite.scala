@@ -8,7 +8,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 import scalafim.pipeline.*
 
@@ -48,7 +48,7 @@ class PipelineFitWorkflowSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = ImageDMat.fromRows(
+    val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, 10.0),
         Vector(3.0, 1.0, 9.0),

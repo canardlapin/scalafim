@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import Ops.*
 import spire.std.double.given
 
@@ -10,7 +12,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "selected volume scatter regression",
           locus4s.DomainRegistry.empty
         )
@@ -68,7 +70,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "selected volume roundtrip regression",
           locus4s.DomainRegistry.empty
         )
@@ -95,12 +97,15 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
         .toOption
         .get
     val selected =
-      SelectedVolume.gather(domain, volume, selection).toOption.get
+      SelectedVolume
+        .gather(domain, SomeNeuroVolume.eraseSpace(volume), selection)
+        .toOption
+        .get
     val dense = selected.toDense(0.0).toOption.get
 
     assertEquals(
       dense.data.iterator.toVector,
-      volume.data.iterator.toVector,
+      volume.sampled.data.iterator.toVector,
       clue = ""
     )
   }
@@ -110,7 +115,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "mask region regression",
           locus4s.DomainRegistry.empty
         )
@@ -131,7 +136,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "selection bounds regression",
           locus4s.DomainRegistry.empty
         )
@@ -146,7 +151,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "selected shape regression",
           locus4s.DomainRegistry.empty
         )
@@ -236,7 +241,7 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val packed =
       GridDomain
         .register(
-          VolumeSpace(sp).sampleSpace.grid,
+          ProviderSpaces.grid(sp),
           "coordinate gather regression",
           locus4s.DomainRegistry.empty
         )
@@ -269,9 +274,12 @@ class NeuroVolumeRegressionSuite extends munit.FunSuite:
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, ordinals).toOption.get
     val selected =
-      SelectedVolume.gather(domain, volume, selection).toOption.get
+      SelectedVolume
+        .gather(domain, SomeNeuroVolume.eraseSpace(volume), selection)
+        .toOption
+        .get
     val got = selected.data.iterator.toVector
-    val exp = coords.map(c => volume.data(c(0), c(1), c(2)))
+    val exp = coords.map(c => volume.sampled.data(c(0), c(1), c(2)))
     assertEquals(got, exp, clue = "")
   }
 

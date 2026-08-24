@@ -1,7 +1,9 @@
 package scalafim.dataset
 
+import gale.linalg.DMat
+import image4s.geometry.GeometryError
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetIndexSuite extends munit.FunSuite:
 
@@ -131,7 +133,7 @@ class DatasetIndexSuite extends munit.FunSuite:
         .open(
           backend = InMemoryDatasetBackend(
             id = DatasetId("multi"),
-            data = DMat.fromRows(
+            data = GaleTestData.matrixFromRows(
               Vector.tabulate(5)(time => Vector(time.toDouble, time.toDouble + 10.0))
             ),
             space = SampleSpaces(Vector(2, 1, 1))
@@ -165,7 +167,7 @@ class DatasetIndexSuite extends munit.FunSuite:
         )
         .fold(error => fail(error.message), identity)
     assertEquals(series.timepoints, Vector(2, 3))
-    assertEquals(series.data.toRows, Vector(Vector(12.0), Vector(13.0)))
+    assertEquals(GaleTestData.toRows(series.data), Vector(Vector(12.0), Vector(13.0)))
     assertEquals(partition.timepoints, Vector(2, 3))
     assertEquals(partition.localTimepoints, Vector(0, 1))
 
@@ -180,7 +182,7 @@ class DatasetIndexSuite extends munit.FunSuite:
 
   test("cross-run coordinate reads require exact grids") {
     val translated =
-      DMat.fromRows(
+      GaleTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, 4.0),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -198,7 +200,7 @@ class DatasetIndexSuite extends munit.FunSuite:
       datasetRun(
         RunKey.unsafe("sub-01", "run-2", space = Some("MNI")),
         "second-grid",
-        SampleSpaces(Vector(2, 1, 1), trans = Some(translated))
+        SampleSpaces(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated)))
       )
     val index =
       DatasetIndex
@@ -211,7 +213,10 @@ class DatasetIndexSuite extends munit.FunSuite:
         DataSelection(voxels = VoxelSelection.coords(VoxelCoord(0, 0, 0)))
       )
 
-    assert(result.left.exists(_.message.contains("requires identical run grids")))
+    assertEquals(
+      result.left.toOption,
+      Some(DatasetError.Geometry(GeometryError.GridsNotCongruent(0.0)))
+    )
   }
 
   private def run(
@@ -234,7 +239,7 @@ class DatasetIndexSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         id = DatasetId(id),
-        data = DMat.fromRows(Vector(Vector(1.0), Vector(2.0))),
+        data = GaleTestData.matrixFromRows(Vector(Vector(1.0), Vector(2.0))),
         space = space
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),
@@ -250,7 +255,7 @@ class DatasetIndexSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           id = DatasetId(id),
-          data = DMat.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0))),
+          data = GaleTestData.matrixFromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0))),
           space = runSpace
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)),

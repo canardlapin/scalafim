@@ -5,7 +5,7 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.image.{DMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import gale.linalg.Matrix
 
 class ModelSuite extends munit.FunSuite:
@@ -14,13 +14,13 @@ class ModelSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(3), tr = Seq(1.0))
 
   private def dataset: FmriDataset =
-    val data = DMat.fromRows(
+    val rows =
       Vector(
         Vector(1.0, 2.0, 3.0, 4.0),
         Vector(5.0, 6.0, 7.0, 8.0),
         Vector(9.0, 10.0, 11.0, 12.0)
       )
-    )
+    val data = Matrix.dense(rows.length, rows.head.length, rows.flatten)
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(DatasetId("demo"), data, SampleSpaces(Vector(2, 2, 1))),
       samplingFrame = samplingFrame

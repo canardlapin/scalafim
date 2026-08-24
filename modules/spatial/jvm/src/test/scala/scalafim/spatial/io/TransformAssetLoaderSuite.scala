@@ -1,7 +1,8 @@
 package scalafim.spatial.io
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{SampleSpaces, DMat, DenseVectorField, GridSpec, SomeSampleSpace}
+import image4s.geometry.GeometryError
+import scalafim.image.{SampleSpaces, DenseVectorField, GridSpec, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
@@ -19,7 +20,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
   private def linearValue[A](result: Either[LinearMapError, A]): A =
     result.fold(error => fail(error.getMessage), identity)
 
-  private def domain(name: String, space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
+  private def domain(name: String, space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity))): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
@@ -110,13 +111,13 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
         }
         assertEquals(loaded.provenance.primaryPath, asset.path.toAbsolutePath.normalize())
         assertEquals(loaded.provenance.fingerprint.sha256.length, 64)
-        assert(loaded.provenance.normalization.contains("gale.linalg.DMat"))
+        assert(loaded.provenance.normalization.contains("image4s.geometry.Affine[D3]"))
       }
     }
 
   test("an ANTs LPS displacement fixture becomes an executable absolute RAS pullback"):
     withDirectory { directory =>
-      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity))
       val source = domain("source", space)
       val target = domain("target", space)
       val path = directory.resolve("ants-Warp.nii")
@@ -139,7 +140,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   test("dense inverse claims require an executable inverse asset and retain inverse quality"):
     withDirectory { directory =>
-      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity))
       val source = domain("source", space)
       val target = domain("target", space)
       val forwardPath = directory.resolve("ants-Warp.nii")
@@ -175,6 +176,20 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
           assert(reason.contains("expected 16"))
         case other => fail(s"expected malformed asset error, got $other")
 
+      val singular = directory.resolve("singular.mat")
+      Files.writeString(
+        singular,
+        """0 0 0 0
+          |0 1 0 0
+          |0 0 1 0
+          |0 0 0 1
+          |""".stripMargin
+      )
+      descriptor(source, target, singular, TransformFileFormat.FslFlirt).load(source, target).left.toOption match
+        case Some(SpatialIoError.Geometry(path, GeometryError.NonInvertibleAffine(_))) =>
+          assertEquals(path, singular)
+        case other => fail(s"expected typed provider affine failure, got $other")
+
       val h5 = directory.resolve("composite.h5")
       Files.write(h5, Array[Byte](1, 2, 3))
       descriptor(source, target, h5, TransformFileFormat.ANTsH5).load(source, target).left.toOption match
@@ -184,7 +199,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
         case other => fail(s"expected malformed HDF5 error, got $other")
 
       val dense = directory.resolve("ants-Warp.nii")
-      writeDenseField(dense, SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4))), Vector.fill(3)(Vector(0.0, 0.0)))
+      writeDenseField(dense, SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity)), Vector.fill(3)(Vector(0.0, 0.0)))
       val forwardDense =
         TransformLoadOptions(
           TransformDirection.ForwardSourceToTarget,

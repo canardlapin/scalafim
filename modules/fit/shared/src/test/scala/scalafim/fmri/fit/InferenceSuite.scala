@@ -11,8 +11,8 @@ import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.DMat as ImageDMat
-import gale.linalg.DVec
+import scalafim.image.SomeSampleSpace
+import gale.linalg.{DMat, DVec}
 
 class InferenceSuite extends munit.FunSuite:
 
@@ -20,7 +20,7 @@ class InferenceSuite extends munit.FunSuite:
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
   private def noisyModel: FmriModel =
-    val data = ImageDMat.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
+    val data = GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
     val dataset =
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(DatasetId("inference-demo"), data, SampleSpaces(Vector(1, 1, 1))),
@@ -92,7 +92,7 @@ class InferenceSuite extends munit.FunSuite:
     }
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), ImageDMat.fromRows(rows), SampleSpaces(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(1, 1, 1))),
         samplingFrame = sf
       )
     FmriModel(eventModel, baseline, dataset)

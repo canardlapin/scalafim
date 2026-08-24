@@ -19,7 +19,7 @@ import scalafim.fmri.group.GroupTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, Matrix}
 
 class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
@@ -112,7 +112,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId(s"scenario-known-effect-${subject.id.value}"),
-          ImageDMat.fromRows(subject.responseRows),
+          GroupTestMatrix.fromRows(subject.responseRows),
           SampleSpaces(Vector(subject.samples, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(KnownDesign.task.length), tr = Seq(1.0)),

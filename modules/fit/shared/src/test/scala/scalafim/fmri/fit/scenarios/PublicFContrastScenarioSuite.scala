@@ -17,11 +17,12 @@ import scalafim.fmri.fit.{
   ResidualDegreesOfFreedom,
   TContrast
 }
+import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.DMat as ImageDMat
-import gale.linalg.DVec
+import scalafim.image.SomeSampleSpace
+import gale.linalg.{DMat, DVec}
 
 class PublicFContrastScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -45,7 +46,7 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
       FmriDataset.unsafe(
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-public-f-contrast"),
-          ImageDMat.fromRows(fixture.responseRows),
+          GaleTestMatrix.fromRows(fixture.responseRows),
           SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),

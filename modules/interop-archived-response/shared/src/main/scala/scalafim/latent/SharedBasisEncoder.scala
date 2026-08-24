@@ -40,7 +40,7 @@ object SharedBasisEncoder:
             .left
             .map(err => LatentError.ProjectionFailed(err.message))
             .flatMap { validBasis =>
-              val loadings = toDoubleMatrix(validBasis)
+              val loadings = validBasis.loadings
               val offset = Option.when(center)(columnMeans(data))
               for
                 coefficients <- project(data, loadings, offset, ridge)
@@ -117,18 +117,6 @@ object SharedBasisEncoder:
       means(col) = sum / data.rows.toDouble
       col += 1
     LatentNumerics.vectorFromArray(means)
-
-  private def toDoubleMatrix(basis: SharedBasisArtifact): DMat =
-    val loadings = basis.loadings
-    val out = new Array[Double](loadings.rows * loadings.cols)
-    var row = 0
-    while row < loadings.rows do
-      var col = 0
-      while col < loadings.cols do
-        out(row * loadings.cols + col) = loadings(row, col)
-        col += 1
-      row += 1
-    LatentNumerics.matrixFromRowMajor(loadings.rows, loadings.cols, out)
 
   private def sharedBasisMetadata(
       basis: SharedBasisArtifact,

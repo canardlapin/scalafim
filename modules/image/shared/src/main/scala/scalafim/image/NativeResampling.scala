@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import ravel.DType
@@ -20,7 +22,7 @@ object NativeResampling:
   )(using
       DType[A],
       ValueSemantics[A, Sem]
-  ): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
+  ): Either[NeuroImageError, SomeNeuroVolume[A, Sem]] =
     val sourceSampled = SomeNeuroVolume.sampled(source)
     val targetSampled = SomeNeuroVolume.sampled(target)
     val sourceSpace = SampleSpaces.fromCanonical(sourceSampled.sampleSpace)
@@ -59,5 +61,5 @@ object NativeResampling:
     NeuroVolume
       .fromRavel[A, Sem](targetSampleSpace, data, sourceSampled.metadata)
       .left
-      .map(NativeImageError.Image.apply)
+      .map(NeuroImageError.Image.apply)
       .map(SomeNeuroVolume.eraseSpace)

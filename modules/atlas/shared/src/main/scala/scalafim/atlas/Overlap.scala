@@ -1,5 +1,8 @@
 package scalafim.atlas
 
+import scalafim.image.SampleSpaces.*
+
+import image4s.geometry.Grid
 import scalafim.image.*
 
 final case class RegionOverlap(
@@ -51,23 +54,11 @@ object AtlasOverlap:
       atlas1: VolumeAtlas,
       atlas2: VolumeAtlas
   ): Either[AtlasError, Unit] =
-    GridCompatibility.spatial(atlas1.space, atlas2.space) match
-      case Right(_) =>
-        Right(())
-      case Left(_) if atlas1.space.spatialDims != atlas2.space.spatialDims =>
-        Left(
-          AtlasError.SpaceMismatch(
-            atlas1.space.spatialDims,
-            atlas2.space.spatialDims
-          )
-        )
-      case Left(_) =>
-        Left(
-          AtlasError.ExactGridRequired(
-            atlas1.space.spatialSpace.toString,
-            atlas2.space.spatialSpace.toString
-          )
-        )
+    Grid
+      .exactCongruence(atlas1.labelVolume.grid, atlas2.labelVolume.grid)
+      .left
+      .map(AtlasError.Geometry.apply)
+      .map(_ => ())
 
   private def computeFromAssignments(
       atlas1: VolumeAtlas,

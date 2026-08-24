@@ -2,7 +2,7 @@ package scalafim.archive.io
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
 import scalafim.archive.lna.*
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
@@ -199,42 +199,30 @@ object LnaSharedBasisResolver:
       .toRight(ArchiveError.InvalidArchive(s"${desc.kind.value} descriptor missing ${role.value} dataset"))
 
   private def multiplyCoefficientsByLoadings(coefficients: DMat, loadings: DMat): DMat =
-    DMat.fromRows(
-      Vector.tabulate(coefficients.rows) { t =>
-        Vector.tabulate(loadings.rows) { voxel =>
-          var sum = 0.0
-          var atom = 0
-          while atom < coefficients.cols do
-            sum += coefficients(t, atom) * loadings(voxel, atom)
-            atom += 1
-          sum
-        }
-      }
-    )
+    DMat.tabulate(coefficients.rows, loadings.rows): (time, voxel) =>
+      var sum = 0.0
+      var atom = 0
+      while atom < coefficients.cols do
+        sum += coefficients(time, atom) * loadings(voxel, atom)
+        atom += 1
+      sum
 
   private def addOffset(data: DMat, offset: Vector[Double]): DMat =
-    DMat.fromRows(
-      Vector.tabulate(data.rows) { row =>
-        Vector.tabulate(data.cols) { col =>
-          data(row, col) + offset(col)
-        }
-      }
-    )
+    DMat.tabulate(data.rows, data.cols): (row, column) =>
+      data(row, column) + offset(column)
 
   private def expandMask(activeData: DMat, mask: SharedBasisMask): DMat =
-    DMat.fromRows(
-      Vector.tabulate(activeData.rows) { row =>
-        val out = Array.fill(mask.values.length)(0.0)
-        var voxel = 0
-        var active = 0
-        while voxel < mask.values.length do
-          if mask.values(voxel) then
-            out(voxel) = activeData(row, active)
-            active += 1
-          voxel += 1
-        out.toVector
-      }
-    )
+    val activeOrdinal = Array.fill(mask.values.length)(-1)
+    var voxel = 0
+    var active = 0
+    while voxel < mask.values.length do
+      if mask.values(voxel) then
+        activeOrdinal(voxel) = active
+        active += 1
+      voxel += 1
+    DMat.tabulate(activeData.rows, mask.values.length): (row, column) =>
+      val ordinal = activeOrdinal(column)
+      if ordinal >= 0 then activeData(row, ordinal) else 0.0
 
   private def basisDirs(context: SharedBasisResolutionContext): Vector[Path] =
     val dirs = Vector.newBuilder[Path]

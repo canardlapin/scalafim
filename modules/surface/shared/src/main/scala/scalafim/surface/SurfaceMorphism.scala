@@ -2,20 +2,34 @@ package scalafim.surface
 
 import scalafim.image.*
 
+opaque type SurfaceDomainId = String
+
+object SurfaceDomainId:
+  def apply(value: String): SurfaceDomainId =
+    val normalized = value.trim
+    require(normalized.nonEmpty, "SurfaceDomainId must be non-empty")
+    normalized
+
+  extension (id: SurfaceDomainId)
+    def value: String = id
+
+enum SurfaceInverseKind:
+  case Adjoint
+
 enum SurfaceMorphismKind:
   case VolumeToSurface, SurfaceToSurface
 
 sealed trait SurfaceMorphism:
-  def source: SpatialDomainId
-  def target: SpatialDomainId
+  def source: SurfaceDomainId
+  def target: SurfaceDomainId
   def kind: SurfaceMorphismKind
   def cost: Double
   def methodTag: String
-  def inverseKind: InverseKind
+  def inverseKind: SurfaceInverseKind
 
 final case class VolToSurfMorphism(
-    source: SpatialDomainId,
-    target: SpatialDomainId,
+    source: SurfaceDomainId,
+    target: SurfaceDomainId,
     plan: VolumeSurfaceSamplingPlan,
     cost: Double = 10.0,
     methodTag: String = "volume-to-surface"
@@ -25,8 +39,8 @@ final case class VolToSurfMorphism(
   def kind: SurfaceMorphismKind =
     SurfaceMorphismKind.VolumeToSurface
 
-  def inverseKind: InverseKind =
-    InverseKind.Adjoint
+  def inverseKind: SurfaceInverseKind =
+    SurfaceInverseKind.Adjoint
 
   def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
     VolumeSurfaceSampler(plan).sample(volume, mask)
@@ -58,8 +72,8 @@ object SurfaceVertexMapping:
     SurfaceVertexMapping(sourceGeometry, targetGeometry, sourceForTarget)
 
 final case class SurfToSurfMorphism(
-    source: SpatialDomainId,
-    target: SpatialDomainId,
+    source: SurfaceDomainId,
+    target: SurfaceDomainId,
     mapping: SurfaceVertexMapping,
     cost: Double = 5.0,
     methodTag: String = "surface-to-surface"
@@ -69,8 +83,8 @@ final case class SurfToSurfMorphism(
   def kind: SurfaceMorphismKind =
     SurfaceMorphismKind.SurfaceToSurface
 
-  def inverseKind: InverseKind =
-    InverseKind.Adjoint
+  def inverseKind: SurfaceInverseKind =
+    SurfaceInverseKind.Adjoint
 
   def resample(field: SurfaceField[Double]): SurfaceField[Double] =
     mapping(field)

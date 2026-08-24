@@ -1,6 +1,7 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.image.{Mask, SomeSampleSpace}
 
 final case class InMemoryDatasetBackend(
     id: DatasetId,
@@ -17,12 +18,9 @@ final case class InMemoryDatasetBackend(
   override def readEither(selection: DataSelection = DataSelection.All): Either[DatasetError, FmriSeries] =
     val resolvedEither = selection.resolveEither(acquisitionDomain)
     resolvedEither.flatMap { resolved =>
-      val rows =
-        resolved.timepoints.map { r =>
-          resolved.voxels.map(c => data(r, c))
-        }
       FmriSeries.make(
-        data = DMat.fromRows(rows),
+        data = DMat.tabulate(resolved.timepoints.length, resolved.voxels.length): (row, column) =>
+          data(resolved.timepoints(row), resolved.voxels(column)),
         voxelIndices = resolved.voxelIndexValues,
         timepoints = resolved.timepointIndices,
         shape = shape,

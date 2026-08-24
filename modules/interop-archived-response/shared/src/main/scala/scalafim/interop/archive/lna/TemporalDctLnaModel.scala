@@ -21,7 +21,8 @@ import scalafim.archive.lna.{
   TemporalDctNorm,
   TemporalDctParams
 }
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
 import scalafim.interop.archive.RepresentationEnvelope
 import scalafim.latent.{
   DctNorm,
@@ -307,7 +308,12 @@ private object TemporalDctLnaModel:
     while index < source.length do
       owned(index) = source(index)
       index += 1
-    Right(DMat.fromRowMajorOwned(rows, columns, owned))
+    val builder = DMat.newBuilder(rows, columns)
+    var outputIndex = 0
+    while outputIndex < owned.length do
+      builder.updateRowMajor(outputIndex, owned(outputIndex))
+      outputIndex += 1
+    Right(builder.result())
 
   private def temporalNorm(value: DctNorm): TemporalDctNorm =
     value match

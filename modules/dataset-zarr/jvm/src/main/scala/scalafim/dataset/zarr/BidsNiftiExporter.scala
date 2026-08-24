@@ -9,9 +9,11 @@ import java.nio.file.Path
 import java.util.zip.GZIPOutputStream
 import scala.util.Using
 import scala.util.control.NonFatal
+import gale.linalg.DMat
+import image4s.geometry.{Affine, D3}
 import scalafim.archive.zarr.*
 import bids4s.EntityKey
-import scalafim.image.Affine
+import scalafim.image.NeuroAffineSyntax.*
 import zarr4s.*
 
 final case class BidsExportResult(
@@ -101,8 +103,11 @@ object BidsNiftiExporter:
       case found => throw IllegalArgumentException(s"unsupported NIfTI export type $found")
     val shape = descriptor.shape
     val affine = manifest.geometry.voxelToWorld
-    val affineRows = Vector.tabulate(4)(row => Vector.tabulate(4)(column => affine(row, column)))
-    val voxelSizes = Affine.voxelSizes(scalafim.image.DMat.fromRows(affineRows))
+    val affineMatrix = DMat.tabulate(4, 4)(affine.apply)
+    val voxelSizes = Affine
+      .fromRowMajor[D3](affineMatrix.valuesRowMajor)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+      .neuroVoxelSizes
     val repetition = manifest.timing match
       case AcquisitionTiming.Regular(_, step, _, TimeUnits.Second) => step
       case AcquisitionTiming.Regular(_, step, _, TimeUnits.Millisecond) => step / 1000.0

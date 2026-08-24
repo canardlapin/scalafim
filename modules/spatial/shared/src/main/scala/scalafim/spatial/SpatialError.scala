@@ -1,5 +1,9 @@
 package scalafim.spatial
 
+import image4s.geometry.GeometryError
+import scalafim.image.SampleSpaceError
+import reframe4s.core.MapError
+
 enum SpatialErrorReason:
   case Identifier
   case Dimension
@@ -22,6 +26,8 @@ enum SpatialError:
   case DuplicatePartName(name: PartName)
   case NegativeOffset(part: PartName, offset: Int)
   case MaskSpaceMismatch(label: String)
+  case SampleSpaceAdmission(cause: SampleSpaceError)
+  case Geometry(cause: GeometryError)
   case DomainKindMismatch(id: DomainId, expected: DomainKind, actual: DomainKind)
   case LatentDimensionMismatch(id: DomainId, spaceDim: Int, geometryDim: Int)
   case UnsupportedGeometry(label: String)
@@ -37,10 +43,9 @@ enum SpatialError:
   case EmptyPath
   case DisconnectedPath(previous: DomainId, next: DomainId)
   case NonInvertibleMorphism(id: MorphismId)
-  case InvalidAffineCoordinateMap(label: String)
-  case InvalidDenseCoordinateMap(reason: String)
-  case InvalidCompositeCoordinateMap(reason: String)
+  case InvalidProviderCoordinateMap(reason: String)
   case CoordinateMapDomainMismatch(id: MorphismId, source: DomainId, target: DomainId, mapSource: String, mapTarget: String)
+  case ProviderMap(cause: MapError)
   case MissingCoordinateMap(id: MorphismId)
   case NonVolumeDomain(id: DomainId)
   case NonSurfaceDomain(id: DomainId)
@@ -64,6 +69,8 @@ enum SpatialError:
   case FieldSourceStale(source: FieldSourceId, expected: String, actual: String)
   case FieldSourceDomainMismatch(source: FieldSourceId, expected: DomainId, actual: DomainId)
   case FieldSourceGeometryMismatch(source: FieldSourceId)
+  case FieldSourceSampleSpaceAdmission(source: FieldSourceId, cause: SampleSpaceError)
+  case FieldSourceGridMismatch(source: FieldSourceId, cause: GeometryError)
   case FieldSourceShapeMismatch(source: FieldSourceId, expectedRows: Int, actualRows: Int)
   case FieldSourceIndexOutOfBounds(axis: String, index: Int, limit: Int)
   case DuplicateFieldSourceIndex(axis: String, index: Int)
@@ -83,7 +90,7 @@ enum SpatialError:
         SpatialErrorReason.Identifier
       case NonPositiveDimension(_, _) | LatentDimensionMismatch(_, _, _) | NegativeOffset(_, _) =>
         SpatialErrorReason.Dimension
-      case EmptyHybrid | DuplicatePartName(_) | MaskSpaceMismatch(_) | UnsupportedGeometry(_) =>
+      case EmptyHybrid | DuplicatePartName(_) | MaskSpaceMismatch(_) | SampleSpaceAdmission(_) | Geometry(_) | UnsupportedGeometry(_) =>
         SpatialErrorReason.Geometry
       case DomainKindMismatch(_, _, _) =>
         SpatialErrorReason.DomainKind
@@ -93,7 +100,7 @@ enum SpatialError:
         SpatialErrorReason.Graph
       case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
         SpatialErrorReason.Route
-      case InvalidAffineCoordinateMap(_) | InvalidDenseCoordinateMap(_) | InvalidCompositeCoordinateMap(_) | CoordinateMapDomainMismatch(_, _, _, _, _) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
+      case InvalidProviderCoordinateMap(_) | CoordinateMapDomainMismatch(_, _, _, _, _) | ProviderMap(_) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
         SpatialErrorReason.CoordinateMap
       case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | MorphismCompilerNotFound(_) | DuplicateMorphismCompiler(_) | MorphismCompilerKindMismatch(_, _, _) | InvalidMorphismPlugin(_, _) | UnsupportedPluginComposition(_) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | SurfaceSamplingGeometryMismatch(_) | SurfaceMappingGeometryMismatch(_) | InvalidMixedPullback(_) | OperatorAssemblyFailed(_) =>
         SpatialErrorReason.Operator
@@ -101,7 +108,7 @@ enum SpatialError:
         SpatialErrorReason.RowSelection
       case FieldDataUnavailable(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) | FieldObservationMismatch(_, _) | FieldMaterializedShapeMismatch(_, _, _, _) =>
         SpatialErrorReason.Field
-      case FieldSourceUnavailable(_, _) | FieldSourceStale(_, _, _) | FieldSourceDomainMismatch(_, _, _) | FieldSourceGeometryMismatch(_) | FieldSourceShapeMismatch(_, _, _) | FieldSourceIndexOutOfBounds(_, _, _) | DuplicateFieldSourceIndex(_, _) | FieldSourceRequestMismatch(_) | FieldSourceBlockShapeMismatch(_, _, _, _, _) | FieldSourceReadFailed(_, _) =>
+      case FieldSourceUnavailable(_, _) | FieldSourceStale(_, _, _) | FieldSourceDomainMismatch(_, _, _) | FieldSourceGeometryMismatch(_) | FieldSourceSampleSpaceAdmission(_, _) | FieldSourceGridMismatch(_, _) | FieldSourceShapeMismatch(_, _, _) | FieldSourceIndexOutOfBounds(_, _, _) | DuplicateFieldSourceIndex(_, _) | FieldSourceRequestMismatch(_) | FieldSourceBlockShapeMismatch(_, _, _, _, _) | FieldSourceReadFailed(_, _) =>
         SpatialErrorReason.Source
       case OperatorCacheMiss(_) =>
         SpatialErrorReason.Cache
@@ -120,6 +127,10 @@ enum SpatialError:
         s"hybrid part ${part.value} has negative offset $offset"
       case MaskSpaceMismatch(label) =>
         s"$label mask geometry does not match sampled geometry"
+      case SampleSpaceAdmission(cause) =>
+        cause.message
+      case Geometry(cause) =>
+        cause.message
       case DomainKindMismatch(id, expected, actual) =>
         s"domain ${id.value} declares $expected space but uses $actual sampling geometry"
       case LatentDimensionMismatch(id, spaceDim, geometryDim) =>
@@ -150,14 +161,12 @@ enum SpatialError:
         s"morphism path is disconnected between ${previous.value} and ${next.value}"
       case NonInvertibleMorphism(id) =>
         s"morphism ${id.value} does not have a geometric inverse"
-      case InvalidAffineCoordinateMap(label) =>
-        s"$label coordinate map must be a finite 4x4 affine matrix"
-      case InvalidDenseCoordinateMap(reason) =>
-        s"invalid dense coordinate map: $reason"
-      case InvalidCompositeCoordinateMap(reason) =>
-        s"invalid composite coordinate map: $reason"
+      case InvalidProviderCoordinateMap(reason) =>
+        s"invalid provider coordinate map: $reason"
       case CoordinateMapDomainMismatch(id, source, target, mapSource, mapTarget) =>
         s"morphism ${id.value} is ${source.value}->${target.value}, but its coordinate map is $mapSource->$mapTarget"
+      case ProviderMap(cause) =>
+        cause.message
       case MissingCoordinateMap(id) =>
         s"morphism ${id.value} does not carry an executable coordinate map"
       case NonVolumeDomain(id) =>
@@ -204,6 +213,10 @@ enum SpatialError:
         s"field source ${source.value} targets ${actual.value}, expected ${expected.value}"
       case FieldSourceGeometryMismatch(source) =>
         s"field source ${source.value} geometry does not match its root domain"
+      case FieldSourceSampleSpaceAdmission(source, cause) =>
+        s"field source ${source.value} has an invalid sample space: ${cause.message}"
+      case FieldSourceGridMismatch(source, cause) =>
+        s"field source ${source.value} grid mismatch: ${cause.message}"
       case FieldSourceShapeMismatch(source, expectedRows, actualRows) =>
         s"field source ${source.value} expected $expectedRows rows, got $actualRows"
       case FieldSourceIndexOutOfBounds(axis, index, limit) =>

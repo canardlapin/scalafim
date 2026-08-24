@@ -1,8 +1,9 @@
 package scalafim.dataset.io
 
+import scalafim.image.SampleSpaces.*
+
 import scalafim.dataset.*
 import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
-import scalafim.image.{spatialDims, spatialSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
 
 import java.io.BufferedInputStream

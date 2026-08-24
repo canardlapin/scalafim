@@ -11,9 +11,9 @@ import ravel.NDArray
 
 class GridDomainSuite extends munit.FunSuite:
   private val volumeSpace =
-    VolumeSpace(SampleSpaces(Vector(2, 3, 5)))
+    ProviderSpaces.volume(SampleSpaces(Vector(2, 3, 5)))
   private val seriesSpace =
-    volumeSpace.toSampleSpace.addDim(7, Some(Axis.Time))
+    volumeSpace.appendNonSpatial(ProviderAxes.time(7)).toOption.get
 
   private val volumeData =
     NDArray.tabulate[Double](2, 3, 5): (x, y, z) =>
@@ -24,13 +24,13 @@ class GridDomainSuite extends munit.FunSuite:
       1000.0 * x + 100.0 * y + 10.0 * z + time
 
   private val volume =
-    SomeScalarVolume.unsafeFromRavel(volumeData, volumeSpace.toSampleSpace, "oracle-volume")
+    SomeScalarVolume.unsafeFromRavel(volumeData, volumeSpace, "oracle-volume")
   private val series =
     SomeScalarSeries.unsafeFromRavel(seriesData, seriesSpace, "oracle-series")
   private val registered =
     right(
       GridDomain.register(
-        volumeSpace.sampleSpace.grid,
+        volumeSpace.grid,
         "2x3x5 oracle voxels",
         DomainRegistry.empty
       )
@@ -101,19 +101,19 @@ class GridDomainSuite extends munit.FunSuite:
 
   test("same persistent grid key does not admit a foreign live owner"):
     val foreignSpace =
-      VolumeSpace(SampleSpaces(Vector(2, 3, 5)))
+      ProviderSpaces.volume(SampleSpaces(Vector(2, 3, 5)))
     val foreignVolume =
       SomeScalarVolume.unsafeFromRavel(
         volumeData,
-        foreignSpace.toSampleSpace,
+        foreignSpace,
         "foreign-owner"
       )
 
     assert(
-      domain.grid.samePersistentKeyAs(foreignSpace.sampleSpace.grid)
+      domain.grid.samePersistentKeyAs(foreignSpace.grid)
     )
     assert(
-      domain.validateGrid(foreignSpace.sampleSpace.grid) match
+      domain.validateGrid(foreignSpace.grid) match
         case Left(_: GridDomainError.GridRuntimeOwnerMismatch) => true
         case _                                                  => false
     )
@@ -129,7 +129,7 @@ class GridDomainSuite extends munit.FunSuite:
       right(
         GridDomain.restore(
           domain.record,
-          volumeSpace.sampleSpace.grid,
+          volumeSpace.grid,
           registered.registry
         )
       )

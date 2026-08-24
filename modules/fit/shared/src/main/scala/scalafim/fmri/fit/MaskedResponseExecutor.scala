@@ -14,7 +14,7 @@ import scalafim.fmri.model.{
   NuisanceProjection,
   VolumeWeighting
 }
-import scalafim.image.DMat
+import gale.linalg.Matrix
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,7 +82,7 @@ private[fit] object MaskedResponsePlanner:
         localRow += 1
       val patternSeries = FmriSeries
         .make(
-          data = DMat.fromRowMajorOwned(rowPositions.length, voxelPositions.length, data),
+          data = Matrix.dense(rowPositions.length, voxelPositions.length, data),
           voxelIndices = voxelPositions.map(series.voxelIndexValues),
           timepoints = rowPositions.map(series.timepointIndices),
           shape = series.shape,

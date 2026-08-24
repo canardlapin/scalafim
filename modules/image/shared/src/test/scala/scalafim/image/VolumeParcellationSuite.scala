@@ -137,7 +137,12 @@ class VolumeParcellationSuite extends munit.FunSuite:
     assertEquals(dense.data.iterator.toVector, Vector(7, 7, 0, 9))
 
   test("parcel series are parcel-major with contiguous time rows"):
-    val reduced = right(ParcelSeries.reduceMean(series, parcellation))
+    val reduced = right(
+      ParcelSeries.reduceMean(
+        SomeNeuroSeries.eraseSpace(series),
+        parcellation
+      )
+    )
     assert(reduced.parcellation eq parcellation)
     assertEquals(reduced.data.shape, Shape(2, 3))
     assertEquals(
@@ -178,7 +183,7 @@ class VolumeParcellationSuite extends munit.FunSuite:
       right(Region.fromOrdinals(domain.space, Vector(0)))
 
     ParcelSeries.reduceMean(
-      series,
+      SomeNeuroSeries.eraseSpace(series),
       parcellation,
       firstVoxelOnly,
       EmptyParcelPolicy.Reject
@@ -189,7 +194,7 @@ class VolumeParcellationSuite extends munit.FunSuite:
     val filled =
       right(
         ParcelSeries.reduceMean(
-          series,
+          SomeNeuroSeries.eraseSpace(series),
           parcellation,
           firstVoxelOnly,
           EmptyParcelPolicy.Fill(-99.0)
@@ -251,7 +256,7 @@ class VolumeParcellationSuite extends munit.FunSuite:
       )
     assert(
       ParcelSeries.reduceMean(
-        series,
+        SomeNeuroSeries.eraseSpace(series),
         parcellation,
         foreignSupport,
         EmptyParcelPolicy.Reject
@@ -357,7 +362,12 @@ class VolumeParcellationSuite extends munit.FunSuite:
     )
 
   test("parcel neighborhood windows retain exact support and center position"):
-    val reduced = right(ParcelSeries.reduceMean(series, parcellation))
+    val reduced = right(
+      ParcelSeries.reduceMean(
+        SomeNeuroSeries.eraseSpace(series),
+        parcellation
+      )
+    )
     val neighborhoods =
       right(
         ExactParcelSearchlight.nearest(

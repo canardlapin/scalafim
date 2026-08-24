@@ -10,7 +10,7 @@ import scalafim.dataset.{
   TimepointSelection,
   VoxelSelection
 }
-import scalafim.image.{Axis, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 import scalafim.response.*
@@ -255,7 +255,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         3.0, 7.0, 11.0
       )
     )
-    val space = SampleSpaces(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
+    val space = SampleSpaces(Vector(2, 2, 1)).addDim(ProviderAxes.time(3))
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
       .fold(error => fail(error.message), _ => path)
@@ -270,7 +270,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
     target
 
   private def assertMatrixEquals(
-      actual: scalafim.image.DMat,
+      actual: gale.linalg.DMat,
       expected: Vector[Vector[Double]],
       tolerance: Double = 1e-12
   ): Unit =

@@ -1,5 +1,9 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.SamplingAlignment
+import image4s.geometry.Grid
 import ravel.NDArray
 
 class KernelLayoutSuite extends munit.FunSuite:
@@ -46,14 +50,14 @@ class KernelLayoutSuite extends munit.FunSuite:
 
     val grid = GridSpec.fromSpace(volumeSpace)
     val identityMorphism =
-      IdentityMorphism(SpatialDomainId("layout-oracle"))
+      SpatialPullbacks.worldAligned(grid, grid)
     val resampling =
       ResamplingPlan
         .make(grid, grid, identityMorphism, Resample.Method.Linear)
         .fold(error => fail(error.message), identity)
     assertEquals(
       resampling.executionModel,
-      ResamplingExecutionModel.AffineProvider
+      ResamplingExecutionModel.ProviderAffine
     )
     assertEquals(resampling.materializedCoordinateCount, 0)
     val viewResampled =
@@ -63,7 +67,7 @@ class KernelLayoutSuite extends munit.FunSuite:
     assertSameVolume(viewResampled, canonicalResampled, tolerance = 1e-12)
     assertWholeCanonical(viewResampled)
 
-    val seriesSpace = volumeSpace.addDim(7, Some(Axis.Time))
+    val seriesSpace = volumeSpace.addDim(ProviderAxes.time(7))
     val seriesData =
       NDArray
         .tabulate[Double](2, 3, 5, 7): (x, y, z, time) =>
@@ -159,10 +163,7 @@ class KernelLayoutSuite extends munit.FunSuite:
       expected: SomeScalarVolume[Double],
       tolerance: Double = 0.0
   ): Unit =
-    assertEquals(
-      GridCompatibility.exact(actual.space, expected.space),
-      Right(())
-    )
+    assert(Grid.exactCongruence(actual.grid, expected.grid).isRight)
     val shape = actual.space.spatialDims
     var x = 0
     while x < shape(0) do
@@ -180,10 +181,13 @@ class KernelLayoutSuite extends munit.FunSuite:
       expected: SomeScalarSeries[Double],
       tolerance: Double = 0.0
   ): Unit =
-    assertEquals(
-      GridCompatibility.exact(actual.space, expected.space),
-      Right(())
-    )
+    val alignment =
+      for
+        left <- SampleSpaces.requireD3(actual.space).left.map(_.message)
+        right <- SampleSpaces.requireD3(expected.space).left.map(_.message)
+        evidence <- SamplingAlignment.exact(left, right).left.map(_.message)
+      yield evidence
+    assert(alignment.isRight)
     val shape = actual.space.spatialDims
     var x = 0
     while x < shape(0) do

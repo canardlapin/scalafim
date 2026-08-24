@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.GridCompatibility
+import image4s.geometry.Grid
 
 enum DatasetFieldCriterion[+A]:
   case Any
@@ -327,11 +327,9 @@ final class DatasetIndex private (
     var failure = Option.empty[DatasetError]
     while index < selected.length && failure.isEmpty do
       val run = selected(index)
-      GridCompatibility.exact(expected, run.dataset.shape.space) match
+      Grid.exactCongruence(expected.grid, run.dataset.shape.grid) match
         case Left(error) =>
-          failure = Some(DatasetError.ShapeMismatch(
-            s"coordinate selection requires identical run grids: ${error.message}"
-          ))
+          failure = Some(DatasetError.Geometry(error))
         case Right(_) =>
           run.dataset.voxelDomain.resolve(coordinates, run.dataset.shape.space) match
             case Left(error) => failure = Some(error)

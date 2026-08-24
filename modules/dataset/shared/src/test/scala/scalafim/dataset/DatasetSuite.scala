@@ -1,14 +1,16 @@
 package scalafim.dataset
 
+import image4s.AxisKind
+import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{SampleSpaceError, SampleSpaces, SomeSampleSpace}
 
 class DatasetSuite extends munit.FunSuite:
 
   private def backend: InMemoryDatasetBackend =
     InMemoryDatasetBackend(
       id = DatasetId("demo"),
-      data = DMat.fromRows(denseRows),
+      data = GaleTestData.matrixFromRows(denseRows),
       space = SampleSpaces(Vector(2, 2, 1))
     )
 
@@ -74,18 +76,23 @@ class DatasetSuite extends munit.FunSuite:
         .readerFor(description)
         .flatMap(_.seriesEither())
         .fold(error => fail(error.message), identity)
-    assertEquals(explicit.data.toRows, denseRows)
+    assertEquals(GaleTestData.toRows(explicit.data), denseRows)
   }
 
   test("dataset shape rejects 4D spaces as spatial-only shapes") {
     val fourD = SampleSpaces(Vector(2, 2, 1, 3))
     val error = DatasetShape.make(fourD, timepoints = 3).left.toOption.getOrElse(fail("expected 4D shape rejection"))
-    assert(error.message.contains("requires exactly 3 dimensions"))
+    assertEquals(
+      error,
+      DatasetError.InvalidSpace(
+        SampleSpaceError.UnexpectedNonSpatialAxes(Vector(AxisKind.Time))
+      )
+    )
 
     val thrown = intercept[IllegalArgumentException] {
-      DatasetShape(fourD, timepoints = 3)
+      DatasetShape.unsafe(fourD, timepoints = 3)
     }
-    assert(thrown.getMessage.contains("dataset space must be exactly 3D"))
+    assertEquals(thrown.getMessage, error.message)
   }
 
   test("selection reads timepoints x voxels in canonical orientation") {
@@ -102,7 +109,7 @@ class DatasetSuite extends munit.FunSuite:
 
     assertEquals(series.nTimepoints, 2)
     assertEquals(series.nVoxels, 2)
-    assertEquals(series.data.toRows, Vector(Vector(2.0, 4.0), Vector(10.0, 12.0)))
+    assertEquals(GaleTestData.toRows(series.data), Vector(Vector(2.0, 4.0), Vector(10.0, 12.0)))
   }
 
   test("dense dataset default read uses the full spatial voxel domain") {
@@ -111,7 +118,7 @@ class DatasetSuite extends munit.FunSuite:
     assertEquals(backend.voxelDomain.kind, VoxelDomainKind.FullSpatial)
     assertEquals(backend.voxelDomain.indices, Vector(0, 1, 2, 3))
     assertEquals(series.voxelIndices, Vector(0, 1, 2, 3))
-    assertEquals(series.data.toRows, denseRows)
+    assertEquals(GaleTestData.toRows(series.data), denseRows)
   }
 
   test("selection reports duplicate and out-of-bounds indices as DatasetError") {
@@ -158,7 +165,7 @@ class DatasetSuite extends munit.FunSuite:
     val bad =
       FmriSeries
         .fromIntIndices(
-          data = DMat.fromRows(Vector(Vector(1.0))),
+          data = GaleTestData.matrixFromRows(Vector(Vector(1.0))),
           voxelIndices = Vector(0, 1),
           timepoints = Vector(0),
           shape = backend.shape

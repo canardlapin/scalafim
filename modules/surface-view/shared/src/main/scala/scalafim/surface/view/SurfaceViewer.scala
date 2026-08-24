@@ -53,15 +53,16 @@ object SurfaceAsset:
     var maximumZ = Double.NegativeInfinity
     val coordinates = geometry.mesh.coordinates
     val transform = geometry.surfaceToWorld
+    val matrix = transform.matrix
     var offset = 0
     while offset < coordinates.length do
       val x = coordinates(offset)
       val y = coordinates(offset + 1)
       val z = coordinates(offset + 2)
-      val wx = transform(0, 0) * x + transform(0, 1) * y + transform(0, 2) * z + transform(0, 3)
-      val wy = transform(1, 0) * x + transform(1, 1) * y + transform(1, 2) * z + transform(1, 3)
-      val wz = transform(2, 0) * x + transform(2, 1) * y + transform(2, 2) * z + transform(2, 3)
-      val ww = transform(3, 0) * x + transform(3, 1) * y + transform(3, 2) * z + transform(3, 3)
+      val wx = matrix(0, 0) * x + matrix(0, 1) * y + matrix(0, 2) * z + matrix(0, 3)
+      val wy = matrix(1, 0) * x + matrix(1, 1) * y + matrix(1, 2) * z + matrix(1, 3)
+      val wz = matrix(2, 0) * x + matrix(2, 1) * y + matrix(2, 2) * z + matrix(2, 3)
+      val ww = matrix(3, 0) * x + matrix(3, 1) * y + matrix(3, 2) * z + matrix(3, 3)
       val inverseW = if ww == 0.0 then 1.0 else 1.0 / ww
       val worldX = wx * inverseW
       val worldY = wy * inverseW

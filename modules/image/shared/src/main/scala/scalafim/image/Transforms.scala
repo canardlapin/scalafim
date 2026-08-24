@@ -1,7 +1,12 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.filter.LinearFilter
+import image4s.Axis
+import image4s.AxisKind
 import image4s.geometry.D3
+import image4s.geometry.Grid
 import image4s.ops.Border
 import image4s.ops.Correlation
 import image4s.ops.FilterExtent
@@ -9,6 +14,7 @@ import image4s.ops.Kernel as ImageKernel
 import image4s.ops.Offset
 import image4s.ops.OpError
 import image4s.ops.Support
+import scalafim.image.NeuroAffineSyntax.*
 import ravel.DType
 import ravel.DType.given
 import ravel.NDArray as RavelArray
@@ -69,20 +75,21 @@ object Downsample:
     val scaleFactors = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
     val newSpacing = Vector.tabulate(3)(d => old.spacing(d) * scaleFactors(d))
     val newTrans =
-      Affine.rescaleAffine(
-        old.trans,
-        shape = oldSpatial,
-        zooms = newSpacing,
-        newShape = Some(newSpatialDims)
-      )
-    val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
+      vec.grid.indexToFrame
+        .rescaledVoxelGeometry(
+          shape = oldSpatial,
+          voxelSizes = newSpacing,
+          newShape = Some(newSpatialDims)
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val newOrigin = Vector.tabulate(3)(i => newTrans.matrix(i, 3))
     val newSpace =
       SampleSpaces(
         dims = newDims4,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
-        axes = Some(old.axes),
-        trans = Some(newTrans)
+        axes = Some(old.nonSpatialAxes),
+        affine = Some(newTrans)
       )
     SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
@@ -137,24 +144,29 @@ object Downsample:
     val scaleFactors = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
     val newSpacing = Vector.tabulate(3)(d => old.spacing(d) * scaleFactors(d))
     val newTrans =
-      Affine.rescaleAffine(
-        old.trans,
-        shape = oldSpatial,
-        zooms = newSpacing,
-        newShape = Some(newSpatialDims)
-      )
-    val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
+      vol.grid.indexToFrame
+        .rescaledVoxelGeometry(
+          shape = oldSpatial,
+          voxelSizes = newSpacing,
+          newShape = Some(newSpatialDims)
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val newOrigin = Vector.tabulate(3)(i => newTrans.matrix(i, 3))
     val newSpace =
       SampleSpaces(
         dims = newSpatialDims,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
-        axes = Some(old.axes),
-        trans = Some(newTrans)
+        axes = Some(old.nonSpatialAxes),
+        affine = Some(newTrans)
       )
     SomeNeuroVolume.unsafeFromRavel(out, newSpace, vol.label)
 
 object Resample:
+  private def timeAxis(extent: Int): Axis =
+    Axis
+      .ordinal("time", AxisKind.Time, extent)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   enum ResampleError:
     case UnknownMethod(value: String)
@@ -255,38 +267,38 @@ object Resample:
   def plan(
       source: GridSpec,
       target: GridSpec,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    ResamplingPlan.make(source, target, morphism, method)
+    ResamplingPlan.make(source, target, pullback, method)
 
   @targetName("planFromSampleSpaces")
   def plan(
       source: SomeSampleSpace,
       target: SomeSampleSpace,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
-    ResamplingPlan.fromSpaces(source, target, morphism, method)
+    ResamplingPlan.fromSpaces(source, target, pullback, method)
 
   def resampleTo(
       source: SomeScalarVolume[Double],
       target: GridSpec,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Method,
       outside: Double
   ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
-    plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
+    plan(GridSpec.fromSpace(source.space), target, pullback, method).flatMap(_.apply(source, outside))
 
   @scala.annotation.targetName("resampleToNeuroSeries")
   def resampleTo(
       source: SomeScalarSeries[Double],
       target: GridSpec,
-      morphism: SpatialMorphism,
+      pullback: SpatialPullback,
       method: Method,
       outside: Double
   ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
+    plan(GridSpec.fromSpace(source.space), target, pullback, method).flatMap(_.apply(source, outside))
 
   def nearest(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
     executeContinuous(vol, target, Method.Nearest)
@@ -362,7 +374,7 @@ object Resample:
             sz >= 0 && sz < srcDims(2)
         then vec(sx, sy, sz, time)
         else fill
-    val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
+    val newSpace = targSpatial.addDim(timeAxis(tLen))
     SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
   def trilinear(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
@@ -390,7 +402,10 @@ object Resample:
       .make(
         sourceGrid,
         targetGrid,
-        IdentityMorphism(SpatialDomainId("world-coordinate-resampling")),
+        reframe4s.lie.FramedAffine.betweenFrames(
+          targetGrid.nativeGrid.frame,
+          sourceGrid.nativeGrid.frame
+        )(image4s.geometry.Affine.identity[image4s.geometry.D3]),
         method
       )
       .flatMap(_.apply(volume, outside = 0.0))
@@ -410,7 +425,10 @@ object Resample:
       .make(
         sourceGrid,
         targetGrid,
-        IdentityMorphism(SpatialDomainId("world-coordinate-resampling")),
+        reframe4s.lie.FramedAffine.betweenFrames(
+          targetGrid.nativeGrid.frame,
+          sourceGrid.nativeGrid.frame
+        )(image4s.geometry.Affine.identity[image4s.geometry.D3]),
         method
       )
       .flatMap(_.apply(series, outside = 0.0))
@@ -432,7 +450,12 @@ object SpatialFilters:
       case Some(activeMask) =>
         val sp = vol.space
         val dims = sp.spatialDims
-        GridCompatibility.requireSpatial(sp, activeMask.space)
+        Grid
+          .exactCongruence(vol.grid, activeMask.grid)
+          .fold(
+            error => throw new IllegalArgumentException(error.message),
+            identity
+          )
         val nx = dims(0); val ny = dims(1); val nz = dims(2)
         val out =
           RavelArray.tabulate[Double](nx, ny, nz): (x, y, z) =>
@@ -529,7 +552,12 @@ object SpatialFilters:
     val spacing = sp.spacing
 
     mask.foreach { m =>
-      GridCompatibility.requireSpatial(sp, m.space)
+      Grid
+        .exactCongruence(vol.grid, m.grid)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
     }
 
     mapf(vol, gaussianKernel(spacing, sigma, window), mask)
@@ -586,7 +614,12 @@ object SpatialFilters:
     val spacing = sp.spacing
 
     mask.foreach { m =>
-      GridCompatibility.requireSpatial(sp, m.space)
+      Grid
+        .exactCongruence(vol.grid, m.grid)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
     }
 
     var sum = 0.0
@@ -692,7 +725,13 @@ object SpatialFilters:
     val nx = dims(0); val ny = dims(1); val nz = dims(2)
     val tLen = vec.nVolumes
     val spatialNels = dims.product
-    mask.foreach(value => GridCompatibility.requireSpatial(space, value.space))
+    mask.foreach: value =>
+      Grid
+        .exactCongruence(vec.grid, value.grid)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
 
     val width = 2 * window + 1
     val total = width * width * width
@@ -841,7 +880,12 @@ object SpatialFilters:
     val spacing = sp.spacing
 
     mask.foreach { m =>
-      GridCompatibility.requireSpatial(sp, m.space)
+      Grid
+        .exactCongruence(vec.grid, m.grid)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
     }
 
     var sum = 0.0

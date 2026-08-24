@@ -1,5 +1,7 @@
 package scalafim.surface.view
 
+import scalafim.image.SampleSpaces.*
+
 import intaglio.*
 import scalafim.image.*
 import scalafim.surface.*
@@ -927,21 +929,19 @@ object SurfaceWorldLink:
       Left(SurfaceViewError.InvalidVertexIndex(vertex.index, geometry.vertexCount))
     else
       val point = geometry.mesh.vertex(vertex)
-      val transform = geometry.surfaceToWorld
-      val x = transform(0, 0) * point.x + transform(0, 1) * point.y + transform(0, 2) * point.z + transform(0, 3)
-      val y = transform(1, 0) * point.x + transform(1, 1) * point.y + transform(1, 2) * point.z + transform(1, 3)
-      val z = transform(2, 0) * point.x + transform(2, 1) * point.y + transform(2, 2) * point.z + transform(2, 3)
-      val w = transform(3, 0) * point.x + transform(3, 1) * point.y + transform(3, 2) * point.z + transform(3, 3)
-      if w == 0.0 then Left(SurfaceViewError.IncompatibleMorph("surface-to-world transform produced w=0"))
-      else Right(WorldPoint(x / w, y / w, z / w))
+      geometry.surfaceToWorld(Vector(point.x, point.y, point.z))
+        .left.map(SurfaceViewError.GeometryFailure.apply)
+        .map(coordinates => WorldPoint(coordinates(0), coordinates(1), coordinates(2)))
 
   def toVolume(
     selection: SurfaceSelection,
     geometry: SurfaceGeometry,
-    volume: VolumeSpace
+    volume: image4s.geometry.Grid[? <: image4s.geometry.Frame[image4s.geometry.D3], image4s.geometry.D3]
   ): Either[SurfaceViewError, SurfaceLinkedSelection] =
-    worldPoint(geometry, selection.vertex).map: world =>
-      SurfaceLinkedSelection(selection, world, volume.worldToVoxel(world))
+    worldPoint(geometry, selection.vertex).flatMap: world =>
+      volume.worldToVoxel(world)
+        .left.map(SurfaceViewError.GeometryFailure.apply)
+        .map(voxel => SurfaceLinkedSelection(selection, world, voxel))
 
   def nearestVertex(
     surface: SurfaceId,
@@ -953,14 +953,9 @@ object SurfaceWorldLink:
     var bestSquared = Double.PositiveInfinity
     var vertex = 0
     while vertex < geometry.vertexCount do
-      val point = geometry.mesh.vertex(VertexId.unsafe(vertex))
-      val transform = geometry.surfaceToWorld
-      val x = transform(0, 0) * point.x + transform(0, 1) * point.y + transform(0, 2) * point.z + transform(0, 3)
-      val y = transform(1, 0) * point.x + transform(1, 1) * point.y + transform(1, 2) * point.z + transform(1, 3)
-      val z = transform(2, 0) * point.x + transform(2, 1) * point.y + transform(2, 2) * point.z + transform(2, 3)
-      val w = transform(3, 0) * point.x + transform(3, 1) * point.y + transform(3, 2) * point.z + transform(3, 3)
-      if w == 0.0 then return Left(SurfaceViewError.IncompatibleMorph("surface-to-world transform produced w=0"))
-      val candidate = WorldPoint(x / w, y / w, z / w)
+      val candidate = worldPoint(geometry, VertexId.unsafe(vertex)) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
       val dx = candidate.x - world.x
       val dy = candidate.y - world.y
       val dz = candidate.z - world.z

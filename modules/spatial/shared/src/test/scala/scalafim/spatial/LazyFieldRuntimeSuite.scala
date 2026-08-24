@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import image4s.geometry.{Affine, D3}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class LazyFieldRuntimeSuite extends munit.FunSuite:
@@ -20,12 +21,12 @@ class LazyFieldRuntimeSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
-      SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4))))
+      SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
     )
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def translation(x: Double): DMat =
-    DMat.fromRows(
+  private def translation(x: Double): Affine[D3] =
+    ProviderAffines.fromRows(
       Vector(
         Vector(1.0, 0.0, 0.0, x),
         Vector(0.0, 1.0, 0.0, 0.0),
@@ -43,7 +44,7 @@ class LazyFieldRuntimeSuite extends munit.FunSuite:
         kind = MorphismKind.Affine3D,
         routeTag = RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(translation(x)))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, translation(x)))
       )
     )
 

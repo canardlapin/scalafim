@@ -1,11 +1,15 @@
 package scalafim.surface.view.raster
 
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import intaglio.*
-import scalafim.image.DMat
 import scalafim.surface.*
 import scalafim.surface.view.*
 
 class SurfaceRasterizerSuite extends munit.FunSuite:
+  private def testAffine(rows: Vector[Vector[Double]]): Affine[D3] =
+    Affine.fromRowMajor[D3](rows.flatten).toOption.get
+
   test("CPU projection and signed network tubes render through the reference backend"):
     val plan = SurfaceFeatureFixture.plan
     val rendered = SurfaceRasterizer.render(plan, RasterDimensions.unsafe(160, 160)).toOption.get
@@ -28,7 +32,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     vertices: Seq[Seq[Double]],
     faces: Seq[(Int, Int, Int)],
     hemisphere: Hemisphere = Hemisphere.Left,
-    transform: DMat = DMat.eye(4)
+    transform: Affine[D3] = Affine.identity[D3]
   ): SurfaceGeometry =
     SurfaceGeometry(TriangleMesh.fromRows(vertices, faces), hemisphere, SurfaceKind.Inflated, transform)
 
@@ -115,7 +119,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
 
   test("world translation preserves framing, pixels, and picks"):
     val base = triangleGeometry()
-    val translation = DMat.fromRows(Vector(
+    val translation = testAffine(Vector(
       Vector(1.0, 0.0, 0.0, 10.0),
       Vector(0.0, 1.0, 0.0, 20.0),
       Vector(0.0, 0.0, 1.0, 30.0),

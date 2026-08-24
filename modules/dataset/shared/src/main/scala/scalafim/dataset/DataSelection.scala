@@ -1,7 +1,6 @@
 package scalafim.dataset
 
 import scalafim.image.{
-  GridCompatibility,
   Indexing,
   Mask,
   SampleSpaces,
@@ -13,6 +12,8 @@ import scalafim.image.SampleSpaces.*
 import scalafim.image.space
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.Grid
+import image4s.geometry.GridCongruence
 import image4s.locus.GridDomain
 import locus4s.Selection
 import locus4s.SpaceMismatch
@@ -136,10 +137,11 @@ object VoxelSelection:
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
       .flatMap: _ =>
-        GridCompatibility
-          .volume(shape.volumeSpace, domain.volumeSpace)
+        Grid
+          .exactCongruence(shape.grid, domain.grid)
           .left
-          .map(error => DatasetError.ShapeMismatch(error.message))
+          .map(DatasetError.Geometry.apply)
+          .map(_ => ())
       .flatMap: _ =>
         fromInts(selection.ordinals.toVector*)
 
@@ -268,20 +270,18 @@ object VoxelDomain:
     active(spatialSize, voxels).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def fromMask(mask: Mask.MaskVol, shape: DatasetShape): Either[DatasetError, VoxelDomain] =
-    GridCompatibility.spatial(shape.space, mask.space)
+    Grid
+      .exactCongruence(shape.grid, mask.grid)
       .left
-      .map(error => DatasetError.ShapeMismatch(error.message))
+      .map(DatasetError.Geometry.apply)
       .flatMap(_ => fromAlignedMask(mask, shape))
 
   def fromMask(
       mask: Mask.MaskVol,
       shape: DatasetShape,
-      congruence: scalafim.image.CertifiedGridCongruence
+      congruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
   ): Either[DatasetError, VoxelDomain] =
-    GridCompatibility
-      .acceptCertifiedSpatial(congruence, shape.space, mask.space)
-      .left
-      .map(error => DatasetError.ShapeMismatch(error.message))
+    bindGridCongruence(congruence, shape.grid, mask.grid)
       .flatMap(_ => fromAlignedMask(mask, shape))
 
   private def fromAlignedMask(

@@ -19,7 +19,8 @@ import scalafim.dataset.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.mvpa.*
-import scalafim.image.{DMat, SomeSampleSpace}
+import scalafim.image.SomeSampleSpace
+import gale.linalg.Matrix
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
@@ -51,7 +52,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         id = DatasetId("mvpa-demo"),
-        data = DMat.fromRows(rows),
+        data = Matrix.dense(rows.length, rows.head.length, rows.flatten),
         space = SampleSpaces(Vector(3, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))

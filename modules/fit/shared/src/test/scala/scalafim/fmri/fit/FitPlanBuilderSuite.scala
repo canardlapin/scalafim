@@ -8,7 +8,7 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.DMat as ImageDMat
+import scalafim.image.SomeSampleSpace
 
 class FitPlanBuilderSuite extends munit.FunSuite:
 
@@ -24,7 +24,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-ols-demo"),
-        ImageDMat.fromRows(rows),
+        GaleTestMatrix.fromRows(rows),
         SampleSpaces(Vector(2, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
@@ -60,7 +60,7 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId("builder-nuisance-demo"),
-        ImageDMat.fromRows(rows),
+        GaleTestMatrix.fromRows(rows),
         SampleSpaces(Vector(1, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(6), tr = Seq(1.0)),

@@ -1,7 +1,10 @@
 package scalafim.surface.io
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
+import image4s.geometry.GeometryError
 import scalafim.surface.*
+import scalafim.surface.gifti.GiftiError
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -22,9 +25,9 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     assertEquals(geom.hemisphere, Hemisphere.Left)
     assertEquals(geom.kind, SurfaceKind.Midthickness)
     assertEquals(geom.mesh.face(FaceId(0)), Triangle(VertexId(0), VertexId(1), VertexId(2)))
-    assertEqualsDouble(geom.surfaceToWorld(0, 3), 10.0, 1e-12)
-    assertEqualsDouble(geom.surfaceToWorld(1, 3), 20.0, 1e-12)
-    assertEqualsDouble(geom.surfaceToWorld(2, 3), 30.0, 1e-12)
+    assertEqualsDouble(geom.surfaceToWorld.matrix(0, 3), 10.0, 1e-12)
+    assertEqualsDouble(geom.surfaceToWorld.matrix(1, 3), 20.0, 1e-12)
+    assertEqualsDouble(geom.surfaceToWorld.matrix(2, 3), 30.0, 1e-12)
 
   test("read uses identity transform when CoordinateSystemTransformMatrix is absent"):
     withGiftiFile("sub-01_hemi-R_pial.surf.gii", giftiXml(includeTransform = false)) { path =>
@@ -32,7 +35,7 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
 
       assertEquals(geom.hemisphere, Hemisphere.Right)
       assertEquals(geom.kind, SurfaceKind.Pial)
-      assertEquals(geom.surfaceToWorld, DMat.eye(4))
+      assertEquals(geom.surfaceToWorld, Affine.identity[D3])
     }
 
   test("read rejects malformed POINTSET shapes with stable messages"):
@@ -72,6 +75,23 @@ class GiftiSurfaceReaderSuite extends munit.FunSuite:
     withGiftiFile("bad-transform.surf.gii", xml) { path =>
       interceptMessage[IllegalArgumentException]("invalid GIFTI DataArray: CoordinateSystemTransformMatrix must contain 16 values"):
         GiftiSurfaceReader.read(path)
+    }
+
+  test("geometry preserves the provider cause for a singular surface affine"):
+    val xml = giftiXml(includeTransform = true).replace("0 0 1 3", "0 0 0 3")
+
+    withGiftiFile("singular-transform.surf.gii", xml) { path =>
+      val document = GiftiReader.read(path).toOption.get
+      val error =
+        GiftiSurfaceReader
+          .geometry(document, Hemisphere.Left, SurfaceKind.Pial)
+          .left
+          .toOption
+          .get
+
+      error match
+        case GiftiError.Geometry(GeometryError.NonInvertibleAffine(_)) => ()
+        case other => fail(s"expected the exact provider geometry cause, got $other")
     }
 
   test("read accepts explicit hemisphere and kind metadata"):

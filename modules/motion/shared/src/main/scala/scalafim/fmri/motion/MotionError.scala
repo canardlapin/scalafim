@@ -1,7 +1,5 @@
 package scalafim.fmri.motion
 
-import scalafim.image.DMat
-
 enum MotionError:
   case InvalidScalar(name: String, value: Double, reason: String)
   case InvalidInt(name: String, value: Int, reason: String)
@@ -13,7 +11,6 @@ enum MotionError:
   case IncompleteFitCostTrace(missing: String)
   case NonFiniteData(name: String, index: Int)
   case InvalidMatrix(reason: String)
-  case SingularTransform(reason: String)
   case UnsupportedInterpolation(interpolation: Interpolation)
   case UnsupportedControl(name: String, reason: String)
   case NotImplemented(feature: String)
@@ -40,21 +37,9 @@ enum MotionError:
         s"$name contains non-finite value at linear index $index"
       case InvalidMatrix(reason) =>
         s"invalid rigid transform matrix: $reason"
-      case SingularTransform(reason) =>
-        s"singular rigid transform: $reason"
       case UnsupportedInterpolation(interpolation) =>
         s"unsupported interpolation for motion application: $interpolation"
       case UnsupportedControl(name, reason) =>
         s"unsupported motion control $name: $reason"
       case NotImplemented(feature) =>
         s"$feature is not implemented yet"
-
-object MotionError:
-  private[motion] def validateFiniteMatrix(matrix: DMat): Either[MotionError, Unit] =
-    if matrix.rows != 4 || matrix.cols != 4 then Left(MotionError.InvalidMatrix("matrix must be 4x4"))
-    else
-      var i = 0
-      while i < matrix.data.length do
-        if !matrix.data(i).isFinite then return Left(MotionError.InvalidMatrix("matrix contains non-finite values"))
-        i += 1
-      Right(())

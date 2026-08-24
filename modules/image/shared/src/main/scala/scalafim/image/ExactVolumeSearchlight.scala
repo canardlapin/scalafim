@@ -1,5 +1,7 @@
 package scalafim.image
 
+import SampleSpaces.*
+
 import image4s.ImageMetadata
 import image4s.Categorical
 import image4s.Continuous

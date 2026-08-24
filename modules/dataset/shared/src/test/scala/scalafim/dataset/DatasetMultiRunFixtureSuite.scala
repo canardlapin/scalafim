@@ -1,7 +1,8 @@
 package scalafim.dataset
 
+import gale.linalg.DMat
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class DatasetMultiRunFixtureSuite extends munit.FunSuite:
 
@@ -82,7 +83,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
         .open(
           backend = InMemoryDatasetBackend(
             id = DatasetId("sub-01-ses-01-rest"),
-            data = DMat.fromRows(
+            data = GaleTestData.matrixFromRows(
               Vector(
                 Vector(1.0, 2.0),
                 Vector(3.0, 4.0),
@@ -170,7 +171,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
       .open(
         backend = InMemoryDatasetBackend(
           id = DatasetId(id),
-          data = DMat.fromRows(
+          data = GaleTestData.matrixFromRows(
             Vector.tabulate(3) { time =>
               val value = base + time.toDouble * 10.0
               Vector(value, value + 1.0)

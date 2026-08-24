@@ -1,9 +1,11 @@
 package scalafim.fmri.workflow
 
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+import image4s.geometry.GridCongruence
 import scalafim.dataset.*
 import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
-import scalafim.image.CertifiedGridCongruence
-import scalafim.image.GridCompatibility
 import scalafim.image.Mask
 import scalafim.image.PrimitiveBuffers
 import scalafim.image.SomeScalarVolume
@@ -18,7 +20,7 @@ final case class OpenedFirstLevelUnit(
     unit: FirstLevelUnit,
     source: CompositeResponseBlockSource,
     mask: Mask.MaskVol,
-    maskCongruence: CertifiedGridCongruence
+    maskCongruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
 ):
   def backend(
       datasetId: DatasetId,
@@ -40,10 +42,10 @@ object FirstLevelUnitSource:
   ): Either[DatasetError, OpenedFirstLevelUnit] =
     for
       mask <- readMask(unit.mask)
-      maskCongruence <- GridCompatibility
-        .certifySpatialCongruence(unit.shape.space, mask.space, 1e-6)
+      maskCongruence <- Grid
+        .approximateCongruence(unit.shape.grid, mask.grid, 1e-6)
         .left
-        .map(_ => DatasetError.ShapeMismatch("unit mask does not match catalog geometry"))
+        .map(DatasetError.Geometry.apply)
       voxelDomain <- VoxelDomain.fromMask(mask, unit.shape, maskCongruence)
       openedRuns <- traverse(unit.runs) { run =>
         for
@@ -58,29 +60,26 @@ object FirstLevelUnitSource:
         openedRuns.map(_._2),
         metadata
       )
-      _ <-
-        if sameShape(composite.shape, unit.shape) then Right(())
-        else Left(DatasetError.ShapeMismatch("opened run sources do not match catalog unit shape"))
+      _ <- validateSameShape(composite.shape, unit.shape)
     yield OpenedFirstLevelUnit(unit, composite, mask, maskCongruence)
 
   private def validateRunSource(
       unit: FirstLevelUnit,
       run: RunInput,
       source: NiftiResponseBlockSource
-  ): Either[DatasetError, CertifiedGridCongruence] =
+  ): Either[
+    DatasetError,
+    GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]
+  ] =
     for
-      congruence <- GridCompatibility
-        .certifySpatialCongruence(
-          unit.shape.space,
-          source.shape.space,
+      congruence <- Grid
+        .approximateCongruence(
+          unit.shape.grid,
+          source.shape.grid,
           1e-6
         )
         .left
-        .map(_ =>
-          DatasetError.ShapeMismatch(
-            s"run '${run.id.value}' geometry differs from its catalog unit"
-          )
-        )
+        .map(DatasetError.Geometry.apply)
       _ <-
         if source.shape.timepoints != run.timepoints then
           Left(
@@ -116,20 +115,15 @@ object FirstLevelUnitSource:
     else
       val first = masks.head
       val alignments =
-        masks.tail.foldLeft[Either[DatasetError, Vector[CertifiedGridCongruence]]](
-          Right(Vector.empty)
-        ): (acc, mask) =>
-          for
-            collected <- acc
-            alignment <- GridCompatibility
-              .certifySpatialCongruence(first.space, mask.space, 1e-6)
-              .left
-              .map(_ =>
-                DatasetError.ShapeMismatch(
-                  "run masks have incompatible geometry"
-                )
-              )
-          yield collected :+ alignment
+        masks.tail.foldLeft[Either[DatasetError, Unit]](Right(())):
+          (acc, mask) =>
+            for
+              _ <- acc
+              _ <- Grid
+                .approximateCongruence(first.grid, mask.grid, 1e-6)
+                .left
+                .map(DatasetError.Geometry.apply)
+            yield ()
       alignments.map: _ =>
         val indices = Array.newBuilder[Int]
         var voxel = 0
@@ -156,9 +150,18 @@ object FirstLevelUnitSource:
             )
           )
 
-  private def sameShape(expected: DatasetShape, actual: DatasetShape): Boolean =
-    expected.timepoints == actual.timepoints &&
-      GridCompatibility.exact(expected.space, actual.space).isRight
+  private def validateSameShape(
+      expected: DatasetShape,
+      actual: DatasetShape
+  ): Either[DatasetError, Unit] =
+    if expected.timepoints != actual.timepoints then
+      Left(DatasetError.ShapeMismatch("opened run sources do not match catalog unit timepoints"))
+    else
+      Grid
+        .exactCongruence(expected.grid, actual.grid)
+        .left
+        .map(DatasetError.Geometry.apply)
+        .map(_ => ())
 
   private def filePath(location: ArtifactLocation): Either[DatasetError, Path] =
     try

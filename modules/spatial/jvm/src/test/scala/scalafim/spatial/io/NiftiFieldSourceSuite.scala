@@ -1,7 +1,9 @@
 package scalafim.spatial.io
 
+import image4s.geometry.GeometryError
 import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.{SampleSpaceError, SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.spatial.{ProviderAffines, ProviderAxes}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
@@ -40,7 +42,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("lazy runtime reads one exact NIfTI support block and closes its channel"):
     withNiftiPath { path =>
-      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 3, label = "bold"))
       val field = spatialValue(Field.fromSource(domain, source))
@@ -53,7 +55,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
       val values = PrimitiveBuffers.fromArray(Array(0.0, 10.0, 20.0, 1.0, 11.0, 21.0, 2.0, 12.0, 22.0, 3.0, 13.0, 23.0))
       Nifti
-        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(3, Some(Axis.Time)), "bold"))
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(ProviderAxes.time(3)), "bold"))
         .fold(error => fail(error.message), _ => ())
       val runtime = LazyFieldRuntime(summon[SpatialGraph])
       given FieldRuntime = runtime
@@ -80,7 +82,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
   test("big-endian int16 fixtures preserve byte order, scaling, and request order"):
     withNiftiPath { path =>
       writeBigEndianInt16(path)
-      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 2))
       val request = spatialValue(
@@ -99,7 +101,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("terminal validation reports unavailable, stale, and geometry-mismatched NIfTI roots"):
     withNiftiPath { path =>
-      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
       val field = spatialValue(Field.fromSource(domain, source))
@@ -115,7 +117,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
       val values = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
       Nifti
-        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(1, Some(Axis.Time))))
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(ProviderAxes.time(1))))
         .fold(error => fail(error.message), _ => ())
       assertEquals(apiValue(field.value).toRows, Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
       Files.write(path, Array(0.toByte), APPEND)
@@ -128,11 +130,11 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
     }
 
     withNiftiPath { path =>
-      val identity = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val identity = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
       val translated = SampleSpaces(
         Vector(4, 1, 1),
-        trans = Some(
-          DMat.fromRows(
+        affine = Some(
+          ProviderAffines.fromRows(
             Vector(
               Vector(1.0, 0.0, 0.0, 5.0),
               Vector(0.0, 1.0, 0.0, 0.0),
@@ -147,16 +149,71 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
           path,
           SomeScalarSeries.unsafeCopyFromCanonicalArray(
             PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
-            identity.addDim(1, Some(Axis.Time))
+            identity.addDim(ProviderAxes.time(1))
           )
         )
         .fold(error => fail(error.message), _ => ())
       val domain = volumeDomain("translated", translated)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
 
-      assertEquals(source.validate().left.toOption, Some(SpatialError.FieldSourceGeometryMismatch(source.descriptor.id)))
+      assertEquals(
+        source.validate().left.toOption,
+        Some(
+          SpatialError.FieldSourceGridMismatch(
+            source.descriptor.id,
+            GeometryError.GridsNotCongruent(0.0)
+          )
+        )
+      )
       assertEquals(source.stats.channelOpens, 0L)
     }
+
+  test("NIfTI validation preserves an exact D2 sample-space admission failure"):
+    withNiftiPath { path =>
+      writeTwoDimensionalFloat32(path)
+      val domain = volumeDomain("d2-header", SampleSpaces(Vector(2, 2, 1)))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
+      val cause =
+        SampleSpaceError.ExpectedDimensionality(
+          "D3 sample space",
+          expected = 3,
+          actual = 2
+        )
+
+      assertEquals(
+        source.validate().left.toOption,
+        Some(SpatialError.FieldSourceSampleSpaceAdmission(source.descriptor.id, cause))
+      )
+      assertEquals(source.stats.channelOpens, 0L)
+    }
+
+  private def writeTwoDimensionalFloat32(path: Path): Unit =
+    val values = Array(1.0f, 2.0f, 3.0f, 4.0f)
+    val bytes = Array.ofDim[Byte](352 + values.length * 4)
+    val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+    buffer.putInt(0, 348)
+    buffer.putShort(40, 2.toShort)
+    buffer.putShort(42, 2.toShort)
+    buffer.putShort(44, 2.toShort)
+    buffer.putShort(70, 16.toShort)
+    buffer.putShort(72, 32.toShort)
+    buffer.putFloat(76, 1.0f)
+    buffer.putFloat(80, 1.0f)
+    buffer.putFloat(84, 1.0f)
+    buffer.putFloat(108, 352.0f)
+    buffer.putShort(254, 1.toShort)
+    buffer.putFloat(280, 1.0f)
+    buffer.putFloat(300, 1.0f)
+    buffer.putFloat(320, 1.0f)
+    val magic = "n+1".getBytes(StandardCharsets.US_ASCII)
+    buffer.put(344, magic(0))
+    buffer.put(345, magic(1))
+    buffer.put(346, magic(2))
+    var i = 0
+    while i < values.length do
+      buffer.putFloat(352 + i * 4, values(i))
+      i += 1
+    Files.write(path, bytes)
 
   private def writeBigEndianInt16(path: Path): Unit =
     val values = Array[Short](1, 2, 3, 4, 5, 6, 7, 8)

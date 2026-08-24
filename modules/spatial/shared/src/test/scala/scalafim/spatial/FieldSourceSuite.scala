@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import image4s.geometry.GeometryError
+import scalafim.image.{SampleSpaceError, SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class FieldSourceSuite extends munit.FunSuite:
@@ -20,7 +21,7 @@ class FieldSourceSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
-      SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4))))
+      SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity)))
     )
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
@@ -92,6 +93,32 @@ class FieldSourceSuite extends munit.FunSuite:
     assertEquals(source.requests.length, 1)
     assertEquals(runtime.stats.resultCacheHits, 0L)
 
+  test("field runtime preserves typed source sample-space admission failures"):
+    val root = volumeDomain("sample-space-admission")
+    given SpatialGraph = spatialValue(SpatialGraph.build(Vector(root), Vector.empty))
+    val source = RecordingFieldSource(descriptor(root), rootData)
+    val cause =
+      SampleSpaceError.ExpectedDimensionality(
+        "D3 sample space",
+        expected = 3,
+        actual = 2
+      )
+    source.validationFailure = Some(
+      SpatialError.FieldSourceSampleSpaceAdmission(source.descriptor.id, cause)
+    )
+    val field = spatialValue(Field.fromSource(root, source))
+    given FieldRuntime = LazyFieldRuntime(summon[SpatialGraph])
+
+    assertEquals(
+      field.value.left.toOption,
+      Some(
+        FieldApiError.Spatial(
+          SpatialError.FieldSourceSampleSpaceAdmission(source.descriptor.id, cause)
+        )
+      )
+    )
+    assertEquals(source.requests, Vector.empty)
+
   test("source construction validates root domain, geometry, and shape without reading"):
     val expected = volumeDomain("expected")
     val other = volumeDomain("other")
@@ -116,7 +143,12 @@ class FieldSourceSuite extends munit.FunSuite:
     val wrongGeometry = RecordingFieldSource(wrongGeometryDescriptor, rootData)
     assertEquals(
       Field.fromSource(expected, wrongGeometry).left.toOption,
-      Some(SpatialError.FieldSourceGeometryMismatch(wrongGeometry.descriptor.id))
+      Some(
+        SpatialError.FieldSourceGridMismatch(
+          wrongGeometry.descriptor.id,
+          GeometryError.GridsNotCongruent(0.0)
+        )
+      )
     )
     assertEquals(wrongDomain.validationCalls, 0)
     assertEquals(wrongGeometry.validationCalls, 0)

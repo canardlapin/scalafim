@@ -4,6 +4,7 @@ import gale.linalg.DMat
 import gale.linalg.Matrix
 import gale.sparse.CSR
 import gale.sparse.Sparse
+import image4s.geometry.{Affine, D3}
 
 private[dataset] object GaleTestData:
   def matrixFromRows(rows: Seq[Seq[Double]]): DMat =
@@ -26,6 +27,11 @@ private[dataset] object GaleTestData:
     Vector.tabulate(matrix.rows) { row =>
       Vector.tabulate(matrix.cols) { col => matrix(row, col) }
     }
+
+  def affineD3(matrix: DMat): Affine[D3] =
+    Affine
+      .fromRowMajor[D3](matrix.valuesRowMajor)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   def csrFromTriplets(
       rows: Int,

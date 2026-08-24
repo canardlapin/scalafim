@@ -1,5 +1,6 @@
 package scalafim.dataset
 
+import image4s.geometry.GeometryError
 import munit.FunSuite
 import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
 
@@ -23,7 +24,7 @@ class ResponseBlockSourceSuite extends FunSuite:
     assertEquals(block.timepoints, Vector(3, 0, 2))
     assertEquals(block.voxelIndices, Vector(2, 0))
     assertMatrixEquals(
-      block.data.toRows,
+      GaleTestData.toRows(block.data),
       Vector(
         Vector(112.0, 110.0),
         Vector(2.0, 0.0),
@@ -80,7 +81,9 @@ class ResponseBlockSourceSuite extends FunSuite:
         mask
       )
 
-    assert(result.left.exists(_.message.contains("grid mismatch")))
+    result match
+      case Left(DatasetError.Geometry(GeometryError.GridsNotCongruent(0.0))) => ()
+      case other => fail(s"expected provider grid-congruence failure, found $other")
   }
 
   private final class RecordingSource(

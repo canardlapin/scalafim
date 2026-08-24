@@ -72,7 +72,7 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("shape.timepoints", backend.shape.timepoints == rows.length, s"actual=${backend.shape.timepoints} expected=${rows.length}"),
         ScenarioHarness.fact("shape.spatial_dims", backend.shape.spatialDims == Vector(2, 2, 1), s"actual=${backend.shape.spatialDims}"),
         ScenarioHarness.fact("metadata.scenario", series.metadata.get("scenario").contains(scenarioId), s"metadata=${series.metadata.values}"),
-        ScenarioHarness.finite("series.values", series.data.data.toIndexedSeq)
+        ScenarioHarness.finite("series.values", series.data.valuesRowMajor.toIndexedSeq)
       ) ++
         ScenarioHarness.matrix("series.selected", series.data, expected, ScenarioTolerance.absolute(1e-10))
     )

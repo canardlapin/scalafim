@@ -1,9 +1,19 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import gale.linalg.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
+
 object SpaceUtils:
 
   final case class Bounds(min: Vector[Double], max: Vector[Double])
-  final case class AlignedSpace(shape: Vector[Int], affine: DMat, bounds: Bounds)
+  final case class AlignedSpace(
+      shape: Vector[Int],
+      affine: Affine[D3],
+      bounds: Bounds
+  )
 
   enum IndexBase:
     case R, Zero
@@ -18,13 +28,16 @@ object SpaceUtils:
     outputAlignedSpace(space, Some(Vector(voxelSize)))
 
   def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Option[Vector[Double]]): AlignedSpace =
-    outputAlignedSpace(space.dims, space.trans, voxelSizes)
+    val affine =
+      space.affineD3
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    outputAlignedSpace(space.dims, affine, voxelSizes)
 
   def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem]): AlignedSpace =
     outputAlignedSpace(vol.space, None)
 
   def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
-    outputAlignedSpace(vol.space, voxelSizes)
+    outputAlignedSpace(vol.space.dims, vol.grid.indexToFrame, voxelSizes)
 
   @scala.annotation.targetName("outputAlignedNeuroSeries")
   def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem]): AlignedSpace =
@@ -32,24 +45,27 @@ object SpaceUtils:
 
   @scala.annotation.targetName("outputAlignedNeuroSeriesWithVoxelSizes")
   def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
-    outputAlignedSpace(vec.space, voxelSizes)
+    outputAlignedSpace(vec.space.dims, vec.grid.indexToFrame, voxelSizes)
 
-  def outputAlignedSpace(shape: Vector[Int], affine: DMat): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3]): AlignedSpace =
     outputAlignedSpace(shape, affine, None)
 
-  def outputAlignedSpace(shape: Vector[Int], affine: DMat, voxelSizes: Vector[Double]): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSizes: Vector[Double]): AlignedSpace =
     outputAlignedSpace(shape, affine, Some(voxelSizes))
 
-  def outputAlignedSpace(shape: Vector[Int], affine: DMat, voxelSize: Double): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSize: Double): AlignedSpace =
     outputAlignedSpace(shape, affine, Some(Vector(voxelSize)))
 
-  def outputAlignedSpace(shape: Vector[Int], affine: DMat, voxelSizes: Option[Vector[Double]]): AlignedSpace =
+  def outputAlignedSpace(
+      shape: Vector[Int],
+      affine: Affine[D3],
+      voxelSizes: Option[Vector[Double]]
+  ): AlignedSpace =
     require(shape.nonEmpty, "shape must have at least one dimension")
     require(shape.forall(_ > 0), "shape must contain positive dimensions")
 
     val nAxes = math.min(3, shape.length)
     val spatialShape = shape.take(nAxes)
-    val aff4 = asAffine4(affine, nAxes)
     val outVox = normalizeVoxelSizes(voxelSizes, nAxes)
 
     val nCorners = 1 << nAxes
@@ -62,7 +78,9 @@ object SpaceUtils:
         }
       }
 
-    val worldCorners = Affine.applyAffines(aff4, corners)
+    val worldCorners = corners.map: corner =>
+      affine(corner)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
     val mins = Vector.tabulate(3)(axis => worldCorners.map(_(axis)).min)
     val maxs = Vector.tabulate(3)(axis => worldCorners.map(_(axis)).max)
     val fullShape =
@@ -71,16 +89,18 @@ object SpaceUtils:
       }
     val outShape = fullShape.take(nAxes)
     val outAffine =
-      DMat.fromRows(
-        Vector.tabulate(4) { r =>
-          Vector.tabulate(4) { c =>
+      Affine
+        .fromRowMajor[D3](
+          Vector.tabulate(16) { flat =>
+            val r = flat / 4
+            val c = flat % 4
             if r < 3 && c < 3 && r == c then outVox(r)
             else if r < 3 && c == 3 then mins(r)
             else if r == 3 && c == 3 then 1.0
             else 0.0
           }
-        }
-      )
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
 
     AlignedSpace(outShape, outAffine, Bounds(mins, maxs))
 
@@ -121,13 +141,15 @@ object SpaceUtils:
     }
 
     val keptAxes = Vector(0, 1, 2, 3).filterNot(_ == axis0)
-    DMat.fromRows(
-      Vector.tabulate(4) { r =>
-        Vector.tabulate(3) { c =>
+    DMat.dense(
+      4,
+      3,
+      Vector.tabulate(12) { flat =>
+          val r = flat / 3
+          val c = flat % 3
           if r == axis0 && c == 2 then index0.toDouble
           else if keptAxes(c) == r then 1.0
           else 0.0
-        }
       }
     )
 
@@ -139,25 +161,6 @@ object SpaceUtils:
     axisBase: IndexBase = IndexBase.Zero
   ): DMat =
     sliceToVolumeAffine(index, axis, shape, indexBase, axisBase)
-
-  private def asAffine4(affine: DMat, nAxes: Int): DMat =
-    if affine.rows == 4 && affine.cols == 4 then affine
-    else
-      val expected = nAxes + 1
-      require(
-        affine.rows == expected && affine.cols == expected,
-        "affine must be 4x4 or (nAxes + 1) square"
-      )
-      DMat.fromRows(
-        Vector.tabulate(4) { r =>
-          Vector.tabulate(4) { c =>
-            if r < nAxes && c < nAxes then affine(r, c)
-            else if r < nAxes && c == 3 then affine(r, expected - 1)
-            else if r == c then 1.0
-            else 0.0
-          }
-        }
-      )
 
   private def normalizeVoxelSizes(voxelSizes: Option[Vector[Double]], nAxes: Int): Vector[Double] =
     voxelSizes match
@@ -194,13 +197,13 @@ object Deoblique:
           newgrid.getOrElse(space.spacing.take(3).min)
         require(voxelSize.isFinite && voxelSize > 0.0, "newgrid must be positive and finite")
         val aligned = SpaceUtils.outputAlignedSpace(space, voxelSize)
-        val spacing = Vector.tabulate(3)(i => aligned.affine(i, i))
-        val origin = Vector.tabulate(3)(i => aligned.affine(i, 3))
+        val spacing = Vector.tabulate(3)(i => aligned.affine.matrix(i, i))
+        val origin = Vector.tabulate(3)(i => aligned.affine.matrix(i, 3))
         SampleSpaces(
           dims = aligned.shape,
           spacing = Some(spacing),
           origin = Some(origin),
-          trans = Some(aligned.affine)
+          affine = Some(aligned.affine)
         )
 
   def apply(space: SomeSampleSpace): SomeSampleSpace =

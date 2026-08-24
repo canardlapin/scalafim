@@ -2,7 +2,8 @@ package scalafim.dataset
 
 import ravel.Array1
 import scalafim.image.Mask
-import scalafim.image.{asVolumeSpace, space}
+import scalafim.image.SampleSpaces
+import scalafim.image.space
 
 final class VoxelSampleMap private (
     val sampleVoxels: Vector[VoxelIndex],
@@ -41,8 +42,8 @@ object VoxelSampleMap:
       expectedSamples: Int
   ): Either[DatasetError, VoxelSampleMap] =
     for
-      volume <- mask.space.asVolumeSpace.left.map(DatasetError.InvalidSpace.apply)
-      map <- fromMaskIndices(Mask.indices(mask), volume.nVoxels, expectedSamples)
+      volume <- SampleSpaces.requireVolumeD3(mask.space).left.map(DatasetError.InvalidSpace.apply)
+      map <- fromMaskIndices(Mask.indices(mask), volume.grid.shape.product, expectedSamples)
     yield map
 
   private def fromMaskIndices(

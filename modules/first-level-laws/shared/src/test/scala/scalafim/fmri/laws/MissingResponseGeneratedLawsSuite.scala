@@ -18,7 +18,7 @@ import scalafim.fmri.model.{
   MissingDataPolicy,
   ModelBuildSpec
 }
-import scalafim.image.{DMat as ImageDMat, SampleSpaces}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
 
@@ -209,7 +209,7 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
     val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId(s"missing-response-law-${generated.seed}-${generated.rows}-${generated.voxels}"),
-        ImageDMat.fromRows(responseRows),
+        scalafim.fmri.fit.GaleTestMatrix.fromRows(responseRows),
         SampleSpaces(Vector(generated.voxels, 1, 1))
       ),
       samplingFrame = sampling,

@@ -2,6 +2,7 @@ package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
 import scalafim.image.*
+import scalafim.image.SampleSpaces.*
 
 class VolreggerParitySuite extends munit.FunSuite:
 
@@ -9,11 +10,11 @@ class VolreggerParitySuite extends munit.FunSuite:
 
   private def run1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "volregger-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(ProviderAxes.time(values.length)), "volregger-fixture")
 
   private def lineRun(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(values.length, 1, 1)).addDim(1, Some(Axis.Time)), "volregger-apply-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(values.length, 1, 1)).addDim(ProviderAxes.time(1)), "volregger-apply-fixture")
 
   private def allMask(space: SomeSampleSpace): SomeMaskVolume =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
@@ -36,7 +37,7 @@ class VolreggerParitySuite extends munit.FunSuite:
         data(i * nt + t) = frame(i)
         t += 1
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(nt, Some(Axis.Time)), "volregger-estimator-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(nt)), "volregger-estimator-fixture")
 
   private def baseValueAt(x: Double, y: Double, z: Double): Double =
     val dx = x - 3.0
@@ -76,7 +77,7 @@ class VolreggerParitySuite extends munit.FunSuite:
       data(i * nt) = fixed(i)
       data(i * nt + 1) = moving(i)
       i += 1
-    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(nt, Some(Axis.Time)), "volregger-translation-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(ProviderAxes.time(nt)), "volregger-translation-fixture")
 
   private def translationEstimatorMask(space: SomeSampleSpace): SomeMaskVolume =
     val dims = space.spatialDims
@@ -146,8 +147,8 @@ class VolreggerParitySuite extends munit.FunSuite:
 
   test("pose matrix and inverse match volregger homogeneous transform convention") {
     val pose = poseFrom(fixture.doubles("pose"))
-    val matrix = pose.toMatrix
-    val inverse = pose.inverse.fold(err => fail(err.message), identity).toMatrix
+    val matrix = pose.toAffine.matrix
+    val inverse = pose.inverse.fold(err => fail(err.message), identity).toAffine.matrix
     val expectedMatrix = fixture.doubles("matrix_row_major")
     val expectedInverse = fixture.doubles("inverse_row_major")
 

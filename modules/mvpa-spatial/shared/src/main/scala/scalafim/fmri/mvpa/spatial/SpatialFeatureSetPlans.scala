@@ -10,12 +10,10 @@ import scalafim.image.{
   SearchlightRadius,
   SomeLabelVolume,
   GridDomain,
-  VolumeNeighborhoods,
-  VolumeSpace
+  VolumeNeighborhoods
 }
 import scalafim.image.SomeNeuroVolume.*
 import scalafim.image.SampleSpaces.*
-import scalafim.image.VolumeSpace.*
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 import locus4s.DomainRegistry
 import locus4s.Index
@@ -51,7 +49,7 @@ object SpatialFeatureSetPlans:
       regionalPlan(
         name,
         SpatialFeatureDomain.VolumeLabels(
-          labels.volumeSpace.toSampleSpace,
+          labels.sampleSpace,
           background
         ),
         sets
@@ -309,13 +307,9 @@ object SpatialFeatureSetPlans:
       label: String
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     for
-      volumeSpace <- VolumeSpace
-        .fromSpatialPart(mask.space)
-        .left
-        .map(error => SpatialPlanError.AdapterFailure("mask space", error.message))
       packedDomain <- GridDomain
         .register(
-          volumeSpace.sampleSpace.grid,
+          mask.grid,
           "MVPA searchlight voxels",
           DomainRegistry.empty
         )

@@ -1,12 +1,12 @@
 package scalafim.latent
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat}
 import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
 
 class SharedBasisEncoderSuite extends munit.FunSuite:
   private val loadings =
-    ImageDMat.fromRows(
+    GaleArchiveTestData.matrixFromRows(
       Vector(
         Vector(1.0, 0.0),
         Vector(1.0, 1.0),

@@ -1,6 +1,12 @@
 package scalafim.dataset
 
-import scalafim.image.{CertifiedGridCongruence, DMat, GridCompatibility, Mask, SomeSampleSpace, PrimitiveBuffers}
+import image4s.SampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+import image4s.geometry.GridCongruence
+import gale.linalg.DMat
+import scalafim.image.{Mask, PrimitiveBuffers}
 import scalafim.image.space
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
@@ -120,23 +126,24 @@ object CompositeResponseBlockSource:
         Left(DatasetError.StorageFailure(s"composite response source has duplicate run ids: ${duplicateIds.mkString(", ")}"))
       else
         val first = runs.head.source
-        val incompatibleSpace =
-          runs.tail.find: run =>
-            GridCompatibility
-              .exact(run.source.shape.space, first.shape.space)
-              .isLeft
+        val compatibleSpace =
+          runs.tail.foldLeft[Either[DatasetError, Unit]](Right(())):
+            (result, run) =>
+              result.flatMap: _ =>
+                Grid
+                  .exactCongruence(first.shape.grid, run.source.shape.grid)
+                  .left
+                  .map(DatasetError.Geometry.apply)
+                  .map(_ => ())
         val incompatibleVoxels = runs.tail.find(_.source.voxelDomain.indices != first.voxelDomain.indices)
-        incompatibleSpace match
-          case Some(run) =>
-            Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' has incompatible spatial geometry"))
-          case None =>
-            incompatibleVoxels match
-              case Some(run) =>
-                Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' has an incompatible voxel domain"))
-              case None =>
-                DatasetShape
-                  .make(first.shape.space, runs.map(_.source.shape.timepoints).sum)
-                  .map(shape => new CompositeResponseBlockSource(runs, shape, first.voxelDomain, metadata))
+        compatibleSpace.flatMap: _ =>
+          incompatibleVoxels match
+            case Some(run) =>
+              Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' has an incompatible voxel domain"))
+            case None =>
+              DatasetShape
+                .make(first.shape.space, runs.map(_.source.shape.timepoints).sum)
+                .map(shape => new CompositeResponseBlockSource(runs, shape, first.voxelDomain, metadata))
 
   def unsafe(
       runs: Vector[RunResponseBlockSource],
@@ -146,8 +153,8 @@ object CompositeResponseBlockSource:
 
   def makeCongruent(
       runs: Vector[RunResponseBlockSource],
-      referenceSpace: SomeSampleSpace,
-      congruences: Vector[CertifiedGridCongruence],
+      referenceSpace: SampleSpace[? <: Frame[D3], D3],
+      congruences: Vector[GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]]],
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, CompositeResponseBlockSource] =
     if runs.isEmpty then Left(DatasetError.StorageFailure("composite response source requires at least one run"))
@@ -164,28 +171,25 @@ object CompositeResponseBlockSource:
       if duplicateIds.nonEmpty then
         Left(DatasetError.StorageFailure(s"composite response source has duplicate run ids: ${duplicateIds.mkString(", ")}"))
       else
-        val incompatibleSpace =
-          runs.zip(congruences).find: (run, certificate) =>
-            GridCompatibility
-              .acceptCertifiedSpatial(
-                certificate,
-                referenceSpace,
-                run.source.shape.space
-              )
-              .isLeft
+        val boundCongruences =
+          runs.zip(congruences).foldLeft[Either[DatasetError, Unit]](Right(())):
+            case (result, (run, congruence)) =>
+              result.flatMap: _ =>
+                bindGridCongruence(
+                  congruence,
+                  referenceSpace.grid,
+                  run.source.shape.grid
+                )
         val first = runs.head.source
         val incompatibleVoxels = runs.tail.find(_.source.voxelDomain.indices != first.voxelDomain.indices)
-        incompatibleSpace match
-          case Some((run, _)) =>
-            Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' lacks a valid spatial-grid certificate"))
-          case None =>
-            incompatibleVoxels match
-              case Some(run) =>
-                Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' has an incompatible voxel domain"))
-              case None =>
-                DatasetShape
-                  .make(referenceSpace, runs.map(_.source.shape.timepoints).sum)
-                  .map(shape => new CompositeResponseBlockSource(runs, shape, first.voxelDomain, metadata))
+        boundCongruences.flatMap: _ =>
+          incompatibleVoxels match
+            case Some(run) =>
+              Left(DatasetError.ShapeMismatch(s"run '${run.runId.value}' has an incompatible voxel domain"))
+            case None =>
+              DatasetShape
+                .make(referenceSpace, runs.map(_.source.shape.timepoints).sum)
+                .map(shape => new CompositeResponseBlockSource(runs, shape, first.voxelDomain, metadata))
 
 final class ResponseBlockDatasetBackend private (
     val id: DatasetId,
@@ -206,10 +210,10 @@ object ResponseBlockDatasetBackend:
       mask: Mask.MaskVol,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, ResponseBlockDatasetBackend] =
-    GridCompatibility
-      .spatial(source.shape.space, mask.space)
+    Grid
+      .exactCongruence(source.shape.grid, mask.grid)
       .left
-      .map(error => DatasetError.ShapeMismatch(error.message))
+      .map(DatasetError.Geometry.apply)
       .map: _ =>
         new ResponseBlockDatasetBackend(
           id = id,
@@ -233,13 +237,10 @@ object ResponseBlockDatasetBackend:
       id: DatasetId,
       source: ResponseBlockSource,
       mask: Mask.MaskVol,
-      congruence: CertifiedGridCongruence,
+      congruence: GridCongruence[D3, ? <: Frame[D3], ? <: Frame[D3]],
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, ResponseBlockDatasetBackend] =
-    GridCompatibility
-      .acceptCertifiedSpatial(congruence, source.shape.space, mask.space)
-      .left
-      .map(error => DatasetError.ShapeMismatch(error.message))
+    bindGridCongruence(congruence, source.shape.grid, mask.grid)
       .map: _ =>
         new ResponseBlockDatasetBackend(
           id = id,
@@ -257,4 +258,9 @@ private[dataset] def matrixFromRowMajor(
 ): DMat =
   require(rows > 0 && cols > 0, "response block matrix dimensions must be positive")
   require(values.length == rows * cols, "response block data must match matrix dimensions")
-  DMat.fromRowMajorOwned(rows, cols, values)
+  val builder = DMat.newBuilder(rows, cols)
+  var index = 0
+  while index < values.length do
+    builder.updateRowMajor(index, values(index))
+    index += 1
+  builder.result()

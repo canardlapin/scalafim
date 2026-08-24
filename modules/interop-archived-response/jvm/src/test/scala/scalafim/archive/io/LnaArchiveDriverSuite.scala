@@ -20,7 +20,9 @@ import scalafim.archive.lna.{
   Payload,
   QuantParams
 }
-import scalafim.image.{DMat, SomeSampleSpace}
+import gale.linalg.DMat
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 
 import java.nio.file.Files
 import scala.concurrent.Future
@@ -28,7 +30,7 @@ import scala.concurrent.Future
 class LnaArchiveDriverSuite extends munit.FunSuite:
   test("eager HDF5 driver exposes pure revision and typed whole-payload execution"):
     val data =
-      DMat.fromRows(Vector(
+      GaleArchiveTestData.matrixFromRows(Vector(
         Vector(0.0, 1.0, 2.0, 3.0),
         Vector(4.0, 5.0, 6.0, 7.0),
         Vector(8.0, 9.0, 10.0, 11.0)

@@ -4,7 +4,8 @@ import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.spatialDims
 
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.archive.lna.GaleArchiveTestData
+import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 class LatentEncoderSuite extends munit.FunSuite:
@@ -230,7 +231,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
   test("shared spatial basis specs match direct shared-basis encoder and archive helpers") {
     val loadings =
-      ImageDMat.fromRows(
+      GaleArchiveTestData.matrixFromRows(
         Vector(
           Vector(1.0, 0.0),
           Vector(1.0, 1.0),
@@ -386,7 +387,7 @@ class LatentEncoderSuite extends munit.FunSuite:
     )
 
   private def spatialDataFrom(
-      loadings: ImageDMat,
+      loadings: DMat,
       coefficients: Vector[Vector[Double]],
       offset: Vector[Double]
   ): DMat =

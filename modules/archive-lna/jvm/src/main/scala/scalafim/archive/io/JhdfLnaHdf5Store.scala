@@ -4,7 +4,7 @@ import io.jhdf.HdfFile
 import io.jhdf.api.{Attribute, Dataset, WritableGroup}
 import scalafim.archive.{ArchiveError, ArchivePath, ArchiveStorageFormatId}
 import scalafim.archive.lna.*
-import scalafim.image.DMat
+import gale.linalg.DMat
 
 import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, ByteOrder}
@@ -164,7 +164,7 @@ object JhdfLnaHdf5Store extends LnaHdf5Store:
     val rows = ref.dims(0)
     val cols = ref.dims(1)
     flatDoubles(dataset, ref).map { values =>
-      Payload.DoubleMatrix(DMat.fromRows(Vector.tabulate(rows)(r => Vector.tabulate(cols)(c => values(r * cols + c)))), dtype)
+      Payload.DoubleMatrix(DMat.tabulate(rows, cols)((row, column) => values(row * cols + column)), dtype)
     }
 
   private def doubleVectorPayload(dataset: Dataset, ref: DatasetRef, dtype: LnaDType): Either[ArchiveError, Payload] =

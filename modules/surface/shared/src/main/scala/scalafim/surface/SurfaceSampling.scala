@@ -1,5 +1,7 @@
 package scalafim.surface
 
+import scalafim.image.SampleSpaces.*
+
 import scalafim.image.*
 import scala.util.control.NonFatal
 
@@ -86,7 +88,10 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   private def worldPoint(surface: SurfaceGeometry, vertex: VertexId): Vector[Double] =
     val point = surface.mesh.vertex(vertex)
-    Affine.applyAffine(surface.surfaceToWorld, Vector(point.x, point.y, point.z))
+    surface.surfaceToWorld(Vector(point.x, point.y, point.z)).fold(
+      error => throw new IllegalStateException(error.message),
+      identity
+    )
 
   private def sampleValues(
     volume: SomeScalarVolume[Double],
@@ -120,8 +125,10 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
         counts.toVector.minBy { case (value, count) => (-count, value) }._1
 
   private def validateMask(volume: SomeScalarVolume[Double], mask: SomeMaskVolume): Unit =
-    require(mask.space.spatialDims == volume.space.spatialDims, "mask/volume space mismatch")
-    require(mask.space.trans == volume.space.trans, "mask/volume space mismatch")
+    require(
+      mask.grid.sameRuntimeOwnerAs(volume.grid),
+      "mask/volume space mismatch"
+    )
 
   private def add(a: Vector[Double], b: Vector[Double]): Vector[Double] =
     Vector.tabulate(3)(i => a(i) + b(i))

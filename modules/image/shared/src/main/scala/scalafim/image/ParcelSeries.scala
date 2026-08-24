@@ -36,7 +36,7 @@ enum ParcelSeriesError:
   case ParcellationMismatch
   case TimeAxisMismatch(left: image4s.AxisRecord, right: image4s.AxisRecord)
   case InvalidImage(error: image4s.ImageError)
-  case InvalidNativeImage(error: NativeImageError)
+  case InvalidNeuroImage(error: NeuroImageError)
 
   def message: String =
     this match
@@ -56,7 +56,7 @@ enum ParcelSeriesError:
       case TimeAxisMismatch(left, right) =>
         s"parcel series time axes differ: $left versus $right"
       case InvalidImage(error) => error.message
-      case InvalidNativeImage(error) => error.message
+      case InvalidNeuroImage(error) => error.message
 
 type SomeParcelSeries[A, Sem] =
   ParcelSeries[? <: Frame[D3], ?, ?, A, Sem]
@@ -155,7 +155,7 @@ final class ParcelSeries[
         NeuroSeries
           .fromRavel(sampleSpace, dense, outputMetadata)
           .left
-          .map(ParcelSeriesError.InvalidNativeImage.apply)
+          .map(ParcelSeriesError.InvalidNeuroImage.apply)
           .map(SomeNeuroSeries.eraseSpace)
 
 object ParcelSeries:

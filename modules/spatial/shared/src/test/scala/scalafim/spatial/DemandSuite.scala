@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialAxis, VoxelCoord}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialAxis, VoxelCoord}
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
@@ -30,7 +30,7 @@ class DemandSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
+    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String): Domain =
@@ -59,7 +59,7 @@ class DemandSuite extends munit.FunSuite:
         kind = MorphismKind.Affine3D,
         routeTag = RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(DMat.eye(4)))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, ProviderAffines.identity))
       )
     )
 

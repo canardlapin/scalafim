@@ -13,8 +13,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat as ArchiveDMat, Mask, PrimitiveBuffers, SomeSampleSpace}
-import scalafim.image.spatialDims
+import scalafim.image.{Mask, PrimitiveBuffers, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -82,7 +82,7 @@ object SharedBasisLatentArchive:
       _ <- validateArtifact(archive, artifact, space)
       response <- ExplicitLatentResponse(
         basis = archive.coefficients,
-        loadings = toDoubleMatrix(artifact.loadings),
+        loadings = artifact.loadings,
         offset = archive.offset,
         sourceDomain = archive.sourceDomain,
         targetDomain = archive.targetDomain,
@@ -123,7 +123,7 @@ object SharedBasisLatentArchive:
             case Some(value) if artifact.mask.values.length != value.spatialDims.product =>
               Left(LatentError.DimensionMismatch("shared basis mask size", value.spatialDims.product, artifact.mask.values.length))
             case _ =>
-              firstNonFinite("shared-basis loadings", toDoubleMatrix(artifact.loadings)) match
+              firstNonFinite("shared-basis loadings", artifact.loadings) match
                 case Some(error) => Left(error)
                 case None        => Right(())
 
@@ -141,9 +141,6 @@ object SharedBasisLatentArchive:
       "basis.mask_size" -> artifact.mask.values.length.toString,
       "basis.mask_active" -> artifact.mask.activeCount.toString
     ) ++ archive.basis.locator.map(locator => "basis.locator" -> locator.value).toMap
-
-  private def toDoubleMatrix(matrix: ArchiveDMat): DMat =
-    LatentNumerics.matrixFromRows(matrix.toRows)
 
   private def firstNonFinite(label: String, matrix: DMat): Option[LatentError] =
     val data = matrix.copyData
@@ -197,7 +194,7 @@ object SharedBasisLatentArchiveCodec:
       .map(error)
       .flatMap { encoding =>
         LnaPipeline.sharedBasisEmbedArchiveFromCoefficients(
-          coefficients = toDMat(encoding.coefficients),
+          coefficients = encoding.coefficients,
           space = space,
           basis = encoding.basis,
           basisId = basisId,
@@ -229,7 +226,7 @@ object SharedBasisLatentArchiveCodec:
         source <- DomainId(params.targetDomain.getOrElse("shared_basis.coefficients")).left.map(error)
         target <- DomainId(params.sourceDomain.getOrElse("voxels")).left.map(error)
         response <- SharedBasisLatentArchive(
-          coefficients = toDoubleMatrix(coefficients),
+          coefficients = coefficients,
           basis = params.basis,
           offset = offset.map(DVec.fromSeq),
           sourceDomain = source,

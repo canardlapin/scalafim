@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.GridCompatibility
+import image4s.geometry.Grid
+import scalafim.image.SampleSpaces
 import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
@@ -240,28 +241,48 @@ object Field:
     val descriptor = source.descriptor
     if descriptor.domain != domain.id then
       Left(SpatialError.FieldSourceDomainMismatch(descriptor.id, domain.id, descriptor.domain))
-    else if !sameGeometry(descriptor.geometry, domain.geometry) then
-      Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
-    else if descriptor.rows != domain.nElements then
-      Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, domain.nElements, descriptor.rows))
     else
-      Right(
-        Field(
-          data = FieldDataRef.source(source),
-          revision = nextRevision(),
-          plan = ViewPlan.unsafeRoot(rootId, domain.id, descriptor.rows, descriptor.observations),
-          legacyExecution = LegacyFieldExecution.empty,
-          provenance = FieldProvenance.root(domain.id)
-        )
-      )
+      geometryCompatibility(descriptor.id, descriptor.geometry, domain.geometry) match
+        case Left(error) =>
+          Left(error)
+        case Right(false) =>
+          Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
+        case Right(true) if descriptor.rows != domain.nElements =>
+          Left(SpatialError.FieldSourceShapeMismatch(descriptor.id, domain.nElements, descriptor.rows))
+        case Right(true) =>
+          Right(
+            Field(
+              data = FieldDataRef.source(source),
+              revision = nextRevision(),
+              plan = ViewPlan.unsafeRoot(rootId, domain.id, descriptor.rows, descriptor.observations),
+              legacyExecution = LegacyFieldExecution.empty,
+              provenance = FieldProvenance.root(domain.id)
+            )
+          )
 
-  private def sameGeometry(expected: SamplingGeometry, actual: SamplingGeometry): Boolean =
+  private def geometryCompatibility(
+      source: FieldSourceId,
+      expected: SamplingGeometry,
+      actual: SamplingGeometry
+  ): Either[SpatialError, Boolean] =
     (expected, actual) match
       case (SamplingGeometry.Volume(expectedSpace, expectedMask), SamplingGeometry.Volume(actualSpace, actualMask)) =>
-        GridCompatibility.spatial(expectedSpace, actualSpace).isRight &&
-          expectedMask == actualMask
+        for
+          expectedD3 <- SampleSpaces
+            .requireSpatialD3(expectedSpace)
+            .left
+            .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
+          actualD3 <- SampleSpaces
+            .requireSpatialD3(actualSpace)
+            .left
+            .map(error => SpatialError.FieldSourceSampleSpaceAdmission(source, error))
+          _ <- Grid
+            .exactCongruence(expectedD3.grid, actualD3.grid)
+            .left
+            .map(error => SpatialError.FieldSourceGridMismatch(source, error))
+        yield expectedMask == actualMask
       case _ =>
-        expected == actual
+        Right(expected == actual)
 
   private[spatial] def viewOf(
     field: Field,

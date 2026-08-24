@@ -1,5 +1,10 @@
 package scalafim.image
 
+import SampleSpaces.*
+
+import image4s.geometry.Affine
+import image4s.geometry.D3
+
 class SpatialCoordinatesSuite extends munit.FunSuite:
 
   private def assertClose(actual: Double, expected: Double, tol: Double = 1e-10): Unit =
@@ -14,8 +19,8 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
     assertClose(actual.y, expected.y, tol)
     assertClose(actual.z, expected.z, tol)
 
-  private def affine: DMat =
-    DMat.fromRows(
+  private def affine: Affine[D3] =
+    ProviderSpaces.affine(
       Vector(
         Vector(2.0, 0.0, 0.0, 10.0),
         Vector(0.0, 3.0, 0.0, 20.0),
@@ -84,19 +89,18 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
     assertClose(roundtrip(1), voxels(1), 1e-10)
   }
 
-  test("worldToVoxel reports singular affine directly") {
+  test("provider construction reports singular affine directly") {
     val singular =
-      DMat.fromRows(
+      Affine.fromRowMajor[D3](
         Vector(
           Vector(1.0, 0.0, 0.0, 0.0),
           Vector(0.0, 0.0, 0.0, 0.0),
           Vector(0.0, 0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 0.0, 1.0)
-        )
+        ).flatten
       )
 
-    val out = SpatialCoordinates.worldToVoxel(Vector(1.0, 2.0, 3.0), singular)
-    assert(out.isLeft, clue = "singular affine should be represented as an error")
+    assert(singular.isLeft, clue = "singular affine should be represented as an error")
   }
 
   test("GridSpec generates world coordinates in canonical last-axis-fastest order") {

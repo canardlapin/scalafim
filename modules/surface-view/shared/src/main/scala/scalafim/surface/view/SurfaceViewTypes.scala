@@ -1,5 +1,6 @@
 package scalafim.surface.view
 
+import image4s.geometry.GeometryError as ImageGeometryError
 import intaglio.*
 import scalafim.surface.*
 
@@ -51,6 +52,7 @@ enum SurfaceViewError:
   case InvalidLayerPosition(index: Int, count: Int)
   case InvalidSelection(surface: SurfaceId, vertex: Int)
   case LayerCapabilityUnsupported(layer: SurfaceLayerId, capability: String)
+  case GeometryFailure(cause: ImageGeometryError)
   case DisplayFailure(cause: DisplayError)
 
   def message: String =
@@ -114,6 +116,7 @@ enum SurfaceViewError:
       case InvalidSelection(surface, vertex) => s"vertex $vertex is not valid for surface '${surface.value}'"
       case LayerCapabilityUnsupported(layer, capability) =>
         s"layer '${layer.value}' does not support $capability"
+      case GeometryFailure(cause) => cause.message
       case DisplayFailure(cause) => cause.message
 
 opaque type SurfaceId = String

@@ -1,6 +1,7 @@
 package scalafim.examples.surfaceview
 
-import scalafim.image.DMat
+import image4s.geometry.Affine
+import image4s.geometry.D3
 import scalafim.surface.*
 import scalafim.surface.view.*
 
@@ -41,7 +42,7 @@ class CorticalSurfaceLensAcceptanceSuite extends munit.FunSuite:
     assert(CorticalSurfaceLensAcceptance.build(inflated, pial).isLeft)
     assert(CorticalSurfaceLensAcceptance.build(
       pial,
-      SurfaceGeometry(inflated.mesh, Hemisphere.Right, SurfaceKind.Inflated, DMat.eye(4))
+      SurfaceGeometry(inflated.mesh, Hemisphere.Right, SurfaceKind.Inflated, Affine.identity[D3])
     ).isLeft)
     val rewound = inflated.mesh.faceIndices.toArray
     val swap = rewound(1)
@@ -53,7 +54,7 @@ class CorticalSurfaceLensAcceptanceSuite extends munit.FunSuite:
         TriangleMesh.fromArrays(inflated.mesh.coordinates.toArray, rewound),
         Hemisphere.Left,
         SurfaceKind.Inflated,
-        DMat.eye(4)
+        Affine.identity[D3]
       )
     ).isLeft)
 
@@ -92,5 +93,5 @@ class CorticalSurfaceLensAcceptanceSuite extends munit.FunSuite:
       TriangleMesh.fromRows(coordinates.result(), faces.result()),
       Hemisphere.Left,
       kind,
-      DMat.eye(4)
+      Affine.identity[D3]
     )

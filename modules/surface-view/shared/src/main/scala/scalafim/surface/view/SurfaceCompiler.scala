@@ -147,16 +147,17 @@ object SurfaceCompiler:
     val to = frame.to.mesh.coordinates
     val positions = new Array[Float](asset.domain.vertexCount * 3)
     val transform = frame.from.surfaceToWorld
+    val matrix = transform.matrix
     var vertex = 0
     while vertex < asset.domain.vertexCount do
       val offset = vertex * 3
       val x = frame.coordinateAt(offset)
       val y = frame.coordinateAt(offset + 1)
       val z = frame.coordinateAt(offset + 2)
-      val wx = transform(0, 0) * x + transform(0, 1) * y + transform(0, 2) * z + transform(0, 3)
-      val wy = transform(1, 0) * x + transform(1, 1) * y + transform(1, 2) * z + transform(1, 3)
-      val wz = transform(2, 0) * x + transform(2, 1) * y + transform(2, 2) * z + transform(2, 3)
-      val ww = transform(3, 0) * x + transform(3, 1) * y + transform(3, 2) * z + transform(3, 3)
+      val wx = matrix(0, 0) * x + matrix(0, 1) * y + matrix(0, 2) * z + matrix(0, 3)
+      val wy = matrix(1, 0) * x + matrix(1, 1) * y + matrix(1, 2) * z + matrix(1, 3)
+      val wz = matrix(2, 0) * x + matrix(2, 1) * y + matrix(2, 2) * z + matrix(2, 3)
+      val ww = matrix(3, 0) * x + matrix(3, 1) * y + matrix(3, 2) * z + matrix(3, 3)
       val inverseW = if ww == 0.0 then 1.0 else 1.0 / ww
       positions(offset) = (wx * inverseW).toFloat
       positions(offset + 1) = (wy * inverseW).toFloat
@@ -326,10 +327,11 @@ object SurfaceCompiler:
         val py = frame.coordinateAt(offset + 1)
         val pz = frame.coordinateAt(offset + 2)
         val transform = frame.from.surfaceToWorld
-        val tx = transform(0, 0) * px + transform(0, 1) * py + transform(0, 2) * pz + transform(0, 3)
-        val ty = transform(1, 0) * px + transform(1, 1) * py + transform(1, 2) * pz + transform(1, 3)
-        val tz = transform(2, 0) * px + transform(2, 1) * py + transform(2, 2) * pz + transform(2, 3)
-        val tw = transform(3, 0) * px + transform(3, 1) * py + transform(3, 2) * pz + transform(3, 3)
+        val matrix = transform.matrix
+        val tx = matrix(0, 0) * px + matrix(0, 1) * py + matrix(0, 2) * pz + matrix(0, 3)
+        val ty = matrix(1, 0) * px + matrix(1, 1) * py + matrix(1, 2) * pz + matrix(1, 3)
+        val tz = matrix(2, 0) * px + matrix(2, 1) * py + matrix(2, 2) * pz + matrix(2, 3)
+        val tw = matrix(3, 0) * px + matrix(3, 1) * py + matrix(3, 2) * pz + matrix(3, 3)
         val inverseW = if tw == 0.0 then 1.0 else 1.0 / tw
         val values = state.layerOrder.flatMap: id =>
           model.layer(id).filter(_.surfaceId == selection.surface).map(layer => id -> layer.describe(vertex, state.timepoint))

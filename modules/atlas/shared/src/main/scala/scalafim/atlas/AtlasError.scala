@@ -1,5 +1,7 @@
 package scalafim.atlas
 
+import image4s.geometry.GeometryError
+
 enum AtlasError:
   case EmptyAtlas
   case DuplicateRegionIds(ids: Vector[RegionId])
@@ -12,6 +14,7 @@ enum AtlasError:
   case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
+  case Geometry(cause: GeometryError)
   case InvalidQuery(detail: String)
   case InvalidCoordinate(detail: String)
   case InvalidRegionMetadata(detail: String)
@@ -42,6 +45,8 @@ enum AtlasError:
         s"expected spatial dimensions ${expected.mkString("x")} but got ${actual.mkString("x")}"
       case ExactGridRequired(expected, actual) =>
         s"exact atlas grid required; expected $expected but got $actual"
+      case Geometry(cause) =>
+        cause.message
       case InvalidQuery(detail) =>
         detail
       case InvalidCoordinate(detail) =>

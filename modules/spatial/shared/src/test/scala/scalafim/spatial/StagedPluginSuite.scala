@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import gale.linalg.DMat as GaleDMat
-import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 
 class StagedPluginSuite extends munit.FunSuite:
@@ -16,7 +16,7 @@ class StagedPluginSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
+    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def hybrid(name: String, parts: Vector[(String, Domain)]): Domain =
@@ -36,7 +36,7 @@ class StagedPluginSuite extends munit.FunSuite:
 
   private def affine(source: Domain, target: Domain, x: Double): Morphism =
     val matrix =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, x),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -52,7 +52,7 @@ class StagedPluginSuite extends munit.FunSuite:
         MorphismKind.Affine3D,
         RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(matrix))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, matrix))
       )
     )
 

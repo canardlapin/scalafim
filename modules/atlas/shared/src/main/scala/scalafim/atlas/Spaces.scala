@@ -1,13 +1,12 @@
 package scalafim.atlas
 
+import image4s.geometry.Affine as ProviderAffine
+import image4s.geometry.D3
 import scalafim.image.{
-  Affine,
-  Affine3DMorphism,
-  DMat,
-  IdentityMorphism,
-  SpatialDomainId,
+  GridSpec,
   SpatialPoint,
-  SpatialMorphism as ImageSpatialMorphism
+  SpatialPullback,
+  SpatialPullbacks
 }
 
 type Point3D = SpatialPoint
@@ -44,7 +43,7 @@ final case class TransformStep(
   dataFiles: Vector[String],
   status: TransformStatus,
   notes: Option[String] = None,
-  affine: Option[DMat] = None
+  affine: Option[ProviderAffine[D3]] = None
 ):
   require(dataFiles.forall(_.trim.nonEmpty), "transform data file names must be non-empty")
 
@@ -69,7 +68,7 @@ final case class TransformPlan(
 
 final case class ExecutableCoordinateTransformPlan private (
   route: TransformPlan,
-  affine: DMat
+  affine: ProviderAffine[D3]
 ):
   def from: AnySpaceId =
     route.from
@@ -81,7 +80,20 @@ final case class ExecutableCoordinateTransformPlan private (
     route.steps
 
   def transform(points: Vector[Point3D]): Vector[Point3D] =
-    points.map(pt => Point3D.fromVector(Affine.applyAffine(affine, pt.toVector)))
+    points.map: point =>
+      affine(point.toVector).fold(
+        error => throw new IllegalStateException(error.message),
+        Point3D.fromVector
+      )
+
+  /** Render the atlas route as the provider pullback required by image
+    * resampling: target world coordinates to source world coordinates.
+    */
+  def pullback(
+      source: GridSpec,
+      target: GridSpec
+  ): SpatialPullback =
+    SpatialPullbacks.affine(source, target, affine.inverse)
 
 object ExecutableCoordinateTransformPlan:
   def fromRoute(route: TransformPlan): Either[AtlasError, ExecutableCoordinateTransformPlan] =
@@ -98,26 +110,31 @@ object ExecutableCoordinateTransformPlan:
         else Vector(s"non-affine steps=${missingAffine.map(stepLabel).mkString(",")}")
       Left(AtlasError.TransformNotExecutable(route.from, route.to, (unavailableReason ++ missingReason).mkString("; ")))
     else
+      val affines = route.steps.map(_.affine.get)
       val composed =
-        route.steps.map(_.affine.get).reduceLeft((acc, next) => Affine.multiply(next, acc))
-      Right(ExecutableCoordinateTransformPlan(route, composed))
+        affines.tail.foldLeft[Either[AtlasError, ProviderAffine[D3]]](Right(affines.head)):
+          (current, next) =>
+            current.flatMap(
+              _.andThen(next).left.map(AtlasError.Geometry.apply)
+            )
+      composed.map(ExecutableCoordinateTransformPlan(route, _))
 
   private def stepLabel(step: TransformStep): String =
     s"${step.from.value}->${step.to.value}:${step.kind}/${step.backend}"
 
 object SpaceTransforms:
-  val mni305ToMni152: DMat =
-    DMat.fromRows(
+  val mni305ToMni152: ProviderAffine[D3] =
+    ProviderAffine.fromRowMajor[D3](
       Vector(
-        Vector(0.9975, -0.0073, 0.0176, -0.0429),
-        Vector(0.0146, 1.0009, -0.0024, 1.5496),
-        Vector(-0.0130, -0.0093, 0.9971, 1.1840),
-        Vector(0.0, 0.0, 0.0, 1.0)
+        0.9975, -0.0073, 0.0176, -0.0429,
+        0.0146, 1.0009, -0.0024, 1.5496,
+        -0.0130, -0.0093, 0.9971, 1.1840,
+        0.0, 0.0, 0.0, 1.0
       )
-    )
+    ).fold(error => throw new IllegalStateException(error.message), identity)
 
-  val mni152ToMni305: DMat =
-    DMat.invert(mni305ToMni152).fold(msg => throw new IllegalStateException(msg), identity)
+  val mni152ToMni305: ProviderAffine[D3] =
+    mni305ToMni152.inverse
 
   val manifest: Vector[TransformStep] =
     Vector(
@@ -277,7 +294,7 @@ object SpaceTransforms:
           dataFiles = Vector.empty,
           TransformStatus.Available,
           notes = Some("No transform required."),
-          affine = Some(DMat.eye(4))
+          affine = Some(ProviderAffine.identity[D3])
         )
       Right(TransformPlan(fromNorm, toNorm, Vector(step), TransformStatus.Available, Confidence.Exact, Vector.empty))
     else
@@ -297,39 +314,16 @@ object SpaceTransforms:
       .flatMap(_.executableCoordinatePlan)
       .map(_.transform(points))
 
-  def spatialMorphism(
+  def spatialPullback(
     from: AnySpaceId,
     to: AnySpaceId,
+    source: GridSpec,
+    target: GridSpec,
     registry: Vector[TransformStep] = manifest
-  ): Either[AtlasError, ImageSpatialMorphism] =
-    plan(from, to, DataKind.Voxel, registry).flatMap { route =>
-      route.executableCoordinatePlan.flatMap { executable =>
-        val steps = Vector.newBuilder[ImageSpatialMorphism]
-        var i = 0
-        var error = Option.empty[AtlasError]
-        while i < executable.steps.length && error.isEmpty do
-          val step = executable.steps(i)
-          val source = SpatialDomainId(SpaceId.normalize(step.from).value)
-          val target = SpatialDomainId(SpaceId.normalize(step.to).value)
-          if step.kind == TransformKind.Identity then steps += IdentityMorphism(source)
-          else
-            DMat.invert(step.affine.get) match
-              case Left(msg) =>
-                error = Some(AtlasError.InvalidCoordinate(msg))
-              case Right(pullback) =>
-                Affine3DMorphism.make(source, target, pullback, methodTag = step.backend.toString) match
-                  case Left(err) =>
-                    error = Some(AtlasError.InvalidCoordinate(err.message))
-                  case Right(morphism) =>
-                    steps += morphism
-          i += 1
-
-        error match
-          case Some(err) => Left(err)
-          case None =>
-            ImageSpatialMorphism.path(steps.result()).left.map(err => AtlasError.InvalidCoordinate(err.message))
-      }
-    }
+  ): Either[AtlasError, SpatialPullback] =
+    plan(from, to, DataKind.Voxel, registry)
+      .flatMap(_.executableCoordinatePlan)
+      .map(_.pullback(source, target))
 
   private final case class Candidate(space: AnySpaceId, steps: Vector[TransformStep], score: Int)
 

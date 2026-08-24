@@ -1,8 +1,9 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
-import scalafim.image.{DMat, SomeSampleSpace}
-import scalafim.image.spatialDims
+import gale.linalg.DMat
+import scalafim.image.SomeSampleSpace
+import scalafim.image.SampleSpaces.*
 
 object LnaPipeline:
   def quantArchive(
@@ -491,45 +492,30 @@ object LnaPipeline:
       .toRight(ArchiveError.InvalidArchive(s"${desc.kind.value} descriptor missing ${role.value} dataset"))
 
   private def multiplyByBasisTranspose(data: DMat, basis: DMat): DMat =
-    val rows =
-      Vector.tabulate(data.rows) { r =>
-        Vector.tabulate(basis.rows) { k =>
-          var sum = 0.0
-          var c = 0
-          while c < data.cols do
-            sum += data(r, c) * basis(k, c)
-            c += 1
-          sum
-        }
-      }
-    DMat.fromRows(rows)
+    DMat.tabulate(data.rows, basis.rows): (row, basisRow) =>
+      var sum = 0.0
+      var column = 0
+      while column < data.cols do
+        sum += data(row, column) * basis(basisRow, column)
+        column += 1
+      sum
 
   private def multiplyBySharedBasisLoadings(data: DMat, loadings: DMat): DMat =
     require(data.cols == loadings.rows, "matrix columns must match shared basis loading rows")
-    val rows =
-      Vector.tabulate(data.rows) { r =>
-        Vector.tabulate(loadings.cols) { k =>
-          var sum = 0.0
-          var c = 0
-          while c < data.cols do
-            sum += data(r, c) * loadings(c, k)
-            c += 1
-          sum
-        }
-      }
-    DMat.fromRows(rows)
+    DMat.tabulate(data.rows, loadings.cols): (row, atom) =>
+      var sum = 0.0
+      var column = 0
+      while column < data.cols do
+        sum += data(row, column) * loadings(column, atom)
+        column += 1
+      sum
 
   private def multiply(left: DMat, right: DMat): DMat =
     require(left.cols == right.rows, "matrix inner dimensions must agree")
-    val rows =
-      Vector.tabulate(left.rows) { r =>
-        Vector.tabulate(right.cols) { c =>
-          var sum = 0.0
-          var k = 0
-          while k < left.cols do
-            sum += left(r, k) * right(k, c)
-            k += 1
-          sum
-        }
-      }
-    DMat.fromRows(rows)
+    DMat.tabulate(left.rows, right.cols): (row, column) =>
+      var sum = 0.0
+      var inner = 0
+      while inner < left.cols do
+        sum += left(row, inner) * right(inner, column)
+        inner += 1
+      sum

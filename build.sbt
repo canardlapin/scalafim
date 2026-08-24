@@ -2,6 +2,10 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.*
 import sbtcrossproject.CrossPlugin.autoImport.*
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport.*
 
+lazy val imageAlgebraBoundaryCheck = taskKey[Unit](
+  "Reject removed ScalaFIM axis, space, matrix, affine, congruence, and transform algebras"
+)
+
 ThisBuild / organization := "scalafim"
 ThisBuild / scalaVersion := "3.7.4"
 ThisBuild / version      := "0.1.0-SNAPSHOT"
@@ -55,6 +59,8 @@ lazy val image4sBuild = {
 }
 lazy val image4sCoreJVM = ProjectRef(image4sBuild, "image4s-coreJVM")
 lazy val image4sCoreJS  = ProjectRef(image4sBuild, "image4s-coreJS")
+lazy val image4sGeometryJVM = ProjectRef(image4sBuild, "image4s-geometryJVM")
+lazy val image4sGeometryJS  = ProjectRef(image4sBuild, "image4s-geometryJS")
 lazy val image4sLocusJVM = ProjectRef(image4sBuild, "image4s-locusJVM")
 lazy val image4sLocusJS  = ProjectRef(image4sBuild, "image4s-locusJS")
 lazy val image4sFilterJVM = ProjectRef(image4sBuild, "image4s-filterJVM")
@@ -72,6 +78,8 @@ lazy val reframe4sBuild =
     .getOrElse(uri(s"https://github.com/canardlapin/reframe4s.git#$reframe4sRevision"))
 lazy val reframe4sLieJVM      = ProjectRef(reframe4sBuild, "reframe4s-lieJVM")
 lazy val reframe4sLieJS       = ProjectRef(reframe4sBuild, "reframe4s-lieJS")
+lazy val reframe4sFieldJVM    = ProjectRef(reframe4sBuild, "reframe4s-fieldJVM")
+lazy val reframe4sFieldJS     = ProjectRef(reframe4sBuild, "reframe4s-fieldJS")
 lazy val reframe4sResampleJVM = ProjectRef(reframe4sBuild, "reframe4s-resampleJVM")
 lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS")
 
@@ -393,8 +401,75 @@ lazy val image =
     .settings(commonSettings)
     .settings(
       name := "scalafim-image",
+      Test / scalacOptions +=
+        "-Wconf:src=.*NeuroImageErrorContractSuite\\.scala&id=E29:e",
+      imageAlgebraBoundaryCheck := {
+        val repository = (LocalRootProject / baseDirectory).value
+        val removedFiles = Vector(
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Axis.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "AxisSet.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "GridCompatibility.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DMat.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Affine.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "Morphism.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "MorphismExecutionPlan.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DenseFieldInterpolationPlan.scala",
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "DenseFieldInverse.scala"
+        ).filter(_.exists)
+        val productionSources =
+          (repository / "modules" ** "*.scala").get.filter { source =>
+            source.getPath.contains("/src/main/scala/")
+          }
+        val legacyReferences =
+          productionSources.filter { source =>
+            val contents = IO.read(source)
+            contents.contains("scalafim.image.Axis") ||
+            contents.contains("scalafim.image.DMat") ||
+            "\\bAxisSet\\b".r.findFirstIn(contents).nonEmpty ||
+            "\\bAffine3DError\\b|\\bDMat\\.invert\\b".r
+              .findFirstIn(contents)
+              .nonEmpty ||
+            "(?m)^\\s*(?:final\\s+)?(?:case\\s+)?(?:class|object|enum|type)\\s+(?:DMat|Affine3D)\\b|(?m)^\\s*object\\s+Affine\\s*:".r
+              .findFirstIn(contents)
+              .nonEmpty ||
+            "\\b(?:ImageDim|Slice2D|Volume3D|Series4D|ImageDimEvidence|ImageSpace|VolumeSpace|SeriesSpace|GridCompatibility|GridMismatch|CertifiedGridCongruence)\\b".r
+              .findFirstIn(contents)
+              .nonEmpty ||
+            "\\b(?:SpatialMorphism|Affine3DMorphism|IdentityMorphism|DenseFieldMorphism|SpatialDomainId|MorphismExecutionPlan|DenseFieldInterpolationPlan|DenseFieldInverse|JacobianField|JacobianMode|MorphismFields)\\b".r
+              .findFirstIn(contents)
+              .nonEmpty ||
+            "\\b(?:DenseCoordinateMap|CompositeCoordinateMap)\\b|\\bCoordinateMap\\.(?:Affine3D|Dense3D|Composite3D|dense3D|composite3D)\\b".r
+              .findFirstIn(contents)
+              .nonEmpty
+          }
+        val obsoleteDependencies =
+          libraryDependencies.value.filter { module =>
+            module.organization == "ai.dragonfly" && module.name.contains("slash")
+          }
+        val sampleSpacesSource =
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "SampleSpaces.scala"
+        val packageSource =
+          repository / "modules" / "image" / "shared" / "src" / "main" / "scala" / "scalafim" / "image" / "package.scala"
+        val publicProviderStateAliases =
+          "(?m)^\\s+(?:inline\\s+)?def\\s+(?:dims|ndim|spatialDims|spatialShape|spacing|origin|orientation|affineD3|inverseAffineD3|gridToIndex|indexToGrid|gridToIndex3D|indexToGrid3D|indexToVoxel3D|spatialSpace|addDim|dropDim|indexToCoord|indexToPoint|voxelToWorld|coordToIndex|coordToIndexPoint|worldToVoxel)\\b".r
+            .findFirstIn(IO.read(sampleSpacesSource))
+        val packageFacadeReturned =
+          "(?m)^\\s*export SampleSpaces\\.\\*\\s*$".r
+            .findFirstIn(IO.read(packageSource))
+            .nonEmpty
+        if (removedFiles.nonEmpty)
+          sys.error(s"removed ScalaFIM algebra sources returned: ${removedFiles.mkString(", ")}")
+        if (legacyReferences.nonEmpty)
+          sys.error(s"production sources reference a removed ScalaFIM algebra: ${legacyReferences.mkString(", ")}")
+        if (obsoleteDependencies.nonEmpty)
+          sys.error(s"obsolete image algebra dependency returned: ${obsoleteDependencies.mkString(", ")}")
+        if (publicProviderStateAliases.nonEmpty)
+          sys.error(s"public SampleSpaces provider-state alias returned: ${publicProviderStateAliases.get}")
+        if (packageFacadeReturned)
+          sys.error("package-wide SampleSpaces export returned")
+      },
+      Compile / compile := (Compile / compile).dependsOn(imageAlgebraBoundaryCheck).value,
       libraryDependencies ++= Seq(
-        "ai.dragonfly" %%% "slash"       % "0.4.1",
         "org.typelevel" %%% "cats-core"   % "2.12.0",
         "org.typelevel" %%% "cats-effect" % "3.5.4",
         "org.typelevel" %%% "spire"       % "0.18.0"
@@ -402,20 +477,26 @@ lazy val image =
     )
     .jvmConfigure(
       _.dependsOn(
+        galeCoreJVM,
         image4sCoreJVM,
+        image4sGeometryJVM,
         image4sLocusJVM,
         image4sFilterJVM,
         image4sNiftiJVM,
         reframe4sLieJVM,
+        reframe4sFieldJVM,
         reframe4sResampleJVM
       )
     )
     .jsConfigure(
       _.dependsOn(
+        galeCoreJS,
         image4sCoreJS,
+        image4sGeometryJS,
         image4sLocusJS,
         image4sFilterJS,
         reframe4sLieJS,
+        reframe4sFieldJS,
         reframe4sResampleJS
       )
     )
@@ -423,6 +504,58 @@ lazy val image =
 
 lazy val imageJS  = image.js
 lazy val imageJVM = image.jvm
+
+// Unpublished cross-platform compile contract proving that ScalaFIM consumers
+// can compose the admitted provider APIs directly. Sources deliberately live
+// outside package scalafim and define no adapter algebra.
+lazy val providerSpike =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/provider-spike"))
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-provider-spike",
+      publish / skip := true
+    )
+    .jvmConfigure(
+      _.dependsOn(
+        ravelCoreJVM,
+        galeCoreJVM,
+        locus4sCoreJVM,
+        image4sCoreJVM,
+        image4sGeometryJVM,
+        image4sLocusJVM,
+        reframe4sLieJVM,
+        reframe4sResampleJVM
+      )
+    )
+    .jsConfigure(
+      _.dependsOn(
+        ravelCoreJS,
+        galeCoreJS,
+        locus4sCoreJS,
+        image4sCoreJS,
+        image4sGeometryJS,
+        image4sLocusJS,
+        reframe4sLieJS,
+        reframe4sResampleJS
+      )
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val providerSpikeJS  = providerSpike.js
+lazy val providerSpikeJVM = providerSpike.jvm
+
+lazy val galeBenchJVM =
+  project
+    .in(file("benchmarks/gale-jvm"))
+    .dependsOn(linalgJVM)
+    .enablePlugins(JmhPlugin)
+    .settings(commonSettings)
+    .settings(
+      name := "scalafim-gale-stress-benchmarks",
+      publish / skip := true
+    )
 
 lazy val hrfBenchJVM =
   project
@@ -521,8 +654,8 @@ lazy val motion =
     .settings(
       name := "scalafim-fmri-motion"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS))
     .jsSettings(jsSettingsBase)
 
 lazy val motionJS  = motion.js
@@ -540,8 +673,8 @@ lazy val surface =
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js
@@ -677,8 +810,8 @@ lazy val atlas =
     .settings(
       name := "scalafim-atlas"
     )
-    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
     .jsSettings(jsSettingsBase)
 
 lazy val atlasJS  = atlas.js
@@ -730,6 +863,8 @@ lazy val archiveLna =
     .settings(
       name := "scalafim-archive-lna"
     )
+    .jvmConfigure(_.dependsOn(galeCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS))
     .jvmSettings(
       libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion
     )
@@ -759,8 +894,8 @@ lazy val archivedResponseInterop =
           "ResponseArchiveMigrationBaselineSuite.scala"
       )
     )
-    .jvmConfigure(_.dependsOn(bids4sJVM, zarr4sCoreJVM))
-    .jsConfigure(_.dependsOn(zarr4sCoreJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val archivedResponseInteropJS  = archivedResponseInterop.js
@@ -982,8 +1117,8 @@ lazy val fmriWorkflow =
     .settings(
       name := "scalafim-fmri-workflow"
     )
-    .jvmConfigure(_.dependsOn(bids4sJVM))
-    .jsConfigure(_.dependsOn(bids4sJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS, bids4sJS))
     .jsSettings(jsSettingsBase)
 
 lazy val fmriWorkflowJS  = fmriWorkflow.js
@@ -1018,8 +1153,8 @@ lazy val datasetZarr =
     .settings(
       name := "scalafim-dataset-zarr"
     )
-    .jvmConfigure(_.dependsOn(bids4sJVM, zarr4sCoreJVM))
-    .jsConfigure(_.dependsOn(bids4sJS, zarr4sCoreJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS, bids4sJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val datasetZarrJS  = datasetZarr.js
@@ -1051,6 +1186,8 @@ lazy val root =
       designJVM,
       imageJS,
       imageJVM,
+      providerSpikeJS,
+      providerSpikeJVM,
       imageViewJS,
       imageViewJVM,
       imageViewCanvasJS,
@@ -1117,8 +1254,8 @@ lazy val root =
       publish / skip := true
     )
 
-addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
-addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias("scalafimCompileAll", ";locusDataJVM/compile;locusDataJS/compile;linalgJVM/compile;linalgJS/compile;linalgBreezeJVM/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;scenarioTestkitJVM/compile;scenarioTestkitJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;providerSpikeJVM/compile;providerSpikeJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
+addCommandAlias("scalafimTestAll", ";locusDataJVM/test;locusDataJS/test;linalgJVM/test;linalgJS/test;linalgBreezeJVM/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;scenarioTestkitJVM/test;scenarioTestkitJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;providerSpikeJVM/test;providerSpikeJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
 addCommandAlias("compileAll", "scalafimCompileAll")
 addCommandAlias("testAll", "scalafimTestAll")
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")

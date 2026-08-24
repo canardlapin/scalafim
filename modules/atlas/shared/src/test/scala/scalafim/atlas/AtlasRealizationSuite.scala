@@ -8,7 +8,7 @@ import ravel.DType.given
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.NeuroVolume
 import scalafim.image.SomeLabelVolume
-import scalafim.image.VolumeSpace
+import scalafim.image.SomeNeuroVolume
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 import scalafim.surface.HemispherePair
 import scalafim.surface.LabelInfo
@@ -213,12 +213,16 @@ class AtlasRealizationSuite extends munit.FunSuite:
   private def labelVolume(
       space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))
   ): SomeLabelVolume[Int] =
-    val sampleSpace = VolumeSpace(space).sampleSpace
+    val sampleSpace =
+      SampleSpaces
+        .requireVolumeD3(space)
+        .fold(error => fail(error.message), identity)
     NeuroVolume
       .copyCategoricalFromCanonicalArray[Int](
         sampleSpace,
         Array(10, 20, 10, 20)
       )
+      .map(SomeNeuroVolume.eraseSpace)
       .fold(error => fail(error.message), identity)
 
   private def surfacePayload(): SurfaceAtlasPayload =

@@ -1,7 +1,8 @@
 package scalafim.spatial.io
 
 import scalafim.image.io.Nifti
-import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.spatial.{ProviderAffines, ProviderAxes}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
@@ -24,7 +25,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
 
   private def affine(name: String, source: Domain, target: Domain, x: Double): Morphism =
     val matrix =
-      DMat.fromRows(
+      ProviderAffines.fromRows(
         Vector(
           Vector(1.0, 0.0, 0.0, x),
           Vector(0.0, 1.0, 0.0, 0.0),
@@ -40,7 +41,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
         MorphismKind.Affine3D,
         RouteTag.Anatomical,
         inverse = Inverse.Exact("analytic"),
-        coordinateMap = spatialValue(CoordinateMap.affine3D(matrix))
+        coordinateMap = spatialValue(CoordinateMap.affine(source, target, matrix))
       )
     )
 
@@ -58,7 +59,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     assertEquals(result.status, ScenarioStatus.Pass)
 
   private def runScenario(path: Path): ScenarioResult =
-    val space = SampleSpaces(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(6, 1, 1), affine = Some(ProviderAffines.identity))
     val root = volumeDomain("native", space)
     val target = volumeDomain("target", space)
     val source = spatialValue(NiftiFieldSource.prepare(path, root, observations = 3, label = "bold"))
@@ -82,7 +83,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
         )
       )
     Nifti
-      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space.addDim(3, Some(Axis.Time)), "bold"))
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space.addDim(ProviderAxes.time(3)), "bold"))
       .fold(error => fail(error.message), _ => ())
 
     val runtime = LazyFieldRuntime(summon[SpatialGraph])

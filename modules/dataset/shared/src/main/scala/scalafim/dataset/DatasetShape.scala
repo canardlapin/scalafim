@@ -1,25 +1,32 @@
 package scalafim.dataset
 
-import scalafim.image.{SomeSampleSpace, VolumeSpace}
+import image4s.SampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
+import scalafim.image.SomeSampleSpace
+import scalafim.image.SampleSpaces
 import scalafim.image.SampleSpaces.*
 
-final case class DatasetShape(space: SomeSampleSpace, timepoints: Int):
+final case class DatasetShape private (
+    space: SampleSpace[? <: Frame[D3], D3],
+    timepoints: Int
+):
   require(timepoints > 0, "timepoints must be positive")
-  require(space.ndim == 3, "dataset space must be exactly 3D")
 
-  def volumeSpace: VolumeSpace =
-    VolumeSpace.unsafe(space)
+  def grid: Grid[? <: Frame[D3], D3] = space.grid
   def spatialDims: Vector[Int] = space.spatialDims
-  def spatialSize: Int = volumeSpace.nVoxels
+  def spatialSize: Int = grid.shape.product
 
 object DatasetShape:
   def make(space: SomeSampleSpace, timepoints: Int): Either[DatasetError, DatasetShape] =
     if timepoints <= 0 then Left(DatasetError.NonPositiveTimepoints(timepoints))
     else
-      space.asVolumeSpace
+      SampleSpaces
+        .requireVolumeD3(space)
         .left
         .map(DatasetError.InvalidSpace.apply)
-        .map(volumeSpace => DatasetShape(volumeSpace.toSampleSpace, timepoints))
+        .map(sampleSpace => DatasetShape(sampleSpace, timepoints))
 
   def unsafe(space: SomeSampleSpace, timepoints: Int): DatasetShape =
     make(space, timepoints).fold(error => throw new IllegalArgumentException(error.message), identity)
