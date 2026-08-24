@@ -45,10 +45,10 @@
     "benchmark_receipt": {
       "path": "docs/benchmarks/receipts/first-level-current.json",
       "schema_version": "scalafim-first-level-benchmark-receipt/v1",
-      "sha256": "be0cd5cc105a50019edd723a7635cbec03c3406b492aadede95b6cea5e9aac41",
+      "sha256": "d32a37a265a035a39d8c6b9abf9ff98eff6dc4a664dc8075eb61464ce27e8368",
       "status": "pass"
     },
-    "commit": "https://github.com/canardlapin/scalafim/commit/f7619a4bbe8d943bdfaf459643c1bfed30362dc0",
+    "commit": "https://github.com/canardlapin/scalafim/commit/6a6f3d478a1f22f597748993617cf5f31dbb727a",
     "reference_lock": "tools/r-parity/reference-lock.json",
     "scenario_manifest": "docs/scenarios/manifest.json"
   },
@@ -69,7 +69,7 @@
       "url": null
     }
   },
-  "generated_at": "2026-08-24T12:32:33.533296+00:00",
+  "generated_at": "2026-08-24T12:54:06.064743+00:00",
   "local_gates": {
     "compile_all": {
       "command": "sbt scalafimCompileAll",
@@ -111,9 +111,9 @@
   "release_eligible": false,
   "schema_version": "scalafim-first-level-release-report/v1",
   "source": {
-    "commit": "f7619a4bbe8d943bdfaf459643c1bfed30362dc0",
+    "commit": "6a6f3d478a1f22f597748993617cf5f31dbb727a",
     "dirty": true,
-    "dirty_path_count": 8,
+    "dirty_path_count": 1,
     "files": {
       ".github/workflows/first-level-laws-calibration.yml": "1032a3e8313fdba1be01331599379ec294bce050483a4066dc02b74bab687f0c",
       ".github/workflows/first-level-mutation-pilot.yml": "84da3c38b75a9abf8c83001755b11130c8e5eb80183ae8f309cd11ee6acc10ee",
@@ -121,7 +121,7 @@
       ".github/workflows/first-level.yml": "6d855022e770e3689e7f3c88d63cb2f357cfc00b962322f506479f4219dcf7db",
       ".github/workflows/scenario-receipts.yml": "c0ed8f3398373b5451b1fe71e651689b54a747f1755b7fbbd1196d91fb33a67f",
       "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala": "57446cc7917d3025c6c5044eb4f985c62d786dbc4740501475652046ada6a3a3",
-      "build.sbt": "63e790a7095959d2bfe692a83c81170348a97167bdff7f72dea423bf9a42de04",
+      "build.sbt": "69ea39e69bfcf62b8f21f0d031d78d021fa7a362c49fb508bb32e1270257794f",
       "docs/benchmarks/first-level.md": "ed487c88d6112ddd2213d21a36d54da01a35206d9ef3f5fcb5a865970a37459e",
       "docs/first-level-analysis.md": "554077e219678b68c825f04bdbdb28736be7db71c73fa2ad8af6d4c27d6908aa",
       "docs/release-assurance.md": "662baa237a50c86b492c08bc661f0f74718050a0775ca22960554cffa205f651",
@@ -155,7 +155,7 @@
       "tools/ci/first-level-coverage.sh": "0c91cf0154c62489bde198b7256be2b2b0afe33c6eba00d6407b956d3574df17",
       "tools/ci/first-level-gate.sh": "c413aff0a080cbcb26b86d81d4f1c85994aeaa2015310fc096a7db7423985f3d",
       "tools/ci/first-level-release.sh": "f507d4e02af8b7c7526001ea471b103f19df65e6d2a387b0fd9cf6dc58bc617c",
-      "tools/ci/full-repository-tests.sh": "7502a525971d9c2262bec508f2fe17dfe51b8f6a415ebda6e4d62e017afc421d",
+      "tools/ci/full-repository-tests.sh": "ca37276751d13b554b1cf17ac80bda2c4a2f23a1c0cc8c26347a11c346cf6a37",
       "tools/docs/check_first_level_docs.py": "01e550285c1f9a44b725bcd9e971677a56ece66d29a2239c1fbf3c459b072193",
       "tools/mutation/ar_na_pilot.py": "c27ec87cec27e98ac48bccdb44f8f69d21a652c37900973f79b66f7efbb1e8e5",
       "tools/r-parity/auxiliary-manifest.json": "0d01170a47ad0b45cb57349554ff5e9bced0dfc3feeb969572de9c088b3e7022",
