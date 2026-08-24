@@ -386,7 +386,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
         Seq(0.0, 1.0, 0.0),
         Seq(0.0, 0.0, 1.0)
       ),
-      Seq((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+      Seq((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
     )
     SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Inflated, DMat.eye(4))
 

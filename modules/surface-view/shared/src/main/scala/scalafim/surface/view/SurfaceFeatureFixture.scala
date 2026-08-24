@@ -96,7 +96,7 @@ object SurfaceFeatureFixture:
           Vector(1.0, 2.0, z),
           Vector(1.0, 1.0, z + 0.5)
         ),
-        Vector((0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3))
+        Vector((0, 1, 2), (0, 3, 1), (0, 2, 3), (1, 3, 2))
       ),
       Hemisphere.Left,
       kind

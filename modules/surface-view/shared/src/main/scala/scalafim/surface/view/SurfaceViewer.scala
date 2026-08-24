@@ -1,7 +1,10 @@
 package scalafim.surface.view
 
 import intaglio.*
+import locus4s.Index
+import mesh4s.geometry.D3PointConsumer
 import scalafim.surface.*
+import scala.util.hashing.MurmurHash3
 
 private[view] final case class SurfaceWorldBounds(
   minimumX: Double,
@@ -12,52 +15,163 @@ private[view] final case class SurfaceWorldBounds(
   maximumZ: Double
 )
 
-final case class SurfaceAsset private (
-  id: SurfaceId,
-  geometries: SurfaceSet,
-  domain: SurfaceMeshDomain,
-  private[view] val cameraBounds: SurfaceWorldBounds,
-  private[view] val topologyIndices: IntBufferView
+/** Renderer-local, immutable view of one coordinate realization. The local
+  * Double coordinates are copied once from the typed mesh4s realization; the
+  * world-space Float buffers and normals are then reused by every fixed-frame
+  * compilation and every backend.
+  */
+private[view] final class SurfaceRendererGeometry private[view] (
+  val source: SurfaceGeometry,
+  private val localCoordinates: Array[Double],
+  val packet: SurfaceMeshPacket,
+  val worldBounds: SurfaceWorldBounds
 ):
-  def geometry: SurfaceGeometry = geometries.default
+  inline def coordinateAt(offset: Int): Double =
+    localCoordinates(offset)
 
-  private[view] def resolve(presentation: SurfaceGeometryPresentation): Either[SurfaceViewError, SurfaceGeometry] =
-    presentation.resolve(geometries)
+/** One derived renderer rendition for an ingested surface family. Topology
+  * indices and every fixed coordinate packet are packed exactly once.
+  */
+private[view] final class SurfaceRendererRendition private (
+  val topologyKey: SurfaceResourceKey,
+  val indices: IntBufferView,
+  private val geometries: Map[SurfaceKind, SurfaceRendererGeometry]
+):
+  def geometry(kind: SurfaceKind): SurfaceRendererGeometry =
+    geometries(kind)
 
-object SurfaceAsset:
-  def make(id: SurfaceId, geometry: SurfaceGeometry): Either[SurfaceViewError, SurfaceAsset] =
-    make(id, SurfaceSet.of(geometry.kind, geometry))
+private[view] object SurfaceRendererRendition:
+  def from(
+    id: SurfaceId,
+    surfaces: SurfaceSet,
+    domain: SurfaceMeshDomain
+  ): SurfaceRendererRendition =
+    val indices = new IntBufferView(surfaces.default.mesh.faceIndices)
+    val topologyKey = SurfaceResourceKey(
+      s"mesh:${id.value}:${domain.display}:${domain.topology.stableKey}"
+    )
+    val packed = surfaces.surfaces.map: (kind, geometry) =>
+      val local = copyLocalCoordinates(geometry)
+      val world = worldPositions(local, geometry.surfaceToWorld)
+      val normals = computeNormals(world, indices.unsafeArray)
+      val packet = SurfaceMeshPacket(
+        id,
+        topologyKey,
+        new FloatBufferView(world),
+        new FloatBufferView(normals),
+        indices,
+        Some(geometryKey(id, domain, world))
+      )
+      kind -> new SurfaceRendererGeometry(
+        geometry,
+        local,
+        packet,
+        bounds(local, geometry.surfaceToWorld)
+      )
+    new SurfaceRendererRendition(topologyKey, indices, packed)
 
-  def make(id: SurfaceId, geometries: SurfaceSet): Either[SurfaceViewError, SurfaceAsset] =
-    geometries.meshDomainEither
-      .left.map(error => SurfaceViewError.InvalidBilateralLayout(error.message))
-      .map: domain =>
-        val source = geometries.default.mesh.faceIndices
-        val indices = new Array[Int](source.length)
-        var index = 0
-        while index < source.length do
-          indices(index) = source(index)
-          index += 1
-        new SurfaceAsset(id, geometries, domain, worldBounds(geometries.default), new IntBufferView(indices))
+  def worldPositions(
+    local: Array[Double],
+    transform: scalafim.image.DMat
+  ): Array[Float] =
+    val world = new Array[Float](local.length)
+    var offset = 0
+    while offset < local.length do
+      val x = local(offset)
+      val y = local(offset + 1)
+      val z = local(offset + 2)
+      val wx = transform(0, 0) * x + transform(0, 1) * y + transform(0, 2) * z + transform(0, 3)
+      val wy = transform(1, 0) * x + transform(1, 1) * y + transform(1, 2) * z + transform(1, 3)
+      val wz = transform(2, 0) * x + transform(2, 1) * y + transform(2, 2) * z + transform(2, 3)
+      val ww = transform(3, 0) * x + transform(3, 1) * y + transform(3, 2) * z + transform(3, 3)
+      val inverseW = if ww == 0.0 then 1.0 else 1.0 / ww
+      world(offset) = (wx * inverseW).toFloat
+      world(offset + 1) = (wy * inverseW).toFloat
+      world(offset + 2) = (wz * inverseW).toFloat
+      offset += 3
+    world
 
-  /** Camera framing belongs to the canonical geometry, not to the union of
-    * every presentation state. This keeps a family stable while preventing a
-    * distant inflated or spherical state from displacing the folded cortex.
-    */
-  private def worldBounds(geometry: SurfaceGeometry): SurfaceWorldBounds =
+  def computeNormals(positions: Array[Float], indices: Array[Int]): Array[Float] =
+    val accum = new Array[Double](positions.length)
+    var face = 0
+    while face < indices.length do
+      val a = indices(face) * 3
+      val b = indices(face + 1) * 3
+      val c = indices(face + 2) * 3
+      val abx = positions(b) - positions(a)
+      val aby = positions(b + 1) - positions(a + 1)
+      val abz = positions(b + 2) - positions(a + 2)
+      val acx = positions(c) - positions(a)
+      val acy = positions(c + 1) - positions(a + 1)
+      val acz = positions(c + 2) - positions(a + 2)
+      val nx = aby * acz - abz * acy
+      val ny = abz * acx - abx * acz
+      val nz = abx * acy - aby * acx
+      accum(a) += nx; accum(a + 1) += ny; accum(a + 2) += nz
+      accum(b) += nx; accum(b + 1) += ny; accum(b + 2) += nz
+      accum(c) += nx; accum(c + 1) += ny; accum(c + 2) += nz
+      face += 3
+    val normals = new Array[Float](positions.length)
+    var offset = 0
+    while offset < normals.length do
+      val x = accum(offset)
+      val y = accum(offset + 1)
+      val z = accum(offset + 2)
+      val norm = math.sqrt(x * x + y * y + z * z)
+      if norm > 0.0 then
+        normals(offset) = (x / norm).toFloat
+        normals(offset + 1) = (y / norm).toFloat
+        normals(offset + 2) = (z / norm).toFloat
+      offset += 3
+    normals
+
+  def geometryKey(
+    id: SurfaceId,
+    domain: SurfaceMeshDomain,
+    positions: Array[Float]
+  ): SurfaceResourceKey =
+    var hash = MurmurHash3.stringHash(domain.display)
+    var index = 0
+    while index < positions.length do
+      hash = MurmurHash3.mix(hash, java.lang.Float.floatToIntBits(positions(index)))
+      index += 1
+    SurfaceResourceKey(
+      s"mesh:${id.value}:${domain.topology.stableKey}:${hex(MurmurHash3.finalizeHash(hash, positions.length))}"
+    )
+
+  private def copyLocalCoordinates(geometry: SurfaceGeometry): Array[Double] =
+    val local = new Array[Double](geometry.vertexCount * 3)
+    val realization = geometry.mesh.realization
+    realization.positions.foreachD3(
+      new D3PointConsumer[realization.topology.Vertex]:
+        def apply(
+          index: Index[realization.topology.Vertex],
+          x: Double,
+          y: Double,
+          z: Double
+        ): Unit =
+          val offset = index.ordinal * 3
+          local(offset) = x
+          local(offset + 1) = y
+          local(offset + 2) = z
+    )
+    local
+
+  private def bounds(
+    local: Array[Double],
+    transform: scalafim.image.DMat
+  ): SurfaceWorldBounds =
     var minimumX = Double.PositiveInfinity
     var minimumY = Double.PositiveInfinity
     var minimumZ = Double.PositiveInfinity
     var maximumX = Double.NegativeInfinity
     var maximumY = Double.NegativeInfinity
     var maximumZ = Double.NegativeInfinity
-    val coordinates = geometry.mesh.coordinates
-    val transform = geometry.surfaceToWorld
     var offset = 0
-    while offset < coordinates.length do
-      val x = coordinates(offset)
-      val y = coordinates(offset + 1)
-      val z = coordinates(offset + 2)
+    while offset < local.length do
+      val x = local(offset)
+      val y = local(offset + 1)
+      val z = local(offset + 2)
       val wx = transform(0, 0) * x + transform(0, 1) * y + transform(0, 2) * z + transform(0, 3)
       val wy = transform(1, 0) * x + transform(1, 1) * y + transform(1, 2) * z + transform(1, 3)
       val wz = transform(2, 0) * x + transform(2, 1) * y + transform(2, 2) * z + transform(2, 3)
@@ -75,6 +189,43 @@ object SurfaceAsset:
       offset += 3
     SurfaceWorldBounds(minimumX, minimumY, minimumZ, maximumX, maximumY, maximumZ)
 
+  private def hex(value: Int): String =
+    val raw = java.lang.Integer.toHexString(value)
+    "0" * (8 - raw.length) + raw
+
+final case class SurfaceAsset private (
+  id: SurfaceId,
+  geometries: SurfaceSet,
+  domain: SurfaceMeshDomain,
+  private[view] val cameraBounds: SurfaceWorldBounds,
+  private[view] val rendition: SurfaceRendererRendition
+):
+  def geometry: SurfaceGeometry = geometries.default
+
+  private[view] def resolve(presentation: SurfaceGeometryPresentation): Either[SurfaceViewError, SurfaceGeometry] =
+    presentation.resolve(geometries)
+
+object SurfaceAsset:
+  def make(id: SurfaceId, geometry: SurfaceGeometry): Either[SurfaceViewError, SurfaceAsset] =
+    make(id, SurfaceSet.of(geometry.kind, geometry))
+
+  def make(id: SurfaceId, geometries: SurfaceSet): Either[SurfaceViewError, SurfaceAsset] =
+    geometries.meshDomainEither
+      .left.map(error => SurfaceViewError.InvalidBilateralLayout(error.message))
+      .map: domain =>
+        val rendition = SurfaceRendererRendition.from(id, geometries, domain)
+        new SurfaceAsset(
+          id,
+          geometries,
+          domain,
+          rendition.geometry(geometries.defaultKind).worldBounds,
+          rendition
+        )
+
+  /** Camera framing belongs to the canonical geometry, not to the union of
+    * every presentation state. This keeps a family stable while preventing a
+    * distant inflated or spherical state from displacing the folded cortex.
+    */
 final case class SurfaceViewerModel private (
   surfaces: Vector[SurfaceAsset],
   layers: Vector[SurfaceLayer],

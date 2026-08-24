@@ -26,10 +26,18 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(capabilities.caveats.exists(_.contains("world clipping")))
 
   private def geometry(faceCopies: Int = 1): SurfaceGeometry =
-    val faces = Vector.fill(faceCopies)((0, 1, 2))
+    val vertices = Vector.tabulate(faceCopies * 3): vertex =>
+      val face = vertex / 3
+      vertex % 3 match
+        case 0 => Seq(face.toDouble * 3.0 - 1.0, -1.0, 0.0)
+        case 1 => Seq(face.toDouble * 3.0 + 1.0, -1.0, 0.0)
+        case _ => Seq(face.toDouble * 3.0 - 0.5, 1.0, 0.0)
+    val faces = Vector.tabulate(faceCopies): face =>
+      val first = face * 3
+      (first, first + 1, first + 2)
     SurfaceGeometry(
       TriangleMesh.fromRows(
-        Seq(Seq(-1.0, -1.0, 0.0), Seq(1.0, -1.0, 0.0), Seq(-0.5, 1.0, 0.0)),
+        vertices,
         faces
       ),
       Hemisphere.Left,
@@ -176,7 +184,7 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assertEquals(result.chunks.map(_.faceCount), Vector(256, 44))
     assertEquals(result.receipt.chunks, 2)
     assertEquals(result.receipt.facesUploaded, 300)
-    assertEquals(result.receipt.verticesUploaded, 6)
+    assertEquals(result.receipt.verticesUploaded, 1800)
     assertEquals(result.receipt.atlasPixels, 4864L)
 
   test("face tuples retain point, normal, and face-local atlas indices"):

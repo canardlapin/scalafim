@@ -295,8 +295,29 @@ class SurfaceViewerSuite extends munit.FunSuite:
     val after = SurfaceCompiler.compile(viewer, moved).toOption.get
     assertEquals(after.receipt.meshKeys, before.receipt.meshKeys)
     assertEquals(after.receipt.layerKeys, before.receipt.layerKeys)
+    assert(after.meshes.head eq before.meshes.head)
+    assert(after.meshes.head.positions eq before.meshes.head.positions)
+    assert(after.meshes.head.normals eq before.meshes.head.normals)
+    assert(after.meshes.head.indices eq before.meshes.head.indices)
     assertNotEquals(after.receipt.cameraKey, before.receipt.cameraKey)
     assertEquals(after.camera.directionZ, 1.0)
+
+  test("timepoint changes reuse the fixed renderer geometry rendition"):
+    val viewer = model(frames = 2)
+    val initial = SurfaceViewerState.initial(viewer)
+    val before = SurfaceCompiler.compile(viewer, initial).toOption.get
+    val atOne = SurfaceViewer.reduce(
+      viewer,
+      initial,
+      SurfaceViewerAction.SetTimepoint(1)
+    ).toOption.get
+    val after = SurfaceCompiler.compile(viewer, atOne).toOption.get
+
+    assert(after.meshes.head eq before.meshes.head)
+    assert(after.meshes.head.positions eq before.meshes.head.positions)
+    assert(after.meshes.head.normals eq before.meshes.head.normals)
+    assert(after.meshes.head.indices eq before.meshes.head.indices)
+    assertNotEquals(after.layers.head.resourceKey, before.layers.head.resourceKey)
 
   test("geometry families morph without changing topology, layers, selection, or camera framing"):
     val white = geometry(offset = 0.0, kind = SurfaceKind.White)
@@ -349,6 +370,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assertEquals(during.meshes.head.positions(0), 1.0f)
     assertEquals(during.receipt.meshKeys, before.receipt.meshKeys)
     assertNotEquals(during.meshes.head.geometryKey, before.meshes.head.geometryKey)
+    assert(during.meshes.head.indices eq before.meshes.head.indices)
     assertEquals(during.receipt.layerKeys, before.receipt.layerKeys)
     assertEquals(during.receipt.cameraKey, before.receipt.cameraKey)
     assertEqualsDouble(during.readouts.head.worldX, 1.0, 0.0)

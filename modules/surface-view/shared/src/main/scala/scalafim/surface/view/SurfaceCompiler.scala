@@ -9,15 +9,15 @@ object SurfaceCompiler:
     def stableKey: String = s"$x:$y:$z:$radius"
 
   private final case class GeometryFrame(
-    from: SurfaceGeometry,
-    to: SurfaceGeometry,
+    from: SurfaceRendererGeometry,
+    to: SurfaceRendererGeometry,
     fraction: Double,
     deformation: Option[SurfaceLensDeformation] = None
   ):
     inline def coordinateAt(offset: Int): Double =
       deformation match
-        case Some(value) => from.mesh.coordinates(offset) + fraction * value.displacementAtUnsafe(offset)
-        case None => from.mesh.coordinates(offset) + fraction * (to.mesh.coordinates(offset) - from.mesh.coordinates(offset))
+        case Some(value) => from.coordinateAt(offset) + fraction * value.displacementAtUnsafe(offset)
+        case None => from.coordinateAt(offset) + fraction * (to.coordinateAt(offset) - from.coordinateAt(offset))
 
   def compile(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, SurfaceRenderPlan] =
     for
@@ -143,10 +143,13 @@ object SurfaceCompiler:
       case _: SurfaceLayout.Single => slots
 
   private def packMesh(asset: SurfaceAsset, frame: GeometryFrame): SurfaceMeshPacket =
-    val from = frame.from.mesh.coordinates
-    val to = frame.to.mesh.coordinates
+    if frame.fraction == 0.0 then frame.from.packet
+    else if frame.fraction == 1.0 && frame.deformation.isEmpty then frame.to.packet
+    else packDynamicMesh(asset, frame)
+
+  private def packDynamicMesh(asset: SurfaceAsset, frame: GeometryFrame): SurfaceMeshPacket =
     val positions = new Array[Float](asset.domain.vertexCount * 3)
-    val transform = frame.from.surfaceToWorld
+    val transform = frame.from.source.surfaceToWorld
     var vertex = 0
     while vertex < asset.domain.vertexCount do
       val offset = vertex * 3
@@ -163,53 +166,18 @@ object SurfaceCompiler:
       positions(offset + 2) = (wz * inverseW).toFloat
       vertex += 1
 
-    val indices = asset.topologyIndices
+    val indices = asset.rendition.indices
     val indexArray = indices.unsafeArray
-    val normals = computeNormals(positions, indexArray)
-    val key = topologyKey(asset)
-    val geometryKey = meshKey(asset, positions)
+    val normals = SurfaceRendererRendition.computeNormals(positions, indexArray)
+    val geometryKey = SurfaceRendererRendition.geometryKey(asset.id, asset.domain, positions)
     SurfaceMeshPacket(
       asset.id,
-      key,
+      asset.rendition.topologyKey,
       new FloatBufferView(positions),
       new FloatBufferView(normals),
       indices,
       Some(geometryKey)
     )
-
-  private def computeNormals(positions: Array[Float], indices: Array[Int]): Array[Float] =
-    val accum = new Array[Double](positions.length)
-    var face = 0
-    while face < indices.length do
-      val a = indices(face) * 3
-      val b = indices(face + 1) * 3
-      val c = indices(face + 2) * 3
-      val abx = positions(b) - positions(a)
-      val aby = positions(b + 1) - positions(a + 1)
-      val abz = positions(b + 2) - positions(a + 2)
-      val acx = positions(c) - positions(a)
-      val acy = positions(c + 1) - positions(a + 1)
-      val acz = positions(c + 2) - positions(a + 2)
-      val nx = aby * acz - abz * acy
-      val ny = abz * acx - abx * acz
-      val nz = abx * acy - aby * acx
-      accum(a) += nx; accum(a + 1) += ny; accum(a + 2) += nz
-      accum(b) += nx; accum(b + 1) += ny; accum(b + 2) += nz
-      accum(c) += nx; accum(c + 1) += ny; accum(c + 2) += nz
-      face += 3
-    val normals = new Array[Float](positions.length)
-    var offset = 0
-    while offset < normals.length do
-      val x = accum(offset)
-      val y = accum(offset + 1)
-      val z = accum(offset + 2)
-      val norm = math.sqrt(x * x + y * y + z * z)
-      if norm > 0.0 then
-        normals(offset) = (x / norm).toFloat
-        normals(offset + 1) = (y / norm).toFloat
-        normals(offset + 2) = (z / norm).toFloat
-      offset += 3
-    normals
 
   private def familyFrame(assets: Vector[SurfaceAsset]): CameraFrame =
     var minimumX = Double.PositiveInfinity
@@ -320,12 +288,10 @@ object SurfaceCompiler:
         val vertex = selection.vertex.index
         val frame = frames(asset.id)
         val offset = vertex * 3
-        val from = frame.from.mesh.coordinates
-        val to = frame.to.mesh.coordinates
         val px = frame.coordinateAt(offset)
         val py = frame.coordinateAt(offset + 1)
         val pz = frame.coordinateAt(offset + 2)
-        val transform = frame.from.surfaceToWorld
+        val transform = frame.from.source.surfaceToWorld
         val tx = transform(0, 0) * px + transform(0, 1) * py + transform(0, 2) * pz + transform(0, 3)
         val ty = transform(1, 0) * px + transform(1, 1) * py + transform(1, 2) * pz + transform(1, 3)
         val tz = transform(2, 0) * px + transform(2, 1) * py + transform(2, 2) * pz + transform(2, 3)
@@ -334,17 +300,6 @@ object SurfaceCompiler:
         val values = state.layerOrder.flatMap: id =>
           model.layer(id).filter(_.surfaceId == selection.surface).map(layer => id -> layer.describe(vertex, state.timepoint))
         SurfaceReadout(selection.surface, vertex, tx * inverseW, ty * inverseW, tz * inverseW, values)
-
-  private def meshKey(asset: SurfaceAsset, positions: Array[Float]): SurfaceResourceKey =
-    var hash = MurmurHash3.stringHash(asset.domain.display)
-    var index = 0
-    while index < positions.length do
-      hash = MurmurHash3.mix(hash, java.lang.Float.floatToIntBits(positions(index)))
-      index += 1
-    SurfaceResourceKey(s"mesh:${asset.id.value}:${asset.domain.topology.stableKey}:${hex(MurmurHash3.finalizeHash(hash, positions.length))}")
-
-  private def topologyKey(asset: SurfaceAsset): SurfaceResourceKey =
-    SurfaceResourceKey(s"mesh:${asset.id.value}:${asset.domain.display}:${asset.domain.topology.stableKey}")
 
   private def resolveFrames(
     model: SurfaceViewerModel,
@@ -364,18 +319,29 @@ object SurfaceCompiler:
               case None => return Left(SurfaceViewError.IncompatibleMorph(
                 s"surface '${asset.id.value}' has no '${kind.label}' geometry"
               ))
-              case Some(geometry) => resolved += asset.id -> GeometryFrame(geometry, geometry, 0.0)
+              case Some(_) =>
+                val geometry = asset.rendition.geometry(kind)
+                resolved += asset.id -> GeometryFrame(geometry, geometry, 0.0)
           case SurfaceGeometryPresentation.Morphing(from, to, fraction) =>
             (asset.geometries.get(from), asset.geometries.get(to)) match
               case (Some(start), Some(end)) =>
-                resolved += asset.id -> GeometryFrame(start, end, fraction.value)
+                resolved += asset.id -> GeometryFrame(
+                  asset.rendition.geometry(from),
+                  asset.rendition.geometry(to),
+                  fraction.value
+                )
               case _ => return Left(SurfaceViewError.IncompatibleMorph(
                 s"surface '${asset.id.value}' lacks a requested morph endpoint"
               ))
           case SurfaceGeometryPresentation.RevealLens(from, to, deformation, fraction) =>
             (asset.geometries.get(from), asset.geometries.get(to)) match
               case (Some(start), Some(end)) if deformation.isCompatibleWith(start) =>
-                resolved += asset.id -> GeometryFrame(start, end, fraction.value, Some(deformation))
+                resolved += asset.id -> GeometryFrame(
+                  asset.rendition.geometry(from),
+                  asset.rendition.geometry(to),
+                  fraction.value,
+                  Some(deformation)
+                )
               case (Some(_), Some(_)) => return Left(SurfaceViewError.IncompatibleMorph(
                 s"surface '${asset.id.value}' reveal lens belongs to another mesh domain"
               ))
