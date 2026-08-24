@@ -54,8 +54,9 @@ clean boundary is:
   adapters into spatial domains.
 - `dataset`: data backends and series adapters that can feed or consume spatial
   field views.
-- JVM-only IO packages: NIfTI, GIFTI/CIFTI, fMRIPrep, ANTs/FSL/AFNI, and
-  on-disk operator caches.
+- JVM-only IO packages: NIfTI, CIFTI, FreeSurfer, fMRIPrep, ANTs/FSL/AFNI,
+  and on-disk operator caches. GIFTI surface ingestion is available through
+  platform-specific JVM and Scala.js entry points.
 
 The first new module should be:
 
