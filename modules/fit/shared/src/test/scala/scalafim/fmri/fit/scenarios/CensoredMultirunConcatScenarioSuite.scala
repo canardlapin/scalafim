@@ -21,6 +21,7 @@ import scalafim.fmri.fit.{
   FitPlanExecutor,
   MatrixAdapters,
   Ols,
+  RankPreviewDifference,
   ResidualDegreesOfFreedom,
   ResponseBlock,
   RunPartition,
@@ -28,8 +29,8 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
-import gale.linalg.{DMat, DVec}
+import scalafim.image.DMat as ImageDMat
+import gale.linalg.DMat
 
 class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)
@@ -58,6 +59,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
     val oracle = Ols.unsafeFit(DesignMatrix.unsafe(selectedDesign), ResponseBlock.unsafe(selectedResponse))
     val fullResult = FitPlanExecutor.unsafeFit(plan).asInstanceOf[DenseFmriFitResult]
     val task = value(TContrast("task", Map("task" -> 1.0)).evaluate(publicResult))
+    val rankComparison = value(publicResult.rankPreviewComparison)
     val expectedPartitions = RunPartition.fromSamplingFrame(fixture.samplingFrame, fixture.keepTimepoints)
     val datasetPartitions = fixture.dataset.runPartitions(fixture.selection)
 
@@ -84,13 +86,19 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
           s"actual=${publicResult.residualDegreesOfFreedom} expected=${fixture.keepTimepoints.length - publicResult.columnNames.length}"
         ),
         ScenarioHarness.fact(
+          "fit-time rank evidence records aggressive row selection",
+          rankComparison.differences.contains(RankPreviewDifference.SelectedRows(12, 6)) &&
+            rankComparison.fitted.numericalRank == publicResult.columnNames.length,
+          s"differences=${rankComparison.differences}; rank=${rankComparison.fitted.numericalRank}"
+        ),
+        ScenarioHarness.fact(
           "fit run partitions",
-          expectedPartitions.map(_.timepoints) == Vector(Vector(0, 1, 2, 3, 4), Vector(6, 7, 9, 10, 11)),
+          expectedPartitions.map(_.timepoints) == Vector(Vector(0, 2, 4), Vector(6, 9, 11)),
           s"actual=${expectedPartitions.map(_.timepoints).mkString(",")}"
         ),
         ScenarioHarness.fact(
           "fit run partition rows",
-          expectedPartitions.map(_.rowIndices) == Vector(Vector(0, 1, 2, 3, 4), Vector(5, 6, 7, 8, 9)),
+          expectedPartitions.map(_.rowIndices) == Vector(Vector(0, 1, 2), Vector(3, 4, 5)),
           s"actual=${expectedPartitions.map(_.rowIndices).mkString(",")}"
         ),
         ScenarioHarness.fact(
@@ -100,7 +108,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
         ),
         ScenarioHarness.fact(
           "dataset local run timepoints",
-          datasetPartitions.map(_.localTimepoints) == Vector(Vector(0, 1, 2, 3, 4), Vector(0, 1, 3, 4, 5)),
+          datasetPartitions.map(_.localTimepoints) == Vector(Vector(0, 2, 4), Vector(0, 3, 5)),
           s"actual=${datasetPartitions.map(_.localTimepoints).mkString(",")}"
         ),
         ScenarioHarness.fact(
@@ -176,7 +184,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
         -2.0, -1.0, 0.0, 1.0, 2.0, 3.0,
         -2.0, -1.0, 3.0, 0.0, 1.0, 2.0
       )
-    val keep = Vector(0, 1, 2, 3, 4, 6, 7, 9, 10, 11)
+    val keep = Vector(0, 2, 4, 6, 9, 11)
     val beta =
       scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
@@ -189,12 +197,8 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
       Vector(
         Vector(0.06, -0.04),
         Vector(-0.12, 0.08),
-        Vector(0.12, -0.08),
-        Vector(-0.12, 0.08),
         Vector(0.06, -0.04),
         Vector(0.05, 0.03),
-        Vector(-0.10, -0.06),
-        Vector(0.10, 0.06),
         Vector(-0.10, -0.06),
         Vector(0.05, 0.03)
       )

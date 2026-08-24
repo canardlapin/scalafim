@@ -41,6 +41,27 @@ class FormulaParserSuite extends munit.FunSuite:
     )
   }
 
+  test("FormulaParser retains an ordered additive modulator family") {
+    val f = FormulaParser.parse("onset ~ hrf(modulators(center(x), y), id = slopes)")
+    assertEquals(
+      f.terms,
+      Vector(
+        HrfCall(
+          vars = Vector(
+            ArgValue.Call(
+              "modulators",
+              Vector(
+                Arg(None, ArgValue.Call("center", Vector(Arg(None, col("x"))))),
+                Arg(None, col("y"))
+              )
+            )
+          ),
+          id = Some(term("slopes"))
+        )
+      )
+    )
+  }
+
   test("FormulaParser parses trialwise()") {
     val f = FormulaParser.parse("onset ~ trialwise(basis = \"spmg2\", add_sum = TRUE, label = trialwise)")
     assertEquals(
@@ -99,6 +120,39 @@ class FormulaParserSuite extends munit.FunSuite:
     )
   }
 
+  test("FormulaParser parses phase provenance arguments") {
+    val f = FormulaParser.parse("onset ~ hrf(cond, onsets = phase_onset, durations = phase_dur, phase = probe, parent = trial_id, id = probe)")
+    assertEquals(
+      f.terms,
+      Vector(
+        HrfCall(
+          vars = Vector(col("cond")),
+          onsets = Some(col("phase_onset")),
+          durations = Some(col("phase_dur")),
+          phase = Some(
+            PhaseRef(
+              PhaseId.unsafe("probe"),
+              ColumnId.unsafe("trial_id")
+            )
+          ),
+          id = Some(term("probe"))
+        )
+      )
+    )
+  }
+
+  test("FormulaParser rejects incomplete phase provenance") {
+    val missingParent = FormulaParser.parseEither(
+      "onset ~ hrf(cond, phase = probe)"
+    )
+    val missingPhase = FormulaParser.parseEither(
+      "onset ~ hrf(cond, parent = trial_id)"
+    )
+
+    assert(missingParent.left.exists(_.message.contains("requires a 'parent'")))
+    assert(missingPhase.left.exists(_.message.contains("requires a 'phase'")))
+  }
+
   test("FormulaParser parses trialwise durations and normalize") {
     val f = FormulaParser.parse("onset ~ trialwise(durations = dur, normalize = TRUE)")
     assertEquals(
@@ -109,6 +163,26 @@ class FormulaParserSuite extends munit.FunSuite:
           normalize = Some(true)
         )
       )
+    )
+  }
+
+  test("FormulaParser parses named HRF column scaling and rejects conflicting compatibility syntax") {
+    val formula = FormulaParser.parse(
+      "onset ~ hrf(condition, scaling = unit_maximum_absolute, id = task) + " +
+        "trialwise(scaling = as_convolved)"
+    )
+    assertEquals(
+      formula.terms.collect { case term: HrfCall => term.scaling },
+      Vector(Some(HrfColumnScaling.UnitMaximumAbsolute))
+    )
+    assertEquals(
+      formula.terms.collect { case term: TrialwiseCall => term.scaling },
+      Vector(Some(HrfColumnScaling.AsConvolved))
+    )
+    assert(
+      FormulaParser.parseEither(
+        "onset ~ hrf(condition, scaling = unit_maximum_absolute, normalize = true)"
+      ).isLeft
     )
   }
 

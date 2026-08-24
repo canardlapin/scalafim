@@ -1,7 +1,7 @@
 package scalafim.fmri.hrf
 
 import scalafim.fmri.hrf.{Hrf, Seconds, s}
-import scalafim.fmri.hrf.linalg.{Mat, Vec}
+import scalafim.fmri.hrf.linalg.Mat
 
 object Evaluate:
 

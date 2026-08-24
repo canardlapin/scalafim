@@ -2,15 +2,13 @@ package scalafim.fmri.fit
 
 import scalafim.image.SampleSpaces
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.NuisanceCheck
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.image.DMat as ImageDMat
 
 class FitPlanBuilderSuite extends munit.FunSuite:
 
@@ -91,5 +89,5 @@ class FitPlanBuilderSuite extends munit.FunSuite:
     assertEquals(plan.model.baselineModel.nuisanceReport.map(_.droppedByBlock).get, Vector(Vector("motion_y_dup", "constant_conf")))
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)
-    assertEqualsDouble(result.coefficient("nuis#01_1", 0).get, 5.0, 1e-10)
+    assertEqualsDouble(result.coefficient("motion_y", 0).get, 5.0, 1e-10)
   }

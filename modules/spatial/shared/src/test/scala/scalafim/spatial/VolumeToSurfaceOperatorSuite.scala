@@ -3,7 +3,6 @@ package scalafim.spatial
 import scalafim.image.{SampleSpaces, DMat, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.valueAtCanonicalOrdinal
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError, SparseTriplets}
 import scalafim.surface.*
 
 class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
@@ -33,7 +32,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
   private def linValue[A](result: Either[LinearMapError, A]): A =
     result match
       case Right(value) => value
-      case Left(error) => fail(error.message)
+      case Left(error) => fail(error.getMessage)
 
   private def volumeDomain(mask: Option[SomeMaskVolume] = None): Domain =
     val id = value(DomainId("volume"))

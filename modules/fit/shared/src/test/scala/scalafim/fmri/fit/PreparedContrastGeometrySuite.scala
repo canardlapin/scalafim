@@ -132,7 +132,11 @@ class PreparedContrastGeometrySuite extends munit.FunSuite:
         nuisanceRank = TemporalNuisanceRank.unsafe(2)
       )
 
-    assert(result.left.toOption.exists(_.isInstanceOf[FitError.SingularDesign]))
+    assert(result.left.toOption.exists {
+      case FitError.RankDeficientDesign(report) => report.deficient
+      case FitError.SingularDesign(_)            => true
+      case _                                     => false
+    })
 
   test("held-out responses cannot alter a training-scoped whitening geometry"):
     val design = designMatrix(designRows)

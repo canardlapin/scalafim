@@ -72,3 +72,23 @@ class DataSelectionSuite extends munit.FunSuite:
       .left
       .exists(_.message.contains("exceeds size 6")))
   }
+
+  test("excluded timepoints are an explicit ordered censor selection") {
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(1, 1, 1)), timepoints = 8)
+    val resolved =
+      DataSelection(time = TimepointSelection.excluding(2, 4, 5))
+        .resolveEither(shape)
+        .fold(error => fail(error.message), identity)
+
+    assertEquals(resolved.timepoints, Vector(0, 1, 3, 6, 7))
+    assert(TimepointSelection.fromExcludedInts(-1).isLeft)
+    assert(DataSelection(time = TimepointSelection.excluding(7, 8))
+      .resolveEither(shape)
+      .left
+      .exists(_.message.contains("out of bounds")))
+    assert(DataSelection(time = TimepointSelection.excluding(0, 1, 2, 3, 4, 5, 6, 7))
+      .resolveEither(shape)
+      .left
+      .toOption
+      .contains(DatasetError.EmptySelection(DatasetAxis.Timepoint)))
+  }

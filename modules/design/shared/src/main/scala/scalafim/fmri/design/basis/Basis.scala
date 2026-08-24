@@ -359,7 +359,7 @@ object ParametricBasis:
 
       (q, diagR)
 
-    def predict(coefs: PolyCoefs, newData: Seq[Double], degree: Int, colNamePrefix: String): Mat =
+    def predict(coefs: PolyCoefs, newData: Seq[Double], degree: Int): Mat =
       val x = newData.toVector
       val n = x.length
       if n == 0 then return Mat.zeros(0, degree)

@@ -1,0 +1,44 @@
+name: first-level-performance
+run-name: first-level performance (${{ github.event_name }})
+
+on:
+  schedule:
+    - cron: "23 7 * * 4"
+  workflow_dispatch:
+
+concurrency:
+  group: first-level-performance-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  jmh-admission:
+    name: HRF, AR, and fit JMH admission court
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up the declared JDK baseline
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Run HRF, AR, and fit admission benchmarks
+        env:
+          SCALAFIM_BENCHMARK_OUT: ${{ runner.temp }}/first-level-benchmarks
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-first-level-benchmark-sbt
+        run: bash tools/ci/first-level-benchmark.sh
+
+      - name: Upload raw JMH reports and admission receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: first-level-performance-${{ github.sha }}
+          path: ${{ runner.temp }}/first-level-benchmarks
+          if-no-files-found: error
+          retention-days: 30

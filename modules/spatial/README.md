@@ -108,12 +108,11 @@ barriers remain visible; unsupported orderings fail with
 `SpatialError.UnsupportedPluginComposition` rather than silently changing the
 math.
 
-New linear algebra uses Gale. Plugin matrices are `gale.linalg.DMat`, Gale row
-maps execute through `GaleLinearMap`, and JVM transform ingestion uses Gale
-factorization. `GaleMatrixBridge` is the explicit compatibility boundary to the
-older `scalafim.linalg.DoubleMatrix`. Spatial image geometry still exposes its
-current `scalafim.image.DMat` ABI; conversions at that boundary are deliberate,
-not a second linear-algebra implementation.
+Linear algebra uses Gale directly. Plugin matrices are `gale.linalg.DMat`;
+sampled maps use Gale `DoubleLinearOperator`, `COO`, and `CSR`; and JVM transform
+ingestion uses Gale factorization. Spatial image geometry still exposes its
+current `scalafim.image.DMat` ABI, so conversions at that domain boundary are
+deliberate rather than a second generic linear-algebra implementation.
 
 ## JVM sources and transform assets
 

@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, DesignError, TermId}
+import scalafim.fmri.design.{ColumnId, DesignError, HrfColumnScaling, PhaseId, TermId}
 
 object FormulaParser:
 
@@ -32,7 +32,7 @@ object FormulaParser:
 
   def parse(input: String): ModelFormula =
     val toks = tokenize(input)
-    val p = new Parser(toks, input)
+    val p = new Parser(toks)
     val out = p.parseFormula()
     p.expect(Tok.EOF)
     out
@@ -182,7 +182,7 @@ object FormulaParser:
   private def isNumberPart(c: Char): Boolean =
     c.isDigit || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-'
 
-  private final class Parser(tokens: Vector[Token], input: String):
+  private final class Parser(tokens: Vector[Token]):
     private var ix: Int = 0
 
     private def cur: Token = tokens(ix)
@@ -366,6 +366,19 @@ object FormulaParser:
           TermId(v).fold(error => throw ParseError(idDetail(error), cur.pos), identity)
         }
 
+      def phaseId(name: String): Option[PhaseId] =
+        stringOrIdent(name).map { v =>
+          PhaseId(v).fold(error => throw ParseError(idDetail(error), cur.pos), identity)
+        }
+
+      def columnId(name: String): Option[ColumnId] =
+        named.get(name).map {
+          case ArgValue.Ident(id) => id
+          case ArgValue.Str(value) =>
+            ColumnId(value).fold(error => throw ParseError(idDetail(error), cur.pos), identity)
+          case other => throw ParseError(s"'$name' must be a string/identifier, found $other", cur.pos)
+        }
+
       def numeric(name: String): Option[Double] =
         named.get(name).map {
           case ArgValue.Num(v) => v
@@ -419,6 +432,16 @@ object FormulaParser:
       val subset = schema.raw("subset")
       val onsets = schema.vectorRef("onsets")
       val durations = schema.vectorRef("durations")
+      val phaseId = schema.phaseId("phase")
+      val parent = schema.columnId("parent")
+      val phase =
+        (phaseId, parent) match
+          case (Some(id), Some(parentColumn)) => Some(PhaseRef(id, parentColumn))
+          case (None, None)                   => None
+          case (Some(_), None) =>
+            throw ParseError("hrf(...) 'phase' requires a 'parent' trial-id column", cur.pos)
+          case (None, Some(_)) =>
+            throw ParseError("hrf(...) 'parent' requires a 'phase' identity", cur.pos)
       val hrfFun = schema.stringOrIdentRef("hrf_fun")
       val contrasts = schema.stringOrIdent("contrasts")
       val id = schema.termId("id").orElse(schema.termId("name"))
@@ -426,9 +449,14 @@ object FormulaParser:
       val lag = schema.numeric("lag")
       val nbasis = schema.integer("nbasis")
       val summate = schema.boolean("summate")
+      val scaling = schema.stringOrIdent("scaling").map { value =>
+        HrfColumnScaling.parse(value).fold(error => throw ParseError(error.message, cur.pos), identity)
+      }
       val normalize = schema.boolean("normalize")
+      if scaling.nonEmpty && normalize.nonEmpty then
+        throw ParseError("hrf(...) accepts either 'scaling' or compatibility 'normalize', not both", cur.pos)
 
-      val allowed = Set("basis", "subset", "onsets", "durations", "hrf_fun", "contrasts", "id", "name", "prefix", "lag", "nbasis", "summate", "normalize")
+      val allowed = Set("basis", "subset", "onsets", "durations", "phase", "parent", "hrf_fun", "contrasts", "id", "name", "prefix", "lag", "nbasis", "summate", "scaling", "normalize")
       schema.rejectUnknown(allowed)
 
       HrfCall(
@@ -437,6 +465,7 @@ object FormulaParser:
         subset = subset,
         onsets = onsets,
         durations = durations,
+        phase = phase,
         hrfFun = hrfFun,
         contrasts = contrasts,
         id = id,
@@ -444,6 +473,7 @@ object FormulaParser:
         lag = lag,
         nbasis = nbasis,
         summate = summate,
+        scaling = scaling,
         normalize = normalize
       )
 
@@ -457,12 +487,17 @@ object FormulaParser:
       val nbasis = schema.integer("nbasis")
       val addSum = schema.boolean("add_sum")
       val label = schema.termId("label")
+      val scaling = schema.stringOrIdent("scaling").map { value =>
+        HrfColumnScaling.parse(value).fold(error => throw ParseError(error.message, cur.pos), identity)
+      }
       val normalize = schema.boolean("normalize")
+      if scaling.nonEmpty && normalize.nonEmpty then
+        throw ParseError("trialwise(...) accepts either 'scaling' or compatibility 'normalize', not both", cur.pos)
 
-      val allowed = Set("basis", "durations", "lag", "nbasis", "add_sum", "label", "normalize")
+      val allowed = Set("basis", "durations", "lag", "nbasis", "add_sum", "label", "scaling", "normalize")
       schema.rejectUnknown(allowed)
 
-      TrialwiseCall(basis = basis, durations = durations, lag = lag, nbasis = nbasis, addSum = addSum, label = label, normalize = normalize)
+      TrialwiseCall(basis = basis, durations = durations, lag = lag, nbasis = nbasis, addSum = addSum, label = label, scaling = scaling, normalize = normalize)
 
     private def buildCovariateCall(args: Vector[Arg]): CovariateCall =
       val schema = TermArgs("covariate", args)

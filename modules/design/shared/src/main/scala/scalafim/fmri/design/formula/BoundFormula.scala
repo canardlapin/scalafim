@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{ColumnId, DesignError, TermId}
+import scalafim.fmri.design.{ColumnId, DesignError, PhaseId, TermId}
 import scalafim.fmri.design.data.DataTable
 import scalafim.fmri.hrf.HrfKind
 
@@ -32,6 +32,8 @@ object ContrastRef:
     if !requireKnown || available.contains(name) then Right(ContrastRef(name))
     else Left(DesignError.UnknownContrast(name, available.toVector.sorted))
 
+final case class BoundPhaseRef(id: PhaseId, parent: ColumnRef)
+
 sealed trait BoundTerm:
   def id: Option[TermId]
 
@@ -41,6 +43,7 @@ final case class BoundHrfTerm(
     onset: ColumnRef,
     basis: Option[BasisRef],
     duration: Option[ColumnRef],
+    phase: Option[BoundPhaseRef],
     contrast: Option[ContrastRef],
     raw: HrfCall
 ) extends BoundTerm
@@ -102,8 +105,9 @@ object BoundFormula:
           columns <- bindArgColumns(h.vars, data)
           basis <- bindOptionalBasis(h.basis)
           duration <- bindOptionalColumn(h.durations, data, argName = "durations")
+          phase <- bindOptionalPhase(h.phase, data)
           contrast <- bindOptionalContrast(h.contrasts, availableContrastSets, requireKnownContrasts)
-        yield BoundHrfTerm(h.id.orElse(h.prefix), columns, onset, basis, duration, contrast, h)
+        yield BoundHrfTerm(h.id.orElse(h.prefix), columns, onset, basis, duration, phase, contrast, h)
 
       case t: TrialwiseCall =>
         for
@@ -118,6 +122,11 @@ object BoundFormula:
     value match
       case None => Right(None)
       case Some(v) => BasisRef.bind(v).map(Some(_))
+
+  private def bindOptionalPhase(value: Option[PhaseRef], data: DataTable): Either[DesignError, Option[BoundPhaseRef]] =
+    value match
+      case None => Right(None)
+      case Some(ref) => ColumnRef.bind(ref.parent, data).map(parent => Some(BoundPhaseRef(ref.id, parent)))
 
   private def bindOptionalColumn(value: Option[ArgValue], data: DataTable, argName: String): Either[DesignError, Option[ColumnRef]] =
     value match

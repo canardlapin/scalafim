@@ -22,7 +22,7 @@ standalone locus4s
 |   +-- image
 |   +-- surface       also depends on image, standalone graph4s
 |   +-- atlas         also depends on image, surface, standalone graph4s
-|   +-- spatial       also depends on linalg, image, surface
+|   +-- spatial       also depends on standalone Gale, image, surface
 |   +-- dataset       also depends on response, image, hrf
 |   +-- mvpa-spatial  also depends on mvpa, image, surface, atlas
 +-- latent            also depends on response, image
@@ -35,8 +35,7 @@ standalone graph4s
 +-- surface           also depends on image, locus-data
 +-- atlas             also depends on image, surface, locus-data
 
-linalg
-+-- linalg-breeze    JVM-only optional Breeze adapter
+standalone Gale
 +-- ar
 +-- design           also depends on hrf
 +-- mvpa
@@ -51,7 +50,7 @@ linalg
 pipeline
 
 standalone Intaglio core
-+-- design                 also depends on hrf, linalg
++-- design                 also depends on hrf, standalone Gale
 +-- image-view             also depends on image
 |   +-- image-view-canvas  also depends on Intaglio Canvas
 |   +-- image-view-java2d  also depends on Intaglio Java2D
@@ -63,7 +62,7 @@ standalone Intaglio core
     +-- surface-view-connectivity  also depends on connectivity
 
 hrf
-+-- design           also depends on linalg, Intaglio core
++-- design           also depends on standalone Gale, Intaglio core
     +-- model
         +-- fit
             +-- group
@@ -71,17 +70,17 @@ hrf
 image
 +-- image-view        also depends on Intaglio core
 +-- archive-lna      also depends on archive
-+-- latent           also depends on response, locus-data, and linalg
++-- latent           also depends on response, locus-data, and standalone Gale
 +-- dataset          also depends on response, hrf, locus-data
 |   +-- mvpa-dataset  also depends on mvpa
 +-- surface
-|   +-- spatial        also depends on linalg, image
+|   +-- spatial        also depends on standalone Gale, image
 |   +-- atlas          also depends on image
 |   +-- mvpa-spatial   also depends on mvpa, image, atlas
 |   +-- surface-view   also depends on Intaglio core
-+-- threshold         also depends on linalg
-+-- motion            also depends on linalg
-+-- group             also depends on linalg, dataset, design, fit
++-- threshold         also depends on standalone Gale
++-- motion            also depends on standalone Gale
++-- group             also depends on standalone Gale, dataset, design, fit
 
 standalone bids4s
 +-- motion JVM
@@ -139,42 +138,40 @@ adjacent checkout is selected automatically during extraction; an explicit
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
 | `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, searchlights, and one-pass commutative aggregation. | standalone locus4s core and data | Generic finite-domain algebra or laws, image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
-| `linalg` | Primitive vectors, matrices, sparse linear maps, solver contracts, portable reference decompositions, linear solves, projection kernels, and backend adapter boundaries. | Nothing internal. | fMRI, image, dataset, domain-specific spatial concepts, or direct domain-module ownership of eigensolver/SVD/inverse helpers. |
-| `linalg-breeze` | JVM-only Breeze-backed adapters for linalg solver contracts and backend differential tests. | `linalg` | Shared APIs, domain-specific algorithms, Scala.js code, or direct Breeze exposure to domain modules. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph4s-delegated deterministic DAG staging, local pure execution, and structured receipts. | standalone graph4s | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, provenance, axis-keyed locality capabilities, and read receipts. | Nothing internal; Cats Core and Cats Effect externally. | General tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
-| `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | `linalg` | GLM fitting orchestration or dataset IO. |
-| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, `linalg`, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
+| `ar` | AR/ARMA whitening plans and pure prewhitening kernels. | standalone Gale | GLM fitting orchestration or dataset IO. |
+| `design` | Event models, formulas, baselines, contrasts, design metadata, and renderer-neutral design plot exports. | `hrf`, standalone Gale, standalone Intaglio core | Dataset execution, numerical fit engines, or concrete renderers such as SVG/Java2D/Canvas. |
 | `image` | Volumes, masks, exact volume locus domains, locus-backed regions/selections, affine math, low-level coordinate transforms, morphisms, resampling, clustering, and metric searchlight construction. | `locus-data` | Atlas registries, dataset backends, graph-level operator caches, JVM-only image readers in shared code. |
 | `image-view` | Renderer-neutral world-space slice views: typed colorizers/layers, orthogonal scene compilation, crosshairs, orientation labels, and panel receipts. | `image`, standalone Intaglio core | NIfTI IO, mutable toolkit widgets, DOM/JavaFX lifecycle ownership, or concrete renderer command interpretation. |
 | `image-view-canvas` | Browser Canvas rendering host plus canvas-relative pointer/wheel translation into pure viewer actions. | `image-view`, Intaglio Canvas | Image geometry, DOM ownership, application state mutation, or alternate renderer logic. |
 | `image-view-java2d` | Java2D rendering host plus device-relative event translation and `BufferedImage` convenience rendering. | `image-view`, Intaglio Java2D | Image geometry, Swing lifecycle ownership, or alternate renderer logic. |
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
-| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, `linalg`; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
+| `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, standalone Gale; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
 | `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, and JVM surface readers. | standalone graph4s, `image`, `locus-data` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
 | `surface-view-three` | Scala.js Three.js/WebGL plan interpretation, retained GPU resources, native picks/snapshots, and feature-gated GPU volume projection. | `surface-view`, Intaglio core; host-injected Three.js | DOM/bundler ownership, shared scientific semantics, or an assumption that WebGL2 float targets exist. |
 | `surface-view-connectivity` | Typed conversion from connectivity edge spaces/vectors to renderer-neutral surface-network inputs and provenance. | `surface-view`, `connectivity` | Estimation/inference, backend objects, or alternate node identity. |
-| `spatial` | Neurofunctor-style domains with locus packages, domain-specific morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | `linalg`, `image`, `surface`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
+| `spatial` | Neurofunctor-style domains with locus packages, domain-specific morphism routing, exact/crisp/sampled transport distinctions, selections, route policies, sampled operators, adjoints, provenance, QC, caches, and lazy fields. | standalone Gale, `image`, `surface`, `locus-data` | Low-level image interpolation kernels, atlas-specific route catalogs, or another finite-space/region implementation. |
 | `atlas` | Standard atlas descriptors, parcel metadata, typed locus parcellations, parcel/network quotient operations, explicit display order, one-pass reduction, explicit-alignment overlap, graph4s region interop, and transform route descriptors. | standalone graph4s, `image`, `surface`, `locus-data` | Generic spatial operator compilation, low-level transform kernels, or extensional region identity in labels/metadata. |
 | `archive` | Format-neutral revision/publication envelopes; separately versioned archive, object, and representation identities; exact canonical manifest values and encoding; namespaced payload roles and logical identities; transactional canonical write orchestration; typed payload plans/executors; resource-safe open archives; and archive-native physical receipts. | No internal module; Cats Core and Cats Effect externally. | Physical LNA or Zarr sinks/schemas, dataset selection APIs, scientific reconstruction, untyped manifest values, secretly owned handles, or model-level decoding policy. |
 | `archive-lna` | Typed LNA 2 paths, manifests, descriptors, validation, quant/delta payload codecs, shared-basis artifacts and registries, pure manifest normalization, JVM HDF5 stores, and the eager whole-payload driver. | `archive`, `image`; jHDF on JVM. | Scientific reconstruction, latent encoders, dataset discovery, response interpretation, runtime family assembly, or ownership of the canonical manifest writer. |
 | `response-laws` | Typed, framework-neutral JVM/Scala.js checks for response ordering, shape, selected/whole and partition decode consistency, raw-bit persistence, axis-keyed receipt conformance, and provenance derivation. | `response` | Runtime execution, representation mathematics, archive bindings, fixtures, effect interpretation, or ownership of production response types. |
 | `latent` | Archive-independent response-representation contracts, typed inspectable decode plans, temporal bases, transport and BOLDZip response semantics, radial/HRBF mathematics, and exact locus-backed active/full-grid selection order. | `response`, `image`, `locus-data`; Gale on each platform. | Archive values or paths, physical execution, checksums, dataset storage backends, model execution, a general tensor API, or another spatial selection algebra. |
 | `interop-archived-response` | Typed logical-read lowering between representations and LNA/Zarr archives, LNA pipeline reconstruction and representation-specific latent codecs, archive/latent dataset adapters, first-class narrow persisted envelopes, canonical dense-BOLD response binding, immutable registries, and resource-safe runtime assembly. | `response`, `latent`, `archive`, `archive-lna`, `archive-zarr`, `dataset`; standalone bids4s and zarr4s | New reconstruction mathematics, core dataset query semantics, manifest attribute scraping, global mutable/plugin-loaded registries, central codec facades, or a universal payload/tensor carrier. |
-| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data` | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
-| `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`, `linalg` | OLS/GLS kernels or backend implementations. |
-| `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `linalg`, `model`, `ar` | Model description, dataset storage, hidden blocking readers, or group inference. |
-| `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | `linalg` | Spatial object adapters or dataset backend logic. |
+| `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data`; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
+| `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`; standalone Gale | OLS/GLS kernels or backend implementations. |
+| `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
+| `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | standalone Gale | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
-| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `linalg`, `image`, `dataset`, `design`, `fit` | First-level model fitting or thresholding internals. |
+| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `fit`; standalone Gale | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
@@ -204,6 +201,9 @@ archive-lna + archive-zarr + latent + response + dataset
 response -> response-laws
   -> reusable checks consumed from module test configurations
 
+hrf-laws + fit -> first-level-laws
+  -> generated cross-stack scientific laws; test-only and non-published
+
 archive-zarr + dataset + image + bids4s
   -> dataset-zarr
 ```
@@ -212,7 +212,7 @@ archive-zarr + dataset + image + bids4s
 describes BIDS files and confounds. `dataset` provides pure scientific descriptions, explicit
 synchronous readers, and checked effectful attachment over that contract.
 `design`/`hrf` describe regressors. `model` joins those descriptions into an
-inspectable plan. `fit` executes the plan with `linalg` and optionally `ar`.
+inspectable plan. `fit` executes the plan with Gale and optionally `ar`.
 `interop-archived-response` owns runtime driver/family assembly and scopes a
 validated `OpenedDataset[F]`; it does not move effects into the scientific
 description or model plan.
@@ -345,12 +345,11 @@ descriptors can materialize executable dense morphisms.
   commutative aggregation in `locus-data`. Geometry, storage, metadata, and
   algorithm policy remain in their domain modules.
 - Put primitive matrix/vector/operator math, solver contracts, portable
-  eigensolver/SVD/QR/Cholesky/SPD-inverse reference implementations, and backend
-  adapter boundaries in `linalg`. Domain modules should receive typed solver
-  capabilities from `linalg`, not define private decomposition families.
-  JVM-only libraries such as Breeze must stay behind adapter modules and never
-  appear in shared APIs. The current JVM adapter is `linalg-breeze`; see
-  `docs/plans/linalg-backend-strategy.md`.
+  eigensolver/SVD/QR/Cholesky/SPD-inverse implementations, and backend adapter
+  boundaries in standalone Gale. ScalaFIM domain modules may own typed
+  scientific policy and explicit conversions, but must not recreate generic
+  decomposition families or expose JVM-only libraries such as Breeze in shared
+  APIs.
 - Put generic workflow graph algebra in `pipeline`; keep domain execution in the owning computational modules and adapt it upward.
 - Put general plotting, scene-description contracts, and concrete renderers in
   standalone Intaglio. ScalaFIM modules may adapt scientific values into that

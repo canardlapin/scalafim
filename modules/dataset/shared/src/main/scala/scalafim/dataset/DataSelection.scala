@@ -52,6 +52,8 @@ enum TimepointSelection:
   case All
   case Indices(values: Vector[TimepointIndex])
   case Window(start: TimepointIndex, length: Int)
+  /** Keep the acquisition axis in order while omitting explicitly censored scans. */
+  case Excluding(values: Vector[TimepointIndex])
 
   def resolve(size: Int): Either[DatasetError, Vector[TimepointIndex]] =
     this match
@@ -61,6 +63,8 @@ enum TimepointSelection:
         validateTimepoints(values, size)
       case TimepointSelection.Window(start, length) =>
         resolveWindow(start, length, size)
+      case TimepointSelection.Excluding(values) =>
+        resolveExcluding(values, size)
 
 object TimepointSelection:
   def fromInts(values: Int*): Either[DatasetError, TimepointSelection] =
@@ -82,6 +86,15 @@ object TimepointSelection:
 
   def unsafeWindow(start: Int, length: Int): TimepointSelection =
     window(start, length).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def fromExcludedInts(values: Int*): Either[DatasetError, TimepointSelection] =
+    buildTypedSelection(DatasetAxis.Timepoint, values.toVector, TimepointIndex.make)
+      .map(TimepointSelection.Excluding.apply)
+
+  /** Select every scan except the declared zero-based acquisition indices. */
+  def excluding(values: Int*): TimepointSelection =
+    fromExcludedInts(values*)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum VoxelSelection:
   case All
@@ -482,6 +495,23 @@ private def resolveWindow(
     ))
   else
     Right(Vector.tabulate(length)(offset => TimepointIndex.unsafe(startValue + offset)))
+
+private def resolveExcluding(
+    values: Vector[TimepointIndex],
+    size: Int
+): Either[DatasetError, Vector[TimepointIndex]] =
+  if values.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Timepoint))
+  else
+    validateTimepoints(values, size).flatMap { excluded =>
+      val excludedValues = excluded.iterator.map(TimepointIndex.raw).toSet
+      val retained =
+        Vector.tabulate(size)(identity).iterator
+          .filterNot(excludedValues)
+          .map(TimepointIndex.unsafe)
+          .toVector
+      if retained.nonEmpty then Right(retained)
+      else Left(DatasetError.EmptySelection(DatasetAxis.Timepoint))
+    }
 
 private def validateTimepoints(
     values: Vector[TimepointIndex],

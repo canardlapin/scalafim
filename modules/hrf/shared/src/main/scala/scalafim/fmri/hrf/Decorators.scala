@@ -78,6 +78,15 @@ object HrfCombinators:
     def normalize(dt: Seconds = 0.1.s): Hrf =
       normalizeWithTransform(dt).basis
 
+    /** Normalize once on the fixed reference grid declared by `mode`.
+      *
+      * Unlike the legacy resolution-taking overload, this operation reports
+      * unusable scales explicitly and makes the normalization convention part
+      * of the call's type rather than a string or boolean flag.
+      */
+    def normalize(mode: HrfNormalization): Either[HrfNormalizationError, Hrf] =
+      normalizeWithTransform(mode).map(_.basis)
+
     /** Peak-normalize each column, returning the gauge change that did it.
       *
       * Rescaling a basis does not change the space it spans, but it does change
@@ -112,6 +121,12 @@ object HrfCombinators:
           Vec.unsafe(v.zip(scales).map(_ / _))
         }
       TransformedBasis(normalized, BasisTransform.Diagonal(scales.toVector))
+
+    /** Fixed-reference normalization together with its gauge transform. */
+    def normalizeWithTransform(
+        mode: HrfNormalization
+    ): Either[HrfNormalizationError, TransformedBasis] =
+      HrfNormalizer.withTransform(hrf, mode)
 
     def block(
         width: Seconds,
@@ -252,42 +267,65 @@ object HrfCombinators:
       summate: Boolean = true,
       normalize: Boolean = false,
       name: Option[String] = None,
-      span: Option[Seconds] = None
+      span: Option[Seconds] = None,
+      normalization: HrfNormalization = HrfNormalization.None
   ): Hrf =
     require(lag.value.isFinite, "`lag` must be finite")
     require(width.value.isFinite, "`width` must be finite")
     require(precision.value.isFinite && precision.value > 0.0, "`precision` must be finite and > 0")
     require(!halfLife.isNaN, "`halfLife` must be finite or infinite")
     if halfLife.isFinite then require(halfLife > 0.0, "`halfLife` must be > 0")
-    val withBlock = if width.value > 0.0 then base.block(width, precision, halfLife, summate, normalize = false) else base
-    val withLag = if lag.value != 0.0 then withBlock.lag(lag) else withBlock
-    val withNorm = if normalize then withLag.normalize(precision) else withLag
-    val renamed =
-      name match
-        case Some(nm) =>
-          val descriptor = withNorm.descriptor.copy(family = HrfFamily.Derived(nm))
-          Hrf.of(
-            nm,
-            nbasis = withNorm.nbasis,
-            span = withNorm.span,
-            descriptor = Some(descriptor),
-            support = withNorm.support
-          ) { t => withNorm(t) }
-        case None => withNorm
-    span match
-      case Some(sp) =>
-        // An explicit `span` overrides the computational horizon only. It does
-        // not claim the kernel is zero past `sp`, so a compact support is
-        // narrowed to `sp` and an unbounded one stays unbounded.
-        val narrowed =
-          renamed.support match
-            case Support.Compact(horizon) => Support.Compact(if horizon.value <= sp.value then horizon else sp)
-            case Support.Unbounded        => Support.Unbounded
-        Hrf.of(
-          renamed.name,
-          nbasis = renamed.nbasis,
-          span = sp,
-          descriptor = Some(renamed.descriptor.withSpan(sp)),
-          support = narrowed
-        ) { t => renamed(t) }
-      case None     => renamed
+    genEither(base, lag, width, precision, halfLife, summate, normalize, name, span, normalization)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  private[hrf] def genEither(
+      base: Hrf,
+      lag: Seconds,
+      width: Seconds,
+      precision: Seconds,
+      halfLife: Double,
+      summate: Boolean,
+      normalize: Boolean,
+      name: Option[String],
+      span: Option[Seconds],
+      normalization: HrfNormalization
+  ): Either[HrfNormalizationError, Hrf] =
+    if normalize && normalization != HrfNormalization.None then
+      Left(HrfNormalizationError.ConflictingModes)
+    else
+      val withBlock = if width.value > 0.0 then base.block(width, precision, halfLife, summate, normalize = false) else base
+      val withLag = if lag.value != 0.0 then withBlock.lag(lag) else withBlock
+      val normalized =
+        if normalize then Right(withLag.normalize(precision))
+        else withLag.normalize(normalization)
+      normalized.map { withNorm =>
+        val renamed =
+          name match
+            case Some(nm) =>
+              val descriptor = withNorm.descriptor.copy(family = HrfFamily.Derived(nm))
+              Hrf.of(
+                nm,
+                nbasis = withNorm.nbasis,
+                span = withNorm.span,
+                descriptor = Some(descriptor),
+                support = withNorm.support
+              ) { t => withNorm(t) }
+            case None => withNorm
+        span match
+          case Some(sp) =>
+            // An explicit `span` overrides the computational horizon only. It
+            // does not claim the kernel is zero past `sp`, so a compact support
+            // is narrowed to `sp` and an unbounded one stays unbounded.
+            val narrowed =
+              renamed.support match
+                case Support.Compact(horizon) => Support.Compact(if horizon.value <= sp.value then horizon else sp)
+                case Support.Unbounded        => Support.Unbounded
+            Hrf.of(
+              renamed.name,
+              nbasis = renamed.nbasis,
+              span = sp,
+              descriptor = Some(renamed.descriptor.withSpan(sp)),
+              support = narrowed
+            ) { t => renamed(t) }
+          case None => renamed
+      }

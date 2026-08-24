@@ -21,6 +21,7 @@ enum ContrastError:
   case InvalidBasisSelection(contrast: String, detail: String)
   case InvalidWeights(contrast: String, detail: String)
   case IncompatibleWeights(contrast: String, detail: String)
+  case HeterogeneousBasisUnsupported(contrast: String, basisWidths: Vector[Int])
   case MissingConditionRow(contrast: String, row: String, known: Vector[String])
   case DuplicateContrasts(context: String, names: Vector[String])
   case UnknownTerm(termKey: String, known: Vector[String])
@@ -54,6 +55,8 @@ enum ContrastError:
         s"Contrast '$contrast': $detail"
       case IncompatibleWeights(contrast, detail) =>
         s"Contrast '$contrast': $detail"
+      case HeterogeneousBasisUnsupported(contrast, basisWidths) =>
+        s"Contrast '$contrast' requires one shared HRF basis width, found ${basisWidths.mkString("[", ", ", "]")}; use structural hypotheses for heterogeneous basis blocks"
       case MissingConditionRow(contrast, row, known) =>
         val suffix = if known.isEmpty then "" else s" (known: ${known.mkString(", ")})"
         s"Contrast '$contrast': row '$row' not found in categorical condition names$suffix"
@@ -477,7 +480,9 @@ enum ContrastExpr:
 
   def compile(space: ContrastSpace): Either[ContrastError, CompiledContrast] =
     def withBasis(basis: BasisSelection): Either[ContrastError, (Option[Vector[Int]], Option[Vector[Double]])] =
-      basis.legacyOptions(space.nbasis, id)
+      if space.term.hasHeterogeneousBasis then
+        Left(ContrastError.HeterogeneousBasisUnsupported(id.value, space.term.basisWidths))
+      else basis.legacyOptions(space.nbasis, id)
 
     def validateSelectors(selectors: CellSelector*): Either[ContrastError, Unit] =
       val known = space.factorNames.toSet
@@ -634,7 +639,14 @@ object ContrastCompiler:
   )(body: => ContrastWeights): Either[ContrastError, CompiledContrast] =
     try
       val legacy = body
-      Right(
+      if legacy.condNames != term.columnNames then
+        Left(
+          ContrastError.IncompatibleWeights(
+            name,
+            "legacy condition names must match the compiled term columns"
+          )
+        )
+      else Right(
         CompiledContrast(
           id = ContrastId.unsafe(name),
           effect = None,

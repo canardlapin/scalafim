@@ -11,7 +11,7 @@ import scalafim.image.{
 }
 import scalafim.image.SampleSpaces.*
 import scalafim.image.SomeNeuroVolume.*
-import scalafim.linalg.{CsrMatrix, LinearMapError, SparseTriplets}
+import gale.linalg.LinAlgError
 import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
 
 import scala.collection.mutable.ArrayBuffer
@@ -375,8 +375,8 @@ object VolumeToSurfaceOperatorCompiler:
   private def norm(a: SpatialPoint): Double =
     math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
 
-  private def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
 private final case class VolumeSource(space: SomeSampleSpace, mask: Option[SomeMaskVolume])
 
@@ -635,14 +635,13 @@ object MixedPullbackOperatorCompiler:
     val route = program.route
     val rows = route.targetRows
     for
-      triplets <- SparseTriplets(
+      csr <- GaleSpatialSupport.sparseCsr(
         rows = rows.length,
         cols = route.source.nElements,
         rowIndices = assembly.rowIndices.toArray,
         colIndices = assembly.colIndices.toArray,
         values = assembly.values.toArray
       ).left.map(linearError)
-      csr <- CsrMatrix.fromTriplets(triplets).left.map(linearError)
       coverage <- CoverageReport.build(rows, assembly.coverage.toVector)
       recipe <- OperatorRecipe.build(
         path = route.path.ids,
@@ -672,8 +671,8 @@ object MixedPullbackOperatorCompiler:
       case SamplingGeometry.Surface(geometry, mask) => Right(SurfaceTarget(geometry, mask))
       case _ => Left(SpatialError.NonSurfaceDomain(domain.id))
 
-  private def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
 private final case class MixedRowAssembly(
   rowIndices: ArrayBuffer[Int] = ArrayBuffer.empty[Int],

@@ -1,7 +1,6 @@
 package scalafim.fmri.hrf
 
 import scalafim.fmri.hrf.*
-import scalafim.fmri.hrf.TestUtils.*
 
 class DerivSuite extends munit.FunSuite:
 

@@ -3,7 +3,6 @@ package scalafim.spatial
 import gale.linalg.DMat as GaleDMat
 import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
-import scalafim.linalg.DoubleMatrix
 
 class StagedPluginSuite extends munit.FunSuite:
 

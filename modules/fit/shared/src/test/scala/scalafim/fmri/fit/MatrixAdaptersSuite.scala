@@ -1,7 +1,5 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import gale.linalg.Matrix
 
 class MatrixAdaptersSuite extends munit.FunSuite:

@@ -40,6 +40,39 @@ The harness should be small and dependency-light. It should use `DoubleVector`,
 `DoubleMatrix`, primitive arrays, and MUnit assertions. It should not pull JSON,
 Python, or filesystem assumptions into shared tests.
 
+## Generated First-Level Laws
+
+Fixed scenarios prove named scientific workflows; generated laws probe the
+algebra around them. The non-published `first-level-laws` module composes the
+public HRF, design, and fit APIs and runs the same properties on the JVM and
+Scala.js. It covers causal/support contracts, response linearity and basis
+transport, acquisition and structural-design equivariance, weighted and
+whitened fits, multiresponse chunking, fixed-effects combination, and
+rank-deficient fitted geometry.
+
+Two deterministic profiles keep this court useful at different cadences:
+
+- Pull requests run 48 successful cases per property with a maximum ScalaCheck
+  size of 28.
+- Weekly and manually dispatched calibration runs execute 300 successful cases
+  per property with a maximum size of 96.
+
+Both profiles use one worker and a fixed initial seed. A failure reports that
+seed and its shrunken counterexample; setting `SCALAFIM_LAW_SEED` replays it on
+either runtime. `SCALAFIM_LAW_PROFILE=calibration` selects the deeper profile.
+
+Generators and shrinkers must preserve scientific validity. They construct
+values through the same smart constructors as consumers and shrink within
+valid acquisition, event, factor, censoring, weighting, and rank regimes. A
+failed constructor discards a generated candidate; tests do not recover invalid
+states with `.get`, casts, or sentinel values.
+
+Numerical bounds are local evidence, not one global epsilon. Each comparison
+declares its operation class, observed scale, condition evidence, and primitive
+operation count; the bound is derived from those values and machine precision.
+Changing a tolerance therefore requires changing the evidence model for that
+specific comparison.
+
 ## Oderskyan Core
 
 The harness should feel like Scala, not like a miniature Python test runner
@@ -311,7 +344,9 @@ oracle proves the Scala path is coherent.
 | `fit_censored_multirun_concat` | `workflow_parity` | `fit` | fmrimod/Nilearn fixture | Censor masks row-delete design and response data consistently and report correct residual df. |
 | `design_mixed_tr_multirun` | `workflow_parity` | `design` | fmrimod/Nilearn fixture | Heterogeneous per-run TRs use correct sampling grids, run-local baselines, and cross-run condition columns. |
 | `fit_mixed_tr_cross_run_contrast` | `workflow_parity` | `fit` | fmrimod/Nilearn fixture | Cross-run contrasts evaluate on the concatenated design rather than per-run isolated fits. |
-| `fit_realistic_confounds_motion_omnibus` | `workflow_parity` | `fit` | fmrimod/Nilearn fixture | fMRIPrep-style motion/confound columns feed task and motion omnibus contrasts without manual index bookkeeping. |
+| `fit.mixed-block-transient.v1` | `cross_level_workflow` | `fit` | structural public-model contract | One formula combines sustained instruction blocks, cue and feedback impulses, variable epochs, centered modulation, and phase-specific canonical, informed, and FIR bases while retaining parent-trial and run-scope evidence. |
+| `fit.realistic-nuisance.v1` | `workflow_parity` | `fit` | independent fmrihrf rendering plus base-R direct QR | Scan-aligned motion, derivatives, declared squares, CompCor-like components, spikes, a constant, an exact duplicate, and a near duplicate exercise typed alignment, rank policy, semantic nuisance identities, and planted T/F recovery without event-shaped confounds. |
+| `fit.ar-censor-boundary-gls.v1` | `workflow_parity` | `fit` | independent base-R segmented AR(1) transform plus direct QR | Row-deleted isolated and consecutive censored scans split whitening within two runs, cannot leak source outliers across boundaries, and retain typed GLS, rank, covariance, T/F, and chunking provenance. |
 | `fit_fir_basis_recovery` | `workflow_parity` | `fit` | fmrimod/Nilearn fixture | FIR basis columns recover block/epoch effects and preserve basis metadata. |
 | `fit_block_epoch_durations` | `workflow_parity` | `fit` | fmrimod/Nilearn fixture | Nonzero event durations are convolved and contrasted correctly. |
 | `fit_factorial_3way_rank_diagnostics` | `workflow_parity` | `fit` | fmrimod fixture | Factorial expansion remains inspectable and rank diagnostics catch non-estimable hypotheses. |
@@ -653,11 +688,13 @@ tests before introducing any common production testkit.
 | Scenario id | Suite | Reference | Terminal truth |
 | --- | --- | --- | --- |
 | `fit.public-f-contrast.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastScenarioSuite.scala` | mathematical/direct OLS oracle over the intended design matrix | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.dms-multiphase-dsl.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala` | checked-in R formula/per-run fmrihrf design, planted response, base-R runwise QR/full-covariance fixed effects, and semantic T/F receipt | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.semantic-contrast-reordered-columns.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/SemanticContrastReorderedColumnsScenarioSuite.scala` | paired public fits with reversed design-column order plus direct OLS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.lss-trialwise-recovery.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/LssTrialwiseRecoveryScenarioSuite.scala` | public builder/executor result against direct metadata-selected LSS oracle | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.censored-multirun-concat.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/CensoredMultirunConcatScenarioSuite.scala` | public multi-run fit with selected timepoints against direct OLS on row-deleted design/response; censored rows contain outliers | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.chunked-runwise-execution.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ChunkedRunwiseExecutionScenarioSuite.scala` | public chunked and future chunked `RunwiseLeastSquares` execution against unchunked runwise fitting and analytic per-run coefficients | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `fit.pipeline-first-level-workflow.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PipelineFirstLevelWorkflowScenarioSuite.scala` | public dataset/model/fit/T/F workflow expressed as a generic pipeline graph, checked against direct OLS plus local/future runner parity | `ScenarioResult.status` and `ScenarioResult.ciPass` |
+| `fit.ar-censor-boundary-gls.v1` | `modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ArCensorBoundaryGlsScenarioSuite.scala` | public segmented fixed/estimated AR workflow against an independent base-R exact-first transform and direct QR receipt | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `design.mixed-tr-multirun.v1` | `modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/MixedTrMultirunScenarioSuite.scala` | public mixed-TR `EventModelBuilder` output against independently stitched per-run designs plus runwise baseline and uniform-TR canary checks | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.one-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupOneSampleScenarioSuite.scala` | analytic one-sample t oracle per sample | `ScenarioResult.status` and `ScenarioResult.ciPass` |
 | `group.two-sample-analytic.v1` | `modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupTwoSampleScenarioSuite.scala` | analytic pooled two-sample t oracle per sample plus named group contrast check | `ScenarioResult.status` and `ScenarioResult.ciPass` |

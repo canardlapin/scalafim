@@ -1,9 +1,12 @@
 package scalafim.fmri.model
 
+import scalafim.fmri.design.{CoefficientAxis, DesignFingerprint, StructuralColumn}
+
 enum FitEngine:
   case OrdinaryLeastSquares
   case LeastSquaresSeparate
   case RunwiseLeastSquares
+  case FixedEffects
   case GeneralizedLeastSquares
   case RobustLeastSquares
   case LatentSketch
@@ -15,10 +18,14 @@ final class FitPlan private (
 ):
   def engine: FitEngine = strategy.engine
   def config: FitConfig = strategy.config
+  def coefficientScope: CoefficientScope = strategy.coefficientScope
 
   def nTimepoints: Int = model.nTimepoints
   def nPredictors: Int = model.nPredictors
   def nVoxels: Int = model.dataset.shape.spatialSize
+  def designFingerprint: Option[DesignFingerprint] = model.designFingerprint
+  def structuralColumns: Vector[StructuralColumn] = model.designBlock.structuralColumns
+  def coefficientAxis: Option[CoefficientAxis] = model.designSchema.map(_.coefficientAxis)
 
   def summary: FitSummary =
     FitSummary(
@@ -33,7 +40,8 @@ final class FitPlan private (
         case FitStrategy.GeneralizedLeastSquares(_, _) => true
         case FitStrategy.ReducedRankGls(_, _) => true
         case FitStrategy.RobustLeastSquares(_, _, autocorrelation) => autocorrelation.reestimates
-        case _ => false
+        case _ => false,
+      coefficientScope = coefficientScope
     )
 
   def copy(
@@ -95,5 +103,6 @@ final case class FitSummary(
     predictors: Int,
     voxels: Int,
     robust: Boolean,
-    autocorrelated: Boolean
+    autocorrelated: Boolean,
+    coefficientScope: CoefficientScope = CoefficientScope.SharedAcrossRuns
 )

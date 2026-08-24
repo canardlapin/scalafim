@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import scalafim.image.{Affine, GridSpec, Indexing, SomeSampleSpace, SpatialDims, SpatialPoint}
 import scalafim.image.SampleSpaces.*
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMap, LinearMapError, SparseTriplets}
+import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -126,7 +126,7 @@ object OperatorProvenance:
 final case class SpatialOperator private (
   source: DomainId,
   target: DomainId,
-  map: LinearMap,
+  map: DoubleLinearOperator,
   path: MorphismPath,
   qc: OperatorQc,
   signature: OperatorSignature,
@@ -140,14 +140,14 @@ final case class SpatialOperator private (
   def cols: Int =
     map.cols
 
-  def forward(input: DoubleMatrix): Either[LinearMapError, DoubleMatrix] =
+  def forward(input: DMat): Either[LinAlgError, DMat] =
     map.forward(input)
 
 object SpatialOperator:
   def build(
     source: DomainId,
     target: DomainId,
-    map: LinearMap,
+    map: DoubleLinearOperator,
     path: MorphismPath,
     qc: OperatorQc,
     provenance: OperatorProvenance
@@ -209,14 +209,13 @@ object VolumePullbackOperatorCompiler extends OperatorCompiler:
       sourceSpace <- volumeSpace(sourceDomain)
       targetSpace <- volumeSpace(targetDomain)
       rowAssembly <- assembleRows(sourceSpace, targetSpace, rows, program, route.sampling)
-      triplets <- SparseTriplets(
+      csr <- GaleSpatialSupport.sparseCsr(
         rows = rows.length,
         cols = sourceDomain.nElements,
         rowIndices = rowAssembly.rowIndices.toArray,
         colIndices = rowAssembly.colIndices.toArray,
         values = rowAssembly.values.toArray
       ).left.map(mapLinearError)
-      csr <- CsrMatrix.fromTriplets(triplets).left.map(mapLinearError)
       coverage <- CoverageReport.build(rows, rowAssembly.coverage.toVector)
       recipe <- OperatorRecipe.build(
         path = path.ids,
@@ -361,8 +360,8 @@ object VolumePullbackOperatorCompiler extends OperatorCompiler:
       y >= 0 && y < dims.y &&
       z >= 0 && z < dims.z
 
-  private def mapLinearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def mapLinearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
 object VolumeAffineOperatorCompiler extends OperatorCompiler:
   private val CompilerName = "affine-pullback-fused-v1"

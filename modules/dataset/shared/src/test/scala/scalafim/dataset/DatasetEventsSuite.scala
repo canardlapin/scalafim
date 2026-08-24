@@ -59,6 +59,40 @@ class DatasetEventsSuite extends munit.FunSuite:
     assert(err.message.contains("invalid dataset event row 1"))
   }
 
+  test("fromColumns preserves typed values including missing numeric markers") {
+    val events = DatasetEvents
+      .fromColumns(
+        "trial_id" -> DatasetEventColumn.text(Vector("trial-1", "trial-2")),
+        "run" -> DatasetEventColumn.text(Vector("run-1", "run-1")),
+        "rt" -> DatasetEventColumn.numbers(Vector(0.72, Double.NaN)),
+        "correct" -> DatasetEventColumn.booleans(Vector(true, false))
+      )
+      .fold(error => fail(error.message), identity)
+
+    assertEquals(events.nrows, 2)
+    assertEquals(events.typedRows.map(_.run.map(_.value)), Vector(Some("run-1"), Some("run-1")))
+    assertEquals(events.column(DatasetFieldId("correct")).flatMap(_.asBoolean), Vector(true, false))
+    assert(events.column(DatasetFieldId("rt"))(1).asDouble.exists(_.isNaN))
+  }
+
+  test("fromColumns rejects duplicate, empty, and ragged columns") {
+    val duplicate = DatasetEvents.fromColumns(
+      "condition" -> DatasetEventColumn.text(Vector("face")),
+      "condition" -> DatasetEventColumn.text(Vector("scene"))
+    )
+    val empty = DatasetEvents.fromColumns(
+      "condition" -> DatasetEventColumn.text(Vector.empty)
+    )
+    val ragged = DatasetEvents.fromColumns(
+      "condition" -> DatasetEventColumn.text(Vector("face", "scene")),
+      "onset" -> DatasetEventColumn.numbers(Vector(0.0))
+    )
+
+    assertEquals(duplicate, Left(DatasetError.InvalidEventTable("duplicate column 'condition'")))
+    assertEquals(empty, Left(DatasetError.InvalidEventTable("event columns must contain at least one row")))
+    assertEquals(ragged, Left(DatasetError.InvalidEventTable("column 'onset' has 1 rows; expected 2")))
+  }
+
   test("validateAgainst checks typed run labels against the dataset time axis") {
     val timeAxis = DatasetTimeAxis
       .fromSamplingFrame(SamplingFrame(blockLens = Seq(2), tr = Seq(1.0)), Vector(RunId("run-1")))

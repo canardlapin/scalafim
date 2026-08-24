@@ -1,7 +1,7 @@
 package scalafim.spatial
 
+import gale.linalg.DMat
 import scalafim.image.{SpatialAxis, VoxelCoord}
-import scalafim.linalg.DoubleMatrix
 
 enum FieldApiError:
   case Spatial(error: SpatialError)
@@ -86,7 +86,7 @@ extension (field: Field)
       .map(error => FieldApiError.Demand(error))
       .flatMap(block => field.select(FieldDemand.time(block)))
 
-  def value(using runtime: FieldRuntime): Either[FieldApiError, DoubleMatrix] =
+  def value(using runtime: FieldRuntime): Either[FieldApiError, DMat] =
     runtime.data(field).left.map(error => FieldApiError.Spatial(error))
 
   def materialize(using runtime: FieldRuntime): Either[FieldApiError, Field] =

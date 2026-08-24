@@ -1,0 +1,321 @@
+{
+  "inputs": {
+    "compact_horizon": 4,
+    "conditions": [
+      "A",
+      "B",
+      "A",
+      "B"
+    ],
+    "phase_assignments": {
+      "probe": {
+        "A": "canonical",
+        "B": [
+          "canonical",
+          "temporal-derivative"
+        ]
+      },
+      "sample": {
+        "A": "canonical",
+        "B": "canonical"
+      }
+    },
+    "probe_onsets": [
+      3,
+      9,
+      15,
+      21
+    ],
+    "sample_onsets": [
+      1,
+      7,
+      13,
+      19
+    ],
+    "scans": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ]
+  },
+  "outputs": {
+    "column_keys": [
+      "sample_A",
+      "sample_B",
+      "probe_A_canonical",
+      "probe_B_canonical",
+      "probe_B_temporal"
+    ],
+    "matrix": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0.36787944117144233,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0.1353352832366127,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0.049787068367863944,
+        0,
+        0.6065306597126334,
+        0,
+        0
+      ],
+      [
+        0.01831563888873418,
+        0,
+        0.36787944117144233,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0.22313016014842982,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0.1353352832366127,
+        0,
+        0
+      ],
+      [
+        0,
+        0.36787944117144233,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0.1353352832366127,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0.049787068367863944,
+        0,
+        0.36787944117144233,
+        0.36787944117144233
+      ],
+      [
+        0,
+        0.01831563888873418,
+        0,
+        0.1353352832366127,
+        0.2706705664732254
+      ],
+      [
+        0,
+        0,
+        0,
+        0.049787068367863944,
+        0.14936120510359183
+      ],
+      [
+        1,
+        0,
+        0,
+        0.01831563888873418,
+        0.07326255555493671
+      ],
+      [
+        0.36787944117144233,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0.1353352832366127,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0.049787068367863944,
+        0,
+        0.6065306597126334,
+        0,
+        0
+      ],
+      [
+        0.01831563888873418,
+        0,
+        0.36787944117144233,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0.22313016014842982,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0.1353352832366127,
+        0,
+        0
+      ],
+      [
+        0,
+        0.36787944117144233,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0.1353352832366127,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0.049787068367863944,
+        0,
+        0.36787944117144233,
+        0.36787944117144233
+      ],
+      [
+        0,
+        0.01831563888873418,
+        0,
+        0.1353352832366127,
+        0.2706705664732254
+      ],
+      [
+        0,
+        0,
+        0,
+        0.049787068367863944,
+        0.14936120510359183
+      ],
+      [
+        0,
+        0,
+        0,
+        0.01831563888873418,
+        0.07326255555493671
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ]
+  },
+  "receipt": {
+    "accepted_differences": [
+      "The oracle uses explicitly stated custom kernels so no fmridesign or fmrihrf default basis convention is imported.",
+      "Column alignment is declared structurally as phase, cell, and basis element rather than inferred from rendered labels."
+    ],
+    "comparison_policy": {
+      "alignment": "identity_only_no_post_hoc_lag_shift",
+      "correlation_role": "diagnostic_only_requires_error_and_norm_bounds",
+      "disagreement_triage": "truth_boundary_local",
+      "tolerance_scope": "comparison_local_no_global_override"
+    },
+    "conventions": {
+      "column_order": "sample A, sample B, probe A canonical, probe B canonical, probe B temporal derivative",
+      "dtype": "float64",
+      "hrf_basis": "explicit compact custom kernels evaluated at scan minus onset",
+      "json_encoding": "sorted-key UTF-8 JSON",
+      "matrix_orientation": "rows are scans; columns follow outputs.column_keys"
+    },
+    "environment": {
+      "generator_sha256": "c65f930c68237f68cf4be5fe37023dd56e1435461ede1255379df627781a6ba2",
+      "locale": "C",
+      "lock_path": "tools/r-parity/reference-lock.json",
+      "lock_sha256": "083b2f7014de600b7184c79d9a06366202805abbf74eb8a1dfa104310f0836e3",
+      "runtime": "R 4.5.1"
+    },
+    "hashes": {
+      "generated_scala_sha256": "9738f7cf95633641a6d6719e3cb44942f21721d91925a3b6b7a49974ce633ce3",
+      "inputs_sha256": "e5434e231fe3d7158112e90a9f5ab01ce1144107471def17d79d14df3bd9bf97",
+      "outputs_sha256": "be11e3f9233c547a10b0cbd3af510f19bca2be31b8e3827e169ad78f140d7bc6"
+    },
+    "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
+    "schema_version": "scalafim-r-kernel-fixture/v1",
+    "source": {
+      "producer": "tools/r-parity/generate_heterogeneous_hrf_receipt.R",
+      "r_version": "4.5.1",
+      "reference": "independent base-R continuous-time event summation",
+      "stats_version": "4.5.1"
+    }
+  },
+  "scenario_id": "design.heterogeneous-hrf.v1",
+  "schema_version": "scalafim-r-kernel-fixture/v1",
+  "source": {
+    "producer": "tools/r-parity/generate_heterogeneous_hrf_receipt.R",
+    "r_version": "4.5.1",
+    "reference": "independent base-R continuous-time event summation",
+    "stats_version": "4.5.1"
+  },
+  "truth_boundary": "hrf_evaluation"
+}

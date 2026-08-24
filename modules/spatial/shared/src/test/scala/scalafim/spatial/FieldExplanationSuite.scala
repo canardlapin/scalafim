@@ -2,7 +2,6 @@ package scalafim.spatial
 
 import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
-import scalafim.linalg.DoubleMatrix
 
 class FieldExplanationSuite extends munit.FunSuite:
 

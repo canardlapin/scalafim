@@ -3,7 +3,6 @@ package scalafim.spatial
 import ravel.NDArray as RavelArray
 import scalafim.image.{SampleSpaces, DMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
 import scalafim.image.SampleSpaces.*
-import scalafim.linalg.{CsrMatrix, DoubleMatrix}
 import scalafim.surface.*
 
 class MixedPullbackSuite extends munit.FunSuite:

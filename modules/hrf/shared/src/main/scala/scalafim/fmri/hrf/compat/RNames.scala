@@ -5,12 +5,12 @@ import scalafim.fmri.hrf.design.{Design, SamplingFrame}
 import scalafim.fmri.hrf.HrfCombinators.*
 import scalafim.fmri.hrf.regressor.{NeuralInput, Regressor, RegressorSet}
 import scalafim.fmri.hrf.linalg.Mat
-import scala.annotation.targetName
-
 object r:
 
   // ---- HRF constructors / objects ----
-  def hrf_gamma(t: Double = 0.0, shape: Double = 6.0, rate: Double = 1.0): Hrf = Hrfs.gamma(shape, rate)
+  def hrf_gamma(t: Double = 0.0, shape: Double = 6.0, rate: Double = 1.0): Hrf =
+    val _ = t // Retained for source compatibility with fmrihrf's constructor surface.
+    Hrfs.gamma(shape, rate)
   def hrf_gaussian(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.gaussian(mean, sd)
   def hrf_spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Hrf = Hrfs.spmg1(P1, P2, A1)
   def hrf_mexhat(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.mexhat(mean, sd)
@@ -58,8 +58,12 @@ object r:
       summate: Boolean = true,
       normalize: Boolean = false,
       name: Option[String] = None,
-      span: Option[Double] = None
+      span: Option[Double] = None,
+      hrf_norm: String = "none"
   ): Hrf =
+    val normalization = HrfNormalization
+      .fromString(hrf_norm)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     HrfCombinators.gen(
       base = hrf,
       lag = lag.s,
@@ -69,13 +73,21 @@ object r:
       summate = summate,
       normalize = normalize,
       name = name,
-      span = span.map(_.s)
+      span = span.map(_.s),
+      normalization = normalization
     )
 
   def lag_hrf(hrf: Hrf, lag: Double): Hrf = hrf.lag(lag.s)
   def block_hrf(hrf: Hrf, width: Double, precision: Double = 0.1, half_life: Double = Double.PositiveInfinity, summate: Boolean = true, normalize: Boolean = false): Hrf =
     hrf.block(width.s, precision.s, half_life, summate, normalize)
-  def normalise_hrf(hrf: Hrf): Hrf = hrf.normalize(0.1.s)
+  def normalize_hrf(hrf: Hrf, mode: String): Hrf =
+    val normalization = HrfNormalization
+      .fromString(mode)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    hrf.normalize(normalization).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def normalise_hrf(hrf: Hrf): Hrf =
+    normalize_hrf(hrf, HrfNormalization.UnitPeakPerBasis.label)
   def hrf_from_coefficients(hrf: Hrf, h: Seq[Double], name: Option[String] = None): Hrf =
     hrf.withCoefficients(h.toArray, name)
 

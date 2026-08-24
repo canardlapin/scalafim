@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError, SparseTriplets}
+import gale.linalg.{DMat, LinAlgError}
+import gale.sparse.{COO, CSR}
 
 final case class QcTolerance private (absolute: Double, relative: Double):
   require(absolute.isFinite && absolute >= 0.0, "absolute tolerance must be finite and non-negative")
@@ -59,8 +60,8 @@ final case class TripletFixture private (
   require(rows >= 0 && cols >= 0, "fixture dimensions must be non-negative")
   require(rowIndices.length == colIndices.length && rowIndices.length == values.length, "fixture triplet lengths must match")
 
-  def toSparseTriplets: Either[SpatialError, SparseTriplets] =
-    SparseTriplets(
+  def toSparseTriplets: Either[SpatialError, COO] =
+    GaleSpatialSupport.sparseTriplets(
       rows = rows,
       cols = cols,
       rowIndices = rowIndices.toArray,
@@ -105,14 +106,14 @@ object TripletFixture:
     values: Vector[Double],
     origin: TripletIndexOrigin
   ): Either[SpatialError, TripletFixture] =
-    SparseTriplets(rows, cols, rowIndices.toArray, colIndices.toArray, values.toArray)
+    GaleSpatialSupport.sparseTriplets(rows, cols, rowIndices.toArray, colIndices.toArray, values.toArray)
       .left.map(SpatialQc.linearError)
       .map(_ => new TripletFixture(rows, cols, rowIndices, colIndices, values, origin))
 
 object SpatialQc:
   def identityLaw(
     operator: SpatialOperator,
-    probe: DoubleMatrix,
+    probe: DMat,
     tolerance: QcTolerance = QcTolerance.default
   ): Either[SpatialError, QcCheck] =
     for
@@ -122,7 +123,7 @@ object SpatialQc:
   def compositionLaw(
     direct: SpatialOperator,
     composed: SpatialOperator,
-    probe: DoubleMatrix,
+    probe: DMat,
     tolerance: QcTolerance = QcTolerance.default
   ): Either[SpatialError, QcCheck] =
     for
@@ -132,8 +133,8 @@ object SpatialQc:
 
   def adjointLaw(
     operator: SpatialOperator,
-    sourceProbe: DoubleMatrix,
-    targetProbe: DoubleMatrix,
+    sourceProbe: DMat,
+    targetProbe: DMat,
     tolerance: QcTolerance = QcTolerance.default
   ): Either[SpatialError, QcCheck] =
     for
@@ -148,7 +149,7 @@ object SpatialQc:
     full: SpatialOperator,
     restricted: SpatialOperator,
     roiRows: Vector[Int],
-    probe: DoubleMatrix,
+    probe: DMat,
     tolerance: QcTolerance = QcTolerance.default
   ): Either[SpatialError, QcCheck] =
     for
@@ -172,28 +173,26 @@ object SpatialQc:
   ): Either[SpatialError, QcCheck] =
     for
       expected <- fixture.toSparseTriplets
-      expectedCsr <- CsrMatrix.fromTriplets(expected).left.map(linearError)
       observed <- operatorTriplets(operator)
-      observedCsr <- CsrMatrix.fromTriplets(observed).left.map(linearError)
-    yield tripletCheck(observedCsr.toTriplets, expectedCsr.toTriplets, tolerance)
+    yield tripletCheck(observed.toCSR.toTriplets, expected.toCSR.toTriplets, tolerance)
 
   def report(checks: QcCheck*): QcReport =
     QcReport(checks.toVector)
 
-  private[spatial] def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private[spatial] def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
-  private def operatorTriplets(operator: SpatialOperator): Either[SpatialError, SparseTriplets] =
+  private def operatorTriplets(operator: SpatialOperator): Either[SpatialError, COO] =
     operator.map match
-      case csr: CsrMatrix =>
+      case csr: CSR =>
         Right(csr.toTriplets)
       case other =>
         Left(SpatialError.OperatorAssemblyFailed(s"operator map ${other.getClass.getName} cannot be serialized as triplets"))
 
   private def matrixCheck(
     name: String,
-    actual: DoubleMatrix,
-    expected: DoubleMatrix,
+    actual: DMat,
+    expected: DMat,
     tolerance: QcTolerance
   ): QcCheck =
     if actual.rows != expected.rows || actual.cols != expected.cols then
@@ -228,8 +227,8 @@ object SpatialQc:
     QcCheck(name, tolerance.accepts(actual, expected), expected = expected, observed = actual, maxAbsError = error, tolerance)
 
   private def tripletCheck(
-    observed: SparseTriplets,
-    expected: SparseTriplets,
+    observed: COO,
+    expected: COO,
     tolerance: QcTolerance
   ): QcCheck =
     val sameShape = observed.rows == expected.rows && observed.cols == expected.cols && observed.nnz == expected.nnz
@@ -247,7 +246,7 @@ object SpatialQc:
       tolerance = tolerance
     )
 
-  private def maxMatrixAbsDiff(left: DoubleMatrix, right: DoubleMatrix): Double =
+  private def maxMatrixAbsDiff(left: DMat, right: DMat): Double =
     val leftData = left.copyData
     val rightData = right.copyData
     maxArrayAbsDiff(leftData, rightData)
@@ -268,7 +267,7 @@ object SpatialQc:
       i += 1
     out
 
-  private def dot(left: DoubleMatrix, right: DoubleMatrix): Double =
+  private def dot(left: DMat, right: DMat): Double =
     require(left.rows == right.rows && left.cols == right.cols, "dot inputs must have matching shape")
     val leftData = left.copyData
     val rightData = right.copyData

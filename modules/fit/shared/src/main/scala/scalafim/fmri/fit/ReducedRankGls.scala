@@ -202,7 +202,11 @@ private final class ReducedRankGlsProjection private (
         timepoints = input.timepoints,
         engine = FitEngine.ReducedRankGls,
         olsDiagnostics = Some(fullFit.finalOlsDiagnostics),
-        autocorrelation = Some(fullFit.diagnostics)
+        autocorrelation = Some(fullFit.diagnostics),
+        coefficientAxis = input.coefficientAxis,
+        preparationProvenance = input.preparationProvenance,
+        voxelStatuses = Some(VoxelFitStatus.refine(input.resolvedVoxelStatuses, residualVariance)),
+        fitExclusions = input.fitExclusions
       )
 
   private def decodeCoefficients(positions: Vector[Int]): Either[FitError, CoefficientBlock] =

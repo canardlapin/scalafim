@@ -1,6 +1,8 @@
 package scalafim.spatial
 
-import scalafim.linalg.{CsrMatrix, DoubleMatrix, GaleLinearMap, GaleMatrixBridge, LinearMap, LinearMapError}
+import gale.backend.Backend.given
+import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError, LinearOperator}
+import gale.sparse.Sparse
 
 object StagedOperatorCompiler:
   private val CompilerName = "staged-gale-pullback-v1"
@@ -26,7 +28,7 @@ object StagedOperatorCompiler:
     val targetSize = route.target.nElements
     val rows = route.targetRows
     for
-      base <- CsrMatrix.identity(sourceSize).left.map(linearError)
+      base <- Right(Sparse.identity(sourceSize): DoubleLinearOperator)
       composed <- composeRows(base, rowStages(program))
       _ <-
         if composed.rows == targetSize then Right(())
@@ -40,7 +42,7 @@ object StagedOperatorCompiler:
         if rows.length == targetSize && rows.indices.indices.forall(index => rows.indices(index) == index) then
           Right(composed)
         else
-          LinearMap.restrict(composed, targetRows = Some(rows.indices)).left.map(linearError)
+          composed.restrictRows(rows.indices).left.map(linearError)
       coverage <- CoverageReport.build(rows, Vector.fill(rows.length)(1.0))
       recipe <- OperatorRecipe.build(
         route.path.ids,
@@ -61,16 +63,16 @@ object StagedOperatorCompiler:
     yield operator
 
   private def composeRows(
-    initial: LinearMap,
+    initial: DoubleLinearOperator,
     stages: Vector[ValueStage]
-  ): Either[SpatialError, LinearMap] =
+  ): Either[SpatialError, DoubleLinearOperator] =
     var current = initial
     var index = 0
     var error = Option.empty[SpatialError]
     while index < stages.length && error.isEmpty do
       stages(index).transform match
         case ValueTransform.RowLinear(matrix) =>
-          LinearMap.compose(current, GaleLinearMap(matrix)) match
+          LinearOperator.compose(matrix, current) match
             case Left(err) => error = Some(linearError(err))
             case Right(next) => current = next
         case _ => ()
@@ -104,11 +106,11 @@ object StagedOperatorCompiler:
         case _ => false
     }
 
-  private def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
 object ValueStageExecutor:
-  def execute(program: PullbackProgram, input: DoubleMatrix): Either[SpatialError, DoubleMatrix] =
+  def execute(program: PullbackProgram, input: DMat): Either[SpatialError, DMat] =
     var current = input
     var index = 0
     var error = Option.empty[SpatialError]
@@ -117,15 +119,14 @@ object ValueStageExecutor:
         case ValueTransform.RowLinear(_) =>
           ()
         case ValueTransform.ObservationLinear(matrix) =>
-          GaleMatrixBridge.rightMultiply(current, matrix.t) match
-            case Left(err) => error = Some(SpatialError.OperatorAssemblyFailed(err.message))
-            case Right(next) => current = next
+          try current = current * matrix.t
+          catch case err: LinAlgError => error = Some(SpatialError.OperatorAssemblyFailed(err.getMessage))
         case ValueTransform.PointwiseAffine(scale, offset) =>
           val data = current.copyData
           var valueIndex = 0
           while valueIndex < data.length do
             data(valueIndex) = scale * data(valueIndex) + offset
             valueIndex += 1
-          current = DoubleMatrix.unsafe(current.rows, current.cols, data)
+          current = GaleSpatialSupport.unsafeOwnedMatrix(current.rows, current.cols, data)
       index += 1
     error.toLeft(current)

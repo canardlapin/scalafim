@@ -1,0 +1,52 @@
+{
+  "schema_version": "scalafim-parity-environment-lock/v1",
+  "r": {
+    "locale": "C",
+    "packages": {
+      "fmriAR": {
+        "environment_variable": "FMRIAR_R",
+        "repository": "bbuchsbaum/fmriAR",
+        "revision": "f563f2df20264ffa7db9be116f11d631551e9132",
+        "version": "0.3.3"
+      },
+      "fmridesign": {
+        "environment_variable": "FMRIDESIGN_R",
+        "repository": "bbuchsbaum/fmridesign",
+        "revision": "148658557317987535477166746fae09b2e630b7",
+        "version": "0.6.0"
+      },
+      "fmrihrf": {
+        "environment_variable": "FMRIHRF_R",
+        "repository": "bbuchsbaum/fmrihrf",
+        "revision": "9423be3f3c6eb65dbee180630779a5d4a6fb3867",
+        "version": "0.4.0"
+      },
+      "fmrireg": {
+        "environment_variable": "FMRIREG_R",
+        "repository": "bbuchsbaum/fmrireg",
+        "revision": "02b193dcce61dfb15a46654e40ee0331abf0da08",
+        "version": "0.2.0"
+      }
+    },
+    "version": "4.5.1"
+  },
+  "python": {
+    "packages": {
+      "fmrimod": {
+        "environment_variable": "FMRIMOD_ROOT",
+        "repository": "bbuchsbaum/fmrimod",
+        "revision": "f3dd9dbfbd8d3aa196f17477579a073840b007ef"
+      },
+      "nilearn": {
+        "version": "0.12.1"
+      },
+      "numpy": {
+        "version": "1.26.4"
+      },
+      "scipy": {
+        "version": "1.13.1"
+      }
+    },
+    "version": "3.11"
+  }
+}

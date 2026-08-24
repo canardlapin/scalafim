@@ -200,8 +200,11 @@ object PreparedContrastGeometry:
   ): Either[FitError, Unit] =
     for
       _ <- preparation.missingData match
-        case MissingDataPolicy.Error => Right(())
-        case MissingDataPolicy.Propagate => unsupportedPreparation("non-finite propagation is not supported")
+        case MissingDataPolicy.Error | MissingDataPolicy.ExcludeVoxel | MissingDataPolicy.Propagate => Right(())
+        case MissingDataPolicy.OmitRowsPerVoxel =>
+          Left(FitError.UnsupportedMissingDataPolicy(
+            "response-independent contrast geometry cannot choose a voxel-specific observed-row pattern"
+          ))
       _ <- preparation.volumeWeighting match
         case VolumeWeighting.Disabled => Right(())
         case _ => unsupportedPreparation("volume weighting is not executable in shared first-level preparation")

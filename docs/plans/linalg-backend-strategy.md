@@ -1,5 +1,14 @@
 # Linear Algebra Backend Strategy
 
+Status: historical; superseded by standalone Gale
+
+ScalaFIM implemented this strategy as an intermediate extraction step, then
+moved the generic dense/sparse/operator/factorization layer to standalone
+[`Gale`](https://github.com/canardlapin/gale). The local linear-algebra and
+Breeze-adapter modules have been removed. The body below records the original
+in-repository plan; current placement rules live in
+[`docs/module-relations.md`](../module-relations.md).
+
 ScalaFIM needs numerical linear algebra that is portable across JVM and
 Scala.js, but JVM users should still be able to use mature libraries such as
 Breeze for larger dense problems. The project strategy is therefore:

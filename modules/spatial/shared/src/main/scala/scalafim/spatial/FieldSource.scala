@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.linalg.DoubleMatrix
+import gale.linalg.DMat
 
 opaque type FieldSourceId = String
 
@@ -119,14 +119,14 @@ object FieldSourceRequest:
 
 final case class FieldSourceBlock private (
   request: FieldSourceRequest,
-  data: DoubleMatrix
+  data: DMat
 )
 
 object FieldSourceBlock:
   def make(
     source: FieldSourceId,
     request: FieldSourceRequest,
-    data: DoubleMatrix
+    data: DMat
   ): Either[SpatialError, FieldSourceBlock] =
     if data.rows != request.rows || data.cols != request.columns then
       Left(

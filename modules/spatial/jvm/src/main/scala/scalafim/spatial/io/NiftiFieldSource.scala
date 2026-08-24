@@ -2,7 +2,6 @@ package scalafim.spatial.io
 
 import scalafim.image.GridCompatibility
 import scalafim.image.io.{Nifti, NiftiHeader}
-import scalafim.linalg.DoubleMatrix
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer
@@ -160,7 +159,11 @@ final class NiftiFieldSource private (
     if valueCount > Int.MaxValue.toLong then
       Left(SpatialError.FieldSourceReadFailed(descriptor.id, s"requested block has $valueCount values"))
     else if request.rows == 0 then
-      FieldSourceBlock.make(descriptor.id, request, DoubleMatrix.unsafe(0, request.columns, Array.emptyDoubleArray))
+      FieldSourceBlock.make(
+        descriptor.id,
+        request,
+        GaleSpatialSupport.unsafeOwnedMatrix(0, request.columns, Array.emptyDoubleArray)
+      )
     else
       try
         val bytesPerValue = header.bitpix / 8
@@ -201,7 +204,7 @@ final class NiftiFieldSource private (
         FieldSourceBlock.make(
           descriptor.id,
           request,
-          DoubleMatrix.unsafe(request.rows, request.columns, values)
+          GaleSpatialSupport.unsafeOwnedMatrix(request.rows, request.columns, values)
         )
       catch
         case NonFatal(error) =>

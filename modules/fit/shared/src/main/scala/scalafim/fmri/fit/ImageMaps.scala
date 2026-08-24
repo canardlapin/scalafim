@@ -9,9 +9,7 @@ import locus4s.DomainRegistry
 import locus4s.Selection
 import scalafim.dataset.DatasetShape
 import ravel.NDArray as RavelArray
-import scalafim.image.{SampleSpaces, SomeSampleSpace, SelectedSeries, SomeScalarSeries, SomeSelectedSeries}
-import scalafim.image.SampleSpaces.*
-import spire.implicits.DoubleAlgebra
+import scalafim.image.{SampleSpaces, SelectedSeries, SomeScalarSeries, SomeSelectedSeries}
 
 final case class FitImageMaps(
     names: Vector[String],

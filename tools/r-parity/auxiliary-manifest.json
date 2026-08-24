@@ -1,0 +1,15 @@
+{
+  "schema_version": "scalafim-auxiliary-receipt-manifest/v1",
+  "receipts": [
+    {
+      "description": "fmriAR PACF, estimation, censor pooling, diagnostics, and whitening oracle",
+      "exporter_path": "modules/ar/tools/generate_fmriar_parity.R",
+      "finalizer_path": "tools/r-parity/finalize_fmriar_parity_receipt.py"
+    },
+    {
+      "description": "fmriAR estimated-AR GLS inference oracle",
+      "exporter_path": "modules/fit/tools/generate_fmriar_estimated_gls_parity.R",
+      "finalizer_path": "tools/r-parity/finalize_fmriar_estimated_gls_receipt.py"
+    }
+  ]
+}

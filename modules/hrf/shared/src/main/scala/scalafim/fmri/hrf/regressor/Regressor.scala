@@ -94,10 +94,39 @@ final case class Regressor private (
   def durations: Vector[Seconds] = events.map(_.durationSeconds)
   def amplitudes: Vector[Double] = events.map(_.amplitude)
 
+/** Immutable samples of one shared HRF kernel for repeated direct
+  * convolutions. The sample arrays stay encapsulated so callers cannot mutate
+  * the numerical plan between evaluations.
+  */
+private[scalafim] final class PreparedConvolutionKernel private[regressor] (
+    val hrf: Hrf,
+    val span: PositiveSeconds,
+    val precision: PositiveSeconds,
+    private[regressor] val fineColumns: Array[Array[Double]]
+):
+  def evaluate(regressor: Regressor, grid: Seq[Double]): Mat =
+    Regressor.evaluatePrepared(regressor, grid, this)
+
 object Regressor:
 
   enum EvalMethod:
     case Conv, FFT, Loop
+
+  private[scalafim] def prepareConvolution(
+      hrf: Hrf,
+      span: Seconds,
+      precision: Seconds
+  ): Either[TimeError, PreparedConvolutionKernel] =
+    for
+      span0 <- PositiveSeconds.fromSeconds(span, "span")
+      precision0 <- PositiveSeconds.fromSeconds(precision, "precision")
+    yield
+      new PreparedConvolutionKernel(
+        hrf = hrf,
+        span = span0,
+        precision = precision0,
+        fineColumns = hrfFineColumns(hrf, span0.seconds, precision0.value)
+      )
 
   private def recycleOrError[A](xs: Seq[A], n: Int, name: String): Either[RegressorError, Vector[A]] =
     if xs.length == n then Right(xs.toVector)
@@ -275,6 +304,36 @@ object Regressor:
       method: EvalMethod = EvalMethod.Conv,
       integration: Integration = Integration.Exact
   ): Mat =
+    evaluateImpl(reg, grid, precision, method, integration, prepared = None)
+
+  private[regressor] def evaluatePrepared(
+      reg: Regressor,
+      grid: Seq[Double],
+      prepared: PreparedConvolutionKernel
+  ): Mat =
+    require(reg.span.value == prepared.span.value, "prepared kernel span does not match regressor span")
+    reg.hrf match
+      case HrfAssignment.Shared(hrf) =>
+        require(hrf eq prepared.hrf, "prepared kernel HRF does not match regressor HRF")
+      case HrfAssignment.PerEvent(_) =>
+        throw new IllegalArgumentException("a shared prepared kernel cannot evaluate per-event HRFs")
+    evaluateImpl(
+      reg,
+      grid,
+      prepared.precision.value,
+      EvalMethod.Conv,
+      Integration.Exact,
+      prepared = Some(prepared)
+    )
+
+  private def evaluateImpl(
+      reg: Regressor,
+      grid: Seq[Double],
+      precision: Double,
+      method: EvalMethod,
+      integration: Integration,
+      prepared: Option[PreparedConvolutionKernel]
+  ): Mat =
     val dt = Seconds(precision)
     require(dt.value > 0.0, "`precision` must be > 0")
     require(grid.nonEmpty, "`grid` must be non-empty")
@@ -288,7 +347,8 @@ object Regressor:
     val onsetMin = sorted.head.value - reg.span.value
     val onsetMax = sorted.last.value
     val keepIdx = reg.onsets.indices.filter(i =>
-      reg.onsets(i).value >= onsetMin && reg.onsets(i).value <= onsetMax
+      reg.onsets(i).value + reg.durations(i).value >= onsetMin &&
+        reg.onsets(i).value <= onsetMax
     )
 
     if keepIdx.isEmpty then Mat.zeros(sorted.length, nb)
@@ -306,7 +366,8 @@ object Regressor:
         case (HrfAssignment.PerEvent(_), _) =>
           evalLoop(reg.hrf, reg.span, sorted, ons, durs, amps, eventIdx, dt, reg.summate, integration)
         case (HrfAssignment.Shared(hrf), EvalMethod.Conv) =>
-          evalConv(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
+          val fineColumns = prepared.map(_.fineColumns).getOrElse(hrfFineColumns(hrf, reg.span, dt.value))
+          evalConv(reg.span, sorted, ons, durs, amps, dt, reg.summate, fineColumns)
         case (HrfAssignment.Shared(hrf), EvalMethod.FFT) =>
           evalFft(hrf, reg.span, sorted, ons, durs, amps, dt, reg.summate)
 
@@ -359,7 +420,10 @@ object Regressor:
       val onset = onsets(e)
       // The one place absolute run time becomes displacement from an onset.
       val rel = grid.map(g => Lag.between(onset, g))
-      val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= span.value)
+      // A pulse of width `duration` widens the response support by that width:
+      // `(q_d * h)(lag)` can remain non-zero through `span + duration`.
+      val eventSpan = span.value + durations(e).value
+      val validIdx = rel.indices.filter(i => rel(i).value >= 0.0 && rel(i).value <= eventSpan)
       // A zero-amplitude event scales every basis value to zero, so it is
       // skipped here rather than dropped from the event vector.
       if validIdx.nonEmpty && amps(e) != 0.0 then
@@ -377,17 +441,12 @@ object Regressor:
       e += 1
     Mat.unsafe(grid.length, nb, out)
 
-  /** The neural drive as a discrete measure: mass per microtime bin.
+  /** The neural drive projected onto the microtime grid's linear hat basis.
     *
-    * Treating the drive as a measure rather than a sampled signal is what makes
-    * the impulse and box cases one computation. An impulse deposits its whole
-    * amplitude in a single bin; a unit-height box of duration `d` deposits
-    * `amp * dt` per bin, so its total mass is `amp * d` and the subsequent
-    * convolution approximates `∫ x(t-τ) h(τ) dτ` rather than a bin count.
-    *
-    * The previous version deposited `amp` in every box bin, which made the
-    * result scale with `d / dt` — the epoch amplitude then depended on the
-    * `precision` argument.
+    * Point events split their unit mass between the two surrounding bins.
+    * Blocks are differences of running hat integrals at their exact start and
+    * end positions. This preserves `amp * duration` for every sub-bin
+    * alignment and gives trapezoid quadrature for grid-aligned edges.
     */
   private def buildDriveMeasure(
       onsets: Vector[Seconds],
@@ -399,26 +458,30 @@ object Regressor:
       dt: Double
   ): Array[Double] =
     val nBins = math.floor((t1 - t0) / dt).toInt + 1
-    val diff = Array.fill(nBins + 1)(0.0)
+    val diff = Array.fill(nBins + 2)(0.0)
+    val maxPosition = (nBins - 1).toDouble
     var i = 0
     while i < onsets.length do
-      val on = onsets(i).value
-      val dur = durations(i).value
+      var startPosition = (onsets(i).value - t0) / dt
+      val duration = durations(i).value
       val amp = amplitudes(i)
-      val a =
-        if on <= t0 then 0
-        else math.floor((on - t0) / dt).toInt
-      if a < nBins then
-        var b = math.floor((on + dur - t0) / dt).toInt
-        if b >= nBins then b = nBins - 1
-        if a <= b then
-          // Mass deposited in each covered bin.
-          val perBin =
-            if dur <= 0.0 || a == b then amp
-            else if summate then amp * dt // unit-height box: total mass amp*dur
-            else amp * dt / dur // unit-mass box: total mass amp
-          diff(a) += perBin
-          diff(b + 1) -= perBin
+      if startPosition <= maxPosition then
+        if duration <= 0.0 then
+          if startPosition < 0.0 then startPosition = 0.0
+          val lower = math.floor(startPosition).toInt
+          val fraction = startPosition - lower
+          val lowerWeight = amp * (1.0 - fraction)
+          val upperWeight = amp * fraction
+          diff(lower) += lowerWeight
+          diff(lower + 1) -= lowerWeight
+          diff(lower + 1) += upperWeight
+          diff(lower + 2) -= upperWeight
+        else
+          val endPosition = (onsets(i).value + duration - t0) / dt
+          if endPosition > 0.0 then
+            val scale = amp * (if summate then 1.0 else 1.0 / duration)
+            addHatStep(diff, endPosition, scale, dt, nBins)
+            addHatStep(diff, startPosition, -scale, dt, nBins)
       i += 1
     val out = new Array[Double](nBins)
     var acc = 0.0
@@ -428,6 +491,29 @@ object Regressor:
       out(i) = acc
       i += 1
     out
+
+  /** Add `coefficient` times the running integral of one linear hat basis. */
+  private def addHatStep(
+      diff: Array[Double],
+      position0: Double,
+      coefficient: Double,
+      dt: Double,
+      nBins: Int
+  ): Unit =
+    if position0 > 0.0 then
+      val position = math.min(position0, (nBins - 1).toDouble)
+      val lower = math.floor(position).toInt
+      val fraction = position - lower
+      val scaled = coefficient * dt
+      if lower > 0 then
+        diff(0) += scaled
+        diff(lower) -= scaled
+      val lowerWeight = scaled * (0.5 + fraction - 0.5 * fraction * fraction)
+      val upperWeight = scaled * 0.5 * fraction * fraction
+      diff(lower) += lowerWeight
+      diff(lower + 1) -= lowerWeight
+      diff(lower + 1) += upperWeight
+      diff(lower + 2) -= upperWeight
 
   /** The kernel sampled on the microtime grid, **column-major**: `out(b)(i)`.
     *
@@ -449,14 +535,14 @@ object Regressor:
     out
 
   private def evalConv(
-      hrf: Hrf,
       span: Seconds,
       grid: Array[Seconds],
       onsets: Vector[Seconds],
       durations: Vector[Seconds],
       amps: Vector[Double],
       precision: Seconds,
-      summate: Boolean
+      summate: Boolean,
+      hrfFine: Array[Array[Double]]
   ): Mat =
     val dt = precision.value
     val start = grid.head.value - span.value
@@ -465,8 +551,7 @@ object Regressor:
     val end = math.max(grid.last.value, lastOnset + maxDur) + span.value
 
     val neural = buildDriveMeasure(onsets, durations, amps, summate, start, end, dt)
-    val hrfFine = hrfFineColumns(hrf, span, dt)
-    val nb = hrf.nbasis
+    val nb = hrfFine.length
     val nFine = neural.length
 
     val out = new Array[Double](grid.length * nb)

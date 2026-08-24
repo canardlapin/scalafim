@@ -2,7 +2,6 @@ package scalafim.spatial
 
 import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
 
 class FieldRuntimeSuite extends munit.FunSuite:
 
@@ -14,7 +13,7 @@ class FieldRuntimeSuite extends munit.FunSuite:
   private def linValue[A](result: Either[LinearMapError, A]): A =
     result match
       case Right(value) => value
-      case Left(error) => fail(error.message)
+      case Left(error) => fail(error.getMessage)
 
   private def domain(name: String, dims: Vector[Int] = Vector(3, 1, 1)): Domain =
     val id = value(DomainId(name))

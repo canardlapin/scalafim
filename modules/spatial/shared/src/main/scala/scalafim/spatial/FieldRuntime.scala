@@ -1,7 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.GridCompatibility
-import scalafim.linalg.{DoubleMatrix, LinearMapError}
+import gale.linalg.{DMat, LinAlgError}
 
 import scala.collection.mutable
 
@@ -16,7 +16,7 @@ object FieldRevision:
       revision
 
 enum FieldDataRef:
-  case DenseMatrix(override val label: String, data: DoubleMatrix)
+  case DenseMatrix(override val label: String, data: DMat)
   case Source(source: FieldSource)
 
   def label: String =
@@ -34,7 +34,7 @@ enum FieldDataRef:
       case DenseMatrix(_, data) => data.cols
       case Source(source) => source.descriptor.observations
 
-  def materialized: Option[DoubleMatrix] =
+  def materialized: Option[DMat] =
     this match
       case DenseMatrix(_, data) => Some(data)
       case Source(_) => None
@@ -48,7 +48,7 @@ enum FieldDataRef:
     materialized.isDefined
 
 object FieldDataRef:
-  def dense(label: String, data: DoubleMatrix): FieldDataRef =
+  def dense(label: String, data: DMat): FieldDataRef =
     FieldDataRef.DenseMatrix(label.trim, data)
 
   def source(source: FieldSource): FieldDataRef =
@@ -212,13 +212,13 @@ object Field:
   private var nextRootSequence = 0L
   private var nextRevisionSequence = 0L
 
-  def fromMatrix(domain: DomainId, data: DoubleMatrix, label: String = ""): Field =
+  def fromMatrix(domain: DomainId, data: DMat, label: String = ""): Field =
     fromMatrix(nextRootId("dense", domain, label), domain, data, label)
 
   def fromMatrix(
     rootId: FieldRootId,
     domain: DomainId,
-    data: DoubleMatrix,
+    data: DMat,
     label: String
   ): Field =
     Field(
@@ -293,7 +293,7 @@ object Field:
 
   private[spatial] def materializedFrom(
     view: Field,
-    data: DoubleMatrix,
+    data: DMat,
     execution: Option[ExecutionExplanation] = None
   ): Either[SpatialError, Field] =
     if data.rows != view.sampleCount || data.cols != view.observations then
@@ -378,7 +378,7 @@ object InMemoryOperatorCache:
 
 trait FieldRuntime:
   def view(field: Field, operator: SpatialOperator): Either[SpatialError, Field]
-  def data(field: Field): Either[SpatialError, DoubleMatrix]
+  def data(field: Field): Either[SpatialError, DMat]
 
   def materialize(field: Field): Either[SpatialError, Field] =
     data(field).flatMap(data => Field.materializedFrom(field, data))
@@ -393,7 +393,7 @@ final class CachedFieldRuntime private (cache: OperatorCache) extends FieldRunti
         .put(key, operator)
         .flatMap(_ => Field.viewOf(field, operator).left.map(viewPlanError))
 
-  override def data(field: Field): Either[SpatialError, DoubleMatrix] =
+  override def data(field: Field): Either[SpatialError, DMat] =
     field.data.materialized match
       case None =>
         Left(SpatialError.FieldDataUnavailable(field.data.label))
@@ -422,8 +422,8 @@ final class CachedFieldRuntime private (cache: OperatorCache) extends FieldRunti
               if current.rows != field.sampleCount then Left(SpatialError.FieldShapeMismatch(field.sampleCount, current.rows))
               else Right(current)
 
-  private def linearError(error: LinearMapError): SpatialError =
-    SpatialError.OperatorAssemblyFailed(error.message)
+  private def linearError(error: LinAlgError): SpatialError =
+    SpatialError.OperatorAssemblyFailed(error.getMessage)
 
   private def viewPlanError(error: ViewPlanError): SpatialError =
     SpatialError.OperatorAssemblyFailed(error.message)

@@ -38,7 +38,7 @@ object Searchlight:
       var ordinal = 0
       var invalid = -1
       while ordinal < centers.space.size && invalid < 0 do
-        val point = centers.space.pointOption(ordinal).get
+        val point = centers.space.indexOption(ordinal).get
         if !centers.contains(point) && !neighborhoods.row(point).isEmpty then
           invalid = ordinal
         ordinal += 1
@@ -53,7 +53,7 @@ object CenteredSearchlight:
   def validate[S](
       searchlight: Searchlight[S]
   ): Either[CenteredSearchlightError, CenteredSearchlight[S]] =
-    val centers = searchlight.centers.pointsInDomainOrder
+    val centers = searchlight.centers.indicesInDomainOrder
     var missing = -1
     while centers.hasNext && missing < 0 do
       val center = centers.next()

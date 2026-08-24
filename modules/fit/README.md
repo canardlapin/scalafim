@@ -6,8 +6,9 @@ The first engine is full-rank ordinary least squares over timepoints-by-voxels
 response blocks. It is cross-built for the JVM and Scala.js and uses the
 `scalafim-linalg` primitive array-backed matrix layer rather than Breeze.
 
-The low-level `Ols` kernel is matrix-only. `FitPlanExecutor` is the stable
-fMRI-aware public execution facade: it adapts `FitPlan` plus an in-memory
+The low-level `Ols` kernel is matrix-only. During `0.1-development`,
+`FitPlanExecutor` is the canonical fMRI-aware execution facade: it adapts
+`FitPlan` plus an in-memory
 timepoints-by-voxels dataset into typed coefficient and residual-variance
 results while preserving column names, voxel indices, and timepoint indices.
 Engine-specific behavior is routed through typed `FitInterpreter` instances, so
@@ -32,6 +33,28 @@ Dense `DesignMatrix` and `ResponseBlock` constructors reject non-finite values a
 the boundary. Use the public constructors when accepting external data; reserve
 the `.unsafe` constructors for already-validated internal paths and tests.
 
+`MissingDataPolicy` keeps that finite-block invariant intact. `Error` rejects a
+selected response containing any non-finite value; `ExcludeVoxel` removes a
+whole affected response column; `Propagate` is the compatibility name for that
+same whole-column behavior. `OmitRowsPerVoxel` scans before `ResponseBlock`
+construction, groups voxels by their exact finite-row mask, and fits each group
+with its own selected design. Unlike masks produce `PatternedFmriFitResult`,
+whose children retain their own timepoints, rank/covariance geometry, ordinary
+residual degrees of freedom, AR plan, and contrast result. All-missing,
+insufficient-df, and rank-deficient patterns become typed per-voxel exclusions;
+healthy patterns still complete. `fitDense` succeeds only when the retained
+voxels genuinely share one observation geometry.
+
+Row omission is available for OLS, GLS, runwise OLS, and separate-run fixed
+effects, including sequential/future voxel chunking. A missing timepoint is a
+real gap on the source time axis, so AR whitening and estimation reset across
+it rather than compacting adjacent observations. Estimated shared/global AR is
+estimated independently within each observation pattern; ScalaFIM does not
+invent a pooled AR estimator across incompatible masks. Fixed selected-row
+weights are subset by original row position. Response-derived DVARS weights and an
+explicit nuisance-projection matrix are rejected for this policy until their
+cross-pattern estimation/alignment contracts are defined.
+
 Response preparation is represented explicitly by `ResponsePreparationPlan`.
 The plan records missing-data policy, censoring, volume weights, nuisance
 projection, whitening/autocorrelation preparation, and robust weighting as typed
@@ -39,6 +62,21 @@ steps. Preparing a block returns a provenance-bearing `PreparedFitBlockInput`.
 The default plan is identity-preserving for current OLS/GLS/LSS behavior;
 non-default transforms that still need engine-specific implementation are
 retained as deferred provenance instead of disappearing into loose config flags.
+
+OLS volume weighting is executable rather than advisory. Fixed weights declare
+whether they align to the full acquisition series or the selected response rows;
+estimated weights use a typed DVARS estimator with an explicit transform and
+within-run or across-selection normalization scope. Both paths apply `sqrt(w)`
+to the design and response. Exact zero weights remove their rows before QR, so
+rank and residual degrees of freedom describe the fitted weighted system rather
+than counting observations with no influence. The result provenance records the
+weight source, normalization, input and retained timepoints, zero/excluded rows,
+partition scope, and the resolved weights. Chunked OLS resolves response-derived
+weights once from the complete selected response and reuses that immutable
+temporal geometry for every voxel chunk. Other fit engines reject volume
+weighting when the plan is built until they have an equally explicit execution
+contract; response-independent canonical geometry likewise cannot estimate
+DVARS without a response.
 
 Prepared LSS designs expose a response-independent `TrialReadout`: a checked
 Gale linear operator from timepoints to a named `TrialCoefficientAxis`. The

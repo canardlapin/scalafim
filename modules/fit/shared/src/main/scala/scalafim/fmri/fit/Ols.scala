@@ -1,6 +1,7 @@
 package scalafim.fmri.fit
 
 import gale.linalg.{Cholesky, CholeskyOptions, DMat, DVec, Matrix, QR, QROptions, QRPivoting, Vec}
+import scalafim.fmri.design.RankToleranceConvention
 
 enum OlsSolveMethod:
   case QrRankRevealing
@@ -22,13 +23,35 @@ enum OlsRankPolicy:
       case RidgeRegularized(ridge) => s"ridge regularized (ridge=$ridge)"
       case MinimumNorm             => "minimum norm"
 
+/** How column-pivoted QR chooses its numerical-rank cutoff. */
+enum OlsRankTolerance:
+  /** Scale the cutoff from the realized diagonal of R. */
+  case ScaleAware
+  /** Use the supplied absolute diagonal-R cutoff. */
+  case Absolute(value: Double)
+
+  def valid: Boolean =
+    this match
+      case ScaleAware     => true
+      case Absolute(value) => value >= 0.0 && value.isFinite
+
+  private[fit] def qrValue: Option[Double] =
+    this match
+      case ScaleAware      => None
+      case Absolute(value) => Some(value)
+
+  def convention: RankToleranceConvention =
+    this match
+      case ScaleAware => RankToleranceConvention.ScaleAware
+      case Absolute(_) => RankToleranceConvention.Absolute
+
 final case class OlsSolvePolicy(
     method: OlsSolveMethod = OlsSolveMethod.QrRankRevealing,
     rankPolicy: OlsRankPolicy = OlsRankPolicy.StrictFullRank,
-    rankTolerance: Double = 1e-7,
+    rankTolerance: OlsRankTolerance = OlsRankTolerance.ScaleAware,
     choleskyTolerance: Double = 1e-12
 ):
-  require(rankTolerance >= 0.0 && rankTolerance.isFinite, "OLS rank tolerance must be finite and non-negative")
+  require(rankTolerance.valid, "absolute OLS rank tolerance must be finite and non-negative")
   require(choleskyTolerance >= 0.0 && choleskyTolerance.isFinite, "OLS Cholesky tolerance must be finite and non-negative")
 
 object OlsSolvePolicy:
@@ -42,11 +65,31 @@ final case class OlsDiagnostics(
     solveMethod: OlsSolveMethod,
     predictors: Int,
     rank: Int,
-    policy: OlsSolvePolicy
+    policy: OlsSolvePolicy,
+    rankReport: RankDiagnostics
 ):
   require(predictors > 0, "OLS diagnostics require at least one predictor")
   require(rank >= 0 && rank <= predictors, "OLS rank must be between 0 and predictor count")
+  require(rankReport.predictorCount == predictors, "OLS rank report must match predictor count")
+  require(rankReport.numericalRank == rank, "OLS rank report must match reported rank")
+  require(
+    solveMethod != OlsSolveMethod.QrRankRevealing ||
+      rankReport.toleranceConvention == policy.rankTolerance.convention,
+    "QR rank report tolerance convention must match the declared OLS policy"
+  )
   def fullRank: Boolean = rank == predictors
+
+  /**
+    * Compatibility for merging response chunks.  QR diagonal magnitudes and
+    * condition estimates may legitimately vary after voxel-specific whitening;
+    * the rank/pivot partition is the factorization identity that must agree.
+    */
+  def structurallyCompatible(other: OlsDiagnostics): Boolean =
+    solveMethod == other.solveMethod &&
+      predictors == other.predictors &&
+      rank == other.rank &&
+      policy == other.policy &&
+      rankReport.structurallyCompatible(other.rankReport)
 
 final class OlsPrepared private[fit] (
     val design: DesignMatrix,
@@ -62,7 +105,7 @@ final class OlsPrepared private[fit] (
       Left(FitError.RowMismatch(design.timepoints, response.timepoints))
     else
       for
-        residualDf <- ResidualDegreesOfFreedom(design.timepoints - design.predictors)
+        residualDf <- ResidualDegreesOfFreedom(design.timepoints - diagnostics.rank)
         coefficientMatrix <- solver.coefficients(design, response)
       yield
         val coefficients = CoefficientBlock(coefficientMatrix)
@@ -107,24 +150,38 @@ object Ols:
       Left(FitError.UnsupportedLeastSquaresPolicy(s"OLS currently supports ${OlsRankPolicy.StrictFullRank.label}; got ${policy.rankPolicy.label}"))
     else policy.method match
       case OlsSolveMethod.QrRankRevealing =>
-        val qr = design.value.qr(QROptions(QRPivoting.Column, Some(policy.rankTolerance)))
-        qr.normalizedCovariance
-          .left
-          .map(FitError.SingularDesign.apply)
-          .map { covariance =>
-            new OlsPrepared(
-              design = design,
-              crossproduct = xtx,
-              solver = OlsPreparedSolver.Qr(qr),
-              normalizedCovariance = covariance,
-              diagnostics = OlsDiagnostics(
-                solveMethod = OlsSolveMethod.QrRankRevealing,
-                predictors = design.predictors,
-                rank = qr.diagnostics.rank.getOrElse(design.predictors),
-                policy = policy
+        val qr = design.value.qr(QROptions(QRPivoting.Column, policy.rankTolerance.qrValue))
+        val appliedTolerance = qr.diagnostics.rankTolerance match
+          case Some(value) => value
+          case None        => 0.0
+        val rankReport = RankDiagnostics.fromPivotedQr(
+          predictorCount = design.predictors,
+          rank = qr.diagnostics.rank.getOrElse(design.predictors),
+          tolerance = appliedTolerance,
+          pivotOrder = qr.columnPermutation.toIndexSeq.toVector,
+          diagonalR = (0 until math.min(qr.r.rows, qr.r.cols)).toVector.map(index => math.abs(qr.r(index, index))),
+          toleranceConvention = policy.rankTolerance.convention
+        )
+        if rankReport.deficient then Left(FitError.RankDeficientDesign(rankReport))
+        else
+          qr.normalizedCovariance
+            .left
+            .map(FitError.SingularDesign.apply)
+            .map { covariance =>
+              new OlsPrepared(
+                design = design,
+                crossproduct = xtx,
+                solver = OlsPreparedSolver.Qr(qr),
+                normalizedCovariance = covariance,
+                diagnostics = OlsDiagnostics(
+                  solveMethod = OlsSolveMethod.QrRankRevealing,
+                  predictors = design.predictors,
+                  rank = rankReport.numericalRank,
+                  policy = policy,
+                  rankReport = rankReport
+                )
               )
-            )
-          }
+            }
       case OlsSolveMethod.CholeskyNormalEquations =>
         for
           cholesky <- xtx
@@ -144,7 +201,8 @@ object Ols:
             solveMethod = OlsSolveMethod.CholeskyNormalEquations,
             predictors = design.predictors,
             rank = design.predictors,
-            policy = policy
+            policy = policy,
+            rankReport = RankDiagnostics.fullRankNormalEquations(design.predictors, policy.choleskyTolerance)
           )
         )
 

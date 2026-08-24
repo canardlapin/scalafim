@@ -23,10 +23,10 @@ class SearchlightSuite extends munit.FunSuite:
     val searchlight = Searchlight.make(centers, relation).toOption.get
 
     assertEquals(
-      searchlight.regionAt(space.pointOption(0).get).map(_.ordinalsInDomainOrder.toVector),
+      searchlight.regionAt(space.indexOption(0).get).map(_.ordinalsInDomainOrder.toVector),
       Some(Vector(0, 1))
     )
-    assertEquals(searchlight.regionAt(space.pointOption(1).get), None)
+    assertEquals(searchlight.regionAt(space.indexOption(1).get), None)
     assert(CenteredSearchlight.validate(searchlight).isRight)
 
   test("rows outside the center domain must be empty"):

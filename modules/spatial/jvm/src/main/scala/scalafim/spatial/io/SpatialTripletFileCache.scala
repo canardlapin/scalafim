@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.linalg.{CsrMatrix, SparseTriplets}
+import gale.sparse.{COO, CSR}
 import scalafim.spatial.*
 
 import java.io.{DataInputStream, DataOutputStream}
@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 final case class CachedSpatialTriplets(
   key: OperatorCacheKey,
   provenance: OperatorProvenance,
-  triplets: SparseTriplets
+  triplets: COO
 )
 
 object SpatialTripletFileCache:
@@ -19,7 +19,7 @@ object SpatialTripletFileCache:
 
   def write(path: Path, operator: SpatialOperator): Either[SpatialIoError, Unit] =
     operator.map match
-      case csr: CsrMatrix =>
+      case csr: CSR =>
         writeTriplets(path, OperatorCacheKey.from(operator), operator.provenance, csr.toTriplets)
       case other =>
         Left(SpatialIoError.UnsupportedLinearMap(path, other.getClass.getName))
@@ -28,7 +28,7 @@ object SpatialTripletFileCache:
     path: Path,
     key: OperatorCacheKey,
     provenance: OperatorProvenance,
-    triplets: SparseTriplets
+    triplets: COO
   ): Either[SpatialIoError, Unit] =
     validateCached(path, key, provenance, triplets).flatMap { _ =>
       try
@@ -126,7 +126,7 @@ object SpatialTripletFileCache:
         .left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
     yield OperatorProvenance.fromRecipe(recipe)
 
-  private def writeTriplets(out: DataOutputStream, triplets: SparseTriplets): Unit =
+  private def writeTriplets(out: DataOutputStream, triplets: COO): Unit =
     val rows = triplets.rowIndices
     val cols = triplets.colIndices
     val values = triplets.values
@@ -140,7 +140,7 @@ object SpatialTripletFileCache:
       out.writeDouble(values(i))
       i += 1
 
-  private def readTriplets(in: DataInputStream, path: Path): Either[SpatialIoError, SparseTriplets] =
+  private def readTriplets(in: DataInputStream, path: Path): Either[SpatialIoError, COO] =
     for
       rows <- readNonNegativeInt(in, path, "triplet rows")
       cols <- readNonNegativeInt(in, path, "triplet cols")
@@ -154,7 +154,7 @@ object SpatialTripletFileCache:
     rows: Int,
     cols: Int,
     nnz: Int
-  ): Either[SpatialIoError, SparseTriplets] =
+  ): Either[SpatialIoError, COO] =
     val rowIndices = Array.ofDim[Int](nnz)
     val colIndices = Array.ofDim[Int](nnz)
     val values = Array.ofDim[Double](nnz)
@@ -164,8 +164,8 @@ object SpatialTripletFileCache:
       colIndices(i) = in.readInt()
       values(i) = in.readDouble()
       i += 1
-    SparseTriplets(rows, cols, rowIndices, colIndices, values)
-      .left.map(error => SpatialIoError.InvalidCachePayload(path, error.message))
+    GaleSpatialSupport.sparseTriplets(rows, cols, rowIndices, colIndices, values)
+      .left.map(error => SpatialIoError.InvalidCachePayload(path, error.getMessage))
 
   private def writeMorphismIds(out: DataOutputStream, ids: Vector[MorphismId]): Unit =
     out.writeInt(ids.length)
@@ -249,7 +249,7 @@ object SpatialTripletFileCache:
     path: Path,
     key: OperatorCacheKey,
     provenance: OperatorProvenance,
-    triplets: SparseTriplets
+    triplets: COO
   ): Either[SpatialIoError, Unit] =
     if key.path != provenance.path then
       Left(SpatialIoError.InvalidCachePayload(path, "cache key path differs from provenance path"))

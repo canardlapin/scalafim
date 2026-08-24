@@ -152,9 +152,9 @@ class WhiteningPlanSuite extends munit.FunSuite:
     assert(mismatch.left.toOption.contains(ArError.SegmentCoverageMismatch(5, 6)))
   }
 
-  test("precomputed initial-condition scale is used without inspecting AR(1) stationarity") {
+  test("precomputed initial-condition scale is used with a validated AR(1) filter") {
     val values = Vector(2.0, 3.0, 5.0)
-    val coefficients = ArmaCoefficients.ar(1.05)
+    val coefficients = ArmaCoefficients.ar(0.95)
     val segments = TimeSegments.continuous(values.length)
     val plan = WhiteningPlan
       .globalWithInitialCondition(
@@ -167,7 +167,7 @@ class WhiteningPlanSuite extends munit.FunSuite:
 
     val whitened = WhiteningTransform.matrix(plan, matrix(values)).toOption.get.col(0).toSeq.toVector
 
-    assertClose(whitened, Vector(0.5, 0.9, 1.85))
+    assertClose(whitened, Vector(0.5, 1.1, 2.15))
     assertEquals(plan.exactFirstAr1, false)
   }
 
@@ -231,16 +231,28 @@ class WhiteningPlanSuite extends munit.FunSuite:
     assertMatrixClose(whitenedCombined, expected)
   }
 
-  test("invalid exact AR(1) first-row scaling is reported as a typed error") {
-    val plan = WhiteningPlan.global(
+  test("non-stationary fixed AR coefficients are rejected before whitening") {
+    val result = WhiteningPlan.globalWithInitialCondition(
       ArmaCoefficients.ar(1.05),
       TimeSegments.continuous(3),
-      exactFirstAr1 = true
+      initialCondition = InitialConditionPolicy.ExactAr1
     )
-    val result = WhiteningTransform.matrix(plan, matrix(Vector(1.0, 2.0, 3.0)))
 
     assert(result.left.toOption.exists {
-      case ArError.InvalidExactFirstAr1(rho) => rho == 1.05
-      case _                                => false
+      case ArError.NonStationaryArCoefficients(radius) => radius >= 1.0
+      case _                                               => false
+    })
+  }
+
+  test("non-invertible fixed MA coefficients are rejected before whitening") {
+    val result = WhiteningPlan.globalWithInitialCondition(
+      ArmaCoefficients.arma(phi = Vector.empty, theta = Vector(1.05)),
+      TimeSegments.continuous(3),
+      initialCondition = InitialConditionPolicy.Identity
+    )
+
+    assert(result.left.toOption.exists {
+      case ArError.NonInvertibleMaCoefficients(radius) => radius >= 1.0
+      case _                                            => false
     })
   }

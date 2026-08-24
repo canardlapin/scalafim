@@ -5,24 +5,32 @@ import scalafim.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import scalafim.fmri.design.*
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.fit.{
   ChunkedFitExecutor,
+  ContrastId,
   FitChunkPlan,
   FitChunkingStrategy,
   FitError,
   FitParallelism,
   FitPlanExecutor,
+  FixedEffects,
+  FixedEffectsFmriFitResult,
   FmriFitResult,
   RunwiseFitBlockResult,
-  RunwiseFmriFitResult
+  RunwiseFmriFitResult,
+  StructuralColumnSelector,
+  StructuralFContrast,
+  StructuralTContrast,
+  StructuralWeight
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
-import gale.linalg.{DMat, DVec}
+import scalafim.fmri.model.{CoefficientScope, FitEngine, FitPlan, FitStrategy, FmriModel}
+import scalafim.image.DMat as ImageDMat
+import gale.linalg.DMat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -58,6 +66,13 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
       FitPlanExecutor
         .unsafeFit(fixture.plan, fixture.selection)
         .asInstanceOf[RunwiseFmriFitResult]
+    val fixedPlan = FitPlan(fixture.plan.model, FitStrategy.SeparateRunsThenFixedEffects())
+    val fixedSequential =
+      value(FitPlanExecutor.fitChunked(fixedPlan, fixture.selection, fixture.chunking))
+        .asInstanceOf[FixedEffectsFmriFitResult]
+    val fixedUnchunked =
+      value(FitPlanExecutor.fit(fixedPlan, fixture.selection))
+        .asInstanceOf[FixedEffectsFmriFitResult]
 
     val observations =
       Vector(
@@ -117,19 +132,138 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
           s"actual=${sequential.engine} expected=${FitEngine.RunwiseLeastSquares}"
         ),
         ScenarioHarness.fact(
+          "coefficient scope is explicitly run-specific",
+          sequential.summary.coefficientScope == CoefficientScope.RunSpecific,
+          s"actual=${sequential.summary.coefficientScope}"
+        ),
+        ScenarioHarness.fact(
+          "runwise rank evidence binds to per-run structural axes",
+          sequential.structuralRankReports.isRight,
+          s"actual=${sequential.structuralRankReports.left.toOption.map(_.message).getOrElse("ok")}"
+        ),
+        ScenarioHarness.fact(
           "column names",
           sequential.columnNames == Vector("task", "base_constant"),
           s"actual=${sequential.columnNames.mkString(",")}"
+        ),
+        ScenarioHarness.fact(
+          "fixed-effects engine",
+          fixedSequential.engine == FitEngine.FixedEffects,
+          s"actual=${fixedSequential.engine}"
+        ),
+        ScenarioHarness.fact(
+          "fixed-effects coefficient scope",
+          fixedSequential.summary.coefficientScope == CoefficientScope.SeparateRunsThenFixedEffects,
+          s"actual=${fixedSequential.summary.coefficientScope}"
+        ),
+        ScenarioHarness.fact(
+          "fixed-effects run provenance",
+          fixedSequential.perRunContributions.map(_.runIndex) == Vector(0, 1) &&
+            fixedSequential.perRunContributions.map(_.rowCount) == Vector(5, 5),
+          s"actual=${fixedSequential.perRunContributions.map(c => s"${c.runIndex}:${c.rowCount}").mkString(",")}"
+        ),
+        ScenarioHarness.fact(
+          "fixed-effects effective degrees of freedom",
+          fixedSequential.effectiveResidualDegreesOfFreedom.value == 6,
+          s"actual=${fixedSequential.effectiveResidualDegreesOfFreedom.value} expected=6"
         )
       ) ++
+        runwiseAxisObservations(sequential) ++
         runwiseResultObservations("chunked vs unchunked", sequential, unchunked) ++
         runwiseResultObservations("future vs sequential chunked", future, sequential) ++
         analyticRunObservations("analytic run 0", sequential.runs(0), fixture.expectedCoefficients(run = 0)) ++
         analyticRunObservations("analytic run 1", sequential.runs(1), fixture.expectedCoefficients(run = 1)) ++
+        runwiseHypothesisObservations(fixture, sequential) ++
+        fixedEffectsObservations(fixture, fixedSequential, fixedUnchunked) ++
         finiteRunObservations("chunked", sequential) ++
         finiteRunObservations("future", future)
 
     ScenarioHarness.result(ScenarioId, observations)
+
+  private def fixedEffectsObservations(
+      fixture: ChunkedRunwiseFixture,
+      actual: FixedEffectsFmriFitResult,
+      expected: FixedEffectsFmriFitResult
+  ): Vector[ScenarioObservation] =
+    val statistics = actual.sufficientStatistics
+    val associative: Option[FixedEffectsFmriFitResult] =
+      if statistics.contributions.length == 2 then
+        FixedEffects.combineStatistics(
+          statistics.copy(contributions = Vector(statistics.contributions.head)),
+          statistics.copy(contributions = Vector(statistics.contributions(1))),
+          actual.columnNames,
+          actual.timepoints,
+          actual.summary,
+          actual.preparationProvenance
+        ).toOption
+      else None
+    val duplicateRejected = statistics.combine(statistics) match
+      case Left(FitError.FixedEffectsIncompatible(_)) => true
+      case _ => false
+    val hypothesis = StructuralTContrast(
+      id = ContrastId.unsafe("shared-task-fixed-effects"),
+      description = "shared task effect after fixed-effects combination",
+      terms = Vector(
+        StructuralWeight(
+          StructuralColumnSelector.event(
+            term = Some(TermId.unsafe("task")),
+            role = Some(ColumnRole.Task)
+          ),
+          1.0
+        )
+      )
+    )
+    val compiled = fixture.plan.model.designSchema.flatMap(schema => hypothesis.compile(schema).toOption)
+    val evaluated = compiled.flatMap(_.evaluate(actual).toOption)
+    Vector(
+      ScenarioHarness.fact(
+        "fixed-effects chunked and unchunked engines agree",
+        actual.engine == expected.engine && actual.summary.coefficientScope == expected.summary.coefficientScope,
+        s"actual=${actual.engine}/${actual.summary.coefficientScope} expected=${expected.engine}/${expected.summary.coefficientScope}"
+      ),
+      ScenarioHarness.fact(
+        "fixed-effects semantic cross-run hypothesis evaluates",
+        evaluated.exists(_.hypothesis.exists(_.id == hypothesis.id)),
+        s"actual=${evaluated.map(_.hypothesis.map(_.id))}"
+      ),
+      ScenarioHarness.fact(
+        "fixed-effects sufficient-statistics fold is associative",
+        associative.exists(result => result.sufficientStatistics.runIndices == statistics.runIndices),
+        s"actual=${associative.map(_.sufficientStatistics.runIndices)} expected=${statistics.runIndices}"
+      ),
+      ScenarioHarness.fact(
+        "fixed-effects rejects duplicate run contributions",
+        duplicateRejected,
+        s"actual=$duplicateRejected"
+      ),
+    ) ++
+      ScenarioHarness.matrix("fixed-effects coefficients", actual.coefficients.value, expected.coefficients.value, Tol) ++
+      ScenarioHarness.matrix("fixed-effects covariance", actual.coefficientCovariance.matrices.head, expected.coefficientCovariance.matrices.head, Tol) ++
+      Vector(
+        ScenarioHarness.finite("fixed-effects coefficients finite", actual.coefficients.value.copyData.toVector),
+        ScenarioHarness.finite("fixed-effects standard errors finite", actual.standardErrors.value.copyData.toVector)
+      )
+
+  private def runwiseAxisObservations(result: RunwiseFmriFitResult): Vector[ScenarioObservation] =
+    result.runs.zipWithIndex.flatMap { case (run, index) =>
+      val expected = RunScope.Run(RunIndex.unsafeOneBased(index + 1))
+      val taskScopes = run.coefficientAxis.toVector.flatMap(_.columns.collect {
+        case column if column.origin.isInstanceOf[StructuralColumnOrigin.Event] =>
+          column.origin.asInstanceOf[StructuralColumnOrigin.Event].runScope
+      })
+      Vector(
+        ScenarioHarness.fact(
+          s"run[$index].coefficient-axis-present",
+          run.coefficientAxis.nonEmpty,
+          "runwise fits must carry a structural axis for each independently estimated run"
+        ),
+        ScenarioHarness.fact(
+          s"run[$index].task-coefficient-scope",
+          taskScopes.nonEmpty && taskScopes.forall(_ == expected),
+          s"actual=${taskScopes.mkString(",")} expected=$expected"
+        )
+      )
+    }.toVector
 
   private def runwiseResultObservations(
       name: String,
@@ -186,6 +320,93 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
         ScenarioHarness.finite(s"$name.run[$index].residual-variance finite", run.residualVariance.toVector)
       )
     }.toVector
+
+  private def runwiseHypothesisObservations(
+      fixture: ChunkedRunwiseFixture,
+      result: RunwiseFmriFitResult
+  ): Vector[ScenarioObservation] =
+    val runOne = RunIndex.unsafeOneBased(1)
+    val runTwo = RunIndex.unsafeOneBased(2)
+    val selectedRows = fixture.selectedTimepoints.map(timepoint => ScanIndex.unsafeOneBased(timepoint + 1))
+    val runOneSlice = fixture.plan.model.designSchema.flatMap(_.runwiseSlice(runOne, selectedRows).toOption)
+    val runTwoSlice = fixture.plan.model.designSchema.flatMap(_.runwiseSlice(runTwo, selectedRows).toOption)
+    val runOneT = runwiseTaskTContrast(runOne, "run-one-task")
+    val runTwoT = runwiseTaskTContrast(runTwo, "run-two-task")
+    val runOneF = runwiseTaskFContrast(runOne, "run-one-task-f")
+    val runOneCompiledT = runOneSlice.flatMap(slice => runOneT.compile(slice).toOption)
+    val runTwoCompiledT = runTwoSlice.flatMap(slice => runTwoT.compile(slice).toOption)
+    val runOneCompiledF = runOneSlice.flatMap(slice => runOneF.compile(slice).toOption)
+    val runOneEvaluation = runOneCompiledT.flatMap(_.evaluate(result, 0).toOption)
+    val runTwoEvaluation = runTwoCompiledT.flatMap(_.evaluate(result, 1).toOption)
+    val runOneFEvaluation = runOneCompiledF.flatMap(_.evaluate(result, 0).toOption)
+    val wrongRunRejected = runOneCompiledT.exists { compiled =>
+      compiled.evaluate(result, 1) match
+        case Left(FitError.HypothesisCoefficientAxisMismatch(_, _, _, _, _)) => true
+        case _ => false
+    }
+    Vector(
+      ScenarioHarness.fact(
+        "runwise slice identities",
+        runOneSlice.exists(_.sourceRowIndices == Vector(0, 1, 2, 4, 5)) &&
+          runTwoSlice.exists(_.sourceRowIndices == Vector(6, 7, 8, 10, 11)),
+        s"run1=${runOneSlice.map(_.sourceRowIndices)} run2=${runTwoSlice.map(_.sourceRowIndices)}"
+      ),
+      ScenarioHarness.fact(
+        "runwise semantic T hypotheses compile",
+        runOneCompiledT.nonEmpty && runTwoCompiledT.nonEmpty,
+        s"run1=${runOneCompiledT.nonEmpty} run2=${runTwoCompiledT.nonEmpty}"
+      ),
+      ScenarioHarness.fact(
+        "runwise semantic T hypotheses evaluate",
+        runOneEvaluation.exists(_.hypothesis.exists(_.id == runOneT.id)) &&
+          runTwoEvaluation.exists(_.hypothesis.exists(_.id == runTwoT.id)),
+        s"run1=${runOneEvaluation.map(_.hypothesis.map(_.id))} run2=${runTwoEvaluation.map(_.hypothesis.map(_.id))}"
+      ),
+      ScenarioHarness.fact(
+        "runwise semantic F hypotheses evaluate",
+        runOneFEvaluation.exists(_.hypothesis.exists(_.id == runOneF.id)),
+        s"actual=${runOneFEvaluation.map(_.hypothesis.map(_.id))}"
+      ),
+      ScenarioHarness.fact(
+        "run-scoped hypotheses reject a different run axis",
+        wrongRunRejected,
+        "a run 1 compiled hypothesis must not be reusable against run 2 coefficients"
+      )
+    )
+
+  private def runwiseTaskTContrast(run: RunIndex, id: String): StructuralTContrast =
+    StructuralTContrast(
+      id = ContrastId.unsafe(id),
+      description = s"task coefficient for run ${run.oneBased}",
+      terms = Vector(
+        StructuralWeight(
+          StructuralColumnSelector.event(
+            term = Some(TermId.unsafe("task")),
+            role = Some(ColumnRole.Task),
+            runScope = Some(RunScope.Run(run))
+          ),
+          1.0
+        )
+      )
+    )
+
+  private def runwiseTaskFContrast(run: RunIndex, id: String): StructuralFContrast =
+    StructuralFContrast(
+      id = ContrastId.unsafe(id),
+      description = s"task coefficient omnibus for run ${run.oneBased}",
+      rows = Vector(
+        Vector(
+          StructuralWeight(
+            StructuralColumnSelector.event(
+              term = Some(TermId.unsafe("task")),
+              role = Some(ColumnRole.Task),
+              runScope = Some(RunScope.Run(run))
+            ),
+            1.0
+          )
+        )
+      )
+    )
 
   private def value[A](either: Either[FitError, A]): A =
     either.fold(error => fail(error.message), identity)
@@ -245,14 +466,36 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
       )
 
     private def model: FmriModel =
+      val eventMatrix = Mat.fromRows(taskByTimepoint.map(value => Vector(value)))
+      val eventSchema =
+        DesignSchema.validated(
+          matrix = eventMatrix,
+          rows = RowLayout.fromSamplingFrame(samplingFrame),
+          columns = Vector(
+            StructuralColumn.fromOrigin(
+              1,
+              StructuralColumnOrigin.Event(
+                term = TermId.unsafe("task"),
+                phase = None,
+                cell = CellKey.empty,
+                modulator = None,
+                basis = None,
+                role = ColumnRole.Task,
+                runScope = RunScope.Global
+              ),
+              "task"
+            ).toOption.get
+          )
+        ).toOption.get
       val eventModel =
         EventModel(
           terms = Vector.empty,
           samplingFrame = samplingFrame,
-          designMatrix = Mat.fromRows(taskByTimepoint.map(value => Vector(value))),
+          designMatrix = eventMatrix,
           columnNames = Vector("task"),
           termSpans = Vector(0 -> 1),
-          colIndices = Map("task" -> Vector(0))
+          colIndices = Map("task" -> Vector(0)),
+          compiledSchema = Some(eventSchema)
         )
       val baseline =
         BaselineModel.build(

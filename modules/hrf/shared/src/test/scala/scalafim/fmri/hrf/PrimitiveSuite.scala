@@ -1,5 +1,6 @@
 package scalafim.fmri.hrf
 
+import scala.concurrent.duration.*
 import scalafim.fmri.hrf.HrfCombinators.*
 
 /** The box response is `∫_{l-d}^{l} h(τ) dτ`, so the closed forms are checked
@@ -7,6 +8,12 @@ import scalafim.fmri.hrf.HrfCombinators.*
   * against each other.
   */
 class PrimitiveSuite extends munit.FunSuite:
+
+  /** Refined quadrature deliberately performs enough work to validate the
+    * closed forms. Coverage instrumentation can take longer than MUnit's
+    * general 30-second default without changing the numerical assertion.
+    */
+  override val munitTimeout = 2.minutes
 
   private val grid = (0 to 60).map(_ * 0.5)
 

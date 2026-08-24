@@ -1,7 +1,5 @@
 package scalafim.fmri.fit.scenarios
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import gale.linalg.{DMat, DVec}
 
 object PublicFContrastNilearnFixture:
@@ -51,7 +49,11 @@ object PublicFContrastNilearnFixture:
     DVec.fromSeq(Vector(0.012042971138919209, 0.012074573109252428))
   val taskTStatistics: DVec =
     DVec.fromSeq(Vector(165.25052955266852, -104.18555292189018))
+  val taskTPValues: DVec =
+    DVec.fromSeq(Vector(1.5396399820519613E-10, 1.5446772749783122E-09))
   val taskFStatistics: DVec =
     DVec.fromSeq(Vector(27307.73751743737, 10854.62943763998))
+  val taskFPValues: DVec =
+    DVec.fromSeq(Vector(1.5396399820519634E-10, 1.5446773323185779E-09))
   val taskAndMotionFStatistics: DVec =
     DVec.fromSeq(Vector(14672.719231742811, 6955.6679559540135))

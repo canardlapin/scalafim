@@ -5,14 +5,14 @@ import scalafim.image.SampleSpaces
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
-import scalafim.fmri.ar.{ArmaCoefficients, TimeSegments, WhiteningPlan, WhiteningTransform}
+import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, TimeSegments, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
-import scalafim.fmri.fit.fixtures.FmriregGlsFixtures
+import scalafim.fmri.fit.fixtures.{ArCensorGlsRFixture, FmriArEstimatedGlsFixture, FmriregGlsFixtures}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.DMat
 
 class GlsSuite extends munit.FunSuite:
@@ -41,22 +41,13 @@ class GlsSuite extends munit.FunSuite:
 
   private val rho = 0.4
 
-  private def samplingFrame(length: Int = 6): SamplingFrame =
-    samplingFrame(Vector(length))
-
   private def samplingFrame(blockLens: Vector[Int]): SamplingFrame =
     SamplingFrame(blockLens = blockLens, tr = Vector.fill(blockLens.length)(1.0))
-
-  private def whitenRows(rows: Vector[Vector[Double]], rho: Double): Vector[Vector[Double]] =
-    whitenRows(rows, Vector(rho))
-
-  private def orthogonalInnovation(designRows: Vector[Vector[Double]], seed: Vector[Double], rho: Double): Vector[Double] =
-    orthogonalInnovation(designRows, seed, Vector(rho))
 
   private def whitenRows(
       rows: Vector[Vector[Double]],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Vector[Double]] =
     var segmentStart = 0
     rows.indices.toVector.map { row =>
@@ -77,7 +68,7 @@ class GlsSuite extends munit.FunSuite:
       designRows: Vector[Vector[Double]],
       seed: Vector[Double],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Double] =
     val whitened = whitenRows(designRows, phi, resetAfterRows)
     val design = DesignMatrix.unsafe(scalafim.fmri.fit.GaleTestMatrix.fromRows(whitened))
@@ -93,13 +84,10 @@ class GlsSuite extends munit.FunSuite:
       value - fitted
     }
 
-  private def unwhitenInnovation(z: Vector[Double], rho: Double): Vector[Double] =
-    unwhitenInnovation(z, Vector(rho))
-
   private def unwhitenInnovation(
       z: Vector[Double],
       phi: Vector[Double],
-      resetAfterRows: Set[Int] = Set.empty
+      resetAfterRows: Set[Int]
   ): Vector[Double] =
     val out = Array.ofDim[Double](z.length)
     var segmentStart = 0
@@ -242,6 +230,34 @@ class GlsSuite extends munit.FunSuite:
     assertEquals(result.summary.autocorrelated, true)
   }
 
+  test("estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt") {
+    val fixture = FmriArEstimatedGlsFixture
+    val frame = samplingFrame(fixture.runLengths)
+    val partitions = RunPartition.fromSamplingFrame(frame, (0 until fixture.rows).toVector)
+    val fit = Gls
+      .fit(
+        DesignMatrix.unsafe(fixture.design),
+        ResponseBlock.unsafe(fixture.response),
+        partitions,
+        ArOptions(
+          structure = ArStructure.Ar(2),
+          global = true,
+          exactFirst = false,
+          censoredTimepoints = fixture.censoredTimepoints
+        )
+      )
+      .fold(error => fail(error.message), identity)
+
+    assertEquals(fit.diagnostics.order, 2)
+    assertEquals(fit.diagnostics.iterations, 1)
+    assertEquals(fit.diagnostics.runs.map(_.method), Vector("estimated", "estimated"))
+    fit.diagnostics.runs.foreach(run => assertVectorClose(run.phi, fixture.estimatedPhi, 1e-12))
+    assertMatrixClose(fit.coefficients.value, fixture.coefficients, 1e-11)
+    assertVectorClose(fit.residualVariance.toVector, fixture.residualVariance, 1e-11)
+    assertMatrixClose(fit.normalizedCovariance, fixture.normalizedCovariance, 1e-11)
+    assertEquals(fit.residualDegreesOfFreedom.value, fixture.residualDegreesOfFreedom)
+  }
+
   test("GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals") {
     val n = 240
     val x =
@@ -358,6 +374,26 @@ class GlsSuite extends munit.FunSuite:
     assertEquals(result.autocorrelation.get.runs.head.rows, 6)
     assertEqualsDouble(result.coefficient("task", 0).get, 2.0, 1e-10)
     assertEqualsDouble(result.coefficient("base_constant", 0).get, 3.0, 1e-10)
+  }
+
+  test("estimated GLS excludes explicit censor rows only from noise estimation") {
+    val rows = 6
+    val partitions = RunPartition.fromSamplingFrame(samplingFrame(Vector(rows)), (0 until rows).toVector)
+    val layout = Gls
+      .noiseEstimationLayout(partitions, censoredTimepoints = Vector(2))
+      .fold(error => fail(error.message), identity)
+
+    assertEquals(layout.rows, rows)
+    assertEquals(layout.retainedRows, rows - 1)
+    assertEquals(layout.excludedRows, Vector(2))
+    assertEquals(
+      layout.whiteningSegments,
+      Vector(TimeSegment(0, 3, 0), TimeSegment(3, 6, 0))
+    )
+    assertEquals(
+      layout.estimationSegments,
+      Vector(TimeSegment(0, 2, 0), TimeSegment(3, 6, 0))
+    )
   }
 
   test("GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset") {
@@ -587,6 +623,35 @@ class GlsSuite extends munit.FunSuite:
     assertFinite(f.statistics.toVector)
   }
 
+  test("voxelwise GLS retains degenerate voxel status and isolates contrast inference") {
+    val n = 96
+    val x = (0 until n).toVector.map(i => math.sin(i.toDouble * 0.13))
+    val signalResidual = ar1Residual(0.4, n, offset = 5000)
+    val y = x.indices.toVector.map { row =>
+      Vector(1.0, 0.8 * x(row) + 2.0 + signalResidual(row))
+    }
+    val model = modelFromRows(x, y, Vector(n))
+    val result = FitPlanExecutor
+      .unsafeFit(
+        FitPlan(
+          model,
+          engine = FitEngine.GeneralizedLeastSquares,
+          config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true))
+        )
+      )
+      .asInstanceOf[DenseFmriFitResult]
+
+    assertEquals(result.resolvedVoxelStatuses, Vector(VoxelFitStatus.Constant, VoxelFitStatus.Estimable))
+    val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
+    val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
+    assertEquals(t.voxelIndices, Vector(1))
+    assertEquals(f.voxelIndices, Vector(1))
+    assertEquals(t.excludedVoxels, Vector(VoxelInferenceExclusion(0, VoxelFitStatus.Constant)))
+    assertEquals(f.excludedVoxels, Vector(VoxelInferenceExclusion(0, VoxelFitStatus.Constant)))
+    assertFinite(t.statistics.toVector)
+    assertFinite(f.statistics.toVector)
+  }
+
   test("GeneralizedLeastSquares rejects unsupported AR configurations explicitly") {
     val iid = FitPlan.makeLegacy(glsModel, engine = FitEngine.GeneralizedLeastSquares)
     assert(iid.left.toOption.exists {
@@ -603,19 +668,79 @@ class GlsSuite extends munit.FunSuite:
     })
   }
 
-  test("GeneralizedLeastSquares rejects non-contiguous selected timepoints") {
+  test("GeneralizedLeastSquares rejects non-stationary fixed AR coefficients") {
+    val plan = FitPlan(
+      glsModel,
+      engine = FitEngine.GeneralizedLeastSquares,
+      config = FitConfig(
+        autocorrelation = ArOptions(
+          structure = ArStructure.Ar(2),
+          phi = Some(Vector(1.5, 0.0)),
+          exactFirst = false
+        )
+      )
+    )
+
+    val result = FitPlanExecutor.fit(plan)
+
+    assert(result.left.toOption.exists {
+      case FitError.UnsupportedAutocorrelation(message) => message.contains("not stationary")
+      case _                                             => false
+    })
+  }
+
+  test("GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries") {
     val plan = FitPlan(
       glsModel,
       engine = FitEngine.GeneralizedLeastSquares,
       config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(rho)))
     )
-    val result = FitPlanExecutor.fit(
-      plan,
-      DataSelection(time = IndexSelection.indices(0, 2, 3, 4, 5))
-    )
+    val result = FitPlanExecutor
+      .fit(plan, DataSelection(time = IndexSelection.indices(0, 2, 3, 4, 5)))
+      .fold(error => fail(error.message), identity)
+      .asInstanceOf[DenseFmriFitResult]
+    val whitening = result.autocorrelation.get.whitening
 
-    assert(result.left.toOption.exists {
-      case FitError.UnsupportedAutocorrelation(msg) => msg.contains("contiguous")
-      case _                                       => false
-    })
+    assertEquals(result.timepoints, Vector(0, 2, 3, 4, 5))
+    assertEquals(
+      whitening.segments,
+      Vector(
+        ArWhiteningSegment(0, 0, 1, 0, 1),
+        ArWhiteningSegment(0, 1, 5, 2, 6)
+      )
+    )
+    assertEquals(whitening.censorGaps, Vector(ArCensorGap(0, 1, 2)))
+  }
+
+  test("row-deleted whitening matches independent segmented L X and L Y") {
+    val fixture = ArCensorGlsRFixture
+    val design = GaleTestMatrix.fromRows(fixture.selectedDesignRows)
+    val response = GaleTestMatrix.fromRows(fixture.selectedResponseRows)
+    val partitions =
+      RunPartition.fromSamplingFrame(
+        samplingFrame(fixture.blockLengths),
+        fixture.selectedTimepoints
+      )
+    val segments =
+      Gls.timeSegments(partitions, Vector.empty)
+        .fold(error => fail(error.message), identity)
+    val whitening =
+      WhiteningPlan.global(
+        ArmaCoefficients.ar(fixture.rho),
+        segments,
+        exactFirstAr1 = fixture.exactFirst
+      )
+    val transformed =
+      WhiteningTransform(whitening, design, response)
+        .fold(error => fail(error.message), identity)
+    val direct =
+      Ols.fit(
+        DesignMatrix.unsafe(GaleTestMatrix.fromRows(fixture.whitenedDesignRows)),
+        ResponseBlock.unsafe(GaleTestMatrix.fromRows(fixture.whitenedResponseRows))
+      ).fold(error => fail(error.message), identity)
+
+    assertMatrixClose(transformed.design, GaleTestMatrix.fromRows(fixture.whitenedDesignRows), 1e-12)
+    assertMatrixClose(transformed.response, GaleTestMatrix.fromRows(fixture.whitenedResponseRows), 1e-12)
+    assertMatrixClose(direct.coefficients.value, GaleTestMatrix.fromRows(fixture.coefficients), 1e-12)
+    assertMatrixClose(direct.normalizedCovariance, GaleTestMatrix.fromRows(fixture.normalizedCovariance), 1e-12)
   }

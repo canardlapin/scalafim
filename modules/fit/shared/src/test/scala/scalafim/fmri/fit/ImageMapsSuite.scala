@@ -3,16 +3,13 @@ package scalafim.fmri.fit
 import scalafim.image.SampleSpaces
 import scalafim.image.{space, timeSeries}
 
-import scalafim.fmri.fit.GaleTestSyntax.*
-
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat as ImageDMat, GridCompatibility, SomeSampleSpace}
-import gale.linalg.DMat
+import scalafim.image.{DMat as ImageDMat, GridCompatibility}
 
 class ImageMapsSuite extends munit.FunSuite:
 

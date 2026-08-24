@@ -11,6 +11,10 @@ enum ArError:
   case SegmentGap(index: Int, expectedStart: Int, actualStart: Int)
   case SegmentOutOfBounds(segment: TimeSegment, rows: Int)
   case SegmentCoverageMismatch(coveredRows: Int, matrixRows: Int)
+  case NonContiguousRunIndex(segmentIndex: Int, previousRunIndex: Int, actualRunIndex: Int)
+  case ExcludedRowOutOfBounds(row: Int, matrixRows: Int)
+  case NoEstimableRows
+  case NonContiguousRunLabel(firstRow: Int, repeatedRow: Int)
   case MissingRunSegments(runIndex: Int)
   case CoefficientScopeMismatch(scope: CoefficientScopeKind, coefficientSets: Int, runCount: Int)
   case InvalidArOrder(order: Int)
@@ -19,10 +23,16 @@ enum ArError:
   case EmptyAutocovariances
   case InsufficientAutocovariances(required: Int, actual: Int)
   case NonFiniteAutocovariance(lag: ArLag, value: Double)
+  case NonFiniteResidual(row: Int, column: Int, value: Double)
+  case NonFiniteArCoefficient(index: Int, value: Double)
+  case NonFiniteMaCoefficient(index: Int, value: Double)
   case NonFinitePartialAutocorrelation(index: Int, value: Double)
   case InvalidStationarityBound(bound: Double)
   case InvalidExactFirstAr1(phi: Double)
   case InvalidInitialScale(scale: Double)
+  case NonStationaryArCoefficients(maxRootMagnitude: Double)
+  case NonInvertibleMaCoefficients(maxRootMagnitude: Double)
+  case StationarityCheckFailed(detail: String)
   case UnableToEstimateArModel
 
   def message: String =
@@ -39,6 +49,14 @@ enum ArError:
         s"segment ${segment.start}:${segment.endExclusive} is out of bounds for $rows rows"
       case SegmentCoverageMismatch(coveredRows, matrixRows) =>
         s"segments cover $coveredRows rows but matrix has $matrixRows rows"
+      case NonContiguousRunIndex(segmentIndex, previousRunIndex, actualRunIndex) =>
+        s"segment $segmentIndex has run index $actualRunIndex after run index $previousRunIndex; run indices must begin at zero and advance contiguously"
+      case ExcludedRowOutOfBounds(row, matrixRows) =>
+        s"excluded row $row is out of bounds for $matrixRows rows"
+      case NoEstimableRows =>
+        "noise estimation has no retained rows"
+      case NonContiguousRunLabel(firstRow, repeatedRow) =>
+        s"run label beginning at row $firstRow reappears non-contiguously at row $repeatedRow"
       case MissingRunSegments(runIndex) =>
         s"run $runIndex has no segments"
       case CoefficientScopeMismatch(scope, coefficientSets, runCount) =>
@@ -58,6 +76,12 @@ enum ArError:
         s"need $required autocovariance values, got $actual"
       case NonFiniteAutocovariance(lag, value) =>
         s"autocovariance at lag ${lag.value} must be finite, got $value"
+      case NonFiniteResidual(row, column, value) =>
+        s"residual at row $row, column $column must be finite, got $value"
+      case NonFiniteArCoefficient(index, value) =>
+        s"AR coefficient at index $index must be finite, got $value"
+      case NonFiniteMaCoefficient(index, value) =>
+        s"MA coefficient at index $index must be finite, got $value"
       case NonFinitePartialAutocorrelation(index, value) =>
         s"partial autocorrelation at index $index must be finite, got $value"
       case InvalidStationarityBound(bound) =>
@@ -66,5 +90,11 @@ enum ArError:
         s"exact AR(1) first-row scaling requires abs(phi) < 1, got $phi"
       case InvalidInitialScale(scale) =>
         s"initial-condition scale must be finite and non-negative, got $scale"
+      case NonStationaryArCoefficients(maxRootMagnitude) =>
+        s"AR coefficients are not stationary; recurrence-root magnitude is $maxRootMagnitude"
+      case NonInvertibleMaCoefficients(maxRootMagnitude) =>
+        s"MA coefficients are not invertible; innovation-recursion root magnitude is $maxRootMagnitude"
+      case StationarityCheckFailed(detail) =>
+        s"could not verify AR stationarity: $detail"
       case UnableToEstimateArModel =>
         "unable to estimate AR model"

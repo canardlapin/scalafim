@@ -168,6 +168,23 @@ object FmriDataset:
   ): Either[DatasetError, SynchronousFmriDataset] =
     open(backend, samplingFrame, Vector(runId))
 
+  /** Open a dataset using the sampling frame's canonical run identities. */
+  def open(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame,
+      events: DatasetEvents
+  ): Either[DatasetError, SynchronousFmriDataset] =
+    DatasetTimeAxis
+      .fromSamplingFrame(samplingFrame)
+      .flatMap(timeAxis => open(backend, samplingFrame, timeAxis.runIds, events))
+
+  /** Open a dataset using the sampling frame's canonical run identities. */
+  def open(
+      backend: DatasetBackend,
+      samplingFrame: SamplingFrame
+  ): Either[DatasetError, SynchronousFmriDataset] =
+    open(backend, samplingFrame, DatasetEvents.Empty)
+
   def unsafe(
       backend: DatasetBackend,
       samplingFrame: SamplingFrame,

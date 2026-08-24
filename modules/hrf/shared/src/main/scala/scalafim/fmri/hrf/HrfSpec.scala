@@ -1,7 +1,5 @@
 package scalafim.fmri.hrf
 
-import scalafim.fmri.hrf.HrfCombinators.*
-
 enum HrfSpecError:
   case UnknownKind(name: String, available: Vector[String])
   case UnsupportedKind(kind: HrfKind, detail: String)
@@ -10,6 +8,7 @@ enum HrfSpecError:
   case InvalidWidth(error: TimeError)
   case InvalidPrecision(error: TimeError)
   case InvalidLag(error: TimeError)
+  case InvalidNormalization(error: HrfNormalizationError)
   case ExpectedScalar(name: String, nbasis: Int)
 
   def message: String =
@@ -27,6 +26,8 @@ enum HrfSpecError:
       case InvalidPrecision(error) =>
         error.message
       case InvalidLag(error) =>
+        error.message
+      case InvalidNormalization(error) =>
         error.message
       case ExpectedScalar(name, nbasis) =>
         s"HRF '$name' must have exactly one basis column for scalar evaluation, got $nbasis"
@@ -75,7 +76,8 @@ final case class HrfSpec private (
     width: NonNegativeSeconds,
     precision: PositiveSeconds,
     summate: Boolean,
-    normalize: Boolean
+    normalize: Boolean,
+    normalization: HrfNormalization
 ):
   def basis: BasisCount =
     BasisCount.unsafe(nbasis)
@@ -109,16 +111,22 @@ final case class HrfSpec private (
         case HrfKind.Weighted =>
           Left(HrfSpecError.UnsupportedKind(kind, "weighted HRFs require explicit times and weights"))
 
-    base.map { hrf =>
-      HrfCombinators.gen(
-        base = hrf,
-        lag = lag,
-        width = width.seconds,
-        precision = precision.seconds,
-        summate = summate,
-        normalize = normalize,
-        span = if applySpecSpan then Some(span.seconds) else None
-      )
+    base.flatMap { hrf =>
+      HrfCombinators
+        .genEither(
+          base = hrf,
+          lag = lag,
+          width = width.seconds,
+          precision = precision.seconds,
+          halfLife = Double.PositiveInfinity,
+          summate = summate,
+          normalize = normalize,
+          name = None,
+          normalization = normalization,
+          span = if applySpecSpan then Some(span.seconds) else None
+        )
+        .left
+        .map(HrfSpecError.InvalidNormalization.apply)
     }
 
   def toScalarHrf: Either[HrfSpecError, ScalarHrf] =
@@ -133,16 +141,20 @@ object HrfSpec:
       width: Seconds = 0.0.s,
       precision: Seconds = 0.1.s,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      normalization: HrfNormalization = HrfNormalization.None
   ): Either[HrfSpecError, HrfSpec] =
-    BasisCount.fromInt(nbasis).left.map(_ => HrfSpecError.InvalidBasisCount(nbasis)).flatMap { basis =>
-      for
-        span0 <- PositiveSeconds.fromSeconds(span, "span").left.map(HrfSpecError.InvalidSpan.apply)
-        lag0 <- Seconds.fromDouble(lag.value, "lag").left.map(HrfSpecError.InvalidLag.apply)
-        width0 <- NonNegativeSeconds.fromSeconds(width, "width").left.map(HrfSpecError.InvalidWidth.apply)
-        precision0 <- PositiveSeconds.fromSeconds(precision, "precision").left.map(HrfSpecError.InvalidPrecision.apply)
-      yield HrfSpec(kind, basis.value, span0, lag0, width0, precision0, summate, normalize)
-    }
+    if normalize && normalization != HrfNormalization.None then
+      Left(HrfSpecError.InvalidNormalization(HrfNormalizationError.ConflictingModes))
+    else
+      BasisCount.fromInt(nbasis).left.map(_ => HrfSpecError.InvalidBasisCount(nbasis)).flatMap { basis =>
+        for
+          span0 <- PositiveSeconds.fromSeconds(span, "span").left.map(HrfSpecError.InvalidSpan.apply)
+          lag0 <- Seconds.fromDouble(lag.value, "lag").left.map(HrfSpecError.InvalidLag.apply)
+          width0 <- NonNegativeSeconds.fromSeconds(width, "width").left.map(HrfSpecError.InvalidWidth.apply)
+          precision0 <- PositiveSeconds.fromSeconds(precision, "precision").left.map(HrfSpecError.InvalidPrecision.apply)
+        yield HrfSpec(kind, basis.value, span0, lag0, width0, precision0, summate, normalize, normalization)
+      }
 
   def fromName(
       name: String,
@@ -152,7 +164,8 @@ object HrfSpec:
       width: Seconds = 0.0.s,
       precision: Seconds = 0.1.s,
       summate: Boolean = true,
-      normalize: Boolean = false
+      normalize: Boolean = false,
+      normalization: HrfNormalization = HrfNormalization.None
   ): Either[HrfSpecError, HrfSpec] =
     HrfKind.fromString(name).flatMap { kind =>
       HrfSpec(
@@ -163,6 +176,7 @@ object HrfSpec:
         width = width,
         precision = precision,
         summate = summate,
-        normalize = normalize
+        normalize = normalize,
+        normalization = normalization
       )
     }

@@ -126,6 +126,8 @@ final case class InferenceReadyDenseFit private[fit] (
   def varianceScale: DVec = result.inference.varianceScale
   def voxelIndices: Vector[Int] = result.voxelIndices
   def voxels: Int = result.voxels
+  def voxelStatuses: Vector[VoxelFitStatus] = result.resolvedVoxelStatuses
+  def fitExclusions: Vector[VoxelInferenceExclusion] = result.fitExclusions
 
 sealed trait CoefficientInferenceScope:
   def validateFor(predictors: Int): Either[FitError, Unit]

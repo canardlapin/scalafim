@@ -24,7 +24,7 @@ import scalafim.fmri.model.{
   ScaleScope
 }
 import scalafim.fmri.fit.fixtures.FmriregRobustFixtures
-import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global

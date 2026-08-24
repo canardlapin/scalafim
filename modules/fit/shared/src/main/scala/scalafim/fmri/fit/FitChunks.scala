@@ -8,7 +8,7 @@ import scalafim.dataset.{
   ResolvedDataSelection,
   SynchronousFmriDataset
 }
-import scalafim.fmri.model.{FitEngine, FitPlan}
+import scalafim.fmri.model.{FitEngine, FitPlan, MissingDataPolicy}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -337,7 +337,6 @@ private[fit] object SequentialFitChunkInterpreter extends FitChunkInterpreter[[A
     SequentialChunkProgramInterpreter.execute(program.workProgram) { work =>
       ChunkedFitExecutor.fitChunk(
         program.reader,
-        program.plan,
         work.chunk,
         program.context
       )
@@ -353,7 +352,6 @@ private[fit] final case class FutureFitChunkInterpreter(
       Future {
         ChunkedFitExecutor.fitChunk(
           program.reader,
-          program.plan,
           work.chunk,
           program.context
         )
@@ -388,11 +386,15 @@ object ChunkedFitExecutor:
       selection: DataSelection = DataSelection.All,
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection
   ): Either[FitError, FmriFitResult] =
-    for
-      program <- FitChunkProgram.fromSelection(reader, plan, selection, chunking)
-      chunks <- SequentialFitChunkInterpreter.execute(program)
-      result <- mergeCompletedChunks(program.plan, chunks)
-    yield result
+    plan.config.missingData match
+      case MissingDataPolicy.OmitRowsPerVoxel =>
+        MaskedResponseExecutor.fitChunked(reader, plan, selection, chunking)
+      case _ =>
+        for
+          program <- FitChunkProgram.fromSelection(reader, plan, selection, chunking)
+          chunks <- SequentialFitChunkInterpreter.execute(program)
+          result <- mergeCompletedChunks(program.plan, chunks)
+        yield result
 
   def fitChunks(
       reader: DatasetSeriesReader,
@@ -437,7 +439,7 @@ object ChunkedFitExecutor:
     FitChunkPlan
       .make(Vector(normalized))
       .flatMap(PreparedFitContexts.prepare(reader, plan, _))
-      .flatMap(fitChunk(reader, plan, chunk, _))
+      .flatMap(fitChunk(reader, chunk, _))
 
   /** Synchronous compatibility overload. */
   def fitChunk(
@@ -448,7 +450,6 @@ object ChunkedFitExecutor:
 
   private[fit] def fitChunk(
       reader: DatasetSeriesReader,
-      plan: FitPlan,
       chunk: FitChunkSpec,
       context: PreparedFitContext
   ): Either[FitError, FitBlockResult] =
@@ -533,16 +534,20 @@ object FutureChunkedFitExecutor:
       chunking: FitChunkingStrategy = FitChunkingStrategy.WholeSelection,
       parallelism: FitParallelism = FitParallelism.unbounded
   )(using ExecutionContext): Future[Either[FitError, FmriFitResult]] =
-    FitChunkProgram.fromSelection(reader, plan, selection, chunking) match
-      case Left(error) =>
-        Future.successful(Left(error))
-      case Right(program) =>
-        FutureFitChunkInterpreter(parallelism).execute(program).map {
+    plan.config.missingData match
+      case MissingDataPolicy.OmitRowsPerVoxel =>
+        MaskedResponseExecutor.fitChunkedFuture(reader, plan, selection, chunking, parallelism)
+      case _ =>
+        FitChunkProgram.fromSelection(reader, plan, selection, chunking) match
           case Left(error) =>
-            Left(error)
-          case Right(chunks) =>
-            ChunkedFitExecutor.mergeCompletedChunks(program.plan, chunks)
-        }
+            Future.successful(Left(error))
+          case Right(program) =>
+            FutureFitChunkInterpreter(parallelism).execute(program).map {
+              case Left(error) =>
+                Left(error)
+              case Right(chunks) =>
+                ChunkedFitExecutor.mergeCompletedChunks(program.plan, chunks)
+            }
 
   private[fit] def fitChunks(
       reader: DatasetSeriesReader,
