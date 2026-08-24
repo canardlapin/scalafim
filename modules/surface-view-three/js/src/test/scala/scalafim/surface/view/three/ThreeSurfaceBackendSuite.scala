@@ -70,6 +70,45 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       Vector("color:16777215:1", "scissor:false", "clear:true:true:true", "scissor:true")
     )
 
+  test("disposal forces WebGL context loss exactly once and reports the context as lost"):
+    var loseContextCalls = 0
+    var rendererDisposals = 0
+    val loseContext: js.Function0[Unit] = () => loseContextCalls += 1
+    val extension = js.Dynamic.literal(loseContext = loseContext)
+    val isContextLost: js.Function0[Boolean] = () => false
+    val getExtension: js.Function1[String, js.Any] = name =>
+      if name == "WEBGL_lose_context" then extension else null
+    val webgl = js.Dynamic.literal(isContextLost = isContextLost, getExtension = getExtension)
+    val getContext: js.Function1[String, js.Any] = kind =>
+      if kind == "webgl2" then js.undefined else if kind == "webgl" then webgl else null
+    val canvas = js.Dynamic.literal(getContext = getContext)
+    val renderer = js.Dynamic.literal(
+      getContext = (() => webgl): js.Function0[js.Any],
+      dispose = (() => rendererDisposals += 1): js.Function0[Unit]
+    )
+    val three = js.Dynamic.literal(
+      WebGLRenderer = FakeThree.constructing(renderer),
+      Scene = FakeThree.constructing(js.Dynamic.literal()),
+      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
+      Raycaster = FakeThree.constructing(js.Dynamic.literal())
+    )
+    val runtime = ThreeJsRuntime.create(three, canvas).toOption.get
+    assertEquals(runtime.contextState, ThreeContextState.Available)
+    assertEquals(runtime.dispose(), Right(()))
+    assertEquals(runtime.dispose(), Right(()))
+    assertEquals(loseContextCalls, 1)
+    assertEquals(rendererDisposals, 1)
+    assertEquals(runtime.contextState, ThreeContextState.Lost)
+
+  private object FakeThree:
+    /** A `new`-able JavaScript constructor whose instances are `instance`. */
+    def constructing(instance: js.Dynamic): js.Dynamic =
+      val factory: js.Function0[js.Any] = () => instance
+      js.Dynamic.newInstance(js.Dynamic.global.Function)(
+        "factory",
+        "return function() { return factory(); };"
+      ).applyDynamic("call")(null, factory)
+
   private final class RecordingRuntime(var state: ThreeContextState = ThreeContextState.Available)
       extends ThreeSurfaceRuntime:
     val calls = ArrayBuffer.empty[String]
