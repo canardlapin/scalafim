@@ -63,6 +63,8 @@ lazy val mesh4sBuild = {
 }
 lazy val mesh4sCoreJVM = ProjectRef(mesh4sBuild, "mesh4s-coreJVM")
 lazy val mesh4sCoreJS  = ProjectRef(mesh4sBuild, "mesh4s-coreJS")
+lazy val mesh4sGeometryJVM = ProjectRef(mesh4sBuild, "mesh4s-geometryJVM")
+lazy val mesh4sGeometryJS  = ProjectRef(mesh4sBuild, "mesh4s-geometryJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
@@ -527,8 +529,8 @@ lazy val surface =
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM, mesh4sCoreJVM))
-    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS, mesh4sCoreJS))
+    .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM, mesh4sCoreJVM, mesh4sGeometryJVM))
+    .jsConfigure(_.dependsOn(graph4sAlgorithmsJS, mesh4sCoreJS, mesh4sGeometryJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js

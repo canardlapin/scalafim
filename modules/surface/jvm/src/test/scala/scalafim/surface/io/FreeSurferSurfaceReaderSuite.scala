@@ -19,6 +19,7 @@ class FreeSurferSurfaceReaderSuite extends munit.FunSuite:
     assertEquals(geom.faceCount, 2)
     assertEquals(geom.hemisphere, Hemisphere.Left)
     assertEquals(geom.kind, SurfaceKind.SmoothWm)
+    assert(geom.mesh.realization.topology eq geom.mesh.topology)
     assertEqualsDouble(geom.mesh.vertex(VertexId(3)).y, 1.0, 1e-12)
     assertEquals(geom.mesh.face(FaceId(1)).b, VertexId(3))
 

@@ -23,6 +23,13 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(mesh.topology.vertices.size, 4)
     assertEquals(mesh.topology.faces.size, 4)
     assertEquals(mesh.orientationReceipt, TriangleMeshOrientationReceipt.Strict)
+    assert(mesh.realization.topology eq mesh.topology)
+    assertEquals(mesh.nativeFrame.persistentId, None)
+    val realized =
+      mesh.realization.position(mesh.topology.vertices.indexAtValidatedOrdinal(2))
+    assertEquals(realized.coordinate(0), Some(0.0))
+    assertEquals(realized.coordinate(1), Some(1.0))
+    assertEquals(realized.coordinate(2), Some(0.0))
 
   test("mesh topology identity ignores coordinates but preserves exact face ordering"):
     val mesh = SurfaceTestFixtures.tetraMesh

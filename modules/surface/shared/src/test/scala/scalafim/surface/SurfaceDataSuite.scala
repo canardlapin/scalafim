@@ -113,9 +113,13 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(set.hemisphere, Hemisphere.Left)
     assertEquals(set.vertexCount, 4)
     assertEquals(set.default, geometry)
-    assertEquals(set.get(SurfaceKind.Inflated), Some(inflated))
+    val canonicalInflated = set.get(SurfaceKind.Inflated).get
+    assertEquals(canonicalInflated.kind, inflated.kind)
+    assertEquals(canonicalInflated.mesh.vertices, inflated.mesh.vertices)
     assertEquals(set.topologyIdentity, geometry.mesh.topologyIdentity)
     assertEquals(set.meshDomainEither, geometry.meshDomainEither)
+    assert(set.surfaces.values.forall(_.mesh.topology eq set.default.mesh.topology))
+    assert(set.surfaces.values.forall(surface => surface.mesh.realization.topology eq set.default.mesh.topology))
 
     val right = SurfaceGeometry(geometry.mesh, Hemisphere.Right, SurfaceKind.Inflated)
     interceptMessage[IllegalArgumentException]("requirement failed: all surface geometries must share a hemisphere"):

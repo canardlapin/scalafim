@@ -30,6 +30,8 @@ class GiftiReaderJsSuite extends munit.FunSuite:
 
         assertEquals(geometry.vertexCount, 10449)
         assertEquals(geometry.faceCount, 20480)
+        assert(geometry.mesh.realization.topology eq geometry.mesh.topology)
+        assertEquals(geometry.mesh.realization.positions.space.size, 10449)
         assertEquals(geometry.mesh.face(FaceId(20479)), Triangle(VertexId(10319), VertexId(10448), VertexId(10447)))
         assertEqualsDouble(sample.x, 100.0, 0.0)
         assertEqualsDouble(sample.y, 50.0, 0.0)

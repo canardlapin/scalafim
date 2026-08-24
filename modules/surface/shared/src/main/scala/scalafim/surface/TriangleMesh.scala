@@ -5,7 +5,12 @@ import mesh4s.TopologyAudit
 import mesh4s.Triangle as MeshTriangle
 import mesh4s.TriangleTable
 import mesh4s.TriangleTopology as MeshTriangleTopology
+import mesh4s.geometry.SurfaceRealization
+import mesh4s.geometry.SurfaceRealizationError
 import scalafim.image.PrimitiveBuffers
+import spatial4s.D3
+import spatial4s.Dimension.given
+import spatial4s.Frame
 
 enum TriangleMeshOrientationPolicy derives CanEqual:
   case Strict
@@ -19,12 +24,16 @@ enum TriangleMeshError derives CanEqual:
   case InvalidInput(reason: String)
   case TopologyRejected(audit: TopologyAudit)
   case OrientationRejected(error: MeshOrientationError)
+  case RealizationRejected(error: SurfaceRealizationError)
+  case ConnectivityMismatch
 
   def message: String =
     this match
       case InvalidInput(reason)       => reason
       case TopologyRejected(audit)    => audit.message
       case OrientationRejected(error) => error.message
+      case RealizationRejected(error) => error.message
+      case ConnectivityMismatch       => "mesh connectivity does not match the canonical topology"
 
 /** Compatibility facade over one lawful mesh4s topology and one coordinate
   * realization.
@@ -34,10 +43,13 @@ enum TriangleMeshError derives CanEqual:
   * renditions; they are not used to reconstruct a second topology.
   */
 final class TriangleMesh private (
-  val coordinates: Array[Double],
-  val faceIndices: Array[Int],
+  private val packedCoordinates: Array[Double],
+  private val packedFaceIndices: Array[Int],
   val topology: MeshTriangleTopology,
-  val orientationReceipt: TriangleMeshOrientationReceipt
+  val orientationReceipt: TriangleMeshOrientationReceipt,
+  val nativeFrame: Frame[D3]
+)(
+  val realization: SurfaceRealization[topology.type, D3, Frame[D3]]
 ):
   val vertexCount: Int =
     topology.vertices.size
@@ -46,7 +58,19 @@ final class TriangleMesh private (
     topology.faces.size
 
   val topologyIdentity: MeshTopologyIdentity =
-    MeshTopologyIdentity.from(vertexCount, faceIndices)
+    MeshTopologyIdentity.from(vertexCount, packedFaceIndices)
+
+  /** Surface-local coordinates before `SurfaceGeometry.surfaceToWorld` maps
+    * them into RAS+. A defensive copy preserves the mesh/realization invariant.
+    */
+  def coordinates: Array[Double] =
+    packedCoordinates.clone()
+
+  /** Ordered renderer/codec compatibility indices. mesh4s remains the
+    * topology authority.
+    */
+  def faceIndices: Array[Int] =
+    packedFaceIndices.clone()
 
   /** Exact ordered-connectivity compatibility for fields and alternate
     * coordinate realizations. The legacy fingerprint is a cheap rejection
@@ -58,11 +82,30 @@ final class TriangleMesh private (
       topologyIdentity == other.topologyIdentity &&
       topology.sameConnectivity(other.topology)
 
+  /** Rebind this coordinate realization onto an already-validated canonical
+    * topology. Structural comparison occurs once at this ingestion boundary.
+    */
+  def shareTopologyFrom(canonical: TriangleMesh): Either[TriangleMeshError, TriangleMesh] =
+    if topology eq canonical.topology then Right(this)
+    else if !hasSameTopology(canonical) then Left(TriangleMeshError.ConnectivityMismatch)
+    else
+      TriangleMesh.create(
+        packedCoordinates,
+        canonical.packedFaceIndices,
+        canonical.topology,
+        orientationReceipt,
+        nativeFrame
+      )
+
   inline def vertex(id: VertexId): Point3D =
     val i = id.index
     require(i < vertexCount, "vertex id out of range")
     val off = i * 3
-    Point3D(coordinates(off), coordinates(off + 1), coordinates(off + 2))
+    Point3D(
+      packedCoordinates(off),
+      packedCoordinates(off + 1),
+      packedCoordinates(off + 2)
+    )
 
   inline def face(id: FaceId): Triangle =
     val i = id.index
@@ -142,7 +185,7 @@ object TriangleMesh:
             .fromTable(table)
             .left
             .map(TriangleMeshError.TopologyRejected.apply)
-            .map: topology =>
+            .flatMap: topology =>
               create(
                 coordinates,
                 faceIndices,
@@ -154,7 +197,7 @@ object TriangleMesh:
             .orientAndBuild(table)
             .left
             .map(TriangleMeshError.OrientationRejected.apply)
-            .map: oriented =>
+            .flatMap: oriented =>
               val flippedFaces =
                 oriented.flipped.toVector.zipWithIndex.collect:
                   case (true, face) => FaceId.unsafe(face)
@@ -179,14 +222,31 @@ object TriangleMesh:
     coordinates: Array[Double],
     faceIndices: Array[Int],
     topology: MeshTriangleTopology,
-    orientationReceipt: TriangleMeshOrientationReceipt
-  ): TriangleMesh =
-    new TriangleMesh(
-      coordinates = PrimitiveBuffers.fromArray(coordinates),
-      faceIndices = PrimitiveBuffers.fromArray(faceIndices),
-      topology = topology,
-      orientationReceipt = orientationReceipt
-    )
+    orientationReceipt: TriangleMeshOrientationReceipt,
+    nativeFrame: Frame[D3] = freshNativeFrame()
+  ): Either[TriangleMeshError, TriangleMesh] =
+    val ownedCoordinates = PrimitiveBuffers.fromArray(coordinates)
+    val ownedFaceIndices = PrimitiveBuffers.fromArray(faceIndices)
+    SurfaceRealization
+      .fromInterleavedDoubles(topology, nativeFrame, ownedCoordinates)
+      .left
+      .map(TriangleMeshError.RealizationRejected.apply)
+      .map: realization =>
+        new TriangleMesh(
+          packedCoordinates = ownedCoordinates,
+          packedFaceIndices = ownedFaceIndices,
+          topology = topology,
+          orientationReceipt = orientationReceipt,
+          nativeFrame = nativeFrame
+        )(realization)
+
+  private def freshNativeFrame(): Frame[D3] =
+    Frame
+      .named[D3]("ScalaFIM surface-local coordinates")
+      .fold(
+        error => throw new IllegalStateException(error.message),
+        identity
+      )
 
   private def validateArrays(
     coordinates: Array[Double],

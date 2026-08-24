@@ -245,19 +245,19 @@ final case class SurfaceSet private (
   )
 
   val hemisphere: Hemisphere =
-    surfaces.values.head.hemisphere
+    surfaces(defaultKind).hemisphere
 
   val vertexCount: Int =
-    surfaces.values.head.vertexCount
+    surfaces(defaultKind).vertexCount
 
   val topologyIdentity: MeshTopologyIdentity =
-    surfaces.values.head.mesh.topologyIdentity
+    surfaces(defaultKind).mesh.topologyIdentity
 
   require(surfaces.values.forall(_.hemisphere == hemisphere), "all surface geometries must share a hemisphere")
   require(surfaces.values.forall(_.vertexCount == vertexCount), "all surface geometries must share a vertex count")
   require(
-    surfaces.values.forall(_.mesh.hasSameTopology(surfaces(defaultKind).mesh)),
-    "all surface geometries must share ordered triangle topology"
+    surfaces.values.forall(geometry => geometry.mesh.topology eq surfaces(defaultKind).mesh.topology),
+    "all surface geometries must share one canonical mesh topology owner"
   )
   require(
     surfaces.values.forall(_.surfaceToWorld == surfaces(defaultKind).surfaceToWorld),
@@ -282,7 +282,42 @@ object SurfaceSet:
     surfaces: Map[SurfaceKind, SurfaceGeometry],
     defaultKind: SurfaceKind
   ): SurfaceSet =
-    new SurfaceSet(surfaces, defaultKind)
+    require(surfaces.nonEmpty, "surface set must contain at least one geometry")
+    require(surfaces.contains(defaultKind), "surface set default must exist in the set")
+    require(
+      surfaces.forall((kind, geometry) => kind == geometry.kind),
+      "surface set keys must match geometry kinds"
+    )
+    val canonical = surfaces(defaultKind)
+    require(
+      surfaces.values.forall(_.hemisphere == canonical.hemisphere),
+      "all surface geometries must share a hemisphere"
+    )
+    require(
+      surfaces.values.forall(_.vertexCount == canonical.vertexCount),
+      "all surface geometries must share a vertex count"
+    )
+    require(
+      surfaces.values.forall(_.mesh.hasSameTopology(canonical.mesh)),
+      "all surface geometries must share ordered triangle topology"
+    )
+    require(
+      surfaces.values.forall(_.surfaceToWorld == canonical.surfaceToWorld),
+      "all surface geometries must share a surface-to-world transform"
+    )
+    val canonicalized =
+      surfaces.map: (kind, geometry) =>
+        val mesh =
+          geometry.mesh
+            .shareTopologyFrom(canonical.mesh)
+            .fold(
+              error => throw new IllegalArgumentException(error.message),
+              identity
+            )
+        kind ->
+          (if mesh eq geometry.mesh then geometry
+           else SurfaceGeometry(mesh, geometry.hemisphere, geometry.kind, geometry.surfaceToWorld))
+    new SurfaceSet(canonicalized, defaultKind)
 
   def of(defaultKind: SurfaceKind, default: SurfaceGeometry, rest: (SurfaceKind, SurfaceGeometry)*): SurfaceSet =
     val entries = (defaultKind -> default) +: rest

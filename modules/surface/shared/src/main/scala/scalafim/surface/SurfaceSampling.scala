@@ -5,10 +5,13 @@ import scalafim.image.NeuroVol
 import scalafim.image.PrimitiveBuffers
 import scala.util.control.NonFatal
 
-final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):
+final case class SurfaceGeometryPair private (white: SurfaceGeometry, pial: SurfaceGeometry):
   require(white.vertexCount == pial.vertexCount, "white and pial surfaces must have the same vertex count")
   require(white.hemisphere == pial.hemisphere, "white and pial surfaces must have the same hemisphere")
-  require(white.mesh.hasSameTopology(pial.mesh), "white and pial surfaces must share ordered triangle topology")
+  require(
+    white.mesh.topology eq pial.mesh.topology,
+    "white and pial surfaces must share one canonical mesh topology owner"
+  )
 
   def domainEither: Either[SurfaceError, SurfaceDomain] =
     for
@@ -18,6 +21,22 @@ final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeomet
     yield whiteDomain
 
 object SurfaceGeometryPair:
+  def apply(white: SurfaceGeometry, pial: SurfaceGeometry): SurfaceGeometryPair =
+    require(white.vertexCount == pial.vertexCount, "white and pial surfaces must have the same vertex count")
+    require(white.hemisphere == pial.hemisphere, "white and pial surfaces must have the same hemisphere")
+    require(white.mesh.hasSameTopology(pial.mesh), "white and pial surfaces must share ordered triangle topology")
+    val sharedMesh =
+      pial.mesh
+        .shareTopologyFrom(white.mesh)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
+    val sharedPial =
+      if sharedMesh eq pial.mesh then pial
+      else SurfaceGeometry(sharedMesh, pial.hemisphere, pial.kind, pial.surfaceToWorld)
+    new SurfaceGeometryPair(white, sharedPial)
+
   def fromEither(white: SurfaceGeometry, pial: SurfaceGeometry): Either[SurfaceError, SurfaceGeometryPair] =
     try scala.util.Right(SurfaceGeometryPair(white, pial))
     catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidGeometry(SurfaceError.reason(error)))

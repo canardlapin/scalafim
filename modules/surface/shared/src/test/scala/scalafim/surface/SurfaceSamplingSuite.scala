@@ -27,6 +27,8 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   test("SurfaceGeometryPair exposes a shared cortical domain"):
     assertEquals(pair.domainEither, scala.util.Right(SurfaceDomain(CorticalHemisphere.Left, 3)))
+    assert(pair.white.mesh.topology eq pair.pial.mesh.topology)
+    assert(pair.white.mesh.realization.topology eq pair.pial.mesh.realization.topology)
 
   test("midpoint path is a named policy that preserves midpoint sampling semantics"):
     val plan = VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest)
