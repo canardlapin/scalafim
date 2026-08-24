@@ -11,32 +11,32 @@ import spire.std.double.given
 
 class SubVectorSyntaxSuite extends munit.FunSuite:
 
-  test("NeuroVec apply overloads select one volume or a time subset") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 4))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
+  test("SomeNeuroSeries apply overloads select one volume or a time subset") {
+    val sp = SampleSpaces(Vector(2, 1, 1, 4))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
 
     val v2 = vec(2)
     assertEquals(v2.space.dims, Vector(2, 1, 1), clue = "")
     assertEquals(Vector.tabulate(v2.copyToCanonicalArray.length)(i => v2.copyToCanonicalArray(i)), Vector(2.0, 6.0), clue = "")
 
-    val sub = vec(1 to 3)
+    val sub = vec.selectTimes(1 to 3)
     assertEquals(sub.space.dims, Vector(2, 1, 1, 3), clue = "")
     assertEquals(Vector.tabulate(sub.copyToCanonicalArray.length)(i => sub.copyToCanonicalArray(i)), Vector(1.0, 2.0, 3.0, 5.0, 6.0, 7.0), clue = "")
   }
 
   test("selected series use exact support and contiguous position-time rows") {
-    val spatial = NeuroSpace(Vector(3, 1, 1))
+    val spatial = SampleSpaces(Vector(3, 1, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(spatial),
+          VolumeSpace(spatial).sampleSpace.grid,
           "sub-vector selected series",
           DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val time = Axis.create("time", 4, AxisKind.Time).toOption.get
@@ -71,12 +71,12 @@ class SubVectorSyntaxSuite extends munit.FunSuite:
     assertEquals(first.iterator.toVector, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
   }
 
-  test("NeuroVecSeq supports apply subsetting syntax") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 3))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](12)(_.toDouble), sp)
-    val seq = NeuroVecSeq(Vector(vec.subVector(Seq(0, 1)), vec.subVector(Seq(2))))
-    val seqSub = seq(Seq(1, 2))
-    assertEquals(seqSub.length, 2, clue = "")
-    assertEquals(Vector.tabulate(seqSub(0).copyToCanonicalArray.length)(i => seqSub(0).copyToCanonicalArray(i)), Vector(1.0, 4.0, 7.0, 10.0), clue = "")
-    assertEquals(Vector.tabulate(seqSub(1).copyToCanonicalArray.length)(i => seqSub(1).copyToCanonicalArray(i)), Vector(2.0, 5.0, 8.0, 11.0), clue = "")
+  test("NeuroSeriesSeq supports explicit time selection") {
+    val sp = SampleSpaces(Vector(2, 2, 1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](12)(_.toDouble), sp)
+    val seq = NeuroSeriesSeq(Vector(vec.selectTimes(Seq(0, 1)), vec.selectTimes(Seq(2))))
+    val seqSub = seq.selectTimes(Seq(1, 2))
+    assertEquals(seqSub.frameCount, 2, clue = "")
+    assertEquals(Vector.tabulate(seqSub.volumeAt(0).copyToCanonicalArray.length)(i => seqSub.volumeAt(0).copyToCanonicalArray(i)), Vector(1.0, 4.0, 7.0, 10.0), clue = "")
+    assertEquals(Vector.tabulate(seqSub.volumeAt(1).copyToCanonicalArray.length)(i => seqSub.volumeAt(1).copyToCanonicalArray(i)), Vector(2.0, 5.0, 8.0, 11.0), clue = "")
   }

@@ -4,11 +4,13 @@ import scalafim.image.{
   GridCompatibility,
   Indexing,
   Mask,
-  NeuroSpace,
-  VoxelCoord,
-  VolumeDomain
+  SampleSpaces,
+  SomeSampleSpace,
+  VoxelCoord
 }
-import scalafim.image.VolumeDomain.*
+import scalafim.image.GridDomainOps.*
+import scalafim.image.SampleSpaces.*
+import scalafim.image.space
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.locus.GridDomain
@@ -160,7 +162,7 @@ final class VoxelDomain private (
 
   def resolve(
       selection: VoxelSelection,
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[DatasetError, Vector[VoxelIndex]] =
     selection match
       case VoxelSelection.All =>
@@ -198,7 +200,7 @@ final class VoxelDomain private (
 
   private def resolveCoordinates(
       values: Vector[VoxelCoord],
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[DatasetError, Vector[VoxelIndex]] =
     if values.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Voxel))
     else
@@ -407,7 +409,7 @@ object ResolvedDataSelection:
         validTimepoints <- validateTimepoints(timepoints, timeSize)
         validVoxels <- validateVoxels(voxels, voxelSize)
         shape <- DatasetShape.make(
-          NeuroSpace(Vector(voxelSize, 1, 1)),
+          SampleSpaces(Vector(voxelSize, 1, 1)),
           timeSize
         )
         voxelDomain <- VoxelDomain.full(shape)

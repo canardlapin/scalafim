@@ -35,8 +35,8 @@ final class VolumeAtlas private (
         .toVector
     )
 
-  def space: NeuroSpace =
-    VolumeSpace.fromGridDomain(realization.domain).toNeuroSpace
+  def space: SomeSampleSpace =
+    VolumeSpace.fromGridDomain(realization.domain).toSampleSpace
 
   /** Materialize categorical labels in canonical Ravel order.
     *

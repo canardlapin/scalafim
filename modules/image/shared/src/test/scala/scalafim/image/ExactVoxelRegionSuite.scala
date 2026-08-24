@@ -3,11 +3,11 @@ package scalafim.image
 class ExactVoxelRegionSuite extends munit.FunSuite:
 
   private val volumeSpace =
-    VolumeSpace(NeuroSpace(Vector(2, 2, 1)))
+    VolumeSpace(SampleSpaces(Vector(2, 2, 1)))
 
   private val translatedSpace =
     VolumeSpace(
-      NeuroSpace(
+      SampleSpaces(
         Vector(2, 2, 1),
         trans = Some(
           DMat.fromRows(
@@ -23,16 +23,16 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     )
 
   private val packedDomain =
-    VolumeDomain
+    GridDomain
       .register(
-        volumeSpace,
+        volumeSpace.sampleSpace.grid,
         "exact voxel region suite",
         locus4s.DomainRegistry.empty
       )
       .toOption
       .get
   private type Voxel = packedDomain.S
-  private val domain: VolumeDomain[Voxel] = packedDomain.value
+  private val domain = packedDomain.value
 
   private def region(indices: Int*): locus4s.Region[Voxel] =
     locus4s.Region.fromOrdinals(domain.space, indices).toOption.get
@@ -51,9 +51,9 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
 
   test("checked region algebra rejects a same-size foreign grid owner"):
     val foreign =
-      VolumeDomain
+      GridDomain
         .register(
-          translatedSpace,
+          translatedSpace.sampleSpace.grid,
           "translated exact voxel region suite",
           locus4s.DomainRegistry.empty
         )
@@ -100,9 +100,9 @@ class ExactVoxelRegionSuite extends munit.FunSuite:
     assert(selected.selection.eq(selection))
 
     val foreign =
-      VolumeDomain
+      GridDomain
         .register(
-          translatedSpace,
+          translatedSpace.sampleSpace.grid,
           "translated exact selected volume suite",
           locus4s.DomainRegistry.empty
         )

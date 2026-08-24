@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
 
 class DatasetSuite extends munit.FunSuite:
 
@@ -9,7 +9,7 @@ class DatasetSuite extends munit.FunSuite:
     InMemoryDatasetBackend(
       id = DatasetId("demo"),
       data = DMat.fromRows(denseRows),
-      space = NeuroSpace(Vector(2, 2, 1))
+      space = SampleSpaces(Vector(2, 2, 1))
     )
 
   test("opaque identifiers reject blank values") {
@@ -78,7 +78,7 @@ class DatasetSuite extends munit.FunSuite:
   }
 
   test("dataset shape rejects 4D spaces as spatial-only shapes") {
-    val fourD = NeuroSpace(Vector(2, 2, 1, 3))
+    val fourD = SampleSpaces(Vector(2, 2, 1, 3))
     val error = DatasetShape.make(fourD, timepoints = 3).left.toOption.getOrElse(fail("expected 4D shape rejection"))
     assert(error.message.contains("requires exactly 3 dimensions"))
 

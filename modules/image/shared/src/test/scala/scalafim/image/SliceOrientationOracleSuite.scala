@@ -108,15 +108,15 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   private def dot(left: Vector[Double], right: Vector[Double]): Double =
     left(0) * right(0) + left(1) * right(1) + left(2) * right(2)
 
-  private def volume[A: ClassTag: DType: MigrationValueSemantics](
+  private def volume[A: ClassTag: DType, Sem](
     dims: SpatialDims,
     affine: DMat
-  )(value: (Int, Int, Int) => A): NeuroVol[A] =
+  )(value: (Int, Int, Int) => A)(using image4s.ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
     val values =
       RavelArray.tabulate[A](dims.x, dims.y, dims.z)(value)
-    NeuroVol.fromRavel(
+    SomeNeuroVolume.unsafeFromRavel[A, Sem](
       values,
-      NeuroSpace(dims.toVector, trans = Some(affine)),
+      SampleSpaces(dims.toVector, trans = Some(affine)),
       "orientation-oracle"
     )
 
@@ -204,7 +204,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   test("all 48 signed axis permutations reslice every anatomical plane correctly") {
     assertEquals(SignedPermutation.all.length, 48)
     SignedPermutation.all.foreach { orientation =>
-      val source = volume[Int](Dims, orientation.affine(Dims)) { (x, y, z) =>
+      val source = volume[Int, image4s.Categorical](Dims, orientation.affine(Dims)) { (x, y, z) =>
         encoded(Vector(x, y, z))
       }
       val worldDimensions = orientation.worldDimensions(Dims)
@@ -224,7 +224,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
               clue = s"${orientation.clue} plane=$plane convention=$convention fixed=$fixed"
             )
             val sampled = SlicePlan.make(source.volumeSpace, grid)
-              .sample(source.toNative, SliceSampling.Nearest(-1))
+              .sample(source, SliceSampling.Nearest(-1))
               .toOption
               .get
             var row = 0
@@ -252,7 +252,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
     var compared = 0
     (0 until 24).foreach { seed =>
       val fixture = generatedAffine(seed)
-      val source = volume[Double](dims, fixture.matrix) { (x, y, z) =>
+      val source = volume[Double, image4s.Continuous](dims, fixture.matrix) { (x, y, z) =>
         worldField(fixture.voxelToWorld(x.toDouble, y.toDouble, z.toDouble))
       }
       val cursor = fixture.voxelToWorld(2.5, 3.0, 3.5)
@@ -263,7 +263,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
           PixelSpacing(0.8, 1.1)
         )
         val sampled = SlicePlan.make(source.volumeSpace, grid)
-          .sample(source.toNative, SliceSampling.Linear())
+          .sample(source, SliceSampling.Linear())
           .toOption
           .get
         var row = 0

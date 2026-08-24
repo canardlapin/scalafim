@@ -4,7 +4,7 @@ import scala.collection.mutable
 
 import scalafim.image.Indexing
 import scalafim.image.PrimitiveBuffers
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class GraphDifferentialSuite extends munit.FunSuite:
   private val dimensions = Vector(3, 3, 2)
@@ -27,7 +27,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
   )
 
   private val atlas =
-    val space = NeuroSpace(dimensions)
+    val space = SampleSpaces(dimensions)
     val ref = AtlasRef.volume(
       family = "graph-differential",
       model = "GraphDifferential",

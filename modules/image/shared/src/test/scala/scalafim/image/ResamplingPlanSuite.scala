@@ -21,7 +21,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   private def assertClose(actual: VoxelPoint, expected: VoxelPoint, tol: Double): Unit =
     assertClose(actual.toVector, expected.toVector, tol)
 
-  private def assertSameVolume(actual: NeuroVol[Double], expected: NeuroVol[Double], tol: Double = 1e-10): Unit =
+  private def assertSameVolume(actual: SomeScalarVolume[Double], expected: SomeScalarVolume[Double], tol: Double = 1e-10): Unit =
     assertEquals(actual.space, expected.space, clue = "")
     assertEquals(actual.values.shape, expected.values.shape, clue = "")
     var i = 0
@@ -29,7 +29,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
       assertClose(actual.copyToCanonicalArray(i), expected.copyToCanonicalArray(i), tol)
       i += 1
 
-  private def assertSameVec(actual: NeuroVec[Double], expected: NeuroVec[Double], tol: Double = 1e-10): Unit =
+  private def assertSameVec(actual: SomeScalarSeries[Double], expected: SomeScalarSeries[Double], tol: Double = 1e-10): Unit =
     assertEquals(
       GridCompatibility.exact(actual.space, expected.space),
       Right(()),
@@ -42,23 +42,23 @@ class ResamplingPlanSuite extends munit.FunSuite:
       assertClose(actual.copyToCanonicalArray(i), expected.copyToCanonicalArray(i), tol)
       i += 1
 
-  private def testVolume(space: NeuroSpace): NeuroVol[Double] =
+  private def testVolume(space: SomeSampleSpace): SomeScalarVolume[Double] =
     val dims = space.spatialDims
     val data =
       PrimitiveBuffers.tabulate[Double](dims.product) { lin =>
         val g = Indexing.indexToGrid3D(dims, lin)
         valueAt(g(0), g(1), g(2))
       }
-    NeuroVol.copyFromCanonicalArray(data, space, "plan-fixture")
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space, "plan-fixture")
 
-  private def testVec(space: NeuroSpace, nVolumes: Int): NeuroVec[Double] =
+  private def testVec(space: SomeSampleSpace, nVolumes: Int): SomeScalarSeries[Double] =
     val spatial = space.spatialSpace
     val dims = spatial.spatialDims
     val data =
       RavelArray.tabulate[Double](dims(0), dims(1), dims(2), nVolumes) { (x, y, z, t) =>
         valueAt(x, y, z) + 1000.0 * t.toDouble
       }
-    NeuroVec.fromRavel(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
+    SomeScalarSeries.unsafeFromRavel(data, spatial.addDim(nVolumes, Some(Axis.Time)), "plan-vec-fixture")
 
   private def denseField(
       grid: GridSpec
@@ -105,7 +105,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     ResamplingPlan.make(source, target, morphism, method).fold(err => fail(err.message), identity)
 
   test("identity plan matches existing nearest and linear resampling") {
-    val space = NeuroSpace(Vector(4, 4, 4))
+    val space = SampleSpaces(Vector(4, 4, 4))
     val volume = testVolume(space)
     val grid = GridSpec.fromSpace(space)
     val id = IdentityMorphism(sourceDomain)
@@ -122,8 +122,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertSameVolume(linear, linearExisting)
   }
 
-  test("identity plan matches existing nearest and linear NeuroVec resampling") {
-    val space = NeuroSpace(Vector(4, 4, 4))
+  test("identity plan matches existing nearest and linear SomeNeuroSeries resampling") {
+    val space = SampleSpaces(Vector(4, 4, 4))
     val vec = testVec(space, nVolumes = 2)
     val grid = GridSpec.fromSpace(space)
     val id = IdentityMorphism(sourceDomain)
@@ -141,7 +141,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("Resample plan helpers build and execute morphism-aware plans") {
-    val space = NeuroSpace(Vector(3, 2, 1))
+    val space = SampleSpaces(Vector(3, 2, 1))
     val grid = GridSpec.fromSpace(space)
     val id = IdentityMorphism(sourceDomain)
     val volume = testVolume(space)
@@ -164,7 +164,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("affine translation plan samples shifted source voxels") {
-    val sourceSpace = NeuroSpace(Vector(4, 2, 1))
+    val sourceSpace = SampleSpaces(Vector(4, 2, 1))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(4, 2, 1))
     val volume = testVolume(sourceSpace)
@@ -186,8 +186,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
     assertClose(resampled(0, 1, 0), valueAt(1, 1, 0))
   }
 
-  test("affine translation plan samples every NeuroVec volume") {
-    val sourceSpace = NeuroSpace(Vector(4, 1, 1))
+  test("affine translation plan samples every SomeNeuroSeries volume") {
+    val sourceSpace = SampleSpaces(Vector(4, 1, 1))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(4, 1, 1))
     val vec = testVec(sourceSpace, nVolumes = 2)
@@ -210,7 +210,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("dense displacement morphisms drive resampling plans") {
-    val sourceSpace = NeuroSpace(Vector(4, 1, 1))
+    val sourceSpace = SampleSpaces(Vector(4, 1, 1))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(4, 1, 1))
     val volume = testVolume(sourceSpace)
@@ -237,7 +237,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("affine scale plan delegates without coordinate materialization") {
-    val sourceSpace = NeuroSpace(Vector(5, 1, 1))
+    val sourceSpace = SampleSpaces(Vector(5, 1, 1))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(3, 1, 1))
     val volume = testVolume(sourceSpace)
@@ -254,7 +254,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("linear plan samples continuous source voxel coordinates") {
-    val sourceSpace = NeuroSpace(Vector(3, 3, 3))
+    val sourceSpace = SampleSpaces(Vector(3, 3, 3))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(1, 1, 1))
     val volume = testVolume(sourceSpace)
@@ -280,7 +280,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("outside value is explicit for out-of-bounds nearest and linear samples") {
-    val sourceSpace = NeuroSpace(Vector(2, 2, 2))
+    val sourceSpace = SampleSpaces(Vector(2, 2, 2))
     val sourceGrid = GridSpec.fromSpace(sourceSpace)
     val targetGrid = GridSpec.identity(Vector(1, 1, 1))
     val volume = testVolume(sourceSpace)
@@ -299,7 +299,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("cubic plans execute and match existing identity tricubic resampling") {
-    val sourceSpace = NeuroSpace(Vector(4, 4, 4))
+    val sourceSpace = SampleSpaces(Vector(4, 4, 4))
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume = testVolume(sourceSpace)
     val p = plan(grid, grid, IdentityMorphism(sourceDomain), Resample.Method.Cubic)
@@ -313,10 +313,10 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("resampling plans can apply Jacobian and square-root Jacobian modulation") {
-    val sourceSpace = NeuroSpace(Vector(1, 1, 1))
+    val sourceSpace = SampleSpaces(Vector(1, 1, 1))
     val grid = GridSpec.fromSpace(sourceSpace)
     val volume =
-      NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
+      SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](1, 2.0), sourceSpace, "constant")
     val morphism = affine(scale(2.0, 3.0, 1.0))
     val p = plan(grid, grid, morphism, Resample.Method.Nearest)
 
@@ -354,7 +354,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   test("plan rejects volumes whose source grid differs from the planned source") {
     val plannedSource = GridSpec.identity(Vector(2, 2, 2))
     val target = GridSpec.identity(Vector(2, 2, 2))
-    val volume = testVolume(NeuroSpace(Vector(3, 2, 2)))
+    val volume = testVolume(SampleSpaces(Vector(3, 2, 2)))
     val p = plan(plannedSource, target, IdentityMorphism(sourceDomain), Resample.Method.Nearest)
 
     val result = p(volume)

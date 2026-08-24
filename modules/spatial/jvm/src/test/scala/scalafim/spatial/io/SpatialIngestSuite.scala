@@ -1,6 +1,7 @@
 package scalafim.spatial.io
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.file.Path
@@ -21,7 +22,7 @@ class SpatialIngestSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   test("missing inverse quality is explicit and becomes a non-geometric inverse"):

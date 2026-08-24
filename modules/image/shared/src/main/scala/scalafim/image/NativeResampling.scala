@@ -13,19 +13,21 @@ import ravel.Shape
   * source value semantics and metadata, and owns one canonical Ravel array.
   */
 object NativeResampling:
-  def nearestLike[A, Sem, B](
+  def nearestLike[A, Sem, B, TargetSem](
       source: SomeNeuroVolume[A, Sem],
-      target: AnyNeuroVolume[B],
+      target: SomeNeuroVolume[B, TargetSem],
       fill: A
   )(using
       DType[A],
       ValueSemantics[A, Sem]
   ): Either[NativeImageError, SomeNeuroVolume[A, Sem]] =
-    val sourceSpace = NeuroSpace.fromCanonical(source.sampleSpace)
-    val targetSampleSpace = target.sampleSpace
-    val targetSpace = NeuroSpace.fromCanonical(targetSampleSpace)
-    val targetShape = target.grid.shape
-    val sourceShape = source.grid.shape
+    val sourceSampled = SomeNeuroVolume.sampled(source)
+    val targetSampled = SomeNeuroVolume.sampled(target)
+    val sourceSpace = SampleSpaces.fromCanonical(sourceSampled.sampleSpace)
+    val targetSampleSpace = targetSampled.sampleSpace
+    val targetSpace = SampleSpaces.fromCanonical(targetSampleSpace)
+    val targetShape = targetSampled.grid.shape
+    val sourceShape = sourceSampled.grid.shape
     val data =
       NDArray.build[A, Rank[3]](
         Shape(targetShape(0), targetShape(1), targetShape(2))
@@ -49,13 +51,13 @@ object NativeResampling:
             if x >= 0 && x < sourceShape(0) &&
                 y >= 0 && y < sourceShape(1) &&
                 z >= 0 && z < sourceShape(2)
-            then source.data(x, y, z)
+            then sourceSampled.data(x, y, z)
             else fill
           output.writeLinear(ordinal, value)
           ordinal += 1
 
     NeuroVolume
-      .fromRavel[A, Sem](targetSampleSpace, data, source.metadata)
+      .fromRavel[A, Sem](targetSampleSpace, data, sourceSampled.metadata)
       .left
       .map(NativeImageError.Image.apply)
       .map(SomeNeuroVolume.eraseSpace)

@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError}
 
 class AffineFusionSuite extends munit.FunSuite:
@@ -20,7 +21,7 @@ class AffineFusionSuite extends munit.FunSuite:
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
     val geometry =
-      value(SamplingGeometry.volume(NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4)))))
+      value(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def translation(x: Double): DMat =

@@ -53,7 +53,9 @@ object SelectedVolumeWindow:
         )
       )
     else
-      val actual = values.selection.get(centerPosition).get.ordinal
+      val position =
+        values.selection.positions.indexAtValidatedOrdinal(centerPosition)
+      val actual = values.selection(position).ordinal
       if actual != center.ordinal then
         Left(
           SelectedVolumeWindowError.CenterMismatch(

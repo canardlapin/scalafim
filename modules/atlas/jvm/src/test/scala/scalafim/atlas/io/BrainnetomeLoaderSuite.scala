@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
+import scalafim.image.spatialDims
 
 class BrainnetomeLoaderSuite extends munit.FunSuite:
 

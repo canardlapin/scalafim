@@ -695,7 +695,7 @@ kernel must not define “sample” as “coefficient” or bake in rank-four st
 
 `SampleDomain` carries finite identity, cardinality, ordering, and
 content-verifiable geometry or topology references. It does not contain
-`NeuroSpace`, mesh arrays, graph values, or coordinate-resolution algorithms.
+`SomeSampleSpace`, mesh arrays, graph values, or coordinate-resolution algorithms.
 Image and surface modules retain those concrete values. Dataset-domain adapters
 compare them with the references during attachment.
 

@@ -1,5 +1,7 @@
 package scalafim.dataset.zarr
 
+import scalafim.image.valueAtCanonicalOrdinal
+
 import java.nio.file.Files
 import scalafim.archive.zarr.{AcquisitionTiming, CanonicalChunkProfile, NeuroArchiveZarr, TimeUnits}
 import bids4s.io.BidsProjectLoader
@@ -50,7 +52,9 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     assertEquals(header.slope, 0.25)
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)
-    assertEquals(Nifti.readVec(exported).valueAtCanonicalOrdinal(23), 3.75)
+    val exportedSeries =
+      Nifti.readSeries(exported).fold(error => fail(error.message), _.image)
+    assertEquals(exportedSeries.valueAtCanonicalOrdinal(23), 3.75)
     BidsProjectLoader.loadStrict(fixture.exportRoot).fold(error => fail(error.message), _ => ())
 
   test("importer rejects unsupported scalar types before publishing"):

@@ -1,9 +1,11 @@
 package scalafim.dataset
 
+import scalafim.image.SampleSpaces
+
 import gale.linalg.{DMat as GaleDMat, DVec}
 import scalafim.archive.RunLabel
 import scalafim.archive.lna.{LnaPipeline, QuantParams}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -21,7 +23,7 @@ import scalafim.latent.{
 class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
 
   test("latent archive backend exposes reconstructed selections as FmriSeries") {
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
     val data =
       DMat.fromRows(
         Vector(
@@ -64,7 +66,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("latent archive backend reads transport archives through a typed latent plan") {
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
     val decoder =
       GaleTestData.csrFromTriplets(
         rows = 4,
@@ -116,7 +118,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("latent archive backend reads BOLDZip archives through a typed latent plan") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val spatialBasis =
       BoldZipSpatialBasis(
         sampleCount = 3,
@@ -172,7 +174,7 @@ class LatentArchiveDatasetBackendSuite extends munit.FunSuite:
   }
 
   test("latent archive backend rejects a missing internal run during construction") {
-    val space = NeuroSpace(Vector(1, 1, 1))
+    val space = SampleSpaces(Vector(1, 1, 1))
     val archive =
       LnaPipeline
         .quantArchive(DMat.fromRows(Vector(Vector(1.0))), space, params = QuantParams(bits = 16))

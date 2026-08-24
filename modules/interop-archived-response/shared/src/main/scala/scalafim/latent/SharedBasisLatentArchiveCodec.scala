@@ -13,7 +13,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat as ArchiveDMat, Mask, PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{DMat as ArchiveDMat, Mask, PrimitiveBuffers, SomeSampleSpace}
+import scalafim.image.spatialDims
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -40,12 +41,12 @@ final class SharedBasisLatentArchive private (
 
   def materialize(
       artifact: SharedBasisArtifact,
-      space: Option[NeuroSpace] = None
+      space: Option[SomeSampleSpace] = None
   ): Either[LatentError, ExplicitLatentResponse] =
     SharedBasisLatentArchive.materialize(this, artifact, space)
 
   def sampleMask(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       artifact: SharedBasisArtifact
   ): Either[LatentError, Mask.MaskVol] =
     SharedBasisLatentArchive.sampleMask(space, artifact)
@@ -75,7 +76,7 @@ object SharedBasisLatentArchive:
   def materialize(
       archive: SharedBasisLatentArchive,
       artifact: SharedBasisArtifact,
-      space: Option[NeuroSpace] = None
+      space: Option[SomeSampleSpace] = None
   ): Either[LatentError, ExplicitLatentResponse] =
     for
       _ <- validateArtifact(archive, artifact, space)
@@ -91,7 +92,7 @@ object SharedBasisLatentArchive:
     yield response
 
   def sampleMask(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       artifact: SharedBasisArtifact
   ): Either[LatentError, Mask.MaskVol] =
     if artifact.mask.values.length != space.spatialDims.product then
@@ -107,7 +108,7 @@ object SharedBasisLatentArchive:
   private def validateArtifact(
       archive: SharedBasisLatentArchive,
       artifact: SharedBasisArtifact,
-      space: Option[NeuroSpace]
+      space: Option[SomeSampleSpace]
   ): Either[LatentError, Unit] =
     if archive.coefficients.cols != artifact.nAtoms then
       Left(LatentError.DimensionMismatch("shared basis atoms", artifact.nAtoms, archive.coefficients.cols))
@@ -166,7 +167,7 @@ object SharedBasisLatentArchive:
 object SharedBasisLatentArchiveCodec:
   def toArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
       locator: Option[SharedBasisLocator] = None,

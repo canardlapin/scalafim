@@ -203,8 +203,9 @@ object ParcelSeries:
       .left
       .map(ParcelSeriesError.WrongSupport.apply)
       .flatMap: activeSupport =>
+        val sampled = SomeNeuroSeries.sampled(series)
         parcellation.domain
-          .validateGrid(series.grid)
+          .validateGrid(sampled.grid)
           .left
           .map(ParcelSeriesError.WrongGrid.apply)
           .flatMap: _ =>
@@ -221,8 +222,8 @@ object ParcelSeries:
             if firstEmpty >= 0 && rejectsEmpty then
               Left(ParcelSeriesError.EmptyParcel(firstEmpty))
             else
-              given DType[A] = series.dtype
-              val timeAxis = series.nonSpatialAxes.values.head
+              given DType[A] = sampled.dtype
+              val timeAxis = sampled.nonSpatialAxes.values.head
               val nTime = timeAxis.extent
               val spatialShape = parcellation.domain.grid.shape
               val plane = spatialShape(1) * spatialShape(2)
@@ -250,7 +251,7 @@ object ParcelSeries:
                             val z = withinPlane % spatialShape(2)
                             sum = values.plus(
                               sum,
-                              series.data(x, y, z, time)
+                              sampled.data(x, y, z, time)
                             )
                           values.div(
                             sum,
@@ -266,7 +267,7 @@ object ParcelSeries:
                 parcellation,
                 timeAxis,
                 data,
-                series.metadata
+                sampled.metadata
               )
 
   def reduceMean[F <: Frame[D3], S, P, M, A, Sem](
@@ -288,8 +289,7 @@ object ParcelSeries:
       DType[C],
       ValueSemantics[C, OutSem]
   ): Either[ParcelSeriesError, ParcelSeries[F, S, P, C, OutSem]] =
-    if !(left.parcellation.asInstanceOf[AnyRef] eq
-        right.parcellation.asInstanceOf[AnyRef])
+    if !(left.parcellation eq right.parcellation)
     then Left(ParcelSeriesError.ParcellationMismatch)
     else if left.timeAxis.record != right.timeAxis.record then
       Left(

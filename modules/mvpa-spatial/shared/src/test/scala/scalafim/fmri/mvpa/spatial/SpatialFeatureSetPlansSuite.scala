@@ -34,8 +34,8 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
           row += 1
         Right(RoiAnalysisResult(MetricVector("mean" -> (sum / (roi.value.rows * roi.value.cols)))))
 
-  private def volumeSpace: NeuroSpace =
-    NeuroSpace(
+  private def volumeSpace: SomeSampleSpace =
+    SampleSpaces(
       dims = Vector(3, 2, 1),
       spacing = Some(Vector(1.0, 1.0, 1.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))
@@ -119,23 +119,23 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
   test("exact volume neighborhoods become searchlight plans in domain order") {
     val space =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
     )
     val volumeSpace = VolumeSpace(space)
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          volumeSpace,
+          volumeSpace.sampleSpace.grid,
           "MVPA window test voxels",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val centers =
       locus4s.Region.fromOrdinals(domain.space, Vector(4)).toOption.get
     val neighborhoods =
@@ -174,7 +174,7 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
   test("searchlight mask plans run through the MVPA engine") {
     val space =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
@@ -264,23 +264,23 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
 
   test("exact searchlight construction rejects a missing center") {
     val space =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(3, 3, 1),
         spacing = Some(Vector(1.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
       )
     val volumeSpace = VolumeSpace(space)
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          volumeSpace,
+          volumeSpace.sampleSpace.grid,
           "MVPA invalid window test voxels",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val centers =
       locus4s.Region.fromOrdinals(domain.space, Vector(4)).toOption.get
     val rows = Vector.tabulate(domain.space.size): ordinal =>

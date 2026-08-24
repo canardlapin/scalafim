@@ -1,7 +1,8 @@
 package scalafim.spatial.io
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{DMat, DenseVectorField, GridSpec, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, DenseVectorField, GridSpec, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
 import scalafim.spatial.*
@@ -19,7 +20,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
   private def linearValue[A](result: Either[LinearMapError, A]): A =
     result.fold(error => fail(error.message), identity)
 
-  private def domain(name: String, space: NeuroSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
+  private def domain(name: String, space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
@@ -53,7 +54,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
       finally children.close()
       Files.deleteIfExists(directory)
 
-  private def writeDenseField(path: Path, space: NeuroSpace, components: Vector[Vector[Double]]): Unit =
+  private def writeDenseField(path: Path, space: SomeSampleSpace, components: Vector[Vector[Double]]): Unit =
     require(components.length == 3)
     require(components.forall(_.length == space.spatialDims.product))
     val grid = GridSpec.fromSpace(space)
@@ -116,7 +117,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   test("an ANTs LPS displacement fixture becomes an executable absolute RAS pullback"):
     withDirectory { directory =>
-      val space = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
       val source = domain("source", space)
       val target = domain("target", space)
       val path = directory.resolve("ants-Warp.nii")
@@ -139,7 +140,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   test("dense inverse claims require an executable inverse asset and retain inverse quality"):
     withDirectory { directory =>
-      val space = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
       val source = domain("source", space)
       val target = domain("target", space)
       val forwardPath = directory.resolve("ants-Warp.nii")
@@ -184,7 +185,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
         case other => fail(s"expected malformed HDF5 error, got $other")
 
       val dense = directory.resolve("ants-Warp.nii")
-      writeDenseField(dense, NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4))), Vector.fill(3)(Vector(0.0, 0.0)))
+      writeDenseField(dense, SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4))), Vector.fill(3)(Vector(0.0, 0.0)))
       val forwardDense =
         TransformLoadOptions(
           TransformDirection.ForwardSourceToTarget,

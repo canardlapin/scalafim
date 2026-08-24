@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.locus.{Region, Relation, Selection, TotalMap, mapping}
 import scalafim.surface.{
   Hemisphere,
@@ -24,7 +25,7 @@ class DomainLocusSuite extends munit.FunSuite:
     val geometry =
       value(
         SamplingGeometry.volume(
-          NeuroSpace(Vector(size, 1, 1), trans = Some(DMat.eye(4)))
+          SampleSpaces(Vector(size, 1, 1), trans = Some(DMat.eye(4)))
         )
       )
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))

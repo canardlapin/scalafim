@@ -14,7 +14,7 @@ records, a portable baseline rigid estimator with optional pyramid levels,
 typed information-content stencil sampling, low-motion pose shrink, temporal
 regularization plus frame-mean nuisance residual removal, deterministic
 pose-spline primitives, and one-pass rigid-motion application over
-`NeuroVec[Double]`, including packet-aware linear application for validated
+`AnyNeuroSeries[Double]`, including packet-aware linear application for validated
 slice/packet timing.
 `MotionCorrectionResult` bundles an estimate, optional corrected run, QC, and
 the controls that produced them. JVM builds support deterministic ordered

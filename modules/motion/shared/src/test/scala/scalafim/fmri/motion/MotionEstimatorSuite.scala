@@ -1,13 +1,13 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
+import scalafim.image.*
 
 class MotionEstimatorSuite extends munit.FunSuite:
 
   private val dims = VolreggerFixtures.estimatorDims
   private val nxyz = dims.product
-  private val space = NeuroSpace(dims)
+  private val space = SampleSpaces(dims)
 
   private def baseValueAt(x: Double, y: Double, z: Double): Double =
     val dx = x - 3.0
@@ -67,7 +67,7 @@ class MotionEstimatorSuite extends munit.FunSuite:
       fixed(lin) + 35.0 + 4.0 * voxel.x.toDouble - 3.0 * voxel.y.toDouble + 2.0 * voxel.z.toDouble
     }
 
-  private def runFromFrames(frames: Vector[Array[Double]]): NeuroVec[Double] =
+  private def runFromFrames(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
     val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
     var i = 0
     while i < nxyz do
@@ -76,9 +76,9 @@ class MotionEstimatorSuite extends munit.FunSuite:
         out(i * frames.length + t) = frames(t)(i)
         t += 1
       i += 1
-    NeuroVec.copyFromCanonicalArray(out, space.addDim(frames.length, Some(Axis.Time)), "estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(frames.length, Some(Axis.Time)), "estimate-fixture")
 
-  private def interiorMask: NeuroVol[Boolean] =
+  private def interiorMask: SomeMaskVolume =
     val data =
       PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
         val voxel = space.indexToVoxel3D(lin)
@@ -86,10 +86,10 @@ class MotionEstimatorSuite extends munit.FunSuite:
           voxel.y >= 1 && voxel.y < dims(1) - 1 &&
           voxel.z >= 1 && voxel.z < dims(2) - 1
       }
-    NeuroVol.copyFromCanonicalArray(data, space, "interior")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space, "interior")
 
-  private def emptyMask: NeuroVol[Boolean] =
-    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
+  private def emptyMask: SomeMaskVolume =
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
 
   private def plan: MotionPlan =
     MotionPlan(

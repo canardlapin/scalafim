@@ -1,6 +1,8 @@
 package scalafim.latent
 
-import scalafim.image.NeuroSpace
+import scalafim.image.SampleSpaces
+
+import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 class BoldZipEncoderSuite extends munit.FunSuite:
@@ -35,7 +37,7 @@ class BoldZipEncoderSuite extends munit.FunSuite:
 
     val archive =
       BoldZipLatentArchiveCodec
-        .toArchive(payload, NeuroSpace(Vector(data.cols, 1, 1)))
+        .toArchive(payload, SampleSpaces(Vector(data.cols, 1, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
       LatentArchiveRegistry.standard

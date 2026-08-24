@@ -1,11 +1,11 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{DMat, Mask, SomeSampleSpace}
 
 final case class InMemoryDatasetBackend(
     id: DatasetId,
     data: DMat,
-    space: NeuroSpace,
+    space: SomeSampleSpace,
     metadata: DatasetMetadata = DatasetMetadata.Empty
 ) extends DatasetBackend:
   override val shape: DatasetShape = DatasetShape.unsafe(space, data.rows)

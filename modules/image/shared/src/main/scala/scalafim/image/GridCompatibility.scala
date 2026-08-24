@@ -1,7 +1,7 @@
 package scalafim.image
 
 enum GridMismatch:
-  case Image(expected: NeuroSpace, actual: NeuroSpace)
+  case Image(expected: SomeSampleSpace, actual: SomeSampleSpace)
   case Volume(expected: VolumeSpace, actual: VolumeSpace)
 
   def message: String =
@@ -9,34 +9,34 @@ enum GridMismatch:
       case Image(expected, actual) =>
         s"image grid mismatch: expected $expected, got $actual"
       case Volume(expected, actual) =>
-        s"volume grid mismatch: expected ${expected.toNeuroSpace}, got ${actual.toNeuroSpace}"
+        s"volume grid mismatch: expected ${expected.toSampleSpace}, got ${actual.toSampleSpace}"
 
 /** Explicit evidence that two independently owned grids have been checked as
   * coordinate-congruent. This is the only admission path for separately
   * decoded files whose live grid identities deliberately differ.
   */
 final class CertifiedGridCongruence private[image] (
-    private[scalafim] val expected: NeuroSpace,
-    private[scalafim] val actual: NeuroSpace,
+    private[scalafim] val expected: SomeSampleSpace,
+    private[scalafim] val actual: SomeSampleSpace,
     val tolerance: Double,
     val includesNonSpatialAxes: Boolean
 )
 
 object GridCompatibility:
-  def exact(expected: NeuroSpace, actual: NeuroSpace): Either[GridMismatch, Unit] =
+  def exact(expected: SomeSampleSpace, actual: SomeSampleSpace): Either[GridMismatch, Unit] =
     if sameCanonicalSpace(expected, actual, includeNonSpatial = true) then Right(())
     else Left(GridMismatch.Image(expected, actual))
 
   def volume(expected: VolumeSpace, actual: VolumeSpace): Either[GridMismatch, Unit] =
     if sameCanonicalSpace(
-        expected.toNeuroSpace,
-        actual.toNeuroSpace,
+        expected.toSampleSpace,
+        actual.toSampleSpace,
         includeNonSpatial = false
       )
     then Right(())
     else Left(GridMismatch.Volume(expected, actual))
 
-  def spatial(expected: NeuroSpace, actual: NeuroSpace): Either[GridMismatch, Unit] =
+  def spatial(expected: SomeSampleSpace, actual: SomeSampleSpace): Either[GridMismatch, Unit] =
     for
       expectedVolume <- VolumeSpace
         .fromSpatialPart(expected)
@@ -50,8 +50,8 @@ object GridCompatibility:
     yield ()
 
   def certifyExactCongruence(
-      expected: NeuroSpace,
-      actual: NeuroSpace,
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace,
       tolerance: Double
   ): Either[GridMismatch, CertifiedGridCongruence] =
     certifyCongruence(
@@ -62,8 +62,8 @@ object GridCompatibility:
     )
 
   def certifySpatialCongruence(
-      expected: NeuroSpace,
-      actual: NeuroSpace,
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace,
       tolerance: Double
   ): Either[GridMismatch, CertifiedGridCongruence] =
     certifyCongruence(
@@ -75,8 +75,8 @@ object GridCompatibility:
 
   def acceptCertifiedExact(
       certificate: CertifiedGridCongruence,
-      expected: NeuroSpace,
-      actual: NeuroSpace
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace
   ): Either[GridMismatch, Unit] =
     if certificate.includesNonSpatialAxes &&
         sameCanonicalSpace(certificate.expected, expected, includeNonSpatial = true) &&
@@ -86,30 +86,30 @@ object GridCompatibility:
 
   def acceptCertifiedSpatial(
       certificate: CertifiedGridCongruence,
-      expected: NeuroSpace,
-      actual: NeuroSpace
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace
   ): Either[GridMismatch, Unit] =
     if sameCanonicalSpace(certificate.expected, expected, includeNonSpatial = true) &&
         sameCanonicalSpace(certificate.actual, actual, includeNonSpatial = true)
     then Right(())
     else Left(GridMismatch.Image(expected, actual))
 
-  private[scalafim] def requireExact(expected: NeuroSpace, actual: NeuroSpace): Unit =
+  private[scalafim] def requireExact(expected: SomeSampleSpace, actual: SomeSampleSpace): Unit =
     exact(expected, actual).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private[scalafim] def requireVolume(expected: VolumeSpace, actual: VolumeSpace): Unit =
     volume(expected, actual).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  private[scalafim] def requireSpatial(expected: NeuroSpace, actual: NeuroSpace): Unit =
+  private[scalafim] def requireSpatial(expected: SomeSampleSpace, actual: SomeSampleSpace): Unit =
     spatial(expected, actual).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def sameCanonicalSpace(
-      expected: NeuroSpace,
-      actual: NeuroSpace,
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace,
       includeNonSpatial: Boolean
   ): Boolean =
-    val left = NeuroSpace.canonical(expected)
-    val right = NeuroSpace.canonical(actual)
+    val left = SampleSpaces.canonical(expected)
+    val right = SampleSpaces.canonical(actual)
     val leftFrame = left.grid.frame
     val rightFrame = right.grid.frame
     val alignedFrames =
@@ -125,13 +125,13 @@ object GridCompatibility:
         left.nonSpatialAxes.records == right.nonSpatialAxes.records)
 
   private def certifyCongruence(
-      expected: NeuroSpace,
-      actual: NeuroSpace,
+      expected: SomeSampleSpace,
+      actual: SomeSampleSpace,
       tolerance: Double,
       includeNonSpatial: Boolean
   ): Either[GridMismatch, CertifiedGridCongruence] =
-    val left = NeuroSpace.canonical(expected)
-    val right = NeuroSpace.canonical(actual)
+    val left = SampleSpaces.canonical(expected)
+    val right = SampleSpaces.canonical(actual)
     val finiteTolerance = tolerance.isFinite && tolerance >= 0.0
     val sameFrameContract =
       left.grid.frame.spatialRank == right.grid.frame.spatialRank &&

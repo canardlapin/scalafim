@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,7 +26,7 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 import scalafim.pipeline.*
 
@@ -156,7 +158,7 @@ class PipelineFirstLevelWorkflowScenarioSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(
         DatasetId("scenario-pipeline-first-level"),
         ImageDMat.fromRows(fixture.responseRows),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),
       events = DatasetEvents(

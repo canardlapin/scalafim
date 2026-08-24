@@ -5,7 +5,8 @@ import gale.linalg.{DMat as GaleDMat, DVec}
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
+import scalafim.image.{DMat as ImageDMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
+import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
 
@@ -617,8 +618,8 @@ object TransformAssetLoader:
   private def normalizeDense(
     native: RavelArray[Double, Rank[4]],
     grid: GridSpec,
-    source: NeuroSpace,
-    target: NeuroSpace,
+    source: SomeSampleSpace,
+    target: SomeSampleSpace,
     options: TransformLoadOptions
   ): RavelArray[Double, Rank[4]] =
     val count = grid.nVoxels
@@ -751,8 +752,8 @@ object TransformAssetLoader:
     path: Path,
     native: GaleDMat,
     options: TransformLoadOptions,
-    source: NeuroSpace,
-    target: NeuroSpace
+    source: SomeSampleSpace,
+    target: SomeSampleSpace
   ): Either[SpatialIoError, GaleDMat] =
     options.convention match
       case TransformCoordinateConvention.RasMillimeters =>
@@ -786,7 +787,7 @@ object TransformAssetLoader:
       case TransformDirection.PullbackTargetToSource => Right(matrix)
       case TransformDirection.ForwardSourceToTarget => inverse(path, matrix)
 
-  private def fslVoxelToScaled(space: NeuroSpace): GaleDMat =
+  private def fslVoxelToScaled(space: SomeSampleSpace): GaleDMat =
     val affine = toGale(space.trans)
     val sx = columnNorm(affine, 0)
     val sy = columnNorm(affine, 1)
@@ -849,7 +850,7 @@ object TransformAssetLoader:
     else if !homogeneous then Left(SpatialIoError.MalformedTransformAsset(path, "affine bottom row must be [0, 0, 0, 1]"))
     else inverse(path, matrix).map(_ => ())
 
-  private def sameGrid(actual: NeuroSpace, expected: NeuroSpace): Boolean =
+  private def sameGrid(actual: SomeSampleSpace, expected: SomeSampleSpace): Boolean =
     actual.spatialDims == expected.spatialDims && matricesClose(actual.trans, expected.trans, 1e-5)
 
   private def matricesClose(left: ImageDMat, right: ImageDMat, tolerance: Double): Boolean =
@@ -864,7 +865,7 @@ object TransformAssetLoader:
         row += 1
       true
 
-  private def volumeSpace(domain: Domain): NeuroSpace =
+  private def volumeSpace(domain: Domain): SomeSampleSpace =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => space
       case _ => throw new IllegalArgumentException(s"domain ${domain.id.value} is not volumetric")

@@ -140,8 +140,8 @@ object SpatialCoordinates:
   def gridCoords(grid: GridSpec): Vector[Vector[Double]] =
     grid.worldCoords
 
-  @targetName("gridCoordsFromNeuroSpace")
-  def gridCoords(space: NeuroSpace): Vector[Vector[Double]] =
+  @targetName("gridCoordsFromSampleSpace")
+  def gridCoords(space: SomeSampleSpace): Vector[Vector[Double]] =
     GridSpec.fromSpace(space).worldCoords
 
   private[image] def validatePoint(point: Vector[Double], label: String): Unit =
@@ -168,7 +168,7 @@ object GridSpec:
       SpatialDims.unsafeFromVector(gridSpec.grid.shape, "GridSpec dims")
 
     def affine: DMat =
-      gridSpec.toNeuroSpace.trans
+      gridSpec.toSampleSpace.trans
 
     def affine3D: Either[Affine3DError, Affine3D] =
       Affine3D.make(affine)
@@ -290,8 +290,8 @@ object GridSpec:
         out.result()
       }
 
-    def toNeuroSpace: NeuroSpace =
-      NeuroSpace.fromCanonical(gridSpec)
+    def toSampleSpace: SomeSampleSpace =
+      SampleSpaces.fromCanonical(gridSpec)
 
   def apply(dims: Vector[Int], affine: DMat): GridSpec =
     fromVector(dims, affine)
@@ -300,11 +300,11 @@ object GridSpec:
   def fromVector(dims: Vector[Int], affine: DMat): Either[GeometryError, GridSpec] =
     for
       shape <- SpatialDims.fromVector(dims, "GridSpec dims")
-      space <- NeuroSpace
+      space <- SampleSpaces
         .make(shape.toVector, trans = Some(affine))
         .left
         .map(error => GeometryError.InvalidGridGeometry(error.message))
-    yield NeuroSpace.canonical(space)
+    yield SampleSpaces.canonical(space)
 
   def fromSpatialDims(dims: SpatialDims, affine: DMat): GridSpec =
     fromVector(dims.toVector, affine)
@@ -316,9 +316,9 @@ object GridSpec:
   def identity(dims: SpatialDims): GridSpec =
     fromSpatialDims(dims, DMat.eye(4))
 
-  def fromSpace(space: NeuroSpace): GridSpec =
+  def fromSpace(space: SomeSampleSpace): GridSpec =
     require(space.spatialDims.length == 3, "GridSpec requires 3D geometry")
-    NeuroSpace.canonical(space.spatialSpace)
+    SampleSpaces.canonical(space.spatialSpace)
 
   def fromVolumeSpace(space: VolumeSpace): GridSpec =
-    NeuroSpace.canonical(space.toNeuroSpace)
+    SampleSpaces.canonical(space.toSampleSpace)

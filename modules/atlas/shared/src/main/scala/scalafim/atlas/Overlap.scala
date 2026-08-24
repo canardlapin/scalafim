@@ -105,7 +105,7 @@ object AtlasOverlap:
     val both = scala.collection.mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
 
     var i = 0
-    while i < vol1.data.size do
+    while i < vol1.values.size do
       val voxel = atlas1.space.indexToVoxel3D(i)
       val a = vol1(voxel)
       val b = vol2(voxel)

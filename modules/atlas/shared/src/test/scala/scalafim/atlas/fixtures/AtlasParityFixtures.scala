@@ -174,8 +174,8 @@ object AtlasParityFixtures:
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 303)
     out
 
-  private lazy val space: NeuroSpace =
-    NeuroSpace(
+  private lazy val space: SomeSampleSpace =
+    SampleSpaces(
       dims = dims,
       spacing = Some(Vector(1.0, 1.0, 1.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))

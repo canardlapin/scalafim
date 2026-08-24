@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
 
 class DatasetMultiRunFixtureSuite extends munit.FunSuite:
 
@@ -90,7 +90,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
                 Vector(7.0, 8.0)
               )
             ),
-            space = NeuroSpace(Vector(2, 1, 1))
+            space = SampleSpaces(Vector(2, 1, 1))
           ),
           samplingFrame = samplingFrame,
           runIds = timeAxis.runIds,
@@ -176,7 +176,7 @@ class DatasetMultiRunFixtureSuite extends munit.FunSuite:
               Vector(value, value + 1.0)
             }
           ),
-          space = NeuroSpace(Vector(2, 1, 1))
+          space = SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = samplingFrame,
         events = DatasetEvents(

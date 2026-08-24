@@ -1,5 +1,7 @@
 package scalafim.dataset.io
 
+import scalafim.image.SampleSpaces
+
 import gale.linalg.{DMat as GaleDMat, DVec}
 import scalafim.archive.RunLabel
 import scalafim.archive.io.{JhdfSharedBasisStore, LnaHdf5Store}
@@ -14,7 +16,7 @@ import scalafim.dataset.{
   VoxelSelection
 }
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, GridCompatibility, Mask, NeuroSpace}
+import scalafim.image.{DMat, GridCompatibility, Mask, SomeSampleSpace}
 import scalafim.latent.{
   BoldZipCoarseBasis,
   BoldZipDetailBasis,
@@ -36,7 +38,7 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 class LnaDatasetSuite extends munit.FunSuite:
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
   private val data =
     DMat.fromRows(
       Vector(
@@ -394,7 +396,7 @@ class LnaDatasetSuite extends munit.FunSuite:
 
   test("LnaDataset reads BOLDZip latent archives as selection-aware latent backends") {
     val root = Files.createTempDirectory("scalafim-lna-dataset-boldzip-latent-")
-    val boldZipSpace = NeuroSpace(Vector(3, 1, 1))
+    val boldZipSpace = SampleSpaces(Vector(3, 1, 1))
     try
       Files.writeString(root.resolve("dataset_description.json"), """{"Name":"BOLDZip Latent LNA Derivative"}""")
       val spatialBasis =

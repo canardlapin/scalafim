@@ -10,7 +10,8 @@ import scalafim.dataset.{
   TimepointSelection,
   VoxelSelection
 }
-import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 import scalafim.response.*
 
@@ -254,8 +255,10 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         3.0, 7.0, 11.0
       )
     )
-    val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, space, "bold"))
+    val space = SampleSpaces(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
+      .fold(error => fail(error.message), _ => path)
 
   private def gzip(source: Path, target: Path): Path =
     val input = Files.newInputStream(source)

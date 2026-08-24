@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{
@@ -26,7 +28,7 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 
 class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
@@ -137,7 +139,7 @@ class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-censored-multirun-concat"),
             ImageDMat.fromRows(responseRows),
-            NeuroSpace(Vector(2, 1, 1))
+            SampleSpaces(Vector(2, 1, 1))
           ),
           samplingFrame = samplingFrame,
           events = DatasetEvents(

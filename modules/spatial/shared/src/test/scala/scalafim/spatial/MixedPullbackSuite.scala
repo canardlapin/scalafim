@@ -1,13 +1,14 @@
 package scalafim.spatial
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
+import scalafim.image.{SampleSpaces, DMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.{CsrMatrix, DoubleMatrix}
 import scalafim.surface.*
 
 class MixedPullbackSuite extends munit.FunSuite:
 
-  private val volumeSpace = NeuroSpace(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
+  private val volumeSpace = SampleSpaces(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)

@@ -1,6 +1,16 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, NeuroVol, SpatialDims, SpatialPoint}
+import scalafim.image.{
+  Affine,
+  GridSpec,
+  Indexing,
+  SomeMaskVolume,
+  SomeSampleSpace,
+  SpatialDims,
+  SpatialPoint
+}
+import scalafim.image.SampleSpaces.*
+import scalafim.image.SomeNeuroVolume.*
 import scalafim.linalg.{CsrMatrix, LinearMapError, SparseTriplets}
 import scalafim.surface.{SurfaceGeometry, SurfaceGeometryPair, SurfaceRoi, SurfaceSamplingPath, VertexId, VolumeSurfaceSamplingPlan}
 
@@ -180,7 +190,7 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def rowWeights(
     sourceGrid: GridSpec,
-    sourceMask: Option[NeuroVol[Boolean]],
+    sourceMask: Option[SomeMaskVolume],
     targetMask: Option[SurfaceRoi[Boolean]],
     surfaces: SurfaceGeometryPair,
     path: SurfaceSamplingPath,
@@ -218,7 +228,7 @@ object VolumeToSurfaceOperatorCompiler:
 
   private[spatial] def sourcePointWeights(
     sourceGrid: GridSpec,
-    sourceMask: Option[NeuroVol[Boolean]],
+    sourceMask: Option[SomeMaskVolume],
     point: SpatialPoint,
     sampling: SamplingPolicy
   ): SurfacePointWeights =
@@ -234,7 +244,7 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def nearestWeights(
     sourceDims: SpatialDims,
-    sourceMask: Option[NeuroVol[Boolean]],
+    sourceMask: Option[SomeMaskVolume],
     voxel: SpatialPoint
   ): SurfacePointWeights =
     val x = math.round(voxel.x).toInt
@@ -248,7 +258,7 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def trilinearWeights(
     sourceDims: SpatialDims,
-    sourceMask: Option[NeuroVol[Boolean]],
+    sourceMask: Option[SomeMaskVolume],
     voxel: SpatialPoint
   ): SurfacePointWeights =
     val x0 = math.floor(voxel.x).toInt
@@ -281,7 +291,7 @@ object VolumeToSurfaceOperatorCompiler:
 
   private def addTrilinearCorner(
     dims: SpatialDims,
-    mask: Option[NeuroVol[Boolean]],
+    mask: Option[SomeMaskVolume],
     x: Int,
     y: Int,
     z: Int,
@@ -368,7 +378,7 @@ object VolumeToSurfaceOperatorCompiler:
   private def linearError(error: LinearMapError): SpatialError =
     SpatialError.OperatorAssemblyFailed(error.message)
 
-private final case class VolumeSource(space: NeuroSpace, mask: Option[NeuroVol[Boolean]])
+private final case class VolumeSource(space: SomeSampleSpace, mask: Option[SomeMaskVolume])
 
 private final case class SurfaceTarget(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
 

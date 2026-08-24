@@ -10,14 +10,14 @@ import locus4s.Selection
 import ravel.NDArray
 import spire.std.double.given
 import Ops.*
-import VolumeDomain.*
+import GridDomainOps.*
 
 class NativeImageAllocationSuite extends munit.FunSuite:
   private var retained: AnyRef = null
 
   test("representative native kernels retain one Ravel value destination"):
     val edge = 40
-    val volumeSpace = VolumeSpace(NeuroSpace(Vector(edge, edge, edge)))
+    val volumeSpace = VolumeSpace(SampleSpaces(Vector(edge, edge, edge)))
     val data =
       NDArray.tabulate[Double](edge, edge, edge): (x, y, z) =>
         ((x * 17 + y * 5 + z) % 101).toDouble
@@ -25,8 +25,7 @@ class NativeImageAllocationSuite extends munit.FunSuite:
       NeuroVolume
         .continuous(volumeSpace.sampleSpace, data)
         .fold(error => fail(error.message), identity)
-    val volume =
-      NeuroVol.fromPacked(AnyNeuroVolume.eraseSemantics(nativeVolume))
+    val volume: SomeScalarVolume[Double] = nativeVolume
     val other = volume.mapValues(_ * 0.25)
 
     val seriesData =
@@ -34,11 +33,11 @@ class NativeImageAllocationSuite extends munit.FunSuite:
         (x, y, z, time) =>
           ((x * 11 + y * 3 + z + time) % 97).toDouble
     val seriesSpace =
-      NeuroSpace(Vector(edge, edge, edge / 2, 5))
+      SampleSpaces(Vector(edge, edge, edge / 2, 5))
     val series =
-      NeuroVec.fromRavel(seriesData, seriesSpace, "allocation-series")
+      SomeScalarSeries.unsafeFromRavel(seriesData, seriesSpace, "allocation-series")
 
-    val grid = GridSpec.fromSpace(volumeSpace.toNeuroSpace)
+    val grid = GridSpec.fromSpace(volumeSpace.toSampleSpace)
     val resampling =
       ResamplingPlan
         .make(
@@ -50,9 +49,9 @@ class NativeImageAllocationSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
 
     val registered =
-      VolumeDomain
+      GridDomain
         .register(
-          volumeSpace,
+          volumeSpace.sampleSpace.grid,
           "native image allocation voxels",
           DomainRegistry.empty
         )

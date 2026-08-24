@@ -99,7 +99,7 @@ enum SpaceRef:
   case Latent(dim: Int, basisName: Option[String], support: Option[DomainId])
 
 enum SamplingGeometry:
-  case Volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]])
+  case Volume(space: SomeSampleSpace, mask: Option[NeuroVol[Boolean]])
   case Surface(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
   case Hybrid(parts: Vector[DomainPart])
 
@@ -281,7 +281,7 @@ blocks.
 2. Add `modules/spatial` with `DomainId`, `SpaceRef`, `SamplingGeometry`,
    `Domain`, `Morphism`, `SpatialGraph`, and route-policy tests.
 3. Implement identity and affine morphisms over volume domains.
-4. Compile volume-to-volume trilinear operators on toy `NeuroSpace` fixtures.
+4. Compile volume-to-volume trilinear operators on toy `SomeSampleSpace` fixtures.
 5. Add functor and adjoint tests:
    - identity compiles to identity;
    - direct affine path matches composed affine path;

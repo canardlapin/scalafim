@@ -140,9 +140,9 @@ class SpatialCoordinatesSuite extends munit.FunSuite:
     assert(GridSpec.fromVector(Vector(2, 2), affine).isLeft, clue = "grid dims should be exactly 3D")
   }
 
-  test("GridSpec bridges to NeuroSpace without changing affine coordinates") {
+  test("GridSpec bridges to SomeSampleSpace without changing affine coordinates") {
     val grid = GridSpec(Vector(3, 4, 5), affine)
-    val space = grid.toNeuroSpace
+    val space = grid.toSampleSpace
     val roundtrip = GridSpec.fromSpace(space)
 
     assertEquals(space.spatialDims, grid.dims, clue = "")

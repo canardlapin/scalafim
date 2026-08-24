@@ -133,15 +133,25 @@ object RegionGraph:
       )
     // Composition is total when the shared boundary type matches, which it
     // does here by construction: parcel -> voxel -> voxel -> parcel.
+    val assignmentRelation =
+      realization.parcelAssignment.toRelation.fold(
+        error =>
+          throw new IllegalStateException(
+            s"validated parcel assignment could not form a relation: ${error.message}"
+          ),
+        identity
+      )
     val projected =
-      realization.parcelAssignment.toRelation.toOption.get.converse
+      assignmentRelation.converse
         .andThen(voxelRelation)
-        .andThen(realization.parcelAssignment.toRelation.toOption.get)
+        .andThen(assignmentRelation)
     val withoutSelf =
       val rows =
         Iterator.tabulate(realization.parcelDomain.size): source =>
           projected
-            .row(realization.parcelDomain.indexOption(source).get)
+            .row(
+              realization.parcelDomain.indexAtValidatedOrdinal(source)
+            )
             .ordinalsInDomainOrder
             .filter(_ != source)
             .iterator
@@ -151,8 +161,13 @@ object RegionGraph:
           realization.parcelDomain,
           rows
         )
-        .toOption
-        .get
+        .fold(
+          error =>
+            throw new IllegalStateException(
+              s"validated parcel adjacency could not form a relation: ${error.message}"
+            ),
+          identity
+        )
 
     new ParcelAdjacencyRelation:
       type P = realization.P
@@ -182,8 +197,13 @@ object RegionGraph:
         targets.result()
     Relation
       .fromOrdinalRows(space, space, rows.iterator.map(_.iterator))
-      .toOption
-      .get
+      .fold(
+        error =>
+          throw new IllegalStateException(
+            s"validated voxel adjacency could not form a relation: ${error.message}"
+          ),
+        identity
+      )
 
   private def regionIdAtOrdinal(
       realization: VolumeAtlasRealization,

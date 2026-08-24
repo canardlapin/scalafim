@@ -1,5 +1,7 @@
 package scalafim.fmri.mvpa.dataset
 
+import scalafim.image.SampleSpaces
+
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import scalafim.dataset.{
@@ -17,7 +19,7 @@ import scalafim.dataset.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.mvpa.*
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
@@ -50,7 +52,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(
         id = DatasetId("mvpa-demo"),
         data = DMat.fromRows(rows),
-        space = NeuroSpace(Vector(3, 1, 1))
+        space = SampleSpaces(Vector(3, 1, 1))
       ),
       samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
     )

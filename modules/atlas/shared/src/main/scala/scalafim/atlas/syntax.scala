@@ -36,26 +36,26 @@ object syntax:
     ): ParcelValues =
       AtlasReduce.summarizeVolume(atlas, data, reducer)
 
-    @scala.annotation.targetName("reduceNeuroVecEither")
+    @scala.annotation.targetName("reduceNeuroSeriesEither")
     def reduceEither(
         data: SomeScalarSeries[Double]
     ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
       AtlasReduce.reduceSeriesEither(atlas, data, reducer = Reducers.mean)
 
-    @scala.annotation.targetName("reduceNeuroVec")
+    @scala.annotation.targetName("reduceNeuroSeries")
     def reduce(
         data: SomeScalarSeries[Double]
     ): SomeScalarParcelSeries[Double] =
       AtlasReduce.reduceSeries(atlas, data, reducer = Reducers.mean)
 
-    @scala.annotation.targetName("reduceNeuroVecWithEither")
+    @scala.annotation.targetName("reduceNeuroSeriesWithEither")
     def reduceEither(
         data: SomeScalarSeries[Double],
         reducer: Array[Double] => Double
     ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
       AtlasReduce.reduceSeriesEither(atlas, data, reducer = reducer)
 
-    @scala.annotation.targetName("reduceNeuroVecWith")
+    @scala.annotation.targetName("reduceNeuroSeriesWith")
     def reduce(
         data: SomeScalarSeries[Double],
         reducer: Array[Double] => Double

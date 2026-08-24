@@ -5,12 +5,7 @@ import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
 import scalafim.fmri.motion.*
 import scalafim.image.io.Nifti
-import scalafim.image.DMat
-import scalafim.image.NeuroSeries
-import scalafim.image.NeuroSpace
-import scalafim.image.NeuroVec
-import scalafim.image.SomeNeuroSeries
-import scalafim.image.SomeScalarSeries
+import scalafim.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -36,7 +31,7 @@ object MotionNifti:
             header.preferredAffine
           )
         yield MotionNiftiRun(
-          NeuroVec.fromNative(decoded.image),
+          decoded.image,
           metadata.copy(path = path)
         )
       catch
@@ -44,7 +39,7 @@ object MotionNifti:
 
   def write(
       path: Path,
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       metadata: Option[MotionNiftiMetadata] = None
   ): Either[MotionIoError, Path] =
     try
@@ -101,10 +96,10 @@ object MotionNifti:
 
   private def nativeRun(
       path: Path,
-      run: NeuroVec[Double]
+      run: SomeScalarSeries[Double]
   ): Either[MotionIoError, SomeScalarSeries[Double]] =
     for
-      sampleSpace <- NeuroSpace
+      sampleSpace <- SampleSpaces
         .requireD3(run.space)
         .left
         .map(error => MotionIoError.WriteFailed(path, error.message))
@@ -132,7 +127,7 @@ object MotionNifti:
 
   private def validateWriteMetadata(
       path: Path,
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       metadata: Option[MotionNiftiMetadata]
   ): Either[MotionIoError, Unit] =
     metadata match

@@ -1,5 +1,6 @@
 package scalafim.image
 
+import image4s.Continuous
 import ravel.DType
 import ravel.NDArray
 import ravel.Rank
@@ -19,38 +20,38 @@ private[image] trait SliceSampleCursor[A]:
 
 /** Sampling policy whose result type is tied to the voxel value type.
   *
-  * Nearest-neighbour sampling works for any voxel type. Linear and cubic
-  * interpolation are `SliceSampling[Double]`, so they cannot accidentally be
+  * Nearest-neighbour sampling works for any voxel semantics. Linear and cubic
+  * interpolation are `SliceSampling[Double, Continuous]`, so they cannot accidentally be
   * requested for label or Boolean volumes.
   */
-sealed trait SliceSampling[A]:
+sealed trait SliceSampling[A, Sem]:
   private[image] def cursor(
-      volume: AnyNeuroVolume[A],
+      volume: SomeNeuroVolume[A, Sem],
       dims: SpatialDims
   ): SliceSampleCursor[A]
 
 object SliceSampling:
-  final case class Nearest[A](outside: A) extends SliceSampling[A]:
+  final case class Nearest[A, Sem](outside: A) extends SliceSampling[A, Sem]:
     private[image] def cursor(
-        volume: AnyNeuroVolume[A],
+        volume: SomeNeuroVolume[A, Sem],
         dims: SpatialDims
     ): SliceSampleCursor[A] =
       new SliceSampleCursor[A]:
         def sample(x: Double, y: Double, z: Double): A =
           VoxelSamplingKernel.nearest(volume, dims, x, y, z, outside)
 
-  final case class Linear(outside: Double = 0.0) extends SliceSampling[Double]:
+  final case class Linear(outside: Double = 0.0) extends SliceSampling[Double, Continuous]:
     private[image] def cursor(
-        volume: AnyNeuroVolume[Double],
+        volume: SomeScalarVolume[Double],
         dims: SpatialDims
     ): SliceSampleCursor[Double] =
       new SliceSampleCursor[Double]:
         def sample(x: Double, y: Double, z: Double): Double =
           VoxelSamplingKernel.linear(volume, dims, x, y, z, outside)
 
-  final case class Cubic(outside: Double = 0.0) extends SliceSampling[Double]:
+  final case class Cubic(outside: Double = 0.0) extends SliceSampling[Double, Continuous]:
     private[image] def cursor(
-        volume: AnyNeuroVolume[Double],
+        volume: SomeScalarVolume[Double],
         dims: SpatialDims
     ): SliceSampleCursor[Double] =
       val workspace = new CubicWorkspace
@@ -101,15 +102,15 @@ final case class SlicePlan private (
   def sourceVoxelAt(pixel: PixelCoord): Either[SliceGeometryError, VoxelPoint] =
     grid.worldAt(pixel).map(source.worldToVoxel)
 
-  def sample[A: ClassTag](
-    volume: AnyNeuroVolume[A],
-    sampling: SliceSampling[A]
+  def sample[A: ClassTag, Sem](
+    volume: SomeNeuroVolume[A, Sem],
+    sampling: SliceSampling[A, Sem]
   ): Either[SlicePlanError, SliceImage[A]] =
     GridCompatibility.volume(source, volume.volumeSpace).left.map { _ =>
       SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace)
     }.map { _ =>
       val dimensions = grid.dimensions
-      given DType[A] = volume.data.dtype
+      given DType[A] = volume.values.dtype
       val sampleCursor = sampling.cursor(volume, source.shape)
       val out =
         NDArray.build[A, Rank[2]](
@@ -175,14 +176,14 @@ final class MappedSlicePlan private (
       VoxelPoint(sourceX(index), sourceY(index), sourceZ(index))
     }
 
-  def sample[A: ClassTag](
-    volume: AnyNeuroVolume[A],
-    sampling: SliceSampling[A]
+  def sample[A: ClassTag, Sem](
+    volume: SomeNeuroVolume[A, Sem],
+    sampling: SliceSampling[A, Sem]
   ): Either[SlicePlanError, SliceImage[A]] =
     if volume.volumeSpace != source then
       Left(SlicePlanError.SourceSpaceMismatch(source, volume.volumeSpace))
     else
-      given DType[A] = volume.data.dtype
+      given DType[A] = volume.values.dtype
       val sampleCursor = sampling.cursor(volume, source.shape)
       val dimensions = grid.dimensions
       val out =
@@ -280,8 +281,8 @@ private[image] object VoxelSamplingKernel:
       y >= 0 && y < dims.y &&
       z >= 0 && z < dims.z
 
-  inline def nearest[A](
-    volume: AnyNeuroVolume[A],
+  inline def nearest[A, Sem](
+    volume: SomeNeuroVolume[A, Sem],
     dims: SpatialDims,
     x: Double,
     y: Double,
@@ -296,7 +297,7 @@ private[image] object VoxelSamplingKernel:
     else outside
 
   inline def valueOrOutside(
-    volume: AnyNeuroVolume[Double],
+    volume: SomeScalarVolume[Double],
     dims: SpatialDims,
     x: Int,
     y: Int,
@@ -308,7 +309,7 @@ private[image] object VoxelSamplingKernel:
     else outside
 
   def linear(
-    volume: AnyNeuroVolume[Double],
+    volume: SomeScalarVolume[Double],
     dims: SpatialDims,
     x: Double,
     y: Double,
@@ -343,7 +344,7 @@ private[image] object VoxelSamplingKernel:
     c0 * (1.0 - zd) + c1 * zd
 
   def cubic(
-    volume: AnyNeuroVolume[Double],
+    volume: SomeScalarVolume[Double],
     dims: SpatialDims,
     x: Double,
     y: Double,

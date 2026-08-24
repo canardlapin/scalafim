@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, Mask, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DomainSuite extends munit.FunSuite:
@@ -14,7 +15,7 @@ class DomainSuite extends munit.FunSuite:
     val id = value(DomainId(idValue))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality("bold"))
-    val space = NeuroSpace(dims, trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(dims, trans = Some(DMat.eye(4)))
     val geometry = value(SamplingGeometry.volume(space))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
@@ -37,7 +38,7 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(PartName("").left.toOption, Some(SpatialError.EmptyIdentifier("part")))
 
   test("volume geometry counts sampled voxels and validates masks"):
-    val space = NeuroSpace(Vector(2, 2, 2), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(2, 2, 2), trans = Some(DMat.eye(4)))
     val geometry = value(SamplingGeometry.volume(space))
     assertEquals(geometry.nElements, 8)
 
@@ -45,7 +46,7 @@ class DomainSuite extends munit.FunSuite:
     val masked = value(SamplingGeometry.volume(space, Some(mask)))
     assertEquals(masked.nElements, 8)
 
-    val other = NeuroSpace(Vector(2, 2, 1), trans = Some(DMat.eye(4)))
+    val other = SampleSpaces(Vector(2, 2, 1), trans = Some(DMat.eye(4)))
     val badMask = Mask.fromIndices(other, scalafim.image.PrimitiveBuffers.fromArray(Array(0)), "bad")
     assertEquals(
       SamplingGeometry.volume(space, Some(badMask)).left.toOption,
@@ -77,7 +78,7 @@ class DomainSuite extends munit.FunSuite:
     val id = value(DomainId("bad-surface"))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality("bold"))
-    val volume = value(SamplingGeometry.volume(NeuroSpace(Vector(2, 2, 1), trans = Some(DMat.eye(4)))))
+    val volume = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 2, 1), trans = Some(DMat.eye(4)))))
 
     assertEquals(
       Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.White), volume).left.toOption,

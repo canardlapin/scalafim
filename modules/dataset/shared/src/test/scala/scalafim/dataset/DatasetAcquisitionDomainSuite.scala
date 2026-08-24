@@ -1,10 +1,11 @@
 package scalafim.dataset
 
 import scalafim.locus.mapping
+import image4s.locus.GridDomain
 import scalafim.image.{
   DMat,
-  NeuroSpace,
-  VolumeDomain
+  SampleSpaces,
+  SomeSampleSpace,
 }
 
 class DatasetAcquisitionDomainSuite extends munit.FunSuite:
@@ -14,7 +15,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
       timepoints: Int = 3
   ): DatasetShape =
     DatasetShape.unsafe(
-      NeuroSpace(Vector(4, 1, 1), trans = Some(affine)),
+      SampleSpaces(Vector(4, 1, 1), trans = Some(affine)),
       timepoints
     )
 
@@ -142,15 +143,15 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
   test("image selection adapter preserves requested order and checks exact volume grid"):
     val requestedShape = shape()
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          requestedShape.volumeSpace,
+          requestedShape.volumeSpace.sampleSpace.grid,
           "dataset image selection adapter",
           locus4s.DomainRegistry.empty
         )
         .fold(error => fail(error.message), identity)
     type Voxel = packed.S
-    val imageDomain: VolumeDomain[Voxel] = packed.value
+    val imageDomain = packed.value
     val selected =
       locus4s.Selection
         .fromOrdinals(imageDomain.space, Vector(3, 0))

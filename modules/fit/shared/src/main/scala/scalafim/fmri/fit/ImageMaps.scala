@@ -9,7 +9,8 @@ import locus4s.DomainRegistry
 import locus4s.Selection
 import scalafim.dataset.DatasetShape
 import ravel.NDArray as RavelArray
-import scalafim.image.{NeuroSpace, NeuroVec, SelectedSeries, SomeSelectedSeries}
+import scalafim.image.{SampleSpaces, SomeSampleSpace, SelectedSeries, SomeScalarSeries, SomeSelectedSeries}
+import scalafim.image.SampleSpaces.*
 import spire.implicits.DoubleAlgebra
 
 final case class FitImageMaps(
@@ -20,12 +21,10 @@ final case class FitImageMaps(
   require(values.value.nTime == names.length, "image map names must match map volumes")
 
   def nMaps: Int = names.length
-  def dense: NeuroVec[Double] =
-    val native =
-      values.value
-        .toDense(0.0)
-        .fold(error => throw new IllegalStateException(error.message), identity)
-    NeuroVec.fromNative(native)
+  def dense: SomeScalarSeries[Double] =
+    values.value
+      .toDense(0.0)
+      .fold(error => throw new IllegalStateException(error.message), identity)
   def mapIndex(name: String): Option[Int] = names.indexOf(name) match
     case -1 => None
     case i  => Some(i)
@@ -104,7 +103,7 @@ object FitImageMaps:
         rowsByMap(map)(sorted(outPosition)._2)
       }
     val spatial =
-      NeuroSpace
+      SampleSpaces
         .requireSpatialD3(shape.space)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
     val resolution =

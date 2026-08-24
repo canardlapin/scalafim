@@ -3,14 +3,14 @@ package scalafim.fmri.motion
 import ravel.NDArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.NeuroVec
+import scalafim.image.*
 
 object MotionApplier:
   def apply(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       trace: MotionTrace,
       control: ApplyControl = ApplyControl.linear
-  ): Either[MotionError, NeuroVec[Double]] =
+  ): Either[MotionError, SomeScalarSeries[Double]] =
     if trace.length != run.nVolumes then Left(MotionError.TraceLengthMismatch(trace.length, run.nVolumes))
     else
       control.interpolation match
@@ -23,10 +23,10 @@ object MotionApplier:
           yield corrected
 
   private def applyLinear(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       trace: MotionTrace,
       control: ApplyControl
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     val dims = run.space.spatialDims
     val nx = dims(0)
     val ny = dims(1)
@@ -84,14 +84,14 @@ object MotionApplier:
               k += 1
             time += 1
 
-    NeuroVec.fromRavel(out, run.space, run.label)
+    SomeNeuroSeries.unsafeFromRavel(out, run.space, run.label)
 
   private def applyLinearPacketAware(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       trace: MotionTrace,
       control: ApplyControl,
       normalizedOffsets: Vector[Double]
-  ): Either[MotionError, NeuroVec[Double]] =
+  ): Either[MotionError, SomeScalarSeries[Double]] =
     val dims = run.space.spatialDims
     val nx = dims(0)
     val ny = dims(1)
@@ -162,4 +162,4 @@ object MotionApplier:
               k += 1
             time += 1
 
-    Right(NeuroVec.fromRavel(out, run.space, run.label))
+    Right(SomeNeuroSeries.unsafeFromRavel(out, run.space, run.label))

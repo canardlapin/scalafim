@@ -1,7 +1,8 @@
 package scalafim.spatial
 
 import gale.linalg.DMat as GaleDMat
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.DoubleMatrix
 
 class StagedPluginSuite extends munit.FunSuite:
@@ -16,7 +17,7 @@ class StagedPluginSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(SamplingGeometry.volume(NeuroSpace(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
+    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def hybrid(name: String, parts: Vector[(String, Domain)]): Domain =

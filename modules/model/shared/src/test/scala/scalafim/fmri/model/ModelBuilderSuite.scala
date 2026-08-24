@@ -6,7 +6,7 @@ import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.data.Column
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
 
 class ModelBuilderSuite extends munit.FunSuite:
 
@@ -26,7 +26,7 @@ class ModelBuilderSuite extends munit.FunSuite:
       )
     )
     FmriDataset.unsafe(
-      backend = InMemoryDatasetBackend(DatasetId("builder-demo"), data, NeuroSpace(Vector(1, 1, 1))),
+      backend = InMemoryDatasetBackend(DatasetId("builder-demo"), data, SampleSpaces(Vector(1, 1, 1))),
       samplingFrame = samplingFrame,
       events = events
     ).dataset

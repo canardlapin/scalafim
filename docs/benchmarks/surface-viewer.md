@@ -99,7 +99,7 @@ annotations materialize as ordinary packed-RGBA layers, and bounded
 ## Volume projection and connectivity contracts
 
 `SurfaceVolumeProjection` is the portable CPU oracle on both JVM and Scala.js.
-It reuses `VolToSurfMorphism`, `VolumeSurfaceSamplingPlan`, and `NeuroSpace`
+It reuses `VolToSurfMorphism`, `VolumeSurfaceSamplingPlan`, and `SomeSampleSpace`
 rather than embedding spatial policy in a renderer. White, pial, midpoint,
 fractional-thickness, and normal-line paths therefore share the existing
 surface-to-world and world-to-voxel transforms. Reducer, minimum-sample, mask,

@@ -22,7 +22,7 @@ enum SearchlightError:
   case InvalidRadius(value: Double)
   case RadiusBelowVoxelSpacing(radius: Double, minimumSpacing: Double)
   case InvalidCenter(error: GeometryError)
-  case InvalidSpace(error: NeuroSpaceError)
+  case InvalidSpace(error: SampleSpaceError)
   case Grid(error: GridMismatch)
   case CenterExcluded(center: VoxelCoord)
   case IncompatiblePolicies(
@@ -85,9 +85,9 @@ object SearchlightCenter:
       .map(SearchlightError.InvalidCenter.apply)
       .map(index => new SearchlightCenter(space, voxel, index))
 
-  @targetName("makeFromNeuroSpace")
+  @targetName("makeFromSampleSpace")
   def make(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       voxel: VoxelCoord
   ): Either[SearchlightError, SearchlightCenter] =
     VolumeSpace

@@ -1,6 +1,6 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{Affine, DMat, NeuroVec, NeuroVol}
+import scalafim.image.*
 
 final case class DisplacementSummary(
     median: Double,
@@ -63,8 +63,8 @@ object MotionMetrics:
     out.toVector
 
   def dvarsPairs(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]] = None,
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume] = None,
       policy: DvarsPolicy = DvarsPolicy.Raw
   ): Either[MotionError, Vector[DvarsMetric]] =
     validateMask(run, mask).map { maskVol =>
@@ -106,25 +106,25 @@ object MotionMetrics:
       out.result()
     }
 
-  def dvars(run: NeuroVec[Double]): Either[MotionError, Vector[Double]] =
+  def dvars(run: SomeScalarSeries[Double]): Either[MotionError, Vector[Double]] =
     dvars(run, None, DvarsPolicy.Raw)
 
-  def dvars(run: NeuroVec[Double], mask: Option[NeuroVol[Boolean]]): Either[MotionError, Vector[Double]] =
+  def dvars(run: SomeScalarSeries[Double], mask: Option[SomeMaskVolume]): Either[MotionError, Vector[Double]] =
     dvars(run, mask, DvarsPolicy.Raw)
 
-  def dvars(run: NeuroVec[Double], robust: Boolean): Either[MotionError, Vector[Double]] =
+  def dvars(run: SomeScalarSeries[Double], robust: Boolean): Either[MotionError, Vector[Double]] =
     dvars(run, None, DvarsPolicy.fromRobustBoolean(robust))
 
   def dvars(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       robust: Boolean
   ): Either[MotionError, Vector[Double]] =
     dvars(run, mask, DvarsPolicy.fromRobustBoolean(robust))
 
   def dvars(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       policy: DvarsPolicy
   ): Either[MotionError, Vector[Double]] =
     dvarsPairs(run, mask, policy).map { metrics =>
@@ -155,7 +155,7 @@ object MotionMetrics:
     sum / points.length.toDouble
 
   def maskedDisplacements(
-      mask: NeuroVol[Boolean],
+      mask: SomeMaskVolume,
       motion: RigidPose,
       reference: Option[RigidPose] = None
   ): Vector[Double] =
@@ -175,7 +175,7 @@ object MotionMetrics:
     out.result()
 
   def maskedDisplacementSummary(
-      mask: NeuroVol[Boolean],
+      mask: SomeMaskVolume,
       motion: RigidPose,
       reference: Option[RigidPose] = None
   ): Either[MotionError, DisplacementSummary] =
@@ -191,9 +191,9 @@ object MotionMetrics:
       )
 
   private[motion] def validateMask(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]]
-  ): Either[MotionError, Option[NeuroVol[Boolean]]] =
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume]
+  ): Either[MotionError, Option[SomeMaskVolume]] =
     mask match
       case None => Right(None)
       case Some(m) =>

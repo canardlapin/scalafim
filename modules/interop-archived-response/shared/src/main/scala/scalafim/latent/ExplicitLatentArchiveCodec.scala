@@ -10,14 +10,14 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 import scalafim.latent.LatentArchivePayloads.*
 
 object ExplicitLatentArchiveCodec:
   def toArchive(
       response: ExplicitLatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-latent"
   ): Either[ArchiveError, LnaArchive] =
@@ -38,7 +38,7 @@ object ExplicitLatentArchiveCodec:
 
   def toTemporalDctArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       components: Int,
       norm: DctNorm = DctNorm.Ortho,
       center: Boolean = false,
@@ -70,7 +70,7 @@ object ExplicitLatentArchiveCodec:
 
   def toTemporalDctArchiveSpec(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       spec: DctSpec,
       center: Boolean = false,
       ridge: RidgePenalty = RidgePenalty.Zero,

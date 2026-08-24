@@ -890,7 +890,7 @@ than overloaded onto `summarize`.
 ### Sample support and `GroupSpace`
 
 Before the voxel bridge lands, `group.GroupSpace.VoxelAxis` should reuse
-`image.VoxelIndexSet` rather than storing a raw `NeuroSpace` plus
+`image.VoxelIndexSet` rather than storing a raw `SomeSampleSpace` plus
 `Vector[Int]`:
 
 ```scala

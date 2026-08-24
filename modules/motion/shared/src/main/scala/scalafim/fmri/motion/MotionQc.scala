@@ -1,6 +1,6 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{NeuroVec, NeuroVol}
+import scalafim.image.*
 
 final case class MotionQcThresholds(
     fdSpike: FramewiseDisplacementMm,
@@ -131,10 +131,10 @@ final case class MotionQc(
 
 object MotionQc:
   def from(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       trace: MotionTrace,
-      corrected: Option[NeuroVec[Double]] = None,
-      mask: Option[NeuroVol[Boolean]] = None,
+      corrected: Option[SomeScalarSeries[Double]] = None,
+      mask: Option[SomeMaskVolume] = None,
       costInit: Option[Vector[Double]] = None,
       costFinal: Option[Vector[Double]] = None,
       radius: HeadRadius = HeadRadius.default,

@@ -52,7 +52,7 @@ class NativeDenseImageSuite extends munit.FunSuite:
       right(Sampled.continuous(volumeSpace, volumeData))
     val volume = NeuroVolume.fromSampled(sampled)
     val semantic: SomeScalarVolume[Double] = volume
-    val agnostic: AnyNeuroVolume[Double] = volume
+    val agnostic: SomeScalarVolume[Double] = volume
 
     assert(volume.sampled eq sampled)
     assert(semantic.asInstanceOf[AnyRef] eq sampled)
@@ -129,29 +129,28 @@ class NativeDenseImageSuite extends munit.FunSuite:
     assertEqualsDouble(strided.data(1, 1, 1), 122.0, 0.0)
     assert(!strided.data.isCanonicalLayout)
 
-    val plane = right(volume.plane(axis = 2, index = 1))
+    val plane = right(SomeNeuroVolume.eraseSpace(volume).plane(axis = SpatialAxis.Z, index = 1))
     assertEquals(plane.grid.shape, Vector(2, 3, 1))
-    assertEqualsDouble(plane.data(1, 2, 0), 121.0, 0.0)
+    assertEqualsDouble(plane.data(1, 2, 0), 121.0, 0.0, clue = "")
     assert(!plane.data.isWholeBuffer)
 
   test("explicit materialization creates a distinct whole-canonical owner"):
     val volume =
       right(NeuroVolume.continuous(volumeSpace, volumeData))
     val flipped = right(volume.flipVolume(0))
-    val materialized =
-      NeuroVolume.fromSampled(flipped.materializedCopy)
+    val materialized = flipped.materializedCanonical
 
-    assert(!(materialized.data eq flipped.data))
+    assert(!materialized.data.eq(flipped.data))
     assert(materialized.data.isCanonicalLayout)
     assert(materialized.data.isWholeBuffer)
-    assertEqualsDouble(materialized(0, 2, 3), 123.0, 0.0)
+    assertEqualsDouble(materialized(0, 2, 3), 123.0, 0.0, clue = "")
 
   test("NeuroSeries certifies one Time axis without a wrapper"):
     val sampled =
       right(Sampled.continuous(seriesSpace, seriesData))
     val series = right(NeuroSeries.fromSampled(sampled))
     val semantic: SomeScalarSeries[Double] = series
-    val agnostic: AnyNeuroSeries[Double] = series
+    val agnostic: SomeScalarSeries[Double] = series
 
     assert(series.sampled eq sampled)
     assert(semantic.asInstanceOf[AnyRef] eq sampled)
@@ -208,12 +207,12 @@ class NativeDenseImageSuite extends munit.FunSuite:
       right(NeuroSeries.continuous(seriesSpace, seriesData))
     val flipped = right(series.flipSeries(0))
 
-    assert(flipped.data.isCanonicalLayout == false)
+    assert(!flipped.data.isCanonicalLayout, clue = "")
     val checked =
       SomeNeuroSeries
-        .fromSampled(flipped)
+        .fromSampled(flipped.sampled)
         .fold(error => fail(error.message), identity)
-    assert(checked.data.isCanonicalLayout == false)
+    assert(!checked.data.isCanonicalLayout, clue = "")
 
   private def shapeOf[A, R <: ravel.AnyRank](
       array: NDArray[A, R]

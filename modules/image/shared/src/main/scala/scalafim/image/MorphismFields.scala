@@ -48,8 +48,8 @@ object DenseVectorField:
     inline def values: RavelArray[Double, Rank[4]] =
       field.data
 
-    inline def space: NeuroSpace =
-      NeuroSpace.fromCanonical(field.sampleSpace)
+    inline def space: SomeSampleSpace =
+      SampleSpaces.fromCanonical(field.sampleSpace)
 
     inline def kind(using role: ValueOf[Role]): Role =
       role.value
@@ -106,8 +106,8 @@ object DenseVectorField:
       "dense vector field must have grid dims plus three components"
     )
     val spatial =
-      NeuroSpace
-        .requireSpatialD3(grid.toNeuroSpace)
+      SampleSpaces
+        .requireSpatialD3(grid.toSampleSpace)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
     val direction =
       ImageAxis
@@ -158,7 +158,7 @@ object MorphismFields:
       grid: GridSpec,
       log: Boolean = false,
       mode: JacobianMode = JacobianMode.Pullback
-  ): Either[MorphismError, NeuroVol[Double]] =
+  ): Either[MorphismError, SomeScalarVolume[Double]] =
     val points = grid.worldPoints
     morphism.jacobianDetAt(points, log, mode).map { dets =>
       val nx = grid.shape.x
@@ -166,7 +166,7 @@ object MorphismFields:
       val values =
         RavelArray.tabulate[Double](nx, ny, grid.shape.z): (x, y, z) =>
           dets(Indexing.gridToIndex3D(grid.shape, x, y, z))
-      NeuroVol.fromRavel(values, grid.toNeuroSpace, "jacobian-det")
+      SomeNeuroVolume.unsafeFromRavel(values, grid.toSampleSpace, "jacobian-det")
     }
 
   private def vectorField(grid: GridSpec, vectors: Vector[Vector[Double]]): RavelArray[Double, Rank[4]] =

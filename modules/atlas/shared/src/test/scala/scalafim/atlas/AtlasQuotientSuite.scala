@@ -28,7 +28,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
         AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
         AtlasRegionMetadata(RegionId(1), "First", network = Some(NetworkId("Visual")))
       ),
-      space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))
+      space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))
   ): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(
       volumeRef,
@@ -170,7 +170,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
   test("overlap requires exact grids unless alignment is explicitly requested"):
     val reference = volumeAtlas()
     val shiftedSpace =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(2, 2, 1),
         origin = Some(Vector(10.0, 0.0, 0.0))
       )

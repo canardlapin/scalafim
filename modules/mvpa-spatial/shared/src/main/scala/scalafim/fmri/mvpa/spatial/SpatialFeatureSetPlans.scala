@@ -9,11 +9,12 @@ import scalafim.image.{
   SelectedVolumeWindow,
   SearchlightRadius,
   SomeLabelVolume,
-  VolumeDomain,
+  GridDomain,
   VolumeNeighborhoods,
   VolumeSpace
 }
 import scalafim.image.SomeNeuroVolume.*
+import scalafim.image.SampleSpaces.*
 import scalafim.image.VolumeSpace.*
 import scalafim.surface.{FragmentedParcelPolicy, LabeledSurface, MeshTopology, ParcelUnit, SurfaceParcels}
 import locus4s.DomainRegistry
@@ -31,8 +32,8 @@ object SpatialFeatureSetPlans:
   ): Either[SpatialPlanError, SpatialFeaturePlan] =
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[LinearVoxelIndex]]
     var lin = 0
-    while lin < labels.data.size do
-      val coordinate = Indexing.indexToGrid3D(labels.grid.shape, lin)
+    while lin < labels.values.size do
+      val coordinate = Indexing.indexToGrid3D(labels.space.spatialDims, lin)
       val label = labels(coordinate(0), coordinate(1), coordinate(2))
       if !background.contains(label) then
         if label < 0 then return Left(SpatialPlanError.InvalidVolumeLabel(label))
@@ -50,7 +51,7 @@ object SpatialFeatureSetPlans:
       regionalPlan(
         name,
         SpatialFeatureDomain.VolumeLabels(
-          labels.volumeSpace.toNeuroSpace,
+          labels.volumeSpace.toSampleSpace,
           background
         ),
         sets
@@ -312,9 +313,9 @@ object SpatialFeatureSetPlans:
         .fromSpatialPart(mask.space)
         .left
         .map(error => SpatialPlanError.AdapterFailure("mask space", error.message))
-      packedDomain <- VolumeDomain
+      packedDomain <- GridDomain
         .register(
-          volumeSpace,
+          volumeSpace.sampleSpace.grid,
           "MVPA searchlight voxels",
           DomainRegistry.empty
         )
@@ -322,7 +323,7 @@ object SpatialFeatureSetPlans:
         .map(error => SpatialPlanError.AdapterFailure("voxel domain", error.message))
       result <-
         type Voxel = packedDomain.S
-        val domain: VolumeDomain[Voxel] = packedDomain.value
+        val domain = packedDomain.value
         val maskOrdinals = Mask.indices(mask)
         for
           centers <- Region

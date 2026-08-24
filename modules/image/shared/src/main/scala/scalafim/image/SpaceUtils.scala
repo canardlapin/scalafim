@@ -8,30 +8,30 @@ object SpaceUtils:
   enum IndexBase:
     case R, Zero
 
-  def outputAlignedSpace(space: NeuroSpace): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace): AlignedSpace =
     outputAlignedSpace(space, None)
 
-  def outputAlignedSpace(space: NeuroSpace, voxelSizes: Vector[Double]): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace =
     outputAlignedSpace(space, Some(voxelSizes))
 
-  def outputAlignedSpace(space: NeuroSpace, voxelSize: Double): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSize: Double): AlignedSpace =
     outputAlignedSpace(space, Some(Vector(voxelSize)))
 
-  def outputAlignedSpace(space: NeuroSpace, voxelSizes: Option[Vector[Double]]): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Option[Vector[Double]]): AlignedSpace =
     outputAlignedSpace(space.dims, space.trans, voxelSizes)
 
-  def outputAlignedSpace[A](vol: NeuroVol[A]): AlignedSpace =
+  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem]): AlignedSpace =
     outputAlignedSpace(vol.space, None)
 
-  def outputAlignedSpace[A](vol: NeuroVol[A], voxelSizes: Option[Vector[Double]]): AlignedSpace =
+  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
     outputAlignedSpace(vol.space, voxelSizes)
 
-  @scala.annotation.targetName("outputAlignedNeuroVec")
-  def outputAlignedSpace[A](vec: NeuroVec[A]): AlignedSpace =
+  @scala.annotation.targetName("outputAlignedNeuroSeries")
+  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem]): AlignedSpace =
     outputAlignedSpace(vec.space, None)
 
-  @scala.annotation.targetName("outputAlignedNeuroVecWithVoxelSizes")
-  def outputAlignedSpace[A](vec: NeuroVec[A], voxelSizes: Option[Vector[Double]]): AlignedSpace =
+  @scala.annotation.targetName("outputAlignedNeuroSeriesWithVoxelSizes")
+  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
     outputAlignedSpace(vec.space, voxelSizes)
 
   def outputAlignedSpace(shape: Vector[Int], affine: DMat): AlignedSpace =
@@ -84,10 +84,10 @@ object SpaceUtils:
 
     AlignedSpace(outShape, outAffine, Bounds(mins, maxs))
 
-  def vox2outVox(space: NeuroSpace): AlignedSpace =
+  def vox2outVox(space: SomeSampleSpace): AlignedSpace =
     outputAlignedSpace(space)
 
-  def vox2outVox(space: NeuroSpace, voxelSizes: Vector[Double]): AlignedSpace =
+  def vox2outVox(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace =
     outputAlignedSpace(space, voxelSizes)
 
   def sliceToVolumeAffine(
@@ -172,22 +172,22 @@ object SpaceUtils:
 
 object Deoblique:
 
-  def target(space: NeuroSpace): NeuroSpace =
+  def target(space: SomeSampleSpace): SomeSampleSpace =
     target(space, gridset = None, newgrid = None)
 
-  def target(space: NeuroSpace, newgrid: Double): NeuroSpace =
+  def target(space: SomeSampleSpace, newgrid: Double): SomeSampleSpace =
     target(space, gridset = None, newgrid = Some(newgrid))
 
-  def target(space: NeuroSpace, gridset: NeuroSpace): NeuroSpace =
+  def target(space: SomeSampleSpace, gridset: SomeSampleSpace): SomeSampleSpace =
     target(space, gridset = Some(gridset), newgrid = None)
 
-  def target(space: NeuroSpace, gridset: Option[NeuroSpace], newgrid: Option[Double]): NeuroSpace =
+  def target(space: SomeSampleSpace, gridset: Option[SomeSampleSpace], newgrid: Option[Double]): SomeSampleSpace =
     require(space.ndim == 3, "deoblique currently supports 3D spaces only")
     require(!(gridset.isDefined && newgrid.isDefined), "gridset and newgrid are mutually exclusive")
 
     gridset match
       case Some(grid) =>
-        require(grid.ndim == 3, "gridset must define a 3D NeuroSpace")
+        require(grid.ndim == 3, "gridset must define a 3D SomeSampleSpace")
         grid
       case None =>
         val voxelSize =
@@ -196,27 +196,27 @@ object Deoblique:
         val aligned = SpaceUtils.outputAlignedSpace(space, voxelSize)
         val spacing = Vector.tabulate(3)(i => aligned.affine(i, i))
         val origin = Vector.tabulate(3)(i => aligned.affine(i, 3))
-        NeuroSpace(
+        SampleSpaces(
           dims = aligned.shape,
           spacing = Some(spacing),
           origin = Some(origin),
           trans = Some(aligned.affine)
         )
 
-  def apply(space: NeuroSpace): NeuroSpace =
+  def apply(space: SomeSampleSpace): SomeSampleSpace =
     target(space)
 
-  def apply(space: NeuroSpace, newgrid: Double): NeuroSpace =
+  def apply(space: SomeSampleSpace, newgrid: Double): SomeSampleSpace =
     target(space, newgrid)
 
-  def apply(space: NeuroSpace, gridset: NeuroSpace): NeuroSpace =
+  def apply(space: SomeSampleSpace, gridset: SomeSampleSpace): SomeSampleSpace =
     target(space, gridset)
 
-  def apply(vol: NeuroVol[Double], method: Resample.Method = Resample.Method.Linear): NeuroVol[Double] =
+  def apply(vol: SomeScalarVolume[Double], method: Resample.Method = Resample.Method.Linear): SomeScalarVolume[Double] =
     Resample.resampleTo(vol, target(vol.space), method)
 
-  def apply(vol: NeuroVol[Double], newgrid: Double, method: Resample.Method): NeuroVol[Double] =
+  def apply(vol: SomeScalarVolume[Double], newgrid: Double, method: Resample.Method): SomeScalarVolume[Double] =
     Resample.resampleTo(vol, target(vol.space, newgrid), method)
 
-  def apply(vol: NeuroVol[Double], gridset: NeuroSpace, method: Resample.Method): NeuroVol[Double] =
+  def apply(vol: SomeScalarVolume[Double], gridset: SomeSampleSpace, method: Resample.Method): SomeScalarVolume[Double] =
     Resample.resampleTo(vol, target(vol.space, gridset), method)

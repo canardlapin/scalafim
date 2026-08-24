@@ -11,10 +11,17 @@ object AtlasLabelMaps:
       path: Path,
       label: String = ""
   ): SomeLabelVolume[Int] =
-    fromDouble(Nifti.readVol(path), label)
+    val decoded =
+      Nifti
+        .readVolume(path)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
+    fromDouble(decoded.image, label)
 
   def fromDouble(
-      vol: NeuroVol[Double],
+      vol: SomeScalarVolume[Double],
       label: String = ""
   ): SomeLabelVolume[Int] =
     val out = Array.ofDim[Int](vol.values.size)
@@ -44,7 +51,8 @@ object AtlasLabelMaps:
       )
 
   def presentRegionIds(labels: SomeLabelVolume[Int]): Set[RegionId] =
-    val shape = labels.grid.shape
+    val valueShape = labels.values.shape
+    val shape = Vector(valueShape(0), valueShape(1), valueShape(2))
     val out = scala.collection.mutable.Set.empty[RegionId]
     var x = 0
     while x < shape(0) do

@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.spatial
 
 import scalafim.atlas.AtlasRef
 import scalafim.fmri.mvpa.{FeatureSetPlan, MvpaError}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 
 enum ParcelCoveragePolicy:
   case RequireEveryRegion
@@ -13,7 +13,7 @@ enum SurfaceParcelIdentityPolicy:
   case ParcelKey
 
 enum SpatialFeatureDomain:
-  case VolumeLabels(space: NeuroSpace, background: Set[Int])
+  case VolumeLabels(space: SomeSampleSpace, background: Set[Int])
   case VolumeAtlas(ref: AtlasRef, coveragePolicy: ParcelCoveragePolicy)
   case LocusSearchlight(spaceKey: String, centerCount: Int)
   case SurfaceParcels(identityPolicy: SurfaceParcelIdentityPolicy)

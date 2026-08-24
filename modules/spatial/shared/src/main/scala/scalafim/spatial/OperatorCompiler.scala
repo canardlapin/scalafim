@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{Affine, GridSpec, Indexing, NeuroSpace, SpatialDims, SpatialPoint}
+import scalafim.image.{Affine, GridSpec, Indexing, SomeSampleSpace, SpatialDims, SpatialPoint}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMap, LinearMapError, SparseTriplets}
 
 import scala.collection.mutable.ArrayBuffer
@@ -235,14 +236,14 @@ object VolumePullbackOperatorCompiler extends OperatorCompiler:
       )
     yield operator
 
-  private def volumeSpace(domain: Domain): Either[SpatialError, NeuroSpace] =
+  private def volumeSpace(domain: Domain): Either[SpatialError, SomeSampleSpace] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => Right(space.spatialSpace)
       case _ => Left(SpatialError.NonVolumeDomain(domain.id))
 
   private def assembleRows(
-    sourceSpace: NeuroSpace,
-    targetSpace: NeuroSpace,
+    sourceSpace: SomeSampleSpace,
+    targetSpace: SomeSampleSpace,
     targetRows: TargetRows,
     program: PullbackProgram,
     sampling: SamplingPolicy

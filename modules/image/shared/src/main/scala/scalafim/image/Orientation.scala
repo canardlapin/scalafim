@@ -234,12 +234,12 @@ object Orientation:
         ax3 <- axisFromCode(kbest * rbest)
       yield AxisSet(ax1.axis, ax2.axis, ax3.axis)
 
-  def reorient(space: NeuroSpace, orient: Seq[String]): NeuroSpace =
+  def reorient(space: SomeSampleSpace, orient: Seq[String]): SomeSampleSpace =
     val orientation =
       Orientation3D.fromStrings(orient).fold(err => throw new IllegalArgumentException(err.message), identity)
     reorient(space, orientation)
 
-  def reorient(space: NeuroSpace, orientation: Orientation3D): NeuroSpace =
+  def reorient(space: SomeSampleSpace, orientation: Orientation3D): SomeSampleSpace =
     val anat = orientation.axisSet
     val pmat = permMat3D(orientation)
 
@@ -280,7 +280,7 @@ object Orientation:
     val newOrigin = Vector(tx(0, 3), tx(1, 3), tx(2, 3))
 
     val newAxes = AxisSet((anat.axes ++ space.axes.additionalAxes)*)
-    NeuroSpace(
+    SampleSpaces(
       dims = space.dims,
       spacing = Some(space.spacing),
       origin = Some(newOrigin),
@@ -288,27 +288,27 @@ object Orientation:
       trans = Some(tx)
     )
 
-  def reorient[A](vol: NeuroVol[A], orient: Seq[String])(using
-      MigrationValueSemantics[A]
-  ): NeuroVol[A] =
-    vol.copy(space = reorient(vol.space, orient))
+  def reorient[A, Sem](vol: SomeNeuroVolume[A, Sem], orient: Seq[String])(using
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroVolume[A, Sem] =
+    SomeNeuroVolume.unsafeFromRavel(vol.values, reorient(vol.space, orient), vol.label)
 
-  def reorient[A](vol: NeuroVol[A], orientation: Orientation3D)(using
-      MigrationValueSemantics[A]
-  ): NeuroVol[A] =
-    vol.copy(space = reorient(vol.space, orientation))
+  def reorient[A, Sem](vol: SomeNeuroVolume[A, Sem], orientation: Orientation3D)(using
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroVolume[A, Sem] =
+    SomeNeuroVolume.unsafeFromRavel(vol.values, reorient(vol.space, orientation), vol.label)
 
-  @scala.annotation.targetName("reorientNeuroVecAxes")
-  def reorient[A](vec: NeuroVec[A], orient: Seq[String])(using
-      MigrationValueSemantics[A]
-  ): NeuroVec[A] =
-    vec.copy(space = reorient(vec.space, orient))
+  @scala.annotation.targetName("reorientNeuroSeriesAxes")
+  def reorient[A, Sem](vec: SomeNeuroSeries[A, Sem], orient: Seq[String])(using
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroSeries[A, Sem] =
+    SomeNeuroSeries.unsafeFromRavel(vec.values, reorient(vec.space, orient), vec.label)
 
-  @scala.annotation.targetName("reorientNeuroVecOrientation")
-  def reorient[A](vec: NeuroVec[A], orientation: Orientation3D)(using
-      MigrationValueSemantics[A]
-  ): NeuroVec[A] =
-    vec.copy(space = reorient(vec.space, orientation))
+  @scala.annotation.targetName("reorientNeuroSeriesOrientation")
+  def reorient[A, Sem](vec: SomeNeuroSeries[A, Sem], orientation: Orientation3D)(using
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroSeries[A, Sem] =
+    SomeNeuroSeries.unsafeFromRavel(vec.values, reorient(vec.space, orientation), vec.label)
 
   private def axisFromCode(code: Int): Either[OrientationError, AnatomicalAxis] =
     code match

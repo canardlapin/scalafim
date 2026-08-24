@@ -1,16 +1,18 @@
 package scalafim.archive.io
 
+import scalafim.image.SampleSpaces
+
 import io.jhdf.HdfFile
 import io.jhdf.api.WritableGroup
 import io.jhdf.`object`.datatype.FixedPoint
 import scalafim.archive.ArchivePath
 import scalafim.archive.lna.{LnaArchive, LnaDType, LnaExplicitLatent, LnaManifestCodec, LnaPipeline, LnaTemporalDct, LnaValidator, Payload, QuantMethod, QuantParams, QuantScaleScope, TemporalDctNorm, TemporalDctParams, TransformKind, TransformParams, TransformReport}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 
 import java.nio.file.Files
 
 class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
     DMat.fromRows(

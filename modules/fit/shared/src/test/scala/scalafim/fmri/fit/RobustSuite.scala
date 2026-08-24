@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
@@ -22,7 +24,7 @@ import scalafim.fmri.model.{
   ScaleScope
 }
 import scalafim.fmri.fit.fixtures.FmriregRobustFixtures
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -268,7 +270,7 @@ class RobustSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("robust-demo"), data, NeuroSpace(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("robust-demo"), data, SampleSpaces(Vector(1, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =
@@ -300,7 +302,7 @@ class RobustSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("robust-two-voxel-demo"), data, NeuroSpace(Vector(2, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("robust-two-voxel-demo"), data, SampleSpaces(Vector(2, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =
@@ -341,7 +343,7 @@ class RobustSuite extends munit.FunSuite:
     val frame = SamplingFrame(blockLens = Seq(arTime), tr = Seq(1.0))
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), ImageDMat.fromRows(robustArResponseRows), NeuroSpace(Vector(2, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("robust-ar-demo"), ImageDMat.fromRows(robustArResponseRows), SampleSpaces(Vector(2, 1, 1))),
         samplingFrame = frame
       )
     val eventModel =

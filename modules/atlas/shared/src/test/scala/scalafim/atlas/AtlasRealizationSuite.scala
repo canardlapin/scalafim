@@ -5,7 +5,7 @@ import locus4s.Bijection
 import locus4s.DomainRegistry
 import locus4s.TotalMap
 import ravel.DType.given
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.NeuroVolume
 import scalafim.image.SomeLabelVolume
 import scalafim.image.VolumeSpace
@@ -145,7 +145,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
       )
     val shifted =
       labelVolume(
-        NeuroSpace(
+        SampleSpaces(
           dims = Vector(2, 2, 1),
           origin = Some(Vector(10.0, 0.0, 0.0))
         )
@@ -211,7 +211,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
     )
 
   private def labelVolume(
-      space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))
+      space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))
   ): SomeLabelVolume[Int] =
     val sampleSpace = VolumeSpace(space).sampleSpace
     NeuroVolume

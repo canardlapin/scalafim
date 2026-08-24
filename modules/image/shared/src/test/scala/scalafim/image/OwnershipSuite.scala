@@ -6,7 +6,7 @@ import ravel.NDArray as RavelArray
 class OwnershipSuite extends munit.FunSuite:
 
   test("canonical array construction copies its input buffer") {
-    val space = VolumeSpace(NeuroSpace(Vector(2, 2, 1))).sampleSpace
+    val space = VolumeSpace(SampleSpaces(Vector(2, 2, 1))).sampleSpace
     val input = Array[Int](1, 2, 3, 4)
     val volume =
       NeuroVolume
@@ -18,7 +18,7 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("canonical ingress retains one Sampled and Ravel value") {
-    val space = VolumeSpace(NeuroSpace(Vector(2, 3, 2))).sampleSpace
+    val space = VolumeSpace(SampleSpaces(Vector(2, 3, 2))).sampleSpace
     val input =
       PrimitiveBuffers.tabulate[Int](12)(index => index + 1)
     val volume =
@@ -39,25 +39,25 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("dense compatibility geometry is the sampled SampleSpace itself") {
-    val volumeSpace = NeuroSpace(Vector(2, 3, 2))
+    val volumeSpace = SampleSpaces(Vector(2, 3, 2))
     val volume =
-      NeuroVol.fromRavel(
+      SomeLabelVolume.unsafeFromRavel(
         RavelArray.tabulate[Int](2, 3, 2)((i, j, k) => i + 10 * j + 100 * k),
         volumeSpace,
         "volume"
       )
     assert(
-      NeuroSpace.canonical(volume.space).eq(volume.sampled.sampleSpace),
-      clue = "NeuroVol.space must not retain or reconstruct geometry"
+      SampleSpaces.canonical(volume.space).eq(volume.sampled.sampleSpace),
+      clue = "SomeNeuroVolume.space must not retain or reconstruct geometry"
     )
     assert(
-      NeuroSpace.canonical(volumeSpace).eq(volume.sampled.sampleSpace),
+      SampleSpaces.canonical(volumeSpace).eq(volume.sampled.sampleSpace),
       clue = "ranked Ravel construction must reuse the admitted SampleSpace"
     )
 
     val seriesSpace = volumeSpace.addDim(2, Some(Axis.Time))
     val series =
-      NeuroVec.fromRavel(
+      SomeLabelSeries.unsafeFromRavel(
         RavelArray.tabulate[Int](2, 3, 2, 2) {
           (i, j, k, t) => i + 10 * j + 100 * k + 1000 * t
         },
@@ -66,22 +66,22 @@ class OwnershipSuite extends munit.FunSuite:
       )
     assert(
       series.asInstanceOf[AnyRef] eq series.sampled.asInstanceOf[AnyRef],
-      clue = "NeuroVec must be the Sampled value, not an allocating wrapper"
+      clue = "SomeNeuroSeries must be the Sampled value, not an allocating wrapper"
     )
     assert(
-      NeuroSpace.canonical(series.space).eq(series.sampled.sampleSpace),
-      clue = "NeuroVec.space must be a zero-wrapper compatibility name"
+      SampleSpaces.canonical(series.space).eq(series.sampled.sampleSpace),
+      clue = "SomeNeuroSeries.space must be a zero-wrapper compatibility name"
     )
     assert(
-      NeuroSpace.canonical(seriesSpace).eq(series.sampled.sampleSpace),
+      SampleSpaces.canonical(seriesSpace).eq(series.sampled.sampleSpace),
       clue = "series construction must reuse the admitted SampleSpace"
     )
   }
 
   test("series volume selection is a zero-copy Ravel view") {
-    val space = NeuroSpace(Vector(2, 2, 2, 3))
+    val space = SampleSpaces(Vector(2, 2, 2, 3))
     val series =
-      NeuroVec.copyFromCanonicalArray[Int](
+      SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](
         PrimitiveBuffers.tabulate[Int](24)(index => index + 1),
         space,
         "series"
@@ -120,18 +120,18 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("selected series retains one compact Ravel value and exact ordered support") {
-    val space = NeuroSpace(Vector(3, 1, 1, 2))
+    val space = SampleSpaces(Vector(3, 1, 1, 2))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space.spatialSpace),
+          VolumeSpace(space.spatialSpace).sampleSpace.grid,
           "ownership selected series",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val compact =
@@ -163,18 +163,18 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("ordered selected support survives time selection and dense roundtrips") {
-    val space = NeuroSpace(Vector(3, 1, 1, 3))
+    val space = SampleSpaces(Vector(3, 1, 1, 3))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space.spatialSpace),
+          VolumeSpace(space.spatialSpace).sampleSpace.grid,
           "ownership ordered selected series",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(2, 0)).toOption.get
     val compact =
@@ -232,8 +232,8 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("checked dense reconstruction reports shape failures") {
-    val space = NeuroSpace(Vector(2, 2, 1))
-    val result = NeuroVol.copyFromCanonicalArrayChecked(Array[Int](1, 2, 3), space)
+    val space = SampleSpaces(Vector(2, 2, 1))
+    val result = SomeNeuroVolume.copyFromCanonicalArray[Int, image4s.Categorical](Array[Int](1, 2, 3), space)
 
     assertEquals(
       result,
@@ -243,18 +243,18 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("selected-volume construction copies mutable ingress into immutable storage") {
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space),
+          VolumeSpace(space).sampleSpace.grid,
           "ownership selected volume",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val input = Array[Int](10, 20)
@@ -273,18 +273,18 @@ class OwnershipSuite extends munit.FunSuite:
   }
 
   test("selected windows add only a certified center to selected storage") {
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space),
+          VolumeSpace(space).sampleSpace.grid,
           "ownership selected window",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val input = Array[Int](10, 20)

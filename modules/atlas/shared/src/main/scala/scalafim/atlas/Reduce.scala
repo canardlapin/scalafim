@@ -52,10 +52,11 @@ object AtlasReduce:
       reducer: Array[Double] => Double = Reducers.mean
   ): Either[AtlasError, ParcelValues] =
     val realization = atlas.realization
+    val sampled = SomeNeuroVolume.sampled(data)
     realization.domain
-      .spatialField(data)
+      .spatialField(sampled)
       .left
-      .map(_ => nativeGridError(atlas, data.grid.shape))
+      .map(_ => nativeGridError(atlas, sampled.grid.shape))
       .map: field =>
         if sameReducer(reducer, Reducers.mean) ||
             sameReducer(reducer, Reducers.sum)
@@ -79,18 +80,25 @@ object AtlasReduce:
         EmptyParcelPolicy.Fill(Double.NaN)
   ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
     val realization = atlas.realization
+    val sampled = SomeNeuroSeries.sampled(data)
     for
       _ <- realization.domain
-        .seriesField(data)
+        .seriesField(sampled)
         .left
-        .map(_ => nativeGridError(atlas, data.grid.shape))
+        .map(_ => nativeGridError(atlas, sampled.grid.shape))
       maskField <- mask match
         case None => Right(None)
         case Some(value) =>
+          val valueShape = value.values.shape
           realization.domain
-            .spatialField(value)
+            .spatialField(SomeNeuroVolume.sampled(value))
             .left
-            .map(_ => nativeGridError(atlas, value.grid.shape))
+            .map(_ =>
+              nativeGridError(
+                atlas,
+                Vector(valueShape(0), valueShape(1), valueShape(2))
+              )
+            )
             .map(Some(_))
       reduced <- buildSeries(
         realization.parcellation,
@@ -180,8 +188,9 @@ object AtlasReduce:
     AtlasError,
     ParcelSeries[F, S, P, Double, Continuous]
   ] =
+    val sampled = SomeNeuroSeries.sampled(data)
     val parcelCount = parcellation.parcels.size
-    val timeCount = data.nonSpatialAxes.values.head.extent
+    val timeCount = sampled.nonSpatialAxes.values.head.extent
     val standard =
       sameReducer(reducer, Reducers.mean) ||
         sameReducer(reducer, Reducers.sum)
@@ -211,7 +220,7 @@ object AtlasReduce:
             val z = withinPlane % shape(2)
             var time = 0
             while time < timeCount do
-              val value = data.data(x, y, z, time)
+              val value = sampled.data(x, y, z, time)
               if !value.isNaN then
                 val output = parcelOrdinal * timeCount + time
                 sums(output) += value
@@ -250,15 +259,15 @@ object AtlasReduce:
                 val withinPlane = ordinal % plane
                 val y = withinPlane / shape(2)
                 val z = withinPlane % shape(2)
-                values(position) = data.data(x, y, z, time)
+                values(position) = sampled.data(x, y, z, time)
                 position += 1
               reducer(values)
         ParcelSeries
           .create(
             parcellation,
-            data.nonSpatialAxes.values.head,
+            sampled.nonSpatialAxes.values.head,
             output,
-            data.metadata
+            sampled.metadata
           )
           .left
           .map(error => AtlasError.InvalidReduction(error.message))
@@ -280,4 +289,4 @@ object AtlasReduce:
       left: Array[Double] => Double,
       right: Array[Double] => Double
   ): Boolean =
-    left.asInstanceOf[AnyRef] eq right.asInstanceOf[AnyRef]
+    left eq right

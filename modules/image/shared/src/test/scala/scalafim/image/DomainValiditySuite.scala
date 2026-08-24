@@ -5,19 +5,19 @@ import spire.std.int.given
 
 class DomainValiditySuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(3, 3, 1))
+  private val space = SampleSpaces(Vector(3, 3, 1))
   private val volumeSpace = VolumeSpace(space)
   private val packedDomain =
-    VolumeDomain
+    GridDomain
       .register(
-        volumeSpace,
+        volumeSpace.sampleSpace.grid,
         "domain validity voxels",
         locus4s.DomainRegistry.empty
       )
       .toOption
       .get
   private type Voxel = packedDomain.S
-  private val domain: VolumeDomain[Voxel] = packedDomain.value
+  private val domain = packedDomain.value
 
   test("selected windows validate that the selected center is the exact voxel") {
     val selection =

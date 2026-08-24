@@ -2,7 +2,7 @@ package scalafim.dataset.scenarios
 
 import scalafim.dataset.*
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace, VoxelCoord}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
 
@@ -137,7 +137,7 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
                   base + time.toDouble * 10.0 + 2.0
                 )
             ),
-            space = NeuroSpace(Vector(2, 1, 1)),
+            space = SampleSpaces(Vector(2, 1, 1)),
             metadata = DatasetMetadata(Map("session" -> sessionId))
           ),
           samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),

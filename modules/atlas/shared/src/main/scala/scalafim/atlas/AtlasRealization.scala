@@ -25,7 +25,7 @@ import locus4s.TotalMapError
 import locus4s.data.Field
 import locus4s.data.FieldConstructionError
 import locus4s.data.VectorField
-import scalafim.image.AnyNeuroVolume
+import scalafim.image.SomeNeuroVolume
 import scalafim.image.SomeLabelVolume
 import scalafim.image.VolumeParcellation
 import scalafim.image.VolumeParcellationError
@@ -210,12 +210,12 @@ object AtlasRealization:
       registry: DomainRegistry,
       atlasRef: AtlasRef,
       regions: RegionIndex,
-      labels: AnyNeuroVolume[Int],
+      labels: SomeLabelVolume[Int],
       atlasProvenance: AtlasProvenance
   ): Either[AtlasRealizationError, VolumeAtlasRealization] =
     GridDomain
       .register(
-        labels.grid,
+        SomeNeuroVolume.sampled(labels).grid,
         s"${atlasRef.name} voxels",
         registry
       )
@@ -253,7 +253,7 @@ object AtlasRealization:
       atlasRef: AtlasRef,
       regions: RegionIndex,
       gridDomain: GridDomain[F0, D3, S],
-      labels: AnyNeuroVolume[Int],
+      labels: SomeLabelVolume[Int],
       atlasProvenance: AtlasProvenance
   ): Either[AtlasRealizationError, VolumeAtlasRealization] =
     for
@@ -264,7 +264,7 @@ object AtlasRealization:
         AtlasRepresentation.Volume
       )
       labelField <- gridDomain
-        .spatialField(labels)
+        .spatialField(SomeNeuroVolume.sampled(labels))
         .left
         .map(AtlasRealizationError.GridDomain.apply)
       parcelResolution <- AtlasParcelDomain
@@ -294,7 +294,7 @@ object AtlasRealization:
           gridDomain,
           assignmentValue,
           metadataField,
-          labels.metadata
+          SomeNeuroVolume.sampled(labels).metadata
         )
         .left
         .map(AtlasRealizationError.Parcellation.apply)

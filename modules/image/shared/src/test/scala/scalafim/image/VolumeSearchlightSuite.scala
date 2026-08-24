@@ -1,6 +1,6 @@
 package scalafim.image
 
-import VolumeDomain.*
+import GridDomainOps.*
 import locus4s.DomainRegistry
 import locus4s.Relation
 import ravel.NDArray
@@ -8,17 +8,17 @@ import spire.std.int.given
 
 class VolumeSearchlightSuite extends munit.FunSuite:
   private val volumeSpace =
-    VolumeSpace(NeuroSpace(Vector(3, 3, 1)))
+    VolumeSpace(SampleSpaces(Vector(3, 3, 1)))
   private val packedDomain =
     right(
-      VolumeDomain.register(
-        volumeSpace,
+      GridDomain.register(
+        volumeSpace.sampleSpace.grid,
         "searchlight voxels",
         DomainRegistry.empty
       )
     )
   private type S = packedDomain.S
-  private val domain: VolumeDomain[S] = packedDomain.value
+  private val domain = packedDomain.value
 
   test("radius zero is the identity relation"):
     val radius = SearchlightRadius.make(0.0).toOption.get
@@ -110,7 +110,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
     while i < values.length do
       values(i) = i + 1
       i += 1
-    val volume = NeuroVol.copyFromCanonicalArray[Int](values, volumeSpace.toNeuroSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace.toSampleSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
@@ -134,7 +134,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
   test("value support restricts materialization without changing metric geometry"):
     val values = PrimitiveBuffers.fillConst[Int](volumeSpace.nVoxels, 1)
     values(1) = 0
-    val volume = NeuroVol.copyFromCanonicalArray[Int](values, volumeSpace.toNeuroSpace)
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](values, volumeSpace.toSampleSpace)
     val field = domain.fieldOf(volume).toOption.get
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight = ExactVolumeSearchlight.metricBalls(domain, radius).toOption.get
@@ -170,7 +170,7 @@ class VolumeSearchlightSuite extends munit.FunSuite:
         .fold(error => fail(error.message), identity)
     val field =
       domain
-        .spatialField(native)
+        .spatialField(native.sampled)
         .fold(error => fail(error.message), identity)
     val radius = SearchlightRadius.make(1.0).toOption.get
     val searchlight =

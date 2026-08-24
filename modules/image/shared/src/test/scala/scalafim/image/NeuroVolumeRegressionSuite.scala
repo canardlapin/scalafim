@@ -3,21 +3,21 @@ package scalafim.image
 import Ops.*
 import spire.std.double.given
 
-class NeuroVolRegressionSuite extends munit.FunSuite:
+class NeuroVolumeRegressionSuite extends munit.FunSuite:
 
   test("selected-volume scatter preserves indices and explicit fill") {
-    val sp = NeuroSpace(Vector(3, 3, 3))
+    val sp = SampleSpaces(Vector(3, 3, 3))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "selected volume scatter regression",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection
         .fromOrdinals(domain.space, Vector(1, 4, 9))
@@ -39,43 +39,43 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     assertEquals(out.sum, 6.0, clue = "")
   }
 
-  test("NeuroVol.asLogical flags all non-zero values") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
+  test("SomeNeuroVolume.asLogical flags all non-zero values") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
     val m = vol.asLogical
     val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, true, true, false), clue = "")
   }
 
-  test("NeuroVol.asMask flags positive values only") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
+  test("SomeNeuroVolume.asMask flags positive values only") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](0.0, -1.0, 2.0, 0.0), sp)
     val m = vol.asMask
     val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, false, true, false), clue = "")
   }
 
-  test("NeuroVol.asMask(indices) sets specified indices true") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](4, 0.0), sp)
+  test("SomeNeuroVolume.asMask(indices) sets specified indices true") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](4, 0.0), sp)
     val m = vol.asMask(Array[Int](1, 3))
     val flags = Vector.tabulate(m.copyToCanonicalArray.length)(i => m.copyToCanonicalArray(i))
     assertEquals(flags, Vector(false, true, false, true), clue = "")
   }
 
   test("native volume gather and scatter roundtrip on an exact selection") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "selected volume roundtrip regression",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val sampleSpace =
       image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
     val volume =
@@ -106,18 +106,18 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("dense semantic masks convert explicitly to and from exact regions") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "mask region regression",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val region =
       locus4s.Region.fromOrdinals(domain.space, Vector(1, 3)).toOption.get
     val mask = Mask.fromRegion(domain, region).toOption.get
@@ -127,11 +127,11 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("exact selection rejects out-of-range voxel ordinals") {
-    val sp = NeuroSpace(Vector(2, 2, 2))
+    val sp = SampleSpaces(Vector(2, 2, 2))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "selection bounds regression",
           locus4s.DomainRegistry.empty
         )
@@ -142,18 +142,18 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("selected-volume construction rejects mismatched data and support lengths") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "selected shape regression",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0)).toOption.get
 
@@ -168,9 +168,9 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     )
   }
 
-  test("NeuroVol.asMatrix matches linear ordering") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 3, 4), sp)
+  test("SomeNeuroVolume.asMatrix matches linear ordering") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array[Int](1, 2, 3, 4), sp)
     val m = vol.asMatrix
     assertEquals(
       Vector.tabulate(m.shape.rank)(m.shape.apply),
@@ -182,8 +182,8 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("mapValues maps label ids with numeric keys and defaults missing to 0") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
 
     val out = vol.mapValues(Map(1 -> 10, 2 -> 20), default = 0)
     val vals = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i)).distinct.sorted
@@ -195,8 +195,8 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("mapValues accepts string keys when parseable and rejects non-numeric keys") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array[Int](1, 2, 1, 2), sp)
 
     val out = vol.mapValues(Map("1" -> 10, "2" -> 20), default = 0)
     val vals = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i)).distinct.sorted
@@ -208,9 +208,9 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("mapf produces expected size and respects mask") {
-    val sp = NeuroSpace(Vector(5, 5, 5))
+    val sp = SampleSpaces(Vector(5, 5, 5))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](nels, 1.0), sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](nels, 1.0), sp)
 
     val kdim = Vector(3, 3, 3)
     val ker = Kernel3D(kdim, vdim = Vector(1.0, 1.0, 1.0)) { d =>
@@ -221,7 +221,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     val center = Vector(2, 2, 2)
     val centerLin = Indexing.gridToIndex3D(sp.spatialDims, center(0), center(1), center(2))
     maskFlags(centerLin) = true
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, sp)
+    val mask = SomeMaskVolume.unsafeCopyFromCanonicalArray(maskFlags, sp)
 
     val out = SpatialFilters.mapf(vol, ker, mask = Some(mask))
     assertEquals(out.space.dims, vol.space.dims, clue = "")
@@ -231,19 +231,19 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
   }
 
   test("selected-volume gather extracts values at exact voxel coordinates") {
-    val sp = NeuroSpace(Vector(4, 4, 4))
+    val sp = SampleSpaces(Vector(4, 4, 4))
     val nels = sp.spatialDims.product
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "coordinate gather regression",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val sampleSpace =
       image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
     val volume =
@@ -275,28 +275,28 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
     assertEquals(got, exp, clue = "")
   }
 
-  test("NeuroVol.toVec produces a 4D NeuroVec with one volume") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
-    val vec = vol.toVec
+  test("SomeNeuroVolume.toSeries produces a 4D SomeNeuroSeries with one volume") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
+    val vec = vol.toSeries
     assertEquals(vec.space.dims, Vector(2, 2, 1, 1), clue = "")
     val v0 = vec.volume(0)
     val got = Vector.tabulate(v0.copyToCanonicalArray.length)(i => v0.copyToCanonicalArray(i))
     assertEquals(got, Vector(1.0, 2.0, 3.0, 4.0), clue = "")
   }
 
-  test("NeuroVol.concat stacks volumes along time into a NeuroVec") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val v1 = NeuroVol.copyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
-    val v2 = NeuroVol.copyFromCanonicalArray[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp)
-    val vec = v1.concat(v2)
+  test("SomeNeuroVolume.concatenate stacks volumes along time into a SomeNeuroSeries") {
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val v1 = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](1.0, 2.0, 3.0, 4.0), sp)
+    val v2 = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp)
+    val vec = v1.concatenate(v2)
     assertEquals(vec.space.dims, Vector(2, 2, 1, 2), clue = "")
     val lin = Vector.tabulate(vec.copyToCanonicalArray.length)(i => vec.copyToCanonicalArray(i))
     assertEquals(lin, Vector(1.0, 10.0, 2.0, 20.0, 3.0, 30.0, 4.0, 40.0), clue = "")
   }
 
-  test("NeuroVol planes are zero-copy singleton-D3 image views") {
-    val sp = NeuroSpace(Vector(2, 2, 3))
+  test("SomeNeuroVolume planes are zero-copy singleton-D3 image views") {
+    val sp = SampleSpaces(Vector(2, 2, 3))
     val nx = sp.dims(0); val ny = sp.dims(1); val nz = sp.dims(2)
     val data = PrimitiveBuffers.ofSize[Double](nx * ny * nz)
     var z = 0
@@ -311,7 +311,7 @@ class NeuroVolRegressionSuite extends munit.FunSuite:
         y += 1
       z += 1
 
-    val vol = NeuroVol.copyFromCanonicalArray[Double](data, sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](data, sp)
     val planes =
       Vector.tabulate(nz): index =>
         vol

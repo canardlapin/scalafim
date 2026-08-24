@@ -1,10 +1,12 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.model.{FitEngine, FitSummary}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class ResultArtifactsSuite extends munit.FunSuite:
@@ -181,7 +183,7 @@ class ResultArtifactsSuite extends munit.FunSuite:
   }
 
   private def shape: DatasetShape =
-    DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), timepoints = 4)
+    DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), timepoints = 4)
 
   private def denseResult(): DenseFmriFitResult =
     val covariance =

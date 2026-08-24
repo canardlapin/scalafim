@@ -3,7 +3,7 @@ package scalafim.fmri.motion.io
 import bids4s.*
 import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
-import scalafim.image.NeuroVec
+import scalafim.image.*
 
 import java.nio.file.{Path, Paths}
 
@@ -52,7 +52,7 @@ object MotionBids:
       )
     )
 
-  def loadRun(scan: MotionBidsScan): Either[MotionIoError, NeuroVec[Double]] =
+  def loadRun(scan: MotionBidsScan): Either[MotionIoError, SomeScalarSeries[Double]] =
     MotionNiftiIo.readRun(scan.path)
 
   private def scans(project: BidsProject, files: Vector[BidsFile]): Either[MotionIoError, Vector[MotionBidsScan]] =

@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace, SpatialAxis, VoxelCoord}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialAxis, VoxelCoord}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.DoubleMatrix
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
@@ -20,7 +21,7 @@ class FieldApiSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(SamplingGeometry.volume(NeuroSpace(dims, trans = Some(DMat.eye(4)))))
+    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String): Domain =

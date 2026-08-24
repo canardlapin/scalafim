@@ -1,14 +1,16 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, Mask, NeuroSpace, NeuroVol, PrimitiveBuffers}
+import scalafim.image.{SampleSpaces, DMat, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
+import scalafim.image.SampleSpaces.*
+import scalafim.image.valueAtCanonicalOrdinal
 import scalafim.linalg.{CsrMatrix, DoubleMatrix, LinearMapError, SparseTriplets}
 import scalafim.surface.*
 
 class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(3, 3, 3))
+  private val space = SampleSpaces(Vector(3, 3, 3))
   private val volume =
-    NeuroVol.copyFromCanonicalArray(
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
@@ -33,7 +35,7 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
       case Right(value) => value
       case Left(error) => fail(error.message)
 
-  private def volumeDomain(mask: Option[NeuroVol[Boolean]] = None): Domain =
+  private def volumeDomain(mask: Option[SomeMaskVolume] = None): Domain =
     val id = value(DomainId("volume"))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality("bold"))

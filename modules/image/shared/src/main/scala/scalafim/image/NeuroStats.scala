@@ -10,8 +10,6 @@ import ravel.DType
 import ravel.NDArray as RavelArray
 import spire.algebra.Order
 
-import VolumeDomain.*
-
 object NeuroStats:
 
   final case class ScalarSummary(
@@ -28,7 +26,7 @@ object NeuroStats:
   ):
     def range: (Double, Double) = (min, max)
 
-  final case class NeuroVolSummary(
+  final case class NeuroVolumeSummary(
     kind: String,
     dims: Vector[Int],
     spacing: Vector[Double],
@@ -37,7 +35,7 @@ object NeuroStats:
     stats: ScalarSummary
   )
 
-  final case class NeuroVecSummary(
+  final case class NeuroSeriesSummary(
     kind: String,
     dims: Vector[Int],
     spacing: Vector[Double],
@@ -102,12 +100,12 @@ object NeuroStats:
           math.sqrt(math.max(0.0, variance))
       ScalarSummary(n, missing, sum, product, min, max, mean, sd, zeros, nonZeros)
 
-  def summarize(vol: NeuroVol[Double]): NeuroVolSummary =
+  def summarize(vol: SomeScalarVolume[Double]): NeuroVolumeSummary =
     summarize(vol, naRm = true)
 
-  def summarize(vol: NeuroVol[Double], naRm: Boolean): NeuroVolSummary =
-    NeuroVolSummary(
-      kind = "NeuroVol",
+  def summarize(vol: SomeScalarVolume[Double], naRm: Boolean): NeuroVolumeSummary =
+    NeuroVolumeSummary(
+      kind = "SomeNeuroVolume",
       dims = vol.space.spatialDims,
       spacing = vol.space.spacing,
       origin = vol.space.origin,
@@ -121,15 +119,15 @@ object NeuroStats:
 
   def summarize[F <: Frame[D3], S](
       volume: SelectedVolume[F, S, Double, Continuous]
-  ): NeuroVolSummary =
+  ): NeuroVolumeSummary =
     summarize(volume, naRm = true)
 
   def summarize[F <: Frame[D3], S](
       volume: SelectedVolume[F, S, Double, Continuous],
       naRm: Boolean
-  ): NeuroVolSummary =
-    val space = volume.domain.volumeSpace.toNeuroSpace
-    NeuroVolSummary(
+  ): NeuroVolumeSummary =
+    val space = volume.domain.volumeSpace.toSampleSpace
+    NeuroVolumeSummary(
       kind = "SelectedVolume",
       dims = space.spatialDims,
       spacing = space.spacing,
@@ -142,12 +140,12 @@ object NeuroStats:
       )
     )
 
-  def summarize(vec: NeuroVec[Double]): NeuroVecSummary =
+  def summarize(vec: SomeScalarSeries[Double]): NeuroSeriesSummary =
     summarize(vec, naRm = true)
 
-  def summarize(vec: NeuroVec[Double], naRm: Boolean): NeuroVecSummary =
+  def summarize(vec: SomeScalarSeries[Double], naRm: Boolean): NeuroSeriesSummary =
     summarizeVec(
-      "NeuroVec",
+      "SomeNeuroSeries",
       vec.space,
       vec.values.size,
       vec.valueAtCanonicalOrdinal,
@@ -158,14 +156,14 @@ object NeuroStats:
 
   def summarize[F <: Frame[D3], S](
       series: SelectedSeries[F, S, Double, Continuous]
-  ): NeuroVecSummary =
+  ): NeuroSeriesSummary =
     summarize(series, naRm = true)
 
   def summarize[F <: Frame[D3], S](
       series: SelectedSeries[F, S, Double, Continuous],
       naRm: Boolean
-  ): NeuroVecSummary =
-    val space = series.domain.volumeSpace.toNeuroSpace.addDim(
+  ): NeuroSeriesSummary =
+    val space = series.domain.volumeSpace.toSampleSpace.addDim(
       series.nTime,
       Some(Axis.Time)
     )
@@ -178,7 +176,7 @@ object NeuroStats:
       naRm
     )
 
-  def temporalMean(vec: NeuroVec[Double]): NeuroVol[Double] =
+  def temporalMean(vec: SomeScalarSeries[Double]): SomeScalarVolume[Double] =
     val shape = vec.space.spatialDims
     val tLen = vec.nVolumes
     val out =
@@ -203,7 +201,7 @@ object NeuroStats:
             y += 1
           x += 1
 
-    NeuroVol.fromRavel(out, vec.space.spatialSpace, vec.label)
+    SomeNeuroVolume.unsafeFromRavel(out, vec.space.spatialSpace, vec.label)
 
   def temporalMean[F <: Frame[D3], S](
       series: SelectedSeries[F, S, Double, Continuous]
@@ -235,13 +233,13 @@ object NeuroStats:
 
   private def summarizeVec(
     kind: String,
-    space: NeuroSpace,
+    space: SomeSampleSpace,
     dataLength: Int,
     valueAt: Int => Double,
     tLen: Int,
     spatialNels: Int,
     naRm: Boolean
-  ): NeuroVecSummary =
+  ): NeuroSeriesSummary =
     val global = summarizeIndexed(dataLength, valueAt, naRm)
     var nonZero = 0
     var minimumMean = Double.PositiveInfinity
@@ -272,7 +270,7 @@ object NeuroStats:
         if sd > maximumSd then maximumSd = sd
       lin += 1
 
-    NeuroVecSummary(
+    NeuroSeriesSummary(
       kind = kind,
       dims = space.dims.take(4),
       spacing = space.spacing,
@@ -288,12 +286,12 @@ object NeuroStats:
 
   private def summarizeSparseVec(
     kind: String,
-    space: NeuroSpace,
+    space: SomeSampleSpace,
     tLen: Int,
     nColumns: Int,
     valueAt: (Int, Int) => Double,
     naRm: Boolean
-  ): NeuroVecSummary =
+  ): NeuroSeriesSummary =
     val global =
       summarizeIndexed(
         tLen * nColumns,
@@ -329,7 +327,7 @@ object NeuroStats:
         if sd > maximumSd then maximumSd = sd
       col += 1
 
-    NeuroVecSummary(
+    NeuroSeriesSummary(
       kind = kind,
       dims = space.dims.take(4),
       spacing = space.spacing,
@@ -343,7 +341,7 @@ object NeuroStats:
       totalVoxels = space.spatialDims.product
     )
 
-  private def orientation(space: NeuroSpace): String =
+  private def orientation(space: SomeSampleSpace): String =
     space.axes.spatialAxes.map(_.toString).mkString(" / ")
 
 object NeuroCompare:
@@ -351,20 +349,20 @@ object NeuroCompare:
   enum Predicate:
     case LT, LTE, GT, GTE, EQV, NEQ
 
-  def compare[A: Order](x: NeuroVol[A], y: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
+  def compare[A: Order, Sem](x: SomeNeuroVolume[A, Sem], y: SomeNeuroVolume[A, Sem], predicate: Predicate): SomeMaskVolume =
     requireSameSpace(x.space, y.space)
     val shape = x.space.spatialDims
     val out =
       RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
         (i, j, k) => test(x(i, j, k), y(i, j, k), predicate)
-    NeuroVol.fromRavel(out, x.space, x.label)
+    SomeNeuroVolume.unsafeFromRavel(out, x.space, x.label)
 
-  def compare[A: Order](x: NeuroVol[A], scalar: A, predicate: Predicate): NeuroVol[Boolean] =
+  def compare[A: Order, Sem](x: SomeNeuroVolume[A, Sem], scalar: A, predicate: Predicate): SomeMaskVolume =
     val shape = x.space.spatialDims
     val out =
       RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
         (i, j, k) => test(x(i, j, k), scalar, predicate)
-    NeuroVol.fromRavel(out, x.space, x.label)
+    SomeNeuroVolume.unsafeFromRavel(out, x.space, x.label)
 
   def compare[F <: Frame[D3], S, A: Order, Sem](
       volume: SelectedVolume[F, S, A, Sem],
@@ -392,15 +390,15 @@ object NeuroCompare:
         test(scalar, value, predicate)
     )
 
-  def compare[A: Order](scalar: A, x: NeuroVol[A], predicate: Predicate): NeuroVol[Boolean] =
+  def compare[A: Order, Sem](scalar: A, x: SomeNeuroVolume[A, Sem], predicate: Predicate): SomeMaskVolume =
     val shape = x.space.spatialDims
     val out =
       RavelArray.tabulate[Boolean](shape(0), shape(1), shape(2)):
         (i, j, k) => test(scalar, x(i, j, k), predicate)
-    NeuroVol.fromRavel(out, x.space, x.label)
+    SomeNeuroVolume.unsafeFromRavel(out, x.space, x.label)
 
-  @scala.annotation.targetName("compareNeuroVecPair")
-  def compare[A: Order](x: NeuroVec[A], y: NeuroVec[A], predicate: Predicate): NeuroVec[Boolean] =
+  @scala.annotation.targetName("compareNeuroSeriesPair")
+  def compare[A: Order, Sem](x: SomeNeuroSeries[A, Sem], y: SomeNeuroSeries[A, Sem], predicate: Predicate): SomeMaskSeries =
     requireSameSpace(x.space, y.space)
     val shape = x.space.spatialDims
     val out =
@@ -410,10 +408,10 @@ object NeuroCompare:
         shape(2),
         x.nVolumes
       )((i, j, k, t) => test(x(i, j, k, t), y(i, j, k, t), predicate))
-    NeuroVec.fromRavel(out, x.space, x.label)
+    SomeNeuroSeries.unsafeFromRavel(out, x.space, x.label)
 
-  @scala.annotation.targetName("compareNeuroVecScalar")
-  def compare[A: Order](x: NeuroVec[A], scalar: A, predicate: Predicate): NeuroVec[Boolean] =
+  @scala.annotation.targetName("compareNeuroSeriesScalar")
+  def compare[A: Order, Sem](x: SomeNeuroSeries[A, Sem], scalar: A, predicate: Predicate): SomeMaskSeries =
     val shape = x.space.spatialDims
     val out =
       RavelArray.tabulate[Boolean](
@@ -422,24 +420,24 @@ object NeuroCompare:
         shape(2),
         x.nVolumes
       )((i, j, k, t) => test(x(i, j, k, t), scalar, predicate))
-    NeuroVec.fromRavel(out, x.space, x.label)
+    SomeNeuroSeries.unsafeFromRavel(out, x.space, x.label)
 
-  def gt[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
+  def gt[A: Order, Sem](x: SomeNeuroVolume[A, Sem], scalar: A): SomeMaskVolume =
     compare(x, scalar, Predicate.GT)
 
-  def lt[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
+  def lt[A: Order, Sem](x: SomeNeuroVolume[A, Sem], scalar: A): SomeMaskVolume =
     compare(x, scalar, Predicate.LT)
 
-  def gte[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
+  def gte[A: Order, Sem](x: SomeNeuroVolume[A, Sem], scalar: A): SomeMaskVolume =
     compare(x, scalar, Predicate.GTE)
 
-  def lte[A: Order](x: NeuroVol[A], scalar: A): NeuroVol[Boolean] =
+  def lte[A: Order, Sem](x: SomeNeuroVolume[A, Sem], scalar: A): SomeMaskVolume =
     compare(x, scalar, Predicate.LTE)
 
-  def eqv[A: Order](x: NeuroVol[A], y: NeuroVol[A]): NeuroVol[Boolean] =
+  def eqv[A: Order, Sem](x: SomeNeuroVolume[A, Sem], y: SomeNeuroVolume[A, Sem]): SomeMaskVolume =
     compare(x, y, Predicate.EQV)
 
-  def neq[A: Order](x: NeuroVol[A], y: NeuroVol[A]): NeuroVol[Boolean] =
+  def neq[A: Order, Sem](x: SomeNeuroVolume[A, Sem], y: SomeNeuroVolume[A, Sem]): SomeMaskVolume =
     compare(x, y, Predicate.NEQ)
 
   private def test[A: Order](left: A, right: A, predicate: Predicate): Boolean =
@@ -452,5 +450,5 @@ object NeuroCompare:
       case Predicate.EQV => ord.eqv(left, right)
       case Predicate.NEQ => !ord.eqv(left, right)
 
-  private def requireSameSpace(a: NeuroSpace, b: NeuroSpace): Unit =
+  private def requireSameSpace(a: SomeSampleSpace, b: SomeSampleSpace): Unit =
     GridCompatibility.requireExact(a, b)

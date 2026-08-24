@@ -14,7 +14,7 @@ class SliceGeometrySuite extends munit.FunSuite:
 
   private def axisAlignedSpace: VolumeSpace =
     VolumeSpace(
-      NeuroSpace(
+      SampleSpaces(
         Vector(4, 3, 2),
         trans = Some(
           DMat.fromRows(
@@ -135,7 +135,7 @@ class SliceGeometrySuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    val space = VolumeSpace(NeuroSpace(Vector(5, 4, 3), trans = Some(affine)))
+    val space = VolumeSpace(SampleSpaces(Vector(5, 4, 3), trans = Some(affine)))
     val cursor = space.voxelToWorld(VoxelPoint(2.0, 1.5, 1.0))
 
     AnatomicalPlane.values.foreach { anatomicalPlane =>

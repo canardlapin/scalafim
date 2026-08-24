@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.{DMat, Matrix}
-import scalafim.image.{Mask, NeuroSpace, NeuroVol}
+import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdCoreSuite extends munit.FunSuite:
 
@@ -23,8 +23,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("masked field gathers finite voxels and applies tail transform") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val stat = NeuroVol.copyFromCanonicalArray[Double](Array(1.0, -2.0, Double.NaN, 4.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val stat = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, -2.0, Double.NaN, 4.0), sp)
     val field = value(MaskedField.fromVolume(stat, Tail.TwoSided))
 
     assertEquals(field.size, 3)
@@ -34,8 +34,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("statistic maps separate evidence orientation from threshold alternative") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val evidence = NeuroVol.copyFromCanonicalArray[Double](Array(1.0, 2.0, 0.5, 3.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val evidence = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, 2.0, 0.5, 3.0), sp)
     val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
     val field = value(MaskedField.fromStatisticMap(statistic, ThresholdAlternative.Greater))
 
@@ -49,8 +49,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("unsigned statistic maps reject negative evidence inside the mask") {
-    val sp = NeuroSpace(Vector(2, 1, 1))
-    val evidence = NeuroVol.copyFromCanonicalArray[Double](Array(1.0, -0.1), sp)
+    val sp = SampleSpaces(Vector(2, 1, 1))
+    val evidence = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, -0.1), sp)
     val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
 
     assertEquals(
@@ -60,8 +60,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("masked field rejects non-finite values inside an explicit mask") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val stat = NeuroVol.copyFromCanonicalArray[Double](Array(1.0, -2.0, Double.NaN, 4.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val stat = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, -2.0, Double.NaN, 4.0), sp)
     val mask = Mask.fromIndices(sp, Array(2))
 
     assertEquals(
@@ -101,8 +101,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("scoring input ties a masked field, priors, and region for typed scores") {
-    val sp = NeuroSpace(Vector(3, 1, 1))
-    val stat = NeuroVol.copyFromCanonicalArray[Double](Array(1.0, 2.0, 3.0), sp)
+    val sp = SampleSpaces(Vector(3, 1, 1))
+    val stat = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, 2.0, 3.0), sp)
     val field = value(MaskedField.fromVolume(stat))
     val priors = value(PriorWeights.uniform(field.size))
     val root = value(Octree.root(field, priors))
@@ -169,9 +169,9 @@ class ThresholdCoreSuite extends munit.FunSuite:
   }
 
   test("octree root and split use mask-space coordinates and prior mass") {
-    val sp = NeuroSpace(Vector(2, 2, 2))
+    val sp = SampleSpaces(Vector(2, 2, 2))
     val stat =
-      NeuroVol.copyFromCanonicalArray[Double](
+      SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](
         Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0),
         sp
       )

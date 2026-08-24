@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{PrimitiveBuffers, NeuroSpace, NeuroVol}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 class HierScanSuite extends munit.FunSuite:
 
@@ -89,8 +89,8 @@ class HierScanSuite extends munit.FunSuite:
       minPriorMass = 0.0
     )
 
-  private def volume(dims: Vector[Int], data: Array[Double]): NeuroVol[Double] =
-    NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(data), NeuroSpace(dims))
+  private def volume(dims: Vector[Int], data: Array[Double]): SomeScalarVolume[Double] =
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
 
   private final class FixedNullDraw(rows: Vector[Array[Double]]) extends NullDraw:
     override val nPermutations: PermutationCount =

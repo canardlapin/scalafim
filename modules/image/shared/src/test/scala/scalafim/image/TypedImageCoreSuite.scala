@@ -65,7 +65,7 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("VolumeSpace and SeriesSpace distinguish exact 3D and 4D spaces") {
-    val volume = VolumeSpace(NeuroSpace(Vector(2, 3, 4), trans = Some(affineMatrix)))
+    val volume = VolumeSpace(SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix)))
     val series = volume.addTime(5)
 
     assertEquals(volume.shape, SpatialDims(2, 3, 4), clue = "")
@@ -75,25 +75,25 @@ class TypedImageCoreSuite extends munit.FunSuite:
       Right(()),
       clue = ""
     )
-    assert(VolumeSpace.make(series.toNeuroSpace).isLeft, clue = "4D space should not be a VolumeSpace")
-    assert(SeriesSpace.make(volume.toNeuroSpace).isLeft, clue = "3D space should not be a SeriesSpace")
+    assert(VolumeSpace.make(series.toSampleSpace).isLeft, clue = "4D space should not be a VolumeSpace")
+    assert(SeriesSpace.make(volume.toSampleSpace).isLeft, clue = "3D space should not be a SeriesSpace")
     assert(
-      volume.asInstanceOf[AnyRef] eq volume.toNeuroSpace.asInstanceOf[AnyRef],
+      volume.asInstanceOf[AnyRef] eq volume.toSampleSpace.asInstanceOf[AnyRef],
       clue = "VolumeSpace must be a zero-allocation refinement"
     )
     assert(
-      series.asInstanceOf[AnyRef] eq series.toNeuroSpace.asInstanceOf[AnyRef],
+      series.asInstanceOf[AnyRef] eq series.toSampleSpace.asInstanceOf[AnyRef],
       clue = "SeriesSpace must be a zero-allocation refinement"
     )
   }
 
   test("non-spatial refinements retain the exact image4s grid and frame") {
-    val volume = NeuroSpace(Vector(2, 3, 4), trans = Some(affineMatrix))
-    val volumeCanonical = NeuroSpace.canonical(volume)
+    val volume = SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix))
+    val volumeCanonical = SampleSpaces.canonical(volume)
     val series = volume.addDim(5, Some(Axis.Time))
-    val seriesCanonical = NeuroSpace.canonical(series)
+    val seriesCanonical = SampleSpaces.canonical(series)
     val roundTrip = series.dropDim(3)
-    val roundTripCanonical = NeuroSpace.canonical(roundTrip)
+    val roundTripCanonical = SampleSpaces.canonical(roundTrip)
 
     assert(volumeCanonical.grid eq seriesCanonical.grid)
     assert(volumeCanonical.grid.frame eq seriesCanonical.grid.frame)
@@ -107,21 +107,21 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("image4s Sampled backs singleton-D3 plane, volume, and series views") {
-    val volumeSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(affineMatrix))
-    val volume = NeuroVol.copyFromCanonicalArray[Int](Array(10, 20), volumeSpace, "vol")
-    val mapped = volume.map(_ + 1)
-    val series = volume.toVec
+    val volumeSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(affineMatrix))
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array(10, 20), volumeSpace, "vol")
+    val mapped = volume.mapValues[Int, image4s.Categorical](_ + 1)
+    val series = volume.toSeries
     val plane =
       volume
         .plane(SpatialAxis.Z, 0)
         .fold(error => fail(error.message), identity)
 
-    assertEquals(volume.typedSpace.toNeuroSpace, volumeSpace, clue = "")
+    assertEquals(volume.typedSpace.toSampleSpace, volumeSpace, clue = "")
     assertEquals(volume.label, "vol", clue = "")
     assertEquals(volume.sampled.metadata.label, "vol", clue = "")
     assertEquals(volume.ndim, 3, clue = "")
     assertEquals(mapped.valueAtCanonicalOrdinal(1), 21, clue = "")
-    assertEquals(series.typedSpace.toNeuroSpace.ndim, 4, clue = "")
+    assertEquals(series.typedSpace.toSampleSpace.ndim, 4, clue = "")
     assertEquals(
       GridCompatibility.exact(series.volume(0).space, volume.space),
       Right(()),
@@ -149,18 +149,18 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("regions canonicalize support while ordered selections reject duplicates") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space),
+          VolumeSpace(space).sampleSpace.grid,
           "typed region selection",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val region =
       locus4s.Region
         .fromOrdinals(domain.space, Vector(2, 0, 2))
@@ -181,18 +181,18 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("exact grid indices validate coordinates before selected extraction") {
-    val space = NeuroSpace(Vector(3, 1, 1), trans = Some(affineMatrix))
+    val space = SampleSpaces(Vector(3, 1, 1), trans = Some(affineMatrix))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(space),
+          VolumeSpace(space).sampleSpace.grid,
           "typed coordinate selection",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val sampleSpace =

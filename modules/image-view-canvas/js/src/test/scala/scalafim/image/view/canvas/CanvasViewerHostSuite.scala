@@ -8,10 +8,10 @@ import scalafim.image.view.*
 
 class CanvasViewerHostSuite extends munit.FunSuite:
 
-  private val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
-  private val volume = NeuroVol.copyFromCanonicalArray(
+  private val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
+  private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
     PrimitiveBuffers.tabulate[Double](space.nVoxels)(_.toDouble),
-    space.toNeuroSpace,
+    space.toSampleSpace,
     "canvas"
   )
   private val layer = SliceLayer(

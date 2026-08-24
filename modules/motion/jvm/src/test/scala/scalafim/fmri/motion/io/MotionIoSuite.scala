@@ -255,21 +255,21 @@ class MotionIoSuite extends munit.FunSuite:
     Files.createDirectories(path.getParent)
     Files.writeString(path, text)
 
-  private def tinyRun(affine: DMat): NeuroVec[Double] =
+  private def tinyRun(affine: DMat): SomeScalarSeries[Double] =
     val spatial =
-      NeuroSpace(
+      SampleSpaces(
         Vector(2, 1, 2),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0)),
         trans = Some(affine)
       )
     val data = PrimitiveBuffers.tabulate[Double](2 * 1 * 2 * 2)(i => i.toDouble + 0.25)
-    NeuroVec.copyFromCanonicalArray(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, spatial.addDim(2, Some(Axis.Time)), "motion-io-fixture")
 
-  private def estimatorRun(): NeuroVec[Double] =
+  private def estimatorRun(): SomeScalarSeries[Double] =
     val dims = Vector(7, 5, 5)
     val nxyz = dims.product
-    val space = NeuroSpace(dims)
+    val space = SampleSpaces(dims)
     val frame =
       PrimitiveBuffers.tabulate[Double](nxyz) { lin =>
         val voxel = space.indexToVoxel3D(lin)
@@ -289,7 +289,7 @@ class MotionIoSuite extends munit.FunSuite:
         data(lin * 2 + t) = frame(lin)
         t += 1
       lin += 1
-    NeuroVec.copyFromCanonicalArray(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(2, Some(Axis.Time)), "motion-cli-estimate-fixture")
 
   private def writeFloat32Nifti(path: Path, dims: Vector[Int], values: Vector[Double]): Unit =
     Files.createDirectories(path.getParent)

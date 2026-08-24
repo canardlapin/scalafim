@@ -1,22 +1,22 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, PrimitiveBuffers}
+import scalafim.image.*
 
 class MotionApplierSuite extends munit.FunSuite:
 
-  private def line(values: Vector[Double], nVolumes: Int = 1): NeuroVec[Double] =
+  private def line(values: Vector[Double], nVolumes: Int = 1): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.copyFromCanonicalArray(
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(
       data,
-      NeuroSpace(Vector(values.length / nVolumes, 1, 1)).addDim(nVolumes, Some(Axis.Time)),
+      SampleSpaces(Vector(values.length / nVolumes, 1, 1)).addDim(nVolumes, Some(Axis.Time)),
       "line"
     )
 
-  private def volume(values: Vector[Double], dims: Vector[Int], nVolumes: Int): NeuroVec[Double] =
+  private def volume(values: Vector[Double], dims: Vector[Int], nVolumes: Int): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.copyFromCanonicalArray(data, NeuroSpace(dims).addDim(nVolumes, Some(Axis.Time)), "volume")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(dims).addDim(nVolumes, Some(Axis.Time)), "volume")
 
-  private def assertSameValues(actual: NeuroVec[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
+  private def assertSameValues(actual: SomeScalarSeries[Double], expected: Vector[Double], tol: Double = 1e-12): Unit =
     val actualValues = actual.copyToCanonicalArray
     assertEquals(actualValues.length, expected.length)
     var i = 0

@@ -1,13 +1,13 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, PrimitiveBuffers}
+import scalafim.image.*
 
 class MotionApiShapeSuite extends munit.FunSuite:
 
-  private def run(values: Vector[Double]): NeuroVec[Double] =
-    NeuroVec.copyFromCanonicalArray(
+  private def run(values: Vector[Double]): SomeScalarSeries[Double] =
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](values.length)(values),
-      NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)),
+      SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)),
       "api-shape"
     )
 

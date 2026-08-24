@@ -30,7 +30,7 @@ enum MaskRegionError:
 
 object Mask:
 
-  type MaskVol = NeuroVol[Boolean]
+  type MaskVol = SomeMaskVolume
 
   /** Convert a semantic dense mask into an exact voxel region. */
   def region[F <: Frame[D3], S](
@@ -38,7 +38,7 @@ object Mask:
       mask: SomeMaskVolume
   ): Either[MaskRegionError, Region[S]] =
     domain
-      .spatialField(mask)
+      .spatialField(mask.sampled)
       .left
       .map(MaskRegionError.Domain.apply)
       .map: field =>
@@ -79,7 +79,7 @@ object Mask:
         .map(MaskRegionError.Image.apply)
         .map(SomeNeuroVolume.eraseSpace)
 
-  def fromIndices(space: NeuroSpace, indices: Array1[Int], label: String = ""): MaskVol =
+  def fromIndices(space: SomeSampleSpace, indices: Array1[Int], label: String = ""): MaskVol =
     val volumeSpace =
       VolumeSpace
         .fromSpatialPart(space)
@@ -98,16 +98,16 @@ object Mask:
           )
           output.writeLinear(ordinal, true)
           position += 1
-    NeuroVol.fromRavel(flags, volumeSpace.toNeuroSpace, label)
+    SomeNeuroVolume.unsafeFromRavel(flags, volumeSpace.toSampleSpace, label)
 
-  def fromIndices(space: NeuroSpace, indices: Array[Int], label: String): MaskVol =
+  def fromIndices(space: SomeSampleSpace, indices: Array[Int], label: String): MaskVol =
     fromIndices(
       space,
       NDArray.fromSeq(Shape(indices.length), indices),
       label
     )
 
-  def fromIndices(space: NeuroSpace, indices: Array[Int]): MaskVol =
+  def fromIndices(space: SomeSampleSpace, indices: Array[Int]): MaskVol =
     fromIndices(space, indices, "")
 
   def indices(mask: MaskVol): Array1[Int] =
@@ -125,17 +125,17 @@ object Mask:
           position += 1
         linear += 1
 
-  def all(space: NeuroSpace, label: String = ""): MaskVol =
+  def all(space: SomeSampleSpace, label: String = ""): MaskVol =
     val shape = space.spatialShape
-    NeuroVol.fromRavel[Boolean](
+    SomeNeuroVolume.unsafeFromRavel[Boolean, MaskSemantics](
       NDArray.fill(Shape(shape.x, shape.y, shape.z), true),
       space.spatialSpace,
       label
     )
 
-  def of[A](vol: NeuroVol[A]): MaskVol =
+  def of[A, Sem](vol: SomeNeuroVolume[A, Sem]): MaskVol =
     all(vol.space, vol.label)
 
-  @scala.annotation.targetName("ofNeuroVec")
-  def of[A](vec: NeuroVec[A]): MaskVol =
+  @scala.annotation.targetName("ofNeuroSeries")
+  def of[A, Sem](vec: SomeNeuroSeries[A, Sem]): MaskVol =
     all(vec.space.spatialSpace, vec.label)

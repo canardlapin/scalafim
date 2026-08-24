@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace, SpatialPoint}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialPoint}
+import scalafim.image.SampleSpaces.*
 
 class PullbackCompilerSuite extends munit.FunSuite:
 
@@ -14,7 +15,7 @@ class PullbackCompilerSuite extends munit.FunSuite:
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
     val geometry =
-      value(SamplingGeometry.volume(NeuroSpace(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
+      value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def translation(x: Double, y: Double, z: Double): DMat =

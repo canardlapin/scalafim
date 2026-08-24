@@ -1,7 +1,10 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+import scalafim.image.SampleSpaces.spatialDims
+
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.DMat
 
 class LatentEncoderSuite extends munit.FunSuite:
@@ -48,7 +51,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
     val archive =
       LatentEncoder
-        .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
+        .toArchive(data, SampleSpaces(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     val plan =
       LatentArchiveRegistry.standard
@@ -111,7 +114,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
     val archive =
       LatentEncoder
-        .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
+        .toArchive(data, SampleSpaces(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     val plan =
       LatentArchiveRegistry.standard
@@ -216,7 +219,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
     val archive =
       LatentEncoder
-        .toArchive(data, NeuroSpace(Vector(2, 1, 1)), spec)
+        .toArchive(data, SampleSpaces(Vector(2, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity) match
       case LatentArchiveResponse.Explicit(decoded) =>
@@ -271,7 +274,7 @@ class LatentEncoderSuite extends munit.FunSuite:
 
     val archive =
       LatentEncoder
-        .toArchive(data, NeuroSpace(Vector(3, 1, 1)), spec)
+        .toArchive(data, SampleSpaces(Vector(3, 1, 1)), spec)
         .fold(err => fail(err.message), identity)
     LatentArchiveRegistry.standard.fromArchive(archive).fold(err => fail(err.message), identity) match
       case LatentArchiveResponse.SharedBasis(decoded) =>
@@ -283,7 +286,7 @@ class LatentEncoderSuite extends munit.FunSuite:
   }
 
   test("radial spatial basis specs dispatch through shared-basis encoding and archives") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val radial =
       RadialBasis
         .fromSpaceIndices(

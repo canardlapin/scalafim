@@ -1,7 +1,8 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.*
-import scalafim.image.{PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
+import scalafim.image.{spatialDims, spatialSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
 
 import java.io.BufferedInputStream
@@ -205,7 +206,7 @@ object NiftiResponseBlockSource:
     catch
       case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.getMessage}"))
 
-  private def validateHeader(header: NiftiHeader): Either[DatasetError, (NeuroSpace, Int)] =
+  private def validateHeader(header: NiftiHeader): Either[DatasetError, (SomeSampleSpace, Int)] =
     val bytesPerValue = header.bitpix / 8
     val supported =
       (header.datatype == 2 && bytesPerValue == 1) ||

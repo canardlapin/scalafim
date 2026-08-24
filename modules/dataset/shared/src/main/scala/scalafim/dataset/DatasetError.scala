@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{NeuroSpaceError, VoxelCoord}
+import scalafim.image.{SampleSpaceError, VoxelCoord}
 import scalafim.response.{OperationId, ReadError}
 
 enum DatasetAxis(val label: String):
@@ -8,7 +8,7 @@ enum DatasetAxis(val label: String):
   case Voxel extends DatasetAxis("voxel")
 
 enum DatasetError:
-  case InvalidSpace(error: NeuroSpaceError)
+  case InvalidSpace(error: SampleSpaceError)
   case NonPositiveTimepoints(value: Int)
   case NonPositiveAxisSize(axis: DatasetAxis, value: Int)
   case NegativeIndex(axis: DatasetAxis, index: Int)

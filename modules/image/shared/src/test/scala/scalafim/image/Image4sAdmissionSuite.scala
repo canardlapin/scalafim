@@ -16,12 +16,12 @@ final class Image4sAdmissionSuite extends FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val space = NeuroSpace(shape, trans = Some(affine))
+    val space = SampleSpaces(shape, trans = Some(affine))
     val values =
       NDArray.tabulate[Double](2, 3, 4): (x, y, z) =>
         100.0 * x.toDouble + 10.0 * y.toDouble + z.toDouble
     val volume =
-      NeuroVol.fromRavel(values, space, "admission-volume")
+      SomeScalarVolume.unsafeFromRavel(values, space, "admission-volume")
 
     assert(
       volume.asInstanceOf[AnyRef].eq(volume.sampled.asInstanceOf[AnyRef])

@@ -7,7 +7,7 @@ import scalafim.dataset.io.MatrixFileDatasetBackend
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -29,7 +29,7 @@ class MatrixFileFitSuite extends munit.FunSuite:
         backend = MatrixFileDatasetBackend(
           id = DatasetId("matrix-fit-demo"),
           path = path,
-          space = NeuroSpace(Vector(2, 1, 1))
+          space = SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0)),
         events = events

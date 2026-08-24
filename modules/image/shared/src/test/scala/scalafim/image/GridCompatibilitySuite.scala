@@ -32,30 +32,30 @@ class GridCompatibilitySuite extends munit.FunSuite:
     )
 
   test("exact compatibility rejects equal-shaped spaces with different affines") {
-    val expected = NeuroSpace(Vector(2, 2, 1))
-    val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
+    val expected = SampleSpaces(Vector(2, 2, 1))
+    val translated = SampleSpaces(Vector(2, 2, 1), trans = Some(translatedAffine))
 
     assert(GridCompatibility.exact(expected, translated).isLeft)
     assert(GridCompatibility.spatial(expected, translated).isLeft)
   }
 
   test("spatial compatibility ignores only non-spatial series extent") {
-    val first = NeuroSpace(Vector(2, 2, 1, 3))
-    val second = NeuroSpace(Vector(2, 2, 1, 5))
+    val first = SampleSpaces(Vector(2, 2, 1, 3))
+    val second = SampleSpaces(Vector(2, 2, 1, 5))
 
     assert(GridCompatibility.exact(first, second).isLeft)
     assertEquals(GridCompatibility.spatial(first, second), Right(()), clue = "")
   }
 
   test("certified congruence is explicit evidence bound to its exact live grids") {
-    def liveSpace(label: String): NeuroSpace =
+    def liveSpace(label: String): SomeSampleSpace =
       val frame =
         Frame.named[D3](label).fold(error => fail(error.message), identity)
       val grid =
         Grid
           .in(frame)(Vector(2, 2, 1), Affine.identity[D3])
           .fold(error => fail(error.message), identity)
-      NeuroSpace.fromCanonical(SampleSpace.create(grid, NonSpatialAxes.empty))
+      SampleSpaces.fromCanonical(SampleSpace.create(grid, NonSpatialAxes.empty))
 
     val expected = liveSpace("certified-grid-expected")
     val actual = liveSpace("certified-grid-actual")
@@ -84,10 +84,10 @@ class GridCompatibilitySuite extends munit.FunSuite:
   }
 
   test("pointwise volume arithmetic rejects a different physical grid") {
-    val expected = NeuroSpace(Vector(2, 2, 1))
-    val reflected = NeuroSpace(Vector(2, 2, 1), trans = Some(reflectedAffine))
-    val left = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val right = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), reflected)
+    val expected = SampleSpaces(Vector(2, 2, 1))
+    val reflected = SampleSpaces(Vector(2, 2, 1), trans = Some(reflectedAffine))
+    val left = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
+    val right = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), reflected)
 
     intercept[IllegalArgumentException] {
       left + right
@@ -95,20 +95,20 @@ class GridCompatibilitySuite extends munit.FunSuite:
   }
 
   test("volume concatenation rejects a different physical grid") {
-    val expected = NeuroSpace(Vector(2, 2, 1))
-    val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val left = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
-    val right = NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), translated)
+    val expected = SampleSpaces(Vector(2, 2, 1))
+    val translated = SampleSpaces(Vector(2, 2, 1), trans = Some(translatedAffine))
+    val left = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 1.0), expected)
+    val right = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](4, 2.0), translated)
 
     intercept[IllegalArgumentException] {
-      left.concat(right)
+      left.concatenate(right)
     }
   }
 
   test("selected-volume gather rejects a different exact grid owner") {
-    val expected = NeuroSpace(Vector(2, 2, 1))
-    val translated = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
-    val sampleSpace = NeuroSpace.requireSpatialD3(expected).toOption.get
+    val expected = SampleSpaces(Vector(2, 2, 1))
+    val translated = SampleSpaces(Vector(2, 2, 1), trans = Some(translatedAffine))
+    val sampleSpace = SampleSpaces.requireSpatialD3(expected).toOption.get
     val volume =
       NeuroVolume
         .continuous(
@@ -118,20 +118,20 @@ class GridCompatibilitySuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(expected),
+          VolumeSpace(expected).sampleSpace.grid,
           "grid compatibility expected",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val foreign =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(translated),
+          VolumeSpace(translated).sampleSpace.grid,
           "grid compatibility translated",
           locus4s.DomainRegistry.empty
         )

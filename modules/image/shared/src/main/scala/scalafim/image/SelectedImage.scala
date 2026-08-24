@@ -16,6 +16,7 @@ import image4s.locus.GridDomain
 import image4s.locus.SelectedSampled
 import image4s.locus.SelectedSampledError
 import locus4s.Region
+import locus4s.RegionError
 import locus4s.Selection
 import locus4s.SelectionError
 import locus4s.SpaceMismatch
@@ -28,6 +29,7 @@ enum SelectedImageError:
   case Image(error: ImageError)
   case Native(error: NativeImageError)
   case Selection(error: SelectionError)
+  case InvalidRegion(error: RegionError)
   case SelectionSpace(error: SpaceMismatch)
   case ExpectedSingleTimeAxis(actual: Vector[AxisKind])
   case OutsideSupport(missing: Region[?])
@@ -46,6 +48,8 @@ enum SelectedImageError:
       case Native(error) =>
         error.message
       case Selection(error) =>
+        error.message
+      case InvalidRegion(error) =>
         error.message
       case SelectionSpace(error) =>
         error.message
@@ -187,7 +191,7 @@ object SelectedVolume:
       selection: Selection[T]
   ): Either[SelectedImageError, SelectedVolume[F, S, A, Sem]] =
     SelectedSampled
-      .gatherVolume(domain, volume, selection)
+      .gatherVolume(domain, volume.sampled, selection)
       .left
       .map(SelectedImageError.Provider.apply)
       .map(fromSelected)
@@ -277,9 +281,13 @@ object SelectedVolume:
               val missing =
                 requested.ordinals.filterNot(sourcePositions.contains)
               if missing.nonEmpty then
-                val region =
-                  Region.fromOrdinals(volume.domain.space, missing).toOption.get
-                Left(SelectedImageError.OutsideSupport(region))
+                Region
+                  .fromOrdinals(volume.domain.space, missing)
+                  .left
+                  .map(SelectedImageError.InvalidRegion.apply)
+                  .flatMap(region =>
+                    Left(SelectedImageError.OutsideSupport(region))
+                  )
               else
                 materializeSelection(
                   requested,
@@ -465,7 +473,7 @@ object SelectedSeries:
       selection: Selection[T]
   ): Either[SelectedImageError, SelectedSeries[F, S, A, Sem]] =
     SelectedSampled
-      .gatherSingleAxis(domain, series, selection)
+      .gatherSingleAxis(domain, series.sampled, selection)
       .left
       .map(SelectedImageError.Provider.apply)
       .flatMap(fromSelected)
@@ -581,9 +589,13 @@ object SelectedSeries:
               val missing =
                 requested.ordinals.filterNot(sourcePositions.contains)
               if missing.nonEmpty then
-                val region =
-                  Region.fromOrdinals(series.domain.space, missing).toOption.get
-                Left(SelectedImageError.OutsideSupport(region))
+                Region
+                  .fromOrdinals(series.domain.space, missing)
+                  .left
+                  .map(SelectedImageError.InvalidRegion.apply)
+                  .flatMap(region =>
+                    Left(SelectedImageError.OutsideSupport(region))
+                  )
               else
                 materializeSelection(
                   requested,

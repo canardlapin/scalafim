@@ -1,13 +1,14 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, GridCompatibility, Mask, NeuroSpace}
+import scalafim.image.{DMat, GridCompatibility, Mask, SomeSampleSpace}
+import scalafim.image.space
 import scalafim.latent.{LatentResponse, LatentSelection}
 import scalafim.response.OperationId
 
 final class LatentResponseDatasetBackend private (
     val id: DatasetId,
     val response: LatentResponse,
-    val space: NeuroSpace,
+    val space: SomeSampleSpace,
     val mask: Mask.MaskVol,
     val metadata: DatasetMetadata,
     override val shape: DatasetShape,
@@ -41,7 +42,7 @@ object LatentResponseDatasetBackend:
   def make(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       mask: Mask.MaskVol,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, LatentResponseDatasetBackend] =
@@ -64,7 +65,7 @@ object LatentResponseDatasetBackend:
   def make(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       metadata: DatasetMetadata
   ): Either[DatasetError, LatentResponseDatasetBackend] =
     make(
@@ -78,14 +79,14 @@ object LatentResponseDatasetBackend:
   def make(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[DatasetError, LatentResponseDatasetBackend] =
     make(id, response, space, DatasetMetadata.Empty)
 
   def unsafe(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       mask: Mask.MaskVol,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): LatentResponseDatasetBackend =
@@ -95,7 +96,7 @@ object LatentResponseDatasetBackend:
   def unsafe(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       metadata: DatasetMetadata
   ): LatentResponseDatasetBackend =
     make(id, response, space, metadata)
@@ -104,7 +105,7 @@ object LatentResponseDatasetBackend:
   def unsafe(
       id: DatasetId,
       response: LatentResponse,
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): LatentResponseDatasetBackend =
     make(id, response, space)
       .fold(error => throw new IllegalArgumentException(error.message), identity)

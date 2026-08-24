@@ -13,7 +13,9 @@ import ravel.DType.given
 import ravel.NDArray
 import scalafim.image.Axis
 import scalafim.image.NeuroSeries
-import scalafim.image.NeuroSpace
+import scalafim.image.SampleSpaces
+import scalafim.image.SampleSpaces.*
+import scalafim.image.SomeSampleSpace
 import scalafim.image.SomeNeuroSeries
 
 final class NativeNiftiAllocationSuite extends FunSuite:
@@ -24,9 +26,9 @@ final class NativeNiftiAllocationSuite extends FunSuite:
     val timePoints = 8
     val valueCount = spatialShape.product * timePoints
     val sourceSpace =
-      NeuroSpace
+      SampleSpaces
         .requireD3(
-          NeuroSpace(spatialShape).addDim(timePoints, Some(Axis.Time))
+          SampleSpaces(spatialShape).addDim(timePoints, Some(Axis.Time))
         )
         .toOption
         .get

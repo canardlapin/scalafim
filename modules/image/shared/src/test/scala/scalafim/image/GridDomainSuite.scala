@@ -1,6 +1,6 @@
 package scalafim.image
 
-import VolumeDomain.*
+import GridDomainOps.*
 import image4s.locus.GridDomainError
 import image4s.locus.GridDomainLayout
 import locus4s.DomainRegistry
@@ -9,11 +9,11 @@ import ravel.CanonicalArray.*
 import ravel.DType.given
 import ravel.NDArray
 
-class VolumeDomainSuite extends munit.FunSuite:
+class GridDomainSuite extends munit.FunSuite:
   private val volumeSpace =
-    VolumeSpace(NeuroSpace(Vector(2, 3, 5)))
+    VolumeSpace(SampleSpaces(Vector(2, 3, 5)))
   private val seriesSpace =
-    volumeSpace.toNeuroSpace.addDim(7, Some(Axis.Time))
+    volumeSpace.toSampleSpace.addDim(7, Some(Axis.Time))
 
   private val volumeData =
     NDArray.tabulate[Double](2, 3, 5): (x, y, z) =>
@@ -24,19 +24,19 @@ class VolumeDomainSuite extends munit.FunSuite:
       1000.0 * x + 100.0 * y + 10.0 * z + time
 
   private val volume =
-    NeuroVol.fromRavel(volumeData, volumeSpace.toNeuroSpace, "oracle-volume")
+    SomeScalarVolume.unsafeFromRavel(volumeData, volumeSpace.toSampleSpace, "oracle-volume")
   private val series =
-    NeuroVec.fromRavel(seriesData, seriesSpace, "oracle-series")
+    SomeScalarSeries.unsafeFromRavel(seriesData, seriesSpace, "oracle-series")
   private val registered =
     right(
-      VolumeDomain.register(
-        volumeSpace,
+      GridDomain.register(
+        volumeSpace.sampleSpace.grid,
         "2x3x5 oracle voxels",
         DomainRegistry.empty
       )
     )
   private type Voxel = registered.S
-  private val domain: VolumeDomain[Voxel] = registered.value
+  private val domain = registered.value
 
   test("2x3x5x7 uses one canonical Ravel and GridDomain order"):
     val spatialField = right(domain.spatialField(volume.sampled))
@@ -101,11 +101,11 @@ class VolumeDomainSuite extends munit.FunSuite:
 
   test("same persistent grid key does not admit a foreign live owner"):
     val foreignSpace =
-      VolumeSpace(NeuroSpace(Vector(2, 3, 5)))
+      VolumeSpace(SampleSpaces(Vector(2, 3, 5)))
     val foreignVolume =
-      NeuroVol.fromRavel(
+      SomeScalarVolume.unsafeFromRavel(
         volumeData,
-        foreignSpace.toNeuroSpace,
+        foreignSpace.toSampleSpace,
         "foreign-owner"
       )
 
@@ -127,9 +127,9 @@ class VolumeDomainSuite extends munit.FunSuite:
   test("versioned domain evidence restores through the same registry"):
     val restored =
       right(
-        VolumeDomain.restore(
+        GridDomain.restore(
           domain.record,
-          volumeSpace,
+          volumeSpace.sampleSpace.grid,
           registered.registry
         )
       )

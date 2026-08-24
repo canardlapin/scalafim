@@ -1,11 +1,11 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace, VoxelCoord}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetIndexSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(1, 1, 1))
+  private val space = SampleSpaces(Vector(1, 1, 1))
 
   test("dataset keys have safe string constructors") {
     val key =
@@ -134,7 +134,7 @@ class DatasetIndexSuite extends munit.FunSuite:
             data = DMat.fromRows(
               Vector.tabulate(5)(time => Vector(time.toDouble, time.toDouble + 10.0))
             ),
-            space = NeuroSpace(Vector(2, 1, 1))
+            space = SampleSpaces(Vector(2, 1, 1))
           ),
           samplingFrame = samplingFrame,
           runIds = Vector(RunId("run-a"), RunId("run-b"))
@@ -192,13 +192,13 @@ class DatasetIndexSuite extends munit.FunSuite:
       datasetRun(
         RunKey.unsafe("sub-01", "run-1", space = Some("MNI")),
         "first-grid",
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       )
     val second =
       datasetRun(
         RunKey.unsafe("sub-01", "run-2", space = Some("MNI")),
         "second-grid",
-        NeuroSpace(Vector(2, 1, 1), trans = Some(translated))
+        SampleSpaces(Vector(2, 1, 1), trans = Some(translated))
       )
     val index =
       DatasetIndex
@@ -244,7 +244,7 @@ class DatasetIndexSuite extends munit.FunSuite:
   private def datasetRun(
       key: RunKey,
       id: String,
-      runSpace: NeuroSpace
+      runSpace: SomeSampleSpace
   ): DatasetRun =
     val dataset =
       FmriDataset.unsafe(

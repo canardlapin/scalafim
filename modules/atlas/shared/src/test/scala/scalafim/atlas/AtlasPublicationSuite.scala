@@ -1,7 +1,7 @@
 package scalafim.atlas
 
 import locus4s.DomainRegistry
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.surface.Hemisphere as SurfaceHemisphere
 import scalafim.surface.HemispherePair
 import scalafim.surface.LabelInfo
@@ -87,7 +87,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
     val shifted =
       volumeAtlas(
         volumeRef,
-        NeuroSpace(
+        SampleSpaces(
           dims = Vector(2, 2, 1),
           origin = Some(Vector(10.0, 0.0, 0.0))
         )
@@ -325,7 +325,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
 
     val foreignLabels =
       AtlasTestImages.labelVolume(
-        NeuroSpace(Vector(2, 2, 1)),
+        SampleSpaces(Vector(2, 2, 1)),
         Array(10, 10, 30, 30)
       )
     AtlasRealization.volumeFromLabelsIn(
@@ -344,7 +344,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
 
     val incomplete =
       AtlasTestImages.labelVolume(
-        NeuroSpace(Vector(2, 2, 1)),
+        SampleSpaces(Vector(2, 2, 1)),
         Array(10, 10, 10, 10)
       )
     AtlasRealization.volumeFromLabelsIn(
@@ -363,7 +363,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
 
   private def volumeAtlas(
       ref: AtlasRef,
-      space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))
+      space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))
   ): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(
       ref,

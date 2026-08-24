@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.linalg.{DoubleMatrix, LinearMapError}
 
 class SpatialQcSuite extends munit.FunSuite:
@@ -19,7 +20,7 @@ class SpatialQcSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(NeuroSpace(dims, trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def translation(x: Double, y: Double, z: Double): DMat =

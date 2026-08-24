@@ -5,7 +5,7 @@ import image4s.ImageError
 
 enum NativeImageError derives CanEqual:
   case Image(error: ImageError)
-  case Space(error: NeuroSpaceError)
+  case Space(error: SampleSpaceError)
   case ExpectedSingleTimeAxis(actual: Vector[AxisKind])
   case CanonicalArraySizeMismatch(expected: Int, actual: Int)
   case SpatialAxisOutOfBounds(axis: Int)

@@ -1,11 +1,13 @@
 package scalafim.archive.lna
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, RunScopedPath, TransformName, TransformPort}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 
 class LnaCoreSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
     DMat.fromRows(

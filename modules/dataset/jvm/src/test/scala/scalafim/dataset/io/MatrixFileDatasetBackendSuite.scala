@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, DatasetId, TimepointSelection, VoxelSelection}
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -19,7 +19,7 @@ class MatrixFileDatasetBackendSuite extends munit.FunSuite:
       val backend = MatrixFileDatasetBackend(
         id = DatasetId("matrix-demo"),
         path = path,
-        space = NeuroSpace(Vector(2, 2, 1))
+        space = SampleSpaces(Vector(2, 2, 1))
       )
 
       assertEquals(backend.shape.timepoints, 3)
@@ -39,7 +39,7 @@ class MatrixFileDatasetBackendSuite extends munit.FunSuite:
 
   test("MatrixFileDatasetBackend rejects non-numeric and shape-mismatched files") {
     withMatrixFile("1,2\n3,nope\n") { path =>
-      val backend = MatrixFileDatasetBackend(DatasetId("bad-numeric"), path, NeuroSpace(Vector(2, 1, 1)))
+      val backend = MatrixFileDatasetBackend(DatasetId("bad-numeric"), path, SampleSpaces(Vector(2, 1, 1)))
       val safeError = backend.readEither().left.toOption.getOrElse(fail("expected non-numeric read error"))
       assert(safeError.message.contains("non-numeric"))
 
@@ -48,7 +48,7 @@ class MatrixFileDatasetBackendSuite extends munit.FunSuite:
     }
 
     withMatrixFile("1,2,3\n4,5,6\n") { path =>
-      val backend = MatrixFileDatasetBackend(DatasetId("bad-shape"), path, NeuroSpace(Vector(2, 1, 1)))
+      val backend = MatrixFileDatasetBackend(DatasetId("bad-shape"), path, SampleSpaces(Vector(2, 1, 1)))
       val safeError = backend.readEither().left.toOption.getOrElse(fail("expected shape read error"))
       assert(safeError.message.contains("space has 2 voxels"))
 

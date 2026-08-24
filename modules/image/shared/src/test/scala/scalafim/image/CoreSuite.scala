@@ -29,8 +29,8 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(arr(1, 2), 6, clue = "")
   }
 
-  test("NeuroSpace default affine matches spacing/origin") {
-    val sp = NeuroSpace(
+  test("SomeSampleSpace default affine matches spacing/origin") {
+    val sp = SampleSpaces(
       dims = Vector(2, 2, 2),
       spacing = Some(Vector(2.0, 3.0, 4.0)),
       origin = Some(Vector(10.0, 20.0, 30.0))
@@ -39,19 +39,19 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(coord, Vector(12.0, 23.0, 34.0), clue = "")
   }
 
-  test("NeuroSpace smart constructor reports invalid geometry directly") {
-    val shortSpacing = NeuroSpace.make(Vector(2, 2, 2), spacing = Some(Vector(1.0, 2.0)))
+  test("SomeSampleSpace smart constructor reports invalid geometry directly") {
+    val shortSpacing = SampleSpaces.make(Vector(2, 2, 2), spacing = Some(Vector(1.0, 2.0)))
     assertEquals(shortSpacing.left.map(_.message), Left("'spacing' must contain 3 spatial values; got 2"), clue = "")
 
-    val badTransform = NeuroSpace.make(Vector(2, 2, 2), trans = Some(DMat.eye(3)))
+    val badTransform = SampleSpaces.make(Vector(2, 2, 2), trans = Some(DMat.eye(3)))
     assertEquals(badTransform.left.map(_.message), Left("spatial transform must be 4x4; got 3x3"), clue = "")
 
-    val badAxes = NeuroSpace.make(Vector(2, 2, 2, 4), axes = Some(AxisSet.standard(3)))
+    val badAxes = SampleSpaces.make(Vector(2, 2, 2, 4), axes = Some(AxisSet.standard(3)))
     assertEquals(badAxes.left.map(_.message), Left("axis count must match dimensionality: expected 4, got 3"), clue = "")
   }
 
-  test("NeuroSpace exposes typed 3D coordinate roundtrip") {
-    val sp = NeuroSpace(
+  test("SomeSampleSpace exposes typed 3D coordinate roundtrip") {
+    val sp = SampleSpaces(
       dims = Vector(2, 2, 2),
       spacing = Some(Vector(2.0, 3.0, 4.0)),
       origin = Some(Vector(10.0, 20.0, 30.0))
@@ -63,10 +63,10 @@ class CoreSuite extends munit.FunSuite:
     assertPointClose(sp.coordToIndexPoint(world), voxel, 1e-12)
   }
 
-  test("NeuroVol arithmetic is elementwise") {
-    val sp = NeuroSpace(Vector(2, 2, 2))
-    val v1 = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](8, 1.0), sp)
-    val v2 = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](8, 2.0), sp)
+  test("SomeNeuroVolume arithmetic is elementwise") {
+    val sp = SampleSpaces(Vector(2, 2, 2))
+    val v1 = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](8, 1.0), sp)
+    val v2 = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](8, 2.0), sp)
 
     val v3 = v1 + v2
     val vals = (0 until v3.copyToCanonicalArray.length).map(i => v3.copyToCanonicalArray(i)).toVector
@@ -74,7 +74,7 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Mask indices roundtrip") {
-    val sp = NeuroSpace(Vector(3, 3, 3))
+    val sp = SampleSpaces(Vector(3, 3, 3))
     val idx = Array[Int](0, 13, 26)
     val mask = Mask.fromIndices(sp, idx)
     val back = Mask.indices(mask)
@@ -84,19 +84,19 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("ordered voxel selections use canonical grid ordinals") {
-    val sp = NeuroSpace(Vector(2, 3, 4))
+    val sp = SampleSpaces(Vector(2, 3, 4))
     val coords = Vector(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "core ordered voxel selection",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val ordinals = coords.map: coord =>
       val index =
         image4s.geometry.LatticeIndex
@@ -113,36 +113,36 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(selection.ordinals.toVector, Vector(0, 12, 4), clue = "")
   }
 
-  test("NeuroVec volume and series") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 3))
+  test("SomeNeuroSeries volume and series") {
+    val sp = SampleSpaces(Vector(2, 2, 1, 3))
     // Whole-array input follows canonical Ravel order: the last axis is fastest.
     val data = PrimitiveBuffers.tabulate[Double](12)(_.toDouble)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](data, sp)
 
     val v1 = vec.volume(1)
     val linVol1 = Vector.tabulate(v1.copyToCanonicalArray.length)(i => v1.copyToCanonicalArray(i))
     assertEquals(linVol1, Vector(1.0, 4.0, 7.0, 10.0), clue = "")
 
-    val ts = vec.series(2)
+    val ts = vec.timeSeries(2)
     val tsVec = Vector.tabulate(ts.size)(i => ts(i))
     assert(!ts.isWholeBuffer, clue = "single-voxel series must share the rank-4 owner")
     assertEquals(tsVec, Vector(6.0, 7.0, 8.0), clue = "")
   }
 
-  test("NeuroVec subVector keeps spatial layout") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 4))
+  test("SomeNeuroSeries subVector keeps spatial layout") {
+    val sp = SampleSpaces(Vector(2, 2, 1, 4))
     val data = PrimitiveBuffers.tabulate[Double](16)(_.toDouble)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
-    val sub = vec.subVector(Seq(1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](data, sp)
+    val sub = vec.selectTimes(Seq(1, 3))
     assertEquals(sub.space.dims, Vector(2, 2, 1, 2), clue = "")
     val subData = Vector.tabulate(sub.copyToCanonicalArray.length)(i => sub.copyToCanonicalArray(i))
     assertEquals(subData, Vector(1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0), clue = "")
   }
 
-  test("NeuroVol plane retains an affine-honest singleton-D3 view") {
-    val sp = NeuroSpace(Vector(2, 3, 1))
+  test("SomeNeuroVolume plane retains an affine-honest singleton-D3 view") {
+    val sp = SampleSpaces(Vector(2, 3, 1))
     val data = PrimitiveBuffers.tabulate[Int](6)(i => i + 1)
-    val vol = NeuroVol.copyFromCanonicalArray[Int](data, sp)
+    val vol = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](data, sp)
     val plane =
       vol
         .plane(SpatialAxis.X, 1)
@@ -152,20 +152,20 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(planeData, Vector(4, 5, 6), clue = "")
   }
 
-  test("NeuroVecSeq indexes across runs") {
-    val sp1 = NeuroSpace(Vector(2, 1, 1, 2))
-    val sp2 = NeuroSpace(Vector(2, 1, 1, 3), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
-    val v1 = NeuroVec.copyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](4)(identity), sp1)
-    val v2 = NeuroVec.copyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](6)(i => i + 100), sp2)
-    val seq = NeuroVecSeq(Vector(v1, v2))
-    assertEquals(seq.length, 5, clue = "")
-    val vol3 = seq(3)
+  test("NeuroSeriesSeq indexes across runs") {
+    val sp1 = SampleSpaces(Vector(2, 1, 1, 2))
+    val sp2 = SampleSpaces(Vector(2, 1, 1, 3), spacing = Some(sp1.spacing), origin = Some(sp1.origin), trans = Some(sp1.trans))
+    val v1 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](4)(identity), sp1)
+    val v2 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](6)(i => i + 100), sp2)
+    val seq = NeuroSeriesSeq(Vector(v1, v2))
+    assertEquals(seq.frameCount, 5, clue = "")
+    val vol3 = seq.volumeAt(3)
     val vals3 = Vector.tabulate(vol3.copyToCanonicalArray.length)(i => vol3.copyToCanonicalArray(i))
     assertEquals(vals3, Vector(101, 104), clue = "")
   }
 
-  test("NeuroSpace grid/index conversions") {
-    val sp = NeuroSpace(Vector(2, 3, 4))
+  test("SomeSampleSpace grid/index conversions") {
+    val sp = SampleSpaces(Vector(2, 3, 4))
     assertEquals(sp.gridToIndex3D(1, 0, 0), 12, clue = "")
     assertEquals(sp.indexToGrid3D(5), Vector(0, 1, 1), clue = "")
   }
@@ -181,8 +181,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected series retain position-first storage and contiguous time") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(2, 1, 1, 3))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val data = RavelArray.tabulate[Int](2, 1, 1, 3):
       (x, _, _, time) => x * 3 + time
     val series =
@@ -191,16 +191,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected series",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection
         .fromOrdinals(domain.space, Vector(0, 1))
@@ -219,8 +219,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("dense series gather and explicit fill scatter roundtrip") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 3))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(2, 2, 1, 3))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val series =
       NeuroSeries
         .continuous(
@@ -232,16 +232,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core dense selected roundtrip",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection
         .fromOrdinals(domain.space, Vector(0, 3))
@@ -255,10 +255,10 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected series rows match the canonical dense voxel-time view") {
-    val sp = NeuroSpace(Vector(10, 10, 10, 3))
+    val sp = SampleSpaces(Vector(10, 10, 10, 3))
     val spatialNels = sp.spatialDims.product
     val tLen = sp.dims(3)
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val dense =
       NeuroSeries
         .continuous(
@@ -271,16 +271,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected matrix",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val ordinals = Vector.range(0, spatialNels).filter(ordinal => ordinal % 10 < 3)
     val selection =
       locus4s.Selection
@@ -306,8 +306,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected series preserve explicit support order and dense parity") {
-    val sp = NeuroSpace(Vector(2, 2, 2, 2))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(2, 2, 2, 2))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val series =
       NeuroSeries
         .continuous(
@@ -319,16 +319,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected parity",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val ordinals = Vector(0, 2, 5, 7)
     val selection =
       locus4s.Selection
@@ -356,8 +356,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected-series fill policy is explicit for missing voxels") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(2, 2, 1, 2))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val series =
       NeuroSeries
         .continuous(
@@ -368,16 +368,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected fill",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val support =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val requested =
@@ -396,8 +396,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected-series union arithmetic requires an explicit fill policy") {
-    val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(2, 2, 1, 2))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val first =
       NeuroSeries
         .continuous(
@@ -417,16 +417,16 @@ class CoreSuite extends munit.FunSuite:
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected union",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val leftSupport =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 1)).toOption.get
     val rightSupport =
@@ -466,8 +466,8 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Downsample byFactor uses box averaging") {
-    val sp = NeuroSpace(Vector(4, 4, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](16)(_.toDouble), sp)
+    val sp = SampleSpaces(Vector(4, 4, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](16)(_.toDouble), sp)
     val ds = Downsample.byFactor(vol, 0.5)
     assertEquals(ds.space.dims, Vector(2, 2, 1), clue = "")
     val vals = Vector.tabulate(ds.copyToCanonicalArray.length)(i => ds.copyToCanonicalArray(i))
@@ -476,12 +476,12 @@ class CoreSuite extends munit.FunSuite:
 
   test("Downsample updates affine by preserving center world coordinate") {
     val sp =
-      NeuroSpace(
+      SampleSpaces(
         Vector(4, 6, 8),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0))
       )
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val ds = Downsample.byFactor(vol, 0.5)
     val expectedTrans =
       Affine.rescaleAffine(
@@ -496,39 +496,39 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(ds.space.origin, Vector(12.0, 20.0, 34.0), clue = "")
     assertEquals(ds.space.trans, expectedTrans, clue = "")
 
-    val vec = vol.concat(vol)
+    val vec = vol.concatenate(vol)
     val vds = Downsample.byFactor(vec, 0.5)
     assertEquals(vds.space.dims, Vector(2, 3, 4, 2), clue = "")
     assertEquals(vds.space.trans, expectedTrans, clue = "")
   }
 
   test("Resample.nearest preserves data when spaces match") {
-    val sp = NeuroSpace(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
+    val sp = SampleSpaces(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
     val res = Resample.nearest(vol, sp)
     val vals = Vector.tabulate(res.copyToCanonicalArray.length)(i => res.copyToCanonicalArray(i))
     assertEquals(vals, Vector.tabulate(9)(_.toDouble), clue = "")
   }
 
   test("Gaussian blur uses 0-padding at volume boundaries") {
-    val sp = NeuroSpace(Vector(3, 3, 3))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 5.0), sp)
+    val sp = SampleSpaces(Vector(3, 3, 3))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 5.0), sp)
     val blurred = SpatialFilters.gaussianBlur(vol, sigma = 1.0, window = 1)
     assert(math.abs(blurred(1, 1, 1) - 5.0) < 1e-9, clue = "")
     assert(blurred(0, 0, 0) < 5.0, clue = "")
   }
 
   test("Gaussian blur respects mask (zeros outside mask)") {
-    val sp = NeuroSpace(Vector(5, 5, 5))
+    val sp = SampleSpaces(Vector(5, 5, 5))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 11).toDouble), sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 11).toDouble), sp)
 
     val maskFlags = PrimitiveBuffers.fillConst[Boolean](nels, false)
     var i = 0
     while i < nels do
       if (i % 7) < 3 then maskFlags(i) = true
       i += 1
-    val mask = NeuroVol.copyFromCanonicalArray[Boolean](maskFlags, sp)
+    val mask = SomeMaskVolume.unsafeCopyFromCanonicalArray(maskFlags, sp)
 
     val blurred = SpatialFilters.gaussianBlur(vol, sigma = 2.0, window = 1, mask = Some(mask))
     assertEquals(blurred.space, sp, clue = "")
@@ -544,9 +544,9 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Bilateral filter handles missing mask") {
-    val sp = NeuroSpace(Vector(6, 6, 6))
+    val sp = SampleSpaces(Vector(6, 6, 6))
     val nels = sp.spatialDims.product
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 13).toDouble), sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](nels)(i => (i % 13).toDouble), sp)
     val filtered = SpatialFilters.bilateralFilter(vol, spatialSigma = 2.0, intensitySigma = 1.0, window = 1)
     assertEquals(filtered.space, sp, clue = "")
     assertEquals(filtered.copyToCanonicalArray.length, vol.copyToCanonicalArray.length, clue = "")
@@ -554,11 +554,11 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Bilateral filter 4D is identity for zero windows") {
-    val sp = NeuroSpace(Vector(3, 4, 2, 5))
+    val sp = SampleSpaces(Vector(3, 4, 2, 5))
     val nels = sp.spatialDims.product
     val tLen = sp.dims(3)
     val data = PrimitiveBuffers.tabulate[Double](nels * tLen)(i => (i.toDouble - 50.0) / 7.0)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](data, sp)
     val out =
       SpatialFilters.bilateralFilter4D(
         vec,
@@ -577,11 +577,11 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Bilateral filter 4D preserves constant arrays without NaNs") {
-    val sp = NeuroSpace(Vector(3, 3, 3, 4))
+    val sp = SampleSpaces(Vector(3, 3, 3, 4))
     val nels = sp.spatialDims.product
     val tLen = sp.dims(3)
     val data = PrimitiveBuffers.fillConst[Double](nels * tLen, 5.0)
-    val vec = NeuroVec.copyFromCanonicalArray[Double](data, sp)
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](data, sp)
     val out =
       SpatialFilters.bilateralFilter4D(
         vec,
@@ -600,29 +600,29 @@ class CoreSuite extends munit.FunSuite:
       i += 1
   }
 
-  test("NeuroVec-NeuroVol arithmetic broadcasts spatially") {
+  test("SomeNeuroSeries-SomeNeuroVolume arithmetic broadcasts spatially") {
     import spire.std.double.given
-    val sp = NeuroSpace(Vector(2, 2, 1, 2))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp.spatialSpace)
+    val sp = SampleSpaces(Vector(2, 2, 1, 2))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), sp)
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array[Double](10.0, 20.0, 30.0, 40.0), sp.spatialSpace)
     val out = vec + vol
     val vals = Vector.tabulate(out.copyToCanonicalArray.length)(i => out.copyToCanonicalArray(i))
     assertEquals(vals, Vector(10, 11, 22, 23, 34, 35, 46, 47).map(_.toDouble), clue = "")
   }
 
   test("selected-series time concatenation uses an explicit union support") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "core selected time concatenation",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val timeOne =
       image4s.Axis
         .ordinal("time", image4s.AxisKind.Time, 1)
@@ -705,37 +705,37 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("Resample.trilinear preserves data when spaces match") {
-    val sp = NeuroSpace(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
+    val sp = SampleSpaces(Vector(3, 3, 1), spacing = Some(Vector(1.0, 1.0, 1.0)))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](9)(_.toDouble), sp)
     val res = Resample.trilinear(vol, sp)
     val vals = Vector.tabulate(res.copyToCanonicalArray.length)(i => res.copyToCanonicalArray(i))
     assertEquals(vals, Vector.tabulate(9)(_.toDouble), clue = "")
   }
 
   test("selected-series gather rejects a foreign support owner") {
-    val sp = NeuroSpace(Vector(8, 8, 8, 5), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val badSp = NeuroSpace(Vector(4, 4, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
-    val sampleSpace = NeuroSpace.requireD3(sp).toOption.get
+    val sp = SampleSpaces(Vector(8, 8, 8, 5), spacing = Some(Vector(2.0, 2.0, 2.0)))
+    val badSp = SampleSpaces(Vector(4, 4, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
+    val sampleSpace = SampleSpaces.requireD3(sp).toOption.get
     val series =
       NeuroSeries
         .continuous(sampleSpace, RavelArray.zeros[Double](8, 8, 8, 5))
         .toOption
         .get
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected owner",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val foreignPacked =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(badSp),
+          VolumeSpace(badSp).sampleSpace.grid,
           "core foreign selected owner",
           locus4s.DomainRegistry.empty
         )
@@ -751,18 +751,18 @@ class CoreSuite extends munit.FunSuite:
   }
 
   test("selected-series validity enforces position x time shape") {
-    val sp = NeuroSpace(Vector(6, 6, 6, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
+    val sp = SampleSpaces(Vector(6, 6, 6, 4), spacing = Some(Vector(2.0, 2.0, 2.0)))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "core selected shape",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection
         .fromOrdinals(domain.space, Vector(0, 10, 20, 30, 40))
@@ -786,10 +786,10 @@ class CoreSuite extends munit.FunSuite:
     )
   }
 
-  test("NeuroVec preserves input shape and linearization") {
-    val sp = NeuroSpace(Vector(2, 2, 2, 2))
+  test("SomeNeuroSeries preserves input shape and linearization") {
+    val sp = SampleSpaces(Vector(2, 2, 2, 2))
     val data = PrimitiveBuffers.tabulate[Int](16)(i => i + 1)
-    val vec = NeuroVec.copyFromCanonicalArray[Int](data, sp)
+    val vec = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](data, sp)
     assertEquals(vec.space.dims, Vector(2, 2, 2, 2), clue = "")
     assertEquals(
       Vector.tabulate(vec.values.shape.rank)(vec.values.shape.apply),
@@ -800,19 +800,19 @@ class CoreSuite extends munit.FunSuite:
     assertEquals(back, Vector.tabulate(16)(i => i + 1), clue = "")
   }
 
-  test("NeuroVec series at voxel matches ROI drop semantics") {
-    val sp = NeuroSpace(Vector(2, 2, 2, 3))
+  test("SomeNeuroSeries series at voxel matches ROI drop semantics") {
+    val sp = SampleSpaces(Vector(2, 2, 2, 3))
     val data = PrimitiveBuffers.tabulate[Int](24)(i => i + 1)
-    val vec = NeuroVec.copyFromCanonicalArray[Int](data, sp)
+    val vec = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](data, sp)
 
-    val ts = vec.series(0, 0, 0)
+    val ts = vec.timeSeries(0, 0, 0)
     val tsVals = Vector.tabulate(ts.size)(i => ts(i))
     assert(!ts.isWholeBuffer, clue = "single-voxel series must be a Ravel view")
     assertEquals(tsVals, Vector(1, 2, 3), clue = "")
 
     val lin0 = sp.gridToIndex3D(0, 0, 0)
     val lin1 = sp.gridToIndex3D(1, 1, 1)
-    val mat = vec.series(Array(lin1, lin0))
+    val mat = vec.timeSeries(Array(lin1, lin0))
     assertEquals(mat.shape, Shape(2, 3), clue = "")
     val matVals =
       Vector.tabulate(2)(position =>

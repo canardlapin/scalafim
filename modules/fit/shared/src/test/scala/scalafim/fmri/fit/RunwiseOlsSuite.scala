@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
@@ -8,7 +10,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 
 class RunwiseOlsSuite extends munit.FunSuite:
 
@@ -21,7 +23,7 @@ class RunwiseOlsSuite extends munit.FunSuite:
     val data = ImageDMat.fromRows(y.map(v => Vector(v)))
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("runwise-demo"), data, NeuroSpace(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("runwise-demo"), data, SampleSpaces(Vector(1, 1, 1))),
         samplingFrame = samplingFrame
       )
     val eventModel =

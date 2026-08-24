@@ -67,6 +67,14 @@ The exact aliases may vary with provider syntax, but these properties are
 mandatory:
 
 - the opaque value has exactly the representation of its `Sampled` value;
+- dynamic `SomeNeuroVolume` and `SomeNeuroSeries` forms are also zero-wrapper
+  opaque refinements, so raw provider values cannot bypass neuro-specific
+  admission checks after the concrete sample-space owner is erased;
+- each validated concrete form is a subtype of its dynamic refinement, while
+  an arbitrary provider `Sampled` is not;
+- dynamic refinements retain provider-shaped read access to `data`, `grid`,
+  `sampleSpace`, and `metadata`; `.sampled` is the explicit zero-copy view when
+  a generic provider API requires the underlying `Sampled` type;
 - the public type retains the concrete sample-space owner `S`;
 - construction from a known sample space returns a value parameterized by
   `space.type`;
@@ -78,7 +86,7 @@ mandatory:
   narrower name.
 
 The current `NeuroVol`, `NeuroVec`, universal `ScalaFimValues`, and opaque
-`NeuroSpace` compatibility surface are replaced. The deliberate public names
+`SomeSampleSpace` compatibility surface are replaced. The deliberate public names
 are `NeuroVolume` and `NeuroSeries`. There are no deprecated aliases in the
 new core. Image metadata lives once, in image4s `ImageMetadata`.
 
@@ -272,7 +280,11 @@ Scala.js:
 4. Atlas tests reject same-sized foreign/reordered domains and prove direct
    volume and surface publication realizations.
 5. NIfTI fixtures prove affine, axis, dtype, scaling, coordinate order, and
-   roundtrip behavior without whole-file decoded staging.
+   roundtrip behavior without whole-file decoded staging. An asymmetric 4D
+   file authored by nibabel and read independently by neuroim2 must agree at
+   every coordinate and world point; ScalaFIM ingress and raw writer payloads
+   must prove the deliberate translation between NIfTI/neuroim2
+   first-axis-fastest order and Ravel canonical last-axis-fastest order.
 6. Allocation tests show zero wrappers and zero copies for retained `Sampled`,
    Ravel, view, and canonical-refinement paths.
 7. Same-run performance courts compare hot kernels with primitive loop oracles

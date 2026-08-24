@@ -331,8 +331,7 @@ object ParcelSeriesWindow:
     ParcelNeighborhoodError,
     ParcelSeriesWindow[F, S, P, A, Sem]
   ] =
-    if !(series.parcellation.asInstanceOf[AnyRef] eq
-        neighborhoods.parcellation.asInstanceOf[AnyRef])
+    if !(series.parcellation eq neighborhoods.parcellation)
     then Left(ParcelNeighborhoodError.ParcellationMismatch)
     else
       neighborhoods.regionAt(center) match

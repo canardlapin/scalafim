@@ -15,7 +15,7 @@ The current dense layer is partly native and partly compatibility code:
 - `fromLinear` interprets a mutable Scala array in first-axis-fastest order and
   transposes it into canonical Ravel storage;
 - `linear(i)` and `copyLegacyLinear` reintroduce that historical order;
-- `NeuroSpace` hides the precise sample-space owner and duplicates axis helpers;
+- `SomeSampleSpace` hides the precise sample-space owner and duplicates axis helpers;
 - `VolumeDomain` and the ROI/sparse types reproduce locus4s concepts; and
 - many kernels fill Scala arrays before constructing their final Ravel value.
 
@@ -30,7 +30,7 @@ a local rename.
 | `NeuroVol[A]` | opaque `NeuroVolume[S,A,Sem]` over rank-3 `Sampled` | Replace; precise space and semantic parameters |
 | `NeuroVec[A]` | opaque `NeuroSeries[S,A,Sem]` over rank-4 `Sampled` | Replace; require exactly one time axis |
 | `NeuroSlice[A]` | singleton-dimension `Sampled` view plus renderer plane | Remove as dense owner |
-| `NeuroSpace`, `VolumeSpace`, `SeriesSpace` | image4s `SampleSpace`; named existential at dynamic boundaries | Remove duplicate ownership; retain only neuro-specific geometry utilities |
+| `SomeSampleSpace`, `VolumeSpace`, `SeriesSpace` | image4s `SampleSpace`; named existential at dynamic boundaries | Remove duplicate ownership; retain only neuro-specific geometry utilities |
 | `ScalaFimValues` | image4s `Continuous`, `Categorical`, `Mask` | Delete |
 | `Image4sInterop.Packed*` | direct checked opaque refinements | Delete compatibility layer |
 | `VolumeDomain` | image4s-locus `GridDomain` | Delete |
@@ -77,7 +77,7 @@ leave an unclassified overload.
 ### Image shared core
 
 - Replace `Image4sInterop.scala`, `NeuroVol.scala`, `NeuroVec.scala`,
-  `NeuroSlice.scala`, and dense portions of `NeuroSpace.scala` first.
+  `NeuroSlice.scala`, and dense portions of `SampleSpaces.scala` first.
 - Replace `VolumeDomain.scala`, `VoxelIndexSet.scala`, `VoxelRegion.scala`,
   `ROI.scala`, `RoiData.scala`, `ROIVec.scala`, `ROIVolWindow.scala`,
   `SparseSupport.scala`, `SparseSelection.scala`, `SparseNeuroVol.scala`, and
@@ -182,11 +182,13 @@ closed. The final phase additionally requires:
 
 - warning-clean `compileAll`;
 - `testAll` and example tests;
-- independent asymmetric coordinate/domain oracles;
+- independent asymmetric coordinate/domain oracles, including committed
+  nibabel and neuroim2 4D NIfTI fixtures;
 - compile-time semantic rejection probes;
 - zero-copy identity and allocation tests;
 - sparse/selection property tests;
-- NIfTI fixture and streaming-memory tests;
+- NIfTI fixture and streaming-memory tests, with coordinate-exact ingress and
+  raw-payload writer parity across the distinct file and Ravel orders;
 - exact atlas volume/surface publication tests;
 - same-run performance comparisons against primitive reference loops; and
 - a clean immutable-provider rerun, followed by focused commit, non-force push,

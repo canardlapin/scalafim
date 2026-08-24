@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
@@ -19,7 +21,7 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -263,7 +265,7 @@ class ChunkedRunwiseExecutionScenarioSuite extends munit.FunSuite:
           backend = InMemoryDatasetBackend(
             DatasetId("scenario-chunked-runwise-execution"),
             ImageDMat.fromRows(responseRows),
-            NeuroSpace(Vector(5, 1, 1))
+            SampleSpaces(Vector(5, 1, 1))
           ),
           samplingFrame = samplingFrame
         )

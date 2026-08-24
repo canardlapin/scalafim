@@ -49,8 +49,8 @@ class OrientationResampleSuite extends munit.FunSuite:
     assert(result.isLeft, clue = "singular orientation matrices should not throw on checked path")
   }
 
-  test("reorient updates NeuroSpace transform and axes") {
-    val sp = NeuroSpace(
+  test("reorient updates SomeSampleSpace transform and axes") {
+    val sp = SampleSpaces(
       dims = Vector(2, 2, 2),
       spacing = Some(Vector(2.0, 3.0, 4.0)),
       origin = Some(Vector(10.0, 20.0, 30.0))
@@ -64,7 +64,7 @@ class OrientationResampleSuite extends munit.FunSuite:
     assertEquals(typed.trans, ras.trans, clue = "")
   }
 
-  test("NeuroSpace infers axes from trans when axes are not provided") {
+  test("SomeSampleSpace infers axes from trans when axes are not provided") {
     val tx =
       DMat.fromRows(
         Vector(
@@ -76,7 +76,7 @@ class OrientationResampleSuite extends munit.FunSuite:
       )
 
     val sp3 =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(2, 2, 2),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0)),
@@ -85,7 +85,7 @@ class OrientationResampleSuite extends munit.FunSuite:
     assertEquals(sp3.axes.spatialAxes, Vector(Axis.RightLeft, Axis.AnteriorPosterior, Axis.SuperiorInferior), clue = "")
 
     val sp4 =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(2, 2, 2, 5),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0)),
@@ -96,9 +96,9 @@ class OrientationResampleSuite extends munit.FunSuite:
   }
 
   test("resampleTo maps method strings to internal interpolators") {
-    val spSrc = NeuroSpace(Vector(4, 4, 4))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
-    val spTarg = NeuroSpace(Vector(3, 3, 3))
+    val spSrc = SampleSpaces(Vector(4, 4, 4))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
+    val spTarg = SampleSpaces(Vector(3, 3, 3))
 
     val n = Resample.resampleTo(vol, spTarg, method = "nearest", engine = "internal")
     val l = Resample.resampleTo(vol, spTarg, method = "linear", engine = "internal")
@@ -113,9 +113,9 @@ class OrientationResampleSuite extends munit.FunSuite:
   }
 
   test("resampleTo refuses unknown engine") {
-    val spSrc = NeuroSpace(Vector(4, 4, 4))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(i => (i + 1).toDouble), spSrc)
-    val spTarg = NeuroSpace(Vector(2, 2, 2))
+    val spSrc = SampleSpaces(Vector(4, 4, 4))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(i => (i + 1).toDouble), spSrc)
+    val spTarg = SampleSpaces(Vector(2, 2, 2))
 
     interceptMessage[IllegalArgumentException]("Only engine = 'internal'") {
       Resample.resampleTo(vol, spTarg, method = "nearest", engine = "RNiftyReg")
@@ -123,9 +123,9 @@ class OrientationResampleSuite extends munit.FunSuite:
   }
 
   test("resampleToEither reports parser failures without throwing") {
-    val spSrc = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
-    val spTarg = NeuroSpace(Vector(2, 2, 2))
+    val spSrc = SampleSpaces(Vector(2, 2, 2))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
+    val spTarg = SampleSpaces(Vector(2, 2, 2))
 
     val ok = Resample.resampleTo(vol, spTarg, method = Resample.Method.Nearest, engine = Resample.Engine.Internal)
     assertEquals(ok.space.dims, spTarg.dims, clue = "")
@@ -141,18 +141,18 @@ class OrientationResampleSuite extends munit.FunSuite:
       case other => fail(s"expected UnknownMethod, got $other")
   }
 
-  test("resampleTo accepts NeuroVol/NeuroVec targets (plus Ops syntax)") {
-    val spSrc = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
+  test("resampleTo accepts SomeNeuroVolume/SomeNeuroSeries targets (plus Ops syntax)") {
+    val spSrc = SampleSpaces(Vector(2, 2, 2))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
 
-    val targVol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), NeuroSpace(Vector(3, 3, 3)))
+    val targVol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), SampleSpaces(Vector(3, 3, 3)))
     val outVol = Resample.resampleTo(vol, targVol, method = Resample.Method.Nearest)
     assertEquals(outVol.space.dims, Vector(3, 3, 3), clue = "")
 
-    val spVec = NeuroSpace(Vector(2, 2, 2, 3))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](2 * 2 * 2 * 3)(_.toDouble), spVec)
+    val spVec = SampleSpaces(Vector(2, 2, 2, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](2 * 2 * 2 * 3)(_.toDouble), spVec)
 
-    val targVec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), NeuroSpace(Vector(3, 3, 3, 2)))
+    val targVec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), SampleSpaces(Vector(3, 3, 3, 2)))
     val outVec = Resample.resampleTo(vec, targVec, method = Resample.Method.Linear)
     assertEquals(outVec.space.dims, Vector(3, 3, 3, 3), clue = "")
 

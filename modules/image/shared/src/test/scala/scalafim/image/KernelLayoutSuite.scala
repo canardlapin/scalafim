@@ -5,16 +5,16 @@ import ravel.NDArray
 class KernelLayoutSuite extends munit.FunSuite:
 
   test("view-safe kernels agree with whole-canonical 2x3x5x7 oracles"):
-    val volumeSpace = NeuroSpace(Vector(2, 3, 5))
+    val volumeSpace = SampleSpaces(Vector(2, 3, 5))
     val volumeData =
       NDArray
         .tabulate[Double](2, 3, 5): (x, y, z) =>
           100.0 * x + 10.0 * y + z
         .reverse(1)
     val viewVolume =
-      NeuroVol.fromRavel(volumeData, volumeSpace, "asymmetric-view")
+      SomeScalarVolume.unsafeFromRavel(volumeData, volumeSpace, "asymmetric-view")
     val canonicalVolume =
-      NeuroVol.fromRavel(volumeData.copy, volumeSpace, "asymmetric-view")
+      SomeScalarVolume.unsafeFromRavel(volumeData.copy, volumeSpace, "asymmetric-view")
 
     assert(!viewVolume.values.isCanonicalLayout)
     assert(canonicalVolume.values.isCanonicalLayout)
@@ -28,11 +28,11 @@ class KernelLayoutSuite extends munit.FunSuite:
 
     val viewZipped =
       viewVolume
-        .zipWith(viewMapped)(_ + _)
+        .zipExact(viewMapped)(_ + _)
         .fold(error => fail(error.message), identity)
     val canonicalZipped =
       canonicalVolume
-        .zipWith(canonicalMapped)(_ + _)
+        .zipExact(canonicalMapped)(_ + _)
         .fold(error => fail(error.message), identity)
     assertSameVolume(viewZipped, canonicalZipped)
     assertWholeCanonical(viewZipped)
@@ -70,9 +70,9 @@ class KernelLayoutSuite extends munit.FunSuite:
           1000.0 * x + 100.0 * y + 10.0 * z + time
         .reverse(0)
     val viewSeries =
-      NeuroVec.fromRavel(seriesData, seriesSpace, "asymmetric-series-view")
+      SomeScalarSeries.unsafeFromRavel(seriesData, seriesSpace, "asymmetric-series-view")
     val canonicalSeries =
-      NeuroVec.fromRavel(
+      SomeScalarSeries.unsafeFromRavel(
         seriesData.copy,
         seriesSpace,
         "asymmetric-series-view"
@@ -119,18 +119,18 @@ class KernelLayoutSuite extends munit.FunSuite:
 
     val viewSeriesZipped =
       viewSeries
-        .zipWith(viewSeriesMapped)(_ - _)
+        .zipExact(viewSeriesMapped)(_ - _)
         .fold(error => fail(error.message), identity)
     val canonicalSeriesZipped =
       canonicalSeries
-        .zipWith(canonicalSeriesMapped)(_ - _)
+        .zipExact(canonicalSeriesMapped)(_ - _)
         .fold(error => fail(error.message), identity)
     assertSameSeries(viewSeriesZipped, canonicalSeriesZipped)
     assertWholeCanonical(viewSeriesZipped)
 
     val voxel = volumeSpace.gridToIndex3D(1, 2, 4)
-    val viewTimeCourse = viewSeries.series(voxel)
-    val canonicalTimeCourse = canonicalSeries.series(voxel)
+    val viewTimeCourse = viewSeries.timeSeries(voxel)
+    val canonicalTimeCourse = canonicalSeries.timeSeries(voxel)
     assert(!viewTimeCourse.isWholeBuffer)
     assertEquals(viewTimeCourse.size, 7)
     var time = 0
@@ -142,12 +142,12 @@ class KernelLayoutSuite extends munit.FunSuite:
       )
       time += 1
 
-  private def assertWholeCanonical[A](volume: NeuroVol[A]): Unit =
+  private def assertWholeCanonical[A, Sem](volume: SomeNeuroVolume[A, Sem]): Unit =
     assert(volume.values.isCanonicalLayout)
     assert(volume.values.isWholeBuffer)
 
   @scala.annotation.targetName("assertWholeCanonicalSeries")
-  private def assertWholeCanonical[A](series: NeuroVec[A]): Unit =
+  private def assertWholeCanonical[A, Sem](series: SomeNeuroSeries[A, Sem]): Unit =
     assert(series.values.isCanonicalLayout)
     assert(series.values.isWholeBuffer)
 
@@ -155,8 +155,8 @@ class KernelLayoutSuite extends munit.FunSuite:
     if value.isNaN then 0.0 else value
 
   private def assertSameVolume(
-      actual: NeuroVol[Double],
-      expected: NeuroVol[Double],
+      actual: SomeScalarVolume[Double],
+      expected: SomeScalarVolume[Double],
       tolerance: Double = 0.0
   ): Unit =
     assertEquals(
@@ -176,8 +176,8 @@ class KernelLayoutSuite extends munit.FunSuite:
       x += 1
 
   private def assertSameSeries(
-      actual: NeuroVec[Double],
-      expected: NeuroVec[Double],
+      actual: SomeScalarSeries[Double],
+      expected: SomeScalarSeries[Double],
       tolerance: Double = 0.0
   ): Unit =
     assertEquals(

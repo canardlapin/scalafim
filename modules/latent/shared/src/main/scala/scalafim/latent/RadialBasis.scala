@@ -5,7 +5,8 @@ import image4s.geometry.Frame
 import image4s.locus.GridDomain
 import locus4s.DomainRegistry
 import locus4s.Selection
-import scalafim.image.{Indexing, NeuroSpace}
+import scalafim.image.{Indexing, SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import gale.linalg.{DMat, DVec}
 
 sealed trait RadialActiveVoxels:
@@ -38,11 +39,11 @@ sealed trait RadialActiveVoxels:
 
 object RadialActiveVoxels:
   def fromIndices(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       activeIndices: IndexedSeq[Int]
   ): Either[RadialBasisError, RadialActiveVoxels] =
     for
-      spatial <- NeuroSpace
+      spatial <- SampleSpaces
         .requireSpatialD3(space)
         .left
         .map(error => RadialBasisError.InvalidActiveVoxelIndices(error.message))
@@ -78,14 +79,20 @@ object RadialActiveVoxels:
     else if selection0.isEmpty then
       Left(RadialBasisError.EmptyActiveCoordinates)
     else
-      val native = selection0.asInstanceOf[Selection[S0]]
-      Right(
-        new RadialActiveVoxels:
-          type F = F0
-          type S = S0
-          val domain: GridDomain[F, D3, S] = domain0
-          val selection: Selection[S] = native
-      )
+      domain0.space.align(selection0.space) match
+        case Left(error) =>
+          Left(
+            RadialBasisError.InvalidActiveVoxelIndices(error.message)
+          )
+        case Right(alignment) =>
+          val native = selection0.rebind(alignment.reverse)
+          Right(
+            new RadialActiveVoxels:
+              type F = F0
+              type S = S0
+              val domain: GridDomain[F, D3, S] = domain0
+              val selection: Selection[S] = native
+          )
 
 final case class RadialBasis(
     kernel: RadialKernel,
@@ -264,7 +271,7 @@ final case class RadialBasis(
 
 object RadialBasis:
   def fromSpec(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       activeIndices: IndexedSeq[Int],
       spec: RadialBasisSpec
   ): Either[RadialBasisError, RadialBasis] =
@@ -289,7 +296,7 @@ object RadialBasis:
 
   def fromSpaceIndices(
       atoms: IndexedSeq[RadialAtom],
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       activeIndices: IndexedSeq[Int],
       kernel: RadialKernel,
       threshold: RadialValueThreshold = RadialValueThreshold.Zero,

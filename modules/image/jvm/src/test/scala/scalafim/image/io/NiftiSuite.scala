@@ -108,8 +108,8 @@ class NiftiSuite extends munit.FunSuite:
   test("native series round-trip asymmetric 2x3x5x7 coordinates through nii and gzip") {
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val sourceSpace =
-      NeuroSpace.requireD3(
-        NeuroSpace(Vector(2, 3, 5)).addDim(7, Some(Axis.Time))
+      SampleSpaces.requireD3(
+        SampleSpaces(Vector(2, 3, 5)).addDim(7, Some(Axis.Time))
       ).toOption.get
     val data =
       NDArray.tabulate[Double](2, 3, 5, 7): (x, y, z, time) =>
@@ -148,7 +148,7 @@ class NiftiSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val path = dir.resolve("volume.nii")
     val sourceSpace =
-      NeuroSpace.requireSpatialD3(NeuroSpace(Vector(2, 3, 5))).toOption.get
+      SampleSpaces.requireSpatialD3(SampleSpaces(Vector(2, 3, 5))).toOption.get
     val data =
       NDArray.tabulate[Double](2, 3, 5): (x, y, z) =>
         x * 100.0 + y * 10.0 + z
@@ -161,8 +161,13 @@ class NiftiSuite extends munit.FunSuite:
 
     assert(Nifti.writeVolume(path, source).isRight)
     val loaded = Nifti.readVolume(path).toOption.get.image
+    val reloaded = Nifti.readVolume(path).toOption.get.image
 
     assertEquals(loaded.data.shape, Shape(2, 3, 5))
+    assert(loaded.grid.record.isRight)
+    assertEquals(loaded.grid.record, reloaded.grid.record)
+    assert(loaded.grid.samePersistentKeyAs(reloaded.grid))
+    assert(!loaded.grid.sameRuntimeOwnerAs(reloaded.grid))
     var x = 0
     while x < 2 do
       var y = 0

@@ -2,7 +2,7 @@ package scalafim.fmri.motion.benchmark
 
 import scalafim.fmri.motion.*
 import scalafim.fmri.motion.io.MotionReportWriter
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, PrimitiveBuffers}
+import scalafim.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
@@ -296,7 +296,7 @@ object MotionBenchmark:
     val poses = translations.map { case (tx, ty, tz) => RigidPose.unsafe(tx, ty, tz, 0.0, 0.0, 0.0) }
     MotionBenchmarkScenario(name, dims, MotionTrace.unsafe(poses), noiseScale, nuisanceGain)
 
-  private def renderRun(scenario: MotionBenchmarkScenario): NeuroVec[Double] =
+  private def renderRun(scenario: MotionBenchmarkScenario): SomeScalarSeries[Double] =
     val dims = scenario.dims
     val nx = dims(0)
     val ny = dims(1)
@@ -316,8 +316,12 @@ object MotionBenchmark:
       val noise = scenario.noiseScale * math.sin(12.9898 * (lin + 1).toDouble + 78.233 * (t + 1).toDouble)
       nuisance * base + noise
     }
-    val space = NeuroSpace(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(scenario.nVolumes, Some(Axis.Time))
-    NeuroVec.copyFromCanonicalArray(data, space, label = scenario.name)
+    val space = SampleSpaces(dims, spacing = Some(Vector(2.0, 2.0, 2.0))).addDim(scenario.nVolumes, Some(Axis.Time))
+    SomeNeuroSeries.unsafeCopyFromCanonicalArray[Double, image4s.Continuous](
+      data,
+      space,
+      label = scenario.name
+    )
 
   private def templateValue(x: Double, y: Double, z: Double, dims: Vector[Int]): Double =
     val cx = 0.5 * (dims(0) - 1).toDouble
@@ -379,7 +383,7 @@ object MotionBenchmark:
       "\"" + value.replace("\"", "\"\"") + "\""
     else value
 
-  private def tsnr(run: NeuroVec[Double]): Double =
+  private def tsnr(run: SomeScalarSeries[Double]): Double =
     val nSpatial = run.space.spatialDims.product
     val nt = run.nVolumes
     val values = Vector.newBuilder[Double]

@@ -66,8 +66,8 @@
     }
   ],
   "correctness": {
-    "command": "sbt -J-Xmx4G -Dsbt.supershell=false 'imageJVM/testOnly scalafim.image.io.NiftiSuite scalafim.image.io.NiftiResliceOracleSuite scalafim.image.io.NativeNiftiAllocationSuite'",
-    "testsPassed": 10,
+    "command": "sbt -J-Xmx4G -Dsbt.supershell=false 'imageJVM/testOnly scalafim.image.io.NiftiSuite scalafim.image.io.NiftiResliceOracleSuite scalafim.image.io.ImageLibraryParitySuite scalafim.image.io.NativeNiftiAllocationSuite'",
+    "testsPassed": 13,
     "failed": 0,
     "status": "pass",
     "oracles": [
@@ -75,8 +75,22 @@
       "asymmetric 2x3x5 native volume round trip",
       "UInt8 native Ravel storage with explicit slope and intercept encoding",
       "typed qform-sform disagreement, unsupported datatype, and payload-limit failures",
-      "independent nibabel oblique affine and slice pixels"
+      "independent nibabel oblique affine and slice pixels",
+      "nibabel 5.2.1 and neuroim2 0.19.0 agreement across all 72 coordinates of an asymmetric 2x3x4x3 NIfTI",
+      "coordinate-exact translation from first-axis-fastest NIfTI storage to canonical last-axis-fastest Ravel storage",
+      "raw Float32 writer payload, shape, temporal spacing, and sform agreement with the independent library oracle"
     ]
+  },
+  "libraryParity": {
+    "nibabelVersion": "5.2.1",
+    "neuroim2Version": "0.19.0",
+    "coordinatesChecked": 72,
+    "regeneratedByteExactly": true,
+    "sha256": {
+      "nibabel-neuroim2-basic-4d.nii": "5393071395379cadc73e96a452489bd33f799903e2d63a4b8fe0e2283e381bd4",
+      "nibabel-basic-4d.tsv": "135722ee359b51bfa8a75df476ed58f492a9e104fe8b49cc09edc806b98bf36b",
+      "neuroim2-basic-4d.tsv": "6821dcfdf37917a2c83389eb25f9c8697753c0f7b426cf34546aed946714b88a"
+    }
   },
   "providerEvidence": {
     "image4sRevision": "6b9016b7aa622df8dec3d887080ee512fa7439c6",

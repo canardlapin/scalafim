@@ -1,5 +1,7 @@
 package scalafim.archive.io
 
+import scalafim.image.SampleSpaces
+
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import scalafim.archive.{
@@ -18,7 +20,7 @@ import scalafim.archive.lna.{
   Payload,
   QuantParams
 }
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 
 import java.nio.file.Files
 import scala.concurrent.Future
@@ -35,7 +37,7 @@ class LnaArchiveDriverSuite extends munit.FunSuite:
       LnaPipeline
         .quantArchive(
           data,
-          NeuroSpace(Vector(2, 2, 1)),
+          SampleSpaces(Vector(2, 2, 1)),
           params = QuantParams(bits = 8)
         )
         .fold(error => fail(error.message), identity)

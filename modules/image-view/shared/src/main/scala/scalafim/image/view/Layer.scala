@@ -118,13 +118,13 @@ enum VolumeSourceError:
       case SpaceMismatch(expected, actual) =>
         s"source returned space ${actual.dims} instead of declared space ${expected.dims}"
 
-final class VolumeSource[A] private (
+final class VolumeSource[A, Sem] private (
   val space: VolumeSpace,
   val frameCount: Int,
   val timeInvariant: Boolean,
-  readFrame: Int => Either[String, NeuroVol[A]]
+  readFrame: Int => Either[String, SomeNeuroVolume[A, Sem]]
 ):
-  def volumeAt(timepoint: Int): Either[VolumeSourceError, NeuroVol[A]] =
+  def volumeAt(timepoint: Int): Either[VolumeSourceError, SomeNeuroVolume[A, Sem]] =
     val index = if timeInvariant then 0 else timepoint
     if index < 0 || index >= frameCount then
       Left(VolumeSourceError.TimepointOutOfBounds(index, frameCount))
@@ -141,24 +141,24 @@ final class VolumeSource[A] private (
         }
 
 object VolumeSource:
-  def lazyFrames[A](
+  def lazyFrames[A, Sem](
     space: VolumeSpace,
     frameCount: Int
   )(
-    readFrame: Int => Either[String, NeuroVol[A]]
-  ): Either[VolumeSourceError, VolumeSource[A]] =
+    readFrame: Int => Either[String, SomeNeuroVolume[A, Sem]]
+  ): Either[VolumeSourceError, VolumeSource[A, Sem]] =
     if frameCount <= 0 then Left(VolumeSourceError.InvalidFrameCount(frameCount))
     else Right(new VolumeSource(space, frameCount, timeInvariant = false, readFrame))
 
-  def static[A](volume: NeuroVol[A]): VolumeSource[A] =
+  def static[A, Sem](volume: SomeNeuroVolume[A, Sem]): VolumeSource[A, Sem] =
     new VolumeSource(volume.volumeSpace, 1, timeInvariant = true, _ => Right(volume))
 
-  def series[A: ClassTag](series: NeuroVec[A]): VolumeSource[A] =
+  def series[A: ClassTag, Sem](series: SomeNeuroSeries[A, Sem]): VolumeSource[A, Sem] =
     new VolumeSource(
       series.seriesSpace.volumeSpace,
       series.nVolumes,
       timeInvariant = series.nVolumes == 1,
-      index => Right(series.volume(index))
+      index => series.volumeAt(index).left.map(_.message)
     )
 
 enum LayerMapping:
@@ -222,10 +222,10 @@ sealed trait SliceLayer:
     sample(grid, timepoint).map(_.colorize(window, threshold))
 
 object SliceLayer:
-  def apply[A: ClassTag: LayerValue](
+  def apply[A: ClassTag: LayerValue, Sem](
     id: LayerId,
-    volume: NeuroVol[A],
-    sampling: SliceSampling[A],
+    volume: SomeNeuroVolume[A, Sem],
+    sampling: SliceSampling[A, Sem],
     colorizer: Colorizer[A],
     opacity: LayerOpacity = LayerOpacity.Opaque,
     displayInterpolation: RasterInterpolation = RasterInterpolation.Nearest,
@@ -233,10 +233,10 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.static(volume), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def series[A: ClassTag: LayerValue](
+  def series[A: ClassTag: LayerValue, Sem](
     id: LayerId,
-    series: NeuroVec[A],
-    sampling: SliceSampling[A],
+    series: SomeNeuroSeries[A, Sem],
+    sampling: SliceSampling[A, Sem],
     colorizer: Colorizer[A],
     opacity: LayerOpacity = LayerOpacity.Opaque,
     displayInterpolation: RasterInterpolation = RasterInterpolation.Nearest,
@@ -244,10 +244,10 @@ object SliceLayer:
   ): SliceLayer =
     fromSource(id, VolumeSource.series(series), sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  def fromSource[A: ClassTag: LayerValue](
+  def fromSource[A: ClassTag: LayerValue, Sem](
     id: LayerId,
-    source: VolumeSource[A],
-    sampling: SliceSampling[A],
+    source: VolumeSource[A, Sem],
+    sampling: SliceSampling[A, Sem],
     colorizer: Colorizer[A],
     opacity: LayerOpacity = LayerOpacity.Opaque,
     displayInterpolation: RasterInterpolation = RasterInterpolation.Nearest,
@@ -255,10 +255,10 @@ object SliceLayer:
   ): SliceLayer =
     Typed(id, source, sampling, colorizer, opacity, displayInterpolation, mapping)
 
-  private final case class Typed[A: ClassTag: LayerValue](
+  private final case class Typed[A: ClassTag: LayerValue, Sem](
     id: LayerId,
-    source: VolumeSource[A],
-    sampling: SliceSampling[A],
+    source: VolumeSource[A, Sem],
+    sampling: SliceSampling[A, Sem],
     colorizer: Colorizer[A],
     opacity: LayerOpacity,
     displayInterpolation: RasterInterpolation,
@@ -287,10 +287,10 @@ object SliceLayer:
         .map(error => ImageViewError.SourceFailed(id, error))
         .map(volume => TypedFrame(id, volume, sampling, colorizer, mapping))
 
-  private final case class TypedFrame[A: ClassTag: LayerValue](
+  private final case class TypedFrame[A: ClassTag: LayerValue, Sem](
     id: LayerId,
-    volume: NeuroVol[A],
-    sampling: SliceSampling[A],
+    volume: SomeNeuroVolume[A, Sem],
+    sampling: SliceSampling[A, Sem],
     colorizer: Colorizer[A],
     mapping: LayerMapping
   ) extends ResolvedLayerFrame:
@@ -298,11 +298,11 @@ object SliceLayer:
       val sampled =
         mapping match
           case LayerMapping.WorldAligned =>
-            SlicePlan.make(volume.volumeSpace, grid).sample(volume.toNative, sampling)
+            SlicePlan.make(volume.volumeSpace, grid).sample(volume, sampling)
           case LayerMapping.Pullback(referenceToSource) =>
             MappedSlicePlan
               .make(volume.volumeSpace, grid, referenceToSource)
-              .sample(volume.toNative, sampling)
+              .sample(volume, sampling)
       sampled
         .left
         .map(error => ImageViewError.SamplingFailed(id, error))

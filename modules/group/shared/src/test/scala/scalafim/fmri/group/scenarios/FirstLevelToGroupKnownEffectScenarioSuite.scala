@@ -1,5 +1,7 @@
 package scalafim.fmri.group.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend, SubjectId}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
 import scalafim.fmri.fit.{DenseFmriFitResult, FitError, FitPlanExecutor, TContrast, TContrastResult}
@@ -17,7 +19,7 @@ import scalafim.fmri.group.GroupTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, Matrix}
 
 class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
@@ -111,7 +113,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId(s"scenario-known-effect-${subject.id.value}"),
           ImageDMat.fromRows(subject.responseRows),
-          NeuroSpace(Vector(subject.samples, 1, 1))
+          SampleSpaces(Vector(subject.samples, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(KnownDesign.task.length), tr = Seq(1.0)),
         events = DatasetEvents(

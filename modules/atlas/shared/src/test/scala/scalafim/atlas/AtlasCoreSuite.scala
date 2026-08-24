@@ -14,7 +14,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     assertEquals(Point3D.fromVector(Vector(1.0, 2.0, 3.0)), point)
 
   private def toyAtlas(): VolumeAtlas =
-    val sp = NeuroSpace(
+    val sp = SampleSpaces(
       dims = Vector(5, 5, 5),
       spacing = Some(Vector(2.0, 2.0, 2.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))

@@ -5,11 +5,11 @@ import cats.implicits.*
 class FunctionalImageSuite extends munit.FunSuite:
 
   private val volumeSpace =
-    VolumeSpace(NeuroSpace(Vector(2, 2, 1)))
+    VolumeSpace(SampleSpaces(Vector(2, 2, 1)))
 
   private val translatedSpace =
     VolumeSpace(
-      NeuroSpace(
+      SampleSpaces(
         Vector(2, 2, 1),
         trans = Some(
           DMat.fromRows(
@@ -25,16 +25,16 @@ class FunctionalImageSuite extends munit.FunSuite:
     )
 
   private val packedDomain =
-    VolumeDomain
+    GridDomain
       .register(
-        volumeSpace,
+        volumeSpace.sampleSpace.grid,
         "functional image voxels",
         locus4s.DomainRegistry.empty
       )
       .toOption
       .get
   private type Voxel = packedDomain.S
-  private val domain: VolumeDomain[Voxel] = packedDomain.value
+  private val domain = packedDomain.value
   private val timeAxis =
     image4s.Axis
       .ordinal("time", image4s.AxisKind.Time, 2)
@@ -65,9 +65,9 @@ class FunctionalImageSuite extends munit.FunSuite:
     Vector.tabulate(values.size)(i => values(i))
 
   test("mapValues and coordinate-aware volume mapping preserve geometry") {
-    val volume = NeuroVol.copyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toNeuroSpace)
-    val mapped = volume.mapValues(_ + 1)
-    val located = volume.mapVoxels: (coord, value) =>
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toSampleSpace)
+    val mapped = volume.mapValues[Int, image4s.Categorical](_ + 1)
+    val located = volume.mapVoxels[Int, image4s.Categorical]: (coord, value) =>
       value + coord.x + 10 * coord.y
 
     assertEquals(mapped.space, volume.space, clue = "")
@@ -75,29 +75,38 @@ class FunctionalImageSuite extends munit.FunSuite:
     assertEquals(vector(located.copyToCanonicalArray), Vector(10, 30, 31, 51), clue = "")
   }
 
-  test("NeuroVec mapping distinguishes voxel coordinates from time samples") {
+  test("SomeNeuroSeries mapping distinguishes voxel coordinates from time samples") {
     val space = volumeSpace.addTime(2)
-    val series = NeuroVec.copyFromCanonicalArray(Array[Int](0, 0, 0, 0, 0, 0, 0, 0), space.toNeuroSpace)
-    val mapped = series.mapSamples: (coord, time, _) =>
+    val series = SomeScalarSeries.unsafeCopyFromCanonicalArray(Array[Int](0, 0, 0, 0, 0, 0, 0, 0), space.toSampleSpace)
+    val mapped = series.mapSamples[Int, image4s.Continuous]: (coord, time, _) =>
       coord.x + 10 * coord.y + 100 * time
 
     assertEquals(vector(mapped.copyToCanonicalArray), Vector(0, 100, 10, 110, 1, 101, 11, 111), clue = "")
   }
 
-  test("checked zipWith rejects a different physical grid") {
-    val left = NeuroVol.copyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toNeuroSpace)
-    val right = NeuroVol.copyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toNeuroSpace)
-    val translated = NeuroVol.copyFromCanonicalArray(Array[Int](10, 20, 30, 40), translatedSpace.toNeuroSpace)
+  test("checked zipExact rejects a different physical grid") {
+    val left = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toSampleSpace)
+    val right = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), volumeSpace.toSampleSpace)
+    val translated = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](10, 20, 30, 40), translatedSpace.toSampleSpace)
 
-    val summed = left.zipWith(right)(_ + _).fold(error => fail(error.message), identity)
+    val summed =
+      left
+        .zipExact[Int, image4s.Categorical, Int, image4s.Categorical](right)(_ + _)
+        .fold(error => fail(error.message), identity)
     assertEquals(vector(summed.copyToCanonicalArray), Vector(11, 22, 33, 44), clue = "")
-    assert(left.zipWith(translated)(_ + _).isLeft)
+    assert(
+      left
+        .zipExact[Int, image4s.Categorical, Int, image4s.Categorical](translated)(_ + _)
+        .isLeft
+    )
   }
 
   test("effectful traversal sequences failures without adding an image monad") {
-    val volume = NeuroVol.copyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toNeuroSpace)
-    val success = volume.traverseValues[Option, Int](value => Some(value * 2))
-    val failure = volume.traverseValues[Option, Int](value => Option.when(value < 3)(value))
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray(Array[Int](1, 2, 3, 4), volumeSpace.toSampleSpace)
+    val success =
+      volume.traverseValues[Option, Int, image4s.Categorical](value => Some(value * 2))
+    val failure =
+      volume.traverseValues[Option, Int, image4s.Categorical](value => Option.when(value < 3)(value))
 
     assertEquals(success.map(result => vector(result.copyToCanonicalArray)), Some(Vector(2, 4, 6, 8)), clue = "")
     assertEquals(failure, None, clue = "")
@@ -186,9 +195,9 @@ class FunctionalImageSuite extends munit.FunSuite:
     assertEquals(filled(2, 1), 10)
 
     val foreignPacked =
-      VolumeDomain
+      GridDomain
         .register(
-          translatedSpace,
+          translatedSpace.sampleSpace.grid,
           "functional translated voxels",
           locus4s.DomainRegistry.empty
         )

@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import scalafim.fmri.fit.GaleTestSyntax.*
@@ -48,7 +50,7 @@ import scalafim.fmri.model.{
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy
 }
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,
@@ -74,7 +76,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       )
     )
     FmriDataset.unsafe(
-      backend = InMemoryDatasetBackend(DatasetId("ols-demo"), data, NeuroSpace(Vector(2, 1, 1))),
+      backend = InMemoryDatasetBackend(DatasetId("ols-demo"), data, SampleSpaces(Vector(2, 1, 1))),
       samplingFrame = samplingFrame
     )
 
@@ -116,7 +118,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("pca-sketch-demo"), data, NeuroSpace(Vector(3, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("pca-sketch-demo"), data, SampleSpaces(Vector(3, 1, 1))),
         samplingFrame = samplingFrame
       )
     FmriModel(eventModel, baseline, dataset)
@@ -145,7 +147,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("rrr-partitioned-demo"),
           ImageDMat.fromRows(ReducedRankGlsFmriregFixtures.partitionedResponse.toRows),
-          NeuroSpace(Vector(3, 1, 1))
+          SampleSpaces(Vector(3, 1, 1))
         ),
         samplingFrame = frame
       )
@@ -629,7 +631,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("lss-trialwise-demo"),
           ImageDMat.fromRows(rows),
-          NeuroSpace(Vector(2, 1, 1))
+          SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
         events = events
@@ -689,7 +691,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("lss-reordered-trialwise-demo"),
           ImageDMat.fromRows(rows),
-          NeuroSpace(Vector(2, 1, 1))
+          SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
         events = DatasetEvents(Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 6).toString)))
@@ -742,7 +744,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("lss-renamed-aggregate-demo"),
           ImageDMat.fromRows(rows),
-          NeuroSpace(Vector(2, 1, 1))
+          SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
         events = DatasetEvents(Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 6).toString)))
@@ -793,7 +795,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("lss-ambiguous-demo"),
           ImageDMat.fromRows(Vector.tabulate(nTime)(i => Vector(i.toDouble))),
-          NeuroSpace(Vector(1, 1, 1))
+          SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
         events = DatasetEvents(Vector.tabulate(nTrials)(i => Map("onset" -> (2 + i * 5).toString)))

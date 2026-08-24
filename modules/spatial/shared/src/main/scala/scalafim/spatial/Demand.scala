@@ -1,6 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.{Indexing, SpatialAxis, VoxelCoord}
+import scalafim.image.SampleSpaces.*
 
 enum DemandError:
   case EmptySelection(label: String)

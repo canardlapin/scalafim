@@ -25,12 +25,12 @@ class AtlasCoverageSuite extends munit.FunSuite:
 
   private def labelVolume(values: Vector[Int]): SomeLabelVolume[Int] =
     AtlasTestImages.labelVolume(
-      NeuroSpace(Vector(2, 2, 1)),
+      SampleSpaces(Vector(2, 2, 1)),
       PrimitiveBuffers.fromArray(values.toArray),
       "coverage"
     )
 
-  private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: NeuroSpace = NeuroSpace(Vector(2, 2, 1))): VolumeAtlas =
+  private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
@@ -246,7 +246,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(self.forall(o => math.abs(o.dice - 1.0) < 1e-12), clue = self.toString)
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
-    val mismatched = atlas(Vector(1, 2), space = NeuroSpace(Vector(2, 1, 1)))
+    val mismatched = atlas(Vector(1, 2), space = SampleSpaces(Vector(2, 1, 1)))
     assertEquals(
       AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact),
       Left(AtlasError.SpaceMismatch(Vector(2, 2, 1), Vector(2, 1, 1)))
@@ -257,7 +257,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(err.getMessage.contains("expected spatial dimensions 2x2x1 but got 2x1x1"), clue = err.getMessage)
 
   test("adjacency connectivity is monotone from faces to corners"):
-    val space = NeuroSpace(Vector(2, 2, 2))
+    val space = SampleSpaces(Vector(2, 2, 2))
     val values = Vector(1, 0, 0, 0, 0, 0, 0, 2)
     val a = atlas(values, space = space)
 

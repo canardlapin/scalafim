@@ -26,7 +26,7 @@ object ThreeVolumeProjector:
     three: js.Dynamic,
     canvas: js.Dynamic,
     morphism: VolToSurfMorphism,
-    volume: NeuroVol[Double],
+    volume: SomeScalarVolume[Double],
     policy: SurfaceProjectionPolicy = SurfaceProjectionPolicy()
   ): Either[ThreeSurfaceError, ThreeVolumeProjectionResult] =
     if morphism.plan.path != SurfaceSamplingPath.Midpoint ||

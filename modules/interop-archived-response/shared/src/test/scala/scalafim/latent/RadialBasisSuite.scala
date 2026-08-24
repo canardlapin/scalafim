@@ -1,8 +1,11 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+import scalafim.image.SampleSpaces.{gridToIndex3D, spatialDims}
+
 import scalafim.locus.mapping
 import scalafim.archive.lna.SharedBasisId
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class RadialBasisSuite extends munit.FunSuite:
@@ -156,9 +159,9 @@ class RadialBasisSuite extends munit.FunSuite:
     assertEquals(basis.metadata("threshold"), "0.05")
   }
 
-  test("builds active coordinates from NeuroSpace and preserves sparse index order") {
+  test("builds active coordinates from SomeSampleSpace and preserves sparse index order") {
     val space =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(4, 1, 1),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0))
@@ -181,7 +184,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("active voxel construction rejects duplicate and out-of-bounds indices") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val duplicate = RadialActiveVoxels.fromIndices(space, Vector(1, 1))
     val outOfBounds = RadialActiveVoxels.fromIndices(space, Vector(3))
 
@@ -193,7 +196,7 @@ class RadialBasisSuite extends munit.FunSuite:
 
   test("shared-basis artifact conversion canonicalizes rows to mask order") {
     val space =
-      NeuroSpace(
+      SampleSpaces(
         dims = Vector(4, 1, 1),
         spacing = Some(Vector(2.0, 1.0, 1.0)),
         origin = Some(Vector(0.0, 0.0, 0.0))
@@ -270,7 +273,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("radial basis encoder delegates through shared-basis projection and reconstructs data in span") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val radial =
       RadialBasis
         .fromSpaceIndices(
@@ -318,7 +321,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("partial decode supports typed active voxel and time selections") {
-    val space = NeuroSpace(Vector(4, 1, 1))
+    val space = SampleSpaces(Vector(4, 1, 1))
     val radial =
       RadialBasis
         .fromSpaceIndices(
@@ -358,7 +361,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("partial decode maps full-grid active voxel indices without materializing full output") {
-    val space = NeuroSpace(Vector(4, 4, 2))
+    val space = SampleSpaces(Vector(4, 4, 2))
     val active =
       Vector(
         space.gridToIndex3D(0, 0, 0),
@@ -407,7 +410,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("radial encoding exposes partial decode with centered offsets") {
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val active = Vector(2, 0, 1)
     val radial =
       RadialBasis
@@ -454,7 +457,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("fmrilatent tiny sparse HRBF fixture roundtrips through encoder and archive") {
-    val space = NeuroSpace(Vector(5, 5, 5))
+    val space = SampleSpaces(Vector(5, 5, 5))
     val active =
       Vector(
         space.gridToIndex3D(0, 0, 0),
@@ -517,7 +520,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("spec generation uses identity-like atoms for tiny sparse masks") {
-    val space = NeuroSpace(Vector(5, 5, 5))
+    val space = SampleSpaces(Vector(5, 5, 5))
     val active =
       Vector(
         space.gridToIndex3D(0, 0, 0),
@@ -546,7 +549,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("spec generation samples disconnected components independently") {
-    val space = NeuroSpace(Vector(10, 1, 1))
+    val space = SampleSpaces(Vector(10, 1, 1))
     val active = Vector(0, 1, 8, 9)
     val spec =
       RadialBasisSpec(
@@ -568,7 +571,7 @@ class RadialBasisSuite extends munit.FunSuite:
   }
 
   test("spec generation is deterministic and halves sigma by level") {
-    val space = NeuroSpace(Vector(100, 1, 1))
+    val space = SampleSpaces(Vector(100, 1, 1))
     val active = 0 until 100
     val spec =
       RadialBasisSpec(

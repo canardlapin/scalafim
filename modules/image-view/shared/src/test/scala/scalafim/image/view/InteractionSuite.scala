@@ -6,12 +6,12 @@ import scalafim.image.*
 class InteractionSuite extends munit.FunSuite:
 
   private val space =
-    VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
+    VolumeSpace(SampleSpaces(Vector(4, 3, 2)))
 
-  private def constantVolume(value: Double, label: String): NeuroVol[Double] =
-    NeuroVol.copyFromCanonicalArray(
+  private def constantVolume(value: Double, label: String): SomeScalarVolume[Double] =
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.fillConst[Double](space.nVoxels, value),
-      space.toNeuroSpace,
+      space.toSampleSpace,
       label
     )
 
@@ -27,9 +27,9 @@ class InteractionSuite extends munit.FunSuite:
   private val maskLayer =
     SliceLayer(
       maskId,
-      NeuroVol.copyFromCanonicalArray(
+      SomeMaskVolume.unsafeCopyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](space.nVoxels, true),
-        space.toNeuroSpace,
+        space.toSampleSpace,
         "mask"
       ),
       SliceSampling.Nearest(false),
@@ -196,7 +196,7 @@ class InteractionSuite extends munit.FunSuite:
     val second = constantVolume(10.0, "second")
     val seriesLayer = SliceLayer.series(
       scalarId,
-      first.concat(second),
+      first.concatenate(second),
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 10.0))
     )
@@ -222,13 +222,13 @@ class InteractionSuite extends munit.FunSuite:
     val one = constantVolume(1.0, "one")
     val twoFrames = SliceLayer.series(
       LayerId.unsafe("two"),
-      one.concat(one),
+      one.concatenate(one),
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
     )
     val threeFrames = SliceLayer.series(
       LayerId.unsafe("three"),
-      one.concat(one, one),
+      one.concatenate(one, one),
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
     )

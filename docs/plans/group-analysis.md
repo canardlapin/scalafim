@@ -39,7 +39,7 @@ a covariate design yields meta-regression — no new machinery.
 
 | Type | Role |
 |---|---|
-| `GroupSpace` | the sample axis (sealed): `SampleAxis`, `VoxelAxis`, `ParcelAxis`. `VoxelAxis` carries a `NeuroSpace` + packed sample→voxel indices for later spatial correction. |
+| `GroupSpace` | the sample axis (sealed): `SampleAxis`, `VoxelAxis`, `ParcelAxis`. `VoxelAxis` carries a `SomeSampleSpace` + packed sample→voxel indices for later spatial correction. |
 | `GroupResponse` | the primitive: one first-level contrast as `effects [subjects × samples]` plus optional `variances`. Mirrors `fit.ResponseBlock`. |
 | `GroupData` | the canonical cube: subjects × samples × (first-level) contrasts, as role-typed responses over a `GroupSpace`. |
 | `GroupDesign` | the second-level design `[subjects × terms]` with named terms. Built by combinators: `intercept`, `twoSample`, `covariates(DataTable, …)`. |
@@ -126,7 +126,7 @@ Each is a clean later phase, not a gap in the core:
 ## Module wiring
 
 `modules/group`, cross-compiled, `name := "scalafim-fmri-group"`, package
-`scalafim.fmri.group`. Depends on `linalg` (numerics), `image` (`NeuroSpace`),
+`scalafim.fmri.group`. Depends on `linalg` (numerics), `image` (`SomeSampleSpace`),
 `dataset` (`SubjectId`), `design` (`DataTable`), and `fit` (first-level bridge).
 </content>
 </invoke>

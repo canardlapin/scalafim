@@ -1,6 +1,7 @@
 package scalafim.dataset
 
-import scalafim.image.{CertifiedGridCongruence, DMat, GridCompatibility, Mask, NeuroSpace, PrimitiveBuffers}
+import scalafim.image.{CertifiedGridCongruence, DMat, GridCompatibility, Mask, SomeSampleSpace, PrimitiveBuffers}
+import scalafim.image.space
 
 /** A scheduler-neutral, bounded read boundary for time-by-voxel response data.
   * Implementations may open local files, archives, or remote objects, but no
@@ -145,7 +146,7 @@ object CompositeResponseBlockSource:
 
   def makeCongruent(
       runs: Vector[RunResponseBlockSource],
-      referenceSpace: NeuroSpace,
+      referenceSpace: SomeSampleSpace,
       congruences: Vector[CertifiedGridCongruence],
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, CompositeResponseBlockSource] =

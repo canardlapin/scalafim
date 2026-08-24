@@ -1,7 +1,8 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -169,7 +170,7 @@ object LnaManifestCodec:
         timepoints <- intField(obj, "timepoints")
         output <- archivePathField(obj, "output")
         mask <- optionalNullableString(obj, "mask").flatMap(_.fold(Right(None))(value => catchInvalid(s"mask path $value")(Some(ArchivePath(value)))))
-        run <- catchInvalid(s"run ${label.value}")(LnaRun(label, LnaShape(NeuroSpace(dims), timepoints), output, mask))
+        run <- catchInvalid(s"run ${label.value}")(LnaRun(label, LnaShape(SampleSpaces(dims), timepoints), output, mask))
       yield run
     }
 

@@ -23,6 +23,7 @@ import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiUnknownTemporalUnitPolicy
 import image4s.nifti.NiftiWriteOptions
 import ravel.Rank
+import ravel.AnyRank
 import scalafim.image.*
 
 import java.nio.ByteOrder
@@ -90,10 +91,10 @@ final class NiftiHeader private[io] (
       native.sform.orElse(native.qform).getOrElse(native.fallbackAffine)
     )
 
-  lazy val space: NeuroSpace =
+  lazy val space: SomeSampleSpace =
     val affine = selectedAffine
     val origin = Vector(affine(0, 3), affine(1, 3), affine(2, 3))
-    NeuroSpace(
+    SampleSpaces(
       dims,
       spacing = Some(Affine.voxelSizes(affine)),
       origin = Some(origin),
@@ -111,9 +112,8 @@ object NiftiHeader:
 
 /** Native NIfTI I/O over image4s streaming and Ravel-owned destinations.
   *
-  * Public entry points return typed provider errors. The package-scoped old
-  * names remain only while ScalaFIM consumers migrate their dense type names;
-  * they delegate to these methods without reordering or staging values.
+  * Public entry points return typed provider errors and preserve the native
+  * image4s/Ravel representation without compatibility staging.
   */
 object Nifti:
   type Error = NiftiError
@@ -181,16 +181,9 @@ object Nifti:
       options: NiftiWriteOptions = NiftiWriteOptions.default,
       extensions: Vector[NiftiExtension] = Vector.empty
   ): Either[NiftiError, NiftiFiles[Path]] =
-    ImageNifti.writeScalar(
+    writeScalar(
       path,
-      volume.asInstanceOf[
-        Sampled[
-          SampleSpace[Frame[D3], D3],
-          Double,
-          Continuous,
-          Rank[3]
-        ]
-      ],
+      volume.sampled,
       options,
       extensions
     )
@@ -201,16 +194,9 @@ object Nifti:
       options: NiftiWriteOptions = Nifti.defaultSeriesWriteOptions,
       extensions: Vector[NiftiExtension] = Vector.empty
   ): Either[NiftiError, NiftiFiles[Path]] =
-    ImageNifti.writeScalar(
+    writeScalar(
       path,
-      series.asInstanceOf[
-        Sampled[
-          SampleSpace[Frame[D3], D3],
-          Double,
-          Continuous,
-          Rank[4]
-        ]
-      ],
+      series.sampled,
       options,
       extensions
     )
@@ -263,6 +249,7 @@ object Nifti:
           case 3 =>
             d3.value
               .requireDataRank[3]
+              .flatMap(persistDecoded)
               .left
               .map(NiftiError.Image.apply)
               .map(SomeNeuroVolume.unsafeFromSampled)
@@ -273,6 +260,7 @@ object Nifti:
               .requireDataRank[4]
               .flatMap(_.selectNonSpatial(0, 0))
               .flatMap(_.requireDataRank[3])
+              .flatMap(persistDecoded)
               .left
               .map(NiftiError.Image.apply)
               .map(SomeNeuroVolume.unsafeFromSampled)
@@ -308,12 +296,41 @@ object Nifti:
                 )
               )
             else
-              NeuroSeries
-                .fromSampled(ranked)
+              persistDecoded(ranked)
                 .left
-                .map(nativeImageError)
-                .map(SomeNeuroSeries.eraseSpace)
+                .map(NiftiError.Image.apply)
+                .flatMap: persistent =>
+                  NeuroSeries
+                    .fromSampled(persistent)
+                    .left
+                    .map(nativeImageError)
+                    .map(SomeNeuroSeries.eraseSpace)
     )
+
+  /** Rebind an external decode to deterministic persistent geometry without
+    * copying its Ravel data owner.
+    */
+  private def persistDecoded[A, R <: AnyRank](
+      sampled: Sampled[
+        ? <: SampleSpace[?, D3],
+        A,
+        Continuous,
+        R
+      ]
+  )(using
+      image4s.ValueSemantics[A, Continuous]
+  ): Either[
+    ImageError,
+    Sampled[? <: SampleSpace[?, D3], A, Continuous, R]
+  ] =
+    for
+      persistent <- SampleSpaces
+        .persistentD3(sampled.sampleSpace)
+        .left
+        .map(ImageError.Geometry.apply)
+      rebound <- Sampled
+        .continuous(persistent, sampled.data, sampled.metadata)
+    yield rebound
 
   private def readDenseVectorFieldData(
       path: Path,
@@ -351,7 +368,7 @@ object Nifti:
                 .map(NiftiError.Image.apply)
                 .map: ranked =>
                   val space =
-                    NeuroSpace.fromCanonical(ranked.sampleSpace).spatialSpace
+                    SampleSpaces.fromCanonical(ranked.sampleSpace).spatialSpace
                   GridSpec.fromSpace(space) -> ranked.data
         )
 
@@ -359,9 +376,23 @@ object Nifti:
     error match
       case NativeImageError.Image(cause) =>
         NiftiError.Image(cause)
-      case _ =>
+      case NativeImageError.ExpectedSingleTimeAxis(_) =>
         NiftiError.Image(
           ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+        )
+      case NativeImageError.Space(cause) =>
+        NiftiError.InvalidArrayShape(cause.message)
+      case NativeImageError.CanonicalArraySizeMismatch(expected, actual) =>
+        NiftiError.InvalidArrayShape(
+          s"expected $expected canonical values, found $actual"
+        )
+      case NativeImageError.SpatialAxisOutOfBounds(axis) =>
+        NiftiError.InvalidArrayShape(
+          s"spatial axis $axis is outside D3"
+        )
+      case NativeImageError.SpatialIndexOutOfBounds(axis, index, extent) =>
+        NiftiError.InvalidArrayShape(
+          s"spatial index $index on axis $axis is outside [0, $extent)"
         )
 
   private[scalafim] def readHeaderUnsafe(path: Path): NiftiHeader =
@@ -370,70 +401,53 @@ object Nifti:
       identity
     )
 
-  private[scalafim] def readVol(path: Path): NeuroVol[Double] =
-    readVolume(path)
-      .map: decoded =>
-        NeuroVol.fromPacked(
-          AnyNeuroVolume.eraseSemantics(decoded.image)
-        )
-      .fold(
-        error => throw new IllegalArgumentException(error.message),
-        identity
-      )
-
-  private[scalafim] def readVec(path: Path): NeuroVec[Double] =
-    readSeries(path)
-      .map(decoded => NeuroVec.fromNative(decoded.image))
-      .fold(
-        error => throw new IllegalArgumentException(error.message),
-        identity
-      )
-
-  private[scalafim] def writeVol(
-      path: Path,
-      volume: NeuroVol[Double]
-  ): Path =
-    ImageNifti
-      .writeScalar(path, ContinuousImageRefinement.volume(volume))
-      .fold(
-        error => throw new IllegalArgumentException(error.message),
-        _.paths.head
-      )
-
-  private[scalafim] def writeVec(
-      path: Path,
-      series: NeuroVec[Double]
-  ): Path =
-    ImageNifti
-      .writeScalar(
-        path,
-        ContinuousImageRefinement.series(series),
-        defaultSeriesWriteOptions
-      )
-      .fold(
-        error => throw new IllegalArgumentException(error.message),
-        _.paths.head
-      )
-
   private[scalafim] def writeDenseVectorField[
       Role <: DenseVectorFieldKind
   ](
       path: Path,
       field: DenseVectorField[Role]
   ): Path =
-    ImageNifti
-      .writeScalar(
-        path,
-        field.sampled.asInstanceOf[
-          Sampled[
-            SampleSpace[Frame[D3], D3],
-            Double,
-            Continuous,
-            Rank[4]
-          ]
-        ]
-      )
+    writeScalar(
+      path,
+      field.sampled
+    )
       .fold(
         error => throw new IllegalArgumentException(error.message),
-        _.paths.head
+        files =>
+          files match
+            case NiftiFiles.SingleFile(value) => value
+            case NiftiFiles.PairFile(header, _) => header
       )
+
+  /** Capture the existential sample-space owner before entering image4s' NIfTI
+    * writer.
+    *
+    * `Sampled` is immutable, and `S` is already bounded by a D3 sample space.
+    * Scala cannot retain the relationship between the two nested existential
+    * owners when inferring image4s' separate `F` and `S` parameters, so the
+    * single erased cast below restores that relationship at this format
+    * boundary. No object or storage is copied or widened outside the call.
+    */
+  private def writeScalar[
+      S <: SampleSpace[?, D3],
+      R <: AnyRank
+  ](
+      path: Path,
+      image: Sampled[S, Double, Continuous, R],
+      options: NiftiWriteOptions = NiftiWriteOptions.default,
+      extensions: Vector[NiftiExtension] = Vector.empty
+  ): Either[NiftiError, NiftiFiles[Path]] =
+    val captured = image.asInstanceOf[
+      Sampled[
+        SampleSpace[Frame[D3], D3],
+        Double,
+        Continuous,
+        R
+      ]
+    ]
+    ImageNifti.writeScalar(
+      path,
+      captured,
+      options,
+      extensions
+    )

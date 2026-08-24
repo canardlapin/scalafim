@@ -18,16 +18,16 @@ import scala.annotation.targetName
 
 object Downsample:
 
-  def byFactor(vec: NeuroVec[Double], factor: Double): NeuroVec[Double] =
+  def byFactor(vec: SomeScalarSeries[Double], factor: Double): SomeScalarSeries[Double] =
     byFactor(vec, Vector.fill(3)(factor))
 
-  def byFactor(vec: NeuroVec[Double], factors: Vector[Double]): NeuroVec[Double] =
+  def byFactor(vec: SomeScalarSeries[Double], factors: Vector[Double]): SomeScalarSeries[Double] =
     require(factors.length == 3 && factors.forall(f => f > 0 && f <= 1.0), "factors must be length-3 in (0,1]")
     val oldDims = vec.space.dims.take(4)
     val newSpatial = Vector.tabulate(3)(d => math.max(1, math.round(oldDims(d) * factors(d)).toInt))
     toDims(vec, newSpatial)
 
-  def toDims(vec: NeuroVec[Double], newSpatialDims: Vector[Int]): NeuroVec[Double] =
+  def toDims(vec: SomeScalarSeries[Double], newSpatialDims: Vector[Int]): SomeScalarSeries[Double] =
     require(newSpatialDims.length == 3 && newSpatialDims.forall(_ > 0), "newSpatialDims must be length-3 positive")
     val old = vec.space
     val oldSpatial = old.spatialDims
@@ -77,29 +77,29 @@ object Downsample:
       )
     val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
     val newSpace =
-      NeuroSpace(
+      SampleSpaces(
         dims = newDims4,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVec.fromRavel(out, newSpace, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
-  @scala.annotation.targetName("byFactorNeuroVolScalar")
-  def byFactor(vol: NeuroVol[Double], factor: Double): NeuroVol[Double] =
+  @scala.annotation.targetName("byFactorNeuroVolumeScalar")
+  def byFactor(vol: SomeScalarVolume[Double], factor: Double): SomeScalarVolume[Double] =
     byFactor(vol, Vector.fill(3)(factor))
 
-  @scala.annotation.targetName("byFactorNeuroVolVector")
-  def byFactor(vol: NeuroVol[Double], factors: Vector[Double]): NeuroVol[Double] =
+  @scala.annotation.targetName("byFactorNeuroVolumeVector")
+  def byFactor(vol: SomeScalarVolume[Double], factors: Vector[Double]): SomeScalarVolume[Double] =
     require(factors.length == 3 && factors.forall(f => f > 0 && f <= 1.0), "factors must be length-3 in (0,1]")
     val old = vol.space
     val oldSpatial = old.spatialDims
     val newSpatial = Vector.tabulate(3)(d => math.max(1, math.round(oldSpatial(d) * factors(d)).toInt))
     toDims(vol, newSpatial)
 
-  @scala.annotation.targetName("toDimsNeuroVol")
-  def toDims(vol: NeuroVol[Double], newSpatialDims: Vector[Int]): NeuroVol[Double] =
+  @scala.annotation.targetName("toDimsNeuroVolume")
+  def toDims(vol: SomeScalarVolume[Double], newSpatialDims: Vector[Int]): SomeScalarVolume[Double] =
     require(newSpatialDims.length == 3 && newSpatialDims.forall(_ > 0), "newSpatialDims must be length-3 positive")
     val old = vol.space
     val oldSpatial = old.spatialDims
@@ -145,14 +145,14 @@ object Downsample:
       )
     val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
     val newSpace =
-      NeuroSpace(
+      SampleSpaces(
         dims = newSpatialDims,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVol.fromRavel(out, newSpace, vol.label)
+    SomeNeuroVolume.unsafeFromRavel(out, newSpace, vol.label)
 
 object Resample:
 
@@ -187,37 +187,37 @@ object Resample:
 
   trait Resampleable[A]:
     type Out
-    def apply(source: A, target: NeuroSpace, method: Method): Out
+    def apply(source: A, target: SomeSampleSpace, method: Method): Out
 
   object Resampleable:
-    given Resampleable[NeuroVol[Double]] with
-      type Out = NeuroVol[Double]
-      def apply(source: NeuroVol[Double], target: NeuroSpace, method: Method): NeuroVol[Double] =
+    given Resampleable[SomeScalarVolume[Double]] with
+      type Out = SomeScalarVolume[Double]
+      def apply(source: SomeScalarVolume[Double], target: SomeSampleSpace, method: Method): SomeScalarVolume[Double] =
         method match
           case Method.Nearest => nearest(source, target)
           case Method.Linear => trilinear(source, target)
           case Method.Cubic => tricubic(source, target)
 
-    given Resampleable[NeuroVec[Double]] with
-      type Out = NeuroVec[Double]
-      def apply(source: NeuroVec[Double], target: NeuroSpace, method: Method): NeuroVec[Double] =
+    given Resampleable[SomeScalarSeries[Double]] with
+      type Out = SomeScalarSeries[Double]
+      def apply(source: SomeScalarSeries[Double], target: SomeSampleSpace, method: Method): SomeScalarSeries[Double] =
         method match
           case Method.Nearest => nearest(source, target)
           case Method.Linear => trilinear(source, target)
           case Method.Cubic => tricubic(source, target)
 
   trait HasSpace[T]:
-    def spaceOf(target: T): NeuroSpace
+    def spaceOf(target: T): SomeSampleSpace
 
   object HasSpace:
-    given HasSpace[NeuroSpace] with
-      def spaceOf(target: NeuroSpace): NeuroSpace = target
+    given HasSpace[SomeSampleSpace] with
+      def spaceOf(target: SomeSampleSpace): SomeSampleSpace = target
 
-    given [A]: HasSpace[NeuroVol[A]] with
-      def spaceOf(target: NeuroVol[A]): NeuroSpace = target.space
+    given [A, Sem]: HasSpace[SomeNeuroVolume[A, Sem]] with
+      def spaceOf(target: SomeNeuroVolume[A, Sem]): SomeSampleSpace = target.space
 
-    given [A]: HasSpace[NeuroVec[A]] with
-      def spaceOf(target: NeuroVec[A]): NeuroSpace = target.space
+    given [A, Sem]: HasSpace[SomeNeuroSeries[A, Sem]] with
+      def spaceOf(target: SomeNeuroSeries[A, Sem]): SomeSampleSpace = target.space
 
   def resampleTo[A, T](
     source: A,
@@ -260,46 +260,46 @@ object Resample:
   ): Either[ResamplingPlanError, ResamplingPlan] =
     ResamplingPlan.make(source, target, morphism, method)
 
-  @targetName("planFromNeuroSpaces")
+  @targetName("planFromSampleSpaces")
   def plan(
-      source: NeuroSpace,
-      target: NeuroSpace,
+      source: SomeSampleSpace,
+      target: SomeSampleSpace,
       morphism: SpatialMorphism,
       method: Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
     ResamplingPlan.fromSpaces(source, target, morphism, method)
 
   def resampleTo(
-      source: NeuroVol[Double],
+      source: SomeScalarVolume[Double],
       target: GridSpec,
       morphism: SpatialMorphism,
       method: Method,
       outside: Double
-  ): Either[ResamplingPlanError, NeuroVol[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
 
-  @scala.annotation.targetName("resampleToNeuroVec")
+  @scala.annotation.targetName("resampleToNeuroSeries")
   def resampleTo(
-      source: NeuroVec[Double],
+      source: SomeScalarSeries[Double],
       target: GridSpec,
       morphism: SpatialMorphism,
       method: Method,
       outside: Double
-  ): Either[ResamplingPlanError, NeuroVec[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
 
-  def nearest(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
+  def nearest(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
     executeContinuous(vol, target, Method.Nearest)
 
-  def nearest[A](
-      vol: NeuroVol[A],
-      target: NeuroSpace,
+  def nearest[A, Sem](
+      vol: SomeNeuroVolume[A, Sem],
+      target: SomeSampleSpace,
       fill: A
   )(using
       scala.reflect.ClassTag[A],
       DType[A],
-      MigrationValueSemantics[A]
-  ): NeuroVol[A] =
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroVolume[A, Sem] =
     val src = vol.space
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
@@ -321,22 +321,22 @@ object Resample:
           then vol(sx, sy, sz)
           else fill
 
-    NeuroVol.fromRavel(out, targ, vol.label)
+    SomeNeuroVolume.unsafeFromRavel(out, targ, vol.label)
 
-  @scala.annotation.targetName("nearestNeuroVec")
-  def nearest(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
+  @scala.annotation.targetName("nearestNeuroSeries")
+  def nearest(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
     executeContinuousSeries(vec, target, Method.Nearest)
 
-  @scala.annotation.targetName("nearestGenericNeuroVec")
-  def nearest[A](
-    vec: NeuroVec[A],
-    target: NeuroSpace,
+  @scala.annotation.targetName("nearestGenericNeuroSeries")
+  def nearest[A, Sem](
+    vec: SomeNeuroSeries[A, Sem],
+    target: SomeSampleSpace,
     fill: A
   )(using
       scala.reflect.ClassTag[A],
       DType[A],
-      MigrationValueSemantics[A]
-  ): NeuroVec[A] =
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroSeries[A, Sem] =
     val src = vec.space
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
@@ -363,27 +363,27 @@ object Resample:
         then vec(sx, sy, sz, time)
         else fill
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromRavel(out, newSpace, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
-  def trilinear(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
+  def trilinear(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
     executeContinuous(vol, target, Method.Linear)
 
-  @scala.annotation.targetName("trilinearNeuroVec")
-  def trilinear(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
+  @scala.annotation.targetName("trilinearNeuroSeries")
+  def trilinear(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
     executeContinuousSeries(vec, target, Method.Linear)
 
-  def tricubic(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
+  def tricubic(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
     executeContinuous(vol, target, Method.Cubic)
 
-  @scala.annotation.targetName("tricubicNeuroVec")
-  def tricubic(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
+  @scala.annotation.targetName("tricubicNeuroSeries")
+  def tricubic(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
     executeContinuousSeries(vec, target, Method.Cubic)
 
   private def executeContinuous(
-      volume: NeuroVol[Double],
-      target: NeuroSpace,
+      volume: SomeScalarVolume[Double],
+      target: SomeSampleSpace,
       method: Method
-  ): NeuroVol[Double] =
+  ): SomeScalarVolume[Double] =
     val sourceGrid = GridSpec.fromSpace(volume.space)
     val targetGrid = GridSpec.fromSpace(target.spatialSpace)
     ResamplingPlan
@@ -400,10 +400,10 @@ object Resample:
       )
 
   private def executeContinuousSeries(
-      series: NeuroVec[Double],
-      target: NeuroSpace,
+      series: SomeScalarSeries[Double],
+      target: SomeSampleSpace,
       method: Method
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     val sourceGrid = GridSpec.fromSpace(series.space)
     val targetGrid = GridSpec.fromSpace(target.spatialSpace)
     ResamplingPlan
@@ -422,10 +422,10 @@ object Resample:
 object SpatialFilters:
 
   def mapf(
-    vol: NeuroVol[Double],
+    vol: SomeScalarVolume[Double],
     kernel: Kernel3D,
-    mask: Option[NeuroVol[Boolean]] = None
-  ): NeuroVol[Double] =
+    mask: Option[SomeMaskVolume] = None
+  ): SomeScalarVolume[Double] =
     mask match
       case None =>
         filterVolumeWithProvider(vol, kernel)
@@ -450,17 +450,17 @@ object SpatialFilters:
                 q += 1
               sum
             else 0.0
-        NeuroVol.fromRavel(out, sp, vol.label)
+        SomeNeuroVolume.unsafeFromRavel(out, sp, vol.label)
 
   private def filterVolumeWithProvider(
-      volume: NeuroVol[Double],
+      volume: SomeScalarVolume[Double],
       kernel: Kernel3D
-  ): NeuroVol[Double] =
+  ): SomeScalarVolume[Double] =
     val filtered =
       providerCorrelation(kernel)
         .flatMap(operation =>
           LinearFilter.correlate(
-            ContinuousImageRefinement.volume(volume),
+            volume.sampled,
             operation
           )
         )
@@ -468,21 +468,17 @@ object SpatialFilters:
           error => throw new IllegalArgumentException(error.message),
           identity
         )
-    NeuroVol.fromPacked(
-      AnyNeuroVolume.eraseSemantics(
-        SomeNeuroVolume.unsafeFromSampled(filtered)
-      )
-    )
+    SomeNeuroVolume.unsafeFromSampled(filtered)
 
   private def filterSeriesWithProvider(
-      series: NeuroVec[Double],
+      series: SomeScalarSeries[Double],
       kernel: Kernel3D
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     val filtered =
       providerCorrelation(kernel)
         .flatMap(operation =>
           LinearFilter.correlate(
-            ContinuousImageRefinement.series(series),
+            series.sampled,
             operation
           )
         )
@@ -494,7 +490,7 @@ object SpatialFilters:
       SomeNeuroSeries
         .fromSampled(filtered)
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    NeuroVec.fromNative(native)
+    native
 
   private def providerCorrelation(
       kernel: Kernel3D
@@ -521,11 +517,11 @@ object SpatialFilters:
     )
 
   def gaussianBlur(
-    vol: NeuroVol[Double],
+    vol: SomeScalarVolume[Double],
     sigma: Double = 2.0,
     window: Int = 1,
-    mask: Option[NeuroVol[Boolean]] = None
-  ): NeuroVol[Double] =
+    mask: Option[SomeMaskVolume] = None
+  ): SomeScalarVolume[Double] =
     require(window >= 1, "window must be >= 1")
     require(sigma > 0, "sigma must be positive")
 
@@ -538,16 +534,16 @@ object SpatialFilters:
 
     mapf(vol, gaussianKernel(spacing, sigma, window), mask)
 
-  def gaussianBlur(vec: NeuroVec[Double], sigma: Double, window: Int): NeuroVec[Double] =
+  def gaussianBlur(vec: SomeScalarSeries[Double], sigma: Double, window: Int): SomeScalarSeries[Double] =
     require(window >= 1, "window must be >= 1")
     require(sigma > 0, "sigma must be positive")
     val kernel = gaussianKernel(vec.space.spacing, sigma, window)
     filterSeriesWithProvider(vec, kernel)
 
-  def gaussianBlur(vec: NeuroVec[Double]): NeuroVec[Double] =
+  def gaussianBlur(vec: SomeScalarSeries[Double]): SomeScalarSeries[Double] =
     gaussianBlur(vec, sigma = 2.0, window = 1)
 
-  def gaussianBlur(vec: NeuroVec[Double], sigma: Double): NeuroVec[Double] =
+  def gaussianBlur(vec: SomeScalarSeries[Double], sigma: Double): SomeScalarSeries[Double] =
     gaussianBlur(vec, sigma = sigma, window = 1)
 
   private def gaussianKernel(
@@ -573,12 +569,12 @@ object SpatialFilters:
     kernel
 
   def bilateralFilter(
-    vol: NeuroVol[Double],
-    mask: Option[NeuroVol[Boolean]] = None,
+    vol: SomeScalarVolume[Double],
+    mask: Option[SomeMaskVolume] = None,
     window: Int = 1,
     spatialSigma: Double = 2.0,
     intensitySigma: Double = 1.0
-  ): NeuroVol[Double] =
+  ): SomeScalarVolume[Double] =
     require(window >= 0, "window must be >= 0")
     require(spatialSigma > 0, "spatialSigma must be positive")
     require(intensitySigma > 0, "intensitySigma must be positive")
@@ -679,15 +675,15 @@ object SpatialFilters:
             else valueSum / weightSum
         else 0.0
 
-    NeuroVol.fromRavel(out, sp, vol.label)
+    SomeNeuroVolume.unsafeFromRavel(out, sp, vol.label)
 
   private def bilateralFilterVec(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]],
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume],
     window: Int,
     spatialSigma: Double,
     intensitySigma: Double
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     require(window >= 0, "window must be >= 0")
     require(spatialSigma > 0, "spatialSigma must be positive")
     require(intensitySigma > 0, "intensitySigma must be positive")
@@ -802,34 +798,34 @@ object SpatialFilters:
             output.writeLinear(ordinal * tLen + time, value)
             ordinal += 1
           time += 1
-    NeuroVec.fromRavel(out, space, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, space, vec.label)
 
-  def bilateralFilter(vec: NeuroVec[Double]): NeuroVec[Double] =
+  def bilateralFilter(vec: SomeScalarSeries[Double]): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask = None, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
 
-  def bilateralFilter(vec: NeuroVec[Double], mask: Option[NeuroVol[Boolean]]): NeuroVec[Double] =
+  def bilateralFilter(vec: SomeScalarSeries[Double], mask: Option[SomeMaskVolume]): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
 
-  @scala.annotation.targetName("bilateralFilterNeuroVec")
+  @scala.annotation.targetName("bilateralFilterNeuroSeries")
   def bilateralFilter(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]],
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume],
     window: Int,
     spatialSigma: Double,
     intensitySigma: Double
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask, window, spatialSigma, intensitySigma)
 
   def bilateralFilter4D(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]] = None,
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume] = None,
     spatialWindow: Int = 1,
     temporalWindow: Int = 1,
     spatialSigma: Double = 2.0,
     intensitySigma: Double = 1.0,
     temporalSigma: Double = 1.0,
     temporalSpacing: Double = 1.0
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     require(spatialWindow >= 0, "spatialWindow must be >= 0")
     require(temporalWindow >= 0, "temporalWindow must be >= 0")
     require(spatialSigma > 0, "spatialSigma must be positive")
@@ -949,4 +945,4 @@ object SpatialFilters:
               offset += 1
             if weightSum > 0.0 then valueSum / weightSum else center
 
-    NeuroVec.fromRavel(out, sp, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, sp, vec.label)

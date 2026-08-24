@@ -5,8 +5,9 @@ import scalafim.dataset.io.{NiftiResponseBlockSource, NiftiStagingCache}
 import scalafim.image.CertifiedGridCongruence
 import scalafim.image.GridCompatibility
 import scalafim.image.Mask
-import scalafim.image.NeuroVol
 import scalafim.image.PrimitiveBuffers
+import scalafim.image.SomeScalarVolume
+import scalafim.image.{space, valueAtCanonicalOrdinal, values}
 import scalafim.image.io.Nifti
 
 import java.net.URI
@@ -99,15 +100,17 @@ object FirstLevelUnitSource:
 
   private def readMaskArtifact(
       artifact: WorkflowArtifactRef[MaskImageResource]
-  ): Either[DatasetError, NeuroVol[Double]] =
+  ): Either[DatasetError, SomeScalarVolume[Double]] =
     filePath(artifact.location).flatMap { path =>
-      try Right(Nifti.readVol(path))
-      catch
-        case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read mask NIfTI '$path': ${error.getMessage}"))
+      Nifti
+        .readVolume(path)
+        .left
+        .map(error => DatasetError.StorageFailure(s"failed to read mask NIfTI '$path': ${error.message}"))
+        .map(_.image)
     }
 
   private def intersectMasks(
-      masks: Vector[NeuroVol[Double]]
+      masks: Vector[SomeScalarVolume[Double]]
   ): Either[DatasetError, Mask.MaskVol] =
     if masks.isEmpty then Left(DatasetError.StorageFailure("mask intersection requires at least one mask"))
     else

@@ -1,7 +1,9 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.lna.{DatasetRole, Payload}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 class BoldZipSyntheticPropertySuite extends munit.FunSuite:
@@ -67,7 +69,7 @@ class BoldZipSyntheticPropertySuite extends munit.FunSuite:
       val payload = synthetic.payload
       val archive =
         BoldZipLatentArchiveCodec
-          .toArchive(payload, NeuroSpace(Vector(payload.shape.samples, 1, 1)))
+          .toArchive(payload, SampleSpaces(Vector(payload.shape.samples, 1, 1)))
           .fold(err => fail(err.message), identity)
       val plan =
         LatentArchiveRegistry.standard

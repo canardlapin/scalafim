@@ -1,7 +1,8 @@
 package scalafim.spatial.io
 
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
+import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -14,7 +15,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
   private def apiValue[A](result: Either[FieldApiError, A]): A =
     result.fold(error => fail(error.message), identity)
 
-  private def volumeDomain(name: String, space: NeuroSpace): Domain =
+  private def volumeDomain(name: String, space: SomeSampleSpace): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-external"))
     val modality = spatialValue(Modality(name))
@@ -57,7 +58,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     assertEquals(result.status, ScenarioStatus.Pass)
 
   private def runScenario(path: Path): ScenarioResult =
-    val space = NeuroSpace(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(6, 1, 1), trans = Some(DMat.eye(4)))
     val root = volumeDomain("native", space)
     val target = volumeDomain("target", space)
     val source = spatialValue(NiftiFieldSource.prepare(path, root, observations = 3, label = "bold"))
@@ -80,7 +81,9 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
           5.0, 15.0, 25.0
         )
       )
-    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, space.addDim(3, Some(Axis.Time)), "bold"))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space.addDim(3, Some(Axis.Time)), "bold"))
+      .fold(error => fail(error.message), _ => ())
 
     val runtime = LazyFieldRuntime(summon[SpatialGraph])
     given FieldRuntime = runtime

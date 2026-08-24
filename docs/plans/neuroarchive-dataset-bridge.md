@@ -441,7 +441,7 @@ enum VoxelSelection:
 
 `DataSelection` remains the only read-selection record.
 
-For one dataset, `Coords` resolves through its `NeuroSpace` and voxel domain.
+For one dataset, `Coords` resolves through its `SomeSampleSpace` and voxel domain.
 For an indexed cross-run read, coordinate selection has exact-grid semantics:
 it additionally requires identical geometry across selected runs and readable
 membership for every requested coordinate. Equal `SpaceId` labels or equal

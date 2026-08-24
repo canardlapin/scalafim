@@ -9,18 +9,19 @@ import ravel.DType.given
 import ravel.NDArray
 import ravel.Shape
 import scalafim.image.NeuroSeries
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import scalafim.image.NeuroVolume
 import scalafim.image.Indexing
 import scalafim.image.SomeLabelVolume
 import scalafim.image.SomeMaskVolume
 import scalafim.image.SomeScalarSeries
 import scalafim.image.SomeScalarVolume
+import scalafim.image.SampleSpaces.*
 import scalafim.image.VolumeSpace.*
 
 private[atlas] object AtlasTestImages:
   def labelVolume(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       values: Array[Int],
       label: String = ""
   ): SomeLabelVolume[Int] =
@@ -43,7 +44,7 @@ private[atlas] object AtlasTestImages:
       ordinal: Int
   ): Int =
     val coordinate = Indexing.indexToGrid3D(volume.grid.shape, ordinal)
-    volume(coordinate(0), coordinate(1), coordinate(2))
+    volume.data(coordinate(0), coordinate(1), coordinate(2))
 
   def scalarVolume(
       atlas: VolumeAtlas,

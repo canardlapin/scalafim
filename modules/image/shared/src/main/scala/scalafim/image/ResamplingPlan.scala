@@ -92,20 +92,20 @@ final class ResamplingPlan private (
   def materializedCoordinateCount: Int =
     backend.materializedCoordinateCount
 
-  def apply(volume: NeuroVol[Double]): Either[ResamplingPlanError, NeuroVol[Double]] =
+  def apply(volume: SomeScalarVolume[Double]): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     apply(volume, outside = 0.0)
 
-  def apply(volume: NeuroVol[Double], outside: Double): Either[ResamplingPlanError, NeuroVol[Double]] =
+  def apply(volume: SomeScalarVolume[Double], outside: Double): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     apply(volume, outside, JacobianModulation.None)
 
   def apply(
-      volume: NeuroVol[Double],
+      volume: SomeScalarVolume[Double],
       outside: Double,
       modulation: JacobianModulation
-  ): Either[ResamplingPlanError, NeuroVol[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     val actual = GridSpec.fromSpace(volume.space)
     if GridCompatibility
-        .exact(source.toNeuroSpace, actual.toNeuroSpace)
+        .exact(source.toSampleSpace, actual.toSampleSpace)
         .isLeft
     then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
     else
@@ -116,23 +116,23 @@ final class ResamplingPlan private (
           case prepared: ResamplingBackend.WorkloadPrepared =>
             Right(samplePreparedVolume(volume, outside, factors, prepared))
 
-  @scala.annotation.targetName("applyNeuroVec")
-  def apply(vec: NeuroVec[Double]): Either[ResamplingPlanError, NeuroVec[Double]] =
+  @scala.annotation.targetName("applyNeuroSeries")
+  def apply(vec: SomeScalarSeries[Double]): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     apply(vec, outside = 0.0)
 
-  @scala.annotation.targetName("applyNeuroVecOutside")
-  def apply(vec: NeuroVec[Double], outside: Double): Either[ResamplingPlanError, NeuroVec[Double]] =
+  @scala.annotation.targetName("applyNeuroSeriesOutside")
+  def apply(vec: SomeScalarSeries[Double], outside: Double): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     apply(vec, outside, JacobianModulation.None)
 
-  @scala.annotation.targetName("applyNeuroVecModulated")
+  @scala.annotation.targetName("applyNeuroSeriesModulated")
   def apply(
-      vec: NeuroVec[Double],
+      vec: SomeScalarSeries[Double],
       outside: Double,
       modulation: JacobianModulation
-  ): Either[ResamplingPlanError, NeuroVec[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     val actual = GridSpec.fromSpace(vec.space)
     if GridCompatibility
-        .exact(source.toNeuroSpace, actual.toNeuroSpace)
+        .exact(source.toSampleSpace, actual.toSampleSpace)
         .isLeft
     then Left(ResamplingPlanError.SourceSpaceMismatch(source, actual))
     else
@@ -144,11 +144,11 @@ final class ResamplingPlan private (
             Right(samplePreparedSeries(vec, outside, factors, prepared))
 
   private def sampleVolumeWithProvider(
-      volume: NeuroVol[Double],
+      volume: SomeScalarVolume[Double],
       outside: Double,
       factors: ModulationFactors,
       backend: ResamplingBackend.AffineProvider
-  ): Either[ResamplingPlanError, NeuroVol[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     given DType[Double] = volume.values.dtype
     val targetShape = target.shape
     var failure = Option.empty[ResamplingPlanError]
@@ -158,7 +158,7 @@ final class ResamplingPlan private (
       ): output =>
         failure =
           scanProvider(
-            ContinuousImageRefinement.volume(volume),
+            volume.sampled,
             output,
             trailingSize = 1,
             outside,
@@ -168,14 +168,14 @@ final class ResamplingPlan private (
     failure match
       case Some(error) => Left(error)
       case None =>
-        Right(NeuroVol.fromRavel(out, target.toNeuroSpace, volume.label))
+        Right(SomeNeuroVolume.unsafeFromRavel(out, target.toSampleSpace, volume.label))
 
   private def sampleSeriesWithProvider(
-      vec: NeuroVec[Double],
+      vec: SomeScalarSeries[Double],
       outside: Double,
       factors: ModulationFactors,
       backend: ResamplingBackend.AffineProvider
-  ): Either[ResamplingPlanError, NeuroVec[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     given DType[Double] = vec.values.dtype
     val targetShape = target.shape
     val tLen = vec.nVolumes
@@ -186,7 +186,7 @@ final class ResamplingPlan private (
       ): output =>
         failure =
           scanProvider(
-            ContinuousImageRefinement.series(vec),
+            vec.sampled,
             output,
             trailingSize = tLen,
             outside,
@@ -197,9 +197,9 @@ final class ResamplingPlan private (
       case Some(error) => Left(error)
       case None =>
         Right(
-          NeuroVec.fromRavel(
+          SomeNeuroSeries.unsafeFromRavel(
             out,
-            target.toNeuroSpace.addDim(tLen, Some(Axis.Time)),
+            target.toSampleSpace.addDim(tLen, Some(Axis.Time)),
             vec.label
           )
         )
@@ -209,11 +209,11 @@ final class ResamplingPlan private (
     * strides and no hidden canonicalization occurs.
     */
   private def samplePreparedVolume(
-      volume: NeuroVol[Double],
+      volume: SomeScalarVolume[Double],
       outside: Double,
       factors: ModulationFactors,
       backend: ResamplingBackend.WorkloadPrepared
-  ): NeuroVol[Double] =
+  ): SomeScalarVolume[Double] =
     given DType[Double] = volume.values.dtype
     val dims = source.shape
     val targetShape = target.shape
@@ -232,17 +232,17 @@ final class ResamplingPlan private (
             sampled * factors.atVoxel(ordinal)
           )
           ordinal += 1
-    NeuroVol.fromRavel(out, target.toNeuroSpace, volume.label)
+    SomeNeuroVolume.unsafeFromRavel(out, target.toSampleSpace, volume.label)
 
   /** Series execution is fused across time so it retains one destination and
     * never materializes a temporary volume for each frame.
     */
   private def samplePreparedSeries(
-      vec: NeuroVec[Double],
+      vec: SomeScalarSeries[Double],
       outside: Double,
       factors: ModulationFactors,
       backend: ResamplingBackend.WorkloadPrepared
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     given DType[Double] = vec.values.dtype
     val tLen = vec.nVolumes
     val volumes = Vector.tabulate(tLen)(vec.volume)
@@ -273,15 +273,15 @@ final class ResamplingPlan private (
             )
             time += 1
           voxelOrdinal += 1
-    NeuroVec.fromRavel(
+    SomeNeuroSeries.unsafeFromRavel(
       out,
-      target.toNeuroSpace.addDim(tLen, Some(Axis.Time)),
+      target.toSampleSpace.addDim(tLen, Some(Axis.Time)),
       vec.label
     )
 
   private def scanProvider[R <: AnyRank](
       sampled: Sampled[
-        SampleSpace[Frame[D3], D3],
+        ? <: SampleSpace[?, D3],
         Double,
         Continuous,
         R
@@ -293,14 +293,20 @@ final class ResamplingPlan private (
       backend: ResamplingBackend.AffineProvider
   ): Either[ResamplingPlanError, Unit] =
     val targetGrid = target.nativeGrid
+    // Sampled is immutable and its existential owner is already D3. Scala
+    // loses the nested frame-to-space relationship while inferring the
+    // reframe4s parameters, so restore it only at this provider boundary.
+    val captured = sampled.asInstanceOf[
+      Sampled[SampleSpace[Frame[D3], D3], Double, Continuous, R]
+    ]
     val pull =
       FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](
         targetGrid.frame,
-        sampled.frame
+        captured.frame
       )(backend.pull)
     ReframeResamplingPlan
       .affine(
-        sampled,
+        captured,
         targetGrid,
         pull,
         backend.interpolation,
@@ -328,7 +334,7 @@ final class ResamplingPlan private (
           .map(error => ResamplingPlanError.ProviderFailure(error.message))
 
   private inline def sampleAt(
-      volume: NeuroVol[Double],
+      volume: SomeScalarVolume[Double],
       dims: SpatialDims,
       coord: VoxelPoint,
       outside: Double,
@@ -337,7 +343,7 @@ final class ResamplingPlan private (
     method match
       case Resample.Method.Nearest =>
         VoxelSamplingKernel.nearest(
-          volume.toNative,
+          volume,
           dims,
           coord.x,
           coord.y,
@@ -346,7 +352,7 @@ final class ResamplingPlan private (
         )
       case Resample.Method.Linear =>
         VoxelSamplingKernel.linear(
-          volume.toNative,
+          volume,
           dims,
           coord.x,
           coord.y,
@@ -355,7 +361,7 @@ final class ResamplingPlan private (
         )
       case Resample.Method.Cubic =>
         VoxelSamplingKernel.cubic(
-          volume.toNative,
+          volume,
           dims,
           coord.x,
           coord.y,
@@ -447,8 +453,8 @@ object ResamplingPlan:
     make(source, source, IdentityMorphism(domain), method)
 
   def fromSpaces(
-      source: NeuroSpace,
-      target: NeuroSpace,
+      source: SomeSampleSpace,
+      target: SomeSampleSpace,
       morphism: SpatialMorphism,
       method: Resample.Method
   ): Either[ResamplingPlanError, ResamplingPlan] =

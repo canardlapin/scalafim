@@ -25,9 +25,9 @@ class SpaceUtilsSuite extends munit.FunSuite:
     assertClose(out.bounds.max, Vector(4.0, 5.0, 6.0), 1e-10)
   }
 
-  test("outputAlignedSpace supports NeuroSpace and custom voxel sizes") {
+  test("outputAlignedSpace supports SomeSampleSpace and custom voxel sizes") {
     val sp =
-      NeuroSpace(
+      SampleSpaces(
         Vector(5, 6, 7),
         spacing = Some(Vector(2.0, 3.0, 4.0)),
         origin = Some(Vector(10.0, 20.0, 30.0))
@@ -40,7 +40,7 @@ class SpaceUtilsSuite extends munit.FunSuite:
 
   test("vox2outVox is an alias for outputAlignedSpace") {
     val a = SpaceUtils.outputAlignedSpace(Vector(4, 4, 4), DMat.eye(4))
-    val b = SpaceUtils.vox2outVox(NeuroSpace(Vector(4, 4, 4)))
+    val b = SpaceUtils.vox2outVox(SampleSpaces(Vector(4, 4, 4)))
     assertEquals(a.shape, b.shape, clue = "")
     assertEquals(a.affine, b.affine, clue = "")
   }
@@ -76,7 +76,7 @@ class SpaceUtilsSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val sp = NeuroSpace(Vector(18, 12, 10), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
+    val sp = SampleSpaces(Vector(18, 12, 10), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
     assert(Affine.obliquity(sp.trans).max > 0.0, clue = "")
 
     val deob = Deoblique.target(sp)
@@ -88,11 +88,11 @@ class SpaceUtilsSuite extends munit.FunSuite:
     )
     assertClose(Affine.obliquity(deob.trans), Vector(0.0, 0.0, 0.0), 1e-10)
 
-    val grid = NeuroSpace(Vector(20, 20, 20), spacing = Some(Vector(1.0, 1.0, 1.0)), origin = Some(Vector(-5.0, -6.0, -7.0)))
+    val grid = SampleSpaces(Vector(20, 20, 20), spacing = Some(Vector(1.0, 1.0, 1.0)), origin = Some(Vector(-5.0, -6.0, -7.0)))
     assertEquals(Deoblique.target(sp, grid), grid, clue = "")
   }
 
-  test("deoblique resamples NeuroVol to target grid") {
+  test("deoblique resamples SomeNeuroVolume to target grid") {
     val tx =
       DMat.fromRows(
         Vector(
@@ -102,8 +102,8 @@ class SpaceUtilsSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val sp = NeuroSpace(Vector(8, 6, 4), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
+    val sp = SampleSpaces(Vector(8, 6, 4), spacing = Some(Vector(2.0, 3.0, 4.0)), trans = Some(tx))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](sp.spatialDims.product)(_.toDouble), sp)
     val out = Deoblique(vol, newgrid = 2.0, method = Resample.Method.Linear)
 
     assertEquals(out.space.spacing, Vector(2.0, 2.0, 2.0), clue = "")

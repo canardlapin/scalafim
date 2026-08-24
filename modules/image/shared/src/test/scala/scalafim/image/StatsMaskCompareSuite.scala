@@ -8,8 +8,8 @@ import spire.std.int.given
 class StatsMaskCompareSuite extends munit.FunSuite:
 
   test("NeuroStats summarizes dense volumes") {
-    val sp = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 2))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
     val summary = NeuroStats.summarize(vol)
 
     assertEquals(summary.dims, Vector(2, 2, 2), clue = "")
@@ -24,9 +24,9 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     assertEquals(vol.summary, summary, clue = "")
   }
 
-  test("temporalMean for dense NeuroVec matches row means") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
+  test("temporalMean for dense SomeNeuroSeries matches row means") {
+    val sp = SampleSpaces(Vector(2, 1, 1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val mean = NeuroStats.temporalMean(vec)
     val vals = Vector.tabulate(mean.copyToCanonicalArray.length)(i => mean.copyToCanonicalArray(i))
 
@@ -41,18 +41,18 @@ class StatsMaskCompareSuite extends munit.FunSuite:
   }
 
   test("temporalMean for selected series preserves exact support") {
-    val sp = NeuroSpace(Vector(3, 1, 1, 3))
+    val sp = SampleSpaces(Vector(3, 1, 1, 3))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "stats selected temporal mean",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val data =
@@ -84,21 +84,21 @@ class StatsMaskCompareSuite extends munit.FunSuite:
   }
 
   test("mask images and exact selected support convert only through named operations") {
-    val sp = NeuroSpace(Vector(3, 1, 1, 2))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
+    val sp = SampleSpaces(Vector(3, 1, 1, 2))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
     val denseMask = Mask.of(vec)
     assertEquals(Vector.tabulate(denseMask.copyToCanonicalArray.length)(i => denseMask.copyToCanonicalArray(i)), Vector(true, true, true), clue = "")
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp.spatialSpace),
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
           "stats mask region",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val support =
       locus4s.Region.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val semanticMask = Mask.fromRegion(domain, support).toOption.get
@@ -108,33 +108,33 @@ class StatsMaskCompareSuite extends munit.FunSuite:
   }
 
   test("NeuroCompare builds logical volumes and vectors") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.copyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
     val gt = vol.gt(1.0)
 
     assertEquals(gt.space, sp, clue = "")
     assertEquals(Vector.tabulate(gt.copyToCanonicalArray.length)(i => gt.copyToCanonicalArray(i)), Vector(false, false, true, true), clue = "")
     assertEquals(Vector.tabulate(vol.eqv(vol).copyToCanonicalArray.length)(i => vol.eqv(vol).copyToCanonicalArray(i)), Vector.fill(4)(true), clue = "")
 
-    val sp4 = NeuroSpace(Vector(2, 1, 1, 2))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
+    val sp4 = SampleSpaces(Vector(2, 1, 1, 2))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
     val lt = vec.lt(5.0)
     assertEquals(Vector.tabulate(lt.copyToCanonicalArray.length)(i => lt.copyToCanonicalArray(i)), Vector(true, true, true, false), clue = "")
   }
 
   test("NeuroCompare preserves selected support") {
-    val sp = NeuroSpace(Vector(3, 1, 1))
+    val sp = SampleSpaces(Vector(3, 1, 1))
     val packed =
-      VolumeDomain
+      GridDomain
         .register(
-          VolumeSpace(sp),
+          VolumeSpace(sp).sampleSpace.grid,
           "stats selected comparison",
           locus4s.DomainRegistry.empty
         )
         .toOption
         .get
     type Voxel = packed.S
-    val domain: VolumeDomain[Voxel] = packed.value
+    val domain = packed.value
     val selection =
       locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val selected =
@@ -152,9 +152,9 @@ class StatsMaskCompareSuite extends munit.FunSuite:
 
   }
 
-  test("NeuroStats summarizes NeuroVec temporal ranges") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.copyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
+  test("NeuroStats summarizes SomeNeuroSeries temporal ranges") {
+    val sp = SampleSpaces(Vector(2, 1, 1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val summary = vec.summary
 
     assertEquals(summary.timePoints, 3, clue = "")

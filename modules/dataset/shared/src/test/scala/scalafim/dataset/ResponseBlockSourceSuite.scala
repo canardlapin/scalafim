@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import munit.FunSuite
-import scalafim.image.{Mask, PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
 
 class ResponseBlockSourceSuite extends FunSuite:
   test("composite source preserves requested global time and voxel order") {
@@ -40,7 +40,7 @@ class ResponseBlockSourceSuite extends FunSuite:
     val differentGeometry = new RecordingSource(
       timepoints = 2,
       base = 100.0,
-      space = NeuroSpace(Vector(1, 3, 1))
+      space = SampleSpaces(Vector(1, 3, 1))
     )
     val masked = new RecordingSource(
       timepoints = 2,
@@ -71,7 +71,7 @@ class ResponseBlockSourceSuite extends FunSuite:
 
   test("dataset backend rejects a mask from incompatible geometry during construction") {
     val source = new RecordingSource(timepoints = 2, base = 0.0)
-    val mask = Mask.all(NeuroSpace(Vector(1, 3, 1)))
+    val mask = Mask.all(SampleSpaces(Vector(1, 3, 1)))
 
     val result =
       ResponseBlockDatasetBackend.make(
@@ -86,7 +86,7 @@ class ResponseBlockSourceSuite extends FunSuite:
   private final class RecordingSource(
       timepoints: Int,
       base: Double,
-      val space: NeuroSpace = NeuroSpace(Vector(3, 1, 1)),
+      val space: SomeSampleSpace = SampleSpaces(Vector(3, 1, 1)),
       domain: VoxelDomain | Null = null
   ) extends ResponseBlockSource:
     val shape: DatasetShape = DatasetShape.unsafe(space, timepoints)

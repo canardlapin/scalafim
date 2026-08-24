@@ -12,11 +12,13 @@ import image4s.geometry.CoordinateConvention
 import image4s.geometry.Frame
 import image4s.geometry.FrameId
 import image4s.geometry.FrameMetadata
+import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.GridId
+import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
 
-enum NeuroSpaceError:
+enum SampleSpaceError:
   case EmptyDimensions
   case NonPositiveDimension(index: Int, value: Int)
   case SpatialVectorLengthMismatch(label: String, expected: Int, actual: Int)
@@ -57,10 +59,10 @@ enum NeuroSpaceError:
       case CanonicalGeometry(reason) =>
         s"canonical sampling geometry is invalid: $reason"
 
-/** Zero-wrapper compatibility name for image4s' canonical sampling geometry. */
-opaque type NeuroSpace = SomeSampleSpace
-
-object NeuroSpace:
+/** Neuroimaging constructors and checked refinements for image4s sampling
+  * geometry. Values remain the exact provider-owned `SomeSampleSpace` object.
+  */
+object SampleSpaces:
   private val rasD2FrameId =
     FrameId
       .parse("scalafim-ras-d2")
@@ -71,10 +73,10 @@ object NeuroSpace:
       .parse("scalafim-ras-d3")
       .fold(error => throw new IllegalStateException(error.message), identity)
 
-  private[image] def fromCanonical(space: SomeSampleSpace): NeuroSpace =
+  private[image] def fromCanonical(space: SomeSampleSpace): SomeSampleSpace =
     space
 
-  private[image] def canonical(space: NeuroSpace): SomeSampleSpace =
+  private[image] def canonical(space: SomeSampleSpace): SomeSampleSpace =
     space
 
   /** Recover the checked D3 provider type at a dynamic compatibility boundary.
@@ -84,9 +86,9 @@ object NeuroSpace:
     * object is still the exact original SampleSpace and grid owner.
     */
   private[scalafim] def requireD3(
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[
-    NeuroSpaceError,
+    SampleSpaceError,
     SampleSpace[? <: Frame[D3], D3]
   ] =
     val canonical = space.typed
@@ -96,7 +98,7 @@ object NeuroSpace:
       )
     else
       Left(
-        NeuroSpaceError.ExpectedDimensionality(
+        SampleSpaceError.ExpectedDimensionality(
           "D3 sample space",
           3,
           canonical.spatialRank
@@ -104,22 +106,61 @@ object NeuroSpace:
       )
 
   private[scalafim] def requireSpatialD3(
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[
-    NeuroSpaceError,
+    SampleSpaceError,
     SampleSpace[? <: Frame[D3], D3]
   ] =
     requireD3(space).map(_.spatialOnly)
 
-  private[image] def logicalDims(space: NeuroSpace): Vector[Int] =
+  /** Assign deterministic persistent identity to exact D3 sampling geometry.
+    *
+    * External decoders intentionally produce ephemeral frame and grid owners.
+    * ScalaFIM admits those values by retaining their exact geometry and axes
+    * while constructing the persistent frame/grid keys used by GridDomain.
+    * Existing persistent sample spaces pass through unchanged.
+    */
+  private[scalafim] def persistentD3[F <: Frame[D3]](
+      space: SampleSpace[F, D3]
+  ): Either[
+    GeometryError,
+    SampleSpace[? <: Frame[D3], D3]
+  ] =
+    if space.grid.persistentId.nonEmpty then Right(space)
+    else
+      for
+        frameId <- persistentFrameId(
+          3,
+          space.grid.frame.unit,
+          space.grid.frame.convention
+        )
+        frame = Frame.createPersistent[D3](
+          frameId,
+          space.grid.frame.metadata,
+          space.grid.frame.unit,
+          space.grid.frame.convention
+        )
+        gridId <- admittedGridId(
+          3,
+          frameId,
+          space.grid.shape,
+          space.grid.indexToFrame.rowMajor
+        )
+        grid <- Grid.createPersistent(gridId, frame)(
+          space.grid.shape,
+          space.grid.indexToFrame
+        )
+      yield SampleSpace.create(grid, space.nonSpatialAxes)
+
+  private[image] def logicalDims(space: SomeSampleSpace): Vector[Int] =
     space.logicalShape
 
   private[image] def spatialShapeOf(
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): SpatialDims =
     SpatialDims.unsafeFromVector(space.grid.shape)
 
-  private[image] def affineOf(space: NeuroSpace): Affine3D =
+  private[image] def affineOf(space: SomeSampleSpace): Affine3D =
     val transform = canonicalTransform(space)
     Affine3D.unsafe(
       transform,
@@ -128,16 +169,16 @@ object NeuroSpace:
         .fold(reason => throw new IllegalStateException(reason), identity)
     )
 
-  private[image] def spatialPart(space: NeuroSpace): NeuroSpace =
+  private[image] def spatialPart(space: SomeSampleSpace): SomeSampleSpace =
     fromCanonical(space.typed.spatialOnly)
 
   private[image] def withTime(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       extent: Int
-  ): NeuroSpace =
+  ): SomeSampleSpace =
     space.addDim(extent, Some(Axis.Time))
 
-  extension (space: NeuroSpace)
+  extension (space: SomeSampleSpace)
     def dims: Vector[Int] =
       space.logicalShape
 
@@ -174,10 +215,10 @@ object NeuroSpace:
     def affine3D: Affine3D =
       Affine3D.unsafe(trans, inverse)
 
-    def asVolumeSpace: Either[NeuroSpaceError, VolumeSpace] =
+    def asVolumeSpace: Either[SampleSpaceError, VolumeSpace] =
       VolumeSpace.make(space)
 
-    def asSeriesSpace: Either[NeuroSpaceError, SeriesSpace] =
+    def asSeriesSpace: Either[SampleSpaceError, SeriesSpace] =
       SeriesSpace.make(space)
 
     def gridToIndex(coords: Vector[Int]): Int =
@@ -198,10 +239,10 @@ object NeuroSpace:
     def indexToVoxel3D(idx: Int): VoxelCoord =
       Indexing.indexToGrid3D(spatialShape, idx)
 
-    def spatialSpace: NeuroSpace =
+    def spatialSpace: SomeSampleSpace =
       fromCanonical(space.typed.spatialOnly)
 
-    def addDim(n: Int, axis: Option[Axis] = None): NeuroSpace =
+    def addDim(n: Int, axis: Option[Axis] = None): SomeSampleSpace =
       require(n > 0, "added dimension must be positive")
       val newDims = dims :+ n
       val newAxis =
@@ -212,7 +253,7 @@ object NeuroSpace:
           space.nonSpatialAxes.size == 0 &&
           axis != Some(Axis.Time)
       then
-        NeuroSpace(
+        SampleSpaces(
           dims = newDims,
           spacing = Some(spacing :+ 1.0),
           origin = Some(origin :+ 0.0),
@@ -228,7 +269,7 @@ object NeuroSpace:
               .appendNonSpatial(canonical)
               .left
               .map(error =>
-                NeuroSpaceError.CanonicalGeometry(error.message)
+                SampleSpaceError.CanonicalGeometry(error.message)
               )
           yield fromCanonical(refined)
         appended.fold(
@@ -236,7 +277,7 @@ object NeuroSpace:
           identity
         )
 
-    def dropDim(dimnum: Int = space.ndim - 1): NeuroSpace =
+    def dropDim(dimnum: Int = space.ndim - 1): SomeSampleSpace =
       require(ndim >= 2, "cannot drop from <2D space")
       require(dimnum >= 0 && dimnum < ndim, "dimnum out of range")
       if dimnum >= space.spatialRank then
@@ -253,7 +294,7 @@ object NeuroSpace:
         val newAxes = AxisSet(keepIdx.map(axes.axes(_))*)
         val newSpacing = spacing.patch(dimnum, Nil, 1)
         val newOrigin = origin.patch(dimnum, Nil, 1)
-        NeuroSpace(
+        SampleSpaces(
           dims = newDims,
           spacing = Some(newSpacing),
           origin = Some(newOrigin),
@@ -291,8 +332,8 @@ object NeuroSpace:
       origin: Option[Vector[Double]] = None,
       axes: Option[AxisSet] = None,
       trans: Option[DMat] = None
-  ): NeuroSpace =
-    NeuroSpace(dims.toVector, spacing, origin, axes, trans)
+  ): SomeSampleSpace =
+    SampleSpaces(dims.toVector, spacing, origin, axes, trans)
 
   def make(
       dims: Vector[Int],
@@ -300,7 +341,7 @@ object NeuroSpace:
       origin: Option[Vector[Double]] = None,
       axes: Option[AxisSet] = None,
       trans: Option[DMat] = None
-  ): Either[NeuroSpaceError, NeuroSpace] =
+  ): Either[SampleSpaceError, SomeSampleSpace] =
     validateDims(dims).flatMap: checkedDims =>
       val spatialDimCount = math.min(checkedDims.length, 3)
       val defaultSpacing = Vector.fill(spatialDimCount)(1.0)
@@ -310,8 +351,8 @@ object NeuroSpace:
           if spatialDimCount >= 2 then Right(())
           else
             Left(
-              NeuroSpaceError.ExpectedDimensionality(
-                "NeuroSpace spatial part",
+              SampleSpaceError.ExpectedDimensionality(
+                "SomeSampleSpace spatial part",
                 2,
                 spatialDimCount
               )
@@ -334,7 +375,7 @@ object NeuroSpace:
         _ <- DMat
           .invert(matrix)
           .left
-          .map(NeuroSpaceError.SingularTransform.apply)
+          .map(SampleSpaceError.SingularTransform.apply)
         checkedAxes <- axes match
           case Some(value) =>
             validateAxes(checkedDims.length, value).map(_ => value)
@@ -350,7 +391,7 @@ object NeuroSpace:
       origin: Option[Vector[Double]] = None,
       axes: Option[AxisSet] = None,
       trans: Option[DMat] = None
-  ): NeuroSpace =
+  ): SomeSampleSpace =
     make(dims, spacing, origin, axes, trans)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -358,13 +399,13 @@ object NeuroSpace:
       dims: Vector[Int],
       transform: DMat,
       axes: AxisSet
-  ): Either[NeuroSpaceError, NeuroSpace] =
+  ): Either[SampleSpaceError, SomeSampleSpace] =
     if dims.length == 2 then
       for
         metadata <- FrameMetadata
           .create("scalafim-space")
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         frame = Frame.createPersistent[D2](
           rasD2FrameId,
           metadata,
@@ -385,12 +426,12 @@ object NeuroSpace:
             )
           )
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         gridId <- persistentGridId(2, dims, affine.rowMajor)
         grid <- Grid
           .createPersistent(gridId, frame)(dims, affine)
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
       yield fromCanonical(
         SampleSpace.create(grid, NonSpatialAxes.empty)
       )
@@ -399,7 +440,7 @@ object NeuroSpace:
         metadata <- FrameMetadata
           .create("scalafim-space")
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         frame = Frame.createPersistent[D3](
           rasD3FrameId,
           metadata,
@@ -410,13 +451,13 @@ object NeuroSpace:
             Vector.tabulate(16)(transform.data.apply)
           )
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         spatialShape = dims.take(3)
         gridId <- persistentGridId(3, spatialShape, affine.rowMajor)
         grid <- Grid
           .createPersistent(gridId, frame)(spatialShape, affine)
           .left
-          .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+          .map(error => SampleSpaceError.CanonicalGeometry(error.message))
         nonSpatial <- canonicalAxes(dims.drop(3), axes.axes.drop(3))
       yield fromCanonical(SampleSpace.create(grid, nonSpatial))
 
@@ -424,27 +465,73 @@ object NeuroSpace:
       rank: Int,
       shape: Vector[Int],
       affineRowMajor: Vector[Double]
-  ): Either[NeuroSpaceError, GridId] =
+  ): Either[SampleSpaceError, GridId] =
+    parseGridId(rank, None, shape, affineRowMajor)
+      .left
+      .map(error => SampleSpaceError.CanonicalGeometry(error.message))
+
+  private def admittedGridId(
+      rank: Int,
+      frameId: FrameId,
+      shape: Vector[Int],
+      affineRowMajor: Vector[Double]
+  ): Either[GeometryError, GridId] =
+    val frameComponent =
+      if frameId == rasD3FrameId then None else Some(frameId.value)
+    parseGridId(rank, frameComponent, shape, affineRowMajor)
+
+  private def parseGridId(
+      rank: Int,
+      frameComponent: Option[String],
+      shape: Vector[Int],
+      affineRowMajor: Vector[Double]
+  ): Either[GeometryError, GridId] =
     val affineBits =
       affineRowMajor.map: value =>
         java.lang.Long.toUnsignedString(
           java.lang.Double.doubleToRawLongBits(value),
           16
         )
-    GridId
-      .parse(
-        s"scalafim-grid-d$rank-${shape.mkString("x")}-${affineBits.mkString("-")}"
+    val framePart = frameComponent.fold("")(value => s"-$value")
+    GridId.parse(
+      s"scalafim-grid$framePart-d$rank-${shape.mkString("x")}-${affineBits.mkString("-")}"
+    )
+
+  private def persistentFrameId(
+      rank: Int,
+      unit: LengthUnit,
+      convention: CoordinateConvention
+  ): Either[GeometryError, FrameId] =
+    if rank == 3 &&
+        unit == LengthUnit.Millimeter &&
+        convention == CoordinateConvention.RAS
+    then Right(rasD3FrameId)
+    else
+      FrameId.parse(
+        s"scalafim-frame-d$rank-${lengthUnitId(unit)}-${coordinateConventionId(convention)}"
       )
-      .left
-      .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+
+  private def lengthUnitId(unit: LengthUnit): String =
+    unit match
+      case LengthUnit.Millimeter => "millimeter"
+      case LengthUnit.Meter      => "meter"
+      case LengthUnit.Micrometer => "micrometer"
+
+  private def coordinateConventionId(
+      convention: CoordinateConvention
+  ): String =
+    convention match
+      case CoordinateConvention.Unspecified => "unspecified"
+      case CoordinateConvention.RAS         => "ras"
+      case CoordinateConvention.LPS         => "lps"
 
   private def canonicalAxes(
       extents: Vector[Int],
       axes: Vector[Axis]
-  ): Either[NeuroSpaceError, NonSpatialAxes] =
+  ): Either[SampleSpaceError, NonSpatialAxes] =
     val built =
       extents.zipWithIndex.foldLeft[
-        Either[NeuroSpaceError, Vector[ImageAxis]]
+        Either[SampleSpaceError, Vector[ImageAxis]]
       ](Right(Vector.empty)):
         case (acc, (extent, index)) =>
           val exposed = axes.lift(index).getOrElse(Axis.NoneAxis)
@@ -460,14 +547,14 @@ object NeuroSpace:
               .create(name, extent, kind)
               .left
               .map(error =>
-                NeuroSpaceError.CanonicalGeometry(error.message)
+                SampleSpaceError.CanonicalGeometry(error.message)
               )
           yield values :+ axis
     built.flatMap: values =>
       NonSpatialAxes
         .from(values)
         .left
-        .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+        .map(error => SampleSpaceError.CanonicalGeometry(error.message))
 
   private def publicAxis(axis: ImageAxis): Axis =
     axis.kind match
@@ -478,7 +565,7 @@ object NeuroSpace:
       axis: Axis,
       extent: Int,
       index: Int
-  ): Either[NeuroSpaceError, ImageAxis] =
+  ): Either[SampleSpaceError, ImageAxis] =
     val kind =
       if axis == Axis.Time then AxisKind.Time
       else
@@ -495,7 +582,7 @@ object NeuroSpace:
     ImageAxis
       .create(name, extent, kind)
       .left
-      .map(error => NeuroSpaceError.CanonicalGeometry(error.message))
+      .map(error => SampleSpaceError.CanonicalGeometry(error.message))
 
   private def canonicalTransform(space: SomeSampleSpace): DMat =
     val matrix = space.grid.indexToFrame.matrix
@@ -536,12 +623,12 @@ object NeuroSpace:
 
   private def validateDims(
       dims: Vector[Int]
-  ): Either[NeuroSpaceError, Vector[Int]] =
-    if dims.isEmpty then Left(NeuroSpaceError.EmptyDimensions)
+  ): Either[SampleSpaceError, Vector[Int]] =
+    if dims.isEmpty then Left(SampleSpaceError.EmptyDimensions)
     else
       dims.zipWithIndex.collectFirst {
         case (value, index) if value <= 0 =>
-          NeuroSpaceError.NonPositiveDimension(index, value)
+          SampleSpaceError.NonPositiveDimension(index, value)
       } match
         case Some(error) => Left(error)
         case None => Right(dims)
@@ -551,11 +638,11 @@ object NeuroSpace:
       candidate: Option[Vector[Double]],
       default: Vector[Double],
       requirePositive: Boolean
-  ): Either[NeuroSpaceError, Vector[Double]] =
+  ): Either[SampleSpaceError, Vector[Double]] =
     val values = candidate.getOrElse(default)
     if values.length != default.length then
       Left(
-        NeuroSpaceError.SpatialVectorLengthMismatch(
+        SampleSpaceError.SpatialVectorLengthMismatch(
           label,
           default.length,
           values.length
@@ -564,13 +651,13 @@ object NeuroSpace:
     else
       values.zipWithIndex.collectFirst {
         case (value, index) if !value.isFinite =>
-          NeuroSpaceError.NonFiniteSpatialValue(
+          SampleSpaceError.NonFiniteSpatialValue(
             label,
             SpatialAxis.all(index),
             value
           )
         case (value, index) if requirePositive && value <= 0.0 =>
-          NeuroSpaceError.NonPositiveSpacing(
+          SampleSpaceError.NonPositiveSpacing(
             SpatialAxis.all(index),
             value
           )
@@ -596,10 +683,10 @@ object NeuroSpace:
 
   private def validateTransform(
       transform: DMat
-  ): Either[NeuroSpaceError, DMat] =
+  ): Either[SampleSpaceError, DMat] =
     if transform.rows != 4 || transform.cols != 4 then
       Left(
-        NeuroSpaceError.InvalidTransformShape(
+        SampleSpaceError.InvalidTransformShape(
           transform.rows,
           transform.cols
         )
@@ -611,7 +698,7 @@ object NeuroSpace:
           .find(index => !transform.data(index).isFinite)
       nonFinite match
         case Some(index) =>
-          Left(NeuroSpaceError.NonFiniteTransformValue(index))
+          Left(SampleSpaceError.NonFiniteTransformValue(index))
         case None =>
           val bottom =
             Vector(
@@ -623,15 +710,15 @@ object NeuroSpace:
           if bottom == Vector(0.0, 0.0, 0.0, 1.0) then
             Right(transform)
           else
-            Left(NeuroSpaceError.InvalidTransformBottomRow(bottom))
+            Left(SampleSpaceError.InvalidTransformBottomRow(bottom))
 
   private def validateAxes(
       expected: Int,
       axes: AxisSet
-  ): Either[NeuroSpaceError, Unit] =
+  ): Either[SampleSpaceError, Unit] =
     if axes.ndim == expected then Right(())
     else
-      Left(NeuroSpaceError.AxisCountMismatch(expected, axes.ndim))
+      Left(SampleSpaceError.AxisCountMismatch(expected, axes.ndim))
 
   private def defaultAxes(
       dimsLength: Int,
@@ -643,12 +730,12 @@ object NeuroSpace:
       AxisSet((inferred.axes ++ base.additionalAxes)*)
     else base
 
-opaque type VolumeSpace = NeuroSpace
+opaque type VolumeSpace = SomeSampleSpace
 
 object VolumeSpace:
   extension (space: VolumeSpace)
     def sampleSpace: SampleSpace[? <: Frame[D3], D3] =
-      NeuroSpace
+      SampleSpaces
         .requireD3(space)
         .fold(
           error => throw new IllegalStateException(error.message),
@@ -656,18 +743,18 @@ object VolumeSpace:
         )
 
     def shape: SpatialDims =
-      NeuroSpace.spatialShapeOf(space)
+      SampleSpaces.spatialShapeOf(space)
 
     def dims: Vector[Int] =
-      NeuroSpace.logicalDims(space)
+      SampleSpaces.logicalDims(space)
 
     def affine: Affine3D =
-      NeuroSpace.affineOf(space)
+      SampleSpaces.affineOf(space)
 
     def nVoxels: Int =
       shape.product
 
-    def toNeuroSpace: NeuroSpace =
+    def toSampleSpace: SomeSampleSpace =
       space
 
     def voxelToWorld(voxel: VoxelPoint): WorldPoint =
@@ -677,34 +764,34 @@ object VolumeSpace:
       affine.worldToVoxel(world)
 
     def addTime(n: Int): SeriesSpace =
-      SeriesSpace.unsafe(NeuroSpace.withTime(space, n))
+      SeriesSpace.unsafe(SampleSpaces.withTime(space, n))
 
   def make(
-      space: NeuroSpace
-  ): Either[NeuroSpaceError, VolumeSpace] =
-    if NeuroSpace.canonical(space).spatialRank == 3 &&
-        NeuroSpace.canonical(space).nonSpatialAxes.size == 0
+      space: SomeSampleSpace
+  ): Either[SampleSpaceError, VolumeSpace] =
+    if SampleSpaces.canonical(space).spatialRank == 3 &&
+        SampleSpaces.canonical(space).nonSpatialAxes.size == 0
     then Right(space)
     else
       Left(
-        NeuroSpaceError.ExpectedDimensionality(
+        SampleSpaceError.ExpectedDimensionality(
           "VolumeSpace",
           3,
-          NeuroSpace.logicalDims(space).length
+          SampleSpaces.logicalDims(space).length
         )
       )
 
   def fromSpatialPart(
-      space: NeuroSpace
-  ): Either[NeuroSpaceError, VolumeSpace] =
-    if NeuroSpace.canonical(space).spatialRank == 3 then
-      Right(NeuroSpace.spatialPart(space))
+      space: SomeSampleSpace
+  ): Either[SampleSpaceError, VolumeSpace] =
+    if SampleSpaces.canonical(space).spatialRank == 3 then
+      Right(SampleSpaces.spatialPart(space))
     else
       Left(
-        NeuroSpaceError.ExpectedDimensionality(
+        SampleSpaceError.ExpectedDimensionality(
           "VolumeSpace spatial part",
           3,
-          NeuroSpace.logicalDims(space).length
+          SampleSpaces.logicalDims(space).length
         )
       )
 
@@ -716,64 +803,64 @@ object VolumeSpace:
       domain: GridDomain[F, D3, S]
   ): VolumeSpace =
     unsafe(
-      NeuroSpace.fromCanonical(
+      SampleSpaces.fromCanonical(
         SampleSpace.create(domain.grid, NonSpatialAxes.empty)
       )
     )
 
-  def apply(space: NeuroSpace): VolumeSpace =
+  def apply(space: SomeSampleSpace): VolumeSpace =
     make(space)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  def unsafe(space: NeuroSpace): VolumeSpace =
+  def unsafe(space: SomeSampleSpace): VolumeSpace =
     space
 
-opaque type SeriesSpace = NeuroSpace
+opaque type SeriesSpace = SomeSampleSpace
 
 object SeriesSpace:
   import VolumeSpace.*
 
   extension (space: SeriesSpace)
     def volumeSpace: VolumeSpace =
-      VolumeSpace.unsafe(NeuroSpace.spatialPart(space))
+      VolumeSpace.unsafe(SampleSpaces.spatialPart(space))
 
     def spatialShape: SpatialDims =
       volumeSpace.shape
 
     def dims: Vector[Int] =
-      NeuroSpace.logicalDims(space).take(4)
+      SampleSpaces.logicalDims(space).take(4)
 
     def nVolumes: Int =
       space.dims(3)
 
     def affine: Affine3D =
-      NeuroSpace.affineOf(space)
+      SampleSpaces.affineOf(space)
 
-    def toNeuroSpace: NeuroSpace =
+    def toSampleSpace: SomeSampleSpace =
       space
 
   def make(
-      space: NeuroSpace
-  ): Either[NeuroSpaceError, SeriesSpace] =
-    if NeuroSpace.canonical(space).spatialRank == 3 &&
-        NeuroSpace.canonical(space).nonSpatialAxes.size == 1 &&
-        NeuroSpace
+      space: SomeSampleSpace
+  ): Either[SampleSpaceError, SeriesSpace] =
+    if SampleSpaces.canonical(space).spatialRank == 3 &&
+        SampleSpaces.canonical(space).nonSpatialAxes.size == 1 &&
+        SampleSpaces
           .canonical(space)
           .nonSpatialAxes(0)
           .exists(_.kind == AxisKind.Time)
     then Right(space)
     else
       Left(
-        NeuroSpaceError.ExpectedDimensionality(
+        SampleSpaceError.ExpectedDimensionality(
           "SeriesSpace",
           4,
-          NeuroSpace.logicalDims(space).length
+          SampleSpaces.logicalDims(space).length
         )
       )
 
-  def apply(space: NeuroSpace): SeriesSpace =
+  def apply(space: SomeSampleSpace): SeriesSpace =
     make(space)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
 
-  def unsafe(space: NeuroSpace): SeriesSpace =
+  def unsafe(space: SomeSampleSpace): SeriesSpace =
     space

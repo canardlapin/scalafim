@@ -1,6 +1,7 @@
 package scalafim.atlas
 
 import scalafim.image.Indexing
+import scalafim.image.SampleSpaces.*
 
 final case class QueryHit(
   pointIndex: Int,

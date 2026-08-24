@@ -2,7 +2,7 @@ package scalafim.latent
 
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{LnaArchive, SharedBasisArtifact, SharedBasisId, SharedBasisLocator}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 enum LatentEncodingSpec:
@@ -409,7 +409,7 @@ object LatentEncoder:
 
   def toArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       spec: LatentEncodingSpec,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-latent"

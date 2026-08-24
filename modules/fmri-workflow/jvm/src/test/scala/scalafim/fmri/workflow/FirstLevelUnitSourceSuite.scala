@@ -2,7 +2,9 @@ package scalafim.fmri.workflow
 
 import munit.FunSuite
 import scalafim.dataset.*
-import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec, NeuroVol}
+import scalafim.image.{Axis, DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
+import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
+import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 
 import java.nio.file.{Files, Path}
@@ -11,7 +13,7 @@ import scala.jdk.CollectionConverters.*
 class FirstLevelUnitSourceSuite extends FunSuite:
   test("unit source opens run references lazily and applies the exact mask intersection") {
     withFixture { root =>
-      val space = NeuroSpace(Vector(2, 2, 1))
+      val space = SampleSpaces(Vector(2, 2, 1))
       val bold1 = writeBold(root.resolve("run-1.nii"), space, 0.0)
       val bold2 = writeBold(root.resolve("run-2.nii"), space, 100.0)
       val mask1 = writeMask(root.resolve("mask-1.nii"), space, Array(1.0, 1.0, 1.0, 0.0))
@@ -62,13 +64,17 @@ class FirstLevelUnitSourceSuite extends FunSuite:
       events = WorkflowArtifactRef.unsafe[EventsTableResource](path.resolveSibling(s"events-$id.tsv").toUri.toString)
     )
 
-  private def writeBold(path: Path, space: NeuroSpace, offset: Double): Path =
+  private def writeBold(path: Path, space: SomeSampleSpace, offset: Double): Path =
     val values = PrimitiveBuffers.fromArray(Array.tabulate(8)(index => offset + index.toDouble))
     val seriesSpace = space.addDim(2, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.copyFromCanonicalArray(values, seriesSpace, "bold"))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, seriesSpace, "bold"))
+      .fold(error => fail(error.message), _ => path)
 
-  private def writeMask(path: Path, space: NeuroSpace, values: Array[Double]): Path =
-    Nifti.writeVol(path, NeuroVol.copyFromCanonicalArray(PrimitiveBuffers.fromArray(values), space, "mask"))
+  private def writeMask(path: Path, space: SomeSampleSpace, values: Array[Double]): Path =
+    Nifti
+      .writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(values), space, "mask"))
+      .fold(error => fail(error.message), _ => path)
 
   private def withFixture[A](body: Path => A): A =
     val root = Files.createTempDirectory("scalafim-unit-source-")

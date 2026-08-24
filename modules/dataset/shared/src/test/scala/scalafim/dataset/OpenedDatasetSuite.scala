@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.syntax.all.*
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
 import scalafim.response.*
 import scalafim.response.laws.ResponseLawChecks
 
@@ -404,7 +404,7 @@ class OpenedDatasetSuite extends munit.FunSuite:
             Vector(30.0, 31.0, 32.0)
           )
         ),
-        NeuroSpace(Vector(3, 1, 1))
+        SampleSpaces(Vector(3, 1, 1))
       )
     FmriDataset.unsafe(
       backend,

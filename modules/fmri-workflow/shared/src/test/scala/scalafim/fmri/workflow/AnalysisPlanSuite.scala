@@ -1,5 +1,7 @@
 package scalafim.fmri.workflow
 
+import scalafim.image.SampleSpaces
+
 import munit.FunSuite
 import bids4s.{BidsQuery, BidsScope}
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SessionId, SpaceId, SubjectId, TaskId}
@@ -7,7 +9,7 @@ import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.formula.ModelFormula
 import scalafim.fmri.fit.SequentialChunkProgramInterpreter
 import scalafim.fmri.group.{GroupWeighting, InterceptPolicy}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 
 class AnalysisPlanSuite extends FunSuite:
   test("compile produces deterministic subject and group jobs from pure descriptors") {
@@ -201,7 +203,7 @@ class AnalysisPlanSuite extends FunSuite:
       session = session.map(SessionId(_)),
       task = TaskId("demo"),
       space = SpaceId("MNI152NLin2009cAsym"),
-      shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), timepoints),
+      shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), timepoints),
       runs = Vector(runInput),
       mask = UnitMask.Single(WorkflowArtifactRef.unsafe[MaskImageResource](s"file:///$id/mask.nii.gz"))
     )

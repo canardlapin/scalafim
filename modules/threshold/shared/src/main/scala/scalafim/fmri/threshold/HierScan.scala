@@ -1,7 +1,7 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.DMat
-import scalafim.image.NeuroVol
+import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
 
 final case class HierScanConfig(
     alpha: Alpha = Alpha.unsafe(0.05),
@@ -58,10 +58,10 @@ final case class HierScanRegionHit(
 object HierScan:
 
   def run(
-    stat: NeuroVol[Double],
+    stat: SomeScalarVolume[Double],
     nullDraw: NullDraw,
-    mask: Option[NeuroVol[Boolean]] = None,
-    prior: Option[NeuroVol[Double]] = None,
+    mask: Option[SomeMaskVolume] = None,
+    prior: Option[SomeScalarVolume[Double]] = None,
     config: HierScanConfig = HierScanConfig()
   ): Either[ThresholdError, HierScanResult] =
     runMap(StatisticMap.z(stat), nullDraw, mask, prior, config)
@@ -69,8 +69,8 @@ object HierScan:
   def runMap(
     statistic: StatisticMap,
     nullDraw: NullDraw,
-    mask: Option[NeuroVol[Boolean]] = None,
-    prior: Option[NeuroVol[Double]] = None,
+    mask: Option[SomeMaskVolume] = None,
+    prior: Option[SomeScalarVolume[Double]] = None,
     config: HierScanConfig = HierScanConfig()
   ): Either[ThresholdError, HierScanResult] =
     for

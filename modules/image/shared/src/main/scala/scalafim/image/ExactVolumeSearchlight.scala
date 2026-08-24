@@ -6,7 +6,6 @@ import image4s.Continuous
 import image4s.ValueSemantics
 import image4s.geometry.D3
 import image4s.geometry.Frame
-import image4s.geometry.LatticeIndex
 import image4s.locus.GridDomain
 import locus4s.Index
 import locus4s.Region
@@ -256,7 +255,7 @@ object ExactVolumeSearchlight:
             boundedOrdinals(domain, center, deltas): (dx, dy, dz) =>
               worldSquaredDistance(domain, dx, dy, dz) <= squaredRadius
           val distances = ball.map: ordinal =>
-            val target = domain.indexOfOrdinal(ordinal).toOption.get.values
+            val target = Indexing.indexToGrid3D(domain.grid.shape, ordinal)
             math.sqrt(
               worldSquaredDistance(
                 domain,
@@ -394,7 +393,7 @@ object ExactVolumeSearchlight:
     val labeled =
       if label.isEmpty then volume
       else SomeNeuroVolume.unsafeFromSampled(
-        volume.withMetadata(ImageMetadata(label))
+        SomeNeuroVolume.sampled(volume).withMetadata(ImageMetadata(label))
       )
     for
       selected <- SelectedVolume
@@ -505,11 +504,12 @@ object ExactVolumeSearchlight:
   ): Either[ExactVolumeSearchlightError, VolumeNeighborhoods[S]] =
     val rows = Array.fill(domain.space.size)(Vector.empty[Int])
     centers.indicesInDomainOrder.foreach: centerIndex =>
-      val lattice = domain.indexOf(centerIndex).toOption.get
+      val lattice =
+        Indexing.indexToGrid3D(domain.grid.shape, centerIndex.ordinal)
       val center = VoxelCoord(
-        lattice.values(0),
-        lattice.values(1),
-        lattice.values(2)
+        lattice(0),
+        lattice(1),
+        lattice(2)
       )
       rows(centerIndex.ordinal) = rowAt(center).iterator.toVector
 
@@ -555,12 +555,12 @@ object ExactVolumeSearchlight:
       domain: GridDomain[F, D3, S],
       voxel: VoxelCoord
   ): Int =
-    val target =
-      LatticeIndex
-        .fromVector[D3](voxel.toVector)
-        .toOption
-        .get
-    domain.ordinalOf(target).toOption.get
+    Indexing.gridToIndex3D(
+      domain.grid.shape,
+      voxel.x,
+      voxel.y,
+      voxel.z
+    )
 
   private def axisSpacing[F <: Frame[D3], S](
       domain: GridDomain[F, D3, S],
