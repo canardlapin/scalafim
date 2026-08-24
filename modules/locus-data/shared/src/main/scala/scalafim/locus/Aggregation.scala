@@ -16,7 +16,7 @@ object Aggregation:
         scala.collection.mutable.ArrayBuffer.fill(parcellation.parcels.size)(monoid.empty)
       var ambientOrdinal = 0
       while ambientOrdinal < parcellation.ambient.size do
-        val ambientPoint = parcellation.ambient.pointOption(ambientOrdinal).get
+        val ambientPoint = parcellation.ambient.indexOption(ambientOrdinal).get
         parcellation.parcelAt(ambientPoint).foreach: parcel =>
           val next = contribution(field(ambientPoint))
           accumulated(parcel.ordinal) =

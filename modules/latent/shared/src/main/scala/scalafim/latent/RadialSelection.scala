@@ -72,7 +72,7 @@ sealed abstract class RadialMaskOrder private (
   def maskValues(maskSize: Int): Either[RadialBasisError, Vector[Boolean]] =
     locus(maskSize).map { domain =>
       val values = Array.fill(maskSize)(false)
-      val points = domain.activeSelection.points
+      val points = domain.activeSelection.indices
       while points.hasNext do
         values(points.next().value) = true
       values.toVector
@@ -139,13 +139,13 @@ sealed trait RadialLocusOrder:
         )
       )
     else
-      Right(order.activeSpace.pointOption(ordinal).get)
+      Right(order.activeSpace.indexOption(ordinal).get)
 
   def fullPointFor(
       active: Point[ActivePoint]
   ): Point[FullGridPoint] =
     // Total: an injection's underlying map is defined on all of its source.
-    activeToFull.mapping.at(active)
+    activeToFull.mapping(active)
 
 object RadialLocusOrder:
   private[latent] def make(

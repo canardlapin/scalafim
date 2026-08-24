@@ -57,14 +57,14 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
     val acquisition = domain("masked", requestedShape, active)
 
     assertEquals(acquisition.activeToFull.mapping.targetOrdinals.toVector, Vector(0, 2, 3))
-    val activeTwo = acquisition.activeVoxelSpace.pointOption(1).get
+    val activeTwo = acquisition.activeVoxelSpace.indexOption(1).get
     assertEquals(acquisition.fullPointFor(activeTwo).value, 2)
     assertEquals(
-      acquisition.activePointFor(acquisition.fullVoxelSpace.pointOption(2).get).map(_.value),
+      acquisition.activePointFor(acquisition.fullVoxelSpace.indexOption(2).get).map(_.value),
       Right(1)
     )
     assertEquals(
-      acquisition.activePointFor(acquisition.fullVoxelSpace.pointOption(1).get).left.toOption,
+      acquisition.activePointFor(acquisition.fullVoxelSpace.indexOption(1).get).left.toOption,
       Some(DatasetError.VoxelOutsideMask(1))
     )
 

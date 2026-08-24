@@ -12,7 +12,7 @@ class IndexedFieldSuite extends munit.FunSuite:
     val owned = IndexedField.fromValues(space, values).toOption.get
     values(0) = 99
 
-    assertEquals(owned(space.pointOption(0).get), 1)
+    assertEquals(owned(space.indexOption(0).get), 1)
     assertEquals(
       IndexedField.fromValues(space, Vector(1, 2)),
       Left(IndexedFieldError.WrongValueCount(6, 2))
@@ -48,13 +48,13 @@ class IndexedFieldSuite extends munit.FunSuite:
     val section = field.restrict(support)
     val selection = Selection.fromOrdinals(space, Vector(5, 1, 3)).toOption.get
 
-    assertEquals(section.at(space.pointOption(1).get).toOption, Some(10))
-    assertEquals(section.at(space.pointOption(2).get).toOption, None)
-    assertEquals(section.valuesIn(selection).toOption.get.toVector, Vector(50, 10, 30))
+    assertEquals(section(space.indexOption(1).get).toOption, Some(10))
+    assertEquals(section(space.indexOption(2).get).toOption, None)
+    assertEquals(section.gather(selection).toOption.get.toVector, Vector(50, 10, 30))
 
     val outside = Selection.fromOrdinals(space, Vector(1, 2)).toOption.get
     assertEquals(
-      section.valuesIn(outside).left.toOption.get,
+      section.gather(outside).left.toOption.get,
       SectionSelectionError.OutsideSupport(2)
     )
 

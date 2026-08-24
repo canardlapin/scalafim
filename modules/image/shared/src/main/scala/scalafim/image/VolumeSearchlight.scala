@@ -137,12 +137,12 @@ object VolumeSearchlight:
         .voxelSelection(locusSelection)
         .left
         .map(VolumeSearchlightError.WrongSpace.apply)
-      orderedPoints = locusSelection.points.toVector
+      orderedPoints = locusSelection.indices.toVector
       data =
         RavelArray.fromSeq(
           Shape(orderedPoints.length),
-          // `at` is total: a `Point[S]` is already proof of membership in `S`.
-          orderedPoints.map(point => field.at(point))
+          // Lookup is total: a `Point[S]` is already proof of membership in `S`.
+          orderedPoints.map(point => field(point))
         )
       centerIndex = orderedPoints.indexWhere(_.value == center.value)
       window <- ROIVolWindow

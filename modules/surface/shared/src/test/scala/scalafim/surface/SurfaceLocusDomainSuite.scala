@@ -44,10 +44,10 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
       .toOption
       .get
 
-    assertEquals(full.at(d.finiteSpace.pointOption(2).get), 30.0)
-    assertEquals(sparse.at(d.finiteSpace.pointOption(0).get), None)
-    assertEquals(sparse.at(d.finiteSpace.pointOption(1).get), Some(20.0))
-    assertEquals(sparse.at(d.finiteSpace.pointOption(3).get), Some(40.0))
+    assertEquals(full(d.finiteSpace.indexOption(2).get), 30.0)
+    assertEquals(sparse(d.finiteSpace.indexOption(0).get), None)
+    assertEquals(sparse(d.finiteSpace.indexOption(1).get), Some(20.0))
+    assertEquals(sparse(d.finiteSpace.indexOption(3).get), Some(40.0))
 
   test("legacy SurfaceRoi adapts to a region, restricted values, and annotation"):
     val d = domain().value
@@ -66,20 +66,20 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
 
     assertEquals(view.region.ordinalsInDomainOrder.toVector, Vector(1, 3))
     assertEquals(view.annotation, "motor")
-    assertEquals(view.values.at(d.finiteSpace.pointOption(1).get).toOption, Some(Some(2)))
-    assertEquals(view.values.at(d.finiteSpace.pointOption(0).get).toOption, None)
+    assertEquals(view.values(d.finiteSpace.indexOption(1).get).toOption, Some(Some(2)))
+    assertEquals(view.values(d.finiteSpace.indexOption(0).get).toOption, None)
 
   test("labeled surfaces become quotients with metadata and explicit display order"):
     val d = domain(SurfaceTestFixtures.sheetGeometry).value
     val atlas = d.parcellation(SurfaceTestFixtures.sheetLabels).toOption.get
-    val firstParcel = atlas.parcellation.parcels.pointOption(0).get
-    val secondParcel = atlas.parcellation.parcels.pointOption(1).get
+    val firstParcel = atlas.parcellation.parcels.indexOption(0).get
+    val secondParcel = atlas.parcellation.parcels.indexOption(1).get
 
     assertEquals(atlas.parcellation.assignmentOrdinals, Vector(Some(0), Some(0), Some(1), Some(1)))
     assertEquals(atlas.parcellation.fiber(firstParcel).ordinalsInDomainOrder.toVector, Vector(0, 1))
     assertEquals(atlas.parcellation.fiber(secondParcel).ordinalsInDomainOrder.toVector, Vector(2, 3))
-    assertEquals(atlas.labelIds.at(firstParcel), 1)
-    assertEquals(atlas.metadata.at(secondParcel).map(_.name), Some("B"))
+    assertEquals(atlas.labelIds(firstParcel), 1)
+    assertEquals(atlas.metadata(secondParcel).map(_.name), Some("B"))
     assertEquals(atlas.displayOrder.ordinals.toVector, Vector(0, 1))
 
   test("a disconnected label remains one valid extensional quotient fiber"):
@@ -99,14 +99,14 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
     val d = domain(geometry).value
     val atlas =
       d.parcellation(labels).toOption.get
-    val parcel = atlas.parcellation.parcels.pointOption(0).get
+    val parcel = atlas.parcellation.parcels.indexOption(0).get
 
     assertEquals(atlas.parcellation.parcels.size, 1)
     assertEquals(
       atlas.parcellation.fiber(parcel).ordinalsInDomainOrder.toVector,
       Vector(0, 1, 3, 4)
     )
-    assertEquals(atlas.metadata.at(parcel).map(_.name), Some("fragmented"))
+    assertEquals(atlas.metadata(parcel).map(_.name), Some("fragmented"))
 
   test("runtime-loaded domains preserve the hidden semantic space type"):
     val packed =
@@ -129,4 +129,4 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
         .toOption
         .get
 
-    assertEquals(field.at(space.pointOption(3).get), 4)
+    assertEquals(field(space.indexOption(3).get), 4)

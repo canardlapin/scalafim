@@ -8,7 +8,7 @@ trait NodeLocusDomain:
   val space: FiniteSpace[N]
 
   final def pointFor(id: NodeId): Option[Point[N]] =
-    axis.indexOf(id).flatMap(space.pointOption)
+    axis.indexOf(id).flatMap(space.indexOption)
 
   final def nodeAt(point: Point[N]): NodeSpec =
     axis.nodes(point.value)
@@ -48,7 +48,7 @@ trait EdgeLocusDomain:
   val space: FiniteSpace[E]
 
   final def pointFor(index: EdgeSpaceIx): Point[E] =
-    space.pointOption(index.value).get
+    space.indexOption(index.value).get
 
   final def edgeAt(point: Point[E]): EdgeRef =
     edgeSpace.edge(point.value)

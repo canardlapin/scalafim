@@ -177,10 +177,10 @@ object AtlasReduce:
         .toOption
         .get
     val values =
-      quotient.displayOrder.points.map: parcel =>
+      quotient.displayOrder.indices.map: parcel =>
         ParcelValue(
-          quotient.metadata.at(parcel),
-          finish(summaries.at(parcel))
+          quotient.metadata(parcel),
+          finish(summaries(parcel))
         )
       .toVector
     Right(ParcelValues(atlas, values))
@@ -203,7 +203,7 @@ object AtlasReduce:
       val included = mask.forall(_.linear(voxel))
       if included then
         val coordinate = data.space.indexToVoxel3D(voxel)
-        val point = quotient.parcellation.ambient.pointOption(voxel).get
+        val point = quotient.parcellation.ambient.indexOption(voxel).get
         quotient.parcellation.parcelAt(point).foreach: parcel =>
           var time = 0
           while time < timeCount do

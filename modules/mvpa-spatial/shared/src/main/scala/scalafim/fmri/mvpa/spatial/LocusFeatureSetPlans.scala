@@ -48,7 +48,7 @@ object LocusFeatureSetPlans:
       parcellation: Parcellation[X, P],
       label: Point[P] => Option[String] = (_: Point[P]) => None
   ): Either[MvpaError, FeatureSetPlan] =
-    build(parcellation.parcels.points): parcel =>
+    build(parcellation.parcels.indices): parcel =>
       fromRegion(
         RoiId(parcel.value),
         parcellation.fiber(parcel),
@@ -62,7 +62,7 @@ object LocusFeatureSetPlans:
       label: Point[S] => Option[String] = (point: Point[S]) => Some(point.value.toString)
   ): Either[MvpaError, FeatureSetPlan] =
     val searchlight = centered.searchlight
-    build(searchlight.centers.pointsInDomainOrder): center =>
+    build(searchlight.centers.indicesInDomainOrder): center =>
       FeatureSet(
         RoiId(center.value),
         searchlight.neighborhoods

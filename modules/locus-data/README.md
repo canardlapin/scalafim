@@ -68,7 +68,7 @@ val parcels =
 val field =
   IndexedField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
 val section = field.restrict(left).toOption.get
-val orderedValues = section.valuesIn(requestedOrder).toOption.get.toVector
+val orderedValues = section.gather(requestedOrder).toOption.get.toVector
 ```
 
 `orderedValues` is `Vector(12, 10, 11)`: ordering comes from

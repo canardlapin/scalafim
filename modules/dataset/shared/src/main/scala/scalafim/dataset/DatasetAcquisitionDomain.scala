@@ -38,7 +38,7 @@ trait DatasetAcquisitionDomain:
   final def fullPointFor(
       active: Point[A]
   ): Point[X] =
-    activeToFull.mapping.at(active)
+    activeToFull.mapping(active)
 
   final def resolveTimepoints(
       requested: TimepointSelection
@@ -196,7 +196,7 @@ object DatasetAcquisitionDomain:
             if activeOrdinal < 0 then
               Left(DatasetError.VoxelOutsideMask(fullPoint.value))
             else
-              Right(active.pointOption(activeOrdinal).get)
+              Right(active.indexOption(activeOrdinal).get)
 
 trait ResolvedLocusSelection:
   type T
