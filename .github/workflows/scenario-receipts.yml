@@ -37,7 +37,7 @@ jobs:
           echo "Evidence lane: $SCALAFIM_EVIDENCE_LANE" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check out ScalaFIM
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Read the checked-in environment lock
         id: lock
@@ -50,28 +50,28 @@ jobs:
           echo "fmrireg=$(jq -r '.r.packages.fmrireg.revision' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check out fmriAR at the locked revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: bbuchsbaum/fmriAR
           ref: ${{ steps.lock.outputs.fmriar }}
           path: reference/fmriAR
 
       - name: Check out fmridesign at the locked revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: bbuchsbaum/fmridesign
           ref: ${{ steps.lock.outputs.fmridesign }}
           path: reference/fmridesign
 
       - name: Check out fmrihrf at the locked revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: bbuchsbaum/fmrihrf
           ref: ${{ steps.lock.outputs.fmrihrf }}
           path: reference/fmrihrf
 
       - name: Check out fmrireg at the locked revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: bbuchsbaum/fmrireg
           ref: ${{ steps.lock.outputs.fmrireg }}
@@ -156,7 +156,7 @@ jobs:
           echo "Evidence lane: $SCALAFIM_EVIDENCE_LANE" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Check out ScalaFIM
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Read the checked-in environment lock
         id: lock
@@ -169,7 +169,7 @@ jobs:
           echo "nilearn=$(jq -r '.python.packages.nilearn.version' tools/r-parity/reference-lock.json)" >> "$GITHUB_OUTPUT"
 
       - name: Check out fmrimod at the locked revision
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: bbuchsbaum/fmrimod
           ref: ${{ steps.lock.outputs.fmrimod }}

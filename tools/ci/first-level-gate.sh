@@ -18,8 +18,8 @@ echo "[first-level-ci] declared sbt $sbt_version"
 node_version=$(node --version)
 node_major=${node_version#v}
 node_major=${node_major%%.*}
-if (( node_major < 20 )); then
-  echo "[first-level-ci] Node.js 20 or newer is required; found $node_version" >&2
+if (( node_major < 24 )); then
+  echo "[first-level-ci] Node.js 24 or newer is required; found $node_version" >&2
   exit 1
 fi
 echo "[first-level-ci] Node.js $node_version"

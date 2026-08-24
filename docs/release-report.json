@@ -48,7 +48,7 @@
       "sha256": "d32a37a265a035a39d8c6b9abf9ff98eff6dc4a664dc8075eb61464ce27e8368",
       "status": "pass"
     },
-    "commit": "https://github.com/canardlapin/scalafim/commit/6a6f3d478a1f22f597748993617cf5f31dbb727a",
+    "commit": "https://github.com/canardlapin/scalafim/commit/864f862a50ddae792b053fa42fa23b9a9de9028e",
     "reference_lock": "tools/r-parity/reference-lock.json",
     "scenario_manifest": "docs/scenarios/manifest.json"
   },
@@ -69,7 +69,7 @@
       "url": null
     }
   },
-  "generated_at": "2026-08-24T12:54:06.064743+00:00",
+  "generated_at": "2026-08-24T18:05:47.950560+00:00",
   "local_gates": {
     "compile_all": {
       "command": "sbt scalafimCompileAll",
@@ -111,15 +111,15 @@
   "release_eligible": false,
   "schema_version": "scalafim-first-level-release-report/v1",
   "source": {
-    "commit": "6a6f3d478a1f22f597748993617cf5f31dbb727a",
+    "commit": "864f862a50ddae792b053fa42fa23b9a9de9028e",
     "dirty": true,
-    "dirty_path_count": 1,
+    "dirty_path_count": 6,
     "files": {
-      ".github/workflows/first-level-laws-calibration.yml": "1032a3e8313fdba1be01331599379ec294bce050483a4066dc02b74bab687f0c",
-      ".github/workflows/first-level-mutation-pilot.yml": "84da3c38b75a9abf8c83001755b11130c8e5eb80183ae8f309cd11ee6acc10ee",
-      ".github/workflows/first-level-performance.yml": "5e417daf4d1a9e6b6c647b7058037fefa4b78e18a5580248b7ab9591733a979e",
-      ".github/workflows/first-level.yml": "6d855022e770e3689e7f3c88d63cb2f357cfc00b962322f506479f4219dcf7db",
-      ".github/workflows/scenario-receipts.yml": "c0ed8f3398373b5451b1fe71e651689b54a747f1755b7fbbd1196d91fb33a67f",
+      ".github/workflows/first-level-laws-calibration.yml": "3160cc9e0b002b6f850e48469e5d7d72d9d0de26f01b0b8ac5107d9a735ceefc",
+      ".github/workflows/first-level-mutation-pilot.yml": "24017d764f077a1dc78a15a7534736fceea026fc640d5619e931b93a728fe832",
+      ".github/workflows/first-level-performance.yml": "54e723f45631f42d6cef62df81505a8010dcf4ea98793ef42edbfb19312df205",
+      ".github/workflows/first-level.yml": "02af402f57dad40de3c6571a3742933a4b52e5753a54039634d06e7313741207",
+      ".github/workflows/scenario-receipts.yml": "7be644f94a18fe3c74ca9495c77f81b402dc0403187d5697d639f4aa42fd0160",
       "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala": "57446cc7917d3025c6c5044eb4f985c62d786dbc4740501475652046ada6a3a3",
       "build.sbt": "69ea39e69bfcf62b8f21f0d031d78d021fa7a362c49fb508bb32e1270257794f",
       "docs/benchmarks/first-level.md": "ed487c88d6112ddd2213d21a36d54da01a35206d9ef3f5fcb5a865970a37459e",
@@ -153,7 +153,7 @@
       "tools/ci/finalize_first_level_release.py": "083508d579ada2238214a5bd916c882ab30b8f6a0d583673a78490606b42d31f",
       "tools/ci/first-level-benchmark.sh": "62592f869723da778d91024a0897b7a6b3caa2c2391ccb6c7e8ad0dbc75ed401",
       "tools/ci/first-level-coverage.sh": "0c91cf0154c62489bde198b7256be2b2b0afe33c6eba00d6407b956d3574df17",
-      "tools/ci/first-level-gate.sh": "c413aff0a080cbcb26b86d81d4f1c85994aeaa2015310fc096a7db7423985f3d",
+      "tools/ci/first-level-gate.sh": "5ce3f37d539cb066c2faf59c0bbf2867f58da4f4c76ffe100d0f906f523c3ea3",
       "tools/ci/first-level-release.sh": "f507d4e02af8b7c7526001ea471b103f19df65e6d2a387b0fd9cf6dc58bc617c",
       "tools/ci/full-repository-tests.sh": "ca37276751d13b554b1cf17ac80bda2c4a2f23a1c0cc8c26347a11c346cf6a37",
       "tools/docs/check_first_level_docs.py": "01e550285c1f9a44b725bcd9e971677a56ece66d29a2239c1fbf3c459b072193",
