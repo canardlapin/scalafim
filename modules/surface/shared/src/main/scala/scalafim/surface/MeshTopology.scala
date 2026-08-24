@@ -182,8 +182,11 @@ final case class MeshTopology private (
   def eulerCharacteristic: Int =
     mesh.topology.eulerCharacteristic
 
+  def vertexNormals: Vector[Point3D] =
+    vertexNormals(VertexNormalWeighting.FaceArea)
+
   def vertexNormals(
-      weighting: VertexNormalWeighting = VertexNormalWeighting.FaceArea
+      weighting: VertexNormalWeighting
   ): Vector[Point3D] =
     weighting match
       case VertexNormalWeighting.FaceArea =>

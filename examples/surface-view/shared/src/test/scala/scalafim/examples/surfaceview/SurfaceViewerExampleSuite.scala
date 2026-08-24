@@ -6,6 +6,8 @@ import scalafim.surface.*
 import scalafim.surface.view.*
 import scalafim.surface.view.raster.*
 
+import scala.collection.mutable
+
 class SurfaceViewerExampleSuite extends munit.FunSuite:
   test("portable GIFTI-derived example has one exact JVM/Scala.js semantic receipt"):
     val first = SurfaceViewerExample.semanticReceipt()
@@ -90,7 +92,7 @@ class SurfaceViewerExampleSuite extends munit.FunSuite:
     assertEqualsDouble(
       example.plan.meshes.head.positions(0).toDouble,
       left.mesh.vertex(VertexId(0)).x,
-      0.0
+      1e-5
     )
     assert(CorticalSurfaceAcceptance.build(right, left).isLeft)
     assert(SurfaceLayer.scalar(
@@ -107,25 +109,92 @@ class SurfaceViewerExampleSuite extends munit.FunSuite:
     assert(cameraPlan.receipt.cameraKey != example.plan.receipt.cameraKey)
 
   private def corticalGeometry(hemisphere: Hemisphere): SurfaceGeometry =
-    val vertexCount = CorticalSurfaceAcceptance.LeftCorpus.vertices
-    val faceCount = CorticalSurfaceAcceptance.LeftCorpus.faces
-    val coordinates = Array.tabulate(vertexCount * 3): index =>
-      val vertex = index / 3
-      index % 3 match
-        case 0 =>
-          val hemisphereOffset = if hemisphere == Hemisphere.Left then -20.0 else 20.0
-          math.cos(vertex * 0.013) + hemisphereOffset
-        case 1 => math.sin(vertex * 0.017)
-        case _ => vertex.toDouble / vertexCount
-    val faces = Array.tabulate(faceCount * 3): index =>
-      val face = index / 3
-      index % 3 match
-        case 0 => face % (vertexCount - 2)
-        case 1 => face % (vertexCount - 2) + 1
-        case _ => face % (vertexCount - 2) + 2
+    val (unitVertices, faces) = icosphere(subdivisions = 5)
+    val hemisphereOffset = if hemisphere == Hemisphere.Left then -20.0 else 20.0
+    val coordinates = unitVertices.map: (x, y, z) =>
+      Vector(x + hemisphereOffset, y, (z + 1.0) / 2.0)
+    require(
+      coordinates.length == CorticalSurfaceAcceptance.LeftCorpus.vertices,
+      "generated cortical fixture must have fsaverage5 vertex cardinality"
+    )
+    require(
+      faces.length == CorticalSurfaceAcceptance.LeftCorpus.faces,
+      "generated cortical fixture must have fsaverage5 face cardinality"
+    )
     SurfaceGeometry(
-      TriangleMesh.fromArrays(coordinates, faces),
+      TriangleMesh.fromRows(coordinates, faces),
       hemisphere,
       SurfaceKind.Pial,
       DMat.eye(4)
     )
+
+  private def icosphere(
+    subdivisions: Int
+  ): (Vector[(Double, Double, Double)], Vector[(Int, Int, Int)]) =
+    require(subdivisions >= 0, "icosphere subdivisions must be non-negative")
+    val golden = (1.0 + math.sqrt(5.0)) / 2.0
+    var vertices = mutable.ArrayBuffer.from(Vector(
+      normalized(-1.0, golden, 0.0),
+      normalized(1.0, golden, 0.0),
+      normalized(-1.0, -golden, 0.0),
+      normalized(1.0, -golden, 0.0),
+      normalized(0.0, -1.0, golden),
+      normalized(0.0, 1.0, golden),
+      normalized(0.0, -1.0, -golden),
+      normalized(0.0, 1.0, -golden),
+      normalized(golden, 0.0, -1.0),
+      normalized(golden, 0.0, 1.0),
+      normalized(-golden, 0.0, -1.0),
+      normalized(-golden, 0.0, 1.0)
+    ))
+    var faces = Vector(
+      (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11),
+      (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+      (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9),
+      (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)
+    )
+
+    var level = 0
+    while level < subdivisions do
+      val refinedVertices = mutable.ArrayBuffer.from(vertices)
+      val midpointIndices = mutable.HashMap.empty[(Int, Int), Int]
+      def midpoint(first: Int, second: Int): Int =
+        val key = if first < second then (first, second) else (second, first)
+        midpointIndices.getOrElseUpdate(
+          key,
+          {
+            val a = vertices(first)
+            val b = vertices(second)
+            val point = normalized(
+              (a._1 + b._1) / 2.0,
+              (a._2 + b._2) / 2.0,
+              (a._3 + b._3) / 2.0
+            )
+            val index = refinedVertices.length
+            refinedVertices += point
+            index
+          }
+        )
+
+      val refinedFaces = Vector.newBuilder[(Int, Int, Int)]
+      faces.foreach: (a, b, c) =>
+        val ab = midpoint(a, b)
+        val bc = midpoint(b, c)
+        val ca = midpoint(c, a)
+        refinedFaces += ((a, ab, ca))
+        refinedFaces += ((b, bc, ab))
+        refinedFaces += ((c, ca, bc))
+        refinedFaces += ((ab, bc, ca))
+      vertices = refinedVertices
+      faces = refinedFaces.result()
+      level += 1
+
+    (vertices.toVector, faces)
+
+  private def normalized(
+    x: Double,
+    y: Double,
+    z: Double
+  ): (Double, Double, Double) =
+    val length = math.sqrt(x * x + y * y + z * z)
+    (x / length, y / length, z / length)

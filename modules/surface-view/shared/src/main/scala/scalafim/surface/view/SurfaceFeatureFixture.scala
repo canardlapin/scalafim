@@ -44,7 +44,13 @@ object SurfaceFeatureFixture:
 
   def plan: SurfaceRenderPlan =
     val projectionFixture = projectionCase
-    val display = geometry(0.0, SurfaceKind.Inflated)
+    val white = projectionFixture.morphism.plan.surfaces.white
+    val display = SurfaceGeometry(
+      white.mesh,
+      white.hemisphere,
+      SurfaceKind.Inflated,
+      white.surfaceToWorld
+    )
     val projection = SurfaceVolumeProjection.materialize(
       projectionFixture.morphism,
       projectionFixture.volume,

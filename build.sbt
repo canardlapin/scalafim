@@ -30,7 +30,7 @@ lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "af063d7fcf2d0d48aed5474c9c9a41376e18531f"
+lazy val locus4sRevision = "eec9a4b9527f7f6a62256dcf45a47e14bd2c7fb5"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
@@ -1124,6 +1124,51 @@ lazy val root =
 
 addCommandAlias("compileAll", ";locusDataJVM/compile;locusDataJS/compile;pipelineJVM/compile;pipelineJS/compile;responseJVM/compile;responseJS/compile;responseLawsJVM/compile;responseLawsJS/compile;latentJVM/compile;latentJS/compile;arJVM/compile;arJS/compile;hrfJVM/compile;hrfJS/compile;hrfLawsJVM/compile;hrfLawsJS/compile;designJVM/compile;designJS/compile;imageJVM/compile;imageJS/compile;imageViewJVM/compile;imageViewJS/compile;imageViewCanvasJS/compile;imageViewJava2dJVM/compile;imageViewJavafxJVM/compile;thresholdJVM/compile;thresholdJS/compile;motionJVM/compile;motionJS/compile;surfaceJVM/compile;surfaceJS/compile;surfaceViewJVM/compile;surfaceViewJS/compile;surfaceViewRasterJVM/compile;surfaceViewRasterJS/compile;surfaceViewJavafxJVM/compile;surfaceViewThreeJS/compile;surfaceViewConnectivityJVM/compile;surfaceViewConnectivityJS/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;spatialJVM/compile;spatialJS/compile;atlasJVM/compile;atlasJS/compile;archiveJVM/compile;archiveJS/compile;archiveLnaJVM/compile;archiveLnaJS/compile;archivedResponseInteropJVM/compile;archivedResponseInteropJS/compile;datasetJVM/compile;datasetJS/compile;modelJVM/compile;modelJS/compile;fitJVM/compile;fitJS/compile;firstLevelLawsJVM/compile;firstLevelLawsJS/compile;mvpaJVM/compile;mvpaJS/compile;mvpaFitJVM/compile;mvpaFitJS/compile;connectivityJVM/compile;connectivityJS/compile;mvpaDatasetJVM/compile;mvpaDatasetJS/compile;mvpaSpatialJVM/compile;mvpaSpatialJS/compile;groupJVM/compile;groupJS/compile;fmriWorkflowJVM/compile;fmriWorkflowJS/compile;archiveZarrJVM/compile;archiveZarrJS/compile;datasetZarrJVM/compile;datasetZarrJS/compile")
 addCommandAlias("testAll", ";locusDataJVM/test;locusDataJS/test;pipelineJVM/test;pipelineJS/test;responseJVM/test;responseJS/test;responseLawsJVM/test;responseLawsJS/test;latentJVM/test;latentJS/test;arJVM/test;arJS/test;hrfJVM/test;hrfJS/test;hrfLawsJVM/test;hrfLawsJS/test;designJVM/test;designJS/test;imageJVM/test;imageJS/test;imageViewJVM/test;imageViewJS/test;imageViewCanvasJS/test;imageViewJava2dJVM/test;imageViewJavafxJVM/test;thresholdJVM/test;thresholdJS/test;motionJVM/test;motionJS/test;surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;spatialJVM/test;spatialJS/test;atlasJVM/test;atlasJS/test;archiveJVM/test;archiveJS/test;archiveLnaJVM/test;archiveLnaJS/test;archivedResponseInteropJVM/test;archivedResponseInteropJS/test;datasetJVM/test;datasetJS/test;modelJVM/test;modelJS/test;fitJVM/test;fitJS/test;firstLevelLawsJVM/test;firstLevelLawsJS/test;mvpaJVM/test;mvpaJS/test;mvpaFitJVM/test;mvpaFitJS/test;connectivityJVM/test;connectivityJS/test;mvpaDatasetJVM/test;mvpaDatasetJS/test;mvpaSpatialJVM/test;mvpaSpatialJS/test;groupJVM/test;groupJS/test;fmriWorkflowJVM/test;fmriWorkflowJS/test;archiveZarrJVM/test;archiveZarrJS/test;datasetZarrJVM/test;datasetZarrJS/test")
+addCommandAlias(
+  // Source dependencies define their own testFullOptJS aliases. A
+  // repository-qualified name prevents one composite build from replacing
+  // ScalaFIM's release court at command-registration time.
+  "testFullOptScalafimJS",
+  ";set Global / scalaJSStage := FullOptStage;" +
+    "locusDataJS/test;" +
+    "pipelineJS/test;" +
+    "responseJS/test;" +
+    "responseLawsJS/test;" +
+    "latentJS/test;" +
+    "arJS/test;" +
+    "hrfJS/test;" +
+    "hrfLawsJS/test;" +
+    "designJS/test;" +
+    "imageJS/test;" +
+    "imageViewJS/test;" +
+    "imageViewCanvasJS/test;" +
+    "thresholdJS/test;" +
+    "motionJS/test;" +
+    "surfaceJS/test;" +
+    "surfaceViewJS/test;" +
+    "surfaceViewRasterJS/test;" +
+    "surfaceViewThreeJS/test;" +
+    "surfaceViewConnectivityJS/test;" +
+    "surfaceViewExamplesJS/test;" +
+    "spatialJS/test;" +
+    "atlasJS/test;" +
+    "archiveJS/test;" +
+    "archiveLnaJS/test;" +
+    "archivedResponseInteropJS/test;" +
+    "datasetJS/test;" +
+    "modelJS/test;" +
+    "fitJS/test;" +
+    "firstLevelLawsJS/test;" +
+    "mvpaJS/test;" +
+    "mvpaFitJS/test;" +
+    "connectivityJS/test;" +
+    "mvpaDatasetJS/test;" +
+    "mvpaSpatialJS/test;" +
+    "groupJS/test;" +
+    "fmriWorkflowJS/test;" +
+    "archiveZarrJS/test;" +
+    "datasetZarrJS/test"
+)
 addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamplesJVM/compile;surfaceViewExamplesJS/compile;atlasExamplesJVM/compile;workflowExamplesJVM/compile")
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")

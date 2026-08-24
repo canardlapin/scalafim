@@ -7,6 +7,12 @@ Status: historical. The audited in-repository graph substrate was subsequently
 extracted to standalone graph4s; numerical graph consumers now use its optional
 `graph4s-gale` module.
 
+Current surface state, 2026-08-24: mesh4s is now the sole retained triangle
+topology owner. `MeshTopology.primalGraphProjection` exposes mesh4s's named,
+typed graph4s correspondence; edge-graph weights are locus4s fields over the
+exact mesh edge owner. The specialized multi-target shortest-path kernel remains
+for the performance reasons recorded below.
+
 ## Outcome
 
 The reusable `graph` module is a sound semantic oracle for the surveyed
@@ -32,7 +38,7 @@ dependency edges are deliberately deferred to the migration beads.
 | Domain | Differential fixture | Independent comparison |
 | --- | --- | --- |
 | Atlas | `modules/atlas/.../GraphDifferentialSuite.scala` | `RegionGraph.adjacency` contact counts versus a full 26-neighborhood oracle for Connect6/18/26; region edges then lower to canonical simple topology. |
-| Surface | `modules/surface/.../GraphDifferentialSuite.scala` | Thresholded mesh components versus induced graph components; default/custom geodesics versus graph Dijkstra; unreachable pairs versus `NoPath`. |
+| Surface | `modules/surface/.../GraphDifferentialSuite.scala` | Thresholded mesh components versus induced graph components; default/custom edge-graph distances versus an independent Dijkstra oracle; unreachable pairs versus `NoPath`. |
 | Spatial | `modules/spatial/.../GraphDifferentialSuite.scala` | Route costs, reconstructed morphism ids, policy filtering, geometric inverses, parallel-edge collapse, and identity-path behavior. |
 | Pipeline | `modules/pipeline/.../GraphDifferentialSuite.scala` | Stable pipeline stages versus `Dag` layers; repeated dependency collapse; generic cycle witness versus the domain remaining-node diagnostic. |
 

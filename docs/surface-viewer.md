@@ -134,10 +134,11 @@ world translation to preserve exact raster pixels and picks.
 
 ## Layers, thresholds, and time
 
-Every layer is tied to one exact surface domain. Domain equality includes
-hemisphere, vertex count/order, face count, ordered topology, and the coordinate
-transform where the operation requires it. Invalid cross-surface reuse fails at
-construction rather than being repaired by a renderer.
+Every layer is tied to one exact mesh4s vertex owner and a cortical hemisphere.
+Equal vertex counts or connectivity fingerprints do not authorize attachment.
+Operations that depend on placement also check the coordinate realization or
+`surfaceToWorld` transform. Invalid cross-surface reuse fails at construction
+rather than being repaired by a renderer.
 
 Layer presentation contains visibility, opacity, blend mode, and threshold.
 Layer order is an explicit state vector and therefore deterministic. A
@@ -159,8 +160,10 @@ readouts survive the transition. Starting a morph toward its source reverses
 the active transition without a coordinate discontinuity; completing fraction
 one settles to the target state.
 
-The compiler interpolates directly into the packed float position buffer,
-recomputes normals, and reuses the asset's cached index buffer. Topology and
+The compiler interpolates directly into the cached renderer-local float
+position buffer, recomputes normals, and reuses the asset's cached index buffer.
+These buffers are derived from the mesh4s owner and are not another mesh format.
+Topology and
 coordinate revisions have separate resource keys. JavaFX mutates the retained
 `TriangleMesh` point and normal buffers; Three.js mutates retained `position`
 and `normal` attributes and refreshes its bounding sphere. Neither path uploads
@@ -173,7 +176,8 @@ folded anatomy before a transition starts.
 
 `SurfaceGeodesicLens` is an immutable topology-domain value: a pinned
 `VertexId`, validated opaque inner/outer radii, and one precomputed geodesic
-weight per vertex. Construction runs the shared surface Dijkstra once. Every
+weight per vertex. Here “geodesic” is the lens's legacy name: construction runs
+one edge-graph shortest-path search, not a continuous surface geodesic. Every
 animation frame then performs only allocation-controlled interpolation in the
 compiler's existing position-buffer loop. The falloff is one inside the inner
 radius, zero at and beyond the outer radius, and quintic smootherstep between
@@ -217,9 +221,9 @@ See
 ## Curvature, parcels, clipping, and publication
 
 Curvature is an ordinary scalar underlay with a pinned neutral-gray colorizer.
-It may color corresponding inflated geometry only when the cortical hemisphere,
-vertex order, and ordered triangle topology agree. Parcel and ROI boundaries
-reuse the surface module's topology edge table.
+It may color corresponding inflated geometry only when the cortical hemisphere
+and exact mesh4s vertex owner agree. Parcel and ROI boundaries traverse that
+owner's edge domain.
 
 The reference raster implements exact world-plane clipping. JavaFX and Three.js
 currently reject world-plane plans and advertise that limitation in

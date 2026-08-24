@@ -65,7 +65,7 @@ object SurfaceViewerExample:
           Vector(0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 1.0)
         ),
-        Vector((0, 1, 2), (0, 1, 3))
+        Vector((0, 1, 2), (0, 3, 1))
       ),
       Hemisphere.Left,
       SurfaceKind.Midthickness,

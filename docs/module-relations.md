@@ -35,6 +35,9 @@ standalone graph4s
 +-- surface           also depends on image, locus-data
 +-- atlas             also depends on image, surface, locus-data
 
+standalone mesh4s
++-- surface           also depends on image, locus-data, standalone graph4s
+
 standalone Gale
 +-- ar
 +-- design           also depends on hrf
@@ -150,7 +153,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `image-view-javafx` | JavaFX Canvas rendering host plus device-relative event translation through the toolkit-free graphics context boundary. | `image-view`, Intaglio JavaFX | Image geometry, JavaFX application/thread lifecycle ownership, or alternate renderer logic. |
 | `threshold` | Spatial inference over statistic maps: locus-backed active/full support, scored candidates, octrees, set scoring, and maxT-style correction. | `image`, `locus-data`; Gale on each platform | Model fitting, group-model definitions, or a second generic region abstraction. |
 | `motion` | Rigid poses/traces, FD/DVARS, motion QC, one-pass rigid application over image data. | `image`, standalone Gale; standalone bids4s on JVM | Heavy registration engines, NIfTI IO, reports, or GLM nuisance modeling. |
-| `surface` | Meshes, exact topology/order locus domains, vertex fields, region-backed surface ROIs, quotient-backed labels, geodesic searchlights, graph4s interop, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone graph4s, `image`, `locus-data` | Atlas metadata, MVPA plans, or whole spatial graph compilation. |
+| `surface` | Neuroimaging facades over one mesh4s topology/realization owner, exact locus4s vertex and edge fields, region-backed ROIs, quotient-backed labels, edge-graph searchlights, surface transforms and sampling, cross-platform GIFTI ingestion, and JVM FreeSurfer readers. | standalone mesh4s and graph4s, `image`, `locus-data` | A second topology/adjacency owner, generic mesh geometry, portable mesh serialization, renderer buffers, atlas metadata, or MVPA plans. |
 | `surface-view` | Renderer-neutral surface assets/layers, immutable display state and reducer, anatomical cameras/layouts, render-plan compilation, resource identity, temporal/projection/network primitives, scene documents, backend capabilities, and admission contracts. | `surface`, standalone Intaglio core | JavaFX/Three.js objects, DOM/window lifecycle, connectivity estimation, or platform IO. |
 | `surface-view-raster` | Deterministic JVM/Scala.js CPU raster, depth/culling/clipping, compositing, exact picks, and semantic reference receipts. | `surface-view`, Intaglio core | Interactive toolkit lifecycle, platform-specific acceleration, or scientific-data policy. |
 | `surface-view-javafx` | JVM JavaFX Scene3D plan interpretation, retained mesh/color-atlas resources, reducer-backed controller, picks, snapshots, and native receipts. | `surface-view`, Intaglio core; external OpenJFX | Shared scientific semantics, application/stage ownership, Scala.js code, or silent fallback for unsupported plans. |
@@ -252,10 +255,34 @@ locus-data -> image -> surface
      +-----------------> spatial <----- surface
 ```
 
-`image` owns executable low-level volume geometry. `surface` owns mesh geometry.
+`image` owns executable low-level volume geometry. mesh4s owns generic triangle
+geometry, while `surface` owns its neuroimaging metadata and operations.
 `atlas` names standard spaces and attaches metadata to locus parcels.
 `spatial` compiles reusable source-to-target operators with provenance and
 adjoints.
+
+### Triangulated Surfaces
+
+```text
+standalone locus4s <------- standalone mesh4s
+                              |
+                              v
+image + locus-data --------> surface --------> surface-view/backends
+```
+
+mesh4s owns lawful oriented triangle topology, vertex/edge/face/halfedge
+domains, incidence, audits, coordinate realizations, intrinsic metric
+primitives, and the named graph4s projections. Its cell domains are locus4s
+finite-domain owners. ScalaFIM's `surface` module attaches neuroimaging meaning:
+hemisphere, surface kind, GIFTI/FreeSurfer ingress, `surfaceToWorld`, RAS+,
+volume/surface sampling, atlas links, picking contracts, and numerical policy.
+
+Every coordinate kind in a `SurfaceSet` shares one exact mesh4s topology.
+Fields and weights attach to `topology.vertices` or `topology.edges`; matching
+counts or fingerprints are not ownership proof. Surface-view compiles a cached
+packed rendition for renderers, but neither that buffer nor the legacy
+16-character scene/atlas digest becomes a topology authority. Ingestion owns
+format conversion, so ScalaFIM does not add a portable mesh byte protocol.
 
 ### Surface Display
 
@@ -335,7 +362,7 @@ descriptors can materialize executable dense morphisms.
 
 ## Placement Rules
 
-- Put generic topology, traversal, graph laws, indexed numerical operators,
+- Put generic graph topology, traversal, graph laws, indexed numerical operators,
   spectra, embeddings, and graph similarities in standalone graph4s. Its
   optional `graph4s-gale` module owns the numerical boundary. Keep scientific
   connectivity semantics in `connectivity`.
@@ -358,7 +385,10 @@ descriptors can materialize executable dense morphisms.
 - Put nonlinear registration state, objectives, deformation geometry, and
   acceptance policy in standalone reframe4s. ScalaFIM retains no registration
   module or adapter dependency.
-- Put mesh and vertex-domain algorithms in `surface`.
+- Put generic triangle topology, incidence, topology audits, realizations,
+  intrinsic metric primitives, and graph correspondence in standalone mesh4s.
+  Put neuroimaging surface ingestion, frames/transforms, sampling, typed
+  compatibility facades, and scientific policy in `surface`.
 - Put surface display state, layers, anatomical cameras, render-plan compilation,
   projection/network visualization primitives, scene documents, and backend
   admission contracts in `surface-view`. Put deterministic pixels in

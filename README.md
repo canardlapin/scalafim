@@ -27,7 +27,7 @@ cross-compiled sbt build.
 - `image-view-javafx`: thin JVM JavaFX Canvas host behind the existing toolkit-free drawing contract.
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
-- `surface`: surface-mesh data structures, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
+- `surface`: mesh4s-backed triangle surfaces, exact locus4s vertex/edge ownership, region-backed ROIs, quotient-backed labels, edge-graph searchlights, parcel operations, cross-platform GIFTI ingestion, and JVM FreeSurfer IO.
 - `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
 - `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
 - `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
@@ -85,6 +85,14 @@ numerical graph operators, spectra, embeddings, and similarities. Pipeline,
 surface, atlas, and connectivity retain only ScalaFIM domain metadata and
 adapters.
 
+Lawful oriented triangle topology and basic surface geometry live in
+standalone [`mesh4s`](https://github.com/canardlapin/mesh4s). One mesh4s
+`TriangleTopology` owns the vertex, edge, face, and halfedge domains for each
+ScalaFIM surface family. ScalaFIM keeps neuroimaging ingestion, hemisphere and
+surface-kind metadata, RAS+ transforms, sampling, atlases, picking, and display
+policy. Renderer buffers are cached derived renditions; they are not a second
+mesh model or a portable serialization format.
+
 Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
@@ -97,14 +105,15 @@ spectral algorithms now live in standalone
 revision and keeps only neuroimaging-specific numerical policy and adapters; it
 does not retain local `linalg` or Breeze-adapter modules.
 
-An ordinary build loads both libraries from their pinned GitHub revisions. To
-test coordinated changes in sibling checkouts, select those checkouts
+An ordinary build loads these source dependencies from pinned GitHub revisions.
+To test coordinated changes in sibling checkouts, select those checkouts
 explicitly:
 
 ```sh
 sbt \
   -Dscalafim.graph4s.build=../graph4s \
   -Dscalafim.locus4s.build=../locus4s \
+  -Dscalafim.mesh4s.build=../mesh4s \
   compileAll
 ```
 
@@ -132,6 +141,7 @@ serialization, performance gates, and the cross-platform example.
 ```sh
 sbt compileAll
 sbt testAll
+sbt testFullOptScalafimJS
 sbt locusDataJVM/test
 sbt locusDataJS/test
 sbt pipelineJVM/test

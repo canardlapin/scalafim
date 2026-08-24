@@ -1,9 +1,9 @@
 # scalafim-surface
 
-`scalafim-surface` is the renderer-free surface-mesh layer for ScalaFIM. It
-ports the useful data-structure and algorithmic ideas from `neurosurf` into a
-Scala 3 shape: typed ids, immutable values, explicit topology views, pure
-algorithms, cross-platform GIFTI ingestion, and JVM-only FreeSurfer readers.
+`scalafim-surface` is ScalaFIM's renderer-free neuroimaging layer over mesh4s
+triangle topology and geometry. It provides typed compatibility APIs, exact
+locus4s-owned vertex and edge data, pure surface algorithms, cross-platform
+GIFTI ingestion, and JVM-only FreeSurfer readers.
 
 ```scala
 import scalafim.surface.*
@@ -20,19 +20,25 @@ import scalafim.surface.io.*
 The shared module cross-compiles to JVM and Scala.js and contains:
 
 - `VertexId` and `FaceId` opaque ids over zero-based mesh indices.
-- `TriangleMesh`, `Point3D` (an alias for `scalafim.image.SpatialPoint`),
-  `Triangle`, and `SurfaceGeometry`.
+- `TriangleMesh`, a compatibility facade over one mesh4s `TriangleTopology`
+  and one `SurfaceRealization`, plus `Point3D` (an alias for
+  `scalafim.image.SpatialPoint`), `Triangle`, and `SurfaceGeometry`.
 - `Hemisphere`, `SurfaceKind`, `SurfaceSet`, and `HemispherePair`.
-- `MeshTopology` derived from triangle faces: edges, neighbors, edge lengths,
-  face areas, normals, Euler characteristic, and a non-retained `toGraph`
-  interop value with distance-typed edges.
-- Vertex-indexed containers: `SurfaceField`, `SurfaceMatrix`, `SurfaceRoi`,
-  and `LabeledSurface`.
+- `MeshTopology`, a compatibility view that delegates incidence, boundaries,
+  components, and Euler characteristic to mesh4s. Its named
+  `primalGraphProjection` retains exact mesh-edge correspondence.
+- Vertex-indexed facades (`SurfaceField`, `SurfaceMatrix`, `SurfaceRoi`, and
+  `LabeledSurface`) backed by locus4s fields, selections, regions, and sections
+  over the exact `topology.vertices` owner.
+- `SurfaceEdgeWeights`, a finite non-negative field over the exact
+  `topology.edges` owner. The former lexicographic sequence order is available
+  only through an endpoint-checked compatibility permutation.
 - `VolToSurfMorphism` and `SurfToSurfMorphism` wrappers for reusable
   volume-to-surface sampling plans and explicit surface-to-surface vertex maps.
-- Pure algorithms for connected components, thresholded clusters, geodesic and
-  spherical neighborhoods, parcel representatives, parcel distances, and parcel
-  boundary contacts.
+- Pure algorithms for connected components, thresholded clusters, edge-graph
+  shortest-path and spherical neighborhoods, parcel representatives, parcel
+  distances, and parcel boundary contacts. Edge-graph distance is not a
+  continuous surface geodesic.
 
 The platform modules add matching GIFTI APIs:
 
@@ -52,18 +58,38 @@ The JVM module additionally adds:
 - `FreeSurferSurfaceReader` for FreeSurfer/SUMA ASCII and binary triangle
   geometry.
 
+## Ownership boundary
+
+- mesh4s owns `TriangleTopology`, all cell domains and incidence, topology
+  audits, connectivity fingerprints, `SurfaceRealization`, intrinsic metric
+  primitives, and the optional graph4s projection.
+- locus4s owns fields, regions, selections, sections, and typed maps over those
+  exact mesh cell domains.
+- ScalaFIM owns GIFTI and FreeSurfer ingestion, hemisphere and `SurfaceKind`,
+  `surfaceToWorld`, RAS+ behavior, surface/volume sampling, atlases, scene
+  compatibility, picking contracts, and named numerical policy.
+- Surface ingestion or compilation may cache a renderer-local packed coordinate
+  and index rendition. It remains a derived view of the typed surface. The
+  module does not define a portable mesh byte format.
+
 ## Conventions
 
 Faces and vertices are zero-based internally. FreeSurfer ASCII, FreeSurfer
 binary, and GIFTI triangle indices are preserved as zero-based indices when
 loaded into `TriangleMesh`.
 
-`TriangleMesh` stores only geometry. `MeshTopology` is a derived view over the
-mesh, so graph-like queries do not become a second source of truth.
-`MeshTopology.toGraph` materializes an immutable graph on demand; callers may
-reuse that value, but `MeshTopology` does not retain a parallel full topology.
+`TriangleMesh` owns one mesh4s topology and one coordinate realization.
+`MeshTopology` delegates to that owner; it does not store another edge table or
+neighbor matrix. `MeshTopology.primalGraphProjection` provides the explicitly
+named topology-forgetting graph4s view with total vertex and edge
+correspondence. The older `toGraph` result is a transient compatibility value.
 Thresholded components share one surface-local filtered traversal rather than
 allocating induced graphs per field.
+
+Vertex and edge counts or matching connectivity fingerprints do not authorize
+data reuse. Fields, labels, mappings, masks, and custom weights must carry the
+same runtime mesh owner. Structural comparison belongs at ingestion, where a
+coordinate realization can be checked and rebound to the canonical topology.
 
 `SurfaceGeometry.surfaceToWorld` stores a 4x4 affine. Readers use identity when
 the source format has no usable transform.
@@ -101,7 +127,7 @@ val field =
 val roi = SurfaceRoi.fromField(field, Vector(VertexId(1), VertexId(2)), "roi")
 ```
 
-Query geodesic neighborhoods:
+Query shortest-path neighborhoods along mesh edges:
 
 ```scala
 val hits =
@@ -109,9 +135,30 @@ val hits =
     topology,
     radius = 2.0,
     sources = Vector(VertexId(0)),
-    metric = DistanceMetric.Geodesic
+    metric = DistanceMetric.EdgeGraphShortestPath
   )
 ```
+
+Custom weights use the mesh4s edge-domain order:
+
+```scala
+val weightedHits =
+  SurfaceEdgeWeights
+    .fromTopologyOrder(topology, Vector(1.0, 1.0, 1.0))
+    .map: weights =>
+      SurfaceGeodesics.neighborsWithin(
+        topology,
+        radius = 1.0,
+        sources = Vector(VertexId(0)),
+        edgeWeights = Some(weights)
+      )
+// Either[SurfaceEdgeWeightError, Vector[NeighborHit]]
+```
+
+For old data stored in ScalaFIM's lexicographic endpoint order, call
+`SurfaceEdgeWeights.fromLegacyLexicographic`. It matches values by endpoints
+before creating the typed field; it never treats the old positions as mesh4s
+edge ordinals.
 
 Work with parcels:
 
@@ -178,11 +225,11 @@ This is not an S4 or plotting port. The target mapping from `neurosurf` is:
 
 - `SurfaceGeometry` style mesh metadata -> `TriangleMesh` plus
   `SurfaceGeometry`.
-- neighbor/graph helpers -> `MeshTopology`.
+- neighbor/graph helpers -> the `MeshTopology` compatibility view over mesh4s.
 - vertex data, ROI, and label containers -> `SurfaceField`, `SurfaceMatrix`,
   `SurfaceRoi`, and `LabeledSurface`.
-- cluster, neighborhood, geodesic, and parcel operations -> pure functions over
-  the typed model.
+- cluster, neighborhood, edge-graph distance, and parcel operations -> pure
+  functions over the typed model.
 - GIFTI geometry/label readers -> JVM and Scala.js platform IO; FreeSurfer
   geometry readers -> JVM-only IO.
 
@@ -191,8 +238,8 @@ Non-goals for this module:
 - RGL, htmlwidgets, screenshots, camera state, and interactive viewers.
 - Color-map rendering classes.
 - Mutable graph-library objects as public data structures.
-- Volume-to-surface projection until it can reuse `scalafim-image` spaces and
-  affine transforms cleanly.
+- A portable mesh serialization, arbitrary cell complexes, continuous surface
+  geodesics, FEM, DEC, or curvature systems.
 
 ## Verification
 
@@ -201,6 +248,7 @@ Run the surface module directly:
 ```sh
 sbt surfaceJVM/test
 sbt surfaceJS/test
+sbt testFullOptScalafimJS
 ```
 
 The deterministic fixture corpus is documented in

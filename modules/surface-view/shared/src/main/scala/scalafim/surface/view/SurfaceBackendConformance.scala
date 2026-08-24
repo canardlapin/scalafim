@@ -97,15 +97,28 @@ final case class SurfaceBackendObservation(
   events: Vector[SurfaceResourceEvent],
   timings: Vector[SurfacePhaseTiming]
 ):
+  // Keep these scans indexed. In backend-specific Scala.js FullOpt links an
+  // event subtype can be unreachable, so a subtype-only collection predicate
+  // may constant-fold away the iterator advance. This form is allocation-free.
   def geometryUploads: Int =
-    events.count:
-      case _: SurfaceResourceEvent.MeshUploaded => true
-      case _ => false
+    var count = 0
+    var index = 0
+    while index < events.length do
+      events(index) match
+        case _: SurfaceResourceEvent.MeshUploaded => count += 1
+        case _ => ()
+      index += 1
+    count
 
   def layerUploads: Int =
-    events.count:
-      case _: SurfaceResourceEvent.LayerUploaded => true
-      case _ => false
+    var count = 0
+    var index = 0
+    while index < events.length do
+      events(index) match
+        case _: SurfaceResourceEvent.LayerUploaded => count += 1
+        case _ => ()
+      index += 1
+    count
 
   def uploadedBytes: Long =
     events.iterator.map:

@@ -43,14 +43,17 @@ class CorticalSurfaceLensAcceptanceSuite extends munit.FunSuite:
       pial,
       SurfaceGeometry(inflated.mesh, Hemisphere.Right, SurfaceKind.Inflated, DMat.eye(4))
     ).isLeft)
-    val rewound = inflated.mesh.faceIndices.toArray
-    val swap = rewound(1)
-    rewound(1) = rewound(2)
-    rewound(2) = swap
+    val edgeFlipped = inflated.mesh.faceIndices
+    edgeFlipped(0) = 0
+    edgeFlipped(1) = 56
+    edgeFlipped(2) = 57
+    edgeFlipped(3) = 0
+    edgeFlipped(4) = 57
+    edgeFlipped(5) = 1
     assert(CorticalSurfaceLensAcceptance.build(
       pial,
       SurfaceGeometry(
-        TriangleMesh.fromArrays(inflated.mesh.coordinates.toArray, rewound),
+        TriangleMesh.fromArrays(inflated.mesh.coordinates, edgeFlipped),
         Hemisphere.Left,
         SurfaceKind.Inflated,
         DMat.eye(4)
