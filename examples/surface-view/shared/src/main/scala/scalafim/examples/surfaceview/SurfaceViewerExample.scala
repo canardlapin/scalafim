@@ -52,8 +52,9 @@ object SurfaceViewerExample:
   val Parcels: SurfaceLayerId = SurfaceLayerId.unsafe("parcels")
 
   /** Portable decoding of the checked `tetra_lh_midthickness.surf.gii`
-    * fixture. The JVM example verifies these values against the production
-    * GIFTI reader; Scala.js starts from the same decoded scientific payload.
+    * fixture. The JVM example verifies these values against its production
+    * reader; the Scala.js surface suite separately exercises the same typed
+    * GIFTI model and payload semantics.
     */
   def portableGiftiGeometry: SurfaceGeometry =
     SurfaceGeometry(

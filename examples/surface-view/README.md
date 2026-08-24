@@ -67,6 +67,9 @@ orthographic plan on JVM and Scala.js. The native probes compare pixels with
 the CPU oracle, exercise a stable pick, require flip sentinels, and prove that
 a camera-only update uploads neither geometry nor layer data.
 
-The browser uses SurfViewJS only to decode external GIFTI bytes and to supply
-Three.js. Primitive arrays cross immediately into ScalaFIM; scene, layer,
-threshold, layout, camera, raster-oracle, and acceptance logic remain ScalaFIM.
+The browser decodes external GIFTI bytes with ScalaFIM's Scala.js reader. The
+local SurfViewJS checkout supplies only the Three.js renderer runtime and the
+external checksum-pinned fixture corpus. The browser host chooses a local
+typed-array rendition; ScalaFIM does not introduce a second portable mesh byte
+format. That rendition carries the source surface-to-world affine beside the
+vertices and faces so compiled positions and picks retain RAS+ semantics.

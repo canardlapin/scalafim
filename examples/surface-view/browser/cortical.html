@@ -42,16 +42,17 @@
     <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
     <script type="module">
       import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
-      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
 
       const corpus = {
         left: {
           url: "../../../../../jscode/surfviewjs/tests/data/fsaverage5-lh-pial.gii",
-          sha256: "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951"
+          sha256: "b425b4914362af4aaf43bb5d022afd39a0c5f6ec4601e353631cdd737884c951",
+          hemisphere: "left"
         },
         right: {
           url: "../../../../../jscode/surfviewjs/tests/data/fsaverage5-rh-pial.gii",
-          sha256: "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9"
+          sha256: "6142dfcec7533aaeb962b1de829e21948bb35c85645a08f2c4b7ea503d655ee9",
+          hemisphere: "right"
         }
       };
       const status = document.querySelector("#status");
@@ -65,7 +66,12 @@
         const bytes = await response.arrayBuffer();
         const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (digest !== entry.sha256) throw new Error(`SHA-256 mismatch for ${entry.url}: ${digest}`);
-        return { digest, geometry: parseGIfTISurface(new TextDecoder().decode(bytes)) };
+        const geometry = await exports.readScalafimGiftiSurface(
+          new Uint8Array(bytes),
+          entry.hemisphere,
+          "pial"
+        );
+        return { digest, geometry };
       }
 
       try {
@@ -77,8 +83,10 @@
           document.querySelector("#surface"),
           left.geometry.vertices,
           left.geometry.faces,
+          left.geometry.surfaceToWorld,
           right.geometry.vertices,
-          right.geometry.faces
+          right.geometry.faces,
+          right.geometry.surfaceToWorld
         );
         result.leftSha256 = left.digest;
         result.rightSha256 = right.digest;

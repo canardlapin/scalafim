@@ -58,7 +58,6 @@
     <script src="../js/target/scala-3.7.4/scalafim-examples-surface-view-fastopt/main.js"></script>
     <script type="module">
       import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
-      import { parseGIfTISurface } from "../../../../../jscode/surfviewjs/dist/surfview.es.js";
 
       const source = {
         url: "../../../../../jscode/surfviewjs/tests/data/fsaverage5-lh-pial.gii",
@@ -76,12 +75,13 @@
         const bytes = await response.arrayBuffer();
         const digest = hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
         if (digest !== source.sha256) throw new Error(`SHA-256 mismatch: ${digest}`);
-        const geometry = parseGIfTISurface(new TextDecoder().decode(bytes));
+        const geometry = await exports.readScalafimGiftiSurface(new Uint8Array(bytes), "left", "pial");
         const result = exports.mountScalafimThresholdParityPlate(
           THREE,
           [...document.querySelectorAll("canvas")],
           geometry.vertices,
-          geometry.faces
+          geometry.faces,
+          geometry.surfaceToWorld
         );
         result.sourceSha256 = digest;
         result.fetchParseAndRenderMillis = performance.now() - started;
