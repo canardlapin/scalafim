@@ -199,7 +199,7 @@ object SurfaceGiftiAtlasLoader:
     labelValues(surface).filter(_ != background).toSet
 
   private def labelValues(surface: LabeledSurface): Vector[Int] =
-    Vector.tabulate(surface.labels.length)(surface.labels(_))
+    surface.labels.toVector
 
   private def rgb(label: GiftiLabel): Option[Rgb] =
     for

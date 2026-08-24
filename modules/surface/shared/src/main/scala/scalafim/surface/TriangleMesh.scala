@@ -2,6 +2,7 @@ package scalafim.surface
 
 import mesh4s.OrientationError as MeshOrientationError
 import mesh4s.TopologyAudit
+import mesh4s.TopologyFingerprint
 import mesh4s.Triangle as MeshTriangle
 import mesh4s.TriangleTable
 import mesh4s.TriangleTopology as MeshTriangleTopology
@@ -60,6 +61,10 @@ final class TriangleMesh private (
   val topologyIdentity: MeshTopologyIdentity =
     MeshTopologyIdentity.from(vertexCount, packedFaceIndices)
 
+  /** Canonical mesh4s structural evidence. It is never runtime-owner proof. */
+  val connectivityFingerprint: TopologyFingerprint =
+    topology.connectivityFingerprint
+
   /** Surface-local coordinates before `SurfaceGeometry.surfaceToWorld` maps
     * them into RAS+. A defensive copy preserves the mesh/realization invariant.
     */
@@ -79,7 +84,7 @@ final class TriangleMesh private (
   def hasSameTopology(other: TriangleMesh): Boolean =
     vertexCount == other.vertexCount &&
       faceCount == other.faceCount &&
-      topologyIdentity == other.topologyIdentity &&
+      connectivityFingerprint == other.connectivityFingerprint &&
       topology.sameConnectivity(other.topology)
 
   /** Rebind this coordinate realization onto an already-validated canonical

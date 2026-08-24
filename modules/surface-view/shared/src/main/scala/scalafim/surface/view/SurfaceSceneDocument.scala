@@ -104,6 +104,13 @@ enum SurfaceDocumentRevision:
     this match
       case V1 => 1
 
+/** V1 scene documents retain ScalaFIM's legacy 16-character topology digest.
+  * Runtime attachment still requires the exact mesh4s owner. A future wire
+  * fingerprint must use a new document revision and identity scheme.
+  */
+enum SurfaceSceneTopologyIdentityScheme derives CanEqual:
+  case LegacyMeshTopologyIdentityV1
+
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
 
@@ -142,6 +149,8 @@ final case class SurfaceSceneDocument private (
 
 object SurfaceSceneDocument:
   val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V1
+  val CurrentTopologyIdentityScheme: SurfaceSceneTopologyIdentityScheme =
+    SurfaceSceneTopologyIdentityScheme.LegacyMeshTopologyIdentityV1
 
   def capture(
     model: SurfaceViewerModel,

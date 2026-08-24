@@ -9,20 +9,29 @@ class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
 
   private def geometry(
     vertices: Seq[Seq[Double]],
-    faces: Seq[(Int, Int, Int)] = Seq((0, 1, 2))
+    faces: Seq[(Int, Int, Int)] = Seq((0, 1, 2)),
+    kind: SurfaceKind = SurfaceKind.Inflated
   ): SurfaceGeometry =
-    SurfaceGeometry(TriangleMesh.fromRows(vertices, faces), Hemisphere.Left, SurfaceKind.Inflated)
+    SurfaceGeometry(TriangleMesh.fromRows(vertices, faces), Hemisphere.Left, kind)
 
-  private val folded = geometry(Seq(
+  private val independentFolded = geometry(Seq(
     Seq(-1.0, -1.0, 0.0),
     Seq(1.0, -1.0, 0.2),
     Seq(0.0, 1.0, -0.2)
-  ))
-  private val inflated = geometry(Seq(
+  ), kind = SurfaceKind.Pial)
+  private val independentInflated = geometry(Seq(
     Seq(-2.0, -1.0, 0.0),
     Seq(2.0, -1.0, 0.0),
     Seq(0.0, 2.0, 0.0)
   ))
+  private val family =
+    SurfaceSet.of(
+      SurfaceKind.Pial,
+      independentFolded,
+      SurfaceKind.Inflated -> independentInflated
+    )
+  private val folded = family.default
+  private val inflated = family.get(SurfaceKind.Inflated).get
 
   test("curvature is an ordinary scalar field transferable only across exact topology"):
     val curvature = SurfaceField.full(folded, Seq(-1.0, 0.0, 1.0), "sulcal curvature")
@@ -40,6 +49,16 @@ class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
     val rewound = geometry(inflated.mesh.vertices.map(point => Seq(point.x, point.y, point.z)), Seq((0, 2, 1)))
     assertEquals(
       SurfaceLayer.curvatureUnderlay(curvatureId, surfaceId, curvature, rewound).left.toOption,
+      Some(SurfaceViewError.IncompatibleLayerDomain(curvatureId, surfaceId))
+    )
+    val duplicateOwner =
+      geometry(
+        inflated.mesh.vertices.map(point => Seq(point.x, point.y, point.z)),
+        inflated.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+      )
+    assert(folded.mesh.hasSameTopology(duplicateOwner.mesh))
+    assertEquals(
+      SurfaceLayer.curvatureUnderlay(curvatureId, surfaceId, curvature, duplicateOwner).left.toOption,
       Some(SurfaceViewError.IncompatibleLayerDomain(curvatureId, surfaceId))
     )
     val sparse = SurfaceField.fromIndexed(folded, Seq(VertexId(0), VertexId(2)), Seq(-1.0, 1.0))

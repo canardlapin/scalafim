@@ -5,6 +5,17 @@ import scalafim.surface.fixtures.SurfaceTestFixtures
 
 class SurfaceLocusDomainSuite extends munit.FunSuite:
 
+  private def duplicateOwner(geometry: SurfaceGeometry): SurfaceGeometry =
+    SurfaceGeometry(
+      TriangleMesh.fromRows(
+        geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+        geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+      ),
+      geometry.hemisphere,
+      geometry.kind,
+      geometry.surfaceToWorld
+    )
+
   private def domain(
       geometry: SurfaceGeometry = SurfaceTestFixtures.tetraGeometry
   ): SomeSurfaceLocusDomain =
@@ -23,6 +34,49 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
 
     assert(tetra.fullField(equalSizedDifferentTopology).isLeft)
     assert(tetra.optionalField(equalSizedDifferentTopology).isLeft)
+    assert(tetra.vertices.sameRuntimeOwnerAs(SurfaceTestFixtures.tetraGeometry.mesh.topology.vertices))
+    assert(!tetra.vertices.isPersistable)
+
+  test("equal semantic keys and connectivity fingerprints never authorize a second owner"):
+    val canonicalGeometry = SurfaceTestFixtures.tetraGeometry
+    val foreignGeometry = duplicateOwner(canonicalGeometry)
+    val canonical = domain(canonicalGeometry).value
+    val foreign = domain(foreignGeometry).value
+    val foreignField = SurfaceField.full(foreignGeometry, Vector(1, 2, 3, 4))
+    val foreignSparse =
+      SurfaceField.fromIndexed(foreignGeometry, Vector(VertexId(0), VertexId(2)), Vector(1, 3))
+    val foreignRoi =
+      SurfaceRoi.fromField(foreignField, Vector(VertexId(1), VertexId(3)))
+    val foreignLabels =
+      LabeledSurface.fromIndexed(
+        foreignGeometry,
+        Vector(VertexId(0), VertexId(1), VertexId(2), VertexId(3)),
+        Vector(1, 1, 2, 2),
+        Vector(LabelInfo(1, "A"), LabelInfo(2, "B"))
+      )
+
+    assertEquals(
+      canonicalGeometry.mesh.connectivityFingerprint,
+      foreignGeometry.mesh.connectivityFingerprint
+    )
+    assertEquals(canonical.identityKey, foreign.identityKey)
+    assert(!canonical.vertices.sameRuntimeOwnerAs(foreign.vertices))
+    canonical.fullField(foreignField) match
+      case Left(SurfaceLocusError.VertexOwnerMismatch(expected, actual)) =>
+        assertEquals(expected, actual)
+      case other =>
+        fail(s"expected exact owner rejection, found $other")
+    assert(canonical.optionalField(foreignSparse).isLeft)
+    assert(canonical.roi(foreignRoi).isLeft)
+    assert(canonical.parcellation(foreignLabels).isLeft)
+
+    val alternateSemantic =
+      SurfaceLocusDomain
+        .semantic(SpaceKey.unsafe("alternate-semantic-key"), canonicalGeometry)
+        .toOption
+        .get
+        .value
+    assert(canonical.vertices.sameRuntimeOwnerAs(alternateSemantic.vertices))
 
   test("full and sparse surface fields preserve their distinct support semantics"):
     val d = domain().value
@@ -64,6 +118,7 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
       )
     val view = d.roi(legacy).toOption.get
 
+    assert(view.region.space.sameRuntimeOwnerAs(SurfaceTestFixtures.tetraGeometry.mesh.topology.vertices))
     assertEquals(view.region.ordinalsInDomainOrder.toVector, Vector(1, 3))
     assertEquals(view.annotation, "motor")
     assertEquals(view.values(d.finiteSpace.indexOption(1).get).toOption, Some(Some(2)))
@@ -81,6 +136,7 @@ class SurfaceLocusDomainSuite extends munit.FunSuite:
     assertEquals(atlas.labelIds(firstParcel), 1)
     assertEquals(atlas.metadata(secondParcel).map(_.name), Some("B"))
     assertEquals(atlas.displayOrder.ordinals.toVector, Vector(0, 1))
+    assert(atlas.parcellation.ambient.sameRuntimeOwnerAs(SurfaceTestFixtures.sheetGeometry.mesh.topology.vertices))
 
   test("a disconnected label remains one valid extensional quotient fiber"):
     val geometry =

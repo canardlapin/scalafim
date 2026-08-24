@@ -99,7 +99,14 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
       morphism(SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest),
       volume
     )
-    val inflated = geometry(0.0, SurfaceKind.Inflated, translation)
+    val independentInflated = geometry(0.0, SurfaceKind.Inflated, translation)
+    val family =
+      SurfaceSet.of(
+        projection.values.geometry.kind,
+        projection.values.geometry,
+        SurfaceKind.Inflated -> independentInflated
+      )
+    val inflated = family.get(SurfaceKind.Inflated).get
     val layer = SurfaceVolumeProjection.scalarLayer(
       projection,
       SurfaceLayerId.unsafe("volume-overlay"),

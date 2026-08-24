@@ -132,18 +132,26 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   test("surface-to-surface morphism applies explicit target-to-source vertex maps"):
     val geometry = surfaceAtZ(0.0, SurfaceKind.White)
+    val targetGeometry = surfaceAtZ(1.0, SurfaceKind.Pial)
     val field = SurfaceField.full(geometry, Vector(1.0, 2.0, 3.0), "source")
     val mapping =
       SurfaceVertexMapping.nearestIndex(
         sourceGeometry = geometry,
-        targetGeometry = geometry,
+        targetGeometry = targetGeometry,
         sourceForTarget = Vector(VertexId(2), VertexId(1), VertexId(0))
       )
     val morphism =
       SurfToSurfMorphism(SpatialDomainId("source-surface"), SpatialDomainId("target-surface"), mapping)
     val out = morphism.resample(field)
+    val typed = mapping.locus
+    val firstTarget = typed.targetVertices.indexAtValidatedOrdinal(0)
 
     assertEquals(morphism.kind, SurfaceMorphismKind.SurfaceToSurface)
+    assert(typed.sourceVertices.sameRuntimeOwnerAs(geometry.mesh.topology.vertices))
+    assert(typed.targetVertices.sameRuntimeOwnerAs(targetGeometry.mesh.topology.vertices))
+    assert(!typed.sourceVertices.sameRuntimeOwnerAs(typed.targetVertices))
+    assertEquals(typed.sourceForTarget(firstTarget).ordinal, 2)
+    assert(out.locus.vertices.sameRuntimeOwnerAs(targetGeometry.mesh.topology.vertices))
     assertEqualsDouble(out.valueAt(VertexId(0)).get, 3.0, 1e-12)
     assertEqualsDouble(out.valueAt(VertexId(1)).get, 2.0, 1e-12)
     assertEqualsDouble(out.valueAt(VertexId(2)).get, 1.0, 1e-12)

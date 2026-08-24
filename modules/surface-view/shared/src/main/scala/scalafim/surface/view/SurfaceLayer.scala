@@ -27,7 +27,8 @@ sealed trait SurfaceLayer:
   final def supportsThreshold: Boolean = kind == SurfaceLayerKind.Scalar
 
   final def isCompatibleWith(surface: SurfaceGeometry): Boolean =
-    geometry.hemisphere == surface.hemisphere && geometry.mesh.hasSameTopology(surface.mesh)
+    geometry.hemisphere == surface.hemisphere &&
+      (geometry.mesh.topology eq surface.mesh.topology)
 
 object SurfaceLayer:
   /** Conventional sulcal/gyral underlay encoding. Curvature remains an
@@ -172,7 +173,9 @@ object SurfaceLayer:
     opacity: DisplayOpacity = DisplayOpacity.Opaque,
     blendMode: DisplayBlendMode = DisplayBlendMode.Normal
   ): Either[SurfaceViewError, SurfaceLayer] =
-    if !curvature.geometry.hasSameMeshDomain(displayGeometry) then
+    if curvature.geometry.hemisphere != displayGeometry.hemisphere ||
+        !(curvature.locus.vertices.sameRuntimeOwnerAs(displayGeometry.mesh.topology.vertices))
+    then
       Left(SurfaceViewError.IncompatibleLayerDomain(id, surfaceId))
     else if curvature.size != displayGeometry.vertexCount then
       Left(SurfaceViewError.InvalidDataLength(displayGeometry.vertexCount, curvature.size))

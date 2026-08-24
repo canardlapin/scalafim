@@ -129,3 +129,20 @@ class DomainLocusSuite extends munit.FunSuite:
       SamplingGeometry.surface(sampled, Some(mask)).left.toOption,
       Some(SpatialError.MaskSpaceMismatch("surface"))
     )
+
+    val duplicateOwner =
+      SurfaceGeometry(
+        TriangleMesh.fromRows(vertices, Vector((0, 1, 2), (1, 3, 2))),
+        Hemisphere.Left,
+        SurfaceKind.Midthickness
+      )
+    val duplicateMask =
+      SurfaceRoi.fromField(
+        SurfaceField.full(duplicateOwner, Vector(true, true, true, true)),
+        Vector(VertexId(0), VertexId(1), VertexId(2), VertexId(3))
+      )
+    assert(sampled.mesh.hasSameTopology(duplicateOwner.mesh))
+    assertEquals(
+      SamplingGeometry.surface(sampled, Some(duplicateMask)).left.toOption,
+      Some(SpatialError.MaskSpaceMismatch("surface"))
+    )

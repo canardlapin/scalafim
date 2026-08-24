@@ -50,8 +50,19 @@ class SurfaceParcelsSuite extends munit.FunSuite:
         )
       )
 
-    interceptMessage[IllegalArgumentException]("requirement failed: labeled surface and topology must share ordered triangle topology"):
+    interceptMessage[IllegalArgumentException]("requirement failed: labeled surface and topology must share the exact mesh vertex owner"):
       SurfaceParcels.units(sheetLabels, incompatible)
+
+    val duplicateOwner =
+      MeshTopology.from:
+        TriangleMesh.fromRows(
+          sheetLabels.geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+          sheetLabels.geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+        )
+    assert(sheetLabels.geometry.mesh.hasSameTopology(duplicateOwner.mesh))
+    assert(!(sheetLabels.geometry.mesh.topology eq duplicateOwner.mesh.topology))
+    interceptMessage[IllegalArgumentException]("requirement failed: labeled surface and topology must share the exact mesh vertex owner"):
+      SurfaceParcels.units(sheetLabels, duplicateOwner)
 
   test("fragmented parcel policies error, keep largest, split, or merge"):
     val topology = SurfaceTestFixtures.disconnectedTopology

@@ -42,7 +42,7 @@ object SurfaceSearchlight:
   ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
     if !radius.isFinite || radius < 0.0 then
       Left(SurfaceSearchlightError.InvalidRadius(radius))
-    else if !domain.geometry.mesh.hasSameTopology(topology.mesh) then
+    else if !(domain.geometry.mesh.topology eq topology.mesh.topology) then
       Left(SurfaceSearchlightError.TopologyMismatch(domain.meshDomain.display))
     else if !domain.finiteSpace.sameRuntimeOwnerAs(centers.space) then
       Left:

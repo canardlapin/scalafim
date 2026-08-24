@@ -122,13 +122,17 @@ object SurfaceParcels:
     ignoredLabels: Set[Int] = Set.empty,
     includeExterior: Boolean = false
   ): Vector[ParcelBoundaryEdge] =
-    require(labeled.geometry.vertexCount == topology.mesh.vertexCount, "labeled surface and topology vertex counts must match")
-    require(labeled.geometry.mesh.hasSameTopology(topology.mesh), "labeled surface and topology must share ordered triangle topology")
+    require(
+      labeled.geometry.mesh.topology eq topology.mesh.topology,
+      "labeled surface and topology must share the exact mesh vertex owner"
+    )
     val assignments = Array.fill[Option[ParcelLabel]](topology.mesh.vertexCount)(None)
+    val labels = labeled.unsafeLabels
+    val indices = labeled.unsafeIndices
     var index = 0
     while index < labeled.size do
-      val label = labeled.labels(index)
-      if !ignoredLabels(label) then assignments(labeled.indices(index)) = Some(ParcelLabel(label))
+      val label = labels(index)
+      if !ignoredLabels(label) then assignments(indices(index)) = Some(ParcelLabel(label))
       index += 1
     topology.edges.flatMap: edge =>
       val a = assignments(edge.a.index)
@@ -142,15 +146,19 @@ object SurfaceParcels:
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set.empty
   ): Vector[ParcelUnit] =
-    require(labeled.geometry.vertexCount == topology.mesh.vertexCount, "labeled surface and topology vertex counts must match")
-    require(labeled.geometry.mesh.hasSameTopology(topology.mesh), "labeled surface and topology must share ordered triangle topology")
+    require(
+      labeled.geometry.mesh.topology eq topology.mesh.topology,
+      "labeled surface and topology must share the exact mesh vertex owner"
+    )
 
     val byLabel = scala.collection.mutable.Map.empty[Int, scala.collection.mutable.ArrayBuffer[VertexId]]
+    val labels = labeled.unsafeLabels
+    val indices = labeled.unsafeIndices
     var i = 0
     while i < labeled.size do
-      val label = labeled.labels(i)
+      val label = labels(i)
       if !ignoredLabels(label) then
-        byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += VertexId.unsafe(labeled.indices(i))
+        byLabel.getOrElseUpdate(label, scala.collection.mutable.ArrayBuffer.empty) += VertexId.unsafe(indices(i))
       i += 1
 
     byLabel.toVector.sortBy(_._1).flatMap { case (label, buffer) =>

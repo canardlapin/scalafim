@@ -339,14 +339,7 @@ object VolumeToSurfaceOperatorCompiler:
       case None =>
         true
       case Some(roi) =>
-        var i = 0
-        var allowed = false
-        while i < roi.indices.length do
-          if roi.indices(i) == vertex.index then
-            allowed = roi.data(i)
-            i = roi.indices.length
-          else i += 1
-        allowed
+        roi.valueAt(vertex).contains(true)
 
   private inline def inBounds(dims: SpatialDims, x: Int, y: Int, z: Int): Boolean =
     x >= 0 && x < dims.x &&

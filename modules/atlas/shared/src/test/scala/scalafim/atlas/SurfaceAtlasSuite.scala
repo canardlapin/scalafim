@@ -88,6 +88,16 @@ class SurfaceAtlasSuite extends munit.FunSuite:
     assertEquals(a.regionAt(SurfaceHemisphere.Right, VertexId(3)).map(_.label), Some("R_B"))
     assertEquals(a.region("L_A", Some(Hemisphere.Left)).map(_.id), Vector(RegionId(1)))
     assertEquals(a.provenance.labels.encoding, LabelEncoding.SurfaceIntegerLabels)
+    assertEquals(a.quotient.identityScheme, SurfaceAtlasIdentityScheme.LegacyTopologyDigestV1)
+    val quotient = a.quotient
+    val leftLink = quotient.leftVertices
+    val rightLink = quotient.rightVertices
+    val leftZero = leftLink.vertices.indexAtValidatedOrdinal(0)
+    val rightZero = rightLink.vertices.indexAtValidatedOrdinal(0)
+    assert(leftLink.vertices.sameRuntimeOwnerAs(a.left.locus.vertices))
+    assert(rightLink.vertices.sameRuntimeOwnerAs(a.right.locus.vertices))
+    assertEquals(leftLink.intoAmbient(leftZero).ordinal, 0)
+    assertEquals(rightLink.intoAmbient(rightZero).ordinal, a.left.geometry.vertexCount)
 
   test("SurfaceAtlas validates geometry hemispheres"):
     val rightLabels =

@@ -63,7 +63,7 @@ enum SamplingGeometry:
       require(GridCompatibility.spatial(space, mask.space).isRight, "volume mask geometry mismatch")
     case SamplingGeometry.Surface(geometry, Some(mask)) =>
       require(
-        geometry.mesh.hasSameTopology(mask.geometry.mesh),
+        geometry.mesh.topology eq mask.geometry.mesh.topology,
         "surface mask geometry mismatch"
       )
     case SamplingGeometry.Hybrid(parts) =>
@@ -105,7 +105,7 @@ object SamplingGeometry:
     mask: Option[SurfaceRoi[Boolean]] = None
   ): Either[SpatialError, SamplingGeometry] =
     mask match
-      case Some(m) if !geometry.mesh.hasSameTopology(m.geometry.mesh) =>
+      case Some(m) if !(geometry.mesh.topology eq m.geometry.mesh.topology) =>
         Left(SpatialError.MaskSpaceMismatch("surface"))
       case _ =>
         Right(SamplingGeometry.Surface(geometry, mask))

@@ -93,6 +93,23 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
         .isLeft
     )
 
+  test("equal connectivity does not excuse a foreign topology owner"):
+    val geometry = SurfaceTestFixtures.tetraGeometry
+    val duplicate =
+      MeshTopology.from:
+        TriangleMesh.fromRows(
+          geometry.mesh.vertices.map(point => Vector(point.x, point.y, point.z)),
+          geometry.mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+        )
+
+    assert(geometry.mesh.hasSameTopology(duplicate.mesh))
+    assertEquals(geometry.mesh.connectivityFingerprint, duplicate.mesh.connectivityFingerprint)
+    assert(
+      SurfaceSearchlight
+        .metricBalls(domain, duplicate, 1.0)
+        .isLeft
+    )
+
   test("local extraction is ordinary indexed-field restriction"):
     val searchlight =
       SurfaceSearchlight.metricBalls(domain, topology, 1.0).toOption.get

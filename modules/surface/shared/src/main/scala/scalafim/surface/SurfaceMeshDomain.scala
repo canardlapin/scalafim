@@ -2,10 +2,11 @@ package scalafim.surface
 
 import scala.util.hashing.MurmurHash3
 
-/** Stable compact identity for an exact ordered triangle topology. It is a
-  * cache key, not the construction-time proof of compatibility: public mesh
-  * compatibility also compares every face index so a hash collision cannot
-  * admit an invalid surface pairing.
+/** Legacy 16-character compatibility digest for scene and atlas keys.
+  *
+  * It is not a topology or vertex-owner authority. New runtime code uses the
+  * exact mesh4s owner; structural ingestion uses mesh4s's versioned SHA-256
+  * connectivity fingerprint followed by an ordered-incidence comparison.
   */
 opaque type MeshTopologyIdentity = Long
 

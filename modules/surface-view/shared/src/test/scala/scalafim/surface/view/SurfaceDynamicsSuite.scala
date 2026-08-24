@@ -237,14 +237,15 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
       Rgba32.unsafe(255, 0, 0)
     ).toOption.get
     assertEquals(annotation.label, "peak activation")
+    val annotationGeometry = geometry()
     val layer = SurfaceAnnotations.layer(
       SurfaceLayerId.unsafe("annotations"),
       surfaceId,
-      geometry(),
+      annotationGeometry,
       Vector(annotation)
     ).toOption.get
     val model = SurfaceViewerModel.make(
-      Vector(SurfaceAsset.make(surfaceId, geometry()).toOption.get),
+      Vector(SurfaceAsset.make(surfaceId, annotationGeometry).toOption.get),
       Vector(layer)
     ).toOption.get
     val plan = SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get

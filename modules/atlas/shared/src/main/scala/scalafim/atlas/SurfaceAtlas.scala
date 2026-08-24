@@ -43,9 +43,10 @@ final case class SurfaceAtlasPayload(labels: HemispherePair[LabeledSurface]):
 
   private def presentIds(surface: LabeledSurface): Set[Int] =
     val out = scala.collection.mutable.Set.empty[Int]
+    val labels = surface.labels
     var i = 0
-    while i < surface.labels.length do
-      val id = surface.labels(i)
+    while i < labels.length do
+      val id = labels(i)
       if id != 0 then out += id
       i += 1
     out.toSet

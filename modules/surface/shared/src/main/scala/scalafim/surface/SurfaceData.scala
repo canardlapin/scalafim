@@ -25,33 +25,59 @@ private[surface] object SurfaceData:
     }
     out
 
-final case class SurfaceField[A](
-  geometry: SurfaceGeometry,
-  indices: Array[Int],
-  data: Array[A],
-  label: String = ""
+/** Compatibility facade whose mutable ingress arrays are copied into one
+  * exact topology-owned field. It is intentionally not a case class: a
+  * generated `copy` would reopen the unchecked-array construction path.
+  */
+final class SurfaceField[A] private (
+  val geometry: SurfaceGeometry,
+  private val ownedIndices: Array[Int],
+  private val ownedData: Array[A],
+  val label: String
 ):
-  require(data.length == indices.length, "field data length must match vertex indices")
-  SurfaceData.validateIndices(indices, geometry.vertexCount)
+  require(ownedData.length == ownedIndices.length, "field data length must match vertex indices")
+  SurfaceData.validateIndices(ownedIndices, geometry.vertexCount)
 
-  lazy private val indexLookup: Map[Int, Int] =
-    val pairs =
-      Vector.tabulate(indices.length)(i => indices(i) -> i)
-    pairs.toMap
+  /** Exact locus4s field and support over `geometry.mesh.topology.vertices`. */
+  val locus: SurfaceVertexField[A] =
+    SurfaceVertexData.field(geometry, ownedIndices, ownedData)
+
+  /** Dynamic-boundary compatibility copy in selection order. */
+  def indices: Array[Int] =
+    ownedIndices.clone()
+
+  /** Dynamic-boundary compatibility copy in selection order. */
+  def data: Array[A] =
+    ownedData.clone()
+
+  private[surface] def unsafeIndices: Array[Int] =
+    ownedIndices
+
+  private[surface] def unsafeData: Array[A] =
+    ownedData
 
   def size: Int =
-    indices.length
+    ownedIndices.length
 
   def vertexIds: Vector[VertexId] =
-    Vector.tabulate(indices.length)(i => VertexId.unsafe(indices(i)))
+    Vector.tabulate(ownedIndices.length)(i => VertexId.unsafe(ownedIndices(i)))
 
   def valueAt(vertex: VertexId): Option[A] =
-    indexLookup.get(vertex.index).map(data(_))
+    val row = locus.rowAtOrdinal(vertex.index)
+    if row < 0 then None else Some(ownedData(row))
 
   def domainEither: Either[SurfaceError, SurfaceDomain] =
     geometry.domainEither
 
 object SurfaceField:
+
+  def apply[A](
+    geometry: SurfaceGeometry,
+    indices: Array[Int],
+    data: Array[A],
+    label: String = ""
+  ): SurfaceField[A] =
+    new SurfaceField(geometry, indices.clone(), data.clone(), label)
 
   def fromIndexed[A: ClassTag](
     geometry: SurfaceGeometry,
@@ -59,11 +85,11 @@ object SurfaceField:
     data: Seq[A],
     label: String = ""
   ): SurfaceField[A] =
-    SurfaceField(
-      geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      data = PrimitiveBuffers.fromArray(data.toArray),
-      label = label
+    new SurfaceField(
+      geometry,
+      PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      PrimitiveBuffers.fromArray(data.toArray),
+      label
     )
 
   def fromIndexedEither[A: ClassTag](
@@ -92,30 +118,56 @@ object SurfaceField:
     try scala.util.Right(full(geometry, data, label))
     catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidField(SurfaceError.reason(error)))
 
-final case class SurfaceMatrix[A](
-  geometry: SurfaceGeometry,
-  indices: Array[Int],
-  data: Array[A],
-  columns: Int,
-  label: String = ""
+/** Compatibility matrix facade with copied storage and typed row ownership. */
+final class SurfaceMatrix[A] private (
+  val geometry: SurfaceGeometry,
+  private val ownedIndices: Array[Int],
+  private val ownedData: Array[A],
+  val columns: Int,
+  val label: String
 ):
   require(columns > 0, "surface matrix must have at least one column")
-  require(data.length == indices.length * columns, "matrix data length must equal vertices * columns")
-  SurfaceData.validateIndices(indices, geometry.vertexCount)
+  require(ownedData.length == ownedIndices.length * columns, "matrix data length must equal vertices * columns")
+  SurfaceData.validateIndices(ownedIndices, geometry.vertexCount)
+
+  /** Typed row selection into the exact mesh vertex owner. */
+  val locus: SurfaceVertexMatrix[A] =
+    SurfaceVertexData.matrix(geometry, ownedIndices, ownedData, columns)
+
+  def indices: Array[Int] =
+    ownedIndices.clone()
+
+  def data: Array[A] =
+    ownedData.clone()
+
+  private[surface] def unsafeIndices: Array[Int] =
+    ownedIndices
+
+  private[surface] def unsafeData: Array[A] =
+    ownedData
 
   def rows: Int =
-    indices.length
+    ownedIndices.length
 
   def apply(row: Int, column: Int): A =
     require(row >= 0 && row < rows, "surface matrix row out of range")
     require(column >= 0 && column < columns, "surface matrix column out of range")
-    data(row * columns + column)
+    ownedData(row * columns + column)
 
   def rowVertex(row: Int): VertexId =
     require(row >= 0 && row < rows, "surface matrix row out of range")
-    VertexId.unsafe(indices(row))
+    VertexId.unsafe(ownedIndices(row))
 
 object SurfaceMatrix:
+
+  def apply[A](
+    geometry: SurfaceGeometry,
+    indices: Array[Int],
+    data: Array[A],
+    columns: Int,
+    label: String = ""
+  ): SurfaceMatrix[A] =
+    new SurfaceMatrix(geometry, indices.clone(), data.clone(), columns, label)
 
   def fromRows[A: ClassTag](
     geometry: SurfaceGeometry,
@@ -128,30 +180,59 @@ object SurfaceMatrix:
     val columns = rows.head.length
     require(columns > 0, "surface matrix must have at least one column")
     require(rows.forall(_.length == columns), "surface matrix rows must have equal length")
-    SurfaceMatrix(
-      geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      data = PrimitiveBuffers.fromArray(rows.iterator.flatten.toArray),
-      columns = columns,
-      label = label
+    new SurfaceMatrix(
+      geometry,
+      PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      PrimitiveBuffers.fromArray(rows.iterator.flatten.toArray),
+      columns,
+      label
     )
 
-final case class SurfaceRoi[A](
-  geometry: SurfaceGeometry,
-  indices: Array[Int],
-  data: Array[A],
-  label: String = ""
+/** Compatibility ROI facade over an exact locus4s selection and region. */
+final class SurfaceRoi[A] private (
+  val geometry: SurfaceGeometry,
+  private val ownedIndices: Array[Int],
+  private val ownedData: Array[A],
+  val label: String
 ):
-  require(data.length == indices.length, "ROI data length must match vertex indices")
-  SurfaceData.validateIndices(indices, geometry.vertexCount)
+  require(ownedData.length == ownedIndices.length, "ROI data length must match vertex indices")
+  SurfaceData.validateIndices(ownedIndices, geometry.vertexCount)
+
+  /** Typed region, selection, and section over the exact mesh vertex owner. */
+  val locus: SurfaceVertexField[A] =
+    SurfaceVertexData.field(geometry, ownedIndices, ownedData)
+
+  def indices: Array[Int] =
+    ownedIndices.clone()
+
+  def data: Array[A] =
+    ownedData.clone()
+
+  private[surface] def unsafeIndices: Array[Int] =
+    ownedIndices
+
+  private[surface] def unsafeData: Array[A] =
+    ownedData
 
   def size: Int =
-    indices.length
+    ownedIndices.length
 
   def vertexIds: Vector[VertexId] =
-    Vector.tabulate(indices.length)(i => VertexId.unsafe(indices(i)))
+    Vector.tabulate(ownedIndices.length)(i => VertexId.unsafe(ownedIndices(i)))
+
+  def valueAt(vertex: VertexId): Option[A] =
+    val row = locus.rowAtOrdinal(vertex.index)
+    if row < 0 then None else Some(ownedData(row))
 
 object SurfaceRoi:
+
+  def apply[A](
+    geometry: SurfaceGeometry,
+    indices: Array[Int],
+    data: Array[A],
+    label: String = ""
+  ): SurfaceRoi[A] =
+    new SurfaceRoi(geometry, indices.clone(), data.clone(), label)
 
   def fromField[A: ClassTag](
     field: SurfaceField[A],
@@ -163,42 +244,56 @@ object SurfaceRoi:
         throw new IllegalArgumentException(s"ROI vertex ${vertex.index} is not present in field")
       }
     }
-    SurfaceRoi(
-      geometry = field.geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(vertices)),
-      data = PrimitiveBuffers.fromArray(values.toArray),
-      label = label
+    new SurfaceRoi(
+      field.geometry,
+      PrimitiveBuffers.fromArray(SurfaceData.vertexArray(vertices)),
+      PrimitiveBuffers.fromArray(values.toArray),
+      label
     )
 
 final case class LabelInfo(id: Int, name: String, color: Option[String] = None):
   require(name.nonEmpty, "label name must be non-empty")
 
-final case class LabeledSurface(
-  geometry: SurfaceGeometry,
-  indices: Array[Int],
-  labels: Array[Int],
-  table: Vector[LabelInfo],
-  label: String = ""
+/** Compatibility label facade whose support belongs to one exact topology. */
+final class LabeledSurface private (
+  val geometry: SurfaceGeometry,
+  private val ownedIndices: Array[Int],
+  private val ownedLabels: Array[Int],
+  val table: Vector[LabelInfo],
+  val label: String
 ):
-  require(labels.length == indices.length, "label data length must match vertex indices")
+  require(ownedLabels.length == ownedIndices.length, "label data length must match vertex indices")
   require(table.map(_.id).distinct.length == table.length, "label table ids must be unique")
-  SurfaceData.validateIndices(indices, geometry.vertexCount)
+  SurfaceData.validateIndices(ownedIndices, geometry.vertexCount)
+
+  /** Typed label field and support over the exact mesh vertex owner. */
+  val locus: SurfaceVertexField[Int] =
+    SurfaceVertexData.field(geometry, ownedIndices, ownedLabels)
+
+  def indices: Array[Int] =
+    ownedIndices.clone()
+
+  def labels: Array[Int] =
+    ownedLabels.clone()
+
+  private[surface] def unsafeIndices: Array[Int] =
+    ownedIndices
+
+  private[surface] def unsafeLabels: Array[Int] =
+    ownedLabels
 
   lazy private val labelLookup: Map[Int, LabelInfo] =
     table.map(info => info.id -> info).toMap
 
   def size: Int =
-    indices.length
+    ownedIndices.length
 
   def info(id: Int): Option[LabelInfo] =
     labelLookup.get(id)
 
   def labelAt(vertex: VertexId): Option[Int] =
-    var i = 0
-    while i < indices.length do
-      if indices(i) == vertex.index then return Some(labels(i))
-      i += 1
-    None
+    val row = locus.rowAtOrdinal(vertex.index)
+    if row < 0 then None else Some(ownedLabels(row))
 
   def parcelLabelAt(vertex: VertexId): Option[ParcelLabel] =
     labelAt(vertex).map(ParcelLabel(_))
@@ -208,6 +303,15 @@ final case class LabeledSurface(
 
 object LabeledSurface:
 
+  def apply(
+    geometry: SurfaceGeometry,
+    indices: Array[Int],
+    labels: Array[Int],
+    table: Vector[LabelInfo],
+    label: String = ""
+  ): LabeledSurface =
+    new LabeledSurface(geometry, indices.clone(), labels.clone(), table, label)
+
   def fromIndexed(
     geometry: SurfaceGeometry,
     indices: Seq[VertexId],
@@ -215,12 +319,12 @@ object LabeledSurface:
     table: Seq[LabelInfo],
     label: String = ""
   ): LabeledSurface =
-    LabeledSurface(
-      geometry = geometry,
-      indices = PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
-      labels = PrimitiveBuffers.fromArray(labels.toArray),
-      table = table.toVector,
-      label = label
+    new LabeledSurface(
+      geometry,
+      PrimitiveBuffers.fromArray(SurfaceData.vertexArray(indices)),
+      PrimitiveBuffers.fromArray(labels.toArray),
+      table.toVector,
+      label
     )
 
   def fromIndexedEither(
@@ -252,6 +356,9 @@ final case class SurfaceSet private (
 
   val topologyIdentity: MeshTopologyIdentity =
     surfaces(defaultKind).mesh.topologyIdentity
+
+  val connectivityFingerprint =
+    surfaces(defaultKind).mesh.connectivityFingerprint
 
   require(surfaces.values.forall(_.hemisphere == hemisphere), "all surface geometries must share a hemisphere")
   require(surfaces.values.forall(_.vertexCount == vertexCount), "all surface geometries must share a vertex count")

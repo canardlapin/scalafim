@@ -1,10 +1,12 @@
 package scalafim.surface
 
+import locus4s.data.Field
 import scalafim.locus.*
 
 enum SurfaceLocusError:
   case InvalidMeshDomain(error: SurfaceError)
   case TopologyMismatch(expected: String, actual: String)
+  case VertexOwnerMismatch(expectedFingerprint: String, actualFingerprint: String)
   case NotFullField(expectedVertices: Int, actualVertices: Int)
   case WrongSpace(error: SpaceMismatch)
 
@@ -13,6 +15,9 @@ enum SurfaceLocusError:
       case InvalidMeshDomain(error) => error.message
       case TopologyMismatch(expected, actual) =>
         s"surface topology mismatch: expected $expected, found $actual"
+      case VertexOwnerMismatch(expected, actual) =>
+        s"surface vertex owner mismatch: expected connectivity $expected, found $actual; " +
+          "equal fingerprints do not authorize cross-owner indexing; canonicalize at ingestion"
       case NotFullField(expected, actual) =>
         s"full surface field requires $expected vertices, found $actual"
       case WrongSpace(error) => error.message
@@ -30,50 +35,78 @@ final case class SurfaceRoiView[S, A](
 final class SurfaceLocusDomain[S] private[surface] (
     val geometry: SurfaceGeometry,
     val meshDomain: SurfaceMeshDomain,
-    val finiteSpace: FiniteSpace[S],
-    val identityBasis: SurfaceIdentityBasis
+    val finiteSpace: FiniteDomain[S],
+    val identityBasis: SurfaceIdentityBasis,
+    val identityKey: SpaceKey
 ):
+  require(
+    finiteSpace.sameRuntimeOwnerAs(geometry.mesh.topology.vertices),
+    "surface locus domain must use topology.vertices as its exact owner"
+  )
+
+  /** Preferred spelling; `finiteSpace` remains as a compatibility alias. */
+  def vertices: FiniteDomain[S] =
+    finiteSpace
+
   def optionalField[A](
       field: SurfaceField[A]
-  ): Either[SurfaceLocusError, IndexedField[S, Option[A]]] =
-    checkGeometry(field.geometry).map: _ =>
-      val values = field.vertexIds.zipWithIndex.map((vertex, row) => vertex.index -> field.data(row)).toMap
-      IndexedField.tabulate(finiteSpace)(point => values.get(point.ordinal))
+  ): Either[SurfaceLocusError, Field[S, Option[A]]] =
+    checkGeometry(field.geometry).flatMap: _ =>
+      val source = field.locus
+      if !finiteSpace.sameRuntimeOwnerAs(source.vertices) then
+        Left(SurfaceLocusError.WrongSpace(mismatch(finiteSpace, source.vertices)))
+      else
+        val alignment =
+          source.vertices
+            .align(finiteSpace)
+            .fold(
+              _ => throw new IllegalStateException("validated surface owners did not align"),
+              identity
+            )
+        Right(source.optionalValues.rebind(alignment))
 
   def fullField[A](
       field: SurfaceField[A]
-  ): Either[SurfaceLocusError, IndexedField[S, A]] =
+  ): Either[SurfaceLocusError, Field[S, A]] =
     checkGeometry(field.geometry).flatMap: _ =>
-      if field.size != finiteSpace.size then
-        Left(SurfaceLocusError.NotFullField(finiteSpace.size, field.size))
-      else
-        val values = Array.ofDim[Any](finiteSpace.size)
-        var row = 0
-        while row < field.indices.length do
-          values(field.indices(row)) = field.data(row)
-          row += 1
-        Right:
-          IndexedField.tabulate(finiteSpace)(point => values(point.ordinal).asInstanceOf[A])
+      val source = field.locus
+      source.fullValues match
+        case None =>
+          Left(SurfaceLocusError.NotFullField(finiteSpace.size, field.size))
+        case Some(values) =>
+          if !finiteSpace.sameRuntimeOwnerAs(source.vertices) then
+            Left(SurfaceLocusError.WrongSpace(mismatch(finiteSpace, source.vertices)))
+          else
+            val alignment =
+              source.vertices
+                .align(finiteSpace)
+                .fold(
+                  _ => throw new IllegalStateException("validated surface owners did not align"),
+                  identity
+                )
+            Right(values.rebind(alignment))
 
   def roi[A](
       surfaceRoi: SurfaceRoi[A]
   ): Either[SurfaceLocusError, SurfaceRoiView[S, A]] =
-    checkGeometry(surfaceRoi.geometry).map: _ =>
-      val region =
-        Region.fromOrdinals(
-          finiteSpace,
-          Vector.tabulate(surfaceRoi.indices.length)(surfaceRoi.indices.apply)
-        ).toOption.get
-      val valuesByVertex =
-        Vector
-          .tabulate(surfaceRoi.indices.length): row =>
-            surfaceRoi.indices(row) -> surfaceRoi.data(row)
-          .toMap
-      val optional =
-        IndexedField.tabulate(finiteSpace)(point => valuesByVertex.get(point.ordinal))
-      // Total: `region` shares this field's `S`, so there is no mismatch case.
-      val section = optional.restrict(region)
-      SurfaceRoiView(region, section, surfaceRoi.label)
+    checkGeometry(surfaceRoi.geometry).flatMap: _ =>
+      val source = surfaceRoi.locus
+      if !finiteSpace.sameRuntimeOwnerAs(source.vertices) then
+        Left(SurfaceLocusError.WrongSpace(mismatch(finiteSpace, source.vertices)))
+      else
+        val alignment =
+          source.vertices
+            .align(finiteSpace)
+            .fold(
+              _ => throw new IllegalStateException("validated surface owners did not align"),
+              identity
+            )
+        Right:
+          SurfaceRoiView(
+            source.support.rebind(alignment),
+            source.section.rebind(alignment),
+            surfaceRoi.label
+          )
 
   def parcellation(
       labeled: LabeledSurface,
@@ -85,10 +118,16 @@ final class SurfaceLocusDomain[S] private[surface] (
       actual: SurfaceGeometry
   ): Either[SurfaceLocusError, Unit] =
     SurfaceMeshDomain.from(actual).left.map(SurfaceLocusError.InvalidMeshDomain.apply).flatMap: actualDomain =>
-      if meshDomain == actualDomain && geometry.mesh.hasSameTopology(actual.mesh) then
+      if geometry.hemisphere != actual.hemisphere then
+        Left(SurfaceLocusError.TopologyMismatch(meshDomain.display, actualDomain.display))
+      else if geometry.mesh.topology eq actual.mesh.topology then
         Right(())
       else
-        Left(SurfaceLocusError.TopologyMismatch(meshDomain.display, actualDomain.display))
+        Left:
+          SurfaceLocusError.VertexOwnerMismatch(
+            geometry.mesh.connectivityFingerprint.value,
+            actual.mesh.connectivityFingerprint.value
+          )
 
 object SurfaceLocusDomain:
   def semantic(
@@ -147,16 +186,16 @@ object SomeSurfaceLocusDomain:
       meshDomain: SurfaceMeshDomain,
       basis: SurfaceIdentityBasis
   ): SomeSurfaceLocusDomain =
-    val resolution =
-      DomainFactory.unsafeRestore(key, geometry.vertexCount)
+    val topology = geometry.mesh.topology
     new SomeSurfaceLocusDomain:
-      type S = resolution.S
+      type S = topology.Vertex
       val value: SurfaceLocusDomain[S] =
         new SurfaceLocusDomain(
           geometry,
           meshDomain,
-          resolution.space,
-          basis
+          topology.vertices,
+          basis,
+          key
         )
 
 trait SurfaceParcellation[S]:
@@ -173,27 +212,33 @@ object SurfaceParcellation:
       ignoredLabels: Set[Int]
   ): Either[SurfaceLocusError, SurfaceParcellation[S]] =
     domain.checkGeometry(labeled.geometry).map: _ =>
+      val source = labeled.locus
+      val alignment =
+        source.vertices
+          .align(domain.finiteSpace)
+          .fold(
+            _ => throw new IllegalStateException("validated label owners did not align"),
+            identity
+          )
+      val labelsOnDomain = source.optionalValues.rebind(alignment)
       val labels =
-        Vector.tabulate(labeled.labels.length)(labeled.labels.apply)
+        labeled.unsafeLabels.toVector
           .filterNot(ignoredLabels)
           .distinct
           .sorted
       val parcelResolution =
         DomainFactory.unsafeRestore(
           SpaceKey.unsafe(
-            s"${domain.finiteSpace.id.value}:parcels:${labels.mkString(",")}"
+            s"${domain.identityKey.value}:parcels:${labels.mkString(",")}"
           ),
           labels.length
         )
       val parcelSpace = parcelResolution.space
       val ordinalByLabel = labels.zipWithIndex.toMap
       val assignments = Array.fill[Option[Int]](domain.finiteSpace.size)(None)
-      var row = 0
-      while row < labeled.indices.length do
-        val label = labeled.labels(row)
-        ordinalByLabel.get(label).foreach: parcel =>
-          assignments(labeled.indices(row)) = Some(parcel)
-        row += 1
+      domain.finiteSpace.foreachIndex: vertex =>
+        labelsOnDomain(vertex).flatMap(ordinalByLabel.get).foreach: parcel =>
+          assignments(vertex.ordinal) = Some(parcel)
       val quotient =
         Parcellation
           .fromAssignments(domain.finiteSpace, parcelSpace, assignments)

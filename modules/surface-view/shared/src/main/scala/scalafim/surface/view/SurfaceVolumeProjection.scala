@@ -115,7 +115,9 @@ object SurfaceVolumeProjection:
     opacity: DisplayOpacity = DisplayOpacity.Opaque,
     blendMode: DisplayBlendMode = DisplayBlendMode.Normal
   ): Either[SurfaceViewError, SurfaceLayer] =
-    if !result.values.geometry.hasSameMeshDomain(displayGeometry) then
+    if result.values.geometry.hemisphere != displayGeometry.hemisphere ||
+        !result.values.locus.vertices.sameRuntimeOwnerAs(displayGeometry.mesh.topology.vertices)
+    then
       Left(SurfaceViewError.IncompatibleLayerDomain(id, surface))
     else
       val values = new Array[Double](displayGeometry.vertexCount)

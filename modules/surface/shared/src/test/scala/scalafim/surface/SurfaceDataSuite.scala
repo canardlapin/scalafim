@@ -1,6 +1,7 @@
 package scalafim.surface
 
 import scalafim.image.DMat
+import scala.compiletime.testing.typeCheckErrors
 
 class SurfaceDataSuite extends munit.FunSuite:
 
@@ -38,6 +39,41 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(field.valueAt(VertexId(2)), Some(20.0))
     assertEquals(field.valueAt(VertexId(1)), None)
     assertEquals(field.domainEither, geometry.domainEither)
+    assert(field.locus.vertices.sameRuntimeOwnerAs(geometry.mesh.topology.vertices))
+    assertEquals(field.locus.selection.ordinals.toVector, Vector(0, 2))
+    assertEquals(field.locus.support.ordinalsInDomainOrder.toVector, Vector(0, 2))
+    assertEquals(field.locus.fullValues, None)
+
+  test("surface data exposes exact owner types and rejects foreign indices at compile time"):
+    val errors = typeCheckErrors("""
+      import scalafim.surface.SurfaceVertexField
+      import locus4s.Index
+
+      def exact[A](field: SurfaceVertexField[A], index: Index[field.Vertex]) =
+        field.optionalValues(index)
+
+      def foreign[A](left: SurfaceVertexField[A], right: SurfaceVertexField[A]) =
+        val index = left.vertices.indexAtValidatedOrdinal(0)
+        right.optionalValues(index)
+    """)
+
+    assert(errors.nonEmpty)
+
+  test("surface data owns compatibility arrays without weakening typed ownership"):
+    val sourceIndices = Array(0, 2)
+    val sourceData = Array(10.0, 20.0)
+    val field = SurfaceField(geometry, sourceIndices, sourceData, "owned")
+
+    sourceIndices(0) = 1
+    sourceData(0) = -1.0
+    val exportedIndices = field.indices
+    val exportedData = field.data
+    exportedIndices(0) = 3
+    exportedData(0) = -2.0
+
+    assertEquals(field.vertexIds, Vector(VertexId(0), VertexId(2)))
+    assertEquals(field.valueAt(VertexId(0)), Some(10.0))
+    assertEquals(field.locus.selection.ordinals.toVector, Vector(0, 2))
 
   test("SurfaceField validates data length, uniqueness, and bounds"):
     interceptMessage[IllegalArgumentException]("requirement failed: field data length must match vertex indices"):
@@ -69,6 +105,10 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(matrix.rowVertex(1), VertexId(3))
     assertEquals(matrix(1, 0), 3.0)
     assertEquals(matrix(1, 1), 4.0)
+    assert(matrix.locus.vertices.sameRuntimeOwnerAs(geometry.mesh.topology.vertices))
+    assertEquals(matrix.locus.selection.ordinals.toVector, Vector(1, 3))
+    val second = matrix.locus.selection.positions.indexAtValidatedOrdinal(1)
+    assertEquals(matrix.locus.rows(second), Vector(3.0, 4.0))
 
   test("SurfaceRoi extracts a checked subset from a field"):
     val field = SurfaceField.full(geometry, Vector(1, 2, 3, 4), "labels")
@@ -78,6 +118,10 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(roi.vertexIds, Vector(VertexId(3), VertexId(1)))
     assertEquals(roi.data(0), 4)
     assertEquals(roi.data(1), 2)
+    assertEquals(roi.locus.selection.ordinals.toVector, Vector(3, 1))
+    assertEquals(roi.locus.support.ordinalsInDomainOrder.toVector, Vector(1, 3))
+    assert(roi.locus.section(roi.locus.vertices.indexAtValidatedOrdinal(1)).isRight)
+    assert(roi.locus.section(roi.locus.vertices.indexAtValidatedOrdinal(0)).isLeft)
 
     interceptMessage[IllegalArgumentException]("ROI vertex 2 is not present in field"):
       SurfaceRoi.fromField(SurfaceField.fromIndexed(geometry, Vector(VertexId(0)), Vector(1)), Vector(VertexId(2)))
@@ -99,6 +143,8 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(labeled.parcelLabelAt(VertexId(2)).map(_.value), Some(2))
     assertEquals(labeled.info(1).map(_.name), Some("A"))
     assertEquals(labeled.domainEither, geometry.domainEither)
+    assert(labeled.locus.vertices.sameRuntimeOwnerAs(geometry.mesh.topology.vertices))
+    assertEquals(labeled.locus.support.ordinalsInDomainOrder.toVector, Vector(0, 1, 2))
     assert(LabeledSurface.fromIndexedEither(geometry, Vector(VertexId(0), VertexId(0)), Vector(1, 2), Vector(LabelInfo(1, "A"))).isLeft)
 
   test("SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates"):
@@ -117,6 +163,7 @@ class SurfaceDataSuite extends munit.FunSuite:
     assertEquals(canonicalInflated.kind, inflated.kind)
     assertEquals(canonicalInflated.mesh.vertices, inflated.mesh.vertices)
     assertEquals(set.topologyIdentity, geometry.mesh.topologyIdentity)
+    assertEquals(set.connectivityFingerprint, geometry.mesh.connectivityFingerprint)
     assertEquals(set.meshDomainEither, geometry.meshDomainEither)
     assert(set.surfaces.values.forall(_.mesh.topology eq set.default.mesh.topology))
     assert(set.surfaces.values.forall(surface => surface.mesh.realization.topology eq set.default.mesh.topology))

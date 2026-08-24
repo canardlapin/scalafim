@@ -24,6 +24,11 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     val restored = decoded.restore(model, bindings).toOption.get
 
     assertEquals(encodedAgain, encoded)
+    assertEquals(
+      SurfaceSceneDocument.CurrentTopologyIdentityScheme,
+      SurfaceSceneTopologyIdentityScheme.LegacyMeshTopologyIdentityV1
+    )
+    assert(document.assets.forall(_.topologyIdentity.length == 16))
     assertEquals(restored, state)
     assert(!encoded.contains("vertexValues"))
     assert(encoded.contains("asset://surfaces/left"))
@@ -79,9 +84,19 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     )
 
     val changedLeft = SurfaceAsset.make(leftId, geometry(Hemisphere.Left, SurfaceKind.Pial, 0.0)).toOption.get
+    val changedActivation = SurfaceLayer.scalar(
+      activationId,
+      leftId,
+      changedLeft.geometry,
+      Array(-1.0, 0.0, 1.0, 2.0, 2.0, 1.0, 0.0, -1.0),
+      ScalarColorizer(DisplayWindow.unsafe(-1.0, 2.0), ColorRamp.Heat),
+      frameCount = 2,
+      opacity = DisplayOpacity.unsafe(0.8),
+      blendMode = DisplayBlendMode.Screen
+    ).toOption.get
     val changedModel = SurfaceViewerModel.make(
       model.surfaces.updated(0, changedLeft),
-      model.layers
+      model.layers.map(layer => if layer.id == activationId then changedActivation else layer)
     ).toOption.get
     assert(document.restore(changedModel, bindings).left.exists(_.message.contains("identity differs")))
 

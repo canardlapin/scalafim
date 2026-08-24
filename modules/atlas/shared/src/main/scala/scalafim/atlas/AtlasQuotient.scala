@@ -1,8 +1,10 @@
 package scalafim.atlas
 
+import locus4s.Injection
 import scalafim.image.{ClusteredNeuroVol, VolumeDomain, VolumeSpace}
 import scalafim.locus.{
   DomainFactory,
+  FiniteDomain,
   FiniteSpace,
   IndexedField,
   Parcellation,
@@ -67,7 +69,25 @@ trait AtlasQuotient:
 trait VolumeAtlasQuotient extends AtlasQuotient:
   val domain: VolumeDomain[X]
 
+/** The current persisted bilateral ambient key retains the pre-mesh4s
+  * 16-character topology digests. Future key layouts must add a new scheme
+  * instead of silently changing this one.
+  */
+enum SurfaceAtlasIdentityScheme derives CanEqual:
+  case LegacyTopologyDigestV1
+
+/** Checked embedding of one exact cortical vertex owner into the derived
+  * bilateral atlas-position domain.
+  */
+trait SurfaceAtlasVertexLink[X]:
+  type V
+  val vertices: FiniteDomain[V]
+  val intoAmbient: Injection[V, X]
+
 trait SurfaceAtlasQuotient extends AtlasQuotient:
+  val identityScheme: SurfaceAtlasIdentityScheme
+  val leftVertices: SurfaceAtlasVertexLink[X]
+  val rightVertices: SurfaceAtlasVertexLink[X]
   val leftVertexCount: Int
   val rightVertexCount: Int
 
@@ -152,16 +172,18 @@ object AtlasQuotient:
       regions.ids.zipWithIndex.toMap
     val assignments =
       Array.fill[Option[Int]](ambient.size)(None)
+    val leftLink = surfaceLink(payload.left, ambient, 0)
+    val rightLink = surfaceLink(payload.right, ambient, leftCount)
 
     assignSurface(
       payload.left,
-      offset = 0,
+      leftLink,
       assignments,
       parcelOrdinalById
     )
     assignSurface(
       payload.right,
-      offset = leftCount,
+      rightLink,
       assignments,
       parcelOrdinalById
     )
@@ -177,6 +199,10 @@ object AtlasQuotient:
     new SurfaceAtlasQuotient:
       type X = Vertex
       type P = Parcel
+      val identityScheme: SurfaceAtlasIdentityScheme =
+        SurfaceAtlasIdentityScheme.LegacyTopologyDigestV1
+      val leftVertices: SurfaceAtlasVertexLink[Vertex] = leftLink
+      val rightVertices: SurfaceAtlasVertexLink[Vertex] = rightLink
       val leftVertexCount: Int = leftCount
       val rightVertexCount: Int = rightCount
       val parcellation: Parcellation[Vertex, Parcel] = quotient
@@ -236,16 +262,47 @@ object AtlasQuotient:
           val networkIds: IndexedField[Network, NetworkId] = idField
           val parcelToNetwork: Surjection[P, Network] = surjection
 
-  private def assignSurface(
+  private def surfaceLink[X](
       labeled: scalafim.surface.LabeledSurface,
-      offset: Int,
+      ambient: FiniteDomain[X],
+      offset: Int
+  ): SurfaceAtlasVertexLink[X] =
+    val source = labeled.locus
+    val mapping =
+      TotalMap.tabulate(source.vertices, ambient): vertex =>
+        ambient.indexAtValidatedOrdinal(offset + vertex.ordinal)
+    val injection =
+      Injection
+        .fromTotalMap(mapping)
+        .fold(
+          error => throw new IllegalStateException(error.message),
+          identity
+        )
+    new SurfaceAtlasVertexLink[X]:
+      type V = source.Vertex
+      val vertices: FiniteDomain[V] = source.vertices
+      val intoAmbient: Injection[V, X] = injection
+
+  private def assignSurface[X](
+      labeled: scalafim.surface.LabeledSurface,
+      link: SurfaceAtlasVertexLink[X],
       assignments: Array[Option[Int]],
       parcelOrdinalById: Map[RegionId, Int]
   ): Unit =
-    var row = 0
-    while row < labeled.indices.length do
-      val label = labeled.labels(row)
-      if label != 0 then
-        assignments(offset + labeled.indices(row)) =
+    val source = labeled.locus
+    require(
+      source.vertices.sameRuntimeOwnerAs(link.vertices),
+      "surface atlas link must retain the exact label vertex owner"
+    )
+    val alignment =
+      source.vertices
+        .align(link.vertices)
+        .fold(
+          _ => throw new IllegalStateException("validated surface atlas owners did not align"),
+          identity
+        )
+    val labels = source.optionalValues.rebind(alignment)
+    link.vertices.foreachIndex: vertex =>
+      labels(vertex).filter(_ != 0).foreach: label =>
+        assignments(link.intoAmbient(vertex).ordinal) =
           Some(parcelOrdinalById(RegionId(label)))
-      row += 1

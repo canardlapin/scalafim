@@ -77,7 +77,7 @@ class SurfaceGiftiAtlasLoaderSuite extends munit.FunSuite:
           Vector(0.0, 1.0, 0.0),
           Vector(0.0, 0.0, 1.0)
         ),
-        faces = Vector((0, 1, 2), (0, 1, 3))
+        faces = Vector((0, 1, 2), (0, 3, 1))
       ),
       hemisphere,
       SurfaceKind.Midthickness

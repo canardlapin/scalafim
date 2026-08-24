@@ -21,10 +21,12 @@ object SurfaceComponents:
   ): SurfaceComponentResult =
     val topology = MeshTopology.from(field.geometry.mesh)
     val active = scala.collection.mutable.Set.empty[Int]
+    val fieldIndices = field.unsafeIndices
+    val fieldData = field.unsafeData
 
     var i = 0
     while i < field.size do
-      if threshold.keep(field.data(i)) then active += field.indices(i)
+      if threshold.keep(fieldData(i)) then active += fieldIndices(i)
       i += 1
 
     val components = SurfaceTopologyTraversal.connectedComponents(topology, active.toSet)
@@ -48,7 +50,7 @@ object SurfaceComponents:
 
     i = 0
     while i < field.size do
-      val vertex = field.indices(i)
+      val vertex = fieldIndices(i)
       indexData(i) = componentIndex.getOrElse(vertex, 0)
       sizeData(i) = componentSize.getOrElse(vertex, 0)
       i += 1
@@ -68,14 +70,16 @@ object SurfaceComponents:
     val components = connectedComponents(field, threshold)
     val indices = copyIndices(field)
     val out = Array.ofDim[Double](field.size)
+    val componentSizes = components.size.unsafeData
+    val fieldData = field.unsafeData
 
     var i = 0
     while i < field.size do
       out(i) =
-        if components.size.data(i) >= minSize then field.data(i) else fill
+        if componentSizes(i) >= minSize then fieldData(i) else fill
       i += 1
 
     SurfaceField(field.geometry, PrimitiveBuffers.fromArray(indices), PrimitiveBuffers.fromArray(out), field.label)
 
   private def copyIndices[A](field: SurfaceField[A]): Array[Int] =
-    Array.tabulate(field.size)(i => field.indices(i))
+    field.unsafeIndices.clone()

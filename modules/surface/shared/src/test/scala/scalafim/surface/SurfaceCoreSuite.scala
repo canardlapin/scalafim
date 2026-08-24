@@ -51,8 +51,11 @@ class SurfaceCoreSuite extends munit.FunSuite:
       )
 
     assertEquals(mesh.topologyIdentity, moved.topologyIdentity)
+    assertEquals(mesh.connectivityFingerprint, moved.connectivityFingerprint)
+    assertEquals(mesh.connectivityFingerprint.value.length, 64)
     assert(mesh.hasSameTopology(moved))
     assertNotEquals(mesh.topologyIdentity, reordered.topologyIdentity)
+    assertNotEquals(mesh.connectivityFingerprint, reordered.connectivityFingerprint)
     assert(!mesh.hasSameTopology(reordered))
     assertNotEquals(mesh.topologyIdentity, rewound.topologyIdentity)
     assert(!mesh.hasSameTopology(rewound))
