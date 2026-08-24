@@ -1,6 +1,16 @@
 package scalafim.surface.view.three
 
+import intaglio.Rgba32
 import scalafim.surface.view.*
+
+/** Browser-interpreter options. The clear colour is an already-validated
+  * `Rgba32`; it does not leak Three.js values into the shared surface model.
+  */
+final case class ThreeJsRuntimeOptions(clearColor: Rgba32)
+
+object ThreeJsRuntimeOptions:
+  val Default: ThreeJsRuntimeOptions =
+    ThreeJsRuntimeOptions(Rgba32.unsafe(255, 255, 255))
 
 final case class ThreePick(
   surface: SurfaceId,

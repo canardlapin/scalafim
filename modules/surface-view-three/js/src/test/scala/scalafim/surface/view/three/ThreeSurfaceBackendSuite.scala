@@ -70,6 +70,39 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       Vector("color:16777215:1", "scissor:false", "clear:true:true:true", "scissor:true")
     )
 
+  test("typed runtime clear colour survives resize and draw cycles"):
+    val observed = ArrayBuffer.empty[(Int, Double)]
+    val setClearColor: js.Function2[Int, Double, Unit] = (color, alpha) =>
+      observed += color -> alpha
+    val noOpScissor: js.Function1[Boolean, Unit] = _ => ()
+    val noOpClear: js.Function3[Boolean, Boolean, Boolean, Unit] = (_, _, _) => ()
+    val isContextLost: js.Function0[Boolean] = () => false
+    val webgl = js.Dynamic.literal(isContextLost = isContextLost)
+    val renderer = js.Dynamic.literal(
+      setClearColor = setClearColor,
+      setScissorTest = noOpScissor,
+      clear = noOpClear,
+      getContext = (() => webgl): js.Function0[js.Any],
+      setPixelRatio = ((_: Double) => ()): js.Function1[Double, Unit],
+      setSize = ((_: Int, _: Int, _: Boolean) => ()): js.Function3[Int, Int, Boolean, Unit]
+    )
+    val three = js.Dynamic.literal(
+      WebGLRenderer = FakeThree.constructing(renderer),
+      Scene = FakeThree.constructing(js.Dynamic.literal()),
+      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
+      Raycaster = FakeThree.constructing(js.Dynamic.literal())
+    )
+    val options = ThreeJsRuntimeOptions(Rgba32.unsafe(18, 24, 32, 128))
+    val runtime = ThreeJsRuntime.create(three, js.Dynamic.literal(), options).toOption.get
+
+    assertEquals(runtime.resize(ThreeCanvasSize.unsafe(320, 240)), Right(()))
+    assertEquals(runtime.draw(), Right(()))
+    assertEquals(runtime.resize(ThreeCanvasSize.unsafe(640, 480, 2.0)), Right(()))
+    assertEquals(runtime.draw(), Right(()))
+
+    assertEquals(observed.map(_._1).toVector, Vector(0x121820, 0x121820))
+    observed.foreach((_, alpha) => assertEqualsDouble(alpha, 128.0 / 255.0, 0.0))
+
   test("disposal forces WebGL context loss exactly once and reports the context as lost"):
     var loseContextCalls = 0
     var rendererDisposals = 0

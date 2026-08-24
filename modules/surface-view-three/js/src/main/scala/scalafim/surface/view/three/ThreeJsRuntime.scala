@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.{Float32Array, Uint32Array}
 
+import intaglio.*
 import scalafim.surface.view.*
 
 /** Thin interpreter over a host-owned Three.js namespace. The host may pass an
@@ -16,7 +17,8 @@ final class ThreeJsRuntime private (
   renderer: js.Dynamic,
   scene: js.Dynamic,
   camera: js.Dynamic,
-  raycaster: js.Dynamic
+  raycaster: js.Dynamic,
+  options: ThreeJsRuntimeOptions
 ) extends ThreeSurfaceRuntime:
   private final case class Bundle(
     surface: SurfaceId,
@@ -181,7 +183,7 @@ final class ThreeJsRuntime private (
   def draw(): Either[ThreeSurfaceError, Unit] =
     attempt("draw"):
       renderer.updateDynamic("autoClear")(false)
-      ThreeJsRuntime.clearFrame(renderer)
+      ThreeJsRuntime.clearFrame(renderer, options)
       slots.foreach: slot =>
         bundles.valuesIterator.foreach: bundle =>
           val visible = bundle.surface == slot.surface
@@ -376,8 +378,13 @@ object ThreeJsRuntime:
       |}
       |""".stripMargin
 
-  private[three] def clearFrame(renderer: js.Dynamic): Unit =
-    renderer.applyDynamic("setClearColor")(0xffffff, 1.0)
+  private[three] def clearFrame(
+    renderer: js.Dynamic,
+    options: ThreeJsRuntimeOptions = ThreeJsRuntimeOptions.Default
+  ): Unit =
+    val color = options.clearColor
+    val rgb = (color.red << 16) | (color.green << 8) | color.blue
+    renderer.applyDynamic("setClearColor")(rgb, color.alpha.toDouble / 255.0)
     // The previous frame leaves the last bilateral viewport as the active
     // scissor. Clear with scissoring disabled or the first viewport retains
     // old geometry and visibly tears during a morph.
@@ -385,7 +392,11 @@ object ThreeJsRuntime:
     renderer.applyDynamic("clear")(true, true, true)
     renderer.applyDynamic("setScissorTest")(true)
 
-  def create(three: js.Dynamic, canvas: js.Dynamic): Either[ThreeSurfaceError, ThreeJsRuntime] =
+  def create(
+    three: js.Dynamic,
+    canvas: js.Dynamic,
+    options: ThreeJsRuntimeOptions = ThreeJsRuntimeOptions.Default
+  ): Either[ThreeSurfaceError, ThreeJsRuntime] =
     if three == null || js.isUndefined(three) || canvas == null || js.isUndefined(canvas) then
       Left(ThreeSurfaceError.ContextUnavailable)
     else
@@ -393,14 +404,14 @@ object ThreeJsRuntime:
         val renderer = js.Dynamic.newInstance(three.selectDynamic("WebGLRenderer"))(js.Dynamic.literal(
           canvas = canvas,
           antialias = true,
-          alpha = false,
+          alpha = options.clearColor.alpha < 255,
           preserveDrawingBuffer = false
         ))
         val scene = js.Dynamic.newInstance(three.selectDynamic("Scene"))()
         val camera = js.Dynamic.newInstance(three.selectDynamic("PerspectiveCamera"))()
         camera.updateDynamic("matrixAutoUpdate")(false)
         val raycaster = js.Dynamic.newInstance(three.selectDynamic("Raycaster"))()
-        val runtime = new ThreeJsRuntime(three, canvas, renderer, scene, camera, raycaster)
+        val runtime = new ThreeJsRuntime(three, canvas, renderer, scene, camera, raycaster, options)
         runtime.contextState match
           case ThreeContextState.Available => Right(runtime)
           case ThreeContextState.Lost => Left(ThreeSurfaceError.ContextLost)
